@@ -9,6 +9,7 @@ import {
   PlayTable,
   zoneOf,
   type CardCode,
+  type CardStats,
   type InstanceId,
   type InvestigatorCard,
   type ScenarioDefinition,
@@ -40,11 +41,15 @@ const rolandId = investigatorId('roland');
 
 /**
  * A solo game of `scenario` (The Gathering or a variant of it), played until act 1 opens the
- * house: Roland Banks takes the Study's two clues and spends them.
+ * house: Roland Banks takes the Study's two clues and spends them. `replaced` stand in for the
+ * scenario's cards of the same code.
  */
-function houseOpened(scenario: ScenarioDefinition): PlayTable {
+function houseOpened(scenario: ScenarioDefinition, replaced: readonly CardStats[] = []): PlayTable {
   const table = PlayTable.setUp(
-    { cards: cardDbWith(theGatheringCards, [investigatorCardStats(roland)]), scenario },
+    {
+      cards: cardDbWith(theGatheringCards, [investigatorCardStats(roland), ...replaced]),
+      scenario,
+    },
     { investigators: [{ id: rolandId, code: roland.code }], seed: 3 },
   );
   table.nextPhase();
@@ -336,6 +341,26 @@ export function rolandSurroundedExport(title: string): Buffer {
   for (const enemyId of [cardIn(table, GATHERING_CODES.ghoulPriest), ...minions])
     table.play({ type: 'SpawnEnemy', enemyId, at: cardIn(table, GATHERING_CODES.hallway) });
   return exportOf(title, table, 'roland_surrounded');
+}
+
+/**
+ * Like `houseOpenedExport`, but a Ghoul Minion spawns at "any empty location", so the players
+ * choose where: the Attic, the Cellar or the Parlor, since Roland Banks stands in the Hallway. No
+ * card of The Gathering lets the players choose a location, so this game's Ghoul Minion prints that
+ * instruction, entered by hand; the screen reads the choice from the game, not from the card.
+ */
+export function ghoulMinionToSpawnExport(title: string): Buffer {
+  const printed = theGatheringCards.get(GATHERING_CODES.ghoulMinion);
+  if (!printed) throw new Error('The Gathering has a Ghoul Minion');
+  const table = houseOpened(theGathering, [
+    { ...printed, keywords: [{ name: 'spawn', detail: 'Any empty location' }] },
+  ]);
+  const [minion] = Object.values(table.state.cards).filter(
+    ({ code }) => code === GATHERING_CODES.ghoulMinion,
+  );
+  if (!minion) throw new Error('The Gathering has a Ghoul Minion');
+  table.play({ type: 'SpawnEnemy', enemyId: minion.id });
+  return exportOf(title, table, 'ghoul_minion_to_spawn');
 }
 
 /** The Gathering's Dissonant Voices and Frozen in Fear, treacheries that go into the threat area; two copies each. */

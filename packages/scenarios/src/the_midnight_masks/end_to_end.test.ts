@@ -206,6 +206,8 @@ describe('The Midnight Masks end to end: Roland and Daisy, seed 40', () => {
           "St. Mary's Hospital",
           'Your House',
         ],
+        // Each option is a location in play, so the players can pick it on the map too.
+        locations: expect.objectContaining({ Northside: expect.any(String) }),
       },
     ]);
     table.answer(byName(wizard), 'Northside');

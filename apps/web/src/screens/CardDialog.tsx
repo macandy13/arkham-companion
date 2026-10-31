@@ -22,7 +22,9 @@ const LANDSCAPE: ReadonlySet<CardType> = new Set<CardType>(['agenda', 'act']);
  * Opening and closing stay the caller's: the shell opens as a modal when it mounts and passes on
  * `cancel` (Escape), so a dialog that must be answered can refuse it; one the players may leave
  * gets an × (`onClose`), and one that must be answered can be lowered out of the board's way
- * (`lowerable`), so the players can adjust the board on the game screen first.
+ * (`lowered`, `onLower`), so the players can adjust the board on the game screen or pick a
+ * location on the map first. The caller keeps whether it is lowered, since picking on the map
+ * lowers it too.
  */
 export function CardDialog({
   name,
@@ -33,7 +35,8 @@ export function CardDialog({
   title,
   onCancel,
   onClose,
-  lowerable = false,
+  lowered = false,
+  onLower,
   children,
 }: {
   /** The dialog's `data-dialog`, which its own stylesheet styles its content by. */
@@ -47,17 +50,18 @@ export function CardDialog({
   onCancel: (event: SyntheticEvent<HTMLDialogElement>) => void;
   /** For a dialog the players may leave: the × in the page's corner. */
   onClose?: () => void;
+  /** Whether the dialog is lowered to a strip along the bottom, where the board takes taps. */
+  lowered?: boolean;
   /**
    * For a dialog that must be answered but leaves the board in reach (a decision): its grab handle
-   * lowers it to a strip along the bottom, and the board takes taps again until it is raised.
+   * asks to lower it, or to raise it again when it is `lowered`.
    */
-  lowerable?: boolean;
+  onLower?: (lowered: boolean) => void;
   children: ReactNode;
 }) {
   const { t } = useTranslation();
   const titleId = useId();
   const dialog = useRef<HTMLDialogElement>(null);
-  const [lowered, setLowered] = useState(false);
   useEffect(() => {
     const element = dialog.current;
     if (!element) return;
@@ -91,13 +95,14 @@ export function CardDialog({
         </figure>
       )}
       {card === undefined && actor && <InvestigatorArt image={actor.image} />}
-      <article>
-        {lowerable && (
+      {/* Lowered, the strip is small, so a tap anywhere on it raises it, not only on the handle. */}
+      <article onClick={lowered && onLower ? () => onLower(false) : undefined}>
+        {onLower && (
           <button
             type="button"
             data-part="grab"
             aria-label={t(lowered ? 'cardDialog.raise' : 'cardDialog.lower')}
-            onClick={() => setLowered(!lowered)}
+            onClick={() => onLower(!lowered)}
           />
         )}
         {onClose && (

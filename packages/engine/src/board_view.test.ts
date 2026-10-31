@@ -1509,6 +1509,38 @@ describe("a fail's choice", () => {
   );
 });
 
+describe('a decision whose options pick locations', () => {
+  it('names the location in play each option picks, not an enemy, an investigator or none', () => {
+    const { context, state } = newGame()
+      .withLocation(study, blankLocation('study'), { revealed: true })
+      .withLocation(hallway, blankLocation('hallway'))
+      .withInvestigator(alice, { locationId: study })
+      .withCard(instanceId('ghoul'), blankEnemy('ghoul'), atLocation(study))
+      .start();
+    const asked = stateAfter(context, state, {
+      type: 'RequestDecision',
+      decision: {
+        id: decisionId('where_to'),
+        kind: 'chooseOption',
+        prompt: 'decision.chooseSpawnLocation',
+        decider: { kind: 'lead' },
+        options: [
+          { id: 'study', label: 'Study', target: study, commands: [] },
+          { id: 'hallway', label: 'Hallway', target: hallway, commands: [] },
+          { id: 'ghoul', label: 'Ghoul', target: instanceId('ghoul'), commands: [] },
+          { id: 'alice', label: 'Alice', target: alice, commands: [] },
+          { id: 'nowhere', label: 'Nowhere', commands: [] },
+        ],
+      },
+    });
+
+    expect(boardView(context, asked).decisions[0]?.locations).toEqual({
+      Study: study,
+      Hallway: hallway,
+    });
+  });
+});
+
 describe('a decision with one adjustable amount', () => {
   it('reads the default of the option amount', () => {
     const { context, state } = newGame()

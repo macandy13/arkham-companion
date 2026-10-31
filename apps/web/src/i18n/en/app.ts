@@ -534,6 +534,7 @@ export const appTexts = {
     options: 'Answers',
     fromTheGame: 'from the game',
     done: 'Done',
+    pickOnMap: 'Pick on the map',
     test: '{{skill}} test ({{difficulty}})',
     advanceAgenda: 'Does the agenda {{card}} advance?',
     chooseEngagement: 'Whom does {{card}} engage?',

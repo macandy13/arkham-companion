@@ -72,6 +72,7 @@ export function LocationTile({
   turnOrder,
   dragOf,
   onOpen,
+  pickable = false,
   x,
   y,
 }: {
@@ -81,6 +82,8 @@ export function LocationTile({
   turnOrder: TurnOrder;
   dragOf: (piece: TilePiece) => DragHandlers | undefined;
   onOpen?: () => void;
+  /** Lit as a location the players may pick now (`MapBoard`'s `pickable`). */
+  pickable?: boolean;
   x: number;
   y: number;
 }) {
@@ -105,6 +108,7 @@ export function LocationTile({
       data-card="location"
       data-side={location.revealed ? 'revealed' : 'unrevealed'}
       data-picture={picture?.shown ? 'shown' : undefined}
+      data-pickable={pickable || undefined}
       transform={`translate(${x} ${y})`}
       onPointerDown={onOpen && onPointerDown}
       onClick={onOpen && onClick}

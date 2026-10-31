@@ -22,7 +22,9 @@ import { CardDialog } from './CardDialog';
  * never carries over to the next; adjusting the board, which unmounts it, starts the draw over.
  * The game cannot go on before it is answered, so Escape does not close it; Undo takes back
  * the step that raised it instead, and its grab handle lowers it out of the way, so the players
- * can adjust the board on the game screen first (the screen hides it while they adjust). The engine's labels are i18n keys or names already readable
+ * can adjust the board on the game screen first (the screen hides it while they adjust). A
+ * decision whose options pick locations (`DecisionView.locations`) offers to pick one on the map:
+ * the dialog lowers while the screen lights them (`picking`, `onPicking`), and raising it stops. The engine's labels are i18n keys or names already readable
  * (investigators, locations); a key the strings lack shows as the option's readable name.
  */
 export function DecisionDialog({
@@ -30,11 +32,17 @@ export function DecisionDialog({
   decision,
   actions,
   busy,
+  picking = false,
+  onPicking,
 }: {
   board: BoardView;
   decision: DecisionView;
   actions: GameActions;
   busy: boolean;
+  /** Whether the players are picking one of the decision's locations on the map. */
+  picking?: boolean;
+  /** Starts picking on the map, or stops it; without it the dialog offers no map. */
+  onPicking?: (picking: boolean) => void;
 }) {
   const { t } = useTranslation();
   const { test } = decision;
@@ -68,6 +76,12 @@ export function DecisionDialog({
     );
   };
 
+  const [lowered, setLowered] = useState(false);
+  const lower = (to: boolean) => {
+    setLowered(to);
+    if (!to) onPicking?.(false);
+  };
+
   const actor = decision.for === undefined ? undefined : board.investigator(decision.for);
   return (
     <CardDialog
@@ -77,7 +91,8 @@ export function DecisionDialog({
       {...(actor ? { actor, kicker: t('decision.decides', { name: actor.name }) } : {})}
       title={t(decision.prompt, { card: decision.about, defaultValue: decision.prompt })}
       onCancel={(event) => event.preventDefault()}
-      lowerable
+      lowered={lowered || picking}
+      onLower={lower}
     >
       {board.resolving && <ResolvingCard board={board} card={board.resolving} />}
       {decision.provokedBy && actor && (
@@ -170,6 +185,11 @@ export function DecisionDialog({
           <button type="button" disabled={busy} onClick={() => void actions.undo()}>
             {t('header.undo')}
           </button>
+          {decision.locations && onPicking && (
+            <button type="button" disabled={busy} onClick={() => onPicking(true)}>
+              {t('decision.pickOnMap')}
+            </button>
+          )}
           <button type="submit" disabled={busy || picked === undefined}>
             {t('decision.done')}
           </button>

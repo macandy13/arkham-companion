@@ -1,5 +1,9 @@
 import { expect, test } from './fixtures/test';
-import { investigationOpenExport, resumeImportedGame } from './fixtures/saved_games';
+import {
+  ghoulMinionToSpawnExport,
+  investigationOpenExport,
+  resumeImportedGame,
+} from './fixtures/saved_games';
 
 // Journey: the game asks the players something (here the result of Roland Banks' investigation), they
 // draw a chaos token for the test in the decision dialog and answer it, which gives the board back.
@@ -49,5 +53,38 @@ test('lower a decision to adjust the board first', async ({ page }) => {
   await test.step('Find the decision back, raised, its intellect 4', async () => {
     await expect(decision.getByRole('button', { name: 'Lower to reach the board' })).toBeVisible();
     await expect(decision.getByRole('button', { name: 'Intellect 4' })).toBeVisible();
+  });
+});
+
+// Journey: a Ghoul Minion spawns at any empty location, so the game asks where. The players pick
+// on the map: the dialog lowers and the empty rooms light up; a tap on the Hallway, where Roland
+// Banks stands, brings the question back, and a tap on the Attic answers it.
+test('pick the answer to a decision on the map', { tag: '@flow' }, async ({ page }) => {
+  const decision = page.getByRole('dialog', { name: 'Where does Ghoul Minion spawn?' });
+  const house = page.getByRole('figure', { name: 'House' });
+  const room = (name: string) => house.getByRole('group', { name, exact: true });
+
+  await test.step('Resume a game whose Ghoul Minion waits to spawn', async () => {
+    await resumeImportedGame(page, 'Spawning', ghoulMinionToSpawnExport('Spawning'));
+    await expect(decision.getByRole('button', { name: 'Attic' })).toBeVisible();
+  });
+
+  await test.step('Pick on the map: the dialog lowers and the empty rooms light up', async () => {
+    await decision.getByRole('button', { name: 'Pick on the map' }).click();
+    await expect(decision.getByRole('button', { name: 'Raise the dialog' })).toBeVisible();
+    await expect(room('Attic')).toHaveAttribute('data-pickable', 'true');
+    await expect(room('Hallway')).not.toHaveAttribute('data-pickable');
+  });
+
+  await test.step('Tap the Hallway, which it cannot spawn in: the question comes back', async () => {
+    await room('Hallway').click();
+    await expect(decision.getByRole('button', { name: 'Lower to reach the board' })).toBeVisible();
+  });
+
+  await test.step('Pick again and tap the Attic: the Ghoul Minion spawns there', async () => {
+    await decision.getByRole('button', { name: 'Pick on the map' }).click();
+    await room('Attic').click();
+    await expect(decision).toBeHidden();
+    await expect(room('Attic').getByRole('img', { name: /^Ghoul Minion/ })).toBeVisible();
   });
 });

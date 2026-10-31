@@ -786,6 +786,27 @@ describe('MapBoard', () => {
       expect(screen.queryByRole('dialog')).toBeNull();
     });
 
+    it.each([
+      { pickable: undefined, lit: ['study', 'hallway'] },
+      { pickable: [hallway], lit: ['hallway'] },
+    ])('lights $lit while picking among $pickable', ({ pickable, lit }) => {
+      const table = PlayTable.start(house);
+      render(
+        <MapBoard
+          board={table.board}
+          actions={actionsOn(table)}
+          busy={false}
+          adjusting={false}
+          onPick={() => {}}
+          pickable={pickable}
+        />,
+      );
+
+      expect(
+        ['study', 'hallway'].filter((name) => tile(name).hasAttribute('data-pickable')),
+      ).toEqual(lit);
+    });
+
     it('opens nothing when the press moves on, as a pan of the map does', () => {
       const table = PlayTable.start(house);
       render(

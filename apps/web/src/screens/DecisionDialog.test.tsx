@@ -164,6 +164,94 @@ describe('DecisionDialog', () => {
     expect(zoneOf(table.state, studyGhoul)).toEqual(atLocation(hallway));
   });
 
+  describe('for a decision whose options are locations', () => {
+    const hallway = instanceId('hallway');
+    const attic = instanceId('attic');
+    /** A Wraith that spawns at any empty location, with the Study and the Hallway empty. */
+    const wraithToSpawn = () => {
+      const wraith = instanceId('wraith');
+      const table = PlayTable.start(
+        newGame()
+          .withLocation(study, blankLocation('study', { name: 'Study' }), { revealed: true })
+          .withLocation(hallway, blankLocation('hallway', { name: 'Hallway' }), { revealed: true })
+          .withLocation(attic, blankLocation('attic', { name: 'Attic' }), { revealed: true })
+          .withInvestigator(alder, { locationId: attic })
+          .withCard(
+            wraith,
+            blankEnemy('wraith', {
+              name: 'Wraith',
+              keywords: [{ name: 'spawn', detail: 'Any empty location' }],
+            }),
+            { kind: 'setAside' },
+          ),
+      );
+      table.play({ type: 'SpawnEnemy', enemyId: wraith });
+      return table;
+    };
+
+    it('starts picking on the map from its footer', () => {
+      const table = wraithToSpawn();
+      const [decision] = table.board.decisions;
+      if (!decision) throw new Error('the spawn is asked');
+      const onPicking = vi.fn();
+      render(
+        <DecisionDialog
+          board={table.board}
+          decision={decision}
+          actions={actionsOn(table)}
+          busy={false}
+          picking={false}
+          onPicking={onPicking}
+        />,
+      );
+
+      fireEvent.click(screen.getByRole('button', { name: 'Pick on the map' }));
+
+      expect(onPicking).toHaveBeenCalledWith(true);
+    });
+
+    it('is lowered while the players pick, and raising it stops picking', () => {
+      const table = wraithToSpawn();
+      const [decision] = table.board.decisions;
+      if (!decision) throw new Error('the spawn is asked');
+      const onPicking = vi.fn();
+      render(
+        <DecisionDialog
+          board={table.board}
+          decision={decision}
+          actions={actionsOn(table)}
+          busy={false}
+          picking={true}
+          onPicking={onPicking}
+        />,
+      );
+      expect(screen.getByRole('dialog').dataset['lowered']).toBe('true');
+
+      fireEvent.click(screen.getByRole('button', { name: 'Raise the dialog' }));
+
+      expect(onPicking).toHaveBeenCalledWith(false);
+    });
+  });
+
+  it('offers no map for a decision whose options are no locations', () => {
+    const table = aldersTurnInTheStudy();
+    table.investigate(alder, { result: 'open' });
+    const [decision] = table.board.decisions;
+    if (!decision) throw new Error('the test is asked');
+    render(
+      <DecisionDialog
+        board={table.board}
+        decision={decision}
+        actions={actionsOn(table)}
+        busy={false}
+        picking={false}
+        onPicking={() => {}}
+      />,
+    );
+
+    expect(screen.queryByRole('button', { name: 'Pick on the map' })).toBeNull();
+  });
+
   describe('with the chaos draw', () => {
     /** Alder (intellect 3) investigating the Study (shroud 2) with a bag of one -2 token. */
     const aldersInvestigationWithAMinusTwo = () => {

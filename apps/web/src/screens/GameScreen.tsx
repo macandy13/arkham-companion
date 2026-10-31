@@ -1,9 +1,9 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router';
 import { useStore } from 'zustand';
 import type { StoreApi } from 'zustand/vanilla';
-import { gameId as toGameId, type InstanceId } from '@arkham/engine';
+import { gameId as toGameId, type DecisionId, type InstanceId } from '@arkham/engine';
 import type { AppState } from '../state/appStore';
 import { useCatalog, type CatalogSource } from '../catalog/useCatalog';
 import { InvestigatorBar } from '../investigators/InvestigatorBar';
@@ -34,7 +34,9 @@ import './game.css';
  * (`DetailControls`); the map row gets a strip above and below the map (`MapStrip`). A tap on a
  * location there or in the compact view shows that location in the map row (`LocationFocus`), the
  * location mode, until the players go back to the map; while they choose where an enemy spawns,
- * the map shows. The scenario card's texts come from the card `catalog`.
+ * or pick the answer to the open decision on the map (`DecisionView.locations`), the map shows,
+ * its pickable locations lit. Picking belongs to the decision it was started for, so the next
+ * one opens raised; a tap on a location the decision cannot pick raises the dialog again. The scenario card's texts come from the card `catalog`.
  */
 export function GameScreen({
   store,
@@ -51,6 +53,7 @@ export function GameScreen({
   const open = current?.gameId === gameId ? current : undefined;
   const phone = usePhone();
   const detail = useDetailView();
+  const [pickingFor, setPickingFor] = useState<DecisionId>();
   const boardElement = useRef<HTMLDivElement>(null);
   const detailTarget = phone ? detail.target : undefined;
   const opensDetail = phone && !detailTarget;
@@ -77,10 +80,20 @@ export function GameScreen({
   }
   const { board } = open;
   const [decision] = board.decisions;
+  const decisionId = open.state.pending[0]?.id;
   const { spawning } = open;
+  const picking =
+    decision?.locations !== undefined && decisionId !== undefined && pickingFor === decisionId;
+  const pickable = picking ? Object.values(decision?.locations ?? {}) : undefined;
+  const pickAnswer = (location: InstanceId) => {
+    setPickingFor(undefined);
+    const option = Object.entries(decision?.locations ?? {}).find(([, at]) => at === location);
+    if (option) void store.getState().actions.answer(option[0]);
+  };
   const focusId = detailTarget?.row === 'map' ? detailTarget.location : undefined;
-  // A location that left play, or a spawn to place on the map, brings the whole map back.
-  const focused = spawning ? undefined : board.locations.find(({ id }) => id === focusId);
+  // A location that left play, or a location to pick on the map, brings the whole map back.
+  const focused =
+    spawning || picking ? undefined : board.locations.find(({ id }) => id === focusId);
   const showLocation = phone
     ? (location: InstanceId) => (detailTarget ? detail.go : detail.open)({ row: 'map', location })
     : undefined;
@@ -135,12 +148,16 @@ export function GameScreen({
             busy={open.busy}
             adjusting={open.adjusting}
             onPick={
-              spawning &&
-              ((location) => {
-                store.getState().cancelSpawn();
-                void store.getState().actions.spawnEnemy(spawning.id, location);
-              })
+              spawning
+                ? (location) => {
+                    store.getState().cancelSpawn();
+                    void store.getState().actions.spawnEnemy(spawning.id, location);
+                  }
+                : picking
+                  ? pickAnswer
+                  : undefined
             }
+            pickable={pickable}
             onOpenLocation={showLocation}
           />
         )}
@@ -171,6 +188,8 @@ export function GameScreen({
           decision={decision}
           actions={store.getState().actions}
           busy={open.busy}
+          picking={picking}
+          onPicking={(to) => setPickingFor(to ? decisionId : undefined)}
         />
       )}
       <div id="notices">

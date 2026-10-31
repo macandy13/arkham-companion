@@ -51,7 +51,7 @@ A tap on a line of the drawn-cards notice below opens the places the players can
 - a treachery goes into a threat area,
 - any card onto the discard pile or aside.
 
-An enemy not yet on the map gets one Spawn button instead, which closes the dialog and asks the players to tap a location ([`SpawnPrompt`](../../apps/web/src/encounter/SpawnPrompt.tsx) with Cancel, `OpenGame.spawning`; every tile glows and `MapBoard.onPick` takes the tap).
+An enemy not yet on the map gets one Spawn button instead, which closes the dialog and asks the players to tap a location ([`SpawnPrompt`](../../apps/web/src/encounter/SpawnPrompt.tsx) with Cancel, `OpenGame.spawning`; every tile glows, `data-pickable`, and `MapBoard.onPick` takes the tap).
 The tap plays `SpawnEnemy` (`GameActions.spawnEnemy`), so the engine engages it by the rules (prey, Aloof).
 
 ## Drawn-cards notice
