@@ -131,8 +131,17 @@
   stroke-width: var(--card-border-width);
 }
 
-#board svg[data-card='enemy']:not([data-picture]) image {
+/*
+ * The picture shows once it has loaded: its art in the window under the face in the Exact theme,
+ * the whole card over the face in the card pictures theme, with only the damage count on top.
+ */
+#board svg[data-card='enemy']:not([data-picture]) image,
+#board svg[data-card='enemy'] > image {
   visibility: hidden;
+}
+
+:root[data-card-theme='pictures'] #board svg[data-card='enemy'][data-picture] > image {
+  visibility: visible;
 }
 
 #board svg[data-card='enemy'] > text {

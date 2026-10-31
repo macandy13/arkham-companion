@@ -90,7 +90,7 @@ test('the house map in the card pictures style, the clues left on each card', as
   await expect(page.locator('html')).toHaveAttribute('data-card-theme', 'pictures');
 });
 
-test('the house map in the Eldritch card style', { tag: '@shot' }, async ({ page }) => {
+test('the house map in the Eldritch card style', async ({ page }) => {
   await page.goto('/#/settings');
   await page.getByLabel('Card style').selectOption('Eldritch');
   await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
@@ -99,12 +99,30 @@ test('the house map in the Eldritch card style', { tag: '@shot' }, async ({ page
   await expect(page.locator('html')).toHaveAttribute('data-card-theme', 'eldritch');
 });
 
+test("the Ghoul Priest's details in the Eldritch card style: a blackletter name, tentacle scrolls, an eye on the medallion", async ({
+  page,
+}) => {
+  await page.goto('/#/settings');
+  await page.getByLabel('Card style').selectOption('Eldritch');
+  await resumeImportedGame(
+    page,
+    'Roland Banks threatened',
+    rolandThreatenedExport('Roland Banks threatened'),
+  );
+  const roland = page.getByRole('region', { name: 'Roland Banks' });
+  await roland.getByRole('button', { name: 'Later cards in the threat area' }).click();
+
+  await roland.getByRole('button', { name: 'Details of Ghoul Priest' }).click();
+
+  await expect(page.getByRole('dialog', { name: 'Ghoul Priest' })).toBeVisible();
+});
+
 test(
-  "the Ghoul Priest's details in the Eldritch card style: a blackletter name, tentacle scrolls, an eye on the medallion",
+  "the Ghoul Priest's details in the card pictures style, its damage on the printed health",
   { tag: '@shot' },
   async ({ page }) => {
     await page.goto('/#/settings');
-    await page.getByLabel('Card style').selectOption('Eldritch');
+    await page.getByLabel('Card style').selectOption('Card pictures');
     await resumeImportedGame(
       page,
       'Roland Banks threatened',
@@ -115,7 +133,10 @@ test(
 
     await roland.getByRole('button', { name: 'Details of Ghoul Priest' }).click();
 
-    await expect(page.getByRole('dialog', { name: 'Ghoul Priest' })).toBeVisible();
+    const card = page
+      .getByRole('dialog', { name: 'Ghoul Priest' })
+      .locator('svg[data-card="enemy"]');
+    await expect(card).toHaveAttribute('data-picture', 'shown');
   },
 );
 

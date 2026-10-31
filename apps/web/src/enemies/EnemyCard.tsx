@@ -31,8 +31,10 @@ type Stat = 'fight' | 'health' | 'evade';
  * (`CountCircle`), the scrolls of the frame, its traits, keywords and victory points on the lens in
  * our own words, and its attack as hearts and brains beside the set medallion on the lens's arc,
  * over its art, cut from the card's picture once that has loaded (a hatch until then, and for
- * good offline). The name's text has `titleId`, so the dialog showing the card is named by it.
- * The texts are HTML in `foreignObject`s, so they wrap and stay paragraphs.
+ * good offline). In the card pictures theme the whole picture lies over the drawing once loaded,
+ * under the damage count alone; the drawing stays beneath it, so it keeps naming the card and its
+ * values to assistive technology. The name's text has `titleId`, so the dialog showing the card is
+ * named by it. The texts are HTML in `foreignObject`s, so they wrap and stay paragraphs.
  */
 export function EnemyCard({
   enemy,
@@ -143,14 +145,6 @@ export function EnemyCard({
         <StatIcon symbol="combat" centre={ENEMY_FACE.fightIcon} />
         <StatIcon symbol="agility" centre={ENEMY_FACE.evadeIcon} />
       </g>
-      {enemy.health !== undefined && (
-        <CountCircle
-          kind="damage"
-          value={damage}
-          label={t('map.damage', { count: damage })}
-          centre={ENEMY_FACE.damage}
-        />
-      )}
       <text id={titleId} ref={name} {...nameCentre} transform={shrinkAround(nameCentre, scale)}>
         {enemy.name}
       </text>
@@ -177,6 +171,24 @@ export function EnemyCard({
         type={t('enemy.type')}
       />
       <path data-part="edge" d={CARD_OUTLINE} />
+      {picture && (
+        <image
+          href={picture.url}
+          {...PORTRAIT_SCAN}
+          preserveAspectRatio="none"
+          clipPath={`url(#${clipId})`}
+          onLoad={picture.onLoad}
+          onError={picture.onError}
+        />
+      )}
+      {enemy.health !== undefined && (
+        <CountCircle
+          kind="damage"
+          value={damage}
+          label={t('map.damage', { count: damage })}
+          centre={ENEMY_FACE.damage}
+        />
+      )}
     </svg>
   );
 }
