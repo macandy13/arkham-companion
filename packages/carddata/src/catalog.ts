@@ -1,6 +1,11 @@
 import { buildInvestigatorCatalog, type InvestigatorDef } from './investigators';
 import { normalisePacks, type PackDef } from './packs';
-import { buildReferences, type ReferenceTexts } from './references';
+import {
+  buildReferencePictures,
+  buildReferences,
+  type ReferencePictures,
+  type ReferenceTexts,
+} from './references';
 
 /**
  * Everything the investigator picker needs and the scenario card's texts, fetched together and
@@ -14,6 +19,11 @@ export interface CardCatalog {
    * a catalog cached before the app read them, until its next refresh.
    */
   references?: Record<string, ReferenceTexts>;
+  /**
+   * The pictures of the scenario reference cards' sides, by card code (`buildReferencePictures`);
+   * absent in a catalog cached before the app read them, until its next refresh.
+   */
+  referencePictures?: Record<string, ReferencePictures>;
   /** `Last-Modified` of the cards response; sent back as `If-Modified-Since` on refresh. */
   lastModified?: string;
 }
@@ -50,6 +60,10 @@ export async function fetchCatalog(
   const rawCards: unknown = await cardsResponse.json();
   const investigators = buildInvestigatorCatalog(rawCards, packs);
   const references = buildReferences(rawCards);
+  const referencePictures = buildReferencePictures(rawCards);
   const lastModified = cardsResponse.headers.get('Last-Modified') ?? undefined;
-  return { status: 'ok', catalog: { investigators, packs, references, lastModified } };
+  return {
+    status: 'ok',
+    catalog: { investigators, packs, references, referencePictures, lastModified },
+  };
 }

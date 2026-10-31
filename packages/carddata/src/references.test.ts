@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildReferences, parseReferenceSide } from './index';
+import { buildReferencePictures, buildReferences, parseReferenceSide } from './index';
 
 // Hand-written fake data – never real card text.
 describe('parseReferenceSide', () => {
@@ -48,5 +48,25 @@ describe('buildReferences', () => {
 
   it('rejects non-array input', () => {
     expect(() => buildReferences({})).toThrow('Expected an array of cards');
+  });
+});
+
+describe('buildReferencePictures', () => {
+  it('keeps the scenario cards by code, front for Easy / Standard and back for Hard / Expert', () => {
+    const cards = [
+      {
+        code: '9001',
+        type_code: 'scenario',
+        imagesrc: '/bundles/cards/9001.png',
+        backimagesrc: '/bundles/cards/9001b.png',
+      },
+      { code: '9002', type_code: 'scenario' },
+      { code: '9003', type_code: 'agenda', imagesrc: '/bundles/cards/9003.png' },
+    ];
+
+    expect(buildReferencePictures(cards)).toEqual({
+      '9001': { easyStandard: '/bundles/cards/9001.png', hardExpert: '/bundles/cards/9001b.png' },
+      '9002': { easyStandard: undefined, hardExpert: undefined },
+    });
   });
 });

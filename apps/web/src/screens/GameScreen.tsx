@@ -11,7 +11,7 @@ import { LocationFocus } from '../map/LocationFocus';
 import { MapBoard } from '../map/MapBoard';
 import { DecisionDialog } from './DecisionDialog';
 import { DetailControls } from './DetailControls';
-import { GameHeader } from './GameHeader';
+import { GameHeader, printedReferenceOf } from './GameHeader';
 import { GameStatus } from './GameStatus';
 import { MapStrip } from './MapStrip';
 import { RejectionToast } from './RejectionToast';
@@ -97,9 +97,9 @@ export function GameScreen({
         store={store}
         open={open}
         board={board}
-        referenceTexts={
+        printedReference={
           board.reference && cards.status === 'ready'
-            ? cards.catalog.references?.[board.reference.code]?.[board.reference.side]
+            ? printedReferenceOf(cards.catalog, board.reference)
             : undefined
         }
         onOpenCard={opensDetail ? (card) => detail.open({ row: 'cards', card }) : undefined}

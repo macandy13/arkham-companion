@@ -374,7 +374,7 @@
 :root:not([data-card-theme='pictures'])
   #board
   > header
-  :is([data-card='agenda'], [data-card='act'])
+  :is([data-card='agenda'], [data-card='act'], [data-card='scenario'])
   > img {
   visibility: hidden;
 }

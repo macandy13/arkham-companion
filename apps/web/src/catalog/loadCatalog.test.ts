@@ -74,6 +74,18 @@ describe('loadCatalog', () => {
     expect(refreshed.references).toEqual({});
   });
 
+  it('fetches in full once a cached catalog has no reference card pictures', async () => {
+    const fetched = await loadCatalog(store, 'en', respondingWith(okCards('v1')));
+    delete fetched.referencePictures;
+    await store.putCatalog('en', fetched);
+    const requests: string[] = [];
+
+    const refreshed = await loadCatalog(store, 'en', respondingWith(okCards('v1'), requests));
+
+    expect(requests).toContain('https://arkhamdb.com/api/public/cards/');
+    expect(refreshed.referencePictures).toEqual({});
+  });
+
   it('replaces the cache when the server has a newer version', async () => {
     await loadCatalog(store, 'en', respondingWith(okCards('v1')));
 

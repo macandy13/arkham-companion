@@ -17,6 +17,16 @@ export interface ReferenceTexts {
 }
 
 /** ArkhamDB's names of the symbol tokens in card text, and the engine's for each. */
+/**
+ * The pictures of a scenario reference card's sides (`buildReferencePictures`), host-relative
+ * paths as ArkhamDB gives them (`/bundles/cards/01104.png`): the front for Easy and Standard, the
+ * back for Hard and Expert, each absent when the card data has none.
+ */
+export interface ReferencePictures {
+  easyStandard?: string;
+  hardExpert?: string;
+}
+
 const TOKEN_NAMES: Readonly<Record<string, ReferenceToken>> = {
   skull: 'skull',
   cultist: 'cultist',
@@ -32,24 +42,45 @@ const RawScenarioSchema = z.object({
   type_code: z.literal('scenario'),
   text: opt(z.string()),
   back_text: opt(z.string()),
+  imagesrc: opt(z.string()),
+  backimagesrc: opt(z.string()),
 });
+
+/** The scenario cards in `rawCards` (ArkhamDB's cards list); cards of other types are left out. */
+function scenarioCards(rawCards: unknown): z.infer<typeof RawScenarioSchema>[] {
+  if (!Array.isArray(rawCards)) throw new Error('Expected an array of cards');
+  return rawCards.flatMap((card: unknown) => {
+    const parsed = RawScenarioSchema.safeParse(card);
+    return parsed.success ? [parsed.data] : [];
+  });
+}
 
 /**
  * The reference card texts of every scenario card in `rawCards` (ArkhamDB's cards list), by card
  * code (`ScenarioDefinition.referenceCode`). Cards of other types are left out.
  */
 export function buildReferences(rawCards: unknown): Record<string, ReferenceTexts> {
-  if (!Array.isArray(rawCards)) throw new Error('Expected an array of cards');
   return Object.fromEntries(
-    rawCards.flatMap((card: unknown) => {
-      const parsed = RawScenarioSchema.safeParse(card);
-      if (!parsed.success) return [];
-      const { code, text, back_text } = parsed.data;
+    scenarioCards(rawCards).map(({ code, text, back_text }) => {
       const texts: ReferenceTexts = {
         easyStandard: parseReferenceSide(text),
         hardExpert: parseReferenceSide(back_text),
       };
-      return [[code, texts]];
+      return [code, texts];
+    }),
+  );
+}
+
+/**
+ * The pictures of every scenario card's sides in `rawCards` (ArkhamDB's cards list), by card code
+ * (`ScenarioDefinition.referenceCode`), for the card pictures theme. Cards of other types are left
+ * out.
+ */
+export function buildReferencePictures(rawCards: unknown): Record<string, ReferencePictures> {
+  return Object.fromEntries(
+    scenarioCards(rawCards).map(({ code, imagesrc, backimagesrc }) => {
+      const pictures: ReferencePictures = { easyStandard: imagesrc, hardExpert: backimagesrc };
+      return [code, pictures];
     }),
   );
 }
