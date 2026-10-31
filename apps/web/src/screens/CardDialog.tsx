@@ -17,6 +17,8 @@ const LANDSCAPE: ReadonlySet<CardType> = new Set<CardType>(['agenda', 'act']);
  * over the page instead, and with one they sit small in the kicker. On a phone held upright the
  * page is a sheet along the bottom with the card peeking out beside its title (card_dialog.css).
  * The card is a button that opens it whole (`CardZoom`), since on a phone only its top shows.
+ * The cards of the decisions that wait after this one (`waiting`, the next enemies to attack) fan
+ * out behind it.
  * Opening and closing stay the caller's: the shell opens as a modal when it mounts and passes on
  * `cancel` (Escape), so a dialog that must be answered can refuse it; one the players may leave
  * gets an × (`onClose`), and one that must be answered can be lowered out of the board's way
@@ -25,6 +27,7 @@ const LANDSCAPE: ReadonlySet<CardType> = new Set<CardType>(['agenda', 'act']);
 export function CardDialog({
   name,
   card,
+  waiting = [],
   actor,
   kicker,
   title,
@@ -36,6 +39,8 @@ export function CardDialog({
   /** The dialog's `data-dialog`, which its own stylesheet styles its content by. */
   name: string;
   card?: CardFaceView;
+  /** The cards behind `card`, next first (`DecisionView.waiting`). */
+  waiting?: readonly CardFaceView[];
   actor?: InvestigatorView;
   kicker?: ReactNode;
   title: ReactNode;
@@ -73,7 +78,18 @@ export function CardDialog({
       data-shell={layout}
       data-lowered={lowered || undefined}
     >
-      {card && <SubjectCard card={card} onOpen={() => setZoomed(true)} />}
+      {card && (
+        <figure data-part="cards">
+          {waiting.length > 0 && (
+            <ul aria-label={t('cardDialog.waiting')}>
+              {waiting.map((each, index) => (
+                <WaitingCard key={index} card={each} />
+              ))}
+            </ul>
+          )}
+          <SubjectCard card={card} onOpen={() => setZoomed(true)} />
+        </figure>
+      )}
       {card === undefined && actor && <InvestigatorArt image={actor.image} />}
       <article>
         {lowerable && (
@@ -111,6 +127,19 @@ export function CardDialog({
 
 function orientationOf(card: CardFaceView): 'beside' | 'above' {
   return LANDSCAPE.has(card.type) ? 'above' : 'beside';
+}
+
+/** A card waiting behind the subject: its picture once it has loaded, else its name. */
+function WaitingCard({ card }: { card: CardFaceView }) {
+  const picture = useCardPicture(card.image);
+  return (
+    <li data-picture={picture?.shown ? 'shown' : undefined}>
+      {picture && (
+        <img src={picture.url} alt="" onLoad={picture.onLoad} onError={picture.onError} />
+      )}
+      <span>{card.name}</span>
+    </li>
+  );
 }
 
 /**

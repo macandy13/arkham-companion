@@ -61,7 +61,7 @@ import {
   type SymbolToken,
   type SymbolTokenEffect,
 } from './scenario';
-import { NAMED_AMOUNTS } from './state';
+import { NAMED_AMOUNTS, type Decider } from './state';
 import {
   boostedSkills,
   cluesHeldByGroup,
@@ -383,6 +383,12 @@ export interface DecisionView {
    * starts shows that card too.
    */
   card?: CardFaceView;
+  /**
+   * The cards of the decisions that ask the same of the same players after this one, in the order
+   * they wait, at most `MAX_WAITING_CARDS` (several enemies' attacks of opportunity on one
+   * investigator), so the dialog fans them behind `card`.
+   */
+  waiting?: readonly CardFaceView[];
   for?: InvestigatorId;
   test?: SkillTest;
   /** The basic action a skill test belongs to (`Decision.testKind`), which says what its pass `amount` counts. */
@@ -1221,6 +1227,7 @@ function decisionView(ctx: EngineContext, state: GameState, decision: Decision):
   const [resolving] = cardsInZone(state, resolvingZone);
   const cardId = decision.subject ?? resolving;
   const card = cardId === undefined ? undefined : cardFaceOf(ctx, requireCard(state, cardId));
+  const waiting = waitingCards(ctx, state, decision);
   const provokedBy =
     decision.prompt === forcedAttackPrompt('attackOfOpportunity')
       ? provokingAction(ctx, state)
@@ -1230,6 +1237,7 @@ function decisionView(ctx: EngineContext, state: GameState, decision: Decision):
     kind: decision.kind,
     ...(about === undefined ? {} : { about }),
     ...(card === undefined ? {} : { card }),
+    ...listIfAny('waiting', waiting),
     ...(decision.decider.kind === 'investigator' ? { for: decision.decider.investigatorId } : {}),
     ...(decision.skillTest ? { test: decision.skillTest } : {}),
     ...(decision.testKind ? { action: decision.testKind.kind } : {}),
@@ -1238,6 +1246,37 @@ function decisionView(ctx: EngineContext, state: GameState, decision: Decision):
     ...(Object.keys(counts).length > 0 ? { counts } : {}),
     ...(provokedBy ? { provokedBy } : {}),
   };
+}
+
+/** How many waiting cards a decision view names (`DecisionView.waiting`): two behind its own card. */
+const MAX_WAITING_CARDS = 2;
+
+/**
+ * The subjects of the pending decisions after `decision` that ask the same question (same prompt)
+ * of the same decider, in the order they wait, at most `MAX_WAITING_CARDS`.
+ */
+function waitingCards(ctx: EngineContext, state: GameState, decision: Decision): CardFaceView[] {
+  const after = state.pending.slice(state.pending.findIndex((each) => each.id === decision.id) + 1);
+  return after
+    .flatMap((each) =>
+      each.prompt === decision.prompt &&
+      sameDecider(each.decider, decision.decider) &&
+      each.subject !== undefined
+        ? [each.subject]
+        : [],
+    )
+    .slice(0, MAX_WAITING_CARDS)
+    .map((subject) => cardFaceOf(ctx, requireCard(state, subject)));
+}
+
+function sameDecider(one: Decider, other: Decider): boolean {
+  if (one.kind === 'investigator' || other.kind === 'investigator')
+    return (
+      one.kind === 'investigator' &&
+      other.kind === 'investigator' &&
+      one.investigatorId === other.investigatorId
+    );
+  return one.kind === other.kind;
 }
 
 /** The action held in the queue until the attacks of opportunity it provoked are answered. */

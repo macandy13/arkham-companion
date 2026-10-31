@@ -322,6 +322,22 @@ export function rolandThreatenedExport(title: string): Buffer {
   return exportOf(title, table, 'roland_threatened');
 }
 
+/**
+ * Like `houseOpenedExport`, but the Ghoul Priest and two Ghoul Minions have spawned in the Hallway,
+ * by hand to keep the script short, so all three are engaged with Roland Banks and each attacks
+ * when an action provokes them.
+ */
+export function rolandSurroundedExport(title: string): Buffer {
+  const table = houseOpened(theGathering);
+  const minions = Object.values(table.state.cards)
+    .filter(({ code }) => code === GATHERING_CODES.ghoulMinion)
+    .slice(0, 2)
+    .map(({ id }) => id);
+  for (const enemyId of [cardIn(table, GATHERING_CODES.ghoulPriest), ...minions])
+    table.play({ type: 'SpawnEnemy', enemyId, at: cardIn(table, GATHERING_CODES.hallway) });
+  return exportOf(title, table, 'roland_surrounded');
+}
+
 /** The Gathering's Dissonant Voices and Frozen in Fear, treacheries that go into the threat area; two copies each. */
 const THREAT_AREA_TREACHERIES: readonly CardCode[] = [cardCode('01165'), cardCode('01164')];
 

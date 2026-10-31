@@ -25,7 +25,7 @@ test('answer a decision in its dialog', async ({ page }) => {
 // Journey: a decision waits, but the board needs a correction first – the players lower the dialog
 // out of the way, adjust the board from the header to boost Roland Banks' intellect, as a card in
 // play does, keep it, and the decision comes back raised with the boost in its test.
-test('lower a decision to adjust the board first', { tag: '@flow' }, async ({ page }) => {
+test('lower a decision to adjust the board first', async ({ page }) => {
   const decision = page.getByRole('dialog', { name: 'Investigate Hallway' });
   const roland = page.getByRole('region', { name: 'Roland Banks' });
 
