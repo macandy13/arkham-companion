@@ -55,7 +55,7 @@ jobs:
       - uses: actions/cache@v6
         with:
           path: apps/web/e2e/.card_pictures
-          key: card-pictures-${{ hashFiles('packages/scenarios/src/the_gathering/cards.ts', 'packages/scenarios/src/the_midnight_masks/cards.ts', 'packages/scenarios/src/the_devourer_below/cards.ts', 'packages/scenarios/src/card_builders.ts', 'apps/web/e2e/fixtures/card_pictures.ts') }}-${{ github.run_id }}
+          key: card-pictures-${{ hashFiles('packages/scenarios/src/the_gathering/cards.ts', 'packages/scenarios/src/the_midnight_masks/cards.ts', 'packages/scenarios/src/the_devourer_below/cards.ts', 'packages/scenarios/src/card_builders.ts', 'apps/web/e2e/fixtures/card_pictures.ts') }}-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: |
             card-pictures-${{ hashFiles('packages/scenarios/src/the_gathering/cards.ts', 'packages/scenarios/src/the_midnight_masks/cards.ts', 'packages/scenarios/src/the_devourer_below/cards.ts', 'packages/scenarios/src/card_builders.ts', 'apps/web/e2e/fixtures/card_pictures.ts') }}-
             card-pictures-
