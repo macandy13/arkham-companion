@@ -44,18 +44,13 @@ import {
   ZEALOT_STORY,
   nightOfTheZealot,
   theDevourerBelow,
-  theDevourerBelowCardDefs,
+  theDevourerBelowCards,
   theDevourerBelowResolutions,
-  theGatheringCards,
-  theMidnightMasksCardDefs,
 } from '../index';
 import { daisyWalker, rolandBanks, zealotInvestigatorCards } from '../investigators';
 
 const ctx: ScenarioContext = {
-  cards: cardDbWith(
-    cardDbWith(cardDbWith(theGatheringCards, theMidnightMasksCardDefs), theDevourerBelowCardDefs),
-    zealotInvestigatorCards,
-  ),
+  cards: cardDbWith(theDevourerBelowCards, zealotInvestigatorCards),
   scenario: theDevourerBelow,
 };
 const campaignCtx = { cards: ctx.cards };

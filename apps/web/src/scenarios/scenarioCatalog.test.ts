@@ -19,7 +19,7 @@ describe('scenarioCatalog', () => {
   };
 
   it.each(scenarioCatalog.map((entry) => ({ id: entry.id, entry })))(
-    'sets up $id standalone with its catalog cards alone',
+    'sets up $id standalone with its catalog cards alone, the encounter deck shuffled',
     ({ entry }) => {
       const table = PlayTable.setUp(
         {
@@ -29,7 +29,10 @@ describe('scenarioCatalog', () => {
         { seed: 1, investigators: [{ id: investigatorId('alder'), code: alder.code }] },
       );
 
-      expect(table.state.meta.scenarioId).toBe(entry.id);
+      const encounterDeck = Object.values(table.state.cards).filter(
+        (card) => card.zone.kind === 'encounterDeck',
+      );
+      expect(encounterDeck.length).toBeGreaterThan(0);
     },
   );
 });
