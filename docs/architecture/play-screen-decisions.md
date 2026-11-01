@@ -12,7 +12,7 @@ A skill test one investigator takes also brings the test block the skill test di
 
 - the four skills as toggles with the investigator card's glyphs, starting on the test's skill; tapping another adds it (`SkillTestInput.addedSkill`), tapping the first then drops it, so the players can switch (a card can test another skill);
 - the modifier, for committed cards and card effects (a difficulty stepper only in the panel's own test);
-- the result strip (`ResultStrip`): the skill value's terms and their sum left, the tokens drawn in the middle with their sum when there are several ("?" for one the app cannot tell), PASS or FAIL over the total against the difficulty and the margin right.
+- the result strip (`ResultStrip`), shown from the start: the skill value's terms and their sum left; in the middle the draw button until a token is out, then the tokens drawn, a symbol token with its effect under it, and their sum when there are several ("?" for one the app cannot tell); PASS or FAIL over the total against the difficulty and the margin right, once a token is out.
 The calculation marks the answer it works out and sends that one with its `margin`, while the other still overrides it (the screen keys the dialog by the decision's id, so a draw never carries over).
 
 - An option's counts (`DecisionView.counts`: the clues a passed investigation discovers, the damage a passed fight deals, an attack's damage and horror) show as steppers within their limits on the row of their answer, marked "from the game" (on a phone each label stands over its stepper), which carries them as `amount` and `amounts`.

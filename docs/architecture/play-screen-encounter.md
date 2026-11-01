@@ -11,7 +11,7 @@ Each face names itself for its stylesheet (`data-face="book"`, `"scenario"`, `"e
 
 ## Agenda and act
 
-The agenda and act are drawn as the printed cards in the Exact card theme ([`BookFace`](../../apps/web/src/screens/BookFace.tsx), in landscape scan units, `BOOK_FACE`): the art cut from the picture (`AGENDA_ART`, `ACT_ART`) beside an open book with its page edges and title scrolls, and the threshold on a disc at the page's corner (the act's mirrored, with a magnifier handle).
+The agenda and act are drawn as the printed cards in the Exact card theme ([`BookFace`](../../apps/web/src/screens/BookFace.tsx), in landscape scan units, `BOOK_FACE`): the art cut from the picture (`AGENDA_ART`, `ACT_ART`) beside an open book with its page edges and title scrolls, the encounter set's icon between the title's brackets (`AgendaView.encounterSet`, `SetIcon`), and the threshold on a disc at the page's corner (the act's mirrored, with a magnifier handle). A scan that loads standing upright, as about one in fifty ArkhamDB scans does, never shows (`useCardPicture` with the card's `PictureShape`): the face keeps its pattern rather than cutting the wrong part as art. The scenario card checks the same, the other way round.
 The header card lays its HTML over that drawing in fractions of the card (`--book-*` tokens): the name on the page, the token as the small count circle on the disc's lower right, and the plate with its buttons at the page's foot.
 In the card pictures theme the whole picture lies over the drawing, and the count stays on the printed threshold.
 
@@ -24,7 +24,7 @@ The clue steppers, a correction while adjusting, show only for an act that count
 
 ## Scenario card
 
-The scenario card is drawn as the printed reference card ([`ScenarioFace`](../../apps/web/src/screens/ScenarioFace.tsx), in portrait scan units, `SCENARIO_FACE`): the dark frame, the band across the top with its half wheel and a serpent coiling in from each corner, and the set medallion.
+The scenario card is drawn as the printed reference card ([`ScenarioFace`](../../apps/web/src/screens/ScenarioFace.tsx), in portrait scan units, `SCENARIO_FACE`): the dark frame, the band across the top with its half wheel and a serpent coiling in from each corner, and the set medallion with the scenario's set icon (`ReferenceView.encounterSet`, the current agenda's set).
 Over it lies its HTML, placed in the face's scan units (`--scenario-*` tokens, `cqw` of the card, so every size prints the same layout): the scenario's name (the screen's heading), the side the difficulty plays with, and one row per symbol token from `BoardView.reference`, the token's game symbol on a disc in its colour beside its printed text.
 The texts come from the card catalog ([Card data](card-data.md), `CardCatalog.references` by `BoardView.reference.code` and side), rendered by [`cardText`](../../apps/web/src/catalog/cardText.tsx), which also sets the enemy cards' keyword lines: traits (`[[Ghoul]]`) in bold italics, symbols as icons. Until the catalog has loaded (a first start offline) a row shows only its token. In the card pictures theme the side's picture (`CardCatalog.referencePictures`, gathered with the texts as `PrintedReference` by `printedReferenceOf`) lies over the face once loaded; the title and rows stay beneath it for assistive technology.
 The header's small card shows only the name (a container query hides the rest from sight, not from screen readers); a tap on it or its name opens it full in a dialog (`ScenarioDetails`), and the phone's detail view shows it a zoomed card wide.
