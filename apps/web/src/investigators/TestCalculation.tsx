@@ -21,8 +21,9 @@ export type TestedSkills = readonly [SkillName, SkillName?];
 
 /**
  * A skill test as the players run it at the table (MD.2b): the skills tested, their modifier and
- * the tokens drawn so far, and what the engine makes of them (`BoardView.skillTest`) once a token
- * is out. Kept by the dialog that shows the test (`useSkillTest`), so its answer can use the result.
+ * the tokens drawn so far, and what the engine makes of them (`BoardView.skillTest`), the skill
+ * value alone before a token is out. Kept by the dialog that shows the test (`useSkillTest`), so
+ * its answer can use the result.
  */
 export interface SkillTestRun {
   skills: TestedSkills;
@@ -31,8 +32,9 @@ export interface SkillTestRun {
   setModifier: (modifier: number) => void;
   revealed: readonly ChaosToken[];
   draw: () => void;
-  result?: SkillTestSuggestion;
-  /** Whether the tokens drawn settle the test, or one of them asks for another. */
+  /** The calculation with the tokens drawn so far; its outcome counts only once `finished`. */
+  result: SkillTestSuggestion;
+  /** Whether the tokens drawn settle the test: false before the first and while one asks for another. */
   finished: boolean;
 }
 
@@ -54,14 +56,11 @@ export function useSkillTest(
   if (investigator === undefined || test === undefined) return undefined;
   const skills = picked ?? [test.skill];
   const [tested, added] = skills;
-  const result =
-    revealed.length === 0
-      ? undefined
-      : board.skillTest(
-          investigator,
-          { skill: tested, difficulty: test.difficulty },
-          { modifier, tokens: revealed, ...(added === undefined ? {} : { addedSkill: added }) },
-        );
+  const result = board.skillTest(
+    investigator,
+    { skill: tested, difficulty: test.difficulty },
+    { modifier, tokens: revealed, ...(added === undefined ? {} : { addedSkill: added }) },
+  );
   return {
     skills,
     pick: (each) => setSkills(pickSkill(skills, each)),
@@ -69,7 +68,7 @@ export function useSkillTest(
     setModifier,
     revealed,
     draw: () => setRevealed(drawTokens(board.chaosBag, revealed, Math.random)),
-    ...(result ? { result } : {}),
+    result,
     finished: testFinished(revealed),
   };
 }
@@ -89,7 +88,7 @@ export function pickSkill(skills: TestedSkills, skill: SkillName): TestedSkills 
 /**
  * The test block of every skill test dialog (MD.2b): the investigator's four skills as toggles,
  * the difficulty when the players set it (`onDifficulty`, the panel's own test; a decision's comes
- * from the card), their modifier, the draw button and, once a token is out, the result strip.
+ * from the card), their modifier and the result strip, which holds the draw button.
  */
 export function SkillTestBlock({
   board,
@@ -124,17 +123,13 @@ export function SkillTestBlock({
         shown={signed(run.modifier)}
         onChange={run.setModifier}
       />
-      <button type="button" disabled={board.chaosBag.length === 0} onClick={run.draw}>
-        {t('skillTest.draw')}
-      </button>
-      {run.result && (
-        <ResultStrip
-          result={run.result}
-          revealed={run.revealed}
-          skill={run.skills[0]}
-          finished={run.finished}
-        />
-      )}
+      <ResultStrip
+        result={run.result}
+        revealed={run.revealed}
+        skill={run.skills[0]}
+        finished={run.finished}
+        {...(board.chaosBag.length > 0 ? { onDraw: run.draw } : {})}
+      />
     </>
   );
 }
@@ -181,22 +176,26 @@ export function SkillToggles({
 
 /**
  * The result of a test in three columns (MD.2b), read left to right like the sum at the table:
- * the skill value and what was added to it, the tokens drawn in the order they came out (each
- * with its effect, and their sum when there are several), then the outcome with the total
- * against the difficulty and the margin. Until the test is `finished` (a token asks for another)
- * the outcome asks for another token. A token whose effect the app does not know shows a "?" and
- * a reminder under the strip to add it by hand.
+ * the skill value and what was added to it, the tokens drawn in the order they came out (a
+ * symbol token with its effect under it, and their sum when there are several), then the outcome
+ * with the total against the difficulty and the margin. Before a token is out the draw button
+ * (`onDraw`, left out when the bag is empty) stands where the tokens go and nothing stands in the
+ * outcome's place; the draw takes every token the test reveals, so it is not offered again. A
+ * token whose effect the app does not know shows a "?" and a reminder under the strip to add
+ * it by hand.
  */
 export function ResultStrip({
   result,
   revealed,
   skill,
   finished,
+  onDraw,
 }: {
   result: SkillTestSuggestion;
   revealed: readonly ChaosToken[];
   skill: SkillName;
   finished: boolean;
+  onDraw?: () => void;
 }) {
   const { t } = useTranslation();
   const terms = result.trace.filter(isSkillTerm);
@@ -218,38 +217,50 @@ export function ResultStrip({
         </li>
       </ol>
       <figure>
-        <ol aria-label={t('skillTest.drawn')}>
-          {revealed.map((token, index) => (
-            <li key={index} data-token={token}>
-              {t(`chaosToken.${token}`)}
-            </li>
-          ))}
-        </ol>
+        {revealed.length > 0 && (
+          <ol aria-label={t('skillTest.drawn')}>
+            {revealed.map((token, index) => (
+              <li key={index}>
+                <span data-token={token}>{t(`chaosToken.${token}`)}</span>
+                {hasSymbol(token) && token !== 'autoFail' && (
+                  <>
+                    {' '}
+                    <data value={effects[index] ?? ''}>{signedOrUnknown(effects[index])}</data>
+                  </>
+                )}
+              </li>
+            ))}
+          </ol>
+        )}
+        {revealed.length === 0 && onDraw && (
+          <button type="button" data-primary onClick={onDraw}>
+            {t('skillTest.draw')}
+          </button>
+        )}
         {revealed.length > 1 && (
           <figcaption>
             {t('skillTest.tokenSum', {
-              tokens: effects
-                .map((effect) => (effect === undefined ? '?' : signed(effect)))
-                .join(' '),
+              tokens: effects.map(signedOrUnknown).join(' '),
               total: signed(sum(known)),
             })}
           </figcaption>
         )}
       </figure>
-      {finished ? (
-        <output data-outcome={result.outcome}>
-          <span>{t(`skillTest.outcome.${result.outcome}`)}</span>{' '}
-          <span>
-            {t(`skillTest.against.${result.outcome}`, {
-              skill: result.skill,
-              difficulty: result.difficulty,
-            })}
-          </span>{' '}
-          <span>{t('skillTest.margin', { margin: result.margin })}</span>
-        </output>
-      ) : (
-        <output>{t('skillTest.revealAnother')}</output>
-      )}
+      {revealed.length > 0 &&
+        (finished ? (
+          <output data-outcome={result.outcome}>
+            <span>{t(`skillTest.outcome.${result.outcome}`)}</span>{' '}
+            <span>
+              {t(`skillTest.against.${result.outcome}`, {
+                skill: result.skill,
+                difficulty: result.difficulty,
+              })}
+            </span>{' '}
+            <span>{t('skillTest.margin', { margin: result.margin })}</span>
+          </output>
+        ) : (
+          <output>{t('skillTest.revealAnother')}</output>
+        ))}
       {result.unknownTokens.map((unknown) => (
         <p key={unknown}>{t('skillTest.unknownToken', { token: t(`chaosToken.${unknown}`) })}</p>
       ))}
@@ -373,6 +384,20 @@ function tokenEffects(
     next += 1;
     return step.change;
   });
+}
+
+/**
+ * Whether the token shows a symbol rather than its number, so the strip spells out its effect:
+ * the scenario's symbols, the elder sign, auto-fail and the tokens a campaign adds (bless, curse,
+ * frost, blood).
+ */
+function hasSymbol(token: ChaosToken): boolean {
+  return Number.isNaN(Number(token));
+}
+
+/** A token's effect with its sign, or "?" when the app cannot tell it (`tokenEffects`). */
+function signedOrUnknown(effect: number | undefined): string {
+  return effect === undefined ? '?' : signed(effect);
 }
 
 /** A modifier with its sign, as the players say it: +1, 0, −2. */

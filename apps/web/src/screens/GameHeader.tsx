@@ -8,6 +8,7 @@ import {
   type BoardView,
   type CardImagePath,
   type CardName,
+  type EncounterSetCode,
   type ReferenceView,
 } from '@arkham/engine';
 import type { CardCatalog, ReferenceSideTexts } from '@arkham/carddata';
@@ -225,7 +226,7 @@ function ScenarioCard({
   children: ReactNode;
 }) {
   const { t } = useTranslation();
-  const picture = useCardPicture(printed?.picture);
+  const picture = useCardPicture(printed?.picture, 'portrait');
   return (
     <div
       data-card="scenario"
@@ -237,7 +238,7 @@ function ScenarioCard({
         })
       }
     >
-      <ScenarioFace />
+      <ScenarioFace set={reference?.encounterSet} />
       {children}
       {reference && (
         <>
@@ -334,6 +335,7 @@ function AgendaStatus({
         kind="agenda"
         name={agenda.name}
         image={agenda.image}
+        set={agenda.encounterSet}
         threshold={agenda.threshold}
         onOpen={full ? undefined : () => setZoomed(true)}
       >
@@ -345,6 +347,7 @@ function AgendaStatus({
           kind="agenda"
           name={agenda.name}
           image={agenda.image}
+          set={agenda.encounterSet}
           threshold={agenda.threshold}
           actionRow={actionRow}
           onClose={close}
@@ -452,6 +455,7 @@ function ActStatus({
         kind="act"
         name={act.name}
         image={act.image}
+        set={act.encounterSet}
         threshold={advance?.threshold}
         onOpen={full ? undefined : () => setZoomed(true)}
       >
@@ -463,6 +467,7 @@ function ActStatus({
           kind="act"
           name={act.name}
           image={act.image}
+          set={act.encounterSet}
           threshold={advance?.threshold}
           actionRow={actionRow}
           onClose={close}
@@ -522,6 +527,7 @@ function HeaderCard({
   kind,
   name,
   image,
+  set,
   threshold,
   onOpen,
   children,
@@ -529,6 +535,7 @@ function HeaderCard({
   kind: 'agenda' | 'act';
   name: CardName;
   image: CardImagePath | undefined;
+  set: EncounterSetCode | undefined;
   threshold: number | undefined;
   onOpen: (() => void) | undefined;
   children: ReactNode;
@@ -537,6 +544,7 @@ function HeaderCard({
     <CardFace
       kind={kind}
       image={image}
+      set={set}
       threshold={threshold}
       onClick={
         onOpen &&
@@ -571,6 +579,7 @@ function CardDetails({
   kind,
   name,
   image,
+  set,
   threshold,
   actionRow,
   onClose,
@@ -579,6 +588,7 @@ function CardDetails({
   kind: 'agenda' | 'act';
   name: CardName;
   image: CardImagePath | undefined;
+  set: EncounterSetCode | undefined;
   threshold: number | undefined;
   actionRow: ReactNode;
   onClose: () => void;
@@ -593,7 +603,7 @@ function CardDetails({
   return (
     <dialog ref={dialog} aria-labelledby={titleId} onCancel={onClose} data-dialog="card">
       <button type="button" data-icon="close" aria-label={t('header.close')} onClick={onClose} />
-      <CardFace kind={kind} image={image} threshold={threshold}>
+      <CardFace kind={kind} image={image} set={set} threshold={threshold}>
         <h2 id={titleId}>{name}</h2>
         {children}
       </CardFace>
@@ -613,20 +623,22 @@ function CardDetails({
 function CardFace({
   kind,
   image,
+  set,
   threshold,
   onClick,
   children,
 }: {
   kind: 'agenda' | 'act';
   image: CardImagePath | undefined;
+  set: EncounterSetCode | undefined;
   threshold: number | undefined;
   onClick?: (event: MouseEvent<HTMLDivElement>) => void;
   children: ReactNode;
 }) {
-  const picture = useCardPicture(image);
+  const picture = useCardPicture(image, 'landscape');
   return (
     <div data-card={kind} data-picture={picture?.shown ? 'shown' : undefined} onClick={onClick}>
-      <BookFace kind={kind} picture={picture} threshold={threshold} />
+      <BookFace kind={kind} picture={picture} threshold={threshold} set={set} />
       {picture && (
         <img src={picture.url} alt="" onLoad={picture.onLoad} onError={picture.onError} />
       )}
