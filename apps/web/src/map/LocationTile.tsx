@@ -10,7 +10,14 @@ import type {
   PrintedActionView,
   ScaledValue,
 } from '@arkham/engine';
-import { LOCATION_ART, PORTRAIT_SCAN, artViewBox } from '../catalog/cardArt';
+import {
+  ENEMY_AVATAR,
+  INVESTIGATOR_AVATAR,
+  LANDSCAPE_SCAN,
+  LOCATION_ART,
+  PORTRAIT_SCAN,
+  artViewBox,
+} from '../catalog/cardArt';
 import {
   CardFaceCorners,
   CountCircle,
@@ -37,6 +44,7 @@ import {
   type Point,
 } from './mapLayout';
 import type { DragHandlers } from './usePieceDrag';
+import { TokenPicture } from './TokenPicture';
 import { shrinkAround, useShrinkToFit } from './useShrinkToFit';
 
 /** A piece standing on a tile that the players may drag: an investigator's pawn or an enemy. */
@@ -296,6 +304,7 @@ function NameBand({ location }: { location: LocationView }) {
         radius={medallion.radius}
         plateWidth={medallion.plateWidth}
         type={t(location.revealed ? 'map.location' : 'map.unrevealed')}
+        set={location.encounterSet}
       />
     </>
   );
@@ -509,7 +518,8 @@ function dragAttributes({
 export type TurnOrder = Pick<BoardView, 'lead' | 'turn'>;
 
 /**
- * An investigator's pawn (`data-pawn`): a circle with their initial, centred on `centre`. The
+ * An investigator's pawn (`data-pawn`): a circle with their initial, centred on `centre`, and
+ * over it their face from their card's picture once loaded (`TokenPicture`). The
  * `lead` investigator's pawn carries a pentagon like the game's lead investigator token, and the
  * pawn of the investigator whose turn it is (`onTurn`, `data-turn`) a bolder ring; both are also
  * in its name. With `drag` it can be dragged (`usePieceDrag`); a `ghost` is the copy that follows
@@ -547,6 +557,13 @@ export function Pawn({
       <text x={x} y={y}>
         {investigator.name.charAt(0)}
       </text>
+      <TokenPicture
+        image={investigator.image}
+        area={INVESTIGATOR_AVATAR}
+        scan={LANDSCAPE_SCAN}
+        centre={centre}
+        radius={CONTENT.pawnRadius}
+      />
       {lead && (
         <polygon
           data-marker="lead"
@@ -560,7 +577,8 @@ export function Pawn({
 }
 
 /**
- * An enemy as a round token with its initial, centred on `centre`, like an investigator's pawn but
+ * An enemy as a round token with its initial, its figure from its card's picture over it once
+ * loaded (`TokenPicture`), centred on `centre`, like an investigator's pawn but
  * ringed in the doom colour (`data-enemy`). An `engaged` enemy stands faded right after the pawn
  * of the investigator it is engaged with (`data-engaged`), since the threat area shows it in full.
  * A red badge on its rim shows its damage, and an exhausted enemy's initial lies on its side, like
@@ -601,6 +619,13 @@ export function EnemyToken({
       <text x={centre.x} y={centre.y}>
         {enemy.name.charAt(0)}
       </text>
+      <TokenPicture
+        image={enemy.image}
+        area={ENEMY_AVATAR}
+        scan={PORTRAIT_SCAN}
+        centre={centre}
+        radius={CONTENT.pawnRadius}
+      />
       {enemy.damage ? (
         <g data-marker="damage">
           <circle cx={badge.x} cy={badge.y} r={BADGE_RADIUS} />

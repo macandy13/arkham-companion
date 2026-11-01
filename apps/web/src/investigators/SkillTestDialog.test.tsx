@@ -64,7 +64,7 @@ describe('SkillTestDialog', () => {
     );
   };
 
-  it('tests the tapped skill and shows no result before a token is drawn', () => {
+  it('tests the tapped skill and shows its value, but no outcome, before a token is drawn', () => {
     renderWillpowerTest(['-1']);
 
     const title = screen.getByRole('heading');
@@ -72,7 +72,16 @@ describe('SkillTestDialog', () => {
     const kicker = title.closest('hgroup')?.querySelector('p');
     expect(kicker?.textContent).toBe('Alder');
     expect(pressedSkills()).toEqual(['Willpower 3']);
-    expect(result()).toBeNull();
+    expect(calculation()).toEqual(['Willpower 3', '3']);
+    expect(within(result()!).queryByRole('status')).toBeNull();
+  });
+
+  it('hides the draw button once the token is drawn', () => {
+    renderWillpowerTest(['-1']);
+
+    fireEvent.click(button('Draw a token'));
+
+    expect(screen.queryByRole('button', { name: 'Draw a token' })).toBeNull();
   });
 
   it.each<{ bag: ChaosToken[]; raises: number; shown: string }>([
@@ -124,7 +133,7 @@ describe('SkillTestDialog', () => {
     expect(calculation()).toEqual(['Willpower 3', 'Modifier +2', '5']);
   });
 
-  it('lists the tokens drawn by name, in the order they came out', () => {
+  it('lists the tokens drawn in the order they came out, a symbol with its effect', () => {
     // Always the first token left, so the bless comes out first and reveals the skull.
     vi.spyOn(Math, 'random').mockReturnValue(0);
     renderWillpowerTest(['bless', 'skull']);
@@ -134,7 +143,7 @@ describe('SkillTestDialog', () => {
     const drawn = within(screen.getByRole('list', { name: 'Tokens drawn' }))
       .getAllByRole('listitem')
       .map((token) => token.textContent);
-    expect(drawn).toEqual(['Bless', 'Skull']);
+    expect(drawn).toEqual(['Bless +2', 'Skull ?']);
   });
 
   it('sums several tokens under them, a token the app cannot tell as "?"', () => {

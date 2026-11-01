@@ -48,18 +48,14 @@ import {
   MIDNIGHT_MASKS_CODES,
   ZEALOT_STORY,
   nightOfTheZealot,
-  theGatheringCards,
   theMidnightMasks,
-  theMidnightMasksCardDefs,
+  theMidnightMasksCards,
   theMidnightMasksResolutions,
 } from '../index';
 import { daisyWalker, rolandBanks, zealotInvestigatorCards } from '../investigators';
 
 const ctx: ScenarioContext = {
-  cards: cardDbWith(
-    cardDbWith(theGatheringCards, theMidnightMasksCardDefs),
-    zealotInvestigatorCards,
-  ),
+  cards: cardDbWith(theMidnightMasksCards, zealotInvestigatorCards),
   scenario: theMidnightMasks,
 };
 const campaignCtx = { cards: ctx.cards };

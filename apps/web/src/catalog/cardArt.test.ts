@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { ART_WINDOW, TILE } from '../map/mapLayout';
-import { LOCATION_ART, PORTRAIT_SCAN, artViewBox } from './cardArt';
+import {
+  ENEMY_AVATAR,
+  INVESTIGATOR_AVATAR,
+  LANDSCAPE_SCAN,
+  LOCATION_ART,
+  PORTRAIT_SCAN,
+  artViewBox,
+} from './cardArt';
 import { TILE_PER_SCAN } from './cardFace';
 
 describe('artViewBox', () => {
@@ -26,5 +33,19 @@ describe('TILE_PER_SCAN', () => {
   it('draws a card face measured on a scan at the size of a map tile', () => {
     expect(PORTRAIT_SCAN.width * TILE_PER_SCAN).toBe(TILE.width);
     expect(Math.round(PORTRAIT_SCAN.height * TILE_PER_SCAN)).toBe(TILE.height);
+  });
+});
+
+describe('avatars', () => {
+  it.each([
+    {
+      avatar: 'investigator',
+      area: INVESTIGATOR_AVATAR,
+      scan: LANDSCAPE_SCAN,
+      viewBox: '45 56 110 110',
+    },
+    { avatar: 'enemy', area: ENEMY_AVATAR, scan: PORTRAIT_SCAN, viewBox: '75 256 150 150' },
+  ])('cuts the $avatar avatar as a square of its scan: $viewBox', ({ area, scan, viewBox }) => {
+    expect(artViewBox(area, scan)).toBe(viewBox);
   });
 });
