@@ -1,0 +1,72 @@
+/*
+ * The resolution dialog (ResolutionDialog): the app's one dialog design (base.css), with the log
+ * page's group labels and each change written in pen, as it will appear in the log.
+ */
+#resolution > p {
+  margin-block: var(--space-2) 0;
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
+/*
+ * Plain text, not the home screen's framed `#app > main ul > li` cards and `#app > main section`
+ * rows: two ids beat their one.
+ */
+#app #resolution section {
+  display: block;
+  margin-block-start: var(--space-3);
+}
+
+#resolution h3 {
+  margin: 0 0 var(--space-1);
+  border-block-end: var(--border-width) solid var(--color-border);
+  font-family: var(--font-family-label);
+  font-size: var(--font-size-log-label);
+}
+
+#app #resolution ul {
+  display: block;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+#app #resolution li {
+  padding: var(--space-1) 0;
+  border: none;
+  border-radius: 0;
+  background: none;
+}
+
+#app #resolution section:not([aria-labelledby='resolution-atTheTable']) li {
+  color: var(--color-pen);
+  font-family: var(--font-family-hand);
+  font-size: var(--font-size-hand);
+}
+
+#resolution fieldset {
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+#resolution legend {
+  color: var(--color-text-muted);
+  font-family: var(--font-family);
+  font-size: var(--font-size-caption);
+}
+
+#resolution label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--touch-target);
+}
+
+#resolution [role='alert'] {
+  color: var(--color-danger);
+}
+
+#resolution footer {
+  margin-block-start: var(--space-4);
+}

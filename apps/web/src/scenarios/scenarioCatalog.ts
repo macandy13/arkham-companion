@@ -12,6 +12,7 @@ import type {
   CampaignDefinitionId,
   CardCode,
   CardDb,
+  ResolutionId,
   ScenarioDefinition,
   ScenarioId,
 } from '@arkham/engine';
@@ -83,6 +84,19 @@ export const campaignCatalog: readonly CampaignEntry[] = [
 /** The scenario with `id`, if the catalog has it. */
 export function findScenario(id: ScenarioId): ScenarioEntry | undefined {
   return scenarioCatalog.find((entry) => entry.id === id);
+}
+
+/** The campaign whose scenarios include `id`, if the catalog has one; none for a standalone scenario. */
+export function findCampaignOfScenario(id: ScenarioId): CampaignEntry | undefined {
+  return campaignCatalog.find((entry) => entry.definition.scenarios.includes(id));
+}
+
+/**
+ * The number the campaign guide gives resolution `id` ("R2" → "2"): ids are numbered like the
+ * guide's, so the screens write the number.
+ */
+export function resolutionNumber(id: ResolutionId): string {
+  return /\d+$/.exec(id)?.[0] ?? id;
 }
 
 /** The campaign with definition id `id`, if the catalog has it. */
