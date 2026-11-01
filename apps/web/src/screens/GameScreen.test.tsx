@@ -229,6 +229,39 @@ describe('GameScreen header', () => {
     expect(screen.queryByRole('dialog')).toBeNull();
   });
 
+  it("shows the agenda's doom in play on its page, and its steppers only while adjusting", async () => {
+    await renderTheGathering('game-screen-agenda-page-test');
+    fireEvent.click(button("What's Going On?!"));
+    const card = await screen.findByRole('dialog', { name: "What's Going On?!" });
+    const stepperBeforeAdjusting = within(card).queryByRole('region', { name: 'On the agenda' });
+
+    fireEvent.click(button('Adjust board'));
+    const onAgenda = await within(card).findByRole('region', { name: 'On the agenda' });
+    fireEvent.click(within(onAgenda).getByRole('button', { name: 'Add doom' }));
+
+    expect(stepperBeforeAdjusting).toBeNull();
+    expect(within(card).getByText('Agenda')).toBeTruthy();
+    expect(await within(card).findByText('1 of 3')).toBeTruthy();
+  });
+
+  it("offers the act's Advance as its full card's one primary, with the clues alder holds", async () => {
+    const store = await renderTheGathering('game-screen-act-page-test');
+    // Trapped needs 2 clues for one investigator.
+    const { actions } = store.getState();
+    await actions.nextPhase();
+    await actions.startTurn(investigatorId('alder'));
+    await actions.takeClue(study);
+
+    fireEvent.click(button('Trapped'));
+    const card = await screen.findByRole('dialog', { name: 'Trapped' });
+
+    expect(within(card).getByText('1 of 2')).toBeTruthy();
+    expect(within(card).queryByRole('region', { name: 'On the act' })).toBeNull();
+    const advance = within(card).getByRole('button', { name: 'Advance' });
+    expect(advance.hasAttribute('data-primary')).toBe(true);
+    expect((advance as HTMLButtonElement).disabled).toBe(true);
+  });
+
   it("opens the act on a tap on its card but not on its plate's Advance button", async () => {
     const store = await renderTheGathering('game-screen-act-tap-test');
     const { actions } = store.getState();
@@ -270,7 +303,7 @@ describe('GameScreen header', () => {
     { card: "What's Going On?!", code: '01105' },
     { card: 'Trapped', code: '01108' },
   ])(
-    "takes an action $card prints from its full card on alder's turn and closes it",
+    "takes an action $card prints from its full card on alder's turn, which stays open",
     async ({ card, code }) => {
       const printed = theGatheringCards.get(cardCode(code));
       if (!printed) throw new Error(`The Gathering has ${card}`);
@@ -296,7 +329,7 @@ describe('GameScreen header', () => {
           actions: 2,
         }),
       );
-      expect(screen.queryByRole('dialog')).toBeNull();
+      expect(screen.getByRole('dialog', { name: card })).toBeTruthy();
     },
   );
 
