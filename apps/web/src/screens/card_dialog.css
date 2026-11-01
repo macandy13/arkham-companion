@@ -194,7 +194,7 @@
 
 #board dialog[data-shell][data-lowered] > article > hgroup {
   min-height: 0;
-  margin-inline-start: 0;
+  margin: 0;
 }
 
 /*
@@ -351,9 +351,14 @@
     margin-inline-start: calc(var(--card-dialog-peek-width) + var(--space-2));
   }
 
+  /*
+   * A sideways card leaves too little room beside it for a title, so the title starts under it,
+   * past the part of the card that lies on the sheet.
+   */
   #board dialog[data-shell='above'] > article > hgroup {
-    min-height: var(--card-dialog-peek-landscape-title-height);
-    margin-inline-start: calc(var(--card-dialog-peek-landscape-width) + var(--space-2));
+    margin-block-start: calc(
+      var(--card-dialog-peek-landscape-width) * 5 / 7 - var(--card-dialog-peek-landscape)
+    );
   }
 
   #board dialog[data-shell='portrait'] > article > hgroup {

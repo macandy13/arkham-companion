@@ -400,14 +400,17 @@ export const appTexts = {
     victory: 'Sieg {{points}}.',
   },
   cluePayment: {
-    advanceTitle: 'Wer zahlt die Hinweise, um {{act}} vorzurücken?',
+    title: 'Wer zahlt die Hinweise?',
     total:
       '{{total}} von {{required}} Hinweisen gewählt: tippe einen Marker an, um ihn zu zahlen oder zu behalten',
     tokens: 'Hinweise von {{name}}',
     token: 'Hinweis {{number}} von {{name}}',
     splitEvenly: 'Gleichmäßig aufteilen',
     pay: 'Zahlen',
-    close: 'Schließen, ohne zu zahlen',
+    kicker_one: '{{card}} · {{count}} Hinweis als Gruppe',
+    kicker_other: '{{card}} · {{count}} Hinweise als Gruppe',
+    pays_one: 'zahlt {{pays}} von {{count}} Hinweis',
+    pays_other: 'zahlt {{pays}} von {{count}} Hinweisen',
   },
   cardActions: {
     title: 'Kartenaktionen',

@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
-import { afterEach, beforeAll, describe, expect, it } from 'vitest';
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import {
   blankLocation,
   instanceId,
@@ -94,12 +94,24 @@ describe('CardActions with a group clue cost', () => {
       />,
     );
     fireEvent.click(screen.getByRole('button', { name: 'Action · Study' }));
-    return screen.getByRole('dialog', { name: 'Action · Study' });
+    return screen.getByRole('dialog', { name: 'Who pays the clues?' });
   };
 
   /** Whether each of the clue tokens named `names` in `dialog` is pressed, in that order. */
   const pressed = (dialog: HTMLElement, names: string[]) =>
     names.map((name) => within(dialog).getByRole('button', { name }).ariaPressed);
+
+  it('asks for the 4 clues beside the Study, each payer a row with what they pay', () => {
+    const dialog = openStudyPayment(studyWithGroupCost(3, 3));
+
+    expect(within(dialog).getByRole('button', { name: 'Read Study' })).toBeTruthy();
+    expect(within(dialog).getByText('Study · 4 clues as a group')).toBeTruthy();
+    expect(
+      within(dialog)
+        .getAllByText(/^pays/)
+        .map((line) => line.textContent),
+    ).toEqual(['pays 3 of 3 clues', 'pays 1 of 3 clues']);
+  });
 
   it('starts at the engine’s split, alder’s 3 first, and keeps Pay off once a token is kept', () => {
     const dialog = openStudyPayment(studyWithGroupCost(3, 3));
@@ -150,11 +162,35 @@ describe('CardActions with a group clue cost', () => {
   it('takes nothing when the players close the dialog', () => {
     const table = studyWithGroupCost(3, 3);
     const dialog = openStudyPayment(table);
-    fireEvent.click(within(dialog).getByRole('button', { name: 'Close without paying' }));
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Close' }));
 
     expect(screen.queryByRole('dialog')).toBeNull();
     expect(table.board.investigator(alder).clues).toBe(3);
     expect(table.board.investigator(bea).clues).toBe(3);
+  });
+
+  it('closes on Escape without closing a dialog it was opened from', () => {
+    const table = studyWithGroupCost(3, 3);
+    const onDetailsCancel = vi.fn();
+    render(
+      <dialog open aria-label="Study details" onCancel={onDetailsCancel}>
+        <CardActions
+          board={table.board}
+          offered={cardActionsOn(table.board, study)}
+          actions={actionsOn(table)}
+          busy={false}
+        />
+      </dialog>,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Action · Study' }));
+
+    fireEvent(
+      screen.getByRole('dialog', { name: 'Who pays the clues?' }),
+      new Event('cancel', { bubbles: false, cancelable: true }),
+    );
+
+    expect(screen.queryByRole('dialog', { name: 'Who pays the clues?' })).toBeNull();
+    expect(onDetailsCancel).not.toHaveBeenCalled();
   });
 
   it('pays at once, with no dialog, when the 4 clues are all alder and bea hold', async () => {
