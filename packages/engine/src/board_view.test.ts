@@ -1295,6 +1295,34 @@ describe('decisions and attacks', () => {
     ]);
   });
 
+  it('fans the next two attacks of opportunity behind the first, the last one alone', () => {
+    const { context, state } = ghoulOnAlice
+      .withCard(instanceId('rat'), blankEnemy('rat'), engagedWith(alice))
+      .withCard(instanceId('cultist'), blankEnemy('cultist'), engagedWith(alice))
+      .withCard(instanceId('priest'), blankEnemy('priest'), engagedWith(alice))
+      .withTurnOf(alice)
+      .start();
+
+    const { decisions } = boardView(
+      context,
+      stateAfter(context, state, {
+        type: 'GainResources',
+        investigatorId: alice,
+        amount: 1,
+        asAction: true,
+      }),
+    );
+
+    expect(
+      decisions.map((decision) => [decision.about, decision.waiting?.map((card) => card.name)]),
+    ).toEqual([
+      ['ghoul', ['rat', 'cultist']],
+      ['rat', ['cultist', 'priest']],
+      ['cultist', ['priest']],
+      ['priest', undefined],
+    ]);
+  });
+
   it.each([
     {
       provoking: { type: 'MoveInvestigator', investigatorId: alice, to: hallway, asAction: true },

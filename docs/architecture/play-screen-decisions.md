@@ -17,6 +17,7 @@ The calculation marks the answer it works out and sends that one with its `margi
 
 - An option's counts (`DecisionView.counts`: the clues a passed investigation discovers, the damage a passed fight deals, an attack's damage and horror) show as steppers within their limits on the row of their answer, marked "from the game" (on a phone each label stands over its stepper), which carries them as `amount` and `amounts`.
 - `DecisionView.labels` gives the i18n key of each option whose name is not its own label (`does not provoke` is `decision.doesNotProvoke`).
+- When several enemies attack the same investigator (an action that provokes several attacks of opportunity), each attack is its own decision; the dialog fans the next two attackers behind the card of the one it asks about (`DecisionView.waiting`: the subjects of the pending decisions with the same prompt and decider after it).
 - An attack of opportunity also names the action that provoked it and waits for it (`DecisionView.provokedBy`, read from the held action in the queue: "Roland Banks takes a resource: Ghoul Priest attacks first"), so the players see why the enemy attacks.
 
 The game cannot go on without an answer, so:

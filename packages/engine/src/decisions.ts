@@ -342,6 +342,19 @@ function mayAnswer(state: GameState, decider: Decider, investigatorId: Investiga
   }
 }
 
+/** Whether two deciders are the same players: the same kind, and for one investigator the same one. */
+export function sameDecider(one: Decider, other: Decider): boolean {
+  switch (one.kind) {
+    case 'investigator':
+      return other.kind === 'investigator' && other.investigatorId === one.investigatorId;
+    case 'lead':
+    case 'group':
+      return other.kind === one.kind;
+    default:
+      return assertNever(one);
+  }
+}
+
 /** The yes/no options of a `confirm` decision: "yes" runs `onYes`, "no" does nothing. */
 export function confirmOptions(onYes: Command[], target?: InstanceId): DecisionOption[] {
   return [

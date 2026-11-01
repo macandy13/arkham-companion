@@ -282,6 +282,18 @@
    */
   --card-dialog-lowered-height: 7.5rem;
   /*
+   * The cards waiting behind a card dialog's card (`DecisionView.waiting`): each one further out
+   * is turned by the angle and shifted by the shift sideways and half as much up, to the left on
+   * a tablet and, by the smaller phone shift, to the right on a phone (card_dialog.css), where the
+   * card meets the screen's edge.
+   */
+  --card-dialog-fan-angle: 5deg;
+  --card-dialog-fan-shift: 1.25rem;
+  --card-dialog-fan-shift-phone: 0.625rem;
+  --card-dialog-fan-x: calc(-1 * var(--card-dialog-fan-shift));
+  --card-dialog-fan-y: calc(-0.5 * var(--card-dialog-fan-shift));
+  --card-dialog-fan-turn: calc(-1 * var(--card-dialog-fan-angle));
+  /*
    * The skill test block (MD.2b, test_calculation.css): the glyph of a skill toggle, a chaos token
    * drawn and its symbol, the narrow column of the skill value's terms (so three or more tokens
    * fit beside it), and the outcome's tight lines and spaced capitals.

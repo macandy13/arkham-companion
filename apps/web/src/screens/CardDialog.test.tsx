@@ -91,6 +91,35 @@ describe('CardDialog', () => {
     expect(screen.getByRole('dialog', { name: 'Ghoul Priest' })).toBeDefined();
   });
 
+  it('fans the cards waiting after its own behind it, next first', () => {
+    const [priest, rat, cultist] = PlayTable.start(
+      newGame()
+        .withLocation(study, blankLocation('study'), { revealed: true })
+        .withInvestigator(alder, { name: 'Alder', locationId: study })
+        .withCard(instanceId('ghoul_priest'), blankEnemy('Ghoul Priest'), engagedWith(alder))
+        .withCard(instanceId('rat'), blankEnemy('Swarm of Rats'), engagedWith(alder))
+        .withCard(instanceId('cultist'), blankEnemy('Acolyte'), engagedWith(alder)),
+    ).board.cardsIn({ kind: 'engaged', investigatorId: alder });
+    render(
+      <CardDialog
+        name="decision"
+        card={priest!}
+        waiting={[rat!, cultist!]}
+        title="Attack of opportunity"
+        onCancel={() => {}}
+      >
+        <p>The page</p>
+      </CardDialog>,
+    );
+
+    const waiting = screen.getByRole('list', { name: 'Waiting next' });
+    expect([...waiting.querySelectorAll('li')].map((card) => card.textContent)).toEqual([
+      'Swarm of Rats',
+      'Acolyte',
+    ]);
+    expect(screen.getByRole('button', { name: /Ghoul Priest/ })).toBeDefined();
+  });
+
   it("lowers out of the board's way and back with its grab handle", () => {
     render(
       <CardDialog name="decision" title="Attack of opportunity" onCancel={() => {}} lowerable>

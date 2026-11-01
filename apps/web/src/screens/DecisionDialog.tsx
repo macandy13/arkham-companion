@@ -55,6 +55,7 @@ export function DecisionDialog({
     <CardDialog
       name="decision"
       {...(decision.card ? { card: decision.card } : {})}
+      {...(decision.waiting ? { waiting: decision.waiting } : {})}
       {...(actor ? { actor, kicker: t('decision.decides', { name: actor.name }) } : {})}
       title={t(decision.prompt, { card: decision.about, defaultValue: decision.prompt })}
       onCancel={(event) => event.preventDefault()}

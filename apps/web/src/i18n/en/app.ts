@@ -399,6 +399,7 @@ export const appTexts = {
   cardDialog: {
     lower: 'Lower to reach the board',
     raise: 'Raise the dialog',
+    waiting: 'Waiting next',
   },
   cardZoom: {
     open: 'Read {{name}}',

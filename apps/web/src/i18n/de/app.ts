@@ -402,6 +402,7 @@ export const appTexts = {
   cardDialog: {
     lower: 'Absenken, um ans Spielfeld zu kommen',
     raise: 'Dialog wieder anheben',
+    waiting: 'Als Nächstes',
   },
   cardZoom: {
     open: '{{name}} lesen',
