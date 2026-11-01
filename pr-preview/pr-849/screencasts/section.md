@@ -1,6 +1,6 @@
 <!-- screencasts:start -->
 
-_Recorded from 4a6ade3 by the PR preview workflow; updated on every push that changes `apps/web`._
+_Recorded from e3a9260 by the PR preview workflow; updated on every push that changes `apps/web`._
 
 ## Screenshots
 
@@ -8,56 +8,71 @@ _Recorded from 4a6ade3 by the PR preview workflow; updated on every push that ch
 
 <table>
 <tr><th>Desktop</th><th>Phone</th></tr>
-<tr><td><img src="https://raw.githubusercontent.com/macandy13/arkham-companion/gh-pages/pr-preview/pr-849/screencasts/the-house-map-with-roland-banks-in-the-hallway-desktop.png?v=4a6ade3" alt="Desktop" width="560"></td><td><img src="https://raw.githubusercontent.com/macandy13/arkham-companion/gh-pages/pr-preview/pr-849/screencasts/the-house-map-with-roland-banks-in-the-hallway-phone.png?v=4a6ade3" alt="Phone" width="180"></td></tr>
-</table>
-
-### Roland Banks with four treacheries and the Ghoul Priest, scrolled on to the Ghoul Priest
-
-<table>
-<tr><th>Desktop</th><th>Phone</th></tr>
-<tr><td><img src="https://raw.githubusercontent.com/macandy13/arkham-companion/gh-pages/pr-preview/pr-849/screencasts/roland-banks-with-four-treacheries-and-the-ghoul-priest-scrolled-on-to-the-ghoul-priest-desktop.png?v=4a6ade3" alt="Desktop" width="560"></td><td><img src="https://raw.githubusercontent.com/macandy13/arkham-companion/gh-pages/pr-preview/pr-849/screencasts/roland-banks-with-four-treacheries-and-the-ghoul-priest-scrolled-on-to-the-ghoul-priest-phone.png?v=4a6ade3" alt="Phone" width="180"></td></tr>
+<tr><td><img src="https://raw.githubusercontent.com/macandy13/arkham-companion/gh-pages/pr-preview/pr-849/screencasts/the-house-map-with-roland-banks-in-the-hallway-desktop.png?v=e3a9260" alt="Desktop" width="560"></td><td><img src="https://raw.githubusercontent.com/macandy13/arkham-companion/gh-pages/pr-preview/pr-849/screencasts/the-house-map-with-roland-banks-in-the-hallway-phone.png?v=e3a9260" alt="Phone" width="180"></td></tr>
 </table>
 
 ### the house map by day
 
 <table>
 <tr><th>Desktop</th><th>Phone</th></tr>
-<tr><td><img src="https://raw.githubusercontent.com/macandy13/arkham-companion/gh-pages/pr-preview/pr-849/screencasts/the-house-map-by-day-desktop.png?v=4a6ade3" alt="Desktop" width="560"></td><td><img src="https://raw.githubusercontent.com/macandy13/arkham-companion/gh-pages/pr-preview/pr-849/screencasts/the-house-map-by-day-phone.png?v=4a6ade3" alt="Phone" width="180"></td></tr>
+<tr><td><img src="https://raw.githubusercontent.com/macandy13/arkham-companion/gh-pages/pr-preview/pr-849/screencasts/the-house-map-by-day-desktop.png?v=e3a9260" alt="Desktop" width="560"></td><td><img src="https://raw.githubusercontent.com/macandy13/arkham-companion/gh-pages/pr-preview/pr-849/screencasts/the-house-map-by-day-phone.png?v=e3a9260" alt="Phone" width="180"></td></tr>
 </table>
 
 ### the house map in the card pictures style, the clues left on each card
 
 <table>
 <tr><th>Desktop</th><th>Phone</th></tr>
-<tr><td><img src="https://raw.githubusercontent.com/macandy13/arkham-companion/gh-pages/pr-preview/pr-849/screencasts/the-house-map-in-the-card-pictures-style-the-clues-left-on-each-card-desktop.png?v=4a6ade3" alt="Desktop" width="560"></td><td><img src="https://raw.githubusercontent.com/macandy13/arkham-companion/gh-pages/pr-preview/pr-849/screencasts/the-house-map-in-the-card-pictures-style-the-clues-left-on-each-card-phone.png?v=4a6ade3" alt="Phone" width="180"></td></tr>
+<tr><td><img src="https://raw.githubusercontent.com/macandy13/arkham-companion/gh-pages/pr-preview/pr-849/screencasts/the-house-map-in-the-card-pictures-style-the-clues-left-on-each-card-desktop.png?v=e3a9260" alt="Desktop" width="560"></td><td><img src="https://raw.githubusercontent.com/macandy13/arkham-companion/gh-pages/pr-preview/pr-849/screencasts/the-house-map-in-the-card-pictures-style-the-clues-left-on-each-card-phone.png?v=e3a9260" alt="Phone" width="180"></td></tr>
 </table>
 
 ### the house map in the Eldritch card style
 
 <table>
 <tr><th>Desktop</th><th>Phone</th></tr>
-<tr><td><img src="https://raw.githubusercontent.com/macandy13/arkham-companion/gh-pages/pr-preview/pr-849/screencasts/the-house-map-in-the-eldritch-card-style-desktop.png?v=4a6ade3" alt="Desktop" width="560"></td><td><img src="https://raw.githubusercontent.com/macandy13/arkham-companion/gh-pages/pr-preview/pr-849/screencasts/the-house-map-in-the-eldritch-card-style-phone.png?v=4a6ade3" alt="Phone" width="180"></td></tr>
+<tr><td><img src="https://raw.githubusercontent.com/macandy13/arkham-companion/gh-pages/pr-preview/pr-849/screencasts/the-house-map-in-the-eldritch-card-style-desktop.png?v=e3a9260" alt="Desktop" width="560"></td><td><img src="https://raw.githubusercontent.com/macandy13/arkham-companion/gh-pages/pr-preview/pr-849/screencasts/the-house-map-in-the-eldritch-card-style-phone.png?v=e3a9260" alt="Phone" width="180"></td></tr>
 </table>
 
 ### the house map in the Night and brass card style
 
 <table>
 <tr><th>Desktop</th><th>Phone</th></tr>
-<tr><td><img src="https://raw.githubusercontent.com/macandy13/arkham-companion/gh-pages/pr-preview/pr-849/screencasts/the-house-map-in-the-night-and-brass-card-style-desktop.png?v=4a6ade3" alt="Desktop" width="560"></td><td><img src="https://raw.githubusercontent.com/macandy13/arkham-companion/gh-pages/pr-preview/pr-849/screencasts/the-house-map-in-the-night-and-brass-card-style-phone.png?v=4a6ade3" alt="Phone" width="180"></td></tr>
+<tr><td><img src="https://raw.githubusercontent.com/macandy13/arkham-companion/gh-pages/pr-preview/pr-849/screencasts/the-house-map-in-the-night-and-brass-card-style-desktop.png?v=e3a9260" alt="Desktop" width="560"></td><td><img src="https://raw.githubusercontent.com/macandy13/arkham-companion/gh-pages/pr-preview/pr-849/screencasts/the-house-map-in-the-night-and-brass-card-style-phone.png?v=e3a9260" alt="Phone" width="180"></td></tr>
 </table>
 
 ### Roland Banks’ combat boosted by 2, as an ally in play gives it
 
 <table>
 <tr><th>Desktop</th><th>Phone</th></tr>
-<tr><td><img src="https://raw.githubusercontent.com/macandy13/arkham-companion/gh-pages/pr-preview/pr-849/screencasts/roland-banks-combat-boosted-by-2-as-an-ally-in-play-gives-it-desktop.png?v=4a6ade3" alt="Desktop" width="560"></td><td><img src="https://raw.githubusercontent.com/macandy13/arkham-companion/gh-pages/pr-preview/pr-849/screencasts/roland-banks-combat-boosted-by-2-as-an-ally-in-play-gives-it-phone.png?v=4a6ade3" alt="Phone" width="180"></td></tr>
+<tr><td><img src="https://raw.githubusercontent.com/macandy13/arkham-companion/gh-pages/pr-preview/pr-849/screencasts/roland-banks-combat-boosted-by-2-as-an-ally-in-play-gives-it-desktop.png?v=e3a9260" alt="Desktop" width="560"></td><td><img src="https://raw.githubusercontent.com/macandy13/arkham-companion/gh-pages/pr-preview/pr-849/screencasts/roland-banks-combat-boosted-by-2-as-an-ally-in-play-gives-it-phone.png?v=e3a9260" alt="Phone" width="180"></td></tr>
 </table>
 
 ### Lita Chantler under Roland Banks’ card, in their control
 
 <table>
 <tr><th>Desktop</th><th>Phone</th></tr>
-<tr><td><img src="https://raw.githubusercontent.com/macandy13/arkham-companion/gh-pages/pr-preview/pr-849/screencasts/lita-chantler-under-roland-banks-card-in-their-control-desktop.png?v=4a6ade3" alt="Desktop" width="560"></td><td><img src="https://raw.githubusercontent.com/macandy13/arkham-companion/gh-pages/pr-preview/pr-849/screencasts/lita-chantler-under-roland-banks-card-in-their-control-phone.png?v=4a6ade3" alt="Phone" width="180"></td></tr>
+<tr><td><img src="https://raw.githubusercontent.com/macandy13/arkham-companion/gh-pages/pr-preview/pr-849/screencasts/lita-chantler-under-roland-banks-card-in-their-control-desktop.png?v=e3a9260" alt="Desktop" width="560"></td><td><img src="https://raw.githubusercontent.com/macandy13/arkham-companion/gh-pages/pr-preview/pr-849/screencasts/lita-chantler-under-roland-banks-card-in-their-control-phone.png?v=e3a9260" alt="Phone" width="180"></td></tr>
 </table>
+
+### Arkham in The Midnight Masks, Easttown, the Graveyard and Northside with their new symbols
+
+<table>
+<tr><th>Desktop</th><th>Phone</th></tr>
+<tr><td><img src="https://raw.githubusercontent.com/macandy13/arkham-companion/gh-pages/pr-preview/pr-849/screencasts/arkham-in-the-midnight-masks-easttown-the-graveyard-and-northside-with-their-new-symbols-desktop.png?v=e3a9260" alt="Desktop" width="560"></td><td><img src="https://raw.githubusercontent.com/macandy13/arkham-companion/gh-pages/pr-preview/pr-849/screencasts/arkham-in-the-midnight-masks-easttown-the-graveyard-and-northside-with-their-new-symbols-phone.png?v=e3a9260" alt="Phone" width="180"></td></tr>
+</table>
+
+### the Tangled Thicket revealed with its double slash, the other Arkham Woods still showing their square
+
+<table>
+<tr><th>Desktop</th><th>Phone</th></tr>
+<tr><td><img src="https://raw.githubusercontent.com/macandy13/arkham-companion/gh-pages/pr-preview/pr-849/screencasts/the-tangled-thicket-revealed-with-its-double-slash-the-other-arkham-woods-still-showing-their-square-desktop.png?v=e3a9260" alt="Desktop" width="560"></td><td><img src="https://raw.githubusercontent.com/macandy13/arkham-companion/gh-pages/pr-preview/pr-849/screencasts/the-tangled-thicket-revealed-with-its-double-slash-the-other-arkham-woods-still-showing-their-square-phone.png?v=e3a9260" alt="Phone" width="180"></td></tr>
+</table>
+
+## Screencasts
+
+### fight an enemy from the map
+
+![fight an enemy from the map](https://raw.githubusercontent.com/macandy13/arkham-companion/gh-pages/pr-preview/pr-849/screencasts/fight-an-enemy-from-the-map.gif?v=e3a9260)
+
+[Play with pause and speed controls](https://macandy13.github.io/arkham-companion/pr-preview/pr-849/screencasts/player.html?flow=fight-an-enemy-from-the-map&v=e3a9260&speed=0.25)
 
 <!-- screencasts:end -->
