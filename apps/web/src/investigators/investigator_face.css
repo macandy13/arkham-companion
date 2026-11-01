@@ -267,6 +267,127 @@
   right: 0;
 }
 
+/* The text on the notebook page, as printed: traits in bold italics, abilities, flavour in italics. */
+#investigators [data-card='investigator'] > [data-page] {
+  position: absolute;
+  left: calc(var(--investigator-page-left) * var(--scan-unit));
+  top: calc(var(--investigator-page-top) * var(--scan-unit));
+  width: calc(var(--investigator-page-width) * var(--scan-unit));
+  max-height: calc(var(--investigator-page-height) * var(--scan-unit));
+  display: flex;
+  flex-direction: column;
+  gap: calc(3 * var(--scan-unit));
+  overflow: hidden;
+  font-size: calc(var(--investigator-text-size) * var(--scan-unit));
+  line-height: 1.12;
+}
+
+#investigators [data-card='investigator'] > [data-page][data-length='long'] {
+  font-size: calc(var(--investigator-long-text-size) * var(--scan-unit));
+}
+
+#investigators [data-card='investigator'] > [data-page][data-length='longest'] {
+  font-size: calc(var(--investigator-longest-text-size) * var(--scan-unit));
+}
+
+#investigators [data-card='investigator'] > [data-page] :is(p, blockquote) {
+  margin: 0;
+}
+
+#investigators [data-card='investigator'] > [data-page] > [data-traits] {
+  font-size: calc(var(--investigator-traits-size) * var(--scan-unit));
+  font-style: italic;
+  font-weight: bold;
+  text-align: center;
+}
+
+#investigators [data-card='investigator'] > [data-page] em {
+  font-weight: bold;
+}
+
+#investigators [data-card='investigator'] > [data-page] > blockquote {
+  margin-block-start: calc(4 * var(--scan-unit));
+  font-style: italic;
+  text-align: center;
+}
+
+/* The game's symbols in the text, in the ink's colour at the text's height. */
+#investigators [data-card='investigator'] > [data-page] span[data-symbol] {
+  display: inline-block;
+  width: 1.1em;
+  height: 1.1em;
+  vertical-align: text-bottom;
+  background: currentcolor;
+  mask: var(--symbol) center / contain no-repeat;
+}
+
+#investigators [data-page] [data-symbol='reaction'] {
+  --symbol: url('../symbols/reaction.svg');
+}
+
+#investigators [data-page] [data-symbol='elder_sign'] {
+  --symbol: url('../symbols/elder_sign.svg');
+}
+
+#investigators [data-page] [data-symbol='action'] {
+  --symbol: url('../symbols/action.svg');
+}
+
+#investigators [data-page] [data-symbol='free'] {
+  --symbol: url('../symbols/free.svg');
+}
+
+#investigators [data-page] [data-symbol='skull'] {
+  --symbol: url('../symbols/skull.svg');
+}
+
+#investigators [data-page] [data-symbol='auto_fail'] {
+  --symbol: url('../symbols/auto_fail.svg');
+}
+
+#investigators [data-page] [data-symbol='bless'] {
+  --symbol: url('../symbols/bless.svg');
+}
+
+#investigators [data-page] [data-symbol='curse'] {
+  --symbol: url('../symbols/curse.svg');
+}
+
+#investigators [data-page] [data-symbol='wild'] {
+  --symbol: url('../symbols/wild.svg');
+}
+
+#investigators [data-page] [data-symbol='per_investigator'] {
+  --symbol: url('../symbols/per_investigator.svg');
+}
+
+#investigators
+  [data-page]
+  :is(
+    [data-symbol='willpower'],
+    [data-symbol='intellect'],
+    [data-symbol='combat'],
+    [data-symbol='agility']
+  ) {
+  --symbol: var(--skill-icon);
+}
+
+#investigators [data-page] [data-symbol='willpower'] {
+  --skill-icon: url('../symbols/willpower.svg');
+}
+
+#investigators [data-page] [data-symbol='intellect'] {
+  --skill-icon: url('../symbols/intellect.svg');
+}
+
+#investigators [data-page] [data-symbol='combat'] {
+  --skill-icon: url('../symbols/combat.svg');
+}
+
+#investigators [data-page] [data-symbol='agility'] {
+  --skill-icon: url('../symbols/agility.svg');
+}
+
 /*
  * The counters at the page's foot, as the printed card has its heart and brain there, with the
  * clue token and the resource coin either side. Each sits on its centre; its name stays for
