@@ -1,6 +1,7 @@
 import { expect, test } from '../fixtures/test';
 import {
   cluesToShareExport,
+  graveyardTestExport,
   rolandSurroundedExport,
   rolandThreatenedExport,
   houseOpenedExport,
@@ -172,43 +173,39 @@ test('Roland Banks’ combat boosted by 2, as an ally in play gives it', async (
   await expect(roland.getByRole('button', { name: 'Combat 6, boosted +2' })).toBeVisible();
 });
 
-test(
-  'Roland Banks’ willpower test before a token is drawn, the draw button in its place',
-  { tag: '@shot' },
-  async ({ page }) => {
-    await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
+test('Roland Banks’ willpower test before a token is drawn, the draw button in its place', async ({
+  page,
+}) => {
+  await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
 
-    await page
-      .getByRole('region', { name: 'Roland Banks' })
-      .getByRole('button', { name: /^Willpower/ })
-      .click();
-    const test = page.getByRole('dialog', { name: /^Skill test/ });
+  await page
+    .getByRole('region', { name: 'Roland Banks' })
+    .getByRole('button', { name: /^Willpower/ })
+    .click();
+  const test = page.getByRole('dialog', { name: /^Skill test/ });
 
-    await expect(test.getByRole('button', { name: 'Draw a token' })).toBeVisible();
-  },
-);
+  await expect(test.getByRole('button', { name: 'Draw a token' })).toBeVisible();
+});
 
-test(
-  'Roland Banks’ willpower and agility test, the tablet drawn with its −2 under it',
-  { tag: '@shot' },
-  async ({ page }) => {
-    // The Gathering's Standard bag lists 16 tokens, the tablet 14th: the draw picks it.
-    await page.addInitScript(() => {
-      Math.random = () => 13.5 / 16;
-    });
-    await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
+test('Roland Banks’ willpower and agility test, the tablet drawn with its −2 under it', async ({
+  page,
+}) => {
+  // The Gathering's Standard bag lists 16 tokens, the tablet 14th: the draw picks it.
+  await page.addInitScript(() => {
+    Math.random = () => 13.5 / 16;
+  });
+  await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
 
-    await page
-      .getByRole('region', { name: 'Roland Banks' })
-      .getByRole('button', { name: /^Willpower/ })
-      .click();
-    const test = page.getByRole('dialog', { name: /^Skill test/ });
-    await test.getByRole('button', { name: /^Agility/ }).click();
-    await test.getByRole('button', { name: 'Draw a token' }).click();
+  await page
+    .getByRole('region', { name: 'Roland Banks' })
+    .getByRole('button', { name: /^Willpower/ })
+    .click();
+  const test = page.getByRole('dialog', { name: /^Skill test/ });
+  await test.getByRole('button', { name: /^Agility/ }).click();
+  await test.getByRole('button', { name: 'Draw a token' }).click();
 
-    await expect(test.getByRole('list', { name: 'Tokens drawn' })).toHaveText('Tablet −2');
-  },
-);
+  await expect(test.getByRole('list', { name: 'Tokens drawn' })).toHaveText('Tablet −2');
+});
 
 test('the decision dialog asking for the result of an investigation, a token drawn', async ({
   page,
@@ -479,3 +476,17 @@ test('who pays the 4 clues to advance Trapped, Daisy Walker 3 and Roland Banks 1
   await expect(dialog.getByText(/^4 of 4 clues chosen/)).toBeVisible();
   await expect(dialog.getByRole('button', { name: 'Pay', exact: true })).toBeEnabled();
 });
+
+test(
+  'the Graveyard’s failed willpower test, its choice under the Failed row',
+  { tag: '@shot' },
+  async ({ page }) => {
+    await resumeImportedGame(page, 'In the Graveyard', graveyardTestExport('In the Graveyard'));
+    const decision = page.getByRole('dialog').filter({ hasText: 'Willpower test (3)' });
+
+    await decision.getByRole('button', { name: 'Failed' }).click();
+
+    await expect(decision.getByRole('button', { name: 'Take 2 horror' })).toBeVisible();
+    await expect(decision.getByRole('button', { name: 'Move to Rivertown' })).toBeVisible();
+  },
+);
