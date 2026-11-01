@@ -91,6 +91,22 @@ describe('CardDialog', () => {
     expect(screen.getByRole('dialog', { name: 'Ghoul Priest' })).toBeDefined();
   });
 
+  it("lowers out of the board's way and back with its grab handle", () => {
+    render(
+      <CardDialog name="decision" title="Attack of opportunity" onCancel={() => {}} lowerable>
+        <p>The page</p>
+      </CardDialog>,
+    );
+    const dialog = screen.getByRole('dialog');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Lower to reach the board' }));
+    expect(dialog.dataset['lowered']).toBe('true');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Raise the dialog' }));
+    expect(dialog.dataset['lowered']).toBeUndefined();
+    expect(dialog.hasAttribute('open')).toBe(true);
+  });
+
   it('passes Escape on to the caller, which may refuse it', () => {
     const onCancel = vi.fn((event: { preventDefault: () => void }) => event.preventDefault());
     render(

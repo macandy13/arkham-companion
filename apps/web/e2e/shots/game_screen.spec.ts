@@ -223,6 +223,19 @@ test(
 );
 
 test(
+  'the investigation decision lowered to reach the board',
+  { tag: '@shot' },
+  async ({ page }) => {
+    await resumeImportedGame(page, 'Investigating', investigationOpenExport('Investigating'));
+    const decision = page.getByRole('dialog', { name: 'Investigate Hallway' });
+
+    await decision.getByRole('button', { name: 'Lower to reach the board' }).click();
+
+    await expect(decision.getByRole('button', { name: 'Raise the dialog' })).toBeVisible();
+  },
+);
+
+test(
   "Roland Banks' fight against the Ghoul Priest, the damage raised to 2",
   { tag: '@shot' },
   async ({ page }) => {

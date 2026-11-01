@@ -86,6 +86,63 @@
   padding-block-start: calc(var(--card-dialog-overlap) + var(--space-4));
 }
 
+/*
+ * The grab handle of a dialog that can be lowered: a short bar at the top of the page, a whole
+ * touch target tall, which lowers the dialog to a strip along the bottom of the screen and raises
+ * it again. Lowered, the dialog is no modal (CardDialog), so the board takes taps; only the page's
+ * handle and title show, without its card.
+ */
+#board dialog[data-shell] > article > button[data-part='grab'] {
+  align-self: center;
+  flex: none;
+  width: var(--touch-target);
+  min-height: var(--touch-target);
+  margin-block-start: calc(-1 * var(--space-3));
+  padding: 0;
+  border: none;
+  background: none;
+}
+
+#board dialog[data-shell] > article > button[data-part='grab']::before {
+  content: '';
+  display: block;
+  width: var(--card-dialog-grab-width);
+  height: var(--card-dialog-grab-height);
+  margin: auto;
+  border-radius: var(--radius-pill);
+  background: var(--color-paper-rim);
+}
+
+#board dialog[data-shell][data-lowered][open] {
+  position: fixed;
+  inset: auto 0 0;
+  z-index: var(--layer-lowered-dialog);
+  margin: 0 auto;
+}
+
+#board dialog[data-shell][data-lowered] > :is(button[data-part='subject'], picture) {
+  display: none;
+}
+
+#board dialog[data-shell][data-lowered] > article {
+  max-height: var(--card-dialog-lowered-height);
+  padding-block-start: var(--space-3);
+  padding-inline: var(--space-4);
+  overflow: hidden;
+  border-block-end: none;
+  border-radius: var(--card-dialog-sheet-radius) var(--card-dialog-sheet-radius) 0 0;
+}
+
+/* Lowered, the page shows only what it asks; the rest waits until it is raised again. */
+#board dialog[data-shell][data-lowered] > article > :not(button[data-part='grab'], hgroup) {
+  display: none;
+}
+
+#board dialog[data-shell][data-lowered] > article > hgroup {
+  min-height: 0;
+  margin-inline-start: 0;
+}
+
 /* The investigator who acts, round over the page or small before the kicker's words. */
 #board dialog[data-shell] picture {
   position: relative;
@@ -144,7 +201,8 @@
     border-radius: var(--card-dialog-sheet-radius) var(--card-dialog-sheet-radius) 0 0;
   }
 
-  #board dialog[data-shell] > article::before {
+  /* A sheet that cannot be lowered still shows the handle, as a sheet does. */
+  #board dialog[data-shell] > article:not(:has(> button[data-part='grab']))::before {
     content: '';
     align-self: center;
     flex: none;

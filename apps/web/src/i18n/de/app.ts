@@ -399,6 +399,10 @@ export const appTexts = {
   cardActions: {
     title: 'Kartenaktionen',
   },
+  cardDialog: {
+    lower: 'Absenken, um ans Spielfeld zu kommen',
+    raise: 'Dialog wieder anheben',
+  },
   cardZoom: {
     open: '{{name}} lesen',
     close: 'Schließen',
