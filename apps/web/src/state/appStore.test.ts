@@ -1,6 +1,7 @@
 import 'fake-indexeddb/auto';
 import { describe, expect, it } from 'vitest';
 import {
+  CampaignCommandRejected,
   campaignId,
   cardCode,
   cardStats,
@@ -139,6 +140,11 @@ describe('appStore', () => {
       seed: 3,
       investigators: [{ id: investigatorId('alder'), code: alder.code }],
     };
+    const campaignStart = {
+      ...start,
+      definition: nightOfTheZealot,
+      campaignTitle: 'Night of the Zealot',
+    };
 
     describe('startScenario', () => {
       it('stores the setup events as a new game and opens it', async () => {
@@ -168,12 +174,6 @@ describe('appStore', () => {
     });
 
     describe('startCampaign', () => {
-      const campaignStart = {
-        ...start,
-        definition: nightOfTheZealot,
-        campaignTitle: 'Night of the Zealot',
-      };
-
       it("stores the campaign log and its first scenario as the campaign's game", async () => {
         const db = new IndexedDbStore('appstore-campaign-test');
         const store = createAppStore(db);
@@ -211,12 +211,6 @@ describe('appStore', () => {
     });
 
     describe('openCampaign', () => {
-      const campaignStart = {
-        ...start,
-        definition: nightOfTheZealot,
-        campaignTitle: 'Night of the Zealot',
-      };
-
       it('loads the campaign log with the games of that campaign only', async () => {
         const db = new IndexedDbStore('appstore-open-campaign-test');
         const store = createAppStore(db);
@@ -244,11 +238,6 @@ describe('appStore', () => {
     });
 
     describe('resolution', () => {
-      const campaignStart = {
-        ...start,
-        definition: nightOfTheZealot,
-        campaignTitle: 'Night of the Zealot',
-      };
       const alderId = investigatorId('alder');
       const houseStillStanding = { kind: 'flag', value: true } as const;
 
@@ -299,6 +288,17 @@ describe('appStore', () => {
         expect(store.getState().current?.resolution).toBeUndefined();
       });
 
+      it('proposes the resolution again when the ended game is reopened before it is written', async () => {
+        const store = createAppStore(new IndexedDbStore('appstore-resolution-reopen-test'));
+        const gameId = await store.getState().startCampaign(campaignStart);
+        await store.getState().actions.adjust(alderId, 'horror', alder.sanity);
+        const proposed = store.getState().current?.resolution;
+
+        await store.getState().openGame(gameId);
+
+        expect(store.getState().current?.resolution).toEqual(proposed);
+      });
+
       it('writes nothing and keeps the proposal when the log refuses a change', async () => {
         const db = new IndexedDbStore('appstore-resolution-refused-test');
         const store = createAppStore(db);
@@ -309,7 +309,7 @@ describe('appStore', () => {
 
         await expect(
           store.getState().writeResolution([{ type: 'AwardXp', code: stranger, amount: 2 }]),
-        ).rejects.toThrow();
+        ).rejects.toBeInstanceOf(CampaignCommandRejected);
 
         expect((await db.loadCampaign(campaignId))?.log.playedScenarios).toEqual([]);
         expect(store.getState().current?.resolution).toBeDefined();
@@ -324,7 +324,9 @@ describe('appStore', () => {
         const resolution = store.getState().current?.resolution;
         expect(resolution?.campaignId).toBeUndefined();
         expect(resolution?.changes.length).toBeGreaterThan(0);
-        await expect(store.getState().writeResolution([])).rejects.toThrow();
+        await expect(store.getState().writeResolution([])).rejects.toThrow(
+          'No resolution to write',
+        );
       });
     });
 

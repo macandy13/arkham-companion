@@ -445,7 +445,7 @@ export function createAppStore(
         set({ campaign: { campaignId, title: loaded.summary.title, log: loaded.log, games } });
       },
       writeResolution(confirmed) {
-        return enqueue(async () => {
+        return queueStep(async () => {
           const played = session;
           const campaignId = get().current?.resolution?.campaignId;
           if (!played || campaignId === undefined) throw new Error('No resolution to write');
