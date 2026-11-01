@@ -502,6 +502,13 @@ describe('gameOutcome', () => {
       id: 'R3',
     });
   });
+
+  it('is "no resolution" once every investigator has resigned', () => {
+    const { context, state } = table.withTurnOf(alice).start();
+    const ended = stateAfter(context, state, resign(alice), startTurn(bob), resign(bob));
+
+    expect(campaign.gameOutcome(ended)).toEqual({ kind: 'noResolution' });
+  });
 });
 
 describe('proposeResolution with steps that read the game', () => {

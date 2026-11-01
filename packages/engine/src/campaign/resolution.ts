@@ -202,7 +202,8 @@ function withoutChangesForEliminated(
  * Writes a confirmed resolution to the campaign log in one step: the
  * commands the players confirmed (`proposeResolution`, edited as they
  * like), then `AdvanceScenario` with `outcome`, the resolution they read (the
- * game's own unless they picked another). Either every command
+ * game's own unless they picked another; it must be one the scenario defines,
+ * since the log records it as given). Either every command
  * applies or the first rejection is thrown and the log stays as it was. Also
  * rejects a game that is still running (`scenarioNotEnded`) or that belongs
  * to another scenario than the campaign's current one (`notCurrentScenario`).
