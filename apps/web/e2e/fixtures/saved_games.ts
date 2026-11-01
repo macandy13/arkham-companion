@@ -16,8 +16,11 @@ import {
   type Zone,
 } from '@arkham/engine';
 import {
+  DEVOURER_BELOW_CODES,
   GATHERING_CODES,
   MIDNIGHT_MASKS_CODES,
+  theDevourerBelow,
+  theDevourerBelowCards,
   theGathering,
   theGatheringCards,
   theGatheringHouse,
@@ -388,6 +391,43 @@ export function graveyardTestExport(title: string): Buffer {
   table.startTurn(rolandId);
   table.moveTo(rolandId, cardIn(table, MIDNIGHT_MASKS_CODES.graveyard));
   return exportOf(title, table, 'graveyard_test');
+}
+
+/**
+ * An export file of a solo game of The Midnight Masks titled `title`, started from the catalog's
+ * card data and left at the start of the investigation phase, Roland Banks in Rivertown: the map
+ * shows every location of Arkham with its connection symbol.
+ */
+export function midnightMasksStartedExport(title: string): Buffer {
+  const table = PlayTable.setUp(
+    {
+      cards: cardDbWith(theMidnightMasksCards, [investigatorCardStats(roland)]),
+      scenario: theMidnightMasks,
+    },
+    { investigators: [{ id: rolandId, code: roland.code }], seed: 3 },
+  );
+  table.nextPhase();
+  return exportOf(title, table, 'midnight_masks_started');
+}
+
+/**
+ * An export file of a solo game of The Devourer Below titled `title`, started from the catalog's
+ * card data: on Roland Banks' first turn they move from the Main Path into the Arkham Woods
+ * (Tangled Thicket), one of the four woods seed 3 sets out, which reveals it, so its double slash
+ * shows while the other three still show the square of their unrevealed side.
+ */
+export function tangledThicketRevealedExport(title: string): Buffer {
+  const table = PlayTable.setUp(
+    {
+      cards: cardDbWith(theDevourerBelowCards, [investigatorCardStats(roland)]),
+      scenario: theDevourerBelow,
+    },
+    { investigators: [{ id: rolandId, code: roland.code }], seed: 3 },
+  );
+  table.nextPhase();
+  table.startTurn(rolandId);
+  table.moveTo(rolandId, cardIn(table, DEVOURER_BELOW_CODES.arkhamWoodsTangledThicket));
+  return exportOf(title, table, 'tangled_thicket_revealed');
 }
 
 function cardIn(table: PlayTable, code: CardCode): InstanceId {

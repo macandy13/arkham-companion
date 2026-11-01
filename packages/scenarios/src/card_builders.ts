@@ -125,6 +125,8 @@ export interface LocationOptions {
   actions?: readonly CardAction[];
   /** The connection symbol in its upper left corner; left out where nobody has entered it yet. */
   symbol?: LocationSymbol;
+  /** The symbol its unrevealed side prints, where that differs from `symbol`. */
+  unrevealedSymbol?: LocationSymbol;
   /** Its "cannot" abilities (the Parlor's barrier on its unrevealed side). */
   restrictions?: readonly CardRestriction[];
 }
@@ -141,6 +143,7 @@ export function location({
   abilities,
   actions,
   symbol,
+  unrevealedSymbol,
   restrictions,
 }: LocationOptions): CardStats {
   return {
@@ -153,6 +156,7 @@ export function location({
     ...(abilities === undefined ? {} : { abilities }),
     ...(actions === undefined ? {} : { actions }),
     ...(symbol === undefined ? {} : { symbol }),
+    ...(unrevealedSymbol === undefined ? {} : { unrevealedSymbol }),
     ...(restrictions === undefined ? {} : { restrictions }),
   };
 }
