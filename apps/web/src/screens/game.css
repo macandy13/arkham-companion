@@ -555,9 +555,10 @@
 
 /*
  * The agenda's or act's full card (BookDetails) on the card shell: the same face as in the header
- * fills the shell's card over the page, in place of the header's height.
+ * fills the shell's card over the page, in place of the header's height, also while the shell
+ * hosts a decision in its place.
  */
-#board > header dialog[data-dialog='book'] > figure > button[data-part='subject'] > [data-card] {
+#board > header dialog[data-shell] > figure > button[data-part='subject'] > [data-card] {
   width: 100%;
   height: 100%;
 }

@@ -231,13 +231,15 @@ describe('GameScreen header', () => {
 
   it("shows the agenda's doom in play on its page, and its steppers only while adjusting", async () => {
     await renderTheGathering('game-screen-agenda-page-test');
-    fireEvent.click(button('Adjust board'));
-
     fireEvent.click(button("What's Going On?!"));
     const card = await screen.findByRole('dialog', { name: "What's Going On?!" });
-    const onAgenda = within(card).getByRole('region', { name: 'On the agenda' });
+    const stepperBeforeAdjusting = within(card).queryByRole('region', { name: 'On the agenda' });
+
+    fireEvent.click(button('Adjust board'));
+    const onAgenda = await within(card).findByRole('region', { name: 'On the agenda' });
     fireEvent.click(within(onAgenda).getByRole('button', { name: 'Add doom' }));
 
+    expect(stepperBeforeAdjusting).toBeNull();
     expect(within(card).getByText('Agenda')).toBeTruthy();
     expect(await within(card).findByText('1 of 3')).toBeTruthy();
   });

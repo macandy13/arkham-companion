@@ -33,7 +33,7 @@ import type { HeaderCardKind } from './useDetailView';
  * step is queued (`OpenGame.busy`), since a second tap would act on whatever the first one leaves
  * open; the agenda's and act's steppers show only while the players adjust the board
  * (`OpenGame.adjusting`). The round, the phase and the buttons that run the game sit in the status
- * row below (`GameStatus`). A tap on the agenda or act opens it as a full card (`CardDetails`).
+ * row below (`GameStatus`). A tap on the agenda or act opens it on the card shell (`BookDetails`).
  * `board` is the open game's `OpenGame.board`. On a phone's compact view a tap on any of the four
  * cards calls `onOpenCard` instead (the detail view opens on it), so the card's own buttons and
  * dialogs wait for the detail view. There the cards show `full`: the agenda and act are already
