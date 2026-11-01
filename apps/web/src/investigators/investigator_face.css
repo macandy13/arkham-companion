@@ -55,13 +55,20 @@
   --shield-colour: var(--color-class-survivor);
 }
 
-/* The class icon and the skills' icons: the game's symbols, pale paper on their colour. */
+/*
+ * The class icon and the skills' icons: the game's symbols, the class icon pale paper on the
+ * shield's colour, the skills' icons in the face's ink like the skill test's toggles.
+ */
 #investigators svg[data-face='investigator'] :is([data-class-icon], [data-skill-icon]) {
   display: block;
   width: 100%;
   height: 100%;
   background: var(--color-skill-symbol);
   mask: var(--symbol) center / contain no-repeat;
+}
+
+#investigators svg[data-face='investigator'] [data-skill-icon] {
+  background: var(--color-face-ink);
 }
 
 #investigators [data-class-icon='guardian'] {
@@ -118,12 +125,6 @@
 
 #investigators svg[data-face='investigator'] [data-part='ring'] circle {
   stroke-width: var(--face-ring-width);
-}
-
-#investigators svg[data-face='investigator'] [data-part='diamond'] {
-  fill: var(--skill-colour);
-  stroke: var(--color-skill-symbol);
-  stroke-width: var(--face-rule-width);
 }
 
 /* The notebook page: its shadow, the paper shaded downwards, faint rules and the binding spiral. */
@@ -198,7 +199,7 @@
 
 /*
  * The skills on the chain: each value is a button over its link, the number on the plate left of
- * the diamond, a lasting boost in a small dark badge on the plate's upper right. Two ids' worth,
+ * the skill's icon, a lasting boost in a small dark badge on the plate's upper right. Two ids' worth,
  * so they beat the home screen's padded `#app > main ul > li` cards.
  */
 #investigators [data-card='investigator'] > ul {
@@ -226,6 +227,7 @@
   display: grid;
   grid-template-columns: calc(var(--investigator-skill-value-width) * var(--scan-unit));
   align-items: center;
+  justify-content: start;
   justify-items: center;
   width: calc(var(--investigator-skill-width) * var(--scan-unit));
   height: calc(var(--investigator-skill-height) * var(--scan-unit));
