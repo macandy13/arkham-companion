@@ -147,7 +147,8 @@ dialog[data-shell] > article {
 /*
  * Buttons on the paper (MD.1b). A footer's buttons stand in one row at its end as outlined pills;
  * the button that submits the form is the view's one primary, a brass pill, and in a question
- * before something is removed (`alertdialog`) a red one.
+ * before something is removed (`alertdialog`) a red one. A view's central action that submits
+ * nothing (the skill test's draw) is marked `data-primary` and takes the same brass pill.
  */
 :where(#app > main:not(:has(#board)), dialog) footer:has(> button[type='submit']) {
   display: flex;
@@ -156,13 +157,14 @@ dialog[data-shell] > article {
   gap: var(--space-2);
 }
 
-:where(#app > main:not(:has(#board)), dialog) :is(footer > button, button[type='submit']) {
+:where(#app > main:not(:has(#board)), dialog)
+  :is(footer > button, button[type='submit'], button[data-primary]) {
   padding-inline: var(--space-4);
   border-radius: var(--radius-pill);
   background: none;
 }
 
-:where(#app > main:not(:has(#board)), dialog) button[type='submit'] {
+:where(#app > main:not(:has(#board)), dialog) :is(button[type='submit'], button[data-primary]) {
   border-color: var(--color-brass-deep);
   background: var(--brass-button);
   color: var(--color-ink);
@@ -176,7 +178,8 @@ dialog[role='alertdialog'] button[type='submit'] {
   color: var(--color-paper);
 }
 
-:where(#app > main:not(:has(#board)), dialog) button[type='submit']:disabled {
+:where(#app > main:not(:has(#board)), dialog)
+  :is(button[type='submit'], button[data-primary]):disabled {
   opacity: var(--disabled-opacity);
 }
 

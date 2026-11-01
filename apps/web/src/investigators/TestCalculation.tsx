@@ -233,7 +233,7 @@ export function ResultStrip({
           </ol>
         )}
         {revealed.length === 0 && onDraw && (
-          <button type="button" onClick={onDraw}>
+          <button type="button" data-primary onClick={onDraw}>
             {t('skillTest.draw')}
           </button>
         )}

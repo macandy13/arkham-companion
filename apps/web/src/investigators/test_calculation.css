@@ -150,15 +150,6 @@
   font-variant-numeric: lining-nums tabular-nums;
 }
 
-/* The draw button as large as a token, a dashed ring like the empty place on the table. */
-#board dialog[data-shell] section[data-part='strip'] > figure > button {
-  min-height: var(--test-token-size);
-  padding-inline: var(--space-3);
-  border-style: dashed;
-  border-radius: var(--radius-round);
-  font-size: var(--font-size-note);
-}
-
 #board dialog[data-shell] section[data-part='strip'] > figure > figcaption {
   flex-basis: 100%;
   color: var(--color-text-muted);
@@ -301,7 +292,11 @@
  */
 #board
   dialog[data-shell]
-  :is(section[data-part='stepper'] > button, article > button:not([data-icon])) {
+  :is(
+    section[data-part='stepper'] > button,
+    section[data-part='strip'] > figure > button,
+    article > button:not([data-icon])
+  ) {
   min-width: var(--touch-target);
   min-height: var(--touch-target);
   font-size: var(--font-size-body);
