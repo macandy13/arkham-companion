@@ -609,6 +609,13 @@ export const appTexts = {
     tokenCount_other: '{{token}} ×{{count}}',
   },
   resolution: {
+    written: {
+      label: 'Ins Protokoll geschrieben',
+      text: 'Die Auflösung steht im Kampagnenprotokoll.',
+      undo: 'Rückgängig',
+      dismiss: 'OK',
+      undoFailed: 'Die Auflösung ließ sich nicht aus dem Protokoll zurücknehmen.',
+    },
     over: 'Das Szenario ist vorbei',
     pickResolution:
       'Bestätigt die Auflösung oder wählt eine andere, wenn ihr das Ende anders gespielt habt.',

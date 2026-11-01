@@ -181,6 +181,12 @@ export interface AppState {
   current?: OpenGame;
   /** Open campaign, if any; `null` once `openCampaign` found no such campaign. */
   campaign?: OpenCampaign | null;
+  /**
+   * The resolution `writeResolution` wrote last, which the campaign screen offers to take back
+   * (`undoResolution`) until the players dismiss it. `seq` is the campaign log's last event after
+   * the write, so an undo never takes back a later change instead.
+   */
+  writtenResolution?: { readonly campaignId: CampaignId; readonly seq: number };
   /** Reloads the game and campaign lists from the `GameStore`. */
   refresh(): Promise<void>;
   /** Creates an empty game, reloads the list and opens it. */
@@ -209,6 +215,14 @@ export interface AppState {
    * rejects for a game without a pending resolution of a campaign.
    */
   writeResolution(outcome: ScenarioOutcome, confirmed: readonly CampaignCommand[]): Promise<void>;
+  /**
+   * Takes `writtenResolution` back out of its campaign log (`GameStore.undoLastCampaign`), so its
+   * game proposes the resolution again. Rejects with `SeqConflictError` and changes nothing if the
+   * log has changed since.
+   */
+  undoResolution(): Promise<void>;
+  /** Forgets `writtenResolution` once the players have read that it is in the log. */
+  dismissWrittenResolution(): void;
   /**
    * What the play screen can do to the open game (`GameActions`). Each action is stored before
    * the new state shows; a refused one stores nothing and sets `current.rejection`. Actions run
@@ -312,6 +326,8 @@ export function createAppStore(
     // The campaign log of `current`'s game as stored, absent for a standalone one: each step
     // that ends the game proposes its resolution against it.
     let campaignLog: CampaignLog | undefined;
+    // The campaign `current`'s game belongs to, if any.
+    let currentCampaignId: CampaignId | undefined;
     // Actions and undos sent but not finished; `current.busy` while any are.
     let unfinishedSteps = 0;
 
@@ -322,6 +338,7 @@ export function createAppStore(
       const ctx = entry && contextFor(entry);
       session = ctx && (await GameSession.open(gameStore, gameId, ctx));
       const campaignId = loaded?.summary.campaignId;
+      currentCampaignId = campaignId;
       campaignLog = campaignId && (await gameStore.loadCampaign(campaignId))?.log;
       set({
         current: {
@@ -337,6 +354,17 @@ export function createAppStore(
           resolution: session && pendingResolution(session.ctx, session.state, campaignLog),
         },
       });
+    }
+
+    /** Loads a campaign's log and its games into `campaign`, or `null` if there is no such campaign. */
+    async function loadCampaign(campaignId: CampaignId): Promise<void> {
+      const loaded = await gameStore.loadCampaign(campaignId);
+      if (!loaded) {
+        set({ campaign: null });
+        return;
+      }
+      const games = (await gameStore.listGames()).filter((g) => g.campaignId === campaignId);
+      set({ campaign: { campaignId, title: loaded.summary.title, log: loaded.log, games } });
     }
 
     /** Publishes the session's state, unless the player left the game while a write was pending. */
@@ -465,13 +493,7 @@ export function createAppStore(
       async openCampaign(campaignId) {
         // Forget the last campaign, so a missing one never shows while another loads.
         set({ campaign: undefined });
-        const loaded = await gameStore.loadCampaign(campaignId);
-        if (!loaded) {
-          set({ campaign: null });
-          return;
-        }
-        const games = (await gameStore.listGames()).filter((g) => g.campaignId === campaignId);
-        set({ campaign: { campaignId, title: loaded.summary.title, log: loaded.log, games } });
+        await loadCampaign(campaignId);
       },
       writeResolution(outcome, confirmed) {
         return queueStep(async () => {
@@ -491,11 +513,36 @@ export function createAppStore(
             confirmed,
             outcome,
           );
-          await gameStore.appendCampaignEvents(campaignId, events, loaded.summary.lastSeq);
+          const stored = await gameStore.appendCampaignEvents(
+            campaignId,
+            events,
+            loaded.summary.lastSeq,
+          );
           campaignLog = log;
+          const seq = stored.at(-1)?.seq ?? loaded.summary.lastSeq;
+          set({ writtenResolution: { campaignId, seq } });
           publish(played);
           await get().refresh();
         });
+      },
+      undoResolution() {
+        return queueStep(async () => {
+          const written = get().writtenResolution;
+          if (!written) throw new Error('No resolution to take back');
+          const loaded = await gameStore.undoLastCampaign(written.campaignId, written.seq);
+          if (session && currentCampaignId === written.campaignId) {
+            campaignLog = loaded?.log;
+            publish(session);
+          }
+          if (get().campaign?.campaignId === written.campaignId)
+            await loadCampaign(written.campaignId);
+          // Only now, so the toast closes as the log is drawn without the entries it took back.
+          set({ writtenResolution: undefined });
+          await get().refresh();
+        });
+      },
+      dismissWrittenResolution() {
+        set({ writtenResolution: undefined });
       },
       actions: gameActions(
         (step) => queueStep(() => playStep(step)),
@@ -551,6 +598,7 @@ export function createAppStore(
         await gameStore.deleteGame(gameId);
         if (get().current?.gameId === gameId) {
           session = undefined;
+          currentCampaignId = undefined;
           set({ current: undefined });
         }
         await get().refresh();

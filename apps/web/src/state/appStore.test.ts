@@ -26,7 +26,7 @@ import {
   theGatheringCards,
 } from '@arkham/scenarios';
 import { GameImportError } from '../storage/gameExport';
-import { IndexedDbStore } from '../storage/IndexedDbStore';
+import { IndexedDbStore, SeqConflictError } from '../storage/IndexedDbStore';
 import { createAppStore } from './appStore';
 import type { GameActions } from './gameActions';
 
@@ -365,6 +365,60 @@ describe('appStore', () => {
 
         expect((await db.loadCampaign(campaignId))?.log.playedScenarios).toEqual([]);
         expect(store.getState().current?.resolution).toBeDefined();
+      });
+
+      describe('after the no-resolution changes are written', () => {
+        it('takes them back out of the log and proposes the resolution again', async () => {
+          const db = new IndexedDbStore('appstore-resolution-undo-test');
+          const store = createAppStore(db);
+          await store.getState().startCampaign(campaignStart);
+          const campaignId = store.getState().campaigns[0]!.campaignId;
+          await store.getState().actions.adjust(alderId, 'horror', alder.sanity);
+          await store.getState().writeResolution(noResolution, []);
+          await store.getState().openCampaign(campaignId);
+
+          await store.getState().undoResolution();
+
+          expect((await db.loadCampaign(campaignId))?.log.playedScenarios).toEqual([]);
+          expect(store.getState().campaign?.log.playedScenarios).toEqual([]);
+          expect(store.getState().current?.resolution?.reached).toEqual(noResolution);
+          expect(store.getState().writtenResolution).toBeUndefined();
+        });
+
+        it('refuses to take them back once the log has changed since, and keeps them', async () => {
+          const db = new IndexedDbStore('appstore-resolution-undo-conflict-test');
+          const store = createAppStore(db);
+          await store.getState().startCampaign(campaignStart);
+          const campaignId = store.getState().campaigns[0]!.campaignId;
+          await store.getState().actions.adjust(alderId, 'horror', alder.sanity);
+          await store.getState().writeResolution(noResolution, []);
+          await db.appendCampaignEvents(campaignId, [
+            { type: 'XpChanged', code: alder.code, account: 'earned', delta: 1 },
+          ]);
+
+          await expect(store.getState().undoResolution()).rejects.toBeInstanceOf(SeqConflictError);
+
+          expect((await db.loadCampaign(campaignId))?.log.playedScenarios).toEqual([
+            { scenarioId: 'the-gathering', outcome: noResolution },
+          ]);
+          expect(store.getState().writtenResolution?.campaignId).toBe(campaignId);
+        });
+
+        it('offers no undo once the players dismissed it', async () => {
+          const store = createAppStore(new IndexedDbStore('appstore-resolution-dismiss-test'));
+          await store.getState().startCampaign(campaignStart);
+          const campaignId = store.getState().campaigns[0]!.campaignId;
+          await store.getState().actions.adjust(alderId, 'horror', alder.sanity);
+          await store.getState().writeResolution(noResolution, []);
+          expect(store.getState().writtenResolution?.campaignId).toBe(campaignId);
+
+          store.getState().dismissWrittenResolution();
+
+          expect(store.getState().writtenResolution).toBeUndefined();
+          await expect(store.getState().undoResolution()).rejects.toThrow(
+            'No resolution to take back',
+          );
+        });
       });
 
       it('proposes the resolution of a standalone game without a campaign to write', async () => {

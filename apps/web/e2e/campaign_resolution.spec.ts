@@ -2,7 +2,7 @@ import { expect, test } from './fixtures/test';
 
 // Journey: a campaign's first game ends when its only investigator is driven out by horror; the
 // players confirm the resolution the game reached, check what it writes into the campaign log and
-// write it, then read it there.
+// write it, read it there, take it back with Undo and write it again.
 test('write a scenario resolution into the campaign log', { tag: '@flow' }, async ({ page }) => {
   await test.step('Start a campaign with Fake Seeker alone', async () => {
     await page.goto('/#/new');
@@ -43,5 +43,24 @@ test('write a scenario resolution into the campaign log', { tag: '@flow' }, asyn
     await expect(page.getByRole('region', { name: 'Campaign Notes' })).toContainText(
       'Your house is still standing.',
     );
+  });
+
+  const written = page.getByRole('status', { name: 'Written into the log' });
+  await test.step('Undo takes it back out of the log', async () => {
+    await written.getByRole('button', { name: 'Undo' }).click();
+    await expect(written).toBeHidden();
+    await expect(page.getByRole('region', { name: 'Scenarios' })).not.toContainText(
+      'no resolution',
+    );
+  });
+
+  await test.step('Back in the game, the resolution waits to be written again', async () => {
+    await page.getByRole('link', { name: 'Continue The Gathering' }).click();
+    await expect(dialog.getByRole('heading', { name: 'The scenario is over' })).toBeVisible();
+    await dialog.getByRole('button', { name: 'Next' }).click();
+    await dialog.getByRole('button', { name: 'Write into the log' }).click();
+    await written.getByRole('button', { name: 'OK' }).click();
+    await expect(written).toBeHidden();
+    await expect(page.getByRole('region', { name: 'Scenarios' })).toContainText('no resolution');
   });
 });
