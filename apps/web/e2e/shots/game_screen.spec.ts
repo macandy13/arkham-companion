@@ -229,8 +229,25 @@ test('the investigation decision lowered to reach the board', async ({ page }) =
   await expect(decision.getByRole('button', { name: 'Raise the dialog' })).toBeVisible();
 });
 
+test("Roland Banks' fight against the Ghoul Priest, the damage raised to 2", async ({ page }) => {
+  await resumeImportedGame(
+    page,
+    'Roland Banks threatened',
+    rolandThreatenedExport('Roland Banks threatened'),
+  );
+  const roland = page.getByRole('region', { name: 'Roland Banks' });
+  await roland.getByRole('button', { name: 'Later cards in the threat area' }).click();
+  await roland.getByRole('button', { name: 'Details of Ghoul Priest' }).click();
+  await page.getByRole('button', { name: 'Fight · 3 actions' }).click();
+  const decision = page.getByRole('dialog', { name: 'Fight Ghoul Priest' });
+
+  await decision.getByRole('button', { name: 'Raise the Damage dealt' }).click();
+
+  await expect(decision.getByRole('region', { name: 'Damage dealt' })).toContainText('2');
+});
+
 test(
-  "Roland Banks' fight against the Ghoul Priest, the damage raised to 2",
+  "the Ghoul Priest's details opened from its card on Roland Banks' turn, both Frozen in Fear raising the fight to 3 actions",
   { tag: '@shot' },
   async ({ page }) => {
     await resumeImportedGame(
@@ -240,29 +257,13 @@ test(
     );
     const roland = page.getByRole('region', { name: 'Roland Banks' });
     await roland.getByRole('button', { name: 'Later cards in the threat area' }).click();
+
     await roland.getByRole('button', { name: 'Details of Ghoul Priest' }).click();
-    await page.getByRole('button', { name: 'Fight · 1 action' }).click();
-    const decision = page.getByRole('dialog', { name: 'Fight Ghoul Priest' });
 
-    await decision.getByRole('button', { name: 'Raise the Damage dealt' }).click();
-
-    await expect(decision.getByRole('region', { name: 'Damage dealt' })).toContainText('2');
+    const details = page.getByRole('dialog', { name: 'Ghoul Priest' });
+    await expect(details.getByRole('button', { name: 'Fight · 3 actions' })).toBeVisible();
   },
 );
-
-test("the Ghoul Priest's details opened from its card on Roland Banks' turn", async ({ page }) => {
-  await resumeImportedGame(
-    page,
-    'Roland Banks threatened',
-    rolandThreatenedExport('Roland Banks threatened'),
-  );
-  const roland = page.getByRole('region', { name: 'Roland Banks' });
-  await roland.getByRole('button', { name: 'Later cards in the threat area' }).click();
-
-  await roland.getByRole('button', { name: 'Details of Ghoul Priest' }).click();
-
-  await expect(page.getByRole('dialog', { name: 'Ghoul Priest' })).toBeVisible();
-});
 
 test('the encounter deck after two mythos phases, Dissonant Voices on the discard pile', async ({
   page,
@@ -493,37 +494,33 @@ test('the Graveyard’s failed willpower test, its choice under the Failed row',
   await expect(decision.getByRole('button', { name: 'Move to Rivertown' })).toBeVisible();
 });
 
-test(
-  'Arkham in The Midnight Masks, Easttown, the Graveyard and Northside with their new symbols',
-  { tag: '@shot' },
-  async ({ page }) => {
-    await resumeImportedGame(
-      page,
-      'The Midnight Masks started',
-      midnightMasksStartedExport('The Midnight Masks started'),
-    );
-    const map = page.locator('#map');
+test('Arkham in The Midnight Masks, Easttown, the Graveyard and Northside with their new symbols', async ({
+  page,
+}) => {
+  await resumeImportedGame(
+    page,
+    'The Midnight Masks started',
+    midnightMasksStartedExport('The Midnight Masks started'),
+  );
+  const map = page.locator('#map');
 
-    for (const symbol of ['moon', 'hourglass', 'T']) {
-      await expect(
-        map.getByRole('img', { name: `Connection symbol: ${symbol}`, exact: true }),
-      ).toBeVisible();
-    }
-  },
-);
+  for (const symbol of ['moon', 'hourglass', 'T']) {
+    await expect(
+      map.getByRole('img', { name: `Connection symbol: ${symbol}`, exact: true }),
+    ).toBeVisible();
+  }
+});
 
-test(
-  'the Tangled Thicket revealed with its double slash, the other Arkham Woods still showing their square',
-  { tag: '@shot' },
-  async ({ page }) => {
-    await resumeImportedGame(
-      page,
-      'The Tangled Thicket revealed',
-      tangledThicketRevealedExport('The Tangled Thicket revealed'),
-    );
-    const map = page.locator('#map');
+test('the Tangled Thicket revealed with its double slash, the other Arkham Woods still showing their square', async ({
+  page,
+}) => {
+  await resumeImportedGame(
+    page,
+    'The Tangled Thicket revealed',
+    tangledThicketRevealedExport('The Tangled Thicket revealed'),
+  );
+  const map = page.locator('#map');
 
-    await expect(map.getByRole('img', { name: 'Connection symbol: double slash' })).toHaveCount(1);
-    await expect(map.getByRole('img', { name: 'Connection symbol: square' })).toHaveCount(3);
-  },
-);
+  await expect(map.getByRole('img', { name: 'Connection symbol: double slash' })).toHaveCount(1);
+  await expect(map.getByRole('img', { name: 'Connection symbol: square' })).toHaveCount(3);
+});

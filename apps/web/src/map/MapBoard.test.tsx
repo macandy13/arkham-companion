@@ -17,6 +17,7 @@ import {
   perInvestigator,
   PlayTable,
   resignAction,
+  threatAreaOf,
 } from '@arkham/engine';
 import { initI18n } from '../i18n';
 import { MapBoard } from './MapBoard';
@@ -927,6 +928,35 @@ describe('MapBoard', () => {
       ).toEqual([
         ['Move here · 1 action', 'action'],
         ['Move here, no action', 'free'],
+      ]);
+    });
+
+    it("marks the hallway's moves with what Frozen in Fear adds: two arrows, one for the free move", () => {
+      const frozen = blankTreachery('frozen', {
+        actionCosts: [
+          { actions: ['move', 'fight', 'evade'], by: 1, who: 'threatArea', first: 'eachRound' },
+        ],
+      });
+      const table = PlayTable.start(
+        house
+          .withInvestigator(alder, { locationId: study })
+          .withCard(instanceId('frozen'), frozen, threatAreaOf(alder))
+          .withTurnOf(alder),
+      );
+      render(
+        <MapBoard board={table.board} actions={actionsOn(table)} busy={false} adjusting={false} />,
+      );
+
+      fireEvent.click(tile('hallway'));
+
+      const moves = within(details('hallway')).getByRole('region', { name: 'Actions' });
+      expect(
+        within(moves)
+          .getAllByRole('button')
+          .map((button) => [button.getAttribute('aria-label'), button.dataset['actions']]),
+      ).toEqual([
+        ['Move here · 2 actions', '2'],
+        ['Move here without an action · 1 extra action', undefined],
       ]);
     });
 
