@@ -20,7 +20,7 @@ import {
 } from '@arkham/engine';
 import { range } from '@arkham/util';
 import { initI18n } from '../i18n';
-import { InvestigatorBar } from './InvestigatorBar';
+import { InvestigatorBar, textLength } from './InvestigatorBar';
 import { actionsOn } from '../state/gameActions.test_support';
 
 const study = instanceId('study');
@@ -337,6 +337,51 @@ describe('InvestigatorBar', () => {
     expect(card.querySelector('[data-class-icon]')?.getAttribute('data-class-icon')).toBe(
       'guardian',
     );
+  });
+
+  it("prints the traits, abilities and flavour of the investigator's card on its notebook page", () => {
+    const table = PlayTable.start(
+      newGame()
+        .withLocation(study, blankLocation('study'))
+        .withInvestigator(alder, { locationId: study }),
+    );
+
+    render(
+      <InvestigatorBar
+        board={table.board}
+        actions={actionsOn(table)}
+        busy={false}
+        adjusting={false}
+        printed={() => ({
+          factionCode: 'guardian',
+          traits: 'Tester. Hero.',
+          text: '[reaction] After you pass a test: gain 1 resource.\n<b>Forced</b> – Nothing.',
+          flavor: 'It always works in the tests.',
+        })}
+      />,
+    );
+
+    const card = within(panel('alder')).getByRole('article');
+    // The page is a plain block of the card's paragraphs, with no role of its own; each symbol
+    // reads as its name in braces.
+    for (const icon of card.querySelectorAll('[data-page] [role="img"]')) {
+      icon.textContent = `{${icon.getAttribute('aria-label') ?? ''}}`;
+    }
+    const page = Array.from(card.querySelectorAll('[data-page] > *'), (part) => part.textContent);
+    expect(page).toEqual([
+      'Tester. Hero.',
+      '{Reaction} After you pass a test: gain 1 resource.',
+      'Forced – Nothing.',
+      'It always works in the tests.',
+    ]);
+  });
+
+  it.each([
+    { size: 'short', text: 'x'.repeat(200) },
+    { size: 'long', text: 'x'.repeat(300) },
+    { size: 'longest', text: 'x'.repeat(450) },
+  ])('sets a page of $text.length characters in its $size size', ({ size, text }) => {
+    expect(textLength({ factionCode: 'seeker', text })).toBe(size);
   });
 
   describe('the lead and turn markers', () => {

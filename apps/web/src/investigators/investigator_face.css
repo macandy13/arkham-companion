@@ -269,6 +269,50 @@
   right: 0;
 }
 
+/* The text on the notebook page, as printed: traits in bold italics, abilities, flavour in italics. */
+#investigators [data-card='investigator'] > [data-page] {
+  position: absolute;
+  left: calc(var(--investigator-page-left) * var(--scan-unit));
+  top: calc(var(--investigator-page-top) * var(--scan-unit));
+  width: calc(var(--investigator-page-width) * var(--scan-unit));
+  max-height: calc(var(--investigator-page-height) * var(--scan-unit));
+  display: flex;
+  flex-direction: column;
+  gap: calc(3 * var(--scan-unit));
+  overflow: hidden;
+  font-size: calc(var(--investigator-text-size) * var(--scan-unit));
+  line-height: 1.12;
+}
+
+#investigators [data-card='investigator'] > [data-page][data-length='long'] {
+  font-size: calc(var(--investigator-long-text-size) * var(--scan-unit));
+}
+
+#investigators [data-card='investigator'] > [data-page][data-length='longest'] {
+  font-size: calc(var(--investigator-longest-text-size) * var(--scan-unit));
+}
+
+#investigators [data-card='investigator'] > [data-page] :is(p, blockquote) {
+  margin: 0;
+}
+
+#investigators [data-card='investigator'] > [data-page] > [data-traits] {
+  font-size: calc(var(--investigator-traits-size) * var(--scan-unit));
+  font-style: italic;
+  font-weight: bold;
+  text-align: center;
+}
+
+#investigators [data-card='investigator'] > [data-page] em {
+  font-weight: bold;
+}
+
+#investigators [data-card='investigator'] > [data-page] > blockquote {
+  margin-block-start: calc(4 * var(--scan-unit));
+  font-style: italic;
+  text-align: center;
+}
+
 /*
  * The counters at the page's foot, as the printed card has its heart and brain there, with the
  * clue token and the resource coin either side. Each sits on its centre; its name stays for
