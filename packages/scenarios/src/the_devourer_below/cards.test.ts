@@ -38,6 +38,33 @@ const cardOf = (code: string): CardStats => cardIn(theDevourerBelowCards, code);
 
 describe('The Devourer Below card data', () => {
   it.each([
+    { code: '01149', name: 'Main Path', symbol: 'tilde', unrevealed: undefined },
+    {
+      code: '01150',
+      name: 'Arkham Woods (Unhallowed Ground)',
+      symbol: 'triangle',
+      unrevealed: 'square',
+    },
+    { code: '01151', name: 'Arkham Woods (Twisting Paths)', symbol: 't', unrevealed: 'square' },
+    { code: '01152', name: 'Arkham Woods (Old House)', symbol: 'diamond', unrevealed: 'square' },
+    { code: '01153', name: 'Arkham Woods (Cliffside)', symbol: 'hourglass', unrevealed: 'square' },
+    {
+      code: '01154',
+      name: 'Arkham Woods (Tangled Thicket)',
+      symbol: 'double_slash',
+      unrevealed: 'square',
+    },
+    { code: '01155', name: 'Arkham Woods (Quiet Glade)', symbol: 'moon', unrevealed: 'square' },
+    { code: '01156', name: 'Ritual Site', symbol: 'plus', unrevealed: undefined },
+  ])(
+    'gives $name its printed connection symbols, the $symbol revealed',
+    ({ code, symbol, unrevealed }) => {
+      expect(cardOf(code).symbol).toBe(symbol);
+      expect(cardOf(code).unrevealedSymbol).toBe(unrevealed);
+    },
+  );
+
+  it.each([
     {
       code: '01143',
       name: 'The Arkham Woods',

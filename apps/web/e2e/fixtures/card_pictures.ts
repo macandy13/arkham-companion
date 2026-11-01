@@ -2,7 +2,11 @@ import { existsSync } from 'node:fs';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { basename, join } from 'node:path';
 import { cardImagePath, type CardImagePath } from '@arkham/engine';
-import { theGatheringCardDefs } from '@arkham/scenarios';
+import {
+  theDevourerBelowCardDefs,
+  theGatheringCardDefs,
+  theMidnightMasksCardDefs,
+} from '@arkham/scenarios';
 
 /** Where ArkhamDB serves the card pictures the app names (`CardStats.imageSrc`). */
 const ARKHAMDB = 'https://arkhamdb.com';
@@ -21,11 +25,17 @@ export const ROLAND_PICTURE = cardImagePath('/bundles/cards/01001.png');
 const GATHERING_REFERENCE_PICTURE = cardImagePath('/bundles/cards/01104.png');
 
 /**
- * Every picture the E2E games name: The Gathering's cards, both sides, its reference card's front
- * and Roland Banks'.
+ * Every picture the E2E games name: the cards of the whole Night of the Zealot campaign (The
+ * Gathering, The Midnight Masks and The Devourer Below), both sides, The Gathering's reference
+ * card's front and Roland Banks'.
  */
 function e2ePictures(): CardImagePath[] {
-  const sides = theGatheringCardDefs.flatMap(({ imageSrc, backImageSrc }) => [
+  const zealotCards = [
+    ...theGatheringCardDefs,
+    ...theMidnightMasksCardDefs,
+    ...theDevourerBelowCardDefs,
+  ];
+  const sides = zealotCards.flatMap(({ imageSrc, backImageSrc }) => [
     ...(imageSrc ? [imageSrc] : []),
     ...(backImageSrc ? [backImageSrc] : []),
   ]);
@@ -76,7 +86,10 @@ async function downloadWithRetries(path: CardImagePath): Promise<string | undefi
 /**
  * Playwright's global setup: downloads the pictures that have no local copy yet, a few at a time.
  * A picture that still fails (no network, ArkhamDB down) is only warned about, since the app then
- * shows the card's pattern, as it does offline, and no test depends on the art.
+ * shows the card's pattern, as it does offline, and no test depends on the art. After the first
+ * such failure the rest are skipped: ArkhamDB stops answering a CI runner after a few dozen
+ * pictures, and waiting out every timeout cost a run eight minutes. CI keeps what this run got,
+ * and a later run fetches the rest.
  */
 export default async function fetchCardPictures(): Promise<void> {
   await mkdir(CARD_PICTURE_DIR, { recursive: true });
@@ -85,7 +98,9 @@ export default async function fetchCardPictures(): Promise<void> {
   const worker = async (): Promise<void> => {
     for (let path = queue.shift(); path !== undefined; path = queue.shift()) {
       const error = await downloadWithRetries(path);
-      if (error !== undefined) failed.push(`${path} (${error})`);
+      if (error === undefined) continue;
+      failed.push(`${path} (${error})`);
+      failed.push(...queue.splice(0).map((skipped) => `${skipped} (skipped)`));
     }
   };
   await Promise.all(Array.from({ length: PARALLEL_DOWNLOADS }, worker));

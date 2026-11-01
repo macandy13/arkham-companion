@@ -510,6 +510,26 @@
   --connection-colour: var(--color-connection-diamond);
 }
 
+#map svg g[data-connection='tilde'] {
+  --connection-colour: var(--color-connection-tilde);
+}
+
+#map svg g[data-connection='moon'] {
+  --connection-colour: var(--color-connection-moon);
+}
+
+#map svg g[data-connection='hourglass'] {
+  --connection-colour: var(--color-connection-hourglass);
+}
+
+#map svg g[data-connection='t'] {
+  --connection-colour: var(--color-connection-t);
+}
+
+#map svg g[data-connection='double_slash'] {
+  --connection-colour: var(--color-connection-double-slash);
+}
+
 #map svg g[role='button']:focus-visible {
   outline: var(--border-width) solid var(--color-accent);
 }

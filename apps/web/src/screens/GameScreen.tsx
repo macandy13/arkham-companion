@@ -12,6 +12,7 @@ import { InvestigatorBar } from '../investigators/InvestigatorBar';
 import { LocationFocus } from '../map/LocationFocus';
 import { MapBoard } from '../map/MapBoard';
 import { DecisionDialog } from './DecisionDialog';
+import { DecisionHostContext } from './DetailsDialog';
 import { DetailControls } from './DetailControls';
 import { GameHeader, printedReferenceOf } from './GameHeader';
 import { GameStatus } from './GameStatus';
@@ -39,7 +40,10 @@ import './game.css';
  * location mode, until the players go back to the map; while they choose where an enemy spawns,
  * or pick the answer to the open decision on the map (`DecisionView.locations`), the map shows,
  * its pickable locations lit. Picking belongs to the decision it was started for, so the next
- * one opens raised; a tap on a location the decision cannot pick raises the dialog again. The scenario card's texts come from the card `catalog`.
+ * one opens raised; a tap on a location the decision cannot pick raises the dialog again. A
+ * details dialog whose action raised the decision shows it in its own page instead
+ * (`DecisionHostContext`), and the screen's decision dialog stays shut until it closes. The
+ * scenario card's texts come from the card `catalog`.
  */
 export function GameScreen({
   store,
@@ -57,6 +61,7 @@ export function GameScreen({
   const phone = usePhone();
   const detail = useDetailView();
   const [pickingFor, setPickingFor] = useState<DecisionId>();
+  const [hosted, setHosted] = useState(false);
   const boardElement = useRef<HTMLDivElement>(null);
   const detailTarget = phone ? detail.target : undefined;
   const opensDetail = phone && !detailTarget;
@@ -102,133 +107,141 @@ export function GameScreen({
     ? (location: InstanceId) => (detailTarget ? detail.go : detail.open)({ row: 'map', location })
     : undefined;
 
+  const host = {
+    decision: decision && decisionId !== undefined ? { view: decision, id: decisionId } : undefined,
+    adjusting: open.adjusting,
+    setHosted,
+  };
+
   return (
-    <div
-      id="board"
-      ref={boardElement}
-      data-view={detailTarget ? 'detail' : undefined}
-      data-adjusting={open.adjusting || undefined}
-      data-spawning={open.spawning ? true : undefined}
-    >
-      <GameHeader
-        store={store}
-        open={open}
-        board={board}
-        printedReference={
-          board.reference && cards.status === 'ready'
-            ? printedReferenceOf(cards.catalog, board.reference)
-            : undefined
-        }
-        onOpenCard={opensDetail ? (card) => detail.open({ row: 'cards', card }) : undefined}
-        full={detailTarget !== undefined}
-      />
-      <GameStatus store={store} open={open} board={board} />
-      <section id="map" aria-labelledby="map-title">
-        <h2 id="map-title">{t('map.title')}</h2>
-        {opensDetail && (
-          <button
-            type="button"
-            data-icon="expand"
-            data-detail="expand"
-            aria-label={t('detail.openMap')}
-            onClick={() => detail.open({ row: 'map' })}
-          />
-        )}
-        {detailTarget && <MapStrip board={board} to="cards" onGo={detail.go} />}
-        {focused ? (
-          <LocationFocus
+    <DecisionHostContext.Provider value={host}>
+      <div
+        id="board"
+        ref={boardElement}
+        data-view={detailTarget ? 'detail' : undefined}
+        data-adjusting={open.adjusting || undefined}
+        data-spawning={open.spawning ? true : undefined}
+      >
+        <GameHeader
+          store={store}
+          open={open}
+          board={board}
+          printedReference={
+            board.reference && cards.status === 'ready'
+              ? printedReferenceOf(cards.catalog, board.reference)
+              : undefined
+          }
+          onOpenCard={opensDetail ? (card) => detail.open({ row: 'cards', card }) : undefined}
+          full={detailTarget !== undefined}
+        />
+        <GameStatus store={store} open={open} board={board} />
+        <section id="map" aria-labelledby="map-title">
+          <h2 id="map-title">{t('map.title')}</h2>
+          {opensDetail && (
+            <button
+              type="button"
+              data-icon="expand"
+              data-detail="expand"
+              aria-label={t('detail.openMap')}
+              onClick={() => detail.open({ row: 'map' })}
+            />
+          )}
+          {detailTarget && <MapStrip board={board} to="cards" onGo={detail.go} />}
+          {focused ? (
+            <LocationFocus
+              board={board}
+              location={focused}
+              actions={store.getState().actions}
+              busy={open.busy}
+              adjusting={open.adjusting}
+              onGo={(location) => detail.go({ row: 'map', location })}
+              onMap={() => detail.go({ row: 'map' })}
+            />
+          ) : (
+            <MapBoard
+              board={board}
+              actions={store.getState().actions}
+              busy={open.busy}
+              adjusting={open.adjusting}
+              onPick={
+                spawning
+                  ? (location) => {
+                      store.getState().cancelSpawn();
+                      void store.getState().actions.spawnEnemy(spawning.id, location);
+                    }
+                  : picking
+                    ? pickAnswer
+                    : undefined
+              }
+              pickable={pickable}
+              onOpenLocation={showLocation}
+            />
+          )}
+          {detailTarget && <MapStrip board={board} to="investigators" onGo={detail.go} />}
+        </section>
+        <section id="investigators" aria-labelledby="investigators-title">
+          <h2 id="investigators-title">{t('investigators.title')}</h2>
+          <InvestigatorBar
             board={board}
-            location={focused}
             actions={store.getState().actions}
             busy={open.busy}
             adjusting={open.adjusting}
-            onGo={(location) => detail.go({ row: 'map', location })}
-            onMap={() => detail.go({ row: 'map' })}
-          />
-        ) : (
-          <MapBoard
-            board={board}
-            actions={store.getState().actions}
-            busy={open.busy}
-            adjusting={open.adjusting}
-            onPick={
-              spawning
-                ? (location) => {
-                    store.getState().cancelSpawn();
-                    void store.getState().actions.spawnEnemy(spawning.id, location);
-                  }
-                : picking
-                  ? pickAnswer
-                  : undefined
+            onOpen={
+              opensDetail
+                ? (investigator) => detail.open({ row: 'investigators', investigator })
+                : undefined
             }
-            pickable={pickable}
-            onOpenLocation={showLocation}
+            printed={
+              cards.status === 'ready'
+                ? (code) => printedInvestigatorOf(cards.catalog, code)
+                : undefined
+            }
           />
+        </section>
+        {detailTarget && (
+          <DetailControls board={boardElement} target={detailTarget} onClose={detail.close} />
         )}
-        {detailTarget && <MapStrip board={board} to="investigators" onGo={detail.go} />}
-      </section>
-      <section id="investigators" aria-labelledby="investigators-title">
-        <h2 id="investigators-title">{t('investigators.title')}</h2>
-        <InvestigatorBar
-          board={board}
-          actions={store.getState().actions}
-          busy={open.busy}
-          adjusting={open.adjusting}
-          onOpen={
-            opensDetail
-              ? (investigator) => detail.open({ row: 'investigators', investigator })
-              : undefined
-          }
-          printed={
-            cards.status === 'ready'
-              ? (code) => printedInvestigatorOf(cards.catalog, code)
-              : undefined
-          }
-        />
-      </section>
-      {detailTarget && (
-        <DetailControls board={boardElement} target={detailTarget} onClose={detail.close} />
-      )}
-      {/* Adjusting the board is allowed with a decision open, so the dialog steps aside meanwhile. */}
-      {decision && !open.adjusting && (
-        <DecisionDialog
-          key={open.state.pending[0]?.id}
-          board={board}
-          decision={decision}
-          actions={store.getState().actions}
-          busy={open.busy}
-          picking={picking}
-          onPicking={(to) => setPickingFor(to ? decisionId : undefined)}
-        />
-      )}
-      <ResolutionPrompt key={open.gameId} store={store} open={open} />
-      <div id="notices">
-        {open.spawning && (
-          <SpawnPrompt enemy={open.spawning} onCancel={() => store.getState().cancelSpawn()} />
-        )}
-        {open.drawnCards && (
-          <DrawnCardsNotice
+        {/* Adjusting the board is allowed with a decision open, so the dialog steps aside meanwhile. */}
+        {decision && !open.adjusting && !hosted && (
+          <DecisionDialog
+            key={open.state.pending[0]?.id}
             board={board}
-            drawn={open.drawnCards}
+            decision={decision}
             actions={store.getState().actions}
             busy={open.busy}
-            onSpawn={(enemy) => store.getState().startSpawn(enemy)}
-            onDismiss={() => store.getState().dismissDrawnCards()}
+            picking={picking}
+            onPicking={(to) => setPickingFor(to ? decisionId : undefined)}
           />
         )}
-        {open.skippedEffects && (
-          <SkippedEffectsNotice
-            skipped={open.skippedEffects}
-            onDismiss={() => store.getState().dismissSkippedEffects()}
-          />
-        )}
-        {open.rejection && (
-          <RejectionToast
-            rejection={open.rejection}
-            onDismiss={() => store.getState().dismissRejection()}
-          />
-        )}
+        <ResolutionPrompt key={open.gameId} store={store} open={open} />
+        <div id="notices">
+          {open.spawning && (
+            <SpawnPrompt enemy={open.spawning} onCancel={() => store.getState().cancelSpawn()} />
+          )}
+          {open.drawnCards && (
+            <DrawnCardsNotice
+              board={board}
+              drawn={open.drawnCards}
+              actions={store.getState().actions}
+              busy={open.busy}
+              onSpawn={(enemy) => store.getState().startSpawn(enemy)}
+              onDismiss={() => store.getState().dismissDrawnCards()}
+            />
+          )}
+          {open.skippedEffects && (
+            <SkippedEffectsNotice
+              skipped={open.skippedEffects}
+              onDismiss={() => store.getState().dismissSkippedEffects()}
+            />
+          )}
+          {open.rejection && (
+            <RejectionToast
+              rejection={open.rejection}
+              onDismiss={() => store.getState().dismissRejection()}
+            />
+          )}
+        </div>
       </div>
-    </div>
+    </DecisionHostContext.Provider>
   );
 }
