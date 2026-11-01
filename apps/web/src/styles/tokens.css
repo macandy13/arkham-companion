@@ -161,14 +161,46 @@
   /* The skill symbols on those tiles, pale paper in every card theme. */
   --color-skill-symbol: #ebdfc2;
   /*
-   * The investigator's clue token and resource coin: a teal token lit from its upper left in a
-   * dark rim, and a gold coin with a milled ring inside its rim.
+   * The game tokens in their resin dome finish (GameToken): each kind's watercolour field, light
+   * at its centre and dark at its edge, and the ink of its glyph; the bronze bezel round them all,
+   * the dark setting under the glass, and the glass's shade and shine.
    */
-  --color-clue-token-rim: #1d5566;
-  --clue-token-face: radial-gradient(circle at 35% 30%, #7cc6d6, #2f8aa6 55%, #1f6478);
-  --color-resource-coin-rim: #7a561c;
-  --resource-coin-face: radial-gradient(circle at 35% 30%, #f6dc8e, #d6a743 55%, #9c7226);
-  --resource-coin-milling: inset 0 0 0 2px #f1d27c, inset 0 0 0 3px #8a6420;
+  --color-token-clue-light: #6cc0cf;
+  --color-token-clue-dark: #1d5a6c;
+  --color-token-clue-ink: #f4fbf8;
+  --color-token-damage-light: #e2615a;
+  --color-token-damage-dark: #8a1b18;
+  --color-token-damage-ink: #fff3ee;
+  --color-token-horror-light: #58aade;
+  --color-token-horror-dark: #1a4a82;
+  --color-token-horror-ink: #f1f8ff;
+  --color-token-resource-light: #b6d0c8;
+  --color-token-resource-dark: #3e6660;
+  --color-token-resource-ink: #f2dcc2;
+  --color-token-crate-top: #f2dcc2;
+  --color-token-crate-left: #d8b393;
+  --color-token-crate-right: #bf9070;
+  --color-token-crate-line: #3a1f16;
+  --color-token-bronze-1: #e2c48a;
+  --color-token-bronze-2: #9c7640;
+  --color-token-bronze-3: #5a3f1e;
+  --color-token-bronze-4: #b48a4e;
+  --color-token-setting: #2a1c0e;
+  --color-token-shadow: #000;
+  --color-token-shine: #fff;
+  --token-shadow-opacity: 0.45;
+  --token-dome-opacity: 0.45;
+  --token-shine-opacity: 0.75;
+  --token-glint-opacity: 0.45;
+  --token-lens-opacity: 0.28;
+  /* Their strokes and count, in the token's 100-unit box. */
+  --token-glyph-width: 3.6;
+  --token-stem-width: 7;
+  --token-lens-width: 4.5;
+  --token-crate-width: 2.2;
+  --token-glint-width: 2.5;
+  --token-count-ring-width: 3;
+  --token-count-size: 30px;
 
   --space-1: 0.25rem;
   --space-2: 0.5rem;
@@ -469,7 +501,7 @@
   --investigator-resources-x: 394;
   --investigator-doom-x: 256;
   --investigator-doom-y: 220;
-  --investigator-token-size: 28;
+  --investigator-token-size: 34;
   --investigator-token-number-size: 14;
   --investigator-symbol-size: 36;
   --investigator-symbol-number-size: 24;

@@ -10,6 +10,7 @@ import {
   type SkillName,
 } from '@arkham/engine';
 import { Brain, Heart } from '../catalog/cardFace';
+import { GameToken, type GameTokenKind } from '../screens/GameToken';
 import { cardParagraphs } from '../catalog/cardText';
 import { useCardPicture } from '../catalog/cardImages';
 import type { GameActions, SteppedStat } from '../state/gameActions';
@@ -464,7 +465,7 @@ type StatKind = 'health' | 'sanity' | 'clues' | 'resources' | 'doom';
  * prints them (`printed`): the printed maximum on an anatomical heart or a brain, with the damage
  * or horror taken as a count circle on its lower right, like the location's clues on its clue
  * value; the pair is one image named by `shown`, since the two numbers alone do not say what is
- * left.
+ * left. Clues and resources show as their game tokens (`GameToken`) with the count in a disc.
  */
 function Stat({
   kind,
@@ -502,6 +503,8 @@ function Stat({
               {printed.taken}
             </data>
           </span>
+        ) : kind === 'clues' || kind === 'resources' ? (
+          <GameToken kind={TOKEN_OF[kind]} count={value} label={shown} />
         ) : (
           <data value={value}>{shown}</data>
         )}
@@ -510,6 +513,11 @@ function Stat({
     </div>
   );
 }
+
+/** The game token each counted stat shows as, as on the table. */
+const TOKEN_OF = { clues: 'clue', resources: 'resource' } as const satisfies Partial<
+  Record<StatKind, GameTokenKind>
+>;
 
 /** The square around the heart's and brain's drawings (`Heart`, `Brain`), centred on the origin. */
 const PRINTED_SYMBOL_VIEW_BOX = '-15 -15 30 30';

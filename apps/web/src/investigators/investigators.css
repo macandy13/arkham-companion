@@ -222,16 +222,12 @@
   padding: 0;
 }
 
-/* Clues and resources as the game's tokens: a teal clue token and a milled gold resource coin. */
-#investigators [data-stat='clues'] dd > data {
-  border-color: var(--color-clue-token-rim);
-  background: var(--clue-token-face);
-}
-
-#investigators [data-stat='resources'] dd > data {
-  border-color: var(--color-resource-coin-rim);
-  background: var(--resource-coin-face);
-  box-shadow: var(--resource-coin-milling), var(--header-token-shadow);
+/* Clues and resources as the game's tokens (GameToken), their count in its disc. */
+#investigators dd > [data-game-token] {
+  grid-column: 1 / -1;
+  justify-self: center;
+  width: var(--stat-token-size);
+  height: var(--stat-token-size);
 }
 
 /*

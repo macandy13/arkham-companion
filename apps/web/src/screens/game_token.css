@@ -1,0 +1,150 @@
+/*
+ * A game token in the resin dome finish (GameToken.tsx): its kind's colours, a bronze bezel, the
+ * glyph's strokes in the token's ink and the glass's shade and shine. The size comes from where
+ * it sits; the token fills its box.
+ */
+[data-game-token] {
+  display: inline-block;
+  line-height: 0;
+}
+
+[data-game-token] > svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+[data-game-token='clue'] {
+  --token-light: var(--color-token-clue-light);
+  --token-dark: var(--color-token-clue-dark);
+  --token-ink: var(--color-token-clue-ink);
+}
+
+[data-game-token='damage'] {
+  --token-light: var(--color-token-damage-light);
+  --token-dark: var(--color-token-damage-dark);
+  --token-ink: var(--color-token-damage-ink);
+}
+
+[data-game-token='horror'] {
+  --token-light: var(--color-token-horror-light);
+  --token-dark: var(--color-token-horror-dark);
+  --token-ink: var(--color-token-horror-ink);
+}
+
+[data-game-token='resource'] {
+  --token-light: var(--color-token-resource-light);
+  --token-dark: var(--color-token-resource-dark);
+  --token-ink: var(--color-token-resource-ink);
+}
+
+[data-game-token] [data-part='field'] stop:first-child {
+  stop-color: var(--token-light);
+}
+
+[data-game-token] [data-part='field'] stop:last-child {
+  stop-color: var(--token-dark);
+}
+
+[data-game-token] [data-part='bezel'] stop:nth-child(1) {
+  stop-color: var(--color-token-bronze-1);
+}
+
+[data-game-token] [data-part='bezel'] stop:nth-child(2) {
+  stop-color: var(--color-token-bronze-2);
+}
+
+[data-game-token] [data-part='bezel'] stop:nth-child(3) {
+  stop-color: var(--color-token-bronze-3);
+}
+
+[data-game-token] [data-part='bezel'] stop:nth-child(4) {
+  stop-color: var(--color-token-bronze-4);
+}
+
+[data-game-token] [data-part='dome'] stop {
+  stop-color: var(--color-token-shadow);
+  stop-opacity: 0;
+}
+
+[data-game-token] [data-part='dome'] stop:last-child {
+  stop-opacity: var(--token-dome-opacity);
+}
+
+[data-game-token] [data-part='gloss'] stop {
+  stop-color: var(--color-token-shine);
+  stop-opacity: 0;
+}
+
+[data-game-token] [data-part='gloss'] stop:first-child {
+  stop-opacity: var(--token-shine-opacity);
+}
+
+[data-game-token] [data-part='shadow'] {
+  fill: var(--color-token-shadow);
+  opacity: var(--token-shadow-opacity);
+}
+
+[data-game-token] [data-part='setting'] {
+  fill: var(--color-token-setting);
+}
+
+[data-game-token] [data-part='glint'] {
+  fill: none;
+  stroke: var(--color-token-shine);
+  stroke-opacity: var(--token-glint-opacity);
+  stroke-width: var(--token-glint-width);
+  stroke-linecap: round;
+}
+
+/* The glyph: round-capped strokes in the ink, the clue's lens tinted with it. */
+[data-game-token] [data-part='glyph'] {
+  fill: none;
+  stroke: var(--token-ink);
+  stroke-width: var(--token-glyph-width);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+[data-game-token] [data-part='glyph'] [data-weight='heavy'] {
+  stroke-width: var(--token-stem-width);
+}
+
+[data-game-token] [data-part='lens'] {
+  fill: var(--token-ink);
+  fill-opacity: var(--token-lens-opacity);
+  stroke-width: var(--token-lens-width);
+}
+
+[data-game-token] [data-part='crate'] {
+  fill: none;
+  stroke: var(--color-token-crate-line);
+  stroke-width: var(--token-crate-width);
+  stroke-linejoin: round;
+}
+
+[data-game-token] [data-part='crate'] [data-side='top'] {
+  fill: var(--color-token-crate-top);
+}
+
+[data-game-token] [data-part='crate'] [data-side='left'] {
+  fill: var(--color-token-crate-left);
+}
+
+[data-game-token] [data-part='crate'] [data-side='right'] {
+  fill: var(--color-token-crate-right);
+}
+
+/* The count in a small disc of the field's dark colour, ringed and written in the ink. */
+[data-game-token] [data-part='count'] circle {
+  fill: var(--token-dark);
+  stroke: var(--token-ink);
+  stroke-width: var(--token-count-ring-width);
+}
+
+[data-game-token] [data-part='count'] text {
+  fill: var(--token-ink);
+  font-family: var(--font-family-label);
+  font-size: var(--token-count-size);
+  font-weight: bold;
+}
