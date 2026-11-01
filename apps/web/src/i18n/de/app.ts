@@ -107,6 +107,8 @@ export const appTexts = {
     agenda: 'Agenda',
     act: 'Szene',
     scenario: 'Szenario',
+    scenarioSide: 'Szenario · {{side}}',
+    setAsideName: 'Beiseitegelegt',
     reference: 'Chaosmarker',
     referenceSide: { easyStandard: 'Leicht / Standard', hardExpert: 'Schwer / Experte' },
     victory: 'Sieg',
@@ -135,7 +137,6 @@ export const appTexts = {
     removeDoom: 'Verderben entfernen',
     addClue: 'Hinweis hinzufügen',
     removeClue: 'Hinweis entfernen',
-    close: 'Schließen',
     noGame: 'Kein Spiel geöffnet',
   },
   encounter: {

@@ -107,6 +107,8 @@ export const appTexts = {
     agenda: 'Agenda',
     act: 'Act',
     scenario: 'Scenario',
+    scenarioSide: 'Scenario · {{side}}',
+    setAsideName: 'Set aside',
     reference: 'Chaos tokens',
     referenceSide: { easyStandard: 'Easy / Standard', hardExpert: 'Hard / Expert' },
     victory: 'Victory',
@@ -135,7 +137,6 @@ export const appTexts = {
     removeDoom: 'Remove doom',
     addClue: 'Add a clue',
     removeClue: 'Remove a clue',
-    close: 'Close',
     noGame: 'No game open',
   },
   encounter: {

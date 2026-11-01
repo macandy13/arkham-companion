@@ -396,7 +396,7 @@ describe('GameScreen header', () => {
     expect(within(scenario).getByRole('heading', { level: 1 }).textContent).toBe('The Gathering');
   });
 
-  it("opens the scenario card from its name, a row per chaos token with the easy side's text", async () => {
+  it("opens the scenario card from its name, its page a row per chaos token with the easy side's text", async () => {
     // Invented texts under The Gathering's reference card code: the catalog's, not the card's.
     const catalog: CatalogSource = async () => ({
       investigators: [],
@@ -412,17 +412,34 @@ describe('GameScreen header', () => {
 
     fireEvent.click(button('The Gathering'));
     const card = await screen.findByRole('dialog', { name: 'The Gathering' });
-    const rows = within(within(card).getByRole('list', { name: 'Chaos tokens' }))
+    const list = within(card).getByRole('list', { name: 'Chaos tokens' });
+    const rows = within(list)
       .getAllByRole('listitem')
       .map((row) => [within(row).getByRole('img').getAttribute('aria-label'), row.textContent]);
 
-    expect(within(card).getByText('Easy / Standard')).toBeTruthy();
+    expect(within(card).getByText('Scenario · Easy / Standard')).toBeTruthy();
     expect(rows).toEqual([
       ['Skull', '-X. Count the Ghoul enemies.'],
       ['Cultist', '-1. Easy cultist.'],
       ['Tablet', ''],
     ]);
-    expect(within(card).getByText('Ghoul').tagName).toBe('EM');
+    expect(within(list).getByText('Ghoul').tagName).toBe('EM');
+  });
+
+  it("shows the scenario's set-aside cards and its victory points on its page", async () => {
+    // The Gathering's setup sets aside 6 cards: Hallway, Attic, Cellar, Parlor, the Ghoul Priest, Lita.
+    await renderTheGathering('game-screen-scenario-piles-test');
+
+    fireEvent.click(button('The Gathering'));
+    const card = await screen.findByRole('dialog', { name: 'The Gathering' });
+    const values = within(card)
+      .getAllByRole('term')
+      .map((term) => [term.textContent, term.nextElementSibling?.textContent]);
+
+    expect(values).toEqual([
+      ['Set aside', '6'],
+      ['Victory', '0'],
+    ]);
   });
 
   it('shows the round and the phases of a round in a status row, setup marking none', async () => {

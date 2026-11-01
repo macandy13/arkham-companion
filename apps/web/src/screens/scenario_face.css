@@ -66,12 +66,13 @@
   text-align: center;
 }
 
-#board > header > section [data-card='scenario'] > :is(h1, h2, p, ul) {
+#board > header > section [data-card='scenario'] > :is(h1, h2, span, p, ul) {
   position: relative;
   margin: 0;
 }
 
-#board > header > section [data-card='scenario'] > :is(h1, h2) {
+#board > header > section [data-card='scenario'] > :is(h1, h2, span) {
+  display: block;
   margin-block-start: calc(var(--scenario-title-top) * var(--scan-unit));
   padding: 0 calc(var(--scenario-inset) * var(--scan-unit));
   background: none;
@@ -111,7 +112,12 @@
   list-style: none;
 }
 
-#board > header > section [data-card='scenario'] > ul > li {
+#board
+  > header
+  > section
+  :is([data-card='scenario'], dialog[data-dialog='scenario'] > article)
+  > ul
+  > li {
   display: grid;
   grid-template-columns: calc(var(--scenario-token-size) * var(--scan-unit)) 1fr;
   gap: calc(var(--scenario-inset) / 2 * var(--scan-unit));
@@ -124,17 +130,36 @@
   text-align: start;
 }
 
-#board > header > section [data-card='scenario'] > ul > li > p {
+#board
+  > header
+  > section
+  :is([data-card='scenario'], dialog[data-dialog='scenario'] > article)
+  > ul
+  > li
+  > p {
   margin: 0;
 }
 
 /* The token: a disc in its colour inside a dark ring, its symbol in paper colour on it. */
 /* The traits a row names in bold italics, as the printed card sets them. */
-#board > header > section [data-card='scenario'] > ul > li > p > em {
+#board
+  > header
+  > section
+  :is([data-card='scenario'], dialog[data-dialog='scenario'] > article)
+  > ul
+  > li
+  > p
+  > em {
   font-weight: bold;
 }
 
-#board > header > section [data-card='scenario'] > ul > li > span {
+#board
+  > header
+  > section
+  :is([data-card='scenario'], dialog[data-dialog='scenario'] > article)
+  > ul
+  > li
+  > span {
   display: grid;
   aspect-ratio: 1;
   box-sizing: border-box;
@@ -143,31 +168,58 @@
   background: var(--token-colour);
 }
 
-#board > header > section [data-card='scenario'] > ul > li > span::before {
+#board
+  > header
+  > section
+  :is([data-card='scenario'], dialog[data-dialog='scenario'] > article)
+  > ul
+  > li
+  > span::before {
   content: '';
   margin: 18%;
   background: var(--color-face-medallion);
   mask: var(--token-symbol) center / contain no-repeat;
 }
 
-#board > header > section [data-card='scenario'] [data-chaos-token='skull'] {
+#board > header > section [data-chaos-token='skull'] {
   --token-symbol: url('../symbols/skull.svg');
   --token-colour: var(--color-face-skull);
 }
 
-#board > header > section [data-card='scenario'] [data-chaos-token='cultist'] {
+#board > header > section [data-chaos-token='cultist'] {
   --token-symbol: url('../symbols/cultist.svg');
   --token-colour: var(--color-face-cultist);
 }
 
-#board > header > section [data-card='scenario'] [data-chaos-token='tablet'] {
+#board > header > section [data-chaos-token='tablet'] {
   --token-symbol: url('../symbols/tablet.svg');
   --token-colour: var(--color-face-tablet);
 }
 
-#board > header > section [data-card='scenario'] [data-chaos-token='elderThing'] {
+#board > header > section [data-chaos-token='elderThing'] {
   --token-symbol: url('../symbols/elder_thing.svg');
   --token-colour: var(--color-face-elder-thing);
+}
+
+/*
+ * The rows on the scenario dialog's page (ScenarioDetails): the same rows as on the card, at the
+ * page's print size, the token as large as a touch target, so the texts read on a tablet too.
+ */
+#board > header > section dialog[data-dialog='scenario'] > article {
+  --scan-unit: calc(var(--touch-target) / var(--scenario-token-size));
+}
+
+#board > header > section dialog[data-dialog='scenario'] > article > ul {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+#board > header > section dialog[data-dialog='scenario'] > article > ul > li {
+  font-size: var(--font-size-body);
 }
 
 /*
@@ -202,7 +254,10 @@
  * In the card pictures theme the side's picture covers the face once loaded (game.css), and the
  * title, side and rows give way to the ones it prints; they stay for assistive technology.
  */
-:root[data-card-theme='pictures'] #board [data-card='scenario'][data-picture] > :is(h1, h2, p, ul) {
+:root[data-card-theme='pictures']
+  #board
+  [data-card='scenario'][data-picture]
+  > :is(h1, h2, span, p, ul) {
   opacity: 0;
 }
 
