@@ -337,8 +337,11 @@
   background: var(--color-card-scenario);
 }
 
-/* While the players choose where an enemy spawns, every location glows to say it can be tapped. */
-#board[data-spawning] #map g[data-card='location'] {
+/*
+ * While the players choose a location (where an enemy spawns, a decision's answer), the ones
+ * they may pick glow to say they can be tapped.
+ */
+#map g[data-card='location'][data-pickable] {
   cursor: pointer;
   filter: var(--turn-piece-glow);
 }

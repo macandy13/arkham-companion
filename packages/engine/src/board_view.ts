@@ -1,5 +1,5 @@
 import { assertNever, listIfAny, recordIfAny } from '@arkham/util';
-import { isConnectionOpen, neighbours } from './board';
+import { isConnectionOpen, isLocationInPlay, neighbours } from './board';
 import { resolveEffect, tokenObjective } from './abilities';
 import {
   advanceActionOf,
@@ -417,6 +417,11 @@ export interface DecisionView extends ChoiceView {
    * failed test's "you must either …"), so the dialog offers it under the option.
    */
   followUps?: Record<string, ChoiceView>;
+  /**
+   * By option name, the location in play an option picks (`DecisionOption.target`: where an enemy
+   * spawns or moves), so the players can answer by tapping it on the map.
+   */
+  locations?: Record<string, InstanceId>;
   /** For an attack of opportunity, the action that provoked it and waits until the attacks are answered. */
   provokedBy?: ProvokingActionView;
 }
@@ -1272,6 +1277,14 @@ function decisionView(ctx: EngineContext, state: GameState, decision: Decision):
       return choice ? [[optionName(option), choiceView(choice)]] : [];
     }),
   );
+  const locations = Object.fromEntries(
+    decision.options.flatMap((option) => {
+      const { target } = option;
+      return target !== undefined && isLocationTarget(state, target)
+        ? [[optionName(option), target]]
+        : [];
+    }),
+  );
   const provokedBy =
     decision.prompt === forcedAttackPrompt('attackOfOpportunity')
       ? provokingAction(ctx, state)
@@ -1286,8 +1299,18 @@ function decisionView(ctx: EngineContext, state: GameState, decision: Decision):
     ...(decision.testKind ? { action: decision.testKind.kind } : {}),
     ...choiceView(decision),
     ...(Object.keys(followUps).length > 0 ? { followUps } : {}),
+    ...recordIfAny('locations', locations),
     ...(provokedBy ? { provokedBy } : {}),
   };
+}
+
+/** Whether an option's target is a location in play rather than another card or an investigator. */
+function isLocationTarget(
+  state: GameState,
+  target: InstanceId | InvestigatorId,
+): target is InstanceId {
+  // An investigator's id names no card, so the lookup finds nothing for it.
+  return isLocationInPlay(state, target as InstanceId);
 }
 
 /**

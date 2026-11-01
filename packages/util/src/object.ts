@@ -55,3 +55,8 @@ export function shallowEqual<T extends object>(a: T, b: T): boolean {
     left.every(([key, value]) => right.has(key) && Object.is(value, right.get(key)))
   );
 }
+
+/** The first key of `record` whose value is `value`, in key order; `undefined` when none has it. */
+export function keyOf<T>(record: Readonly<Record<string, T>>, value: T): string | undefined {
+  return Object.entries(record).find(([, each]) => each === value)?.[0];
+}

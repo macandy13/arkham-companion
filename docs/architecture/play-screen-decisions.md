@@ -25,4 +25,6 @@ The game cannot go on without an answer, so:
 
 - Escape does not close it,
 - Undo in it takes back the step that raised it,
-- and its grab handle lowers it to a strip along the bottom (`CardDialog`'s `lowerable`: the modal makes the board inert, so the lowered dialog is shown as a plain one), so the players can reach the board and its header, for example to adjust the board first; while they adjust, the dialog steps aside, and it comes back raised.
+- and its grab handle lowers it to a strip along the bottom (`CardDialog`'s `lowered` and `onLower`: the modal makes the board inert, so the lowered dialog is shown as a plain one), so the players can reach the board and its header, for example to adjust the board first; while they adjust, the dialog steps aside, and it comes back raised.
+
+A decision whose options pick locations in play (where an enemy spawns or moves) names them in `DecisionView.locations` (option name → location, from `DecisionOption.target`). Its footer then offers **Pick on the map**: the dialog lowers and [`GameScreen`](../../apps/web/src/screens/GameScreen.tsx) passes `MapBoard` an `onPick` with those locations as `pickable`, which glow (`data-pickable`, the same glow as a spawn's tiles). A tap on one answers that option; a tap on another tile, on the lowered strip or on its handle raises the dialog again. Picking belongs to the decision it started for (`GameScreen` keeps its id), so the next decision opens raised.

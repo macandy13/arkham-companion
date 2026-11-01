@@ -47,14 +47,20 @@ export function MapBoard({
   busy,
   adjusting,
   onPick,
+  pickable,
   onOpenLocation,
 }: {
   board: BoardView;
   actions: GameActions;
   busy: boolean;
   adjusting: boolean;
-  /** While the players choose a location (an enemy's spawn), a tap on a tile picks it. */
+  /**
+   * While the players choose a location (an enemy's spawn, a decision's answer), a tap on a tile
+   * picks it, the tiles they may pick lit (`pickable`).
+   */
   onPick?: (location: InstanceId) => void;
+  /** The tiles `onPick` lights, all of them when left out; a tap on another one still reaches it. */
+  pickable?: readonly InstanceId[];
   /** Where a tap on a tile shows its location instead of its details dialog (the phone). */
   onOpenLocation?: (location: InstanceId) => void;
 }) {
@@ -74,6 +80,7 @@ export function MapBoard({
         busy={busy}
         adjusting={adjusting}
         onPick={onPick}
+        pickable={pickable}
         onOpenLocation={onOpenLocation}
       />
     );
@@ -125,6 +132,7 @@ export function MapBoard({
           busy={busy}
           adjusting={adjusting}
           onPick={onPick}
+          pickable={pickable}
           onOpenLocation={onOpenLocation}
         />
       </div>
@@ -165,6 +173,7 @@ function MapDrawing({
   busy,
   adjusting,
   onPick,
+  pickable,
   onOpenLocation,
 }: {
   map: MapView;
@@ -173,6 +182,7 @@ function MapDrawing({
   busy: boolean;
   adjusting: boolean;
   onPick?: (location: InstanceId) => void;
+  pickable?: readonly InstanceId[] | undefined;
   onOpenLocation?: (location: InstanceId) => void;
 }) {
   const investigators = board.investigators;
@@ -255,6 +265,7 @@ function MapDrawing({
                       enemies={map.enemies[location.id] ?? []}
                       investigators={board.investigatorsAt(location.id)}
                       turnOrder={board}
+                      pickable={onPick !== undefined && (pickable?.includes(location.id) ?? true)}
                       onOpen={() => (onPick ?? onOpenLocation ?? setDetailsFor)(location.id)}
                       dragOf={(piece) =>
                         draggable(piece)

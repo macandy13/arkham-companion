@@ -120,21 +120,33 @@ describe('CardDialog', () => {
     expect(screen.getByRole('button', { name: /Ghoul Priest/ })).toBeDefined();
   });
 
-  it("lowers out of the board's way and back with its grab handle", () => {
-    render(
-      <CardDialog name="decision" title="Attack of opportunity" onCancel={() => {}} lowerable>
-        <p>The page</p>
-      </CardDialog>,
-    );
-    const dialog = screen.getByRole('dialog');
+  it.each([
+    { lowered: false, handle: 'Lower to reach the board', asks: true, shown: undefined },
+    { lowered: true, handle: 'Raise the dialog', asks: false, shown: 'true' },
+  ])(
+    'lowered $lowered, it shows data-lowered $shown and its handle asks for lowered $asks',
+    ({ lowered, handle, asks, shown }) => {
+      const onLower = vi.fn();
+      render(
+        <CardDialog
+          name="decision"
+          title="Attack of opportunity"
+          onCancel={() => {}}
+          lowered={lowered}
+          onLower={onLower}
+        >
+          <p>The page</p>
+        </CardDialog>,
+      );
+      const dialog = screen.getByRole('dialog');
 
-    fireEvent.click(screen.getByRole('button', { name: 'Lower to reach the board' }));
-    expect(dialog.dataset['lowered']).toBe('true');
+      fireEvent.click(screen.getByRole('button', { name: handle }));
 
-    fireEvent.click(screen.getByRole('button', { name: 'Raise the dialog' }));
-    expect(dialog.dataset['lowered']).toBeUndefined();
-    expect(dialog.hasAttribute('open')).toBe(true);
-  });
+      expect(onLower).toHaveBeenCalledWith(asks);
+      expect(dialog.dataset['lowered']).toBe(shown);
+      expect(dialog.hasAttribute('open')).toBe(true);
+    },
+  );
 
   it('passes Escape on to the caller, which may refuse it', () => {
     const onCancel = vi.fn((event: { preventDefault: () => void }) => event.preventDefault());
