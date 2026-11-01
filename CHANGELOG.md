@@ -2,6 +2,14 @@
 
 The sections dated up to 2026-10-22 were released as 1.0.0 to 1.8.0 by mistake: Release Please starts at 1.0.0 by default. Versioning restarted at 0.1.0 (see "Versions" in docs/product.md).
 
+## [0.1.20](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v0.1.19...arkham-companion-v0.1.20) (2026-11-01)
+
+
+### Features
+
+* **web:** propose an ended game's resolution and write it into the campaign log (MC1.6c1) ([51f2b87](https://github.com/macandy13/arkham-companion/commit/51f2b87d12b8f89bdf3e2f6f45ef6732b706aa61))
+* **web:** resolution dialog writes an ended game into the campaign log (MC1.6c2) ([6428409](https://github.com/macandy13/arkham-companion/commit/6428409d60004320dccb7d5a916a70ec23b7af79))
+
 ## [0.1.19](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v0.1.18...arkham-companion-v0.1.19) (2026-11-01)
 
 
