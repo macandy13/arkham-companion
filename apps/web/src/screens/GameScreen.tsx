@@ -1,3 +1,4 @@
+import { printedInvestigatorOf } from '@arkham/carddata';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router';
@@ -13,7 +14,6 @@ import { MapBoard } from '../map/MapBoard';
 import { DecisionDialog } from './DecisionDialog';
 import { DetailControls } from './DetailControls';
 import { GameHeader, printedReferenceOf } from './GameHeader';
-import { printedInvestigatorOf } from '../investigators/InvestigatorFace';
 import { GameStatus } from './GameStatus';
 import { MapStrip } from './MapStrip';
 import { RejectionToast } from './RejectionToast';

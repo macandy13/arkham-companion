@@ -1,13 +1,7 @@
-import type { Chapter, PackDef } from '@arkham/carddata';
+import { FACTION_CODES, type Chapter, type PackDef } from '@arkham/carddata';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  activeFilterCount,
-  cyclePositions,
-  FACTION_CODES,
-  sortedPacks,
-  type PickerFilters,
-} from './pickerLogic';
+import { activeFilterCount, cyclePositions, sortedPacks, type PickerFilters } from './pickerLogic';
 
 interface PickerFilterBarProps {
   readonly filters: PickerFilters;

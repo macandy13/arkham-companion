@@ -4,6 +4,7 @@
  * (`--scan-unit`, a 419th of the card's width) so it scales with the card. While the players adjust
  * the board, the counters with their steppers leave the page for a row under the card.
  */
+/* A landscape scan is 419 units wide (LANDSCAPE_SCAN), as the scenario face divides by its 300. */
 #investigators [data-card='investigator'] {
   --scan-unit: calc(100cqw / 419);
   container-type: inline-size;

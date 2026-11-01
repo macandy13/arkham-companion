@@ -1,38 +1,10 @@
 import { useId } from 'react';
-import { SKILL_NAMES, type InvestigatorCode, type SkillName } from '@arkham/engine';
-import type { CardCatalog, InvestigatorDef } from '@arkham/carddata';
+import { SKILL_NAMES, type SkillName } from '@arkham/engine';
+import type { InvestigatorClass } from '@arkham/carddata';
 import { LANDSCAPE_SCAN } from '../catalog/cardArt';
 import { NightSky } from '../catalog/cardFace';
 import type { CardPicture } from '../catalog/cardImages';
-import { FACTION_CODES } from '../picker/pickerLogic';
 import './investigator_face.css';
-
-/**
- * What an investigator card prints besides its stats, from the card catalog (`InvestigatorDef`):
- * the subname under the name, the class on the shield, and the traits, ability text and flavour
- * on the notebook page, in ArkhamDB markup. A game names its investigators by card code
- * (`InvestigatorView.code`); the screen looks these up in the catalog, so no card text is stored.
- */
-export type PrintedInvestigator = Pick<
-  InvestigatorDef,
-  'subname' | 'factionCode' | 'traits' | 'text' | 'flavor'
->;
-
-/** The printed texts of the investigator card `code` in `catalog`, if the catalog lists it. */
-export function printedInvestigatorOf(
-  catalog: CardCatalog,
-  code: InvestigatorCode,
-): PrintedInvestigator | undefined {
-  return catalog.investigators.find((investigator) => investigator.code === code);
-}
-
-/** An investigator's class, which colours the shield and names its icon. */
-export type InvestigatorClass = (typeof FACTION_CODES)[number];
-
-/** The class `factionCode` names, or none for a code the app has no icon for. */
-export function classOf(factionCode: string | undefined): InvestigatorClass | undefined {
-  return FACTION_CODES.find((code) => code === factionCode);
-}
 
 /**
  * Where an investigator card prints its parts, in landscape scan units (`LANDSCAPE_SCAN`),
@@ -40,21 +12,24 @@ export function classOf(factionCode: string | undefined): InvestigatorClass | un
  * exact card templates, MD.10): the class shield in the top left corner, the name plate with its
  * pointed right end and the subname plate under it, the skill chain across the top right with
  * one plate and one diamond per skill, and the spiral-bound notebook page under it. The art fills
- * the rest. The panel's HTML (InvestigatorBar) lies over
- * these places (`--investigator-face-*` in tokens.css).
+ * the rest. The panel's HTML (InvestigatorBar) lies over these places, which tokens.css gives
+ * again for the stylesheet (`--investigator-*`, in the same scan units): change both together.
  */
 export const INVESTIGATOR_FACE = {
-  shield: { left: 7, right: 35, top: 4, shoulder: 20, point: 35 },
+  /** The shield's flat top, where its sides start to curve, its point, and how far the curve bulges. */
+  shield: { left: 7, right: 35, top: 4, shoulder: 20, point: 35, bulge: 9, iconInset: 4 },
   name: { left: 36, right: 212, tip: 222, top: 6, bottom: 32 },
   subname: { left: 48, right: 204, slant: 6, top: 31, bottom: 46 },
   chain: { left: 219, top: 4, width: 200, height: 42 },
   link: { left: 226, step: 48.5, top: 7, width: 44, height: 36, corner: 14 },
   ring: { offset: 46.5, y: 25, outer: 9, inner: 5 },
   plate: { left: 228, top: 9, width: 40, height: 32, corner: 12 },
-  diamond: { x: 29, y: 25, half: 9 },
+  /** A skill's diamond, from its plate's left edge, and its icon's size in the diamond's half width. */
+  diamond: { x: 29, y: 25, half: 9, icon: 1.25 },
   page: { left: 230, top: 52, width: 184, height: 232, shadow: 3 },
   rules: { left: 236, right: 410, first: 86, step: 14.5, last: 282 },
-  spiral: { first: 238, last: 412, step: 8.7, y: 62, rise: 12, eye: 1.6 },
+  /** The binding: a loop every `step` along the page's top, `rise` high, its end `reach` along and `drop` down. */
+  spiral: { first: 238, last: 412, step: 8.7, y: 62, rise: 12, reach: 4, drop: 6, eye: 1.6 },
 } as const;
 
 const { width, height } = LANDSCAPE_SCAN;
@@ -68,7 +43,7 @@ function facePaths() {
   const spiralCount = Math.floor((spiral.last - spiral.first) / spiral.step) + 1;
   const pageEdge = `h ${page.width} v ${page.height} h ${-page.width} Z`;
   return {
-    shield: `M ${shield.left} ${shield.top} H ${shield.right} V ${shield.shoulder} C ${shield.right} ${shield.shoulder + 9} ${half} ${shield.point} ${half} ${shield.point} C ${half} ${shield.point} ${shield.left} ${shield.shoulder + 9} ${shield.left} ${shield.shoulder} Z`,
+    shield: `M ${shield.left} ${shield.top} H ${shield.right} V ${shield.shoulder} C ${shield.right} ${shield.shoulder + shield.bulge} ${half} ${shield.point} ${half} ${shield.point} C ${half} ${shield.point} ${shield.left} ${shield.shoulder + shield.bulge} ${shield.left} ${shield.shoulder} Z`,
     name: `M ${name.left} ${name.top} H ${name.right} L ${name.tip} ${middle} L ${name.right} ${name.bottom} H ${name.left} Z`,
     subname: `M ${subname.left} ${subname.top} H ${subname.right} L ${subname.right - subname.slant} ${subname.bottom} H ${subname.left + subname.slant} Z`,
     links: SKILL_NAMES.map((_, index) => link.left + index * link.step),
@@ -80,9 +55,10 @@ function facePaths() {
       (_, index) => `M ${rules.left} ${rules.first + index * rules.step} H ${rules.right}`,
     ).join(' '),
     spiral: Array.from({ length: spiralCount }, (_, index) => {
-      const x = (spiral.first + index * spiral.step).toFixed(1);
+      const x = spiral.first + index * spiral.step;
       const top = spiral.y - spiral.rise;
-      return `M ${x} ${spiral.y} C ${x} ${top} ${Number(x) + 4} ${top} ${Number(x) + 4} ${spiral.y - 6}`;
+      const end = x + spiral.reach;
+      return `M ${x.toFixed(1)} ${spiral.y} C ${x.toFixed(1)} ${top} ${end.toFixed(1)} ${top} ${end.toFixed(1)} ${spiral.y - spiral.drop}`;
     }).join(' '),
     spiralEyes: Array.from(
       { length: spiralCount },
@@ -133,10 +109,10 @@ export function InvestigatorFace({
       <path data-part="shield" data-class={investigatorClass} d={paths.shield} />
       {investigatorClass && (
         <foreignObject
-          x={shield.left + 4}
-          y={shield.top + 2}
-          width={shield.right - shield.left - 8}
-          height={shield.right - shield.left - 8}
+          x={shield.left + shield.iconInset}
+          y={shield.top + shield.iconInset / 2}
+          width={shield.right - shield.left - 2 * shield.iconInset}
+          height={shield.right - shield.left - 2 * shield.iconInset}
         >
           <span data-class-icon={investigatorClass} />
         </foreignObject>
@@ -206,7 +182,12 @@ function SkillPlate({ skill, left }: { skill: SkillName; left: number }) {
         data-part="diamond"
         d={`M ${x} ${y - half - 1} L ${x + half} ${y} L ${x} ${y + half + 1} L ${x - half} ${y} Z`}
       />
-      <foreignObject x={x - half / 1.6} y={y - half / 1.6} width={half * 1.25} height={half * 1.25}>
+      <foreignObject
+        x={x - (half * diamond.icon) / 2}
+        y={y - (half * diamond.icon) / 2}
+        width={half * diamond.icon}
+        height={half * diamond.icon}
+      >
         <span data-skill-icon="" />
       </foreignObject>
     </g>

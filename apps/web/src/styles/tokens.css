@@ -80,7 +80,7 @@
   --color-ink: #2b1e12;
   --color-ink-muted: #6a5536;
   --color-card-edge: #3d2b19;
-  /* The dark bands of a printed card's frame (the enemy card's) and the thin gilt rules on them. */
+  /* The thin gilt rules on a printed card's dark frame (the map's location tiles). */
   --color-card-gilt: #d8c48e;
   /* The shroud token, a dark disc like the printed shroud icon's. */
   --color-token-shroud: #2c2c33;
