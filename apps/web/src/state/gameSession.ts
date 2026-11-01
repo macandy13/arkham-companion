@@ -15,6 +15,7 @@ import {
   type ScenarioContext,
   type SetupOptions,
   takenAsAction,
+  undoLastGroup,
 } from '@arkham/engine';
 import { runsBy } from '@arkham/util';
 import { drawnCards, type DrawnCard } from '../encounter/drawnCards';
@@ -344,10 +345,6 @@ export class GameSession {
   }
 }
 
-/**
- * The table for a stored game, the `seq` its next write expects and when each of its steps was
- * stored (`GameSession.stepTimes`).
- */
 /** What a step leaves for the players to read: the effects it skipped and the cards it drew. */
 interface StepNotices {
   skipped: readonly SkippedEffect[];
@@ -375,19 +372,20 @@ function stepNotices(
  * is the last one, so its notices come back too.
  */
 function lastStepNotices(ctx: ScenarioContext, table: PlayTable): StepNotices {
-  const { entries } = table;
-  const last = entries.at(-1);
-  if (!table.canUndo || last === undefined) return { skipped: [], drawn: [] };
-  const start = entries.findIndex((entry) => entry.commandId === last.commandId);
-  const before = PlayTable.resume(ctx, entries.slice(0, start)).board;
+  if (!table.canUndo) return { skipped: [], drawn: [] };
+  const { kept, removed } = undoLastGroup(table.entries);
   return stepNotices(
     ctx,
-    before,
+    PlayTable.resume(ctx, kept).board,
     table,
-    entries.slice(start).map((entry) => entry.event),
+    removed.map((entry) => entry.event),
   );
 }
 
+/**
+ * The table for a stored game, the `seq` its next write expects and when each of its steps was
+ * stored (`GameSession.stepTimes`).
+ */
 async function loadTable(
   store: GameStore,
   gameId: GameId,

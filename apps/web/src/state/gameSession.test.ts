@@ -238,7 +238,7 @@ describe('GameSession on The Gathering', () => {
     });
   });
 
-  it('names the effects a step skipped for a missing card, until the next step', async () => {
+  it('names the effects a step skipped for a missing card, after a reload too, until the next step', async () => {
     // With two Ghoul Priests set aside, The Barrier's reverse side cannot tell which one spawns.
     const twoPriests: ScenarioDefinition = {
       ...theGathering,
@@ -263,11 +263,13 @@ describe('GameSession on The Gathering', () => {
 
     await session.play((table) => table.play({ type: 'AdvanceAct' }));
     const afterTheBarrier = session.skippedEffects;
+    const reopened = await GameSession.open(store, gameId, twoPriestsCtx);
     await session.play((table) => table.nextPhase());
 
     expect(afterTheBarrier).toEqual([
       { kind: 'missingCard', card: 'The Barrier', effect: 'SpawnEnemy', missing: ['Ghoul Priest'] },
     ]);
+    expect(reopened.skippedEffects).toEqual(afterTheBarrier);
     expect(session.skippedEffects).toEqual([]);
   });
 
@@ -301,6 +303,18 @@ describe('GameSession on The Gathering', () => {
     expect(
       reopened.drawnCards.map(({ card, drawnFor, place }) => [card.name, drawnFor, place]),
     ).toEqual([['Dissonant Voices', 'alder', { kind: 'threatArea', investigator: 'alder' }]]);
+  });
+
+  it("shows the earlier step's drawn cards again after the later step was undone", async () => {
+    const { store, gameId } = await storedGame('session-undone-step-notices-test');
+    const session = await GameSession.open(store, gameId, ctx);
+    await session.play((table) => table.drawEncounterCard(investigatorId('alder')));
+    await session.play((table) => table.nextPhase());
+    await session.undo();
+
+    const reopened = await GameSession.open(store, gameId, ctx);
+
+    expect(reopened.drawnCards.map(({ card }) => card.name)).toEqual(['Dissonant Voices']);
   });
 
   it('opens a game with no step played yet without notices', async () => {
