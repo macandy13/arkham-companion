@@ -49,6 +49,7 @@ import {
   type CardName,
   type EncounterSetCode,
   type InstanceId,
+  type InvestigatorCode,
   type InvestigatorId,
   type MapId,
   type ResolutionId,
@@ -133,6 +134,8 @@ export class TableError extends Error {
  */
 export interface InvestigatorView {
   id: InvestigatorId;
+  /** The investigator card's code (`Investigator.code`), by which the screen finds its printed texts. */
+  code: InvestigatorCode;
   /** The printed name of the investigator card. */
   name: CardName;
   status: InvestigatorStatus;
@@ -1082,6 +1085,7 @@ function investigatorView(
   const at = nameOfId(ctx, state, investigator.locationId);
   return {
     id: investigator.id,
+    code: investigator.code,
     name: cardName(investigator.name),
     status: investigator.status,
     ...(at === undefined ? {} : { at }),
