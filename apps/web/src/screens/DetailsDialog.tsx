@@ -73,8 +73,8 @@ export function useDecisionHost(): HostedDecision {
 }
 
 /**
- * The card shell of an enemy's or location's details (`EnemyDetails`, `LocationDetails`): its
- * page (`children`) with the × and Escape to close it, or, while it hosts a decision
+ * The card shell of an enemy's, a location's or a held card's details (`EnemyDetails`,
+ * `LocationDetails`, `CardDetails`): its page (`children`) with the × and Escape to close it, or, while it hosts a decision
  * (`hosted.decision`), that decision's page in the same `<dialog>` (`DecisionPage`), titled and
  * answered like the decision dialog: Escape refused, the grab handle to lower it, its draw fresh
  * for each decision. The details' card stays beside it, unless the decision is about another card

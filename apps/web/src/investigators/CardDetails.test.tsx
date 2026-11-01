@@ -90,6 +90,9 @@ describe('CardDetails', () => {
     rerender(fearDetailsWith(table, setHosted, { view: test, id: decisionId('the_test') }));
 
     expect(setHosted).toHaveBeenCalledWith(true);
+    expect(screen.getByRole('dialog', { hidden: true, name: 'Test for frozen_in_fear' })).toBe(
+      details,
+    );
     expect(
       within(details).getByRole('button', { hidden: true, name: 'Read frozen_in_fear' }),
     ).toBeDefined();
