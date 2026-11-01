@@ -1,6 +1,14 @@
 import { useId } from 'react';
 import { PORTRAIT_SCAN } from '../catalog/cardArt';
-import { CARD_OUTLINE, NightSky, OrnamentLine, mirrored, scrollPath } from '../catalog/cardFace';
+import type { EncounterSetCode } from '@arkham/engine';
+import {
+  CARD_OUTLINE,
+  NightSky,
+  OrnamentLine,
+  SetIcon,
+  mirrored,
+  scrollPath,
+} from '../catalog/cardFace';
 import type { Point } from '../map/mapLayout';
 import './scenario_face.css';
 
@@ -78,13 +86,17 @@ function framePaths() {
   };
 }
 
+/** How much of the medallion's radius the scenario's set icon fills. */
+const SET_ICON_IN_MEDALLION = 0.75;
+
 /**
  * The frame of a scenario reference card in the Exact card theme, in portrait scan units: our own
- * drawing of the printed one (`SCENARIO_FACE`, no FFG art) on its paper. The card lays its title,
+ * drawing of the printed one (`SCENARIO_FACE`, no FFG art) on its paper, the scenario's encounter
+ * set icon (`set`) on its medallion. The card lays its title,
  * difficulty and rows over it in HTML (GameHeader `ScenarioCard`), so this is decoration only
  * (`aria-hidden`).
  */
-export function ScenarioFace() {
+export function ScenarioFace({ set }: { set: EncounterSetCode | undefined }) {
   const paperId = useId();
   const clipId = useId();
   const { width, height } = PORTRAIT_SCAN;
@@ -120,6 +132,14 @@ export function ScenarioFace() {
       <path data-part="rule" d={insetOutline(rule.inset, rule.corner)} />
       <path data-part="rule" d={paths.rules} />
       <circle data-part="medallion" cx={medallion.x} cy={medallion.y} r={medallion.radius} />
+      {set && (
+        <SetIcon
+          set={set}
+          x={medallion.x}
+          y={medallion.y}
+          radius={medallion.radius * SET_ICON_IN_MEDALLION}
+        />
+      )}
     </svg>
   );
 }

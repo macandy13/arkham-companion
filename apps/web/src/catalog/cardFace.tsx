@@ -85,6 +85,30 @@ export function CountCircle({
 const COUNT_RADIUS = 11;
 
 /**
+ * The icon of an encounter set (`set`, its `CardStats.encounterCode`) centred on `x`, `y` and
+ * filling a circle of `radius`, in the face's units: a span whose CSS mask is the set's picture
+ * (`symbols/sets.css`), so it takes the colour its place on the face gives it (`color`). The set
+ * medallions, the agenda's and act's title and the scenario card's medallion print it.
+ */
+export function SetIcon({
+  set,
+  x,
+  y,
+  radius,
+}: {
+  set: EncounterSetCode;
+  x: number;
+  y: number;
+  radius: number;
+}) {
+  return (
+    <foreignObject x={x - radius} y={y - radius} width={2 * radius} height={2 * radius}>
+      <span data-encounter-set={set} />
+    </foreignObject>
+  );
+}
+
+/**
  * The round set medallion on its plate, in scan units, as every encounter card prints it on its
  * type line: a dark ring, the pale medallion with an inner ring (where the encounter set's icon
  * goes), and under it the notched plate naming the card's `type`, `plateWidth` wide. The icon of
@@ -123,16 +147,7 @@ export function SetMedallion({
         <circle data-part="iris" cx={x} cy={y} r={radius * EYE.iris} />
         <path data-part="pupil" d={lens(x, y, radius * EYE.iris, radius * EYE.pupil, 'upright')} />
       </g>
-      {set && (
-        <foreignObject
-          x={x - iconRadius}
-          y={y - iconRadius}
-          width={2 * iconRadius}
-          height={2 * iconRadius}
-        >
-          <span data-encounter-set={set} />
-        </foreignObject>
-      )}
+      {set && <SetIcon set={set} x={x} y={y} radius={iconRadius} />}
       <path
         data-part="plate"
         d={`M ${left} ${top} H ${right} L ${right + 5} ${middle} L ${right} ${bottom} H ${left} L ${left - 5} ${middle} Z`}
