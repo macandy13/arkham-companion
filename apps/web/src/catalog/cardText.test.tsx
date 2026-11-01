@@ -82,6 +82,13 @@ describe('cardText', () => {
     expect(rendered(text)).toEqual({ reads, emphasised });
   });
 
+  it('shows a tag left over once others are dropped as text, never as an element', () => {
+    const { container } = render(<div>{cardText('<scr<u>ipt>alert(1)</script>')}</div>);
+
+    expect(container.querySelector('script')).toBeNull();
+    expect(container.textContent).toBe('<script>alert(1)');
+  });
+
   it('sets each line of card text as a paragraph of its own, skipping empty ones', () => {
     const { container } = render(<div>{cardParagraphs('First ability.\n\nSecond ability.')}</div>);
 
