@@ -34,27 +34,29 @@ test('map tabs for the Study and the house, the house chosen', async ({ page }) 
   await expect(page.getByRole('tabpanel', { name: 'House' })).toBeVisible();
 });
 
-test('Roland Banks with four treacheries and the Ghoul Priest, scrolled on to the Ghoul Priest', async ({
-  page,
-}) => {
-  await resumeImportedGame(
-    page,
-    'Roland Banks threatened',
-    rolandThreatenedExport('Roland Banks threatened'),
-  );
+test(
+  'Roland Banks with four treacheries and the Ghoul Priest, scrolled on to the Ghoul Priest',
+  { tag: '@shot' },
+  async ({ page }) => {
+    await resumeImportedGame(
+      page,
+      'Roland Banks threatened',
+      rolandThreatenedExport('Roland Banks threatened'),
+    );
 
-  const roland = page.getByRole('region', { name: 'Roland Banks' });
-  const threatArea = roland.getByRole('list', { name: 'Threat area' });
-  const ghoulPriest = threatArea.getByRole('listitem', {
-    name: 'Ghoul Priest, 3 of 5 health left, 2 damage',
-  });
-  await expect(threatArea.getByRole('listitem')).toHaveCount(5);
-  await expect(ghoulPriest).not.toBeInViewport({ ratio: 1 });
+    const roland = page.getByRole('region', { name: 'Roland Banks' });
+    const threatArea = roland.getByRole('list', { name: 'Threat area' });
+    const ghoulPriest = threatArea.getByRole('listitem', {
+      name: 'Ghoul Priest, 3 of 5 health left, 2 damage',
+    });
+    await expect(threatArea.getByRole('listitem')).toHaveCount(5);
+    await expect(ghoulPriest).not.toBeInViewport({ ratio: 1 });
 
-  await roland.getByRole('button', { name: 'Later cards in the threat area' }).click();
+    await roland.getByRole('button', { name: 'Later cards in the threat area' }).click();
 
-  await expect(ghoulPriest).toBeInViewport({ ratio: 1 });
-});
+    await expect(ghoulPriest).toBeInViewport({ ratio: 1 });
+  },
+);
 
 test('the Hallway’s details, its card with Roland Banks on it, on Roland Banks’ turn', async ({
   page,
@@ -97,7 +99,7 @@ test(
   },
 );
 
-test('the house map in the Eldritch card style', async ({ page }) => {
+test('the house map in the Eldritch card style', { tag: '@shot' }, async ({ page }) => {
   await page.goto('/#/settings');
   await page.getByLabel('Card style').selectOption('Eldritch');
   await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
@@ -143,7 +145,7 @@ test("the Ghoul Priest's details in the card pictures style, its damage on the p
   await expect(card).toHaveAttribute('data-picture', 'shown');
 });
 
-test('the house map in the Night and brass card style', async ({ page }) => {
+test('the house map in the Night and brass card style', { tag: '@shot' }, async ({ page }) => {
   await page.goto('/#/settings');
   await page.getByLabel('Card style').selectOption('Night and brass');
   await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
@@ -165,17 +167,21 @@ test('the game log after two rounds, scrolled to the newest step under its round
   await expect(newestRound.getByRole('listitem').last()).toBeInViewport();
 });
 
-test('Roland Banks’ combat boosted by 2, as an ally in play gives it', async ({ page }) => {
-  await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
-  const roland = page.getByRole('region', { name: 'Roland Banks' });
+test(
+  'Roland Banks’ combat boosted by 2, as an ally in play gives it',
+  { tag: '@shot' },
+  async ({ page }) => {
+    await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
+    const roland = page.getByRole('region', { name: 'Roland Banks' });
 
-  await page.getByRole('button', { name: 'Adjust board' }).click();
-  await roland.getByRole('button', { name: 'Raise the Combat boost' }).click();
-  await roland.getByRole('button', { name: 'Raise the Combat boost' }).click();
-  await page.getByRole('button', { name: 'Done' }).click();
+    await page.getByRole('button', { name: 'Adjust board' }).click();
+    await roland.getByRole('button', { name: 'Raise the Combat boost' }).click();
+    await roland.getByRole('button', { name: 'Raise the Combat boost' }).click();
+    await page.getByRole('button', { name: 'Done' }).click();
 
-  await expect(roland.getByRole('button', { name: 'Combat 6, boosted +2' })).toBeVisible();
-});
+    await expect(roland.getByRole('button', { name: 'Combat 6, boosted +2' })).toBeVisible();
+  },
+);
 
 test('Roland Banks’ willpower test before a token is drawn, the draw button in its place', async ({
   page,

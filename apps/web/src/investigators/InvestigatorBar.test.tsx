@@ -362,15 +362,18 @@ describe('InvestigatorBar', () => {
     );
 
     const card = within(panel('alder')).getByRole('article');
-    // The page is a plain block of the card's paragraphs, with no role of its own.
+    // The page is a plain block of the card's paragraphs, with no role of its own; each symbol
+    // reads as its name in braces.
+    for (const icon of card.querySelectorAll('[data-page] [role="img"]')) {
+      icon.textContent = `{${icon.getAttribute('aria-label') ?? ''}}`;
+    }
     const page = Array.from(card.querySelectorAll('[data-page] > *'), (part) => part.textContent);
     expect(page).toEqual([
       'Tester. Hero.',
-      ' After you pass a test: gain 1 resource.',
+      '{Reaction} After you pass a test: gain 1 resource.',
       'Forced – Nothing.',
       'It always works in the tests.',
     ]);
-    expect(within(card).getByRole('img', { name: 'Reaction' })).toBeTruthy();
   });
 
   it.each([
