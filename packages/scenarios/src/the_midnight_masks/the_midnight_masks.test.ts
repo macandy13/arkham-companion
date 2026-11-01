@@ -35,17 +35,13 @@ import {
   MIDNIGHT_MASKS_RESOLUTIONS,
   ZEALOT_STORY,
   theMidnightMasksResolutions,
-  theGatheringCards,
   theMidnightMasks,
-  theMidnightMasksCardDefs,
+  theMidnightMasksCards,
 } from '../index';
 import { rolandBanks, zealotInvestigatorCards } from '../investigators';
 
 const ctx: ScenarioContext = {
-  cards: cardDbWith(
-    cardDbWith(theGatheringCards, theMidnightMasksCardDefs),
-    standardInvestigatorCards,
-  ),
+  cards: cardDbWith(theMidnightMasksCards, standardInvestigatorCards),
   scenario: theMidnightMasks,
 };
 const arkham = mapId('arkham');

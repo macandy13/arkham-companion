@@ -40,18 +40,16 @@ import {
   ZEALOT_STORY,
   nightOfTheZealot,
   theDevourerBelow,
-  theDevourerBelowCardDefs,
+  theDevourerBelowCards,
   theDevourerBelowResolutions,
-  theGatheringCards,
-  theMidnightMasksCardDefs,
 } from '../index';
 import { daisyWalker, rolandBanks, zealotInvestigatorCards } from '../investigators';
 
 const ctx: ScenarioContext = {
-  cards: cardDbWith(
-    cardDbWith(cardDbWith(theGatheringCards, theMidnightMasksCardDefs), theDevourerBelowCardDefs),
-    [...standardInvestigatorCards, ...zealotInvestigatorCards],
-  ),
+  cards: cardDbWith(theDevourerBelowCards, [
+    ...standardInvestigatorCards,
+    ...zealotInvestigatorCards,
+  ]),
   scenario: theDevourerBelow,
 };
 const woods = mapId('woods');
