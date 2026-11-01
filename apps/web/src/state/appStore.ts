@@ -1,6 +1,7 @@
 import { createStore, type StoreApi } from 'zustand/vanilla';
 import type {
   BoardView,
+  CampaignCommand,
   CampaignDefinition,
   CampaignExecuteResult,
   CampaignId,
@@ -15,6 +16,7 @@ import type {
   GameSummary,
   InvestigatorSeat,
   LoggedEvent,
+  ProposedChange,
   Rejection,
   ScenarioContext,
   ScenarioId,
@@ -63,6 +65,18 @@ export interface OpenCampaign {
   log: CampaignLog;
   /** The campaign's games, most recently played first. */
   games: GameSummary[];
+}
+
+/**
+ * What an ended game writes into its campaign log, for the players to confirm
+ * (`AppState.writeResolution`): `campaign.proposeResolution` for the game as it ended. A standalone
+ * game has one too, shown without a log to write.
+ */
+export interface PendingResolution {
+  /** The proposed log changes, in the order the resolution lists them, then the defeat trauma. */
+  changes: readonly ProposedChange[];
+  /** The campaign the resolution writes into; absent for a standalone game. */
+  campaignId?: CampaignId;
 }
 
 /** The game on the play screen, as `AppState.openGame` loaded it and `AppState.actions` keep it. */
@@ -118,6 +132,12 @@ export interface OpenGame {
    * until they tap one or cancel.
    */
   spawning?: EncounterCardView;
+  /**
+   * The resolution the ended game proposes, until it is written into the campaign log. Absent
+   * while the game goes on, once its campaign has moved past its scenario, and for a scenario
+   * without resolutions.
+   */
+  resolution?: PendingResolution;
 }
 
 /**
@@ -165,6 +185,14 @@ export interface AppState {
   openGame(gameId: GameId): Promise<void>;
   /** Loads a campaign's log and its games for the campaign screen (`campaign`). */
   openCampaign(campaignId: CampaignId): Promise<void>;
+  /**
+   * Writes the open game's resolution into its campaign log as one undo step
+   * (`campaign.applyResolution`): `confirmed` are the commands the players kept of
+   * `current.resolution`, as they edited them. Afterwards the game has no pending resolution.
+   * Rejects with `CampaignCommandRejected` and writes nothing if one of them is refused, and
+   * rejects for a game without a pending resolution of a campaign.
+   */
+  writeResolution(confirmed: readonly CampaignCommand[]): Promise<void>;
   /**
    * What the play screen can do to the open game (`GameActions`). Each action is stored before
    * the new state shows; a refused one stores nothing and sets `current.rejection`. Actions run
@@ -221,6 +249,23 @@ function startCampaignLog(start: CampaignStart, campaignId: CampaignId): Campaig
 }
 
 /**
+ * The resolution `state` proposes (`PendingResolution`), if it has ended and is not yet in the
+ * campaign log: `log` is its campaign's log, absent for a standalone game. A log whose current
+ * scenario is another one has written this game already.
+ */
+function pendingResolution(
+  ctx: ScenarioContext,
+  state: GameState,
+  log: CampaignLog | undefined,
+): PendingResolution | undefined {
+  const resolutions = ctx.scenario.resolutions;
+  if (resolutions === undefined) return undefined;
+  if (log && campaign.findCurrentScenarioId(log) !== state.meta.scenarioId) return undefined;
+  const changes = campaign.proposeResolution(ctx, state, resolutions);
+  return changes && { changes, campaignId: log?.campaignId };
+}
+
+/**
  * Builds the app store around a `GameStore`. It is a factory (not a singleton)
  * so tests can inject an in-memory database and their own scenarios; the app
  * never touches IndexedDB directly (CLAUDE.md ground rules). It plays the
@@ -235,6 +280,9 @@ export function createAppStore(
     let stepQueue = Promise.resolve();
     // The table behind `current`; mutable, so it stays out of the published state.
     let session: GameSession | undefined;
+    // The campaign log of `current`'s game as stored, absent for a standalone one: each step
+    // that ends the game proposes its resolution against it.
+    let campaignLog: CampaignLog | undefined;
     // Actions and undos sent but not finished; `current.busy` while any are.
     let unfinishedSteps = 0;
 
@@ -244,6 +292,8 @@ export function createAppStore(
       const entry = loaded && scenarios(state.meta.scenarioId);
       const ctx = entry && contextFor(entry);
       session = ctx && (await GameSession.open(gameStore, gameId, ctx));
+      const campaignId = loaded?.summary.campaignId;
+      campaignLog = campaignId && (await gameStore.loadCampaign(campaignId))?.log;
       set({
         current: {
           gameId,
@@ -255,6 +305,7 @@ export function createAppStore(
           busy: unfinishedSteps > 0,
           canUndo: session?.canUndo ?? false,
           adjusting: false,
+          resolution: session && pendingResolution(session.ctx, session.state, campaignLog),
         },
       });
     }
@@ -274,6 +325,7 @@ export function createAppStore(
           rejection,
           skippedEffects: played.skippedEffects.length > 0 ? played.skippedEffects : undefined,
           drawnCards: played.drawnCards.length > 0 ? played.drawnCards : undefined,
+          resolution: pendingResolution(played.ctx, played.state, campaignLog),
         },
       });
     }
@@ -391,6 +443,26 @@ export function createAppStore(
         }
         const games = (await gameStore.listGames()).filter((g) => g.campaignId === campaignId);
         set({ campaign: { campaignId, title: loaded.summary.title, log: loaded.log, games } });
+      },
+      writeResolution(confirmed) {
+        return enqueue(async () => {
+          const played = session;
+          const campaignId = get().current?.resolution?.campaignId;
+          if (!played || campaignId === undefined) throw new Error('No resolution to write');
+          const loaded = await gameStore.loadCampaign(campaignId);
+          if (!loaded) throw new Error(`Unknown campaign ${campaignId}`);
+          const ctx = { cards: played.ctx.cards };
+          const { log, events } = campaign.applyResolution(
+            ctx,
+            loaded.log,
+            played.state,
+            confirmed,
+          );
+          await gameStore.appendCampaignEvents(campaignId, events, loaded.summary.lastSeq);
+          campaignLog = log;
+          publish(played);
+          await get().refresh();
+        });
       },
       actions: gameActions(
         (step) => queueStep(() => playStep(step)),

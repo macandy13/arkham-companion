@@ -243,6 +243,91 @@ describe('appStore', () => {
       });
     });
 
+    describe('resolution', () => {
+      const campaignStart = {
+        ...start,
+        definition: nightOfTheZealot,
+        campaignTitle: 'Night of the Zealot',
+      };
+      const alderId = investigatorId('alder');
+      const houseStillStanding = { kind: 'flag', value: true } as const;
+
+      it('proposes nothing while the game goes on', async () => {
+        const store = createAppStore(new IndexedDbStore('appstore-resolution-running-test'));
+
+        await store.getState().startCampaign(campaignStart);
+
+        expect(store.getState().current?.resolution).toBeUndefined();
+      });
+
+      it("proposes the campaign's no-resolution changes once Alder is defeated by horror", async () => {
+        const store = createAppStore(new IndexedDbStore('appstore-resolution-proposed-test'));
+        await store.getState().startCampaign(campaignStart);
+        const campaignId = store.getState().campaigns[0]!.campaignId;
+
+        await store.getState().actions.adjust(alderId, 'horror', alder.sanity);
+
+        const resolution = store.getState().current?.resolution;
+        expect(resolution?.campaignId).toBe(campaignId);
+        expect(resolution?.changes).toContainEqual({
+          kind: 'command',
+          command: { type: 'RecordStory', key: 'houseStillStanding', value: houseStillStanding },
+        });
+        expect(resolution?.changes.at(-1)).toEqual({
+          kind: 'command',
+          command: { type: 'AddTrauma', code: alder.code, kind: 'mental', amount: 1 },
+        });
+      });
+
+      it('writes the confirmed changes into the campaign log and proposes nothing more', async () => {
+        const db = new IndexedDbStore('appstore-resolution-write-test');
+        const store = createAppStore(db);
+        const gameId = await store.getState().startCampaign(campaignStart);
+        const campaignId = store.getState().campaigns[0]!.campaignId;
+        await store.getState().actions.adjust(alderId, 'horror', alder.sanity);
+        const trauma = { type: 'AddTrauma', code: alder.code, kind: 'mental', amount: 1 } as const;
+
+        await store.getState().writeResolution([trauma]);
+
+        expect(store.getState().current?.resolution).toBeUndefined();
+        const { log } = (await db.loadCampaign(campaignId))!;
+        expect(log.playedScenarios).toEqual([
+          { scenarioId: 'the-gathering', outcome: { kind: 'noResolution' } },
+        ]);
+        expect(log.investigators).toMatchObject([{ code: alder.code, mentalTrauma: 1 }]);
+        await store.getState().openGame(gameId);
+        expect(store.getState().current?.resolution).toBeUndefined();
+      });
+
+      it('writes nothing and keeps the proposal when the log refuses a change', async () => {
+        const db = new IndexedDbStore('appstore-resolution-refused-test');
+        const store = createAppStore(db);
+        await store.getState().startCampaign(campaignStart);
+        const campaignId = store.getState().campaigns[0]!.campaignId;
+        await store.getState().actions.adjust(alderId, 'horror', alder.sanity);
+        const stranger = investigatorCode('stranger');
+
+        await expect(
+          store.getState().writeResolution([{ type: 'AwardXp', code: stranger, amount: 2 }]),
+        ).rejects.toThrow();
+
+        expect((await db.loadCampaign(campaignId))?.log.playedScenarios).toEqual([]);
+        expect(store.getState().current?.resolution).toBeDefined();
+      });
+
+      it('proposes the resolution of a standalone game without a campaign to write', async () => {
+        const store = createAppStore(new IndexedDbStore('appstore-resolution-standalone-test'));
+        await store.getState().startScenario(start);
+
+        await store.getState().actions.adjust(alderId, 'horror', alder.sanity);
+
+        const resolution = store.getState().current?.resolution;
+        expect(resolution?.campaignId).toBeUndefined();
+        expect(resolution?.changes.length).toBeGreaterThan(0);
+        await expect(store.getState().writeResolution([])).rejects.toThrow();
+      });
+    });
+
     describe('actions', () => {
       it("stores an action's events, so reopening the game shows the same state", async () => {
         const db = 'appstore-play-test';
