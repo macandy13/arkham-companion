@@ -1,14 +1,15 @@
 /*
- * The encounter set icons on the set medallions (`SetMedallion`), one rule per encounter set
+ * The encounter set icons (`SetIcon`), one rule per encounter set
  * (`CardStats.encounterCode`, ArkhamDB's code), added campaign by campaign. The pictures are cut
- * from the symbol sheets in the project library (sets/*.svg) and drawn as a mask, so each card
- * theme colours them. They go on the M9 copyright check with the other game symbols.
+ * from the symbol sheets in the project library (sets/*.svg) and drawn as a mask in the current
+ * `color`, which each place on a face sets for its card theme. They go on the M9 copyright check
+ * with the other game symbols.
  */
-#board svg [data-medallion] span[data-encounter-set] {
+#board svg span[data-encounter-set] {
   display: block;
   width: 100%;
   height: 100%;
-  background: var(--color-face-medallion-ring);
+  background: currentColor;
   mask: var(--set-icon) center / contain no-repeat;
 }
 

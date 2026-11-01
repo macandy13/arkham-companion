@@ -1685,6 +1685,23 @@ describe('encounter sets', () => {
     );
   });
 
+  it('names the scenario set on the agenda, the act and the reference card, for their set marks', () => {
+    const theGathering = encounterSetCode('torch');
+    const { context, state } = newGame()
+      .withAgenda(
+        instanceId('whats_going_on'),
+        blankAgenda('whats_going_on', fixed(3), { encounterCode: theGathering }),
+      )
+      .withAct(instanceId('trapped'), blankAct('trapped', { encounterCode: theGathering }))
+      .withReferenceCard({ easyStandard: {}, hardExpert: {} })
+      .start();
+    const board = boardView(context, state);
+
+    expect(board.agenda?.encounterSet).toBe('torch');
+    expect(board.act?.encounterSet).toBe('torch');
+    expect(board.reference?.encounterSet).toBe('torch');
+  });
+
   it('names none for a card outside every encounter set', () => {
     const { context, state } = newGame()
       .withLocation(study, blankLocation('study'))

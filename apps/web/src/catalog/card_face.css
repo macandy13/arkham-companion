@@ -46,6 +46,10 @@
   display: inline;
 }
 
+#board svg [data-medallion] span[data-encounter-set] {
+  color: var(--color-face-medallion-ring);
+}
+
 #board svg [data-medallion] [data-part='eye-white'] {
   fill: var(--color-face-eye);
 }

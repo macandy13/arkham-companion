@@ -342,6 +342,8 @@ export interface AgendaView {
   name: CardName;
   /** The picture of its front, the side in play (`CardStats.imageSrc`), when the card data has one. */
   image?: CardImagePath;
+  /** The encounter set it belongs to (`CardStats.encounterCode`), whose icon its title prints. */
+  encounterSet?: EncounterSetCode;
   doom: number;
   threshold?: number;
 }
@@ -355,6 +357,8 @@ export interface ActView {
   name: CardName;
   /** The picture of its front, the side in play (`CardStats.imageSrc`), when the card data has one. */
   image?: CardImagePath;
+  /** The encounter set it belongs to (`CardStats.encounterCode`), whose icon its title prints. */
+  encounterSet?: EncounterSetCode;
   clues: number;
   advance?: ActAdvance;
 }
@@ -455,6 +459,12 @@ export interface EncounterPilesView {
  */
 export interface ReferenceView {
   code: CardCode;
+  /**
+   * The scenario's own encounter set, whose icon the card prints on its medallion: the current
+   * agenda's (`AgendaView.encounterSet`), since a scenario's agendas, acts and reference card all
+   * belong to that set.
+   */
+  encounterSet?: EncounterSetCode;
   difficulty: Difficulty;
   side: ReferenceSide;
   rows: readonly ReferenceRowView[];
@@ -751,8 +761,10 @@ export class BoardView {
     const { difficulty } = this.state.meta;
     const side = pickReferenceSide(difficulty);
     const effects = scenario.reference[side];
+    const encounterSet = this.agenda?.encounterSet;
     return {
       code: scenario.referenceCode,
+      ...(encounterSet === undefined ? {} : { encounterSet }),
       difficulty,
       side,
       rows: SYMBOL_TOKENS.flatMap((token) => {
@@ -1170,12 +1182,13 @@ function mapOf({ zone, id }: CardInstance): MapId {
 function agendaView(ctx: EngineContext, state: GameState): AgendaView | undefined {
   const agenda = currentCard(state, 'agenda');
   if (!agenda) return undefined;
-  const { imageSrc } = cardStats(ctx.cards, agenda.code);
+  const { imageSrc, encounterCode } = cardStats(ctx.cards, agenda.code);
   const threshold = agendaThreshold(ctx, state, agenda);
   return {
     id: agenda.id,
     name: nameOf(ctx, agenda),
     ...(imageSrc === undefined ? {} : { image: imageSrc }),
+    ...(encounterCode === undefined ? {} : { encounterSet: encounterCode }),
     doom: agenda.tokens.doom ?? 0,
     ...(threshold === undefined ? {} : { threshold }),
   };
@@ -1190,6 +1203,7 @@ function actView(ctx: EngineContext, state: GameState): ActView | undefined {
     id: act.id,
     name: nameOf(ctx, act),
     ...(stats.imageSrc === undefined ? {} : { image: stats.imageSrc }),
+    ...(stats.encounterCode === undefined ? {} : { encounterSet: stats.encounterCode }),
     clues: act.tokens.clue ?? 0,
     ...(advance === undefined ? {} : { advance }),
   };
