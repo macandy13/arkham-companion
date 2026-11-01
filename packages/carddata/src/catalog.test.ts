@@ -100,10 +100,14 @@ describe('buildInvestigatorCatalog', () => {
   });
 
   it('leaves the texts out when the card prints none', () => {
-    const [investigator] = buildInvestigatorCatalog([rawInvestigator({ flavor: null })], packs);
+    const [investigator] = buildInvestigatorCatalog(
+      [rawInvestigator({ traits: null, text: null, flavor: null })],
+      packs,
+    );
 
-    expect(investigator?.flavor).toBeUndefined();
+    expect(investigator?.traits).toBeUndefined();
     expect(investigator?.text).toBeUndefined();
+    expect(investigator?.flavor).toBeUndefined();
   });
 
   it('takes the chapter the pack data gives', () => {

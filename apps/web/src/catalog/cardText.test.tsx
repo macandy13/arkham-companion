@@ -43,6 +43,18 @@ describe('cardText', () => {
       emphasised: ['(Once per game.)'],
     },
     {
+      markup: 'a bold run naming a trait and a symbol',
+      text: '<b>[[Tome]]. [action]:</b> Draw 1 card.',
+      reads: 'Tome. {Action}: Draw 1 card.',
+      emphasised: ['Tome. {Action}:', 'Tome'],
+    },
+    {
+      markup: 'a bracket word that is no symbol',
+      text: '[constructor] stays.',
+      reads: '[constructor] stays.',
+      emphasised: [],
+    },
+    {
       markup: 'symbols',
       text: '[reaction] Gain 1 resource. [elder_sign] effect: +1.',
       reads: '{Reaction} Gain 1 resource. {Elder Sign} effect: +1.',

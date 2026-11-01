@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
+import './card_text.css';
 
 /** The symbols card text names in brackets (`[combat]`) that the cards draw as icons. */
 const SYMBOLS = [
@@ -29,7 +30,8 @@ const ALIASES: Readonly<Record<string, CardSymbol>> = { fast: 'free' };
 type CardSymbol = (typeof SYMBOLS)[number];
 
 function symbolOf(name: string): CardSymbol | undefined {
-  return ALIASES[name] ?? SYMBOLS.find((symbol) => symbol === name);
+  const alias = Object.hasOwn(ALIASES, name) ? ALIASES[name] : undefined;
+  return alias ?? SYMBOLS.find((symbol) => symbol === name);
 }
 
 /**
@@ -41,8 +43,11 @@ function symbolOf(name: string): CardSymbol | undefined {
  */
 export function cardText(text: string): ReactNode[] {
   return text.split(/(\[\[[^\]]+\]\]|\[[a-z_]+\]|<b>.*?<\/b>|<i>.*?<\/i>)/).map((part, index) => {
-    const emphasis = /^\[\[([^\]]+)\]\]$/.exec(part)?.[1] ?? /^<([bi])>(.*)<\/\1>$/.exec(part)?.[2];
-    if (emphasis !== undefined) return <em key={index}>{withoutTags(emphasis)}</em>;
+    const trait = /^\[\[([^\]]+)\]\]$/.exec(part)?.[1];
+    if (trait !== undefined) return <em key={index}>{trait}</em>;
+    // A bold or italic run may name traits and symbols of its own.
+    const run = /^<([bi])>(.*)<\/\1>$/.exec(part)?.[2];
+    if (run !== undefined) return <em key={index}>{cardText(run)}</em>;
     const symbol = symbolOf(/^\[([a-z_]+)\]$/.exec(part)?.[1] ?? '');
     return symbol ? <SymbolIcon key={index} symbol={symbol} /> : withoutTags(part);
   });
