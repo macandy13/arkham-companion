@@ -2,7 +2,11 @@ import { existsSync } from 'node:fs';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { basename, join } from 'node:path';
 import { cardImagePath, type CardImagePath } from '@arkham/engine';
-import { theGatheringCardDefs } from '@arkham/scenarios';
+import {
+  theDevourerBelowCardDefs,
+  theGatheringCardDefs,
+  theMidnightMasksCardDefs,
+} from '@arkham/scenarios';
 
 /** Where ArkhamDB serves the card pictures the app names (`CardStats.imageSrc`). */
 const ARKHAMDB = 'https://arkhamdb.com';
@@ -21,11 +25,17 @@ export const ROLAND_PICTURE = cardImagePath('/bundles/cards/01001.png');
 const GATHERING_REFERENCE_PICTURE = cardImagePath('/bundles/cards/01104.png');
 
 /**
- * Every picture the E2E games name: The Gathering's cards, both sides, its reference card's front
- * and Roland Banks'.
+ * Every picture the E2E games name: the cards of the whole Night of the Zealot campaign (The
+ * Gathering, The Midnight Masks and The Devourer Below), both sides, The Gathering's reference
+ * card's front and Roland Banks'.
  */
 function e2ePictures(): CardImagePath[] {
-  const sides = theGatheringCardDefs.flatMap(({ imageSrc, backImageSrc }) => [
+  const zealotCards = [
+    ...theGatheringCardDefs,
+    ...theMidnightMasksCardDefs,
+    ...theDevourerBelowCardDefs,
+  ];
+  const sides = zealotCards.flatMap(({ imageSrc, backImageSrc }) => [
     ...(imageSrc ? [imageSrc] : []),
     ...(backImageSrc ? [backImageSrc] : []),
   ]);
