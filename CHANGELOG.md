@@ -2,6 +2,59 @@
 
 The sections dated up to 2026-10-22 were released as 1.0.0 to 1.8.0 by mistake: Release Please starts at 1.0.0 by default. Versioning restarted at 0.1.0 (see "Versions" in docs/product.md).
 
+## [0.1.18](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v0.1.17...arkham-companion-v0.1.18) (2026-11-01)
+
+
+### Features
+
+* **web:** "from the game" on the row's own line (MD.2c3b) ([45b691c](https://github.com/macandy13/arkham-companion/commit/45b691c678c6d1ab458a84cca3292b1179c25a6f))
+* **web:** a failed test's choice under its row, answered with Done (MD.2c3b) ([073e4e9](https://github.com/macandy13/arkham-companion/commit/073e4e9a895aac543f7e7cd513895756e57a8c7a))
+* **web:** a failed test's choice under its row, answered with Done (MD.2c3b) ([762187d](https://github.com/macandy13/arkham-companion/commit/762187d5c63532caaa8a50f8ab93dff6d743c9c2))
+* **web:** avatars from card pictures on pawns and enemy tokens (M3.12c3) ([eb95344](https://github.com/macandy13/arkham-companion/commit/eb953446333c81ab2b4a11d7ab8adcd8cea7e26b))
+* **web:** avatars from card pictures on pawns and enemy tokens (M3.12c3) ([d1cac44](https://github.com/macandy13/arkham-companion/commit/d1cac44b563cd4be0e1d5c32204a491052e5189c))
+* **web:** card dialog shell, decisions first (MD.2a) ([19de275](https://github.com/macandy13/arkham-companion/commit/19de2750b1d004f27505e0b2e96e3ec162b5ef08))
+* **web:** card dialog shell, decisions first (MD.2a) ([227eeef](https://github.com/macandy13/arkham-companion/commit/227eeefc261caa6cc55e0f14778b6779d2a46f4c))
+* **web:** decision answers as choice rows with Done (MD.2c1) ([49da23d](https://github.com/macandy13/arkham-companion/commit/49da23d270b5f2ec65bc2cf77df1ce9f62a84a38))
+* **web:** decision answers as choice rows with Done (MD.2c1) ([a72a4f8](https://github.com/macandy13/arkham-companion/commit/a72a4f8deb7b0149c6744a86ccad5f4ae5f54bb3))
+* **web:** draw button in the token's place, a symbol's effect under it (MD.2c) ([cc4aad6](https://github.com/macandy13/arkham-companion/commit/cc4aad6d7ae662e2d4c0b67056f36697a8f1f7d2))
+* **web:** encounter set icons on the set medallions (M3.10m2) ([c6e1317](https://github.com/macandy13/arkham-companion/commit/c6e1317ffa9f5427467a4aa9001c7d085bd1f803))
+* **web:** encounter set icons on the set medallions (M3.10m2a) ([acd2d9b](https://github.com/macandy13/arkham-companion/commit/acd2d9bac18a1121b9f8923e2e7553b729bee42c))
+* **web:** enemy card picture in the card pictures theme (M3.10l1) ([ad2b6cc](https://github.com/macandy13/arkham-companion/commit/ad2b6cc35d1336aa050c56a3156e75868e0fb4d9))
+* **web:** fan the attackers waiting behind a decision's card (MD.2c3a) ([6e4d014](https://github.com/macandy13/arkham-companion/commit/6e4d01417e6c7f0d1312da77c3cf73ae6ce7c9e7))
+* **web:** fan the attackers waiting behind a decision's card (MD.2c3a) ([d99081b](https://github.com/macandy13/arkham-companion/commit/d99081bb5b66ed2a89f04f8feffd379cd0a4e3d5))
+* **web:** keep the pattern for sideways agenda, act and scenario scans (M3.12c2b) ([268cb78](https://github.com/macandy13/arkham-companion/commit/268cb785cfc7bd5f9be54f527d099cdec33e354c))
+* **web:** keep the pattern for sideways agenda, act and scenario scans (M3.12c2b) ([32fd892](https://github.com/macandy13/arkham-companion/commit/32fd89273b97bfd03a5fd050ae742025ef5b13ca))
+* **web:** lower a decision to reach the board (MD.2c2) ([3821180](https://github.com/macandy13/arkham-companion/commit/38211800c2b87b5193f194adb811efc69aae6809))
+* **web:** lower a decision to reach the board (MD.2c2) ([2f5b267](https://github.com/macandy13/arkham-companion/commit/2f5b2674a44bda9e696c390801d9149fe19d0e03))
+* **web:** scenario reference card picture in the card pictures theme (M3.10l2) ([b35f1f0](https://github.com/macandy13/arkham-companion/commit/b35f1f058ab2c3ac6534047000eeaeddd8c83f47))
+* **web:** scenario reference card picture in the card pictures theme (M3.10l2) ([802f18a](https://github.com/macandy13/arkham-companion/commit/802f18a27e5ebc6166955c7d1629a2cb6b6bcbab))
+* **web:** set icons on the agenda, act and scenario cards (M3.10m3) ([289d029](https://github.com/macandy13/arkham-companion/commit/289d02976262d93dbf4d695e053fa1f16fc60d8e))
+* **web:** set icons on the agenda, act and scenario cards (M3.10m3) ([87db7f1](https://github.com/macandy13/arkham-companion/commit/87db7f17430d2b1370c160fc229bb52a5817d8bb))
+* **web:** skill test block with a result strip (MD.2b) ([bfa1f47](https://github.com/macandy13/arkham-companion/commit/bfa1f474083170e542399e912d6cbecf91f74a7b))
+* **web:** skill test block with a result strip (MD.2b) ([3e10a67](https://github.com/macandy13/arkham-companion/commit/3e10a670b42a199d5476aaec5c2a22ce8fcd6f9e))
+* **web:** the draw button as the brass primary; UI follows the design language ([ae7c312](https://github.com/macandy13/arkham-companion/commit/ae7c312a6451a916540a50de6e8a651be7061cf6))
+
+
+### Bug fixes
+
+* **scenarios:** start The Midnight Masks and The Devourer Below standalone (MC1.12) ([4aac7a7](https://github.com/macandy13/arkham-companion/commit/4aac7a7a47844ddb54124552208e7ef9167dfe22))
+* **scenarios:** start The Midnight Masks and The Devourer Below standalone (MC1.12) ([2eca41c](https://github.com/macandy13/arkham-companion/commit/2eca41c3b26305d8d519800a697632183291d2ab))
+* **web:** fill token avatars as a pattern so tokens keep their tap box (M3.12c3) ([96702e3](https://github.com/macandy13/arkham-companion/commit/96702e3b878cdbba91253493419ef222898d6893))
+* **web:** probe SVG token pictures for sideways scans (M3.12c3) ([9bf1b2b](https://github.com/macandy13/arkham-companion/commit/9bf1b2bfad1710f318ba22d8eafed238b7784437))
+* **web:** review nits on the set icons (M3.10m2a) ([4dcf371](https://github.com/macandy13/arkham-companion/commit/4dcf3719e04f20bbbe4221a5797a06a390aa4e99))
+* **web:** sanity label as the printed brain (M3.10m1) ([9966fad](https://github.com/macandy13/arkham-companion/commit/9966fadd104a64786cec3fc4739e5546c6eb33e7))
+* **web:** sanity label as the printed brain (M3.10m1) ([43f2f16](https://github.com/macandy13/arkham-companion/commit/43f2f16c14094cda16c1587b97a63c6f465fe8ea))
+
+
+### Refactoring
+
+* **engine:** sameDecider next to the decisions; key waiting cards by id ([d703a15](https://github.com/macandy13/arkham-companion/commit/d703a156d30fa645b0fc7313d3f5f21bb7f89602))
+
+
+### Documentation
+
+* **web:** describe the lowerable card dialog; grab handle a full touch target ([0234c8c](https://github.com/macandy13/arkham-companion/commit/0234c8c958aa201f610d53b7052b0191128ead75))
+
 ## [0.1.17](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v0.1.16...arkham-companion-v0.1.17) (2026-10-31)
 
 
