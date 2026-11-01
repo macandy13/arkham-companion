@@ -205,7 +205,7 @@ test('move and take a clue from the location details', { tag: '@flow' }, async (
 // Journey: keep the map in step with the table through a location's details while adjusting the
 // board: reveal a location a card turned over, put doom on it, and place a clue a card adds to the
 // Hallway.
-test('correct a location from its details', { tag: '@flow' }, async ({ page }) => {
+test('correct a location from its details', async ({ page }) => {
   const house = page.getByRole('figure', { name: 'House' });
   const room = (name: string) => house.getByRole('group', { name });
   const details = (name: string) => page.getByRole('dialog', { name });

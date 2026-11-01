@@ -154,16 +154,16 @@ describe('EnemyDetails', () => {
   });
 
   it.each([
-    { group: 'Action', button: 'Fight · 1 action', prompt: 'decision.fight', left: 2 },
-    { group: 'Action', button: 'Evade · 1 action', prompt: 'decision.evade', left: 2 },
+    { group: 'Actions', button: 'Fight · 1 action', prompt: 'decision.fight', left: 2 },
+    { group: 'Actions', button: 'Evade · 1 action', prompt: 'decision.evade', left: 2 },
     {
-      group: 'Free',
+      group: 'Actions',
       button: 'Fight, no action',
       prompt: 'decision.fight',
       left: 3,
     },
     {
-      group: 'Free',
+      group: 'Actions',
       button: 'Evade, no action',
       prompt: 'decision.evade',
       left: 3,
@@ -224,19 +224,17 @@ describe('EnemyDetails', () => {
     expect(groups).toEqual(['Card effect']);
   });
 
-  it("offers brook, at the same location on their turn, fight and engage but no evade of alder's ghoul", () => {
+  it("offers brook, at the same location on their turn, fight and engage but no evade of alder's ghoul, the free fight last", () => {
     renderGhoulDetails(PlayTable.start(ghoulOnAlder.withTurnOf(brook)));
 
+    const offered = within(group('Actions')).getAllByRole('button');
     expect(
-      within(group('Action'))
-        .getAllByRole('button')
-        .map((button) => button.getAttribute('aria-label')),
-    ).toEqual(['Fight · 1 action', 'Engage · 1 action']);
-    expect(
-      within(group('Free'))
-        .getAllByRole('button')
-        .map((button) => button.getAttribute('aria-label')),
-    ).toEqual(['Fight, no action']);
+      offered.map((button) => [button.getAttribute('aria-label'), button.dataset['cost']]),
+    ).toEqual([
+      ['Fight · 1 action', 'action'],
+      ['Engage · 1 action', 'action'],
+      ['Fight, no action', 'free'],
+    ]);
   });
 
   it('closes from its × button', () => {

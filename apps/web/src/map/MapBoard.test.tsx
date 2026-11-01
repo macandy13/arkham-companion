@@ -923,6 +923,25 @@ describe('MapBoard', () => {
       expect(offered(location)).toEqual(buttons);
     });
 
+    it("lists the hallway's moves in one Actions group, the one that costs an action first", () => {
+      const table = aldersTurn();
+      render(
+        <MapBoard board={table.board} actions={actionsOn(table)} busy={false} adjusting={false} />,
+      );
+
+      fireEvent.click(tile('hallway'));
+
+      const moves = within(details('hallway')).getByRole('region', { name: 'Actions' });
+      expect(
+        within(moves)
+          .getAllByRole('button')
+          .map((button) => [button.getAttribute('aria-label'), button.dataset['cost']]),
+      ).toEqual([
+        ['Move here · 1 action', 'action'],
+        ['Move here, no action', 'free'],
+      ]);
+    });
+
     it('turns taking a clue off while an enemy engaged with alder forbids discovering clues', () => {
       const hunter = blankEnemy('hunter', {
         restrictions: [{ cannot: ['discover'], what: 'clues', who: 'threatArea' }],

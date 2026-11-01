@@ -249,19 +249,23 @@ test("Roland Banks' fight against the Ghoul Priest, the damage raised to 2", asy
   await expect(decision.getByRole('region', { name: 'Damage dealt' })).toContainText('2');
 });
 
-test("the Ghoul Priest's details opened from its card on Roland Banks' turn", async ({ page }) => {
-  await resumeImportedGame(
-    page,
-    'Roland Banks threatened',
-    rolandThreatenedExport('Roland Banks threatened'),
-  );
-  const roland = page.getByRole('region', { name: 'Roland Banks' });
-  await roland.getByRole('button', { name: 'Later cards in the threat area' }).click();
+test(
+  "the Ghoul Priest's details opened from its card on Roland Banks' turn",
+  { tag: '@shot' },
+  async ({ page }) => {
+    await resumeImportedGame(
+      page,
+      'Roland Banks threatened',
+      rolandThreatenedExport('Roland Banks threatened'),
+    );
+    const roland = page.getByRole('region', { name: 'Roland Banks' });
+    await roland.getByRole('button', { name: 'Later cards in the threat area' }).click();
 
-  await roland.getByRole('button', { name: 'Details of Ghoul Priest' }).click();
+    await roland.getByRole('button', { name: 'Details of Ghoul Priest' }).click();
 
-  await expect(page.getByRole('dialog', { name: 'Ghoul Priest' })).toBeVisible();
-});
+    await expect(page.getByRole('dialog', { name: 'Ghoul Priest' })).toBeVisible();
+  },
+);
 
 test('the encounter deck after two mythos phases, Dissonant Voices on the discard pile', async ({
   page,
@@ -432,23 +436,21 @@ test(
   },
 );
 
-test(
-  'the unrevealed Parlor’s details, its barrier offering Roland Banks no move',
-  { tag: '@shot' },
-  async ({ page }) => {
-    await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
+test('the unrevealed Parlor’s details, its barrier offering Roland Banks no move', async ({
+  page,
+}) => {
+  await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
 
-    // On a phone the investigator panel lies over the Parlor's tile, so the keyboard opens it.
-    await page.getByRole('button', { name: 'Details of Parlor' }).press('Enter');
+  // On a phone the investigator panel lies over the Parlor's tile, so the keyboard opens it.
+  await page.getByRole('button', { name: 'Details of Parlor' }).press('Enter');
 
-    // A dialog on a tablet, the location mode in place of the map on a phone.
-    const parlor = page
-      .getByRole('dialog', { name: 'Parlor' })
-      .or(page.getByRole('region', { name: 'Parlor' }));
-    await expect(parlor.getByRole('heading', { name: 'Parlor' })).toBeVisible();
-    await expect(parlor.getByRole('button', { name: /^Move here/ })).toHaveCount(0);
-  },
-);
+  // A dialog on a tablet, the location mode in place of the map on a phone.
+  const parlor = page
+    .getByRole('dialog', { name: 'Parlor' })
+    .or(page.getByRole('region', { name: 'Parlor' }));
+  await expect(parlor.getByRole('heading', { name: 'Parlor' })).toBeVisible();
+  await expect(parlor.getByRole('button', { name: /^Move here/ })).toHaveCount(0);
+});
 
 test('the Parlor tile printing its Resign', async ({ page }) => {
   await resumeImportedGame(page, 'In the Parlor', inTheParlorExport('In the Parlor'));
