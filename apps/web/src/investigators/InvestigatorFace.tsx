@@ -11,7 +11,7 @@ import './investigator_face.css';
  * measured on the ArkhamDB scan of Roland Banks and checked by laying the drawing over it (the
  * exact card templates, MD.10): the class shield in the top left corner, the name plate with its
  * pointed right end and the subname plate under it, the skill chain across the top right with
- * one plate and one diamond per skill, and the spiral-bound notebook page under it. The art fills
+ * one plate per skill with its value and icon, and the spiral-bound notebook page under it. The art fills
  * the rest. The panel's HTML (InvestigatorBar) lies over these places, which tokens.css gives
  * again for the stylesheet (`--investigator-*`, in the same scan units): change both together.
  */
@@ -24,8 +24,8 @@ export const INVESTIGATOR_FACE = {
   link: { left: 226, step: 48.5, top: 7, width: 44, height: 36, corner: 14 },
   ring: { offset: 46.5, y: 25, outer: 9, inner: 5 },
   plate: { left: 228, top: 9, width: 40, height: 32, corner: 12 },
-  /** A skill's diamond, from its plate's left edge, and its icon's size in the diamond's half width. */
-  diamond: { x: 29, y: 25, half: 9, icon: 1.25 },
+  /** A skill's icon, its centre from its plate's left edge, in one colour beside the value. */
+  glyph: { x: 30, y: 25, size: 15 },
   page: { left: 230, top: 52, width: 184, height: 232, shadow: 3 },
   rules: { left: 236, right: 410, first: 86, step: 14.5, last: 282 },
   /** The binding: a loop every `step` along the page's top, `rise` high, its end `reach` along and `drop` down. */
@@ -72,7 +72,7 @@ function facePaths() {
  * scan units: our own drawing of the printed layout (`INVESTIGATOR_FACE`, no FFG art) over the
  * card's `picture` once it has loaded (a hatch until then, and for good offline), so the printed
  * frame and text of the scan fall under the face's own. The shield takes the colour and icon of
- * the investigator's `investigatorClass`; each skill's diamond its colour and icon. The panel lays
+ * the investigator's `investigatorClass`; each skill's plate its icon in the face's ink. The panel lays
  * the name, the skills' values, the page's text and the counters over it in HTML
  * (InvestigatorBar), so this is decoration only (`aria-hidden`).
  */
@@ -160,14 +160,11 @@ export function InvestigatorFace({
 }
 
 /**
- * One skill's place on the chain, its plate (where the panel writes the value) and the diamond in
- * the skill's colour with its icon (`data-skill`, the colour and icon the stylesheet gives it).
+ * One skill's place on the chain: its plate, where the panel writes the value, and the skill's
+ * icon beside it in one colour, the face's ink (`data-skill`, the icon the stylesheet gives it).
  */
 function SkillPlate({ skill, left }: { skill: SkillName; left: number }) {
-  const { plate, diamond } = INVESTIGATOR_FACE;
-  const x = left + diamond.x;
-  const y = diamond.y;
-  const { half } = diamond;
+  const { plate, glyph } = INVESTIGATOR_FACE;
   return (
     <g data-skill={skill}>
       <rect
@@ -178,15 +175,11 @@ function SkillPlate({ skill, left }: { skill: SkillName; left: number }) {
         height={plate.height}
         rx={plate.corner}
       />
-      <path
-        data-part="diamond"
-        d={`M ${x} ${y - half - 1} L ${x + half} ${y} L ${x} ${y + half + 1} L ${x - half} ${y} Z`}
-      />
       <foreignObject
-        x={x - (half * diamond.icon) / 2}
-        y={y - (half * diamond.icon) / 2}
-        width={half * diamond.icon}
-        height={half * diamond.icon}
+        x={left + glyph.x - glyph.size / 2}
+        y={glyph.y - glyph.size / 2}
+        width={glyph.size}
+        height={glyph.size}
       >
         <span data-skill-icon="" />
       </foreignObject>
