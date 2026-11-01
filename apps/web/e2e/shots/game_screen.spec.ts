@@ -227,22 +227,26 @@ test('the investigation decision lowered to reach the board', async ({ page }) =
   await expect(decision.getByRole('button', { name: 'Raise the dialog' })).toBeVisible();
 });
 
-test("Roland Banks' fight against the Ghoul Priest, the damage raised to 2", async ({ page }) => {
-  await resumeImportedGame(
-    page,
-    'Roland Banks threatened',
-    rolandThreatenedExport('Roland Banks threatened'),
-  );
-  const roland = page.getByRole('region', { name: 'Roland Banks' });
-  await roland.getByRole('button', { name: 'Later cards in the threat area' }).click();
-  await roland.getByRole('button', { name: 'Details of Ghoul Priest' }).click();
-  await page.getByRole('button', { name: 'Fight · 1 action' }).click();
-  const decision = page.getByRole('dialog', { name: 'Fight Ghoul Priest' });
+test(
+  "Roland Banks' fight against the Ghoul Priest, the damage raised to 2",
+  { tag: '@shot' },
+  async ({ page }) => {
+    await resumeImportedGame(
+      page,
+      'Roland Banks threatened',
+      rolandThreatenedExport('Roland Banks threatened'),
+    );
+    const roland = page.getByRole('region', { name: 'Roland Banks' });
+    await roland.getByRole('button', { name: 'Later cards in the threat area' }).click();
+    await roland.getByRole('button', { name: 'Details of Ghoul Priest' }).click();
+    await page.getByRole('button', { name: 'Fight · 1 action' }).click();
+    const decision = page.getByRole('dialog', { name: 'Fight Ghoul Priest' });
 
-  await decision.getByRole('button', { name: 'Raise the Damage dealt' }).click();
+    await decision.getByRole('button', { name: 'Raise the Damage dealt' }).click();
 
-  await expect(decision.getByRole('region', { name: 'Damage dealt' })).toContainText('2');
-});
+    await expect(decision.getByRole('region', { name: 'Damage dealt' })).toContainText('2');
+  },
+);
 
 test("the Ghoul Priest's details opened from its card on Roland Banks' turn", async ({ page }) => {
   await resumeImportedGame(
@@ -368,23 +372,27 @@ test('Frozen in Fear from Roland Banks’ threat area, zoomed to read', async ({
   await expect(page.getByRole('dialog', { name: 'Frozen in Fear' })).toBeVisible();
 });
 
-test('the attack of opportunity Roland Banks provokes by taking a resource', async ({ page }) => {
-  await resumeImportedGame(
-    page,
-    'Roland Banks threatened',
-    rolandThreatenedExport('Roland Banks threatened'),
-  );
+test(
+  'the attack of opportunity Roland Banks provokes by taking a resource',
+  { tag: '@shot' },
+  async ({ page }) => {
+    await resumeImportedGame(
+      page,
+      'Roland Banks threatened',
+      rolandThreatenedExport('Roland Banks threatened'),
+    );
 
-  await page
-    .getByRole('region', { name: 'Roland Banks' })
-    .getByRole('button', { name: 'Take a resource' })
-    .click();
+    await page
+      .getByRole('region', { name: 'Roland Banks' })
+      .getByRole('button', { name: 'Take a resource' })
+      .click();
 
-  const attack = page.getByRole('dialog', { name: 'Attack of opportunity by Ghoul Priest' });
-  await expect(
-    attack.getByText('Roland Banks takes a resource: Ghoul Priest attacks first'),
-  ).toBeVisible();
-});
+    const attack = page.getByRole('dialog', { name: 'Attack of opportunity by Ghoul Priest' });
+    await expect(
+      attack.getByText('Roland Banks takes a resource: Ghoul Priest attacks first'),
+    ).toBeVisible();
+  },
+);
 
 test('three attacks of opportunity on Roland Banks, the Ghoul Minions fanned behind the Ghoul Priest', async ({
   page,
