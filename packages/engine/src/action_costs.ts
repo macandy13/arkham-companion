@@ -7,7 +7,9 @@ import type { GameState } from './state';
 /**
  * The basic actions an investigator takes in their turn (Rules Reference, "Actions"), by the
  * word card text uses for them: what a cost modifier raises (`ActionCostModifier.actions`) and what
- * the players name when they count one off (`AdjustActions.for`).
+ * the players name when they count one off (`AdjustActions.for`). A card ability that is one of
+ * them ("[action]: Fight") is that action too (Rules Reference, "Actions"), so it is counted off
+ * by its word as well.
  */
 export type BasicAction = (typeof BASIC_ACTIONS)[number];
 
@@ -53,16 +55,20 @@ export interface TakenAction {
 }
 
 /**
- * The actions `investigator`'s next `action` costs: one, plus what the cost modifiers of the cards
- * in play that bind them add (`CardStats.actionCosts`). The engine leaves counting actions to the
- * players (`Investigator.actionsRemaining`), so this is what they count off, and what the screen
- * shows on the action's button; two copies of Frozen in Fear each add their one.
+ * The actions `investigator`'s next `action` costs: one, or none when a card lets them perform it
+ * without spending an action (`free`), plus what the cost modifiers of the cards in play that bind
+ * them add (`CardStats.actionCosts`). A free action still pays those (the Frozen in Fear FAQ: a
+ * granted or free move costs its additional action) and is the round's first all the same. The
+ * engine leaves counting actions to the players (`Investigator.actionsRemaining`), so this is
+ * what they count off, and what the screen shows on the action's button; two copies of Frozen in
+ * Fear each add their one.
  */
 export function actionCost(
   ctx: EngineContext,
   state: GameState,
   investigator: InvestigatorId,
   action: BasicAction,
+  { free = false }: { free?: boolean } = {},
 ): number {
   const taken = (state.meta.actionsTaken ?? []).filter(
     (each) => each.investigatorId === investigator,
@@ -80,6 +86,6 @@ export function actionCost(
             ),
         )
         .reduce((sum, modifier) => sum + modifier.by, cost),
-    1,
+    free ? 0 : 1,
   );
 }

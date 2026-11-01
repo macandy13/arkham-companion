@@ -9,6 +9,7 @@ import {
   threatAreaOf,
   type BasicAction,
 } from './index';
+import { rejectionOf } from '../test/utils';
 
 const alice = investigatorId('alice');
 const bob = investigatorId('bob');
@@ -82,6 +83,7 @@ describe('actionCost', () => {
     table.startTurn(bob);
     table.endTurn(bob);
 
+    // The enemy phase, then the upkeep phase, whose end ends the round.
     table.nextPhase();
     table.nextPhase();
 
@@ -115,11 +117,43 @@ describe('actionCost', () => {
     expect(table.board.actionCost(alice, 'investigate')).toBe(2);
   });
 
+  it('charges a free first move only its additional action, and counts it as the first', () => {
+    const table = aliceFrozen();
+
+    table.spendActionFor(alice, 'move', { free: true });
+
+    expect(table.board.investigator(alice).actions).toBe(2);
+    expect(table.board.actionCost(alice, 'fight')).toBe(1);
+  });
+
+  it('records a free move of bob, who is not frozen, at no cost', () => {
+    const table = aliceFrozen();
+
+    table.spendActionFor(bob, 'move', { free: true });
+
+    expect(table.board.investigator(bob).actions).toBe(3);
+    expect(table.state.meta.actionsTaken).toEqual([{ investigatorId: bob, action: 'move' }]);
+  });
+
+  it('refuses an action named on a count upwards, which would use up the first', () => {
+    const table = aliceFrozen();
+
+    expect(
+      rejectionOf(() =>
+        table.play({ type: 'AdjustActions', investigatorId: alice, delta: 1, for: 'move' }),
+      ),
+    ).toMatchObject({ code: 'invalidActionAdjustment', delta: 1 });
+  });
+
   it('refuses a first fight that costs 2 when alice has only 1 action left', () => {
     const table = aliceFrozen();
     table.spendAction(alice, 2);
 
-    expect(() => table.spendActionFor(alice, 'fight')).toThrow(/invalidActionAdjustment|actions/);
-    expect(table.board.investigator(alice).actions).toBe(1);
+    expect(rejectionOf(() => table.spendActionFor(alice, 'fight'))).toEqual({
+      code: 'invalidActionAdjustment',
+      investigatorId: alice,
+      delta: -2,
+      actionsRemaining: 1,
+    });
   });
 });

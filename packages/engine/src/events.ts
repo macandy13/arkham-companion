@@ -514,7 +514,8 @@ export interface PhaseStepsChanged {
 
 /**
  * Round `round` is over (the last step of upkeep): opens `roundEnds` and
- * clears the per-round flags (`GameMeta.turnsTaken`). Produced by `NextPhase`.
+ * clears the per-round flags (`GameMeta.turnsTaken`, `GameMeta.actionsTaken`). Produced by
+ * `NextPhase`.
  */
 export interface RoundEnded {
   type: 'RoundEnded';

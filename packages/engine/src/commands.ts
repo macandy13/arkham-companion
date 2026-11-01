@@ -1060,8 +1060,8 @@ export interface AdjustActions {
   investigatorId: InvestigatorId;
   delta: number;
   /**
-   * The basic action the players count off, when it is one (`delta` is then what it costs,
-   * `actionCost`): recorded for the round (`GameMeta.actionsTaken`), so a card that raises the
+   * The basic action the players count off, when it is one (`delta` is then minus what it costs,
+   * `actionCost`, and may be 0 for a free one, which is performed all the same): recorded for the round (`GameMeta.actionsTaken`), so a card that raises the
    * first such action each round (Frozen in Fear) raises only that one.
    */
   for?: BasicAction;

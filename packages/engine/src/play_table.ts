@@ -317,14 +317,19 @@ export class PlayTable {
 
   /**
    * The investigator counts off the basic `action` they take, at what it costs them now
-   * (`BoardView.actionCost`), naming it so a cost raised for the first one each round is paid once.
+   * (`BoardView.actionCost`, `free` for one a card lets them take without spending an action),
+   * naming it so a cost raised for the first one each round is paid once.
    */
-  spendActionFor(investigator: InvestigatorRef, action: BasicAction): void {
+  spendActionFor(
+    investigator: InvestigatorRef,
+    action: BasicAction,
+    cost?: { free?: boolean },
+  ): void {
     const seat = this.seat(investigator);
     this.play({
       type: 'AdjustActions',
       investigatorId: seat,
-      delta: -this.board.actionCost(seat, action),
+      delta: -this.board.actionCost(seat, action, cost),
       for: action,
     });
   }

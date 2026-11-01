@@ -13,7 +13,8 @@ The cards below have costs the whole group pays, or that the players pay at the 
 A card can also raise what a basic action costs, paid in actions when it is taken ([Actions](https://arkhamdb.com/rules#Actions), [Costs](https://arkhamdb.com/rules#Costs)).
 
 - Frozen in Fear ("The first move, fight, or evade action you perform each round costs 1 additional action") raises only the first of those three its investigator performs in a round, whichever it is: after a fight, the round's moves and evades cost 1 again.
-  - An action they performed earlier in the round, before Frozen in Fear came into play, was already their first, so the card raises none that round.
+  - An action they performed earlier in the round, before Frozen in Fear came into play, was already their first, so the card raises none that round (our reading of "the first … each round"; no ruling found).
   - Two copies each add 1, so the first such action costs 3.
   - An investigator with fewer actions left than the raised cost can't take it.
-  - A move, fight or evade a card effect allows without spending an action isn't an action performed, so it costs nothing and leaves the first one still to come.
+  - A move, fight or evade a card lets them perform without spending an action (a granted or free one, Shortcut's move) still costs the additional action, and it is the first one (the card's FAQ on ArkhamDB).
+  - It also raises a card ability with a Move, Fight or Evade designator ("[action] Fight."): such an ability is that action too (RR "Action Designators"). The players count those off at the table, since the app has no player cards.

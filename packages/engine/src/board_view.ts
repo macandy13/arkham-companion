@@ -621,11 +621,12 @@ export class BoardView {
 
   /**
    * The actions `investigator`'s next basic `action` costs (`actionCost`): one, or more while a
-   * card raises it (Frozen in Fear's first move, fight or evade each round). What the screen counts
-   * off for it and shows on its button.
+   * card raises it (Frozen in Fear's first move, fight or evade each round); with `free`, only what
+   * cards add to an action a card lets them take without spending one. What the screen counts off
+   * for it and shows on its button.
    */
-  actionCost(investigator: InvestigatorId, action: BasicAction): number {
-    return actionCost(this.ctx, this.state, investigator, action);
+  actionCost(investigator: InvestigatorId, action: BasicAction, cost?: { free?: boolean }): number {
+    return actionCost(this.ctx, this.state, investigator, action, cost);
   }
 
   /**
