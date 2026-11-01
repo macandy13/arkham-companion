@@ -572,6 +572,31 @@
   align-items: end;
 }
 
+/*
+ * The scenario's full card (ScenarioDetails): the same face as in the header, with the × above
+ * it. It moves onto the card shell next (MD.6b3).
+ */
+#board > header dialog[data-dialog='card'] {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  align-items: center;
+  padding-block-start: calc(var(--dialog-close-inset) + var(--touch-target));
+  font-size: var(--font-size-body);
+}
+
+#board > header dialog[data-dialog='card']:not([open]) {
+  display: none;
+}
+
+#board > header dialog[data-dialog='card'] > [data-card] {
+  width: calc(var(--layout-zoom-card-width) * 7 / 5);
+  max-width: 100%;
+  height: auto;
+  filter: var(--piece-shadow);
+}
+
 /* While the players adjust the board, a dashed brass line round the map says it is open for corrections. */
 #board[data-adjusting] > #map {
   outline: var(--adjust-outline-width) dashed var(--color-accent);
