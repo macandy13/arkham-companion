@@ -35,6 +35,15 @@ export function CampaignSheets({
   );
 }
 
+/**
+ * The i18n key of the note a flag record writes when it is `value` (`CampaignEntry.storyKey`). A
+ * flag has words for one side only when the guide records just that sentence, so the key may not
+ * exist.
+ */
+export function flagNoteKey(storyKey: string, record: string, value: boolean): string {
+  return `${storyKey}.${record}.${value ? 'yes' : 'no'}`;
+}
+
 /** The notes the log holds in `records`, each in the players' words. */
 function CampaignNotes({
   log,
@@ -49,8 +58,7 @@ function CampaignNotes({
   const lines = records.flatMap((record) => {
     const value = log.story[record];
     if (value?.kind !== 'flag') return [];
-    // A flag has words for one side only when the guide records just that sentence.
-    const key = `${storyKey}.${record}.${value.value ? 'yes' : 'no'}`;
+    const key = flagNoteKey(storyKey, record, value.value);
     return i18n.exists(key) ? [{ record, text: t(key) }] : [];
   });
   return (
