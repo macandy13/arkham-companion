@@ -144,7 +144,6 @@ function PileStrip({
         <>
           <CardStrip
             label={title}
-            count={cards.length}
             shown={STRIP_CARDS_SHOWN}
             earlierLabel={t('encounter.earlierCards')}
             laterLabel={t('encounter.laterCards')}

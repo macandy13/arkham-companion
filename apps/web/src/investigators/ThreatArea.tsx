@@ -44,7 +44,6 @@ export function ThreatArea({
   return (
     <CardStrip
       label={t('investigators.threatArea')}
-      count={count}
       shown={THREAT_CARDS_SHOWN}
       earlierLabel={t('investigators.earlierThreats')}
       laterLabel={t('investigators.laterThreats')}

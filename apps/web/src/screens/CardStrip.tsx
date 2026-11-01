@@ -1,15 +1,15 @@
-import { useRef, type ReactNode } from 'react';
+import { Children, useRef, type ReactNode } from 'react';
 import './card_strip.css';
 
 /**
  * A row of cards that scrolls sideways a whole card at a time, as the threat area and the
  * encounter dialog's pile lay them out: past `shown` cards it gets an arrow on each side, and a
  * swipe or an arrow moves it by one card. The caller's stylesheet sizes the row to `shown` cards
- * and snaps it to whole cards; the children are the row's `li`s.
+ * and snaps it to whole cards; the children are the row's `li`s. The root carries `data-strip`,
+ * the hook the shared arrow styles (`card_strip.css`) hang on.
  */
 export function CardStrip({
   label,
-  count,
   shown,
   earlierLabel,
   laterLabel,
@@ -17,12 +17,13 @@ export function CardStrip({
 }: {
   /** The row's accessible name. */
   label: string;
-  /** How many cards the row holds, to tell whether it overflows. */
-  count: number;
   /** How many cards show side by side before the row scrolls. */
   shown: number;
+  /** The accessible name of the arrow that scrolls back. */
   earlierLabel: string;
+  /** The accessible name of the arrow that scrolls on. */
   laterLabel: string;
+  /** The row's cards, one `li` each. */
   children: ReactNode;
 }) {
   const strip = useRef<HTMLUListElement>(null);
@@ -32,9 +33,9 @@ export function CardStrip({
     if (card instanceof HTMLElement)
       strip.current?.scrollBy({ left: direction * card.offsetWidth, behavior: 'smooth' });
   };
-  const overflowing = count > shown;
+  const overflowing = Children.count(children) > shown;
   return (
-    <div>
+    <div data-strip>
       {overflowing && (
         <button
           type="button"

@@ -1,18 +1,12 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { CardStrip } from './CardStrip';
 
 /** A strip of `names` showing `shown` cards side by side. */
 const renderStrip = (names: readonly string[], shown: number) =>
   render(
-    <CardStrip
-      label="Pile"
-      count={names.length}
-      shown={shown}
-      earlierLabel="Earlier cards"
-      laterLabel="Later cards"
-    >
+    <CardStrip label="Pile" shown={shown} earlierLabel="Earlier cards" laterLabel="Later cards">
       {names.map((name) => (
         <li key={name}>{name}</li>
       ))}
@@ -25,9 +19,12 @@ describe('CardStrip', () => {
   it('lists its cards under its label', () => {
     renderStrip(['Ghoul Minion', 'Rotting Remains'], 3);
 
-    expect(screen.getByRole('list', { name: 'Pile' }).textContent).toBe(
-      'Ghoul MinionRotting Remains',
-    );
+    const strip = screen.getByRole('list', { name: 'Pile' });
+    expect(
+      within(strip)
+        .getAllByRole('listitem')
+        .map((card) => card.textContent),
+    ).toEqual(['Ghoul Minion', 'Rotting Remains']);
   });
 
   it.each([
