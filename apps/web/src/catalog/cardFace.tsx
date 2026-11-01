@@ -1,5 +1,7 @@
 import { useId } from 'react';
+import type { EncounterSetCode } from '@arkham/engine';
 import type { Point } from '../map/mapLayout';
+import '../symbols/sets.css';
 import { PORTRAIT_SCAN } from './cardArt';
 import './card_face.css';
 
@@ -83,39 +85,69 @@ export function CountCircle({
 const COUNT_RADIUS = 11;
 
 /**
+ * The icon of an encounter set (`set`, its `CardStats.encounterCode`) centred on `x`, `y` and
+ * filling a circle of `radius`, in the face's units: a span whose CSS mask is the set's picture
+ * (`symbols/sets.css`), so it takes the colour its place on the face gives it (`color`). The set
+ * medallions, the agenda's and act's title and the scenario card's medallion print it.
+ */
+export function SetIcon({
+  set,
+  x,
+  y,
+  radius,
+}: {
+  set: EncounterSetCode;
+  x: number;
+  y: number;
+  radius: number;
+}) {
+  return (
+    <foreignObject x={x - radius} y={y - radius} width={2 * radius} height={2 * radius}>
+      <span data-encounter-set={set} />
+    </foreignObject>
+  );
+}
+
+/**
  * The round set medallion on its plate, in scan units, as every encounter card prints it on its
  * type line: a dark ring, the pale medallion with an inner ring (where the encounter set's icon
- * goes once the app has them, M3.10m), and under it the notched plate naming the card's `type`,
- * `plateWidth` wide. The Eldritch card theme shows an open eye on the medallion instead of the
- * inner ring (`data-part` eye, hidden otherwise). Decoration and the type word only, so it is no
- * image of its own.
+ * goes), and under it the notched plate naming the card's `type`, `plateWidth` wide. The icon of
+ * the card's encounter `set` fills the inner ring (`data-encounter-set`, its picture from
+ * sets.css); a card without one, or whose set has no icon yet, shows the ring empty. The Eldritch
+ * card theme shows an open eye on a medallion without a set icon (`data-part` eye, hidden
+ * otherwise). Decoration and the type word only, so it is no image of its own.
  */
 export function SetMedallion({
   centre: { x, y },
   radius,
   plateWidth,
   type,
+  set,
 }: {
   centre: Point;
   radius: number;
   plateWidth: number;
   type: string;
+  set?: EncounterSetCode | undefined;
 }) {
   const top = y + radius + 1;
   const bottom = top + PLATE_HEIGHT;
   const middle = (top + bottom) / 2;
   const left = x - plateWidth / 2;
   const right = x + plateWidth / 2;
+  const innerRadius = radius - 3.5;
+  const iconRadius = innerRadius * SET_ICON;
   return (
     <g data-medallion="">
       <circle data-part="setting" cx={x} cy={y} r={radius + 2.5} />
       <circle data-part="medallion" cx={x} cy={y} r={radius} />
-      <circle data-part="inner" cx={x} cy={y} r={radius - 3.5} />
+      <circle data-part="inner" cx={x} cy={y} r={innerRadius} />
       <g data-part="eye">
         <path data-part="eye-white" d={lens(x, y, radius * EYE.width, radius * EYE.height)} />
         <circle data-part="iris" cx={x} cy={y} r={radius * EYE.iris} />
         <path data-part="pupil" d={lens(x, y, radius * EYE.iris, radius * EYE.pupil, 'upright')} />
       </g>
+      {set && <SetIcon set={set} x={x} y={y} radius={iconRadius} />}
       <path
         data-part="plate"
         d={`M ${left} ${top} H ${right} L ${right + 5} ${middle} L ${right} ${bottom} H ${left} L ${left - 5} ${middle} Z`}
@@ -133,6 +165,9 @@ export function SetMedallion({
 
 /** The type plate's height under a set medallion, in scan units, as printed. */
 const PLATE_HEIGHT = 13;
+
+/** How much of the inner ring's radius the encounter set icon fills, as printed. */
+const SET_ICON = 0.85;
 
 /**
  * The Eldritch medallion's eye, in parts of the medallion's radius: half the almond's width and

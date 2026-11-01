@@ -73,6 +73,10 @@
   stroke-width: var(--face-symbol-line-width);
 }
 
+#board svg[data-face='book'] span[data-encounter-set] {
+  color: var(--color-face-ink);
+}
+
 #board svg[data-face='book'] [data-part='handle'] path {
   stroke-linecap: round;
 }

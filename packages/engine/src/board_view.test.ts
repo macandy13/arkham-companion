@@ -23,6 +23,7 @@ import {
   cardCode,
   cardName,
   decisionId,
+  encounterSetCode,
   engagedWith,
   enemyMatching,
   fixed,
@@ -1654,6 +1655,60 @@ describe('cardsIn', () => {
       },
       { id: instanceId('plain_terror'), name: 'plain_terror', type: 'treachery', traits: [] },
     ]);
+  });
+});
+
+describe('encounter sets', () => {
+  const rats = encounterSetCode('rats');
+
+  it('names the encounter set of a location, an enemy and a treachery, for their medallions', () => {
+    const { context, state } = newGame()
+      .withLocation(study, blankLocation('study', { encounterCode: rats }))
+      .withInvestigator(alice, { locationId: study })
+      .withCard(
+        instanceId('swarm_of_rats'),
+        blankEnemy('swarm_of_rats', { encounterCode: rats }),
+        engagedWith(alice),
+      )
+      .withCard(
+        instanceId('rat_bite'),
+        blankTreachery('rat_bite', { encounterCode: rats }),
+        threatAreaOf(alice),
+      )
+      .start();
+    const board = boardView(context, state);
+
+    expect(board.location(byName('study')).encounterSet).toBe('rats');
+    expect(board.enemyStats(instanceId('swarm_of_rats')).encounterSet).toBe('rats');
+    expect(board.cardsIn({ kind: 'threatArea', investigatorId: alice })[0]?.encounterSet).toBe(
+      'rats',
+    );
+  });
+
+  it('names the scenario set on the agenda, the act and the reference card, for their set marks', () => {
+    const theGathering = encounterSetCode('torch');
+    const { context, state } = newGame()
+      .withAgenda(
+        instanceId('whats_going_on'),
+        blankAgenda('whats_going_on', fixed(3), { encounterCode: theGathering }),
+      )
+      .withAct(instanceId('trapped'), blankAct('trapped', { encounterCode: theGathering }))
+      .withReferenceCard({ easyStandard: {}, hardExpert: {} })
+      .start();
+    const board = boardView(context, state);
+
+    expect(board.agenda?.encounterSet).toBe('torch');
+    expect(board.act?.encounterSet).toBe('torch');
+    expect(board.reference?.encounterSet).toBe('torch');
+  });
+
+  it('names none for a card outside every encounter set', () => {
+    const { context, state } = newGame()
+      .withLocation(study, blankLocation('study'))
+      .withInvestigator(alice, { locationId: study })
+      .start();
+
+    expect(boardView(context, state).location(byName('study')).encounterSet).toBeUndefined();
   });
 });
 
