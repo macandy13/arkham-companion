@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef, useState, type ReactNode, type SyntheticEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { CardFaceView, CardType, InvestigatorView } from '@arkham/engine';
+import type { ShownCard } from '../catalog/cardFace';
 import { useCardPicture } from '../catalog/cardImages';
 import { InvestigatorArt } from '../investigators/InvestigatorArt';
 import { CardZoom } from './CardZoom';
@@ -42,7 +43,7 @@ export function CardDialog({
 }: {
   /** The dialog's `data-dialog`, which its own stylesheet styles its content by. */
   name: string;
-  card?: CardFaceView;
+  card?: ShownCard;
   /**
    * The card drawn in place of its picture, when the dialog has a drawing of it that lays the
    * picture over itself once loaded (an enemy's `EnemyCard`, a location's `LocationCard`), so it reads offline too.
@@ -140,7 +141,7 @@ export function CardDialog({
   );
 }
 
-function orientationOf(card: CardFaceView): 'beside' | 'above' {
+function orientationOf(card: ShownCard): 'beside' | 'above' {
   return LANDSCAPE.has(card.type) ? 'above' : 'beside';
 }
 
@@ -166,7 +167,7 @@ function SubjectCard({
   drawn,
   onOpen,
 }: {
-  card: CardFaceView;
+  card: ShownCard;
   drawn: ReactNode;
   onOpen: () => void;
 }) {
@@ -187,7 +188,7 @@ function PictureCard({
   label,
   onOpen,
 }: {
-  card: CardFaceView;
+  card: ShownCard;
   label: string;
   onOpen: () => void;
 }) {

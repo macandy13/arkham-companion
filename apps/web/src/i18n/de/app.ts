@@ -107,6 +107,8 @@ export const appTexts = {
     agenda: 'Agenda',
     act: 'Szene',
     scenario: 'Szenario',
+    scenarioSide: 'Szenario · {{side}}',
+    setAsideName: 'Beiseitegelegt',
     reference: 'Chaosmarker',
     referenceSide: { easyStandard: 'Leicht / Standard', hardExpert: 'Schwer / Experte' },
     victory: 'Sieg',

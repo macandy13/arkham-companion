@@ -80,7 +80,6 @@ describe('CardZoom', () => {
     render(
       <CardZoom
         card={{
-          id: instanceId('plain_curse'),
           name: cardName('plain_curse'),
           type: 'treachery',
           traits: [],
