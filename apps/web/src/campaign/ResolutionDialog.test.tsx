@@ -56,7 +56,7 @@ function gatheringEndedWith(resolution: string | undefined): GameState {
   };
 }
 
-/** The resolutions the dialog offers for a game of a Night of the Zealot campaign. */
+/** Renders the dialog over `game` with `options`, in a Zealot campaign unless `inCampaign: false`. */
 function renderDialog(
   game: GameState,
   options: readonly ResolutionOption[],

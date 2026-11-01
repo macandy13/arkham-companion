@@ -335,6 +335,20 @@ describe('appStore', () => {
         ]);
       });
 
+      it('refuses a resolution The Gathering does not have and writes nothing', async () => {
+        const db = new IndexedDbStore('appstore-resolution-unknown-test');
+        const store = createAppStore(db);
+        await store.getState().startCampaign(campaignStart);
+        const campaignId = store.getState().campaigns[0]!.campaignId;
+        await store.getState().actions.adjust(alderId, 'horror', alder.sanity);
+        const r9 = { kind: 'resolution', id: resolutionId('R9') } as const;
+
+        await expect(store.getState().writeResolution(r9, [])).rejects.toThrow(
+          'Not one of the scenario resolutions',
+        );
+        expect((await db.loadCampaign(campaignId))?.log.playedScenarios).toEqual([]);
+      });
+
       it('writes nothing and keeps the proposal when the log refuses a change', async () => {
         const db = new IndexedDbStore('appstore-resolution-refused-test');
         const store = createAppStore(db);

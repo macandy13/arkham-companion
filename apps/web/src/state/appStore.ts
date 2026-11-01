@@ -278,8 +278,6 @@ function pendingResolution(
   if (resolutions === undefined) return undefined;
   if (log && campaign.findCurrentScenarioId(log) !== state.meta.scenarioId) return undefined;
   const reached = campaign.gameOutcome(state);
-  // Only a game that ended with a resolution its scenario defines has anything to propose.
-  if (campaign.proposeResolution(ctx, state, resolutions, reached) === undefined) return undefined;
   const outcomes: ScenarioOutcome[] = [
     ...(Object.keys(resolutions.byId) as ResolutionId[]).map((id) => ({
       kind: 'resolution' as const,
@@ -291,6 +289,8 @@ function pendingResolution(
     const changes = campaign.proposeResolution(ctx, state, resolutions, outcome);
     return changes ? [{ outcome, changes }] : [];
   });
+  // Only a game that ended with a resolution its scenario defines has anything to propose.
+  if (!options.some((option) => campaign.sameOutcome(option.outcome, reached))) return undefined;
   return { reached, options, campaignId: log?.campaignId };
 }
 
@@ -476,8 +476,11 @@ export function createAppStore(
       writeResolution(outcome, confirmed) {
         return queueStep(async () => {
           const played = session;
-          const campaignId = get().current?.resolution?.campaignId;
+          const pending = get().current?.resolution;
+          const campaignId = pending?.campaignId;
           if (!played || campaignId === undefined) throw new Error('No resolution to write');
+          if (!pending?.options.some((option) => campaign.sameOutcome(option.outcome, outcome)))
+            throw new Error('Not one of the scenario resolutions');
           const loaded = await gameStore.loadCampaign(campaignId);
           if (!loaded) throw new Error(`Unknown campaign ${campaignId}`);
           const ctx = { cards: played.ctx.cards };

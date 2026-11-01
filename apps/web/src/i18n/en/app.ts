@@ -609,7 +609,6 @@ export const appTexts = {
     over: 'The scenario is over',
     pickResolution:
       'Confirm the resolution, or pick another one if the table played it differently.',
-    fromTheGame: 'from the game',
     standaloneTitle: 'Resolution steps',
     next: 'Next',
     back: 'Back',

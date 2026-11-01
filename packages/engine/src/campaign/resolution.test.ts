@@ -493,6 +493,17 @@ describe('proposeResolution for a resolution the players picked', () => {
   });
 });
 
+describe('sameOutcome', () => {
+  it.each([
+    ['R1 and R1', { kind: 'resolution', id: r1 }, { kind: 'resolution', id: r1 }, true],
+    ['R1 and R3', { kind: 'resolution', id: r1 }, { kind: 'resolution', id: r3 }, false],
+    ['R1 and no resolution', { kind: 'resolution', id: r1 }, { kind: 'noResolution' }, false],
+    ['no resolution twice', { kind: 'noResolution' }, { kind: 'noResolution' }, true],
+  ] as const)('%s: %s', (_, a, b, same) => {
+    expect(campaign.sameOutcome(a, b)).toBe(same);
+  });
+});
+
 describe('gameOutcome', () => {
   it('is the resolution the game ended with', () => {
     const { context, state } = table.start();

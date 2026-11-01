@@ -254,6 +254,12 @@ export function proposedCommands(changes: readonly ProposedChange[]): CampaignCo
   });
 }
 
+/** Whether `a` and `b` are the same outcome: both "no resolution", or the same resolution id. */
+export function sameOutcome(a: ScenarioOutcome, b: ScenarioOutcome): boolean {
+  if (a.kind === 'noResolution' || b.kind === 'noResolution') return a.kind === b.kind;
+  return a.id === b.id;
+}
+
 /** The resolution an ended `game` reached (`ScenarioEnded`), or "no resolution". */
 export function gameOutcome(game: GameState): ScenarioOutcome {
   return game.meta.resolution === undefined

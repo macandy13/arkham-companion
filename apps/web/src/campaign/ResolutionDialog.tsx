@@ -65,7 +65,8 @@ export function ResolutionDialog({
   }, []);
 
   const changes =
-    resolution.options.find((option) => sameOutcome(option.outcome, outcome))?.changes ?? [];
+    resolution.options.find((option) => campaign.sameOutcome(option.outcome, outcome))?.changes ??
+    [];
   const confirmed = changes.flatMap((change, index): CampaignCommand[] => {
     if (change.kind === 'command') return [change.command];
     if (change.kind !== 'choice') return [];
@@ -116,17 +117,17 @@ export function ResolutionDialog({
                 <input
                   type="radio"
                   name="resolution-outcome"
-                  checked={sameOutcome(option.outcome, outcome)}
+                  checked={campaign.sameOutcome(option.outcome, outcome)}
                   onChange={() => {
                     setOutcome(option.outcome);
                     setPicks(new Map());
                   }}
                 />
                 {outcomeName(t, option.outcome)}
-                {sameOutcome(option.outcome, resolution.reached) && (
+                {campaign.sameOutcome(option.outcome, resolution.reached) && (
                   <>
-                    {' '}
-                    <em>{t('resolution.fromTheGame')}</em>
+                    {/* A space, so the radio's name reads "No resolution from the game". */}{' '}
+                    <em>{t('decision.fromTheGame')}</em>
                   </>
                 )}
               </label>
@@ -192,11 +193,7 @@ export function ResolutionDialog({
 
 type Translate = ReturnType<typeof useTranslation>['t'];
 
-function sameOutcome(a: ScenarioOutcome, b: ScenarioOutcome): boolean {
-  return outcomeKey(a) === outcomeKey(b);
-}
-
-/** A key that tells outcomes apart: the resolution id, or `none`. */
+/** A key that tells outcomes apart in a list: the resolution id, or `none`. */
 function outcomeKey(outcome: ScenarioOutcome): string {
   return outcome.kind === 'noResolution' ? 'none' : outcome.id;
 }
