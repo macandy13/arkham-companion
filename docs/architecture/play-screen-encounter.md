@@ -44,7 +44,7 @@ An empty pile is a dashed card outline.
 A tap on the deck or a pile opens the [encounter dialog](../../apps/web/src/encounter/EncounterDialog.tsx) on it:
 
 - on the deck, its count with a "Draw for …" button per active investigator, the one whose turn it is first (`GameActions.drawEncounter`, for player cards and effects that draw outside the mythos phase; the card then resolves as in the mythos phase);
-- on a pile, its cards as a row of pictures, top card first (`PileStrip`: five side by side, `--encounter-strip-cards-shown`; more scroll by whole cards with a swipe or the investigator picker's round arrows), the chosen card (the top one at first) named under the row with its victory points and its moves.
+- on a pile, its cards as a row of pictures, top card first (`PileStrip` in the shared [`CardStrip`](../../apps/web/src/screens/CardStrip.tsx): five side by side, `--encounter-strip-cards-shown`; more scroll by whole cards with a swipe or the investigator picker's round arrows, as in the threat area), the chosen card (the top one at first) named under the row with its victory points and its moves.
 
 A tap on a line of the drawn-cards notice below opens the places the players can put it ([`CardMoves`](../../apps/web/src/encounter/CardMoves.tsx) over [`cardMoves`](../../apps/web/src/encounter/cardMoves.ts)), each a `ManualAdjust` `moveCard` step (`GameActions.moveEncounterCard`), for revelations the engine leaves to them:
 

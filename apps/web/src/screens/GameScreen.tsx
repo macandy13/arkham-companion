@@ -18,6 +18,7 @@ import { GameStatus } from './GameStatus';
 import { MapStrip } from './MapStrip';
 import { RejectionToast } from './RejectionToast';
 import { DrawnCardsNotice } from '../encounter/DrawnCardsNotice';
+import { ResolutionPrompt } from '../campaign/ResolutionPrompt';
 import { SpawnPrompt } from '../encounter/SpawnPrompt';
 import { SkippedEffectsNotice } from './SkippedEffectsNotice';
 import { useDetailView } from './useDetailView';
@@ -206,6 +207,7 @@ export function GameScreen({
             onPicking={(to) => setPickingFor(to ? decisionId : undefined)}
           />
         )}
+        <ResolutionPrompt key={open.gameId} store={store} open={open} />
         <div id="notices">
           {open.spawning && (
             <SpawnPrompt enemy={open.spawning} onCancel={() => store.getState().cancelSpawn()} />

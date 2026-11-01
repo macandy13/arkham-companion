@@ -15,26 +15,14 @@ import {
   trait,
 } from '@arkham/engine';
 import { initI18n } from '../i18n';
-import { gameActions } from '../state/gameActions';
 import { DecisionHostContext, type OpenDecision } from '../screens/DetailsDialog';
 import { EnemyDetails } from './EnemyDetails';
+import { actionsOn } from '../state/gameActions.test_support';
 
 const study = instanceId('study');
 const ghoul = instanceId('ghoul');
 const alder = investigatorId('alder');
 const brook = investigatorId('brook');
-
-/** Actions that play on `table`, as the store's play on the open game; undo and adjusting do nothing. */
-const actionsOn = (table: PlayTable) =>
-  gameActions(
-    async (step) => step(table),
-    async () => {},
-    {
-      start: async () => {},
-      finish: async () => {},
-      cancel: async () => {},
-    },
-  );
 
 /** The ghoul's details on `table`, as Alder's threat area opens them; `onClose` is a spy. */
 const renderGhoulDetails = (table: PlayTable, onClose = vi.fn()) => {
@@ -156,16 +144,16 @@ describe('EnemyDetails', () => {
   });
 
   it.each([
-    { group: 'Action', button: 'Fight · 1 action', prompt: 'decision.fight', left: 2 },
-    { group: 'Action', button: 'Evade · 1 action', prompt: 'decision.evade', left: 2 },
+    { group: 'Actions', button: 'Fight · 1 action', prompt: 'decision.fight', left: 2 },
+    { group: 'Actions', button: 'Evade · 1 action', prompt: 'decision.evade', left: 2 },
     {
-      group: 'Free',
+      group: 'Actions',
       button: 'Fight, no action',
       prompt: 'decision.fight',
       left: 3,
     },
     {
-      group: 'Free',
+      group: 'Actions',
       button: 'Evade, no action',
       prompt: 'decision.evade',
       left: 3,
@@ -212,7 +200,7 @@ describe('EnemyDetails', () => {
       const { rerender } = render(ghoulDetailsWith(table, setHosted));
       const details = screen.getByRole('dialog', { hidden: true, name: 'ghoul' });
 
-      fireEvent.click(within(group('Action')).getByRole('button', { name: 'Fight · 1 action' }));
+      fireEvent.click(within(group('Actions')).getByRole('button', { name: 'Fight · 1 action' }));
       const [fight] = table.board.decisions;
       if (!fight) throw new Error('the fight waits for its result');
       rerender(ghoulDetailsWith(table, setHosted, { view: fight, id: decisionId('the_fight') }));
@@ -279,19 +267,17 @@ describe('EnemyDetails', () => {
     expect(groups).toEqual(['Card effect']);
   });
 
-  it("offers brook, at the same location on their turn, fight and engage but no evade of alder's ghoul", () => {
+  it("offers brook, at the same location on their turn, fight and engage but no evade of alder's ghoul, the free fight last", () => {
     renderGhoulDetails(PlayTable.start(ghoulOnAlder.withTurnOf(brook)));
 
+    const offered = within(group('Actions')).getAllByRole('button');
     expect(
-      within(group('Action'))
-        .getAllByRole('button')
-        .map((button) => button.getAttribute('aria-label')),
-    ).toEqual(['Fight · 1 action', 'Engage · 1 action']);
-    expect(
-      within(group('Free'))
-        .getAllByRole('button')
-        .map((button) => button.getAttribute('aria-label')),
-    ).toEqual(['Fight, no action']);
+      offered.map((button) => [button.getAttribute('aria-label'), button.dataset['cost']]),
+    ).toEqual([
+      ['Fight · 1 action', 'action'],
+      ['Engage · 1 action', 'action'],
+      ['Fight, no action', 'free'],
+    ]);
   });
 
   it('closes from its × button', () => {

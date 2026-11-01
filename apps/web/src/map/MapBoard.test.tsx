@@ -19,9 +19,9 @@ import {
   resignAction,
 } from '@arkham/engine';
 import { initI18n } from '../i18n';
-import { gameActions } from '../state/gameActions';
 import { MapBoard } from './MapBoard';
 import type { Point } from './mapLayout';
+import { actionsOn } from '../state/gameActions.test_support';
 
 const study = instanceId('study');
 const hallway = instanceId('hallway');
@@ -44,17 +44,6 @@ const house = newGame()
   .withLocation(attic, blankLocation('attic'))
   .withConnection(study, hallway)
   .withConnection(hallway, attic, { oneWay: true });
-
-/**
- * Actions that play on `table`, as the store's play on the open game; undo and adjusting are never
- * used here.
- */
-const actionsOn = (table: PlayTable) =>
-  gameActions(
-    async (step) => step(table),
-    async () => {},
-    { start: async () => {}, finish: async () => {}, cancel: async () => {} },
-  );
 
 const tile = (name: string) => screen.getByRole('group', { name });
 
@@ -920,6 +909,25 @@ describe('MapBoard', () => {
       fireEvent.click(tile(location));
 
       expect(offered(location)).toEqual(buttons);
+    });
+
+    it("lists the hallway's moves in one Actions group, the one that costs an action first", () => {
+      const table = aldersTurn();
+      render(
+        <MapBoard board={table.board} actions={actionsOn(table)} busy={false} adjusting={false} />,
+      );
+
+      fireEvent.click(tile('hallway'));
+
+      const moves = within(details('hallway')).getByRole('region', { name: 'Actions' });
+      expect(
+        within(moves)
+          .getAllByRole('button')
+          .map((button) => [button.getAttribute('aria-label'), button.dataset['cost']]),
+      ).toEqual([
+        ['Move here · 1 action', 'action'],
+        ['Move here, no action', 'free'],
+      ]);
     });
 
     it('turns taking a clue off while an enemy engaged with alder forbids discovering clues', () => {

@@ -23,7 +23,7 @@ Their [threat area](../../apps/web/src/investigators/ThreatArea.tsx) is a row of
 - treacheries
 - and engaged enemies, the enemies with their health left (`EnemyView.health`, scaled by the player count through `enemyHealth`).
 
-The threat area shows four cards (`THREAT_CARDS_SHOWN`); more scroll by whole cards with a swipe or its arrows (CSS scroll snap).
+The threat area shows four cards (`THREAT_CARDS_SHOWN`); more scroll by whole cards with a swipe or its round arrows (CSS scroll snap). The row and its arrows are the shared [`CardStrip`](../../apps/web/src/screens/CardStrip.tsx), which the encounter dialog's pile uses too.
 
 A tap on a treachery opens the [card zoom](../../apps/web/src/screens/CardZoom.tsx), the card as big as a zoomed card to read (`BoardView.cardsIn` a zone: id, name, type, traits and the pictures of both sides):
 
@@ -50,9 +50,9 @@ The face's shared rules (medallion, count circle, ornament lines, heart and brai
 
 Under it is one row of buttons ([`ActionRow`](../../apps/web/src/screens/ActionRow.tsx), for the details windows to share):
 
-- on an investigator's turn the basic actions the rules allow them against the enemy (`BoardView.enemyActions`, a dry run of each command, so the rules stay in the engine: evade only one engaged with them, fight no unengaged aloof enemy, engage none already engaged with them):
-  - fight, evade and engage as an action (marked, like the turn row's actions left, with the game's action arrow, [`action.svg`](../../apps/web/src/symbols/action.svg))
-  - and fight and evade, as some cards allow, without one,
+- on an investigator's turn, in one Actions group, the basic actions the rules allow them against the enemy (`BoardView.enemyActions`, a dry run of each command, so the rules stay in the engine: evade only one engaged with them, fight no unengaged aloof enemy, engage none already engaged with them):
+  - fight, evade and engage as an action (`cost="action"`, marked, like the turn row's actions left, with the game's action arrow, [`action.svg`](../../apps/web/src/symbols/action.svg))
+  - then fight and evade, as some cards allow, without one (`cost="free"`, marked with the game's free-ability symbol, [`free.svg`](../../apps/web/src/symbols/free.svg)); each mark has a column of its own beside the icon,
 - the actions the enemy's own card offers them, such as a Parley,
 - and at any time the card effects deal 1 damage, disengage and defeat.
 
@@ -61,7 +61,7 @@ Fight, evade and engage keep the details open and show the decisions they raise 
 ## Card actions
 
 Every card screen shows the actions its card offers the same way ([`CardActions`](../../apps/web/src/screens/ActionRow.tsx) over `cardActionsOn`, the turn investigator's `BoardView.cardActions` on that card, found by the `id` each card view carries):
-a "Card actions" group named like the turn row's buttons ("Resign · Parlor"), with the action arrow unless the action is free.
+a "Card actions" group named like the turn row's buttons ("Resign · Parlor"), with the action arrow, or the free-ability symbol when the action is free.
 Taking one closes the window first.
 
 The turn row keeps a button for every card action besides.

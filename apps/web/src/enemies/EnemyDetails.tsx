@@ -13,15 +13,17 @@ import './enemies.css';
  * (`DetailsDialog`): the enemy drawn as its card beside the page (`EnemyCard`, from
  * `BoardView.enemyStats`), whom it is engaged with in the kicker, its fight, health left of its
  * health for the player count and evade on the page, and under them one row of what the players
- * can do to it. On an investigator's turn, the basic actions the rules allow them against it
- * (`BoardView.enemyActions`): fight, evade and engage as actions, which count off one, and fight
- * and evade without an action, as some cards allow; at any time, what card effects do to an
- * enemy: deal 1 damage, disengage it, defeat it. Each button shows a short word and is named in
- * full ("Fight · 1 action"). Fight, evade and engage keep it open and show the decisions they
- * raise in place of its page (`useDecisionHost`: the test's result, an attack of opportunity), with
- * the enemy still beside it, then its page again for the fight that often follows; damage keeps
- * it open for the next point. It reads the enemy fresh from the board. Escape and its × close it; nothing is tapped while a step is queued (`busy`). On a phone it is the shell's sheet
- * and the back gesture closes it too (`useBackCloses`).
+ * can do to it. On an investigator's turn, in one Actions group, the basic actions the rules
+ * allow them against it (`BoardView.enemyActions`): fight, evade and engage as actions, which
+ * count off one, then fight and evade without an action, as some cards allow; at any time, in a
+ * group of their own, what card effects do to an enemy: deal 1 damage, disengage it, defeat it.
+ * Each button shows a short word and is named in full ("Fight · 1 action"). Fight, evade and
+ * engage keep it open and show the decisions they raise in place of its page
+ * (`useDecisionHost`: the test's result, an attack of opportunity), with the enemy still beside
+ * it, then its page again for the fight that often follows; damage keeps it open for the next
+ * point. It reads the enemy fresh from the board. Escape and its × close it; nothing is tapped
+ * while a step is queued (`busy`). On a phone it is the shell's sheet and the back gesture
+ * closes it too (`useBackCloses`).
  */
 export function EnemyDetails({
   board,
@@ -84,7 +86,7 @@ export function EnemyDetails({
       </dl>
       <footer>
         {allowed.length > 0 && (
-          <ActionGroup title={t('enemy.asAction')}>
+          <ActionGroup title={t('enemy.actions')}>
             {allowed.includes('fight') && (
               <ActionButton
                 icon="fight"
@@ -115,13 +117,10 @@ export function EnemyDetails({
                 onClick={step(() => actions.engage(enemy.id), 'host')}
               />
             )}
-          </ActionGroup>
-        )}
-        {tests.length > 0 && (
-          <ActionGroup title={t('enemy.free')}>
             {tests.includes('fight') && (
               <ActionButton
                 icon="fight"
+                cost="free"
                 caption={t('enemy.caption.fight')}
                 name={t('enemy.fightFree')}
                 disabled={busy}
@@ -131,6 +130,7 @@ export function EnemyDetails({
             {tests.includes('evade') && (
               <ActionButton
                 icon="evade"
+                cost="free"
                 caption={t('enemy.caption.evade')}
                 name={t('enemy.evadeFree')}
                 disabled={busy}

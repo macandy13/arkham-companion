@@ -10,8 +10,8 @@ import {
   PlayTable,
 } from '@arkham/engine';
 import { initI18n } from '../i18n';
-import { gameActions } from '../state/gameActions';
 import { LocationFocus } from './LocationFocus';
+import { actionsOn } from '../state/gameActions.test_support';
 
 const hallway = instanceId('hallway');
 const study = instanceId('study');
@@ -19,14 +19,6 @@ const attic = instanceId('attic');
 const cellar = instanceId('cellar');
 const parlor = instanceId('parlor');
 const alder = investigatorId('alder');
-
-/** Actions that play on `table`; the location mode's neighbours only move the view, never play. */
-const actionsOn = (table: PlayTable) =>
-  gameActions(
-    async (step) => step(table),
-    async () => {},
-    { start: async () => {}, finish: async () => {}, cancel: async () => {} },
-  );
 
 describe('LocationFocus', () => {
   beforeAll(async () => {

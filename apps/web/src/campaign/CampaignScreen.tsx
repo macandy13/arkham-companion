@@ -12,7 +12,12 @@ import {
   type PlayedScenario,
 } from '@arkham/engine';
 import type { AppState } from '../state/appStore';
-import { findCampaign, findScenario, scenarioCardName } from '../scenarios/scenarioCatalog';
+import {
+  findCampaign,
+  findScenario,
+  resolutionNumber,
+  scenarioCardName,
+} from '../scenarios/scenarioCatalog';
 import { range } from '@arkham/util';
 import { CampaignSheets } from './CampaignSheets';
 import { Tally } from './Tally';
@@ -154,8 +159,7 @@ function ScenarioList({ log }: { readonly log: CampaignLog }) {
 function outcomeLabel(t: ReturnType<typeof useTranslation>['t'], played: PlayedScenario): string {
   const { outcome } = played;
   if (outcome.kind === 'noResolution') return t('campaignLog.noResolution');
-  // Resolution ids are numbered like the guide's ("R1"), and the log writes the number.
-  return t('campaignLog.resolution', { n: /\d+$/.exec(outcome.id)?.[0] ?? outcome.id });
+  return t('campaignLog.resolution', { n: resolutionNumber(outcome.id) });
 }
 
 /** Back to the game of the scenario in play, if the campaign has one that is not over yet. */

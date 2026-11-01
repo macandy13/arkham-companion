@@ -154,7 +154,7 @@
 #board
   :is(dialog, dialog > article, [data-mode='location'], header > section)
   > footer:has(> section > h3)
-  button[data-cost='action']::after {
+  button:is([data-cost='action'], [data-cost='free'])::after {
   content: '';
   position: absolute;
   top: var(--space-1);
@@ -163,4 +163,20 @@
   height: var(--action-mark-size);
   background: var(--color-accent);
   mask: url('../symbols/action.svg') center / contain no-repeat;
+}
+
+/* One that takes no action carries the game's free-ability symbol instead. */
+#board
+  :is(dialog, dialog > article, [data-mode='location'], header > section)
+  > footer:has(> section > h3)
+  button[data-cost='free']::after {
+  mask-image: url('../symbols/free.svg');
+}
+
+/* A cost mark gets a column of its own beside the icon, so it never covers it. */
+#board
+  :is(dialog, dialog > article, [data-mode='location'], header > section)
+  > footer:has(> section > h3)
+  button:is([data-cost='action'], [data-cost='free']) {
+  padding-inline-end: calc(var(--action-mark-size) + var(--space-1));
 }
