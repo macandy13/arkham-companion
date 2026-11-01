@@ -81,7 +81,6 @@
   --color-ink-muted: #6a5536;
   --color-card-edge: #3d2b19;
   /* The dark bands of a printed card's frame (the enemy card's) and the thin gilt rules on them. */
-  --color-card-band: #4a3222;
   --color-card-gilt: #d8c48e;
   /* The shroud token, a dark disc like the printed shroud icon's. */
   --color-token-shroud: #2c2c33;
@@ -170,17 +169,6 @@
   --color-resource-coin-rim: #7a561c;
   --resource-coin-face: radial-gradient(circle at 35% 30%, #f6dc8e, #d6a743 55%, #9c7226);
   --resource-coin-milling: inset 0 0 0 2px #f1d27c, inset 0 0 0 3px #8a6420;
-  /*
-   * The notebook page an investigator's counters sit on: pale paper with faint ruled lines, like
-   * the printed card's text page.
-   */
-  --notebook-page:
-    repeating-linear-gradient(
-      to bottom,
-      transparent 0 calc(1.25rem - 1px),
-      rgb(30 23 18 / 10%) calc(1.25rem - 1px) 1.25rem
-    ),
-    linear-gradient(#f4ecd6, #e8dcbc);
 
   --space-1: 0.25rem;
   --space-2: 0.5rem;
@@ -440,8 +428,51 @@
   --scenario-row-gap: 22;
   --scenario-token-size: 34;
   --scenario-text-size: 13;
-  /* The art window on the investigator card in each panel of the investigator bar. */
-  --layout-investigator-art-width: 7.5rem;
+  /*
+   * Where the HTML on an investigator card sits, in scan units of its face (`INVESTIGATOR_FACE`, a
+   * landscape card 419 wide): the name on its plate and the subname on the one under it, the four
+   * skills' values on the chain (the first link's left, the step from link to link, a link's size
+   * and the value's place on it), and the counters at the notebook page's foot (each one's centre,
+   * the tokens' and printed symbols' sizes, their numbers' and counts' sizes).
+   */
+  --investigator-name-left: 40;
+  --investigator-name-top: 6;
+  --investigator-name-width: 172;
+  --investigator-name-height: 26;
+  --investigator-name-size: 20;
+  --investigator-subname-left: 54;
+  --investigator-subname-top: 32;
+  --investigator-subname-width: 144;
+  --investigator-subname-height: 14;
+  --investigator-subname-size: 12;
+  --investigator-skills-left: 226;
+  --investigator-skills-top: 7;
+  --investigator-skill-step: 48.5;
+  --investigator-skill-width: 44;
+  --investigator-skill-height: 36;
+  --investigator-skill-value-width: 30;
+  --investigator-skill-size: 24;
+  --investigator-boost-size: 11;
+  --investigator-counters-y: 256;
+  --investigator-clues-x: 256;
+  --investigator-health-x: 298;
+  --investigator-sanity-x: 346;
+  --investigator-resources-x: 394;
+  --investigator-doom-x: 256;
+  --investigator-doom-y: 220;
+  --investigator-token-size: 28;
+  --investigator-token-number-size: 14;
+  --investigator-symbol-size: 36;
+  --investigator-symbol-number-size: 24;
+  --investigator-count-size: 17;
+  --investigator-count-number-size: 11;
+  /* The spiral and rules on the investigator card's notebook page, in scan units. */
+  --face-spiral-width: 1.4px;
+  --face-rules-width: 0.6px;
+  --face-page-shadow-opacity: 0.35;
+  --face-link-width: 3px;
+  --face-ring-width: 1.4px;
+  /* The shape of an investigator's art cut from their card, round portraits and the clue payment's. */
   --investigator-art-ratio: 4 / 3;
   /*
    * Where the art is on the scan of an investigator card's front (landscape, 419 × 300), in
@@ -516,16 +547,6 @@
   --action-spent-opacity: 0.3;
   /* The icon before the name of an investigator's counter. */
   --stat-icon-size: 0.875rem;
-  /*
-   * An investigator card's skills on their chain: the value's circle, the icon's tile beside it,
-   * the icon on the tile, and the chain's link through them.
-   */
-  --skill-circle-size: 1.875rem;
-  --skill-tile-size: 1.5rem;
-  --skill-icon-size: 1rem;
-  --skill-chain-width: 0.375rem;
-  /* How far the points of the investigator's name banner reach in from its ends. */
-  --banner-point: 0.625rem;
   /* An icon on an icon button (`button[data-icon]` in base.css). */
   --icon-size: 1.25rem;
   /* What is left of a name kept only for screen readers: a dot, clipped away. */
@@ -748,9 +769,6 @@
     --header-token-border-width: 2px;
     --header-count-size: 0.875rem;
     --font-size-token-count: 1rem;
-    --skill-circle-size: 1.5rem;
-    --skill-tile-size: 1.25rem;
-    --skill-icon-size: 0.875rem;
     --stat-token-size: 1.75rem;
     --stat-count-size: 0.875rem;
   }
@@ -824,28 +842,6 @@
   --color-face-health: #2a2a26;
   --color-face-evade: #1e3a24;
   --color-face-chevron-rim: #c29a5b;
-  --notebook-page:
-    repeating-linear-gradient(
-      to bottom,
-      transparent 0 calc(1.25rem - 1px),
-      rgb(194 154 91 / 18%) calc(1.25rem - 1px) 1.25rem
-    ),
-    linear-gradient(#23302d, #18221f);
-}
-
-/*
- * The investigator card is drawn in HTML on the shared paper tokens, which dialogs use too, so
- * the Night and brass theme sets them on the card alone.
- */
-:root[data-card-theme='nightAndBrass'] #investigators [data-card='investigator'] {
-  --color-parchment: #2a3a36;
-  --color-parchment-shade: #15201e;
-  --color-parchment-light: #3a4a45;
-  --color-ink: #ece2c8;
-  --color-ink-muted: #b8aa88;
-  --color-card-band: #0e1514;
-  --color-card-gilt: #c29a5b;
-  --color-card-edge: #070b0a;
 }
 
 /*
@@ -896,23 +892,4 @@
   --color-face-eye-pupil: #030207;
   --color-face-star: #d9eee2;
   --face-star-opacity: 0.5;
-  --notebook-page:
-    repeating-linear-gradient(
-      to bottom,
-      transparent 0 calc(1.25rem - 1px),
-      rgb(158 240 196 / 14%) calc(1.25rem - 1px) 1.25rem
-    ),
-    linear-gradient(#1a1428, #0d0a16);
-}
-
-/* The investigator card's paper and ink in the Eldritch theme, on the card alone (see above). */
-:root[data-card-theme='eldritch'] #investigators [data-card='investigator'] {
-  --color-parchment: #1d1630;
-  --color-parchment-shade: #07060d;
-  --color-parchment-light: #2a2240;
-  --color-ink: #d9eee2;
-  --color-ink-muted: #8fb3a3;
-  --color-card-band: #0a0812;
-  --color-card-gilt: #9ef0c4;
-  --color-card-edge: #030207;
 }

@@ -13,6 +13,7 @@ import { MapBoard } from '../map/MapBoard';
 import { DecisionDialog } from './DecisionDialog';
 import { DetailControls } from './DetailControls';
 import { GameHeader, printedReferenceOf } from './GameHeader';
+import { printedInvestigatorOf } from '../investigators/InvestigatorFace';
 import { GameStatus } from './GameStatus';
 import { MapStrip } from './MapStrip';
 import { RejectionToast } from './RejectionToast';
@@ -176,6 +177,11 @@ export function GameScreen({
           onOpen={
             opensDetail
               ? (investigator) => detail.open({ row: 'investigators', investigator })
+              : undefined
+          }
+          printed={
+            cards.status === 'ready'
+              ? (code) => printedInvestigatorOf(cards.catalog, code)
               : undefined
           }
         />

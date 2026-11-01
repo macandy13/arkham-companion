@@ -16,7 +16,7 @@ test('start a new game', async ({ page }) => {
   await test.step('Pick the difficulty', async () => {
     await page.getByRole('radio', { name: 'Hard' }).check();
     await page.getByRole('button', { name: 'Next' }).click();
-    await expect(portraits.getByRole('listitem')).toHaveCount(2);
+    await expect(portraits.getByRole('listitem')).toHaveCount(3);
   });
 
   await test.step('Search for an investigator by name', async () => {

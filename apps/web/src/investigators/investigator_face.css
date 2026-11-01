@@ -1,0 +1,367 @@
+/*
+ * An investigator's card (InvestigatorBar), drawn as the printed one: the face (InvestigatorFace)
+ * fills the card's width, and the HTML lies over its places, sized in the face's scan units
+ * (`--scan-unit`, a 419th of the card's width) so it scales with the card. While the players adjust
+ * the board, the counters with their steppers leave the page for a row under the card.
+ */
+#investigators [data-card='investigator'] {
+  --scan-unit: calc(100cqw / 419);
+  container-type: inline-size;
+  position: relative;
+  border-radius: var(--radius);
+  color: var(--color-face-ink);
+  overflow: hidden;
+}
+
+/* The face in the card theme's colours, in scan units. */
+#investigators svg[data-face='investigator'] {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+#investigators svg[data-face='investigator'] [data-part='art'] {
+  fill: var(--color-card-face);
+}
+
+#investigators [data-card='investigator']:not([data-picture]) svg[data-face='investigator'] image {
+  visibility: hidden;
+}
+
+#investigators svg[data-face='investigator'] [data-part='shield'] {
+  fill: var(--shield-colour, var(--color-class-neutral));
+  stroke: var(--color-face-setting);
+  stroke-width: var(--face-disc-line-width);
+}
+
+#investigators svg[data-face='investigator'] [data-class='guardian'] {
+  --shield-colour: var(--color-class-guardian);
+}
+
+#investigators svg[data-face='investigator'] [data-class='seeker'] {
+  --shield-colour: var(--color-class-seeker);
+}
+
+#investigators svg[data-face='investigator'] [data-class='rogue'] {
+  --shield-colour: var(--color-class-rogue);
+}
+
+#investigators svg[data-face='investigator'] [data-class='mystic'] {
+  --shield-colour: var(--color-class-mystic);
+}
+
+#investigators svg[data-face='investigator'] [data-class='survivor'] {
+  --shield-colour: var(--color-class-survivor);
+}
+
+/* The class icon and the skills' icons: the game's symbols, pale paper on their colour. */
+#investigators svg[data-face='investigator'] :is([data-class-icon], [data-skill-icon]) {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: var(--color-skill-symbol);
+  mask: var(--symbol) center / contain no-repeat;
+}
+
+#investigators [data-class-icon='guardian'] {
+  --symbol: url('../symbols/guardian.svg');
+}
+
+#investigators [data-class-icon='seeker'] {
+  --symbol: url('../symbols/seeker.svg');
+}
+
+#investigators [data-class-icon='rogue'] {
+  --symbol: url('../symbols/rogue.svg');
+}
+
+#investigators [data-class-icon='mystic'] {
+  --symbol: url('../symbols/mystic.svg');
+}
+
+#investigators [data-class-icon='survivor'] {
+  --symbol: url('../symbols/survivor.svg');
+}
+
+#investigators [data-class-icon='neutral'] {
+  --symbol: url('../symbols/neutral.svg');
+}
+
+#investigators svg[data-face='investigator'] [data-skill] {
+  --symbol: var(--skill-icon);
+}
+
+/* The name plates and the skills' plates: paper between dark rules, like the printed ones. */
+#investigators svg[data-face='investigator'] :is([data-part='plate'], [data-part='skill-plate']) {
+  fill: var(--color-face-plate);
+  stroke: var(--color-face-setting);
+  stroke-width: var(--face-disc-line-width);
+}
+
+#investigators svg[data-face='investigator'] [data-part='skill-plate'] {
+  stroke: none;
+}
+
+#investigators svg[data-face='investigator'] [data-part='chain-band'] {
+  fill: var(--color-face-frame);
+}
+
+#investigators svg[data-face='investigator'] :is([data-part='link'], [data-part='ring'] circle) {
+  fill: none;
+  stroke: var(--color-face-ornament);
+}
+
+#investigators svg[data-face='investigator'] [data-part='link'] {
+  stroke-width: var(--face-link-width);
+}
+
+#investigators svg[data-face='investigator'] [data-part='ring'] circle {
+  stroke-width: var(--face-ring-width);
+}
+
+#investigators svg[data-face='investigator'] [data-part='diamond'] {
+  fill: var(--skill-colour);
+  stroke: var(--color-skill-symbol);
+  stroke-width: var(--face-rule-width);
+}
+
+/* The notebook page: its shadow, the paper shaded downwards, faint rules and the binding spiral. */
+#investigators svg[data-face='investigator'] [data-part='page-shadow'] {
+  fill: var(--color-face-setting);
+  opacity: var(--face-page-shadow-opacity);
+}
+
+#investigators svg[data-face='investigator'] linearGradient stop:first-child {
+  stop-color: var(--color-face-page);
+}
+
+#investigators svg[data-face='investigator'] linearGradient stop:last-child {
+  stop-color: var(--color-face-page-shade);
+}
+
+#investigators svg[data-face='investigator'] [data-part='rules'] {
+  stroke: var(--color-face-ink);
+  stroke-width: var(--face-rules-width);
+  opacity: var(--face-watermark-opacity);
+}
+
+#investigators svg[data-face='investigator'] [data-part='spiral'] {
+  fill: none;
+  stroke: var(--color-face-setting);
+  stroke-width: var(--face-spiral-width);
+}
+
+#investigators svg[data-face='investigator'] [data-part='spiral-eye'] {
+  fill: var(--color-face-setting);
+}
+
+/* The name and subname on their plates, in the card title's face. */
+#investigators [data-card='investigator'] > header > :is(h3, p) {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  margin: 0;
+  overflow: hidden;
+  color: var(--color-face-ink);
+  font-family: var(--font-family-card-title);
+  line-height: 1;
+  white-space: nowrap;
+}
+
+#investigators [data-card='investigator'] > header > h3 {
+  left: calc(var(--investigator-name-left) * var(--scan-unit));
+  top: calc(var(--investigator-name-top) * var(--scan-unit));
+  width: calc(var(--investigator-name-width) * var(--scan-unit));
+  height: calc(var(--investigator-name-height) * var(--scan-unit));
+  font-size: calc(var(--investigator-name-size) * var(--scan-unit));
+}
+
+#investigators [data-card='investigator'] > header > p {
+  left: calc(var(--investigator-subname-left) * var(--scan-unit));
+  top: calc(var(--investigator-subname-top) * var(--scan-unit));
+  width: calc(var(--investigator-subname-width) * var(--scan-unit));
+  height: calc(var(--investigator-subname-height) * var(--scan-unit));
+  font-size: calc(var(--investigator-subname-size) * var(--scan-unit));
+}
+
+/* The plate is the name's button already, so the phone's name button keeps only its text. */
+#investigators [data-card='investigator'] > header > h3 > button {
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
+}
+
+/*
+ * The skills on the chain: each value is a button over its link, the number on the plate left of
+ * the diamond, a lasting boost in a small dark badge on the plate's upper right. Two ids' worth,
+ * so they beat the home screen's padded `#app > main ul > li` cards.
+ */
+#investigators [data-card='investigator'] > ul {
+  position: absolute;
+  left: calc(var(--investigator-skills-left) * var(--scan-unit));
+  top: calc(var(--investigator-skills-top) * var(--scan-unit));
+  display: grid;
+  grid-template-columns: repeat(4, calc(var(--investigator-skill-step) * var(--scan-unit)));
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+#investigators [data-card='investigator'] > ul > li {
+  position: relative;
+  display: flex;
+  padding: 0;
+  border: none;
+  background: none;
+}
+
+#investigators [data-card='investigator'] > ul > li > button:first-child {
+  position: relative;
+  display: grid;
+  grid-template-columns: calc(var(--investigator-skill-value-width) * var(--scan-unit));
+  align-items: center;
+  justify-items: center;
+  width: calc(var(--investigator-skill-width) * var(--scan-unit));
+  height: calc(var(--investigator-skill-height) * var(--scan-unit));
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius);
+  background: none;
+  color: var(--color-face-ink);
+  font-family: var(--font-family);
+  font-size: calc(var(--investigator-skill-size) * var(--scan-unit));
+  font-weight: bold;
+  font-variant-numeric: lining-nums;
+  line-height: 1;
+}
+
+#investigators [data-card='investigator'] > ul > li > button:first-child > data + data {
+  position: absolute;
+  top: 0;
+  left: calc(var(--investigator-skill-value-width) * var(--scan-unit));
+  translate: -75% -15%;
+  padding: 0 calc(2 * var(--scan-unit));
+  border-radius: var(--radius-round);
+  background: var(--color-face-setting);
+  color: var(--color-face-ornament);
+  font-size: calc(var(--investigator-boost-size) * var(--scan-unit));
+}
+
+/* While adjusting, a skill's − and + hang under its link, over the page's top. */
+#investigators [data-card='investigator'] > ul > li > button + button {
+  position: absolute;
+  top: 100%;
+  left: 0;
+}
+
+#investigators [data-card='investigator'] > ul > li > button:last-child:not(:first-child) {
+  left: auto;
+  right: 0;
+}
+
+/*
+ * The counters at the page's foot, as the printed card has its heart and brain there, with the
+ * clue token and the resource coin either side. Each sits on its centre; its name stays for
+ * screen readers.
+ */
+#investigators [data-card='investigator']:not([data-adjusting]) > dl > div {
+  position: absolute;
+  left: calc(var(--counter-x) * var(--scan-unit));
+  top: calc(var(--investigator-counters-y) * var(--scan-unit));
+  translate: -50% -50%;
+}
+
+#investigators [data-card='investigator']:not([data-adjusting]) > dl dt {
+  position: absolute;
+  width: var(--hidden-size);
+  height: var(--hidden-size);
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+#investigators [data-card='investigator'] [data-stat='clues'] {
+  --counter-x: var(--investigator-clues-x);
+}
+
+#investigators [data-card='investigator'] [data-stat='health'] {
+  --counter-x: var(--investigator-health-x);
+}
+
+#investigators [data-card='investigator'] [data-stat='sanity'] {
+  --counter-x: var(--investigator-sanity-x);
+}
+
+#investigators [data-card='investigator'] [data-stat='resources'] {
+  --counter-x: var(--investigator-resources-x);
+}
+
+#investigators [data-card='investigator']:not([data-adjusting]) [data-stat='doom'] {
+  --counter-x: var(--investigator-doom-x);
+  top: calc(var(--investigator-doom-y) * var(--scan-unit));
+}
+
+/* On the card, the tokens, the printed symbols and their counts take the face's sizes. */
+#investigators [data-card='investigator']:not([data-adjusting]) {
+  --stat-token-size: calc(var(--investigator-token-size) * var(--scan-unit));
+  --stat-count-size: calc(var(--investigator-count-size) * var(--scan-unit));
+  --stat-count-offset: calc(-4 * var(--scan-unit));
+}
+
+#investigators [data-card='investigator']:not([data-adjusting]) > dl {
+  margin: 0;
+}
+
+#investigators [data-card='investigator']:not([data-adjusting]) dd > data {
+  font-size: calc(var(--investigator-token-number-size) * var(--scan-unit));
+}
+
+#investigators [data-card='investigator']:not([data-adjusting]) dd > [data-printed] {
+  width: calc(var(--investigator-symbol-size) * var(--scan-unit));
+  height: calc(var(--investigator-symbol-size) * var(--scan-unit));
+}
+
+#investigators
+  [data-card='investigator']:not([data-adjusting])
+  dd
+  > [data-printed]
+  > data:not([data-count]) {
+  font-size: calc(var(--investigator-symbol-number-size) * var(--scan-unit));
+}
+
+#investigators [data-card='investigator']:not([data-adjusting]) dd > [data-printed] > [data-count] {
+  font-size: calc(var(--investigator-count-number-size) * var(--scan-unit));
+}
+
+/*
+ * While adjusting, the counters with their steppers form a row under the card on its paper, each
+ * named under its token, as the steppers would not fit on the page.
+ */
+#investigators [data-card='investigator'][data-adjusting] > dl {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  gap: var(--space-1);
+  margin: 0;
+  padding: var(--space-1);
+  background: var(--color-face-page);
+}
+
+#investigators [data-card='investigator'][data-adjusting] > dl > div {
+  display: grid;
+  grid-template-rows: 1fr auto;
+  justify-items: center;
+  gap: var(--space-1);
+}
+
+#investigators [data-card='investigator'][data-adjusting] > dl > div > dd {
+  grid-row: 1;
+  align-self: start;
+}

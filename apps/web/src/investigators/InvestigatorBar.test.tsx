@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
-import { afterEach, beforeAll, describe, expect, it } from 'vitest';
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import {
   attachedTo,
   blankAsset,
@@ -49,7 +49,10 @@ describe('InvestigatorBar', () => {
   beforeAll(async () => {
     await initI18n('en');
   });
-  afterEach(cleanup);
+  afterEach(() => {
+    cleanup();
+    vi.unstubAllGlobals();
+  });
 
   it('shows a panel per investigator with health and sanity left, clues, resources and doom', () => {
     const table = PlayTable.start(
@@ -183,7 +186,20 @@ describe('InvestigatorBar', () => {
     ]);
   });
 
-  it('shows the art of the card picture once it has loaded', () => {
+  it('shows the card picture once it has loaded, landscape like the card', async () => {
+    // jsdom loads no images: the probe the picture hook reads an SVG picture's shape with
+    // loads at once, at the size of a landscape scan.
+    vi.stubGlobal(
+      'Image',
+      class {
+        naturalWidth = 419;
+        naturalHeight = 300;
+        onload: (() => void) | null = null;
+        set src(_url: string) {
+          queueMicrotask(() => this.onload?.());
+        }
+      },
+    );
     const table = PlayTable.start(
       newGame()
         .withLocation(study, blankLocation('study'))
@@ -200,18 +216,21 @@ describe('InvestigatorBar', () => {
         adjusting={false}
       />,
     );
-    // The picture is decorative (`alt=""`), so it has no role to find it by.
-    const art = within(panel('alder')).getByRole('article').querySelector('picture');
-    const picture = art?.querySelector('img');
-    if (!art || !picture) throw new Error("alder's card has no picture");
-    const beforeLoading = art.hasAttribute('data-picture');
+    // The face is decorative (`aria-hidden`), so its picture has no role to find it by.
+    const card = within(panel('alder')).getByRole('article');
+    const picture = card.querySelector('svg[data-face="investigator"] image');
+    if (!picture) throw new Error("alder's card has no picture");
+    const beforeLoading = card.hasAttribute('data-picture');
 
     // jsdom loads no images, so the test fires the load itself.
-    fireEvent.load(picture);
+    await act(async () => {
+      fireEvent.load(picture);
+      await Promise.resolve();
+    });
 
-    expect(picture.getAttribute('src')).toBe('https://arkhamdb.com/bundles/cards/alder.png');
+    expect(picture.getAttribute('href')).toBe('https://arkhamdb.com/bundles/cards/alder.png');
     expect(beforeLoading).toBe(false);
-    expect(art.getAttribute('data-picture')).toBe('shown');
+    expect(card.getAttribute('data-picture')).toBe('shown');
   });
 
   describe('the line on their round', () => {
@@ -293,6 +312,33 @@ describe('InvestigatorBar', () => {
     });
   });
 
+  it("prints the subname and class of the investigator's card, looked up by its code", () => {
+    const table = PlayTable.start(
+      newGame()
+        .withLocation(study, blankLocation('study'))
+        .withInvestigator(alder, { locationId: study }),
+    );
+
+    render(
+      <InvestigatorBar
+        board={table.board}
+        actions={actionsOn(table)}
+        busy={false}
+        adjusting={false}
+        printed={(code) =>
+          code === 'alder' ? { subname: 'The Tester', factionCode: 'guardian' } : undefined
+        }
+      />,
+    );
+
+    const card = within(panel('alder')).getByRole('article');
+    // The class shows only on the decorative face, which has no role to find it by.
+    expect(within(card).getByText('The Tester')).toBeTruthy();
+    expect(card.querySelector('[data-class-icon]')?.getAttribute('data-class-icon')).toBe(
+      'guardian',
+    );
+  });
+
   describe('the lead and turn markers', () => {
     const alderAndBrook = () =>
       PlayTable.start(
@@ -304,12 +350,11 @@ describe('InvestigatorBar', () => {
           .withInvestigator(brook, { locationId: study }),
       );
 
-    /** The markers beside `name`'s name, by what they say. */
-    // The markers sit beside the name in the card's header, which has no role to find it by.
+    /** The markers before where `name` is, by what they say. */
+    // The markers open the status line under the card, which has no role to find it by.
     const markersOf = (name: string) =>
-      Array.from(
-        within(panel(name)).getByRole('article').querySelectorAll('header [role="img"]'),
-        (marker) => marker.getAttribute('aria-label'),
+      Array.from(panel(name).querySelectorAll('[data-whereabouts] [role="img"]'), (marker) =>
+        marker.getAttribute('aria-label'),
       );
 
     it.each([
