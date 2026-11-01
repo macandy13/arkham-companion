@@ -27,6 +27,7 @@ test('take a turn from the investigator panel', async ({ page }) => {
     await bar.getByRole('button', { name: 'Investigate' }).click();
     const decision = page.getByRole('dialog', { name: 'Investigate Study' });
     await decision.getByRole('button', { name: 'Passed' }).click();
+    await decision.getByRole('button', { name: 'Done' }).click();
     await expect(decision).toBeHidden();
     await expect(bar.getByRole('list', { name: '2 actions left' })).toBeVisible();
   });
@@ -74,7 +75,7 @@ test('take a resource while the Ghoul Priest is engaged', async ({ page }) => {
       attack.getByText('Roland Banks takes a resource: Ghoul Priest attacks first'),
     ).toBeVisible();
     await expect(resources).toHaveText('5');
-    await attack.getByRole('button', { name: 'Take the attack' }).click();
+    await attack.getByRole('button', { name: 'Done' }).click();
   });
 
   await test.step('Then the resource arrives and the action is spent', async () => {

@@ -285,6 +285,9 @@
   --test-calculation-width: 7rem;
   --test-outcome-line-height: 1.1;
   --test-outcome-letter-spacing: 0.08em;
+  /* A decision's choice row (MD.2c), at least this tall, its key in a column this wide. */
+  --decision-row-height: 3.25rem;
+  --decision-key-width: 1.375rem;
   /* The room the × keeps free in a dialog's top corner, and how far it sits from the edge. */
   --dialog-close-inset: var(--space-3);
   /* The clue payment dialog, wide enough for three payers' art side by side, each this wide. */

@@ -16,7 +16,7 @@ test('answer a decision in its dialog', async ({ page }) => {
     await expect(decision.getByRole('status')).toBeVisible();
   });
 
-  await test.step('Report the test as passed', async () => {
+  await test.step('Report the test as passed: the Hallway has no clue to count, so it answers at once', async () => {
     await decision.getByRole('button', { name: 'Passed' }).click();
     await expect(decision).toBeHidden();
   });

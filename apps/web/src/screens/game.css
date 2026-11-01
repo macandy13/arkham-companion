@@ -704,42 +704,77 @@
 }
 
 /*
- * An answer with its counts on one row: the button takes the room the steppers leave, and an
- * answer with two counts (an attack's damage and horror) wraps them under it on a phone.
+ * The answers as the guide's choice rows (MD.2c): a framed row each, its key (✓, ✗ or its number)
+ * in a narrow column before what it does, then "from the game" for counts the game set and their
+ * steppers. The row Done answers (`aria-pressed`) or the one the draw works out is outlined.
  */
-#board dialog[data-dialog='decision'] > article > ul > li {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
+#board dialog[data-dialog='decision'] form > ul > li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-1) var(--space-2);
   align-items: center;
+  min-height: var(--decision-row-height);
+  padding: var(--space-1) var(--space-3);
+  border: var(--border-width) solid var(--color-paper-rim);
+  border-radius: var(--radius);
+  background: var(--color-paper-surface);
+}
+
+#board
+  dialog[data-dialog='decision']
+  form
+  > ul
+  > li:has(> button:is([aria-pressed='true'], [data-suggested])) {
+  border-color: var(--color-accent);
+  box-shadow: inset 0 0 0 var(--border-width) var(--color-accent);
+}
+
+#board dialog[data-dialog='decision'] form > ul > li > button {
+  grid-area: 1 / 1;
+  justify-content: flex-start;
+  gap: var(--space-3);
   padding: 0;
   border: none;
   background: none;
+  text-align: start;
 }
 
-#board dialog[data-dialog='decision'] > article > ul > li > button {
-  flex: 1;
+#board dialog[data-dialog='decision'] form > ul > li > button > span:first-child {
+  width: var(--decision-key-width);
+  font-family: var(--font-family-print);
+  font-size: var(--font-size-subtitle);
+  text-align: center;
 }
 
-#board dialog[data-dialog='decision'] > article > ul > li > section {
-  flex-wrap: nowrap;
+#board dialog[data-dialog='decision'] form > ul > li > p {
+  grid-area: 2 / 1;
+  margin-inline-start: calc(var(--decision-key-width) + var(--space-3));
+  color: var(--color-clue);
+  font-family: var(--font-family-label);
+  font-size: var(--font-size-note);
+  font-style: italic;
 }
 
-#board dialog[data-dialog='decision'] > article > ul > li > section > p {
+/* Each count on its own line in the right column, its label before its stepper. */
+#board dialog[data-dialog='decision'] form > ul > li > section[data-part='stepper'] {
+  grid-column: 2;
+  justify-content: flex-end;
+}
+
+#board dialog[data-dialog='decision'] form > ul > li > section[data-part='stepper'] > p {
   flex: none;
+  color: var(--color-text-muted);
+}
+
+#board dialog[data-dialog='decision'] form {
+  display: grid;
+  gap: var(--space-2);
 }
 
 #board :is(dialog[data-dialog='decision'], dialog[data-dialog='clue-payment']) footer {
   display: flex;
   justify-content: flex-end;
   gap: var(--space-2);
-}
-
-/* The answer the chaos draw works out, ready to confirm; the other one still overrides it. */
-#board dialog[data-dialog='decision'] ul button[data-suggested] {
-  border-color: var(--color-accent);
-  background: var(--color-accent);
-  color: var(--color-accent-text);
 }
 
 /*
@@ -829,6 +864,21 @@
  * the top left where the detail view keeps its own. `[open]` outweighs the dialogs' own rules
  * (enemies.css, card_zoom.css, game_log.css).
  */
+@media (orientation: portrait) and (max-width: 40rem) {
+  /* A count's label stands over its stepper, so the row keeps room for what it does. */
+  #board dialog[data-dialog='decision'] form > ul > li > section[data-part='stepper'] {
+    display: grid;
+    grid-template: 'label label label' auto 'lower value raise' auto / auto auto auto;
+    justify-items: center;
+    gap: 0 var(--space-1);
+  }
+
+  #board dialog[data-dialog='decision'] form > ul > li > section[data-part='stepper'] > p {
+    grid-area: label;
+    font-size: var(--font-size-note);
+  }
+}
+
 @media (orientation: portrait) and (max-width: 40rem) {
   #board dialog:is([data-dialog='enemy'], [data-dialog='card-zoom'], [data-dialog='log'])[open] {
     box-sizing: border-box;

@@ -45,7 +45,7 @@ const optionButtons = () =>
   screen
     .getAllByRole('listitem')
     .filter((item) => item.closest('section') === null)
-    .map((item) => item.querySelector('button')?.textContent);
+    .map((item) => item.querySelector(':scope > button > span:last-child')?.textContent);
 
 describe('DecisionDialog', () => {
   beforeAll(async () => {
@@ -79,18 +79,21 @@ describe('DecisionDialog', () => {
   });
 
   it.each([
-    { answer: 'Passed', clues: 1 },
-    { answer: 'Failed', clues: 0 },
-  ])('answering the investigation "$answer" finds $clues clues', ({ answer, clues }) => {
-    const table = aldersTurnInTheStudy();
-    table.investigate(alder, { result: 'open' });
-    renderFirstDecision(table);
+    { answer: 'Passed', taps: ['Passed', 'Done'], clues: 1 },
+    { answer: 'Failed', taps: ['Failed'], clues: 0 },
+  ])(
+    'answering the investigation "$answer" (tapping $taps) finds $clues clues',
+    ({ taps, clues }) => {
+      const table = aldersTurnInTheStudy();
+      table.investigate(alder, { result: 'open' });
+      renderFirstDecision(table);
 
-    fireEvent.click(screen.getByRole('button', { name: answer }));
+      for (const tap of taps) fireEvent.click(screen.getByRole('button', { name: tap }));
 
-    expect(table.board.decisions).toEqual([]);
-    expect(table.board.investigator(alder)).toMatchObject({ clues });
-  });
+      expect(table.board.decisions).toEqual([]);
+      expect(table.board.investigator(alder)).toMatchObject({ clues });
+    },
+  );
 
   it('answers an option whose readable name differs from its id', () => {
     const table = PlayTable.start(
@@ -182,7 +185,7 @@ describe('DecisionDialog', () => {
     };
     const suggestedOptions = () =>
       screen.getAllByRole('listitem').flatMap((item) => {
-        const suggested = item.querySelector(':scope > button[data-suggested]');
+        const suggested = item.querySelector(':scope > button[data-suggested] > span:last-child');
         return suggested ? [suggested.textContent] : [];
       });
 
@@ -228,15 +231,15 @@ describe('DecisionDialog', () => {
     });
 
     it.each([
-      { answer: 'Failed', sends: ['fail', { margin: 1 }] },
-      { answer: 'Passed', sends: ['pass', { amount: 1 }] },
-    ])('answering "$answer" after the draw sends $sends', ({ answer, sends }) => {
+      { answer: 'Failed', taps: ['Failed'], sends: ['fail', { margin: 1 }] },
+      { answer: 'Passed', taps: ['Passed', 'Done'], sends: ['pass', { amount: 1 }] },
+    ])('answering "$answer" after the draw sends $sends', ({ taps, sends }) => {
       const table = aldersInvestigationWithAMinusTwo();
       const answered = vi.fn(async () => {});
       renderFirstDecision(table, { ...actionsOn(table), answer: answered });
 
       fireEvent.click(screen.getByRole('button', { name: 'Draw a token' }));
-      fireEvent.click(screen.getByRole('button', { name: answer }));
+      for (const tap of taps) fireEvent.click(screen.getByRole('button', { name: tap }));
 
       expect(answered).toHaveBeenCalledWith(...sends);
     });
@@ -260,6 +263,29 @@ describe('DecisionDialog', () => {
   });
 
   describe('with counts', () => {
+    it('picks a row with counts on tap and waits for Done, the attack picked from the start', () => {
+      const table = PlayTable.start(
+        newGame()
+          .withLocation(study, blankLocation('study'), { revealed: true })
+          .withInvestigator(alder, { locationId: study })
+          .withCard(
+            ghoul,
+            blankEnemy('ghoul', { name: 'Ghoul', damage: 1, horror: 2 }),
+            engagedWith(alder),
+          )
+          .withTurnOf(alder),
+      );
+      table.investigate(alder, { result: 'open' });
+      renderFirstDecision(table);
+      const attack = screen.getByRole('button', { name: 'Take the attack' });
+      expect(attack.getAttribute('aria-pressed')).toBe('true');
+
+      fireEvent.click(attack);
+
+      expect(table.board.decisions).toMatchObject([{ prompt: 'decision.attackOfOpportunity' }]);
+      expect(screen.getByText('from the game')).toBeDefined();
+    });
+
     it('discovers as many clues as the players raise the count to, up to those on the location', () => {
       const table = PlayTable.start(
         newGame()
@@ -278,7 +304,7 @@ describe('DecisionDialog', () => {
         name: 'Raise the Clues discovered',
       });
       expect(raise.disabled).toBe(true);
-      fireEvent.click(screen.getByRole('button', { name: 'Passed' }));
+      fireEvent.click(screen.getByRole('button', { name: 'Done' }));
 
       expect(table.board.investigator(alder)).toMatchObject({ clues: 2 });
     });
@@ -299,7 +325,7 @@ describe('DecisionDialog', () => {
       renderFirstDecision(table);
 
       fireEvent.click(screen.getByRole('button', { name: 'Raise the Damage dealt' }));
-      fireEvent.click(screen.getByRole('button', { name: 'Passed' }));
+      fireEvent.click(screen.getByRole('button', { name: 'Done' }));
 
       expect(table.board.enemy(ghoul)).toMatchObject({ damage: 2 });
     });
@@ -321,7 +347,7 @@ describe('DecisionDialog', () => {
 
       fireEvent.click(screen.getByRole('button', { name: 'Lower the Damage' }));
       fireEvent.click(screen.getByRole('button', { name: 'Lower the Horror' }));
-      fireEvent.click(screen.getByRole('button', { name: 'Take the attack' }));
+      fireEvent.click(screen.getByRole('button', { name: 'Done' }));
 
       expect(table.board.investigator(alder)).toMatchObject({ damage: 0, horror: 1 });
     });
