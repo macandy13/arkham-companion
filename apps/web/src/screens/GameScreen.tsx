@@ -1,3 +1,4 @@
+import { printedInvestigatorOf } from '@arkham/carddata';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router';
@@ -188,6 +189,11 @@ export function GameScreen({
             onOpen={
               opensDetail
                 ? (investigator) => detail.open({ row: 'investigators', investigator })
+                : undefined
+            }
+            printed={
+              cards.status === 'ready'
+                ? (code) => printedInvestigatorOf(cards.catalog, code)
                 : undefined
             }
           />

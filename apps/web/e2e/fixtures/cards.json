@@ -27,6 +27,21 @@
     "skill_agility": 3
   },
   {
+    "code": "01001",
+    "name": "Roland Banks",
+    "subname": "Invented Subname",
+    "type_code": "investigator",
+    "faction_code": "guardian",
+    "pack_code": "core",
+    "health": 9,
+    "sanity": 5,
+    "skill_willpower": 3,
+    "skill_intellect": 3,
+    "skill_combat": 4,
+    "skill_agility": 2,
+    "imagesrc": "/bundles/cards/01001.png"
+  },
+  {
     "code": "01104",
     "name": "Fake Reference",
     "type_code": "scenario",

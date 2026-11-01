@@ -34,6 +34,25 @@ export interface CardCatalog {
 }
 
 /**
+ * What an investigator card prints besides its stats (`InvestigatorDef`): the subname under the
+ * name, the class on the shield, and the traits, ability text and flavour on the notebook page,
+ * in ArkhamDB markup. A game names its investigators by card code, and the screen looks these up
+ * in the catalog (`printedInvestigatorOf`), so no card text is stored with a game.
+ */
+export type PrintedInvestigator = Pick<
+  InvestigatorDef,
+  'subname' | 'factionCode' | 'traits' | 'text' | 'flavor'
+>;
+
+/** What the investigator card `code` prints, if the catalog lists it. */
+export function printedInvestigatorOf(
+  catalog: CardCatalog,
+  code: string,
+): PrintedInvestigator | undefined {
+  return catalog.investigators.find((investigator) => investigator.code === code);
+}
+
+/**
  * The catalog's current shape. Raise it whenever the catalog gains data an older cached copy
  * lacks (2: the investigators' traits, ability and flavour texts), so the app fetches it in full
  * once instead of revalidating the old copy.
