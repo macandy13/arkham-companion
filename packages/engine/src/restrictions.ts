@@ -191,7 +191,12 @@ function isAbout(source: CardInstance, of: RestrictedLocation, location: CardIns
   }
 }
 
-function binds(
+/**
+ * Whether a card's constant ability (a restriction, an action cost modifier) binds
+ * `investigator`: for `threatArea`, the card lies in their threat area or is an enemy engaged with
+ * them.
+ */
+export function binds(
   source: CardInstance,
   who: RestrictedInvestigator,
   investigator: InvestigatorId,

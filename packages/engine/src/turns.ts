@@ -77,7 +77,8 @@ export function requireTurnOf(state: GameState, investigatorId: InvestigatorId):
 
 /** `AdjustActions`: changes the investigator's remaining actions. */
 export function handleAdjustActions(state: GameState, cmd: AdjustActions): ActionsAdjusted[] {
-  return [actionsAdjusted(state, cmd.investigatorId, cmd.delta)];
+  const adjusted = actionsAdjusted(state, cmd.investigatorId, cmd.delta);
+  return [cmd.for === undefined ? adjusted : { ...adjusted, for: cmd.for }];
 }
 
 /**

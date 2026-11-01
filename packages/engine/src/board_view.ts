@@ -11,6 +11,7 @@ import {
 } from './card_actions';
 
 export type { PrintedActionView };
+import { actionCost, type BasicAction } from './action_costs';
 import { effectiveValue } from './card_values';
 import {
   cardStats,
@@ -616,6 +617,15 @@ export class BoardView {
     return enemiesInPlay(this.ctx, this.state)
       .map((enemy) => mapEnemyView(this.ctx, this.state, enemy))
       .filter(({ engagedWith }) => engagedWith === investigator);
+  }
+
+  /**
+   * The actions `investigator`'s next basic `action` costs (`actionCost`): one, or more while a
+   * card raises it (Frozen in Fear's first move, fight or evade each round). What the screen counts
+   * off for it and shows on its button.
+   */
+  actionCost(investigator: InvestigatorId, action: BasicAction): number {
+    return actionCost(this.ctx, this.state, investigator, action);
   }
 
   /**

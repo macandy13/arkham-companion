@@ -1,3 +1,4 @@
+import type { TakenAction } from './action_costs';
 import type { AbilityEffect, OpenedWindow } from './abilities';
 import type { CampaignLog } from './campaign/campaign_log';
 import type {
@@ -563,6 +564,12 @@ export interface GameMeta {
    * which is permanent for the scenario; cleared when the round ends.
    */
   turnsTaken: InvestigatorId[];
+  /**
+   * The basic actions the investigators counted off this round, oldest first (`AdjustActions.for`),
+   * so a cost modifier of the first action each round knows it was paid (`actionCost`); cleared
+   * when the round ends. None when absent.
+   */
+  actionsTaken?: TakenAction[];
   /** The turn in progress during the investigation phase; absent between turns. */
   turn?: Turn;
   leadInvestigator?: InvestigatorId;

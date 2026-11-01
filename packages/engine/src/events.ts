@@ -1,3 +1,4 @@
+import type { BasicAction } from './action_costs';
 import type { CampaignLog, TraumaKind } from './campaign/campaign_log';
 import type { AbilityCommand, TestedAction } from './abilities';
 import type { PlayerCardCommand } from './commands';
@@ -535,6 +536,8 @@ export interface ActionsAdjusted {
   type: 'ActionsAdjusted';
   investigatorId: InvestigatorId;
   delta: number;
+  /** The basic action counted off (`AdjustActions.for`), added to `GameMeta.actionsTaken`. */
+  for?: BasicAction;
 }
 
 /**

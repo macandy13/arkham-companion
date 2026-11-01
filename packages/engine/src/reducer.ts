@@ -140,7 +140,7 @@ export function apply(state: GameState, event: Event): GameState {
     case 'PhaseStepsChanged':
       return { ...state, meta: { ...state.meta, steps: event.steps } };
     case 'RoundEnded':
-      return { ...state, meta: { ...state.meta, turnsTaken: [] } };
+      return { ...state, meta: { ...withoutKey(state.meta, 'actionsTaken'), turnsTaken: [] } };
     case 'TurnStarted':
       return {
         ...state,
@@ -149,11 +149,18 @@ export function apply(state: GameState, event: Event): GameState {
           turn: { investigatorId: event.investigatorId },
         },
       };
-    case 'ActionsAdjusted':
-      return applyInvestigator(state, event, (inv) => ({
+    case 'ActionsAdjusted': {
+      const adjusted = applyInvestigator(state, event, (inv) => ({
         ...inv,
         actionsRemaining: inv.actionsRemaining + event.delta,
       }));
+      if (event.for === undefined) return adjusted;
+      const taken = { investigatorId: event.investigatorId, action: event.for };
+      return {
+        ...adjusted,
+        meta: { ...adjusted.meta, actionsTaken: [...(adjusted.meta.actionsTaken ?? []), taken] },
+      };
+    }
     case 'SkillBoostChanged':
       return applyInvestigator(state, event, (inv) =>
         withSkillBoost(inv, event.skill, event.delta),

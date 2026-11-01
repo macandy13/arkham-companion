@@ -10,6 +10,7 @@ export type * from './scenario';
 export * from './cards';
 export * from './card_values';
 export * from './restrictions';
+export * from './action_costs';
 export * from './blank_cards';
 export * from './game_builder';
 export * from './investigator_cards';
