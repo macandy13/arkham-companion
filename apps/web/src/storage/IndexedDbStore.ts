@@ -27,6 +27,7 @@ import {
   type StoredEvent,
 } from '@arkham/engine';
 import type { CardCatalog, CardDef } from '@arkham/carddata';
+import { withoutValue } from '@arkham/util';
 
 /** A fresh UUID for a created, duplicated or imported game. */
 function newGameId(): GameId {
@@ -204,10 +205,14 @@ export class IndexedDbStore implements GameStore {
       }
       const log = await this.loadEvents(gameId);
       const { kept, removed } = undoLastGroup(log);
-      if (removed.length === 0) return;
+      const [undone] = removed;
+      if (undone === undefined) return;
       await this.db.events.bulkDelete(removed.map((e) => [gameId, e.seq] as unknown as number));
       const lastSeq = kept.at(-1)?.seq ?? 0;
-      await this.db.games.update(gameId, { lastSeq, updatedAt: Date.now() });
+      // Played again after a reload, the next step gets the undone step's id back, and the
+      // players haven't read its notices.
+      const readNotices = withoutValue(game.readNotices ?? {}, undone.commandId);
+      await this.db.games.update(gameId, { lastSeq, updatedAt: Date.now(), readNotices });
       const snapshot = await this.db.snapshots.get(gameId);
       if (snapshot && snapshot.seq > lastSeq) await this.db.snapshots.delete(gameId);
     });

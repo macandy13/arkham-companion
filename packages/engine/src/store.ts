@@ -132,8 +132,8 @@ export type StepNotice = 'skippedEffects' | 'drawnCards';
 
 /**
  * For each `StepNotice`, the step (`StoredEvent.commandId`) whose notice the players dismissed, so a
- * reload doesn't show it again. A step id rather than a `seq`: after an undo, a new step reuses the
- * `seq`, but never the id.
+ * reload doesn't show it again. `GameStore.undoLast` forgets the undone step's marks, since the next
+ * step may reuse its `seq` and, after a reload, its id.
  */
 export type ReadNotices = Partial<Record<StepNotice, string>>;
 
@@ -160,8 +160,8 @@ export interface GameStore {
     commandId?: string,
   ): Promise<StoredEvent[]>;
   /**
-   * Removes the last command group from the log, drops snapshots beyond the
-   * new end and returns the game replayed to that point (unchanged if the log
+   * Removes the last command group from the log, forgets the notices read for it
+   * (`ReadNotices`), drops snapshots beyond the new end and returns the game replayed to that point (unchanged if the log
    * is empty). Rejects like `appendEvents` if `expectedSeq` is stale; `undefined`
    * if the game doesn't exist. The RNG state is part of the replayed state, so
    * redoing a command after an undo reproduces the same shuffle.

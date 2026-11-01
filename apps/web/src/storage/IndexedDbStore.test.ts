@@ -179,6 +179,18 @@ describe('IndexedDbStore', () => {
     expect((await store.listGames())[0]).toMatchObject({ updatedAt: before });
   });
 
+  it('forgets the notices read for the step it undoes, and only those', async () => {
+    const id = await store.createGame({ title: 'Undone' });
+    await store.appendEvents(id, [started], undefined, 'first_step');
+    await store.appendEvents(id, [tokens(1)], undefined, 'second_step');
+    await store.markNoticeRead(id, 'skippedEffects', 'first_step');
+    await store.markNoticeRead(id, 'drawnCards', 'second_step');
+
+    await store.undoLast(id);
+
+    expect(await store.loadReadNotices(id)).toEqual({ skippedEffects: 'first_step' });
+  });
+
   it('knows no notices read in a new or unknown game, and marks none in an unknown one', async () => {
     const id = await store.createGame({ title: 'New' });
 

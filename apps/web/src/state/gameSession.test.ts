@@ -328,13 +328,15 @@ describe('GameSession on The Gathering', () => {
     expect([session.drawnCards, reopened.drawnCards]).toEqual([[], []]);
   });
 
-  it('shows the drawn cards of a step played again after its dismissed one was undone', async () => {
+  // After a reload the new step gets the undone step's id back.
+  it('shows the drawn cards of a step played again after a reload once its dismissed one was undone', async () => {
     const { store, gameId } = await storedGame('session-dismissed-then-undone-test');
     const session = await GameSession.open(store, gameId, ctx);
     await session.play((table) => table.drawEncounterCard(investigatorId('alder')));
     await session.dismissNotice('drawnCards');
     await session.undo();
-    await session.play((table) => table.drawEncounterCard(investigatorId('alder')));
+    const reloaded = await GameSession.open(store, gameId, ctx);
+    await reloaded.play((table) => table.drawEncounterCard(investigatorId('alder')));
 
     const reopened = await GameSession.open(store, gameId, ctx);
 
