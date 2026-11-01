@@ -239,6 +239,7 @@ export const theDevourerBelowCardDefs: readonly CardStats[] = [
   location({
     code: '01149',
     name: 'Main Path',
+    symbol: 'tilde',
     set: own,
     shroud: 2,
     cluesPerInvestigator: 0,
@@ -248,6 +249,8 @@ export const theDevourerBelowCardDefs: readonly CardStats[] = [
   location({
     code: '01150',
     name: 'Arkham Woods',
+    symbol: 'triangle',
+    unrevealedSymbol: 'square',
     set: own,
     shroud: 4,
     cluesPerInvestigator: 1,
@@ -261,6 +264,8 @@ export const theDevourerBelowCardDefs: readonly CardStats[] = [
   location({
     code: '01151',
     name: 'Arkham Woods',
+    symbol: 't',
+    unrevealedSymbol: 'square',
     set: own,
     shroud: 3,
     cluesPerInvestigator: 1,
@@ -269,6 +274,8 @@ export const theDevourerBelowCardDefs: readonly CardStats[] = [
   location({
     code: '01152',
     name: 'Arkham Woods',
+    symbol: 'diamond',
+    unrevealedSymbol: 'square',
     set: own,
     shroud: 2,
     cluesPerInvestigator: 1,
@@ -277,6 +284,8 @@ export const theDevourerBelowCardDefs: readonly CardStats[] = [
   location({
     code: '01153',
     name: 'Arkham Woods',
+    symbol: 'hourglass',
+    unrevealedSymbol: 'square',
     set: own,
     shroud: 2,
     cluesPerInvestigator: 1,
@@ -285,6 +294,8 @@ export const theDevourerBelowCardDefs: readonly CardStats[] = [
   location({
     code: '01154',
     name: 'Arkham Woods',
+    symbol: 'double_slash',
+    unrevealedSymbol: 'square',
     set: own,
     shroud: 2,
     cluesPerInvestigator: 1,
@@ -293,6 +304,8 @@ export const theDevourerBelowCardDefs: readonly CardStats[] = [
   location({
     code: '01155',
     name: 'Arkham Woods',
+    symbol: 'moon',
+    unrevealedSymbol: 'square',
     set: own,
     shroud: 1,
     cluesPerInvestigator: 0,
@@ -313,6 +326,7 @@ export const theDevourerBelowCardDefs: readonly CardStats[] = [
   location({
     code: '01156',
     name: 'Ritual Site',
+    symbol: 'plus',
     set: own,
     shroud: 3,
     cluesPerInvestigator: 2,

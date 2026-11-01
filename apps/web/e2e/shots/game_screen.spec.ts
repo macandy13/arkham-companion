@@ -2,6 +2,8 @@ import { expect, test } from '../fixtures/test';
 import {
   cluesToShareExport,
   graveyardTestExport,
+  midnightMasksStartedExport,
+  tangledThicketRevealedExport,
   rolandSurroundedExport,
   rolandThreatenedExport,
   houseOpenedExport,
@@ -496,3 +498,38 @@ test('the Graveyard’s failed willpower test, its choice under the Failed row',
   await expect(decision.getByRole('button', { name: 'Take 2 horror' })).toBeVisible();
   await expect(decision.getByRole('button', { name: 'Move to Rivertown' })).toBeVisible();
 });
+
+test(
+  'Arkham in The Midnight Masks, Easttown, the Graveyard and Northside with their new symbols',
+  { tag: '@shot' },
+  async ({ page }) => {
+    await resumeImportedGame(
+      page,
+      'The Midnight Masks started',
+      midnightMasksStartedExport('The Midnight Masks started'),
+    );
+    const map = page.locator('#map');
+
+    for (const symbol of ['moon', 'hourglass', 'T']) {
+      await expect(
+        map.getByRole('img', { name: `Connection symbol: ${symbol}`, exact: true }),
+      ).toBeVisible();
+    }
+  },
+);
+
+test(
+  'the Tangled Thicket revealed with its double slash, the other Arkham Woods still showing their square',
+  { tag: '@shot' },
+  async ({ page }) => {
+    await resumeImportedGame(
+      page,
+      'The Tangled Thicket revealed',
+      tangledThicketRevealedExport('The Tangled Thicket revealed'),
+    );
+    const map = page.locator('#map');
+
+    await expect(map.getByRole('img', { name: 'Connection symbol: double slash' })).toHaveCount(1);
+    await expect(map.getByRole('img', { name: 'Connection symbol: square' })).toHaveCount(3);
+  },
+);

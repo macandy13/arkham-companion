@@ -31,6 +31,22 @@ const cardOf = (code: string): CardStats => cardIn(theMidnightMasksCards, code);
 
 describe('The Midnight Masks card data', () => {
   it.each([
+    { code: '01124', name: 'Your House', symbol: 'tilde' },
+    { code: '01125', name: 'Rivertown', symbol: 'circle' },
+    { code: '01126', name: 'Southside (1)', symbol: 'square' },
+    { code: '01127', name: 'Southside (2)', symbol: 'square' },
+    { code: '01128', name: "St. Mary's Hospital", symbol: 'plus' },
+    { code: '01129', name: 'Miskatonic University', symbol: 'diamond' },
+    { code: '01130', name: 'Downtown (1)', symbol: 'triangle' },
+    { code: '01131', name: 'Downtown (2)', symbol: 'triangle' },
+    { code: '01132', name: 'Easttown', symbol: 'moon' },
+    { code: '01133', name: 'Graveyard', symbol: 'hourglass' },
+    { code: '01134', name: 'Northside', symbol: 't' },
+  ])('gives $name its printed connection symbol, the $symbol', ({ code, symbol }) => {
+    expect(cardOf(code).symbol).toBe(symbol);
+  });
+
+  it.each([
     {
       code: '01121a',
       name: 'Predator or Prey?',
