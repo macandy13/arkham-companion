@@ -290,6 +290,38 @@ describe('GameSession on The Gathering', () => {
     expect(session.drawnCards).toEqual([]);
   });
 
+  // Seed 3 puts Dissonant Voices on top of the encounter deck.
+  it("shows the last step's drawn cards again when the game is opened anew", async () => {
+    const { store, gameId } = await storedGame('session-drawn-cards-reload-test');
+    const session = await GameSession.open(store, gameId, ctx);
+    await session.play((table) => table.drawEncounterCard(investigatorId('alder')));
+
+    const reopened = await GameSession.open(store, gameId, ctx);
+
+    expect(
+      reopened.drawnCards.map(({ card, drawnFor, place }) => [card.name, drawnFor, place]),
+    ).toEqual([['Dissonant Voices', 'alder', { kind: 'threatArea', investigator: 'alder' }]]);
+  });
+
+  it('opens a game with no step played yet without notices', async () => {
+    const { store, gameId } = await storedGame('session-no-step-notices-test');
+
+    const session = await GameSession.open(store, gameId, ctx);
+
+    expect([session.drawnCards, session.skippedEffects]).toEqual([[], []]);
+  });
+
+  it("opens a game whose last step drew nothing without the earlier step's notices", async () => {
+    const { store, gameId } = await storedGame('session-later-step-notices-test');
+    const session = await GameSession.open(store, gameId, ctx);
+    await session.play((table) => table.drawEncounterCard(investigatorId('alder')));
+    await session.play((table) => table.nextPhase());
+
+    const reopened = await GameSession.open(store, gameId, ctx);
+
+    expect(reopened.drawnCards).toEqual([]);
+  });
+
   it('reloads what another tab stored when its own write is refused', async () => {
     const { store, gameId } = await storedGame('session-two-tabs-test');
     const firstTab = await GameSession.open(store, gameId, ctx);
