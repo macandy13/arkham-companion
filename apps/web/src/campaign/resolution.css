@@ -70,3 +70,9 @@
 #resolution footer {
   margin-block-start: var(--space-4);
 }
+
+/* The resolution the game reached, beside its name like the decisions' "from the game". */
+#resolution label > em {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-caption);
+}

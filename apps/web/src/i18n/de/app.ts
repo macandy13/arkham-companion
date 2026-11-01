@@ -609,6 +609,14 @@ export const appTexts = {
     tokenCount_other: '{{token}} ×{{count}}',
   },
   resolution: {
+    over: 'Das Szenario ist vorbei',
+    pickResolution:
+      'Bestätigt die Auflösung oder wählt eine andere, wenn ihr das Ende anders gespielt habt.',
+    fromTheGame: 'aus dem Spiel',
+    standaloneTitle: 'Schritte der Auflösung',
+    next: 'Weiter',
+    back: 'Zurück',
+    done: 'Fertig',
     title: 'Ins Kampagnenlogbuch',
     numbered: 'Auflösung {{n}}',
     none: 'Keine Auflösung',

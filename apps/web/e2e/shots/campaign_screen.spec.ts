@@ -34,6 +34,6 @@ test(
       await page.getByRole('button', { name: 'Take horror' }).click();
     await page.getByRole('button', { name: 'Done' }).click();
 
-    await expect(page.getByRole('dialog', { name: 'Into the campaign log' })).toBeVisible();
+    await expect(page.getByRole('dialog', { name: 'The scenario is over' })).toBeVisible();
   },
 );

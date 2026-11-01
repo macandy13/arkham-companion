@@ -1,7 +1,8 @@
 import { expect, test } from './fixtures/test';
 
 // Journey: a campaign's first game ends when its only investigator is driven out by horror; the
-// players check what the resolution writes into the campaign log and write it, then read it there.
+// players confirm the resolution the game reached, check what it writes into the campaign log and
+// write it, then read it there.
 test('write a scenario resolution into the campaign log', { tag: '@flow' }, async ({ page }) => {
   await test.step('Start a campaign with Fake Seeker alone', async () => {
     await page.goto('/#/new');
@@ -21,8 +22,15 @@ test('write a scenario resolution into the campaign log', { tag: '@flow' }, asyn
     await page.getByRole('button', { name: 'Done' }).click();
   });
 
-  const dialog = page.getByRole('dialog', { name: 'Into the campaign log' });
+  const dialog = page.locator('#resolution');
+  await test.step('The game reached no resolution; the players confirm it', async () => {
+    await expect(dialog.getByRole('heading', { name: 'The scenario is over' })).toBeVisible();
+    await expect(dialog.getByRole('radio', { name: 'No resolution from the game' })).toBeChecked();
+    await dialog.getByRole('button', { name: 'Next' }).click();
+  });
+
   await test.step('The game proposes what "no resolution" writes into the log', async () => {
+    await expect(dialog.getByRole('heading', { name: 'Into the campaign log' })).toBeVisible();
     await expect(dialog).toContainText('The Gathering · No resolution');
     await expect(dialog).toContainText('Your house is still standing.');
     await expect(dialog).toContainText('Fake Seeker suffers 1 mental trauma');

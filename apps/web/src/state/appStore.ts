@@ -18,7 +18,9 @@ import type {
   LoggedEvent,
   ProposedChange,
   Rejection,
+  ScenarioOutcome,
   ScenarioContext,
+  ResolutionId,
   ScenarioId,
 } from '@arkham/engine';
 import { PlayTable, campaign, campaignId as toCampaignId, emptyState } from '@arkham/engine';
@@ -68,13 +70,26 @@ export interface OpenCampaign {
 }
 
 /**
+ * One resolution of the ended game's scenario and what it would write into the campaign log
+ * (`campaign.proposeResolution` for that outcome): the log changes in the order the resolution
+ * lists them, then the trauma of the game's defeats.
+ */
+export interface ResolutionOption {
+  outcome: ScenarioOutcome;
+  changes: readonly ProposedChange[];
+}
+
+/**
  * What an ended game writes into its campaign log, for the players to confirm
- * (`AppState.writeResolution`): `campaign.proposeResolution` for the game as it ended. A standalone
+ * (`AppState.writeResolution`): every resolution of its scenario with its changes, so the players
+ * can pick another one than the game reached if they played the ending differently. A standalone
  * game has one too, shown without a log to write.
  */
 export interface PendingResolution {
-  /** The proposed log changes, in the order the resolution lists them, then the defeat trauma. */
-  changes: readonly ProposedChange[];
+  /** The resolution the game ended with (`campaign.gameOutcome`), which `options` holds. */
+  reached: ScenarioOutcome;
+  /** The scenario's resolutions in the guide's order, then "no resolution". */
+  options: readonly ResolutionOption[];
   /** The campaign the resolution writes into; absent for a standalone game. */
   campaignId?: CampaignId;
 }
@@ -187,12 +202,13 @@ export interface AppState {
   openCampaign(campaignId: CampaignId): Promise<void>;
   /**
    * Writes the open game's resolution into its campaign log as one undo step
-   * (`campaign.applyResolution`): `confirmed` are the commands the players kept of
-   * `current.resolution`, as they edited them. Afterwards the game has no pending resolution.
+   * (`campaign.applyResolution`): `outcome` is the resolution the players read, one of
+   * `current.resolution.options`, and `confirmed` the commands they kept of its changes, as they
+   * edited them. Afterwards the game has no pending resolution.
    * Rejects with `CampaignCommandRejected` and writes nothing if one of them is refused, and
    * rejects for a game without a pending resolution of a campaign.
    */
-  writeResolution(confirmed: readonly CampaignCommand[]): Promise<void>;
+  writeResolution(outcome: ScenarioOutcome, confirmed: readonly CampaignCommand[]): Promise<void>;
   /**
    * What the play screen can do to the open game (`GameActions`). Each action is stored before
    * the new state shows; a refused one stores nothing and sets `current.rejection`. Actions run
@@ -261,8 +277,21 @@ function pendingResolution(
   const resolutions = ctx.scenario.resolutions;
   if (resolutions === undefined) return undefined;
   if (log && campaign.findCurrentScenarioId(log) !== state.meta.scenarioId) return undefined;
-  const changes = campaign.proposeResolution(ctx, state, resolutions);
-  return changes && { changes, campaignId: log?.campaignId };
+  const reached = campaign.gameOutcome(state);
+  // Only a game that ended with a resolution its scenario defines has anything to propose.
+  if (campaign.proposeResolution(ctx, state, resolutions, reached) === undefined) return undefined;
+  const outcomes: ScenarioOutcome[] = [
+    ...(Object.keys(resolutions.byId) as ResolutionId[]).map((id) => ({
+      kind: 'resolution' as const,
+      id,
+    })),
+    { kind: 'noResolution' },
+  ];
+  const options = outcomes.flatMap((outcome) => {
+    const changes = campaign.proposeResolution(ctx, state, resolutions, outcome);
+    return changes ? [{ outcome, changes }] : [];
+  });
+  return { reached, options, campaignId: log?.campaignId };
 }
 
 /**
@@ -444,7 +473,7 @@ export function createAppStore(
         const games = (await gameStore.listGames()).filter((g) => g.campaignId === campaignId);
         set({ campaign: { campaignId, title: loaded.summary.title, log: loaded.log, games } });
       },
-      writeResolution(confirmed) {
+      writeResolution(outcome, confirmed) {
         return queueStep(async () => {
           const played = session;
           const campaignId = get().current?.resolution?.campaignId;
@@ -457,6 +486,7 @@ export function createAppStore(
             loaded.log,
             played.state,
             confirmed,
+            outcome,
           );
           await gameStore.appendCampaignEvents(campaignId, events, loaded.summary.lastSeq);
           campaignLog = log;

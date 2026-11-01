@@ -3,6 +3,7 @@ import { cleanup, fireEvent, render, screen, within } from '@testing-library/rea
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import {
   campaign,
+  campaignId,
   cardCode,
   emptyState,
   investigatorCode,
@@ -12,7 +13,9 @@ import {
   type CampaignInvestigator,
   type GameState,
   type ProposedChange,
+  type ScenarioOutcome,
 } from '@arkham/engine';
+import type { ResolutionOption } from '../state/appStore';
 import { initI18n } from '../i18n';
 import { ResolutionDialog } from './ResolutionDialog';
 
@@ -53,13 +56,23 @@ function gatheringEndedWith(resolution: string | undefined): GameState {
   };
 }
 
-function renderDialog(game: GameState, changes: readonly ProposedChange[], failed = false) {
-  const onWrite = vi.fn<(confirmed: readonly CampaignCommand[]) => void>();
+/** The resolutions the dialog offers for a game of a Night of the Zealot campaign. */
+function renderDialog(
+  game: GameState,
+  options: readonly ResolutionOption[],
+  { failed = false, inCampaign = true } = {},
+) {
+  const onWrite =
+    vi.fn<(outcome: ScenarioOutcome, confirmed: readonly CampaignCommand[]) => void>();
   const onLater = vi.fn();
   render(
     <ResolutionDialog
       game={game}
-      changes={changes}
+      resolution={{
+        reached: campaign.gameOutcome(game),
+        options,
+        campaignId: inCampaign ? campaignId('zealot') : undefined,
+      }}
       busy={false}
       failed={failed}
       onWrite={onWrite}
@@ -69,6 +82,17 @@ function renderDialog(game: GameState, changes: readonly ProposedChange[], faile
   return { onWrite, onLater };
 }
 
+/** The dialog with only the resolution `game` reached, whose `changes` it shows after "Next". */
+function renderChanges(game: GameState, changes: readonly ProposedChange[], failed = false) {
+  const rendered = renderDialog(game, [{ outcome: campaign.gameOutcome(game), changes }], {
+    failed,
+  });
+  fireEvent.click(screen.getByRole('button', { name: 'Next' }));
+  return rendered;
+}
+
+const r1 = { kind: 'resolution', id: resolutionId('R1') } as const;
+const r2 = { kind: 'resolution', id: resolutionId('R2') } as const;
 const houseBurned: CampaignCommand = {
   type: 'RecordStory',
   key: 'houseStillStanding',
@@ -87,7 +111,7 @@ describe('ResolutionDialog', () => {
   afterEach(cleanup);
 
   it('names the resolution to read aloud and lists its changes like the log page', () => {
-    renderDialog(gatheringEndedWith('R1'), [
+    renderChanges(gatheringEndedWith('R1'), [
       { kind: 'command', command: houseBurned },
       { kind: 'command', command: rolandXp },
       { kind: 'command', command: { type: 'EarnCard', code: roland, card: litaChantler } },
@@ -115,7 +139,7 @@ describe('ResolutionDialog', () => {
   });
 
   it('points at the "No resolution" text when the game ended without one', () => {
-    renderDialog(gatheringEndedWith(undefined), [upgradeDecks]);
+    renderChanges(gatheringEndedWith(undefined), [upgradeDecks]);
 
     expect(screen.getByText('The Gathering · No resolution')).toBeTruthy();
     expect(
@@ -124,7 +148,7 @@ describe('ResolutionDialog', () => {
   });
 
   it('writes the commands without the by-hand steps', () => {
-    const { onWrite } = renderDialog(gatheringEndedWith('R1'), [
+    const { onWrite } = renderChanges(gatheringEndedWith('R1'), [
       { kind: 'command', command: houseBurned },
       upgradeDecks,
       { kind: 'command', command: rolandXp },
@@ -132,7 +156,7 @@ describe('ResolutionDialog', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Write into the log' }));
 
-    expect(onWrite).toHaveBeenCalledWith([houseBurned, rolandXp]);
+    expect(onWrite).toHaveBeenCalledWith(r1, [houseBurned, rolandXp]);
   });
 
   describe('when Daisy was defeated by damage and horror at once', () => {
@@ -146,25 +170,74 @@ describe('ResolutionDialog', () => {
     const daisyDefeat: ProposedChange = { kind: 'choice', options: [physical, mental] };
 
     it('writes the physical trauma until the players pick another', () => {
-      const { onWrite } = renderDialog(gatheringEndedWith('R1'), [daisyDefeat]);
+      const { onWrite } = renderChanges(gatheringEndedWith('R1'), [daisyDefeat]);
 
       fireEvent.click(screen.getByRole('button', { name: 'Write into the log' }));
 
-      expect(onWrite).toHaveBeenCalledWith([physical]);
+      expect(onWrite).toHaveBeenCalledWith(r1, [physical]);
     });
 
     it('writes the trauma the players picked', () => {
-      const { onWrite } = renderDialog(gatheringEndedWith('R1'), [daisyDefeat]);
+      const { onWrite } = renderChanges(gatheringEndedWith('R1'), [daisyDefeat]);
 
       fireEvent.click(screen.getByRole('radio', { name: 'Daisy Walker suffers 1 mental trauma' }));
       fireEvent.click(screen.getByRole('button', { name: 'Write into the log' }));
 
-      expect(onWrite).toHaveBeenCalledWith([mental]);
+      expect(onWrite).toHaveBeenCalledWith(r1, [mental]);
     });
   });
 
+  describe('when The Gathering ended with resolution 1', () => {
+    const options: readonly ResolutionOption[] = [
+      { outcome: r1, changes: [{ kind: 'command', command: houseBurned }] },
+      { outcome: r2, changes: [{ kind: 'command', command: rolandXp }] },
+    ];
+
+    it('offers its resolutions, resolution 1 tagged as the one from the game', () => {
+      renderDialog(gatheringEndedWith('R1'), options);
+
+      const dialog = screen.getByRole('dialog', { name: 'The scenario is over' });
+      expect(
+        within(dialog).getByRole('radio', { name: 'Resolution 1 from the game' }),
+      ).toHaveProperty('checked', true);
+      expect(within(dialog).getByRole('radio', { name: 'Resolution 2' })).toHaveProperty(
+        'checked',
+        false,
+      );
+    });
+
+    it('writes resolution 2 with its changes once the players pick it', () => {
+      const { onWrite } = renderDialog(gatheringEndedWith('R1'), options);
+
+      fireEvent.click(screen.getByRole('radio', { name: 'Resolution 2' }));
+      expect(screen.getByText('Read Resolution 2 aloud from the campaign guide.')).toBeTruthy();
+      fireEvent.click(screen.getByRole('button', { name: 'Next' }));
+      expect(screen.getByText('The Gathering · Resolution 2')).toBeTruthy();
+      fireEvent.click(screen.getByRole('button', { name: 'Write into the log' }));
+
+      expect(onWrite).toHaveBeenCalledWith(r2, [rolandXp]);
+    });
+  });
+
+  it('lists the steps of a standalone game and closes on "Done" without writing', () => {
+    const { onWrite, onLater } = renderDialog(
+      gatheringEndedWith('R1'),
+      [{ outcome: r1, changes: [upgradeDecks] }],
+      { inCampaign: false },
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Next' }));
+    expect(screen.getByRole('dialog', { name: 'Resolution steps' })).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Done' }));
+
+    expect(onLater).toHaveBeenCalled();
+    expect(onWrite).not.toHaveBeenCalled();
+  });
+
   it('leaves the game as it is on "Not yet"', () => {
-    const { onWrite, onLater } = renderDialog(gatheringEndedWith('R1'), [upgradeDecks]);
+    const { onWrite, onLater } = renderDialog(gatheringEndedWith('R1'), [
+      { outcome: r1, changes: [upgradeDecks] },
+    ]);
 
     fireEvent.click(screen.getByRole('button', { name: 'Not yet' }));
 
@@ -173,7 +246,7 @@ describe('ResolutionDialog', () => {
   });
 
   it('says the log refused the last write', () => {
-    renderDialog(gatheringEndedWith('R1'), [upgradeDecks], true);
+    renderChanges(gatheringEndedWith('R1'), [upgradeDecks], true);
 
     expect(screen.getByRole('alert').textContent).toMatch(/refused these changes/);
   });

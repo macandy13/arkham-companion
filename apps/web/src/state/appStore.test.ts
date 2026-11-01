@@ -12,6 +12,7 @@ import {
   investigatorCardStats,
   investigatorId,
   onlyCopy,
+  resolutionId,
   replay,
   revealLocation,
   whenAdvanced,
@@ -240,6 +241,7 @@ describe('appStore', () => {
     describe('resolution', () => {
       const alderId = investigatorId('alder');
       const houseStillStanding = { kind: 'flag', value: true } as const;
+      const noResolution = { kind: 'noResolution' } as const;
 
       it('proposes nothing while the game goes on', async () => {
         const store = createAppStore(new IndexedDbStore('appstore-resolution-running-test'));
@@ -258,11 +260,15 @@ describe('appStore', () => {
 
         const resolution = store.getState().current?.resolution;
         expect(resolution?.campaignId).toBe(campaignId);
-        expect(resolution?.changes).toContainEqual({
+        expect(resolution?.reached).toEqual(noResolution);
+        const changes = resolution?.options.find(
+          (option) => option.outcome.kind === 'noResolution',
+        )?.changes;
+        expect(changes).toContainEqual({
           kind: 'command',
           command: { type: 'RecordStory', key: 'houseStillStanding', value: houseStillStanding },
         });
-        expect(resolution?.changes.at(-1)).toEqual({
+        expect(changes?.at(-1)).toEqual({
           kind: 'command',
           command: { type: 'AddTrauma', code: alder.code, kind: 'mental', amount: 1 },
         });
@@ -276,7 +282,7 @@ describe('appStore', () => {
         await store.getState().actions.adjust(alderId, 'horror', alder.sanity);
         const trauma = { type: 'AddTrauma', code: alder.code, kind: 'mental', amount: 1 } as const;
 
-        await store.getState().writeResolution([trauma]);
+        await store.getState().writeResolution(noResolution, [trauma]);
 
         expect(store.getState().current?.resolution).toBeUndefined();
         const { log } = (await db.loadCampaign(campaignId))!;
@@ -299,6 +305,36 @@ describe('appStore', () => {
         expect(store.getState().current?.resolution).toEqual(proposed);
       });
 
+      it("offers each of The Gathering's resolutions in the guide's order, then no resolution", async () => {
+        const store = createAppStore(new IndexedDbStore('appstore-resolution-options-test'));
+        await store.getState().startCampaign(campaignStart);
+
+        await store.getState().actions.adjust(alderId, 'horror', alder.sanity);
+
+        expect(
+          store.getState().current?.resolution?.options.map((option) => option.outcome),
+        ).toEqual([
+          { kind: 'resolution', id: 'R1' },
+          { kind: 'resolution', id: 'R2' },
+          { kind: 'resolution', id: 'R3' },
+          noResolution,
+        ]);
+      });
+
+      it('records the resolution the players picked instead of the one the game reached', async () => {
+        const db = new IndexedDbStore('appstore-resolution-picked-test');
+        const store = createAppStore(db);
+        await store.getState().startCampaign(campaignStart);
+        const campaignId = store.getState().campaigns[0]!.campaignId;
+        await store.getState().actions.adjust(alderId, 'horror', alder.sanity);
+
+        await store.getState().writeResolution({ kind: 'resolution', id: resolutionId('R2') }, []);
+
+        expect((await db.loadCampaign(campaignId))?.log.playedScenarios).toEqual([
+          { scenarioId: 'the-gathering', outcome: { kind: 'resolution', id: 'R2' } },
+        ]);
+      });
+
       it('writes nothing and keeps the proposal when the log refuses a change', async () => {
         const db = new IndexedDbStore('appstore-resolution-refused-test');
         const store = createAppStore(db);
@@ -308,7 +344,9 @@ describe('appStore', () => {
         const stranger = investigatorCode('stranger');
 
         await expect(
-          store.getState().writeResolution([{ type: 'AwardXp', code: stranger, amount: 2 }]),
+          store
+            .getState()
+            .writeResolution(noResolution, [{ type: 'AwardXp', code: stranger, amount: 2 }]),
         ).rejects.toBeInstanceOf(CampaignCommandRejected);
 
         expect((await db.loadCampaign(campaignId))?.log.playedScenarios).toEqual([]);
@@ -323,8 +361,8 @@ describe('appStore', () => {
 
         const resolution = store.getState().current?.resolution;
         expect(resolution?.campaignId).toBeUndefined();
-        expect(resolution?.changes.length).toBeGreaterThan(0);
-        await expect(store.getState().writeResolution([])).rejects.toThrow(
+        expect(resolution?.options.length).toBeGreaterThan(0);
+        await expect(store.getState().writeResolution(noResolution, [])).rejects.toThrow(
           'No resolution to write',
         );
       });

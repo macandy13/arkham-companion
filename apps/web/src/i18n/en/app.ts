@@ -606,6 +606,14 @@ export const appTexts = {
     tokenCount_other: '{{token}} ×{{count}}',
   },
   resolution: {
+    over: 'The scenario is over',
+    pickResolution:
+      'Confirm the resolution, or pick another one if the table played it differently.',
+    fromTheGame: 'from the game',
+    standaloneTitle: 'Resolution steps',
+    next: 'Next',
+    back: 'Back',
+    done: 'Done',
     title: 'Into the campaign log',
     numbered: 'Resolution {{n}}',
     none: 'No resolution',
