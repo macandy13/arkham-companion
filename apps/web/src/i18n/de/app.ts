@@ -449,6 +449,12 @@ export const appTexts = {
     per_investigator: 'pro Ermittler',
     action: 'Aktion',
     free: 'Frei',
+    reaction: 'Reaktion',
+    elder_sign: 'Älteres Zeichen',
+    skull: 'Schädel',
+    auto_fail: 'Automatischer Fehlschlag',
+    bless: 'Segen',
+    curse: 'Fluch',
   },
   investigators: {
     title: 'Ermittler',

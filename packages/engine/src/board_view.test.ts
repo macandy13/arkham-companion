@@ -143,6 +143,7 @@ describe('investigators', () => {
     expect(investigators).toEqual([
       {
         id: alice,
+        code: 'alice',
         name: 'alice',
         status: 'active',
         at: 'study',

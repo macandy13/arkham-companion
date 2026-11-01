@@ -446,6 +446,12 @@ export const appTexts = {
     per_investigator: 'per investigator',
     action: 'Action',
     free: 'Free',
+    reaction: 'Reaction',
+    elder_sign: 'Elder Sign',
+    skull: 'Skull',
+    auto_fail: 'Auto-fail',
+    bless: 'Bless',
+    curse: 'Curse',
   },
   investigators: {
     title: 'Investigators',

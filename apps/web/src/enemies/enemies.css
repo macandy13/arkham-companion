@@ -213,35 +213,3 @@
   width: var(--face-text-size);
   height: var(--face-text-size);
 }
-
-#board svg[data-card='enemy'] [data-symbol='willpower'] {
-  --symbol: url('../symbols/willpower.svg');
-}
-
-#board svg[data-card='enemy'] [data-symbol='intellect'] {
-  --symbol: url('../symbols/intellect.svg');
-}
-
-#board svg[data-card='enemy'] [data-symbol='combat'] {
-  --symbol: url('../symbols/combat.svg');
-}
-
-#board svg[data-card='enemy'] [data-symbol='agility'] {
-  --symbol: url('../symbols/agility.svg');
-}
-
-#board svg[data-card='enemy'] [data-symbol='wild'] {
-  --symbol: url('../symbols/wild.svg');
-}
-
-#board :is(svg[data-card='enemy'], [data-card='location']) [data-symbol='action'] {
-  --symbol: url('../symbols/action.svg');
-}
-
-#board :is(svg[data-card='enemy'], [data-card='location']) [data-symbol='free'] {
-  --symbol: url('../symbols/free.svg');
-}
-
-#board svg[data-card='enemy'] [data-symbol='per_investigator'] {
-  --symbol: url('../symbols/per_investigator.svg');
-}
