@@ -26,33 +26,38 @@ export function TokenPicture({
   centre: Point;
   radius: number;
 }) {
-  const clipId = useId();
+  const patternId = useId();
   const picture = useCardPicture(image, scan.width > scan.height ? 'landscape' : 'portrait');
   if (!picture) return null;
   const inner = radius * PICTURE_INSET;
+  // A pattern, not a clipped copy of the scan, so the token's box stays the size of its circle:
+  // a clip hides the rest of the scan but still counts it in the box that taps and focus use.
+  // The circle takes the group's fill (map.css), which the stylesheet's circle colour would hide.
   return (
-    <g data-part="avatar" data-picture={picture.shown ? 'shown' : undefined}>
-      <clipPath id={clipId}>
-        <circle cx={centre.x} cy={centre.y} r={inner} />
-      </clipPath>
-      <g clipPath={`url(#${clipId})`}>
-        <svg
-          x={centre.x - inner}
-          y={centre.y - inner}
-          width={2 * inner}
-          height={2 * inner}
-          viewBox={artViewBox(area, scan)}
-          preserveAspectRatio="xMidYMid slice"
-        >
-          <image
-            href={picture.url}
-            {...scan}
-            preserveAspectRatio="none"
-            onLoad={picture.onLoad}
-            onError={picture.onError}
-          />
-        </svg>
-      </g>
+    <g
+      data-part="avatar"
+      data-picture={picture.shown ? 'shown' : undefined}
+      fill={`url(#${patternId})`}
+    >
+      <pattern
+        id={patternId}
+        patternUnits="userSpaceOnUse"
+        x={centre.x - inner}
+        y={centre.y - inner}
+        width={2 * inner}
+        height={2 * inner}
+        viewBox={artViewBox(area, scan)}
+        preserveAspectRatio="xMidYMid slice"
+      >
+        <image
+          href={picture.url}
+          {...scan}
+          preserveAspectRatio="none"
+          onLoad={picture.onLoad}
+          onError={picture.onError}
+        />
+      </pattern>
+      <circle cx={centre.x} cy={centre.y} r={inner} />
     </g>
   );
 }

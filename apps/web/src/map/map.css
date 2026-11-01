@@ -405,6 +405,11 @@
   display: none;
 }
 
+#map svg :is([data-pawn], [data-enemy]) > [data-part='avatar'] > circle {
+  fill: inherit;
+  stroke: none;
+}
+
 #map svg [data-enemy][data-exhausted] > [data-part='avatar'] {
   transform: rotate(90deg);
   transform-box: fill-box;

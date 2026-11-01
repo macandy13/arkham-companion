@@ -81,7 +81,7 @@ describe('TokenPicture', () => {
       if (!avatar || !image) throw new Error('the token has no avatar');
 
       expect(image.getAttribute('href')).toBe('https://arkhamdb.com/bundles/cards/token.png');
-      expect(avatar.querySelector('svg')?.getAttribute('viewBox')).toBe(viewBox);
+      expect(avatar.querySelector('pattern')?.getAttribute('viewBox')).toBe(viewBox);
       expect(avatar.hasAttribute('data-picture')).toBe(false);
       await act(async () => {
         fireEvent.load(image);
