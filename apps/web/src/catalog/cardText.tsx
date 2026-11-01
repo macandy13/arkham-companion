@@ -39,23 +39,21 @@ function symbolOf(name: string): CardSymbol | undefined {
  * (`[[Ghoul]]`) and the runs it sets bold or italic (`<b>Forced</b>`) emphasised, as the printed
  * cards set them in bold italics, and the symbols it names in brackets drawn as icons
  * (`data-symbol`), each named for assistive technology; brackets it has no icon for stay as text,
- * and other tags (`<u>`) are dropped.
+ * and other tags (`<u>`, a stray `</i>`) are dropped as parts of their own. Every part ends up as
+ * a React text node or element, never as HTML, so a tag left over in the text is shown, not run.
  */
 export function cardText(text: string): ReactNode[] {
-  return text.split(/(\[\[[^\]]+\]\]|\[[a-z_]+\]|<b>.*?<\/b>|<i>.*?<\/i>)/).map((part, index) => {
+  const parts = text.split(/(\[\[[^\]]+\]\]|\[[a-z_]+\]|<b>.*?<\/b>|<i>.*?<\/i>|<\/?[a-z]+>)/);
+  return parts.map((part, index) => {
     const trait = /^\[\[([^\]]+)\]\]$/.exec(part)?.[1];
     if (trait !== undefined) return <em key={index}>{trait}</em>;
     // A bold or italic run may name traits and symbols of its own.
     const run = /^<([bi])>(.*)<\/\1>$/.exec(part)?.[2];
     if (run !== undefined) return <em key={index}>{cardText(run)}</em>;
     const symbol = symbolOf(/^\[([a-z_]+)\]$/.exec(part)?.[1] ?? '');
-    return symbol ? <SymbolIcon key={index} symbol={symbol} /> : withoutTags(part);
+    if (symbol) return <SymbolIcon key={index} symbol={symbol} />;
+    return /^<\/?[a-z]+>$/.test(part) ? null : part;
   });
-}
-
-/** Text without the markup tags this screen does not draw (`<u>`, a stray `</i>`). */
-function withoutTags(text: string): string {
-  return text.replace(/<\/?[a-z]+>/g, '');
 }
 
 /**
