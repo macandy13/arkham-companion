@@ -14,25 +14,13 @@ import {
   trait,
 } from '@arkham/engine';
 import { initI18n } from '../i18n';
-import { gameActions } from '../state/gameActions';
 import { EnemyDetails } from './EnemyDetails';
+import { actionsOn } from '../state/gameActions.test_support';
 
 const study = instanceId('study');
 const ghoul = instanceId('ghoul');
 const alder = investigatorId('alder');
 const brook = investigatorId('brook');
-
-/** Actions that play on `table`, as the store's play on the open game; undo and adjusting do nothing. */
-const actionsOn = (table: PlayTable) =>
-  gameActions(
-    async (step) => step(table),
-    async () => {},
-    {
-      start: async () => {},
-      finish: async () => {},
-      cancel: async () => {},
-    },
-  );
 
 /** The ghoul's details on `table`, as Alder's threat area opens them; `onClose` is a spy. */
 const renderGhoulDetails = (table: PlayTable, onClose = vi.fn()) => {
