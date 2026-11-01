@@ -305,9 +305,20 @@ export function createAppStore(
           busy: unfinishedSteps > 0,
           canUndo: session?.canUndo ?? false,
           adjusting: false,
+          ...lastNotices(session),
           resolution: session && pendingResolution(session.ctx, session.state, campaignLog),
         },
       });
+    }
+
+    /** The notices of `played`'s last step, each left out when it has nothing to say. */
+    function lastNotices(
+      played: GameSession | undefined,
+    ): Pick<OpenGame, 'skippedEffects' | 'drawnCards'> {
+      return {
+        skippedEffects: played?.skippedEffects.length ? played.skippedEffects : undefined,
+        drawnCards: played?.drawnCards.length ? played.drawnCards : undefined,
+      };
     }
 
     /** Publishes the session's state, unless the player left the game while a write was pending. */
@@ -323,8 +334,7 @@ export function createAppStore(
           canUndo: played.canUndo,
           adjusting: played.adjusting,
           rejection,
-          skippedEffects: played.skippedEffects.length > 0 ? played.skippedEffects : undefined,
-          drawnCards: played.drawnCards.length > 0 ? played.drawnCards : undefined,
+          ...lastNotices(played),
           resolution: pendingResolution(played.ctx, played.state, campaignLog),
         },
       });
