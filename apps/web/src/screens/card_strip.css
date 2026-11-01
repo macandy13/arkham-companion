@@ -1,0 +1,23 @@
+/*
+ * A card strip's arrows (`CardStrip`), in the threat area and the encounter dialog's pile: the
+ * investigator picker's round previous and next icon buttons on either side of the row. Each
+ * place keeps its own row size and gap.
+ */
+:is(#board > #investigators > section, #board dialog[data-dialog='encounter']) > div > button {
+  min-width: var(--button-compact);
+  min-height: var(--button-compact);
+  padding: 0;
+  border-radius: var(--radius-round);
+}
+
+:is(#board > #investigators > section, #board dialog[data-dialog='encounter'])
+  > div
+  > button[data-icon='previous']::before {
+  mask-image: url('../picker/icons/previous.svg');
+}
+
+:is(#board > #investigators > section, #board dialog[data-dialog='encounter'])
+  > div
+  > button[data-icon='next']::before {
+  mask-image: url('../picker/icons/next.svg');
+}

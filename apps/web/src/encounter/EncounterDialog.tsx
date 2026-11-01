@@ -4,6 +4,7 @@ import type { BoardView, EncounterCardView } from '@arkham/engine';
 import { matchingFirst } from '@arkham/util';
 import { useCardPicture } from '../catalog/cardImages';
 import type { GameActions } from '../state/gameActions';
+import { CardStrip } from '../screens/CardStrip';
 import { CardMoves } from './CardMoves';
 
 /** Where the encounter dialog opens (`EncounterDialog.start`): on the deck or on one of its piles. */
@@ -115,7 +116,8 @@ const STRIP_CARDS_SHOWN = 5;
 
 /**
  * One pile as a row of its cards, top card first, like the threat area's: past
- * `STRIP_CARDS_SHOWN` cards the row scrolls by whole cards, with a swipe or its arrows. The card
+ * `STRIP_CARDS_SHOWN` cards the row scrolls by whole cards, with a swipe or its arrows
+ * (`CardStrip`). The card
  * tapped (the top card at first) shows its name, victory points and the places the players can
  * put it (`moves`) under the row. Empty, it says so instead.
  */
@@ -131,16 +133,8 @@ function PileStrip({
   moves: (card: EncounterCardView) => ReactNode;
 }) {
   const { t } = useTranslation();
-  const strip = useRef<HTMLUListElement>(null);
   const [chosenId, setChosenId] = useState(cards[0]?.id);
   const chosen = cards.find((card) => card.id === chosenId) ?? cards[0];
-  // One card's width is enough: the strip snaps to whole cards, so the scroll ends on the next one.
-  const scroll = (direction: -1 | 1) => {
-    const card = strip.current?.firstElementChild;
-    if (card instanceof HTMLElement)
-      strip.current?.scrollBy({ left: direction * card.offsetWidth, behavior: 'smooth' });
-  };
-  const overflowing = cards.length > STRIP_CARDS_SHOWN;
   return (
     <>
       <h2 id={titleId}>{t('encounter.pile', { pile: title, count: cards.length })}</h2>
@@ -148,34 +142,22 @@ function PileStrip({
         <p>{t('encounter.empty')}</p>
       ) : (
         <>
-          <div>
-            {overflowing && (
-              <button
-                type="button"
-                data-icon="previous"
-                aria-label={t('encounter.earlierCards')}
-                onClick={() => scroll(-1)}
+          <CardStrip
+            label={title}
+            count={cards.length}
+            shown={STRIP_CARDS_SHOWN}
+            earlierLabel={t('encounter.earlierCards')}
+            laterLabel={t('encounter.laterCards')}
+          >
+            {cards.map((card) => (
+              <StripCard
+                key={card.id}
+                card={card}
+                chosen={card.id === chosen.id}
+                onChoose={() => setChosenId(card.id)}
               />
-            )}
-            <ul ref={strip} aria-label={title}>
-              {cards.map((card) => (
-                <StripCard
-                  key={card.id}
-                  card={card}
-                  chosen={card.id === chosen.id}
-                  onChoose={() => setChosenId(card.id)}
-                />
-              ))}
-            </ul>
-            {overflowing && (
-              <button
-                type="button"
-                data-icon="next"
-                aria-label={t('encounter.laterCards')}
-                onClick={() => scroll(1)}
-              />
-            )}
-          </div>
+            ))}
+          </CardStrip>
           <section aria-label={chosen.name}>
             <h3>
               {chosen.name}

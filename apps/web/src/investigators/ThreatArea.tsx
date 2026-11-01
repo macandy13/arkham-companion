@@ -1,10 +1,11 @@
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { BoardView, CardFaceView, MapEnemyView } from '@arkham/engine';
 import { EnemyDetails } from '../enemies/EnemyDetails';
 import { healthLeft } from '../enemies/enemyHealth';
 import { enemyConditions } from '../map/LocationTile';
 import { CardActions, cardActionsOn } from '../screens/ActionRow';
+import { CardStrip } from '../screens/CardStrip';
 import { CardZoom } from '../screens/CardZoom';
 import type { GameActions } from '../state/gameActions';
 
@@ -19,7 +20,7 @@ export const THREAT_CARDS_SHOWN = 4;
  * the treacheries in it (`BoardView.cardsIn` its zone), then the enemies engaged with them, each
  * with the health it has left, like the damage tokens on the card. A tap on a treachery opens it
  * large to read and act on (`CardZoom`). Past `THREAT_CARDS_SHOWN` cards
- * the row scrolls by whole cards, with a swipe or its arrows. A tap on an enemy card opens its
+ * the row scrolls by whole cards, with a swipe or its arrows (`CardStrip`). A tap on an enemy card opens its
  * details with what the players can do to it (`EnemyDetails`). Nothing while the area is empty,
  * so the card keeps its place.
  */
@@ -38,52 +39,30 @@ export function ThreatArea({
   busy: boolean;
 }) {
   const { t } = useTranslation();
-  const strip = useRef<HTMLUListElement>(null);
   const count = treacheries.length + enemies.length;
   if (count === 0) return null;
-  // One card's width is enough: the strip snaps to whole cards, so the scroll ends on the next one.
-  const scroll = (direction: -1 | 1) => {
-    const card = strip.current?.firstElementChild;
-    if (card instanceof HTMLElement)
-      strip.current?.scrollBy({ left: direction * card.offsetWidth, behavior: 'smooth' });
-  };
-  const overflowing = count > THREAT_CARDS_SHOWN;
   return (
-    <div>
-      {overflowing && (
-        <button
-          type="button"
-          aria-label={t('investigators.earlierThreats')}
-          onClick={() => scroll(-1)}
-        >
-          ‹
-        </button>
-      )}
-      <ul ref={strip} aria-label={t('investigators.threatArea')}>
-        {treacheries.map((card) => (
-          <SmallCard
-            key={card.id}
-            kind="treachery"
-            board={board}
-            card={card}
-            actions={actions}
-            busy={busy}
-          />
-        ))}
-        {enemies.map((enemy) => (
-          <EnemyCard key={enemy.id} board={board} enemy={enemy} actions={actions} busy={busy} />
-        ))}
-      </ul>
-      {overflowing && (
-        <button
-          type="button"
-          aria-label={t('investigators.laterThreats')}
-          onClick={() => scroll(1)}
-        >
-          ›
-        </button>
-      )}
-    </div>
+    <CardStrip
+      label={t('investigators.threatArea')}
+      count={count}
+      shown={THREAT_CARDS_SHOWN}
+      earlierLabel={t('investigators.earlierThreats')}
+      laterLabel={t('investigators.laterThreats')}
+    >
+      {treacheries.map((card) => (
+        <SmallCard
+          key={card.id}
+          kind="treachery"
+          board={board}
+          card={card}
+          actions={actions}
+          busy={busy}
+        />
+      ))}
+      {enemies.map((enemy) => (
+        <EnemyCard key={enemy.id} board={board} enemy={enemy} actions={actions} busy={busy} />
+      ))}
+    </CardStrip>
   );
 }
 
