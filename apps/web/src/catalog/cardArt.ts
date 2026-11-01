@@ -55,6 +55,30 @@ export const AGENDA_ART: ScanArea = { x: 0, y: 0, width: 174 / 419, height: 1 };
 export const ACT_ART: ScanArea = { x: 245 / 419, y: 0, width: 174 / 419, height: 1 };
 
 /**
+ * The square round an investigator's face on the landscape scan of their card's front, for the
+ * pawn's avatar: about a quarter in from the left and a third down, a little over a quarter of
+ * the card's width across (measured on Roland Banks and the other Core Set investigators).
+ */
+export const INVESTIGATOR_AVATAR: ScanArea = {
+  x: 45 / 419,
+  y: 56 / 300,
+  width: 110 / 419,
+  height: 110 / 300,
+};
+
+/**
+ * The square round the figure in an enemy card's art, for its token's avatar: half the card's
+ * width across, centred about four fifths of the way down (79 %), where the art shows the enemy
+ * on every Core Set enemy.
+ */
+export const ENEMY_AVATAR: ScanArea = {
+  x: 75 / 300,
+  y: 256 / 419,
+  width: 150 / 300,
+  height: 150 / 419,
+};
+
+/**
  * The SVG `viewBox` that shows `area` of a portrait scan drawn at `PORTRAIT_SCAN` size (or of a
  * landscape one at `LANDSCAPE_SCAN`, given as `scan`); with `preserveAspectRatio="xMidYMid slice"`
  * the art fills its window and keeps its proportions. Whole units are close enough for a crop and

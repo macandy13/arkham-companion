@@ -330,7 +330,14 @@ export interface CluePayerView {
  * `EnemyView` with its instance id, since those are where the players act on an enemy (drag it to
  * move or engage it, fight or evade it), and copies share a name.
  */
-export type MapEnemyView = EnemyView & { id: InstanceId };
+export type MapEnemyView = EnemyView & {
+  id: InstanceId;
+  /**
+   * The picture of its front (`CardStats.imageSrc`), whose art its token shows, when the card data
+   * has one. Not on `EnemyView`, which tests compare whole.
+   */
+  image?: CardImagePath;
+};
 
 /**
  * The current agenda (`id`, to act on it), its name, the doom on the card itself and, when it has
@@ -1082,7 +1089,12 @@ function enemyLocation(state: GameState, enemy: CardInstance): InstanceId | unde
 }
 
 function mapEnemyView(ctx: EngineContext, state: GameState, enemy: CardInstance): MapEnemyView {
-  return { id: enemy.id, ...enemyView(ctx, state, enemy) };
+  const { imageSrc } = cardStats(ctx.cards, enemy.code);
+  return {
+    id: enemy.id,
+    ...enemyView(ctx, state, enemy),
+    ...(imageSrc === undefined ? {} : { image: imageSrc }),
+  };
 }
 
 function enemyView(ctx: EngineContext, state: GameState, enemy: CardInstance): EnemyView {
