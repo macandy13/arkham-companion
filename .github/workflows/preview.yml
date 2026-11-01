@@ -49,14 +49,18 @@ jobs:
               - 'apps/web/**'
               # So a change to this workflow runs (and times) the steps it changes.
               - '.github/workflows/preview.yml'
-      # The card pictures the E2E shots show, downloaded once by Playwright's global setup
-      # (apps/web/e2e/fixtures/card_pictures.ts) and kept here, never in the repo.
+      # The card pictures the E2E shots show, downloaded by Playwright's global setup
+      # (apps/web/e2e/fixtures/card_pictures.ts) and kept here, never in the repo. ArkhamDB stops
+      # answering a runner after a few dozen pictures, so each run saves what it has under its own
+      # key and the next run restores the newest and fetches only what is still missing.
       - if: steps.changes.outputs.web == 'true'
         uses: actions/cache@v6
         with:
           path: apps/web/e2e/.card_pictures
-          key: card-pictures-${{ hashFiles('packages/scenarios/src/the_gathering/cards.ts', 'packages/scenarios/src/the_midnight_masks/cards.ts', 'packages/scenarios/src/the_devourer_below/cards.ts', 'packages/scenarios/src/card_builders.ts', 'apps/web/e2e/fixtures/card_pictures.ts') }}
-          restore-keys: card-pictures-
+          key: card-pictures-${{ hashFiles('packages/scenarios/src/the_gathering/cards.ts', 'packages/scenarios/src/the_midnight_masks/cards.ts', 'packages/scenarios/src/the_devourer_below/cards.ts', 'packages/scenarios/src/card_builders.ts', 'apps/web/e2e/fixtures/card_pictures.ts') }}-${{ github.run_id }}
+          restore-keys: |
+            card-pictures-${{ hashFiles('packages/scenarios/src/the_gathering/cards.ts', 'packages/scenarios/src/the_midnight_masks/cards.ts', 'packages/scenarios/src/the_devourer_below/cards.ts', 'packages/scenarios/src/card_builders.ts', 'apps/web/e2e/fixtures/card_pictures.ts') }}-
+            card-pictures-
       # Headless runs only need Chromium's headless shell, cached per Playwright version. No
       # `--with-deps`: the runner image already has the libraries it needs, and apt only added
       # fonts the app doesn't use (it bundles its own) from Ubuntu's mirror, which can drop to
