@@ -226,7 +226,7 @@ function ScenarioCard({
   children: ReactNode;
 }) {
   const { t } = useTranslation();
-  const picture = useCardPicture(printed?.picture);
+  const picture = useCardPicture(printed?.picture, 'portrait');
   return (
     <div
       data-card="scenario"
@@ -635,7 +635,7 @@ function CardFace({
   onClick?: (event: MouseEvent<HTMLDivElement>) => void;
   children: ReactNode;
 }) {
-  const picture = useCardPicture(image);
+  const picture = useCardPicture(image, 'landscape');
   return (
     <div data-card={kind} data-picture={picture?.shown ? 'shown' : undefined} onClick={onClick}>
       <BookFace kind={kind} picture={picture} threshold={threshold} set={set} />
