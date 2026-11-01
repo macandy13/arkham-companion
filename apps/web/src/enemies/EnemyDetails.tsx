@@ -15,7 +15,7 @@ import './enemies.css';
  * health for the player count and evade on the page, and under them one row of what the players
  * can do to it. On an investigator's turn, in one Actions group, the basic actions the rules
  * allow them against it (`BoardView.enemyActions`): fight, evade and engage as actions, which
- * count off one, then fight and evade without an action, as some cards allow; at any time, in a
+ * count off what they cost (`BoardView.actionCost`), then fight and evade without an action, as some cards allow; at any time, in a
  * group of their own, what card effects do to an enemy: deal 1 damage, disengage it, defeat it.
  * Each button shows a short word and is named in full ("Fight · 1 action"). Fight, evade and
  * engage keep it open and show the decisions they raise in place of its page
@@ -50,7 +50,7 @@ export function EnemyDetails({
   const tests = allowed.filter((action) => action !== 'engage');
   const offered = cardActionsOn(board, enemy.id);
   const costOf = (action: EnemyAction, cost?: { free: true }) =>
-    board.turn === undefined ? 1 : board.actionCost(board.turn, action, cost);
+    board.turn === undefined ? (cost?.free ? 0 : 1) : board.actionCost(board.turn, action, cost);
 
   const engaged =
     enemy.engagedWith === undefined ? undefined : board.investigator(enemy.engagedWith);
