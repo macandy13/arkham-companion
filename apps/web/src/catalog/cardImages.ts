@@ -18,13 +18,9 @@ export interface CardPicture {
 /** Which way round a card's scan is printed: an agenda or act lies, every other card stands. */
 export type PictureShape = 'landscape' | 'portrait';
 
-/**
- * The shape of a loaded `img`, or nothing while its size is unknown (an SVG `image` has none to
- * read, and a test's fake load has none).
- */
-function loadedShape(target: EventTarget): PictureShape | undefined {
-  if (!(target instanceof HTMLImageElement)) return undefined;
-  const { naturalWidth: width, naturalHeight: height } = target;
+/** The shape of a loaded `img`, or nothing while its size is unknown (a test's fake load has none). */
+function loadedShape(image: HTMLImageElement): PictureShape | undefined {
+  const { naturalWidth: width, naturalHeight: height } = image;
   if (width === 0 || height === 0) return undefined;
   return width > height ? 'landscape' : 'portrait';
 }
@@ -48,9 +44,25 @@ export function useCardPicture(
     url,
     shown: loadedUrl === url && sidewaysUrl !== url,
     onLoad: (event) => {
-      const loaded = loadedShape(event.currentTarget);
-      if (shape && loaded && loaded !== shape) setSidewaysUrl(url);
-      else setLoadedUrl(url);
+      if (!shape) {
+        setLoadedUrl(url);
+        return;
+      }
+      const settle = (loaded: PictureShape | undefined) => {
+        if (loaded && loaded !== shape) setSidewaysUrl(url);
+        else setLoadedUrl(url);
+      };
+      const target = event.currentTarget;
+      if (target instanceof HTMLImageElement) {
+        settle(loadedShape(target));
+        return;
+      }
+      // An SVG `image` has no size to read, so a probe loads the same picture, cached by now, to
+      // tell its shape. A probe that fails tells nothing, and the picture shows as loaded.
+      const probe = new Image();
+      probe.onload = () => settle(loadedShape(probe));
+      probe.onerror = () => settle(undefined);
+      probe.src = url;
     },
     onError: () => setLoadedUrl(undefined),
   };

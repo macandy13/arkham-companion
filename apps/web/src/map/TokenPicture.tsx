@@ -1,6 +1,6 @@
 import { useId } from 'react';
 import type { CardImagePath } from '@arkham/engine';
-import { LANDSCAPE_SCAN, artViewBox, type ScanArea } from '../catalog/cardArt';
+import { artViewBox, type ScanArea } from '../catalog/cardArt';
 import { useCardPicture } from '../catalog/cardImages';
 import type { Point } from './mapLayout';
 
@@ -27,7 +27,7 @@ export function TokenPicture({
   radius: number;
 }) {
   const clipId = useId();
-  const picture = useCardPicture(image, scan === LANDSCAPE_SCAN ? 'landscape' : 'portrait');
+  const picture = useCardPicture(image, scan.width > scan.height ? 'landscape' : 'portrait');
   if (!picture) return null;
   const inner = radius * PICTURE_INSET;
   return (
