@@ -1,6 +1,6 @@
 import { assertNever, listIfAny, recordIfAny } from '@arkham/util';
 import { isConnectionOpen, neighbours } from './board';
-import { tokenObjective } from './abilities';
+import { resolveEffect, tokenObjective } from './abilities';
 import {
   advanceActionOf,
   cardActionsOfferedTo,
@@ -86,6 +86,7 @@ import type {
   CardInstance,
   ChaosToken,
   Decision,
+  DecisionOption,
   Difficulty,
   GameState,
   HeldAction,
@@ -391,8 +392,7 @@ export type ActAdvance =
  * key is), and, for options whose counts the players confirm or adjust, the
  * range of each count by option name (`counts`).
  */
-export interface DecisionView {
-  prompt: string;
+export interface DecisionView extends ChoiceView {
   kind: Decision['kind'];
   /** The printed name of the card the decision is about (`Decision.subject`). */
   about?: CardName;
@@ -412,6 +412,23 @@ export interface DecisionView {
   test?: SkillTest;
   /** The basic action a skill test belongs to (`Decision.testKind`), which says what its pass `amount` counts. */
   action?: SkillTestKind['kind'];
+  /**
+   * By option name, the choice that option asks right after it is picked (`followUpChoice`: a
+   * failed test's "you must either …"), so the dialog offers it under the option.
+   */
+  followUps?: Record<string, ChoiceView>;
+  /** For an attack of opportunity, the action that provoked it and waits until the attacks are answered. */
+  provokedBy?: ProvokingActionView;
+}
+
+/**
+ * A question and its answers as the players see them (a `DecisionView`, or the choice one of its
+ * options asks next): the question (`prompt`, the engine's i18n key), the options by readable name
+ * (`optionName`), the `labels` the UI translates for names that are not their own label, and the
+ * counts of the options that have them.
+ */
+export interface ChoiceView {
+  prompt: string;
   options: string[];
   labels?: Record<string, string>;
   /**
@@ -421,8 +438,6 @@ export interface DecisionView {
    * carries them as `ResolveDecision.amount` and `amounts`.
    */
   counts?: Record<string, DecisionCounts>;
-  /** For an attack of opportunity, the action that provoked it and waits until the attacks are answered. */
-  provokedBy?: ProvokingActionView;
 }
 
 /**
@@ -1246,6 +1261,60 @@ function actAdvance(
 }
 
 function decisionView(ctx: EngineContext, state: GameState, decision: Decision): DecisionView {
+  const about = nameOfId(ctx, state, decision.subject);
+  const [resolving] = cardsInZone(state, resolvingZone);
+  const cardId = decision.subject ?? resolving;
+  const card = cardId === undefined ? undefined : cardFaceOf(ctx, requireCard(state, cardId));
+  const waiting = waitingCards(ctx, state, decision);
+  const followUps = Object.fromEntries(
+    decision.options.flatMap((option) => {
+      const choice = followUpChoice(ctx, state, decision, option);
+      return choice ? [[optionName(option), choiceView(choice)]] : [];
+    }),
+  );
+  const provokedBy =
+    decision.prompt === forcedAttackPrompt('attackOfOpportunity')
+      ? provokingAction(ctx, state)
+      : undefined;
+  return {
+    kind: decision.kind,
+    ...(about === undefined ? {} : { about }),
+    ...(card === undefined ? {} : { card }),
+    ...listIfAny('waiting', waiting),
+    ...(decision.decider.kind === 'investigator' ? { for: decision.decider.investigatorId } : {}),
+    ...(decision.skillTest ? { test: decision.skillTest } : {}),
+    ...(decision.testKind ? { action: decision.testKind.kind } : {}),
+    ...choiceView(decision),
+    ...(Object.keys(followUps).length > 0 ? { followUps } : {}),
+    ...(provokedBy ? { provokedBy } : {}),
+  };
+}
+
+/**
+ * The choice `option` asks right after it is picked: its first command, resolved like the queue
+ * resolves it when it is a test's deferred outcome (`ResolveEffect`), when that asks the same
+ * players to choose (a failed test's "you must either …", such as the Graveyard's).
+ */
+function followUpChoice(
+  ctx: EngineContext,
+  state: GameState,
+  decision: Decision,
+  option: DecisionOption,
+): Decision | undefined {
+  const [first] = option.commands;
+  const [command] =
+    first?.type === 'ResolveEffect'
+      ? resolveEffect(ctx, state, first.effect, first.opened)
+      : [first];
+  return command?.type === 'RequestDecision' &&
+    command.decision.kind === 'chooseOption' &&
+    sameDecider(command.decision.decider, decision.decider)
+    ? command.decision
+    : undefined;
+}
+
+/** A decision's options by name, with the labels and counts they need (`ChoiceView`). */
+function choiceView(decision: Decision): ChoiceView {
   const counts = Object.fromEntries(
     decision.options.flatMap((option) => {
       const ranges: DecisionCounts = {
@@ -1266,28 +1335,11 @@ function decisionView(ctx: EngineContext, state: GameState, decision: Decision):
       return name === option.label ? [] : [[name, option.label]];
     }),
   );
-  const about = nameOfId(ctx, state, decision.subject);
-  const [resolving] = cardsInZone(state, resolvingZone);
-  const cardId = decision.subject ?? resolving;
-  const card = cardId === undefined ? undefined : cardFaceOf(ctx, requireCard(state, cardId));
-  const waiting = waitingCards(ctx, state, decision);
-  const provokedBy =
-    decision.prompt === forcedAttackPrompt('attackOfOpportunity')
-      ? provokingAction(ctx, state)
-      : undefined;
   return {
     prompt: decision.prompt,
-    kind: decision.kind,
-    ...(about === undefined ? {} : { about }),
-    ...(card === undefined ? {} : { card }),
-    ...listIfAny('waiting', waiting),
-    ...(decision.decider.kind === 'investigator' ? { for: decision.decider.investigatorId } : {}),
-    ...(decision.skillTest ? { test: decision.skillTest } : {}),
-    ...(decision.testKind ? { action: decision.testKind.kind } : {}),
     options: decision.options.map(optionName),
     ...(Object.keys(labels).length > 0 ? { labels } : {}),
     ...(Object.keys(counts).length > 0 ? { counts } : {}),
-    ...(provokedBy ? { provokedBy } : {}),
   };
 }
 

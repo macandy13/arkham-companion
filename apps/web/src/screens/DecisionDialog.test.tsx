@@ -4,6 +4,7 @@ import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import {
   atLocation,
   blankEnemy,
+  decisionId,
   fixed,
   blankLocation,
   engagedWith,
@@ -352,6 +353,66 @@ describe('DecisionDialog', () => {
       expect(table.board.investigator(alder)).toMatchObject({ damage: 0, horror: 1 });
     });
   });
+
+  it.each([
+    { taps: [], horror: 2, damage: 0 },
+    { taps: ['Take 2 damage'], horror: 0, damage: 2 },
+  ])(
+    "answers a failed test's choice under its row (tapping $taps) with the fail in one Done",
+    ({ taps, horror, damage }) => {
+      const table = PlayTable.start(
+        newGame()
+          .withLocation(study, blankLocation('study', { name: 'Graveyard' }), { revealed: true })
+          .withInvestigator(alder, { name: 'Alder', locationId: study }),
+      );
+      table.play({
+        type: 'TestSkill',
+        investigatorId: alder,
+        cardId: study,
+        test: { skill: 'willpower', difficulty: 3 },
+        onPass: [],
+        onFail: [
+          {
+            type: 'RequestDecision',
+            decision: {
+              id: decisionId('graveyard_either'),
+              kind: 'chooseOption',
+              prompt: 'You must either',
+              decider: { kind: 'investigator', investigatorId: alder },
+              options: [
+                {
+                  id: 'horror',
+                  label: 'Take 2 horror',
+                  commands: [
+                    { type: 'AdjustInvestigator', investigatorId: alder, stat: 'horror', delta: 2 },
+                  ],
+                },
+                {
+                  id: 'damage',
+                  label: 'Take 2 damage',
+                  commands: [
+                    { type: 'AdjustInvestigator', investigatorId: alder, stat: 'damage', delta: 2 },
+                  ],
+                },
+              ],
+            },
+          },
+        ],
+      });
+      renderFirstDecision(table);
+
+      fireEvent.click(screen.getByRole('button', { name: 'Failed' }));
+      const choice = screen.getByRole('list', { name: 'You must either' });
+      expect(within(choice).getByRole('button', { pressed: true }).textContent).toBe(
+        'Take 2 horror',
+      );
+      for (const tap of taps) fireEvent.click(within(choice).getByRole('button', { name: tap }));
+      fireEvent.click(screen.getByRole('button', { name: 'Done' }));
+
+      expect(table.board.decisions).toEqual([]);
+      expect(table.board.investigator(alder)).toMatchObject({ horror, damage });
+    },
+  );
 
   it('takes back the step that raised it with Undo, and offers no Adjust board of its own', () => {
     const table = aldersTurnInTheStudy();

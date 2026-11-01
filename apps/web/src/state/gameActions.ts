@@ -37,6 +37,12 @@ export interface DecisionAmounts {
   margin?: number;
 }
 
+/** The answer to the choice an option asks next (`DecisionView.followUps`): its option and counts. */
+export interface FollowUpAnswer {
+  option: string;
+  counts?: DecisionAmounts;
+}
+
 /**
  * What the play screen can do to the open game, in the players' words. It mirrors `PlayTable`'s
  * verbs, but with the screen's defaults:
@@ -105,9 +111,10 @@ export interface GameActions {
   defeatEnemy(enemy: InstanceId): Promise<void>;
   /**
    * Picks `option` of the first open decision by its readable name (`DecisionView.options`), as the
-   * decision dialog lists them.
+   * decision dialog lists them, and with `then` the choice that option asks next
+   * (`DecisionView.followUps`), in the same step, so one undo takes both back.
    */
-  answer(option: string, counts?: DecisionAmounts): Promise<void>;
+  answer(option: string, counts?: DecisionAmounts, then?: FollowUpAnswer): Promise<void>;
   /** Enemy step 3.3: each listed enemy attack at its printed damage and horror. */
   resolveEnemyAttacks(): Promise<void>;
   /**
@@ -255,16 +262,16 @@ export function gameActions(
     disengageEnemy: (enemy) =>
       play((table) => table.play({ type: 'DisengageEnemy', enemyId: enemy })),
     defeatEnemy: (enemy) => play((table) => table.play({ type: 'DefeatEnemy', enemyId: enemy })),
-    answer: (option, counts = {}) =>
+    answer: (option, counts = {}, then) =>
       play((table) => {
         const decision = firstDecision(table.state);
-        table.play({
-          type: 'ResolveDecision',
-          decisionId: decision.id,
-          // A name no option has goes on as an id, so the engine refuses it as `unknownOption`.
-          optionId: optionNamed(decision, option)?.id ?? option,
-          ...counts,
-        });
+        const before = table.state.pending;
+        resolve(table, decision, option, counts);
+        if (!then) return;
+        // The choice the option asks is the one decision its answer opened.
+        const asked = table.state.pending.find((each) => !before.some((old) => old.id === each.id));
+        if (!asked) throw new CommandRejected({ code: 'noPendingDecision' });
+        resolve(table, asked, then.option, then.counts);
       }),
     resolveEnemyAttacks: () => play((table) => table.resolveEnemyAttacks()),
     advanceAct: (spend) =>
@@ -367,6 +374,22 @@ function currentAct(state: GameState): InstanceId {
   const act = state.act.current;
   if (act === undefined) throw new CommandRejected({ code: 'noCurrentCard', deck: 'act' });
   return act;
+}
+
+/** Answers `decision` with the option named `option` and its counts. */
+function resolve(
+  table: PlayTable,
+  decision: Decision,
+  option: string,
+  counts: DecisionAmounts = {},
+): void {
+  table.play({
+    type: 'ResolveDecision',
+    decisionId: decision.id,
+    // A name no option has goes on as an id, so the engine refuses it as `unknownOption`.
+    optionId: optionNamed(decision, option)?.id ?? option,
+    ...counts,
+  });
 }
 
 /** The decision the dialog shows; refused like an engine command when none is open. */
