@@ -17,6 +17,7 @@ import { cardText } from '../catalog/cardText';
 import type { Point } from '../map/mapLayout';
 import { shrinkAround, useShrinkToFit } from '../map/useShrinkToFit';
 import { ENEMY_FACE, ENEMY_FRAME } from './enemyCardFrame';
+import { healthLeft } from './enemyHealth';
 
 /** The hatch's cell in scan units, as on the location tiles' art while they have no picture. */
 const HATCH = 40;
@@ -33,18 +34,9 @@ type Stat = 'fight' | 'health' | 'evade';
  * over its art, cut from the card's picture once that has loaded (a hatch until then, and for
  * good offline). In the card pictures theme the whole picture lies over the drawing once loaded,
  * under the damage count alone; the drawing stays beneath it, so it keeps naming the card and its
- * values to assistive technology. The name's text has `titleId`, so the dialog showing the card is
- * named by it. The texts are HTML in `foreignObject`s, so they wrap and stay paragraphs.
+ * values to assistive technology. The texts are HTML in `foreignObject`s, so they wrap and stay paragraphs.
  */
-export function EnemyCard({
-  enemy,
-  stats,
-  titleId,
-}: {
-  enemy: MapEnemyView;
-  stats: EnemyStatsView;
-  titleId: string;
-}) {
+export function EnemyCard({ enemy, stats }: { enemy: MapEnemyView; stats: EnemyStatsView }) {
   const { t } = useTranslation();
   const clipId = useId();
   const plateId = useId();
@@ -61,12 +53,13 @@ export function EnemyCard({
     health: enemy.health === undefined ? '–' : `${enemy.health}`,
     evade: `${stats.evade}`,
   };
+  const left = healthLeft(enemy);
   const labels: Record<Stat, string> = {
     fight: `${t('enemy.fight')} ${values.fight}`,
     health:
-      enemy.health === undefined
+      left === undefined
         ? `${t('enemy.health')} –`
-        : `${t('enemy.health')} ${enemy.health - damage} ${t('enemy.ofMax', { max: enemy.health })}`,
+        : `${t('enemy.health')} ${left} ${t('enemy.ofMax', { max: enemy.health })}`,
     evade: `${t('enemy.evade')} ${values.evade}`,
   };
   const nameCentre = { x: ENEMY_FACE.name.x, y: ENEMY_FACE.name.y };
@@ -145,7 +138,7 @@ export function EnemyCard({
         <StatIcon symbol="combat" centre={ENEMY_FACE.fightIcon} />
         <StatIcon symbol="agility" centre={ENEMY_FACE.evadeIcon} />
       </g>
-      <text id={titleId} ref={name} {...nameCentre} transform={shrinkAround(nameCentre, scale)}>
+      <text ref={name} {...nameCentre} transform={shrinkAround(nameCentre, scale)}>
         {enemy.name}
       </text>
       <foreignObject {...ENEMY_FACE.traits}>

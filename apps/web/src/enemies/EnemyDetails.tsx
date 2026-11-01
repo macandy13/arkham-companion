@@ -1,24 +1,27 @@
-import { useEffect, useId, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { BoardView, MapEnemyView } from '@arkham/engine';
 import { ActionButton, ActionGroup, CardActions, cardActionsOn } from '../screens/ActionRow';
+import { CardDialog } from '../screens/CardDialog';
 import type { GameActions } from '../state/gameActions';
 import { useBackCloses } from '../screens/useBackCloses';
 import { EnemyCard } from './EnemyCard';
+import { healthLeft } from './enemyHealth';
 import './enemies.css';
 
 /**
- * One enemy in full, opened by a tap on its card or its map token: whom it is engaged with, the
- * enemy drawn as its card (`EnemyCard`, from `BoardView.enemyStats`), and under it one row of what
- * the players can do to it. On an investigator's turn, the basic actions the rules allow them
- * against it (`BoardView.enemyActions`): fight, evade and engage as actions, which count off one,
- * and fight and evade without an action, as some cards allow; at any time, what card effects do
- * to an enemy: deal 1 damage, disengage it, defeat it. Each button shows a short word and is
- * named in full ("Fight · 1 action"). Fight and evade close it, so the decision dialog that asks
- * for the test's result is the only one open; damage keeps it open for the next point, and engage
- * for the fight that usually follows, and both read the enemy fresh from the board. A native
- * modal `<dialog>` brings focus trapping and Escape; nothing is tapped while a step is queued
- * (`busy`). On a phone it fills the screen and the back gesture closes it too (`useBackCloses`).
+ * One enemy in full, opened by a tap on its card or its map token, on the card shell
+ * (`CardDialog`): the enemy drawn as its card beside the page (`EnemyCard`, from
+ * `BoardView.enemyStats`), whom it is engaged with in the kicker, its fight, health left of its
+ * health for the player count and evade on the page, and under them one row of what the players
+ * can do to it. On an investigator's turn, the basic actions the rules allow them against it
+ * (`BoardView.enemyActions`): fight, evade and engage as actions, which count off one, and fight
+ * and evade without an action, as some cards allow; at any time, what card effects do to an
+ * enemy: deal 1 damage, disengage it, defeat it. Each button shows a short word and is named in
+ * full ("Fight · 1 action"). Fight and evade close it, so the decision dialog that asks for the
+ * test's result is the only one open; damage keeps it open for the next point, and engage for the
+ * fight that usually follows, and both read the enemy fresh from the board. Escape and its ×
+ * close it; nothing is tapped while a step is queued (`busy`). On a phone it is the shell's sheet
+ * and the back gesture closes it too (`useBackCloses`).
  */
 export function EnemyDetails({
   board,
@@ -34,11 +37,6 @@ export function EnemyDetails({
   onClose: () => void;
 }) {
   const { t } = useTranslation();
-  const titleId = useId();
-  const dialog = useRef<HTMLDialogElement>(null);
-  useEffect(() => {
-    dialog.current?.showModal();
-  }, []);
   const close = useBackCloses(onClose);
   const step = (play: () => Promise<void>, closes: boolean) => () => {
     if (closes) close();
@@ -48,13 +46,37 @@ export function EnemyDetails({
   const tests = allowed.filter((action) => action !== 'engage');
   const offered = cardActionsOn(board, enemy.id);
 
+  const engaged =
+    enemy.engagedWith === undefined ? undefined : board.investigator(enemy.engagedWith);
+  const stats = board.enemyStats(enemy.id);
+  const left = healthLeft(enemy);
+
   return (
-    <dialog ref={dialog} aria-labelledby={titleId} onCancel={close} data-dialog="enemy">
-      <button type="button" data-icon="close" aria-label={t('enemy.close')} onClick={close} />
-      {enemy.engagedWith !== undefined && (
-        <p>{t('enemy.engagedWith', { name: board.investigator(enemy.engagedWith).name })}</p>
-      )}
-      <EnemyCard enemy={enemy} stats={board.enemyStats(enemy.id)} titleId={titleId} />
+    <CardDialog
+      name="enemy"
+      card={board.cardFace(enemy.id)}
+      drawn={<EnemyCard enemy={enemy} stats={stats} />}
+      {...(engaged
+        ? { actor: engaged, kicker: t('enemy.engagedWith', { name: engaged.name }) }
+        : {})}
+      title={enemy.name}
+      onCancel={close}
+      onClose={close}
+    >
+      <dl>
+        <div>
+          <dt>{t('enemy.fight')}</dt>
+          <dd>{stats.fight}</dd>
+        </div>
+        <div>
+          <dt>{t('enemy.health')}</dt>
+          <dd>{left === undefined ? '–' : t('enemy.healthLeft', { left, max: enemy.health })}</dd>
+        </div>
+        <div>
+          <dt>{t('enemy.evade')}</dt>
+          <dd>{stats.evade}</dd>
+        </div>
+      </dl>
       <footer>
         {allowed.length > 0 && (
           <ActionGroup title={t('enemy.asAction')}>
@@ -147,6 +169,6 @@ export function EnemyDetails({
           />
         </ActionGroup>
       </footer>
-    </dialog>
+    </CardDialog>
   );
 }

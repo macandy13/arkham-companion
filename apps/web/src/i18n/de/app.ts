@@ -384,6 +384,7 @@ export const appTexts = {
     engagedWith: 'Im Kampf mit {{name}}',
     type: 'Gegner',
     ofMax: 'von {{max}}',
+    healthLeft: '{{left}} / {{max}}',
     victory: 'Sieg {{points}}.',
   },
   cluePayment: {

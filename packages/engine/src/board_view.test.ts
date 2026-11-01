@@ -1802,6 +1802,31 @@ describe('cardsIn', () => {
   });
 });
 
+describe('cardFace', () => {
+  it('reads one card by its id: an enemy with its traits and picture', () => {
+    const { context, state } = newGame()
+      .withLocation(study, blankLocation('study'))
+      .withInvestigator(alice, { locationId: study })
+      .withCard(
+        instanceId('ghoul'),
+        blankEnemy('ghoul', {
+          traits: [trait('Ghoul')],
+          imageSrc: cardImagePath('/cards/ghoul.png'),
+        }),
+        engagedWith(alice),
+      )
+      .start();
+
+    expect(boardView(context, state).cardFace(instanceId('ghoul'))).toEqual({
+      id: instanceId('ghoul'),
+      name: 'ghoul',
+      type: 'enemy',
+      traits: ['Ghoul'],
+      image: '/cards/ghoul.png',
+    });
+  });
+});
+
 describe('encounter sets', () => {
   const rats = encounterSetCode('rats');
 

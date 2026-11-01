@@ -80,7 +80,7 @@ On a phone a tap on a location, in the compact map or the map row, shows that lo
 
 ### Cards over the whole screen
 
-On a phone an enemy's details (`EnemyDetails`) and a zoomed card (`CardZoom`: a treachery or asset, a card attached to a location) are the same dialogs as on the tablet, laid over the whole screen without their frame (`game.css`).
+On a phone a zoomed card (`CardZoom`: a treachery or asset, a card attached to a location) is the same dialog as on the tablet, laid over the whole screen without its frame (`game.css`); an enemy's details (`EnemyDetails`) are on the card shell, so they are its sheet.
 The back gesture closes them as it closes the detail view ([`useBackCloses`](../../apps/web/src/screens/useBackCloses.ts)): opening pushes a history entry named by a fresh id, and the ×, Escape and their buttons that close them (fight, evade, a card action) step back through it once.
 The detail view names its own entry too and ignores a back step that lands on it.
 A card that goes while it is open (an enemy leaving play) drops its entry a tick later, unless it mounts again at once (development's double effects), so no back step is left that changes nothing.
@@ -123,6 +123,7 @@ In-game dialogs move onto the card dialog shell ([`CardDialog`](../../apps/web/s
 - `page`: the page alone.
 
 With a card, the investigator who acts sits small in the kicker (their art cut from their card like the clue payment's avatars). The card is a button that opens it whole (`CardZoom`); the cards of the decisions that wait after it (`DecisionView.waiting`, the next enemies to attack) fan out behind it, to the left (to the right on a phone, where the card meets the screen's edge). On an upright phone the page is a sheet along the bottom with a grab handle and a footer of full-width buttons, and the card (or portrait) peeks out over its top edge on the left, beside the title.
+A dialog with a drawing of its card (the enemy details' `EnemyCard`, which lays the picture over itself) passes it as `drawn`, shown in place of the picture. A card's values on the page (`article > dl`) stand side by side, each number in the guide's big print over its name.
 A dialog that must be answered but leaves the board in reach (`onLower`, the decision) gets a grab handle at the top of its page instead: it lowers the dialog to a strip along the bottom with only the handle and the title, shown as a plain dialog (`show()`, not `showModal()`, which would make the board inert), so the players can tap the board and the header, and raises it again, as a tap anywhere on the strip does. The caller keeps whether it is `lowered`, since the decision's Pick on the map lowers it too.
 The app's labels use the guide's fonts (Federant for titles and big numbers, Libre Caslon Text, `--font-family-label`, for labels and kickers); IM Fell English SC (`--font-family-display`) stays on the card faces.
 The play screen's notices keep the playmat's frame (brass rules, a quarter of its zodiac ring and a star in each corner, [`panel_frame.svg`](../../apps/web/src/styles/panel_frame.svg) as a `border-image`, with a light-theme copy), the see-through night by night and parchment by day (`--panel-paper`).

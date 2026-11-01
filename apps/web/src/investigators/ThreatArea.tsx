@@ -2,6 +2,7 @@ import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { BoardView, CardFaceView, MapEnemyView } from '@arkham/engine';
 import { EnemyDetails } from '../enemies/EnemyDetails';
+import { healthLeft } from '../enemies/enemyHealth';
 import { enemyConditions } from '../map/LocationTile';
 import { CardActions, cardActionsOn } from '../screens/ActionRow';
 import { CardZoom } from '../screens/CardZoom';
@@ -155,7 +156,7 @@ function EnemyCard({
 }) {
   const { t } = useTranslation();
   const [detailsOpen, setDetailsOpen] = useState(false);
-  const left = enemy.health === undefined ? undefined : enemy.health - (enemy.damage ?? 0);
+  const left = healthLeft(enemy);
   return (
     <li
       data-card="enemy"

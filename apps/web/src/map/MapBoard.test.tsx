@@ -675,7 +675,13 @@ describe('MapBoard', () => {
       await tapPiece('study', 'rats');
 
       expect(screen.getAllByRole('dialog')).toHaveLength(1);
-      expect(offered()).toEqual(['Close', 'Engage · 1 action', 'Deal 1 damage', 'Defeat']);
+      expect(offered()).toEqual([
+        'Read rats',
+        'Close',
+        'Engage · 1 action',
+        'Deal 1 damage',
+        'Defeat',
+      ]);
     });
 
     it('engages the enemy as an action and keeps its details open', async () => {
@@ -731,7 +737,7 @@ describe('MapBoard', () => {
 
       await tapPiece('study', 'rats');
 
-      expect(offered()).toEqual(['Close', 'Deal 1 damage', 'Defeat']);
+      expect(offered()).toEqual(['Read rats', 'Close', 'Deal 1 damage', 'Defeat']);
     });
   });
 

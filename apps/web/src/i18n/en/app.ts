@@ -382,6 +382,7 @@ export const appTexts = {
     engagedWith: 'Engaged with {{name}}',
     type: 'Enemy',
     ofMax: 'of {{max}}',
+    healthLeft: '{{left}} / {{max}}',
     victory: 'Victory {{points}}.',
   },
   cluePayment: {

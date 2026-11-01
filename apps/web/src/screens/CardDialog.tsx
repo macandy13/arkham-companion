@@ -29,6 +29,7 @@ const LANDSCAPE: ReadonlySet<CardType> = new Set<CardType>(['agenda', 'act']);
 export function CardDialog({
   name,
   card,
+  drawn,
   waiting = [],
   actor,
   kicker,
@@ -42,6 +43,11 @@ export function CardDialog({
   /** The dialog's `data-dialog`, which its own stylesheet styles its content by. */
   name: string;
   card?: CardFaceView;
+  /**
+   * The card drawn in place of its picture, when the dialog has a drawing of it that lays the
+   * picture over itself once loaded (an enemy's `EnemyCard`), so it reads offline too.
+   */
+  drawn?: ReactNode;
   /** The cards behind `card`, next first (`DecisionView.waiting`). */
   waiting?: readonly CardFaceView[];
   actor?: InvestigatorView;
@@ -91,7 +97,7 @@ export function CardDialog({
               ))}
             </ul>
           )}
-          <SubjectCard card={card} onOpen={() => setZoomed(true)} />
+          <SubjectCard card={card} drawn={drawn} onOpen={() => setZoomed(true)} />
         </figure>
       )}
       {card === undefined && actor && <InvestigatorArt image={actor.image} />}
@@ -152,18 +158,46 @@ function WaitingCard({ card }: { card: CardFaceView }) {
 }
 
 /**
- * The card a dialog is about, its picture once it has loaded; until then, and for good without
- * one, its name on the card's pattern says what it is.
+ * The card a dialog is about: its drawing (`drawn`), or its picture once it has loaded; until
+ * then, and for good without one, its name on the card's pattern says what it is.
  */
-function SubjectCard({ card, onOpen }: { card: CardFaceView; onOpen: () => void }) {
+function SubjectCard({
+  card,
+  drawn,
+  onOpen,
+}: {
+  card: CardFaceView;
+  drawn: ReactNode;
+  onOpen: () => void;
+}) {
   const { t } = useTranslation();
+  const label = t('cardZoom.open', { name: card.name });
+  if (drawn !== undefined)
+    return (
+      <button type="button" data-part="subject" aria-label={label} onClick={onOpen}>
+        {drawn}
+      </button>
+    );
+  return <PictureCard card={card} label={label} onOpen={onOpen} />;
+}
+
+/** The subject card as its picture, or its name on the card's pattern until that has loaded. */
+function PictureCard({
+  card,
+  label,
+  onOpen,
+}: {
+  card: CardFaceView;
+  label: string;
+  onOpen: () => void;
+}) {
   const picture = useCardPicture(card.image);
   return (
     <button
       type="button"
       data-part="subject"
       data-picture={picture?.shown ? 'shown' : undefined}
-      aria-label={t('cardZoom.open', { name: card.name })}
+      aria-label={label}
       onClick={onOpen}
     >
       {picture && (

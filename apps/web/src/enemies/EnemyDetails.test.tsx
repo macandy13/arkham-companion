@@ -83,6 +83,15 @@ describe('EnemyDetails', () => {
     ).toBeDefined();
   });
 
+  it('lists its fight, health left of its health and evade on the page', () => {
+    renderGhoulDetails(PlayTable.start(ghoulOnAlder));
+
+    const texts = (role: 'term' | 'definition') =>
+      screen.getAllByRole(role, { hidden: true }).map((value) => value.textContent);
+    expect(texts('term')).toEqual(['Fight', 'Health', 'Evade']);
+    expect(texts('definition')).toEqual(['3', '2 / 3', '2']);
+  });
+
   it("writes the ghoul's traits, keywords and victory points on its card", () => {
     const table = PlayTable.start(
       newGame()
