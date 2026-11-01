@@ -23,7 +23,7 @@ Their [threat area](../../apps/web/src/investigators/ThreatArea.tsx) is a row of
 - treacheries
 - and engaged enemies, the enemies with their health left (`EnemyView.health`, scaled by the player count through `enemyHealth`).
 
-The threat area shows four cards (`THREAT_CARDS_SHOWN`); more scroll by whole cards with a swipe or its arrows (CSS scroll snap).
+The threat area shows four cards (`THREAT_CARDS_SHOWN`); more scroll by whole cards with a swipe or its round arrows (CSS scroll snap). The row and its arrows are the shared [`CardStrip`](../../apps/web/src/screens/CardStrip.tsx), which the encounter dialog's pile uses too.
 
 A tap on a treachery opens the [card zoom](../../apps/web/src/screens/CardZoom.tsx), the card as big as a zoomed card to read (`BoardView.cardsIn` a zone: id, name, type, traits and the pictures of both sides):
 

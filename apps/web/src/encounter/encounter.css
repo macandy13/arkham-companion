@@ -41,22 +41,6 @@
   gap: var(--space-1);
 }
 
-/* The arrows are the investigator picker's round previous and next buttons. */
-#board dialog[data-dialog='encounter'] > div > button {
-  min-width: var(--button-compact);
-  min-height: var(--button-compact);
-  padding: 0;
-  border-radius: var(--radius-round);
-}
-
-#board dialog[data-dialog='encounter'] > div > button[data-icon='previous']::before {
-  mask-image: url('../picker/icons/previous.svg');
-}
-
-#board dialog[data-dialog='encounter'] > div > button[data-icon='next']::before {
-  mask-image: url('../picker/icons/next.svg');
-}
-
 #board dialog[data-dialog='encounter'] > div > ul {
   display: flex;
   flex: none;
