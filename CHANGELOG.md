@@ -2,6 +2,36 @@
 
 The sections dated up to 2026-10-22 were released as 1.0.0 to 1.8.0 by mistake: Release Please starts at 1.0.0 by default. Versioning restarted at 0.1.0 (see "Versions" in docs/product.md).
 
+## [0.1.21](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v0.1.20...arkham-companion-v0.1.21) (2026-11-01)
+
+
+### Features
+
+* **carddata:** investigator card texts and card text markup (MD.10a) ([38eb52e](https://github.com/macandy13/arkham-companion/commit/38eb52e9b5e2b6c6eebe96ed961708fcf7edfbc0))
+* **carddata:** investigator card texts in the catalog (MD.10a) ([553ee80](https://github.com/macandy13/arkham-companion/commit/553ee80945d91ca3afc1ffad2ef8e8e15e379550))
+* **engine:** propose and apply a resolution the players picked (MC1.6c3a) ([9dc4d1c](https://github.com/macandy13/arkham-companion/commit/9dc4d1c0d31e0958a58a15a2090a1134ddb00a35))
+* **web:** location symbols for The Midnight Masks and The Devourer Below (M3.14d2) ([24a673b](https://github.com/macandy13/arkham-companion/commit/24a673b9d5a668507067754538fe7e7934500562))
+* **web:** read investigator card text markup and name the card's code (MD.10a) ([16c6035](https://github.com/macandy13/arkham-companion/commit/16c6035af38b3eb813afba75bc0df55d4c93cf7c))
+* **web:** show a details action's decision in the same dialog (MD.6a4) ([2da5514](https://github.com/macandy13/arkham-companion/commit/2da5514504f38525f9d3b68fac9c08d1f81b3371))
+* **web:** show a details action's decision in the same dialog (MD.6a4) ([6a29468](https://github.com/macandy13/arkham-companion/commit/6a294685ebdc2a0e9db687bc0d00923a9378ff69))
+
+
+### Bug fixes
+
+* **web:** drop unknown card text tags as parts of their own (MD.10a CodeQL) ([d165f4c](https://github.com/macandy13/arkham-companion/commit/d165f4c38b67f5b13072075be0eff4c29dead4b0))
+
+
+### Refactoring
+
+* **web:** address review nits on hosted decisions ([66e71cf](https://github.com/macandy13/arkham-companion/commit/66e71cf47cd3cc7379b5dd093c4593554e0e4677))
+* **web:** one shared symbol icon mapping for card text (MD.10a review) ([6e30a68](https://github.com/macandy13/arkham-companion/commit/6e30a68dd3d0a83c30568b70fe071091569e10a1))
+* **web:** share one scrolling card strip (M3.6k) ([fc6d13c](https://github.com/macandy13/arkham-companion/commit/fc6d13ce8ca9700b549b1a44e9e76f88f527ecdc))
+
+
+### Documentation
+
+* format the automation table ([7717e64](https://github.com/macandy13/arkham-companion/commit/7717e64eeb567a86860cd9efe9e0ce28cc5328e1))
+
 ## [0.1.20](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v0.1.19...arkham-companion-v0.1.20) (2026-11-01)
 
 
