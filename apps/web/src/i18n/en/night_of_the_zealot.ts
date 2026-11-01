@@ -14,6 +14,15 @@ export const nightOfTheZealotTexts = {
         burn: 'Burn the house to the ground',
         spare: 'Leave the house standing',
       },
+      resolution: {
+        earnLita:
+          'The lead investigator puts Lita Chantler into their deck; she does not count toward its size.',
+        upgradeDecks: 'Each investigator spends experience on deck upgrades.',
+        replaceKilled:
+          "Each killed investigator's player picks a new investigator for the next scenario.",
+        earnLitaIfLeadKilled:
+          'If the lead investigator was killed, the investigator who earned Lita Chantler puts her into their deck.',
+      },
     },
     theMidnightMasks: {
       graveyard: {
@@ -26,6 +35,9 @@ export const nightOfTheZealotTexts = {
         clue: 'Spend 1 clue',
         damage: 'Take 2 damage',
       },
+      resolution: {
+        upgradeDecks: 'Each investigator spends experience on deck upgrades.',
+      },
     },
     theDevourerBelow: {
       offerOfPower: {
@@ -37,6 +49,11 @@ export const nightOfTheZealotTexts = {
         prompt: '{{card}}: heal 1 damage or 1 horror',
         damage: 'Heal 1 damage',
         horror: 'Heal 1 horror',
+      },
+      resolution: {
+        upgradeDecks: 'Each investigator spends experience on deck upgrades.',
+        removeLita: 'Remove Lita Chantler from the deck that holds her.',
+        madnessWeakness: 'Each investigator adds a random basic madness weakness to their deck.',
       },
     },
   },

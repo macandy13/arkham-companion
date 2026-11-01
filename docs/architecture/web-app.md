@@ -35,6 +35,8 @@ The paper look is tokens, so dialogs can share it: fonts `--font-family-print`, 
 
 When a game ends, `OpenGame.resolution` (`PendingResolution`) holds what `campaign.proposeResolution` proposes for it, read against its campaign's stored log: a log whose current scenario is another one has written the game already, so nothing is pending. `AppState.writeResolution` takes the commands the players confirmed and appends `campaign.applyResolution`'s events as one campaign undo step, all or none. A standalone game proposes its resolution too, with no campaign to write it into.
 
+Over an ended campaign game, [`ResolutionPrompt`](../../apps/web/src/campaign/ResolutionPrompt.tsx) opens [`ResolutionDialog`](../../apps/web/src/campaign/ResolutionDialog.tsx) ("Into the campaign log"): it names the resolution to read aloud from the guide, lists the changes grouped like the log page (campaign notes, investigators, chaos bag, then the by-hand steps "At the table"), lets the players pick an option of each choice, and after the write goes to the campaign screen. It waits while the board is being adjusted, and "Not yet" closes it until the game is opened again.
+
 ## Open game
 
 The open game (`OpenGame`) is the play screen's single source of truth:
