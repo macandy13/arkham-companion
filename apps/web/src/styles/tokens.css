@@ -39,13 +39,19 @@
   --color-card-asset: #6f6a5c;
   /*
    * The colours of the location connection symbols, as the printed cards colour each symbol (map
-   * tiles), sampled from The Gathering's card pictures; the same in both themes, like the cards.
+   * tiles), sampled from Night of the Zealot's card pictures; the same in both themes, like the
+   * cards.
    */
   --color-connection-circle: #a78f32;
   --color-connection-square: #8f2e2f;
   --color-connection-triangle: #3b5775;
   --color-connection-plus: #4a2219;
   --color-connection-diamond: #557f47;
+  --color-connection-tilde: #5c4a2e;
+  --color-connection-moon: #74404f;
+  --color-connection-hourglass: #3e1f28;
+  --color-connection-t: #1d2129;
+  --color-connection-double-slash: #2f3f2c;
   /*
    * The face of a card drawn by the app (map tiles, attachments): dark in both themes, like the
    * printed cards, so these are not redefined for the light theme.

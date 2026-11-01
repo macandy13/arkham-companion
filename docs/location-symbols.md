@@ -10,25 +10,25 @@ Front and back are ArkhamDB's sides: for most packs the back is the unrevealed s
 
 ## The symbols
 
-Fifteen glyphs, each always in the same colour. The hex values of the first five are the ones the app uses, sampled from The Gathering's pictures; the others get theirs with their task, checked against a card. The name is the suggested `LocationSymbol` value.
+Fifteen glyphs, each always in the same colour. The hex values of the first ten are the ones the app uses, sampled from Night of the Zealot's pictures; the others get theirs with their task, checked against a card. The name is the suggested `LocationSymbol` value.
 
-| Symbol         | Glyph       | Colour             | Sides | First needed by                             | Task            |
-| -------------- | ----------- | ------------------ | ----- | ------------------------------------------- | --------------- |
-| `circle`       | circle      | gold `#a78f32`     | 143   | The Gathering                               | M3.14d ([#448]) |
-| `square`       | square      | red `#8f2e2f`      | 163   | The Gathering                               | M3.14d ([#448]) |
-| `triangle`     | triangle    | blue `#3b5775`     | 154   | The Gathering                               | M3.14d ([#448]) |
-| `plus`         | plus        | dark red `#4a2219` | 105   | The Gathering                               | M3.14d ([#448]) |
-| `diamond`      | diamond     | green `#557f47`    | 138   | The Gathering                               | M3.14d ([#448]) |
-| `tilde`        | squiggle    | brown              | 125   | The Midnight Masks (Your House)             | [#626]          |
-| `moon`         | crescent    | purple-pink        | 148   | The Midnight Masks (Easttown)               | [#626]          |
-| `hourglass`    | hourglass   | maroon             | 87    | The Midnight Masks (Graveyard)              | [#626]          |
-| `t`            | T           | navy               | 83    | The Midnight Masks (Northside)              | [#626]          |
-| `double_slash` | two slashes | dark green         | 96    | The Devourer Below (Arkham Woods)           | [#626]          |
-| `heart`        | heart       | orange             | 80    | Return to the Gathering (Bedroom)           | [#637]          |
-| `star`         | star        | dark purple        | 88    | Return to the Gathering (Bathroom)          | [#637]          |
-| `comma`        | curl        | rust               | 36    | Return to the Devourer Below (Arkham Woods) | [#637]          |
-| `spade`        | spade       | pink               | 15    | Core Set (2026) (Your Friend's Room)        | [#638]          |
-| `clover`       | clover      | teal               | 31    | Core Set (2026) (Sewer Tunnels)             | [#638]          |
+| Symbol         | Glyph       | Colour                | Sides | First needed by                             | Task            |
+| -------------- | ----------- | --------------------- | ----- | ------------------------------------------- | --------------- |
+| `circle`       | circle      | gold `#a78f32`        | 143   | The Gathering                               | M3.14d ([#448]) |
+| `square`       | square      | red `#8f2e2f`         | 163   | The Gathering                               | M3.14d ([#448]) |
+| `triangle`     | triangle    | blue `#3b5775`        | 154   | The Gathering                               | M3.14d ([#448]) |
+| `plus`         | plus        | dark red `#4a2219`    | 105   | The Gathering                               | M3.14d ([#448]) |
+| `diamond`      | diamond     | green `#557f47`       | 138   | The Gathering                               | M3.14d ([#448]) |
+| `tilde`        | squiggle    | brown `#5c4a2e`       | 125   | The Midnight Masks (Your House)             | [#626]          |
+| `moon`         | crescent    | purple-pink `#74404f` | 148   | The Midnight Masks (Easttown)               | [#626]          |
+| `hourglass`    | hourglass   | maroon `#3e1f28`      | 87    | The Midnight Masks (Graveyard)              | [#626]          |
+| `t`            | T           | navy `#1d2129`        | 83    | The Midnight Masks (Northside)              | [#626]          |
+| `double_slash` | two slashes | dark green `#2f3f2c`  | 96    | The Devourer Below (Arkham Woods)           | [#626]          |
+| `heart`        | heart       | orange                | 80    | Return to the Gathering (Bedroom)           | [#637]          |
+| `star`         | star        | dark purple           | 88    | Return to the Gathering (Bathroom)          | [#637]          |
+| `comma`        | curl        | rust                  | 36    | Return to the Devourer Below (Arkham Woods) | [#637]          |
+| `spade`        | spade       | pink                  | 15    | Core Set (2026) (Your Friend's Room)        | [#638]          |
+| `clover`       | clover      | teal                  | 31    | Core Set (2026) (Sewer Tunnels)             | [#638]          |
 
 Two more cases are not glyphs:
 
@@ -41,7 +41,7 @@ After Core Set (2026) the app draws all fifteen glyphs, so later campaigns only 
 
 | Campaign                  | Location cards | Glyphs beyond the first five                          | New for the app             | Sides differ | No symbol |
 | ------------------------- | -------------- | ----------------------------------------------------- | --------------------------- | ------------ | --------- |
-| Night of the Zealot       | 24             | tilde, moon, hourglass, t, double_slash               | those five ([#626])         | 6            | 0         |
+| Night of the Zealot       | 24             | tilde, moon, hourglass, t, double_slash               | those five (built, [#626])  | 6            | 0         |
 | Return to NotZ            | 17             | heart, star, comma, t, moon, tilde                    | heart, star, comma ([#637]) | 4            | 0         |
 | Core Set (2026)           | 26             | spade, clover, star, hourglass, t, moon, double_slash | spade, clover ([#638])      | 5            | 0         |
 | Children of Blood         | 42             | unknown: no pictures on ArkhamDB yet                  | rescan ([#639])             | ?            | ?         |

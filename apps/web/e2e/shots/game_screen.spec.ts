@@ -2,6 +2,8 @@ import { expect, test } from '../fixtures/test';
 import {
   cluesToShareExport,
   graveyardTestExport,
+  midnightMasksStartedExport,
+  tangledThicketRevealedExport,
   rolandSurroundedExport,
   rolandThreatenedExport,
   houseOpenedExport,
@@ -34,29 +36,27 @@ test('map tabs for the Study and the house, the house chosen', async ({ page }) 
   await expect(page.getByRole('tabpanel', { name: 'House' })).toBeVisible();
 });
 
-test(
-  'Roland Banks with four treacheries and the Ghoul Priest, scrolled on to the Ghoul Priest',
-  { tag: '@shot' },
-  async ({ page }) => {
-    await resumeImportedGame(
-      page,
-      'Roland Banks threatened',
-      rolandThreatenedExport('Roland Banks threatened'),
-    );
+test('Roland Banks with four treacheries and the Ghoul Priest, scrolled on to the Ghoul Priest', async ({
+  page,
+}) => {
+  await resumeImportedGame(
+    page,
+    'Roland Banks threatened',
+    rolandThreatenedExport('Roland Banks threatened'),
+  );
 
-    const roland = page.getByRole('region', { name: 'Roland Banks' });
-    const threatArea = roland.getByRole('list', { name: 'Threat area' });
-    const ghoulPriest = threatArea.getByRole('listitem', {
-      name: 'Ghoul Priest, 3 of 5 health left, 2 damage',
-    });
-    await expect(threatArea.getByRole('listitem')).toHaveCount(5);
-    await expect(ghoulPriest).not.toBeInViewport({ ratio: 1 });
+  const roland = page.getByRole('region', { name: 'Roland Banks' });
+  const threatArea = roland.getByRole('list', { name: 'Threat area' });
+  const ghoulPriest = threatArea.getByRole('listitem', {
+    name: 'Ghoul Priest, 3 of 5 health left, 2 damage',
+  });
+  await expect(threatArea.getByRole('listitem')).toHaveCount(5);
+  await expect(ghoulPriest).not.toBeInViewport({ ratio: 1 });
 
-    await roland.getByRole('button', { name: 'Later cards in the threat area' }).click();
+  await roland.getByRole('button', { name: 'Later cards in the threat area' }).click();
 
-    await expect(ghoulPriest).toBeInViewport({ ratio: 1 });
-  },
-);
+  await expect(ghoulPriest).toBeInViewport({ ratio: 1 });
+});
 
 test('the Hallway’s details, its card with Roland Banks on it, on Roland Banks’ turn', async ({
   page,
@@ -500,3 +500,38 @@ test('the Graveyard’s failed willpower test, its choice under the Failed row',
   await expect(decision.getByRole('button', { name: 'Take 2 horror' })).toBeVisible();
   await expect(decision.getByRole('button', { name: 'Move to Rivertown' })).toBeVisible();
 });
+
+test(
+  'Arkham in The Midnight Masks, Easttown, the Graveyard and Northside with their new symbols',
+  { tag: '@shot' },
+  async ({ page }) => {
+    await resumeImportedGame(
+      page,
+      'The Midnight Masks started',
+      midnightMasksStartedExport('The Midnight Masks started'),
+    );
+    const map = page.locator('#map');
+
+    for (const symbol of ['moon', 'hourglass', 'T']) {
+      await expect(
+        map.getByRole('img', { name: `Connection symbol: ${symbol}`, exact: true }),
+      ).toBeVisible();
+    }
+  },
+);
+
+test(
+  'the Tangled Thicket revealed with its double slash, the other Arkham Woods still showing their square',
+  { tag: '@shot' },
+  async ({ page }) => {
+    await resumeImportedGame(
+      page,
+      'The Tangled Thicket revealed',
+      tangledThicketRevealedExport('The Tangled Thicket revealed'),
+    );
+    const map = page.locator('#map');
+
+    await expect(map.getByRole('img', { name: 'Connection symbol: double slash' })).toHaveCount(1);
+    await expect(map.getByRole('img', { name: 'Connection symbol: square' })).toHaveCount(3);
+  },
+);

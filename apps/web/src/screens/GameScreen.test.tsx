@@ -469,6 +469,26 @@ describe('GameScreen map', () => {
         .map((tile) => tile.getAttribute('aria-label')),
     ).toEqual(['Study']);
   });
+
+  it("investigates the Study from its details in the same dialog, then shows the Study's page again", async () => {
+    const store = await renderTheGathering('screen-map-investigate');
+    const { actions } = store.getState();
+    await actions.nextPhase();
+    await actions.startTurn(investigatorId('alder'));
+    fireEvent.click(screen.getByRole('group', { name: 'Study' }));
+    const details = screen.getByRole('dialog', { name: 'Study' });
+
+    fireEvent.click(within(details).getByRole('button', { name: 'Investigate · 1 action' }));
+    const investigation = await screen.findByRole('dialog', { name: 'Investigate Study' });
+    const cardDuringTest = within(investigation).queryByRole('img', { name: 'The card of Study' });
+    fireEvent.click(within(investigation).getByRole('button', { name: /Failed/ }));
+    const afterTest = await screen.findByRole('dialog', { name: 'Study' });
+
+    expect(investigation).toBe(details);
+    expect(cardDuringTest).not.toBeNull();
+    expect(afterTest).toBe(details);
+    expect(screen.getAllByRole('dialog')).toEqual([details]);
+  });
 });
 
 describe('GameScreen on a phone held upright', () => {
