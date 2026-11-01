@@ -18,22 +18,37 @@ test('the log of a campaign just started', async ({ page }) => {
   await expect(page.getByRole('region', { name: 'Scenarios' })).toContainText('The Gathering');
 });
 
-test(
-  'the resolution of a game its only investigator lost to horror',
-  { tag: '@shot' },
-  async ({ page }) => {
-    await page.goto('/#/new');
-    await page.getByRole('link', { name: 'New campaign' }).click();
-    await page.getByRole('button', { name: 'Next' }).click();
-    await page.getByRole('button', { name: /Fake Seeker/ }).click();
-    await page.getByRole('button', { name: 'Select', exact: true }).click();
-    await page.getByRole('button', { name: 'Next' }).click();
-    await page.getByRole('button', { name: 'Start game' }).click();
-    await page.getByRole('button', { name: 'Adjust board' }).click();
-    for (let horror = 0; horror < 8; horror++)
-      await page.getByRole('button', { name: 'Take horror' }).click();
-    await page.getByRole('button', { name: 'Done' }).click();
+test('the resolution of a game its only investigator lost to horror', async ({ page }) => {
+  await page.goto('/#/new');
+  await page.getByRole('link', { name: 'New campaign' }).click();
+  await page.getByRole('button', { name: 'Next' }).click();
+  await page.getByRole('button', { name: /Fake Seeker/ }).click();
+  await page.getByRole('button', { name: 'Select', exact: true }).click();
+  await page.getByRole('button', { name: 'Next' }).click();
+  await page.getByRole('button', { name: 'Start game' }).click();
+  await page.getByRole('button', { name: 'Adjust board' }).click();
+  for (let horror = 0; horror < 8; horror++)
+    await page.getByRole('button', { name: 'Take horror' }).click();
+  await page.getByRole('button', { name: 'Done' }).click();
 
-    await expect(page.getByRole('dialog', { name: 'The scenario is over' })).toBeVisible();
-  },
-);
+  await expect(page.getByRole('dialog', { name: 'The scenario is over' })).toBeVisible();
+});
+
+test('the log right after that resolution was written', { tag: '@shot' }, async ({ page }) => {
+  await page.goto('/#/new');
+  await page.getByRole('link', { name: 'New campaign' }).click();
+  await page.getByRole('button', { name: 'Next' }).click();
+  await page.getByRole('button', { name: /Fake Seeker/ }).click();
+  await page.getByRole('button', { name: 'Select', exact: true }).click();
+  await page.getByRole('button', { name: 'Next' }).click();
+  await page.getByRole('button', { name: 'Start game' }).click();
+  await page.getByRole('button', { name: 'Adjust board' }).click();
+  for (let horror = 0; horror < 8; horror++)
+    await page.getByRole('button', { name: 'Take horror' }).click();
+  await page.getByRole('button', { name: 'Done' }).click();
+  const dialog = page.locator('#resolution');
+  await dialog.getByRole('button', { name: 'Next' }).click();
+  await dialog.getByRole('button', { name: 'Write into the log' }).click();
+
+  await expect(page.getByRole('status', { name: 'Written into the log' })).toBeVisible();
+});

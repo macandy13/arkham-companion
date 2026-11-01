@@ -367,6 +367,41 @@ describe('appStore', () => {
         expect(store.getState().current?.resolution).toBeDefined();
       });
 
+      describe('after the no-resolution changes are written', () => {
+        it('takes them back out of the log and proposes the resolution again', async () => {
+          const db = new IndexedDbStore('appstore-resolution-undo-test');
+          const store = createAppStore(db);
+          await store.getState().startCampaign(campaignStart);
+          const campaignId = store.getState().campaigns[0]!.campaignId;
+          await store.getState().actions.adjust(alderId, 'horror', alder.sanity);
+          await store.getState().writeResolution(noResolution, []);
+          await store.getState().openCampaign(campaignId);
+
+          await store.getState().undoResolution();
+
+          expect((await db.loadCampaign(campaignId))?.log.playedScenarios).toEqual([]);
+          expect(store.getState().campaign?.log.playedScenarios).toEqual([]);
+          expect(store.getState().current?.resolution?.reached).toEqual(noResolution);
+          expect(store.getState().writtenResolution).toBeUndefined();
+        });
+
+        it('offers no undo once the players dismissed it', async () => {
+          const store = createAppStore(new IndexedDbStore('appstore-resolution-dismiss-test'));
+          await store.getState().startCampaign(campaignStart);
+          const campaignId = store.getState().campaigns[0]!.campaignId;
+          await store.getState().actions.adjust(alderId, 'horror', alder.sanity);
+          await store.getState().writeResolution(noResolution, []);
+          expect(store.getState().writtenResolution?.campaignId).toBe(campaignId);
+
+          store.getState().dismissWrittenResolution();
+
+          expect(store.getState().writtenResolution).toBeUndefined();
+          await expect(store.getState().undoResolution()).rejects.toThrow(
+            'No resolution to take back',
+          );
+        });
+      });
+
       it('proposes the resolution of a standalone game without a campaign to write', async () => {
         const store = createAppStore(new IndexedDbStore('appstore-resolution-standalone-test'));
         await store.getState().startScenario(start);

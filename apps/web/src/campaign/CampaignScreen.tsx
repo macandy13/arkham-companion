@@ -20,6 +20,7 @@ import {
 } from '../scenarios/scenarioCatalog';
 import { range } from '@arkham/util';
 import { CampaignSheets } from './CampaignSheets';
+import { ResolutionUndo } from './ResolutionUndo';
 import { Tally } from './Tally';
 import '@fontsource/felipa/latin-400.css';
 import '@fontsource/caveat/latin-500.css';
@@ -31,13 +32,15 @@ import './campaign_log.css';
  * Route `/campaign/:id`: the campaign log, drawn after the campaign log sheet of the Core Set
  * (docs/product.md "Campaign screen"): an index card with a column per investigator, a napkin
  * with the scenarios, each played one ticked with its resolution, then the campaign notes and the
- * campaign's own sheets (`CampaignSheets`). Below them, a link continues the scenario in play.
+ * campaign's own sheets (`CampaignSheets`). Below them, a link continues the scenario in play, and
+ * after a resolution was written a toast offers to take it back (`ResolutionUndo`).
  */
 export function CampaignScreen({ store }: { store: StoreApi<AppState> }) {
   const { t } = useTranslation();
   // The route only matches with an `:id` segment; the fallback only satisfies the type.
   const campaignId = toCampaignId(useParams().id ?? '');
   const opened = useStore(store, (s) => s.campaign);
+  const written = useStore(store, (s) => s.writtenResolution);
 
   useEffect(() => {
     void store.getState().openCampaign(campaignId);
@@ -68,6 +71,12 @@ export function CampaignScreen({ store }: { store: StoreApi<AppState> }) {
       <ScenarioList log={log} />
       {entry && <CampaignSheets log={log} entry={entry} />}
       <ContinueLink log={log} games={games} />
+      {written?.campaignId === campaignId && (
+        <ResolutionUndo
+          onUndo={() => store.getState().undoResolution()}
+          onDismiss={() => store.getState().dismissWrittenResolution()}
+        />
+      )}
     </article>
   );
 }
