@@ -11,7 +11,7 @@ import {
   cardActionsOn,
   type ActionIcon,
 } from '../screens/ActionRow';
-import type { ActionCost, GameActions, LocationToken } from '../state/gameActions';
+import type { GameActions, LocationToken } from '../state/gameActions';
 import { CardPatterns, LocationTile } from './LocationTile';
 import { TILE } from './mapLayout';
 
@@ -175,9 +175,9 @@ function LocationPage({
     <ActionButton
       key={key}
       icon={icon}
-      cost={cost}
+      actions={cost}
       caption={t(`location.caption.${icon}`)}
-      name={t(`location.${key}`)}
+      name={t(`location.${key}`, { count: cost })}
       disabled={busy || play === undefined}
       onClick={() => {
         switch (then) {
@@ -226,7 +226,8 @@ function LocationPage({
 
 /**
  * One button of the location details' action row: its name and caption keys (`location.<key>`,
- * `location.caption.<icon>`), whether it counts off an action, and the step it plays; without
+ * `location.caption.<icon>`), the actions it counts off (`cost`, 0 for none, which a name with
+ * plural forms says, as a raised cost can make it more), and the step it plays; without
  * `play` it shows but is off, as a clue at a location that has none. `then` says what the view
  * does first: step aside (`leave`), as after a move the location is no longer where the players
  * look, show the test the step starts (`test`), or nothing (`stay`).
@@ -234,7 +235,7 @@ function LocationPage({
 interface LocationAction {
   key: 'investigateAction' | 'takeClue' | 'moveAction' | 'moveFree';
   icon: Extract<ActionIcon, 'investigate' | 'clue' | 'move'>;
-  cost: ActionCost;
+  cost: number;
   play?: () => Promise<void>;
   then: 'leave' | 'test' | 'stay';
 }
@@ -261,14 +262,14 @@ function locationActions(
       {
         key: 'investigateAction',
         icon: 'investigate',
-        cost: 'action',
+        cost: board.actionCost(turn, 'investigate'),
         play: location.forbidden?.includes('investigate') ? undefined : () => actions.investigate(),
         then: 'test',
       },
       {
         key: 'takeClue',
         icon: 'clue',
-        cost: 'free',
+        cost: 0,
         play:
           location.clues > 0 && !cannotDiscover ? () => actions.takeClue(location.id) : undefined,
         then: 'stay',
@@ -281,14 +282,14 @@ function locationActions(
     {
       key: 'moveAction',
       icon: 'move',
-      cost: 'action',
+      cost: board.actionCost(turn, 'move'),
       play: () => actions.moveTo(location.id, 'action'),
       then: 'leave',
     },
     {
       key: 'moveFree',
       icon: 'move',
-      cost: 'free',
+      cost: board.actionCost(turn, 'move', { free: true }),
       play: () => actions.moveTo(location.id, 'free'),
       then: 'leave',
     },

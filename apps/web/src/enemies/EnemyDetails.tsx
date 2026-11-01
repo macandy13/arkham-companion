@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import type { BoardView, MapEnemyView } from '@arkham/engine';
+import type { BoardView, EnemyAction, MapEnemyView } from '@arkham/engine';
 import { ActionButton, ActionGroup, CardActions, cardActionsOn } from '../screens/ActionRow';
 import { DetailsDialog, useDecisionHost } from '../screens/DetailsDialog';
 import type { GameActions } from '../state/gameActions';
@@ -15,7 +15,7 @@ import './enemies.css';
  * health for the player count and evade on the page, and under them one row of what the players
  * can do to it. On an investigator's turn, in one Actions group, the basic actions the rules
  * allow them against it (`BoardView.enemyActions`): fight, evade and engage as actions, which
- * count off one, then fight and evade without an action, as some cards allow; at any time, in a
+ * count off what they cost (`BoardView.actionCost`), then fight and evade without an action, as some cards allow; at any time, in a
  * group of their own, what card effects do to an enemy: deal 1 damage, disengage it, defeat it.
  * Each button shows a short word and is named in full ("Fight · 1 action"). Fight, evade and
  * engage keep it open and show the decisions they raise in place of its page
@@ -49,6 +49,8 @@ export function EnemyDetails({
   const allowed = board.turn === undefined ? [] : board.enemyActions(board.turn, enemy.id);
   const tests = allowed.filter((action) => action !== 'engage');
   const offered = cardActionsOn(board, enemy.id);
+  const costOf = (action: EnemyAction, cost?: { free: true }) =>
+    board.turn === undefined ? (cost?.free ? 0 : 1) : board.actionCost(board.turn, action, cost);
 
   const engaged =
     enemy.engagedWith === undefined ? undefined : board.investigator(enemy.engagedWith);
@@ -90,9 +92,9 @@ export function EnemyDetails({
             {allowed.includes('fight') && (
               <ActionButton
                 icon="fight"
-                cost="action"
+                actions={costOf('fight')}
                 caption={t('enemy.caption.fight')}
-                name={t('enemy.fightAction')}
+                name={t('enemy.fightAction', { count: costOf('fight') })}
                 disabled={busy}
                 onClick={step(() => actions.fight(enemy.id), 'host')}
               />
@@ -100,9 +102,9 @@ export function EnemyDetails({
             {allowed.includes('evade') && (
               <ActionButton
                 icon="evade"
-                cost="action"
+                actions={costOf('evade')}
                 caption={t('enemy.caption.evade')}
-                name={t('enemy.evadeAction')}
+                name={t('enemy.evadeAction', { count: costOf('evade') })}
                 disabled={busy}
                 onClick={step(() => actions.evade(enemy.id), 'host')}
               />
@@ -110,9 +112,9 @@ export function EnemyDetails({
             {allowed.includes('engage') && (
               <ActionButton
                 icon="engage"
-                cost="action"
+                actions={costOf('engage')}
                 caption={t('enemy.caption.engage')}
-                name={t('enemy.engageAction')}
+                name={t('enemy.engageAction', { count: costOf('engage') })}
                 disabled={busy}
                 onClick={step(() => actions.engage(enemy.id), 'host')}
               />
@@ -120,9 +122,9 @@ export function EnemyDetails({
             {tests.includes('fight') && (
               <ActionButton
                 icon="fight"
-                cost="free"
+                actions={costOf('fight', { free: true })}
                 caption={t('enemy.caption.fight')}
-                name={t('enemy.fightFree')}
+                name={t('enemy.fightFree', { count: costOf('fight', { free: true }) })}
                 disabled={busy}
                 onClick={step(() => actions.fight(enemy.id, 'free'), 'host')}
               />
@@ -130,9 +132,9 @@ export function EnemyDetails({
             {tests.includes('evade') && (
               <ActionButton
                 icon="evade"
-                cost="free"
+                actions={costOf('evade', { free: true })}
                 caption={t('enemy.caption.evade')}
-                name={t('enemy.evadeFree')}
+                name={t('enemy.evadeFree', { count: costOf('evade', { free: true }) })}
                 disabled={busy}
                 onClick={step(() => actions.evade(enemy.id, 'free'), 'host')}
               />

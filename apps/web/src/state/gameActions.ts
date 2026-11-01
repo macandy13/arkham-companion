@@ -10,6 +10,7 @@ import {
   type InvestigatorId,
   type InvestigatorStat,
   type PlayTable,
+  type BasicAction,
   type ResolveDecision,
   type SkillName,
   type TokenKind,
@@ -74,9 +75,11 @@ export interface GameActions {
   /** Changes the actions left this turn. */
   adjustActions(delta: number): Promise<void>;
   /**
-   * A move to a connected location. As an action it counts off one and provokes attacks of
-   * opportunity; free (the default, as the pawn's drag plays it) it does neither, since a card
-   * allows it or the drag catches the screen up with a move made at the table.
+   * A move to a connected location. As an action it counts off what it costs
+   * (`BoardView.actionCost`) and provokes attacks of opportunity; `free`, as a card allows it, it
+   * provokes none and counts off only what a card adds to it (Frozen in Fear). Without a cost, as
+   * the pawn's drag plays it, it counts nothing, since the drag catches the screen up with a move
+   * made at the table.
    */
   moveTo(location: InstanceId, cost?: ActionCost): Promise<void>;
   /** An investigate action; its test stays open as a decision. */
@@ -90,8 +93,9 @@ export interface GameActions {
   /** One clue from `location`, the investigator's own, without a test, as a card grants it. */
   takeClue(location: InstanceId): Promise<void>;
   /**
-   * A fight; its test stays open as a decision. It is an action unless `cost` says `free`, as a
-   * card can let an investigator fight without spending one.
+   * A fight; its test stays open as a decision. It is an action, counting off what it costs
+   * (`BoardView.actionCost`), unless `cost` says `free`, as a card can let an investigator fight
+   * without spending one; then it counts off only what a card adds to it.
    */
   fight(enemy: InstanceId, cost?: ActionCost): Promise<void>;
   /** An evade; its test stays open as a decision. An action unless `cost` says `free`, like `fight`. */
@@ -204,13 +208,16 @@ export function gameActions(
 ): GameActions {
   const onTurn = (action: (table: PlayTable, investigator: InvestigatorId) => void) =>
     play((table) => action(table, turnInvestigator(table.state)));
-  // The engine leaves counting actions to the players, so the screen counts off the one it takes.
-  const asAction = (action: (table: PlayTable, investigator: InvestigatorId) => void) =>
-    onTurn((table, investigator) => {
-      table.spendAction(investigator);
-      action(table, investigator);
-    });
-  const costing = (cost: ActionCost) => (cost === 'action' ? asAction : onTurn);
+  // The engine leaves counting actions to the players, so the screen counts off what the action
+  // costs (a card can raise it, Frozen in Fear) and names it, so a raise of the round's first is
+  // paid once; a free one costs only such a raise and is still performed.
+  const taking =
+    (kind: BasicAction, cost: ActionCost = 'action') =>
+    (action: (table: PlayTable, investigator: InvestigatorId) => void) =>
+      onTurn((table, investigator) => {
+        table.spendActionFor(investigator, kind, { free: cost === 'free' });
+        action(table, investigator);
+      });
   return {
     nextPhase: () => play((table) => void table.nextPhase()),
     startTurn: (investigator) => play((table) => table.startTurn(investigator)),
@@ -230,17 +237,28 @@ export function gameActions(
       }),
     adjustActions: (delta) =>
       onTurn((table, investigator) => table.adjustActions(investigator, delta)),
-    moveTo: (location, cost = 'free') =>
-      cost === 'action'
-        ? asAction((table, investigator) => table.moveTo(investigator, location))
-        : onTurn((table, investigator) =>
-            table.play({ type: 'MoveInvestigator', investigatorId: investigator, to: location }),
-          ),
+    moveTo: (location, cost) => {
+      const move = (table: PlayTable, investigator: InvestigatorId) =>
+        table.play({ type: 'MoveInvestigator', investigatorId: investigator, to: location });
+      switch (cost) {
+        case 'action':
+          return taking('move')((table, investigator) => table.moveTo(investigator, location));
+        case 'free':
+          return taking('move', 'free')(move);
+        case undefined:
+          return onTurn(move);
+        default:
+          return assertNever(cost);
+      }
+    },
     investigate: () =>
-      asAction((table, investigator) => table.investigate(investigator, { result: 'open' })),
-    takeResource: () => asAction((table, investigator) => table.takeResource(investigator)),
-    drawCard: () => asAction((table, investigator) => table.drawCard(investigator)),
-    playCard: () => asAction((table, investigator) => table.playCard(investigator)),
+      taking('investigate')((table, investigator) =>
+        table.investigate(investigator, { result: 'open' }),
+      ),
+    takeResource: () =>
+      taking('resource')((table, investigator) => table.takeResource(investigator)),
+    drawCard: () => taking('draw')((table, investigator) => table.drawCard(investigator)),
+    playCard: () => taking('play')((table, investigator) => table.playCard(investigator)),
     takeClue: (location) =>
       onTurn((table, investigator) =>
         table.play({
@@ -251,10 +269,16 @@ export function gameActions(
         }),
       ),
     fight: (enemy, cost = 'action') =>
-      costing(cost)((table, investigator) => table.fight(investigator, enemy, { result: 'open' })),
+      taking(
+        'fight',
+        cost,
+      )((table, investigator) => table.fight(investigator, enemy, { result: 'open' })),
     evade: (enemy, cost = 'action') =>
-      costing(cost)((table, investigator) => table.evade(investigator, enemy, { result: 'open' })),
-    engage: (enemy) => asAction((table, investigator) => table.engage(investigator, enemy)),
+      taking(
+        'evade',
+        cost,
+      )((table, investigator) => table.evade(investigator, enemy, { result: 'open' })),
+    engage: (enemy) => taking('engage')((table, investigator) => table.engage(investigator, enemy)),
     moveEnemy: (enemy, location) =>
       play((table) => table.moveEnemy(enemy, location, { forced: true })),
     damageEnemy: (enemy, amount) =>

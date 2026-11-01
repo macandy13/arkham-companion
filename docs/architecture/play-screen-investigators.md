@@ -51,8 +51,8 @@ The face's shared rules (medallion, count circle, ornament lines, heart and brai
 Under it is one row of buttons ([`ActionRow`](../../apps/web/src/screens/ActionRow.tsx), for the details windows to share):
 
 - on an investigator's turn, in one Actions group, the basic actions the rules allow them against the enemy (`BoardView.enemyActions`, a dry run of each command, so the rules stay in the engine: evade only one engaged with them, fight no unengaged aloof enemy, engage none already engaged with them):
-  - fight, evade and engage as an action (`cost="action"`, marked, like the turn row's actions left, with the game's action arrow, [`action.svg`](../../apps/web/src/symbols/action.svg))
-  - then fight and evade, as some cards allow, without one (`cost="free"`, marked with the game's free-ability symbol, [`free.svg`](../../apps/web/src/symbols/free.svg)); each mark has a column of its own beside the icon,
+  - fight, evade and engage as an action (`ActionButton.actions`, marked, like the turn row's actions left, with the game's action arrow, [`action.svg`](../../apps/web/src/symbols/action.svg), one per action it costs, `BoardView.actionCost`: Frozen in Fear stacks a second arrow on the round's first fight or evade, and its name says "Fight · 2 actions")
+  - then fight and evade, as some cards allow, without one (`actions={0}`, marked with the game's free-ability symbol, [`free.svg`](../../apps/web/src/symbols/free.svg), or with the arrows a card adds to it, "Fight without an action · 1 extra action"); each mark has a column of its own beside the icon,
 - the actions the enemy's own card offers them, such as a Parley,
 - and at any time the card effects deal 1 damage, disengage and defeat.
 
