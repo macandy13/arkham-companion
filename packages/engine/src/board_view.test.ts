@@ -143,6 +143,7 @@ describe('investigators', () => {
     expect(investigators).toEqual([
       {
         id: alice,
+        code: 'alice',
         name: 'alice',
         status: 'active',
         at: 'study',
@@ -509,6 +510,34 @@ describe('locations', () => {
   it("shows a location's connection symbol", () => {
     const { context, state } = house
       .withLocation(instanceId('cellar'), blankLocation('cellar', { symbol: 'plus' }))
+      .start();
+
+    expect(boardView(context, state).location(byName('cellar')).symbol).toBe('plus');
+  });
+
+  it.each([
+    { side: 'unrevealed', revealed: false, symbol: 'square' },
+    { side: 'revealed', revealed: true, symbol: 'moon' },
+  ])(
+    "shows the $side side's symbol of a location whose sides print different ones",
+    ({ revealed, symbol }) => {
+      const quietGlade = blankLocation('quiet_glade', {
+        symbol: 'moon',
+        unrevealedSymbol: 'square',
+      });
+      const { context, state } = house
+        .withLocation(instanceId('quiet_glade'), quietGlade, { revealed })
+        .start();
+
+      expect(boardView(context, state).location(byName('quiet_glade')).symbol).toBe(symbol);
+    },
+  );
+
+  it('shows an unrevealed location the one symbol both its sides print', () => {
+    const { context, state } = house
+      .withLocation(instanceId('cellar'), blankLocation('cellar', { symbol: 'plus' }), {
+        revealed: false,
+      })
       .start();
 
     expect(boardView(context, state).location(byName('cellar')).symbol).toBe('plus');

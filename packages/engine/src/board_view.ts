@@ -49,6 +49,7 @@ import {
   type CardName,
   type EncounterSetCode,
   type InstanceId,
+  type InvestigatorCode,
   type InvestigatorId,
   type MapId,
   type ResolutionId,
@@ -133,6 +134,8 @@ export class TableError extends Error {
  */
 export interface InvestigatorView {
   id: InvestigatorId;
+  /** The investigator card's code (`Investigator.code`), by which the screen finds its printed texts. */
+  code: InvestigatorCode;
   /** The printed name of the investigator card. */
   name: CardName;
   status: InvestigatorStatus;
@@ -227,7 +230,10 @@ interface LocationViewBase {
   map: MapId;
   /** The picture of the side it shows (`CardStats.imageSrc` once revealed, else `backImageSrc`), when the card data has one. */
   image?: CardImagePath;
-  /** Its connection symbol (`CardStats.symbol`), when the card data has one. */
+  /**
+   * The connection symbol of the side it shows (`CardStats.symbol`, or `unrevealedSymbol` while
+   * unrevealed where that differs), when the card data has one.
+   */
   symbol?: LocationSymbol;
   /** The encounter set it belongs to (`CardStats.encounterCode`), whose icon its set medallion prints. */
   encounterSet?: EncounterSetCode;
@@ -1082,6 +1088,7 @@ function investigatorView(
   const at = nameOfId(ctx, state, investigator.locationId);
   return {
     id: investigator.id,
+    code: investigator.code,
     name: cardName(investigator.name),
     status: investigator.status,
     ...(at === undefined ? {} : { at }),
@@ -1149,17 +1156,16 @@ const NO_CLUES: ScaledValue = { fixed: 0, perInvestigator: 0 };
 
 function locationView(ctx: EngineContext, state: GameState, location: CardInstance): LocationView {
   const present = state.investigators.filter((inv) => inv.locationId === location.id);
-  const { imageSrc, backImageSrc, actions, symbol, clues, encounterCode } = cardStats(
-    ctx.cards,
-    location.code,
-  );
+  const { imageSrc, backImageSrc, actions, symbol, unrevealedSymbol, clues, encounterCode } =
+    cardStats(ctx.cards, location.code);
   const image = location.faceUp ? imageSrc : backImageSrc;
+  const shownSymbol = location.faceUp ? symbol : (unrevealedSymbol ?? symbol);
   return {
     id: location.id,
     name: nameOf(ctx, location),
     map: mapOf(location),
     ...(image === undefined ? {} : { image }),
-    ...(symbol === undefined ? {} : { symbol }),
+    ...(shownSymbol === undefined ? {} : { symbol: shownSymbol }),
     ...(encounterCode === undefined ? {} : { encounterSet: encounterCode }),
     ...(location.faceUp
       ? {
