@@ -1,0 +1,78 @@
+/*
+ * The encounter set icons on the set medallions (`SetMedallion`), one rule per encounter set
+ * (`CardStats.encounterCode`, ArkhamDB's code), added campaign by campaign. The pictures are cut
+ * from the symbol sheets in the project library (sets/*.svg) and drawn as a mask, so each card
+ * theme colours them. They go on the M9 copyright check with the other game symbols.
+ */
+#board svg [data-medallion] span[data-encounter-set] {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: var(--color-face-medallion-ring);
+  mask: var(--set-icon) center / contain no-repeat;
+}
+
+/* Night of the Zealot: the three scenarios' own sets and the core set's shared ones. */
+[data-encounter-set='torch'] {
+  --set-icon: url('./sets/torch.svg');
+}
+
+[data-encounter-set='arkham'] {
+  --set-icon: url('./sets/arkham.svg');
+}
+
+[data-encounter-set='tentacles'] {
+  --set-icon: url('./sets/tentacles.svg');
+}
+
+[data-encounter-set='rats'] {
+  --set-icon: url('./sets/rats.svg');
+}
+
+[data-encounter-set='ghouls'] {
+  --set-icon: url('./sets/ghouls.svg');
+}
+
+[data-encounter-set='striking_fear'] {
+  --set-icon: url('./sets/striking_fear.svg');
+}
+
+[data-encounter-set='ancient_evils'] {
+  --set-icon: url('./sets/ancient_evils.svg');
+}
+
+[data-encounter-set='chilling_cold'] {
+  --set-icon: url('./sets/chilling_cold.svg');
+}
+
+[data-encounter-set='pentagram'] {
+  --set-icon: url('./sets/pentagram.svg');
+}
+
+[data-encounter-set='nightgaunts'] {
+  --set-icon: url('./sets/nightgaunts.svg');
+}
+
+[data-encounter-set='locked_doors'] {
+  --set-icon: url('./sets/locked_doors.svg');
+}
+
+[data-encounter-set='agents_of_hastur'] {
+  --set-icon: url('./sets/agents_of_hastur.svg');
+}
+
+[data-encounter-set='agents_of_yog'] {
+  --set-icon: url('./sets/agents_of_yog.svg');
+}
+
+[data-encounter-set='agents_of_shub'] {
+  --set-icon: url('./sets/agents_of_shub.svg');
+}
+
+[data-encounter-set='agents_of_cthulhu'] {
+  --set-icon: url('./sets/agents_of_cthulhu.svg');
+}
+
+[data-encounter-set='cultists'] {
+  --set-icon: url('./sets/cultists.svg');
+}

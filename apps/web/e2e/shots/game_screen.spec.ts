@@ -100,7 +100,7 @@ test('the house map in the Eldritch card style', async ({ page }) => {
   await expect(page.locator('html')).toHaveAttribute('data-card-theme', 'eldritch');
 });
 
-test("the Ghoul Priest's details in the Eldritch card style: a blackletter name, tentacle scrolls, an eye on the medallion", async ({
+test("the Ghoul Priest's details in the Eldritch card style: a blackletter name, tentacle scrolls, its set icon on the medallion", async ({
   page,
 }) => {
   await page.goto('/#/settings');
