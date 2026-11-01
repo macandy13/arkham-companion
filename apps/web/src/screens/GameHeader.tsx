@@ -205,6 +205,7 @@ function ScenarioDetails({
   const { t } = useTranslation();
   const { reference } = board;
   const card: ShownCard = {
+    // The scenario's display name: the reference card prints it, and the game holds no card name.
     name: cardName(name),
     type: 'scenario',
     traits: [],

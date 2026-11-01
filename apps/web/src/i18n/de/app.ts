@@ -137,7 +137,6 @@ export const appTexts = {
     removeDoom: 'Verderben entfernen',
     addClue: 'Hinweis hinzufügen',
     removeClue: 'Hinweis entfernen',
-    close: 'Schließen',
     noGame: 'Kein Spiel geöffnet',
   },
   encounter: {

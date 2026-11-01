@@ -137,7 +137,6 @@ export const appTexts = {
     removeDoom: 'Remove doom',
     addClue: 'Add a clue',
     removeClue: 'Remove a clue',
-    close: 'Close',
     noGame: 'No game open',
   },
   encounter: {

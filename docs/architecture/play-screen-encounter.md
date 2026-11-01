@@ -41,7 +41,7 @@ The header's small card shows only the name (a container query hides the rest fr
 - the upright card beside the page (decorative there, since the page repeats its rows);
 - "Scenario" and the difficulty's side as the kicker;
 - the cards set aside and the victory points on the page;
-- one row per symbol token at the page's print size, so it reads in the phone's sheet too, where only the card's top peeks out.
+- one row per symbol token at the page's print size, so it reads even when only the card's top shows (the shell's phone sheet; the phone itself opens the header cards in the detail view).
 
 The reference card is no instance in play, so the shell takes a `ShownCard` (a `CardFaceView` without its `id`, [`cardFace.tsx`](../../apps/web/src/catalog/cardFace.tsx)), as `CardZoom` does.
 

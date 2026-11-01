@@ -433,10 +433,13 @@ describe('GameScreen header', () => {
     fireEvent.click(button('The Gathering'));
     const card = await screen.findByRole('dialog', { name: 'The Gathering' });
     const values = within(card)
-      .getAllByRole('definition')
-      .map((value) => value.textContent);
+      .getAllByRole('term')
+      .map((term) => [term.textContent, term.nextElementSibling?.textContent]);
 
-    expect(values).toEqual(['6', '0']);
+    expect(values).toEqual([
+      ['Set aside', '6'],
+      ['Victory', '0'],
+    ]);
   });
 
   it('shows the round and the phases of a round in a status row, setup marking none', async () => {
