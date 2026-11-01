@@ -3,7 +3,7 @@
 The [map](../../apps/web/src/map/MapBoard.tsx) is an SVG of location tiles at their layout cells with pan, zoom and drag-to-play pieces (its tabs and small zoom icons float over its top corners, and its name is for screen readers only).
 The map tabs follow the WAI-ARIA tabs pattern: one Tab stop, the arrow keys, Home and End choose the map.
 
-A tap on a tile (or its "i" button, for the keyboard) opens the location's [details](../../apps/web/src/map/LocationDetails.tsx) on the card shell (`CardDialog`; on a phone in the map row instead, the [location mode](play-screen.md#location-mode)):
+A tap on a tile (or its "i" button, for the keyboard) opens the location's [details](../../apps/web/src/map/LocationDetails.tsx) on the card shell (`DetailsDialog`; on a phone in the map row instead, the [location mode](play-screen.md#location-mode)):
 
 - its card beside the page (the tile's drawing with its pieces, as the shell's `drawn` card),
 - its shroud and its clues left of its clue value for the player count (`LocationView.clueValue`, "1 / 2") as the page's values, or "Unrevealed",
@@ -16,6 +16,8 @@ A tap on a tile (or its "i" button, for the keyboard) opens the location's [deta
   - plus the location's own card actions (`CardActions`, the Parlor's Resign),
 
   While adjusting, the corrections (reveal, clue and doom steppers) take its place.
+
+  A move closes the details; an investigation shows its test in their place, the location still beside it ([decisions](play-screen-decisions.md#in-a-details-dialog)).
 
 The pieces on a tile stand in rows along its bottom edge ([`piecesOnTile`](../../apps/web/src/map/mapLayout.ts)): each investigator's pawn followed by the enemies engaged with them, faded since the threat area shows them in full, then after a thin line the enemies engaged with no one. Order alone shows an engagement on the map. An enemy token ([`EnemyToken`](../../apps/web/src/map/LocationTile.tsx)) shows its damage on a red badge at its lower right (`damageBadgeCentre`) and, when exhausted, its initial on its side. Pawns and enemy tokens show an avatar cut from their card's picture once it has loaded ([`TokenPicture`](../../apps/web/src/map/TokenPicture.tsx)): the investigator's face (`INVESTIGATOR_AVATAR`) and the enemy's figure (`ENEMY_AVATAR`, from `MapEnemyView.image`), squares measured on the scans in [`cardArt.ts`](../../apps/web/src/catalog/cardArt.ts) and filled into a circle inside the ring as a pattern, so the token keeps the box of its circle for taps and focus. The initial stays beneath until then, and for good when the picture fails or its scan is turned.
 A tap on an enemy token (a press let go where it went down, `isTap`, which a drag is not) opens the enemy's details as from the threat area.

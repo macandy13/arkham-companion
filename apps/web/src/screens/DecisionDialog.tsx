@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, type ComponentProps } from 'react';
 import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import type { BoardView, ChoiceView, DecisionCounts, DecisionView } from '@arkham/engine';
 import { assertNever } from '@arkham/util';
 import { ResolvingCard } from '../encounter/ResolvingCard';
@@ -45,6 +46,69 @@ export function DecisionDialog({
   onPicking?: (picking: boolean) => void;
 }) {
   const { t } = useTranslation();
+  const [lowered, setLowered] = useState(false);
+  const lower = (to: boolean) => {
+    setLowered(to);
+    if (!to) onPicking?.(false);
+  };
+  return (
+    <CardDialog
+      name="decision"
+      {...(decision.card ? { card: decision.card } : {})}
+      {...decisionHeading(t, board, decision)}
+      onCancel={(event) => event.preventDefault()}
+      lowered={lowered || picking}
+      onLower={lower}
+    >
+      <DecisionPage
+        board={board}
+        decision={decision}
+        actions={actions}
+        busy={busy}
+        {...(onPicking ? { onPicking } : {})}
+      />
+    </CardDialog>
+  );
+}
+
+/**
+ * The parts of a decision's card dialog over its page: the cards waiting behind its card, the
+ * investigator who answers it with the kicker naming them, and the question as the title. Shared
+ * by the decision dialog and a details dialog that shows the decision its action raised
+ * (`DetailsDialog`).
+ */
+export function decisionHeading(
+  t: TFunction,
+  board: BoardView,
+  decision: DecisionView,
+): Pick<ComponentProps<typeof CardDialog>, 'waiting' | 'actor' | 'kicker' | 'title'> {
+  const actor = decision.for === undefined ? undefined : board.investigator(decision.for);
+  return {
+    ...(decision.waiting ? { waiting: decision.waiting } : {}),
+    ...(actor ? { actor, kicker: t('decision.decides', { name: actor.name }) } : {}),
+    title: t(decision.prompt, { card: decision.about, defaultValue: decision.prompt }),
+  };
+}
+
+/**
+ * A decision's page (`DecisionDialog`): what it is about, its test with the draw, and its
+ * options with Undo, Pick on the map (with `onPicking`) and Done at the foot. Its draw and picks
+ * belong to one decision, so the caller mounts one page per decision.
+ */
+export function DecisionPage({
+  board,
+  decision,
+  actions,
+  busy,
+  onPicking,
+}: {
+  board: BoardView;
+  decision: DecisionView;
+  actions: GameActions;
+  busy: boolean;
+  onPicking?: (picking: boolean) => void;
+}) {
+  const { t } = useTranslation();
   const { test } = decision;
   const tested = decision.kind === 'skillTestResult' ? decision.for : undefined;
   const run = useSkillTest(board, tested, test);
@@ -76,24 +140,9 @@ export function DecisionDialog({
     );
   };
 
-  const [lowered, setLowered] = useState(false);
-  const lower = (to: boolean) => {
-    setLowered(to);
-    if (!to) onPicking?.(false);
-  };
-
   const actor = decision.for === undefined ? undefined : board.investigator(decision.for);
   return (
-    <CardDialog
-      name="decision"
-      {...(decision.card ? { card: decision.card } : {})}
-      {...(decision.waiting ? { waiting: decision.waiting } : {})}
-      {...(actor ? { actor, kicker: t('decision.decides', { name: actor.name }) } : {})}
-      title={t(decision.prompt, { card: decision.about, defaultValue: decision.prompt })}
-      onCancel={(event) => event.preventDefault()}
-      lowered={lowered || picking}
-      onLower={lower}
-    >
+    <>
       {board.resolving && <ResolvingCard board={board} card={board.resolving} />}
       {decision.provokedBy && actor && (
         <p>
@@ -195,7 +244,7 @@ export function DecisionDialog({
           </button>
         </footer>
       </form>
-    </CardDialog>
+    </>
   );
 }
 

@@ -1,7 +1,7 @@
 import { useId, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { BoardView, CardFaceView, InvestigatorId, LocationView } from '@arkham/engine';
-import { CardDialog } from '../screens/CardDialog';
+import { DetailsDialog, useDecisionHost } from '../screens/DetailsDialog';
 import { CardZoom } from '../screens/CardZoom';
 import {
   ActionButton,
@@ -16,11 +16,12 @@ import { TILE } from './mapLayout';
 
 /**
  * One location in full, opened by a tap on its tile or its details button on a tablet or wider,
- * on the card shell (`CardDialog`): the location drawn as its card beside the page, the same
+ * on the card shell (`DetailsDialog`): the location drawn as its card beside the page, the same
  * drawing as its tile with the pieces on it (`LocationCard`), its name as the title, its shroud
  * and the clues left of its clue value for the player count (`LocationValues`), and the page's
- * parts (`LocationPage`). Escape and its × close it. A move or an investigation closes it, so the
- * decision dialog that may follow is the only one open.
+ * parts (`LocationPage`). Escape and its × close it. A move closes it, since the players look
+ * elsewhere then; an investigation keeps it open and shows its test's decision in place of the
+ * page (`useDecisionHost`), with the location still beside it.
  */
 export function LocationDetails({
   board,
@@ -37,13 +38,17 @@ export function LocationDetails({
   adjusting: boolean;
   onClose: () => void;
 }) {
+  const hosted = useDecisionHost();
   return (
-    <CardDialog
+    <DetailsDialog
+      board={board}
+      actions={actions}
+      busy={busy}
+      hosted={hosted}
       name="location"
       card={board.cardFace(location.id)}
       drawn={<LocationCard board={board} location={location} />}
       title={location.name}
-      onCancel={onClose}
       onClose={onClose}
     >
       <LocationValues location={location} />
@@ -54,8 +59,9 @@ export function LocationDetails({
         busy={busy}
         adjusting={adjusting}
         onLeave={onClose}
+        onTest={hosted.host}
       />
-    </CardDialog>
+    </DetailsDialog>
   );
 }
 
@@ -140,8 +146,9 @@ export function LocationContent({
  * its clues and doom, as a card effect or the table asks, so the screen keeps up with the physical
  * game; they are not steps of play, so the two never show together. It reads the location fresh
  * from the board, so its counts follow each step. A move, an investigation or a card action calls
- * `onLeave` first, for a view that should step aside then; corrections and a clue taken do not,
- * since those often come several at a time. Nothing is tapped while a step is queued (`busy`).
+ * `onLeave` first, for a view that should step aside then, except that an investigation calls
+ * `onTest` instead when given, for a view that shows the test itself; corrections and a clue taken
+ * do neither, since those often come several at a time. Nothing is tapped while a step is queued (`busy`).
  */
 function LocationPage({
   board,
@@ -150,6 +157,7 @@ function LocationPage({
   busy,
   adjusting,
   onLeave,
+  onTest,
 }: {
   board: BoardView;
   location: LocationView;
@@ -157,11 +165,12 @@ function LocationPage({
   busy: boolean;
   adjusting: boolean;
   onLeave?: () => void;
+  onTest?: () => void;
 }) {
   const { t } = useTranslation();
   const offered = adjusting ? [] : locationActions(board, location, actions);
   const printed = adjusting ? [] : cardActionsOn(board, location.id);
-  const button = ({ key, icon, cost, play, closes }: LocationAction) => (
+  const button = ({ key, icon, cost, play, then }: LocationAction) => (
     <ActionButton
       key={key}
       icon={icon}
@@ -170,7 +179,8 @@ function LocationPage({
       name={t(`location.${key}`)}
       disabled={busy || play === undefined}
       onClick={() => {
-        if (closes) onLeave?.();
+        if (then === 'test' && onTest) onTest();
+        else if (then !== 'stay') onLeave?.();
         void play?.();
       }}
     />
@@ -211,15 +221,16 @@ function LocationPage({
 /**
  * One button of the location details' action row: its name and caption keys (`location.<key>`,
  * `location.caption.<icon>`), whether it counts off an action, and the step it plays; without
- * `play` it shows but is off, as a clue at a location that has none. `closes` closes the window
- * first, for a step after which the location is no longer where the players look.
+ * `play` it shows but is off, as a clue at a location that has none. `then` says what the view
+ * does first: step aside (`leave`), as after a move the location is no longer where the players
+ * look, show the test the step starts (`test`), or nothing (`stay`).
  */
 interface LocationAction {
   key: 'investigateAction' | 'takeClue' | 'moveAction' | 'moveFree';
   icon: Extract<ActionIcon, 'investigate' | 'clue' | 'move'>;
   cost: ActionCost;
   play?: () => Promise<void>;
-  closes: boolean;
+  then: 'leave' | 'test' | 'stay';
 }
 
 /**
@@ -246,7 +257,7 @@ function locationActions(
         icon: 'investigate',
         cost: 'action',
         play: location.forbidden?.includes('investigate') ? undefined : () => actions.investigate(),
-        closes: true,
+        then: 'test',
       },
       {
         key: 'takeClue',
@@ -254,7 +265,7 @@ function locationActions(
         cost: 'free',
         play:
           location.clues > 0 && !cannotDiscover ? () => actions.takeClue(location.id) : undefined,
-        closes: false,
+        then: 'stay',
       },
     ];
   const from = board.locationOf(turn);
@@ -266,14 +277,14 @@ function locationActions(
       icon: 'move',
       cost: 'action',
       play: () => actions.moveTo(location.id, 'action'),
-      closes: true,
+      then: 'leave',
     },
     {
       key: 'moveFree',
       icon: 'move',
       cost: 'free',
       play: () => actions.moveTo(location.id, 'free'),
-      closes: true,
+      then: 'leave',
     },
   ];
 }
