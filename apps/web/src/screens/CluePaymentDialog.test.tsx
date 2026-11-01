@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
-import { afterEach, beforeAll, describe, expect, it } from 'vitest';
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import {
   blankLocation,
   instanceId,
@@ -167,6 +167,30 @@ describe('CardActions with a group clue cost', () => {
     expect(screen.queryByRole('dialog')).toBeNull();
     expect(table.board.investigator(alder).clues).toBe(3);
     expect(table.board.investigator(bea).clues).toBe(3);
+  });
+
+  it('closes on Escape without closing a dialog it was opened from', () => {
+    const table = studyWithGroupCost(3, 3);
+    const onDetailsCancel = vi.fn();
+    render(
+      <dialog open aria-label="Study details" onCancel={onDetailsCancel}>
+        <CardActions
+          board={table.board}
+          offered={cardActionsOn(table.board, study)}
+          actions={actionsOn(table)}
+          busy={false}
+        />
+      </dialog>,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Action · Study' }));
+
+    fireEvent(
+      screen.getByRole('dialog', { name: 'Who pays the clues?' }),
+      new Event('cancel', { bubbles: false, cancelable: true }),
+    );
+
+    expect(screen.queryByRole('dialog', { name: 'Who pays the clues?' })).toBeNull();
+    expect(onDetailsCancel).not.toHaveBeenCalled();
   });
 
   it('pays at once, with no dialog, when the 4 clues are all alder and bea hold', async () => {

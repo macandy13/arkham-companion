@@ -342,11 +342,6 @@
     text-align: start;
   }
 
-  /* Set flush left, the title keeps clear of the × on its right only. */
-  #board dialog[data-shell] > article > hgroup {
-    padding-inline-start: 0;
-  }
-
   #board dialog[data-shell] > article > hgroup > p {
     justify-content: flex-start;
   }

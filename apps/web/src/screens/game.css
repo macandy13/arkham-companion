@@ -664,8 +664,8 @@
 /*
  * The decision dialog's page (DecisionDialog, on the CardDialog shell): the question as its title
  * under who decides, the test under it, then the options as a column of full-width buttons and
- * Undo at its foot. Every card dialog's page shares its column, and the clue payment dialog's
- * (CluePaymentDialog, clue_payment.css) its title, text and foot.
+ * Undo at its foot. Every card dialog's page shares its column; the clue payment dialog's page
+ * (CluePaymentDialog, clue_payment.css) also shares its title, text and foot rules.
  */
 #board dialog[data-shell] > article {
   display: flex;
