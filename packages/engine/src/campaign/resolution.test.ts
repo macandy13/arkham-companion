@@ -431,6 +431,79 @@ describe('proposeResolution', () => {
   });
 });
 
+describe('proposeResolution for a resolution the players picked', () => {
+  const resolutions: ScenarioResolutions = {
+    byId: {
+      [r1]: [{ kind: 'record', key: 'houseStillStanding', value: { kind: 'flag', value: false } }],
+      [r3]: [{ kind: 'record', key: 'houseStillStanding', value: { kind: 'flag', value: true } }],
+    },
+    none: [{ kind: 'addChaosToken', token: 'cultist' }],
+  };
+
+  it.each([
+    [
+      'R3',
+      { kind: 'resolution', id: r3 } as const,
+      { type: 'RecordStory', key: 'houseStillStanding', value: { kind: 'flag', value: true } },
+    ],
+    [
+      'no resolution',
+      { kind: 'noResolution' } as const,
+      { type: 'AddChaosToken', token: 'cultist' },
+    ],
+  ])('proposes the steps of %s for a game that ended with R1', (_, outcome, command) => {
+    const { context, state } = table.start();
+
+    const proposal = campaign.proposeResolution(
+      context,
+      stateAfter(context, state, endWith(r1)),
+      resolutions,
+      outcome,
+    );
+
+    expect(proposal).toEqual([{ kind: 'command', command }]);
+  });
+
+  it('still adds the trauma of the defeats the game had', () => {
+    const { context, state } = table.withTurnOf(alice).start();
+    const ended = stateAfter(context, state, takeDamage(alice, 8), startTurn(bob), resign(bob));
+
+    const proposal = campaign.proposeResolution(context, ended, resolutions, {
+      kind: 'resolution',
+      id: r3,
+    });
+
+    expect(proposal?.at(-1)).toEqual({
+      kind: 'command',
+      command: { type: 'AddTrauma', code: aliceCode, kind: 'physical', amount: 1 },
+    });
+  });
+
+  it('proposes nothing for a resolution the scenario does not define', () => {
+    const { context, state } = table.start();
+
+    const proposal = campaign.proposeResolution(
+      context,
+      stateAfter(context, state, endWith(r1)),
+      resolutions,
+      { kind: 'resolution', id: r9 },
+    );
+
+    expect(proposal).toBeUndefined();
+  });
+});
+
+describe('gameOutcome', () => {
+  it('is the resolution the game ended with', () => {
+    const { context, state } = table.start();
+
+    expect(campaign.gameOutcome(stateAfter(context, state, endWith(r3)))).toEqual({
+      kind: 'resolution',
+      id: 'R3',
+    });
+  });
+});
+
 describe('proposeResolution with steps that read the game', () => {
   const drew = cardCode('wolf_man_drew');
   const herman = cardCode('herman_collins');
@@ -600,6 +673,20 @@ describe('applyResolution', () => {
       { scenarioId: CUSTOM_SCENARIO, outcome: { kind: 'resolution', id: 'R1' } },
     ]);
     expect(log.position).toBe(1);
+  });
+
+  it("records the resolution the players picked instead of the game's", () => {
+    const { context, state } = table.start();
+    const ended = stateAfter(context, state, endWith(r1));
+
+    const { log } = campaign.applyResolution(campaignContext, atTheTablesScenario, ended, [], {
+      kind: 'resolution',
+      id: r3,
+    });
+
+    expect(log.playedScenarios).toEqual([
+      { scenarioId: CUSTOM_SCENARIO, outcome: { kind: 'resolution', id: 'R3' } },
+    ]);
   });
 
   it('records "no resolution" when every investigator left', () => {

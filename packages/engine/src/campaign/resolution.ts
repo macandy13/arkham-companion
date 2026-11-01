@@ -144,18 +144,20 @@ export type ProposedChange =
  * resolution awards them first. Someone the resolution kills, drives insane or
  * gives trauma up to their limit gets no further change. A defeat that reached
  * both health and sanity at once proposes a choice between 1 physical and 1
- * mental trauma, which the player makes (Rules Reference, "Trauma"). Undefined
- * while the game is still running,
- * or for a resolution id the scenario doesn't define.
+ * mental trauma, which the player makes (Rules Reference, "Trauma"). `outcome`
+ * is the resolution the players read: the one the game ended with
+ * (`gameOutcome`) unless the table played it differently and picked another;
+ * the defeats are the game's either way. Undefined while the game is still
+ * running, or for a resolution id the scenario doesn't define.
  */
 export function proposeResolution(
   ctx: EngineContext,
   game: GameState,
   resolutions: ScenarioResolutions,
+  outcome: ScenarioOutcome = gameOutcome(game),
 ): ProposedChange[] | undefined {
   if (game.meta.ended !== true) return undefined;
-  const steps =
-    game.meta.resolution === undefined ? resolutions.none : resolutions.byId[game.meta.resolution];
+  const steps = outcome.kind === 'noResolution' ? resolutions.none : resolutions.byId[outcome.id];
   if (steps === undefined) return undefined;
   const changes = steps.flatMap((step) => proposeStep(ctx, game, step));
   return withoutChangesForEliminated(game.campaign, [
@@ -199,7 +201,8 @@ function withoutChangesForEliminated(
 /**
  * Writes a confirmed resolution to the campaign log in one step: the
  * commands the players confirmed (`proposeResolution`, edited as they
- * like), then `AdvanceScenario` with the game's outcome. Either every command
+ * like), then `AdvanceScenario` with `outcome`, the resolution they read (the
+ * game's own unless they picked another). Either every command
  * applies or the first rejection is thrown and the log stays as it was. Also
  * rejects a game that is still running (`scenarioNotEnded`) or that belongs
  * to another scenario than the campaign's current one (`notCurrentScenario`).
@@ -209,6 +212,7 @@ export function applyResolution(
   log: CampaignLog,
   game: GameState,
   confirmed: readonly CampaignCommand[],
+  outcome: ScenarioOutcome = gameOutcome(game),
 ): CampaignExecuteResult {
   if (game.meta.ended !== true) throw new CampaignCommandRejected({ code: 'scenarioNotEnded' });
   const current = findCurrentScenarioId(log);
@@ -218,7 +222,7 @@ export function applyResolution(
       scenarioId: game.meta.scenarioId,
       current,
     });
-  const advance: CampaignCommand = { type: 'AdvanceScenario', outcome: outcomeOf(game) };
+  const advance: CampaignCommand = { type: 'AdvanceScenario', outcome };
   return [...confirmed, advance].reduce<CampaignExecuteResult>(
     (result, command) => {
       const next = executeCommand(ctx, result.log, command);
@@ -249,7 +253,8 @@ export function proposedCommands(changes: readonly ProposedChange[]): CampaignCo
   });
 }
 
-function outcomeOf(game: GameState): ScenarioOutcome {
+/** The resolution an ended `game` reached (`ScenarioEnded`), or "no resolution". */
+export function gameOutcome(game: GameState): ScenarioOutcome {
   return game.meta.resolution === undefined
     ? { kind: 'noResolution' }
     : { kind: 'resolution', id: game.meta.resolution };
