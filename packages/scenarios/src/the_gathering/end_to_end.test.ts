@@ -1162,7 +1162,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
 
     // The players confirm it as proposed, and the campaign log moves on to The Midnight Masks.
     const campaignCtx = { cards: ctx.cards };
-    const zealotCampaign = campaign.executeCommand(
+    const zealotStart = campaign.executeCommand(
       campaignCtx,
       campaign.createEmptyLog(),
       campaign.compileStart(nightOfTheZealot, {
@@ -1170,10 +1170,15 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
         difficulty: 'standard',
         investigators: [rolandBanks.code, daisyWalker.code, wendyAdams.code],
       }),
-    ).log;
+    );
     const confirmed = campaign.proposedCommands(proposal ?? []);
 
-    const { log } = campaign.applyResolution(campaignCtx, zealotCampaign, table.state, confirmed);
+    const { log, events: resolutionEvents } = campaign.applyResolution(
+      campaignCtx,
+      zealotStart.log,
+      table.state,
+      confirmed,
+    );
 
     expect(log.story).toEqual({ houseStillStanding: { kind: 'flag', value: false } });
     expect(log.investigators).toMatchObject([
@@ -1223,8 +1228,9 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
       { id: wendy, locationId: rivertown, horror: 0 },
     ]);
 
-    // The whole event log, setup included, replays to the live state.
+    // The whole event log, setup included, replays to the live state, and so does the campaign's.
     expect(replay(table.events)).toEqual(table.state);
+    expect(campaign.replayEvents([...zealotStart.events, ...resolutionEvents])).toEqual(log);
   });
 });
 
