@@ -17,9 +17,12 @@ import {
 } from '@arkham/engine';
 import {
   GATHERING_CODES,
+  MIDNIGHT_MASKS_CODES,
   theGathering,
   theGatheringCards,
   theGatheringHouse,
+  theMidnightMasks,
+  theMidnightMasksCards,
 } from '@arkham/scenarios';
 import { serialiseGameExport } from '../../src/storage/gameExport';
 import { ROLAND_PICTURE } from './card_pictures';
@@ -367,6 +370,26 @@ export function ghoulMinionToSpawnExport(title: string): Buffer {
 const THREAT_AREA_TREACHERIES: readonly CardCode[] = [cardCode('01165'), cardCode('01164')];
 
 /** The card of `table`'s game with `code`; only for cards the game has one copy of. */
+/**
+ * An export file of a solo game of The Midnight Masks titled `title`, started from the catalog's
+ * card data: on Roland Banks' first turn they move from Rivertown, where a standalone game
+ * starts, into the Graveyard, whose willpower test waits for its result, so the screen opens with
+ * its decision.
+ */
+export function graveyardTestExport(title: string): Buffer {
+  const table = PlayTable.setUp(
+    {
+      cards: cardDbWith(theMidnightMasksCards, [investigatorCardStats(roland)]),
+      scenario: theMidnightMasks,
+    },
+    { investigators: [{ id: rolandId, code: roland.code }], seed: 3 },
+  );
+  table.nextPhase();
+  table.startTurn(rolandId);
+  table.moveTo(rolandId, cardIn(table, MIDNIGHT_MASKS_CODES.graveyard));
+  return exportOf(title, table, 'graveyard_test');
+}
+
 function cardIn(table: PlayTable, code: CardCode): InstanceId {
   const card = Object.values(table.state.cards).find((candidate) => candidate.code === code);
   if (!card) throw new Error(`no card ${code} in the game`);

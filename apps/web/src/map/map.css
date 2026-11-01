@@ -392,6 +392,30 @@
   transform-origin: center;
 }
 
+/*
+ * A piece's avatar (`TokenPicture`) shows once its picture has loaded, over the initial, which
+ * stays beneath until then and for good when the picture fails. An exhausted enemy's avatar lies
+ * on its side like its initial.
+ */
+#map svg :is([data-pawn], [data-enemy]) > [data-part='avatar']:not([data-picture]) {
+  display: none;
+}
+
+#map svg :is([data-pawn], [data-enemy]):has(> [data-part='avatar'][data-picture]) > text {
+  display: none;
+}
+
+#map svg :is([data-pawn], [data-enemy]) > [data-part='avatar'] > circle {
+  fill: inherit;
+  stroke: none;
+}
+
+#map svg [data-enemy][data-exhausted] > [data-part='avatar'] {
+  transform: rotate(90deg);
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
 /* An enemy engaged with an investigator stands faded after their pawn: the threat area shows it. */
 #map svg [data-enemy][data-engaged] {
   opacity: var(--engaged-enemy-opacity);

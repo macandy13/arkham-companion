@@ -48,7 +48,7 @@ export function DecisionDialog({
   const { test } = decision;
   const tested = decision.kind === 'skillTestResult' ? decision.for : undefined;
   const run = useSkillTest(board, tested, test);
-  const suggested = run?.result && run.finished ? run.result : undefined;
+  const suggested = run?.finished ? run.result : undefined;
   const [counts, setCounts] = useState(() => defaultCounts(decision.counts));
   const [chosen, setPicked] = useState<string>();
   const picked = chosen ?? pickedFirst(decision, suggested?.outcome);

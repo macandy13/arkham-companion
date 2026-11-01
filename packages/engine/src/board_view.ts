@@ -47,6 +47,7 @@ import {
   type CardCode,
   type CardImagePath,
   type CardName,
+  type EncounterSetCode,
   type InstanceId,
   type InvestigatorId,
   type MapId,
@@ -228,6 +229,8 @@ interface LocationViewBase {
   image?: CardImagePath;
   /** Its connection symbol (`CardStats.symbol`), when the card data has one. */
   symbol?: LocationSymbol;
+  /** The encounter set it belongs to (`CardStats.encounterCode`), whose icon its set medallion prints. */
+  encounterSet?: EncounterSetCode;
   clues: number;
   doom?: number;
   investigators?: InvestigatorId[];
@@ -269,6 +272,8 @@ export interface MapView {
 export interface EnemyStatsView {
   /** The picture of its card (`CardStats.imageSrc`), when the card data has one. */
   image?: CardImagePath;
+  /** The encounter set it belongs to (`CardStats.encounterCode`), whose icon its set medallion prints. */
+  encounterSet?: EncounterSetCode;
   fight: number;
   evade: number;
   attack: { damage: number; horror: number };
@@ -292,6 +297,8 @@ export interface CardFaceView {
   image?: CardImagePath;
   /** The picture of its back (`CardStats.backImageSrc`), for a card with two sides. */
   backImage?: CardImagePath;
+  /** The encounter set it belongs to (`CardStats.encounterCode`), whose icon its set medallion prints. */
+  encounterSet?: EncounterSetCode;
 }
 
 /** A basic action against an enemy (`BoardView.enemyActions`). */
@@ -327,7 +334,14 @@ export interface CluePayerView {
  * `EnemyView` with its instance id, since those are where the players act on an enemy (drag it to
  * move or engage it, fight or evade it), and copies share a name.
  */
-export type MapEnemyView = EnemyView & { id: InstanceId };
+export type MapEnemyView = EnemyView & {
+  id: InstanceId;
+  /**
+   * The picture of its front (`CardStats.imageSrc`), whose art its token shows, when the card data
+   * has one. Not on `EnemyView`, which tests compare whole.
+   */
+  image?: CardImagePath;
+};
 
 /**
  * The current agenda (`id`, to act on it), its name, the doom on the card itself and, when it has
@@ -339,6 +353,8 @@ export interface AgendaView {
   name: CardName;
   /** The picture of its front, the side in play (`CardStats.imageSrc`), when the card data has one. */
   image?: CardImagePath;
+  /** The encounter set it belongs to (`CardStats.encounterCode`), whose icon its title prints. */
+  encounterSet?: EncounterSetCode;
   doom: number;
   threshold?: number;
 }
@@ -352,6 +368,8 @@ export interface ActView {
   name: CardName;
   /** The picture of its front, the side in play (`CardStats.imageSrc`), when the card data has one. */
   image?: CardImagePath;
+  /** The encounter set it belongs to (`CardStats.encounterCode`), whose icon its title prints. */
+  encounterSet?: EncounterSetCode;
   clues: number;
   advance?: ActAdvance;
 }
@@ -477,6 +495,12 @@ export interface EncounterPilesView {
  */
 export interface ReferenceView {
   code: CardCode;
+  /**
+   * The scenario's own encounter set, whose icon the card prints on its medallion: the current
+   * agenda's (`AgendaView.encounterSet`), since a scenario's agendas, acts and reference card all
+   * belong to that set.
+   */
+  encounterSet?: EncounterSetCode;
   difficulty: Difficulty;
   side: ReferenceSide;
   rows: readonly ReferenceRowView[];
@@ -773,8 +797,10 @@ export class BoardView {
     const { difficulty } = this.state.meta;
     const side = pickReferenceSide(difficulty);
     const effects = scenario.reference[side];
+    const encounterSet = this.agenda?.encounterSet;
     return {
       code: scenario.referenceCode,
+      ...(encounterSet === undefined ? {} : { encounterSet }),
       difficulty,
       side,
       rows: SYMBOL_TOKENS.flatMap((token) => {
@@ -822,9 +848,10 @@ export class BoardView {
   enemyStats(enemy: InstanceId): EnemyStatsView {
     const card = requireCard(this.state, enemy);
     const stats = cardStats(this.ctx.cards, card.code);
-    const { damage = 0, horror = 0, imageSrc, victory } = stats;
+    const { damage = 0, horror = 0, imageSrc, encounterCode, victory } = stats;
     return {
       ...(imageSrc === undefined ? {} : { image: imageSrc }),
+      ...(encounterCode === undefined ? {} : { encounterSet: encounterCode }),
       fight: effectiveValue(this.ctx, this.state, card, 'fight'),
       evade: effectiveValue(this.ctx, this.state, card, 'evade'),
       attack: { damage, horror },
@@ -1020,7 +1047,10 @@ function nameOf(ctx: EngineContext, card: CardInstance): CardName {
 }
 
 function cardFaceOf(ctx: EngineContext, card: CardInstance): CardFaceView {
-  const { typeCode, traits, imageSrc, backImageSrc } = cardStats(ctx.cards, card.code);
+  const { typeCode, traits, imageSrc, backImageSrc, encounterCode } = cardStats(
+    ctx.cards,
+    card.code,
+  );
   return {
     id: card.id,
     name: nameOf(ctx, card),
@@ -1028,6 +1058,7 @@ function cardFaceOf(ctx: EngineContext, card: CardInstance): CardFaceView {
     traits,
     ...(imageSrc === undefined ? {} : { image: imageSrc }),
     ...(backImageSrc === undefined ? {} : { backImage: backImageSrc }),
+    ...(encounterCode === undefined ? {} : { encounterSet: encounterCode }),
   };
 }
 
@@ -1092,7 +1123,12 @@ function enemyLocation(state: GameState, enemy: CardInstance): InstanceId | unde
 }
 
 function mapEnemyView(ctx: EngineContext, state: GameState, enemy: CardInstance): MapEnemyView {
-  return { id: enemy.id, ...enemyView(ctx, state, enemy) };
+  const { imageSrc } = cardStats(ctx.cards, enemy.code);
+  return {
+    id: enemy.id,
+    ...enemyView(ctx, state, enemy),
+    ...(imageSrc === undefined ? {} : { image: imageSrc }),
+  };
 }
 
 function enemyView(ctx: EngineContext, state: GameState, enemy: CardInstance): EnemyView {
@@ -1113,7 +1149,10 @@ const NO_CLUES: ScaledValue = { fixed: 0, perInvestigator: 0 };
 
 function locationView(ctx: EngineContext, state: GameState, location: CardInstance): LocationView {
   const present = state.investigators.filter((inv) => inv.locationId === location.id);
-  const { imageSrc, backImageSrc, actions, symbol, clues } = cardStats(ctx.cards, location.code);
+  const { imageSrc, backImageSrc, actions, symbol, clues, encounterCode } = cardStats(
+    ctx.cards,
+    location.code,
+  );
   const image = location.faceUp ? imageSrc : backImageSrc;
   return {
     id: location.id,
@@ -1121,6 +1160,7 @@ function locationView(ctx: EngineContext, state: GameState, location: CardInstan
     map: mapOf(location),
     ...(image === undefined ? {} : { image }),
     ...(symbol === undefined ? {} : { symbol }),
+    ...(encounterCode === undefined ? {} : { encounterSet: encounterCode }),
     ...(location.faceUp
       ? {
           revealed: true as const,
@@ -1189,12 +1229,13 @@ function mapOf({ zone, id }: CardInstance): MapId {
 function agendaView(ctx: EngineContext, state: GameState): AgendaView | undefined {
   const agenda = currentCard(state, 'agenda');
   if (!agenda) return undefined;
-  const { imageSrc } = cardStats(ctx.cards, agenda.code);
+  const { imageSrc, encounterCode } = cardStats(ctx.cards, agenda.code);
   const threshold = agendaThreshold(ctx, state, agenda);
   return {
     id: agenda.id,
     name: nameOf(ctx, agenda),
     ...(imageSrc === undefined ? {} : { image: imageSrc }),
+    ...(encounterCode === undefined ? {} : { encounterSet: encounterCode }),
     doom: agenda.tokens.doom ?? 0,
     ...(threshold === undefined ? {} : { threshold }),
   };
@@ -1209,6 +1250,7 @@ function actView(ctx: EngineContext, state: GameState): ActView | undefined {
     id: act.id,
     name: nameOf(ctx, act),
     ...(stats.imageSrc === undefined ? {} : { image: stats.imageSrc }),
+    ...(stats.encounterCode === undefined ? {} : { encounterSet: stats.encounterCode }),
     clues: act.tokens.clue ?? 0,
     ...(advance === undefined ? {} : { advance }),
   };

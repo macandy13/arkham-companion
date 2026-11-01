@@ -26,7 +26,10 @@
   stroke-width: var(--card-gilt-line-width);
 }
 
-/* The eye on the medallion shows in the Eldritch card theme alone, in place of the inner ring. */
+/*
+ * The eye on the medallion shows in the Eldritch card theme alone, in place of the inner ring, on a
+ * medallion without an encounter set icon.
+ */
 #board svg [data-medallion] [data-part='eye'] {
   display: none;
 }
@@ -35,8 +38,16 @@
   display: none;
 }
 
-:root[data-card-theme='eldritch'] #board svg [data-medallion] [data-part='eye'] {
+:root[data-card-theme='eldritch']
+  #board
+  svg
+  [data-medallion]:not(:has([data-encounter-set]))
+  [data-part='eye'] {
   display: inline;
+}
+
+#board svg [data-medallion] span[data-encounter-set] {
+  color: var(--color-face-medallion-ring);
 }
 
 #board svg [data-medallion] [data-part='eye-white'] {
