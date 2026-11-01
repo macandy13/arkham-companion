@@ -1,4 +1,4 @@
-import { fetchCatalog, type CardCatalog, type FetchFn } from '@arkham/carddata';
+import { CATALOG_FORMAT, fetchCatalog, type CardCatalog, type FetchFn } from '@arkham/carddata';
 
 /** The slice of `IndexedDbStore` the catalog loader needs; keeps the loader testable. */
 export interface CatalogCache {
@@ -24,9 +24,8 @@ export async function loadCatalog(
 ): Promise<CardCatalog> {
   const cached = await cache.getCatalog(lang);
   try {
-    // A catalog cached before the app kept the reference cards' texts and pictures is fetched in
-    // full once.
-    const since = cached?.references && cached.referencePictures ? cached.lastModified : undefined;
+    // A catalog cached in an older shape lacks data the app now reads, so it is fetched in full once.
+    const since = cached?.format === CATALOG_FORMAT ? cached.lastModified : undefined;
     const result = await fetchCatalog(HOSTS[lang] ?? HOSTS.en!, fetchFn, since);
     if (result.status === 'ok') {
       await cache.putCatalog(lang, result.catalog);

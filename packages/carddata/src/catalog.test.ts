@@ -80,6 +80,32 @@ describe('buildInvestigatorCatalog', () => {
     ]);
   });
 
+  it('keeps the texts the card prints on its notebook page', () => {
+    const [investigator] = buildInvestigatorCatalog(
+      [
+        rawInvestigator({
+          traits: 'Tester. Hero.',
+          text: '[reaction] After you pass a test: gain 1 resource.',
+          flavor: 'It always works in the tests.',
+        }),
+      ],
+      packs,
+    );
+
+    expect(investigator).toMatchObject({
+      traits: 'Tester. Hero.',
+      text: '[reaction] After you pass a test: gain 1 resource.',
+      flavor: 'It always works in the tests.',
+    });
+  });
+
+  it('leaves the texts out when the card prints none', () => {
+    const [investigator] = buildInvestigatorCatalog([rawInvestigator({ flavor: null })], packs);
+
+    expect(investigator?.flavor).toBeUndefined();
+    expect(investigator?.text).toBeUndefined();
+  });
+
   it('takes the chapter the pack data gives', () => {
     const markedPacks = normalisePacks([
       { code: 'new_box', name: 'New Box', position: 1, cycle_position: 9, chapter: 2 },
