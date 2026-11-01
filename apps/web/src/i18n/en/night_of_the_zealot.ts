@@ -16,12 +16,12 @@ export const nightOfTheZealotTexts = {
       },
       resolution: {
         earnLita:
-          'The lead investigator puts Lita Chantler into their deck; she does not count toward its size.',
+          'The lead investigator may include Lita Chantler in their deck; she does not count toward its size.',
         upgradeDecks: 'Each investigator spends experience on deck upgrades.',
         replaceKilled:
-          "Each killed investigator's player picks a new investigator for the next scenario.",
+          "Each killed investigator's player picks a new investigator for the next scenario. If no investigators are left to choose, the campaign is over and the players lose.",
         earnLitaIfLeadKilled:
-          'If the lead investigator was killed, the investigator who earned Lita Chantler puts her into their deck.',
+          'If nobody resigned, choose one of the new investigators to earn Lita Chantler. Whoever earned her may include her in their deck; she does not count toward its size.',
       },
     },
     theMidnightMasks: {
@@ -53,7 +53,7 @@ export const nightOfTheZealotTexts = {
       resolution: {
         upgradeDecks: 'Each investigator spends experience on deck upgrades.',
         removeLita: 'Remove Lita Chantler from the deck that holds her.',
-        madnessWeakness: 'Each investigator adds a random basic madness weakness to their deck.',
+        madnessWeakness: 'Each investigator adds a random Madness weakness to their deck.',
       },
     },
   },

@@ -18,6 +18,7 @@ import { ResolutionDialog } from './ResolutionDialog';
 
 const roland = investigatorCode('01001');
 const daisy = investigatorCode('01002');
+const litaChantler = cardCode('01117');
 
 function member(code: CampaignInvestigator['code'], name: string): CampaignInvestigator {
   return {
@@ -89,7 +90,7 @@ describe('ResolutionDialog', () => {
     renderDialog(gatheringEndedWith('R1'), [
       { kind: 'command', command: houseBurned },
       { kind: 'command', command: rolandXp },
-      { kind: 'command', command: { type: 'EarnCard', code: roland, card: cardCode('01117') } },
+      { kind: 'command', command: { type: 'EarnCard', code: roland, card: litaChantler } },
       upgradeDecks,
     ]);
 

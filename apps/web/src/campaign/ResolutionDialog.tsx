@@ -1,14 +1,21 @@
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { assertNever } from '@arkham/util';
-import type {
-  CampaignCommand,
-  GameState,
-  InvestigatorCode,
-  ProposedChange,
-  StoryValue,
+import {
+  campaign,
+  type CampaignCommand,
+  type GameState,
+  type InvestigatorCode,
+  type ProposedChange,
+  type StoryValue,
 } from '@arkham/engine';
-import { campaignCatalog, findScenario, scenarioCardName } from '../scenarios/scenarioCatalog';
+import {
+  findCampaignOfScenario,
+  findScenario,
+  resolutionNumber,
+  scenarioCardName,
+} from '../scenarios/scenarioCatalog';
+import { flagNoteKey } from './CampaignSheets';
 import './resolution.css';
 
 /** Where a change goes on the log page, which is how the dialog groups the list. */
@@ -57,7 +64,7 @@ export function ResolutionDialog({
     return change.options.slice(picked, picked + 1);
   });
   const scenario = findScenario(game.meta.scenarioId);
-  const resolutionNumber = game.meta.resolution && numberOf(game.meta.resolution);
+  const number = game.meta.resolution && resolutionNumber(game.meta.resolution);
   const indexed = changes.map((change, index) => ({ change, index }));
 
   return (
@@ -74,17 +81,11 @@ export function ResolutionDialog({
       <hgroup>
         <p>
           {scenario && `${t(scenario.nameKey)} · `}
-          {resolutionNumber === undefined
-            ? t('resolution.none')
-            : t('resolution.numbered', { n: resolutionNumber })}
+          {number === undefined ? t('resolution.none') : t('resolution.numbered', { n: number })}
         </p>
         <h2 id="resolution-title">{t('resolution.title')}</h2>
       </hgroup>
-      <p>
-        {resolutionNumber === undefined
-          ? t('resolution.readNone')
-          : t('resolution.read', { n: resolutionNumber })}
-      </p>
+      <p>{number === undefined ? t('resolution.readNone') : t('resolution.read', { n: number })}</p>
       <form
         onSubmit={(event) => {
           event.preventDefault();
@@ -139,23 +140,40 @@ export function ResolutionDialog({
   );
 }
 
-/** The number a resolution id carries ("R2" → "2"), which the guide titles it with. */
-function numberOf(resolution: string): string {
-  return /\d+$/.exec(resolution)?.[0] ?? resolution;
+function groupOf(change: ProposedChange): ChangeGroup {
+  switch (change.kind) {
+    case 'byHand':
+      return 'atTheTable';
+    case 'choice':
+      return 'investigators';
+    case 'command':
+      return commandGroup(change.command);
+    default:
+      return assertNever(change);
+  }
 }
 
-function groupOf(change: ProposedChange): ChangeGroup {
-  if (change.kind === 'byHand') return 'atTheTable';
-  if (change.kind === 'choice') return 'investigators';
-  switch (change.command.type) {
+function commandGroup(command: CampaignCommand): ChangeGroup {
+  switch (command.type) {
     case 'RecordStory':
     case 'EndCampaign':
+    case 'StartCampaign':
+    case 'AdvanceScenario':
+    case 'AdjustCampaign':
       return 'notes';
     case 'AddChaosToken':
     case 'RemoveChaosToken':
       return 'chaosBag';
-    default:
+    case 'AwardXp':
+    case 'SpendXp':
+    case 'AddTrauma':
+    case 'MarkKilled':
+    case 'MarkInsane':
+    case 'EarnCard':
+    case 'ReplaceInvestigator':
       return 'investigators';
+    default:
+      return assertNever(command);
   }
 }
 
@@ -166,18 +184,17 @@ function groupOf(change: ProposedChange): ChangeGroup {
  */
 function useDescribeCommand(game: GameState): (command: CampaignCommand) => string {
   const { t, i18n } = useTranslation();
-  const storyKey = campaignCatalog.find((entry) =>
-    entry.definition.scenarios.includes(game.meta.scenarioId),
-  )?.storyKey;
+  const storyKey = findCampaignOfScenario(game.meta.scenarioId)?.storyKey;
   const nameOf = (code: InvestigatorCode): string =>
-    game.campaign?.investigators.find((member) => member.code === code)?.name ?? code;
+    (game.campaign && campaign.findInvestigator(game.campaign, code)?.name) ?? code;
 
   const story = (key: string, value: StoryValue): string => {
     const record = `${storyKey}.${key}`;
     switch (value.kind) {
       case 'flag': {
-        const words = `${record}.${value.value ? 'yes' : 'no'}`;
-        return i18n.exists(words) ? t(words) : t('resolution.record', { record: key });
+        const words = flagNoteKey(`${storyKey}`, key, value.value);
+        // The log page shows no note for this side of the flag, so neither does the dialog.
+        return i18n.exists(words) ? t(words) : t('resolution.unwrittenRecord');
       }
       case 'list':
         return t('resolution.list', { heading: t(record), names: value.entries.join(', ') });
@@ -219,9 +236,15 @@ function useDescribeCommand(game: GameState): (command: CampaignCommand) => stri
         return t('resolution.removeToken', { token: t(`chaosToken.${command.token}`) });
       case 'EndCampaign':
         return t(`resolution.campaignEnds.${command.result}`);
+      case 'StartCampaign':
+      case 'SpendXp':
+      case 'ReplaceInvestigator':
+      case 'AdvanceScenario':
+      case 'AdjustCampaign':
+        // A resolution proposes none of these; `applyResolution` adds `AdvanceScenario` itself.
+        return t('resolution.otherChange');
       default:
-        // A resolution proposes none of the other commands (start, spending XP, corrections).
-        return command.type;
+        return assertNever(command);
     }
   };
 }

@@ -16,12 +16,12 @@ export const nightOfTheZealotTexts = {
       },
       resolution: {
         earnLita:
-          'Der Ermittlungsleiter nimmt Lita Chantler in sein Deck; sie zählt nicht zur Deckgröße.',
+          'Der Ermittlungsleiter darf Lita Chantler in sein Deck aufnehmen; sie zählt nicht zur Deckgröße.',
         upgradeDecks: 'Jeder Ermittler gibt Erfahrung für Deckverbesserungen aus.',
         replaceKilled:
-          'Wessen Ermittler getötet wurde, wählt einen neuen Ermittler für das nächste Szenario.',
+          'Wessen Ermittler getötet wurde, wählt einen neuen Ermittler für das nächste Szenario. Bleibt kein Ermittler zur Wahl, endet die Kampagne und die Spieler verlieren.',
         earnLitaIfLeadKilled:
-          'Wurde der Ermittlungsleiter getötet, nimmt der Ermittler, der Lita Chantler erhalten hat, sie in sein Deck.',
+          'Hat niemand aufgegeben, wählt einen der neuen Ermittler, der Lita Chantler erhält. Wer sie erhalten hat, darf sie in sein Deck aufnehmen; sie zählt nicht zur Deckgröße.',
       },
     },
     theMidnightMasks: {
@@ -53,8 +53,7 @@ export const nightOfTheZealotTexts = {
       resolution: {
         upgradeDecks: 'Jeder Ermittler gibt Erfahrung für Deckverbesserungen aus.',
         removeLita: 'Entfernt Lita Chantler aus dem Deck, in dem sie ist.',
-        madnessWeakness:
-          'Jeder Ermittler nimmt eine zufällige Basis-Schwäche „Wahnsinn“ in sein Deck.',
+        madnessWeakness: 'Jeder Ermittler nimmt eine zufällige Schwäche „Wahnsinn“ in sein Deck.',
       },
     },
   },
