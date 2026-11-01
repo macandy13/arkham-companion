@@ -98,6 +98,17 @@ describe('SettingsScreen', () => {
     expect(loadSettings().cardTheme).toBe('pictures');
   });
 
+  it('applies and saves the enemy token face', () => {
+    render(<SettingsScreen packs={packs} />);
+
+    fireEvent.change(screen.getByRole('combobox', { name: 'Enemy tokens' }), {
+      target: { value: 'initials' },
+    });
+
+    expect(document.documentElement.dataset.enemyTokens).toBe('initials');
+    expect(loadSettings().enemyTokens).toBe('initials');
+  });
+
   it('explains that the pack list is missing without catalog packs', () => {
     render(<SettingsScreen />);
 

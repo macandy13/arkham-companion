@@ -418,12 +418,13 @@
 
 /*
  * With the setting at initials (`Settings.enemyTokens`), enemy tokens keep their initial and never
- * show the picture. More specific than the rule above that hides the initial under a picture.
+ * show the picture.
  */
 :root[data-enemy-tokens='initials'] #map svg [data-enemy] > [data-part='avatar'] {
   display: none;
 }
 
+/* More specific than the rule above that hides the initial under a picture. */
 :root[data-enemy-tokens='initials'] #map svg [data-enemy]:has(> [data-part='avatar']) > text {
   display: inline;
 }
