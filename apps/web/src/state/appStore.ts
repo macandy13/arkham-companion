@@ -530,13 +530,14 @@ export function createAppStore(
           const written = get().writtenResolution;
           if (!written) throw new Error('No resolution to take back');
           const loaded = await gameStore.undoLastCampaign(written.campaignId, written.seq);
-          set({ writtenResolution: undefined });
           if (session && currentCampaignId === written.campaignId) {
             campaignLog = loaded?.log;
             publish(session);
           }
           if (get().campaign?.campaignId === written.campaignId)
             await loadCampaign(written.campaignId);
+          // Only now, so the toast closes as the log is drawn without the entries it took back.
+          set({ writtenResolution: undefined });
           await get().refresh();
         });
       },

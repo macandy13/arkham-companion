@@ -611,7 +611,7 @@ export const appTexts = {
       text: 'The resolution is in the campaign log.',
       undo: 'Undo',
       dismiss: 'OK',
-      undoFailed: 'The log has changed since, so the resolution can no longer be taken back here.',
+      undoFailed: 'The resolution could not be taken back out of the log.',
     },
     over: 'The scenario is over',
     pickResolution:

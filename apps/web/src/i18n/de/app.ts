@@ -614,8 +614,7 @@ export const appTexts = {
       text: 'Die Auflösung steht im Kampagnenprotokoll.',
       undo: 'Rückgängig',
       dismiss: 'OK',
-      undoFailed:
-        'Das Protokoll hat sich seitdem geändert, daher lässt sich die Auflösung hier nicht mehr zurücknehmen.',
+      undoFailed: 'Die Auflösung ließ sich nicht aus dem Protokoll zurücknehmen.',
     },
     over: 'Das Szenario ist vorbei',
     pickResolution:

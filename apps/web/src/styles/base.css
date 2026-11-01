@@ -116,12 +116,10 @@ button:not(:disabled):hover {
  * Every screen outside play and every dialog is printed on campaign-guide paper (MD.1), the same in
  * both themes. The table's colour tokens are redefined on the paper, so what lies on it (text,
  * buttons, fields, lines, the game's clue and doom colours) turns to ink without rules of its own.
- * The campaign log brings its own papers on a starfield, so it keeps the table's tokens; only the
- * toast after a resolution was written (#resolution-written) is a slip of guide paper.
+ * The campaign log brings its own papers on a starfield, so it keeps the table's tokens.
  */
 #app > main:not(:has(#board, #campaign-log)),
-dialog,
-#resolution-written {
+dialog {
   --color-background: var(--color-paper);
   --color-text: var(--color-ink);
   --color-text-muted: var(--color-ink-muted);
@@ -138,8 +136,7 @@ dialog,
 /* A card dialog (CardDialog) is only the frame around its card and page, so the page is the paper. */
 #app > main:not(:has(#board, #campaign-log)),
 dialog:where(:not([data-shell])),
-dialog[data-shell] > article,
-#resolution-written {
+dialog[data-shell] > article {
   border: var(--border-width) solid var(--color-paper-rim);
   border-radius: var(--radius);
   background: var(--guide-paper);
@@ -161,8 +158,7 @@ dialog[data-shell] > article,
 }
 
 :where(#app > main:not(:has(#board)), dialog)
-  :is(footer > button, button[type='submit'], button[data-primary]),
-#resolution-written > footer > button {
+  :is(footer > button, button[type='submit'], button[data-primary]) {
   padding-inline: var(--space-4);
   border-radius: var(--radius-pill);
   background: none;
