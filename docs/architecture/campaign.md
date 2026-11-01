@@ -58,7 +58,7 @@ Steps name their target (`each`, `lead`, `notResigned`, `resigned`) instead of i
 An investigator the proposal kills, drives insane, or gives trauma up to their health or sanity on the log gets no change after that one, since the campaign rejects commands for them.
 
 `campaign.proposeResolution` only proposes: the players confirm or edit the list, and `campaign.applyResolution` applies the confirmed commands in one step, all or none, followed by `AdvanceScenario`, which adds the scenario and its outcome to `CampaignLog.playedScenarios` and moves on.
-Both read the resolution the game ended with (`gameOutcome`) unless the players pass another `ScenarioOutcome`, for a table that played the ending differently; the defeat trauma still comes from the game.
+Both read the resolution the game ended with (`gameOutcome`) unless the players pass another `ScenarioOutcome`, for a table that played the ending differently (`sameOutcome` compares two); the defeat trauma still comes from the game.
 
 The last scenario's `endCampaign` step proposes `EndCampaign`, which sets `CampaignLog.result` (`won`, `lost`, or `survived` for an ending that is neither); a log without a result is still running.
 

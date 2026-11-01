@@ -617,6 +617,20 @@ export const appTexts = {
     tokenCount_other: '{{token}} ×{{count}}',
   },
   resolution: {
+    written: {
+      label: 'Written into the log',
+      text: 'The resolution is in the campaign log.',
+      undo: 'Undo',
+      dismiss: 'OK',
+      undoFailed: 'The resolution could not be taken back out of the log.',
+    },
+    over: 'The scenario is over',
+    pickResolution:
+      'Confirm the resolution, or pick another one if the table played it differently.',
+    standaloneTitle: 'Resolution steps',
+    next: 'Next',
+    back: 'Back',
+    done: 'Done',
     title: 'Into the campaign log',
     numbered: 'Resolution {{n}}',
     none: 'No resolution',
