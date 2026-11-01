@@ -11,7 +11,7 @@ import { cardImageUrl } from './cardImageUrl';
 export interface CardPicture {
   url: string;
   shown: boolean;
-  onLoad: (event?: SyntheticEvent<Element>) => void;
+  onLoad: (event: SyntheticEvent<Element>) => void;
   onError: () => void;
 }
 
@@ -22,7 +22,7 @@ export type PictureShape = 'landscape' | 'portrait';
  * The shape of a loaded `img`, or nothing while its size is unknown (an SVG `image` has none to
  * read, and a test's fake load has none).
  */
-function loadedShape(target: EventTarget | undefined): PictureShape | undefined {
+function loadedShape(target: EventTarget): PictureShape | undefined {
   if (!(target instanceof HTMLImageElement)) return undefined;
   const { naturalWidth: width, naturalHeight: height } = target;
   if (width === 0 || height === 0) return undefined;
@@ -48,7 +48,7 @@ export function useCardPicture(
     url,
     shown: loadedUrl === url && sidewaysUrl !== url,
     onLoad: (event) => {
-      const loaded = loadedShape(event?.currentTarget);
+      const loaded = loadedShape(event.currentTarget);
       if (shape && loaded && loaded !== shape) setSidewaysUrl(url);
       else setLoadedUrl(url);
     },
