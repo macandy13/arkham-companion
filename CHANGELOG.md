@@ -2,6 +2,14 @@
 
 The sections dated up to 2026-10-22 were released as 1.0.0 to 1.8.0 by mistake: Release Please starts at 1.0.0 by default. Versioning restarted at 0.1.0 (see "Versions" in docs/product.md).
 
+## [0.1.19](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v0.1.18...arkham-companion-v0.1.19) (2026-11-01)
+
+
+### Features
+
+* **web:** enemy details on the card shell (MD.6a1) ([c796d41](https://github.com/macandy13/arkham-companion/commit/c796d41f007f8e6725a7201b0df643f48836fd35))
+* **web:** location details on the card shell (MD.6a2) ([c41ffdd](https://github.com/macandy13/arkham-companion/commit/c41ffddd30c66015cc401990c28d5e277cebc93d))
+
 ## [0.1.18](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v0.1.17...arkham-companion-v0.1.18) (2026-11-01)
 
 
