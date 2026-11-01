@@ -19,6 +19,13 @@ A "cannot" is a `CardStats.restrictions` entry, never an ability.
 - Dissonant Voices, "You cannot play assets or events":
   `restrictions: [{ cannot: ['play'], what: 'cards', who: 'threatArea', cards: { types: ['asset', 'event'] } }]`.
 
+## Action costs
+
+A raised cost of basic actions is a `CardStats.actionCosts` entry.
+
+- Frozen in Fear, "The first move, fight, or evade action you perform each round costs 1 additional action":
+  `actionCosts: [{ actions: ['move', 'fight', 'evade'], by: 1, who: 'threatArea', first: 'eachRound' }]`.
+
 ## Objectives and special acts and agendas
 
 An objective is an ability of its act or agenda, with a window that opens only while that card is current.

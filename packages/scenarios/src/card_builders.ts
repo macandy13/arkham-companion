@@ -8,6 +8,7 @@ import {
   type Ability,
   type CardAction,
   type CardModifier,
+  type ActionCostModifier,
   type CardRestriction,
   type CardStats,
   type EncounterSetCode,
@@ -229,6 +230,8 @@ export interface TreacheryOptions {
   actions?: readonly CardAction[];
   /** Its "cannot" abilities (Locked Door: its location cannot be investigated). */
   restrictions?: readonly CardRestriction[];
+  /** What it adds to the cost of basic actions (Frozen in Fear's first move, fight or evade). */
+  actionCosts?: readonly ActionCostModifier[];
 }
 
 /** Card stats for a hand-entered treachery, with its front picture. */
@@ -244,6 +247,7 @@ export function treachery({
   modifiers,
   actions,
   restrictions,
+  actionCosts,
 }: TreacheryOptions): CardStats {
   return {
     code: cardCode(code),
@@ -259,6 +263,7 @@ export function treachery({
     ...(modifiers ? { modifiers } : {}),
     ...(actions ? { actions } : {}),
     ...(restrictions ? { restrictions } : {}),
+    ...(actionCosts ? { actionCosts } : {}),
   };
 }
 

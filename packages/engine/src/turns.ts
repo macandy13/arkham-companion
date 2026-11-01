@@ -77,7 +77,27 @@ export function requireTurnOf(state: GameState, investigatorId: InvestigatorId):
 
 /** `AdjustActions`: changes the investigator's remaining actions. */
 export function handleAdjustActions(state: GameState, cmd: AdjustActions): ActionsAdjusted[] {
-  return [actionsAdjusted(state, cmd.investigatorId, cmd.delta)];
+  if (cmd.for === undefined) return [actionsAdjusted(state, cmd.investigatorId, cmd.delta)];
+  // A free action costs nothing but is still performed, so it is recorded with no change.
+  if (cmd.delta === 0)
+    return [
+      {
+        type: 'ActionsAdjusted',
+        investigatorId: activeInvestigator(state, cmd.investigatorId).id,
+        delta: 0,
+        for: cmd.for,
+      },
+    ];
+  const adjusted = actionsAdjusted(state, cmd.investigatorId, cmd.delta);
+  // Only counting an action off takes it; a correction upwards must not use up the first one.
+  if (cmd.delta > 0)
+    throw new CommandRejected({
+      code: 'invalidActionAdjustment',
+      investigatorId: cmd.investigatorId,
+      delta: cmd.delta,
+      actionsRemaining: activeInvestigator(state, cmd.investigatorId).actionsRemaining,
+    });
+  return [{ ...adjusted, for: cmd.for }];
 }
 
 /**
