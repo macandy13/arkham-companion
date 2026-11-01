@@ -1,6 +1,7 @@
 import { useId } from 'react';
 import { ACT_ART, AGENDA_ART, LANDSCAPE_SCAN, artViewBox } from '../catalog/cardArt';
-import { NightSky, OrnamentLine, mirrored, scrollPath } from '../catalog/cardFace';
+import { NightSky, OrnamentLine, SetIcon, mirrored, scrollPath } from '../catalog/cardFace';
+import type { EncounterSetCode } from '@arkham/engine';
 import type { CardPicture } from '../catalog/cardImages';
 import type { Point } from '../map/mapLayout';
 import './book_face.css';
@@ -34,6 +35,8 @@ export const BOOK_FACE = {
    * header's small cards.
    */
   disc: { x: 205, y: 252, radius: 23, setting: 26 },
+  /** The radius the encounter set icon fills between the title's brackets. */
+  setIcon: 8,
   handle: { from: 12, to: 34, rise: 18 },
   footer: 14,
 } as const;
@@ -134,7 +137,7 @@ function bookPaths(kind: BookKind) {
  * The face of an agenda or act (`kind`) in the Exact card theme, in landscape scan units: our own
  * drawing of the printed layout (`BOOK_FACE`, no FFG art), the art cut from the card's `picture`
  * once it has loaded (a hatch until then, and for good offline), the open book beside it with its
- * page edges, the title's scrolls and set mark, and the threshold disc printing `threshold`. The
+ * page edges, the title's scrolls and its encounter set's icon (`set`; a plain ring without one), and the threshold disc printing `threshold`. The
  * header card lays its name, its count and its buttons over it in HTML (GameHeader `CardFace`), so
  * this is decoration only (`aria-hidden`): the count's token names the threshold for assistive
  * technology.
@@ -143,10 +146,12 @@ export function BookFace({
   kind,
   picture,
   threshold,
+  set,
 }: {
   kind: BookKind;
   picture: CardPicture | undefined;
   threshold: number | undefined;
+  set: EncounterSetCode | undefined;
 }) {
   const pageId = useId();
   const paths = bookPaths(kind);
@@ -196,7 +201,11 @@ export function BookFace({
         <OrnamentLine key={d} d={d} />
       ))}
       <path data-part="ink-line" d={paths.brackets} />
-      <circle data-part="set-mark" cx={paths.setMark.x} cy={paths.setMark.y} r={4} />
+      {set ? (
+        <SetIcon set={set} x={paths.setMark.x} y={paths.setMark.y} radius={BOOK_FACE.setIcon} />
+      ) : (
+        <circle data-part="set-mark" cx={paths.setMark.x} cy={paths.setMark.y} r={4} />
+      )}
       <path data-part="fine-line" d={paths.fan} />
       {paths.handle && (
         <g data-part="handle">
