@@ -1,0 +1,3142 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="robots" content="noindex" />
+    <title>Campaign Log Prototype</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=IM+Fell+English+SC&family=IM+Fell+English:ital@0;1&family=Alegreya+Sans:wght@400;500;700&family=Caveat:wght@500;700&family=Federant&family=Felipa&family=Libre+Caslon+Text:wght@400;700&family=Crimson+Pro:ital,wght@1,800&display=swap"
+    />
+    <style>
+      /* Campaign mode prototype. The campaign log is drawn as the printed log page of the campaign
+   guides: a sheet of paper with printed headings, boxes and rules, and the players' entries in
+   handwriting. Like the cards, the log is an object on the table, so it keeps its own skin in both
+   app themes: "Printed" (paper, like the card theme Exact) or "Night and brass" (like that card theme). */
+      :root {
+        color-scheme: dark;
+        --night: #0b1614;
+        --night-2: #12241f;
+        --brass: #c9a45c;
+        --brass-dim: #8a7140;
+        --bone: #ece3cf;
+        --bone-dim: #b5ab95;
+        --text: var(--bone);
+        --text-dim: var(--bone-dim);
+        --bar: rgba(5, 12, 10, 0.9);
+        --line: rgba(201, 164, 92, 0.32);
+        --surface: #10201c;
+        --scrim: rgba(3, 8, 7, 0.72);
+        --shadow: rgba(0, 0, 0, 0.6);
+        --clue: #3f9bb5;
+        --doom: #b8433f;
+        --health: #b23a33;
+        --sanity: #3d63ad;
+        --token-black: #141414;
+        --token-ring: #e6dcc3;
+
+        /* The log page skin ("Printed"). */
+        --paper: #eee2c4;
+        --paper-edge: #d9c69c;
+        --print: #2c2216;
+        --print-dim: #6b5a40;
+        --rule: rgba(60, 42, 20, 0.55);
+        --rule-faint: rgba(60, 42, 20, 0.18);
+        --pen: #1f3d78;
+        --pen-new: #1f3d78;
+        --stamp: #a3261f;
+        --mark: rgba(201, 150, 40, 0.28);
+
+        --font-display: 'Federant', 'IM Fell English SC', Georgia, serif;
+        --font-story: 'Libre Caslon Text', Georgia, serif;
+        --font-label: 'Libre Caslon Text', Georgia, serif;
+        --font-script: 'Felipa', 'Apple Chancery', cursive;
+        --font-news: 'Crimson Pro', Georgia, serif;
+        --script-ink: #2a5d93;
+        --space: #070b1f;
+        --board-a: #d3ccc9;
+        --board-b: #b9b1b0;
+        --stars: none;
+        --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.3 0 0 0 0 0.22 0 0 0 0 0.1 0 0 0 0.1 0'/%3E%3C/filter%3E%3Crect width='240' height='240' filter='url(%23n)'/%3E%3C/svg%3E");
+        --font-ui: 'Alegreya Sans', 'Segoe UI', system-ui, sans-serif;
+        --font-hand: 'Caveat', 'Segoe Print', 'Bradley Hand', cursive;
+        --touch: 44px;
+        --radius: 6px;
+      }
+      :root[data-skin='night'] {
+        --paper: #10221d;
+        --paper-edge: #050c0a;
+        --print: #d9c48f;
+        --print-dim: #9c8a5c;
+        --rule: rgba(201, 164, 92, 0.6);
+        --rule-faint: rgba(201, 164, 92, 0.16);
+        --pen: #e8efe9;
+        --pen-new: #e8efe9;
+        --stamp: #e0645a;
+        --mark: rgba(201, 164, 92, 0.22);
+      }
+      @media (prefers-color-scheme: light) {
+        :root:not([data-theme='dark']) {
+          color-scheme: light;
+          --night: #e8dcc0;
+          --night-2: #dccdab;
+          --brass: #8a6526;
+          --brass-dim: #b39a6a;
+          --text: #2a2216;
+          --text-dim: #6a5d47;
+          --bar: rgba(246, 238, 220, 0.94);
+          --line: rgba(125, 90, 30, 0.35);
+          --surface: #f6eedb;
+          --scrim: rgba(40, 30, 15, 0.45);
+          --shadow: rgba(60, 40, 10, 0.35);
+        }
+      }
+      :root[data-theme='light'] {
+        color-scheme: light;
+        --night: #e8dcc0;
+        --night-2: #dccdab;
+        --brass: #8a6526;
+        --brass-dim: #b39a6a;
+        --text: #2a2216;
+        --text-dim: #6a5d47;
+        --bar: rgba(246, 238, 220, 0.94);
+        --line: rgba(125, 90, 30, 0.35);
+        --surface: #f6eedb;
+        --scrim: rgba(40, 30, 15, 0.45);
+        --shadow: rgba(60, 40, 10, 0.35);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        min-height: 100%;
+      }
+      body {
+        background:
+          radial-gradient(ellipse at 50% 30%, var(--night-2), var(--night) 70%) fixed,
+          var(--night);
+        color: var(--text);
+        font-family: var(--font-ui);
+        font-size: 15px;
+      }
+      #mat {
+        display: none;
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        z-index: 0;
+        opacity: 0.5;
+      }
+      button {
+        font: inherit;
+        color: inherit;
+        cursor: pointer;
+      }
+      button:focus-visible {
+        outline: 2px solid var(--brass);
+        outline-offset: 2px;
+      }
+      h1,
+      h2,
+      h3,
+      h4 {
+        font-weight: 400;
+        margin: 0;
+        text-wrap: balance;
+      }
+
+      /* ---------- App bar ---------- */
+      #bar {
+        position: sticky;
+        top: 0;
+        z-index: 5;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-height: 52px;
+        padding: 6px max(16px, env(safe-area-inset-right)) 6px max(16px, env(safe-area-inset-left));
+        background: var(--bar);
+        border-bottom: 1px solid var(--line);
+        backdrop-filter: blur(6px);
+      }
+      #bar .title {
+        flex: 1;
+        min-width: 0;
+        display: grid;
+      }
+      #bar h1 {
+        font-family: var(--font-display);
+        font-size: 1.25rem;
+        color: var(--brass);
+        line-height: 1.1;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      #bar .sub {
+        font-size: 0.8rem;
+        color: var(--text-dim);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .icon-btn {
+        width: var(--touch);
+        height: var(--touch);
+        flex: none;
+        display: grid;
+        place-items: center;
+        border: 1px solid transparent;
+        border-radius: 50%;
+        background: transparent;
+        color: var(--brass);
+      }
+      .icon-btn:hover {
+        border-color: var(--line);
+      }
+      .icon-btn svg {
+        width: 22px;
+        height: 22px;
+      }
+      .bag-btn {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        height: 38px;
+        padding: 0 12px 0 6px;
+        border: 1px solid var(--line);
+        border-radius: 19px;
+        background: transparent;
+        color: var(--text);
+        font-size: 0.9rem;
+      }
+      .bag-btn .token {
+        --size: 26px;
+      }
+
+      /* ---------- Menu ---------- */
+      #menu {
+        position: fixed;
+        top: 52px;
+        right: max(12px, env(safe-area-inset-right));
+        z-index: 20;
+        width: min(300px, calc(100vw - 24px));
+        padding: 8px;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        box-shadow: 0 12px 32px var(--shadow);
+      }
+      #menu[hidden] {
+        display: none;
+      }
+      #menu h4 {
+        font-family: var(--font-display);
+        color: var(--brass);
+        font-size: 0.95rem;
+        padding: 8px 8px 4px;
+      }
+      #menu button {
+        display: block;
+        width: 100%;
+        text-align: left;
+        min-height: 38px;
+        padding: 6px 10px;
+        border: 0;
+        border-radius: 6px;
+        background: transparent;
+      }
+      #menu button:hover {
+        background: var(--line);
+      }
+      #menu button[aria-checked='true']::before {
+        content: '✓ ';
+        color: var(--brass);
+      }
+      #menu .seg {
+        display: flex;
+        gap: 4px;
+        padding: 0 4px 6px;
+      }
+      #menu .seg button {
+        flex: 1;
+        text-align: center;
+        border: 1px solid var(--line);
+      }
+      #menu .seg button[aria-checked='true'] {
+        background: var(--line);
+      }
+      #menu .seg button[aria-checked='true']::before {
+        content: none;
+      }
+
+      /* ---------- Chapter strip: bookmarks along the top of the book ---------- */
+      main {
+        position: relative;
+        z-index: 1;
+        padding: 14px max(16px, env(safe-area-inset-right)) 120px
+          max(16px, env(safe-area-inset-left));
+      }
+      #chapters {
+        display: flex;
+        gap: 8px;
+        max-width: 1180px;
+        margin: 0 auto 12px;
+        overflow-x: auto;
+        scrollbar-width: none;
+      }
+      .chapter {
+        flex: 1 0 150px;
+        display: grid;
+        grid-template-columns: auto 1fr;
+        align-items: center;
+        gap: 2px 10px;
+        padding: 8px 12px;
+        text-align: left;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: rgba(0, 0, 0, 0.12);
+        color: var(--text-dim);
+      }
+      .chapter .num {
+        grid-row: span 2;
+        font-family: var(--font-display);
+        font-size: 1.5rem;
+        color: var(--brass-dim);
+        width: 1.6em;
+        text-align: center;
+      }
+      .chapter .name {
+        font-family: var(--font-display);
+        font-size: 1rem;
+        color: var(--text);
+      }
+      .chapter .state {
+        font-size: 0.78rem;
+      }
+      .chapter[data-state='played'] .num {
+        color: var(--brass);
+      }
+      .chapter[data-state='next'] {
+        border-color: var(--brass);
+        background: rgba(201, 164, 92, 0.12);
+      }
+      .chapter[data-state='next'] .num,
+      .chapter[data-state='next'] .state {
+        color: var(--brass);
+      }
+      .chapter[data-state='later'] .name {
+        color: var(--text-dim);
+      }
+
+      @media (max-width: 599px) {
+        .chapter {
+          flex: 0 0 auto;
+          padding: 6px 10px;
+        }
+        .chapter .name {
+          white-space: nowrap;
+          font-size: 0.92rem;
+        }
+        .chapter .num {
+          font-size: 1.2rem;
+        }
+        .bag-btn {
+          padding: 0 6px;
+        }
+        .bag-btn span:last-child {
+          display: none;
+        }
+        .xp-circle {
+          width: 44px;
+          height: 44px;
+        }
+      }
+
+      /* ---------- The log: a book spread on wide screens, one page on phones ---------- */
+      #book {
+        max-width: 1180px;
+        margin: 0 auto;
+        display: grid;
+        gap: 0;
+        filter: drop-shadow(0 18px 30px var(--shadow));
+      }
+      @media (min-width: 900px) {
+        #book {
+          grid-template-columns: 1fr 1fr;
+        }
+        #book .page:first-child {
+          border-radius: 4px 0 0 4px;
+          box-shadow: inset -18px 0 24px -18px rgba(0, 0, 0, 0.35);
+        }
+        #book .page:last-child {
+          border-radius: 0 4px 4px 0;
+          box-shadow: inset 18px 0 24px -18px rgba(0, 0, 0, 0.35);
+        }
+      }
+      .page {
+        position: relative;
+        padding: clamp(18px, 3.4vw, 40px) clamp(16px, 3.2vw, 38px) clamp(22px, 3.4vw, 40px);
+        background-color: var(--paper);
+        background-image:
+          radial-gradient(ellipse at 50% 40%, transparent 55%, var(--paper-edge) 130%),
+          url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.3 0 0 0 0 0.22 0 0 0 0 0.1 0 0 0 0.09 0'/%3E%3C/filter%3E%3Crect width='240' height='240' filter='url(%23n)'/%3E%3C/svg%3E");
+        color: var(--print);
+        font-family: var(--font-story);
+      }
+      :root[data-skin='night'] .page {
+        background-image:
+          radial-gradient(ellipse at 50% 40%, transparent 50%, var(--paper-edge) 140%),
+          radial-gradient(circle at 18% 12%, rgba(201, 164, 92, 0.06), transparent 30%);
+        outline: 1px solid var(--rule);
+        outline-offset: -10px;
+      }
+      @media (max-width: 899px) {
+        #book .page + .page {
+          border-top: 1px dashed var(--rule-faint);
+        }
+      }
+      .page-head {
+        text-align: center;
+        margin-bottom: 18px;
+      }
+      .page-head h2 {
+        font-family: var(--font-display);
+        font-size: clamp(1.6rem, 3.4vw, 2.3rem);
+        letter-spacing: 0.02em;
+      }
+      .page-head .campaign {
+        font-family: var(--font-story);
+        font-style: italic;
+        color: var(--print-dim);
+        font-size: 1.05rem;
+      }
+      .flourish {
+        display: block;
+        width: min(320px, 80%);
+        height: 16px;
+        margin: 6px auto 0;
+        color: var(--print);
+      }
+      .section-title {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin: 22px 0 10px;
+        font-family: var(--font-display);
+        font-size: 1.2rem;
+      }
+      .section-title::before,
+      .section-title::after {
+        content: '';
+        flex: 1;
+        border-top: 1px solid var(--rule);
+        box-shadow: 0 2px 0 -1px var(--rule-faint);
+      }
+      .section-title:first-of-type {
+        margin-top: 4px;
+      }
+
+      /* Printed box: a double rule like the guide's frames, with little corner notches. */
+      .box {
+        position: relative;
+        border: 1.5px solid var(--rule);
+        outline: 1px solid var(--rule-faint);
+        outline-offset: 3px;
+        padding: 10px 12px;
+        margin: 4px;
+      }
+      .box::before,
+      .box::after {
+        content: '';
+        position: absolute;
+        width: 9px;
+        height: 9px;
+        border: 1.5px solid var(--rule);
+        background: var(--paper);
+        transform: rotate(45deg);
+      }
+      .box::before {
+        top: -6px;
+        left: calc(50% - 5px);
+      }
+      .box::after {
+        bottom: -6px;
+        left: calc(50% - 5px);
+      }
+      .label {
+        display: block;
+        font-family: var(--font-display);
+        font-size: 0.82rem;
+        letter-spacing: 0.04em;
+        color: var(--print-dim);
+      }
+      .hand {
+        font-family: var(--font-hand);
+        font-weight: 500;
+        color: var(--pen);
+        font-size: 1.45rem;
+        line-height: 1.1;
+      }
+      .written-line {
+        border-bottom: 1px solid var(--rule-faint);
+        min-height: 1.9rem;
+        padding-top: 2px;
+      }
+
+      /* ---------- Investigator boxes ---------- */
+      .investigators {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(min(100%, 230px), 1fr));
+        gap: 14px;
+      }
+      .inv {
+        display: grid;
+        gap: 6px;
+        text-align: left;
+        background: transparent;
+        color: inherit;
+        font: inherit;
+        cursor: pointer;
+      }
+      .inv:hover {
+        background: var(--mark);
+      }
+      .inv .who {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        align-items: end;
+        gap: 8px;
+      }
+      .inv .who .hand {
+        font-size: 1.7rem;
+      }
+      .class-icon {
+        width: 30px;
+        height: 30px;
+        color: var(--print);
+      }
+      .inv .meta {
+        font-family: var(--font-ui);
+        font-size: 0.78rem;
+        color: var(--print-dim);
+      }
+      .inv .xp {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        align-items: center;
+        gap: 10px;
+      }
+      .xp-circle {
+        width: 54px;
+        height: 54px;
+        border: 1.5px solid var(--rule);
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        outline: 1px solid var(--rule-faint);
+        outline-offset: 2px;
+      }
+      .xp-circle .hand {
+        font-size: 2rem;
+        font-weight: 700;
+      }
+      .trauma {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        align-items: center;
+        gap: 4px 8px;
+      }
+      .ticks {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 2px;
+      }
+      .tick {
+        position: relative;
+        width: 13px;
+        height: 13px;
+        border: 1px solid var(--rule);
+      }
+      .tick[data-kind='physical'] {
+        border-color: color-mix(in srgb, var(--health) 70%, var(--rule));
+      }
+      .tick[data-kind='mental'] {
+        border-color: color-mix(in srgb, var(--sanity) 70%, var(--rule));
+      }
+      .tick[data-filled]::after {
+        content: '✗';
+        position: absolute;
+        inset: -8px -3px auto auto;
+        font-family: var(--font-hand);
+        font-weight: 700;
+        font-size: 1.3rem;
+        line-height: 1;
+        color: var(--pen);
+      }
+      .earned {
+        min-height: 1.9rem;
+      }
+      .inv[data-fate='killed'],
+      .inv[data-fate='insane'] {
+        position: relative;
+      }
+      .inv[data-fate='killed'] > :not(.stamp),
+      .inv[data-fate='insane'] > :not(.stamp) {
+        opacity: 0.55;
+      }
+      .stamp {
+        position: absolute;
+        top: 44%;
+        left: 50%;
+        transform: translate(-50%, -50%) rotate(-12deg);
+        padding: 2px 14px;
+        border: 3px double var(--stamp);
+        color: var(--stamp);
+        font-family: var(--font-display);
+        font-size: 1.7rem;
+        letter-spacing: 0.12em;
+        mix-blend-mode: multiply;
+        opacity: 0.85;
+      }
+      :root[data-skin='night'] .stamp {
+        mix-blend-mode: normal;
+      }
+      .former {
+        margin-top: 10px;
+        font-size: 0.95rem;
+        color: var(--print-dim);
+      }
+      .former .hand {
+        font-size: 1.25rem;
+        text-decoration: line-through;
+        text-decoration-color: var(--pen);
+      }
+
+      /* ---------- Campaign notes ---------- */
+      .notes {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        background-image: repeating-linear-gradient(
+          to bottom,
+          transparent 0 calc(2.3rem - 1px),
+          var(--rule-faint) calc(2.3rem - 1px) 2.3rem
+        );
+        min-height: calc(2.3rem * 4);
+      }
+      .note {
+        display: grid;
+        grid-template-columns: 2.2rem 1fr;
+        align-items: baseline;
+        min-height: 2.3rem;
+      }
+      .note button {
+        all: unset;
+        cursor: pointer;
+        padding-top: 4px;
+        border-radius: 4px;
+      }
+      .note button:hover {
+        background: var(--mark);
+      }
+      .note button:focus-visible {
+        outline: 2px solid var(--brass);
+      }
+      .note .margin {
+        font-family: var(--font-display);
+        font-size: 0.8rem;
+        color: var(--print-dim);
+        text-align: center;
+      }
+      .note[data-crossed] .hand {
+        text-decoration: line-through;
+        text-decoration-thickness: 2px;
+        text-decoration-color: var(--pen);
+        opacity: 0.7;
+      }
+      .empty-hint {
+        font-family: var(--font-ui);
+        font-style: normal;
+        font-size: 0.85rem;
+        color: var(--print-dim);
+        padding: 8px 0;
+      }
+
+      .lists {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));
+        gap: 14px;
+      }
+      .lists ul {
+        list-style: none;
+        margin: 4px 0 0;
+        padding: 0;
+        min-height: calc(1.9rem * 4);
+        background-image: repeating-linear-gradient(
+          to bottom,
+          transparent 0 calc(1.9rem - 1px),
+          var(--rule-faint) calc(1.9rem - 1px) 1.9rem
+        );
+      }
+      .lists li {
+        min-height: 1.9rem;
+        font-size: 1.3rem;
+      }
+      .lists li[data-crossed] {
+        text-decoration: line-through;
+      }
+
+      /* ---------- Chaos bag ---------- */
+      .bag {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px 6px;
+        align-items: flex-end;
+      }
+      .bag-box {
+        width: calc(100% - 8px);
+        background: transparent;
+        color: inherit;
+        font: inherit;
+        cursor: pointer;
+      }
+      .bag-box:hover {
+        background: var(--mark);
+      }
+      .bag-entry {
+        display: grid;
+        justify-items: center;
+        gap: 2px;
+      }
+      .bag-entry .hand {
+        font-size: 1.15rem;
+        min-width: 1.4em;
+        text-align: center;
+        border-bottom: 1px solid var(--rule);
+      }
+      .token {
+        --size: 34px;
+        width: var(--size);
+        height: var(--size);
+        flex: none;
+        display: grid;
+        place-items: center;
+        border-radius: 50%;
+        background: radial-gradient(circle at 35% 30%, #2c2c2c, var(--token-black) 70%);
+        box-shadow:
+          0 0 0 calc(var(--size) * 0.07) var(--token-ring),
+          0 0 0 calc(var(--size) * 0.1) #3a3428,
+          0 2px 4px rgba(0, 0, 0, 0.5);
+        color: var(--token-ring);
+        font-family: var(--font-ui);
+        font-weight: 700;
+        font-size: calc(var(--size) * 0.42);
+        line-height: 1;
+      }
+      .token svg {
+        width: 64%;
+        height: 64%;
+        fill: currentColor;
+      }
+      .token[data-token='auto_fail'] {
+        color: #e0645a;
+      }
+      .token[data-token='elder_sign'] {
+        color: #8fd3c0;
+      }
+
+      /* Entries just written into the log are inked in and briefly marked. */
+      .new {
+        animation:
+          ink 1.4s ease-out both,
+          mark 5s ease-out both;
+      }
+      @keyframes ink {
+        from {
+          clip-path: inset(0 100% 0 0);
+        }
+        to {
+          clip-path: inset(0 0 0 0);
+        }
+      }
+      @keyframes mark {
+        0%,
+        40% {
+          background: var(--mark);
+        }
+        100% {
+          background: transparent;
+        }
+      }
+
+      /* ---------- Next step: printed at the foot of the page, docked on phones ---------- */
+      #next {
+        position: fixed;
+        z-index: 4;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        display: flex;
+        justify-content: center;
+        padding: 12px max(16px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom))
+          max(16px, env(safe-area-inset-left));
+        background: linear-gradient(to top, var(--bar) 60%, transparent);
+        pointer-events: none;
+      }
+      #next > * {
+        pointer-events: auto;
+      }
+      .primary {
+        min-height: 48px;
+        padding: 8px 22px;
+        border: 1px solid var(--brass);
+        border-radius: 24px;
+        background: linear-gradient(to bottom, #d9b86e, #a9843f);
+        color: #1b1408;
+        font-family: var(--font-display);
+        font-size: 1.1rem;
+        box-shadow: 0 6px 18px var(--shadow);
+      }
+      .primary[disabled] {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+      .secondary {
+        min-height: 44px;
+        padding: 6px 18px;
+        border: 1px solid var(--line);
+        border-radius: 22px;
+        background: transparent;
+        color: var(--text);
+      }
+      .link {
+        border: 0;
+        background: none;
+        padding: 4px 0;
+        color: var(--brass);
+        text-decoration: underline;
+        text-underline-offset: 3px;
+      }
+      .next-wrap {
+        display: grid;
+        justify-items: center;
+        gap: 4px;
+      }
+      .next-wrap .why {
+        font-size: 0.85rem;
+        color: var(--text-dim);
+        text-align: center;
+      }
+
+      /* ---------- Dialogs: sheets on phones, centred panels on wide screens ---------- */
+      #scrim {
+        position: fixed;
+        inset: 0;
+        z-index: 10;
+        background: var(--scrim);
+        display: grid;
+        place-items: center;
+        padding: 16px;
+      }
+      #scrim[hidden] {
+        display: none;
+      }
+      .dialog {
+        position: relative;
+        width: min(640px, 100%);
+        max-height: calc(100dvh - 32px);
+        overflow: auto;
+        border-radius: 6px;
+        box-shadow: 0 20px 50px var(--shadow);
+      }
+      .dialog.page {
+        padding: 26px clamp(16px, 4vw, 34px) 22px;
+      }
+      @media (max-width: 599px) {
+        #scrim {
+          place-items: end stretch;
+          padding: 0;
+        }
+        .dialog {
+          width: 100%;
+          max-height: 92dvh;
+          border-radius: 14px 14px 0 0;
+        }
+      }
+      .close {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        width: 36px;
+        height: 36px;
+        border: 0;
+        border-radius: 50%;
+        background: transparent;
+        color: var(--print);
+        font-size: 1.4rem;
+        line-height: 1;
+      }
+      .close:hover {
+        background: var(--mark);
+      }
+      .dialog h3 {
+        font-family: var(--font-display);
+        font-size: 1.6rem;
+        text-align: center;
+        padding: 0 30px;
+      }
+      .dialog .kicker {
+        display: block;
+        text-align: center;
+        font-style: italic;
+        color: var(--print-dim);
+      }
+      .steps {
+        display: flex;
+        justify-content: center;
+        gap: 6px;
+        margin: 6px 0 4px;
+      }
+      .steps span {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        border: 1px solid var(--print-dim);
+      }
+      .steps span[data-on] {
+        background: var(--print);
+        border-color: var(--print);
+      }
+      .ui {
+        font-family: var(--font-ui);
+        font-size: 0.95rem;
+      }
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        gap: 10px;
+        margin-top: 20px;
+      }
+      .dialog .secondary {
+        color: var(--print);
+        border-color: var(--rule);
+      }
+      .dialog .link {
+        color: var(--print);
+      }
+
+      /* Resolution choices */
+      .choices {
+        display: grid;
+        gap: 8px;
+        margin-top: 14px;
+      }
+      .choice {
+        display: grid;
+        grid-template-columns: 3.2rem 1fr;
+        align-items: center;
+        gap: 2px 10px;
+        padding: 10px 12px;
+        text-align: left;
+        border: 1.5px solid var(--rule-faint);
+        border-radius: 4px;
+        background: transparent;
+        color: var(--print);
+      }
+      .choice .rn {
+        grid-row: span 2;
+        font-family: var(--font-display);
+        font-size: 1.15rem;
+        text-align: center;
+      }
+      .choice .what {
+        font-family: var(--font-story);
+        font-size: 1.05rem;
+      }
+      .choice .from {
+        font-family: var(--font-ui);
+        font-size: 0.8rem;
+        color: var(--print-dim);
+      }
+      .choice[aria-checked='true'] {
+        border-color: var(--print);
+        background: var(--mark);
+      }
+      .proposed {
+        display: inline-block;
+        margin-left: 6px;
+        padding: 0 6px;
+        border: 1px solid var(--print-dim);
+        border-radius: 8px;
+        font-family: var(--font-ui);
+        font-size: 0.72rem;
+        color: var(--print-dim);
+        vertical-align: 2px;
+      }
+      .read-aloud {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        margin-top: 14px;
+        padding: 10px 12px;
+        border-left: 3px solid var(--print-dim);
+        font-style: italic;
+      }
+
+      .read-aloud .pen {
+        width: 22px;
+        height: 22px;
+        flex: none;
+        color: var(--print-dim);
+      }
+      .dialog h3.hand {
+        font-family: var(--font-hand);
+        font-weight: 700;
+      }
+      .dialog .box + .box {
+        margin-top: 14px;
+      }
+
+      /* Change list: what the resolution writes into the log */
+      .changes {
+        display: grid;
+        gap: 4px;
+        margin-top: 8px;
+      }
+      .changes h4 {
+        font-family: var(--font-display);
+        font-size: 1.05rem;
+        margin-top: 12px;
+        border-bottom: 1px solid var(--rule-faint);
+      }
+      .change {
+        display: grid;
+        grid-template-columns: 1.6rem 1fr;
+        align-items: baseline;
+        gap: 6px;
+      }
+      .change .pen {
+        width: 18px;
+        height: 18px;
+        color: var(--print-dim);
+        transform: translateY(3px);
+      }
+      .change .hand {
+        font-size: 1.3rem;
+      }
+      .change .why {
+        font-family: var(--font-ui);
+        font-size: 0.8rem;
+        color: var(--print-dim);
+      }
+      .change[data-kind='byHand'] .text {
+        font-family: var(--font-ui);
+        font-size: 0.92rem;
+      }
+      .change[data-kind='strike'] .hand {
+        text-decoration: line-through;
+      }
+
+      /* Investigator sheet */
+      .sheet-head {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 4px 12px;
+        align-items: center;
+      }
+      .sheet-head .class-icon {
+        width: 46px;
+        height: 46px;
+        grid-row: span 2;
+      }
+      .sheet-head h3 {
+        text-align: left;
+        padding: 0 30px 0 0;
+      }
+      .stat-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: 12px;
+        margin-top: 14px;
+      }
+      .stepper {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-family: var(--font-ui);
+      }
+      .stepper button {
+        width: 34px;
+        height: 34px;
+        border: 1px solid var(--rule);
+        border-radius: 50%;
+        background: transparent;
+        color: var(--print);
+        font-size: 1.1rem;
+      }
+      .stepper output {
+        min-width: 2ch;
+        text-align: center;
+        font-family: var(--font-hand);
+        font-size: 1.6rem;
+        color: var(--pen);
+      }
+      .adjust-note {
+        font-family: var(--font-ui);
+        font-size: 0.85rem;
+        color: var(--print-dim);
+      }
+      .pick-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 10px;
+        margin-top: 14px;
+      }
+      .pick {
+        display: grid;
+        justify-items: center;
+        gap: 4px;
+        padding: 12px 8px;
+        border: 1.5px solid var(--rule-faint);
+        border-radius: 4px;
+        background: transparent;
+        color: var(--print);
+        font-family: var(--font-story);
+      }
+      .pick[aria-checked='true'] {
+        border-color: var(--print);
+        background: var(--mark);
+      }
+      .pick[disabled] {
+        opacity: 0.4;
+      }
+      .pick .class-icon {
+        width: 36px;
+        height: 36px;
+      }
+      .pick .stats {
+        font-family: var(--font-ui);
+        font-size: 0.8rem;
+        color: var(--print-dim);
+      }
+
+      /* Setup preview: how the log shapes the next scenario */
+      .reads {
+        display: grid;
+        gap: 10px;
+        margin-top: 8px;
+      }
+      .read {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 2px;
+        padding: 8px 10px;
+        border-left: 3px solid var(--rule);
+      }
+      .read .hand {
+        font-size: 1.3rem;
+      }
+      .read .effect {
+        font-family: var(--font-ui);
+        font-size: 0.92rem;
+      }
+      .read .effect::before {
+        content: '→ ';
+        color: var(--print-dim);
+      }
+      .team-row {
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        align-items: center;
+        gap: 10px;
+        padding: 6px 0;
+        border-bottom: 1px solid var(--rule-faint);
+      }
+      .team-row .class-icon {
+        width: 26px;
+        height: 26px;
+      }
+      .team-row .ui {
+        color: var(--print-dim);
+      }
+      .warning {
+        margin-top: 10px;
+        padding: 8px 12px;
+        border: 1.5px solid var(--stamp);
+        color: var(--stamp);
+        font-family: var(--font-ui);
+      }
+
+      /* Playing placeholder and the end of the campaign */
+      .playing {
+        max-width: 640px;
+        margin: 40px auto;
+        padding: 26px;
+        text-align: center;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: var(--bar);
+      }
+      .playing h2 {
+        font-family: var(--font-display);
+        color: var(--brass);
+        font-size: 1.8rem;
+      }
+      .playing p {
+        color: var(--text-dim);
+      }
+      .result-banner {
+        text-align: center;
+        margin: 4px 0 14px;
+        padding: 10px;
+        border-top: 1px solid var(--rule);
+        border-bottom: 1px solid var(--rule);
+      }
+      .result-banner .hand {
+        font-size: 2.1rem;
+        font-weight: 700;
+      }
+
+      /* Toast */
+      #toast {
+        position: fixed;
+        z-index: 30;
+        left: 50%;
+        bottom: 90px;
+        transform: translateX(-50%);
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 10px 16px;
+        border: 1px solid var(--line);
+        border-radius: 22px;
+        background: var(--surface);
+        box-shadow: 0 8px 24px var(--shadow);
+      }
+      #toast[hidden] {
+        display: none;
+      }
+
+      /* New campaign title page */
+      .title-page {
+        max-width: 760px;
+        margin: 0 auto;
+      }
+      .title-page .page {
+        border-radius: 4px;
+      }
+      .diff {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 10px;
+      }
+      .diff .choice {
+        grid-template-columns: 1fr;
+      }
+      .diff .bag {
+        gap: 3px;
+      }
+      .diff .token {
+        --size: 18px;
+      }
+
+      /* ---------- The desk: the official log sheet's collage of papers on a starfield ---------- */
+      #desk {
+        position: relative;
+        max-width: 1120px;
+        margin: 0 auto;
+        padding: clamp(12px, 2.6vw, 30px);
+        border-radius: 6px;
+        background-color: var(--space);
+        background-image:
+          var(--stars),
+          radial-gradient(ellipse at 20% 30%, rgba(70, 90, 170, 0.45), transparent 55%),
+          radial-gradient(ellipse at 85% 75%, rgba(40, 60, 140, 0.5), transparent 50%);
+        box-shadow: 0 18px 40px var(--shadow);
+      }
+      .board {
+        position: relative;
+        isolation: isolate;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        grid-template-areas: 'card card' 'scen notes' 'gone notes';
+        gap: clamp(14px, 2.4vw, 26px) clamp(14px, 2.4vw, 28px);
+        padding: clamp(14px, 2.6vw, 30px) clamp(10px, 2vw, 22px);
+      }
+      .board::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        z-index: -2;
+        background: linear-gradient(160deg, var(--board-a), var(--board-b));
+        box-shadow:
+          inset 0 0 0 1px rgba(0, 0, 0, 0.25),
+          inset 0 0 40px rgba(60, 50, 60, 0.35);
+        filter: url(#torn-soft);
+      }
+      .board::after {
+        content: '★ ★ ★';
+        position: absolute;
+        top: 6px;
+        left: 10px;
+        z-index: -1;
+        font-size: 9px;
+        letter-spacing: 6px;
+        color: rgba(70, 60, 70, 0.55);
+      }
+      @media (max-width: 719px) {
+        .board {
+          grid-template-columns: minmax(0, 1fr);
+          grid-template-areas: 'card' 'scen' 'notes' 'gone';
+        }
+      }
+
+      /* A sheet of paper with a ragged edge: the edge filter runs on a background layer only, so text stays crisp. */
+      .sheet {
+        position: relative;
+        isolation: isolate;
+        color: var(--print);
+      }
+      .sheet::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        z-index: -1;
+        background: var(--sheet-bg);
+        filter: url(#torn) drop-shadow(0 5px 6px rgba(0, 0, 0, 0.45));
+      }
+      .label {
+        display: block;
+        font-family: var(--font-label);
+        font-weight: 700;
+        font-size: 0.7rem;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--print);
+      }
+      @media (max-width: 719px) {
+        .column .label {
+          font-size: 0.62rem;
+        }
+      }
+      .hand {
+        font-family: var(--font-hand);
+        font-weight: 500;
+        color: var(--pen);
+        font-size: 1.4rem;
+        line-height: 1.1;
+      }
+      .script {
+        font-family: var(--font-script);
+        color: var(--script-ink);
+        font-weight: 400;
+      }
+
+      /* Index card: the investigators */
+      .index-card {
+        grid-area: card;
+        padding: clamp(14px, 2.4vw, 26px) clamp(12px, 2.4vw, 26px) clamp(16px, 2.4vw, 26px);
+        --sheet-bg:
+          radial-gradient(ellipse at 50% 45%, transparent 55%, rgba(120, 90, 40, 0.35) 120%),
+          var(--grain), linear-gradient(175deg, #efe3c3, #e4d4ae);
+      }
+      .index-card::after {
+        content: '';
+        position: absolute;
+        inset: 7px -7px -7px 7px;
+        z-index: -2;
+        background: linear-gradient(175deg, #ddd0ad, #cdbb92);
+        filter: url(#torn) drop-shadow(0 4px 5px rgba(0, 0, 0, 0.4));
+      }
+      .clip {
+        position: absolute;
+        top: -26px;
+        right: clamp(30px, 14%, 180px);
+        width: 70px;
+        height: 96px;
+        transform: rotate(38deg);
+        color: #9aa3ab;
+        filter: drop-shadow(1px 2px 1px rgba(0, 0, 0, 0.5));
+      }
+      .card-head {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: baseline;
+        gap: 0 18px;
+        padding-inline: 8px;
+      }
+      .card-head .printed {
+        font-family: var(--font-display);
+        font-size: clamp(1.2rem, 2.6vw, 1.6rem);
+      }
+      .card-head .script {
+        font-size: clamp(2rem, 5.4vw, 3.2rem);
+        line-height: 1;
+      }
+      .frame {
+        border: 3px solid var(--print);
+        outline: 1px solid var(--print);
+        outline-offset: -7px;
+        padding: 4px 8px 8px;
+      }
+      .frame-title {
+        text-align: center;
+        font-family: var(--font-display);
+        font-size: clamp(1.3rem, 2.8vw, 1.8rem);
+        border-bottom: 1.5px solid var(--print);
+        margin: 0 -2px 6px;
+        padding-bottom: 2px;
+      }
+      .columns {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+      @media (max-width: 719px) {
+        .columns {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+        .column:nth-child(n + 3) {
+          border-top: 3px double var(--print);
+        }
+      }
+      .column {
+        display: grid;
+        grid-template-rows: auto auto auto auto 1fr;
+        min-height: 100%;
+        padding: 0 8px;
+        border: 0;
+        border-left: 3px double var(--print);
+        text-align: left;
+        background: transparent;
+        color: inherit;
+        font: inherit;
+        cursor: pointer;
+      }
+      .column:first-child,
+      .column:nth-child(3) {
+        border-left-width: 0;
+      }
+      @media (min-width: 720px) {
+        .column:nth-child(3) {
+          border-left-width: 3px;
+        }
+      }
+      .column:hover {
+        background: var(--mark);
+      }
+      .column[data-empty] {
+        cursor: default;
+      }
+      .column[data-empty]:hover {
+        background: transparent;
+      }
+      .field {
+        position: relative;
+        min-height: 3.3rem;
+        padding: 4px 0 4px;
+        border-bottom: 1.5px solid var(--print);
+        min-width: 0;
+      }
+      .field:last-child {
+        border-bottom: 0;
+        min-height: 4.4rem;
+      }
+      .field .hand {
+        font-size: 1.55rem;
+        display: block;
+        padding-left: 4px;
+        overflow-wrap: anywhere;
+      }
+      .who {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .who .class-icon {
+        width: 22px;
+        height: 22px;
+        flex: none;
+        color: var(--pen);
+        opacity: 0.85;
+      }
+      .xp-line {
+        display: flex;
+        align-items: baseline;
+        gap: 10px;
+        padding-left: 4px;
+      }
+      .xp-line .hand {
+        padding: 0;
+      }
+      .xp-line .old {
+        position: relative;
+        font-size: 1.3rem;
+        opacity: 0.75;
+      }
+      .xp-line .old::after {
+        content: '';
+        position: absolute;
+        left: -3px;
+        right: -3px;
+        top: 50%;
+        border-top: 2px solid var(--pen);
+        transform: rotate(-20deg);
+      }
+      .xp-line .now {
+        font-size: 1.9rem;
+        font-weight: 700;
+      }
+      .trauma-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        min-height: 3.6rem;
+      }
+      .trauma-row > div + div {
+        border-left: 1.5px solid var(--print);
+        padding-left: 6px;
+      }
+      .trauma-row .sub {
+        font-family: var(--font-label);
+        font-weight: 700;
+        font-size: 0.66rem;
+      }
+      .trauma-head {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0 10px;
+      }
+      .trauma-row > div {
+        min-width: 0;
+      }
+      .tally {
+        display: block;
+        height: 26px;
+        margin-top: 2px;
+        color: var(--pen);
+      }
+      .column[data-fate='killed'] .who .hand,
+      .column[data-fate='insane'] .who .hand {
+        text-decoration: line-through;
+        text-decoration-thickness: 2px;
+      }
+      .fate-note {
+        display: block;
+        font-family: var(--font-hand);
+        color: var(--stamp);
+        font-size: 1.15rem;
+        padding-left: 4px;
+      }
+
+      /* Napkin: the scenario list */
+      .napkin {
+        grid-area: scen;
+        transform: rotate(-1.2deg);
+        padding: clamp(18px, 3vw, 30px) clamp(16px, 3vw, 30px) clamp(20px, 3vw, 30px);
+        --sheet-bg:
+          radial-gradient(
+            circle at 18% 22%,
+            transparent 52px,
+            rgba(170, 120, 60, 0.28) 54px,
+            rgba(170, 120, 60, 0.12) 58px,
+            transparent 61px
+          ),
+          radial-gradient(circle at 88% 70%, rgba(170, 120, 60, 0.18) 0 8px, transparent 10px),
+          linear-gradient(90deg, rgba(0, 0, 0, 0.05) 0 1px, transparent 1px) 0 0 / 5px 5px,
+          linear-gradient(#f6f5f0, #ecebe4);
+      }
+      .napkin::after {
+        content: '';
+        position: absolute;
+        inset: 12px;
+        z-index: -1;
+        border: 1px solid rgba(0, 0, 0, 0.06);
+        box-shadow: inset 0 0 0 6px rgba(0, 0, 0, 0.025);
+      }
+      .napkin h2 {
+        font-size: clamp(2.2rem, 4.6vw, 2.9rem);
+        transform: rotate(-9deg);
+        transform-origin: left bottom;
+        display: inline-block;
+        border-bottom: 2px solid var(--script-ink);
+        border-radius: 0 0 40% 0;
+        padding-right: 20px;
+        line-height: 1;
+      }
+      .scenario-list {
+        list-style: none;
+        margin: 6px 0 0;
+        padding: 0;
+        display: grid;
+        justify-items: start;
+      }
+      .scenario-list li {
+        display: grid;
+        justify-items: center;
+      }
+      .scenario-list li:nth-child(2) {
+        margin-left: -4%;
+      }
+      .scenario-list li:nth-child(3) {
+        margin-left: 4%;
+      }
+      .arrow {
+        width: 22px;
+        height: 30px;
+        color: var(--script-ink);
+      }
+      .scenario {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 0;
+        border: 0;
+        background: transparent;
+        text-align: left;
+      }
+      .scenario .check {
+        position: relative;
+        width: 20px;
+        height: 20px;
+        flex: none;
+        border: 2px solid var(--script-ink);
+        border-radius: 2px;
+      }
+      .scenario .check[data-done]::after {
+        content: '✓';
+        position: absolute;
+        left: 0;
+        bottom: -4px;
+        font-family: var(--font-hand);
+        font-size: 1.9rem;
+        font-weight: 700;
+        line-height: 1;
+        color: var(--pen);
+      }
+      .scenario .name {
+        padding: 2px 14px;
+        border: 2px solid var(--script-ink);
+        border-radius: 3px 6px 2px 5px;
+        font-size: clamp(1.45rem, 3vw, 1.9rem);
+        line-height: 1.25;
+        transform: rotate(-1.5deg);
+      }
+      .scenario-list li:nth-child(2) .name {
+        transform: rotate(1deg);
+      }
+      .scenario .res {
+        font-size: 1.3rem;
+      }
+      .scenario[data-state='next'] .name {
+        background: var(--mark);
+      }
+      .scenario[data-state='next'] .res {
+        color: var(--stamp);
+      }
+      .scenario:hover .name {
+        background: var(--mark);
+      }
+
+      /* Newspaper clipping: killed and insane investigators */
+      .clipping {
+        grid-area: gone;
+        padding: 14px clamp(16px, 3vw, 28px) 18px clamp(28px, 4vw, 40px);
+        transform: rotate(0.6deg);
+        --sheet-bg:
+          linear-gradient(115deg, transparent 30%, rgba(255, 255, 255, 0.35) 31%, transparent 33%),
+          linear-gradient(200deg, transparent 55%, rgba(0, 0, 0, 0.07) 56%, transparent 60%),
+          var(--grain), linear-gradient(#dcdad3, #cfccc4);
+      }
+      .clipping h2 {
+        font-family: var(--font-news);
+        font-style: italic;
+        font-weight: 800;
+        font-size: clamp(1.15rem, 2.6vw, 1.55rem);
+        letter-spacing: -0.01em;
+        border-top: 1.5px solid #3a3a3a;
+        padding-top: 6px;
+        color: #2b2b2b;
+      }
+      .clipping ul {
+        list-style: none;
+        margin: 6px 0 0;
+        padding: 0;
+        min-height: 5.4rem;
+        border-bottom: 1.5px solid #3a3a3a;
+      }
+      .clipping li {
+        line-height: 1.8rem;
+      }
+      .staple {
+        position: absolute;
+        left: 12px;
+        top: 50%;
+        width: 4px;
+        height: 46px;
+        border: 1.5px solid #8b9096;
+        border-radius: 2px;
+        box-shadow: 1px 1px 1px rgba(0, 0, 0, 0.4);
+      }
+
+      /* Ring-bound notepad: campaign notes and the cultist lists */
+      .notepad {
+        grid-area: notes;
+        position: relative;
+        isolation: isolate;
+        padding: 46px clamp(14px, 3vw, 28px) 26px clamp(40px, 5vw, 54px);
+        color: var(--print);
+        --line-gap: 2rem;
+      }
+      .notepad::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        z-index: -1;
+        border-radius: 4px 14px 14px 6px;
+        background:
+          radial-gradient(circle at 80% 8%, rgba(170, 120, 60, 0.25) 0 22px, transparent 30px),
+          radial-gradient(circle at 92% 62%, rgba(170, 120, 60, 0.2) 0 16px, transparent 24px),
+          linear-gradient(
+            90deg,
+            transparent 0 calc(clamp(40px, 5vw, 54px) - 10px),
+            rgba(200, 80, 80, 0.45) calc(clamp(40px, 5vw, 54px) - 10px)
+              calc(clamp(40px, 5vw, 54px) - 9px),
+            transparent 0
+          ),
+          repeating-linear-gradient(
+              to bottom,
+              transparent 0 calc(var(--line-gap) - 1px),
+              rgba(90, 140, 170, 0.35) calc(var(--line-gap) - 1px) var(--line-gap)
+            )
+            0 38px / 100% 100% no-repeat,
+          linear-gradient(#f2e9c9, #e9dcb4);
+        box-shadow:
+          0 0 0 5px #3a2a1f,
+          0 0 0 7px #241911,
+          4px 8px 14px rgba(0, 0, 0, 0.5);
+      }
+      .rings {
+        position: absolute;
+        top: -16px;
+        left: 0;
+        right: 0;
+        display: flex;
+        justify-content: space-around;
+        padding-inline: 20%;
+        pointer-events: none;
+      }
+      .rings svg {
+        width: 26px;
+        height: 52px;
+        color: #a9b0b6;
+        filter: drop-shadow(1px 2px 1px rgba(0, 0, 0, 0.5));
+      }
+      .notepad h2 {
+        display: inline-block;
+        font-size: clamp(1.9rem, 4vw, 2.4rem);
+        line-height: var(--line-gap);
+        padding: 0 14px 4px 4px;
+        border-bottom: 2px solid var(--script-ink);
+        margin: calc(var(--line-gap) * 0.4) 0 4px;
+      }
+      .notepad section:first-of-type h2 {
+        margin-top: 0;
+      }
+      .notepad section {
+        text-align: center;
+      }
+      .notepad ul {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        text-align: left;
+        min-height: calc(var(--line-gap) * 3);
+      }
+      .notepad li {
+        min-height: var(--line-gap);
+        line-height: var(--line-gap);
+      }
+      .notepad .hand {
+        font-size: 1.4rem;
+        line-height: var(--line-gap);
+      }
+      .notepad li button {
+        all: unset;
+        cursor: pointer;
+        border-radius: 3px;
+      }
+      .notepad li button:hover {
+        background: var(--mark);
+      }
+      .notepad li button:focus-visible {
+        outline: 2px solid var(--script-ink);
+      }
+      .notepad li[data-crossed] .hand {
+        text-decoration: line-through;
+        text-decoration-thickness: 2px;
+      }
+      .notepad .verdict .hand {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: var(--stamp);
+        border-bottom: 3px double var(--stamp);
+      }
+      .muted-hint {
+        font-family: var(--font-ui);
+        font-size: 0.8rem;
+        color: var(--print-dim);
+      }
+      .copyright {
+        grid-column: 1 / -1;
+        text-align: center;
+        font-family: var(--font-ui);
+        font-size: 0.72rem;
+        color: #3f3a44;
+        margin-top: -4px;
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .new {
+          animation: none;
+          background: var(--mark);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <svg width="0" height="0" style="position: absolute" aria-hidden="true">
+      <filter id="torn" x="-5%" y="-5%" width="110%" height="110%">
+        <feTurbulence type="fractalNoise" baseFrequency="0.06" numOctaves="4" seed="3" />
+        <feDisplacementMap in="SourceGraphic" scale="7" />
+      </filter>
+      <filter id="torn-soft" x="-2%" y="-2%" width="104%" height="104%">
+        <feTurbulence type="fractalNoise" baseFrequency="0.03" numOctaves="3" seed="8" />
+        <feDisplacementMap in="SourceGraphic" scale="4" />
+      </filter>
+    </svg>
+    <svg id="mat" viewBox="0 0 1000 1000" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+      <g fill="none" stroke="var(--brass)" stroke-opacity="0.25">
+        <circle cx="500" cy="520" r="420" stroke-width="1.2" />
+        <circle cx="500" cy="520" r="400" stroke-width="0.6" />
+        <circle cx="500" cy="520" r="300" stroke-width="0.6" stroke-dasharray="2 10" />
+        <g id="ticks"></g>
+      </g>
+    </svg>
+    <header id="bar">
+      <button class="icon-btn" aria-label="Home" data-act="home">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M15 5l-7 7 7 7" />
+        </svg>
+      </button>
+      <div class="title">
+        <h1 id="bar-title">Night of the Zealot</h1>
+        <span class="sub" id="bar-sub"></span>
+      </div>
+      <button class="bag-btn" data-act="bag" aria-label="Chaos bag" id="bag-btn"></button>
+      <button class="icon-btn" aria-label="Menu" aria-haspopup="true" data-act="menu">
+        <svg viewBox="0 0 24 24" fill="currentColor">
+          <circle cx="12" cy="5" r="2" />
+          <circle cx="12" cy="12" r="2" />
+          <circle cx="12" cy="19" r="2" />
+        </svg>
+      </button>
+    </header>
+    <nav id="menu" hidden></nav>
+    <main id="main"></main>
+    <div id="next"></div>
+    <div id="scrim" hidden></div>
+    <div id="toast" role="status" hidden></div>
+
+    <script>
+      const SYM = {
+        skull:
+          'M85 71.8a6 6 0 0 1-.5 2.6q-.4.3-.8 1l-.8.9-.6.8q-.4.1-.7.6-.5.8-1.4.2l-.6-.3q-.3 0-.5-.3l-.9-.4-.7-.2q-2-1.1-4.4-1.3h-3.8l-7.5.5q-.5 0-.6.2l-.6.3q-.6.1-.7.7l-.2 1.2-.2 1q-.3 1.2 0 2.1 0 .5.2.8l.2.7q.2.3.3.2l2.2-.2q.3-.1.6.4 0 .4.4.7l.2.3q.3.6.4.2l.3-.2.3-.2q.3-.1.5.2v.7l.1.7q0 .7.5 1.5.5 1 .7 2l.5 2.6q.3.4-.7.9H66l-.2.3q-.2 0-.5.5 0 .3-.2.4l-2.2 1.8q-.3.2-.5-.1L62 95l-.3-1-.2-1.1v-.8l-.2-.9H61l-.2 1q-.2 1.2.1 2v1.5q0 1-.6 1.4h-.1l-.2.1-.8.4-.8.5h-.2l-.1.1q-.8.2-.8-.5l-.1-.7v-.4l.1-.4q0-.3-.2-.5 0-.5-.4 0l-.4.4-1 .5v.5q.8.3.9.6l.1.7q0 .2-.6.4l-.8.4-1.4.5h-1.2q-.6-.4-.9-1a4 4 0 0 1-.1-2v-.9l.1-1.1v-1.1l-.1-1.3L51 91h-.3l-.5 1.5-.3 1.4-.2.9v1.8l.2.7.1.6V99q-.2.5-.5.7-1 .5-1.9.2-.8 0-1-1l-.2-1.4v-.9l-.1-.3-.2.3-.2.4-.4 1.1-.2.4-.4.2q-1.5-.2-2-.5l-1-.9q-.4-.4-.4-1.4l.3-4.6h-.2l-1 2a12 12 0 0 0-.9 3v.3q-.3.3-.6.2a3 3 0 0 1-1.2-1q-.7-1.3-.9-2.6-.3-1.7.1-3.5l.3-1.2.3-1.2q.4-2.3 2.2-4.2l.4-.4.4-.3.7-.5q.4-.4.4-1.2v-.2l.1-.3q-.2-1.3.4-2.8v-.8l-.8-.4-.6-.1-.6-.2h-.7l-.6-.3-1.8-.3-1.7-.2h-2a12 12 0 0 0-3.4.2l-.8.1-4.7 1.4q-.3.3-1.3.5-1.4.3-2.6-.7h-.1a20 20 0 0 1-2.8-3.7l-1-2q-.3-1.4.2-2.6l.2-.6.3-.9.4-1 .5-1q.8-1.2.6-3l-.2-1.6q0-.8-.3-1.4l-.2-1-.4-4.2.1-2.8.6-3.5.9-6.8v-2a40 40 0 0 0-1-8.6h-.1v5.3l-.2 1-.2 1-.3 1-.3.7-.4.7a11 11 0 0 0-.8 5.6l-.1.9H16l-.2-.1-.9-8.4a81 81 0 0 1 1.2-12.7l.3-1.6a25 25 0 0 1 1.8-5.9 15 15 0 0 1 4-4.5 37 37 0 0 1 7-6.9l1.7-1q.6-.6 1.3-.9l1.7-.6 2.3-.7a54 54 0 0 1 18-2.7h2.6a50 50 0 0 1 11.9 4 23 23 0 0 1 4.5 2.7q1.6 1.5 2.8 3.4 1 1.5 2 2.5l2.4 2.3 1 1.5 1 1.5q.8 1.3 1.2 3.4l.9 3.4.2 4.6V34l-.2 3.5-.4 2.6-.1 1.2-.1 1.2q0 2.6-.4 3.9l-.2 1.9-.3.6h-.2l-.3-.7-.2-.7v-.8l-.2-1.3a20 20 0 0 0-.8-5.5l-.2-1.8v-4l-.2.1v.3l-.1.4-.6 5-.3 2.4-.2 3.2.4 1.8q.1 1 .7 1.8l1 1.8.9 1.8q.4.8.4 1.2l.2 1 .4 1.7.4 1.3.6 1.4q.5 2.3.2 4.2l-.4 2.7-.1 2.4.4 2v.4zM42.4 66l1-.8 1.6-.8.4-.8.6-.6h.5l.7.5.7.6.3.1q.2 0 .2-.3a6 6 0 0 0-.5-2.3l-.3-1.1q-.3-.8 0-1.7.3-.5.2-1v-1l-.1-1.4q0-.3-.2-.3h-.3l-.2.3-.3 1q-.2.3-.3.2l-.7-.2v-1.2a4 4 0 0 0-3-2.2q-1.2-.9-2.7-1.2a17 17 0 0 0-4-.8q-.4 0-1 .6l-.2-.2-.2-.1q-.7-.5-2.5.1H32l-.1.2q-1.2.5-2 .4h-.3l-.3-.1-1.2-.1a5 5 0 0 0-2.4.5l-.4.1q-.3.3-.7 0h-.3q-.5 0-.5.4 0 .9-.3 1.2-.3.4-.3.9v2.9l-.2 1-.1 1v.8q0 2.4.9 4.5 0 .6.6 1.2.5 1.2 1.1 2l1.5 1 1 1q.2.5.5.6l.4.2q0 .3.4.2l.4-.2.4-.7q.6-1 2-1h5q1.6-.2 3-.9.6-.3 1.2-1zm15.3 12.3.3-1.8-.2-.8-.5-2q-.2-.7-.7-1.3t-1.5-1.1l-.7-1-.6-1-.4-.7-.2-.7q-.3-1.3-.7-1.6-.8-.6-1.4-.3-1.8 1.3-2.3 3.3 0 .7-.6 1.6a26 26 0 0 1-2.5 4.8q-.4.7-.7 1.8-1.9 2.5.1 4l.9 1.8q.3.6.9 1l.7.4.6.4q.5.3.8.2.6.2 1-.3l.3-.5.1-.4.1-.3q0-.8.8-1.2.6-.4 1 .2l.3.3.3.4q.6.5 1.2.2l1.7-.7q1-.5 1.3-1.4V81l.3-1 .2-1zM81.8 63v-.7l.1-1-.1-.8v-1q0-.6-.3-1.3l-1-2.1q-.6-1.1-1.4-2-.5 0-.6-.3l-.8-.3-2.1-1-2.6-1.3q-.6-.4-1.8 0l-.2.2-.2.2-.5.2q-.7.3-1.6.3l-1.4-.3-1.2-.5q-.6-.2-.8.3l-.2.5q-.2.5-.6.5-.8 0-1.5.6l-.6.2-.6.3q-.9.5-1.6.3l-1.6.4h-.1q-.5 0-.1.6l.2.2.3.2.3 1v.5q0 1-.6 2.2l-.4.5-.4.6-.6 1-.4 1.2v.2h.2l.5-.2h.3q.2.7.8 1.5l1.2 1.4 1.4 1.5q.4.8 1 1.4l1.3.7q2.3 1 6 1.6h2q1.6 0 3.3-1 1.5-.5 3-1.6l3.7-3.3.3-1.2zm0 0',
+        cultist:
+          'M95 77q.5 2 .2 4a10 10 0 0 1-1.1 3.8l-1.2 1.5-1.5 1.2q-3.4 2.8-7 3.6a21 21 0 0 1-5.5 0l-1.2-.1-2-.6-2.1-.4a61 61 0 0 1-9.2-3.3l-.8.2-.4.2-.2.3q-3.3 3-6 6-3 3-6.1 5.8l-.8.8h-.2l-.2-.1q0-.3-.4-.4L49 99a46 46 0 0 1-5.8-5.5q-2.7-3-5.8-6l-.4-.3-.3-.2h-.6q-3 1.6-7.6 2.9l-1.7.3-1.7.1-3.5.4h-2.4l-2.4.2a6 6 0 0 1-2.3-.4l-1.8-1-1.2-1q-.7-.3-1.3-.9-3.4-2.6-5-7.5-.4-1.1-.5-2.1t.2-1.8l.5-1.4.6-1.7a29 29 0 0 1 4.6-7.5 14 14 0 0 0 1.8-2.9v-.1L13 61l5.3-11 .5-2.2v-.1l.3-.6.2-.6 1-2 .7-2 1-2.5 1-2.7q.3-1.5.7-2.5l.6-2.4v-1L25 30l2.5-5.6 1.9-4.1.2-.7.4-.8.4-.6q0-.4.3-.6l.2-.1a8 8 0 0 0 1.4-2.3h.2l.2-.4 1.6-2 2-2.5L40 6.6q2-1.8 4.1-3 .6-.7 2.2-1.7l.7-.4.3-.2h.1l.2-.1 2-.5 2-.7.8.2 1.6.5 1.1.7q.5.3.6.7 1 .3 1.7.9l1.5 1a34 34 0 0 1 8.7 9.8l.7 1 .9 1.1.3.3.3.2q.4 1.5 1.5 3l1.7 2.5v.2l.1.1 1.8 3.9 1.6 4.2.3 1.8.6 1.8.4 3.6a35 35 0 0 0 1.9 8l1.4 3.8q.4 2 1.2 3.6t1.6 2.6l.2 1.1a5 5 0 0 0 1.3 2.3l.1.1.8 2.2.9 2.1q-.3 0 0 .2l.3 1 1.8 2.4a41 41 0 0 1 5.8 10m-46.2-.2 1.2.2h1.2q1.8 0 3.3-.9l.5-.4.5-.4q0-1.2.5-2.2v-.2a1 1 0 0 0 0-1l-.2-.1-.1-.3q-.3-.5 0-.5.3-.3.8-.3l1.2-.6 1-1q.8-.6 1.4-1.7l.1-.5.1-.4.3-.8.4-1q0-1.2.6-2.2a13 13 0 0 1 2-3.3l.6-.8.5-.8q.4-.3.6-.8l.1-.5L65 55q-.3-.8-1.2-1.4l-1.5-1-2-.6-3-.6-1-.4q-.6 0-.8-.2l-.8-.4a5 5 0 0 1-3.1-3.3l-.2-.6-.1-.6-.1-.7q0-.4-1.1-.4l-.7-.1h-1.2q-.4.7-.7 1.8l-.5 1-.4 1q-.3.6-.8 1-.3.9-1.2.8h-.2a78 78 0 0 0-8 1.5q-1.3 0-2 .4l-1 1a2 2 0 0 0-1 1.2l-.1 1 .3.9q.4 1.2 1.3 2.4l2.5 6.1q.3.8.7 1.2l.6 1.4q.4 1 1.3 1.8l1.6 1.5q.4.3.8 1l.2.4.4.4 1.8 2 1 1q.3.4 1.2.7 1.2.6 2.8.7M44.6 56v.3h.6l.2.1.2.1q.8 0 1.4.7.8 1 2.5.8.8-.2.9-.5l.3-.2.2-.3q.4-.5.9-.3l1 .1h.8q.5-.1.3.4 0 1-.6 1.8 0 .4-.6 1-1 .7-1.5 1.7l-.8 2.1v.6q0 .3.3.5l.8.2 1.4.4 2.4.7h-5.5q-.6.5-1 0h-1l-1-.1h-2.4l.2-.2.6-.4 1.6-.5.9-.3q.4.1.4-.4a4 4 0 0 0-.5-2.1l-1.1-1.4q-1-1-1.7-2.4l-.2-1.9zm6.5 12.6.8.7.8.8v.2l.2.2-.2.3-1 .2h-.5l-.5-.2h-1.5L48 71q-.6 0-1-.2l-1.2-.5q-.4-.3 0-.3l.5-.3 2-1 .5-.1zm0 0',
+        tablet:
+          'm45.2 97.6-.2-.2q0-.3-.3-.3h-2l-.3.2-.2.1q-.4 0-.5.2l-.5.5H40l-.6.2h-.7l-.4-.2-.3-.3a3 3 0 0 0-1.6 0l-.3.2-.2.3-.3.2-.4.1h-.5q-.3.3-.7.2l-1 .1h-.6a4 4 0 0 0-2 0l-.2-.2-.4-.6q-.3-.9-1.2-.6l-.5.2-.7.6-.5.2q-.3 0-.3.2 0 .5-.5.2h-.3l-.8-.4-.8-.2-.2.2q0 .3-.2.3l-1 .1-.8.2h-.7l-.2.1-.2-.2v-.5q0-.2-.3-.2-.6 0-.7.2l-.1.3-.2.3q-.2.4-.5.4H19l.2-.6v-.4l-.1-.3H19l-.6.3-.4.2-.2.5-.2.6-.4.2h-1v-.9q.2-1-.6-2.2l-.1-.3q-.2-.3-.2-.7l-.2-.5v-.7l-.2-.5-.2-.6-.4-1.3v-1.5l-.2-1.3q-.3-.4-.3-1l-.2-.8-.2-1-.2-1.4-.1-1.1-.2-1.4-.2-.7-.3-1.7v-1.2l-.1-1.3-.1-1.2-.1-.7q0-1.2-.6-2.8 0-.6.2-.9V71l-.2-.4v-1.1l-.4-1.5.1-1.9v-.7l-.4-1.2V63l-.3-.8v-2.9l-.3-.8v-1L9.9 56l-.2-1.3v-2.2q-.2-.4-.2-1v-3.1q-.3-.6 0-1.3v-1l-.2-.8.2-1.7q.2-.3 0-.8-.5-1 0-1.6v-.3l.1-.3v-1.4l-.1-1.4q-.3-.9.1-1.4v-1.3q0-.7.3-1l.4-1.3.5-1.4 1.4-.3h.3l.2.2.8.3.7.4q.5 0 1 .4l1.1.8q.6.7 1.5.9l1 .4 1 .4q.6.4 1 .4l1.7.4.6.2q1.2.9 2.1 1l2.7 1.6q.3.3 1 .3.5 0 1.1.4.4.6 1.3.7l.5.2.9.2a9 9 0 0 0 2.4 1.3l2.1 1.4.8 1.2q.4.7 1 1l.7.3q.1.3.5.4.3 0 .6.4.5.6 1 .6l.8.2 1.4.5q.9.1 1.2.6l.7.5q1 .3 1.6.8.1.3.4.3l.4.1.8.4.4.3.4.3.5.4.7.4.6.2q.7.4 1 .8 0 .3.4.4.7.9 1.4 1.3l1.3 1.3q1 .8 1.1 1.4l.5.8.5.7.7.8.5.7.4.7.4.7q.4.3.5.8.2 1 .7 1.4t.4.9l.1.8.4.6q.8 2 .8 3.4 0 .8.5 2l.4 1 .2 1 .3 2 .2 1 .3 1.6v.7l.2.8v1l.4 2 .2 1.2v2q0 1 .4 1.7a17 17 0 0 1 .3 4.8v.2q0 .9-.2 1.2l-.3.8-.3.6-.4.4h-1.2l-1.2-.3h-3.4l-.8.1-1.4.2h-2.2q-.6-.1-.6.4l-.2.2-.4.2a9 9 0 0 0-2.7.7l-.4-.3v-.4h-.1V96q-.4 0-.5.2l-.2.2-.2.3-.2.1-.4.1h-.6q0-.2-.3-.2l-.3.3-.6.2q-1 0-1.9.3M57 49.4l-1.3-.3-1.3-.4-2-1.4-2.4-2-.6-.5-.6-1.2-.8-.5-.4-.2q-.3 0-.4-.3l-1-.9q-.6-.3-.9-.9l-.6-.3-1.2-.3-1.2-.4q-.8-.6-1.4-.8-1.5-.5-2.9-1.3l-.6-.3-.6-.3q-.8-.2-1.4-.8l-1.1-1q-.7-.8-2.4-1.3-.5-.3-.6-1l-.5-.8-.5-.7-.8-.5q-.9-.2-1.2-.8l-1-.8q-.6 0-.9-.5l-.8-.6-1.9-1.3-1.2-.7-.3-.2-.2-.2q-.5-.5-1-.6l-1.2-.5-.5-.5-.2-.6v-.4l.1-.9.3-1.2.3-.7q.1-.5.7-.8L22 18l1.4-1.7 1-1.4 1-1.1q.2-.6.7-1l.7-1.3 1.4-2.2.7-.7.7-.8 1-1 3-.9 2.5-.9q.8-.6 1.7-.6l.9-.4q.4-.1.9-.5l3.3-1.4 1.2-.2 1.2-.2.3-.2h.4l.4-.1h.4l1.7-.1 1.7-.3h.9q1.3.2 2.5-.4l1-.1h2l1.2-.2q.4-.3 1.3-.3l1.5.3h.5l.4.2 1.3.3q.6 0 1.3.4l3.3 1.5 1.2.5.9.4 1.3.6q1 .6 1.9 1.8l.4.6.6.7V9l-.4 1-.4 1.3q0 .6-.2 1.1 0 1-.5 2l-.6 1.8q-.3.9-1 1.7v.6l-.2.5-.3.8-.3 1a19 19 0 0 1-1.6 4.9q-.6.5-.6.9 0 .6-.9 1.5l-.4.3-.3.4-.4 1.1-.5 1-.7 1.3-.4 1.3-.2 1-.1 1-.6 2.3-.3.9q-.2.6-.5.8-.6.8-.7 1.5l-.3.4-.2.3q-.5.7-1 2l-.9 2-.4.7-.6.7q-.6.8-1 2l-.1.1zm20-31.5.6.6q0 .3.7.7.8.5 1.5 1.4l.7.9.6 1.4.4 1.1 1 1.7q0 .3.2.5l1.6 3 .5.8.4.6a4 4 0 0 1 .6 2.2l.1.7.3 1.1.2 1.1.2 1.3.2 1.3.2 1.7.5 1.6.5 1.8.5 2.5.5 2v.2q.6 1.4.6 2.4v.4l.3.5.1 1v.8a19 19 0 0 0 .4 4v.9l.3.8v2l.1 1-.1 1-.1.5-.1.6v.7l-.3.8q0 .2-.3.2h-.6l-.6.2-.2-.3q0-.5-.7-.2l-.8.5q-.6.3-.8.2l-.6.1-.4.4q-.3.6-.9.6l-1-.2-.4-.4q-.2-.3-.8-.4l-1.5.2q-.3 0-.5.6 0 .5-.6.8h-.6q-.4 0-.6.3-.6 0-1-.7-.1-.3-.3 0l-.3.9-.7.1q-1 .4-1.7-.6-.3-.6-.7 0-.1.7-.8 1l-.6.6-.2.1v.1q-.6 0-.6-.2t-.5-.2l-.2.1-.4.7-1 .2-.1-.2v-.6l.2-.6-.1-.5-.5-1.7q-.1-.9-.4-1.3-.1-.8-1-1.3l-1.5-2.3-2-4.9v-1.4q0-.6-.3-1l-.4-1.3.1-1.4q0-1 .7-2.1l.5-1.4.7-1.3q.8-1.2 1.1-4.1 0-.8.7-1.4.8-.6 1-1.2l.6-1 .6-1.2q.5-.7.5-1.3l.5-1 .1-.7.2-.6.2-1.7.4-1.5.4-.8.2-1 .6-2 .2-.3.1-.5 1.3-3.1q0-.5.5-1.4l.2-.5.2-.7.2-.5v-.6l.4-1 .5-1 .3-.2zm0 0',
+        elder_thing:
+          'M24.6 48.2h.2l.3.1a85 85 0 0 0-3.2 23.2l-.5.2h-.1l-.4.3-.4.2-.4.4-.4.2-.6.4-.7.5-.7.6-.4.2-.7.7-.8.7-1 .8-.2.3-.2.3-.3.3-.2-.2-.1-.9v-.2l-.2-1-.1-.5-.6-1.7-.3-.8-.2-.7-.1-.1-.4-.7-.4-.7q0-.4-.4-.7l-.3-.7-1.1-1.5-.6-.7-.6-.5-1.6-1.4-.3-.3-.3-.1-.7-.4-.7-.5h-.2q-.2 0-.2-.4v-1.1l.1-.6.1-1v-1.6l.1-.9v-6.3l-.2-1v-2.3l-.2-.6-.1-.8v-.8l-.1-.7v-.8l-.2-.8-.1-1-.2-.6v-1l-.2-.4v-.5l-.2-.7V39l.3.2 1 .9.5.5.5.4 1 .8.7.5.7.5.8.5 1.7 1 .8.6.9.3.1.1h.2l.4.1.4.1h.4l.4.3q.7.3 1 .2l.7.3 1.6.4 1 .2.3.1.4.1.4.1h.5l.7.2h.2q.4.3.7.3h1q0 .3.3.2h1.4l.1.1zm50.8-10.6h-.2L72.5 39q-.3.3-.5.2l-.4.2-.4.2h-1l-.5.2-.4.4-.6.3-1.2 1.2-.2.3v.5l-.2.4v.3q.3.1.4.9l.2.2h.1l.2.4.3.4v.2l.1.2.1.3q0 .2.2.3l.2.8.2.9.4.8v1.3q0 .3.2.3v.1q0 .2.2.2v.4l.3.4.3.9v.7l.2.7v1l.2.8h.1l.2.9q.3.5.2.8l.2.6v1.2q0 .5.4.9v1.6l.4 1.6v.4q.3.5.2.8v1.4l.2.3.1.8-.1.3v4q.1.4 0 .8V77l-.2.4-.4.2-.3.4-.5.3v.1l-.4.3q0 .3-.4.5l-.7.5-.3.3q-.2 0-.4.5l-.3.4-.5.5q-.4.1-1 .9l-.4.2-.2.3-.2.2-.1.2-.9 1.1-.2.2-.2.3q-.2 0-.6.4l-1.3 1.3-.4.2-.3.2-.2.3-.5.7q-.1.5-.4.5l-.1.1-.5.3-.4.5-.5.6-.5.5-.1.1q-.3 0-.3.2l-.3.3-.3.4-.3.3q-.3 0-.6.4l-.2.1-.1.1-.5.7-.7.5q0 .3-.3.3l-.2.3-.3.3-.5.5-.7.8-1 1-.4.3-.2.2-.3.3-.5.4-.3.3-1 1.4q-.2.1-.2.3-.3 0-.3.2h-.2l-.2-.1-.2-.3-.1-.1-.9-1-.8-.9-.2-.3q-.6 0-.8-.4l-.9-.8h-.1l-1-1.4-1.3-1.3-.2-.3-.2-.1q-.6-.2-.6-.5l-.4-.3-.2-.3q0-.3-.3-.4l-.8-.7-1.2-1.3-.5-.5-.2-.2q0-.2-.3-.2 0-.2-.2-.2l-.3-.3h-.2l-.1-.2-.2-.3-.2-.4-.3-.3-.4-.2-.3-.2-.5-.4-.4-.4-.2-.2-.1-.2-.5-.6-.5-.4-.5-.4-.3-.3-.2-.1-.2-.4-.2-.3-.3-.3H32l-.1-.1-.4-.4-.3-.4-.3-.6-.3-.4-.5-.2-.4-.3-.5-.5-.5-.5-.3-.4-.2-.3-.3-.5-.1-.3v-.3l-.1-.2q0-.9-.2-1.3v-1.2l-.1-.3v-2.5l-.3-.7-.1-.7V69l.1-.6q.3-.7.2-1V67l.2-1-.2-.8v-1.5l.4-1.2.1-.4v-2.4l.2-.2V59q0-.3.2-.4l.3-1 .2-1 .4-1.2v-1.8l.1-.2.4-.6v-.3l.1-.2V52l.2-.8h.1l.7-1.7V49l.2-1 .1-.3.4-.7.2-.2v-1.3l.2-.3.2-.2.6-1.4q.4-.3.4-.8t.3-.9l.2-1 .2-.2.4-.7q0-.3.2-.3l-.2-.2-.9-.9-.8-1-.3-.1-.1-.1-.8-.2-.8-.2-.4-.2-.4-.2-.2-.1-1-.6h-.2l-.4-.3-.3-.2-.6-.4-.6-.4-.8-.8-.4-.4-.4-.1-.3-.1h-.2L24 33l-.3-.1-.8-.6-.2-.3q-.4-.3-.8-1l-.6-.7-.7-.8-.3-.3-.8-.6-.1-.1H19q0-.4-.6-.9l-.3-.3-.3-.2-.3-.2-.3-.3-.3-.2-.2-.3-.5-.6-.3-.6-.6-.3-.8-.5-.8-.4-.5-.4-.4-.4-.1-.2-.4-.3-.3-.5-.1-.3-.4-1-.2-1v-.8l.2-.7q0-.5.3-.8l.1-.5v-.2l.4-.7.8-.4.4-.2h.8l.2-.2.8-.2.2-.1h.6l.9.3.8.2h.2l.2.1.2.1.4.4.4.4q.3.3.4 1l.2.2.3 1v.9l-.1.1v.5l.2.4.6.6.2.2a6 6 0 0 0 2 1.4q.6.1 1 .5l1.2.4h.1l.3.2.6.6.1.1.2.1.2.1 3 .7h.2l.4.2H32l.2.2.6.2.5.2.2.2 1 1 .3.4.2.4.2.3.6.6.3.3q0 .2.2.2l1.4 1.4q.3 0 .4.2l1.4 1v.1l.4.3.4.2.3.2.7.7v.1h.3q.4.4.8.4l.3.3q.2 0 .3.2l.4.2q.1.1.2 0v-.2h.2l-.1-.2-.5-.5-.4-.6-.3-.4-.5-.5-.1-.3q0-.3-.3-.4l-.2-.3q-.3 0-.4-.2l-.4-.2-.2-.1-.2-.4-.6-.5-.6-.8-.4-.4-.3-.4-.5-.4-.3-.6-.3-.4-.3-.4-.2-.2-.3-.3-.1-.2v-.4l-.4-.6-.4-.8-.4-.9-.3-.6-.1-.6-.2-.6-.8-1.5-.7-1.4v-5.3h-.2l-.1-.3-.1-.2-.4-.5-.1-.3-.1-.3-.1-.1-.1-.2q-.4-.3-.4-.5l-.3-.1v-1q-.2 0-.2-.5v-.5l-.1-.7v-.2l-.1-.5.2-.4 1-1.6h.2l.7-.9.3-.1v-.2l2.2-.5h.2l1.2.3.3.2.7.5.3.2.7 1 .7.9v1.8l-.2 1.1q0 .6-.3 1l-.2.8-.1.3.1.2.3.4 1.3 1.4.2.5.2.6.1.2v.1l.1.3.2.2.4 1.1v.1l.9 2 .3.2.6.3.3.4.2.3.3.3v.2l.3.1.6.7.3.2.1.4.2.5.2.2.7.6.7.6q.2 0 .6.4l.7.5.8.5.6.4.7.4.5.2q.5 0 .8.3h.4q.8 0 1-.2h.7l.9-.3.7-.4.3-.6.2-.4.6-.2.2-.1.2-.1.3-.2 2-2.7 1.2-.9q.2 0 .2-.2t.2-.3l.2-.2.2-.4.2-.3.6-.6.2-.4.2-.4.2-.8.2-.8.5-.8h.2l.2-.6.1-.1.3-.9q0-.4.4-.9v-.6l.4-1.4v-.5l.1-.4v-.3l.1-.3q.3-.5.2-.8v-.2q0-.2-.4-.6l-.2-.3-.2-.3-.8-1.2v-.1l-.2-.2V4l.1-.4v-.4l.3-.4.2-.5.2-.2.4-.2.3-.3.2-.3h.1l1.6-.9h.3l.3-.1h.4q.6 0 1-.2h.7q.1-.2.2 0h.2l1 .3h.4q.3.6.9.6l.3.5.4.4h.1q.3.2.2.6.3.1.2.5.3.2.3.4v1.4l-.1.4q0 .3-.2.5v.7l-.3.3-.3.5-.2.5-.1.2v.2l-.1.2-.3.4-.3.4H72l-.6.2q0 .2-.2.2l-.2.2v.8l-.1.4v1.4l-.1.7v.6l-.4 1v.4l-.1.2-.2.5-.2.4v1l-.4 2.3-.1.6v.1l-.1.2-.3.7q-.3.4-.3.7t-.2.5l-.1.4-.6.6-.1.2-.2.1v.4q-.2 0-.2.3v.4l-.3.5-.6.5q-.3.2-.2.3l-.2.2-.3.7-.1.2-.2.3-1.2 1.7-1 1-.1.3-.3.4-.2.4-.2.2-.1.2-.2.2-.4.5-.1.7v.9l-.2.2h.3q.4-.6.8-.7l.4-.2.2-.2.5-.3.4-.5q.5-.3.6-.8l.2-.2.5-.4.5-.6.8-.3.4-.2.9-.3q.5 0 .8-.3l.4-.2.3-.1 1-.1.7-.4.5-.2.3-.2.4-.3h1.1l.3-.1h.3l.4-.3.8-.3 1-.2h.8l.3-.2.2-.1.3-.3.4-.3.2-.1h.3l.4-.1.5-.1.5-.1.9-.4.4-.2.4-.2.6-.3.9-.5.8-.5.7-.3.9-.2v-.1l.3-.1.4-.4.5-.4.1-.2V21q0-.9.2-1.2v-1.3l.2-.6q0-.3.3-.5l.5-1 .2-.1V16l.5-.4.4-.3h.2l.1-.1.7-.2.8-.2.7-.2.5-.1h.4l.3.2h.5q.2.3.5.3l.5.2h.1l.2.1.7.9v.2l.2.1.2.5.2.5.3.4.3.6v2.7l-.1.5-.2.3v.3l-.3.3-.4 1-.7.8-.4.3-.3.3H94l-.7.4h-1l-.3.2-1.2.7-.5.4-.4.4-.3.3A4 4 0 0 1 88 29l-.3.3q-.2 0-.2.2l-.3.6-.4.5-.2.3-.2.3-.2.1-.2.1-.9.4-.8.3-.5.1-.3.3-.4.2-.4.1-.6.7-.4.3-.4.3-.6.4-.7.2-1.3.7-.3.3-.7.6-.2.2-.4.2-.3.2q-.3 0-.5.2l-.4.2-.2.2zm21.4 1.6-.1.8q-.3.6-.2.9-.3.6-.2 1.1l-.1.8v.6l-.3.8-.1.8v.8l-.2 1.5v.4l-.1.8-.1.7v1l-.1.8v1.6q0 .5-.2.9V57l.2 1.6v.2l-.1.8v.7l.2.4v2.6h-.1l-.6.3-.4.2-.4.2-.7.5-.8.5-.4.4-1.5 1.5-.2.3q-.3 0-.4.4l-.3.4v.1l-.1.2-.6 1-.6.8-.2.5-1.4 3.7-.6 2.2v.5q0 .3-.2.5v.1h-.1l-.2-.3-.2-.2-.4-.4-1.3-1.3-.4-.4-.4-.3-.8-.7q-.4-.1-.6-.4l-.5-.4-.5-.3-.4-.3-2-1a162 162 0 0 0-2.9-20.1q-.5-2-1-3.2h.5l1-.1.4-.1.5-.1.7-.1.8-.1.6-.1.6-.2 1.4-.3h.5l.9-.3.8-.2 1.1-.2h.3q0-.2.3-.2h.3l.5-.2.5-.2h.6l.4-.3 1.4-.4q.4 0 .9-.4l.7-.5.7-.4.6-.5q.3 0 .7-.5l.8-.5.7-.4.1-.3 1-.6.8-.8 1-1 .2-.1.2-.2zm0 0',
+        auto_fail:
+          'M7.4 71.3h-.2zv.2zm2.4-38a23 23 0 0 0-.3-4.4v-1l.2-.3.2-.4.2-.7.1-.8.2-1v-.9a7 7 0 0 1 .6-2.3l.5-1.2q0-.8.6-1.2.5-.5.6-1l.7-1.2.1-.5v-.6l.2-.5q0-.4.3-.7l.1-.2q.7-.4.8-.7l.7-1 .4-.8.4-1q0-.5.6-.8l.7-.3.4-.4.4-.4q0-.2.3-.5l.7-.8.5-1q.2-.3.6-.5l1.2-.6L23 5l1-1q0-.2.2-.3l.3-.2q.3 0 .4-.3l2.1-.7 1-.3q.6 0 1-.2l1-.2.9-.3.5-.2.6-.2 1-.4h1.3l.7.1h.8q.5-.3 1-.3l1 .2q.7 0 1.5.6l.2.1.3.2 1 .2h.2q1-.2 1.8.6l1 .8 1.8.7 1 .4 1 1q.2.4 1.1.9l.4.2q.6.2.8.8l.6 1.4 1.9 1.8.7.8q.1.4.4.6.5.8.5 1.5l.6 1.5.4.6.2 1v1l.2 1q.3.8 0 1.8-.3.5-.2 1.6.1 1-.2 1.5l-.2 1.4-.2 1.2q0 .4-.3.8l-.3.3-.2.4a3 3 0 0 1-1 1.3l-.2.2-.4.6-.4.5q0 .4-.2.6l-.6.6-1.1.6-1 .8q0 .3-.7.6l-2 1-2 1q-.3 0-.5-.3l.2-.5.7-1 .5-1 .5-1 .5-1v-3q.5-1.1 0-3l-.5-1.6q-.2-.8-.8-1-.6-.4-1-1.3a3 3 0 0 0-1.4-1.2l-2-.9-1-.3-1-.3h-.7l-1 .2-1 .3-1 .5-.8.7-1 .8-.8.7q-.7.6-.7 1.1v.4l-.3 1-.4.4L30 26v3.3l.7 1.7.2.2.4 1.3q0 .6.4 1.2.3.2.3.5t.3.5l.8.8.3.2.3.1.2.3.2.2.4.5.5.5.6 1.1v.3q.1.5.7.8l.2.1q.6.2 1 .6l.9.6.3.4.7.2h.5l.8.2.6.4.6.2.9.8.7.6.7.6.7.5.7.7q.5.7 1 1.1.7.3 1 .8l1 1 .5.6.3.7.7 1.2.2.3.2.2.5 1v1q.3 1 .2 1.6t.4 1.1v.1q.6.8.7 2V60q0 1-.5 1.4t-1.1 1q-.4.2-.6.5l-.4.5-1.5 2-.7 1a6 6 0 0 0-1.4 2l-.4.8q0 .5-.3.8a11 11 0 0 0-1 3h-.5v-.2l-.6-1-.4-1-1-3.6-.2-.3-.3-.4-.2-.4-.2-.3-.5-1-.3-.7-.5-1-.8-.7-1-1.4-.4-.4-2.2-2-.6-.7-.2-.2q0-.6-.6-.7l-1-.5h-.5q-.3 0-.4-.4l-.3-.2-.3-.4q-.2-.5-1-.9l-.7-.2-.6-.3-.4-.1-.4-.1-1.1-.2L26 53l-1-.5-.6-.1-.6-.1H23q-.6.2-1.3-.4L20 50.7l-1.1-1-2-1.4q-.4 0-.7-.6v-.2q-.7-.9-1.6-1.6-.8-.9-.9-1.4v-.2l-.1-.3q0-.3-.6-.6l-.5-.4-.4-.5-.3-.6-.3-.6-.4-1-1-4.2-.3-.8zm55.5 36q-1.6 0-2.8.4a3 3 0 0 0-1.4.7q-.3 0-.5.3-.3 0-.5.3l-1.3.6q-.6.4-1.4.4l-1 .4a109 109 0 0 0-8.8 5.7l-.8.7-.9.6h-.1v-.2l-.2-.2v-1.8l.1-1.5v-.9l.6-1q0-.6.4-1.1l1.2-3.1.5-1 1-1 .6-.9.5-.8.5-.7q.8-1.2 1.8-1.8.5 0 .8-.7l.7-.8.9-1q.3-.5 1.2-1.1l.8-.6 1-.7a34 34 0 0 1 5.8-3.6l.5-.4.4-.2.3-.2.3-.1 1.3-.5 1.4-.6q.3-.3.7-.3.5 0 .8-.2l.9-.7.2-.4.7-1q1-.7 1.5-2l.8-1.5.7-1.5q.3-.7.3-1.7v-1.2l-.1-1.8q0-.7-1-1.5a4 4 0 0 0-2-1h-1.5l-1.5.2-1.4.2q-.8 0-1.4.3l-.7.3-1 .7-1 .6h-.1l-.2.1-.3.3-.2.3-.2.4-.5 1-.7.8q-.3.1-.4 0l-.1-.2q0-.8.3-2v-2l.2-1 .1-.2v-.4q.6-.7.6-1.6l.3-.8.5-1 .2-.5.5-.4.9-.9.9-.9.7-.5.5-.3.7-.4.6-.2h.5q.8-.2 1.4-.7l.3-.2.3-.2.3-.1 1.2-.3 1-.1h2q1 .3 2.4-.2h.8l2.2 1 .6.3.6.3 1.7 1.1q.9.6 1.3 1.2l.7 1 1 1.4.4.4q.5.9.7 2 .1.7.7 1.4l.3.5.2.7v.5q0 1 .3 2t.2 1.8l-.2 1.3q0 .6-.3 1.3v1.2l-.4 1.1-.2 1-.2 1-.5 1-.5 1-.6 1.4q0 .4-.2.6l-.1.4-.2.3-.4.4q-.4.3-1 1.2l-1 1.4-.8 1-.8.8-1.3 1.1q-.9.7-1.3 1.5l-.3.3-.7.5h-.1l-.1.1-1.2.5-.7.8q-.3.4-1 .8l-1.5 1-3.8 2.5h-1zM41.3 82v1l-.2 1q0 .4-.3.7l-1.2 1.5-1.2 1.7-.7 1.2-.8 1.2-.1.2v.2h-.4l-.2-.2-.4-.3-.4-.3-7.3-7.3-.8-1-.1-.4.1-.8v-.7l.4-1.8-.1-1.2-.2-1.8-.3-1.7q0-.7-.4-1.7l-.2-.4q-.6-1.6-1.2-2.4l-.6-.8-.5-1q-.3-.2-.3-.4l-.7-.6-.5-.2-.9-.6a5 5 0 0 0-2.2-2l-.4-.2-.3-.2-1.2-.6-1.2-.7-2.1-.5-.7-.2-1.8-.4h-.6l-.7.1h-.8a3 3 0 0 0-1.7.6l-1.6 1.3-1.4 1.4-.7.9-.4 1.2q-.3.8-.2 1.4l-.2 1.2q-.2.9-.1 1.9 0 1 .3 1.8 0 1 .6 2l.5.9.6.8v.3h-.3V76q-1-.5-1.8-1.5l-1-1.2q-.7-.5-.8-1.2L1 71l-1-3v-1.1l.3-1v-1.1l.3-1.5q0-.9.6-1.6l.6-1.5.7-1.2.7-.9.9-.7 1.4-1 .8-.5.8-.6q.8-.7 1.7-.7l1.7-.6 1.8-.6.9-.2 1-.1 1-.1.5-.1q.3 0 .5-.2H18l.5.2q.7-.1 1.6.8l.4.3 1.3.6h1.5q.5 0 .6.2l1.1.4 1.2.3q1 .6 2.1.6l.6.4 1.4 1q.5.6.9.8l1 .7.7.7.7.7q0 .4.4.6l.6 1q.3 0 .5.3.4.4.6 1l.2.1.1.2q0 .7.8 1.5l.5 1 .5.7L39 70a5 5 0 0 1 .9 2.1l.2.7q.6 1.6.4 2.7l.2.8.1.3.3 2.5v.8l.1 1.1zm43.3-.7-1 .2-1.2.1H81l-.6-.2H80q-.7-.3-1.8 0H77l-1.1-.2-.8-.1-.6-.2-1.1-.2q-.6 0-1 .2l-1 .1-1-.2h-1l-1.5-.1q-.9 0-1.3.2l-.9.1-.7.2-1.8.3-1.3.5-1.5.6q-.6.3-1.2 1l-.4.1-.3.3-3 2.7-.9 1-1.5 2.2-.4 1.1-.1.7q0 .7-.3 1l-.2.4-.2.2-.3.2-.1.3a53 53 0 0 0-5.8 5.7h-.5l-.2-.1-5.9-6-.3-.7V92l.2-1q1.6-3 4.1-5.5l.4-.4.6-.3 1-.9.7-.8.3-.4.2-.2q.3-.8 1.2-1.4l2.1-1.8q.5-.4.9-.4l.5-.1 1-.6a30 30 0 0 1 6.9-4.2l.7-.3 1.2-.6 1.4-.8 1.4-.6H67q1-.3 2 0l4 .3q1 0 1.4.2l1 .3 1 .2q.8.5 1.8.8l1.8.5q1.2.1 2 .8.3.3 1 .3l.5-.1q1-.2 2 .4l.2.1.1.2h1.6q.6-.1 1.1.2h.3l.3.2 1.3.2 1-.2 1.1-.1 1-.1 1.4-.5.7-.2.8-.2q.8 0 1.2-.6l.7-.5.6-.6.7-.8h.3q.2 0 .2.2v.2q-.5.8-.5 1.5l-1 2q-.7.8-1.5 1.2l-.9.6-1 .5-1 .7-.4.3q-.1.3-.6.5l-1.2.3-1.2.3q-1 0-2 .3l-1.2.2h-1.1zm0 0',
+        elder_sign:
+          'M66 61.5h.5l1.3.2 1.3.2q2.2.3 4.1.9l4 1q.1.3.6.2h.2v-.2l-.1-.2-5.6-13.5-.9-1.6.3-.4.6-.4.7-.5.3-.3q.1-.3.6-.3l.6-.3.5-.5.5-.4q.3 0 .5.2l3 3.2a90 90 0 0 1 8 10.7A114 114 0 0 1 93.4 70l5.5 10 .2.4-.1.2h-1l-1-.2-5.2-1.4a144 144 0 0 1-14-4.3l-9-3.4-4.2-1.7-8.4-3.4A147 147 0 0 1 37.8 57L36 56l-2.7-1.6q-.8-.7-.5-1.7v-.2l.2-.3q0-.2.3-.2l.7.3 5.6 2.3 2.3.9q1.3.4 3.3 1.4a65 65 0 0 0 8.6 3l6.2 1.5v-.1l-.4-.6v-.2h.4l.2.1 3.4 1 .8.2 1 .2.7.1v-.3zm-18.5 3.8-.2.2v.2a142 142 0 0 1-6.6 8.7l-1.2 1.8a37 37 0 0 0-4.1 8.4 27 27 0 0 0-1.6 8.2v2l-.1.2h-.2l-.2-.2-1-1.4-1.4-2.1v.1l-.2.2.1.3.7 3.2q0 1 .4 2l.4 2.9-.3-.2-.5-.6-.6-.6a10 10 0 0 1-1.8-2.7 45 45 0 0 1-3-6.4A54 54 0 0 1 22.8 75v-1h.2l.3 1 .5 1.3.7 2.5h.1q.3.3.2-.2V78a80 80 0 0 1-.6-9.5l.3-6.3.3-3.5.2-1.2v-1.2l.5-3.3a117 117 0 0 1 1.3-9.7l1.2-7.7q0-.5.5-.5l.4.2h.5l1.4.2 1.4.2q.4 0 .3.5l-.6 3.1a72 72 0 0 0-.3 20.8l.2 1.6.3 3 .3 4.1h-.2l-.5-.5h-.2v.2q0 .8.3 1.3l.4 1.2q.2.3.4 0l.4-.5 1.5-2 3.7-4.8 2.3-2.7.7-.6q.1-.3.8.6l1 .9 2 1.5zm-33-31.5.2.3.6.6.7.6 1 .8a28 28 0 0 0 3.6 3.3l1.7 1.4q.5.6 1.2.8l1.3.9q.9.8.7 2l-.3.8v1l-.2.7-.2.8h-.3l-.3-.2a97 97 0 0 1-10-7.8 50 50 0 0 1-8-9A38 38 0 0 1 1 19.5l.4-.2 1 .4.2.1A20 20 0 0 0 8 23l2 .8 2 .6 14.8 4.2a42 42 0 0 0 6 1l2.4.1 2.5.3 2.5.4 3.7.5h1.3l1 .1 1.1.1 5.6.4h1.3l1 .2q.7.1 1.2.7l.9 1 1 1.1-.1.2h-.4l-.2.1-6.5.1q-3.3 0-6.4-.2H42l-4.3-.3-1.6-.2-1-.1-1-.1-10.4-1.8-2.2-.5-3-.8-.2.1v.1l.5.2 5.5 2 .8.4v.1h-1.5l-1.3-.1-3.8-.4q-.3 0-.3.2H18l.7.4.6.4v.3a5 5 0 0 1-2.3 0l-1-.6q-.6 0-1-.3zm15.1-6.6.2-1 .4-1.2.2-1 .3-1.2.6-2.2.3-1 .3-1.2.6-2.2.3-1.1q0-.6.2-1.1l.7-2.3.2-1q0-.6.3-1l.6-2.3.7-2.3q.1-.9.5-2.1h.3l.2.1q.2.2.2-.2V2l.1-1.5V0h.2l.3.1.3.9 4.5 8.4 2 2.9a31 31 0 0 0 5.8 5.6l-.4.1h-.8l-.1.2.2.3.3.2q3.3 2.4 6.2 4.9A113 113 0 0 1 68.8 37l-.6.6q-.3.3-.9.5-.3.3-.6 0l-.4-.2-.4-.3-.7-.6q-.3-.4-.8-.6l-1.6-1.2-1.5-1.1-1.7-1-3.5-2.4-3.2-2.4-1.2-1-3.6-2.4h-.2l.7 1 .2.4.2.4h-.3l-1.5-.8-1.4-1q-1.6-.7-3.1-2.4l-.4-.2-.2-.1q-.3.1 0 .4l.3 1.2q0 .6.3 1.1v.1h-.2l-.3-.1-1.3-1-1.2-1-.8-.7-.7-.8-.5-.2-.6.1-.3.6-.3.4-.2.4-.6 1.8-.7 1.9-.2.7-.2.8q-.1.5-.5.2l-2-.3-2-.3zm46.2 6.2h-4.2l-.8.2q-1.2 0-1.9-.7l-1-1v-.3h1q.6 0 1-.2h1l.8-.2.1-.1-.5-.3-.3-.4v-.1l.4-.1.5-.1 2.8-.4 7.1-1.3 2-.3q.3 0 .2-.4l-.3-.2q0-.2.3-.2l.8-.3.9-.3q3-.7 6-1.7l6.3-1.6.9-.2h.1v.2l-.3.2-9.9 9a131 131 0 0 1-9.5 7.5l-4.4 3.2-8.6 6.1-4.2 3.2-3.1 2.7-3.6 3.3q-1.2.9-2.3 0-.4-.3-.4-.8l.2-.5.2-.4.5-.6a41 41 0 0 1 5-5.5l1.1-1 1.2-1.2a74 74 0 0 1 8.2-7.2l4-4 1.4-1.5.7-1 .6-1.2zm-29 2.5.4-.1.5.2a24 24 0 0 1 5.8 5.6q.5 1 .5 2 0 1.6-.5 3.4l-.2.5-.2.6-.4 1.2q-.1.8.4 1.8.1.6.7 1.2l.1.2v.1l-.2.2a12 12 0 0 1-10-4.1q-1-1-1-2.9v-1.6q.6-2.3 2-4.1.2 0 .3-.2v.7l.2 1 .1.8q0 1.1 1 2h.3V44a13 13 0 0 0 1.1-4.9q0-1.8-.8-3zm-3.6 17-4.6-.4-2.3-.6-2.1-1-.5-.3-.4-.3-.4-.4-.4-.5q-1.5-2-.1-5.5l1-1.5a9 9 0 0 1 3.3-2.4l4.2-1.5.7-.1h.7v.2l-.4.5-1.1 1.7-1 1.7-.5 1.3-.2 2q.3 2 1.2 3l1.6 1.3 1.6 1 .6.2.3.5q0 .3.3.3h.6l.6.2.3.1.3.1v.1q-.6.3-1.6.2zm9.7-14h.2v-.2q.8-.4 1.3-.4l.9-.2h.9l.8-.1h.7q.4 0 .2-.5l-.2-.2V37q0-.2.2-.2 2.6-.3 5 .7l.9.7.8.7q.4.8.4 2.4 0 1.7-.6 2.5l-.8.9-1.1 1-1.1.8-3.3 2.3-1.4.6-1.4.3h-.9l.3-.3.4-.4 2.8-2.8.4-1 .4-1.2q.3-1-.1-2-.6-1-1.2-1.4-1.2-.9-2.6-1.3l-.9-.2zm0 0',
+        guardian:
+          'm 91.6,24.6 c 0.0,1.7 0.1,3.4 0.1,5.3 c 0,1.8 -0.0,3.5 -0.1,5.3 c -0.1,2.1 -0.3,4.3 -0.6,6.7 c -0.2,2.3 -0.4,4.1 -0.7,5.4 c -0.4,2.3 -0.8,4.6 -1.4,6.7 c -0.4,2.0 -1.0,4.1 -1.5,6.2 c -0.7,2.1 -1.5,4.2 -2.3,6.2 c -0.8,2.0 -1.7,4.0 -2.6,5.8 c -1.4,2.3 -3.9,4.7 -7.4,7.4 C 73.4,81.2 71.8,82.3 70.0,83.2 C 68.1,84.2 66.2,85.2 64.4,86.1 l -0.7,0.3 c -1.0,0.5 -2.0,1.0 -3.0,1.5 c -1.0,0.5 -2.0,1.0 -3.0,1.5 c -0.9,0.5 -1.8,1.0 -2.6,1.5 C 54.1,91.7 53.5,92.3 53.2,92.8 C 52.6,93.2 52.0,93.6 51.5,93.9 C 51.0,94.3 50.4,94.6 49.9,95 C 49.5,94.6 49.0,94.3 48.4,93.9 C 48.0,93.6 47.4,93.2 46.9,92.8 C 45.2,91.7 43.5,90.6 41.8,89.6 C 40.1,88.5 38.2,87.5 36.3,86.5 L 35.5,86.1 C 33.6,85.2 31.8,84.2 29.9,83.2 C 28.1,82.3 26.5,81.2 25.0,80.0 C 23.3,78.7 21.8,77.5 20.6,76.2 C 19.3,74.9 18.4,73.7 17.6,72.6 C 16.7,70.7 15.8,68.8 15.1,66.7 C 14.3,64.7 13.6,62.6 12.9,60.5 C 12.1,58.4 11.6,56.3 11.1,54.2 C 10.6,52.1 10.2,49.8 9.8,47.5 C 9.4,46.2 9.1,44.4 8.9,42.0 C 8.7,39.7 8.6,37.4 8.4,35.3 C 8.3,33.5 8.2,31.7 8.1,29.9 c 0,-1.8 0.0,-3.6 0.1,-5.3 c 0,-1.1 0.0,-2.2 0.0,-3.3 c 0.0,-1.1 0.0,-2.1 0.0,-3.0 c 0.0,-0.3 0.0,-0.7 0.0,-1.0 c 0,-0.3 0,-0.7 0,-1.0 c 0.3,0.0 0.6,0.1 1.1,0.1 c 0.3,0 0.8,0.0 1.2,0.1 c 0.9,0.1 1.9,0.2 3.0,0.3 c 1.0,0.0 2.0,0.1 3.0,0.1 c 0.5,0 1.0,0 1.6,0 c 0.5,0 1.1,-0.0 1.6,-0.1 c 0.7,-0.0 1.4,-0.1 2.0,-0.1 c 0.6,-0.0 1.1,-0.1 1.7,-0.3 c 0.5,-0.0 1.1,-0.0 1.5,-0.1 c 0.5,-0.1 1.1,-0.2 1.7,-0.3 c 0.6,-0.1 1.3,-0.2 1.9,-0.3 c 0.6,-0.1 1.3,-0.3 1.9,-0.4 c 2.1,-0.6 4.2,-1.3 6.2,-2.2 c 1.9,-0.8 3.8,-1.7 5.5,-2.8 c 1.2,-0.8 2.4,-1.7 3.6,-2.5 c 1.1,-0.8 2.2,-1.7 3.2,-2.4 c 1.0,0.7 2.1,1.5 3.3,2.5 c 1.2,0.9 2.5,1.8 3.8,2.7 c 1.7,0.9 3.5,1.7 5.5,2.6 c 1.9,0.8 3.9,1.5 6.1,2.1 c 0.6,0.1 1.3,0.2 1.9,0.4 c 0.6,0.1 1.3,0.2 1.9,0.3 c 0.6,0.0 1.1,0.1 1.6,0.3 c 0.4,0.0 1.0,0.1 1.6,0.1 c 0.6,0.1 1.1,0.2 1.7,0.3 c 0.6,0 1.2,0.0 1.8,0.1 c 0.6,0.0 1.1,0.1 1.7,0.1 c 0.5,0 1.1,0 1.6,0 c 0.8,0 1.7,-0.0 2.8,-0.1 c 1.0,-0.0 2.0,-0.1 3.1,-0.3 c 0.3,-0.0 0.7,-0.1 1.1,-0.1 c 0.4,-0.0 0.8,-0.0 1.1,-0.1 l 0,2.0 c 0.0,0.9 0.1,1.9 0.1,3.0 c 0,1.0 0.0,2.1 0.0,3.3 z M 14.0,35.0 c 0.1,0.0 0.2,0.1 0.2,0.2 L 41.4,35.3 l 7.8,-23.4 c -0.7,0.6 -1.5,1.2 -2.6,1.8 c -0.5,0.4 -1.1,0.7 -1.8,1.1 c -0.7,0.3 -1.2,0.6 -1.6,0.8 c -0.7,0.3 -1.4,0.6 -2.2,0.9 c -0.7,0.2 -1.5,0.5 -2.3,0.9 c -0.8,0.3 -1.6,0.6 -2.5,1.0 c -0.8,0.3 -1.6,0.6 -2.5,0.8 c -0.6,0.2 -1.2,0.3 -1.7,0.5 c -0.5,0.1 -1.1,0.3 -1.7,0.4 c -0.5,0.1 -1.1,0.2 -1.7,0.4 c -0.6,0.1 -1.2,0.2 -1.8,0.3 c -0.4,0.0 -0.9,0.1 -1.5,0.1 c -0.6,0.0 -1.2,0.1 -1.7,0.1 c -0.6,0 -1.2,0.0 -1.8,0.1 c -0.6,0.0 -1.2,0.1 -1.8,0.1 L 17.6,22.0 c -0.2,0 -0.4,-0.0 -0.6,-0.1 c -0.2,-0.0 -0.4,-0.1 -0.6,-0.1 c -0.4,0 -0.8,-0.0 -0.9,-0.0 L 14.3,21.7 l 0,1.1 c -0.1,0.2 -0.2,0.5 -0.2,1.0 z m 12.3,39.1 c 0.1,0.1 0.4,0.2 0.6,0.3 c 0.2,0.0 0.5,0.1 0.7,0.3 L 35.8,51.5 L 14.4,35.6 L 14.3,35.3 c 0.0,1.2 0.0,2.4 0.1,3.7 c 0.0,1.2 0.2,2.5 0.4,3.9 c 0.1,1.3 0.3,2.7 0.4,4.2 c 0.1,1.4 0.3,2.9 0.6,4.5 c 0.3,1.5 0.7,3.0 1.1,4.5 c 0.4,1.4 0.9,2.9 1.4,4.4 c 0.5,1.5 1.1,3.0 1.8,4.3 c 0.7,1.3 1.4,2.7 2.2,4.2 c 0.1,0.3 0.3,0.6 0.5,0.9 c 0.1,0.2 0.3,0.5 0.4,0.7 c 0.2,0.2 0.5,0.4 0.7,0.7 c 0.1,0.2 0.4,0.5 0.6,0.8 c 0.1,0.2 0.3,0.5 0.5,0.7 c 0.1,0.1 0.4,0.3 0.7,0.6 z m 41.5,3.4 c 0.3,-0.2 0.7,-0.4 1.1,-0.6 c 0.3,-0.2 0.7,-0.4 1.0,-0.6 L 49.9,61.9 L 29.8,76.3 c 0.3,0.1 0.6,0.4 1.0,0.6 c 0.3,0.2 0.7,0.4 1.1,0.6 c 0.3,0.2 0.7,0.4 1.1,0.6 c 0.3,0.1 0.8,0.4 1.2,0.7 c 0.3,0.1 0.6,0.3 0.9,0.6 c 0.3,0.1 0.6,0.3 1.1,0.6 c 0.3,0.1 0.7,0.3 1.1,0.6 c 0.3,0.2 0.8,0.4 1.2,0.6 l 3.0,1.5 c 0.5,0.2 0.9,0.4 1.3,0.7 c 0.3,0.2 0.5,0.4 0.5,0.5 c 0.8,0.2 1.5,0.5 2.0,0.7 c 0.5,0.2 1.0,0.5 1.5,0.9 c 1.1,0.6 2.0,1.2 2.6,1.8 c 0.4,-0.3 0.9,-0.6 1.3,-0.9 C 51.7,86.8 52.2,86.4 52.6,86.1 C 53.2,85.8 53.7,85.5 54.0,85.2 C 54.4,84.9 54.7,84.7 54.9,84.4 c 0,-0.1 0.4,-0.3 1.2,-0.5 c 0.8,-0.2 1.5,-0.4 2.0,-0.7 L 61.3,81.6 c 0.3,-0.2 0.8,-0.4 1.2,-0.6 c 0.3,-0.2 0.8,-0.4 1.2,-0.6 c 0.3,-0.2 0.6,-0.4 0.9,-0.6 c 0.2,-0.2 0.5,-0.4 0.8,-0.6 c 0.3,-0.3 0.7,-0.5 1.1,-0.7 c 0.3,-0.2 0.8,-0.4 1.3,-0.6 z m 16.9,-34.6 c 0.1,-1.3 0.2,-2.6 0.3,-3.9 c 0.1,-1.2 0.2,-2.5 0.3,-3.7 l -0.1,0.2 l -21.3,15.9 l 7.9,23.3 c 0.2,-0.1 0.5,-0.2 0.7,-0.3 c 0.2,-0.1 0.5,-0.2 0.7,-0.3 c 0.2,-0.2 0.4,-0.5 0.6,-0.6 c 0.1,-0.1 0.3,-0.4 0.5,-0.7 c 0.1,-0.3 0.4,-0.6 0.6,-0.8 c 0.2,-0.2 0.4,-0.4 0.5,-0.7 c 0.1,-0.2 0.3,-0.5 0.6,-0.7 c 0.2,-0.2 0.4,-0.5 0.6,-0.9 c 0.7,-1.5 1.5,-2.9 2.2,-4.2 c 0.7,-1.3 1.3,-2.7 1.8,-4.3 c 1.0,-2.9 1.9,-5.9 2.5,-9.0 c 0.1,-1.5 0.3,-3.0 0.5,-4.5 c 0.1,-1.5 0.3,-2.9 0.4,-4.2 z M 85.8,30.1 l 0,-4.9 c -0.0,-0.3 -0.1,-0.7 -0.1,-1.2 l 0,-2.2 l -1.1,0 c -0.2,0.0 -0.5,0.0 -0.9,0.0 c -0.2,0 -0.4,0.0 -0.6,0.1 c -0.2,0.0 -0.4,0.1 -0.7,0.1 l -1.4,0 c -0.5,0 -1.2,-0.0 -1.8,-0.1 c -0.6,-0.0 -1.3,-0.1 -1.9,-0.1 c -0.6,-0.0 -1.1,-0.0 -1.7,-0.1 c -0.5,-0.0 -1.0,-0.1 -1.4,-0.1 c -0.6,-0.1 -1.2,-0.2 -1.8,-0.3 c -0.5,-0.1 -1.1,-0.3 -1.7,-0.4 c -0.6,-0.1 -1.2,-0.3 -1.8,-0.4 c -0.5,-0.1 -1.2,-0.3 -1.8,-0.5 c -0.9,-0.2 -1.8,-0.5 -2.5,-0.8 c -0.7,-0.3 -1.5,-0.7 -2.3,-1.0 c -0.8,-0.3 -1.6,-0.6 -2.3,-0.9 c -0.7,-0.3 -1.5,-0.6 -2.2,-0.9 c -0.9,-0.2 -1.6,-0.5 -2.0,-0.8 c -0.3,-0.3 -0.8,-0.7 -1.4,-1.1 c -0.9,-0.5 -1.8,-1.1 -2.6,-1.8 l 7.8,23.4 l 27.0,0 l 0,-0.2 c 0,-0.3 0.0,-0.7 0.0,-1.1 c 0.0,-0.3 0.0,-0.8 0.0,-1.2 z m 0,0',
+        seeker:
+          'M 50.6,42.6 C 49.3,42.0 47.9,41.4 46.4,40.8 C 45.0,40.2 43.6,39.6 42.3,38.9 l -20.8,-8.8 c 2.0,-3.9 4.9,-7.2 8.6,-9.8 c 3.7,-2.5 8.0,-4.1 12.6,-4.6 c 0.3,-0.0 0.6,-0.1 1.0,-0.1 c 0.3,-0.0 0.7,-0.0 1.0,-0.0 l 1.9,0 c 0.1,0.0 0.3,0.0 0.6,0.0 l 0.2,0 c 0.1,0 0.2,0.0 0.3,0.0 c 0.1,0.0 0.2,0.0 0.4,0.0 c 0.3,0 0.5,0.0 0.7,0.1 c 0.2,0.0 0.4,0.1 0.6,0.1 c 0.2,0 0.4,0.0 0.6,0.1 c 0.4,0.1 0.7,0.2 1.1,0.2 c 0.3,0.0 0.7,0.1 1.1,0.3 c 2.8,0.7 5.6,2.0 8.1,3.9 c 0.1,0.1 0.2,0.1 0.2,0.1 c 0.0,0 0.1,0.0 0.1,0.1 c 3.2,2.4 5.9,5.6 7.8,9.3 c 1.9,3.7 2.9,7.8 2.9,12.2 c 0,2.8 -0.4,5.8 -1.4,8.8 L 56.9,45.1 c -0.0,0.0 -0.1,0.1 -0.2,0.1 c 0,-0.0 -0.0,-0.1 -0.1,-0.1 C 55.4,44.6 54.4,44.2 53.4,43.8 C 52.5,43.4 51.5,43.0 50.6,42.6 Z M 24.0,58.8 C 23.7,58.4 23.4,58.1 23.2,57.6 C 21.5,55.3 20.3,52.6 19.5,49.5 C 19.3,49.2 19.2,48.9 19.1,48.5 c -0.0,-0.3 -0.1,-0.6 -0.1,-1.0 c -0.1,-0.5 -0.2,-1.0 -0.2,-1.3 c -0.0,-0.1 -0.1,-0.4 -0.1,-0.8 l 0,-0.1 c -0.0,-0.3 -0.1,-0.8 -0.1,-1.5 c -0.0,-0.2 -0.0,-0.6 -0.0,-1.3 l 0,-0.1 c 0,-0.5 0.0,-0.9 0.0,-1.1 l 0,-1.1 c 0,-0.0 0.0,-0.1 0.0,-0.2 c 0.0,-0.0 0.0,-0.1 0.0,-0.2 l 0,-0.2 c 0.0,-0.2 0.1,-0.4 0.1,-0.6 c 0,-0.1 0.0,-0.3 0.1,-0.6 l 0,-0.1 c 0.1,-1.4 0.5,-2.7 1.0,-3.9 c 0,0 0.0,-0.0 0.1,-0.1 c 0,0.0 0.0,0.1 0.1,0.1 l 1.2,0.6 c 2.6,1.1 5.2,2.3 7.9,3.4 c 2.6,1.1 5.3,2.3 7.9,3.4 c 2.6,1.1 5.3,2.3 8.0,3.5 c 2.6,1.1 5.4,2.3 8.2,3.5 c 0.1,0 0.2,0.0 0.3,0.2 l 15.2,6.5 c -0.3,0.6 -0.7,1.3 -1.1,1.9 c -0.4,0.5 -0.9,1.1 -1.3,1.7 c -1.5,1.7 -3.2,3.0 -4.8,4.1 c -1.6,1.0 -3.3,1.8 -5.0,2.5 c -1.7,0.5 -3.4,1.0 -5.3,1.2 c -1.8,0.2 -3.8,0.3 -5.8,0.3 c -3.3,0 -6.1,-0.3 -8.6,-0.9 C 34.5,65.7 32.5,65.0 30.9,64.2 C 29.3,63.5 28.0,62.8 27.2,62.1 C 26.3,61.4 25.9,61.0 25.8,60.9 C 25.1,60.3 24.5,59.6 24.1,58.9 c -0.0,0 -0.0,-0.0 -0.0,-0.1 z M 81.3,40.0 c 0.0,0.5 0.1,1.0 0.1,1.6 c 0,0.5 0,1.0 0,1.6 l 0,0.5 c 0,0.1 -0.0,0.3 -0.0,0.4 c -0.0,0.1 -0.0,0.2 -0.0,0.3 l 0,0.8 c 0,0.1 -0.0,0.2 -0.1,0.3 l 0,0.7 l -0.2,1.8 c -0.3,1.4 -0.6,2.9 -1.0,4.3 c -0.3,1.4 -0.8,2.8 -1.5,4.1 c -2.0,4.6 -4.8,8.5 -8.2,11.7 c -2.8,2.7 -6.2,5.0 -10.1,6.6 c -0.9,0.4 -1.8,0.8 -2.8,1.1 c -0.9,0.3 -1.9,0.6 -2.9,0.8 c -0.3,0.1 -0.7,0.1 -1.1,0.2 c -0.4,0.0 -0.8,0.1 -1.2,0.2 c -0.5,0.1 -1.0,0.2 -1.3,0.2 c -0.1,0.0 -0.2,0.0 -0.4,0.0 c -0.1,0 -0.3,0.0 -0.5,0.1 c -0.5,0 -0.9,0.0 -1.2,0.1 L 47.8,78.3 c -0.4,0 -0.8,0.0 -1.0,0.1 l -1.3,0 c -0.6,0 -1.1,-0.0 -1.5,-0.1 l -1.3,0 C 42.5,78.2 42.4,78.2 42.3,78.2 L 41.6,78.2 C 41.4,78.1 41.1,78.1 40.7,78.1 c -0.1,-0.0 -0.3,-0.0 -0.5,-0.0 c -0.1,0 -0.3,-0.0 -0.4,-0.1 c -0.1,0 -0.3,-0.0 -0.5,-0.0 C 39.0,77.8 38.9,77.7 38.6,77.7 C 38.3,77.6 37.9,77.5 37.6,77.4 C 37.2,77.4 36.9,77.3 36.5,77.2 C 36.0,77.0 35.5,76.9 35.1,76.7 C 34.6,76.6 34.2,76.5 33.7,76.3 c -0.1,0 -0.2,-0.0 -0.2,-0.0 l 0,1.1 c -0.0,0.2 -0.2,0.6 -0.5,1.2 c -0.3,0.4 -0.8,0.7 -1.5,1.1 c -0.1,0 -0.2,0.0 -0.3,0.0 c -0.1,0.0 -0.2,0.0 -0.3,0.0 l -0.1,0 c -0.7,0 -1.3,-0.2 -1.8,-0.6 c -0.4,-0.4 -0.8,-0.9 -0.9,-1.5 c 0,-0.1 -0.0,-0.3 -0.0,-0.4 c -0.0,-0.1 -0.0,-0.2 -0.0,-0.3 c 0.1,-0.8 0.5,-1.6 1.1,-2.1 c 0.1,-0.1 0.2,-0.1 0.3,-0.1 c 0,-0.1 -0.0,-0.2 -0.1,-0.2 c 0,0 -0.0,-0.0 -0.2,-0.1 c -0.1,-0.1 -0.3,-0.1 -0.6,-0.2 c -0.1,-0.0 -0.3,-0.1 -0.6,-0.2 l -0.0,-0.1 c 0,-0.0 0,-0.0 0,-0.1 c 0.0,-0.0 0.0,-0.0 0.0,-0.1 l 3.2,-7.0 c 1.4,0.7 3.1,1.3 5.0,1.8 c 1.5,0.4 3.5,0.8 5.8,1.1 c 2.2,0.3 4.8,0.3 7.7,0.1 c 3.2,-0.2 6.0,-0.8 8.6,-1.7 c 2.5,-0.9 4.6,-2.0 6.4,-3.3 c 1.6,-1.2 3.1,-2.5 4.3,-3.8 c 1.2,-1.3 2.2,-2.7 3.1,-4.0 c 0.8,-1.3 1.5,-2.6 1.9,-3.8 c 0.4,-1.2 0.8,-2.2 1.1,-3.1 c 1.0,-4.0 1.3,-7.4 1.0,-10.2 c -0.3,-2.8 -0.6,-5.0 -0.9,-6.5 c -0.1,-0.5 -0.3,-1.3 -0.7,-2.3 c -0.3,-1.0 -0.7,-1.9 -1.1,-2.9 c -0.3,-0.7 -0.6,-1.3 -0.8,-1.8 c -0.2,-0.5 -0.4,-0.9 -0.6,-1.2 c -0.1,-0.2 -0.3,-0.5 -0.5,-0.7 c -0.1,-0.2 -0.3,-0.5 -0.5,-0.8 c -1.3,-1.9 -2.8,-3.6 -4.5,-5.2 c -1.6,-1.5 -3.6,-2.9 -5.8,-4.1 c -0.2,-0.1 -0.4,-0.2 -0.6,-0.3 c -0.2,-0.0 -0.4,-0.1 -0.6,-0.2 c 0,0 -0.1,-0.0 -0.3,-0.2 l -0.1,0 c -0.0,0 -0.1,-0.0 -0.2,-0.1 c -0.4,-0.1 -0.9,-0.3 -1.3,-0.6 c -0.4,-0.2 -0.9,-0.4 -1.3,-0.6 c -0.0,0 -0.2,-0.0 -0.5,-0.2 l -0.0,0 l 0,-0.1 c 0,-0.0 0,-0.1 0,-0.1 c 0.0,-0.0 0.0,-0.0 0.0,-0.1 c 0.1,-0.3 0.2,-0.4 0.2,-0.3 c 0,0.0 0.0,-0.1 0.2,-0.4 c 0.1,-0.1 0.1,-0.3 0.2,-0.6 c 0.0,-0.2 0.1,-0.5 0.2,-0.7 c 0,0 0.0,-0.0 0.1,-0.2 l 0.2,0 c 0.5,0.2 0.9,0.4 1.2,0.5 c 0,0.0 0.0,0.1 0.2,0.1 c 0,0 0.0,-0.0 0.0,-0.1 l 0,-0.2 c -0.0,-0.1 -0.0,-0.4 0,-0.6 c 0,-0.4 0.1,-0.8 0.5,-1.3 c 0.3,-0.5 0.9,-0.8 1.6,-1.1 c 0.2,-0.0 0.6,-0.1 1.1,-0.1 c 0.5,0.0 1.0,0.3 1.5,0.8 c 0.4,0.4 0.6,0.9 0.7,1.5 c 0.0,0.1 0.1,0.3 0.1,0.6 c 0,0.9 -0.3,1.7 -1.1,2.3 c -0.0,0.0 -0.1,0.1 -0.1,0.1 c -0.0,0 -0.0,0.0 -0.1,0.0 c 0,0 0,0.0 0,0.1 l 0.0,0.1 l 1.2,0.6 c 5.8,3.3 10.4,8.0 13.7,14.0 c 1.3,2.4 2.3,4.9 3.0,7.6 c 0.3,0.9 0.5,1.8 0.6,2.7 l 0.3,1.5 c 0.0,0.1 0.0,0.4 0.0,0.6 c 0,0.2 0.0,0.4 0.1,0.6 c 0,0.6 0.0,1.1 0.1,1.4 z m -12.3,49.8 c 0,0.0 0.0,0.1 0.0,0.2 c 0.0,0.0 0.0,0.1 0.0,0.2 c 0,0.1 -0.0,0.3 -0.2,0.6 c 0,0 -0.0,0.1 -0.1,0.3 c -0.1,0.0 -0.2,0.1 -0.3,0.1 c -0.0,0.0 -0.1,0.1 -0.2,0.2 c -0.1,0.0 -0.2,0.1 -0.3,0.2 c -0.0,0.0 -0.1,0.1 -0.3,0.1 l -1.5,0.6 c -0.3,0.1 -0.6,0.2 -1.0,0.3 c -0.3,0.0 -0.6,0.1 -1.0,0.2 c -0.3,0.1 -0.7,0.2 -1.1,0.2 c -0.4,0.0 -0.8,0.1 -1.2,0.2 c -0.1,0.0 -0.3,0.1 -0.6,0.1 c -0.1,0 -0.3,0.0 -0.5,0.1 c -0.3,0.0 -0.5,0.1 -0.7,0.1 c -0.1,0 -0.4,0.0 -0.6,0.1 c -0.1,0 -0.2,0 -0.4,0 c -0.1,0.0 -0.3,0.0 -0.4,0.0 c -0.2,0.0 -0.6,0.1 -1.1,0.1 c 0,0 -0.0,0.0 -0.1,0.1 c -0.5,0 -0.9,0.0 -1.2,0.1 l -0.2,0 c -0.3,0 -0.5,0.0 -0.6,0.1 c -0.6,0 -1.1,0.0 -1.5,0.1 l -0.8,0 c -0.1,0 -0.2,0 -0.3,0 c -0.0,0.0 -0.1,0.0 -0.3,0.0 l -0.6,0 c -0.2,0 -0.4,0 -0.7,0 c -0.2,0 -0.4,0.0 -0.7,0.1 L 42.4,95 c -0.4,0 -0.8,-0.0 -1.1,-0.1 L 39.4,94.8 c -0.0,-0.0 -0.2,-0.0 -0.3,-0.0 L 37.7,94.8 C 37.7,94.7 37.6,94.7 37.5,94.7 L 36.6,94.7 c -0.1,0 -0.4,-0.0 -0.6,-0.0 c -0.2,-0.0 -0.4,-0.0 -0.6,-0.0 c -0.0,0 -0.0,-0.0 -0.1,-0.0 c -0.0,-0.0 -0.1,-0.0 -0.2,-0.0 l -0.2,0 c -0.1,0 -0.2,-0.0 -0.5,-0.0 c -0.1,-0.0 -0.3,-0.0 -0.6,-0.0 c -0.1,0 -0.2,-0.0 -0.4,-0.0 C 33.0,94.2 32.8,94.2 32.6,94.2 C 32.5,94.2 32.2,94.2 31.8,94.2 L 30.2,93.8 C 30.0,93.8 29.7,93.7 29.5,93.7 c -0.2,0 -0.5,-0.0 -0.8,-0.1 C 28.1,93.4 27.6,93.3 27.0,93.1 C 26.5,93.0 26.0,92.9 25.4,92.7 C 25.1,92.6 24.9,92.5 24.6,92.4 c -0.2,0 -0.4,-0.0 -0.6,-0.2 c -0.2,-0.1 -0.4,-0.2 -0.6,-0.2 c -0.1,0 -0.3,-0.0 -0.4,-0.2 c -0.1,-0.2 -0.3,-0.3 -0.5,-0.3 c -0.1,-0.1 -0.2,-0.3 -0.2,-0.4 c -0.0,-0.0 -0.1,-0.0 -0.1,-0.1 c 0,-0.0 -0.0,-0.0 -0.1,-0.1 c -0.0,-0.2 -0.0,-0.4 0,-0.7 c 0.0,-0.0 0.1,-0.1 0.1,-0.2 c 0.0,-0.0 0.0,-0.0 0.1,-0.1 l 0.2,-0.3 c 0.1,-0.1 0.3,-0.2 0.6,-0.3 c 0.3,-0.1 0.6,-0.3 1.0,-0.5 C 24.8,87.9 25.4,87.7 25.9,87.7 C 26.7,87.3 27.6,87.1 28.5,87.1 l 1.5,-0.2 c 0.2,-0.0 0.4,-0.1 0.6,-0.1 c 0.2,-0.0 0.4,-0.0 0.6,-0.0 c 0.1,-0.0 0.2,-0.1 0.3,-0.1 c 0.1,0 0.3,-0.0 0.5,-0.0 c 0.1,0 0.2,-0.0 0.4,-0.0 c 0.1,-0.0 0.3,-0.0 0.4,-0.0 c 0.2,0 0.4,-0.0 0.6,-0.0 c 0.2,-0.0 0.3,-0.0 0.5,-0.0 c 0.2,0 0.3,-0.0 0.4,-0.1 L 35.3,86.1 c 0.1,-0.0 0.4,-0.1 0.8,-0.1 c 0.1,0 0.3,-0.0 0.6,-0.0 c 0.2,-0.0 0.5,-0.0 0.7,-0.0 c 0.3,0 0.5,-0.0 0.7,-0.0 L 39.1,85.8 c 0.1,0 0.3,-0.0 0.3,-0.1 c 0.3,-0.1 0.6,-0.3 0.8,-0.5 c 0.2,-0.1 0.5,-0.3 0.8,-0.5 c 0.4,-0.3 0.6,-0.5 0.8,-0.7 L 42.7,83.3 c 0.2,-0.4 0.4,-0.6 0.5,-0.7 c 0,-0.1 0.0,-0.3 0.2,-0.6 l 0,-0.3 c 0,-0.3 -0.0,-0.6 -0.2,-0.8 c -0.1,-0.3 -0.2,-0.4 -0.2,-0.5 c 0,-0.0 -0.0,-0.1 -0.0,-0.1 c -0.0,0 -0.0,-0.0 -0.0,-0.1 l 0,-0.1 l 5.3,0 c 0,0 0,0.0 0,0.1 c 0,0.0 -0.0,0.1 -0.0,0.2 c -0.1,0.1 -0.2,0.2 -0.2,0.3 c -0.2,0.4 -0.3,0.9 -0.2,1.3 c 0,0.1 0.0,0.3 0.1,0.5 l 0.3,0.6 c 0.1,0.1 0.1,0.1 0.2,0.2 c 0.0,0.0 0.1,0.1 0.2,0.2 c 0.3,0.3 0.5,0.6 0.7,0.7 L 50.3,84.9 c 0.2,0.2 0.6,0.4 1.1,0.7 c 0.0,0.0 0.2,0.1 0.5,0.1 l 0.8,0 c 0.0,0.0 0.1,0.0 0.2,0.0 c 0.1,0 0.3,0 0.6,0 c 0.2,0 0.4,0.0 0.6,0.1 l 0.8,0 c 0.1,0 0.3,0.0 0.3,0.1 l 0.8,0 c 0.1,0.0 0.2,0.1 0.5,0.1 l 0.2,0 c 0.0,0 0.1,0.0 0.2,0.0 c 0.0,0.0 0.1,0.0 0.2,0.0 l 0.2,0 c 0.1,0 0.3,0.0 0.5,0.0 c 0.1,0.0 0.3,0.0 0.5,0.0 c 0.1,0.0 0.3,0.0 0.6,0.0 c 0.2,0.0 0.4,0.1 0.6,0.1 c 0.2,0.0 0.4,0.0 0.6,0.0 c 0.6,0.1 1.3,0.2 1.9,0.3 c 0.6,0.1 1.2,0.3 1.8,0.5 c 0.3,0.1 0.6,0.2 0.8,0.3 c 0.2,0.0 0.5,0.1 0.8,0.2 c 0.2,0.0 0.4,0.1 0.5,0.2 c 0.1,0.0 0.3,0.1 0.5,0.2 c 0.2,0.1 0.4,0.2 0.5,0.3 c 0.1,0.0 0.1,0.1 0.2,0.1 c 0.0,0.0 0.1,0.1 0.2,0.2 c 0.1,0.1 0.1,0.2 0.2,0.3 z m 0,0',
+        rogue:
+          'm 50.0,5.0 l 44.9,31.5 l -44.9,58.4 l -45.0,-58.4 z m 0,5.6 l -22.3,16.7 l 22.3,31.2 l 8.8,-13.5 l -3.9,-2.6 l -4.8,4.0 l -13.7,-17.8 l 13.5,-10.0 l 13.5,10.0 l -2.4,3.5 l 4.0,4.0 l 7.0,-8.8 z m -26.5,36.5 l 26.5,37.9 l 26.5,-37.9 l -26.5,-19.0 l -6.5,5.3 l 3.6,4.4 l 2.9,-1.6 l 18.0,13.4 l -18.0,24.6 L 31.9,49.7 L 37.2,45.1 L 34.1,40.0 Z m 0,0',
+        mystic:
+          'm 49.9,9.1 l -44.9,60.1 l 90,0 z m 0,24.3 c 3.1,0 6.1,0.5 9.0,1.5 c 2.8,1.0 5.3,2.5 7.5,4.4 c 2.2,1.8 4.1,4.1 5.5,6.7 c 1.5,2.5 2.5,5.3 3.0,8.4 c -1.3,1.7 -2.9,3.3 -4.7,4.8 c -1.8,1.3 -3.8,2.5 -6.0,3.5 c -2.2,0.9 -4.5,1.7 -6.9,2.2 c -2.4,0.5 -4.9,0.7 -7.5,0.7 c -2.5,0 -5.0,-0.2 -7.5,-0.7 c -2.4,-0.5 -4.7,-1.2 -6.9,-2.2 c -2.2,-0.9 -4.2,-2.2 -6.0,-3.5 c -1.7,-1.4 -3.3,-3.0 -4.6,-4.8 c 0.5,-3.0 1.5,-5.8 3.0,-8.4 c 1.4,-2.6 3.3,-4.8 5.4,-6.7 c 2.2,-1.8 4.7,-3.3 7.5,-4.4 c 2.8,-1.0 5.9,-1.5 9.1,-1.5 z m 0,0 c -1.7,0 -3.4,0.3 -5.0,1.1 c -1.5,0.7 -2.9,1.7 -4.0,3.0 c -1.1,1.2 -2.1,2.7 -2.8,4.4 c -0.6,1.7 -0.9,3.5 -0.9,5.4 c 0,1.9 0.3,3.7 0.9,5.4 c 0.6,1.7 1.6,3.2 2.8,4.5 c 1.1,1.3 2.5,2.3 4.0,3.0 c 1.5,0.7 3.2,1.1 5.0,1.1 c 1.7,0 3.4,-0.3 4.9,-1.1 c 1.5,-0.7 2.9,-1.7 4.0,-3.0 c 1.1,-1.3 2.1,-2.8 2.7,-4.5 c 0.6,-1.7 0.9,-3.5 0.9,-5.4 c 0,-1.9 -0.3,-3.7 -0.9,-5.4 c -0.6,-1.7 -1.5,-3.2 -2.7,-4.4 c -1.1,-1.2 -2.5,-2.3 -4.0,-3.0 c -1.5,-0.7 -3.2,-1.1 -4.9,-1.1 z m -26.4,38.7 l -1.2,2.2 c -0.5,1.0 -1.4,1.8 -2.4,2.4 l -2.2,1.2 l 2.2,1.2 c 1.0,0.5 1.8,1.3 2.4,2.4 l 1.2,2.2 l 1.2,-2.2 c 0.5,-1.0 1.3,-1.8 2.4,-2.4 l 2.2,-1.2 l -2.2,-1.2 c -1.0,-0.5 -1.8,-1.3 -2.4,-2.4 z m 53.0,0 l -1.2,2.2 c -0.5,1.0 -1.3,1.8 -2.4,2.4 l -2.2,1.2 l 2.2,1.2 c 1.0,0.5 1.8,1.3 2.4,2.4 l 1.2,2.2 l 1.2,-2.2 c 0.5,-1.0 1.3,-1.8 2.4,-2.4 l 2.2,-1.2 l -2.2,-1.2 c -1.0,-0.5 -1.8,-1.3 -2.4,-2.4 z m -26.5,0.5 l -1.8,3.4 c -0.8,1.5 -2.1,2.8 -3.6,3.6 l -3.4,1.8 l 3.4,1.8 c 1.5,0.8 2.8,2.1 3.6,3.6 l 1.8,3.4 l 1.8,-3.4 c 0.8,-1.5 2.1,-2.8 3.6,-3.6 l 3.4,-1.8 l -3.4,-1.8 c -1.5,-0.8 -2.8,-2.1 -3.6,-3.6 z',
+        survivor:
+          'm 95,27.0 c -0.2,1.7 -0.8,3.2 -1.7,4.5 c -0.8,1.2 -1.7,2.3 -2.6,3.2 c -1.0,0.9 -2.2,1.7 -3.6,2.5 c 0.4,0 0.9,0.0 1.3,0.1 c 0.4,0.0 0.7,0.1 1.0,0.2 c 0.2,0.1 0.5,0.2 0.8,0.3 c -0.7,1.1 -1.5,2.0 -2.3,2.6 c -0.7,0.5 -1.5,0.9 -2.3,1.2 c -0.8,0.2 -1.6,0.3 -2.4,0.2 c 0.4,0.2 0.8,0.6 1.2,1.0 c 0.4,0.3 0.7,0.8 1.0,1.2 c 0.3,0.4 0.6,1.0 0.8,1.5 c -0.4,0.1 -1.0,0.2 -1.7,0.2 c -0.6,0.0 -1.3,0.0 -2.0,-0.0 c -0.7,0 -1.6,-0.0 -2.4,-0.1 c 0.4,0.1 0.7,0.3 1.0,0.6 c 0.2,0.2 0.5,0.4 0.6,0.6 c 0.2,0.2 0.3,0.4 0.4,0.7 c -0.4,0.5 -1.1,0.9 -1.8,1.2 c -0.6,0.2 -1.3,0.5 -2.0,0.6 c -0.8,0.1 -1.6,0.2 -2.4,0.2 c 0.3,0.3 0.6,0.7 0.8,1.0 c 0.1,0.2 0.3,0.5 0.4,0.8 c 0.1,0.3 0.1,0.6 0.0,0.8 c -0.7,0.1 -1.4,0.2 -1.9,0.2 c -0.5,-0.0 -1.0,-0.1 -1.4,-0.2 c -0.4,-0.1 -0.8,-0.3 -1.2,-0.5 c 0.3,0.4 0.4,0.7 0.2,1.0 c -0.0,0.1 -0.2,0.2 -0.3,0.3 c -1.4,0 -2.3,-0.1 -2.8,-0.3 c -0.2,-0.1 -0.4,-0.3 -0.6,-0.4 c 0,0.4 -0.0,0.7 -0.0,0.8 l -0.0,0.0 c -1.2,0 -2.1,-0.1 -2.8,-0.5 c -0.3,-0.2 -0.6,-0.4 -0.8,-0.6 c 0.1,0.4 0.1,0.8 0.0,0.9 c -0.0,0.0 -0.1,0.1 -0.1,0.1 c -0.6,0 -1.2,-0.0 -1.7,-0.1 c -0.4,-0.1 -0.8,-0.2 -1.1,-0.4 c -0.3,-0.1 -0.6,-0.4 -0.8,-0.6 c 0.0,0.2 0.0,0.4 0,0.6 c 0,0.1 0,0.2 0,0.3 c -0.0,0.1 -0.0,0.2 -0.0,0.2 c -0.6,-0.0 -1.2,-0.1 -1.8,-0.3 c -0.4,-0.2 -0.9,-0.4 -1.3,-0.7 c -0.4,-0.2 -0.8,-0.6 -1.1,-0.9 c 0,0.9 -0.1,1.7 -0.4,2.5 c -0.2,0.7 -0.6,1.4 -1.0,1.9 c -0.4,0.5 -1.0,1.1 -1.5,1.5 c 0,0.7 0.1,1.5 0.5,2.3 c 0.3,0.8 0.8,1.7 1.4,2.6 c 0.5,0.8 1.2,1.7 1.9,2.6 c 0.6,0.8 1.3,1.6 2.1,2.3 c 0.5,0.5 1.0,1.0 1.6,1.6 c 0.5,0.5 0.9,1.1 1.4,1.6 c 0.5,0.5 1.0,1.1 1.5,1.7 c -1.1,0.4 -2.0,0.5 -2.6,0.3 c -0.6,-0.1 -1.1,-0.2 -1.5,-0.3 c 0.4,1.4 0.7,2.6 0.8,3.6 c 0.0,0.5 0.0,1.1 0.0,1.6 c -0.6,-0.1 -1.2,-0.3 -1.7,-0.6 c -0.4,-0.2 -0.8,-0.4 -1.1,-0.7 c -0.3,-0.2 -0.7,-0.5 -1.0,-0.9 c -0.2,1.4 -0.6,2.6 -0.9,3.3 c -0.3,0.7 -0.6,1.2 -1.0,1.6 c -0.4,0.4 -0.8,0.6 -1.3,0.6 c -0.0,-0.6 -0.0,-1.2 -0.1,-1.9 c -0.0,-0.6 -0.0,-1.1 -0.0,-1.4 c -0.0,0.7 -0.2,1.4 -0.5,2.1 c -0.2,0.6 -0.5,1.2 -0.8,1.7 c -0.3,0.5 -0.7,1.0 -1.2,1.5 C 50.5,83.1 50.3,82.5 50.2,81.8 C 50.1,81.1 50.1,80.5 50.1,79.9 c 0,-0.6 0.0,-1.4 0.1,-2.1 c -0.1,1.0 -0.5,1.9 -0.9,2.7 c -0.4,0.8 -0.8,1.5 -1.2,2.1 c -0.5,0.6 -1.1,1.2 -1.7,1.7 c -0.3,-0.9 -0.6,-1.7 -0.8,-2.5 c -0.1,-0.7 -0.3,-1.4 -0.4,-2.0 c -0.0,-0.7 -0.1,-1.3 -0.1,-2.0 c 0,0.5 -0.0,1.1 -0.2,1.5 c -0.1,0.4 -0.3,0.8 -0.4,1.1 c -0.1,0.3 -0.4,0.6 -0.6,0.8 c -0.4,-0.8 -0.6,-1.7 -0.5,-2.6 c 0.0,-0.8 0.2,-1.6 0.4,-2.3 c 0.1,-0.8 0.5,-1.6 0.9,-2.3 c -0.2,0.4 -0.6,0.7 -1.2,1.1 c -0.5,0.3 -1.1,0.5 -1.6,0.8 c -0.6,0.1 -1.2,0.3 -2.0,0.5 c 0,-0.4 0.0,-1.0 0.2,-1.7 c 0.1,-0.6 0.4,-1.3 0.6,-2.0 l -0.3,0.2 c -0.3,0.2 -0.8,0.3 -1.2,0.4 c -0.4,0.0 -0.9,0.1 -1.4,0.0 c -0.5,0 -1.1,-0.1 -1.7,-0.4 c 0.5,-0.5 1.0,-1.1 1.6,-1.7 c 0.4,-0.5 0.8,-1.0 1.4,-1.6 c 0.5,-0.5 1.0,-1.1 1.6,-1.6 c 0.6,-0.7 1.3,-1.5 1.9,-2.3 c 0.6,-0.8 1.1,-1.7 1.5,-2.6 c 0.4,-0.9 0.7,-1.8 0.9,-2.6 c 0.2,-0.8 0.3,-1.6 0.3,-2.3 c -0.3,-0.4 -0.7,-0.9 -0.9,-1.5 c -0.2,-0.5 -0.4,-1.1 -0.6,-1.9 c -0.1,-0.7 -0.2,-1.5 -0.2,-2.5 c -0.3,0.3 -0.7,0.6 -1.1,0.9 c -0.3,0.2 -0.8,0.5 -1.3,0.7 c -0.5,0.1 -1.1,0.3 -1.8,0.3 c -0.0,-0.0 -0.0,-0.1 -0.0,-0.2 c -0.0,-0.2 -0.0,-0.5 0,-1.0 c -0.2,0.2 -0.5,0.4 -0.9,0.6 c -0.2,0.1 -0.6,0.3 -1.1,0.4 c -0.4,0.1 -0.9,0.1 -1.5,0.1 c -0.0,-0.0 -0.1,-0.0 -0.2,-0.1 c -0.0,-0.1 -0.0,-0.4 0.0,-0.9 c -0.2,0.1 -0.5,0.4 -0.8,0.6 c -0.6,0.3 -1.5,0.5 -2.7,0.5 l -0.0,-0.0 c -0.0,-0.0 -0.1,-0.3 -0.0,-0.8 c -0.1,0.1 -0.4,0.3 -0.7,0.4 c -0.2,0.1 -0.6,0.2 -1.0,0.2 c -0.4,0.0 -1.0,0.0 -1.8,0.0 c -0.1,-0.0 -0.2,-0.2 -0.3,-0.3 c -0.2,-0.3 -0.1,-0.6 0.1,-1.0 c -0.3,0.2 -0.7,0.4 -1.2,0.5 c -0.4,0.1 -0.9,0.2 -1.4,0.2 c -0.5,0 -1.1,-0.0 -1.8,-0.2 c -0.0,-0.2 0,-0.5 0.0,-0.8 c 0.0,-0.2 0.2,-0.5 0.3,-0.8 c 0.1,-0.3 0.4,-0.6 0.8,-1.0 c -0.8,0 -1.7,-0.0 -2.4,-0.2 c -0.6,-0.1 -1.4,-0.3 -2.1,-0.6 c -0.7,-0.2 -1.3,-0.6 -1.7,-1.2 c 0.0,-0.2 0.1,-0.5 0.3,-0.7 c 0.1,-0.1 0.3,-0.4 0.6,-0.6 c 0.2,-0.2 0.6,-0.4 1.1,-0.6 c -0.8,0.0 -1.7,0.1 -2.4,0.1 c -0.7,0.0 -1.4,0.0 -2.0,0.0 c -0.6,-0.0 -1.1,-0.1 -1.5,-0.2 c 0.2,-0.5 0.4,-1.0 0.7,-1.5 c 0.2,-0.4 0.6,-0.8 1.0,-1.2 c 0.3,-0.3 0.8,-0.7 1.3,-1.0 c -0.8,0.0 -1.7,-0.0 -2.5,-0.2 c -0.7,-0.2 -1.5,-0.6 -2.3,-1.2 c -0.8,-0.5 -1.5,-1.4 -2.2,-2.6 c 0.2,-0.0 0.5,-0.2 0.9,-0.3 c 0.3,-0.0 0.6,-0.1 1.0,-0.2 c 0.4,-0.0 0.8,-0.1 1.4,-0.1 C 11.6,36.5 10.4,35.7 9.4,34.7 C 8.4,33.8 7.5,32.7 6.7,31.5 C 5.8,30.2 5.2,28.7 5,27.0 c 0.9,0.6 2.2,1.2 3.9,1.7 c 1.3,0.4 3.2,0.8 5.4,1.2 c 2.2,0.3 5.1,0.5 8.4,0.6 c 0.9,0.0 1.8,0.0 2.8,0 c 0.7,0 1.6,-0.0 2.5,-0.0 c 0.9,-0.0 1.8,-0.1 2.7,-0.2 l 0.4,0 c 0.1,0 0.3,0.0 0.5,0.0 c 0.2,0.0 0.5,0.1 1.0,0.2 c 0.5,0.1 1.1,0.4 1.9,0.8 c 0.8,0.3 1.7,0.7 2.6,1.1 c 1.0,0.3 2.0,0.6 3.1,0.9 c 1.1,0.2 2.2,0.3 3.5,0.3 c 0,-0.9 0.0,-1.9 0.2,-2.9 c 0.0,-0.9 0.2,-1.8 0.5,-2.9 c 0.2,-1.0 0.6,-2.1 1.2,-3.2 c 0.2,-1.5 0.6,-2.9 1.0,-4.3 c 0.3,-1.1 0.6,-2.2 1.1,-3.1 c 0.4,-0.9 0.8,-1.6 1.4,-1.9 c 0.4,0.2 0.9,0.9 1.3,1.9 c 0.4,0.9 0.7,2.0 1.1,3.1 c 0.3,1.3 0.7,2.7 1.1,4.3 c 0.4,1.0 0.8,2.1 1.1,3.2 c 0.2,1.0 0.4,2.0 0.5,2.9 c 0.1,1.0 0.2,2.0 0.2,2.9 c 1.1,0 2.3,-0.1 3.4,-0.3 c 1.1,-0.2 2.2,-0.6 3.1,-0.9 c 0.9,-0.3 1.8,-0.7 2.6,-1.1 c 0.7,-0.3 1.4,-0.6 2.0,-0.8 c 0.7,-0.2 1.2,-0.3 1.5,-0.3 l 0.4,0 c 0.8,0.0 1.6,0.1 2.6,0.2 c 0.9,0.0 1.8,0.0 2.6,0.0 c 0.9,0.0 1.9,0.0 2.8,0 c 3.3,-0.0 6.0,-0.2 8.3,-0.6 c 2.2,-0.3 4.0,-0.7 5.4,-1.2 c 1.6,-0.5 2.9,-1.1 4.0,-1.7 z m 0,0',
+        willpower:
+          'M86.3 30.3a33 33 0 0 1-3 12.5 8 8 0 0 1-1.8 3l-.1.6-2.7 5q-1.7 2.8-3.5 6.3-1.6 3-1.3 6.3a47 47 0 0 0 3.3 13.5l-1.6.6-1.4.6H74l-.3.3q-4.6 1.6-9.4 4.8a161 161 0 0 0-17 12.5l-4.5 3.7q-.3 0-.4-.3v-1.6l-.1-1.6q-.3-.7-.3-1.8l-.3-1.9-.2-2.3q0-1-.3-2l-.8-2.9q-.3-1-1-2L38 82l-1.2-2-1.3-3q-.2-.4.5-1l1.6-1.4q.9-.7.7-1t-.6-.3H37l-.2.1-1.8.2-2.8.5-2.8.6-1.4.1a9 9 0 0 1-5.2-1q-1.5-.8-2-2a7 7 0 0 1-.5-2.7v-2.3l.4-2.7a3 3 0 0 0-.8-2.2q-.7-.8-.6-1.5 0-.9.4-1.2l.2-.3-.5-.7-.5-.6-.2-.7q-.3-1.2 0-1.6.4-.5 1-2 .3-.8.2-1.4-.4-.7-1.2-1h-.8l-.7-.1Q15 50.5 14 48q-.9-2.1.5-3.6a21 21 0 0 1 3.2-4.3l1.8-2 1.7-1.9.4-.5 1.1-1.5 1.2-1.4q.3-.7 0-1.6l-.3-1q-1.4-1.8-1-3.4.2-1.6.8-3l.1-.4.5-1.3.6-1.8 1.6-5q1-2.4 2-4 2.3-2.9 4.5-4.7a20 20 0 0 1 4.9-3A57 57 0 0 1 55.4 0q4.2 0 8.4.8h.2a33 33 0 0 1 12.7 5.8q5 4 7.2 9.2 1.2 3.5 1.7 7 .5 3.6.7 6.8zm0 0',
+        intellect:
+          'm98.8 80.7-13.2 1.4-4.2.4A88 88 0 0 1 83.3 95l-9.8-4.4-5.3-2.4L55 100a47 47 0 0 0-1.5-7.4 54 54 0 0 0-3.9-13.3v-.2l-.2-.4-.1-.2a52 52 0 0 0-3.9-7.8l-1.6-2 30-3.8q2.2 2.7 3.8 5.8t2.7 6.4l6.1-1.3 2.5-.5A46 46 0 0 1 86.5 58q.5-3.4 1.7-5.8L59.5 56l-7.9 1.3-7 1.1-5.1 1q-4.3.9-6.3 2.5-2 1.5-3 3-.9 1.9-.6 3.9v3.8l.3 3.7.5 4q0 1.5 2.2 2.2 2.1.9 8 .6l2.5-.2 2.9-.4 1.6 2.7q.8 1.4 1.3 1.8l.1.7.1 1-5 .7-3.7.2q-3.2.1-5.6-.1-2.3-.1-3.8-1-1.5-.5-2.4-2-1-1.1-2-3.2l-2.7-4.7-4.6-8.5L3.7 41.9l-2-3.5Q.9 37 .6 31.8t.3-12.1q.5-3.9 1.7-6 1.2-2.3 2.5-3.5t3.5-1.8L69 0l.9.1.7.2.4.4L89.4 33l4.4 7.6L97 46l1.3 2.2.4.8v.7q-.2.3-1 .6t-2.5.5l-3.2 1q-.8 1-1.3 2.4-.6 1.2-.7 2.3l-.5 2.9A278 278 0 0 1 98 75.5l1 2.5.5 1.2q0 .9-.3 1.3zm0 0',
+        combat:
+          'M32.6 37.2q-.3-.8-1.5-2.6L25.4 26l-2.8-4-.4-1.4a2 2 0 0 1 0-1.7q0-1 1.2-2.2 1-1.3 3.4-2.2 2-.7 3-.6 1.1.1 2 1 .8.7 1.4 1.8l1.3 1.8 2 3A87 87 0 0 1 43 32.8l.1 1.3q.3.9.3 1.9t-.2 2-1.2 2q-1.8 1-3.2 1t-2.6-.5a7 7 0 0 1-2-1.4zm9.9-12.6q-.7-1.3-2.4-3.3l-7.7-9.6q-.2-.5 0-1.4a7 7 0 0 1 4.9-4.8q2.6-1.1 4.3-.4t2.7 2.2q1 .8 2 2.7l2 3.8 2 5-1.6 1-1.2 1.1q-.6.5-.7 1-.2.3 0 1.4l1.2 2.1 1.3 2 1.2 1.2q.6.4 1.5.4h3.3q.6 0 .6.3 0 .5-1.3 1.4-1.3 1-4.1 1.5a4 4 0 0 1-2.7-.4 11 11 0 0 1-5.3-7.2m10.3-7.2-3.3-5.8L47 7.3a4 4 0 0 1-.7-2.9q.3-.9 1-1.7A8 8 0 0 1 49.6 1Q52.1-.4 54 0t2.8.8q1.3.5 2.6 1.5 1.2 1 2.1 2.3l2.1 3.1-.7.3h-1l-.5-.5-.7-.7-.8-.8.2 1.2a4 4 0 0 1-.2 2.2l-1 2-2.1 3q-1.2 1.7-2.4 2.7t-1.6.2m-4.1 62.9a121 121 0 0 1-5.2-8.4q-2.2-1-4.2-2.3l-3.7-2.2q-1.9-1.2-3.2-2.4L30 61.2a81 81 0 0 0-6.5-7.9q-1.6-1.6-2.4-2.8-1.4-2-3.2-3.5-1.6-1.5-2.5-3.7l-.9-2.8-.7-3.1L13 34a11 11 0 0 1-.4-6q.3-1.5 1.8-2.9 3-2.1 4.4-2.3t3.2 1.3a82 82 0 0 1 10.8 17.1q.3.9 0 1.8 0 .9-1.3 1.2-1.3 1-2.6 1-1.2 0-2.3-.3l-2-.9-1.4-.7q-.6 0-1.7-1.1a64 64 0 0 1-5.5-6.4l3.6 6.4-2.8-1 4 2 1.2.6 1.7 2a66 66 0 0 0 5.4 5.5q1.6 1 2.6.8 1 0 2-.8l2-1.8 2-2q1-.8 1.7-1 1.5 0 3-1.6 1.5-1.5 3.8-2.6 1.4-1.5 2.5-2.1l1.6-.7q.6 0 .9.3l.3.6q.3 1.3 0 3.4v4.3q.1 1.2.6 1.1t1-1a33 33 0 0 0 3-6q.5-2.7 1.4-4.2l1.7-2.2 1.8-1.5q.9-.7 1.8-2 1.8-1.6 2.8-1.6 1 .2 1.8.6.4.3 1.4.4l2.1.2 2.9.1-3-1.9q-1.2-.6-2.2-1.6-.8-.7-.8-1.5v-2.1q.3-.7 1.8-.6 1 0 1.4-.2t.5-.4l.5-.6 1.5-.5.6-.1-1.5-.2q-.8-.4-1.5-1.1-.5-.8.8-2.6 1.2-2.2.6-1.8l-2 1.8L67 22q-2 1.8-3.6 2.3l-3.8 1.3q-1.8.6-3.1.7t-2.6-.4a6 6 0 0 1-2.4-1.6l-2-1.8-.4-.8q-.1-.5.3-.6a22 22 0 0 0 5.3-2.5q1.1-.9 1.3-1.7l4.8-4.9a15 15 0 0 1 4.6-3.3q.8-.2 1.4-.7l1.4-.8Q69 7 70 7q1.1 0 2.5.8a35 35 0 0 1 5.5 4.5q1.4 1.2 2.3 2.4l1.6 1.8 1.3 1.6q1 1 1.6 3 .6 1.8.4 4.4 0 2.8-1.5 6.4l-4.9 13.8q-2 5.6-2 6.4l.1 1.8q0 .6.6 2.1l.4.2.4.5.7.5a37 37 0 0 1-6.2 6.7 117 117 0 0 1-17 12.2l-7 4.2m38.8-13.8q.3.4.2 1l-.2 1.1-1 1.5q-.8 1.6-2.9 3.8t-4.9 4.6l-6.2 5a262 262 0 0 1-24 16.5 91 91 0 0 1-7-15.2 3 3 0 0 1 .2-2.3 9 9 0 0 1 3.6-3.3l1.9 3.6a165 165 0 0 0 18.1-11.1q6.6-5 9.9-8.4 4-4 5-6.9l-1-.2h2zm0 0',
+        agility:
+          'M67.4 66.9q-2.4-1-4.3-2.8-1.5-1.5-2.9-3.7Q59 58 59 54.8a25 25 0 0 1 3.3-11.9l2.7-4.3 2.6-4 4.1-3.2a45 45 0 0 0 8.5-10q1.5-2.7 1.6-5.2a66 66 0 0 0-1-10.5l-1-2.8a13 13 0 0 1 3.5 2q1.4 1 2.7 2.6 1.5 1.5 2.2 3.9.7 2.5.7 4.6a11 11 0 0 1-.6 3.6q-.7 1.8-1.6 3.3h.4l.3-.1.7-.4.5-.7q.3-.3.4-.9 1.2.9 2.2 2.4.8 1.2 1.2 3.5.5 2.1.2 5.4-.3 3-1 4.7-.8 1.8-1.6 2.9-1 1.3-2 1.6h.7l.5.1h.7l1.1-.8.7-.7q0 1.6-.5 3.6a19 19 0 0 1-4.5 8.3 28 28 0 0 1-7 4.2q-1.4.6-2.5.6l-1-.7-1.7-.6q-1-.3-2.7-.3-2.8 0-3.6.8t-.4.8h5.4q3.9 0 2.7 5.9-.7 3.2-2.8 4.1t-5.7.3M43.2 47.5q0-2.1.3-4.6l.7-4.5q.5-2.6 1.4-5.3 2.1-2.7 3.8-6l2.9-6 2.5-6.3q0-3.6-.7-6.4l-1.7-4.7q-1.2-2-2.6-3.7 1.7.2 2.7.6 1.2.5 1.9 1.1.8.7 1.5 1.6l1.6 2.2q1.5 1.5 2.1 3t1 2.9q.3 1.5 0 3 .3 0 .9-.6l.5-1.7a10 10 0 0 1 3.2 4.8q.6 1.5.7 3.5l-.3 3.3-.4 2.3-.5 2.1h.4l.5-.5.2-.2.3-.5.4-.2.4 2.2.2 2 .1 1.7-2 2.3a14 14 0 0 0-6.7.3q-1.5.5-2.8 1.6a5 5 0 0 0-1.6 3 105 105 0 0 0-7.6 6.3L44 48.7ZM78 60.4a21 21 0 0 1 3 6.6l1.2 5.3-15 11.1-3.5-4.9q-3 3.8-6.1 7.4l-6 5.8q-3.2 3-6.3 4.5c-1 1-3 2-5.6 2.5a55 55 0 0 1-9 1.2A86 86 0 0 1 7.9 98q-.7-2-.6-4 0-1.8 1-3.6 1.1-1.7 4-3.2 2.7-1.5 5-2.2a20 20 0 0 1 7-1.3q1.5 0 3 .5l2.2.9h.5q-.1-.4-.7-.8l-1-.9-1.3-.8h-.4l2.2-2 2-1.9a9 9 0 0 0 1.7-2.2A72 72 0 0 0 34 62.8l.6-6.5a10 10 0 0 1 1.2-4.7 5 5 0 0 1 5-2.8q1.2.3 2.5 1.5l3.4 2.5q2 1.4 4.4 2.5 2.4 1 5.5 1 0 2.8 1 5.3.9 2 2.8 3.9 2 2 5.8 2.8 3.3 1 5.6.2a9 9 0 0 0 3.8-2.1q1.5-1.5 2.1-3.1t.4-3m0 0',
+      };
+      const sym = (name, cls = '') =>
+        `<svg class="${cls}" viewBox="0 0 100 100" fill="currentColor" aria-hidden="true"><path d="${SYM[name]}"/></svg>`;
+      const esc = (s) =>
+        String(s).replace(
+          /[&<>"]/g,
+          (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c],
+        );
+      const PEN = `<svg class="pen" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 20l3.5-1 11-11-2.5-2.5-11 11zM14.5 6.5l2.5 2.5"/></svg>`;
+      const HAND = `<svg class="pen" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M7 11V5.5a1.5 1.5 0 013 0V11m0-1V4a1.5 1.5 0 013 0v6m0-.5V5.5a1.5 1.5 0 013 0V12m0-3a1.5 1.5 0 013 0v5a7 7 0 01-7 7h-1a7 7 0 01-6-3.5L4.5 14a1.5 1.5 0 012.5-1.5L8 14"/></svg>`;
+      const FLOURISH = `<svg class="flourish" viewBox="0 0 320 16" fill="none" stroke="currentColor" aria-hidden="true"><path d="M10 8h120M190 8h120" stroke-width="1"/><path d="M130 8c8-7 16-7 20 0-4 7-12 7-20 0zM190 8c-8-7-16-7-20 0 4 7 12 7 20 0z" stroke-width="1"/><path d="M160 2l6 6-6 6-6-6z" fill="currentColor"/><circle cx="6" cy="8" r="2" fill="currentColor"/><circle cx="314" cy="8" r="2" fill="currentColor"/></svg>`;
+
+      // ---------- Game data (hand-entered; names and printed stats only, no card text) ----------
+      const INVESTIGATORS = {
+        roland: { name: 'Roland Banks', cls: 'guardian', health: 9, sanity: 5 },
+        daisy: { name: 'Daisy Walker', cls: 'seeker', health: 5, sanity: 9 },
+        skids: { name: '“Skids” O’Toole', cls: 'rogue', health: 8, sanity: 6 },
+        agnes: { name: 'Agnes Baker', cls: 'mystic', health: 6, sanity: 8 },
+        wendy: { name: 'Wendy Adams', cls: 'survivor', health: 7, sanity: 7 },
+      };
+      const SCENARIOS = [
+        { id: 'gathering', num: 'I', name: 'The Gathering' },
+        { id: 'masks', num: 'II', name: 'The Midnight Masks' },
+        { id: 'devourer', num: 'III', name: 'The Devourer Below' },
+      ];
+      const BAGS = {
+        easy: [
+          '+1',
+          '+1',
+          '0',
+          '0',
+          '0',
+          '-1',
+          '-1',
+          '-1',
+          '-2',
+          '-2',
+          'skull',
+          'skull',
+          'cultist',
+          'tablet',
+          'auto_fail',
+          'elder_sign',
+        ],
+        standard: [
+          '+1',
+          '0',
+          '0',
+          '-1',
+          '-1',
+          '-1',
+          '-2',
+          '-2',
+          '-3',
+          '-4',
+          'skull',
+          'skull',
+          'cultist',
+          'tablet',
+          'auto_fail',
+          'elder_sign',
+        ],
+        hard: [
+          '0',
+          '0',
+          '0',
+          '-1',
+          '-1',
+          '-2',
+          '-2',
+          '-3',
+          '-3',
+          '-4',
+          '-5',
+          'skull',
+          'skull',
+          'cultist',
+          'tablet',
+          'auto_fail',
+          'elder_sign',
+        ],
+        expert: [
+          '0',
+          '-1',
+          '-1',
+          '-2',
+          '-2',
+          '-3',
+          '-3',
+          '-4',
+          '-4',
+          '-5',
+          '-6',
+          '-8',
+          'skull',
+          'skull',
+          'cultist',
+          'tablet',
+          'auto_fail',
+          'elder_sign',
+        ],
+      };
+      const TOKEN_ORDER = [
+        '+1',
+        '0',
+        '-1',
+        '-2',
+        '-3',
+        '-4',
+        '-5',
+        '-6',
+        '-8',
+        'skull',
+        'cultist',
+        'tablet',
+        'elder_thing',
+        'auto_fail',
+        'elder_sign',
+      ];
+      const TOKEN_NAMES = {
+        skull: 'Skull',
+        cultist: 'Cultist',
+        tablet: 'Tablet',
+        elder_thing: 'Elder Thing',
+        auto_fail: 'Auto-fail',
+        elder_sign: 'Elder Sign',
+      };
+      const token = (t, size) =>
+        `<span class="token" data-token="${t}" ${size ? `style="--size:${size}px"` : ''} role="img" aria-label="${TOKEN_NAMES[t] ?? t}">${SYM[t] ? sym(t) : t.replace('-', '−')}</span>`;
+
+      // Story records, keyed like ZEALOT_STORY. `yes`/`no` are the sentences the log reads for a flag.
+      const STORY = {
+        houseStillStanding: {
+          yes: 'Your house is still standing.',
+          no: 'Your house has burned to the ground.',
+        },
+        ghoulPriestStillAlive: { yes: 'The Ghoul Priest is still alive.' },
+        litaForcedToFindOthers: { yes: 'Lita was forced to find others to help her cause.' },
+        itIsPastMidnight: { yes: 'It is past midnight.' },
+        ritualBroken: { yes: 'The ritual to summon Umôrdhoth was broken.' },
+        umordhothRepelled: { yes: 'The investigators repelled Umôrdhoth.' },
+        litaSacrificed: { yes: 'The investigators sacrificed Lita Chantler to Umôrdhoth.' },
+        arkhamSuccumbed: { yes: 'Arkham succumbed to Umôrdhoth’s terrible vengeance.' },
+      };
+      // Which setup reads which record: shown when a note is tapped, and in the setup preview.
+      const READS = {
+        houseStillStanding: {
+          scenario: 'masks',
+          yes: 'Your House is put into play; you begin there.',
+          no: 'Your House is not used; you begin in Rivertown.',
+        },
+        ghoulPriestStillAlive: {
+          scenario: 'masks',
+          yes: 'The Ghoul Priest is shuffled into the encounter deck.',
+          no: 'The Ghoul Priest is not used.',
+          also: 'devourer',
+        },
+      };
+
+      // ---------- Resolutions: what each one writes, in our own words ----------
+      // Each change is { kind, ... }: record, strike, xp, trauma, earn, list, byHand, result.
+      const RESOLUTIONS = {
+        gathering: {
+          proposal: 'none',
+          proposalWhy:
+            'Every investigator resigned or was defeated (Roland resigned, Daisy and Wendy were defeated).',
+          options: [
+            {
+              id: 'none',
+              rn: '—',
+              what: 'No resolution',
+              from: 'Everyone resigned or was defeated',
+            },
+            {
+              id: 'R1',
+              rn: 'R1',
+              what: 'The house was burned',
+              from: 'Act 3, the investigators set the fire',
+            },
+            {
+              id: 'R2',
+              rn: 'R2',
+              what: 'The house was left standing',
+              from: 'Act 3, they refused Lita',
+            },
+            { id: 'R3', rn: 'R3', what: 'Lita was trapped', from: 'Agenda 3 advanced' },
+          ],
+          changes: {
+            none: [
+              { kind: 'record', key: 'houseStillStanding', value: 'yes' },
+              { kind: 'record', key: 'ghoulPriestStillAlive', value: 'yes' },
+              { kind: 'earn', who: 'lead', card: 'Lita Chantler', why: 'lead investigator' },
+              {
+                kind: 'trauma',
+                who: 'daisy',
+                trauma: 'mental',
+                amount: 1,
+                why: 'defeated by horror',
+              },
+              {
+                kind: 'trauma',
+                who: 'wendy',
+                trauma: 'physical',
+                amount: 1,
+                why: 'defeated by damage',
+              },
+              { kind: 'xp', each: 3, why: '1 victory point + 2 for insight' },
+              {
+                kind: 'byHand',
+                text: 'Roland: add Lita Chantler to your deck (she does not count toward deck size).',
+              },
+              {
+                kind: 'byHand',
+                text: 'Each player may upgrade their deck with their unspent experience.',
+              },
+            ],
+          },
+        },
+        masks: {
+          proposal: 'R2',
+          proposalWhy: 'Agenda 2 advanced: it struck midnight.',
+          options: [
+            { id: 'none', rn: '—', what: 'No resolution', from: 'Read as Resolution 1' },
+            {
+              id: 'R1',
+              rn: 'R1',
+              what: 'The conspiracy was uncovered',
+              from: 'The investigators gave up the hunt',
+            },
+            { id: 'R2', rn: 'R2', what: 'It struck midnight', from: 'Agenda 2 advanced' },
+          ],
+          changes: {
+            R2: [
+              {
+                kind: 'list',
+                key: 'interrogated',
+                names: ['Herman Collins', 'Victoria Devereux'],
+                why: 'in the victory display',
+              },
+              {
+                kind: 'list',
+                key: 'gotAway',
+                names: ['“Wolf-Man” Drew', 'Peter Warren', 'Ruth Turner', 'The Masked Hunter'],
+                why: 'still in play or in the Cultist deck',
+              },
+              { kind: 'record', key: 'itIsPastMidnight', value: 'yes' },
+              {
+                kind: 'strike',
+                key: 'ghoulPriestStillAlive',
+                why: 'the Ghoul Priest is in the victory display',
+              },
+              { kind: 'xp', each: 4, why: '4 victory points' },
+              {
+                kind: 'byHand',
+                text: 'Each player may upgrade their deck with their unspent experience.',
+              },
+            ],
+          },
+        },
+        devourer: {
+          proposal: 'R1',
+          proposalWhy: 'Act 3 advanced: the ritual site was cleared.',
+          options: [
+            { id: 'none', rn: '—', what: 'No resolution', from: 'Arkham falls' },
+            { id: 'R1', rn: 'R1', what: 'The ritual was broken', from: 'Act 3 advanced' },
+            { id: 'R2', rn: 'R2', what: 'Umôrdhoth was repelled', from: 'Umôrdhoth was defeated' },
+            {
+              id: 'R3',
+              rn: 'R3',
+              what: 'Lita was sacrificed',
+              from: 'Lita was given to Umôrdhoth',
+            },
+          ],
+          changes: {
+            R1: [
+              { kind: 'record', key: 'ritualBroken', value: 'yes' },
+              { kind: 'xp', each: 5, why: '5 victory points' },
+              { kind: 'result', text: 'The investigators win!' },
+            ],
+          },
+        },
+      };
+
+      // ---------- The campaign log (mirrors the engine's CampaignLog) ----------
+      const member = (key, extra = {}) => ({
+        key,
+        player: '',
+        physical: 0,
+        mental: 0,
+        xpEarned: 0,
+        xpSpent: 0,
+        xpTrail: [],
+        fate: 'alive',
+        cards: [],
+        ...extra,
+      });
+      // Example player names; the paper log has a field for them, the engine's log does not yet.
+      const PLAYERS = ['Sam', 'Kim', 'Alex', 'Jo'];
+      /** Changes an investigator's XP like a pen on paper: the old unspent value is crossed out, the new one written next to it. */
+      function setXp(m, earned, spent) {
+        const before = m.xpEarned - m.xpSpent;
+        if (earned - spent !== before && (m.xpEarned || m.xpTrail.length))
+          m.xpTrail = [...m.xpTrail, before].slice(-2);
+        m.xpEarned = earned;
+        m.xpSpent = spent;
+      }
+      function freshLog(difficulty = 'standard', team = ['roland', 'daisy', 'wendy']) {
+        return {
+          difficulty,
+          investigators: team.map((key, i) => member(key, { player: PLAYERS[i] })),
+          former: [],
+          notes: [],
+          lists: { interrogated: [], gotAway: [] },
+          bag: [...BAGS[difficulty]],
+          played: [],
+          position: 0,
+          result: null,
+        };
+      }
+      const clone = (o) => JSON.parse(JSON.stringify(o));
+      const scenarioOf = (id) => SCENARIOS.find((s) => s.id === id);
+      const inv = (log, key) => log.investigators.find((m) => m.key === key);
+
+      /** Applies a resolution's changes; returns the log and the ids of the entries it wrote (for the ink-in). */
+      function applyResolution(log, scenarioId, resolutionId) {
+        const next = clone(log);
+        const fresh = new Set();
+        const chapter = scenarioOf(scenarioId).num;
+        const changes = RESOLUTIONS[scenarioId].changes[resolutionId] ?? [];
+        for (const c of changes) {
+          if (c.kind === 'record') {
+            next.notes.push({ key: c.key, value: c.value, chapter, crossed: false });
+            fresh.add('note:' + c.key);
+          } else if (c.kind === 'strike') {
+            const note = next.notes.find((n) => n.key === c.key);
+            if (note) {
+              note.crossed = true;
+              note.crossedIn = chapter;
+              fresh.add('note:' + c.key);
+            }
+          } else if (c.kind === 'earn') {
+            const target = c.who === 'lead' ? next.investigators[0] : inv(next, c.who);
+            target.cards.push(c.card);
+            fresh.add('cards:' + target.key);
+          } else if (c.kind === 'trauma') {
+            // The example's defeats name investigators; a team built in the new-campaign demo may not have them.
+            const target = inv(next, c.who);
+            if (!target) continue;
+            target[c.trauma] += c.amount;
+            fresh.add(c.trauma + ':' + c.who);
+          } else if (c.kind === 'xp') {
+            for (const m of next.investigators) {
+              if (m.fate !== 'alive') continue;
+              setXp(m, m.xpEarned + c.each, m.xpSpent);
+              fresh.add('xp:' + m.key);
+            }
+          } else if (c.kind === 'list') {
+            for (const name of c.names) next.lists[c.key].push({ name, crossed: false });
+            fresh.add('list:' + c.key);
+          } else if (c.kind === 'result') {
+            next.result = c.text;
+            fresh.add('result');
+          }
+        }
+        next.played.push({ id: scenarioId, res: resolutionId });
+        next.position += 1;
+        return { log: next, fresh };
+      }
+
+      const DEMOS = {
+        newCampaign: 'Start a new campaign',
+        gatheringEnded: 'The Gathering just ended',
+        afterGathering: 'Before The Midnight Masks',
+        afterMasks: 'Before The Devourer Below',
+        killed: 'An investigator was killed',
+        over: 'Campaign over',
+      };
+      function demoLog(name) {
+        let log = freshLog();
+        if (name === 'gatheringEnded' || name === 'newCampaign') return log;
+        log = applyResolution(log, 'gathering', 'none').log;
+        setXp(inv(log, 'roland'), 3, 2);
+        if (name === 'afterGathering') return log;
+        log = applyResolution(log, 'masks', 'R2').log;
+        if (name === 'afterMasks') return log;
+        if (name === 'killed') {
+          const wendy = inv(log, 'wendy');
+          wendy.physical = 7;
+          wendy.fate = 'killed';
+          return log;
+        }
+        return applyResolution(log, 'devourer', 'R1').log;
+      }
+
+      // ---------- UI state ----------
+      const ui = {
+        demo: 'afterGathering',
+        log: demoLog('afterGathering'),
+        fresh: new Set(),
+        view: 'log', // 'log' | 'playing' | 'new'
+        dialog: null, // { kind, ... }
+        undo: null,
+        skin: 'printed',
+        theme: 'auto',
+        newCampaign: { difficulty: 'standard', team: ['roland', 'daisy', 'wendy'] },
+      };
+
+      const $ = (id) => document.getElementById(id);
+      const nextScenario = () => SCENARIOS[ui.log.position];
+      const blocked = () => ui.log.investigators.filter((m) => m.fate !== 'alive');
+
+      function render() {
+        document.documentElement.dataset.skin = ui.skin;
+        if (ui.theme === 'auto') delete document.documentElement.dataset.theme;
+        else document.documentElement.dataset.theme = ui.theme;
+        renderBar();
+        $('main').innerHTML =
+          ui.view === 'new'
+            ? renderNewCampaign()
+            : ui.view === 'playing'
+              ? renderPlaying()
+              : renderDesk();
+        renderNext();
+        renderDialog();
+        renderMenu();
+      }
+
+      function renderBar() {
+        const next = nextScenario();
+        const diff = ui.log.difficulty[0].toUpperCase() + ui.log.difficulty.slice(1);
+        $('bar-title').textContent = ui.view === 'new' ? 'New campaign' : 'Night of the Zealot';
+        $('bar-sub').textContent =
+          ui.view === 'new'
+            ? 'Campaign, difficulty and investigators'
+            : `${diff} · ${ui.log.result ? 'Campaign over' : next ? `Chapter ${next.num} next` : ''}`;
+        $('bag-btn').innerHTML =
+          `${token('elder_sign', 26)}<span>${ui.log.bag.length} tokens</span>`;
+        $('bag-btn').hidden = ui.view === 'new';
+      }
+
+      function renderChapters() {
+        const items = SCENARIOS.map((s, i) => {
+          const played = ui.log.played.find((p) => p.id === s.id);
+          const state = played
+            ? 'played'
+            : i === ui.log.position && !ui.log.result
+              ? 'next'
+              : 'later';
+          const label = played
+            ? played.res === 'none'
+              ? 'No resolution'
+              : `Resolution ${played.res.slice(1)}`
+            : state === 'next'
+              ? 'Up next'
+              : 'Not played yet';
+          return `<button class="chapter" data-state="${state}" data-act="chapter" data-id="${s.id}">
+            <span class="num">${s.num}</span><span class="name">${s.name}</span><span class="state">${label}</span></button>`;
+        });
+        return `<nav id="chapters" aria-label="Scenarios">${items.join('')}</nav>`;
+      }
+
+      const isNew = (id) => (ui.fresh.has(id) ? ' new' : '');
+
+      function renderInvestigator(m) {
+        const card = INVESTIGATORS[m.key];
+        const ticks = (kind, max, filled) =>
+          Array.from(
+            { length: max },
+            (_, i) =>
+              `<span class="tick" data-kind="${kind}" ${i < filled ? 'data-filled' : ''}></span>`,
+          ).join('');
+        const stamp =
+          m.fate === 'killed'
+            ? '<span class="stamp">Killed</span>'
+            : m.fate === 'insane'
+              ? '<span class="stamp">Insane</span>'
+              : '';
+        const seat = ui.log.investigators.indexOf(m) + 1;
+        return `<button class="inv box" data-act="investigator" data-key="${m.key}" data-fate="${m.fate}" aria-label="${esc(card.name)}, ${m.xpEarned - m.xpSpent} unspent experience">
+          <div class="who"><div><span class="label">Investigator</span><span class="hand">${esc(card.name)}</span></div>${sym(card.cls, 'class-icon')}</div>
+          <span class="meta">Seat ${seat}${seat === 1 ? ' · lead' : ''} · health ${card.health} · sanity ${card.sanity}</span>
+          <div class="xp"><span class="xp-circle${isNew('xp:' + m.key)}"><span class="hand">${m.xpEarned - m.xpSpent}</span></span>
+            <div><span class="label">Unspent Experience</span><span class="meta">${m.xpEarned} earned · ${m.xpSpent} spent</span></div></div>
+          <div class="trauma"><span class="label">Physical</span><span class="ticks${isNew('physical:' + m.key)}">${ticks('physical', card.health, m.physical)}</span>
+            <span class="label">Mental</span><span class="ticks${isNew('mental:' + m.key)}">${ticks('mental', card.sanity, m.mental)}</span></div>
+          <div><span class="label">Earned Story Assets / Weaknesses</span>
+            <div class="earned written-line hand${isNew('cards:' + m.key)}">${m.cards.map(esc).join(', ')}</div></div>
+          ${stamp}
+        </button>`;
+      }
+
+      function noteSentence(n) {
+        return STORY[n.key][n.value];
+      }
+
+      function renderBook() {
+        const log = ui.log;
+        const former = log.former.length
+          ? `<p class="former">Former investigators: ${log.former.map((m) => `<span class="hand">${esc(INVESTIGATORS[m.key].name)}</span> (${m.fate})`).join(', ')}</p>`
+          : '';
+        const notes = log.notes.length
+          ? log.notes
+              .map(
+                (
+                  n,
+                ) => `<li class="note${isNew('note:' + n.key)}" ${n.crossed ? 'data-crossed' : ''}>
+                  <span class="margin">${n.chapter}</span>
+                  <button data-act="note" data-key="${n.key}"><span class="hand">${esc(noteSentence(n))}</span></button></li>`,
+              )
+              .join('')
+          : '<li class="empty-hint">Nothing recorded yet. Resolutions write their records here.</li>';
+        const list = (key) =>
+          log.lists[key]
+            .map((e) => `<li class="hand" ${e.crossed ? 'data-crossed' : ''}>${esc(e.name)}</li>`)
+            .join('');
+        const counts = {};
+        for (const t of log.bag) counts[t] = (counts[t] ?? 0) + 1;
+        const bag = TOKEN_ORDER.filter((t) => counts[t])
+          .map(
+            (t) =>
+              `<span class="bag-entry">${token(t)}<span class="hand">${counts[t]}</span></span>`,
+          )
+          .join('');
+        const result = log.result
+          ? `<div class="result-banner${isNew('result')}"><span class="label">The campaign is over</span><span class="hand">${esc(log.result)}</span></div>`
+          : '';
+        return `<div id="book">
+          <section class="page" aria-label="Investigators">
+            <header class="page-head"><h2>Campaign Log</h2><span class="campaign">Night of the Zealot</span>${FLOURISH}</header>
+            ${result}
+            <h3 class="section-title">Investigators</h3>
+            <div class="investigators">${log.investigators.map(renderInvestigator).join('')}</div>
+            ${former}
+          </section>
+          <section class="page" aria-label="Campaign notes">
+            <h3 class="section-title">Campaign Notes</h3>
+            <ul class="notes">${notes}</ul>
+            <div class="lists">
+              <div class="box"><span class="label">Cultists We Interrogated</span><ul class="${isNew('list:interrogated').trim()}">${list('interrogated')}</ul></div>
+              <div class="box"><span class="label">Cultists Who Got Away</span><ul class="${isNew('list:gotAway').trim()}">${list('gotAway')}</ul></div>
+            </div>
+            <h3 class="section-title">Chaos Bag</h3>
+            <button class="box bag bag-box" data-act="bag" aria-label="Chaos bag, ${log.bag.length} tokens">${bag}</button>
+          </section>
+        </div>`;
+      }
+
+      function renderNext() {
+        let html = '';
+        if (ui.view === 'log') {
+          const next = nextScenario();
+          const out = blocked();
+          if (ui.log.result) {
+            html = `<div class="next-wrap"><button class="primary" data-act="export">Export the campaign</button><span class="why">The log stays readable from the home screen.</span></div>`;
+          } else if (ui.demo === 'gatheringEnded' && ui.log.position === 0) {
+            html = `<div class="next-wrap"><button class="primary" data-act="resolve" data-id="gathering">Resolve The Gathering</button><span class="why">The scenario is over. Record its resolution.</span></div>`;
+          } else if (next) {
+            const why = out.length
+              ? `Replace ${out.map((m) => INVESTIGATORS[m.key].name).join(', ')} first.`
+              : 'Shows what the log changes in the setup first.';
+            html = `<div class="next-wrap"><button class="primary" data-act="setup" ${out.length ? 'disabled' : ''}>Begin Chapter ${next.num}: ${next.name}</button><span class="why">${why}</span></div>`;
+          }
+        } else if (ui.view === 'new') {
+          html = `<div class="next-wrap"><button class="primary" data-act="create" ${ui.newCampaign.team.length ? '' : 'disabled'}>Open the campaign log</button></div>`;
+        }
+        $('next').innerHTML = html;
+      }
+
+      function renderPlaying() {
+        const s = nextScenario();
+        return `<section class="playing"><h2>Chapter ${s.num}: ${s.name}</h2>
+          <p>The play screen opens here (see the play screen prototype). When the scenario ends, the app proposes a resolution from the game and comes back to the log.</p>
+          <div class="actions" style="justify-content:center"><button class="secondary" data-act="back-to-log">Back to the log</button>
+          <button class="primary" data-act="resolve" data-id="${s.id}">End the scenario (demo)</button></div></section>`;
+      }
+
+      function renderNewCampaign() {
+        const nc = ui.newCampaign;
+        const diffs = Object.keys(BAGS)
+          .map(
+            (
+              d,
+            ) => `<button class="choice" role="radio" aria-checked="${nc.difficulty === d}" data-act="difficulty" data-id="${d}">
+              <span class="what">${d[0].toUpperCase() + d.slice(1)}</span>
+              <span class="bag">${BAGS[d].map((t) => token(t, 18)).join('')}</span></button>`,
+          )
+          .join('');
+        const picks = Object.entries(INVESTIGATORS)
+          .map(([key, c]) => {
+            const seat = nc.team.indexOf(key);
+            return `<button class="pick" role="checkbox" aria-checked="${seat >= 0}" data-act="team" data-key="${key}" ${seat < 0 && nc.team.length >= 4 ? 'disabled' : ''}>
+              ${sym(c.cls, 'class-icon')}<span>${esc(c.name)}</span><span class="stats">${seat >= 0 ? `Seat ${seat + 1}` : `health ${c.health} · sanity ${c.sanity}`}</span></button>`;
+          })
+          .join('');
+        return `<div class="title-page"><section class="page">
+          <header class="page-head"><h2>A New Campaign</h2><span class="campaign">Night of the Zealot · three chapters</span>${FLOURISH}</header>
+          <h3 class="section-title">Difficulty</h3><div class="diff" role="radiogroup">${diffs}</div>
+          <h3 class="section-title">Investigators</h3>
+          <p class="ui">Pick 1–4 in player order. The first is the lead investigator.</p>
+          <div class="pick-grid">${picks}</div>
+        </section></div>`;
+      }
+
+      // ---------- The desk (the official log sheet's layout) ----------
+      /** Hand-drawn tally marks: groups of four strokes crossed by a fifth, as players keep trauma on paper. */
+      function tally(n, label) {
+        if (!n)
+          return `<svg class="tally" viewBox="0 0 10 26" role="img" aria-label="${label}: none"></svg>`;
+        let x = 4;
+        let d = '';
+        const jitter = (i) => ((i * 37) % 7) / 3 - 1;
+        for (let i = 0; i < n; i++) {
+          const inGroup = i % 5;
+          if (inGroup === 4) {
+            d += `M${x - 30 + jitter(i)} 19L${x - 2} 6`;
+            x += 8;
+            continue;
+          }
+          d += `M${x + jitter(i)} 3L${x + jitter(i + 3) * 0.6} 23`;
+          x += 7;
+          if (i === n - 1) x += 2;
+        }
+        return `<svg class="tally" viewBox="0 0 ${x} 26" style="width:${x}px" role="img" aria-label="${label}: ${n}"><path d="${d}" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>`;
+      }
+      const CLIP = `<svg class="clip" viewBox="0 0 40 96" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path d="M30 20v52a12 12 0 01-24 0V12a9 9 0 0118 0v56a5 5 0 01-10 0V22"/></svg>`;
+      const RING = `<svg viewBox="0 0 26 52" fill="none" stroke="currentColor" stroke-width="4" aria-hidden="true"><path d="M13 48a9 9 0 01-9-9V13a9 9 0 0118 0v14"/></svg>`;
+      const ARROW = `<svg class="arrow" viewBox="0 0 22 30" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M10 2c1 8 0 14 1 22M4 17l7 10 7-11c-4 1-10 1-14 1z"/></svg>`;
+
+      function renderColumn(m) {
+        if (!m)
+          return `<div class="column" data-empty><div class="field"><span class="label">Player Name</span></div><div class="field"><span class="label">Investigator</span></div>
+            <div class="field"><span class="label">Unspent Experience</span></div><div class="field trauma-row"><div><span class="trauma-head"><span class="label">Trauma</span><span class="sub">(Physical)</span></span></div><div><span class="sub">(Mental)</span></div></div>
+            <div class="field"><span class="label">Earned Story Assets/<wbr>Weaknesses</span></div></div>`;
+        const card = INVESTIGATORS[m.key];
+        const unspent = m.xpEarned - m.xpSpent;
+        const xp =
+          m.xpEarned || m.xpTrail.length
+            ? `<span class="xp-line${isNew('xp:' + m.key)}">${m.xpTrail.map((v) => `<span class="hand old">${v}</span>`).join('')}<span class="hand now">${unspent}</span></span>`
+            : '';
+        const fate =
+          m.fate === 'alive'
+            ? ''
+            : `<span class="fate-note">${m.fate === 'killed' ? 'killed' : 'insane'}</span>`;
+        return `<button class="column" data-act="investigator" data-key="${m.key}" data-fate="${m.fate}" aria-label="${esc(card.name)}, ${unspent} unspent experience">
+          <div class="field"><span class="label">Player Name</span><span class="hand">${esc(m.player ?? '')}</span></div>
+          <div class="field"><span class="label">Investigator</span><span class="who">${sym(card.cls, 'class-icon')}<span class="hand">${esc(card.name)}</span></span>${fate}</div>
+          <div class="field"><span class="label">Unspent Experience</span>${xp}</div>
+          <div class="field trauma-row">
+            <div class="${isNew('physical:' + m.key).trim()}"><span class="trauma-head"><span class="label">Trauma</span><span class="sub">(Physical)</span></span>${tally(m.physical, 'Physical trauma')}</div>
+            <div class="${isNew('mental:' + m.key).trim()}"><span class="sub">(Mental)</span>${tally(m.mental, 'Mental trauma')}</div>
+          </div>
+          <div class="field"><span class="label">Earned Story Assets/<wbr>Weaknesses</span><span class="hand${isNew('cards:' + m.key)}">${m.cards.map(esc).join(', ')}</span></div>
+        </button>`;
+      }
+
+      function renderDesk() {
+        const log = ui.log;
+        const columns = [0, 1, 2, 3].map((i) => renderColumn(log.investigators[i])).join('');
+        const scenarios = SCENARIOS.map((s, i) => {
+          const played = log.played.find((p) => p.id === s.id);
+          const state = played ? 'played' : i === log.position && !log.result ? 'next' : 'later';
+          const res = played
+            ? played.res === 'none'
+              ? 'no res.'
+              : played.res
+            : state === 'next'
+              ? '← next'
+              : '';
+          return `<li>${i ? ARROW : ''}<button class="scenario" data-state="${state}" data-act="chapter" data-id="${s.id}">
+            <span class="check" ${played ? 'data-done' : ''}></span><span class="name script">${s.name}</span><span class="res hand">${res}</span></button></li>`;
+        }).join('');
+        const gone = [...log.investigators, ...log.former].filter((m) => m.fate !== 'alive');
+        const left = log.former.filter((m) => m.fate === 'alive');
+        const goneItems = gone
+          .map(
+            (m) =>
+              `<li class="hand">${esc(INVESTIGATORS[m.key].name)} – ${m.fate === 'killed' ? 'killed' : 'insane'}${m.player ? ` (${esc(m.player)})` : ''}</li>`,
+          )
+          .join('');
+        const notes = log.notes
+          .map(
+            (n) =>
+              `<li class="${isNew('note:' + n.key).trim()}" ${n.crossed ? 'data-crossed' : ''}><button data-act="note" data-key="${n.key}"><span class="hand">${esc(noteSentence(n))}</span></button></li>`,
+          )
+          .join('');
+        const verdict = log.result
+          ? `<li class="verdict${isNew('result')}"><span class="hand">${esc(log.result)}</span></li>`
+          : '';
+        const list = (key) =>
+          log.lists[key]
+            .map(
+              (e) =>
+                `<li class="${isNew('list:' + key).trim()}" ${e.crossed ? 'data-crossed' : ''}><span class="hand">${esc(e.name)}</span></li>`,
+            )
+            .join('');
+        return `<div id="desk"><div class="board">
+          <section class="sheet index-card" aria-label="Investigators">${CLIP}
+            <header class="card-head"><span class="printed">Campaign Log:</span><h1 class="script">Night of the Zealot</h1></header>
+            <div class="frame"><h2 class="frame-title">Investigators</h2><div class="columns">${columns}</div></div>
+          </section>
+          <section class="sheet napkin" aria-label="Scenarios"><h2 class="script">Scenarios</h2><ol class="scenario-list">${scenarios}</ol></section>
+          <section class="sheet clipping" aria-label="Killed and insane investigators"><span class="staple"></span>
+            <h2>Killed/Insane Investigators</h2><ul>${goneItems}</ul>
+            ${left.length ? `<p class="muted-hint">Left the campaign: ${left.map((m) => esc(INVESTIGATORS[m.key].name)).join(', ')}</p>` : ''}</section>
+          <section class="notepad" aria-label="Campaign notes"><div class="rings">${RING}${RING}</div>
+            <section><h2 class="script">Campaign Notes</h2><ul>${notes}${verdict}</ul></section>
+            <section><h2 class="script">Interrogated Cultists</h2><ul>${list('interrogated')}</ul></section>
+            <section><h2 class="script">Cultists Who Got Away</h2><ul>${list('gotAway')}</ul></section>
+          </section>
+          <p class="copyright">Unofficial fan project. Layout after the campaign log sheet of the Core Set.</p>
+        </div></div>`;
+      }
+
+      /** Paints the starfield the log sheet lies on, once, as a background image. */
+      function paintStars() {
+        const c = document.createElement('canvas');
+        c.width = 600;
+        c.height = 600;
+        const g = c.getContext('2d');
+        let seed = 7;
+        const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+        for (let i = 0; i < 520; i++) {
+          const r = rnd() < 0.92 ? rnd() * 0.9 + 0.2 : rnd() * 1.6 + 0.8;
+          g.fillStyle = `rgba(${200 + rnd() * 55},${210 + rnd() * 45},255,${0.3 + rnd() * 0.7})`;
+          g.beginPath();
+          g.arc(rnd() * 600, rnd() * 600, r, 0, Math.PI * 2);
+          g.fill();
+        }
+        document.documentElement.style.setProperty('--stars', `url(${c.toDataURL()})`);
+      }
+
+      // ---------- Dialogs ----------
+      function renderDialog() {
+        const d = ui.dialog;
+        $('scrim').hidden = !d;
+        if (!d) {
+          $('scrim').innerHTML = '';
+          return;
+        }
+        const body =
+          d.kind === 'resolve'
+            ? renderResolve(d)
+            : d.kind === 'investigator'
+              ? renderSheet(d)
+              : d.kind === 'replace'
+                ? renderReplace(d)
+                : d.kind === 'setup'
+                  ? renderSetup(d)
+                  : d.kind === 'note'
+                    ? renderNote(d)
+                    : d.kind === 'bag'
+                      ? renderBag()
+                      : '';
+        $('scrim').innerHTML =
+          `<div class="dialog page" role="dialog" aria-modal="true">${body}</div>`;
+      }
+
+      const closeX = '<button class="close" data-act="close" aria-label="Close">×</button>';
+
+      function changeLines(changes) {
+        const groups = { notes: [], team: [], byHand: [] };
+        for (const c of changes) {
+          if (c.kind === 'record')
+            groups.notes.push(
+              `<div class="change">${PEN}<div><span class="hand">${esc(STORY[c.key][c.value])}</span></div></div>`,
+            );
+          else if (c.kind === 'strike')
+            groups.notes.push(
+              `<div class="change" data-kind="strike">${PEN}<div><span class="hand">${esc(STORY[c.key].yes)}</span><div class="why">Crossed out: ${esc(c.why)}</div></div></div>`,
+            );
+          else if (c.kind === 'list')
+            groups.notes.push(
+              `<div class="change">${PEN}<div><span class="label">${c.key === 'gotAway' ? 'Cultists Who Got Away' : 'Cultists We Interrogated'}</span><span class="hand">${c.names.map(esc).join(', ')}</span><div class="why">${esc(c.why)}</div></div></div>`,
+            );
+          else if (c.kind === 'xp')
+            groups.team.push(
+              `<div class="change">${PEN}<div><span class="hand">+${c.each} experience each</span><div class="why">${esc(c.why)}</div></div></div>`,
+            );
+          else if (c.kind === 'trauma' && inv(ui.log, c.who))
+            groups.team.push(
+              `<div class="change">${PEN}<div><span class="hand">${esc(INVESTIGATORS[c.who].name)}: ${c.amount} ${c.trauma} trauma</span><div class="why">${esc(c.why)}</div></div></div>`,
+            );
+          else if (c.kind === 'earn')
+            groups.team.push(
+              `<div class="change">${PEN}<div><span class="hand">${esc(INVESTIGATORS[c.who === 'lead' ? ui.log.investigators[0].key : c.who].name)} earns ${esc(c.card)}</span><div class="why">${esc(c.why)}</div></div></div>`,
+            );
+          else if (c.kind === 'byHand')
+            groups.byHand.push(
+              `<div class="change" data-kind="byHand">${HAND}<div class="text">${esc(c.text)}</div></div>`,
+            );
+          else if (c.kind === 'result')
+            groups.notes.push(
+              `<div class="change">${PEN}<div><span class="hand">${esc(c.text)}</span><div class="why">The campaign ends.</div></div></div>`,
+            );
+        }
+        return `<div class="changes">
+          ${groups.notes.length ? `<h4>Campaign Notes</h4>${groups.notes.join('')}` : ''}
+          ${groups.team.length ? `<h4>Investigators</h4>${groups.team.join('')}` : ''}
+          <h4>Chaos Bag</h4><div class="change">${PEN}<div class="ui">No change.</div></div>
+          ${groups.byHand.length ? `<h4>At the table</h4>${groups.byHand.join('')}` : ''}
+        </div>`;
+      }
+
+      function renderResolve(d) {
+        const s = scenarioOf(d.scenario);
+        const r = RESOLUTIONS[d.scenario];
+        const chosen = r.options.find((o) => o.id === d.choice);
+        const steps = `<div class="steps" aria-label="Step ${d.step} of 2"><span ${d.step >= 1 ? 'data-on' : ''}></span><span ${d.step >= 2 ? 'data-on' : ''}></span></div>`;
+        if (d.step === 1) {
+          const options = r.options
+            .map(
+              (
+                o,
+              ) => `<button class="choice" role="radio" aria-checked="${o.id === d.choice}" data-act="pick-res" data-id="${o.id}">
+                <span class="rn">${o.rn}</span><span class="what">${esc(o.what)}${o.id === r.proposal ? '<span class="proposed">from the game</span>' : ''}</span>
+                <span class="from">${esc(o.from)}</span></button>`,
+            )
+            .join('');
+          return `<span class="kicker">Chapter ${s.num} · ${s.name}</span><h3>The scenario is over</h3>${steps}
+            <p class="ui">${esc(r.proposalWhy)} Confirm the resolution, or pick another one if the table played it differently.</p>
+            <div class="choices" role="radiogroup">${options}</div>
+            <div class="read-aloud">${HAND}<span>Read ${chosen.id === 'none' ? 'the “No resolution” text' : `Resolution ${chosen.id.slice(1)}`} aloud from the campaign guide.</span></div>
+            <div class="actions"><button class="secondary" data-act="close">Not yet</button><button class="primary" data-act="res-next">Next</button></div>`;
+        }
+        const changes = r.changes[d.choice] ?? r.changes[r.proposal];
+        return `<span class="kicker">Chapter ${s.num} · ${chosen.id === 'none' ? 'No resolution' : `Resolution ${chosen.id.slice(1)}`}</span><h3>Into the campaign log</h3>${steps}
+          ${changeLines(changes)}
+          <div class="actions"><button class="secondary" data-act="res-back">Back</button><button class="primary" data-act="res-write">Write into the log</button></div>`;
+      }
+
+      function renderSheet(d) {
+        const m = inv(ui.log, d.key);
+        const card = INVESTIGATORS[m.key];
+        const draft = d.adjust ?? m;
+        const unspent = draft.xpEarned - draft.xpSpent;
+        const ticks = (kind, max, filled) =>
+          Array.from(
+            { length: max },
+            (_, i) =>
+              `<span class="tick" data-kind="${kind}" ${i < filled ? 'data-filled' : ''}></span>`,
+          ).join('');
+        const stepper = (field) =>
+          `<span class="stepper"><button data-act="adj" data-field="${field}" data-by="-1" aria-label="Less">−</button><output>${draft[field]}</output><button data-act="adj" data-field="${field}" data-by="1" aria-label="More">+</button></span>`;
+        const adjusting = !!d.adjust;
+        const fateNote =
+          m.fate !== 'alive'
+            ? `<div class="warning">${esc(card.name)} was ${m.fate === 'killed' ? 'killed' : 'driven insane'}. Choose a replacement investigator before the next scenario.</div>`
+            : '';
+        const spend = adjusting
+          ? ''
+          : `<div class="box"><span class="label">Spend Experience</span>
+              <p class="adjust-note">Upgrade your deck at the table, then record what the new cards cost.</p>
+              <span class="stepper"><button data-act="spend-by" data-by="-1" aria-label="Less">−</button><output>${d.spend}</output><button data-act="spend-by" data-by="1" aria-label="More">+</button></span>
+              <button class="secondary" data-act="spend" ${d.spend ? '' : 'disabled'} style="margin-left:10px">Spend ${d.spend} XP</button></div>`;
+        return `${closeX}
+          <div class="sheet-head">${sym(card.cls, 'class-icon')}<h3 class="hand" style="font-size:2rem">${esc(card.name)}</h3><span class="adjust-note">${esc(m.player)}${m.player ? ' · ' : ''}seat ${ui.log.investigators.indexOf(m) + 1}</span>
+            <span class="adjust-note">Health ${card.health} · sanity ${card.sanity}${m.physical || m.mental ? ` · starts each scenario with ${m.physical} damage and ${m.mental} horror` : ''}</span></div>
+          ${fateNote}
+          <div class="stat-grid">
+            <div class="box"><span class="label">Unspent Experience</span><span class="hand" style="font-size:2.2rem">${unspent}</span>
+              ${adjusting ? `<div class="adjust-note">Earned ${stepper('xpEarned')}</div><div class="adjust-note">Spent ${stepper('xpSpent')}</div>` : `<div class="adjust-note">${draft.xpEarned} earned · ${draft.xpSpent} spent</div>`}</div>
+            <div class="box"><span class="label">Physical Trauma</span>${tally(draft.physical, 'Physical trauma')}<div class="adjust-note">${draft.physical} of ${card.health} health</div>${adjusting ? stepper('physical') : ''}
+              <span class="label" style="margin-top:8px">Mental Trauma</span>${tally(draft.mental, 'Mental trauma')}<div class="adjust-note">${draft.mental} of ${card.sanity} sanity</div>${adjusting ? stepper('mental') : ''}</div>
+          </div>
+          <div class="box" style="margin-top:12px"><span class="label">Earned Story Assets / Weaknesses</span><div class="written-line hand">${draft.cards.map(esc).join(', ') || '&nbsp;'}</div></div>
+          ${spend}
+          ${
+            adjusting
+              ? `<p class="adjust-note">Corrections change the log directly, for mistakes made at the table. Done keeps them as one undo step.</p>
+                 <div class="actions"><button class="secondary" data-act="adj-cancel">Cancel</button><button class="primary" data-act="adj-done">Done</button></div>`
+              : `<div class="actions">${m.fate !== 'alive' ? '<button class="primary" data-act="replace">Choose a replacement</button>' : '<button class="link" data-act="leave">Player leaves the campaign</button>'}<button class="secondary" data-act="adj-start">Correct the log</button></div>`
+          }`;
+      }
+
+      function renderReplace(d) {
+        const used = new Set([...ui.log.investigators, ...ui.log.former].map((m) => m.key));
+        const out = inv(ui.log, d.key);
+        const picks = Object.entries(INVESTIGATORS)
+          .map(
+            ([
+              key,
+              c,
+            ]) => `<button class="pick" role="radio" aria-checked="${d.pick === key}" data-act="pick-inv" data-key="${key}" ${used.has(key) ? 'disabled' : ''}>
+              ${sym(c.cls, 'class-icon')}<span>${esc(c.name)}</span><span class="stats">${used.has(key) ? 'Already in this campaign' : `health ${c.health} · sanity ${c.sanity}`}</span></button>`,
+          )
+          .join('');
+        return `${closeX}<span class="kicker">Seat ${ui.log.investigators.indexOf(out) + 1}</span><h3>Replace ${esc(INVESTIGATORS[out.key].name)}</h3>
+          <p class="ui">The new investigator joins with a new deck, no trauma and no experience. ${esc(INVESTIGATORS[out.key].name)} stays in the log as a former investigator.</p>
+          <div class="pick-grid">${picks}</div>
+          <div class="actions"><button class="primary" data-act="replace-confirm" ${d.pick ? '' : 'disabled'}>Join the campaign</button></div>`;
+      }
+
+      function renderSetup() {
+        const s = nextScenario();
+        const log = ui.log;
+        const reads = [];
+        for (const n of log.notes) {
+          const r = READS[n.key];
+          if (!r) continue;
+          if (r.scenario !== s.id && r.also !== s.id) continue;
+          reads.push(
+            `<div class="read"><span class="hand" ${n.crossed ? 'style="text-decoration:line-through"' : ''}>${esc(noteSentence(n))}</span><span class="effect">${esc(n.crossed ? r.no : r[n.value])}</span></div>`,
+          );
+        }
+        if (s.id === 'devourer') {
+          const away = log.lists.gotAway.filter((e) => !e.crossed);
+          reads.push(
+            `<div class="read"><span class="label">Cultists Who Got Away</span><span class="hand">${away.map((e) => esc(e.name)).join(', ')}</span>
+              <span class="effect">${Math.ceil(away.length / 2)} doom on agenda 1a; each of them is set aside to spawn at the Main Path.</span></div>`,
+          );
+        }
+        for (const m of log.investigators.filter((x) => x.cards.includes('Lita Chantler'))) {
+          const name = INVESTIGATORS[m.key].name;
+          reads.push(
+            `<div class="read"><span class="label">Earned Story Assets</span><span class="hand">${esc(name)}: Lita Chantler</span><span class="effect">${esc(name)} may play Lita from their deck${s.id === 'devourer' ? '; the setup trusts that they control her' : ''}.</span></div>`,
+          );
+        }
+        const team = log.investigators
+          .map((m) => {
+            const c = INVESTIGATORS[m.key];
+            const unspent = m.xpEarned - m.xpSpent;
+            return `<div class="team-row">${sym(c.cls, 'class-icon')}<div><span class="hand">${esc(c.name)}</span>
+              <div class="ui">${m.physical} damage and ${m.mental} horror from trauma</div></div>
+              <button class="link" data-act="investigator" data-key="${m.key}">${unspent} XP unspent</button></div>`;
+          })
+          .join('');
+        const counts = {};
+        for (const t of log.bag) counts[t] = (counts[t] ?? 0) + 1;
+        return `${closeX}<span class="kicker">Chapter ${s.num}</span><h3>${s.name}</h3>
+          <h4 class="section-title">From your campaign log</h4>
+          <div class="reads">${reads.join('') || '<p class="ui">Nothing in the log changes this setup.</p>'}</div>
+          <h4 class="section-title">Investigators</h4>${team}
+          <p class="adjust-note">Spend experience before you start: upgrade your deck at the table, then record the cost.</p>
+          <h4 class="section-title">Chaos Bag</h4>
+          <div class="bag">${TOKEN_ORDER.filter((t) => counts[t])
+            .map(
+              (t) =>
+                `<span class="bag-entry">${token(t, 28)}<span class="hand">${counts[t]}</span></span>`,
+            )
+            .join('')}</div>
+          <div class="read-aloud">${HAND}<span>Read the introduction of Chapter ${s.num} aloud from the campaign guide.</span></div>
+          <div class="actions"><button class="secondary" data-act="close">Not yet</button><button class="primary" data-act="play">Set up and play</button></div>`;
+      }
+
+      function renderNote(d) {
+        const n = ui.log.notes.find((x) => x.key === d.key);
+        const writer = SCENARIOS.find((s) => s.num === n.chapter);
+        const played = ui.log.played.find((p) => p.id === writer.id);
+        const r = READS[n.key];
+        const readers = r ? [r.scenario, r.also].filter(Boolean).map((id) => scenarioOf(id)) : [];
+        return `${closeX}<span class="kicker">Campaign note</span>
+          <h3 class="hand" style="font-size:1.9rem;${n.crossed ? 'text-decoration:line-through' : ''}">${esc(noteSentence(n))}</h3>
+          <div class="reads" style="margin-top:14px">
+            <div class="read"><span class="label">Written by</span><span class="ui">Chapter ${writer.num}, ${writer.name} · ${played.res === 'none' ? 'no resolution' : `Resolution ${played.res.slice(1)}`}</span></div>
+            ${n.crossed ? `<div class="read"><span class="label">Crossed out by</span><span class="ui">Chapter ${n.crossedIn}, ${SCENARIOS.find((s) => s.num === n.crossedIn).name}</span></div>` : ''}
+            ${readers.map((s) => `<div class="read"><span class="label">Read by the setup of</span><span class="ui">Chapter ${s.num}, ${s.name}</span><span class="effect">${esc(n.crossed ? r.no : r[n.value])}</span></div>`).join('')}
+          </div>
+          <div class="actions"><button class="secondary" data-act="close">Close</button></div>`;
+      }
+
+      function renderBag() {
+        const counts = {};
+        for (const t of ui.log.bag) counts[t] = (counts[t] ?? 0) + 1;
+        const entries = TOKEN_ORDER.filter((t) => counts[t])
+          .map(
+            (t) =>
+              `<span class="bag-entry">${token(t, 44)}<span class="hand">${counts[t]}</span></span>`,
+          )
+          .join('');
+        return `${closeX}<span class="kicker">${ui.log.difficulty[0].toUpperCase() + ui.log.difficulty.slice(1)} · ${ui.log.bag.length} tokens</span><h3>Chaos Bag</h3>
+          <div class="bag" style="justify-content:center;gap:14px 10px;margin-top:16px">${entries}</div>
+          <h4 class="section-title">Changes</h4>
+          <div class="reads"><div class="read"><span class="ui">Set up for ${ui.log.difficulty} when the campaign started. Night of the Zealot adds no tokens; later campaigns write their changes here, each with the chapter that made it.</span></div></div>`;
+      }
+
+      function renderMenu() {
+        const opt = (group, value, label, current) =>
+          `<button role="menuitemradio" aria-checked="${current === value}" data-act="${group}" data-id="${value}">${label}</button>`;
+        $('menu').innerHTML = `
+          <h4>Example</h4>${Object.entries(DEMOS)
+            .map(([k, label]) => opt('demo', k, label, ui.demo))
+            .join('')}
+
+          <h4>Theme</h4><div class="seg">${opt('theme', 'auto', 'Auto', ui.theme)}${opt('theme', 'dark', 'Dark', ui.theme)}${opt('theme', 'light', 'Light', ui.theme)}</div>`;
+      }
+
+      function toast(text, undo) {
+        ui.undo = undo;
+        $('toast').innerHTML =
+          `<span>${esc(text)}</span>${undo ? '<button class="link" data-act="undo">Undo</button>' : ''}`;
+        $('toast').hidden = false;
+        clearTimeout(toast.timer);
+        toast.timer = setTimeout(() => ($('toast').hidden = true), 5000);
+      }
+
+      function setDemo(name) {
+        ui.demo = name;
+        ui.log = demoLog(name);
+        ui.fresh = new Set();
+        ui.dialog = null;
+        ui.view = name === 'newCampaign' ? 'new' : 'log';
+        if (name === 'gatheringEnded')
+          ui.dialog = {
+            kind: 'resolve',
+            scenario: 'gathering',
+            step: 1,
+            choice: RESOLUTIONS.gathering.proposal,
+          };
+      }
+
+      // ---------- Actions ----------
+      document.addEventListener('click', (e) => {
+        const el = e.target.closest('[data-act]');
+        if (!el) {
+          if (!$('menu').hidden && !e.target.closest('#menu')) $('menu').hidden = true;
+          if (
+            e.target === $('scrim') &&
+            ui.dialog &&
+            ui.dialog.kind !== 'resolve' &&
+            !ui.dialog.adjust
+          ) {
+            ui.dialog = null;
+            render();
+          }
+          return;
+        }
+        const act = el.dataset.act;
+        const id = el.dataset.id;
+        const key = el.dataset.key;
+        const d = ui.dialog;
+        if (act === 'menu') {
+          $('menu').hidden = !$('menu').hidden;
+          return;
+        }
+        if (act !== 'undo') $('menu').hidden = true;
+        switch (act) {
+          case 'demo':
+            setDemo(id);
+            break;
+          case 'skin':
+            ui.skin = id;
+            break;
+          case 'theme':
+            ui.theme = id;
+            break;
+          case 'home':
+            toast('The home screen lists campaigns and quick games.');
+            return;
+          case 'export':
+            toast('Exports the log and every scenario as one file.');
+            return;
+          case 'bag':
+            ui.dialog = { kind: 'bag' };
+            break;
+          case 'close':
+            ui.dialog = null;
+            break;
+          case 'chapter': {
+            const played = ui.log.played.find((p) => p.id === id);
+            const s = scenarioOf(id);
+            if (played)
+              toast(
+                `${s.name}: ${played.res === 'none' ? 'no resolution' : `Resolution ${played.res.slice(1)}`}. Its game stays in the log for replay.`,
+              );
+            else if (s === nextScenario() && !ui.log.result) ui.dialog = { kind: 'setup' };
+            else toast(`${s.name} comes after the chapters before it.`);
+            if (!ui.dialog) return;
+            break;
+          }
+          case 'note':
+            ui.dialog = { kind: 'note', key };
+            break;
+          case 'investigator':
+            ui.dialog = {
+              kind: 'investigator',
+              key,
+              spend: 0,
+              back: d?.kind === 'setup' ? 'setup' : null,
+            };
+            break;
+          case 'spend-by': {
+            const m = inv(ui.log, d.key);
+            d.spend = Math.max(
+              0,
+              Math.min(m.xpEarned - m.xpSpent, d.spend + Number(el.dataset.by)),
+            );
+            break;
+          }
+          case 'spend': {
+            const before = clone(ui.log);
+            const m = inv(ui.log, d.key);
+            setXp(m, m.xpEarned, m.xpSpent + d.spend);
+            ui.fresh = new Set(['xp:' + m.key]);
+            toast(`${INVESTIGATORS[m.key].name} spent ${d.spend} XP.`, before);
+            d.spend = 0;
+            break;
+          }
+          case 'adj-start':
+            d.adjust = clone(inv(ui.log, d.key));
+            break;
+          case 'adj': {
+            const card = INVESTIGATORS[d.key];
+            const f = el.dataset.field;
+            const max = f === 'physical' ? card.health : f === 'mental' ? card.sanity : 99;
+            d.adjust[f] = Math.max(0, Math.min(max, d.adjust[f] + Number(el.dataset.by)));
+            d.adjust.xpSpent = Math.min(d.adjust.xpSpent, d.adjust.xpEarned);
+            break;
+          }
+          case 'adj-cancel':
+            d.adjust = null;
+            break;
+          case 'adj-done': {
+            const before = clone(ui.log);
+            const i = ui.log.investigators.findIndex((m) => m.key === d.key);
+            const card = INVESTIGATORS[d.key];
+            const a = d.adjust;
+            a.fate =
+              a.physical >= card.health ? 'killed' : a.mental >= card.sanity ? 'insane' : 'alive';
+            const old = ui.log.investigators[i];
+            const earned = a.xpEarned;
+            const spent = a.xpSpent;
+            a.xpEarned = old.xpEarned;
+            a.xpSpent = old.xpSpent;
+            setXp(a, earned, spent);
+            ui.log.investigators[i] = a;
+            d.adjust = null;
+            ui.fresh = new Set();
+            toast('Log corrected.', before);
+            break;
+          }
+          case 'leave': {
+            const before = clone(ui.log);
+            const m = inv(ui.log, d.key);
+            if (ui.log.investigators.length === 1) {
+              toast('A campaign needs at least one investigator.');
+              return;
+            }
+            ui.log.investigators = ui.log.investigators.filter((x) => x !== m);
+            ui.log.former.push(m);
+            ui.dialog = null;
+            toast(
+              `${INVESTIGATORS[m.key].name} left the campaign. They may rejoin between scenarios.`,
+              before,
+            );
+            break;
+          }
+          case 'replace':
+            ui.dialog = { kind: 'replace', key: d.key, pick: null };
+            break;
+          case 'pick-inv':
+            d.pick = key;
+            break;
+          case 'replace-confirm': {
+            const before = clone(ui.log);
+            const i = ui.log.investigators.findIndex((m) => m.key === d.key);
+            ui.log.former.push(ui.log.investigators[i]);
+            ui.log.investigators[i] = member(d.pick, { player: ui.log.investigators[i].player });
+            ui.fresh = new Set(['xp:' + d.pick]);
+            ui.dialog = null;
+            toast(`${INVESTIGATORS[d.pick].name} joined the campaign.`, before);
+            break;
+          }
+          case 'setup':
+            ui.dialog = { kind: 'setup' };
+            break;
+          case 'play':
+            ui.dialog = null;
+            ui.view = 'playing';
+            window.scrollTo(0, 0);
+            break;
+          case 'back-to-log':
+            ui.view = 'log';
+            break;
+          case 'resolve':
+            ui.dialog = {
+              kind: 'resolve',
+              scenario: id,
+              step: 1,
+              choice: RESOLUTIONS[id].proposal,
+            };
+            break;
+          case 'pick-res':
+            d.choice = id;
+            break;
+          case 'res-next':
+            d.step = 2;
+            break;
+          case 'res-back':
+            d.step = 1;
+            break;
+          case 'res-write': {
+            const before = clone(ui.log);
+            const res = RESOLUTIONS[d.scenario].changes[d.choice]
+              ? d.choice
+              : RESOLUTIONS[d.scenario].proposal;
+            const { log, fresh } = applyResolution(ui.log, d.scenario, res);
+            ui.log = log;
+            ui.fresh = fresh;
+            ui.dialog = null;
+            ui.view = 'log';
+            if (ui.demo === 'gatheringEnded') ui.demo = 'afterGathering';
+            window.scrollTo(0, 0);
+            toast(`Written into the log.`, before);
+            break;
+          }
+          case 'undo':
+            if (ui.undo) {
+              ui.log = ui.undo;
+              ui.fresh = new Set();
+              ui.undo = null;
+              $('toast').hidden = true;
+            }
+            break;
+          case 'difficulty':
+            ui.newCampaign.difficulty = id;
+            break;
+          case 'team': {
+            const t = ui.newCampaign.team;
+            ui.newCampaign.team = t.includes(key) ? t.filter((k) => k !== key) : [...t, key];
+            break;
+          }
+          case 'create':
+            ui.log = freshLog(ui.newCampaign.difficulty, ui.newCampaign.team);
+            ui.view = 'log';
+            ui.fresh = new Set();
+            ui.dialog = { kind: 'setup' };
+            ui.demo = 'fresh';
+            break;
+        }
+        render();
+      });
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && ui.dialog && ui.dialog.kind !== 'resolve') {
+          ui.dialog = null;
+          render();
+        }
+      });
+
+      // Brass ticks on the playmat ring.
+      $('ticks').innerHTML = Array.from({ length: 72 }, (_, i) => {
+        const a = (i / 72) * Math.PI * 2;
+        const r1 = 400,
+          r2 = i % 6 ? 410 : 420;
+        return `<line x1="${500 + r1 * Math.cos(a)}" y1="${520 + r1 * Math.sin(a)}" x2="${500 + r2 * Math.cos(a)}" y2="${520 + r2 * Math.sin(a)}"/>`;
+      }).join('');
+
+      paintStars();
+      const params = new URLSearchParams(location.search);
+      if (params.get('skin')) ui.skin = params.get('skin');
+      if (params.get('theme')) ui.theme = params.get('theme');
+      setDemo(params.get('demo') ?? 'afterGathering');
+      render();
+    </script>
+  </body>
+</html>
