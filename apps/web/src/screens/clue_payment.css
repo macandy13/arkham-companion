@@ -1,102 +1,74 @@
 /*
- * The clue payment dialog (CluePaymentDialog): its title beside a close button, the clues chosen
- * as text and as a row of pips, then the payers side by side, each their art over their name with
- * the clues they hold as tokens under it, and Split evenly and Pay at its foot. The column, title,
- * text and foot come from the decision dialog's rules in game.css.
+ * The clue payment dialog (CluePaymentDialog) on the card shell: the clues chosen as text, then a
+ * row per payer, their round portrait beside their name with what they pay under it and their clue
+ * tokens to tap, and Split evenly and Pay at its foot. The shell lays out the card and the page;
+ * the title, text and foot come from the decision dialog's rules in game.css.
  */
-#board dialog[data-dialog='clue-payment'] {
-  max-width: var(--layout-clue-payment-width);
-}
-
-#board dialog[data-dialog='clue-payment'] :is(ol, ul) {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: var(--space-2);
+#board dialog[data-dialog='clue-payment'] > article :is(ul, li) {
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
 /* Two ids' worth, so the home screen's framed list items (`#app > main ul > li`) stay off. */
-#board dialog[data-dialog='clue-payment'] li {
-  padding: 0;
+#board dialog[data-dialog='clue-payment'] > article li {
   border: none;
   background: none;
 }
 
-#board dialog[data-dialog='clue-payment'] > ol {
-  justify-content: flex-start;
-  gap: var(--space-1);
-}
-
-/* A pip per clue the cost asks, filled for each one chosen, like the clue tokens below. */
-#board dialog[data-dialog='clue-payment'] > ol > li {
-  box-sizing: border-box;
-  width: var(--clue-pip-size);
-  height: var(--clue-pip-size);
-  border: var(--border-width) solid var(--color-clue);
-  border-radius: var(--radius-round);
-}
-
-#board dialog[data-dialog='clue-payment'] > ol > li[data-paid] {
-  background: var(--color-clue);
-}
-
-#board dialog[data-dialog='clue-payment'] > form > ul {
+#board dialog[data-dialog='clue-payment'] > article > form {
+  display: flex;
+  flex-direction: column;
   gap: var(--space-3);
 }
 
-#board dialog[data-dialog='clue-payment'] > form > ul > li {
+#board dialog[data-dialog='clue-payment'] > article > form > ul {
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
-  width: var(--clue-payer-width);
 }
 
-/*
- * A payer's art in the investigator card's proportions, the initial under it until the picture
- * loads, the name along its foot. investigators.css cuts the art out of the picture.
- */
-#board dialog[data-dialog='clue-payment'] figure {
+/* A payer: the portrait spans both lines, their name and what they pay beside it, then the tokens. */
+#board dialog[data-dialog='clue-payment'] > article > form > ul > li {
   display: grid;
-  grid-template: 1fr / 1fr;
-  margin: 0;
-  aspect-ratio: var(--investigator-art-ratio);
-  border: var(--border-width) solid var(--color-card-edge);
-  border-radius: var(--radius);
+  grid-template: 'art name tokens' auto / var(--investigator-avatar-size) 1fr auto;
+  column-gap: var(--space-2);
+  align-items: center;
+}
+
+/* The portrait, round like the investigator avatars, cut from their card (investigators.css). */
+#board dialog[data-dialog='clue-payment'] > article > form > ul > li > picture {
+  grid-area: art;
+  position: relative;
+  width: var(--investigator-avatar-size);
+  height: var(--investigator-avatar-size);
+  overflow: hidden;
+  border: var(--border-width) solid var(--color-accent);
+  border-radius: var(--radius-round);
   background: var(--card-art-pattern), var(--color-card-face);
-  overflow: hidden;
 }
 
-#board dialog[data-dialog='clue-payment'] figure > * {
-  grid-area: 1 / 1;
+#board dialog[data-dialog='clue-payment'] > article > form > ul > li > p {
+  grid-area: name;
+  display: flex;
+  flex-direction: column;
 }
 
-#board dialog[data-dialog='clue-payment'] figure > span {
-  place-self: center;
-  color: var(--color-card-text);
-  font-family: var(--font-family-print);
-  font-size: var(--font-size-token-count);
+#board dialog[data-dialog='clue-payment'] > article > form > ul > li > p > span {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-note);
 }
 
-#board dialog[data-dialog='clue-payment'] figure > picture {
-  position: relative;
-  place-self: stretch;
-  overflow: hidden;
-}
-
-/* Positioned like the picture, so it stays over the art once that loads. */
-#board dialog[data-dialog='clue-payment'] figure > figcaption {
-  position: relative;
-  align-self: end;
-  padding: var(--space-1);
-  background: var(--color-surface);
-  text-align: center;
+#board dialog[data-dialog='clue-payment'] > article > form > ul > li > ul {
+  grid-area: tokens;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-1);
 }
 
 /* A clue token: a ring in the clue colour, filled with a tick while its investigator pays it. */
-#board dialog[data-dialog='clue-payment'] > form > ul > li > ul button {
+#board dialog[data-dialog='clue-payment'] > article > form > ul > li > ul button {
   width: var(--clue-token-size);
   height: var(--clue-token-size);
   min-width: 0;
@@ -108,12 +80,20 @@
   color: var(--color-token-text);
 }
 
-#board dialog[data-dialog='clue-payment'] > form > ul > li > ul button[aria-pressed='true'] {
+#board
+  dialog[data-dialog='clue-payment']
+  > article
+  > form
+  > ul
+  > li
+  > ul
+  button[aria-pressed='true'] {
   background: var(--color-clue);
 }
 
 #board
   dialog[data-dialog='clue-payment']
+  > article
   > form
   > ul
   > li
@@ -126,58 +106,17 @@
   margin-inline-end: auto;
 }
 
-/*
- * An upright phone: a payer per row, a round avatar of their art beside their name with their
- * tokens under it, like the investigator avatars over the phone's panel.
- */
+/* An upright phone: the tokens move under the name, so a payer's row stays within the sheet. */
 @media (orientation: portrait) and (max-width: 40rem) {
-  #board dialog[data-dialog='clue-payment'] > form > ul {
-    flex-direction: column;
-    flex-wrap: nowrap;
-  }
-
-  #board dialog[data-dialog='clue-payment'] > form > ul > li {
-    display: grid;
+  #board dialog[data-dialog='clue-payment'] > article > form > ul > li {
     grid-template: 'art name' auto 'art tokens' auto / var(--investigator-avatar-size) 1fr;
-    column-gap: var(--space-2);
-    align-items: center;
-    width: auto;
   }
 
-  #board dialog[data-dialog='clue-payment'] figure {
-    display: contents;
-  }
-
-  #board dialog[data-dialog='clue-payment'] figure > :is(span, picture) {
-    grid-area: art;
-    place-self: center;
-    width: var(--investigator-avatar-size);
-    height: var(--investigator-avatar-size);
-    border: var(--border-width) solid var(--color-card-edge);
-    border-radius: var(--radius-round);
-    background: var(--color-card-face);
-    font-size: var(--font-size-subtitle);
-    text-align: center;
-    line-height: var(--investigator-avatar-size);
-  }
-
-  #board dialog[data-dialog='clue-payment'] figure > picture:not([data-picture]) {
-    visibility: hidden;
-  }
-
-  #board dialog[data-dialog='clue-payment'] figure > figcaption {
-    grid-area: name;
-    padding: 0;
-    background: none;
-    text-align: start;
-  }
-
-  #board dialog[data-dialog='clue-payment'] > form > ul > li > ul {
-    grid-area: tokens;
+  #board dialog[data-dialog='clue-payment'] > article > form > ul > li > ul {
     justify-content: flex-start;
   }
 
-  #board dialog[data-dialog='clue-payment'] > form > ul > li > ul button {
+  #board dialog[data-dialog='clue-payment'] > article > form > ul > li > ul button {
     width: var(--button-compact);
     height: var(--button-compact);
   }

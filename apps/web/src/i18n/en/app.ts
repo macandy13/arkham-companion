@@ -398,13 +398,16 @@ export const appTexts = {
     victory: 'Victory {{points}}.',
   },
   cluePayment: {
-    advanceTitle: 'Who pays the clues to advance {{act}}?',
+    title: 'Who pays the clues?',
     total: '{{total}} of {{required}} clues chosen: tap a token to pay it or keep it',
     tokens: 'clues {{name}} holds',
     token: 'clue {{number}} of {{name}}',
     splitEvenly: 'Split evenly',
     pay: 'Pay',
-    close: 'Close without paying',
+    kicker_one: '{{card}} · {{count}} clue as a group',
+    kicker_other: '{{card}} · {{count}} clues as a group',
+    pays_one: 'pays {{pays}} of {{count}} clue',
+    pays_other: 'pays {{pays}} of {{count}} clues',
   },
   cardActions: {
     title: 'Card actions',

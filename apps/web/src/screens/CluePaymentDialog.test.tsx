@@ -94,12 +94,24 @@ describe('CardActions with a group clue cost', () => {
       />,
     );
     fireEvent.click(screen.getByRole('button', { name: 'Action · Study' }));
-    return screen.getByRole('dialog', { name: 'Action · Study' });
+    return screen.getByRole('dialog', { name: 'Who pays the clues?' });
   };
 
   /** Whether each of the clue tokens named `names` in `dialog` is pressed, in that order. */
   const pressed = (dialog: HTMLElement, names: string[]) =>
     names.map((name) => within(dialog).getByRole('button', { name }).ariaPressed);
+
+  it('asks for the 4 clues beside the Study, each payer a row with what they pay', () => {
+    const dialog = openStudyPayment(studyWithGroupCost(3, 3));
+
+    expect(within(dialog).getByRole('button', { name: 'Read Study' })).toBeTruthy();
+    expect(within(dialog).getByText('Study · 4 clues as a group')).toBeTruthy();
+    expect(
+      within(dialog)
+        .getAllByText(/^pays/)
+        .map((line) => line.textContent),
+    ).toEqual(['pays 3 of 3 clues', 'pays 1 of 3 clues']);
+  });
 
   it('starts at the engine’s split, alder’s 3 first, and keeps Pay off once a token is kept', () => {
     const dialog = openStudyPayment(studyWithGroupCost(3, 3));
@@ -150,7 +162,7 @@ describe('CardActions with a group clue cost', () => {
   it('takes nothing when the players close the dialog', () => {
     const table = studyWithGroupCost(3, 3);
     const dialog = openStudyPayment(table);
-    fireEvent.click(within(dialog).getByRole('button', { name: 'Close without paying' }));
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Close' }));
 
     expect(screen.queryByRole('dialog')).toBeNull();
     expect(table.board.investigator(alder).clues).toBe(3);

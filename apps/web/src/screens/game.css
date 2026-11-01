@@ -664,25 +664,25 @@
 /*
  * The decision dialog's page (DecisionDialog, on the CardDialog shell): the question as its title
  * under who decides, the test under it, then the options as a column of full-width buttons and
- * Undo at its foot. Every card dialog's page and the clue payment dialog (CluePaymentDialog,
- * clue_payment.css) share its column.
+ * Undo at its foot. Every card dialog's page shares its column, and the clue payment dialog's
+ * (CluePaymentDialog, clue_payment.css) its title, text and foot.
  */
-#board :is(dialog[data-shell] > article, dialog[data-dialog='clue-payment']) {
+#board dialog[data-shell] > article {
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
 }
 
-#board :is(dialog[data-dialog='decision'], dialog[data-dialog='clue-payment']):not([open]) {
+#board dialog[data-dialog='decision']:not([open]) {
   display: none;
 }
 
-#board :is(dialog[data-dialog='decision'], dialog[data-dialog='clue-payment']) h2 {
+#board :is(dialog[data-dialog='decision'], dialog[data-dialog='clue-payment'] > article) h2 {
   margin: 0;
   font-size: var(--font-size-subtitle);
 }
 
-#board :is(dialog[data-dialog='decision'], dialog[data-dialog='clue-payment']) p {
+#board :is(dialog[data-dialog='decision'], dialog[data-dialog='clue-payment'] > article) p {
   margin: 0;
 }
 
@@ -794,7 +794,7 @@
   gap: var(--space-2);
 }
 
-#board :is(dialog[data-dialog='decision'], dialog[data-dialog='clue-payment']) footer {
+#board :is(dialog[data-dialog='decision'], dialog[data-dialog='clue-payment'] > article) footer {
   display: flex;
   justify-content: flex-end;
   gap: var(--space-2);
