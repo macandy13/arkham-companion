@@ -171,19 +171,43 @@ test('Roland Banks’ combat boosted by 2, as an ally in play gives it', async (
   await expect(roland.getByRole('button', { name: 'Combat 6, boosted +2' })).toBeVisible();
 });
 
-test('Roland Banks’ willpower and agility test, a token drawn', async ({ page }) => {
-  await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
+test(
+  'Roland Banks’ willpower test before a token is drawn, the draw button in its place',
+  { tag: '@shot' },
+  async ({ page }) => {
+    await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
 
-  await page
-    .getByRole('region', { name: 'Roland Banks' })
-    .getByRole('button', { name: /^Willpower/ })
-    .click();
-  const test = page.getByRole('dialog', { name: /^Skill test/ });
-  await test.getByRole('button', { name: /^Agility/ }).click();
-  await test.getByRole('button', { name: 'Draw a token' }).click();
+    await page
+      .getByRole('region', { name: 'Roland Banks' })
+      .getByRole('button', { name: /^Willpower/ })
+      .click();
+    const test = page.getByRole('dialog', { name: /^Skill test/ });
 
-  await expect(test.getByRole('status')).toBeVisible();
-});
+    await expect(test.getByRole('button', { name: 'Draw a token' })).toBeVisible();
+  },
+);
+
+test(
+  'Roland Banks’ willpower and agility test, the tablet drawn with its −2 under it',
+  { tag: '@shot' },
+  async ({ page }) => {
+    // The Gathering's Standard bag lists 16 tokens, the tablet 14th: the draw picks it.
+    await page.addInitScript(() => {
+      Math.random = () => 13.5 / 16;
+    });
+    await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
+
+    await page
+      .getByRole('region', { name: 'Roland Banks' })
+      .getByRole('button', { name: /^Willpower/ })
+      .click();
+    const test = page.getByRole('dialog', { name: /^Skill test/ });
+    await test.getByRole('button', { name: /^Agility/ }).click();
+    await test.getByRole('button', { name: 'Draw a token' }).click();
+
+    await expect(test.getByRole('list', { name: 'Tokens drawn' })).toHaveText('Tablet −2');
+  },
+);
 
 test(
   'the decision dialog asking for the result of an investigation, a token drawn',

@@ -5,10 +5,7 @@
  */
 
 /* The block's lists are plain rows, not the home screen's padded list cards. */
-#board
-  dialog[data-shell]
-  :is(section[data-part='skills'], section[data-part='strip'])
-  li:not([data-token]) {
+#board dialog[data-shell] :is(section[data-part='skills'], section[data-part='strip']) li {
   padding: 0;
   border: none;
   background: none;
@@ -123,10 +120,13 @@
   font-size: var(--font-size-subtitle);
 }
 
+/* The tokens drawn and, while the test waits for one, the draw button where the next one goes. */
 #board dialog[data-shell] section[data-part='strip'] > figure {
-  display: grid;
-  justify-items: center;
-  gap: var(--space-1);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-2);
+  align-items: flex-start;
+  justify-content: center;
   margin: 0;
 }
 
@@ -137,16 +137,40 @@
   gap: var(--space-2);
 }
 
+/* A token with the effect of its symbol under it. */
+#board dialog[data-shell] section[data-part='strip'] > figure > ol > li {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-1);
+}
+
+#board dialog[data-shell] section[data-part='strip'] > figure > ol > li > data {
+  font-family: var(--font-family-print);
+  font-size: var(--font-size-note);
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+/* The draw button as large as a token, a dashed ring like the empty place on the table. */
+#board dialog[data-shell] section[data-part='strip'] > figure > button {
+  min-height: var(--test-token-size);
+  padding-inline: var(--space-3);
+  border-style: dashed;
+  border-radius: var(--radius-round);
+  font-size: var(--font-size-note);
+}
+
 #board dialog[data-shell] section[data-part='strip'] > figure > figcaption {
+  flex-basis: 100%;
   color: var(--color-text-muted);
   font-size: var(--font-size-note);
+  text-align: center;
 }
 
 /*
  * A token drawn, round like the cardboard one: a number token shows its number, a symbol token
  * the game's symbol, with its name kept for screen readers only.
  */
-#board dialog[data-shell] li[data-token] {
+#board dialog[data-shell] span[data-token] {
   display: grid;
   place-items: center;
   box-sizing: border-box;
@@ -164,7 +188,7 @@
 
 #board
   dialog[data-shell]
-  li:is(
+  span:is(
     [data-token='skull'],
     [data-token='cultist'],
     [data-token='tablet'],
@@ -180,7 +204,7 @@
 
 #board
   dialog[data-shell]
-  li:is(
+  span:is(
     [data-token='skull'],
     [data-token='cultist'],
     [data-token='tablet'],
@@ -198,39 +222,39 @@
   mask: var(--token-symbol) center / contain no-repeat;
 }
 
-#board dialog[data-shell] li[data-token='skull'] {
+#board dialog[data-shell] span[data-token='skull'] {
   --token-symbol: url('../symbols/skull.svg');
 }
 
-#board dialog[data-shell] li[data-token='cultist'] {
+#board dialog[data-shell] span[data-token='cultist'] {
   --token-symbol: url('../symbols/cultist.svg');
 }
 
-#board dialog[data-shell] li[data-token='tablet'] {
+#board dialog[data-shell] span[data-token='tablet'] {
   --token-symbol: url('../symbols/tablet.svg');
 }
 
-#board dialog[data-shell] li[data-token='elderThing'] {
+#board dialog[data-shell] span[data-token='elderThing'] {
   --token-symbol: url('../symbols/elder_thing.svg');
 }
 
-#board dialog[data-shell] li[data-token='autoFail'] {
+#board dialog[data-shell] span[data-token='autoFail'] {
   --token-symbol: url('../symbols/auto_fail.svg');
 }
 
-#board dialog[data-shell] li[data-token='elderSign'] {
+#board dialog[data-shell] span[data-token='elderSign'] {
   --token-symbol: url('../symbols/elder_sign.svg');
 }
 
-#board dialog[data-shell] li[data-token='bless'] {
+#board dialog[data-shell] span[data-token='bless'] {
   --token-symbol: url('../symbols/bless.svg');
 }
 
-#board dialog[data-shell] li[data-token='curse'] {
+#board dialog[data-shell] span[data-token='curse'] {
   --token-symbol: url('../symbols/curse.svg');
 }
 
-#board dialog[data-shell] li[data-token='frost'] {
+#board dialog[data-shell] span[data-token='frost'] {
   --token-symbol: url('../symbols/frost.svg');
 }
 
