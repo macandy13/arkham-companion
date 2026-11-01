@@ -23,6 +23,7 @@ import {
   cardCode,
   cardName,
   decisionId,
+  encounterSetCode,
   engagedWith,
   enemyMatching,
   fixed,
@@ -741,6 +742,20 @@ describe('enemies', () => {
     expect(board.enemiesEngagedWith(alice)).toEqual([
       { id: instanceId('ghoul'), name: 'ghoul', at: 'study', engagedWith: alice, health: 1 },
     ]);
+  });
+
+  it("gives an enemy in play its card's picture, for its token", () => {
+    const { context, state } = newGame()
+      .withLocation(study, blankLocation('study'))
+      .withInvestigator(alice, { locationId: study })
+      .withCard(
+        instanceId('ghoul'),
+        blankEnemy('ghoul', { imageSrc: cardImagePath('/cards/ghoul.png') }),
+        engagedWith(alice),
+      )
+      .start();
+
+    expect(boardView(context, state).enemiesEngagedWith(alice)[0]?.image).toBe('/cards/ghoul.png');
   });
 
   it("reads an enemy's fight and evade as modified where it stands, its card's print and picture", () => {
@@ -1809,6 +1824,60 @@ describe('cardFace', () => {
       traits: ['Ghoul'],
       image: '/cards/ghoul.png',
     });
+  });
+});
+
+describe('encounter sets', () => {
+  const rats = encounterSetCode('rats');
+
+  it('names the encounter set of a location, an enemy and a treachery, for their medallions', () => {
+    const { context, state } = newGame()
+      .withLocation(study, blankLocation('study', { encounterCode: rats }))
+      .withInvestigator(alice, { locationId: study })
+      .withCard(
+        instanceId('swarm_of_rats'),
+        blankEnemy('swarm_of_rats', { encounterCode: rats }),
+        engagedWith(alice),
+      )
+      .withCard(
+        instanceId('rat_bite'),
+        blankTreachery('rat_bite', { encounterCode: rats }),
+        threatAreaOf(alice),
+      )
+      .start();
+    const board = boardView(context, state);
+
+    expect(board.location(byName('study')).encounterSet).toBe('rats');
+    expect(board.enemyStats(instanceId('swarm_of_rats')).encounterSet).toBe('rats');
+    expect(board.cardsIn({ kind: 'threatArea', investigatorId: alice })[0]?.encounterSet).toBe(
+      'rats',
+    );
+  });
+
+  it('names the scenario set on the agenda, the act and the reference card, for their set marks', () => {
+    const theGathering = encounterSetCode('torch');
+    const { context, state } = newGame()
+      .withAgenda(
+        instanceId('whats_going_on'),
+        blankAgenda('whats_going_on', fixed(3), { encounterCode: theGathering }),
+      )
+      .withAct(instanceId('trapped'), blankAct('trapped', { encounterCode: theGathering }))
+      .withReferenceCard({ easyStandard: {}, hardExpert: {} })
+      .start();
+    const board = boardView(context, state);
+
+    expect(board.agenda?.encounterSet).toBe('torch');
+    expect(board.act?.encounterSet).toBe('torch');
+    expect(board.reference?.encounterSet).toBe('torch');
+  });
+
+  it('names none for a card outside every encounter set', () => {
+    const { context, state } = newGame()
+      .withLocation(study, blankLocation('study'))
+      .withInvestigator(alice, { locationId: study })
+      .start();
+
+    expect(boardView(context, state).location(byName('study')).encounterSet).toBeUndefined();
   });
 });
 

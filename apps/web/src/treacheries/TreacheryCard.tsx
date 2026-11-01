@@ -95,6 +95,7 @@ export function TreacheryCard({ card, titleId }: { card: CardFaceView; titleId: 
         radius={TREACHERY_FACE.medallion.radius}
         plateWidth={TREACHERY_FACE.medallion.plateWidth}
         type={t('cardZoom.type.treachery')}
+        set={card.encounterSet}
       />
       <text
         id={titleId}

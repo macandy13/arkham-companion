@@ -162,6 +162,7 @@ export function EnemyCard({ enemy, stats }: { enemy: MapEnemyView; stats: EnemyS
         radius={ENEMY_FACE.medallion.radius}
         plateWidth={ENEMY_FACE.medallion.plateWidth}
         type={t('enemy.type')}
+        set={stats.encounterSet}
       />
       <path data-part="edge" d={CARD_OUTLINE} />
       {picture && (

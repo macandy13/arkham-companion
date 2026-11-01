@@ -322,6 +322,29 @@ describe('GameScreen header', () => {
     expect(act?.hasAttribute('data-picture')).toBe(false);
   });
 
+  it.each([
+    { scan: 'lying, 419 by 300', width: 419, height: 300, shown: true },
+    { scan: 'turned upright, 300 by 419', width: 300, height: 419, shown: false },
+  ])(
+    "shows the agenda's picture only when its scan lies: $scan",
+    async ({ width, height, shown }) => {
+      const whatsGoingOn = theGatheringCards.get(cardCode('01105'));
+      if (!whatsGoingOn) throw new Error("The Gathering has the agenda What's Going On?!");
+      await renderTheGathering('game-screen-agenda-shape-test', [
+        { ...whatsGoingOn, imageSrc: cardImagePath('/bundles/cards/whats_going_on.jpg') },
+      ]);
+      const agenda = screen.getByRole('region', { name: 'Agenda' }).querySelector('[data-card]');
+      const picture = agenda?.querySelector('img');
+      if (!agenda || !picture) throw new Error('the agenda has no card with a picture');
+      Object.defineProperty(picture, 'naturalWidth', { value: width });
+      Object.defineProperty(picture, 'naturalHeight', { value: height });
+
+      fireEvent.load(picture);
+
+      expect(agenda.hasAttribute('data-picture')).toBe(shown);
+    },
+  );
+
   it('turns the buttons off while a step is still being stored', async () => {
     await renderTheGathering('game-screen-busy-test');
 

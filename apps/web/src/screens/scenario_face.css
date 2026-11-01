@@ -46,6 +46,10 @@
   stroke-width: var(--face-symbol-line-width);
 }
 
+#board svg[data-face='scenario'] span[data-encounter-set] {
+  color: var(--color-face-medallion-ring);
+}
+
 /*
  * The HTML over the face, placed and sized in its scan units (`--scenario-*`, one unit a 300th of
  * the card's width), so the header's small card and the full one print the same layout: the title

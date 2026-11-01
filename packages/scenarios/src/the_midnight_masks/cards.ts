@@ -5,7 +5,7 @@ import {
   afterEvaded,
   atEndOfPhase,
   cardCode,
-  cardDbFrom,
+  cardDbWith,
   cardImagePath,
   disengageFromEachEnemy,
   drawCards,
@@ -55,6 +55,7 @@ import {
   addToVictoryDisplay,
 } from '@arkham/engine';
 import { act, agenda, enemy, location, prey, spawn, treachery } from '../card_builders';
+import { theGatheringCards } from '../the_gathering/cards';
 
 /**
  * ArkhamDB encounter set codes of The Midnight Masks (Core Set, 2016): the
@@ -538,5 +539,11 @@ export const theMidnightMasksCardDefs: readonly CardStats[] = [
   }),
 ];
 
-/** Card data for The Midnight Masks' own cards; join it with The Gathering's for Chilling Cold and the Ghoul Priest. */
-export const theMidnightMasksCards: CardDb = cardDbFrom(theMidnightMasksCardDefs);
+/**
+ * Card data for everything The Midnight Masks' setup uses: its own cards plus The Gathering's,
+ * whose Chilling Cold set and Ghoul Priest it shuffles in, so a standalone game starts with it alone.
+ */
+export const theMidnightMasksCards: CardDb = cardDbWith(
+  theGatheringCards,
+  theMidnightMasksCardDefs,
+);

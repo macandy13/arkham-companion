@@ -59,7 +59,7 @@ test('lower a decision to adjust the board first', async ({ page }) => {
 // Journey: a Ghoul Minion spawns at any empty location, so the game asks where. The players pick
 // on the map: the dialog lowers and the empty rooms light up; a tap on the Hallway, where Roland
 // Banks stands, brings the question back, and a tap on the Attic answers it.
-test('pick the answer to a decision on the map', { tag: '@flow' }, async ({ page }) => {
+test('pick the answer to a decision on the map', async ({ page }) => {
   const decision = page.getByRole('dialog', { name: 'Where does Ghoul Minion spawn?' });
   const house = page.getByRole('figure', { name: 'House' });
   const room = (name: string) => house.getByRole('group', { name, exact: true });
