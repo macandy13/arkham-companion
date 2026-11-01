@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { CardFaceView } from '@arkham/engine';
 import { sentences } from '@arkham/util';
@@ -11,22 +11,13 @@ import './card_zoom.css';
  * One card picked up to read (`CardFaceView`), as big as a zoomed card: a treachery's front drawn
  * as its card (`TreacheryCard`); any other card or side as its picture once it has loaded, and
  * under the picture, for a card without one or until it loads, what the card data says of it in
- * our own frame: its name, type and traits. A card with a back turns over with a
- * button. Under it, as `children`, the action row of what the card offers the investigator whose
- * turn it is (`CardActions`), when it offers anything, given the zoom's own `close` for the
- * actions that close it; reading it alone changes nothing in the game. A native modal `<dialog>`
- * brings focus trapping and Escape. On a phone it fills the screen and the back gesture closes it
- * too (`useBackCloses`), which is why its actions close it through `close`.
+ * our own frame: its name, type and traits. A card with a back turns over with a button. It
+ * opens from the card shell's card (`CardDialog`) and from a location's attached cards; reading
+ * it changes nothing in the game, so it offers no actions (the shell's page does). A native modal
+ * `<dialog>` brings focus trapping and Escape. On a phone it fills the screen and the back
+ * gesture closes it too (`useBackCloses`).
  */
-export function CardZoom({
-  card,
-  onClose,
-  children,
-}: {
-  card: CardFaceView;
-  onClose: () => void;
-  children?: (close: () => void) => ReactNode;
-}) {
+export function CardZoom({ card, onClose }: { card: CardFaceView; onClose: () => void }) {
   const { t } = useTranslation();
   const titleId = useId();
   const dialog = useRef<HTMLDialogElement>(null);
@@ -34,7 +25,6 @@ export function CardZoom({
     dialog.current?.showModal();
   }, []);
   const close = useBackCloses(onClose);
-  const actionRow = children?.(close);
   const [side, setSide] = useState<'front' | 'back'>('front');
   const picture = useCardPicture(side === 'front' ? card.image : card.backImage);
 
@@ -72,7 +62,6 @@ export function CardZoom({
           {t(side === 'front' ? 'cardZoom.showBack' : 'cardZoom.showFront')}
         </button>
       )}
-      {actionRow && <footer>{actionRow}</footer>}
     </dialog>
   );
 }

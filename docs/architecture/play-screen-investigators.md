@@ -25,14 +25,15 @@ Their [threat area](../../apps/web/src/investigators/ThreatArea.tsx) is a row of
 
 The threat area shows four cards (`THREAT_CARDS_SHOWN`); more scroll by whole cards with a swipe or its round arrows (CSS scroll snap). The row and its arrows are the shared [`CardStrip`](../../apps/web/src/screens/CardStrip.tsx), which the encounter dialog's pile uses too.
 
-A tap on a treachery opens the [card zoom](../../apps/web/src/screens/CardZoom.tsx), the card as big as a zoomed card to read (`BoardView.cardsIn` a zone: id, name, type, traits and the pictures of both sides):
+A tap on a treachery opens its details on the card shell ([`CardDetails`](../../apps/web/src/investigators/CardDetails.tsx), `DetailsDialog`; `BoardView.cardsIn` a zone gives id, name, type, traits and the pictures of both sides):
 
-- a treachery's front drawn as its card ([`TreacheryCard`](../../apps/web/src/treacheries/TreacheryCard.tsx), in scan units like the enemy card: `TREACHERY_FACE` and the frame's paths `TREACHERY_FRAME` in [`treacheryCardFrame.ts`](../../apps/web/src/treacheries/treacheryCardFrame.ts)): the art through the keyhole window cut from its picture (`TREACHERY_ART`), the bead chains and volutes, the set medallion, the name and traits on the page; in the card pictures theme the whole picture lies over it,
-- any other card or side as its picture, turned over with a button when it has a back,
-- and without a picture its name, type and traits in our own frame,
-- and under it the actions the card offers the investigator whose turn it is.
+- the card beside the page, a treachery's front drawn as its card ([`TreacheryCard`](../../apps/web/src/treacheries/TreacheryCard.tsx), in scan units like the enemy card: `TREACHERY_FACE` and the frame's paths `TREACHERY_FRAME` in [`treacheryCardFrame.ts`](../../apps/web/src/treacheries/treacheryCardFrame.ts)): the art through the keyhole window cut from its picture (`TREACHERY_ART`), the bead chains and volutes, the set medallion, the name and traits on the page; in the card pictures theme the whole picture lies over it; any other card as its picture,
+- whose threat area or play area it lies in as the kicker, with their portrait,
+- and on the page the card actions it offers the investigator whose turn it is. Taking one keeps the dialog open and shows the decision it raises in its place (`useDecisionHost`), so a test to discard follows beside the same card; once the card leaves play its small card goes, and the dialog with it.
 
-The cards an investigator controls (their `playArea` zone, Lita Chantler after a Parley) lie under their card as the same small cards in the asset frame ([`PlayArea`](../../apps/web/src/investigators/PlayArea.tsx), `SmallCard`), each opening the card zoom.
+A tap on the shell's card opens the [card zoom](../../apps/web/src/screens/CardZoom.tsx), which only reads it: as big as a zoomed card, turned over with a button when it has a back, and without a picture its name, type and traits in our own frame.
+
+The cards an investigator controls (their `playArea` zone, Lita Chantler after a Parley) lie under their card as the same small cards in the asset frame ([`PlayArea`](../../apps/web/src/investigators/PlayArea.tsx), `SmallCard`), each opening its details like a treachery.
 
 ## Enemy details
 

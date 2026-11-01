@@ -402,6 +402,11 @@ export const appTexts = {
   cardActions: {
     title: 'Card actions',
   },
+  cardDetails: {
+    threatArea: "In {{name}}'s threat area",
+    playArea: "In {{name}}'s play area",
+    tapToRead: 'Tap the card to read it.',
+  },
   cardDialog: {
     lower: 'Lower to reach the board',
     raise: 'Raise the dialog',

@@ -1,13 +1,12 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { BoardView, CardFaceView, MapEnemyView } from '@arkham/engine';
+import type { BoardView, CardFaceView, InvestigatorView, MapEnemyView } from '@arkham/engine';
 import { EnemyDetails } from '../enemies/EnemyDetails';
 import { healthLeft } from '../enemies/enemyHealth';
 import { enemyConditions } from '../map/LocationTile';
-import { CardActions, cardActionsOn } from '../screens/ActionRow';
 import { CardStrip } from '../screens/CardStrip';
-import { CardZoom } from '../screens/CardZoom';
 import type { GameActions } from '../state/gameActions';
+import { CardDetails, type HeldIn } from './CardDetails';
 
 /**
  * How many threat area cards show side by side; more scroll, a whole card at a time. The
@@ -19,13 +18,14 @@ export const THREAT_CARDS_SHOWN = 4;
  * An investigator's threat area, laid as a row of small cards along the top edge of their card:
  * the treacheries in it (`BoardView.cardsIn` its zone), then the enemies engaged with them, each
  * with the health it has left, like the damage tokens on the card. A tap on a treachery opens it
- * large to read and act on (`CardZoom`). Past `THREAT_CARDS_SHOWN` cards
+ * to read and act on (`CardDetails`). Past `THREAT_CARDS_SHOWN` cards
  * the row scrolls by whole cards, with a swipe or its arrows (`CardStrip`). A tap on an enemy card opens its
  * details with what the players can do to it (`EnemyDetails`). Nothing while the area is empty,
  * so the card keeps its place.
  */
 export function ThreatArea({
   board,
+  investigator,
   treacheries,
   enemies,
   actions,
@@ -33,6 +33,8 @@ export function ThreatArea({
 }: {
   /** The board the enemy details read their numbers from (`BoardView.enemyStats`). */
   board: BoardView;
+  /** Whose threat area it is. */
+  investigator: InvestigatorView;
   treacheries: readonly CardFaceView[];
   enemies: readonly MapEnemyView[];
   actions: GameActions;
@@ -51,7 +53,8 @@ export function ThreatArea({
       {treacheries.map((card) => (
         <SmallCard
           key={card.id}
-          kind="treachery"
+          heldIn="threatArea"
+          owner={investigator}
           board={board}
           card={card}
           actions={actions}
@@ -66,50 +69,47 @@ export function ThreatArea({
 }
 
 /**
- * A treachery in the threat area or an asset in the play area (`kind`, which picks its frame) as
+ * A treachery in the threat area or an asset in the play area (`heldIn`, which picks its frame) as
  * a small card with its name; a tap on it, a button over the whole card like the enemies', opens
- * it large (`CardZoom`), with the actions it offers, such as one that discards a treachery.
+ * it on the card shell (`CardDetails`), with the actions it offers, such as one that discards a
+ * treachery.
  */
 export function SmallCard({
-  kind,
+  heldIn,
+  owner,
   board,
   card,
   actions,
   busy,
 }: {
-  kind: 'treachery' | 'asset';
+  heldIn: HeldIn;
+  owner: InvestigatorView;
   board: BoardView;
   card: CardFaceView;
   actions: GameActions;
   busy: boolean;
 }) {
   const { t } = useTranslation();
-  const [zoomed, setZoomed] = useState(false);
-  const close = () => setZoomed(false);
-  const offered = cardActionsOn(board, card.id);
+  const [open, setOpen] = useState(false);
   return (
-    <li data-card={kind}>
+    <li data-card={heldIn === 'threatArea' ? 'treachery' : 'asset'}>
       {card.name}
       <button
         type="button"
         aria-haspopup="dialog"
         aria-label={t('cardZoom.open', { name: card.name })}
-        onClick={() => setZoomed(true)}
+        onClick={() => setOpen(true)}
       />
-      {zoomed && (
-        <CardZoom card={card} onClose={close}>
-          {(closeZoom) =>
-            offered.length > 0 && (
-              <CardActions
-                board={board}
-                offered={offered}
-                actions={actions}
-                busy={busy}
-                onUse={closeZoom}
-              />
-            )
-          }
-        </CardZoom>
+      {open && (
+        <CardDetails
+          board={board}
+          card={card}
+          owner={owner}
+          heldIn={heldIn}
+          actions={actions}
+          busy={busy}
+          onClose={() => setOpen(false)}
+        />
       )}
     </li>
   );
