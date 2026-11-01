@@ -13,6 +13,8 @@ export default defineConfig({
       include: ['packages/*/src/**', 'apps/web/src/**', 'apps/web/scripts/**'],
       exclude: [
         '**/*.test.{ts,tsx}',
+        // Shared test helpers run only inside the tests.
+        '**/*.test_support.{ts,tsx}',
         // Entry points and network scripts are covered by E2E / the carddata check workflow.
         'apps/web/src/main.tsx',
         'apps/web/src/test_setup.ts',

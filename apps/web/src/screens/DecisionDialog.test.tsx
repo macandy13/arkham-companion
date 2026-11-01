@@ -15,24 +15,12 @@ import {
   zoneOf,
 } from '@arkham/engine';
 import { initI18n } from '../i18n';
-import { gameActions } from '../state/gameActions';
 import { DecisionDialog } from './DecisionDialog';
+import { actionsOn } from '../state/gameActions.test_support';
 
 const study = instanceId('study');
 const ghoul = instanceId('ghoul');
 const alder = investigatorId('alder');
-
-/** Actions that play on `table`, as the store's play on the open game; undo and adjusting do nothing. */
-const actionsOn = (table: PlayTable) =>
-  gameActions(
-    async (step) => step(table),
-    async () => {},
-    {
-      start: async () => {},
-      finish: async () => {},
-      cancel: async () => {},
-    },
-  );
 
 /** Shows the first open decision of `table` in the dialog. */
 const renderFirstDecision = (table: PlayTable, actions = actionsOn(table)) => {

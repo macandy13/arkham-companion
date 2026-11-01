@@ -19,9 +19,9 @@ import {
   resignAction,
 } from '@arkham/engine';
 import { initI18n } from '../i18n';
-import { gameActions } from '../state/gameActions';
 import { MapBoard } from './MapBoard';
 import type { Point } from './mapLayout';
+import { actionsOn } from '../state/gameActions.test_support';
 
 const study = instanceId('study');
 const hallway = instanceId('hallway');
@@ -44,17 +44,6 @@ const house = newGame()
   .withLocation(attic, blankLocation('attic'))
   .withConnection(study, hallway)
   .withConnection(hallway, attic, { oneWay: true });
-
-/**
- * Actions that play on `table`, as the store's play on the open game; undo and adjusting are never
- * used here.
- */
-const actionsOn = (table: PlayTable) =>
-  gameActions(
-    async (step) => step(table),
-    async () => {},
-    { start: async () => {}, finish: async () => {}, cancel: async () => {} },
-  );
 
 const tile = (name: string) => screen.getByRole('group', { name });
 
