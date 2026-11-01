@@ -322,6 +322,24 @@ describe('GameScreen header', () => {
     expect(act?.hasAttribute('data-picture')).toBe(false);
   });
 
+  it("keeps the agenda's pattern when its picture loads turned on its side", async () => {
+    const whatsGoingOn = theGatheringCards.get(cardCode('01105'));
+    if (!whatsGoingOn) throw new Error("The Gathering has the agenda What's Going On?!");
+    await renderTheGathering('game-screen-sideways-agenda-test', [
+      { ...whatsGoingOn, imageSrc: cardImagePath('/bundles/cards/whats_going_on.jpg') },
+    ]);
+    const agenda = screen.getByRole('region', { name: 'Agenda' }).querySelector('[data-card]');
+    const picture = agenda?.querySelector('img');
+    if (!agenda || !picture) throw new Error('the agenda has no card with a picture');
+    // An ArkhamDB scan turned upright: 300 wide and 419 high, where an agenda lies.
+    Object.defineProperty(picture, 'naturalWidth', { value: 300 });
+    Object.defineProperty(picture, 'naturalHeight', { value: 419 });
+
+    fireEvent.load(picture);
+
+    expect(agenda.hasAttribute('data-picture')).toBe(false);
+  });
+
   it('turns the buttons off while a step is still being stored', async () => {
     await renderTheGathering('game-screen-busy-test');
 

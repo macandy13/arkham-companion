@@ -11,7 +11,7 @@ Each face names itself for its stylesheet (`data-face="book"`, `"scenario"`, `"e
 
 ## Agenda and act
 
-The agenda and act are drawn as the printed cards in the Exact card theme ([`BookFace`](../../apps/web/src/screens/BookFace.tsx), in landscape scan units, `BOOK_FACE`): the art cut from the picture (`AGENDA_ART`, `ACT_ART`) beside an open book with its page edges and title scrolls, the encounter set's icon between the title's brackets (`AgendaView.encounterSet`, `SetIcon`), and the threshold on a disc at the page's corner (the act's mirrored, with a magnifier handle).
+The agenda and act are drawn as the printed cards in the Exact card theme ([`BookFace`](../../apps/web/src/screens/BookFace.tsx), in landscape scan units, `BOOK_FACE`): the art cut from the picture (`AGENDA_ART`, `ACT_ART`) beside an open book with its page edges and title scrolls, the encounter set's icon between the title's brackets (`AgendaView.encounterSet`, `SetIcon`), and the threshold on a disc at the page's corner (the act's mirrored, with a magnifier handle). A scan that loads standing upright, as about one in fifty ArkhamDB scans does, never shows (`useCardPicture` with the card's `PictureShape`): the face keeps its pattern rather than cutting the wrong part as art. The scenario card checks the same, the other way round.
 The header card lays its HTML over that drawing in fractions of the card (`--book-*` tokens): the name on the page, the token as the small count circle on the disc's lower right, and the plate with its buttons at the page's foot.
 In the card pictures theme the whole picture lies over the drawing, and the count stays on the printed threshold.
 
