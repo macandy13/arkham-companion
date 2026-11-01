@@ -416,6 +416,18 @@
   transform-origin: center;
 }
 
+/*
+ * With the setting at initials (`Settings.enemyTokens`), enemy tokens keep their initial and never
+ * show the picture. More specific than the rule above that hides the initial under a picture.
+ */
+:root[data-enemy-tokens='initials'] #map svg [data-enemy] > [data-part='avatar'] {
+  display: none;
+}
+
+:root[data-enemy-tokens='initials'] #map svg [data-enemy]:has(> [data-part='avatar']) > text {
+  display: inline;
+}
+
 /* An enemy engaged with an investigator stands faded after their pawn: the threat area shows it. */
 #map svg [data-enemy][data-engaged] {
   opacity: var(--engaged-enemy-opacity);

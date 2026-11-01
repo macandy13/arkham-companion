@@ -1,6 +1,7 @@
 import { expect, test } from '../fixtures/test';
 import {
   cluesToShareExport,
+  ghoulPriestInCellarExport,
   graveyardTestExport,
   midnightMasksStartedExport,
   tangledThicketRevealedExport,
@@ -110,6 +111,45 @@ test('the house map in the Eldritch card style', async ({ page }) => {
   await expect(page.getByRole('region', { name: 'Roland Banks' })).toBeVisible();
   await expect(page.locator('html')).toHaveAttribute('data-card-theme', 'eldritch');
 });
+
+test(
+  'the Ghoul Priest in the Cellar, its token cut from the card art',
+  { tag: '@shot' },
+  async ({ page }) => {
+    await resumeImportedGame(
+      page,
+      'The Ghoul Priest is out',
+      ghoulPriestInCellarExport('The Ghoul Priest is out'),
+    );
+
+    const cellar = page
+      .getByRole('figure', { name: 'House' })
+      .getByRole('group', { name: 'Cellar' });
+    const priest = cellar.getByRole('img', { name: /^Ghoul Priest/ });
+    await expect(priest.locator('[data-part="avatar"]')).toHaveAttribute('data-picture', 'shown');
+  },
+);
+
+test(
+  'the Ghoul Priest in the Cellar, its token showing its initial as the settings ask',
+  { tag: '@shot' },
+  async ({ page }) => {
+    await page.goto('/#/settings');
+    await page.getByLabel('Enemy tokens').selectOption('Initials');
+    await resumeImportedGame(
+      page,
+      'The Ghoul Priest is out',
+      ghoulPriestInCellarExport('The Ghoul Priest is out'),
+    );
+
+    const cellar = page
+      .getByRole('figure', { name: 'House' })
+      .getByRole('group', { name: 'Cellar' });
+    const priest = cellar.getByRole('img', { name: /^Ghoul Priest/ });
+    await expect(priest.locator('[data-part="avatar"]')).toBeHidden();
+    await expect(priest.locator('text').first()).toBeVisible();
+  },
+);
 
 test("the Ghoul Priest's details in the Eldritch card style: a blackletter name, tentacle scrolls, its set icon on the medallion", async ({
   page,

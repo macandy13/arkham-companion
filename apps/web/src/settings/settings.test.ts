@@ -21,6 +21,7 @@ describe('settings storage', () => {
       uiLanguage: 'de',
       theme: 'light',
       cardTheme: 'pictures',
+      enemyTokens: 'initials',
     } as const;
 
     saveSettings(settings);
@@ -54,6 +55,7 @@ describe('settings storage', () => {
         uiLanguage: 'fr',
         theme: 'light',
         cardTheme: 'scans',
+        enemyTokens: 'portraits',
       }),
     );
 

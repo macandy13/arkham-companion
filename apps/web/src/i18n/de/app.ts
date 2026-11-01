@@ -525,6 +525,11 @@ export const appTexts = {
       eldritch: 'Unheimlich',
       pictures: 'Kartenbilder',
     },
+    enemyTokens: 'Gegnermarker',
+    enemyTokenFaces: {
+      art: 'Kartenbild',
+      initials: 'Anfangsbuchstabe',
+    },
     about: 'Über die App',
     unofficial:
       'Arkham Companion ist ein inoffizielles Fanprojekt. Es wird nicht von Fantasy Flight Games hergestellt, unterstützt oder befürwortet.',
