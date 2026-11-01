@@ -14,7 +14,8 @@ import {
   type CardPlaceView,
 } from '@arkham/engine';
 import type { PileMove } from '../encounter/cardMoves';
-import { gameActions, type ActionCost, type GameActions } from './gameActions';
+import { type ActionCost, type GameActions } from './gameActions';
+import { actionsOn } from './gameActions.test_support';
 
 const study = instanceId('study');
 const hall = instanceId('hall');
@@ -22,18 +23,6 @@ const ghoul = instanceId('ghoul');
 const lurker = instanceId('lurker');
 const alder = investigatorId('alder');
 const brook = investigatorId('brook');
-
-/** Actions that play on `table`, as the store's play on the open game; undo and adjusting do nothing. */
-const actionsOn = (table: PlayTable) =>
-  gameActions(
-    async (step) => step(table),
-    async () => {},
-    {
-      start: async () => {},
-      finish: async () => {},
-      cancel: async () => {},
-    },
-  );
 
 describe('gameActions', () => {
   /**

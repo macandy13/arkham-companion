@@ -12,19 +12,11 @@ import {
   PlayTable,
 } from '@arkham/engine';
 import { initI18n } from '../i18n';
-import { gameActions } from '../state/gameActions';
 import { DrawnCardsNotice } from './DrawnCardsNotice';
+import { actionsOn } from '../state/gameActions.test_support';
 
 const study = instanceId('study');
 const alder = investigatorId('alder');
-
-/** Actions that play on `table`; undo and adjusting are never used here. */
-const actionsOn = (table: PlayTable) =>
-  gameActions(
-    async (step) => step(table),
-    async () => {},
-    { start: async () => {}, finish: async () => {}, cancel: async () => {} },
-  );
 
 describe('DrawnCardsNotice', () => {
   beforeAll(async () => {

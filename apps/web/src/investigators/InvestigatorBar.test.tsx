@@ -20,23 +20,12 @@ import {
 } from '@arkham/engine';
 import { range } from '@arkham/util';
 import { initI18n } from '../i18n';
-import { gameActions } from '../state/gameActions';
 import { InvestigatorBar } from './InvestigatorBar';
+import { actionsOn } from '../state/gameActions.test_support';
 
 const study = instanceId('study');
 const alder = investigatorId('alder');
 const brook = investigatorId('brook');
-
-/**
- * Actions that play on `table`, as the store's play on the open game; undo and adjusting are never
- * used here.
- */
-const actionsOn = (table: PlayTable) =>
-  gameActions(
-    async (step) => step(table),
-    async () => {},
-    { start: async () => {}, finish: async () => {}, cancel: async () => {} },
-  );
 
 const panel = (name: string) => screen.getByRole('region', { name });
 
