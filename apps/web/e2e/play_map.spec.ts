@@ -132,7 +132,7 @@ test('move an enemy on the map', async ({ page }) => {
 // Journey: act on an enemy from its token on the map: the Ghoul Priest in the Cellar offers only
 // card effects, as Roland Banks is elsewhere; dragged to the Hallway it engages Roland Banks, and a tap on it
 // there fights it as an action.
-test('fight an enemy from the map', { tag: '@flow' }, async ({ page }) => {
+test('fight an enemy from the map', async ({ page }) => {
   const house = page.getByRole('figure', { name: 'House' });
   const room = (name: string) => house.getByRole('group', { name });
   const priest = (name: string) => room(name).getByRole('img', { name: /^Ghoul Priest/ });
@@ -170,7 +170,7 @@ test('fight an enemy from the map', { tag: '@flow' }, async ({ page }) => {
 
 // Journey: play from a location's details: Roland Banks moves from the Hallway to the Attic as an
 // action, which reveals it, and takes a clue there as a card grants it.
-test('move and take a clue from the location details', async ({ page }) => {
+test('move and take a clue from the location details', { tag: '@flow' }, async ({ page }) => {
   const house = page.getByRole('figure', { name: 'House' });
   const room = (name: string) => house.getByRole('group', { name });
   const details = (name: string) => page.getByRole('dialog', { name });
@@ -205,7 +205,7 @@ test('move and take a clue from the location details', async ({ page }) => {
 // Journey: keep the map in step with the table through a location's details while adjusting the
 // board: reveal a location a card turned over, put doom on it, and place a clue a card adds to the
 // Hallway.
-test('correct a location from its details', async ({ page }) => {
+test('correct a location from its details', { tag: '@flow' }, async ({ page }) => {
   const house = page.getByRole('figure', { name: 'House' });
   const room = (name: string) => house.getByRole('group', { name });
   const details = (name: string) => page.getByRole('dialog', { name });

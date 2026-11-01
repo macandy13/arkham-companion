@@ -89,7 +89,7 @@
   z-index: 2;
 }
 
-/* A card the dialog draws itself (an enemy's `EnemyCard`) fills the card's place. */
+/* A card the dialog draws itself (an enemy's `EnemyCard`, a location's `LocationCard`) fills the card's place. */
 #board dialog[data-shell] > figure > button[data-part='subject'] > svg {
   width: 100%;
   height: 100%;
@@ -190,7 +190,7 @@
 }
 
 /*
- * A card's values on the page (an enemy's fight, health left of its printed health and evade),
+ * A card's values on the page (an enemy's fight, health and evade, a location's shroud and clues),
  * each its number in the guide's big print over its name, side by side.
  */
 #board dialog[data-shell] > article > dl {

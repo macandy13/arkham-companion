@@ -515,12 +515,13 @@
 }
 
 /*
- * The location details (LocationDetails) and the phone's location mode (LocationFocus), the same
- * content (LocationContent): the name with its shroud and clues, who is there, then the
- * corrections while adjusting (one row per token stepper) or the action row (action_row.css); the
- * dialog adds the × in the corner. The dialog lies in the top layer, so it resets what the map sets.
+ * The phone's location mode (LocationFocus) and the page of the location details
+ * (LocationDetails, on the card shell, card_dialog.css), the same parts (LocationPage): who is
+ * there, the attached cards, then the corrections while adjusting (one row per token stepper) or
+ * the action row (action_row.css). The location mode adds the name, the card and its shroud and
+ * clues as a line, which the dialog shows as its title, its card and its values.
  */
-#map :is(dialog[data-dialog='location'], [data-mode='location']) {
+#map [data-mode='location'] {
   position: relative;
   display: flex;
   flex-direction: column;
@@ -529,23 +530,19 @@
   font-size: var(--font-size-body);
 }
 
-#map dialog[data-dialog='location']:not([open]) {
-  display: none;
-}
-
-#map :is(dialog[data-dialog='location'], [data-mode='location']) h2 {
+#map [data-mode='location'] h2 {
   margin: 0;
   font-size: var(--font-size-subtitle);
 }
 
-#map :is(dialog[data-dialog='location'], [data-mode='location']) > p,
-#map :is(dialog[data-dialog='location'], [data-mode='location']) > section > p {
+#map :is(dialog[data-dialog='location'] > article, [data-mode='location']) > p,
+#map :is(dialog[data-dialog='location'] > article, [data-mode='location']) > section > p {
   margin: 0;
   color: var(--color-text-muted);
 }
 
 /* The location's card, as big as a zoomed card. */
-#map :is(dialog[data-dialog='location'], [data-mode='location']) > svg {
+#map [data-mode='location'] > svg {
   align-self: center;
   width: var(--layout-zoom-card-width);
   max-height: none;
@@ -553,13 +550,13 @@
 }
 
 /* Who is there, the attached cards and the corrections: each a column under its small title. */
-#map :is(dialog[data-dialog='location'], [data-mode='location']) > section {
+#map :is(dialog[data-dialog='location'] > article, [data-mode='location']) > section {
   display: flex;
   flex-direction: column;
   gap: var(--space-1);
 }
 
-#map :is(dialog[data-dialog='location'], [data-mode='location']) > section > h3 {
+#map :is(dialog[data-dialog='location'] > article, [data-mode='location']) > section > h3 {
   margin: 0;
   font-size: var(--font-size-caption);
   font-weight: normal;
@@ -567,24 +564,24 @@
   text-transform: uppercase;
 }
 
-#map :is(dialog[data-dialog='location'], [data-mode='location']) > section > ul {
+#map :is(dialog[data-dialog='location'] > article, [data-mode='location']) > section > ul {
   margin: 0;
   padding-left: var(--space-3);
 }
 
 /* A token stepper of the corrections: its count, then − and +. */
-#map :is(dialog[data-dialog='location'], [data-mode='location']) section section {
+#map :is(dialog[data-dialog='location'] > article, [data-mode='location']) section section {
   display: flex;
   align-items: center;
   gap: var(--space-2);
 }
 
-#map :is(dialog[data-dialog='location'], [data-mode='location']) section section p {
+#map :is(dialog[data-dialog='location'] > article, [data-mode='location']) section section p {
   flex: 1;
   margin: 0;
 }
 
-#map :is(dialog[data-dialog='location'], [data-mode='location']) section section button {
+#map :is(dialog[data-dialog='location'] > article, [data-mode='location']) section section button {
   min-width: var(--touch-target);
 }
 

@@ -45,7 +45,7 @@ export function CardDialog({
   card?: CardFaceView;
   /**
    * The card drawn in place of its picture, when the dialog has a drawing of it that lays the
-   * picture over itself once loaded (an enemy's `EnemyCard`), so it reads offline too.
+   * picture over itself once loaded (an enemy's `EnemyCard`, a location's `LocationCard`), so it reads offline too.
    */
   drawn?: ReactNode;
   /** The cards behind `card`, next first (`DecisionView.waiting`). */

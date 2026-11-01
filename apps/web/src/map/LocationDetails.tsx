@@ -1,6 +1,7 @@
-import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
+import { useId, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { BoardView, CardFaceView, InvestigatorId, LocationView } from '@arkham/engine';
+import { CardDialog } from '../screens/CardDialog';
 import { CardZoom } from '../screens/CardZoom';
 import {
   ActionButton,
@@ -14,9 +15,11 @@ import { CardPatterns, LocationTile } from './LocationTile';
 import { TILE } from './mapLayout';
 
 /**
- * One location in full as a dialog, opened by a tap on its tile or its details button on a tablet
- * or wider: the location's content (`LocationContent`) with a close button. A native modal
- * `<dialog>` brings focus trapping and Escape. A move or an investigation closes it, so the
+ * One location in full, opened by a tap on its tile or its details button on a tablet or wider,
+ * on the card shell (`CardDialog`): the location drawn as its card beside the page, the same
+ * drawing as its tile with the pieces on it (`LocationCard`), its name as the title, its shroud
+ * and the clues left of its clue value for the player count (`LocationValues`), and the page's
+ * parts (`LocationPage`). Escape and its × close it. A move or an investigation closes it, so the
  * decision dialog that may follow is the only one open.
  */
 export function LocationDetails({
@@ -34,42 +37,54 @@ export function LocationDetails({
   adjusting: boolean;
   onClose: () => void;
 }) {
-  const { t } = useTranslation();
-  const titleId = useId();
-  const dialog = useRef<HTMLDialogElement>(null);
-  useEffect(() => {
-    dialog.current?.showModal();
-  }, []);
   return (
-    <dialog ref={dialog} aria-labelledby={titleId} onCancel={onClose} data-dialog="location">
-      <button type="button" data-icon="close" aria-label={t('location.close')} onClick={onClose} />
-      <LocationContent
+    <CardDialog
+      name="location"
+      card={board.cardFace(location.id)}
+      drawn={<LocationCard board={board} location={location} />}
+      title={location.name}
+      onCancel={onClose}
+      onClose={onClose}
+    >
+      <LocationValues location={location} />
+      <LocationPage
         board={board}
         location={location}
         actions={actions}
         busy={busy}
         adjusting={adjusting}
-        titleId={titleId}
         onLeave={onClose}
       />
-    </dialog>
+    </CardDialog>
   );
 }
 
 /**
- * What the players see of one location, in the details dialog and in the phone's location mode
- * (`LocationFocus`): its name as a heading (`titleId`), its card, drawn like its tile with the
- * pieces on it, its shroud and clues, who is there (investigators and enemies), the cards attached
- * to it, and under it one row of what the investigator whose turn it is can do there
- * (`locationActions`) and the actions the location's card offers them (`CardActions`, such as the
- * Parlor's Resign). While the players adjust the board (`adjusting`), the row gives way to the
- * corrections instead: reveal it and add or remove its clues and doom, as a card effect or the
- * table asks, so the screen keeps up with the physical game; they are not steps of play, so the
- * two never show together. It reads the location fresh from the board, so its counts follow each
- * step. The location mode sets its neighbours around the card (`around`). A move, an
- * investigation or a card action calls `onLeave` first, for a view that should
- * step aside then; corrections and a clue taken do not, since those often come several at a
- * time. Nothing is tapped while a step is queued (`busy`).
+ * A location's values on the details' page: its shroud and the clues left of its clue value for
+ * the player count (`LocationView.clueValue`) once revealed; only that it is unrevealed before.
+ */
+function LocationValues({ location }: { location: LocationView }) {
+  const { t } = useTranslation();
+  if (!location.revealed) return <p>{t('location.unrevealed')}</p>;
+  return (
+    <dl>
+      <div>
+        <dt>{t('location.shroud')}</dt>
+        <dd>{location.shroud}</dd>
+      </div>
+      <div>
+        <dt>{t('location.cluesLeft')}</dt>
+        <dd>{t('location.cluesOf', { left: location.clues, value: location.clueValue })}</dd>
+      </div>
+    </dl>
+  );
+}
+
+/**
+ * What the players see of one location in the phone's location mode (`LocationFocus`): its name
+ * as a heading (`titleId`), its card, drawn like its tile with the pieces on it, its shroud and
+ * clues, and the parts the details' page shows too (`LocationPage`). The location mode sets its
+ * neighbours around the card (`around`).
  */
 export function LocationContent({
   board,
@@ -88,6 +103,59 @@ export function LocationContent({
   adjusting: boolean;
   titleId: string;
   around?: (card: ReactNode) => ReactNode;
+  onLeave?: () => void;
+}) {
+  const { t } = useTranslation();
+  return (
+    <>
+      <h2 id={titleId}>{location.name}</h2>
+      {around ? (
+        around(<LocationCard board={board} location={location} />)
+      ) : (
+        <LocationCard board={board} location={location} />
+      )}
+      <p>
+        {location.revealed
+          ? t('location.facts', { shroud: location.shroud, clues: location.clues })
+          : t('location.unrevealed')}
+      </p>
+      <LocationPage
+        board={board}
+        location={location}
+        actions={actions}
+        busy={busy}
+        adjusting={adjusting}
+        {...(onLeave ? { onLeave } : {})}
+      />
+    </>
+  );
+}
+
+/**
+ * The parts of a location both the details and the location mode show: who is there
+ * (investigators and enemies), the cards attached to it, and under them one row of what the
+ * investigator whose turn it is can do there (`locationActions`) and the actions the location's
+ * card offers them (`CardActions`, such as the Parlor's Resign). While the players adjust the
+ * board (`adjusting`), the row gives way to the corrections instead: reveal it and add or remove
+ * its clues and doom, as a card effect or the table asks, so the screen keeps up with the physical
+ * game; they are not steps of play, so the two never show together. It reads the location fresh
+ * from the board, so its counts follow each step. A move, an investigation or a card action calls
+ * `onLeave` first, for a view that should step aside then; corrections and a clue taken do not,
+ * since those often come several at a time. Nothing is tapped while a step is queued (`busy`).
+ */
+function LocationPage({
+  board,
+  location,
+  actions,
+  busy,
+  adjusting,
+  onLeave,
+}: {
+  board: BoardView;
+  location: LocationView;
+  actions: GameActions;
+  busy: boolean;
+  adjusting: boolean;
   onLeave?: () => void;
 }) {
   const { t } = useTranslation();
@@ -112,17 +180,6 @@ export function LocationContent({
 
   return (
     <>
-      <h2 id={titleId}>{location.name}</h2>
-      {around ? (
-        around(<LocationCard board={board} location={location} />)
-      ) : (
-        <LocationCard board={board} location={location} />
-      )}
-      <p>
-        {location.revealed
-          ? t('location.facts', { shroud: location.shroud, clues: location.clues })
-          : t('location.unrevealed')}
-      </p>
       <Here board={board} location={location} />
       {location.attachments && (
         <Attached cards={board.cardsIn({ kind: 'attachedTo', hostId: location.id })} />
