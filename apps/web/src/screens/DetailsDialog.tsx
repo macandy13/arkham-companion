@@ -21,9 +21,8 @@ export interface OpenDecision {
 /**
  * What the game screen (`GameScreen`) shares with the details dialogs below it: the first open
  * decision, whether the players adjust the board (a hosted decision is lowered meanwhile, as the
- * screen hides its own), and the switch
- * that tells the screen a details dialog shows the decisions in its place (`useDecisionHost`), so
- * its own decision dialog stays shut meanwhile.
+ * screen hides its own), and the switch that tells the screen a details dialog shows the decisions
+ * in its place (`useDecisionHost`), so its own decision dialog stays shut meanwhile.
  */
 export interface DecisionHost {
   decision: OpenDecision | undefined;
@@ -137,7 +136,10 @@ export function DetailsDialog({
       {...decisionHeading(t, board, view)}
       onCancel={(event) => event.preventDefault()}
       lowered={loweredFor === id || hosted.adjusting}
-      onLower={(to) => setLoweredFor(to ? id : undefined)}
+      // While the board is adjusted it stays lowered, so its handle offers nothing then.
+      {...(hosted.adjusting
+        ? {}
+        : { onLower: (to: boolean) => setLoweredFor(to ? id : undefined) })}
     >
       <DecisionPage key={id} board={board} decision={view} actions={actions} busy={busy} />
     </CardDialog>

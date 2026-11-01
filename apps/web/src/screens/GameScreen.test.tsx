@@ -480,12 +480,12 @@ describe('GameScreen map', () => {
 
     fireEvent.click(within(details).getByRole('button', { name: 'Investigate · 1 action' }));
     const investigation = await screen.findByRole('dialog', { name: 'Investigate Study' });
-    const cardDuringTest = within(investigation).getByRole('img', { name: 'The card of Study' });
+    const cardDuringTest = within(investigation).queryByRole('img', { name: 'The card of Study' });
     fireEvent.click(within(investigation).getByRole('button', { name: /Failed/ }));
     const afterTest = await screen.findByRole('dialog', { name: 'Study' });
 
     expect(investigation).toBe(details);
-    expect(cardDuringTest).toBeTruthy();
+    expect(cardDuringTest).not.toBeNull();
     expect(afterTest).toBe(details);
     expect(screen.getAllByRole('dialog')).toEqual([details]);
   });

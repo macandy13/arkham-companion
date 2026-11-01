@@ -40,7 +40,8 @@ import './game.css';
  * its pickable locations lit. Picking belongs to the decision it was started for, so the next
  * one opens raised; a tap on a location the decision cannot pick raises the dialog again. A
  * details dialog whose action raised the decision shows it in its own page instead
- * (`DecisionHostContext`), and the screen's decision dialog stays shut until it closes. The scenario card's texts come from the card `catalog`.
+ * (`DecisionHostContext`), and the screen's decision dialog stays shut until it closes. The
+ * scenario card's texts come from the card `catalog`.
  */
 export function GameScreen({
   store,

@@ -1,5 +1,6 @@
 import { useId, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
+import { assertNever } from '@arkham/util';
 import type { BoardView, CardFaceView, InvestigatorId, LocationView } from '@arkham/engine';
 import { DetailsDialog, useDecisionHost } from '../screens/DetailsDialog';
 import { CardZoom } from '../screens/CardZoom';
@@ -179,8 +180,18 @@ function LocationPage({
       name={t(`location.${key}`)}
       disabled={busy || play === undefined}
       onClick={() => {
-        if (then === 'test' && onTest) onTest();
-        else if (then !== 'stay') onLeave?.();
+        switch (then) {
+          case 'test':
+            (onTest ?? onLeave)?.();
+            break;
+          case 'leave':
+            onLeave?.();
+            break;
+          case 'stay':
+            break;
+          default:
+            assertNever(then);
+        }
         void play?.();
       }}
     />

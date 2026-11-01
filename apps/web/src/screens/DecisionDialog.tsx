@@ -82,7 +82,7 @@ export function decisionHeading(
   board: BoardView,
   decision: DecisionView,
 ): Pick<ComponentProps<typeof CardDialog>, 'waiting' | 'actor' | 'kicker' | 'title'> {
-  const actor = decision.for === undefined ? undefined : board.investigator(decision.for);
+  const actor = actorOf(board, decision);
   return {
     ...(decision.waiting ? { waiting: decision.waiting } : {}),
     ...(actor ? { actor, kicker: t('decision.decides', { name: actor.name }) } : {}),
@@ -140,7 +140,7 @@ export function DecisionPage({
     );
   };
 
-  const actor = decision.for === undefined ? undefined : board.investigator(decision.for);
+  const actor = actorOf(board, decision);
   return (
     <>
       {board.resolving && <ResolvingCard board={board} card={board.resolving} />}
@@ -246,6 +246,11 @@ export function DecisionPage({
       </form>
     </>
   );
+}
+
+/** The investigator who answers `decision`, when it is for one. */
+function actorOf(board: BoardView, decision: DecisionView) {
+  return decision.for === undefined ? undefined : board.investigator(decision.for);
 }
 
 /**
