@@ -292,6 +292,7 @@ function NameBand({ location }: { location: LocationView }) {
         radius={medallion.radius}
         plateWidth={medallion.plateWidth}
         type={t(location.revealed ? 'map.location' : 'map.unrevealed')}
+        set={location.encounterSet}
       />
     </>
   );
