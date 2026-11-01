@@ -3,7 +3,8 @@ import { houseOpenedExport, mythosDrawnExport, resumeImportedGame } from './fixt
 
 // Journey: a player card tells Roland Banks to draw from the encounter deck on his turn – open the
 // encounter dialog from the header, draw for him, answer its test and see where the card went. A
-// reload while the test waits, and another after it, lose neither the test nor the notice.
+// reload while the test waits, and another after it, lose neither the test nor the notice; once
+// dismissed, the notice stays away after a reload.
 test('draw an encounter card for Roland Banks on his turn', { tag: '@flow' }, async ({ page }) => {
   await test.step('Resume a game after two mythos phases and start Roland Banks’ turn', async () => {
     await resumeImportedGame(page, 'Two mythos draws', mythosDrawnExport('Two mythos draws'));
@@ -40,6 +41,17 @@ test('draw an encounter card for Roland Banks on his turn', { tag: '@flow' }, as
         name: 'Encounter discard pile, 2 cards, Crypt Chill on top',
       }),
     ).toBeVisible();
+  });
+
+  await test.step('Dismiss the notice: a reload does not bring it back', async () => {
+    const notice = page.getByRole('status', { name: 'Encounter cards drawn' });
+    await notice.getByRole('button', { name: 'OK' }).click();
+    await expect(notice).toBeHidden();
+    await page.reload();
+    await expect(
+      page.getByRole('button', { name: 'Encounter discard pile, 2 cards, Crypt Chill on top' }),
+    ).toBeVisible();
+    await expect(notice).toBeHidden();
   });
 });
 

@@ -20,6 +20,7 @@ import type {
   Rejection,
   ScenarioContext,
   ScenarioId,
+  StepNotice,
 } from '@arkham/engine';
 import { PlayTable, campaign, campaignId as toCampaignId, emptyState } from '@arkham/engine';
 import { gameActions, type GameActions } from './gameActions';
@@ -202,10 +203,11 @@ export interface AppState {
   actions: GameActions;
   /** Clears `current.rejection` once the screen has shown it. */
   dismissRejection(): void;
-  /** Clears `current.skippedEffects` once the players have read them. */
-  dismissSkippedEffects(): void;
-  /** Clears `current.drawnCards` once the players have read them. */
-  dismissDrawnCards(): void;
+  /**
+   * Clears `current.skippedEffects` or `current.drawnCards` once the players have read them, and
+   * stores that, so the game opened again doesn't show them (`GameSession.dismissNotice`).
+   */
+  dismissNotice(notice: StepNotice): void;
   /** Lets the players choose on the map where `enemy` spawns (`current.spawning`). */
   startSpawn(enemy: EncounterCardView): void;
   /** Ends choosing a spawn location, after a tap on the map or a cancel. */
@@ -499,13 +501,13 @@ export function createAppStore(
         const open = get().current;
         if (open?.rejection) set({ current: { ...open, rejection: undefined } });
       },
-      dismissSkippedEffects() {
+      dismissNotice(notice) {
         const open = get().current;
-        if (open?.skippedEffects) set({ current: { ...open, skippedEffects: undefined } });
-      },
-      dismissDrawnCards() {
-        const open = get().current;
-        if (open?.drawnCards) set({ current: { ...open, drawnCards: undefined } });
+        if (!open?.[notice]) return;
+        set({ current: { ...open, [notice]: undefined } });
+        session?.dismissNotice(notice).catch((error: unknown) => {
+          console.warn(`Could not store that a notice of game ${open.gameId} was read.`, error);
+        });
       },
       startSpawn(enemy) {
         const open = get().current;

@@ -207,13 +207,13 @@ export function GameScreen({
             actions={store.getState().actions}
             busy={open.busy}
             onSpawn={(enemy) => store.getState().startSpawn(enemy)}
-            onDismiss={() => store.getState().dismissDrawnCards()}
+            onDismiss={() => store.getState().dismissNotice('drawnCards')}
           />
         )}
         {open.skippedEffects && (
           <SkippedEffectsNotice
             skipped={open.skippedEffects}
-            onDismiss={() => store.getState().dismissSkippedEffects()}
+            onDismiss={() => store.getState().dismissNotice('skippedEffects')}
           />
         )}
         {open.rejection && (

@@ -317,6 +317,30 @@ describe('GameSession on The Gathering', () => {
     expect(reopened.drawnCards.map(({ card }) => card.name)).toEqual(['Dissonant Voices']);
   });
 
+  it('keeps drawn cards the players dismissed hidden when the game is opened anew', async () => {
+    const { store, gameId } = await storedGame('session-dismissed-notice-test');
+    const session = await GameSession.open(store, gameId, ctx);
+    await session.play((table) => table.drawEncounterCard(investigatorId('alder')));
+    await session.dismissNotice('drawnCards');
+
+    const reopened = await GameSession.open(store, gameId, ctx);
+
+    expect([session.drawnCards, reopened.drawnCards]).toEqual([[], []]);
+  });
+
+  it('shows the drawn cards of a step played again after its dismissed one was undone', async () => {
+    const { store, gameId } = await storedGame('session-dismissed-then-undone-test');
+    const session = await GameSession.open(store, gameId, ctx);
+    await session.play((table) => table.drawEncounterCard(investigatorId('alder')));
+    await session.dismissNotice('drawnCards');
+    await session.undo();
+    await session.play((table) => table.drawEncounterCard(investigatorId('alder')));
+
+    const reopened = await GameSession.open(store, gameId, ctx);
+
+    expect(reopened.drawnCards.map(({ card }) => card.name)).toEqual(['Dissonant Voices']);
+  });
+
   it('opens a game with no step played yet without notices', async () => {
     const { store, gameId } = await storedGame('session-no-step-notices-test');
 

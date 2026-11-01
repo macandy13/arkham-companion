@@ -18,6 +18,8 @@ import {
   type GameState,
   type GameStore,
   type GameSummary,
+  type ReadNotices,
+  type StepNotice,
   type ImportedGame,
   type LoadedGame,
   type NewGame,
@@ -44,6 +46,8 @@ interface GameRow {
   createdAt: number;
   updatedAt: number;
   lastSeq: number;
+  /** Not indexed, so it needs no schema version; absent until the players dismiss a notice. */
+  readNotices?: ReadNotices;
 }
 
 /** Row of the `campaigns` table: a `CampaignSummary` is derived from it plus the replayed log. */
@@ -221,6 +225,17 @@ export class IndexedDbStore implements GameStore {
     if ((await this.db.games.update(gameId, { title })) === 0) {
       throw new Error(`Unknown game ${gameId}`);
     }
+  }
+
+  async loadReadNotices(gameId: GameId): Promise<ReadNotices> {
+    return (await this.db.games.get(gameId))?.readNotices ?? {};
+  }
+
+  async markNoticeRead(gameId: GameId, notice: StepNotice, commandId: string): Promise<void> {
+    const updated = await this.db.games.update(gameId, (row) => {
+      row.readNotices = { ...row.readNotices, [notice]: commandId };
+    });
+    if (updated === 0) throw new Error(`Unknown game ${gameId}`);
   }
 
   async duplicateGame(gameId: GameId, title?: string): Promise<GameId> {
