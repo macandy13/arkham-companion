@@ -742,6 +742,20 @@ describe('enemies', () => {
     ]);
   });
 
+  it("gives an enemy in play its card's picture, for its token", () => {
+    const { context, state } = newGame()
+      .withLocation(study, blankLocation('study'))
+      .withInvestigator(alice, { locationId: study })
+      .withCard(
+        instanceId('ghoul'),
+        blankEnemy('ghoul', { imageSrc: cardImagePath('/cards/ghoul.png') }),
+        engagedWith(alice),
+      )
+      .start();
+
+    expect(boardView(context, state).enemiesEngagedWith(alice)[0]?.image).toBe('/cards/ghoul.png');
+  });
+
   it("reads an enemy's fight and evade as modified where it stands, its card's print and picture", () => {
     const { context, state } = newGame()
       .withLocation(
