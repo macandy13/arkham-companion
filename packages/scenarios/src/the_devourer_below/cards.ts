@@ -11,7 +11,7 @@ import {
   atEndOfEachTurn,
   atEndOfRound,
   cardCode,
-  cardDbFrom,
+  cardDbWith,
   decisionId,
   eachInvestigatorAt,
   encounterSetCode,
@@ -49,6 +49,7 @@ import {
   resignAction,
 } from '@arkham/engine';
 import { act, agenda, enemy, location, prey, treachery } from '../card_builders';
+import { theMidnightMasksCards } from '../the_midnight_masks/cards';
 
 /**
  * ArkhamDB encounter set codes of The Devourer Below (Core Set, 2016): the
@@ -453,8 +454,11 @@ export const theDevourerBelowCardDefs: readonly CardStats[] = [
 ];
 
 /**
- * Card data for The Devourer Below's own cards and the Agents sets; join it
- * with The Gathering's (Ghouls, Striking Fear, Ancient Evils, the Ghoul
- * Priest) and The Midnight Masks' (Dark Cult).
+ * Card data for everything The Devourer Below's setup uses: its own cards and the Agents sets,
+ * plus The Gathering's (Ghouls, Striking Fear, Ancient Evils, the Ghoul Priest) and The Midnight
+ * Masks' (Dark Cult), so a standalone game starts with it alone.
  */
-export const theDevourerBelowCards: CardDb = cardDbFrom(theDevourerBelowCardDefs);
+export const theDevourerBelowCards: CardDb = cardDbWith(
+  theMidnightMasksCards,
+  theDevourerBelowCardDefs,
+);
