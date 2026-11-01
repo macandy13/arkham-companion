@@ -946,7 +946,7 @@ describe('InvestigatorBar', () => {
       expect(screen.getByRole('dialog', { name: 'ghoul_minion' })).toBeTruthy();
     });
 
-    it('opens a treachery in the threat area to read', () => {
+    it("opens a treachery on the card shell, in alder's threat area by the kicker", () => {
       const table = PlayTable.start(
         newGame()
           .withLocation(study, blankLocation('study'))
@@ -966,11 +966,11 @@ describe('InvestigatorBar', () => {
         within(panel('alder')).getByRole('button', { name: 'Read dissonant_voices' }),
       );
 
-      const zoom = screen.getByRole('dialog', { name: 'dissonant_voices' });
-      expect(within(zoom).getByText('Treachery')).toBeTruthy();
+      const details = screen.getByRole('dialog', { name: 'dissonant_voices' });
+      expect(within(details).getByText("In alder's threat area")).toBeTruthy();
     });
 
-    it("takes the action of a treachery in alder's threat area from its zoom and closes it", async () => {
+    it("takes the action of a treachery in alder's threat area from its details, which stay open", async () => {
       const table = PlayTable.start(
         newGame()
           .withLocation(study, blankLocation('study'))
@@ -991,12 +991,12 @@ describe('InvestigatorBar', () => {
         />,
       );
       fireEvent.click(within(panel('alder')).getByRole('button', { name: 'Read frozen_in_fear' }));
-      const zoom = screen.getByRole('dialog', { name: 'frozen_in_fear' });
+      const details = screen.getByRole('dialog', { name: 'frozen_in_fear' });
 
-      fireEvent.click(within(zoom).getByRole('button', { name: 'Action · frozen_in_fear' }));
+      fireEvent.click(within(details).getByRole('button', { name: 'Action · frozen_in_fear' }));
       await act(async () => {});
 
-      expect(screen.queryByRole('dialog', { name: 'frozen_in_fear' })).toBeNull();
+      expect(screen.getByRole('dialog', { name: 'frozen_in_fear' })).toBeTruthy();
       expect(table.board.investigator(alder)).toMatchObject({ actions: 2 });
     });
 
@@ -1087,7 +1087,7 @@ describe('InvestigatorBar', () => {
       expect(within(panel('brook')).queryByRole('list', { name: 'Cards in play' })).toBeNull();
     });
 
-    it('opens a controlled card to read', () => {
+    it("opens a controlled card on the card shell, in alder's play area by the kicker", () => {
       const table = aldersLita();
       render(
         <InvestigatorBar
@@ -1100,7 +1100,8 @@ describe('InvestigatorBar', () => {
 
       fireEvent.click(within(panel('alder')).getByRole('button', { name: 'Read lita_chantler' }));
 
-      expect(screen.getByRole('dialog', { name: 'lita_chantler' })).toBeTruthy();
+      const details = screen.getByRole('dialog', { name: 'lita_chantler' });
+      expect(within(details).getByText("In alder's play area")).toBeTruthy();
     });
   });
 });

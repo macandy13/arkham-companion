@@ -17,12 +17,13 @@ const HATCH = 40;
  * (`TREACHERY_FACE`, our own drawing of it, no FFG art): its art through the keyhole window of
  * the frame, cut from the card's picture once that has loaded (a hatch until then, and for good
  * offline), the bead chains and volutes around the window, the set medallion on the frame's foot,
- * and on the page its name, a heading with `titleId` so the dialog showing the card is named by
- * it, and its traits as HTML in a `foreignObject`. In the card pictures theme the whole picture
+ * and on the page its name, with `titleId` a heading the dialog showing the card is named by
+ * (the card shell, which titles its page itself, draws it without), and its traits as HTML in a
+ * `foreignObject`. In the card pictures theme the whole picture
  * lies over the face once loaded (`data-picture`); the face stays under it for assistive
  * technology. The card text isn't in the card data, so the page shows no more than that.
  */
-export function TreacheryCard({ card, titleId }: { card: CardFaceView; titleId: string }) {
+export function TreacheryCard({ card, titleId }: { card: CardFaceView; titleId?: string }) {
   const { t } = useTranslation();
   const clipId = useId();
   const pageId = useId();
@@ -98,10 +99,8 @@ export function TreacheryCard({ card, titleId }: { card: CardFaceView; titleId: 
         set={card.encounterSet}
       />
       <text
-        id={titleId}
         ref={name}
-        role="heading"
-        aria-level={2}
+        {...(titleId === undefined ? {} : { id: titleId, role: 'heading', 'aria-level': 2 })}
         {...nameCentre}
         transform={shrinkAround(nameCentre, scale)}
       >

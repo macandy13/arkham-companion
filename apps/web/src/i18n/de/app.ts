@@ -405,6 +405,11 @@ export const appTexts = {
   cardActions: {
     title: 'Kartenaktionen',
   },
+  cardDetails: {
+    threatArea: 'Im Bedrohungsbereich von {{name}}',
+    playArea: 'Im Spielbereich von {{name}}',
+    tapToRead: 'Tippe auf die Karte, um sie zu lesen.',
+  },
   cardDialog: {
     lower: 'Absenken, um ans Spielfeld zu kommen',
     raise: 'Dialog wieder anheben',
