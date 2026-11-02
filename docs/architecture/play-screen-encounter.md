@@ -15,7 +15,16 @@ The agenda and act are drawn as the printed cards in the Exact card theme ([`Boo
 The header card lays its HTML over that drawing in fractions of the card (`--book-*` tokens): the name on the page, the token as the small count circle on the disc's lower right, and the plate with its buttons at the page's foot.
 In the card pictures theme the whole picture lies over the drawing, and the count stays on the printed threshold.
 
-A tap on the agenda or act (or its name, a button for the keyboard) opens it as a full card in a dialog ([`CardDetails`](../../apps/web/src/screens/GameHeader.tsx)), the same face with its picture large and its buttons at full size, and under it the card actions it offers the investigator whose turn it is (`CardActions`, as in the details windows); advancing or taking one closes it, since a decision may follow.
+A tap on the agenda or act (or its name, a button for the keyboard) opens it on the card shell ([`BookDetails`](../../apps/web/src/screens/GameHeader.tsx), `DetailsDialog`, MD.6b2):
+
+- the same face over the page as a landscape card, with its name and token, tapped to read it whole;
+- "Agenda" or "Act" as the kicker;
+- its count on the page (the doom in play; the clues the investigators hold, or the clues on the act);
+- while adjusting, its steppers in a group of their own ("On the agenda", "On the act");
+- the card actions it offers the investigator whose turn it is (`CardActions`);
+- the act's Advance as the dialog's one brass primary.
+
+A card action keeps it open and shows the decision it raises in its place (`useDecisionHost`). Advance closes it first, since the act it was about is gone. On a phone the header cards open the detail view instead, as before.
 In the phone's [detail view](play-screen.md#detail-view) the agenda and act are shown full instead (`GameHeader` `full`): their card actions sit under them and a tap opens no dialog.
 
 The act's Advance button takes its spend-clues action for the investigator whose turn it is (`GameActions.advanceAct`), so it waits for a turn and enough clues.

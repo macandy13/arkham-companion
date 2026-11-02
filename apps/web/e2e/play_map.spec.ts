@@ -133,7 +133,7 @@ test('move an enemy on the map', async ({ page }) => {
 // card effects, as Roland Banks is elsewhere; dragged to the Hallway it engages Roland Banks, and a tap on it
 // there fights it as an action, whose test follows in the same dialog; once it is answered the
 // details come back.
-test('fight an enemy from the map', { tag: '@flow' }, async ({ page }) => {
+test('fight an enemy from the map', async ({ page }) => {
   const house = page.getByRole('figure', { name: 'House' });
   const room = (name: string) => house.getByRole('group', { name });
   const priest = (name: string) => room(name).getByRole('img', { name: /^Ghoul Priest/ });
