@@ -1298,7 +1298,7 @@
 
   to {
     opacity: 0;
-    translate: 0 calc(-1 * var(--space-3));
+    translate: 0 calc(-1 * var(--delta-rise));
   }
 }
 
@@ -1311,7 +1311,9 @@
   display: none;
 }
 
-#board svg [data-changed] > text[data-rising] {
+#board svg g[data-changed] > text[data-rising] {
+  --delta-rise: var(--face-delta-rise);
+
   dominant-baseline: auto;
   font-size: var(--face-delta-size);
   font-weight: bold;
@@ -1324,7 +1326,9 @@
 }
 
 /* The enemy's damage badge is drawn at the tile's size, not a card scan's. */
-#map svg [data-marker] > text[data-rising] {
+#map svg g[data-marker] > text[data-rising] {
+  --delta-rise: var(--card-delta-rise);
+
   font-size: var(--card-delta-size);
   stroke-width: var(--card-delta-halo);
 }
