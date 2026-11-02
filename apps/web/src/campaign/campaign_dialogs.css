@@ -1,6 +1,7 @@
 /*
- * The resolution dialog (ResolutionDialog): the app's one dialog design (base.css), with the log
- * page's group labels and each change written in pen, as it will appear in the log.
+ * The campaign's dialogs: the resolution dialog (ResolutionDialog) and the next scenario's setup
+ * preview (NextScenarioDialog). Both take the app's one dialog design (base.css) with the log
+ * page's group labels; the resolution writes each change in pen, as it will appear in the log.
  */
 #resolution > p {
   margin-block: var(--space-2) 0;
@@ -12,26 +13,26 @@
  * Plain text, not the home screen's framed `#app > main ul > li` cards and `#app > main section`
  * rows: two ids beat their one.
  */
-#app #resolution section {
+#app :is(#resolution, #next-scenario) section {
   display: block;
   margin-block-start: var(--space-3);
 }
 
-#resolution h3 {
+:is(#resolution, #next-scenario) h3 {
   margin: 0 0 var(--space-1);
   border-block-end: var(--border-width) solid var(--color-border);
   font-family: var(--font-family-label);
   font-size: var(--font-size-log-label);
 }
 
-#app #resolution ul {
+#app :is(#resolution, #next-scenario) :is(ul, ol) {
   display: block;
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-#app #resolution li {
+#app :is(#resolution, #next-scenario) li {
   padding: var(--space-1) 0;
   border: none;
   border-radius: 0;
@@ -63,11 +64,11 @@
   min-height: var(--touch-target);
 }
 
-#resolution [role='alert'] {
+:is(#resolution, #next-scenario) [role='alert'] {
   color: var(--color-danger);
 }
 
-#resolution footer {
+:is(#resolution, #next-scenario) footer {
   margin-block-start: var(--space-4);
 }
 
@@ -75,4 +76,23 @@
 #resolution label > em {
   color: var(--color-text-muted);
   font-size: var(--font-size-caption);
+}
+
+/* The setup preview's difficulty and team, a label above each value like the log's fields. */
+#next-scenario dl {
+  margin: var(--space-3) 0 0;
+}
+
+#next-scenario dt {
+  font-family: var(--font-family-label);
+  font-size: var(--font-size-log-label);
+}
+
+#next-scenario dd {
+  margin: 0 0 var(--space-2);
+}
+
+#next-scenario section > p {
+  margin: 0;
+  color: var(--color-text-muted);
 }

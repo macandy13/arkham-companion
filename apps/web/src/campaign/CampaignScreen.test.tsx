@@ -1,7 +1,8 @@
 // @vitest-environment jsdom
 import 'fake-indexeddb/auto';
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
-import { MemoryRouter, Route, Routes } from 'react-router';
+import { MemoryRouter, Route, Routes, useParams } from 'react-router';
+import type { CardCatalog } from '@arkham/carddata';
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
 import {
   campaignDefinitionId,
@@ -55,11 +56,39 @@ async function storeCampaign(events: (id: CampaignId) => CampaignEvent[]) {
   return { gameStore, campaignId };
 }
 
+/** The catalog the setup preview takes the team's card stats from: Roland Banks alone. */
+const rolandCatalog: CardCatalog = {
+  packs: [{ code: 'core', name: 'Core Set', position: 1, cyclePosition: 1, chapter: 1 }],
+  investigators: [
+    {
+      code: '01001',
+      name: 'Roland Banks',
+      factionCode: 'guardian',
+      health: 9,
+      sanity: 5,
+      skills: { willpower: 3, intellect: 3, combat: 4, agility: 2 },
+      packCode: 'core',
+      cyclePosition: 1,
+      parallel: false,
+      chapter: 1,
+    },
+  ],
+};
+
+/** Stands in for the play screen: names the game the campaign screen went to. */
+function GameRoute() {
+  return <output>{`game ${useParams().id}`}</output>;
+}
+
 function renderLog(gameStore: IndexedDbStore, path: string, store = createAppStore(gameStore)) {
   render(
     <MemoryRouter initialEntries={[path]}>
       <Routes>
-        <Route path="/campaign/:id" element={<CampaignScreen store={store} />} />
+        <Route
+          path="/campaign/:id"
+          element={<CampaignScreen store={store} catalog={() => Promise.resolve(rolandCatalog)} />}
+        />
+        <Route path="/game/:id" element={<GameRoute />} />
       </Routes>
     </MemoryRouter>,
   );
@@ -296,6 +325,53 @@ describe('CampaignScreen', () => {
 
     const link = await screen.findByRole('link', { name: 'Continue The Gathering' });
     expect(link.getAttribute('href')).toBe(`/game/${gameId}`);
+  });
+
+  describe('after The Gathering, in which Roland earned 5 experience and spent 2', () => {
+    async function renderLogBeforeMasks() {
+      const { gameStore, campaignId } = await storeCampaign(() => [
+        {
+          type: 'ScenarioPlayed',
+          scenarioId: gathering,
+          outcome: { kind: 'resolution', id: resolutionId('R1') },
+        },
+        { type: 'ScenarioPositionChanged', position: 1 },
+        { type: 'XpChanged', code: roland, account: 'earned', delta: 5 },
+        { type: 'XpChanged', code: roland, account: 'spent', delta: 2 },
+      ]);
+      renderLog(gameStore, `/campaign/${campaignId}`);
+      fireEvent.click(await screen.findByRole('button', { name: 'Set up The Midnight Masks' }));
+      return {
+        gameStore,
+        dialog: screen.getByRole('dialog', { name: 'Set up The Midnight Masks' }),
+      };
+    }
+
+    it('reminds the players of his 3 unspent experience before The Midnight Masks', async () => {
+      const { dialog } = await renderLogBeforeMasks();
+
+      const upgrades = within(dialog).getByRole('region', { name: 'Deck upgrades' });
+      expect(within(upgrades).getByRole('listitem').textContent).toBe(
+        'Roland Banks: 3 unspent experience',
+      );
+      expect(within(dialog).getByText('Standard')).toBeTruthy();
+    });
+
+    it('sets The Midnight Masks up as a game of the campaign and goes to it', async () => {
+      const { gameStore, dialog } = await renderLogBeforeMasks();
+
+      const startButton = within(dialog).getByRole('button', { name: 'Start game' });
+      await waitFor(() => expect(startButton).toHaveProperty('disabled', false));
+      fireEvent.click(startButton);
+
+      const shown = await screen.findByRole('status');
+      const [game] = await gameStore.listGames();
+      expect(shown.textContent).toBe(`game ${game?.gameId}`);
+      expect(game).toMatchObject({
+        title: 'The Midnight Masks – Roland Banks',
+        scenarioId: midnightMasks,
+      });
+    });
   });
 
   it('says so when the campaign is not on this device', async () => {

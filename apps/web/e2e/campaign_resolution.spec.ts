@@ -2,7 +2,8 @@ import { expect, test } from './fixtures/test';
 
 // Journey: a campaign's first game ends when its only investigator is driven out by horror; the
 // players confirm the resolution the game reached, check what it writes into the campaign log and
-// write it, read it there, take it back with Undo and write it again.
+// write it, read it there, take it back with Undo and write it again, then set up the next
+// scenario from the log.
 test('write a scenario resolution into the campaign log', { tag: '@flow' }, async ({ page }) => {
   await test.step('Start a campaign with Fake Seeker alone', async () => {
     await page.goto('/#/new');
@@ -62,5 +63,16 @@ test('write a scenario resolution into the campaign log', { tag: '@flow' }, asyn
     await written.getByRole('button', { name: 'OK' }).click();
     await expect(written).toBeHidden();
     await expect(page.getByRole('region', { name: 'Scenarios' })).toContainText('no resolution');
+  });
+
+  await test.step('Set up The Midnight Masks from the log', async () => {
+    await page.getByRole('button', { name: 'Set up The Midnight Masks' }).click();
+    const preview = page.getByRole('dialog', { name: 'Set up The Midnight Masks' });
+    await expect(preview.getByRole('region', { name: 'Deck upgrades' })).toContainText(
+      /Fake Seeker: \d+ unspent experience/,
+    );
+    await preview.getByRole('button', { name: 'Start game' }).click();
+    await expect(page).toHaveURL(/#\/game\/.+/);
+    await expect(page.getByRole('heading', { name: 'The Midnight Masks' })).toBeVisible();
   });
 });

@@ -678,6 +678,15 @@ export const appTexts = {
     later: 'Noch nicht',
     write: 'Ins Logbuch eintragen',
   },
+  nextScenario: {
+    setUp: '{{scenario}} aufbauen',
+    title: '{{scenario}} aufbauen',
+    upgrades: 'Deckverbesserungen',
+    spendXp:
+      'Vor dem Start darf jeder Ermittler seine nicht ausgegebene Erfahrung für Deckverbesserungen ausgeben.',
+    unspentXp: '{{name}}: {{count}} nicht ausgegebene Erfahrung',
+    failed: 'Das Szenario ließ sich nicht aus dem Kampagnenprotokoll aufbauen.',
+  },
   wizard: {
     campaign: 'Kampagne',
     scenario: 'Szenario',

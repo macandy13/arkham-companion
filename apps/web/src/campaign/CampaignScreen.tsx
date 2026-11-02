@@ -1,16 +1,18 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link, useParams } from 'react-router';
+import { Link, useNavigate, useParams } from 'react-router';
 import { useStore } from 'zustand';
 import type { StoreApi } from 'zustand/vanilla';
 import {
   campaign,
   campaignId as toCampaignId,
+  type CampaignId,
   type CampaignInvestigator,
   type CampaignLog,
   type GameSummary,
   type PlayedScenario,
 } from '@arkham/engine';
+import type { CatalogSource } from '../catalog/useCatalog';
 import type { AppState } from '../state/appStore';
 import {
   findCampaign,
@@ -20,6 +22,7 @@ import {
 } from '../scenarios/scenarioCatalog';
 import { range } from '@arkham/util';
 import { CampaignSheets } from './CampaignSheets';
+import { NextScenarioDialog } from './NextScenarioDialog';
 import { ResolutionUndo } from './ResolutionUndo';
 import { Tally } from './Tally';
 import '@fontsource/felipa/latin-400.css';
@@ -32,10 +35,17 @@ import './campaign_log.css';
  * Route `/campaign/:id`: the campaign log, drawn after the campaign log sheet of the Core Set
  * (docs/product.md "Campaign screen"): an index card with a column per investigator, a napkin
  * with the scenarios, each played one ticked with its resolution, then the campaign notes and the
- * campaign's own sheets (`CampaignSheets`). Below them, a link continues the scenario in play, and
+ * campaign's own sheets (`CampaignSheets`). Below them, a link continues the scenario in play or
+ * sets the next one up (`NextScenarioDialog`), and
  * after a resolution was written a toast offers to take it back (`ResolutionUndo`).
  */
-export function CampaignScreen({ store }: { store: StoreApi<AppState> }) {
+export function CampaignScreen({
+  store,
+  catalog,
+}: {
+  store: StoreApi<AppState>;
+  catalog: CatalogSource;
+}) {
   const { t } = useTranslation();
   // The route only matches with an `:id` segment; the fallback only satisfies the type.
   const campaignId = toCampaignId(useParams().id ?? '');
@@ -70,7 +80,13 @@ export function CampaignScreen({ store }: { store: StoreApi<AppState> }) {
       </section>
       <ScenarioList log={log} />
       {entry && <CampaignSheets log={log} entry={entry} />}
-      <ContinueLink log={log} games={games} />
+      <ContinueLink
+        store={store}
+        catalog={catalog}
+        campaignId={campaignId}
+        log={log}
+        games={games}
+      />
       {written?.campaignId === campaignId && (
         <ResolutionUndo
           onUndo={() => store.getState().undoResolution()}
@@ -171,24 +187,56 @@ function outcomeLabel(t: ReturnType<typeof useTranslation>['t'], played: PlayedS
   return t('campaignLog.resolution', { n: resolutionNumber(outcome.id) });
 }
 
-/** Back to the game of the scenario in play, if the campaign has one that is not over yet. */
+/**
+ * Back to the game of the scenario in play, if the campaign has one that is not over yet;
+ * otherwise, once the log has moved on to a scenario without a game, the way to set it up.
+ */
 function ContinueLink({
+  store,
+  catalog,
+  campaignId,
   log,
   games,
 }: {
+  readonly store: StoreApi<AppState>;
+  readonly catalog: CatalogSource;
+  readonly campaignId: CampaignId;
   readonly log: CampaignLog;
   readonly games: GameSummary[];
 }) {
   const { t } = useTranslation();
+  const navigate = useNavigate();
+  const [settingUp, setSettingUp] = useState(false);
   const scenarioId = log.scenarioIds[log.position];
   const game = games.find((g) => g.scenarioId === scenarioId);
   const scenario = scenarioId && findScenario(scenarioId);
-  if (!game || !scenario || log.result) return null;
+  if (!scenario || log.result) return null;
+  const name = t(scenario.nameKey);
+  if (game) {
+    return (
+      <footer>
+        <Link to={`/game/${game.gameId}`}>{t('campaignLog.continue', { scenario: name })}</Link>
+      </footer>
+    );
+  }
   return (
     <footer>
-      <Link to={`/game/${game.gameId}`}>
-        {t('campaignLog.continue', { scenario: t(scenario.nameKey) })}
-      </Link>
+      <button type="button" data-primary onClick={() => setSettingUp(true)}>
+        {t('nextScenario.setUp', { scenario: name })}
+      </button>
+      {settingUp && (
+        <NextScenarioDialog
+          log={log}
+          entry={findCampaign(log.definitionId)}
+          scenario={scenario}
+          catalog={catalog}
+          onCancel={() => setSettingUp(false)}
+          onStart={async (start) => {
+            const gameId = await store.getState().startNextScenario({ ...start, campaignId });
+            await navigate(`/game/${gameId}`);
+          }}
+        />
+      )}
     </footer>
   );
 }

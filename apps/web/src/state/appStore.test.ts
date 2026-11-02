@@ -24,6 +24,8 @@ import {
   nightOfTheZealot,
   theGathering,
   theGatheringCards,
+  theMidnightMasks,
+  theMidnightMasksCards,
 } from '@arkham/scenarios';
 import { GameImportError } from '../storage/gameExport';
 import { IndexedDbStore, SeqConflictError } from '../storage/IndexedDbStore';
@@ -208,6 +210,56 @@ describe('appStore', () => {
         await expect(store.getState().startCampaign(invalid)).rejects.toThrow();
         expect(await db.listCampaigns()).toEqual([]);
         expect(await db.listGames()).toEqual([]);
+      });
+    });
+
+    describe('startNextScenario after The Gathering ended without a resolution', () => {
+      const midnightMasks = {
+        title: 'The Midnight Masks',
+        ctx: {
+          cards: cardDbWith(theMidnightMasksCards, [investigatorCardStats(alder)]),
+          scenario: theMidnightMasks,
+        },
+        seed: 5,
+      };
+
+      /** A campaign whose log has The Gathering written in, without a resolution. */
+      async function gatheringWritten(db: IndexedDbStore) {
+        const store = createAppStore(db);
+        await store.getState().startCampaign(campaignStart);
+        const campaignId = store.getState().campaigns[0]!.campaignId;
+        await store.getState().actions.adjust(investigatorId('alder'), 'horror', alder.sanity);
+        await store.getState().writeResolution({ kind: 'noResolution' }, []);
+        return { store, campaignId };
+      }
+
+      it('sets The Midnight Masks up from the log as a game of the campaign and opens it', async () => {
+        const db = new IndexedDbStore('appstore-next-scenario-test');
+        const { store, campaignId } = await gatheringWritten(db);
+
+        const gameId = await store.getState().startNextScenario({ ...midnightMasks, campaignId });
+
+        expect(store.getState().current?.gameId).toBe(gameId);
+        expect(store.getState().current?.state.meta).toMatchObject({
+          scenarioId: 'the-midnight-masks',
+          difficulty: 'easy',
+        });
+        expect(store.getState().current?.state.campaign?.campaignId).toBe(campaignId);
+        expect(store.getState().games.find((g) => g.gameId === gameId)).toMatchObject({
+          title: 'The Midnight Masks',
+          campaignId,
+        });
+      });
+
+      it('stores no game for The Gathering, which the log has played already', async () => {
+        const db = new IndexedDbStore('appstore-next-scenario-wrong-test');
+        const { store, campaignId } = await gatheringWritten(db);
+        const gamesBefore = await db.listGames();
+
+        await expect(
+          store.getState().startNextScenario({ ...start, campaignId }),
+        ).rejects.toMatchObject({ rejection: { code: 'notNextCampaignScenario' } });
+        expect(await db.listGames()).toEqual(gamesBefore);
       });
     });
 

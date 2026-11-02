@@ -23,7 +23,13 @@ import type {
   ResolutionId,
   ScenarioId,
 } from '@arkham/engine';
-import { PlayTable, campaign, campaignId as toCampaignId, emptyState } from '@arkham/engine';
+import {
+  PlayTable,
+  campaign,
+  campaignId as toCampaignId,
+  emptyState,
+  investigatorId,
+} from '@arkham/engine';
 import { gameActions, type GameActions } from './gameActions';
 import { GameSession, startGame, type PlayStep, type SkippedEffect } from './gameSession';
 import type { DrawnCard } from '../encounter/drawnCards';
@@ -57,6 +63,23 @@ export interface CampaignStart extends ScenarioStart {
   definition: CampaignDefinition;
   /** Name shown in the campaign list. */
   campaignTitle: string;
+}
+
+/**
+ * The next scenario of a stored campaign, as the campaign screen sets it up; input to
+ * `AppState.startNextScenario`. The difficulty, chaos bag, trauma and team come from the log.
+ */
+export interface NextScenarioStart {
+  campaignId: CampaignId;
+  /** Name shown in the game list. */
+  title: string;
+  /**
+   * The log's next scenario (`campaign.findCurrentScenarioId`) and its card data, whose `CardDb`
+   * must hold the team's investigator cards, as for `ScenarioStart.ctx`.
+   */
+  ctx: ScenarioContext;
+  /** Seeds the game's RNG; chosen by the caller because the engine never reads randomness itself. */
+  seed: number;
 }
 
 /** The campaign on the campaign screen, as `AppState.openCampaign` loaded it. */
@@ -203,6 +226,13 @@ export interface AppState {
    * before anything is stored.
    */
   startCampaign(start: CampaignStart): Promise<GameId>;
+  /**
+   * Sets the campaign's next scenario up from its stored log as a new game of the campaign, the
+   * team in the log's order (the first is the lead investigator), and opens it. Rejects with
+   * `CommandRejected` before anything is stored if the log's next scenario is another one or a
+   * team member is killed or insane and must be replaced first.
+   */
+  startNextScenario(start: NextScenarioStart): Promise<GameId>;
   openGame(gameId: GameId): Promise<void>;
   /** Loads a campaign's log and its games for the campaign screen (`campaign`). */
   openCampaign(campaignId: CampaignId): Promise<void>;
@@ -481,6 +511,22 @@ export function createAppStore(
         const { log, events } = startCampaignLog(start, campaignId);
         await gameStore.appendCampaignEvents(campaignId, events);
         const { title, ctx, seed, investigators } = start;
+        const options = { campaign: log, seed, investigators };
+        const gameId = await startGame(gameStore, title, ctx, options, campaignId);
+        await get().refresh();
+        await get().openGame(gameId);
+        return gameId;
+      },
+      async startNextScenario({ campaignId, title, ctx, seed }) {
+        const loaded = await gameStore.loadCampaign(campaignId);
+        if (!loaded) throw new Error(`Unknown campaign ${campaignId}`);
+        const { log } = loaded;
+        // A game has one copy of each investigator, so the code is unique enough to be the seat's
+        // ID too, as in the new game wizard.
+        const investigators = log.investigators.map(({ code }) => ({
+          id: investigatorId(code),
+          code,
+        }));
         const options = { campaign: log, seed, investigators };
         const gameId = await startGame(gameStore, title, ctx, options, campaignId);
         await get().refresh();

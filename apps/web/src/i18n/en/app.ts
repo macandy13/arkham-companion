@@ -675,6 +675,15 @@ export const appTexts = {
     later: 'Not yet',
     write: 'Write into the log',
   },
+  nextScenario: {
+    setUp: 'Set up {{scenario}}',
+    title: 'Set up {{scenario}}',
+    upgrades: 'Deck upgrades',
+    spendXp:
+      'Before you start, each investigator may spend their unspent experience on deck upgrades.',
+    unspentXp: '{{name}}: {{count}} unspent experience',
+    failed: 'The scenario could not be set up from the campaign log.',
+  },
   wizard: {
     campaign: 'Campaign',
     scenario: 'Scenario',
