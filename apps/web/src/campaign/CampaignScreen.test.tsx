@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import 'fake-indexeddb/auto';
-import { cleanup, render, screen, within } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
 import {
@@ -55,14 +55,11 @@ async function storeCampaign(events: (id: CampaignId) => CampaignEvent[]) {
   return { gameStore, campaignId };
 }
 
-function renderLog(gameStore: IndexedDbStore, path: string) {
+function renderLog(gameStore: IndexedDbStore, path: string, store = createAppStore(gameStore)) {
   render(
     <MemoryRouter initialEntries={[path]}>
       <Routes>
-        <Route
-          path="/campaign/:id"
-          element={<CampaignScreen store={createAppStore(gameStore)} />}
-        />
+        <Route path="/campaign/:id" element={<CampaignScreen store={store} />} />
       </Routes>
     </MemoryRouter>,
   );
@@ -125,6 +122,43 @@ describe('CampaignScreen', () => {
       const masksItem = within(scenarios).getByText('The Midnight Masks').closest('li')!;
       expect(within(masksItem).getByRole('checkbox')).toHaveProperty('checked', false);
       expect(masksItem.getAttribute('aria-current')).toBe('step');
+    });
+  });
+
+  describe('right after resolution 1 of The Gathering was written', () => {
+    async function renderWrittenLog() {
+      const { gameStore, campaignId } = await storeCampaign(() => []);
+      const written = await gameStore.appendCampaignEvents(campaignId, [
+        {
+          type: 'ScenarioPlayed',
+          scenarioId: gathering,
+          outcome: { kind: 'resolution', id: resolutionId('R1') },
+        },
+        { type: 'ScenarioPositionChanged', position: 1 },
+      ]);
+      const store = createAppStore(gameStore);
+      store.setState({ writtenResolution: { campaignId, seq: written.at(-1)!.seq } });
+      renderLog(gameStore, `/campaign/${campaignId}`, store);
+      return screen.findByRole('status', { name: 'Written into the log' });
+    }
+
+    it('takes the resolution back out of the log on "Undo"', async () => {
+      const toast = await renderWrittenLog();
+      expect(screen.getByText('R1')).toBeTruthy();
+
+      fireEvent.click(within(toast).getByRole('button', { name: 'Undo' }));
+
+      await waitFor(() => expect(screen.queryByText('R1')).toBeNull());
+      expect(screen.queryByRole('status', { name: 'Written into the log' })).toBeNull();
+    });
+
+    it('keeps the resolution and closes the toast on "OK"', async () => {
+      const toast = await renderWrittenLog();
+
+      fireEvent.click(within(toast).getByRole('button', { name: 'OK' }));
+
+      expect(screen.queryByRole('status', { name: 'Written into the log' })).toBeNull();
+      expect(screen.getByText('R1')).toBeTruthy();
     });
   });
 
