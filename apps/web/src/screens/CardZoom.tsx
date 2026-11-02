@@ -1,14 +1,14 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { CardFaceView } from '@arkham/engine';
 import { sentences } from '@arkham/util';
+import type { ShownCard } from '../catalog/cardFace';
 import { useCardPicture } from '../catalog/cardImages';
 import { TreacheryCard } from '../treacheries/TreacheryCard';
 import { useBackCloses } from './useBackCloses';
 import './card_zoom.css';
 
 /**
- * One card picked up to read (`CardFaceView`), as big as a zoomed card: a treachery's front drawn
+ * One card picked up to read (`ShownCard`), as big as a zoomed card: a treachery's front drawn
  * as its card (`TreacheryCard`); any other card or side as its picture once it has loaded, and
  * under the picture, for a card without one or until it loads, what the card data says of it in
  * our own frame: its name, type and traits. A card with a back turns over with a button. It
@@ -17,7 +17,7 @@ import './card_zoom.css';
  * `<dialog>` brings focus trapping and Escape. On a phone it fills the screen and the back
  * gesture closes it too (`useBackCloses`).
  */
-export function CardZoom({ card, onClose }: { card: CardFaceView; onClose: () => void }) {
+export function CardZoom({ card, onClose }: { card: ShownCard; onClose: () => void }) {
   const { t } = useTranslation();
   const titleId = useId();
   const dialog = useRef<HTMLDialogElement>(null);

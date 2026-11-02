@@ -1,25 +1,31 @@
-import { useEffect, useId, useRef, useState, type MouseEvent, type ReactNode } from 'react';
+import { useId, useState, type MouseEvent, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { StoreApi } from 'zustand/vanilla';
 import {
   cardImagePath,
+  cardName,
   type ActAdvance,
   type ActView,
   type BoardView,
+  type CardFaceView,
   type CardImagePath,
   type CardName,
   type EncounterSetCode,
   type ReferenceView,
 } from '@arkham/engine';
 import type { CardCatalog, ReferenceSideTexts } from '@arkham/carddata';
+import type { ShownCard } from '../catalog/cardFace';
 import { useCardPicture } from '../catalog/cardImages';
 import { cardText } from '../catalog/cardText';
 import { EncounterPiles, HeaderPile, type PileProps } from '../encounter/EncounterPiles';
 import type { AppState, OpenGame } from '../state/appStore';
-import { CardActions, cardActionsOn } from './ActionRow';
+import type { GameActions } from '../state/gameActions';
+import { ActionGroup, CardActions, cardActionsOn } from './ActionRow';
+import { CardDialog } from './CardDialog';
 import { BookFace } from './BookFace';
 import { ScenarioFace } from './ScenarioFace';
 import { useCluePayment } from './CluePaymentDialog';
+import { DetailsDialog, useDecisionHost } from './DetailsDialog';
 import { Token } from './Token';
 import type { HeaderCardKind } from './useDetailView';
 
@@ -30,7 +36,7 @@ import type { HeaderCardKind } from './useDetailView';
  * step is queued (`OpenGame.busy`), since a second tap would act on whatever the first one leaves
  * open; the agenda's and act's steppers show only while the players adjust the board
  * (`OpenGame.adjusting`). The round, the phase and the buttons that run the game sit in the status
- * row below (`GameStatus`). A tap on the agenda or act opens it as a full card (`CardDetails`).
+ * row below (`GameStatus`). A tap on the agenda or act opens it on the card shell (`BookDetails`).
  * `board` is the open game's `OpenGame.board`. On a phone's compact view a tap on any of the four
  * cards calls `onOpenCard` instead (the detail view opens on it), so the card's own buttons and
  * dialogs wait for the detail view. There the cards show `full`: the agenda and act are already
@@ -164,8 +170,8 @@ function ScenarioStatus({
       </ScenarioCard>
       {zoomed && (
         <ScenarioDetails
+          board={board}
           name={name}
-          reference={board.reference}
           printed={printed}
           onClose={() => setZoomed(false)}
         />
@@ -175,33 +181,95 @@ function ScenarioStatus({
 }
 
 /**
- * The scenario's full card (`ScenarioStatus`), as big as a zoomed card: the same face as in the
- * header, where the rows' texts are too small to read.
+ * The scenario reference card opened from the header (`ScenarioStatus`), on the card shell
+ * (`CardDialog`, MD.6b3):
+ * - the upright card beside the page, the same face as in the header, tapped to read it whole;
+ * - "Scenario" and the side the game's difficulty plays with as the kicker, its name as the title;
+ * - on the page the cards set aside and the victory points so far (`BoardView.victoryPoints`);
+ * - one row per symbol token at the page's print size, the token beside its printed text, since
+ *   on the card they stay too small to read on a tablet.
+ * The card is no instance in play (`BoardView.reference`), so the shell shows it as a `ShownCard`
+ * built from its name and picture. Escape and its × close it.
  */
 function ScenarioDetails({
+  board,
   name,
-  reference,
   printed,
   onClose,
 }: {
+  board: BoardView;
   name: string;
-  reference: ReferenceView | undefined;
   printed: PrintedReference | undefined;
   onClose: () => void;
 }) {
   const { t } = useTranslation();
-  const titleId = useId();
-  const dialog = useRef<HTMLDialogElement>(null);
-  useEffect(() => {
-    dialog.current?.showModal();
-  }, []);
+  const { reference } = board;
+  const card: ShownCard = {
+    // The scenario's display name: the reference card prints it, and the game holds no card name.
+    name: cardName(name),
+    type: 'scenario',
+    traits: [],
+    ...(printed?.picture === undefined ? {} : { image: printed.picture }),
+  };
   return (
-    <dialog ref={dialog} aria-labelledby={titleId} onCancel={onClose} data-dialog="card">
-      <button type="button" data-icon="close" aria-label={t('header.close')} onClick={onClose} />
-      <ScenarioCard reference={reference} printed={printed}>
-        <h2 id={titleId}>{name}</h2>
-      </ScenarioCard>
-    </dialog>
+    <CardDialog
+      name="scenario"
+      card={card}
+      drawn={
+        <ScenarioCard reference={reference} printed={printed} decorative>
+          {/* Inside the card's button, so its name is no second heading; the page's title is. */}
+          <span data-part="name">{name}</span>
+        </ScenarioCard>
+      }
+      kicker={
+        reference
+          ? t('header.scenarioSide', { side: t(`header.referenceSide.${reference.side}`) })
+          : t('header.scenario')
+      }
+      title={name}
+      onCancel={onClose}
+      onClose={onClose}
+    >
+      <dl>
+        <div>
+          <dt>{t('header.setAsideName')}</dt>
+          <dd>{board.cardsIn({ kind: 'setAside' }).length}</dd>
+        </div>
+        <div>
+          <dt>{t('header.victory')}</dt>
+          <dd>{board.victoryPoints}</dd>
+        </div>
+      </dl>
+      {reference && <ReferenceRows reference={reference} printed={printed} />}
+    </CardDialog>
+  );
+}
+
+/**
+ * The reference card's rows, one per symbol token: the token's game symbol (named for screen
+ * readers) beside its printed text (`printed`, from the card catalog, for the side
+ * `BoardView.reference` names), on the card's face and, larger, on its dialog's page.
+ */
+function ReferenceRows({
+  reference,
+  printed,
+}: {
+  reference: ReferenceView;
+  printed: PrintedReference | undefined;
+}) {
+  const { t } = useTranslation();
+  return (
+    <ul aria-label={t('header.reference')}>
+      {reference.rows.map(({ token }) => {
+        const text = printed?.texts?.[token];
+        return (
+          <li key={token} data-chaos-token={token}>
+            <span role="img" aria-label={t(`chaosToken.${token}`)} />
+            {text !== undefined && <p>{cardText(text)}</p>}
+          </li>
+        );
+      })}
+    </ul>
   );
 }
 
@@ -212,17 +280,20 @@ function ScenarioDetails({
  * text (`printed`, from the card catalog, for the side `BoardView.reference` names). A game without
  * a reference card shows only the title. In the card pictures theme the side's picture lies over
  * it all once loaded (`data-picture`), and the stylesheet hides what the picture prints; the
- * rows stay beneath it for assistive technology.
+ * rows stay beneath it for assistive technology. Drawn as a dialog's card (`decorative`), whose
+ * page repeats its rows, it is hidden from assistive technology.
  */
 function ScenarioCard({
   reference,
   printed,
   onClick,
+  decorative = false,
   children,
 }: {
   reference: ReferenceView | undefined;
   printed: PrintedReference | undefined;
   onClick?: () => void;
+  decorative?: boolean;
   children: ReactNode;
 }) {
   const { t } = useTranslation();
@@ -231,6 +302,7 @@ function ScenarioCard({
     <div
       data-card="scenario"
       data-picture={picture?.shown ? 'shown' : undefined}
+      aria-hidden={decorative || undefined}
       onClick={
         onClick &&
         ((event) => {
@@ -243,17 +315,7 @@ function ScenarioCard({
       {reference && (
         <>
           <p>{t(`header.referenceSide.${reference.side}`)}</p>
-          <ul aria-label={t('header.reference')}>
-            {reference.rows.map(({ token }) => {
-              const text = printed?.texts?.[token];
-              return (
-                <li key={token} data-chaos-token={token}>
-                  <span role="img" aria-label={t(`chaosToken.${token}`)} />
-                  {text !== undefined && <p>{cardText(text)}</p>}
-                </li>
-              );
-            })}
-          </ul>
+          <ReferenceRows reference={reference} printed={printed} />
         </>
       )}
       {picture && (
@@ -294,38 +356,42 @@ function AgendaStatus({
   const actionRow = offered.length > 0 && (
     <CardActions board={board} offered={offered} actions={actions} busy={blocked} onUse={close} />
   );
+  const doomToken = (
+    <Token
+      kind="doom"
+      count={board.doomInPlay}
+      threshold={agenda.threshold}
+      label={
+        agenda.threshold === undefined
+          ? t('header.doom', { doom: board.doomInPlay })
+          : t('header.doomOf', { doom: board.doomInPlay, threshold: agenda.threshold })
+      }
+    />
+  );
+  const doomSteppers = (
+    <>
+      <button
+        type="button"
+        aria-label={t('header.removeDoom')}
+        disabled={blocked || agenda.doom === 0}
+        onClick={() => void actions.removeDoom(1)}
+      >
+        −
+      </button>
+      <button
+        type="button"
+        aria-label={t('header.addDoom')}
+        disabled={blocked}
+        onClick={() => void actions.placeDoom(1)}
+      >
+        +
+      </button>
+    </>
+  );
   const tokenAndPlate = (
     <>
-      <Token
-        kind="doom"
-        count={board.doomInPlay}
-        threshold={agenda.threshold}
-        label={
-          agenda.threshold === undefined
-            ? t('header.doom', { doom: board.doomInPlay })
-            : t('header.doomOf', { doom: board.doomInPlay, threshold: agenda.threshold })
-        }
-      />
-      {adjusting && (
-        <footer>
-          <button
-            type="button"
-            aria-label={t('header.removeDoom')}
-            disabled={blocked || agenda.doom === 0}
-            onClick={() => void actions.removeDoom(1)}
-          >
-            −
-          </button>
-          <button
-            type="button"
-            aria-label={t('header.addDoom')}
-            disabled={blocked}
-            onClick={() => void actions.placeDoom(1)}
-          >
-            +
-          </button>
-        </footer>
-      )}
+      {doomToken}
+      {adjusting && <footer>{doomSteppers}</footer>}
     </>
   );
 
@@ -343,17 +409,24 @@ function AgendaStatus({
       </HeaderCard>
       {full && actionRow && <footer>{actionRow}</footer>}
       {zoomed && !full && (
-        <CardDetails
+        <BookDetails
           kind="agenda"
-          name={agenda.name}
-          image={agenda.image}
-          set={agenda.encounterSet}
+          board={board}
+          actions={actions}
+          busy={blocked}
+          card={board.cardFace(agenda.id)}
           threshold={agenda.threshold}
-          actionRow={actionRow}
+          token={doomToken}
+          value={{
+            name: t('header.doomName'),
+            count: board.doomInPlay,
+            ...(agenda.threshold === undefined ? {} : { threshold: agenda.threshold }),
+          }}
+          corrections={
+            adjusting && <ActionGroup title={t('header.onAgenda')}>{doomSteppers}</ActionGroup>
+          }
           onClose={close}
-        >
-          {tokenAndPlate}
-        </CardDetails>
+        />
       )}
     </HeaderSlot>
   );
@@ -397,57 +470,63 @@ function ActStatus({
     <CardActions board={board} offered={offered} actions={actions} busy={blocked} onUse={close} />
   );
   const { advance } = act;
-  const plate = (advance: ActAdvance, onAdvance?: () => void) => {
-    const clues = actClues(act, advance);
-    const { threshold } = advance;
-    return (
-      <>
-        <Token
-          kind="clue"
-          count={clues}
-          threshold={threshold}
-          label={t('header.cluesOf', { clues, threshold })}
-        />
-        <footer>
-          {advance.kind === 'cluesOnAct' && adjusting && (
-            <>
-              <button
-                type="button"
-                aria-label={t('header.removeClue')}
-                disabled={blocked || clues === 0}
-                onClick={() => void actions.adjustActClues(-1)}
-              >
-                −
-              </button>
-              <button
-                type="button"
-                aria-label={t('header.addClue')}
-                disabled={blocked}
-                onClick={() => void actions.adjustActClues(1)}
-              >
-                +
-              </button>
-            </>
-          )}
-          {advance.kind === 'spendClues' && (
-            <button
-              type="button"
-              disabled={blocked || adjusting || board.turn === undefined || clues < threshold}
-              onClick={() =>
-                pay(threshold, t('cluePayment.advanceTitle', { act: act.name }), (spend) => {
-                  onAdvance?.();
-                  void actions.advanceAct(spend);
-                })
-              }
-            >
-              {t('header.advanceAct')}
-            </button>
-          )}
-        </footer>
-      </>
+  const clues = advance && actClues(act, advance);
+  const clueToken = advance && clues !== undefined && (
+    <Token
+      kind="clue"
+      count={clues}
+      threshold={advance.threshold}
+      label={t('header.cluesOf', { clues, threshold: advance.threshold })}
+    />
+  );
+  const clueSteppers = advance?.kind === 'cluesOnAct' && adjusting && (
+    <>
+      <button
+        type="button"
+        aria-label={t('header.removeClue')}
+        disabled={blocked || act.clues === 0}
+        onClick={() => void actions.adjustActClues(-1)}
+      >
+        −
+      </button>
+      <button
+        type="button"
+        aria-label={t('header.addClue')}
+        disabled={blocked}
+        onClick={() => void actions.adjustActClues(1)}
+      >
+        +
+      </button>
+    </>
+  );
+  /** The act's advance, for an act the investigators advance by spending clues (`primary` in its full card). */
+  const advanceButton = (onAdvance?: () => void, primary = false) =>
+    advance?.kind === 'spendClues' && (
+      <button
+        type="button"
+        data-primary={primary || undefined}
+        disabled={
+          blocked || adjusting || board.turn === undefined || advance.held < advance.threshold
+        }
+        onClick={() =>
+          pay(advance.threshold, t('cluePayment.advanceTitle', { act: act.name }), (spend) => {
+            onAdvance?.();
+            void actions.advanceAct(spend);
+          })
+        }
+      >
+        {t('header.advanceAct')}
+      </button>
     );
-  };
-  const tokenAndPlate = (onAdvance?: () => void) => advance && plate(advance, onAdvance);
+  const tokenAndPlate = advance && (
+    <>
+      {clueToken}
+      <footer>
+        {clueSteppers}
+        {advanceButton()}
+      </footer>
+    </>
+  );
 
   return (
     <HeaderSlot label={t('header.act')} card="act" onOpen={onOpen}>
@@ -459,21 +538,33 @@ function ActStatus({
         threshold={advance?.threshold}
         onOpen={full ? undefined : () => setZoomed(true)}
       >
-        {tokenAndPlate()}
+        {tokenAndPlate}
       </HeaderCard>
       {full && actionRow && <footer>{actionRow}</footer>}
       {zoomed && !full && (
-        <CardDetails
+        <BookDetails
           kind="act"
-          name={act.name}
-          image={act.image}
-          set={act.encounterSet}
+          board={board}
+          actions={actions}
+          busy={blocked}
+          card={board.cardFace(act.id)}
           threshold={advance?.threshold}
-          actionRow={actionRow}
+          token={clueToken}
+          {...(advance && clues !== undefined
+            ? {
+                value: {
+                  name: t(advance.kind === 'spendClues' ? 'header.cluesHeld' : 'header.cluesOnAct'),
+                  count: clues,
+                  threshold: advance.threshold,
+                },
+              }
+            : {})}
+          corrections={
+            clueSteppers && <ActionGroup title={t('header.onAct')}>{clueSteppers}</ActionGroup>
+          }
+          primary={advanceButton(close, true)}
           onClose={close}
-        >
-          {tokenAndPlate(close)}
-        </CardDetails>
+        />
       )}
       {dialog}
     </HeaderSlot>
@@ -568,47 +659,93 @@ function HeaderCard({
 }
 
 /**
- * The agenda or act (`kind`) as a full card in a dialog, as big as a zoomed card: the same face as
- * in the header with its picture large, its name as the dialog's title, and its token and plate
- * (`children`) with their buttons, and under it the action row of what the card offers the
- * investigator whose turn it is (`actionRow`, `CardActions`), when it offers anything. The card
- * text joins it once the card data has text. A native modal `<dialog>` brings focus trapping and
- * Escape.
+ * The agenda or act (`kind`) opened from the header, on the card shell (`DetailsDialog`, MD.6b2):
+ * - the landscape card over the page, the same face as in the header with its `token`, tapped to
+ *   read it whole (`CardZoom`);
+ * - what it is as the kicker, its name as the title;
+ * - its count on the page (`value`: the doom in play, the clues that count towards advancing);
+ * - while the players adjust, its steppers (`corrections`);
+ * - the card actions it offers the investigator whose turn it is;
+ * - the act's Advance as the dialog's one primary (`primary`).
+ * A card action keeps it open and shows the decision it raises in place of its page
+ * (`useDecisionHost`); Advance closes it first, since the act it was about is gone. The card text
+ * joins it once the card data has text.
  */
-function CardDetails({
+function BookDetails({
   kind,
-  name,
-  image,
-  set,
+  board,
+  actions,
+  busy,
+  card,
   threshold,
-  actionRow,
+  token,
+  value,
+  corrections,
+  primary,
   onClose,
-  children,
 }: {
   kind: 'agenda' | 'act';
-  name: CardName;
-  image: CardImagePath | undefined;
-  set: EncounterSetCode | undefined;
+  board: BoardView;
+  actions: GameActions;
+  busy: boolean;
+  card: CardFaceView;
   threshold: number | undefined;
-  actionRow: ReactNode;
+  token: ReactNode;
+  value?: { name: string; count: number; threshold?: number };
+  corrections: ReactNode;
+  primary?: ReactNode;
   onClose: () => void;
-  children: ReactNode;
 }) {
   const { t } = useTranslation();
-  const titleId = useId();
-  const dialog = useRef<HTMLDialogElement>(null);
-  useEffect(() => {
-    dialog.current?.showModal();
-  }, []);
+  const hosted = useDecisionHost();
+  const offered = cardActionsOn(board, card.id);
   return (
-    <dialog ref={dialog} aria-labelledby={titleId} onCancel={onClose} data-dialog="card">
-      <button type="button" data-icon="close" aria-label={t('header.close')} onClick={onClose} />
-      <CardFace kind={kind} image={image} set={set} threshold={threshold}>
-        <h2 id={titleId}>{name}</h2>
-        {children}
-      </CardFace>
-      {actionRow && <footer>{actionRow}</footer>}
-    </dialog>
+    <DetailsDialog
+      board={board}
+      actions={actions}
+      busy={busy}
+      hosted={hosted}
+      name="book"
+      card={card}
+      drawn={
+        <CardFace kind={kind} image={card.image} set={card.encounterSet} threshold={threshold}>
+          {/* Inside the card's button, so its name is no second heading; the page's title is. */}
+          <span data-part="name">{card.name}</span>
+          {token}
+        </CardFace>
+      }
+      kicker={t(`header.${kind}`)}
+      title={card.name}
+      onClose={onClose}
+    >
+      {value && (
+        <dl>
+          <div>
+            <dt>{value.name}</dt>
+            <dd>
+              {value.threshold === undefined
+                ? value.count
+                : t('header.countOf', { count: value.count, threshold: value.threshold })}
+            </dd>
+          </div>
+        </dl>
+      )}
+      {(corrections || offered.length > 0 || primary) && (
+        <footer>
+          {corrections}
+          {offered.length > 0 && (
+            <CardActions
+              board={board}
+              offered={offered}
+              actions={actions}
+              busy={busy}
+              onUse={hosted.host}
+            />
+          )}
+          {primary}
+        </footer>
+      )}
+    </DetailsDialog>
   );
 }
 

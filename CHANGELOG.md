@@ -2,6 +2,44 @@
 
 The sections dated up to 2026-10-22 were released as 1.0.0 to 1.8.0 by mistake: Release Please starts at 1.0.0 by default. Versioning restarted at 0.1.0 (see "Versions" in docs/product.md).
 
+## [0.1.21](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v0.1.20...arkham-companion-v0.1.21) (2026-11-02)
+
+
+### Features
+
+* **carddata:** investigator card texts and card text markup (MD.10a) ([38eb52e](https://github.com/macandy13/arkham-companion/commit/38eb52e9b5e2b6c6eebe96ed961708fcf7edfbc0))
+* **carddata:** investigator card texts in the catalog (MD.10a) ([553ee80](https://github.com/macandy13/arkham-companion/commit/553ee80945d91ca3afc1ffad2ef8e8e15e379550))
+* **engine:** propose and apply a resolution the players picked (MC1.6c3a) ([9dc4d1c](https://github.com/macandy13/arkham-companion/commit/9dc4d1c0d31e0958a58a15a2090a1134ddb00a35))
+* **web:** location symbols for The Midnight Masks and The Devourer Below (M3.14d2) ([24a673b](https://github.com/macandy13/arkham-companion/commit/24a673b9d5a668507067754538fe7e7934500562))
+* **web:** open the agenda and act on the card shell (MD.6b2) ([cfa6c65](https://github.com/macandy13/arkham-companion/commit/cfa6c652b2a2f61426dde5aec11c553ae572bc6b))
+* **web:** open the agenda and act on the card shell (MD.6b2) ([65a4230](https://github.com/macandy13/arkham-companion/commit/65a4230a55e90bf592d9391e9c802153e42c1c63))
+* **web:** open the scenario reference card on the card shell (MD.6b3) ([1f42f73](https://github.com/macandy13/arkham-companion/commit/1f42f7358a2c6f5c6c1e7a426834775d1ef03791))
+* **web:** open the scenario reference card on the card shell (MD.6b3) ([1f247dd](https://github.com/macandy13/arkham-companion/commit/1f247dd29916193520b19ac8af31b227993817ec))
+* **web:** read investigator card text markup and name the card's code (MD.10a) ([16c6035](https://github.com/macandy13/arkham-companion/commit/16c6035af38b3eb813afba75bc0df55d4c93cf7c))
+* **web:** show a details action's decision in the same dialog (MD.6a4) ([2da5514](https://github.com/macandy13/arkham-companion/commit/2da5514504f38525f9d3b68fac9c08d1f81b3371))
+* **web:** show a details action's decision in the same dialog (MD.6a4) ([6a29468](https://github.com/macandy13/arkham-companion/commit/6a294685ebdc2a0e9db687bc0d00923a9378ff69))
+
+
+### Bug fixes
+
+* **web:** drop unknown card text tags as parts of their own (MD.10a CodeQL) ([d165f4c](https://github.com/macandy13/arkham-companion/commit/d165f4c38b67f5b13072075be0eff4c29dead4b0))
+* **web:** fill the shell's card with the act's face while it hosts a decision; tag the act flow ([345dde1](https://github.com/macandy13/arkham-companion/commit/345dde17bd6333d68c657644c7e2fa1a6f3a274e))
+* **web:** keep the scenario's full card styled until it moves onto the shell ([b0fbbb1](https://github.com/macandy13/arkham-companion/commit/b0fbbb1aa9d5cb17eda4a943b03d7b66f6e3e746))
+* **web:** review nits on the scenario dialog ([2e446f5](https://github.com/macandy13/arkham-companion/commit/2e446f5be2a5d948f722ad117f959e058739cebf))
+
+
+### Refactoring
+
+* **web:** address review nits on hosted decisions ([66e71cf](https://github.com/macandy13/arkham-companion/commit/66e71cf47cd3cc7379b5dd093c4593554e0e4677))
+* **web:** drop the old full card's styles, now the scenario uses the shell ([29d6d05](https://github.com/macandy13/arkham-companion/commit/29d6d05d9d82a65d124d2ded21e4d4eea64d1ce6))
+* **web:** one shared symbol icon mapping for card text (MD.10a review) ([6e30a68](https://github.com/macandy13/arkham-companion/commit/6e30a68dd3d0a83c30568b70fe071091569e10a1))
+* **web:** share one scrolling card strip (M3.6k) ([fc6d13c](https://github.com/macandy13/arkham-companion/commit/fc6d13ce8ca9700b549b1a44e9e76f88f527ecdc))
+
+
+### Documentation
+
+* format the automation table ([7717e64](https://github.com/macandy13/arkham-companion/commit/7717e64eeb567a86860cd9efe9e0ce28cc5328e1))
+
 ## [0.1.20](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v0.1.19...arkham-companion-v0.1.20) (2026-11-01)
 
 
