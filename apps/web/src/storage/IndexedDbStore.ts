@@ -18,6 +18,8 @@ import {
   type GameState,
   type GameStore,
   type GameSummary,
+  type ReadNotices,
+  type StepNotice,
   type ImportedGame,
   type LoadedGame,
   type NewGame,
@@ -25,6 +27,7 @@ import {
   type StoredEvent,
 } from '@arkham/engine';
 import type { CardCatalog, CardDef } from '@arkham/carddata';
+import { withoutValue } from '@arkham/util';
 
 /** A fresh UUID for a created, duplicated or imported game. */
 function newGameId(): GameId {
@@ -44,6 +47,8 @@ interface GameRow {
   createdAt: number;
   updatedAt: number;
   lastSeq: number;
+  /** Not indexed, so it needs no schema version; absent until the players dismiss a notice. */
+  readNotices?: ReadNotices;
 }
 
 /** Row of the `campaigns` table: a `CampaignSummary` is derived from it plus the replayed log. */
@@ -200,10 +205,14 @@ export class IndexedDbStore implements GameStore {
       }
       const log = await this.loadEvents(gameId);
       const { kept, removed } = undoLastGroup(log);
-      if (removed.length === 0) return;
+      const [undone] = removed;
+      if (undone === undefined) return;
       await this.db.events.bulkDelete(removed.map((e) => [gameId, e.seq] as unknown as number));
       const lastSeq = kept.at(-1)?.seq ?? 0;
-      await this.db.games.update(gameId, { lastSeq, updatedAt: Date.now() });
+      // Played again after a reload, the next step gets the undone step's id back, and the
+      // players haven't read its notices.
+      const readNotices = withoutValue(game.readNotices ?? {}, undone.commandId);
+      await this.db.games.update(gameId, { lastSeq, updatedAt: Date.now(), readNotices });
       const snapshot = await this.db.snapshots.get(gameId);
       if (snapshot && snapshot.seq > lastSeq) await this.db.snapshots.delete(gameId);
     });
@@ -221,6 +230,17 @@ export class IndexedDbStore implements GameStore {
     if ((await this.db.games.update(gameId, { title })) === 0) {
       throw new Error(`Unknown game ${gameId}`);
     }
+  }
+
+  async loadReadNotices(gameId: GameId): Promise<ReadNotices> {
+    return (await this.db.games.get(gameId))?.readNotices ?? {};
+  }
+
+  async markNoticeRead(gameId: GameId, notice: StepNotice, commandId: string): Promise<void> {
+    const updated = await this.db.games.update(gameId, (row) => {
+      row.readNotices = { ...row.readNotices, [notice]: commandId };
+    });
+    if (updated === 0) throw new Error(`Unknown game ${gameId}`);
   }
 
   async duplicateGame(gameId: GameId, title?: string): Promise<GameId> {

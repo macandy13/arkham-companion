@@ -386,7 +386,7 @@ test('The Gathering’s reference card opened to read', async ({ page, isMobile 
   ).toBeInViewport();
 });
 
-test('Frozen in Fear from Roland Banks’ threat area, zoomed to read', async ({ page }) => {
+test('Frozen in Fear from Roland Banks’ threat area, on the card shell', async ({ page }) => {
   await resumeImportedGame(
     page,
     'Roland Banks threatened',

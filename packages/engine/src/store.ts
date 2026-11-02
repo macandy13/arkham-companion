@@ -127,6 +127,16 @@ export interface LoadedCampaign {
   log: CampaignLog;
 }
 
+/** A notice the app shows the players after a step: effects to do by hand, or cards drawn. */
+export type StepNotice = 'skippedEffects' | 'drawnCards';
+
+/**
+ * For each `StepNotice`, the step (`StoredEvent.commandId`) whose notice the players dismissed, so a
+ * reload doesn't show it again. `GameStore.undoLast` forgets the undone step's marks, since the next
+ * step may reuse its `seq` and, after a reload, its id.
+ */
+export type ReadNotices = Partial<Record<StepNotice, string>>;
+
 /**
  * Persistence boundary (architecture "Persistence"). The app only talks to this
  * interface; `IndexedDbStore` implements it now, a cloud store may later.
@@ -150,8 +160,8 @@ export interface GameStore {
     commandId?: string,
   ): Promise<StoredEvent[]>;
   /**
-   * Removes the last command group from the log, drops snapshots beyond the
-   * new end and returns the game replayed to that point (unchanged if the log
+   * Removes the last command group from the log, forgets the notices read for it
+   * (`ReadNotices`), drops snapshots beyond the new end and returns the game replayed to that point (unchanged if the log
    * is empty). Rejects like `appendEvents` if `expectedSeq` is stale; `undefined`
    * if the game doesn't exist. The RNG state is part of the replayed state, so
    * redoing a command after an undo reproduces the same shuffle.
@@ -168,6 +178,13 @@ export interface GameStore {
    * `title` defaults to the original's. Rejects for unknown games.
    */
   duplicateGame(gameId: GameId, title?: string): Promise<GameId>;
+  /** The notices the players dismissed in a game (`ReadNotices`); none for unknown games. */
+  loadReadNotices(gameId: GameId): Promise<ReadNotices>;
+  /**
+   * Records that the players dismissed `notice` of the step `commandId`; does not count as play,
+   * so `updatedAt` stays. Rejects for unknown games.
+   */
+  markNoticeRead(gameId: GameId, notice: StepNotice, commandId: string): Promise<void>;
   /** Permanently removes a game with its events and snapshot; unknown games are ignored. */
   deleteGame(gameId: GameId): Promise<void>;
   /** Stored events of a game with `seq` greater than `afterSeq`, oldest first (for export and sync). */
