@@ -662,18 +662,26 @@
 }
 
 /*
- * The decision dialog's page (DecisionDialog, on the CardDialog shell): the question as its title
- * under who decides, the test under it, then the options as a column of full-width buttons and
- * Undo at its foot. Every card dialog's page and the clue payment dialog (CluePaymentDialog,
- * clue_payment.css) share its column.
+ * The column the dialogs over the board lay their parts in: every card dialog's page (the decision
+ * dialog's among them: the question under who decides, the test, the options as full-width
+ * buttons, Undo at its foot), the clue payment (clue_payment.css), the encounter dialog
+ * (encounter.css) and the card zoom (card_zoom.css). Each file adds only what differs.
  */
-#board :is(dialog[data-shell] > article, dialog[data-dialog='clue-payment']) {
+#board
+  :is(
+    dialog[data-shell] > article,
+    dialog:is([data-dialog='clue-payment'], [data-dialog='encounter'], [data-dialog='card-zoom'])
+  ) {
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
 }
 
-#board :is(dialog[data-dialog='decision'], dialog[data-dialog='clue-payment']):not([open]) {
+/*
+ * A dialog that sets its own `display` hides no more while closed, as the browser's own rule
+ * would; one rule for all, its two attributes outranking each dialog's own.
+ */
+#board :is(dialog[data-dialog], dialog[data-shell]):not([open]) {
   display: none;
 }
 
