@@ -109,7 +109,9 @@ const currentPhase = (page: Page) =>
 
 // Journey, continued: play The Gathering on through two full rounds from Roland Banks' first turn,
 // and reload the page once round 2's mythos phase has drawn, the riskiest moment to lose the tab:
-// the game comes back exactly as it was, with the notice of what the mythos phase drew.
+// the game comes back exactly as it was, with the notice of what the mythos phase drew. What the
+// game does by itself, the upkeep's resource and the mythos phase's doom, shows in a notice that
+// fades away on its own.
 test(
   'play two rounds and reload in the middle of the mythos phase',
   { tag: '@flow' },
@@ -128,6 +130,12 @@ test(
       }
     });
 
+    await test.step('The upkeep gives Roland Banks 1 resource, and its notice fades away', async () => {
+      const changes = page.getByRole('status', { name: 'What the game did' });
+      await expect(changes).toHaveText('Roland Banks gains 1 resource');
+      await expect(changes).toBeHidden({ timeout: 10_000 });
+    });
+
     await test.step('Start round 2: its mythos phase draws Dissonant Voices for Roland Banks', async () => {
       await page.getByRole('button', { name: 'Next' }).click();
       await expect(page.getByRole('heading', { name: 'Round 2' })).toBeVisible();
@@ -137,6 +145,9 @@ test(
           .getByRole('region', { name: 'Roland Banks' })
           .getByRole('list', { name: 'Threat area' }),
       ).toContainText('Dissonant Voices');
+      await expect(page.getByRole('status', { name: 'What the game did' })).toHaveText(
+        "1 doom on What's Going On?!",
+      );
     });
 
     await test.step('Reload: the game comes back exactly as it was', async () => {
