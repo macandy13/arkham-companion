@@ -32,6 +32,14 @@ export type Theme = (typeof THEMES)[number];
 export const CARD_THEMES = ['exact', 'nightAndBrass', 'eldritch', 'pictures'] as const;
 export type CardTheme = (typeof CARD_THEMES)[number];
 
+/**
+ * What an enemy's token on the map shows: the figure from its card's picture (`art`, the initial
+ * while the picture loads or when it fails) or always its `initials`, plainer and quicker to tell
+ * apart at a glance.
+ */
+export const ENEMY_TOKEN_FACES = ['art', 'initials'] as const;
+export type EnemyTokenFace = (typeof ENEMY_TOKEN_FACES)[number];
+
 /** What the card theme replaced: the old "Card pictures" setting, read once into the new one. */
 const CARD_LOOK_THEMES: Readonly<Record<string, CardTheme>> = {
   frames: 'exact',
@@ -47,6 +55,7 @@ export interface Settings {
   readonly uiLanguage?: UiLanguage;
   readonly theme: Theme;
   readonly cardTheme: CardTheme;
+  readonly enemyTokens: EnemyTokenFace;
 }
 
 /** Defaults for a fresh device; dark because the app is used at a dim table. */
@@ -55,6 +64,7 @@ export const DEFAULT_SETTINGS: Settings = {
   cardLanguage: 'en',
   theme: 'dark',
   cardTheme: 'exact',
+  enemyTokens: 'art',
 };
 
 const STORAGE_KEY = 'arkham-companion.settings';
@@ -79,6 +89,7 @@ function parseSettings(value: unknown): Settings {
       oneOf(CARD_THEMES, raw.cardTheme) ??
       (typeof raw.cardLook === 'string' ? CARD_LOOK_THEMES[raw.cardLook] : undefined) ??
       DEFAULT_SETTINGS.cardTheme,
+    enemyTokens: oneOf(ENEMY_TOKEN_FACES, raw.enemyTokens) ?? DEFAULT_SETTINGS.enemyTokens,
   };
 }
 

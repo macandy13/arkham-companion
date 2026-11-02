@@ -529,6 +529,11 @@ export const appTexts = {
       eldritch: 'Eldritch',
       pictures: 'Card pictures',
     },
+    enemyTokens: 'Enemy tokens',
+    enemyTokenFaces: {
+      art: 'Card art',
+      initials: 'Initials',
+    },
     about: 'About',
     unofficial:
       'Arkham Companion is an unofficial fan project. It is not produced, endorsed or supported by Fantasy Flight Games.',
