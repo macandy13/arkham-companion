@@ -4,18 +4,11 @@
  */
 #board dialog[data-dialog='encounter'] {
   position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
   min-inline-size: min(var(--layout-zoom-card-width), 100%);
   /* Wider than other dialogs, as wide as the row of a pile's cards beside its arrows. */
   inline-size: min-content;
   max-width: min(var(--dialog-width-wide), 100%);
   font-size: var(--font-size-body);
-}
-
-#board dialog[data-dialog='encounter']:not([open]) {
-  display: none;
 }
 
 #board dialog[data-dialog='encounter'] p {

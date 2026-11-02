@@ -17,10 +17,6 @@
   overflow: visible;
 }
 
-#board dialog[data-shell]:not([open]) {
-  display: none;
-}
-
 #board dialog[data-shell]:is([data-shell='above'], [data-shell='portrait']) {
   flex-direction: column;
 }

@@ -39,7 +39,10 @@
     "skill_intellect": 3,
     "skill_combat": 4,
     "skill_agility": 2,
-    "imagesrc": "/bundles/cards/01001.png"
+    "imagesrc": "/bundles/cards/01001.png",
+    "traits": "Invented. Traits.",
+    "text": "[reaction] Invented text for the tests: after you pass a test, nothing happens. (Not the printed ability.)\n[elder_sign] effect: +1, invented as well.",
+    "flavor": "Written for the end-to-end tests, never printed on a card."
   },
   {
     "code": "01104",
