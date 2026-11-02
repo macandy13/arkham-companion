@@ -160,7 +160,7 @@ A restriction can also bind an investigator (`InvestigatorCardRestriction`), whi
 - Clue costs leave their clues out (`cluesHeldByGroup`, `defaultCluePayments`); `groupCluePayments` rejects them as payers, and `canPay` an own clue cost.
 - `InvestigatorView.forbidden` lists them for the screen, verbs by noun (`forbiddenFor`: `{ clues: ['discover', 'spend'] }`).
 
-A card can also make basic actions cost more (an `actionCost` modifier, [`ActionCostModifier`](../../packages/engine/src/modifiers.ts)): the actions it raises by their card text words (`BasicAction`), by how much, whom it binds (`of: 'threatArea'`, as a restriction), and with `first: 'eachRound'` only the first of them each round (Frozen in Fear).
+A card can also make basic actions cost more (an `actionCost` modifier, [`ActionCostModifier`](../../packages/engine/src/modifiers.ts)): the actions it raises by their card text words (`BasicAction`), by how much, whom it binds (`of: 'threatArea'`, the `InvestigatorScope` a restriction's `who` takes), and with `first: 'eachRound'` only the first of them each round (Frozen in Fear).
 
 - The engine still leaves counting actions to the players, so [`actionCost`](../../packages/engine/src/action_costs.ts) (`BoardView.actionCost`) is what they count off: 1 (none for a free one) plus what the binding cards add, each copy its own.
 - They name the action they count off (`AdjustActions.for`, `PlayTable.spendActionFor`). The engine records it for the round (`GameMeta.actionsTaken`, cleared by `RoundEnded`), so a cost of the first one is paid once, even when the action came before the card. A free action is recorded with a delta of 0.

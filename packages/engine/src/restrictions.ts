@@ -57,9 +57,6 @@ export type Forbidden = { [N in RestrictedNoun]?: RestrictedVerbs[N][] };
  */
 export type RestrictedLocation = Extract<CardScope, 'self' | 'host'>;
 
-/** The investigator a restriction binds (`InvestigatorScope`). */
-export type RestrictedInvestigator = InvestigatorScope;
-
 /** A "cannot" about a location: `{ cannot: 'investigate', of: 'host' }` is Locked Door. */
 export interface LocationCardRestriction {
   cannot: LocationRestriction;
@@ -87,11 +84,11 @@ export interface PlayedCardFilter {
  * narrows which cards.
  */
 export type InvestigatorCardRestriction =
-  | { cannot: readonly RestrictedVerbs['clues'][]; what: 'clues'; who: RestrictedInvestigator }
+  | { cannot: readonly RestrictedVerbs['clues'][]; what: 'clues'; who: InvestigatorScope }
   | {
       cannot: readonly RestrictedVerbs['cards'][];
       what: 'cards';
-      who: RestrictedInvestigator;
+      who: InvestigatorScope;
       cards?: PlayedCardFilter;
     };
 

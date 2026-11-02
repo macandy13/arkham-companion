@@ -46,7 +46,7 @@ export type Modifier =
   | ActionCostModifier;
 
 /** What a modifier is applied to: a card in play or an investigator. */
-export type ModifierSubject =
+export type ModifiedSubject =
   { kind: 'card'; card: CardInstance } | { kind: 'investigator'; investigatorId: InvestigatorId };
 
 /** A modifier that applies now, with the card whose constant ability it is. */
@@ -56,19 +56,19 @@ export interface ActiveModifier {
 }
 
 /**
- * Every modifier of the cards in play that names `target`, of any value, so each reader filters
+ * Every modifier of the cards in play that names `subject`, of any value, so each reader filters
  * the value it needs and can say which card changed it.
  */
 export function modifiersOn(
   ctx: EngineContext,
   state: GameState,
-  target: ModifierSubject,
+  subject: ModifiedSubject,
 ): readonly ActiveModifier[] {
   return cardsInPlay(state)
     .filter(hasActiveAbilities)
     .flatMap((source) =>
       (cardStats(ctx.cards, source.code).modifiers ?? [])
-        .filter((modifier) => names(ctx, state, source, modifier, target))
+        .filter((modifier) => names(ctx, state, source, modifier, subject))
         .map((modifier) => ({ source, modifier })),
     );
 }
@@ -95,15 +95,15 @@ function names(
   state: GameState,
   source: CardInstance,
   modifier: Modifier,
-  target: ModifierSubject,
+  subject: ModifiedSubject,
 ): boolean {
   switch (modifier.value) {
     case 'shroud':
     case 'fight':
     case 'evade':
-      return target.kind === 'card' && namesCard(ctx, state, source, modifier.of, target.card);
+      return subject.kind === 'card' && namesCard(ctx, state, source, modifier.of, subject.card);
     case 'actionCost':
-      return target.kind === 'investigator' && binds(source, modifier.of, target.investigatorId);
+      return subject.kind === 'investigator' && binds(source, modifier.of, subject.investigatorId);
     default:
       return assertNever(modifier);
   }
