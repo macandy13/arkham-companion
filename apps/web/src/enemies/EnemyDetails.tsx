@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import type { BoardView, MapEnemyView } from '@arkham/engine';
 import { ActionButton, ActionGroup, CardActions, cardActionsOn } from '../screens/ActionRow';
-import { CardDialog } from '../screens/CardDialog';
+import { DetailsDialog, useDecisionHost } from '../screens/DetailsDialog';
 import type { GameActions } from '../state/gameActions';
 import { useBackCloses } from '../screens/useBackCloses';
 import { EnemyCard } from './EnemyCard';
@@ -10,19 +10,20 @@ import './enemies.css';
 
 /**
  * One enemy in full, opened by a tap on its card or its map token, on the card shell
- * (`CardDialog`): the enemy drawn as its card beside the page (`EnemyCard`, from
+ * (`DetailsDialog`): the enemy drawn as its card beside the page (`EnemyCard`, from
  * `BoardView.enemyStats`), whom it is engaged with in the kicker, its fight, health left of its
  * health for the player count and evade on the page, and under them one row of what the players
  * can do to it. On an investigator's turn, in one Actions group, the basic actions the rules
  * allow them against it (`BoardView.enemyActions`): fight, evade and engage as actions, which
- * count off one, then fight and evade without an action, as some cards allow; at any time, in
- * a group of their own, what card effects do to an
- * enemy: deal 1 damage, disengage it, defeat it. Each button shows a short word and is named in
- * full ("Fight · 1 action"). Fight and evade close it, so the decision dialog that asks for the
- * test's result is the only one open; damage keeps it open for the next point, and engage for the
- * fight that usually follows, and both read the enemy fresh from the board. Escape and its ×
- * close it; nothing is tapped while a step is queued (`busy`). On a phone it is the shell's sheet
- * and the back gesture closes it too (`useBackCloses`).
+ * count off one, then fight and evade without an action, as some cards allow; at any time, in a
+ * group of their own, what card effects do to an enemy: deal 1 damage, disengage it, defeat it.
+ * Each button shows a short word and is named in full ("Fight · 1 action"). Fight, evade and
+ * engage keep it open and show the decisions they raise in place of its page
+ * (`useDecisionHost`: the test's result, an attack of opportunity), with the enemy still beside
+ * it, then its page again for the fight that often follows; damage keeps it open for the next
+ * point. It reads the enemy fresh from the board. Escape and its × close it; nothing is tapped
+ * while a step is queued (`busy`). On a phone it is the shell's sheet and the back gesture
+ * closes it too (`useBackCloses`).
  */
 export function EnemyDetails({
   board,
@@ -39,8 +40,10 @@ export function EnemyDetails({
 }) {
   const { t } = useTranslation();
   const close = useBackCloses(onClose);
-  const step = (play: () => Promise<void>, closes: boolean) => () => {
-    if (closes) close();
+  const hosted = useDecisionHost();
+  const step = (play: () => Promise<void>, then: 'close' | 'stay' | 'host') => () => {
+    if (then === 'close') close();
+    if (then === 'host') hosted.host();
     void play();
   };
   const allowed = board.turn === undefined ? [] : board.enemyActions(board.turn, enemy.id);
@@ -53,7 +56,11 @@ export function EnemyDetails({
   const left = healthLeft(enemy);
 
   return (
-    <CardDialog
+    <DetailsDialog
+      board={board}
+      actions={actions}
+      busy={busy}
+      hosted={hosted}
       name="enemy"
       card={board.cardFace(enemy.id)}
       drawn={<EnemyCard enemy={enemy} stats={stats} />}
@@ -61,7 +68,6 @@ export function EnemyDetails({
         ? { actor: engaged, kicker: t('enemy.engagedWith', { name: engaged.name }) }
         : {})}
       title={enemy.name}
-      onCancel={close}
       onClose={close}
     >
       <dl>
@@ -88,7 +94,7 @@ export function EnemyDetails({
                 caption={t('enemy.caption.fight')}
                 name={t('enemy.fightAction')}
                 disabled={busy}
-                onClick={step(() => actions.fight(enemy.id), true)}
+                onClick={step(() => actions.fight(enemy.id), 'host')}
               />
             )}
             {allowed.includes('evade') && (
@@ -98,7 +104,7 @@ export function EnemyDetails({
                 caption={t('enemy.caption.evade')}
                 name={t('enemy.evadeAction')}
                 disabled={busy}
-                onClick={step(() => actions.evade(enemy.id), true)}
+                onClick={step(() => actions.evade(enemy.id), 'host')}
               />
             )}
             {allowed.includes('engage') && (
@@ -108,7 +114,7 @@ export function EnemyDetails({
                 caption={t('enemy.caption.engage')}
                 name={t('enemy.engageAction')}
                 disabled={busy}
-                onClick={step(() => actions.engage(enemy.id), false)}
+                onClick={step(() => actions.engage(enemy.id), 'host')}
               />
             )}
             {tests.includes('fight') && (
@@ -118,7 +124,7 @@ export function EnemyDetails({
                 caption={t('enemy.caption.fight')}
                 name={t('enemy.fightFree')}
                 disabled={busy}
-                onClick={step(() => actions.fight(enemy.id, 'free'), true)}
+                onClick={step(() => actions.fight(enemy.id, 'free'), 'host')}
               />
             )}
             {tests.includes('evade') && (
@@ -128,7 +134,7 @@ export function EnemyDetails({
                 caption={t('enemy.caption.evade')}
                 name={t('enemy.evadeFree')}
                 disabled={busy}
-                onClick={step(() => actions.evade(enemy.id, 'free'), true)}
+                onClick={step(() => actions.evade(enemy.id, 'free'), 'host')}
               />
             )}
           </ActionGroup>
@@ -148,7 +154,7 @@ export function EnemyDetails({
             caption={t('enemy.caption.damage')}
             name={t('enemy.damage')}
             disabled={busy}
-            onClick={step(() => actions.damageEnemy(enemy.id, 1), false)}
+            onClick={step(() => actions.damageEnemy(enemy.id, 1), 'stay')}
           />
           {enemy.engagedWith !== undefined && (
             <ActionButton
@@ -156,7 +162,7 @@ export function EnemyDetails({
               caption={t('enemy.caption.disengage')}
               name={t('enemy.disengage')}
               disabled={busy}
-              onClick={step(() => actions.disengageEnemy(enemy.id), true)}
+              onClick={step(() => actions.disengageEnemy(enemy.id), 'close')}
             />
           )}
           <ActionButton
@@ -164,10 +170,10 @@ export function EnemyDetails({
             caption={t('enemy.caption.defeat')}
             name={t('enemy.defeat')}
             disabled={busy}
-            onClick={step(() => actions.defeatEnemy(enemy.id), true)}
+            onClick={step(() => actions.defeatEnemy(enemy.id), 'close')}
           />
         </ActionGroup>
       </footer>
-    </CardDialog>
+    </DetailsDialog>
   );
 }

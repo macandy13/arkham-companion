@@ -48,13 +48,17 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      # The card pictures the E2E shots show, downloaded once by Playwright's global setup
-      # (apps/web/e2e/fixtures/card_pictures.ts) and kept here, never in the repo.
+      # The card pictures the E2E shots show, downloaded by Playwright's global setup
+      # (apps/web/e2e/fixtures/card_pictures.ts) and kept here, never in the repo. ArkhamDB stops
+      # answering a runner after a few dozen pictures, so each run saves what it has under its own
+      # key and the next run restores the newest and fetches only what is still missing.
       - uses: actions/cache@v6
         with:
           path: apps/web/e2e/.card_pictures
-          key: card-pictures-${{ hashFiles('packages/scenarios/src/the_gathering/cards.ts', 'packages/scenarios/src/card_builders.ts', 'apps/web/e2e/fixtures/card_pictures.ts') }}
-          restore-keys: card-pictures-
+          key: card-pictures-${{ hashFiles('packages/scenarios/src/the_gathering/cards.ts', 'packages/scenarios/src/the_midnight_masks/cards.ts', 'packages/scenarios/src/the_devourer_below/cards.ts', 'packages/scenarios/src/card_builders.ts', 'apps/web/e2e/fixtures/card_pictures.ts') }}-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: |
+            card-pictures-${{ hashFiles('packages/scenarios/src/the_gathering/cards.ts', 'packages/scenarios/src/the_midnight_masks/cards.ts', 'packages/scenarios/src/the_devourer_below/cards.ts', 'packages/scenarios/src/card_builders.ts', 'apps/web/e2e/fixtures/card_pictures.ts') }}-
+            card-pictures-
       # Chromium's headless shell without apt, as in preview.yml (see there). This job also runs
       # on main, so its cache is the one every PR's preview and E2E job restore.
       - id: playwright

@@ -1,0 +1,69 @@
+/*
+ * The game's symbols in card text (`cardText`, `data-symbol`): each one's picture as `--symbol`,
+ * for every card and dialog that shows card text, and by default an icon of the text's height in
+ * its colour. A surface sets only its own size and colour, as the enemy and location cards do.
+ */
+:where(span[data-symbol]) {
+  display: inline-block;
+  width: 1.1em;
+  height: 1.1em;
+  vertical-align: text-bottom;
+  background: currentcolor;
+  mask: var(--symbol) center / contain no-repeat;
+}
+
+[data-symbol='willpower'] {
+  --symbol: url('../symbols/willpower.svg');
+}
+
+[data-symbol='intellect'] {
+  --symbol: url('../symbols/intellect.svg');
+}
+
+[data-symbol='combat'] {
+  --symbol: url('../symbols/combat.svg');
+}
+
+[data-symbol='agility'] {
+  --symbol: url('../symbols/agility.svg');
+}
+
+[data-symbol='wild'] {
+  --symbol: url('../symbols/wild.svg');
+}
+
+[data-symbol='per_investigator'] {
+  --symbol: url('../symbols/per_investigator.svg');
+}
+
+[data-symbol='action'] {
+  --symbol: url('../symbols/action.svg');
+}
+
+[data-symbol='free'] {
+  --symbol: url('../symbols/free.svg');
+}
+
+[data-symbol='reaction'] {
+  --symbol: url('../symbols/reaction.svg');
+}
+
+[data-symbol='elder_sign'] {
+  --symbol: url('../symbols/elder_sign.svg');
+}
+
+[data-symbol='skull'] {
+  --symbol: url('../symbols/skull.svg');
+}
+
+[data-symbol='auto_fail'] {
+  --symbol: url('../symbols/auto_fail.svg');
+}
+
+[data-symbol='bless'] {
+  --symbol: url('../symbols/bless.svg');
+}
+
+[data-symbol='curse'] {
+  --symbol: url('../symbols/curse.svg');
+}

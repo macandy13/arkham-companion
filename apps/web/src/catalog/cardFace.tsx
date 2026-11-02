@@ -1,9 +1,16 @@
 import { useId } from 'react';
-import type { EncounterSetCode } from '@arkham/engine';
+import type { CardFaceView, EncounterSetCode } from '@arkham/engine';
 import type { Point } from '../map/mapLayout';
 import '../symbols/sets.css';
 import { PORTRAIT_SCAN } from './cardArt';
 import './card_face.css';
+
+/**
+ * A card's face as a dialog shows it (`CardDialog`, `CardZoom`, `TreacheryCard`): a `CardFaceView`
+ * without the instance it is in play, so a card that is none (the scenario reference card, which
+ * the game keeps as `BoardView.reference`) shows the same way.
+ */
+export type ShownCard = Omit<CardFaceView, 'id'>;
 
 /**
  * How many SVG user units of a drawing a unit of a card scan is: card faces are drawn in scan

@@ -1,9 +1,14 @@
 import { useId, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { CardFaceView } from '@arkham/engine';
 import { sentences } from '@arkham/util';
 import { PORTRAIT_SCAN, TREACHERY_ART, artViewBox } from '../catalog/cardArt';
-import { CARD_OUTLINE, NightSky, OrnamentLine, SetMedallion } from '../catalog/cardFace';
+import {
+  CARD_OUTLINE,
+  NightSky,
+  OrnamentLine,
+  SetMedallion,
+  type ShownCard,
+} from '../catalog/cardFace';
 import { useCardPicture } from '../catalog/cardImages';
 import { shrinkAround, useShrinkToFit } from '../map/useShrinkToFit';
 import { TREACHERY_FACE, TREACHERY_FRAME } from './treacheryCardFrame';
@@ -22,7 +27,7 @@ const HATCH = 40;
  * lies over the face once loaded (`data-picture`); the face stays under it for assistive
  * technology. The card text isn't in the card data, so the page shows no more than that.
  */
-export function TreacheryCard({ card, titleId }: { card: CardFaceView; titleId: string }) {
+export function TreacheryCard({ card, titleId }: { card: ShownCard; titleId: string }) {
   const { t } = useTranslation();
   const clipId = useId();
   const pageId = useId();

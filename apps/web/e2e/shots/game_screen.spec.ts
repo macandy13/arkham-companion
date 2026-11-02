@@ -2,6 +2,8 @@ import { expect, test } from '../fixtures/test';
 import {
   cluesToShareExport,
   graveyardTestExport,
+  midnightMasksStartedExport,
+  tangledThicketRevealedExport,
   rolandSurroundedExport,
   rolandThreatenedExport,
   houseOpenedExport,
@@ -34,49 +36,42 @@ test('map tabs for the Study and the house, the house chosen', async ({ page }) 
   await expect(page.getByRole('tabpanel', { name: 'House' })).toBeVisible();
 });
 
-test(
-  'Roland Banks with four treacheries and the Ghoul Priest, scrolled on to the Ghoul Priest',
-  { tag: '@shot' },
-  async ({ page }) => {
-    await resumeImportedGame(
-      page,
-      'Roland Banks threatened',
-      rolandThreatenedExport('Roland Banks threatened'),
-    );
+test('Roland Banks with four treacheries and the Ghoul Priest, scrolled on to the Ghoul Priest', async ({
+  page,
+}) => {
+  await resumeImportedGame(
+    page,
+    'Roland Banks threatened',
+    rolandThreatenedExport('Roland Banks threatened'),
+  );
 
-    const roland = page.getByRole('region', { name: 'Roland Banks' });
-    const threatArea = roland.getByRole('list', { name: 'Threat area' });
-    const ghoulPriest = threatArea.getByRole('listitem', {
-      name: 'Ghoul Priest, 3 of 5 health left, 2 damage',
-    });
-    await expect(threatArea.getByRole('listitem')).toHaveCount(5);
-    await expect(ghoulPriest).not.toBeInViewport({ ratio: 1 });
+  const roland = page.getByRole('region', { name: 'Roland Banks' });
+  const threatArea = roland.getByRole('list', { name: 'Threat area' });
+  const ghoulPriest = threatArea.getByRole('listitem', {
+    name: 'Ghoul Priest, 3 of 5 health left, 2 damage',
+  });
+  await expect(threatArea.getByRole('listitem')).toHaveCount(5);
+  await expect(ghoulPriest).not.toBeInViewport({ ratio: 1 });
 
-    await roland.getByRole('button', { name: 'Later cards in the threat area' }).click();
+  await roland.getByRole('button', { name: 'Later cards in the threat area' }).click();
 
-    await expect(ghoulPriest).toBeInViewport({ ratio: 1 });
-  },
-);
+  await expect(ghoulPriest).toBeInViewport({ ratio: 1 });
+});
 
-test(
-  'the Hallway’s details, its card with Roland Banks on it, on Roland Banks’ turn',
-  { tag: '@shot' },
-  async ({ page }) => {
-    await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
+test('the Hallway’s details, its card with Roland Banks on it, on Roland Banks’ turn', async ({
+  page,
+}) => {
+  await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
 
-    await page
-      .getByRole('figure', { name: 'House' })
-      .getByRole('group', { name: 'Hallway' })
-      .click();
+  await page.getByRole('figure', { name: 'House' }).getByRole('group', { name: 'Hallway' }).click();
 
-    // A dialog on a tablet, the location mode in place of the map on a phone.
-    const details = page
-      .getByRole('dialog', { name: 'Hallway' })
-      .or(page.getByRole('region', { name: 'Hallway' }));
-    await expect(details.getByRole('img', { name: 'The card of Hallway' })).toBeVisible();
-    await expect(details.getByRole('button', { name: 'Investigate · 1 action' })).toBeVisible();
-  },
-);
+  // A dialog on a tablet, the location mode in place of the map on a phone.
+  const details = page
+    .getByRole('dialog', { name: 'Hallway' })
+    .or(page.getByRole('region', { name: 'Hallway' }));
+  await expect(details.getByRole('img', { name: 'The card of Hallway' })).toBeVisible();
+  await expect(details.getByRole('button', { name: 'Investigate · 1 action' })).toBeVisible();
+});
 
 test('the house map by day', async ({ page }) => {
   await page.goto('/#/settings');
@@ -251,23 +246,19 @@ test("Roland Banks' fight against the Ghoul Priest, the damage raised to 2", asy
   await expect(decision.getByRole('region', { name: 'Damage dealt' })).toContainText('2');
 });
 
-test(
-  "the Ghoul Priest's details opened from its card on Roland Banks' turn",
-  { tag: '@shot' },
-  async ({ page }) => {
-    await resumeImportedGame(
-      page,
-      'Roland Banks threatened',
-      rolandThreatenedExport('Roland Banks threatened'),
-    );
-    const roland = page.getByRole('region', { name: 'Roland Banks' });
-    await roland.getByRole('button', { name: 'Later cards in the threat area' }).click();
+test("the Ghoul Priest's details opened from its card on Roland Banks' turn", async ({ page }) => {
+  await resumeImportedGame(
+    page,
+    'Roland Banks threatened',
+    rolandThreatenedExport('Roland Banks threatened'),
+  );
+  const roland = page.getByRole('region', { name: 'Roland Banks' });
+  await roland.getByRole('button', { name: 'Later cards in the threat area' }).click();
 
-    await roland.getByRole('button', { name: 'Details of Ghoul Priest' }).click();
+  await roland.getByRole('button', { name: 'Details of Ghoul Priest' }).click();
 
-    await expect(page.getByRole('dialog', { name: 'Ghoul Priest' })).toBeVisible();
-  },
-);
+  await expect(page.getByRole('dialog', { name: 'Ghoul Priest' })).toBeVisible();
+});
 
 test('the encounter deck after two mythos phases, Dissonant Voices on the discard pile', async ({
   page,
@@ -351,17 +342,25 @@ test('The Barrier opened as a full card', async ({ page, isMobile }) => {
   await expect(card.getByRole('img', { name: 'Clues 0 / 3' })).toBeInViewport();
 });
 
-test('The Gathering’s reference card opened to read', async ({ page, isMobile }) => {
-  await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
-  const scenario = page.getByRole('region', { name: 'Scenario' });
+test(
+  'The Gathering’s reference card opened to read',
+  { tag: '@shot' },
+  async ({ page, isMobile }) => {
+    await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
+    const scenario = page.getByRole('region', { name: 'Scenario' });
 
-  // A dialog from the name on a tablet; on a phone a tap opens the detail view on the card.
-  if (isMobile) await scenario.locator('[data-card]').click();
-  else await scenario.getByRole('button', { name: 'The Gathering' }).click();
+    // A dialog from the name on a tablet; on a phone a tap opens the detail view on the card.
+    if (isMobile) await scenario.locator('[data-card]').click();
+    else await scenario.getByRole('button', { name: 'The Gathering' }).click();
 
-  const card = isMobile ? scenario : page.getByRole('dialog', { name: 'The Gathering' });
-  await expect(card.getByText('-1. On a failure, take 1 horror.')).toBeInViewport();
-});
+    const card = isMobile ? scenario : page.getByRole('dialog', { name: 'The Gathering' });
+    await expect(
+      card
+        .getByRole('list', { name: 'Chaos tokens' })
+        .getByText('-1. On a failure, take 1 horror.'),
+    ).toBeInViewport();
+  },
+);
 
 test('Frozen in Fear from Roland Banks’ threat area, zoomed to read', async ({ page }) => {
   await resumeImportedGame(
@@ -417,26 +416,22 @@ test('three attacks of opportunity on Roland Banks, the Ghoul Minions fanned beh
   ).toHaveCount(2);
 });
 
-test(
-  'the Parlor’s details with its Resign among Roland Banks’ card actions',
-  { tag: '@shot' },
-  async ({ page }) => {
-    await resumeImportedGame(page, 'In the Parlor', inTheParlorExport('In the Parlor'));
+test('the Parlor’s details with its Resign among Roland Banks’ card actions', async ({ page }) => {
+  await resumeImportedGame(page, 'In the Parlor', inTheParlorExport('In the Parlor'));
 
-    // On a phone the investigator panel lies over the Parlor's tile, so the keyboard opens it.
-    await page.getByRole('button', { name: 'Details of Parlor' }).press('Enter');
+  // On a phone the investigator panel lies over the Parlor's tile, so the keyboard opens it.
+  await page.getByRole('button', { name: 'Details of Parlor' }).press('Enter');
 
-    // A dialog on a tablet, the location mode in place of the map on a phone.
-    const parlor = page
-      .getByRole('dialog', { name: 'Parlor' })
-      .or(page.getByRole('region', { name: 'Parlor' }));
-    await expect(
-      parlor
-        .getByRole('region', { name: 'Card actions' })
-        .getByRole('button', { name: 'Resign · Parlor' }),
-    ).toBeVisible();
-  },
-);
+  // A dialog on a tablet, the location mode in place of the map on a phone.
+  const parlor = page
+    .getByRole('dialog', { name: 'Parlor' })
+    .or(page.getByRole('region', { name: 'Parlor' }));
+  await expect(
+    parlor
+      .getByRole('region', { name: 'Card actions' })
+      .getByRole('button', { name: 'Resign · Parlor' }),
+  ).toBeVisible();
+});
 
 test('the unrevealed Parlor’s details, its barrier offering Roland Banks no move', async ({
   page,
@@ -500,4 +495,35 @@ test('the Graveyard’s failed willpower test, its choice under the Failed row',
 
   await expect(decision.getByRole('button', { name: 'Take 2 horror' })).toBeVisible();
   await expect(decision.getByRole('button', { name: 'Move to Rivertown' })).toBeVisible();
+});
+
+test('Arkham in The Midnight Masks, Easttown, the Graveyard and Northside with their new symbols', async ({
+  page,
+}) => {
+  await resumeImportedGame(
+    page,
+    'The Midnight Masks started',
+    midnightMasksStartedExport('The Midnight Masks started'),
+  );
+  const map = page.locator('#map');
+
+  for (const symbol of ['moon', 'hourglass', 'T']) {
+    await expect(
+      map.getByRole('img', { name: `Connection symbol: ${symbol}`, exact: true }),
+    ).toBeVisible();
+  }
+});
+
+test('the Tangled Thicket revealed with its double slash, the other Arkham Woods still showing their square', async ({
+  page,
+}) => {
+  await resumeImportedGame(
+    page,
+    'The Tangled Thicket revealed',
+    tangledThicketRevealedExport('The Tangled Thicket revealed'),
+  );
+  const map = page.locator('#map');
+
+  await expect(map.getByRole('img', { name: 'Connection symbol: double slash' })).toHaveCount(1);
+  await expect(map.getByRole('img', { name: 'Connection symbol: square' })).toHaveCount(3);
 });

@@ -12,6 +12,11 @@ import {
  * cached as one unit.
  */
 export interface CardCatalog {
+  /**
+   * The shape of the catalog (`CATALOG_FORMAT`) when it was built; a cached catalog of an older
+   * shape, or one cached before this field, is fetched in full once (`loadCatalog`).
+   */
+  format?: number;
   investigators: InvestigatorDef[];
   packs: PackDef[];
   /**
@@ -27,6 +32,13 @@ export interface CardCatalog {
   /** `Last-Modified` of the cards response; sent back as `If-Modified-Since` on refresh. */
   lastModified?: string;
 }
+
+/**
+ * The catalog's current shape. Raise it whenever the catalog gains data an older cached copy
+ * lacks (2: the investigators' traits, ability and flavour texts), so the app fetches it in full
+ * once instead of revalidating the old copy.
+ */
+export const CATALOG_FORMAT = 2;
 
 /** Result of a refresh: `notModified` means the cached catalog is still current. */
 export type CatalogFetchResult = { status: 'notModified' } | { status: 'ok'; catalog: CardCatalog };
@@ -64,6 +76,13 @@ export async function fetchCatalog(
   const lastModified = cardsResponse.headers.get('Last-Modified') ?? undefined;
   return {
     status: 'ok',
-    catalog: { investigators, packs, references, referencePictures, lastModified },
+    catalog: {
+      format: CATALOG_FORMAT,
+      investigators,
+      packs,
+      references,
+      referencePictures,
+      lastModified,
+    },
   };
 }

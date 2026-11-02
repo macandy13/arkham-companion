@@ -163,12 +163,16 @@ export interface CardStats {
   /** The card's action abilities ("[action]: …"), taken with `UseCardAction`; none when absent. */
   actions?: readonly CardAction[];
   /**
-   * Only on locations: the connection symbol in its upper left corner, the same on both sides of
-   * every location so far. The views label locations with it; movement follows the map's
-   * connections, not these symbols. Entered with the scenario data, since ArkhamDB has no field
-   * for it.
+   * Only on locations: the connection symbol in its upper left corner, on its revealed side. The
+   * views label locations with it; movement follows the map's connections, not these symbols.
+   * Entered with the scenario data, since ArkhamDB has no field for it.
    */
   symbol?: LocationSymbol;
+  /**
+   * The symbol the unrevealed side prints, only where it differs from `symbol` (every Arkham Woods
+   * shows a square until it is revealed).
+   */
+  unrevealedSymbol?: LocationSymbol;
   /**
    * The picture of its front on ArkhamDB, only for the views to show; no rule reads it. A
    * location's front is its revealed side.
@@ -179,10 +183,21 @@ export interface CardStats {
 }
 
 /**
- * A location's connection symbol (`CardStats.symbol`). The game prints many more; each joins this
- * union with the first location that needs it, together with its glyph in the web app.
+ * A location's connection symbol (`CardStats.symbol`). The game prints fifteen
+ * (`docs/location-symbols.md`); each joins this union with the first location that needs it,
+ * together with its glyph in the web app.
  */
-export type LocationSymbol = 'circle' | 'square' | 'triangle' | 'plus' | 'diamond';
+export type LocationSymbol =
+  | 'circle'
+  | 'square'
+  | 'triangle'
+  | 'plus'
+  | 'diamond'
+  | 'tilde'
+  | 'moon'
+  | 'hourglass'
+  | 't'
+  | 'double_slash';
 
 /**
  * What a treachery attached to a location by its revelation does

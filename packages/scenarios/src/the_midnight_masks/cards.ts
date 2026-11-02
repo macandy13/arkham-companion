@@ -182,6 +182,7 @@ export const theMidnightMasksCardDefs: readonly CardStats[] = [
   location({
     code: '01124',
     name: 'Your House',
+    symbol: 'tilde',
     set: own,
     shroud: 2,
     cluesPerInvestigator: 1,
@@ -191,6 +192,7 @@ export const theMidnightMasksCardDefs: readonly CardStats[] = [
   location({
     code: '01125',
     name: 'Rivertown',
+    symbol: 'circle',
     set: own,
     shroud: 1,
     cluesPerInvestigator: 1,
@@ -199,6 +201,7 @@ export const theMidnightMasksCardDefs: readonly CardStats[] = [
   location({
     code: '01126',
     name: 'Southside',
+    symbol: 'square',
     set: own,
     shroud: 3,
     cluesPerInvestigator: 1,
@@ -209,6 +212,7 @@ export const theMidnightMasksCardDefs: readonly CardStats[] = [
   location({
     code: '01127',
     name: 'Southside',
+    symbol: 'square',
     set: own,
     shroud: 2,
     cluesPerInvestigator: 1,
@@ -219,6 +223,7 @@ export const theMidnightMasksCardDefs: readonly CardStats[] = [
   location({
     code: '01128',
     name: "St. Mary's Hospital",
+    symbol: 'plus',
     set: own,
     shroud: 2,
     cluesPerInvestigator: 1,
@@ -228,6 +233,7 @@ export const theMidnightMasksCardDefs: readonly CardStats[] = [
   location({
     code: '01129',
     name: 'Miskatonic University',
+    symbol: 'diamond',
     set: own,
     shroud: 4,
     cluesPerInvestigator: 2,
@@ -238,6 +244,7 @@ export const theMidnightMasksCardDefs: readonly CardStats[] = [
   location({
     code: '01130',
     name: 'Downtown',
+    symbol: 'triangle',
     set: own,
     shroud: 3,
     cluesPerInvestigator: 1,
@@ -248,6 +255,7 @@ export const theMidnightMasksCardDefs: readonly CardStats[] = [
   location({
     code: '01131',
     name: 'Downtown',
+    symbol: 'triangle',
     set: own,
     shroud: 4,
     cluesPerInvestigator: 2,
@@ -259,6 +267,7 @@ export const theMidnightMasksCardDefs: readonly CardStats[] = [
   location({
     code: '01132',
     name: 'Easttown',
+    symbol: 'moon',
     set: own,
     shroud: 2,
     cluesPerInvestigator: 1,
@@ -267,6 +276,7 @@ export const theMidnightMasksCardDefs: readonly CardStats[] = [
   location({
     code: '01133',
     name: 'Graveyard',
+    symbol: 'hourglass',
     set: own,
     shroud: 1,
     cluesPerInvestigator: 2,
@@ -292,6 +302,7 @@ export const theMidnightMasksCardDefs: readonly CardStats[] = [
   location({
     code: '01134',
     name: 'Northside',
+    symbol: 't',
     set: own,
     shroud: 3,
     cluesPerInvestigator: 2,

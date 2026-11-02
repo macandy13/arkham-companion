@@ -1,6 +1,6 @@
 import 'fake-indexeddb/auto';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { CardCatalog, FetchFn } from '@arkham/carddata';
+import { CATALOG_FORMAT, type CardCatalog, type FetchFn } from '@arkham/carddata';
 import { IndexedDbStore } from '../storage/IndexedDbStore';
 import { loadCatalog } from './loadCatalog';
 
@@ -62,28 +62,18 @@ describe('loadCatalog', () => {
     expect(requests).toContain('https://arkhamdb.com/api/public/cards/ v1');
   });
 
-  it('fetches in full once a cached catalog has no reference card texts', async () => {
+  it.each([
+    { cachedAs: 'a catalog cached before the app noted its shape', format: undefined },
+    { cachedAs: 'a catalog of an older shape', format: CATALOG_FORMAT - 1 },
+  ])('fetches $cachedAs in full once', async ({ format }) => {
     const fetched = await loadCatalog(store, 'en', respondingWith(okCards('v1')));
-    delete fetched.references;
-    await store.putCatalog('en', fetched);
+    await store.putCatalog('en', { ...fetched, format });
     const requests: string[] = [];
 
     const refreshed = await loadCatalog(store, 'en', respondingWith(okCards('v1'), requests));
 
     expect(requests).toContain('https://arkhamdb.com/api/public/cards/');
-    expect(refreshed.references).toEqual({});
-  });
-
-  it('fetches in full once a cached catalog has no reference card pictures', async () => {
-    const fetched = await loadCatalog(store, 'en', respondingWith(okCards('v1')));
-    delete fetched.referencePictures;
-    await store.putCatalog('en', fetched);
-    const requests: string[] = [];
-
-    const refreshed = await loadCatalog(store, 'en', respondingWith(okCards('v1'), requests));
-
-    expect(requests).toContain('https://arkhamdb.com/api/public/cards/');
-    expect(refreshed.referencePictures).toEqual({});
+    expect(refreshed.format).toBe(CATALOG_FORMAT);
   });
 
   it('replaces the cache when the server has a newer version', async () => {

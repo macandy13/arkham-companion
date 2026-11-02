@@ -15,6 +15,15 @@ export interface InvestigatorDef {
     combat: number;
     agility: number;
   };
+  /** The traits the card prints over its text ("Agency. Detective."), absent when it prints none. */
+  traits?: string;
+  /**
+   * The ability text on the card's notebook page, in ArkhamDB markup (`[reaction]`, `<b>…</b>`,
+   * newlines between abilities), in the language of the card data.
+   */
+  text?: string;
+  /** The flavour text under the abilities, in ArkhamDB markup. */
+  flavor?: string;
   packCode: string;
   /** Cycle of the pack (`PackDef.cyclePosition`); 0 if the pack is unknown. */
   cyclePosition: number;
@@ -44,6 +53,9 @@ const RawInvestigatorSchema = z.object({
   skill_intellect: z.number().int(),
   skill_combat: z.number().int(),
   skill_agility: z.number().int(),
+  traits: opt(z.string()),
+  text: opt(z.string()),
+  flavor: opt(z.string()),
   pack_code: z.string(),
   imagesrc: opt(z.string()),
   backimagesrc: opt(z.string()),
@@ -86,6 +98,9 @@ export function normaliseInvestigator(
       combat: r.skill_combat,
       agility: r.skill_agility,
     },
+    traits: r.traits,
+    text: r.text,
+    flavor: r.flavor,
     packCode: r.pack_code,
     cyclePosition: pack?.cyclePosition ?? 0,
     imageSrc: r.imagesrc,

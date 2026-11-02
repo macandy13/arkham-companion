@@ -120,12 +120,12 @@ export interface OpenGame {
   rejection?: Rejection;
   /**
    * What the last action skipped for the players to do by hand (a card it names is missing), until
-   * the next action or `dismissSkippedEffects`.
+   * the next action or `dismissNotice`.
    */
   skippedEffects?: readonly SkippedEffect[];
   /**
    * The encounter cards the last action drew or placed and where they went, until the next action or
-   * `dismissDrawnCards`.
+   * `dismissNotice`.
    */
   drawnCards?: readonly DrawnCard[];
   /**
