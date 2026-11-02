@@ -353,6 +353,10 @@
   --face-type-spacing: 1.4px;
   --face-number-size: 28px;
   --face-count-size: 14px;
+  /* A count's rising change (`RisingDelta`) on a card face, in scan units: about 16px on a tile. */
+  --face-delta-size: 32px;
+  /* Its halo, wide enough to read over the printed value the count sits on. */
+  --face-delta-halo: 8px;
   --face-count-rim-width: 1.8px;
   /*
    * The ornament lines' body and outline, and their highlight's opacity and offset; the heart's and
@@ -389,6 +393,9 @@
   --face-threshold-size: 32px;
   /* The count on the damage badge on an enemy's rim. */
   --card-badge-size: 8px;
+  /* A badge's rising change (`RisingDelta`), drawn at the tile's size. */
+  --card-delta-size: 16px;
+  --card-delta-halo: 4px;
   /* The action icons in a location's text. */
   --card-text-icon-size: 7px;
   --card-type-spacing: 0.08em;

@@ -21,12 +21,14 @@ import {
 import {
   CardFaceCorners,
   CountCircle,
+  RisingDelta,
   SCAN_TO_TILE,
   SetMedallion,
   TILE_PER_SCAN,
 } from '../catalog/cardFace';
 import { useCardPicture } from '../catalog/cardImages';
 import { cardActionCaption } from '../screens/ActionRow';
+import { useCountChange } from '../screens/countChange';
 import { LOCATION_FACE, LocationOrnament } from './cardOrnament';
 import { connectionGlyph } from './connectionSymbol';
 import {
@@ -320,15 +322,24 @@ interface TokenCount {
 /**
  * A printed disc with its number on the face, in scan units, centred on `centre`: the shroud, or
  * the doom on the location. `kind` (`data-token`) lets the stylesheet colour each like the card
- * prints it or its token on the table.
+ * prints it or its token on the table. A change of the value plays its effect (`RisingDelta`).
  */
 function Token({ kind, value, label, centre: { x, y } }: TokenCount & { centre: Point }) {
+  const change = useCountChange(value);
+  const { radius } = LOCATION_FACE.disc;
   return (
-    <g role="img" aria-label={label} data-token={kind}>
-      <circle cx={x} cy={y} r={LOCATION_FACE.disc.radius} />
+    <g
+      key={change?.key}
+      role="img"
+      aria-label={label}
+      data-token={kind}
+      data-changed={change && ''}
+    >
+      <circle cx={x} cy={y} r={radius} />
       <text x={x} y={y}>
         {value}
       </text>
+      <RisingDelta change={change} x={x} y={y - radius} />
     </g>
   );
 }
@@ -581,7 +592,8 @@ export function Pawn({
  * loaded (`TokenPicture`), centred on `centre`, like an investigator's pawn but
  * ringed in the doom colour (`data-enemy`). An `engaged` enemy stands faded right after the pawn
  * of the investigator it is engaged with (`data-engaged`), since the threat area shows it in full.
- * A red badge on its rim shows its damage, and an exhausted enemy's initial lies on its side, like
+ * A red badge on its rim shows its damage, pulsing with the change when it takes some
+ * (`RisingDelta`), and an exhausted enemy's initial lies on its side, like
  * the exhausted card turned sideways (`data-exhausted`). Its accessible name says the same, with
  * whom of `investigators` it is engaged with. With `drag` it can be dragged; a `ghost` is the copy
  * that follows the pointer.
@@ -608,6 +620,7 @@ export function EnemyToken({
     ...enemyConditions(enemy, t),
   ];
   const badge = damageBadgeCentre(centre);
+  const damageChange = useCountChange(enemy.damage ?? 0);
   return (
     <g
       data-enemy
@@ -627,11 +640,12 @@ export function EnemyToken({
         radius={CONTENT.pawnRadius}
       />
       {enemy.damage ? (
-        <g data-marker="damage">
+        <g key={damageChange?.key} data-marker="damage" data-changed={damageChange && ''}>
           <circle cx={badge.x} cy={badge.y} r={BADGE_RADIUS} />
           <text x={badge.x} y={badge.y}>
             {enemy.damage}
           </text>
+          <RisingDelta change={damageChange} x={badge.x} y={badge.y - BADGE_RADIUS} />
         </g>
       ) : null}
     </g>

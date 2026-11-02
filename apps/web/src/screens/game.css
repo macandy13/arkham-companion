@@ -1290,7 +1290,57 @@
   }
 }
 
+/* A drawing's delta (`RisingDelta`) rises straight up, its text already centred on the count. */
+@keyframes delta-rises-drawn {
+  from {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 0;
+    translate: 0 calc(-1 * var(--space-3));
+  }
+}
+
+/*
+ * Haloed like the counter's delta pill, so it reads over any card face, and sitting on the count,
+ * larger than its digits so it reads on a map tile; shown only when it moves. The selector outranks
+ * the count's own text rules (`card_face.css`, `map.css`).
+ */
+#board svg [data-rising] {
+  display: none;
+}
+
+#board svg [data-changed] > text[data-rising] {
+  dominant-baseline: auto;
+  font-size: var(--face-delta-size);
+  font-weight: bold;
+  fill: var(--color-text);
+  stroke: var(--color-background);
+  stroke-width: var(--face-delta-halo);
+  stroke-linejoin: round;
+  paint-order: stroke;
+  pointer-events: none;
+}
+
+/* The enemy's damage badge is drawn at the tile's size, not a card scan's. */
+#map svg [data-marker] > text[data-rising] {
+  font-size: var(--card-delta-size);
+  stroke-width: var(--card-delta-halo);
+}
+
 @media (prefers-reduced-motion: no-preference) {
+  #board svg [data-changed] {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: count-pulses var(--duration-pulse) ease-out;
+  }
+
+  #board svg [data-rising] {
+    display: inline;
+    animation: delta-rises-drawn var(--duration-delta) ease-out forwards;
+  }
+
   #board [data-delta] {
     position: relative;
     animation: count-pulses var(--duration-pulse) ease-out;
