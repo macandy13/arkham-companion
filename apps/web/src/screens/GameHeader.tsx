@@ -1,8 +1,9 @@
-import { useEffect, useId, useRef, useState, type MouseEvent, type ReactNode } from 'react';
+import { useId, useState, type MouseEvent, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { StoreApi } from 'zustand/vanilla';
 import {
   cardImagePath,
+  cardName,
   type ActAdvance,
   type ActView,
   type BoardView,
@@ -13,12 +14,14 @@ import {
   type ReferenceView,
 } from '@arkham/engine';
 import type { CardCatalog, ReferenceSideTexts } from '@arkham/carddata';
+import type { ShownCard } from '../catalog/cardFace';
 import { useCardPicture } from '../catalog/cardImages';
 import { cardText } from '../catalog/cardText';
 import { EncounterPiles, HeaderPile, type PileProps } from '../encounter/EncounterPiles';
 import type { AppState, OpenGame } from '../state/appStore';
 import type { GameActions } from '../state/gameActions';
 import { ActionGroup, CardActions, cardActionsOn } from './ActionRow';
+import { CardDialog } from './CardDialog';
 import { BookFace } from './BookFace';
 import { ScenarioFace } from './ScenarioFace';
 import { useCluePayment } from './CluePaymentDialog';
@@ -167,8 +170,8 @@ function ScenarioStatus({
       </ScenarioCard>
       {zoomed && (
         <ScenarioDetails
+          board={board}
           name={name}
-          reference={board.reference}
           printed={printed}
           onClose={() => setZoomed(false)}
         />
@@ -178,33 +181,95 @@ function ScenarioStatus({
 }
 
 /**
- * The scenario's full card (`ScenarioStatus`), as big as a zoomed card: the same face as in the
- * header, where the rows' texts are too small to read.
+ * The scenario reference card opened from the header (`ScenarioStatus`), on the card shell
+ * (`CardDialog`, MD.6b3):
+ * - the upright card beside the page, the same face as in the header, tapped to read it whole;
+ * - "Scenario" and the side the game's difficulty plays with as the kicker, its name as the title;
+ * - on the page the cards set aside and the victory points so far (`BoardView.victoryPoints`);
+ * - one row per symbol token at the page's print size, the token beside its printed text, since
+ *   on the card they stay too small to read on a tablet.
+ * The card is no instance in play (`BoardView.reference`), so the shell shows it as a `ShownCard`
+ * built from its name and picture. Escape and its × close it.
  */
 function ScenarioDetails({
+  board,
   name,
-  reference,
   printed,
   onClose,
 }: {
+  board: BoardView;
   name: string;
-  reference: ReferenceView | undefined;
   printed: PrintedReference | undefined;
   onClose: () => void;
 }) {
   const { t } = useTranslation();
-  const titleId = useId();
-  const dialog = useRef<HTMLDialogElement>(null);
-  useEffect(() => {
-    dialog.current?.showModal();
-  }, []);
+  const { reference } = board;
+  const card: ShownCard = {
+    // The scenario's display name: the reference card prints it, and the game holds no card name.
+    name: cardName(name),
+    type: 'scenario',
+    traits: [],
+    ...(printed?.picture === undefined ? {} : { image: printed.picture }),
+  };
   return (
-    <dialog ref={dialog} aria-labelledby={titleId} onCancel={onClose} data-dialog="card">
-      <button type="button" data-icon="close" aria-label={t('header.close')} onClick={onClose} />
-      <ScenarioCard reference={reference} printed={printed}>
-        <h2 id={titleId}>{name}</h2>
-      </ScenarioCard>
-    </dialog>
+    <CardDialog
+      name="scenario"
+      card={card}
+      drawn={
+        <ScenarioCard reference={reference} printed={printed} decorative>
+          {/* Inside the card's button, so its name is no second heading; the page's title is. */}
+          <span data-part="name">{name}</span>
+        </ScenarioCard>
+      }
+      kicker={
+        reference
+          ? t('header.scenarioSide', { side: t(`header.referenceSide.${reference.side}`) })
+          : t('header.scenario')
+      }
+      title={name}
+      onCancel={onClose}
+      onClose={onClose}
+    >
+      <dl>
+        <div>
+          <dt>{t('header.setAsideName')}</dt>
+          <dd>{board.cardsIn({ kind: 'setAside' }).length}</dd>
+        </div>
+        <div>
+          <dt>{t('header.victory')}</dt>
+          <dd>{board.victoryPoints}</dd>
+        </div>
+      </dl>
+      {reference && <ReferenceRows reference={reference} printed={printed} />}
+    </CardDialog>
+  );
+}
+
+/**
+ * The reference card's rows, one per symbol token: the token's game symbol (named for screen
+ * readers) beside its printed text (`printed`, from the card catalog, for the side
+ * `BoardView.reference` names), on the card's face and, larger, on its dialog's page.
+ */
+function ReferenceRows({
+  reference,
+  printed,
+}: {
+  reference: ReferenceView;
+  printed: PrintedReference | undefined;
+}) {
+  const { t } = useTranslation();
+  return (
+    <ul aria-label={t('header.reference')}>
+      {reference.rows.map(({ token }) => {
+        const text = printed?.texts?.[token];
+        return (
+          <li key={token} data-chaos-token={token}>
+            <span role="img" aria-label={t(`chaosToken.${token}`)} />
+            {text !== undefined && <p>{cardText(text)}</p>}
+          </li>
+        );
+      })}
+    </ul>
   );
 }
 
@@ -215,17 +280,20 @@ function ScenarioDetails({
  * text (`printed`, from the card catalog, for the side `BoardView.reference` names). A game without
  * a reference card shows only the title. In the card pictures theme the side's picture lies over
  * it all once loaded (`data-picture`), and the stylesheet hides what the picture prints; the
- * rows stay beneath it for assistive technology.
+ * rows stay beneath it for assistive technology. Drawn as a dialog's card (`decorative`), whose
+ * page repeats its rows, it is hidden from assistive technology.
  */
 function ScenarioCard({
   reference,
   printed,
   onClick,
+  decorative = false,
   children,
 }: {
   reference: ReferenceView | undefined;
   printed: PrintedReference | undefined;
   onClick?: () => void;
+  decorative?: boolean;
   children: ReactNode;
 }) {
   const { t } = useTranslation();
@@ -234,6 +302,7 @@ function ScenarioCard({
     <div
       data-card="scenario"
       data-picture={picture?.shown ? 'shown' : undefined}
+      aria-hidden={decorative || undefined}
       onClick={
         onClick &&
         ((event) => {
@@ -246,17 +315,7 @@ function ScenarioCard({
       {reference && (
         <>
           <p>{t(`header.referenceSide.${reference.side}`)}</p>
-          <ul aria-label={t('header.reference')}>
-            {reference.rows.map(({ token }) => {
-              const text = printed?.texts?.[token];
-              return (
-                <li key={token} data-chaos-token={token}>
-                  <span role="img" aria-label={t(`chaosToken.${token}`)} />
-                  {text !== undefined && <p>{cardText(text)}</p>}
-                </li>
-              );
-            })}
-          </ul>
+          <ReferenceRows reference={reference} printed={printed} />
         </>
       )}
       {picture && (
