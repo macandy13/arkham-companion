@@ -203,8 +203,9 @@
   list-style: none;
 }
 
+/* The header's own names; a dialog opened from the header titles itself (base.css). */
 #board > header h1,
-#board > header h2 {
+#board > header h2:not(dialog h2) {
   margin: 0;
   font-size: var(--font-size-subtitle);
 }
@@ -382,7 +383,7 @@
   visibility: hidden;
 }
 
-:root[data-card-theme='pictures'] #board > header [data-picture] > h2 {
+:root[data-card-theme='pictures'] #board > header [data-picture] > :is(h2, [data-part='name']) {
   opacity: 0;
 }
 
@@ -460,7 +461,7 @@
  * plate with its buttons at the page's foot, away from the disc. Placed in fractions of the
  * printed card (`BOOK_FACE`), so they hold at every card size; an act mirrors the agenda.
  */
-#board > header :is([data-card='agenda'], [data-card='act']) > h2 {
+#board > header :is([data-card='agenda'], [data-card='act']) > :is(h2, [data-part='name']) {
   position: absolute;
   inset-block-start: var(--book-name-top);
   inset-inline: var(--book-page-inset) var(--book-edge-inset);
@@ -473,7 +474,7 @@
   line-height: 1.1;
 }
 
-#board > header [data-card='act'] > h2 {
+#board > header [data-card='act'] > :is(h2, [data-part='name']) {
   inset-inline: var(--book-edge-inset) var(--book-page-inset);
 }
 
@@ -553,8 +554,27 @@
 }
 
 /*
- * The full card (CardDetails): the same face as in the header, as wide as a zoomed card turned to
- * landscape, with the × above it and buttons of the full size again.
+ * The agenda's or act's full card (BookDetails) on the card shell: the same face as in the header
+ * fills the shell's card over the page, in place of the header's height, also while the shell
+ * hosts a decision in its place.
+ */
+#board > header dialog[data-shell] > figure > button[data-part='subject'] > [data-card] {
+  width: 100%;
+  height: 100%;
+}
+
+/* Its footer: the steppers and card actions, then the act's Advance, centred like an action row. */
+#board > header dialog[data-dialog='book'] > article > footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  justify-content: center;
+  align-items: end;
+}
+
+/*
+ * The scenario's full card (ScenarioDetails): the same face as in the header, with the × above
+ * it. It moves onto the card shell next (MD.6b3).
  */
 #board > header dialog[data-dialog='card'] {
   position: relative;
@@ -575,13 +595,6 @@
   max-width: 100%;
   height: auto;
   filter: var(--piece-shadow);
-}
-
-#board > header dialog[data-dialog='card'] > [data-card] button {
-  min-width: var(--touch-target);
-  min-height: var(--touch-target);
-  padding: 0 var(--space-3);
-  font-size: var(--font-size-body);
 }
 
 /* While the players adjust the board, a dashed brass line round the map says it is open for corrections. */

@@ -710,7 +710,6 @@ describe('MapBoard', () => {
       await act(async () => {});
 
       expect(table.board.decisions).toMatchObject([{ prompt: 'decision.fight', about: 'rats' }]);
-      expect(screen.queryByRole('dialog')).toBeNull();
     });
 
     it('offers only the card effects for an enemy at another location', async () => {

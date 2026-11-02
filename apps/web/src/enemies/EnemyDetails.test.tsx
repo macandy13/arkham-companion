@@ -3,6 +3,7 @@ import { act, cleanup, fireEvent, render, screen, within } from '@testing-librar
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import {
   blankEnemy,
+  decisionId,
   blankLocation,
   cardImagePath,
   engagedWith,
@@ -14,6 +15,7 @@ import {
   trait,
 } from '@arkham/engine';
 import { initI18n } from '../i18n';
+import { DecisionHostContext, type OpenDecision } from '../screens/DetailsDialog';
 import { EnemyDetails } from './EnemyDetails';
 import { actionsOn } from '../state/gameActions.test_support';
 
@@ -157,18 +159,71 @@ describe('EnemyDetails', () => {
       left: 3,
     },
   ])(
-    '"$button" on alder\'s turn closes, leaves the test open and leaves $left actions',
+    '"$button" on alder\'s turn stays open, leaves the test open and leaves $left actions',
     ({ group: name, button, prompt, left }) => {
       const table = PlayTable.start(ghoulOnAlder.withTurnOf(alder));
       const onClose = renderGhoulDetails(table);
 
       fireEvent.click(within(group(name)).getByRole('button', { name: button }));
 
-      expect(onClose).toHaveBeenCalled();
+      expect(onClose).not.toHaveBeenCalled();
       expect(table.board.decisions).toMatchObject([{ prompt, about: 'ghoul', for: alder }]);
       expect(table.board.investigator(alder)).toMatchObject({ actions: left });
     },
   );
+
+  describe('on the game screen, which shares the open decision', () => {
+    /** The ghoul's details under a game screen whose open decision is `decision`. */
+    const ghoulDetailsWith = (
+      table: PlayTable,
+      setHosted: (hosted: boolean) => void,
+      decision?: OpenDecision,
+    ) => {
+      const enemy = table.board.enemiesEngagedWith(alder).find(({ id }) => id === ghoul);
+      if (!enemy) throw new Error('the ghoul is engaged with alder');
+      return (
+        <DecisionHostContext.Provider value={{ decision, adjusting: false, setHosted }}>
+          <EnemyDetails
+            board={table.board}
+            enemy={enemy}
+            actions={actionsOn(table)}
+            busy={false}
+            onClose={() => {}}
+          />
+        </DecisionHostContext.Provider>
+      );
+    };
+
+    it('shows the fight it starts in the same dialog, the ghoul still beside it', () => {
+      const table = PlayTable.start(ghoulOnAlder.withTurnOf(alder));
+      const setHosted = vi.fn();
+      const { rerender } = render(ghoulDetailsWith(table, setHosted));
+      const details = screen.getByRole('dialog', { hidden: true, name: 'ghoul' });
+
+      fireEvent.click(within(group('Actions')).getByRole('button', { name: 'Fight · 1 action' }));
+      const [fight] = table.board.decisions;
+      if (!fight) throw new Error('the fight waits for its result');
+      rerender(ghoulDetailsWith(table, setHosted, { view: fight, id: decisionId('the_fight') }));
+
+      expect(setHosted).toHaveBeenCalledWith(true);
+      expect(screen.getByRole('dialog', { hidden: true, name: 'Fight ghoul' })).toBe(details);
+      expect(within(details).getByRole('img', { hidden: true, name: 'Fight 3' })).toBeDefined();
+      expect(within(details).queryByRole('button', { hidden: true, name: 'Close' })).toBeNull();
+    });
+
+    it('leaves a decision that was open before it opened to the screen', () => {
+      const table = PlayTable.start(ghoulOnAlder.withTurnOf(alder));
+      void actionsOn(table).fight(ghoul);
+      const [fight] = table.board.decisions;
+      if (!fight) throw new Error('the fight waits for its result');
+      const setHosted = vi.fn();
+
+      render(ghoulDetailsWith(table, setHosted, { view: fight, id: decisionId('the_fight') }));
+
+      expect(setHosted).not.toHaveBeenCalled();
+      expect(screen.getByRole('dialog', { hidden: true, name: 'ghoul' })).toBeDefined();
+    });
+  });
 
   it("parleys with the cultist through its card's action on alder's turn, closing first", async () => {
     const cultist = instanceId('cultist');
