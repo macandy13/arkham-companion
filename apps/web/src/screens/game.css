@@ -665,7 +665,8 @@
  * The column the dialogs over the board lay their parts in: every card dialog's page (the decision
  * dialog's among them: the question under who decides, the test, the options as full-width
  * buttons, Undo at its foot), the clue payment (clue_payment.css), the encounter dialog
- * (encounter.css) and the card zoom (card_zoom.css). Each file adds only what differs.
+ * (encounter.css) and the card zoom (card_zoom.css). Each file adds only what differs; to
+ * change the column itself, it needs a selector as specific as `dialog[data-shell] > article`.
  */
 #board
   :is(
