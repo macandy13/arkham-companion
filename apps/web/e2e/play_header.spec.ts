@@ -109,8 +109,9 @@ const currentPhase = (page: Page) =>
 
 // Journey, continued: play The Gathering on through two full rounds from Roland Banks' first turn,
 // and reload the page once round 2's mythos phase has drawn, the riskiest moment to lose the tab:
-// the game comes back exactly as it was. What the game does by itself, the upkeep's resource and
-// the mythos phase's doom, shows in a notice that fades away on its own.
+// the game comes back exactly as it was, with the notice of what the mythos phase drew. What the
+// game does by itself, the upkeep's resource and the mythos phase's doom, shows in a notice that
+// fades away on its own.
 test(
   'play two rounds and reload in the middle of the mythos phase',
   { tag: '@flow' },
@@ -152,8 +153,11 @@ test(
     await test.step('Reload: the game comes back exactly as it was', async () => {
       const before = await shownGame(page, 'Round 2').allInnerTexts();
       expect(before).toHaveLength(8);
+      const drawn = page.getByRole('status', { name: 'Encounter cards drawn' });
+      const notice = await drawn.innerText();
       await page.reload();
       await expect(shownGame(page, 'Round 2')).toHaveText(before, { useInnerText: true });
+      await expect(drawn).toHaveText(notice, { useInnerText: true });
       await expect(currentPhase(page)).toHaveText('Mythos');
     });
 

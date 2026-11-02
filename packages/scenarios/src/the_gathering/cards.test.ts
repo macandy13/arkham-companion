@@ -6,7 +6,9 @@ import {
   investigatorId,
   newGame,
   playAreaOf,
+  PlayTable,
   putIntoThreatArea,
+  threatAreaOf,
   whenRevealed,
   type CardStats,
   type Command,
@@ -94,6 +96,37 @@ describe('The Gathering card data', () => {
     expect(theGatheringCards.get(cardCode('01163'))?.abilities).not.toContainEqual(
       whenRevealed(putIntoThreatArea()),
     );
+  });
+});
+
+describe('Frozen in Fear', () => {
+  const alice = investigatorId('alice');
+  const parlor = instanceId('parlor');
+  /** Alice in the revealed Parlor with Frozen in Fear in their threat area, on their turn. */
+  const aliceFrozenInTheParlor = () =>
+    PlayTable.start(
+      newGame()
+        .withLocation(parlor, cardOf('01115'), { revealed: true })
+        .withInvestigator(alice, { locationId: parlor })
+        .withCard(instanceId('frozen_in_fear'), cardOf('01164'), threatAreaOf(alice))
+        .withTurnOf(alice),
+    );
+
+  it.each([
+    { action: 'move', cost: 2 },
+    { action: 'fight', cost: 2 },
+    { action: 'evade', cost: 2 },
+    { action: 'investigate', cost: 1 },
+  ] as const)('makes the first $action of the round cost $cost', ({ action, cost }) => {
+    expect(aliceFrozenInTheParlor().board.actionCost(alice, action)).toBe(cost);
+  });
+
+  it('makes a move after the first fight of the round cost the usual 1', () => {
+    const table = aliceFrozenInTheParlor();
+
+    table.spendActionFor(alice, 'fight');
+
+    expect(table.board.actionCost(alice, 'move')).toBe(1);
   });
 });
 

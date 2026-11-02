@@ -21,7 +21,7 @@
   - An action whose effect is done at the table (no effect the engine runs) is always offered.
 - [Costs](https://arkhamdb.com/rules#Costs): the text before the colon ("Spend 5 resources:") is paid in full before the effect; an action whose cost can't be paid can't be taken.
   - Attacks of opportunity come after the costs are paid; the engine pays a card action's cost after them for now.
-  - Card rulings: [Costs of card actions](cards/action-costs.md).
+  - Card rulings: [Costs of card actions and basic actions](cards/action-costs.md).
 - "You must either A or B" (and "the lead investigator must decide") offers only the options that can change the game state ([Must](https://arkhamdb.com/rules#Must)):
   - with no clues, "spend 1 clue or take 2 damage" leaves only the damage,
   - and with no damage the Quiet Glade's "heal 1 damage or 1 horror" leaves only the horror.

@@ -424,6 +424,9 @@ export const theGatheringCardDefs: readonly CardStats[] = [
       whenRevealed(putIntoThreatArea()),
       atEndOfTurn(skillTest('willpower', 3, { onPass: [discardSelf()] })),
     ],
+    actionCosts: [
+      { actions: ['move', 'fight', 'evade'], by: 1, who: 'threatArea', first: 'eachRound' },
+    ],
   }),
   treachery({
     code: '01165',

@@ -22,6 +22,7 @@ import type {
   ScenarioContext,
   ResolutionId,
   ScenarioId,
+  StepNotice,
 } from '@arkham/engine';
 import { PlayTable, campaign, campaignId as toCampaignId, emptyState } from '@arkham/engine';
 import { gameActions, type GameActions } from './gameActions';
@@ -134,12 +135,12 @@ export interface OpenGame {
   rejection?: Rejection;
   /**
    * What the last action skipped for the players to do by hand (a card it names is missing), until
-   * the next action or `dismissSkippedEffects`.
+   * the next action or `dismissNotice`.
    */
   skippedEffects?: readonly SkippedEffect[];
   /**
    * The encounter cards the last action drew or placed and where they went, until the next action or
-   * `dismissDrawnCards`.
+   * `dismissNotice`.
    */
   drawnCards?: readonly DrawnCard[];
   /**
@@ -232,10 +233,11 @@ export interface AppState {
   actions: GameActions;
   /** Clears `current.rejection` once the screen has shown it. */
   dismissRejection(): void;
-  /** Clears `current.skippedEffects` once the players have read them. */
-  dismissSkippedEffects(): void;
-  /** Clears `current.drawnCards` once the players have read them. */
-  dismissDrawnCards(): void;
+  /**
+   * Clears `current.skippedEffects` or `current.drawnCards` once the players have read them, and
+   * stores that, so the game opened again doesn't show them (`GameSession.dismissNotice`).
+   */
+  dismissNotice(notice: StepNotice): void;
   /** Lets the players choose on the map where `enemy` spawns (`current.spawning`). */
   startSpawn(enemy: EncounterCardView): void;
   /** Ends choosing a spawn location, after a tap on the map or a cancel. */
@@ -351,9 +353,20 @@ export function createAppStore(
           busy: unfinishedSteps > 0,
           canUndo: session?.canUndo ?? false,
           adjusting: false,
+          ...lastNotices(session),
           resolution: session && pendingResolution(session.ctx, session.state, campaignLog),
         },
       });
+    }
+
+    /** The notices of `played`'s last step, each left out when it has nothing to say. */
+    function lastNotices(
+      played: GameSession | undefined,
+    ): Pick<OpenGame, 'skippedEffects' | 'drawnCards'> {
+      return {
+        skippedEffects: played?.skippedEffects.length ? played.skippedEffects : undefined,
+        drawnCards: played?.drawnCards.length ? played.drawnCards : undefined,
+      };
     }
 
     /** Loads a campaign's log and its games into `campaign`, or `null` if there is no such campaign. */
@@ -380,8 +393,7 @@ export function createAppStore(
           canUndo: played.canUndo,
           adjusting: played.adjusting,
           rejection,
-          skippedEffects: played.skippedEffects.length > 0 ? played.skippedEffects : undefined,
-          drawnCards: played.drawnCards.length > 0 ? played.drawnCards : undefined,
+          ...lastNotices(played),
           resolution: pendingResolution(played.ctx, played.state, campaignLog),
         },
       });
@@ -569,13 +581,13 @@ export function createAppStore(
         const open = get().current;
         if (open?.rejection) set({ current: { ...open, rejection: undefined } });
       },
-      dismissSkippedEffects() {
+      dismissNotice(notice) {
         const open = get().current;
-        if (open?.skippedEffects) set({ current: { ...open, skippedEffects: undefined } });
-      },
-      dismissDrawnCards() {
-        const open = get().current;
-        if (open?.drawnCards) set({ current: { ...open, drawnCards: undefined } });
+        if (!open?.[notice]) return;
+        set({ current: { ...open, [notice]: undefined } });
+        session?.dismissNotice(notice).catch((error: unknown) => {
+          console.warn(`Could not store that a notice of game ${open.gameId} was read.`, error);
+        });
       },
       startSpawn(enemy) {
         const open = get().current;
