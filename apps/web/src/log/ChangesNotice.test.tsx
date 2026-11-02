@@ -60,6 +60,21 @@ describe('ChangesNotice', () => {
     );
   });
 
+  it('starts afresh for a step played while the last notice still shows', () => {
+    const table = beforeUpkeep();
+    const { rerender } = render(noticeFor(table));
+    table.nextPhase();
+    rerender(noticeFor(table));
+    const upkeepNotice = screen.getByRole('status', { name: 'What the game did' });
+
+    table.nextPhase();
+    rerender(noticeFor(table));
+
+    const mythosNotice = screen.getByRole('status', { name: 'What the game did' });
+    expect(mythosNotice.textContent).toBe('1 doom on What Lurks Below');
+    expect(mythosNotice).not.toBe(upkeepNotice);
+  });
+
   it('goes once its fade has ended', () => {
     const table = beforeUpkeep();
     const { rerender } = render(noticeFor(table));

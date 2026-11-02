@@ -26,7 +26,9 @@ export function ChangesNotice({ log, state }: { log: GameLogSource; state: GameS
   if (changes === undefined || shown !== changes.step) return null;
 
   return (
+    // Its own element per step, so a step played while the last one shows starts a fade of its own.
     <aside
+      key={changes.step}
       role="status"
       aria-label={t('changes.label')}
       data-part="changes"

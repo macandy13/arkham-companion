@@ -144,7 +144,6 @@ export function eventLines(
   });
 }
 
-/** Who did what `event` tells: the enemy that engaged or attacked, else the investigator it names. */
 /**
  * Events the screen already tells another way: where the game is (the phase tracker, the turn
  * controls) and the encounter cards drawn (`DrawnCardsNotice`).
@@ -186,6 +185,7 @@ export function automaticChanges(
   return lines.length === 0 ? undefined : { step: last.key, lines };
 }
 
+/** Who did what `event` tells: the enemy that engaged or attacked, else the investigator it names. */
 function actorOf(names: Names, event: Event): string | undefined {
   if (event.type === 'EnemyEngaged' || event.type === 'EnemyAttacked') {
     return names.card(event.enemyId);

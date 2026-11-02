@@ -216,7 +216,7 @@ export function GameScreen({
         )}
         <ResolutionPrompt key={open.gameId} store={store} open={open} />
         <div id="notices">
-          {open.log && <ChangesNotice log={open.log} state={open.state} />}
+          {open.log && <ChangesNotice key={open.gameId} log={open.log} state={open.state} />}
           {open.spawning && (
             <SpawnPrompt enemy={open.spawning} onCancel={() => store.getState().cancelSpawn()} />
           )}
