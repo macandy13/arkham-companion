@@ -19,12 +19,14 @@ A "cannot" is a `CardStats.restrictions` entry, never an ability.
 - Dissonant Voices, "You cannot play assets or events":
   `restrictions: [{ cannot: ['play'], what: 'cards', who: 'threatArea', cards: { types: ['asset', 'event'] } }]`.
 
-## Action costs
+## Modifiers
 
-A raised cost of basic actions is a `CardStats.actionCosts` entry.
+A buff or nerf of a number is a `CardStats.modifiers` entry, named by the value it changes.
 
+- Obscuring Fog, "Attached location gets +2 shroud": `modifiers: [{ value: 'shroud', of: 'host', by: 2 }]`.
+- "Each enemy at this location gets +1 fight": `modifiers: [{ value: 'fight', of: 'enemiesHere', by: 1 }]`.
 - Frozen in Fear, "The first move, fight, or evade action you perform each round costs 1 additional action":
-  `actionCosts: [{ actions: ['move', 'fight', 'evade'], by: 1, who: 'threatArea', first: 'eachRound' }]`.
+  `modifiers: [{ value: 'actionCost', of: 'threatArea', actions: ['move', 'fight', 'evade'], first: 'eachRound', by: 1 }]`.
 
 ## Objectives and special acts and agendas
 

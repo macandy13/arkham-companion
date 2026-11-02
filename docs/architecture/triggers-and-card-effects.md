@@ -142,7 +142,14 @@ The `investigatorTurn` condition ("during any investigator's turn") holds while 
 
 ## Constant abilities
 
-Constant abilities are data too (`CardStats.modifiers`); [`effectiveValue`](../../packages/engine/src/card_values.ts) is the one place that answers "what is this value now". "Cannot" abilities are `CardStats.restrictions` ([`CardRestriction`](../../packages/engine/src/restrictions.ts): what is forbidden, `moveInto` or `investigate`, at which location, the card itself or its host), and [`isRestricted`](../../packages/engine/src/restrictions.ts) is the one place that answers "may anyone do this here": `MoveInvestigator` and `Investigate` reject a forbidden step (`restricted`), and `LocationView.forbidden` lists them so the screen offers neither. Like a modifier a restriction holds while its card is in play and a location's once it is revealed, except one printed on the unrevealed side (`unrevealed`, the Parlor's barrier), which holds until then.
+Constant abilities are data too. A buff or nerf of any number is a `CardStats.modifiers` entry ([`Modifier`](../../packages/engine/src/modifiers.ts)), keyed by the value it changes: `{ value: 'shroud', of: 'host', by: 2 }`. Each variant ties its value to the scope that may name it, so a card value never names an investigator.
+
+- [`modifiersOn`](../../packages/engine/src/modifiers.ts) is the one place that collects the active ones for a card or an investigator, each with its source card; a new value is one union member plus the reader that needs it.
+- [`effectiveValue`](../../packages/engine/src/modifiers.ts) answers "what is this card value now" (shroud, fight, evade), and `actionCost` what an action costs.
+- Who a modifier or restriction is about is one shared vocabulary ([`scopes.ts`](../../packages/engine/src/scopes.ts)): cards by `CardScope` (`self`, `host`, `enemiesHere`, read by `namesCard`), investigators by `InvestigatorScope` (`threatArea`, read by `binds`).
+- The plan for further values (skills, health, doom threshold) and lasting modifiers is ME.7 (#865).
+
+"Cannot" abilities are `CardStats.restrictions` ([`CardRestriction`](../../packages/engine/src/restrictions.ts): what is forbidden, `moveInto` or `investigate`, at which location, the card itself or its host), and [`isRestricted`](../../packages/engine/src/restrictions.ts) is the one place that answers "may anyone do this here": `MoveInvestigator` and `Investigate` reject a forbidden step (`restricted`), and `LocationView.forbidden` lists them so the screen offers neither. Like a modifier a restriction holds while its card is in play and a location's once it is revealed, except one printed on the unrevealed side (`unrevealed`, the Parlor's barrier), which holds until then.
 
 A restriction can also bind an investigator (`InvestigatorCardRestriction`), which [`isRestrictedFor`](../../packages/engine/src/restrictions.ts) answers:
 
@@ -153,7 +160,7 @@ A restriction can also bind an investigator (`InvestigatorCardRestriction`), whi
 - Clue costs leave their clues out (`cluesHeldByGroup`, `defaultCluePayments`); `groupCluePayments` rejects them as payers, and `canPay` an own clue cost.
 - `InvestigatorView.forbidden` lists them for the screen, verbs by noun (`forbiddenFor`: `{ clues: ['discover', 'spend'] }`).
 
-A card can also make basic actions cost more (`CardStats.actionCosts`, [`ActionCostModifier`](../../packages/engine/src/action_costs.ts)): the actions it raises by their card text words (`BasicAction`), by how much, whom it binds (`who: 'threatArea'`, as a restriction), and with `first: 'eachRound'` only the first of them each round (Frozen in Fear).
+A card can also make basic actions cost more (an `actionCost` modifier, [`ActionCostModifier`](../../packages/engine/src/modifiers.ts)): the actions it raises by their card text words (`BasicAction`), by how much, whom it binds (`of: 'threatArea'`, as a restriction), and with `first: 'eachRound'` only the first of them each round (Frozen in Fear).
 
 - The engine still leaves counting actions to the players, so [`actionCost`](../../packages/engine/src/action_costs.ts) (`BoardView.actionCost`) is what they count off: 1 (none for a free one) plus what the binding cards add, each copy its own.
 - They name the action they count off (`AdjustActions.for`, `PlayTable.spendActionFor`). The engine records it for the round (`GameMeta.actionsTaken`, cleared by `RoundEnded`), so a cost of the first one is paid once, even when the action came before the card. A free action is recorded with a delta of 0.

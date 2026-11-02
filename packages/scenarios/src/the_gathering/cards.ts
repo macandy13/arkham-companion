@@ -424,8 +424,14 @@ export const theGatheringCardDefs: readonly CardStats[] = [
       whenRevealed(putIntoThreatArea()),
       atEndOfTurn(skillTest('willpower', 3, { onPass: [discardSelf()] })),
     ],
-    actionCosts: [
-      { actions: ['move', 'fight', 'evade'], by: 1, who: 'threatArea', first: 'eachRound' },
+    modifiers: [
+      {
+        value: 'actionCost',
+        of: 'threatArea',
+        actions: ['move', 'fight', 'evade'],
+        first: 'eachRound',
+        by: 1,
+      },
     ],
   }),
   treachery({
@@ -461,7 +467,7 @@ export const theGatheringCardDefs: readonly CardStats[] = [
     traits: ['Hazard'],
     quantity: 2,
     locationAttachment: { onePerLocation: true },
-    modifiers: [{ stat: 'shroud', of: 'host', by: 2 }],
+    modifiers: [{ value: 'shroud', of: 'host', by: 2 }],
     abilities: [whenRevealed(attachToLocation()), afterTest('investigate', 'pass', discardSelf())],
   }),
 ];

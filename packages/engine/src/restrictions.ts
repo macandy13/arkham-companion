@@ -1,7 +1,8 @@
-import { assertNever, withoutEmptyLists } from '@arkham/util';
+import { withoutEmptyLists } from '@arkham/util';
 import { cardStats, type EngineContext, type Trait } from './cards';
 import { cardsInPlay } from './doom';
 import type { InvestigatorId } from './ids';
+import { binds, namesCard, type CardScope, type InvestigatorScope } from './scopes';
 import type { CardInstance, GameState } from './state';
 
 /**
@@ -51,17 +52,13 @@ export type ForbiddenStep = {
 export type Forbidden = { [N in RestrictedNoun]?: RestrictedVerbs[N][] };
 
 /**
- * The location a restriction is about, relative to the card that has it: the card itself (a
- * location's own text) or the card it is attached to (a treachery on a location).
+ * The location a restriction is about (`CardScope`): the card itself (a location's own text) or
+ * the card it is attached to (a treachery on a location).
  */
-export type RestrictedLocation = 'self' | 'host';
+export type RestrictedLocation = Extract<CardScope, 'self' | 'host'>;
 
-/**
- * The investigator a restriction binds, relative to the card that has it: `threatArea`, the one
- * in whose threat area it is, an enemy engaged with them included (Rules Reference, "Threat
- * Area"), so both "while you are engaged with The Masked Hunter" and a treachery's "you".
- */
-export type RestrictedInvestigator = 'threatArea';
+/** The investigator a restriction binds (`InvestigatorScope`). */
+export type RestrictedInvestigator = InvestigatorScope;
 
 /** A "cannot" about a location: `{ cannot: 'investigate', of: 'host' }` is Locked Door. */
 export interface LocationCardRestriction {
@@ -99,7 +96,7 @@ export type InvestigatorCardRestriction =
     };
 
 /**
- * A constant "cannot" ability (`CardStats.restrictions`), as card data. Like a `CardModifier` it
+ * A constant "cannot" ability (`CardStats.restrictions`), as card data. Like a `Modifier` it
  * holds while its card is in play, and a location's restriction only once it is revealed,
  * unless it is printed on the unrevealed side (`unrevealed`, the Parlor's barrier), which holds
  * until then. `isRestricted` and `isRestrictedFor` are the only places that read them, so the
@@ -123,7 +120,7 @@ export function isRestricted(
       (restriction) =>
         'of' in restriction &&
         restriction.cannot === cannot &&
-        isAbout(source, restriction.of, location),
+        namesCard(ctx, state, source, restriction.of, location),
     ),
   );
 }
@@ -178,38 +175,6 @@ function activeRestrictions(ctx: EngineContext, source: CardInstance): readonly 
     (restriction) =>
       ('unrevealed' in restriction && restriction.unrevealed === true) === onUnrevealedSide,
   );
-}
-
-function isAbout(source: CardInstance, of: RestrictedLocation, location: CardInstance): boolean {
-  switch (of) {
-    case 'self':
-      return source.id === location.id;
-    case 'host':
-      return source.zone.kind === 'attachedTo' && source.zone.hostId === location.id;
-    default:
-      return assertNever(of);
-  }
-}
-
-/**
- * Whether a card's constant ability (a restriction, an action cost modifier) binds
- * `investigator`: for `threatArea`, the card lies in their threat area or is an enemy engaged with
- * them.
- */
-export function binds(
-  source: CardInstance,
-  who: RestrictedInvestigator,
-  investigator: InvestigatorId,
-): boolean {
-  switch (who) {
-    case 'threatArea':
-      return (
-        (source.zone.kind === 'threatArea' || source.zone.kind === 'engaged') &&
-        source.zone.investigatorId === investigator
-      );
-    default:
-      return assertNever(who);
-  }
 }
 
 function namesEveryPlayedCard(cards: PlayedCardFilter | undefined): boolean {
