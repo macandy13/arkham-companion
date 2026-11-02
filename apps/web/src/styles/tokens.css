@@ -220,6 +220,8 @@
   --button-compact: 1.75rem;
   /* How long a new location takes to slide in, in the phone's location mode. */
   --duration-slide: 0.25s;
+  /* How long the game's own changes stay readable before their notice fades away. */
+  --duration-notice: 6s;
   /* The keyboard focus ring, in the accent colour. */
   --focus-ring-width: 2px;
   /* The dashed line round the map while the players adjust the board. */

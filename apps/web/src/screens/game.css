@@ -193,6 +193,25 @@
   background: var(--color-background);
 }
 
+/*
+ * What the game did by itself (ChangesNotice) stays, then fades out; the screen drops it when the
+ * fade ends. Only its opacity changes, so it stays under reduced motion too.
+ */
+@keyframes notice-fades {
+  from,
+  80% {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 0;
+  }
+}
+
+#notices > aside[data-part='changes'] {
+  animation: notice-fades var(--duration-notice) ease-in forwards;
+}
+
 #notices p,
 #notices ul {
   margin: 0;

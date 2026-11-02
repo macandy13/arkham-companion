@@ -1,3 +1,4 @@
+import type { BasicAction } from './action_costs';
 import type { AbilityEffect, OpenedWindow, TimingWindow } from './abilities';
 import type { CampaignLog, TraumaKind } from './campaign/campaign_log';
 import type { CardType, TokenAmount, Trait } from './cards';
@@ -1058,6 +1059,12 @@ export interface AdjustActions {
   type: 'AdjustActions';
   investigatorId: InvestigatorId;
   delta: number;
+  /**
+   * The basic action the players count off, when it is one (`delta` is then minus what it costs,
+   * `actionCost`, and may be 0 for a free one, which is performed all the same): recorded for the round (`GameMeta.actionsTaken`), so a card that raises the
+   * first such action each round (Frozen in Fear) raises only that one.
+   */
+  for?: BasicAction;
 }
 
 /**
