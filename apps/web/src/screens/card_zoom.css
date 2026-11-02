@@ -5,19 +5,12 @@
  */
 #board dialog[data-dialog='card-zoom'] {
   position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
   align-items: center;
   padding-block-start: calc(var(--dialog-close-inset) + var(--touch-target));
   font-size: var(--font-size-body);
   line-height: normal;
   text-align: center;
   hyphens: manual;
-}
-
-#board dialog[data-dialog='card-zoom']:not([open]) {
-  display: none;
 }
 
 /*

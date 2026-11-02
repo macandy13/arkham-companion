@@ -107,6 +107,8 @@ export const appTexts = {
     agenda: 'Agenda',
     act: 'Szene',
     scenario: 'Szenario',
+    scenarioSide: 'Szenario · {{side}}',
+    setAsideName: 'Beiseitegelegt',
     reference: 'Chaosmarker',
     referenceSide: { easyStandard: 'Leicht / Standard', hardExpert: 'Schwer / Experte' },
     victory: 'Sieg',
@@ -124,12 +126,17 @@ export const appTexts = {
     doomOf: 'Verderben {{doom}} / {{threshold}}',
     cluesOf: 'Hinweise {{clues}} / {{threshold}}',
     tokenThreshold: 'von {{threshold}}',
+    doomName: 'Verderben im Spiel',
+    cluesHeld: 'Hinweise der Ermittler',
+    cluesOnAct: 'Hinweise auf der Szene',
+    countOf: '{{count}} von {{threshold}}',
+    onAgenda: 'Auf der Agenda',
+    onAct: 'Auf der Szene',
     advanceAct: 'Vorrücken',
     addDoom: 'Verderben hinzufügen',
     removeDoom: 'Verderben entfernen',
     addClue: 'Hinweis hinzufügen',
     removeClue: 'Hinweis entfernen',
-    close: 'Schließen',
     noGame: 'Kein Spiel geöffnet',
   },
   encounter: {
@@ -416,6 +423,11 @@ export const appTexts = {
   cardActions: {
     title: 'Kartenaktionen',
   },
+  cardDetails: {
+    threatArea: 'Im Bedrohungsbereich von {{name}}',
+    playArea: 'Im Spielbereich von {{name}}',
+    tapToRead: 'Tippe auf die Karte, um sie zu lesen.',
+  },
   cardDialog: {
     lower: 'Absenken, um ans Spielfeld zu kommen',
     raise: 'Dialog wieder anheben',
@@ -536,6 +548,11 @@ export const appTexts = {
       eldritch: 'Unheimlich',
       pictures: 'Kartenbilder',
     },
+    enemyTokens: 'Gegnermarker',
+    enemyTokenFaces: {
+      art: 'Kartenbild',
+      initials: 'Anfangsbuchstabe',
+    },
     about: 'Über die App',
     unofficial:
       'Arkham Companion ist ein inoffizielles Fanprojekt. Es wird nicht von Fantasy Flight Games hergestellt, unterstützt oder befürwortet.',
@@ -631,6 +648,20 @@ export const appTexts = {
     tokenCount_other: '{{token}} ×{{count}}',
   },
   resolution: {
+    written: {
+      label: 'Ins Protokoll geschrieben',
+      text: 'Die Auflösung steht im Kampagnenprotokoll.',
+      undo: 'Rückgängig',
+      dismiss: 'OK',
+      undoFailed: 'Die Auflösung ließ sich nicht aus dem Protokoll zurücknehmen.',
+    },
+    over: 'Das Szenario ist vorbei',
+    pickResolution:
+      'Bestätigt die Auflösung oder wählt eine andere, wenn ihr das Ende anders gespielt habt.',
+    standaloneTitle: 'Schritte der Auflösung',
+    next: 'Weiter',
+    back: 'Zurück',
+    done: 'Fertig',
     title: 'Ins Kampagnenlogbuch',
     numbered: 'Auflösung {{n}}',
     none: 'Keine Auflösung',

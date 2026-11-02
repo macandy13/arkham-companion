@@ -7,7 +7,7 @@ import {
   type ReactNode,
 } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { BoardView, DecisionId, DecisionView } from '@arkham/engine';
+import type { BoardView, CardFaceView, DecisionId, DecisionView } from '@arkham/engine';
 import type { GameActions } from '../state/gameActions';
 import { CardDialog } from './CardDialog';
 import { DecisionPage, decisionHeading } from './DecisionDialog';
@@ -73,8 +73,8 @@ export function useDecisionHost(): HostedDecision {
 }
 
 /**
- * The card shell of an enemy's or location's details (`EnemyDetails`, `LocationDetails`): its
- * page (`children`) with the × and Escape to close it, or, while it hosts a decision
+ * The card shell of an enemy's, a location's or a held card's details (`EnemyDetails`,
+ * `LocationDetails`, `CardDetails`): its page (`children`) with the × and Escape to close it, or, while it hosts a decision
  * (`hosted.decision`), that decision's page in the same `<dialog>` (`DecisionPage`), titled and
  * answered like the decision dialog: Escape refused, the grab handle to lower it, its draw fresh
  * for each decision. The details' card stays beside it, unless the decision is about another card
@@ -99,12 +99,11 @@ export function DetailsDialog({
   actions: GameActions;
   busy: boolean;
   hosted: HostedDecision;
+  /** The card in play the details are about, whose decisions keep it beside the page. */
+  card?: CardFaceView;
   onClose: () => void;
   children: ReactNode;
-} & Pick<
-  ComponentProps<typeof CardDialog>,
-  'name' | 'card' | 'drawn' | 'actor' | 'kicker' | 'title'
->) {
+} & Pick<ComponentProps<typeof CardDialog>, 'name' | 'drawn' | 'actor' | 'kicker' | 'title'>) {
   const { t } = useTranslation();
   // Lowered belongs to one decision, so the next opens raised, as the screen's dialog does.
   const [loweredFor, setLoweredFor] = useState<DecisionId>();

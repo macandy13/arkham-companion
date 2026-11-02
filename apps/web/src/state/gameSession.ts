@@ -14,7 +14,9 @@ import {
   type Rejection,
   type ScenarioContext,
   type SetupOptions,
+  type StepNotice,
   takenAsAction,
+  undoLastGroup,
 } from '@arkham/engine';
 import { runsBy } from '@arkham/util';
 import { drawnCards, type DrawnCard } from '../encounter/drawnCards';
@@ -130,6 +132,8 @@ export class GameSession {
 
   private skipped: readonly SkippedEffect[] = [];
   private drawn: readonly DrawnCard[] = [];
+  /** The step whose notices `skipped` and `drawn` are (a `LoggedEvent.commandId`). */
+  private noticeStep?: string;
 
   /**
    * While the players adjust the board: the log the adjustment started from and the taps played on
@@ -137,10 +141,24 @@ export class GameSession {
    */
   private adjustment?: { base: readonly LoggedEvent[]; taps: PlayStep[] };
 
-  /** The game `gameId` from its stored log, played with the rules of `ctx`. */
+  /**
+   * The game `gameId` from its stored log, played with the rules of `ctx`. Its notices are those of
+   * the last stored step the players haven't dismissed yet (`lastStepNotices`, `ReadNotices`), so a
+   * reload loses nothing unread and shows nothing read.
+   */
   static async open(store: GameStore, gameId: GameId, ctx: ScenarioContext): Promise<GameSession> {
-    const { table, lastSeq, times } = await loadTable(store, gameId, ctx);
-    return new GameSession(store, gameId, ctx, table, lastSeq, times);
+    const [{ table, lastSeq, times }, read] = await Promise.all([
+      loadTable(store, gameId, ctx),
+      store.loadReadNotices(gameId),
+    ]);
+    const session = new GameSession(store, gameId, ctx, table, lastSeq, times);
+    const last = lastStepNotices(ctx, table);
+    session.notice({
+      step: last.step,
+      skipped: read.skippedEffects === last.step ? [] : last.skipped,
+      drawn: read.drawnCards === last.step ? [] : last.drawn,
+    });
+    return session;
   }
 
   /** The state after the last stored step, and while adjusting, after the adjustment's taps. */
@@ -262,10 +280,35 @@ export class GameSession {
       if (firstStored) this.times.set(first.commandId, firstStored.timestamp);
     });
     // Only a step that counts replaces them: a refused tap leaves an unread notice in place.
-    const events = added.map((entry) => entry.event);
-    this.skipped = skippedEffects(this.ctx, this.state, events);
-    this.drawn = drawnCards(boardBefore, this.board, events);
+    this.notice(
+      stepNotices(
+        first.commandId,
+        this.ctx,
+        boardBefore,
+        this.table,
+        added.map((entry) => entry.event),
+      ),
+    );
     return undefined;
+  }
+
+  /** Shows `notices` as the last step's. */
+  private notice({ step, skipped, drawn }: StepNotices): void {
+    this.noticeStep = step;
+    this.skipped = skipped;
+    this.drawn = drawn;
+  }
+
+  /**
+   * Hides `notice` once the players have read it, and stores that, so opening the game again
+   * doesn't show it again. The notice is gone even if the write fails: it then only comes back
+   * after a reload.
+   */
+  async dismissNotice(notice: StepNotice): Promise<void> {
+    if (notice === 'skippedEffects') this.skipped = [];
+    else this.drawn = [];
+    if (this.noticeStep === undefined) return;
+    await this.store.markNoticeRead(this.gameId, notice, this.noticeStep);
   }
 
   /**
@@ -281,8 +324,7 @@ export class GameSession {
     }
     if (!this.table.canUndo) return;
     const before = this.table.entries;
-    this.skipped = [];
-    this.drawn = [];
+    this.notice({ skipped: [], drawn: [] });
     this.table.undo();
     await this.storing(before, async () => {
       const loaded = await this.store.undoLast(this.gameId, this.lastSeq);
@@ -326,6 +368,48 @@ export class GameSession {
       throw error;
     }
   }
+}
+
+/** What a step leaves for the players to read: the effects it skipped and the cards it drew. */
+interface StepNotices {
+  /** The step (`LoggedEvent.commandId`); none when no step has notices to show. */
+  step?: string;
+  skipped: readonly SkippedEffect[];
+  drawn: readonly DrawnCard[];
+}
+
+/** The notices of the step `step` that played `events`, from the board `before` it to `after` it. */
+function stepNotices(
+  step: string,
+  ctx: ScenarioContext,
+  before: BoardView,
+  after: PlayTable,
+  events: readonly Event[],
+): StepNotices {
+  return {
+    step,
+    skipped: skippedEffects(ctx, after.state, events),
+    drawn: drawnCards(before, after.board, events),
+  };
+}
+
+/**
+ * The notices of `table`'s last step, worked out again from its log: the board before that step is
+ * the log without its undo group. The scenario start has none, as nobody took it. After an undo,
+ * the step before is the last one, so its notices come back too, unless the players dismissed them.
+ */
+function lastStepNotices(ctx: ScenarioContext, table: PlayTable): StepNotices {
+  if (!table.canUndo) return { skipped: [], drawn: [] };
+  const { kept, removed } = undoLastGroup(table.entries);
+  const [first] = removed;
+  if (first === undefined) return { skipped: [], drawn: [] };
+  return stepNotices(
+    first.commandId,
+    ctx,
+    PlayTable.resume(ctx, kept).board,
+    table,
+    removed.map((entry) => entry.event),
+  );
 }
 
 /**

@@ -107,6 +107,8 @@ export const appTexts = {
     agenda: 'Agenda',
     act: 'Act',
     scenario: 'Scenario',
+    scenarioSide: 'Scenario · {{side}}',
+    setAsideName: 'Set aside',
     reference: 'Chaos tokens',
     referenceSide: { easyStandard: 'Easy / Standard', hardExpert: 'Hard / Expert' },
     victory: 'Victory',
@@ -124,12 +126,17 @@ export const appTexts = {
     doomOf: 'Doom {{doom}} / {{threshold}}',
     cluesOf: 'Clues {{clues}} / {{threshold}}',
     tokenThreshold: 'of {{threshold}}',
+    doomName: 'Doom in play',
+    cluesHeld: 'Clues the investigators hold',
+    cluesOnAct: 'Clues on the act',
+    countOf: '{{count}} of {{threshold}}',
+    onAgenda: 'On the agenda',
+    onAct: 'On the act',
     advanceAct: 'Advance',
     addDoom: 'Add doom',
     removeDoom: 'Remove doom',
     addClue: 'Add a clue',
     removeClue: 'Remove a clue',
-    close: 'Close',
     noGame: 'No game open',
   },
   encounter: {
@@ -413,6 +420,11 @@ export const appTexts = {
   cardActions: {
     title: 'Card actions',
   },
+  cardDetails: {
+    threatArea: "In {{name}}'s threat area",
+    playArea: "In {{name}}'s play area",
+    tapToRead: 'Tap the card to read it.',
+  },
   cardDialog: {
     lower: 'Lower to reach the board',
     raise: 'Raise the dialog',
@@ -533,6 +545,11 @@ export const appTexts = {
       eldritch: 'Eldritch',
       pictures: 'Card pictures',
     },
+    enemyTokens: 'Enemy tokens',
+    enemyTokenFaces: {
+      art: 'Card art',
+      initials: 'Initials',
+    },
     about: 'About',
     unofficial:
       'Arkham Companion is an unofficial fan project. It is not produced, endorsed or supported by Fantasy Flight Games.',
@@ -628,6 +645,20 @@ export const appTexts = {
     tokenCount_other: '{{token}} ×{{count}}',
   },
   resolution: {
+    written: {
+      label: 'Written into the log',
+      text: 'The resolution is in the campaign log.',
+      undo: 'Undo',
+      dismiss: 'OK',
+      undoFailed: 'The resolution could not be taken back out of the log.',
+    },
+    over: 'The scenario is over',
+    pickResolution:
+      'Confirm the resolution, or pick another one if the table played it differently.',
+    standaloneTitle: 'Resolution steps',
+    next: 'Next',
+    back: 'Back',
+    done: 'Done',
     title: 'Into the campaign log',
     numbered: 'Resolution {{n}}',
     none: 'No resolution',

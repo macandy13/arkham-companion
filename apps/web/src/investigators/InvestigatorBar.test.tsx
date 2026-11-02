@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
-import { afterEach, beforeAll, describe, expect, it } from 'vitest';
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import {
   attachedTo,
   blankAsset,
@@ -20,7 +20,7 @@ import {
 } from '@arkham/engine';
 import { range } from '@arkham/util';
 import { initI18n } from '../i18n';
-import { InvestigatorBar } from './InvestigatorBar';
+import { InvestigatorBar, textLength } from './InvestigatorBar';
 import { actionsOn } from '../state/gameActions.test_support';
 
 const study = instanceId('study');
@@ -49,7 +49,10 @@ describe('InvestigatorBar', () => {
   beforeAll(async () => {
     await initI18n('en');
   });
-  afterEach(cleanup);
+  afterEach(() => {
+    cleanup();
+    vi.unstubAllGlobals();
+  });
 
   it('shows a panel per investigator with health and sanity left, clues, resources and doom', () => {
     const table = PlayTable.start(
@@ -183,7 +186,20 @@ describe('InvestigatorBar', () => {
     ]);
   });
 
-  it('shows the art of the card picture once it has loaded', () => {
+  it('shows the card picture once it has loaded, landscape like the card', async () => {
+    // jsdom loads no images: the probe the picture hook reads an SVG picture's shape with
+    // loads at once, at the size of a landscape scan.
+    vi.stubGlobal(
+      'Image',
+      class {
+        naturalWidth = 419;
+        naturalHeight = 300;
+        onload: (() => void) | null = null;
+        set src(_url: string) {
+          queueMicrotask(() => this.onload?.());
+        }
+      },
+    );
     const table = PlayTable.start(
       newGame()
         .withLocation(study, blankLocation('study'))
@@ -200,18 +216,21 @@ describe('InvestigatorBar', () => {
         adjusting={false}
       />,
     );
-    // The picture is decorative (`alt=""`), so it has no role to find it by.
-    const art = within(panel('alder')).getByRole('article').querySelector('picture');
-    const picture = art?.querySelector('img');
-    if (!art || !picture) throw new Error("alder's card has no picture");
-    const beforeLoading = art.hasAttribute('data-picture');
+    // The face is decorative (`aria-hidden`), so its picture has no role to find it by.
+    const card = within(panel('alder')).getByRole('article');
+    const picture = card.querySelector('svg[data-face="investigator"] image');
+    if (!picture) throw new Error("alder's card has no picture");
+    const beforeLoading = card.hasAttribute('data-picture');
 
     // jsdom loads no images, so the test fires the load itself.
-    fireEvent.load(picture);
+    await act(async () => {
+      fireEvent.load(picture);
+      await Promise.resolve();
+    });
 
-    expect(picture.getAttribute('src')).toBe('https://arkhamdb.com/bundles/cards/alder.png');
+    expect(picture.getAttribute('href')).toBe('https://arkhamdb.com/bundles/cards/alder.png');
     expect(beforeLoading).toBe(false);
-    expect(art.getAttribute('data-picture')).toBe('shown');
+    expect(card.getAttribute('data-picture')).toBe('shown');
   });
 
   describe('the line on their round', () => {
@@ -293,6 +312,78 @@ describe('InvestigatorBar', () => {
     });
   });
 
+  it("prints the subname and class of the investigator's card, looked up by its code", () => {
+    const table = PlayTable.start(
+      newGame()
+        .withLocation(study, blankLocation('study'))
+        .withInvestigator(alder, { locationId: study }),
+    );
+
+    render(
+      <InvestigatorBar
+        board={table.board}
+        actions={actionsOn(table)}
+        busy={false}
+        adjusting={false}
+        printed={(code) =>
+          code === 'alder' ? { subname: 'The Tester', factionCode: 'guardian' } : undefined
+        }
+      />,
+    );
+
+    const card = within(panel('alder')).getByRole('article');
+    // The class shows only on the decorative face, which has no role to find it by.
+    expect(within(card).getByText('The Tester')).toBeTruthy();
+    expect(card.querySelector('[data-class-icon]')?.getAttribute('data-class-icon')).toBe(
+      'guardian',
+    );
+  });
+
+  it("prints the traits, abilities and flavour of the investigator's card on its notebook page", () => {
+    const table = PlayTable.start(
+      newGame()
+        .withLocation(study, blankLocation('study'))
+        .withInvestigator(alder, { locationId: study }),
+    );
+
+    render(
+      <InvestigatorBar
+        board={table.board}
+        actions={actionsOn(table)}
+        busy={false}
+        adjusting={false}
+        printed={() => ({
+          factionCode: 'guardian',
+          traits: 'Tester. Hero.',
+          text: '[reaction] After you pass a test: gain 1 resource.\n<b>Forced</b> – Nothing.',
+          flavor: 'It always works in the tests.',
+        })}
+      />,
+    );
+
+    const card = within(panel('alder')).getByRole('article');
+    // The page is a plain block of the card's paragraphs, with no role of its own; each symbol
+    // reads as its name in braces.
+    for (const icon of card.querySelectorAll('[data-page] [role="img"]')) {
+      icon.textContent = `{${icon.getAttribute('aria-label') ?? ''}}`;
+    }
+    const page = Array.from(card.querySelectorAll('[data-page] > *'), (part) => part.textContent);
+    expect(page).toEqual([
+      'Tester. Hero.',
+      '{Reaction} After you pass a test: gain 1 resource.',
+      'Forced – Nothing.',
+      'It always works in the tests.',
+    ]);
+  });
+
+  it.each([
+    { size: 'short', text: 'x'.repeat(200) },
+    { size: 'long', text: 'x'.repeat(300) },
+    { size: 'longest', text: 'x'.repeat(450) },
+  ])('sets a page of $text.length characters in its $size size', ({ size, text }) => {
+    expect(textLength({ factionCode: 'seeker', text })).toBe(size);
+  });
+
   describe('the lead and turn markers', () => {
     const alderAndBrook = () =>
       PlayTable.start(
@@ -304,12 +395,11 @@ describe('InvestigatorBar', () => {
           .withInvestigator(brook, { locationId: study }),
       );
 
-    /** The markers beside `name`'s name, by what they say. */
-    // The markers sit beside the name in the card's header, which has no role to find it by.
+    /** The markers before where `name` is, by what they say. */
+    // The markers open the status line under the card, which has no role to find it by.
     const markersOf = (name: string) =>
-      Array.from(
-        within(panel(name)).getByRole('article').querySelectorAll('header [role="img"]'),
-        (marker) => marker.getAttribute('aria-label'),
+      Array.from(panel(name).querySelectorAll('[data-whereabouts] [role="img"]'), (marker) =>
+        marker.getAttribute('aria-label'),
       );
 
     it.each([
@@ -946,7 +1036,7 @@ describe('InvestigatorBar', () => {
       expect(screen.getByRole('dialog', { name: 'ghoul_minion' })).toBeTruthy();
     });
 
-    it('opens a treachery in the threat area to read', () => {
+    it("opens a treachery on the card shell, in alder's threat area by the kicker", () => {
       const table = PlayTable.start(
         newGame()
           .withLocation(study, blankLocation('study'))
@@ -966,11 +1056,11 @@ describe('InvestigatorBar', () => {
         within(panel('alder')).getByRole('button', { name: 'Read dissonant_voices' }),
       );
 
-      const zoom = screen.getByRole('dialog', { name: 'dissonant_voices' });
-      expect(within(zoom).getByText('Treachery')).toBeTruthy();
+      const details = screen.getByRole('dialog', { name: 'dissonant_voices' });
+      expect(within(details).getByText("In alder's threat area")).toBeTruthy();
     });
 
-    it("takes the action of a treachery in alder's threat area from its zoom and closes it", async () => {
+    it("takes the action of a treachery in alder's threat area from its details, which stay open", async () => {
       const table = PlayTable.start(
         newGame()
           .withLocation(study, blankLocation('study'))
@@ -991,12 +1081,12 @@ describe('InvestigatorBar', () => {
         />,
       );
       fireEvent.click(within(panel('alder')).getByRole('button', { name: 'Read frozen_in_fear' }));
-      const zoom = screen.getByRole('dialog', { name: 'frozen_in_fear' });
+      const details = screen.getByRole('dialog', { name: 'frozen_in_fear' });
 
-      fireEvent.click(within(zoom).getByRole('button', { name: 'Action · frozen_in_fear' }));
+      fireEvent.click(within(details).getByRole('button', { name: 'Action · frozen_in_fear' }));
       await act(async () => {});
 
-      expect(screen.queryByRole('dialog', { name: 'frozen_in_fear' })).toBeNull();
+      expect(screen.getByRole('dialog', { name: 'frozen_in_fear' })).toBeTruthy();
       expect(table.board.investigator(alder)).toMatchObject({ actions: 2 });
     });
 
@@ -1087,7 +1177,7 @@ describe('InvestigatorBar', () => {
       expect(within(panel('brook')).queryByRole('list', { name: 'Cards in play' })).toBeNull();
     });
 
-    it('opens a controlled card to read', () => {
+    it("opens a controlled card on the card shell, in alder's play area by the kicker", () => {
       const table = aldersLita();
       render(
         <InvestigatorBar
@@ -1100,7 +1190,8 @@ describe('InvestigatorBar', () => {
 
       fireEvent.click(within(panel('alder')).getByRole('button', { name: 'Read lita_chantler' }));
 
-      expect(screen.getByRole('dialog', { name: 'lita_chantler' })).toBeTruthy();
+      const details = screen.getByRole('dialog', { name: 'lita_chantler' });
+      expect(within(details).getByText("In alder's play area")).toBeTruthy();
     });
   });
 });

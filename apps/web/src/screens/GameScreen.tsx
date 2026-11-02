@@ -1,3 +1,4 @@
+import { printedInvestigatorOf } from '@arkham/carddata';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router';
@@ -190,6 +191,11 @@ export function GameScreen({
                 ? (investigator) => detail.open({ row: 'investigators', investigator })
                 : undefined
             }
+            printed={
+              cards.status === 'ready'
+                ? (code) => printedInvestigatorOf(cards.catalog, code)
+                : undefined
+            }
           />
         </section>
         {detailTarget && (
@@ -219,13 +225,13 @@ export function GameScreen({
               actions={store.getState().actions}
               busy={open.busy}
               onSpawn={(enemy) => store.getState().startSpawn(enemy)}
-              onDismiss={() => store.getState().dismissDrawnCards()}
+              onDismiss={() => store.getState().dismissNotice('drawnCards')}
             />
           )}
           {open.skippedEffects && (
             <SkippedEffectsNotice
               skipped={open.skippedEffects}
-              onDismiss={() => store.getState().dismissSkippedEffects()}
+              onDismiss={() => store.getState().dismissNotice('skippedEffects')}
             />
           )}
           {open.rejection && (
