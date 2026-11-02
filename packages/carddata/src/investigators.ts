@@ -1,6 +1,24 @@
 import { z } from 'zod';
 import { chapterOfPack, type Chapter, type PackDef } from './packs';
 
+/** The investigator classes (ArkhamDB faction codes), in the order the picker's class chips show them. */
+export const FACTION_CODES = [
+  'guardian',
+  'seeker',
+  'rogue',
+  'mystic',
+  'survivor',
+  'neutral',
+] as const;
+
+/** An investigator's class, which colours their card's shield and names its icon. */
+export type InvestigatorClass = (typeof FACTION_CODES)[number];
+
+/** The class `factionCode` names, or none for a code that names no investigator class. */
+export function classOf(factionCode: string | undefined): InvestigatorClass | undefined {
+  return FACTION_CODES.find((code) => code === factionCode);
+}
+
 /** Investigator entry of the catalog the picker lists; see `buildInvestigatorCatalog`. */
 export interface InvestigatorDef {
   code: string;

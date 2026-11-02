@@ -3,14 +3,18 @@ import { useTranslation } from 'react-i18next';
 import {
   SKILL_NAMES,
   type BoardView,
+  type InvestigatorCode,
   type InvestigatorId,
   type InvestigatorView,
   type MapEnemyView,
   type SkillName,
 } from '@arkham/engine';
 import { Brain, Heart } from '../catalog/cardFace';
+import { useCardPicture } from '../catalog/cardImages';
 import type { GameActions, SteppedStat } from '../state/gameActions';
 import { InvestigatorArt } from './InvestigatorArt';
+import { classOf, type PrintedInvestigator } from '@arkham/carddata';
+import { InvestigatorFace } from './InvestigatorFace';
 import { SkillTestDialog } from './SkillTestDialog';
 import { signed } from './TestCalculation';
 import { PlayArea } from './PlayArea';
@@ -38,12 +42,15 @@ export function InvestigatorBar({
   busy,
   adjusting,
   onOpen,
+  printed,
 }: {
   board: BoardView;
   actions: GameActions;
   busy: boolean;
   adjusting: boolean;
   onOpen?: ((investigator: InvestigatorId) => void) | undefined;
+  /** Looks up what each investigator's card prints (`printedInvestigatorOf`), once the catalog has loaded. */
+  printed?: ((code: InvestigatorCode) => PrintedInvestigator | undefined) | undefined;
 }) {
   // The players pick who goes next in the investigation phase, once no turn is in progress.
   const picking = board.phase === 'investigation' && board.turn === undefined;
@@ -56,6 +63,7 @@ export function InvestigatorBar({
           key={investigator.id}
           board={board}
           investigator={investigator}
+          printed={printed?.(investigator.code)}
           focused={focus === investigator.id}
           onOpen={focus === investigator.id ? onOpen : undefined}
           onTurn={board.turn === investigator.id}
@@ -130,12 +138,11 @@ function OtherInvestigators({
 }
 
 /**
- * One investigator: their threat area along the top edge of their card, the card laid out like the
- * printed investigator cards (the name banner in a dark band with where they are and how their
- * round goes, the four skills on their chain, the art window beside the notebook page with the
- * counters), the cards they control under it (`PlayArea`), then their turn controls. Beside the name,
- * a pentagon marks the lead investigator, like the game's lead investigator token, and an action
- * arrow the investigator whose turn it is.
+ * One investigator: their threat area along the top edge of their card, the card drawn as the
+ * printed one (`InvestigatorFace`) with the name and subname on its plates (`printed`), the four
+ * skills on their chain and the counters at the foot of its notebook page, then where they are and how their round goes, the cards they control (`PlayArea`) and
+ * their turn controls. Before where they are, a pentagon marks the lead investigator, like the
+ * game's lead investigator token, and an action arrow the investigator whose turn it is.
  * Health and sanity show what is left of the printed value, like the dials, while their steppers
  * place and heal damage and horror, like the tokens on the card. Clues show without steppers: they
  * are found by investigating and spent on the act.
@@ -143,6 +150,7 @@ function OtherInvestigators({
 function InvestigatorPanel({
   board,
   investigator,
+  printed,
   focused,
   onOpen,
   onTurn,
@@ -156,6 +164,8 @@ function InvestigatorPanel({
   /** The board the skill tests (`SkillTestDialog`) and the card actions (`TurnControls`) read. */
   board: BoardView;
   investigator: InvestigatorView;
+  /** What their card prints besides its stats, once the catalog has it. */
+  printed: PrintedInvestigator | undefined;
   /** The phone shows this panel in full (`useFocus`). */
   focused: boolean;
   /** Opens the phone's detail view on this panel, from a tap on the name. */
@@ -173,6 +183,7 @@ function InvestigatorPanel({
 }) {
   const { t } = useTranslation();
   const nameId = useId();
+  const picture = useCardPicture(investigator.image, 'landscape');
   return (
     <section
       aria-labelledby={nameId}
@@ -189,7 +200,12 @@ function InvestigatorPanel({
         // Fighting and evading are play, so they wait while the players adjust, like the turn's.
         busy={busy || adjusting}
       />
-      <article data-card="investigator">
+      <article
+        data-card="investigator"
+        data-picture={picture?.shown ? 'shown' : undefined}
+        data-adjusting={adjusting || undefined}
+      >
+        <InvestigatorFace picture={picture} investigatorClass={classOf(printed?.factionCode)} />
         <header>
           <h3 id={nameId}>
             {onOpen ? (
@@ -200,11 +216,8 @@ function InvestigatorPanel({
               investigator.name
             )}
           </h3>
-          {lead && <span role="img" aria-label={t('investigators.lead')} data-marker="lead" />}
-          {onTurn && <span role="img" aria-label={t('investigators.onTurn')} data-marker="turn" />}
-          <p>{statusLine(investigator, onTurn, t)}</p>
+          {printed?.subname && <p>{printed.subname}</p>}
         </header>
-        <InvestigatorArt image={investigator.image} />
         <Skills
           board={board}
           investigator={investigator}
@@ -214,6 +227,11 @@ function InvestigatorPanel({
         />
         <Counters investigator={investigator} adjusting={adjusting} busy={busy} actions={actions} />
       </article>
+      <p data-whereabouts="">
+        {lead && <span role="img" aria-label={t('investigators.lead')} data-marker="lead" />}
+        {onTurn && <span role="img" aria-label={t('investigators.onTurn')} data-marker="turn" />}
+        {statusLine(investigator, onTurn, t)}
+      </p>
       <PlayArea
         board={board}
         cards={board.cardsIn({ kind: 'playArea', investigatorId: investigator.id })}

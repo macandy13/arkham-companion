@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { buildInvestigatorCatalog, fetchCatalog, normalisePacks, type FetchFn } from './index';
+import {
+  buildInvestigatorCatalog,
+  classOf,
+  fetchCatalog,
+  normalisePacks,
+  printedInvestigatorOf,
+  type FetchFn,
+} from './index';
 
 // Hand-written fake data – never real card text.
 const packs = normalisePacks([
@@ -251,5 +258,31 @@ describe('fetchCatalog', () => {
     await expect(
       fetchCatalog('https://example.test', async () => new Response('', { status: 503 })),
     ).rejects.toThrow('packs -> HTTP 503');
+  });
+});
+
+describe('printedInvestigatorOf', () => {
+  it('finds what an investigator card prints by its code, and nothing for a code not listed', () => {
+    const catalog = {
+      investigators: buildInvestigatorCatalog([rawInvestigator({ traits: 'Tester.' })], packs),
+      packs,
+    };
+
+    expect(printedInvestigatorOf(catalog, '1001')).toMatchObject({
+      subname: 'The Tester',
+      factionCode: 'guardian',
+      traits: 'Tester.',
+    });
+    expect(printedInvestigatorOf(catalog, '9999')).toBeUndefined();
+  });
+});
+
+describe('classOf', () => {
+  it.each([
+    { factionCode: 'mystic', investigatorClass: 'mystic' },
+    { factionCode: 'mythos', investigatorClass: undefined },
+    { factionCode: undefined, investigatorClass: undefined },
+  ])('reads $factionCode as $investigatorClass', ({ factionCode, investigatorClass }) => {
+    expect(classOf(factionCode)).toBe(investigatorClass);
   });
 });
