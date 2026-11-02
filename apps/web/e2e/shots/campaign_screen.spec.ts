@@ -34,7 +34,7 @@ test('the resolution of a game its only investigator lost to horror', async ({ p
   await expect(page.getByRole('dialog', { name: 'The scenario is over' })).toBeVisible();
 });
 
-test('the log right after that resolution was written', async ({ page }) => {
+test('the log right after that resolution was written', { tag: '@shot' }, async ({ page }) => {
   await page.goto('/#/new');
   await page.getByRole('link', { name: 'New campaign' }).click();
   await page.getByRole('button', { name: 'Next' }).click();

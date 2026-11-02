@@ -80,13 +80,7 @@ export function CampaignScreen({
       </section>
       <ScenarioList log={log} />
       {entry && <CampaignSheets log={log} entry={entry} />}
-      <ContinueLink
-        store={store}
-        catalog={catalog}
-        campaignId={campaignId}
-        log={log}
-        games={games}
-      />
+      <NextStep store={store} catalog={catalog} campaignId={campaignId} log={log} games={games} />
       {written?.campaignId === campaignId && (
         <ResolutionUndo
           onUndo={() => store.getState().undoResolution()}
@@ -191,7 +185,7 @@ function outcomeLabel(t: ReturnType<typeof useTranslation>['t'], played: PlayedS
  * Back to the game of the scenario in play, if the campaign has one that is not over yet;
  * otherwise, once the log has moved on to a scenario without a game, the way to set it up.
  */
-function ContinueLink({
+function NextStep({
   store,
   catalog,
   campaignId,

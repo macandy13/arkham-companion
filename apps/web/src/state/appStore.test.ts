@@ -213,7 +213,7 @@ describe('appStore', () => {
       });
     });
 
-    describe('startNextScenario after The Gathering ended without a resolution', () => {
+    describe('startNextScenario after an Easy Gathering ended without a resolution', () => {
       const midnightMasks = {
         title: 'The Midnight Masks',
         ctx: {
@@ -226,7 +226,7 @@ describe('appStore', () => {
       /** A campaign whose log has The Gathering written in, without a resolution. */
       async function gatheringWritten(db: IndexedDbStore) {
         const store = createAppStore(db);
-        await store.getState().startCampaign(campaignStart);
+        await store.getState().startCampaign({ ...campaignStart, difficulty: 'easy' });
         const campaignId = store.getState().campaigns[0]!.campaignId;
         await store.getState().actions.adjust(investigatorId('alder'), 'horror', alder.sanity);
         await store.getState().writeResolution({ kind: 'noResolution' }, []);

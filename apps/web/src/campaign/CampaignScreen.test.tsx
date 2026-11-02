@@ -24,7 +24,7 @@ const litaChantler = cardCode('01117');
 const gathering = scenarioId('the-gathering');
 const midnightMasks = scenarioId('the-midnight-masks');
 
-/** A Night of the Zealot campaign of Roland Banks alone, its chaos bag a single 0, then `events` on its log. */
+/** A Night of the Zealot campaign on Standard of Roland Banks alone, its chaos bag a single 0, then `events` on its log. */
 async function storeCampaign(events: (id: CampaignId) => CampaignEvent[]) {
   const gameStore = new IndexedDbStore(`campaign-screen-test-${n++}`);
   const campaignId = await gameStore.createCampaign({ title: 'Zealot – Roland' });
@@ -327,7 +327,7 @@ describe('CampaignScreen', () => {
     expect(link.getAttribute('href')).toBe(`/game/${gameId}`);
   });
 
-  describe('after The Gathering, in which Roland earned 5 experience and spent 2', () => {
+  describe('after The Gathering on Standard, in which Roland earned 5 experience and spent 2', () => {
     async function renderLogBeforeMasks() {
       const { gameStore, campaignId } = await storeCampaign(() => [
         {
@@ -343,6 +343,7 @@ describe('CampaignScreen', () => {
       fireEvent.click(await screen.findByRole('button', { name: 'Set up The Midnight Masks' }));
       return {
         gameStore,
+        campaignId,
         dialog: screen.getByRole('dialog', { name: 'Set up The Midnight Masks' }),
       };
     }
@@ -358,7 +359,7 @@ describe('CampaignScreen', () => {
     });
 
     it('sets The Midnight Masks up as a game of the campaign and goes to it', async () => {
-      const { gameStore, dialog } = await renderLogBeforeMasks();
+      const { gameStore, campaignId, dialog } = await renderLogBeforeMasks();
 
       const startButton = within(dialog).getByRole('button', { name: 'Start game' });
       await waitFor(() => expect(startButton).toHaveProperty('disabled', false));
@@ -370,6 +371,7 @@ describe('CampaignScreen', () => {
       expect(game).toMatchObject({
         title: 'The Midnight Masks – Roland Banks',
         scenarioId: midnightMasks,
+        campaignId,
       });
     });
   });

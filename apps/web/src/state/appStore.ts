@@ -23,18 +23,13 @@ import type {
   ResolutionId,
   ScenarioId,
 } from '@arkham/engine';
-import {
-  PlayTable,
-  campaign,
-  campaignId as toCampaignId,
-  emptyState,
-  investigatorId,
-} from '@arkham/engine';
+import { PlayTable, campaign, campaignId as toCampaignId, emptyState } from '@arkham/engine';
 import { gameActions, type GameActions } from './gameActions';
 import { GameSession, startGame, type PlayStep, type SkippedEffect } from './gameSession';
 import type { DrawnCard } from '../encounter/drawnCards';
 import { findScenario, type ScenarioEntry } from '../scenarios/scenarioCatalog';
 import { parseGameExport, serialiseGameExport } from '../storage/gameExport';
+import { seatsFor } from '../wizard/seating';
 
 /** Everything the new game wizard has decided; input to `AppState.startScenario`. */
 export interface ScenarioStart {
@@ -521,13 +516,7 @@ export function createAppStore(
         const loaded = await gameStore.loadCampaign(campaignId);
         if (!loaded) throw new Error(`Unknown campaign ${campaignId}`);
         const { log } = loaded;
-        // A game has one copy of each investigator, so the code is unique enough to be the seat's
-        // ID too, as in the new game wizard.
-        const investigators = log.investigators.map(({ code }) => ({
-          id: investigatorId(code),
-          code,
-        }));
-        const options = { campaign: log, seed, investigators };
+        const options = { campaign: log, seed, investigators: seatsFor(log.investigators) };
         const gameId = await startGame(gameStore, title, ctx, options, campaignId);
         await get().refresh();
         await get().openGame(gameId);
