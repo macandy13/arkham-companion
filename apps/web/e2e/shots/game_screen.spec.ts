@@ -1,6 +1,7 @@
 import { expect, test } from '../fixtures/test';
 import {
   cluesToShareExport,
+  ghoulPriestInCellarExport,
   graveyardTestExport,
   midnightMasksStartedExport,
   tangledThicketRevealedExport,
@@ -102,6 +103,35 @@ test('the house map in the Eldritch card style', async ({ page }) => {
 
   await expect(page.getByRole('region', { name: 'Roland Banks' })).toBeVisible();
   await expect(page.locator('html')).toHaveAttribute('data-card-theme', 'eldritch');
+});
+
+test('the Ghoul Priest in the Cellar, its token cut from the card art', async ({ page }) => {
+  await resumeImportedGame(
+    page,
+    'The Ghoul Priest is out',
+    ghoulPriestInCellarExport('The Ghoul Priest is out'),
+  );
+
+  const cellar = page.getByRole('figure', { name: 'House' }).getByRole('group', { name: 'Cellar' });
+  const priest = cellar.getByRole('img', { name: /^Ghoul Priest/ });
+  await expect(priest.locator('[data-part="avatar"]')).toHaveAttribute('data-picture', 'shown');
+});
+
+test('the Ghoul Priest in the Cellar, its token showing its initial as the settings ask', async ({
+  page,
+}) => {
+  await page.goto('/#/settings');
+  await page.getByLabel('Enemy tokens').selectOption('Initials');
+  await resumeImportedGame(
+    page,
+    'The Ghoul Priest is out',
+    ghoulPriestInCellarExport('The Ghoul Priest is out'),
+  );
+
+  const cellar = page.getByRole('figure', { name: 'House' }).getByRole('group', { name: 'Cellar' });
+  const priest = cellar.getByRole('img', { name: /^Ghoul Priest/ });
+  await expect(priest.locator('[data-part="avatar"]')).toBeHidden();
+  await expect(priest.locator('text').first()).toBeVisible();
 });
 
 test("the Ghoul Priest's details in the Eldritch card style: a blackletter name, tentacle scrolls, its set icon on the medallion", async ({
@@ -342,25 +372,19 @@ test('The Barrier opened as a full card', async ({ page, isMobile }) => {
   await expect(card.getByRole('img', { name: 'Clues 0 / 3' })).toBeInViewport();
 });
 
-test(
-  'The Gathering’s reference card opened to read',
-  { tag: '@shot' },
-  async ({ page, isMobile }) => {
-    await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
-    const scenario = page.getByRole('region', { name: 'Scenario' });
+test('The Gathering’s reference card opened to read', async ({ page, isMobile }) => {
+  await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
+  const scenario = page.getByRole('region', { name: 'Scenario' });
 
-    // A dialog from the name on a tablet; on a phone a tap opens the detail view on the card.
-    if (isMobile) await scenario.locator('[data-card]').click();
-    else await scenario.getByRole('button', { name: 'The Gathering' }).click();
+  // A dialog from the name on a tablet; on a phone a tap opens the detail view on the card.
+  if (isMobile) await scenario.locator('[data-card]').click();
+  else await scenario.getByRole('button', { name: 'The Gathering' }).click();
 
-    const card = isMobile ? scenario : page.getByRole('dialog', { name: 'The Gathering' });
-    await expect(
-      card
-        .getByRole('list', { name: 'Chaos tokens' })
-        .getByText('-1. On a failure, take 1 horror.'),
-    ).toBeInViewport();
-  },
-);
+  const card = isMobile ? scenario : page.getByRole('dialog', { name: 'The Gathering' });
+  await expect(
+    card.getByRole('list', { name: 'Chaos tokens' }).getByText('-1. On a failure, take 1 horror.'),
+  ).toBeInViewport();
+});
 
 test(
   'Frozen in Fear from Roland Banks’ threat area, on the card shell',

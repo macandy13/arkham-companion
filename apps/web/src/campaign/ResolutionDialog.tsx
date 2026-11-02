@@ -7,8 +7,10 @@ import {
   type GameState,
   type InvestigatorCode,
   type ProposedChange,
+  type ScenarioOutcome,
   type StoryValue,
 } from '@arkham/engine';
+import type { PendingResolution } from '../state/appStore';
 import {
   findCampaignOfScenario,
   findScenario,
@@ -24,32 +26,37 @@ type ChangeGroup = 'notes' | 'investigators' | 'chaosBag' | 'atTheTable';
 const GROUPS: readonly ChangeGroup[] = ['notes', 'investigators', 'chaosBag', 'atTheTable'];
 
 /**
- * "Into the campaign log" (MC1.6c, design: docs/product.md "Campaign screen"): what the ended
- * `game`'s resolution writes into its campaign log (`PendingResolution.changes`), grouped like the
- * log page, with the steps the players do at the table. A defeat by damage and horror at once, or
- * a story card one of several investigators earns, asks the players to pick; the first option is
- * picked until they do. The app shows no guide text, so the dialog names the part to read aloud.
- * Submitting hands the confirmed commands to `onWrite`; "Not yet" leaves the game as it is.
+ * The end of a scenario in two steps (MC1.6c, design: docs/product.md "Campaign screen"). First
+ * "The scenario is over": the scenario's resolutions, the one the game reached tagged "from the
+ * game", for the players to confirm or to pick another if the table played the ending differently.
+ * Then "Into the campaign log": what that resolution writes, grouped like the log page, with the
+ * steps the players do at the table. A defeat by damage and horror at once, or a story card one of
+ * several investigators earns, asks the players to pick; the first option is picked until they do.
+ * The app shows no guide text, so both steps name the part to read aloud. Writing hands the
+ * resolution and the confirmed commands to `onWrite`; "Not yet" leaves the game as it is. Without
+ * a campaign (`PendingResolution.campaignId`) the second step only lists the steps and closes.
  * `failed` says the last write was refused, so the log is unchanged.
  */
 export function ResolutionDialog({
   game,
-  changes,
+  resolution,
   busy,
   failed,
   onWrite,
   onLater,
 }: {
   readonly game: GameState;
-  readonly changes: readonly ProposedChange[];
+  readonly resolution: PendingResolution;
   readonly busy: boolean;
   readonly failed: boolean;
-  readonly onWrite: (confirmed: readonly CampaignCommand[]) => void;
+  readonly onWrite: (outcome: ScenarioOutcome, confirmed: readonly CampaignCommand[]) => void;
   readonly onLater: () => void;
 }) {
   const { t } = useTranslation();
   const dialog = useRef<HTMLDialogElement>(null);
-  // The option each choice has picked, by the choice's place in `changes`.
+  const [step, setStep] = useState<'pick' | 'changes'>('pick');
+  const [outcome, setOutcome] = useState(resolution.reached);
+  // The option each choice has picked, by the choice's place in the chosen resolution's changes.
   const [picks, setPicks] = useState<ReadonlyMap<number, number>>(new Map());
   const describe = useDescribeCommand(game);
 
@@ -57,6 +64,9 @@ export function ResolutionDialog({
     dialog.current?.showModal();
   }, []);
 
+  const changes =
+    resolution.options.find((option) => campaign.sameOutcome(option.outcome, outcome))?.changes ??
+    [];
   const confirmed = changes.flatMap((change, index): CampaignCommand[] => {
     if (change.kind === 'command') return [change.command];
     if (change.kind !== 'choice') return [];
@@ -64,7 +74,11 @@ export function ResolutionDialog({
     return change.options.slice(picked, picked + 1);
   });
   const scenario = findScenario(game.meta.scenarioId);
-  const number = game.meta.resolution && resolutionNumber(game.meta.resolution);
+  const kicker = [
+    ...(scenario ? [t(scenario.nameKey)] : []),
+    ...(step === 'pick' ? [] : [outcomeName(t, outcome)]),
+  ].join(' · ');
+  const inCampaign = resolution.campaignId !== undefined;
   const indexed = changes.map((change, index) => ({ change, index }));
 
   return (
@@ -79,65 +93,123 @@ export function ResolutionDialog({
       }}
     >
       <hgroup>
-        <p>
-          {scenario && `${t(scenario.nameKey)} · `}
-          {number === undefined ? t('resolution.none') : t('resolution.numbered', { n: number })}
-        </p>
-        <h2 id="resolution-title">{t('resolution.title')}</h2>
+        <p>{kicker}</p>
+        <h2 id="resolution-title">
+          {step === 'pick'
+            ? t('resolution.over')
+            : t(inCampaign ? 'resolution.title' : 'resolution.standaloneTitle')}
+        </h2>
       </hgroup>
-      <p>{number === undefined ? t('resolution.readNone') : t('resolution.read', { n: number })}</p>
+      <p>{readAloud(t, outcome)}</p>
       <form
         onSubmit={(event) => {
           event.preventDefault();
-          onWrite(confirmed);
+          if (step === 'pick') setStep('changes');
+          else if (inCampaign) onWrite(outcome, confirmed);
+          else onLater();
         }}
       >
-        {GROUPS.map((group) => {
-          const inGroup = indexed.filter(({ change }) => groupOf(change) === group);
-          if (group !== 'chaosBag' && inGroup.length === 0) return null;
-          return (
-            <section key={group} aria-labelledby={`resolution-${group}`}>
-              <h3 id={`resolution-${group}`}>{t(`resolution.groups.${group}`)}</h3>
-              <ul>
-                {inGroup.length === 0 && <li>{t('resolution.noChange')}</li>}
-                {inGroup.map(({ change, index }) => (
-                  <li key={index}>
-                    {change.kind === 'byHand' && t(change.textKey)}
-                    {change.kind === 'command' && describe(change.command)}
-                    {change.kind === 'choice' && (
-                      <fieldset>
-                        <legend>{t('resolution.pickOne')}</legend>
-                        {change.options.map((option, optionIndex) => (
-                          <label key={optionIndex}>
-                            <input
-                              type="radio"
-                              name={`resolution-choice-${index}`}
-                              checked={(picks.get(index) ?? 0) === optionIndex}
-                              onChange={() => setPicks(new Map(picks).set(index, optionIndex))}
-                            />
-                            {describe(option)}
-                          </label>
-                        ))}
-                      </fieldset>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            </section>
-          );
-        })}
+        {step === 'pick' && (
+          <fieldset>
+            <legend>{t('resolution.pickResolution')}</legend>
+            {resolution.options.map((option) => (
+              <label key={outcomeKey(option.outcome)}>
+                <input
+                  type="radio"
+                  name="resolution-outcome"
+                  checked={campaign.sameOutcome(option.outcome, outcome)}
+                  onChange={() => {
+                    setOutcome(option.outcome);
+                    setPicks(new Map());
+                  }}
+                />
+                {outcomeName(t, option.outcome)}
+                {campaign.sameOutcome(option.outcome, resolution.reached) && (
+                  <>
+                    {/* A space, so the radio's name reads "No resolution from the game". */}{' '}
+                    <em>{t('decision.fromTheGame')}</em>
+                  </>
+                )}
+              </label>
+            ))}
+          </fieldset>
+        )}
+        {step === 'changes' &&
+          GROUPS.map((group) => {
+            const inGroup = indexed.filter(({ change }) => groupOf(change) === group);
+            if (group !== 'chaosBag' && inGroup.length === 0) return null;
+            return (
+              <section key={group} aria-labelledby={`resolution-${group}`}>
+                <h3 id={`resolution-${group}`}>{t(`resolution.groups.${group}`)}</h3>
+                <ul>
+                  {inGroup.length === 0 && <li>{t('resolution.noChange')}</li>}
+                  {inGroup.map(({ change, index }) => (
+                    <li key={index}>
+                      {change.kind === 'byHand' && t(change.textKey)}
+                      {change.kind === 'command' && describe(change.command)}
+                      {change.kind === 'choice' && (
+                        <fieldset>
+                          <legend>{t('resolution.pickOne')}</legend>
+                          {change.options.map((option, optionIndex) => (
+                            <label key={optionIndex}>
+                              <input
+                                type="radio"
+                                name={`resolution-choice-${index}`}
+                                checked={(picks.get(index) ?? 0) === optionIndex}
+                                onChange={() => setPicks(new Map(picks).set(index, optionIndex))}
+                              />
+                              {describe(option)}
+                            </label>
+                          ))}
+                        </fieldset>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            );
+          })}
         {failed && <p role="alert">{t('resolution.failed')}</p>}
         <footer>
-          <button type="button" onClick={onLater}>
-            {t('resolution.later')}
-          </button>
+          {step === 'pick' ? (
+            <button type="button" onClick={onLater}>
+              {t('resolution.later')}
+            </button>
+          ) : (
+            <button type="button" onClick={() => setStep('pick')}>
+              {t('resolution.back')}
+            </button>
+          )}
           <button type="submit" disabled={busy}>
-            {t('resolution.write')}
+            {step === 'pick'
+              ? t('resolution.next')
+              : t(inCampaign ? 'resolution.write' : 'resolution.done')}
           </button>
         </footer>
       </form>
     </dialog>
   );
+}
+
+type Translate = ReturnType<typeof useTranslation>['t'];
+
+/** A key that tells outcomes apart in a list: the resolution id, or `none`. */
+function outcomeKey(outcome: ScenarioOutcome): string {
+  return outcome.kind === 'noResolution' ? 'none' : outcome.id;
+}
+
+/** "Resolution 2" or "No resolution", as the guide titles them. */
+function outcomeName(t: Translate, outcome: ScenarioOutcome): string {
+  return outcome.kind === 'noResolution'
+    ? t('resolution.none')
+    : t('resolution.numbered', { n: resolutionNumber(outcome.id) });
+}
+
+/** Which part of the campaign guide the players read aloud for `outcome`. */
+function readAloud(t: Translate, outcome: ScenarioOutcome): string {
+  return outcome.kind === 'noResolution'
+    ? t('resolution.readNone')
+    : t('resolution.read', { n: resolutionNumber(outcome.id) });
 }
 
 function groupOf(change: ProposedChange): ChangeGroup {

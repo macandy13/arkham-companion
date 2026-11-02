@@ -1,15 +1,5 @@
 import type { Chapter, InvestigatorDef, PackDef } from '@arkham/carddata';
 
-/** Faction codes in the order the class chips are shown. */
-export const FACTION_CODES = [
-  'guardian',
-  'seeker',
-  'rogue',
-  'mystic',
-  'survivor',
-  'neutral',
-] as const;
-
 /** Filter state of the investigator picker; an empty/absent field means "no restriction". */
 export interface PickerFilters {
   readonly search: string;
