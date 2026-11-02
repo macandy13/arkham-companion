@@ -1268,8 +1268,9 @@
 /*
  * A counter that just changed while it showed (`useCountChange`: the agenda's doom, the act's
  * clues, the encounter deck's cards, an investigator's counters): it swells for a moment and its
- * change ("+1", from `data-delta`) rises off it and fades. Generated content, so screen readers and
- * the text of the page leave it out. Motion only, so reduced motion has none of it.
+ * change ("+1", from `data-delta`) rises off it and fades. Generated content with an empty
+ * alternative text, so neither the page's text nor screen readers take it in. Each counter is the
+ * box it rises from, wherever the counter sits. Motion only, so reduced motion has none of it.
  */
 @keyframes count-pulses {
   50% {
@@ -1291,11 +1292,12 @@
 
 @media (prefers-reduced-motion: no-preference) {
   #board [data-delta] {
+    position: relative;
     animation: count-pulses var(--duration-pulse) ease-out;
   }
 
   #board [data-delta]::after {
-    content: attr(data-delta);
+    content: attr(data-delta) / '';
     position: absolute;
     inset-inline-start: 50%;
     inset-block-end: 100%;

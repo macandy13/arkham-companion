@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { signed } from '../investigators/TestCalculation';
 
 /** The last change of a shown count (`useCountChange`): by how much, and a key new to each change. */
 export interface CountChange {
@@ -23,10 +24,9 @@ export function useCountChange(count: number): CountChange | undefined {
 }
 
 /**
- * How a change reads on its counter ("+1", "−2"), for its `data-delta`, which the stylesheet lets
- * rise from the counter. A typographic minus, like the steppers.
+ * How a change reads on its counter ("+1", "−2", as the players say a modifier: `signed`), for its
+ * `data-delta`, which the stylesheet lets rise from the counter.
  */
 export function deltaText(change: CountChange | undefined): string | undefined {
-  if (change === undefined) return undefined;
-  return change.delta > 0 ? `+${change.delta}` : `−${-change.delta}`;
+  return change && signed(change.delta);
 }

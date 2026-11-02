@@ -386,25 +386,21 @@ test('The Gathering’s reference card opened to read', async ({ page, isMobile 
   ).toBeInViewport();
 });
 
-test(
-  'Frozen in Fear from Roland Banks’ threat area, on the card shell',
-  { tag: '@shot' },
-  async ({ page }) => {
-    await resumeImportedGame(
-      page,
-      'Roland Banks threatened',
-      rolandThreatenedExport('Roland Banks threatened'),
-    );
+test('Frozen in Fear from Roland Banks’ threat area, on the card shell', async ({ page }) => {
+  await resumeImportedGame(
+    page,
+    'Roland Banks threatened',
+    rolandThreatenedExport('Roland Banks threatened'),
+  );
 
-    await page
-      .getByRole('region', { name: 'Roland Banks' })
-      .getByRole('button', { name: 'Read Frozen in Fear' })
-      .first()
-      .click();
+  await page
+    .getByRole('region', { name: 'Roland Banks' })
+    .getByRole('button', { name: 'Read Frozen in Fear' })
+    .first()
+    .click();
 
-    await expect(page.getByRole('dialog', { name: 'Frozen in Fear' })).toBeVisible();
-  },
-);
+  await expect(page.getByRole('dialog', { name: 'Frozen in Fear' })).toBeVisible();
+});
 
 test('the attack of opportunity Roland Banks provokes by taking a resource', async ({ page }) => {
   await resumeImportedGame(
