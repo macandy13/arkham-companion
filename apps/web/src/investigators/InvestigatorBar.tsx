@@ -10,6 +10,7 @@ import {
   type SkillName,
 } from '@arkham/engine';
 import { Brain, Heart } from '../catalog/cardFace';
+import { cardParagraphs } from '../catalog/cardText';
 import { useCardPicture } from '../catalog/cardImages';
 import type { GameActions, SteppedStat } from '../state/gameActions';
 import { InvestigatorArt } from './InvestigatorArt';
@@ -139,8 +140,9 @@ function OtherInvestigators({
 
 /**
  * One investigator: their threat area along the top edge of their card, the card drawn as the
- * printed one (`InvestigatorFace`) with the name and subname on its plates (`printed`), the four
- * skills on their chain and the counters at the foot of its notebook page, then where they are and how their round goes, the cards they control (`PlayArea`) and
+ * printed one (`InvestigatorFace`) with the name and subname on its plates, the four skills on
+ * their chain, the traits, ability and flavour on the notebook page (`printed`) and the counters at
+ * its foot, then where they are and how their round goes, the cards they control (`PlayArea`) and
  * their turn controls. Before where they are, a pentagon marks the lead investigator, like the
  * game's lead investigator token, and an action arrow the investigator whose turn it is.
  * Health and sanity show what is left of the printed value, like the dials, while their steppers
@@ -164,7 +166,7 @@ function InvestigatorPanel({
   /** The board the skill tests (`SkillTestDialog`) and the card actions (`TurnControls`) read. */
   board: BoardView;
   investigator: InvestigatorView;
-  /** What their card prints besides its stats, once the catalog has it. */
+  /** What their card prints besides its stats; the page stays blank until the catalog has it. */
   printed: PrintedInvestigator | undefined;
   /** The phone shows this panel in full (`useFocus`). */
   focused: boolean;
@@ -225,6 +227,7 @@ function InvestigatorPanel({
           busy={busy}
           actions={actions}
         />
+        {printed && <NotebookPage printed={printed} />}
         <Counters investigator={investigator} adjusting={adjusting} busy={busy} actions={actions} />
       </article>
       <p data-whereabouts="">
@@ -400,6 +403,40 @@ function Counters({
     </dl>
   );
 }
+
+/**
+ * The text on the card's notebook page, as printed: the traits on the first line, each ability on
+ * its own lines (`cardParagraphs`, its symbols as icons), the flavour under them. A long text
+ * (some investigators print four abilities) takes a smaller size (`data-length`), so it stays on
+ * the page above the counters.
+ */
+function NotebookPage({ printed }: { printed: PrintedInvestigator }) {
+  const { traits, text, flavor } = printed;
+  return (
+    <div data-page="" data-length={textLength(printed)}>
+      {traits && <p data-traits="">{traits}</p>}
+      {text && cardParagraphs(text)}
+      {flavor && <blockquote>{cardParagraphs(flavor)}</blockquote>}
+    </div>
+  );
+}
+
+/**
+ * How much the notebook page holds, so the stylesheet sizes its text to fit: the printed cards
+ * keep one size and fit by tighter setting, which plain HTML cannot measure ahead.
+ */
+type TextLength = 'short' | 'long' | 'longest';
+
+/** The length class of a card's page text, by its characters (Roland Banks' is short). */
+export function textLength({ traits, text, flavor }: PrintedInvestigator): TextLength {
+  const length = (traits?.length ?? 0) + (text?.length ?? 0) + (flavor?.length ?? 0);
+  if (length <= LONG_TEXT) return 'short';
+  return length <= LONGEST_TEXT ? 'long' : 'longest';
+}
+
+/** The characters from which a page's text is long, or longest (measured on the Core Set cards). */
+const LONG_TEXT = 260;
+const LONGEST_TEXT = 400;
 
 /**
  * Where the investigator is and how their round goes: out of the game once defeated or resigned,

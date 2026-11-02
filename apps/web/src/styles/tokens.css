@@ -438,8 +438,9 @@
    * Where the HTML on an investigator card sits, in scan units of its face (`INVESTIGATOR_FACE`, a
    * landscape card 419 wide): the name on its plate and the subname on the one under it, the four
    * skills' values on the chain (the first link's left, the step from link to link, a link's size
-   * and the value's place on it), and the counters at the notebook page's foot (each one's centre,
-   * the tokens' and printed symbols' sizes, their numbers' and counts' sizes).
+   * and the value's place on it), the notebook page's text, the counters at the page's foot (each
+   * one's centre, the printed heart's and brain's size, their maximum's and count's size) and the
+   * text sizes, smaller for a long text (`data-length`).
    */
   --investigator-name-left: 40;
   --investigator-name-top: 6;
@@ -459,6 +460,14 @@
   --investigator-skill-value-width: 24;
   --investigator-skill-size: 24;
   --investigator-boost-size: 11;
+  --investigator-page-left: 244;
+  --investigator-page-top: 64;
+  --investigator-page-width: 160;
+  --investigator-page-height: 166;
+  --investigator-text-size: 13;
+  --investigator-long-text-size: 11.5;
+  --investigator-longest-text-size: 10;
+  --investigator-traits-size: 11.5;
   --investigator-counters-y: 256;
   --investigator-clues-x: 256;
   --investigator-health-x: 298;
