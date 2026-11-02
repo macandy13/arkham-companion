@@ -598,7 +598,11 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     table.fight(daisy, byName(ravenousGhoul), { result: 'fail' });
     table.endTurn(daisy);
     table.startTurn(wendy);
+    // Frozen in Fear in Wendy's threat area makes her first fight of the round cost 2.
+    expect(table.board.actionCost(wendy, 'fight')).toBe(2);
+    table.spendActionFor(wendy, 'fight');
     table.fight(wendy, enemyMatching(byName(swarmOfRats), { engagedWith: wendy }));
+    expect(table.board.investigator(wendy).actions).toBe(1);
     table.endTurn(wendy);
     table.answer(byName('Frozen in Fear'), 'fail');
 

@@ -2,6 +2,7 @@ import { stripTrailingDot } from '@arkham/util';
 import type { Ability } from './abilities';
 import type { CardAction } from './card_actions';
 import type { CardModifier } from './card_values';
+import type { ActionCostModifier } from './action_costs';
 import type { CardRestriction } from './restrictions';
 import type { Brand, CardCode, CardImagePath, EncounterSetCode } from './ids';
 import type { Keyword } from './keywords';
@@ -158,6 +159,12 @@ export interface CardStats {
    * `isRestricted` reads them. None when absent.
    */
   restrictions?: readonly CardRestriction[];
+  /**
+   * Its constant abilities that make basic actions cost more ("The first move, fight, or evade
+   * action you perform each round costs 1 additional action"); `actionCost` reads them. None when
+   * absent.
+   */
+  actionCosts?: readonly ActionCostModifier[];
   /** The card's forced abilities as data (architecture "Triggers and card effects"); none when absent. */
   abilities?: readonly Ability[];
   /** The card's action abilities ("[action]: …"), taken with `UseCardAction`; none when absent. */
