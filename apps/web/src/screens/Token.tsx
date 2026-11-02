@@ -1,10 +1,12 @@
 import { useTranslation } from 'react-i18next';
+import { deltaText, useCountChange } from './countChange';
 
 /**
  * A big round token on a header card (agenda, act or encounter deck), like the doom and clue tokens
  * on the table (on the deck it counts the cards left): the `count` and, when the card has one, its
  * `threshold` under it ("2 of 7"). `label` says it in words for screen readers, since the token's
  * colour alone says what it counts. A `span`, so it may sit inside a button (the encounter deck).
+ * A change of the count while it shows plays its effect (`useCountChange`).
  */
 export function Token({
   kind,
@@ -18,9 +20,12 @@ export function Token({
   label: string;
 }) {
   const { t } = useTranslation();
+  const change = useCountChange(count);
   return (
     <span role="img" aria-label={label} data-token={kind}>
-      <data value={count}>{count}</data>
+      <data key={change?.key} value={count} data-delta={deltaText(change)}>
+        {count}
+      </data>
       {threshold !== undefined && <span>{t('header.tokenThreshold', { threshold })}</span>}
     </span>
   );

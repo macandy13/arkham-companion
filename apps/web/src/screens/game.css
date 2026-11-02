@@ -1264,3 +1264,49 @@
     background: var(--color-accent);
   }
 }
+
+/*
+ * A counter that just changed while it showed (`useCountChange`: the agenda's doom, the act's
+ * clues, the encounter deck's cards, an investigator's counters): it swells for a moment and its
+ * change ("+1", from `data-delta`) rises off it and fades. Generated content, so screen readers and
+ * the text of the page leave it out. Motion only, so reduced motion has none of it.
+ */
+@keyframes count-pulses {
+  50% {
+    scale: var(--pulse-scale);
+  }
+}
+
+@keyframes delta-rises {
+  from {
+    opacity: 1;
+    translate: -50% 0;
+  }
+
+  to {
+    opacity: 0;
+    translate: -50% calc(-1 * var(--space-4));
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  #board [data-delta] {
+    animation: count-pulses var(--duration-pulse) ease-out;
+  }
+
+  #board [data-delta]::after {
+    content: attr(data-delta);
+    position: absolute;
+    inset-inline-start: 50%;
+    inset-block-end: 100%;
+    padding-inline: var(--space-1);
+    border-radius: var(--radius-pill);
+    background: var(--color-background);
+    color: var(--color-text);
+    font-family: var(--font-family);
+    font-size: var(--font-size-note);
+    font-weight: bold;
+    pointer-events: none;
+    animation: delta-rises var(--duration-delta) ease-out forwards;
+  }
+}

@@ -21,6 +21,7 @@ import { signed } from './TestCalculation';
 import { PlayArea } from './PlayArea';
 import { ThreatArea } from './ThreatArea';
 import { TurnControls } from './TurnControls';
+import { deltaText, useCountChange } from '../screens/countChange';
 import './investigators.css';
 
 /**
@@ -466,7 +467,8 @@ type StatKind = 'health' | 'sanity' | 'clues' | 'resources' | 'doom';
  * prints them (`printed`): the printed maximum on an anatomical heart or a brain, with the damage
  * or horror taken as a count circle on its lower right, like the location's clues on its clue
  * value; the pair is one image named by `shown`, since the two numbers alone do not say what is
- * left.
+ * left. A change of the count while it shows plays its effect (`useCountChange`): of the damage or
+ * horror taken on health and sanity.
  */
 function Stat({
   kind,
@@ -486,6 +488,7 @@ function Stat({
   children?: ReactNode;
 }) {
   const origin = { x: 0, y: 0 };
+  const change = useCountChange(printed ? printed.taken : value);
   return (
     <div data-stat={kind}>
       <dt>{short ? <abbr title={label}>{short}</abbr> : label}</dt>
@@ -500,12 +503,20 @@ function Stat({
               )}
             </svg>
             <data value={printed.max}>{printed.max}</data>
-            <data value={printed.taken} data-count="" data-empty={printed.taken === 0 || undefined}>
+            <data
+              key={change?.key}
+              value={printed.taken}
+              data-count=""
+              data-empty={printed.taken === 0 || undefined}
+              data-delta={deltaText(change)}
+            >
               {printed.taken}
             </data>
           </span>
         ) : (
-          <data value={value}>{shown}</data>
+          <data key={change?.key} value={value} data-delta={deltaText(change)}>
+            {shown}
+          </data>
         )}
         {children}
       </dd>
