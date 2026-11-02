@@ -60,3 +60,13 @@ export function shallowEqual<T extends object>(a: T, b: T): boolean {
 export function keyOf<T>(record: Readonly<Record<string, T>>, value: T): string | undefined {
   return Object.entries(record).find(([, each]) => each === value)?.[0];
 }
+
+/** A shallow copy of `record` without the entries whose value is `value`; the original stays. */
+export function withoutValue<K extends string, T>(
+  record: Readonly<Partial<Record<K, T>>>,
+  value: T,
+): Partial<Record<K, T>> {
+  return Object.fromEntries(Object.entries(record).filter(([, each]) => each !== value)) as Partial<
+    Record<K, T>
+  >;
+}

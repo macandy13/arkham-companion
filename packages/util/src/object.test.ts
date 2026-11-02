@@ -6,6 +6,7 @@ import {
   shallowEqual,
   withoutEmptyLists,
   withoutKey,
+  withoutValue,
 } from './index';
 
 describe('withoutKey', () => {
@@ -114,5 +115,20 @@ describe('keyOf', () => {
     { value: 'hallway_card', key: undefined },
   ])('finds $key for $value', ({ value, key }) => {
     expect(keyOf(rooms, value)).toBe(key);
+  });
+});
+
+describe('withoutValue', () => {
+  it('drops every entry with the value and keeps the others', () => {
+    const marks = { drawn: 'step_two', skipped: 'step_one', tokens: 'step_two' };
+
+    expect(withoutValue(marks, 'step_two')).toStrictEqual({ skipped: 'step_one' });
+    expect(marks).toStrictEqual({ drawn: 'step_two', skipped: 'step_one', tokens: 'step_two' });
+  });
+
+  it('copies a record without the value unchanged', () => {
+    expect(withoutValue({ skipped: 'step_one' }, 'step_two')).toStrictEqual({
+      skipped: 'step_one',
+    });
   });
 });

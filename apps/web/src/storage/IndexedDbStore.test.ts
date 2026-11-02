@@ -164,6 +164,43 @@ describe('IndexedDbStore', () => {
     await expect(store.renameGame(gameId('nope'), 'x')).rejects.toThrow(/Unknown game/);
   });
 
+  it('remembers the notices read in a game without counting it as play', async () => {
+    const id = await store.createGame({ title: 'Read' });
+    const before = (await store.listGames())[0]!.updatedAt;
+
+    await store.markNoticeRead(id, 'drawnCards', 'first_step');
+    await store.markNoticeRead(id, 'skippedEffects', 'first_step');
+    await store.markNoticeRead(id, 'drawnCards', 'second_step');
+
+    expect(await store.loadReadNotices(id)).toEqual({
+      drawnCards: 'second_step',
+      skippedEffects: 'first_step',
+    });
+    expect((await store.listGames())[0]).toMatchObject({ updatedAt: before });
+  });
+
+  it('forgets the notices read for the step it undoes, and only those', async () => {
+    const id = await store.createGame({ title: 'Undone' });
+    await store.appendEvents(id, [started], undefined, 'first_step');
+    await store.appendEvents(id, [tokens(1)], undefined, 'second_step');
+    await store.markNoticeRead(id, 'skippedEffects', 'first_step');
+    await store.markNoticeRead(id, 'drawnCards', 'second_step');
+
+    await store.undoLast(id);
+
+    expect(await store.loadReadNotices(id)).toEqual({ skippedEffects: 'first_step' });
+  });
+
+  it('knows no notices read in a new or unknown game, and marks none in an unknown one', async () => {
+    const id = await store.createGame({ title: 'New' });
+
+    expect(await store.loadReadNotices(id)).toEqual({});
+    expect(await store.loadReadNotices(gameId('nope'))).toEqual({});
+    await expect(store.markNoticeRead(gameId('nope'), 'drawnCards', 'a_step')).rejects.toThrow(
+      /Unknown game/,
+    );
+  });
+
   it('duplicates a game with its log, independent of the original', async () => {
     const id = await store.createGame({ title: 'Orig' });
     await store.appendEvents(id, [started, tokens(1)]);
