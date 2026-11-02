@@ -196,6 +196,7 @@ function InvestigatorPanel({
     >
       <ThreatArea
         board={board}
+        investigator={investigator}
         treacheries={board.cardsIn({ kind: 'threatArea', investigatorId: investigator.id })}
         enemies={engaged}
         actions={actions}
@@ -237,6 +238,7 @@ function InvestigatorPanel({
       </p>
       <PlayArea
         board={board}
+        investigator={investigator}
         cards={board.cardsIn({ kind: 'playArea', investigatorId: investigator.id })}
         actions={actions}
         busy={busy || adjusting}

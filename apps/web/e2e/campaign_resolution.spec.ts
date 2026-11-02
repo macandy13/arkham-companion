@@ -3,7 +3,7 @@ import { expect, test } from './fixtures/test';
 // Journey: a campaign's first game ends when its only investigator is driven out by horror; the
 // players confirm the resolution the game reached, check what it writes into the campaign log and
 // write it, read it there, take it back with Undo and write it again.
-test('write a scenario resolution into the campaign log', { tag: '@flow' }, async ({ page }) => {
+test('write a scenario resolution into the campaign log', async ({ page }) => {
   await test.step('Start a campaign with Fake Seeker alone', async () => {
     await page.goto('/#/new');
     await page.getByRole('link', { name: 'New campaign' }).click();
