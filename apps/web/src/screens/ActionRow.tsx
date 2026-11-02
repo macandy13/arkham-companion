@@ -142,7 +142,7 @@ export function CardActions({
             name={name}
             disabled={busy}
             onClick={() =>
-              pay(groupClues, name, (spend) => {
+              pay(groupClues, cardId, (spend) => {
                 onUse?.();
                 void actions.useCardAction(cardId, action, spend);
               })

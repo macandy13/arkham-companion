@@ -278,7 +278,6 @@
   --card-dialog-peek-title-height: 6rem;
   --card-dialog-peek-landscape-width: 12.5rem;
   --card-dialog-peek-landscape: 5.25rem;
-  --card-dialog-peek-landscape-title-height: 4rem;
   --card-dialog-peek-portrait: 2.875rem;
   --card-dialog-peek-portrait-title-height: 3.5rem;
   --card-dialog-peek-turn: -2deg;
@@ -315,12 +314,8 @@
   --decision-key-width: 1.375rem;
   /* The room the × keeps free in a dialog's top corner, and how far it sits from the edge. */
   --dialog-close-inset: var(--space-3);
-  /* The clue payment dialog, wide enough for three payers' art side by side, each this wide. */
-  --layout-clue-payment-width: 46rem;
-  --clue-payer-width: 13rem;
-  /* A clue token to tap in the clue payment dialog, and a pip counting the clues chosen. */
+  /* A clue token to tap in the clue payment dialog. */
   --clue-token-size: var(--touch-target);
-  --clue-pip-size: 0.75rem;
   /* The game log, wide enough that a step's lines rarely wrap. */
   --layout-log-width: 36rem;
   /* A card drawn in full in a dialog (the enemy details), like the prototype's zoomed card. */

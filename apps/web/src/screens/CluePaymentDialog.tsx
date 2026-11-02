@@ -1,7 +1,14 @@
-import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { BoardView, CluePayerView, InvestigatorId } from '@arkham/engine';
+import type {
+  BoardView,
+  CardFaceView,
+  CluePayerView,
+  InstanceId,
+  InvestigatorId,
+} from '@arkham/engine';
 import { InvestigatorArt } from '../investigators/InvestigatorArt';
+import { CardDialog } from './CardDialog';
 import './clue_payment.css';
 import type { ClueSpend } from '../state/gameActions';
 
@@ -38,33 +45,32 @@ export function evenClueSplit(
 
 /**
  * The players choose who pays a group clue cost ("as a group", RR "Act Deck": "Any or all
- * investigators may contribute any number of clues"): each payer (`BoardView.cluePayers`) as their
- * card's art over their name, or their initial until it loads, with the clues they hold as tokens
- * under it, the ones they pay pressed, starting at the engine's split. Tapping a pressed token
- * keeps one more of theirs, tapping another pays one more, so a payer's pressed tokens always come
- * first. A row of pips counts the clues chosen against `required`; Split evenly chooses
- * `evenClueSplit`, and Pay takes them once they are `required`. A native modal `<dialog>` brings
- * focus trapping and Escape, which closes it like its close button, paying nothing.
+ * investigators may contribute any number of clues"), on the card shell (`CardDialog`, MD.6b4):
+ * - the card the cost is paid for (`card`: the act to advance, the card whose action it is) beside
+ *   the page, an act over it;
+ * - that card and the clues the group pays as the kicker, the question as the title;
+ * - the clues chosen against `required`;
+ * - each payer (`BoardView.cluePayers`) as a row: their round portrait cut from their card, their
+ *   name over the clues they hold, and those clues as tokens, the ones they pay pressed, starting
+ *   at the engine's split. Tapping a pressed token keeps one more of theirs, tapping another pays
+ *   one more, so a payer's pressed tokens always come first;
+ * - Split evenly (`evenClueSplit`), and Pay, its one primary, once they are `required`.
+ * Escape and its × close it, paying nothing. On a phone it is the shell's sheet.
  */
 export function CluePaymentDialog({
-  title,
+  card,
   payers,
   required,
   onPay,
   onCancel,
 }: {
-  title: string;
+  card: CardFaceView;
   payers: readonly CluePayerView[];
   required: number;
   onPay: (spend: readonly ClueSpend[]) => void;
   onCancel: () => void;
 }) {
   const { t } = useTranslation();
-  const titleId = useId();
-  const dialog = useRef<HTMLDialogElement>(null);
-  useEffect(() => {
-    dialog.current?.showModal();
-  }, []);
   const [pays, setPays] = useState<ReadonlyMap<InvestigatorId, number>>(
     () => new Map(payers.map(({ id, pays }) => [id, pays])),
   );
@@ -72,20 +78,19 @@ export function CluePaymentDialog({
   const total = payers.reduce((sum, { id }) => sum + paysOf(id), 0);
 
   return (
-    <dialog ref={dialog} aria-labelledby={titleId} onCancel={onCancel} data-dialog="clue-payment">
-      <h2 id={titleId}>{title}</h2>
-      <button
-        type="button"
-        data-icon="close"
-        aria-label={t('cluePayment.close')}
-        onClick={onCancel}
-      />
+    <CardDialog
+      name="clue-payment"
+      card={card}
+      kicker={t('cluePayment.kicker', { count: required, card: card.name })}
+      title={t('cluePayment.title')}
+      onCancel={(event) => {
+        // React passes `cancel` on to a details dialog this one opened from, which Escape keeps open.
+        event.stopPropagation();
+        onCancel();
+      }}
+      onClose={onCancel}
+    >
       <p>{t('cluePayment.total', { total, required })}</p>
-      <ol aria-hidden="true">
-        {Array.from({ length: required }, (_, i) => (
-          <li key={i} data-paid={i < total || undefined} />
-        ))}
-      </ol>
       <form
         onSubmit={(event) => {
           event.preventDefault();
@@ -99,11 +104,11 @@ export function CluePaymentDialog({
         <ul>
           {payers.map(({ id, name, image, clues }) => (
             <li key={id}>
-              <figure>
-                <span>{name.charAt(0)}</span>
-                <InvestigatorArt image={image} />
-                <figcaption>{name}</figcaption>
-              </figure>
+              <InvestigatorArt image={image} />
+              <p>
+                {name}
+                <span>{t('cluePayment.pays', { count: clues, pays: paysOf(id) })}</span>
+              </p>
               <ul aria-label={t('cluePayment.tokens', { name })}>
                 {Array.from({ length: clues }, (_, i) => (
                   <li key={i}>
@@ -130,45 +135,46 @@ export function CluePaymentDialog({
           </button>
         </footer>
       </form>
-    </dialog>
+    </CardDialog>
   );
 }
 
 /**
  * Takes an action for the investigator whose turn it is that may have a group clue cost: one
  * without (`required` undefined) or with no split to choose (`offersClueSplit`) at once, with the
- * engine's split; else after the players split it in the `CluePaymentDialog` titled `title`, which
- * `dialog` renders while it is open. `take` gets the split (none for the engine's).
+ * engine's split; else after the players split it in the `CluePaymentDialog` beside the card
+ * `cardId` the cost is paid for, which `dialog` renders while it is open. `take` gets the
+ * split (none for the engine's).
  */
 export function useCluePayment(board: BoardView): {
   dialog: ReactNode;
   pay: (
     required: number | undefined,
-    title: string,
+    cardId: InstanceId,
     take: (spend?: readonly ClueSpend[]) => void,
   ) => void;
 } {
   const [asked, setAsked] = useState<{
     required: number;
-    title: string;
+    cardId: InstanceId;
     payers: readonly CluePayerView[];
     take: (spend?: readonly ClueSpend[]) => void;
   }>();
   const pay = (
     required: number | undefined,
-    title: string,
+    cardId: InstanceId,
     take: (spend?: readonly ClueSpend[]) => void,
   ) => {
     const first = board.turn;
     const payers =
       required === undefined || first === undefined ? [] : board.cluePayers(first, required);
     if (required !== undefined && offersClueSplit(payers, required))
-      setAsked({ required, title, payers, take });
+      setAsked({ required, cardId, payers, take });
     else take();
   };
   const dialog = asked && (
     <CluePaymentDialog
-      title={asked.title}
+      card={board.cardFace(asked.cardId)}
       payers={asked.payers}
       required={asked.required}
       onPay={(spend) => {
