@@ -1,6 +1,6 @@
 <!-- screencasts:start -->
 
-_Recorded from da37644 by the PR preview workflow; updated on every push that changes `apps/web`._
+_Recorded from fabf44d by the PR preview workflow; updated on every push that changes `apps/web`._
 
 ## Screenshots
 
@@ -8,7 +8,7 @@ _Recorded from da37644 by the PR preview workflow; updated on every push that ch
 
 <table>
 <tr><th>Desktop</th><th>Phone</th></tr>
-<tr><td><img src="https://raw.githubusercontent.com/macandy13/arkham-companion/gh-pages/pr-preview/pr-864/screencasts/who-pays-the-4-clues-to-advance-trapped-daisy-walker-3-and-roland-banks-1-desktop.png?v=da37644" alt="Desktop" width="560"></td><td><img src="https://raw.githubusercontent.com/macandy13/arkham-companion/gh-pages/pr-preview/pr-864/screencasts/who-pays-the-4-clues-to-advance-trapped-daisy-walker-3-and-roland-banks-1-phone.png?v=da37644" alt="Phone" width="180"></td></tr>
+<tr><td><img src="https://raw.githubusercontent.com/macandy13/arkham-companion/gh-pages/pr-preview/pr-864/screencasts/who-pays-the-4-clues-to-advance-trapped-daisy-walker-3-and-roland-banks-1-desktop.png?v=fabf44d" alt="Desktop" width="560"></td><td><img src="https://raw.githubusercontent.com/macandy13/arkham-companion/gh-pages/pr-preview/pr-864/screencasts/who-pays-the-4-clues-to-advance-trapped-daisy-walker-3-and-roland-banks-1-phone.png?v=fabf44d" alt="Phone" width="180"></td></tr>
 </table>
 
 <!-- screencasts:end -->
