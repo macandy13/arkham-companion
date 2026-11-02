@@ -448,22 +448,6 @@
 }
 
 /*
- * The skill test (SkillTestDialog): the title under the investigator's name, the skills as a row of
- * toggles, the difficulty and the modifier as stepper rows, the draw, then the calculation and
- * the outcome, coloured like a pass or a fail. The `#investigators` id lets these beat the home screen's `#app > main` rows and
- * padded list cards.
- */
-#investigators dialog[data-dialog='skill-test'] {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-}
-
-#investigators dialog[data-dialog='skill-test']:not([open]) {
-  display: none;
-}
-
-/*
  * A phone held upright, in the compact view: one panel, the focused investigator's
  * (`data-focus`), across the width under the map, with the others as round avatars along its top.
  */

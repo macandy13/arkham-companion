@@ -412,6 +412,11 @@ export const appTexts = {
   cardActions: {
     title: 'Kartenaktionen',
   },
+  cardDetails: {
+    threatArea: 'Im Bedrohungsbereich von {{name}}',
+    playArea: 'Im Spielbereich von {{name}}',
+    tapToRead: 'Tippe auf die Karte, um sie zu lesen.',
+  },
   cardDialog: {
     lower: 'Absenken, um ans Spielfeld zu kommen',
     raise: 'Dialog wieder anheben',
@@ -531,6 +536,11 @@ export const appTexts = {
       nightAndBrass: 'Nacht und Messing',
       eldritch: 'Unheimlich',
       pictures: 'Kartenbilder',
+    },
+    enemyTokens: 'Gegnermarker',
+    enemyTokenFaces: {
+      art: 'Kartenbild',
+      initials: 'Anfangsbuchstabe',
     },
     about: 'Über die App',
     unofficial:

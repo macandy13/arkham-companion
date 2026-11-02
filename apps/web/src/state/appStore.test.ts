@@ -744,7 +744,7 @@ describe('appStore', () => {
           await store.getState().actions.drawEncounter(investigatorId('alder'));
           const shown = store.getState().current?.drawnCards;
 
-          store.getState().dismissDrawnCards();
+          store.getState().dismissNotice('drawnCards');
 
           expect(shown?.map(({ card, place }) => [card.name, place.kind])).toEqual([
             ['Dissonant Voices', 'threatArea'],
@@ -811,7 +811,7 @@ describe('appStore', () => {
           const store = await advancedTrapped('actions-skipped-dismiss-test');
           const shown = store.getState().current?.skippedEffects;
 
-          store.getState().dismissSkippedEffects();
+          store.getState().dismissNotice('skippedEffects');
 
           expect(shown).toEqual([
             {

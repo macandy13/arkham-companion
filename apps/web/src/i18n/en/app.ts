@@ -409,6 +409,11 @@ export const appTexts = {
   cardActions: {
     title: 'Card actions',
   },
+  cardDetails: {
+    threatArea: "In {{name}}'s threat area",
+    playArea: "In {{name}}'s play area",
+    tapToRead: 'Tap the card to read it.',
+  },
   cardDialog: {
     lower: 'Lower to reach the board',
     raise: 'Raise the dialog',
@@ -528,6 +533,11 @@ export const appTexts = {
       nightAndBrass: 'Night and brass',
       eldritch: 'Eldritch',
       pictures: 'Card pictures',
+    },
+    enemyTokens: 'Enemy tokens',
+    enemyTokenFaces: {
+      art: 'Card art',
+      initials: 'Initials',
     },
     about: 'About',
     unofficial:

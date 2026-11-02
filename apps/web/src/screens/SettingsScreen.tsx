@@ -7,6 +7,7 @@ import { applySettings } from '../settings/applySettings';
 import {
   CARD_LANGUAGES,
   CARD_THEMES,
+  ENEMY_TOKEN_FACES,
   loadSettings,
   saveSettings,
   THEMES,
@@ -123,6 +124,19 @@ export function SettingsScreen({ packs = [] }: SettingsScreenProps) {
               {CARD_THEMES.map((theme) => (
                 <option key={theme} value={theme}>
                   {t(`settings.cardThemes.${theme}`)}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            {t('settings.enemyTokens')}
+            <select
+              value={settings.enemyTokens}
+              onChange={(e) => update({ enemyTokens: e.target.value as Settings['enemyTokens'] })}
+            >
+              {ENEMY_TOKEN_FACES.map((face) => (
+                <option key={face} value={face}>
+                  {t(`settings.enemyTokenFaces.${face}`)}
                 </option>
               ))}
             </select>
