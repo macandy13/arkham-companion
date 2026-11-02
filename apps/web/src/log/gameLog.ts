@@ -7,6 +7,7 @@ import type {
   InstanceId,
   InvestigatorId,
   InvestigatorStat,
+  LoggedEvent,
   EventType,
   Phase,
   PlayerCardCommand,
@@ -144,6 +145,47 @@ export function eventLines(
 }
 
 /** Who did what `event` tells: the enemy that engaged or attacked, else the investigator it names. */
+/**
+ * Events the screen already tells another way: where the game is (the phase tracker, the turn
+ * controls) and the encounter cards drawn (`DrawnCardsNotice`).
+ */
+const TOLD_ELSEWHERE: ReadonlySet<EventType> = new Set<EventType>([
+  'PhaseChanged',
+  'RoundEnded',
+  'TurnStarted',
+  'TurnEnded',
+  'EncounterCardDrawn',
+]);
+
+/**
+ * What the game changed by itself in a step: its id (`LoggedEvent.commandId`) and what it did, in
+ * the log's words (`eventLines`).
+ */
+export interface AutomaticChanges {
+  readonly step: string;
+  readonly lines: readonly LogLine[];
+}
+
+/**
+ * What the game did by itself in the last step of `entries` (M3.13a): when that step moved the
+ * game on to another phase, the lines of its events but those the screen tells another way
+ * (`TOLD_ELSEWHERE`): the doom of the mythos phase, the resources of the upkeep. `undefined` when the last
+ * step didn't change the phase, as the players did all of it themselves, or changed nothing else.
+ */
+export function automaticChanges(
+  t: TFunction,
+  ctx: EngineContext,
+  state: GameState,
+  entries: readonly LoggedEvent[],
+): AutomaticChanges | undefined {
+  const last = runsBy(entries, (entry) => entry.commandId).at(-1);
+  if (last === undefined) return undefined;
+  const events = last.items.map((entry) => entry.event);
+  if (!events.some((event) => event.type === 'PhaseChanged')) return undefined;
+  const lines = eventLines(t, ctx, state, events).filter((line) => !TOLD_ELSEWHERE.has(line.event));
+  return lines.length === 0 ? undefined : { step: last.key, lines };
+}
+
 function actorOf(names: Names, event: Event): string | undefined {
   if (event.type === 'EnemyEngaged' || event.type === 'EnemyAttacked') {
     return names.card(event.enemyId);

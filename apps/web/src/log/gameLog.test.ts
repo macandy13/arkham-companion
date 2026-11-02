@@ -17,7 +17,7 @@ import {
 } from '@arkham/engine';
 import type { TFunction } from 'i18next';
 import { initI18n } from '../i18n';
-import { gameLog, logSections, type LogStep } from './gameLog';
+import { automaticChanges, gameLog, logSections, type LogStep } from './gameLog';
 
 const study = instanceId('study');
 const hallway = instanceId('hallway');
@@ -254,5 +254,98 @@ describe('logSections', () => {
       { round: 2, phase: 'mythos', steps: [doom, draw] },
       { round: 2, phase: 'investigation', steps: [turn] },
     ]);
+  });
+});
+
+describe('automaticChanges', () => {
+  let t: TFunction;
+  beforeAll(async () => {
+    t = (await initI18n('en')).t;
+  });
+
+  /** Roland Banks in the revealed Study, his turn begun, the agenda What Lurks Below without doom. */
+  const rolandsTurn = newGame()
+    .withLocation(study, blankLocation('Study'), { revealed: true })
+    .withAgenda(instanceId('agenda'), blankAgenda('What Lurks Below', fixed(5)))
+    .withInvestigator(roland, { name: 'Roland Banks', locationId: study })
+    .withTurnOf(roland);
+
+  /** What the game did by itself in the last step played on `table`, in English. */
+  const changesOf = (table: PlayTable) =>
+    automaticChanges(t, table.ctx, table.state, table.entries)?.lines.map((line) => line.text);
+
+  it('tells the resources the upkeep phase gives, without the phase and round lines', () => {
+    const table = PlayTable.start(rolandsTurn);
+    table.endTurn(byName('Roland Banks'));
+    table.nextPhase();
+
+    table.nextPhase();
+
+    expect(table.state.meta.phase).toBe('upkeep');
+    expect(changesOf(table)).toEqual(['Roland Banks gains 1 resource']);
+  });
+
+  it('tells the doom the mythos phase places on the agenda', () => {
+    const table = PlayTable.start(rolandsTurn);
+    table.endTurn(byName('Roland Banks'));
+    table.nextPhase();
+    table.nextPhase();
+
+    table.nextPhase();
+
+    expect(table.state.meta.phase).toBe('mythos');
+    expect(changesOf(table)).toEqual(['1 doom on What Lurks Below']);
+  });
+
+  it('names the step the changes belong to', () => {
+    const table = PlayTable.start(rolandsTurn);
+    table.endTurn(byName('Roland Banks'));
+    table.nextPhase();
+
+    table.nextPhase();
+
+    expect(automaticChanges(t, table.ctx, table.state, table.entries)?.step).toBe(
+      table.entries.at(-1)?.commandId,
+    );
+  });
+
+  it('leaves out the encounter card the mythos phase draws, which the drawn-cards notice tells', () => {
+    const table = PlayTable.start(
+      rolandsTurn
+        .withCard(instanceId('crypt_chill'), blankTreachery('Crypt Chill'), {
+          kind: 'encounterDeck',
+        })
+        // A second card, so the draw doesn't empty the deck and reshuffle it.
+        .withCard(instanceId('next_card'), blankTreachery('Next card'), { kind: 'encounterDeck' }),
+    );
+    table.endTurn(byName('Roland Banks'));
+    table.nextPhase();
+    table.nextPhase();
+
+    table.nextPhase();
+
+    expect(changesOf(table)).toEqual(['1 doom on What Lurks Below']);
+  });
+
+  it.each([
+    [
+      'a phase that changes nothing else',
+      (table: PlayTable) => {
+        table.endTurn(byName('Roland Banks'));
+        table.nextPhase();
+      },
+    ],
+    [
+      'a step the players took',
+      (table: PlayTable) => {
+        table.takeDamage(byName('Roland Banks'), 2);
+      },
+    ],
+  ])('has none after %s', (_situation, play) => {
+    const table = PlayTable.start(rolandsTurn);
+
+    play(table);
+
+    expect(changesOf(table)).toBeUndefined();
   });
 });

@@ -182,6 +182,7 @@ export const appTexts = {
   },
   toast: { label: 'Nicht möglich', dismiss: 'OK', fallback: 'Das ist gerade nicht möglich.' },
   notice: { dismiss: 'OK' },
+  changes: { label: 'Was das Spiel getan hat' },
   skipped: {
     label: 'Von Hand erledigen',
     effect:

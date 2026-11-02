@@ -22,6 +22,7 @@ import { DrawnCardsNotice } from '../encounter/DrawnCardsNotice';
 import { ResolutionPrompt } from '../campaign/ResolutionPrompt';
 import { SpawnPrompt } from '../encounter/SpawnPrompt';
 import { SkippedEffectsNotice } from './SkippedEffectsNotice';
+import { ChangesNotice } from '../log/ChangesNotice';
 import { useDetailView } from './useDetailView';
 import { usePhone } from './usePhone';
 import './game.css';
@@ -215,6 +216,7 @@ export function GameScreen({
         )}
         <ResolutionPrompt key={open.gameId} store={store} open={open} />
         <div id="notices">
+          {open.log && <ChangesNotice log={open.log} state={open.state} />}
           {open.spawning && (
             <SpawnPrompt enemy={open.spawning} onCancel={() => store.getState().cancelSpawn()} />
           )}
