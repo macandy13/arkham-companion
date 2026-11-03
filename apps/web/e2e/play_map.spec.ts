@@ -235,7 +235,7 @@ test('move and take a clue from the location details', async ({ page }) => {
 
 // Journey: doom a card effect places on a location, moves on, and takes off again, dragged
 // between the token pool in the header and the map.
-test('move doom between the token pool and the map', { tag: '@flow' }, async ({ page }) => {
+test('move doom between the token pool and the map', async ({ page }) => {
   const house = page.getByRole('figure', { name: 'House' });
   const room = (name: string) => house.getByRole('group', { name });
   const pool = page.getByRole('region', { name: 'Token pool' });
@@ -265,6 +265,40 @@ test('move doom between the token pool and the map', { tag: '@flow' }, async ({ 
     await dragTo(page, room('Attic').getByRole('img', { name: 'Doom 1' }), pool);
     await expect(room('Attic').getByRole('img', { name: /^Doom/ })).toHaveCount(0);
     await expect(agendaDoom).toHaveAccessibleName(/^Doom 0/);
+  });
+});
+
+// Journey: doom a cultist gains, dragged from the token pool onto an enemy on the map, then moved
+// off it onto its location.
+test('move doom onto and off an enemy', { tag: '@flow' }, async ({ page }) => {
+  const house = page.getByRole('figure', { name: 'House' });
+  const room = (name: string) => house.getByRole('group', { name });
+  const priest = room('Cellar').getByRole('img', { name: /^Ghoul Priest/ });
+  const pool = page.getByRole('region', { name: 'Token pool' });
+
+  await test.step('Import a game in which the Ghoul Priest lurks in the Cellar', async () => {
+    await resumeImportedGame(
+      page,
+      'The Ghoul Priest is out',
+      ghoulPriestInCellarExport('The Ghoul Priest is out'),
+    );
+    await expect(priest).toHaveAccessibleName('Ghoul Priest');
+  });
+
+  await test.step('Drag a doom off the token pool onto the Ghoul Priest, as a card makes it gain one', async () => {
+    await dragTo(page, pool.getByRole('img', { name: 'Doom from the pool' }), priest);
+    await expect(priest).toHaveAccessibleName('Ghoul Priest, Doom 1');
+  });
+
+  await test.step('Drag the doom off the Ghoul Priest onto the Cellar', async () => {
+    await dragTo(
+      page,
+      room('Cellar').locator('[data-marker="doom"] > [data-part="grip"]'),
+      room('Cellar'),
+    );
+    await expect(priest).toHaveAccessibleName('Ghoul Priest');
+    await expect(room('Cellar').getByRole('img', { name: 'Doom 1' })).toBeVisible();
+    await expect(page.getByRole('dialog')).toHaveCount(0);
   });
 });
 

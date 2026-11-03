@@ -190,6 +190,8 @@ export interface EnemyView {
   /** Its health for this game's player count (`enemyHealth`); left out when it prints none. */
   health?: number;
   damage?: number;
+  /** The doom on it (Cult of Umôrdhoth cultists gain doom), left out while there is none. */
+  doom?: number;
   exhausted?: true;
 }
 
@@ -1158,6 +1160,7 @@ function enemyView(ctx: EngineContext, state: GameState, enemy: CardInstance): E
     ...(enemy.zone.kind === 'engaged' ? { engagedWith: enemy.zone.investigatorId } : {}),
     ...(health === undefined ? {} : { health }),
     ...(enemy.tokens.damage ? { damage: enemy.tokens.damage } : {}),
+    ...(enemy.tokens.doom ? { doom: enemy.tokens.doom } : {}),
     ...(enemy.exhausted ? { exhausted: true as const } : {}),
   };
 }

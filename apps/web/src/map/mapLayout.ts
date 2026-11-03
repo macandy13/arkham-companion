@@ -65,6 +65,12 @@ const LEAD_MARKER_RADIUS = CONTENT.pawnRadius / 2;
 export const BADGE_RADIUS = CONTENT.pawnRadius / 2;
 
 /**
+ * The unseen grip around a badge a token is dragged off (an enemy's doom): larger than the badge,
+ * so a finger catches it, yet smaller than the pawn, so most of the enemy token stays its own.
+ */
+export const BADGE_GRIP_RADIUS = BADGE_RADIUS * 1.5;
+
+/**
  * The centre of the damage badge on a piece centred on `piece`: on its rim at the lower right, so
  * it keeps clear of the initial, of the pieces beside it in the row and of a pawn's lead marker
  * (upper right).
@@ -72,6 +78,15 @@ export const BADGE_RADIUS = CONTENT.pawnRadius / 2;
 export function damageBadgeCentre(piece: Point): Point {
   const reach = CONTENT.pawnRadius * Math.SQRT1_2;
   return { x: piece.x + reach, y: piece.y + reach };
+}
+
+/**
+ * The centre of the doom badge on an enemy token centred on `piece`: on its rim at the upper left,
+ * across from the damage badge, so the two never cover each other.
+ */
+export function doomBadgeCentre(piece: Point): Point {
+  const reach = CONTENT.pawnRadius * Math.SQRT1_2;
+  return { x: piece.x - reach, y: piece.y - reach };
 }
 
 /**

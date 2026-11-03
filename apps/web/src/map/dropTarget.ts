@@ -14,3 +14,14 @@ export function locationAt(client: Point): InstanceId | undefined {
   const id = tile?.dataset['location'];
   return id === undefined ? undefined : instanceId(id);
 }
+
+/**
+ * The enemy whose map token (`EnemyToken`'s `data-enemy`) lies under the screen point `client`, for
+ * doom dropped on a cultist. A hit test like `locationAt`, so a token dragged from the header's pool
+ * finds it as well as one dragged on the map.
+ */
+export function enemyAt(client: Point): InstanceId | undefined {
+  const token = document.elementFromPoint(client.x, client.y)?.closest<SVGElement>('[data-enemy]');
+  const id = token?.dataset['enemy'];
+  return id === undefined ? undefined : instanceId(id);
+}

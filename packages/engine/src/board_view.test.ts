@@ -740,7 +740,9 @@ describe('enemies', () => {
         blankEnemy('lurker', { health: fixed(3) }),
         atLocation(hallway),
       )
-      .withCard(instanceId('ghoul'), ghoul, engagedWith(alice), { tokens: { damage: 2 } })
+      .withCard(instanceId('ghoul'), ghoul, engagedWith(alice), {
+        tokens: { damage: 2, doom: 1 },
+      })
       .withCard(instanceId('set_aside_ghoul'), ghoul, { kind: 'setAside' })
       .start();
 
@@ -748,7 +750,7 @@ describe('enemies', () => {
 
     expect(enemies).toEqual([
       { name: 'lurker', at: 'hallway', health: 3 },
-      { name: 'ghoul', at: 'study', engagedWith: alice, health: 4, damage: 2 },
+      { name: 'ghoul', at: 'study', engagedWith: alice, health: 4, damage: 2, doom: 1 },
     ]);
   });
 

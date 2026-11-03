@@ -850,6 +850,124 @@ describe('MapBoard', () => {
         expect(table.board.location(study).doom).toBe(1);
       });
 
+      describe('on a cultist', () => {
+        const ghoul = instanceId('ghoul');
+        /**
+         * The house with a ghoul in the study that carries one doom, as a cultist gains it. Alder
+         * waits in the hallway, so the ghoul engages no one.
+         */
+        const cultistInStudy = house
+          .withInvestigator(alder, { locationId: hallway })
+          .withCard(ghoul, blankEnemy('ghoul'), atLocation(study), { tokens: { doom: 1 } });
+        const ghoulToken = () => within(tile('study')).getByRole('img', { name: 'ghoul, Doom 1' });
+
+        /** Drags the doom badge off the ghoul in the study and lets go at (`x`, `y`). */
+        async function dragGhoulDoom(x: number, y: number) {
+          const badge = tile('study').querySelector<SVGElement>('[data-marker="doom"]');
+          if (!badge) throw new Error('The ghoul shows no doom badge');
+          fireEvent.pointerDown(badge, { pointerId: 1, clientX: 100, clientY: 160 });
+          fireEvent.pointerMove(badge, { pointerId: 1, clientX: x, clientY: y });
+          fireEvent.pointerUp(badge, { pointerId: 1, clientX: x, clientY: y });
+          await act(async () => {});
+        }
+
+        it('shows the doom as a badge on the ghoul that can be dragged off', () => {
+          const table = PlayTable.start(cultistInStudy);
+          render(
+            <MapBoard
+              board={table.board}
+              actions={actionsOn(table)}
+              busy={false}
+              adjusting={false}
+            />,
+          );
+
+          const badge = tile('study').querySelector<SVGElement>('[data-marker="doom"]');
+          expect(badge?.textContent).toBe('1');
+          expect(badge?.dataset['drag']).toBe('doom');
+        });
+
+        it("opens the ghoul's details, not the study's, on a tap on its doom badge", async () => {
+          const table = PlayTable.start(cultistInStudy);
+          render(
+            <MapBoard
+              board={table.board}
+              actions={actionsOn(table)}
+              busy={false}
+              adjusting={false}
+            />,
+          );
+          const badge = tile('study').querySelector<SVGElement>('[data-marker="doom"]');
+          if (!badge) throw new Error('The ghoul shows no doom badge');
+
+          fireEvent.pointerDown(badge, { pointerId: 1, clientX: 100, clientY: 160 });
+          fireEvent.pointerUp(badge, { pointerId: 1, clientX: 100, clientY: 160 });
+          fireEvent.click(badge, { clientX: 100, clientY: 160 });
+          await act(async () => {});
+
+          expect(screen.getByRole('dialog', { name: 'ghoul' })).toBeTruthy();
+          expect(screen.queryByRole('dialog', { name: 'study' })).toBeNull();
+        });
+
+        it('moves the doom dragged off the ghoul to the hallway it is dropped on', async () => {
+          const table = PlayTable.start(cultistInStudy);
+          render(
+            <MapBoard
+              board={table.board}
+              actions={actionsOn(table)}
+              busy={false}
+              adjusting={false}
+            />,
+          );
+
+          await dragGhoulDoom(255, 105);
+
+          expect(table.board.enemy(ghoul).doom).toBeUndefined();
+          expect(table.board.location(hallway).doom).toBe(1);
+        });
+
+        it('moves a doom dragged off the study onto the ghoul under the pointer', async () => {
+          const table = PlayTable.start(cultistInStudy);
+          render(
+            <MapBoard
+              board={table.board}
+              actions={actionsOn(table)}
+              busy={false}
+              adjusting={false}
+            />,
+          );
+          underPointer = ghoulToken();
+
+          await drag('study', 'Doom 1', doomToken, 100, 160);
+
+          expect(table.board.location(study).doom).toBeUndefined();
+          expect(table.board.enemy(ghoul).doom).toBe(2);
+        });
+
+        it("gives the ghoul's doom dropped on the token pool back to it", async () => {
+          const table = PlayTable.start(cultistInStudy);
+          render(
+            <>
+              <MapBoard
+                board={table.board}
+                actions={actionsOn(table)}
+                busy={false}
+                adjusting={false}
+              />
+              <section data-pool>
+                <h3>pool</h3>
+              </section>
+            </>,
+          );
+          underPointer = screen.getByRole('heading', { name: 'pool' });
+
+          await dragGhoulDoom(600, 40);
+
+          expect(table.board.enemy(ghoul).doom).toBeUndefined();
+          expect(table.board.doomInPlay).toBe(1);
+        });
+      });
+
       it('shows a doom token over the page while it is dragged', () => {
         const table = PlayTable.start(house.withInvestigator(alder, { locationId: study }));
         render(

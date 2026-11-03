@@ -27,6 +27,7 @@ import {
 } from './mapLayout';
 import { usePieceDrag } from './usePieceDrag';
 import { investigatorAt } from '../investigators/dropTarget';
+import { enemyAt } from './dropTarget';
 import { overHeaderCard, overTokenPool } from '../screens/headerDropTarget';
 import { TokenGhost } from '../screens/TokenGhost';
 import './map.css';
@@ -164,11 +165,11 @@ type DraggedPiece = TilePiece & { from: InstanceId };
  *   beside the map (`investigatorAt`), is theirs, discovered as a card grants it
  *   (`GameActions.takeClue`), whoever's turn it is. It follows the pointer over the whole page as
  *   a clue token (`TokenGhost`).
- * - Doom dragged off a location onto another location, or onto the agenda in the header
- *   (`overHeaderCard`), moves there (`GameActions.moveDoom`); it follows the pointer as a doom
- *   token.
+ * - Doom dragged off a location or an enemy onto another location, an enemy (`enemyAt`) or the
+ *   agenda in the header (`overHeaderCard`) moves there (`GameActions.moveDoom`); it follows the
+ *   pointer as a doom token. A tap on an enemy's doom opens the enemy, like a tap on the enemy.
  * - A clue or doom dropped on the header's token pool (`overTokenPool`, `TokenPool`) goes back to
- *   it (`GameActions.adjustLocation`).
+ *   it (`GameActions.adjustTokens`).
  *
  * A tap on a tile opens its details (`LocationDetails`): what the investigator whose turn it is
  * can do there, or while adjusting the corrections, when no piece is dragged; on a phone it calls
@@ -214,7 +215,7 @@ function MapDrawing({
     svg,
     (piece, point, client) => {
       if ('clue' in piece && overTokenPool(client)) {
-        void actions.adjustLocation(piece.from, 'clue', -1);
+        void actions.adjustTokens(piece.from, 'clue', -1);
         return;
       }
       if ('clue' in piece) {
@@ -225,10 +226,13 @@ function MapDrawing({
         if (taker) void actions.takeClue(piece.from, taker);
         return;
       }
-      if ('doom' in piece) {
-        const to = overHeaderCard('agenda', client) ? board.agenda?.id : tileAt(cells, point);
-        if (overTokenPool(client)) void actions.adjustLocation(piece.from, 'doom', -1);
-        else if (to !== undefined && to !== piece.from) void actions.moveDoom(piece.from, to);
+      if ('doom' in piece || 'enemyDoom' in piece) {
+        const from = 'doom' in piece ? piece.from : piece.enemyDoom.id;
+        const to = overHeaderCard('agenda', client)
+          ? board.agenda?.id
+          : (enemyAt(client) ?? tileAt(cells, point));
+        if (overTokenPool(client)) void actions.adjustTokens(from, 'doom', -1);
+        else if (to !== undefined && to !== from) void actions.moveDoom(from, to);
         return;
       }
       if ('enemy' in piece && moverCentre && onPawn(moverCentre, point)) {
@@ -240,8 +244,9 @@ function MapDrawing({
       void ('enemy' in piece ? actions.moveEnemy(piece.enemy.id, to) : actions.moveTo(to));
     },
     (piece) => {
-      if (!('enemy' in piece)) return false;
-      setEnemyFor(piece.enemy.id);
+      const enemy = 'enemy' in piece ? piece.enemy : 'enemyDoom' in piece && piece.enemyDoom;
+      if (!enemy) return false;
+      setEnemyFor(enemy.id);
       return true;
     },
   );
@@ -350,8 +355,8 @@ function MapDrawing({
 /** A token piece, which follows the pointer over the whole page (`TokenGhost`) rather than the map. */
 function isToken(
   piece: TilePiece,
-): piece is Extract<TilePiece, { clue: unknown } | { doom: unknown }> {
-  return 'clue' in piece || 'doom' in piece;
+): piece is Extract<TilePiece, { clue: unknown } | { doom: unknown } | { enemyDoom: unknown }> {
+  return 'clue' in piece || 'doom' in piece || 'enemyDoom' in piece;
 }
 
 /** The copy of a dragged piece that follows the pointer, centred on `at`. */
@@ -360,7 +365,7 @@ function Ghost({
   at,
   board,
 }: {
-  piece: Exclude<TilePiece, { clue: unknown } | { doom: unknown }>;
+  piece: Exclude<TilePiece, { clue: unknown } | { doom: unknown } | { enemyDoom: unknown }>;
   at: Point;
   board: BoardView;
 }) {

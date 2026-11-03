@@ -19,8 +19,11 @@ import {
 import type { PileMove } from '../encounter/cardMoves';
 import { assertNever } from '@arkham/util';
 
-/** The tokens on a location that its menu's +/− steppers change. */
-export type LocationToken = Extract<TokenKind, 'clue' | 'doom'>;
+/**
+ * The tokens the players place, move and take back by hand (`adjustTokens`): the clues and doom a
+ * location's steppers change, and those dragged to and from the token pool.
+ */
+export type LooseToken = Extract<TokenKind, 'clue' | 'doom'>;
 
 /** The investigator counters the screen's +/− steppers change. */
 export type SteppedStat = Extract<InvestigatorStat, 'resources' | 'damage' | 'horror'>;
@@ -172,14 +175,16 @@ export interface GameActions {
   /** Turns `location` face up, as a card effect says or the players catch up with the table. */
   revealLocation(location: InstanceId): Promise<void>;
   /**
-   * One tap on a location's stepper: `delta` more (or, negative, fewer) of `token` on `location`.
-   * Doom added is placed by rule (`PlaceDoom`), so effects that count placed doom see it; the
-   * engine has no command that places or removes clues or removes doom yet, so the rest are
-   * corrections by hand (`ManualAdjust`), like the header's `removeDoom`.
+   * `delta` more (or, negative, fewer) of `token` on `card` in play (a location, an enemy): one tap
+   * on a location's stepper, or a token dragged from or to the token pool. Doom added is placed by
+   * rule (`PlaceDoom`), so effects that count placed doom see it; the engine has no command that
+   * places or removes clues or removes doom yet, so the rest are corrections by hand
+   * (`ManualAdjust`), like the header's `removeDoom`.
    */
-  adjustLocation(location: InstanceId, token: LocationToken, delta: number): Promise<void>;
+  adjustTokens(card: InstanceId, token: LooseToken, delta: number): Promise<void>;
   /**
-   * One doom moved from the card `from` to the card `to` (a location, the agenda), as one step.
+   * One doom moved from the card `from` to the card `to` (a location, an enemy, the agenda), as one
+   * step.
    * The doom in play stays the same, so it is a correction by hand on both (`ManualAdjust`), not
    * doom placed.
    */
@@ -351,14 +356,14 @@ export function gameActions(
     removeDoom: (amount) => play((table) => table.removeDoom(amount)),
     revealLocation: (location) =>
       play((table) => table.play({ type: 'RevealLocation', locationId: location })),
-    adjustLocation: (location, token, delta) =>
+    adjustTokens: (card, token, delta) =>
       play((table) =>
         table.play(
           token === 'doom' && delta > 0
-            ? { type: 'PlaceDoom', cardId: location, amount: delta }
+            ? { type: 'PlaceDoom', cardId: card, amount: delta }
             : {
                 type: 'ManualAdjust',
-                adjustment: { kind: 'tokens', cardId: location, token, delta },
+                adjustment: { kind: 'tokens', cardId: card, token, delta },
               },
         ),
       ),
