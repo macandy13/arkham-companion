@@ -480,6 +480,13 @@
   --investigator-resources-x: 394;
   --investigator-doom-x: 204;
   --investigator-doom-y: 106;
+  /*
+   * The banner's scan lift (INVESTIGATOR_FACE `art.lift`), undone in the card pictures theme, and
+   * how far its page strip stretches there to the card's foot, over the scan's abilities.
+   */
+  --investigator-art-lift: 20px;
+  --investigator-pictures-page-stretch: 1.09;
+  --investigator-page-top-y: 52;
   --investigator-art-button-top: 46;
   --investigator-art-button-width: 226;
   --investigator-art-button-height: 84;
@@ -763,6 +770,16 @@
   --investigator-long-text-size: 11.5;
   --investigator-longest-text-size: 10;
   --investigator-traits-size: 11.5;
+}
+
+/*
+ * The whole card in the card pictures theme: the counters on the scan's printed heart and brain
+ * (measured on Roland Banks' scan), so the damage and horror taken sit on the printed maximum.
+ */
+:root[data-card-theme='pictures'] [data-card='investigator'][data-shape='full'][data-picture] {
+  --investigator-counters-y: 277;
+  --investigator-health-x: 306;
+  --investigator-sanity-x: 350;
 }
 
 /*
