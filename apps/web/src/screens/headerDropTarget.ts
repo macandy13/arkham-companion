@@ -6,6 +6,5 @@ import type { Point } from '../map/mapLayout';
  * `locationAt`, since the drag belongs to the counter it started on.
  */
 export function overAct(client: Point): boolean {
-  const slot = document.elementFromPoint(client.x, client.y)?.closest('[data-slot="act"]');
-  return slot !== null && slot !== undefined;
+  return Boolean(document.elementFromPoint(client.x, client.y)?.closest('[data-slot="act"]'));
 }

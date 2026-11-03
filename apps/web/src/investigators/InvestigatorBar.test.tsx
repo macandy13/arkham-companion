@@ -1112,6 +1112,27 @@ describe('InvestigatorBar', () => {
         document.elementFromPoint = () => screen.getByRole('heading', { name: 'Act' });
       }
 
+      it('leaves an act for 2 clues current while alder holds only 1', async () => {
+        const table = PlayTable.start(
+          newGame()
+            .withLocation(study, blankLocation('study'), { revealed: true })
+            .withAct(
+              firstAct,
+              blankAct('first_act', { actions: [advanceBySpendingClues(perInvestigator(2))] }),
+            )
+            .withAct(instanceId('second_act'), blankAct('second_act'))
+            .withInvestigator(alder, { locationId: study, clues: 1 })
+            .withTurnOf(alder),
+        );
+        renderWithAct(table);
+
+        dragAlderClue();
+        await act(async () => {});
+
+        expect(table.board.act?.name).toBe('first_act');
+        expect(table.board.investigator(alder).clues).toBe(1);
+      });
+
       it("advances an act for 2 clues alder holds on alder's turn, like its button", async () => {
         const table = PlayTable.start(
           newGame()
@@ -1140,11 +1161,11 @@ describe('InvestigatorBar', () => {
       });
 
       it.each([
-        { whose: "alder's turn", turn: alder, after: { alder: 1, onAct: 1 } },
-        { whose: "brook's turn", turn: brook, after: { alder: 2, onAct: 0 } },
+        { whose: "alder's turn", turn: alder, alderKeeps: 1, onAct: 1 },
+        { whose: "brook's turn", turn: brook, alderKeeps: 2, onAct: 0 },
       ])(
-        'takes the clue action of an act that takes clues on it, on $whose: $after',
-        async ({ turn, after }) => {
+        'drops a clue on an act that takes clues on it on $whose: alder keeps $alderKeeps and the act holds $onAct',
+        async ({ turn, alderKeeps, onAct }) => {
           const table = PlayTable.start(
             newGame()
               .withLocation(study, blankLocation('study'), { revealed: true })
@@ -1158,8 +1179,8 @@ describe('InvestigatorBar', () => {
           dragAlderClue();
           await act(async () => {});
 
-          expect(table.board.investigator(alder).clues).toBe(after.alder);
-          expect(table.board.act?.clues).toBe(after.onAct);
+          expect(table.board.investigator(alder).clues).toBe(alderKeeps);
+          expect(table.board.act?.clues).toBe(onAct);
         },
       );
     });

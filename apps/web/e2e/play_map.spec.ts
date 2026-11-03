@@ -1,4 +1,3 @@
-import type { Locator, Page } from '@playwright/test';
 import { expect, test } from './fixtures/test';
 import {
   ghoulPriestInCellarExport,
@@ -6,6 +5,7 @@ import {
   resumeImportedGame,
 } from './fixtures/saved_games';
 import { startQuickGame } from './fixtures/wizard';
+import { dragTo } from './fixtures/drag';
 
 // Journey: read the map – the one location a new game starts with, then a game further on whose
 // map has several locations and the connections between them, zoomed in, panned and fitted again.
@@ -270,14 +270,3 @@ test('correct a location from its details', async ({ page }) => {
     await expect(room('Hallway').getByRole('img', { name: 'Clues 1' })).toBeVisible();
   });
 });
-
-/** Drags `piece` with the mouse to the middle of `target`, in steps, as a player's finger would. */
-async function dragTo(page: Page, piece: Locator, target: Locator): Promise<void> {
-  const from = await piece.boundingBox();
-  const to = await target.boundingBox();
-  if (!from || !to) throw new Error('the piece or its target is not on screen');
-  await page.mouse.move(from.x + from.width / 2, from.y + from.height / 2);
-  await page.mouse.down();
-  await page.mouse.move(to.x + to.width / 2, to.y + to.height / 2, { steps: 10 });
-  await page.mouse.up();
-}
