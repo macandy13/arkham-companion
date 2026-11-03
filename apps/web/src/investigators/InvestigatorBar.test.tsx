@@ -1069,6 +1069,33 @@ describe('InvestigatorBar', () => {
       );
     });
 
+    it('marks the damage dealt to an engaged enemy on the health it has left', () => {
+      const ghoul = instanceId('ghoul');
+      const table = PlayTable.start(
+        newGame()
+          .withLocation(study, blankLocation('study'))
+          .withInvestigator(alder, { locationId: study })
+          .withCard(ghoul, blankEnemy('ghoul_minion', { health: fixed(3) }), engagedWith(alder)),
+      );
+      const bar = () => (
+        <InvestigatorBar
+          board={table.board}
+          actions={actionsOn(table)}
+          busy={false}
+          adjusting={false}
+        />
+      );
+      const { rerender } = render(bar());
+
+      table.play({ type: 'DamageEnemy', enemyId: ghoul, amount: 1 });
+      rerender(bar());
+
+      const threatArea = within(panel('alder')).getByRole('list', { name: 'Threat area' });
+      const healthLeft = within(threatArea).getByRole('listitem').querySelector('data');
+      expect(healthLeft?.textContent).toBe('2/3');
+      expect(healthLeft?.dataset.delta).toBe('−1');
+    });
+
     it("opens an enemy's details from its card", () => {
       const table = PlayTable.start(
         newGame()

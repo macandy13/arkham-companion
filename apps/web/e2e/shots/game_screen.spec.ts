@@ -372,20 +372,21 @@ test('the header with its piles fanned: seven cards discarded, the set-aside car
   ).toBeVisible();
 });
 
-test('the discard pile of seven cards in its dialog, the top card chosen, scroll arrows beside the row', async ({
-  page,
-  isMobile,
-}) => {
-  await resumeImportedGame(page, 'Piles filled', pilesFilledExport('Piles filled'));
-  // A phone's compact header shows the deck alone, and a tap opens the detail view on its piles.
-  if (isMobile) await page.getByRole('region', { name: 'Encounter deck' }).click();
+test(
+  'the discard pile of seven cards on its wide page, the top card chosen, scroll arrows beside the row',
+  { tag: '@shot' },
+  async ({ page, isMobile }) => {
+    await resumeImportedGame(page, 'Piles filled', pilesFilledExport('Piles filled'));
+    // A phone's compact header shows the deck alone, and a tap opens the detail view on its piles.
+    if (isMobile) await page.getByRole('region', { name: 'Encounter deck' }).click();
 
-  await page.getByRole('button', { name: /^Encounter discard pile, 7 cards, / }).click();
+    await page.getByRole('button', { name: /^Encounter discard pile, 7 cards, / }).click();
 
-  const dialog = page.getByRole('dialog', { name: 'Discard pile (7)' });
-  await expect(dialog.getByRole('button', { name: 'Later cards' })).toBeVisible();
-  await expect(dialog.getByRole('button', { pressed: true })).toBeVisible();
-});
+    const dialog = page.getByRole('dialog', { name: 'Discard pile (7)' });
+    await expect(dialog.getByRole('button', { name: 'Later cards' })).toBeVisible();
+    await expect(dialog.getByRole('button', { pressed: true })).toBeVisible();
+  },
+);
 
 test('Crypt Chill drawn for Roland Banks, its willpower test waiting', async ({
   page,

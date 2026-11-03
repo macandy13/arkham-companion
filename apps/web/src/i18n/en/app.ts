@@ -140,7 +140,6 @@ export const appTexts = {
     noGame: 'No game open',
   },
   encounter: {
-    close: 'Close',
     drawFor: 'Draw for {{name}}',
     drawnFor: '{{card}}, drawn for {{name}}',
     keywords: 'Keywords',

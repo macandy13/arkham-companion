@@ -1,6 +1,7 @@
 import { useId } from 'react';
 import type { CardFaceView, EncounterSetCode } from '@arkham/engine';
 import type { Point } from '../map/mapLayout';
+import { type CountChange, deltaText, useCountChange } from '../screens/countChange';
 import '../symbols/sets.css';
 import { PORTRAIT_SCAN } from './cardArt';
 import './card_face.css';
@@ -60,7 +61,8 @@ export type CountKind = 'clue' | 'damage';
  * (the clues left on a location's clue value, the doom on an agenda's threshold, the damage on an
  * enemy's health), so one element shows both. Every card type and every card theme draws it the
  * same way; `data-count` gives its colour, and a count of none fades (`data-empty`). Named for
- * assistive technology by `label`, since the number alone does not say what it counts.
+ * assistive technology by `label`, since the number alone does not say what it counts. A change of
+ * the count while it shows plays its effect (`useCountChange`, `RisingDelta`).
  */
 export function CountCircle({
   kind,
@@ -75,14 +77,45 @@ export function CountCircle({
   centre: Point;
   radius?: number;
 }) {
+  const change = useCountChange(value);
   return (
-    <g role="img" aria-label={label} data-count={kind} data-empty={value === 0 || undefined}>
+    <g
+      key={change?.key}
+      role="img"
+      aria-label={label}
+      data-count={kind}
+      data-empty={value === 0 || undefined}
+      data-changed={change && ''}
+    >
       <circle cx={x} cy={y} r={radius} />
       <text x={x} y={y}>
         {value}
       </text>
+      <RisingDelta change={change} x={x} y={y - radius} />
     </g>
   );
+}
+
+/**
+ * The drawing's counterpart of a counter's rising delta (`data-delta`, M3.13b): the last `change`
+ * of a count as "+1" text above `x`, `y`, which the stylesheet lets rise and fade (`data-rising`),
+ * since SVG draws no pseudo-elements. The group around it carries `data-changed` and the change's
+ * key, so it pulses once per change. Hidden from assistive technology, which reads the new count.
+ */
+export function RisingDelta({
+  change,
+  x,
+  y,
+}: {
+  change: CountChange | undefined;
+  x: number;
+  y: number;
+}) {
+  return change ? (
+    <text data-rising="" x={x} y={y} aria-hidden="true">
+      {deltaText(change)}
+    </text>
+  ) : null;
 }
 
 /**

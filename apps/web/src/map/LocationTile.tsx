@@ -21,12 +21,14 @@ import {
 import {
   CardFaceCorners,
   CountCircle,
+  RisingDelta,
   SCAN_TO_TILE,
   SetMedallion,
   TILE_PER_SCAN,
 } from '../catalog/cardFace';
 import { useCardPicture } from '../catalog/cardImages';
 import { cardActionCaption } from '../screens/ActionRow';
+import { useCountChange } from '../screens/countChange';
 import { LOCATION_FACE, LocationOrnament } from './cardOrnament';
 import { connectionGlyph } from './connectionSymbol';
 import {
@@ -47,8 +49,12 @@ import type { DragHandlers } from './usePieceDrag';
 import { TokenPicture } from './TokenPicture';
 import { shrinkAround, useShrinkToFit } from './useShrinkToFit';
 
-/** A piece standing on a tile that the players may drag: an investigator's pawn or an enemy. */
-export type TilePiece = { investigator: InvestigatorView } | { enemy: MapEnemyView };
+/**
+ * What the players may drag off a tile: a piece standing on it (an investigator's pawn or an
+ * enemy), or one of the clues on `location` (M3.11c), which a drop on a pawn there discovers.
+ */
+export type TilePiece =
+  { investigator: InvestigatorView } | { enemy: MapEnemyView } | { clue: LocationView };
 
 /**
  * One location as a tile at (`x`, `y`), drawn as a card face in layers, laid out like the printed
@@ -160,11 +166,9 @@ export function LocationTile({
               centre={LOCATION_FACE.shroud}
             />
             <ClueValue printed={location.printedClues} />
-            <CountCircle
-              kind="clue"
-              value={location.clues}
-              label={t('map.clues', { count: location.clues })}
-              centre={LOCATION_FACE.count}
+            <Clues
+              location={location}
+              drag={location.clues > 0 ? dragOf({ clue: location }) : undefined}
             />
           </>
         )}
@@ -310,6 +314,31 @@ function NameBand({ location }: { location: LocationView }) {
   );
 }
 
+/**
+ * The clues left on `location`, the count circle on its printed clue value. With `drag` a clue can
+ * be dragged off it (`data-drag`): a pawn-sized circle around the small count takes the press, so
+ * a finger can pick a clue up.
+ */
+function Clues({ location, drag }: { location: LocationView; drag: DragHandlers | undefined }) {
+  const { t } = useTranslation();
+  const count = (
+    <CountCircle
+      kind="clue"
+      value={location.clues}
+      label={t('map.clues', { count: location.clues })}
+      centre={LOCATION_FACE.count}
+    />
+  );
+  if (!drag) return count;
+  const { x, y } = LOCATION_FACE.count;
+  return (
+    <g data-drag="clue" {...drag}>
+      <circle data-part="grip" cx={x} cy={y} r={CONTENT.pawnRadius / TILE_PER_SCAN} />
+      {count}
+    </g>
+  );
+}
+
 /** What a tile shows as a round token: the kind it counts, its value and its accessible name. */
 interface TokenCount {
   kind: 'shroud' | 'clue' | 'doom';
@@ -320,15 +349,24 @@ interface TokenCount {
 /**
  * A printed disc with its number on the face, in scan units, centred on `centre`: the shroud, or
  * the doom on the location. `kind` (`data-token`) lets the stylesheet colour each like the card
- * prints it or its token on the table.
+ * prints it or its token on the table. A change of the value plays its effect (`RisingDelta`).
  */
 function Token({ kind, value, label, centre: { x, y } }: TokenCount & { centre: Point }) {
+  const change = useCountChange(value);
+  const { radius } = LOCATION_FACE.disc;
   return (
-    <g role="img" aria-label={label} data-token={kind}>
-      <circle cx={x} cy={y} r={LOCATION_FACE.disc.radius} />
+    <g
+      key={change?.key}
+      role="img"
+      aria-label={label}
+      data-token={kind}
+      data-changed={change && ''}
+    >
+      <circle cx={x} cy={y} r={radius} />
       <text x={x} y={y}>
         {value}
       </text>
+      <RisingDelta change={change} x={x} y={y - radius} />
     </g>
   );
 }
@@ -581,7 +619,8 @@ export function Pawn({
  * loaded (`TokenPicture`), centred on `centre`, like an investigator's pawn but
  * ringed in the doom colour (`data-enemy`). An `engaged` enemy stands faded right after the pawn
  * of the investigator it is engaged with (`data-engaged`), since the threat area shows it in full.
- * A red badge on its rim shows its damage, and an exhausted enemy's initial lies on its side, like
+ * A red badge on its rim shows its damage, pulsing with the change when it takes some
+ * (`RisingDelta`), and an exhausted enemy's initial lies on its side, like
  * the exhausted card turned sideways (`data-exhausted`). Its accessible name says the same, with
  * whom of `investigators` it is engaged with. With `drag` it can be dragged; a `ghost` is the copy
  * that follows the pointer.
@@ -608,6 +647,7 @@ export function EnemyToken({
     ...enemyConditions(enemy, t),
   ];
   const badge = damageBadgeCentre(centre);
+  const damageChange = useCountChange(enemy.damage ?? 0);
   return (
     <g
       data-enemy
@@ -627,11 +667,12 @@ export function EnemyToken({
         radius={CONTENT.pawnRadius}
       />
       {enemy.damage ? (
-        <g data-marker="damage">
+        <g key={damageChange?.key} data-marker="damage" data-changed={damageChange && ''}>
           <circle cx={badge.x} cy={badge.y} r={BADGE_RADIUS} />
           <text x={badge.x} y={badge.y}>
             {enemy.damage}
           </text>
+          <RisingDelta change={damageChange} x={badge.x} y={badge.y - BADGE_RADIUS} />
         </g>
       ) : null}
     </g>

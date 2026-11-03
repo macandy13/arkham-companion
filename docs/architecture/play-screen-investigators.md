@@ -16,6 +16,8 @@ The [investigator bar](../../apps/web/src/investigators/InvestigatorBar.tsx) sho
   - a button per card action the cards offer them (`BoardView.cardActions`, "Resign · Parlor"),
   - end.
 
+Each investigator's panel carries their id as `data-investigator`, which the phone's detail view scrolls to and the map's token drag hit-tests for a drop ([`investigatorAt`](../../apps/web/src/investigators/dropTarget.ts)): a clue dragged off a location onto the panel is theirs ([map](play-screen-map.md)).
+
 ## Threat area and play area
 
 Their [threat area](../../apps/web/src/investigators/ThreatArea.tsx) is a row of small cards on the top edge of their card:

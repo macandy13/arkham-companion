@@ -5,6 +5,7 @@ import { EnemyDetails } from '../enemies/EnemyDetails';
 import { healthLeft } from '../enemies/enemyHealth';
 import { enemyConditions } from '../map/LocationTile';
 import { CardStrip } from '../screens/CardStrip';
+import { deltaText, useCountChange } from '../screens/countChange';
 import type { GameActions } from '../state/gameActions';
 import { CardDetails, type HeldIn } from './CardDetails';
 
@@ -118,7 +119,8 @@ export function SmallCard({
 /**
  * An engaged enemy as a small card: its name and the health it has left of its health
  * (`EnemyView.health` less `damage`), named for screen readers with that, its damage and whether
- * it is exhausted, as on the map. A tap on the card opens its details (`EnemyDetails`), with what
+ * it is exhausted, as on the map; damage dealt plays its effect on the health left
+ * (`useCountChange`). A tap on the card opens its details (`EnemyDetails`), with what
  * the players can do to it; the button lies over the whole card, which is too small for more.
  */
 function EnemyCard({
@@ -135,6 +137,7 @@ function EnemyCard({
   const { t } = useTranslation();
   const [detailsOpen, setDetailsOpen] = useState(false);
   const left = healthLeft(enemy);
+  const change = useCountChange(left ?? 0);
   return (
     <li
       data-card="enemy"
@@ -147,7 +150,9 @@ function EnemyCard({
     >
       {enemy.name}
       {left !== undefined && (
-        <data value={left}>{t('investigators.left', { left, max: enemy.health })}</data>
+        <data key={change?.key} value={left} data-delta={deltaText(change)}>
+          {t('investigators.left', { left, max: enemy.health })}
+        </data>
       )}
       <button
         type="button"
