@@ -120,7 +120,13 @@
 
 /* The replacement picker (ReplacementPicker) holds pages of portraits, so it takes the wide size. */
 #replacement-picker {
+  width: min(var(--dialog-width-wide), 100%);
   max-width: min(var(--dialog-width-wide), 100%);
+}
+
+/* The dialog's title names whom the pick replaces, so the picker's own title would repeat it. */
+#replacement-picker #picker-heading {
+  display: none;
 }
 
 #replacement-picker footer {

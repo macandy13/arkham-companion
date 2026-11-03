@@ -38,23 +38,23 @@ export function ReplacementPicker({
       onCancel={onCancel}
     >
       <h2 id="replacement-picker-title">{t('nextScenario.replace.title', { name })}</h2>
-      {/* No form: the picker's own buttons would submit it. */}
+      {/* The form holds only the footer: the picker's own buttons would submit it. */}
       <InvestigatorPicker catalog={catalog} seats={seats} onSeatsChange={setSeats} maxSeats={1} />
-      <footer>
-        <button type="button" onClick={onCancel}>
-          {t('games.cancel')}
-        </button>
-        <button
-          type="button"
-          data-primary
-          disabled={chosen === undefined}
-          onClick={() => {
-            if (chosen !== undefined) onChoose(investigatorCode(chosen));
-          }}
-        >
-          {t('nextScenario.replace.choose')}
-        </button>
-      </footer>
+      <form
+        onSubmit={(event) => {
+          event.preventDefault();
+          if (chosen !== undefined) onChoose(investigatorCode(chosen));
+        }}
+      >
+        <footer>
+          <button type="button" onClick={onCancel}>
+            {t('games.cancel')}
+          </button>
+          <button type="submit" disabled={chosen === undefined}>
+            {t('nextScenario.replace.choose')}
+          </button>
+        </footer>
+      </form>
     </dialog>
   );
 }
