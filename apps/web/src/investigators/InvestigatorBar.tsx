@@ -142,13 +142,14 @@ function OtherInvestigators({
 /**
  * One investigator: their threat area along the top edge of their card, the card drawn as the top
  * of the printed one (`InvestigatorFace`) with the name and subname on its plates, the four skills
- * on their chain and the counters on a strip of its notebook page. The players hold the card itself,
- * so its abilities and flavour stay off the screen to leave the board its room; a tap on the art
- * shows the whole card (`CardZoom`). Then where they are and how their round goes, the cards they control (`PlayArea`) and
- * their turn controls. Before where they are, a pentagon marks the lead investigator, like the
- * game's lead investigator token, and an action arrow the investigator whose turn it is.
- * Health and sanity show what is left of the printed value, like the dials, while their steppers
- * place and heal damage and horror, like the tokens on the card. Clues show without steppers: they
+ * on their chain and the counters on a strip of its notebook page. The players hold the card
+ * itself, so its abilities and flavour stay off the screen to leave the board its room; a tap on
+ * the art shows the whole card (`CardZoom`). Then where they are and how their round goes, the
+ * cards they control (`PlayArea`) and their turn controls. Before where they are, a pentagon marks
+ * the lead investigator, like the game's lead investigator token, and an action arrow the
+ * investigator whose turn it is. Health and sanity show what is left of the printed value, like
+ * the dials, while their steppers place and heal damage and horror, like the tokens on the card.
+ * Clues show without steppers: they
  * are found by investigating and spent on the act.
  */
 function InvestigatorPanel({
@@ -244,6 +245,7 @@ function InvestigatorPanel({
           card={{
             name: investigator.name,
             type: 'investigator',
+            // The scan prints the traits; the fallback without it names the card only.
             traits: [],
             ...(investigator.image && { image: investigator.image }),
           }}

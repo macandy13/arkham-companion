@@ -12,8 +12,8 @@ import './card_zoom.css';
  * as its card (`TreacheryCard`); any other card or side as its picture once it has loaded, and
  * under the picture, for a card without one or until it loads, what the card data says of it in
  * our own frame: its name, type and traits. A card with a back turns over with a button. It
- * opens from the card shell's card (`CardDialog`) and from a location's attached cards; reading
- * it changes nothing in the game, so it offers no actions (the shell's page does). A native modal
+ * opens from the card shell's card (`CardDialog`), from a location's attached cards and from an
+ * investigator card's art (sideways, like the printed one); reading it changes nothing in the game, so it offers no actions (the shell's page does). A native modal
  * `<dialog>` brings focus trapping and Escape. On a phone it fills the screen and the back
  * gesture closes it too (`useBackCloses`).
  */

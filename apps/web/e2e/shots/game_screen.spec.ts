@@ -29,6 +29,23 @@ test('the house map with Roland Banks in the Hallway', { tag: '@shot' }, async (
   await expect(hallway.getByRole('img', { name: 'Roland Banks' })).toBeVisible();
 });
 
+test(
+  'Roland Banks’ card opened whole from its art, to read its abilities',
+  { tag: '@shot' },
+  async ({ page }) => {
+    await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
+
+    await page
+      .getByRole('region', { name: 'Roland Banks' })
+      .getByRole('button', { name: "Show Roland Banks's card" })
+      .click();
+
+    await expect(
+      page.getByRole('dialog', { name: 'Roland Banks' }).getByRole('img', { name: /Roland Banks/ }),
+    ).toBeVisible();
+  },
+);
+
 test('map tabs for the Study and the house, the house chosen', async ({ page }) => {
   await resumeImportedGame(page, 'Two maps', twoMapsExport('Two maps'));
 
