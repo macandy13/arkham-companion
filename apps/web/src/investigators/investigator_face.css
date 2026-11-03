@@ -285,7 +285,8 @@
   left: 0;
   top: calc(var(--investigator-art-button-top) * var(--scan-unit));
   width: calc(var(--investigator-art-button-width) * var(--scan-unit));
-  bottom: 0;
+  /* The face's height, not the card's: while adjusting, the counters' row hangs under the face. */
+  height: calc(var(--investigator-art-button-height) * var(--scan-unit));
   min-width: 0;
   min-height: 0;
   padding: 0;
