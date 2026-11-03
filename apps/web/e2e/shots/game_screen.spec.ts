@@ -498,27 +498,31 @@ test('Lita Chantler under Roland Banks’ card, in their control', async ({ page
   await expect(cardsInPlay.getByRole('listitem')).toHaveText('Lita Chantler');
 });
 
-test('who pays the 4 clues to advance Trapped, Daisy Walker 3 and Roland Banks 1', async ({
-  page,
-  isMobile,
-}) => {
-  await resumeImportedGame(page, 'Clues to share', cluesToShareExport('Clues to share'));
-  // A phone's compact header hides the act's plate; its detail view shows the act in full.
-  if (isMobile) await page.getByRole('region', { name: 'Act' }).click();
+test(
+  'who pays the 4 clues to advance Trapped, Daisy Walker 3 and Roland Banks 1',
+  { tag: '@shot' },
+  async ({ page, isMobile }) => {
+    await resumeImportedGame(page, 'Clues to share', cluesToShareExport('Clues to share'));
+    // A phone's compact header hides the act's plate; its detail view shows the act in full.
+    if (isMobile) await page.getByRole('region', { name: 'Act' }).click();
 
-  await page.getByRole('region', { name: 'Act' }).getByRole('button', { name: 'Advance' }).click();
-  const dialog = page.getByRole('dialog', { name: 'Who pays the clues to advance Trapped?' });
-  for (const token of [
-    'clue 3 of Roland Banks',
-    'clue 2 of Roland Banks',
-    'clue 2 of Daisy Walker',
-    'clue 3 of Daisy Walker',
-  ])
-    await dialog.getByRole('button', { name: token }).click();
+    await page
+      .getByRole('region', { name: 'Act' })
+      .getByRole('button', { name: 'Advance' })
+      .click();
+    const dialog = page.getByRole('dialog', { name: 'Who pays the clues?' });
+    for (const token of [
+      'clue 3 of Roland Banks',
+      'clue 2 of Roland Banks',
+      'clue 2 of Daisy Walker',
+      'clue 3 of Daisy Walker',
+    ])
+      await dialog.getByRole('button', { name: token }).click();
 
-  await expect(dialog.getByText(/^4 of 4 clues chosen/)).toBeVisible();
-  await expect(dialog.getByRole('button', { name: 'Pay', exact: true })).toBeEnabled();
-});
+    await expect(dialog.getByText(/^4 of 4 clues chosen/)).toBeVisible();
+    await expect(dialog.getByRole('button', { name: 'Pay', exact: true })).toBeEnabled();
+  },
+);
 
 test('the Graveyard’s failed willpower test, its choice under the Failed row', async ({ page }) => {
   await resumeImportedGame(page, 'In the Graveyard', graveyardTestExport('In the Graveyard'));

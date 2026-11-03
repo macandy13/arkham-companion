@@ -509,7 +509,7 @@ function ActStatus({
           blocked || adjusting || board.turn === undefined || advance.held < advance.threshold
         }
         onClick={() =>
-          pay(advance.threshold, t('cluePayment.advanceTitle', { act: act.name }), (spend) => {
+          pay(advance.threshold, act.id, (spend) => {
             onAdvance?.();
             void actions.advanceAct(spend);
           })
