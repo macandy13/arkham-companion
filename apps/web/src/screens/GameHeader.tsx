@@ -351,9 +351,9 @@ function AgendaStatus({
 }) {
   const { t } = useTranslation();
   const [zoomed, setZoomed] = useState(false);
-  const { actions } = store.getState();
   const { agenda } = board;
   if (!agenda) return null;
+  const { actions } = store.getState();
   const close = () => setZoomed(false);
   const offered = adjusting ? [] : cardActionsOn(board, agenda.id);
   const actionRow = offered.length > 0 && (

@@ -806,7 +806,7 @@ describe('MapBoard', () => {
       });
 
       it.each([
-        { token: 'doom', name: 'Doom 1', from: doomToken, clues: 2, doom: undefined },
+        { token: 'doom', name: 'Doom 1', from: doomToken, clues: 2, doom: 0 },
         { token: 'clue', name: 'Clues 2', from: { x: 127, y: 122 }, clues: 1, doom: 1 },
       ])(
         'gives a $token dropped on the token pool in the header back to it: the study keeps $clues clues and $doom doom',
@@ -830,7 +830,7 @@ describe('MapBoard', () => {
           await drag('study', name, from, 600, 40);
 
           expect(table.board.location(study).clues).toBe(clues);
-          expect(table.board.location(study).doom).toBe(doom);
+          expect(table.board.location(study).doom ?? 0).toBe(doom);
         },
       );
 

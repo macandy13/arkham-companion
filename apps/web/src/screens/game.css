@@ -460,14 +460,12 @@
   background: var(--color-doom);
 }
 
-/*
- * The token pool: a doom and a clue token side by side, like the supply beside the playmat. A
- * token that can be dragged off it: the page must not scroll when a touch drags it.
- */
+/* The token pool: a doom and a clue token side by side, like the supply beside the playmat. */
 #board > header [data-pool-token] {
   display: block;
 }
 
+/* A token that can be dragged off the pool: the page must not scroll when a touch drags it. */
 #board > header [data-drag] {
   cursor: grab;
   touch-action: none;
@@ -1375,11 +1373,7 @@
   }
 }
 
-/*
- * A dragged token (`TokenGhost`), over the whole page at the pointer and lifted above the dialogs,
- * coloured like the token on the table. The pointer passes through it to what lies beneath.
- */
-/* A loose token: one of the token pool's, and the one a player drags (`TokenGhost`). */
+/* A loose token, coloured like the token on the table: one of the token pool's, and a dragged one. */
 #board > header [data-pool-token],
 body > [data-token-ghost] {
   box-sizing: border-box;
@@ -1400,6 +1394,10 @@ body > [data-token-ghost='doom'] {
   background: var(--color-doom);
 }
 
+/*
+ * A dragged token (`TokenGhost`), over the whole page at the pointer and lifted above the dialogs.
+ * The pointer passes through it to what lies beneath.
+ */
 body > [data-token-ghost] {
   position: fixed;
   inset-inline-start: var(--ghost-x);
