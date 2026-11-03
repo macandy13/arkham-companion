@@ -933,8 +933,14 @@ describe('MapBoard', () => {
 
     it("marks the hallway's moves with what Frozen in Fear adds: two arrows, one for the free move", () => {
       const frozen = blankTreachery('frozen', {
-        actionCosts: [
-          { actions: ['move', 'fight', 'evade'], by: 1, who: 'threatArea', first: 'eachRound' },
+        modifiers: [
+          {
+            value: 'actionCost',
+            of: 'threatArea',
+            actions: ['move', 'fight', 'evade'],
+            first: 'eachRound',
+            by: 1,
+          },
         ],
       });
       const table = PlayTable.start(
