@@ -114,6 +114,13 @@
   fill: var(--color-face-frame);
 }
 
+/* The portrait's rim on the strip, in the ornament's colour like the chain's links. */
+#investigators svg[data-face='investigator'] [data-part='rim'] {
+  fill: none;
+  stroke: var(--color-face-ornament);
+  stroke-width: var(--face-link-width);
+}
+
 #investigators svg[data-face='investigator'] :is([data-part='link'], [data-part='ring'] circle) {
   fill: none;
   stroke: var(--color-face-ornament);
@@ -285,6 +292,16 @@
   border: none;
   border-radius: 0;
   background: none;
+}
+
+/* On the strip, the art button is the round portrait. */
+#investigators [data-card='investigator'][data-shape='strip'] > [data-full-card] {
+  left: calc(var(--investigator-portrait-left) * var(--scan-unit));
+  top: calc(var(--investigator-portrait-top) * var(--scan-unit));
+  width: calc(var(--investigator-portrait-size) * var(--scan-unit));
+  height: calc(var(--investigator-portrait-size) * var(--scan-unit));
+  bottom: auto;
+  border-radius: var(--radius-round);
 }
 
 /*

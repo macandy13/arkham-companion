@@ -382,6 +382,35 @@ describe('InvestigatorBar', () => {
     expect(screen.getByRole('dialog', { name: 'alder' })).toBeTruthy();
   });
 
+  it.each([
+    {
+      view: "the phone's compact view, which opens the detail view",
+      onOpen: vi.fn(),
+      shape: 'strip',
+    },
+    { view: 'a wider screen', onOpen: undefined, shape: 'banner' },
+  ])('draws the card as the $shape on $view', ({ onOpen, shape }) => {
+    const table = PlayTable.start(
+      newGame()
+        .withLocation(study, blankLocation('study'))
+        .withInvestigator(alder, { locationId: study }),
+    );
+    render(
+      <InvestigatorBar
+        board={table.board}
+        actions={actionsOn(table)}
+        busy={false}
+        adjusting={false}
+        onOpen={onOpen}
+      />,
+    );
+
+    // The shape is the stylesheet's to draw, so only its mark on the card says which one shows.
+    expect(
+      panel('alder').querySelector('[data-card="investigator"]')?.getAttribute('data-shape'),
+    ).toBe(shape);
+  });
+
   describe('the lead and turn markers', () => {
     const alderAndBrook = () =>
       PlayTable.start(

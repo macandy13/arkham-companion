@@ -14,7 +14,7 @@ import { useCardPicture } from '../catalog/cardImages';
 import type { GameActions, SteppedStat } from '../state/gameActions';
 import { InvestigatorArt } from './InvestigatorArt';
 import { classOf, type PrintedInvestigator } from '@arkham/carddata';
-import { InvestigatorFace } from './InvestigatorFace';
+import { InvestigatorFace, type InvestigatorFaceShape } from './InvestigatorFace';
 import { SkillTestDialog } from './SkillTestDialog';
 import { signed } from './TestCalculation';
 import { PlayArea } from './PlayArea';
@@ -36,7 +36,7 @@ import './investigators.css';
  * (`data-focus`) with the others as avatar buttons above it (`OtherInvestigators`); a wider screen
  * shows every panel and hides the avatars. Focus follows the turn, see `useFocus`. With `onOpen`
  * (the phone's compact view), the focused investigator's name is a button that opens the detail
- * view on their panel.
+ * view on their panel, and the card is the slim strip (`InvestigatorFace`) to leave the map room.
  */
 export function InvestigatorBar({
   board,
@@ -68,6 +68,7 @@ export function InvestigatorBar({
           printed={printed?.(investigator.code)}
           focused={focus === investigator.id}
           onOpen={focus === investigator.id ? onOpen : undefined}
+          shape={onOpen ? 'strip' : 'banner'}
           onTurn={board.turn === investigator.id}
           lead={board.lead === investigator.id}
           engaged={board.enemiesEngagedWith(investigator.id)}
@@ -158,6 +159,7 @@ function InvestigatorPanel({
   printed,
   focused,
   onOpen,
+  shape,
   onTurn,
   lead,
   engaged,
@@ -175,6 +177,8 @@ function InvestigatorPanel({
   focused: boolean;
   /** Opens the phone's detail view on this panel, from a tap on the name. */
   onOpen: ((investigator: InvestigatorId) => void) | undefined;
+  /** The card's shape: the phone's compact view has room for the slim strip only. */
+  shape: InvestigatorFaceShape;
   onTurn: boolean;
   /** They are the lead investigator (`BoardView.lead`). */
   lead: boolean;
@@ -211,8 +215,13 @@ function InvestigatorPanel({
         data-card="investigator"
         data-picture={picture?.shown ? 'shown' : undefined}
         data-adjusting={adjusting || undefined}
+        data-shape={shape}
       >
-        <InvestigatorFace picture={picture} investigatorClass={classOf(printed?.factionCode)} />
+        <InvestigatorFace
+          picture={picture}
+          investigatorClass={classOf(printed?.factionCode)}
+          shape={shape}
+        />
         <button
           type="button"
           data-full-card=""

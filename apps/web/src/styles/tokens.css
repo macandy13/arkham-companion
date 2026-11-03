@@ -735,6 +735,42 @@
   );
 }
 
+/*
+ * The phone's slim strip (`INVESTIGATOR_STRIP`, InvestigatorFace): the same places as the banner's
+ * above, in its scan units, where the strip scales the plates (by 0.8) and the chain (by 0.85) to
+ * the top row, the counters on the paper strip under them and the art button on the round portrait.
+ */
+[data-card='investigator'][data-shape='strip'] {
+  --investigator-name-left: 89;
+  --investigator-name-top: 4;
+  --investigator-name-width: 138;
+  --investigator-name-height: 21;
+  --investigator-name-size: 16;
+  --investigator-subname-left: 100;
+  --investigator-subname-top: 25;
+  --investigator-subname-width: 115;
+  --investigator-subname-height: 11;
+  --investigator-subname-size: 10;
+  --investigator-skills-left: 251;
+  --investigator-skills-top: 6.5;
+  --investigator-skill-step: 41.2;
+  --investigator-skill-width: 37.4;
+  --investigator-skill-height: 30.6;
+  --investigator-skill-value-width: 20.4;
+  --investigator-skill-size: 20;
+  --investigator-boost-size: 9;
+  --investigator-counters-y: 65;
+  --investigator-clues-x: 130;
+  --investigator-health-x: 196;
+  --investigator-sanity-x: 262;
+  --investigator-resources-x: 328;
+  --investigator-doom-x: 394;
+  --investigator-doom-y: 65;
+  --investigator-portrait-left: 6;
+  --investigator-portrait-top: 8;
+  --investigator-portrait-size: 72;
+}
+
 :root[data-theme='light'] {
   color-scheme: light;
 
