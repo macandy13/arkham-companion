@@ -407,6 +407,47 @@ describe('MapBoard', () => {
     expect(within(tile('hallway')).getByRole('img', { name: 'rats' })).toBeTruthy();
   });
 
+  it('lets the clue taken from a location rise from its count, and marks no count first shown', () => {
+    const table = PlayTable.start(house.withInvestigator(alder, { locationId: study }));
+    const board = () => (
+      <MapBoard board={table.board} actions={actionsOn(table)} busy={false} adjusting={false} />
+    );
+    const { rerender } = render(board());
+    expect(tile('study').querySelector('[data-changed]')).toBeNull();
+
+    table.play({ type: 'DiscoverClues', investigatorId: alder, locationId: study, amount: 1 });
+    rerender(board());
+
+    const clues = within(tile('study')).getByRole('img', { name: 'Clues 1' });
+    expect(clues.dataset.changed).toBe('');
+    expect(clues.querySelector('[data-rising]')?.textContent).toBe('−1');
+    expect(within(tile('study')).getByRole('img', { name: 'Doom 1' }).dataset.changed).toBe(
+      undefined,
+    );
+  });
+
+  it("lets the damage dealt to an enemy rise from its token's damage badge", () => {
+    const ghoul = instanceId('ghoul');
+    const table = PlayTable.start(
+      house
+        .withInvestigator(alder, { locationId: study })
+        .withCard(ghoul, blankEnemy('ghoul', { health: fixed(3) }), atLocation(study)),
+    );
+    const board = () => (
+      <MapBoard board={table.board} actions={actionsOn(table)} busy={false} adjusting={false} />
+    );
+    const { rerender } = render(board());
+
+    table.play({ type: 'DamageEnemy', enemyId: ghoul, amount: 2 });
+    rerender(board());
+
+    const badge = within(tile('study'))
+      .getByRole('img', { name: /^ghoul,/ })
+      .querySelector<SVGElement>('[data-marker="damage"]');
+    expect(badge?.dataset.changed).toBe('');
+    expect(badge?.querySelector('[data-rising]')?.textContent).toBe('+2');
+  });
+
   it('fades an engaged enemy token, and shows its damage as a badge and its exhaustion on its initial', () => {
     const ghoul = instanceId('ghoul');
     const table = PlayTable.start(

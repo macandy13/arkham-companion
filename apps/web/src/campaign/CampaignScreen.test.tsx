@@ -358,6 +358,18 @@ describe('CampaignScreen', () => {
       expect(within(dialog).getByText('Standard')).toBeTruthy();
     });
 
+    it('says where the investigators start, as the log has no house still standing', async () => {
+      const { dialog } = await renderLogBeforeMasks();
+
+      const fromTheLog = within(dialog).getByRole('region', { name: 'From the campaign log' });
+      expect(within(fromTheLog).getByRole('term').textContent).toBe(
+        'Your house burned to the ground.',
+      );
+      expect(within(fromTheLog).getByRole('definition').textContent).toBe(
+        'The investigators start at Rivertown',
+      );
+    });
+
     it('sets The Midnight Masks up as a game of the campaign and goes to it', async () => {
       const { gameStore, campaignId, dialog } = await renderLogBeforeMasks();
 

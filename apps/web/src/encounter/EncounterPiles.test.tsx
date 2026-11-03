@@ -77,7 +77,7 @@ describe('EncounterPiles', () => {
     expect(screen.getByRole('button', { name: 'Encounter discard pile' }).textContent).toBe('');
   });
 
-  it('opens the discard pile as a row of its cards, top card first and chosen', () => {
+  it('opens the discard pile on the page of the encounter deck, a row of its cards, top card first and chosen', () => {
     const table = PlayTable.start(
       newGame()
         .withLocation(study, blankLocation('study'))
@@ -105,6 +105,7 @@ describe('EncounterPiles', () => {
     );
 
     const dialog = within(screen.getByRole('dialog', { name: 'Discard pile (2)' }));
+    expect(dialog.getByText('Encounter deck')).toBeTruthy();
     const row = within(dialog.getByRole('list', { name: 'Discard pile' }));
     expect(row.getAllByRole('button').map((card) => card.getAttribute('aria-label'))).toEqual([
       'Rotting Remains',

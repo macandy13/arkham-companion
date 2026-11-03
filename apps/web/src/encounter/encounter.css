@@ -1,23 +1,20 @@
 /*
- * The encounter dialog (EncounterDialog): the × in the corner, the title and the deck's count, then
- * one list per pile that opens and closes, each card a row with a small picture and its name.
+ * The encounter dialog (EncounterDialog), a page of the card shell without a card: the deck's count
+ * and a draw button per investigator, or a pile's cards as a row with the chosen card's moves
+ * under it. The page of a pile with cards is as wide as a dialog with a row of cards gets; the
+ * shell keeps it a sheet on a phone.
  */
-#board dialog[data-dialog='encounter'] {
-  position: relative;
-  min-inline-size: min(var(--layout-zoom-card-width), 100%);
-  /* Wider than other dialogs, as wide as the row of a pile's cards beside its arrows. */
-  inline-size: min-content;
-  max-width: min(var(--dialog-width-wide), 100%);
-  font-size: var(--font-size-body);
+#board dialog[data-dialog='encounter']:has(> article > div[data-strip]) {
+  --dialog-width: var(--dialog-width-wide);
 }
 
-#board dialog[data-dialog='encounter'] p {
+#board dialog[data-dialog='encounter'] > article > p {
   margin: 0;
   color: var(--color-text-muted);
 }
 
 /* The draw buttons, one per investigator, wrapping when there are many. */
-#board dialog[data-dialog='encounter'] > footer {
+#board dialog[data-dialog='encounter'] > article > footer {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-2);
@@ -28,13 +25,13 @@
  * the row scrolls sideways and snaps to whole cards, with arrows on both sides. The chosen card is
  * ringed in the accent colour; its name and moves sit under the row.
  */
-#board dialog[data-dialog='encounter'] > div {
+#board dialog[data-dialog='encounter'] > article > div {
   display: flex;
   align-items: center;
   gap: var(--space-1);
 }
 
-#board dialog[data-dialog='encounter'] > div > ul {
+#board dialog[data-dialog='encounter'] > article > div > ul {
   display: flex;
   flex: none;
   gap: var(--space-2);
@@ -57,12 +54,12 @@
   background: none;
 }
 
-#board dialog[data-dialog='encounter'] > div > ul > li {
+#board dialog[data-dialog='encounter'] > article > div > ul > li {
   flex: none;
   scroll-snap-align: start;
 }
 
-#board dialog[data-dialog='encounter'] > div > ul > li > button {
+#board dialog[data-dialog='encounter'] > article > div > ul > li > button {
   display: block;
   box-sizing: border-box;
   inline-size: var(--encounter-strip-card-width);
@@ -76,28 +73,35 @@
   overflow: hidden;
 }
 
-#board dialog[data-dialog='encounter'] > div > ul > li > button[aria-pressed='true'] {
+#board dialog[data-dialog='encounter'] > article > div > ul > li > button[aria-pressed='true'] {
   outline: var(--focus-ring-width) solid var(--color-accent);
   outline-offset: var(--border-width);
 }
 
-#board dialog[data-dialog='encounter'] > div > ul > li > button > img {
+#board dialog[data-dialog='encounter'] > article > div > ul > li > button > img {
   display: block;
   inline-size: 100%;
   block-size: 100%;
   object-fit: cover;
 }
 
-#board dialog[data-dialog='encounter'] > div > ul > li:not([data-picture]) > button > img {
+#board
+  dialog[data-dialog='encounter']
+  > article
+  > div
+  > ul
+  > li:not([data-picture])
+  > button
+  > img {
   visibility: hidden;
 }
 
 /* The chosen card: its name with its victory points, then where the players can put it. */
-#board dialog[data-dialog='encounter'] > section {
+#board dialog[data-dialog='encounter'] > article > section {
   display: block;
 }
 
-#board dialog[data-dialog='encounter'] > section > h3 {
+#board dialog[data-dialog='encounter'] > article > section > h3 {
   display: flex;
   align-items: baseline;
   gap: var(--space-2);
@@ -105,7 +109,7 @@
   font-size: var(--font-size-body);
 }
 
-#board dialog[data-dialog='encounter'] > section > h3 > data {
+#board dialog[data-dialog='encounter'] > article > section > h3 > data {
   color: var(--color-text-muted);
   font-size: var(--font-size-note);
 }

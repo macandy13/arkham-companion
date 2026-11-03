@@ -59,6 +59,21 @@ describe('GameLogDialog', () => {
     ]);
   });
 
+  it("names the scenario over the title, as the page's kicker", () => {
+    const table = PlayTable.start(rolandsTurn);
+    render(
+      <GameLogDialog
+        log={{ ctx: table.ctx, entries: table.entries, stepTimes: new Map() }}
+        state={table.state}
+        scenario="The Gathering"
+        onClose={() => {}}
+      />,
+    );
+
+    const log = screen.getByRole('dialog', { name: 'Game log' });
+    expect(within(log).getByText('The Gathering')).toBeTruthy();
+  });
+
   it('closes from its × button', () => {
     const table = PlayTable.start(rolandsTurn);
     const onClose = vi.fn();
@@ -70,7 +85,7 @@ describe('GameLogDialog', () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'Close the game log' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Close' }));
 
     expect(onClose).toHaveBeenCalled();
   });

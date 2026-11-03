@@ -9,7 +9,6 @@ export const appTexts = {
   log: {
     title: 'Spielverlauf',
     open: 'Spielverlauf',
-    close: 'Spielverlauf schließen',
     goBack: 'Hierher zurück',
     goBackTitle: 'Zu diesem Schritt zurück?',
     goBackWarning_one: 'Der Schritt danach wird zurückgenommen.',
@@ -140,7 +139,6 @@ export const appTexts = {
     noGame: 'Kein Spiel geöffnet',
   },
   encounter: {
-    close: 'Schließen',
     drawFor: 'Für {{name}} ziehen',
     drawnFor: '{{card}}, gezogen für {{name}}',
     keywords: 'Schlüsselwörter',
@@ -704,6 +702,33 @@ export const appTexts = {
     write: 'Ins Logbuch eintragen',
   },
   nextScenario: {
+    fromTheLog: 'Aus dem Kampagnenprotokoll',
+    atLeastNames: {
+      yes: 'Mindestens {{count}} Namen unter „{{heading}}“.',
+      no: 'Weniger als {{count}} Namen unter „{{heading}}“.',
+    },
+    listsName: {
+      yes: '{{name}} steht unter „{{heading}}“.',
+      no: '{{name}} steht nicht unter „{{heading}}“.',
+    },
+    steps: {
+      start: 'Die Ermittler beginnen in {{location}}',
+      shuffleIn_one: '{{cards}} wird in das Begegnungsdeck gemischt',
+      shuffleIn_other: '{{cards}} werden in das Begegnungsdeck gemischt',
+      setAside_one: '{{cards}} wird beiseitegelegt',
+      setAside_other: '{{cards}} werden beiseitegelegt',
+      spawn: '{{card}} erscheint in {{location}}',
+      chaosTokens: '{{tokens}} kommt in den Chaosbeutel',
+      tokens: {
+        doom: '{{count}} Verderben auf {{card}}',
+        clue_one: '{{count}} Hinweis auf {{card}}',
+        clue_other: '{{count}} Hinweise auf {{card}}',
+        damage: '{{count}} Schaden auf {{card}}',
+        horror: '{{count}} Horror auf {{card}}',
+        resource_one: '{{count}} Ressource auf {{card}}',
+        resource_other: '{{count}} Ressourcen auf {{card}}',
+      },
+    },
     setUp: '{{scenario}} aufbauen',
     title: '{{scenario}} aufbauen',
     upgrades: 'Deckverbesserungen',

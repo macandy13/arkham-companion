@@ -683,15 +683,11 @@
 /*
  * The column the dialogs over the board lay their parts in: every card dialog's page (the decision
  * dialog's among them: the question under who decides, the test, the options as full-width
- * buttons, Undo at its foot; the clue payment's, clue_payment.css), the encounter dialog
- * (encounter.css) and the card zoom (card_zoom.css). Each file adds only what differs; to
+ * buttons, Undo at its foot; the clue payment's, clue_payment.css; the encounter dialog's,
+ * encounter.css) and the card zoom (card_zoom.css). Each file adds only what differs; to
  * change the column itself, it needs a selector as specific as `dialog[data-shell] > article`.
  */
-#board
-  :is(
-    dialog[data-shell] > article,
-    dialog:is([data-dialog='encounter'], [data-dialog='card-zoom'])
-  ) {
+#board :is(dialog[data-shell] > article, dialog[data-dialog='card-zoom']) {
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
@@ -931,7 +927,7 @@
 }
 
 @media (orientation: portrait) and (max-width: 40rem) {
-  #board dialog:is([data-dialog='card-zoom'], [data-dialog='log'])[open] {
+  #board dialog[data-dialog='card-zoom'][open] {
     box-sizing: border-box;
     justify-content: center;
     width: 100%;
@@ -946,9 +942,7 @@
     overflow-y: auto;
   }
 
-  #board
-    dialog:is([data-dialog='card-zoom'], [data-dialog='log'])[open]
-    > button[data-icon='close'] {
+  #board dialog[data-dialog='card-zoom'][open] > button[data-icon='close'] {
     top: calc(var(--space-2) + var(--safe-top));
     right: auto;
     left: calc(var(--space-2) + var(--safe-left));
@@ -1290,7 +1284,61 @@
   }
 }
 
+/* A drawing's delta (`RisingDelta`) rises straight up, its text already centred on the count. */
+@keyframes delta-rises-drawn {
+  from {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 0;
+    translate: 0 calc(-1 * var(--delta-rise));
+  }
+}
+
+/*
+ * Haloed like the counter's delta pill, so it reads over any card face, and sitting on the count,
+ * larger than its digits so it reads on a map tile; shown only when it moves. The selector outranks
+ * the count's own text rules (`card_face.css`, `map.css`).
+ */
+#board svg [data-rising] {
+  display: none;
+}
+
+#board svg g[data-changed] > text[data-rising] {
+  --delta-rise: var(--face-delta-rise);
+
+  dominant-baseline: auto;
+  font-size: var(--face-delta-size);
+  font-weight: bold;
+  fill: var(--color-text);
+  stroke: var(--color-background);
+  stroke-width: var(--face-delta-halo);
+  stroke-linejoin: round;
+  paint-order: stroke;
+  pointer-events: none;
+}
+
+/* The enemy's damage badge is drawn at the tile's size, not a card scan's. */
+#map svg g[data-marker] > text[data-rising] {
+  --delta-rise: var(--card-delta-rise);
+
+  font-size: var(--card-delta-size);
+  stroke-width: var(--card-delta-halo);
+}
+
 @media (prefers-reduced-motion: no-preference) {
+  #board svg [data-changed] {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: count-pulses var(--duration-pulse) ease-out;
+  }
+
+  #board svg [data-rising] {
+    display: inline;
+    animation: delta-rises-drawn var(--duration-delta) ease-out forwards;
+  }
+
   #board [data-delta] {
     position: relative;
     animation: count-pulses var(--duration-pulse) ease-out;
