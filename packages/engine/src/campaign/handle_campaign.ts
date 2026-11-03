@@ -95,6 +95,25 @@ export function executeCommand(
   return { log: replayEvents(events, log), events };
 }
 
+/**
+ * Runs campaign commands one after the other (`executeCommand`), each on the log the ones before
+ * left: the events of all of them and the log after the last. Throws `CampaignCommandRejected` at
+ * the first refused one, so the caller stores either all of them or none.
+ */
+export function executeCommands(
+  ctx: CampaignContext,
+  log: CampaignLog,
+  commands: readonly CampaignCommand[],
+): CampaignExecuteResult {
+  return commands.reduce<CampaignExecuteResult>(
+    (result, command) => {
+      const next = executeCommand(ctx, result.log, command);
+      return { log: next.log, events: [...result.events, ...next.events] };
+    },
+    { log, events: [] },
+  );
+}
+
 function handleStartCampaign(
   ctx: CampaignContext,
   log: CampaignLog,

@@ -4,12 +4,17 @@ import {
   cardDbWith,
   investigatorCardStats,
   scenario as scenarioApi,
+  type CampaignInvestigator,
   type CampaignLog,
+  type InvestigatorCode,
+  type ReplaceInvestigator,
 } from '@arkham/engine';
 import { useCatalog, type CatalogSource } from '../catalog/useCatalog';
 import type { NextScenarioStart } from '../state/appStore';
 import type { CampaignEntry, ScenarioEntry } from '../scenarios/scenarioCatalog';
 import { chosenInvestigators } from '../wizard/seating';
+import { eliminatedMembers, replacementCandidates, teamAfter } from './replacements';
+import { ReplacementPicker } from './ReplacementPicker';
 import { storyReadLines, type StoryReadLine } from './storyReads';
 import './campaign_dialogs.css';
 
@@ -17,7 +22,9 @@ import './campaign_dialogs.css';
  * The setup preview of a campaign's next scenario (MC1.6d1, docs/product.md "Campaign screen"):
  * the difficulty and team the log sets it up with, and each investigator's unspent experience to
  * spend on deck upgrades at the table first, as the app leaves deck building to the players, and
- * what the log changes in the setup (`storyReadLines`).
+ * what the log changes in the setup (`storyReadLines`). A killed or insane member needs a
+ * replacement first (MC1.6d3), picked from the investigators the campaign hasn't had; with none
+ * left, the players can only end the campaign as lost (`onLose`).
  * "Start" hands the game to set up to `onStart`; the team's card stats come from the catalog, as
  * in the new game wizard, so it waits for the catalog to load.
  */
@@ -27,6 +34,7 @@ export function NextScenarioDialog({
   scenario,
   catalog: catalogSource,
   onStart,
+  onLose,
   onCancel,
 }: {
   readonly log: CampaignLog;
@@ -34,6 +42,7 @@ export function NextScenarioDialog({
   readonly scenario: ScenarioEntry;
   readonly catalog: CatalogSource;
   readonly onStart: (start: Omit<NextScenarioStart, 'campaignId'>) => Promise<void>;
+  readonly onLose: () => Promise<void>;
   readonly onCancel: () => void;
 }) {
   const { t, i18n } = useTranslation();
@@ -42,7 +51,20 @@ export function NextScenarioDialog({
   const catalog = useCatalog(catalogSource);
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState(false);
+  const [chosen, setChosen] = useState<readonly ReplaceInvestigator[]>([]);
+  const [picking, setPicking] = useState<CampaignInvestigator>();
   const scenarioName = t(scenario.nameKey);
+  const eliminated = eliminatedMembers(log);
+  const investigators = catalog.status === 'ready' ? catalog.catalog.investigators : [];
+  const team = chosenInvestigators(investigators, teamAfter(log, chosen));
+  const nameOf = (code: InvestigatorCode) =>
+    investigators.find((investigator) => investigator.code === code)?.name ?? code;
+  const candidatesFor = (member: CampaignInvestigator) =>
+    replacementCandidates(investigators, log, chosen, member.code);
+  const replacementOf = (member: CampaignInvestigator) =>
+    chosen.find(({ code }) => code === member.code);
+  const ready =
+    catalog.status === 'ready' && eliminated.every((member) => replacementOf(member) !== undefined);
 
   useEffect(() => {
     dialog.current?.showModal();
@@ -60,26 +82,39 @@ export function NextScenarioDialog({
   }
 
   function start() {
-    if (catalog.status !== 'ready') return;
-    const cards = chosenInvestigators(
-      catalog.catalog.investigators,
-      log.investigators.map(({ code }) => code),
+    if (!ready) return;
+    run(
+      () =>
+        onStart({
+          title: [scenarioName, ...team.map(({ name }) => name)].join(' – '),
+          ctx: {
+            cards: cardDbWith(scenario.cards, team.map(investigatorCardStats)),
+            scenario: scenario.definition,
+          },
+          seed: drawSeed(),
+          replacements: chosen,
+        }),
+      'Could not set the next scenario up.',
     );
+  }
+
+  function run(step: () => Promise<void>, failure: string) {
     setBusy(true);
     setFailed(false);
-    onStart({
-      title: [scenarioName, ...log.investigators.map(({ name }) => name)].join(' – '),
-      ctx: {
-        cards: cardDbWith(scenario.cards, cards.map(investigatorCardStats)),
-        scenario: scenario.definition,
-      },
-      seed: drawSeed(),
-    })
+    step()
       .catch((error: unknown) => {
-        console.warn('Could not set the next scenario up.', error);
+        console.warn(failure, error);
         setFailed(true);
       })
       .finally(() => setBusy(false));
+  }
+
+  function choose(member: CampaignInvestigator, by: InvestigatorCode) {
+    setChosen([
+      ...chosen.filter(({ code }) => code !== member.code),
+      { type: 'ReplaceInvestigator', code: member.code, by },
+    ]);
+    setPicking(undefined);
   }
 
   return (
@@ -105,19 +140,66 @@ export function NextScenarioDialog({
           <dt>{t('investigators.title')}</dt>
           <dd>
             <ol>
-              {log.investigators.map(({ code, name }) => (
-                <li key={code}>{name}</li>
+              {teamAfter(log, chosen).map((code) => (
+                <li key={code}>{nameOf(code)}</li>
               ))}
             </ol>
           </dd>
         </dl>
+        {eliminated.length > 0 && (
+          <section aria-labelledby="next-scenario-replace">
+            <h3 id="next-scenario-replace">{t('nextScenario.replace.heading')}</h3>
+            <p>{t('nextScenario.replace.rule')}</p>
+            <ul>
+              {eliminated.map((member) => {
+                const replacement = replacementOf(member);
+                const noneLeft = catalog.status === 'ready' && candidatesFor(member).length === 0;
+                return (
+                  <li key={member.code}>
+                    <p>{t(`nextScenario.replace.${member.fate}`, { name: member.name })}</p>
+                    {replacement && (
+                      <p>{t('nextScenario.replace.by', { name: nameOf(replacement.by) })}</p>
+                    )}
+                    {noneLeft && !replacement ? (
+                      <>
+                        <p>{t('nextScenario.replace.noneLeft')}</p>
+                        <button
+                          type="button"
+                          disabled={busy}
+                          onClick={() => run(onLose, 'Could not end the campaign.')}
+                        >
+                          {t('nextScenario.replace.lose')}
+                        </button>
+                      </>
+                    ) : (
+                      <button
+                        type="button"
+                        disabled={busy || catalog.status !== 'ready'}
+                        onClick={() => setPicking(member)}
+                      >
+                        {t(
+                          replacement ? 'nextScenario.replace.change' : 'nextScenario.replace.pick',
+                          { name: member.name },
+                        )}
+                      </button>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          </section>
+        )}
         <section aria-labelledby="next-scenario-upgrades">
           <h3 id="next-scenario-upgrades">{t('nextScenario.upgrades')}</h3>
           <p>{t('nextScenario.spendXp')}</p>
           <ul>
-            {log.investigators.map(({ code, name, xpEarned, xpSpent }) => (
-              <li key={code}>{t('nextScenario.unspentXp', { name, count: xpEarned - xpSpent })}</li>
-            ))}
+            {log.investigators
+              .filter(({ fate }) => fate === 'alive')
+              .map(({ code, name, xpEarned, xpSpent }) => (
+                <li key={code}>
+                  {t('nextScenario.unspentXp', { name, count: xpEarned - xpSpent })}
+                </li>
+              ))}
           </ul>
         </section>
         {fromTheLog.length > 0 && (
@@ -143,11 +225,19 @@ export function NextScenarioDialog({
           <button type="button" onClick={onCancel}>
             {t('games.cancel')}
           </button>
-          <button type="submit" disabled={busy || catalog.status !== 'ready'}>
+          <button type="submit" disabled={busy || !ready}>
             {t('wizard.start')}
           </button>
         </footer>
       </form>
+      {picking && catalog.status === 'ready' && (
+        <ReplacementPicker
+          name={picking.name}
+          catalog={{ ...catalog.catalog, investigators: candidatesFor(picking) }}
+          onChoose={(by) => choose(picking, by)}
+          onCancel={() => setPicking(undefined)}
+        />
+      )}
     </dialog>
   );
 }

@@ -75,18 +75,43 @@ const rolandCatalog: CardCatalog = {
   ],
 };
 
+/** The catalog of a replacement for Roland: Daisy Walker beside him. */
+const rolandAndDaisyCatalog: CardCatalog = {
+  ...rolandCatalog,
+  investigators: [
+    ...rolandCatalog.investigators,
+    {
+      code: '01002',
+      name: 'Daisy Walker',
+      factionCode: 'seeker',
+      health: 5,
+      sanity: 9,
+      skills: { willpower: 3, intellect: 5, combat: 2, agility: 2 },
+      packCode: 'core',
+      cyclePosition: 1,
+      parallel: false,
+      chapter: 1,
+    },
+  ],
+};
+
 /** Stands in for the play screen: names the game the campaign screen went to. */
 function GameRoute() {
   return <output>{`game ${useParams().id}`}</output>;
 }
 
-function renderLog(gameStore: IndexedDbStore, path: string, store = createAppStore(gameStore)) {
+function renderLog(
+  gameStore: IndexedDbStore,
+  path: string,
+  store = createAppStore(gameStore),
+  catalog = rolandCatalog,
+) {
   render(
     <MemoryRouter initialEntries={[path]}>
       <Routes>
         <Route
           path="/campaign/:id"
-          element={<CampaignScreen store={store} catalog={() => Promise.resolve(rolandCatalog)} />}
+          element={<CampaignScreen store={store} catalog={() => Promise.resolve(catalog)} />}
         />
         <Route path="/game/:id" element={<GameRoute />} />
       </Routes>
@@ -385,6 +410,69 @@ describe('CampaignScreen', () => {
         scenarioId: midnightMasks,
         campaignId,
       });
+    });
+  });
+
+  describe('after The Gathering, in which Roland was killed', () => {
+    async function openSetupWith(catalog: CardCatalog) {
+      const { gameStore, campaignId } = await storeCampaign(() => [
+        { type: 'InvestigatorFateChanged', code: roland, fate: 'killed' },
+        {
+          type: 'ScenarioPlayed',
+          scenarioId: gathering,
+          outcome: { kind: 'resolution', id: resolutionId('R3') },
+        },
+        { type: 'ScenarioPositionChanged', position: 1 },
+      ]);
+      const store = createAppStore(gameStore);
+      renderLog(gameStore, `/campaign/${campaignId}`, store, catalog);
+      fireEvent.click(await screen.findByRole('button', { name: 'Set up The Midnight Masks' }));
+      return {
+        gameStore,
+        campaignId,
+        dialog: screen.getByRole('dialog', { name: 'Set up The Midnight Masks' }),
+      };
+    }
+
+    it('sets The Midnight Masks up with Daisy Walker, picked to replace him', async () => {
+      const { gameStore, campaignId, dialog } = await openSetupWith(rolandAndDaisyCatalog);
+      const startButton = within(dialog).getByRole('button', { name: 'Start game' });
+
+      fireEvent.click(
+        await within(dialog).findByRole('button', {
+          name: 'Choose a replacement for Roland Banks',
+        }),
+      );
+      const picker = screen.getByRole('dialog', { name: 'Replace Roland Banks' });
+      fireEvent.click(within(picker).getByRole('button', { name: /Daisy Walker/ }));
+      fireEvent.click(screen.getByRole('button', { name: 'Select' }));
+      fireEvent.click(within(picker).getByRole('button', { name: 'Choose' }));
+
+      expect(within(dialog).getByText('Daisy Walker takes their place.')).toBeTruthy();
+      expect(startButton).toHaveProperty('disabled', false);
+      fireEvent.click(startButton);
+      await screen.findByRole('status');
+      const [game] = await gameStore.listGames();
+      expect(game?.title).toBe('The Midnight Masks – Daisy Walker');
+      const log = (await gameStore.loadCampaign(campaignId))?.log;
+      expect(log?.investigators.map(({ name }) => name)).toEqual(['Daisy Walker']);
+    });
+
+    it('ends the campaign as lost when no investigator is left to replace him', async () => {
+      const { dialog } = await openSetupWith(rolandCatalog);
+
+      expect(
+        await within(dialog).findByText(
+          'No investigator is left to choose: the campaign is over and the players lose.',
+        ),
+      ).toBeTruthy();
+      expect(within(dialog).getByRole('button', { name: 'Start game' })).toHaveProperty(
+        'disabled',
+        true,
+      );
+      fireEvent.click(within(dialog).getByRole('button', { name: 'End the campaign' }));
+
+      expect(await screen.findByText('The campaign ends: the investigators lost.')).toBeTruthy();
     });
   });
 

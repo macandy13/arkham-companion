@@ -15,6 +15,7 @@ export {
 export { applyEvent, replayEvents } from './campaign_reducer';
 export {
   executeCommand,
+  executeCommands,
   handleCommand,
   type CampaignContext,
   type CampaignExecuteResult,

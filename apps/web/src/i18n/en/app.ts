@@ -702,6 +702,19 @@ export const appTexts = {
     write: 'Write into the log',
   },
   nextScenario: {
+    replace: {
+      heading: 'Replace investigators',
+      rule: 'A killed or insane investigator can’t return. Their player picks an investigator new to the campaign, with a new level 0 deck.',
+      killed: '{{name}} was killed.',
+      insane: '{{name}} went insane.',
+      by: '{{name}} takes their place.',
+      pick: 'Choose a replacement for {{name}}',
+      change: 'Choose another one',
+      noneLeft: 'No investigator is left to choose: the campaign is over and the players lose.',
+      lose: 'End the campaign',
+      title: 'Replace {{name}}',
+      choose: 'Choose',
+    },
     fromTheLog: 'From the campaign log',
     atLeastNames: {
       yes: 'At least {{count}} names under “{{heading}}”.',

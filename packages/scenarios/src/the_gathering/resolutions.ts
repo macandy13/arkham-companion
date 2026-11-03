@@ -66,6 +66,7 @@ export const theGatheringResolutions: ScenarioResolutions = {
       { kind: 'byHand', textKey: `${byHandKeyPrefix}.replaceKilled` },
       { kind: 'earnCard', to: 'resigned', card: GATHERING_CODES.litaChantler, choose: true },
       { kind: 'byHand', textKey: `${byHandKeyPrefix}.earnLitaIfLeadKilled` },
+      upgradeDecks,
     ],
   },
 };
