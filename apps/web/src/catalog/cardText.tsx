@@ -56,17 +56,6 @@ export function cardText(text: string): ReactNode[] {
   });
 }
 
-/**
- * Card text of several lines (ArkhamDB puts each ability on its own) as one paragraph each, in
- * the markup `cardText` reads.
- */
-export function cardParagraphs(text: string): ReactNode[] {
-  return text
-    .split('\n')
-    .filter((line) => line.trim() !== '')
-    .map((line, index) => <p key={index}>{cardText(line)}</p>);
-}
-
 /** A game symbol in running text, named by its skill. */
 function SymbolIcon({ symbol }: { symbol: CardSymbol }) {
   const { t } = useTranslation();

@@ -512,6 +512,7 @@ export const appTexts = {
     onTurn: 'Their turn',
     others: 'Other investigators',
     show: 'Show {{name}}',
+    showCard: "Show {{name}}'s card",
     defeated: 'Defeated',
     resigned: 'Resigned',
     threatArea: 'Threat area',

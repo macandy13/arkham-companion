@@ -11,11 +11,18 @@ import './investigator_face.css';
  * measured on the ArkhamDB scan of Roland Banks and checked by laying the drawing over it (the
  * exact card templates, MD.10): the class shield in the top left corner, the name plate with its
  * pointed right end and the subname plate under it, the skill chain across the top right with
- * one plate per skill with its value and icon, and the spiral-bound notebook page under it. The art fills
- * the rest. The panel's HTML (InvestigatorBar) lies over these places, which tokens.css gives
+ * one plate per skill with its value and icon, and the spiral-bound notebook page under it. The
+ * play screen shows only the card's top (`card.height`): the players hold the card, so its
+ * abilities and flavour make way for the board, and the page is a strip for the counters. The
+ * scan's art is lifted by `art.lift`, so the portrait's face shows under the plates, and the frame
+ * covers what the lifted scan prints round it: a header behind the plates and a column round the
+ * page. The panel's HTML (InvestigatorBar) lies over these places, which tokens.css gives
  * again for the stylesheet (`--investigator-*`, in the same scan units): change both together.
  */
 export const INVESTIGATOR_FACE = {
+  card: { height: 130 },
+  /** The scan's art, lifted so the portrait's face shows; the frame's header and column cover the rest. */
+  art: { lift: 20, header: 46, column: 222 },
   /** The shield's flat top, where its sides start to curve, its point, and how far the curve bulges. */
   shield: { left: 7, right: 35, top: 4, shoulder: 20, point: 35, bulge: 9, iconInset: 4 },
   name: { left: 36, right: 212, tip: 222, top: 6, bottom: 32 },
@@ -26,23 +33,25 @@ export const INVESTIGATOR_FACE = {
   plate: { left: 228, top: 9, width: 40, height: 32, corner: 12 },
   /** A skill's icon, its centre from its plate's left edge, in one colour beside the value. */
   glyph: { x: 30, y: 25, size: 15 },
-  page: { left: 230, top: 52, width: 184, height: 232, shadow: 3 },
-  rules: { left: 236, right: 410, first: 86, step: 14.5, last: 282 },
+  page: { left: 230, top: 52, width: 184, height: 72, shadow: 3 },
+  rules: { left: 236, right: 410, first: 86, step: 14.5, last: 120 },
   /** The binding: a loop every `step` along the page's top, `rise` high, its end `reach` along and `drop` down. */
   spiral: { first: 238, last: 412, step: 8.7, y: 62, rise: 12, reach: 4, drop: 6, eye: 1.6 },
 } as const;
 
 const { width, height } = LANDSCAPE_SCAN;
+const cardHeight = INVESTIGATOR_FACE.card.height;
 
 /** The face's parts as SVG paths in scan units, each named for the stylesheet. */
 function facePaths() {
-  const { shield, name, subname, page, rules, spiral, link, ring } = INVESTIGATOR_FACE;
+  const { shield, name, subname, page, rules, spiral, link, ring, art } = INVESTIGATOR_FACE;
   const middle = (name.top + name.bottom) / 2;
   const half = (shield.left + shield.right) / 2;
   const ruleCount = Math.floor((rules.last - rules.first) / rules.step) + 1;
   const spiralCount = Math.floor((spiral.last - spiral.first) / spiral.step) + 1;
   const pageEdge = `h ${page.width} v ${page.height} h ${-page.width} Z`;
   return {
+    frame: `M 0 0 H ${width} V ${cardHeight} H ${art.column} V ${art.header} H 0 Z`,
     shield: `M ${shield.left} ${shield.top} H ${shield.right} V ${shield.shoulder} C ${shield.right} ${shield.shoulder + shield.bulge} ${half} ${shield.point} ${half} ${shield.point} C ${half} ${shield.point} ${shield.left} ${shield.shoulder + shield.bulge} ${shield.left} ${shield.shoulder} Z`,
     name: `M ${name.left} ${name.top} H ${name.right} L ${name.tip} ${middle} L ${name.right} ${name.bottom} H ${name.left} Z`,
     subname: `M ${subname.left} ${subname.top} H ${subname.right} L ${subname.right - subname.slant} ${subname.bottom} H ${subname.left + subname.slant} Z`,
@@ -68,12 +77,12 @@ function facePaths() {
 }
 
 /**
- * The face of an investigator card in the card theme's colours (`--color-face-*`), in landscape
- * scan units: our own drawing of the printed layout (`INVESTIGATOR_FACE`, no FFG art) over the
+ * The top of an investigator card's face in the card theme's colours (`--color-face-*`), in
+ * landscape scan units: our own drawing of the printed layout (`INVESTIGATOR_FACE`, no FFG art) over the
  * card's `picture` once it has loaded (a hatch until then, and for good offline), so the printed
  * frame and text of the scan fall under the face's own. The shield takes the colour and icon of
  * the investigator's `investigatorClass`; each skill's plate its icon in the face's ink. The panel lays
- * the name, the skills' values, the page's text and the counters over it in HTML
+ * the name, the skills' values and the counters over it in HTML
  * (InvestigatorBar), so this is decoration only (`aria-hidden`).
  */
 export function InvestigatorFace({
@@ -85,9 +94,9 @@ export function InvestigatorFace({
 }) {
   const pageId = useId();
   const paths = facePaths();
-  const { shield, chain, link, ring, plate, spiral } = INVESTIGATOR_FACE;
+  const { shield, chain, link, ring, plate, spiral, art } = INVESTIGATOR_FACE;
   return (
-    <svg viewBox={`0 0 ${width} ${height}`} aria-hidden="true" data-face="investigator">
+    <svg viewBox={`0 0 ${width} ${cardHeight}`} aria-hidden="true" data-face="investigator">
       <defs>
         {/* The stylesheet colours the stops, like the other faces' paper. */}
         <linearGradient id={pageId} x1="0" y1="0" x2="0" y2="1">
@@ -95,10 +104,11 @@ export function InvestigatorFace({
           <stop offset="1" />
         </linearGradient>
       </defs>
-      <rect data-part="art" width={width} height={height} />
+      <rect data-part="art" width={width} height={cardHeight} />
       {picture && (
         <image
           href={picture.url}
+          y={-art.lift}
           width={width}
           height={height}
           preserveAspectRatio="none"
@@ -106,6 +116,7 @@ export function InvestigatorFace({
           onError={picture.onError}
         />
       )}
+      <path data-part="frame" d={paths.frame} />
       <path data-part="shield" data-class={investigatorClass} d={paths.shield} />
       {investigatorClass && (
         <foreignObject
@@ -149,7 +160,7 @@ export function InvestigatorFace({
       ))}
       <path data-part="page-shadow" d={paths.pageShadow} />
       <path data-part="page" d={paths.page} fill={`url(#${pageId})`} />
-      <NightSky page={paths.page} scan={LANDSCAPE_SCAN} />
+      <NightSky page={paths.page} scan={{ width, height: cardHeight }} />
       <path data-part="rules" d={paths.rules} />
       <path data-part="spiral" d={paths.spiral} />
       {paths.spiralEyes.map((x) => (

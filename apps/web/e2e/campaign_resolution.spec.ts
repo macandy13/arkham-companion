@@ -4,7 +4,7 @@ import { expect, test } from './fixtures/test';
 // players confirm the resolution the game reached, check what it writes into the campaign log and
 // write it, read it there, take it back with Undo and write it again, then set up the next
 // scenario from the log.
-test('write a scenario resolution into the campaign log', { tag: '@flow' }, async ({ page }) => {
+test('write a scenario resolution into the campaign log', async ({ page }) => {
   await test.step('Start a campaign with Fake Seeker alone', async () => {
     await page.goto('/#/new');
     await page.getByRole('link', { name: 'New campaign' }).click();

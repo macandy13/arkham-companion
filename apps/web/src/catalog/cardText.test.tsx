@@ -2,7 +2,7 @@
 import { cleanup, render } from '@testing-library/react';
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { initI18n } from '../i18n';
-import { cardParagraphs, cardText } from './cardText';
+import { cardText } from './cardText';
 
 /** `text` rendered by `cardText`: what it reads, with each icon as `{its name}`, and its emphasised runs. */
 function rendered(text: string) {
@@ -87,14 +87,5 @@ describe('cardText', () => {
 
     expect(container.querySelector('script')).toBeNull();
     expect(container.textContent).toBe('<script>alert(1)');
-  });
-
-  it('sets each line of card text as a paragraph of its own, skipping empty ones', () => {
-    const { container } = render(<div>{cardParagraphs('First ability.\n\nSecond ability.')}</div>);
-
-    expect(Array.from(container.querySelectorAll('p'), (line) => line.textContent)).toEqual([
-      'First ability.',
-      'Second ability.',
-    ]);
   });
 });
