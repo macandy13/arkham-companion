@@ -33,6 +33,16 @@ Once the scenario has ended, only `ManualAdjust` is allowed.
 Handlers never import each other; shared queries live with their entity.
 All events of one player command share a `commandId`, so [undo](../../packages/engine/src/undo.ts) removes a command with its whole chain.
 
+Every event also has a cause (`ChangeCause`, M1C.2): `handleWithCauses` (and `execute`) return one per event, next to the events rather than in them, so replay never needs them.
+The player's command is the cause of its own events and of what follows from them; a card's forced ability is the cause of its effects (`{ kind: 'card', cardId, window }`); a phase step is the cause of what the rules do between turns (`{ kind: 'rule', step }`).
+A step passes its cause on to the steps it queues (`QueuedStep.cause`), so a step stored for an answer keeps it.
+[`changeNotices`](../../packages/engine/src/change_notices.ts) groups the events the players didn't cause into notices of one `NoticeKind` (tokens, board, investigator, enemy, encounter, by hand) and one cause, for the screens to word and filter.
+
+```ts
+function handleWithCauses(ctx, state, command): { events: Event[]; causes: ChangeCause[] };
+function changeNotices(caused: CausedEvents): ChangeNotice[];  // { kind, cause, events }
+```
+
 ## Extension points
 
 - **A new command:** add it to the `Command` union in [`commands.ts`](../../packages/engine/src/commands.ts), its handler in a `handle_<area>.ts` and its `COMMAND_SPECS` entry. An action command extends `ActionCommand`, and its spec uses `provokes: asAction`; `UseCardAction` is the exception, as the printed ability decides whether it is an action (`CardAction.free`).

@@ -5,6 +5,7 @@ import type { Command, DrawEncounter } from './commands';
 import { attackOfOpportunityDecisions, isOwnTurnAction } from './attacks_of_opportunity';
 import { answerCommands, plainOptionCommands } from './decisions';
 import { testedActionCommands } from './skill_tests';
+import { PLAYER_CAUSE, type ChangeCause } from './change_cause';
 import type { Event } from './events';
 import {
   canDrawEncounter,
@@ -55,6 +56,26 @@ import { followUpStep, MAX_TRIGGERED_COMMANDS, triggeredSteps } from './triggers
  * Inside, the chain grows one `Resolution`, which never leaves this call.
  */
 export function handle(ctx: EngineContext, state: GameState, command: Command): Event[] {
+  return handleWithCauses(ctx, state, command).events;
+}
+
+/** The events of `handle` and why each happened, at the same index (`ChangeCause`). */
+export interface CausedEvents {
+  readonly events: Event[];
+  readonly causes: ChangeCause[];
+}
+
+/**
+ * `handle` with the cause of each event (M1C.2): the player's command for its own events and
+ * whatever follows from them, a card's ability for that ability's effects and their chain, a
+ * phase step for what the rules do between turns. A step passes its cause on to the steps it
+ * queues, unless they bring their own (a card ability).
+ */
+export function handleWithCauses(
+  ctx: EngineContext,
+  state: GameState,
+  command: Command,
+): CausedEvents {
   const spec = commandSpec(command);
   assertAccepted(state, command, spec);
   const provoking = spec.provokes?.(command, ctx, state);
@@ -66,14 +87,18 @@ export function handle(ctx: EngineContext, state: GameState, command: Command): 
     // resolves after the attacks. It stops at the first decision the action's
     // chain asks, like the real run: what follows that answer is checked only
     // when it resolves, and a rejection there rejects the answer.
-    run({ ctx, state, events: [] }, [{ kind: 'command', command }], newBudget(), {
+    run(newResolution(ctx, state), [{ kind: 'command', command }], newBudget(), {
       resumesStored: false,
     });
-    return [...attacks, { type: 'StepsQueued', steps: [{ kind: 'action', command: action }] }];
+    const events: Event[] = [
+      ...attacks,
+      { type: 'StepsQueued', steps: [{ kind: 'action', command: action }] },
+    ];
+    return { events, causes: events.map(() => PLAYER_CAUSE) };
   }
-  const resolution: Resolution = { ctx, state, events: [] };
+  const resolution = newResolution(ctx, state);
   run(resolution, [{ kind: 'command', command }], newBudget(), { resumesStored: true });
-  return resolution.events;
+  return { events: resolution.events, causes: resolution.causes };
 }
 
 /**
@@ -86,6 +111,14 @@ interface Resolution {
   readonly ctx: EngineContext;
   state: GameState;
   readonly events: Event[];
+  /** Why each of `events` happened, at the same index. */
+  readonly causes: ChangeCause[];
+  /** The cause of the step being resolved, which `emit` gives its events. */
+  cause: ChangeCause;
+}
+
+function newResolution(ctx: EngineContext, state: GameState): Resolution {
+  return { ctx, state, events: [], causes: [], cause: PLAYER_CAUSE };
 }
 
 /** Appends `events` to the chain and applies them to its state. */
@@ -93,6 +126,7 @@ function emit(resolution: Resolution, events: readonly Event[]): void {
   for (const event of events) {
     resolution.state = apply(resolution.state, event);
     resolution.events.push(event);
+    resolution.causes.push(resolution.cause);
   }
 }
 
@@ -103,6 +137,7 @@ function checkpoint(resolution: Resolution): () => void {
   return () => {
     resolution.state = state;
     resolution.events.length = length;
+    resolution.causes.length = length;
   };
 }
 
@@ -170,7 +205,7 @@ function run(
       return;
     }
     const step = queue.shift();
-    if (step) queue.unshift(...resolveStep(resolution, step, budget));
+    if (step) queue.unshift(...resolveCausedStep(resolution, step, budget));
     else if (!resumesStored || !resumeStored(resolution, queue)) return;
   }
 }
@@ -199,6 +234,34 @@ function resumeStored(resolution: Resolution, queue: Step[]): boolean {
   if (step.kind !== 'action') emit(resolution, [{ type: 'StepResumed' }]);
   queue.push(step);
   return true;
+}
+
+/**
+ * One step under its own cause (`QueuedStep.cause`, else the one in force), which the steps it
+ * queues inherit unless they bring their own: a card ability is that card's doing.
+ */
+function resolveCausedStep(resolution: Resolution, step: Step, budget: TriggerBudget): Step[] {
+  const outer = resolution.cause;
+  if (step.kind !== 'phaseStep' && step.cause !== undefined) resolution.cause = step.cause;
+  try {
+    // Read after the step: a phase step names its own rule (`resolvePhaseStep`).
+    const queued = resolveStep(resolution, step, budget);
+    const cause = resolution.cause;
+    return queued.map((next) => withCause(next, cause));
+  } finally {
+    resolution.cause = outer;
+  }
+}
+
+/** `step` with the cause it inherits from the step that queued it, unless it has one. */
+function withCause(step: Step, inherited: ChangeCause): Step {
+  if (step.kind === 'phaseStep' || step.cause !== undefined) return step;
+  if (step.kind === 'ability') {
+    const { cardId, window } = step.opened;
+    return { ...step, cause: { kind: 'card', cardId, window } };
+  }
+  // The player's cause is the default (`newResolution`), so a stored step leaves it out.
+  return inherited.kind === 'player' ? step : { ...step, cause: inherited };
 }
 
 /** One step, naming the follow-up it belongs to when it is rejected. */
@@ -407,6 +470,8 @@ function resolvePhaseStep(resolution: Resolution, budget: TriggerBudget): Step[]
   const plan = nextStepPlan(resolution.ctx, resolution.state);
   if (!plan) return [];
   resetBudget(budget);
+  const [step] = resolution.state.meta.steps;
+  if (step) resolution.cause = { kind: 'rule', step: step.id };
   const before = resolution.state;
   emit(resolution, plan.events);
   return [
@@ -515,7 +580,7 @@ function changesState(resolution: Resolution, steps: readonly Step[]): boolean {
  * `CommandRejected` when they would be rejected.
  */
 function dryRun(resolution: Resolution, steps: readonly Step[]): readonly Event[] {
-  const dry: Resolution = { ctx: resolution.ctx, state: resolution.state, events: [] };
+  const dry = newResolution(resolution.ctx, resolution.state);
   run(dry, steps, newBudget(), { resumesStored: false });
   return dry.events;
 }
@@ -530,7 +595,7 @@ export function changesGameState(ctx: EngineContext, state: GameState, command: 
   const steps = commandSpec(command).mustChangeState?.(command, ctx, state) ?? [];
   if (steps.length === 0) return true;
   try {
-    return dryRun({ ctx, state, events: [] }, steps).length > 0;
+    return dryRun(newResolution(ctx, state), steps).length > 0;
   } catch (error) {
     if (!(error instanceof CommandRejected)) throw error;
     return true;
