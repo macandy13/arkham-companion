@@ -468,7 +468,9 @@
 :is(#board > header [data-token='doom'], [data-pool-token='doom'], [data-token-ghost='doom'])
   > [data-part='doom-mark'] {
   position: absolute;
+  /* Half of what `DoomMark`'s MARK_SHARE leaves free; the side tentacles' tips reach past the box. */
   inset: 12%;
+  overflow: visible;
   fill: var(--color-doom-mark);
 }
 

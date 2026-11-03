@@ -303,7 +303,7 @@ export function ghoulPriestInCellarExport(title: string): Buffer {
 
 /**
  * Like `ghoulPriestInCellarExport`, with doom beside damage: the Ghoul Priest has taken 2 damage
- * and carries 1 doom, as a cultist gains it, and the Cellar holds 1 doom, all given by hand.
+ * and carries 1 doom, placed by hand as on a cultist, and the Cellar holds 1 doom, all given by hand.
  */
 export function doomBesideDamageExport(title: string): Buffer {
   const table = houseOpened(theGathering);

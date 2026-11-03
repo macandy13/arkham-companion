@@ -441,7 +441,7 @@
   opacity: var(--engaged-enemy-opacity);
 }
 
-/* The damage and doom badges on an enemy's rim, red like the printed damage tokens and ringed like a pawn. */
+/* The damage and doom badges on an enemy's rim, ringed like a pawn; damage red like the printed damage tokens. */
 #map svg :is([data-marker='damage'], [data-marker='doom']) circle:not([data-part]) {
   fill: var(--color-health);
   stroke: var(--color-parchment);
