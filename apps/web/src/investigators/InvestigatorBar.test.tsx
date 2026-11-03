@@ -124,6 +124,29 @@ describe('InvestigatorBar', () => {
     },
   );
 
+  it('marks the damage taken on the health count, not the health left, when it changes', () => {
+    const table = PlayTable.start(
+      newGame()
+        .withLocation(study, blankLocation('study'))
+        .withInvestigator(alder, { locationId: study, health: { max: 7, damage: 3 } }),
+    );
+    const bar = () => (
+      <InvestigatorBar
+        board={table.board}
+        actions={actionsOn(table)}
+        busy={false}
+        adjusting={false}
+      />
+    );
+    const { rerender } = render(bar());
+
+    table.takeDamage(alder, 1);
+    rerender(bar());
+
+    const health = within(panel('alder')).getByRole('img', { name: '3/7' });
+    expect(health.querySelector('[data-count]')?.getAttribute('data-delta')).toBe('+1');
+  });
+
   it('shows the four skills in the printed order, each named for screen readers', () => {
     const table = PlayTable.start(
       newGame()

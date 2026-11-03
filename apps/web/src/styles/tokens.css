@@ -220,6 +220,10 @@
   --button-compact: 1.75rem;
   /* How long a new location takes to slide in, in the phone's location mode. */
   --duration-slide: 0.25s;
+  /* A counter that just changed swells for a moment, and its "+1" rises off it and fades. */
+  --duration-pulse: 0.4s;
+  --duration-delta: 1.2s;
+  --pulse-scale: 1.3;
   /* How long the game's own changes stay readable before their notice fades away. */
   --duration-notice: 6s;
   /* The keyboard focus ring, in the accent colour. */
