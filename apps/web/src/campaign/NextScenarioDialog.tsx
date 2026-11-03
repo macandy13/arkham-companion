@@ -1,16 +1,23 @@
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { cardDbWith, investigatorCardStats, type CampaignLog } from '@arkham/engine';
+import {
+  cardDbWith,
+  investigatorCardStats,
+  scenario as scenarioApi,
+  type CampaignLog,
+} from '@arkham/engine';
 import { useCatalog, type CatalogSource } from '../catalog/useCatalog';
 import type { NextScenarioStart } from '../state/appStore';
 import type { CampaignEntry, ScenarioEntry } from '../scenarios/scenarioCatalog';
 import { chosenInvestigators } from '../wizard/seating';
+import { storyReadLines, type StoryReadLine } from './storyReads';
 import './campaign_dialogs.css';
 
 /**
  * The setup preview of a campaign's next scenario (MC1.6d1, docs/product.md "Campaign screen"):
  * the difficulty and team the log sets it up with, and each investigator's unspent experience to
- * spend on deck upgrades at the table first, as the app leaves deck building to the players.
+ * spend on deck upgrades at the table first, as the app leaves deck building to the players, and
+ * what the log changes in the setup (`storyReadLines`).
  * "Start" hands the game to set up to `onStart`; the team's card stats come from the catalog, as
  * in the new game wizard, so it waits for the catalog to load.
  */
@@ -29,8 +36,9 @@ export function NextScenarioDialog({
   readonly onStart: (start: Omit<NextScenarioStart, 'campaignId'>) => Promise<void>;
   readonly onCancel: () => void;
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const dialog = useRef<HTMLDialogElement>(null);
+  const fromTheLog = entry ? logLines(entry.storyKey) : [];
   const catalog = useCatalog(catalogSource);
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState(false);
@@ -39,6 +47,17 @@ export function NextScenarioDialog({
   useEffect(() => {
     dialog.current?.showModal();
   }, []);
+
+  function logLines(storyKey: string): StoryReadLine[] {
+    try {
+      const reads = scenarioApi.storyReadsOfSetup(scenario.definition.setup, log);
+      return storyReadLines(t, (key) => i18n.exists(key), storyKey, log, reads);
+    } catch (error) {
+      // A log entry of the wrong kind is a scenario data error, which "Start" reports too.
+      console.warn('Could not read the setup against the campaign log.', error);
+      return [];
+    }
+  }
 
   function start() {
     if (catalog.status !== 'ready') return;
@@ -101,6 +120,21 @@ export function NextScenarioDialog({
             ))}
           </ul>
         </section>
+        {fromTheLog.length > 0 && (
+          <section aria-labelledby="next-scenario-log">
+            <h3 id="next-scenario-log">{t('nextScenario.fromTheLog')}</h3>
+            <dl>
+              {fromTheLog.map(({ entry: logEntry, effects }) => (
+                <div key={logEntry}>
+                  <dt>{logEntry}</dt>
+                  {effects.map((effect) => (
+                    <dd key={effect}>{effect}</dd>
+                  ))}
+                </div>
+              ))}
+            </dl>
+          </section>
+        )}
         {catalog.status === 'loading' && <p>{t('wizard.loadingCatalog')}</p>}
         {catalog.status === 'failed' && <p role="alert">{t('wizard.catalogFailed')}</p>}
         {failed && <p role="alert">{t('nextScenario.failed')}</p>}

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  CommandRejected,
   blankAgenda,
   blankEnemy,
   blankLocation,
@@ -1012,5 +1013,71 @@ describe('pickReferenceSide', () => {
     ['expert', 'hardExpert'],
   ] as const)('reads the %s difficulty from the %s side', (difficulty, side) => {
     expect(scenario.pickReferenceSide(difficulty)).toBe(side);
+  });
+});
+
+describe('storyReadsOfSetup', () => {
+  const houseStanding = { kind: 'flag', key: 'houseStillStanding', value: true } as const;
+  const ghoulPriestAlive = { kind: 'flag', key: 'ghoulPriestStillAlive', value: true } as const;
+  const atYourHouse: SetupStep = { kind: 'moveInvestigators', to: cardCode('your_house') };
+  const inRivertown: SetupStep = { kind: 'moveInvestigators', to: cardCode('rivertown') };
+  const ghoulPriestShuffledIn: SetupStep = {
+    kind: 'shuffleIntoEncounterDeck',
+    codes: [cardCode('ghoul_priest')],
+  };
+  /** The Midnight Masks' reads: the house, then the Ghoul Priest. */
+  const masksSetup: SetupStep[] = [
+    { kind: 'whenStory', condition: houseStanding, then: [atYourHouse], otherwise: [inRivertown] },
+    { kind: 'setAside', codes: [cardCode('the_masked_hunter')] },
+    { kind: 'whenStory', condition: ghoulPriestAlive, then: [ghoulPriestShuffledIn] },
+  ];
+  /** Roland alone, with `story` in the log. */
+  const rolandWith = (story: CampaignLog['story']) =>
+    makeCampaignLog({ investigators: [rolandMember], story });
+
+  it('answers each entry the setup reads from the log, with the steps it takes', () => {
+    const log = rolandWith({
+      houseStillStanding: { kind: 'flag', value: false },
+      ghoulPriestStillAlive: { kind: 'flag', value: true },
+    });
+
+    expect(scenario.storyReadsOfSetup(masksSetup, log)).toEqual([
+      { condition: houseStanding, holds: false, steps: [inRivertown] },
+      { condition: ghoulPriestAlive, holds: true, steps: [ghoulPriestShuffledIn] },
+    ]);
+  });
+
+  it('reads an entry the log lacks as no, with no steps when the read has no otherwise', () => {
+    expect(scenario.storyReadsOfSetup(masksSetup, rolandWith({}))).toEqual([
+      { condition: houseStanding, holds: false, steps: [inRivertown] },
+      { condition: ghoulPriestAlive, holds: false, steps: [] },
+    ]);
+  });
+
+  it.each([
+    ['Roland alone skips it', [rolandMember], []],
+    [
+      'Roland and Daisy read it',
+      [rolandMember, daisyMember],
+      [{ condition: ghoulPriestAlive, holds: false, steps: [] }],
+    ],
+  ])('reads an entry inside a step for 2 or more investigators: %s', (_, team, reads) => {
+    const forTwo: SetupStep[] = [
+      {
+        kind: 'whenPlayers',
+        atLeast: 2,
+        then: [{ kind: 'whenStory', condition: ghoulPriestAlive, then: [ghoulPriestShuffledIn] }],
+      },
+    ];
+
+    expect(
+      scenario.storyReadsOfSetup(forTwo, makeCampaignLog({ investigators: team, story: {} })),
+    ).toEqual(reads);
+  });
+
+  it('refuses a flag read of a list entry', () => {
+    const log = rolandWith({ houseStillStanding: { kind: 'list', entries: ['Your House'] } });
+
+    expect(() => scenario.storyReadsOfSetup(masksSetup, log)).toThrow(CommandRejected);
   });
 });

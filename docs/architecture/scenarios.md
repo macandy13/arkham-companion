@@ -30,6 +30,7 @@ Once the scenario has ended, only `ManualAdjust` is accepted ([Command handling]
 
 - A `whenStory` setup step picks its `then` or `otherwise` steps by a `StoryCondition` on the log's story records (a flag, at least n names on a list, or one name on it); a standalone game answers as an empty log.
 - A `whenPlayers` step applies its steps only with at least that many investigators.
+- `storyReadsOfSetup` lists the `whenStory` steps a campaign's setup would read, each with its answer and the steps that answer applies, so the app can preview what the log changes before setup.
 - A location with `versions` ("one of the two Downtowns at random") goes into play as one of them, picked with the setup's seed so `compileSetup` stays pure; other steps and connections name it by its first code.
 - A map's `atRandom` locations ("choose 4 of the 6 Arkham Woods at random") fill its given cells with that many of the group, picked with the seed too; connections to the ones left out are dropped, so a scenario declares the printed connections once.
 - A `oneAtRandom` step applies the steps of one of its options, picked with the seed (one of four Agents sets), and `addChaosTokens` adds tokens to the bag the scenario starts with.

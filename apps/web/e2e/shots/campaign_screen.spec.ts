@@ -34,7 +34,7 @@ test('the resolution of a game its only investigator lost to horror', async ({ p
   await expect(page.getByRole('dialog', { name: 'The scenario is over' })).toBeVisible();
 });
 
-test('the log right after that resolution was written', { tag: '@shot' }, async ({ page }) => {
+test('the log right after that resolution was written', async ({ page }) => {
   await page.goto('/#/new');
   await page.getByRole('link', { name: 'New campaign' }).click();
   await page.getByRole('button', { name: 'Next' }).click();
@@ -72,5 +72,8 @@ test('the setup preview of The Midnight Masks', { tag: '@shot' }, async ({ page 
   await page.getByRole('button', { name: 'Set up The Midnight Masks' }).click();
 
   const preview = page.getByRole('dialog', { name: 'Set up The Midnight Masks' });
+  await expect(preview.getByRole('region', { name: 'From the campaign log' })).toContainText(
+    'The investigators start at Your House',
+  );
   await expect(preview.getByRole('button', { name: 'Start game' })).toBeEnabled();
 });

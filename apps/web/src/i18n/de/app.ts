@@ -704,6 +704,29 @@ export const appTexts = {
     write: 'Ins Logbuch eintragen',
   },
   nextScenario: {
+    fromTheLog: 'Aus dem Kampagnenprotokoll',
+    atLeastNames: {
+      yes: 'Mindestens {{count}} Namen unter „{{heading}}“.',
+      no: 'Weniger als {{count}} Namen unter „{{heading}}“.',
+    },
+    listsName: {
+      yes: '{{name}} steht unter „{{heading}}“.',
+      no: '{{name}} steht nicht unter „{{heading}}“.',
+    },
+    steps: {
+      start: 'Die Ermittler beginnen in {{location}}',
+      shuffleIn: '{{cards}} wird in das Begegnungsdeck gemischt',
+      setAside: '{{cards}} wird beiseitegelegt',
+      spawn: '{{card}} erscheint in {{location}}',
+      chaosTokens: '{{tokens}} kommt in den Chaosbeutel',
+      tokens: {
+        doom: '{{count}} Verderben auf {{card}}',
+        clue: '{{count}} Hinweise auf {{card}}',
+        damage: '{{count}} Schaden auf {{card}}',
+        horror: '{{count}} Horror auf {{card}}',
+        resource: '{{count}} Ressourcen auf {{card}}',
+      },
+    },
     setUp: '{{scenario}} aufbauen',
     title: '{{scenario}} aufbauen',
     upgrades: 'Deckverbesserungen',

@@ -424,6 +424,59 @@ function deckCards(codes: readonly CardCode[], zone: Zone): DraftCard[] {
   return codes.map((code, i) => ({ id: newId(code, codes.slice(0, i)), code, zone, faceUp: true }));
 }
 
+/**
+ * A campaign log entry a setup reads (`WhenStoryStep`) and the steps it takes for the log, which
+ * the setup preview shows the players ("The Ghoul Priest is still out there → he is shuffled
+ * into the encounter deck"). Produced by `storyReadsOfSetup`.
+ */
+export interface StoryRead {
+  readonly condition: StoryCondition;
+  /** Whether the log answers the condition with yes; an entry it lacks answers as `storyHolds`. */
+  readonly holds: boolean;
+  /** The step's `then` steps when it holds, else its `otherwise` steps (none if it has none). */
+  readonly steps: readonly SetupStep[];
+}
+
+/**
+ * Each campaign log entry `setup` reads, in setup order, as `log` answers it: the reads nested in
+ * a step taken are listed after it, and those of steps the setup skips for the team's size are
+ * left out. A `OneAtRandomStep` is picked by the seed, so its reads are left out too.
+ * Throws `CommandRejected` like `compileSetup` when an entry has another kind than the read.
+ */
+export function storyReadsOfSetup(
+  setup: readonly SetupStep[],
+  log: CampaignLog,
+): readonly StoryRead[] {
+  return setup.flatMap((step): readonly StoryRead[] => {
+    switch (step.kind) {
+      case 'whenPlayers':
+        return log.investigators.length >= step.atLeast ? storyReadsOfSetup(step.then, log) : [];
+      case 'whenStory': {
+        const holds = storyAnswer(log.story, step.condition);
+        const steps = holds ? step.then : (step.otherwise ?? []);
+        return [{ condition: step.condition, holds, steps }, ...storyReadsOfSetup(steps, log)];
+      }
+      default:
+        return [];
+    }
+  });
+}
+
+/**
+ * The log's answer to a `WhenStoryStep`'s condition. Throws `CommandRejected` when the entry has
+ * another kind than the condition reads, which is a scenario data error.
+ */
+function storyAnswer(story: CampaignLog['story'], condition: StoryCondition): boolean {
+  const holds = storyHolds(story, condition);
+  if (holds === undefined)
+    throw new CommandRejected({
+      code: 'storyConditionMismatch',
+      key: condition.key,
+      condition: condition.kind,
+    });
+  return holds;
+}
+
 /** What decides which conditional and random steps apply. */
 interface StepPicks {
   readonly story: CampaignLog['story'];
@@ -459,13 +512,7 @@ function placingSteps(steps: readonly SetupStep[], picks: StepPicks): readonly P
       case 'oneAtRandom':
         return placingSteps(step.options[picks.pick(step.options.length)] ?? [], picks);
       case 'whenStory': {
-        const holds = storyHolds(story, step.condition);
-        if (holds === undefined)
-          throw new CommandRejected({
-            code: 'storyConditionMismatch',
-            key: step.condition.key,
-            condition: step.condition.kind,
-          });
+        const holds = storyAnswer(story, step.condition);
         return placingSteps(holds ? step.then : (step.otherwise ?? []), picks);
       }
       default:

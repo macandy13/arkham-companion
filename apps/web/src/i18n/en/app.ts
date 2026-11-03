@@ -701,6 +701,29 @@ export const appTexts = {
     write: 'Write into the log',
   },
   nextScenario: {
+    fromTheLog: 'From the campaign log',
+    atLeastNames: {
+      yes: 'At least {{count}} names under “{{heading}}”.',
+      no: 'Fewer than {{count}} names under “{{heading}}”.',
+    },
+    listsName: {
+      yes: '{{name}} is under “{{heading}}”.',
+      no: '{{name}} is not under “{{heading}}”.',
+    },
+    steps: {
+      start: 'The investigators start at {{location}}',
+      shuffleIn: '{{cards}} is shuffled into the encounter deck',
+      setAside: '{{cards}} is set aside',
+      spawn: '{{card}} spawns at {{location}}',
+      chaosTokens: '{{tokens}} goes into the chaos bag',
+      tokens: {
+        doom: '{{count}} doom on {{card}}',
+        clue: '{{count}} clues on {{card}}',
+        damage: '{{count}} damage on {{card}}',
+        horror: '{{count}} horror on {{card}}',
+        resource: '{{count}} resources on {{card}}',
+      },
+    },
     setUp: 'Set up {{scenario}}',
     title: 'Set up {{scenario}}',
     upgrades: 'Deck upgrades',
