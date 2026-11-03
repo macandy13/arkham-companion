@@ -204,6 +204,24 @@ function InvestigatorPanel({
   const nameId = useId();
   const picture = useCardPicture(investigator.image, 'landscape');
   const [zoomed, setZoomed] = useState(false);
+  const stats = (
+    <>
+      <Skills
+        board={board}
+        investigator={investigator}
+        adjusting={adjusting}
+        busy={busy}
+        actions={actions}
+      />
+      <Counters
+        board={board}
+        investigator={investigator}
+        adjusting={adjusting}
+        busy={busy}
+        actions={actions}
+      />
+    </>
+  );
   return (
     <section
       aria-labelledby={nameId}
@@ -229,20 +247,7 @@ function InvestigatorPanel({
           nameId={nameId}
           adjusting={adjusting}
         >
-          <Skills
-            board={board}
-            investigator={investigator}
-            adjusting={adjusting}
-            busy={busy}
-            actions={actions}
-          />
-          <Counters
-            board={board}
-            investigator={investigator}
-            adjusting={adjusting}
-            busy={busy}
-            actions={actions}
-          />
+          {stats}
         </WholeCard>
       ) : (
         <article
@@ -274,20 +279,7 @@ function InvestigatorPanel({
             </h3>
             {printed?.subname && <p>{printed.subname}</p>}
           </header>
-          <Skills
-            board={board}
-            investigator={investigator}
-            adjusting={adjusting}
-            busy={busy}
-            actions={actions}
-          />
-          <Counters
-            board={board}
-            investigator={investigator}
-            adjusting={adjusting}
-            busy={busy}
-            actions={actions}
-          />
+          {stats}
         </article>
       )}
       {zoomed && (

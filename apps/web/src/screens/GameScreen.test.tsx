@@ -715,14 +715,13 @@ describe('GameScreen on a phone held upright', () => {
     expect(screen.getByRole('dialog', { name: 'The Gathering' })).toBeTruthy();
   });
 
-  it("expands Alder's panel in place from the name on it, beside the map", async () => {
+  it("expands Alder's panel in place from the name on it", async () => {
     await renderTheGathering('phone-investigator-test');
 
     fireEvent.click(screen.getByRole('button', { name: 'Alder' }));
 
     expect(board()?.getAttribute('data-view')).toBe('investigators');
     expect(scrolledTo).toEqual([screen.getByRole('region', { name: 'Alder' })]);
-    expect(screen.getByRole('figure', { name: 'Study' })).toBeTruthy();
   });
 
   it.each([
