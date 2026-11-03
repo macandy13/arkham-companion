@@ -351,26 +351,27 @@ test('the encounter deck after two mythos phases, Dissonant Voices on the discar
   ).toBeVisible();
 });
 
-test('the header with its piles fanned: seven cards discarded, the set-aside cards on the scenario card, the Ghoul Priest in the victory display', async ({
-  page,
-  isMobile,
-}) => {
-  await resumeImportedGame(page, 'Piles filled', pilesFilledExport('Piles filled'));
-  // A phone's compact header shows the deck alone, and a tap opens the detail view on its piles.
-  if (isMobile) await page.getByRole('region', { name: 'Encounter deck' }).click();
+test(
+  'the header with its piles fanned: seven cards discarded, the set-aside cards on the scenario card, the Ghoul Priest in the victory display, the token pool beside it',
+  { tag: '@shot' },
+  async ({ page, isMobile }) => {
+    await resumeImportedGame(page, 'Piles filled', pilesFilledExport('Piles filled'));
+    // A phone's compact header shows the deck alone, and a tap opens the detail view on its piles.
+    if (isMobile) await page.getByRole('region', { name: 'Encounter deck' }).click();
 
-  await expect(
-    page.getByRole('button', { name: /^Encounter discard pile, 7 cards, .* on top$/ }),
-  ).toBeVisible();
-  await expect(
-    page.getByRole('region', { name: 'Scenario' }).getByRole('button', { name: /^Set aside, / }),
-  ).toBeVisible();
-  await expect(
-    page
-      .getByRole('region', { name: 'Victory' })
-      .getByRole('button', { name: 'Victory display, 2 victory points' }),
-  ).toBeVisible();
-});
+    await expect(
+      page.getByRole('button', { name: /^Encounter discard pile, 7 cards, .* on top$/ }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('region', { name: 'Scenario' }).getByRole('button', { name: /^Set aside, / }),
+    ).toBeVisible();
+    await expect(
+      page
+        .getByRole('region', { name: 'Victory' })
+        .getByRole('button', { name: 'Victory display, 2 victory points' }),
+    ).toBeVisible();
+  },
+);
 
 test('the discard pile of seven cards on its wide page, the top card chosen, scroll arrows beside the row', async ({
   page,

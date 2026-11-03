@@ -1,4 +1,10 @@
-import { useRef, type KeyboardEvent, type MouseEvent, type PointerEvent } from 'react';
+import {
+  useRef,
+  type KeyboardEvent,
+  type MouseEvent,
+  type PointerEvent,
+  type ReactNode,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import type {
   BoardView,
@@ -51,10 +57,14 @@ import { shrinkAround, useShrinkToFit } from './useShrinkToFit';
 
 /**
  * What the players may drag off a tile: a piece standing on it (an investigator's pawn or an
- * enemy), or one of the clues on `location` (M3.11c), which a drop on a pawn there discovers.
+ * enemy), one of the clues on `location` (M3.11c), which a drop on a pawn there discovers, or
+ * the doom on `location`, which a drop moves to another location or back to the agenda.
  */
 export type TilePiece =
-  { investigator: InvestigatorView } | { enemy: MapEnemyView } | { clue: LocationView };
+  | { investigator: InvestigatorView }
+  | { enemy: MapEnemyView }
+  | { clue: LocationView }
+  | { doom: LocationView };
 
 /**
  * One location as a tile at (`x`, `y`), drawn as a card face in layers, laid out like the printed
@@ -174,12 +184,14 @@ export function LocationTile({
           </>
         )}
         {location.doom ? (
-          <Token
-            kind="doom"
-            value={location.doom}
-            label={t('map.doom', { count: location.doom })}
-            centre={LOCATION_FACE.doom}
-          />
+          <Grip drag={dragOf({ doom: location })} kind="doom" centre={LOCATION_FACE.doom}>
+            <Token
+              kind="doom"
+              value={location.doom}
+              label={t('map.doom', { count: location.doom })}
+              centre={LOCATION_FACE.doom}
+            />
+          </Grip>
         ) : null}
       </g>
       {location.symbol && <ConnectionSymbol symbol={location.symbol} />}
@@ -317,8 +329,7 @@ function NameBand({ location }: { location: LocationView }) {
 
 /**
  * The clues left on `location`, the count circle on its printed clue value. With `drag` a clue can
- * be dragged off it (`data-drag`): a pawn-sized circle around the small count takes the press, so
- * a finger can pick a clue up.
+ * be dragged off it (`Grip`).
  */
 function Clues({ location, drag }: { location: LocationView; drag: DragHandlers | undefined }) {
   const { t } = useTranslation();
@@ -330,12 +341,34 @@ function Clues({ location, drag }: { location: LocationView; drag: DragHandlers 
       centre={LOCATION_FACE.count}
     />
   );
-  if (!drag) return count;
-  const { x, y } = LOCATION_FACE.count;
   return (
-    <g data-drag="clue" {...drag}>
-      <circle data-part="grip" cx={x} cy={y} r={CONTENT.pawnRadius / TILE_PER_SCAN} />
+    <Grip drag={drag} kind="clue" centre={LOCATION_FACE.count}>
       {count}
+    </Grip>
+  );
+}
+
+/**
+ * A token (`children`) a player can drag off the tile with `drag` (`data-drag` with its `kind`): a
+ * pawn-sized circle around it at `centre`, in scan units, takes the press, so a finger can pick a
+ * small token up. Without `drag` only the token shows.
+ */
+function Grip({
+  drag,
+  kind,
+  centre: { x, y },
+  children,
+}: {
+  drag: DragHandlers | undefined;
+  kind: 'clue' | 'doom';
+  centre: Point;
+  children: ReactNode;
+}) {
+  if (!drag) return children;
+  return (
+    <g data-drag={kind} {...drag}>
+      <circle data-part="grip" cx={x} cy={y} r={CONTENT.pawnRadius / TILE_PER_SCAN} />
+      {children}
     </g>
   );
 }

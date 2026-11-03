@@ -118,7 +118,8 @@ function itemOf(target: DetailTarget): string | undefined {
 function positionOf(board: HTMLElement): DetailPosition {
   const row = board.clientHeight > 0 ? Math.round(board.scrollTop / board.clientHeight) : 0;
   const rowElement = board.querySelector<HTMLElement>(ROWS[row] ?? ROWS[0]);
-  const items = rowElement?.querySelectorAll(':scope > section').length ?? 0;
+  // The header's token pool has no room on a phone, so it is no place the row scrolls to.
+  const items = rowElement?.querySelectorAll(':scope > section:not([data-pool])').length ?? 0;
   const item =
     rowElement && rowElement.clientWidth > 0
       ? Math.round(rowElement.scrollLeft / rowElement.clientWidth)

@@ -132,6 +132,65 @@ describe('GameScreen header', () => {
     expect(within(clues).getByText('of 2')).toBeTruthy();
   });
 
+  // jsdom lays nothing out and has no pointer capture on the page: the hit test under the pointer
+  // finds what a test puts under it (`underPointer`), and capture is stubbed.
+  describe('dragging a token off the token pool', () => {
+    let underPointer: () => Element | null = () => null;
+    beforeEach(() => {
+      document.elementFromPoint = () => underPointer();
+      Object.assign(HTMLElement.prototype, { setPointerCapture: () => {} });
+    });
+    afterEach(() => {
+      const element: object = HTMLElement.prototype;
+      Reflect.deleteProperty(document, 'elementFromPoint');
+      Reflect.deleteProperty(element, 'setPointerCapture');
+    });
+
+    /** Drags the token pool's token named `name` off the pool and lets go over `underPointer`. */
+    function dragOffPool(name: string) {
+      const token = screen.getByRole('img', { name });
+      fireEvent.pointerDown(token, { pointerId: 1, clientX: 600, clientY: 40 });
+      fireEvent.pointerMove(token, { pointerId: 1, clientX: 200, clientY: 300 });
+      fireEvent.pointerUp(token, { pointerId: 1, clientX: 200, clientY: 300 });
+    }
+
+    it.each([
+      { token: 'Doom from the pool', placed: 'Doom 1' },
+      { token: 'Clue from the pool', placed: 'Clues 3' },
+    ])('places "$token" on the Study it is dropped on: $placed', async ({ token, placed }) => {
+      await renderTheGathering(`game-screen-pool-${token}-test`);
+      underPointer = () => screen.getByRole('group', { name: 'Study' });
+
+      dragOffPool(token);
+
+      const study = screen.getByRole('group', { name: 'Study' });
+      expect(await within(study).findByRole('img', { name: placed })).toBeTruthy();
+    });
+
+    it('places a doom dropped on the agenda on the agenda', async () => {
+      await renderTheGathering('game-screen-pool-agenda-test');
+      const agenda = screen.getByRole('region', { name: 'Agenda' });
+      underPointer = () => agenda;
+
+      dragOffPool('Doom from the pool');
+
+      expect(await within(agenda).findByRole('img', { name: 'Doom 1 / 3' })).toBeTruthy();
+    });
+
+    it('offers no token to drag while the players adjust the board', async () => {
+      await renderTheGathering('game-screen-pool-adjusting-test');
+      const draggable = screen.getByRole('img', { name: 'Doom from the pool' }).dataset['drag'];
+
+      fireEvent.click(button('Adjust board'));
+      await screen.findByRole('button', { name: 'Done' });
+
+      expect(draggable).toBe('doom');
+      expect(
+        screen.getByRole('img', { name: 'Doom from the pool' }).dataset['drag'],
+      ).toBeUndefined();
+    });
+  });
+
   it('shows the steppers only while adjusting, with "Done" and "Cancel" in place of "Next"', async () => {
     await renderTheGathering('game-screen-adjust-mode-test');
     const before = screen.queryByRole('button', { name: 'Add doom' });
@@ -464,7 +523,7 @@ describe('GameScreen header', () => {
     ]);
   });
 
-  it('lays the encounter deck with its discard pile, agenda, act, scenario with the set-aside cards and victory display out under their labels', async () => {
+  it('lays the token pool, the encounter deck with its discard pile, agenda, act, scenario with the set-aside cards and victory display out under their labels', async () => {
     await renderTheGathering('game-screen-encounter-test');
 
     // The investigator cards have headers too, so the board's header is the one holding the deck.
@@ -476,7 +535,14 @@ describe('GameScreen header', () => {
       .map((place) => place.firstChild?.textContent);
     const deck = within(deckPlace);
 
-    expect(labels).toEqual(['Encounter deck', 'Agenda', 'Act', 'Scenario', 'Victory']);
+    expect(labels).toEqual([
+      'Token pool',
+      'Encounter deck',
+      'Agenda',
+      'Act',
+      'Scenario',
+      'Victory',
+    ]);
     expect(deck.getByRole('button', { name: 'Encounter discard pile' })).toBeTruthy();
     const scenario = within(within(boardHeader).getByRole('region', { name: 'Scenario' }));
     expect(scenario.getByRole('button', { name: /^Set aside, \d+ cards?$/ })).toBeTruthy();

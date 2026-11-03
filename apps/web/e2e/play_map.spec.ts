@@ -233,6 +233,41 @@ test('move and take a clue from the location details', async ({ page }) => {
   });
 });
 
+// Journey: doom a card effect places on a location, moves on, and takes off again, dragged
+// between the token pool in the header and the map.
+test('move doom between the token pool and the map', { tag: '@flow' }, async ({ page }) => {
+  const house = page.getByRole('figure', { name: 'House' });
+  const room = (name: string) => house.getByRole('group', { name });
+  const pool = page.getByRole('region', { name: 'Token pool' });
+  const agendaDoom = page
+    .getByRole('region', { name: 'Agenda' })
+    .getByRole('img', { name: /^Doom/ });
+
+  await test.step('Import a game in which the house is open', async () => {
+    await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
+    await expect(agendaDoom).toHaveAccessibleName(/^Doom 0/);
+  });
+
+  await test.step('Drag a doom off the token pool onto the Hallway, as a card places it there', async () => {
+    await dragTo(page, pool.getByRole('img', { name: 'Doom from the pool' }), room('Hallway'));
+    await expect(room('Hallway').getByRole('img', { name: 'Doom 1' })).toBeVisible();
+    await expect(agendaDoom).toHaveAccessibleName(/^Doom 1/);
+  });
+
+  await test.step('Drag it on from the Hallway to the Attic', async () => {
+    await dragTo(page, room('Hallway').getByRole('img', { name: 'Doom 1' }), room('Attic'));
+    await expect(room('Attic').getByRole('img', { name: 'Doom 1' })).toBeVisible();
+    await expect(room('Hallway').getByRole('img', { name: /^Doom/ })).toHaveCount(0);
+    await expect(agendaDoom).toHaveAccessibleName(/^Doom 1/);
+  });
+
+  await test.step('Drag it off the Attic back onto the token pool', async () => {
+    await dragTo(page, room('Attic').getByRole('img', { name: 'Doom 1' }), pool);
+    await expect(room('Attic').getByRole('img', { name: /^Doom/ })).toHaveCount(0);
+    await expect(agendaDoom).toHaveAccessibleName(/^Doom 0/);
+  });
+});
+
 // Journey: keep the map in step with the table through a location's details while adjusting the
 // board: reveal a location a card turned over, put doom on it, and place a clue a card adds to the
 // Hallway.
