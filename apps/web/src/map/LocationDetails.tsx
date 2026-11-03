@@ -11,7 +11,7 @@ import {
   cardActionsOn,
   type ActionIcon,
 } from '../screens/ActionRow';
-import type { GameActions, LocationToken } from '../state/gameActions';
+import type { GameActions, LooseToken } from '../state/gameActions';
 import { CardPatterns, LocationTile } from './LocationTile';
 import { TILE } from './mapLayout';
 
@@ -410,13 +410,13 @@ function Corrections({
       <TokenStepper
         token="clue"
         count={location.clues}
-        onStep={(delta) => void actions.adjustLocation(location.id, 'clue', delta)}
+        onStep={(delta) => void actions.adjustTokens(location.id, 'clue', delta)}
         busy={busy}
       />
       <TokenStepper
         token="doom"
         count={location.doom ?? 0}
-        onStep={(delta) => void actions.adjustLocation(location.id, 'doom', delta)}
+        onStep={(delta) => void actions.adjustTokens(location.id, 'doom', delta)}
         busy={busy}
       />
     </section>
@@ -430,7 +430,7 @@ function TokenStepper({
   onStep,
   busy,
 }: {
-  token: LocationToken;
+  token: LooseToken;
   count: number;
   onStep: (delta: number) => void;
   busy: boolean;

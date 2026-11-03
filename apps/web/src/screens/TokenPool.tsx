@@ -1,6 +1,6 @@
 import { useId } from 'react';
 import { useTranslation } from 'react-i18next';
-import { locationAt } from '../map/dropTarget';
+import { enemyAt, locationAt } from '../map/dropTarget';
 import type { GameActions } from '../state/gameActions';
 import { overHeaderCard } from './headerDropTarget';
 import { TokenGhost } from './TokenGhost';
@@ -13,9 +13,9 @@ type PoolKind = 'clue' | 'doom';
  * The token pool in the header's top left corner (M3.11c): a doom and a clue token, the supply on the
  * table that card effects place tokens from and that tokens taken off go back to. A token dragged
  * off it is placed where it is dropped:
- * - doom on a location (`adjustLocation`, `PlaceDoom`) or on the agenda (`placeDoom`), as a card
- *   effect places it, so it counts towards the threshold;
- * - a clue on a location (`adjustLocation`), as a card adds one there.
+ * - doom on a location or an enemy (`adjustTokens`, `PlaceDoom`) or on the agenda (`placeDoom`),
+ *   as a card effect places it, so it counts towards the threshold;
+ * - a clue on a location (`adjustTokens`), as a card adds one there.
  * The pool is also a drop target (`data-pool`): the map gives back a token dropped on it
  * (`overTokenPool`). Not drag sources while a step is queued or the players adjust the board. A
  * phone has no room for it (`game.css`).
@@ -36,12 +36,12 @@ export function TokenPool({
       void actions.placeDoom(1);
       return;
     }
-    const location = locationAt(client);
-    if (location) void actions.adjustLocation(location, 'doom', 1);
+    const card = enemyAt(client) ?? locationAt(client);
+    if (card) void actions.adjustTokens(card, 'doom', 1);
   });
   const clue = useTokenDrag((client) => {
     const location = locationAt(client);
-    if (location) void actions.adjustLocation(location, 'clue', 1);
+    if (location) void actions.adjustTokens(location, 'clue', 1);
   });
   const off = busy || adjusting;
   return (

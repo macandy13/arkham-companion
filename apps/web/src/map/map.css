@@ -430,7 +430,7 @@
 }
 
 /* An enemy engaged with an investigator stands faded after their pawn: the threat area shows it. */
-#map svg [data-enemy][data-engaged] {
+#map svg :is([data-enemy], [data-badge-of])[data-engaged] {
   opacity: var(--engaged-enemy-opacity);
 }
 
@@ -441,14 +441,19 @@
   opacity: var(--engaged-enemy-opacity);
 }
 
-/* The damage badge on an enemy's rim, red like the printed damage tokens and ringed like a pawn. */
-#map svg [data-marker='damage'] circle {
+/* The damage and doom badges on an enemy's rim, red like the printed damage tokens and ringed like a pawn. */
+#map svg :is([data-marker='damage'], [data-marker='doom']) circle:not([data-part]) {
   fill: var(--color-health);
   stroke: var(--color-parchment);
   stroke-width: var(--border-width);
 }
 
-#map svg [data-marker='damage'] text {
+/* The doom badge on a cultist's other rim, in the doom tokens' colour. */
+#map svg [data-marker='doom'] circle:not([data-part]) {
+  fill: var(--color-doom);
+}
+
+#map svg :is([data-marker='damage'], [data-marker='doom']) text {
   fill: var(--header-token-text);
   font-size: var(--card-badge-size);
   font-weight: bold;
