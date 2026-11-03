@@ -229,8 +229,14 @@ describe('EnemyDetails', () => {
 
   it('marks the fight and evade that Frozen in Fear raises with two action arrows, the free ones with one', () => {
     const frozen = blankTreachery('frozen', {
-      actionCosts: [
-        { actions: ['move', 'fight', 'evade'], by: 1, who: 'threatArea', first: 'eachRound' },
+      modifiers: [
+        {
+          value: 'actionCost',
+          of: 'threatArea',
+          actions: ['move', 'fight', 'evade'],
+          first: 'eachRound',
+          by: 1,
+        },
       ],
     });
     renderGhoulDetails(
