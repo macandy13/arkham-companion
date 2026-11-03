@@ -105,6 +105,24 @@ describe('TokenPool', () => {
     expect(table.board.investigator(alder).damage).toBe(0);
   });
 
+  it('places a doom dropped on the ghoul’s card in a threat area on the ghoul, not on the study', async () => {
+    const table = studyWithGhoul();
+    render(
+      <>
+        <TokenPool actions={actionsOn(table)} busy={false} adjusting={false} />
+        <ul>
+          <li data-enemy="ghoul">ghoul</li>
+        </ul>
+      </>,
+    );
+    underPointer = screen.getByText('ghoul');
+
+    await dragOffPool('Doom from the pool');
+
+    expect(table.board.enemy(ghoul).doom).toBe(1);
+    expect(table.board.location(study).doom).toBeUndefined();
+  });
+
   it('places nothing when a damage token is dropped on neither an investigator nor an enemy', async () => {
     const table = studyWithGhoul();
     render(<TokenPool actions={actionsOn(table)} busy={false} adjusting={false} />);

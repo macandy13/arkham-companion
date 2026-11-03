@@ -1475,7 +1475,7 @@ body > [data-token-ghost='resource'] {
 )::after {
   content: '';
   position: absolute;
-  inset: 22%;
+  inset: var(--loose-token-icon-inset);
   background: var(--color-parchment);
   mask: var(--loose-token-icon) center / contain no-repeat;
 }
