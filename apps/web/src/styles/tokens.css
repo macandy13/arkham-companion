@@ -856,7 +856,7 @@
     --font-size-token-count: 1rem;
   }
 
-  /* The compact investigator stays under the expanded header too. */
+  /* The compact investigator stays under the expanded header too; expanded it shows them whole. */
   #board:not([data-view='map'], [data-view='investigators']) {
     --stat-token-size: 1.75rem;
     --stat-count-size: 0.875rem;

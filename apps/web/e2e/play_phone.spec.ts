@@ -18,55 +18,77 @@ test.use({
 // where it was, the map and Roland Banks stay on the screen. Swipe sideways to the agenda, open the
 // map on the whole screen from the expanded header, and go back to the overview. The dots follow
 // the cards along the header's foot.
-test(
-  'expand the header in place and swipe through its cards on a phone',
-  { tag: '@flow' },
-  async ({ page }) => {
-    const board = page.locator('#board');
-    const cardDots = page.locator('ol[data-dots="items"] > li');
+test('expand the header in place and swipe through its cards on a phone', async ({ page }) => {
+  const board = page.locator('#board');
+  const cardDots = page.locator('ol[data-dots="items"] > li');
 
-    await test.step('Expand the header from the act', async () => {
-      await resumeImportedGame(
-        page,
-        'Roland Banks threatened',
-        rolandThreatenedExport('Roland Banks threatened'),
-      );
-      await page.getByRole('region', { name: 'Act' }).click();
-      await expect(board).toHaveAttribute('data-view', 'cards');
-      await expect(page.getByRole('region', { name: 'Act' })).toBeInViewport({ ratio: 1 });
-      await expect(page.getByRole('figure', { name: 'House' })).toBeInViewport();
-      await expect(page.getByRole('region', { name: 'Roland Banks' })).toBeInViewport();
-      // The header's places: encounter deck, agenda, act, scenario and victory display.
-      await expect(cardDots).toHaveCount(5);
-      await expect(cardDots.nth(2)).toHaveAttribute('data-current');
-    });
+  await test.step('Expand the header from the act', async () => {
+    await resumeImportedGame(
+      page,
+      'Roland Banks threatened',
+      rolandThreatenedExport('Roland Banks threatened'),
+    );
+    await page.getByRole('region', { name: 'Act' }).click();
+    await expect(board).toHaveAttribute('data-view', 'cards');
+    await expect(page.getByRole('region', { name: 'Act' })).toBeInViewport({ ratio: 1 });
+    await expect(page.getByRole('figure', { name: 'House' })).toBeInViewport();
+    await expect(page.getByRole('region', { name: 'Roland Banks' })).toBeInViewport();
+    // The header's places: encounter deck, agenda, act, scenario and victory display.
+    await expect(cardDots).toHaveCount(5);
+    await expect(cardDots.nth(2)).toHaveAttribute('data-current');
+  });
 
-    await test.step('Swipe back to the agenda', async () => {
-      await page
-        .locator('#board > header')
-        .evaluate((header) => header.scrollTo({ left: header.clientWidth }));
-      await expect(page.getByRole('region', { name: 'Agenda' })).toBeInViewport({ ratio: 1 });
-      await expect(cardDots.nth(1)).toHaveAttribute('data-current');
-    });
+  await test.step('Swipe back to the agenda', async () => {
+    await page
+      .locator('#board > header')
+      .evaluate((header) => header.scrollTo({ left: header.clientWidth }));
+    await expect(page.getByRole('region', { name: 'Agenda' })).toBeInViewport({ ratio: 1 });
+    await expect(cardDots.nth(1)).toHaveAttribute('data-current');
+  });
 
-    await test.step('Open the map on the whole screen', async () => {
-      await page.getByRole('button', { name: 'Show the map on the whole screen' }).click();
-      await expect(board).toHaveAttribute('data-view', 'map');
-      await expect(page.getByRole('region', { name: 'Agenda' })).toBeHidden();
-    });
+  await test.step('Open the map on the whole screen', async () => {
+    await page.getByRole('button', { name: 'Show the map on the whole screen' }).click();
+    await expect(board).toHaveAttribute('data-view', 'map');
+    await expect(page.getByRole('region', { name: 'Agenda' })).toBeHidden();
+  });
 
-    await test.step('Go back to the overview', async () => {
-      await page.getByRole('button', { name: 'Back to the overview' }).click();
-      await expect(board).not.toHaveAttribute('data-view');
-      await expect(page.getByRole('button', { name: 'Next' })).toBeVisible();
-    });
-  },
-);
+  await test.step('Go back to the overview', async () => {
+    await page.getByRole('button', { name: 'Back to the overview' }).click();
+    await expect(board).not.toHaveAttribute('data-view');
+    await expect(page.getByRole('button', { name: 'Next' })).toBeVisible();
+  });
+});
+
+// Journey: on a phone, expand Roland Banks' panel in place from his name: his whole card shows,
+// its ability text on the notebook page, with the map and the compact header still on the screen,
+// and the × folds it again.
+test('expand the investigator in place on a phone', { tag: '@flow' }, async ({ page }) => {
+  const board = page.locator('#board');
+  const roland = page.getByRole('region', { name: 'Roland Banks' });
+
+  await test.step("Expand Roland Banks' panel from his name", async () => {
+    await resumeImportedGame(
+      page,
+      'Roland Banks threatened',
+      rolandThreatenedExport('Roland Banks threatened'),
+    );
+    await roland.getByRole('heading', { name: 'Roland Banks' }).getByRole('button').click();
+    await expect(board).toHaveAttribute('data-view', 'investigators');
+    await expect(roland.getByText(/Invented text for the tests/)).toBeInViewport();
+    await expect(page.getByRole('figure', { name: 'House' })).toBeInViewport();
+    await expect(page.getByRole('region', { name: 'Agenda' })).toBeInViewport();
+  });
+
+  await test.step('Fold it again', async () => {
+    await page.getByRole('button', { name: 'Back to the overview' }).click();
+    await expect(board).not.toHaveAttribute('data-view');
+  });
+});
 
 // Journey: on a phone, open the map on the whole screen from the compact map's expand button. A
 // tap on the strip above it expands the header on the agenda, and the strip below it shows the
 // turn's investigator.
-test('open the map on a phone and go on from its strips', { tag: '@flow' }, async ({ page }) => {
+test('open the map on a phone and go on from its strips', async ({ page }) => {
   const board = page.locator('#board');
   const lowerStrip = page.locator('#map > button[data-strip="investigators"]');
 

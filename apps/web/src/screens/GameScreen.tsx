@@ -35,9 +35,9 @@ import './game.css';
  *
  * On a phone held upright the board starts as the compact view (the stylesheet's phone blocks); a
  * tap on a header card, the map's expand button or the investigator's name opens the detail view
- * on it (`useDetailView`, `data-view` names its row): the header expands in place over the shrunk
- * map, its places snapped sideways, while the map and the investigator panels take the whole
- * screen (`DetailControls`); the map gets a strip above and below it (`MapStrip`). A tap on a
+ * on it (`useDetailView`, `data-view` names its row): the header or the investigator bar expands
+ * in place over the shrunk map, its places or panels snapped sideways, while the map takes the
+ * whole screen (`DetailControls`) with a strip above and below it (`MapStrip`). A tap on a
  * location there or in the compact view shows that location in the map row (`LocationFocus`), the
  * location mode, until the players go back to the map; while they choose where an enemy spawns,
  * or pick the answer to the open decision on the map (`DecisionView.locations`), the map shows,
@@ -199,6 +199,7 @@ export function GameScreen({
                 ? (investigator) => showDetail({ row: 'investigators', investigator })
                 : undefined
             }
+            whole={detailTarget?.row === 'investigators'}
             printed={
               cards.status === 'ready'
                 ? (code) => printedInvestigatorOf(cards.catalog, code)

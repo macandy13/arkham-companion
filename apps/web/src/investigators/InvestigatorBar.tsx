@@ -20,7 +20,7 @@ import { signed } from './TestCalculation';
 import { PlayArea } from './PlayArea';
 import { ThreatArea } from './ThreatArea';
 import { TurnControls } from './TurnControls';
-import { InvestigatorCard } from './InvestigatorCard';
+import { InvestigatorCard, WholeCard } from './InvestigatorCard';
 import { deltaText, useCountChange } from '../screens/countChange';
 import type { TokenDragHandlers } from '../screens/useTokenDrag';
 import { useClueDrag } from './useClueDrag';
@@ -39,6 +39,7 @@ import './investigators.css';
  * shows every panel and hides the avatars. Focus follows the turn, see `useFocus`. With `onOpen`
  * (the phone's compact view), the focused investigator's name is a button that opens the detail
  * view on their panel, and the card is the slim strip (`InvestigatorFace`) to leave the map room.
+ * Expanded in place there (`whole`), each panel shows the whole card (`WholeCard`) instead.
  */
 export function InvestigatorBar({
   board,
@@ -46,6 +47,7 @@ export function InvestigatorBar({
   busy,
   adjusting,
   onOpen,
+  whole = false,
   printed,
 }: {
   board: BoardView;
@@ -53,6 +55,8 @@ export function InvestigatorBar({
   busy: boolean;
   adjusting: boolean;
   onOpen?: ((investigator: InvestigatorId) => void) | undefined;
+  /** The phone's expanded bar: every panel shows the whole card, its text included. */
+  whole?: boolean;
   /** Looks up what each investigator's card prints (`printedInvestigatorOf`), once the catalog has loaded. */
   printed?: ((code: InvestigatorCode) => PrintedInvestigator | undefined) | undefined;
 }) {
@@ -71,6 +75,7 @@ export function InvestigatorBar({
           focused={focus === investigator.id}
           onOpen={focus === investigator.id ? onOpen : undefined}
           shape={onOpen ? 'strip' : 'banner'}
+          whole={whole}
           onTurn={board.turn === investigator.id}
           lead={board.lead === investigator.id}
           engaged={board.enemiesEngagedWith(investigator.id)}
@@ -162,6 +167,7 @@ function InvestigatorPanel({
   focused,
   onOpen,
   shape,
+  whole,
   onTurn,
   lead,
   engaged,
@@ -181,6 +187,8 @@ function InvestigatorPanel({
   onOpen: ((investigator: InvestigatorId) => void) | undefined;
   /** The card's shape: the phone's compact view has room for the slim strip only. */
   shape: InvestigatorFaceShape;
+  /** The whole card shows in place of the compact one, with nothing left to open from its art. */
+  whole: boolean;
   onTurn: boolean;
   /** They are the lead investigator (`BoardView.lead`). */
   lead: boolean;
@@ -213,50 +221,75 @@ function InvestigatorPanel({
         // Fighting and evading are play, so they wait while the players adjust, like the turn's.
         busy={busy || adjusting}
       />
-      <article
-        data-card="investigator"
-        data-picture={picture?.shown ? 'shown' : undefined}
-        data-adjusting={adjusting || undefined}
-        data-shape={shape}
-      >
-        <InvestigatorFace
+      {whole ? (
+        <WholeCard
+          investigator={investigator}
+          printed={printed}
           picture={picture}
-          investigatorClass={classOf(printed?.factionCode)}
-          shape={shape}
-        />
-        <button
-          type="button"
-          data-full-card=""
-          aria-label={t('investigators.showCard', { name: investigator.name })}
-          onClick={() => setZoomed(true)}
-        />
-        <header>
-          <h3 id={nameId}>
-            {onOpen ? (
-              <button type="button" onClick={() => onOpen(investigator.id)}>
-                {investigator.name}
-              </button>
-            ) : (
-              investigator.name
-            )}
-          </h3>
-          {printed?.subname && <p>{printed.subname}</p>}
-        </header>
-        <Skills
-          board={board}
-          investigator={investigator}
+          nameId={nameId}
           adjusting={adjusting}
-          busy={busy}
-          actions={actions}
-        />
-        <Counters
-          board={board}
-          investigator={investigator}
-          adjusting={adjusting}
-          busy={busy}
-          actions={actions}
-        />
-      </article>
+        >
+          <Skills
+            board={board}
+            investigator={investigator}
+            adjusting={adjusting}
+            busy={busy}
+            actions={actions}
+          />
+          <Counters
+            board={board}
+            investigator={investigator}
+            adjusting={adjusting}
+            busy={busy}
+            actions={actions}
+          />
+        </WholeCard>
+      ) : (
+        <article
+          data-card="investigator"
+          data-picture={picture?.shown ? 'shown' : undefined}
+          data-adjusting={adjusting || undefined}
+          data-shape={shape}
+        >
+          <InvestigatorFace
+            picture={picture}
+            investigatorClass={classOf(printed?.factionCode)}
+            shape={shape}
+          />
+          <button
+            type="button"
+            data-full-card=""
+            aria-label={t('investigators.showCard', { name: investigator.name })}
+            onClick={() => setZoomed(true)}
+          />
+          <header>
+            <h3 id={nameId}>
+              {onOpen ? (
+                <button type="button" onClick={() => onOpen(investigator.id)}>
+                  {investigator.name}
+                </button>
+              ) : (
+                investigator.name
+              )}
+            </h3>
+            {printed?.subname && <p>{printed.subname}</p>}
+          </header>
+          <Skills
+            board={board}
+            investigator={investigator}
+            adjusting={adjusting}
+            busy={busy}
+            actions={actions}
+          />
+          <Counters
+            board={board}
+            investigator={investigator}
+            adjusting={adjusting}
+            busy={busy}
+            actions={actions}
+          />
+        </article>
+      )}
       {zoomed && (
         <InvestigatorCard
           investigator={investigator}
