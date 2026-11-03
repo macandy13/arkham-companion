@@ -269,7 +269,7 @@ function InvestigatorPanel({
       <p data-whereabouts="">
         {lead && <span role="img" aria-label={t('investigators.lead')} data-marker="lead" />}
         {onTurn && <span role="img" aria-label={t('investigators.onTurn')} data-marker="turn" />}
-        {statusLine(investigator, onTurn, t)}
+        <span>{statusLine(investigator, onTurn, t)}</span>
       </p>
       <PlayArea
         board={board}
