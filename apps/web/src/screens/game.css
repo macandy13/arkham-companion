@@ -460,6 +460,12 @@
   background: var(--color-doom);
 }
 
+/* A token that can be dragged off (the agenda's doom): the page must not scroll when a touch drags it. */
+#board > header [data-drag] {
+  cursor: grab;
+  touch-action: none;
+}
+
 #board > header [data-token='clue'] {
   background: var(--color-clue);
 }
@@ -1383,4 +1389,8 @@ body > [data-token-ghost] {
 
 body > [data-token-ghost='clue'] {
   background: var(--color-clue);
+}
+
+body > [data-token-ghost='doom'] {
+  background: var(--color-doom);
 }

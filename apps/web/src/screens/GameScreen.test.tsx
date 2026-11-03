@@ -132,6 +132,37 @@ describe('GameScreen header', () => {
     expect(within(clues).getByText('of 2')).toBeTruthy();
   });
 
+  // jsdom lays nothing out and has no pointer capture on the page: the hit test under the pointer
+  // finds the Study's tile, and capture is stubbed.
+  describe('dragging doom off the agenda', () => {
+    beforeEach(() => {
+      document.elementFromPoint = () => screen.getByRole('group', { name: 'Study' });
+      Object.assign(HTMLElement.prototype, { setPointerCapture: () => {} });
+    });
+    afterEach(() => {
+      const element: object = HTMLElement.prototype;
+      Reflect.deleteProperty(document, 'elementFromPoint');
+      Reflect.deleteProperty(element, 'setPointerCapture');
+    });
+
+    it('places a doom from the token pool on the location it is dropped on, and opens no agenda', async () => {
+      await renderTheGathering('game-screen-doom-drag-test');
+      const agenda = screen.getByRole('region', { name: 'Agenda' });
+      const doom = within(agenda).getByRole('img', { name: 'Doom 0 / 3' });
+
+      fireEvent.pointerDown(doom, { pointerId: 1, clientX: 600, clientY: 40 });
+      fireEvent.pointerMove(doom, { pointerId: 1, clientX: 200, clientY: 300 });
+      fireEvent.pointerUp(doom, { pointerId: 1, clientX: 200, clientY: 300 });
+      fireEvent.click(doom);
+
+      expect(await within(agenda).findByRole('img', { name: 'Doom 1 / 3' })).toBeTruthy();
+      expect(
+        within(screen.getByRole('group', { name: 'Study' })).getByRole('img', { name: 'Doom 1' }),
+      ).toBeTruthy();
+      expect(screen.queryByRole('dialog')).toBeNull();
+    });
+  });
+
   it('shows the steppers only while adjusting, with "Done" and "Cancel" in place of "Next"', async () => {
     await renderTheGathering('game-screen-adjust-mode-test');
     const before = screen.queryByRole('button', { name: 'Add doom' });

@@ -32,7 +32,7 @@ test('advance the act from its full card', async ({ page }) => {
 });
 
 // Journey: advance the act by dragging one of Roland Banks' clues onto it, as its button would.
-test('advance the act by dragging a clue onto it', { tag: '@flow' }, async ({ page }) => {
+test('advance the act by dragging a clue onto it', async ({ page }) => {
   const act = page.getByRole('region', { name: 'Act' });
 
   await test.step('Import a game at act 2, with Roland Banks holding its 3 clues', async () => {

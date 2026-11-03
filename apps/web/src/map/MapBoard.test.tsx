@@ -744,6 +744,95 @@ describe('MapBoard', () => {
       });
     });
 
+    // The Study's doom sits under its clue count, centred on (136, 141). jsdom lays nothing out,
+    // so the hit test for the agenda under the pointer finds what a test puts under it.
+    describe('doom', () => {
+      const doomToken = { x: 136, y: 141 };
+      let underPointer: Element | null = null;
+      beforeEach(() => {
+        underPointer = null;
+        document.elementFromPoint = () => underPointer;
+      });
+      afterEach(() => {
+        Reflect.deleteProperty(document, 'elementFromPoint');
+      });
+
+      it('moves a doom dragged off the study to the hallway it is dropped on', async () => {
+        const table = PlayTable.start(house.withInvestigator(alder, { locationId: study }));
+        render(
+          <MapBoard
+            board={table.board}
+            actions={actionsOn(table)}
+            busy={false}
+            adjusting={false}
+          />,
+        );
+
+        await drag('study', 'Doom 1', doomToken, 255, 105);
+
+        expect(table.board.location(study).doom).toBeUndefined();
+        expect(table.board.location(hallway).doom).toBe(1);
+        expect(table.board.doomInPlay).toBe(1);
+      });
+
+      it('takes a doom dropped on the agenda off the study, back to the token pool', async () => {
+        const table = PlayTable.start(house.withInvestigator(alder, { locationId: study }));
+        render(
+          <>
+            <MapBoard
+              board={table.board}
+              actions={actionsOn(table)}
+              busy={false}
+              adjusting={false}
+            />
+            <section data-slot="agenda">
+              <h3>agenda</h3>
+            </section>
+          </>,
+        );
+        underPointer = screen.getByRole('heading', { name: 'agenda' });
+
+        await drag('study', 'Doom 1', doomToken, 600, 40);
+
+        expect(table.board.location(study).doom).toBeUndefined();
+        expect(table.board.doomInPlay).toBe(0);
+      });
+
+      it('leaves the doom on the study when dropped on the study itself', async () => {
+        const table = PlayTable.start(house.withInvestigator(alder, { locationId: study }));
+        render(
+          <MapBoard
+            board={table.board}
+            actions={actionsOn(table)}
+            busy={false}
+            adjusting={false}
+          />,
+        );
+
+        await drag('study', 'Doom 1', doomToken, 75, 105);
+
+        expect(table.board.location(study).doom).toBe(1);
+      });
+
+      it('shows a doom token over the page while it is dragged', () => {
+        const table = PlayTable.start(house.withInvestigator(alder, { locationId: study }));
+        render(
+          <MapBoard
+            board={table.board}
+            actions={actionsOn(table)}
+            busy={false}
+            adjusting={false}
+          />,
+        );
+        const doom = within(tile('study')).getByRole('img', { name: 'Doom 1' });
+
+        fireEvent.pointerDown(doom, { pointerId: 1, clientX: doomToken.x, clientY: doomToken.y });
+        fireEvent.pointerMove(doom, { pointerId: 1, clientX: 600, clientY: 40 });
+
+        expect(document.body.querySelector('[data-token-ghost="doom"]')).not.toBeNull();
+      });
+    });
+
     it('moves an enemy to the location it is dropped on, connected or not', async () => {
       const table = PlayTable.start(
         house.withCard(rats, blankEnemy('rats', { health: fixed(1) }), atLocation(study)),

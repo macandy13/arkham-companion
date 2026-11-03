@@ -18,6 +18,7 @@ import type { ShownCard } from '../catalog/cardFace';
 import { useCardPicture } from '../catalog/cardImages';
 import { cardText } from '../catalog/cardText';
 import { EncounterPiles, HeaderPile, type PileProps } from '../encounter/EncounterPiles';
+import { locationAt } from '../map/dropTarget';
 import type { AppState, OpenGame } from '../state/appStore';
 import type { GameActions } from '../state/gameActions';
 import { ActionGroup, CardActions, cardActionsOn } from './ActionRow';
@@ -27,6 +28,8 @@ import { ScenarioFace } from './ScenarioFace';
 import { useCluePayment } from './CluePaymentDialog';
 import { DetailsDialog, useDecisionHost } from './DetailsDialog';
 import { Token } from './Token';
+import { TokenGhost } from './TokenGhost';
+import { useTokenDrag, type TokenDragHandlers } from './useTokenDrag';
 import type { HeaderCardKind } from './useDetailView';
 
 /**
@@ -330,6 +333,8 @@ function ScenarioCard({
  * name, a big doom token with the doom its threshold counts (all doom in play, `doomInPlay`) and,
  * while adjusting, steppers on the plate at its foot for the doom on the agenda itself, which card
  * effects add or the players correct. The buttons sit on the card to keep the header compact.
+ * Doom dragged off the token onto a location on the map is placed there from the token pool
+ * (`adjustLocation`, `PlaceDoom`), as a card effect places it, so it counts towards the threshold.
  */
 function AgendaStatus({
   store,
@@ -348,15 +353,19 @@ function AgendaStatus({
 }) {
   const { t } = useTranslation();
   const [zoomed, setZoomed] = useState(false);
+  const { actions } = store.getState();
+  const doomDrag = useTokenDrag((client) => {
+    const location = locationAt(client);
+    if (location && !blocked) void actions.adjustLocation(location, 'doom', 1);
+  });
   const { agenda } = board;
   if (!agenda) return null;
-  const { actions } = store.getState();
   const close = () => setZoomed(false);
   const offered = adjusting ? [] : cardActionsOn(board, agenda.id);
   const actionRow = offered.length > 0 && (
     <CardActions board={board} offered={offered} actions={actions} busy={blocked} onUse={close} />
   );
-  const doomToken = (
+  const doomToken = (drag?: TokenDragHandlers) => (
     <Token
       kind="doom"
       count={board.doomInPlay}
@@ -366,6 +375,7 @@ function AgendaStatus({
           ? t('header.doom', { doom: board.doomInPlay })
           : t('header.doomOf', { doom: board.doomInPlay, threshold: agenda.threshold })
       }
+      drag={drag}
     />
   );
   const doomSteppers = (
@@ -390,7 +400,9 @@ function AgendaStatus({
   );
   const tokenAndPlate = (
     <>
-      {doomToken}
+      {/* The handlers stay while a step is queued: the drop queues its own step before the click
+          that ends the drag arrives, and they must keep that click from opening the agenda. */}
+      {doomToken(adjusting ? undefined : doomDrag.handlers)}
       {adjusting && <footer>{doomSteppers}</footer>}
     </>
   );
@@ -408,6 +420,7 @@ function AgendaStatus({
         {tokenAndPlate}
       </HeaderCard>
       {full && actionRow && <footer>{actionRow}</footer>}
+      {doomDrag.at && <TokenGhost kind="doom" at={doomDrag.at} />}
       {zoomed && !full && (
         <BookDetails
           kind="agenda"
@@ -416,7 +429,7 @@ function AgendaStatus({
           busy={blocked}
           card={board.cardFace(agenda.id)}
           threshold={agenda.threshold}
-          token={doomToken}
+          token={doomToken()}
           value={{
             name: t('header.doomName'),
             count: board.doomInPlay,
