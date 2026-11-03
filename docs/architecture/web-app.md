@@ -37,6 +37,8 @@ When a game ends, `OpenGame.resolution` (`PendingResolution`) holds the resoluti
 
 Over an ended game, [`ResolutionPrompt`](../../apps/web/src/campaign/ResolutionPrompt.tsx) opens [`ResolutionDialog`](../../apps/web/src/campaign/ResolutionDialog.tsx) in two steps. "The scenario is over" lists the resolutions with the one the game reached tagged "from the game", for the players to confirm or change; "Into the campaign log" names the resolution to read aloud from the guide, lists the changes grouped like the log page (campaign notes, investigators, chaos bag, then the by-hand steps "At the table"), lets the players pick an option of each choice, and after the write goes to the campaign screen. It waits while the board is being adjusted, and "Not yet" closes it until the game is opened again. A standalone game gets the same steps, titled "Resolution steps", and "Done" closes them without writing.
 
+Once the log has moved on to a scenario that has no game yet, the log's footer sets it up instead of continuing: [`NextScenarioDialog`](../../apps/web/src/campaign/NextScenarioDialog.tsx) previews the difficulty and team the log sets it up with and each investigator's unspent experience to spend on deck upgrades at the table, then `AppState.startNextScenario` (`NextScenarioStart`) sets the scenario up from the stored log (`CampaignSetupOptions`, the team in the log's order) as a new game of the campaign and opens it. Like the wizard, the dialog takes the team's card stats from the catalog. The campaign dialogs share [`campaign_dialogs.css`](../../apps/web/src/campaign/campaign_dialogs.css).
+
 ## Open game
 
 The open game (`OpenGame`) is the play screen's single source of truth:
