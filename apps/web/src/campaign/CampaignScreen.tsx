@@ -204,7 +204,13 @@ function NextStep({
   const scenarioId = log.scenarioIds[log.position];
   const game = games.find((g) => g.scenarioId === scenarioId);
   const scenario = scenarioId && findScenario(scenarioId);
-  if (!scenario || log.result) return null;
+  if (log.result)
+    return (
+      <footer>
+        <p>{t(`resolution.campaignEnds.${log.result}`)}</p>
+      </footer>
+    );
+  if (!scenario) return null;
   const name = t(scenario.nameKey);
   if (game) {
     return (
@@ -225,6 +231,7 @@ function NextStep({
           scenario={scenario}
           catalog={catalog}
           onCancel={() => setSettingUp(false)}
+          onLose={() => store.getState().loseCampaign(campaignId)}
           onStart={async (start) => {
             const gameId = await store.getState().startNextScenario({ ...start, campaignId });
             await navigate(`/game/${gameId}`);

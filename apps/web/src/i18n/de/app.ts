@@ -702,6 +702,19 @@ export const appTexts = {
     write: 'Ins Logbuch eintragen',
   },
   nextScenario: {
+    replace: {
+      heading: 'Ermittler ersetzen',
+      rule: 'Ein getöteter oder wahnsinniger Ermittler kehrt nicht zurück. Sein Spieler wählt einen Ermittler, der neu in der Kampagne ist, mit einem neuen Deck der Stufe 0.',
+      killed: '{{name}} wurde getötet.',
+      insane: '{{name}} wurde wahnsinnig.',
+      by: '{{name}} nimmt den Platz ein.',
+      pick: 'Ersatz für {{name}} wählen',
+      change: 'Einen anderen wählen',
+      noneLeft: 'Kein Ermittler bleibt zur Wahl: Die Kampagne endet und die Spieler verlieren.',
+      lose: 'Kampagne beenden',
+      title: '{{name}} ersetzen',
+      choose: 'Wählen',
+    },
     fromTheLog: 'Aus dem Kampagnenprotokoll',
     atLeastNames: {
       yes: 'Mindestens {{count}} Namen unter „{{heading}}“.',

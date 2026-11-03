@@ -17,6 +17,7 @@ import type {
   InvestigatorSeat,
   LoggedEvent,
   ProposedChange,
+  ReplaceInvestigator,
   Rejection,
   ScenarioOutcome,
   ScenarioContext,
@@ -24,7 +25,13 @@ import type {
   ScenarioId,
   StepNotice,
 } from '@arkham/engine';
-import { PlayTable, campaign, campaignId as toCampaignId, emptyState } from '@arkham/engine';
+import {
+  PlayTable,
+  campaign,
+  campaignId as toCampaignId,
+  cardDbFrom,
+  emptyState,
+} from '@arkham/engine';
 import { gameActions, type GameActions } from './gameActions';
 import { GameSession, startGame, type PlayStep, type SkippedEffect } from './gameSession';
 import type { DrawnCard } from '../encounter/drawnCards';
@@ -76,6 +83,11 @@ export interface NextScenarioStart {
   ctx: ScenarioContext;
   /** Seeds the game's RNG; chosen by the caller because the engine never reads randomness itself. */
   seed: number;
+  /**
+   * A newcomer for each killed or insane team member, written into the log before setup; `ctx`
+   * holds their cards too.
+   */
+  replacements: readonly ReplaceInvestigator[];
 }
 
 /** The campaign on the campaign screen, as `AppState.openCampaign` loaded it. */
@@ -224,11 +236,18 @@ export interface AppState {
   startCampaign(start: CampaignStart): Promise<GameId>;
   /**
    * Sets the campaign's next scenario up from its stored log as a new game of the campaign, the
-   * team in the log's order (the first is the lead investigator), and opens it. Rejects with
-   * `CommandRejected` before anything is stored if the log's next scenario is another one or a
-   * team member is killed or insane and must be replaced first.
+   * team in the log's order (the first is the lead investigator), and opens it. Its
+   * `replacements` go into the log first, as the players chose them even if setup then fails.
+   * Rejects with `CampaignCommandRejected` and stores nothing for a refused replacement, and with
+   * `CommandRejected` before the game is stored if the log's next scenario is another one or a
+   * killed or insane team member is left without a replacement.
    */
   startNextScenario(start: NextScenarioStart): Promise<GameId>;
+  /**
+   * Ends the campaign as lost (`EndCampaign`), when no investigator is left to replace a killed
+   * or insane one, and reloads the open campaign.
+   */
+  loseCampaign(campaignId: CampaignId): Promise<void>;
   openGame(gameId: GameId): Promise<void>;
   /** Loads a campaign's log and its games for the campaign screen (`campaign`). */
   openCampaign(campaignId: CampaignId): Promise<void>;
@@ -524,15 +543,33 @@ export function createAppStore(
         await get().openGame(gameId);
         return gameId;
       },
-      async startNextScenario({ campaignId, title, ctx, seed }) {
+      async startNextScenario({ campaignId, title, ctx, seed, replacements }) {
         const loaded = await gameStore.loadCampaign(campaignId);
         if (!loaded) throw new Error(`Unknown campaign ${campaignId}`);
-        const { log } = loaded;
+        const { log, events } = campaign.executeCommands(
+          { cards: ctx.cards },
+          loaded.log,
+          replacements,
+        );
+        if (events.length > 0)
+          await gameStore.appendCampaignEvents(campaignId, events, loaded.summary.lastSeq);
         const options = { campaign: log, seed, investigators: seatsFor(log.investigators) };
         const gameId = await startGame(gameStore, title, ctx, options, campaignId);
         await get().refresh();
         await get().openGame(gameId);
         return gameId;
+      },
+      async loseCampaign(campaignId) {
+        const loaded = await gameStore.loadCampaign(campaignId);
+        if (!loaded) throw new Error(`Unknown campaign ${campaignId}`);
+        // Ending the campaign looks up no card.
+        const { events } = campaign.executeCommand({ cards: cardDbFrom([]) }, loaded.log, {
+          type: 'EndCampaign',
+          result: 'lost',
+        });
+        await gameStore.appendCampaignEvents(campaignId, events, loaded.summary.lastSeq);
+        await loadCampaign(campaignId);
+        await get().refresh();
       },
       openGame(gameId) {
         return enqueue(() => open(gameId));
