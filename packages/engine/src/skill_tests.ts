@@ -1,5 +1,5 @@
 import { assertNever } from '@arkham/util';
-import { effectiveValue } from './card_values';
+import { effectiveValue } from './modifiers';
 import type { CardStats, EngineContext } from './cards';
 import type { Command, Evade, Fight, Investigate, TestSkill } from './commands';
 import {

@@ -7,8 +7,7 @@ import {
   trait,
   type Ability,
   type CardAction,
-  type CardModifier,
-  type ActionCostModifier,
+  type Modifier,
   type CardRestriction,
   type CardStats,
   type EncounterSetCode,
@@ -224,14 +223,12 @@ export interface TreacheryOptions {
   abilities?: readonly Ability[];
   /** What it does attached to the drawer's location (Obscuring Fog). */
   locationAttachment?: LocationAttachment;
-  /** Its constant abilities (Obscuring Fog's +2 shroud on its location). */
-  modifiers?: readonly CardModifier[];
+  /** Its constant abilities (Obscuring Fog's +2 shroud on its location, Frozen in Fear's action cost). */
+  modifiers?: readonly Modifier[];
   /** Its action abilities, offered while it is in a threat area (Dreams of R'lyeh). */
   actions?: readonly CardAction[];
   /** Its "cannot" abilities (Locked Door: its location cannot be investigated). */
   restrictions?: readonly CardRestriction[];
-  /** What it adds to the cost of basic actions (Frozen in Fear's first move, fight or evade). */
-  actionCosts?: readonly ActionCostModifier[];
 }
 
 /** Card stats for a hand-entered treachery, with its front picture. */
@@ -247,7 +244,6 @@ export function treachery({
   modifiers,
   actions,
   restrictions,
-  actionCosts,
 }: TreacheryOptions): CardStats {
   return {
     code: cardCode(code),
@@ -263,7 +259,6 @@ export function treachery({
     ...(modifiers ? { modifiers } : {}),
     ...(actions ? { actions } : {}),
     ...(restrictions ? { restrictions } : {}),
-    ...(actionCosts ? { actionCosts } : {}),
   };
 }
 

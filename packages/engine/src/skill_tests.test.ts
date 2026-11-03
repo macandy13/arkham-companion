@@ -69,11 +69,11 @@ const plainTreachery = blankTreachery('plain_treachery');
 const fogCard = blankTreachery('fog', {
   name: 'Fog',
   abilities: [afterTest('investigate', 'pass', discardSelf())],
-  modifiers: [{ stat: 'shroud', of: 'host', by: 2 }],
+  modifiers: [{ value: 'shroud', of: 'host', by: 2 }],
 });
 const lastingFogCard = blankTreachery('lasting_fog', {
   name: 'Lasting Fog',
-  modifiers: [{ stat: 'shroud', of: 'host', by: 1 }],
+  modifiers: [{ value: 'shroud', of: 'host', by: 1 }],
 });
 
 /**
@@ -566,8 +566,8 @@ describe('Fight and Evade against values a location changes', () => {
       hallway,
       blankLocation('dark_hall', {
         modifiers: [
-          { stat: 'fight', of: 'enemiesHere', by: 1 },
-          { stat: 'evade', of: 'enemiesHere', by: 2 },
+          { value: 'fight', of: 'enemiesHere', by: 1 },
+          { value: 'evade', of: 'enemiesHere', by: 2 },
         ],
       }),
       { revealed: true },
