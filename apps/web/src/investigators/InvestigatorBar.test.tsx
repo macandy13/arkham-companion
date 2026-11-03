@@ -1003,7 +1003,6 @@ describe('InvestigatorBar', () => {
   // puts under it: a stand-in for a location's tile on the map. It has no pointer capture either.
   describe('dragging a clue off the card', () => {
     const hallway = instanceId('hallway');
-    let underPointer: Element | null = null;
     beforeEach(() => {
       HTMLElement.prototype.setPointerCapture = () => {};
     });
@@ -1046,14 +1045,45 @@ describe('InvestigatorBar', () => {
           </svg>
         </>,
       );
-      underPointer = document.querySelector(`[data-location="${tile}"] > title`);
-      document.elementFromPoint = () => underPointer;
+      document.elementFromPoint = () => document.querySelector(`[data-location="${tile}"] > title`);
 
       dragAlderClue();
       await act(async () => {});
 
       expect(table.board.investigator(alder).clues).toBe(after.alder);
       expect(table.board.location(study).clues).toBe(after.study);
+    });
+
+    it('places nothing on a tap on the clue count over the study, where alder is', async () => {
+      const table = PlayTable.start(
+        newGame()
+          .withLocation(study, blankLocation('study'), { revealed: true })
+          .withInvestigator(alder, { locationId: study, clues: 2 }),
+      );
+      render(
+        <>
+          <InvestigatorBar
+            board={table.board}
+            actions={actionsOn(table)}
+            busy={false}
+            adjusting={false}
+          />
+          <svg>
+            <g data-location={study}>
+              <title>study</title>
+            </g>
+          </svg>
+        </>,
+      );
+      document.elementFromPoint = () => document.querySelector('[data-location] > title');
+      const clues = panel('alder').querySelector('[data-drag="clues"]');
+      if (!clues) throw new Error("alder's clue count is not draggable");
+
+      fireEvent.pointerDown(clues, { pointerId: 1, clientX: 10, clientY: 10 });
+      fireEvent.pointerUp(clues, { pointerId: 1, clientX: 10, clientY: 10 });
+      await act(async () => {});
+
+      expect(table.board.investigator(alder).clues).toBe(2);
     });
 
     it('shows a clue token over the page while it is dragged', () => {

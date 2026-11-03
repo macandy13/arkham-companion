@@ -22,7 +22,7 @@ import { PlayArea } from './PlayArea';
 import { ThreatArea } from './ThreatArea';
 import { TurnControls } from './TurnControls';
 import { deltaText, useCountChange } from '../screens/countChange';
-import { locationAt } from '../map/LocationTile';
+import { locationAt } from '../map/dropTarget';
 import { TokenGhost } from '../screens/TokenGhost';
 import { useTokenDrag, type TokenDragHandlers } from '../screens/useTokenDrag';
 import './investigators.css';
