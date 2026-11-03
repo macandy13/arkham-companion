@@ -26,7 +26,8 @@ import {
 } from '@arkham/engine';
 import { range } from '@arkham/util';
 import { initI18n } from '../i18n';
-import { InvestigatorBar, textLength } from './InvestigatorBar';
+import { InvestigatorBar } from './InvestigatorBar';
+import { textLength } from './InvestigatorCard';
 import { actionsOn } from '../state/gameActions.test_support';
 
 const study = instanceId('study');
@@ -368,13 +369,12 @@ describe('InvestigatorBar', () => {
     );
   });
 
-  it("prints the traits, abilities and flavour of the investigator's card on its notebook page", () => {
+  it('opens the whole card from a tap on the art, its traits, abilities and flavour on its notebook page', () => {
     const table = PlayTable.start(
       newGame()
         .withLocation(study, blankLocation('study'))
         .withInvestigator(alder, { locationId: study }),
     );
-
     render(
       <InvestigatorBar
         board={table.board}
@@ -390,7 +390,9 @@ describe('InvestigatorBar', () => {
       />,
     );
 
-    const card = within(panel('alder')).getByRole('article');
+    fireEvent.click(within(panel('alder')).getByRole('button', { name: "Show alder's card" }));
+
+    const card = screen.getByRole('dialog', { name: 'alder' });
     // The page is a plain block of the card's paragraphs, with no role of its own; each symbol
     // reads as its name in braces.
     for (const icon of card.querySelectorAll('[data-page] [role="img"]')) {
@@ -411,6 +413,35 @@ describe('InvestigatorBar', () => {
     { size: 'longest', text: 'x'.repeat(450) },
   ])('sets a page of $text.length characters in its $size size', ({ size, text }) => {
     expect(textLength({ factionCode: 'seeker', text })).toBe(size);
+  });
+
+  it.each([
+    {
+      view: "the phone's compact view, which opens the detail view",
+      onOpen: vi.fn(),
+      shape: 'strip',
+    },
+    { view: 'a wider screen', onOpen: undefined, shape: 'banner' },
+  ])('draws the card as the $shape on $view', ({ onOpen, shape }) => {
+    const table = PlayTable.start(
+      newGame()
+        .withLocation(study, blankLocation('study'))
+        .withInvestigator(alder, { locationId: study }),
+    );
+    render(
+      <InvestigatorBar
+        board={table.board}
+        actions={actionsOn(table)}
+        busy={false}
+        adjusting={false}
+        onOpen={onOpen}
+      />,
+    );
+
+    // The shape is the stylesheet's to draw, so only its mark on the card says which one shows.
+    expect(
+      panel('alder').querySelector('[data-card="investigator"]')?.getAttribute('data-shape'),
+    ).toBe(shape);
   });
 
   describe('the lead and turn markers', () => {
@@ -695,11 +726,13 @@ describe('InvestigatorBar', () => {
 
       render(<InvestigatorBar board={table.board} actions={actionsOn(table)} busy adjusting />);
 
-      // The skills open a skill test, which changes nothing, so they need not wait.
+      // The skills open a skill test and the art the whole card; neither changes anything, so they
+      // need not wait.
       const skills = within(panel('alder')).getByRole('list', { name: 'Skills' });
+      const card = within(panel('alder')).getByRole('button', { name: "Show alder's card" });
       const on = within(panel('alder'))
         .getAllByRole('button')
-        .filter((button) => !skills.contains(button))
+        .filter((button) => !skills.contains(button) && button !== card)
         .filter((button) => !(button as HTMLButtonElement).disabled);
       expect(on).toEqual([]);
     });

@@ -467,6 +467,47 @@
     display: none;
   }
 
+  /*
+   * The lead and turn markers and the turn controls share one row under the card, so the map keeps
+   * the height; the status line's words give way to the controls (the map shows where everyone
+   * is), and stay for screen readers. Dense packing lifts the controls, after the cards in play
+   * in the markup, into the markers' row.
+   */
+  #board:not([data-view]) > #investigators > section {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-auto-flow: row dense;
+    align-items: center;
+    column-gap: var(--space-2);
+  }
+
+  #board:not([data-view]) > #investigators > section > * {
+    grid-column: 1 / -1;
+  }
+
+  #board:not([data-view]) > #investigators > section > p[data-whereabouts] {
+    grid-column: 1;
+  }
+
+  /* The controls keep to the right, apart from the markers, so the turn marker's arrow is not read as an action. */
+  #board:not([data-view]) > #investigators > section > :is(button, [role='group']) {
+    grid-column: 2;
+    justify-self: end;
+  }
+
+  #board:not([data-view])
+    > #investigators
+    > section:has(> :is(button, [role='group']))
+    > p[data-whereabouts]
+    > span:not([data-marker]) {
+    position: absolute;
+    width: var(--hidden-size);
+    height: var(--hidden-size);
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
   #board:not([data-view]) > #investigators > ul {
     display: flex;
     gap: var(--space-2);

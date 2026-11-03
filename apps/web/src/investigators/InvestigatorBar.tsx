@@ -10,17 +10,17 @@ import {
   type SkillName,
 } from '@arkham/engine';
 import { Brain, Heart } from '../catalog/cardFace';
-import { cardParagraphs } from '../catalog/cardText';
 import { useCardPicture } from '../catalog/cardImages';
 import type { GameActions, SteppedStat } from '../state/gameActions';
 import { InvestigatorArt } from './InvestigatorArt';
 import { classOf, type PrintedInvestigator } from '@arkham/carddata';
-import { InvestigatorFace } from './InvestigatorFace';
+import { InvestigatorFace, type InvestigatorFaceShape } from './InvestigatorFace';
 import { SkillTestDialog } from './SkillTestDialog';
 import { signed } from './TestCalculation';
 import { PlayArea } from './PlayArea';
 import { ThreatArea } from './ThreatArea';
 import { TurnControls } from './TurnControls';
+import { InvestigatorCard } from './InvestigatorCard';
 import { deltaText, useCountChange } from '../screens/countChange';
 import type { TokenDragHandlers } from '../screens/useTokenDrag';
 import { useClueDrag } from './useClueDrag';
@@ -38,7 +38,7 @@ import './investigators.css';
  * (`data-focus`) with the others as avatar buttons above it (`OtherInvestigators`); a wider screen
  * shows every panel and hides the avatars. Focus follows the turn, see `useFocus`. With `onOpen`
  * (the phone's compact view), the focused investigator's name is a button that opens the detail
- * view on their panel.
+ * view on their panel, and the card is the slim strip (`InvestigatorFace`) to leave the map room.
  */
 export function InvestigatorBar({
   board,
@@ -70,6 +70,7 @@ export function InvestigatorBar({
           printed={printed?.(investigator.code)}
           focused={focus === investigator.id}
           onOpen={focus === investigator.id ? onOpen : undefined}
+          shape={onOpen ? 'strip' : 'banner'}
           onTurn={board.turn === investigator.id}
           lead={board.lead === investigator.id}
           engaged={board.enemiesEngagedWith(investigator.id)}
@@ -142,14 +143,16 @@ function OtherInvestigators({
 }
 
 /**
- * One investigator: their threat area along the top edge of their card, the card drawn as the
- * printed one (`InvestigatorFace`) with the name and subname on its plates, the four skills on
- * their chain, the traits, ability and flavour on the notebook page (`printed`) and the counters at
- * its foot, then where they are and how their round goes, the cards they control (`PlayArea`) and
- * their turn controls. Before where they are, a pentagon marks the lead investigator, like the
- * game's lead investigator token, and an action arrow the investigator whose turn it is.
- * Health and sanity show what is left of the printed value, like the dials, while their steppers
- * place and heal damage and horror, like the tokens on the card. Clues show without steppers: they
+ * One investigator: their threat area along the top edge of their card, the card drawn as the top
+ * of the printed one (`InvestigatorFace`) with the name and subname on its plates, the four skills
+ * on their chain and the counters on a strip of its notebook page. The players hold the card
+ * itself, so its abilities and flavour stay off the screen to leave the board its room; a tap on
+ * the art shows the whole card with its text (`InvestigatorCard`). Then where they are and how their round goes, the
+ * cards they control (`PlayArea`) and their turn controls. Before where they are, a pentagon marks
+ * the lead investigator, like the game's lead investigator token, and an action arrow the
+ * investigator whose turn it is. Health and sanity show what is left of the printed value, like
+ * the dials, while their steppers place and heal damage and horror, like the tokens on the card.
+ * Clues show without steppers: they
  * are found by investigating and spent on the act.
  */
 function InvestigatorPanel({
@@ -158,6 +161,7 @@ function InvestigatorPanel({
   printed,
   focused,
   onOpen,
+  shape,
   onTurn,
   lead,
   engaged,
@@ -169,12 +173,14 @@ function InvestigatorPanel({
   /** The board the skill tests (`SkillTestDialog`) and the card actions (`TurnControls`) read. */
   board: BoardView;
   investigator: InvestigatorView;
-  /** What their card prints besides its stats; the page stays blank until the catalog has it. */
+  /** What their card prints besides its stats: the subname and class, once the catalog has them. */
   printed: PrintedInvestigator | undefined;
   /** The phone shows this panel in full (`useFocus`). */
   focused: boolean;
   /** Opens the phone's detail view on this panel, from a tap on the name. */
   onOpen: ((investigator: InvestigatorId) => void) | undefined;
+  /** The card's shape: the phone's compact view has room for the slim strip only. */
+  shape: InvestigatorFaceShape;
   onTurn: boolean;
   /** They are the lead investigator (`BoardView.lead`). */
   lead: boolean;
@@ -189,6 +195,7 @@ function InvestigatorPanel({
   const { t } = useTranslation();
   const nameId = useId();
   const picture = useCardPicture(investigator.image, 'landscape');
+  const [zoomed, setZoomed] = useState(false);
   return (
     <section
       aria-labelledby={nameId}
@@ -210,8 +217,19 @@ function InvestigatorPanel({
         data-card="investigator"
         data-picture={picture?.shown ? 'shown' : undefined}
         data-adjusting={adjusting || undefined}
+        data-shape={shape}
       >
-        <InvestigatorFace picture={picture} investigatorClass={classOf(printed?.factionCode)} />
+        <InvestigatorFace
+          picture={picture}
+          investigatorClass={classOf(printed?.factionCode)}
+          shape={shape}
+        />
+        <button
+          type="button"
+          data-full-card=""
+          aria-label={t('investigators.showCard', { name: investigator.name })}
+          onClick={() => setZoomed(true)}
+        />
         <header>
           <h3 id={nameId}>
             {onOpen ? (
@@ -231,7 +249,6 @@ function InvestigatorPanel({
           busy={busy}
           actions={actions}
         />
-        {printed && <NotebookPage printed={printed} />}
         <Counters
           board={board}
           investigator={investigator}
@@ -240,10 +257,33 @@ function InvestigatorPanel({
           actions={actions}
         />
       </article>
+      {zoomed && (
+        <InvestigatorCard
+          investigator={investigator}
+          printed={printed}
+          picture={picture}
+          onClose={() => setZoomed(false)}
+        >
+          <Skills
+            board={board}
+            investigator={investigator}
+            adjusting={false}
+            busy={busy}
+            actions={actions}
+          />
+          <Counters
+            board={board}
+            investigator={investigator}
+            adjusting={false}
+            busy={busy}
+            actions={actions}
+          />
+        </InvestigatorCard>
+      )}
       <p data-whereabouts="">
         {lead && <span role="img" aria-label={t('investigators.lead')} data-marker="lead" />}
         {onTurn && <span role="img" aria-label={t('investigators.onTurn')} data-marker="turn" />}
-        {statusLine(investigator, onTurn, t)}
+        <span>{statusLine(investigator, onTurn, t)}</span>
       </p>
       <PlayArea
         board={board}
@@ -428,40 +468,6 @@ function Counters({
     </>
   );
 }
-
-/**
- * The text on the card's notebook page, as printed: the traits on the first line, each ability on
- * its own lines (`cardParagraphs`, its symbols as icons), the flavour under them. A long text
- * (some investigators print four abilities) takes a smaller size (`data-length`), so it stays on
- * the page above the counters.
- */
-function NotebookPage({ printed }: { printed: PrintedInvestigator }) {
-  const { traits, text, flavor } = printed;
-  return (
-    <div data-page="" data-length={textLength(printed)}>
-      {traits && <p data-traits="">{traits}</p>}
-      {text && cardParagraphs(text)}
-      {flavor && <blockquote>{cardParagraphs(flavor)}</blockquote>}
-    </div>
-  );
-}
-
-/**
- * How much the notebook page holds, so the stylesheet sizes its text to fit: the printed cards
- * keep one size and fit by tighter setting, which plain HTML cannot measure ahead.
- */
-type TextLength = 'short' | 'long' | 'longest';
-
-/** The length class of a card's page text, by its characters (Roland Banks' is short). */
-export function textLength({ traits, text, flavor }: PrintedInvestigator): TextLength {
-  const length = (traits?.length ?? 0) + (text?.length ?? 0) + (flavor?.length ?? 0);
-  if (length <= LONG_TEXT) return 'short';
-  return length <= LONGEST_TEXT ? 'long' : 'longest';
-}
-
-/** The characters from which a page's text is long, or longest (measured on the Core Set cards). */
-const LONG_TEXT = 260;
-const LONGEST_TEXT = 400;
 
 /**
  * Where the investigator is and how their round goes: out of the game once defeated or resigned,

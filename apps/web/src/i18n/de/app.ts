@@ -513,6 +513,7 @@ export const appTexts = {
     onTurn: 'Am Zug',
     others: 'Weitere Ermittler',
     show: '{{name}} zeigen',
+    showCard: 'Karte von {{name}} zeigen',
     defeated: 'Besiegt',
     resigned: 'Aufgegeben',
     threatArea: 'Bedrohungsbereich',
