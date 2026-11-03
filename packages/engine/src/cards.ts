@@ -1,8 +1,7 @@
 import { stripTrailingDot } from '@arkham/util';
 import type { Ability } from './abilities';
 import type { CardAction } from './card_actions';
-import type { CardModifier } from './card_values';
-import type { ActionCostModifier } from './action_costs';
+import type { Modifier } from './modifiers';
 import type { CardRestriction } from './restrictions';
 import type { Brand, CardCode, CardImagePath, EncounterSetCode } from './ids';
 import type { Keyword } from './keywords';
@@ -149,22 +148,16 @@ export interface CardStats {
    */
   locationAttachment?: LocationAttachment;
   /**
-   * Its constant abilities that change a value of cards while it is in play
-   * ("Attached location gets +2 shroud"); `effectiveValue` reads them. None
-   * when absent.
+   * Its constant abilities that change a number while it is in play: a card's value ("Attached
+   * location gets +2 shroud") or what an action costs ("The first move … costs 1 additional
+   * action"); `modifiersOn` collects them. None when absent.
    */
-  modifiers?: readonly CardModifier[];
+  modifiers?: readonly Modifier[];
   /**
    * Its constant "cannot" abilities ("The attached location cannot be investigated");
    * `isRestricted` reads them. None when absent.
    */
   restrictions?: readonly CardRestriction[];
-  /**
-   * Its constant abilities that make basic actions cost more ("The first move, fight, or evade
-   * action you perform each round costs 1 additional action"); `actionCost` reads them. None when
-   * absent.
-   */
-  actionCosts?: readonly ActionCostModifier[];
   /** The card's forced abilities as data (architecture "Triggers and card effects"); none when absent. */
   abilities?: readonly Ability[];
   /** The card's action abilities ("[action]: …"), taken with `UseCardAction`; none when absent. */

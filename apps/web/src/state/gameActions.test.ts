@@ -104,12 +104,13 @@ describe('gameActions', () => {
           .withCard(
             instanceId('frozen'),
             blankTreachery('frozen', {
-              actionCosts: [
+              modifiers: [
                 {
+                  value: 'actionCost',
+                  of: 'threatArea',
                   actions: ['move', 'fight', 'evade'],
-                  by: 1,
-                  who: 'threatArea',
                   first: 'eachRound',
+                  by: 1,
                 },
               ],
             }),
