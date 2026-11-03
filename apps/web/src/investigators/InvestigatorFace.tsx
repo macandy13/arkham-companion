@@ -66,7 +66,6 @@ const cardHeight = INVESTIGATOR_FACE.card.height;
 /** The face's parts as SVG paths in scan units, each named for the stylesheet. */
 function facePaths() {
   const { shield, name, subname, page, rules, spiral, link, ring, art } = INVESTIGATOR_FACE;
-  const { paper } = INVESTIGATOR_STRIP;
   const middle = (name.top + name.bottom) / 2;
   const half = (shield.left + shield.right) / 2;
   const ruleCount = Math.floor((rules.last - rules.first) / rules.step) + 1;
@@ -74,7 +73,6 @@ function facePaths() {
   const pageEdge = `h ${page.width} v ${page.height} h ${-page.width} Z`;
   return {
     frame: `M 0 0 H ${width} V ${cardHeight} H ${art.column} V ${art.header} H 0 Z`,
-    paper: `M ${paper.left} ${paper.top} h ${paper.width} v ${paper.height} h ${-paper.width} Z`,
     shield: `M ${shield.left} ${shield.top} H ${shield.right} V ${shield.shoulder} C ${shield.right} ${shield.shoulder + shield.bulge} ${half} ${shield.point} ${half} ${shield.point} C ${half} ${shield.point} ${shield.left} ${shield.shoulder + shield.bulge} ${shield.left} ${shield.shoulder} Z`,
     name: `M ${name.left} ${name.top} H ${name.right} L ${name.tip} ${middle} L ${name.right} ${name.bottom} H ${name.left} Z`,
     subname: `M ${subname.left} ${subname.top} H ${subname.right} L ${subname.right - subname.slant} ${subname.bottom} H ${subname.left + subname.slant} Z`,
@@ -121,18 +119,25 @@ export function InvestigatorFace({
   investigatorClass: InvestigatorClass | undefined;
   shape?: InvestigatorFaceShape;
 }) {
+  return shape === 'strip' ? (
+    <StripFace picture={picture} investigatorClass={investigatorClass} />
+  ) : (
+    <BannerFace picture={picture} investigatorClass={investigatorClass} />
+  );
+}
+
+/** The tablet's banner (`INVESTIGATOR_FACE`): the printed card's top, its page a strip for the counters. */
+function BannerFace({
+  picture,
+  investigatorClass,
+}: {
+  picture: CardPicture | undefined;
+  investigatorClass: InvestigatorClass | undefined;
+}) {
   const pageId = useId();
-  if (shape === 'strip') {
-    return <StripFace picture={picture} investigatorClass={investigatorClass} />;
-  }
   const { spiral, art } = INVESTIGATOR_FACE;
   return (
-    <svg
-      viewBox={`0 0 ${width} ${cardHeight}`}
-      aria-hidden="true"
-      data-face="investigator"
-      data-shape="banner"
-    >
+    <svg viewBox={`0 0 ${width} ${cardHeight}`} aria-hidden="true" data-face="investigator">
       <PageGradient id={pageId} />
       <rect data-part="art" width={width} height={cardHeight} />
       {picture && (
@@ -175,16 +180,12 @@ function StripFace({
 }) {
   const pageId = useId();
   const discId = useId();
-  const { card, portrait, shield, plates, chain } = INVESTIGATOR_STRIP;
+  const { card, portrait, shield, plates, chain, paper } = INVESTIGATOR_STRIP;
+  const paperPath = `M ${paper.left} ${paper.top} h ${paper.width} v ${paper.height} h ${-paper.width} Z`;
   const placed = ({ x, y, scale }: { x: number; y: number; scale: number }) =>
     `translate(${x} ${y}) scale(${scale})`;
   return (
-    <svg
-      viewBox={`0 0 ${width} ${card.height}`}
-      aria-hidden="true"
-      data-face="investigator"
-      data-shape="strip"
-    >
+    <svg viewBox={`0 0 ${width} ${card.height}`} aria-hidden="true" data-face="investigator">
       <PageGradient id={pageId} />
       <clipPath id={discId}>
         <circle cx={portrait.x} cy={portrait.y} r={portrait.radius} />
@@ -214,8 +215,8 @@ function StripFace({
       <g transform={placed(chain)}>
         <Chain />
       </g>
-      <path data-part="page" d={PATHS.paper} fill={`url(#${pageId})`} />
-      <NightSky page={PATHS.paper} scan={{ width, height: card.height }} />
+      <path data-part="page" d={paperPath} fill={`url(#${pageId})`} />
+      <NightSky page={paperPath} scan={{ width, height: card.height }} />
     </svg>
   );
 }
