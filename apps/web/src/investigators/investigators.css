@@ -489,8 +489,10 @@
     grid-column: 1;
   }
 
+  /* The controls keep to the right, apart from the markers, so the turn marker's arrow is not read as an action. */
   #board:not([data-view]) > #investigators > section > :is(button, [role='group']) {
     grid-column: 2;
+    justify-self: end;
   }
 
   #board:not([data-view])
