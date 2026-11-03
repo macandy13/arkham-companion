@@ -1,3 +1,4 @@
+import { assertNever } from '@arkham/util';
 import {
   findCurrentScenarioId,
   findInvestigator,
@@ -456,8 +457,22 @@ export function storyReadsOfSetup(
         const steps = holds ? step.then : (step.otherwise ?? []);
         return [{ condition: step.condition, holds, steps }, ...storyReadsOfSetup(steps, log)];
       }
-      default:
+      // Which option a oneAtRandom step takes depends on the seed, not the log, so the preview
+      // can't name it before setup.
+      case 'oneAtRandom':
+      case 'addMap':
+      case 'setAside':
+      case 'buildEncounterDeck':
+      case 'shuffleIntoEncounterDeck':
+      case 'scenarioDeck':
+      case 'shuffle':
+      case 'placeTokens':
+      case 'spawn':
+      case 'moveInvestigators':
+      case 'addChaosTokens':
         return [];
+      default:
+        return assertNever(step);
     }
   });
 }

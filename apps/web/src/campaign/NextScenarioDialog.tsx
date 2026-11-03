@@ -124,11 +124,12 @@ export function NextScenarioDialog({
           <section aria-labelledby="next-scenario-log">
             <h3 id="next-scenario-log">{t('nextScenario.fromTheLog')}</h3>
             <dl>
-              {fromTheLog.map(({ entry: logEntry, effects }) => (
-                <div key={logEntry}>
+              {fromTheLog.map(({ entry: logEntry, effects }, index) => (
+                // The same entry can be read in two places of a setup, so its text isn't unique.
+                <div key={index}>
                   <dt>{logEntry}</dt>
-                  {effects.map((effect) => (
-                    <dd key={effect}>{effect}</dd>
+                  {effects.map((effect, effectIndex) => (
+                    <dd key={effectIndex}>{effect}</dd>
                   ))}
                 </div>
               ))}

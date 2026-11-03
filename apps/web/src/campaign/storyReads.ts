@@ -73,9 +73,19 @@ function stepWords(t: TFunction, log: CampaignLog, step: SetupStep): string[] {
     case 'moveInvestigators':
       return [t('nextScenario.steps.start', { location: scenarioCardName(step.to) })];
     case 'shuffleIntoEncounterDeck':
-      return [t('nextScenario.steps.shuffleIn', { cards: cardNames(step.codes) })];
+      return [
+        t('nextScenario.steps.shuffleIn', {
+          cards: cardNames(step.codes),
+          count: step.codes.length,
+        }),
+      ];
     case 'setAside':
-      return [t('nextScenario.steps.setAside', { cards: cardNames(step.codes) })];
+      return [
+        t('nextScenario.steps.setAside', {
+          cards: cardNames(step.codes),
+          count: step.codes.length,
+        }),
+      ];
     case 'placeTokens':
       return [
         t(`nextScenario.steps.tokens.${step.token}`, {
@@ -96,8 +106,18 @@ function stepWords(t: TFunction, log: CampaignLog, step: SetupStep): string[] {
           tokens: step.tokens.map((token) => t(`chaosToken.${token}`)).join(', '),
         }),
       ];
-    default:
+    // Nested branches have reads of their own; the rest build the table the players set up
+    // the same in every campaign, so the preview needs no word on them.
+    case 'whenStory':
+    case 'whenPlayers':
+    case 'oneAtRandom':
+    case 'addMap':
+    case 'buildEncounterDeck':
+    case 'scenarioDeck':
+    case 'shuffle':
       return [];
+    default:
+      return assertNever(step);
   }
 }
 
