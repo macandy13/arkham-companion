@@ -70,7 +70,7 @@ export function CampaignScreen({
           <p>{t('campaignLog.title')}</p>
           <h1 id="campaign-name">{entry ? t(entry.nameKey) : opened.title}</h1>
         </header>
-        {log.result && <CampaignOver log={log} />}
+        {log.result && <CampaignOver log={log} endedAt={opened.endedAt} />}
         <h2 id="campaign-investigators-title">{t('campaignLog.investigators')}</h2>
         <ol>
           {log.investigators.map((member) => (
@@ -95,21 +95,41 @@ export function CampaignScreen({
 }
 
 /**
- * How the campaign ended (MC1.6f), written under the card's head: the investigators won, lost or
- * survived, and which ending to read aloud when the last scenario's resolution ended it; a
- * campaign lost earlier, with no investigator left to replace a fallen one, has none to read.
+ * How the campaign ended (MC1.6f), under the card's head: a stamp with the result (won, lost or
+ * survived) and the day it ended, then which ending to read aloud when the last scenario's
+ * resolution ended it; a campaign lost earlier, with no investigator left to replace a fallen
+ * one, has none to read.
  */
-function CampaignOver({ log }: { readonly log: CampaignLog }) {
-  const { t } = useTranslation();
+function CampaignOver({
+  log,
+  endedAt,
+}: {
+  readonly log: CampaignLog;
+  /** Epoch ms of `CampaignEnded` (`OpenCampaign.endedAt`). */
+  readonly endedAt: number | undefined;
+}) {
+  const { t, i18n } = useTranslation();
   const last = log.playedScenarios.at(-1);
   const finished = log.playedScenarios.length === log.scenarioIds.length;
   const scenario = last && findScenario(last.scenarioId);
+  const ended = endedAt === undefined ? undefined : new Date(endedAt);
   return (
-    <section id="campaign-result" aria-labelledby="campaign-result-title">
-      <h2 id="campaign-result-title">{t('campaignLog.over')}</h2>
-      <p>{t(`campaignLog.result.${log.result}`)}</p>
-      {finished && last && scenario && <p>{endingToRead(last.outcome, t(scenario.nameKey))}</p>}
-    </section>
+    <>
+      <section id="campaign-result" aria-labelledby="campaign-result-title">
+        <h2 id="campaign-result-title">{t('campaignLog.over')}</h2>
+        <p>{t(`campaignLog.result.${log.result}`)}</p>
+        {ended && (
+          <p>
+            <time dateTime={ended.toISOString()}>
+              {ended.toLocaleDateString(i18n.resolvedLanguage, { dateStyle: 'long' })}
+            </time>
+          </p>
+        )}
+      </section>
+      {finished && last && scenario && (
+        <p id="campaign-ending">{endingToRead(last.outcome, t(scenario.nameKey))}</p>
+      )}
+    </>
   );
 
   function endingToRead(outcome: ScenarioOutcome, scenarioName: string): string {

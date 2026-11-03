@@ -3,7 +3,7 @@ import 'fake-indexeddb/auto';
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter, Route, Routes, useParams } from 'react-router';
 import type { CardCatalog } from '@arkham/carddata';
-import { afterEach, beforeAll, describe, expect, it } from 'vitest';
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import {
   campaignDefinitionId,
   cardCode,
@@ -124,7 +124,10 @@ describe('CampaignScreen', () => {
   beforeAll(async () => {
     await initI18n('en');
   });
-  afterEach(cleanup);
+  afterEach(() => {
+    cleanup();
+    vi.useRealTimers();
+  });
 
   describe('after The Gathering, won with resolution 1', () => {
     async function renderPlayedLog() {
@@ -473,8 +476,8 @@ describe('CampaignScreen', () => {
       );
       fireEvent.click(within(dialog).getByRole('button', { name: 'End the campaign' }));
 
-      const over = await screen.findByRole('region', { name: 'The campaign is over' });
-      expect(within(over).getByText('The investigators lost.')).toBeTruthy();
+      const over = await screen.findByRole('region', { name: 'Campaign over' });
+      expect(within(over).getByText('Lost')).toBeTruthy();
     });
   });
 
@@ -482,18 +485,20 @@ describe('CampaignScreen', () => {
     {
       outcome: { kind: 'resolution', id: resolutionId('R1') },
       result: 'won',
-      says: 'The investigators won.',
+      says: 'Won',
       read: 'Read Resolution 1 of The Devourer Below in the campaign guide.',
     },
     {
       outcome: { kind: 'noResolution' },
       result: 'survived',
-      says: 'The investigators survived.',
+      says: 'Survived',
       read: 'Read the "No resolution" text of The Devourer Below in the campaign guide.',
     },
   ])(
-    'after The Devourer Below ended with $outcome.kind, says "$says" and "$read"',
+    'after The Devourer Below ended with $outcome.kind on 31 October 2026, stamps "$says" and says "$read"',
     async ({ outcome, result, says, read }) => {
+      vi.useFakeTimers({ toFake: ['Date'] });
+      vi.setSystemTime(new Date(2026, 9, 31, 22, 0));
       const { gameStore, campaignId } = await storeCampaign(() => [
         ...[gathering, midnightMasks].flatMap((scenario, position): CampaignEvent[] => [
           {
@@ -510,9 +515,10 @@ describe('CampaignScreen', () => {
 
       renderLog(gameStore, `/campaign/${campaignId}`);
 
-      const over = await screen.findByRole('region', { name: 'The campaign is over' });
-      expect(within(over).getByText(says)).toBeTruthy();
-      expect(within(over).getByText(read)).toBeTruthy();
+      const stamp = await screen.findByRole('region', { name: 'Campaign over' });
+      expect(within(stamp).getByText(says)).toBeTruthy();
+      expect(within(stamp).getByText('October 31, 2026')).toBeTruthy();
+      expect(screen.getByText(read)).toBeTruthy();
       expect(screen.queryByRole('button', { name: /Set up/ })).toBeNull();
     },
   );

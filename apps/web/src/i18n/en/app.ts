@@ -621,11 +621,11 @@ export const appTexts = {
     },
   },
   campaignLog: {
-    over: 'The campaign is over',
+    over: 'Campaign over',
     result: {
-      won: 'The investigators won.',
-      lost: 'The investigators lost.',
-      survived: 'The investigators survived.',
+      won: 'Won',
+      lost: 'Lost',
+      survived: 'Survived',
     },
     readEnding: 'Read Resolution {{n}} of {{scenario}} in the campaign guide.',
     readNoResolution: 'Read the "No resolution" text of {{scenario}} in the campaign guide.',

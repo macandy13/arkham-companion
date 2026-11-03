@@ -350,7 +350,8 @@ export class IndexedDbStore implements GameStore {
     if (!row) return undefined;
     const events = await this.loadCampaignEvents(campaignId);
     const log = campaign.replayEvents(events.map((e) => e.event));
-    return { summary: toCampaignSummary(row, log), log };
+    const endedAt = events.filter((e) => e.event.type === 'CampaignEnded').at(-1)?.timestamp;
+    return { summary: toCampaignSummary(row, log, endedAt), log };
   }
 
   async undoLastCampaign(
@@ -433,7 +434,11 @@ function toSummary(row: GameRow, state: GameState): GameSummary {
   };
 }
 
-function toCampaignSummary(row: CampaignRow, log: CampaignLog): CampaignSummary {
+function toCampaignSummary(
+  row: CampaignRow,
+  log: CampaignLog,
+  endedAt: number | undefined,
+): CampaignSummary {
   return {
     ...row,
     definitionId: log.definitionId,
@@ -442,5 +447,6 @@ function toCampaignSummary(row: CampaignRow, log: CampaignLog): CampaignSummary 
     scenarioCount: log.scenarioIds.length,
     investigators: log.investigators.map(({ code, name }) => ({ code, name })),
     ...(log.result ? { result: log.result } : {}),
+    ...(log.result && endedAt !== undefined ? { endedAt } : {}),
   };
 }

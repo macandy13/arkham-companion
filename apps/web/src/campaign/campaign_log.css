@@ -103,29 +103,41 @@
 
 /* How the campaign ended (CampaignOver): a printed label, then the verdict in pen between rules. */
 /* Two ids, so it beats the home screen's `#app > main section` row. */
+/*
+ * An ended campaign's result, stamped across the card in red ink: what the stamp says, the result
+ * in large capitals, and the day. Multiplied into the paper, so the card's grain shows through.
+ */
 #app #campaign-result {
   display: block;
-  margin: var(--space-2) 0 0;
-  padding: var(--space-2);
-  border-block: var(--sheet-rule-width) solid var(--color-print);
+  width: fit-content;
+  margin: var(--space-3) auto;
+  padding: var(--space-1) var(--space-4);
+  border: var(--stamp-frame-width) double var(--color-stamp);
+  border-radius: var(--space-1);
+  color: var(--color-stamp);
+  font-family: var(--font-family-print);
   text-align: center;
+  text-transform: uppercase;
+  letter-spacing: var(--stamp-tracking);
+  rotate: var(--stamp-tilt);
+  mix-blend-mode: multiply;
 }
 
-#campaign-result > h2 {
+#campaign-result > h2,
+#campaign-result > p {
   margin: 0;
-  font-family: var(--font-family-print);
-  font-size: var(--font-size-print-title);
+  font-size: var(--font-size-body);
   font-weight: normal;
 }
 
-#campaign-result > p {
-  margin: 0;
+#campaign-result > h2 + p {
+  font-size: var(--font-size-script-title);
+  line-height: 1;
 }
 
-#campaign-result > h2 + p {
-  font-family: var(--font-family-hand);
-  font-size: var(--font-size-hand-large);
-  color: var(--color-pen);
+#campaign-ending {
+  margin: 0 0 var(--space-2);
+  text-align: center;
 }
 
 /* The investigators' frame: a heavy rule with a fine one inside it, and a column each. */

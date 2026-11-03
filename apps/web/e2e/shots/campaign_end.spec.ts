@@ -17,8 +17,8 @@ test('the log of a campaign lost for want of investigators', { tag: '@shot' }, a
   await page.getByRole('button', { name: 'Set up The Midnight Masks' }).click();
   await page.getByRole('button', { name: 'End the campaign' }).click();
 
-  const over = page.getByRole('region', { name: 'The campaign is over' });
-  await expect(over).toContainText('The investigators lost.');
+  const over = page.getByRole('region', { name: 'Campaign over' });
+  await expect(over).toContainText('Lost');
   await over.scrollIntoViewIfNeeded();
 });
 
@@ -27,7 +27,8 @@ test('the log of Night of the Zealot, won', { tag: '@shot' }, async ({ page }) =
     zealotWonEvents(id, [rolandBanks]),
   );
 
-  await expect(page.getByRole('region', { name: 'The campaign is over' })).toContainText(
-    'Read Resolution 1 of The Devourer Below in the campaign guide.',
-  );
+  await expect(page.getByRole('region', { name: 'Campaign over' })).toContainText('Won');
+  await expect(
+    page.getByText('Read Resolution 1 of The Devourer Below in the campaign guide.'),
+  ).toBeVisible();
 });
