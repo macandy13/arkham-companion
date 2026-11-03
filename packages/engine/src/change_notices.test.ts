@@ -10,35 +10,45 @@ import {
   investigatorId,
   newGame,
   placeDoomOnAgenda,
+  skillTest,
   takeHorror,
+  whenAdvanced,
   whenRevealed,
+  type ChangeNotice,
   type Command,
+  type Event,
+  type ExecuteResult,
 } from './index';
-import { stateAfter } from '../test/utils';
+import { answer, stateAfter } from '../test/utils';
 
 const agenda = instanceId('agenda');
+const lastAgenda = instanceId('last_agenda');
 const hall = instanceId('hall');
 const cellar = instanceId('cellar');
 const rottingTreachery = instanceId('rotting_treachery');
+const testingTreachery = instanceId('testing_treachery');
 const alice = investigatorId('alice');
+const encounterDeck = { kind: 'encounterDeck' } as const;
 
-/**
- * Alice in the revealed hall, next to the unrevealed cellar, whose revealed ability places 1 doom
- * on the agenda; the encounter deck holds one treachery that deals 1 horror when it is drawn.
- */
-const table = newGame()
+/** A notice as these tests compare it: its kind, its cause and the types of its events. */
+interface NoticeShape {
+  readonly kind: ChangeNotice['kind'];
+  readonly cause: ChangeNotice['cause'];
+  readonly events: readonly Event['type'][];
+}
+
+function noticesOf(result: ExecuteResult): NoticeShape[] {
+  return changeNotices(result).map(({ kind, cause, events }) => ({
+    kind,
+    cause,
+    events: events.map((event) => event.type),
+  }));
+}
+
+/** Alice in the revealed hall, with an agenda of 9 doom: nothing advances on its own. */
+const hallTable = newGame()
   .withAgenda(agenda, blankAgenda('agenda', fixed(9)))
   .withLocation(hall, blankLocation('hall'), { revealed: true })
-  .withLocation(
-    cellar,
-    blankLocation('dooming_cellar', { abilities: [whenRevealed(placeDoomOnAgenda(1))] }),
-  )
-  .withConnection(hall, cellar)
-  .withCard(
-    rottingTreachery,
-    blankTreachery('rotting_treachery', { abilities: [whenRevealed(takeHorror(1))] }),
-    { kind: 'encounterDeck' },
-  )
   .withInvestigator(alice, { locationId: hall });
 
 const next: Command = { type: 'NextPhase' };
@@ -52,68 +62,130 @@ const toUpkeep: Command[] = [
 ];
 
 describe('changeNotices', () => {
-  it.each<{ name: string; command: Command; notices: unknown[] }>([
-    {
-      name: "alice's move into the cellar: the cellar's revealed doom, not the move itself",
-      command: { type: 'MoveInvestigator', investigatorId: alice, to: cellar },
-      notices: [
-        {
-          kind: 'tokens',
-          cause: { kind: 'card', cardId: cellar, window: { kind: 'revealed' } },
-          events: ['TokensChanged'],
-        },
-      ],
-    },
-    {
-      name: 'the mythos phase: its doom and draw, then the drawn treachery’s horror',
-      command: next,
-      notices: [
-        { kind: 'tokens', cause: { kind: 'rule', step: 'placeDoom' }, events: ['TokensChanged'] },
-        {
-          kind: 'encounter',
-          cause: { kind: 'rule', step: 'drawEncounterCard' },
-          events: ['EncounterCardDrawn'],
-        },
-        {
-          kind: 'board',
-          cause: { kind: 'rule', step: 'drawEncounterCard' },
-          events: ['CardMoved', 'CardFlipped'],
-        },
-        {
-          kind: 'investigator',
-          cause: { kind: 'card', cardId: rottingTreachery, window: { kind: 'revealed' } },
-          events: ['InvestigatorChanged'],
-        },
-        // The treachery goes to the discard pile, which is shuffled back into the empty deck.
-        {
-          kind: 'board',
-          cause: { kind: 'rule', step: 'drawEncounterCard' },
-          events: ['CardMoved', 'CardMoved'],
-        },
-        {
-          kind: 'encounter',
-          cause: { kind: 'rule', step: 'drawEncounterCard' },
-          events: ['DeckShuffled'],
-        },
-      ],
-    },
-  ])('$name', ({ command, notices }) => {
-    const { context, state: started } = table.start();
-    const before = command === next ? stateAfter(context, started, ...toUpkeep) : started;
+  it("gives the cellar's revealed doom for alice's move into it, not the move itself", () => {
+    const { context, state } = hallTable
+      .withLocation(
+        cellar,
+        blankLocation('dooming_cellar', { abilities: [whenRevealed(placeDoomOnAgenda(1))] }),
+      )
+      .withConnection(hall, cellar)
+      .start();
 
-    const result = execute(context, before, command);
+    const result = execute(context, state, {
+      type: 'MoveInvestigator',
+      investigatorId: alice,
+      to: cellar,
+    });
 
-    expect(
-      changeNotices(result).map(({ kind, cause, events }) => ({
-        kind,
-        cause,
-        events: events.map((event) => event.type),
-      })),
-    ).toEqual(notices);
+    expect(noticesOf(result)).toEqual([
+      {
+        kind: 'tokens',
+        cause: { kind: 'card', cardId: cellar, window: { kind: 'revealed' } },
+        events: ['TokensChanged'],
+      },
+    ]);
+  });
+
+  it('gives the mythos doom and draw as the rules’, the drawn treachery’s horror as the card’s', () => {
+    const { context, state } = hallTable
+      .withCard(
+        rottingTreachery,
+        blankTreachery('rotting_treachery', { abilities: [whenRevealed(takeHorror(1))] }),
+        encounterDeck,
+      )
+      .start();
+    const upkeep = stateAfter(context, state, ...toUpkeep);
+
+    const result = execute(context, upkeep, next);
+
+    const drawStep = { kind: 'rule', step: 'drawEncounterCard' } as const;
+    expect(noticesOf(result)).toEqual([
+      { kind: 'tokens', cause: { kind: 'rule', step: 'placeDoom' }, events: ['TokensChanged'] },
+      { kind: 'encounter', cause: drawStep, events: ['EncounterCardDrawn'] },
+      { kind: 'board', cause: drawStep, events: ['CardMoved', 'CardFlipped'] },
+      {
+        kind: 'investigator',
+        cause: { kind: 'card', cardId: rottingTreachery, window: { kind: 'revealed' } },
+        events: ['InvestigatorChanged'],
+      },
+      // The treachery goes to the discard pile, which is shuffled back into the empty deck.
+      { kind: 'board', cause: drawStep, events: ['CardMoved', 'CardMoved'] },
+      { kind: 'encounter', cause: drawStep, events: ['DeckShuffled'] },
+    ]);
+  });
+
+  it("gives an agenda's reverse side as the card's once the players confirm its advance", () => {
+    const { context, state } = newGame()
+      .withAgenda(
+        agenda,
+        blankAgenda('agenda_of_one', fixed(1), { abilities: [whenAdvanced(placeDoomOnAgenda(1))] }),
+      )
+      .withAgenda(lastAgenda, blankAgenda('last_agenda', fixed(9), { stage: { number: 2 } }))
+      .withLocation(hall, blankLocation('hall'), { revealed: true })
+      .withInvestigator(alice, { locationId: hall })
+      .start();
+    // The mythos doom reaches the threshold of 1; the players confirm the advance (`agendaThresholdDecision`).
+    const asked = stateAfter(context, state, ...toUpkeep, next);
+
+    const result = execute(context, asked, answer('advanceAgenda:agenda', 'yes'));
+
+    expect(noticesOf(result)).toEqual([
+      {
+        kind: 'tokens',
+        cause: { kind: 'card', cardId: agenda, window: { kind: 'advanced' } },
+        events: ['TokensChanged'],
+      },
+    ]);
+  });
+
+  it('keeps the cause of a mythos draw whose revelation test waits for the players', () => {
+    const { context, state } = hallTable
+      .withCard(
+        testingTreachery,
+        blankTreachery('testing_treachery', {
+          abilities: [whenRevealed(skillTest('willpower', 3))],
+        }),
+        encounterDeck,
+      )
+      .start();
+    const asked = stateAfter(context, state, ...toUpkeep, next);
+
+    const result = execute(context, asked, answer('test:testing_treachery', 'pass'));
+
+    // Placing the drawn card waited in the state for the answer, and is still the draw's.
+    const drawStep = { kind: 'rule', step: 'drawEncounterCard' } as const;
+    expect(noticesOf(result)).toEqual([
+      { kind: 'board', cause: drawStep, events: ['CardMoved', 'CardMoved'] },
+      { kind: 'encounter', cause: drawStep, events: ['DeckShuffled'] },
+    ]);
+  });
+
+  it("gives no notice for alice's own card action, though it is the card's effect", () => {
+    const { context, state } = newGame()
+      .withLocation(
+        hall,
+        blankLocation('scary_hall', { actions: [{ effects: [takeHorror(1)] }] }),
+        {
+          revealed: true,
+        },
+      )
+      .withInvestigator(alice, { locationId: hall })
+      .withTurnOf(alice)
+      .start();
+
+    const result = execute(context, state, {
+      type: 'UseCardAction',
+      investigatorId: alice,
+      cardId: hall,
+      action: 0,
+    });
+
+    expect(result.events.map((event) => event.type)).toContain('InvestigatorChanged');
+    expect(changeNotices(result)).toEqual([]);
   });
 
   it('gives no notice for what the players do themselves', () => {
-    const { context, state } = table.start();
+    const { context, state } = hallTable.start();
     const investigation = stateAfter(context, state, next);
 
     const result = execute(context, investigation, { type: 'StartTurn', investigatorId: alice });

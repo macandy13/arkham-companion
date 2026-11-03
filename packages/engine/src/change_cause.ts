@@ -6,7 +6,8 @@ import type { PhaseStepId } from './state';
  * Why the engine produced an event (M1C.2): the players' own command, a card's forced ability, or
  * a step of the phase sequence the rules run by themselves. `handleWithCauses` returns one per
  * event, so a notice can say what the app changed and why ("1 doom: mythos phase", "1 horror:
- * Rotting Remains"). It travels next to the events, not inside them: replay never needs it.
+ * Rotting Remains"). It travels next to the events, not inside them, as replay never needs it;
+ * only a step stored for an answer keeps its cause in the state (`QueuedStep.cause`).
  */
 export type ChangeCause =
   | { readonly kind: 'player' }

@@ -1,4 +1,4 @@
-import { assertNever } from '@arkham/util';
+import { assertNever, shallowEqual } from '@arkham/util';
 import type { ChangeCause } from './change_cause';
 import type { Event } from './events';
 import type { CausedEvents } from './handle';
@@ -49,7 +49,7 @@ function sameCause(a: ChangeCause, b: ChangeCause): boolean {
     case 'player':
       return b.kind === 'player';
     case 'card':
-      return b.kind === 'card' && a.cardId === b.cardId && a.window.kind === b.window.kind;
+      return b.kind === 'card' && a.cardId === b.cardId && shallowEqual(a.window, b.window);
     case 'rule':
       return b.kind === 'rule' && a.step === b.step;
     default:

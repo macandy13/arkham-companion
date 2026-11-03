@@ -238,7 +238,7 @@ function resumeStored(resolution: Resolution, queue: Step[]): boolean {
 
 /**
  * One step under its own cause (`QueuedStep.cause`, else the one in force), which the steps it
- * queues inherit unless they bring their own: a card ability is that card's doing.
+ * queues inherit unless they bring their own: a card's forced ability is that card's doing.
  */
 function resolveCausedStep(resolution: Resolution, step: Step, budget: TriggerBudget): Step[] {
   const outer = resolution.cause;
@@ -256,7 +256,8 @@ function resolveCausedStep(resolution: Resolution, step: Step, budget: TriggerBu
 /** `step` with the cause it inherits from the step that queued it, unless it has one. */
 function withCause(step: Step, inherited: ChangeCause): Step {
   if (step.kind === 'phaseStep' || step.cause !== undefined) return step;
-  if (step.kind === 'ability') {
+  // A card's action is the player's doing; only a forced ability is the card's.
+  if (step.kind === 'ability' && step.opened.window.kind !== 'action') {
     const { cardId, window } = step.opened;
     return { ...step, cause: { kind: 'card', cardId, window } };
   }
