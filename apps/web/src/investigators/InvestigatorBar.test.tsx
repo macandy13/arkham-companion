@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
-import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   attachedTo,
   blankAsset,
@@ -996,6 +996,142 @@ describe('InvestigatorBar', () => {
         'disabled',
         true,
       );
+    });
+  });
+
+  // jsdom lays nothing out, so the hit test for the location under the pointer finds what a test
+  // puts under it: a stand-in for a location's tile on the map. It has no pointer capture either.
+  describe('dragging a clue off the card', () => {
+    const hallway = instanceId('hallway');
+    beforeEach(() => {
+      HTMLElement.prototype.setPointerCapture = () => {};
+    });
+    afterEach(() => {
+      Reflect.deleteProperty(document, 'elementFromPoint');
+      Reflect.deleteProperty(HTMLElement.prototype, 'setPointerCapture');
+    });
+
+    /** Drags alder's clue count from (10, 10) to (300, 200) and lets go there. */
+    function dragAlderClue() {
+      const clues = panel('alder').querySelector('[data-drag="clues"]');
+      if (!clues) throw new Error("alder's clue count is not draggable");
+      fireEvent.pointerDown(clues, { pointerId: 1, clientX: 10, clientY: 10 });
+      fireEvent.pointerMove(clues, { pointerId: 1, clientX: 300, clientY: 200 });
+      fireEvent.pointerUp(clues, { pointerId: 1, clientX: 300, clientY: 200 });
+    }
+
+    it.each([
+      { where: 'on the study, where alder is', tile: study, after: { alder: 1, study: 1 } },
+      { where: 'on the hallway, where alder is not', tile: hallway, after: { alder: 2, study: 0 } },
+    ])('places a clue dropped $where: $after', async ({ tile, after }) => {
+      const table = PlayTable.start(
+        newGame()
+          .withLocation(study, blankLocation('study'), { revealed: true })
+          .withLocation(hallway, blankLocation('hallway'), { revealed: true })
+          .withInvestigator(alder, { locationId: study, clues: 2 }),
+      );
+      render(
+        <>
+          <InvestigatorBar
+            board={table.board}
+            actions={actionsOn(table)}
+            busy={false}
+            adjusting={false}
+          />
+          <svg>
+            <g data-location={tile}>
+              <title>{tile}</title>
+            </g>
+          </svg>
+        </>,
+      );
+      document.elementFromPoint = () => document.querySelector(`[data-location="${tile}"] > title`);
+
+      dragAlderClue();
+      await act(async () => {});
+
+      expect(table.board.investigator(alder).clues).toBe(after.alder);
+      expect(table.board.location(study).clues).toBe(after.study);
+    });
+
+    it('places nothing on a tap on the clue count over the study, where alder is', async () => {
+      const table = PlayTable.start(
+        newGame()
+          .withLocation(study, blankLocation('study'), { revealed: true })
+          .withInvestigator(alder, { locationId: study, clues: 2 }),
+      );
+      render(
+        <>
+          <InvestigatorBar
+            board={table.board}
+            actions={actionsOn(table)}
+            busy={false}
+            adjusting={false}
+          />
+          <svg>
+            <g data-location={study}>
+              <title>study</title>
+            </g>
+          </svg>
+        </>,
+      );
+      document.elementFromPoint = () => document.querySelector('[data-location] > title');
+      const clues = panel('alder').querySelector('[data-drag="clues"]');
+      if (!clues) throw new Error("alder's clue count is not draggable");
+
+      fireEvent.pointerDown(clues, { pointerId: 1, clientX: 10, clientY: 10 });
+      fireEvent.pointerUp(clues, { pointerId: 1, clientX: 10, clientY: 10 });
+      await act(async () => {});
+
+      expect(table.board.investigator(alder).clues).toBe(2);
+    });
+
+    it('shows a clue token over the page while it is dragged', () => {
+      const table = PlayTable.start(
+        newGame()
+          .withLocation(study, blankLocation('study'), { revealed: true })
+          .withInvestigator(alder, { locationId: study, clues: 2 }),
+      );
+      render(
+        <InvestigatorBar
+          board={table.board}
+          actions={actionsOn(table)}
+          busy={false}
+          adjusting={false}
+        />,
+      );
+      const clues = panel('alder').querySelector('[data-drag="clues"]');
+      if (!clues) throw new Error("alder's clue count is not draggable");
+
+      fireEvent.pointerDown(clues, { pointerId: 1, clientX: 10, clientY: 10 });
+      fireEvent.pointerMove(clues, { pointerId: 1, clientX: 300, clientY: 200 });
+
+      expect(
+        document.body
+          .querySelector<HTMLElement>('[data-token-ghost="clue"]')
+          ?.style.getPropertyValue('--ghost-y'),
+      ).toBe('200px');
+    });
+
+    it.each([
+      { why: 'holding no clue', clues: 0, adjusting: false },
+      { why: 'while the players adjust the board', clues: 2, adjusting: true },
+    ])('leaves the clue count undraggable $why', ({ clues, adjusting }) => {
+      const table = PlayTable.start(
+        newGame()
+          .withLocation(study, blankLocation('study'), { revealed: true })
+          .withInvestigator(alder, { locationId: study, clues }),
+      );
+      render(
+        <InvestigatorBar
+          board={table.board}
+          actions={actionsOn(table)}
+          busy={false}
+          adjusting={adjusting}
+        />,
+      );
+
+      expect(panel('alder').querySelector('[data-drag]')).toBeNull();
     });
   });
 
