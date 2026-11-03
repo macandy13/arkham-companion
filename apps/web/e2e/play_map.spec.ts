@@ -270,7 +270,7 @@ test('move doom between the token pool and the map', async ({ page }) => {
 
 // Journey: doom a cultist gains, dragged from the token pool onto an enemy on the map, then moved
 // off it onto its location.
-test('move doom onto and off an enemy', { tag: '@flow' }, async ({ page }) => {
+test('move doom onto and off an enemy', async ({ page }) => {
   const house = page.getByRole('figure', { name: 'House' });
   const room = (name: string) => house.getByRole('group', { name });
   const priest = room('Cellar').getByRole('img', { name: /^Ghoul Priest/ });

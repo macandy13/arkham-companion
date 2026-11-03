@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { enemyAt, locationAt } from '../map/dropTarget';
 import type { GameActions } from '../state/gameActions';
 import { overHeaderCard } from './headerDropTarget';
+import { DoomMark } from './DoomMark';
 import { TokenGhost } from './TokenGhost';
 import { useTokenDrag, type TokenDragHandlers } from './useTokenDrag';
 
@@ -66,6 +67,8 @@ function PoolToken({
   drag: TokenDragHandlers | undefined;
 }) {
   return (
-    <span role="img" aria-label={label} data-pool-token={kind} data-drag={drag && kind} {...drag} />
+    <span role="img" aria-label={label} data-pool-token={kind} data-drag={drag && kind} {...drag}>
+      {kind === 'doom' && <DoomMark />}
+    </span>
   );
 }

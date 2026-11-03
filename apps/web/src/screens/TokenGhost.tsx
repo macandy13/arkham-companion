@@ -1,6 +1,7 @@
 import { useLayoutEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import type { Point } from '../map/mapLayout';
+import { DoomMark } from './DoomMark';
 
 /**
  * The token a player drags (M3.11c), drawn over the whole page at the screen point `at`, so it
@@ -17,7 +18,9 @@ export function TokenGhost({ kind, at }: { kind: 'clue' | 'doom'; at: Point }) {
     element.current?.style.setProperty('--ghost-y', `${at.y}px`);
   }, [at.x, at.y]);
   return createPortal(
-    <span ref={element} aria-hidden="true" data-token-ghost={kind} />,
+    <span ref={element} aria-hidden="true" data-token-ghost={kind}>
+      {kind === 'doom' && <DoomMark />}
+    </span>,
     document.body,
   );
 }

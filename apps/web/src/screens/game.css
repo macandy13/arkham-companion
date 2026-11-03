@@ -458,7 +458,22 @@
 }
 
 #board > header [data-token='doom'] {
-  background: var(--color-doom);
+  background: var(--color-doom-token);
+}
+
+/*
+ * The tentacles on an HTML doom token (`DoomMark`), behind its count: the count is positioned too,
+ * so it paints over them.
+ */
+:is(#board > header [data-token='doom'], [data-pool-token='doom'], [data-token-ghost='doom'])
+  > [data-part='doom-mark'] {
+  position: absolute;
+  inset: 12%;
+  fill: var(--color-doom-mark);
+}
+
+#board > header [data-token='doom'] > :not([data-part='doom-mark']) {
+  position: relative;
 }
 
 /*
@@ -475,6 +490,7 @@
 }
 
 #board > header [data-pool-token] {
+  position: relative;
   display: block;
 }
 
@@ -1407,7 +1423,7 @@ body > [data-token-ghost='clue'] {
 
 #board > header [data-pool-token='doom'],
 body > [data-token-ghost='doom'] {
-  background: var(--color-doom);
+  background: var(--color-doom-token);
 }
 
 /*

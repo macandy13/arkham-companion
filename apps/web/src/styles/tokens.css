@@ -25,6 +25,12 @@
   --color-health: #c4524b;
   --color-sanity: #4f78b8;
   --color-doom: #b8433f;
+  /*
+   * A doom token itself: near black with black tentacles (`DoomMark`), so doom never reads as the
+   * red damage tokens beside it; `--color-doom` stays for doom named in text and outlines.
+   */
+  --color-doom-token: #4a1518;
+  --color-doom-mark: #0a0506;
   --color-token-text: #ffffff;
   /*
    * Card frames by card type: locations on the map; the encounter deck, agenda, act and scenario
