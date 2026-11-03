@@ -3,6 +3,7 @@ import { act, cleanup, fireEvent, render, screen, within } from '@testing-librar
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import {
   blankEnemy,
+  blankTreachery,
   decisionId,
   blankLocation,
   cardImagePath,
@@ -12,6 +13,7 @@ import {
   investigatorId,
   newGame,
   PlayTable,
+  threatAreaOf,
   trait,
 } from '@arkham/engine';
 import { initI18n } from '../i18n';
@@ -223,6 +225,29 @@ describe('EnemyDetails', () => {
       expect(setHosted).not.toHaveBeenCalled();
       expect(screen.getByRole('dialog', { hidden: true, name: 'ghoul' })).toBeDefined();
     });
+  });
+
+  it('marks the fight and evade that Frozen in Fear raises with two action arrows, the free ones with one', () => {
+    const frozen = blankTreachery('frozen', {
+      actionCosts: [
+        { actions: ['move', 'fight', 'evade'], by: 1, who: 'threatArea', first: 'eachRound' },
+      ],
+    });
+    renderGhoulDetails(
+      PlayTable.start(
+        ghoulOnAlder.withCard(instanceId('frozen'), frozen, threatAreaOf(alder)).withTurnOf(alder),
+      ),
+    );
+
+    const offered = within(group('Actions')).getAllByRole('button');
+    expect(
+      offered.map((button) => [button.getAttribute('aria-label'), button.dataset['actions']]),
+    ).toEqual([
+      ['Fight · 2 actions', '2'],
+      ['Evade · 2 actions', '2'],
+      ['Fight without an action · 1 extra action', undefined],
+      ['Evade without an action · 1 extra action', undefined],
+    ]);
   });
 
   it("parleys with the cultist through its card's action on alder's turn, closing first", async () => {

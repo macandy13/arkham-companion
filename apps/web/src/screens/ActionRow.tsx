@@ -38,20 +38,22 @@ export function ActionGroup({ title, children }: { title: string; children: Reac
 
 /**
  * A button of the action row: its icon over a short `caption`, named in full by `name` (which
- * contains the caption, so speech input finds it by the word it shows); `cost` marks the ones
- * that count off an action with the game's action arrow, and those that take none with its
- * free-ability symbol (action_row.css).
+ * contains the caption, so speech input finds it by the word it shows); `actions` marks the ones
+ * that count off actions with one of the game's action arrows per action (two for a raised cost,
+ * Frozen in Fear's, `BoardView.actionCost`), and those that take none with its free-ability symbol
+ * (action_row.css).
  */
 export function ActionButton({
   icon,
-  cost,
+  actions,
   caption,
   name,
   disabled,
   onClick,
 }: {
   icon: ActionIcon;
-  cost?: 'action' | 'free';
+  /** The actions it counts off: 0 marks it free; none, no mark (a card effect). */
+  actions?: number;
   caption: string;
   name: string;
   disabled: boolean;
@@ -61,7 +63,8 @@ export function ActionButton({
     <button
       type="button"
       data-icon={icon}
-      data-cost={cost}
+      data-cost={actions === undefined ? undefined : actions === 0 ? 'free' : 'action'}
+      data-actions={actions !== undefined && actions > 1 ? actions : undefined}
       aria-label={name}
       disabled={disabled}
       onClick={onClick}
@@ -137,7 +140,7 @@ export function CardActions({
           <ActionButton
             key={action}
             icon={designator ?? 'cardAction'}
-            cost={free ? 'free' : 'action'}
+            actions={free ? 0 : 1}
             caption={caption}
             name={name}
             disabled={busy}
