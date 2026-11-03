@@ -1,6 +1,7 @@
 import type { CardCatalog } from '@arkham/carddata';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { investigatorCode, type InvestigatorCode } from '@arkham/engine';
 import { InvestigatorPicker } from '../picker/InvestigatorPicker';
 
 /**
@@ -17,7 +18,7 @@ export function ReplacementPicker({
   /** The replaced member's name, for the title. */
   readonly name: string;
   readonly catalog: CardCatalog;
-  readonly onChoose: (code: string) => void;
+  readonly onChoose: (code: InvestigatorCode) => void;
   readonly onCancel: () => void;
 }) {
   const { t } = useTranslation();
@@ -48,7 +49,7 @@ export function ReplacementPicker({
           data-primary
           disabled={chosen === undefined}
           onClick={() => {
-            if (chosen !== undefined) onChoose(chosen);
+            if (chosen !== undefined) onChoose(investigatorCode(chosen));
           }}
         >
           {t('nextScenario.replace.choose')}

@@ -546,11 +546,11 @@ export function createAppStore(
       async startNextScenario({ campaignId, title, ctx, seed, replacements }) {
         const loaded = await gameStore.loadCampaign(campaignId);
         if (!loaded) throw new Error(`Unknown campaign ${campaignId}`);
-        const { log, events } = campaign.executeCommands(
-          { cards: ctx.cards },
-          loaded.log,
-          replacements,
+        // A replacement stored by an earlier try whose setup then failed is in the log already.
+        const pending = replacements.filter(({ code }) =>
+          loaded.log.investigators.some((member) => member.code === code),
         );
+        const { log, events } = campaign.executeCommands({ cards: ctx.cards }, loaded.log, pending);
         if (events.length > 0)
           await gameStore.appendCampaignEvents(campaignId, events, loaded.summary.lastSeq);
         const options = { campaign: log, seed, investigators: seatsFor(log.investigators) };

@@ -3,10 +3,10 @@ import { useTranslation } from 'react-i18next';
 import {
   cardDbWith,
   investigatorCardStats,
-  investigatorCode,
   scenario as scenarioApi,
   type CampaignInvestigator,
   type CampaignLog,
+  type InvestigatorCode,
   type ReplaceInvestigator,
 } from '@arkham/engine';
 import { useCatalog, type CatalogSource } from '../catalog/useCatalog';
@@ -57,7 +57,7 @@ export function NextScenarioDialog({
   const eliminated = eliminatedMembers(log);
   const investigators = catalog.status === 'ready' ? catalog.catalog.investigators : [];
   const team = chosenInvestigators(investigators, teamAfter(log, chosen));
-  const nameOf = (code: string) =>
+  const nameOf = (code: InvestigatorCode) =>
     investigators.find((investigator) => investigator.code === code)?.name ?? code;
   const candidatesFor = (member: CampaignInvestigator) =>
     replacementCandidates(investigators, log, chosen, member.code);
@@ -109,10 +109,10 @@ export function NextScenarioDialog({
       .finally(() => setBusy(false));
   }
 
-  function choose(member: CampaignInvestigator, by: string) {
+  function choose(member: CampaignInvestigator, by: InvestigatorCode) {
     setChosen([
       ...chosen.filter(({ code }) => code !== member.code),
-      { type: 'ReplaceInvestigator', code: member.code, by: investigatorCode(by) },
+      { type: 'ReplaceInvestigator', code: member.code, by },
     ]);
     setPicking(undefined);
   }
@@ -174,7 +174,7 @@ export function NextScenarioDialog({
                     ) : (
                       <button
                         type="button"
-                        disabled={catalog.status !== 'ready'}
+                        disabled={busy || catalog.status !== 'ready'}
                         onClick={() => setPicking(member)}
                       >
                         {t(

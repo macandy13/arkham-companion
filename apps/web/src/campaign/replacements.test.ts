@@ -23,9 +23,10 @@ function member(code: string, fate: CampaignInvestigator['fate']): CampaignInves
   };
 }
 
-function def(code: string): InvestigatorDef {
+function def(code: string, parallelOfCode?: string): InvestigatorDef {
   return {
     code,
+    ...(parallelOfCode === undefined ? {} : { parallelOfCode }),
     name: code,
     factionCode: 'neutral',
     health: 7,
@@ -33,7 +34,7 @@ function def(code: string): InvestigatorDef {
     skills: { willpower: 3, intellect: 3, combat: 3, agility: 3 },
     packCode: 'core',
     cyclePosition: 1,
-    parallel: false,
+    parallel: parallelOfCode !== undefined,
     chapter: 1,
   };
 }
@@ -44,7 +45,11 @@ describe('after alder was killed and cedar went insane, beside birch, with forme
     investigators: [member('alder', 'killed'), member('birch', 'alive'), member('cedar', 'insane')],
     formerInvestigators: [member('dusk', 'killed')],
   };
-  const catalog = ['alder', 'birch', 'cedar', 'dusk', 'elm', 'fir'].map(def);
+  const catalog = [
+    ...['alder', 'birch', 'cedar', 'dusk', 'elm', 'fir'].map((code) => def(code)),
+    def('parallel_alder', 'alder'),
+    def('parallel_fir', 'fir'),
+  ];
   const elmForAlder = {
     type: 'ReplaceInvestigator' as const,
     code: investigatorCode('alder'),
@@ -52,14 +57,28 @@ describe('after alder was killed and cedar went insane, beside birch, with forme
   };
 
   it.each([
-    ['alder, with nothing chosen yet', [], 'alder', ['elm', 'fir']],
-    ['cedar, with elm chosen for alder', [elmForAlder], 'cedar', ['fir']],
-    ['alder again, with elm chosen for alder', [elmForAlder], 'alder', ['elm', 'fir']],
-  ])('offers for %s only investigators new to the campaign', (_, chosen, code, expected) => {
-    const candidates = replacementCandidates(catalog, log, chosen, investigatorCode(code));
+    ['alder, with nothing chosen yet', [], 'alder', ['elm', 'fir', 'parallel_fir']],
+    ['cedar, with elm chosen for alder', [elmForAlder], 'cedar', ['fir', 'parallel_fir']],
+    [
+      'alder again, with elm chosen for alder',
+      [elmForAlder],
+      'alder',
+      ['elm', 'fir', 'parallel_fir'],
+    ],
+    [
+      'cedar, with parallel fir chosen for alder',
+      [{ ...elmForAlder, by: investigatorCode('parallel_fir') }],
+      'cedar',
+      ['elm'],
+    ],
+  ])(
+    'offers for %s only investigators new to the campaign, a parallel version going with its original',
+    (_, chosen, code, expected) => {
+      const candidates = replacementCandidates(catalog, log, chosen, investigatorCode(code));
 
-    expect(candidates.map((candidate) => candidate.code)).toEqual(expected);
-  });
+      expect(candidates.map((candidate) => candidate.code)).toEqual(expected);
+    },
+  );
 
   it("seats elm in alder's place", () => {
     expect(teamAfter(log, [elmForAlder])).toEqual(['elm', 'birch', 'cedar']);
