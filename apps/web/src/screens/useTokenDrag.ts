@@ -21,8 +21,7 @@ export interface TokenDrag {
  * card: the page's counterpart of the map's `usePieceDrag`, in screen points since the token may
  * land anywhere on the page. Letting go calls `onDrop` with the point, and the caller hit-tests
  * what lies there (`investigatorAt`, `locationAt`). A press let go where it went down (`isTap`)
- * drags nothing, so a tap on the counter stays a tap; the click a drag ends with goes no further,
- * so a card the counter sits on (the agenda) does not open as well.
+ * drags nothing, so a tap on the counter stays a tap.
  */
 export function useTokenDrag(onDrop: (client: Point) => void): TokenDrag {
   const [pressed, setPressed] = useState<Point>();
@@ -45,9 +44,7 @@ export function useTokenDrag(onDrop: (client: Point) => void): TokenDrag {
         const dragged = pressed !== undefined && !isTap(pressed, point);
         setPressed(undefined);
         setAt(undefined);
-        if (!dragged) return;
-        swallowNextClick();
-        onDrop(point);
+        if (dragged) onDrop(point);
       },
       onPointerCancel() {
         setPressed(undefined);
@@ -55,17 +52,4 @@ export function useTokenDrag(onDrop: (client: Point) => void): TokenDrag {
       },
     },
   };
-}
-
-/**
- * Keeps the click a drag ends with from reaching the page, so a card the counter sits on does not
- * open. It is caught on the window before React's own capture handlers (`HeaderSlot` opens the
- * card in the capture phase). A drag a browser ends without a click leaves it to the next press,
- * which drops it, so it never eats a later tap.
- */
-function swallowNextClick(): void {
-  const swallow = (event: Event) => event.stopPropagation();
-  const drop = () => window.removeEventListener('click', swallow, { capture: true });
-  window.addEventListener('click', swallow, { capture: true, once: true });
-  window.addEventListener('pointerdown', drop, { capture: true, once: true });
 }

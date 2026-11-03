@@ -179,8 +179,9 @@ export interface GameActions {
    */
   adjustLocation(location: InstanceId, token: LocationToken, delta: number): Promise<void>;
   /**
-   * One doom moved from the location `from` to the location `to`, as one step. The doom in play
-   * stays the same, so it is a correction by hand on both (`ManualAdjust`), not doom placed.
+   * One doom moved from the card `from` to the card `to` (a location, the agenda), as one step.
+   * The doom in play stays the same, so it is a correction by hand on both (`ManualAdjust`), not
+   * doom placed.
    */
   moveDoom(from: InstanceId, to: InstanceId): Promise<void>;
   /** Takes back the last step; never the scenario start. While adjusting, the last tap. */

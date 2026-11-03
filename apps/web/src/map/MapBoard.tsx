@@ -27,7 +27,7 @@ import {
 } from './mapLayout';
 import { usePieceDrag } from './usePieceDrag';
 import { investigatorAt } from '../investigators/dropTarget';
-import { overHeaderCard } from '../screens/headerDropTarget';
+import { overHeaderCard, overTokenPool } from '../screens/headerDropTarget';
 import { TokenGhost } from '../screens/TokenGhost';
 import './map.css';
 
@@ -164,9 +164,11 @@ type DraggedPiece = TilePiece & { from: InstanceId };
  *   beside the map (`investigatorAt`), is theirs, discovered as a card grants it
  *   (`GameActions.takeClue`), whoever's turn it is. It follows the pointer over the whole page as
  *   a clue token (`TokenGhost`).
- * - Doom dragged off a location onto another location moves there (`GameActions.moveDoom`), and
- *   onto the agenda in the header (`overHeaderCard`) goes back to the token pool
- *   (`GameActions.adjustLocation`); it follows the pointer as a doom token.
+ * - Doom dragged off a location onto another location, or onto the agenda in the header
+ *   (`overHeaderCard`), moves there (`GameActions.moveDoom`); it follows the pointer as a doom
+ *   token.
+ * - A clue or doom dropped on the header's token pool (`overTokenPool`, `TokenPool`) goes back to
+ *   it (`GameActions.adjustLocation`).
  *
  * A tap on a tile opens its details (`LocationDetails`): what the investigator whose turn it is
  * can do there, or while adjusting the corrections, when no piece is dragged; on a phone it calls
@@ -211,6 +213,10 @@ function MapDrawing({
   const drag = usePieceDrag<DraggedPiece>(
     svg,
     (piece, point, client) => {
+      if ('clue' in piece && overTokenPool(client)) {
+        void actions.adjustLocation(piece.from, 'clue', -1);
+        return;
+      }
       if ('clue' in piece) {
         // The panel first: a pawn panned out of sight still maps to the screen beside the map.
         const taker =
@@ -220,8 +226,8 @@ function MapDrawing({
         return;
       }
       if ('doom' in piece) {
-        const to = tileAt(cells, point);
-        if (overHeaderCard('agenda', client)) void actions.adjustLocation(piece.from, 'doom', -1);
+        const to = overHeaderCard('agenda', client) ? board.agenda?.id : tileAt(cells, point);
+        if (overTokenPool(client)) void actions.adjustLocation(piece.from, 'doom', -1);
         else if (to !== undefined && to !== piece.from) void actions.moveDoom(piece.from, to);
         return;
       }

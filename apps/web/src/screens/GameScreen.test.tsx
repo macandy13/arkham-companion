@@ -133,10 +133,11 @@ describe('GameScreen header', () => {
   });
 
   // jsdom lays nothing out and has no pointer capture on the page: the hit test under the pointer
-  // finds the Study's tile, and capture is stubbed.
-  describe('dragging doom off the agenda', () => {
+  // finds what a test puts under it (`underPointer`), and capture is stubbed.
+  describe('dragging a token off the token pool', () => {
+    let underPointer: () => Element | null = () => null;
     beforeEach(() => {
-      document.elementFromPoint = () => screen.getByRole('group', { name: 'Study' });
+      document.elementFromPoint = () => underPointer();
       Object.assign(HTMLElement.prototype, { setPointerCapture: () => {} });
     });
     afterEach(() => {
@@ -145,34 +146,49 @@ describe('GameScreen header', () => {
       Reflect.deleteProperty(element, 'setPointerCapture');
     });
 
-    it('places a doom from the token pool on the location it is dropped on, and opens no agenda', async () => {
-      await renderTheGathering('game-screen-doom-drag-test');
-      const agenda = screen.getByRole('region', { name: 'Agenda' });
-      const doom = within(agenda).getByRole('img', { name: 'Doom 0 / 3' });
+    /** Drags the token pool's token named `name` off the pool and lets go over `underPointer`. */
+    function dragOffPool(name: string) {
+      const token = screen.getByRole('img', { name });
+      fireEvent.pointerDown(token, { pointerId: 1, clientX: 600, clientY: 40 });
+      fireEvent.pointerMove(token, { pointerId: 1, clientX: 200, clientY: 300 });
+      fireEvent.pointerUp(token, { pointerId: 1, clientX: 200, clientY: 300 });
+    }
 
-      fireEvent.pointerDown(doom, { pointerId: 1, clientX: 600, clientY: 40 });
-      fireEvent.pointerMove(doom, { pointerId: 1, clientX: 200, clientY: 300 });
-      fireEvent.pointerUp(doom, { pointerId: 1, clientX: 200, clientY: 300 });
-      fireEvent.click(doom);
+    it.each([
+      { token: 'Doom from the pool', placed: 'Doom 1' },
+      { token: 'Clue from the pool', placed: 'Clues 3' },
+    ])('places "$token" on the Study it is dropped on: $placed', async ({ token, placed }) => {
+      await renderTheGathering(`game-screen-pool-${token}-test`);
+      underPointer = () => screen.getByRole('group', { name: 'Study' });
+
+      dragOffPool(token);
+
+      const study = screen.getByRole('group', { name: 'Study' });
+      expect(await within(study).findByRole('img', { name: placed })).toBeTruthy();
+    });
+
+    it('places a doom dropped on the agenda on the agenda', async () => {
+      await renderTheGathering('game-screen-pool-agenda-test');
+      const agenda = screen.getByRole('region', { name: 'Agenda' });
+      underPointer = () => agenda;
+
+      dragOffPool('Doom from the pool');
 
       expect(await within(agenda).findByRole('img', { name: 'Doom 1 / 3' })).toBeTruthy();
-      expect(
-        within(screen.getByRole('group', { name: 'Study' })).getByRole('img', { name: 'Doom 1' }),
-      ).toBeTruthy();
-      expect(screen.queryByRole('dialog')).toBeNull();
     });
-  });
 
-  it('offers no doom to drag off the agenda while the players adjust the board', async () => {
-    await renderTheGathering('game-screen-doom-drag-adjusting-test');
-    const agenda = screen.getByRole('region', { name: 'Agenda' });
-    const draggable = within(agenda).getByRole('img', { name: 'Doom 0 / 3' }).dataset['drag'];
+    it('offers no token to drag while the players adjust the board', async () => {
+      await renderTheGathering('game-screen-pool-adjusting-test');
+      const draggable = screen.getByRole('img', { name: 'Doom from the pool' }).dataset['drag'];
 
-    fireEvent.click(button('Adjust board'));
-    await screen.findByRole('button', { name: 'Done' });
+      fireEvent.click(button('Adjust board'));
+      await screen.findByRole('button', { name: 'Done' });
 
-    expect(draggable).toBe('doom');
-    expect(within(agenda).getByRole('img', { name: 'Doom 0 / 3' }).dataset['drag']).toBeUndefined();
+      expect(draggable).toBe('doom');
+      expect(
+        screen.getByRole('img', { name: 'Doom from the pool' }).dataset['drag'],
+      ).toBeUndefined();
+    });
   });
 
   it('shows the steppers only while adjusting, with "Done" and "Cancel" in place of "Next"', async () => {
@@ -507,7 +523,7 @@ describe('GameScreen header', () => {
     ]);
   });
 
-  it('lays the encounter deck with its discard pile, agenda, act, scenario with the set-aside cards and victory display out under their labels', async () => {
+  it('lays the encounter deck with its discard pile, agenda, act, scenario with the set-aside cards, victory display and token pool out under their labels', async () => {
     await renderTheGathering('game-screen-encounter-test');
 
     // The investigator cards have headers too, so the board's header is the one holding the deck.
@@ -519,7 +535,14 @@ describe('GameScreen header', () => {
       .map((place) => place.firstChild?.textContent);
     const deck = within(deckPlace);
 
-    expect(labels).toEqual(['Encounter deck', 'Agenda', 'Act', 'Scenario', 'Victory']);
+    expect(labels).toEqual([
+      'Encounter deck',
+      'Agenda',
+      'Act',
+      'Scenario',
+      'Victory',
+      'Token pool',
+    ]);
     expect(deck.getByRole('button', { name: 'Encounter discard pile' })).toBeTruthy();
     const scenario = within(within(boardHeader).getByRole('region', { name: 'Scenario' }));
     expect(scenario.getByRole('button', { name: /^Set aside, \d+ cards?$/ })).toBeTruthy();
@@ -611,27 +634,6 @@ describe('GameScreen on a phone held upright', () => {
   });
 
   const board = () => document.getElementById('board');
-
-  it('places a doom dragged off the agenda on the map without opening the detail view', async () => {
-    await renderTheGathering('phone-doom-drag-test');
-    // jsdom lays nothing out and has no pointer capture on the page: the hit test under the
-    // pointer finds the Study's tile, and capture is stubbed.
-    document.elementFromPoint = () => screen.getByRole('group', { name: 'Study' });
-    Object.assign(HTMLElement.prototype, { setPointerCapture: () => {} });
-    const agenda = screen.getByRole('region', { name: 'Agenda' });
-    const doom = within(agenda).getByRole('img', { name: 'Doom 0 / 3' });
-
-    fireEvent.pointerDown(doom, { pointerId: 1, clientX: 300, clientY: 40 });
-    fireEvent.pointerMove(doom, { pointerId: 1, clientX: 200, clientY: 300 });
-    fireEvent.pointerUp(doom, { pointerId: 1, clientX: 200, clientY: 300 });
-    fireEvent.click(doom);
-    const placed = await within(agenda).findByRole('img', { name: 'Doom 1 / 3' });
-    Reflect.deleteProperty(document, 'elementFromPoint');
-    Reflect.deleteProperty(HTMLElement.prototype, 'setPointerCapture');
-
-    expect(placed).toBeTruthy();
-    expect(board()?.getAttribute('data-view')).not.toBe('detail');
-  });
 
   it('opens the detail view on the act from a tap on it, instead of its full card', async () => {
     await renderTheGathering('phone-act-test');

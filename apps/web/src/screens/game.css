@@ -460,7 +460,14 @@
   background: var(--color-doom);
 }
 
-/* A token that can be dragged off (the agenda's doom): the page must not scroll when a touch drags it. */
+/*
+ * The token pool: a doom and a clue token side by side, like the supply beside the playmat. A
+ * token that can be dragged off it: the page must not scroll when a touch drags it.
+ */
+#board > header [data-pool-token] {
+  display: block;
+}
+
 #board > header [data-drag] {
   cursor: grab;
   touch-action: none;
@@ -870,12 +877,13 @@
 
 /*
  * A phone held upright, in the compact view: the four header cards without their piles or plates.
- * A tap on a card opens the detail view on it, where they come back. The status row keeps to one
- * line.
+ * A tap on a card opens the detail view on it, where they come back. The token pool has no room in
+ * either view. The status row keeps to one line.
  */
 @media (orientation: portrait) and (max-width: 40rem) {
   #board:not([data-view]) > header [data-pile],
   #board:not([data-view]) > header > section:has([data-pile='victoryDisplay']),
+  #board > header > section[data-pool],
   #board:not([data-view]) > header > section > [data-card] > footer {
     display: none;
   }
@@ -1371,26 +1379,33 @@
  * A dragged token (`TokenGhost`), over the whole page at the pointer and lifted above the dialogs,
  * coloured like the token on the table. The pointer passes through it to what lies beneath.
  */
+/* A loose token: one of the token pool's, and the one a player drags (`TokenGhost`). */
+#board > header [data-pool-token],
+body > [data-token-ghost] {
+  box-sizing: border-box;
+  width: var(--loose-token-size);
+  height: var(--loose-token-size);
+  border: var(--header-token-border-width) solid var(--header-token-rim);
+  border-radius: var(--radius-round);
+  box-shadow: var(--header-token-shadow);
+}
+
+#board > header [data-pool-token='clue'],
+body > [data-token-ghost='clue'] {
+  background: var(--color-clue);
+}
+
+#board > header [data-pool-token='doom'],
+body > [data-token-ghost='doom'] {
+  background: var(--color-doom);
+}
+
 body > [data-token-ghost] {
   position: fixed;
   inset-inline-start: var(--ghost-x);
   inset-block-start: var(--ghost-y);
   z-index: var(--layer-token-ghost);
-  box-sizing: border-box;
-  width: var(--token-ghost-size);
-  height: var(--token-ghost-size);
   translate: -50% -50%;
-  border: var(--header-token-border-width) solid var(--header-token-rim);
-  border-radius: var(--radius-round);
-  box-shadow: var(--header-token-shadow);
   opacity: var(--map-ghost-opacity);
   pointer-events: none;
-}
-
-body > [data-token-ghost='clue'] {
-  background: var(--color-clue);
-}
-
-body > [data-token-ghost='doom'] {
-  background: var(--color-doom);
 }
