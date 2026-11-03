@@ -234,6 +234,8 @@
   --layer-menu: 2;
   /* A card dialog lowered out of the board's way (card_dialog.css), over the board's own layers. */
   --layer-lowered-dialog: 4;
+  /* A dragged token (`TokenGhost`), over the lowered card dialog. */
+  --layer-token-ghost: 5;
 
   --layout-content-width: 60rem;
   /* The investigators' column beside the map in landscape, as wide as the prototype's. */
@@ -272,7 +274,6 @@
   --card-dialog-peek-title-height: 6rem;
   --card-dialog-peek-landscape-width: 12.5rem;
   --card-dialog-peek-landscape: 5.25rem;
-  --card-dialog-peek-landscape-title-height: 4rem;
   --card-dialog-peek-portrait: 2.875rem;
   --card-dialog-peek-portrait-title-height: 3.5rem;
   --card-dialog-peek-turn: -2deg;
@@ -309,12 +310,8 @@
   --decision-key-width: 1.375rem;
   /* The room the × keeps free in a dialog's top corner, and how far it sits from the edge. */
   --dialog-close-inset: var(--space-3);
-  /* The clue payment dialog, wide enough for three payers' art side by side, each this wide. */
-  --layout-clue-payment-width: 46rem;
-  --clue-payer-width: 13rem;
-  /* A clue token to tap in the clue payment dialog, and a pip counting the clues chosen. */
+  /* A clue token to tap in the clue payment dialog. */
   --clue-token-size: var(--touch-target);
-  --clue-pip-size: 0.75rem;
   /* The game log, wide enough that a step's lines rarely wrap. */
   --layout-log-width: 36rem;
   /* A card drawn in full in a dialog (the enemy details), like the prototype's zoomed card. */
@@ -566,6 +563,8 @@
   --encounter-strip-card-width: 7.5rem;
   /* A dragged map piece's copy, see-through so the tile under it stays readable. */
   --map-ghost-opacity: 0.6;
+  /* A dragged token (`TokenGhost`): finger-sized, so it shows beside the finger that carries it. */
+  --token-ghost-size: 2.5rem;
   /* An enemy on the map engaged with an investigator, shown in full in their threat area. */
   --engaged-enemy-opacity: 0.5;
   /* A token with nothing on it (a location's clues once found) fades, so it reads as empty. */

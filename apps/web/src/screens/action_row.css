@@ -173,6 +173,33 @@
   mask-image: url('../symbols/free.svg');
 }
 
+/*
+ * A raised cost (Frozen in Fear) stacks one arrow per action down that column, as the card prints
+ * two action symbols for an ability that costs two.
+ */
+#board
+  :is(dialog, dialog > article, [data-mode='location'], header > section)
+  > footer:has(> section > h3)
+  button[data-cost='action'][data-actions]::after {
+  mask-position: top center;
+  mask-size: var(--action-mark-size) var(--action-mark-size);
+  mask-repeat: repeat-y;
+}
+
+#board
+  :is(dialog, dialog > article, [data-mode='location'], header > section)
+  > footer:has(> section > h3)
+  button[data-cost='action'][data-actions='2']::after {
+  height: calc(var(--action-mark-size) * 2);
+}
+
+#board
+  :is(dialog, dialog > article, [data-mode='location'], header > section)
+  > footer:has(> section > h3)
+  button[data-cost='action'][data-actions='3']::after {
+  height: calc(var(--action-mark-size) * 3);
+}
+
 /* A cost mark gets a column of its own beside the icon, so it never covers it. */
 #board
   :is(dialog, dialog > article, [data-mode='location'], header > section)

@@ -475,7 +475,7 @@ describe('locations', () => {
       })
       .withCard(
         instanceId('obscuring_fog'),
-        blankTreachery('obscuring_fog', { modifiers: [{ stat: 'shroud', of: 'host', by: 2 }] }),
+        blankTreachery('obscuring_fog', { modifiers: [{ value: 'shroud', of: 'host', by: 2 }] }),
         attachedTo(instanceId('cellar')),
       )
       .start();
@@ -804,7 +804,7 @@ describe('enemies', () => {
     const { context, state } = newGame()
       .withLocation(
         study,
-        blankLocation('dining_hall', { modifiers: [{ stat: 'fight', of: 'enemiesHere', by: 1 }] }),
+        blankLocation('dining_hall', { modifiers: [{ value: 'fight', of: 'enemiesHere', by: 1 }] }),
         { revealed: true },
       )
       .withInvestigator(alice, { locationId: study })

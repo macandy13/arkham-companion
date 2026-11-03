@@ -683,14 +683,14 @@
 /*
  * The column the dialogs over the board lay their parts in: every card dialog's page (the decision
  * dialog's among them: the question under who decides, the test, the options as full-width
- * buttons, Undo at its foot), the clue payment (clue_payment.css), the encounter dialog
+ * buttons, Undo at its foot; the clue payment's, clue_payment.css), the encounter dialog
  * (encounter.css) and the card zoom (card_zoom.css). Each file adds only what differs; to
  * change the column itself, it needs a selector as specific as `dialog[data-shell] > article`.
  */
 #board
   :is(
     dialog[data-shell] > article,
-    dialog:is([data-dialog='clue-payment'], [data-dialog='encounter'], [data-dialog='card-zoom'])
+    dialog:is([data-dialog='encounter'], [data-dialog='card-zoom'])
   ) {
   display: flex;
   flex-direction: column;
@@ -705,12 +705,12 @@
   display: none;
 }
 
-#board :is(dialog[data-dialog='decision'], dialog[data-dialog='clue-payment']) h2 {
+#board :is(dialog[data-dialog='decision'], dialog[data-dialog='clue-payment'] > article) h2 {
   margin: 0;
   font-size: var(--font-size-subtitle);
 }
 
-#board :is(dialog[data-dialog='decision'], dialog[data-dialog='clue-payment']) p {
+#board :is(dialog[data-dialog='decision'], dialog[data-dialog='clue-payment'] > article) p {
   margin: 0;
 }
 
@@ -822,7 +822,7 @@
   gap: var(--space-2);
 }
 
-#board :is(dialog[data-dialog='decision'], dialog[data-dialog='clue-payment']) footer {
+#board :is(dialog[data-dialog='decision'], dialog[data-dialog='clue-payment'] > article) footer {
   display: flex;
   justify-content: flex-end;
   gap: var(--space-2);
@@ -1365,4 +1365,28 @@
     pointer-events: none;
     animation: delta-rises var(--duration-delta) ease-out forwards;
   }
+}
+
+/*
+ * A dragged token (`TokenGhost`), over the whole page at the pointer and lifted above the dialogs,
+ * coloured like the token on the table. The pointer passes through it to what lies beneath.
+ */
+body > [data-token-ghost] {
+  position: fixed;
+  inset-inline-start: var(--ghost-x);
+  inset-block-start: var(--ghost-y);
+  z-index: var(--layer-token-ghost);
+  box-sizing: border-box;
+  width: var(--token-ghost-size);
+  height: var(--token-ghost-size);
+  translate: -50% -50%;
+  border: var(--header-token-border-width) solid var(--header-token-rim);
+  border-radius: var(--radius-round);
+  box-shadow: var(--header-token-shadow);
+  opacity: var(--map-ghost-opacity);
+  pointer-events: none;
+}
+
+body > [data-token-ghost='clue'] {
+  background: var(--color-clue);
 }

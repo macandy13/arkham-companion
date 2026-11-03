@@ -30,9 +30,9 @@ export function chosenInvestigators(
 }
 
 /**
- * One seat per card, in the same order. A game has one copy of each investigator, so the code
+ * One seat per card (or campaign team member), in the same order. A game has one copy of each investigator, so the code
  * is unique enough to be the seat's ID too.
  */
-export function seatsFor(cards: readonly InvestigatorCard[]): InvestigatorSeat[] {
+export function seatsFor(cards: readonly Pick<InvestigatorCard, 'code'>[]): InvestigatorSeat[] {
   return cards.map(({ code }) => ({ id: investigatorId(code), code }));
 }

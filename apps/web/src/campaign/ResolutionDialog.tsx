@@ -18,7 +18,7 @@ import {
   scenarioCardName,
 } from '../scenarios/scenarioCatalog';
 import { flagNoteKey } from './CampaignSheets';
-import './resolution.css';
+import './campaign_dialogs.css';
 
 /** Where a change goes on the log page, which is how the dialog groups the list. */
 type ChangeGroup = 'notes' | 'investigators' | 'chaosBag' | 'atTheTable';

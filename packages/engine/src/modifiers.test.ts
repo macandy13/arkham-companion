@@ -9,9 +9,11 @@ import {
   engagedWith,
   instanceId,
   investigatorId,
+  modifiersOn,
   newGame,
   setAside,
-  type ModifiedStat,
+  threatAreaOf,
+  type CardValue,
 } from './index';
 import { requireCard } from './lookup';
 
@@ -25,11 +27,11 @@ const diningHall = instanceId('dining_hall');
 /** A ghoul with fight 3 and evade 2. */
 const ghoulCard = blankEnemy('ghoul', { fight: 3, evade: 2 });
 /** A treachery that gives the card it is attached to +2 shroud. */
-const fogCard = blankTreachery('fog', { modifiers: [{ stat: 'shroud', of: 'host', by: 2 }] });
+const fogCard = blankTreachery('fog', { modifiers: [{ value: 'shroud', of: 'host', by: 2 }] });
 /** A location with shroud 1 whose enemies get +1 fight. */
 const diningHallCard = blankLocation('dining_hall', {
   shroud: 1,
-  modifiers: [{ stat: 'fight', of: 'enemiesHere', by: 1 }],
+  modifiers: [{ value: 'fight', of: 'enemiesHere', by: 1 }],
 });
 
 /** Alice in the study (shroud 3), next to the hall (shroud 1). */
@@ -40,7 +42,7 @@ const aliceInStudy = newGame()
   .withInvestigator(alice, { locationId: study });
 
 describe('effectiveValue', () => {
-  it.each<{ name: string; stat: ModifiedStat; value: number }>([
+  it.each<{ name: string; stat: CardValue; value: number }>([
     { name: 'shroud', stat: 'shroud', value: 3 },
     { name: 'fight, which the study does not print', stat: 'fight', value: 0 },
   ])('is the printed $name without constant abilities', ({ stat, value }) => {
@@ -61,7 +63,7 @@ describe('effectiveValue', () => {
 
   it('never goes below 0, e.g. -5 shroud on the study (shroud 3)', () => {
     const clearing = blankTreachery('clearing', {
-      modifiers: [{ stat: 'shroud', of: 'host', by: -5 }],
+      modifiers: [{ value: 'shroud', of: 'host', by: -5 }],
     });
     const { context, state } = aliceInStudy.withCard(fog, clearing, attachedTo(study)).start();
 
@@ -97,5 +99,56 @@ describe('effectiveValue', () => {
       .start();
 
     expect(effectiveValue(context, state, requireCard(state.cards, ghoul), 'fight')).toBe(fight);
+  });
+});
+
+describe('effectiveValue with a modifier of the card itself', () => {
+  it('adds the shroud a revealed location gives itself: 2 + 1', () => {
+    const gloomyCard = blankLocation('gloomy', {
+      shroud: 2,
+      modifiers: [{ value: 'shroud', of: 'self', by: 1 }],
+    });
+    const gloomy = instanceId('gloomy');
+    const { context, state } = newGame()
+      .withLocation(gloomy, gloomyCard, { revealed: true })
+      .withInvestigator(alice, { locationId: gloomy })
+      .start();
+
+    expect(effectiveValue(context, state, requireCard(state.cards, gloomy), 'shroud')).toBe(3);
+  });
+});
+
+describe('modifiersOn', () => {
+  /** A treachery that makes each move of the investigator it threatens cost 1 more. */
+  const heavyCard = blankTreachery('heavy', {
+    modifiers: [{ value: 'actionCost', of: 'threatArea', actions: ['move'], by: 1 }],
+  });
+  const heavy = instanceId('heavy');
+
+  it('names the card whose modifier changes the study: the fog attached to it', () => {
+    const { context, state } = aliceInStudy.withCard(fog, fogCard, attachedTo(study)).start();
+
+    const active = modifiersOn(context, state, {
+      kind: 'card',
+      card: requireCard(state.cards, study),
+    });
+
+    expect(active).toEqual([
+      { source: requireCard(state.cards, fog), modifier: { value: 'shroud', of: 'host', by: 2 } },
+    ]);
+  });
+
+  it("gives alice the action cost of the treachery in her threat area, not the study's", () => {
+    const { context, state } = aliceInStudy.withCard(heavy, heavyCard, threatAreaOf(alice)).start();
+
+    expect(modifiersOn(context, state, { kind: 'investigator', investigatorId: alice })).toEqual([
+      {
+        source: requireCard(state.cards, heavy),
+        modifier: { value: 'actionCost', of: 'threatArea', actions: ['move'], by: 1 },
+      },
+    ]);
+    expect(
+      modifiersOn(context, state, { kind: 'card', card: requireCard(state.cards, study) }),
+    ).toEqual([]);
   });
 });

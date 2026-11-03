@@ -81,7 +81,7 @@ export function TurnControls({
             aria-label={name}
             disabled={busy}
             onClick={() =>
-              pay(groupClues, name, (spend) => void actions.useCardAction(cardId, action, spend))
+              pay(groupClues, cardId, (spend) => void actions.useCardAction(cardId, action, spend))
             }
           >
             {caption}

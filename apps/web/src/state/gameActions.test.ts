@@ -11,6 +11,7 @@ import {
   newGame,
   PlayTable,
   takeHorror,
+  threatAreaOf,
   type CardPlaceView,
 } from '@arkham/engine';
 import type { PileMove } from '../encounter/cardMoves';
@@ -88,6 +89,60 @@ describe('gameActions', () => {
     await actionsOn(table).moveTo(hall, cost);
 
     expect(table.board.decisions.map(({ about }) => about)).toEqual(attacks);
+  });
+
+  describe("with a treachery like Frozen in Fear in alder's threat area", () => {
+    /** Alder's turn in the Study next to the Hall, frozen: the first move, fight or evade costs 1 more. */
+    const aldersFrozenTurn = () =>
+      PlayTable.start(
+        newGame()
+          .withLocation(study, blankLocation('study'), { revealed: true })
+          .withLocation(hall, blankLocation('hall'), { revealed: true })
+          .withConnection(study, hall)
+          .withInvestigator(alder, { locationId: study })
+          .withCard(ghoul, blankEnemy('ghoul', { health: fixed(3) }), engagedWith(alder))
+          .withCard(
+            instanceId('frozen'),
+            blankTreachery('frozen', {
+              modifiers: [
+                {
+                  value: 'actionCost',
+                  of: 'threatArea',
+                  actions: ['move', 'fight', 'evade'],
+                  first: 'eachRound',
+                  by: 1,
+                },
+              ],
+            }),
+            threatAreaOf(alder),
+          )
+          .withTurnOf(alder),
+      );
+
+    it.each<{ verb: string; act: (actions: GameActions) => Promise<void>; left: number }>([
+      { verb: 'a first fight', act: (actions) => actions.fight(ghoul), left: 1 },
+      { verb: 'a first free evade', act: (actions) => actions.evade(ghoul, 'free'), left: 2 },
+      { verb: 'a first free move', act: (actions) => actions.moveTo(hall, 'free'), left: 2 },
+      { verb: 'investigate', act: (actions) => actions.investigate(), left: 2 },
+      { verb: 'the pawn drag', act: (actions) => actions.moveTo(hall), left: 3 },
+    ])('$verb leaves alder $left of three actions', async ({ act, left }) => {
+      const table = aldersFrozenTurn();
+
+      await act(actionsOn(table));
+
+      expect(table.board.investigator(alder)).toMatchObject({ actions: left });
+    });
+
+    it('counts off the usual 1 for a move after the first fight', async () => {
+      const table = aldersFrozenTurn();
+      const actions = actionsOn(table);
+      await actions.fight(ghoul);
+      await actions.answer('fail');
+
+      await actions.moveTo(hall, 'action');
+
+      expect(table.board.investigator(alder)).toMatchObject({ actions: 0 });
+    });
   });
 
   it('draws the top encounter card for an investigator outside the mythos phase', async () => {
@@ -188,6 +243,21 @@ describe('gameActions', () => {
 
     expect(table.board.investigator(alder)).toMatchObject({ clues: 1, actions: 3 });
     expect(table.board.location(study).clues).toBe(1);
+  });
+
+  it("gives brook a clue from the study on alder's turn, as a clue dragged onto their pawn", async () => {
+    const table = PlayTable.start(
+      newGame()
+        .withLocation(study, blankLocation('study'), { revealed: true, clues: 2 })
+        .withInvestigator(alder, { locationId: study })
+        .withInvestigator(brook, { locationId: study })
+        .withTurnOf(alder),
+    );
+
+    await actionsOn(table).takeClue(study, brook);
+
+    expect(table.board.investigator(brook).clues).toBe(1);
+    expect(table.board.investigator(alder)).toMatchObject({ clues: 0, actions: 3 });
   });
 
   it.each<{ effect: string; act: (actions: GameActions) => Promise<void>; ghoul: object }>([

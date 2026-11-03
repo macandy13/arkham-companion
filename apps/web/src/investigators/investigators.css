@@ -49,7 +49,7 @@
  * and a card dialog (CardDialog) the portrait of the investigator who acts.
  */
 :is(
-    #board dialog[data-dialog='clue-payment'] figure,
+    #board dialog[data-dialog='clue-payment'] li,
     #board dialog[data-shell],
     #board dialog[data-shell] hgroup > p
   )
@@ -63,7 +63,7 @@
 }
 
 :is(
-    #board dialog[data-dialog='clue-payment'] figure,
+    #board dialog[data-dialog='clue-payment'] li,
     #board dialog[data-shell],
     #board dialog[data-shell] hgroup > p
   )
