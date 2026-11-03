@@ -140,7 +140,6 @@ export const appTexts = {
     noGame: 'Kein Spiel geöffnet',
   },
   encounter: {
-    close: 'Schließen',
     drawFor: 'Für {{name}} ziehen',
     drawnFor: '{{card}}, gezogen für {{name}}',
     keywords: 'Schlüsselwörter',

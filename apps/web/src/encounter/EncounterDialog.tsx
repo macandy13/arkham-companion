@@ -1,9 +1,10 @@
-import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { BoardView, EncounterCardView } from '@arkham/engine';
 import { matchingFirst } from '@arkham/util';
 import { useCardPicture } from '../catalog/cardImages';
 import type { GameActions } from '../state/gameActions';
+import { CardDialog } from '../screens/CardDialog';
 import { CardStrip } from '../screens/CardStrip';
 import { CardMoves } from './CardMoves';
 
@@ -23,7 +24,8 @@ export type HeaderPileKind = 'discard' | 'setAside' | 'victoryDisplay';
  * empty. Opened on a pile, it shows the pile's cards in a row (`PileStrip`) with the places the
  * players can put the chosen one (`CardMoves`), for a revelation the engine left to them; its
  * Spawn closes the dialog and hands the enemy to `onSpawn`, so the players pick the location on
- * the map. A native modal `<dialog>` brings focus trapping and Escape.
+ * the map. It is a wide page of the card shell without a card (`CardDialog`), since the piles'
+ * cards are its content; on a phone held upright the page is a sheet.
  */
 export function EncounterDialog({
   board,
@@ -43,11 +45,6 @@ export function EncounterDialog({
   onClose: () => void;
 }) {
   const { t } = useTranslation();
-  const titleId = useId();
-  const dialog = useRef<HTMLDialogElement>(null);
-  useEffect(() => {
-    dialog.current?.showModal();
-  }, []);
   const { deckCount, discard, setAside, victoryDisplay } = board.encounter;
   const drawers = matchingFirst(
     board.investigators.filter((investigator) => investigator.status === 'active'),
@@ -73,38 +70,43 @@ export function EncounterDialog({
     victoryDisplay: { title: t('encounter.victoryDisplay'), cards: victoryDisplay },
   };
 
+  if (start === 'deck')
+    return (
+      <CardDialog
+        name="encounter"
+        title={t('header.encounterDeck')}
+        onCancel={onClose}
+        onClose={onClose}
+      >
+        <p>{t('header.encounterDeckCount', { count: deckCount })}</p>
+        <footer>
+          {drawers.map((investigator) => (
+            <button
+              key={investigator.id}
+              type="button"
+              disabled={busy || adjusting || empty}
+              onClick={() => {
+                onClose();
+                void actions.drawEncounter(investigator.id);
+              }}
+            >
+              {t('encounter.drawFor', { name: investigator.name })}
+            </button>
+          ))}
+        </footer>
+      </CardDialog>
+    );
+  const pile = piles[start];
   return (
-    <dialog ref={dialog} aria-labelledby={titleId} onCancel={onClose} data-dialog="encounter">
-      <button type="button" data-icon="close" aria-label={t('encounter.close')} onClick={onClose} />
-      {start === 'deck' ? (
-        <>
-          <h2 id={titleId}>{t('header.encounterDeck')}</h2>
-          <p>{t('header.encounterDeckCount', { count: deckCount })}</p>
-          <footer>
-            {drawers.map((investigator) => (
-              <button
-                key={investigator.id}
-                type="button"
-                disabled={busy || adjusting || empty}
-                onClick={() => {
-                  onClose();
-                  void actions.drawEncounter(investigator.id);
-                }}
-              >
-                {t('encounter.drawFor', { name: investigator.name })}
-              </button>
-            ))}
-          </footer>
-        </>
-      ) : (
-        <PileStrip
-          titleId={titleId}
-          title={piles[start].title}
-          cards={piles[start].cards}
-          moves={moves}
-        />
-      )}
-    </dialog>
+    <CardDialog
+      name="encounter"
+      kicker={t('header.encounterDeck')}
+      title={t('encounter.pile', { pile: pile.title, count: pile.cards.length })}
+      onCancel={onClose}
+      onClose={onClose}
+    >
+      <PileStrip title={pile.title} cards={pile.cards} moves={moves} />
+    </CardDialog>
   );
 }
 
@@ -117,17 +119,14 @@ const STRIP_CARDS_SHOWN = 5;
 /**
  * One pile as a row of its cards, top card first, like the threat area's: past
  * `STRIP_CARDS_SHOWN` cards the row scrolls by whole cards, with a swipe or its arrows
- * (`CardStrip`). The card
- * tapped (the top card at first) shows its name, victory points and the places the players can
- * put it (`moves`) under the row. Empty, it says so instead.
+ * (`CardStrip`). The card tapped (the top card at first) shows its name, victory points and the
+ * places the players can put it (`moves`) under the row. Empty, it says so instead.
  */
 function PileStrip({
-  titleId,
   title,
   cards,
   moves,
 }: {
-  titleId: string;
   title: string;
   cards: readonly EncounterCardView[];
   moves: (card: EncounterCardView) => ReactNode;
@@ -135,41 +134,33 @@ function PileStrip({
   const { t } = useTranslation();
   const [chosenId, setChosenId] = useState(cards[0]?.id);
   const chosen = cards.find((card) => card.id === chosenId) ?? cards[0];
+  if (chosen === undefined) return <p>{t('encounter.empty')}</p>;
   return (
     <>
-      <h2 id={titleId}>{t('encounter.pile', { pile: title, count: cards.length })}</h2>
-      {chosen === undefined ? (
-        <p>{t('encounter.empty')}</p>
-      ) : (
-        <>
-          <CardStrip
-            label={title}
-            shown={STRIP_CARDS_SHOWN}
-            earlierLabel={t('encounter.earlierCards')}
-            laterLabel={t('encounter.laterCards')}
-          >
-            {cards.map((card) => (
-              <StripCard
-                key={card.id}
-                card={card}
-                chosen={card.id === chosen.id}
-                onChoose={() => setChosenId(card.id)}
-              />
-            ))}
-          </CardStrip>
-          <section aria-label={chosen.name}>
-            <h3>
-              {chosen.name}
-              {chosen.victory !== undefined && (
-                <data value={chosen.victory}>
-                  {t('encounter.victory', { count: chosen.victory })}
-                </data>
-              )}
-            </h3>
-            {moves(chosen)}
-          </section>
-        </>
-      )}
+      <CardStrip
+        label={title}
+        shown={STRIP_CARDS_SHOWN}
+        earlierLabel={t('encounter.earlierCards')}
+        laterLabel={t('encounter.laterCards')}
+      >
+        {cards.map((card) => (
+          <StripCard
+            key={card.id}
+            card={card}
+            chosen={card.id === chosen.id}
+            onChoose={() => setChosenId(card.id)}
+          />
+        ))}
+      </CardStrip>
+      <section aria-label={chosen.name}>
+        <h3>
+          {chosen.name}
+          {chosen.victory !== undefined && (
+            <data value={chosen.victory}>{t('encounter.victory', { count: chosen.victory })}</data>
+          )}
+        </h3>
+        {moves(chosen)}
+      </section>
     </>
   );
 }

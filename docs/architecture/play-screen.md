@@ -80,7 +80,7 @@ On a phone a tap on a location, in the compact map or the map row, shows that lo
 
 ### Cards over the whole screen
 
-The dialogs over the board share one column rule and one rule that hides them while closed (`game.css`): every card dialog's page, the clue payment, the encounter dialog and the card zoom lay their parts out the same way, and each stylesheet adds only what differs.
+The dialogs over the board share one column rule and one rule that hides them while closed (`game.css`): every card dialog's page (the clue payment and the encounter dialog among them) and the card zoom lay their parts out the same way, and each stylesheet adds only what differs.
 
 On a phone a zoomed card (`CardZoom`: a card read whole from the card shell, a card attached to a location) is the same dialog as on the tablet, laid over the whole screen without its frame (`game.css`); an enemy's details (`EnemyDetails`) and a threat or play area card's (`CardDetails`) are on the card shell, so they are its sheet.
 The back gesture closes them as it closes the detail view ([`useBackCloses`](../../apps/web/src/screens/useBackCloses.ts)): opening pushes a history entry named by a fresh id, and the ×, Escape and their buttons that close them (fight, evade) step back through it once.
