@@ -22,6 +22,9 @@ import { PlayArea } from './PlayArea';
 import { ThreatArea } from './ThreatArea';
 import { TurnControls } from './TurnControls';
 import { deltaText, useCountChange } from '../screens/countChange';
+import { locationAt } from '../map/LocationTile';
+import { TokenGhost } from '../screens/TokenGhost';
+import { useTokenDrag, type TokenDragHandlers } from '../screens/useTokenDrag';
 import './investigators.css';
 
 /**
@@ -230,7 +233,13 @@ function InvestigatorPanel({
           actions={actions}
         />
         {printed && <NotebookPage printed={printed} />}
-        <Counters investigator={investigator} adjusting={adjusting} busy={busy} actions={actions} />
+        <Counters
+          board={board}
+          investigator={investigator}
+          adjusting={adjusting}
+          busy={busy}
+          actions={actions}
+        />
       </article>
       <p data-whereabouts="">
         {lead && <span role="img" aria-label={t('investigators.lead')} data-marker="lead" />}
@@ -331,15 +340,20 @@ function Skills({
 }
 
 /**
- * The counters on the card's notebook page, each a token like the ones on the table, with their steppers while the
- * players adjust the board (`adjusting`); a step plays `actions` unless one is queued (`busy`).
+ * The counters on the card's notebook page, each a token like the ones on the table, with their
+ * steppers while the players adjust the board (`adjusting`); a step plays `actions` unless one is
+ * queued (`busy`). A clue dragged off the clue count onto the investigator's own location on the
+ * map is placed there (`GameActions.placeClue`), as a card or a failed test tells them to.
  */
 function Counters({
+  board,
   investigator,
   adjusting,
   busy,
   actions,
 }: {
+  /** The board a clue dragged off the card is placed on (`locationAt`). */
+  board: BoardView;
   investigator: InvestigatorView;
   adjusting: boolean;
   busy: boolean;
@@ -350,6 +364,12 @@ function Counters({
   const adjust = (stat: SteppedStat, delta: number) => void actions.adjust(id, stat, delta);
   // A defeated or resigned investigator has left the game, so their counters no longer change.
   const off = busy || investigator.status !== 'active';
+  // A clue goes onto their own location only, as the cards that tell them to place one say.
+  const clueDrag = useTokenDrag((client) => {
+    const location = locationAt(client);
+    if (location && board.investigatorsAt(location).some((there) => there.id === id))
+      void actions.placeClue(id);
+  });
   return (
     <dl>
       <Stat
@@ -382,7 +402,13 @@ function Counters({
           />
         )}
       </Stat>
-      <Stat kind="clues" label={t('investigators.clues')} value={investigator.clues} />
+      <Stat
+        kind="clues"
+        label={t('investigators.clues')}
+        value={investigator.clues}
+        drag={off || adjusting || investigator.clues === 0 ? undefined : clueDrag.handlers}
+      />
+      {clueDrag.at && <TokenGhost kind="clue" at={clueDrag.at} />}
       <Stat
         kind="resources"
         label={t('investigators.resources')}
@@ -477,6 +503,7 @@ function Stat({
   value,
   shown = String(value),
   printed,
+  drag,
   children,
 }: {
   kind: StatKind;
@@ -485,6 +512,8 @@ function Stat({
   value: number;
   shown?: string;
   printed?: { max: number; taken: number };
+  /** Makes a token draggable off the count (`useTokenDrag`), marked `data-drag` with its kind. */
+  drag?: TokenDragHandlers | undefined;
   children?: ReactNode;
 }) {
   const origin = { x: 0, y: 0 };
@@ -514,7 +543,13 @@ function Stat({
             </data>
           </span>
         ) : (
-          <data key={change?.key} value={value} data-delta={deltaText(change)}>
+          <data
+            key={change?.key}
+            value={value}
+            data-delta={deltaText(change)}
+            data-drag={drag && kind}
+            {...drag}
+          >
             {shown}
           </data>
         )}

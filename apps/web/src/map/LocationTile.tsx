@@ -1,5 +1,6 @@
 import { useRef, type KeyboardEvent, type MouseEvent, type PointerEvent } from 'react';
 import { useTranslation } from 'react-i18next';
+import { instanceId, type InstanceId } from '@arkham/engine';
 import type {
   BoardView,
   EnemyView,
@@ -118,6 +119,7 @@ export function LocationTile({
       role="group"
       aria-label={location.name}
       data-card="location"
+      data-location={location.id}
       data-side={location.revealed ? 'revealed' : 'unrevealed'}
       data-picture={picture?.shown ? 'shown' : undefined}
       data-pickable={pickable || undefined}
@@ -677,4 +679,17 @@ export function enemyConditions(
     ...(enemy.damage ? [t('map.damage', { count: enemy.damage })] : []),
     ...(enemy.exhausted ? [t('map.exhausted')] : []),
   ];
+}
+
+/**
+ * The location whose tile lies under the screen point `client` (its `data-location`), for a token
+ * dropped on the map from elsewhere on the page, such as a clue an investigator places on their
+ * location. A hit test, like `investigatorAt`, since the drag belongs to the counter it started on.
+ */
+export function locationAt(client: Point): InstanceId | undefined {
+  const tile = document
+    .elementFromPoint(client.x, client.y)
+    ?.closest<SVGElement>('[data-location]');
+  const id = tile?.dataset['location'];
+  return id === undefined ? undefined : instanceId(id);
 }
