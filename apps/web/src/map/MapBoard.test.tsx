@@ -853,7 +853,8 @@ describe('MapBoard', () => {
       describe('on a cultist', () => {
         const ghoul = instanceId('ghoul');
         /**
-         * The house with a ghoul in the study that carries one doom, as a cultist gains it. Alder
+         * The house with a ghoul in the study that carries one doom, as a cultist gains it, beside
+         * the study's own doom. Alder
          * waits in the hallway, so the ghoul engages no one.
          */
         const cultistInStudy = house
@@ -861,11 +862,18 @@ describe('MapBoard', () => {
           .withCard(ghoul, blankEnemy('ghoul'), atLocation(study), { tokens: { doom: 1 } });
         const ghoulToken = () => within(tile('study')).getByRole('img', { name: 'ghoul, Doom 1' });
 
+        /** Where the ghoul's doom badge is pressed; jsdom lays nothing out, so any point does. */
+        const ghoulDoomBadge = { x: 100, y: 160 };
+
         /** Drags the doom badge off the ghoul in the study and lets go at (`x`, `y`). */
         async function dragGhoulDoom(x: number, y: number) {
           const badge = tile('study').querySelector<SVGElement>('[data-marker="doom"]');
           if (!badge) throw new Error('The ghoul shows no doom badge');
-          fireEvent.pointerDown(badge, { pointerId: 1, clientX: 100, clientY: 160 });
+          fireEvent.pointerDown(badge, {
+            pointerId: 1,
+            clientX: ghoulDoomBadge.x,
+            clientY: ghoulDoomBadge.y,
+          });
           fireEvent.pointerMove(badge, { pointerId: 1, clientX: x, clientY: y });
           fireEvent.pointerUp(badge, { pointerId: 1, clientX: x, clientY: y });
           await act(async () => {});
@@ -900,9 +908,17 @@ describe('MapBoard', () => {
           const badge = tile('study').querySelector<SVGElement>('[data-marker="doom"]');
           if (!badge) throw new Error('The ghoul shows no doom badge');
 
-          fireEvent.pointerDown(badge, { pointerId: 1, clientX: 100, clientY: 160 });
-          fireEvent.pointerUp(badge, { pointerId: 1, clientX: 100, clientY: 160 });
-          fireEvent.click(badge, { clientX: 100, clientY: 160 });
+          fireEvent.pointerDown(badge, {
+            pointerId: 1,
+            clientX: ghoulDoomBadge.x,
+            clientY: ghoulDoomBadge.y,
+          });
+          fireEvent.pointerUp(badge, {
+            pointerId: 1,
+            clientX: ghoulDoomBadge.x,
+            clientY: ghoulDoomBadge.y,
+          });
+          fireEvent.click(badge, { clientX: ghoulDoomBadge.x, clientY: ghoulDoomBadge.y });
           await act(async () => {});
 
           expect(screen.getByRole('dialog', { name: 'ghoul' })).toBeTruthy();
@@ -938,7 +954,7 @@ describe('MapBoard', () => {
           );
           underPointer = ghoulToken();
 
-          await drag('study', 'Doom 1', doomToken, 100, 160);
+          await drag('study', 'Doom 1', doomToken, ghoulDoomBadge.x, ghoulDoomBadge.y);
 
           expect(table.board.location(study).doom).toBeUndefined();
           expect(table.board.enemy(ghoul).doom).toBe(2);
@@ -964,6 +980,7 @@ describe('MapBoard', () => {
           await dragGhoulDoom(600, 40);
 
           expect(table.board.enemy(ghoul).doom).toBeUndefined();
+          expect(table.board.location(study).doom).toBe(1);
           expect(table.board.doomInPlay).toBe(1);
         });
       });

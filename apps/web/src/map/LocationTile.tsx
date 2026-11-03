@@ -15,6 +15,7 @@ import type {
   MapEnemyView,
   PrintedActionView,
   ScaledValue,
+  InstanceId,
 } from '@arkham/engine';
 import {
   ENEMY_AVATAR,
@@ -734,6 +735,7 @@ export function EnemyToken({
           change={doomChange}
           centre={doomBadgeCentre(centre)}
           drag={doomDrag}
+          beside={{ enemy: enemy.id, engaged, ghost }}
         />
       ) : null}
     </>
@@ -743,7 +745,9 @@ export function EnemyToken({
 /**
  * A count on a piece's rim (`data-marker` with its `kind`) centred on `centre`, pulsing with its
  * `change`. With `drag` a token can be dragged off it (`data-drag`), around a grip a finger
- * catches. Hidden from assistive technology: the piece's accessible name says the count.
+ * catches. Hidden from assistive technology: the piece's accessible name says the count. A badge
+ * drawn `beside` an enemy's token rather than in it carries the enemy's id (`data-badge-of`, for
+ * `enemyAt`) and fades with the token (`data-engaged`, `data-ghost`).
  */
 function Badge({
   kind,
@@ -751,12 +755,14 @@ function Badge({
   change,
   centre: { x, y },
   drag,
+  beside,
 }: {
   kind: 'damage' | 'doom';
   value: number;
   change: CountChange | undefined;
   centre: Point;
   drag?: DragHandlers | undefined;
+  beside?: { enemy: InstanceId; engaged: boolean; ghost: boolean };
 }) {
   return (
     <g
@@ -765,6 +771,11 @@ function Badge({
       data-marker={kind}
       data-changed={change && ''}
       {...(drag && { 'data-drag': kind, ...drag })}
+      {...(beside && {
+        'data-badge-of': beside.enemy,
+        'data-engaged': beside.engaged || undefined,
+        'data-ghost': beside.ghost || undefined,
+      })}
     >
       {drag && <circle data-part="grip" cx={x} cy={y} r={BADGE_GRIP_RADIUS} />}
       <circle cx={x} cy={y} r={BADGE_RADIUS} />

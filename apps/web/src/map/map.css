@@ -430,7 +430,7 @@
 }
 
 /* An enemy engaged with an investigator stands faded after their pawn: the threat area shows it. */
-#map svg [data-enemy][data-engaged] {
+#map svg :is([data-enemy], [data-badge-of])[data-engaged] {
   opacity: var(--engaged-enemy-opacity);
 }
 
