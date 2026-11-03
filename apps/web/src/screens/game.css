@@ -1312,3 +1312,27 @@
     animation: delta-rises var(--duration-delta) ease-out forwards;
   }
 }
+
+/*
+ * A dragged token (`TokenGhost`), over the whole page at the pointer and lifted above the dialogs,
+ * coloured like the token on the table. The pointer passes through it to what lies beneath.
+ */
+body > [data-token-ghost] {
+  position: fixed;
+  inset-inline-start: var(--ghost-x);
+  inset-block-start: var(--ghost-y);
+  z-index: var(--layer-token-ghost);
+  box-sizing: border-box;
+  width: var(--token-ghost-size);
+  height: var(--token-ghost-size);
+  translate: -50% -50%;
+  border: var(--header-token-border-width) solid var(--header-token-rim);
+  border-radius: var(--radius-round);
+  box-shadow: var(--header-token-shadow);
+  opacity: var(--map-ghost-opacity);
+  pointer-events: none;
+}
+
+body > [data-token-ghost='clue'] {
+  background: var(--color-clue);
+}

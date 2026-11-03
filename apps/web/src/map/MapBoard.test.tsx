@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
-import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import {
   attachedTo,
   atLocation,
@@ -76,7 +76,7 @@ describe('MapBoard', () => {
     const table = PlayTable.start(
       house.withCard(
         instanceId('obscuring_fog'),
-        blankTreachery('obscuring_fog', { modifiers: [{ stat: 'shroud', of: 'host', by: 2 }] }),
+        blankTreachery('obscuring_fog', { modifiers: [{ value: 'shroud', of: 'host', by: 2 }] }),
         attachedTo(study),
       ),
     );
@@ -453,10 +453,11 @@ describe('MapBoard', () => {
 
   // The Study's tile spans 0–150 across and 0–210 down. Pieces stand in a row along its bottom
   // edge, investigators first: the first centred on (24, 186), an enemy engaged with them next on
-  // (58, 186), and an enemy engaged with no one after a line, on (70, 186). The Hallway's tile
-  // starts at x 180.
+  // (58, 186), and an enemy engaged with no one after a line, on (70, 186). The Study's clue count
+  // sits on its clue value, centred on (127, 122). The Hallway's tile starts at x 180.
   describe('dragging pieces', () => {
     const firstPawn = { x: 24, y: 186 };
+    const clueCount = { x: 127, y: 122 };
     const enemyAlone = { x: 24, y: 186 };
     const enemyEngagedWithAlder = { x: 58, y: 186 };
     const enemyPastAlder = { x: 70, y: 186 };
@@ -540,6 +541,166 @@ describe('MapBoard', () => {
       await drag('study', 'bea, lead investigator', firstPawn, 255, 105);
 
       expect(table.board.investigator(bea).at).toBe('study');
+    });
+
+    // jsdom lays nothing out, so the hit test for an investigator's panel under the pointer finds
+    // what a test puts under it, nothing unless it says so.
+    describe('a clue', () => {
+      let underPointer: Element | null = null;
+      beforeEach(() => {
+        underPointer = null;
+        document.elementFromPoint = () => underPointer;
+      });
+      afterEach(() => {
+        Reflect.deleteProperty(document, 'elementFromPoint');
+      });
+
+      it("gives a clue dragged off the study to the investigator whose pawn it is dropped on, whoever's turn it is", async () => {
+        const table = PlayTable.start(
+          house
+            .withInvestigator(bea, { locationId: study })
+            .withInvestigator(alder, { locationId: study })
+            .withTurnOf(alder),
+        );
+        render(
+          <MapBoard
+            board={table.board}
+            actions={actionsOn(table)}
+            busy={false}
+            adjusting={false}
+          />,
+        );
+
+        // bea came first, so the first pawn is bea's, not that of alder, whose turn it is.
+        await drag('study', 'Clues 2', clueCount, firstPawn.x, firstPawn.y);
+
+        expect(table.board.investigator(bea).clues).toBe(1);
+        expect(table.board.location(study).clues).toBe(1);
+      });
+
+      it("opens the study's details on a tap on its clue count", async () => {
+        const table = PlayTable.start(
+          house.withInvestigator(alder, { locationId: study }).withTurnOf(alder),
+        );
+        render(
+          <MapBoard
+            board={table.board}
+            actions={actionsOn(table)}
+            busy={false}
+            adjusting={false}
+          />,
+        );
+
+        await drag('study', 'Clues 2', clueCount, clueCount.x, clueCount.y);
+        fireEvent.click(within(tile('study')).getByRole('img', { name: 'Clues 2' }), {
+          clientX: clueCount.x,
+          clientY: clueCount.y,
+        });
+
+        expect(screen.getByRole('dialog', { name: 'study' })).toBeTruthy();
+        expect(table.board.location(study).clues).toBe(2);
+      });
+
+      it.each([
+        { where: 'on another location', x: 255, y: 105 },
+        { where: 'on the study, off any pawn', x: 75, y: 105 },
+      ])('leaves the clue on the study when dropped $where', async ({ x, y }) => {
+        const table = PlayTable.start(
+          house.withInvestigator(alder, { locationId: study }).withTurnOf(alder),
+        );
+        render(
+          <MapBoard
+            board={table.board}
+            actions={actionsOn(table)}
+            busy={false}
+            adjusting={false}
+          />,
+        );
+
+        await drag('study', 'Clues 2', clueCount, x, y);
+
+        expect(table.board.location(study).clues).toBe(2);
+        expect(table.board.investigator(alder).clues).toBe(0);
+      });
+
+      it("gives a clue dropped on bea's panel beside the map to bea", async () => {
+        const table = PlayTable.start(
+          house
+            .withInvestigator(bea, { locationId: study })
+            .withInvestigator(alder, { locationId: study })
+            .withTurnOf(alder),
+        );
+        render(
+          <>
+            <MapBoard
+              board={table.board}
+              actions={actionsOn(table)}
+              busy={false}
+              adjusting={false}
+            />
+            <section data-investigator="bea">
+              <h3>bea</h3>
+            </section>
+          </>,
+        );
+        underPointer = screen.getByRole('heading', { name: 'bea' });
+
+        await drag('study', 'Clues 2', clueCount, 600, 400);
+
+        expect(table.board.investigator(bea).clues).toBe(1);
+      });
+
+      it("gives the clue to alder when alder's panel lies over bea's pawn, panned out of sight", async () => {
+        const table = PlayTable.start(
+          house
+            .withInvestigator(bea, { locationId: study })
+            .withInvestigator(alder, { locationId: study })
+            .withTurnOf(alder),
+        );
+        render(
+          <>
+            <MapBoard
+              board={table.board}
+              actions={actionsOn(table)}
+              busy={false}
+              adjusting={false}
+            />
+            <section data-investigator="alder">
+              <h3>alder</h3>
+            </section>
+          </>,
+        );
+        underPointer = screen.getByRole('heading', { name: 'alder' });
+
+        await drag('study', 'Clues 2', clueCount, firstPawn.x, firstPawn.y);
+
+        expect(table.board.investigator(alder).clues).toBe(1);
+        expect(table.board.investigator(bea).clues).toBe(0);
+      });
+
+      it('shows a clue token over the page while it is dragged, and none once it is dropped', () => {
+        const table = PlayTable.start(
+          house.withInvestigator(alder, { locationId: study }).withTurnOf(alder),
+        );
+        render(
+          <MapBoard
+            board={table.board}
+            actions={actionsOn(table)}
+            busy={false}
+            adjusting={false}
+          />,
+        );
+        const clues = within(tile('study')).getByRole('img', { name: 'Clues 2' });
+
+        fireEvent.pointerDown(clues, { pointerId: 1, clientX: clueCount.x, clientY: clueCount.y });
+        fireEvent.pointerMove(clues, { pointerId: 1, clientX: 600, clientY: 400 });
+        const dragged = document.body.querySelector<HTMLElement>('[data-token-ghost="clue"]');
+        fireEvent.pointerUp(clues, { pointerId: 1, clientX: 600, clientY: 400 });
+
+        expect(dragged?.style.getPropertyValue('--ghost-x')).toBe('600px');
+        expect(dragged?.style.getPropertyValue('--ghost-y')).toBe('400px');
+        expect(document.body.querySelector('[data-token-ghost]')).toBeNull();
+      });
     });
 
     it('moves an enemy to the location it is dropped on, connected or not', async () => {
@@ -933,8 +1094,14 @@ describe('MapBoard', () => {
 
     it("marks the hallway's moves with what Frozen in Fear adds: two arrows, one for the free move", () => {
       const frozen = blankTreachery('frozen', {
-        actionCosts: [
-          { actions: ['move', 'fight', 'evade'], by: 1, who: 'threatArea', first: 'eachRound' },
+        modifiers: [
+          {
+            value: 'actionCost',
+            of: 'threatArea',
+            actions: ['move', 'fight', 'evade'],
+            first: 'eachRound',
+            by: 1,
+          },
         ],
       });
       const table = PlayTable.start(

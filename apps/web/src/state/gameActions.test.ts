@@ -104,12 +104,13 @@ describe('gameActions', () => {
           .withCard(
             instanceId('frozen'),
             blankTreachery('frozen', {
-              actionCosts: [
+              modifiers: [
                 {
+                  value: 'actionCost',
+                  of: 'threatArea',
                   actions: ['move', 'fight', 'evade'],
-                  by: 1,
-                  who: 'threatArea',
                   first: 'eachRound',
+                  by: 1,
                 },
               ],
             }),
@@ -242,6 +243,21 @@ describe('gameActions', () => {
 
     expect(table.board.investigator(alder)).toMatchObject({ clues: 1, actions: 3 });
     expect(table.board.location(study).clues).toBe(1);
+  });
+
+  it("gives brook a clue from the study on alder's turn, as a clue dragged onto their pawn", async () => {
+    const table = PlayTable.start(
+      newGame()
+        .withLocation(study, blankLocation('study'), { revealed: true, clues: 2 })
+        .withInvestigator(alder, { locationId: study })
+        .withInvestigator(brook, { locationId: study })
+        .withTurnOf(alder),
+    );
+
+    await actionsOn(table).takeClue(study, brook);
+
+    expect(table.board.investigator(brook).clues).toBe(1);
+    expect(table.board.investigator(alder)).toMatchObject({ clues: 0, actions: 3 });
   });
 
   it.each<{ effect: string; act: (actions: GameActions) => Promise<void>; ghoul: object }>([
