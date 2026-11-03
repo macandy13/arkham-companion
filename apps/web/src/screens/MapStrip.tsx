@@ -16,9 +16,8 @@ interface StripValue {
  * on its side (`to`): `onGo` moves the view to the agenda, or to the panel of the strip's
  * investigator. Above the map the numbers of the cards row (the agenda's doom, the act's clues,
  * the encounter deck and the round), below it those of the investigator whose turn it is, else
- * the lead, else the first (their actions left on their turn, counters and skills). The map takes
- * all touches in that row, so a vertical swipe to the next row starts on a strip. Its values only
- * show as numbers and icons, so its name says them in words.
+ * the lead, else the first (their actions left on their turn, counters and skills). Its values
+ * only show as numbers and icons, so its name says them in words.
  */
 export function MapStrip({
   board,

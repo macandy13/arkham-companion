@@ -855,22 +855,22 @@
  */
 @media (orientation: portrait) and (max-width: 40rem),
   (orientation: landscape) and (max-height: 30rem) {
-  #board:not([data-view]) > header,
-  #board:not([data-view]) > header > section {
+  #board:not([data-view='cards']) > header,
+  #board:not([data-view='cards']) > header > section {
     flex-wrap: nowrap;
     gap: var(--space-1);
   }
 
   /* Without their labels, the places are plain rows of cards again. */
-  #board:not([data-view]) > header > section {
+  #board:not([data-view='cards']) > header > section {
     display: flex;
   }
 
-  #board:not([data-view]) > header {
+  #board:not([data-view='cards']) > header {
     padding-block: var(--space-1);
   }
 
-  #board:not([data-view]) > header > section > p {
+  #board:not([data-view='cards']) > header > section > p {
     position: absolute;
     width: var(--hidden-size);
     height: var(--hidden-size);
@@ -879,7 +879,7 @@
     white-space: nowrap;
   }
 
-  #board:not([data-view]) > header > section > [data-card] > :is(h1, h2) {
+  #board:not([data-view='cards']) > header > section > [data-card] > :is(h1, h2) {
     padding: var(--space-1);
     font-size: var(--font-size-note);
     line-height: 1;
@@ -892,19 +892,19 @@
  * either view. The status row keeps to one line.
  */
 @media (orientation: portrait) and (max-width: 40rem) {
-  #board:not([data-view]) > header [data-pile],
-  #board:not([data-view]) > header > section:has([data-pile='victoryDisplay']),
+  #board:not([data-view='cards']) > header [data-pile],
+  #board:not([data-view='cards']) > header > section:has([data-pile='victoryDisplay']),
   #board > header > section[data-pool],
-  #board:not([data-view]) > header > section > [data-card] > footer {
+  #board:not([data-view='cards']) > header > section > [data-card] > footer {
     display: none;
   }
 
-  #board:not([data-view]) > #status {
+  #board > #status {
     gap: var(--space-1);
   }
 
   /* Opens the detail view on the map row, from the corner the map's zoom buttons leave free. */
-  #board:not([data-view]) > #map > button[data-detail='expand'] {
+  #board:not([data-view='map']) > #map > button[data-detail='expand'] {
     position: absolute;
     z-index: var(--layer-map-controls);
     inset-block-end: var(--space-2);
@@ -915,12 +915,12 @@
     border-radius: var(--radius-round);
   }
 
-  #board:not([data-view]) > #map > button[data-detail='expand']::before {
+  #board:not([data-view='map']) > #map > button[data-detail='expand']::before {
     mask-image: url('../map/icons/expand.svg');
   }
 
   /* The track names only the current phase, so the row keeps its buttons on one line. */
-  #board:not([data-view]) > #status > ol > li:not([aria-current]) {
+  #board > #status > ol > li:not([aria-current]) {
     position: absolute;
     width: var(--hidden-size);
     height: var(--hidden-size);
@@ -977,45 +977,42 @@
 }
 
 /*
- * The phone's detail view (`data-view='detail'`, DetailControls): the header, the map and the
- * investigators as three rows a screen tall, snapped vertically, and the header's places snapped
- * sideways, each a screen wide with its label, piles and plate again. The status row steps aside;
- * the notices float over whichever row shows. The × and the dots float over the rows.
+ * The phone's detail view (`data-view`, DetailControls) shows one row of the board at a time. The
+ * header expands in place (`cards`): its places snapped sideways, each a screen wide with its
+ * label, piles and plate again, over the status row, the map, which shrinks to the room left, and
+ * the compact investigator. The map (`map`) and the investigator panels (`investigators`) take the
+ * whole screen, the rest stepping aside. The notices, the × and the dots float over the board.
  */
 @media (orientation: portrait) and (max-width: 40rem) {
-  #board[data-view='detail'] {
+  #board:is([data-view='map'], [data-view='investigators']) {
     display: flex;
     flex-direction: column;
-    overflow-y: auto;
-    scroll-snap-type: y mandatory;
-    scrollbar-width: none;
   }
 
-  #board[data-view='detail'] > :is(header, #map, #investigators) {
-    flex: none;
-    box-sizing: border-box;
-    height: 100%;
-    scroll-snap-align: start;
-    scroll-snap-stop: always;
-  }
-
-  #board[data-view='detail'] > #status {
+  #board[data-view='map'] > :is(header, #status, #investigators),
+  #board[data-view='investigators'] > :is(header, #status, #map) {
     display: none;
   }
 
-  #board[data-view='detail'] > header {
+  #board:is([data-view='map'], [data-view='investigators']) > :is(#map, #investigators) {
+    flex: 1;
+    box-sizing: border-box;
+  }
+
+  /* Room under the places for their dots. */
+  #board[data-view='cards'] > header {
     flex-wrap: nowrap;
     justify-content: start;
     align-items: center;
     gap: 0;
-    padding: 0;
+    padding: var(--space-2) 0 calc(var(--detail-dot-size) + var(--space-3));
     overflow-x: auto;
     scroll-snap-type: x mandatory;
     scrollbar-width: none;
   }
 
   /* Each place fills the row; the token pool, which a phone has no room for, stays hidden. */
-  #board[data-view='detail'] > header > section:not([data-pool]) {
+  #board[data-view='cards'] > header > section:not([data-pool]) {
     display: flex;
     flex-wrap: wrap;
     flex: none;
@@ -1025,22 +1022,21 @@
   }
 
   /* The agenda's or act's action row, under the card shown full (GameHeader `full`). */
-  #board[data-view='detail'] > header > section > footer {
+  #board[data-view='cards'] > header > section > footer {
     flex-basis: 100%;
   }
 
   /*
    * The map row: the map between its two strips (MapStrip). The map takes every touch, for panning
-   * and pinching, so the browser never starts scrolling the board before the map's own handlers
-   * claim the touch; a vertical swipe to the next row starts on a strip, which the board scrolls.
+   * and pinching, so the browser never scrolls the page before the map's own handlers claim it.
    */
-  #board[data-view='detail'] > #map figure {
+  #board[data-view='map'] > #map figure {
     position: relative;
     touch-action: none;
   }
 
   /* The location mode (LocationFocus) fills the room between the strips and scrolls on its own. */
-  #board[data-view='detail'] > #map > section[data-mode='location'] {
+  #board[data-view='map'] > #map > section[data-mode='location'] {
     flex: 1;
     flex-wrap: nowrap;
     align-self: stretch;
@@ -1050,11 +1046,11 @@
   }
 
   /* Each part keeps its height, so the column scrolls instead of squeezing them. */
-  #board[data-view='detail'] > #map > section[data-mode='location'] > * {
+  #board[data-view='map'] > #map > section[data-mode='location'] > * {
     flex: none;
   }
 
-  #board[data-view='detail'] > #map > section[data-mode='location'] > button {
+  #board[data-view='map'] > #map > section[data-mode='location'] > button {
     align-self: start;
   }
 
@@ -1062,7 +1058,7 @@
    * The location's card with its neighbours around it (LocationFocus), each side's tiles in a line
    * along it, as they lie on the map. A new location slides in from the side it was tapped on.
    */
-  #board[data-view='detail'] [data-compass] {
+  #board[data-view='map'] [data-compass] {
     display: grid;
     grid-template:
       '. above .' auto
@@ -1073,14 +1069,14 @@
     justify-items: center;
   }
 
-  #board[data-view='detail'] [data-compass] > svg {
+  #board[data-view='map'] [data-compass] > svg {
     grid-area: card;
     width: 100%;
     max-width: var(--layout-zoom-card-width);
     filter: var(--piece-shadow);
   }
 
-  #board[data-view='detail'] [data-compass] > ul {
+  #board[data-view='map'] [data-compass] > ul {
     display: flex;
     gap: var(--space-1);
     margin: 0;
@@ -1088,33 +1084,33 @@
     list-style: none;
   }
 
-  #board[data-view='detail'] [data-compass] > ul[data-side='above'] {
+  #board[data-view='map'] [data-compass] > ul[data-side='above'] {
     grid-area: above;
   }
 
-  #board[data-view='detail'] [data-compass] > ul[data-side='below'] {
+  #board[data-view='map'] [data-compass] > ul[data-side='below'] {
     grid-area: below;
   }
 
-  #board[data-view='detail'] [data-compass] > ul[data-side='left'] {
+  #board[data-view='map'] [data-compass] > ul[data-side='left'] {
     grid-area: left;
     flex-direction: column;
   }
 
-  #board[data-view='detail'] [data-compass] > ul[data-side='right'] {
+  #board[data-view='map'] [data-compass] > ul[data-side='right'] {
     grid-area: right;
     flex-direction: column;
   }
 
   /* Resets the home screen's framed list items, which `#app > main ul > li` gives every list. */
-  #board[data-view='detail'] [data-compass] li {
+  #board[data-view='map'] [data-compass] li {
     padding: 0;
     border: none;
     background: none;
   }
 
   /* A neighbour: a small parchment tile with its symbol and name, and who is there. */
-  #board[data-view='detail'] [data-compass] button {
+  #board[data-view='map'] [data-compass] button {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -1128,21 +1124,21 @@
     font-size: var(--font-size-note);
   }
 
-  #board[data-view='detail'] [data-compass] button > svg {
+  #board[data-view='map'] [data-compass] button > svg {
     width: var(--button-compact);
     height: var(--button-compact);
   }
 
-  #board[data-view='detail'] [data-compass] button[data-blocked] {
+  #board[data-view='map'] [data-compass] button[data-blocked] {
     border-style: dashed;
     border-color: var(--color-doom);
   }
 
-  #board[data-view='detail'] [data-compass] button[data-one-way='in'] {
+  #board[data-view='map'] [data-compass] button[data-one-way='in'] {
     border-style: dotted;
   }
 
-  #board[data-view='detail'] [data-compass] button > [data-pieces] {
+  #board[data-view='map'] [data-compass] button > [data-pieces] {
     display: flex;
     gap: var(--space-1);
     font-weight: bold;
@@ -1156,35 +1152,35 @@
   }
 
   @media (prefers-reduced-motion: no-preference) {
-    #board[data-view='detail'] > #map > section[data-mode='location'][data-from] {
+    #board[data-view='map'] > #map > section[data-mode='location'][data-from] {
       animation: location-arrives var(--duration-slide) ease-out;
     }
 
-    #board[data-view='detail'] > #map > section[data-from='above'] {
+    #board[data-view='map'] > #map > section[data-from='above'] {
       --arrive-from: 0 calc(-1 * var(--space-5));
     }
 
-    #board[data-view='detail'] > #map > section[data-from='below'] {
+    #board[data-view='map'] > #map > section[data-from='below'] {
       --arrive-from: 0 var(--space-5);
     }
 
-    #board[data-view='detail'] > #map > section[data-from='left'] {
+    #board[data-view='map'] > #map > section[data-from='left'] {
       --arrive-from: calc(-1 * var(--space-5)) 0;
     }
 
-    #board[data-view='detail'] > #map > section[data-from='right'] {
+    #board[data-view='map'] > #map > section[data-from='right'] {
       --arrive-from: var(--space-5) 0;
     }
   }
 
   /* The zoom buttons float over the map's corner, under the upper strip; the tabs take a line. */
-  #board[data-view='detail'] > #map > [role='tablist'] {
+  #board[data-view='map'] > #map > [role='tablist'] {
     position: static;
     align-self: start;
     margin: var(--space-2);
   }
 
-  #board[data-view='detail'] > #map > button[data-strip] {
+  #board[data-view='map'] > #map > button[data-strip] {
     flex: none;
     flex-wrap: wrap;
     align-self: stretch;
@@ -1196,18 +1192,18 @@
   }
 
   /* Clear of the × at the top left. */
-  #board[data-view='detail'] > #map > button[data-strip='cards'] {
+  #board[data-view='map'] > #map > button[data-strip='cards'] {
     padding-inline-start: calc(var(--touch-target) + var(--space-3));
   }
 
-  #board[data-view='detail'] > #map > button[data-strip] > span {
+  #board[data-view='map'] > #map > button[data-strip] > span {
     display: inline-flex;
     align-items: center;
     gap: var(--space-1);
     white-space: nowrap;
   }
 
-  #board[data-view='detail'] > #map > button[data-strip] > :is([data-stat], [data-skill])::before {
+  #board[data-view='map'] > #map > button[data-strip] > :is([data-stat], [data-skill])::before {
     content: '';
     width: var(--stat-icon-size);
     height: var(--stat-icon-size);
@@ -1215,44 +1211,61 @@
     mask: var(--stat-icon, var(--skill-icon)) center / contain no-repeat;
   }
 
-  #board[data-view='detail'] > #map > button[data-strip] > [data-stat='round']::before {
+  #board[data-view='map'] > #map > button[data-strip] > [data-stat='round']::before {
     content: none;
   }
 
-  #board[data-view='detail'] > #map > button[data-strip] > [data-stat='cards'] {
+  #board[data-view='map'] > #map > button[data-strip] > [data-stat='cards'] {
     --stat-icon: url('../investigators/icons/token.svg');
     --stat-colour: var(--color-card-encounter);
   }
 
-  #board[data-view='detail'] > #map > button[data-strip] > [data-stat='actions'] {
+  #board[data-view='map'] > #map > button[data-strip] > [data-stat='actions'] {
     --stat-icon: url('../symbols/action.svg');
   }
 
-  #board[data-view='detail'] > #notices {
+  /*
+   * Over the whole-screen map or panels the notices float at the foot; under the expanded header
+   * they keep their grid place over the map's foot.
+   */
+  #board:is([data-view='map'], [data-view='investigators']) > #notices {
     position: fixed;
     inset-inline: calc(var(--space-2) + var(--safe-left)) calc(var(--space-2) + var(--safe-right));
     inset-block-end: calc(var(--space-5) + var(--safe-bottom));
     z-index: var(--layer-detail-controls);
   }
 
-  /* At the top left, clear of the map's zoom buttons at its top right. */
-  #board[data-view='detail'] > button[data-detail='close'] {
-    position: fixed;
-    inset-block-start: calc(var(--space-2) + var(--safe-top));
-    inset-inline-start: calc(var(--space-2) + var(--safe-left));
+  #board[data-view] > button[data-detail='close'] {
     z-index: var(--layer-detail-controls);
     border-radius: var(--radius-round);
   }
 
-  #board[data-view='detail'] > button[data-detail='close']::before {
+  #board[data-view] > button[data-detail='close']::before {
     mask-image: url('../investigators/icons/close.svg');
   }
 
-  /* The row dots stand down the right edge, the card dots along the foot. */
-  #board[data-view='detail'] > ol[data-dots] {
+  /* At the top left, clear of the map's zoom buttons at its top right. */
+  #board:is([data-view='map'], [data-view='investigators']) > button[data-detail='close'] {
     position: fixed;
+    inset-block-start: calc(var(--space-2) + var(--safe-top));
+    inset-inline-start: calc(var(--space-2) + var(--safe-left));
+  }
+
+  /*
+   * Over the expanded header's top right corner and its foot: the board's grid lays the × and the
+   * dots over the header's own area.
+   */
+  #board[data-view='cards'] > button[data-detail='close'] {
+    grid-area: header;
+    align-self: start;
+    justify-self: end;
+    margin: var(--space-2) calc(var(--space-2) + var(--safe-right)) 0 0;
+  }
+
+  #board[data-view] > ol[data-dots] {
     z-index: var(--layer-detail-controls);
     display: flex;
+    justify-content: center;
     gap: var(--space-2);
     margin: 0;
     padding: 0;
@@ -1260,20 +1273,19 @@
     pointer-events: none;
   }
 
-  #board[data-view='detail'] > ol[data-dots='rows'] {
-    flex-direction: column;
-    inset-inline-end: calc(var(--space-1) + var(--safe-right));
-    inset-block-start: 50%;
-    transform: translateY(-50%);
+  #board[data-view='cards'] > ol[data-dots] {
+    grid-area: header;
+    align-self: end;
+    padding-block-end: var(--space-2);
   }
 
-  #board[data-view='detail'] > ol[data-dots='items'] {
+  #board[data-view='investigators'] > ol[data-dots] {
+    position: fixed;
     inset-inline: 0;
     inset-block-end: calc(var(--space-2) + var(--safe-bottom));
-    justify-content: center;
   }
 
-  #board[data-view='detail'] > ol[data-dots] > li {
+  #board[data-view] > ol[data-dots] > li {
     width: var(--detail-dot-size);
     height: var(--detail-dot-size);
     padding: 0;
@@ -1282,7 +1294,7 @@
     background: none;
   }
 
-  #board[data-view='detail'] > ol[data-dots] > li[data-current] {
+  #board[data-view] > ol[data-dots] > li[data-current] {
     background: var(--color-accent);
   }
 }

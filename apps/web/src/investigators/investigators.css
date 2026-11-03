@@ -452,18 +452,18 @@
  * (`data-focus`), across the width under the map, with the others as round avatars along its top.
  */
 @media (orientation: portrait) and (max-width: 40rem) {
-  #board:not([data-view]) > #investigators {
+  #board:not([data-view='investigators']) > #investigators {
     flex-direction: column;
     align-items: stretch;
     gap: var(--space-1);
     padding-block: var(--space-1);
   }
 
-  #board:not([data-view]) > #investigators > section {
+  #board:not([data-view='investigators']) > #investigators > section {
     width: 100%;
   }
 
-  #board:not([data-view]) > #investigators > section:not([data-focus]) {
+  #board:not([data-view='investigators']) > #investigators > section:not([data-focus]) {
     display: none;
   }
 
@@ -473,7 +473,7 @@
    * is), and stay for screen readers. Dense packing lifts the controls, after the cards in play
    * in the markup, into the markers' row.
    */
-  #board:not([data-view]) > #investigators > section {
+  #board:not([data-view='investigators']) > #investigators > section {
     display: grid;
     grid-template-columns: auto minmax(0, 1fr);
     grid-auto-flow: row dense;
@@ -481,21 +481,21 @@
     column-gap: var(--space-2);
   }
 
-  #board:not([data-view]) > #investigators > section > * {
+  #board:not([data-view='investigators']) > #investigators > section > * {
     grid-column: 1 / -1;
   }
 
-  #board:not([data-view]) > #investigators > section > p[data-whereabouts] {
+  #board:not([data-view='investigators']) > #investigators > section > p[data-whereabouts] {
     grid-column: 1;
   }
 
   /* The controls keep to the right, apart from the markers, so the turn marker's arrow is not read as an action. */
-  #board:not([data-view]) > #investigators > section > :is(button, [role='group']) {
+  #board:not([data-view='investigators']) > #investigators > section > :is(button, [role='group']) {
     grid-column: 2;
     justify-self: end;
   }
 
-  #board:not([data-view])
+  #board:not([data-view='investigators'])
     > #investigators
     > section:has(> :is(button, [role='group']))
     > p[data-whereabouts]
@@ -508,7 +508,7 @@
     white-space: nowrap;
   }
 
-  #board:not([data-view]) > #investigators > ul {
+  #board:not([data-view='investigators']) > #investigators > ul {
     display: flex;
     gap: var(--space-2);
     margin: 0;
@@ -516,14 +516,14 @@
     list-style: none;
   }
 
-  #board:not([data-view]) > #investigators > ul > li {
+  #board:not([data-view='investigators']) > #investigators > ul > li {
     padding: 0;
     border: none;
     background: none;
   }
 
   /* The initial and the picture share the disc; the picture covers the initial once it loads. */
-  #board:not([data-view]) > #investigators > ul > li > button {
+  #board:not([data-view='investigators']) > #investigators > ul > li > button {
     display: grid;
     grid-template: 1fr / 1fr;
     place-items: center;
@@ -541,24 +541,29 @@
   }
 
   /* An investigator whose turn it is stays marked while another one is in front. */
-  #board:not([data-view]) > #investigators > ul > li[data-turn] > button {
+  #board:not([data-view='investigators']) > #investigators > ul > li[data-turn] > button {
     box-shadow: var(--turn-glow);
   }
 
-  #board:not([data-view]) > #investigators > ul > li > button > * {
+  #board:not([data-view='investigators']) > #investigators > ul > li > button > * {
     grid-area: 1 / 1;
   }
 
-  #board:not([data-view]) > #investigators > ul > li > button > picture {
+  #board:not([data-view='investigators']) > #investigators > ul > li > button > picture {
     position: relative;
     place-self: stretch;
   }
 
-  #board:not([data-view]) > #investigators > ul > li > button > picture:not([data-picture]) {
+  #board:not([data-view='investigators'])
+    > #investigators
+    > ul
+    > li
+    > button
+    > picture:not([data-picture]) {
     visibility: hidden;
   }
 
-  #board:not([data-view]) > #investigators > ul > li > button > picture > img {
+  #board:not([data-view='investigators']) > #investigators > ul > li > button > picture > img {
     position: absolute;
     width: calc(100% / var(--investigator-art-width));
     max-width: none;
@@ -568,12 +573,12 @@
 }
 
 /*
- * The phone's detail view (`data-view='detail'`, game.css): every investigator's whole panel, a
- * screen wide, snapped sideways in seat order, with the threat area above the card and the turn
- * controls under it, as on a tablet.
+ * The phone's detail view on the investigators (`data-view='investigators'`, game.css): every
+ * investigator's whole panel, a screen wide, snapped sideways in seat order, with the threat area
+ * above the card and the turn controls under it, as on a tablet.
  */
 @media (orientation: portrait) and (max-width: 40rem) {
-  #board[data-view='detail'] > #investigators {
+  #board[data-view='investigators'] > #investigators {
     align-items: center;
     gap: 0;
     padding: 0;
@@ -583,7 +588,7 @@
     scrollbar-width: none;
   }
 
-  #board[data-view='detail'] > #investigators > section {
+  #board[data-view='investigators'] > #investigators > section {
     box-sizing: border-box;
     width: 100%;
     padding: var(--space-2);

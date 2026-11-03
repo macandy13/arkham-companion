@@ -42,7 +42,8 @@ import type { HeaderCardKind } from './useDetailView';
  * cards calls `onOpenCard` instead (the detail view opens on it), so the card's own buttons and
  * dialogs wait for the detail view. There the cards show `full`: the agenda and act are already
  * as large as the screen allows, so their action rows sit under them and a tap opens no second,
- * full-card dialog. `printedReference` is what the card catalog prints on the scenario card's
+ * full-card dialog; the upright scenario card is too narrow there for its rows, so it still opens
+ * its own. `printedReference` is what the card catalog prints on the scenario card's
  * side in play; until it has loaded the card shows its rows without texts.
  */
 export function GameHeader({
@@ -94,12 +95,7 @@ export function GameHeader({
         onOpen={onOpenCard}
       />
       <HeaderSlot label={t('header.scenario')} card="scenario" onOpen={onOpenCard}>
-        <ScenarioStatus
-          open={open}
-          board={board}
-          printed={printedReference}
-          opens={!onOpenCard && !full}
-        />
+        <ScenarioStatus open={open} board={board} printed={printedReference} opens={!onOpenCard} />
         <HeaderPile pile="setAside" {...piles} />
       </HeaderSlot>
       <HeaderSlot label={t('header.victory')}>
