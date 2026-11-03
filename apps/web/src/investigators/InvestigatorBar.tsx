@@ -20,7 +20,7 @@ import { signed } from './TestCalculation';
 import { PlayArea } from './PlayArea';
 import { ThreatArea } from './ThreatArea';
 import { TurnControls } from './TurnControls';
-import { CardZoom } from '../screens/CardZoom';
+import { InvestigatorCard } from './InvestigatorCard';
 import { deltaText, useCountChange } from '../screens/countChange';
 import './investigators.css';
 
@@ -145,7 +145,7 @@ function OtherInvestigators({
  * of the printed one (`InvestigatorFace`) with the name and subname on its plates, the four skills
  * on their chain and the counters on a strip of its notebook page. The players hold the card
  * itself, so its abilities and flavour stay off the screen to leave the board its room; a tap on
- * the art shows the whole card (`CardZoom`). Then where they are and how their round goes, the
+ * the art shows the whole card with its text (`InvestigatorCard`). Then where they are and how their round goes, the
  * cards they control (`PlayArea`) and their turn controls. Before where they are, a pentagon marks
  * the lead investigator, like the game's lead investigator token, and an action arrow the
  * investigator whose turn it is. Health and sanity show what is left of the printed value, like
@@ -250,16 +250,21 @@ function InvestigatorPanel({
         <Counters investigator={investigator} adjusting={adjusting} busy={busy} actions={actions} />
       </article>
       {zoomed && (
-        <CardZoom
-          card={{
-            name: investigator.name,
-            type: 'investigator',
-            // The scan prints the traits; the fallback without it names the card only.
-            traits: [],
-            ...(investigator.image && { image: investigator.image }),
-          }}
+        <InvestigatorCard
+          investigator={investigator}
+          printed={printed}
+          picture={picture}
           onClose={() => setZoomed(false)}
-        />
+        >
+          <Skills
+            board={board}
+            investigator={investigator}
+            adjusting={false}
+            busy={busy}
+            actions={actions}
+          />
+          <Counters investigator={investigator} adjusting={false} busy={busy} actions={actions} />
+        </InvestigatorCard>
       )}
       <p data-whereabouts="">
         {lead && <span role="img" aria-label={t('investigators.lead')} data-marker="lead" />}

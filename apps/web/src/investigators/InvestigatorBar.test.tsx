@@ -21,6 +21,7 @@ import {
 import { range } from '@arkham/util';
 import { initI18n } from '../i18n';
 import { InvestigatorBar } from './InvestigatorBar';
+import { textLength } from './InvestigatorCard';
 import { actionsOn } from '../state/gameActions.test_support';
 
 const study = instanceId('study');
@@ -362,7 +363,7 @@ describe('InvestigatorBar', () => {
     );
   });
 
-  it('shows the whole card, with its abilities, from a tap on the art', () => {
+  it('opens the whole card from a tap on the art, its traits, abilities and flavour on its notebook page', () => {
     const table = PlayTable.start(
       newGame()
         .withLocation(study, blankLocation('study'))
@@ -374,12 +375,38 @@ describe('InvestigatorBar', () => {
         actions={actionsOn(table)}
         busy={false}
         adjusting={false}
+        printed={() => ({
+          factionCode: 'guardian',
+          traits: 'Tester. Hero.',
+          text: '[reaction] After you pass a test: gain 1 resource.\n<b>Forced</b> – Nothing.',
+          flavor: 'It always works in the tests.',
+        })}
       />,
     );
 
     fireEvent.click(within(panel('alder')).getByRole('button', { name: "Show alder's card" }));
 
-    expect(screen.getByRole('dialog', { name: 'alder' })).toBeTruthy();
+    const card = screen.getByRole('dialog', { name: 'alder' });
+    // The page is a plain block of the card's paragraphs, with no role of its own; each symbol
+    // reads as its name in braces.
+    for (const icon of card.querySelectorAll('[data-page] [role="img"]')) {
+      icon.textContent = `{${icon.getAttribute('aria-label') ?? ''}}`;
+    }
+    const page = Array.from(card.querySelectorAll('[data-page] > *'), (part) => part.textContent);
+    expect(page).toEqual([
+      'Tester. Hero.',
+      '{Reaction} After you pass a test: gain 1 resource.',
+      'Forced – Nothing.',
+      'It always works in the tests.',
+    ]);
+  });
+
+  it.each([
+    { size: 'short', text: 'x'.repeat(200) },
+    { size: 'long', text: 'x'.repeat(300) },
+    { size: 'longest', text: 'x'.repeat(450) },
+  ])('sets a page of $text.length characters in its $size size', ({ size, text }) => {
+    expect(textLength({ factionCode: 'seeker', text })).toBe(size);
   });
 
   it.each([

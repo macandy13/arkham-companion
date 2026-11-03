@@ -12,11 +12,12 @@ import './investigator_face.css';
  * exact card templates, MD.10): the class shield in the top left corner, the name plate with its
  * pointed right end and the subname plate under it, the skill chain across the top right with
  * one plate per skill with its value and icon, and the spiral-bound notebook page under it. The
- * play screen shows only the card's top (`card.height`): the players hold the card, so its
- * abilities and flavour make way for the board, and the page is a strip for the counters. The
+ * play screen's banner shows only the card's top (`card.height`): the players hold the card, so
+ * its abilities and flavour make way for the board, and the page is a strip for the counters. The
  * scan's art is lifted by `art.lift`, so the portrait's face shows under the plates, and the frame
  * covers what the lifted scan prints round it: a header behind the plates and a column round the
- * page. The panel's HTML (InvestigatorBar) lies over these places, which tokens.css gives
+ * page. The whole card (`full`), opened from the banner, keeps the scan's height and the page's
+ * full length for its text. The panel's HTML (InvestigatorBar) lies over these places, which tokens.css gives
  * again for the stylesheet (`--investigator-*`, in the same scan units): change both together.
  */
 export const INVESTIGATOR_FACE = {
@@ -37,6 +38,8 @@ export const INVESTIGATOR_FACE = {
   rules: { left: 236, right: 410, first: 86, step: 14.5, last: 120 },
   /** The binding: a loop every `step` along the page's top, `rise` high, its end `reach` along and `drop` down. */
   spiral: { first: 238, last: 412, step: 8.7, y: 62, rise: 12, reach: 4, drop: 6, eye: 1.6 },
+  /** The whole card's page: as long as the printed one, its last rule near the card's foot. */
+  full: { pageHeight: 232, lastRule: 282 },
 } as const;
 
 /**
@@ -57,15 +60,23 @@ export const INVESTIGATOR_STRIP = {
   paper: { left: 88, top: 46, width: 326, height: 38 },
 } as const;
 
-/** The two shapes of the card on the play screen: the tablet's banner and the phone's strip. */
-export type InvestigatorFaceShape = 'banner' | 'strip';
+/**
+ * The shapes of the card: the tablet's banner and the phone's strip on the play screen, and the
+ * whole card, page and all, that either opens (`InvestigatorCard`).
+ */
+export type InvestigatorFaceShape = 'banner' | 'strip' | 'full';
 
 const { width, height } = LANDSCAPE_SCAN;
 const cardHeight = INVESTIGATOR_FACE.card.height;
 
-/** The face's parts as SVG paths in scan units, each named for the stylesheet. */
-function facePaths() {
-  const { shield, name, subname, page, rules, spiral, link, ring, art } = INVESTIGATOR_FACE;
+/**
+ * The face's parts as SVG paths in scan units, each named for the stylesheet, for a page
+ * `pageHeight` long with rules down to `lastRule`.
+ */
+function facePaths(pageHeight: number, lastRule: number) {
+  const { shield, name, subname, spiral, link, ring, art } = INVESTIGATOR_FACE;
+  const page = { ...INVESTIGATOR_FACE.page, height: pageHeight };
+  const rules = { ...INVESTIGATOR_FACE.rules, last: lastRule };
   const middle = (name.top + name.bottom) / 2;
   const half = (shield.left + shield.right) / 2;
   const ruleCount = Math.floor((rules.last - rules.first) / rules.step) + 1;
@@ -97,15 +108,17 @@ function facePaths() {
   };
 }
 
-/** The face's paths, the same for every card (`facePaths`). */
-const PATHS = facePaths();
+/** The banner's paths and the whole card's, the same for every card (`facePaths`). */
+const PATHS = facePaths(INVESTIGATOR_FACE.page.height, INVESTIGATOR_FACE.rules.last);
+const FULL_PATHS = facePaths(INVESTIGATOR_FACE.full.pageHeight, INVESTIGATOR_FACE.full.lastRule);
 
 /**
  * The top of an investigator card's face in the card theme's colours (`--color-face-*`), in
  * landscape scan units: our own drawing of the printed layout (`INVESTIGATOR_FACE`, no FFG art) over the
  * card's `picture` once it has loaded (a hatch until then, and for good offline), so the printed
  * frame and text of the scan fall under the face's own. The tablet's `banner` shows the card's
- * top; the phone's `strip` packs the same parts into a slimmer row (`INVESTIGATOR_STRIP`). The
+ * top; the phone's `strip` packs the same parts into a slimmer row (`INVESTIGATOR_STRIP`); `full`
+ * is the whole card, its page long enough for the abilities. The
  * shield takes the colour and icon of the investigator's `investigatorClass`; each skill's plate
  * its icon in the face's ink. The panel lays the name, the skills' values and the counters over
  * it in HTML (InvestigatorBar), so this is decoration only (`aria-hidden`).
@@ -122,28 +135,40 @@ export function InvestigatorFace({
   return shape === 'strip' ? (
     <StripFace picture={picture} investigatorClass={investigatorClass} />
   ) : (
-    <BannerFace picture={picture} investigatorClass={investigatorClass} />
+    <LandscapeFace
+      picture={picture}
+      investigatorClass={investigatorClass}
+      full={shape === 'full'}
+    />
   );
 }
 
-/** The tablet's banner (`INVESTIGATOR_FACE`): the printed card's top, its page a strip for the counters. */
-function BannerFace({
+/**
+ * The printed card's layout (`INVESTIGATOR_FACE`): the tablet's banner, its top with the page a
+ * strip for the counters, or, `full`, the whole card with the scan's art unlifted and no frame
+ * needed round it.
+ */
+function LandscapeFace({
   picture,
   investigatorClass,
+  full,
 }: {
   picture: CardPicture | undefined;
   investigatorClass: InvestigatorClass | undefined;
+  full: boolean;
 }) {
   const pageId = useId();
   const { spiral, art } = INVESTIGATOR_FACE;
+  const paths = full ? FULL_PATHS : PATHS;
+  const faceHeight = full ? height : cardHeight;
   return (
-    <svg viewBox={`0 0 ${width} ${cardHeight}`} aria-hidden="true" data-face="investigator">
+    <svg viewBox={`0 0 ${width} ${faceHeight}`} aria-hidden="true" data-face="investigator">
       <PageGradient id={pageId} />
-      <rect data-part="art" width={width} height={cardHeight} />
+      <rect data-part="art" width={width} height={faceHeight} />
       {picture && (
         <image
           href={picture.url}
-          y={-art.lift}
+          y={full ? 0 : -art.lift}
           width={width}
           height={height}
           preserveAspectRatio="none"
@@ -151,16 +176,16 @@ function BannerFace({
           onError={picture.onError}
         />
       )}
-      <path data-part="frame" d={PATHS.frame} />
+      {!full && <path data-part="frame" d={paths.frame} />}
       <Shield investigatorClass={investigatorClass} />
       <Plates />
       <Chain />
-      <path data-part="page-shadow" d={PATHS.pageShadow} />
-      <path data-part="page" d={PATHS.page} fill={`url(#${pageId})`} />
-      <NightSky page={PATHS.page} scan={{ width, height: cardHeight }} />
-      <path data-part="rules" d={PATHS.rules} />
-      <path data-part="spiral" d={PATHS.spiral} />
-      {PATHS.spiralEyes.map((x) => (
+      <path data-part="page-shadow" d={paths.pageShadow} />
+      <path data-part="page" d={paths.page} fill={`url(#${pageId})`} />
+      <NightSky page={paths.page} scan={{ width, height: faceHeight }} />
+      <path data-part="rules" d={paths.rules} />
+      <path data-part="spiral" d={paths.spiral} />
+      {paths.spiralEyes.map((x) => (
         <circle key={x} data-part="spiral-eye" cx={x} cy={spiral.y} r={spiral.eye} />
       ))}
     </svg>

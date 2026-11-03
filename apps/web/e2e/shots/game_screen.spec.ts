@@ -40,9 +40,9 @@ test(
       .getByRole('button', { name: "Show Roland Banks's card" })
       .click();
 
-    await expect(
-      page.getByRole('dialog', { name: 'Roland Banks' }).getByRole('img', { name: /Roland Banks/ }),
-    ).toBeVisible();
+    const card = page.getByRole('dialog', { name: 'Roland Banks' });
+    await expect(card.getByRole('heading', { name: 'Roland Banks' })).toBeVisible();
+    await expect(card.getByRole('button', { name: 'Combat 4' })).toBeVisible();
   },
 );
 

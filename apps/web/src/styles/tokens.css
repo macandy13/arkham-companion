@@ -316,8 +316,6 @@
   --layout-zoom-card-width: 15rem;
   /* A sideways card zoomed (an investigator card), wide enough to read its abilities. */
   --layout-zoom-landscape-width: 30rem;
-  /* A landscape scan's proportions (LANDSCAPE_SCAN, 419 × 300). */
-  --landscape-card-ratio: 419 / 300;
   /* A neighbour's tile beside the location's card in the phone's location mode, as in the prototype. */
   --layout-neighbour-width: 4.8rem;
   /* Connection lines on the map, in its SVG user units (mapLayout.ts TILE). */
@@ -734,6 +732,25 @@
     0.3% 20%,
     0.6% 10%
   );
+}
+
+/*
+ * The whole investigator card (`InvestigatorCard`, the face's `full` shape): the counters back at
+ * the foot of the full page, doom above the clue token, and the page's text (its box on the page,
+ * the text sizes, smaller for a long text, `data-length`), in the banner's scan units.
+ */
+[data-card='investigator'][data-shape='full'] {
+  --investigator-counters-y: 256;
+  --investigator-doom-x: 256;
+  --investigator-doom-y: 220;
+  --investigator-page-left: 244;
+  --investigator-page-top: 64;
+  --investigator-page-width: 160;
+  --investigator-page-height: 166;
+  --investigator-text-size: 13;
+  --investigator-long-text-size: 11.5;
+  --investigator-longest-text-size: 10;
+  --investigator-traits-size: 11.5;
 }
 
 /*
