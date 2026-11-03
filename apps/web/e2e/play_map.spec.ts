@@ -199,8 +199,9 @@ test('move and take a clue from the location details', { tag: '@flow' }, async (
     await expect(room('Attic').getByRole('img', { name: /^Shroud/ })).toBeVisible();
   });
 
+  let clues = 0;
   await test.step('Tap the Attic again and take one of its clues without a test', async () => {
-    const clues = Number(
+    clues = Number(
       await room('Attic')
         .getByRole('img', { name: /^Clues/ })
         .textContent(),
@@ -212,13 +213,13 @@ test('move and take a clue from the location details', { tag: '@flow' }, async (
     await expect(room('Attic').getByRole('img', { name: `Clues ${clues - 1}` })).toBeVisible();
   });
 
-  await test.step("Drag the Attic's last clue onto Roland Banks' pawn", async () => {
+  await test.step("Drag another of the Attic's clues onto Roland Banks' pawn", async () => {
     await dragTo(
       page,
-      room('Attic').getByRole('img', { name: 'Clues 1' }),
+      room('Attic').getByRole('img', { name: `Clues ${clues - 1}` }),
       room('Attic').getByRole('img', { name: /^Roland Banks/ }),
     );
-    await expect(room('Attic').getByRole('img', { name: 'Clues 0' })).toBeVisible();
+    await expect(room('Attic').getByRole('img', { name: `Clues ${clues - 2}` })).toBeVisible();
   });
 });
 

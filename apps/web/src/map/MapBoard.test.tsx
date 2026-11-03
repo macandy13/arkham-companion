@@ -453,10 +453,11 @@ describe('MapBoard', () => {
 
   // The Study's tile spans 0–150 across and 0–210 down. Pieces stand in a row along its bottom
   // edge, investigators first: the first centred on (24, 186), an enemy engaged with them next on
-  // (58, 186), and an enemy engaged with no one after a line, on (70, 186). The Hallway's tile
-  // starts at x 180.
+  // (58, 186), and an enemy engaged with no one after a line, on (70, 186). The Study's clue count
+  // sits on its clue value, centred on (127, 122). The Hallway's tile starts at x 180.
   describe('dragging pieces', () => {
     const firstPawn = { x: 24, y: 186 };
+    const clueCount = { x: 127, y: 122 };
     const enemyAlone = { x: 24, y: 186 };
     const enemyEngagedWithAlder = { x: 58, y: 186 };
     const enemyPastAlder = { x: 70, y: 186 };
@@ -553,10 +554,29 @@ describe('MapBoard', () => {
         <MapBoard board={table.board} actions={actionsOn(table)} busy={false} adjusting={false} />,
       );
 
-      await drag('study', 'Clues 2', { x: 140, y: 120 }, firstPawn.x, firstPawn.y);
+      // bea came first, so the first pawn is bea's, not that of alder, whose turn it is.
+      await drag('study', 'Clues 2', clueCount, firstPawn.x, firstPawn.y);
 
       expect(table.board.investigator(bea).clues).toBe(1);
       expect(table.board.location(study).clues).toBe(1);
+    });
+
+    it("opens the study's details on a tap on its clue count", async () => {
+      const table = PlayTable.start(
+        house.withInvestigator(alder, { locationId: study }).withTurnOf(alder),
+      );
+      render(
+        <MapBoard board={table.board} actions={actionsOn(table)} busy={false} adjusting={false} />,
+      );
+
+      await drag('study', 'Clues 2', clueCount, clueCount.x, clueCount.y);
+      fireEvent.click(within(tile('study')).getByRole('img', { name: 'Clues 2' }), {
+        clientX: clueCount.x,
+        clientY: clueCount.y,
+      });
+
+      expect(screen.getByRole('dialog', { name: 'study' })).toBeTruthy();
+      expect(table.board.location(study).clues).toBe(2);
     });
 
     it.each([
@@ -570,7 +590,7 @@ describe('MapBoard', () => {
         <MapBoard board={table.board} actions={actionsOn(table)} busy={false} adjusting={false} />,
       );
 
-      await drag('study', 'Clues 2', { x: 140, y: 120 }, x, y);
+      await drag('study', 'Clues 2', clueCount, x, y);
 
       expect(table.board.location(study).clues).toBe(2);
       expect(table.board.investigator(alder).clues).toBe(0);
