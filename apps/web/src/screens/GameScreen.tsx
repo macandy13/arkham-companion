@@ -35,8 +35,9 @@ import './game.css';
  *
  * On a phone held upright the board starts as the compact view (the stylesheet's phone blocks); a
  * tap on a header card, the map's expand button or the investigator's name opens the detail view
- * on it (`useDetailView`, `data-view="detail"`), the same parts laid out as rows to swipe between
- * (`DetailControls`); the map row gets a strip above and below the map (`MapStrip`). A tap on a
+ * on it (`useDetailView`, `data-view` names its row): the header expands in place over the shrunk
+ * map, its places snapped sideways, while the map and the investigator panels take the whole
+ * screen (`DetailControls`); the map gets a strip above and below it (`MapStrip`). A tap on a
  * location there or in the compact view shows that location in the map row (`LocationFocus`), the
  * location mode, until the players go back to the map; while they choose where an enemy spawns,
  * or pick the answer to the open decision on the map (`DecisionView.locations`), the map shows,
@@ -65,7 +66,8 @@ export function GameScreen({
   const [hosted, setHosted] = useState(false);
   const boardElement = useRef<HTMLDivElement>(null);
   const detailTarget = phone ? detail.target : undefined;
-  const opensDetail = phone && !detailTarget;
+  // The expanded header leaves the map and the investigator in view, so they open their rows from there.
+  const show = phone ? (detailTarget ? detail.go : detail.open) : undefined;
 
   useEffect(() => {
     void store.getState().openGame(gameId);
@@ -104,9 +106,7 @@ export function GameScreen({
   // A location that left play, or a location to pick on the map, brings the whole map back.
   const focused =
     spawning || picking ? undefined : board.locations.find(({ id }) => id === focusId);
-  const showLocation = phone
-    ? (location: InstanceId) => (detailTarget ? detail.go : detail.open)({ row: 'map', location })
-    : undefined;
+  const showLocation = show && ((location: InstanceId) => show({ row: 'map', location }));
 
   const host = {
     decision: decision && decisionId !== undefined ? { view: decision, id: decisionId } : undefined,
@@ -119,7 +119,7 @@ export function GameScreen({
       <div
         id="board"
         ref={boardElement}
-        data-view={detailTarget ? 'detail' : undefined}
+        data-view={detailTarget?.row}
         data-adjusting={open.adjusting || undefined}
         data-spawning={open.spawning ? true : undefined}
       >
@@ -132,22 +132,26 @@ export function GameScreen({
               ? printedReferenceOf(cards.catalog, board.reference)
               : undefined
           }
-          onOpenCard={opensDetail ? (card) => detail.open({ row: 'cards', card }) : undefined}
-          full={detailTarget !== undefined}
+          onOpenCard={
+            show && detailTarget?.row !== 'cards'
+              ? (card) => show({ row: 'cards', card })
+              : undefined
+          }
+          full={detailTarget?.row === 'cards'}
         />
         <GameStatus store={store} open={open} board={board} />
         <section id="map" aria-labelledby="map-title">
           <h2 id="map-title">{t('map.title')}</h2>
-          {opensDetail && (
+          {show && detailTarget?.row !== 'map' && (
             <button
               type="button"
               data-icon="expand"
               data-detail="expand"
               aria-label={t('detail.openMap')}
-              onClick={() => detail.open({ row: 'map' })}
+              onClick={() => show({ row: 'map' })}
             />
           )}
-          {detailTarget && <MapStrip board={board} to="cards" onGo={detail.go} />}
+          {detailTarget?.row === 'map' && <MapStrip board={board} to="cards" onGo={detail.go} />}
           {focused ? (
             <LocationFocus
               board={board}
@@ -178,7 +182,9 @@ export function GameScreen({
               onOpenLocation={showLocation}
             />
           )}
-          {detailTarget && <MapStrip board={board} to="investigators" onGo={detail.go} />}
+          {detailTarget?.row === 'map' && (
+            <MapStrip board={board} to="investigators" onGo={detail.go} />
+          )}
         </section>
         <section id="investigators" aria-labelledby="investigators-title">
           <h2 id="investigators-title">{t('investigators.title')}</h2>
@@ -188,8 +194,8 @@ export function GameScreen({
             busy={open.busy}
             adjusting={open.adjusting}
             onOpen={
-              opensDetail
-                ? (investigator) => detail.open({ row: 'investigators', investigator })
+              show && detailTarget?.row !== 'investigators'
+                ? (investigator) => show({ row: 'investigators', investigator })
                 : undefined
             }
             printed={

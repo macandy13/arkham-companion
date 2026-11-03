@@ -37,37 +37,40 @@ The same query opens a block in [`tokens.css`](../../apps/web/src/styles/tokens.
 - the header shows only its four cards in one row:
   - the slot labels are hidden for the eye only,
   - and the piles, the victory display and the card plates are hidden.
-  - A tap on a card opens the detail view on it (below);
+  - A tap on a card expands the header in place on it (below);
 - the status row names only the current phase, so it stays on one line;
 - the investigator bar shows one panel, the focused one (`data-focus`, `useFocus` in [`InvestigatorBar.tsx`](../../apps/web/src/investigators/InvestigatorBar.tsx): the one whose avatar was tapped until the turn changes, else the turn's, else the lead), without its art window, and the other investigators as round avatar buttons above it.
   The avatars are in the markup on every screen and hidden outside the phone, so the switch is CSS only.
 
 ### Detail view
 
-On a phone a tap on a header card, the map's expand button or the investigator's name opens the **detail view** on it instead (`usePhone` and `useDetailView` in [`screens/`](../../apps/web/src/screens/), `#board[data-view='detail']`).
+On a phone a tap on a header card, the map's expand button or the investigator's name opens the **detail view** on it instead (`usePhone` and `useDetailView` in [`screens/`](../../apps/web/src/screens/), `#board[data-view]` naming the row shown: `cards`, `map` or `investigators`).
 It rearranges the same parts and adds no second copy of them:
 
-- the stylesheets turn the header, the map and the investigator bar into three rows a screen tall, snapped vertically,
-- and the header's five places (its four cards and the victory display) and every investigator panel snap sideways at full size, with their labels, piles and plates back.
+- The header expands in place (`cards`, M3.15): its five places (its four cards and the victory display) snap sideways at a larger card size, with their labels, piles and plates back. The status row, the map and the compact investigator stay, and the map shrinks to the room left.
+- The map (`map`) and the investigator panels (`investigators`, snapped sideways at full size) take the whole screen, the other parts stepping aside.
+- Under the expanded header, a tap on the map's expand button or the investigator's name moves the view there (`useDetailView().go`, which changes the target without a new history entry).
 
 The agenda and act there are their full version (`GameHeader` `full`): their action rows sit under them, and a tap on one opens no second, full-card dialog as it does on the tablet.
+The upright scenario card is too narrow at that size for its rows, so a tap on its name still opens its reference card.
 
-[`DetailControls`](../../apps/web/src/screens/DetailControls.tsx) scrolls to the card or panel tapped, draws the × and the row and card dots from the scroll positions, and moves the cards row back to the agenda once the players leave it.
+[`DetailControls`](../../apps/web/src/screens/DetailControls.tsx) scrolls the row to the card or panel tapped and draws the × and a dot per card or panel from the row's scroll position.
+Under the expanded header the board's grid lays the × and the dots over the header's own area; over the whole screen they float at the top left and the foot.
 
 - Opening pushes a history entry, so the back gesture, Escape and the × all close it through `history.back()`.
 - While the compact view shows, a tap in a header place is caught in its capture phase (`HeaderSlot` `onOpen`), so the card's own buttons and dialogs wait for the detail view.
 
-In the map row the map takes every touch (`touch-action: none`, besides the zoom library's own handlers), so panning never scrolls the board; a strip above and below the map ([`MapStrip`](../../apps/web/src/screens/MapStrip.tsx)) is where a vertical swipe to the next row starts.
+On the whole-screen map the map takes every touch (`touch-action: none`, besides the zoom library's own handlers), so panning never scrolls the page; a strip above and below the map ([`MapStrip`](../../apps/web/src/screens/MapStrip.tsx)) shows the numbers of the parts that stepped aside.
 
 - The upper strip shows the cards row's numbers (doom, act clues, encounter deck, round and phase) as icons with the values,
 - the lower one those of the turn's investigator, else the lead (actions left, counters, skills).
 
 The strip's accessible name says them in words.
-A tap on a strip moves the view to the agenda or to that investigator's panel (`useDetailView().go`, which changes the target without a new history entry).
+A tap on a strip expands the header on the agenda or shows that investigator's panel (`go`).
 
 ### Location mode
 
-On a phone a tap on a location, in the compact map or the map row, shows that location in the map row in place of the map (`{ row: 'map', location }`, [`LocationFocus`](../../apps/web/src/map/LocationFocus.tsx)) instead of the details dialog the tablet opens. The strips stay above and below it.
+On a phone a tap on a location, in the compact map or the whole-screen map, shows that location on the whole screen in place of the map (`{ row: 'map', location }`, [`LocationFocus`](../../apps/web/src/map/LocationFocus.tsx)) instead of the details dialog the tablet opens. The strips stay above and below it.
 
 - Its content ([`LocationContent`](../../apps/web/src/map/LocationDetails.tsx)) is the card, the shroud and clues as a line, and the parts the details dialog's page shows too (`LocationPage`): who is there, the attached cards, and the action row or the corrections. The stylesheets share those rules (`:is(dialog[data-dialog='location'] > article, [data-mode='location'])`).
 - Its connected locations sit around the card, each on the side where its tile lies on the map (`neighboursOf` in [`mapLayout.ts`](../../apps/web/src/map/mapLayout.ts): above or below where the centres lie further apart down than across, otherwise left or right).
