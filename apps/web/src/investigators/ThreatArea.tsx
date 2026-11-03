@@ -141,6 +141,7 @@ function EnemyCard({
   return (
     <li
       data-card="enemy"
+      data-enemy={enemy.id}
       data-exhausted={enemy.exhausted}
       aria-label={[
         enemy.name,
