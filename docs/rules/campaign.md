@@ -10,8 +10,8 @@
   - Each trauma means starting later scenarios with 1 damage or 1 horror.
   - When a defeat reaches health and sanity at once (`damageAndHorror`), the resolution proposes a choice between 1 physical and 1 mental trauma for the player to make.
 - Physical trauma ≥ printed health means killed, and mental trauma ≥ printed sanity means insane.
-  - That investigator can't be used again in the campaign, and the player picks a new one with a new level 0 deck for the next scenario.
-  - A parallel version counts as the same investigator, so it is out of the campaign with its original.
+  - That investigator can't be used again in the campaign, and the player picks a new one with a new deck (built with 0 experience) for the next scenario.
+  - A parallel version counts as the same investigator, so it is out of the campaign with its original (unverified: the Rules Reference has no parallel entry, and the parallel investigators' inserts couldn't be read).
   - The 2026 Core Set adds a third way out, devoured.
   - If no investigator is left to choose, the campaign is lost.
 - Players may drop out and back in between scenarios.
