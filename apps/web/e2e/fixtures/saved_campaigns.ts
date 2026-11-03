@@ -51,7 +51,8 @@ function zealotStarted(campaignId: string, team: readonly LoggedInvestigator[]):
 
 /**
  * The events of a Night of the Zealot campaign on Easy with `team` that played each scenario to
- * its resolution 1 and so won, Umôrdhoth banished.
+ * its resolution 1 and so won, Umôrdhoth banished. Every investigator earned 4 XP per scenario,
+ * spent 2 of them, and came out with one physical and one mental trauma.
  */
 export function zealotWonEvents(
   campaignId: string,
@@ -61,7 +62,15 @@ export function zealotWonEvents(
     zealotStarted(campaignId, team),
     ...['the-gathering', 'the-midnight-masks', 'the-devourer-below'].flatMap((scenarioId, i) => [
       { type: 'ScenarioPlayed', scenarioId, outcome: { kind: 'resolution', id: 'R1' } },
+      ...team.flatMap(({ code }) => [
+        { type: 'XpChanged', code, account: 'earned', delta: 4 },
+        { type: 'XpChanged', code, account: 'spent', delta: 2 },
+      ]),
       { type: 'ScenarioPositionChanged', position: i + 1 },
+    ]),
+    ...team.flatMap(({ code }) => [
+      { type: 'TraumaChanged', code, kind: 'physical', delta: 1 },
+      { type: 'TraumaChanged', code, kind: 'mental', delta: 1 },
     ]),
     { type: 'CampaignEnded', result: 'won' },
   ];

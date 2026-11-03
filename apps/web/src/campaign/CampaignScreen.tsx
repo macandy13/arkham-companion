@@ -11,6 +11,7 @@ import {
   type CampaignLog,
   type GameSummary,
   type PlayedScenario,
+  type ScenarioOutcome,
 } from '@arkham/engine';
 import type { CatalogSource } from '../catalog/useCatalog';
 import type { AppState } from '../state/appStore';
@@ -20,7 +21,7 @@ import {
   resolutionNumber,
   scenarioCardName,
 } from '../scenarios/scenarioCatalog';
-import { range } from '@arkham/util';
+import { assertNever, range } from '@arkham/util';
 import { CampaignSheets } from './CampaignSheets';
 import { NextScenarioDialog } from './NextScenarioDialog';
 import { ResolutionUndo } from './ResolutionUndo';
@@ -107,18 +108,23 @@ function CampaignOver({ log }: { readonly log: CampaignLog }) {
     <section id="campaign-result" aria-labelledby="campaign-result-title">
       <h2 id="campaign-result-title">{t('campaignLog.over')}</h2>
       <p>{t(`campaignLog.result.${log.result}`)}</p>
-      {finished && last && scenario && (
-        <p>
-          {last.outcome.kind === 'resolution'
-            ? t('campaignLog.readEnding', {
-                n: resolutionNumber(last.outcome.id),
-                scenario: t(scenario.nameKey),
-              })
-            : t('campaignLog.readNoResolution', { scenario: t(scenario.nameKey) })}
-        </p>
-      )}
+      {finished && last && scenario && <p>{endingToRead(last.outcome, t(scenario.nameKey))}</p>}
     </section>
   );
+
+  function endingToRead(outcome: ScenarioOutcome, scenarioName: string): string {
+    switch (outcome.kind) {
+      case 'resolution':
+        return t('campaignLog.readEnding', {
+          n: resolutionNumber(outcome.id),
+          scenario: scenarioName,
+        });
+      case 'noResolution':
+        return t('campaignLog.readNoResolution', { scenario: scenarioName });
+      default:
+        return assertNever(outcome);
+    }
+  }
 }
 
 /**

@@ -12,6 +12,7 @@ import {
   scenarioId,
   type CampaignEvent,
   type CampaignId,
+  type ScenarioOutcome,
 } from '@arkham/engine';
 import { initI18n } from '../i18n';
 import { createAppStore } from '../state/appStore';
@@ -477,30 +478,44 @@ describe('CampaignScreen', () => {
     });
   });
 
-  it('says the investigators won after The Devourer Below, and which ending to read', async () => {
-    const { gameStore, campaignId } = await storeCampaign(() => [
-      ...[gathering, midnightMasks, scenarioId('the-devourer-below')].flatMap(
-        (scenario, position): CampaignEvent[] => [
+  it.each<{ outcome: ScenarioOutcome; result: 'won' | 'survived'; says: string; read: string }>([
+    {
+      outcome: { kind: 'resolution', id: resolutionId('R1') },
+      result: 'won',
+      says: 'The investigators won.',
+      read: 'Read Resolution 1 of The Devourer Below in the campaign guide.',
+    },
+    {
+      outcome: { kind: 'noResolution' },
+      result: 'survived',
+      says: 'The investigators survived.',
+      read: 'Read the "No resolution" text of The Devourer Below in the campaign guide.',
+    },
+  ])(
+    'after The Devourer Below ended with $outcome.kind, says "$says" and "$read"',
+    async ({ outcome, result, says, read }) => {
+      const { gameStore, campaignId } = await storeCampaign(() => [
+        ...[gathering, midnightMasks].flatMap((scenario, position): CampaignEvent[] => [
           {
             type: 'ScenarioPlayed',
             scenarioId: scenario,
             outcome: { kind: 'resolution', id: resolutionId('R1') },
           },
           { type: 'ScenarioPositionChanged', position: position + 1 },
-        ],
-      ),
-      { type: 'CampaignEnded', result: 'won' },
-    ]);
+        ]),
+        { type: 'ScenarioPlayed', scenarioId: scenarioId('the-devourer-below'), outcome },
+        { type: 'ScenarioPositionChanged', position: 3 },
+        { type: 'CampaignEnded', result },
+      ]);
 
-    renderLog(gameStore, `/campaign/${campaignId}`);
+      renderLog(gameStore, `/campaign/${campaignId}`);
 
-    const over = await screen.findByRole('region', { name: 'The campaign is over' });
-    expect(within(over).getByText('The investigators won.')).toBeTruthy();
-    expect(
-      within(over).getByText('Read Resolution 1 of The Devourer Below in the campaign guide.'),
-    ).toBeTruthy();
-    expect(screen.queryByRole('button', { name: /Set up/ })).toBeNull();
-  });
+      const over = await screen.findByRole('region', { name: 'The campaign is over' });
+      expect(within(over).getByText(says)).toBeTruthy();
+      expect(within(over).getByText(read)).toBeTruthy();
+      expect(screen.queryByRole('button', { name: /Set up/ })).toBeNull();
+    },
+  );
 
   it('says so when the campaign is not on this device', async () => {
     const { gameStore } = await storeCampaign(() => []);
