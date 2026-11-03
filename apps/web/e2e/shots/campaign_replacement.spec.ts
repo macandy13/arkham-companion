@@ -49,13 +49,3 @@ test('the setup preview with nobody left to replace Fake Seeker', async ({ page 
   );
   await expect(preview.getByRole('button', { name: 'Start game' })).toBeDisabled();
 });
-
-test('the log of a campaign lost for want of investigators', async ({ page }) => {
-  await openStoredCampaign(page, 'Zealot – everyone', (id) =>
-    gatheringKilledEvents(id, [fakeSeeker, fakeGuardian, rolandBanks], fakeSeeker),
-  );
-  await page.getByRole('button', { name: 'Set up The Midnight Masks' }).click();
-  await page.getByRole('button', { name: 'End the campaign' }).click();
-
-  await expect(page.getByText('The campaign ends: the investigators lost.')).toBeVisible();
-});

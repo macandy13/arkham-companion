@@ -635,20 +635,17 @@ describe('GameScreen on a phone held upright', () => {
 
   const board = () => document.getElementById('board');
 
-  it('opens the detail view on the act from a tap on it, instead of its full card', async () => {
+  it('expands the header on the act from a tap on it, instead of its full card', async () => {
     await renderTheGathering('phone-act-test');
 
     fireEvent.click(screen.getByRole('button', { name: 'Trapped' }));
 
-    expect(board()?.getAttribute('data-view')).toBe('detail');
-    expect(scrolledTo).toEqual([
-      board()?.querySelector('header'),
-      screen.getByRole('region', { name: 'Act' }),
-    ]);
+    expect(board()?.getAttribute('data-view')).toBe('cards');
+    expect(scrolledTo).toEqual([screen.getByRole('region', { name: 'Act' })]);
     expect(screen.queryByRole('dialog', { name: 'Trapped' })).toBeNull();
   });
 
-  it('shows the act in full in the detail view, where a tap on it opens no second card', async () => {
+  it('shows the act in full in the expanded header, where a tap on it opens no second card', async () => {
     await renderTheGathering('phone-act-full-test');
     fireEvent.click(screen.getByRole('button', { name: 'Trapped' }));
     const face = screen.getByRole('region', { name: 'Act' }).querySelector('[data-card]');
@@ -656,16 +653,29 @@ describe('GameScreen on a phone held upright', () => {
 
     fireEvent.click(face);
 
-    expect(board()?.getAttribute('data-view')).toBe('detail');
+    expect(board()?.getAttribute('data-view')).toBe('cards');
     expect(screen.queryByRole('button', { name: 'Trapped' })).toBeNull();
     expect(screen.queryByRole('dialog', { name: 'Trapped' })).toBeNull();
+  });
+
+  it('opens the reference card from the name of the scenario in the expanded header', async () => {
+    await renderTheGathering('phone-scenario-reference-test');
+    const scenario = screen.getByRole('region', { name: 'Scenario' });
+    const face = scenario.querySelector('[data-card]');
+    if (!face) throw new Error('the scenario has no card');
+    fireEvent.click(face);
+
+    fireEvent.click(within(scenario).getByRole('button', { name: 'The Gathering' }));
+
+    expect(board()?.getAttribute('data-view')).toBe('cards');
+    expect(screen.getByRole('dialog', { name: 'The Gathering' })).toBeTruthy();
   });
 
   it.each([
     { card: "What's Going On?!", code: '01105', place: 'Agenda' },
     { card: 'Trapped', code: '01108', place: 'Act' },
   ])(
-    "takes an action $card prints from under it in the detail view on alder's turn",
+    "takes an action $card prints from under it in the expanded header on alder's turn",
     async ({ card, code, place }) => {
       const printed = theGatheringCards.get(cardCode(code));
       if (!printed) throw new Error(`The Gathering has ${card}`);
@@ -692,34 +702,64 @@ describe('GameScreen on a phone held upright', () => {
     },
   );
 
+  it('opens the reference card from the name of the scenario in the expanded header', async () => {
+    await renderTheGathering('phone-scenario-reference-test');
+    const scenario = screen.getByRole('region', { name: 'Scenario' });
+    const face = scenario.querySelector('[data-card]');
+    if (!face) throw new Error('the scenario has no card');
+    fireEvent.click(face);
+
+    fireEvent.click(within(scenario).getByRole('button', { name: 'The Gathering' }));
+
+    expect(board()?.getAttribute('data-view')).toBe('cards');
+    expect(screen.getByRole('dialog', { name: 'The Gathering' })).toBeTruthy();
+  });
+
   it("opens the detail view on Alder's panel from the name on it", async () => {
     await renderTheGathering('phone-investigator-test');
 
     fireEvent.click(screen.getByRole('button', { name: 'Alder' }));
 
-    expect(board()?.getAttribute('data-view')).toBe('detail');
-    expect(scrolledTo).toEqual([
-      document.getElementById('investigators'),
-      screen.getByRole('region', { name: 'Alder' }),
-    ]);
+    expect(board()?.getAttribute('data-view')).toBe('investigators');
+    expect(scrolledTo).toEqual([screen.getByRole('region', { name: 'Alder' })]);
   });
 
-  it('opens the detail view on the map from its expand button', async () => {
+  it.each([
+    {
+      part: "Alder's panel",
+      db: 'phone-cards-to-alder-test',
+      button: 'Alder',
+      view: 'investigators',
+    },
+    {
+      part: 'the map',
+      db: 'phone-cards-to-map-test',
+      button: 'Show the map on the whole screen',
+      view: 'map',
+    },
+  ])('opens $part from under the expanded header', async ({ db, button, view }) => {
+    await renderTheGathering(db);
+    fireEvent.click(screen.getByRole('button', { name: 'Trapped' }));
+
+    fireEvent.click(screen.getByRole('button', { name: button }));
+
+    expect(board()?.getAttribute('data-view')).toBe(view);
+  });
+
+  it('opens the map on the whole screen from its expand button', async () => {
     await renderTheGathering('phone-map-test');
 
     fireEvent.click(screen.getByRole('button', { name: 'Show the map on the whole screen' }));
 
-    expect(board()?.getAttribute('data-view')).toBe('detail');
-    expect(scrolledTo).toEqual([document.getElementById('map')]);
+    expect(board()?.getAttribute('data-view')).toBe('map');
   });
 
-  it('shows the Study in the map row from a tap on its tile, instead of its details', async () => {
+  it('shows the Study on the whole screen from a tap on its tile, instead of its details', async () => {
     await renderTheGathering('phone-location-test');
 
     fireEvent.click(screen.getByRole('button', { name: 'Details of Study' }));
 
-    expect(board()?.getAttribute('data-view')).toBe('detail');
-    expect(scrolledTo).toEqual([document.getElementById('map')]);
+    expect(board()?.getAttribute('data-view')).toBe('map');
     const study = screen.getByRole('region', { name: 'Study' });
     expect(within(study).getByRole('img', { name: 'The card of Study' })).toBeTruthy();
     expect(document.activeElement).toBe(study);
@@ -735,7 +775,7 @@ describe('GameScreen on a phone held upright', () => {
 
     expect(screen.queryByRole('region', { name: 'Study' })).toBeNull();
     expect(screen.getByRole('figure', { name: 'Study' })).toBeTruthy();
-    expect(board()?.getAttribute('data-view')).toBe('detail');
+    expect(board()?.getAttribute('data-view')).toBe('map');
   });
 
   it.each([
@@ -743,26 +783,27 @@ describe('GameScreen on a phone held upright', () => {
       strip: 'the cards',
       db: 'phone-cards-strip-test',
       name: 'Doom 0 / 3, Clues 0 / 2, 26 cards left in the encounter deck, Setup',
-      row: () => board()?.querySelector('header'),
+      view: 'cards',
       item: () => screen.getByRole('region', { name: 'Agenda' }),
     },
     {
       strip: "Alder's panel",
       db: 'phone-investigator-strip-test',
       name: 'Alder, Health 6/6, Sanity 8/8, Clues 0, Resources 5, Willpower 3, Intellect 3, Combat 3, Agility 3',
-      row: () => document.getElementById('investigators'),
+      view: 'investigators',
       item: () => screen.getByRole('region', { name: 'Alder' }),
     },
   ])(
     'names the numbers of $strip on its strip over the map, and goes there from it',
-    async ({ db, name, row, item }) => {
+    async ({ db, name, view, item }) => {
       await renderTheGathering(db);
       fireEvent.click(screen.getByRole('button', { name: 'Show the map on the whole screen' }));
       scrolledTo = [];
 
       fireEvent.click(screen.getByRole('button', { name }));
 
-      expect(scrolledTo).toEqual([row(), item()]);
+      expect(board()?.getAttribute('data-view')).toBe(view);
+      expect(scrolledTo).toEqual([item()]);
     },
   );
 

@@ -96,6 +96,8 @@ export interface OpenCampaign {
   title: string;
   /** Always the result of replaying the campaign's stored event log. */
   log: CampaignLog;
+  /** When the campaign ended (`CampaignSummary.endedAt`); absent while it goes on. */
+  endedAt?: number;
   /** The campaign's games, most recently played first. */
   games: GameSummary[];
 }
@@ -421,7 +423,16 @@ export function createAppStore(
         return;
       }
       const games = (await gameStore.listGames()).filter((g) => g.campaignId === campaignId);
-      set({ campaign: { campaignId, title: loaded.summary.title, log: loaded.log, games } });
+      const { title, endedAt } = loaded.summary;
+      set({
+        campaign: {
+          campaignId,
+          title,
+          log: loaded.log,
+          games,
+          ...(endedAt !== undefined ? { endedAt } : {}),
+        },
+      });
     }
 
     /** Publishes the session's state, unless the player left the game while a write was pending. */

@@ -593,9 +593,9 @@
   --threat-cards-shown: 4;
   /* The round avatar of another investigator over the phone's one investigator panel. */
   --investigator-avatar-size: 2.75rem;
-  /* The phone's detail view: its cards row shows the header cards this tall. */
-  --layout-detail-card-height: 14rem;
-  /* A dot of the detail view's row and card dots, and their layer over the rows. */
+  /* The phone's header expanded in place shows its cards this tall, leaving the map a third. */
+  --layout-detail-card-height: 12rem;
+  /* A dot of the detail view's card dots, and their layer over the board. */
   --detail-dot-size: 0.5rem;
   --layer-detail-controls: 3;
   /* The panel of an investigator who has left the game (defeated or resigned) steps back. */
@@ -706,6 +706,10 @@
   --log-label-tracking: 0.06em;
   --sheet-frame-width: 3px;
   --sheet-tilt: -1.2deg;
+  /* A rubber stamp on the log (an ended campaign's result): pressed on askew, in a double frame. */
+  --stamp-tilt: -6deg;
+  --stamp-frame-width: 5px;
+  --stamp-tracking: 0.12em;
   --tally-height: 1.6rem;
   /* A torn sheet's ragged outline: a few points per side, a percent or so off the straight edge. */
   --paper-edge: polygon(
@@ -849,20 +853,25 @@
  */
 @media (orientation: portrait) and (max-width: 40rem),
   (orientation: landscape) and (max-height: 30rem) {
-  #board:not([data-view]) {
+  /* The header expanded in place (the detail view's cards row) has its own card height. */
+  #board:not([data-view='cards']) {
     --layout-header-card-height: 4.75rem;
     --header-token-size: 2.25rem;
     --header-token-border-width: 2px;
     --header-count-size: 0.875rem;
     --font-size-token-count: 1rem;
+  }
+
+  /* The compact investigator stays under the expanded header too. */
+  #board:not([data-view='map'], [data-view='investigators']) {
     --stat-token-size: 1.75rem;
     --stat-count-size: 0.875rem;
   }
 }
 
 /*
- * The upright phone's detail view (`data-view`) shows the cards in full again, its header cards
- * taller still, and its dialogs keep to the phone's width. Every dialog on an upright phone keeps
+ * The upright phone's header expanded in place (`data-view='cards'`) shows the cards in full
+ * again, larger, and its dialogs keep to the phone's width. Every dialog on an upright phone keeps
  * less paper around its content.
  */
 @media (orientation: portrait) and (max-width: 40rem) {
@@ -874,7 +883,7 @@
     --test-skill-icon-size: 1.375rem;
   }
 
-  #board[data-view='detail'] {
+  #board[data-view='cards'] {
     --layout-header-card-height: var(--layout-detail-card-height);
   }
 

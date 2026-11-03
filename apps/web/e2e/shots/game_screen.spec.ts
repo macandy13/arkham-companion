@@ -340,7 +340,7 @@ test('the encounter deck after two mythos phases, Dissonant Voices on the discar
   await resumeImportedGame(page, 'Two mythos draws', mythosDrawnExport('Two mythos draws'));
 
   const deck = page.getByRole('region', { name: 'Encounter deck' });
-  // A phone's compact header shows the deck alone, and a tap opens the detail view on its piles.
+  // A phone's compact header shows the deck alone, and a tap expands the header on its piles.
   if (isMobile) await deck.click();
   await expect(
     deck.getByRole('button', { name: '24 cards left in the encounter deck' }),
@@ -355,7 +355,7 @@ test('the header with its piles fanned: seven cards discarded, the set-aside car
   isMobile,
 }) => {
   await resumeImportedGame(page, 'Piles filled', pilesFilledExport('Piles filled'));
-  // A phone's compact header shows the deck alone, and a tap opens the detail view on its piles.
+  // A phone's compact header shows the deck alone, and a tap expands the header on its piles.
   if (isMobile) await page.getByRole('region', { name: 'Encounter deck' }).click();
 
   await expect(
@@ -376,7 +376,7 @@ test('the discard pile of seven cards on its wide page, the top card chosen, scr
   isMobile,
 }) => {
   await resumeImportedGame(page, 'Piles filled', pilesFilledExport('Piles filled'));
-  // A phone's compact header shows the deck alone, and a tap opens the detail view on its piles.
+  // A phone's compact header shows the deck alone, and a tap expands the header on its piles.
   if (isMobile) await page.getByRole('region', { name: 'Encounter deck' }).click();
 
   await page.getByRole('button', { name: /^Encounter discard pile, 7 cards, / }).click();
@@ -393,7 +393,7 @@ test('Crypt Chill drawn for Roland Banks, its willpower test waiting', async ({
   await resumeImportedGame(page, 'Two mythos draws', mythosDrawnExport('Two mythos draws'));
   await page.getByRole('button', { name: 'Start turn' }).click();
   const deck = page.getByRole('region', { name: 'Encounter deck' });
-  // A phone's compact header shows the deck alone, and a tap opens the detail view on its piles.
+  // A phone's compact header shows the deck alone, and a tap expands the header on its piles.
   if (isMobile) await deck.click();
   await deck.getByRole('button', { name: '24 cards left in the encounter deck' }).click();
 
@@ -410,7 +410,7 @@ test('The Barrier opened as a full card', async ({ page, isMobile }) => {
 
   await act.getByRole('button', { name: 'The Barrier' }).click();
 
-  // A dialog on a tablet; on a phone the detail view, which shows the act in full in its place.
+  // A dialog on a tablet; on a phone the expanded header, which shows the act in full in its place.
   const card = isMobile ? act : page.getByRole('dialog', { name: 'The Barrier' });
   await expect(card.getByRole('img', { name: 'Clues 0 / 3' })).toBeInViewport();
 });
@@ -419,13 +419,15 @@ test('The Gathering’s reference card opened to read', async ({ page, isMobile 
   await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
   const scenario = page.getByRole('region', { name: 'Scenario' });
 
-  // A dialog from the name on a tablet; on a phone a tap opens the detail view on the card.
+  // On a phone the first tap expands the header on the card, too narrow there for its rows.
   if (isMobile) await scenario.locator('[data-card]').click();
-  else await scenario.getByRole('button', { name: 'The Gathering' }).click();
+  await scenario.getByRole('button', { name: 'The Gathering' }).click();
 
-  const card = isMobile ? scenario : page.getByRole('dialog', { name: 'The Gathering' });
   await expect(
-    card.getByRole('list', { name: 'Chaos tokens' }).getByText('-1. On a failure, take 1 horror.'),
+    page
+      .getByRole('dialog', { name: 'The Gathering' })
+      .getByRole('list', { name: 'Chaos tokens' })
+      .getByText('-1. On a failure, take 1 horror.'),
   ).toBeInViewport();
 });
 

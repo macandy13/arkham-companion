@@ -240,17 +240,6 @@
 }
 
 /*
- * The phone's detail view shows the header cards at its card height, which leaves an upright card
- * too narrow to read its rows, so the scenario card takes a zoomed card's width there instead.
- */
-@media (orientation: portrait) and (max-width: 40rem) {
-  #board[data-view='detail'] > header > section [data-card='scenario'] {
-    width: min(100%, var(--layout-zoom-card-width));
-    height: auto;
-  }
-}
-
-/*
  * In the card pictures theme the side's picture covers the face once loaded (game.css), and the
  * title, side and rows give way to the ones it prints; they stay for assistive technology.
  */

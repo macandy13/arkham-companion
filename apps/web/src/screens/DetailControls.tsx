@@ -1,27 +1,28 @@
-import { useLayoutEffect, useRef, useState, type RefObject } from 'react';
+import { useLayoutEffect, useState, type RefObject } from 'react';
 import { useTranslation } from 'react-i18next';
 import { assertNever, range } from '@arkham/util';
 import type { DetailTarget } from './useDetailView';
 
-/** Where the detail view is scrolled to: its row, and the card or panel within that row. */
-interface DetailPosition {
-  row: number;
+/** Which card or panel of the shown row the players see, of how many it snaps between. */
+interface RowPosition {
   item: number;
-  /** How many cards or panels the row snaps between; the map row has none. */
   items: number;
 }
 
-/** The rows of the detail view from the top, each a part of the board (`#board > …`). */
-const ROWS = [':scope > header', ':scope > #map', ':scope > #investigators'] as const;
+/** The part of the board (`#board > …`) each row of a `DetailTarget` is. */
+const ROWS = {
+  cards: ':scope > header',
+  map: ':scope > #map',
+  investigators: ':scope > #investigators',
+} as const;
 
 /**
- * The detail view's controls over the board (`board`, the `#board` element), which the stylesheet
- * turns into three rows snapped vertically, the header's places (its four cards and the victory
- * display) and the investigator panels each snapped sideways: the × that closes it (`onClose`), a
- * dot per row at the right edge and a dot per card or panel of the current row along the foot, the
- * current one filled. As it opens it scrolls to its `target`; once the players leave the cards
- * row, the row goes back to the agenda, so it opens there again. The dots only show where the
- * players are, so screen readers skip them.
+ * The detail view's controls over the board (`board`, the `#board` element), whose stylesheet
+ * shows the `target`'s row: the header in place, its places (its four cards and the victory
+ * display) snapped sideways over the shrunk map, or the map or the investigator panels on the
+ * whole screen. The controls are the button that closes it (`onClose`) and a dot per card or panel
+ * of the row, the current one filled. As it opens it scrolls the row to the target's card or panel.
+ * The dots only show where the players are, so screen readers skip them.
  */
 export function DetailControls({
   board,
@@ -33,7 +34,7 @@ export function DetailControls({
   onClose: () => void;
 }) {
   const { t } = useTranslation();
-  const position = useDetailScroll(board, target);
+  const position = useRowScroll(board, target);
   return (
     <>
       <button
@@ -43,11 +44,6 @@ export function DetailControls({
         aria-label={t('detail.close')}
         onClick={onClose}
       />
-      <ol aria-hidden="true" data-dots="rows">
-        {range(ROWS.length).map((row) => (
-          <li key={row} data-current={row === position.row || undefined} />
-        ))}
-      </ol>
       {position.items > 1 && (
         <ol aria-hidden="true" data-dots="items">
           {range(position.items).map((item) => (
@@ -60,45 +56,33 @@ export function DetailControls({
 }
 
 /**
- * Scrolls the board to `target` as the view opens, then follows the players' swipes: the scroll
- * events of the board and its rows reach the board in their capture phase, since they do not
- * bubble.
+ * Scrolls the target's row to its card or panel as the view opens, then follows the players'
+ * sideways swipes. The map row has nothing to swipe between.
  */
-function useDetailScroll(
-  board: RefObject<HTMLElement | null>,
-  target: DetailTarget,
-): DetailPosition {
-  const [position, setPosition] = useState<DetailPosition>({ row: 0, item: 0, items: 0 });
-  const lastRow = useRef(0);
+function useRowScroll(board: RefObject<HTMLElement | null>, target: DetailTarget): RowPosition {
+  const [position, setPosition] = useState<RowPosition>({ item: 0, items: 0 });
   useLayoutEffect(() => {
-    const element = board.current;
-    if (!element) return;
-    const follow = () => {
-      const next = positionOf(element);
-      if (lastRow.current === 0 && next.row !== 0) backToAgenda(element);
-      lastRow.current = next.row;
-      setPosition((last) =>
-        last.row === next.row && last.item === next.item && last.items === next.items ? last : next,
-      );
-    };
-    const row = element.querySelector<HTMLElement>(ROWS[ROW_INDEX[target.row]]);
+    const row = board.current?.querySelector<HTMLElement>(ROWS[target.row]);
     const selector = itemOf(target);
-    const item = selector === undefined ? undefined : row?.querySelector<HTMLElement>(selector);
-    row?.scrollIntoView?.({ block: 'start' });
-    item?.scrollIntoView?.({ block: 'nearest', inline: 'start' });
-    // Scrolling to where the board already is fires no event, so the dots read it once as well.
+    if (!row || selector === undefined) return;
+    const follow = () => {
+      const next = positionOf(row);
+      setPosition((last) => (last.item === next.item && last.items === next.items ? last : next));
+    };
+    row
+      .querySelector<HTMLElement>(selector)
+      ?.scrollIntoView?.({ block: 'nearest', inline: 'start' });
+    // Scrolling to where the row already is fires no event, so the dots read it once as well.
     const first = requestAnimationFrame(follow);
-    element.addEventListener('scroll', follow, { capture: true, passive: true });
+    row.addEventListener('scroll', follow, { passive: true });
     return () => {
       cancelAnimationFrame(first);
-      element.removeEventListener('scroll', follow, { capture: true });
+      row.removeEventListener('scroll', follow);
     };
   }, [board, target]);
-  return position;
+  // The map row keeps no dots, whatever the last row it followed showed.
+  return itemOf(target) === undefined ? { item: 0, items: 0 } : position;
 }
-
-/** Where each row of a `DetailTarget` stands in `ROWS`. */
-const ROW_INDEX = { cards: 0, map: 1, investigators: 2 } as const;
 
 /** The card or panel of its row a target shows, as a selector within the row; the map has none. */
 function itemOf(target: DetailTarget): string | undefined {
@@ -114,23 +98,9 @@ function itemOf(target: DetailTarget): string | undefined {
   }
 }
 
-/** The row and the card or panel of the board the players see now, by how far each is scrolled. */
-function positionOf(board: HTMLElement): DetailPosition {
-  const row = board.clientHeight > 0 ? Math.round(board.scrollTop / board.clientHeight) : 0;
-  const rowElement = board.querySelector<HTMLElement>(ROWS[row] ?? ROWS[0]);
-  // The header's token pool has no room on a phone, so it is no place the row scrolls to.
-  const items = rowElement?.querySelectorAll(':scope > section:not([data-pool])').length ?? 0;
-  const item =
-    rowElement && rowElement.clientWidth > 0
-      ? Math.round(rowElement.scrollLeft / rowElement.clientWidth)
-      : 0;
-  return { row, item, items: row === 1 ? 0 : items };
-}
-
-/** Scrolls the cards row back to the agenda, where it opens. */
-function backToAgenda(board: HTMLElement): void {
-  const header = board.querySelector<HTMLElement>(ROWS[0]);
-  const agenda = header?.querySelector<HTMLElement>(":scope > [data-slot='agenda']");
-  if (!header || !agenda) return;
-  header.scrollLeft += agenda.getBoundingClientRect().left - header.getBoundingClientRect().left;
+/** The card or panel of a row the players see now, by how far the row is scrolled. */
+function positionOf(row: HTMLElement): RowPosition {
+  const items = row.querySelectorAll(':scope > section:not([data-pool])').length;
+  const item = row.clientWidth > 0 ? Math.round(row.scrollLeft / row.clientWidth) : 0;
+  return { item, items };
 }

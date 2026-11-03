@@ -2,7 +2,10 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import type { CampaignSummary } from '@arkham/engine';
 
-/** One campaign on the home screen: difficulty, team and how far it got; it resumes at its log. */
+/**
+ * One campaign on the home screen: difficulty, team and how far it got or how it ended; it
+ * resumes at its log, which stays readable once the campaign is over.
+ */
 export function CampaignListItem({ campaign }: { readonly campaign: CampaignSummary }) {
   const { t, i18n } = useTranslation();
   const resume = `/campaign/${campaign.campaignId}`;
@@ -35,7 +38,7 @@ export function CampaignListItem({ campaign }: { readonly campaign: CampaignSumm
         </dd>
       </dl>
       <nav aria-label={t('games.actions', { title: campaign.title })}>
-        <Link to={resume}>{t('games.resume')}</Link>
+        <Link to={resume}>{t(campaign.result ? 'campaignList.readLog' : 'games.resume')}</Link>
       </nav>
     </li>
   );

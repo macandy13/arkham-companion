@@ -119,6 +119,8 @@ export interface CampaignSummary {
   investigators: { code: InvestigatorCode; name: string }[];
   /** How the campaign ended; absent while it goes on. */
   result?: CampaignResult;
+  /** Epoch ms of the event that ended the campaign (`CampaignEnded`); absent while it goes on. */
+  endedAt?: number;
 }
 
 /** Result of `GameStore.loadCampaign`: the log after replaying all its events. */
