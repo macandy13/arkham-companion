@@ -208,9 +208,10 @@ function MapDrawing({
     svg,
     (piece, point, client) => {
       if ('clue' in piece) {
+        // The panel first: a pawn panned out of sight still maps to the screen beside the map.
         const taker =
-          board.investigatorsAt(piece.from).find(({ id }) => onPawnOf(id, point))?.id ??
-          investigatorAt(client);
+          investigatorAt(client) ??
+          board.investigatorsAt(piece.from).find(({ id }) => onPawnOf(id, point))?.id;
         if (taker) void actions.takeClue(piece.from, taker);
         return;
       }

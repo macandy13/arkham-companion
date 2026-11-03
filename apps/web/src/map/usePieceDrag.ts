@@ -22,14 +22,15 @@ export interface PieceDrag<Piece> {
 }
 
 /**
- * Dragging pieces (pawns, enemy tokens) across the map drawing `svg`. While the pointer is down on
- * a piece, `dragged` follows it; letting go calls `onDrop` with the piece and the point (in the
- * drawing and on the screen, for a drop outside the drawing), and the
- * caller decides what a drop there means. Letting go about where it went down (`isTap`) is a tap
- * instead, which calls `onTap` with the piece: when it returns true the tap was the piece's own,
- * and the click it makes goes no further, so the tile under the piece does not open as well. A drop that means nothing, or a refused one, leaves the
- * piece where it was, since the board still shows it where the game has it; the screen's
- * rejection toast gives the reason for a refusal, so the drop needs no hint of its own.
+ * Dragging pieces (pawns, enemy tokens, clues) across the map drawing `svg`. While the pointer is
+ * down on a piece, `dragged` follows it; letting go calls `onDrop` with the piece and the point
+ * (in the drawing and on the screen, for a drop outside the drawing), and the caller decides what
+ * a drop there means. Letting go about where it went down (`isTap`) is a tap instead, which calls
+ * `onTap` with the piece: when it returns true the tap was the piece's own, and the click it
+ * makes goes no further, so the tile under the piece does not open as well. A drop that means
+ * nothing, or a refused one, leaves the piece where it was, since the board still shows it where
+ * the game has it; the screen's rejection toast gives the reason for a refusal, so the drop needs
+ * no hint of its own.
  */
 export function usePieceDrag<Piece>(
   svg: RefObject<SVGSVGElement | null>,

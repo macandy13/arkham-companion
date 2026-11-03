@@ -234,6 +234,8 @@
   --layer-menu: 2;
   /* A card dialog lowered out of the board's way (card_dialog.css), over the board's own layers. */
   --layer-lowered-dialog: 4;
+  /* A dragged token (`TokenGhost`), over the lowered card dialog. */
+  --layer-token-ghost: 5;
 
   --layout-content-width: 60rem;
   /* The investigators' column beside the map in landscape, as wide as the prototype's. */
@@ -553,7 +555,6 @@
   --map-ghost-opacity: 0.6;
   /* A dragged token (`TokenGhost`): finger-sized, so it shows beside the finger that carries it. */
   --token-ghost-size: 2.5rem;
-  --layer-token-ghost: 5;
   /* An enemy on the map engaged with an investigator, shown in full in their threat area. */
   --engaged-enemy-opacity: 0.5;
   /* A token with nothing on it (a location's clues once found) fades, so it reads as empty. */

@@ -650,6 +650,34 @@ describe('MapBoard', () => {
         expect(table.board.investigator(bea).clues).toBe(1);
       });
 
+      it("gives the clue to alder when alder's panel lies over bea's pawn, panned out of sight", async () => {
+        const table = PlayTable.start(
+          house
+            .withInvestigator(bea, { locationId: study })
+            .withInvestigator(alder, { locationId: study })
+            .withTurnOf(alder),
+        );
+        render(
+          <>
+            <MapBoard
+              board={table.board}
+              actions={actionsOn(table)}
+              busy={false}
+              adjusting={false}
+            />
+            <section data-investigator="alder">
+              <h3>alder</h3>
+            </section>
+          </>,
+        );
+        underPointer = screen.getByRole('heading', { name: 'alder' });
+
+        await drag('study', 'Clues 2', clueCount, firstPawn.x, firstPawn.y);
+
+        expect(table.board.investigator(alder).clues).toBe(1);
+        expect(table.board.investigator(bea).clues).toBe(0);
+      });
+
       it('shows a clue token over the page while it is dragged, and none once it is dropped', () => {
         const table = PlayTable.start(
           house.withInvestigator(alder, { locationId: study }).withTurnOf(alder),
@@ -670,6 +698,7 @@ describe('MapBoard', () => {
         fireEvent.pointerUp(clues, { pointerId: 1, clientX: 600, clientY: 400 });
 
         expect(dragged?.style.getPropertyValue('--ghost-x')).toBe('600px');
+        expect(dragged?.style.getPropertyValue('--ghost-y')).toBe('400px');
         expect(document.body.querySelector('[data-token-ghost]')).toBeNull();
       });
     });
