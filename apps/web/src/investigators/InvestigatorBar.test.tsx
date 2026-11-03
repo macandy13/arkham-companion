@@ -444,6 +444,29 @@ describe('InvestigatorBar', () => {
     ).toBe(shape);
   });
 
+  it("shows the whole card in the panel on the phone's expanded bar, its page text with it", () => {
+    const table = PlayTable.start(
+      newGame()
+        .withLocation(study, blankLocation('study'))
+        .withInvestigator(alder, { locationId: study }),
+    );
+    render(
+      <InvestigatorBar
+        board={table.board}
+        actions={actionsOn(table)}
+        busy={false}
+        adjusting={false}
+        whole
+        printed={() => ({ factionCode: 'guardian', traits: 'Tester. Hero.' })}
+      />,
+    );
+
+    const card = panel('alder').querySelector('[data-card="investigator"]');
+    expect(card?.getAttribute('data-shape')).toBe('full');
+    expect(card?.querySelector('[data-page]')?.textContent).toBe('Tester. Hero.');
+    expect(within(panel('alder')).queryByRole('button', { name: "Show alder's card" })).toBeNull();
+  });
+
   describe('the lead and turn markers', () => {
     const alderAndBrook = () =>
       PlayTable.start(

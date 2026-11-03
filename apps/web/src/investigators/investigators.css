@@ -573,16 +573,15 @@
 }
 
 /*
- * The phone's detail view on the investigators (`data-view='investigators'`, game.css): every
- * investigator's whole panel, a screen wide, snapped sideways in seat order, with the threat area
- * above the card and the turn controls under it, as on a tablet.
+ * The phone's investigator bar expanded in place (`data-view='investigators'`, game.css): every
+ * investigator's panel with the whole card (`WholeCard`), a screen wide, snapped sideways in seat
+ * order, with the threat area above the card and the turn controls under it, as on a tablet.
  */
 @media (orientation: portrait) and (max-width: 40rem) {
   #board[data-view='investigators'] > #investigators {
     align-items: center;
     gap: 0;
     padding: 0;
-    border-top: 0;
     overflow-x: auto;
     scroll-snap-type: x mandatory;
     scrollbar-width: none;
