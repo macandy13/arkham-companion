@@ -180,7 +180,7 @@ test('fight an enemy from the map', async ({ page }) => {
 
 // Journey: play from a location's details: Roland Banks moves from the Hallway to the Attic as an
 // action, which reveals it, and takes a clue there as a card grants it; the next clue they take
-// is dragged off the Attic's clue count onto their pawn.
+// is dragged off the Attic's clue count onto their card.
 test('move and take a clue from the location details', { tag: '@flow' }, async ({ page }) => {
   const house = page.getByRole('figure', { name: 'House' });
   const room = (name: string) => house.getByRole('group', { name });
@@ -213,11 +213,11 @@ test('move and take a clue from the location details', { tag: '@flow' }, async (
     await expect(room('Attic').getByRole('img', { name: `Clues ${clues - 1}` })).toBeVisible();
   });
 
-  await test.step("Drag another of the Attic's clues onto Roland Banks' pawn", async () => {
+  await test.step("Drag another of the Attic's clues onto Roland Banks' card beside the map", async () => {
     await dragTo(
       page,
       room('Attic').getByRole('img', { name: `Clues ${clues - 1}` }),
-      room('Attic').getByRole('img', { name: /^Roland Banks/ }),
+      page.getByRole('region', { name: 'Roland Banks' }),
     );
     await expect(room('Attic').getByRole('img', { name: `Clues ${clues - 2}` })).toBeVisible();
   });

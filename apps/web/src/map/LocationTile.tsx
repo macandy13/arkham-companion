@@ -337,18 +337,6 @@ function Clues({ location, drag }: { location: LocationView; drag: DragHandlers 
   );
 }
 
-/**
- * A clue being dragged (`TilePiece`'s clue), in tile units, centred on `centre`: a clue token
- * that follows the pointer, hidden from assistive technology like a dragged pawn's copy.
- */
-export function ClueGhost({ centre: { x, y } }: { centre: Point }) {
-  return (
-    <g aria-hidden="true" data-ghost="" data-count="clue">
-      <circle cx={x} cy={y} r={BADGE_RADIUS} />
-    </g>
-  );
-}
-
 /** What a tile shows as a round token: the kind it counts, its value and its accessible name. */
 interface TokenCount {
   kind: 'shroud' | 'clue' | 'doom';

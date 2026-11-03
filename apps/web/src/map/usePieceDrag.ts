@@ -12,15 +12,19 @@ export interface DragHandlers {
 
 /** A drag of one `Piece` on a map drawing (`usePieceDrag`). */
 export interface PieceDrag<Piece> {
-  /** The piece being dragged and where it is, in the drawing's coordinates; absent while none is. */
-  dragged?: { piece: Piece; at: Point };
+  /**
+   * The piece being dragged and where it is, in the drawing's coordinates (`at`) and on the screen
+   * (`client`, for a copy drawn over the whole page); absent while none is.
+   */
+  dragged?: { piece: Piece; at: Point; client: Point };
   /** The handlers that make `piece` draggable. */
   handlers(piece: Piece): DragHandlers;
 }
 
 /**
  * Dragging pieces (pawns, enemy tokens) across the map drawing `svg`. While the pointer is down on
- * a piece, `dragged` follows it; letting go calls `onDrop` with the piece and the point, and the
+ * a piece, `dragged` follows it; letting go calls `onDrop` with the piece and the point (in the
+ * drawing and on the screen, for a drop outside the drawing), and the
  * caller decides what a drop there means. Letting go about where it went down (`isTap`) is a tap
  * instead, which calls `onTap` with the piece: when it returns true the tap was the piece's own,
  * and the click it makes goes no further, so the tile under the piece does not open as well. A drop that means nothing, or a refused one, leaves the
@@ -29,10 +33,10 @@ export interface PieceDrag<Piece> {
  */
 export function usePieceDrag<Piece>(
   svg: RefObject<SVGSVGElement | null>,
-  onDrop: (piece: Piece, point: Point) => void,
+  onDrop: (piece: Piece, point: Point, client: Point) => void,
   onTap: (piece: Piece) => boolean,
 ): PieceDrag<Piece> {
-  const [dragged, setDragged] = useState<{ piece: Piece; at: Point }>();
+  const [dragged, setDragged] = useState<{ piece: Piece; at: Point; client: Point }>();
   const pressedAt = useRef<Point>(undefined);
   const tapTaken = useRef(false);
   // The screen matrix includes the pan and zoom transform, so a point maps right at any zoom.
@@ -45,7 +49,7 @@ export function usePieceDrag<Piece>(
   };
   const follow = (piece: Piece, event: PointerEvent<SVGGElement>) => {
     const at = toDrawing(event);
-    setDragged(at && { piece, at });
+    setDragged(at && { piece, at, client: { x: event.clientX, y: event.clientY } });
   };
   return {
     dragged,
@@ -66,7 +70,7 @@ export function usePieceDrag<Piece>(
         tapTaken.current = pressed !== undefined && isTap(pressed, released) && onTap(piece);
         if (tapTaken.current) return;
         const point = toDrawing(event);
-        if (point) onDrop(piece, point);
+        if (point) onDrop(piece, point, released);
       },
       onPointerCancel() {
         setDragged(undefined);

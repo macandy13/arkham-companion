@@ -14,14 +14,7 @@ import { cycledIndex } from '@arkham/util';
 import { EnemyDetails } from '../enemies/EnemyDetails';
 import type { GameActions } from '../state/gameActions';
 import { LocationDetails } from './LocationDetails';
-import {
-  CardPatterns,
-  ClueGhost,
-  EnemyToken,
-  LocationTile,
-  Pawn,
-  type TilePiece,
-} from './LocationTile';
+import { CardPatterns, EnemyToken, LocationTile, Pawn, type TilePiece } from './LocationTile';
 import {
   connectionEnds,
   drawingSize,
@@ -33,6 +26,8 @@ import {
   type Point,
 } from './mapLayout';
 import { usePieceDrag } from './usePieceDrag';
+import { investigatorAt } from '../investigators/dropTarget';
+import { TokenGhost } from '../screens/TokenGhost';
 import './map.css';
 
 /**
@@ -164,8 +159,10 @@ type DraggedPiece = TilePiece & { from: InstanceId };
  * - An enemy dropped on another location moves there as a card instruction says
  *   (`GameActions.moveEnemy`); the players drag it only when a card tells them to, so the map
  *   does not ask which card.
- * - A clue dragged off a location onto the pawn of an investigator there is theirs, discovered as
- *   a card grants it (`GameActions.takeClue`), whoever's turn it is.
+ * - A clue dragged off a location onto the pawn of an investigator there, or onto their panel
+ *   beside the map (`investigatorAt`), is theirs, discovered as a card grants it
+ *   (`GameActions.takeClue`), whoever's turn it is. It follows the pointer over the whole page as
+ *   a clue token (`TokenGhost`).
  *
  * A tap on a tile opens its details (`LocationDetails`): what the investigator whose turn it is
  * can do there, or while adjusting the corrections, when no piece is dragged; on a phone it calls
@@ -209,10 +206,12 @@ function MapDrawing({
   };
   const drag = usePieceDrag<DraggedPiece>(
     svg,
-    (piece, point) => {
+    (piece, point, client) => {
       if ('clue' in piece) {
-        const taker = board.investigatorsAt(piece.from).find(({ id }) => onPawnOf(id, point));
-        if (taker) void actions.takeClue(piece.from, taker.id);
+        const taker =
+          board.investigatorsAt(piece.from).find(({ id }) => onPawnOf(id, point))?.id ??
+          investigatorAt(client);
+        if (taker) void actions.takeClue(piece.from, taker);
         return;
       }
       if ('enemy' in piece && moverCentre && onPawn(moverCentre, point)) {
@@ -296,12 +295,15 @@ function MapDrawing({
                 : [];
             })}
             {/* Drawn last, so the dragged piece passes over the tiles rather than under them. */}
-            {drag.dragged && (
+            {drag.dragged && !('clue' in drag.dragged.piece) && (
               <Ghost piece={drag.dragged.piece} at={drag.dragged.at} board={board} />
             )}
           </svg>
         </TransformComponent>
       </TransformWrapper>
+      {drag.dragged && 'clue' in drag.dragged.piece && (
+        <TokenGhost kind="clue" at={drag.dragged.client} />
+      )}
       {detailsLocation && (
         <LocationDetails
           board={board}
@@ -326,8 +328,15 @@ function MapDrawing({
 }
 
 /** The copy of a dragged piece that follows the pointer, centred on `at`. */
-function Ghost({ piece, at, board }: { piece: TilePiece; at: Point; board: BoardView }) {
-  if ('clue' in piece) return <ClueGhost centre={at} />;
+function Ghost({
+  piece,
+  at,
+  board,
+}: {
+  piece: Exclude<TilePiece, { clue: unknown }>;
+  at: Point;
+  board: BoardView;
+}) {
   return 'enemy' in piece ? (
     <EnemyToken enemy={piece.enemy} investigators={board.investigators} centre={at} ghost />
   ) : (

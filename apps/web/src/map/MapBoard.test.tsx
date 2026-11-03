@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
-import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import {
   attachedTo,
   atLocation,
@@ -543,57 +543,135 @@ describe('MapBoard', () => {
       expect(table.board.investigator(bea).at).toBe('study');
     });
 
-    it("gives a clue dragged off the study to the investigator whose pawn it is dropped on, whoever's turn it is", async () => {
-      const table = PlayTable.start(
-        house
-          .withInvestigator(bea, { locationId: study })
-          .withInvestigator(alder, { locationId: study })
-          .withTurnOf(alder),
-      );
-      render(
-        <MapBoard board={table.board} actions={actionsOn(table)} busy={false} adjusting={false} />,
-      );
-
-      // bea came first, so the first pawn is bea's, not that of alder, whose turn it is.
-      await drag('study', 'Clues 2', clueCount, firstPawn.x, firstPawn.y);
-
-      expect(table.board.investigator(bea).clues).toBe(1);
-      expect(table.board.location(study).clues).toBe(1);
-    });
-
-    it("opens the study's details on a tap on its clue count", async () => {
-      const table = PlayTable.start(
-        house.withInvestigator(alder, { locationId: study }).withTurnOf(alder),
-      );
-      render(
-        <MapBoard board={table.board} actions={actionsOn(table)} busy={false} adjusting={false} />,
-      );
-
-      await drag('study', 'Clues 2', clueCount, clueCount.x, clueCount.y);
-      fireEvent.click(within(tile('study')).getByRole('img', { name: 'Clues 2' }), {
-        clientX: clueCount.x,
-        clientY: clueCount.y,
+    // jsdom lays nothing out, so the hit test for an investigator's panel under the pointer finds
+    // what a test puts under it, nothing unless it says so.
+    describe('a clue', () => {
+      let underPointer: Element | null = null;
+      beforeEach(() => {
+        underPointer = null;
+        document.elementFromPoint = () => underPointer;
+      });
+      afterEach(() => {
+        Reflect.deleteProperty(document, 'elementFromPoint');
       });
 
-      expect(screen.getByRole('dialog', { name: 'study' })).toBeTruthy();
-      expect(table.board.location(study).clues).toBe(2);
-    });
+      it("gives a clue dragged off the study to the investigator whose pawn it is dropped on, whoever's turn it is", async () => {
+        const table = PlayTable.start(
+          house
+            .withInvestigator(bea, { locationId: study })
+            .withInvestigator(alder, { locationId: study })
+            .withTurnOf(alder),
+        );
+        render(
+          <MapBoard
+            board={table.board}
+            actions={actionsOn(table)}
+            busy={false}
+            adjusting={false}
+          />,
+        );
 
-    it.each([
-      { where: 'on another location', x: 255, y: 105 },
-      { where: 'on the study, off any pawn', x: 75, y: 105 },
-    ])('leaves the clue on the study when dropped $where', async ({ x, y }) => {
-      const table = PlayTable.start(
-        house.withInvestigator(alder, { locationId: study }).withTurnOf(alder),
-      );
-      render(
-        <MapBoard board={table.board} actions={actionsOn(table)} busy={false} adjusting={false} />,
-      );
+        // bea came first, so the first pawn is bea's, not that of alder, whose turn it is.
+        await drag('study', 'Clues 2', clueCount, firstPawn.x, firstPawn.y);
 
-      await drag('study', 'Clues 2', clueCount, x, y);
+        expect(table.board.investigator(bea).clues).toBe(1);
+        expect(table.board.location(study).clues).toBe(1);
+      });
 
-      expect(table.board.location(study).clues).toBe(2);
-      expect(table.board.investigator(alder).clues).toBe(0);
+      it("opens the study's details on a tap on its clue count", async () => {
+        const table = PlayTable.start(
+          house.withInvestigator(alder, { locationId: study }).withTurnOf(alder),
+        );
+        render(
+          <MapBoard
+            board={table.board}
+            actions={actionsOn(table)}
+            busy={false}
+            adjusting={false}
+          />,
+        );
+
+        await drag('study', 'Clues 2', clueCount, clueCount.x, clueCount.y);
+        fireEvent.click(within(tile('study')).getByRole('img', { name: 'Clues 2' }), {
+          clientX: clueCount.x,
+          clientY: clueCount.y,
+        });
+
+        expect(screen.getByRole('dialog', { name: 'study' })).toBeTruthy();
+        expect(table.board.location(study).clues).toBe(2);
+      });
+
+      it.each([
+        { where: 'on another location', x: 255, y: 105 },
+        { where: 'on the study, off any pawn', x: 75, y: 105 },
+      ])('leaves the clue on the study when dropped $where', async ({ x, y }) => {
+        const table = PlayTable.start(
+          house.withInvestigator(alder, { locationId: study }).withTurnOf(alder),
+        );
+        render(
+          <MapBoard
+            board={table.board}
+            actions={actionsOn(table)}
+            busy={false}
+            adjusting={false}
+          />,
+        );
+
+        await drag('study', 'Clues 2', clueCount, x, y);
+
+        expect(table.board.location(study).clues).toBe(2);
+        expect(table.board.investigator(alder).clues).toBe(0);
+      });
+
+      it("gives a clue dropped on bea's panel beside the map to bea", async () => {
+        const table = PlayTable.start(
+          house
+            .withInvestigator(bea, { locationId: study })
+            .withInvestigator(alder, { locationId: study })
+            .withTurnOf(alder),
+        );
+        render(
+          <>
+            <MapBoard
+              board={table.board}
+              actions={actionsOn(table)}
+              busy={false}
+              adjusting={false}
+            />
+            <section data-investigator="bea">
+              <h3>bea</h3>
+            </section>
+          </>,
+        );
+        underPointer = screen.getByRole('heading', { name: 'bea' });
+
+        await drag('study', 'Clues 2', clueCount, 600, 400);
+
+        expect(table.board.investigator(bea).clues).toBe(1);
+      });
+
+      it('shows a clue token over the page while it is dragged, and none once it is dropped', () => {
+        const table = PlayTable.start(
+          house.withInvestigator(alder, { locationId: study }).withTurnOf(alder),
+        );
+        render(
+          <MapBoard
+            board={table.board}
+            actions={actionsOn(table)}
+            busy={false}
+            adjusting={false}
+          />,
+        );
+        const clues = within(tile('study')).getByRole('img', { name: 'Clues 2' });
+
+        fireEvent.pointerDown(clues, { pointerId: 1, clientX: clueCount.x, clientY: clueCount.y });
+        fireEvent.pointerMove(clues, { pointerId: 1, clientX: 600, clientY: 400 });
+        const dragged = document.body.querySelector<HTMLElement>('[data-token-ghost="clue"]');
+        fireEvent.pointerUp(clues, { pointerId: 1, clientX: 600, clientY: 400 });
+
+        expect(dragged?.style.getPropertyValue('--ghost-x')).toBe('600px');
+        expect(document.body.querySelector('[data-token-ghost]')).toBeNull();
+      });
     });
 
     it('moves an enemy to the location it is dropped on, connected or not', async () => {
