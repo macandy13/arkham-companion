@@ -4,6 +4,7 @@ import {
   blankLocation,
   blankTreachery,
   changeNotices,
+  noticeKindOf,
   execute,
   fixed,
   instanceId,
@@ -18,6 +19,7 @@ import {
   type Command,
   type Event,
   type ExecuteResult,
+  type NoticeKind,
 } from './index';
 import { answer, stateAfter } from '../test/utils';
 
@@ -160,6 +162,32 @@ describe('changeNotices', () => {
     ]);
   });
 
+  it('gives one notice for two changes of one kind by the same card', () => {
+    const { context, state } = hallTable
+      .withLocation(
+        cellar,
+        blankLocation('twice_dooming_cellar', {
+          abilities: [whenRevealed(placeDoomOnAgenda(1), placeDoomOnAgenda(1))],
+        }),
+      )
+      .withConnection(hall, cellar)
+      .start();
+
+    const result = execute(context, state, {
+      type: 'MoveInvestigator',
+      investigatorId: alice,
+      to: cellar,
+    });
+
+    expect(noticesOf(result)).toEqual([
+      {
+        kind: 'tokens',
+        cause: { kind: 'card', cardId: cellar, window: { kind: 'revealed' } },
+        events: ['TokensChanged', 'TokensChanged'],
+      },
+    ]);
+  });
+
   it("gives no notice for alice's own card action, though it is the card's effect", () => {
     const { context, state } = newGame()
       .withLocation(
@@ -192,5 +220,25 @@ describe('changeNotices', () => {
 
     expect(result.causes.every((cause) => cause.kind === 'player')).toBe(true);
     expect(changeNotices(result)).toEqual([]);
+  });
+});
+
+describe('noticeKindOf', () => {
+  it.each<{ event: Event; kind: NoticeKind | undefined }>([
+    {
+      event: { type: 'ExhaustChanged', cardId: instanceId('ghoul'), exhausted: false },
+      kind: 'enemy',
+    },
+    { event: { type: 'SurgeGained', cardId: rottingTreachery }, kind: 'encounter' },
+    {
+      event: {
+        type: 'CommandDeferred',
+        command: { type: 'DrawCards', investigatorId: alice, amount: 1 },
+      },
+      kind: 'byHand',
+    },
+    { event: { type: 'RoundEnded', round: 1 }, kind: undefined },
+  ])('files $event.type under $kind', ({ event, kind }) => {
+    expect(noticeKindOf(event)).toBe(kind);
   });
 });

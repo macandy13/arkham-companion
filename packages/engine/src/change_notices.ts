@@ -44,10 +44,8 @@ export function changeNotices({ events, causes }: CausedEvents): ChangeNotice[] 
   return notices;
 }
 
-function sameCause(a: ChangeCause, b: ChangeCause): boolean {
+function sameCause(a: ChangeNotice['cause'], b: ChangeNotice['cause']): boolean {
   switch (a.kind) {
-    case 'player':
-      return b.kind === 'player';
     case 'card':
       return b.kind === 'card' && a.cardId === b.cardId && shallowEqual(a.window, b.window);
     case 'rule':
