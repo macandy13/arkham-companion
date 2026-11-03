@@ -1,7 +1,8 @@
 /*
  * The campaign's dialogs: the resolution dialog (ResolutionDialog) and the next scenario's setup
- * preview (NextScenarioDialog). Both take the app's one dialog design (base.css) with the log
- * page's group labels; the resolution writes each change in pen, as it will appear in the log.
+ * preview (NextScenarioDialog) with its replacement picker (ReplacementPicker). They take the
+ * app's one dialog design (base.css) with the log page's group labels; the resolution writes each
+ * change in pen, as it will appear in the log.
  */
 #resolution > p {
   margin-block: var(--space-2) 0;
@@ -110,4 +111,24 @@
 
 #next-scenario section dd {
   margin: 0 0 var(--space-2);
+}
+
+/* A killed or insane member, then who takes their place, above the button that picks them. */
+#next-scenario section li > p {
+  margin: 0;
+}
+
+/* The replacement picker (ReplacementPicker) holds pages of portraits, so it takes the wide size. */
+#replacement-picker {
+  width: min(var(--dialog-width-wide), 100%);
+  max-width: min(var(--dialog-width-wide), 100%);
+}
+
+/* The dialog's title names whom the pick replaces, so the picker's own title would repeat it. */
+#replacement-picker #picker-heading {
+  display: none;
+}
+
+#replacement-picker footer {
+  margin-block-start: var(--space-4);
 }

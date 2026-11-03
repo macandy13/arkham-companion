@@ -221,6 +221,7 @@ describe('appStore', () => {
           scenario: theMidnightMasks,
         },
         seed: 5,
+        replacements: [],
       };
 
       /** A campaign whose log has The Gathering written in, without a resolution. */
@@ -257,9 +258,65 @@ describe('appStore', () => {
         const gamesBefore = await db.listGames();
 
         await expect(
-          store.getState().startNextScenario({ ...start, campaignId }),
+          store.getState().startNextScenario({ ...start, campaignId, replacements: [] }),
         ).rejects.toMatchObject({ rejection: { code: 'notNextCampaignScenario' } });
         expect(await db.listGames()).toEqual(gamesBefore);
+      });
+    });
+
+    describe('after an Easy Gathering in which Alder was killed', () => {
+      const brin: InvestigatorCard = {
+        code: investigatorCode('brin'),
+        name: 'Brin',
+        health: 7,
+        sanity: 7,
+        skills: { willpower: 2, intellect: 4, combat: 2, agility: 4 },
+      };
+
+      /** A campaign whose log has The Gathering written in, with Alder killed in it. */
+      async function alderKilled(db: IndexedDbStore) {
+        const store = createAppStore(db);
+        await store.getState().startCampaign({ ...campaignStart, difficulty: 'easy' });
+        const campaignId = store.getState().campaigns[0]!.campaignId;
+        await store.getState().actions.adjust(investigatorId('alder'), 'horror', alder.sanity);
+        await store
+          .getState()
+          .writeResolution({ kind: 'noResolution' }, [{ type: 'MarkKilled', code: alder.code }]);
+        return { store, campaignId };
+      }
+
+      it('writes Brin into the log in place of Alder and sets The Midnight Masks up with her', async () => {
+        const db = new IndexedDbStore('appstore-replace-test');
+        const { store, campaignId } = await alderKilled(db);
+
+        await store.getState().startNextScenario({
+          campaignId,
+          title: 'The Midnight Masks',
+          ctx: {
+            cards: cardDbWith(theMidnightMasksCards, [investigatorCardStats(brin)]),
+            scenario: theMidnightMasks,
+          },
+          seed: 5,
+          replacements: [{ type: 'ReplaceInvestigator', code: alder.code, by: brin.code }],
+        });
+
+        const log = (await db.loadCampaign(campaignId))?.log;
+        expect(log?.investigators.map(({ name }) => name)).toEqual(['Brin']);
+        expect(log?.formerInvestigators).toMatchObject([{ name: 'Alder', fate: 'killed' }]);
+        expect(store.getState().current?.board?.investigator(investigatorId('brin')).name).toBe(
+          'Brin',
+        );
+      });
+
+      it('ends the campaign as lost', async () => {
+        const db = new IndexedDbStore('appstore-lose-test');
+        const { store, campaignId } = await alderKilled(db);
+        await store.getState().openCampaign(campaignId);
+
+        await store.getState().loseCampaign(campaignId);
+
+        expect((await db.loadCampaign(campaignId))?.log.result).toBe('lost');
+        expect(store.getState().campaign?.log.result).toBe('lost');
       });
     });
 

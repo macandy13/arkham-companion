@@ -18,7 +18,7 @@ import {
 } from './campaign_log';
 import { CampaignCommandRejected } from './campaign_rejection';
 import {
-  executeCommand,
+  executeCommands,
   type CampaignContext,
   type CampaignExecuteResult,
 } from './handle_campaign';
@@ -224,13 +224,7 @@ export function applyResolution(
       current,
     });
   const advance: CampaignCommand = { type: 'AdvanceScenario', outcome };
-  return [...confirmed, advance].reduce<CampaignExecuteResult>(
-    (result, command) => {
-      const next = executeCommand(ctx, result.log, command);
-      return { log: next.log, events: [...result.events, ...next.events] };
-    },
-    { log, events: [] },
-  );
+  return executeCommands(ctx, log, [...confirmed, advance]);
 }
 
 /**
