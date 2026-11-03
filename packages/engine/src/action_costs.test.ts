@@ -17,13 +17,19 @@ const hall = instanceId('hall');
 
 /** A treachery like Frozen in Fear: the first move, fight or evade each round costs 1 more. */
 const frozenCard = blankTreachery('frozen', {
-  actionCosts: [
-    { actions: ['move', 'fight', 'evade'], by: 1, who: 'threatArea', first: 'eachRound' },
+  modifiers: [
+    {
+      value: 'actionCost',
+      of: 'threatArea',
+      actions: ['move', 'fight', 'evade'],
+      first: 'eachRound',
+      by: 1,
+    },
   ],
 });
 /** A treachery that makes every investigate action cost 1 more, not only the first. */
 const slowingCard = blankTreachery('slowing', {
-  actionCosts: [{ actions: ['investigate'], by: 1, who: 'threatArea' }],
+  modifiers: [{ value: 'actionCost', of: 'threatArea', actions: ['investigate'], by: 1 }],
 });
 
 describe('actionCost', () => {

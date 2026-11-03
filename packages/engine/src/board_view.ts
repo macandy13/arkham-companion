@@ -12,7 +12,7 @@ import {
 
 export type { PrintedActionView };
 import { actionCost, type BasicAction } from './action_costs';
-import { effectiveValue } from './card_values';
+import { effectiveValue } from './modifiers';
 import {
   cardStats,
   resolveValue,
