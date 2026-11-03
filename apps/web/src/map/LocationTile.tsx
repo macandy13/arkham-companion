@@ -120,6 +120,7 @@ export function LocationTile({
       role="group"
       aria-label={location.name}
       data-card="location"
+      data-location={location.id}
       data-side={location.revealed ? 'revealed' : 'unrevealed'}
       data-picture={picture?.shown ? 'shown' : undefined}
       data-pickable={pickable || undefined}
