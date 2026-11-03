@@ -1706,6 +1706,21 @@ describe('card actions', () => {
     ]);
   });
 
+  it('names the clue the taker spends on an action that costs alice 1 clue', () => {
+    const { context, state } = newGame()
+      .withLocation(
+        study,
+        blankLocation('study', { actions: [{ effects: [], cost: { spend: 'clues', amount: 1 } }] }),
+        { revealed: true },
+      )
+      .withInvestigator(alice, { locationId: study, clues: 2 })
+      .start();
+
+    expect(boardView(context, state).cardActions(alice)).toEqual([
+      { cardId: study, card: 'study', action: 0, clues: 1 },
+    ]);
+  });
+
   it('keeps the number of the second plain action once the first is used up', () => {
     const { context, state } = newGame()
       .withLocation(

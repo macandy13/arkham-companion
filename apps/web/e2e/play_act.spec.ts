@@ -29,3 +29,25 @@ test('advance the act from its full card', async ({ page }) => {
     await expect(notice).toBeHidden();
   });
 });
+
+// Journey: advance the act by dragging one of Roland Banks' clues onto it, as its button would.
+test('advance the act by dragging a clue onto it', { tag: '@flow' }, async ({ page }) => {
+  const act = page.getByRole('region', { name: 'Act' });
+
+  await test.step('Import a game at act 2, with Roland Banks holding its 3 clues', async () => {
+    await resumeImportedGame(page, 'Two Ghoul Priests', twoGhoulPriestsExport('Two Ghoul Priests'));
+    await expect(act.getByRole('img', { name: 'Clues 3 / 3' })).toBeVisible();
+  });
+
+  await test.step("Drag a clue off Roland Banks' card onto The Barrier", async () => {
+    const clues = page.getByRole('region', { name: 'Roland Banks' }).locator('[data-drag="clues"]');
+    const from = await clues.boundingBox();
+    const to = await act.boundingBox();
+    if (!from || !to) throw new Error('the clue count or the act is not on screen');
+    await page.mouse.move(from.x + from.width / 2, from.y + from.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(to.x + to.width / 2, to.y + to.height / 2, { steps: 10 });
+    await page.mouse.up();
+    await expect(act.getByText('What Have You Done?')).toBeVisible();
+  });
+});

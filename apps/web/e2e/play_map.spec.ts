@@ -182,7 +182,7 @@ test('fight an enemy from the map', async ({ page }) => {
 // action, which reveals it, and takes a clue there as a card grants it; the next clue they take
 // is dragged off the Attic's clue count onto their card, and one goes back from the card onto
 // the Attic, as a card tells them to place one there.
-test('move and take a clue from the location details', { tag: '@flow' }, async ({ page }) => {
+test('move and take a clue from the location details', async ({ page }) => {
   const house = page.getByRole('figure', { name: 'House' });
   const room = (name: string) => house.getByRole('group', { name });
   const details = (name: string) => page.getByRole('dialog', { name });

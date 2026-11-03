@@ -2,7 +2,10 @@
 import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
+  advanceAct,
+  advanceBySpendingClues,
   attachedTo,
+  blankAct,
   blankAsset,
   blankEnemy,
   blankLocation,
@@ -13,10 +16,13 @@ import {
   instanceId,
   investigatorId,
   newGame,
+  perInvestigator,
+  placeCluesOnSelf,
   PlayTable,
   playAreaOf,
   resignAction,
   threatAreaOf,
+  whenTokensOnSelf,
 } from '@arkham/engine';
 import { range } from '@arkham/util';
 import { initI18n } from '../i18n';
@@ -1084,6 +1090,78 @@ describe('InvestigatorBar', () => {
       await act(async () => {});
 
       expect(table.board.investigator(alder).clues).toBe(2);
+    });
+
+    describe('onto the act', () => {
+      const firstAct = instanceId('first_act');
+      /** Renders the bar over `table` beside a stand-in for the header's act, under the pointer. */
+      function renderWithAct(table: PlayTable) {
+        render(
+          <>
+            <InvestigatorBar
+              board={table.board}
+              actions={actionsOn(table)}
+              busy={false}
+              adjusting={false}
+            />
+            <section data-slot="act">
+              <h2>Act</h2>
+            </section>
+          </>,
+        );
+        document.elementFromPoint = () => screen.getByRole('heading', { name: 'Act' });
+      }
+
+      it("advances an act for 2 clues alder holds on alder's turn, like its button", async () => {
+        const table = PlayTable.start(
+          newGame()
+            .withLocation(study, blankLocation('study'), { revealed: true })
+            .withAct(
+              firstAct,
+              blankAct('first_act', { actions: [advanceBySpendingClues(perInvestigator(2))] }),
+            )
+            .withAct(instanceId('second_act'), blankAct('second_act'))
+            .withInvestigator(alder, { locationId: study, clues: 2 })
+            .withTurnOf(alder),
+        );
+        renderWithAct(table);
+
+        dragAlderClue();
+        await act(async () => {});
+
+        expect(table.board.act?.name).toBe('second_act');
+        expect(table.board.investigator(alder).clues).toBe(0);
+      });
+
+      /** An act that takes clues on it: its action costs 1 clue and places 1 clue on it. */
+      const ritualAct = blankAct('ritual_act', {
+        actions: [{ cost: { spend: 'clues', amount: 1 }, effects: [placeCluesOnSelf(1)] }],
+        abilities: [whenTokensOnSelf('clue', fixed(3), advanceAct())],
+      });
+
+      it.each([
+        { whose: "alder's turn", turn: alder, after: { alder: 1, onAct: 1 } },
+        { whose: "brook's turn", turn: brook, after: { alder: 2, onAct: 0 } },
+      ])(
+        'takes the clue action of an act that takes clues on it, on $whose: $after',
+        async ({ turn, after }) => {
+          const table = PlayTable.start(
+            newGame()
+              .withLocation(study, blankLocation('study'), { revealed: true })
+              .withAct(firstAct, ritualAct)
+              .withInvestigator(alder, { locationId: study, clues: 2 })
+              .withInvestigator(brook, { locationId: study })
+              .withTurnOf(turn),
+          );
+          renderWithAct(table);
+
+          dragAlderClue();
+          await act(async () => {});
+
+          expect(table.board.investigator(alder).clues).toBe(after.alder);
+          expect(table.board.act?.clues).toBe(after.onAct);
+        },
+      );
     });
 
     it('shows a clue token over the page while it is dragged', () => {

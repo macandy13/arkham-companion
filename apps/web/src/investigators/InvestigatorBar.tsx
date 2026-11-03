@@ -22,9 +22,8 @@ import { PlayArea } from './PlayArea';
 import { ThreatArea } from './ThreatArea';
 import { TurnControls } from './TurnControls';
 import { deltaText, useCountChange } from '../screens/countChange';
-import { locationAt } from '../map/dropTarget';
-import { TokenGhost } from '../screens/TokenGhost';
-import { useTokenDrag, type TokenDragHandlers } from '../screens/useTokenDrag';
+import type { TokenDragHandlers } from '../screens/useTokenDrag';
+import { useClueDrag } from './useClueDrag';
 import './investigators.css';
 
 /**
@@ -342,8 +341,8 @@ function Skills({
 /**
  * The counters on the card's notebook page, each a token like the ones on the table, with their
  * steppers while the players adjust the board (`adjusting`); a step plays `actions` unless one is
- * queued (`busy`). A clue dragged off the clue count onto the investigator's own location on the
- * map is placed there (`GameActions.placeClue`), as a card or a failed test tells them to.
+ * queued (`busy`). A clue can be dragged off the clue count onto their location or the act
+ * (`useClueDrag`).
  */
 function Counters({
   board,
@@ -352,7 +351,7 @@ function Counters({
   busy,
   actions,
 }: {
-  /** The board a clue dragged off the card is placed on (`locationAt`). */
+  /** The board a clue dragged off the card lands on (`useClueDrag`). */
   board: BoardView;
   investigator: InvestigatorView;
   adjusting: boolean;
@@ -364,72 +363,69 @@ function Counters({
   const adjust = (stat: SteppedStat, delta: number) => void actions.adjust(id, stat, delta);
   // A defeated or resigned investigator has left the game, so their counters no longer change.
   const off = busy || investigator.status !== 'active';
-  // A clue goes onto their own location only, as the cards that tell them to place one say.
-  const clueDrag = useTokenDrag((client) => {
-    const location = locationAt(client);
-    if (location && board.investigatorsAt(location).some((there) => there.id === id))
-      void actions.placeClue(id);
-  });
+  const clueDrag = useClueDrag(board, id, actions);
   return (
-    <dl>
-      <Stat
-        kind="health"
-        label={t('investigators.health')}
-        value={health - damage}
-        shown={t('investigators.left', { left: health - damage, max: health })}
-        printed={{ max: health, taken: damage }}
-      >
-        {adjusting && (
-          <Steppers
-            lower={{ label: t('investigators.takeDamage'), disabled: off }}
-            raise={{ label: t('investigators.healDamage'), disabled: off || damage === 0 }}
-            onStep={(delta) => adjust('damage', -delta)}
-          />
+    <>
+      <dl>
+        <Stat
+          kind="health"
+          label={t('investigators.health')}
+          value={health - damage}
+          shown={t('investigators.left', { left: health - damage, max: health })}
+          printed={{ max: health, taken: damage }}
+        >
+          {adjusting && (
+            <Steppers
+              lower={{ label: t('investigators.takeDamage'), disabled: off }}
+              raise={{ label: t('investigators.healDamage'), disabled: off || damage === 0 }}
+              onStep={(delta) => adjust('damage', -delta)}
+            />
+          )}
+        </Stat>
+        <Stat
+          kind="sanity"
+          label={t('investigators.sanity')}
+          value={sanity - horror}
+          shown={t('investigators.left', { left: sanity - horror, max: sanity })}
+          printed={{ max: sanity, taken: horror }}
+        >
+          {adjusting && (
+            <Steppers
+              lower={{ label: t('investigators.takeHorror'), disabled: off }}
+              raise={{ label: t('investigators.healHorror'), disabled: off || horror === 0 }}
+              onStep={(delta) => adjust('horror', -delta)}
+            />
+          )}
+        </Stat>
+        <Stat
+          kind="clues"
+          label={t('investigators.clues')}
+          value={investigator.clues}
+          drag={off || adjusting || investigator.clues === 0 ? undefined : clueDrag.handlers}
+        />
+        <Stat
+          kind="resources"
+          label={t('investigators.resources')}
+          short={t('investigators.resourcesShort')}
+          value={investigator.resources}
+        >
+          {adjusting && (
+            <Steppers
+              lower={{
+                label: t('investigators.spendResource'),
+                disabled: off || investigator.resources === 0,
+              }}
+              raise={{ label: t('investigators.gainResource'), disabled: off }}
+              onStep={(delta) => adjust('resources', delta)}
+            />
+          )}
+        </Stat>
+        {investigator.doom !== undefined && (
+          <Stat kind="doom" label={t('investigators.doom')} value={investigator.doom} />
         )}
-      </Stat>
-      <Stat
-        kind="sanity"
-        label={t('investigators.sanity')}
-        value={sanity - horror}
-        shown={t('investigators.left', { left: sanity - horror, max: sanity })}
-        printed={{ max: sanity, taken: horror }}
-      >
-        {adjusting && (
-          <Steppers
-            lower={{ label: t('investigators.takeHorror'), disabled: off }}
-            raise={{ label: t('investigators.healHorror'), disabled: off || horror === 0 }}
-            onStep={(delta) => adjust('horror', -delta)}
-          />
-        )}
-      </Stat>
-      <Stat
-        kind="clues"
-        label={t('investigators.clues')}
-        value={investigator.clues}
-        drag={off || adjusting || investigator.clues === 0 ? undefined : clueDrag.handlers}
-      />
-      {clueDrag.at && <TokenGhost kind="clue" at={clueDrag.at} />}
-      <Stat
-        kind="resources"
-        label={t('investigators.resources')}
-        short={t('investigators.resourcesShort')}
-        value={investigator.resources}
-      >
-        {adjusting && (
-          <Steppers
-            lower={{
-              label: t('investigators.spendResource'),
-              disabled: off || investigator.resources === 0,
-            }}
-            raise={{ label: t('investigators.gainResource'), disabled: off }}
-            onStep={(delta) => adjust('resources', delta)}
-          />
-        )}
-      </Stat>
-      {investigator.doom !== undefined && (
-        <Stat kind="doom" label={t('investigators.doom')} value={investigator.doom} />
-      )}
-    </dl>
+      </dl>
+      {clueDrag.shown}
+    </>
   );
 }
 
