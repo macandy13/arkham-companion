@@ -25,6 +25,8 @@ import { SkippedEffectsNotice } from './SkippedEffectsNotice';
 import { ChangesNotice } from '../log/ChangesNotice';
 import { useDetailView } from './useDetailView';
 import { usePhone } from './usePhone';
+import { useVerticalSwipe } from './useVerticalSwipe';
+import { swipeAction } from './detailSwipe';
 import './game.css';
 
 /**
@@ -37,7 +39,9 @@ import './game.css';
  * tap on a header card, the map's expand button or the investigator's name opens the detail view
  * on it (`useDetailView`, `data-view` names its row): the header or the investigator bar expands
  * in place over the shrunk map, its places or panels snapped sideways, while the map takes the
- * whole screen (`DetailControls`) with a strip above and below it (`MapStrip`). A tap on a
+ * whole screen (`DetailControls`) with a strip above and below it (`MapStrip`). A swipe down on
+ * the header or up on the investigators expands them too, and the opposite swipe folds them
+ * (`useVerticalSwipe`, `swipeAction`). A tap on a
  * location there or in the compact view shows that location in the map row (`LocationFocus`), the
  * location mode, until the players go back to the map; while they choose where an enemy spawns,
  * or pick the answer to the open decision on the map (`DecisionView.locations`), the map shows,
@@ -72,6 +76,19 @@ export function GameScreen({
   useEffect(() => {
     void store.getState().openGame(gameId);
   }, [store, gameId]);
+
+  // The whole-screen map takes every touch for panning, so only the board beside it swipes. The
+  // board element only exists once the game has a board, so that turns the listeners on too.
+  useVerticalSwipe(
+    boardElement,
+    showDetail !== undefined && detailTarget?.row !== 'map' && open?.board !== undefined,
+    (direction, on) => {
+      if (!open?.board || !showDetail) return;
+      const action = swipeAction(direction, on, detailTarget?.row, open.board);
+      if (action === 'close') detail.close();
+      else if (action) showDetail(action);
+    },
+  );
 
   // Turned sideways the phone shows the whole board, so the hidden view closes with its entry.
   const { close: closeDetail } = detail;

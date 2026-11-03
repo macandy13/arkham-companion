@@ -807,6 +807,44 @@ describe('GameScreen on a phone held upright', () => {
     },
   );
 
+  /** A one-finger swipe on `element` from `from` to `to`, in screen points. */
+  const swipe = (element: Element, from: { y: number }, to: { y: number }) => {
+    fireEvent.touchStart(element, { touches: [{ clientX: 100, clientY: from.y }] });
+    fireEvent.touchEnd(element, { changedTouches: [{ clientX: 100, clientY: to.y }] });
+  };
+
+  it('expands the header on the act from a swipe down on it, and folds it again with a swipe up', async () => {
+    await renderTheGathering('phone-header-swipe-test');
+    const act = screen.getByRole('region', { name: 'Act' });
+
+    swipe(act, { y: 50 }, { y: 150 });
+    expect(board()?.getAttribute('data-view')).toBe('cards');
+    expect(scrolledTo).toEqual([act]);
+
+    swipe(act, { y: 150 }, { y: 50 });
+    await waitFor(() => expect(board()?.hasAttribute('data-view')).toBe(false));
+  });
+
+  it("expands Alder's panel from a swipe up on it, and folds it again with a swipe down", async () => {
+    await renderTheGathering('phone-investigator-swipe-test');
+    const alder = screen.getByRole('region', { name: 'Alder' });
+
+    swipe(alder, { y: 700 }, { y: 600 });
+    expect(board()?.getAttribute('data-view')).toBe('investigators');
+
+    swipe(alder, { y: 600 }, { y: 700 });
+    await waitFor(() => expect(board()?.hasAttribute('data-view')).toBe(false));
+  });
+
+  it('keeps the compact view on a swipe up on the header or down on the investigators', async () => {
+    await renderTheGathering('phone-wrong-swipe-test');
+
+    swipe(screen.getByRole('region', { name: 'Act' }), { y: 150 }, { y: 50 });
+    swipe(screen.getByRole('region', { name: 'Alder' }), { y: 600 }, { y: 700 });
+
+    expect(board()?.hasAttribute('data-view')).toBe(false);
+  });
+
   it.each([
     {
       way: 'the ×',

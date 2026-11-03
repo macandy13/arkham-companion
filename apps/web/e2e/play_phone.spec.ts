@@ -1,3 +1,4 @@
+import type { Locator } from '@playwright/test';
 import { expect, test } from './fixtures/test';
 import {
   houseOpenedExport,
@@ -62,7 +63,7 @@ test('expand the header in place and swipe through its cards on a phone', async 
 // Journey: on a phone, expand Roland Banks' panel in place from his name: his whole card shows,
 // its ability text on the notebook page, with the map and the compact header still on the screen,
 // and the × folds it again.
-test('expand the investigator in place on a phone', { tag: '@flow' }, async ({ page }) => {
+test('expand the investigator in place on a phone', async ({ page }) => {
   const board = page.locator('#board');
   const roland = page.getByRole('region', { name: 'Roland Banks' });
 
@@ -84,6 +85,58 @@ test('expand the investigator in place on a phone', { tag: '@flow' }, async ({ p
     await expect(board).not.toHaveAttribute('data-view');
   });
 });
+
+// Journey: on a phone, swipe instead of tapping: down on the compact header expands it on the act
+// under the finger, up on it folds it; up on Roland Banks' panel expands it, down folds it.
+test(
+  'swipe the header and the investigator bigger and smaller on a phone',
+  { tag: '@flow' },
+  async ({ page }) => {
+    const board = page.locator('#board');
+    const swipe = async (on: Locator, by: number) => {
+      const box = await on.boundingBox();
+      if (!box) throw new Error('Nothing to swipe on');
+      const x = box.x + box.width / 2;
+      const y = box.y + box.height / 2;
+      const touch = await page.context().newCDPSession(page);
+      await touch.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y }] });
+      for (const step of [1, 2, 3, 4])
+        await touch.send('Input.dispatchTouchEvent', {
+          type: 'touchMove',
+          touchPoints: [{ x, y: y + (step * by) / 4 }],
+        });
+      await touch.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+    };
+
+    await test.step('Swipe down on the act to expand the header', async () => {
+      await resumeImportedGame(
+        page,
+        'Roland Banks threatened',
+        rolandThreatenedExport('Roland Banks threatened'),
+      );
+      await swipe(page.getByRole('region', { name: 'Act' }), 80);
+      await expect(board).toHaveAttribute('data-view', 'cards');
+      await expect(page.getByRole('region', { name: 'Act' })).toBeInViewport({ ratio: 1 });
+    });
+
+    await test.step('Swipe up on it to fold the header', async () => {
+      await swipe(page.getByRole('region', { name: 'Act' }), -80);
+      await expect(board).not.toHaveAttribute('data-view');
+    });
+
+    await test.step("Swipe up on Roland Banks' card to expand it", async () => {
+      const card = page.getByRole('region', { name: 'Roland Banks' }).locator('article');
+      await swipe(card, -80);
+      await expect(board).toHaveAttribute('data-view', 'investigators');
+    });
+
+    await test.step('Swipe down on it to fold it', async () => {
+      const card = page.getByRole('region', { name: 'Roland Banks' }).locator('article');
+      await swipe(card, 80);
+      await expect(board).not.toHaveAttribute('data-view');
+    });
+  },
+);
 
 // Journey: on a phone, open the map on the whole screen from the compact map's expand button. A
 // tap on the strip above it expands the header on the agenda, and the strip below it shows the
