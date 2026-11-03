@@ -4,4 +4,4 @@
  * don't repeat "scenario". The scenario types stay flat exports.
  */
 export { pickReferenceSide } from './scenario';
-export { compileSetup } from './setup';
+export { compileSetup, storyReadsOfSetup } from './setup';

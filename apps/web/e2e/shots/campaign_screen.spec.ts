@@ -72,5 +72,8 @@ test('the setup preview of The Midnight Masks', async ({ page }) => {
   await page.getByRole('button', { name: 'Set up The Midnight Masks' }).click();
 
   const preview = page.getByRole('dialog', { name: 'Set up The Midnight Masks' });
+  await expect(preview.getByRole('region', { name: 'From the campaign log' })).toContainText(
+    'The investigators start at Your House',
+  );
   await expect(preview.getByRole('button', { name: 'Start game' })).toBeEnabled();
 });

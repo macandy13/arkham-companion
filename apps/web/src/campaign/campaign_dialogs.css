@@ -96,3 +96,18 @@
   margin: 0;
   color: var(--color-text-muted);
 }
+
+/* What the log says, in pen as on the log page, then what the setup does for it. */
+#next-scenario section dl {
+  margin: 0;
+}
+
+#next-scenario section dt {
+  color: var(--color-pen);
+  font-family: var(--font-family-hand);
+  font-size: var(--font-size-hand);
+}
+
+#next-scenario section dd {
+  margin: 0 0 var(--space-2);
+}
