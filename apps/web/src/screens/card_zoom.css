@@ -15,9 +15,8 @@
 
 /*
  * Upright like a printed card; the text fallback sits in the middle of the hatched art area. The
- * frame is the treachery colour, since treacheries are the encounter cards opened here (their
- * fronts drawn as cards, TreacheryCard, so this shows their backs); an investigator card takes
- * its own below.
+ * frame is the treachery colour, since treacheries are the only cards opened here so far (their
+ * fronts drawn as cards, TreacheryCard, so this shows their backs).
  */
 #board dialog[data-dialog='card-zoom'] > article {
   position: relative;
@@ -46,13 +45,6 @@
 
 #board dialog[data-dialog='card-zoom'] > article > h2 {
   font-size: var(--font-size-subtitle);
-}
-
-/* An investigator card lies sideways like the printed one, so its abilities show whole. */
-#board dialog[data-dialog='card-zoom'] > article[data-card='investigator'] {
-  width: var(--layout-zoom-landscape-width);
-  aspect-ratio: var(--landscape-card-ratio);
-  border-color: var(--color-card-investigator);
 }
 
 /* The picture fills the card once it has loaded and prints the name, type and traits itself. */

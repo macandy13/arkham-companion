@@ -910,10 +910,10 @@
 }
 
 /*
- * On a phone held upright an enemy's details, a zoomed card or the game log fill the screen
+ * On a phone held upright an enemy's details, a zoomed card, an investigator's whole card or the game log fill the screen
  * (M3.14g, like the location mode), without the frame and the dimmed board around them, the × at
  * the top left where the detail view keeps its own. `[open]` outweighs the dialogs' own rules
- * (enemies.css, card_zoom.css, game_log.css).
+ * (enemies.css, card_zoom.css, investigator_face.css, game_log.css).
  */
 @media (orientation: portrait) and (max-width: 40rem) {
   /* A count's label stands over its stepper, so the row keeps room for what it does. */
@@ -931,7 +931,12 @@
 }
 
 @media (orientation: portrait) and (max-width: 40rem) {
-  #board dialog:is([data-dialog='card-zoom'], [data-dialog='log'])[open] {
+  #board
+    dialog:is(
+      [data-dialog='card-zoom'],
+      [data-dialog='investigator-card'],
+      [data-dialog='log']
+    )[open] {
     box-sizing: border-box;
     justify-content: center;
     width: 100%;
@@ -947,7 +952,11 @@
   }
 
   #board
-    dialog:is([data-dialog='card-zoom'], [data-dialog='log'])[open]
+    dialog:is(
+      [data-dialog='card-zoom'],
+      [data-dialog='investigator-card'],
+      [data-dialog='log']
+    )[open]
     > button[data-icon='close'] {
     top: calc(var(--space-2) + var(--safe-top));
     right: auto;
