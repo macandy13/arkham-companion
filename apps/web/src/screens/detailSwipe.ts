@@ -1,21 +1,20 @@
 import type { BoardView } from '@arkham/engine';
 import type { DetailTarget, HeaderCardKind } from './useDetailView';
-import type { SwipeDirection } from './useVerticalSwipe';
+import type { Swipe } from './useVerticalSwipe';
 
 /** The header cards a swipe can expand the header on, by their places' `data-slot`. */
 const HEADER_CARDS: readonly HeaderCardKind[] = ['encounter', 'agenda', 'act', 'scenario'];
 
 /**
- * What a vertical swipe on the phone's board does (M3.15c), from the element it started `on` and
+ * What a vertical swipe on the phone's board does (M3.15c), from where it started (`swipe.on`) and
  * the part the detail view shows now (`shown`): down on the compact header expands it on the card
  * under the finger (else the agenda), up on the compact investigators expands their bar on the
  * panel under it (else the one the phone shows, `data-focus`). The opposite swipe on an expanded
- * part folds it (`'close'`), unless the investigators were scrolled down, where a swipe down
- * scrolls them back first. Anything else does nothing.
+ * part folds it (`'close'`), unless the investigators were scrolled down as it started
+ * (`swipe.scrolled`), where a swipe down scrolls them back first. Anything else does nothing.
  */
 export function swipeAction(
-  direction: SwipeDirection,
-  on: Element,
+  { direction, on, scrolled }: Swipe,
   shown: DetailTarget['row'] | undefined,
   board: BoardView,
 ): DetailTarget | 'close' | undefined {
@@ -28,8 +27,7 @@ export function swipeAction(
     return { row: 'cards', card };
   }
   if (part) {
-    if (direction === 'down')
-      return shown === 'investigators' && part.scrollTop === 0 ? 'close' : undefined;
+    if (direction === 'down') return shown === 'investigators' && !scrolled ? 'close' : undefined;
     if (shown === 'investigators') return undefined;
     const id =
       on.closest('[data-investigator]')?.getAttribute('data-investigator') ??

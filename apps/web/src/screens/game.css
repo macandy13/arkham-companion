@@ -892,6 +892,11 @@
  * either view. The status row keeps to one line.
  */
 @media (orientation: portrait) and (max-width: 40rem) {
+  /* A swipe down on the header expands it (M3.15c), so it must not pull the page to reload. */
+  :root:has(#board) {
+    overscroll-behavior-y: none;
+  }
+
   #board:not([data-view='cards']) > header [data-pile],
   #board:not([data-view='cards']) > header > section:has([data-pile='victoryDisplay']),
   #board > header > section[data-pool],

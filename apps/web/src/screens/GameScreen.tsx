@@ -82,9 +82,9 @@ export function GameScreen({
   useVerticalSwipe(
     boardElement,
     showDetail !== undefined && detailTarget?.row !== 'map' && open?.board !== undefined,
-    (direction, on) => {
+    (swipe) => {
       if (!open?.board || !showDetail) return;
-      const action = swipeAction(direction, on, detailTarget?.row, open.board);
+      const action = swipeAction(swipe, detailTarget?.row, open.board);
       if (action === 'close') detail.close();
       else if (action) showDetail(action);
     },
