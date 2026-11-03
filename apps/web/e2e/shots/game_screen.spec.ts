@@ -180,18 +180,20 @@ test('the house map in the Night and brass card style', async ({ page }) => {
   await expect(page.locator('html')).toHaveAttribute('data-card-theme', 'nightAndBrass');
 });
 
-test('the game log after two rounds, scrolled to the newest step under its round and phase', async ({
-  page,
-}) => {
-  await resumeImportedGame(page, 'Two rounds', mythosDrawnStepsExport('Two rounds'));
+test(
+  'the game log after two rounds, a page of its own scrolled to the newest step under its round and phase',
+  { tag: '@shot' },
+  async ({ page }) => {
+    await resumeImportedGame(page, 'Two rounds', mythosDrawnStepsExport('Two rounds'));
 
-  await page.getByRole('button', { name: 'Game log' }).click();
+    await page.getByRole('button', { name: 'Game log' }).click();
 
-  const log = page.getByRole('dialog', { name: 'Game log' });
-  const newestRound = log.getByRole('listitem', { name: 'Round 3 · Investigation' });
-  await expect(newestRound.getByRole('heading')).toBeInViewport();
-  await expect(newestRound.getByRole('listitem').last()).toBeInViewport();
-});
+    const log = page.getByRole('dialog', { name: 'Game log' });
+    const newestRound = log.getByRole('listitem', { name: 'Round 3 · Investigation' });
+    await expect(newestRound.getByRole('heading')).toBeInViewport();
+    await expect(newestRound.getByRole('listitem').last()).toBeInViewport();
+  },
+);
 
 test('Roland Banks’ combat boosted by 2, as an ally in play gives it', async ({ page }) => {
   await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
