@@ -523,7 +523,7 @@ describe('GameScreen header', () => {
     ]);
   });
 
-  it('lays the encounter deck with its discard pile, agenda, act, scenario with the set-aside cards, victory display and token pool out under their labels', async () => {
+  it('lays the token pool, the encounter deck with its discard pile, agenda, act, scenario with the set-aside cards and victory display out under their labels', async () => {
     await renderTheGathering('game-screen-encounter-test');
 
     // The investigator cards have headers too, so the board's header is the one holding the deck.
@@ -536,12 +536,12 @@ describe('GameScreen header', () => {
     const deck = within(deckPlace);
 
     expect(labels).toEqual([
+      'Token pool',
       'Encounter deck',
       'Agenda',
       'Act',
       'Scenario',
       'Victory',
-      'Token pool',
     ]);
     expect(deck.getByRole('button', { name: 'Encounter discard pile' })).toBeTruthy();
     const scenario = within(within(boardHeader).getByRole('region', { name: 'Scenario' }));

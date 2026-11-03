@@ -76,6 +76,7 @@
 
 /* The header is the playmat's top row, shaded so its cards read over the table, centred like it. */
 #board > header {
+  position: relative;
   grid-area: header;
   background: var(--header-shade);
   display: flex;
@@ -460,7 +461,19 @@
   background: var(--color-doom);
 }
 
-/* The token pool: a doom and a clue token side by side, like the supply beside the playmat. */
+/*
+ * The token pool: a doom and a clue token side by side, like the supply beside the playmat. On a
+ * screen as wide as a landscape tablet it sits in the header's top left corner, apart from the
+ * cards in its row; a narrower header wraps, so it leads the row instead of covering a card.
+ */
+@media (min-width: 64rem) {
+  #board > header > section[data-pool] {
+    position: absolute;
+    inset-inline-start: var(--space-2);
+    inset-block-start: var(--space-2);
+  }
+}
+
 #board > header [data-pool-token] {
   display: block;
 }
@@ -999,7 +1012,8 @@
     scrollbar-width: none;
   }
 
-  #board[data-view='detail'] > header > section {
+  /* Each place fills the row; the token pool, which a phone has no room for, stays hidden. */
+  #board[data-view='detail'] > header > section:not([data-pool]) {
     display: flex;
     flex-wrap: wrap;
     flex: none;

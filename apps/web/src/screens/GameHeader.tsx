@@ -73,6 +73,7 @@ export function GameHeader({
 
   return (
     <header>
+      <TokenPool actions={piles.actions} busy={blocked} adjusting={adjusting} />
       <HeaderSlot label={t('header.encounterDeck')} card="encounter" onOpen={onOpenCard}>
         <EncounterPiles {...piles} />
       </HeaderSlot>
@@ -104,7 +105,6 @@ export function GameHeader({
       <HeaderSlot label={t('header.victory')}>
         <HeaderPile pile="victoryDisplay" {...piles} />
       </HeaderSlot>
-      <TokenPool actions={piles.actions} busy={blocked} adjusting={adjusting} />
     </header>
   );
 }

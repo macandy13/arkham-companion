@@ -10,7 +10,7 @@ import { useTokenDrag, type TokenDragHandlers } from './useTokenDrag';
 type PoolKind = 'clue' | 'doom';
 
 /**
- * The token pool beside the header's cards (M3.11c): a doom and a clue token, the supply on the
+ * The token pool in the header's top left corner (M3.11c): a doom and a clue token, the supply on the
  * table that card effects place tokens from and that tokens taken off go back to. A token dragged
  * off it is placed where it is dropped:
  * - doom on a location (`adjustLocation`, `PlaceDoom`) or on the agenda (`placeDoom`), as a card
