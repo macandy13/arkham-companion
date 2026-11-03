@@ -90,8 +90,11 @@ export interface GameActions {
   drawCard(): Promise<void>;
   /** The play action; the card is played, and paid for, at the table. */
   playCard(): Promise<void>;
-  /** One clue from `location`, the investigator's own, without a test, as a card grants it. */
-  takeClue(location: InstanceId): Promise<void>;
+  /**
+   * One clue from `location`, the investigator's own, without a test, as a card grants it: for the
+   * investigator whose turn it is, or for `investigator`, as a clue dragged onto their pawn says.
+   */
+  takeClue(location: InstanceId, investigator?: InvestigatorId): Promise<void>;
   /**
    * A fight; its test stays open as a decision. It is an action, counting off what it costs
    * (`BoardView.actionCost`), unless `cost` says `free`, as a card can let an investigator fight
@@ -259,11 +262,11 @@ export function gameActions(
       taking('resource')((table, investigator) => table.takeResource(investigator)),
     drawCard: () => taking('draw')((table, investigator) => table.drawCard(investigator)),
     playCard: () => taking('play')((table, investigator) => table.playCard(investigator)),
-    takeClue: (location) =>
-      onTurn((table, investigator) =>
+    takeClue: (location, investigator) =>
+      play((table) =>
         table.play({
           type: 'DiscoverClues',
-          investigatorId: investigator,
+          investigatorId: investigator ?? turnInvestigator(table.state),
           locationId: location,
           amount: 1,
         }),

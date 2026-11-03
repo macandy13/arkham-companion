@@ -14,7 +14,14 @@ import { cycledIndex } from '@arkham/util';
 import { EnemyDetails } from '../enemies/EnemyDetails';
 import type { GameActions } from '../state/gameActions';
 import { LocationDetails } from './LocationDetails';
-import { CardPatterns, EnemyToken, LocationTile, Pawn, type TilePiece } from './LocationTile';
+import {
+  CardPatterns,
+  ClueGhost,
+  EnemyToken,
+  LocationTile,
+  Pawn,
+  type TilePiece,
+} from './LocationTile';
 import {
   connectionEnds,
   drawingSize,
@@ -157,6 +164,8 @@ type DraggedPiece = TilePiece & { from: InstanceId };
  * - An enemy dropped on another location moves there as a card instruction says
  *   (`GameActions.moveEnemy`); the players drag it only when a card tells them to, so the map
  *   does not ask which card.
+ * - A clue dragged off a location onto the pawn of an investigator there is theirs, discovered as
+ *   a card grants it (`GameActions.takeClue`), whoever's turn it is.
  *
  * A tap on a tile opens its details (`LocationDetails`): what the investigator whose turn it is
  * can do there, or while adjusting the corrections, when no piece is dragged; on a phone it calls
@@ -194,9 +203,18 @@ function MapDrawing({
   const moverCentre = mover && pawnCentre(map, cells, board, mover.id);
   const [detailsFor, setDetailsFor] = useState<InstanceId>();
   const [enemyFor, setEnemyFor] = useState<InstanceId>();
+  const onPawnOf = (investigator: InvestigatorId, point: Point) => {
+    const centre = pawnCentre(map, cells, board, investigator);
+    return centre !== undefined && onPawn(centre, point);
+  };
   const drag = usePieceDrag<DraggedPiece>(
     svg,
     (piece, point) => {
+      if ('clue' in piece) {
+        const taker = board.investigatorsAt(piece.from).find(({ id }) => onPawnOf(id, point));
+        if (taker) void actions.takeClue(piece.from, taker.id);
+        return;
+      }
       if ('enemy' in piece && moverCentre && onPawn(moverCentre, point)) {
         void actions.engage(piece.enemy.id);
         return;
@@ -216,7 +234,7 @@ function MapDrawing({
     .find(({ id }) => id === enemyFor);
   const detailsLocation = map.locations.find(({ id }) => id === detailsFor);
   const draggable = (piece: TilePiece) =>
-    !busy && !adjusting && ('enemy' in piece || piece.investigator.id === mover?.id);
+    !busy && !adjusting && ('investigator' in piece ? piece.investigator.id === mover?.id : true);
   const { width, height } = drawingSize(Object.values(cells));
   return (
     <figure aria-labelledby={captionId}>
@@ -309,6 +327,7 @@ function MapDrawing({
 
 /** The copy of a dragged piece that follows the pointer, centred on `at`. */
 function Ghost({ piece, at, board }: { piece: TilePiece; at: Point; board: BoardView }) {
+  if ('clue' in piece) return <ClueGhost centre={at} />;
   return 'enemy' in piece ? (
     <EnemyToken enemy={piece.enemy} investigators={board.investigators} centre={at} ghost />
   ) : (

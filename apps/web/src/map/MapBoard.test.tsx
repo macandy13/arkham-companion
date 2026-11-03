@@ -542,6 +542,40 @@ describe('MapBoard', () => {
       expect(table.board.investigator(bea).at).toBe('study');
     });
 
+    it("gives a clue dragged off the study to the investigator whose pawn it is dropped on, whoever's turn it is", async () => {
+      const table = PlayTable.start(
+        house
+          .withInvestigator(bea, { locationId: study })
+          .withInvestigator(alder, { locationId: study })
+          .withTurnOf(alder),
+      );
+      render(
+        <MapBoard board={table.board} actions={actionsOn(table)} busy={false} adjusting={false} />,
+      );
+
+      await drag('study', 'Clues 2', { x: 140, y: 120 }, firstPawn.x, firstPawn.y);
+
+      expect(table.board.investigator(bea).clues).toBe(1);
+      expect(table.board.location(study).clues).toBe(1);
+    });
+
+    it.each([
+      { where: 'on another location', x: 255, y: 105 },
+      { where: 'on the study, off any pawn', x: 75, y: 105 },
+    ])('leaves the clue on the study when dropped $where', async ({ x, y }) => {
+      const table = PlayTable.start(
+        house.withInvestigator(alder, { locationId: study }).withTurnOf(alder),
+      );
+      render(
+        <MapBoard board={table.board} actions={actionsOn(table)} busy={false} adjusting={false} />,
+      );
+
+      await drag('study', 'Clues 2', { x: 140, y: 120 }, x, y);
+
+      expect(table.board.location(study).clues).toBe(2);
+      expect(table.board.investigator(alder).clues).toBe(0);
+    });
+
     it('moves an enemy to the location it is dropped on, connected or not', async () => {
       const table = PlayTable.start(
         house.withCard(rats, blankEnemy('rats', { health: fixed(1) }), atLocation(study)),

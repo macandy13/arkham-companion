@@ -47,8 +47,12 @@ import type { DragHandlers } from './usePieceDrag';
 import { TokenPicture } from './TokenPicture';
 import { shrinkAround, useShrinkToFit } from './useShrinkToFit';
 
-/** A piece standing on a tile that the players may drag: an investigator's pawn or an enemy. */
-export type TilePiece = { investigator: InvestigatorView } | { enemy: MapEnemyView };
+/**
+ * What the players may drag off a tile: a piece standing on it (an investigator's pawn or an
+ * enemy), or one of the clues on `location` (M3.11c), which a drop on a pawn there discovers.
+ */
+export type TilePiece =
+  { investigator: InvestigatorView } | { enemy: MapEnemyView } | { clue: LocationView };
 
 /**
  * One location as a tile at (`x`, `y`), drawn as a card face in layers, laid out like the printed
@@ -160,11 +164,9 @@ export function LocationTile({
               centre={LOCATION_FACE.shroud}
             />
             <ClueValue printed={location.printedClues} />
-            <CountCircle
-              kind="clue"
-              value={location.clues}
-              label={t('map.clues', { count: location.clues })}
-              centre={LOCATION_FACE.count}
+            <Clues
+              location={location}
+              drag={location.clues > 0 ? dragOf({ clue: location }) : undefined}
             />
           </>
         )}
@@ -307,6 +309,43 @@ function NameBand({ location }: { location: LocationView }) {
         set={location.encounterSet}
       />
     </>
+  );
+}
+
+/**
+ * The clues left on `location`, the count circle on its printed clue value. With `drag` a clue can
+ * be dragged off it (`data-drag`): a pawn-sized circle around the small count takes the press, so
+ * a finger can pick a clue up.
+ */
+function Clues({ location, drag }: { location: LocationView; drag: DragHandlers | undefined }) {
+  const { t } = useTranslation();
+  const count = (
+    <CountCircle
+      kind="clue"
+      value={location.clues}
+      label={t('map.clues', { count: location.clues })}
+      centre={LOCATION_FACE.count}
+    />
+  );
+  if (!drag) return count;
+  const { x, y } = LOCATION_FACE.count;
+  return (
+    <g data-drag="clue" {...drag}>
+      <circle data-part="grip" cx={x} cy={y} r={CONTENT.pawnRadius / TILE_PER_SCAN} />
+      {count}
+    </g>
+  );
+}
+
+/**
+ * A clue being dragged (`TilePiece`'s clue), in tile units, centred on `centre`: a clue token
+ * that follows the pointer, hidden from assistive technology like a dragged pawn's copy.
+ */
+export function ClueGhost({ centre: { x, y } }: { centre: Point }) {
+  return (
+    <g aria-hidden="true" data-ghost="" data-count="clue">
+      <circle cx={x} cy={y} r={BADGE_RADIUS} />
+    </g>
   );
 }
 
