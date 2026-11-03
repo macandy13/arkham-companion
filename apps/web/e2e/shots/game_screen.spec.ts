@@ -232,6 +232,20 @@ test(
   },
 );
 
+test(
+  'Roland Banks’ card while the players adjust the board, its steppers out',
+  { tag: '@shot' },
+  async ({ page }) => {
+    await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
+    const roland = page.getByRole('region', { name: 'Roland Banks' });
+
+    await page.getByRole('button', { name: 'Adjust board' }).click();
+
+    await expect(roland.getByRole('button', { name: 'Raise the Combat boost' })).toBeVisible();
+    await expect(roland.getByRole('button', { name: 'Take damage' })).toBeVisible();
+  },
+);
+
 test('Roland Banks’ willpower test before a token is drawn, the draw button in its place', async ({
   page,
 }) => {
