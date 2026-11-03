@@ -314,6 +314,8 @@
   --clue-token-size: var(--touch-target);
   /* A card drawn in full in a dialog (the enemy details), like the prototype's zoomed card. */
   --layout-zoom-card-width: 15rem;
+  /* A sideways card zoomed (an investigator card), wide enough to read its abilities. */
+  --layout-zoom-landscape-width: 30rem;
   /* A neighbour's tile beside the location's card in the phone's location mode, as in the prototype. */
   --layout-neighbour-width: 4.8rem;
   /* Connection lines on the map, in its SVG user units (mapLayout.ts TILE). */
@@ -471,21 +473,16 @@
   --investigator-skill-value-width: 24;
   --investigator-skill-size: 24;
   --investigator-boost-size: 11;
-  --investigator-page-left: 244;
-  --investigator-page-top: 64;
-  --investigator-page-width: 160;
-  --investigator-page-height: 166;
-  --investigator-text-size: 13;
-  --investigator-long-text-size: 11.5;
-  --investigator-longest-text-size: 10;
-  --investigator-traits-size: 11.5;
-  --investigator-counters-y: 256;
+  --investigator-counters-y: 92;
   --investigator-clues-x: 256;
   --investigator-health-x: 298;
   --investigator-sanity-x: 346;
   --investigator-resources-x: 394;
-  --investigator-doom-x: 256;
-  --investigator-doom-y: 220;
+  --investigator-doom-x: 204;
+  --investigator-doom-y: 106;
+  --investigator-art-button-top: 46;
+  --investigator-art-button-width: 226;
+  --investigator-art-button-height: 84;
   --investigator-token-size: 28;
   --investigator-token-number-size: 14;
   --investigator-symbol-size: 36;
@@ -561,8 +558,8 @@
   --encounter-strip-card-width: 7.5rem;
   /* A dragged map piece's copy, see-through so the tile under it stays readable. */
   --map-ghost-opacity: 0.6;
-  /* A dragged token (`TokenGhost`): finger-sized, so it shows beside the finger that carries it. */
-  --token-ghost-size: 2.5rem;
+  /* A loose token (the token pool's, a dragged one, `TokenGhost`): finger-sized, so a finger picks it up and it shows beside the finger that carries it. */
+  --loose-token-size: 2.5rem;
   /* An enemy on the map engaged with an investigator, shown in full in their threat area. */
   --engaged-enemy-opacity: 0.5;
   /* A token with nothing on it (a location's clues once found) fades, so it reads as empty. */
@@ -751,6 +748,61 @@
     0.3% 20%,
     0.6% 10%
   );
+}
+
+/*
+ * The whole investigator card (`InvestigatorCard`, the face's `full` shape): the counters back at
+ * the foot of the full page, doom above the clue token, and the page's text (its box on the page,
+ * the text sizes, smaller for a long text, `data-length`), in the banner's scan units.
+ */
+[data-card='investigator'][data-shape='full'] {
+  --investigator-counters-y: 256;
+  --investigator-doom-x: 256;
+  --investigator-doom-y: 220;
+  --investigator-page-left: 244;
+  --investigator-page-top: 64;
+  --investigator-page-width: 160;
+  --investigator-page-height: 166;
+  --investigator-text-size: 13;
+  --investigator-long-text-size: 11.5;
+  --investigator-longest-text-size: 10;
+  --investigator-traits-size: 11.5;
+}
+
+/*
+ * The phone's slim strip (`INVESTIGATOR_STRIP`, InvestigatorFace): the same places as the banner's
+ * above, in its scan units, where the strip scales the plates (by 0.8) and the chain (by 0.85) to
+ * the top row, the counters on the paper strip under them and the art button on the round portrait.
+ */
+[data-card='investigator'][data-shape='strip'] {
+  --investigator-name-left: 89;
+  --investigator-name-top: 4;
+  --investigator-name-width: 138;
+  --investigator-name-height: 21;
+  --investigator-name-size: 16;
+  --investigator-subname-left: 100;
+  --investigator-subname-top: 25;
+  --investigator-subname-width: 115;
+  --investigator-subname-height: 11;
+  --investigator-subname-size: 10;
+  --investigator-skills-left: 251;
+  --investigator-skills-top: 6.5;
+  --investigator-skill-step: 41.2;
+  --investigator-skill-width: 37.4;
+  --investigator-skill-height: 30.6;
+  --investigator-skill-value-width: 20.4;
+  --investigator-skill-size: 20;
+  --investigator-boost-size: 9;
+  --investigator-counters-y: 65;
+  --investigator-clues-x: 130;
+  --investigator-health-x: 196;
+  --investigator-sanity-x: 262;
+  --investigator-resources-x: 328;
+  --investigator-doom-x: 394;
+  --investigator-doom-y: 65;
+  --investigator-portrait-left: 6;
+  --investigator-portrait-top: 8;
+  --investigator-portrait-size: 72;
 }
 
 :root[data-theme='light'] {

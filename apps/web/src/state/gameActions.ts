@@ -178,6 +178,12 @@ export interface GameActions {
    * corrections by hand (`ManualAdjust`), like the header's `removeDoom`.
    */
   adjustLocation(location: InstanceId, token: LocationToken, delta: number): Promise<void>;
+  /**
+   * One doom moved from the card `from` to the card `to` (a location, the agenda), as one step.
+   * The doom in play stays the same, so it is a correction by hand on both (`ManualAdjust`), not
+   * doom placed.
+   */
+  moveDoom(from: InstanceId, to: InstanceId): Promise<void>;
   /** Takes back the last step; never the scenario start. While adjusting, the last tap. */
   undo(): Promise<void>;
   /**
@@ -356,6 +362,17 @@ export function gameActions(
               },
         ),
       ),
+    moveDoom: (from, to) =>
+      play((table) => {
+        table.play({
+          type: 'ManualAdjust',
+          adjustment: { kind: 'tokens', cardId: from, token: 'doom', delta: -1 },
+        });
+        table.play({
+          type: 'ManualAdjust',
+          adjustment: { kind: 'tokens', cardId: to, token: 'doom', delta: 1 },
+        });
+      }),
     undo: () => undo(),
     undoTo: (stepId) => undo(stepId),
     startAdjusting: adjusting.start,

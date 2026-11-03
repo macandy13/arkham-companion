@@ -8,7 +8,7 @@ import type { Point } from '../map/mapLayout';
  * colours it like the token on the table. Hidden from assistive technology and from the pointer,
  * so the drop's hit test finds what lies under it.
  */
-export function TokenGhost({ kind, at }: { kind: 'clue'; at: Point }) {
+export function TokenGhost({ kind, at }: { kind: 'clue' | 'doom'; at: Point }) {
   const element = useRef<HTMLSpanElement>(null);
   // The position changes with every pointer move, so it goes to custom properties the stylesheet
   // places the token by, rather than into the markup.

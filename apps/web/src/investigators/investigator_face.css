@@ -2,7 +2,7 @@
  * An investigator's card (InvestigatorBar), drawn as the printed one: the face (InvestigatorFace)
  * fills the card's width, and the HTML lies over its places, sized in the face's scan units
  * (`--scan-unit`, a 419th of the card's width) so it scales with the card. While the players adjust
- * the board, the counters with their steppers leave the page for a row under the card.
+ * the board, the counters with their steppers leave the page's strip for a row under the card.
  */
 /* A landscape scan is 419 units wide (LANDSCAPE_SCAN), as the scenario face divides by its 300. */
 #investigators [data-card='investigator'] {
@@ -110,8 +110,15 @@
   stroke: none;
 }
 
-#investigators svg[data-face='investigator'] [data-part='chain-band'] {
+#investigators svg[data-face='investigator'] :is([data-part='chain-band'], [data-part='frame']) {
   fill: var(--color-face-frame);
+}
+
+/* The portrait's rim on the strip, in the ornament's colour like the chain's links. */
+#investigators svg[data-face='investigator'] [data-part='rim'] {
+  fill: none;
+  stroke: var(--color-face-ornament);
+  stroke-width: var(--face-link-width);
 }
 
 #investigators svg[data-face='investigator'] :is([data-part='link'], [data-part='ring'] circle) {
@@ -269,53 +276,37 @@
   right: 0;
 }
 
-/* The text on the notebook page, as printed: traits in bold italics, abilities, flavour in italics. */
-#investigators [data-card='investigator'] > [data-page] {
+/*
+ * The art under the plates is a button that shows the whole card (InvestigatorCard), where the players
+ * read its abilities; it covers the art left of the page and below the plates.
+ */
+#investigators [data-card='investigator'] > [data-full-card] {
   position: absolute;
-  left: calc(var(--investigator-page-left) * var(--scan-unit));
-  top: calc(var(--investigator-page-top) * var(--scan-unit));
-  width: calc(var(--investigator-page-width) * var(--scan-unit));
-  max-height: calc(var(--investigator-page-height) * var(--scan-unit));
-  display: flex;
-  flex-direction: column;
-  gap: calc(3 * var(--scan-unit));
-  overflow: hidden;
-  font-size: calc(var(--investigator-text-size) * var(--scan-unit));
-  line-height: 1.12;
+  left: 0;
+  top: calc(var(--investigator-art-button-top) * var(--scan-unit));
+  width: calc(var(--investigator-art-button-width) * var(--scan-unit));
+  /* The face's height, not the card's: while adjusting, the counters' row hangs under the face. */
+  height: calc(var(--investigator-art-button-height) * var(--scan-unit));
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: none;
 }
 
-#investigators [data-card='investigator'] > [data-page][data-length='long'] {
-  font-size: calc(var(--investigator-long-text-size) * var(--scan-unit));
-}
-
-#investigators [data-card='investigator'] > [data-page][data-length='longest'] {
-  font-size: calc(var(--investigator-longest-text-size) * var(--scan-unit));
-}
-
-#investigators [data-card='investigator'] > [data-page] :is(p, blockquote) {
-  margin: 0;
-}
-
-#investigators [data-card='investigator'] > [data-page] > [data-traits] {
-  font-size: calc(var(--investigator-traits-size) * var(--scan-unit));
-  font-style: italic;
-  font-weight: bold;
-  text-align: center;
-}
-
-#investigators [data-card='investigator'] > [data-page] em {
-  font-weight: bold;
-}
-
-#investigators [data-card='investigator'] > [data-page] > blockquote {
-  margin-block-start: calc(4 * var(--scan-unit));
-  font-style: italic;
-  text-align: center;
+/* On the strip, the art button is the round portrait. */
+#investigators [data-card='investigator'][data-shape='strip'] > [data-full-card] {
+  left: calc(var(--investigator-portrait-left) * var(--scan-unit));
+  top: calc(var(--investigator-portrait-top) * var(--scan-unit));
+  width: calc(var(--investigator-portrait-size) * var(--scan-unit));
+  height: calc(var(--investigator-portrait-size) * var(--scan-unit));
+  border-radius: var(--radius-round);
 }
 
 /*
- * The counters at the page's foot, as the printed card has its heart and brain there, with the
- * clue token and the resource coin either side. Each sits on its centre; its name stays for
+ * The counters on the page's strip, as the printed card has its heart and brain at the page's
+ * foot, with the clue token and the resource coin either side. Each sits on its centre; its name stays for
  * screen readers.
  */
 #investigators [data-card='investigator']:not([data-adjusting]) > dl > div {
@@ -411,4 +402,67 @@
 #investigators [data-card='investigator'][data-adjusting] > dl > div > dd {
   grid-row: 1;
   align-self: start;
+}
+
+/*
+ * The whole card's dialog (InvestigatorCard): the card as wide as a zoomed landscape card, the ×
+ * above it, in the card zoom's paper.
+ */
+#investigators dialog[data-dialog='investigator-card'] {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-block-start: calc(var(--dialog-close-inset) + var(--touch-target));
+}
+
+#investigators dialog[data-dialog='investigator-card'] > [data-card='investigator'] {
+  width: var(--layout-zoom-landscape-width);
+  max-width: 100%;
+  filter: var(--piece-shadow);
+}
+
+/* The text on the notebook page, as printed: traits in bold italics, abilities, flavour in italics. */
+#investigators [data-card='investigator'] > [data-page] {
+  position: absolute;
+  left: calc(var(--investigator-page-left) * var(--scan-unit));
+  top: calc(var(--investigator-page-top) * var(--scan-unit));
+  width: calc(var(--investigator-page-width) * var(--scan-unit));
+  max-height: calc(var(--investigator-page-height) * var(--scan-unit));
+  display: flex;
+  flex-direction: column;
+  gap: calc(3 * var(--scan-unit));
+  overflow: hidden;
+  font-size: calc(var(--investigator-text-size) * var(--scan-unit));
+  line-height: 1.12;
+  text-align: start;
+}
+
+#investigators [data-card='investigator'] > [data-page][data-length='long'] {
+  font-size: calc(var(--investigator-long-text-size) * var(--scan-unit));
+}
+
+#investigators [data-card='investigator'] > [data-page][data-length='longest'] {
+  font-size: calc(var(--investigator-longest-text-size) * var(--scan-unit));
+}
+
+#investigators [data-card='investigator'] > [data-page] :is(p, blockquote) {
+  margin: 0;
+}
+
+#investigators [data-card='investigator'] > [data-page] > [data-traits] {
+  font-size: calc(var(--investigator-traits-size) * var(--scan-unit));
+  font-style: italic;
+  font-weight: bold;
+  text-align: center;
+}
+
+#investigators [data-card='investigator'] > [data-page] em {
+  font-weight: bold;
+}
+
+#investigators [data-card='investigator'] > [data-page] > blockquote {
+  margin-block-start: calc(4 * var(--scan-unit));
+  font-style: italic;
+  text-align: center;
 }

@@ -27,6 +27,7 @@ import { ScenarioFace } from './ScenarioFace';
 import { useCluePayment } from './CluePaymentDialog';
 import { DetailsDialog, useDecisionHost } from './DetailsDialog';
 import { Token } from './Token';
+import { TokenPool } from './TokenPool';
 import type { HeaderCardKind } from './useDetailView';
 
 /**
@@ -72,6 +73,7 @@ export function GameHeader({
 
   return (
     <header>
+      <TokenPool actions={piles.actions} busy={blocked} adjusting={adjusting} />
       <HeaderSlot label={t('header.encounterDeck')} card="encounter" onOpen={onOpenCard}>
         <EncounterPiles {...piles} />
       </HeaderSlot>
@@ -330,6 +332,7 @@ function ScenarioCard({
  * name, a big doom token with the doom its threshold counts (all doom in play, `doomInPlay`) and,
  * while adjusting, steppers on the plate at its foot for the doom on the agenda itself, which card
  * effects add or the players correct. The buttons sit on the card to keep the header compact.
+ * It takes doom dropped on it: from the token pool (`TokenPool`), or moved off a location.
  */
 function AgendaStatus({
   store,

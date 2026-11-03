@@ -473,8 +473,8 @@
   opacity: var(--map-ghost-opacity);
 }
 
-/* The clue count's grip: an unseen pawn-sized circle that takes the press of a finger. */
-#map svg [data-drag='clue'] > [data-part='grip'] {
+/* A token's grip (the clue count, the doom): an unseen pawn-sized circle that takes the press of a finger. */
+#map svg [data-drag] > [data-part='grip'] {
   fill: transparent;
 }
 

@@ -29,6 +29,19 @@ test('the house map with Roland Banks in the Hallway', async ({ page }) => {
   await expect(hallway.getByRole('img', { name: 'Roland Banks' })).toBeVisible();
 });
 
+test('Roland Banks’ card opened whole from its art, to read its abilities', async ({ page }) => {
+  await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
+
+  await page
+    .getByRole('region', { name: 'Roland Banks' })
+    .getByRole('button', { name: "Show Roland Banks's card" })
+    .click();
+
+  const card = page.getByRole('dialog', { name: 'Roland Banks' });
+  await expect(card.getByRole('heading', { name: 'Roland Banks' })).toBeVisible();
+  await expect(card.getByRole('button', { name: 'Combat 4' })).toBeVisible();
+});
+
 test('map tabs for the Study and the house, the house chosen', async ({ page }) => {
   await resumeImportedGame(page, 'Two maps', twoMapsExport('Two maps'));
 
@@ -205,6 +218,18 @@ test('Roland Banks’ combat boosted by 2, as an ally in play gives it', async (
   await expect(roland.getByRole('button', { name: 'Combat 6, boosted +2' })).toBeVisible();
 });
 
+test('Roland Banks’ card while the players adjust the board, its steppers out', async ({
+  page,
+}) => {
+  await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
+  const roland = page.getByRole('region', { name: 'Roland Banks' });
+
+  await page.getByRole('button', { name: 'Adjust board' }).click();
+
+  await expect(roland.getByRole('button', { name: 'Raise the Combat boost' })).toBeVisible();
+  await expect(roland.getByRole('button', { name: 'Take damage' })).toBeVisible();
+});
+
 test('Roland Banks’ willpower test before a token is drawn, the draw button in its place', async ({
   page,
 }) => {
@@ -310,7 +335,7 @@ test('the encounter deck after two mythos phases, Dissonant Voices on the discar
   ).toBeVisible();
 });
 
-test('the header with its piles fanned: seven cards discarded, the set-aside cards on the scenario card, the Ghoul Priest in the victory display', async ({
+test('the header with its piles fanned: seven cards discarded, the set-aside cards on the scenario card, the Ghoul Priest in the victory display, the token pool beside it', async ({
   page,
   isMobile,
 }) => {

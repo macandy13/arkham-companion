@@ -3,7 +3,7 @@ import type { BoardView, InvestigatorId } from '@arkham/engine';
 import { locationAt } from '../map/dropTarget';
 import { cardActionsOn } from '../screens/ActionRow';
 import { useCluePayment } from '../screens/CluePaymentDialog';
-import { overAct } from '../screens/headerDropTarget';
+import { overHeaderCard } from '../screens/headerDropTarget';
 import { TokenGhost } from '../screens/TokenGhost';
 import { useTokenDrag, type TokenDragHandlers } from '../screens/useTokenDrag';
 import type { GameActions } from '../state/gameActions';
@@ -40,7 +40,7 @@ export function useClueDrag(
     if (placing) void actions.useCardAction(act.id, placing.action);
   };
   const drag = useTokenDrag((client) => {
-    if (overAct(client)) {
+    if (overHeaderCard('act', client)) {
       dropOnAct();
       return;
     }
