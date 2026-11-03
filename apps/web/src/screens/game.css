@@ -1224,7 +1224,10 @@
     --stat-icon: url('../symbols/action.svg');
   }
 
-  /* Under the expanded header the notices keep their place over the map's foot. */
+  /*
+   * Over the whole-screen map or panels the notices float at the foot; under the expanded header
+   * they keep their grid place over the map's foot.
+   */
   #board:is([data-view='map'], [data-view='investigators']) > #notices {
     position: fixed;
     inset-inline: calc(var(--space-2) + var(--safe-left)) calc(var(--space-2) + var(--safe-right));

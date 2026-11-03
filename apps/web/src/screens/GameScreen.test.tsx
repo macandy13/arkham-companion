@@ -658,6 +658,19 @@ describe('GameScreen on a phone held upright', () => {
     expect(screen.queryByRole('dialog', { name: 'Trapped' })).toBeNull();
   });
 
+  it('opens the reference card from the name of the scenario in the expanded header', async () => {
+    await renderTheGathering('phone-scenario-reference-test');
+    const scenario = screen.getByRole('region', { name: 'Scenario' });
+    const face = scenario.querySelector('[data-card]');
+    if (!face) throw new Error('the scenario has no card');
+    fireEvent.click(face);
+
+    fireEvent.click(within(scenario).getByRole('button', { name: 'The Gathering' }));
+
+    expect(board()?.getAttribute('data-view')).toBe('cards');
+    expect(screen.getByRole('dialog', { name: 'The Gathering' })).toBeTruthy();
+  });
+
   it.each([
     { card: "What's Going On?!", code: '01105', place: 'Agenda' },
     { card: 'Trapped', code: '01108', place: 'Act' },
@@ -688,6 +701,19 @@ describe('GameScreen on a phone held upright', () => {
       expect(screen.queryByRole('dialog')).toBeNull();
     },
   );
+
+  it('opens the reference card from the name of the scenario in the expanded header', async () => {
+    await renderTheGathering('phone-scenario-reference-test');
+    const scenario = screen.getByRole('region', { name: 'Scenario' });
+    const face = scenario.querySelector('[data-card]');
+    if (!face) throw new Error('the scenario has no card');
+    fireEvent.click(face);
+
+    fireEvent.click(within(scenario).getByRole('button', { name: 'The Gathering' }));
+
+    expect(board()?.getAttribute('data-view')).toBe('cards');
+    expect(screen.getByRole('dialog', { name: 'The Gathering' })).toBeTruthy();
+  });
 
   it("opens the detail view on Alder's panel from the name on it", async () => {
     await renderTheGathering('phone-investigator-test');
@@ -720,7 +746,7 @@ describe('GameScreen on a phone held upright', () => {
     expect(board()?.getAttribute('data-view')).toBe(view);
   });
 
-  it('opens the detail view on the map from its expand button', async () => {
+  it('opens the map on the whole screen from its expand button', async () => {
     await renderTheGathering('phone-map-test');
 
     fireEvent.click(screen.getByRole('button', { name: 'Show the map on the whole screen' }));
@@ -728,7 +754,7 @@ describe('GameScreen on a phone held upright', () => {
     expect(board()?.getAttribute('data-view')).toBe('map');
   });
 
-  it('shows the Study in the map row from a tap on its tile, instead of its details', async () => {
+  it('shows the Study on the whole screen from a tap on its tile, instead of its details', async () => {
     await renderTheGathering('phone-location-test');
 
     fireEvent.click(screen.getByRole('button', { name: 'Details of Study' }));

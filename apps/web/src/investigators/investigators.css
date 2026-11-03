@@ -574,8 +574,8 @@
 
 /*
  * The phone's detail view on the investigators (`data-view='investigators'`, game.css): every
- * investigator's whole panel, a screen wide, snapped sideways in seat order, with the threat area above the card and the turn
- * controls under it, as on a tablet.
+ * investigator's whole panel, a screen wide, snapped sideways in seat order, with the threat area
+ * above the card and the turn controls under it, as on a tablet.
  */
 @media (orientation: portrait) and (max-width: 40rem) {
   #board[data-view='investigators'] > #investigators {

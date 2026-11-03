@@ -66,7 +66,7 @@ test(
 // Journey: on a phone, open the map on the whole screen from the compact map's expand button. A
 // tap on the strip above it expands the header on the agenda, and the strip below it shows the
 // turn's investigator.
-test('open the map on a phone and go on from its strips', async ({ page }) => {
+test('open the map on a phone and go on from its strips', { tag: '@flow' }, async ({ page }) => {
   const board = page.locator('#board');
   const lowerStrip = page.locator('#map > button[data-strip="investigators"]');
 

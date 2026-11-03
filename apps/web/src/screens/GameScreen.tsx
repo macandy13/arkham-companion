@@ -67,7 +67,7 @@ export function GameScreen({
   const boardElement = useRef<HTMLDivElement>(null);
   const detailTarget = phone ? detail.target : undefined;
   // The expanded header leaves the map and the investigator in view, so they open their rows from there.
-  const show = phone ? (detailTarget ? detail.go : detail.open) : undefined;
+  const showDetail = phone ? (detailTarget ? detail.go : detail.open) : undefined;
 
   useEffect(() => {
     void store.getState().openGame(gameId);
@@ -106,7 +106,8 @@ export function GameScreen({
   // A location that left play, or a location to pick on the map, brings the whole map back.
   const focused =
     spawning || picking ? undefined : board.locations.find(({ id }) => id === focusId);
-  const showLocation = show && ((location: InstanceId) => show({ row: 'map', location }));
+  const showLocation =
+    showDetail && ((location: InstanceId) => showDetail({ row: 'map', location }));
 
   const host = {
     decision: decision && decisionId !== undefined ? { view: decision, id: decisionId } : undefined,
@@ -133,8 +134,8 @@ export function GameScreen({
               : undefined
           }
           onOpenCard={
-            show && detailTarget?.row !== 'cards'
-              ? (card) => show({ row: 'cards', card })
+            showDetail && detailTarget?.row !== 'cards'
+              ? (card) => showDetail({ row: 'cards', card })
               : undefined
           }
           full={detailTarget?.row === 'cards'}
@@ -142,13 +143,13 @@ export function GameScreen({
         <GameStatus store={store} open={open} board={board} />
         <section id="map" aria-labelledby="map-title">
           <h2 id="map-title">{t('map.title')}</h2>
-          {show && detailTarget?.row !== 'map' && (
+          {showDetail && detailTarget?.row !== 'map' && (
             <button
               type="button"
               data-icon="expand"
               data-detail="expand"
               aria-label={t('detail.openMap')}
-              onClick={() => show({ row: 'map' })}
+              onClick={() => showDetail({ row: 'map' })}
             />
           )}
           {detailTarget?.row === 'map' && <MapStrip board={board} to="cards" onGo={detail.go} />}
@@ -194,8 +195,8 @@ export function GameScreen({
             busy={open.busy}
             adjusting={open.adjusting}
             onOpen={
-              show && detailTarget?.row !== 'investigators'
-                ? (investigator) => show({ row: 'investigators', investigator })
+              showDetail && detailTarget?.row !== 'investigators'
+                ? (investigator) => showDetail({ row: 'investigators', investigator })
                 : undefined
             }
             printed={
