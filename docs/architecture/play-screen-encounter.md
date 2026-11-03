@@ -58,7 +58,7 @@ An empty pile is a dashed card outline.
 ## Encounter dialog
 
 A tap on the deck or a pile opens the [encounter dialog](../../apps/web/src/encounter/EncounterDialog.tsx) on it.
-It is a page of the card shell without a card ([`CardDialog`](../../apps/web/src/screens/CardDialog.tsx)), since the piles' cards are its content: a pile's page takes the wide dialog width (`--dialog-width-wide`), and on a phone held upright it is a sheet.
+It is a page of the card shell without a card ([`CardDialog`](../../apps/web/src/screens/CardDialog.tsx)), since the piles' cards are its content: the page of a pile with cards takes the wide dialog width (`--dialog-width-wide`), and on a phone held upright it is a sheet.
 It shows:
 
 - on the deck, its count with a "Draw for …" button per active investigator, the one whose turn it is first (`GameActions.drawEncounter`, for player cards and effects that draw outside the mythos phase; the card then resolves as in the mythos phase);

@@ -1,8 +1,8 @@
 /*
  * The encounter dialog (EncounterDialog), a page of the card shell without a card: the deck's count
  * and a draw button per investigator, or a pile's cards as a row with the chosen card's moves
- * under it. A pile's page is as wide as a dialog with a row of cards gets; the shell keeps it a
- * sheet on a phone.
+ * under it. The page of a pile with cards is as wide as a dialog with a row of cards gets; the
+ * shell keeps it a sheet on a phone.
  */
 #board dialog[data-dialog='encounter']:has(> article > div[data-strip]) {
   --dialog-width: var(--dialog-width-wide);
