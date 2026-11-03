@@ -1,4 +1,4 @@
-import { useRef, useState, type MouseEvent, type PointerEvent } from 'react';
+import { useState, type PointerEvent } from 'react';
 import { isTap, type Point } from '../map/mapLayout';
 
 /** The pointer handlers that make one token on the page draggable (`TokenDrag.handlers`). */
@@ -7,7 +7,6 @@ export interface TokenDragHandlers {
   onPointerMove(event: PointerEvent<HTMLElement>): void;
   onPointerUp(event: PointerEvent<HTMLElement>): void;
   onPointerCancel(): void;
-  onClick(event: MouseEvent<HTMLElement>): void;
 }
 
 /** A drag of a token off a counter on the page (`useTokenDrag`). */
@@ -28,7 +27,6 @@ export interface TokenDrag {
 export function useTokenDrag(onDrop: (client: Point) => void): TokenDrag {
   const [pressed, setPressed] = useState<Point>();
   const [at, setAt] = useState<Point>();
-  const dropped = useRef(false);
   const pointOf = (event: PointerEvent<HTMLElement>) => ({ x: event.clientX, y: event.clientY });
   return {
     at,
@@ -47,17 +45,27 @@ export function useTokenDrag(onDrop: (client: Point) => void): TokenDrag {
         const dragged = pressed !== undefined && !isTap(pressed, point);
         setPressed(undefined);
         setAt(undefined);
-        dropped.current = dragged;
-        if (dragged) onDrop(point);
+        if (!dragged) return;
+        swallowNextClick();
+        onDrop(point);
       },
       onPointerCancel() {
         setPressed(undefined);
         setAt(undefined);
       },
-      onClick(event) {
-        if (dropped.current) event.stopPropagation();
-        dropped.current = false;
-      },
     },
   };
+}
+
+/**
+ * Keeps the click a drag ends with from reaching the page, so a card the counter sits on does not
+ * open. It is caught on the window before React's own capture handlers (`HeaderSlot` opens the
+ * card in the capture phase). A drag a browser ends without a click leaves it to the next press,
+ * which drops it, so it never eats a later tap.
+ */
+function swallowNextClick(): void {
+  const swallow = (event: Event) => event.stopPropagation();
+  const drop = () => window.removeEventListener('click', swallow, { capture: true });
+  window.addEventListener('click', swallow, { capture: true, once: true });
+  window.addEventListener('pointerdown', drop, { capture: true, once: true });
 }

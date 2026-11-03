@@ -15,6 +15,7 @@ The agenda and act are drawn as the printed cards in the Exact card theme ([`Boo
 The header card lays its HTML over that drawing in fractions of the card (`--book-*` tokens): the name on the page, the token as the small count circle on the disc's lower right, and the plate with its buttons at the page's foot.
 In the card pictures theme the whole picture lies over the drawing, and the count stays on the printed threshold.
 
+The agenda's doom token is a drag source and a drop target for doom on the map ([map](play-screen-map.md)): a drag that ends on it does not open it.
 A tap on the agenda or act (or its name, a button for the keyboard) opens it on the card shell ([`BookDetails`](../../apps/web/src/screens/GameHeader.tsx), `DetailsDialog`, MD.6b2):
 
 - the same face over the page as a landscape card, with its name and token, tapped to read it whole;

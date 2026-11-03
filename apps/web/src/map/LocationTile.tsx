@@ -57,7 +57,8 @@ import { shrinkAround, useShrinkToFit } from './useShrinkToFit';
 
 /**
  * What the players may drag off a tile: a piece standing on it (an investigator's pawn or an
- * enemy), or one of the clues on `location` (M3.11c), which a drop on a pawn there discovers.
+ * enemy), one of the clues on `location` (M3.11c), which a drop on a pawn there discovers, or
+ * the doom on `location`, which a drop moves to another location or back to the agenda.
  */
 export type TilePiece =
   | { investigator: InvestigatorView }

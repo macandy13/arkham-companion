@@ -163,6 +163,18 @@ describe('GameScreen header', () => {
     });
   });
 
+  it('offers no doom to drag off the agenda while the players adjust the board', async () => {
+    await renderTheGathering('game-screen-doom-drag-adjusting-test');
+    const agenda = screen.getByRole('region', { name: 'Agenda' });
+    const draggable = within(agenda).getByRole('img', { name: 'Doom 0 / 3' }).dataset['drag'];
+
+    fireEvent.click(button('Adjust board'));
+    await screen.findByRole('button', { name: 'Done' });
+
+    expect(draggable).toBe('doom');
+    expect(within(agenda).getByRole('img', { name: 'Doom 0 / 3' }).dataset['drag']).toBeUndefined();
+  });
+
   it('shows the steppers only while adjusting, with "Done" and "Cancel" in place of "Next"', async () => {
     await renderTheGathering('game-screen-adjust-mode-test');
     const before = screen.queryByRole('button', { name: 'Add doom' });
@@ -599,6 +611,27 @@ describe('GameScreen on a phone held upright', () => {
   });
 
   const board = () => document.getElementById('board');
+
+  it('places a doom dragged off the agenda on the map without opening the detail view', async () => {
+    await renderTheGathering('phone-doom-drag-test');
+    // jsdom lays nothing out and has no pointer capture on the page: the hit test under the
+    // pointer finds the Study's tile, and capture is stubbed.
+    document.elementFromPoint = () => screen.getByRole('group', { name: 'Study' });
+    Object.assign(HTMLElement.prototype, { setPointerCapture: () => {} });
+    const agenda = screen.getByRole('region', { name: 'Agenda' });
+    const doom = within(agenda).getByRole('img', { name: 'Doom 0 / 3' });
+
+    fireEvent.pointerDown(doom, { pointerId: 1, clientX: 300, clientY: 40 });
+    fireEvent.pointerMove(doom, { pointerId: 1, clientX: 200, clientY: 300 });
+    fireEvent.pointerUp(doom, { pointerId: 1, clientX: 200, clientY: 300 });
+    fireEvent.click(doom);
+    const placed = await within(agenda).findByRole('img', { name: 'Doom 1 / 3' });
+    Reflect.deleteProperty(document, 'elementFromPoint');
+    Reflect.deleteProperty(HTMLElement.prototype, 'setPointerCapture');
+
+    expect(placed).toBeTruthy();
+    expect(board()?.getAttribute('data-view')).not.toBe('detail');
+  });
 
   it('opens the detail view on the act from a tap on it, instead of its full card', async () => {
     await renderTheGathering('phone-act-test');

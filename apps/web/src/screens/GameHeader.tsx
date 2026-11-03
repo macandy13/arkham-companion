@@ -356,7 +356,7 @@ function AgendaStatus({
   const { actions } = store.getState();
   const doomDrag = useTokenDrag((client) => {
     const location = locationAt(client);
-    if (location && !blocked) void actions.adjustLocation(location, 'doom', 1);
+    if (location) void actions.adjustLocation(location, 'doom', 1);
   });
   const { agenda } = board;
   if (!agenda) return null;
@@ -400,9 +400,7 @@ function AgendaStatus({
   );
   const tokenAndPlate = (
     <>
-      {/* The handlers stay while a step is queued: the drop queues its own step before the click
-          that ends the drag arrives, and they must keep that click from opening the agenda. */}
-      {doomToken(adjusting ? undefined : doomDrag.handlers)}
+      {doomToken(blocked || adjusting ? undefined : doomDrag.handlers)}
       {adjusting && <footer>{doomSteppers}</footer>}
     </>
   );
