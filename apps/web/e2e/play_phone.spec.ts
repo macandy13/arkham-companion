@@ -59,6 +59,32 @@ test('expand the header in place and swipe through its cards on a phone', async 
   });
 });
 
+// Journey: on a phone, expand Roland Banks' panel in place from his name: his whole card shows,
+// its ability text on the notebook page, with the map and the compact header still on the screen,
+// and the × folds it again.
+test('expand the investigator in place on a phone', async ({ page }) => {
+  const board = page.locator('#board');
+  const roland = page.getByRole('region', { name: 'Roland Banks' });
+
+  await test.step("Expand Roland Banks' panel from his name", async () => {
+    await resumeImportedGame(
+      page,
+      'Roland Banks threatened',
+      rolandThreatenedExport('Roland Banks threatened'),
+    );
+    await roland.getByRole('heading', { name: 'Roland Banks' }).getByRole('button').click();
+    await expect(board).toHaveAttribute('data-view', 'investigators');
+    await expect(roland.getByText(/Invented text for the tests/)).toBeInViewport();
+    await expect(page.getByRole('figure', { name: 'House' })).toBeInViewport();
+    await expect(page.getByRole('region', { name: 'Agenda' })).toBeInViewport();
+  });
+
+  await test.step('Fold it again', async () => {
+    await page.getByRole('button', { name: 'Back to the overview' }).click();
+    await expect(board).not.toHaveAttribute('data-view');
+  });
+});
+
 // Journey: on a phone, open the map on the whole screen from the compact map's expand button. A
 // tap on the strip above it expands the header on the agenda, and the strip below it shows the
 // turn's investigator.

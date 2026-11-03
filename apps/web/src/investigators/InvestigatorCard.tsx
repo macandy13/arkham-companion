@@ -48,24 +48,53 @@ export function InvestigatorCard({
       data-dialog="investigator-card"
     >
       <button type="button" data-icon="close" aria-label={t('cardZoom.close')} onClick={close} />
-      <article
-        data-card="investigator"
-        data-picture={picture?.shown ? 'shown' : undefined}
-        data-shape="full"
-      >
-        <InvestigatorFace
-          picture={picture}
-          investigatorClass={classOf(printed?.factionCode)}
-          shape="full"
-        />
-        <header>
-          <h3 id={nameId}>{investigator.name}</h3>
-          {printed?.subname && <p>{printed.subname}</p>}
-        </header>
+      <WholeCard investigator={investigator} printed={printed} picture={picture} nameId={nameId}>
         {children}
-        {printed && <NotebookPage printed={printed} />}
-      </article>
+      </WholeCard>
     </dialog>
+  );
+}
+
+/**
+ * The whole card itself, as `InvestigatorCard` shows it and the phone's expanded investigator bar
+ * in place of the strip: the face drawn `full`, the name (`nameId` names what it labels) and
+ * subname on its plates, the skills and counters (`children`) and the notebook page. In the bar
+ * the players may be `adjusting` the board, which brings out the counters' steppers.
+ */
+export function WholeCard({
+  investigator,
+  printed,
+  picture,
+  nameId,
+  adjusting = false,
+  children,
+}: {
+  investigator: InvestigatorView;
+  printed: PrintedInvestigator | undefined;
+  picture: CardPicture | undefined;
+  nameId: string;
+  adjusting?: boolean;
+  children: ReactNode;
+}) {
+  return (
+    <article
+      data-card="investigator"
+      data-picture={picture?.shown ? 'shown' : undefined}
+      data-adjusting={adjusting || undefined}
+      data-shape="full"
+    >
+      <InvestigatorFace
+        picture={picture}
+        investigatorClass={classOf(printed?.factionCode)}
+        shape="full"
+      />
+      <header>
+        <h3 id={nameId}>{investigator.name}</h3>
+        {printed?.subname && <p>{printed.subname}</p>}
+      </header>
+      {children}
+      {printed && <NotebookPage printed={printed} />}
+    </article>
   );
 }
 

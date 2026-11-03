@@ -995,24 +995,24 @@
 }
 
 /*
- * The phone's detail view (`data-view`, DetailControls) shows one row of the board at a time. The
- * header expands in place (`cards`): its places snapped sideways, each a screen wide with its
- * label, piles and plate again, over the status row, the map, which shrinks to the room left, and
- * the compact investigator. The map (`map`) and the investigator panels (`investigators`) take the
- * whole screen, the rest stepping aside. The notices, the × and the dots float over the board.
+ * The phone's detail view (`data-view`, DetailControls) opens one part of the board. The header
+ * (`cards`) or the investigator bar (`investigators`) expands in place: its places or panels
+ * snapped sideways, each a screen wide, the header's with its label, piles and plate again, the
+ * investigators' with the whole card, while the rest stays compact and the map shrinks to the room
+ * left. The map (`map`) takes the whole screen, the rest stepping aside. The notices, the × and the
+ * dots float over the board.
  */
 @media (orientation: portrait) and (max-width: 40rem) {
-  #board:is([data-view='map'], [data-view='investigators']) {
+  #board[data-view='map'] {
     display: flex;
     flex-direction: column;
   }
 
-  #board[data-view='map'] > :is(header, #status, #investigators),
-  #board[data-view='investigators'] > :is(header, #status, #map) {
+  #board[data-view='map'] > :is(header, #status, #investigators) {
     display: none;
   }
 
-  #board:is([data-view='map'], [data-view='investigators']) > :is(#map, #investigators) {
+  #board[data-view='map'] > #map {
     flex: 1;
     box-sizing: border-box;
   }
@@ -1243,10 +1243,10 @@
   }
 
   /*
-   * Over the whole-screen map or panels the notices float at the foot; under the expanded header
-   * they keep their grid place over the map's foot.
+   * Over the whole-screen map the notices float at the foot; beside an expanded part they keep
+   * their grid place over the map's foot.
    */
-  #board:is([data-view='map'], [data-view='investigators']) > #notices {
+  #board[data-view='map'] > #notices {
     position: fixed;
     inset-inline: calc(var(--space-2) + var(--safe-left)) calc(var(--space-2) + var(--safe-right));
     inset-block-end: calc(var(--space-5) + var(--safe-bottom));
@@ -1263,21 +1263,29 @@
   }
 
   /* At the top left, clear of the map's zoom buttons at its top right. */
-  #board:is([data-view='map'], [data-view='investigators']) > button[data-detail='close'] {
+  #board[data-view='map'] > button[data-detail='close'] {
     position: fixed;
     inset-block-start: calc(var(--space-2) + var(--safe-top));
     inset-inline-start: calc(var(--space-2) + var(--safe-left));
   }
 
   /*
-   * Over the expanded header's top right corner and its foot: the board's grid lays the × and the
-   * dots over the header's own area.
+   * Over the expanded part's top right corner and its foot or head: the board's grid lays the ×
+   * and the dots over the part's own area. The investigators' dots stand over the threat area,
+   * since the turn controls take the foot.
    */
-  #board[data-view='cards'] > button[data-detail='close'] {
-    grid-area: header;
+  #board:is([data-view='cards'], [data-view='investigators']) > button[data-detail='close'] {
     align-self: start;
     justify-self: end;
     margin: var(--space-2) calc(var(--space-2) + var(--safe-right)) 0 0;
+  }
+
+  #board[data-view='cards'] > button[data-detail='close'] {
+    grid-area: header;
+  }
+
+  #board[data-view='investigators'] > button[data-detail='close'] {
+    grid-area: investigators;
   }
 
   #board[data-view] > ol[data-dots] {
@@ -1298,9 +1306,9 @@
   }
 
   #board[data-view='investigators'] > ol[data-dots] {
-    position: fixed;
-    inset-inline: 0;
-    inset-block-end: calc(var(--space-2) + var(--safe-bottom));
+    grid-area: investigators;
+    align-self: start;
+    padding-block-start: var(--space-1);
   }
 
   #board[data-view] > ol[data-dots] > li {
