@@ -322,6 +322,11 @@ export interface OfferedCardAction {
    */
   readonly groupClues?: number;
   /**
+   * The clues its cost asks of the investigator who takes it (`spend: 'clues'`, "Spend 1 clue:"),
+   * so a clue dropped on the card can take it (Disrupting the Ritual); absent for any other cost.
+   */
+  readonly clues?: number;
+  /**
    * Which of the card's printed actions of the same kind (the same designator, or plain) this is,
    * counting from 1, when the card prints more than one, so each has a name of its own ("Action 2
    * · Parlor"). Counted over the printed actions, not the offered ones, so a name stays put when
@@ -358,6 +363,7 @@ export function cardActionsOfferedTo(
               ...(cost?.spend === 'groupClues'
                 ? { groupClues: groupClueAmount(state, cost.amount) }
                 : {}),
+              ...(cost?.spend === 'clues' ? { clues: cost.amount } : {}),
               ...numberOfKind(actions, action),
             },
           ]

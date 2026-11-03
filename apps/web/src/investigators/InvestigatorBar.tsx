@@ -22,6 +22,8 @@ import { ThreatArea } from './ThreatArea';
 import { TurnControls } from './TurnControls';
 import { InvestigatorCard } from './InvestigatorCard';
 import { deltaText, useCountChange } from '../screens/countChange';
+import type { TokenDragHandlers } from '../screens/useTokenDrag';
+import { useClueDrag } from './useClueDrag';
 import './investigators.css';
 
 /**
@@ -247,7 +249,13 @@ function InvestigatorPanel({
           busy={busy}
           actions={actions}
         />
-        <Counters investigator={investigator} adjusting={adjusting} busy={busy} actions={actions} />
+        <Counters
+          board={board}
+          investigator={investigator}
+          adjusting={adjusting}
+          busy={busy}
+          actions={actions}
+        />
       </article>
       {zoomed && (
         <InvestigatorCard
@@ -263,7 +271,13 @@ function InvestigatorPanel({
             busy={busy}
             actions={actions}
           />
-          <Counters investigator={investigator} adjusting={false} busy={busy} actions={actions} />
+          <Counters
+            board={board}
+            investigator={investigator}
+            adjusting={false}
+            busy={busy}
+            actions={actions}
+          />
         </InvestigatorCard>
       )}
       <p data-whereabouts="">
@@ -365,15 +379,20 @@ function Skills({
 }
 
 /**
- * The counters on the card's notebook page, each a token like the ones on the table, with their steppers while the
- * players adjust the board (`adjusting`); a step plays `actions` unless one is queued (`busy`).
+ * The counters on the card's notebook page, each a token like the ones on the table, with their
+ * steppers while the players adjust the board (`adjusting`); a step plays `actions` unless one is
+ * queued (`busy`). A clue can be dragged off the clue count onto their location or the act
+ * (`useClueDrag`).
  */
 function Counters({
+  board,
   investigator,
   adjusting,
   busy,
   actions,
 }: {
+  /** The board a clue dragged off the card lands on (`useClueDrag`). */
+  board: BoardView;
   investigator: InvestigatorView;
   adjusting: boolean;
   busy: boolean;
@@ -384,60 +403,69 @@ function Counters({
   const adjust = (stat: SteppedStat, delta: number) => void actions.adjust(id, stat, delta);
   // A defeated or resigned investigator has left the game, so their counters no longer change.
   const off = busy || investigator.status !== 'active';
+  const clueDrag = useClueDrag(board, id, actions);
   return (
-    <dl>
-      <Stat
-        kind="health"
-        label={t('investigators.health')}
-        value={health - damage}
-        shown={t('investigators.left', { left: health - damage, max: health })}
-        printed={{ max: health, taken: damage }}
-      >
-        {adjusting && (
-          <Steppers
-            lower={{ label: t('investigators.takeDamage'), disabled: off }}
-            raise={{ label: t('investigators.healDamage'), disabled: off || damage === 0 }}
-            onStep={(delta) => adjust('damage', -delta)}
-          />
+    <>
+      <dl>
+        <Stat
+          kind="health"
+          label={t('investigators.health')}
+          value={health - damage}
+          shown={t('investigators.left', { left: health - damage, max: health })}
+          printed={{ max: health, taken: damage }}
+        >
+          {adjusting && (
+            <Steppers
+              lower={{ label: t('investigators.takeDamage'), disabled: off }}
+              raise={{ label: t('investigators.healDamage'), disabled: off || damage === 0 }}
+              onStep={(delta) => adjust('damage', -delta)}
+            />
+          )}
+        </Stat>
+        <Stat
+          kind="sanity"
+          label={t('investigators.sanity')}
+          value={sanity - horror}
+          shown={t('investigators.left', { left: sanity - horror, max: sanity })}
+          printed={{ max: sanity, taken: horror }}
+        >
+          {adjusting && (
+            <Steppers
+              lower={{ label: t('investigators.takeHorror'), disabled: off }}
+              raise={{ label: t('investigators.healHorror'), disabled: off || horror === 0 }}
+              onStep={(delta) => adjust('horror', -delta)}
+            />
+          )}
+        </Stat>
+        <Stat
+          kind="clues"
+          label={t('investigators.clues')}
+          value={investigator.clues}
+          drag={off || adjusting || investigator.clues === 0 ? undefined : clueDrag.handlers}
+        />
+        <Stat
+          kind="resources"
+          label={t('investigators.resources')}
+          short={t('investigators.resourcesShort')}
+          value={investigator.resources}
+        >
+          {adjusting && (
+            <Steppers
+              lower={{
+                label: t('investigators.spendResource'),
+                disabled: off || investigator.resources === 0,
+              }}
+              raise={{ label: t('investigators.gainResource'), disabled: off }}
+              onStep={(delta) => adjust('resources', delta)}
+            />
+          )}
+        </Stat>
+        {investigator.doom !== undefined && (
+          <Stat kind="doom" label={t('investigators.doom')} value={investigator.doom} />
         )}
-      </Stat>
-      <Stat
-        kind="sanity"
-        label={t('investigators.sanity')}
-        value={sanity - horror}
-        shown={t('investigators.left', { left: sanity - horror, max: sanity })}
-        printed={{ max: sanity, taken: horror }}
-      >
-        {adjusting && (
-          <Steppers
-            lower={{ label: t('investigators.takeHorror'), disabled: off }}
-            raise={{ label: t('investigators.healHorror'), disabled: off || horror === 0 }}
-            onStep={(delta) => adjust('horror', -delta)}
-          />
-        )}
-      </Stat>
-      <Stat kind="clues" label={t('investigators.clues')} value={investigator.clues} />
-      <Stat
-        kind="resources"
-        label={t('investigators.resources')}
-        short={t('investigators.resourcesShort')}
-        value={investigator.resources}
-      >
-        {adjusting && (
-          <Steppers
-            lower={{
-              label: t('investigators.spendResource'),
-              disabled: off || investigator.resources === 0,
-            }}
-            raise={{ label: t('investigators.gainResource'), disabled: off }}
-            onStep={(delta) => adjust('resources', delta)}
-          />
-        )}
-      </Stat>
-      {investigator.doom !== undefined && (
-        <Stat kind="doom" label={t('investigators.doom')} value={investigator.doom} />
-      )}
-    </dl>
+      </dl>
+      {clueDrag.shown}
+    </>
   );
 }
 
@@ -477,6 +505,7 @@ function Stat({
   value,
   shown = String(value),
   printed,
+  drag,
   children,
 }: {
   kind: StatKind;
@@ -485,6 +514,8 @@ function Stat({
   value: number;
   shown?: string;
   printed?: { max: number; taken: number };
+  /** Makes a token draggable off the count (`useTokenDrag`), marked `data-drag` with its kind. */
+  drag?: TokenDragHandlers | undefined;
   children?: ReactNode;
 }) {
   const origin = { x: 0, y: 0 };
@@ -514,7 +545,13 @@ function Stat({
             </data>
           </span>
         ) : (
-          <data key={change?.key} value={value} data-delta={deltaText(change)}>
+          <data
+            key={change?.key}
+            value={value}
+            data-delta={deltaText(change)}
+            data-drag={drag && kind}
+            {...drag}
+          >
             {shown}
           </data>
         )}

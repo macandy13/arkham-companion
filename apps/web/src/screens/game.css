@@ -927,12 +927,7 @@
 }
 
 @media (orientation: portrait) and (max-width: 40rem) {
-  #board
-    dialog:is(
-      [data-dialog='card-zoom'],
-      [data-dialog='investigator-card'],
-      [data-dialog='log']
-    )[open] {
+  #board dialog:is([data-dialog='card-zoom'], [data-dialog='investigator-card'])[open] {
     box-sizing: border-box;
     justify-content: center;
     width: 100%;
@@ -948,11 +943,7 @@
   }
 
   #board
-    dialog:is(
-      [data-dialog='card-zoom'],
-      [data-dialog='investigator-card'],
-      [data-dialog='log']
-    )[open]
+    dialog:is([data-dialog='card-zoom'], [data-dialog='investigator-card'])[open]
     > button[data-icon='close'] {
     top: calc(var(--space-2) + var(--safe-top));
     right: auto;

@@ -86,6 +86,7 @@ export function GameStatus({
         <GameLogDialog
           log={log}
           state={open.state}
+          scenario={open.scenarioNameKey ? t(open.scenarioNameKey) : undefined}
           onGoBack={blocked || adjusting ? undefined : (step) => void actions.undoTo(step)}
           onClose={() => setLogOpen(false)}
         />

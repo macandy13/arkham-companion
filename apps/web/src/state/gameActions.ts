@@ -96,6 +96,12 @@ export interface GameActions {
    */
   takeClue(location: InstanceId, investigator?: InvestigatorId): Promise<void>;
   /**
+   * `investigator` places one of their clues on their location, as a card or a failed test tells
+   * them to ("place 1 of your clues on your location"), and as a clue dragged off their card onto
+   * it says (`PlaceClues`).
+   */
+  placeClue(investigator: InvestigatorId): Promise<void>;
+  /**
    * A fight; its test stays open as a decision. It is an action, counting off what it costs
    * (`BoardView.actionCost`), unless `cost` says `free`, as a card can let an investigator fight
    * without spending one; then it counts off only what a card adds to it.
@@ -271,6 +277,8 @@ export function gameActions(
           amount: 1,
         }),
       ),
+    placeClue: (investigator) =>
+      play((table) => table.play({ type: 'PlaceClues', investigatorId: investigator, amount: 1 })),
     fight: (enemy, cost = 'action') =>
       taking(
         'fight',

@@ -572,6 +572,7 @@ describe('The Gathering agendas 2 and 3', () => {
     expect(proposal.filter((change) => change.kind !== 'command')).toEqual([
       { kind: 'byHand', textKey: 'scenario.theGathering.resolution.replaceKilled' },
       { kind: 'byHand', textKey: 'scenario.theGathering.resolution.earnLitaIfLeadKilled' },
+      { kind: 'byHand', textKey: 'scenario.theGathering.resolution.upgradeDecks' },
     ]);
   });
 

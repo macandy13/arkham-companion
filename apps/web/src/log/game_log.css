@@ -1,18 +1,21 @@
 /*
- * The game log (GameLogDialog): the title, then the rounds and phases as a list that scrolls on its
- * own, so the dialog stays within the height a modal dialog gets by default.
+ * The game log (GameLogDialog), a page of its own on the card shell: as tall as the screen allows
+ * at the wide dialog width, the title fixed at its top and the rounds and phases scrolling under
+ * it. On a phone held upright it fills the whole screen rather than rising as a sheet.
  */
-#board dialog[data-dialog='log'][open] {
-  display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
-  gap: var(--space-2);
-  box-sizing: border-box;
-  width: var(--layout-log-width);
-  max-width: 100%;
+#board dialog[data-dialog='log'] {
+  --dialog-width: var(--dialog-width-wide);
+}
+
+#board dialog[data-dialog='log'] > article {
+  block-size: calc(100dvh - var(--space-4));
+  overflow: hidden;
 }
 
 /* The sections scroll on their own, under the title. */
-#board dialog[data-dialog='log'] > ol {
+#board dialog[data-dialog='log'] > article > ol {
+  flex: 1;
+  min-block-size: 0;
   overflow-y: auto;
 }
 
@@ -75,4 +78,34 @@
   justify-self: end;
   min-height: var(--button-compact);
   font-size: var(--font-size-note);
+}
+
+/*
+ * A phone held upright: the page is the whole screen, square at its edges and clear of the
+ * notch and the home indicator, without the grab handle of a sheet. The extra attribute outranks
+ * the shell's sheet rules (card_dialog.css).
+ */
+@media (orientation: portrait) and (max-width: 40rem) {
+  #board dialog[data-shell][data-dialog='log'][open] {
+    block-size: 100%;
+    max-block-size: none;
+    margin: 0;
+  }
+
+  #board dialog[data-shell][data-dialog='log'] > article {
+    block-size: 100%;
+    max-block-size: none;
+    padding-block-start: calc(var(--space-3) + var(--safe-top));
+    border: none;
+    border-radius: 0;
+  }
+
+  #board dialog[data-shell][data-dialog='log'][open] > article::before {
+    content: none;
+  }
+
+  /* Flush with the steps under it, as the × keeps to the right. */
+  #board dialog[data-shell][data-dialog='log'] > article > hgroup {
+    padding-inline-start: 0;
+  }
 }

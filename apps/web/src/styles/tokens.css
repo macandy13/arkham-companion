@@ -312,8 +312,6 @@
   --dialog-close-inset: var(--space-3);
   /* A clue token to tap in the clue payment dialog. */
   --clue-token-size: var(--touch-target);
-  /* The game log, wide enough that a step's lines rarely wrap. */
-  --layout-log-width: 36rem;
   /* A card drawn in full in a dialog (the enemy details), like the prototype's zoomed card. */
   --layout-zoom-card-width: 15rem;
   /* A sideways card zoomed (an investigator card), wide enough to read its abilities. */

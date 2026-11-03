@@ -590,3 +590,9 @@
     scroll-snap-align: start;
   }
 }
+
+/* A count a token can be dragged off: the page must not scroll when a touch drags it. */
+#investigators [data-drag] {
+  cursor: grab;
+  touch-action: none;
+}

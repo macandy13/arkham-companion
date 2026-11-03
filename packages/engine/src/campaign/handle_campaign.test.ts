@@ -22,7 +22,7 @@ import { investigatorCardStats } from '../investigator_cards';
 import type { CampaignCommand } from './campaign_commands';
 import type { CampaignRejection } from './campaign_rejection';
 import { createEmptyLog } from './campaign_log';
-import { executeCommand, handleCommand } from './handle_campaign';
+import { executeCommand, executeCommands, handleCommand } from './handle_campaign';
 
 describe('StartCampaign', () => {
   it('writes the campaign log with fresh investigators, the bag and the scenario order', () => {
@@ -343,5 +343,30 @@ describe('EndCampaign', () => {
     const log = startedCampaign({ scenarioIds: [scenarioId('the-gathering')] });
 
     expect(log.result).toBeUndefined();
+  });
+});
+
+describe('executeCommands for a campaign of Roland Banks alone', () => {
+  const log = startedCampaign({ investigators: [roland.code] });
+
+  it('runs each command on the log the ones before left', () => {
+    const result = executeCommands(campaignContext, log, [
+      { type: 'AwardXp', code: roland.code, amount: 2 },
+      { type: 'AwardXp', code: roland.code, amount: 3 },
+    ]);
+
+    expect(result.events).toHaveLength(2);
+    expect(result.log.investigators[0]?.xpEarned).toBe(5);
+  });
+
+  it('refuses all of them when a later one is refused', () => {
+    const rejection = campaignRejectionOf(() =>
+      executeCommands(campaignContext, log, [
+        { type: 'AwardXp', code: roland.code, amount: 2 },
+        { type: 'AwardXp', code: daisy.code, amount: 3 },
+      ]),
+    );
+
+    expect(rejection).toMatchObject({ investigatorCode: daisy.code });
   });
 });
