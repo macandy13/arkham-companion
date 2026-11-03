@@ -235,7 +235,7 @@ test('move and take a clue from the location details', async ({ page }) => {
 
 // Journey: doom a card effect places on a location, moves on, and takes off again, dragged
 // between the token pool in the header and the map.
-test('move doom between the token pool and the map', { tag: '@flow' }, async ({ page }) => {
+test('move doom between the token pool and the map', async ({ page }) => {
   const house = page.getByRole('figure', { name: 'House' });
   const room = (name: string) => house.getByRole('group', { name });
   const pool = page.getByRole('region', { name: 'Token pool' });

@@ -11,6 +11,7 @@ import {
   type CampaignLog,
   type GameSummary,
   type PlayedScenario,
+  type ScenarioOutcome,
 } from '@arkham/engine';
 import type { CatalogSource } from '../catalog/useCatalog';
 import type { AppState } from '../state/appStore';
@@ -20,7 +21,7 @@ import {
   resolutionNumber,
   scenarioCardName,
 } from '../scenarios/scenarioCatalog';
-import { range } from '@arkham/util';
+import { assertNever, range } from '@arkham/util';
 import { CampaignSheets } from './CampaignSheets';
 import { NextScenarioDialog } from './NextScenarioDialog';
 import { ResolutionUndo } from './ResolutionUndo';
@@ -35,7 +36,8 @@ import './campaign_log.css';
  * Route `/campaign/:id`: the campaign log, drawn after the campaign log sheet of the Core Set
  * (docs/product.md "Campaign screen"): an index card with a column per investigator, a napkin
  * with the scenarios, each played one ticked with its resolution, then the campaign notes and the
- * campaign's own sheets (`CampaignSheets`). Below them, a link continues the scenario in play or
+ * campaign's own sheets (`CampaignSheets`); once the campaign is over, the card says how it ended
+ * (`CampaignOver`). Below them, a link continues the scenario in play or
  * sets the next one up (`NextScenarioDialog`), and
  * after a resolution was written a toast offers to take it back (`ResolutionUndo`).
  */
@@ -68,6 +70,7 @@ export function CampaignScreen({
           <p>{t('campaignLog.title')}</p>
           <h1 id="campaign-name">{entry ? t(entry.nameKey) : opened.title}</h1>
         </header>
+        {log.result && <CampaignOver log={log} endedAt={opened.endedAt} />}
         <h2 id="campaign-investigators-title">{t('campaignLog.investigators')}</h2>
         <ol>
           {log.investigators.map((member) => (
@@ -89,6 +92,59 @@ export function CampaignScreen({
       )}
     </article>
   );
+}
+
+/**
+ * How the campaign ended (MC1.6f), under the card's head: a stamp with the result (won, lost or
+ * survived) and the day it ended, then which ending to read aloud when the last scenario's
+ * resolution ended it; a campaign lost earlier, with no investigator left to replace a fallen
+ * one, has none to read.
+ */
+function CampaignOver({
+  log,
+  endedAt,
+}: {
+  readonly log: CampaignLog;
+  /** Epoch ms of `CampaignEnded` (`OpenCampaign.endedAt`). */
+  readonly endedAt: number | undefined;
+}) {
+  const { t, i18n } = useTranslation();
+  const last = log.playedScenarios.at(-1);
+  const finished = log.playedScenarios.length === log.scenarioIds.length;
+  const scenario = last && findScenario(last.scenarioId);
+  const ended = endedAt === undefined ? undefined : new Date(endedAt);
+  return (
+    <>
+      <section id="campaign-result" aria-labelledby="campaign-result-title">
+        <h2 id="campaign-result-title">{t('campaignLog.over')}</h2>
+        <p>{t(`campaignLog.result.${log.result}`)}</p>
+        {ended && (
+          <p>
+            <time dateTime={ended.toISOString()}>
+              {ended.toLocaleDateString(i18n.resolvedLanguage, { dateStyle: 'long' })}
+            </time>
+          </p>
+        )}
+      </section>
+      {finished && last && scenario && (
+        <p id="campaign-ending">{endingToRead(last.outcome, t(scenario.nameKey))}</p>
+      )}
+    </>
+  );
+
+  function endingToRead(outcome: ScenarioOutcome, scenarioName: string): string {
+    switch (outcome.kind) {
+      case 'resolution':
+        return t('campaignLog.readEnding', {
+          n: resolutionNumber(outcome.id),
+          scenario: scenarioName,
+        });
+      case 'noResolution':
+        return t('campaignLog.readNoResolution', { scenario: scenarioName });
+      default:
+        return assertNever(outcome);
+    }
+  }
 }
 
 /**
@@ -204,13 +260,7 @@ function NextStep({
   const scenarioId = log.scenarioIds[log.position];
   const game = games.find((g) => g.scenarioId === scenarioId);
   const scenario = scenarioId && findScenario(scenarioId);
-  if (log.result)
-    return (
-      <footer>
-        <p>{t(`resolution.campaignEnds.${log.result}`)}</p>
-      </footer>
-    );
-  if (!scenario) return null;
+  if (!scenario || log.result) return null;
   const name = t(scenario.nameKey);
   if (game) {
     return (

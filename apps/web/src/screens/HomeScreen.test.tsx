@@ -42,11 +42,16 @@ describe('HomeScreen', () => {
   });
 
   it.each([
-    ['still going', [], 'Scenario 1 of 2'],
-    ['won', [{ type: 'CampaignEnded', result: 'won' } as const], 'The investigators won'],
+    ['still going', [], 'Scenario 1 of 2', 'Resume'],
+    [
+      'won',
+      [{ type: 'CampaignEnded', result: 'won' } as const],
+      'The investigators won',
+      'Read the log',
+    ],
   ])(
-    'lists a campaign %s with its progress and resumes its latest game',
-    async (_, ending, progress) => {
+    'lists a campaign %s with its progress and links to its log',
+    async (_, ending, progress, link) => {
       const gameStore = new IndexedDbStore(`home-test-${n++}`);
       const campaignId = await gameStore.createCampaign({ title: 'Zealot – Roland' });
       await gameStore.appendCampaignEvents(campaignId, [
@@ -85,7 +90,7 @@ describe('HomeScreen', () => {
       expect(within(campaigns).getByText('Hard')).toBeTruthy();
       expect(within(campaigns).getByText('Roland Banks')).toBeTruthy();
       expect(within(campaigns).getByText(progress)).toBeTruthy();
-      expect(within(campaigns).getByRole('link', { name: 'Resume' }).getAttribute('href')).toBe(
+      expect(within(campaigns).getByRole('link', { name: link }).getAttribute('href')).toBe(
         `/campaign/${campaignId}`,
       );
     },
