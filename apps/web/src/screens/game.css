@@ -931,7 +931,7 @@
 }
 
 @media (orientation: portrait) and (max-width: 40rem) {
-  #board dialog:is([data-dialog='card-zoom'], [data-dialog='log'])[open] {
+  #board dialog[data-dialog='card-zoom'][open] {
     box-sizing: border-box;
     justify-content: center;
     width: 100%;
@@ -946,9 +946,7 @@
     overflow-y: auto;
   }
 
-  #board
-    dialog:is([data-dialog='card-zoom'], [data-dialog='log'])[open]
-    > button[data-icon='close'] {
+  #board dialog[data-dialog='card-zoom'][open] > button[data-icon='close'] {
     top: calc(var(--space-2) + var(--safe-top));
     right: auto;
     left: calc(var(--space-2) + var(--safe-left));

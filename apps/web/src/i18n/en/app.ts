@@ -9,7 +9,6 @@ export const appTexts = {
   log: {
     title: 'Game log',
     open: 'Game log',
-    close: 'Close the game log',
     goBack: 'Go back here',
     goBackTitle: 'Go back to this step?',
     goBackWarning_one: 'The step after it is taken back.',
