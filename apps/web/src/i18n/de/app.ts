@@ -111,6 +111,9 @@ export const appTexts = {
     reference: 'Chaosmarker',
     referenceSide: { easyStandard: 'Leicht / Standard', hardExpert: 'Schwer / Experte' },
     victory: 'Sieg',
+    pool: 'Vorrat',
+    poolDoom: 'Verderben aus dem Vorrat',
+    poolClue: 'Hinweis aus dem Vorrat',
     encounterDeck: 'Begegnungsdeck',
     encounterDiscard: 'Begegnungsablagestapel',
     setAside_one: 'Beiseitegelegt, {{count}} Karte',
@@ -625,6 +628,14 @@ export const appTexts = {
     },
   },
   campaignLog: {
+    over: 'Kampagne beendet',
+    result: {
+      won: 'Gewonnen',
+      lost: 'Verloren',
+      survived: 'Überlebt',
+    },
+    readEnding: 'Lies Auflösung {{n}} von {{scenario}} im Kampagnenleitfaden.',
+    readNoResolution: 'Lies den Text „Keine Auflösung“ von {{scenario}} im Kampagnenleitfaden.',
     title: 'Kampagnenlogbuch:',
     loading: 'Die Kampagne wird geöffnet …',
     missing: 'Diese Kampagne ist nicht auf diesem Gerät.',
@@ -856,6 +867,7 @@ export const appTexts = {
       'Das Spiel und sein Verlauf werden von diesem Gerät entfernt. Das kann nicht rückgängig gemacht werden.',
   },
   campaignList: {
+    readLog: 'Protokoll lesen',
     title: 'Kampagnen',
     scenarioOf: 'Szenario {{n}} von {{total}}',
     result: {

@@ -101,6 +101,45 @@
   color: var(--color-script-ink);
 }
 
+/* How the campaign ended (CampaignOver): a printed label, then the verdict in pen between rules. */
+/* Two ids, so it beats the home screen's `#app > main section` row. */
+/*
+ * An ended campaign's result, stamped across the card in red ink: what the stamp says, the result
+ * in large capitals, and the day. Multiplied into the paper, so the card's grain shows through.
+ */
+#app #campaign-result {
+  display: block;
+  width: fit-content;
+  margin: var(--space-3) auto;
+  padding: var(--space-1) var(--space-4);
+  border: var(--stamp-frame-width) double var(--color-stamp);
+  border-radius: var(--space-1);
+  color: var(--color-stamp);
+  font-family: var(--font-family-print);
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: var(--stamp-tracking);
+  rotate: var(--stamp-tilt);
+  mix-blend-mode: multiply;
+}
+
+#campaign-result > h2,
+#campaign-result > p {
+  margin: 0;
+  font-size: var(--font-size-body);
+  font-weight: normal;
+}
+
+#campaign-result > h2 + p {
+  font-size: var(--font-size-script-title);
+  line-height: 1;
+}
+
+#campaign-ending {
+  margin: 0 0 var(--space-2);
+  text-align: center;
+}
+
 /* The investigators' frame: a heavy rule with a fine one inside it, and a column each. */
 #campaign-investigators > h2 {
   margin: var(--space-2) 0 0;
@@ -443,11 +482,6 @@
   align-items: center;
   justify-content: center;
   gap: var(--space-2) var(--space-3);
-}
-
-/* That toast and how the campaign ended (the log's footer) are notes on the table. */
-:is(#campaign-log > #resolution-written, #campaign-log > footer > p) {
-  margin: 0;
   padding: var(--space-2) var(--space-3);
   border: var(--border-width) solid var(--color-border);
   border-radius: var(--radius);

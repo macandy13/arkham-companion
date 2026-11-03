@@ -375,14 +375,17 @@ describe('IndexedDbStore campaigns', () => {
     expect(loaded?.summary.result).toBeUndefined();
   });
 
-  it('summarises a campaign that ended with its result', async () => {
+  it('summarises a campaign that ended with its result and when it ended', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
     const id = await store.createCampaign();
-    await store.appendCampaignEvents(id, [
-      campaignStarted(id),
-      { type: 'CampaignEnded', result: 'won' },
-    ]);
+    vi.setSystemTime(1000);
+    await store.appendCampaignEvents(id, [campaignStarted(id)]);
+    vi.setSystemTime(2000);
+    await store.appendCampaignEvents(id, [{ type: 'CampaignEnded', result: 'won' }]);
 
-    expect((await store.loadCampaign(id))?.summary.result).toBe('won');
+    const summary = (await store.loadCampaign(id))?.summary;
+    expect(summary?.result).toBe('won');
+    expect(summary?.endedAt).toBe(2000);
   });
 
   afterEach(() => {

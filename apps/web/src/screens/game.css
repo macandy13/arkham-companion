@@ -76,6 +76,7 @@
 
 /* The header is the playmat's top row, shaded so its cards read over the table, centred like it. */
 #board > header {
+  position: relative;
   grid-area: header;
   background: var(--header-shade);
   display: flex;
@@ -458,6 +459,29 @@
 
 #board > header [data-token='doom'] {
   background: var(--color-doom);
+}
+
+/*
+ * The token pool: a doom and a clue token side by side, like the supply beside the playmat. On a
+ * screen as wide as a landscape tablet it sits in the header's top left corner, apart from the
+ * cards in its row; a narrower header wraps, so it leads the row instead of covering a card.
+ */
+@media (min-width: 64rem) {
+  #board > header > section[data-pool] {
+    position: absolute;
+    inset-inline-start: var(--space-2);
+    inset-block-start: var(--space-2);
+  }
+}
+
+#board > header [data-pool-token] {
+  display: block;
+}
+
+/* A token that can be dragged off the pool: the page must not scroll when a touch drags it. */
+#board > header [data-drag] {
+  cursor: grab;
+  touch-action: none;
 }
 
 #board > header [data-token='clue'] {
@@ -864,12 +888,13 @@
 
 /*
  * A phone held upright, in the compact view: the four header cards without their piles or plates.
- * A tap on a card opens the detail view on it, where they come back. The status row keeps to one
- * line.
+ * A tap on a card opens the detail view on it, where they come back. The token pool has no room in
+ * either view. The status row keeps to one line.
  */
 @media (orientation: portrait) and (max-width: 40rem) {
   #board:not([data-view]) > header [data-pile],
   #board:not([data-view]) > header > section:has([data-pile='victoryDisplay']),
+  #board > header > section[data-pool],
   #board:not([data-view]) > header > section > [data-card] > footer {
     display: none;
   }
@@ -989,7 +1014,8 @@
     scrollbar-width: none;
   }
 
-  #board[data-view='detail'] > header > section {
+  /* Each place fills the row; the token pool, which a phone has no room for, stays hidden. */
+  #board[data-view='detail'] > header > section:not([data-pool]) {
     display: flex;
     flex-wrap: wrap;
     flex: none;
@@ -1363,26 +1389,37 @@
   }
 }
 
+/* A loose token, coloured like the token on the table: one of the token pool's, and a dragged one. */
+#board > header [data-pool-token],
+body > [data-token-ghost] {
+  box-sizing: border-box;
+  width: var(--loose-token-size);
+  height: var(--loose-token-size);
+  border: var(--header-token-border-width) solid var(--header-token-rim);
+  border-radius: var(--radius-round);
+  box-shadow: var(--header-token-shadow);
+}
+
+#board > header [data-pool-token='clue'],
+body > [data-token-ghost='clue'] {
+  background: var(--color-clue);
+}
+
+#board > header [data-pool-token='doom'],
+body > [data-token-ghost='doom'] {
+  background: var(--color-doom);
+}
+
 /*
- * A dragged token (`TokenGhost`), over the whole page at the pointer and lifted above the dialogs,
- * coloured like the token on the table. The pointer passes through it to what lies beneath.
+ * A dragged token (`TokenGhost`), over the whole page at the pointer and lifted above the dialogs.
+ * The pointer passes through it to what lies beneath.
  */
 body > [data-token-ghost] {
   position: fixed;
   inset-inline-start: var(--ghost-x);
   inset-block-start: var(--ghost-y);
   z-index: var(--layer-token-ghost);
-  box-sizing: border-box;
-  width: var(--token-ghost-size);
-  height: var(--token-ghost-size);
   translate: -50% -50%;
-  border: var(--header-token-border-width) solid var(--header-token-rim);
-  border-radius: var(--radius-round);
-  box-shadow: var(--header-token-shadow);
   opacity: var(--map-ghost-opacity);
   pointer-events: none;
-}
-
-body > [data-token-ghost='clue'] {
-  background: var(--color-clue);
 }

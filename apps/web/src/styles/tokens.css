@@ -565,8 +565,8 @@
   --encounter-strip-card-width: 7.5rem;
   /* A dragged map piece's copy, see-through so the tile under it stays readable. */
   --map-ghost-opacity: 0.6;
-  /* A dragged token (`TokenGhost`): finger-sized, so it shows beside the finger that carries it. */
-  --token-ghost-size: 2.5rem;
+  /* A loose token (the token pool's, a dragged one, `TokenGhost`): finger-sized, so a finger picks it up and it shows beside the finger that carries it. */
+  --loose-token-size: 2.5rem;
   /* An enemy on the map engaged with an investigator, shown in full in their threat area. */
   --engaged-enemy-opacity: 0.5;
   /* A token with nothing on it (a location's clues once found) fades, so it reads as empty. */
@@ -707,6 +707,10 @@
   --log-label-tracking: 0.06em;
   --sheet-frame-width: 3px;
   --sheet-tilt: -1.2deg;
+  /* A rubber stamp on the log (an ended campaign's result): pressed on askew, in a double frame. */
+  --stamp-tilt: -6deg;
+  --stamp-frame-width: 5px;
+  --stamp-tracking: 0.12em;
   --tally-height: 1.6rem;
   /* A torn sheet's ragged outline: a few points per side, a percent or so off the straight edge. */
   --paper-edge: polygon(

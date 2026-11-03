@@ -111,6 +111,9 @@ export const appTexts = {
     reference: 'Chaos tokens',
     referenceSide: { easyStandard: 'Easy / Standard', hardExpert: 'Hard / Expert' },
     victory: 'Victory',
+    pool: 'Token pool',
+    poolDoom: 'Doom from the pool',
+    poolClue: 'Clue from the pool',
     encounterDeck: 'Encounter deck',
     encounterDiscard: 'Encounter discard pile',
     setAside_one: 'Set aside, {{count}} card',
@@ -622,6 +625,14 @@ export const appTexts = {
     },
   },
   campaignLog: {
+    over: 'Campaign over',
+    result: {
+      won: 'Won',
+      lost: 'Lost',
+      survived: 'Survived',
+    },
+    readEnding: 'Read Resolution {{n}} of {{scenario}} in the campaign guide.',
+    readNoResolution: 'Read the "No resolution" text of {{scenario}} in the campaign guide.',
     title: 'Campaign Log:',
     loading: 'Opening the campaign…',
     missing: 'This campaign is not on this device.',
@@ -851,6 +862,7 @@ export const appTexts = {
     deleteWarning: 'The game and its history are removed from this device. This cannot be undone.',
   },
   campaignList: {
+    readLog: 'Read the log',
     title: 'Campaigns',
     scenarioOf: 'Scenario {{n}} of {{total}}',
     result: {
