@@ -1,4 +1,5 @@
 import { expect, test } from './fixtures/test';
+import { dragTo } from './fixtures/drag';
 import { resumeImportedGame, twoGhoulPriestsExport } from './fixtures/saved_games';
 
 // Journey: advance the act once the investigators hold its clues, spending them – in a game whose
@@ -27,5 +28,24 @@ test('advance the act from its full card', async ({ page }) => {
     );
     await notice.getByRole('button', { name: 'OK' }).click();
     await expect(notice).toBeHidden();
+  });
+});
+
+// Journey: advance the act by dragging one of Roland Banks' clues onto it, as its button would.
+test('advance the act by dragging a clue onto it', { tag: '@flow' }, async ({ page }) => {
+  const act = page.getByRole('region', { name: 'Act' });
+
+  await test.step('Import a game at act 2, with Roland Banks holding its 3 clues', async () => {
+    await resumeImportedGame(page, 'Two Ghoul Priests', twoGhoulPriestsExport('Two Ghoul Priests'));
+    await expect(act.getByRole('img', { name: 'Clues 3 / 3' })).toBeVisible();
+  });
+
+  await test.step("Drag a clue off Roland Banks' card onto The Barrier", async () => {
+    await dragTo(
+      page,
+      page.getByRole('region', { name: 'Roland Banks' }).locator('[data-drag="clues"]'),
+      act,
+    );
+    await expect(act.getByText('What Have You Done?')).toBeVisible();
   });
 });

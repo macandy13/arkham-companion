@@ -1,4 +1,3 @@
-import type { Locator, Page } from '@playwright/test';
 import { expect, test } from './fixtures/test';
 import {
   ghoulPriestInCellarExport,
@@ -6,6 +5,7 @@ import {
   resumeImportedGame,
 } from './fixtures/saved_games';
 import { startQuickGame } from './fixtures/wizard';
+import { dragTo } from './fixtures/drag';
 
 // Journey: read the map – the one location a new game starts with, then a game further on whose
 // map has several locations and the connections between them, zoomed in, panned and fitted again.
@@ -133,7 +133,7 @@ test('move an enemy on the map', async ({ page }) => {
 // card effects, as Roland Banks is elsewhere; dragged to the Hallway it engages Roland Banks, and a tap on it
 // there fights it as an action, whose test follows in the same dialog; once it is answered the
 // details come back.
-test('fight an enemy from the map', { tag: '@flow' }, async ({ page }) => {
+test('fight an enemy from the map', async ({ page }) => {
   const house = page.getByRole('figure', { name: 'House' });
   const room = (name: string) => house.getByRole('group', { name });
   const priest = (name: string) => room(name).getByRole('img', { name: /^Ghoul Priest/ });
@@ -182,7 +182,7 @@ test('fight an enemy from the map', { tag: '@flow' }, async ({ page }) => {
 // action, which reveals it, and takes a clue there as a card grants it; the next clue they take
 // is dragged off the Attic's clue count onto their card, and one goes back from the card onto
 // the Attic, as a card tells them to place one there.
-test('move and take a clue from the location details', { tag: '@flow' }, async ({ page }) => {
+test('move and take a clue from the location details', async ({ page }) => {
   const house = page.getByRole('figure', { name: 'House' });
   const room = (name: string) => house.getByRole('group', { name });
   const details = (name: string) => page.getByRole('dialog', { name });
@@ -270,14 +270,3 @@ test('correct a location from its details', async ({ page }) => {
     await expect(room('Hallway').getByRole('img', { name: 'Clues 1' })).toBeVisible();
   });
 });
-
-/** Drags `piece` with the mouse to the middle of `target`, in steps, as a player's finger would. */
-async function dragTo(page: Page, piece: Locator, target: Locator): Promise<void> {
-  const from = await piece.boundingBox();
-  const to = await target.boundingBox();
-  if (!from || !to) throw new Error('the piece or its target is not on screen');
-  await page.mouse.move(from.x + from.width / 2, from.y + from.height / 2);
-  await page.mouse.down();
-  await page.mouse.move(to.x + to.width / 2, to.y + to.height / 2, { steps: 10 });
-  await page.mouse.up();
-}
