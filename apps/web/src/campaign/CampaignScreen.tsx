@@ -35,7 +35,8 @@ import './campaign_log.css';
  * Route `/campaign/:id`: the campaign log, drawn after the campaign log sheet of the Core Set
  * (docs/product.md "Campaign screen"): an index card with a column per investigator, a napkin
  * with the scenarios, each played one ticked with its resolution, then the campaign notes and the
- * campaign's own sheets (`CampaignSheets`). Below them, a link continues the scenario in play or
+ * campaign's own sheets (`CampaignSheets`); once the campaign is over, the card says how it ended
+ * (`CampaignOver`). Below them, a link continues the scenario in play or
  * sets the next one up (`NextScenarioDialog`), and
  * after a resolution was written a toast offers to take it back (`ResolutionUndo`).
  */
@@ -68,6 +69,7 @@ export function CampaignScreen({
           <p>{t('campaignLog.title')}</p>
           <h1 id="campaign-name">{entry ? t(entry.nameKey) : opened.title}</h1>
         </header>
+        {log.result && <CampaignOver log={log} />}
         <h2 id="campaign-investigators-title">{t('campaignLog.investigators')}</h2>
         <ol>
           {log.investigators.map((member) => (
@@ -88,6 +90,34 @@ export function CampaignScreen({
         />
       )}
     </article>
+  );
+}
+
+/**
+ * How the campaign ended (MC1.6f), written under the card's head: the investigators won, lost or
+ * survived, and which ending to read aloud when the last scenario's resolution ended it; a
+ * campaign lost earlier, with no investigator left to replace a fallen one, has none to read.
+ */
+function CampaignOver({ log }: { readonly log: CampaignLog }) {
+  const { t } = useTranslation();
+  const last = log.playedScenarios.at(-1);
+  const finished = log.playedScenarios.length === log.scenarioIds.length;
+  const scenario = last && findScenario(last.scenarioId);
+  return (
+    <section id="campaign-result" aria-labelledby="campaign-result-title">
+      <h2 id="campaign-result-title">{t('campaignLog.over')}</h2>
+      <p>{t(`campaignLog.result.${log.result}`)}</p>
+      {finished && last && scenario && (
+        <p>
+          {last.outcome.kind === 'resolution'
+            ? t('campaignLog.readEnding', {
+                n: resolutionNumber(last.outcome.id),
+                scenario: t(scenario.nameKey),
+              })
+            : t('campaignLog.readNoResolution', { scenario: t(scenario.nameKey) })}
+        </p>
+      )}
+    </section>
   );
 }
 
@@ -204,13 +234,7 @@ function NextStep({
   const scenarioId = log.scenarioIds[log.position];
   const game = games.find((g) => g.scenarioId === scenarioId);
   const scenario = scenarioId && findScenario(scenarioId);
-  if (log.result)
-    return (
-      <footer>
-        <p>{t(`resolution.campaignEnds.${log.result}`)}</p>
-      </footer>
-    );
-  if (!scenario) return null;
+  if (!scenario || log.result) return null;
   const name = t(scenario.nameKey);
   if (game) {
     return (

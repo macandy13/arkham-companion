@@ -624,6 +624,14 @@ export const appTexts = {
     },
   },
   campaignLog: {
+    over: 'Die Kampagne ist vorbei',
+    result: {
+      won: 'Die Ermittler haben gewonnen.',
+      lost: 'Die Ermittler haben verloren.',
+      survived: 'Die Ermittler haben überlebt.',
+    },
+    readEnding: 'Lies Auflösung {{n}} von {{scenario}} im Kampagnenleitfaden.',
+    readNoResolution: 'Lies den Text „Keine Auflösung“ von {{scenario}} im Kampagnenleitfaden.',
     title: 'Kampagnenlogbuch:',
     loading: 'Die Kampagne wird geöffnet …',
     missing: 'Diese Kampagne ist nicht auf diesem Gerät.',
@@ -855,6 +863,7 @@ export const appTexts = {
       'Das Spiel und sein Verlauf werden von diesem Gerät entfernt. Das kann nicht rückgängig gemacht werden.',
   },
   campaignList: {
+    readLog: 'Protokoll lesen',
     title: 'Kampagnen',
     scenarioOf: 'Szenario {{n}} von {{total}}',
     result: {

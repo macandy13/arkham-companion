@@ -621,6 +621,14 @@ export const appTexts = {
     },
   },
   campaignLog: {
+    over: 'The campaign is over',
+    result: {
+      won: 'The investigators won.',
+      lost: 'The investigators lost.',
+      survived: 'The investigators survived.',
+    },
+    readEnding: 'Read Resolution {{n}} of {{scenario}} in the campaign guide.',
+    readNoResolution: 'Read the "No resolution" text of {{scenario}} in the campaign guide.',
     title: 'Campaign Log:',
     loading: 'Opening the campaign…',
     missing: 'This campaign is not on this device.',
@@ -850,6 +858,7 @@ export const appTexts = {
     deleteWarning: 'The game and its history are removed from this device. This cannot be undone.',
   },
   campaignList: {
+    readLog: 'Read the log',
     title: 'Campaigns',
     scenarioOf: 'Scenario {{n}} of {{total}}',
     result: {

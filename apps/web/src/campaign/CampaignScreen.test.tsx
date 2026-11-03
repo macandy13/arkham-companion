@@ -472,8 +472,34 @@ describe('CampaignScreen', () => {
       );
       fireEvent.click(within(dialog).getByRole('button', { name: 'End the campaign' }));
 
-      expect(await screen.findByText('The campaign ends: the investigators lost.')).toBeTruthy();
+      const over = await screen.findByRole('region', { name: 'The campaign is over' });
+      expect(within(over).getByText('The investigators lost.')).toBeTruthy();
     });
+  });
+
+  it('says the investigators won after The Devourer Below, and which ending to read', async () => {
+    const { gameStore, campaignId } = await storeCampaign(() => [
+      ...[gathering, midnightMasks, scenarioId('the-devourer-below')].flatMap(
+        (scenario, position): CampaignEvent[] => [
+          {
+            type: 'ScenarioPlayed',
+            scenarioId: scenario,
+            outcome: { kind: 'resolution', id: resolutionId('R1') },
+          },
+          { type: 'ScenarioPositionChanged', position: position + 1 },
+        ],
+      ),
+      { type: 'CampaignEnded', result: 'won' },
+    ]);
+
+    renderLog(gameStore, `/campaign/${campaignId}`);
+
+    const over = await screen.findByRole('region', { name: 'The campaign is over' });
+    expect(within(over).getByText('The investigators won.')).toBeTruthy();
+    expect(
+      within(over).getByText('Read Resolution 1 of The Devourer Below in the campaign guide.'),
+    ).toBeTruthy();
+    expect(screen.queryByRole('button', { name: /Set up/ })).toBeNull();
   });
 
   it('says so when the campaign is not on this device', async () => {

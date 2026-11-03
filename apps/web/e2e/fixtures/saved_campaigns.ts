@@ -28,6 +28,45 @@ export const rolandBanks: LoggedInvestigator = {
   sanity: 5,
 };
 
+/** `CampaignStarted` for a Night of the Zealot campaign on Easy with `team`, unhurt. */
+function zealotStarted(campaignId: string, team: readonly LoggedInvestigator[]): unknown {
+  return {
+    type: 'CampaignStarted',
+    campaignId,
+    definitionId: 'night-of-the-zealot',
+    difficulty: 'easy',
+    investigators: team.map((investigator) => ({
+      ...investigator,
+      physicalTrauma: 0,
+      mentalTrauma: 0,
+      xpEarned: 0,
+      xpSpent: 0,
+      fate: 'alive',
+      earnedCards: [],
+    })),
+    chaosBag: ['0'],
+    scenarioIds: ['the-gathering', 'the-midnight-masks', 'the-devourer-below'],
+  };
+}
+
+/**
+ * The events of a Night of the Zealot campaign on Easy with `team` that played each scenario to
+ * its resolution 1 and so won, Umôrdhoth banished.
+ */
+export function zealotWonEvents(
+  campaignId: string,
+  team: readonly LoggedInvestigator[],
+): unknown[] {
+  return [
+    zealotStarted(campaignId, team),
+    ...['the-gathering', 'the-midnight-masks', 'the-devourer-below'].flatMap((scenarioId, i) => [
+      { type: 'ScenarioPlayed', scenarioId, outcome: { kind: 'resolution', id: 'R1' } },
+      { type: 'ScenarioPositionChanged', position: i + 1 },
+    ]),
+    { type: 'CampaignEnded', result: 'won' },
+  ];
+}
+
 /**
  * The events of a Night of the Zealot campaign on Easy with `team`, after The Gathering's
  * resolution 3 killed `killed` and left the house standing: the log then waits for The Midnight
@@ -39,23 +78,7 @@ export function gatheringKilledEvents(
   killed: LoggedInvestigator,
 ): unknown[] {
   return [
-    {
-      type: 'CampaignStarted',
-      campaignId,
-      definitionId: 'night-of-the-zealot',
-      difficulty: 'easy',
-      investigators: team.map((investigator) => ({
-        ...investigator,
-        physicalTrauma: 0,
-        mentalTrauma: 0,
-        xpEarned: 0,
-        xpSpent: 0,
-        fate: 'alive',
-        earnedCards: [],
-      })),
-      chaosBag: ['0'],
-      scenarioIds: ['the-gathering', 'the-midnight-masks', 'the-devourer-below'],
-    },
+    zealotStarted(campaignId, team),
     { type: 'StoryRecorded', key: 'houseStillStanding', value: { kind: 'flag', value: true } },
     { type: 'InvestigatorFateChanged', code: killed.code, fate: 'killed' },
     {

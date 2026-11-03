@@ -101,6 +101,33 @@
   color: var(--color-script-ink);
 }
 
+/* How the campaign ended (CampaignOver): a printed label, then the verdict in pen between rules. */
+/* Two ids, so it beats the home screen's `#app > main section` row. */
+#app #campaign-result {
+  display: block;
+  margin: var(--space-2) 0 0;
+  padding: var(--space-2);
+  border-block: var(--sheet-rule-width) solid var(--color-print);
+  text-align: center;
+}
+
+#campaign-result > h2 {
+  margin: 0;
+  font-family: var(--font-family-print);
+  font-size: var(--font-size-print-title);
+  font-weight: normal;
+}
+
+#campaign-result > p {
+  margin: 0;
+}
+
+#campaign-result > h2 + p {
+  font-family: var(--font-family-hand);
+  font-size: var(--font-size-hand-large);
+  color: var(--color-pen);
+}
+
 /* The investigators' frame: a heavy rule with a fine one inside it, and a column each. */
 #campaign-investigators > h2 {
   margin: var(--space-2) 0 0;
@@ -443,11 +470,6 @@
   align-items: center;
   justify-content: center;
   gap: var(--space-2) var(--space-3);
-}
-
-/* That toast and how the campaign ended (the log's footer) are notes on the table. */
-:is(#campaign-log > #resolution-written, #campaign-log > footer > p) {
-  margin: 0;
   padding: var(--space-2) var(--space-3);
   border: var(--border-width) solid var(--color-border);
   border-radius: var(--radius);
