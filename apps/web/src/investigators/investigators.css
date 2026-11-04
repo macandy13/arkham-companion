@@ -571,6 +571,33 @@
     justify-self: end;
   }
 
+  /* The dots over a panel: one per investigator, its own filled, like the detail view's. */
+  #board:not([data-view='investigators']) > #investigators > section > ol[data-dots] {
+    display: flex;
+    justify-content: center;
+    gap: var(--space-2);
+    margin: 0;
+    padding: 0 0 var(--space-1);
+    list-style: none;
+  }
+
+  #board:not([data-view='investigators']) > #investigators > section > ol[data-dots] > li {
+    width: var(--detail-dot-size);
+    height: var(--detail-dot-size);
+    padding: 0;
+    border: var(--border-width) solid var(--color-accent);
+    border-radius: var(--radius-round);
+    background: none;
+  }
+
+  #board:not([data-view='investigators'])
+    > #investigators
+    > section
+    > ol[data-dots]
+    > li[data-current] {
+    background: var(--color-accent);
+  }
+
   /* Thumbs tap them on a phone, so the turn's buttons take a whole touch target. */
   #board:not([data-view='investigators']) > #investigators > section > button,
   #board:not([data-view='investigators']) > #investigators > section > [role='group'] > button {

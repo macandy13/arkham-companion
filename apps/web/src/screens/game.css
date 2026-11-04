@@ -970,6 +970,11 @@
     min-height: var(--touch-target);
   }
 
+  /* The zoom buttons stand in a column down the map's corner, where a row would cover its top. */
+  #board > #map figure [role='toolbar'] {
+    flex-direction: column;
+  }
+
   #board > #map figure [role='toolbar'] > button {
     min-width: var(--touch-target);
     min-height: var(--touch-target);

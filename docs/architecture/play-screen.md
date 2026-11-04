@@ -39,7 +39,7 @@ The same query opens a block in [`tokens.css`](../../apps/web/src/styles/tokens.
   - and the piles, the victory display and the card plates are hidden.
   - A tap on a card expands the header in place on it (below);
 - the status row names only the current phase and keeps only Next, undo and the ☰ menu, at a whole touch target (`--touch-target`), so it stays on one line; adjust and the game log move into the menu, whose copies of them show only on a phone (the map's buttons take the touch target too);
-- the investigator bar lays the panels in a row a screen wide each, snapped sideways, so a swipe brings the next investigator in. The one in view is the focused one (`data-focus`, `useFocus` and `useSwipedTo` in [`InvestigatorBar.tsx`](../../apps/web/src/investigators/InvestigatorBar.tsx): the one swiped to until the turn changes, else the turn's, else the lead), and a change of turn scrolls the row to its investigator.
+- the investigator bar lays the panels in a row a screen wide each, snapped sideways, so a swipe brings the next investigator in. The one in view is the focused one (`data-focus`, `useFocus` and `useSwipedTo` in [`InvestigatorBar.tsx`](../../apps/web/src/investigators/InvestigatorBar.tsx): the one swiped to until the turn changes, else the turn's, else the lead), and a change of turn scrolls the row to its investigator. Dots over each panel (its `seat`) show where it sits in the row, as the detail view's do; the map's zoom buttons stand in a column.
 
 ### Detail view
 

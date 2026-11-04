@@ -10,6 +10,7 @@ import {
   type SkillName,
 } from '@arkham/engine';
 import { Brain, Heart } from '../catalog/cardFace';
+import { range } from '@arkham/util';
 import { useCardPicture } from '../catalog/cardImages';
 import type { GameActions, SteppedStat } from '../state/gameActions';
 import { classOf, type PrintedInvestigator } from '@arkham/carddata';
@@ -36,7 +37,8 @@ import './investigators.css';
  *
  * A phone has room for one panel only, so in its compact view (`onOpen`) the stylesheet lays the
  * panels in a row a screen wide each, and the players swipe sideways between them; the one in
- * view is the focused one (`data-focus`, `useSwipedTo`). Focus follows the turn, see `useFocus`,
+ * view is the focused one (`data-focus`, `useSwipedTo`), and dots on each panel show its seat in
+ * the row. Focus follows the turn, see `useFocus`,
  * and the row scrolls to it. There the focused investigator's name is a button that opens the
  * detail view on their panel, and the card is the slim strip (`InvestigatorFace`) to leave the map
  * room.
@@ -66,9 +68,14 @@ export function InvestigatorBar({
   const [focus, setFocus] = useFocus(board);
   return (
     <>
-      {board.investigators.map((investigator) => (
+      {board.investigators.map((investigator, seat) => (
         <InvestigatorPanel
           key={investigator.id}
+          seat={
+            onOpen && board.investigators.length > 1
+              ? { at: seat, of: board.investigators.length }
+              : undefined
+          }
           board={board}
           investigator={investigator}
           printed={printed?.(investigator.code)}
@@ -172,6 +179,7 @@ function InvestigatorPanel({
   board,
   investigator,
   printed,
+  seat,
   focused,
   onShown,
   onOpen,
@@ -190,6 +198,11 @@ function InvestigatorPanel({
   investigator: InvestigatorView;
   /** What their card prints besides its stats: the subname and class, once the catalog has them. */
   printed: PrintedInvestigator | undefined;
+  /**
+   * Where the panel sits on the phone's row of panels, which its dots show, so the players see
+   * there is more to swipe to; nothing elsewhere, or in a solo game.
+   */
+  seat: { at: number; of: number } | undefined;
   /** The phone shows this panel in full (`useFocus`). */
   focused: boolean;
   /** The players swiped this panel into view, on the phone's row of panels (`useSwipedTo`). */
@@ -243,6 +256,13 @@ function InvestigatorPanel({
       data-focus={focused || undefined}
       data-investigator={investigator.id}
     >
+      {seat && (
+        <ol aria-hidden="true" data-dots="investigators">
+          {range(seat.of).map((other) => (
+            <li key={other} data-current={other === seat.at || undefined} />
+          ))}
+        </ol>
+      )}
       <ThreatArea
         board={board}
         investigator={investigator}

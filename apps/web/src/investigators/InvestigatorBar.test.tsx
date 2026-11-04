@@ -639,6 +639,16 @@ describe('InvestigatorBar', () => {
       expect(focused()).toEqual(['alder']);
     });
 
+    it("dots each panel with its seat in the row, brook's second of two filled on brook's panel", () => {
+      render(phoneBar(alderAndBrook()));
+
+      const dots = panel('brook').querySelector('ol[data-dots]')?.querySelectorAll('li');
+      expect([...(dots ?? [])].map((dot) => dot.hasAttribute('data-current'))).toEqual([
+        false,
+        true,
+      ]);
+    });
+
     it('keeps the focus on a wider screen, whose panels all show', () => {
       const table = alderAndBrook();
       render(
