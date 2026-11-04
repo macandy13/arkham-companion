@@ -96,20 +96,41 @@ test('the house map by day', async ({ page }) => {
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
 });
 
-test('the house map in the card pictures style, the clues left on each card', async ({ page }) => {
-  await page.goto('/#/settings');
-  await page.getByLabel('Card style').selectOption('Card pictures');
-  await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
+test(
+  'the house map in the card pictures style, the clues left on each card',
+  { tag: '@shot' },
+  async ({ page }) => {
+    await page.goto('/#/settings');
+    await page.getByLabel('Card style').selectOption('Card pictures');
+    await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
 
-  const hallway = page
-    .getByRole('figure', { name: 'House' })
-    .getByRole('group', { name: 'Hallway' });
-  await expect(hallway.getByRole('img', { name: 'Clues 0' })).toBeVisible();
-  await expect(page.locator('html')).toHaveAttribute('data-card-theme', 'pictures');
-  await expect(page.locator('[data-card="scenario"]')).toHaveAttribute('data-picture', 'shown');
-});
+    const hallway = page
+      .getByRole('figure', { name: 'House' })
+      .getByRole('group', { name: 'Hallway' });
+    await expect(hallway.getByRole('img', { name: 'Clues 0' })).toBeVisible();
+    await expect(page.locator('html')).toHaveAttribute('data-card-theme', 'pictures');
+    await expect(page.locator('[data-card="scenario"]')).toHaveAttribute('data-picture', 'shown');
+  },
+);
 
-test('the house map in the Eldritch card style', async ({ page }) => {
+test(
+  'Roland Banks’ whole card in the card pictures style, his counters live on the printed card',
+  { tag: '@shot' },
+  async ({ page }) => {
+    await page.goto('/#/settings');
+    await page.getByLabel('Card style').selectOption('Card pictures');
+    await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
+    const roland = page.getByRole('region', { name: 'Roland Banks' });
+    await expect(roland.getByRole('article')).toHaveAttribute('data-picture', 'shown');
+
+    await roland.getByRole('button', { name: "Show Roland Banks's card" }).click();
+
+    const card = page.getByRole('dialog', { name: 'Roland Banks' }).getByRole('article');
+    await expect(card).toHaveAttribute('data-picture', 'shown');
+  },
+);
+
+test('the house map in the Eldritch card style', { tag: '@shot' }, async ({ page }) => {
   await page.goto('/#/settings');
   await page.getByLabel('Card style').selectOption('Eldritch');
   await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
@@ -184,7 +205,7 @@ test("the Ghoul Priest's details in the card pictures style, its damage on the p
   await expect(card).toHaveAttribute('data-picture', 'shown');
 });
 
-test('the house map in the Night and brass card style', async ({ page }) => {
+test('the house map in the Night and brass card style', { tag: '@shot' }, async ({ page }) => {
   await page.goto('/#/settings');
   await page.getByLabel('Card style').selectOption('Night and brass');
   await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
