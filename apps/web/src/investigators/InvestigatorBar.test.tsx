@@ -1311,7 +1311,86 @@ describe('InvestigatorBar', () => {
         />,
       );
 
-      expect(panel('alder').querySelector('[data-drag]')).toBeNull();
+      expect(panel('alder').querySelector('[data-stat="clues"] [data-drag]')).toBeNull();
+    });
+  });
+
+  describe('dragging damage, horror or a resource back to the token pool', () => {
+    beforeEach(() => {
+      HTMLElement.prototype.setPointerCapture = () => {};
+    });
+    afterEach(() => {
+      Reflect.deleteProperty(document, 'elementFromPoint');
+      Reflect.deleteProperty(HTMLElement.prototype, 'setPointerCapture');
+    });
+
+    /** Alder with 2 damage of 7 health, 2 horror of 6 sanity and 3 resources. */
+    const hurtAlder = () =>
+      PlayTable.start(
+        newGame()
+          .withLocation(study, blankLocation('study'), { revealed: true })
+          .withInvestigator(alder, {
+            locationId: study,
+            health: { max: 7, damage: 2 },
+            sanity: { max: 6, horror: 2 },
+            resources: 3,
+          }),
+      );
+
+    /** Drags alder's `stat` off the card from (10, 10) and lets go at (300, 40) over `under`. */
+    async function dragOffAlder(stat: 'health' | 'sanity' | 'resources', under: Element | null) {
+      document.elementFromPoint = () => under;
+      const counter = panel('alder').querySelector(`[data-stat="${stat}"] [data-drag]`);
+      if (!counter) throw new Error(`alder's ${stat} is not draggable`);
+      fireEvent.pointerDown(counter, { pointerId: 1, clientX: 10, clientY: 10 });
+      fireEvent.pointerMove(counter, { pointerId: 1, clientX: 300, clientY: 40 });
+      fireEvent.pointerUp(counter, { pointerId: 1, clientX: 300, clientY: 40 });
+      await act(async () => {});
+    }
+
+    // The damage lies on the heart (health), the horror on the brain (sanity).
+    it.each([
+      { stat: 'health', after: { damage: 1, horror: 2, resources: 3 } },
+      { stat: 'sanity', after: { damage: 2, horror: 1, resources: 3 } },
+      { stat: 'resources', after: { damage: 2, horror: 2, resources: 2 } },
+    ] as const)(
+      "takes one off alder's $stat dropped on the pool: $after",
+      async ({ stat, after }) => {
+        const table = hurtAlder();
+        render(
+          <>
+            <InvestigatorBar
+              board={table.board}
+              actions={actionsOn(table)}
+              busy={false}
+              adjusting={false}
+            />
+            <section data-pool>
+              <h2>Token pool</h2>
+            </section>
+          </>,
+        );
+
+        await dragOffAlder(stat, screen.getByRole('heading', { name: 'Token pool' }));
+
+        expect(table.board.investigator(alder)).toMatchObject(after);
+      },
+    );
+
+    it('keeps the damage when it is dropped anywhere but the pool', async () => {
+      const table = hurtAlder();
+      render(
+        <InvestigatorBar
+          board={table.board}
+          actions={actionsOn(table)}
+          busy={false}
+          adjusting={false}
+        />,
+      );
+
+      await dragOffAlder('health', null);
+
+      expect(table.board.investigator(alder).damage).toBe(2);
     });
   });
 

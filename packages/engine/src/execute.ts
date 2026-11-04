@@ -1,7 +1,8 @@
 import type { EngineContext } from './cards';
 import type { Command } from './commands';
+import type { ChangeCause } from './change_cause';
 import type { Event } from './events';
-import { handle } from './handle';
+import { handleWithCauses } from './handle';
 import { replay } from './reducer';
 import type { GameState } from './state';
 
@@ -9,6 +10,8 @@ import type { GameState } from './state';
 export interface ExecuteResult {
   state: GameState;
   events: Event[];
+  /** Why each of `events` happened, at the same index (`handleWithCauses`). */
+  causes: ChangeCause[];
 }
 
 /**
@@ -17,6 +20,6 @@ export interface ExecuteResult {
  * it persists `events` and keeps `state`. Throws `CommandRejected` like `handle`.
  */
 export function execute(ctx: EngineContext, state: GameState, command: Command): ExecuteResult {
-  const events = handle(ctx, state, command);
-  return { state: replay(events, state), events };
+  const { events, causes } = handleWithCauses(ctx, state, command);
+  return { state: replay(events, state), events, causes };
 }

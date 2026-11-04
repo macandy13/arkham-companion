@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { deltaText, useCountChange } from './countChange';
+import { DoomMark } from './DoomMark';
 
 /**
  * A big round token on a header card (agenda, act or encounter deck), like the doom and clue tokens
@@ -23,6 +24,7 @@ export function Token({
   const change = useCountChange(count);
   return (
     <span role="img" aria-label={label} data-token={kind}>
+      {kind === 'doom' && <DoomMark />}
       <data key={change?.key} value={count} data-delta={deltaText(change)}>
         {count}
       </data>

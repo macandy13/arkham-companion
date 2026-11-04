@@ -1,0 +1,44 @@
+import type { Point } from '../map/mapLayout';
+
+/**
+ * The doom tokens' mark (our own drawing): three tentacles rising from the token's lower edge, in a
+ * 100 × 100 box, so doom never reads as the red damage tokens beside it.
+ */
+const TENTACLES =
+  'M58.4 100.0 L58.1 97.0 L58.0 93.9 L58.0 90.8 L58.1 87.7 L58.3 84.6 L58.7 81.4 L59.1 78.2 L59.7 75.1 L60.4 71.9 L61.1 68.6 L61.9 65.4 L62.7 62.2 L63.6 58.9 L64.5 55.6 L65.5 52.1 L66.2 48.1 L66.2 43.9 L64.9 40.0 L62.4 36.9 L58.9 35.1 L55.2 35.2 L52.2 37.0 L50.9 39.9 L51.4 42.7 L53.4 44.3 L55.4 44.2 L55.0 43.5 L53.8 42.6 L53.6 41.2 L54.2 40.0 L55.5 39.4 L56.9 39.6 L58.0 40.4 L58.8 41.8 L59.2 43.4 L59.0 45.3 L58.4 47.4 L57.3 49.7 L56.0 52.5 L54.5 55.6 L53.1 58.7 L51.7 61.8 L50.3 65.0 L49.0 68.2 L47.7 71.5 L46.5 74.9 L45.4 78.3 L44.5 81.8 L43.6 85.3 L42.9 88.9 L42.3 92.6 L41.9 96.3 L41.6 100.0Z M32.2 98.4 L31.4 95.9 L30.4 93.5 L29.4 91.1 L28.3 88.8 L27.2 86.5 L26.0 84.3 L24.7 82.1 L23.4 80.0 L22.0 77.9 L20.6 75.9 L19.2 73.9 L17.8 71.9 L16.3 70.0 L14.9 68.1 L13.4 66.0 L11.6 63.9 L9.5 62.0 L7.1 60.7 L4.4 60.1 L1.8 60.4 L-0.4 61.6 L-1.9 63.5 L-2.3 65.6 L-1.7 67.5 L-0.5 68.7 L1.0 68.9 L0.9 68.1 L0.2 67.3 L0.0 66.3 L0.4 65.4 L1.1 64.7 L2.1 64.4 L3.2 64.4 L4.3 64.8 L5.3 65.6 L6.3 66.7 L7.1 68.0 L7.9 69.7 L8.9 71.7 L10.0 73.9 L11.0 76.0 L12.1 78.2 L13.1 80.3 L14.0 82.4 L14.9 84.5 L15.8 86.7 L16.6 88.8 L17.3 90.9 L18.0 93.0 L18.5 95.2 L19.0 97.3 L19.5 99.4 L19.8 101.6Z M80.2 101.6 L80.5 99.4 L81.0 97.3 L81.5 95.2 L82.0 93.0 L82.7 90.9 L83.4 88.8 L84.2 86.7 L85.1 84.5 L86.0 82.4 L86.9 80.3 L87.9 78.2 L89.0 76.0 L90.0 73.9 L91.1 71.7 L92.1 69.7 L92.9 68.0 L93.7 66.7 L94.7 65.6 L95.7 64.8 L96.8 64.4 L97.9 64.4 L98.9 64.7 L99.6 65.4 L100.0 66.3 L99.8 67.3 L99.1 68.1 L99.0 68.9 L100.5 68.7 L101.7 67.5 L102.3 65.6 L101.9 63.5 L100.4 61.6 L98.2 60.4 L95.6 60.1 L92.9 60.7 L90.5 62.0 L88.4 63.9 L86.6 66.0 L85.1 68.1 L83.7 70.0 L82.2 71.9 L80.8 73.9 L79.4 75.9 L78.0 77.9 L76.6 80.0 L75.3 82.1 L74.0 84.3 L72.8 86.5 L71.7 88.8 L70.6 91.1 L69.6 93.5 L68.6 95.9 L67.8 98.4Z';
+
+/**
+ * How much of a token's diameter the mark takes, so the rim stays clear of it. The HTML tokens'
+ * stylesheet insets the mark by the rest (`inset: 12%` in game.css).
+ */
+const MARK_SHARE = 0.76;
+
+/**
+ * The doom mark filling an HTML token (the header's agenda doom, the token pool, a dragged doom),
+ * drawn behind its count (`data-part='doom-mark'`, placed by the stylesheet). Decoration only: the
+ * token's own name says it is doom.
+ */
+export function DoomMark() {
+  return (
+    <svg viewBox="0 0 100 100" aria-hidden="true" data-part="doom-mark">
+      <path d={TENTACLES} />
+    </svg>
+  );
+}
+
+/**
+ * The doom mark on an SVG disc of `radius` centred on `centre` (a location's doom, an enemy's doom
+ * badge), to draw between the disc and its count. The tentacles rise from near the disc's lower edge.
+ */
+export function DoomMarkPath({ centre: { x, y }, radius }: { centre: Point; radius: number }) {
+  const scale = (2 * radius * MARK_SHARE) / 100;
+  const left = x - radius * MARK_SHARE;
+  const top = y - radius * MARK_SHARE;
+  return (
+    <path
+      data-part="doom-mark"
+      d={TENTACLES}
+      transform={`translate(${left} ${top}) scale(${scale})`}
+    />
+  );
+}
