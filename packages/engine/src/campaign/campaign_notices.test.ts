@@ -59,6 +59,31 @@ describe('campaignNotices', () => {
     ]);
   });
 
+  it('splits entries of one kind written by two resolutions', () => {
+    const xpFor = (resolution: string, amount: number): campaign.CausedCampaignEvents => ({
+      events: [{ type: 'XpChanged', code: roland.code, account: 'earned', delta: amount }],
+      causes: [
+        {
+          kind: 'resolution',
+          scenarioId: CUSTOM_SCENARIO,
+          outcome: { kind: 'resolution', id: resolutionId(resolution) },
+        },
+      ],
+    });
+    const r1 = xpFor('R1', 2);
+    const r2 = xpFor('R2', 1);
+
+    const notices = campaign.campaignNotices({
+      events: [...r1.events, ...r2.events],
+      causes: [...r1.causes, ...r2.causes],
+    });
+
+    expect(notices.map(({ cause, events }) => [cause, events.length])).toEqual([
+      [r1.causes[0], 1],
+      [r2.causes[0], 1],
+    ]);
+  });
+
   it('gives no notice for what the players write by hand', () => {
     const adjusted = campaign.executeCommand(campaignContext, atTheTablesScenario, {
       type: 'AwardXp',

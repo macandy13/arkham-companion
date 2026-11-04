@@ -8,7 +8,7 @@ import type {
   StartCampaign,
 } from './campaign_commands';
 import type { CampaignEvent } from './campaign_events';
-import { BY_PLAYERS, type CampaignChangeCause } from './campaign_notices';
+import { CAMPAIGN_PLAYER_CAUSE, type CampaignChangeCause } from './campaign_notices';
 import { MAX_TEAM_SIZE, isValidStoryValue } from './campaign_invariants';
 import { findCurrentScenarioId, isStarted, type CampaignLog } from './campaign_log';
 import { replayEvents } from './campaign_reducer';
@@ -94,7 +94,7 @@ export function executeCommand(
   ctx: CampaignContext,
   log: CampaignLog,
   command: CampaignCommand,
-  cause: CampaignChangeCause = BY_PLAYERS,
+  cause: CampaignChangeCause = CAMPAIGN_PLAYER_CAUSE,
 ): CampaignExecuteResult {
   const events = handleCommand(ctx, log, command);
   return { log: replayEvents(events, log), events, causes: events.map(() => cause) };
@@ -109,7 +109,7 @@ export function executeCommands(
   ctx: CampaignContext,
   log: CampaignLog,
   commands: readonly CampaignCommand[],
-  cause: CampaignChangeCause = BY_PLAYERS,
+  cause: CampaignChangeCause = CAMPAIGN_PLAYER_CAUSE,
 ): CampaignExecuteResult {
   return commands.reduce<CampaignExecuteResult>(
     (result, command) => {

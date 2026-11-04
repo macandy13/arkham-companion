@@ -1,7 +1,7 @@
-import { assertNever, shallowEqual } from '@arkham/util';
+import { assertNever } from '@arkham/util';
 import type { ScenarioId } from '../ids';
 import type { CampaignEvent } from './campaign_events';
-import type { ScenarioOutcome } from './campaign_log';
+import { sameOutcome, type ScenarioOutcome } from './campaign_log';
 
 /**
  * Why a campaign log entry was written (M1C.2), the campaign's counterpart of the game's
@@ -18,7 +18,7 @@ export type CampaignChangeCause =
     };
 
 /** The cause of what the players write into the log themselves. */
-export const BY_PLAYERS: CampaignChangeCause = { kind: 'player' };
+export const CAMPAIGN_PLAYER_CAUSE: CampaignChangeCause = { kind: 'player' };
 
 /**
  * What part of the campaign log a notice is about, so the screens can filter or group them:
@@ -65,7 +65,7 @@ export function campaignNotices({ events, causes }: CausedCampaignEvents): Campa
 }
 
 function sameResolution(a: CampaignNotice['cause'], b: CampaignNotice['cause']): boolean {
-  return a.scenarioId === b.scenarioId && shallowEqual(a.outcome, b.outcome);
+  return a.scenarioId === b.scenarioId && sameOutcome(a.outcome, b.outcome);
 }
 
 /**
