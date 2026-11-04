@@ -89,50 +89,46 @@ test('take a resource while the Ghoul Priest is engaged', async ({ page }) => {
 // Journey: tokens a card deals or gives, dragged off the header's token pool: damage and horror onto
 // Roland Banks' card, a resource for them, and damage onto the Ghoul Priest; then the damage healed
 // by dragging it back onto the pool.
-test(
-  'take damage, horror and resources from the token pool and heal it back',
-  { tag: '@flow' },
-  async ({ page }) => {
-    const pool = page.getByRole('region', { name: 'Token pool' });
-    const roland = page.getByRole('region', { name: 'Roland Banks' });
-    const resources = roland.locator('[data-stat="resources"] data');
-    const priest = page
-      .getByRole('figure', { name: 'House' })
-      .getByRole('group', { name: 'Cellar' })
-      .getByRole('img', { name: /^Ghoul Priest/ });
+test('take damage, horror and resources from the token pool and heal it back', async ({ page }) => {
+  const pool = page.getByRole('region', { name: 'Token pool' });
+  const roland = page.getByRole('region', { name: 'Roland Banks' });
+  const resources = roland.locator('[data-stat="resources"] data');
+  const priest = page
+    .getByRole('figure', { name: 'House' })
+    .getByRole('group', { name: 'Cellar' })
+    .getByRole('img', { name: /^Ghoul Priest/ });
 
-    await test.step('Import a game in which the Ghoul Priest lurks in the Cellar', async () => {
-      await resumeImportedGame(
-        page,
-        'The Ghoul Priest is out',
-        ghoulPriestInCellarExport('The Ghoul Priest is out'),
-      );
-      await expect(roland.getByRole('img', { name: '9/9' })).toBeVisible();
-    });
+  await test.step('Import a game in which the Ghoul Priest lurks in the Cellar', async () => {
+    await resumeImportedGame(
+      page,
+      'The Ghoul Priest is out',
+      ghoulPriestInCellarExport('The Ghoul Priest is out'),
+    );
+    await expect(roland.getByRole('img', { name: '9/9' })).toBeVisible();
+  });
 
-    await test.step('Drag a damage and a horror onto Roland Banks, as a treachery deals them', async () => {
-      await dragTo(page, pool.getByRole('img', { name: 'Damage from the pool' }), roland);
-      await expect(roland.getByRole('img', { name: '8/9' })).toBeVisible();
-      await dragTo(page, pool.getByRole('img', { name: 'Horror from the pool' }), roland);
-      await expect(roland.getByRole('img', { name: '4/5' })).toBeVisible();
-    });
+  await test.step('Drag a damage and a horror onto Roland Banks, as a treachery deals them', async () => {
+    await dragTo(page, pool.getByRole('img', { name: 'Damage from the pool' }), roland);
+    await expect(roland.getByRole('img', { name: '8/9' })).toBeVisible();
+    await dragTo(page, pool.getByRole('img', { name: 'Horror from the pool' }), roland);
+    await expect(roland.getByRole('img', { name: '4/5' })).toBeVisible();
+  });
 
-    await test.step('Drag a resource onto Roland Banks, as a card gives one', async () => {
-      const before = Number(await resources.textContent());
-      await dragTo(page, pool.getByRole('img', { name: 'Resource from the pool' }), roland);
-      await expect(resources).toHaveText(String(before + 1));
-    });
+  await test.step('Drag a resource onto Roland Banks, as a card gives one', async () => {
+    const before = Number(await resources.textContent());
+    await dragTo(page, pool.getByRole('img', { name: 'Resource from the pool' }), roland);
+    await expect(resources).toHaveText(String(before + 1));
+  });
 
-    await test.step('Drag a damage onto the Ghoul Priest', async () => {
-      await dragTo(page, pool.getByRole('img', { name: 'Damage from the pool' }), priest);
-      await expect(priest).toHaveAccessibleName('Ghoul Priest, 1 damage');
-    });
+  await test.step('Drag a damage onto the Ghoul Priest', async () => {
+    await dragTo(page, pool.getByRole('img', { name: 'Damage from the pool' }), priest);
+    await expect(priest).toHaveAccessibleName('Ghoul Priest, 1 damage');
+  });
 
-    await test.step('Heal them again: drag the damage off Roland Banks and the Ghoul Priest back to the pool', async () => {
-      await dragTo(page, roland.locator('[data-stat="health"] [data-drag]'), pool);
-      await expect(roland.getByRole('img', { name: '9/9' })).toBeVisible();
-      await dragTo(page, page.locator('#map [data-marker="damage"] > [data-part="grip"]'), pool);
-      await expect(priest).toHaveAccessibleName('Ghoul Priest');
-    });
-  },
-);
+  await test.step('Heal them again: drag the damage off Roland Banks and the Ghoul Priest back to the pool', async () => {
+    await dragTo(page, roland.locator('[data-stat="health"] [data-drag]'), pool);
+    await expect(roland.getByRole('img', { name: '9/9' })).toBeVisible();
+    await dragTo(page, page.locator('#map [data-marker="damage"] > [data-part="grip"]'), pool);
+    await expect(priest).toHaveAccessibleName('Ghoul Priest');
+  });
+});
