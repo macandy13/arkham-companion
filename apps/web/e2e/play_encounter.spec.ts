@@ -117,3 +117,36 @@ test('spawn the set-aside Ghoul Priest in the Attic', async ({ page }) => {
     await expect(page.getByRole('status', { name: 'Choose a spawn location' })).toHaveCount(0);
   });
 });
+
+// Journey: in the enemy phase the Ravenous Ghoul engaged with Roland Banks attacks: the screen asks
+// about the attack at once, Roland Banks takes it, the ghoul exhausts and the round goes on.
+test(
+  'take the attack of an engaged enemy in the enemy phase',
+  { tag: '@flow' },
+  async ({ page }) => {
+    const roland = page.getByRole('region', { name: 'Roland Banks' });
+
+    await test.step('Resume a game with the Ravenous Ghoul engaged with Roland Banks', async () => {
+      await resumeImportedGame(page, 'Ghoul engaged', mythosDrawnExport('Ghoul engaged'));
+      await page.getByRole('button', { name: 'Start turn' }).click();
+      await page.getByRole('button', { name: 'End turn' }).click();
+    });
+
+    await test.step('The enemy phase asks about the Ravenous Ghoul’s attack', async () => {
+      await page.getByRole('button', { name: 'Next' }).click();
+      const attack = page.getByRole('dialog', { name: 'Ravenous Ghoul attacks' });
+      await expect(attack).toBeVisible();
+      await attack.getByRole('button', { name: 'Done' }).click();
+      await expect(attack).toBeHidden();
+    });
+
+    await test.step('Roland Banks took 1 damage and 1 horror, and the round goes on to the upkeep', async () => {
+      await expect(roland.getByRole('img', { name: '8/9' })).toBeVisible();
+      await expect(roland.getByRole('img', { name: '4/5' })).toBeVisible();
+      await page.getByRole('button', { name: 'Next' }).click();
+      await expect(
+        page.getByRole('list', { name: 'Phases' }).locator('[aria-current="step"]'),
+      ).toHaveText('Upkeep');
+    });
+  },
+);

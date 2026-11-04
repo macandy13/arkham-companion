@@ -239,15 +239,15 @@ describe('an investigator who leaves', () => {
       endTurn(bob),
       startTurn(carol),
       endTurn(carol),
-      nextPhase,
       takeDamage(alice, 7),
+      nextPhase,
     );
 
-    const defeated = stateAfter(context, attackPhase, {
-      type: 'ResolveEnemyAttack',
-      enemyId: aliceGhoul,
-      investigatorId: alice,
-    });
+    const defeated = stateAfter(
+      context,
+      attackPhase,
+      answer(`enemyAttack:${aliceGhoul}:${alice}`, 'attack'),
+    );
 
     expect(investigatorOf(defeated, alice).status).toBe('defeated');
     expect(defeated.cards[hall]?.tokens.clue).toBe(2);

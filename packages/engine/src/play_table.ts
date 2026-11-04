@@ -34,6 +34,7 @@ import {
   type PhaseStepId,
 } from './state';
 import { attacksStillDue } from './phases';
+import { enemyPhaseAttackDecisionId } from './forced_attacks';
 import { undoLastGroup } from './undo';
 import type { GameBuilder } from './game_builder';
 
@@ -444,9 +445,10 @@ export class PlayTable {
   }
 
   /**
-   * Enemy step 3.3: the players resolve each attack the step lists, in its
-   * order, with the printed damage and horror; each enemy exhausts after its
-   * attack. An attack that defeats an investigator drops their remaining ones.
+   * Enemy step 3.3: the players take each attack the step asks about
+   * (`enemyPhaseAttackDecision`), in its order, with the printed damage and
+   * horror; each enemy exhausts after its attack. An attack that defeats an
+   * investigator drops their remaining ones.
    */
   resolveEnemyAttacks(): void {
     if (attacksStillDue(this.ctx, this.current).length === 0)
@@ -454,7 +456,11 @@ export class PlayTable {
     this.atomically(() => {
       let [next] = attacksStillDue(this.ctx, this.current);
       while (next) {
-        this.play({ type: 'ResolveEnemyAttack', ...next });
+        this.play({
+          type: 'ResolveDecision',
+          decisionId: enemyPhaseAttackDecisionId(next),
+          optionId: 'attack',
+        });
         [next] = attacksStillDue(this.ctx, this.current);
       }
     });
@@ -751,7 +757,10 @@ function lastStepStarted(
   for (const event of events) {
     if (event.type === 'PhaseChanged') steps = event.steps;
     if (event.type !== 'PhaseStepsChanged') continue;
-    if (event.steps.length < steps.length) started = steps[0]?.id;
+    // A step that is done drops off the list; one that stays but changes (step 3.3 listing the
+    // attacks it then asks about) is the one that started too.
+    if (event.steps.length < steps.length || event.steps[0]?.id === steps[0]?.id)
+      started = steps[0]?.id;
     steps = event.steps;
   }
   return started;

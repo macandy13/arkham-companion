@@ -345,14 +345,31 @@ describe('enemy phase', () => {
     ]);
   });
 
-  it('rejects moving on while an attack is due', () => {
+  it("asks alice about the ghoul's attack, at its printed damage and horror (3.3)", () => {
+    const { context, state } = engagedWithGhoul.start();
+
+    const enemy = toEnemyPhase(context, state, alice);
+
+    expect(enemy.pending).toMatchObject([
+      {
+        id: 'enemyAttack:ghoul:alice',
+        prompt: 'decision.enemyAttack',
+        decider: { kind: 'investigator', investigatorId: alice },
+        options: [
+          { id: 'attack', amounts: { damage: { default: 2 }, horror: { default: 1 } } },
+          { id: 'skip', label: 'decision.attackCancelled' },
+        ],
+      },
+    ]);
+  });
+
+  it('rejects moving on while the attack is asked', () => {
     const { context, state } = engagedWithGhoul.start();
     const enemy = toEnemyPhase(context, state, alice);
 
     expect(rejectionFrom(context, enemy, next)).toEqual({
-      code: 'enemyAttackPending',
-      enemyId: instanceId('ghoul'),
-      investigatorId: alice,
+      code: 'decisionPending',
+      decisionId: 'enemyAttack:ghoul:alice',
     });
   });
 
@@ -360,11 +377,7 @@ describe('enemy phase', () => {
     const { context, state } = engagedWithGhoul.start();
     const enemy = toEnemyPhase(context, state, alice);
 
-    const after = stateAfter(context, enemy, {
-      type: 'ResolveEnemyAttack',
-      enemyId: instanceId('ghoul'),
-      investigatorId: alice,
-    });
+    const after = stateAfter(context, enemy, answer('enemyAttack:ghoul:alice', 'attack'));
 
     expect(requireInvestigator(after, alice)).toMatchObject({
       health: { damage: 2 },
@@ -379,18 +392,31 @@ describe('enemy phase', () => {
     const enemy = toEnemyPhase(context, state, alice);
 
     const after = stateAfter(context, enemy, {
-      type: 'ResolveEnemyAttack',
-      enemyId: instanceId('ghoul'),
-      investigatorId: alice,
-      damage: 0,
-      horror: 0,
+      type: 'ResolveDecision',
+      decisionId: decisionId('enemyAttack:ghoul:alice'),
+      optionId: 'attack',
+      amounts: { damage: 1, horror: 0 },
     });
+
+    expect(requireInvestigator(after, alice)).toMatchObject({
+      health: { damage: 1 },
+      sanity: { horror: 0 },
+    });
+    expect(after.cards[instanceId('ghoul')]!.exhausted).toBe(true);
+  });
+
+  it('deals nothing for a cancelled attack, but the ghoul still exhausts', () => {
+    const { context, state } = engagedWithGhoul.start();
+    const enemy = toEnemyPhase(context, state, alice);
+
+    const after = stateAfter(context, enemy, answer('enemyAttack:ghoul:alice', 'skip'));
 
     expect(requireInvestigator(after, alice)).toMatchObject({
       health: { damage: 0 },
       sanity: { horror: 0 },
     });
     expect(after.cards[instanceId('ghoul')]!.exhausted).toBe(true);
+    expect(after.meta.steps).toEqual([]);
   });
 
   it('defeats an investigator once from damage and horror dealt together', () => {
@@ -404,13 +430,10 @@ describe('enemy phase', () => {
       .start();
     const enemy = toEnemyPhase(context, state, alice);
 
-    const { events } = execute(context, enemy, {
-      type: 'ResolveEnemyAttack',
-      enemyId: instanceId('ghoul'),
-      investigatorId: alice,
-    });
+    const { events } = execute(context, enemy, answer('enemyAttack:ghoul:alice', 'attack'));
 
     expect(events.map((event) => event.type)).toEqual([
+      'DecisionResolved',
       'PhaseStepsChanged',
       'InvestigatorChanged',
       'InvestigatorChanged',
@@ -422,31 +445,31 @@ describe('enemy phase', () => {
     ]);
   });
 
-  it('rejects an attack that is not due', () => {
+  it('rejects an attack outside step 3.3', () => {
     const { context, state } = engagedWithGhoul.start();
-    const enemy = toEnemyPhase(context, state, alice);
+    const investigation = stateAfter(context, state, next);
 
     expect(
-      rejectionFrom(context, enemy, {
-        type: 'ResolveEnemyAttack',
-        enemyId: instanceId('ghoul'),
-        investigatorId: bob,
-      }),
-    ).toEqual({ code: 'attackNotDue', enemyId: instanceId('ghoul'), investigatorId: bob });
-  });
-
-  it('rejects a negative amount', () => {
-    const { context, state } = engagedWithGhoul.start();
-    const enemy = toEnemyPhase(context, state, alice);
-
-    expect(
-      rejectionFrom(context, enemy, {
+      rejectionFrom(context, investigation, {
         type: 'ResolveEnemyAttack',
         enemyId: instanceId('ghoul'),
         investigatorId: alice,
-        damage: -1,
       }),
-    ).toEqual({ code: 'invalidAttackAmount', amount: -1 });
+    ).toEqual({ code: 'attackNotDue', enemyId: instanceId('ghoul'), investigatorId: alice });
+  });
+
+  it('rejects a negative amount for the attack', () => {
+    const { context, state } = engagedWithGhoul.start();
+    const enemy = toEnemyPhase(context, state, alice);
+
+    expect(
+      rejectionFrom(context, enemy, {
+        type: 'ResolveDecision',
+        decisionId: decisionId('enemyAttack:ghoul:alice'),
+        optionId: 'attack',
+        amounts: { damage: -1 },
+      }),
+    ).toMatchObject({ code: 'amountOutOfRange', name: 'damage', amount: -1, min: 0 });
   });
 
   it('exhausts a massive enemy only after it attacked everyone at its location', () => {
@@ -455,31 +478,28 @@ describe('enemy phase', () => {
       .start();
     const enemy = toEnemyPhase(context, state, alice, bob);
 
-    const first = stateAfter(context, enemy, {
-      type: 'ResolveEnemyAttack',
-      enemyId: instanceId('giant'),
-      investigatorId: alice,
-    });
-    const second = stateAfter(context, first, {
-      type: 'ResolveEnemyAttack',
-      enemyId: instanceId('giant'),
-      investigatorId: bob,
-    });
+    const first = stateAfter(context, enemy, answer('enemyAttack:giant:alice', 'attack'));
+    const second = stateAfter(context, first, answer('enemyAttack:giant:bob', 'attack'));
 
     expect(first.cards[instanceId('giant')]!.exhausted).toBe(false);
     expect(second.cards[instanceId('giant')]!.exhausted).toBe(true);
   });
 
-  it('drops an attack whose enemy left play meanwhile', () => {
+  it('drops an attack whose enemy left play before its question was answered', () => {
     const { context, state } = engagedWithGhoul.start();
     const enemy = toEnemyPhase(context, state, alice);
-    const defeated = stateAfter(context, enemy, {
-      type: 'DefeatEnemy',
-      enemyId: instanceId('ghoul'),
+    const discarded = stateAfter(context, enemy, {
+      type: 'ManualAdjust',
+      adjustment: {
+        kind: 'moveCard',
+        cardId: instanceId('ghoul'),
+        to: { kind: 'encounterDiscard' },
+      },
     });
 
-    const after = stateAfter(context, defeated, next);
+    const after = stateAfter(context, discarded, answer('enemyAttack:ghoul:alice', 'attack'));
 
+    expect(requireInvestigator(after, alice)).toMatchObject({ health: { damage: 0 } });
     expect(after.meta).toMatchObject({ phase: 'enemy', steps: [] });
   });
 });

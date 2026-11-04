@@ -520,9 +520,12 @@ export interface AnsweredAmount {
  */
 export type AnswerableCommand = Answerable<Command>;
 
-/** Distributes over the command union, so each command type keeps its own fields. */
+/**
+ * Distributes over the command union, so each command type keeps its own fields. An optional count
+ * (`ResolveEnemyAttack.damage`) can be answered too.
+ */
 type Answerable<C> = C extends Command
-  ? { [K in keyof C]: C[K] extends number ? C[K] | AnsweredAmount : C[K] }
+  ? { [K in keyof C]: Exclude<C[K], undefined> extends number ? C[K] | AnsweredAmount : C[K] }
   : never;
 
 /** The counts an option with an adjustable amount accepts; no `max` means no upper bound. */

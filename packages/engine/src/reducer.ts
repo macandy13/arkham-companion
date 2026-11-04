@@ -41,7 +41,14 @@ function applyInvestigatorLeft(
   investigatorId: Investigator['id'],
   left: Pick<Investigator, 'status' | 'defeat'>,
 ): GameState {
-  const after = applyInvestigator(state, { investigatorId }, (inv) => ({ ...inv, ...left }));
+  const applied = applyInvestigator(state, { investigatorId }, (inv) => ({ ...inv, ...left }));
+  // Whoever is out of the game answers nothing more: the attacks still asked of them go too.
+  const after = {
+    ...applied,
+    pending: applied.pending.filter(
+      (d) => d.decider.kind !== 'investigator' || d.decider.investigatorId !== investigatorId,
+    ),
+  };
   return state.meta.turn?.investigatorId === investigatorId
     ? endTurn(after, investigatorId)
     : after;

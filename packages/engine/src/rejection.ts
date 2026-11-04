@@ -180,8 +180,6 @@ export type Rejection =
   | { code: 'notTheDecider'; decisionId: DecisionId; answeredBy: InvestigatorId; decider: Decider }
   /** A skill test modifier that is not a whole number. */
   | { code: 'invalidModifierAmount'; amount: number }
-  /** `NextPhase` while an enemy attack of the enemy phase still has to be resolved. */
-  | { code: 'enemyAttackPending'; enemyId: InstanceId; investigatorId: InvestigatorId }
   /** `ResolveEnemyAttack` for an attack that is not an outstanding, due step. */
   | { code: 'attackNotDue'; enemyId: InstanceId; investigatorId: InvestigatorId }
   /** `ResolveEnemyAttack` with damage or horror that is not a non-negative integer. */
@@ -434,8 +432,6 @@ function describe(r: Rejection): string {
       return `${r.answeredBy} may not answer decision ${r.decisionId}`;
     case 'invalidModifierAmount':
       return `skill test modifier ${r.amount} is not allowed here`;
-    case 'enemyAttackPending':
-      return `the attack of ${r.enemyId} on ${r.investigatorId} must be resolved first`;
     case 'attackNotDue':
       return `${r.enemyId} has no attack on ${r.investigatorId} to resolve`;
     case 'invalidAttackAmount':

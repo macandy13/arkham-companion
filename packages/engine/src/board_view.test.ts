@@ -852,7 +852,7 @@ describe('enemies', () => {
       { type: 'StartTurn', investigatorId: alice },
       { type: 'EndTurn', investigatorId: alice },
       { type: 'NextPhase' },
-      { type: 'ResolveEnemyAttack', enemyId: instanceId('ghoul'), investigatorId: alice },
+      answer('enemyAttack:ghoul:alice', 'attack'),
     );
 
     const [ghoul] = boardView(context, attacked).enemies;
