@@ -544,6 +544,45 @@ describe('upkeep phase', () => {
     ]);
   });
 
+  it('has each investigator draw 1 card at the table, then each gain 1 resource (4.4)', () => {
+    const { context, state } = table
+      .withInvestigator(alice, { locationId: hall })
+      .withInvestigator(bob, { locationId: hall })
+      .start();
+    const enemy = stateAfter(context, state, next, ...turnsOf(alice, bob));
+
+    const draws = runFrom(context, enemy, [next, next]).events.flatMap((event) => {
+      if (event.type === 'CommandDeferred') return [`${event.command.investigatorId} draws`];
+      if (event.type === 'InvestigatorChanged' && event.stat === 'resources')
+        return [`${event.investigatorId} gains`];
+      return [];
+    });
+
+    expect(draws).toEqual(['alice draws', 'bob draws', 'alice gains', 'bob gains']);
+  });
+
+  it('leaves a defeated investigator out of the upkeep draw (4.4)', () => {
+    const { context, state: started } = table
+      .withInvestigator(alice, { locationId: hall })
+      .withInvestigator(bob, { locationId: hall, sanity: { max: 3, horror: 0 } })
+      .start();
+    const state = stateAfter(
+      context,
+      started,
+      next,
+      { type: 'AdjustInvestigator', investigatorId: bob, stat: 'horror', delta: 3 },
+      ...turnsOf(alice),
+    );
+
+    const deferred = runFrom(context, state, [next, next]).events.filter(
+      (event) => event.type === 'CommandDeferred',
+    );
+
+    expect(deferred).toEqual([
+      { type: 'CommandDeferred', command: { type: 'DrawCards', investigatorId: alice, amount: 1 } },
+    ]);
+  });
+
   it('ends the round (4.6): clears the turns taken', () => {
     const { context, state } = aliceInHall.start();
     const enemy = runFrom(context, state, [next, ...turnsOf(alice), next]).state;

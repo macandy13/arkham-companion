@@ -30,7 +30,7 @@ export const PHASE_STEP_TITLES: Readonly<Record<PhaseStepId, string>> = {
   enemiesAttack: '3.3 resolve engaged enemy attacks',
   resetActions: '4.2 reset actions',
   readyExhausted: '4.3 ready each exhausted enemy (players ready their own cards)',
-  gainResources: '4.4 each investigator gains 1 resource (and draws 1 card at the table)',
+  drawAndGain: '4.4 each investigator draws 1 card (at the table) and gains 1 resource',
   endRound: '4.6 round ends',
 };
 
@@ -196,7 +196,7 @@ function stepsOf(state: GameState, phase: Phase): PhaseStep[] {
       return [
         { id: 'resetActions' },
         { id: 'readyExhausted' },
-        { id: 'gainResources' },
+        { id: 'drawAndGain' },
         { id: 'endRound' },
       ];
     case 'setup':
@@ -230,13 +230,23 @@ function stepCommands(
       return cardsOfType(ctx, state, 'enemy')
         .filter((card) => card.exhausted && isEnemyOnTable(card))
         .map((card) => ({ type: 'ReadyEnemy', enemyId: card.id }));
-    case 'gainResources':
-      return playerOrder(state).map((inv) => ({
-        type: 'AdjustInvestigator',
-        investigatorId: inv.id,
-        stat: 'resources',
-        delta: 1,
-      }));
+    case 'drawAndGain':
+      // Every investigator draws, then every one gains. The draw is deferred to the players
+      // (`CommandDeferred`), as they hold the decks; it still goes through the engine so the log
+      // and the changes notice remind them of it.
+      return [
+        ...playerOrder(state).map((inv): Command => ({
+          type: 'DrawCards',
+          investigatorId: inv.id,
+          amount: 1,
+        })),
+        ...playerOrder(state).map((inv): Command => ({
+          type: 'AdjustInvestigator',
+          investigatorId: inv.id,
+          stat: 'resources',
+          delta: 1,
+        })),
+      ];
   }
 }
 

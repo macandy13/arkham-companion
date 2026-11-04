@@ -274,7 +274,7 @@ describe('automaticChanges', () => {
   const changesOf = (table: PlayTable) =>
     automaticChanges(t, table.ctx, table.state, table.entries)?.lines.map((line) => line.text);
 
-  it('tells the resources the upkeep phase gives, without the phase and round lines', () => {
+  it('tells the card draw and resources of the upkeep phase, without the phase and round lines', () => {
     const table = PlayTable.start(rolandsTurn);
     table.endTurn(byName('Roland Banks'));
     table.nextPhase();
@@ -282,7 +282,10 @@ describe('automaticChanges', () => {
     table.nextPhase();
 
     expect(table.state.meta.phase).toBe('upkeep');
-    expect(changesOf(table)).toEqual(['Roland Banks gains 1 resource']);
+    expect(changesOf(table)).toEqual([
+      'Roland Banks draws 1 card',
+      'Roland Banks gains 1 resource',
+    ]);
   });
 
   it('tells the doom the mythos phase places on the agenda', () => {

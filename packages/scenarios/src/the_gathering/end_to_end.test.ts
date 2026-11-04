@@ -165,7 +165,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     expect(table.board.attacksDue).toEqual([]);
 
     // Round 1 – upkeep: 4.2 resets Roland's counter, 4.4 each investigator
-    // gains a resource, 4.6 the round ends
+    // draws a card (at the table) and gains a resource, 4.6 the round ends
     expect(table.nextPhase()).toEqual({ round: 1, phase: 'upkeep' });
 
     expect(table.board.perInvestigator('actions')).toEqual({ roland: 3, daisy: 3, wendy: 3 });
