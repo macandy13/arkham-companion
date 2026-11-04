@@ -121,6 +121,8 @@ export interface GameActions {
   moveEnemy(enemy: InstanceId, location: InstanceId): Promise<void>;
   /** `amount` damage on `enemy`, as a card effect deals it; enough of it defeats the enemy. */
   damageEnemy(enemy: InstanceId, amount: number): Promise<void>;
+  /** `amount` damage healed from `enemy`, as a card effect heals it (`HealEnemy`). */
+  healEnemy(enemy: InstanceId, amount: number): Promise<void>;
   /** A card effect disengages `enemy`; it stays where it is. */
   disengageEnemy(enemy: InstanceId): Promise<void>;
   /** A card effect defeats `enemy` outright. */
@@ -305,6 +307,8 @@ export function gameActions(
       play((table) => table.moveEnemy(enemy, location, { forced: true })),
     damageEnemy: (enemy, amount) =>
       play((table) => table.play({ type: 'DamageEnemy', enemyId: enemy, amount })),
+    healEnemy: (enemy, amount) =>
+      play((table) => table.play({ type: 'HealEnemy', enemyId: enemy, amount })),
     disengageEnemy: (enemy) =>
       play((table) => table.play({ type: 'DisengageEnemy', enemyId: enemy })),
     defeatEnemy: (enemy) => play((table) => table.play({ type: 'DefeatEnemy', enemyId: enemy })),
