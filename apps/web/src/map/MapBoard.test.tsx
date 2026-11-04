@@ -442,9 +442,7 @@ describe('MapBoard', () => {
     table.play({ type: 'DamageEnemy', enemyId: ghoul, amount: 2 });
     rerender(board());
 
-    const badge = within(tile('study'))
-      .getByRole('img', { name: /^ghoul,/ })
-      .querySelector<SVGElement>('[data-marker="damage"]');
+    const badge = tile('study').querySelector<SVGElement>('[data-marker="damage"]');
     expect(badge?.dataset.changed).toBe('');
     expect(badge?.querySelector('[data-rising]')?.textContent).toBe('+2');
   });
@@ -468,11 +466,14 @@ describe('MapBoard', () => {
     const ghoulToken = within(tile('study')).getByRole('img', { name: /^ghoul,/ });
     expect(ghoulToken.dataset.engaged).toBe('true');
     expect(ghoulToken.dataset.exhausted).toBe('true');
-    expect(ghoulToken.querySelector('[data-marker="damage"]')?.textContent).toBe('2');
+    // The badge lies beside the token, so a drag off it leaves the enemy in place.
+    const damageBadge = tile('study').querySelector<SVGElement>('[data-marker="damage"]');
+    expect(damageBadge?.textContent).toBe('2');
+    expect(damageBadge?.dataset['engaged']).toBe('true');
     const ratsToken = within(tile('hallway')).getByRole('img', { name: 'rats' });
     expect(ratsToken.dataset.engaged).toBeUndefined();
     expect(ratsToken.dataset.exhausted).toBeUndefined();
-    expect(ratsToken.querySelector('[data-marker]')).toBeNull();
+    expect(tile('hallway').querySelector('[data-marker]')).toBeNull();
   });
 
   it('marks the lead investigator’s pawn and the pawn of the investigator whose turn it is', () => {
@@ -984,6 +985,40 @@ describe('MapBoard', () => {
           expect(table.board.location(study).doom).toBe(1);
           expect(table.board.doomInPlay).toBe(1);
         });
+      });
+
+      it("heals the ghoul's damage dragged off its damage badge onto the token pool", async () => {
+        const ghoul = instanceId('ghoul');
+        const table = PlayTable.start(
+          house
+            .withInvestigator(alder, { locationId: hallway })
+            .withCard(ghoul, blankEnemy('ghoul', { health: fixed(3) }), atLocation(study), {
+              tokens: { damage: 2 },
+            }),
+        );
+        render(
+          <>
+            <MapBoard
+              board={table.board}
+              actions={actionsOn(table)}
+              busy={false}
+              adjusting={false}
+            />
+            <section data-pool>
+              <h3>pool</h3>
+            </section>
+          </>,
+        );
+        underPointer = screen.getByRole('heading', { name: 'pool' });
+        const badge = tile('study').querySelector<SVGElement>('[data-marker="damage"]');
+        if (!badge) throw new Error('The ghoul shows no damage badge');
+
+        fireEvent.pointerDown(badge, { pointerId: 1, clientX: 100, clientY: 160 });
+        fireEvent.pointerMove(badge, { pointerId: 1, clientX: 600, clientY: 40 });
+        fireEvent.pointerUp(badge, { pointerId: 1, clientX: 600, clientY: 40 });
+        await act(async () => {});
+
+        expect(table.board.enemy(ghoul).damage).toBe(1);
       });
 
       it('shows a doom token over the page while it is dragged', () => {

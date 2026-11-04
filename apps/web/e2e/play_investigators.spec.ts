@@ -87,8 +87,9 @@ test('take a resource while the Ghoul Priest is engaged', async ({ page }) => {
 });
 
 // Journey: tokens a card deals or gives, dragged off the header's token pool: damage and horror onto
-// Roland Banks' card, a resource for them, and damage onto the Ghoul Priest.
-test('take damage, horror and resources from the token pool', async ({ page }) => {
+// Roland Banks' card, a resource for them, and damage onto the Ghoul Priest; then the damage healed
+// by dragging it back onto the pool.
+test('take damage, horror and resources from the token pool and heal it back', async ({ page }) => {
   const pool = page.getByRole('region', { name: 'Token pool' });
   const roland = page.getByRole('region', { name: 'Roland Banks' });
   const resources = roland.locator('[data-stat="resources"] data');
@@ -122,5 +123,12 @@ test('take damage, horror and resources from the token pool', async ({ page }) =
   await test.step('Drag a damage onto the Ghoul Priest', async () => {
     await dragTo(page, pool.getByRole('img', { name: 'Damage from the pool' }), priest);
     await expect(priest).toHaveAccessibleName('Ghoul Priest, 1 damage');
+  });
+
+  await test.step('Heal them again: drag the damage off Roland Banks and the Ghoul Priest back to the pool', async () => {
+    await dragTo(page, roland.locator('[data-stat="health"] [data-drag]'), pool);
+    await expect(roland.getByRole('img', { name: '9/9' })).toBeVisible();
+    await dragTo(page, page.locator('#map [data-marker="damage"] > [data-part="grip"]'), pool);
+    await expect(priest).toHaveAccessibleName('Ghoul Priest');
   });
 });

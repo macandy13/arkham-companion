@@ -905,6 +905,31 @@ describe('InvestigatorBar', () => {
       expect(within(panel('brook')).queryByRole('button', { name: 'Start turn' })).toBeNull();
     });
 
+    it.each([
+      { situation: 'before anyone’s turn', table: beforeTurns, primary: ['Start turn'] },
+      {
+        situation: 'on alder’s turn',
+        table: () => PlayTable.start(twoAtStudy.withTurnOf(alder)),
+        primary: ['End turn'],
+      },
+    ])('marks only the turn’s own step as the primary button $situation', ({ table, primary }) => {
+      const played = table();
+      render(
+        <InvestigatorBar
+          board={played.board}
+          actions={actionsOn(played)}
+          busy={false}
+          adjusting={false}
+        />,
+      );
+
+      const primaries = within(panel('alder'))
+        .getAllByRole('button')
+        .filter((button) => button.hasAttribute('data-primary'))
+        .map((button) => button.getAttribute('aria-label') ?? button.textContent);
+      expect(primaries).toEqual(primary);
+    });
+
     it.each([{ button: 'End turn', after: { turnTaken: true } }])(
       '"$button" plays it for the investigator whose turn it is',
       async ({ button, after }) => {
@@ -1286,7 +1311,86 @@ describe('InvestigatorBar', () => {
         />,
       );
 
-      expect(panel('alder').querySelector('[data-drag]')).toBeNull();
+      expect(panel('alder').querySelector('[data-stat="clues"] [data-drag]')).toBeNull();
+    });
+  });
+
+  describe('dragging damage, horror or a resource back to the token pool', () => {
+    beforeEach(() => {
+      HTMLElement.prototype.setPointerCapture = () => {};
+    });
+    afterEach(() => {
+      Reflect.deleteProperty(document, 'elementFromPoint');
+      Reflect.deleteProperty(HTMLElement.prototype, 'setPointerCapture');
+    });
+
+    /** Alder with 2 damage of 7 health, 2 horror of 6 sanity and 3 resources. */
+    const hurtAlder = () =>
+      PlayTable.start(
+        newGame()
+          .withLocation(study, blankLocation('study'), { revealed: true })
+          .withInvestigator(alder, {
+            locationId: study,
+            health: { max: 7, damage: 2 },
+            sanity: { max: 6, horror: 2 },
+            resources: 3,
+          }),
+      );
+
+    /** Drags alder's `stat` off the card from (10, 10) and lets go at (300, 40) over `under`. */
+    async function dragOffAlder(stat: 'health' | 'sanity' | 'resources', under: Element | null) {
+      document.elementFromPoint = () => under;
+      const counter = panel('alder').querySelector(`[data-stat="${stat}"] [data-drag]`);
+      if (!counter) throw new Error(`alder's ${stat} is not draggable`);
+      fireEvent.pointerDown(counter, { pointerId: 1, clientX: 10, clientY: 10 });
+      fireEvent.pointerMove(counter, { pointerId: 1, clientX: 300, clientY: 40 });
+      fireEvent.pointerUp(counter, { pointerId: 1, clientX: 300, clientY: 40 });
+      await act(async () => {});
+    }
+
+    // The damage lies on the heart (health), the horror on the brain (sanity).
+    it.each([
+      { stat: 'health', after: { damage: 1, horror: 2, resources: 3 } },
+      { stat: 'sanity', after: { damage: 2, horror: 1, resources: 3 } },
+      { stat: 'resources', after: { damage: 2, horror: 2, resources: 2 } },
+    ] as const)(
+      "takes one off alder's $stat dropped on the pool: $after",
+      async ({ stat, after }) => {
+        const table = hurtAlder();
+        render(
+          <>
+            <InvestigatorBar
+              board={table.board}
+              actions={actionsOn(table)}
+              busy={false}
+              adjusting={false}
+            />
+            <section data-pool>
+              <h2>Token pool</h2>
+            </section>
+          </>,
+        );
+
+        await dragOffAlder(stat, screen.getByRole('heading', { name: 'Token pool' }));
+
+        expect(table.board.investigator(alder)).toMatchObject(after);
+      },
+    );
+
+    it('keeps the damage when it is dropped anywhere but the pool', async () => {
+      const table = hurtAlder();
+      render(
+        <InvestigatorBar
+          board={table.board}
+          actions={actionsOn(table)}
+          busy={false}
+          adjusting={false}
+        />,
+      );
+
+      await dragOffAlder('health', null);
+
+      expect(table.board.investigator(alder).damage).toBe(2);
     });
   });
 
@@ -1325,6 +1429,52 @@ describe('InvestigatorBar', () => {
       expect(cards[1]?.getAttribute('aria-label')).toBe(
         'ghoul_minion, 1 of 3 health left, 2 damage',
       );
+    });
+
+    it.each([
+      { card: 'dissonant_voices', picture: 'https://arkhamdb.com/bundles/cards/voices.png' },
+      { card: 'ghoul_minion', picture: 'https://arkhamdb.com/bundles/cards/ghoul.png' },
+    ])("shows $card's picture in its art strip once it has loaded", async ({ card, picture }) => {
+      const table = PlayTable.start(
+        newGame()
+          .withLocation(study, blankLocation('study'))
+          .withInvestigator(alder, { locationId: study })
+          .withCard(
+            instanceId('voices'),
+            blankTreachery('dissonant_voices', {
+              imageSrc: cardImagePath('/bundles/cards/voices.png'),
+            }),
+            threatAreaOf(alder),
+          )
+          .withCard(
+            instanceId('ghoul'),
+            blankEnemy('ghoul_minion', { imageSrc: cardImagePath('/bundles/cards/ghoul.png') }),
+            engagedWith(alder),
+          ),
+      );
+      render(
+        <InvestigatorBar
+          board={table.board}
+          actions={actionsOn(table)}
+          busy={false}
+          adjusting={false}
+        />,
+      );
+      const threatArea = within(panel('alder')).getByRole('list', { name: 'Threat area' });
+      const smallCard = within(threatArea)
+        .getAllByRole('listitem')
+        .find((item) => item.querySelector('p')?.textContent === card);
+      // The art is decorative (`alt=""`), so it has no role to find it by.
+      const art = smallCard?.querySelector('img');
+      if (!art) throw new Error(`${card} has no art strip`);
+      const beforeLoading = art.hasAttribute('data-shown');
+
+      // jsdom loads no images, so the test fires the load itself.
+      fireEvent.load(art);
+
+      expect(art.getAttribute('src')).toBe(picture);
+      expect(beforeLoading).toBe(false);
+      expect(art.hasAttribute('data-shown')).toBe(true);
     });
 
     it('marks the damage dealt to an engaged enemy on the health it has left', () => {
