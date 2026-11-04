@@ -1,6 +1,7 @@
 import type { Locator } from '@playwright/test';
 import { expect, test } from './fixtures/test';
 import {
+  cluesToShareExport,
   houseOpenedExport,
   rolandThreatenedExport,
   resumeImportedGame,
@@ -85,6 +86,38 @@ test('expand the investigator in place on a phone', async ({ page }) => {
     await expect(board).not.toHaveAttribute('data-view');
   });
 });
+
+// Journey: on a phone with two investigators, expand Roland Banks' panel in place: his whole card
+// fills the screen's width and Daisy Walker's waits beside it, off the screen. Swipe sideways to
+// her, and the dots follow.
+test(
+  'expand the investigators in place and swipe sideways between them on a phone',
+  { tag: '@flow' },
+  async ({ page }) => {
+    const roland = page.getByRole('region', { name: 'Roland Banks' });
+    const daisy = page.getByRole('region', { name: 'Daisy Walker' });
+    const panelDots = page.locator('ol[data-dots="items"] > li');
+
+    await test.step("Expand Roland Banks' panel", async () => {
+      await resumeImportedGame(page, 'Clues to share', cluesToShareExport('Clues to share'));
+      await roland.getByRole('heading', { name: 'Roland Banks' }).getByRole('button').click();
+      await expect(page.locator('#board')).toHaveAttribute('data-view', 'investigators');
+      await expect(roland).toBeInViewport({ ratio: 0.9 });
+      await expect(daisy).not.toBeInViewport();
+      await expect(panelDots).toHaveCount(2);
+      await expect(panelDots.nth(0)).toHaveAttribute('data-current');
+    });
+
+    await test.step('Swipe sideways to Daisy Walker', async () => {
+      await page
+        .locator('#board > #investigators')
+        .evaluate((bar) => bar.scrollTo({ left: bar.clientWidth }));
+      await expect(daisy).toBeInViewport({ ratio: 0.9 });
+      await expect(roland).not.toBeInViewport();
+      await expect(panelDots.nth(1)).toHaveAttribute('data-current');
+    });
+  },
+);
 
 // Journey: on a phone, swipe instead of tapping: down on the compact header expands it on the act
 // under the finger, up on it folds it; up on Roland Banks' panel expands it, down folds it.
