@@ -220,6 +220,8 @@
   margin-inline: auto;
   padding: 0;
   color: inherit;
+  /* It asks nothing, so a tap on the dialog's own buttons underneath goes through. */
+  pointer-events: none;
 }
 
 #notices p,

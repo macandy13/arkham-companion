@@ -134,11 +134,12 @@ test(
       await page.getByRole('button', { name: 'Next' }).click();
     });
 
-    await test.step('A dialog opens, and the notice of the doom shows above it', async () => {
-      await expect(page.getByRole('dialog')).toBeVisible();
-      const changes = page.getByRole('status', { name: 'What the game did' });
-      await expect(changes).toContainText('1 doom on');
-      expect(await changes.evaluate((element) => element.matches(':popover-open'))).toBe(true);
+    await test.step('The agenda asks whether it advances; the doom notice shows above it', async () => {
+      await expect(page.getByText("Does the agenda What's Going On?! advance?")).toBeVisible();
+      // Shown above the dialog: in the top layer, as an open popover.
+      await expect(page.locator('[data-part="changes"]:popover-open')).toContainText(
+        "1 doom on What's Going On?!",
+      );
     });
   },
 );

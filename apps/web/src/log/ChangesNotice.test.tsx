@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
-import { afterEach, beforeAll, describe, expect, it } from 'vitest';
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import {
   blankAgenda,
   blankLocation,
@@ -29,7 +29,10 @@ describe('ChangesNotice', () => {
   beforeAll(async () => {
     await initI18n('en');
   });
-  afterEach(cleanup);
+  afterEach(() => {
+    cleanup();
+    vi.restoreAllMocks();
+  });
 
   /**
    * Roland Banks in the Study, his turn ended and the enemy phase begun: the next step is the
@@ -80,6 +83,10 @@ describe('ChangesNotice', () => {
         {noticeFor(table)}
       </>
     );
+    const shown: HTMLElement[] = [];
+    vi.spyOn(HTMLElement.prototype, 'showPopover').mockImplementation(function (this: HTMLElement) {
+      shown.push(this);
+    });
     const { rerender } = render(withDetails());
 
     table.nextPhase();
@@ -88,6 +95,7 @@ describe('ChangesNotice', () => {
     // jsdom never opens a popover, so it counts the notice as hidden, without a name.
     const notice = screen.getByRole('status', { hidden: true });
     expect(notice.getAttribute('popover')).toBe('manual');
+    expect(shown).toEqual([notice]);
   });
 
   it('starts afresh for a step played while the last notice still shows', () => {
