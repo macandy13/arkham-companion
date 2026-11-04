@@ -108,7 +108,8 @@ describe('describeDecision', () => {
   it.each([
     { prompt: 'decision.retaliate', question: 'Swarm of Rats retaliates:' },
     { prompt: 'decision.alert', question: 'Swarm of Rats attacks after the failed evasion:' },
-  ])('words the keyword attack $prompt', ({ prompt, question }) => {
+    { prompt: 'decision.enemyAttack', question: 'Swarm of Rats attacks:' },
+  ])('words the attack $prompt', ({ prompt, question }) => {
     const attack: Decision = {
       ...engage,
       kind: 'confirm',
