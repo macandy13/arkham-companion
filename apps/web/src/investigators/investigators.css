@@ -572,6 +572,16 @@
     justify-self: end;
   }
 
+  /* Thumbs tap them on a phone, so the turn's buttons take a whole touch target. */
+  #board:not([data-view='investigators'])
+    > #investigators
+    > section
+    > :is(button, [role='group'] > button) {
+    min-width: var(--touch-target);
+    min-height: var(--touch-target);
+    font-size: var(--font-size-body);
+  }
+
   #board:not([data-view='investigators'])
     > #investigators
     > section:has(> :is(button, [role='group']))
