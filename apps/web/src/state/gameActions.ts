@@ -21,10 +21,9 @@ import { assertNever } from '@arkham/util';
 
 /**
  * The tokens the players place, move and take back by hand (`adjustTokens`): the clues and doom a
- * location's steppers change, and those dragged to and from the token pool, among them an enemy's
- * damage given back to heal it.
+ * location's steppers change, and those dragged to and from the token pool.
  */
-export type LooseToken = Extract<TokenKind, 'clue' | 'doom' | 'damage'>;
+export type LooseToken = Extract<TokenKind, 'clue' | 'doom'>;
 
 /** The investigator counters the screen's +/− steppers change. */
 export type SteppedStat = Extract<InvestigatorStat, 'resources' | 'damage' | 'horror'>;
@@ -122,6 +121,8 @@ export interface GameActions {
   moveEnemy(enemy: InstanceId, location: InstanceId): Promise<void>;
   /** `amount` damage on `enemy`, as a card effect deals it; enough of it defeats the enemy. */
   damageEnemy(enemy: InstanceId, amount: number): Promise<void>;
+  /** `amount` damage healed from `enemy`, as a card effect heals it (`HealEnemy`). */
+  healEnemy(enemy: InstanceId, amount: number): Promise<void>;
   /** A card effect disengages `enemy`; it stays where it is. */
   disengageEnemy(enemy: InstanceId): Promise<void>;
   /** A card effect defeats `enemy` outright. */
@@ -179,9 +180,8 @@ export interface GameActions {
    * `delta` more (or, negative, fewer) of `token` on `card` in play (a location, an enemy): one tap
    * on a location's stepper, or a token dragged from or to the token pool. Doom added is placed by
    * rule (`PlaceDoom`), so effects that count placed doom see it; the engine has no command that
-   * places or removes clues, removes doom or heals an enemy yet, so the rest are corrections by
-   * hand (`ManualAdjust`), like the header's `removeDoom`. Damage dealt to an enemy goes through
-   * `damageEnemy` instead, which defeats it.
+   * places or removes clues or removes doom yet, so the rest are corrections by hand
+   * (`ManualAdjust`), like the header's `removeDoom`.
    */
   adjustTokens(card: InstanceId, token: LooseToken, delta: number): Promise<void>;
   /**
@@ -307,6 +307,8 @@ export function gameActions(
       play((table) => table.moveEnemy(enemy, location, { forced: true })),
     damageEnemy: (enemy, amount) =>
       play((table) => table.play({ type: 'DamageEnemy', enemyId: enemy, amount })),
+    healEnemy: (enemy, amount) =>
+      play((table) => table.play({ type: 'HealEnemy', enemyId: enemy, amount })),
     disengageEnemy: (enemy) =>
       play((table) => table.play({ type: 'DisengageEnemy', enemyId: enemy })),
     defeatEnemy: (enemy) => play((table) => table.play({ type: 'DefeatEnemy', enemyId: enemy })),

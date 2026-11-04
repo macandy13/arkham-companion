@@ -8,6 +8,7 @@ import type {
   InstanceId,
   InvestigatorId,
   MapId,
+  MapEnemyView,
   MapView,
 } from '@arkham/engine';
 import { cycledIndex } from '@arkham/util';
@@ -29,7 +30,7 @@ import { usePieceDrag } from './usePieceDrag';
 import { investigatorAt } from '../investigators/dropTarget';
 import { enemyAt } from './dropTarget';
 import { overHeaderCard, overTokenPool } from '../screens/headerDropTarget';
-import { TokenGhost } from '../screens/TokenGhost';
+import { TokenGhost, type GhostKind } from '../screens/TokenGhost';
 import './map.css';
 
 /**
@@ -228,7 +229,7 @@ function MapDrawing({
         return;
       }
       if ('enemyDamage' in piece) {
-        if (overTokenPool(client)) void actions.adjustTokens(piece.enemyDamage.id, 'damage', -1);
+        if (overTokenPool(client)) void actions.healEnemy(piece.enemyDamage.id, 1);
         return;
       }
       if ('doom' in piece || 'enemyDoom' in piece) {
@@ -249,12 +250,7 @@ function MapDrawing({
       void ('enemy' in piece ? actions.moveEnemy(piece.enemy.id, to) : actions.moveTo(to));
     },
     (piece) => {
-      const enemy =
-        'enemy' in piece
-          ? piece.enemy
-          : 'enemyDoom' in piece
-            ? piece.enemyDoom
-            : 'enemyDamage' in piece && piece.enemyDamage;
+      const enemy = enemyOf(piece);
       if (!enemy) return false;
       setEnemyFor(enemy.id);
       return true;
@@ -334,16 +330,7 @@ function MapDrawing({
         </TransformComponent>
       </TransformWrapper>
       {drag.dragged && isToken(drag.dragged.piece) && (
-        <TokenGhost
-          kind={
-            'clue' in drag.dragged.piece
-              ? 'clue'
-              : 'enemyDamage' in drag.dragged.piece
-                ? 'damage'
-                : 'doom'
-          }
-          at={drag.dragged.client}
-        />
+        <TokenGhost kind={tokenKind(drag.dragged.piece)} at={drag.dragged.client} />
       )}
       {detailsLocation && (
         <LocationDetails
@@ -366,6 +353,23 @@ function MapDrawing({
       )}
     </figure>
   );
+}
+
+/** The enemy a piece is or sits on (its doom or damage badge), whose details a tap on it opens. */
+function enemyOf(piece: TilePiece): MapEnemyView | undefined {
+  if ('enemy' in piece) return piece.enemy;
+  if ('enemyDoom' in piece) return piece.enemyDoom;
+  if ('enemyDamage' in piece) return piece.enemyDamage;
+  return undefined;
+}
+
+/** Which token a dragged token piece shows over the page (`TokenGhost`). */
+function tokenKind(
+  piece: Exclude<TilePiece, { investigator: unknown } | { enemy: unknown }>,
+): GhostKind {
+  if ('clue' in piece) return 'clue';
+  if ('enemyDamage' in piece) return 'damage';
+  return 'doom';
 }
 
 /** A token piece, which follows the pointer over the whole page (`TokenGhost`) rather than the map. */

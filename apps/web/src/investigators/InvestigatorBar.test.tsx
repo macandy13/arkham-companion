@@ -1313,7 +1313,7 @@ describe('InvestigatorBar', () => {
       );
 
     /** Drags alder's `stat` off the card from (10, 10) and lets go at (300, 40) over `under`. */
-    async function dragOffAlder(stat: string, under: Element | null) {
+    async function dragOffAlder(stat: 'health' | 'sanity' | 'resources', under: Element | null) {
       document.elementFromPoint = () => under;
       const counter = panel('alder').querySelector(`[data-stat="${stat}"] [data-drag]`);
       if (!counter) throw new Error(`alder's ${stat} is not draggable`);
@@ -1323,30 +1323,34 @@ describe('InvestigatorBar', () => {
       await act(async () => {});
     }
 
+    // The damage lies on the heart (health), the horror on the brain (sanity).
     it.each([
       { stat: 'health', after: { damage: 1, horror: 2, resources: 3 } },
       { stat: 'sanity', after: { damage: 2, horror: 1, resources: 3 } },
       { stat: 'resources', after: { damage: 2, horror: 2, resources: 2 } },
-    ])("takes one off alder's $stat dropped on the pool: $after", async ({ stat, after }) => {
-      const table = hurtAlder();
-      render(
-        <>
-          <InvestigatorBar
-            board={table.board}
-            actions={actionsOn(table)}
-            busy={false}
-            adjusting={false}
-          />
-          <section data-pool>
-            <h2>Token pool</h2>
-          </section>
-        </>,
-      );
+    ] as const)(
+      "takes one off alder's $stat dropped on the pool: $after",
+      async ({ stat, after }) => {
+        const table = hurtAlder();
+        render(
+          <>
+            <InvestigatorBar
+              board={table.board}
+              actions={actionsOn(table)}
+              busy={false}
+              adjusting={false}
+            />
+            <section data-pool>
+              <h2>Token pool</h2>
+            </section>
+          </>,
+        );
 
-      await dragOffAlder(stat, screen.getByRole('heading', { name: 'Token pool' }));
+        await dragOffAlder(stat, screen.getByRole('heading', { name: 'Token pool' }));
 
-      expect(table.board.investigator(alder)).toMatchObject(after);
-    });
+        expect(table.board.investigator(alder)).toMatchObject(after);
+      },
+    );
 
     it('keeps the damage when it is dropped anywhere but the pool', async () => {
       const table = hurtAlder();
