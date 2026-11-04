@@ -1,4 +1,4 @@
-import { useId, useState, type ReactNode } from 'react';
+import { useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   SKILL_NAMES,
@@ -10,9 +10,9 @@ import {
   type SkillName,
 } from '@arkham/engine';
 import { Brain, Heart } from '../catalog/cardFace';
+import { range } from '@arkham/util';
 import { useCardPicture } from '../catalog/cardImages';
 import type { GameActions, SteppedStat } from '../state/gameActions';
-import { InvestigatorArt } from './InvestigatorArt';
 import { classOf, type PrintedInvestigator } from '@arkham/carddata';
 import { InvestigatorFace, type InvestigatorFaceShape } from './InvestigatorFace';
 import { SkillTestDialog } from './SkillTestDialog';
@@ -35,11 +35,13 @@ import './investigators.css';
  * show only while the players adjust the board (`adjusting`, `OpenGame.adjusting`), and the turn
  * controls wait meanwhile, since a turn step is play, not a correction.
  *
- * A phone has room for one panel only, so there the stylesheet shows just the focused one
- * (`data-focus`) with the others as avatar buttons above it (`OtherInvestigators`); a wider screen
- * shows every panel and hides the avatars. Focus follows the turn, see `useFocus`. With `onOpen`
- * (the phone's compact view), the focused investigator's name is a button that opens the detail
- * view on their panel, and the card is the slim strip (`InvestigatorFace`) to leave the map room.
+ * A phone has room for one panel only, so in its compact view (`onOpen`) the stylesheet lays the
+ * panels in a row a screen wide each, and the players swipe sideways between them; the one in
+ * view is the focused one (`data-focus`, `useSwipedTo`), and dots on each panel show its seat in
+ * the row. Focus follows the turn, see `useFocus`,
+ * and the row scrolls to it. There the focused investigator's name is a button that opens the
+ * detail view on their panel, and the card is the slim strip (`InvestigatorFace`) to leave the map
+ * room.
  * Expanded in place there (`whole`), each panel shows the whole card (`WholeCard`) instead.
  */
 export function InvestigatorBar({
@@ -66,14 +68,19 @@ export function InvestigatorBar({
   const [focus, setFocus] = useFocus(board);
   return (
     <>
-      <OtherInvestigators board={board} focus={focus} onFocus={setFocus} />
-      {board.investigators.map((investigator) => (
+      {board.investigators.map((investigator, seat) => (
         <InvestigatorPanel
           key={investigator.id}
+          seat={
+            onOpen && board.investigators.length > 1
+              ? { at: seat, of: board.investigators.length }
+              : undefined
+          }
           board={board}
           investigator={investigator}
           printed={printed?.(investigator.code)}
           focused={focus === investigator.id}
+          onShown={onOpen ? () => setFocus(investigator.id) : undefined}
           onOpen={focus === investigator.id ? onOpen : undefined}
           shape={onOpen ? 'strip' : 'banner'}
           whole={whole}
@@ -108,44 +115,51 @@ function useFocus(board: BoardView): [InvestigatorId | undefined, (id: Investiga
   return [focus, (id) => setPicked({ id, turn: turnKey(board) })];
 }
 
+/**
+ * The phone's row of panels, one a screen wide, which the players swipe between: once a panel is
+ * mostly in view (`SHOWN_SHARE`) it tells `onShown`, which focuses it, and a panel focused
+ * otherwise (the turn moved on) scrolls into view at once, so the row passes no panel between on
+ * its way, which would take the focus. Without `onShown` (a wider screen, or the phone's expanded
+ * bar, whose dots follow the row themselves) it does nothing. Returns the panel's ref.
+ */
+function useSwipedTo(focused: boolean, onShown: (() => void) | undefined) {
+  const section = useRef<HTMLElement>(null);
+  const shown = useRef(onShown);
+  const carousel = onShown !== undefined;
+  useLayoutEffect(() => {
+    shown.current = onShown;
+  });
+  useLayoutEffect(() => {
+    if (carousel && focused)
+      section.current?.scrollIntoView?.({ block: 'nearest', inline: 'start', behavior: 'instant' });
+  }, [carousel, focused]);
+  const focusedNow = useRef(focused);
+  useLayoutEffect(() => {
+    focusedNow.current = focused;
+  });
+  useEffect(() => {
+    const panel = section.current;
+    const row = panel?.parentElement;
+    // jsdom has no IntersectionObserver; without one the row only follows the turn.
+    if (!carousel || !panel || !row || typeof IntersectionObserver === 'undefined') return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry?.isIntersecting && !focusedNow.current) shown.current?.();
+      },
+      { root: row, threshold: SHOWN_SHARE },
+    );
+    observer.observe(panel);
+    return () => observer.disconnect();
+  }, [carousel]);
+  return section;
+}
+
+/** How much of a panel must be in view on the phone's row for it to take the focus. */
+const SHOWN_SHARE = 0.6;
+
 /** Names the turn in progress, or the time between turns, uniquely within a game (`useFocus`). */
 function turnKey(board: BoardView): string {
   return `${board.round}:${board.phase}:${board.turn ?? ''}`;
-}
-
-/**
- * The investigators besides the focused one (`focus`, see `useFocus`) as round avatars of their
- * card's art, or their initial like their pawn on the map until it loads, each a button that
- * brings their panel to the front (`onFocus`). Only the phone shows them; nothing in a solo game.
- */
-function OtherInvestigators({
-  board,
-  focus,
-  onFocus,
-}: {
-  board: BoardView;
-  focus: InvestigatorId | undefined;
-  onFocus: (id: InvestigatorId) => void;
-}) {
-  const { t } = useTranslation();
-  const others = board.investigators.filter(({ id }) => id !== focus);
-  if (others.length === 0) return null;
-  return (
-    <ul aria-label={t('investigators.others')}>
-      {others.map((investigator) => (
-        <li key={investigator.id} data-turn={board.turn === investigator.id || undefined}>
-          <button
-            type="button"
-            aria-label={t('investigators.show', { name: investigator.name })}
-            onClick={() => onFocus(investigator.id)}
-          >
-            <span>{investigator.name.charAt(0)}</span>
-            <InvestigatorArt image={investigator.image} />
-          </button>
-        </li>
-      ))}
-    </ul>
-  );
 }
 
 /**
@@ -155,8 +169,8 @@ function OtherInvestigators({
  * itself, so its abilities and flavour stay off the screen to leave the board its room; a tap on
  * the art shows the whole card with its text (`InvestigatorCard`). Then where they are and how their round goes, the
  * cards they control (`PlayArea`) and their turn controls. Before where they are, a pentagon marks
- * the lead investigator, like the game's lead investigator token, and an action arrow the
- * investigator whose turn it is. Health and sanity show what is left of the printed value, like
+ * the lead investigator, like the game's lead investigator token; whose turn it is needs no
+ * marker, since only their turn controls carry the action arrows. Health and sanity show what is left of the printed value, like
  * the dials, while their steppers place and heal damage and horror, like the tokens on the card.
  * Clues show without steppers: they
  * are found by investigating and spent on the act.
@@ -165,7 +179,9 @@ function InvestigatorPanel({
   board,
   investigator,
   printed,
+  seat,
   focused,
+  onShown,
   onOpen,
   shape,
   whole,
@@ -182,8 +198,15 @@ function InvestigatorPanel({
   investigator: InvestigatorView;
   /** What their card prints besides its stats: the subname and class, once the catalog has them. */
   printed: PrintedInvestigator | undefined;
+  /**
+   * Where the panel sits on the phone's row of panels, which its dots show, so the players see
+   * there is more to swipe to; nothing elsewhere, or in a solo game.
+   */
+  seat: { at: number; of: number } | undefined;
   /** The phone shows this panel in full (`useFocus`). */
   focused: boolean;
+  /** The players swiped this panel into view, on the phone's row of panels (`useSwipedTo`). */
+  onShown: (() => void) | undefined;
   /** Opens the phone's detail view on this panel, from a tap on the name. */
   onOpen: ((investigator: InvestigatorId) => void) | undefined;
   /** The card's shape: the phone's compact view has room for the slim strip only. */
@@ -205,6 +228,7 @@ function InvestigatorPanel({
   const nameId = useId();
   const picture = useCardPicture(investigator.image, 'landscape');
   const [zoomed, setZoomed] = useState(false);
+  const section = useSwipedTo(focused, onShown);
   const stats = (
     <>
       <Skills
@@ -225,12 +249,20 @@ function InvestigatorPanel({
   );
   return (
     <section
+      ref={section}
       aria-labelledby={nameId}
       data-status={investigator.status}
       data-turn={onTurn || undefined}
       data-focus={focused || undefined}
       data-investigator={investigator.id}
     >
+      {seat && (
+        <ol aria-hidden="true" data-dots="investigators">
+          {range(seat.of).map((other) => (
+            <li key={other} data-current={other === seat.at || undefined} />
+          ))}
+        </ol>
+      )}
       <ThreatArea
         board={board}
         investigator={investigator}
@@ -308,7 +340,6 @@ function InvestigatorPanel({
       )}
       <p data-whereabouts="">
         {lead && <span role="img" aria-label={t('investigators.lead')} data-marker="lead" />}
-        {onTurn && <span role="img" aria-label={t('investigators.onTurn')} data-marker="turn" />}
         <span>{statusLine(investigator, onTurn, t)}</span>
       </p>
       <PlayArea

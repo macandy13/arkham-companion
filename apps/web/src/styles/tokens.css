@@ -613,7 +613,7 @@
   --small-card-asset-art-y: 0.1;
   /* A portrait card scan's height for its width (`PORTRAIT_SCAN`, 419 : 300). */
   --portrait-scan-ratio: 1.3967;
-  /* The round avatar of another investigator over the phone's one investigator panel. */
+  /* An investigator's round avatar beside their name (the clue payment's rows). */
   --investigator-avatar-size: 2.75rem;
   /* The phone's header expanded in place shows its cards this tall, leaving the map a third. */
   --layout-detail-card-height: 12rem;

@@ -51,14 +51,14 @@ describe('gameLog', () => {
 
   it.each([
     [
-      'the doom the mythos phase places',
+      'the doom the mythos phase places, which its heading names already',
       (table: PlayTable) => {
         table.endTurn(byName('Roland Banks'));
         table.nextPhase();
         table.nextPhase();
         table.nextPhase();
       },
-      { text: '1 doom on What Lurks Below', cause: 'mythos phase' },
+      { text: '1 doom on What Lurks Below', cause: undefined },
     ],
     [
       'the damage the players take themselves',
@@ -67,13 +67,31 @@ describe('gameLog', () => {
       },
       { text: 'Roland Banks takes 2 damage', cause: undefined },
     ],
-  ])('says why the game did a line by itself, for %s', (_situation, play, line) => {
+  ])('says why the game did a line by itself, but not for %s', (_situation, play, line) => {
     const table = PlayTable.start(rolandsTurn);
 
     play(table);
 
     const lines = logOf(t, table).at(-1)?.lines ?? [];
     expect(lines.map(({ text, cause }) => ({ text, cause }))).toContainEqual(line);
+  });
+
+  it("names the card whose forced ability did a line, which the heading doesn't", () => {
+    const cellar = instanceId('cellar');
+    const table = PlayTable.start(
+      rolandsTurn
+        .withLocation(
+          cellar,
+          blankLocation('Dooming Cellar', { abilities: [whenRevealed(placeDoomOnAgenda(1))] }),
+        )
+        .withConnection(study, cellar),
+    );
+
+    table.moveTo(byName('Roland Banks'), byName('Dooming Cellar'));
+
+    expect(logOf(t, table).at(-1)?.lines).toContainEqual(
+      expect.objectContaining({ text: '1 doom on What Lurks Below', cause: 'Dooming Cellar' }),
+    );
   });
 
   it('starts with the scenario', () => {
@@ -302,7 +320,7 @@ describe('automaticChanges', () => {
   const changesOf = (table: PlayTable) =>
     automaticChanges(t, table.ctx, table.state, table.entries)?.lines.map((line) => line.text);
 
-  it('tells the resources the upkeep phase gives, without the phase and round lines', () => {
+  it('tells the card draw and resources of the upkeep phase, without the phase and round lines', () => {
     const table = PlayTable.start(rolandsTurn);
     table.endTurn(byName('Roland Banks'));
     table.nextPhase();
@@ -310,7 +328,10 @@ describe('automaticChanges', () => {
     table.nextPhase();
 
     expect(table.state.meta.phase).toBe('upkeep');
-    expect(changesOf(table)).toEqual(['Roland Banks gains 1 resource']);
+    expect(changesOf(table)).toEqual([
+      'Roland Banks draws 1 card',
+      'Roland Banks gains 1 resource',
+    ]);
   });
 
   it('tells the doom the mythos phase places on the agenda', () => {

@@ -130,11 +130,12 @@ test(
       }
     });
 
-    await test.step('The upkeep gives Roland Banks 1 resource, and its notice fades away', async () => {
+    await test.step('The upkeep has Roland Banks draw 1 card and gives him 1 resource, and its notice fades away', async () => {
       const changes = page.getByRole('status', { name: 'What the game did' });
-      await expect(changes.getByRole('listitem')).toHaveText(
+      await expect(changes.getByRole('listitem')).toHaveText([
+        'Roland Banks draws 1 card (upkeep phase)',
         'Roland Banks gains 1 resource (upkeep phase)',
-      );
+      ]);
       await expect(changes).toContainText('Not right? Undo the step, or adjust it by hand.');
       await expect(changes).toBeHidden({ timeout: 10_000 });
     });

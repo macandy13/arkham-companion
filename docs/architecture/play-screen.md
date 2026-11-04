@@ -10,7 +10,7 @@ The [game screen](../../apps/web/src/screens/GameScreen.tsx) shows, from top to 
 The first open decision shows as a dialog over the board ([decisions](play-screen-decisions.md)).
 Each part has its own page, so changes to different parts touch different files.
 
-The [status row](../../apps/web/src/screens/GameStatus.tsx) has the round, the phase track, Next and round icon buttons for adjust, undo, the game log and a ☰ menu (the play screen hides the app's title bar, so its links and the export sit in that menu).
+The [status row](../../apps/web/src/screens/GameStatus.tsx) has the round, the phase track, Next (the brass primary pill the investigator's Start turn and End take too) and round icon buttons for adjust, undo, the game log and a ☰ menu (the play screen hides the app's title bar, so its links and the export sit in that menu).
 
 ## Symbols
 
@@ -38,9 +38,8 @@ The same query opens a block in [`tokens.css`](../../apps/web/src/styles/tokens.
   - the slot labels are hidden for the eye only,
   - and the piles, the victory display and the card plates are hidden.
   - A tap on a card expands the header in place on it (below);
-- the status row names only the current phase, so it stays on one line;
-- the investigator bar shows one panel, the focused one (`data-focus`, `useFocus` in [`InvestigatorBar.tsx`](../../apps/web/src/investigators/InvestigatorBar.tsx): the one whose avatar was tapped until the turn changes, else the turn's, else the lead), without its art window, and the other investigators as round avatar buttons above it.
-  The avatars are in the markup on every screen and hidden outside the phone, so the switch is CSS only.
+- the status row names only the current phase and keeps only Next, undo and the ☰ menu, at a whole touch target (`--touch-target`), so it stays on one line; adjust and the game log move into the menu, whose copies of them show only on a phone (the map's buttons take the touch target too);
+- the investigator bar lays the panels in a row a screen wide each, snapped sideways, so a swipe brings the next investigator in. The one in view is the focused one (`data-focus`, `useFocus` and `useSwipedTo` in [`InvestigatorBar.tsx`](../../apps/web/src/investigators/InvestigatorBar.tsx): the one swiped to until the turn changes, else the turn's, else the lead), and a change of turn scrolls the row to its investigator. Dots over each panel (its `seat`) show where it sits in the row, as the detail view's do; the map's zoom buttons stand in a column.
 
 ### Detail view
 
@@ -109,7 +108,7 @@ A card that goes while it is open (an enemy leaving play) drops its entry a tick
 - each step carries the round and phase it ended in, whose turn it was (the actor) and when it was stored (`GameSession.stepTimes`, from `StoredEvent.timestamp`);
 - each event the players care about becomes one `LogLine`: its event type, its actor (the investigator it names, or the enemy that engaged or attacked) and a translated text (`log.*` strings), named with the cards and investigators of the state; bookkeeping (phase steps, queues, decisions asked, map layout) has none, and a step without lines is left out;
 - a clue discovery is one line, without the location and investigator counters it moved;
-- a line the game did by itself names why (`LogLine.cause`, from `LoggedEvent.cause`): the card whose forced ability it was, or the step of the round (`log.cause.*`, "mythos phase"); [`LineText`](../../apps/web/src/log/LineText.tsx) shows it after the line, quieter: "1 doom on What's Going On?! (mythos phase)".
+- a line the game did by itself names why (`LogLine.cause`, from `LoggedEvent.cause`): the card whose forced ability it was, or the step of the round (`log.cause.*`, "mythos phase"), but not a step of the phase its heading names (`PHASE_OF_STEP`), which would only repeat it; [`LineText`](../../apps/web/src/log/LineText.tsx) shows it after the line, quieter: "1 doom on What's Going On?! (Ancient Evils)".
 
 The log button opens [`GameLogDialog`](../../apps/web/src/log/GameLogDialog.tsx). `logSections` cuts the steps, in the order played, into sections of one round and phase, and the dialog opens scrolled to the end, so the newest step shows first. Each section's heading sticks to the top while its steps scroll under it, so the round, phase and actor are never repeated on every line. It is not tied to a moment in the game and grows long, so it is a page of its own on the card shell without a card ([`CardDialog`](../../apps/web/src/screens/CardDialog.tsx)), with the scenario's name as its kicker: the screen's full height at the wide dialog width on a desktop or tablet, and the whole screen on a phone held upright, where it is no sheet. A step shows its actor and time above its lines, with a rule between steps. It reads `OpenGame.log` (the session's `entries`, `stepTimes` and the rules that name their cards), so it waits for no step.
 

@@ -157,7 +157,7 @@ describe('GameSession on The Gathering', () => {
     const resources = reopened.entries.filter(
       ({ event }) => event.type === 'InvestigatorChanged' && event.stat === 'resources',
     );
-    expect(resources.at(-1)?.cause).toEqual({ kind: 'rule', step: 'gainResources' });
+    expect(resources.at(-1)?.cause).toEqual({ kind: 'rule', step: 'drawAndGain' });
   });
 
   it('knows when each step was stored, also after reopening the game', async () => {
@@ -392,7 +392,7 @@ describe('GameSession on The Gathering', () => {
 });
 
 describe('skippedEffects', () => {
-  it('names the investigator of a command the engine left to the players', () => {
+  it('leaves out the upkeep draw no card asked for, which the changes notice tells', () => {
     const southside = instanceId('southside');
     const alder = investigatorId('alder');
     const { context, state } = newGame()
@@ -401,16 +401,10 @@ describe('skippedEffects', () => {
       .start();
 
     const notices = skippedEffects({ ...context, scenario: theGathering }, state, [
-      { type: 'CommandDeferred', command: { type: 'DrawCards', investigatorId: alder, amount: 3 } },
+      { type: 'CommandDeferred', command: { type: 'DrawCards', investigatorId: alder, amount: 1 } },
     ]);
 
-    expect(notices).toEqual([
-      {
-        kind: 'deferred',
-        investigator: 'Alder Ashcroft',
-        command: { type: 'DrawCards', investigatorId: alder, amount: 3 },
-      },
-    ]);
+    expect(notices).toEqual([]);
   });
 
   it('names the card whose ability asked alder to draw', () => {

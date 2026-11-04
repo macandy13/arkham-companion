@@ -4,7 +4,7 @@
 
 - mythos doom, threshold check and encounter draws;
 - enemy hunters and attacks;
-- upkeep resets and resources.
+- upkeep resets, the card draw (deferred to the players) and resources.
 
 `NextPhase` runs them in order and stops at a decision, so the assistant resumes after any answer.
 An enemy-phase attack exhausts its enemy as `ResolveEnemyAttack`'s continuation (`exhaustAfterAttack`), after the abilities the attack triggered.
@@ -16,7 +16,7 @@ flowchart TD
   MYTH["Mythos<br/>placeDoom, checkDoomThreshold,<br/>drawEncounterCard per investigator"] -- NextPhase --> INV
   INV["Investigation<br/>StartTurn → actions → EndTurn,<br/>the players pick who goes next"] -- "NextPhase, once every<br/>investigator took a turn" --> EN
   EN["Enemy<br/>huntersMove, enemiesAttack"] -- NextPhase --> UP
-  UP["Upkeep<br/>resetActions, readyExhausted,<br/>gainResources, RoundEnded"] -- "NextPhase: next round" --> MYTH
+  UP["Upkeep<br/>resetActions, readyExhausted,<br/>drawAndGain, RoundEnded"] -- "NextPhase: next round" --> MYTH
 ```
 
 ## Extension points

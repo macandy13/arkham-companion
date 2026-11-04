@@ -262,7 +262,7 @@ describe('the round', () => {
     // The upkeep begins by the players' Next; its resource is the rules' own step.
     expect(causes.slice(-2)).toEqual([
       ['PhaseChanged', undefined],
-      ['InvestigatorChanged', { kind: 'rule', step: 'gainResources' }],
+      ['InvestigatorChanged', { kind: 'rule', step: 'drawAndGain' }],
     ]);
   });
 

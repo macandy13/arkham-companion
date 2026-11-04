@@ -212,8 +212,11 @@ export type PhaseStepId =
    * ready their own cards at the table.
    */
   | 'readyExhausted'
-  /** 4.4 Upkeep: each investigator gains 1 resource; drawing 1 card is left to the players. */
-  | 'gainResources'
+  /**
+   * 4.4 Upkeep: each investigator draws 1 card (`DrawCards`, which the players carry out) and
+   * gains 1 resource.
+   */
+  | 'drawAndGain'
   /** 4.6 Upkeep: the upkeep phase and the round end (`RoundEnded`, `roundEnds`). */
   | 'endRound';
 
@@ -244,7 +247,7 @@ export type PhaseStep =
   | { id: 'enemiesAttack'; attacks?: DueAttack[] }
   | { id: 'resetActions' }
   | { id: 'readyExhausted' }
-  | { id: 'gainResources' }
+  | { id: 'drawAndGain' }
   | { id: 'endRound' };
 
 /**

@@ -15,6 +15,7 @@ import type {
   SkillTestResolved,
   TokenKind,
 } from '@arkham/engine';
+import { PHASE_OF_STEP } from '@arkham/engine';
 import { assertNever, runsBy } from '@arkham/util';
 import type { GameLogSource } from '../state/appStore';
 
@@ -82,7 +83,8 @@ export function gameLog(
       if (event.type === 'TurnStarted') turn = event.investigatorId;
       if (event.type === 'TurnEnded') turn = undefined;
     }
-    const lines = eventLines(t, ctx, state, items);
+    // The heading names the phase, so a phase step's cause would only repeat it.
+    const lines = eventLines(t, ctx, state, items, phase);
     if (lines.length === 0) return [];
     const actor = turnAtStart ?? turn;
     const timestamp = stepTimes.get(key);
@@ -121,7 +123,8 @@ export function logSections(steps: readonly LogStep[]): LogSection[] {
 
 /**
  * What `entries` (one step's) did, one line per event the players care about, with its cause when
- * the game did it by itself. Bookkeeping that only the engine reads (phase steps, queues, decisions
+ * the game did it by itself, unless the cause is a step of `headingPhase`, which the reader sees
+ * named already. Bookkeeping that only the engine reads (phase steps, queues, decisions
  * asked, map layout, exhaustion) has no line, and neither have the counters a clue discovery
  * moves, since its own line says it all.
  */
@@ -130,6 +133,7 @@ export function eventLines(
   ctx: EngineContext,
   state: GameState,
   entries: readonly LoggedEvent[],
+  headingPhase?: Phase,
 ): LogLine[] {
   const discoveries = entries.flatMap(({ event }) =>
     event.type === 'CluesDiscovered' ? [event] : [],
@@ -148,7 +152,9 @@ export function eventLines(
     const text = eventLine(t, names, state, event);
     if (text === undefined) return [];
     const actor = actorOf(names, event);
-    const why = cause === undefined ? undefined : causeOf(t, names, cause);
+    const told =
+      cause === undefined || (cause.kind === 'rule' && PHASE_OF_STEP[cause.step] === headingPhase);
+    const why = told ? undefined : causeOf(t, names, cause);
     return [
       {
         event: event.type,

@@ -33,7 +33,7 @@ describe('ChangesNotice', () => {
 
   /**
    * Roland Banks in the Study, his turn ended and the enemy phase begun: the next step is the
-   * upkeep, which gives him 1 resource.
+   * upkeep, in which he draws 1 card and gains 1 resource.
    */
   const beforeUpkeep = () => {
     const table = PlayTable.start(
@@ -56,9 +56,14 @@ describe('ChangesNotice', () => {
     rerender(noticeFor(table));
 
     const notice = screen.getByRole('status', { name: 'What the game did' });
-    expect(within(notice).getByRole('listitem').textContent).toBe(
+    expect(
+      within(notice)
+        .getAllByRole('listitem')
+        .map((line) => line.textContent),
+    ).toEqual([
+      'Roland Banks draws 1 card (upkeep phase)',
       'Roland Banks gains 1 resource (upkeep phase)',
-    );
+    ]);
   });
 
   it('tells how to set a wrong change right', () => {

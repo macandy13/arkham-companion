@@ -44,7 +44,7 @@ export async function startGame(
 /**
  * A card effect the players resolve by hand, in their words: one the engine skipped because a card
  * it names is not in the game exactly once (`AbilityEffectSkipped`), or a card effect on an
- * investigator's own cards, which the game doesn't hold (`CommandDeferred` without `asAction`).
+ * investigator's own cards, which the game doesn't hold (`CommandDeferred` a card asked for).
  */
 export type SkippedEffect =
   | {
@@ -58,7 +58,7 @@ export type SkippedEffect =
     }
   | {
       readonly kind: 'deferred';
-      /** The printed name of the card whose ability asked for it (`CommandSource`), if a card did. */
+      /** The printed name of the card whose ability asked for it (`CommandSource`), while it is in the game. */
       readonly card?: string;
       /** The name of the investigator whose cards it is about. */
       readonly investigator: string;
@@ -90,8 +90,11 @@ export function skippedEffects(
         const { command } = event;
         // The players took it as an action at the table themselves, so there is nothing to remind them of.
         if (takenAsAction(command)) return [];
+        // No card asked for it, so a phase step of the rules did (the upkeep draw), which the
+        // changes notice already tells.
+        if (command.source === undefined) return [];
         const investigator = state.investigators.find((inv) => inv.id === command.investigatorId);
-        const source = command.source && state.cards[command.source.cardId];
+        const source = state.cards[command.source.cardId];
         return [
           {
             kind: 'deferred',

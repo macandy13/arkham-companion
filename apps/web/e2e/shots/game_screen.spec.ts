@@ -220,18 +220,24 @@ test('the house map in the Night and brass card style', async ({ page }) => {
 });
 
 test(
-  "the game log after two rounds, scrolled to the newest step under its round and phase, the game's own changes naming why",
+  'the game log after two rounds, scrolled to the newest step under its round and phase, the phase not repeated as a cause',
   { tag: '@shot' },
-  async ({ page }) => {
+  async ({ page, isMobile }) => {
     await resumeImportedGame(page, 'Two rounds', mythosDrawnStepsExport('Two rounds'));
 
+    // A phone keeps the log in the header's menu.
+    if (isMobile) await page.getByRole('button', { name: 'Menu' }).click();
     await page.getByRole('button', { name: 'Game log' }).click();
 
     const log = page.getByRole('dialog', { name: 'Game log' });
     const newestRound = log.getByRole('listitem', { name: 'Round 3 · Investigation' });
     await expect(newestRound.getByRole('heading')).toBeInViewport();
     await expect(newestRound.getByRole('listitem').last()).toBeInViewport();
-    await expect(log.getByText("1 doom on What's Going On?! (mythos phase)").last()).toBeVisible();
+    const mythos = log.getByRole('listitem', { name: 'Round 3 · Mythos' });
+    // The line alone, without "(mythos phase)" after it.
+    await expect(
+      mythos.getByRole('listitem').filter({ hasText: /^1 doom on What's Going On\?!$/ }),
+    ).toBeVisible();
   },
 );
 
@@ -246,9 +252,10 @@ test(
     await page.getByRole('button', { name: 'Next' }).click();
 
     const changes = page.getByRole('status', { name: 'What the game did' });
-    await expect(changes.getByRole('listitem')).toHaveText(
+    await expect(changes.getByRole('listitem')).toHaveText([
+      'Roland Banks draws 1 card (upkeep phase)',
       'Roland Banks gains 1 resource (upkeep phase)',
-    );
+    ]);
   },
 );
 
@@ -626,4 +633,25 @@ test('the Tangled Thicket revealed with its double slash, the other Arkham Woods
 
   await expect(map.getByRole('img', { name: 'Connection symbol: double slash' })).toHaveCount(1);
   await expect(map.getByRole('img', { name: 'Connection symbol: square' })).toHaveCount(3);
+});
+
+test('the menu open, holding "Adjust board" and the game log on a phone', async ({ page }) => {
+  await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
+
+  await page.getByRole('button', { name: 'Menu' }).click();
+
+  await expect(page.getByRole('link', { name: 'Settings' })).toBeVisible();
+});
+
+test('Daisy Walker swiped into view on a phone, Roland Banks beside her', async ({
+  page,
+  isMobile,
+}) => {
+  await resumeImportedGame(page, 'Clues to share', cluesToShareExport('Clues to share'));
+  const daisy = page.getByRole('region', { name: 'Daisy Walker' });
+
+  if (isMobile) await daisy.evaluate((panel) => panel.scrollIntoView({ inline: 'start' }));
+
+  await expect(daisy).toBeVisible();
+  if (isMobile) await expect(daisy).toHaveAttribute('data-focus', 'true');
 });
