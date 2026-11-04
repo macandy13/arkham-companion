@@ -526,7 +526,7 @@ describe('InvestigatorBar', () => {
     });
   });
 
-  describe('the focused panel and the other investigators’ avatars, for a phone', () => {
+  describe('the focused panel, swiped to on a phone', () => {
     const alderAndBrook = () =>
       PlayTable.start(
         newGame()
@@ -542,72 +542,79 @@ describe('InvestigatorBar', () => {
         .filter((region) => region.hasAttribute('data-focus'))
         .map((region) => within(region).getByRole('heading').textContent);
 
-    const avatars = () =>
-      within(screen.getByRole('list', { name: 'Other investigators' }))
-        .getAllByRole('button')
-        .map((avatar) => avatar.getAttribute('aria-label'));
+    // jsdom has no IntersectionObserver: this one records what each panel watches, so a test
+    // can say which panel the players swiped into view.
+    const watching = new Map<Element, IntersectionObserverCallback>();
+    beforeEach(() => {
+      watching.clear();
+      vi.stubGlobal(
+        'IntersectionObserver',
+        class {
+          constructor(private readonly callback: IntersectionObserverCallback) {}
+          observe(panel: Element) {
+            watching.set(panel, this.callback);
+          }
+          disconnect() {}
+        },
+      );
+    });
+    afterEach(() => {
+      vi.unstubAllGlobals();
+    });
+
+    const swipeTo = (name: string) =>
+      act(() => {
+        const shown = panel(name);
+        watching.get(shown)?.(
+          [{ target: shown, isIntersecting: true } as unknown as IntersectionObserverEntry],
+          {} as IntersectionObserver,
+        );
+      });
+
+    /** The compact view's bar, a row of panels to swipe between (its `onOpen`). */
+    const phoneBar = (table: PlayTable) => (
+      <InvestigatorBar
+        board={table.board}
+        actions={actionsOn(table)}
+        busy={false}
+        adjusting={false}
+        onOpen={() => {}}
+      />
+    );
 
     it.each([
       {
         situation: 'outside a turn, the lead investigator Alder',
         turnOf: undefined,
         shown: 'alder',
-        others: ['Show brook'],
       },
-      {
-        situation: 'on Brook’s turn, Brook',
-        turnOf: brook,
-        shown: 'brook',
-        others: ['Show alder'],
-      },
-    ])('focuses $situation, the other one as an avatar', ({ turnOf, shown, others }) => {
+      { situation: 'on Brook’s turn, Brook', turnOf: brook, shown: 'brook' },
+    ])('focuses $situation', ({ turnOf, shown }) => {
       const table = alderAndBrook();
       if (turnOf) {
         table.nextPhase();
         table.startTurn(turnOf);
       }
 
-      render(
-        <InvestigatorBar
-          board={table.board}
-          actions={actionsOn(table)}
-          busy={false}
-          adjusting={false}
-        />,
-      );
+      render(phoneBar(table));
 
       expect(focused()).toEqual([shown]);
-      expect(avatars()).toEqual(others);
     });
 
-    it('focuses the investigator whose avatar is tapped, until the turn changes', () => {
+    it('focuses the investigator swiped into view, until the turn changes', () => {
       const table = alderAndBrook();
       table.nextPhase();
       table.startTurn(alder);
-      const { rerender } = render(
-        <InvestigatorBar
-          board={table.board}
-          actions={actionsOn(table)}
-          busy={false}
-          adjusting={false}
-        />,
-      );
+      const { rerender } = render(phoneBar(table));
 
-      fireEvent.click(screen.getByRole('button', { name: 'Show brook' }));
-      const afterTap = focused();
+      swipeTo('brook');
+      const afterSwipe = focused();
       table.endTurn(alder);
       table.startTurn(brook);
       table.endTurn(brook);
-      rerender(
-        <InvestigatorBar
-          board={table.board}
-          actions={actionsOn(table)}
-          busy={false}
-          adjusting={false}
-        />,
-      );
+      rerender(phoneBar(table));
 
-      expect(afterTap).toEqual(['brook']);
+      expect(afterSwipe).toEqual(['brook']);
       expect(focused()).toEqual(['alder']);
     });
 
@@ -615,16 +622,9 @@ describe('InvestigatorBar', () => {
       const table = alderAndBrook();
       table.nextPhase();
       table.startTurn(alder);
-      const { rerender } = render(
-        <InvestigatorBar
-          board={table.board}
-          actions={actionsOn(table)}
-          busy={false}
-          adjusting={false}
-        />,
-      );
+      const { rerender } = render(phoneBar(table));
 
-      fireEvent.click(screen.getByRole('button', { name: 'Show brook' }));
+      swipeTo('brook');
       table.endTurn(alder);
       table.startTurn(brook);
       table.endTurn(brook);
@@ -633,26 +633,14 @@ describe('InvestigatorBar', () => {
       table.nextPhase();
       table.nextPhase();
       table.startTurn(alder);
-      rerender(
-        <InvestigatorBar
-          board={table.board}
-          actions={actionsOn(table)}
-          busy={false}
-          adjusting={false}
-        />,
-      );
+      rerender(phoneBar(table));
 
       expect(table.board.round).toBe(2);
       expect(focused()).toEqual(['alder']);
     });
 
-    it('shows no avatars in a solo game', () => {
-      const table = PlayTable.start(
-        newGame()
-          .withLocation(study, blankLocation('study'))
-          .withInvestigator(alder, { locationId: study }),
-      );
-
+    it('keeps the focus on a wider screen, whose panels all show', () => {
+      const table = alderAndBrook();
       render(
         <InvestigatorBar
           board={table.board}
@@ -662,7 +650,10 @@ describe('InvestigatorBar', () => {
         />,
       );
 
-      expect(screen.queryByRole('list', { name: 'Other investigators' })).toBeNull();
+      swipeTo('brook');
+
+      expect(watching.size).toBe(0);
+      expect(focused()).toEqual(['alder']);
     });
   });
 

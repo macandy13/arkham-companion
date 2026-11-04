@@ -729,6 +729,26 @@
 }
 
 /*
+ * The menu's copies of "Adjust board" and the game log are for a phone, whose status row leaves
+ * them out; there they read as the menu's other entries, the icon before the name.
+ */
+#status nav li:has(> button[data-icon]) {
+  display: none;
+}
+
+#status nav li > button[data-icon] {
+  justify-content: flex-start;
+  gap: var(--space-2);
+  width: 100%;
+  padding-inline: var(--space-3);
+  border-radius: var(--radius);
+}
+
+#status nav li > button[data-icon]::before {
+  margin: 0;
+}
+
+/*
  * The column the dialogs over the board lay their parts in: every card dialog's page (the decision
  * dialog's among them: the question under who decides, the test, the options as full-width
  * buttons, Undo at its foot; the clue payment's, clue_payment.css; the encounter dialog's,
@@ -932,14 +952,37 @@
     gap: var(--space-1);
   }
 
+  /*
+   * Thumbs tap the status row, so it keeps Next, undo and the menu at a whole touch target, and
+   * "Adjust board" and the game log move into the menu.
+   */
+  #board > #status > button:is([data-icon='adjust'], [data-icon='log']) {
+    display: none;
+  }
+
+  #status nav li:has(> button[data-icon]) {
+    display: list-item;
+  }
+
+  #board > #status > button,
+  #board > #status > nav > button {
+    min-width: var(--touch-target);
+    min-height: var(--touch-target);
+  }
+
+  #board > #map figure [role='toolbar'] > button {
+    min-width: var(--touch-target);
+    min-height: var(--touch-target);
+  }
+
   /* Opens the detail view on the map row, from the corner the map's zoom buttons leave free. */
   #board:not([data-view='map']) > #map > button[data-detail='expand'] {
     position: absolute;
     z-index: var(--layer-map-controls);
     inset-block-end: var(--space-2);
     inset-inline-end: var(--space-2);
-    min-width: var(--button-compact);
-    min-height: var(--button-compact);
+    min-width: var(--touch-target);
+    min-height: var(--touch-target);
     padding: 0;
     border-radius: var(--radius-round);
   }

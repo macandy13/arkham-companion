@@ -517,8 +517,6 @@ export const appTexts = {
     offMap: 'An keinem Ort',
     lead: 'Ermittlungsleiter',
     onTurn: 'Am Zug',
-    others: 'Weitere Ermittler',
-    show: '{{name}} zeigen',
     showCard: 'Karte von {{name}} zeigen',
     defeated: 'Besiegt',
     resigned: 'Aufgegeben',
