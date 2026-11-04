@@ -17,7 +17,9 @@ const BASIC_ACTIONS = ['investigate', 'takeResource', 'drawCard', 'playCard'] as
  * play (`InvestigatorView.forbidden`, Dissonant Voices); then a button per card action the cards offer them (`BoardView.cardActions`, named by its
  * designator and card: "Resign · Parlor"; one with a group clue cost asks who pays, `useCluePayment`) and End, as in the prototype's turn row. Before it,
  * when the players may pick them next (`canStart`: the investigation phase, no turn in progress,
- * not taken this round), "Start turn", since the players choose the order.
+ * not taken this round), "Start turn", since the players choose the order. "Start turn" and End
+ * are the turn's own steps, its primary buttons (`data-primary`, base.css); the rest are
+ * outlined pills.
  * Nothing otherwise. The buttons wait while a step is queued (`busy`).
  */
 export function TurnControls({
@@ -39,7 +41,12 @@ export function TurnControls({
   const { dialog, pay } = useCluePayment(board);
   if (canStart)
     return (
-      <button type="button" disabled={busy} onClick={() => void actions.startTurn(investigator.id)}>
+      <button
+        type="button"
+        data-primary
+        disabled={busy}
+        onClick={() => void actions.startTurn(investigator.id)}
+      >
         {t('investigators.startTurn')}
       </button>
     );
@@ -91,6 +98,7 @@ export function TurnControls({
       <button
         type="button"
         aria-label={t('investigators.endTurn')}
+        data-primary
         disabled={busy}
         onClick={() => void actions.endTurn()}
       >

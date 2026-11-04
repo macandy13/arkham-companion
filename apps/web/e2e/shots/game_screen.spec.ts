@@ -21,7 +21,7 @@ import {
 
 // Situations on the game screen, each photographed as it ends (`@shot`, coding guidelines §3).
 
-test('the house map with Roland Banks in the Hallway', async ({ page }) => {
+test('the house map with Roland Banks in the Hallway', { tag: '@shot' }, async ({ page }) => {
   await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
 
   const hallway = page
@@ -607,3 +607,29 @@ test('the Tangled Thicket revealed with its double slash, the other Arkham Woods
   await expect(map.getByRole('img', { name: 'Connection symbol: double slash' })).toHaveCount(1);
   await expect(map.getByRole('img', { name: 'Connection symbol: square' })).toHaveCount(3);
 });
+
+test(
+  'the menu open, holding "Adjust board" and the game log on a phone',
+  { tag: '@shot' },
+  async ({ page }) => {
+    await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
+
+    await page.getByRole('button', { name: 'Menu' }).click();
+
+    await expect(page.getByRole('link', { name: 'Settings' })).toBeVisible();
+  },
+);
+
+test(
+  'Daisy Walker swiped into view on a phone, Roland Banks beside her',
+  { tag: '@shot' },
+  async ({ page, isMobile }) => {
+    await resumeImportedGame(page, 'Clues to share', cluesToShareExport('Clues to share'));
+    const daisy = page.getByRole('region', { name: 'Daisy Walker' });
+
+    if (isMobile) await daisy.evaluate((panel) => panel.scrollIntoView({ inline: 'start' }));
+
+    await expect(daisy).toBeVisible();
+    if (isMobile) await expect(daisy).toHaveAttribute('data-focus', 'true');
+  },
+);

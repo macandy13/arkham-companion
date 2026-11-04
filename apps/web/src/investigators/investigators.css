@@ -75,8 +75,8 @@
 
 /*
  * Where the investigator is and how their round goes, a line under their card in the table's
- * colours, after the lead and turn markers: a pentagon like the game's lead investigator token and
- * the game's action arrow.
+ * colours, after the lead marker: a pentagon like the game's lead investigator token. The turn
+ * needs no marker, since the turn controls' action arrows show whose turn it is.
  */
 #board > #investigators > section > p[data-whereabouts] {
   display: flex;
@@ -96,10 +96,6 @@
 
 #investigators [data-marker='lead'] {
   --marker-icon: url('./icons/lead.svg');
-}
-
-#investigators [data-marker='turn'] {
-  --marker-icon: url('../symbols/action.svg');
 }
 
 #board [data-skill='willpower'] {
@@ -130,13 +126,15 @@
   font-size: var(--font-size-note);
 }
 
-/* "Start turn" and "End" are the panel's primary buttons, filled in brass like "Next". */
+/*
+ * The turn controls follow the design language's buttons (base.css): the actions are outlined
+ * pills, and "Start turn" and "End", the turn's own steps, are a brass pill like Next (game.css).
+ */
 #board > #investigators > section > button,
-#investigators [role='group'] > button:not([data-icon]) {
+#investigators [role='group'] > button {
   padding-inline: var(--space-2);
-  border-color: var(--color-accent);
-  background: var(--color-accent);
-  color: var(--color-accent-text);
+  border-radius: var(--radius-pill);
+  background: none;
 }
 
 /* The counter's name in small spaced capitals after its icon. */
@@ -329,11 +327,6 @@
   opacity: 1;
 }
 
-/* The other investigators' avatars show only on a phone, which has room for one panel. */
-#board > #investigators > ul {
-  display: none;
-}
-
 #investigators button[data-icon='investigate']::before {
   mask-image: url('./icons/investigate.svg');
 }
@@ -376,27 +369,87 @@
   scrollbar-width: none;
 }
 
-/* Two ids, so they beat the home screen's padded `#app > main ul > li` cards. */
+/*
+ * A small card face (`SmallCard`, the engaged enemies' too) in the card theme's colours: an art
+ * strip over a name plate, framed in its card type's colour. The card's picture lies at the card's
+ * width, slid up by the type's art place (`--small-card-art-y`) so its art fills the strip; the
+ * plate covers the rest. Two ids, so they beat the home screen's padded `#app > main ul > li` cards.
+ */
 #board > #investigators > section li[data-card] {
+  position: relative;
   display: grid;
   flex: none;
-  align-content: space-between;
-  justify-items: center;
+  grid-template-rows: var(--small-card-art-height) 1fr;
   box-sizing: border-box;
   width: var(--threat-card-width);
   height: var(--threat-card-height);
-  padding: var(--space-1);
+  padding: 0;
+  overflow: hidden;
   border: var(--card-border-width) solid var(--color-card-treachery);
   border-radius: var(--radius);
-  background: var(--color-card-face);
-  color: var(--color-card-text);
-  font-size: var(--font-size-note);
+  background: var(--card-art-pattern), var(--color-face-frame);
+  color: var(--color-face-ink);
+  scroll-snap-align: start;
+}
+
+#board > #investigators > section li[data-card] > img {
+  --small-card-picture-width: calc(var(--threat-card-width) * var(--small-card-art-zoom));
+  position: absolute;
+  top: calc(
+    var(--small-card-picture-width) * var(--portrait-scan-ratio) * var(--small-card-art-y) * -1
+  );
+  left: calc((var(--threat-card-width) - var(--small-card-picture-width)) / 2);
+  width: var(--small-card-picture-width);
+  max-width: none;
+  visibility: hidden;
+}
+
+#board > #investigators > section li[data-card] > img[data-shown] {
+  visibility: visible;
+}
+
+#board > #investigators > section li[data-card] > p {
+  position: relative;
+  grid-row: 2;
+  display: grid;
+  place-items: center;
+  margin: 0;
+  padding: 1px;
+  border-block-start: var(--border-width) solid var(--color-face-ornament);
+  background: var(--color-face-plate);
+  font-size: var(--font-size-caption);
   line-height: 1;
   text-align: center;
   /* Long names hyphenate where the browser knows the language, else break anywhere. */
   hyphens: auto;
   overflow-wrap: anywhere;
-  scroll-snap-align: start;
+}
+
+#board > #investigators > section li[data-card='treachery'] {
+  --small-card-art-y: var(--small-card-treachery-art-y);
+}
+
+#board > #investigators > section li[data-card='enemy'] {
+  --small-card-art-y: var(--small-card-enemy-art-y);
+}
+
+#board > #investigators > section li[data-card='asset'] {
+  --small-card-art-y: var(--small-card-asset-art-y);
+}
+
+/* In the card pictures theme the whole scan is the card, its printed name on it. */
+:root[data-card-theme='pictures'] #board > #investigators > section li[data-card] > img {
+  inset: 0;
+  width: 100%;
+}
+
+:root[data-card-theme='pictures']
+  #board
+  > #investigators
+  > section
+  li[data-card]:has(> img[data-shown])
+  > p {
+  visibility: hidden;
 }
 
 /*
@@ -421,19 +474,22 @@
   border-color: var(--color-doom);
 }
 
+/* An enemy's health left stands on the corner of its art, as a token on the card. */
 #board > #investigators > section li[data-card] > data {
+  position: absolute;
+  inset-block-start: var(--space-1);
+  inset-inline-end: var(--space-1);
+  padding-inline: var(--space-1);
+  border-radius: var(--radius-pill);
+  background: var(--color-face-plate);
   font-family: var(--font-family-display);
-  font-size: var(--font-size-body);
+  font-size: var(--font-size-note);
 }
 
 /*
  * Each card is one big button that opens it, an enemy's details or a treachery to read: the button
  * lies over the whole card, so the card still shows its name and health.
  */
-#board > #investigators > section li[data-card] {
-  position: relative;
-}
-
 #board > #investigators > section li[data-card] > button {
   position: absolute;
   inset: 0;
@@ -449,27 +505,30 @@
 }
 
 /*
- * A phone held upright, in the compact view: one panel, the focused investigator's
- * (`data-focus`), across the width under the map, with the others as round avatars along its top.
+ * A phone held upright, in the compact view: the panels in a row under the map, each the width of
+ * the screen, snapped sideways so a swipe brings the next investigator in (InvestigatorBar
+ * `useSwipedTo` focuses the one in view).
  */
 @media (orientation: portrait) and (max-width: 40rem) {
   #board:not([data-view='investigators']) > #investigators {
-    flex-direction: column;
-    align-items: stretch;
-    gap: var(--space-1);
-    padding-block: var(--space-1);
+    align-items: start;
+    gap: 0;
+    padding: var(--space-1) 0;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
   }
 
   #board:not([data-view='investigators']) > #investigators > section {
+    flex: none;
+    box-sizing: border-box;
     width: 100%;
-  }
-
-  #board:not([data-view='investigators']) > #investigators > section:not([data-focus]) {
-    display: none;
+    padding-inline: var(--space-2);
+    scroll-snap-align: start;
   }
 
   /*
-   * The lead and turn markers and the turn controls share one row under the card, so the map keeps
+   * The lead marker and the turn controls share one row under the card, so the map keeps
    * the height; the status line's words give way to the controls (the map shows where everyone
    * is), and stay for screen readers. Dense packing lifts the controls, after the cards in play
    * in the markup, into the markers' row.
@@ -490,10 +549,45 @@
     grid-column: 1;
   }
 
-  /* The controls keep to the right, apart from the markers, so the turn marker's arrow is not read as an action. */
+  /* The controls keep to the right, apart from the marker. */
   #board:not([data-view='investigators']) > #investigators > section > :is(button, [role='group']) {
     grid-column: 2;
     justify-self: end;
+  }
+
+  /* The dots over a panel: one per investigator, its own filled, like the detail view's. */
+  #board:not([data-view='investigators']) > #investigators > section > ol[data-dots] {
+    display: flex;
+    justify-content: center;
+    gap: var(--space-2);
+    margin: 0;
+    padding: 0 0 var(--space-1);
+    list-style: none;
+  }
+
+  #board:not([data-view='investigators']) > #investigators > section > ol[data-dots] > li {
+    width: var(--detail-dot-size);
+    height: var(--detail-dot-size);
+    padding: 0;
+    border: var(--border-width) solid var(--color-accent);
+    border-radius: var(--radius-round);
+    background: none;
+  }
+
+  #board:not([data-view='investigators'])
+    > #investigators
+    > section
+    > ol[data-dots]
+    > li[data-current] {
+    background: var(--color-accent);
+  }
+
+  /* Thumbs tap them on a phone, so the turn's buttons take a whole touch target. */
+  #board:not([data-view='investigators']) > #investigators > section > button,
+  #board:not([data-view='investigators']) > #investigators > section > [role='group'] > button {
+    min-width: var(--touch-target);
+    min-height: var(--touch-target);
+    font-size: var(--font-size-body);
   }
 
   #board:not([data-view='investigators'])
@@ -507,69 +601,6 @@
     overflow: hidden;
     clip-path: inset(50%);
     white-space: nowrap;
-  }
-
-  #board:not([data-view='investigators']) > #investigators > ul {
-    display: flex;
-    gap: var(--space-2);
-    margin: 0;
-    padding: 0;
-    list-style: none;
-  }
-
-  #board:not([data-view='investigators']) > #investigators > ul > li {
-    padding: 0;
-    border: none;
-    background: none;
-  }
-
-  /* The initial and the picture share the disc; the picture covers the initial once it loads. */
-  #board:not([data-view='investigators']) > #investigators > ul > li > button {
-    display: grid;
-    grid-template: 1fr / 1fr;
-    place-items: center;
-    background: var(--color-card-face);
-    color: var(--color-card-text);
-    font-family: var(--font-family-print);
-    font-size: var(--font-size-subtitle);
-    width: var(--investigator-avatar-size);
-    height: var(--investigator-avatar-size);
-    min-width: 0;
-    padding: 0;
-    border: var(--border-width) solid var(--color-card-edge);
-    border-radius: var(--radius-round);
-    overflow: hidden;
-  }
-
-  /* An investigator whose turn it is stays marked while another one is in front. */
-  #board:not([data-view='investigators']) > #investigators > ul > li[data-turn] > button {
-    box-shadow: var(--turn-glow);
-  }
-
-  #board:not([data-view='investigators']) > #investigators > ul > li > button > * {
-    grid-area: 1 / 1;
-  }
-
-  #board:not([data-view='investigators']) > #investigators > ul > li > button > picture {
-    position: relative;
-    place-self: stretch;
-  }
-
-  #board:not([data-view='investigators'])
-    > #investigators
-    > ul
-    > li
-    > button
-    > picture:not([data-picture]) {
-    visibility: hidden;
-  }
-
-  #board:not([data-view='investigators']) > #investigators > ul > li > button > picture > img {
-    position: absolute;
-    width: calc(100% / var(--investigator-art-width));
-    max-width: none;
-    left: calc(var(--investigator-art-x) / var(--investigator-art-width) * -100%);
-    top: calc(var(--investigator-art-y) / var(--investigator-art-height) * -100%);
   }
 }
 

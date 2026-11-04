@@ -335,6 +335,8 @@ export interface CommandSource {
 /**
  * A command on the players' own cards that a card can ask for (`PlayerCardCommand`). The ability
  * step that resolves it stamps its `source` (`withSource`), as does an action's hand card cost.
+ * Without one it is the players' own or a rule step's (the upkeep draw); the play screen relies on
+ * that to leave it out of the "Do this by hand" notice (`skippedEffects`).
  */
 interface AskedByCard {
   source?: CommandSource;
