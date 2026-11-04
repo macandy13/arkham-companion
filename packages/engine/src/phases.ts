@@ -231,12 +231,22 @@ function stepCommands(
         .filter((card) => card.exhausted && isEnemyOnTable(card))
         .map((card) => ({ type: 'ReadyEnemy', enemyId: card.id }));
     case 'drawAndGain':
-      // The draw is deferred to the players (`CommandDeferred`), as they hold the decks; it still
-      // goes through the engine so the log and the changes notice remind them of it.
-      return playerOrder(state).flatMap((inv): Command[] => [
-        { type: 'DrawCards', investigatorId: inv.id, amount: 1 },
-        { type: 'AdjustInvestigator', investigatorId: inv.id, stat: 'resources', delta: 1 },
-      ]);
+      // Every investigator draws, then every one gains. The draw is deferred to the players
+      // (`CommandDeferred`), as they hold the decks; it still goes through the engine so the log
+      // and the changes notice remind them of it.
+      return [
+        ...playerOrder(state).map((inv): Command => ({
+          type: 'DrawCards',
+          investigatorId: inv.id,
+          amount: 1,
+        })),
+        ...playerOrder(state).map((inv): Command => ({
+          type: 'AdjustInvestigator',
+          investigatorId: inv.id,
+          stat: 'resources',
+          delta: 1,
+        })),
+      ];
   }
 }
 

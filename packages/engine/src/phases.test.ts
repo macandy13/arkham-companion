@@ -544,7 +544,24 @@ describe('upkeep phase', () => {
     ]);
   });
 
-  it('has each active investigator draw 1 card, which the players do at the table (4.4)', () => {
+  it('has each investigator draw 1 card at the table, then each gain 1 resource (4.4)', () => {
+    const { context, state } = table
+      .withInvestigator(alice, { locationId: hall })
+      .withInvestigator(bob, { locationId: hall })
+      .start();
+    const enemy = stateAfter(context, state, next, ...turnsOf(alice, bob));
+
+    const draws = runFrom(context, enemy, [next, next]).events.flatMap((event) => {
+      if (event.type === 'CommandDeferred') return [`${event.command.investigatorId} draws`];
+      if (event.type === 'InvestigatorChanged' && event.stat === 'resources')
+        return [`${event.investigatorId} gains`];
+      return [];
+    });
+
+    expect(draws).toEqual(['alice draws', 'bob draws', 'alice gains', 'bob gains']);
+  });
+
+  it('leaves a defeated investigator out of the upkeep draw (4.4)', () => {
     const { context, state: started } = table
       .withInvestigator(alice, { locationId: hall })
       .withInvestigator(bob, { locationId: hall, sanity: { max: 3, horror: 0 } })
