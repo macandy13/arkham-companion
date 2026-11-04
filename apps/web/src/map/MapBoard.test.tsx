@@ -893,6 +893,7 @@ describe('MapBoard', () => {
           const badge = tile('study').querySelector<SVGElement>('[data-marker="doom"]');
           expect(badge?.textContent).toBe('1');
           expect(badge?.dataset['drag']).toBe('doom');
+          expect(badge?.querySelector('[data-part="doom-mark"]')).not.toBeNull();
         });
 
         it("opens the ghoul's details, not the study's, on a tap on its doom badge", async () => {

@@ -25,6 +25,12 @@
   --color-health: #c4524b;
   --color-sanity: #4f78b8;
   --color-doom: #b8433f;
+  /*
+   * A doom token itself: a very dark red with black tentacles (`DoomMark`), so doom never reads as the
+   * red damage tokens beside it; `--color-doom` stays for doom named in text and outlines.
+   */
+  --color-doom-token: #4a1518;
+  --color-doom-mark: #0a0506;
   --color-token-text: #ffffff;
   /*
    * Card frames by card type: locations on the map; the encounter deck, agenda, act and scenario
@@ -567,6 +573,8 @@
   --map-ghost-opacity: 0.6;
   /* A loose token (the token pool's, a dragged one, `TokenGhost`): finger-sized, so a finger picks it up and it shows beside the finger that carries it. */
   --loose-token-size: 2.5rem;
+  /* How far a loose token's printed symbol (the damage token's heart, the horror token's brain) keeps from its rim. */
+  --loose-token-icon-inset: 22%;
   /* An enemy on the map engaged with an investigator, shown in full in their threat area. */
   --engaged-enemy-opacity: 0.5;
   /* A token with nothing on it (a location's clues once found) fades, so it reads as empty. */

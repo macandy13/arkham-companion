@@ -62,7 +62,7 @@ test('expand the header in place and swipe through its cards on a phone', async 
 // Journey: on a phone, expand Roland Banks' panel in place from his name: his whole card shows,
 // its ability text on the notebook page, with the map and the compact header still on the screen,
 // and the × folds it again.
-test('expand the investigator in place on a phone', { tag: '@flow' }, async ({ page }) => {
+test('expand the investigator in place on a phone', async ({ page }) => {
   const board = page.locator('#board');
   const roland = page.getByRole('region', { name: 'Roland Banks' });
 

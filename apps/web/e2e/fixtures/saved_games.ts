@@ -302,6 +302,24 @@ export function ghoulPriestInCellarExport(title: string): Buffer {
 }
 
 /**
+ * Like `ghoulPriestInCellarExport`, with doom beside damage: the Ghoul Priest has taken 2 damage
+ * and carries 1 doom, placed by hand as on a cultist, and the Cellar holds 1 doom, all given by hand.
+ */
+export function doomBesideDamageExport(title: string): Buffer {
+  const table = houseOpened(theGathering);
+  const ghoulPriest = cardIn(table, GATHERING_CODES.ghoulPriest);
+  const cellar = cardIn(table, GATHERING_CODES.cellar);
+  table.play({ type: 'SpawnEnemy', enemyId: ghoulPriest, at: cellar });
+  table.play({
+    type: 'ManualAdjust',
+    adjustment: { kind: 'tokens', cardId: ghoulPriest, token: 'damage', delta: 2 },
+  });
+  table.play({ type: 'PlaceDoom', cardId: ghoulPriest, amount: 1 });
+  table.play({ type: 'PlaceDoom', cardId: cellar, amount: 1 });
+  return exportOf(title, table, 'doom_beside_damage');
+}
+
+/**
  * Like `houseOpenedExport`, but with Roland Banks threatened: the Ghoul Priest has spawned in the Hallway,
  * engaged Roland Banks and taken 2 damage, and both Dissonant Voices and both Frozen in Fear sit in
  * Roland Banks' threat area, all given by hand to keep the script short. That is five cards, one more

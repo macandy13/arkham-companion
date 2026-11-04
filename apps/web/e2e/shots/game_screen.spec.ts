@@ -1,6 +1,7 @@
 import { expect, test } from '../fixtures/test';
 import {
   cluesToShareExport,
+  doomBesideDamageExport,
   ghoulPriestInCellarExport,
   graveyardTestExport,
   midnightMasksStartedExport,
@@ -27,6 +28,16 @@ test('the house map with Roland Banks in the Hallway', async ({ page }) => {
     .getByRole('figure', { name: 'House' })
     .getByRole('group', { name: 'Hallway' });
   await expect(hallway.getByRole('img', { name: 'Roland Banks' })).toBeVisible();
+});
+
+test('the Ghoul Priest in the Cellar with doom beside its damage, and doom on the Cellar', async ({
+  page,
+}) => {
+  await resumeImportedGame(page, 'Doom and damage', doomBesideDamageExport('Doom and damage'));
+
+  const cellar = page.getByRole('figure', { name: 'House' }).getByRole('group', { name: 'Cellar' });
+  await expect(cellar.getByRole('img', { name: 'Ghoul Priest, 2 damage, Doom 1' })).toBeVisible();
+  await expect(cellar.getByRole('img', { name: 'Doom 1', exact: true })).toBeVisible();
 });
 
 test('Roland Banks’ card opened whole from its art, to read its abilities', async ({ page }) => {
@@ -96,41 +107,35 @@ test('the house map by day', async ({ page }) => {
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
 });
 
-test(
-  'the house map in the card pictures style, the clues left on each card',
-  { tag: '@shot' },
-  async ({ page }) => {
-    await page.goto('/#/settings');
-    await page.getByLabel('Card style').selectOption('Card pictures');
-    await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
+test('the house map in the card pictures style, the clues left on each card', async ({ page }) => {
+  await page.goto('/#/settings');
+  await page.getByLabel('Card style').selectOption('Card pictures');
+  await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
 
-    const hallway = page
-      .getByRole('figure', { name: 'House' })
-      .getByRole('group', { name: 'Hallway' });
-    await expect(hallway.getByRole('img', { name: 'Clues 0' })).toBeVisible();
-    await expect(page.locator('html')).toHaveAttribute('data-card-theme', 'pictures');
-    await expect(page.locator('[data-card="scenario"]')).toHaveAttribute('data-picture', 'shown');
-  },
-);
+  const hallway = page
+    .getByRole('figure', { name: 'House' })
+    .getByRole('group', { name: 'Hallway' });
+  await expect(hallway.getByRole('img', { name: 'Clues 0' })).toBeVisible();
+  await expect(page.locator('html')).toHaveAttribute('data-card-theme', 'pictures');
+  await expect(page.locator('[data-card="scenario"]')).toHaveAttribute('data-picture', 'shown');
+});
 
-test(
-  'Roland Banks’ whole card in the card pictures style, his counters live on the printed card',
-  { tag: '@shot' },
-  async ({ page }) => {
-    await page.goto('/#/settings');
-    await page.getByLabel('Card style').selectOption('Card pictures');
-    await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
-    const roland = page.getByRole('region', { name: 'Roland Banks' });
-    await expect(roland.getByRole('article')).toHaveAttribute('data-picture', 'shown');
+test('Roland Banks’ whole card in the card pictures style, his counters live on the printed card', async ({
+  page,
+}) => {
+  await page.goto('/#/settings');
+  await page.getByLabel('Card style').selectOption('Card pictures');
+  await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
+  const roland = page.getByRole('region', { name: 'Roland Banks' });
+  await expect(roland.getByRole('article')).toHaveAttribute('data-picture', 'shown');
 
-    await roland.getByRole('button', { name: "Show Roland Banks's card" }).click();
+  await roland.getByRole('button', { name: "Show Roland Banks's card" }).click();
 
-    const card = page.getByRole('dialog', { name: 'Roland Banks' }).getByRole('article');
-    await expect(card).toHaveAttribute('data-picture', 'shown');
-  },
-);
+  const card = page.getByRole('dialog', { name: 'Roland Banks' }).getByRole('article');
+  await expect(card).toHaveAttribute('data-picture', 'shown');
+});
 
-test('the house map in the Eldritch card style', { tag: '@shot' }, async ({ page }) => {
+test('the house map in the Eldritch card style', async ({ page }) => {
   await page.goto('/#/settings');
   await page.getByLabel('Card style').selectOption('Eldritch');
   await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
@@ -205,7 +210,7 @@ test("the Ghoul Priest's details in the card pictures style, its damage on the p
   await expect(card).toHaveAttribute('data-picture', 'shown');
 });
 
-test('the house map in the Night and brass card style', { tag: '@shot' }, async ({ page }) => {
+test('the house map in the Night and brass card style', async ({ page }) => {
   await page.goto('/#/settings');
   await page.getByLabel('Card style').selectOption('Night and brass');
   await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
@@ -356,26 +361,27 @@ test('the encounter deck after two mythos phases, Dissonant Voices on the discar
   ).toBeVisible();
 });
 
-test('the header with its piles fanned: seven cards discarded, the set-aside cards on the scenario card, the Ghoul Priest in the victory display, the token pool beside it', async ({
-  page,
-  isMobile,
-}) => {
-  await resumeImportedGame(page, 'Piles filled', pilesFilledExport('Piles filled'));
-  // A phone's compact header shows the deck alone, and a tap expands the header on its piles.
-  if (isMobile) await page.getByRole('region', { name: 'Encounter deck' }).click();
+test(
+  'the header with its piles fanned: seven cards discarded, the set-aside cards on the scenario card, the Ghoul Priest in the victory display, the token pool beside it',
+  { tag: '@shot' },
+  async ({ page, isMobile }) => {
+    await resumeImportedGame(page, 'Piles filled', pilesFilledExport('Piles filled'));
+    // A phone's compact header shows the deck alone, and a tap expands the header on its piles.
+    if (isMobile) await page.getByRole('region', { name: 'Encounter deck' }).click();
 
-  await expect(
-    page.getByRole('button', { name: /^Encounter discard pile, 7 cards, .* on top$/ }),
-  ).toBeVisible();
-  await expect(
-    page.getByRole('region', { name: 'Scenario' }).getByRole('button', { name: /^Set aside, / }),
-  ).toBeVisible();
-  await expect(
-    page
-      .getByRole('region', { name: 'Victory' })
-      .getByRole('button', { name: 'Victory display, 2 victory points' }),
-  ).toBeVisible();
-});
+    await expect(
+      page.getByRole('button', { name: /^Encounter discard pile, 7 cards, .* on top$/ }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('region', { name: 'Scenario' }).getByRole('button', { name: /^Set aside, / }),
+    ).toBeVisible();
+    await expect(
+      page
+        .getByRole('region', { name: 'Victory' })
+        .getByRole('button', { name: 'Victory display, 2 victory points' }),
+    ).toBeVisible();
+  },
+);
 
 test('the discard pile of seven cards on its wide page, the top card chosen, scroll arrows beside the row', async ({
   page,

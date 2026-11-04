@@ -25,4 +25,19 @@ describe('Token', () => {
 
     expect(screen.getByRole('img', { name: '1 doom' }).querySelector('[data-delta]')).toBeNull();
   });
+
+  it.each([
+    { kind: 'doom', label: '1 doom', tentacles: true },
+    { kind: 'clue', label: '1 clue', tentacles: false },
+  ] as const)(
+    'draws the tentacles only on a doom token: $kind → $tentacles',
+    ({ kind, label, tentacles }) => {
+      render(<Token kind={kind} count={1} label={label} />);
+
+      const mark = screen
+        .getByRole('img', { name: label })
+        .querySelector('[data-part="doom-mark"]');
+      expect(mark !== null).toBe(tentacles);
+    },
+  );
 });

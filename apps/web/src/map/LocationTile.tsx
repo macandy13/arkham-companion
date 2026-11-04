@@ -36,6 +36,7 @@ import {
 import { useCardPicture } from '../catalog/cardImages';
 import { cardActionCaption } from '../screens/ActionRow';
 import { type CountChange, useCountChange } from '../screens/countChange';
+import { DoomMarkPath } from '../screens/DoomMark';
 import { LOCATION_FACE, LocationOrnament } from './cardOrnament';
 import { connectionGlyph } from './connectionSymbol';
 import {
@@ -403,6 +404,7 @@ function Token({ kind, value, label, centre: { x, y } }: TokenCount & { centre: 
       data-changed={change && ''}
     >
       <circle cx={x} cy={y} r={radius} />
+      {kind === 'doom' && <DoomMarkPath centre={{ x, y }} radius={radius} />}
       <text x={x} y={y}>
         {value}
       </text>
@@ -779,6 +781,7 @@ function Badge({
     >
       {drag && <circle data-part="grip" cx={x} cy={y} r={BADGE_GRIP_RADIUS} />}
       <circle cx={x} cy={y} r={BADGE_RADIUS} />
+      {kind === 'doom' && <DoomMarkPath centre={{ x, y }} radius={BADGE_RADIUS} />}
       <text x={x} y={y}>
         {value}
       </text>
