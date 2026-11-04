@@ -58,6 +58,8 @@ Steps name their target (`each`, `lead`, `notResigned`, `resigned`) instead of i
 An investigator the proposal kills, drives insane, or gives trauma up to their health or sanity on the log gets no change after that one, since the campaign rejects commands for them.
 
 `campaign.proposeResolution` only proposes: the players confirm or edit the list, and `campaign.applyResolution` applies the confirmed commands in one step, all or none (`campaign.executeCommands`), followed by `AdvanceScenario`, which adds the scenario and its outcome to `CampaignLog.playedScenarios` and moves on.
+
+Each campaign event has a cause beside it (`CampaignExecuteResult.causes`, M1C.2), the counterpart of the game's `ChangeCause`: the resolution (`{ kind: 'resolution', scenarioId, outcome }`) for everything `applyResolution` writes, the defeats' trauma included, and the players for every other command. [`campaignNotices`](../../packages/engine/src/campaign/campaign_notices.ts) groups the resolution's entries by `CampaignNoticeKind` (chaos bag, XP, trauma, fate, story, cards, team, scenario) for the screens.
 Both read the resolution the game ended with (`gameOutcome`) unless the players pass another `ScenarioOutcome`, for a table that played the ending differently (`sameOutcome` compares two); the defeat trauma still comes from the game.
 
 The last scenario's `endCampaign` step proposes `EndCampaign`, which sets `CampaignLog.result` (`won`, `lost`, or `survived` for an ending that is neither); a log without a result is still running.
