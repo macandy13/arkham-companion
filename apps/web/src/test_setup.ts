@@ -15,3 +15,8 @@ if (typeof HTMLDialogElement !== 'undefined' && !HTMLDialogElement.prototype.sho
     this.open = false;
   };
 }
+
+// jsdom has no popovers either; the component tests look at the `popover` attribute.
+if (typeof HTMLElement !== 'undefined' && !HTMLElement.prototype.showPopover) {
+  HTMLElement.prototype.showPopover = function showPopover() {};
+}

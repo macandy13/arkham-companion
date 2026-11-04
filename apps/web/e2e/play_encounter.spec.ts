@@ -1,5 +1,10 @@
 import { expect, test } from './fixtures/test';
-import { houseOpenedExport, mythosDrawnExport, resumeImportedGame } from './fixtures/saved_games';
+import {
+  beforeFourthMythosExport,
+  houseOpenedExport,
+  mythosDrawnExport,
+  resumeImportedGame,
+} from './fixtures/saved_games';
 
 // Journey: a player card tells Roland Banks to draw from the encounter deck on his turn – open the
 // encounter dialog from the header, draw for him, answer its test and see where the card went. A
@@ -117,3 +122,23 @@ test('spawn the set-aside Ghoul Priest in the Attic', async ({ page }) => {
     await expect(page.getByRole('status', { name: 'Choose a spawn location' })).toHaveCount(0);
   });
 });
+
+// Journey: the mythos phase places the agenda's third doom and asks at once whether it advances;
+// the notice of the doom shows above that question, not hidden under it.
+test(
+  'see what the mythos phase did above the dialog it opens',
+  { tag: '@flow' },
+  async ({ page }) => {
+    await test.step('Resume a game in the upkeep of round 3 and go on to the mythos phase', async () => {
+      await resumeImportedGame(page, 'Fourth mythos', beforeFourthMythosExport('Fourth mythos'));
+      await page.getByRole('button', { name: 'Next' }).click();
+    });
+
+    await test.step('A dialog opens, and the notice of the doom shows above it', async () => {
+      await expect(page.getByRole('dialog')).toBeVisible();
+      const changes = page.getByRole('status', { name: 'What the game did' });
+      await expect(changes).toContainText('1 doom on');
+      expect(await changes.evaluate((element) => element.matches(':popover-open'))).toBe(true);
+    });
+  },
+);

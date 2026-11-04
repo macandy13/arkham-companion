@@ -60,6 +60,36 @@ describe('ChangesNotice', () => {
     );
   });
 
+  it('stays among the notices under the map while no dialog is open', () => {
+    const table = beforeUpkeep();
+    const { rerender } = render(noticeFor(table));
+
+    table.nextPhase();
+    rerender(noticeFor(table));
+
+    expect(
+      screen.getByRole('status', { name: 'What the game did' }).getAttribute('popover'),
+    ).toBeNull();
+  });
+
+  it('shows above the enemy details the players have open while the step is played', () => {
+    const table = beforeUpkeep();
+    const withDetails = () => (
+      <>
+        <dialog open aria-label="Ghoul Priest" />
+        {noticeFor(table)}
+      </>
+    );
+    const { rerender } = render(withDetails());
+
+    table.nextPhase();
+    rerender(withDetails());
+
+    // jsdom never opens a popover, so it counts the notice as hidden, without a name.
+    const notice = screen.getByRole('status', { hidden: true });
+    expect(notice.getAttribute('popover')).toBe('manual');
+  });
+
   it('starts afresh for a step played while the last notice still shows', () => {
     const table = beforeUpkeep();
     const { rerender } = render(noticeFor(table));

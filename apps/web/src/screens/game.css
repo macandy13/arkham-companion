@@ -213,6 +213,15 @@
   animation: notice-fades var(--duration-notice) ease-in forwards;
 }
 
+/* Over an open dialog (ChangesNotice) it leaves the notices for the top layer, at the screen's foot. */
+#notices > aside[data-part='changes']:popover-open {
+  inset: auto 0 var(--space-4);
+  max-width: var(--layout-sheet-width);
+  margin-inline: auto;
+  padding: 0;
+  color: inherit;
+}
+
 #notices p,
 #notices ul {
   margin: 0;
