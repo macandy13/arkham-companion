@@ -19,7 +19,9 @@ export * from './keywords';
 export * from './commands';
 export * from './events';
 export { apply, replay } from './reducer';
-export { handle } from './handle';
+export { handle, handleWithCauses, type CausedEvents } from './handle';
+export { PLAYER_CAUSE, type ChangeCause } from './change_cause';
+export { changeNotices, noticeKindOf, type ChangeNotice, type NoticeKind } from './change_notices';
 export { locationsNamed, neighbours, sameEdge, shortestPaths } from './board';
 export { cardsNamed, zoneOf } from './lookup';
 export {

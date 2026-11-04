@@ -1,6 +1,7 @@
 import type { TakenAction } from './action_costs';
 import type { AbilityEffect, OpenedWindow } from './abilities';
 import type { CampaignLog } from './campaign/campaign_log';
+import type { ChangeCause } from './change_cause';
 import type {
   AdvanceAct,
   AdvanceAgenda,
@@ -591,7 +592,16 @@ export interface GameMeta {
  * the loop guard (`MAX_TRIGGERED_COMMANDS`). Absent for the player
  * command's own steps.
  */
-export type QueuedStep =
+export type QueuedStep = QueuedStepKind & {
+  /**
+   * Why the step's events happen (`ChangeCause`): set when a step queues it, so a step stored
+   * for an answer keeps the cause it was queued with. Absent for the player command's own steps.
+   */
+  cause?: ChangeCause;
+};
+
+/** The kinds of `QueuedStep`, before their cause. */
+type QueuedStepKind =
   | { kind: 'command'; command: Command; origin?: CommandType }
   /**
    * An action waiting for the attacks of opportunity it provoked. Dropped
