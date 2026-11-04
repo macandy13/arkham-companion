@@ -687,12 +687,30 @@
   border-block-end: var(--focus-ring-width) solid var(--color-accent);
 }
 
-/* "Next" is the row's one primary button, filled in brass. */
 #status > button:not([data-icon]) {
   min-height: var(--button-compact);
-  border-color: var(--color-accent);
-  background: var(--color-accent);
-  color: var(--color-accent-text);
+  border-radius: var(--radius-pill);
+}
+
+/*
+ * The board's next steps follow the design language (base.css): "Next" (or "Done" while
+ * adjusting) in the status row and the turn's own step in an investigator's panel ("Start turn",
+ * "End") are one brass pill of one size, so the two read as the same kind of button. It stands
+ * under #board, or the panel's outlined pills (investigators.css) would win over the brass.
+ */
+#board > :is(#status, #investigators) button[data-primary] {
+  padding-inline: var(--space-3);
+  border-color: var(--color-brass-deep);
+  border-radius: var(--radius-pill);
+  background: var(--brass-button);
+  color: var(--color-ink);
+  font-family: var(--font-family-print);
+  font-size: var(--font-size-body);
+  box-shadow: var(--button-lift);
+}
+
+#board > :is(#status, #investigators) button[data-primary]:disabled {
+  opacity: var(--disabled-opacity);
 }
 
 #status button[data-icon] {
@@ -726,6 +744,26 @@
 /* The menu opens under its button, over the table; base.css draws it. */
 #status nav {
   position: relative;
+}
+
+/*
+ * The menu's copies of "Adjust board" and the game log are for a phone, whose status row leaves
+ * them out; there they read as the menu's other entries, the icon before the name.
+ */
+#status nav li:has(> button[data-icon]) {
+  display: none;
+}
+
+#status nav li > button[data-icon] {
+  justify-content: flex-start;
+  gap: var(--space-2);
+  width: 100%;
+  padding-inline: var(--space-3);
+  border-radius: var(--radius);
+}
+
+#status nav li > button[data-icon]::before {
+  margin: 0;
 }
 
 /*
@@ -932,14 +970,42 @@
     gap: var(--space-1);
   }
 
+  /*
+   * Thumbs tap the status row, so it keeps Next, undo and the menu at a whole touch target, and
+   * "Adjust board" and the game log move into the menu.
+   */
+  #board > #status > button:is([data-icon='adjust'], [data-icon='log']) {
+    display: none;
+  }
+
+  #status nav li:has(> button[data-icon]) {
+    display: list-item;
+  }
+
+  #board > #status > button,
+  #board > #status > nav > button {
+    min-width: var(--touch-target);
+    min-height: var(--touch-target);
+  }
+
+  /* The zoom buttons stand in a column down the map's corner, where a row would cover its top. */
+  #board > #map figure [role='toolbar'] {
+    flex-direction: column;
+  }
+
+  #board > #map figure [role='toolbar'] > button {
+    min-width: var(--touch-target);
+    min-height: var(--touch-target);
+  }
+
   /* Opens the detail view on the map row, from the corner the map's zoom buttons leave free. */
   #board:not([data-view='map']) > #map > button[data-detail='expand'] {
     position: absolute;
     z-index: var(--layer-map-controls);
     inset-block-end: var(--space-2);
     inset-inline-end: var(--space-2);
-    min-width: var(--button-compact);
-    min-height: var(--button-compact);
+    min-width: var(--touch-target);
+    min-height: var(--touch-target);
     padding: 0;
     border-radius: var(--radius-round);
   }

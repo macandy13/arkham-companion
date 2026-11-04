@@ -523,6 +523,25 @@ describe('GameScreen header', () => {
     ]);
   });
 
+  it.each([
+    { entry: 'Adjust board', then: () => screen.findByRole('button', { name: 'Done' }) },
+    { entry: 'Game log', then: () => screen.findByRole('dialog', { name: 'Game log' }) },
+  ])(
+    'takes "$entry" from the menu, as a phone has no room for it in the row, and closes the menu',
+    async ({ entry, then }) => {
+      await renderTheGathering(`game-screen-menu-${entry}-test`);
+      fireEvent.click(button('Menu'));
+      const menu = within(screen.getByRole('navigation', { name: 'Main' }));
+
+      fireEvent.click(menu.getByRole('button', { name: entry }));
+
+      expect(await then()).toBeTruthy();
+      expect(screen.getByRole('button', { name: 'Menu' }).getAttribute('aria-expanded')).toBe(
+        'false',
+      );
+    },
+  );
+
   it('lays the token pool, the encounter deck with its discard pile, agenda, act, scenario with the set-aside cards and victory display out under their labels', async () => {
     await renderTheGathering('game-screen-encounter-test');
 
@@ -635,8 +654,17 @@ describe('GameScreen on a phone held upright', () => {
 
   const board = () => document.getElementById('board');
 
+  /**
+   * Forgets the scrolls the screen made as it opened: the investigator bar's row of panels
+   * scrolls to the focused one, before the detail view's scrolls the tests count.
+   */
+  const forgetOpeningScrolls = () => {
+    scrolledTo = [];
+  };
+
   it('expands the header on the act from a tap on it, instead of its full card', async () => {
     await renderTheGathering('phone-act-test');
+    forgetOpeningScrolls();
 
     fireEvent.click(screen.getByRole('button', { name: 'Trapped' }));
 
@@ -717,6 +745,7 @@ describe('GameScreen on a phone held upright', () => {
 
   it("expands Alder's panel in place from the name on it", async () => {
     await renderTheGathering('phone-investigator-test');
+    forgetOpeningScrolls();
 
     fireEvent.click(screen.getByRole('button', { name: 'Alder' }));
 
@@ -815,6 +844,7 @@ describe('GameScreen on a phone held upright', () => {
 
   it('expands the header on the act from a swipe down on it, and folds it again with a swipe up', async () => {
     await renderTheGathering('phone-header-swipe-test');
+    forgetOpeningScrolls();
     const act = screen.getByRole('region', { name: 'Act' });
 
     swipe(act, { y: 50 }, { y: 150 });
