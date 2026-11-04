@@ -63,14 +63,16 @@ import { shrinkAround, useShrinkToFit } from './useShrinkToFit';
  * What the players may drag off a tile: a piece standing on it (an investigator's pawn or an
  * enemy), one of the clues on `location` (M3.11c), which a drop on a pawn there discovers, or
  * the doom on `location` or on an enemy there (`enemyDoom`), which a drop moves to another card or
- * gives back to the token pool.
+ * gives back to the token pool, or an enemy's damage (`enemyDamage`), which a drop on the pool
+ * heals.
  */
 export type TilePiece =
   | { investigator: InvestigatorView }
   | { enemy: MapEnemyView }
   | { clue: LocationView }
   | { doom: LocationView }
-  | { enemyDoom: MapEnemyView };
+  | { enemyDoom: MapEnemyView }
+  | { enemyDamage: MapEnemyView };
 
 /**
  * One location as a tile at (`x`, `y`), drawn as a card face in layers, laid out like the printed
@@ -227,6 +229,7 @@ export function LocationTile({
             engaged={piece.engaged}
             drag={dragOf({ enemy: piece.enemy })}
             doomDrag={piece.enemy.doom ? dragOf({ enemyDoom: piece.enemy }) : undefined}
+            damageDrag={piece.enemy.damage ? dragOf({ enemyDamage: piece.enemy }) : undefined}
           />
         ),
       )}
@@ -665,7 +668,8 @@ export function Pawn({
  * change (`RisingDelta`), and an exhausted enemy's initial lies on its side, like
  * the exhausted card turned sideways (`data-exhausted`). Its accessible name says the same, with
  * whom of `investigators` it is engaged with. With `drag` it can be dragged; a `ghost` is the copy
- * that follows the pointer. With `doomDrag` a doom can be dragged off its doom badge instead. Its id
+ * that follows the pointer. With `doomDrag` a doom can be dragged off its doom badge instead, and
+ * with `damageDrag` a damage off its damage badge. Its id
  * (`data-enemy`) lets a token dropped on it from elsewhere find it (`enemyAt`).
  */
 export function EnemyToken({
@@ -675,6 +679,7 @@ export function EnemyToken({
   engaged = false,
   drag,
   doomDrag,
+  damageDrag,
   ghost = false,
 }: {
   enemy: MapEnemyView;
@@ -683,6 +688,7 @@ export function EnemyToken({
   engaged?: boolean;
   drag?: DragHandlers;
   doomDrag?: DragHandlers | undefined;
+  damageDrag?: DragHandlers | undefined;
   ghost?: boolean;
 }) {
   const { t } = useTranslation();
@@ -717,19 +723,22 @@ export function EnemyToken({
           centre={centre}
           radius={CONTENT.pawnRadius}
         />
-        {enemy.damage ? (
-          <Badge
-            kind="damage"
-            value={enemy.damage}
-            change={damageChange}
-            centre={damageBadgeCentre(centre)}
-          />
-        ) : null}
       </g>
       {/*
-        Beside the token rather than in it, so a press on it reaches the tile under it as any
-        other piece's does (the tile tells a tap from a drag by it) without moving the enemy too.
+        The badges lie beside the token rather than in it, so a press on one reaches the tile under
+        it as any other piece's does (the tile tells a tap from a drag by it) without moving the
+        enemy too.
       */}
+      {enemy.damage ? (
+        <Badge
+          kind="damage"
+          value={enemy.damage}
+          change={damageChange}
+          centre={damageBadgeCentre(centre)}
+          drag={damageDrag}
+          beside={{ enemy: enemy.id, engaged, ghost }}
+        />
+      ) : null}
       {enemy.doom ? (
         <Badge
           kind="doom"

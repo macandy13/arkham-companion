@@ -21,9 +21,10 @@ import { assertNever } from '@arkham/util';
 
 /**
  * The tokens the players place, move and take back by hand (`adjustTokens`): the clues and doom a
- * location's steppers change, and those dragged to and from the token pool.
+ * location's steppers change, and those dragged to and from the token pool, among them an enemy's
+ * damage given back to heal it.
  */
-export type LooseToken = Extract<TokenKind, 'clue' | 'doom'>;
+export type LooseToken = Extract<TokenKind, 'clue' | 'doom' | 'damage'>;
 
 /** The investigator counters the screen's +/− steppers change. */
 export type SteppedStat = Extract<InvestigatorStat, 'resources' | 'damage' | 'horror'>;
@@ -178,8 +179,9 @@ export interface GameActions {
    * `delta` more (or, negative, fewer) of `token` on `card` in play (a location, an enemy): one tap
    * on a location's stepper, or a token dragged from or to the token pool. Doom added is placed by
    * rule (`PlaceDoom`), so effects that count placed doom see it; the engine has no command that
-   * places or removes clues or removes doom yet, so the rest are corrections by hand
-   * (`ManualAdjust`), like the header's `removeDoom`.
+   * places or removes clues, removes doom or heals an enemy yet, so the rest are corrections by
+   * hand (`ManualAdjust`), like the header's `removeDoom`. Damage dealt to an enemy goes through
+   * `damageEnemy` instead, which defeats it.
    */
   adjustTokens(card: InstanceId, token: LooseToken, delta: number): Promise<void>;
   /**

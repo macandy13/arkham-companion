@@ -23,6 +23,7 @@ import { TurnControls } from './TurnControls';
 import { InvestigatorCard, WholeCard } from './InvestigatorCard';
 import { deltaText, useCountChange } from '../screens/countChange';
 import type { TokenDragHandlers } from '../screens/useTokenDrag';
+import { useReturnToPool } from '../screens/useReturnToPool';
 import { useClueDrag } from './useClueDrag';
 import './investigators.css';
 
@@ -407,7 +408,8 @@ function Skills({
  * The counters on the card's notebook page, each a token like the ones on the table, with their
  * steppers while the players adjust the board (`adjusting`); a step plays `actions` unless one is
  * queued (`busy`). A clue can be dragged off the clue count onto their location or the act
- * (`useClueDrag`).
+ * (`useClueDrag`), and damage, horror or a resource back onto the header's token pool, which heals
+ * or spends it (`useReturnToPool`).
  */
 function Counters({
   board,
@@ -429,6 +431,12 @@ function Counters({
   // A defeated or resigned investigator has left the game, so their counters no longer change.
   const off = busy || investigator.status !== 'active';
   const clueDrag = useClueDrag(board, id, actions);
+  const damageBack = useReturnToPool('damage', () => adjust('damage', -1));
+  const horrorBack = useReturnToPool('horror', () => adjust('horror', -1));
+  const resourceBack = useReturnToPool('resource', () => adjust('resources', -1));
+  // Nothing comes off the card while the players adjust it with the steppers instead.
+  const dragOff = (count: number, drag: TokenDragHandlers) =>
+    off || adjusting || count === 0 ? undefined : drag;
   return (
     <>
       <dl>
@@ -438,6 +446,7 @@ function Counters({
           value={health - damage}
           shown={t('investigators.left', { left: health - damage, max: health })}
           printed={{ max: health, taken: damage }}
+          drag={dragOff(damage, damageBack.handlers)}
         >
           {adjusting && (
             <Steppers
@@ -453,6 +462,7 @@ function Counters({
           value={sanity - horror}
           shown={t('investigators.left', { left: sanity - horror, max: sanity })}
           printed={{ max: sanity, taken: horror }}
+          drag={dragOff(horror, horrorBack.handlers)}
         >
           {adjusting && (
             <Steppers
@@ -466,13 +476,14 @@ function Counters({
           kind="clues"
           label={t('investigators.clues')}
           value={investigator.clues}
-          drag={off || adjusting || investigator.clues === 0 ? undefined : clueDrag.handlers}
+          drag={dragOff(investigator.clues, clueDrag.handlers)}
         />
         <Stat
           kind="resources"
           label={t('investigators.resources')}
           short={t('investigators.resourcesShort')}
           value={investigator.resources}
+          drag={dragOff(investigator.resources, resourceBack.handlers)}
         >
           {adjusting && (
             <Steppers
@@ -490,6 +501,9 @@ function Counters({
         )}
       </dl>
       {clueDrag.shown}
+      {damageBack.shown}
+      {horrorBack.shown}
+      {resourceBack.shown}
     </>
   );
 }
@@ -539,7 +553,10 @@ function Stat({
   value: number;
   shown?: string;
   printed?: { max: number; taken: number };
-  /** Makes a token draggable off the count (`useTokenDrag`), marked `data-drag` with its kind. */
+  /**
+   * Makes a token draggable off the count (`useTokenDrag`), marked `data-drag` with its kind: off
+   * the printed heart or brain for health and sanity, where the damage or horror lies.
+   */
   drag?: TokenDragHandlers | undefined;
   children?: ReactNode;
 }) {
@@ -550,7 +567,7 @@ function Stat({
       <dt>{short ? <abbr title={label}>{short}</abbr> : label}</dt>
       <dd>
         {printed ? (
-          <span role="img" aria-label={shown} data-printed="">
+          <span role="img" aria-label={shown} data-printed="" data-drag={drag && kind} {...drag}>
             <svg viewBox={PRINTED_SYMBOL_VIEW_BOX} aria-hidden="true">
               {kind === 'health' ? (
                 <Heart centre={origin} scale={1} />
