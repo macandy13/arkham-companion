@@ -466,3 +466,93 @@
   font-style: italic;
   text-align: center;
 }
+
+/*
+ * The card pictures theme (`data-card-theme`): once the scan has loaded, the banner and the whole
+ * card show the scan itself, as the other faces do, and our drawing gives way to what the scan
+ * prints (frame, shield, plates, skill chain, page and its text). The banner's scan drops back to
+ * its place (`art.lift` in INVESTIGATOR_FACE, `--investigator-art-lift`), so its plates and skills
+ * lie under the HTML's places, and the banner keeps its page strip, as the counters would
+ * otherwise sit on the printed abilities. The name and printed skill values stay for screen
+ * readers but show only from the scan; a boosted skill keeps its value on a plate of its own, as
+ * the printed one is no longer what it is. The counters stay live over the scan, on the whole
+ * card where it prints health and sanity. The phone's strip has no printed counterpart and keeps
+ * its drawing.
+ */
+:root[data-card-theme='pictures']
+  #investigators
+  [data-card='investigator'][data-picture]:not([data-shape='strip'])
+  svg[data-face='investigator']
+  > image {
+  transform: translateY(var(--investigator-art-lift));
+}
+
+:root[data-card-theme='pictures']
+  #investigators
+  [data-card='investigator'][data-shape='full']
+  svg
+  > image {
+  transform: none;
+}
+
+:root[data-card-theme='pictures']
+  #investigators
+  [data-card='investigator'][data-picture][data-shape='banner']
+  svg[data-face='investigator']
+  > :not(
+    image,
+    defs,
+    [data-part^='page'],
+    [data-part='rules'],
+    [data-part^='spiral'],
+    [data-night-sky]
+  ),
+:root[data-card-theme='pictures']
+  #investigators
+  [data-card='investigator'][data-picture][data-shape='full']
+  svg[data-face='investigator']
+  > :not(image, defs),
+:root[data-card-theme='pictures']
+  #investigators
+  [data-card='investigator'][data-picture]:not([data-shape='strip'])
+  > :is(header, [data-page]) {
+  visibility: hidden;
+}
+
+:root[data-card-theme='pictures']
+  #investigators
+  [data-card='investigator'][data-picture]:not([data-shape='strip'])
+  > ul
+  > li
+  > button:first-child:not(:has(> data + data))
+  > data {
+  visibility: hidden;
+}
+
+:root[data-card-theme='pictures']
+  #investigators
+  [data-card='investigator'][data-picture]:not([data-shape='strip'])
+  > ul
+  > li
+  > button:first-child:has(> data + data) {
+  background: var(--color-face-plate);
+}
+
+:root[data-card-theme='pictures']
+  #investigators
+  [data-card='investigator'][data-picture][data-shape='banner']
+  svg[data-face='investigator']
+  > :is([data-part^='page'], [data-part='rules'], [data-night-sky]) {
+  transform-origin: 0 calc(var(--investigator-page-top-y) * 1px);
+  scale: 1 var(--investigator-pictures-page-stretch);
+}
+
+/* On the whole card the printed heart and brain show the maximum; ours give way to them. */
+:root[data-card-theme='pictures']
+  #investigators
+  [data-card='investigator'][data-picture][data-shape='full']
+  dd
+  > [data-printed]
+  > :is(svg, data:not([data-count])) {
+  visibility: hidden;
+}

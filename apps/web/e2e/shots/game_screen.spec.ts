@@ -120,6 +120,21 @@ test('the house map in the card pictures style, the clues left on each card', as
   await expect(page.locator('[data-card="scenario"]')).toHaveAttribute('data-picture', 'shown');
 });
 
+test('Roland Banks’ whole card in the card pictures style, his counters live on the printed card', async ({
+  page,
+}) => {
+  await page.goto('/#/settings');
+  await page.getByLabel('Card style').selectOption('Card pictures');
+  await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
+  const roland = page.getByRole('region', { name: 'Roland Banks' });
+  await expect(roland.getByRole('article')).toHaveAttribute('data-picture', 'shown');
+
+  await roland.getByRole('button', { name: "Show Roland Banks's card" }).click();
+
+  const card = page.getByRole('dialog', { name: 'Roland Banks' }).getByRole('article');
+  await expect(card).toHaveAttribute('data-picture', 'shown');
+});
+
 test('the house map in the Eldritch card style', async ({ page }) => {
   await page.goto('/#/settings');
   await page.getByLabel('Card style').selectOption('Eldritch');
