@@ -9,10 +9,10 @@ The [investigator bar](../../apps/web/src/investigators/InvestigatorBar.tsx) sho
   - each opening a [skill test](../../apps/web/src/investigators/SkillTestDialog.tsx) on the card dialog shell with the investigator's round portrait over the page: the test block the decisions share ([decisions](play-screen-decisions.md)) with a difficulty stepper, the tokens drawn as round tokens (a symbol token showing its game symbol, its name kept for screen readers), calculated by `BoardView.skillTest` over the engine's `skillTestSuggestion` without changing the game,
 - their counters on a strip of the spiral-bound notebook page: the clue token, health and sanity drawn as the card prints them (the shared heart and brain from [`cardFace.tsx`](../../apps/web/src/catalog/cardFace.tsx) with the printed maximum on the symbol and the damage or horror taken in a small count circle beside it, one image each, named by what is left, "4 of 7"), and the resource coin; while the players adjust the board, the counters with their steppers leave the page for a row under the card,
 - under the card, where they are and how their round goes, after a pentagon like the game's lead investigator token for `BoardView.lead` and the action arrow for `BoardView.turn` (on the map their pawns carry the pentagon and a glowing gilt ring),
-- and the turn controls under the card:
+- and the turn controls under the card, as the design language's buttons: the actions outlined pills, start turn and end the brass primary (`data-primary`):
   - start turn,
   - actions left,
-  - icon buttons for investigate (off where a card forbids investigating their location, `LocationView.forbidden`: Locked Door), take a resource, draw and play (off while a card forbids them to play assets or events, `InvestigatorView.forbidden`: Dissonant Voices),
+  - icon pills for investigate (off where a card forbids investigating their location, `LocationView.forbidden`: Locked Door), take a resource, draw and play (off while a card forbids them to play assets or events, `InvestigatorView.forbidden`: Dissonant Voices),
   - a button per card action the cards offer them (`BoardView.cardActions`, "Resign · Parlor"),
   - end.
 
@@ -24,6 +24,8 @@ Their [threat area](../../apps/web/src/investigators/ThreatArea.tsx) is a row of
 
 - treacheries
 - and engaged enemies, the enemies with their health left (`EnemyView.health`, scaled by the player count through `enemyHealth`).
+
+Each is a small card face in the card theme's colours (`SmallCard`, frame in its card type's colour): an art strip over a name plate, the enemies' health left on the art's corner. The strip shows the card's picture (`SmallCardArt`, an `img` at the card's width enlarged by `--small-card-art-zoom`), slid up to where the type prints its art (`--small-card-*-art-y` in tokens.css, fractions of the scan's height), with the art pattern until it loads; in the card pictures theme the whole scan is the card and the plate gives way to its printed name.
 
 The threat area shows four cards (`THREAT_CARDS_SHOWN`); more scroll by whole cards with a swipe or its round arrows (CSS scroll snap). The row and its arrows are the shared [`CardStrip`](../../apps/web/src/screens/CardStrip.tsx), which the encounter dialog's pile uses too.
 

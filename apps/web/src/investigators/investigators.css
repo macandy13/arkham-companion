@@ -129,13 +129,27 @@
   font-size: var(--font-size-note);
 }
 
-/* "Start turn" and "End" are the panel's primary buttons, filled in brass like "Next". */
+/*
+ * The turn controls follow the design language's buttons (base.css): the actions are outlined
+ * pills, and "Start turn" and "End", the turn's own steps, its one primary, a brass pill.
+ */
 #board > #investigators > section > button,
-#investigators [role='group'] > button:not([data-icon]) {
+#investigators [role='group'] > button {
   padding-inline: var(--space-2);
-  border-color: var(--color-accent);
-  background: var(--color-accent);
-  color: var(--color-accent-text);
+  border-radius: var(--radius-pill);
+  background: none;
+}
+
+#investigators section button[data-primary] {
+  border-color: var(--color-brass-deep);
+  background: var(--brass-button);
+  color: var(--color-ink);
+  font-family: var(--font-family-print);
+  box-shadow: var(--button-lift);
+}
+
+#investigators section button[data-primary]:disabled {
+  opacity: var(--disabled-opacity);
 }
 
 /* The counter's name in small spaced capitals after its icon. */
@@ -375,27 +389,87 @@
   scrollbar-width: none;
 }
 
-/* Two ids, so they beat the home screen's padded `#app > main ul > li` cards. */
+/*
+ * A small card face (`SmallCard`, the engaged enemies' too) in the card theme's colours: an art
+ * strip over a name plate, framed in its card type's colour. The card's picture lies at the card's
+ * width, slid up by the type's art place (`--small-card-art-y`) so its art fills the strip; the
+ * plate covers the rest. Two ids, so they beat the home screen's padded `#app > main ul > li` cards.
+ */
 #board > #investigators > section li[data-card] {
+  position: relative;
   display: grid;
   flex: none;
-  align-content: space-between;
-  justify-items: center;
+  grid-template-rows: var(--small-card-art-height) 1fr;
   box-sizing: border-box;
   width: var(--threat-card-width);
   height: var(--threat-card-height);
-  padding: var(--space-1);
+  padding: 0;
+  overflow: hidden;
   border: var(--card-border-width) solid var(--color-card-treachery);
   border-radius: var(--radius);
-  background: var(--color-card-face);
-  color: var(--color-card-text);
-  font-size: var(--font-size-note);
+  background: var(--card-art-pattern), var(--color-face-frame);
+  color: var(--color-face-ink);
+  scroll-snap-align: start;
+}
+
+#board > #investigators > section li[data-card] > img {
+  --small-card-picture-width: calc(var(--threat-card-width) * var(--small-card-art-zoom));
+  position: absolute;
+  top: calc(
+    var(--small-card-picture-width) * var(--portrait-scan-ratio) * var(--small-card-art-y) * -1
+  );
+  left: calc((var(--threat-card-width) - var(--small-card-picture-width)) / 2);
+  width: var(--small-card-picture-width);
+  max-width: none;
+  visibility: hidden;
+}
+
+#board > #investigators > section li[data-card] > img[data-shown] {
+  visibility: visible;
+}
+
+#board > #investigators > section li[data-card] > p {
+  position: relative;
+  grid-row: 2;
+  display: grid;
+  place-items: center;
+  margin: 0;
+  padding: 1px;
+  border-block-start: var(--border-width) solid var(--color-face-ornament);
+  background: var(--color-face-plate);
+  font-size: var(--font-size-caption);
   line-height: 1;
   text-align: center;
   /* Long names hyphenate where the browser knows the language, else break anywhere. */
   hyphens: auto;
   overflow-wrap: anywhere;
-  scroll-snap-align: start;
+}
+
+#board > #investigators > section li[data-card='treachery'] {
+  --small-card-art-y: var(--small-card-treachery-art-y);
+}
+
+#board > #investigators > section li[data-card='enemy'] {
+  --small-card-art-y: var(--small-card-enemy-art-y);
+}
+
+#board > #investigators > section li[data-card='asset'] {
+  --small-card-art-y: var(--small-card-asset-art-y);
+}
+
+/* In the card pictures theme the whole scan is the card, its printed name on it. */
+:root[data-card-theme='pictures'] #board > #investigators > section li[data-card] > img {
+  inset: 0;
+  width: 100%;
+}
+
+:root[data-card-theme='pictures']
+  #board
+  > #investigators
+  > section
+  li[data-card]:has(> img[data-shown])
+  > p {
+  visibility: hidden;
 }
 
 /*
@@ -420,19 +494,22 @@
   border-color: var(--color-doom);
 }
 
+/* An enemy's health left stands on the corner of its art, as a token on the card. */
 #board > #investigators > section li[data-card] > data {
+  position: absolute;
+  inset-block-start: var(--space-1);
+  inset-inline-end: var(--space-1);
+  padding-inline: var(--space-1);
+  border-radius: var(--radius-pill);
+  background: var(--color-face-plate);
   font-family: var(--font-family-display);
-  font-size: var(--font-size-body);
+  font-size: var(--font-size-note);
 }
 
 /*
  * Each card is one big button that opens it, an enemy's details or a treachery to read: the button
  * lies over the whole card, so the card still shows its name and health.
  */
-#board > #investigators > section li[data-card] {
-  position: relative;
-}
-
 #board > #investigators > section li[data-card] > button {
   position: absolute;
   inset: 0;

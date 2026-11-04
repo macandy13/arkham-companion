@@ -1,6 +1,13 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { BoardView, CardFaceView, InvestigatorView, MapEnemyView } from '@arkham/engine';
+import type {
+  BoardView,
+  CardFaceView,
+  CardImagePath,
+  InvestigatorView,
+  MapEnemyView,
+} from '@arkham/engine';
+import { useCardPicture } from '../catalog/cardImages';
 import { EnemyDetails } from '../enemies/EnemyDetails';
 import { healthLeft } from '../enemies/enemyHealth';
 import { enemyConditions } from '../map/LocationTile';
@@ -71,7 +78,7 @@ export function ThreatArea({
 
 /**
  * A treachery in the threat area or an asset in the play area (`heldIn`, which picks its frame) as
- * a small card with its name; a tap on it, a button over the whole card like the enemies', opens
+ * a small card face (`SmallCardArt` over its name plate); a tap on it, a button over the whole card like the enemies', opens
  * it on the card shell (`CardDetails`), with the actions it offers, such as one that discards a
  * treachery.
  */
@@ -94,7 +101,8 @@ export function SmallCard({
   const [open, setOpen] = useState(false);
   return (
     <li data-card={heldIn === 'threatArea' ? 'treachery' : 'asset'}>
-      {card.name}
+      <SmallCardArt image={card.image} />
+      <p>{card.name}</p>
       <button
         type="button"
         aria-haspopup="dialog"
@@ -117,7 +125,7 @@ export function SmallCard({
 }
 
 /**
- * An engaged enemy as a small card: its name and the health it has left of its health
+ * An engaged enemy as a small card face, like the treacheries' (`SmallCardArt`): its name and the health it has left of its health
  * (`EnemyView.health` less `damage`), named for screen readers with that, its damage and whether
  * it is exhausted, as on the map; damage dealt plays its effect on the health left
  * (`useCountChange`). A tap on the card opens its details (`EnemyDetails`), with what
@@ -148,7 +156,8 @@ function EnemyCard({
         ...enemyConditions(enemy, t),
       ].join(', ')}
     >
-      {enemy.name}
+      <SmallCardArt image={enemy.image} />
+      <p>{enemy.name}</p>
       {left !== undefined && (
         <data key={change?.key} value={left} data-delta={deltaText(change)}>
           {t('investigators.left', { left, max: enemy.health })}
@@ -170,5 +179,26 @@ function EnemyCard({
         />
       )}
     </li>
+  );
+}
+
+/**
+ * The art strip of a small card: its card's picture, which the stylesheet slides so the card
+ * type's art shows in the strip (`--small-card-art-y`), and in the card pictures theme lays over
+ * the whole card. The picture shows once it has loaded (`data-shown`); until then,
+ * and for good when it fails or the scan is turned on its side, the strip shows the art pattern.
+ * Decoration only: the card is named.
+ */
+function SmallCardArt({ image }: { image: CardImagePath | undefined }) {
+  const picture = useCardPicture(image, 'portrait');
+  if (!picture) return null;
+  return (
+    <img
+      src={picture.url}
+      alt=""
+      data-shown={picture.shown || undefined}
+      onLoad={picture.onLoad}
+      onError={picture.onError}
+    />
   );
 }

@@ -589,9 +589,22 @@
    * The threat area along the top of an investigator's card: its treacheries and engaged enemies
    * as small upright cards, this many side by side before the row scrolls (`THREAT_CARDS_SHOWN`).
    */
-  --threat-card-width: 3rem;
-  --threat-card-height: 4.2rem;
+  --threat-card-width: 3.5rem;
+  --threat-card-height: 4.9rem;
   --threat-cards-shown: 4;
+  /*
+   * A small card face's art strip (ThreatArea `SmallCardArt`), and where each card type's art
+   * starts on its scan, in fractions of the scan's height (as `TREACHERY_ART`, `ENEMY_ART` in
+   * cardArt.ts; an enemy's lower, at its figure like `ENEMY_AVATAR`, an asset's under its name).
+   */
+  --small-card-art-height: 2.6rem;
+  /* How far the picture is enlarged in the strip, so the art fills it rather than the frame. */
+  --small-card-art-zoom: 1.5;
+  --small-card-treachery-art-y: 0;
+  --small-card-enemy-art-y: 0.55;
+  --small-card-asset-art-y: 0.1;
+  /* A portrait card scan's height for its width (`PORTRAIT_SCAN`, 419 : 300). */
+  --portrait-scan-ratio: 1.3967;
   /* The round avatar of another investigator over the phone's one investigator panel. */
   --investigator-avatar-size: 2.75rem;
   /* The phone's header expanded in place shows its cards this tall, leaving the map a third. */
