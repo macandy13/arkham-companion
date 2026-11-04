@@ -207,6 +207,8 @@ function withoutChangesForEliminated(
  * applies or the first rejection is thrown and the log stays as it was. Also
  * rejects a game that is still running (`scenarioNotEnded`) or that belongs
  * to another scenario than the campaign's current one (`notCurrentScenario`).
+ * Every entry is the resolution's doing (`CampaignChangeCause`), the defeats' trauma included:
+ * the players confirmed it, but the campaign guide wrote it.
  */
 export function applyResolution(
   ctx: CampaignContext,
@@ -224,7 +226,8 @@ export function applyResolution(
       current,
     });
   const advance: CampaignCommand = { type: 'AdvanceScenario', outcome };
-  return executeCommands(ctx, log, [...confirmed, advance]);
+  const cause = { kind: 'resolution', scenarioId: current, outcome } as const;
+  return executeCommands(ctx, log, [...confirmed, advance], cause);
 }
 
 /**
@@ -246,12 +249,6 @@ export function proposedCommands(changes: readonly ProposedChange[]): CampaignCo
         return assertNever(change);
     }
   });
-}
-
-/** Whether `a` and `b` are the same outcome: both "no resolution", or the same resolution id. */
-export function sameOutcome(a: ScenarioOutcome, b: ScenarioOutcome): boolean {
-  if (a.kind === 'noResolution' || b.kind === 'noResolution') return a.kind === b.kind;
-  return a.id === b.id;
 }
 
 /** The resolution an ended `game` reached (`ScenarioEnded`), or "no resolution". */
