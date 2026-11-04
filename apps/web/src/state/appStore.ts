@@ -601,7 +601,7 @@ export function createAppStore(
           const loaded = await gameStore.loadCampaign(campaignId);
           if (!loaded) throw new Error(`Unknown campaign ${campaignId}`);
           const ctx = { cards: played.ctx.cards };
-          const { log, events } = campaign.applyResolution(
+          const { log, events, causes } = campaign.applyResolution(
             ctx,
             loaded.log,
             played.state,
@@ -612,6 +612,8 @@ export function createAppStore(
             campaignId,
             events,
             loaded.summary.lastSeq,
+            undefined,
+            causes.map((cause) => (cause.kind === 'player' ? undefined : cause)),
           );
           campaignLog = log;
           const seq = stored.at(-1)?.seq ?? loaded.summary.lastSeq;

@@ -253,6 +253,12 @@ export type {
 } from './campaign/campaign_definition';
 export type { CampaignContext, CampaignExecuteResult } from './campaign/handle_campaign';
 export type {
+  CampaignChangeCause,
+  CampaignNotice,
+  CampaignNoticeKind,
+  CausedCampaignEvents,
+} from './campaign/campaign_notices';
+export type {
   CardPlace,
   GameCondition,
   ProposedChange,

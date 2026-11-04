@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
 import {
   blankAgenda,
@@ -55,9 +55,24 @@ describe('ChangesNotice', () => {
     table.nextPhase();
     rerender(noticeFor(table));
 
-    expect(screen.getByRole('status', { name: 'What the game did' }).textContent).toBe(
-      'Roland Banks gains 1 resource',
+    const notice = screen.getByRole('status', { name: 'What the game did' });
+    expect(within(notice).getByRole('listitem').textContent).toBe(
+      'Roland Banks gains 1 resource (upkeep phase)',
     );
+  });
+
+  it('tells how to set a wrong change right', () => {
+    const table = beforeUpkeep();
+    const { rerender } = render(noticeFor(table));
+
+    table.nextPhase();
+    rerender(noticeFor(table));
+
+    expect(
+      within(screen.getByRole('status')).getByText(
+        'Not right? Undo the step, or adjust it by hand.',
+      ),
+    ).toBeTruthy();
   });
 
   it('starts afresh for a step played while the last notice still shows', () => {
@@ -71,7 +86,9 @@ describe('ChangesNotice', () => {
     rerender(noticeFor(table));
 
     const mythosNotice = screen.getByRole('status', { name: 'What the game did' });
-    expect(mythosNotice.textContent).toBe('1 doom on What Lurks Below');
+    expect(within(mythosNotice).getByRole('listitem').textContent).toBe(
+      '1 doom on What Lurks Below (mythos phase)',
+    );
     expect(mythosNotice).not.toBe(upkeepNotice);
   });
 

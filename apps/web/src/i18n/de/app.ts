@@ -7,6 +7,18 @@ export const appTexts = {
     showMap: 'Karte',
   },
   log: {
+    because: '({{cause}})',
+    cause: {
+      placeDoom: 'Mythosphase',
+      checkDoomThreshold: 'Verderbensschwelle',
+      drawEncounterCard: 'Mythosphase',
+      huntersMove: 'Jäger bewegen sich',
+      enemiesAttack: 'Gegnerphase',
+      resetActions: 'Unterhaltsphase',
+      readyExhausted: 'Unterhaltsphase',
+      gainResources: 'Unterhaltsphase',
+      endRound: 'Rundenende',
+    },
     title: 'Spielverlauf',
     open: 'Spielverlauf',
     goBack: 'Hierher zurück',
@@ -186,7 +198,10 @@ export const appTexts = {
   },
   toast: { label: 'Nicht möglich', dismiss: 'OK', fallback: 'Das ist gerade nicht möglich.' },
   notice: { dismiss: 'OK' },
-  changes: { label: 'Was das Spiel getan hat' },
+  changes: {
+    label: 'Was das Spiel getan hat',
+    correct: 'Stimmt nicht? Schritt zurücknehmen oder von Hand korrigieren.',
+  },
   skipped: {
     label: 'Von Hand erledigen',
     effect:

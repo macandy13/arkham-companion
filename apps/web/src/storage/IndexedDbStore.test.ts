@@ -235,6 +235,20 @@ describe('IndexedDbStore', () => {
     expect(first[0]?.commandId).not.toBe('given');
   });
 
+  it("keeps the cause given for an event and none for the players' own", async () => {
+    const id = await store.createGame();
+    const mythosDoom = { kind: 'rule', step: 'placeDoom' } as const;
+
+    await store.appendEvents(id, [started]);
+    await store.appendEvents(id, [tokens(1), tokens(-1)], undefined, 'mythos', [mythosDoom]);
+
+    expect((await store.loadEvents(id)).map((stored) => stored.cause)).toEqual([
+      undefined,
+      mythosDoom,
+      undefined,
+    ]);
+  });
+
   it('undoes the last command group and replays the rest', async () => {
     const id = await store.createGame();
     await store.appendEvents(id, [started]);
@@ -373,6 +387,25 @@ describe('IndexedDbStore campaigns', () => {
       investigators: [{ code: '01001', name: 'Roland Banks' }],
     });
     expect(loaded?.summary.result).toBeUndefined();
+  });
+
+  it("writes the cause given for a campaign event and none for the players' own", async () => {
+    const id = await store.createCampaign();
+    const gathering = {
+      kind: 'resolution',
+      scenarioId: scenarioId('the_gathering'),
+      outcome: { kind: 'noResolution' },
+    } as const;
+
+    const stored = await store.appendCampaignEvents(
+      id,
+      [campaignStarted(id), { type: 'CampaignEnded', result: 'lost' }],
+      undefined,
+      undefined,
+      [undefined, gathering],
+    );
+
+    expect(stored.map((row) => row.cause)).toEqual([undefined, gathering]);
   });
 
   it('summarises a campaign that ended with its result and when it ended', async () => {

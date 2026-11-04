@@ -243,6 +243,29 @@ describe('the round', () => {
     expect(table.nextPhase()).toEqual({ round: 1, phase: 'enemy', step: 'enemiesAttack' });
   });
 
+  it("logs the rules' changes with their phase step and the players' own without a cause", () => {
+    const table = PlayTable.start(
+      newGame()
+        .withLocation(study, blankLocation('study'))
+        .withInvestigator(alice, { locationId: study }),
+    );
+    table.nextPhase();
+    table.startTurn(alice);
+    table.endTurn(alice);
+    table.nextPhase();
+
+    table.nextPhase();
+
+    const causes = table.entries
+      .filter(({ event }) => event.type === 'InvestigatorChanged' || event.type === 'PhaseChanged')
+      .map(({ event, cause }) => [event.type, cause]);
+    // The upkeep begins by the players' Next; its resource is the rules' own step.
+    expect(causes.slice(-2)).toEqual([
+      ['PhaseChanged', undefined],
+      ['InvestigatorChanged', { kind: 'rule', step: 'gainResources' }],
+    ]);
+  });
+
   it('reports the step a phase stops at when it raises a decision', () => {
     const agendaOf1 = blankAgenda('agenda_of_1', fixed(1));
     const table = PlayTable.start(

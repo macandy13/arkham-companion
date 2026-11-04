@@ -13,6 +13,7 @@ import { type EngineContext, type ScenarioContext } from './cards';
 import type { Command } from './commands';
 import { pendingDecision } from './decisions';
 import { describeDecision, optionNamed } from './describe_decision';
+import type { ChangeCause } from './change_cause';
 import type { Event } from './events';
 import { formatBoard } from './format_board';
 import { decisionId, type InvestigatorId } from './ids';
@@ -78,6 +79,11 @@ export class TableRejected extends CommandRejected {
 export interface LoggedEvent {
   commandId: string;
   event: Event;
+  /**
+   * Why the engine produced the event (`ExecuteResult.causes`), kept only when it was not the
+   * players' own command: absent means the players did it.
+   */
+  cause?: ChangeCause;
 }
 
 /** How an action's skill test is resolved. */
@@ -208,7 +214,14 @@ export class PlayTable {
     this.assertConsistent(command.type, result.state);
     this.current = result.state;
     const commandId = this.stepId ?? this.nextGroupId();
-    this.log.push(...result.events.map((event) => ({ commandId, event })));
+    this.log.push(
+      ...result.events.map((event, i): LoggedEvent => {
+        const cause = result.causes[i];
+        return cause === undefined || cause.kind === 'player'
+          ? { commandId, event }
+          : { commandId, event, cause };
+      }),
+    );
   }
 
   /**

@@ -5,9 +5,10 @@ import { STATE_VERSION, replay, type ImportedGame, type StoredEvent } from '@ark
 const FORMAT = 'arkham-companion-game';
 
 /**
- * Envelope of an exported game. Events are only checked for being objects with a `type`:
- * the full `Event` union lives in the engine and would have to be duplicated here. Structural
- * errors inside an event are caught by `parseGameExport` replaying the log instead.
+ * Envelope of an exported game. Events are only checked for being objects with a `type`, and
+ * causes for having a `kind`: the full `Event` and `ChangeCause` unions live in the engine and
+ * would have to be duplicated here. Structural errors inside an event are caught by
+ * `parseGameExport` replaying the log instead; a cause only names why in the log.
  */
 const exportSchema = z.object({
   format: z.literal(FORMAT),
@@ -18,6 +19,7 @@ const exportSchema = z.object({
       timestamp: z.number(),
       commandId: z.string(),
       event: z.looseObject({ type: z.string() }),
+      cause: z.looseObject({ kind: z.string() }).optional(),
     }),
   ),
 });
@@ -47,7 +49,12 @@ export function serialiseGameExport(
     format: FORMAT,
     stateVersion: STATE_VERSION,
     game: { title, createdAt },
-    events: events.map(({ timestamp, commandId, event }) => ({ timestamp, commandId, event })),
+    events: events.map(({ timestamp, commandId, event, cause }) => ({
+      timestamp,
+      commandId,
+      event,
+      ...(cause === undefined ? {} : { cause }),
+    })),
   });
 }
 

@@ -1,6 +1,7 @@
 import type { TFunction } from 'i18next';
 import type {
   CardMoved,
+  ChangeCause,
   EngineContext,
   Event,
   GameState,
@@ -27,6 +28,11 @@ export interface LogLine {
   /** The printed name of who did it; absent for what the game does by itself (doom, shuffles). */
   readonly actor?: string;
   readonly text: string;
+  /**
+   * Why the game did it by itself, in words: the card whose forced ability it was ("Rotting
+   * Remains") or the step of the round ("mythos phase"). Absent for what the players did.
+   */
+  readonly cause?: string;
 }
 
 /**
@@ -70,14 +76,13 @@ export function gameLog(
   const names = namesIn(ctx, state);
   const runs = runsBy(entries, (entry) => entry.commandId);
   return runs.flatMap(({ key, items }, index) => {
-    const events = items.map((entry) => entry.event);
     const turnAtStart = turn;
-    for (const event of events) {
+    for (const { event } of items) {
       if (event.type === 'PhaseChanged') ({ round, phase } = event);
       if (event.type === 'TurnStarted') turn = event.investigatorId;
       if (event.type === 'TurnEnded') turn = undefined;
     }
-    const lines = eventLines(t, ctx, state, events);
+    const lines = eventLines(t, ctx, state, items);
     if (lines.length === 0) return [];
     const actor = turnAtStart ?? turn;
     const timestamp = stepTimes.get(key);
@@ -115,19 +120,22 @@ export function logSections(steps: readonly LogStep[]): LogSection[] {
 }
 
 /**
- * What `events` (one step's) did, one line per event the players care about. Bookkeeping that
- * only the engine reads (phase steps, queues, decisions asked, map layout, exhaustion) has no
- * line, and neither have the counters a clue discovery moves, since its own line says it all.
+ * What `entries` (one step's) did, one line per event the players care about, with its cause when
+ * the game did it by itself. Bookkeeping that only the engine reads (phase steps, queues, decisions
+ * asked, map layout, exhaustion) has no line, and neither have the counters a clue discovery
+ * moves, since its own line says it all.
  */
 export function eventLines(
   t: TFunction,
   ctx: EngineContext,
   state: GameState,
-  events: readonly Event[],
+  entries: readonly LoggedEvent[],
 ): LogLine[] {
-  const discoveries = events.flatMap((event) => (event.type === 'CluesDiscovered' ? [event] : []));
+  const discoveries = entries.flatMap(({ event }) =>
+    event.type === 'CluesDiscovered' ? [event] : [],
+  );
   const names = namesIn(ctx, state);
-  return events.flatMap((event) => {
+  return entries.flatMap(({ event, cause }) => {
     // A discovery is the only clue change of its step: no rule moves clues while a test resolves.
     const isDiscovery =
       (event.type === 'TokensChanged' &&
@@ -140,8 +148,30 @@ export function eventLines(
     const text = eventLine(t, names, state, event);
     if (text === undefined) return [];
     const actor = actorOf(names, event);
-    return [{ event: event.type, ...(actor === undefined ? {} : { actor }), text }];
+    const why = cause === undefined ? undefined : causeOf(t, names, cause);
+    return [
+      {
+        event: event.type,
+        ...(actor === undefined ? {} : { actor }),
+        text,
+        ...(why === undefined ? {} : { cause: why }),
+      },
+    ];
   });
+}
+
+/** The words for why the game did something by itself; none for what the players did. */
+function causeOf(t: TFunction, names: Names, cause: ChangeCause): string | undefined {
+  switch (cause.kind) {
+    case 'player':
+      return undefined;
+    case 'card':
+      return names.card(cause.cardId);
+    case 'rule':
+      return t(`log.cause.${cause.step}`);
+    default:
+      return assertNever(cause);
+  }
 }
 
 /**
@@ -166,10 +196,10 @@ export interface AutomaticChanges {
 }
 
 /**
- * What the game did by itself in the last step of `entries` (M3.13a): when that step moved the
- * game on to another phase, the lines of its events but those the screen tells another way
- * (`TOLD_ELSEWHERE`): the doom of the mythos phase, the resources of the upkeep. `undefined` when the last
- * step didn't change the phase, as the players did all of it themselves, or changed nothing else.
+ * What the game did by itself in the last step of `entries` (M3.13a, M1C.2): the lines of the
+ * events a rule or a card's forced ability caused (`LoggedEvent.cause`), but those the screen tells
+ * another way (`TOLD_ELSEWHERE`): the doom of the mythos phase, the resources of the upkeep, the
+ * horror a treachery deals. `undefined` when the players did all of the step themselves.
  */
 export function automaticChanges(
   t: TFunction,
@@ -179,9 +209,10 @@ export function automaticChanges(
 ): AutomaticChanges | undefined {
   const last = runsBy(entries, (entry) => entry.commandId).at(-1);
   if (last === undefined) return undefined;
-  const events = last.items.map((entry) => entry.event);
-  if (!events.some((event) => event.type === 'PhaseChanged')) return undefined;
-  const lines = eventLines(t, ctx, state, events).filter((line) => !TOLD_ELSEWHERE.has(line.event));
+  const automatic = last.items.filter((entry) => entry.cause !== undefined);
+  const lines = eventLines(t, ctx, state, automatic).filter(
+    (line) => !TOLD_ELSEWHERE.has(line.event),
+  );
   return lines.length === 0 ? undefined : { step: last.key, lines };
 }
 
