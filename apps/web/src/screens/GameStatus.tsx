@@ -14,7 +14,8 @@ import { GameExportButton } from './GameExportButton';
  * has room for only Next, undo and the menu at a touch size, so the menu also holds "Adjust board"
  * and the game log, which the stylesheet shows there only on a phone (game.css). While
  * the players adjust the board (`OpenGame.adjusting`), "Done" and "Cancel" take the place of
- * "Next". Its buttons wait while a step is queued (`OpenGame.busy`), since a second tap would act
+ * "Next". Next and Done are the row's primary (`data-primary`), the brass pill the turn's own step
+ * in an investigator's panel takes too (game.css). Its buttons wait while a step is queued (`OpenGame.busy`), since a second tap would act
  * on whatever the first one leaves open; the log opens meanwhile, only its going back waits.
  * `board` is the open game's `OpenGame.board`.
  */
@@ -48,7 +49,12 @@ export function GameStatus({
       </ol>
       {adjusting ? (
         <>
-          <button type="button" disabled={blocked} onClick={() => void actions.finishAdjusting()}>
+          <button
+            type="button"
+            data-primary
+            disabled={blocked}
+            onClick={() => void actions.finishAdjusting()}
+          >
             {t('header.done')}
           </button>
           <button type="button" disabled={blocked} onClick={() => void actions.cancelAdjusting()}>
@@ -56,7 +62,12 @@ export function GameStatus({
           </button>
         </>
       ) : (
-        <button type="button" disabled={blocked} onClick={() => void actions.nextPhase()}>
+        <button
+          type="button"
+          data-primary
+          disabled={blocked}
+          onClick={() => void actions.nextPhase()}
+        >
           {t('header.next')}
         </button>
       )}

@@ -516,7 +516,6 @@ export const appTexts = {
     turnTakenAt: 'Zug beendet · {{location}}',
     offMap: 'An keinem Ort',
     lead: 'Ermittlungsleiter',
-    onTurn: 'Am Zug',
     showCard: 'Karte von {{name}} zeigen',
     defeated: 'Besiegt',
     resigned: 'Aufgegeben',

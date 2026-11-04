@@ -467,7 +467,7 @@ describe('InvestigatorBar', () => {
     expect(within(panel('alder')).queryByRole('button', { name: "Show alder's card" })).toBeNull();
   });
 
-  describe('the lead and turn markers', () => {
+  describe('the lead marker', () => {
     const alderAndBrook = () =>
       PlayTable.start(
         newGame()
@@ -495,7 +495,7 @@ describe('InvestigatorBar', () => {
           return table;
         },
         alderMarkers: ['Lead investigator'],
-        brookMarkers: ['Their turn'],
+        brookMarkers: [],
       },
       {
         situation: 'once Alder has resigned, leaving the lead to Brook',

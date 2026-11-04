@@ -75,8 +75,8 @@
 
 /*
  * Where the investigator is and how their round goes, a line under their card in the table's
- * colours, after the lead and turn markers: a pentagon like the game's lead investigator token and
- * the game's action arrow.
+ * colours, after the lead marker: a pentagon like the game's lead investigator token. The turn
+ * needs no marker, since the turn controls' action arrows show whose turn it is.
  */
 #board > #investigators > section > p[data-whereabouts] {
   display: flex;
@@ -96,10 +96,6 @@
 
 #investigators [data-marker='lead'] {
   --marker-icon: url('./icons/lead.svg');
-}
-
-#investigators [data-marker='turn'] {
-  --marker-icon: url('../symbols/action.svg');
 }
 
 #board [data-skill='willpower'] {
@@ -132,26 +128,13 @@
 
 /*
  * The turn controls follow the design language's buttons (base.css): the actions are outlined
- * pills, and "Start turn" and "End", the turn's own steps, its one primary, a brass pill.
+ * pills, and "Start turn" and "End", the turn's own steps, are a brass pill like Next (game.css).
  */
 #board > #investigators > section > button,
 #investigators [role='group'] > button {
   padding-inline: var(--space-2);
   border-radius: var(--radius-pill);
   background: none;
-}
-
-/* Under #board like the pills above, or their `background: none` would win over the brass. */
-#board > #investigators section button[data-primary] {
-  border-color: var(--color-brass-deep);
-  background: var(--brass-button);
-  color: var(--color-ink);
-  font-family: var(--font-family-print);
-  box-shadow: var(--button-lift);
-}
-
-#board > #investigators section button[data-primary]:disabled {
-  opacity: var(--disabled-opacity);
 }
 
 /* The counter's name in small spaced capitals after its icon. */
@@ -545,7 +528,7 @@
   }
 
   /*
-   * The lead and turn markers and the turn controls share one row under the card, so the map keeps
+   * The lead marker and the turn controls share one row under the card, so the map keeps
    * the height; the status line's words give way to the controls (the map shows where everyone
    * is), and stay for screen readers. Dense packing lifts the controls, after the cards in play
    * in the markup, into the markers' row.
@@ -566,7 +549,7 @@
     grid-column: 1;
   }
 
-  /* The controls keep to the right, apart from the markers, so the turn marker's arrow is not read as an action. */
+  /* The controls keep to the right, apart from the marker. */
   #board:not([data-view='investigators']) > #investigators > section > :is(button, [role='group']) {
     grid-column: 2;
     justify-self: end;

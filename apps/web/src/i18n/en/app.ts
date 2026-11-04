@@ -513,7 +513,6 @@ export const appTexts = {
     turnTakenAt: 'Turn taken · {{location}}',
     offMap: 'Not at a location',
     lead: 'Lead investigator',
-    onTurn: 'Their turn',
     showCard: "Show {{name}}'s card",
     defeated: 'Defeated',
     resigned: 'Resigned',

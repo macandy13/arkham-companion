@@ -169,8 +169,8 @@ function turnKey(board: BoardView): string {
  * itself, so its abilities and flavour stay off the screen to leave the board its room; a tap on
  * the art shows the whole card with its text (`InvestigatorCard`). Then where they are and how their round goes, the
  * cards they control (`PlayArea`) and their turn controls. Before where they are, a pentagon marks
- * the lead investigator, like the game's lead investigator token, and an action arrow the
- * investigator whose turn it is. Health and sanity show what is left of the printed value, like
+ * the lead investigator, like the game's lead investigator token; whose turn it is needs no
+ * marker, since only their turn controls carry the action arrows. Health and sanity show what is left of the printed value, like
  * the dials, while their steppers place and heal damage and horror, like the tokens on the card.
  * Clues show without steppers: they
  * are found by investigating and spent on the act.
@@ -340,7 +340,6 @@ function InvestigatorPanel({
       )}
       <p data-whereabouts="">
         {lead && <span role="img" aria-label={t('investigators.lead')} data-marker="lead" />}
-        {onTurn && <span role="img" aria-label={t('investigators.onTurn')} data-marker="turn" />}
         <span>{statusLine(investigator, onTurn, t)}</span>
       </p>
       <PlayArea
