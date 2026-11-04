@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
 import {
   blankAgenda,
@@ -33,7 +33,7 @@ describe('ChangesNotice', () => {
 
   /**
    * Roland Banks in the Study, his turn ended and the enemy phase begun: the next step is the
-   * upkeep, which gives him 1 resource.
+   * upkeep, in which he draws 1 card and gains 1 resource.
    */
   const beforeUpkeep = () => {
     const table = PlayTable.start(
@@ -55,9 +55,12 @@ describe('ChangesNotice', () => {
     table.nextPhase();
     rerender(noticeFor(table));
 
-    expect(screen.getByRole('status', { name: 'What the game did' }).textContent).toBe(
-      'Roland Banks gains 1 resource',
-    );
+    const notice = screen.getByRole('status', { name: 'What the game did' });
+    expect(
+      within(notice)
+        .getAllByRole('listitem')
+        .map((line) => line.textContent),
+    ).toEqual(['Roland Banks draws 1 card', 'Roland Banks gains 1 resource']);
   });
 
   it('starts afresh for a step played while the last notice still shows', () => {

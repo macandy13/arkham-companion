@@ -544,6 +544,28 @@ describe('upkeep phase', () => {
     ]);
   });
 
+  it('has each active investigator draw 1 card, which the players do at the table (4.4)', () => {
+    const { context, state: started } = table
+      .withInvestigator(alice, { locationId: hall })
+      .withInvestigator(bob, { locationId: hall, sanity: { max: 3, horror: 0 } })
+      .start();
+    const state = stateAfter(
+      context,
+      started,
+      next,
+      { type: 'AdjustInvestigator', investigatorId: bob, stat: 'horror', delta: 3 },
+      ...turnsOf(alice),
+    );
+
+    const deferred = runFrom(context, state, [next, next]).events.filter(
+      (event) => event.type === 'CommandDeferred',
+    );
+
+    expect(deferred).toEqual([
+      { type: 'CommandDeferred', command: { type: 'DrawCards', investigatorId: alice, amount: 1 } },
+    ]);
+  });
+
   it('ends the round (4.6): clears the turns taken', () => {
     const { context, state } = aliceInHall.start();
     const enemy = runFrom(context, state, [next, ...turnsOf(alice), next]).state;
