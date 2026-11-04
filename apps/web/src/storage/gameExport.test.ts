@@ -81,6 +81,16 @@ describe('game export format', () => {
     expect(parsed.events.map((e) => e.cause)).toEqual([undefined, mythosDoom]);
   });
 
+  it('rejects a cause the log could not word', () => {
+    const [scenarioStart] = stored([started]);
+    const text = serialiseGameExport('Night', 5, [scenarioStart!]).replace(
+      '"event":',
+      '"cause":{"kind":"rule","step":"unknownStep"},"event":',
+    );
+
+    expect(failureOf(text)).toBe('invalid');
+  });
+
   it.each([
     { name: 'no further events', deltas: [] },
     { name: 'one event', deltas: [2] },

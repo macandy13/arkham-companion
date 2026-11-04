@@ -1,14 +1,38 @@
 import { z } from 'zod';
-import { STATE_VERSION, replay, type ImportedGame, type StoredEvent } from '@arkham/engine';
+import {
+  PHASE_STEP_TITLES,
+  STATE_VERSION,
+  replay,
+  type ImportedGame,
+  type PhaseStepId,
+  type StoredEvent,
+} from '@arkham/engine';
 
 /** Marker so arbitrary JSON files are rejected early with a clear reason. */
 const FORMAT = 'arkham-companion-game';
 
+/** The phase steps a rule cause may name, read from the engine's own list. */
+const phaseSteps = Object.keys(PHASE_STEP_TITLES) as [PhaseStepId, ...PhaseStepId[]];
+
 /**
- * Envelope of an exported game. Events are only checked for being objects with a `type`, and
- * causes for having a `kind`: the full `Event` and `ChangeCause` unions live in the engine and
- * would have to be duplicated here. Structural errors inside an event are caught by
- * `parseGameExport` replaying the log instead; a cause only names why in the log.
+ * An event's `ChangeCause`, checked in full: replay never reads it, so nothing later would catch
+ * one the log cannot word. The window of a card cause is only checked for a `kind`, as only its
+ * card is shown.
+ */
+const causeSchema = z.discriminatedUnion('kind', [
+  z.object({ kind: z.literal('player') }),
+  z.object({
+    kind: z.literal('card'),
+    cardId: z.string(),
+    window: z.looseObject({ kind: z.string() }),
+  }),
+  z.object({ kind: z.literal('rule'), step: z.enum(phaseSteps) }),
+]);
+
+/**
+ * Envelope of an exported game. Events are only checked for being objects with a `type`: the full
+ * `Event` union lives in the engine and would have to be duplicated here. Structural errors inside
+ * an event are caught by `parseGameExport` replaying the log instead.
  */
 const exportSchema = z.object({
   format: z.literal(FORMAT),
@@ -19,7 +43,7 @@ const exportSchema = z.object({
       timestamp: z.number(),
       commandId: z.string(),
       event: z.looseObject({ type: z.string() }),
-      cause: z.looseObject({ kind: z.string() }).optional(),
+      cause: causeSchema.optional(),
     }),
   ),
 });
@@ -78,7 +102,8 @@ export function parseGameExport(text: string): ImportedGame {
   const parsed = exportSchema.safeParse(json);
   if (!parsed.success) throw new GameImportError('invalid');
 
-  // The schema above cannot vouch for event payloads, but the cast is checked by the replay below.
+  // The schema above cannot vouch for event payloads, but the cast is checked by the replay below;
+  // it checked the causes in full.
   const events = parsed.data.events as unknown as ImportedGame['events'];
   try {
     if (!replay(events.map((e) => e.event))) throw new Error('unknown event');
