@@ -104,11 +104,11 @@
   align-items: end;
 }
 
-#board > header > section[aria-labelledby]:has(> :nth-child(3)) {
+#board > header > section[aria-labelledby]:not([data-pool]):has(> :nth-child(3)) {
   grid-template-columns: auto auto;
 }
 
-#board > header > section[aria-labelledby] > :not(p) {
+#board > header > section[aria-labelledby]:not([data-pool]) > :not(p) {
   grid-row: 2;
 }
 
@@ -458,14 +458,37 @@
 }
 
 #board > header [data-token='doom'] {
-  background: var(--color-doom);
+  background: var(--color-doom-token);
 }
 
 /*
- * The token pool: a doom and a clue token side by side, like the supply beside the playmat. On a
- * screen as wide as a landscape tablet it sits in the header's top left corner, apart from the
- * cards in its row; a narrower header wraps, so it leads the row instead of covering a card.
+ * The tentacles on an HTML doom token (`DoomMark`), behind its count: the count is positioned too,
+ * so it paints over them.
  */
+:is(#board > header [data-token='doom'], [data-pool-token='doom'], [data-token-ghost='doom'])
+  > [data-part='doom-mark'] {
+  position: absolute;
+  /* Half of what `DoomMark`'s MARK_SHARE leaves free; the side tentacles' tips reach past the box. */
+  inset: 12%;
+  overflow: visible;
+  fill: var(--color-doom-mark);
+}
+
+#board > header [data-token='doom'] > :not([data-part='doom-mark']) {
+  position: relative;
+}
+
+/*
+ * The token pool: its five tokens in rows of three under its label, like the supply beside the
+ * playmat, narrow enough to stay clear of the encounter deck. On a screen as wide as a landscape
+ * tablet it sits in the header's top left corner, apart from the cards in its row; a narrower
+ * header wraps, so it leads the row instead of covering a card.
+ */
+#board > header > section[data-pool] {
+  grid-auto-flow: row;
+  grid-template-columns: repeat(3, auto);
+}
+
 @media (min-width: 64rem) {
   #board > header > section[data-pool] {
     position: absolute;
@@ -475,6 +498,7 @@
 }
 
 #board > header [data-pool-token] {
+  position: relative;
   display: block;
 }
 
@@ -892,6 +916,11 @@
  * either view. The status row keeps to one line.
  */
 @media (orientation: portrait) and (max-width: 40rem) {
+  /* A swipe down on the header expands it (M3.15c), so it must not pull the page to reload. */
+  :root:has(#board) {
+    overscroll-behavior-y: none;
+  }
+
   #board:not([data-view='cards']) > header [data-pile],
   #board:not([data-view='cards']) > header > section:has([data-pile='victoryDisplay']),
   #board > header > section[data-pool],
@@ -1427,7 +1456,41 @@ body > [data-token-ghost='clue'] {
 
 #board > header [data-pool-token='doom'],
 body > [data-token-ghost='doom'] {
-  background: var(--color-doom);
+  background: var(--color-doom-token);
+}
+
+/*
+ * Damage, horror and resources like their cardboard tokens: a red disc with a pale heart, a blue
+ * one with a pale brain, and a milled gold coin.
+ */
+#board > header [data-pool-token='damage'],
+body > [data-token-ghost='damage'] {
+  --loose-token-icon: url('../investigators/icons/health.svg');
+  background: var(--color-health);
+}
+
+#board > header [data-pool-token='horror'],
+body > [data-token-ghost='horror'] {
+  --loose-token-icon: url('../investigators/icons/sanity.svg');
+  background: var(--color-sanity);
+}
+
+#board > header [data-pool-token='resource'],
+body > [data-token-ghost='resource'] {
+  border-color: var(--color-resource-coin-rim);
+  background: var(--resource-coin-face);
+  box-shadow: var(--resource-coin-milling), var(--header-token-shadow);
+}
+
+:is(
+  #board > header :is([data-pool-token='damage'], [data-pool-token='horror']),
+  body > :is([data-token-ghost='damage'], [data-token-ghost='horror'])
+)::after {
+  content: '';
+  position: absolute;
+  inset: var(--loose-token-icon-inset);
+  background: var(--color-parchment);
+  mask: var(--loose-token-icon) center / contain no-repeat;
 }
 
 /*

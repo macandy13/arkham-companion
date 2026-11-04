@@ -8,6 +8,7 @@ import type {
   StartCampaign,
 } from './campaign_commands';
 import type { CampaignEvent } from './campaign_events';
+import { CAMPAIGN_PLAYER_CAUSE, type CampaignChangeCause } from './campaign_notices';
 import { MAX_TEAM_SIZE, isValidStoryValue } from './campaign_invariants';
 import { findCurrentScenarioId, isStarted, type CampaignLog } from './campaign_log';
 import { replayEvents } from './campaign_reducer';
@@ -80,19 +81,23 @@ export function handleCommand(
 export interface CampaignExecuteResult {
   log: CampaignLog;
   events: CampaignEvent[];
+  /** Why each of `events` was written, at the same index. */
+  causes: CampaignChangeCause[];
 }
 
 /**
  * Runs a campaign command end to end (`handleCommand`, then the reducer),
- * like the game's `execute`. Throws `CampaignCommandRejected`.
+ * like the game's `execute`, its events written for `cause` (the players, unless a resolution
+ * writes them). Throws `CampaignCommandRejected`.
  */
 export function executeCommand(
   ctx: CampaignContext,
   log: CampaignLog,
   command: CampaignCommand,
+  cause: CampaignChangeCause = CAMPAIGN_PLAYER_CAUSE,
 ): CampaignExecuteResult {
   const events = handleCommand(ctx, log, command);
-  return { log: replayEvents(events, log), events };
+  return { log: replayEvents(events, log), events, causes: events.map(() => cause) };
 }
 
 /**
@@ -104,13 +109,18 @@ export function executeCommands(
   ctx: CampaignContext,
   log: CampaignLog,
   commands: readonly CampaignCommand[],
+  cause: CampaignChangeCause = CAMPAIGN_PLAYER_CAUSE,
 ): CampaignExecuteResult {
   return commands.reduce<CampaignExecuteResult>(
     (result, command) => {
-      const next = executeCommand(ctx, result.log, command);
-      return { log: next.log, events: [...result.events, ...next.events] };
+      const next = executeCommand(ctx, result.log, command, cause);
+      return {
+        log: next.log,
+        events: [...result.events, ...next.events],
+        causes: [...result.causes, ...next.causes],
+      };
     },
-    { log, events: [] },
+    { log, events: [], causes: [] },
   );
 }
 

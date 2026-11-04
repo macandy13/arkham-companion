@@ -1,6 +1,7 @@
 import { expect, test } from '../fixtures/test';
 import {
   cluesToShareExport,
+  doomBesideDamageExport,
   ghoulPriestInCellarExport,
   graveyardTestExport,
   midnightMasksStartedExport,
@@ -27,6 +28,16 @@ test('the house map with Roland Banks in the Hallway', { tag: '@shot' }, async (
     .getByRole('figure', { name: 'House' })
     .getByRole('group', { name: 'Hallway' });
   await expect(hallway.getByRole('img', { name: 'Roland Banks' })).toBeVisible();
+});
+
+test('the Ghoul Priest in the Cellar with doom beside its damage, and doom on the Cellar', async ({
+  page,
+}) => {
+  await resumeImportedGame(page, 'Doom and damage', doomBesideDamageExport('Doom and damage'));
+
+  const cellar = page.getByRole('figure', { name: 'House' }).getByRole('group', { name: 'Cellar' });
+  await expect(cellar.getByRole('img', { name: 'Ghoul Priest, 2 damage, Doom 1' })).toBeVisible();
+  await expect(cellar.getByRole('img', { name: 'Doom 1', exact: true })).toBeVisible();
 });
 
 test('Roland Banks’ card opened whole from its art, to read its abilities', async ({ page }) => {

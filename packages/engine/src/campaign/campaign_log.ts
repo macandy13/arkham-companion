@@ -103,6 +103,12 @@ export type ScenarioOutcome =
   /** Every investigator resigned or was defeated. */
   | { readonly kind: 'noResolution' };
 
+/** Whether `a` and `b` are the same outcome: both "no resolution", or the same resolution id. */
+export function sameOutcome(a: ScenarioOutcome, b: ScenarioOutcome): boolean {
+  if (a.kind === 'noResolution' || b.kind === 'noResolution') return a.kind === b.kind;
+  return a.id === b.id;
+}
+
 /**
  * A scenario the campaign has played and how it ended, written when its
  * resolution is confirmed (`AdvanceScenario`). Later scenarios and
