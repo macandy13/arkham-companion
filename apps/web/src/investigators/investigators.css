@@ -6,6 +6,7 @@
  */
 #board > #investigators {
   display: flex;
+  flex-wrap: nowrap;
   gap: var(--space-3);
   align-items: start;
 }
