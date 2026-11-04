@@ -26,9 +26,11 @@ A round is mythos → investigation → enemy → upkeep.
 ## Enemy
 
 1. [Hunter](hunter.md) enemies move (also [patrol](https://arkhamdb.com/rules#Patrol) enemies).
-2. In player order, each investigator resolves the attacks of all ready enemies engaged with them, in an order the investigator chooses.
+2. In player order, each investigator resolves the attacks of all ready enemies engaged with them, in an order the investigator chooses, before the next investigator's.
    - An attack deals its damage and horror at the same time.
    - The enemy exhausts after its attack and any triggered abilities resolve.
+   - A cancelled attack (Dodge) has no further consequences, but the enemy still exhausts ([Dodge FAQ](https://arkhamdb.com/card/01023)).
+   - The app asks about all of the step's attacks at once and leaves their order, across investigators too, to the players at the table.
 3. The phase ends (3.4): "at the end of the enemy phase" forced abilities resolve.
 
 ## Upkeep

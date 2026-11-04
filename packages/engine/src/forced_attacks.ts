@@ -71,7 +71,7 @@ export function forcedAttackDecision(
  * massive enemy attacks each engaged investigator), raised for every listed attack when the step
  * is reached. Its `attack` option resolves it at the printed damage and horror, which the players
  * may lower (assets soak part of it); `skip` is for a card that cancels it, after which the enemy
- * still exhausts, so both resolve the attack (`ResolveEnemyAttack`), the second dealing nothing.
+ * still exhausts (Dodge FAQ), so both resolve it (`ResolveEnemyAttack`), the second `cancelled`.
  */
 export function enemyPhaseAttackDecision(
   ctx: EngineContext,
@@ -102,7 +102,7 @@ export function enemyPhaseAttackDecision(
       {
         id: 'skip',
         label: 'decision.attackCancelled',
-        commands: [{ type: 'ResolveEnemyAttack', enemyId, investigatorId, damage: 0, horror: 0 }],
+        commands: [{ type: 'ResolveEnemyAttack', enemyId, investigatorId, cancelled: true }],
       },
     ],
   };

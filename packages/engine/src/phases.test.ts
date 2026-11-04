@@ -409,12 +409,15 @@ describe('enemy phase', () => {
     const { context, state } = engagedWithGhoul.start();
     const enemy = toEnemyPhase(context, state, alice);
 
-    const after = stateAfter(context, enemy, answer('enemyAttack:ghoul:alice', 'skip'));
+    const { state: after, events } = runFrom(context, enemy, [
+      answer('enemyAttack:ghoul:alice', 'skip'),
+    ]);
 
     expect(requireInvestigator(after, alice)).toMatchObject({
       health: { damage: 0 },
       sanity: { horror: 0 },
     });
+    expect(events.map((event) => event.type)).not.toContain('EnemyAttacked');
     expect(after.cards[instanceId('ghoul')]!.exhausted).toBe(true);
     expect(after.meta.steps).toEqual([]);
   });
@@ -501,6 +504,21 @@ describe('enemy phase', () => {
 
     expect(requireInvestigator(after, alice)).toMatchObject({ health: { damage: 0 } });
     expect(after.meta).toMatchObject({ phase: 'enemy', steps: [] });
+  });
+
+  it('neither deals nor exhausts for a ghoul moved away before its question was answered', () => {
+    const { context, state } = engagedWithGhoul.start();
+    const enemy = toEnemyPhase(context, state, alice);
+    const moved = stateAfter(context, enemy, {
+      type: 'ManualAdjust',
+      adjustment: { kind: 'moveCard', cardId: instanceId('ghoul'), to: atLocation(cellar) },
+    });
+
+    const after = stateAfter(context, moved, answer('enemyAttack:ghoul:alice', 'attack'));
+
+    expect(requireInvestigator(after, alice)).toMatchObject({ health: { damage: 0 } });
+    expect(after.cards[instanceId('ghoul')]!.exhausted).toBe(false);
+    expect(after.meta.steps).toEqual([]);
   });
 });
 

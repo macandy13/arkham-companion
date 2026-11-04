@@ -257,6 +257,12 @@ describe('an investigator who leaves', () => {
       id: 'enemiesAttack',
       attacks: [{ enemyId: bobGhoul, investigatorId: bob }],
     });
+    // The question about alice's second ghoul went with her; bob's own stays, and the group picks
+    // a new lead.
+    expect(defeated.pending.map((decision) => decision.id)).toEqual([
+      `enemyAttack:${bobGhoul}:${bob}`,
+      'newLeadInvestigator',
+    ]);
   });
 });
 

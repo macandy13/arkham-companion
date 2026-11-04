@@ -1,3 +1,4 @@
+import { ENEMY_PHASE_ATTACK_PROMPT } from './forced_attacks';
 import { withoutKey } from '@arkham/util';
 import { sameEdge } from './board';
 import type {
@@ -42,11 +43,14 @@ function applyInvestigatorLeft(
   left: Pick<Investigator, 'status' | 'defeat'>,
 ): GameState {
   const applied = applyInvestigator(state, { investigatorId }, (inv) => ({ ...inv, ...left }));
-  // Whoever is out of the game answers nothing more: the attacks still asked of them go too.
+  // Their engaged enemies leave them, so the enemy phase attacks still asked of them go too.
   const after = {
     ...applied,
     pending: applied.pending.filter(
-      (d) => d.decider.kind !== 'investigator' || d.decider.investigatorId !== investigatorId,
+      (d) =>
+        d.prompt !== ENEMY_PHASE_ATTACK_PROMPT ||
+        d.decider.kind !== 'investigator' ||
+        d.decider.investigatorId !== investigatorId,
     ),
   };
   return state.meta.turn?.investigatorId === investigatorId

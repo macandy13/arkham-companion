@@ -763,7 +763,8 @@ function lastStepStarted(
       started = steps[0]?.id;
     steps = event.steps;
   }
-  return started;
+  // A step that only asks again (step 3.3 about attacks still due) changes no list.
+  return started ?? steps[0]?.id;
 }
 
 /**

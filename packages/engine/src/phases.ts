@@ -111,9 +111,11 @@ export function nextStepPlan(ctx: EngineContext, state: GameState): StepPlan | u
  * `enemyAttackList`) and asks the players about each one
  * (`enemyPhaseAttackDecision`); once none of them is due any more (resolved,
  * or the enemy was defeated, evaded or exhausted meanwhile) the step is done.
- * The decisions may be answered in any order, as the players pick the order
- * of an investigator's attacks. Attacks still due without a decision (a
- * decision that went with an undo) are asked again.
+ * The decisions may be answered in any order: the rules have each
+ * investigator, in player order, resolve all their attacks in the order they
+ * pick, and asking them all at once leaves that order to the players at the
+ * table, like the attacks of opportunity of one action. Attacks still due
+ * without a decision (a game stored before step 3.3 asked) are asked again.
  */
 function attackStepPlan(
   ctx: EngineContext,
@@ -181,14 +183,18 @@ export function handleResolveEnemyAttack(
       enemyId: cmd.enemyId,
       investigatorId: cmd.investigatorId,
     });
-  const dealt = enemyAttackEvents(
-    ctx,
-    state,
-    cmd.enemyId,
-    activeInvestigator(state, cmd.investigatorId),
-    cmd.damage ?? attack.damage,
-    cmd.horror ?? attack.horror,
-  );
+  const investigator = activeInvestigator(state, cmd.investigatorId);
+  // A cancelled attack ends "with no further consequences": nothing dealt, no "after it attacks".
+  const dealt = cmd.cancelled
+    ? []
+    : enemyAttackEvents(
+        ctx,
+        state,
+        cmd.enemyId,
+        investigator,
+        cmd.damage ?? attack.damage,
+        cmd.horror ?? attack.horror,
+      );
   const after = replay(dealt, state);
   const remaining = dueAttacksOf(ctx, after, step).filter((due) => !isThisAttack(due));
   const steps: PhaseStep[] =
