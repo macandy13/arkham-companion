@@ -141,7 +141,8 @@
   background: none;
 }
 
-#investigators section button[data-primary] {
+/* Under #board like the pills above, or their `background: none` would win over the brass. */
+#board > #investigators section button[data-primary] {
   border-color: var(--color-brass-deep);
   background: var(--brass-button);
   color: var(--color-ink);
@@ -149,7 +150,7 @@
   box-shadow: var(--button-lift);
 }
 
-#investigators section button[data-primary]:disabled {
+#board > #investigators section button[data-primary]:disabled {
   opacity: var(--disabled-opacity);
 }
 
