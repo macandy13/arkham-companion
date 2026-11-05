@@ -191,7 +191,7 @@ describe('CampaignScreen', () => {
     /**
      * Night of the Zealot with an invented interlude after The Gathering: the investigators decide
      * whether to rest (Roland earns 2 experience) or to press on (a cultist token goes into the
-     * bag), and the lead investigator writes it down as a story note either way.
+     * bag).
      */
     const withAnInterlude = () => ({
       ...nightOfTheZealot,
@@ -282,7 +282,23 @@ describe('CampaignScreen', () => {
       expect(stored?.log.playedInterludes).toEqual([theSurvivors]);
     });
 
-    it('takes an answer back with "Back"', async () => {
+    it('offers the interlude again once its entries are taken back with "Undo"', async () => {
+      await renderInterludeDue();
+
+      fireEvent.click(
+        await screen.findByRole('button', { name: 'Read the interlude The Survivors' }),
+      );
+      fireEvent.click(screen.getByRole('button', { name: 'Next' }));
+      fireEvent.click(screen.getByRole('button', { name: 'Write into the log' }));
+      const toast = await screen.findByRole('status', { name: 'Written into the log' });
+      fireEvent.click(within(toast).getByRole('button', { name: 'Undo' }));
+
+      expect(
+        await screen.findByRole('button', { name: 'Read the interlude The Survivors' }),
+      ).toBeTruthy();
+    });
+
+    it('takes an answer back with "Back", keeping it picked', async () => {
       await renderInterludeDue();
 
       fireEvent.click(
@@ -293,7 +309,7 @@ describe('CampaignScreen', () => {
       expect(screen.getByText('Roland Banks earns 2 experience')).toBeTruthy();
       fireEvent.click(screen.getByRole('button', { name: 'Back' }));
 
-      expect(screen.getByRole('group', { name: 'Rest or press on?' })).toBeTruthy();
+      expect(screen.getByRole('radio', { name: 'Rest' })).toHaveProperty('checked', true);
     });
   });
 

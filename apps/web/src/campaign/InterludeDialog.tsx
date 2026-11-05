@@ -13,7 +13,8 @@ import './campaign_dialogs.css';
  * An interlude between two scenarios (MC1.6e), read like a resolution (`ResolutionDialog`): the
  * players read it aloud from the campaign guide, answer each decision it asks, one at a time and
  * in the guide's order (`campaign.proposeInterlude`), then confirm what it writes into the log,
- * picking an investigator where it asks for one. "Back" takes the last answer back; before the
+ * picking an investigator where it asks for one. "Back" takes the last answer back, still picked
+ * on its question; before the
  * first, "Not yet" closes the dialog. Writing hands the confirmed commands to `onWrite`; `failed`
  * says the last write was refused, so the log is unchanged. The app shows no guide text: the
  * interlude's name is `<storyKey>.interludes.<id>`, its decisions the keys the definition names.
@@ -51,9 +52,9 @@ export function InterludeDialog({
 
   const proposal = campaign.proposeInterlude(log, interlude, answers);
   const name = t(`${storyKey}.interludes.${interlude.id}`);
-  const answer = (next: readonly number[]) => {
+  const answer = (next: readonly number[], picked = 0) => {
     setAnswers(next);
-    setSelected(0);
+    setSelected(picked);
     setPicks(new Map());
   };
 
@@ -111,7 +112,7 @@ export function InterludeDialog({
               {t('resolution.later')}
             </button>
           ) : (
-            <button type="button" onClick={() => answer(answers.slice(0, -1))}>
+            <button type="button" onClick={() => answer(answers.slice(0, -1), answers.at(-1))}>
               {t('resolution.back')}
             </button>
           )}

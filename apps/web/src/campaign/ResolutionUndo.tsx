@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import type { WrittenKind } from '../state/appStore';
 
 /**
  * The toast under the campaign log after a resolution or an interlude (`kind`) was written into it
@@ -12,7 +13,7 @@ export function ResolutionUndo({
   onUndo,
   onDismiss,
 }: {
-  readonly kind: 'resolution' | 'interlude';
+  readonly kind: WrittenKind;
   readonly onUndo: () => Promise<void>;
   readonly onDismiss: () => void;
 }) {

@@ -109,6 +109,8 @@ export interface OpenCampaign {
   games: GameSummary[];
   /** The interlude due before the next scenario (`campaign.findDueInterlude`), if any. */
   interlude?: InterludeDefinition;
+  /** `CampaignEntry.storyKey` of its campaign, which names its records and interludes. */
+  storyKey?: string;
 }
 
 /**
@@ -218,6 +220,9 @@ export type ScenarioLookup = (id: ScenarioId) => ScenarioEntry | undefined;
 /** Looks a campaign up by its definition's id; `findCampaign` in the app, a stub in tests. */
 export type CampaignLookup = (id: CampaignDefinitionId) => CampaignEntry | undefined;
 
+/** What `AppState.writtenResolution` wrote into the campaign log: a resolution or an interlude. */
+export type WrittenKind = 'resolution' | 'interlude';
+
 /** UI-facing state: the persisted game and campaign lists plus the currently open game. */
 export interface AppState {
   games: GameSummary[];
@@ -235,7 +240,7 @@ export interface AppState {
   writtenResolution?: {
     readonly campaignId: CampaignId;
     readonly seq: number;
-    readonly kind: 'resolution' | 'interlude';
+    readonly kind: WrittenKind;
   };
   /** Reloads the game and campaign lists from the `GameStore`. */
   refresh(): Promise<void>;
@@ -449,8 +454,8 @@ export function createAppStore(
       }
       const games = (await gameStore.listGames()).filter((g) => g.campaignId === campaignId);
       const { title, endedAt } = loaded.summary;
-      const definition = campaigns(loaded.log.definitionId)?.definition;
-      const interlude = definition && campaign.findDueInterlude(definition, loaded.log);
+      const entry = campaigns(loaded.log.definitionId);
+      const interlude = entry && campaign.findDueInterlude(entry.definition, loaded.log);
       set({
         campaign: {
           campaignId,
@@ -459,6 +464,7 @@ export function createAppStore(
           games,
           ...(endedAt !== undefined ? { endedAt } : {}),
           ...(interlude ? { interlude } : {}),
+          ...(entry ? { storyKey: entry.storyKey } : {}),
         },
       });
     }

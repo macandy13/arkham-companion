@@ -92,6 +92,7 @@ export function CampaignScreen({
         log={log}
         games={games}
         interlude={opened.interlude}
+        storyKey={opened.storyKey}
       />
       {written?.campaignId === campaignId && (
         <ResolutionUndo
@@ -259,6 +260,7 @@ function NextStep({
   log,
   games,
   interlude,
+  storyKey,
 }: {
   readonly store: StoreApi<AppState>;
   readonly catalog: CatalogSource;
@@ -266,6 +268,7 @@ function NextStep({
   readonly log: CampaignLog;
   readonly games: GameSummary[];
   readonly interlude: InterludeDefinition | undefined;
+  readonly storyKey: string | undefined;
 }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -282,7 +285,8 @@ function NextStep({
       </footer>
     );
   }
-  if (interlude) return <InterludeStep store={store} log={log} interlude={interlude} />;
+  if (interlude)
+    return <InterludeStep store={store} log={log} interlude={interlude} storyKey={storyKey} />;
   return (
     <footer>
       <button type="button" data-primary onClick={() => setSettingUp(true)}>
@@ -311,16 +315,18 @@ function InterludeStep({
   store,
   log,
   interlude,
+  storyKey,
 }: {
   readonly store: StoreApi<AppState>;
   readonly log: CampaignLog;
   readonly interlude: InterludeDefinition;
+  /** `OpenCampaign.storyKey`. */
+  readonly storyKey: string | undefined;
 }) {
   const { t } = useTranslation();
   const [reading, setReading] = useState(false);
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState(false);
-  const storyKey = findCampaign(log.definitionId)?.storyKey;
   const name = t(`${storyKey}.interludes.${interlude.id}`);
   return (
     <footer>
