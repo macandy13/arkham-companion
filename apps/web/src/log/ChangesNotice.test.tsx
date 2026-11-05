@@ -60,7 +60,24 @@ describe('ChangesNotice', () => {
       within(notice)
         .getAllByRole('listitem')
         .map((line) => line.textContent),
-    ).toEqual(['Roland Banks draws 1 card', 'Roland Banks gains 1 resource']);
+    ).toEqual([
+      'Roland Banks draws 1 card (upkeep phase)',
+      'Roland Banks gains 1 resource (upkeep phase)',
+    ]);
+  });
+
+  it('tells how to set a wrong change right', () => {
+    const table = beforeUpkeep();
+    const { rerender } = render(noticeFor(table));
+
+    table.nextPhase();
+    rerender(noticeFor(table));
+
+    expect(
+      within(screen.getByRole('status')).getByText(
+        'Not right? Undo the step, or adjust it by hand.',
+      ),
+    ).toBeTruthy();
   });
 
   it('starts afresh for a step played while the last notice still shows', () => {
@@ -74,7 +91,9 @@ describe('ChangesNotice', () => {
     rerender(noticeFor(table));
 
     const mythosNotice = screen.getByRole('status', { name: 'What the game did' });
-    expect(mythosNotice.textContent).toBe('1 doom on What Lurks Below');
+    expect(within(mythosNotice).getByRole('listitem').textContent).toBe(
+      '1 doom on What Lurks Below (mythos phase)',
+    );
     expect(mythosNotice).not.toBe(upkeepNotice);
   });
 

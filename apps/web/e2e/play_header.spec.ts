@@ -133,9 +133,10 @@ test(
     await test.step('The upkeep has Roland Banks draw 1 card and gives him 1 resource, and its notice fades away', async () => {
       const changes = page.getByRole('status', { name: 'What the game did' });
       await expect(changes.getByRole('listitem')).toHaveText([
-        'Roland Banks draws 1 card',
-        'Roland Banks gains 1 resource',
+        'Roland Banks draws 1 card (upkeep phase)',
+        'Roland Banks gains 1 resource (upkeep phase)',
       ]);
+      await expect(changes).toContainText('Not right? Undo the step, or adjust it by hand.');
       await expect(changes).toBeHidden({ timeout: 10_000 });
     });
 
@@ -148,9 +149,9 @@ test(
           .getByRole('region', { name: 'Roland Banks' })
           .getByRole('list', { name: 'Threat area' }),
       ).toContainText('Dissonant Voices');
-      await expect(page.getByRole('status', { name: 'What the game did' })).toHaveText(
-        "1 doom on What's Going On?!",
-      );
+      await expect(
+        page.getByRole('status', { name: 'What the game did' }).getByRole('listitem'),
+      ).toHaveText("1 doom on What's Going On?! (mythos phase)");
     });
 
     await test.step('Reload: the game comes back exactly as it was', async () => {

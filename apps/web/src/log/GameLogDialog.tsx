@@ -5,6 +5,7 @@ import type { GameLogSource } from '../state/appStore';
 import { CardDialog } from '../screens/CardDialog';
 import { ConfirmDialog } from '../screens/ConfirmDialog';
 import { useBackCloses } from '../screens/useBackCloses';
+import { LineText } from './LineText';
 import { gameLog, logSections, type LogSection, type LogStep } from './gameLog';
 import './game_log.css';
 
@@ -122,7 +123,9 @@ function Step({ step, onGoBack }: { step: LogStep; onGoBack?: (step: LogStep) =>
       )}
       <ul>
         {step.lines.map((line, index) => (
-          <li key={index}>{line.text}</li>
+          <li key={index}>
+            <LineText line={line} />
+          </li>
         ))}
       </ul>
       {onGoBack && step.later > 0 && (

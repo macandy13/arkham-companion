@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import type { GameState } from '@arkham/engine';
 import type { GameLogSource } from '../state/appStore';
 import { automaticChanges } from './gameLog';
+import { LineText } from './LineText';
 
 /**
  * What the game did by itself in the step just played (`automaticChanges`, M3.13a): the doom of
@@ -36,9 +37,12 @@ export function ChangesNotice({ log, state }: { log: GameLogSource; state: GameS
     >
       <ul>
         {changes.lines.map((line, index) => (
-          <li key={index}>{line.text}</li>
+          <li key={index}>
+            <LineText line={line} />
+          </li>
         ))}
       </ul>
+      <p>{t('changes.correct')}</p>
     </aside>
   );
 }

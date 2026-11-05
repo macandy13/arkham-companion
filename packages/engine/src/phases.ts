@@ -34,6 +34,22 @@ export const PHASE_STEP_TITLES: Readonly<Record<PhaseStepId, string>> = {
   endRound: '4.6 round ends',
 };
 
+/**
+ * The phase each step belongs to, so a reader that already names the phase (the game log's
+ * heading) can leave a step's cause unsaid.
+ */
+export const PHASE_OF_STEP: Readonly<Record<PhaseStepId, Phase>> = {
+  placeDoom: 'mythos',
+  checkDoomThreshold: 'mythos',
+  drawEncounterCard: 'mythos',
+  huntersMove: 'enemy',
+  enemiesAttack: 'enemy',
+  resetActions: 'upkeep',
+  readyExhausted: 'upkeep',
+  drawAndGain: 'upkeep',
+  endRound: 'upkeep',
+};
+
 type AttackStep = Extract<PhaseStep, { id: 'enemiesAttack' }>;
 
 /**

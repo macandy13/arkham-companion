@@ -10,6 +10,7 @@ import {
   instanceId,
   investigatorId,
   newGame,
+  placeDoomOnAgenda,
   PlayTable,
   type Phase,
   skillTest,
@@ -47,6 +48,51 @@ describe('gameLog', () => {
     .withAgenda(instanceId('agenda'), blankAgenda('What Lurks Below', fixed(5)))
     .withInvestigator(roland, { name: 'Roland Banks', locationId: study })
     .withTurnOf(roland);
+
+  it.each([
+    [
+      'the doom the mythos phase places, which its heading names already',
+      (table: PlayTable) => {
+        table.endTurn(byName('Roland Banks'));
+        table.nextPhase();
+        table.nextPhase();
+        table.nextPhase();
+      },
+      { text: '1 doom on What Lurks Below', cause: undefined },
+    ],
+    [
+      'the damage the players take themselves',
+      (table: PlayTable) => {
+        table.takeDamage(byName('Roland Banks'), 2);
+      },
+      { text: 'Roland Banks takes 2 damage', cause: undefined },
+    ],
+  ])('says why the game did a line by itself, but not for %s', (_situation, play, line) => {
+    const table = PlayTable.start(rolandsTurn);
+
+    play(table);
+
+    const lines = logOf(t, table).at(-1)?.lines ?? [];
+    expect(lines.map(({ text, cause }) => ({ text, cause }))).toContainEqual(line);
+  });
+
+  it("names the card whose forced ability did a line, which the heading doesn't", () => {
+    const cellar = instanceId('cellar');
+    const table = PlayTable.start(
+      rolandsTurn
+        .withLocation(
+          cellar,
+          blankLocation('Dooming Cellar', { abilities: [whenRevealed(placeDoomOnAgenda(1))] }),
+        )
+        .withConnection(study, cellar),
+    );
+
+    table.moveTo(byName('Roland Banks'), byName('Dooming Cellar'));
+
+    expect(logOf(t, table).at(-1)?.lines).toContainEqual(
+      expect.objectContaining({ text: '1 doom on What Lurks Below', cause: 'Dooming Cellar' }),
+    );
+  });
 
   it('starts with the scenario', () => {
     const table = PlayTable.start(newGame());
@@ -328,6 +374,27 @@ describe('automaticChanges', () => {
     table.nextPhase();
 
     expect(changesOf(table)).toEqual(['1 doom on What Lurks Below']);
+  });
+
+  it("tells what a card's forced ability did in a step the players took, naming the card", () => {
+    const cellar = instanceId('cellar');
+    const table = PlayTable.start(
+      rolandsTurn
+        .withLocation(
+          cellar,
+          blankLocation('Dooming Cellar', { abilities: [whenRevealed(placeDoomOnAgenda(1))] }),
+        )
+        .withConnection(study, cellar),
+    );
+
+    table.moveTo(byName('Roland Banks'), byName('Dooming Cellar'));
+
+    expect(
+      automaticChanges(t, table.ctx, table.state, table.entries)?.lines.map(({ text, cause }) => ({
+        text,
+        cause,
+      })),
+    ).toEqual([{ text: '1 doom on What Lurks Below', cause: 'Dooming Cellar' }]);
   });
 
   it.each([

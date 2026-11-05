@@ -109,3 +109,8 @@
     padding-inline-start: 0;
   }
 }
+
+/* Why the game did a line by itself reads quieter than what it did. */
+#board dialog[data-dialog='log'] li > span {
+  color: var(--color-text-muted);
+}

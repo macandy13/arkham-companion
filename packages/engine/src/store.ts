@@ -1,7 +1,9 @@
 import type { CampaignDefinitionId, CampaignId, GameId, InvestigatorCode, ScenarioId } from './ids';
 import type { Event } from './events';
+import type { ChangeCause } from './change_cause';
 import type { Difficulty, GameState, Phase } from './state';
 import type { CampaignEvent } from './campaign/campaign_events';
+import type { CampaignChangeCause } from './campaign/campaign_notices';
 import type { CampaignLog, CampaignResult } from './campaign/campaign_log';
 
 /** Version of the persisted `GameState` shape; bump together with a migration when `GameState` changes. */
@@ -49,6 +51,8 @@ export interface StoredEvent {
   /** Shared by all events returned by one `execute` call; assigned by the store unless the caller passes one. */
   commandId: string;
   event: Event;
+  /** Why the engine produced it, unless the players did (`LoggedEvent.cause`). */
+  cause?: ChangeCause;
 }
 
 /** Cached `GameState` after applying all events up to and including `seq`. */
@@ -70,9 +74,10 @@ export interface ImportedGame {
   title: string;
   /**
    * Original timestamps are kept so an imported game still shows when it was last played;
-   * command ids are kept so undo still steps back one player command at a time.
+   * command ids are kept so undo still steps back one player command at a time, and causes so
+   * the log still says why the game did what it did by itself.
    */
-  events: readonly Pick<StoredEvent, 'timestamp' | 'commandId' | 'event'>[];
+  events: readonly Pick<StoredEvent, 'timestamp' | 'commandId' | 'event' | 'cause'>[];
 }
 
 /** Optional metadata given to `GameStore.createCampaign`. */
@@ -94,6 +99,8 @@ export interface StoredCampaignEvent {
   timestamp: number;
   commandId: string;
   event: CampaignEvent;
+  /** Why it was written, unless the players did it (`CampaignExecuteResult.causes`). */
+  cause?: CampaignChangeCause;
 }
 
 /**
@@ -153,13 +160,15 @@ export interface GameStore {
    * (optimistic concurrency for multiple tabs/devices) and writes nothing.
    * One call is one undo group: pass the events of exactly one command. The
    * store generates the `commandId` unless the caller supplies one (the engine
-   * never generates IDs itself).
+   * never generates IDs itself). `causes` gives each event at the same index its
+   * `StoredEvent.cause`; an event without one is the players' own.
    */
   appendEvents(
     gameId: GameId,
     events: readonly Event[],
     expectedSeq?: number,
     commandId?: string,
+    causes?: readonly (ChangeCause | undefined)[],
   ): Promise<StoredEvent[]>;
   /**
    * Removes the last command group from the log, forgets the notices read for it
@@ -206,13 +215,15 @@ export interface GameStore {
   createCampaign(init?: NewCampaign): Promise<CampaignId>;
   /**
    * Appends campaign events like `appendEvents` does for a game: one call is one
-   * undo group, a stale `expectedSeq` rejects and writes nothing.
+   * undo group, a stale `expectedSeq` rejects and writes nothing, and `causes`
+   * gives each event at the same index its `StoredCampaignEvent.cause`.
    */
   appendCampaignEvents(
     campaignId: CampaignId,
     events: readonly CampaignEvent[],
     expectedSeq?: number,
     commandId?: string,
+    causes?: readonly (CampaignChangeCause | undefined)[],
   ): Promise<StoredCampaignEvent[]>;
   /**
    * Replays the whole campaign log; `undefined` if the campaign doesn't exist.

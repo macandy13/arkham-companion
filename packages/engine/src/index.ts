@@ -110,7 +110,7 @@ export { enemiesAt, type EnemyFilter, enemiesOnTable } from './enemies';
 export { matchesEncounter } from './handle_encounter';
 export { doomInPlay, isInPlay } from './doom';
 export { checkInvariants } from './invariants';
-export { PHASE_STEP_TITLES } from './phases';
+export { PHASE_OF_STEP, PHASE_STEP_TITLES } from './phases';
 export { BASE_ACTIONS_PER_TURN } from './turns';
 export { formatBoard } from './format_board';
 export { victoryPoints } from './victory';
@@ -252,6 +252,12 @@ export type {
   LogSheet,
 } from './campaign/campaign_definition';
 export type { CampaignContext, CampaignExecuteResult } from './campaign/handle_campaign';
+export type {
+  CampaignChangeCause,
+  CampaignNotice,
+  CampaignNoticeKind,
+  CausedCampaignEvents,
+} from './campaign/campaign_notices';
 export type {
   CardPlace,
   GameCondition,
