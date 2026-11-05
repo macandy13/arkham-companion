@@ -2,7 +2,8 @@
  * An investigator's card (InvestigatorBar), drawn as the printed one: the face (InvestigatorFace)
  * fills the card's width, and the HTML lies over its places, sized in the face's scan units
  * (`--scan-unit`, a 419th of the card's width) so it scales with the card. While the players adjust
- * the board, the counters with their steppers leave the page's strip for a row under the card.
+ * the board, the skills' boosts and the counters with their steppers leave the chain and the page's
+ * strip for rows under the card.
  */
 /* A landscape scan is 419 units wide (LANDSCAPE_SCAN), as the scenario face divides by its 300. */
 #investigators [data-card='investigator'] {
@@ -264,18 +265,6 @@
   font-size: calc(var(--investigator-boost-size) * var(--scan-unit));
 }
 
-/* While adjusting, a skill's − and + hang under its link, over the page's top. */
-#investigators [data-card='investigator'] > ul > li > button + button {
-  position: absolute;
-  top: 100%;
-  left: 0;
-}
-
-#investigators [data-card='investigator'] > ul > li > button:last-child:not(:first-child) {
-  left: auto;
-  right: 0;
-}
-
 /*
  * The art under the plates is a button that shows the whole card (InvestigatorCard), where the players
  * read its abilities; it covers the art left of the page and below the plates.
@@ -380,7 +369,8 @@
 
 /*
  * While adjusting, the counters with their steppers form a row under the card on its paper, each
- * named under its token, as the steppers would not fit on the page.
+ * named under its token, as the steppers would not fit on the page. The skills' boosts form a row
+ * above them the same way (`data-boosts`), as two steppers are wider than a link on the chain.
  */
 #investigators [data-card='investigator'][data-adjusting] > dl {
   display: grid;
@@ -402,6 +392,45 @@
 #investigators [data-card='investigator'][data-adjusting] > dl > div > dd {
   grid-row: 1;
   align-self: start;
+}
+
+/*
+ * A boost stands after its skill's icon, as the chain shows them, over its − and +, in a row only
+ * as tall as the steppers and a line. The skill's name stays for screen readers.
+ */
+#investigators [data-card='investigator'] > dl[data-boosts] {
+  padding-block-end: 0;
+}
+
+#investigators [data-card='investigator'] > dl[data-boosts] > div {
+  --stat-icon: var(--skill-icon);
+  --stat-colour: var(--color-face-ink);
+
+  grid-template-columns: repeat(2, auto);
+  grid-template-rows: auto auto;
+  justify-content: center;
+  align-items: center;
+}
+
+#investigators [data-card='investigator'] > dl[data-boosts] > div > dd {
+  display: contents;
+}
+
+#investigators [data-card='investigator'] > dl[data-boosts] dt {
+  justify-self: end;
+  font-size: 0;
+}
+
+#investigators [data-card='investigator'] > dl[data-boosts] dd > data {
+  grid-column: auto;
+  justify-self: start;
+  width: auto;
+  height: auto;
+  border: none;
+  background: none;
+  box-shadow: none;
+  color: var(--color-face-ink);
+  font-size: var(--font-size-body);
 }
 
 /*

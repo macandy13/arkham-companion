@@ -524,6 +524,7 @@ export const appTexts = {
     skills: 'Fertigkeiten',
     skillValue: '{{skill}} {{value}}',
     boostedSkillValue: '{{skill}} {{value}}, Bonus {{boost}}',
+    skillBoosts: 'Fertigkeitsboni',
     lowerBoost: '{{skill}}-Bonus senken',
     raiseBoost: '{{skill}}-Bonus erhöhen',
     doom: 'Verderben',
