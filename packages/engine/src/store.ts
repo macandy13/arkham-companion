@@ -1,6 +1,7 @@
 import type { CampaignDefinitionId, CampaignId, GameId, InvestigatorCode, ScenarioId } from './ids';
 import type { Event } from './events';
 import type { ChangeCause } from './change_cause';
+import type { Reliance } from './reliance';
 import type { Difficulty, GameState, Phase } from './state';
 import type { CampaignEvent } from './campaign/campaign_events';
 import type { CampaignChangeCause } from './campaign/campaign_notices';
@@ -15,6 +16,11 @@ export interface NewGame {
   title?: string;
   /** Campaign this game belongs to; absent in standalone play. */
   campaignId?: CampaignId;
+  /**
+   * How much the players rely on the helpers in a standalone game. A game of a campaign follows
+   * the campaign's (`CampaignSummary.reliance`), which the caller reads; the store doesn't.
+   */
+  reliance?: Reliance;
 }
 
 /** Row of `GameStore.listGames`: enough to render a game list without loading events. */
@@ -35,6 +41,11 @@ export interface GameSummary {
   phase: Phase;
   /** Seated investigators in seat order (`code` is the ArkhamDB card code, used to look up portraits). */
   investigators: { code: string; name: string }[];
+  /**
+   * The game's own level (`DEFAULT_RELIANCE` until chosen). A campaign game follows its campaign's
+   * instead, which the caller reads from `CampaignSummary.reliance`.
+   */
+  reliance: Reliance;
 }
 
 /**
@@ -84,6 +95,8 @@ export interface ImportedGame {
 export interface NewCampaign {
   /** Human-readable name shown in the campaign list. */
   title?: string;
+  /** How much the players rely on the helpers in all of the campaign's games. */
+  reliance?: Reliance;
 }
 
 /**
@@ -128,6 +141,8 @@ export interface CampaignSummary {
   result?: CampaignResult;
   /** Epoch ms of the event that ended the campaign (`CampaignEnded`); absent while it goes on. */
   endedAt?: number;
+  /** How much the players rely on the helpers (`DEFAULT_RELIANCE` until chosen). */
+  reliance: Reliance;
 }
 
 /** Result of `GameStore.loadCampaign`: the log after replaying all its events. */
@@ -185,6 +200,11 @@ export interface GameStore {
   /** Changes the title of a game; does not count as play, so `updatedAt` stays. Rejects for unknown games. */
   renameGame(gameId: GameId, title: string): Promise<void>;
   /**
+   * Changes how much the players rely on the helpers in a standalone game; a setting, not play, so
+   * `updatedAt` stays. Rejects for unknown games.
+   */
+  setGameReliance(gameId: GameId, reliance: Reliance): Promise<void>;
+  /**
    * Copies a game including its event log under a new UUID, so both continue independently.
    * `title` defaults to the original's. Rejects for unknown games.
    */
@@ -213,6 +233,11 @@ export interface GameStore {
    * `NewGame.campaignId`.
    */
   createCampaign(init?: NewCampaign): Promise<CampaignId>;
+  /**
+   * Changes how much the players rely on the helpers in all of a campaign's games; a setting, not
+   * play, so `updatedAt` stays. Rejects for unknown campaigns.
+   */
+  setCampaignReliance(campaignId: CampaignId, reliance: Reliance): Promise<void>;
   /**
    * Appends campaign events like `appendEvents` does for a game: one call is one
    * undo group, a stale `expectedSeq` rejects and writes nothing, and `causes`
