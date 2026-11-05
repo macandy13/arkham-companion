@@ -59,6 +59,17 @@ button {
   font: inherit;
 }
 
+/* A choice from a list wears the button's outline and reaches a finger like one. */
+select {
+  min-height: var(--touch-target);
+  box-sizing: border-box;
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: inherit;
+}
+
 /* An icon button draws its icon (a line drawing named by `data-icon`) in the text colour. */
 button[data-icon]::before {
   content: '';

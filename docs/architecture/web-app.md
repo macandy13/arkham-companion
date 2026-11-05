@@ -11,7 +11,7 @@ The React PWA is a thin layer over the engine.
 
 Components read the [app store](../../apps/web/src/state/appStore.ts) and call its methods; they never change game state or touch storage.
 
-The wizard's first step also asks how much the players rely on the helpers (`Reliance`, M1C.2d: "What the app tells you"): every change it makes, the changes to investigators and enemies and the cards drawn, or only what they do by hand. A quick game keeps the level as its own, a campaign for all its games (`ScenarioStart.reliance`). `OpenGame.reliance` is the campaign's for a game of a campaign, else the game's; the game log changes it (`AppState.setReliance`), a setting outside the steps, so undo never takes it back. The game screen shows only the notices of kinds the level shows (`showsNotice`): the changes notice's lines and the drawn cards; what to do by hand shows at every level.
+The wizard's first step also asks how much the players rely on the helpers (`Reliance`, M1C.2d: "What the app tells you"): every change it makes, the changes to investigators and enemies and the cards drawn, or only what they do by hand. A quick game keeps the level as its own, a campaign for all its games (`ScenarioStart.reliance`). `OpenGame.reliance` is the campaign's for a game of a campaign, else the game's; the game log changes it (`AppState.setReliance`), a setting outside the steps, so undo never takes it back. The changes notice shows only the lines of kinds the level shows (`showsNotice`). The drawn cards and what to do by hand show at every level: the drawn-cards notice is where the players place a card whose revelation the engine left to them.
 
 ## Investigator picker
 

@@ -5,7 +5,7 @@ import { useParams } from 'react-router';
 import { useStore } from 'zustand';
 import type { StoreApi } from 'zustand/vanilla';
 import { keyOf } from '@arkham/util';
-import { gameId as toGameId, showsNotice, type DecisionId, type InstanceId } from '@arkham/engine';
+import { gameId as toGameId, type DecisionId, type InstanceId } from '@arkham/engine';
 import type { AppState } from '../state/appStore';
 import { useCatalog, type CatalogSource } from '../catalog/useCatalog';
 import { InvestigatorBar } from '../investigators/InvestigatorBar';
@@ -252,7 +252,7 @@ export function GameScreen({
           {open.spawning && (
             <SpawnPrompt enemy={open.spawning} onCancel={() => store.getState().cancelSpawn()} />
           )}
-          {open.drawnCards && showsNotice(open.reliance, 'encounter') && (
+          {open.drawnCards && (
             <DrawnCardsNotice
               board={board}
               drawn={open.drawnCards}

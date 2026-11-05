@@ -25,13 +25,3 @@
   gap: var(--space-2);
   min-height: var(--touch-target);
 }
-
-#settings select {
-  min-height: var(--touch-target);
-  box-sizing: border-box;
-  border: var(--border-width) solid var(--color-border);
-  border-radius: var(--radius);
-  background: var(--color-surface);
-  color: var(--color-text);
-  font: inherit;
-}

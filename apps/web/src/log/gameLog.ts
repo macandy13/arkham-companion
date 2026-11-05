@@ -220,7 +220,7 @@ export function automaticChanges(
   if (last === undefined) return undefined;
   const automatic = last.items.filter(({ event, cause }) => {
     const kind = noticeKindOf(event);
-    return cause !== undefined && kind !== undefined && showsNotice(reliance, kind);
+    return cause !== undefined && (kind === undefined || showsNotice(reliance, kind));
   });
   const lines = eventLines(t, ctx, state, automatic).filter(
     (line) => !TOLD_ELSEWHERE.has(line.event),
