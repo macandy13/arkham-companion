@@ -59,6 +59,26 @@ describe('GameLogDialog', () => {
     ]);
   });
 
+  it('lets the players change how much they rely on the helpers, showing the level they chose', () => {
+    const table = PlayTable.start(rolandsTurn);
+    const onRelianceChange = vi.fn();
+    render(
+      <GameLogDialog
+        log={{ ctx: table.ctx, entries: table.entries, stepTimes: new Map() }}
+        state={table.state}
+        reliance="assist"
+        onRelianceChange={onRelianceChange}
+        onClose={() => {}}
+      />,
+    );
+    const choice = screen.getByRole('combobox', { name: 'What the app tells you' });
+
+    fireEvent.change(choice, { target: { value: 'auto' } });
+
+    expect(choice).toHaveProperty('value', 'assist');
+    expect(onRelianceChange).toHaveBeenCalledWith('auto');
+  });
+
   it("names the scenario over the title, as the page's kicker", () => {
     const table = PlayTable.start(rolandsTurn);
     render(

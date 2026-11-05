@@ -125,24 +125,20 @@ test('spawn the set-aside Ghoul Priest in the Attic', async ({ page }) => {
 
 // Journey: the mythos phase places the agenda's third doom and asks at once whether it advances;
 // the notice of the doom shows above that question, not hidden under it.
-test(
-  'see what the mythos phase did above the dialog it opens',
-  { tag: '@flow' },
-  async ({ page }) => {
-    await test.step('Resume a game in the upkeep of round 3 and go on to the mythos phase', async () => {
-      await resumeImportedGame(page, 'Fourth mythos', beforeFourthMythosExport('Fourth mythos'));
-      await page.getByRole('button', { name: 'Next' }).click();
-    });
+test('see what the mythos phase did above the dialog it opens', async ({ page }) => {
+  await test.step('Resume a game in the upkeep of round 3 and go on to the mythos phase', async () => {
+    await resumeImportedGame(page, 'Fourth mythos', beforeFourthMythosExport('Fourth mythos'));
+    await page.getByRole('button', { name: 'Next' }).click();
+  });
 
-    await test.step('The agenda asks whether it advances; the doom notice shows above it', async () => {
-      await expect(page.getByText("Does the agenda What's Going On?! advance?")).toBeVisible();
-      // Shown above the dialog: in the top layer, as an open popover.
-      await expect(page.locator('[data-part="changes"]:popover-open')).toContainText(
-        "1 doom on What's Going On?!",
-      );
-    });
-  },
-);
+  await test.step('The agenda asks whether it advances; the doom notice shows above it', async () => {
+    await expect(page.getByText("Does the agenda What's Going On?! advance?")).toBeVisible();
+    // Shown above the dialog: in the top layer, as an open popover.
+    await expect(page.locator('[data-part="changes"]:popover-open')).toContainText(
+      "1 doom on What's Going On?!",
+    );
+  });
+});
 
 // Journey: in the enemy phase the Ravenous Ghoul engaged with Roland Banks attacks: the screen asks
 // about the attack at once, Roland Banks takes it, the ghoul exhausts and the round goes on.

@@ -110,11 +110,12 @@ describe('NewGameScreen', () => {
     expect((await gameStore.loadGame(game!.gameId))?.state.meta.difficulty).toBe('hard');
   });
 
-  it("starts a campaign with its team and difficulty, and its first scenario as the campaign's game", async () => {
+  it("starts a campaign with its team, difficulty and reliance on the helpers, and its first scenario as the campaign's game", async () => {
     const { gameStore } = renderWizard('/new?mode=campaign');
 
     expect(screen.getByRole('radio', { name: 'Night of the Zealot' })).toBeTruthy();
     fireEvent.click(screen.getByRole('radio', { name: 'Hard' }));
+    fireEvent.click(screen.getByRole('radio', { name: 'Only what you do by hand' }));
     fireEvent.click(screen.getByRole('button', { name: 'Next' }));
     await screen.findByRole('list', { name: 'Investigators' });
     selectInvestigator('Alder');
@@ -130,6 +131,7 @@ describe('NewGameScreen', () => {
       position: 0,
       scenarioCount: 3,
       investigators: [{ code: 'a1', name: 'Alder' }],
+      reliance: 'auto',
     });
     const [game] = await gameStore.listGames();
     expect(game).toMatchObject({

@@ -149,6 +149,35 @@ describe('appStore', () => {
       campaignTitle: 'Night of the Zealot',
     };
 
+    describe('setReliance', () => {
+      it("keeps a standalone game's own level, chosen at the start and changed later", async () => {
+        const db = new IndexedDbStore('appstore-reliance-game-test');
+        const store = createAppStore(db);
+        const id = await store.getState().startScenario({ ...start, reliance: 'assist' });
+        const chosen = store.getState().current?.reliance;
+
+        await store.getState().setReliance('auto');
+
+        expect(chosen).toBe('assist');
+        expect(store.getState().current?.reliance).toBe('auto');
+        expect((await db.loadGame(id))?.summary.reliance).toBe('auto');
+      });
+
+      it("changes a campaign game's level for the whole campaign", async () => {
+        const db = new IndexedDbStore('appstore-reliance-campaign-test');
+        const store = createAppStore(db);
+        await store.getState().startCampaign({ ...campaignStart, reliance: 'assist' });
+        const campaignId = store.getState().campaigns[0]!.campaignId;
+        const chosen = store.getState().current?.reliance;
+
+        await store.getState().setReliance('display');
+
+        expect(chosen).toBe('assist');
+        expect(store.getState().current?.reliance).toBe('display');
+        expect((await db.loadCampaign(campaignId))?.summary.reliance).toBe('display');
+      });
+    });
+
     describe('startScenario', () => {
       it('stores the setup events as a new game and opens it', async () => {
         const db = new IndexedDbStore('appstore-start-test');

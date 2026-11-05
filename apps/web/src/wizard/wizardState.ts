@@ -1,4 +1,10 @@
-import { scenarioId, type Difficulty } from '@arkham/engine';
+import {
+  DEFAULT_RELIANCE,
+  RELIANCES,
+  scenarioId,
+  type Difficulty,
+  type Reliance,
+} from '@arkham/engine';
 import {
   campaignCatalog,
   findScenario,
@@ -23,6 +29,8 @@ export interface WizardChoices {
   /** Campaign id in `campaign` mode, scenario id in `quick` mode. */
   targetId: string;
   difficulty: Difficulty;
+  /** How much the players rely on the helpers in the game or the whole campaign. */
+  reliance: Reliance;
   /** Investigator codes in seat order. */
   seats: string[];
 }
@@ -39,10 +47,19 @@ export function parseStep(value: string | null): WizardStep {
   return WIZARD_STEPS.find((step) => step === value) ?? WIZARD_STEPS[0];
 }
 
-/** Fresh choices for `mode`: the first campaign or scenario, standard difficulty, nobody seated. */
+/**
+ * Fresh choices for `mode`: the first campaign or scenario, standard difficulty, every change
+ * shown, nobody seated.
+ */
 export function defaultChoices(mode: WizardMode): WizardChoices {
   const first = mode === 'campaign' ? campaignCatalog[0]?.id : scenarioCatalog[0]?.id;
-  return { mode, targetId: first ?? '', difficulty: 'standard', seats: [] };
+  return {
+    mode,
+    targetId: first ?? '',
+    difficulty: 'standard',
+    reliance: DEFAULT_RELIANCE,
+    seats: [],
+  };
 }
 
 /** The campaign the choices will start; `undefined` in a quick game. */
@@ -65,6 +82,7 @@ function isChoices(value: unknown): value is WizardChoices {
     parseMode(typeof v.mode === 'string' ? v.mode : null) !== undefined &&
     typeof v.targetId === 'string' &&
     DIFFICULTIES.some((d) => d === v.difficulty) &&
+    RELIANCES.some((r) => r === v.reliance) &&
     Array.isArray(v.seats) &&
     v.seats.every((code) => typeof code === 'string')
   );

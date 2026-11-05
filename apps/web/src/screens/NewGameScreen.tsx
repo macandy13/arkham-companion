@@ -104,6 +104,7 @@ function Wizard({ store, catalogSource, mode, step }: WizardProps) {
         scenario: scenario.definition,
       },
       difficulty: choices.difficulty,
+      reliance: choices.reliance,
       // The engine never reads randomness itself, so the seed is drawn at the edge.
       seed: Math.floor(Math.random() * 2 ** 31),
       investigators: seatsFor(investigators),

@@ -89,6 +89,8 @@ export function GameStatus({
           log={log}
           state={open.state}
           scenario={open.scenarioNameKey ? t(open.scenarioNameKey) : undefined}
+          reliance={open.reliance}
+          onRelianceChange={(reliance) => void store.getState().setReliance(reliance)}
           onGoBack={blocked || adjusting ? undefined : (step) => void actions.undoTo(step)}
           onClose={() => setLogOpen(false)}
         />

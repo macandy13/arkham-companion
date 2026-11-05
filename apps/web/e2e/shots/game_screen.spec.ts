@@ -219,26 +219,30 @@ test('the house map in the Night and brass card style', async ({ page }) => {
   await expect(page.locator('html')).toHaveAttribute('data-card-theme', 'nightAndBrass');
 });
 
-test('the game log after two rounds, scrolled to the newest step under its round and phase, the phase not repeated as a cause', async ({
-  page,
-  isMobile,
-}) => {
-  await resumeImportedGame(page, 'Two rounds', mythosDrawnStepsExport('Two rounds'));
+test(
+  'the game log after two rounds, scrolled to the newest step under its round and phase, what the app tells the players above',
+  { tag: '@shot' },
+  async ({ page, isMobile }) => {
+    await resumeImportedGame(page, 'Two rounds', mythosDrawnStepsExport('Two rounds'));
 
-  // A phone keeps the log in the header's menu.
-  if (isMobile) await page.getByRole('button', { name: 'Menu' }).click();
-  await page.getByRole('button', { name: 'Game log' }).click();
+    // A phone keeps the log in the header's menu.
+    if (isMobile) await page.getByRole('button', { name: 'Menu' }).click();
+    await page.getByRole('button', { name: 'Game log' }).click();
 
-  const log = page.getByRole('dialog', { name: 'Game log' });
-  const newestRound = log.getByRole('listitem', { name: 'Round 3 · Investigation' });
-  await expect(newestRound.getByRole('heading')).toBeInViewport();
-  await expect(newestRound.getByRole('listitem').last()).toBeInViewport();
-  const mythos = log.getByRole('listitem', { name: 'Round 3 · Mythos' });
-  // The line alone, without "(mythos phase)" after it.
-  await expect(
-    mythos.getByRole('listitem').filter({ hasText: /^1 doom on What's Going On\?!$/ }),
-  ).toBeVisible();
-});
+    const log = page.getByRole('dialog', { name: 'Game log' });
+    const newestRound = log.getByRole('listitem', { name: 'Round 3 · Investigation' });
+    await expect(newestRound.getByRole('heading')).toBeInViewport();
+    await expect(newestRound.getByRole('listitem').last()).toBeInViewport();
+    await expect(log.getByRole('combobox', { name: 'What the app tells you' })).toHaveValue(
+      'display',
+    );
+    const mythos = log.getByRole('listitem', { name: 'Round 3 · Mythos' });
+    // The line alone, without "(mythos phase)" after it.
+    await expect(
+      mythos.getByRole('listitem').filter({ hasText: /^1 doom on What's Going On\?!$/ }),
+    ).toBeVisible();
+  },
+);
 
 test("the upkeep's notice of what the game did, its cause and how to set it right", async ({
   page,
@@ -268,19 +272,17 @@ test('Roland Banks’ combat boosted by 2, as an ally in play gives it', async (
   await expect(roland.getByRole('button', { name: 'Combat 6, boosted +2' })).toBeVisible();
 });
 
-test(
-  'Roland Banks’ card while the players adjust the board, its steppers out',
-  { tag: '@shot' },
-  async ({ page }) => {
-    await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
-    const roland = page.getByRole('region', { name: 'Roland Banks' });
+test('Roland Banks’ card while the players adjust the board, its steppers out', async ({
+  page,
+}) => {
+  await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
+  const roland = page.getByRole('region', { name: 'Roland Banks' });
 
-    await page.getByRole('button', { name: 'Adjust board' }).click();
+  await page.getByRole('button', { name: 'Adjust board' }).click();
 
-    await expect(roland.getByRole('button', { name: 'Raise the Combat boost' })).toBeVisible();
-    await expect(roland.getByRole('button', { name: 'Take damage' })).toBeVisible();
-  },
-);
+  await expect(roland.getByRole('button', { name: 'Raise the Combat boost' })).toBeVisible();
+  await expect(roland.getByRole('button', { name: 'Take damage' })).toBeVisible();
+});
 
 test('Roland Banks’ willpower test before a token is drawn, the draw button in its place', async ({
   page,
