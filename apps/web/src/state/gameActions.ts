@@ -133,8 +133,6 @@ export interface GameActions {
    * (`DecisionView.followUps`), in the same step, so one undo takes both back.
    */
   answer(option: string, counts?: DecisionAmounts, then?: FollowUpAnswer): Promise<void>;
-  /** Enemy step 3.3: each listed enemy attack at its printed damage and horror. */
-  resolveEnemyAttacks(): Promise<void>;
   /**
    * The investigator whose turn it is takes the act's spend-clues action: the investigators spend
    * the clues listed with them (omitted, that investigator pays what they can and the others the
@@ -323,7 +321,6 @@ export function gameActions(
         if (!asked) throw new CommandRejected({ code: 'noPendingDecision' });
         resolve(table, asked, then.option, then.counts);
       }),
-    resolveEnemyAttacks: () => play((table) => table.resolveEnemyAttacks()),
     advanceAct: (spend) =>
       play((table) =>
         table.spendCluesToAdvanceAct(

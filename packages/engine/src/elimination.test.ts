@@ -239,15 +239,15 @@ describe('an investigator who leaves', () => {
       endTurn(bob),
       startTurn(carol),
       endTurn(carol),
-      nextPhase,
       takeDamage(alice, 7),
+      nextPhase,
     );
 
-    const defeated = stateAfter(context, attackPhase, {
-      type: 'ResolveEnemyAttack',
-      enemyId: aliceGhoul,
-      investigatorId: alice,
-    });
+    const defeated = stateAfter(
+      context,
+      attackPhase,
+      answer(`enemyAttack:${aliceGhoul}:${alice}`, 'attack'),
+    );
 
     expect(investigatorOf(defeated, alice).status).toBe('defeated');
     expect(defeated.cards[hall]?.tokens.clue).toBe(2);
@@ -257,6 +257,12 @@ describe('an investigator who leaves', () => {
       id: 'enemiesAttack',
       attacks: [{ enemyId: bobGhoul, investigatorId: bob }],
     });
+    // The question about alice's second ghoul went with her; bob's own stays, and the group picks
+    // a new lead.
+    expect(defeated.pending.map((decision) => decision.id)).toEqual([
+      `enemyAttack:${bobGhoul}:${bob}`,
+      'newLeadInvestigator',
+    ]);
   });
 });
 

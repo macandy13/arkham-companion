@@ -234,7 +234,6 @@ export const appTexts = {
   rejections: {
     decisionPending: 'Triff zuerst die offene Entscheidung.',
     noPendingDecision: 'Es gibt keine offene Entscheidung.',
-    enemyAttackPending: 'Handle zuerst die Angriffe der Gegner ab.',
     attackNotDue: 'Dieser Gegner greift jetzt nicht an.',
     wrongPhase: 'Das ist in dieser Phase nicht möglich.',
     turnInProgress: 'Beende zuerst den laufenden Zug.',
@@ -625,6 +624,7 @@ export const appTexts = {
       DrawCards: '{{name}} zieht eine Karte: Zuerst greift {{enemy}} an',
       PlayCard: '{{name}} spielt eine Karte: Zuerst greift {{enemy}} an',
     },
+    enemyAttack: '{{card}} greift an',
     retaliate: '{{card}} schlägt zurück',
     alert: '{{card}} greift nach dem misslungenen Entkommen an',
     pass: 'Bestanden',
