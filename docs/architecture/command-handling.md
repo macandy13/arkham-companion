@@ -36,7 +36,7 @@ All events of one player command share a `commandId`, so [undo](../../packages/e
 Every event also has a cause (`ChangeCause`, M1C.2): `handleWithCauses` (and `execute`) return one per event, next to the events rather than in them, so replay never needs them.
 The player's command is the cause of its own events and of what follows from them; a card's forced ability is the cause of its effects (`{ kind: 'card', cardId, window }`); a phase step is the cause of what the rules do between turns (`{ kind: 'rule', step }`).
 A card's action (`UseCardAction`) is the player's doing. A step passes its cause on to the steps it queues; a step stored for an answer keeps it in the state (`QueuedStep.cause`).
-[`changeNotices`](../../packages/engine/src/change_notices.ts) groups the events the players didn't cause into notices of one `NoticeKind` (tokens, board, investigator, enemy, encounter, by hand) and one cause, for the screens to word and filter.
+[`changeNotices`](../../packages/engine/src/change_notices.ts) groups the events the players didn't cause into notices of one `NoticeKind` (tokens, board, investigator, enemy, encounter, by hand) and one cause, for the screens to word and filter. [`showsNotice`](../../packages/engine/src/reliance.ts) says which kinds the players' level of reliance on the helpers (`Reliance`) shows: `display` every kind, `assist` the investigator, enemy, encounter and by-hand ones, `auto` only the by-hand ones.
 
 ```ts
 function handleWithCauses(ctx, state, command): { events: Event[]; causes: ChangeCause[] };

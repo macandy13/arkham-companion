@@ -16,7 +16,10 @@ export interface NewGame {
   title?: string;
   /** Campaign this game belongs to; absent in standalone play. */
   campaignId?: CampaignId;
-  /** How much the players rely on the helpers; a game of a campaign follows the campaign's. */
+  /**
+   * How much the players rely on the helpers in a standalone game. A game of a campaign follows
+   * the campaign's (`CampaignSummary.reliance`), which the caller reads; the store doesn't.
+   */
   reliance?: Reliance;
 }
 
@@ -38,7 +41,10 @@ export interface GameSummary {
   phase: Phase;
   /** Seated investigators in seat order (`code` is the ArkhamDB card code, used to look up portraits). */
   investigators: { code: string; name: string }[];
-  /** The game's own level (`DEFAULT_RELIANCE` until chosen); a campaign game follows its campaign's. */
+  /**
+   * The game's own level (`DEFAULT_RELIANCE` until chosen). A campaign game follows its campaign's
+   * instead, which the caller reads from `CampaignSummary.reliance`.
+   */
   reliance: Reliance;
 }
 
