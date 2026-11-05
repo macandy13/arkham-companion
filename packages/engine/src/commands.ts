@@ -960,9 +960,9 @@ export interface CheckDoomThreshold {
  * or, when none are left, moves on to the next phase (setup → investigation
  * of round 1, skipping its mythos phase; investigation → enemy → upkeep →
  * mythos of the next round) and runs its steps. Steps run until one leaves a
- * decision pending or an enemy attack needs resolving (`ResolveEnemyAttack`);
- * the next `NextPhase` after the answer resumes there. Rejected while an
- * enemy attack of step 3.3 is still due, and in the investigation phase
+ * decision pending (step 3.3 asks about each enemy attack,
+ * `enemyPhaseAttackDecision`); the next `NextPhase` after the answers resumes
+ * there. Rejected while a decision is pending, and in the investigation phase
  * while a turn is in progress or an active investigator has not taken their
  * turn (the group ends every turn first, even one without actions). Produces
  * `PhaseChanged`, then per step `PhaseStepsChanged` and the events of the
@@ -1070,10 +1070,14 @@ export interface AdjustActions {
 }
 
 /**
- * The players resolved one enemy attack of the enemy phase (an `enemyAttack`
- * step). `damage`/`horror` default to the enemy's printed values; the players
- * pass less when assets soak part of it. The enemy exhausts after its last
- * due attack (a massive enemy attacks everyone at its location first).
+ * The players resolved one enemy attack of the enemy phase, as the answer of
+ * its `enemyPhaseAttackDecision`. `damage`/`horror` default to the enemy's
+ * printed values; the players pass less when assets soak part of it.
+ * `cancelled` (a card cancelled it) deals nothing and fires no "after it
+ * attacks" abilities, but the enemy still exhausts. The enemy exhausts after
+ * its last due attack (a massive enemy attacks everyone at its location
+ * first). An attack the step listed that is no longer due (its enemy left or
+ * disengaged) only leaves the list, without exhausting anyone.
  * Produces `PhaseStepsChanged`, `EnemyAttacked`, `InvestigatorChanged` (damage, horror; with
  * `InvestigatorDefeated` as usual, horror is skipped for an investigator the
  * damage defeated) and `ExhaustChanged`.
@@ -1084,6 +1088,7 @@ export interface ResolveEnemyAttack {
   investigatorId: InvestigatorId;
   damage?: number;
   horror?: number;
+  cancelled?: true;
 }
 
 /**

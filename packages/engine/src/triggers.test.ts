@@ -740,7 +740,7 @@ describe('trigger bus', () => {
         commands: [
           { type: 'EndTurn', investigatorId: alice },
           { type: 'NextPhase' },
-          { type: 'ResolveEnemyAttack', enemyId: ghast, investigatorId: alice },
+          answer('enemyAttack:ghast:alice', 'attack'),
         ],
       },
       {
@@ -777,13 +777,10 @@ describe('trigger bus', () => {
         { type: 'NextPhase' },
       );
 
-      const { events } = execute(context, enemyPhase, {
-        type: 'ResolveEnemyAttack',
-        enemyId: ghast,
-        investigatorId: alice,
-      });
+      const { events } = execute(context, enemyPhase, answer('enemyAttack:ghast:alice', 'attack'));
 
       expect(events.map((event) => event.type)).toEqual([
+        'DecisionResolved',
         'PhaseStepsChanged',
         'InvestigatorChanged', // the attack's damage
         'EnemyAttacked',

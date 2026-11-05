@@ -1,9 +1,9 @@
 import { cardStats, type CardStats, type EngineContext } from './cards';
 import type { RequestDecision } from './commands';
-import { decisionId, type InstanceId, type InvestigatorId } from './ids';
+import { decisionId, type DecisionId, type InstanceId, type InvestigatorId } from './ids';
 import { requireCard } from './lookup';
 import { hasKeyword } from './keywords';
-import type { CardInstance, Decision, GameState } from './state';
+import type { CardInstance, Decision, DueAttack, GameState } from './state';
 
 /**
  * The enemy attacks the rules force outside the enemy phase, each asked as a
@@ -40,7 +40,6 @@ export function forcedAttackDecision(
   enemyId: InstanceId,
   investigatorId: InvestigatorId,
 ): Decision {
-  const { damage = 0, horror = 0 } = cardStats(ctx.cards, requireCard(state.cards, enemyId).code);
   return {
     id: decisionId(`${kind}:${enemyId}`),
     kind: 'confirm',
@@ -60,11 +59,67 @@ export function forcedAttackDecision(
             horror: { answer: 'horror' },
           },
         ],
-        amounts: { damage: { default: damage, min: 0 }, horror: { default: horror, min: 0 } },
+        amounts: printedAttack(ctx, state, enemyId),
       },
       { id: 'skip', label: SKIP_LABELS[kind], commands: [] },
     ],
   };
+}
+
+/**
+ * The decision for one attack of enemy step 3.3 (`enemyAttack:<enemy>:<investigator>`, as a
+ * massive enemy attacks each engaged investigator), raised for every listed attack when the step
+ * is reached. Its `attack` option resolves it at the printed damage and horror, which the players
+ * may lower (assets soak part of it); `skip` is for a card that cancels it, after which the enemy
+ * still exhausts (Dodge FAQ), so both resolve it (`ResolveEnemyAttack`), the second `cancelled`.
+ */
+export function enemyPhaseAttackDecision(
+  ctx: EngineContext,
+  state: GameState,
+  { enemyId, investigatorId }: DueAttack,
+): Decision {
+  return {
+    id: enemyPhaseAttackDecisionId({ enemyId, investigatorId }),
+    kind: 'confirm',
+    subject: enemyId,
+    prompt: ENEMY_PHASE_ATTACK_PROMPT,
+    decider: { kind: 'investigator', investigatorId },
+    options: [
+      {
+        id: 'attack',
+        label: 'decision.attack',
+        commands: [
+          {
+            type: 'ResolveEnemyAttack',
+            enemyId,
+            investigatorId,
+            damage: { answer: 'damage' },
+            horror: { answer: 'horror' },
+          },
+        ],
+        amounts: printedAttack(ctx, state, enemyId),
+      },
+      {
+        id: 'skip',
+        label: 'decision.attackCancelled',
+        commands: [{ type: 'ResolveEnemyAttack', enemyId, investigatorId, cancelled: true }],
+      },
+    ],
+  };
+}
+
+/** The id of the `enemyPhaseAttackDecision` about `attack`. */
+export function enemyPhaseAttackDecisionId({ enemyId, investigatorId }: DueAttack): DecisionId {
+  return decisionId(`enemyAttack:${enemyId}:${investigatorId}`);
+}
+
+/** The prompt of an `enemyPhaseAttackDecision`. */
+export const ENEMY_PHASE_ATTACK_PROMPT = 'decision.enemyAttack';
+
+/** The enemy's printed damage and horror, as the amounts an attack option starts from. */
+function printedAttack(ctx: EngineContext, state: GameState, enemyId: InstanceId) {
+  const { damage = 0, horror = 0 } = cardStats(ctx.cards, requireCard(state.cards, enemyId).code);
+  return { damage: { default: damage, min: 0 }, horror: { default: horror, min: 0 } };
 }
 
 /** The prompt of a `forcedAttackDecision` of `kind`, so views can tell which forced attack asks. */

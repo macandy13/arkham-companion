@@ -2,7 +2,15 @@ import type { EngineContext } from './cards';
 import type { InstanceId } from './ids';
 import type { Command, ResolveEnemyAttack } from './commands';
 import { enemyAttackEvents, enemyAttackList } from './enemies';
-import type { Event, ExhaustChanged, PhaseChanged, PhaseStepsChanged } from './events';
+import { enemyPhaseAttackDecision } from './forced_attacks';
+import { requestDecision } from './decisions';
+import type {
+  DecisionRequested,
+  Event,
+  ExhaustChanged,
+  PhaseChanged,
+  PhaseStepsChanged,
+} from './events';
 import { isEnemyOnTable } from './enemies';
 import { activeInvestigator, playerOrder } from './investigators';
 import { canDrawEncounter } from './handle_encounter';
@@ -73,14 +81,7 @@ export interface StepPlan {
  * in round 1, whose mythos phase the rules skip. The investigation phase ends
  * only once every active investigator has taken their turn.
  */
-export function handleNextPhase(ctx: EngineContext, state: GameState): PhaseChanged[] {
-  const due = dueAttacksOf(ctx, state, state.meta.steps[0]);
-  if (due[0])
-    throw new CommandRejected({
-      code: 'enemyAttackPending',
-      enemyId: due[0].enemyId,
-      investigatorId: due[0].investigatorId,
-    });
+export function handleNextPhase(_ctx: EngineContext, state: GameState): PhaseChanged[] {
   if (state.meta.steps.length > 0) return [];
   const { phase: current, round } = state.meta;
   if (current === 'investigation') assertTurnsTaken(state);
@@ -123,8 +124,14 @@ export function nextStepPlan(ctx: EngineContext, state: GameState): StepPlan | u
 
 /**
  * Step 3.3 when reached: lists the due attacks (in player order, see
- * `enemyAttackList`) and waits; once none of them is due any more (resolved,
+ * `enemyAttackList`) and asks the players about each one
+ * (`enemyPhaseAttackDecision`); once none of them is due any more (resolved,
  * or the enemy was defeated, evaded or exhausted meanwhile) the step is done.
+ * The decisions may be answered in any order: the rules have each
+ * investigator, in player order, resolve all their attacks in the order they
+ * pick, and asking them all at once leaves that order to the players at the
+ * table, like the attacks of opportunity of one action. Attacks still due
+ * without a decision (a game stored before step 3.3 asked) are asked again.
  */
 function attackStepPlan(
   ctx: EngineContext,
@@ -133,18 +140,42 @@ function attackStepPlan(
   rest: PhaseStep[],
 ): StepPlan | undefined {
   if (step.attacks === undefined) {
-    const listed: AttackStep = { id: 'enemiesAttack', attacks: attacksDue(ctx, state) };
-    return { events: [{ type: 'PhaseStepsChanged', steps: [listed, ...rest] }], commands: [] };
+    const attacks = attacksDue(ctx, state);
+    const listed: AttackStep = { id: 'enemiesAttack', attacks };
+    return {
+      events: [
+        { type: 'PhaseStepsChanged', steps: [listed, ...rest] },
+        ...attackDecisions(ctx, state, attacks),
+      ],
+      commands: [],
+    };
   }
-  if (dueAttacksOf(ctx, state, step).length > 0) return undefined;
+  const due = dueAttacksOf(ctx, state, step);
+  if (due.length > 0) return { events: attackDecisions(ctx, state, due), commands: [] };
   return { events: [{ type: 'PhaseStepsChanged', steps: rest }], commands: [] };
+}
+
+/**
+ * The questions about `attacks`, all at once, so an attack that defeats an investigator takes the
+ * questions of their other attacks along (`InvestigatorDefeated`).
+ */
+function attackDecisions(
+  ctx: EngineContext,
+  state: GameState,
+  attacks: readonly DueAttack[],
+): DecisionRequested[] {
+  return attacks.flatMap((attack) =>
+    requestDecision(state, enemyPhaseAttackDecision(ctx, state, attack)),
+  );
 }
 
 /**
  * `ResolveEnemyAttack`: removes the attack from step 3.3 and deals its damage
  * and horror at once (one defeat check, as the rules deal them
  * simultaneously). The enemy exhausts afterwards (`exhaustAfterAttack`). The
- * step ends with its last due attack.
+ * step ends with its last due attack. An attack the step listed that is no
+ * longer due (its enemy was defeated or evaded, or its investigator is out,
+ * before its decision was answered) only leaves the list.
  */
 export function handleResolveEnemyAttack(
   ctx: EngineContext,
@@ -155,20 +186,31 @@ export function handleResolveEnemyAttack(
   const isThisAttack = (attack: DueAttack) =>
     attack.enemyId === cmd.enemyId && attack.investigatorId === cmd.investigatorId;
   const attack = enemyAttackList(ctx, state).find(isThisAttack);
+  const listed = step?.id === 'enemiesAttack' ? (step.attacks ?? []) : [];
+  if (listed.some(isThisAttack) && !dueAttacksOf(ctx, state, step).some(isThisAttack)) {
+    const remaining = dueAttacksOf(ctx, state, step);
+    const steps: PhaseStep[] =
+      remaining.length > 0 ? [{ id: 'enemiesAttack', attacks: remaining }, ...rest] : rest;
+    return [{ type: 'PhaseStepsChanged', steps }];
+  }
   if (!dueAttacksOf(ctx, state, step).some(isThisAttack) || !attack)
     throw new CommandRejected({
       code: 'attackNotDue',
       enemyId: cmd.enemyId,
       investigatorId: cmd.investigatorId,
     });
-  const dealt = enemyAttackEvents(
-    ctx,
-    state,
-    cmd.enemyId,
-    activeInvestigator(state, cmd.investigatorId),
-    cmd.damage ?? attack.damage,
-    cmd.horror ?? attack.horror,
-  );
+  const investigator = activeInvestigator(state, cmd.investigatorId);
+  // A cancelled attack ends "with no further consequences": nothing dealt, no "after it attacks".
+  const dealt = cmd.cancelled
+    ? []
+    : enemyAttackEvents(
+        ctx,
+        state,
+        cmd.enemyId,
+        investigator,
+        cmd.damage ?? attack.damage,
+        cmd.horror ?? attack.horror,
+      );
   const after = replay(dealt, state);
   const remaining = dueAttacksOf(ctx, after, step).filter((due) => !isThisAttack(due));
   const steps: PhaseStep[] =
