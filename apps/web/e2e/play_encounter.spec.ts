@@ -1,5 +1,10 @@
 import { expect, test } from './fixtures/test';
-import { houseOpenedExport, mythosDrawnExport, resumeImportedGame } from './fixtures/saved_games';
+import {
+  beforeFourthMythosExport,
+  houseOpenedExport,
+  mythosDrawnExport,
+  resumeImportedGame,
+} from './fixtures/saved_games';
 
 // Journey: a player card tells Roland Banks to draw from the encounter deck on his turn – open the
 // encounter dialog from the header, draw for him, answer its test and see where the card went. A
@@ -118,35 +123,52 @@ test('spawn the set-aside Ghoul Priest in the Attic', async ({ page }) => {
   });
 });
 
-// Journey: in the enemy phase the Ravenous Ghoul engaged with Roland Banks attacks: the screen asks
-// about the attack at once, Roland Banks takes it, the ghoul exhausts and the round goes on.
+// Journey: the mythos phase places the agenda's third doom and asks at once whether it advances;
+// the notice of the doom shows above that question, not hidden under it.
 test(
-  'take the attack of an engaged enemy in the enemy phase',
+  'see what the mythos phase did above the dialog it opens',
   { tag: '@flow' },
   async ({ page }) => {
-    const roland = page.getByRole('region', { name: 'Roland Banks' });
-
-    await test.step('Resume a game with the Ravenous Ghoul engaged with Roland Banks', async () => {
-      await resumeImportedGame(page, 'Ghoul engaged', mythosDrawnExport('Ghoul engaged'));
-      await page.getByRole('button', { name: 'Start turn' }).click();
-      await page.getByRole('button', { name: 'End turn' }).click();
+    await test.step('Resume a game in the upkeep of round 3 and go on to the mythos phase', async () => {
+      await resumeImportedGame(page, 'Fourth mythos', beforeFourthMythosExport('Fourth mythos'));
+      await page.getByRole('button', { name: 'Next' }).click();
     });
 
-    await test.step('The enemy phase asks about the Ravenous Ghoul’s attack', async () => {
-      await page.getByRole('button', { name: 'Next' }).click();
-      const attack = page.getByRole('dialog', { name: 'Ravenous Ghoul attacks' });
-      await expect(attack).toBeVisible();
-      await attack.getByRole('button', { name: 'Done' }).click();
-      await expect(attack).toBeHidden();
-    });
-
-    await test.step('Roland Banks took 1 damage and 1 horror, and the round goes on to the upkeep', async () => {
-      await expect(roland.getByRole('img', { name: '8/9' })).toBeVisible();
-      await expect(roland.getByRole('img', { name: '4/5' })).toBeVisible();
-      await page.getByRole('button', { name: 'Next' }).click();
-      await expect(
-        page.getByRole('list', { name: 'Phases' }).locator('[aria-current="step"]'),
-      ).toHaveText('Upkeep');
+    await test.step('The agenda asks whether it advances; the doom notice shows above it', async () => {
+      await expect(page.getByText("Does the agenda What's Going On?! advance?")).toBeVisible();
+      // Shown above the dialog: in the top layer, as an open popover.
+      await expect(page.locator('[data-part="changes"]:popover-open')).toContainText(
+        "1 doom on What's Going On?!",
+      );
     });
   },
 );
+
+// Journey: in the enemy phase the Ravenous Ghoul engaged with Roland Banks attacks: the screen asks
+// about the attack at once, Roland Banks takes it, the ghoul exhausts and the round goes on.
+test('take the attack of an engaged enemy in the enemy phase', async ({ page }) => {
+  const roland = page.getByRole('region', { name: 'Roland Banks' });
+
+  await test.step('Resume a game with the Ravenous Ghoul engaged with Roland Banks', async () => {
+    await resumeImportedGame(page, 'Ghoul engaged', mythosDrawnExport('Ghoul engaged'));
+    await page.getByRole('button', { name: 'Start turn' }).click();
+    await page.getByRole('button', { name: 'End turn' }).click();
+  });
+
+  await test.step('The enemy phase asks about the Ravenous Ghoul’s attack', async () => {
+    await page.getByRole('button', { name: 'Next' }).click();
+    const attack = page.getByRole('dialog', { name: 'Ravenous Ghoul attacks' });
+    await expect(attack).toBeVisible();
+    await attack.getByRole('button', { name: 'Done' }).click();
+    await expect(attack).toBeHidden();
+  });
+
+  await test.step('Roland Banks took 1 damage and 1 horror, and the round goes on to the upkeep', async () => {
+    await expect(roland.getByRole('img', { name: '8/9' })).toBeVisible();
+    await expect(roland.getByRole('img', { name: '4/5' })).toBeVisible();
+    await page.getByRole('button', { name: 'Next' }).click();
+    await expect(
+      page.getByRole('list', { name: 'Phases' }).locator('[aria-current="step"]'),
+    ).toHaveText('Upkeep');
+  });
+});

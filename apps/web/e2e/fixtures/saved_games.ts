@@ -197,6 +197,20 @@ function mythosDrawn(): PlayTable {
 }
 
 /**
+ * Like `mythosDrawnExport`, played on to the upkeep of round 3: Roland Banks took his turn and the
+ * Ravenous Ghoul engaged with him attacked, so the next phase is the mythos of round 4.
+ */
+export function beforeFourthMythosExport(title: string): Buffer {
+  const table = mythosDrawn();
+  table.startTurn(rolandId);
+  table.endTurn(rolandId);
+  table.nextPhase();
+  table.resolveEnemyAttacks();
+  table.nextPhase();
+  return exportOf(title, table, 'before_fourth_mythos');
+}
+
+/**
  * Like `houseOpenedExport`, but with every header pile holding cards, all moved by hand to keep the
  * script short: seven encounter cards lie on the discard pile, and the Ghoul Priest (2
  * victory) has left the set-aside cards for the victory display, so the header fans each pile.
