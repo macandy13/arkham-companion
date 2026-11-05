@@ -2,6 +2,13 @@
 
 The sections dated up to 2026-10-22 were released as 1.0.0 to 1.8.0 by mistake: Release Please starts at 1.0.0 by default. Versioning restarted at 0.1.0 (see "Versions" in docs/product.md).
 
+## [0.1.23](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v0.1.22...arkham-companion-v0.1.23) (2026-11-05)
+
+
+### Features
+
+* ask about each enemy phase attack, like an attack of opportunity (M3.16) ([4fcf284](https://github.com/macandy13/arkham-companion/commit/4fcf284e96ca882b4881a034e0e5d4956e5a586f))
+
 ## [0.1.22](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v0.1.21...arkham-companion-v0.1.22) (2026-11-04)
 
 
