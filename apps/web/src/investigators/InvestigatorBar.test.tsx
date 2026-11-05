@@ -713,6 +713,33 @@ describe('InvestigatorBar', () => {
       await expect.poll(() => table.board.investigator(alder).boosts).toEqual(boosts);
     });
 
+    it('names each boost in the row under the card by its skill, Combat +1 once raised', async () => {
+      const table = PlayTable.start(hurtAlder);
+      const { rerender } = render(
+        <InvestigatorBar board={table.board} actions={actionsOn(table)} busy={false} adjusting />,
+      );
+
+      fireEvent.click(
+        within(panel('alder')).getByRole('button', { name: 'Raise the Combat boost' }),
+      );
+      await expect.poll(() => table.board.investigator(alder).boosts).toEqual({ combat: 1 });
+      rerender(
+        <InvestigatorBar board={table.board} actions={actionsOn(table)} busy={false} adjusting />,
+      );
+
+      const boosts = within(panel('alder')).getByLabelText('Skill boosts');
+      expect(
+        within(boosts)
+          .getAllByRole('term')
+          .map((term) => term.textContent),
+      ).toEqual(['Willpower', 'Intellect', 'Combat', 'Agility']);
+      expect(
+        within(boosts)
+          .getAllByRole('definition')
+          .map((boost) => boost.querySelector('data')?.textContent),
+      ).toEqual(['0', '0', '+1', '0']);
+    });
+
     it('turns the boost steppers off while a step is queued', () => {
       const table = PlayTable.start(hurtAlder);
       render(<InvestigatorBar board={table.board} actions={actionsOn(table)} busy adjusting />);

@@ -112,73 +112,67 @@ const currentPhase = (page: Page) =>
 // the game comes back exactly as it was, with the notice of what the mythos phase drew. What the
 // game does by itself, the upkeep's resource and the mythos phase's doom, shows in a notice that
 // fades away on its own.
-test(
-  'play two rounds and reload in the middle of the mythos phase',
-  { tag: '@flow' },
-  async ({ page }) => {
-    await test.step('Resume the game on Roland Banks’ first turn, the house open', async () => {
-      await resumeImportedGame(page, 'Two rounds', houseOpenedExport('Two rounds'));
-      await expect(page.getByRole('heading', { name: 'Round 1' })).toBeVisible();
-      await expect(currentPhase(page)).toHaveText('Investigation');
-    });
+test('play two rounds and reload in the middle of the mythos phase', async ({ page }) => {
+  await test.step('Resume the game on Roland Banks’ first turn, the house open', async () => {
+    await resumeImportedGame(page, 'Two rounds', houseOpenedExport('Two rounds'));
+    await expect(page.getByRole('heading', { name: 'Round 1' })).toBeVisible();
+    await expect(currentPhase(page)).toHaveText('Investigation');
+  });
 
-    await test.step('End the turn and play on through the enemy and upkeep phases', async () => {
-      await page.getByRole('button', { name: 'End turn' }).click();
-      for (const phase of ['Enemy', 'Upkeep']) {
-        await page.getByRole('button', { name: 'Next' }).click();
-        await expect(currentPhase(page)).toHaveText(phase);
-      }
-    });
-
-    await test.step('The upkeep has Roland Banks draw 1 card and gives him 1 resource, and its notice fades away', async () => {
-      const changes = page.getByRole('status', { name: 'What the game did' });
-      await expect(changes.getByRole('listitem')).toHaveText([
-        'Roland Banks draws 1 card (upkeep phase)',
-        'Roland Banks gains 1 resource (upkeep phase)',
-      ]);
-      await expect(changes).toContainText('Not right? Undo the step, or adjust it by hand.');
-      await expect(changes).toBeHidden({ timeout: 10_000 });
-    });
-
-    await test.step('Start round 2: its mythos phase draws Dissonant Voices for Roland Banks', async () => {
+  await test.step('End the turn and play on through the enemy and upkeep phases', async () => {
+    await page.getByRole('button', { name: 'End turn' }).click();
+    for (const phase of ['Enemy', 'Upkeep']) {
       await page.getByRole('button', { name: 'Next' }).click();
-      await expect(page.getByRole('heading', { name: 'Round 2' })).toBeVisible();
-      await expect(currentPhase(page)).toHaveText('Mythos');
-      await expect(
-        page
-          .getByRole('region', { name: 'Roland Banks' })
-          .getByRole('list', { name: 'Threat area' }),
-      ).toContainText('Dissonant Voices');
-      await expect(
-        page.getByRole('status', { name: 'What the game did' }).getByRole('listitem'),
-      ).toHaveText("1 doom on What's Going On?! (mythos phase)");
-    });
+      await expect(currentPhase(page)).toHaveText(phase);
+    }
+  });
 
-    await test.step('Reload: the game comes back exactly as it was', async () => {
-      const before = await shownGame(page, 'Round 2').allInnerTexts();
-      expect(before).toHaveLength(8);
-      const drawn = page.getByRole('status', { name: 'Encounter cards drawn' });
-      const notice = await drawn.innerText();
-      await page.reload();
-      await expect(shownGame(page, 'Round 2')).toHaveText(before, { useInnerText: true });
-      await expect(drawn).toHaveText(notice, { useInnerText: true });
-      await expect(currentPhase(page)).toHaveText('Mythos');
-    });
+  await test.step('The upkeep has Roland Banks draw 1 card and gives him 1 resource, and its notice fades away', async () => {
+    const changes = page.getByRole('status', { name: 'What the game did' });
+    await expect(changes.getByRole('listitem')).toHaveText([
+      'Roland Banks draws 1 card (upkeep phase)',
+      'Roland Banks gains 1 resource (upkeep phase)',
+    ]);
+    await expect(changes).toContainText('Not right? Undo the step, or adjust it by hand.');
+    await expect(changes).toBeHidden({ timeout: 10_000 });
+  });
 
-    await test.step('Play round 2: Roland Banks’ turn, then the enemy and upkeep phases', async () => {
+  await test.step('Start round 2: its mythos phase draws Dissonant Voices for Roland Banks', async () => {
+    await page.getByRole('button', { name: 'Next' }).click();
+    await expect(page.getByRole('heading', { name: 'Round 2' })).toBeVisible();
+    await expect(currentPhase(page)).toHaveText('Mythos');
+    await expect(
+      page.getByRole('region', { name: 'Roland Banks' }).getByRole('list', { name: 'Threat area' }),
+    ).toContainText('Dissonant Voices');
+    await expect(
+      page.getByRole('status', { name: 'What the game did' }).getByRole('listitem'),
+    ).toHaveText("1 doom on What's Going On?! (mythos phase)");
+  });
+
+  await test.step('Reload: the game comes back exactly as it was', async () => {
+    const before = await shownGame(page, 'Round 2').allInnerTexts();
+    expect(before).toHaveLength(8);
+    const drawn = page.getByRole('status', { name: 'Encounter cards drawn' });
+    const notice = await drawn.innerText();
+    await page.reload();
+    await expect(shownGame(page, 'Round 2')).toHaveText(before, { useInnerText: true });
+    await expect(drawn).toHaveText(notice, { useInnerText: true });
+    await expect(currentPhase(page)).toHaveText('Mythos');
+  });
+
+  await test.step('Play round 2: Roland Banks’ turn, then the enemy and upkeep phases', async () => {
+    await page.getByRole('button', { name: 'Next' }).click();
+    await expect(currentPhase(page)).toHaveText('Investigation');
+    await page.getByRole('button', { name: 'Start turn' }).click();
+    await page.getByRole('button', { name: 'End turn' }).click();
+    for (const phase of ['Enemy', 'Upkeep']) {
       await page.getByRole('button', { name: 'Next' }).click();
-      await expect(currentPhase(page)).toHaveText('Investigation');
-      await page.getByRole('button', { name: 'Start turn' }).click();
-      await page.getByRole('button', { name: 'End turn' }).click();
-      for (const phase of ['Enemy', 'Upkeep']) {
-        await page.getByRole('button', { name: 'Next' }).click();
-        await expect(currentPhase(page)).toHaveText(phase);
-      }
-    });
+      await expect(currentPhase(page)).toHaveText(phase);
+    }
+  });
 
-    await test.step('Round 3 begins', async () => {
-      await page.getByRole('button', { name: 'Next' }).click();
-      await expect(page.getByRole('heading', { name: 'Round 3' })).toBeVisible();
-    });
-  },
-);
+  await test.step('Round 3 begins', async () => {
+    await page.getByRole('button', { name: 'Next' }).click();
+    await expect(page.getByRole('heading', { name: 'Round 3' })).toBeVisible();
+  });
+});
