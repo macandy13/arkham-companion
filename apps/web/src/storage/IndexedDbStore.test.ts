@@ -164,6 +164,28 @@ describe('IndexedDbStore', () => {
     await expect(store.renameGame(gameId('nope'), 'x')).rejects.toThrow(/Unknown game/);
   });
 
+  it.each([
+    { chosen: undefined, kept: 'display' },
+    { chosen: 'auto', kept: 'auto' },
+  ] as const)(
+    "keeps a game's reliance on the helpers: $chosen at the start gives $kept",
+    async ({ chosen, kept }) => {
+      const id = await store.createGame(chosen === undefined ? {} : { reliance: chosen });
+
+      expect((await store.loadGame(id))?.summary.reliance).toBe(kept);
+    },
+  );
+
+  it("changes a game's reliance on the helpers without counting it as play", async () => {
+    const id = await store.createGame({ reliance: 'display' });
+    const before = (await store.listGames())[0]!.updatedAt;
+
+    await store.setGameReliance(id, 'assist');
+
+    expect((await store.listGames())[0]).toMatchObject({ reliance: 'assist', updatedAt: before });
+    await expect(store.setGameReliance(gameId('nope'), 'auto')).rejects.toThrow(/Unknown game/);
+  });
+
   it('remembers the notices read in a game without counting it as play', async () => {
     const id = await store.createGame({ title: 'Read' });
     const before = (await store.listGames())[0]!.updatedAt;
@@ -406,6 +428,23 @@ describe('IndexedDbStore campaigns', () => {
     );
 
     expect(stored.map((row) => row.cause)).toEqual([undefined, gathering]);
+  });
+
+  it("keeps a campaign's reliance on the helpers, and changes it without counting it as play", async () => {
+    const id = await store.createCampaign({ reliance: 'assist' });
+    await store.appendCampaignEvents(id, [campaignStarted(id)]);
+    const before = (await store.loadCampaign(id))?.summary;
+
+    await store.setCampaignReliance(id, 'auto');
+
+    expect(before?.reliance).toBe('assist');
+    expect((await store.loadCampaign(id))?.summary).toMatchObject({
+      reliance: 'auto',
+      updatedAt: before?.updatedAt,
+    });
+    await expect(store.setCampaignReliance(campaignId('nope'), 'auto')).rejects.toThrow(
+      /Unknown campaign/,
+    );
   });
 
   it('summarises a campaign that ended with its result and when it ended', async () => {

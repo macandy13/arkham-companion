@@ -11,6 +11,8 @@ Campaign logs stay short, so they are always replayed whole and have no snapshot
 An event the game or a resolution wrote by itself keeps its cause (`StoredEvent.cause`, `StoredCampaignEvent.cause`, from the engine's [change causes](command-handling.md)), passed to `appendEvents`/`appendCampaignEvents` beside the events; the players' own events have none. Replay never reads it: it is there so the log can say why, after a reload too. Export and import carry it.
 A game links to its campaign through `NewGame.campaignId`; the [campaign log](campaign.md) records each played scenario and its outcome, not the game, so deleting a game leaves the campaign unchanged.
 
+A game row and a campaign row also keep how much the players rely on the helpers ([`Reliance`](../../packages/engine/src/reliance.ts): `display`, `assist` or `auto`; `createGame`/`createCampaign`, `setGameReliance`/`setCampaignReliance`), absent until chosen and read as `DEFAULT_RELIANCE`. It is a setting rather than play, so it lives on the row, not in the log: changing it is no step to undo and leaves `updatedAt` alone. A game of a campaign follows the campaign's level. `showsNotice` says which notice kinds (`NoticeKind`) each level shows.
+
 Beside its log, a game row keeps which step's notices the players dismissed (`ReadNotices`, `markNoticeRead`), so opening the game again doesn't show them twice. It names the step by `commandId` and `undoLast` forgets the undone step's marks, because the next step reuses the undone step's `seq` and, after a reload, its id. It is outside the log: a duplicate keeps it, export and import don't carry it.
 
 Every command is written before the UI updates, so a refresh or flat battery loses nothing.

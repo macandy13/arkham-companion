@@ -18,6 +18,8 @@ import {
   type GameState,
   type GameStore,
   type CampaignChangeCause,
+  DEFAULT_RELIANCE,
+  type Reliance,
   type ChangeCause,
   type GameSummary,
   type ReadNotices,
@@ -51,6 +53,8 @@ interface GameRow {
   lastSeq: number;
   /** Not indexed, so it needs no schema version; absent until the players dismiss a notice. */
   readNotices?: ReadNotices;
+  /** Not indexed either; absent until chosen (`DEFAULT_RELIANCE`). */
+  reliance?: Reliance;
 }
 
 /** Row of the `campaigns` table: a `CampaignSummary` is derived from it plus the replayed log. */
@@ -60,6 +64,8 @@ interface CampaignRow {
   createdAt: number;
   updatedAt: number;
   lastSeq: number;
+  /** Not indexed, so it needs no schema version; absent until chosen (`DEFAULT_RELIANCE`). */
+  reliance?: Reliance;
 }
 
 /** Row of the `cards` table: one normalised card of one language, keyed by `key`. */
@@ -142,6 +148,7 @@ export class IndexedDbStore implements GameStore {
       gameId,
       title: init.title ?? 'New game',
       campaignId: init.campaignId,
+      ...(init.reliance === undefined ? {} : { reliance: init.reliance }),
       createdAt: now,
       updatedAt: now,
       lastSeq: 0,
@@ -239,6 +246,12 @@ export class IndexedDbStore implements GameStore {
     }
   }
 
+  async setGameReliance(gameId: GameId, reliance: Reliance): Promise<void> {
+    if ((await this.db.games.update(gameId, { reliance })) === 0) {
+      throw new Error(`Unknown game ${gameId}`);
+    }
+  }
+
   async loadReadNotices(gameId: GameId): Promise<ReadNotices> {
     return (await this.db.games.get(gameId))?.readNotices ?? {};
   }
@@ -315,11 +328,18 @@ export class IndexedDbStore implements GameStore {
     await this.db.campaigns.add({
       campaignId,
       title: init.title ?? 'New campaign',
+      ...(init.reliance === undefined ? {} : { reliance: init.reliance }),
       createdAt: now,
       updatedAt: now,
       lastSeq: 0,
     });
     return campaignId;
+  }
+
+  async setCampaignReliance(campaignId: CampaignId, reliance: Reliance): Promise<void> {
+    if ((await this.db.campaigns.update(campaignId, { reliance })) === 0) {
+      throw new Error(`Unknown campaign ${campaignId}`);
+    }
   }
 
   async appendCampaignEvents(
@@ -437,6 +457,7 @@ export class IndexedDbStore implements GameStore {
 function toSummary(row: GameRow, state: GameState): GameSummary {
   return {
     ...row,
+    reliance: row.reliance ?? DEFAULT_RELIANCE,
     scenarioId: state.meta.scenarioId,
     round: state.meta.round,
     phase: state.meta.phase,
@@ -453,6 +474,7 @@ function toCampaignSummary(
 ): CampaignSummary {
   return {
     ...row,
+    reliance: row.reliance ?? DEFAULT_RELIANCE,
     definitionId: log.definitionId,
     difficulty: log.difficulty,
     position: log.position,
