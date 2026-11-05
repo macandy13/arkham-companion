@@ -70,6 +70,13 @@ export function handleCommand(
       return handleReplaceInvestigator(ctx, log, command);
     case 'AdvanceScenario':
       return handleAdvanceScenario(log, command);
+    case 'CompleteInterlude':
+      if (log.playedInterludes.includes(command.interludeId))
+        throw new CampaignCommandRejected({
+          code: 'interludeAlreadyPlayed',
+          interludeId: command.interludeId,
+        });
+      return [{ type: 'InterludePlayed', interludeId: command.interludeId }];
     case 'EndCampaign':
       return [{ type: 'CampaignEnded', result: command.result }];
     case 'AdjustCampaign':

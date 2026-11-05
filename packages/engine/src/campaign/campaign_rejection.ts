@@ -1,4 +1,4 @@
-import type { InvestigatorCode, ScenarioId } from '../ids';
+import type { InterludeId, InvestigatorCode, ScenarioId } from '../ids';
 import type { ChaosToken } from '../state';
 import type { InvestigatorFate, StoryKind } from './campaign_log';
 
@@ -57,6 +57,10 @@ export type CampaignRejection =
   | { code: 'scenarioNotEnded' }
   /** `applyResolution` for a game of another scenario than the campaign's current one. */
   | { code: 'notCurrentScenario'; scenarioId: ScenarioId; current: ScenarioId | undefined }
+  /** `CompleteInterlude` for an interlude the log already lists as played. */
+  | { code: 'interludeAlreadyPlayed'; interludeId: InterludeId }
+  /** `applyInterlude` for an interlude that does not follow the last played scenario. */
+  | { code: 'interludeNotDue'; interludeId: InterludeId }
   /** `AdjustCampaign` delta that is zero or not an integer. */
   | { code: 'invalidDelta'; delta: number }
   /** `AdjustCampaign` `fate` to the fate the investigator already has. */
@@ -123,6 +127,10 @@ function describeCampaignRejection(r: CampaignRejection): string {
       return 'the scenario has not ended yet';
     case 'notCurrentScenario':
       return `scenario ${r.scenarioId} is not the campaign's current scenario (${r.current ?? 'none'})`;
+    case 'interludeAlreadyPlayed':
+      return `interlude ${r.interludeId} has already been played`;
+    case 'interludeNotDue':
+      return `interlude ${r.interludeId} does not follow the last played scenario`;
     case 'invalidDelta':
       return `delta must be a non-zero integer, got ${r.delta}`;
     case 'fateUnchanged':

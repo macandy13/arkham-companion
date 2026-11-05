@@ -5,6 +5,7 @@ import {
   campaignId,
   type CampaignDefinitionId,
   type CampaignId,
+  type InterludeId,
   type InvestigatorCode,
   type ResolutionId,
   type ScenarioId,
@@ -150,6 +151,12 @@ export interface CampaignLog {
   readonly chaosBag: readonly ChaosToken[];
   /** The scenarios played so far with how each ended, in the order they were played. */
   readonly playedScenarios: readonly PlayedScenario[];
+  /**
+   * The interludes the players have read and written (`CompleteInterlude`), in that order; an
+   * interlude of the definition after the last played scenario that is not listed here is still
+   * due (`findDueInterlude`).
+   */
+  readonly playedInterludes: readonly InterludeId[];
   /** `ScenarioDefinition.id`s in campaign order. Empty only before `CampaignStarted`. */
   readonly scenarioIds: readonly ScenarioId[];
   /**
@@ -172,6 +179,7 @@ export function createEmptyLog(): CampaignLog {
     story: {},
     chaosBag: [],
     playedScenarios: [],
+    playedInterludes: [],
     scenarioIds: [],
     position: 0,
   };

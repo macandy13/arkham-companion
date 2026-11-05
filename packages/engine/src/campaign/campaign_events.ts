@@ -2,6 +2,7 @@ import type {
   CampaignDefinitionId,
   CampaignId,
   CardCode,
+  InterludeId,
   InvestigatorCode,
   ScenarioId,
 } from '../ids';
@@ -35,6 +36,7 @@ export type CampaignEvent =
   | InvestigatorReplaced
   | ScenarioPlayed
   | ScenarioPositionChanged
+  | InterludePlayed
   | CampaignEnded;
 
 /** A campaign began; replaces the whole log. Produced by `StartCampaign`. */
@@ -124,6 +126,12 @@ export interface ScenarioPlayed {
   readonly type: 'ScenarioPlayed';
   readonly scenarioId: ScenarioId;
   readonly outcome: ScenarioOutcome;
+}
+
+/** An interlude was read and joins `CampaignLog.playedInterludes`. Produced by `CompleteInterlude`. */
+export interface InterludePlayed {
+  readonly type: 'InterludePlayed';
+  readonly interludeId: InterludeId;
 }
 
 /** The campaign ended with `result` (`CampaignLog.result`). Produced by `EndCampaign`. */

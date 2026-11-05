@@ -1,13 +1,14 @@
 import { assertNever } from '@arkham/util';
-import type { ScenarioId } from '../ids';
+import type { InterludeId, ScenarioId } from '../ids';
 import type { CampaignEvent } from './campaign_events';
 import { sameOutcome, type ScenarioOutcome } from './campaign_log';
 
 /**
  * Why a campaign log entry was written (M1C.2), the campaign's counterpart of the game's
  * `ChangeCause`: the players by hand (an adjustment, a replacement, ending a campaign with nobody
- * left), or the resolution of a scenario (`applyResolution`), with the defeats' trauma that comes
- * with it. `executeCommand` returns one per event, beside the events.
+ * left), the resolution of a scenario (`applyResolution`), with the defeats' trauma that comes
+ * with it, or an interlude (`applyInterlude`). `executeCommand` returns one per event, beside the
+ * events.
  */
 export type CampaignChangeCause =
   | { readonly kind: 'player' }
@@ -15,7 +16,8 @@ export type CampaignChangeCause =
       readonly kind: 'resolution';
       readonly scenarioId: ScenarioId;
       readonly outcome: ScenarioOutcome;
-    };
+    }
+  | { readonly kind: 'interlude'; readonly interludeId: InterludeId };
 
 /** The cause of what the players write into the log themselves. */
 export const CAMPAIGN_PLAYER_CAUSE: CampaignChangeCause = { kind: 'player' };
@@ -46,7 +48,8 @@ export interface CausedCampaignEvents {
 
 /**
  * The entries among `events` the players didn't write themselves, as notices: grouped while kind
- * and cause stay the same. One resolution's causes are all alike, so its entries group by kind.
+ * and cause stay the same. One resolution's or interlude's causes are all alike, so its entries
+ * group by kind.
  */
 export function campaignNotices({ events, causes }: CausedCampaignEvents): CampaignNotice[] {
   const notices: CampaignNotice[] = [];
@@ -55,7 +58,7 @@ export function campaignNotices({ events, causes }: CausedCampaignEvents): Campa
     const kind = campaignNoticeKindOf(event);
     if (cause === undefined || cause.kind === 'player' || kind === undefined) return;
     const last = notices.at(-1);
-    if (last && last.kind === kind && sameResolution(last.cause, cause)) {
+    if (last && last.kind === kind && sameCause(last.cause, cause)) {
       notices[notices.length - 1] = { ...last, events: [...last.events, event] };
     } else {
       notices.push({ kind, cause, events: [event] });
@@ -64,7 +67,9 @@ export function campaignNotices({ events, causes }: CausedCampaignEvents): Campa
   return notices;
 }
 
-function sameResolution(a: CampaignNotice['cause'], b: CampaignNotice['cause']): boolean {
+function sameCause(a: CampaignNotice['cause'], b: CampaignNotice['cause']): boolean {
+  if (a.kind === 'interlude') return b.kind === 'interlude' && a.interludeId === b.interludeId;
+  if (b.kind === 'interlude') return false;
   return a.scenarioId === b.scenarioId && sameOutcome(a.outcome, b.outcome);
 }
 
@@ -92,6 +97,7 @@ export function campaignNoticeKindOf(event: CampaignEvent): CampaignNoticeKind |
       return 'team';
     case 'ScenarioPlayed':
     case 'ScenarioPositionChanged':
+    case 'InterludePlayed':
     case 'CampaignEnded':
       return 'scenario';
     case 'CampaignStarted':

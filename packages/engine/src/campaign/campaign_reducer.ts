@@ -53,6 +53,8 @@ export function applyEvent(log: CampaignLog, event: CampaignEvent): CampaignLog 
       };
     case 'ScenarioPositionChanged':
       return { ...log, position: event.position };
+    case 'InterludePlayed':
+      return { ...log, playedInterludes: [...log.playedInterludes, event.interludeId] };
     case 'CampaignEnded':
       return { ...log, result: event.result };
   }

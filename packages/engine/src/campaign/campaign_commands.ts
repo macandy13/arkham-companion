@@ -2,6 +2,7 @@ import type {
   CampaignDefinitionId,
   CampaignId,
   CardCode,
+  InterludeId,
   InvestigatorCode,
   ScenarioId,
 } from '../ids';
@@ -33,6 +34,7 @@ export type CampaignCommand =
   | EarnCard
   | ReplaceInvestigator
   | AdvanceScenario
+  | CompleteInterlude
   | EndCampaign
   | AdjustCampaign;
 
@@ -158,6 +160,16 @@ export interface ReplaceInvestigator {
 export interface AdvanceScenario {
   readonly type: 'AdvanceScenario';
   readonly outcome: ScenarioOutcome;
+}
+
+/**
+ * The interlude `interludeId` has been read and written: it joins `CampaignLog.playedInterludes`,
+ * so the campaign moves on to the next scenario. `applyInterlude` sends it as the last step of a
+ * confirmed interlude; the handler refuses one already played. Produces `InterludePlayed`.
+ */
+export interface CompleteInterlude {
+  readonly type: 'CompleteInterlude';
+  readonly interludeId: InterludeId;
 }
 
 /**

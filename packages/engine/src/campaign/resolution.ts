@@ -172,9 +172,10 @@ export function proposeResolution(
  * the campaign log (Rules Reference, "Trauma"). The campaign rejects any later command for
  * them, so the proposal confirmed unchanged would fail as a whole; and being eliminated
  * outweighs the defeat trauma that follows. A standalone game has no log, so only its
- * resolution's `MarkKilled`/`MarkInsane` eliminate.
+ * resolution's `MarkKilled`/`MarkInsane` eliminate. `proposeInterlude` filters its changes the same
+ * way.
  */
-function withoutChangesForEliminated(
+export function withoutChangesForEliminated(
   log: CampaignLog | undefined,
   changes: readonly ProposedChange[],
 ): ProposedChange[] {

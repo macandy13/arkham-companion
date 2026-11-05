@@ -45,6 +45,11 @@ export type ScenarioId = Brand<string, 'ScenarioId'>;
  * in `ScenarioResolutions.byId`.
  */
 export type ResolutionId = Brand<string, 'ResolutionId'>;
+/**
+ * `InterludeDefinition.id`, e.g. 'armitages-fate': an interlude of a campaign, which
+ * `CampaignLog.playedInterludes` lists once the players have read it.
+ */
+export type InterludeId = Brand<string, 'InterludeId'>;
 /** `CampaignDefinition.id`, e.g. 'night-of-the-zealot'; `CampaignLog.definitionId`. */
 export type CampaignDefinitionId = Brand<string, 'CampaignDefinitionId'>;
 /** UUID (v4) identifying one game; never device-bound so it stays valid for later cloud sync (architecture "Persistence"). */
@@ -70,6 +75,7 @@ export const cardImagePath = (path: string) => path as CardImagePath;
 export const encounterSetCode = (code: string) => code as EncounterSetCode;
 export const scenarioId = (id: string) => id as ScenarioId;
 export const resolutionId = (id: string) => id as ResolutionId;
+export const interludeId = (id: string) => id as InterludeId;
 export const campaignDefinitionId = (id: string) => id as CampaignDefinitionId;
 export const gameId = (id: string) => id as GameId;
 export const campaignId = (id: string) => id as CampaignId;

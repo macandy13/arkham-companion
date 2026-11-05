@@ -59,6 +59,7 @@ export function makeCampaignLog(overrides: Partial<CampaignLog> = {}): CampaignL
     story: {},
     chaosBag: ['0', '-1', 'skull'],
     playedScenarios: [],
+    playedInterludes: [],
     scenarioIds: [scenarioId('first_scenario'), scenarioId('second_scenario')],
     position: 0,
     ...overrides,

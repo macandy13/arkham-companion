@@ -231,6 +231,7 @@ function commandGroup(command: CampaignCommand): ChangeGroup {
     case 'EndCampaign':
     case 'StartCampaign':
     case 'AdvanceScenario':
+    case 'CompleteInterlude':
     case 'AdjustCampaign':
       return 'notes';
     case 'AddChaosToken':
@@ -312,6 +313,7 @@ function useDescribeCommand(game: GameState): (command: CampaignCommand) => stri
       case 'SpendXp':
       case 'ReplaceInvestigator':
       case 'AdvanceScenario':
+      case 'CompleteInterlude':
       case 'AdjustCampaign':
         // A resolution proposes none of these; `applyResolution` adds `AdvanceScenario` itself.
         return t('resolution.otherChange');
