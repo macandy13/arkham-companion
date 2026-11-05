@@ -10,6 +10,7 @@ import {
   type CampaignInvestigator,
   type CampaignLog,
   type GameSummary,
+  type InterludeDefinition,
   type PlayedScenario,
   type ScenarioOutcome,
 } from '@arkham/engine';
@@ -23,6 +24,7 @@ import {
 } from '../scenarios/scenarioCatalog';
 import { assertNever, range } from '@arkham/util';
 import { CampaignSheets } from './CampaignSheets';
+import { InterludeDialog } from './InterludeDialog';
 import { NextScenarioDialog } from './NextScenarioDialog';
 import { ResolutionUndo } from './ResolutionUndo';
 import { Tally } from './Tally';
@@ -37,9 +39,9 @@ import './campaign_log.css';
  * (docs/product.md "Campaign screen"): an index card with a column per investigator, a napkin
  * with the scenarios, each played one ticked with its resolution, then the campaign notes and the
  * campaign's own sheets (`CampaignSheets`); once the campaign is over, the card says how it ended
- * (`CampaignOver`). Below them, a link continues the scenario in play or
- * sets the next one up (`NextScenarioDialog`), and
- * after a resolution was written a toast offers to take it back (`ResolutionUndo`).
+ * (`CampaignOver`). Below them, a link continues the scenario in play, opens the interlude due
+ * before the next scenario (`InterludeDialog`) or sets the next one up (`NextScenarioDialog`), and
+ * after a resolution or an interlude was written a toast offers to take it back (`ResolutionUndo`).
  */
 export function CampaignScreen({
   store,
@@ -83,9 +85,17 @@ export function CampaignScreen({
       </section>
       <ScenarioList log={log} />
       {entry && <CampaignSheets log={log} entry={entry} />}
-      <NextStep store={store} catalog={catalog} campaignId={campaignId} log={log} games={games} />
+      <NextStep
+        store={store}
+        catalog={catalog}
+        campaignId={campaignId}
+        log={log}
+        games={games}
+        interlude={opened.interlude}
+      />
       {written?.campaignId === campaignId && (
         <ResolutionUndo
+          kind={written.kind}
           onUndo={() => store.getState().undoResolution()}
           onDismiss={() => store.getState().dismissWrittenResolution()}
         />
@@ -239,7 +249,8 @@ function outcomeLabel(t: ReturnType<typeof useTranslation>['t'], played: PlayedS
 
 /**
  * Back to the game of the scenario in play, if the campaign has one that is not over yet;
- * otherwise, once the log has moved on to a scenario without a game, the way to set it up.
+ * otherwise, once the log has moved on to a scenario without a game, the `interlude` due before
+ * it, then the way to set it up.
  */
 function NextStep({
   store,
@@ -247,12 +258,14 @@ function NextStep({
   campaignId,
   log,
   games,
+  interlude,
 }: {
   readonly store: StoreApi<AppState>;
   readonly catalog: CatalogSource;
   readonly campaignId: CampaignId;
   readonly log: CampaignLog;
   readonly games: GameSummary[];
+  readonly interlude: InterludeDefinition | undefined;
 }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -269,6 +282,7 @@ function NextStep({
       </footer>
     );
   }
+  if (interlude) return <InterludeStep store={store} log={log} interlude={interlude} />;
   return (
     <footer>
       <button type="button" data-primary onClick={() => setSettingUp(true)}>
@@ -285,6 +299,53 @@ function NextStep({
           onStart={async (start) => {
             const gameId = await store.getState().startNextScenario({ ...start, campaignId });
             await navigate(`/game/${gameId}`);
+          }}
+        />
+      )}
+    </footer>
+  );
+}
+
+/** The interlude due before the next scenario: a button that opens it, and its dialog. */
+function InterludeStep({
+  store,
+  log,
+  interlude,
+}: {
+  readonly store: StoreApi<AppState>;
+  readonly log: CampaignLog;
+  readonly interlude: InterludeDefinition;
+}) {
+  const { t } = useTranslation();
+  const [reading, setReading] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [failed, setFailed] = useState(false);
+  const storyKey = findCampaign(log.definitionId)?.storyKey;
+  const name = t(`${storyKey}.interludes.${interlude.id}`);
+  return (
+    <footer>
+      <button type="button" data-primary onClick={() => setReading(true)}>
+        {t('interlude.begin', { name })}
+      </button>
+      {reading && (
+        <InterludeDialog
+          log={log}
+          interlude={interlude}
+          storyKey={storyKey}
+          busy={busy}
+          failed={failed}
+          onLater={() => setReading(false)}
+          onWrite={(confirmed) => {
+            setBusy(true);
+            setFailed(false);
+            store
+              .getState()
+              .writeInterlude(confirmed)
+              .catch((error: unknown) => {
+                console.warn('The interlude could not be written into the log.', error);
+                setFailed(true);
+              })
+              .finally(() => setBusy(false));
           }}
         />
       )}

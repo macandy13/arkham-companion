@@ -7,6 +7,7 @@ import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import {
   campaignDefinitionId,
   cardCode,
+  interludeId,
   investigatorCode,
   resolutionId,
   scenarioId,
@@ -14,7 +15,8 @@ import {
   type CampaignId,
   type ScenarioOutcome,
 } from '@arkham/engine';
-import { initI18n } from '../i18n';
+import { i18next, initI18n } from '../i18n';
+import { findCampaign } from '../scenarios/scenarioCatalog';
 import { createAppStore } from '../state/appStore';
 import { IndexedDbStore } from '../storage/IndexedDbStore';
 import { CampaignScreen } from './CampaignScreen';
@@ -183,6 +185,118 @@ describe('CampaignScreen', () => {
     });
   });
 
+  describe('after The Gathering, with an interlude "The Survivors" before The Midnight Masks', () => {
+    const theSurvivors = interludeId('the_survivors');
+    const nightOfTheZealot = findCampaign(campaignDefinitionId('night-of-the-zealot'))!;
+    /**
+     * Night of the Zealot with an invented interlude after The Gathering: the investigators decide
+     * whether to rest (Roland earns 2 experience) or to press on (a cultist token goes into the
+     * bag), and the lead investigator writes it down as a story note either way.
+     */
+    const withAnInterlude = () => ({
+      ...nightOfTheZealot,
+      definition: {
+        ...nightOfTheZealot.definition,
+        interludes: [
+          {
+            id: theSurvivors,
+            afterScenario: gathering,
+            steps: [
+              {
+                kind: 'decide' as const,
+                questionKey: 'test.restOrPressOn',
+                options: [
+                  {
+                    labelKey: 'test.rest',
+                    steps: [{ kind: 'awardXp' as const, to: 'each' as const, amount: 2 }],
+                  },
+                  {
+                    labelKey: 'test.pressOn',
+                    steps: [{ kind: 'addChaosToken' as const, token: 'cultist' as const }],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    });
+
+    beforeAll(() => {
+      i18next.addResourceBundle(
+        'en',
+        'translation',
+        {
+          story: { nightOfTheZealot: { interludes: { the_survivors: 'The Survivors' } } },
+          test: { restOrPressOn: 'Rest or press on?', rest: 'Rest', pressOn: 'Press on' },
+        },
+        true,
+        false,
+      );
+    });
+
+    async function renderInterludeDue() {
+      const { gameStore, campaignId } = await storeCampaign(() => [
+        {
+          type: 'ScenarioPlayed',
+          scenarioId: gathering,
+          outcome: { kind: 'resolution', id: resolutionId('R1') },
+        },
+        { type: 'ScenarioPositionChanged', position: 1 },
+      ]);
+      const store = createAppStore(gameStore, undefined, withAnInterlude);
+      renderLog(gameStore, `/campaign/${campaignId}`, store);
+      return { gameStore, campaignId };
+    }
+
+    it('offers the interlude instead of setting The Midnight Masks up', async () => {
+      await renderInterludeDue();
+
+      expect(
+        await screen.findByRole('button', { name: 'Read the interlude The Survivors' }),
+      ).toBeTruthy();
+      expect(screen.queryByRole('button', { name: 'Set up The Midnight Masks' })).toBeNull();
+    });
+
+    it('asks the decision, then writes what the answer adds to the log', async () => {
+      const { gameStore, campaignId } = await renderInterludeDue();
+
+      fireEvent.click(
+        await screen.findByRole('button', { name: 'Read the interlude The Survivors' }),
+      );
+      const dialog = screen.getByRole('dialog', { name: 'The Survivors' });
+      expect(
+        within(dialog).getByText('Read the interlude The Survivors aloud from the campaign guide.'),
+      ).toBeTruthy();
+      fireEvent.click(within(dialog).getByRole('radio', { name: 'Press on' }));
+      fireEvent.click(within(dialog).getByRole('button', { name: 'Next' }));
+      const changes = screen.getByRole('dialog', { name: 'Into the campaign log' });
+      expect(within(changes).getByText('Add a Cultist token')).toBeTruthy();
+      fireEvent.click(within(changes).getByRole('button', { name: 'Write into the log' }));
+
+      expect(await screen.findByRole('status', { name: 'Written into the log' })).toBeTruthy();
+      expect(screen.getByText('The interlude is in the campaign log.')).toBeTruthy();
+      expect(await screen.findByRole('button', { name: 'Set up The Midnight Masks' })).toBeTruthy();
+      const stored = await gameStore.loadCampaign(campaignId);
+      expect(stored?.log.chaosBag).toEqual(['0', 'cultist']);
+      expect(stored?.log.playedInterludes).toEqual([theSurvivors]);
+    });
+
+    it('takes an answer back with "Back"', async () => {
+      await renderInterludeDue();
+
+      fireEvent.click(
+        await screen.findByRole('button', { name: 'Read the interlude The Survivors' }),
+      );
+      fireEvent.click(screen.getByRole('radio', { name: 'Rest' }));
+      fireEvent.click(screen.getByRole('button', { name: 'Next' }));
+      expect(screen.getByText('Roland Banks earns 2 experience')).toBeTruthy();
+      fireEvent.click(screen.getByRole('button', { name: 'Back' }));
+
+      expect(screen.getByRole('group', { name: 'Rest or press on?' })).toBeTruthy();
+    });
+  });
+
   describe('right after resolution 1 of The Gathering was written', () => {
     async function renderWrittenLog() {
       const { gameStore, campaignId } = await storeCampaign(() => []);
@@ -195,7 +309,9 @@ describe('CampaignScreen', () => {
         { type: 'ScenarioPositionChanged', position: 1 },
       ]);
       const store = createAppStore(gameStore);
-      store.setState({ writtenResolution: { campaignId, seq: written.at(-1)!.seq } });
+      store.setState({
+        writtenResolution: { campaignId, seq: written.at(-1)!.seq, kind: 'resolution' },
+      });
       renderLog(gameStore, `/campaign/${campaignId}`, store);
       return screen.findByRole('status', { name: 'Written into the log' });
     }

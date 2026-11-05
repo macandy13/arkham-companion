@@ -34,7 +34,8 @@ export interface CampaignEntry {
   definition: CampaignDefinition;
   /**
    * Prefix of the i18n keys that put its story records into words on the log page: a list's
-   * heading at `<storyKey>.<record>`, a flag's note at `<storyKey>.<record>.yes` or `.no`.
+   * heading at `<storyKey>.<record>`, a flag's note at `<storyKey>.<record>.yes` or `.no`; an
+   * interlude's name at `<storyKey>.interludes.<id>`.
    */
   storyKey: string;
   /**

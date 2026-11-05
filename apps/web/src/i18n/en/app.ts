@@ -674,13 +674,26 @@ export const appTexts = {
     tokenCount_one: '{{token}}',
     tokenCount_other: '{{token}} ×{{count}}',
   },
+  interlude: {
+    kicker: 'Interlude',
+    read: 'Read the interlude {{name}} aloud from the campaign guide.',
+    readOn: 'Read on in the interlude, then answer as the investigators decide.',
+    title: 'Into the campaign log',
+    begin: 'Read the interlude {{name}}',
+  },
   resolution: {
     written: {
       label: 'Written into the log',
-      text: 'The resolution is in the campaign log.',
+      text: {
+        resolution: 'The resolution is in the campaign log.',
+        interlude: 'The interlude is in the campaign log.',
+      },
       undo: 'Undo',
       dismiss: 'OK',
-      undoFailed: 'The resolution could not be taken back out of the log.',
+      undoFailed: {
+        resolution: 'The resolution could not be taken back out of the log.',
+        interlude: 'The interlude could not be taken back out of the log.',
+      },
     },
     over: 'The scenario is over',
     pickResolution:

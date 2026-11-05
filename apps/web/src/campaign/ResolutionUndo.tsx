@@ -2,14 +2,17 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 /**
- * The toast under the campaign log after a resolution was written into it
+ * The toast under the campaign log after a resolution or an interlude (`kind`) was written into it
  * (`AppState.writtenResolution`): the entries are in ink now, and "Undo" takes them back out
- * (`AppState.undoResolution`), so the game proposes its resolution again. "OK" keeps them.
+ * (`AppState.undoResolution`), so the game proposes its resolution, or the campaign its
+ * interlude, again. "OK" keeps them.
  */
 export function ResolutionUndo({
+  kind,
   onUndo,
   onDismiss,
 }: {
+  readonly kind: 'resolution' | 'interlude';
   readonly onUndo: () => Promise<void>;
   readonly onDismiss: () => void;
 }) {
@@ -19,7 +22,9 @@ export function ResolutionUndo({
 
   return (
     <aside id="resolution-written" role="status" aria-label={t('resolution.written.label')}>
-      <p>{t(failed ? 'resolution.written.undoFailed' : 'resolution.written.text')}</p>
+      <p>
+        {t(failed ? `resolution.written.undoFailed.${kind}` : `resolution.written.text.${kind}`)}
+      </p>
       <footer>
         <button
           type="button"
@@ -28,7 +33,7 @@ export function ResolutionUndo({
             setBusy(true);
             onUndo()
               .catch((error: unknown) => {
-                console.warn('The resolution could not be taken back out of the log.', error);
+                console.warn(`The ${kind} could not be taken back out of the log.`, error);
                 setFailed(true);
               })
               .finally(() => setBusy(false));

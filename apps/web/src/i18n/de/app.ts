@@ -677,13 +677,26 @@ export const appTexts = {
     tokenCount_one: '{{token}}',
     tokenCount_other: '{{token}} ×{{count}}',
   },
+  interlude: {
+    kicker: 'Zwischenspiel',
+    read: 'Lest das Zwischenspiel {{name}} aus dem Kampagnenleitfaden vor.',
+    readOn: 'Lest im Zwischenspiel weiter und antwortet, wie die Ermittler entscheiden.',
+    title: 'Ins Kampagnenprotokoll',
+    begin: 'Zwischenspiel {{name}} lesen',
+  },
   resolution: {
     written: {
       label: 'Ins Protokoll geschrieben',
-      text: 'Die Auflösung steht im Kampagnenprotokoll.',
+      text: {
+        resolution: 'Die Auflösung steht im Kampagnenprotokoll.',
+        interlude: 'Das Zwischenspiel steht im Kampagnenprotokoll.',
+      },
       undo: 'Rückgängig',
       dismiss: 'OK',
-      undoFailed: 'Die Auflösung ließ sich nicht aus dem Protokoll zurücknehmen.',
+      undoFailed: {
+        resolution: 'Die Auflösung ließ sich nicht aus dem Protokoll zurücknehmen.',
+        interlude: 'Das Zwischenspiel ließ sich nicht aus dem Protokoll zurücknehmen.',
+      },
     },
     over: 'Das Szenario ist vorbei',
     pickResolution:
