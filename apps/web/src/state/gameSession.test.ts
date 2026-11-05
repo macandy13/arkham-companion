@@ -143,6 +143,23 @@ describe('GameSession on The Gathering', () => {
     expect(session.state).toEqual(adjusted);
   });
 
+  it('keeps why the game did a change by itself, also after reopening the game', async () => {
+    const { store, gameId } = await storedGame('session-causes-test');
+    const session = await GameSession.open(store, gameId, ctx);
+    await session.play((table) => table.nextPhase());
+    await session.play((table) => table.startTurn(investigatorId('alder')));
+    await session.play((table) => table.endTurn(investigatorId('alder')));
+    await session.play((table) => table.nextPhase());
+
+    await session.play((table) => table.nextPhase());
+
+    const reopened = await GameSession.open(store, gameId, ctx);
+    const resources = reopened.entries.filter(
+      ({ event }) => event.type === 'InvestigatorChanged' && event.stat === 'resources',
+    );
+    expect(resources.at(-1)?.cause).toEqual({ kind: 'rule', step: 'drawAndGain' });
+  });
+
   it('knows when each step was stored, also after reopening the game', async () => {
     const { store, gameId } = await storedGame('session-step-times-test');
     const session = await GameSession.open(store, gameId, ctx);

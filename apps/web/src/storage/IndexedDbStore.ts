@@ -17,6 +17,8 @@ import {
   type GameId,
   type GameState,
   type GameStore,
+  type CampaignChangeCause,
+  type ChangeCause,
   type GameSummary,
   type ReadNotices,
   type StepNotice,
@@ -152,6 +154,7 @@ export class IndexedDbStore implements GameStore {
     events: readonly Event[],
     expectedSeq?: number,
     commandId: string = crypto.randomUUID(),
+    causes: readonly (ChangeCause | undefined)[] = [],
   ): Promise<StoredEvent[]> {
     return this.db.transaction('rw', this.db.games, this.db.events, this.db.snapshots, async () => {
       const game = await this.db.games.get(gameId);
@@ -161,13 +164,17 @@ export class IndexedDbStore implements GameStore {
       }
       if (events.length === 0) return [];
       const timestamp = Date.now();
-      const stored = events.map((event, i): StoredEvent => ({
-        gameId,
-        seq: game.lastSeq + i + 1,
-        timestamp,
-        commandId,
-        event,
-      }));
+      const stored = events.map((event, i): StoredEvent => {
+        const cause = causes[i];
+        return {
+          gameId,
+          seq: game.lastSeq + i + 1,
+          timestamp,
+          commandId,
+          event,
+          ...(cause === undefined ? {} : { cause }),
+        };
+      });
       await this.db.events.bulkAdd(stored);
       await this.db.games.update(gameId, {
         lastSeq: game.lastSeq + stored.length,
@@ -320,6 +327,7 @@ export class IndexedDbStore implements GameStore {
     events: readonly CampaignEvent[],
     expectedSeq?: number,
     commandId: string = crypto.randomUUID(),
+    causes: readonly (CampaignChangeCause | undefined)[] = [],
   ): Promise<StoredCampaignEvent[]> {
     return this.db.transaction('rw', this.db.campaigns, this.db.campaignEvents, async () => {
       const row = await this.db.campaigns.get(campaignId);
@@ -329,13 +337,17 @@ export class IndexedDbStore implements GameStore {
       }
       if (events.length === 0) return [];
       const timestamp = Date.now();
-      const stored = events.map((event, i): StoredCampaignEvent => ({
-        campaignId,
-        seq: row.lastSeq + i + 1,
-        timestamp,
-        commandId,
-        event,
-      }));
+      const stored = events.map((event, i): StoredCampaignEvent => {
+        const cause = causes[i];
+        return {
+          campaignId,
+          seq: row.lastSeq + i + 1,
+          timestamp,
+          commandId,
+          event,
+          ...(cause === undefined ? {} : { cause }),
+        };
+      });
       await this.db.campaignEvents.bulkAdd(stored);
       await this.db.campaigns.update(campaignId, {
         lastSeq: row.lastSeq + stored.length,

@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import type { GameState } from '@arkham/engine';
 import type { GameLogSource } from '../state/appStore';
 import { automaticChanges, type LogLine } from './gameLog';
+import { LineText } from './LineText';
 
 /**
  * What the game did by itself in the step just played (`automaticChanges`, M3.13a): the doom of
@@ -28,12 +29,7 @@ export function ChangesNotice({ log, state }: { log: GameLogSource; state: GameS
 
   return (
     // Its own element per step, so a step played while the last one shows starts a fade of its own.
-    <ChangesLines
-      key={changes.step}
-      lines={changes.lines}
-      label={t('changes.label')}
-      onFaded={() => setShown(undefined)}
-    />
+    <ChangesLines key={changes.step} lines={changes.lines} onFaded={() => setShown(undefined)} />
   );
 }
 
@@ -42,15 +38,8 @@ export function ChangesNotice({ log, state }: { log: GameLogSource; state: GameS
  * the players were reading), it goes into the top layer as a manual popover, above even a modal
  * dialog; otherwise it stays in the notices under the map.
  */
-function ChangesLines({
-  lines,
-  label,
-  onFaded,
-}: {
-  lines: readonly LogLine[];
-  label: string;
-  onFaded: () => void;
-}) {
+function ChangesLines({ lines, onFaded }: { lines: readonly LogLine[]; onFaded: () => void }) {
+  const { t } = useTranslation();
   const element = useRef<HTMLElement>(null);
   // An effect, so it runs after the effects that open this step's dialogs (`showModal`). Set on
   // the element rather than rendered, as a popover is hidden until it is shown.
@@ -65,15 +54,18 @@ function ChangesLines({
     <aside
       ref={element}
       role="status"
-      aria-label={label}
+      aria-label={t('changes.label')}
       data-part="changes"
       onAnimationEnd={onFaded}
     >
       <ul>
         {lines.map((line, index) => (
-          <li key={index}>{line.text}</li>
+          <li key={index}>
+            <LineText line={line} />
+          </li>
         ))}
       </ul>
+      <p>{t('changes.correct')}</p>
     </aside>
   );
 }

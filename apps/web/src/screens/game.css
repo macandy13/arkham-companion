@@ -209,7 +209,11 @@
   }
 }
 
+/* The changes, one a line, over how to set a wrong one right. */
 #notices > aside[data-part='changes'] {
+  flex-direction: column;
+  gap: var(--space-1);
+  align-items: flex-start;
   animation: notice-fades var(--duration-notice) ease-in forwards;
 }
 
@@ -222,6 +226,24 @@
   color: inherit;
   /* It asks nothing, so a tap on the dialog's own buttons underneath goes through. */
   pointer-events: none;
+}
+
+/* Plain lines, not the framed ones `#app > main ul > li` gives the home screen: two ids beat its one. */
+#notices > aside[data-part='changes'] li {
+  display: block;
+  padding: 0;
+  border: none;
+  background: none;
+}
+
+/* Why the game did a change, and how to set it right, read quieter than the change itself. */
+#notices > aside[data-part='changes'] li > span,
+#notices > aside[data-part='changes'] > p {
+  color: var(--color-text-muted);
+}
+
+#notices > aside[data-part='changes'] > p {
+  font-size: var(--font-size-note);
 }
 
 #notices p,

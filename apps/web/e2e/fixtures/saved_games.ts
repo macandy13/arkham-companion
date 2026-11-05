@@ -130,6 +130,7 @@ function exportOf(title: string, table: PlayTable, commandId?: string): Buffer {
       timestamp: commandId ? seq : STEPS_START + (steps.length - 1) * MINUTE,
       commandId: commandId ?? entry.commandId,
       event: entry.event,
+      ...(entry.cause === undefined ? {} : { cause: entry.cause }),
     };
   });
   return Buffer.from(serialiseGameExport(title, 0, events));

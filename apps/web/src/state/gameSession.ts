@@ -36,7 +36,8 @@ export async function startGame(
   const { entries } = PlayTable.setUp(ctx, options);
   const gameId = await store.createGame({ title, campaignId });
   const events = entries.map((entry) => entry.event);
-  await store.appendEvents(gameId, events, undefined, entries[0]?.commandId);
+  const causes = entries.map((entry) => entry.cause);
+  await store.appendEvents(gameId, events, undefined, entries[0]?.commandId, causes);
   return gameId;
 }
 
@@ -277,6 +278,7 @@ export class GameSession {
         events,
         this.lastSeq,
         first.commandId,
+        added.map((entry) => entry.cause),
       );
       this.lastSeq = stored.at(-1)?.seq ?? this.lastSeq;
       const [firstStored] = stored;

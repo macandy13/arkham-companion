@@ -7,6 +7,18 @@ export const appTexts = {
     showMap: 'Map',
   },
   log: {
+    because: '({{cause}})',
+    cause: {
+      placeDoom: 'mythos phase',
+      checkDoomThreshold: 'doom threshold',
+      drawEncounterCard: 'mythos phase',
+      huntersMove: 'hunters move',
+      enemiesAttack: 'enemy phase',
+      resetActions: 'upkeep phase',
+      readyExhausted: 'upkeep phase',
+      drawAndGain: 'upkeep phase',
+      endRound: 'end of the round',
+    },
     title: 'Game log',
     open: 'Game log',
     goBack: 'Go back here',
@@ -186,7 +198,10 @@ export const appTexts = {
   },
   toast: { label: 'Not possible', dismiss: 'OK', fallback: 'That is not possible right now.' },
   notice: { dismiss: 'OK' },
-  changes: { label: 'What the game did' },
+  changes: {
+    label: 'What the game did',
+    correct: 'Not right? Undo the step, or adjust it by hand.',
+  },
   skipped: {
     label: 'Do this by hand',
     effect:
