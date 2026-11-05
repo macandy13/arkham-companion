@@ -242,7 +242,6 @@ export const appTexts = {
   rejections: {
     decisionPending: 'Answer the open decision first.',
     noPendingDecision: 'There is no open decision to answer.',
-    enemyAttackPending: 'Resolve the enemy attacks first.',
     attackNotDue: 'That enemy does not attack now.',
     wrongPhase: 'That is not possible in this phase.',
     turnInProgress: 'Finish the current turn first.',
@@ -630,6 +629,7 @@ export const appTexts = {
       DrawCards: '{{name}} draws a card: {{enemy}} attacks first',
       PlayCard: '{{name}} plays a card: {{enemy}} attacks first',
     },
+    enemyAttack: '{{card}} attacks',
     retaliate: '{{card}} retaliates',
     alert: '{{card}} attacks after the failed evasion',
     pass: 'Passed',
