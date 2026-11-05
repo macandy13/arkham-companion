@@ -219,30 +219,29 @@ test('the house map in the Night and brass card style', async ({ page }) => {
   await expect(page.locator('html')).toHaveAttribute('data-card-theme', 'nightAndBrass');
 });
 
-test(
-  'the game log after two rounds, scrolled to the newest step under its round and phase, what the app tells the players above',
-  { tag: '@shot' },
-  async ({ page, isMobile }) => {
-    await resumeImportedGame(page, 'Two rounds', mythosDrawnStepsExport('Two rounds'));
+test('the game log after two rounds, scrolled to the newest step under its round and phase, what the app tells the players above', async ({
+  page,
+  isMobile,
+}) => {
+  await resumeImportedGame(page, 'Two rounds', mythosDrawnStepsExport('Two rounds'));
 
-    // A phone keeps the log in the header's menu.
-    if (isMobile) await page.getByRole('button', { name: 'Menu' }).click();
-    await page.getByRole('button', { name: 'Game log' }).click();
+  // A phone keeps the log in the header's menu.
+  if (isMobile) await page.getByRole('button', { name: 'Menu' }).click();
+  await page.getByRole('button', { name: 'Game log' }).click();
 
-    const log = page.getByRole('dialog', { name: 'Game log' });
-    const newestRound = log.getByRole('listitem', { name: 'Round 3 · Investigation' });
-    await expect(newestRound.getByRole('heading')).toBeInViewport();
-    await expect(newestRound.getByRole('listitem').last()).toBeInViewport();
-    await expect(log.getByRole('combobox', { name: 'What the app tells you' })).toHaveValue(
-      'display',
-    );
-    const mythos = log.getByRole('listitem', { name: 'Round 3 · Mythos' });
-    // The line alone, without "(mythos phase)" after it.
-    await expect(
-      mythos.getByRole('listitem').filter({ hasText: /^1 doom on What's Going On\?!$/ }),
-    ).toBeVisible();
-  },
-);
+  const log = page.getByRole('dialog', { name: 'Game log' });
+  const newestRound = log.getByRole('listitem', { name: 'Round 3 · Investigation' });
+  await expect(newestRound.getByRole('heading')).toBeInViewport();
+  await expect(newestRound.getByRole('listitem').last()).toBeInViewport();
+  await expect(log.getByRole('combobox', { name: 'What the app tells you' })).toHaveValue(
+    'display',
+  );
+  const mythos = log.getByRole('listitem', { name: 'Round 3 · Mythos' });
+  // The line alone, without "(mythos phase)" after it.
+  await expect(
+    mythos.getByRole('listitem').filter({ hasText: /^1 doom on What's Going On\?!$/ }),
+  ).toBeVisible();
+});
 
 test("the upkeep's notice of what the game did, its cause and how to set it right", async ({
   page,

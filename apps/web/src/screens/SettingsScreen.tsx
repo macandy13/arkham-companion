@@ -14,6 +14,7 @@ import {
   UI_LANGUAGES,
   type Settings,
 } from '../settings/settings';
+import { useAppBar } from './AppBar';
 import './settings.css';
 
 interface SettingsScreenProps {
@@ -33,6 +34,7 @@ interface SettingsScreenProps {
 export function SettingsScreen({ packs = [] }: SettingsScreenProps) {
   const { t, i18n } = useTranslation();
   const [settings, setSettings] = useState<Settings>(loadSettings);
+  useAppBar({ title: t('settings.title'), subtitle: t('appBar.settings'), up: '/' });
 
   function update(changes: Partial<Settings>) {
     const next = { ...settings, ...changes };

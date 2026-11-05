@@ -1,8 +1,8 @@
-import { useTranslation } from 'react-i18next';
-import { HashRouter, NavLink, Outlet, Route, Routes, useMatch } from 'react-router';
+import { HashRouter, Outlet, Route, Routes, useMatch } from 'react-router';
 import type { StoreApi } from 'zustand/vanilla';
 import { CampaignScreen } from './campaign/CampaignScreen';
 import { useCatalog, type CatalogSource } from './catalog/useCatalog';
+import { AppBarFrame } from './screens/AppBar';
 import { GameScreen } from './screens/GameScreen';
 import { HomeScreen } from './screens/HomeScreen';
 import { NewGameScreen } from './screens/NewGameScreen';
@@ -57,30 +57,18 @@ export function App({ store, catalog }: Partial<AppProps>) {
 }
 
 /**
- * Page frame shared by all screens: the title bar (app title, settings) plus the active screen.
- * The play screen leaves the title bar out, so the table keeps its height; its status row's menu
+ * Page frame shared by all screens: the app bar (`AppBarFrame`, MD.3a) over the active screen.
+ * The play screen leaves the bar out, so the table keeps its height; its status row's menu
  * (`GameStatus`) holds the same links and the game's export.
  */
 function Layout() {
-  const { t } = useTranslation();
   const playing = useMatch('/game/:id') !== null;
-  return (
-    <div id="app">
-      {!playing && (
-        <header>
-          <NavLink to="/" end>
-            {t('app.title')}
-          </NavLink>
-          <nav aria-label={t('nav.label')}>
-            <NavLink to="/settings">{t('settings.title')}</NavLink>
-          </nav>
-        </header>
-      )}
-      <main>
-        <Outlet />
-      </main>
-    </div>
+  const main = (
+    <main>
+      <Outlet />
+    </main>
   );
+  return <div id="app">{playing ? main : <AppBarFrame>{main}</AppBarFrame>}</div>;
 }
 
 /** Settings with the pack list of the card catalog, which stays empty until the catalog has loaded. */

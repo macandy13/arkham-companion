@@ -1,0 +1,77 @@
+/*
+ * The app bar on the table over every screen outside play (MD.3a, design language "Screens"):
+ * back chevron, the screen's name in the display face over its subtitle, the ⋮ menu at the end.
+ * It shades the playmat like the play screen's header row.
+ */
+#app > header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--app-bar-height);
+  padding: 0 var(--space-3);
+  border-bottom: var(--border-width) solid var(--color-border);
+  background: var(--header-shade);
+}
+
+#app > header > div {
+  flex: 1;
+  min-width: 0;
+}
+
+#app > header p {
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#app > header p:first-child {
+  color: var(--color-accent);
+  font-family: var(--font-family-print);
+  font-size: var(--font-size-title);
+  line-height: var(--app-bar-title-line-height);
+}
+
+#app > header p + p {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-note);
+}
+
+#app > header > a[data-icon]::before {
+  content: '';
+  width: var(--icon-size);
+  height: var(--icon-size);
+  background: currentcolor;
+  mask: url('./icons/back.svg') center / contain no-repeat;
+}
+
+#app > header > a[data-icon] {
+  color: var(--color-text);
+}
+
+/* The menu opens under its button, at the bar's end; base.css draws the button and the panel. */
+#app > header > nav {
+  position: relative;
+}
+
+#app > header > nav > button {
+  border: 0;
+  background: none;
+}
+
+#app > header > nav > button::before {
+  mask-image: url('./icons/more.svg');
+}
+
+#app > header > nav li > a {
+  justify-content: flex-start;
+  width: 100%;
+  padding-inline: var(--space-3);
+  border-radius: var(--radius);
+  color: var(--color-text);
+  text-decoration: none;
+}
+
+#app > header > nav li > a[aria-current='page'] {
+  color: var(--color-accent);
+}
