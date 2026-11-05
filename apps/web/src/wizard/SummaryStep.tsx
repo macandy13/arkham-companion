@@ -19,6 +19,8 @@ export function SummaryStep({ choices, investigators }: SummaryStepProps) {
       <dd>{scenario && t(scenario.nameKey)}</dd>
       <dt>{t('wizard.difficulty')}</dt>
       <dd>{t(`wizard.difficulties.${choices.difficulty}`)}</dd>
+      <dt>{t('reliance.title')}</dt>
+      <dd>{t(`reliance.levels.${choices.reliance}`)}</dd>
       <dt>{t('investigators.title')}</dt>
       <dd>
         <ol>

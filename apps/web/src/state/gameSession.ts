@@ -1,7 +1,6 @@
 import {
   CommandRejected,
   type AbilityEffectSkipped,
-  type CampaignId,
   type CardCode,
   type BoardView,
   type PlayerCardCommand,
@@ -11,6 +10,7 @@ import {
   type GameState,
   type GameStore,
   type LoggedEvent,
+  type NewGame,
   type Rejection,
   type ScenarioContext,
   type SetupOptions,
@@ -24,17 +24,18 @@ import { drawnCards, type DrawnCard } from '../encounter/drawnCards';
 /**
  * Sets `ctx.scenario` up as a new saved game called `title` (`PlayTable.setUp`) and stores the
  * setup as its first step, which undo never takes back. A refused setup stores nothing. A game
- * of a campaign passes the log in `options` and links to it by `campaignId`.
+ * of a campaign passes the log in `options` and links to it by `game.campaignId`; a standalone
+ * one gives its own `game.reliance`.
  */
 export async function startGame(
   store: GameStore,
   title: string,
   ctx: ScenarioContext,
   options: SetupOptions,
-  campaignId?: CampaignId,
+  game: Omit<NewGame, 'title'> = {},
 ): Promise<GameId> {
   const { entries } = PlayTable.setUp(ctx, options);
-  const gameId = await store.createGame({ title, campaignId });
+  const gameId = await store.createGame({ title, ...game });
   const events = entries.map((entry) => entry.event);
   const causes = entries.map((entry) => entry.cause);
   await store.appendEvents(gameId, events, undefined, entries[0]?.commandId, causes);

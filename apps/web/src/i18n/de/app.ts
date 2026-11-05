@@ -198,6 +198,14 @@ export const appTexts = {
   },
   toast: { label: 'Nicht möglich', dismiss: 'OK', fallback: 'Das ist gerade nicht möglich.' },
   notice: { dismiss: 'OK' },
+  reliance: {
+    title: 'Was die App meldet',
+    levels: {
+      display: 'Jede Änderung, die sie vornimmt',
+      assist: 'Änderungen an Ermittlern und Gegnern, gezogene Karten',
+      auto: 'Nur, was von Hand zu tun ist',
+    },
+  },
   changes: {
     label: 'Was das Spiel getan hat',
     correct: 'Stimmt nicht? Schritt zurücknehmen oder von Hand korrigieren.',

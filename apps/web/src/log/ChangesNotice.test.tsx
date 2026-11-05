@@ -10,6 +10,7 @@ import {
   investigatorId,
   newGame,
   PlayTable,
+  type Reliance,
 } from '@arkham/engine';
 import { initI18n } from '../i18n';
 import { ChangesNotice } from './ChangesNotice';
@@ -17,11 +18,15 @@ import { ChangesNotice } from './ChangesNotice';
 const study = instanceId('study');
 const roland = investigatorId('roland');
 
-/** The notice for what `table` holds now: its log, as the app store hands it over, and its state. */
-const noticeFor = (table: PlayTable) => (
+/**
+ * The notice for what `table` holds now: its log, as the app store hands it over, and its state,
+ * for players relying on the helpers as much as `reliance` (every change shows unless named).
+ */
+const noticeFor = (table: PlayTable, reliance: Reliance = 'display') => (
   <ChangesNotice
     log={{ ctx: table.ctx, entries: [...table.entries], stepTimes: new Map() }}
     state={table.state}
+    reliance={reliance}
   />
 );
 
@@ -95,6 +100,42 @@ describe('ChangesNotice', () => {
       '1 doom on What Lurks Below (mythos phase)',
     );
     expect(mythosNotice).not.toBe(upkeepNotice);
+  });
+
+  it.each<[Reliance, string[]]>([
+    [
+      'display',
+      ['Roland Banks draws 1 card (upkeep phase)', 'Roland Banks gains 1 resource (upkeep phase)'],
+    ],
+    [
+      'assist',
+      ['Roland Banks draws 1 card (upkeep phase)', 'Roland Banks gains 1 resource (upkeep phase)'],
+    ],
+    ['auto', ['Roland Banks draws 1 card (upkeep phase)']],
+  ])("tells players relying on the helpers as %s the upkeep's %j", (reliance, lines) => {
+    const table = beforeUpkeep();
+    const { rerender } = render(noticeFor(table, reliance));
+
+    table.nextPhase();
+    rerender(noticeFor(table, reliance));
+
+    const notice = screen.getByRole('status', { name: 'What the game did' });
+    expect(
+      within(notice)
+        .getAllByRole('listitem')
+        .map((line) => line.textContent),
+    ).toEqual(lines);
+  });
+
+  it("leaves the mythos phase's doom out for players relying on the helpers to assist", () => {
+    const table = beforeUpkeep();
+    table.nextPhase();
+    const { rerender } = render(noticeFor(table, 'assist'));
+
+    table.nextPhase();
+    rerender(noticeFor(table, 'assist'));
+
+    expect(screen.queryByRole('status')).toBeNull();
   });
 
   it('goes once its fade has ended', () => {

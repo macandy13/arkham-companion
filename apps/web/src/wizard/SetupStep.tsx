@@ -1,4 +1,4 @@
-import type { Difficulty } from '@arkham/engine';
+import { RELIANCES, type Difficulty } from '@arkham/engine';
 import { useTranslation } from 'react-i18next';
 import { campaignCatalog, scenarioCatalog } from '../scenarios/scenarioCatalog';
 import { DIFFICULTIES, type WizardChoices } from './wizardState';
@@ -8,7 +8,10 @@ interface SetupStepProps {
   readonly onChange: (changes: Partial<WizardChoices>) => void;
 }
 
-/** First wizard step: which campaign (or, in a quick game, which scenario) and the difficulty. */
+/**
+ * First wizard step: which campaign (or, in a quick game, which scenario), the difficulty and how
+ * much the players rely on the helpers.
+ */
 export function SetupStep({ choices, onChange }: SetupStepProps) {
   const { t } = useTranslation();
   const isCampaign = choices.mode === 'campaign';
@@ -41,6 +44,20 @@ export function SetupStep({ choices, onChange }: SetupStepProps) {
               onChange={() => onChange({ difficulty })}
             />
             {t(`wizard.difficulties.${difficulty}`)}
+          </label>
+        ))}
+      </fieldset>
+      <fieldset>
+        <legend>{t('reliance.title')}</legend>
+        {RELIANCES.map((reliance) => (
+          <label key={reliance}>
+            <input
+              type="radio"
+              name="reliance"
+              checked={choices.reliance === reliance}
+              onChange={() => onChange({ reliance })}
+            />
+            {t(`reliance.levels.${reliance}`)}
           </label>
         ))}
       </fieldset>

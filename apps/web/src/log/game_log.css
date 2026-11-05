@@ -12,6 +12,24 @@
   overflow: hidden;
 }
 
+/* How much the players rely on the helpers: a labelled choice between the title and the steps. */
+#board dialog[data-dialog='log'] > article > label {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+  font-size: var(--font-size-note);
+}
+
+#board dialog[data-dialog='log'] > article > label > select {
+  min-height: var(--touch-target);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: inherit;
+}
+
 /* The sections scroll on their own, under the title. */
 #board dialog[data-dialog='log'] > article > ol {
   flex: 1;
