@@ -74,6 +74,7 @@ describe('StartCampaign', () => {
       story: {},
       chaosBag: ['0', 'skull'],
       playedScenarios: [],
+      playedInterludes: [],
       scenarioIds: ['the-gathering', 'the-midnight-masks'],
       position: 0,
     });

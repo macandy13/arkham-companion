@@ -5,6 +5,7 @@ import {
   campaign,
   CUSTOM_SCENARIO,
   instanceId,
+  interludeId,
   investigatorId,
   newGame,
   resolutionId,
@@ -84,6 +85,26 @@ describe('campaignNotices', () => {
     ]);
   });
 
+  it("splits a resolution's entries from an interlude's of the same kind", () => {
+    const byR1 = {
+      kind: 'resolution',
+      scenarioId: CUSTOM_SCENARIO,
+      outcome: { kind: 'resolution', id: resolutionId('R1') },
+    } as const;
+    const byInterlude = { kind: 'interlude', interludeId: interludeId('the_survivors') } as const;
+    const xp: CampaignEvent = { type: 'XpChanged', code: roland.code, account: 'earned', delta: 1 };
+
+    const notices = campaign.campaignNotices({
+      events: [xp, xp, xp],
+      causes: [byR1, byInterlude, byInterlude],
+    });
+
+    expect(notices.map(({ cause, events }) => [cause, events.length])).toEqual([
+      [byR1, 1],
+      [byInterlude, 2],
+    ]);
+  });
+
   it('gives no notice for what the players write by hand', () => {
     const adjusted = campaign.executeCommand(campaignContext, atTheTablesScenario, {
       type: 'AwardXp',
@@ -102,6 +123,10 @@ describe('campaignNoticeKindOf', () => {
     { event: { type: 'InvestigatorFateChanged', code: roland.code, fate: 'killed' }, kind: 'fate' },
     { event: { type: 'StoryRecordRemoved', key: 'houseStillStanding' }, kind: 'story' },
     { event: { type: 'CampaignEnded', result: 'won' }, kind: 'scenario' },
+    {
+      event: { type: 'InterludePlayed', interludeId: interludeId('the_survivors') },
+      kind: 'scenario',
+    },
   ])('files $event.type under $kind', ({ event, kind }) => {
     expect(campaign.campaignNoticeKindOf(event)).toBe(kind);
   });
