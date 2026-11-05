@@ -108,7 +108,7 @@ describe('AppRoutes', () => {
     await waitFor(() => expect(downloaded).toEqual(['Friday-night.arkham.json']));
   });
 
-  it('hides the title bar on the play screen', async () => {
+  it('hides the app bar on the play screen', async () => {
     const store = createAppStore(new IndexedDbStore('app-routes-title-test'));
     const id = await store.getState().startScenario({
       title: 'Friday night',
@@ -120,7 +120,7 @@ describe('AppRoutes', () => {
     renderAt(`/game/${id}`, store);
 
     await screen.findByRole('button', { name: 'Menu' });
-    expect(screen.queryByRole('link', { name: 'Arkham Companion' })).toBeNull();
+    expect(document.querySelector('#app > header')).toBeNull();
   });
 
   it('offers no export in the title bar away from a game', () => {

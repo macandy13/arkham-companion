@@ -38,11 +38,7 @@
 }
 
 #app > header > a[data-icon]::before {
-  content: '';
-  width: var(--icon-size);
-  height: var(--icon-size);
-  background: currentcolor;
-  mask: url('./icons/back.svg') center / contain no-repeat;
+  mask-image: url('./icons/back.svg');
 }
 
 #app > header > a[data-icon] {

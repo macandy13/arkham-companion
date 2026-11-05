@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+import { createContext, useContext, useLayoutEffect, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, NavLink, useLocation } from 'react-router';
 import './app_bar.css';
@@ -23,7 +23,8 @@ const AppBarContext = createContext<(content: AppBarContent | undefined) => void
  */
 export function useAppBar({ title, subtitle, up }: AppBarContent) {
   const show = useContext(AppBarContext);
-  useEffect(() => {
+  // Before paint, so a screen never shows a frame of the app's title without its chevron.
+  useLayoutEffect(() => {
     show({ title, subtitle, up });
     return () => show(undefined);
   }, [show, title, subtitle, up]);
