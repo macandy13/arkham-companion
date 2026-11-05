@@ -1,6 +1,6 @@
 import type { InterludeId, InvestigatorCode, ScenarioId } from '../ids';
 import type { ChaosToken } from '../state';
-import type { InvestigatorFate, StoryKind } from './campaign_log';
+import type { InvestigatorFate, StoryCondition, StoryKind } from './campaign_log';
 
 /**
  * Structured reason why `handleCommand` refused a campaign command; the
@@ -61,6 +61,8 @@ export type CampaignRejection =
   | { code: 'interludeAlreadyPlayed'; interludeId: InterludeId }
   /** `applyInterlude` for an interlude that does not follow the last played scenario. */
   | { code: 'interludeNotDue'; interludeId: InterludeId }
+  /** An interlude's `whenStory` asks a record as `condition`, but the log holds another kind. */
+  | { code: 'storyConditionMismatch'; key: string; condition: StoryCondition['kind'] }
   /** `AdjustCampaign` delta that is zero or not an integer. */
   | { code: 'invalidDelta'; delta: number }
   /** `AdjustCampaign` `fate` to the fate the investigator already has. */
@@ -131,6 +133,8 @@ function describeCampaignRejection(r: CampaignRejection): string {
       return `interlude ${r.interludeId} has already been played`;
     case 'interludeNotDue':
       return `interlude ${r.interludeId} does not follow the last played scenario`;
+    case 'storyConditionMismatch':
+      return `interlude asks story record ${r.key} as a ${r.condition}, but the log holds another kind`;
     case 'invalidDelta':
       return `delta must be a non-zero integer, got ${r.delta}`;
     case 'fateUnchanged':

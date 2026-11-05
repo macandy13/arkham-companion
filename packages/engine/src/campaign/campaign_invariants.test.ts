@@ -1,4 +1,4 @@
-import { scenarioId } from '../ids';
+import { interludeId, scenarioId } from '../ids';
 import { describe, expect, it } from 'vitest';
 import {
   agnesMember,
@@ -62,6 +62,14 @@ describe('checkInvariants', () => {
         investigators: [rolandMember, daisyMember, agnesMember, wendyMember, skidsMember],
       },
       violation: 'team has 5 investigators',
+    },
+    {
+      name: 'an interlude played twice',
+      log: {
+        ...started,
+        playedInterludes: [interludeId('the_survivors'), interludeId('the_survivors')],
+      },
+      violation: 'interlude the_survivors is played more than once',
     },
     {
       name: 'the same investigator twice',

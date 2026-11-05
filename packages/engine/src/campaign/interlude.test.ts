@@ -213,6 +213,22 @@ describe('proposeInterlude', () => {
     });
   });
 
+  it('refuses a story condition that asks a record of another kind than the log holds', () => {
+    const asksAFlag = interludeOf({
+      kind: 'whenStory',
+      condition: { kind: 'flag', key: 'cultistsWhoGotAway', value: true },
+      then: [],
+    });
+    const holdsAList = {
+      ...afterFirstScenario,
+      story: { cultistsWhoGotAway: { kind: 'list', entries: ['Ruth Turner'] } } as const,
+    };
+
+    expect(campaignRejectionOf(() => campaign.proposeInterlude(holdsAList, asksAFlag, []))).toEqual(
+      { code: 'storyConditionMismatch', key: 'cultistsWhoGotAway', condition: 'flag' },
+    );
+  });
+
   it('proposes nothing more for an investigator its trauma drives insane', () => {
     const nearlyInsane = { ...rolandMember, mentalTrauma: rolandMember.sanity - 1 };
 
@@ -244,7 +260,7 @@ describe('applyInterlude', () => {
     ]);
 
     expect(written.log.playedInterludes).toEqual([theSurvivors]);
-    expect(written.log.investigators[0]?.xpEarned).toBe(2);
+    expect(campaign.findInvestigator(written.log, rolandMember.code)?.xpEarned).toBe(2);
     expect(written.events.map((event) => event.type)).toEqual(['XpChanged', 'InterludePlayed']);
     expect(written.causes).toEqual([
       { kind: 'interlude', interludeId: theSurvivors },
@@ -257,6 +273,14 @@ describe('applyInterlude', () => {
       campaignRejectionOf(() =>
         campaign.applyInterlude(campaignContext, makeCampaignLog(), interludeOf(), []),
       ),
+    ).toEqual({ code: 'interludeNotDue', interludeId: theSurvivors });
+  });
+
+  it('refuses an interlude of a campaign that is over', () => {
+    const lost = { ...afterFirstScenario, result: 'lost' as const };
+
+    expect(
+      campaignRejectionOf(() => campaign.applyInterlude(campaignContext, lost, interludeOf(), [])),
     ).toEqual({ code: 'interludeNotDue', interludeId: theSurvivors });
   });
 

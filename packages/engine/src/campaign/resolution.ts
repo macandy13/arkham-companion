@@ -391,6 +391,7 @@ function defeatTraumaKinds(investigator: Investigator): TraumaKind[] {
   }
 }
 
-function command(campaignCommand: CampaignCommand): ProposedChange {
+/** `campaignCommand` as a proposed change, for a resolution or an interlude. */
+export function command(campaignCommand: CampaignCommand): ProposedChange {
   return { kind: 'command', command: campaignCommand };
 }

@@ -10,6 +10,7 @@ import {
   type CampaignExecuteResult,
 } from './handle_campaign';
 import {
+  command,
   withoutChangesForEliminated,
   type ProposedChange,
   type ResolutionStep,
@@ -110,7 +111,9 @@ export function findDueInterlude(
  * earlier answer, so the proposal stops at the first `decide` step without a valid answer and
  * asks it. Then, as for a resolution, the players confirm or edit the changes, picking an option
  * for each choice, and `applyInterlude` writes them. A change for an investigator after the one
- * that eliminates them is left out (`withoutChangesForEliminated`).
+ * that eliminates them is left out (`withoutChangesForEliminated`). Throws
+ * `storyConditionMismatch` when a `whenStory` step asks a record of another kind than the log
+ * holds, a mistake in the campaign's data.
  */
 export function proposeInterlude(
   log: CampaignLog,
@@ -124,7 +127,13 @@ export function proposeInterlude(
   function walk(steps: readonly InterludeStep[]): InterludeQuestion | undefined {
     for (const step of steps) {
       if (step.kind === 'whenStory') {
-        const holds = storyHolds(log.story, step.condition) === true;
+        const holds = storyHolds(log.story, step.condition);
+        if (holds === undefined)
+          throw new CampaignCommandRejected({
+            code: 'storyConditionMismatch',
+            key: step.condition.key,
+            condition: step.condition.kind,
+          });
         const question = walk(holds ? step.then : (step.otherwise ?? []));
         if (question) return question;
       } else if (step.kind === 'decide') {
@@ -153,7 +162,7 @@ export function proposeInterlude(
  * Writes a confirmed interlude to the campaign log in one step: the commands the players
  * confirmed (`proposeInterlude`, edited as they like), then `CompleteInterlude`. Either every
  * command applies or the first rejection is thrown. Rejects an interlude that does not follow the
- * last played scenario (`interludeNotDue`); every entry's cause is the interlude.
+ * last played scenario, or one of a campaign that is over (`interludeNotDue`, as `findDueInterlude`); every entry's cause is the interlude.
  */
 export function applyInterlude(
   ctx: CampaignContext,
@@ -161,7 +170,10 @@ export function applyInterlude(
   interlude: InterludeDefinition,
   confirmed: readonly CampaignCommand[],
 ): CampaignExecuteResult {
-  if (log.playedScenarios.at(-1)?.scenarioId !== interlude.afterScenario)
+  if (
+    log.result !== undefined ||
+    log.playedScenarios.at(-1)?.scenarioId !== interlude.afterScenario
+  )
     throw new CampaignCommandRejected({ code: 'interludeNotDue', interludeId: interlude.id });
   const complete: CampaignCommand = { type: 'CompleteInterlude', interludeId: interlude.id };
   const cause = { kind: 'interlude', interludeId: interlude.id } as const;
@@ -214,8 +226,4 @@ function investigatorCommand(step: InvestigatorStep, code: InvestigatorCode): Ca
     default:
       return assertNever(step);
   }
-}
-
-function command(campaignCommand: CampaignCommand): ProposedChange {
-  return { kind: 'command', command: campaignCommand };
 }

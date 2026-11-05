@@ -68,9 +68,18 @@ export function campaignNotices({ events, causes }: CausedCampaignEvents): Campa
 }
 
 function sameCause(a: CampaignNotice['cause'], b: CampaignNotice['cause']): boolean {
-  if (a.kind === 'interlude') return b.kind === 'interlude' && a.interludeId === b.interludeId;
-  if (b.kind === 'interlude') return false;
-  return a.scenarioId === b.scenarioId && sameOutcome(a.outcome, b.outcome);
+  switch (a.kind) {
+    case 'interlude':
+      return b.kind === 'interlude' && a.interludeId === b.interludeId;
+    case 'resolution':
+      return (
+        b.kind === 'resolution' &&
+        a.scenarioId === b.scenarioId &&
+        sameOutcome(a.outcome, b.outcome)
+      );
+    default:
+      return assertNever(a);
+  }
 }
 
 /**
