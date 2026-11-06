@@ -14,8 +14,8 @@ export const MAX_TEAM_SIZE = 4;
  * Returns a list of invariant violations of a campaign log (empty = the log
  * is consistent): a started campaign has a team of 1–`MAX_TEAM_SIZE`, no
  * investigator code appears twice (current or former), every investigator
- * is consistent (`investigatorErrors`), every story value is well-formed and the scenario position lies
- * within the scenario list. `handleCommand` also uses it to vet
+ * is consistent (`investigatorErrors`), every story value is well-formed, the scenario position lies
+ * within the scenario list and no interlude is played twice. `handleCommand` also uses it to vet
  * `AdjustCampaign` corrections.
  */
 export function checkInvariants(log: CampaignLog): string[] {
@@ -30,6 +30,7 @@ export function checkInvariants(log: CampaignLog): string[] {
       isValidStoryValue(value) ? [] : [`story record ${key} is malformed`],
     ),
     ...positionErrors(log),
+    ...duplicates(log.playedInterludes).map((id) => `interlude ${id} is played more than once`),
   ];
 }
 

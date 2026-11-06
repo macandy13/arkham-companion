@@ -7,6 +7,7 @@ export * from './campaign_commands';
 export * from './campaign_events';
 export * from './campaign_definition';
 export * from './resolution';
+export * from './interlude';
 export * from './campaign_notices';
 export {
   CampaignCommandRejected,

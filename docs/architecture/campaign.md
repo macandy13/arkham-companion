@@ -66,6 +66,18 @@ Each campaign event has a cause beside it (`CampaignExecuteResult.causes`, M1C.2
 The last scenario's `endCampaign` step proposes `EndCampaign`, which sets `CampaignLog.result` (`won`, `lost`, or `survived` for an ending that is neither); a log without a result is still running.
 A killed or insane member keeps their seat until `ReplaceInvestigator` puts a newcomer in it, before the next scenario; when no investigator is left to choose, the players end the campaign as lost with `EndCampaign`.
 
+## Interludes
+
+An interlude is story read between two scenarios that writes to the log (MC1.6e). `CampaignDefinition.interludes` lists them ([`interlude.ts`](../../packages/engine/src/campaign/interlude.ts)), each after the scenario it follows (`afterScenario`); `campaign.findDueInterlude` names the one due before the next scenario: after the last played scenario, not yet in `CampaignLog.playedInterludes`, and the campaign not over.
+
+Its `InterludeStep`s are a resolution's steps that need no ended game (record, chaos tokens, the end of the campaign, by hand), plus:
+
+- XP, trauma and a story card for `each` living investigator or one the players pick (`chosen`, a `choice` like a resolution's);
+- `whenStory`, which picks its steps by a `StoryCondition` on the log;
+- `decide`, the guide's "the investigators must decide": the steps of the option the players pick.
+
+`campaign.proposeInterlude(log, interlude, answers)` reads the steps in order with the players' answers to the `decide` steps so far. It asks the first one without an answer (`InterludeProposal` `question`), since a later question can hang on an earlier answer, and else proposes the changes, filtered like a resolution's (`withoutChangesForEliminated`). `campaign.applyInterlude` writes the confirmed commands and `CompleteInterlude` in one step, all or none, each with the cause `{ kind: 'interlude', interludeId }`.
+
 Story keys of a campaign live next to its definition ([`story.ts`](../../packages/scenarios/src/night_of_the_zealot/story.ts)), so the scenario that writes a record and the one that reads it share the key.
 
 `CampaignDefinition.log` (`CampaignLogLayout`) says how the log page shows those records: which flags are campaign notes, in the guide's order, and the campaign's own sheets (`LogSheet`, only `nameList` so far). Every campaign's log is the same five shared sheets plus sheets of a few kinds, so a campaign adds data, not a page; a record that no note or sheet names stays hidden.
@@ -76,5 +88,6 @@ Story keys of a campaign live next to its definition ([`story.ts`](../../package
 - **A new kind of log sheet** (tally, checklist, roster, track; see docs/product.md "Campaign screen"): a `LogSheet` case and its drawing in the web app's `CampaignSheets.tsx`.
 - **A new command or record:** add it in `campaign/` with its events, reducer case and invariant.
 - **A new correction:** a `CampaignAdjustment` case in `handle_campaign_adjustment.ts` that produces the regular event.
+- **A new kind of interlude step:** an `InterludeStep` case and its command in `interlude.ts`'s `proposeStep`.
 - **A new kind of resolution step:** a `ResolutionStep` case and its command in `proposeStep`; a new target is a `ResolutionTarget` case.
 - **A new question about the ended game:** a `GameCondition` case in `gameHolds`, or a `CardPlace` case in `isAt`.

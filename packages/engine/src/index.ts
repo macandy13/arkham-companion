@@ -249,9 +249,15 @@ export type {
   CampaignDefinition,
   CampaignLogLayout,
   CampaignOptions,
-  InterludeDefinition,
   LogSheet,
 } from './campaign/campaign_definition';
+export type {
+  InterludeDefinition,
+  InterludeProposal,
+  InterludeQuestion,
+  InterludeStep,
+  InterludeTarget,
+} from './campaign/interlude';
 export type { CampaignContext, CampaignExecuteResult } from './campaign/handle_campaign';
 export type {
   CampaignChangeCause,

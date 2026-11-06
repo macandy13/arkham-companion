@@ -1,6 +1,7 @@
 import type { ChaosToken, Difficulty } from '../state';
 import type { CampaignDefinitionId, CampaignId, InvestigatorCode, ScenarioId } from '../ids';
 import type { StartCampaign } from './campaign_commands';
+import type { InterludeDefinition } from './interlude';
 
 /**
  * A campaign as data (architecture §8), the campaign counterpart of
@@ -23,7 +24,7 @@ export interface CampaignDefinition {
    * each scenario's standalone bag, since resolutions modify it from here on.
    */
   readonly chaosBag: Record<Difficulty, readonly ChaosToken[]>;
-  /** Interludes between scenarios; placeholder until a campaign needs them. */
+  /** Interludes between scenarios, each after the scenario it follows (`findDueInterlude`). */
   readonly interludes?: readonly InterludeDefinition[];
   /** What its campaign log shows besides the sheets every campaign has. */
   readonly log: CampaignLogLayout;
@@ -50,18 +51,6 @@ export interface CampaignLogLayout {
 export type LogSheet =
   /** Names written under a heading, e.g. "Cultists Who Got Away"; crossed-out ones stay struck. */
   { readonly kind: 'nameList'; readonly record: string };
-
-/**
- * An interlude: story read between two scenarios, which may write to the
- * campaign log. Only its place in the order for now; its steps get a type
- * once a campaign with interludes is entered (none in the Core Set's first
- * scenarios needs it).
- */
-export interface InterludeDefinition {
-  readonly id: string;
-  /** `ScenarioDefinition.id` of the scenario the interlude follows. */
-  readonly afterScenario: ScenarioId;
-}
 
 /** What the players choose when starting a campaign from a `CampaignDefinition`. */
 export interface CampaignOptions {
