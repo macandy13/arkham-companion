@@ -260,6 +260,19 @@ export interface Turn {
   investigatorId: InvestigatorId;
 }
 
+/**
+ * How long an in-game change to the chaos bag lasts: until the end of the scenario ("add 1 cultist
+ * token to the chaos bag for the remainder of the scenario"), or for the rest of the campaign
+ * ("permanently"), which the scenario's resolution then writes into the campaign log.
+ */
+export type ChaosBagChangeLasts = 'scenario' | 'campaign';
+
+/** A change to the chaos bag that lasts for the campaign, as `GameState.chaosBagChanges` keeps it. */
+export interface ChaosBagChange {
+  readonly token: ChaosToken;
+  readonly change: 'add' | 'remove';
+}
+
 /** Tokens in the chaos bag. */
 export type ChaosToken =
   | '+1'
@@ -677,6 +690,12 @@ export interface GameState {
   order: Record<ZoneKey, InstanceId[]>;
   board: Board;
   chaosBag: ChaosToken[];
+  /**
+   * The changes to `chaosBag` made during the scenario that last for the rest of the campaign
+   * (`ChangeChaosBag` with `lasts: 'campaign'`), in order; `proposeResolution` writes them into
+   * the campaign log.
+   */
+  chaosBagChanges: ChaosBagChange[];
   agenda: { current?: InstanceId };
   act: { current?: InstanceId };
   /** Typed per scenario (zod schema in the scenario package). */
@@ -703,6 +722,7 @@ export function emptyState(): GameState {
     order: {},
     board: { maps: {} },
     chaosBag: [],
+    chaosBagChanges: [],
     agenda: {},
     act: {},
     scenario: undefined,

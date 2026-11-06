@@ -1,4 +1,11 @@
-import type { AdvanceAct, AdvanceAgenda, EndScenario, PlaceDoom, PlaceTokens } from './commands';
+import type {
+  AdvanceAct,
+  AdvanceAgenda,
+  ChangeChaosBag,
+  EndScenario,
+  PlaceDoom,
+  PlaceTokens,
+} from './commands';
 import { cardsWithDoom, isInPlay } from './doom';
 import { activeInvestigators } from './investigators';
 import type {
@@ -6,6 +13,7 @@ import type {
   AgendaAdvanced,
   CardFlipped,
   CardMoved,
+  ChaosBagChanged,
   CurrentCardChanged,
   Event,
   InvestigatorChanged,
@@ -27,6 +35,13 @@ export function handlePlaceDoom(state: GameState, cmd: PlaceDoom): TokensChanged
   const card =
     cmd.cardId === undefined ? currentCard(state, 'agenda') : requireCard(state.cards, cmd.cardId);
   return tokensPlaced(state, card, 'doom', cmd.amount);
+}
+
+/** `ChangeChaosBag`: a token into the chaos bag, or one copy of it out of the bag. */
+export function handleChangeChaosBag(state: GameState, cmd: ChangeChaosBag): ChaosBagChanged[] {
+  if (cmd.change === 'remove' && !state.chaosBag.includes(cmd.token))
+    throw new CommandRejected({ code: 'chaosTokenNotInBag', token: cmd.token });
+  return [{ type: 'ChaosBagChanged', token: cmd.token, change: cmd.change, lasts: cmd.lasts }];
 }
 
 /** `PlaceTokens`: tokens from the pool on a card in play. */

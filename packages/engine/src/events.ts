@@ -18,6 +18,7 @@ import type {
   HeldAction,
   QueuedStep,
   CardInstance,
+  ChaosBagChangeLasts,
   ChaosToken,
   Decision,
   Difficulty,
@@ -41,6 +42,7 @@ export type Event =
   | DeckShuffled
   | CardMoved
   | TokensChanged
+  | ChaosBagChanged
   | CardFlipped
   | ConnectionChanged
   | MapAdded
@@ -115,6 +117,14 @@ export interface CardMoved {
   to: Zone;
   /** Position in the destination zone (0 = top). Omitted = bottom/end. */
   index?: number;
+}
+
+/** A token was added to the chaos bag or one copy removed from it. Produced by `ChangeChaosBag`. */
+export interface ChaosBagChanged {
+  type: 'ChaosBagChanged';
+  token: ChaosToken;
+  change: 'add' | 'remove';
+  lasts: ChaosBagChangeLasts;
 }
 
 /** Tokens of one kind were added to (`delta` > 0) or removed from a card. */

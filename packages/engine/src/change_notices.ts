@@ -5,12 +5,13 @@ import type { CausedEvents } from './handle';
 
 /**
  * What part of the game a notice is about, so the screens can filter or group notices (M1C.2):
- * tokens on cards (doom, clues, damage on an enemy), the board (cards moving, turning over,
+ * tokens on cards (doom, clues, damage on an enemy), the chaos bag, the board (cards moving, turning over,
  * the agenda or act advancing), an investigator (health, sanity, resources, moving, defeat),
  * enemies (engaging, attacking, readying), the encounter deck, and effects the players carry out
  * by hand because the app could not.
  */
-export type NoticeKind = 'tokens' | 'board' | 'investigator' | 'enemy' | 'encounter' | 'byHand';
+export type NoticeKind =
+  'tokens' | 'chaosBag' | 'board' | 'investigator' | 'enemy' | 'encounter' | 'byHand';
 
 /**
  * One thing the engine did by itself in a step (M1C.2): consecutive events of one kind with the
@@ -65,6 +66,8 @@ export function noticeKindOf(event: Event): NoticeKind | undefined {
     case 'TokensChanged':
     case 'CluesDiscovered':
       return 'tokens';
+    case 'ChaosBagChanged':
+      return 'chaosBag';
     case 'CardMoved':
     case 'CardFlipped':
     case 'ConnectionChanged':

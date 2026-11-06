@@ -3,7 +3,7 @@ import { cardStats, type EngineContext } from '../cards';
 import { isInPlay } from '../doom';
 import { currentCard } from '../lookup';
 import type { CardCode, InvestigatorCode, ResolutionId } from '../ids';
-import type { CardInstance, ChaosToken, GameState, Investigator } from '../state';
+import type { CardInstance, ChaosBagChange, ChaosToken, GameState, Investigator } from '../state';
 import { victoryPoints } from '../victory';
 import type { CampaignCommand } from './campaign_commands';
 import {
@@ -162,6 +162,7 @@ export function proposeResolution(
   const changes = steps.flatMap((step) => proposeStep(ctx, game, step));
   return withoutChangesForEliminated(game.campaign, [
     ...changes,
+    ...(game.campaign ? game.chaosBagChanges.map(chaosBagCommand) : []),
     ...game.investigators.flatMap(defeatTrauma),
   ]);
 }
@@ -359,6 +360,11 @@ function targetInvestigators(game: GameState, target: ResolutionTarget): Investi
     default:
       return assertNever(target);
   }
+}
+
+/** A chaos bag change made in the game for the rest of the campaign, as its campaign command. */
+function chaosBagCommand({ token, change }: ChaosBagChange): ProposedChange {
+  return command({ type: change === 'add' ? 'AddChaosToken' : 'RemoveChaosToken', token });
 }
 
 function defeatTrauma(investigator: Investigator): ProposedChange[] {

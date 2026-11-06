@@ -12,7 +12,7 @@ import type {
   ScenarioId,
 } from './ids';
 import type { ForbiddenStep, LocationRestriction } from './restrictions';
-import type { Decider, InvestigatorStat, NamedAmount, Phase, TokenKind } from './state';
+import type { ChaosToken, Decider, InvestigatorStat, NamedAmount, Phase, TokenKind } from './state';
 import type { ScenarioDeck } from './zone';
 
 /**
@@ -53,6 +53,8 @@ export type Rejection =
   | { code: 'hostingCycle'; cardId: InstanceId; hostId: InstanceId }
   | { code: 'indexOutOfRange'; index: number; max: number }
   | { code: 'invalidTokenDelta'; delta: number }
+  /** `ChangeChaosBag` removes a token the chaos bag does not hold. */
+  | { code: 'chaosTokenNotInBag'; token: ChaosToken }
   /** A starting card's token count is not a non-negative integer. */
   | { code: 'invalidStartingTokens'; cardId: InstanceId; token: TokenKind; amount: number }
   /** `cardId` is used as a location but is not one: not on a map (investigator position, reveal) or not a location card (connection). */
@@ -324,6 +326,8 @@ function describe(r: Rejection): string {
       return `${r.cardId} cannot be placed on ${r.hostId}: it would host itself`;
     case 'indexOutOfRange':
       return `index ${r.index} out of range 0..${r.max}`;
+    case 'chaosTokenNotInBag':
+      return `the chaos bag holds no ${r.token} token`;
     case 'invalidTokenDelta':
       return `token delta must be a non-zero integer, got ${r.delta}`;
     case 'invalidStartingTokens':

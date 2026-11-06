@@ -231,6 +231,10 @@ describe('noticeKindOf', () => {
     },
     { event: { type: 'SurgeGained', cardId: rottingTreachery }, kind: 'encounter' },
     {
+      event: { type: 'ChaosBagChanged', token: 'cultist', change: 'add', lasts: 'scenario' },
+      kind: 'chaosBag',
+    },
+    {
       event: {
         type: 'CommandDeferred',
         command: { type: 'DrawCards', investigatorId: alice, amount: 1 },

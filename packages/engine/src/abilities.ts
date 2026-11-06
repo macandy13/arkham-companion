@@ -45,6 +45,8 @@ import type { AddMapStep } from './setup';
 import type {
   CardInstance,
   Decision,
+  ChaosBagChangeLasts,
+  ChaosToken,
   DecisionOption,
   GameState,
   Investigator,
@@ -312,6 +314,7 @@ export type AbilityCommand =
           | 'TakeDamageAndHorror'
           | 'PlaceDoom'
           | 'PlaceTokens'
+          | 'ChangeChaosBag'
           | 'MoveCard'
           | 'DiscardCard'
           | 'RevealLocation'
@@ -1552,6 +1555,19 @@ export function moveTo(location: RelativeCard): AbilityEffect {
     to: location,
     ignoreConnections: true,
   };
+}
+
+/**
+ * "Add 1 [token] token to the chaos bag": until the end of the scenario, or for the rest of the
+ * campaign ("permanently", `lasts: 'campaign'`).
+ */
+export function addChaosToken(token: ChaosToken, lasts: ChaosBagChangeLasts): AbilityEffect {
+  return { type: 'ChangeChaosBag', token, change: 'add', lasts };
+}
+
+/** "Remove 1 [token] token from the chaos bag", for the scenario or for the rest of the campaign. */
+export function removeChaosToken(token: ChaosToken, lasts: ChaosBagChangeLasts): AbilityEffect {
+  return { type: 'ChangeChaosBag', token, change: 'remove', lasts };
 }
 
 /** "Place N doom on the current agenda". */

@@ -161,6 +161,16 @@ describe('gameLog', () => {
       step: (table: PlayTable) => table.drawCard(byName('Roland Banks')),
       line: 'Roland Banks draws 1 card',
     },
+    {
+      step: (table: PlayTable) =>
+        table.play({ type: 'ChangeChaosBag', token: 'cultist', change: 'add', lasts: 'scenario' }),
+      line: 'Cultist token added to the chaos bag until the end of the scenario',
+    },
+    {
+      step: (table: PlayTable) =>
+        table.play({ type: 'ChangeChaosBag', token: 'cultist', change: 'add', lasts: 'campaign' }),
+      line: 'Cultist token added to the chaos bag for the rest of the campaign',
+    },
   ])('says "$line"', ({ step, line }) => {
     const table = PlayTable.start(rolandsTurn);
 
