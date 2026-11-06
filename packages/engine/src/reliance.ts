@@ -17,7 +17,8 @@ export const DEFAULT_RELIANCE: Reliance = 'display';
 /**
  * The notice kinds each level shows. `assist` drops the token counts and card moves, which the
  * board already shows as they change, and keeps changes to the chaos bag (which the board does
- * not show), what happens to the investigators and the enemies, the cards drawn and what the players must do by hand; `auto` keeps only the latter.
+ * not show), what happens to the investigators and the enemies, the cards drawn and what the
+ * players must do by hand; `auto` keeps only the latter.
  */
 const SHOWN: Readonly<Record<Reliance, ReadonlySet<NoticeKind>>> = {
   display: new Set(['tokens', 'chaosBag', 'board', 'investigator', 'enemy', 'encounter', 'byHand']),

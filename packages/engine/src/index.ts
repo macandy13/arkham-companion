@@ -147,6 +147,8 @@ export {
   moveSelf,
   onlyCopy,
   placeDoomOnAgenda,
+  addChaosToken,
+  removeChaosToken,
   placeDoomOn,
   placeDoomOnSelf,
   placeCluesOnSelf,

@@ -1,4 +1,4 @@
-import { assertNever } from '@arkham/util';
+import { assertNever, withoutFirst } from '@arkham/util';
 import { cardStats, type EngineContext } from '../cards';
 import { isInPlay } from '../doom';
 import { currentCard } from '../lookup';
@@ -136,7 +136,8 @@ export type ProposedChange =
 
 /**
  * The campaign log changes for an ended game: the steps of the resolution it
- * ended with (or of "no resolution"), then 1 physical trauma for each
+ * ended with (or of "no resolution"), then, in a campaign game, the chaos bag changes a card
+ * made for the rest of the campaign (`GameState.chaosBagChanges`), then 1 physical trauma for each
  * investigator defeated by damage, 1 mental trauma for each defeated by
  * horror, and the trauma a card effect named for its defeat (Rules
  * Reference, "Trauma"). The defeat trauma comes last so that a
@@ -162,7 +163,7 @@ export function proposeResolution(
   const changes = steps.flatMap((step) => proposeStep(ctx, game, step));
   return withoutChangesForEliminated(game.campaign, [
     ...changes,
-    ...(game.campaign ? game.chaosBagChanges.map(chaosBagCommand) : []),
+    ...(game.campaign ? chaosBagCommands(game.campaign.chaosBag, game.chaosBagChanges) : []),
     ...game.investigators.flatMap(defeatTrauma),
   ]);
 }
@@ -362,9 +363,26 @@ function targetInvestigators(game: GameState, target: ResolutionTarget): Investi
   }
 }
 
-/** A chaos bag change made in the game for the rest of the campaign, as its campaign command. */
-function chaosBagCommand({ token, change }: ChaosBagChange): ProposedChange {
-  return command({ type: change === 'add' ? 'AddChaosToken' : 'RemoveChaosToken', token });
+/**
+ * The chaos bag changes made in the game for the rest of the campaign, as campaign commands on
+ * the log's bag. A permanent removal of a token the log's bag does not hold (one the scenario's
+ * setup or a change for the scenario only put in) is left out: it takes nothing from the
+ * campaign's bag, and the campaign would reject it.
+ */
+function chaosBagCommands(
+  logBag: readonly ChaosToken[],
+  changes: readonly ChaosBagChange[],
+): ProposedChange[] {
+  let bag = logBag;
+  return changes.flatMap(({ token, change }) => {
+    if (change === 'add') {
+      bag = [...bag, token];
+      return [command({ type: 'AddChaosToken', token })];
+    }
+    if (!bag.includes(token)) return [];
+    bag = withoutFirst(bag, token);
+    return [command({ type: 'RemoveChaosToken', token })];
+  });
 }
 
 function defeatTrauma(investigator: Investigator): ProposedChange[] {

@@ -18,6 +18,7 @@ import type {
   HeldAction,
   QueuedStep,
   CardInstance,
+  ChaosBagChangeKind,
   ChaosBagChangeLasts,
   ChaosToken,
   Decision,
@@ -123,7 +124,7 @@ export interface CardMoved {
 export interface ChaosBagChanged {
   type: 'ChaosBagChanged';
   token: ChaosToken;
-  change: 'add' | 'remove';
+  change: ChaosBagChangeKind;
   lasts: ChaosBagChangeLasts;
 }
 

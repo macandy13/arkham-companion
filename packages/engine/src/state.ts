@@ -267,10 +267,13 @@ export interface Turn {
  */
 export type ChaosBagChangeLasts = 'scenario' | 'campaign';
 
+/** Whether an in-game change puts a token into the chaos bag or takes one copy out. */
+export type ChaosBagChangeKind = 'add' | 'remove';
+
 /** A change to the chaos bag that lasts for the campaign, as `GameState.chaosBagChanges` keeps it. */
 export interface ChaosBagChange {
   readonly token: ChaosToken;
-  readonly change: 'add' | 'remove';
+  readonly change: ChaosBagChangeKind;
 }
 
 /** Tokens in the chaos bag. */

@@ -149,6 +149,40 @@ describe('proposeResolution', () => {
       ]);
     });
 
+    it('proposes no removal of a token only the scenario put into the bag', () => {
+      // The log's bag holds a skull but no cultist; the game adds a cultist for the scenario.
+      const log = makeCampaignLog({
+        investigators: [campaignMember('alice', 'Alice', 8, 6), campaignMember('bob', 'Bob', 8, 6)],
+        chaosBag: ['skull'],
+      });
+      const { context, state } = table.withChaosBag(['skull']).withCampaign(log).start();
+
+      const proposal = campaign.proposeResolution(
+        context,
+        stateAfter(
+          context,
+          state,
+          { type: 'ChangeChaosBag', token: 'cultist', change: 'add', lasts: 'scenario' },
+          { type: 'ChangeChaosBag', token: 'cultist', change: 'remove', lasts: 'campaign' },
+          { type: 'ChangeChaosBag', token: 'skull', change: 'remove', lasts: 'campaign' },
+          endWith(r1),
+        ),
+        resolutions,
+      );
+
+      expect(proposal).toEqual([
+        {
+          kind: 'command',
+          command: {
+            type: 'RecordStory',
+            key: 'pastTheGate',
+            value: { kind: 'flag', value: true },
+          },
+        },
+        { kind: 'command', command: { type: 'RemoveChaosToken', token: 'skull' } },
+      ]);
+    });
+
     it('proposes no bag change for a standalone game, which has no log to keep it', () => {
       const { context, state } = table.start();
 

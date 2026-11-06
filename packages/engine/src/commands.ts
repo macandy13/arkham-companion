@@ -14,6 +14,7 @@ import type {
 import type { GridCell, MapPlacement, MapSpec } from './map';
 import type {
   Decision,
+  ChaosBagChangeKind,
   ChaosBagChangeLasts,
   ChaosToken,
   Difficulty,
@@ -479,7 +480,7 @@ export interface PlaceDoom {
 export interface ChangeChaosBag {
   type: 'ChangeChaosBag';
   token: ChaosToken;
-  change: 'add' | 'remove';
+  change: ChaosBagChangeKind;
   lasts: ChaosBagChangeLasts;
 }
 
