@@ -128,7 +128,12 @@ describe('The Devourer Below setup', () => {
       [codes.arkhamWoodsQuietGlade]: [codes.mainPath, codes.arkhamWoodsCliffside],
       [codes.arkhamWoodsCliffside]: [codes.mainPath, codes.arkhamWoodsQuietGlade],
     });
-    expect(neighbours(ctx, state, mainPath).length).toBe(4);
+    expect(neighbours(ctx, state, mainPath).map((to) => code(state, to))).toEqual([
+      codes.arkhamWoodsTwistingPaths,
+      codes.arkhamWoodsQuietGlade,
+      codes.arkhamWoodsCliffside,
+      codes.arkhamWoodsOldHouse,
+    ]);
   });
 
   it('sets aside the Ritual Site and Umôrdhoth', () => {

@@ -210,6 +210,11 @@ describe('The Gathering skull token', () => {
 });
 
 describe('The Gathering house (after act 1)', () => {
+  const hallway = instanceId('01112#1');
+  const attic = instanceId('01113#1');
+  const cellar = instanceId('01114#1');
+  const parlor = instanceId('01115#1');
+
   it('connects the Hallway to the Attic, the Cellar and the Parlor by their printed symbols', () => {
     const houseCtx = { ...ctx, scenario: makeDefinition({ setup: [theGatheringHouse] }) };
 
@@ -219,12 +224,8 @@ describe('The Gathering house (after act 1)', () => {
       scenario.compileSetup(houseCtx, makeSetupOptions()),
     );
 
-    expect(neighbours(houseCtx, state, instanceId('01112#1'))).toEqual([
-      '01113#1',
-      '01114#1',
-      '01115#1',
-    ]);
-    expect(neighbours(houseCtx, state, instanceId('01113#1'))).toEqual(['01112#1']);
+    expect(neighbours(houseCtx, state, hallway)).toEqual([attic, cellar, parlor]);
+    expect(neighbours(houseCtx, state, attic)).toEqual([hallway]);
   });
 });
 

@@ -69,7 +69,7 @@ export type Rejection =
   | { code: 'invalidGridCell'; cardId: InstanceId; column: number; row: number }
   /** `AddConnection` for an edge that already exists. */
   | { code: 'duplicateConnection'; from: InstanceId; to: InstanceId }
-  /** `RemoveConnection` for an edge that does not exist. */
+  /** `RemoveConnection` for an edge no map declares, a printed connection included. */
   | { code: 'connectionNotFound'; from: InstanceId; to: InstanceId }
   /** A connection from a location to itself. */
   | { code: 'selfConnection'; cardId: InstanceId }

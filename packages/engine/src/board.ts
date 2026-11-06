@@ -74,7 +74,27 @@ export function openConnections(ctx: EngineContext, state: GameState): Edge[] {
     .map(({ edge }) => edge)
     .filter((edge) => isConnectionOpen(state, edge))
     .filter((edge) => !allowsEveryMove(printed, edge));
-  return [...printed, ...declared];
+  return joinOpposites([...printed, ...declared]);
+}
+
+/**
+ * `edges` with each pair of opposite one-way edges joined into one two-way edge, where the first
+ * of them stood: a printed one way and a declared way back (a revealed Woods and the Main Path)
+ * are one connection to draw and list.
+ */
+function joinOpposites(edges: readonly Edge[]): Edge[] {
+  const joined: Edge[] = [];
+  for (const edge of edges) {
+    const back = edge.oneWay
+      ? joined.findIndex(
+          (other) => other.oneWay && other.from === edge.to && other.to === edge.from,
+        )
+      : -1;
+    const earlier = joined[back];
+    if (earlier) joined[back] = { ...earlier, oneWay: false };
+    else joined.push(edge);
+  }
+  return joined;
 }
 
 /** Whether `edges` already allow each move `edge` allows: from its `from`, and back unless one-way. */

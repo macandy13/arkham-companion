@@ -500,7 +500,7 @@ describe('neighbours along the printed connection symbols', () => {
     {
       declared: edge('path', 'woods', { oneWay: true }),
       revealing: [woods],
-      open: [edge('woods', 'path', { oneWay: true }), edge('path', 'woods', { oneWay: true })],
+      open: [edge('woods', 'path')],
     },
     {
       declared: edge('path', 'study'),
@@ -508,7 +508,7 @@ describe('neighbours along the printed connection symbols', () => {
       open: [edge('path', 'woods'), edge('path', 'study')],
     },
   ])(
-    'come with $declared, declared, unless they already allow its moves ($revealing revealed)',
+    'come with $declared, declared, unless they already allow its moves, joined into one edge with the way back ($revealing revealed)',
     ({ declared, revealing, open }) => {
       const { context, state: started } = woodsByThePath
         .withLocation(study, studyCard)
