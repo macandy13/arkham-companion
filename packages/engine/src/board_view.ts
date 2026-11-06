@@ -1,5 +1,5 @@
 import { assertNever, listIfAny, recordIfAny } from '@arkham/util';
-import { isConnectionOpen, isLocationInPlay, neighbours } from './board';
+import { isLocationInPlay, neighbours, openConnections } from './board';
 import { resolveEffect, tokenObjective } from './abilities';
 import {
   advanceActionOf,
@@ -257,7 +257,7 @@ interface LocationViewBase {
  * One map as the screen draws it: its locations in map order, the book layout cell of each one
  * that has a cell (`GameMap.layout`, without cells of locations that have left the map) and its
  * connections between them. An edge to a location on another map is left out, since one map's
- * drawing cannot show it, and so is a `revealedOnly` edge until both its locations are revealed.
+ * drawing cannot show it. They are the `openConnections`, printed and declared.
  */
 export interface MapView {
   id: MapId;
@@ -928,7 +928,7 @@ export class BoardView {
    * offer a move there.
    */
   connectedTo(location: InstanceId): readonly InstanceId[] {
-    return neighbours(this.state, location);
+    return neighbours(this.ctx, this.state, location);
   }
 
   /** The investigators at `location`, in seat order, as its `LocationView.investigators` lists them. */
@@ -1207,7 +1207,7 @@ function locationView(ctx: EngineContext, state: GameState, location: CardInstan
 }
 
 function mapView(ctx: EngineContext, state: GameState, id: MapId, map: GameMap): MapView {
-  const { name, visible, layout, connections } = map;
+  const { name, visible, layout } = map;
   const onMap = mapLocations(state, id);
   const isOnMap = (location: InstanceId) => onMap.includes(location);
   return {
@@ -1221,8 +1221,8 @@ function mapView(ctx: EngineContext, state: GameState, id: MapId, map: GameMap):
         return cell ? [[location, cell]] : [];
       }),
     ),
-    connections: connections.filter(
-      (edge) => isOnMap(edge.from) && isOnMap(edge.to) && isConnectionOpen(state, edge),
+    connections: openConnections(ctx, state).filter(
+      (edge) => isOnMap(edge.from) && isOnMap(edge.to),
     ),
     enemies: enemiesByLocation(ctx, state, onMap),
   };

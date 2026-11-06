@@ -6,9 +6,11 @@ The whole table is one serialisable value, [`GameState`](../../packages/engine/s
 - The state stores codes, not card data; rules look stats up in the `CardDb`.
 - Investigators are not card instances but seats with their own record.
 
-Location connections are an explicit graph on each [`GameMap`](../../packages/engine/src/map.ts), since they change in play and can be one-way.
+Location connections come from the symbols the cards print, plus a graph on each [`GameMap`](../../packages/engine/src/map.ts) for those no card prints.
 
-- A `revealedOnly` edge, printed on revealed sides only (the Arkham Woods to each other), counts in `neighbours` and shows on the map once both its locations are revealed.
+- [`printedConnections`](../../packages/engine/src/board.ts) derives an edge for each pair of locations in play where one's connection symbols (`CardStats.connectsTo`, on the side that is up) name the other's symbol, one-way when only one of them prints it (rules "Investigator actions against enemies", Move). They are derived on every call, never stored, so revealing a location or one entering or leaving play changes them with nothing to keep in sync.
+- `GameMap.connections` holds the declared edges: card text such as the Main Path's "is connected to each other Woods location", and those effects add or remove (`AddConnection`, `RemoveConnection`). Such an edge counts once both its ends are in play, so a scenario may declare it for a location still set aside.
+- `openConnections` is both, printed first, without the declared edges the printed ones already allow; `neighbours`, `shortestPaths` (hunters, "nearest") and the map view all read it.
 - Each map also keeps its book layout (`GameMap.layout`, cells on a grid three times finer than a card), which only the screen reads.
 - A whole new map joins the board with `AddMap`; a single location joins a map already there with `PutLocationIntoPlay`, which sets its layout cell too (`LayoutCellSet`).
 

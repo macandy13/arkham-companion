@@ -2,17 +2,15 @@ import type { InstanceId, MapId } from './ids';
 import type { GameState } from './state';
 import { zoneKey } from './zone';
 
-/** A connection between two location instances of one `GameMap`. */
+/**
+ * A connection between two location instances. `printedConnections` derives the ones the cards
+ * print; a `GameMap` stores only those effects add (`AddConnection`).
+ */
 export interface Edge {
   from: InstanceId;
   to: InstanceId;
   /** One-way edges only allow movement from `from` to `to`. */
   oneWay: boolean;
-  /**
-   * The connection counts only while both locations are revealed: it is printed on their
-   * revealed sides only, as the Arkham Woods' connections to each other.
-   */
-  revealedOnly?: boolean;
 }
 
 /**

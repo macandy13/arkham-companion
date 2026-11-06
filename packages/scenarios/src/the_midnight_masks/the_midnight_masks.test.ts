@@ -10,6 +10,7 @@ import {
   zoneKey,
   investigatorId,
   mapId,
+  neighbours,
   scenario,
   skillTestSuggestion,
   type CampaignLog,
@@ -170,12 +171,11 @@ describe('The Midnight Masks setup in the campaign', () => {
       campaign: logWith({ houseStillStanding: { kind: 'flag', value: true } }),
     });
 
+    const { state } = execute(zealotCtx, emptyState(), command);
+
     expect(command.investigators[0]?.locationId).toBe(yourHouse);
-    expect(command.maps?.[arkham]?.connections).toContainEqual({
-      from: rivertown,
-      to: yourHouse,
-      oneWay: false,
-    });
+    expect(neighbours(zealotCtx, state, yourHouse)).toEqual([rivertown]);
+    expect(neighbours(zealotCtx, state, rivertown)).toContain(yourHouse);
   });
 
   it.each([

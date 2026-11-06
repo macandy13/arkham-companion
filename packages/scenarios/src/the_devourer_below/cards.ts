@@ -168,10 +168,7 @@ export const theDevourerBelowCardDefs: readonly CardStats[] = [
       duringAct(
         [codes.investigatingTheTrail],
         whenAdvanced(
-          ...putLocationIntoPlay(codes.ritualSite, WOODS_MAP, {
-            at: RITUAL_SITE_CELL,
-            connectedTo: [codes.mainPath],
-          }),
+          ...putLocationIntoPlay(codes.ritualSite, WOODS_MAP, { at: RITUAL_SITE_CELL }),
           spawnEnemyAt(onlyCopy(codes.umordhoth), onlyCopy(codes.ritualSite)),
         ),
       ),
@@ -199,10 +196,7 @@ export const theDevourerBelowCardDefs: readonly CardStats[] = [
     // and it replaces act 1 as it does.
     abilities: [
       whenAdvanced(
-        ...putLocationIntoPlay(codes.ritualSite, WOODS_MAP, {
-          at: RITUAL_SITE_CELL,
-          connectedTo: [codes.mainPath],
-        }),
+        ...putLocationIntoPlay(codes.ritualSite, WOODS_MAP, { at: RITUAL_SITE_CELL }),
         spawnEachSetAsideAt(trait('Cultist'), onlyCopy(codes.mainPath)),
       ),
     ],

@@ -102,14 +102,14 @@ export function handleMoveHunter(
   if (command.to === undefined && command.towards === undefined)
     return hunterEvents(ctx, state, hunter);
   if (command.to !== undefined) {
-    if (!neighbours(state, hunter.zone.locationId).includes(command.to))
+    if (!neighbours(ctx, state, hunter.zone.locationId).includes(command.to))
       throw new CommandRejected({ code: 'hunterCannotMove', cardId: hunter.id, to: command.to });
     return moveTo(ctx, state, hunter, command.to);
   }
   const investigator = state.investigators.find((inv) => inv.id === command.towards);
   if (!investigator)
     throw new CommandRejected({ code: 'unknownInvestigator', investigatorId: command.towards });
-  const routes = routeTo(state, hunter.zone.locationId, investigator);
+  const routes = routeTo(ctx, state, hunter.zone.locationId, investigator);
   const steps = distinctSteps(routes);
   const [only] = steps;
   if (only === undefined)
@@ -148,7 +148,7 @@ function hunterEvents(ctx: EngineContext, state: GameState, hunter: CardInstance
   if (hunter.zone.kind !== 'atLocation') return [];
   const from = hunter.zone.locationId;
   const stats = cardStats(ctx.cards, hunter.code);
-  const nearest = nearestRoutes(state, from);
+  const nearest = nearestRoutes(ctx, state, from);
   if (nearest.length === 0 || state.pending.some((decision) => decision.subject === hunter.id))
     return [];
   if (distinctSteps(nearest).length === 1) return moveTowards(ctx, state, hunter, nearest);
@@ -193,20 +193,25 @@ function chooseHunterLocation(
 }
 
 /** The routes to the nearest investigators; empty if no investigator is elsewhere and reachable. */
-function nearestRoutes(state: GameState, from: InstanceId): Route[] {
+function nearestRoutes(ctx: EngineContext, state: GameState, from: InstanceId): Route[] {
   const active = activeInvestigators(state).filter(
     (investigator) => investigator.locationId !== undefined,
   );
   // A hunter does not move while an investigator is at its location.
   if (active.some((investigator) => investigator.locationId === from)) return [];
-  const routes = active.flatMap((investigator) => routeTo(state, from, investigator));
+  const routes = active.flatMap((investigator) => routeTo(ctx, state, from, investigator));
   const shortest = Math.min(...routes.map((route) => route.distance));
   return routes.filter((route) => route.distance === shortest);
 }
 
-function routeTo(state: GameState, from: InstanceId, investigator: Investigator): Route[] {
+function routeTo(
+  ctx: EngineContext,
+  state: GameState,
+  from: InstanceId,
+  investigator: Investigator,
+): Route[] {
   if (investigator.locationId === undefined) return [];
-  const paths = shortestPaths(state, from, investigator.locationId);
+  const paths = shortestPaths(ctx, state, from, investigator.locationId);
   const [first] = paths;
   if (first === undefined) return [];
   return [{ investigator, distance: first.length - 1, steps: firstSteps(paths) }];

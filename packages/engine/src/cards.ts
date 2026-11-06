@@ -164,7 +164,7 @@ export interface CardStats {
   actions?: readonly CardAction[];
   /**
    * Only on locations: the connection symbol in its upper left corner, on its revealed side. The
-   * views label locations with it; movement follows the map's connections, not these symbols.
+   * views label locations with it, and the connections follow it (`printedConnections`).
    * Entered with the scenario data, since ArkhamDB has no field for it.
    */
   symbol?: LocationSymbol;
@@ -320,8 +320,8 @@ export interface PrintedSymbols {
 
 /**
  * The symbols `side` of a location prints (`CardStats.symbol`, `connectsTo` and their unrevealed
- * variants, which default to the revealed ones). Views label a location with its symbol; the
- * printed connections let a scenario's declared map be checked against its cards.
+ * variants, which default to the revealed ones). Views label a location with its symbol, and the
+ * board connects locations by them (`printedConnections`).
  */
 export function printedSymbols(stats: CardStats, side: LocationSide): PrintedSymbols {
   const revealed = side === 'revealed';
@@ -331,8 +331,8 @@ export function printedSymbols(stats: CardStats, side: LocationSide): PrintedSym
 }
 
 /**
- * Whether `from` prints a connection to `to`: its connection symbols name `to`'s symbol. Only
- * what the cards print; which way that lets investigators move is the map's (M4.2b).
+ * Whether `from` prints a connection to `to`: its connection symbols name `to`'s symbol. A move
+ * from `from` may go to `to` then; the way back needs `to` to print `from`.
  */
 export function printsConnectionTo(from: PrintedSymbols, to: PrintedSymbols): boolean {
   return to.symbol !== undefined && from.connectsTo.includes(to.symbol);

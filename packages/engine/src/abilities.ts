@@ -1848,8 +1848,9 @@ export function revealLocation(location: RelativeCard): AbilityEffect {
 /**
  * "Put the set-aside Ritual Site into play": the only copy of `code` joins the
  * map `mapId` already on the board, in layout cell `at`, connected to the only
- * copy of each of `connectedTo`. Spread it into the ability:
- * `whenAdvanced(...putLocationIntoPlay(ritualSite, woods, { at, connectedTo: [mainPath] }))`.
+ * copy of each of `connectedTo` (only for a connection no card prints; the
+ * printed ones follow from the symbols). Spread it into the ability:
+ * `whenAdvanced(...putLocationIntoPlay(ritualSite, woods, { at }))`.
  */
 export function putLocationIntoPlay(
   code: CardCode,

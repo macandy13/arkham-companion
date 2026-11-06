@@ -10,6 +10,7 @@ import {
   mapId,
   neighbours,
   newGame,
+  openConnections,
   perInvestigator,
   replay,
   shortestPaths,
@@ -59,8 +60,8 @@ describe('AddConnection', () => {
       to: hall,
     });
 
-    expect(neighbours(next, study)).toEqual([hall]);
-    expect(neighbours(next, hall)).toEqual([study]);
+    expect(neighbours(context, next, study)).toEqual([hall]);
+    expect(neighbours(context, next, hall)).toEqual([study]);
   });
 
   it('adds a one-way edge that only works from its source', () => {
@@ -74,8 +75,8 @@ describe('AddConnection', () => {
       oneWay: true,
     });
 
-    expect(neighbours(next, study)).toEqual([hall]);
-    expect(neighbours(next, hall)).toEqual([]);
+    expect(neighbours(context, next, study)).toEqual([hall]);
+    expect(neighbours(context, next, hall)).toEqual([]);
   });
 
   it('stores the edge on the map named by the command, even when it ends on another map', () => {
@@ -164,8 +165,8 @@ describe('AddConnection', () => {
       adjustment: { kind: 'moveCard', cardId: attic, to: { kind: 'location', mapId: annex } },
     });
 
-    expect(neighbours(connected, study)).toEqual([]);
-    expect(neighbours(inPlay, study)).toEqual([attic]);
+    expect(neighbours(context, connected, study)).toEqual([]);
+    expect(neighbours(context, inPlay, study)).toEqual([attic]);
   });
 });
 
@@ -239,9 +240,9 @@ describe('connections at start', () => {
   });
 
   it('allows a starting connection to a location on another map', () => {
-    const { state } = table.withConnection(hall, cellar).start();
+    const { context, state } = table.withConnection(hall, cellar).start();
 
-    expect(neighbours(state, hall)).toEqual([cellar]);
+    expect(neighbours(context, state, hall)).toEqual([cellar]);
   });
 });
 
@@ -316,7 +317,7 @@ describe('AddMap', () => {
       layout: {},
     });
     expect(next.cards[attic]).toMatchObject({ zone: { kind: 'location', mapId: wing } });
-    expect(neighbours(next, hall)).toEqual([attic]);
+    expect(neighbours(context, next, hall)).toEqual([attic]);
     expect(checkInvariants(next)).toEqual([]);
   });
 
@@ -423,9 +424,9 @@ describe('neighbours', () => {
     ['hall', ['study', 'cellar']],
     ['cellar', []],
   ])('lists the locations reachable from %s', (from, expected) => {
-    const { state } = connected.start();
+    const { context, state } = connected.start();
 
-    expect(neighbours(state, instanceId(from))).toEqual(expected);
+    expect(neighbours(context, state, instanceId(from))).toEqual(expected);
   });
 
   it.each([
@@ -433,36 +434,97 @@ describe('neighbours', () => {
     ['a card that is not a location', 'ghoul'],
     ['an unknown card', 'nowhere'],
   ])('is empty for %s', (_name, from) => {
-    const { state } = connected.withConnection(study, attic).start();
+    const { context, state } = connected.withConnection(study, attic).start();
 
-    expect(neighbours(state, instanceId(from))).toEqual([]);
+    expect(neighbours(context, state, instanceId(from))).toEqual([]);
   });
 });
 
-describe('neighbours along a connection printed on revealed sides only', () => {
+describe('neighbours along the printed connection symbols', () => {
+  const path = instanceId('path');
+  const woods = instanceId('woods');
+  /** Prints the woods' unrevealed symbol (square) only, as the Main Path does. */
+  const pathCard = blankLocation('path', { symbol: 'tilde', connectsTo: ['square'] });
+  /** Square and back to the path unrevealed; triangle and back to the path once revealed. */
+  const woodsCard = blankLocation('woods', {
+    symbol: 'triangle',
+    connectsTo: ['tilde'],
+    unrevealedSymbol: 'square',
+    unrevealedConnectsTo: ['tilde'],
+  });
+  const woodsByThePath = newGame().withLocation(path, pathCard).withLocation(woods, woodsCard);
   const revealed = (cardId: InstanceId): Command => ({
     type: 'RevealLocation',
     locationId: cardId,
   });
 
   it.each([
-    { revealing: [], fromStudy: [] },
-    { revealing: [study], fromStudy: [] },
-    { revealing: [study, hall], fromStudy: [hall] },
-  ])('leads from the study to $fromStudy with $revealing revealed', ({ revealing, fromStudy }) => {
-    const { context, state: started } = table
-      .withConnection(study, hall, { revealedOnly: true })
+    { revealing: [], fromPath: [woods], fromWoods: [path] },
+    { revealing: [woods], fromPath: [], fromWoods: [path] },
+  ])(
+    'lead from the path to $fromPath and back to $fromWoods with $revealing revealed',
+    ({ revealing, fromPath, fromWoods }) => {
+      const { context, state: started } = woodsByThePath.start();
+
+      const state = stateAfter(context, started, ...revealing.map(revealed));
+
+      expect(neighbours(context, state, path)).toEqual(fromPath);
+      expect(neighbours(context, state, woods)).toEqual(fromWoods);
+    },
+  );
+
+  it('wait until both locations are in play', () => {
+    const { context, state } = newGame()
+      .withLocation(path, pathCard)
+      .withCard(woods, woodsCard, setAside)
       .start();
 
-    const state = stateAfter(context, started, ...revealing.map(revealed));
-
-    expect(neighbours(state, study)).toEqual(fromStudy);
+    expect(neighbours(context, state, path)).toEqual([]);
   });
+
+  it('join locations on different maps', () => {
+    const { context, state } = newGame()
+      .withLocation(path, pathCard)
+      .withLocation(woods, woodsCard, { map: annex })
+      .start();
+
+    expect(neighbours(context, state, path)).toEqual([woods]);
+  });
+
+  it.each([
+    {
+      declared: edge('path', 'woods', { oneWay: true }),
+      revealing: [],
+      open: [edge('path', 'woods')],
+    },
+    {
+      declared: edge('path', 'woods', { oneWay: true }),
+      revealing: [woods],
+      open: [edge('woods', 'path')],
+    },
+    {
+      declared: edge('path', 'study'),
+      revealing: [],
+      open: [edge('path', 'woods'), edge('path', 'study')],
+    },
+  ])(
+    'come with $declared, declared, unless they already allow its moves, joined into one edge with the way back ($revealing revealed)',
+    ({ declared, revealing, open }) => {
+      const { context, state: started } = woodsByThePath
+        .withLocation(study, studyCard)
+        .withConnection(declared.from, declared.to, { oneWay: declared.oneWay })
+        .start();
+
+      const state = stateAfter(context, started, ...revealing.map(revealed));
+
+      expect(openConnections(context, state)).toEqual(open);
+    },
+  );
 });
 
 describe('shortestPaths', () => {
   const den = instanceId('den');
-  const { state: ringBoard } = newGame()
+  const { context: ringContext, state: ringBoard } = newGame()
     .withLocation(study, studyCard)
     .withLocation(hall, hallCard)
     .withLocation(den, blankLocation('den'))
@@ -488,19 +550,21 @@ describe('shortestPaths', () => {
     ['nothing for a location that is not on a map', 'study', 'attic', []],
     ['nothing for an unknown location', 'nowhere', 'study', []],
   ])('returns %s', (_name, from, to, expected) => {
-    expect(shortestPaths(ringBoard, instanceId(from), instanceId(to))).toEqual(expected);
+    expect(shortestPaths(ringContext, ringBoard, instanceId(from), instanceId(to))).toEqual(
+      expected,
+    );
   });
 
   it('returns no path when the target cannot be reached', () => {
-    const { state } = table.withConnection(study, hall).start();
+    const { context, state } = table.withConnection(study, hall).start();
 
-    expect(shortestPaths(state, study, cellar)).toEqual([]);
+    expect(shortestPaths(context, state, study, cellar)).toEqual([]);
   });
 
   it('crosses from one map to another', () => {
-    const { state } = table.withConnection(hall, cellar).start();
+    const { context, state } = table.withConnection(hall, cellar).start();
 
-    expect(shortestPaths(state, hall, cellar)).toEqual([[hall, cellar]]);
+    expect(shortestPaths(context, state, hall, cellar)).toEqual([[hall, cellar]]);
   });
 });
 

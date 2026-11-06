@@ -1,5 +1,13 @@
 import { isNonNegativeInteger } from '@arkham/util';
-import { cardStats, resolveValue, type EngineContext, type LocationAttachment } from './cards';
+import {
+  cardStats,
+  printedSymbols,
+  printsConnectionTo,
+  resolveValue,
+  type EngineContext,
+  type LocationAttachment,
+  type PrintedSymbols,
+} from './cards';
 import type { CardFlipped, TokensChanged } from './events';
 import type { InstanceId, MapId } from './ids';
 import { cardsInZone, cardsNamed, cardsOfType, requireCard } from './lookup';
@@ -25,18 +33,93 @@ export function allConnections(state: GameState): { mapId: MapId; edge: Edge }[]
 }
 
 /**
- * Locations an investigator or enemy at `locationId` can move to in one step,
- * in the order the edges were added. An edge only counts while both of its
- * locations are on a map (zone `location`): scenario data may connect locations
- * that are still set aside, and these connections wake up once both are in play;
- * a `revealedOnly` edge waits until both are revealed too.
- * Edges may cross maps: every map's edges count, wherever their ends are.
+ * What the location `card` prints on the side that is up: its symbol and the symbols it
+ * connects to change when it is revealed.
  */
-export function neighbours(state: GameState, locationId: InstanceId): InstanceId[] {
+export function shownSymbols(ctx: EngineContext, card: CardInstance): PrintedSymbols {
+  return printedSymbols(cardStats(ctx.cards, card.code), card.faceUp ? 'revealed' : 'unrevealed');
+}
+
+/**
+ * The connections the locations in play print, from the sides that are up: an edge between two
+ * locations when one's connection symbols name the other's symbol, one-way when only one of them
+ * prints it, since a move follows the symbols on the card it starts from (RR "Move"). They are
+ * derived on each call instead of stored, so revealing a location or one entering or leaving play
+ * changes them with nothing to recompute. Maps don't matter: the symbols connect across them.
+ */
+export function printedConnections(ctx: EngineContext, state: GameState): Edge[] {
+  const shown = locationsInPlay(ctx, state).map((card) => ({
+    id: card.id,
+    symbols: shownSymbols(ctx, card),
+  }));
+  return shown.flatMap((a, i) =>
+    shown.slice(i + 1).flatMap((b): Edge[] => {
+      const ab = printsConnectionTo(a.symbols, b.symbols);
+      const ba = printsConnectionTo(b.symbols, a.symbols);
+      if (ab) return [{ from: a.id, to: b.id, oneWay: !ba }];
+      return ba ? [{ from: b.id, to: a.id, oneWay: true }] : [];
+    }),
+  );
+}
+
+/**
+ * Every connection that holds now: the printed ones (`printedConnections`), then the open ones the
+ * maps declare for what no card prints (`GameMap.connections`: card text such as the Main Path's
+ * "is connected to each other Woods location", or an effect), less those the printed ones already
+ * make.
+ */
+export function openConnections(ctx: EngineContext, state: GameState): Edge[] {
+  const printed = printedConnections(ctx, state);
+  const declared = allConnections(state)
+    .map(({ edge }) => edge)
+    .filter((edge) => isConnectionOpen(state, edge))
+    .filter((edge) => !allowsEveryMove(printed, edge));
+  return joinOpposites([...printed, ...declared]);
+}
+
+/**
+ * `edges` with each pair of opposite one-way edges joined into one two-way edge, where the first
+ * of them stood: a printed one way and a declared way back (a revealed Woods and the Main Path)
+ * are one connection to draw and list.
+ */
+function joinOpposites(edges: readonly Edge[]): Edge[] {
+  const joined: Edge[] = [];
+  for (const edge of edges) {
+    const back = edge.oneWay
+      ? joined.findIndex(
+          (other) => other.oneWay && other.from === edge.to && other.to === edge.from,
+        )
+      : -1;
+    const earlier = joined[back];
+    if (earlier) joined[back] = { ...earlier, oneWay: false };
+    else joined.push(edge);
+  }
+  return joined;
+}
+
+/** Whether `edges` already allow each move `edge` allows: from its `from`, and back unless one-way. */
+function allowsEveryMove(edges: readonly Edge[], edge: Edge): boolean {
+  const leads = (from: InstanceId, to: InstanceId) => neighboursOver(edges, from).includes(to);
+  return leads(edge.from, edge.to) && (edge.oneWay || leads(edge.to, edge.from));
+}
+
+/**
+ * Locations an investigator or enemy at `locationId` can move to in one step, over
+ * `openConnections`: a one-way edge only from its `from`.
+ */
+export function neighbours(
+  ctx: EngineContext,
+  state: GameState,
+  locationId: InstanceId,
+): InstanceId[] {
   if (!isLocationInPlay(state, locationId)) return [];
+  return neighboursOver(openConnections(ctx, state), locationId);
+}
+
+/** The locations `edges` let a move from `locationId` go to, in edge order. */
+function neighboursOver(edges: readonly Edge[], locationId: InstanceId): InstanceId[] {
   const result = new Set<InstanceId>();
-  for (const { edge } of allConnections(state)) {
-    if (!isConnectionOpen(state, edge)) continue;
+  for (const edge of edges) {
     if (edge.from === locationId) result.add(edge.to);
     else if (!edge.oneWay && edge.to === locationId) result.add(edge.from);
   }
@@ -44,16 +127,11 @@ export function neighbours(state: GameState, locationId: InstanceId): InstanceId
 }
 
 /**
- * True while the edge connects its locations: both are on a map, and both are revealed if it is
- * a `revealedOnly` edge.
+ * True while a declared edge connects its locations: both are on a map. A scenario may declare
+ * edges to locations still set aside; they wake up once both are in play.
  */
 export function isConnectionOpen(state: GameState, edge: Edge): boolean {
-  if (!isLocationInPlay(state, edge.from) || !isLocationInPlay(state, edge.to)) return false;
-  return !edge.revealedOnly || (isRevealed(state, edge.from) && isRevealed(state, edge.to));
-}
-
-function isRevealed(state: GameState, id: InstanceId): boolean {
-  return state.cards[id]?.faceUp === true;
+  return isLocationInPlay(state, edge.from) && isLocationInPlay(state, edge.to);
 }
 
 /**
@@ -62,9 +140,14 @@ function isRevealed(state: GameState, id: InstanceId): boolean {
  * reached. Hunter enemies and movement need all of them because ties are
  * resolved by the players, never guessed by the engine.
  */
-export function shortestPaths(state: GameState, from: InstanceId, to: InstanceId): InstanceId[][] {
+export function shortestPaths(
+  ctx: EngineContext,
+  state: GameState,
+  from: InstanceId,
+  to: InstanceId,
+): InstanceId[][] {
   if (!isLocationInPlay(state, from) || !isLocationInPlay(state, to)) return [];
-  return pathsBack(shortestPathPredecessors(state, from, to), from, to);
+  return pathsBack(shortestPathPredecessors(ctx, state, from, to), from, to);
 }
 
 /** The distinct locations `paths` (from `shortestPaths`) go to first: where a one-step move along them can go. */
@@ -117,16 +200,19 @@ export function locationsNamed(
  * Maps each visited location to all its neighbours one step closer to `from`.
  */
 function shortestPathPredecessors(
+  ctx: EngineContext,
   state: GameState,
   from: InstanceId,
   to: InstanceId,
 ): Map<InstanceId, InstanceId[]> {
+  // Derived once for the whole search, since every location in play takes part in it.
+  const edges = openConnections(ctx, state);
   const predecessors = new Map<InstanceId, InstanceId[]>([[from, []]]);
   let frontier = [from];
   while (frontier.length > 0 && !predecessors.has(to)) {
     const next: InstanceId[] = [];
     for (const current of frontier) {
-      for (const neighbour of neighbours(state, current)) {
+      for (const neighbour of neighboursOver(edges, current)) {
         const known = predecessors.get(neighbour);
         if (known === undefined) {
           predecessors.set(neighbour, [current]);
