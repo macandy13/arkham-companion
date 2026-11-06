@@ -99,18 +99,20 @@ describe('shelfEntries', () => {
 
 describe('campaignStanding', () => {
   const scenarios = [scenarioId('the-gathering'), scenarioId('the-midnight-masks')];
+  const gathering = game('gathering', 1, { scenario: 'the-gathering' });
+  const masks = game('masks', 2, { scenario: 'the-midnight-masks' });
 
   it.each([
     {
       case: 'a chapter with its game under way',
       log: campaign('zealot', 1, { position: 1 }),
-      games: [game('masks', 2, { scenario: 'the-midnight-masks' }), game('gathering', 1)],
-      standing: { kind: 'playing', chapter: 2, scenarioId: 'the-midnight-masks', game: 'masks' },
+      games: [masks, gathering],
+      standing: { kind: 'playing', chapter: 2, scenarioId: 'the-midnight-masks', game: masks },
     },
     {
       case: 'a chapter whose game is not set up yet',
       log: campaign('zealot', 1, { position: 1 }),
-      games: [game('gathering', 1)],
+      games: [gathering],
       standing: { kind: 'setUp', chapter: 2, scenarioId: 'the-midnight-masks' },
     },
     {
@@ -126,10 +128,6 @@ describe('campaignStanding', () => {
       standing: { kind: 'over', result: 'won' },
     },
   ])('reads $case', ({ log, games, standing }) => {
-    const found = campaignStanding(log, games, scenarios);
-
-    expect(found.kind === 'playing' ? { ...found, game: found.game.gameId } : found).toEqual(
-      standing,
-    );
+    expect(campaignStanding(log, games, scenarios)).toEqual(standing);
   });
 });

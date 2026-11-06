@@ -883,7 +883,6 @@ export const appTexts = {
     load: 'Load a saved game',
   },
   games: {
-    title: 'Games',
     new: 'New game',
     empty: 'No games yet',
     untitled: 'Game {{n}}',
@@ -900,7 +899,6 @@ export const appTexts = {
       enemy: 'Enemy',
       upkeep: 'Upkeep',
     },
-    actions: 'Actions for {{title}}',
     rename: 'Rename',
     name: 'Name',
     save: 'Save',

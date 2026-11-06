@@ -887,7 +887,6 @@ export const appTexts = {
     load: 'Gespeichertes Spiel laden',
   },
   games: {
-    title: 'Spiele',
     new: 'Neues Spiel',
     empty: 'Noch keine Spiele',
     untitled: 'Spiel {{n}}',
@@ -904,7 +903,6 @@ export const appTexts = {
       enemy: 'Gegner',
       upkeep: 'Unterhalt',
     },
-    actions: 'Aktionen für {{title}}',
     rename: 'Umbenennen',
     name: 'Name',
     save: 'Speichern',

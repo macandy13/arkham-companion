@@ -184,7 +184,9 @@
   gap: var(--space-2);
 }
 
-#app > main > nav > :is(a, label) {
+/* The ways in and a cover's button are pills; the cover's button keeps to the outlined kind. */
+#app > main > nav > :is(a, label),
+#shelf footer > a {
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
@@ -199,8 +201,9 @@
   cursor: pointer;
 }
 
-/* The primary takes its brass from base.css; the other two are outlined. */
-#app > main > nav > :is(a, label):not([data-primary]) {
+/* The primary takes its brass from base.css; the others are outlined. */
+#app > main > nav > :is(a, label):not([data-primary]),
+#shelf footer > a {
   border-color: var(--color-border);
   color: var(--color-text);
 }
@@ -209,7 +212,8 @@
   position: relative;
 }
 
-#app > main > nav > :is(a, label):hover {
+#app > main > nav > :is(a, label):hover,
+#shelf footer > a:hover {
   border-color: var(--color-accent);
 }
 
@@ -290,19 +294,6 @@
   gap: var(--space-2);
   margin-top: auto;
   padding-top: var(--space-2);
-}
-
-#shelf footer > a {
-  padding-inline: var(--space-4);
-  border: var(--border-width) solid var(--color-border);
-  border-radius: var(--radius-pill);
-  color: var(--color-text);
-  font-family: var(--font-family-print);
-  text-decoration: none;
-}
-
-#shelf footer > a:hover {
-  border-color: var(--color-accent);
 }
 
 #shelf footer > div {
