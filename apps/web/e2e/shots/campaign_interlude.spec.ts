@@ -9,7 +9,7 @@ import {
 // The interlude dialog of the E2E build's test campaign, after The Gathering (`@shot`, coding
 // guidelines §3): no campaign the app plays has an interlude yet.
 
-test('the decision of an interlude', { tag: '@shot' }, async ({ page }) => {
+test('the decision of an interlude', async ({ page }) => {
   await openStoredCampaign(page, 'Interlude – Roland and Fake Seeker', (id) =>
     interludeDueEvents(id, [rolandBanks, fakeSeeker]),
   );
@@ -21,7 +21,7 @@ test('the decision of an interlude', { tag: '@shot' }, async ({ page }) => {
   ).toBeVisible();
 });
 
-test('what an interlude writes into the log', { tag: '@shot' }, async ({ page }) => {
+test('what an interlude writes into the log', async ({ page }) => {
   await openStoredCampaign(page, 'Interlude – Roland and Fake Seeker', (id) =>
     interludeDueEvents(id, [rolandBanks, fakeSeeker]),
   );
@@ -36,7 +36,7 @@ test('what an interlude writes into the log', { tag: '@shot' }, async ({ page })
   ).toBeVisible();
 });
 
-test('the log after an interlude was written', { tag: '@shot' }, async ({ page }) => {
+test('the log after an interlude was written', async ({ page }) => {
   await openStoredCampaign(page, 'Interlude – Roland and Fake Seeker', (id) =>
     interludeDueEvents(id, [rolandBanks, fakeSeeker]),
   );

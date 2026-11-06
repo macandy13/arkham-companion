@@ -1,10 +1,10 @@
 import { expect, test } from './fixtures/test';
-import { startQuickGame } from './fixtures/wizard';
+import { seatQuickGame } from './fixtures/wizard';
 
 // Journey: the whole life of a saved game on a tablet – start it, close the tab, resume it, keep it
 // tidy (rename, duplicate, delete with confirmation) and back it up (export, import). It doubles as
 // the smoke test: it boots the production build and resolves the hash routes.
-test('a game is started, resumed, managed and backed up', async ({ page }) => {
+test('a game is started, resumed, managed and backed up', { tag: '@flow' }, async ({ page }) => {
   const games = page.getByRole('list', { name: 'Games' });
   const items = games.getByRole('listitem');
   const named = (title: string) =>
@@ -14,14 +14,14 @@ test('a game is started, resumed, managed and backed up', async ({ page }) => {
   await test.step('Open the game list', async () => {
     await page.goto('/');
     await expect(page).toHaveTitle('Arkham Companion');
-    await expect(page.getByRole('heading', { level: 1, name: 'Games' })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1, name: 'Arkham Companion' })).toBeVisible();
     await expect(items).toHaveCount(0);
   });
 
   await test.step('Start a quick game with two investigators', async () => {
-    await page.getByRole('link', { name: 'New game' }).click();
-    await expect(page).toHaveURL(/#\/new$/);
-    await startQuickGame(page, ['Fake Guardian', 'Fake Seeker']);
+    await page.getByRole('link', { name: 'One scenario' }).click();
+    await expect(page).toHaveURL(/#\/new\?mode=quick$/);
+    await seatQuickGame(page, ['Fake Guardian', 'Fake Seeker']);
     gameUrl = page.url();
   });
 
@@ -48,7 +48,7 @@ test('a game is started, resumed, managed and backed up', async ({ page }) => {
   await test.step('Rename the game', async () => {
     await items.getByRole('button', { name: 'Rename' }).click();
     await page.getByRole('textbox', { name: 'Name' }).fill('Night of the Test');
-    await page.getByRole('button', { name: 'Save' }).click();
+    await page.getByRole('button', { name: 'Save', exact: true }).click();
     await expect(named('Night of the Test')).toBeVisible();
   });
 
@@ -69,7 +69,7 @@ test('a game is started, resumed, managed and backed up', async ({ page }) => {
   });
 
   await test.step('Import the file as a new game', async () => {
-    await page.getByLabel('Import game').setInputFiles({
+    await page.getByLabel('Load a saved game').setInputFiles({
       name: 'game.arkham.json',
       mimeType: 'application/json',
       buffer: backup,

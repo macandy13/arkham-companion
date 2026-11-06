@@ -3,13 +3,13 @@
 The React PWA is a thin layer over the engine.
 [`App.tsx`](../../apps/web/src/App.tsx) defines the hash routes; screens are in [`screens/`](../../apps/web/src/screens/):
 
-- home, with the campaigns (each opens its campaign log) above the saved games,
+- home, lying on the table rather than a paper page: the app's title ([`HomeTitle`](../../apps/web/src/screens/HomeTitle.tsx), our own SVG in the spirit of the game's boxes: worn Cinzel Decorative capitals, a brass arch with the app's mark, a COMPANION ribbon, tentacles), a tagline, and the three ways in (New campaign as the brass primary, One scenario, Load a saved game as a pill around the file input), then the campaigns (each opens its campaign log) above the saved games,
 - new game wizard, whose campaign path starts a campaign log and its first scenario as one of its games (`AppState.startCampaign`),
 - campaign log (`/campaign/:id`, [`campaign/`](../../apps/web/src/campaign/)),
 - game screen,
 - settings with the owned packs of the campaigns the app plays (`CampaignEntry.packCodes`) and the unofficial fan project notice.
 
-Over every screen outside play, the [app bar](../../apps/web/src/screens/AppBar.tsx) (`AppBarFrame`, MD.3a) lies on the table: a back chevron up to the screen above, the screen's name in the display face over a subtitle, and a ⋮ menu with the app's places (Your games, Settings). The bar sits outside the screen's paper page (`#app > main`), so each screen names itself with `useAppBar({ title, subtitle, up })` while it is mounted; home names none and shows the app's title without a chevron. The chevron goes to `up`, a route, not back in history, so a deep link still has a way up. The play screen has no bar: its status row's menu holds the same places.
+Over every screen outside play, the [app bar](../../apps/web/src/screens/AppBar.tsx) (`AppBarFrame`, MD.3a) lies on the table: a back chevron up to the screen above, the screen's name in the display face over a subtitle, and a ⋮ menu with the app's places (Your games, Settings). The bar sits outside the screen's paper page (`#app > main`), so each screen names itself with `useAppBar({ title, subtitle, up })` while it is mounted; home names none, so its bar holds only the menu under the home screen's own title. The chevron goes to `up`, a route, not back in history, so a deep link still has a way up. The play screen has no bar: its status row's menu holds the same places.
 
 Components read the [app store](../../apps/web/src/state/appStore.ts) and call its methods; they never change game state or touch storage.
 

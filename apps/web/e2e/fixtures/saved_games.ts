@@ -472,7 +472,7 @@ function cardIn(table: PlayTable, code: CardCode): InstanceId {
 /** Imports `file` (an export like `houseOpenedExport`) on the home screen, which lists it there. */
 export async function importGame(page: Page, file: Buffer): Promise<void> {
   await page.goto('/');
-  await page.getByLabel('Import game').setInputFiles({
+  await page.getByLabel('Load a saved game').setInputFiles({
     name: 'game.arkham.json',
     mimeType: 'application/json',
     buffer: file,

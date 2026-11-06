@@ -779,6 +779,42 @@
     0.3% 20%,
     0.6% 10%
   );
+  /*
+   * Home's title (MD.3b, `HomeTitle`): bone capitals outlined in near black, brass for the arch,
+   * the mark and the ribbon, sea-green tentacles. Printed artwork, so the same in both themes.
+   * Its sizes are in the title's own 640 × 260 box.
+   */
+  --color-title-bone-light: #f4ecd6;
+  --color-title-bone: #d9c9a0;
+  --color-title-bone-deep: #9c8558;
+  --color-title-brass-light: #f0d593;
+  --color-title-brass: #c39a4e;
+  --color-title-brass-deep: #6f4f19;
+  --color-title-flesh-light: #2f5a4c;
+  --color-title-flesh-deep: #0d211b;
+  --color-title-outline: #120c05;
+  --color-title-night: #0b1915;
+  --color-title-ribbon-fold: #7a5a22;
+  --color-title-ribbon-edge: #4d3610;
+  --color-title-ribbon-ink: #1b1408;
+  --title-shadow-opacity: 0.55;
+  --title-sucker-opacity: 0.7;
+  --title-arch-inner-opacity: 0.5;
+  --color-title-mask: #fff;
+  --title-name-size: 78px;
+  --title-name-spacing: 3px;
+  --title-name-outline: 2.4px;
+  --title-ribbon-size: 17px;
+  --title-ribbon-spacing: 6px;
+  --title-line: 1.1px;
+  --title-arch-line: 2px;
+  --title-width: 35rem;
+  --title-width-phone: 21rem;
+  /* The title's foot fades into the tagline, so the two overlap a little. */
+  --title-overlap: -1.125rem;
+  --title-drop-shadow: drop-shadow(0 0.5rem 1.125rem rgb(0 0 0 / 55%));
+  --font-family-title: 'Cinzel Decorative', 'Cinzel', var(--font-family-print);
+  --font-family-title-ribbon: 'Cinzel', var(--font-family-print);
 }
 
 /*

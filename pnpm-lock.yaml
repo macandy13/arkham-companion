@@ -59,6 +59,12 @@ importers:
       '@fontsource/caveat':
         specifier: ^5.3.0
         version: 5.3.0
+      '@fontsource/cinzel':
+        specifier: ^5.3.0
+        version: 5.3.0
+      '@fontsource/cinzel-decorative':
+        specifier: ^5.3.0
+        version: 5.3.0
       '@fontsource/federant':
         specifier: ^5.3.0
         version: 5.3.0
@@ -972,6 +978,12 @@ packages:
 
   '@fontsource/caveat@5.3.0':
     resolution: {integrity: sha512-eHTfzQxFSW9ABERRLNruHoNJmKed2J7pqTUc5lp4a4POMgXGKpxmWj3d9Hz10kmAg6iuTTLe6UagbA4bnsmfQw==}
+
+  '@fontsource/cinzel-decorative@5.3.0':
+    resolution: {integrity: sha512-9T6Fsv6l+5CUjvKWcTlMtkAYR/C8p2ll0bgT5krOU+DTLJRmaZYpXzcRoxPvENA6+uApa+Yyn0Ft/hdq083iVA==}
+
+  '@fontsource/cinzel@5.3.0':
+    resolution: {integrity: sha512-KEOYTsrRppW0uRIPWBDPrQgunCS6f8u4nzZxYRBfo9SCknKojLYjK7B0ZoVmJhyVLefz271ZQRF9EOpHZlfhRw==}
 
   '@fontsource/federant@5.3.0':
     resolution: {integrity: sha512-QCqoWrrXTsRsBO7V3y7Z/t+kdUO4ZBDSf3WrHwzHvRDm/9zw3bhZ4cwb62aldPR3pV23+OkU84lTzYUIHD558g==}
@@ -4104,6 +4116,10 @@ snapshots:
   '@fontsource/alegreya-sans@5.3.0': {}
 
   '@fontsource/caveat@5.3.0': {}
+
+  '@fontsource/cinzel-decorative@5.3.0': {}
+
+  '@fontsource/cinzel@5.3.0': {}
 
   '@fontsource/federant@5.3.0': {}
 

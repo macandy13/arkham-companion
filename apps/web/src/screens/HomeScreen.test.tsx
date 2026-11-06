@@ -31,14 +31,41 @@ describe('HomeScreen', () => {
     vi.restoreAllMocks();
   });
 
-  it('offers new campaign and quick game when there are no games', async () => {
+  it('names the app in its title and says what it does', async () => {
     await renderHome([]);
 
-    const campaign = await screen.findByRole('link', { name: 'New campaign' });
-    expect(campaign.getAttribute('href')).toBe('/new?mode=campaign');
-    expect(screen.getByRole('link', { name: 'Quick game' }).getAttribute('href')).toBe(
-      '/new?mode=quick',
-    );
+    expect(await screen.findByRole('heading', { level: 1, name: 'Arkham Companion' })).toBeTruthy();
+    expect(screen.getByText('keeps the scenario while you play the cards')).toBeTruthy();
+  });
+
+  it.each([
+    ['New campaign', '/new?mode=campaign'],
+    ['One scenario', '/new?mode=quick'],
+  ])('starts a game from the title with %s', async (name, href) => {
+    await renderHome(['The house is open']);
+
+    const ways = await screen.findByRole('navigation', { name: 'Start or load a game' });
+
+    expect(within(ways).getByRole('link', { name }).getAttribute('href')).toBe(href);
+  });
+
+  it('marks New campaign as the brass primary of the title', async () => {
+    await renderHome([]);
+
+    const ways = await screen.findByRole('navigation', { name: 'Start or load a game' });
+
+    expect(
+      within(ways)
+        .getAllByRole('link')
+        .filter((link) => link.hasAttribute('data-primary'))
+        .map((link) => link.textContent),
+    ).toEqual(['New campaign']);
+  });
+
+  it('says there are no saved games yet', async () => {
+    await renderHome([]);
+
+    expect(await screen.findByText('No games yet')).toBeTruthy();
   });
 
   it.each([
@@ -162,7 +189,9 @@ describe('HomeScreen', () => {
     };
     const file = new File([JSON.stringify(exported)], 'game.json');
 
-    fireEvent.change(await screen.findByLabelText('Import game'), { target: { files: [file] } });
+    fireEvent.change(await screen.findByLabelText('Load a saved game'), {
+      target: { files: [file] },
+    });
 
     expect(await screen.findByRole('link', { name: 'Imported' })).toBeTruthy();
   });
@@ -172,7 +201,9 @@ describe('HomeScreen', () => {
     await renderHome([]);
     const file = new File([JSON.stringify({ stateVersion: STATE_VERSION + 1 })], 'game.json');
 
-    fireEvent.change(await screen.findByLabelText('Import game'), { target: { files: [file] } });
+    fireEvent.change(await screen.findByLabelText('Load a saved game'), {
+      target: { files: [file] },
+    });
 
     expect((await screen.findByRole('alert')).textContent).toMatch(/newer version/);
     expect(warn).toHaveBeenCalledWith(expect.stringContaining('import'), expect.any(Error));

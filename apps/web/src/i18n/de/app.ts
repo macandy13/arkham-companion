@@ -872,6 +872,13 @@ export const appTexts = {
     sanity: 'Verstand',
     otherChapter: 'Version aus Kapitel {{n}} zeigen',
   },
+  home: {
+    tagline: 'führt das Szenario, während ihr die Karten spielt',
+    start: 'Ein Spiel beginnen oder laden',
+    newCampaign: 'Neue Kampagne',
+    oneScenario: 'Ein Szenario',
+    load: 'Gespeichertes Spiel laden',
+  },
   games: {
     title: 'Spiele',
     new: 'Neues Spiel',
@@ -904,7 +911,6 @@ export const appTexts = {
     copyTitle: '{{title}} (Kopie)',
     delete: 'Löschen',
     export: 'Exportieren',
-    import: 'Spiel importieren',
     importInvalid: 'Diese Datei ist kein gültiger Arkham-Companion-Spielexport.',
     importNewerVersion:
       'Dieses Spiel wurde mit einer neueren Version der App exportiert. Aktualisiere die App und versuche es erneut.',

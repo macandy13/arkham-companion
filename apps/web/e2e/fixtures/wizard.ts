@@ -10,6 +10,14 @@ export async function startQuickGame(
   investigators: readonly string[] = ['Fake Seeker'],
 ): Promise<void> {
   await page.getByRole('link', { name: 'Quick game' }).first().click();
+  await seatQuickGame(page, investigators);
+}
+
+/**
+ * Runs the quick-game wizard from its first step (where the home screen's "One scenario" leads),
+ * seating the named investigators of the invented catalog in order, and ends on the game route.
+ */
+export async function seatQuickGame(page: Page, investigators: readonly string[]): Promise<void> {
   await page.getByRole('button', { name: 'Next' }).click();
   for (const name of investigators) {
     await page.getByRole('list', { name: 'Investigators' }).getByRole('button', { name }).click();
