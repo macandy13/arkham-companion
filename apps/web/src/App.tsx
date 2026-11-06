@@ -36,7 +36,7 @@ export function AppRoutes({ store, catalog }: AppProps) {
   return (
     <Routes>
       <Route element={<Layout />}>
-        <Route index element={<HomeScreen store={store} />} />
+        <Route index element={<HomeScreen store={store} catalog={catalog} />} />
         <Route path="new" element={<NewGameScreen store={store} catalog={catalog} />} />
         <Route path="game/:id" element={<GameScreen store={store} catalog={catalog} />} />
         <Route path="campaign/:id" element={<CampaignScreen store={store} catalog={catalog} />} />

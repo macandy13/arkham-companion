@@ -881,6 +881,8 @@ export const appTexts = {
     otherChapter: 'Show Chapter {{n}} version',
   },
   home: {
+    lastPlayed: 'Last played',
+    team: 'Investigators',
     shelf: 'Your games',
     more: 'More for {{title}}',
     continue: 'Continue',

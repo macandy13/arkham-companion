@@ -885,6 +885,8 @@ export const appTexts = {
     otherChapter: 'Version aus Kapitel {{n}} zeigen',
   },
   home: {
+    lastPlayed: 'Zuletzt gespielt',
+    team: 'Ermittler',
     shelf: 'Deine Spiele',
     more: 'Mehr zu {{title}}',
     continue: 'Weiterspielen',

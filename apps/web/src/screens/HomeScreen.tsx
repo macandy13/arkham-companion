@@ -1,8 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { useStore } from 'zustand';
 import type { StoreApi } from 'zustand/vanilla';
+import { investigatorPictures } from '../catalog/investigatorPictures';
+import { useCatalog, type CatalogSource } from '../catalog/useCatalog';
 import type { AppState } from '../state/appStore';
 import { GameImportError } from '../storage/gameExport';
 import { CampaignCover } from './CampaignCover';
@@ -10,6 +12,7 @@ import { downloadGameExport } from './downloadFile';
 import { GameCover, untitledLabel } from './GameCover';
 import { HomeTitle } from './HomeTitle';
 import { shelfEntries } from './shelf';
+import type { PortraitImages } from './TeamPortraits';
 import '@fontsource/caveat/latin-500.css';
 import './home.css';
 
@@ -19,8 +22,21 @@ import './home.css';
  * game of one scenario, last played first (`shelfEntries`). It lies on the table rather than on a
  * page (MD.3b).
  */
-export function HomeScreen({ store }: { store: StoreApi<AppState> }) {
+export function HomeScreen({
+  store,
+  catalog,
+}: {
+  store: StoreApi<AppState>;
+  /** The card catalog, for the investigators' portraits on the covers. */
+  catalog: CatalogSource;
+}) {
   const { t } = useTranslation();
+  const catalogState = useCatalog(catalog);
+  const images: PortraitImages = useMemo(
+    () =>
+      catalogState.status === 'ready' ? investigatorPictures(catalogState.catalog) : new Map(),
+    [catalogState],
+  );
   const games = useStore(store, (s) => s.games);
   const campaigns = useStore(store, (s) => s.campaigns);
   const [importError, setImportError] = useState<string>();
@@ -76,13 +92,16 @@ export function HomeScreen({ store }: { store: StoreApi<AppState> }) {
         <p>{t('games.empty')}</p>
       ) : (
         <ul id="shelf" aria-label={t('home.shelf')}>
-          {shelfEntries(campaigns, games).map((entry) => {
+          {shelfEntries(campaigns, games).map((entry, index) => {
+            const lastPlayed = index === 0;
             if (entry.kind === 'campaign') {
               return (
                 <CampaignCover
                   key={entry.campaign.campaignId}
                   campaign={entry.campaign}
                   games={entry.games}
+                  images={images}
+                  lastPlayed={lastPlayed}
                 />
               );
             }
@@ -98,6 +117,8 @@ export function HomeScreen({ store }: { store: StoreApi<AppState> }) {
                 onDuplicate={() => void store.getState().duplicateGame(game.gameId, copyTitle)}
                 onExport={() => void downloadGameExport(store, game.gameId, game.title || untitled)}
                 onDelete={() => void store.getState().deleteGame(game.gameId)}
+                images={images}
+                lastPlayed={lastPlayed}
               />
             );
           })}

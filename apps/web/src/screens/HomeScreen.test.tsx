@@ -3,11 +3,34 @@ import 'fake-indexeddb/auto';
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
+import type { CardCatalog } from '@arkham/carddata';
 import { STATE_VERSION, campaignDefinitionId, investigatorCode, scenarioId } from '@arkham/engine';
 import { initI18n } from '../i18n';
 import { createAppStore } from '../state/appStore';
 import { IndexedDbStore } from '../storage/IndexedDbStore';
 import { HomeScreen } from './HomeScreen';
+
+/** A catalog that never loads, so the portraits keep their initials. */
+const catalogLoading = () => new Promise<CardCatalog>(() => undefined);
+
+/** A catalog with Roland Banks alone, without a card picture. */
+const rolandCatalog: CardCatalog = {
+  packs: [],
+  investigators: [
+    {
+      code: '01001',
+      name: 'Roland Banks',
+      factionCode: 'guardian',
+      health: 9,
+      sanity: 5,
+      skills: { willpower: 3, intellect: 3, combat: 4, agility: 2 },
+      packCode: 'core',
+      cyclePosition: 1,
+      parallel: false,
+      chapter: 1,
+    },
+  ],
+};
 
 let n = 0;
 async function renderHome(titles: string[]) {
@@ -16,7 +39,7 @@ async function renderHome(titles: string[]) {
   const store = createAppStore(gameStore);
   render(
     <MemoryRouter>
-      <HomeScreen store={store} />
+      <HomeScreen store={store} catalog={catalogLoading} />
     </MemoryRouter>,
   );
   return store;
@@ -108,7 +131,10 @@ describe('HomeScreen', () => {
       ]);
       render(
         <MemoryRouter>
-          <HomeScreen store={createAppStore(gameStore)} />
+          <HomeScreen
+            store={createAppStore(gameStore)}
+            catalog={() => Promise.resolve(rolandCatalog)}
+          />
         </MemoryRouter>,
       );
 
@@ -123,6 +149,81 @@ describe('HomeScreen', () => {
       );
     },
   );
+
+  it("shows a campaign's team as portraits from their card pictures", async () => {
+    const roland = { ...rolandCatalog.investigators[0]!, imageSrc: '/bundles/cards/01001.png' };
+    const gameStore = new IndexedDbStore(`home-test-${n++}`);
+    const campaignId = await gameStore.createCampaign({ title: 'Zealot – Roland' });
+    await gameStore.appendCampaignEvents(campaignId, [
+      {
+        type: 'CampaignStarted',
+        campaignId,
+        definitionId: campaignDefinitionId('night-of-the-zealot'),
+        difficulty: 'hard',
+        investigators: [
+          {
+            code: investigatorCode('01001'),
+            name: 'Roland Banks',
+            health: 9,
+            sanity: 5,
+            physicalTrauma: 0,
+            mentalTrauma: 0,
+            xpEarned: 0,
+            xpSpent: 0,
+            fate: 'alive',
+            earnedCards: [],
+          },
+        ],
+        chaosBag: ['0'],
+        scenarioIds: [scenarioId('the-gathering')],
+      },
+    ]);
+    render(
+      <MemoryRouter>
+        <HomeScreen
+          store={createAppStore(gameStore)}
+          catalog={() => Promise.resolve({ ...rolandCatalog, investigators: [roland] })}
+        />
+      </MemoryRouter>,
+    );
+
+    const team = await screen.findByRole('list', { name: 'Investigators' });
+
+    expect(within(team).getByText('Roland Banks')).toBeTruthy();
+    await vi.waitFor(() =>
+      expect(team.querySelector('img')?.getAttribute('src')).toBe(
+        'https://arkhamdb.com/bundles/cards/01001.png',
+      ),
+    );
+  });
+
+  it('ribbons the cover played last and makes its button the brass primary', async () => {
+    const gameStore = new IndexedDbStore(`home-test-${n++}`);
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(1_000);
+    await gameStore.createGame({ title: 'Played first' });
+    vi.setSystemTime(2_000);
+    await gameStore.createGame({ title: 'Played last' });
+    vi.useRealTimers();
+    render(
+      <MemoryRouter>
+        <HomeScreen store={createAppStore(gameStore)} catalog={catalogLoading} />
+      </MemoryRouter>,
+    );
+
+    const shelf = await screen.findByRole('list', { name: 'Your games' });
+    const [last, first] = within(shelf).getAllByRole('listitem');
+
+    expect(within(last!).getByText('Played last')).toBeTruthy();
+    expect(within(last!).getByText('Last played')).toBeTruthy();
+    expect(within(last!).getByRole('link', { name: 'Continue' }).hasAttribute('data-primary')).toBe(
+      true,
+    );
+    expect(within(first!).queryByText('Last played')).toBeNull();
+    expect(
+      within(first!).getByRole('link', { name: 'Continue' }).hasAttribute('data-primary'),
+    ).toBe(false);
+  });
 
   it('shows a game of one scenario on a cover with its round and a way back in', async () => {
     await renderHome(['Night']);
