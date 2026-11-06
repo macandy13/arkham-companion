@@ -1,13 +1,14 @@
 <!-- screencasts:start -->
 
-_Recorded from f455183 by the PR preview workflow; updated on every push that changes `apps/web`._
+_Recorded from 7b6210f by the PR preview workflow; updated on every push that changes `apps/web`._
 
-## Screencasts
+## Screenshots
 
-### a game is started, resumed, managed and backed up
+### a quick game's setup step: the scenario, the difficulty and what the app tells the players
 
-![a game is started, resumed, managed and backed up](https://raw.githubusercontent.com/macandy13/arkham-companion/gh-pages/pr-preview/pr-972/screencasts/a-game-is-started-resumed-managed-and-backed-up.gif?v=f455183)
-
-[Play with pause and speed controls](https://macandy13.github.io/arkham-companion/pr-preview/pr-972/screencasts/player.html?flow=a-game-is-started-resumed-managed-and-backed-up&v=f455183&speed=0.25)
+<table>
+<tr><th>Desktop</th><th>Phone</th></tr>
+<tr><td><img src="https://raw.githubusercontent.com/macandy13/arkham-companion/gh-pages/pr-preview/pr-972/screencasts/a-quick-game-s-setup-step-the-scenario-the-difficulty-and-what-the-app-tells-the-players-desktop.png?v=7b6210f" alt="Desktop" width="560"></td><td><img src="https://raw.githubusercontent.com/macandy13/arkham-companion/gh-pages/pr-preview/pr-972/screencasts/a-quick-game-s-setup-step-the-scenario-the-difficulty-and-what-the-app-tells-the-players-phone.png?v=7b6210f" alt="Phone" width="180"></td></tr>
+</table>
 
 <!-- screencasts:end -->
