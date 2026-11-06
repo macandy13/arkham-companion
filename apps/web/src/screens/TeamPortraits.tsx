@@ -1,6 +1,7 @@
 import type { CardImagePath } from '@arkham/engine';
 import { useTranslation } from 'react-i18next';
 import { InvestigatorArt } from '../investigators/InvestigatorArt';
+import '../investigators/investigators.css';
 
 /**
  * Where each investigator's card picture is, by investigator code, from the card catalog once it
@@ -11,7 +12,7 @@ export type PortraitImages = ReadonlyMap<string, CardImagePath>;
 /**
  * A cover's team as one row of round portraits (MD.3b): each investigator's art cut from their
  * card's picture, or their initial until it loads and for good when it fails. The names stay for
- * screen readers; the stylesheet hides them beside the faces.
+ * screen readers; the stylesheet hides them beside the faces. A game nobody sits at yet says so.
  */
 export function TeamPortraits({
   team,
@@ -21,6 +22,7 @@ export function TeamPortraits({
   readonly images: PortraitImages;
 }) {
   const { t } = useTranslation();
+  if (team.length === 0) return <p>{t('games.noInvestigators')}</p>;
   return (
     <ul aria-label={t('home.team')}>
       {team.map(({ code, name }) => (

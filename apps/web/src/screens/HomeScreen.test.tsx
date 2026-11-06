@@ -13,7 +13,7 @@ import { HomeScreen } from './HomeScreen';
 /** A catalog that never loads, so the portraits keep their initials. */
 const catalogLoading = () => new Promise<CardCatalog>(() => undefined);
 
-/** A catalog with Roland Banks and the picture of his card. */
+/** A catalog with Roland Banks alone, without a card picture. */
 const rolandCatalog: CardCatalog = {
   packs: [],
   investigators: [
@@ -28,7 +28,6 @@ const rolandCatalog: CardCatalog = {
       cyclePosition: 1,
       parallel: false,
       chapter: 1,
-      imageSrc: '/bundles/cards/01001.png',
     },
   ],
 };
@@ -152,6 +151,7 @@ describe('HomeScreen', () => {
   );
 
   it("shows a campaign's team as portraits from their card pictures", async () => {
+    const roland = { ...rolandCatalog.investigators[0]!, imageSrc: '/bundles/cards/01001.png' };
     const gameStore = new IndexedDbStore(`home-test-${n++}`);
     const campaignId = await gameStore.createCampaign({ title: 'Zealot – Roland' });
     await gameStore.appendCampaignEvents(campaignId, [
@@ -182,7 +182,7 @@ describe('HomeScreen', () => {
       <MemoryRouter>
         <HomeScreen
           store={createAppStore(gameStore)}
-          catalog={() => Promise.resolve(rolandCatalog)}
+          catalog={() => Promise.resolve({ ...rolandCatalog, investigators: [roland] })}
         />
       </MemoryRouter>,
     );

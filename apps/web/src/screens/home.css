@@ -184,7 +184,7 @@
   gap: var(--space-2);
 }
 
-/* The ways in and a cover's button are pills; the cover's button keeps to the outlined kind. */
+/* The ways in and a cover's button are pills. */
 #app > main > nav > :is(a, label),
 #shelf footer > a {
   display: inline-flex;
@@ -203,7 +203,7 @@
 
 /* The primary takes its brass from base.css; the others are outlined. */
 #app > main > nav > :is(a, label):not([data-primary]),
-#shelf footer > a {
+#shelf footer > a:not([data-primary]) {
   border-color: var(--color-border);
   color: var(--color-text);
 }

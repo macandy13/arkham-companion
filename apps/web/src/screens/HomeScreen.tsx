@@ -1,9 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { useStore } from 'zustand';
 import type { StoreApi } from 'zustand/vanilla';
-import { cardImagePath } from '@arkham/engine';
+import { investigatorPictures } from '../catalog/investigatorPictures';
 import { useCatalog, type CatalogSource } from '../catalog/useCatalog';
 import type { AppState } from '../state/appStore';
 import { GameImportError } from '../storage/gameExport';
@@ -32,12 +32,10 @@ export function HomeScreen({
 }) {
   const { t } = useTranslation();
   const catalogState = useCatalog(catalog);
-  const images: PortraitImages = new Map(
-    catalogState.status === 'ready'
-      ? catalogState.catalog.investigators.flatMap(({ code, imageSrc }) =>
-          imageSrc ? [[code, cardImagePath(imageSrc)] as const] : [],
-        )
-      : [],
+  const images: PortraitImages = useMemo(
+    () =>
+      catalogState.status === 'ready' ? investigatorPictures(catalogState.catalog) : new Map(),
+    [catalogState],
   );
   const games = useStore(store, (s) => s.games);
   const campaigns = useStore(store, (s) => s.campaigns);
