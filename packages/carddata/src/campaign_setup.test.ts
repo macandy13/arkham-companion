@@ -19,6 +19,12 @@ describe('campaignChaosBags', () => {
     });
   });
 
+  it('rejects a token the engine does not know', () => {
+    const campaign = campaignWithChoices([{ id: 'easy', tokens: ['fake_token'] }]);
+
+    expect(() => campaignChaosBags(campaign)).toThrow();
+  });
+
   it('leaves out a choice that is not a difficulty', () => {
     const campaign = campaignWithChoices([{ id: 'fake_mode', tokens: ['0'] }]);
 

@@ -16,7 +16,20 @@ const DIFFICULTIES: readonly GuideDifficulty[] = ['easy', 'standard', 'hard', 'e
  * A chaos token as the engine names it (`ChaosToken`): ArkhamCards writes the symbol tokens in
  * snake case (`elder_sign`), the engine in camel case (`elderSign`); numbers stay as they are.
  */
-export type GuideChaosToken = string;
+export type GuideChaosToken = (typeof GUIDE_CHAOS_TOKENS)[number];
+
+/**
+ * The engine's `ChaosToken`s, mirrored because carddata doesn't depend on the engine (like
+ * `keywords.ts`): a token a guide adds that the engine doesn't know fails the import.
+ */
+// prettier-ignore
+const GUIDE_CHAOS_TOKENS = [
+  '+1', '0', '-1', '-2', '-3', '-4', '-5', '-6', '-7', '-8',
+  'skull', 'cultist', 'tablet', 'elderThing', 'autoFail', 'elderSign',
+  'bless', 'curse', 'frost', 'blood',
+] as const;
+
+const GuideChaosTokenSchema = z.enum(GUIDE_CHAOS_TOKENS);
 
 /** A campaign's starting chaos bag per difficulty, from its difficulty choice (`campaignChaosBags`). */
 export type CampaignChaosBags = Partial<Record<GuideDifficulty, readonly GuideChaosToken[]>>;
@@ -97,7 +110,7 @@ const RawDifficultyChoiceSchema = z.object({
 const RawCampaignSchema = z.object({ steps: opt(z.array(z.object({ id: z.string() }).loose())) });
 
 /** ArkhamCards' names of the tokens whose engine name differs. */
-const TOKEN_NAMES: Readonly<Record<string, GuideChaosToken>> = {
+const TOKEN_NAMES: Readonly<Record<string, string>> = {
   auto_fail: 'autoFail',
   elder_sign: 'elderSign',
   elder_thing: 'elderThing',
@@ -108,7 +121,7 @@ function isDifficulty(id: string): id is GuideDifficulty {
 }
 
 function tokenName(token: string): GuideChaosToken {
-  return TOKEN_NAMES[token] ?? token;
+  return GuideChaosTokenSchema.parse(TOKEN_NAMES[token] ?? token);
 }
 
 /**
