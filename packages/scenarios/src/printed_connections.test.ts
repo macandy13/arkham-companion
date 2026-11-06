@@ -9,6 +9,7 @@ import {
   type LocationSide,
   type SetupStep,
 } from '@arkham/engine';
+import { assertNever } from '@arkham/util';
 import { describe, expect, it } from 'vitest';
 import { theDevourerBelowCards } from './the_devourer_below/cards';
 import { theDevourerBelow } from './the_devourer_below/scenario';
@@ -32,8 +33,18 @@ function mapsOf(steps: readonly SetupStep[]): AddMapStep[] {
         return mapsOf(step.then);
       case 'oneAtRandom':
         return step.options.flatMap(mapsOf);
-      default:
+      case 'setAside':
+      case 'buildEncounterDeck':
+      case 'shuffleIntoEncounterDeck':
+      case 'scenarioDeck':
+      case 'shuffle':
+      case 'placeTokens':
+      case 'spawn':
+      case 'moveInvestigators':
+      case 'addChaosTokens':
         return [];
+      default:
+        return assertNever(step);
     }
   });
 }
@@ -110,7 +121,7 @@ describe('the printed connection symbols of Night of the Zealot', () => {
     },
   );
 
-  it('connect the Ritual Site to the Main Path, as act 1 puts it into play', () => {
+  it('print the Ritual Site and the Main Path as connected to each other', () => {
     const mainPath = printedSymbols(
       cardStats(theDevourerBelowCards, cardCode('01149')),
       'revealed',
