@@ -395,3 +395,27 @@
   clip-path: inset(50%);
   white-space: nowrap;
 }
+
+/*
+ * The art band across a cover's top, edge to edge: the chapter's agenda art once it has loaded
+ * (`CoverArt`), plain paper until then and offline.
+ */
+#shelf > li > svg {
+  display: block;
+  width: calc(100% + 2 * var(--space-3));
+  height: var(--cover-art-height);
+  margin: calc(-1 * var(--space-3)) calc(-1 * var(--space-3)) var(--space-2);
+  border-bottom: var(--border-width) solid var(--color-paper-rim);
+  border-radius: var(--radius) var(--radius) 0 0;
+  background: var(--card-art-pattern), var(--color-paper-surface);
+}
+
+#shelf > li > svg:not([data-picture]) > image {
+  visibility: hidden;
+}
+
+@media (orientation: portrait) and (max-width: 40rem) {
+  #shelf > li > svg {
+    height: var(--cover-art-height-phone);
+  }
+}
