@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { opt } from './raw_schema';
 import { entersThreatArea, parseKeywords, type Keyword } from './keywords';
 
 /**
@@ -49,8 +50,6 @@ export interface CardDef {
   imageSrc?: string;
   backImageSrc?: string;
 }
-
-const opt = <T extends z.ZodTypeAny>(s: T) => s.nullish().transform((v) => v ?? undefined);
 
 /**
  * Raw ArkhamDB card shape (only the fields we read; the rest is ignored). zod checks it at runtime

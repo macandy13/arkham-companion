@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { opt } from './raw_schema';
 
 /**
  * Reads the campaign guide data of ArkhamCards (`zzorba/arkham-cards-data`): the setup steps of a
@@ -55,7 +56,7 @@ export interface LocationLayout {
   /** The guide's note under the diagram (HTML as the guide writes it), when it has one. */
   readonly note?: string;
   /** Diagram parts the import does not read (`arrows`, `annotations`, …), with their count. */
-  readonly skipped: Readonly<Record<string, number>>;
+  readonly skipped: Readonly<Partial<Record<SkippedPart, number>>>;
   /** Spacings the import does not know and read as a full step, e.g. `horizontal: tight`. */
   readonly unknownSpacing: readonly string[];
 }
@@ -72,7 +73,9 @@ export interface ScenarioLayouts {
 /** How far apart the guide's grid cells are, in card steps (see `LayoutPosition`). */
 const SPACING_STEPS: Readonly<Record<string, number>> = { normal: 1, half: 0.5 };
 
-/** Diagram parts of a `location_setup` step that the import does not read. */
+/** A diagram part of a `location_setup` step that the import does not read. */
+export type SkippedPart = (typeof SKIPPED_PARTS)[number];
+
 const SKIPPED_PARTS = [
   'arrows',
   'annotations',
@@ -83,8 +86,6 @@ const SKIPPED_PARTS = [
 
 /** A card code cell: five digits and an optional letter, then the side and a rotation. */
 const CARD_CELL = /^(\d{5}[a-z]?)(_back[a-z]?)?(_rotate(_left)?)?$/;
-
-const opt = <T extends z.ZodTypeAny>(s: T) => s.nullish().transform((v) => v ?? undefined);
 
 /** Raw `location_setup` step (only the fields read), checked because the data is external. */
 const RawLocationSetupSchema = z.object({
@@ -163,7 +164,9 @@ function layoutSlot(
   return { kind: 'named', key: cell, ...(name === undefined ? {} : { name }), at };
 }
 
-function skippedParts(step: z.infer<typeof RawLocationSetupSchema>): Record<string, number> {
+function skippedParts(
+  step: z.infer<typeof RawLocationSetupSchema>,
+): Partial<Record<SkippedPart, number>> {
   return Object.fromEntries(
     SKIPPED_PARTS.flatMap((part) => {
       const count = step[part]?.length ?? 0;

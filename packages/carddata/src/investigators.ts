@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { opt } from './raw_schema';
 import { chapterOfPack, type Chapter, type PackDef } from './packs';
 
 /** The investigator classes (ArkhamDB faction codes), in the order the picker's class chips show them. */
@@ -56,8 +57,6 @@ export interface InvestigatorDef {
   /** The same investigator in the other chapter, if the catalog has one. */
   otherChapterCode?: string;
 }
-
-const opt = <T extends z.ZodTypeAny>(s: T) => s.nullish().transform((v) => v ?? undefined);
 
 /** Raw ArkhamDB investigator shape, checked at runtime because the API is external. */
 const RawInvestigatorSchema = z.object({
