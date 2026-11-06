@@ -1,8 +1,9 @@
 import { ENEMY_PHASE_ATTACK_PROMPT } from './forced_attacks';
-import { withoutKey } from '@arkham/util';
+import { withoutFirst, withoutKey } from '@arkham/util';
 import { sameEdge } from './board';
 import type {
   CardFlipped,
+  ChaosBagChanged,
   CardMoved,
   ConnectionChanged,
   DeckShuffled,
@@ -92,6 +93,8 @@ export function apply(state: GameState, event: Event): GameState {
     }
     case 'TokensChanged':
       return applyTokensChanged(state, event);
+    case 'ChaosBagChanged':
+      return applyChaosBagChanged(state, event);
     case 'CardFlipped':
       return applyCardFlipped(state, event);
     case 'ConnectionChanged':
@@ -288,6 +291,16 @@ function updateCard(
   const card = state.cards[cardId];
   if (!card) return state;
   return { ...state, cards: { ...state.cards, [cardId]: update(card) } };
+}
+
+function applyChaosBagChanged(state: GameState, e: ChaosBagChanged): GameState {
+  const chaosBag =
+    e.change === 'add' ? [...state.chaosBag, e.token] : withoutFirst(state.chaosBag, e.token);
+  const chaosBagChanges =
+    e.lasts === 'campaign'
+      ? [...state.chaosBagChanges, { token: e.token, change: e.change }]
+      : state.chaosBagChanges;
+  return { ...state, chaosBag, chaosBagChanges };
 }
 
 function applyTokensChanged(state: GameState, e: TokensChanged): GameState {

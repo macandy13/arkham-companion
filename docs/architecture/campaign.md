@@ -48,7 +48,7 @@ Steps that read the ended game:
 - `when` picks its steps by a `GameCondition` (a card in play, set aside, in a scenario deck or in the victory display, the current agenda, or any of these)
 - and `recordNames` writes the names of the cards whose condition holds as a list record.
 
-Steps name their target (`each`, `lead`, `notResigned`, `resigned`) instead of investigators, so `campaign.proposeResolution` reads the ended game and turns them into campaign commands, followed by the trauma of each defeat:
+Steps name their target (`each`, `lead`, `notResigned`, `resigned`) instead of investigators, so `campaign.proposeResolution` reads the ended game and turns them into campaign commands. In a campaign game they are followed by an `AddChaosToken` or `RemoveChaosToken` for each chaos bag change a card made "permanently" during the scenario (the game's `ChangeChaosBag` with `lasts: 'campaign'`, kept in `GameState.chaosBagChanges`; a change for the scenario only stays out of the log), then by the trauma of each defeat:
 
 - 1 physical for damage,
 - 1 mental for horror,
