@@ -12,10 +12,12 @@
 - Physical trauma ≥ printed health means killed, and mental trauma ≥ printed sanity means insane.
   - That investigator can't be used again in the campaign, and the player picks a new one with a new deck (built with 0 experience) for the next scenario.
   - A parallel version counts as the same investigator, so it is out of the campaign with its original (unverified: the Rules Reference has no parallel entry, and the parallel investigators' inserts couldn't be read).
-  - The 2026 Core Set adds a third way out, devoured.
+  - The 2026 Core Set adds a third way out, devoured, treated like killed: out of the campaign, replaced by a new investigator with a 0-experience deck (unverified: no 2026 Core Set rules text on devoured could be found).
+  - Instead of choosing a new investigator, that player may leave the campaign between scenarios ([joining or leaving](https://arkhamdb.com/rules#Joining_or_Leaving_a_Campaign)); the killed or insane investigator still can't come back.
   - If no investigator is left to choose, the campaign is lost.
 - Players may drop out and back in between scenarios.
   - A leaving player's log entry stays so they can rejoin.
+  - A rejoining investigator returns with their log entry as it was: trauma, unspent experience and earned story cards (the Rules Reference keeps the entry for a rejoin, and unspent experience "may be spent at a later time during this campaign").
   - A joining player picks an investigator not used before in this campaign and starts with no experience and no trauma.
   - The rules don't cover one player swapping a living investigator for another.
 - At the end of a scenario, revealed locations in play with Victory X and no clues go to the victory display.

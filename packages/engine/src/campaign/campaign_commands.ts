@@ -153,7 +153,7 @@ export interface EarnCard {
  */
 export interface ReplaceInvestigator {
   readonly type: 'ReplaceInvestigator';
-  /** Code of the killed or insane team member. */
+  /** Code of the killed, insane or devoured team member. */
   readonly code: InvestigatorCode;
   /** The newcomer, looked up in the `CardDb` like the starting team. */
   readonly by: InvestigatorCode;

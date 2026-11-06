@@ -770,7 +770,7 @@ export const appTexts = {
   nextScenario: {
     replace: {
       heading: 'Replace investigators',
-      rule: 'A killed or insane investigator can’t return. Their player picks an investigator new to the campaign, with a new level 0 deck.',
+      rule: 'A killed, insane or devoured investigator can’t return. Their player picks an investigator new to the campaign, with a new level 0 deck.',
       killed: '{{name}} was killed.',
       insane: '{{name}} went insane.',
       devoured: '{{name}} was devoured.',

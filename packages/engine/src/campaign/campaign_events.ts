@@ -112,7 +112,7 @@ export interface CardEarned {
 }
 
 /**
- * A killed or insane team member left the team for a new investigator in
+ * A killed, insane or devoured team member left the team for a new investigator in
  * the same seat. Produced by `ReplaceInvestigator`.
  */
 export interface InvestigatorReplaced {

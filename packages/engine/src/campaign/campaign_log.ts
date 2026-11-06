@@ -139,7 +139,7 @@ export interface CampaignLog {
   /** The current team in seat order; a replaced investigator moves to `formerInvestigators`. */
   readonly investigators: readonly CampaignInvestigator[];
   /**
-   * Investigators no longer on the team: killed or insane ones, who never
+   * Investigators no longer on the team: killed, insane or devoured ones, who never
    * come back, and living ones whose player left the campaign, who may rejoin
    * between scenarios (Rules Reference, "Joining or Leaving a Campaign").
    * Kept because the log still lists them and a joining player must pick an

@@ -73,6 +73,8 @@ export type ResolutionStep =
       readonly choose?: true;
     }
   | { readonly kind: 'markInsane'; readonly to: ResolutionTarget }
+  /** "… is devoured" (2026 Core Set): out of the campaign like a killed investigator. */
+  | { readonly kind: 'markDevoured'; readonly to: ResolutionTarget }
   /** "The investigators win!": the campaign ends with `result` (`EndCampaign`). */
   | { readonly kind: 'endCampaign'; readonly result: CampaignResult }
   /**
@@ -287,6 +289,8 @@ function proposeStep(ctx: EngineContext, game: GameState, step: ResolutionStep):
       return targetCodes(game, step.to).map((code) => command({ type: 'MarkKilled', code }));
     case 'markInsane':
       return targetCodes(game, step.to).map((code) => command({ type: 'MarkInsane', code }));
+    case 'markDevoured':
+      return targetCodes(game, step.to).map((code) => command({ type: 'MarkDevoured', code }));
     case 'earnCard': {
       const earns = targetCodes(game, step.to).map((code): CampaignCommand => ({
         type: 'EarnCard',

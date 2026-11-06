@@ -1,6 +1,7 @@
 import type { InterludeId, InvestigatorCode, ScenarioId } from '../ids';
 import type { ChaosToken } from '../state';
 import type { InvestigatorFate, StoryCondition, StoryKind } from './campaign_log';
+import { MAX_TEAM_SIZE } from './campaign_invariants';
 
 /**
  * Structured reason why `handleCommand` refused a campaign command; the
@@ -118,7 +119,7 @@ function describeCampaignRejection(r: CampaignRejection): string {
     case 'lastInvestigator':
       return `investigator ${r.investigatorCode} is the last one on the team`;
     case 'teamFull':
-      return 'the team already has 4 investigators';
+      return `the team already has ${MAX_TEAM_SIZE} investigators`;
     case 'invalidAmount':
       return `amount must be a positive integer, got ${r.amount}`;
     case 'notEnoughXp':

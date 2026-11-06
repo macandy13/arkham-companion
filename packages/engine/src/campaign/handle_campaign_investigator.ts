@@ -86,7 +86,7 @@ export function handleEarnCard(log: CampaignLog, command: EarnCard): CampaignEve
   return [{ type: 'CardEarned', code: command.code, card: command.card }];
 }
 
-/** `ReplaceInvestigator`: a newcomer takes the seat of a killed or insane team member. */
+/** `ReplaceInvestigator`: a newcomer takes the seat of a killed, insane or devoured team member. */
 export function handleReplaceInvestigator(
   ctx: CampaignContext,
   log: CampaignLog,
@@ -98,7 +98,7 @@ export function handleReplaceInvestigator(
       code: 'investigatorNotEliminated',
       investigatorCode: command.code,
     });
-  // A campaign has one copy of each investigator, and a killed or insane one may not return.
+  // A campaign has one copy of each investigator, and an eliminated one may not return.
   const everyone = [...log.investigators, ...log.formerInvestigators];
   if (everyone.some((inv) => inv.code === command.by))
     throw new CampaignCommandRejected({

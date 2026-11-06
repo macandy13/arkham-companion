@@ -773,7 +773,7 @@ export const appTexts = {
   nextScenario: {
     replace: {
       heading: 'Ermittler ersetzen',
-      rule: 'Ein getöteter oder wahnsinniger Ermittler kehrt nicht zurück. Sein Spieler wählt einen Ermittler, der neu in der Kampagne ist, mit einem neuen Deck der Stufe 0.',
+      rule: 'Ein getöteter, wahnsinniger oder verschlungener Ermittler kehrt nicht zurück. Sein Spieler wählt einen Ermittler, der neu in der Kampagne ist, mit einem neuen Deck der Stufe 0.',
       killed: '{{name}} wurde getötet.',
       insane: '{{name}} wurde wahnsinnig.',
       devoured: '{{name}} wurde verschlungen.',

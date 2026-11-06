@@ -6,14 +6,14 @@ import type {
   ReplaceInvestigator,
 } from '@arkham/engine';
 
-/** The team members the players must replace before the next scenario: killed or insane ones. */
+/** The team members the players must replace before the next scenario: killed, insane or devoured ones. */
 export function eliminatedMembers(log: CampaignLog): CampaignInvestigator[] {
   return log.investigators.filter(({ fate }) => fate !== 'alive');
 }
 
 /**
  * The catalog's investigators who may still replace `code`: nobody who is or was in the campaign,
- * as a killed or insane investigator may not return, and nobody already chosen for another seat.
+ * as an eliminated investigator may not return, and nobody already chosen for another seat.
  * A parallel version is the same investigator (`parallelOfCode`), so it is out with its original.
  */
 export function replacementCandidates(
