@@ -10,10 +10,12 @@ import { findScenario } from '../scenarios/scenarioCatalog';
  * or for a scenario without a picture, the band stays plain paper. Decoration only.
  */
 export function CoverArt({ scenarioId }: { readonly scenarioId: ScenarioId | undefined }) {
-  const scenario = scenarioId && findScenario(scenarioId);
-  const agenda = scenario && scenario.definition.agendaDeck[0];
-  const imageSrc = agenda && scenario.cards.get(agenda)?.imageSrc;
-  const picture = useCardPicture(imageSrc || undefined, 'landscape');
+  const scenario = scenarioId ? findScenario(scenarioId) : undefined;
+  const agenda = scenario?.definition.agendaDeck[0];
+  const picture = useCardPicture(
+    agenda ? scenario?.cards.get(agenda)?.imageSrc : undefined,
+    'landscape',
+  );
   return (
     <svg
       viewBox={artViewBox(AGENDA_ART, LANDSCAPE_SCAN)}

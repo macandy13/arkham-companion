@@ -8,7 +8,7 @@ import {
   gameId,
   scenarioId,
 } from '@arkham/engine';
-import { campaignStanding, shelfEntries } from './shelf';
+import { campaignArtScenario, campaignStanding, shelfEntries } from './shelf';
 
 /** A saved game named `id`, last changed at `updatedAt`, of `campaign` when given, playing `scenario`. */
 function game(
@@ -129,5 +129,36 @@ describe('campaignStanding', () => {
     },
   ])('reads $case', ({ log, games, standing }) => {
     expect(campaignStanding(log, games, scenarios)).toEqual(standing);
+  });
+});
+
+describe('campaignArtScenario', () => {
+  const scenarios = [scenarioId('the-gathering'), scenarioId('the-midnight-masks')];
+
+  it.each([
+    {
+      case: 'the chapter under way',
+      log: campaign('zealot', 1, { position: 1 }),
+      standing: {
+        kind: 'setUp',
+        chapter: 2,
+        scenarioId: scenarioId('the-midnight-masks'),
+      } as const,
+      art: 'the-midnight-masks',
+    },
+    {
+      case: 'the last chapter once all are played',
+      log: campaign('zealot', 1, { position: 2 }),
+      standing: { kind: 'ending' } as const,
+      art: 'the-midnight-masks',
+    },
+    {
+      case: 'the chapter a lost campaign ended in',
+      log: campaign('zealot', 1, { position: 1, result: 'lost' }),
+      standing: { kind: 'over', result: 'lost' } as const,
+      art: 'the-gathering',
+    },
+  ])('shows $case', ({ log, standing, art }) => {
+    expect(campaignArtScenario(log, standing, scenarios)).toBe(art);
   });
 });

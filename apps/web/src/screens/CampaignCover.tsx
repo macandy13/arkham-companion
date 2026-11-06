@@ -4,7 +4,7 @@ import type { CampaignSummary, GameSummary } from '@arkham/engine';
 import { findCampaign, findScenario } from '../scenarios/scenarioCatalog';
 import { CoverArt } from './CoverArt';
 import { CoverMenu } from './CoverMenu';
-import { campaignStanding } from './shelf';
+import { campaignArtScenario, campaignStanding } from './shelf';
 import { TeamPortraits, type PortraitImages } from './TeamPortraits';
 
 /**
@@ -34,11 +34,7 @@ export function CampaignCover({
   const standing = campaignStanding(campaign, games, entry?.definition.scenarios ?? []);
   const log = `/campaign/${campaign.campaignId}`;
   const primary = lastPlayed || undefined;
-  // The chapter at hand gives the art; a campaign past its chapters shows its last one's.
-  const artScenario =
-    standing.kind === 'playing' || standing.kind === 'setUp'
-      ? standing.scenarioId
-      : entry?.definition.scenarios.at(-1);
+  const artScenario = campaignArtScenario(campaign, standing, entry?.definition.scenarios ?? []);
   const scenarioName = (id: GameSummary['scenarioId']) => {
     const scenario = findScenario(id);
     return scenario ? t(scenario.nameKey) : id;
