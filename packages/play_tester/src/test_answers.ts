@@ -15,13 +15,23 @@ const UNKNOWN_TOKEN_RANGE = 2;
 
 /**
  * Whether the bot answers `decision` by drawing a chaos token: a skill test of one investigator,
- * whose skill the engine knows (`suggestSkillTest`), with tokens in the bag. A test decided by the
- * lead or the group has no suggestion and is answered like any other decision.
+ * whose skill the engine knows (`suggestSkillTest`), with tokens in the bag, and the only open test
+ * of that investigator, since `resolveTest` names the test by who takes it. Any other test (one
+ * decided by the lead or the group, a second one of the same investigator) is answered like any
+ * other decision.
  */
 export function answersByDraw(table: PlayTable, decision: Decision): boolean {
+  const { decider } = decision;
   return (
+    decider.kind === 'investigator' &&
     table.state.chaosBag.length > 0 &&
-    suggestSkillTest(table.ctx, table.state, decision) !== undefined
+    suggestSkillTest(table.ctx, table.state, decision) !== undefined &&
+    table.state.pending.filter(
+      (pending) =>
+        pending.kind === 'skillTestResult' &&
+        pending.decider.kind === 'investigator' &&
+        pending.decider.investigatorId === decider.investigatorId,
+    ).length === 1
   );
 }
 

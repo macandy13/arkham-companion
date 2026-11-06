@@ -65,6 +65,20 @@ describe('judging one step', () => {
     expect(outcome).toMatchObject({ kind: 'failed', failed: { check: 'refusal' } });
   });
 
+  it('fails the liveness check when an answer to an open test is refused', () => {
+    const table = PlayTable.start(game);
+    table.investigate(alice, { result: 'open' });
+
+    const outcome = checkedStep(table, {
+      verb: 'resolveTest',
+      investigator: cardName('alice'),
+      token: '-1',
+      result: { failedBy: -1 },
+    });
+
+    expect(outcome).toMatchObject({ kind: 'failed', failed: { check: 'liveness' } });
+  });
+
   it('fails the crash check for any other error, with the board before the step', () => {
     const table = PlayTable.start(game);
     // No bot offers a verb the table lacks; this one stands in for a bug that throws.

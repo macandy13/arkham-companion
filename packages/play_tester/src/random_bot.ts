@@ -49,9 +49,10 @@ export function randomStep(table: PlayTable, random: SeededRandom): Step {
 
 /**
  * Every step the board offers now, as players at the table would see them. While a decision is
- * open, only its options (but for a test the bot answers by a draw, `answersByDraw`) and undo, since the engine waits for the answer. Otherwise "Next", undo,
- * the attacks due, the investigation turns to start, the turn's actions, the draws a card may ask
- * of anyone, and the corrections. Never empty: a decision has options, and "Next" is always there.
+ * open, only the options (but for a test the bot answers by a draw, `answersByDraw`) and undo,
+ * since the engine waits for the answer. Otherwise "Next", undo, the attacks due, the
+ * investigation turns to start, the turn's actions, the draws a card may ask of anyone, and the
+ * corrections. Never empty: a decision has options, and "Next" is always there.
  */
 export function offeredSteps(table: PlayTable): Step[] {
   const { board } = table;

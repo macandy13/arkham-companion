@@ -69,6 +69,18 @@ describe('the steps the random bot is offered', () => {
     ]);
   });
 
+  it('answers an open test by a token drawn from the bag, and offers only undo besides', () => {
+    const table = PlayTable.start(game.withChaosBag(['+1']).withTurnOf(alice));
+    table.investigate(alice, { result: 'open' });
+
+    expect(randomStep(table, new SeededRandom(7))).toMatchObject({
+      verb: 'resolveTest',
+      investigator: 'alice',
+      token: '+1',
+    });
+    expect(offeredSteps(table)).toEqual([{ verb: 'undo' }]);
+  });
+
   it('picks the same steps from the same seed', () => {
     const table = PlayTable.start(game.withTurnOf(alice));
     const fivePicks = (random: SeededRandom) => range(5).map(() => randomStep(table, random));
