@@ -1,6 +1,7 @@
 import type { InterludeId, InvestigatorCode, ScenarioId } from '../ids';
 import type { ChaosToken } from '../state';
 import type { InvestigatorFate, StoryCondition, StoryKind } from './campaign_log';
+import { MAX_TEAM_SIZE } from './campaign_invariants';
 
 /**
  * Structured reason why `handleCommand` refused a campaign command; the
@@ -30,8 +31,12 @@ export type CampaignRejection =
   | { code: 'unknownInvestigator'; investigatorCode: InvestigatorCode }
   /** A joining investigator whose code is not an investigator card in the `CardDb`. */
   | { code: 'unknownInvestigatorCard'; investigatorCode: InvestigatorCode }
-  /** The investigator is killed or insane and can no longer take part. */
+  /** The investigator is killed, insane or devoured and can no longer take part. */
   | { code: 'investigatorEliminated'; investigatorCode: InvestigatorCode; fate: InvestigatorFate }
+  /** `LeaveCampaign` for the only team member: a campaign needs a player. */
+  | { code: 'lastInvestigator'; investigatorCode: InvestigatorCode }
+  /** `JoinCampaign` with `MAX_TEAM_SIZE` investigators on the team already. */
+  | { code: 'teamFull' }
   /** `ReplaceInvestigator` for an investigator who is still alive. */
   | { code: 'investigatorNotEliminated'; investigatorCode: InvestigatorCode }
   /** XP or trauma amount that is not a positive integer. */
@@ -110,7 +115,11 @@ function describeCampaignRejection(r: CampaignRejection): string {
     case 'investigatorEliminated':
       return `investigator ${r.investigatorCode} is ${r.fate}`;
     case 'investigatorNotEliminated':
-      return `investigator ${r.investigatorCode} is neither killed nor insane`;
+      return `investigator ${r.investigatorCode} is still alive`;
+    case 'lastInvestigator':
+      return `investigator ${r.investigatorCode} is the last one on the team`;
+    case 'teamFull':
+      return `the team already has ${MAX_TEAM_SIZE} investigators`;
     case 'invalidAmount':
       return `amount must be a positive integer, got ${r.amount}`;
     case 'notEnoughXp':

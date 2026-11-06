@@ -14,6 +14,8 @@ describe('CampaignCommandRejected', () => {
     { code: 'unknownInvestigatorCard', investigatorCode: roland.code },
     { code: 'investigatorEliminated', investigatorCode: roland.code, fate: 'killed' },
     { code: 'investigatorNotEliminated', investigatorCode: roland.code },
+    { code: 'lastInvestigator', investigatorCode: roland.code },
+    { code: 'teamFull' },
     { code: 'invalidAmount', amount: 0 },
     { code: 'notEnoughXp', investigatorCode: roland.code, available: 1, requested: 2 },
     { code: 'invalidStoryKey', key: ' ' },

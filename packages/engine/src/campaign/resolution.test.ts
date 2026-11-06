@@ -244,6 +244,30 @@ describe('proposeResolution', () => {
     expect(proposal).toEqual([]);
   });
 
+  it('devours the lead and proposes no experience for them after it', () => {
+    const resolutions: ScenarioResolutions = {
+      byId: {
+        [r1]: [
+          { kind: 'markDevoured', to: 'lead' },
+          { kind: 'awardXp', to: 'each', bonus: 2, victoryDisplay: false },
+        ],
+      },
+      none: [],
+    };
+    const { context, state } = table.start();
+
+    const proposal = campaign.proposeResolution(
+      context,
+      stateAfter(context, state, endWith(r1)),
+      resolutions,
+    );
+
+    expect(proposal).toEqual([
+      { kind: 'command', command: { type: 'MarkDevoured', code: aliceCode } },
+      { kind: 'command', command: { type: 'AwardXp', code: bobCode, amount: 2 } },
+    ]);
+  });
+
   it('kills only the investigators who did not resign', () => {
     const resolutions: ScenarioResolutions = {
       byId: { [r3]: [{ kind: 'markKilled', to: 'notResigned' }] },

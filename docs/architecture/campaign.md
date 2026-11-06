@@ -64,7 +64,9 @@ Both read the resolution the game ended with (`gameOutcome`) unless the players 
 Each campaign event has a cause beside it (`CampaignExecuteResult.causes`, M1C.2), the counterpart of the game's `ChangeCause`: the resolution (`{ kind: 'resolution', scenarioId, outcome }`) for everything `applyResolution` writes, the defeats' trauma included, and the players for every other command. [`campaignNotices`](../../packages/engine/src/campaign/campaign_notices.ts) groups the resolution's entries by `CampaignNoticeKind` (chaos bag, XP, trauma, fate, story, cards, team, scenario) for the screens.
 
 The last scenario's `endCampaign` step proposes `EndCampaign`, which sets `CampaignLog.result` (`won`, `lost`, or `survived` for an ending that is neither); a log without a result is still running.
-A killed or insane member keeps their seat until `ReplaceInvestigator` puts a newcomer in it, before the next scenario; when no investigator is left to choose, the players end the campaign as lost with `EndCampaign`.
+A killed, insane or devoured member (`InvestigatorFate`; devoured is the 2026 Core Set's, `MarkDevoured`) keeps their seat until `ReplaceInvestigator` puts a newcomer in it, before the next scenario; when no investigator is left to choose, the players end the campaign as lost with `EndCampaign`.
+
+Between scenarios a player may leave and another join (Rules Reference, "Joining or Leaving a Campaign"). `LeaveCampaign` moves a team member to `formerInvestigators` with their trauma, XP and story cards (the last one may not leave). `JoinCampaign` seats an investigator last: one the campaign hasn't had starts fresh, and a former one who left alive returns with their entry; a full team, a current member and an eliminated former one are refused.
 
 ## Interludes
 

@@ -34,7 +34,7 @@ export type Rejection =
   | { code: 'notNextCampaignScenario'; scenarioId: ScenarioId; next: ScenarioId | undefined }
   /** A campaign setup seats an investigator who is not on the log's team. */
   | { code: 'notOnCampaignTeam'; investigatorCode: InvestigatorCode }
-  /** A campaign setup seats a killed or insane investigator, who must be replaced first. */
+  /** A campaign setup seats a killed, insane or devoured investigator, who must be replaced first. */
   | {
       code: 'investigatorNeedsReplacement';
       investigatorCode: InvestigatorCode;

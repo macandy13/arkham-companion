@@ -34,6 +34,8 @@ export type CampaignEvent =
   | InvestigatorFateChanged
   | CardEarned
   | InvestigatorReplaced
+  | InvestigatorLeft
+  | InvestigatorJoined
   | ScenarioPlayed
   | ScenarioPositionChanged
   | InterludePlayed
@@ -93,7 +95,7 @@ export interface TraumaChanged {
 }
 
 /**
- * A team member's fate changed. Produced by `MarkKilled`, `MarkInsane`,
+ * A team member's fate changed. Produced by `MarkKilled`, `MarkInsane`, `MarkDevoured`,
  * `AddTrauma` reaching the limit and `AdjustCampaign` `fate`.
  */
 export interface InvestigatorFateChanged {
@@ -110,7 +112,7 @@ export interface CardEarned {
 }
 
 /**
- * A killed or insane team member left the team for a new investigator in
+ * A killed, insane or devoured team member left the team for a new investigator in
  * the same seat. Produced by `ReplaceInvestigator`.
  */
 export interface InvestigatorReplaced {
@@ -119,6 +121,21 @@ export interface InvestigatorReplaced {
   readonly code: InvestigatorCode;
   /** The newcomer in their starting state. */
   readonly by: CampaignInvestigator;
+}
+
+/** A team member moved to `formerInvestigators`, their seat freed. Produced by `LeaveCampaign`. */
+export interface InvestigatorLeft {
+  readonly type: 'InvestigatorLeft';
+  readonly code: InvestigatorCode;
+}
+
+/**
+ * An investigator took the last seat of the team: a newcomer in their starting state, or a former
+ * one, who leaves `formerInvestigators`, as they left. Produced by `JoinCampaign`.
+ */
+export interface InvestigatorJoined {
+  readonly type: 'InvestigatorJoined';
+  readonly investigator: CampaignInvestigator;
 }
 
 /** A scenario was resolved and joins `CampaignLog.playedScenarios`. Produced by `AdvanceScenario`. */

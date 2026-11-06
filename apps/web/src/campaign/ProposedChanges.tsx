@@ -117,8 +117,11 @@ function commandGroup(command: CampaignCommand): ChangeGroup {
     case 'AddTrauma':
     case 'MarkKilled':
     case 'MarkInsane':
+    case 'MarkDevoured':
     case 'EarnCard':
     case 'ReplaceInvestigator':
+    case 'LeaveCampaign':
+    case 'JoinCampaign':
       return 'investigators';
     default:
       return assertNever(command);
@@ -175,6 +178,8 @@ export function useDescribeCommand(
         return t('resolution.killed', { name: nameOf(command.code) });
       case 'MarkInsane':
         return t('resolution.insane', { name: nameOf(command.code) });
+      case 'MarkDevoured':
+        return t('resolution.devoured', { name: nameOf(command.code) });
       case 'EarnCard':
         return t('resolution.earnCard', {
           name: nameOf(command.code),
@@ -189,6 +194,8 @@ export function useDescribeCommand(
       case 'StartCampaign':
       case 'SpendXp':
       case 'ReplaceInvestigator':
+      case 'LeaveCampaign':
+      case 'JoinCampaign':
       case 'AdvanceScenario':
       case 'CompleteInterlude':
       case 'AdjustCampaign':

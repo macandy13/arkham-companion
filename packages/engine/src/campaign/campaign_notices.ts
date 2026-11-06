@@ -103,6 +103,8 @@ export function campaignNoticeKindOf(event: CampaignEvent): CampaignNoticeKind |
     case 'CardEarned':
       return 'cards';
     case 'InvestigatorReplaced':
+    case 'InvestigatorLeft':
+    case 'InvestigatorJoined':
       return 'team';
     case 'ScenarioPlayed':
     case 'ScenarioPositionChanged':

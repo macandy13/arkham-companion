@@ -43,6 +43,23 @@ export function applyEvent(log: CampaignLog, event: CampaignEvent): CampaignLog 
       }));
     case 'InvestigatorReplaced':
       return applyInvestigatorReplaced(log, event);
+    case 'InvestigatorLeft':
+      return {
+        ...log,
+        investigators: log.investigators.filter((each) => each.code !== event.code),
+        formerInvestigators: [
+          ...log.formerInvestigators,
+          ...log.investigators.filter((each) => each.code === event.code),
+        ],
+      };
+    case 'InvestigatorJoined':
+      return {
+        ...log,
+        investigators: [...log.investigators, event.investigator],
+        formerInvestigators: log.formerInvestigators.filter(
+          (each) => each.code !== event.investigator.code,
+        ),
+      };
     case 'ScenarioPlayed':
       return {
         ...log,

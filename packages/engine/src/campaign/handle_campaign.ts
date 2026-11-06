@@ -18,6 +18,8 @@ import {
   handleAwardXp,
   handleEarnCard,
   handleMarkFate,
+  handleJoinCampaign,
+  handleLeaveCampaign,
   handleReplaceInvestigator,
   handleSpendXp,
   newCampaignInvestigator,
@@ -64,10 +66,16 @@ export function handleCommand(
       return handleMarkFate(log, command.code, 'killed');
     case 'MarkInsane':
       return handleMarkFate(log, command.code, 'insane');
+    case 'MarkDevoured':
+      return handleMarkFate(log, command.code, 'devoured');
     case 'EarnCard':
       return handleEarnCard(log, command);
     case 'ReplaceInvestigator':
       return handleReplaceInvestigator(ctx, log, command);
+    case 'LeaveCampaign':
+      return handleLeaveCampaign(log, command);
+    case 'JoinCampaign':
+      return handleJoinCampaign(ctx, log, command);
     case 'AdvanceScenario':
       return handleAdvanceScenario(log, command);
     case 'CompleteInterlude':

@@ -691,7 +691,7 @@ export const appTexts = {
     mental: 'Seelisch',
     traumaCount: '{{count}} Trauma',
     earnedCards: 'Verd. Storyvorteile / Schwächen',
-    fate: { killed: 'getötet', insane: 'wahnsinnig' },
+    fate: { killed: 'getötet', insane: 'wahnsinnig', devoured: 'verschlungen' },
     scenarios: 'Szenarien',
     noResolution: 'keine Auflösung',
     resolution: 'A{{n}}',
@@ -756,6 +756,7 @@ export const appTexts = {
     },
     killed: '{{name}} ist getötet',
     insane: '{{name}} ist wahnsinnig',
+    devoured: '{{name}} ist verschlungen',
     earnCard: '{{name}} erhält {{card}}',
     addToken: 'Einen Marker {{token}} hinzufügen',
     removeToken: 'Einen Marker {{token}} entfernen',
@@ -772,9 +773,10 @@ export const appTexts = {
   nextScenario: {
     replace: {
       heading: 'Ermittler ersetzen',
-      rule: 'Ein getöteter oder wahnsinniger Ermittler kehrt nicht zurück. Sein Spieler wählt einen Ermittler, der neu in der Kampagne ist, mit einem neuen Deck der Stufe 0.',
+      rule: 'Ein getöteter, wahnsinniger oder verschlungener Ermittler kehrt nicht zurück. Sein Spieler wählt einen Ermittler, der neu in der Kampagne ist, mit einem neuen Deck der Stufe 0.',
       killed: '{{name}} wurde getötet.',
       insane: '{{name}} wurde wahnsinnig.',
+      devoured: '{{name}} wurde verschlungen.',
       by: '{{name}} nimmt den Platz ein.',
       pick: 'Ersatz für {{name}} wählen',
       change: 'Einen anderen wählen',
