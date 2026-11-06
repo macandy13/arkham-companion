@@ -4,6 +4,7 @@ import type {
   BoardView,
   CampaignCommand,
   CampaignDefinition,
+  CampaignDefinitionId,
   CampaignExecuteResult,
   CampaignId,
   CampaignLog,
@@ -15,6 +16,7 @@ import type {
   GameState,
   GameStore,
   GameSummary,
+  InterludeDefinition,
   InvestigatorSeat,
   LoggedEvent,
   ProposedChange,
@@ -37,7 +39,12 @@ import {
 import { gameActions, type GameActions } from './gameActions';
 import { GameSession, startGame, type PlayStep, type SkippedEffect } from './gameSession';
 import type { DrawnCard } from '../encounter/drawnCards';
-import { findScenario, type ScenarioEntry } from '../scenarios/scenarioCatalog';
+import {
+  findCampaign,
+  findScenario,
+  type CampaignEntry,
+  type ScenarioEntry,
+} from '../scenarios/scenarioCatalog';
 import { parseGameExport, serialiseGameExport } from '../storage/gameExport';
 import { seatsFor } from '../wizard/seating';
 
@@ -107,6 +114,10 @@ export interface OpenCampaign {
   endedAt?: number;
   /** The campaign's games, most recently played first. */
   games: GameSummary[];
+  /** The interlude due before the next scenario (`campaign.findDueInterlude`), if any. */
+  interlude?: InterludeDefinition;
+  /** `CampaignEntry.storyKey` of its campaign, which names its records and interludes. */
+  storyKey?: string;
 }
 
 /**
@@ -218,6 +229,12 @@ function logSourceOf(played: GameSession): GameLogSource {
 /** Looks a scenario up by id; `findScenario` in the app, a stub in tests. */
 export type ScenarioLookup = (id: ScenarioId) => ScenarioEntry | undefined;
 
+/** Looks a campaign up by its definition's id; `findCampaign` in the app, a stub in tests. */
+export type CampaignLookup = (id: CampaignDefinitionId) => CampaignEntry | undefined;
+
+/** What `AppState.writtenResolution` wrote into the campaign log: a resolution or an interlude. */
+export type WrittenKind = 'resolution' | 'interlude';
+
 /** UI-facing state: the persisted game and campaign lists plus the currently open game. */
 export interface AppState {
   games: GameSummary[];
@@ -227,11 +244,16 @@ export interface AppState {
   /** Open campaign, if any; `null` once `openCampaign` found no such campaign. */
   campaign?: OpenCampaign | null;
   /**
-   * The resolution `writeResolution` wrote last, which the campaign screen offers to take back
-   * (`undoResolution`) until the players dismiss it. `seq` is the campaign log's last event after
-   * the write, so an undo never takes back a later change instead.
+   * The resolution `writeResolution` or the interlude `writeInterlude` wrote last (`kind`), which
+   * the campaign screen offers to take back (`undoResolution`) until the players dismiss it. `seq`
+   * is the campaign log's last event after the write, so an undo never takes back a later change
+   * instead.
    */
-  writtenResolution?: { readonly campaignId: CampaignId; readonly seq: number };
+  writtenResolution?: {
+    readonly campaignId: CampaignId;
+    readonly seq: number;
+    readonly kind: WrittenKind;
+  };
   /** Reloads the game and campaign lists from the `GameStore`. */
   refresh(): Promise<void>;
   /** Creates an empty game, reloads the list and opens it. */
@@ -274,6 +296,13 @@ export interface AppState {
    * rejects for a game without a pending resolution of a campaign.
    */
   writeResolution(outcome: ScenarioOutcome, confirmed: readonly CampaignCommand[]): Promise<void>;
+  /**
+   * Writes the open campaign's due interlude (`campaign.interlude`) into its log as one undo step
+   * (`campaign.applyInterlude`), `confirmed` the commands the players kept of its changes, and
+   * reloads the campaign, which then has no interlude due. Rejects with `CampaignCommandRejected`
+   * and writes nothing if one of them is refused, and rejects without an interlude due.
+   */
+  writeInterlude(confirmed: readonly CampaignCommand[]): Promise<void>;
   /**
    * Takes `writtenResolution` back out of its campaign log (`GameStore.undoLastCampaign`), so its
    * game proposes the resolution again. Rejects with `SeqConflictError` and changes nothing if the
@@ -382,6 +411,7 @@ function pendingResolution(
 export function createAppStore(
   gameStore: GameStore,
   scenarios: ScenarioLookup = findScenario,
+  campaigns: CampaignLookup = findCampaign,
 ): StoreApi<AppState> {
   return createStore<AppState>((set, get) => {
     // Each step must see the state its predecessor left, so they run strictly one at a time.
@@ -445,6 +475,8 @@ export function createAppStore(
       }
       const games = (await gameStore.listGames()).filter((g) => g.campaignId === campaignId);
       const { title, endedAt } = loaded.summary;
+      const entry = campaigns(loaded.log.definitionId);
+      const interlude = entry && campaign.findDueInterlude(entry.definition, loaded.log);
       set({
         campaign: {
           campaignId,
@@ -452,6 +484,8 @@ export function createAppStore(
           log: loaded.log,
           games,
           ...(endedAt !== undefined ? { endedAt } : {}),
+          ...(interlude ? { interlude } : {}),
+          ...(entry ? { storyKey: entry.storyKey } : {}),
         },
       });
     }
@@ -642,8 +676,36 @@ export function createAppStore(
           );
           campaignLog = log;
           const seq = stored.at(-1)?.seq ?? loaded.summary.lastSeq;
-          set({ writtenResolution: { campaignId, seq } });
+          set({ writtenResolution: { campaignId, seq, kind: 'resolution' } });
           publish(played);
+          await get().refresh();
+        });
+      },
+      writeInterlude(confirmed) {
+        return queueStep(async () => {
+          const open = get().campaign;
+          const interlude = open?.interlude;
+          if (!open || !interlude) throw new Error('No interlude to write');
+          const { campaignId } = open;
+          const loaded = await gameStore.loadCampaign(campaignId);
+          if (!loaded) throw new Error(`Unknown campaign ${campaignId}`);
+          // An interlude looks up no cards: it names the team the log already holds.
+          const { events, causes } = campaign.applyInterlude(
+            { cards: cardDbFrom([]) },
+            loaded.log,
+            interlude,
+            confirmed,
+          );
+          const stored = await gameStore.appendCampaignEvents(
+            campaignId,
+            events,
+            loaded.summary.lastSeq,
+            undefined,
+            causes.map((cause) => (cause.kind === 'player' ? undefined : cause)),
+          );
+          const seq = stored.at(-1)?.seq ?? loaded.summary.lastSeq;
+          set({ writtenResolution: { campaignId, seq, kind: 'interlude' } });
+          await loadCampaign(campaignId);
           await get().refresh();
         });
       },

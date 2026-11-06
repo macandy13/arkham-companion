@@ -16,6 +16,7 @@ import type {
   ScenarioDefinition,
   ScenarioId,
 } from '@arkham/engine';
+import { interludeTestCampaign } from './interlude_test_campaign';
 
 /** A scenario the wizard can start: its definition plus the card data the engine needs to run it. */
 export interface ScenarioEntry {
@@ -34,7 +35,8 @@ export interface CampaignEntry {
   definition: CampaignDefinition;
   /**
    * Prefix of the i18n keys that put its story records into words on the log page: a list's
-   * heading at `<storyKey>.<record>`, a flag's note at `<storyKey>.<record>.yes` or `.no`.
+   * heading at `<storyKey>.<record>`, a flag's note at `<storyKey>.<record>.yes` or `.no`; an
+   * interlude's name at `<storyKey>.interludes.<id>`.
    */
   storyKey: string;
   /**
@@ -99,9 +101,16 @@ export function resolutionNumber(id: ResolutionId): string {
   return /\d+$/.exec(id)?.[0] ?? id;
 }
 
-/** The campaign with definition id `id`, if the catalog has it. */
+/**
+ * Campaigns only the end-to-end tests open (`interludeTestCampaign`): in their build alone, and
+ * never in `campaignCatalog`, so the wizard and the settings don't offer them.
+ */
+const testCampaigns: readonly CampaignEntry[] =
+  import.meta.env.MODE === 'e2e' ? [interludeTestCampaign] : [];
+
+/** The campaign with definition id `id`, if the catalog (or an E2E build's test campaigns) has it. */
 export function findCampaign(id: CampaignDefinitionId): CampaignEntry | undefined {
-  return campaignCatalog.find((entry) => entry.id === id);
+  return [...campaignCatalog, ...testCampaigns].find((entry) => entry.id === id);
 }
 
 /**

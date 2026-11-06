@@ -2,22 +2,20 @@ import { expect, test } from '../fixtures/test';
 
 // Situations in the new game wizard, each photographed as it ends (`@shot`, coding guidelines §3).
 
-test(
-  "a quick game's setup step: the scenario, the difficulty and what the app tells the players",
-  { tag: '@shot' },
-  async ({ page }) => {
-    await page.goto('/#/new');
-    await page.getByRole('link', { name: 'Quick game' }).first().click();
+test("a quick game's setup step: the scenario, the difficulty and what the app tells the players", async ({
+  page,
+}) => {
+  await page.goto('/#/new');
+  await page.getByRole('link', { name: 'Quick game' }).first().click();
 
-    await page
-      .getByRole('radio', { name: 'Changes to investigators and enemies, and the cards drawn' })
-      .check();
+  await page
+    .getByRole('radio', { name: 'Changes to investigators and enemies, and the cards drawn' })
+    .check();
 
-    await expect(page.getByRole('group', { name: 'What the app tells you' })).toBeVisible();
-  },
-);
+  await expect(page.getByRole('group', { name: 'What the app tells you' })).toBeVisible();
+});
 
-test('the investigator picker with its filter menu open', { tag: '@shot' }, async ({ page }) => {
+test('the investigator picker with its filter menu open', async ({ page }) => {
   await page.goto('/#/new');
   await page.getByRole('link', { name: 'Quick game' }).first().click();
   await page.getByRole('button', { name: 'Next' }).click();

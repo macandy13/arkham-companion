@@ -1,10 +1,11 @@
 /*
- * The campaign's dialogs: the resolution dialog (ResolutionDialog) and the next scenario's setup
+ * The campaign's dialogs: the resolution dialog (ResolutionDialog), the interlude (InterludeDialog,
+ * laid out like it) and the next scenario's setup
  * preview (NextScenarioDialog) with its replacement picker (ReplacementPicker). They take the
  * app's one dialog design (base.css) with the log page's group labels; the resolution writes each
  * change in pen, as it will appear in the log.
  */
-#resolution > p {
+:is(#resolution, #interlude) > p {
   margin-block: var(--space-2) 0;
   color: var(--color-text-muted);
   text-align: center;
@@ -14,63 +15,71 @@
  * Plain text, not the home screen's framed `#app > main ul > li` cards and `#app > main section`
  * rows: two ids beat their one.
  */
-#app :is(#resolution, #next-scenario) section {
+#app :is(#resolution, #interlude, #next-scenario) section {
   display: block;
   margin-block-start: var(--space-3);
 }
 
-:is(#resolution, #next-scenario) h3 {
+:is(#resolution, #interlude, #next-scenario) h3 {
   margin: 0 0 var(--space-1);
   border-block-end: var(--border-width) solid var(--color-border);
   font-family: var(--font-family-label);
   font-size: var(--font-size-log-label);
 }
 
-#app :is(#resolution, #next-scenario) :is(ul, ol) {
+#app :is(#resolution, #interlude, #next-scenario) :is(ul, ol) {
   display: block;
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-#app :is(#resolution, #next-scenario) li {
+#app :is(#resolution, #interlude, #next-scenario) li {
   padding: var(--space-1) 0;
   border: none;
   border-radius: 0;
   background: none;
 }
 
-#app #resolution section:not([aria-labelledby='resolution-atTheTable']) li {
+#app #resolution section:not([aria-labelledby='resolution-atTheTable']) li,
+#app #interlude section:not([aria-labelledby='interlude-atTheTable']) li {
   color: var(--color-pen);
   font-family: var(--font-family-hand);
   font-size: var(--font-size-hand);
 }
 
-#resolution fieldset {
+:is(#resolution, #interlude) fieldset {
   margin: 0;
   padding: 0;
   border: none;
 }
 
-#resolution legend {
+:is(#resolution, #interlude) legend {
   color: var(--color-text-muted);
   font-family: var(--font-family);
   font-size: var(--font-size-caption);
 }
 
-#resolution label {
+:is(#resolution, #interlude) label {
   display: flex;
   align-items: center;
   gap: var(--space-2);
   min-height: var(--touch-target);
 }
 
-:is(#resolution, #next-scenario) [role='alert'] {
+:is(#resolution, #interlude, #next-scenario) [role='alert'] {
   color: var(--color-danger);
 }
 
-:is(#resolution, #next-scenario) footer {
+:is(#resolution, #interlude, #next-scenario) footer {
   margin-block-start: var(--space-4);
+}
+
+/* An interlude's question is what the players answer, so it reads like the text above it, not a caption. */
+#interlude form > fieldset > legend {
+  margin-block: var(--space-3) var(--space-1);
+  color: var(--color-text);
+  font-size: var(--font-size-body);
 }
 
 /* The resolution the game reached, beside its name like the decisions' "from the game". */

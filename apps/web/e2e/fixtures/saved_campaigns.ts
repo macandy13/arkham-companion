@@ -100,6 +100,26 @@ export function gatheringKilledEvents(
 }
 
 /**
+ * The events of the E2E builds' interlude test campaign (`interludeTestCampaign`) on Easy with
+ * `team`, The Gathering played to its resolution 1: its interlude "A Sleepless Night" is due.
+ */
+export function interludeDueEvents(
+  campaignId: string,
+  team: readonly LoggedInvestigator[],
+): unknown[] {
+  const started = zealotStarted(campaignId, team) as Record<string, unknown>;
+  return [
+    { ...started, definitionId: 'interlude-test' },
+    {
+      type: 'ScenarioPlayed',
+      scenarioId: 'the-gathering',
+      outcome: { kind: 'resolution', id: 'R1' },
+    },
+    { type: 'ScenarioPositionChanged', position: 1 },
+  ];
+}
+
+/**
  * Stores a campaign whose log is `events(campaignId)` straight into the app's database, as the
  * app has no campaign import yet, and opens its log. The app must have created the database
  * first, so it loads the home screen and waits for the schema before writing.
