@@ -42,51 +42,51 @@
 
 #app > main > hgroup > h1 {
   display: block;
-  width: min(var(--title-width), 100%);
-  margin-bottom: var(--title-overlap);
+  width: min(var(--home-title-width), 100%);
+  margin-bottom: var(--home-title-overlap);
 }
 
 #home-title {
   display: block;
   width: 100%;
   height: auto;
-  filter: var(--title-drop-shadow);
+  filter: var(--home-title-drop-shadow);
 }
 
 #home-title [data-part='shadow'] {
-  opacity: var(--title-shadow-opacity);
+  opacity: var(--home-title-shadow-opacity);
   filter: url('#home-title-glow');
 }
 
 #home-title [data-part='tentacles'] {
   mask: url('#home-title-sink');
   fill: url('#home-title-flesh');
-  stroke: var(--color-title-brass);
-  stroke-width: var(--title-line);
+  stroke: var(--color-home-title-brass);
+  stroke-width: var(--home-title-line);
 }
 
 #home-title [data-part='suckers'] {
-  fill: var(--color-title-brass);
+  fill: var(--color-home-title-brass);
   stroke: none;
-  opacity: var(--title-sucker-opacity);
+  opacity: var(--home-title-sucker-opacity);
 }
 
 #home-title [data-part='arch'] {
   fill: none;
   stroke: url('#home-title-brass');
-  stroke-width: var(--title-arch-line);
+  stroke-width: var(--home-title-arch-line);
 }
 
 #home-title [data-part='arch-inner'] {
   fill: none;
-  stroke: var(--color-title-brass);
-  stroke-opacity: var(--title-arch-inner-opacity);
+  stroke: var(--color-home-title-brass);
+  stroke-opacity: var(--home-title-arch-inner-opacity);
 }
 
 #home-title [data-part='mark'] > circle {
-  fill: var(--color-title-night);
+  fill: var(--color-home-title-night);
   stroke: url('#home-title-brass');
-  stroke-width: var(--title-arch-line);
+  stroke-width: var(--home-title-arch-line);
 }
 
 #home-title [data-part='mark'] > path {
@@ -101,20 +101,20 @@
 #home-title [data-part='name'] {
   filter: url('#home-title-worn');
   fill: url('#home-title-bone');
-  stroke: var(--color-title-outline);
-  stroke-width: var(--title-name-outline);
+  stroke: var(--color-home-title-outline);
+  stroke-width: var(--home-title-name-outline);
   paint-order: stroke;
-  font-family: var(--font-family-title);
-  font-size: var(--title-name-size);
-  letter-spacing: var(--title-name-spacing);
+  font-family: var(--font-family-home-title);
+  font-size: var(--home-title-name-size);
+  letter-spacing: var(--home-title-name-spacing);
 }
 
 #home-title [data-part='ribbon-backing'] {
-  fill: var(--color-title-night);
+  fill: var(--color-home-title-night);
 }
 
 #home-title :is([data-part='ribbon'], [data-part='ribbon-folds']) {
-  stroke: var(--color-title-ribbon-edge);
+  stroke: var(--color-home-title-ribbon-edge);
 }
 
 #home-title [data-part='ribbon'] {
@@ -122,45 +122,45 @@
 }
 
 #home-title [data-part='ribbon-folds'] {
-  fill: var(--color-title-ribbon-fold);
+  fill: var(--color-home-title-ribbon-fold);
 }
 
 #home-title [data-part='ribbon-text'] {
-  fill: var(--color-title-ribbon-ink);
-  font-family: var(--font-family-title-ribbon);
-  font-size: var(--title-ribbon-size);
-  letter-spacing: var(--title-ribbon-spacing);
+  fill: var(--color-home-title-ribbon-ink);
+  font-family: var(--font-family-home-title-ribbon);
+  font-size: var(--home-title-ribbon-size);
+  letter-spacing: var(--home-title-ribbon-spacing);
   text-transform: uppercase;
 }
 
 #home-title-bone > :nth-child(1) {
-  stop-color: var(--color-title-bone-light);
+  stop-color: var(--color-home-title-bone-light);
 }
 #home-title-bone > :nth-child(2) {
-  stop-color: var(--color-title-bone);
+  stop-color: var(--color-home-title-bone);
 }
 #home-title-bone > :nth-child(3) {
-  stop-color: var(--color-title-bone-deep);
+  stop-color: var(--color-home-title-bone-deep);
 }
 #home-title-brass > :nth-child(1) {
-  stop-color: var(--color-title-brass-light);
+  stop-color: var(--color-home-title-brass-light);
 }
 #home-title-brass > :nth-child(2) {
-  stop-color: var(--color-title-brass);
+  stop-color: var(--color-home-title-brass);
 }
 #home-title-brass > :nth-child(3) {
-  stop-color: var(--color-title-brass-deep);
+  stop-color: var(--color-home-title-brass-deep);
 }
 #home-title-flesh > :nth-child(1) {
-  stop-color: var(--color-title-flesh-light);
+  stop-color: var(--color-home-title-flesh-light);
 }
 #home-title-flesh > :nth-child(2) {
-  stop-color: var(--color-title-flesh-deep);
+  stop-color: var(--color-home-title-flesh-deep);
 }
 
 /* The mask lets the tentacles through fully above 70 % of the height, then less and less. */
 #home-title-fade > stop {
-  stop-color: var(--color-title-mask);
+  stop-color: var(--color-home-title-mask);
 }
 #home-title-fade > :nth-child(2) {
   stop-opacity: 0;
@@ -191,21 +191,26 @@
   min-height: var(--touch-target);
   padding-inline: var(--space-4);
   box-sizing: border-box;
-  border: var(--border-width) solid var(--color-border);
+  border-width: var(--border-width);
+  border-style: solid;
   border-radius: var(--radius-pill);
-  color: var(--color-text);
   font-family: var(--font-family-print);
   text-decoration: none;
   cursor: pointer;
 }
 
-#app > main > nav > :is(a, label):hover {
-  border-color: var(--color-accent);
+/* The primary takes its brass from base.css; the other two are outlined. */
+#app > main > nav > :is(a, label):not([data-primary]) {
+  border-color: var(--color-border);
+  color: var(--color-text);
 }
 
-#app > main > nav > [data-primary] {
-  border-color: var(--color-brass-deep);
-  color: var(--color-ink);
+#app > main > nav > label {
+  position: relative;
+}
+
+#app > main > nav > :is(a, label):hover {
+  border-color: var(--color-accent);
 }
 
 #app > main > nav > label::before {
@@ -227,10 +232,4 @@
 #app > main > nav > label:focus-within {
   outline: var(--focus-ring-width) solid var(--color-accent);
   outline-offset: var(--focus-ring-width);
-}
-
-@media (max-width: 40rem) {
-  #app > main > hgroup > h1 {
-    width: min(var(--title-width-phone), 100%);
-  }
 }

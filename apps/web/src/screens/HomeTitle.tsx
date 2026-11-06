@@ -18,15 +18,15 @@ const RIBBON_BACKING = 'M168 168 L200 160 H440 L472 168 L440 176 V194 H200 V176 
 const RIBBON_FACE = 'M184 168 L206 162 H434 L456 168 L434 192 H206 Z';
 const RIBBON_FOLDS = 'M168 168 L206 162 V192 Z M472 168 L434 162 V192 Z';
 
-/** The brass arch over the name, a heavy outer line and a faint inner one, meeting at the app's mark. */
+/** The brass arch over the name, a heavy outer line and a faint inner one, meeting at a star. */
 const ARCH_OUTER = 'M120 58 C200 30 250 52 320 34 C390 52 440 30 520 58';
 const ARCH_INNER = 'M150 52 C230 36 270 50 320 40 C370 50 410 36 490 52';
-/** The app's mark at the arch's peak: a four-pointed star. */
+/** The four-pointed star in a dark disc at the arch's peak. */
 const STAR = 'M0 -10 L2.4 -2.4 L10 0 L2.4 2.4 L0 10 L-2.4 2.4 L-10 0 L-2.4 -2.4 Z';
 
 /**
  * The home screen's title (MD.3b, design language "Screens"): ARKHAM in worn bone capitals under
- * a brass arch with the app's mark, on a ribbon reading COMPANION, with tentacles rising behind it.
+ * a brass arch with a star, on a ribbon reading COMPANION, with tentacles rising behind it.
  * It is in the spirit of the game's boxes, not a copy of their logo, which the fan policy does not
  * license. The name stays the same in every language, so its words are not translated; the screen
  * reader reads the app's title. Colours, type and the wear come from home.css; ids are fixed

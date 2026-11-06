@@ -3,7 +3,7 @@
 The React PWA is a thin layer over the engine.
 [`App.tsx`](../../apps/web/src/App.tsx) defines the hash routes; screens are in [`screens/`](../../apps/web/src/screens/):
 
-- home, lying on the table rather than a paper page: the app's title ([`HomeTitle`](../../apps/web/src/screens/HomeTitle.tsx), our own SVG in the spirit of the game's boxes: worn Cinzel Decorative capitals, a brass arch with the app's mark, a COMPANION ribbon, tentacles), a tagline, and the three ways in (New campaign as the brass primary, One scenario, Load a saved game as a pill around the file input), then the campaigns (each opens its campaign log) above the saved games,
+- home, lying on the table rather than a paper page: the app's title ([`HomeTitle`](../../apps/web/src/screens/HomeTitle.tsx), our own SVG in the spirit of the game's boxes: worn Cinzel Decorative capitals, a brass arch with a star, a COMPANION ribbon, tentacles), a tagline, and the three ways in (New campaign as the brass primary, One scenario, Load a saved game as a pill around the file input), then the campaigns (each opens its campaign log) above the saved games,
 - new game wizard, whose campaign path starts a campaign log and its first scenario as one of its games (`AppState.startCampaign`),
 - campaign log (`/campaign/:id`, [`campaign/`](../../apps/web/src/campaign/)),
 - game screen,
