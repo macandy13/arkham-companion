@@ -810,6 +810,8 @@
   --home-title-arch-line: 2px;
   /* The narrowest a cover on home's shelf gets before the shelf holds one fewer per row. */
   --cover-min-width: 14.5rem;
+  /* A team member's round portrait on a cover. */
+  --cover-portrait-size: 2.5rem;
   --home-title-width: 35rem;
   --home-title-width-phone: 21rem;
   /* The title's foot fades into the tagline, so the two overlap a little. */

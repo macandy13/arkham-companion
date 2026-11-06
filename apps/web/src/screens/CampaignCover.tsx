@@ -4,10 +4,11 @@ import type { CampaignSummary, GameSummary } from '@arkham/engine';
 import { findCampaign, findScenario } from '../scenarios/scenarioCatalog';
 import { CoverMenu } from './CoverMenu';
 import { campaignStanding } from './shelf';
+import { TeamPortraits, type PortraitImages } from './TeamPortraits';
 
 /**
  * One campaign on the home shelf (MD.3b), its scenario games included: the campaign's name, the
- * players' title for it in hand, the team, where it stands, and one way on. A chapter under way continues
+ * players' title for it in hand, where it stands, the team's portraits, and one way on. A chapter under way continues
  * its game, a chapter without one is set up from the log, and a campaign that is over (or waits
  * for its ending) opens its log, which stays readable. While a chapter is open, the log is in
  * the ⋮ menu instead.
@@ -15,16 +16,23 @@ import { campaignStanding } from './shelf';
 export function CampaignCover({
   campaign,
   games,
+  images,
+  lastPlayed,
 }: {
   readonly campaign: CampaignSummary;
   /** The campaign's scenario games, newest first (`ShelfEntry`). */
   readonly games: readonly GameSummary[];
+  /** Where the team's card pictures are, for their portraits. */
+  readonly images: PortraitImages;
+  /** Whether this is the cover played last, which wears the ribbon and the brass button. */
+  readonly lastPlayed: boolean;
 }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const entry = findCampaign(campaign.definitionId);
   const standing = campaignStanding(campaign, games, entry?.definition.scenarios ?? []);
   const log = `/campaign/${campaign.campaignId}`;
+  const primary = lastPlayed || undefined;
   const scenarioName = (id: GameSummary['scenarioId']) => {
     const scenario = findScenario(id);
     return scenario ? t(scenario.nameKey) : id;
@@ -32,6 +40,7 @@ export function CampaignCover({
 
   return (
     <li>
+      {lastPlayed && <p data-ribbon>{t('home.lastPlayed')}</p>}
       <hgroup>
         <p>
           {t('home.campaignKicker', {
@@ -41,7 +50,6 @@ export function CampaignCover({
         <h2>{entry ? t(entry.nameKey) : campaign.title}</h2>
         <p>{campaign.title}</p>
       </hgroup>
-      <p>{campaign.investigators.map((i) => i.name).join(', ')}</p>
       {standing.kind === 'over' && <p>{t(`campaignList.result.${standing.result}`)}</p>}
       {standing.kind === 'ending' && <p>{t('home.ending')}</p>}
       {(standing.kind === 'playing' || standing.kind === 'setUp') && (
@@ -57,15 +65,22 @@ export function CampaignCover({
           })}
         </p>
       )}
+      <TeamPortraits team={campaign.investigators} images={images} />
       <footer>
         {standing.kind === 'playing' && (
-          <Link to={`/game/${standing.game.gameId}`}>{t('home.continue')}</Link>
+          <Link to={`/game/${standing.game.gameId}`} data-primary={primary}>
+            {t('home.continue')}
+          </Link>
         )}
         {standing.kind === 'setUp' && (
-          <Link to={log}>{t('home.setUp', { n: standing.chapter })}</Link>
+          <Link to={log} data-primary={primary}>
+            {t('home.setUp', { n: standing.chapter })}
+          </Link>
         )}
         {(standing.kind === 'over' || standing.kind === 'ending') && (
-          <Link to={log}>{t('campaignList.readLog')}</Link>
+          <Link to={log} data-primary={primary}>
+            {t('campaignList.readLog')}
+          </Link>
         )}
         {(standing.kind === 'playing' || standing.kind === 'setUp') && (
           <CoverMenu

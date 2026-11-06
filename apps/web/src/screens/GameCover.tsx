@@ -6,6 +6,7 @@ import type { GameSummary } from '@arkham/engine';
 import { findScenario } from '../scenarios/scenarioCatalog';
 import { ConfirmDialog } from './ConfirmDialog';
 import { CoverMenu } from './CoverMenu';
+import { TeamPortraits, type PortraitImages } from './TeamPortraits';
 
 interface GameCoverProps {
   readonly game: GameSummary;
@@ -15,6 +16,10 @@ interface GameCoverProps {
   readonly onDuplicate: () => void;
   readonly onExport: () => void;
   readonly onDelete: () => void;
+  /** Where the team's card pictures are, for their portraits. */
+  readonly images: PortraitImages;
+  /** Whether this is the cover played last, which wears the ribbon and the brass button. */
+  readonly lastPlayed: boolean;
 }
 
 /**
@@ -28,7 +33,7 @@ export function untitledLabel(t: TFunction, games: readonly GameSummary[], index
 
 /**
  * One game of one scenario on the home shelf (MD.3b): its scenario, the players' title for it
- * in hand, the team, the round it stands at, Continue, and a ⋮ menu to rename, duplicate,
+ * in hand, the round it stands at, the team's portraits, Continue, and a ⋮ menu to rename, duplicate,
  * export or delete it.
  */
 export function GameCover({
@@ -38,6 +43,8 @@ export function GameCover({
   onDuplicate,
   onExport,
   onDelete,
+  images,
+  lastPlayed,
 }: GameCoverProps) {
   const { t } = useTranslation();
   const [renaming, setRenaming] = useState(false);
@@ -53,6 +60,7 @@ export function GameCover({
 
   return (
     <li>
+      {lastPlayed && <p data-ribbon>{t('home.lastPlayed')}</p>}
       <hgroup>
         <p>{t('home.oneScenario')}</p>
         <h2>{scenario ? t(scenario.nameKey) : t('games.notStarted')}</h2>
@@ -75,10 +83,12 @@ export function GameCover({
           <button type="submit">{t('games.save')}</button>
         </form>
       )}
-      <p>{game.investigators.map((i) => i.name).join(', ') || t('games.noInvestigators')}</p>
       <p>{t('games.roundPhase', { round: game.round, phase: t(`games.phases.${game.phase}`) })}</p>
+      <TeamPortraits team={game.investigators} images={images} />
       <footer>
-        <Link to={`/game/${game.gameId}`}>{t('home.continue')}</Link>
+        <Link to={`/game/${game.gameId}`} data-primary={lastPlayed || undefined}>
+          {t('home.continue')}
+        </Link>
         <CoverMenu
           title={title}
           actions={[

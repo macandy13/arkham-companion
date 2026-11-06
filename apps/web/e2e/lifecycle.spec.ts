@@ -37,7 +37,9 @@ test('a game is started, resumed, managed and backed up', { tag: '@flow' }, asyn
     await page.getByRole('button', { name: 'Menu' }).click();
     await page.getByRole('link', { name: 'All games' }).click();
     await expect(items).toHaveCount(1);
-    await expect(items).toContainText('Fake Guardian, Fake Seeker');
+    await expect(
+      items.getByRole('list', { name: 'Investigators' }).getByRole('listitem'),
+    ).toHaveText(['Fake Guardian', 'Fake Seeker']);
   });
 
   await test.step('Resume the game from the list', async () => {
