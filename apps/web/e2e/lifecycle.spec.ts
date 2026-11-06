@@ -2,13 +2,15 @@ import { expect, test } from './fixtures/test';
 import { seatQuickGame } from './fixtures/wizard';
 
 // Journey: the whole life of a saved game on a tablet – start it, close the tab, resume it, keep it
-// tidy (rename, duplicate, delete with confirmation) and back it up (export, import). It doubles as
+// tidy from its cover's menu (rename, duplicate, delete with confirmation) and back it up (export, import). It doubles as
 // the smoke test: it boots the production build and resolves the hash routes.
 test('a game is started, resumed, managed and backed up', { tag: '@flow' }, async ({ page }) => {
-  const games = page.getByRole('list', { name: 'Games' });
-  const items = games.getByRole('listitem');
-  const named = (title: string) =>
-    items.filter({ has: page.getByRole('link', { name: title, exact: true }) });
+  const items = page.getByRole('list', { name: 'Your games' }).locator(':scope > li');
+  const named = (title: string) => items.filter({ has: page.getByText(title, { exact: true }) });
+  const choose = async (title: string, action: string) => {
+    await page.getByRole('button', { name: `More for ${title}`, exact: true }).click();
+    await page.getByRole('button', { name: action, exact: true }).click();
+  };
   let gameUrl = '';
 
   await test.step('Open the game list', async () => {
@@ -39,28 +41,29 @@ test('a game is started, resumed, managed and backed up', { tag: '@flow' }, asyn
   });
 
   await test.step('Resume the game from the list', async () => {
-    await items.getByRole('link', { name: 'Resume' }).click();
+    await items.getByRole('link', { name: 'Continue' }).click();
     await expect(page).toHaveURL(gameUrl);
     await page.getByRole('button', { name: 'Menu' }).click();
     await page.getByRole('link', { name: 'All games' }).click();
   });
 
   await test.step('Rename the game', async () => {
-    await items.getByRole('button', { name: 'Rename' }).click();
+    await items.getByRole('button', { name: /^More for / }).click();
+    await page.getByRole('button', { name: 'Rename', exact: true }).click();
     await page.getByRole('textbox', { name: 'Name' }).fill('Night of the Test');
     await page.getByRole('button', { name: 'Save', exact: true }).click();
     await expect(named('Night of the Test')).toBeVisible();
   });
 
   await test.step('Duplicate the game', async () => {
-    await items.getByRole('button', { name: 'Duplicate' }).click();
+    await choose('Night of the Test', 'Duplicate');
     await expect(items).toHaveCount(2);
     await expect(named('Night of the Test (copy)')).toBeVisible();
   });
 
   const backup = await test.step('Export the game to a file', async () => {
     const download = page.waitForEvent('download');
-    await named('Night of the Test').getByRole('button', { name: 'Export' }).click();
+    await choose('Night of the Test', 'Export');
     const chunks: Buffer[] = [];
     for await (const chunk of await (await download).createReadStream()) {
       chunks.push(chunk as Buffer);
@@ -78,13 +81,13 @@ test('a game is started, resumed, managed and backed up', { tag: '@flow' }, asyn
   });
 
   await test.step('Cancel deleting a game: it stays', async () => {
-    await named('Night of the Test (copy)').getByRole('button', { name: 'Delete' }).click();
+    await choose('Night of the Test (copy)', 'Delete');
     await page.getByRole('alertdialog').getByRole('button', { name: 'Cancel' }).click();
     await expect(items).toHaveCount(3);
   });
 
   await test.step('Delete the copy', async () => {
-    await named('Night of the Test (copy)').getByRole('button', { name: 'Delete' }).click();
+    await choose('Night of the Test (copy)', 'Delete');
     await page.getByRole('alertdialog').getByRole('button', { name: 'Delete' }).click();
     await expect(items).toHaveCount(2);
   });

@@ -69,7 +69,7 @@ describe('HomeScreen', () => {
   });
 
   it.each([
-    ['still going', [], 'Scenario 1 of 2', 'Resume'],
+    ['still going', [], 'Chapter 1: The Gathering', 'Set up chapter 1'],
     [
       'won',
       [{ type: 'CampaignEnded', result: 'won' } as const],
@@ -77,8 +77,8 @@ describe('HomeScreen', () => {
       'Read the log',
     ],
   ])(
-    'lists a campaign %s with its progress and links to its log',
-    async (_, ending, progress, link) => {
+    'shows a campaign %s on a cover with where it stands and a way to its log',
+    async (_, ending, standing, link) => {
       const gameStore = new IndexedDbStore(`home-test-${n++}`);
       const campaignId = await gameStore.createCampaign({ title: 'Zealot – Roland' });
       await gameStore.appendCampaignEvents(campaignId, [
@@ -112,67 +112,78 @@ describe('HomeScreen', () => {
         </MemoryRouter>,
       );
 
-      const campaigns = await screen.findByRole('list', { name: 'Campaigns' });
+      const shelf = await screen.findByRole('list', { name: 'Your games' });
 
-      expect(within(campaigns).getByText('Hard')).toBeTruthy();
-      expect(within(campaigns).getByText('Roland Banks')).toBeTruthy();
-      expect(within(campaigns).getByText(progress)).toBeTruthy();
-      expect(within(campaigns).getByRole('link', { name: link }).getAttribute('href')).toBe(
+      expect(within(shelf).getByText('Campaign · Hard')).toBeTruthy();
+      expect(within(shelf).getByRole('heading', { name: 'Night of the Zealot' })).toBeTruthy();
+      expect(within(shelf).getByText('Zealot – Roland')).toBeTruthy();
+      expect(within(shelf).getByText(standing)).toBeTruthy();
+      expect(within(shelf).getByRole('link', { name: link }).getAttribute('href')).toBe(
         `/campaign/${campaignId}`,
       );
     },
   );
 
-  it('lists games with progress and a resume link', async () => {
+  it('shows a game of one scenario on a cover with its round and a way back in', async () => {
     await renderHome(['Night']);
 
-    const resume = await screen.findByRole('link', { name: 'Resume' });
-    expect(resume.getAttribute('href')).toMatch(/^\/game\/.+/);
-    expect(screen.getByText('Round 0, Setup')).toBeTruthy();
+    const shelf = await screen.findByRole('list', { name: 'Your games' });
+
+    expect(within(shelf).getByText('One scenario')).toBeTruthy();
+    expect(within(shelf).getByText('Night')).toBeTruthy();
+    expect(within(shelf).getByText('Round 0, Setup')).toBeTruthy();
+    expect(within(shelf).getByRole('link', { name: 'Continue' }).getAttribute('href')).toMatch(
+      /^\/game\/.+/,
+    );
   });
 
-  it('renames a game', async () => {
+  it('renames a game from its menu', async () => {
     await renderHome(['Night']);
 
-    fireEvent.click(await screen.findByRole('button', { name: 'Rename' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'More for Night' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Rename' }));
     fireEvent.change(screen.getByRole('textbox', { name: 'Name' }), { target: { value: 'Dawn' } });
     fireEvent.click(screen.getByRole('button', { name: 'Save' }));
 
-    expect(await screen.findByRole('link', { name: 'Dawn' })).toBeTruthy();
+    expect(await screen.findByText('Dawn')).toBeTruthy();
   });
 
-  it('duplicates a game', async () => {
+  it('duplicates a game from its menu', async () => {
     await renderHome(['Night']);
 
-    fireEvent.click(await screen.findByRole('button', { name: 'Duplicate' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'More for Night' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Duplicate' }));
 
-    expect(await screen.findByRole('link', { name: 'Night (copy)' })).toBeTruthy();
+    expect(await screen.findByText('Night (copy)')).toBeTruthy();
   });
 
   it('keeps the game when deleting is cancelled and removes it when confirmed', async () => {
     await renderHome(['Night']);
 
-    fireEvent.click(await screen.findByRole('button', { name: 'Delete' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'More for Night' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Delete' }));
     const dialog = screen.getByRole('alertdialog', { name: 'Delete "Night"?' });
     fireEvent.click(within(dialog).getByRole('button', { name: 'Cancel' }));
     expect(screen.queryByRole('alertdialog')).toBeNull();
-    expect(screen.getByRole('link', { name: 'Night' })).toBeTruthy();
+    expect(screen.getByText('Night')).toBeTruthy();
 
+    fireEvent.click(screen.getByRole('button', { name: 'More for Night' }));
     fireEvent.click(screen.getByRole('button', { name: 'Delete' }));
     fireEvent.click(
       within(screen.getByRole('alertdialog')).getByRole('button', { name: 'Delete' }),
     );
 
-    expect(await screen.findByRole('link', { name: 'New campaign' })).toBeTruthy();
+    expect(await screen.findByText('No games yet')).toBeTruthy();
   });
 
-  it('downloads an export of a game', async () => {
+  it('downloads an export of a game from its menu', async () => {
     const createObjectURL = vi.fn(() => 'blob:test');
     Object.assign(URL, { createObjectURL, revokeObjectURL: vi.fn() });
     const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
     await renderHome(['Night']);
 
-    fireEvent.click(await screen.findByRole('button', { name: 'Export' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'More for Night' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Export' }));
 
     await vi.waitFor(() => expect(click).toHaveBeenCalled());
     expect(createObjectURL).toHaveBeenCalled();
@@ -193,7 +204,7 @@ describe('HomeScreen', () => {
       target: { files: [file] },
     });
 
-    expect(await screen.findByRole('link', { name: 'Imported' })).toBeTruthy();
+    expect(await screen.findByText('Imported')).toBeTruthy();
   });
 
   it('explains why a file from a newer version cannot be imported', async () => {

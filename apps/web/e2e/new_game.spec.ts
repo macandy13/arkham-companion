@@ -97,10 +97,11 @@ test('start a campaign and resume it from its log', async ({ page }) => {
   await test.step('The home screen lists the campaign', async () => {
     gameUrl = page.url();
     await page.goto('/#/');
-    const campaigns = page.getByRole('list', { name: 'Campaigns' });
-    await expect(campaigns).toContainText('Night of the Zealot – Fake Seeker');
-    await expect(campaigns).toContainText('Scenario 1 of 3');
-    await campaigns.getByRole('link', { name: 'Resume' }).click();
+    const shelf = page.getByRole('list', { name: 'Your games' });
+    await expect(shelf).toContainText('Night of the Zealot – Fake Seeker');
+    await expect(shelf).toContainText('Chapter 1: The Gathering');
+    await shelf.getByRole('button', { name: 'More for Night of the Zealot – Fake Seeker' }).click();
+    await shelf.getByRole('button', { name: 'Read the log' }).click();
     await expect(page).toHaveURL(/#\/campaign\/.+/);
   });
 

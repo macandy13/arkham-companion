@@ -13,7 +13,8 @@ test('the log of a campaign just started', async ({ page }) => {
   await expect(page).toHaveURL(/#\/game\/.+/);
 
   await page.goto('/#/');
-  await page.getByRole('list', { name: 'Campaigns' }).getByRole('link', { name: 'Resume' }).click();
+  await page.getByRole('button', { name: /^More for / }).click();
+  await page.getByRole('button', { name: 'Read the log' }).click();
 
   await expect(page.getByRole('region', { name: 'Scenarios' })).toContainText('The Gathering');
 });

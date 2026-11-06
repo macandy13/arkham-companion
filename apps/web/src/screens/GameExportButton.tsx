@@ -4,7 +4,7 @@ import { useStore } from 'zustand';
 import type { StoreApi } from 'zustand/vanilla';
 import type { AppState } from '../state/appStore';
 import { downloadGameExport } from './downloadFile';
-import { untitledLabel } from './GameListItem';
+import { untitledLabel } from './GameCover';
 
 /**
  * The play screen menu's export of the open game (`GameStatus`). It shows only on `/game/:id` once

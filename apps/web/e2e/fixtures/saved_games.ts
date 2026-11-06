@@ -486,8 +486,9 @@ export async function importGame(page: Page, file: Buffer): Promise<void> {
 export async function resumeImportedGame(page: Page, title: string, file: Buffer): Promise<void> {
   await importGame(page, file);
   await page
-    .getByRole('listitem')
-    .filter({ has: page.getByRole('link', { name: title, exact: true }) })
-    .getByRole('link', { name: 'Resume' })
+    .getByRole('list', { name: 'Your games' })
+    .locator(':scope > li')
+    .filter({ has: page.getByText(title, { exact: true }) })
+    .getByRole('link', { name: 'Continue' })
     .click();
 }

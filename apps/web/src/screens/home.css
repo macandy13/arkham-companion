@@ -233,3 +233,104 @@
   outline: var(--focus-ring-width) solid var(--color-accent);
   outline-offset: var(--focus-ring-width);
 }
+
+/*
+ * The shelf: each campaign and each game of one scenario a cover of campaign-guide paper
+ * (base.css), as many side by side as fit. A cover's foot keeps to its bottom edge, so the buttons
+ * of covers in one row line up, with the ⋮ menu at its end.
+ */
+#app > main > #shelf {
+  grid-template-columns: repeat(auto-fill, minmax(var(--cover-min-width), 1fr));
+  gap: var(--space-3);
+}
+
+#app > main > #shelf > li {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-3);
+  border-color: var(--color-paper-rim);
+  background: var(--guide-paper);
+}
+
+#shelf hgroup {
+  margin-bottom: var(--space-1);
+}
+
+#shelf hgroup > p:first-child {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-family: var(--font-family-label);
+  font-size: var(--font-size-log-label);
+  letter-spacing: var(--log-label-tracking);
+  text-transform: uppercase;
+}
+
+#shelf h2 {
+  font-size: var(--font-size-title);
+  line-height: var(--app-bar-title-line-height);
+}
+
+#shelf hgroup > p:last-child:not(:first-child) {
+  margin: 0;
+  color: var(--color-pen);
+  font-family: var(--font-family-hand);
+  font-size: var(--font-size-hand);
+  line-height: var(--app-bar-title-line-height);
+}
+
+#shelf li > p {
+  margin: 0;
+  color: var(--color-text-muted);
+}
+
+#shelf footer {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: auto;
+  padding-top: var(--space-2);
+}
+
+#shelf footer > a {
+  padding-inline: var(--space-4);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-pill);
+  color: var(--color-text);
+  font-family: var(--font-family-print);
+  text-decoration: none;
+}
+
+#shelf footer > a:hover {
+  border-color: var(--color-accent);
+}
+
+#shelf footer > div {
+  position: relative;
+  margin-left: auto;
+}
+
+#shelf footer > div > button {
+  border: 0;
+  background: none;
+}
+
+#shelf footer > div > button::before {
+  mask-image: url('./icons/more.svg');
+}
+
+/* The menu's entries are plain lines, not the covers they hang from. */
+#app #shelf footer li {
+  display: block;
+  padding: 0;
+  border: 0;
+  background: none;
+  box-shadow: none;
+}
+
+#shelf footer li > button {
+  justify-content: flex-start;
+  width: 100%;
+  border: 0;
+  background: none;
+}
