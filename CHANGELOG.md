@@ -2,6 +2,20 @@
 
 The sections dated up to 2026-10-22 were released as 1.0.0 to 1.8.0 by mistake: Release Please starts at 1.0.0 by default. Versioning restarted at 0.1.0 (see "Versions" in docs/product.md).
 
+## [0.1.25](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v0.1.24...arkham-companion-v0.1.25) (2026-11-06)
+
+
+### Features
+
+* **carddata:** import location layouts from the ArkhamCards campaign guides (M4.1a) ([2c0c6fc](https://github.com/macandy13/arkham-companion/commit/2c0c6fc71a6b8f066d64bb66f7850730ae4efc85))
+* **carddata:** import location layouts from the ArkhamCards campaign guides (M4.1a) ([cbf1dc9](https://github.com/macandy13/arkham-companion/commit/cbf1dc9979e13c5918a6587368b9a1eb71522873))
+* **web:** interlude dialog on the campaign screen (MC1.6e2) ([c6d6d41](https://github.com/macandy13/arkham-companion/commit/c6d6d41e82151dc74f81bdb3877d4518b8fbf6f1))
+
+
+### Refactoring
+
+* **carddata:** share the optional-field zod helper; type skipped diagram parts ([2f93279](https://github.com/macandy13/arkham-companion/commit/2f9327974ee8b272e46dfa750c3f723e79ac00be))
+
 ## [0.1.24](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v0.1.23...arkham-companion-v0.1.24) (2026-11-06)
 
 
