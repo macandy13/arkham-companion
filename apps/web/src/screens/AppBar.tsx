@@ -5,7 +5,7 @@ import './app_bar.css';
 
 /**
  * What the app bar shows for the open screen (MD.3a): its name, a line under it, and the screen
- * the back chevron leads up to. Home sets none and shows the app's title without a chevron.
+ * the back chevron leads up to. Home sets none, so its bar holds only the ⋮ menu.
  */
 export interface AppBarContent {
   readonly title: string;
@@ -45,8 +45,9 @@ export function AppBarFrame({ children }: { readonly children: ReactNode }) {
     <AppBarContext.Provider value={setContent}>
       <header>
         {content && <Link to={content.up} data-icon="back" aria-label={t('appBar.up')} />}
+        {/* Home names the app in its own title, so its bar holds only the menu. */}
         <div>
-          <p>{content?.title ?? t('app.title')}</p>
+          {content && <p>{content.title}</p>}
           {content?.subtitle && <p>{content.subtitle}</p>}
         </div>
         <AppMenu key={key} />

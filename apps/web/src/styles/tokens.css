@@ -779,6 +779,42 @@
     0.3% 20%,
     0.6% 10%
   );
+  /*
+   * Home's title (MD.3b, `HomeTitle`): bone capitals outlined in near black, brass for the arch,
+   * the mark and the ribbon, sea-green tentacles. Printed artwork, so the same in both themes.
+   * Its sizes are in the title's own 640 × 260 box.
+   */
+  --color-home-title-bone-light: #f4ecd6;
+  --color-home-title-bone: #d9c9a0;
+  --color-home-title-bone-deep: #9c8558;
+  --color-home-title-brass-light: #f0d593;
+  --color-home-title-brass: #c39a4e;
+  --color-home-title-brass-deep: #6f4f19;
+  --color-home-title-flesh-light: #2f5a4c;
+  --color-home-title-flesh-deep: #0d211b;
+  --color-home-title-outline: #120c05;
+  --color-home-title-night: #0b1915;
+  --color-home-title-ribbon-fold: #7a5a22;
+  --color-home-title-ribbon-edge: #4d3610;
+  --color-home-title-ribbon-ink: #1b1408;
+  --home-title-shadow-opacity: 0.55;
+  --home-title-sucker-opacity: 0.7;
+  --home-title-arch-inner-opacity: 0.5;
+  --color-home-title-mask: #fff;
+  --home-title-name-size: 78px;
+  --home-title-name-spacing: 3px;
+  --home-title-name-outline: 2.4px;
+  --home-title-ribbon-size: 17px;
+  --home-title-ribbon-spacing: 6px;
+  --home-title-line: 1.1px;
+  --home-title-arch-line: 2px;
+  --home-title-width: 35rem;
+  --home-title-width-phone: 21rem;
+  /* The title's foot fades into the tagline, so the two overlap a little. */
+  --home-title-overlap: -1.125rem;
+  --home-title-drop-shadow: drop-shadow(0 0.5rem 1.125rem rgb(0 0 0 / 55%));
+  --font-family-home-title: 'Cinzel Decorative', 'Cinzel', var(--font-family-print);
+  --font-family-home-title-ribbon: 'Cinzel', var(--font-family-print);
 }
 
 /*
@@ -916,6 +952,7 @@
     --test-token-symbol-size: 1.5rem;
     --test-calculation-width: 5.75rem;
     --test-skill-icon-size: 1.375rem;
+    --home-title-width: var(--home-title-width-phone);
   }
 
   #board[data-view='cards'] {

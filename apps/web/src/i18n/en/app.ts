@@ -868,6 +868,13 @@ export const appTexts = {
     sanity: 'Sanity',
     otherChapter: 'Show Chapter {{n}} version',
   },
+  home: {
+    tagline: 'keeps the scenario while you play the cards',
+    start: 'Start or load a game',
+    newCampaign: 'New campaign',
+    oneScenario: 'One scenario',
+    load: 'Load a saved game',
+  },
   games: {
     title: 'Games',
     new: 'New game',
@@ -900,7 +907,6 @@ export const appTexts = {
     copyTitle: '{{title}} (copy)',
     delete: 'Delete',
     export: 'Export',
-    import: 'Import game',
     importInvalid: 'This file is not a valid Arkham Companion game export.',
     importNewerVersion:
       'This game was exported by a newer version of the app. Update the app and try again.',

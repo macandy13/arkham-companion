@@ -27,14 +27,14 @@ describe('AppRoutes', () => {
   });
 
   it.each([
-    ['/', 'Games'],
+    ['/', 'Arkham Companion'],
     ['/new', 'New game'],
     ['/game/some-id', 'Arkham Companion'],
     ['/settings', 'Settings'],
   ])('shows the screen heading for %s', (path, heading) => {
     renderAt(path);
 
-    expect(screen.getByRole('heading', { level: 1 }).textContent).toBe(heading);
+    expect(screen.getByRole('heading', { level: 1, name: heading })).toBeTruthy();
   });
 
   it('offers main navigation on every screen', () => {
@@ -44,7 +44,7 @@ describe('AppRoutes', () => {
   });
 
   it.each([
-    { path: '/', bar: ['Arkham Companion'], up: false },
+    { path: '/', bar: [], up: false },
     { path: '/settings', bar: ['Settings', 'For this device'], up: true },
     { path: '/new', bar: ['New game', 'A campaign or one scenario'], up: true },
     { path: '/new?mode=quick', bar: ['Quick game', 'One scenario, no campaign log'], up: true },
@@ -54,21 +54,21 @@ describe('AppRoutes', () => {
 
     expect(
       within(appBar)
-        .getAllByRole('paragraph')
+        .queryAllByRole('paragraph')
         .map((line) => line.textContent),
     ).toEqual(bar);
     expect(within(appBar).queryByRole('link', { name: 'Back' }) !== null).toBe(up);
   });
 
   it.each([
-    { path: '/settings', above: 'Games' },
+    { path: '/settings', above: 'Arkham Companion' },
     { path: '/new?mode=campaign', above: 'New game' },
   ])("leads up from $path to the screen above it, '$above'", ({ path, above }) => {
     renderAt(path);
 
     fireEvent.click(within(screen.getByRole('banner')).getByRole('link', { name: 'Back' }));
 
-    expect(screen.getByRole('heading', { level: 1 }).textContent).toBe(above);
+    expect(screen.getByRole('heading', { level: 1, name: above })).toBeTruthy();
   });
 
   it("opens a place from the app bar's menu and closes the menu on the way", () => {
