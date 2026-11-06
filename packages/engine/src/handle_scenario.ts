@@ -37,10 +37,13 @@ export function handlePlaceDoom(state: GameState, cmd: PlaceDoom): TokensChanged
   return tokensPlaced(state, card, 'doom', cmd.amount);
 }
 
-/** `ChangeChaosBag`: a token into the chaos bag, or one copy of it out of the bag. */
+/**
+ * `ChangeChaosBag`: a token into the chaos bag, or one copy of it out of the bag. Removing a token
+ * the bag doesn't hold does nothing rather than refusing the step, since the players resolve as
+ * much of an effect as they can (Rules Reference, "Effects").
+ */
 export function handleChangeChaosBag(state: GameState, cmd: ChangeChaosBag): ChaosBagChanged[] {
-  if (cmd.change === 'remove' && !state.chaosBag.includes(cmd.token))
-    throw new CommandRejected({ code: 'chaosTokenNotInBag', token: cmd.token });
+  if (cmd.change === 'remove' && !state.chaosBag.includes(cmd.token)) return [];
   return [{ type: 'ChaosBagChanged', token: cmd.token, change: cmd.change, lasts: cmd.lasts }];
 }
 

@@ -473,8 +473,8 @@ export interface PlaceDoom {
 /**
  * Adds `token` to the chaos bag, or removes one copy of it, during a scenario. Produces
  * `ChaosBagChanged`. A change `lasts: 'campaign'` is also kept in `GameState.chaosBagChanges`,
- * so that `proposeResolution` writes it into the campaign log. Rejects removing a token the bag
- * does not hold (`chaosTokenNotInBag`). Between scenarios the campaign's `AddChaosToken` and
+ * so that `proposeResolution` writes it into the campaign log. Removing a token the bag does not
+ * hold changes nothing. Between scenarios the campaign's `AddChaosToken` and
  * `RemoveChaosToken` change the bag instead.
  */
 export interface ChangeChaosBag {

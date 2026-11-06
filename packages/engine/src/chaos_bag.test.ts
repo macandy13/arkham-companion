@@ -9,7 +9,7 @@ import {
   type ChaosToken,
   type Command,
 } from './index';
-import { rejectionFrom, stateAfter } from '../test/utils';
+import { stateAfter } from '../test/utils';
 
 const study = instanceId('study');
 const alice = investigatorId('alice');
@@ -61,16 +61,16 @@ describe('ChangeChaosBag', () => {
     expect(changed.chaosBagChanges).toEqual(kept);
   });
 
-  it('refuses to remove a token the bag does not hold', () => {
+  it('changes nothing when removing a token the bag does not hold', () => {
     const { context, state } = table.start();
 
-    expect(
-      rejectionFrom(context, state, {
-        type: 'ChangeChaosBag',
-        token: 'tablet',
-        change: 'remove',
-        lasts: 'campaign',
-      }),
-    ).toEqual({ code: 'chaosTokenNotInBag', token: 'tablet' });
+    const changed = stateAfter(context, state, {
+      type: 'ChangeChaosBag',
+      token: 'tablet',
+      change: 'remove',
+      lasts: 'campaign',
+    });
+
+    expect([changed.chaosBag, changed.chaosBagChanges]).toEqual([['skull', '-1', 'autoFail'], []]);
   });
 });

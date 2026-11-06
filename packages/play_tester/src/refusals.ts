@@ -29,7 +29,6 @@ const REFUSAL_KINDS: Readonly<Record<RejectionCode, RefusalKind>> = {
   scenarioEnded: 'expected',
   resolutionRequired: 'expected',
   encounterDeckEmpty: 'expected',
-  chaosTokenNotInBag: 'expected',
   // Enemies the action does not reach.
   enemyEngaged: 'expected',
   alreadyEngaged: 'expected',

@@ -263,7 +263,9 @@ export interface Turn {
 /**
  * How long an in-game change to the chaos bag lasts: until the end of the scenario ("add 1 cultist
  * token to the chaos bag for the remainder of the scenario"), or for the rest of the campaign
- * ("permanently"), which the scenario's resolution then writes into the campaign log.
+ * ("permanently"), which the scenario's resolution then writes into the campaign log. An effect
+ * that names no duration lasts for the campaign, as the bag carries over (Rules Reference,
+ * Appendix III, step 12), except bless and curse tokens, which never carry over (FAQ).
  */
 export type ChaosBagChangeLasts = 'scenario' | 'campaign';
 

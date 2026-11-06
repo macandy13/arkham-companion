@@ -21,4 +21,7 @@
 - At the end of a scenario, revealed locations in play with Victory X and no clues go to the victory display.
   - Experience equals the victory points in the display plus or minus the resolution's adjustments, and unspent experience carries over.
   - Defeated and resigned investigators earn it too: the Rules Reference doesn't say so, but "no resolution" (everyone resigned or was defeated) still has each investigator earn experience in the campaign guide.
+- A card's chaos bag change "for the remainder of the scenario" ends with the scenario; the campaign log's bag stays as it was ([setup](https://arkhamdb.com/rules#Appendix_III_Setting_Up_The_Game), step 12).
+- A change "for the remainder of the campaign" (or "permanently") is written to the campaign log's chaos bag when the scenario ends, since the next scenario uses the bag as it was at the end of the last one ([setup](https://arkhamdb.com/rules#Appendix_III_Setting_Up_The_Game), step 12). Bless and curse tokens never carry over (FAQ).
+- Removing a chaos token the bag doesn't hold does nothing, and the rest of the effect still resolves ([Effects](https://arkhamdb.com/rules#Effects)).
 - The next scenario follows in sequence unless the resolution says otherwise. A lost scenario still continues the campaign.
