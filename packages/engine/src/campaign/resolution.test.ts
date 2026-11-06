@@ -111,6 +111,100 @@ describe('proposeResolution', () => {
     ]);
   });
 
+  describe('a game that put an elder thing token into the bag for the campaign and a cultist for the scenario', () => {
+    const resolutions: ScenarioResolutions = {
+      byId: {
+        [r1]: [{ kind: 'record', key: 'pastTheGate', value: { kind: 'flag', value: true } }],
+      },
+      none: [],
+    };
+    const changesAndEnd: Command[] = [
+      { type: 'ChangeChaosBag', token: 'elderThing', change: 'add', lasts: 'campaign' },
+      { type: 'ChangeChaosBag', token: 'cultist', change: 'add', lasts: 'scenario' },
+      endWith(r1),
+    ];
+
+    it('proposes writing the elder thing into the log after the resolution', () => {
+      const log = makeCampaignLog({
+        investigators: [campaignMember('alice', 'Alice', 8, 6), campaignMember('bob', 'Bob', 8, 6)],
+      });
+      const { context, state } = table.withCampaign(log).start();
+
+      const proposal = campaign.proposeResolution(
+        context,
+        stateAfter(context, state, ...changesAndEnd),
+        resolutions,
+      );
+
+      expect(proposal).toEqual([
+        {
+          kind: 'command',
+          command: {
+            type: 'RecordStory',
+            key: 'pastTheGate',
+            value: { kind: 'flag', value: true },
+          },
+        },
+        { kind: 'command', command: { type: 'AddChaosToken', token: 'elderThing' } },
+      ]);
+    });
+
+    it('proposes no removal of a token only the scenario put into the bag', () => {
+      // The log's bag holds a skull but no cultist; the game adds a cultist for the scenario.
+      const log = makeCampaignLog({
+        investigators: [campaignMember('alice', 'Alice', 8, 6), campaignMember('bob', 'Bob', 8, 6)],
+        chaosBag: ['skull'],
+      });
+      const { context, state } = table.withChaosBag(['skull']).withCampaign(log).start();
+
+      const proposal = campaign.proposeResolution(
+        context,
+        stateAfter(
+          context,
+          state,
+          { type: 'ChangeChaosBag', token: 'cultist', change: 'add', lasts: 'scenario' },
+          { type: 'ChangeChaosBag', token: 'cultist', change: 'remove', lasts: 'campaign' },
+          { type: 'ChangeChaosBag', token: 'skull', change: 'remove', lasts: 'campaign' },
+          endWith(r1),
+        ),
+        resolutions,
+      );
+
+      expect(proposal).toEqual([
+        {
+          kind: 'command',
+          command: {
+            type: 'RecordStory',
+            key: 'pastTheGate',
+            value: { kind: 'flag', value: true },
+          },
+        },
+        { kind: 'command', command: { type: 'RemoveChaosToken', token: 'skull' } },
+      ]);
+    });
+
+    it('proposes no bag change for a standalone game, which has no log to keep it', () => {
+      const { context, state } = table.start();
+
+      const proposal = campaign.proposeResolution(
+        context,
+        stateAfter(context, state, ...changesAndEnd),
+        resolutions,
+      );
+
+      expect(proposal).toEqual([
+        {
+          kind: 'command',
+          command: {
+            type: 'RecordStory',
+            key: 'pastTheGate',
+            value: { kind: 'flag', value: true },
+          },
+        },
+      ]);
+    });
+  });
+
   it('awards each investigator the victory points plus the bonus', () => {
     const resolutions: ScenarioResolutions = {
       byId: { [r1]: [{ kind: 'awardXp', to: 'each', bonus: 2, victoryDisplay: true }] },

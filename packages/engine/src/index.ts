@@ -81,6 +81,7 @@ export {
   type ResolvingCardView,
 } from './board_view';
 export {
+  InvariantBroken,
   PlayTable,
   TableRejected,
   type LoggedEvent,
@@ -146,6 +147,8 @@ export {
   moveSelf,
   onlyCopy,
   placeDoomOnAgenda,
+  addChaosToken,
+  removeChaosToken,
   placeDoomOn,
   placeDoomOnSelf,
   placeCluesOnSelf,

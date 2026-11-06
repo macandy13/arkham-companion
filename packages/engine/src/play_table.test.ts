@@ -15,6 +15,7 @@ import {
   enemyMatching,
   fixed,
   instanceId,
+  InvariantBroken,
   investigatorCode,
   investigatorId,
   mapId,
@@ -134,6 +135,7 @@ describe('starting a table', () => {
     expect(() => PlayTable.start(defeatedAtStart)).toThrow(
       /StartScenario broke invariants: investigator bob is active but has no health or sanity left\nRound 0/,
     );
+    expect(() => PlayTable.start(defeatedAtStart)).toThrow(InvariantBroken);
   });
 
   it('reads a fresh board on each access', () => {

@@ -11,9 +11,11 @@ The engine reads card stats only through a [`CardDb`](../../packages/engine/src/
 - [`campaign_guides.ts`](../../packages/carddata/src/campaign_guides.ts) reads the ArkhamCards campaign guides ([zzorba/arkham-cards-data](https://github.com/zzorba/arkham-cards-data)) for what ArkhamDB lacks. `pnpm carddata:campaign <campaign>` ([`campaign_guides_fetch.ts`](../../packages/carddata/src/campaign_guides_fetch.ts)) keeps a shallow git clone in `.cache/` (the repo has no licence, so nothing of it is committed; the file names aren't the scenario ids, so single files over HTTP won't do) and prints a report per scenario for its author:
   - each `location_setup` step as `LayoutSlot`s: a card by code and side, or a named slot (`location_names`) where the guide shows no single card; positions are in card steps, so the guide's half spacing gives fractions and the engine's `GridCell` is a position times `GRID_CELLS_PER_CARD`;
   - what is left to do by hand: scenarios without a layout, named slots without a label, diagram parts not read (arrows, annotations) and spacings it doesn't know (`tight`, read as a full step).
+  - from [`campaign_setup.ts`](../../packages/carddata/src/campaign_setup.ts): the campaign's starting bag per difficulty (its difficulty choice; a Return to box has none and plays with its original's), and per scenario the encounter sets its setup gathers or sets aside and the chaos tokens a setup step adds or removes outright, token names as the engine writes them (`elderThing`);
+  - the setup steps left to the author: those written only as text (most set-aside cards), those that depend on the log or the players (`branch`) and the players' choices (`input`). Steps the app shares between scenarios (`$play_scenario`) are not the scenario's.
 
 ## Extension points
 
 - **A new card field:** read it in `RawCardSchema`, normalise it in [`schema.ts`](../../packages/carddata/src/schema.ts), and add it to `CardStats` only if a rule or view needs it.
-- **More from the campaign guides** (chaos bags, encounter sets, M4.1b): a zod schema for the step type in `campaign_guides.ts`, its own lines in the report.
+- **More from the campaign guides:** a zod schema for the step or effect type in `campaign_guides.ts` or `campaign_setup.ts`, and its own lines in the report.
 - **A new language:** its ArkhamDB host in `fetch.ts` and `loadCatalog.ts`, and UI strings in [`i18n`](../../apps/web/src/i18n/).

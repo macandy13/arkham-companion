@@ -14,6 +14,8 @@ import type {
 import type { GridCell, MapPlacement, MapSpec } from './map';
 import type {
   Decision,
+  ChaosBagChangeKind,
+  ChaosBagChangeLasts,
   ChaosToken,
   Difficulty,
   Investigator,
@@ -52,6 +54,7 @@ export type Command =
   | PlaceClues
   | PlaceDoom
   | PlaceTokens
+  | ChangeChaosBag
   | AdvanceAgenda
   | BecomeActAndAgenda
   | AdvanceAct
@@ -465,6 +468,20 @@ export interface PlaceDoom {
   /** Defaults to the current agenda. */
   cardId?: InstanceId;
   amount: number;
+}
+
+/**
+ * Adds `token` to the chaos bag, or removes one copy of it, during a scenario. Produces
+ * `ChaosBagChanged`. A change `lasts: 'campaign'` is also kept in `GameState.chaosBagChanges`,
+ * so that `proposeResolution` writes it into the campaign log. Removing a token the bag does not
+ * hold changes nothing. Between scenarios the campaign's `AddChaosToken` and
+ * `RemoveChaosToken` change the bag instead.
+ */
+export interface ChangeChaosBag {
+  type: 'ChangeChaosBag';
+  token: ChaosToken;
+  change: ChaosBagChangeKind;
+  lasts: ChaosBagChangeLasts;
 }
 
 /**

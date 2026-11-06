@@ -9,7 +9,9 @@ test("a quick game's setup step: the scenario, the difficulty and what the app t
   await page.getByRole('link', { name: 'Quick game' }).first().click();
 
   await page
-    .getByRole('radio', { name: 'Changes to investigators and enemies, and the cards drawn' })
+    .getByRole('radio', {
+      name: 'Changes to investigators, enemies and the chaos bag, and the cards drawn',
+    })
     .check();
 
   await expect(page.getByRole('group', { name: 'What the app tells you' })).toBeVisible();

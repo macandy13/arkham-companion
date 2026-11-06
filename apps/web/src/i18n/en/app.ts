@@ -35,6 +35,16 @@ export const appTexts = {
     revealed: '{{card}} is revealed',
     tokensPlaced: '{{amount}} on {{card}}',
     tokensRemoved: '{{amount}} removed from {{card}}',
+    chaosBag: {
+      add: {
+        scenario: '{{token}} token added to the chaos bag until the end of the scenario',
+        campaign: '{{token}} token added to the chaos bag for the rest of the campaign',
+      },
+      remove: {
+        scenario: '{{token}} token removed from the chaos bag until the end of the scenario',
+        campaign: '{{token}} token removed from the chaos bag for the rest of the campaign',
+      },
+    },
     amount: {
       doom_one: '{{count}} doom',
       doom_other: '{{count}} doom',
@@ -202,7 +212,7 @@ export const appTexts = {
     title: 'What the app tells you',
     levels: {
       display: 'Every change it makes',
-      assist: 'Changes to investigators and enemies, and the cards drawn',
+      assist: 'Changes to investigators, enemies and the chaos bag, and the cards drawn',
       auto: 'Only what you do by hand',
     },
   },

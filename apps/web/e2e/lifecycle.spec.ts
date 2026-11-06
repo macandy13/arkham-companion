@@ -2,8 +2,8 @@ import { expect, test } from './fixtures/test';
 import { seatQuickGame } from './fixtures/wizard';
 
 // Journey: the whole life of a saved game on a tablet – start it, close the tab, resume it, keep it
-// tidy from its cover's menu (rename, duplicate, delete with confirmation) and back it up (export, import). It doubles as
-// the smoke test: it boots the production build and resolves the hash routes.
+// tidy from its cover's menu (rename, duplicate, delete with confirmation) and back it up (export,
+// import). It doubles as the smoke test: it boots the production build and resolves the hash routes.
 test('a game is started, resumed, managed and backed up', { tag: '@flow' }, async ({ page }) => {
   const items = page.getByRole('list', { name: 'Your games' }).locator(':scope > li');
   const named = (title: string) => items.filter({ has: page.getByText(title, { exact: true }) });

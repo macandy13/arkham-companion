@@ -23,6 +23,7 @@ interface GameState {
   order: Record<ZoneKey, InstanceId[]>;  // index 0 is the top of a deck
   board: Board;                          // maps with connections and layout
   chaosBag: ChaosToken[];
+  chaosBagChanges: ChaosBagChange[];   // in-game bag changes that last for the campaign
   agenda: { current?: InstanceId }; act: { current?: InstanceId };
   scenario: unknown;                     // per-scenario state
   pending: Decision[];                   // open questions for the players

@@ -5,6 +5,7 @@ import {
   blankTreachery,
   changeNotices,
   noticeKindOf,
+  addChaosToken,
   execute,
   fixed,
   instanceId,
@@ -64,6 +65,33 @@ const toUpkeep: Command[] = [
 ];
 
 describe('changeNotices', () => {
+  it("gives the cultist token the cellar's reveal puts into the bag as the cellar's", () => {
+    const { context, state } = hallTable
+      .withLocation(
+        cellar,
+        blankLocation('cultist_cellar', {
+          abilities: [whenRevealed(addChaosToken('cultist', 'campaign'))],
+        }),
+      )
+      .withConnection(hall, cellar)
+      .start();
+
+    const result = execute(context, state, {
+      type: 'MoveInvestigator',
+      investigatorId: alice,
+      to: cellar,
+    });
+
+    expect(noticesOf(result)).toEqual([
+      {
+        kind: 'chaosBag',
+        cause: { kind: 'card', cardId: cellar, window: { kind: 'revealed' } },
+        events: ['ChaosBagChanged'],
+      },
+    ]);
+    expect(result.state.chaosBag).toEqual(['cultist']);
+  });
+
   it("gives the cellar's revealed doom for alice's move into it, not the move itself", () => {
     const { context, state } = hallTable
       .withLocation(
@@ -230,6 +258,10 @@ describe('noticeKindOf', () => {
       kind: 'enemy',
     },
     { event: { type: 'SurgeGained', cardId: rottingTreachery }, kind: 'encounter' },
+    {
+      event: { type: 'ChaosBagChanged', token: 'cultist', change: 'add', lasts: 'scenario' },
+      kind: 'chaosBag',
+    },
     {
       event: {
         type: 'CommandDeferred',

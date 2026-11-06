@@ -35,6 +35,16 @@ export const appTexts = {
     revealed: '{{card}} wird aufgedeckt',
     tokensPlaced: '{{amount}} auf {{card}}',
     tokensRemoved: '{{amount}} von {{card}} entfernt',
+    chaosBag: {
+      add: {
+        scenario: '{{token}}-Marker bis zum Ende des Szenarios in den Chaosbeutel gelegt',
+        campaign: '{{token}}-Marker für den Rest der Kampagne in den Chaosbeutel gelegt',
+      },
+      remove: {
+        scenario: '{{token}}-Marker bis zum Ende des Szenarios aus dem Chaosbeutel genommen',
+        campaign: '{{token}}-Marker für den Rest der Kampagne aus dem Chaosbeutel genommen',
+      },
+    },
     amount: {
       doom_one: '{{count}} Verderben',
       doom_other: '{{count}} Verderben',
@@ -202,7 +212,7 @@ export const appTexts = {
     title: 'Was die App meldet',
     levels: {
       display: 'Jede Änderung, die sie vornimmt',
-      assist: 'Änderungen an Ermittlern und Gegnern, gezogene Karten',
+      assist: 'Änderungen an Ermittlern, Gegnern und Chaosbeutel, gezogene Karten',
       auto: 'Nur, was von Hand zu tun ist',
     },
   },

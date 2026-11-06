@@ -279,6 +279,10 @@ function eventLine(t: TFunction, names: Names, state: GameState, event: Event): 
         amount: amount(t, event.token, event.delta),
         card: names.card(event.cardId),
       });
+    case 'ChaosBagChanged':
+      return t(`log.chaosBag.${event.change}.${event.lasts}`, {
+        token: t(`chaosToken.${event.token}`),
+      });
     case 'InvestigatorChanged':
       return t(`log.investigator.${event.stat}.${event.delta > 0 ? 'up' : 'down'}`, {
         investigator: names.investigator(event.investigatorId),

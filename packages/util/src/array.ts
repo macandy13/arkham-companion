@@ -69,3 +69,19 @@ export function runsBy<T, K>(items: readonly T[], keyOf: (item: T) => K): { key:
   }
   return runs;
 }
+
+/**
+ * The first index at which `first` and `second` differ by `equals`, a list that ends early
+ * counting as a difference there; `undefined` when they are equal. Total: two empty lists are equal.
+ */
+export function firstDifference<T>(
+  first: readonly T[],
+  second: readonly T[],
+  equals: (a: T, b: T) => boolean,
+): number | undefined {
+  const length = Math.max(first.length, second.length);
+  for (let i = 0; i < length; i++) {
+    if (i >= first.length || i >= second.length || !equals(first[i]!, second[i]!)) return i;
+  }
+  return undefined;
+}

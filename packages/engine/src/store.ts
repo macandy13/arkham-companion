@@ -8,7 +8,7 @@ import type { CampaignChangeCause } from './campaign/campaign_notices';
 import type { CampaignLog, CampaignResult } from './campaign/campaign_log';
 
 /** Version of the persisted `GameState` shape; bump together with a migration when `GameState` changes. */
-export const STATE_VERSION = 2;
+export const STATE_VERSION = 3;
 
 /** Optional metadata given to `GameStore.createGame`. */
 export interface NewGame {
