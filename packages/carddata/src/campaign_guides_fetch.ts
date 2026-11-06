@@ -5,7 +5,8 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
 import { z } from 'zod';
-import { layoutReport, scenarioLayouts, type ScenarioLayouts } from './campaign_guides';
+import { layoutReport, scenarioLayouts } from './campaign_guides';
+import { campaignChaosBags, scenarioSetup, setupReport } from './campaign_setup';
 import { CACHE_DIR } from './fetch';
 
 const run = promisify(execFile);
@@ -56,26 +57,46 @@ async function readJson(file: string): Promise<unknown> {
   return JSON.parse(await readFile(file, 'utf8')) as unknown;
 }
 
-/**
- * The layouts of each scenario of `campaign`, in the campaign's play order, then those of its
- * other files (the campaign-wide `core.json`) that have any, such as a campaign map.
- */
-async function campaignLayouts(campaign: string): Promise<ScenarioLayouts[]> {
+/** A campaign's files as read from the clone: its `campaign.json` and every other file of it. */
+interface RawCampaignFiles {
+  campaign: unknown;
+  scenarios: unknown[];
+}
+
+async function readCampaign(campaign: string): Promise<RawCampaignFiles> {
   const dir = campaignDir(campaign);
-  const order = RawCampaignSchema.parse(await readJson(join(dir, 'campaign.json'))).scenarios;
   const files = (await readdir(dir)).filter(
     (file) => file.endsWith('.json') && file !== 'campaign.json',
   );
-  const scenarios = await Promise.all(
-    files.map(async (file) => scenarioLayouts(await readJson(join(dir, file)))),
-  );
-  const position = (scenario: ScenarioLayouts) => {
-    const index = order.indexOf(scenario.id);
+  return {
+    campaign: await readJson(join(dir, 'campaign.json')),
+    scenarios: await Promise.all(files.map((file) => readJson(join(dir, file)))),
+  };
+}
+
+/** `items` in the campaign's play order (`order`), the ones it doesn't list last. */
+function inPlayOrder<T extends { id: string }>(items: T[], order: readonly string[]): T[] {
+  const position = (item: T) => {
+    const index = order.indexOf(item.id);
     return index === -1 ? order.length : index;
   };
-  return scenarios
-    .filter((scenario) => order.includes(scenario.id) || scenario.layouts.length > 0)
-    .sort((a, b) => position(a) - position(b));
+  return [...items].sort((a, b) => position(a) - position(b));
+}
+
+/**
+ * The import of one campaign: its bags, and per scenario in play order its layouts and setup.
+ * Files the campaign doesn't list as scenarios (the campaign-wide `core.json`) are kept only
+ * when they have a layout, such as a campaign map.
+ */
+function importCampaign(files: RawCampaignFiles) {
+  const order = RawCampaignSchema.parse(files.campaign).scenarios;
+  const layouts = inPlayOrder(files.scenarios.map(scenarioLayouts), order).filter(
+    (scenario) => order.includes(scenario.id) || scenario.layouts.length > 0,
+  );
+  const setups = inPlayOrder(files.scenarios.map(scenarioSetup), order).filter((scenario) =>
+    order.includes(scenario.id),
+  );
+  return { chaosBags: campaignChaosBags(files.campaign), layouts, setups };
 }
 
 /** Usage: pnpm carddata:campaign <campaign ...>, e.g. `notz` or `rtnotz` (ArkhamCards' ids). */
@@ -84,11 +105,16 @@ async function main(): Promise<void> {
   if (campaigns.length === 0) throw new Error('Name at least one ArkhamCards campaign, e.g. notz');
   await updateClone();
   for (const campaign of campaigns) {
-    const layouts = await campaignLayouts(campaign);
+    const imported = importCampaign(await readCampaign(campaign));
     const file = join(CACHE_DIR, 'campaign_guides', `${campaign}.json`);
     await mkdir(join(CACHE_DIR, 'campaign_guides'), { recursive: true });
-    await writeFile(file, JSON.stringify(layouts, null, 2) + '\n');
-    console.log([...layoutReport(layouts), `wrote ${file}`].join('\n'));
+    await writeFile(file, JSON.stringify(imported, null, 2) + '\n');
+    const report = [
+      ...layoutReport(imported.layouts),
+      ...setupReport(imported.chaosBags, imported.setups),
+      `wrote ${file}`,
+    ];
+    console.log(report.join('\n'));
   }
 }
 
