@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   duplicates,
+  firstDifference,
   matchingFirst,
   range,
   runsBy,
@@ -129,5 +130,19 @@ describe('runsBy', () => {
 
   it('is empty for an empty list', () => {
     expect(runsBy([], (item) => item)).toEqual([]);
+  });
+});
+
+describe('firstDifference', () => {
+  const same = (a: string, b: string) => a === b;
+
+  it.each([
+    { first: [], second: [], at: undefined },
+    { first: ['a', 'b'], second: ['a', 'b'], at: undefined },
+    { first: ['a', 'b'], second: ['a', 'c'], at: 1 },
+    { first: ['a', 'b'], second: ['a'], at: 1 },
+    { first: ['a'], second: ['a', 'b'], at: 1 },
+  ])('finds $at for $first and $second', ({ first, second, at }) => {
+    expect(firstDifference(first, second, same)).toBe(at);
   });
 });

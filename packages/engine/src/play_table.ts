@@ -73,6 +73,22 @@ export class TableRejected extends CommandRejected {
 }
 
 /**
+ * A `TableError` for a command (or an undo) that left the state inconsistent (`checkInvariants`):
+ * an engine bug rather than a misused table, so a caller such as the play tester tells the two
+ * apart by type. `violations` are the invariants it broke.
+ */
+export class InvariantBroken extends TableError {
+  constructor(
+    what: string,
+    readonly violations: readonly string[],
+    board: string,
+  ) {
+    super(`${what} broke invariants: ${violations.join('; ')}`, board);
+    this.name = 'InvariantBroken';
+  }
+}
+
+/**
  * An event with the id of the table step that produced it, as the store's undo groups them
  * (`StoredEvent.commandId`). All commands of one step (an action and its test) share the id,
  * so undo takes back the whole step.
@@ -200,8 +216,8 @@ export class PlayTable {
 
   /**
    * Runs one command. A refusal is a `TableRejected` (the engine's rejection
-   * plus the board); a command that leaves the state inconsistent fails with a
-   * `TableError`. Either way the table stays as it was.
+   * plus the board); a command that leaves the state inconsistent fails with
+   * `InvariantBroken`. Either way the table stays as it was.
    */
   play(command: Command): void {
     let result: ExecuteResult;
@@ -736,10 +752,7 @@ export class PlayTable {
   private assertConsistent(what: string, state: GameState): void {
     const violations = checkInvariants(state);
     if (violations.length > 0)
-      throw new TableError(
-        `${what} broke invariants: ${violations.join('; ')}`,
-        formatBoard(this.ctx, state),
-      );
+      throw new InvariantBroken(what, violations, formatBoard(this.ctx, state));
   }
 
   private onlyOne<T>(found: readonly T[], what: string): T {

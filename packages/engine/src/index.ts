@@ -81,6 +81,7 @@ export {
   type ResolvingCardView,
 } from './board_view';
 export {
+  InvariantBroken,
   PlayTable,
   TableRejected,
   type LoggedEvent,

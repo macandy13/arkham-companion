@@ -38,3 +38,4 @@ export {
 } from './the_devourer_below/cards';
 export { theDevourerBelow } from './the_devourer_below/scenario';
 export { theDevourerBelowResolutions } from './the_devourer_below/resolutions';
+export { daisyWalker, rolandBanks, wendyAdams, zealotInvestigatorCards } from './investigators';

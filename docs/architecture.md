@@ -40,6 +40,7 @@ Arrows are package dependencies; [ESLint](../eslint.config.js) enforces the impo
 The engine depends only on `@arkham/util`: no React, storage, network, clock or `Math.random`.
 Only [`IndexedDbStore`](../apps/web/src/storage/IndexedDbStore.ts) imports Dexie.
 [`packages/review_digest`](../packages/review_digest/src/) is CI tooling.
+[`packages/play_tester`](../packages/play_tester/src/) is test tooling: bots play the real scenarios through `PlayTable` (it may use Node; the engine stays pure).
 
 - [`packages/engine`](../packages/engine/src/): game state, commands, events, reducer, generic rules, the `GameStore` interface, and the test tools (`GameBuilder`, `PlayTable`, `BoardView`).
 - [`packages/scenarios`](../packages/scenarios/src/): scenario and campaign definitions; special rules are card abilities.
@@ -216,3 +217,4 @@ Where this lives in `GameState` ([`state.ts`](../packages/engine/src/state.ts)):
     - [Investigators and enemies](architecture/play-screen-investigators.md)
     - [Decisions](architecture/play-screen-decisions.md)
 - [Tests and debugging](architecture/tests-and-debugging.md): `newGame()`, `PlayTable`, `BoardView`.
+- [Play tester](architecture/play-tester.md): runs, bots, steps and the checks a game is judged by.
