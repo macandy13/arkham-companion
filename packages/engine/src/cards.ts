@@ -174,6 +174,17 @@ export interface CardStats {
    */
   unrevealedSymbol?: LocationSymbol;
   /**
+   * Only on locations: the connection symbols printed at the foot of its revealed side, the
+   * symbols of the locations it connects to (none for a location that prints none, as the Study).
+   * Entered with `symbol`, since ArkhamDB has no field for them; `printedSymbols` reads them.
+   */
+  connectsTo?: readonly LocationSymbol[];
+  /**
+   * The connection symbols its unrevealed side prints, only where they differ from `connectsTo`
+   * (every Arkham Woods prints only the Main Path's until it is revealed).
+   */
+  unrevealedConnectsTo?: readonly LocationSymbol[];
+  /**
    * The picture of its front on ArkhamDB, only for the views to show; no rule reads it. A
    * location's front is its revealed side.
    */
@@ -295,4 +306,34 @@ export function cardStats(cards: CardDb, code: CardCode): CardStats {
   const stats = cards.get(code);
   if (!stats) throw new CommandRejected({ code: 'unknownCardCode', cardCode: code });
   return stats;
+}
+
+/** Which side of a location card is up: its symbol and connection symbols can differ between them. */
+export type LocationSide = 'revealed' | 'unrevealed';
+
+/** What one side of a location prints: its own symbol and the symbols it connects to. */
+export interface PrintedSymbols {
+  /** Absent where nobody has entered it yet. */
+  readonly symbol?: LocationSymbol;
+  readonly connectsTo: readonly LocationSymbol[];
+}
+
+/**
+ * The symbols `side` of a location prints (`CardStats.symbol`, `connectsTo` and their unrevealed
+ * variants, which default to the revealed ones). Views label a location with its symbol; the
+ * printed connections let a scenario's declared map be checked against its cards.
+ */
+export function printedSymbols(stats: CardStats, side: LocationSide): PrintedSymbols {
+  const revealed = side === 'revealed';
+  const symbol = revealed ? stats.symbol : (stats.unrevealedSymbol ?? stats.symbol);
+  const connectsTo = revealed ? stats.connectsTo : (stats.unrevealedConnectsTo ?? stats.connectsTo);
+  return { ...(symbol === undefined ? {} : { symbol }), connectsTo: connectsTo ?? [] };
+}
+
+/**
+ * Whether `from` prints a connection to `to`: its connection symbols name `to`'s symbol. Only
+ * what the cards print; which way that lets investigators move is the map's (M4.2b).
+ */
+export function printsConnectionTo(from: PrintedSymbols, to: PrintedSymbols): boolean {
+  return to.symbol !== undefined && from.connectsTo.includes(to.symbol);
 }

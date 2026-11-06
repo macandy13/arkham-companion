@@ -15,6 +15,8 @@ import {
   fixed,
   investigatorCardStats,
   investigatorCode,
+  printedSymbols,
+  printsConnectionTo,
   resolveValue,
   trait,
 } from './index';
@@ -155,5 +157,50 @@ describe('comparableName', () => {
     { name: 'keeps inner dots', text: 'St. Mary', expected: 'st. mary' },
   ])('$name', ({ text, expected }) => {
     expect(comparableName(text)).toEqual(expected);
+  });
+});
+
+describe('printedSymbols', () => {
+  const woods = blankLocation('woods', {
+    symbol: 'triangle',
+    unrevealedSymbol: 'square',
+    connectsTo: ['tilde', 'diamond'],
+    unrevealedConnectsTo: ['tilde'],
+  });
+  const hallway = blankLocation('hallway', { symbol: 'square', connectsTo: ['triangle'] });
+
+  it.each([
+    { side: 'revealed', printed: { symbol: 'triangle', connectsTo: ['tilde', 'diamond'] } },
+    { side: 'unrevealed', printed: { symbol: 'square', connectsTo: ['tilde'] } },
+  ] as const)('reads the $side side of a location whose sides differ', ({ side, printed }) => {
+    expect(printedSymbols(woods, side)).toEqual(printed);
+  });
+
+  it('reads the revealed symbols on the unrevealed side when it prints the same', () => {
+    expect(printedSymbols(hallway, 'unrevealed')).toEqual({
+      symbol: 'square',
+      connectsTo: ['triangle'],
+    });
+  });
+
+  it('reads no connections where none are entered', () => {
+    expect(printedSymbols(blankLocation('study'), 'revealed')).toEqual({ connectsTo: [] });
+  });
+});
+
+describe('printsConnectionTo', () => {
+  const attic = { symbol: 'triangle', connectsTo: ['square'] } as const;
+  const hallway = { symbol: 'square', connectsTo: ['plus'] } as const;
+
+  it("connects a location that lists the other one's symbol", () => {
+    expect(printsConnectionTo(attic, hallway)).toBe(true);
+  });
+
+  it('does not connect one that does not list it', () => {
+    expect(printsConnectionTo(hallway, attic)).toBe(false);
+  });
+
+  it('does not connect to a location without a symbol', () => {
+    expect(printsConnectionTo(attic, { connectsTo: [] })).toBe(false);
   });
 });
