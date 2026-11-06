@@ -40,9 +40,8 @@ const monstersInPlay: TokenValue = (ctx, state) =>
   0 - enemiesOnTable(ctx, state, trait('Monster')).length;
 
 /**
- * The six Arkham Woods around the ring their revealed sides print, each next to the two before
- * and after it (Unhallowed Ground's triangle to Old House's diamond, and so on); read from the
- * ArkhamDB pictures, as no card data has the symbols.
+ * The six Arkham Woods, in the order of the ring their revealed sides print (each to the two
+ * before and after it); the seeded pick of 4 goes by this order.
  */
 const woodsRing: readonly CardCode[] = [
   codes.arkhamWoodsUnhallowedGround,
@@ -54,10 +53,11 @@ const woodsRing: readonly CardCode[] = [
 ];
 
 /**
- * The Main Path with 4 of the 6 Arkham Woods at random in the corners around it. The Main Path
- * "is connected to each other Woods location"; the Woods connect to each other along
- * `woodsRing`, but only on their revealed sides, so those connections count once both
- * neighbours are revealed. Setup drops the connections to the 2 Woods left out of the game.
+ * The Main Path with 4 of the 6 Arkham Woods at random in the corners around it. The printed
+ * symbols connect the Woods to the Main Path and, once revealed, to each other; the Main Path's
+ * own symbols reach only the unrevealed Woods, so its text "is connected to each other Woods
+ * location" is declared, one-way, as no card prints it. Setup drops the connections to the 2
+ * Woods left out of the game.
  */
 const theWoods: AddMapStep = {
   kind: 'addMap',
@@ -68,14 +68,11 @@ const theWoods: AddMapStep = {
     codes: woodsRing,
     cells: WOODS_CORNER_CELLS,
   },
-  connections: [
-    ...woodsRing.map((woods): MapConnection => ({ from: codes.mainPath, to: woods })),
-    ...woodsRing.map((woods, i): MapConnection => ({
-      from: woods,
-      to: woodsRing[(i + 1) % woodsRing.length] ?? woods,
-      revealedOnly: true,
-    })),
-  ],
+  connections: woodsRing.map((woods): MapConnection => ({
+    from: codes.mainPath,
+    to: woods,
+    oneWay: true,
+  })),
 };
 
 /** "Place 1 doom on agenda 1a" for each step of 2 Cultists who got away (1–2: 1, 3–4: 2, 5–6: 3). */

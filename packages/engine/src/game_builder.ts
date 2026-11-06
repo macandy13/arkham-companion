@@ -169,13 +169,9 @@ export class GameBuilder {
   withConnection(
     from: InstanceId,
     to: InstanceId,
-    {
-      oneWay = false,
-      revealedOnly = false,
-      map,
-    }: { oneWay?: boolean; revealedOnly?: boolean; map?: MapId } = {},
+    { oneWay = false, map }: { oneWay?: boolean; map?: MapId } = {},
   ): GameBuilder {
-    const edge: Edge = { from, to, oneWay, ...(revealedOnly && { revealedOnly }) };
+    const edge: Edge = { from, to, oneWay };
     const entry: ConnectionEntry = { edge, ...(map ? { map } : {}) };
     return this.with({ connections: [...this.spec.connections, entry] });
   }

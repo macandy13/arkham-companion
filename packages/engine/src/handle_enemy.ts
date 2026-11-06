@@ -105,7 +105,7 @@ export function handleMoveEnemyTowards(
     });
   // A target not in play yet (the Parlor while act 1 holds it set aside) has no path to it.
   if (!isLocationInPlay(state, cmd.towards)) return [];
-  const steps = firstSteps(shortestPaths(state, locationOf(state, enemy), cmd.towards));
+  const steps = firstSteps(shortestPaths(ctx, state, locationOf(state, enemy), cmd.towards));
   const [only] = steps;
   if (only === undefined) return [];
   const moveTo = (to: InstanceId): MoveEnemy => ({ type: 'MoveEnemy', enemyId: enemy.id, to });

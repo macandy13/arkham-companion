@@ -127,11 +127,6 @@ export const theGatheringHouse: AddMapStep = {
     { code: codes.cellar, at: { column: 0, row: 2 * oneCard } },
     { code: codes.parlor, at: { column: oneCard, row: oneCard } },
   ],
-  connections: [
-    { from: codes.hallway, to: codes.attic },
-    { from: codes.hallway, to: codes.cellar },
-    { from: codes.hallway, to: codes.parlor },
-  ],
 };
 
 /**

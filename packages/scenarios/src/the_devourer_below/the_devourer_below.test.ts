@@ -93,28 +93,42 @@ describe('The Devourer Below setup', () => {
       expect(state.investigators.map((inv) => inv.locationId)).toEqual([mainPath, mainPath]);
       expect(state.cards[mainPath]?.faceUp).toBe(true);
       expect(theWoods.map((id) => state.cards[id]?.faceUp)).toEqual([false, false, false, false]);
-      expect(state.board.maps[woods]?.connections).toEqual(
-        expect.arrayContaining(theWoods.map((id) => ({ from: mainPath, to: id, oneWay: false }))),
+      expect([...neighbours(ctx, state, mainPath)].sort()).toEqual([...theWoods].sort());
+      expect(theWoods.map((id) => neighbours(ctx, state, id))).toEqual(
+        theWoods.map(() => [mainPath]),
       );
     },
   );
 
-  it('connects the 4 Woods picked with seed 1 along their ring, once both ends are revealed', () => {
-    const state = startScenario(ctx, { seed: 1 });
+  it('connects the 4 Woods picked with seed 1 to their ring neighbours and the Main Path once revealed', () => {
+    const started = startScenario(ctx, { seed: 1 });
+    const theWoods = (state: GameState) =>
+      (state.order[zoneKey({ kind: 'location', mapId: woods })] ?? []).filter(
+        (id) => id !== mainPath,
+      );
+    const code = (state: GameState, id: InstanceId) => state.cards[id]?.code;
 
-    const betweenWoods = (state.board.maps[woods]?.connections ?? [])
-      .filter((edge) => edge.from !== mainPath)
-      .map((edge) => ({
-        from: state.cards[edge.from]?.code,
-        to: state.cards[edge.to]?.code,
-        revealedOnly: edge.revealedOnly,
-      }));
+    const state = stateAfter(
+      ctx,
+      started,
+      ...theWoods(started).map((id): Command => ({ type: 'RevealLocation', locationId: id })),
+    );
 
     // Unhallowed Ground and Tangled Thicket are left out, and with them their four connections.
-    expect(betweenWoods).toEqual([
-      { from: codes.arkhamWoodsOldHouse, to: codes.arkhamWoodsTwistingPaths, revealedOnly: true },
-      { from: codes.arkhamWoodsQuietGlade, to: codes.arkhamWoodsCliffside, revealedOnly: true },
-    ]);
+    expect(
+      Object.fromEntries(
+        theWoods(state).map((id) => [
+          code(state, id),
+          neighbours(ctx, state, id).map((to) => code(state, to)),
+        ]),
+      ),
+    ).toEqual({
+      [codes.arkhamWoodsOldHouse]: [codes.mainPath, codes.arkhamWoodsTwistingPaths],
+      [codes.arkhamWoodsTwistingPaths]: [codes.mainPath, codes.arkhamWoodsOldHouse],
+      [codes.arkhamWoodsQuietGlade]: [codes.mainPath, codes.arkhamWoodsCliffside],
+      [codes.arkhamWoodsCliffside]: [codes.mainPath, codes.arkhamWoodsQuietGlade],
+    });
+    expect(neighbours(ctx, state, mainPath).length).toBe(4);
   });
 
   it('sets aside the Ritual Site and Umôrdhoth', () => {
@@ -263,7 +277,7 @@ describe('The Devourer Below setup in the campaign', () => {
       faceUp: false,
     });
     expect(state.board.maps[woods]?.layout[ritualSite]).toEqual({ column: 3, row: 0 });
-    expect(neighbours(state, mainPath)).toContain(ritualSite);
+    expect(neighbours(ctx, state, mainPath)).toContain(ritualSite);
     expect(namesIn(state, { kind: 'engaged', investigatorId: rolandSeat.id }).sort()).toEqual([
       'Peter Warren',
       'The Masked Hunter',
@@ -310,7 +324,7 @@ describe('The Devourer Below setup in the campaign', () => {
 
       expect(state.cards[ritualSite]?.zone).toEqual({ kind: 'location', mapId: woods });
       expect(state.board.maps[woods]?.layout[ritualSite]).toEqual({ column: 3, row: 0 });
-      expect(neighbours(state, mainPath)).toContain(ritualSite);
+      expect(neighbours(ctx, state, mainPath)).toContain(ritualSite);
       expect(namesIn(state, atRitualSite)).toEqual(['Umôrdhoth']);
       expect(state.agenda.current).toBe(devourer);
       expect(state.act.current).toBe(devourer);

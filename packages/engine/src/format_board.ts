@@ -127,7 +127,7 @@ function locationLines(ctx: EngineContext, state: GameState, locationId: Instanc
     ...(attached.length > 0
       ? [`    attached: ${attached.map((card) => nameOf(ctx, card)).join(', ')}`]
       : []),
-    `    connects to: ${listOrNone(neighbours(state, locationId).map((id) => nameOfId(ctx, state, id)))}`,
+    `    connects to: ${listOrNone(neighbours(ctx, state, locationId).map((id) => nameOfId(ctx, state, id)))}`,
   ];
 }
 

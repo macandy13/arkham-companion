@@ -3,6 +3,8 @@ import {
   campaign,
   cardDbWith,
   checkInvariants,
+  emptyState,
+  execute,
   scenario,
   instanceId,
   investigatorCode,
@@ -208,16 +210,21 @@ describe('The Gathering skull token', () => {
 });
 
 describe('The Gathering house (after act 1)', () => {
-  it('connects the Hallway to the Attic, the Cellar and the Parlor', () => {
-    const def = makeDefinition({ setup: [theGatheringHouse] });
+  it('connects the Hallway to the Attic, the Cellar and the Parlor by their printed symbols', () => {
+    const houseCtx = { ...ctx, scenario: makeDefinition({ setup: [theGatheringHouse] }) };
 
-    const command = scenario.compileSetup({ ...ctx, scenario: def }, makeSetupOptions());
+    const { state } = execute(
+      houseCtx,
+      emptyState(),
+      scenario.compileSetup(houseCtx, makeSetupOptions()),
+    );
 
-    expect(command.maps?.[mapId('house')]?.connections).toEqual([
-      { from: '01112#1', to: '01113#1', oneWay: false },
-      { from: '01112#1', to: '01114#1', oneWay: false },
-      { from: '01112#1', to: '01115#1', oneWay: false },
+    expect(neighbours(houseCtx, state, instanceId('01112#1'))).toEqual([
+      '01113#1',
+      '01114#1',
+      '01115#1',
     ]);
+    expect(neighbours(houseCtx, state, instanceId('01113#1'))).toEqual(['01112#1']);
   });
 });
 
@@ -242,7 +249,7 @@ describe('The Gathering act 1 reverse side', () => {
       codes.cellar,
       codes.parlor,
     ]);
-    expect(neighbours(state, hallway)).toEqual(['01113#1', '01114#1', '01115#1']);
+    expect(neighbours(ctx, state, hallway)).toEqual(['01113#1', '01114#1', '01115#1']);
     expect(checkInvariants(state)).toEqual([]);
   });
 

@@ -202,9 +202,7 @@ describe('The Devourer Below end to end: Roland and Daisy, seed 9', () => {
     table.endTurn(daisy);
 
     expect(table.board.perInvestigator('clues')).toEqual({ roland: 2, daisy: 2 });
-    expect(table.board.maps[0]?.connections).toContainEqual(
-      expect.objectContaining({ from: oldHouse, to: twistingPaths }),
-    );
+    expect(table.board.connectedTo(oldHouse)).toContain(twistingPaths);
 
     expect(table.nextPhase()).toEqual({ round: 1, phase: 'enemy' });
     expect(table.nextPhase()).toEqual({ round: 1, phase: 'upkeep' });
@@ -289,9 +287,7 @@ describe('The Devourer Below end to end: Roland and Daisy, seed 9', () => {
     table.answer(byName('Frozen in Fear'), 'pass');
 
     expect(table.board.act).toMatchObject({ name: 'Into the Darkness' });
-    expect(table.board.maps[0]?.connections).toContainEqual(
-      expect.objectContaining({ from: mainPath, to: ritualSite }),
-    );
+    expect(table.board.connectedTo(mainPath)).toContain(ritualSite);
     expect(table.board.namesIn({ kind: 'atLocation', locationId: mainPath }).sort()).toEqual([
       'Peter Warren',
       'Ruth Turner',

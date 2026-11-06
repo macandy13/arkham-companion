@@ -1114,7 +1114,7 @@ describe('trigger bus', () => {
         faceUp: false,
       });
       expect(state.board.maps[main]?.layout[shrine]).toEqual({ column: 3, row: 0 });
-      expect(neighbours(state, hall)).toEqual([shrine]);
+      expect(neighbours(context, state, hall)).toEqual([shrine]);
       expect(state.cards[cultist]?.zone).toEqual(atLocation(shrine));
       expect(state.cards[fanatic]?.zone).toEqual(atLocation(shrine));
       expect(state.cards[elder]?.zone).toEqual({ kind: 'setAside' });

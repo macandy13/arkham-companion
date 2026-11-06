@@ -63,7 +63,7 @@ export function handleMoveInvestigator(
   if (
     investigator.locationId !== undefined &&
     !cmd.ignoreConnections &&
-    !neighbours(state, investigator.locationId).includes(cmd.to)
+    !neighbours(ctx, state, investigator.locationId).includes(cmd.to)
   )
     throw new CommandRejected({ code: 'notConnected', from: investigator.locationId, to: cmd.to });
   if (isRestricted(ctx, state, destination, 'moveInto'))
