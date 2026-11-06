@@ -1,5 +1,13 @@
 import { assertNever } from '@arkham/util';
-import { byId, byName, type CardName, type InstanceId, type PlayTable } from '@arkham/engine';
+import {
+  byId,
+  byName,
+  type CardName,
+  type ChaosToken,
+  type InstanceId,
+  type PlayTable,
+  type SkillTestResult,
+} from '@arkham/engine';
 
 /** The `PlayTable` verbs that take only the investigator who acts or is corrected. */
 export const INVESTIGATOR_VERBS = [
@@ -42,7 +50,17 @@ export type Step =
       readonly action: number;
     }
   /** Answers the open decision about the card `about`, or the only one when it is about none. */
-  | { readonly verb: 'answer'; readonly about?: InstanceId; readonly option: string };
+  | { readonly verb: 'answer'; readonly about?: InstanceId; readonly option: string }
+  /**
+   * Reports the investigator's open skill test with the `result` the drawn chaos `token` gives;
+   * the token is only for the reader, the table takes the result.
+   */
+  | {
+      readonly verb: 'resolveTest';
+      readonly investigator: CardName;
+      readonly token: ChaosToken;
+      readonly result: SkillTestResult;
+    };
 
 /** Plays `step` on `table`; a refusal or misuse throws as the `PlayTable` call does. */
 export function playStep(table: PlayTable, step: Step): void {
@@ -87,6 +105,9 @@ export function playStep(table: PlayTable, step: Step): void {
       return;
     case 'useCardAction':
       table.useCardAction(byName(step.investigator), byId(step.card), step.action);
+      return;
+    case 'resolveTest':
+      table.resolveTest(step.result, { for: byName(step.investigator) });
       return;
     case 'answer':
       if (step.about === undefined) table.answerOnly(step.option);

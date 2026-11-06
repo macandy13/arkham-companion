@@ -95,6 +95,12 @@ describe('playing a run', () => {
     expect(result.steps.length).toBeGreaterThan(0);
   });
 
+  it('fails the liveness check when the game goes past the round cap', () => {
+    const result = playRun(run, { roundCap: 1 });
+
+    expect(result).toMatchObject({ end: 'finding', rounds: 2, finding: { check: 'liveness' } });
+  });
+
   it('plays the same game twice, so the determinism check passes', () => {
     expect(checkRun(run, { stepCap: 40 }).finding).toBeUndefined();
   });

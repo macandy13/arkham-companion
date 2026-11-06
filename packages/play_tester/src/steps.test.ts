@@ -48,6 +48,20 @@ describe('playing a step', () => {
     expect(table.board.investigator(alice).clues).toBe(1);
   });
 
+  it('reports an open test with the result a drawn token gave', () => {
+    const table = PlayTable.start(game);
+
+    playStep(table, { verb: 'investigate', investigator: cardName('alice') });
+    playStep(table, {
+      verb: 'resolveTest',
+      investigator: cardName('alice'),
+      token: '+1',
+      result: 'pass',
+    });
+
+    expect(table.board.investigator(alice).clues).toBe(1);
+  });
+
   it('fights an enemy by its instance id and answers the open test as the only decision', () => {
     const table = PlayTable.start(
       game.withCard(ghoul, blankEnemy('ghoul', { health: fixed(2) }), engagedWith(alice)),
