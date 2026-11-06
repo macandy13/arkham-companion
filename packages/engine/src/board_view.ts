@@ -15,6 +15,7 @@ import { actionCost, type BasicAction } from './action_costs';
 import { effectiveValue } from './modifiers';
 import {
   cardStats,
+  printedSymbols,
   resolveValue,
   type CardStats,
   type CardType,
@@ -1170,10 +1171,10 @@ const NO_CLUES: ScaledValue = { fixed: 0, perInvestigator: 0 };
 
 function locationView(ctx: EngineContext, state: GameState, location: CardInstance): LocationView {
   const present = state.investigators.filter((inv) => inv.locationId === location.id);
-  const { imageSrc, backImageSrc, actions, symbol, unrevealedSymbol, clues, encounterCode } =
-    cardStats(ctx.cards, location.code);
+  const stats = cardStats(ctx.cards, location.code);
+  const { imageSrc, backImageSrc, actions, clues, encounterCode } = stats;
   const image = location.faceUp ? imageSrc : backImageSrc;
-  const shownSymbol = location.faceUp ? symbol : (unrevealedSymbol ?? symbol);
+  const shownSymbol = printedSymbols(stats, location.faceUp ? 'revealed' : 'unrevealed').symbol;
   return {
     id: location.id,
     name: nameOf(ctx, location),

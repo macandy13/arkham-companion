@@ -1,6 +1,6 @@
 # Location symbols
 
-Every location card prints a symbol in its upper left corner, in a colour fixed per symbol, and lists the symbols of the locations it connects to. ArkhamDB's card data has no field for either, so the app enters the own symbol by hand with the scenario's cards (`CardStats.symbol`, added in M3.14d). This page lists which symbols exist and which campaign needs which, so each one is drawn once, when the first scenario that uses it is built.
+Every location card prints a symbol in its upper left corner, in a colour fixed per symbol, and lists the symbols of the locations it connects to. ArkhamDB's card data has no field for either, so the app enters them by hand with the scenario's cards: the own symbol (`CardStats.symbol`, added in M3.14d) and the symbols it connects to (`CardStats.connectsTo`, M4.2a), read from the card pictures. This page lists which symbols exist and which campaign needs which, so each one is drawn once, when the first scenario that uses it is built.
 
 ## How the list was made
 
