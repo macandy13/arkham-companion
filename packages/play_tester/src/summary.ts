@@ -1,3 +1,4 @@
+import { addCount, sum } from '@arkham/util';
 import type { RejectionCode } from '@arkham/engine';
 import type { CheckId, RunResult } from './play_run';
 
@@ -20,39 +21,35 @@ export function summarise(results: readonly RunResult[]): Summary {
   const findings: Partial<Record<CheckId, number>> = {};
   const refusals: Partial<Record<RejectionCode, number>> = {};
   for (const result of results) {
-    count(ends, result.end, 1);
-    if (result.finding) count(findings, result.finding.check, 1);
+    addCount(ends, result.end);
+    if (result.finding) addCount(findings, result.finding.check);
     for (const [code, times] of Object.entries(result.refusals) as [RejectionCode, number][])
-      count(refusals, code, times);
+      addCount(refusals, code, times);
   }
   return {
     games: results.length,
     ends,
     findings,
-    steps: results.reduce((sum, { steps }) => sum + steps.length, 0),
+    steps: sum(results.map(({ steps }) => steps.length)),
     refusals,
-    misuses: results.reduce((sum, { misuses }) => sum + misuses, 0),
+    misuses: sum(results.map(({ misuses }) => misuses)),
   };
 }
 
-/** `summary` as Markdown lines, for the terminal and the nightly job summary. */
+/** `summary` as plain lines, for the terminal (the nightly job summary formats its own). */
 export function formatSummary(summary: Summary): string {
   const { games, ends, findings, steps, refusals, misuses } = summary;
-  const refused = Object.values(refusals).reduce((sum, times) => sum + times, 0);
+  const refused = sum(Object.values(refusals));
   return [
     `Games: ${games}, steps played: ${steps}`,
-    `Ends: ${counts(ends)}`,
-    `Findings: ${counts(findings)}`,
-    `Expected refusals: ${refused} (${counts(refusals)}); misused steps: ${misuses}`,
+    `Ends: ${byCountDescending(ends)}`,
+    `Findings: ${byCountDescending(findings)}`,
+    `Expected refusals: ${refused} (${byCountDescending(refusals)}); misused steps: ${misuses}`,
   ].join('\n');
 }
 
-function count<K extends string>(counts: Partial<Record<K, number>>, key: K, times: number): void {
-  counts[key] = (counts[key] ?? 0) + times;
-}
-
 /** `{ a: 2, b: 1 }` as `a 2, b 1`, most first; `none` when empty. */
-function counts(byKey: Partial<Record<string, number>>): string {
+function byCountDescending(byKey: Partial<Record<string, number>>): string {
   const entries = Object.entries(byKey) as [string, number][];
   if (entries.length === 0) return 'none';
   return entries

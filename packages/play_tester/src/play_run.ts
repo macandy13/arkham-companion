@@ -1,5 +1,5 @@
 import { isDeepStrictEqual } from 'node:util';
-import { firstDifference } from '@arkham/util';
+import { addCount, firstDifference } from '@arkham/util';
 import {
   CommandRejected,
   InvariantBroken,
@@ -86,7 +86,7 @@ export function playRun(run: Run, { stepCap = STEP_CAP } = {}): RunResult {
     const step = randomStep(table, random);
     const outcome = checkedStep(table, step);
     if (outcome.kind === 'played') steps.push(step);
-    else if (outcome.kind === 'refused') refusals[outcome.code] = (refusals[outcome.code] ?? 0) + 1;
+    else if (outcome.kind === 'refused') addCount(refusals, outcome.code);
     else if (outcome.kind === 'misused') misuses++;
     else return result('finding', { ...outcome.failed, step: steps.length, attempted: step });
   }

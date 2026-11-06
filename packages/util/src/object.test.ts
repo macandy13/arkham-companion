@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  addCount,
   keyOf,
   listIfAny,
   recordIfAny,
@@ -130,5 +131,26 @@ describe('withoutValue', () => {
     expect(withoutValue({ skipped: 'step_one' }, 'step_two')).toStrictEqual({
       skipped: 'step_one',
     });
+  });
+});
+
+describe('addCount', () => {
+  it.each([
+    { case: 'a new key', key: 'b' as const, times: 2, counts: { a: 1, b: 2 } },
+    { case: 'a counted key', key: 'a' as const, times: 3, counts: { a: 4 } },
+  ])('adds to $case', ({ key, times, counts }) => {
+    const tally: Partial<Record<'a' | 'b', number>> = { a: 1 };
+
+    addCount(tally, key, times);
+
+    expect(tally).toEqual(counts);
+  });
+
+  it('adds one by default', () => {
+    const tally: Partial<Record<'a', number>> = {};
+
+    addCount(tally, 'a');
+
+    expect(tally).toEqual({ a: 1 });
   });
 });

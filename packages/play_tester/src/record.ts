@@ -73,7 +73,8 @@ export interface StepReplay {
 /**
  * Replays `record`'s steps through a fresh `PlayTable` on today's engine, judging each like the
  * live game, and stops at its failing step: it shows what the engine does now. A `determinism`
- * finding compares two whole games, so its run is played twice again instead.
+ * finding compares two whole games, so its run is played twice again instead (`checkRun`, whose
+ * own tests cover the comparison; an engine that is not deterministic cannot be built for a test).
  */
 export function replaySteps(record: RunRecord): StepReplay {
   const { run, steps, finding: recorded } = record;
