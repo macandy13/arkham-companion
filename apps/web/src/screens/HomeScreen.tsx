@@ -5,16 +5,19 @@ import { useStore } from 'zustand';
 import type { StoreApi } from 'zustand/vanilla';
 import type { AppState } from '../state/appStore';
 import { GameImportError } from '../storage/gameExport';
-import { CampaignListItem } from './CampaignListItem';
+import { CampaignCover } from './CampaignCover';
 import { downloadGameExport } from './downloadFile';
-import { GameListItem, untitledLabel } from './GameListItem';
+import { GameCover, untitledLabel } from './GameCover';
 import { HomeTitle } from './HomeTitle';
+import { shelfEntries } from './shelf';
+import '@fontsource/caveat/latin-500.css';
 import './home.css';
 
 /**
  * Route `/`: the app's title over its three ways in (a new campaign, one scenario, loading an
- * export file), then campaigns with resume and saved games with resume, rename, duplicate, export
- * and delete. The title and the ways in lie on the table rather than on a page (MD.3b).
+ * export file), then the shelf: one cover per campaign, its scenario games included, and one per
+ * game of one scenario, last played first (`shelfEntries`). It lies on the table rather than on a
+ * page (MD.3b).
  */
 export function HomeScreen({ store }: { store: StoreApi<AppState> }) {
   const { t } = useTranslation();
@@ -69,22 +72,25 @@ export function HomeScreen({ store }: { store: StoreApi<AppState> }) {
         </label>
       </nav>
       {importError && <p role="alert">{importError}</p>}
-      {campaigns.length > 0 && (
-        <ul aria-label={t('campaignList.title')}>
-          {campaigns.map((campaign) => (
-            <CampaignListItem key={campaign.campaignId} campaign={campaign} />
-          ))}
-        </ul>
-      )}
-      {games.length === 0 ? (
+      {games.length === 0 && campaigns.length === 0 ? (
         <p>{t('games.empty')}</p>
       ) : (
-        <ul aria-label={t('games.title')}>
-          {games.map((game, i) => {
-            const untitled = untitledLabel(t, games, i);
+        <ul id="shelf" aria-label={t('home.shelf')}>
+          {shelfEntries(campaigns, games).map((entry) => {
+            if (entry.kind === 'campaign') {
+              return (
+                <CampaignCover
+                  key={entry.campaign.campaignId}
+                  campaign={entry.campaign}
+                  games={entry.games}
+                />
+              );
+            }
+            const { game } = entry;
+            const untitled = untitledLabel(t, games, games.indexOf(game));
             const copyTitle = t('games.copyTitle', { title: game.title || untitled });
             return (
-              <GameListItem
+              <GameCover
                 key={game.gameId}
                 game={game}
                 untitledLabel={untitled}

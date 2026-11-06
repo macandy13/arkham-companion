@@ -3,9 +3,11 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import type { GameSummary } from '@arkham/engine';
+import { findScenario } from '../scenarios/scenarioCatalog';
 import { ConfirmDialog } from './ConfirmDialog';
+import { CoverMenu } from './CoverMenu';
 
-interface GameListItemProps {
+interface GameCoverProps {
   readonly game: GameSummary;
   /** Fallback title for games saved without one. */
   readonly untitledLabel: string;
@@ -24,19 +26,24 @@ export function untitledLabel(t: TFunction, games: readonly GameSummary[], index
   return t('games.untitled', { n: games.length - index });
 }
 
-/** One saved game on the home screen: progress summary plus resume, rename, duplicate, export and delete. */
-export function GameListItem({
+/**
+ * One game of one scenario on the home shelf (MD.3b): its scenario, the players' title for it
+ * in hand, the team, the round it stands at, Continue, and a ⋮ menu to rename, duplicate,
+ * export or delete it.
+ */
+export function GameCover({
   game,
   untitledLabel,
   onRename,
   onDuplicate,
   onExport,
   onDelete,
-}: GameListItemProps) {
-  const { t, i18n } = useTranslation();
+}: GameCoverProps) {
+  const { t } = useTranslation();
   const [renaming, setRenaming] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const title = game.title || untitledLabel;
+  const scenario = findScenario(game.scenarioId);
 
   function submitRename(form: HTMLFormElement) {
     const name = new FormData(form).get('title');
@@ -46,7 +53,12 @@ export function GameListItem({
 
   return (
     <li>
-      {renaming ? (
+      <hgroup>
+        <p>{t('home.oneScenario')}</p>
+        <h2>{scenario ? t(scenario.nameKey) : t('games.notStarted')}</h2>
+        {!renaming && <p>{title}</p>}
+      </hgroup>
+      {renaming && (
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -57,47 +69,26 @@ export function GameListItem({
             {t('games.name')}
             <input name="title" defaultValue={game.title} required />
           </label>
-          <button type="submit">{t('games.save')}</button>
           <button type="button" onClick={() => setRenaming(false)}>
             {t('games.cancel')}
           </button>
+          <button type="submit">{t('games.save')}</button>
         </form>
-      ) : (
-        <h2>
-          <Link to={`/game/${game.gameId}`}>{title}</Link>
-        </h2>
       )}
-      <dl>
-        <dt>{t('games.scenario')}</dt>
-        <dd>{game.scenarioId || t('games.notStarted')}</dd>
-        <dt>{t('games.investigators')}</dt>
-        <dd>{game.investigators.map((i) => i.name).join(', ') || t('games.noInvestigators')}</dd>
-        <dt>{t('games.progress')}</dt>
-        <dd>
-          {t('games.roundPhase', { round: game.round, phase: t(`games.phases.${game.phase}`) })}
-        </dd>
-        <dt>{t('games.lastPlayed')}</dt>
-        <dd>
-          <time dateTime={new Date(game.updatedAt).toISOString()}>
-            {new Date(game.updatedAt).toLocaleString(i18n.resolvedLanguage)}
-          </time>
-        </dd>
-      </dl>
-      <nav aria-label={t('games.actions', { title })}>
-        <Link to={`/game/${game.gameId}`}>{t('games.resume')}</Link>
-        <button type="button" onClick={() => setRenaming(true)}>
-          {t('games.rename')}
-        </button>
-        <button type="button" onClick={onDuplicate}>
-          {t('games.duplicate')}
-        </button>
-        <button type="button" onClick={onExport}>
-          {t('games.export')}
-        </button>
-        <button type="button" onClick={() => setConfirmingDelete(true)}>
-          {t('games.delete')}
-        </button>
-      </nav>
+      <p>{game.investigators.map((i) => i.name).join(', ') || t('games.noInvestigators')}</p>
+      <p>{t('games.roundPhase', { round: game.round, phase: t(`games.phases.${game.phase}`) })}</p>
+      <footer>
+        <Link to={`/game/${game.gameId}`}>{t('home.continue')}</Link>
+        <CoverMenu
+          title={title}
+          actions={[
+            { label: t('games.rename'), onSelect: () => setRenaming(true) },
+            { label: t('games.duplicate'), onSelect: onDuplicate },
+            { label: t('games.export'), onSelect: onExport },
+            { label: t('games.delete'), onSelect: () => setConfirmingDelete(true) },
+          ]}
+        />
+      </footer>
       {confirmingDelete && (
         <ConfirmDialog
           title={t('games.deleteTitle', { title })}

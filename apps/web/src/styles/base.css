@@ -128,9 +128,10 @@ button:not(:disabled):hover {
  * both themes. The table's colour tokens are redefined on the paper, so what lies on it (text,
  * buttons, fields, lines, the game's clue and doom colours) turns to ink without rules of its own.
  * The campaign log brings its own papers on a starfield, so it keeps the table's tokens, and home
- * lays its title and its campaign guides straight on the table.
+ * lays its title straight on the table, with each game a cover of its own paper (`#shelf`).
  */
 #app > main:not(:has(#board, #campaign-log, #home-title)),
+#shelf > li,
 dialog {
   --color-background: var(--color-paper);
   --color-text: var(--color-ink);
@@ -147,6 +148,7 @@ dialog {
 
 /* A card dialog (CardDialog) is only the frame around its card and page, so the page is the paper. */
 #app > main:not(:has(#board, #campaign-log, #home-title)),
+#shelf > li,
 dialog:where(:not([data-shell])),
 dialog[data-shell] > article {
   border: var(--border-width) solid var(--color-paper-rim);
