@@ -99,8 +99,8 @@ export function CampaignScreen({
         campaignId={campaignId}
         log={log}
         games={games}
-        interlude={opened.interlude}
-        storyKey={opened.storyKey}
+        interlude={shown.interlude}
+        storyKey={shown.storyKey}
       />
       {written?.campaignId === campaignId && (
         <ResolutionUndo
