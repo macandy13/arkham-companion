@@ -40,10 +40,13 @@ export interface ChaosBagChange {
 
 /**
  * Why the import cannot read a setup step, so the author enters it by hand: its effect is only
- * written as text (most set-aside cards), it depends on the log or the players (`branch`), or
- * the players choose (`input`).
+ * written as text (most set-aside cards), it has effects other than chaos tokens (`effect`: a
+ * card added to a deck, a log entry, experience), it depends on the log or the players
+ * (`branch`), or the players choose (`input`).
  */
-export type ByHandReason = 'text' | 'branch' | 'input';
+export type ByHandReason = (typeof BY_HAND_REASONS)[number];
+
+const BY_HAND_REASONS = ['text', 'effect', 'branch', 'input'] as const;
 
 /** A setup step the import leaves to the author (`ByHandReason`). */
 export interface ByHandStep {
@@ -180,9 +183,12 @@ function chaosBagChange(step: RawStep): ChaosBagChange[] {
 function byHandStep(step: RawStep): ByHandStep[] {
   if (step.type === 'branch') return [{ stepId: step.id, reason: 'branch' }];
   if (step.type === 'input') return [{ stepId: step.id, reason: 'input' }];
+  const effects = step.effects ?? [];
+  if (effects.some((effect) => !RawTokensEffectSchema.safeParse(effect).success)) {
+    return [{ stepId: step.id, reason: 'effect' }];
+  }
   // A step without a type and without effects is a paragraph of the guide's setup text.
-  if (step.type === undefined && !step.effects?.length)
-    return [{ stepId: step.id, reason: 'text' }];
+  if (step.type === undefined && effects.length === 0) return [{ stepId: step.id, reason: 'text' }];
   return [];
 }
 
@@ -205,25 +211,35 @@ export function setupReport(
   ];
 }
 
+/** What the report says each by-hand reason means. */
+const BY_HAND_LABELS: Readonly<Record<ByHandReason, string>> = {
+  text: 'by hand, text only',
+  effect: 'by hand, other effects',
+  branch: 'by hand, depends on the log or players',
+  input: 'by hand, the players choose',
+};
+
 function scenarioLines(scenario: ScenarioSetup): string[] {
-  const byHand = (reason: ByHandReason) =>
-    scenario.byHand.filter((step) => step.reason === reason).map((step) => step.stepId);
+  const byHand = BY_HAND_REASONS.flatMap((reason) => {
+    const ids = scenario.byHand.filter((step) => step.reason === reason).map((s) => s.stepId);
+    return ids.length ? [`  ${BY_HAND_LABELS[reason]}: ${ids.join(', ')}`] : [];
+  });
   return [
     `${scenario.name} (${scenario.id}) setup`,
-    ...scenario.encounterSets.map(
-      (sets) =>
-        `  ${sets.aside ? 'set aside' : 'encounter sets'}: ${sets.codes.join(', ')}${sets.text ? ' (see text)' : ''}`,
-    ),
-    ...scenario.chaosBagChanges.map(
-      (change) =>
-        `  chaos bag (${change.stepId}):${change.add.length ? ` add ${change.add.join(' ')}` : ''}${change.remove.length ? ` remove ${change.remove.join(' ')}` : ''}`,
-    ),
-    ...(byHand('text').length ? [`  by hand, text only: ${byHand('text').join(', ')}`] : []),
-    ...(byHand('branch').length
-      ? [`  by hand, depends on the log or players: ${byHand('branch').join(', ')}`]
-      : []),
-    ...(byHand('input').length
-      ? [`  by hand, the players choose: ${byHand('input').join(', ')}`]
-      : []),
+    ...scenario.encounterSets.map(setsLine),
+    ...scenario.chaosBagChanges.map(chaosBagLine),
+    ...byHand,
   ];
+}
+
+function setsLine(sets: GatheredSets): string {
+  const label = sets.aside ? 'set aside' : 'encounter sets';
+  const seeText = sets.text ? ' (see text)' : '';
+  return `  ${label}: ${sets.codes.join(', ')}${seeText}`;
+}
+
+function chaosBagLine(change: ChaosBagChange): string {
+  const add = change.add.length ? ` add ${change.add.join(' ')}` : '';
+  const remove = change.remove.length ? ` remove ${change.remove.join(' ')}` : '';
+  return `  chaos bag (${change.stepId}):${add}${remove}`;
 }

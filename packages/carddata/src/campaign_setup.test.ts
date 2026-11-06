@@ -85,6 +85,16 @@ describe('scenarioSetup', () => {
     { step: { id: 'set_aside_cards', text: 'Set the fake priest aside.' }, reason: 'text' },
     { step: { id: 'check_fake_flag', type: 'branch' }, reason: 'branch' },
     { step: { id: 'choose_fake_lead', type: 'input' }, reason: 'input' },
+    { step: { id: 'add_fake_weakness', effects: [{ type: 'add_weakness' }] }, reason: 'effect' },
+    {
+      step: {
+        id: 'gather_fake_ally',
+        type: 'encounter_sets',
+        encounter_sets: ['fake_ally'],
+        effects: [{ type: 'add_card', card: '90001' }],
+      },
+      reason: 'effect',
+    },
   ])('leaves a $reason step to the author', ({ step, reason }) => {
     const scenario = scenarioWith([step.id], [step]);
 
