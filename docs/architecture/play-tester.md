@@ -33,9 +33,16 @@ flowchart LR
 
 `checkRun` plays a run twice; another event log the second time is a `determinism` finding.
 
+## Records and replay
+
+- Only failing games are recorded: [`recordOf`](../../packages/play_tester/src/record.ts) makes a `RunRecord` (`*.arkham-run.json`) of the run, the finding with its boards, the steps before it and the event log, with the tester's version and commit.
+- `replaySteps` plays a record's steps on a fresh table with today's engine, judging each, and stops at the first finding; `reproduced` says whether it is the recorded one. `loggedBoard` shows what the record's own log replays to.
+- [`cli.ts`](../../packages/play_tester/src/cli.ts) is `pnpm playtest --games 500 --seed 7` (prints the [summary](../../packages/play_tester/src/summary.ts), writes records to the gitignored `packages/play_tester/.runs/`, exits 1 on a finding) and `pnpm playtest --replay <record>`.
+
 ## Extension points
 
 - **A new scenario:** an entry in `SCENARIOS` (`run.ts`) with its card data.
 - **A new rejection code:** its kind in `REFUSAL_KINDS`; typecheck fails until it is marked.
 - **A new verb:** a `Step` variant, its case in `playStep`, and where the bot offers it.
-- **A new check:** a `CheckId` and where `checkedStep` or `checkRun` finds it.
+- **A new check:** a `CheckId` and where `checkedStep` or `checkRun` finds it; `replaySteps` must find it again.
+- **A new record field:** raise `RECORD_VERSION`, so an old record is refused instead of misread.

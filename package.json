@@ -14,7 +14,8 @@
     "lint": "eslint . && prettier --check .",
     "format": "prettier --write .",
     "carddata:fetch": "pnpm --filter @arkham/carddata fetch-cards",
-    "carddata:campaign": "pnpm --filter @arkham/carddata campaign-guides"
+    "carddata:campaign": "pnpm --filter @arkham/carddata campaign-guides",
+    "playtest": "pnpm --filter @arkham/play_tester playtest"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

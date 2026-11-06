@@ -8,6 +8,7 @@ dist/
 .env*
 *.tsbuildinfo
 packages/carddata/.cache/
+packages/play_tester/.runs/
 
 # Test output
 coverage/

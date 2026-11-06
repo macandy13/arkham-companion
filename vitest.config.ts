@@ -22,6 +22,7 @@ export default defineConfig({
         'packages/carddata/src/campaign_guides_fetch.ts',
         'apps/web/scripts/screencast/cli.ts',
         'packages/review_digest/src/cli.ts',
+        'packages/play_tester/src/cli.ts',
         'apps/web/scripts/tsconfig.json',
       ],
       reporter: ['text-summary', 'json-summary', 'html'],

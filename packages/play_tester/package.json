@@ -4,7 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "typecheck": "tsc -p tsconfig.json"
+    "typecheck": "tsc -p tsconfig.json",
+    "playtest": "tsx src/cli.ts"
   },
   "dependencies": {
     "@arkham/engine": "workspace:*",
@@ -12,6 +13,7 @@
     "@arkham/util": "workspace:*"
   },
   "devDependencies": {
-    "@types/node": "^26.6.6"
+    "@types/node": "^26.6.6",
+    "tsx": "^4.23.15"
   }
 }
