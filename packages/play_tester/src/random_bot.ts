@@ -20,23 +20,24 @@ const TURN_VERBS: readonly InvestigatorVerb[] = INVESTIGATOR_VERBS.filter(
     verb !== 'startTurn' && !ANYTIME_VERBS.includes(verb) && !CORRECTION_VERBS.includes(verb),
 );
 
-/** One step in this many is a correction, when the board offers one. */
-const CORRECTION_ODDS = 10;
+/**
+ * One step in this many is a rare one, when the board offers one: a correction, an encounter card
+ * a card effect draws, or undo. Players do these seldom; at the odds of the actions, extra encounter
+ * draws and damage defeated the group within a few rounds, and undo took back half the game.
+ */
+const RARE_ODDS = 100;
 
 /**
  * The _random_ bot (product.md "Continuous play tester"): any verb the board offers, picked
  * uniformly, then any of that verb's steps. Picking the verb first keeps one verb with many
- * targets (moves) from crowding out the rest. Corrections (doom, damage, horror, resources,
- * actions) are only one step in `CORRECTION_ODDS`: at the same odds as the actions they would end
- * most games in the first rounds, before the rules the tester is after come up.
+ * targets (moves) from crowding out the rest. Rare steps (`isRare`) are only one in `RARE_ODDS`.
  */
 export function randomStep(table: PlayTable, random: SeededRandom): Step {
   const offered = offeredSteps(table);
-  const corrections = offered.filter(isCorrection);
+  const rare = offered.filter(isRare);
+  const usual = offered.filter((step) => !isRare(step));
   const pool =
-    corrections.length > 0 && random.below(CORRECTION_ODDS) === 0
-      ? corrections
-      : offered.filter((step) => !isCorrection(step));
+    usual.length === 0 || (rare.length > 0 && random.below(RARE_ODDS) === 0) ? rare : usual;
   const verb = random.pick(unique(pool.map((step) => step.verb)));
   return random.pick(pool.filter((step) => step.verb === verb));
 }
@@ -70,8 +71,14 @@ export function offeredSteps(table: PlayTable): Step[] {
   ];
 }
 
-function isCorrection(step: Step): boolean {
-  return step.verb === 'placeDoom' || (CORRECTION_VERBS as readonly string[]).includes(step.verb);
+/** Corrections by hand, encounter cards a card effect draws, and undo: what players do seldom. */
+function isRare(step: Step): boolean {
+  return (
+    step.verb === 'placeDoom' ||
+    step.verb === 'undo' ||
+    (ANYTIME_VERBS as readonly string[]).includes(step.verb) ||
+    (CORRECTION_VERBS as readonly string[]).includes(step.verb)
+  );
 }
 
 /** Each option of each open decision, the decision named by the card it is about. */

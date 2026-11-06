@@ -18,7 +18,7 @@ flowchart LR
 
 - A [`Run`](../../packages/play_tester/src/run.ts) is one game: scenario, difficulty, investigators by name in seat order, a game seed and a bot seed. `runsFrom(seed, games)` draws a night's runs; the same run always plays the same game.
 - A [`Step`](../../packages/play_tester/src/steps.ts) is one `PlayTable` call with its arguments: investigators and locations by name, enemies and other cards by instance id. `playStep` plays it; a list of steps replays a game on a fresh table.
-- The _random_ bot ([`random_bot.ts`](../../packages/play_tester/src/random_bot.ts)) picks any verb the board offers (`offeredSteps`), then any of its steps. While a decision is open it offers only its options and undo; tests are left open and answered like any decision; corrections are one step in ten.
+- The _random_ bot ([`random_bot.ts`](../../packages/play_tester/src/random_bot.ts)) picks any verb the board offers (`offeredSteps`), then any of its steps. While a decision is open it offers only its options and undo; tests are left open and answered like any decision; rare steps (corrections, encounter draws a card effect asks for, undo) are one step in a hundred.
 - [`playRun`](../../packages/play_tester/src/play_run.ts) plays until a resolution, every investigator out, a finding, or the step cap.
 
 ## How a step is judged
