@@ -19,6 +19,7 @@ import { i18next, initI18n } from '../i18n';
 import { findCampaign } from '../scenarios/scenarioCatalog';
 import { createAppStore } from '../state/appStore';
 import { IndexedDbStore } from '../storage/IndexedDbStore';
+import { AppBarFrame } from '../screens/AppBar';
 import { CampaignScreen } from './CampaignScreen';
 
 let n = 0;
@@ -111,13 +112,15 @@ function renderLog(
 ) {
   render(
     <MemoryRouter initialEntries={[path]}>
-      <Routes>
-        <Route
-          path="/campaign/:id"
-          element={<CampaignScreen store={store} catalog={() => Promise.resolve(catalog)} />}
-        />
-        <Route path="/game/:id" element={<GameRoute />} />
-      </Routes>
+      <AppBarFrame>
+        <Routes>
+          <Route
+            path="/campaign/:id"
+            element={<CampaignScreen store={store} catalog={() => Promise.resolve(catalog)} />}
+          />
+          <Route path="/game/:id" element={<GameRoute />} />
+        </Routes>
+      </AppBarFrame>
     </MemoryRouter>,
   );
 }
@@ -454,6 +457,22 @@ describe('CampaignScreen', () => {
           .map((item) => item.textContent),
       ).toEqual(['0 ×2', 'Skull']);
     });
+  });
+
+  it('names the campaign in the app bar, "Campaign log" under it, with a way up to the games', async () => {
+    const { gameStore, campaignId } = await storeCampaign(() => []);
+
+    renderLog(gameStore, `/campaign/${campaignId}`);
+
+    const appBar = screen.getByRole('banner');
+    await waitFor(() =>
+      expect(
+        within(appBar)
+          .getAllByRole('paragraph')
+          .map((line) => line.textContent),
+      ).toEqual(['Night of the Zealot', 'Campaign log']),
+    );
+    expect(within(appBar).getByRole('link', { name: 'Back' }).getAttribute('href')).toBe('/');
   });
 
   it('marks a killed investigator', async () => {

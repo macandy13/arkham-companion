@@ -1,5 +1,6 @@
 import { createStore, type StoreApi } from 'zustand/vanilla';
 import type {
+  Reliance,
   BoardView,
   CampaignCommand,
   CampaignDefinition,
@@ -28,6 +29,7 @@ import type {
   StepNotice,
 } from '@arkham/engine';
 import {
+  DEFAULT_RELIANCE,
   PlayTable,
   campaign,
   campaignId as toCampaignId,
@@ -61,6 +63,11 @@ export interface ScenarioStart {
   seed: number;
   /** In seat order; the first one is the lead investigator. */
   investigators: readonly InvestigatorSeat[];
+  /**
+   * How much the players rely on the helpers: the game's own, or the campaign's for all its games.
+   * `DEFAULT_RELIANCE` if left out.
+   */
+  reliance?: Reliance;
 }
 
 /**
@@ -161,6 +168,11 @@ export interface OpenGame {
   log?: GameLogSource;
   /** i18n key of the scenario's name (`ScenarioEntry.nameKey`); a playable game always has one. */
   scenarioNameKey?: string;
+  /**
+   * How much the players rely on the helpers, which decides the notices shown (`showsNotice`): the
+   * campaign's for a game of a campaign, else the game's own (`AppState.setReliance`).
+   */
+  reliance: Reliance;
   /**
    * True while an action or undo is queued or running. Actions act on the turn in progress and
    * the first open decision, so the screen disables them meanwhile: a second tap would hit
@@ -319,6 +331,11 @@ export interface AppState {
   cancelSpawn(): void;
   /** Renames a saved game and reloads the list. */
   renameGame(gameId: GameId, title: string): Promise<void>;
+  /**
+   * Changes how much the players rely on the helpers in the open game: its campaign's level, which
+   * all its games follow, or the standalone game's own. Not a step, so undo never takes it back.
+   */
+  setReliance(reliance: Reliance): Promise<void>;
   /** Copies a saved game under `title` and reloads the list; returns the copy's id. */
   duplicateGame(gameId: GameId, title: string): Promise<GameId>;
   /** Deletes a saved game and reloads the list; closes it if it is the open one. */
@@ -417,7 +434,10 @@ export function createAppStore(
       session = ctx && (await GameSession.open(gameStore, gameId, ctx));
       const campaignId = loaded?.summary.campaignId;
       currentCampaignId = campaignId;
-      campaignLog = campaignId && (await gameStore.loadCampaign(campaignId))?.log;
+      const loadedCampaign = campaignId && (await gameStore.loadCampaign(campaignId));
+      campaignLog = loadedCampaign ? loadedCampaign.log : undefined;
+      const reliance =
+        (loadedCampaign ? loadedCampaign.summary : loaded?.summary)?.reliance ?? DEFAULT_RELIANCE;
       set({
         current: {
           gameId,
@@ -426,6 +446,7 @@ export function createAppStore(
           board: session?.board,
           log: session && logSourceOf(session),
           scenarioNameKey: entry?.nameKey,
+          reliance,
           busy: unfinishedSteps > 0,
           canUndo: session?.canUndo ?? false,
           adjusting: false,
@@ -568,8 +589,9 @@ export function createAppStore(
         await get().openGame(gameId);
         return gameId;
       },
-      async startScenario({ title, ctx, difficulty, seed, investigators }) {
-        const gameId = await startGame(gameStore, title, ctx, { difficulty, seed, investigators });
+      async startScenario({ title, ctx, difficulty, seed, investigators, reliance }) {
+        const options = { difficulty, seed, investigators };
+        const gameId = await startGame(gameStore, title, ctx, options, { reliance });
         await get().refresh();
         await get().openGame(gameId);
         return gameId;
@@ -578,12 +600,15 @@ export function createAppStore(
         // The store hands out the id, so a dry run under a stand-in id refuses a bad team or
         // scenario before an empty campaign is stored.
         startCampaignLog(start, toCampaignId('pending'));
-        const campaignId = await gameStore.createCampaign({ title: start.campaignTitle });
+        const campaignId = await gameStore.createCampaign({
+          title: start.campaignTitle,
+          reliance: start.reliance,
+        });
         const { log, events } = startCampaignLog(start, campaignId);
         await gameStore.appendCampaignEvents(campaignId, events);
         const { title, ctx, seed, investigators } = start;
         const options = { campaign: log, seed, investigators };
-        const gameId = await startGame(gameStore, title, ctx, options, campaignId);
+        const gameId = await startGame(gameStore, title, ctx, options, { campaignId });
         await get().refresh();
         await get().openGame(gameId);
         return gameId;
@@ -599,7 +624,7 @@ export function createAppStore(
         if (events.length > 0)
           await gameStore.appendCampaignEvents(campaignId, events, loaded.summary.lastSeq);
         const options = { campaign: log, seed, investigators: seatsFor(log.investigators) };
-        const gameId = await startGame(gameStore, title, ctx, options, campaignId);
+        const gameId = await startGame(gameStore, title, ctx, options, { campaignId });
         await get().refresh();
         await get().openGame(gameId);
         return gameId;
@@ -743,6 +768,16 @@ export function createAppStore(
       cancelSpawn() {
         const open = get().current;
         if (open?.spawning) set({ current: { ...open, spawning: undefined } });
+      },
+      async setReliance(reliance) {
+        const current = get().current;
+        if (!current) throw new Error('No game is open');
+        if (currentCampaignId !== undefined)
+          await gameStore.setCampaignReliance(currentCampaignId, reliance);
+        else await gameStore.setGameReliance(current.gameId, reliance);
+        const now = get().current;
+        if (now?.gameId === current.gameId) set({ current: { ...now, reliance } });
+        await get().refresh();
       },
       async renameGame(gameId, title) {
         await gameStore.renameGame(gameId, title);

@@ -244,6 +244,9 @@
   --layer-token-ghost: 5;
 
   --layout-content-width: 60rem;
+  /* The app bar over the screens outside play (MD.3a): its height and its title's tight lines. */
+  --app-bar-height: 3.5rem;
+  --app-bar-title-line-height: 1.1;
   /* The investigators' column beside the map in landscape, as wide as the prototype's. */
   --layout-board-panel-width: 23rem;
   --layout-portrait-width: 9rem;

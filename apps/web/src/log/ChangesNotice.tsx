@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { GameState } from '@arkham/engine';
+import type { GameState, Reliance } from '@arkham/engine';
 import type { GameLogSource } from '../state/appStore';
 import { automaticChanges, type LogLine } from './gameLog';
 import { LineText } from './LineText';
@@ -12,11 +12,20 @@ import { LineText } from './LineText';
  * at, or went back to with Undo, has been seen before. While a dialog is open it shows above it
  * (`ChangesLines`), since the board's own animations play underneath.
  */
-export function ChangesNotice({ log, state }: { log: GameLogSource; state: GameState }) {
+export function ChangesNotice({
+  log,
+  state,
+  reliance,
+}: {
+  log: GameLogSource;
+  state: GameState;
+  /** How much the players rely on the helpers, which decides the changes told (`showsNotice`). */
+  reliance: Reliance;
+}) {
   const { t } = useTranslation();
   const changes = useMemo(
-    () => automaticChanges(t, log.ctx, state, log.entries),
-    [t, log.ctx, log.entries, state],
+    () => automaticChanges(t, log.ctx, state, log.entries, reliance),
+    [t, log.ctx, log.entries, state, reliance],
   );
   const [previous, setPrevious] = useState({ length: log.entries.length, step: changes?.step });
   const [shown, setShown] = useState<string>();

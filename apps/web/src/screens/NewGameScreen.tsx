@@ -10,6 +10,7 @@ import type { AppState } from '../state/appStore';
 import { chosenInvestigators, seatsFor } from '../wizard/seating';
 import { SetupStep } from '../wizard/SetupStep';
 import { SummaryStep } from '../wizard/SummaryStep';
+import { useAppBar } from './AppBar';
 import {
   chosenCampaign,
   chosenScenario,
@@ -39,6 +40,15 @@ export function NewGameScreen({ store, catalog }: NewGameScreenProps) {
   const { t } = useTranslation();
   const [params] = useSearchParams();
   const mode = parseMode(params.get('mode'));
+  useAppBar(
+    mode
+      ? {
+          title: t(mode === 'campaign' ? 'games.newCampaign' : 'games.quickGame'),
+          subtitle: t(`appBar.${mode}`),
+          up: '/new',
+        }
+      : { title: t('games.new'), subtitle: t('appBar.newGame'), up: '/' },
+  );
 
   if (!mode) {
     return (
@@ -104,6 +114,7 @@ function Wizard({ store, catalogSource, mode, step }: WizardProps) {
         scenario: scenario.definition,
       },
       difficulty: choices.difficulty,
+      reliance: choices.reliance,
       // The engine never reads randomness itself, so the seed is drawn at the edge.
       seed: Math.floor(Math.random() * 2 ** 31),
       investigators: seatsFor(investigators),

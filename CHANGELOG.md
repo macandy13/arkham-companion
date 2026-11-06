@@ -2,6 +2,26 @@
 
 The sections dated up to 2026-10-22 were released as 1.0.0 to 1.8.0 by mistake: Release Please starts at 1.0.0 by default. Versioning restarted at 0.1.0 (see "Versions" in docs/product.md).
 
+## [0.1.24](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v0.1.23...arkham-companion-v0.1.24) (2026-11-06)
+
+
+### Features
+
+* **engine:** interlude tests and architecture docs (MC1.6e1) ([a98841a](https://github.com/macandy13/arkham-companion/commit/a98841ab88062fe53dc2c57e5f15cb513d4bd9bb))
+* **engine:** interludes between scenarios (MC1.6e1) ([9eb4797](https://github.com/macandy13/arkham-companion/commit/9eb47971d42d3fed8ff742859187bcea4295c0ee))
+* **engine:** store how much the players rely on the helpers (M1C.2d) ([abef957](https://github.com/macandy13/arkham-companion/commit/abef9578bd23d272ad5a0cf423ef83f02114c056))
+* **web:** choose what the app tells you, in the wizard and the game log (M1C.2d) ([8769e4e](https://github.com/macandy13/arkham-companion/commit/8769e4eb0ebc0d43cf3bc777493058d2bd8cbe13))
+* **web:** filter notices by the players' reliance on the helpers, chosen in the wizard and the log (M1C.2d) ([1baaf92](https://github.com/macandy13/arkham-companion/commit/1baaf922578f1117e4f4c52e014f3b5d5b4408a0))
+* **web:** show the changes notice above an open dialog (M3.13d2) ([a089429](https://github.com/macandy13/arkham-companion/commit/a0894290d7849bb7905cac6f812b03163a3d7421))
+
+
+### Bug fixes
+
+* **engine:** reject mismatched story conditions and ended campaigns in interludes ([950b46e](https://github.com/macandy13/arkham-companion/commit/950b46e775ae9bd6eac5fe21d5a643d70494afd2))
+* **web:** keep the drawn cards at every level, one shared select style ([c4e88fa](https://github.com/macandy13/arkham-companion/commit/c4e88fa8ded1fb8bb204f508113126cee091fb56))
+* **web:** skill boost steppers in a row under the card (MD.10h) ([3a7c434](https://github.com/macandy13/arkham-companion/commit/3a7c434cb811d80afa8adb977972167aeff0db15))
+* **web:** skill boost steppers in a row under the card (MD.10h) ([9b31867](https://github.com/macandy13/arkham-companion/commit/9b31867e1c0240141758088018e89d4c69f81260))
+
 ## [0.1.23](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v0.1.22...arkham-companion-v0.1.23) (2026-11-05)
 
 

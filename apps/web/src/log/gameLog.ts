@@ -12,10 +12,11 @@ import type {
   EventType,
   Phase,
   PlayerCardCommand,
+  Reliance,
   SkillTestResolved,
   TokenKind,
 } from '@arkham/engine';
-import { PHASE_OF_STEP } from '@arkham/engine';
+import { DEFAULT_RELIANCE, noticeKindOf, PHASE_OF_STEP, showsNotice } from '@arkham/engine';
 import { assertNever, runsBy } from '@arkham/util';
 import type { GameLogSource } from '../state/appStore';
 
@@ -205,17 +206,22 @@ export interface AutomaticChanges {
  * What the game did by itself in the last step of `entries` (M3.13a, M1C.2): the lines of the
  * events a rule or a card's forced ability caused (`LoggedEvent.cause`), but those the screen tells
  * another way (`TOLD_ELSEWHERE`): the doom of the mythos phase, the resources of the upkeep, the
- * horror a treachery deals. `undefined` when the players did all of the step themselves.
+ * horror a treachery deals, of the kinds the players' `reliance` on the helpers shows
+ * (`showsNotice`). `undefined` when the players did all of the step themselves.
  */
 export function automaticChanges(
   t: TFunction,
   ctx: EngineContext,
   state: GameState,
   entries: readonly LoggedEvent[],
+  reliance: Reliance = DEFAULT_RELIANCE,
 ): AutomaticChanges | undefined {
   const last = runsBy(entries, (entry) => entry.commandId).at(-1);
   if (last === undefined) return undefined;
-  const automatic = last.items.filter((entry) => entry.cause !== undefined);
+  const automatic = last.items.filter(({ event, cause }) => {
+    const kind = noticeKindOf(event);
+    return cause !== undefined && (kind === undefined || showsNotice(reliance, kind));
+  });
   const lines = eventLines(t, ctx, state, automatic).filter(
     (line) => !TOLD_ELSEWHERE.has(line.event),
   );

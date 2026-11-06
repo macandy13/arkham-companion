@@ -1,6 +1,6 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { GameState } from '@arkham/engine';
+import { RELIANCES, type GameState, type Reliance } from '@arkham/engine';
 import type { GameLogSource } from '../state/appStore';
 import { CardDialog } from '../screens/CardDialog';
 import { ConfirmDialog } from '../screens/ConfirmDialog';
@@ -19,13 +19,16 @@ import './game_log.css';
  * adjusting), which leaves `onGoBack` out. It is not tied to a moment in the game and grows long,
  * so it is a page of its own on the card shell (`CardDialog`, without a card): the whole height of
  * a tablet at the wide dialog width, the whole screen of a phone held upright, its steps scrolling
- * inside under the scenario's name (`scenario`) and the title (game_log.css). The back gesture
- * closes it too (`useBackCloses`).
+ * inside under the scenario's name (`scenario`) and the title (game_log.css). Above the steps the
+ * players choose how much they rely on the helpers (`reliance`), as the log is where they see what
+ * the app did. The back gesture closes it too (`useBackCloses`).
  */
 export function GameLogDialog({
   log,
   state,
   scenario,
+  reliance,
+  onRelianceChange,
   onGoBack,
   onClose,
 }: {
@@ -33,6 +36,12 @@ export function GameLogDialog({
   state: GameState;
   /** The scenario's name, the page's kicker. */
   scenario?: string;
+  /**
+   * How much the players rely on the helpers, which they can change here (M1C.2d); without
+   * `onRelianceChange` there is no choice to show.
+   */
+  reliance?: Reliance;
+  onRelianceChange?: (reliance: Reliance) => void;
   onGoBack?: (stepId: string) => void;
   onClose: () => void;
 }) {
@@ -58,6 +67,24 @@ export function GameLogDialog({
       }}
       onClose={close}
     >
+      {reliance && onRelianceChange && (
+        <label>
+          {t('reliance.title')}
+          <select
+            value={reliance}
+            onChange={(event) => {
+              const chosen = RELIANCES.find((level) => level === event.target.value);
+              if (chosen) onRelianceChange(chosen);
+            }}
+          >
+            {RELIANCES.map((level) => (
+              <option key={level} value={level}>
+                {t(`reliance.levels.${level}`)}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
       <ol ref={steps}>
         {sections.map((section) => (
           <Section key={section.steps[0]?.id} section={section} onGoBack={goBack} />

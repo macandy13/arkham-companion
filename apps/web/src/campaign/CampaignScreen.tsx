@@ -23,6 +23,7 @@ import {
   scenarioCardName,
 } from '../scenarios/scenarioCatalog';
 import { assertNever, range } from '@arkham/util';
+import { useAppBar } from '../screens/AppBar';
 import { CampaignSheets } from './CampaignSheets';
 import { InterludeDialog } from './InterludeDialog';
 import { NextScenarioDialog } from './NextScenarioDialog';
@@ -55,24 +56,31 @@ export function CampaignScreen({
   const campaignId = toCampaignId(useParams().id ?? '');
   const opened = useStore(store, (s) => s.campaign);
   const written = useStore(store, (s) => s.writtenResolution);
+  const shown = opened?.campaignId === campaignId ? opened : undefined;
+  const entry = shown && findCampaign(shown.log.definitionId);
+  const name = shown && (entry ? t(entry.nameKey) : shown.title);
+  useAppBar({
+    title: name ?? t('appBar.campaignLog'),
+    subtitle: name && t('appBar.campaignLog'),
+    up: '/',
+  });
 
   useEffect(() => {
     void store.getState().openCampaign(campaignId);
   }, [store, campaignId]);
 
   if (opened === null) return <p role="alert">{t('campaignLog.missing')}</p>;
-  if (opened?.campaignId !== campaignId) return <p>{t('campaignLog.loading')}</p>;
-  const { log, games } = opened;
-  const entry = findCampaign(log.definitionId);
+  if (!shown) return <p>{t('campaignLog.loading')}</p>;
+  const { log, games } = shown;
 
   return (
     <article id="campaign-log" aria-labelledby="campaign-name">
       <section id="campaign-investigators" aria-labelledby="campaign-investigators-title">
         <header>
           <p>{t('campaignLog.title')}</p>
-          <h1 id="campaign-name">{entry ? t(entry.nameKey) : opened.title}</h1>
+          <h1 id="campaign-name">{name}</h1>
         </header>
-        {log.result && <CampaignOver log={log} endedAt={opened.endedAt} />}
+        {log.result && <CampaignOver log={log} endedAt={shown.endedAt} />}
         <h2 id="campaign-investigators-title">{t('campaignLog.investigators')}</h2>
         <ol>
           {log.investigators.map((member) => (

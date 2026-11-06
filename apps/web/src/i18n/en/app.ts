@@ -198,6 +198,14 @@ export const appTexts = {
   },
   toast: { label: 'Not possible', dismiss: 'OK', fallback: 'That is not possible right now.' },
   notice: { dismiss: 'OK' },
+  reliance: {
+    title: 'What the app tells you',
+    levels: {
+      display: 'Every change it makes',
+      assist: 'Changes to investigators and enemies, and the cards drawn',
+      auto: 'Only what you do by hand',
+    },
+  },
   changes: {
     label: 'What the game did',
     correct: 'Not right? Undo the step, or adjust it by hand.',
@@ -246,6 +254,15 @@ export const appTexts = {
     massiveNotEngageable: 'A massive enemy cannot be engaged.',
     alreadyRevealed: 'That location is already revealed.',
     notEnoughClues: 'There are not enough clues there.',
+  },
+  appBar: {
+    up: 'Back',
+    games: 'Your games',
+    settings: 'For this device',
+    newGame: 'A campaign or one scenario',
+    campaign: 'A campaign log through every scenario',
+    quick: 'One scenario, no campaign log',
+    campaignLog: 'Campaign log',
   },
   nav: { label: 'Main' },
   game: {

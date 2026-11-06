@@ -198,6 +198,14 @@ export const appTexts = {
   },
   toast: { label: 'Nicht möglich', dismiss: 'OK', fallback: 'Das ist gerade nicht möglich.' },
   notice: { dismiss: 'OK' },
+  reliance: {
+    title: 'Was die App meldet',
+    levels: {
+      display: 'Jede Änderung, die sie vornimmt',
+      assist: 'Änderungen an Ermittlern und Gegnern, gezogene Karten',
+      auto: 'Nur, was von Hand zu tun ist',
+    },
+  },
   changes: {
     label: 'Was das Spiel getan hat',
     correct: 'Stimmt nicht? Schritt zurücknehmen oder von Hand korrigieren.',
@@ -247,6 +255,15 @@ export const appTexts = {
       'Mit einem massiven Gegner kann man sich nicht in einen Kampf verwickeln.',
     alreadyRevealed: 'Dieser Ort ist bereits aufgedeckt.',
     notEnoughClues: 'Dort liegen nicht genug Hinweise.',
+  },
+  appBar: {
+    up: 'Zurück',
+    games: 'Deine Spiele',
+    settings: 'Für dieses Gerät',
+    newGame: 'Eine Kampagne oder ein Szenario',
+    campaign: 'Ein Kampagnenlogbuch durch alle Szenarien',
+    quick: 'Ein Szenario, ohne Kampagnenlogbuch',
+    campaignLog: 'Kampagnenlogbuch',
   },
   nav: { label: 'Hauptnavigation' },
   game: {
