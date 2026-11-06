@@ -1,14 +1,28 @@
 <!-- screencasts:start -->
 
-_Recorded from 5a4f4df by the PR preview workflow; updated on every push that changes `apps/web`._
+_Recorded from 0f98796 by the PR preview workflow; updated on every push that changes `apps/web`._
 
 ## Screenshots
 
-### Roland Banks’ card while the players adjust the board, its steppers out
+### the decision of an interlude
 
 <table>
 <tr><th>Desktop</th><th>Phone</th></tr>
-<tr><td><img src="https://raw.githubusercontent.com/macandy13/arkham-companion/gh-pages/pr-preview/pr-949/screencasts/roland-banks-card-while-the-players-adjust-the-board-its-steppers-out-desktop.png?v=5a4f4df" alt="Desktop" width="560"></td><td>Not taken: the spec failed, see the E2E check.</td></tr>
+<tr><td><img src="https://raw.githubusercontent.com/macandy13/arkham-companion/gh-pages/pr-preview/pr-949/screencasts/the-decision-of-an-interlude-desktop.png?v=0f98796" alt="Desktop" width="560"></td><td><img src="https://raw.githubusercontent.com/macandy13/arkham-companion/gh-pages/pr-preview/pr-949/screencasts/the-decision-of-an-interlude-phone.png?v=0f98796" alt="Phone" width="180"></td></tr>
+</table>
+
+### what an interlude writes into the log
+
+<table>
+<tr><th>Desktop</th><th>Phone</th></tr>
+<tr><td><img src="https://raw.githubusercontent.com/macandy13/arkham-companion/gh-pages/pr-preview/pr-949/screencasts/what-an-interlude-writes-into-the-log-desktop.png?v=0f98796" alt="Desktop" width="560"></td><td><img src="https://raw.githubusercontent.com/macandy13/arkham-companion/gh-pages/pr-preview/pr-949/screencasts/what-an-interlude-writes-into-the-log-phone.png?v=0f98796" alt="Phone" width="180"></td></tr>
+</table>
+
+### the log after an interlude was written
+
+<table>
+<tr><th>Desktop</th><th>Phone</th></tr>
+<tr><td><img src="https://raw.githubusercontent.com/macandy13/arkham-companion/gh-pages/pr-preview/pr-949/screencasts/the-log-after-an-interlude-was-written-desktop.png?v=0f98796" alt="Desktop" width="560"></td><td><img src="https://raw.githubusercontent.com/macandy13/arkham-companion/gh-pages/pr-preview/pr-949/screencasts/the-log-after-an-interlude-was-written-phone.png?v=0f98796" alt="Phone" width="180"></td></tr>
 </table>
 
 <!-- screencasts:end -->
