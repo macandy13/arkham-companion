@@ -75,6 +75,13 @@
   margin-block-start: var(--space-4);
 }
 
+/* An interlude's question is what the players answer, so it reads like the text above it, not a caption. */
+#interlude form > fieldset > legend {
+  margin-block: var(--space-3) var(--space-1);
+  color: var(--color-text);
+  font-size: var(--font-size-body);
+}
+
 /* The resolution the game reached, beside its name like the decisions' "from the game". */
 #resolution label > em {
   color: var(--color-text-muted);

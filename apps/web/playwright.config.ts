@@ -22,7 +22,8 @@ const phone = {
 const executablePath = process.env.PW_CHROMIUM_PATH;
 
 /**
- * E2E tests run against the production build (`vite preview`), the same bundle users get.
+ * E2E tests run against the production build (`vite preview`), the same bundle users get, built
+ * in mode `e2e` only to add a test campaign the app plays no real one for (`findCampaign`).
  * `tablet-landscape` runs every spec (`pnpm e2e`). For the PR description, `screencast`
  * re-runs only the specs tagged `@flow`, slowed down and recorded, and `screenshot` and
  * `screenshot-phone` only the specs tagged `@shot`, photographed as they end on the tablet and on
@@ -86,7 +87,7 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: 'pnpm build && pnpm preview --port 4173 --strictPort',
+    command: 'pnpm build --mode e2e && pnpm preview --port 4173 --strictPort',
     url: 'http://localhost:4173',
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,

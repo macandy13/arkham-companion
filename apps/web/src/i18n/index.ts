@@ -3,6 +3,7 @@ import { initReactI18next } from 'react-i18next';
 import { appTexts as appDe } from './de/app';
 import { nightOfTheZealotTexts as nightOfTheZealotDe } from './de/night_of_the_zealot';
 import { appTexts as appEn } from './en/app';
+import { interludeTestTexts } from './en/interlude_test';
 import { nightOfTheZealotTexts as nightOfTheZealotEn } from './en/night_of_the_zealot';
 
 /**
@@ -33,9 +34,12 @@ function translation<A extends object>(app: A, campaigns: readonly CampaignTexts
   return { ...app, ...sections };
 }
 
-/** Each language's campaign strings, in the order of the campaign catalog. */
+/**
+ * Each language's campaign strings, in the order of the campaign catalog; an E2E build adds its
+ * test campaign's (`interludeTestCampaign`).
+ */
 export const campaignTexts: Record<'en' | 'de', readonly CampaignTexts[]> = {
-  en: [nightOfTheZealotEn],
+  en: [nightOfTheZealotEn, ...(import.meta.env.MODE === 'e2e' ? [interludeTestTexts] : [])],
   de: [nightOfTheZealotDe],
 };
 
