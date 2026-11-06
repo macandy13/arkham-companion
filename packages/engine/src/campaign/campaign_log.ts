@@ -15,11 +15,12 @@ import type { ChaosToken, Difficulty } from '../state';
 /**
  * What became of an investigator over the campaign. A single field rather
  * than separate killed/insane flags, so an investigator can never be both.
- * `killed` and `insane` are permanent in play (only an `AdjustCampaign`
- * correction undoes them): such an investigator cannot gain XP or trauma and
- * must be replaced (`ReplaceInvestigator`) before the next scenario (M1C.4).
+ * `killed`, `insane` and `devoured` (the 2026 Core Set's third way out) are permanent in play
+ * (only an `AdjustCampaign` correction undoes them): such an investigator cannot gain XP or
+ * trauma and must be replaced (`ReplaceInvestigator`) before the next scenario, or their player
+ * leaves (`LeaveCampaign`).
  */
-export type InvestigatorFate = 'alive' | 'killed' | 'insane';
+export type InvestigatorFate = 'alive' | 'killed' | 'insane' | 'devoured';
 
 /** The two kinds of trauma (Rules Reference, "Trauma"). */
 export type TraumaKind = 'physical' | 'mental';

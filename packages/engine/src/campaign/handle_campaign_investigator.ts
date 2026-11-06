@@ -6,6 +6,8 @@ import type {
   AddTrauma,
   AwardXp,
   EarnCard,
+  JoinCampaign,
+  LeaveCampaign,
   ReplaceInvestigator,
   SpendXp,
 } from './campaign_commands';
@@ -19,6 +21,7 @@ import {
   type CampaignLog,
   type InvestigatorFate,
 } from './campaign_log';
+import { MAX_TEAM_SIZE } from './campaign_invariants';
 import { CampaignCommandRejected } from './campaign_rejection';
 import type { CampaignContext } from './handle_campaign';
 
@@ -63,7 +66,7 @@ export function handleAddTrauma(log: CampaignLog, command: AddTrauma): CampaignE
     : [traumaChanged];
 }
 
-/** `MarkKilled`/`MarkInsane`: a living team member meets `fate`. */
+/** `MarkKilled`/`MarkInsane`/`MarkDevoured`: a living team member meets `fate`. */
 export function handleMarkFate(
   log: CampaignLog,
   code: InvestigatorCode,
@@ -111,9 +114,45 @@ export function handleReplaceInvestigator(
   ];
 }
 
+/** `LeaveCampaign`: a team member's player leaves, the entry kept for a return. */
+export function handleLeaveCampaign(log: CampaignLog, command: LeaveCampaign): CampaignEvent[] {
+  requireCampaignInvestigator(log, command.code);
+  if (log.investigators.length === 1)
+    throw new CampaignCommandRejected({ code: 'lastInvestigator', investigatorCode: command.code });
+  return [{ type: 'InvestigatorLeft', code: command.code }];
+}
+
+/** `JoinCampaign`: a newcomer, or a former team member who left alive, takes a free seat. */
+export function handleJoinCampaign(
+  ctx: CampaignContext,
+  log: CampaignLog,
+  command: JoinCampaign,
+): CampaignEvent[] {
+  if (log.investigators.length >= MAX_TEAM_SIZE)
+    throw new CampaignCommandRejected({ code: 'teamFull' });
+  if (findInvestigator(log, command.code))
+    throw new CampaignCommandRejected({
+      code: 'duplicateInvestigator',
+      investigatorCode: command.code,
+    });
+  const former = log.formerInvestigators.find((each) => each.code === command.code);
+  if (former && former.fate !== 'alive')
+    throw new CampaignCommandRejected({
+      code: 'investigatorEliminated',
+      investigatorCode: command.code,
+      fate: former.fate,
+    });
+  return [
+    {
+      type: 'InvestigatorJoined',
+      investigator: former ?? newCampaignInvestigator(ctx.cards, command.code),
+    },
+  ];
+}
+
 /**
- * The campaign log entry of an investigator joining the campaign (at the start or as
- * a replacement), from their card: no trauma, no XP, alive. Rejects a code
+ * The campaign log entry of an investigator joining the campaign for the first time (at the
+ * start, as a replacement or with `JoinCampaign`), from their card: no trauma, no XP, alive. Rejects a code
  * that is not an investigator card in `cards` and printed stats that are not positive integers.
  */
 export function newCampaignInvestigator(

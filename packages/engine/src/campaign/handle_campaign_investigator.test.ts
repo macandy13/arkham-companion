@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
   agnes,
+  skids,
+  wendy,
   campaignContext,
   campaignRejectionOf,
   daisy,
@@ -9,7 +11,7 @@ import {
 } from '../../test/utils';
 import { cardCode, investigatorCode } from '../ids';
 import { findInvestigator } from './campaign_log';
-import { handleCommand } from './handle_campaign';
+import { executeCommand, handleCommand } from './handle_campaign';
 
 /** A card code of an investigator who is on no team in these tests. */
 const notOnTeam = investigatorCode('not_on_team');
@@ -149,10 +151,11 @@ describe('AddTrauma (Roland: health 9, sanity 5)', () => {
   });
 });
 
-describe('MarkKilled and MarkInsane', () => {
+describe('MarkKilled, MarkInsane and MarkDevoured', () => {
   it.each([
     { type: 'MarkKilled', fate: 'killed' },
     { type: 'MarkInsane', fate: 'insane' },
+    { type: 'MarkDevoured', fate: 'devoured' },
   ] as const)('$type sets the fate to $fate', ({ type, fate }) => {
     const log = startedCampaign({ investigators: [roland.code] }, { type, code: roland.code });
     expect(findInvestigator(log, roland.code)?.fate).toBe(fate);
@@ -315,5 +318,112 @@ describe('ReplaceInvestigator (Roland is killed, Daisy stays alive)', () => {
         }),
       ),
     ).toEqual({ code: 'unknownInvestigatorCard', investigatorCode: notACard });
+  });
+});
+
+describe('LeaveCampaign (Roland and Daisy on the team)', () => {
+  const team = { investigators: [roland.code, daisy.code] };
+
+  it('moves the leaving investigator to the former ones, trauma and XP kept', () => {
+    const log = startedCampaign(
+      team,
+      { type: 'AwardXp', code: roland.code, amount: 3 },
+      { type: 'AddTrauma', code: roland.code, kind: 'mental', amount: 1 },
+      { type: 'LeaveCampaign', code: roland.code },
+    );
+
+    expect(log.investigators.map((member) => member.code)).toEqual([daisy.code]);
+    expect(log.formerInvestigators).toEqual([
+      expect.objectContaining({ code: roland.code, xpEarned: 3, mentalTrauma: 1, fate: 'alive' }),
+    ]);
+  });
+
+  it('rejects the last investigator leaving, since a campaign needs a player', () => {
+    const daisyAlone = startedCampaign(team, { type: 'LeaveCampaign', code: roland.code });
+
+    expect(
+      campaignRejectionOf(() =>
+        handleCommand(campaignContext, daisyAlone, { type: 'LeaveCampaign', code: daisy.code }),
+      ),
+    ).toEqual({ code: 'lastInvestigator', investigatorCode: daisy.code });
+  });
+
+  it('rejects someone who is not on the team', () => {
+    expect(
+      campaignRejectionOf(() =>
+        handleCommand(campaignContext, startedCampaign(team), {
+          type: 'LeaveCampaign',
+          code: notOnTeam,
+        }),
+      ),
+    ).toEqual({ code: 'unknownInvestigator', investigatorCode: notOnTeam });
+  });
+});
+
+describe('JoinCampaign (Roland left with 3 XP, Agnes was killed and her player left)', () => {
+  const afterLeaving = startedCampaign(
+    { investigators: [roland.code, daisy.code, agnes.code] },
+    { type: 'AwardXp', code: roland.code, amount: 3 },
+    { type: 'LeaveCampaign', code: roland.code },
+    { type: 'MarkKilled', code: agnes.code },
+    { type: 'LeaveCampaign', code: agnes.code },
+  );
+
+  it('seats a newcomer last, without trauma or XP', () => {
+    const log = executeCommand(campaignContext, afterLeaving, {
+      type: 'JoinCampaign',
+      code: wendy.code,
+    }).log;
+
+    expect(log.investigators.map((member) => member.code)).toEqual([daisy.code, wendy.code]);
+    expect(findInvestigator(log, wendy.code)).toMatchObject({
+      health: wendy.health,
+      sanity: wendy.sanity,
+      xpEarned: 0,
+      mentalTrauma: 0,
+      fate: 'alive',
+    });
+  });
+
+  it('brings Roland back with his XP, no longer among the former investigators', () => {
+    const log = executeCommand(campaignContext, afterLeaving, {
+      type: 'JoinCampaign',
+      code: roland.code,
+    }).log;
+
+    expect(log.investigators.map((member) => member.code)).toEqual([daisy.code, roland.code]);
+    expect(findInvestigator(log, roland.code)?.xpEarned).toBe(3);
+    expect(log.formerInvestigators.map((member) => member.code)).toEqual([agnes.code]);
+  });
+
+  it.each([
+    [
+      'a current team member',
+      daisy.code,
+      { code: 'duplicateInvestigator', investigatorCode: daisy.code },
+    ],
+    [
+      'a former investigator who was killed',
+      agnes.code,
+      { code: 'investigatorEliminated', investigatorCode: agnes.code, fate: 'killed' },
+    ],
+  ] as const)('rejects %s', (_, code, rejection) => {
+    expect(
+      campaignRejectionOf(() =>
+        handleCommand(campaignContext, afterLeaving, { type: 'JoinCampaign', code }),
+      ),
+    ).toEqual(rejection);
+  });
+
+  it('rejects a fifth investigator', () => {
+    const fullTeam = startedCampaign({
+      investigators: [roland.code, daisy.code, agnes.code, wendy.code],
+    });
+
+    expect(
+      campaignRejectionOf(() =>
+        handleCommand(campaignContext, fullTeam, { type: 'JoinCampaign', code: skids.code }),
+      ),
+    ).toEqual({ code: 'teamFull' });
   });
 });

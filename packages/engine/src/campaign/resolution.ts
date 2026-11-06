@@ -189,7 +189,11 @@ export function withoutChangesForEliminated(
     if (change.kind !== 'command' || !('code' in change.command)) return true;
     const { command } = change;
     if (eliminated.has(command.code)) return false;
-    if (command.type === 'MarkKilled' || command.type === 'MarkInsane')
+    if (
+      command.type === 'MarkKilled' ||
+      command.type === 'MarkInsane' ||
+      command.type === 'MarkDevoured'
+    )
       eliminated.add(command.code);
     const investigator = team.get(command.code);
     if (command.type === 'AddTrauma' && investigator !== undefined) {

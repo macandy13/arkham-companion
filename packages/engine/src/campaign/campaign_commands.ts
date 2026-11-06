@@ -31,8 +31,11 @@ export type CampaignCommand =
   | AddTrauma
   | MarkKilled
   | MarkInsane
+  | MarkDevoured
   | EarnCard
   | ReplaceInvestigator
+  | LeaveCampaign
+  | JoinCampaign
   | AdvanceScenario
   | CompleteInterlude
   | EndCampaign
@@ -126,6 +129,12 @@ export interface MarkInsane {
   readonly code: InvestigatorCode;
 }
 
+/** A living team member is devoured (2026 Core Set): out of the campaign like a killed one. Produces `InvestigatorFateChanged`. */
+export interface MarkDevoured {
+  readonly type: 'MarkDevoured';
+  readonly code: InvestigatorCode;
+}
+
 /**
  * A living team member earns a story card ("the lead investigator earns the Lita Chantler card")
  * and may include it in their deck. Produces `CardEarned`.
@@ -148,6 +157,28 @@ export interface ReplaceInvestigator {
   readonly code: InvestigatorCode;
   /** The newcomer, looked up in the `CardDb` like the starting team. */
   readonly by: InvestigatorCode;
+}
+
+/**
+ * A player leaves the campaign between scenarios (Rules Reference, "Joining or Leaving a
+ * Campaign"): their team member moves to `formerInvestigators` with trauma, XP and story cards,
+ * so a living one may rejoin (`JoinCampaign`). Rejects the last team member, since a campaign
+ * needs one player. Produces `InvestigatorLeft`.
+ */
+export interface LeaveCampaign {
+  readonly type: 'LeaveCampaign';
+  readonly code: InvestigatorCode;
+}
+
+/**
+ * A player joins the campaign between scenarios: with an investigator not used before in this
+ * campaign, who starts without trauma or XP (looked up in the `CardDb` like the starting team), or
+ * with one who left alive and returns with their log entry. Rejects a full team, a current team
+ * member and a former one who was eliminated. Produces `InvestigatorJoined`.
+ */
+export interface JoinCampaign {
+  readonly type: 'JoinCampaign';
+  readonly code: InvestigatorCode;
 }
 
 /**
