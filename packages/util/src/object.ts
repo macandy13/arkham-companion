@@ -70,3 +70,15 @@ export function withoutValue<K extends string, T>(
     Record<K, T>
   >;
 }
+
+/**
+ * Adds `times` to the count `counts` keeps for `key`, starting from 0 for a key it has none for.
+ * Mutates `counts`: it is meant for a tally built inside one function.
+ */
+export function addCount<K extends string>(
+  counts: Partial<Record<K, number>>,
+  key: K,
+  times = 1,
+): void {
+  counts[key] = (counts[key] ?? 0) + times;
+}

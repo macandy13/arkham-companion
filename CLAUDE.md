@@ -36,6 +36,7 @@ Code style and conventions (functions, comments, tests, markup, CSS, helpers) ar
 - `pnpm dev` – web app (apps/web); `pnpm build` – production build
 - `pnpm carddata:fetch` – fetch and normalise ArkhamDB packs into the local cache
 - `pnpm carddata:campaign <campaign>` – report a campaign's location layouts, chaos bags and setup steps from the ArkhamCards guides (`notz`, `rtnotz`, …)
+- `pnpm playtest --games 500 --seed 7` – bots play the real scenarios and write failing games to `packages/play_tester/.runs/`; `pnpm playtest --replay <record>` replays one
 
 Before finishing a task: `pnpm typecheck && pnpm lint && pnpm test` must pass. A Stop hook (`.claude/hooks/verify-before-stop.ts`) runs these automatically when code changed and sends failures back to you – fix them, don't work around the hook.
 

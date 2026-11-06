@@ -1,5 +1,5 @@
 import { isDeepStrictEqual } from 'node:util';
-import { firstDifference } from '@arkham/util';
+import { addCount, firstDifference } from '@arkham/util';
 import {
   CommandRejected,
   InvariantBroken,
@@ -25,7 +25,9 @@ export type CheckId = 'crash' | 'refusal' | 'invariants' | 'replay' | 'determini
 /**
  * A failed check: which one, the step that failed it (`step` counts the played steps before it,
  * so it is the index the failing step would have had; for `determinism`, which compares whole
- * games, all the steps of the first play), the error or difference, and the board before that step.
+ * games, all the steps of the first play), the error or difference, the board before that step and,
+ * when the step left it changed (a log that no longer replays), the board after it; a refused or
+ * broken step leaves the table as it was.
  */
 export interface Finding {
   readonly check: CheckId;
@@ -33,6 +35,7 @@ export interface Finding {
   readonly attempted?: Step;
   readonly message: string;
   readonly boardBefore: string;
+  readonly boardAfter?: string;
 }
 
 /** How a game ended: at a resolution, with every investigator out, or cut off at the step cap. */
@@ -83,7 +86,7 @@ export function playRun(run: Run, { stepCap = STEP_CAP } = {}): RunResult {
     const step = randomStep(table, random);
     const outcome = checkedStep(table, step);
     if (outcome.kind === 'played') steps.push(step);
-    else if (outcome.kind === 'refused') refusals[outcome.code] = (refusals[outcome.code] ?? 0) + 1;
+    else if (outcome.kind === 'refused') addCount(refusals, outcome.code);
     else if (outcome.kind === 'misused') misuses++;
     else return result('finding', { ...outcome.failed, step: steps.length, attempted: step });
   }
@@ -127,10 +130,13 @@ type StepOutcome =
  */
 export function checkedStep(table: PlayTable, step: Step): StepOutcome {
   const boardBefore = table.formatted();
-  const failed = (check: CheckId, message: string): StepOutcome => ({
-    kind: 'failed',
-    failed: { check, message, boardBefore },
-  });
+  const failed = (check: CheckId, message: string): StepOutcome => {
+    const boardAfter = table.formatted();
+    return {
+      kind: 'failed',
+      failed: { check, message, boardBefore, ...(boardAfter !== boardBefore && { boardAfter }) },
+    };
+  };
   try {
     playStep(table, step);
   } catch (error) {

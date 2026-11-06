@@ -74,6 +74,7 @@ describe('judging one step', () => {
       kind: 'failed',
       failed: { check: 'crash', boardBefore: table.formatted() },
     });
+    expect(checkedStep(table, broken)).not.toHaveProperty('failed.boardAfter');
   });
 });
 
