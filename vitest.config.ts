@@ -19,6 +19,7 @@ export default defineConfig({
         'apps/web/src/main.tsx',
         'apps/web/src/test_setup.ts',
         'packages/carddata/src/fetch.ts',
+        'packages/carddata/src/campaign_guides_fetch.ts',
         'apps/web/scripts/screencast/cli.ts',
         'packages/review_digest/src/cli.ts',
         'apps/web/scripts/tsconfig.json',
