@@ -6,3 +6,4 @@ export * from './investigators';
 export * from './catalog';
 export * from './references';
 export * from './keywords';
+export * from './campaign_guides';

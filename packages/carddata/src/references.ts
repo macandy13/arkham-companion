@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { opt } from './raw_schema';
 
 /** A symbol chaos token a scenario reference card prints a row for, named as the engine names it. */
 export type ReferenceToken = 'skull' | 'cultist' | 'tablet' | 'elderThing';
@@ -33,8 +34,6 @@ const TOKEN_NAMES: Readonly<Record<string, ReferenceToken>> = {
   tablet: 'tablet',
   elder_thing: 'elderThing',
 };
-
-const opt = <T extends z.ZodTypeAny>(s: T) => s.nullish().transform((v) => v ?? undefined);
 
 /** Raw ArkhamDB scenario card shape, checked at runtime because the API is external. */
 const RawScenarioSchema = z.object({
