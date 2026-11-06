@@ -101,8 +101,8 @@ describe('a step as text', () => {
       text: 'moveTo("Daisy Walker", "Attic")',
     },
     {
-      step: { verb: 'answer' as const, about: instanceId('01160#2'), option: 'attack' },
-      text: 'answer("01160#2", "attack")',
+      step: { verb: 'answer' as const, about: instanceId('ghoul_minion'), option: 'attack' },
+      text: 'answer("ghoul_minion", "attack")',
     },
   ])('reads $text', ({ step, text }) => {
     expect(describeStep(step)).toBe(text);

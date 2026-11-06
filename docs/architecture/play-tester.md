@@ -1,8 +1,8 @@
 # Play tester
 
 Bots play the real scenarios and judge every step, so rule bugs, crashes and broken states show up without a scripted test ([product.md, "Continuous play tester"](../product.md#continuous-play-tester-m1v4)).
-It is a package of its own, [`packages/play_tester`](../../packages/play_tester/src/), so it may use Node; it reaches the engine only through `PlayTable` and `BoardView`.
-Random play never runs in `pnpm test`: the package's unit tests check the tester's own parts, each with named cards.
+It is a package of its own, [`packages/play_tester`](../../packages/play_tester/src/), so it may use Node; it plays only through `PlayTable`, reads the board through `BoardView`, and checks with the engine's own `replay` and error types.
+Random games never run in `pnpm test`: the package's unit tests check the tester's own parts with named cards, plus one short smoke test (40 steps of The Gathering) that a run plays and plays the same twice.
 
 ## How a game is played
 

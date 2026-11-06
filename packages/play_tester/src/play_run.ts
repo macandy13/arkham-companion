@@ -1,5 +1,5 @@
 import { isDeepStrictEqual } from 'node:util';
-import { range } from '@arkham/util';
+import { firstDifference } from '@arkham/util';
 import {
   CommandRejected,
   InvariantBroken,
@@ -24,8 +24,8 @@ export type CheckId = 'crash' | 'refusal' | 'invariants' | 'replay' | 'determini
 
 /**
  * A failed check: which one, the step that failed it (`step` counts the played steps before it,
- * so it is the index the failing step would have had; none for `determinism`, which compares
- * whole games), the error or difference, and the board before that step.
+ * so it is the index the failing step would have had; for `determinism`, which compares whole
+ * games, all the steps of the first play), the error or difference, and the board before that step.
  */
 export interface Finding {
   readonly check: CheckId;
@@ -98,7 +98,7 @@ export function checkRun(run: Run, options: { stepCap?: number } = {}): RunResul
   const first = playRun(run, options);
   if (first.finding) return first;
   const second = playRun(run, options);
-  const at = firstDifference(first.log, second.log);
+  const at = firstDifference(first.log, second.log, isDeepStrictEqual);
   if (at === undefined) return first;
   return {
     ...first,
@@ -110,19 +110,6 @@ export function checkRun(run: Run, options: { stepCap?: number } = {}): RunResul
       boardBefore: setUpTable(run).formatted(),
     },
   };
-}
-
-/**
- * The index of the first entry where the two logs differ (one log ending early counts), or none
- * when they are equal.
- */
-export function firstDifference(
-  first: readonly LoggedEvent[],
-  second: readonly LoggedEvent[],
-): number | undefined {
-  return range(Math.max(first.length, second.length)).find(
-    (i) => !isDeepStrictEqual(first[i], second[i]),
-  );
 }
 
 /** What one step did: played, refused as expected, misused the table, or failed a check. */
