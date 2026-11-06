@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
   blankLocation,
+  execute,
+  removeChaosToken,
+  whenRevealed,
   instanceId,
   investigatorId,
   newGame,
@@ -72,5 +75,26 @@ describe('ChangeChaosBag', () => {
     });
 
     expect([changed.chaosBag, changed.chaosBagChanges]).toEqual([['skull', '-1', 'autoFail'], []]);
+  });
+
+  it("takes out the skull a card's reveal removes", () => {
+    const cellar = instanceId('cellar');
+    const { context, state } = table
+      .withLocation(
+        cellar,
+        blankLocation('skull_cellar', {
+          abilities: [whenRevealed(removeChaosToken('skull', 'scenario'))],
+        }),
+      )
+      .withConnection(study, cellar)
+      .start();
+
+    const moved = execute(context, state, {
+      type: 'MoveInvestigator',
+      investigatorId: alice,
+      to: cellar,
+    });
+
+    expect(moved.state.chaosBag).toEqual(['-1', 'autoFail']);
   });
 });
