@@ -70,8 +70,8 @@ select {
   font: inherit;
 }
 
-/* An icon button draws its icon (a line drawing named by `data-icon`) in the text colour. */
-button[data-icon]::before {
+/* An icon button or link draws its icon (a line drawing named by `data-icon`) in the text colour. */
+:is(a, button)[data-icon]::before {
   content: '';
   display: block;
   width: var(--icon-size);

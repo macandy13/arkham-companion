@@ -43,6 +43,46 @@ describe('AppRoutes', () => {
     expect(screen.getByRole('navigation', { name: 'Main' })).toBeTruthy();
   });
 
+  it.each([
+    { path: '/', bar: ['Arkham Companion'], up: false },
+    { path: '/settings', bar: ['Settings', 'For this device'], up: true },
+    { path: '/new', bar: ['New game', 'A campaign or one scenario'], up: true },
+    { path: '/new?mode=quick', bar: ['Quick game', 'One scenario, no campaign log'], up: true },
+  ])('names $path in the app bar', ({ path, bar, up }) => {
+    renderAt(path);
+    const appBar = screen.getByRole('banner');
+
+    expect(
+      within(appBar)
+        .getAllByRole('paragraph')
+        .map((line) => line.textContent),
+    ).toEqual(bar);
+    expect(within(appBar).queryByRole('link', { name: 'Back' }) !== null).toBe(up);
+  });
+
+  it.each([
+    { path: '/settings', above: 'Games' },
+    { path: '/new?mode=campaign', above: 'New game' },
+  ])("leads up from $path to the screen above it, '$above'", ({ path, above }) => {
+    renderAt(path);
+
+    fireEvent.click(within(screen.getByRole('banner')).getByRole('link', { name: 'Back' }));
+
+    expect(screen.getByRole('heading', { level: 1 }).textContent).toBe(above);
+  });
+
+  it("opens a place from the app bar's menu and closes the menu on the way", () => {
+    renderAt('/');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Menu' }));
+    fireEvent.click(screen.getByRole('link', { name: 'Settings' }));
+
+    expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('Settings');
+    expect(screen.getByRole('button', { name: 'Menu' }).getAttribute('aria-expanded')).toBe(
+      'false',
+    );
+  });
+
   it("offers the open game's export in the play screen's menu, under the game's title", async () => {
     Object.assign(URL, { createObjectURL: vi.fn(() => 'blob:test'), revokeObjectURL: vi.fn() });
     const downloaded: string[] = [];
@@ -68,7 +108,7 @@ describe('AppRoutes', () => {
     await waitFor(() => expect(downloaded).toEqual(['Friday-night.arkham.json']));
   });
 
-  it('hides the title bar on the play screen', async () => {
+  it('hides the app bar on the play screen', async () => {
     const store = createAppStore(new IndexedDbStore('app-routes-title-test'));
     const id = await store.getState().startScenario({
       title: 'Friday night',
@@ -80,7 +120,7 @@ describe('AppRoutes', () => {
     renderAt(`/game/${id}`, store);
 
     await screen.findByRole('button', { name: 'Menu' });
-    expect(screen.queryByRole('link', { name: 'Arkham Companion' })).toBeNull();
+    expect(document.querySelector('#app > header')).toBeNull();
   });
 
   it('offers no export in the title bar away from a game', () => {

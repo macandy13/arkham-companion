@@ -10,7 +10,7 @@ import {
 
 // How a campaign's log reads once the campaign is over (`@shot`, coding guidelines §3).
 
-test('the log of a campaign lost for want of investigators', async ({ page }) => {
+test('the log of a campaign lost for want of investigators', { tag: '@shot' }, async ({ page }) => {
   await openStoredCampaign(page, 'Zealot – everyone', (id) =>
     gatheringKilledEvents(id, [fakeSeeker, fakeGuardian, rolandBanks], fakeSeeker),
   );
@@ -22,7 +22,7 @@ test('the log of a campaign lost for want of investigators', async ({ page }) =>
   await over.scrollIntoViewIfNeeded();
 });
 
-test('the log of Night of the Zealot, won', async ({ page }) => {
+test('the log of Night of the Zealot, won', { tag: '@shot' }, async ({ page }) => {
   await openStoredCampaign(page, 'Zealot – Roland Banks', (id) =>
     zealotWonEvents(id, [rolandBanks]),
   );

@@ -256,6 +256,15 @@ export const appTexts = {
     alreadyRevealed: 'Dieser Ort ist bereits aufgedeckt.',
     notEnoughClues: 'Dort liegen nicht genug Hinweise.',
   },
+  appBar: {
+    up: 'Zurück',
+    games: 'Deine Spiele',
+    settings: 'Für dieses Gerät',
+    newGame: 'Eine Kampagne oder ein Szenario',
+    campaign: 'Ein Kampagnenlogbuch durch alle Szenarien',
+    quick: 'Ein Szenario, ohne Kampagnenlogbuch',
+    campaignLog: 'Kampagnenlogbuch',
+  },
   nav: { label: 'Hauptnavigation' },
   game: {
     unplayable:

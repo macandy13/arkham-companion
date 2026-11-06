@@ -255,6 +255,15 @@ export const appTexts = {
     alreadyRevealed: 'That location is already revealed.',
     notEnoughClues: 'There are not enough clues there.',
   },
+  appBar: {
+    up: 'Back',
+    games: 'Your games',
+    settings: 'For this device',
+    newGame: 'A campaign or one scenario',
+    campaign: 'A campaign log through every scenario',
+    quick: 'One scenario, no campaign log',
+    campaignLog: 'Campaign log',
+  },
   nav: { label: 'Main' },
   game: {
     unplayable: "This game can't be played: this version of the app does not have its scenario.",

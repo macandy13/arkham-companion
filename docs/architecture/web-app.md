@@ -9,6 +9,8 @@ The React PWA is a thin layer over the engine.
 - game screen,
 - settings with the owned packs of the campaigns the app plays (`CampaignEntry.packCodes`) and the unofficial fan project notice.
 
+Over every screen outside play, the [app bar](../../apps/web/src/screens/AppBar.tsx) (`AppBarFrame`, MD.3a) lies on the table: a back chevron up to the screen above, the screen's name in the display face over a subtitle, and a ⋮ menu with the app's places (Your games, Settings). The bar sits outside the screen's paper page (`#app > main`), so each screen names itself with `useAppBar({ title, subtitle, up })` while it is mounted; home names none and shows the app's title without a chevron. The chevron goes to `up`, a route, not back in history, so a deep link still has a way up. The play screen has no bar: its status row's menu holds the same places.
+
 Components read the [app store](../../apps/web/src/state/appStore.ts) and call its methods; they never change game state or touch storage.
 
 The wizard's first step also asks how much the players rely on the helpers (`Reliance`, M1C.2d: "What the app tells you"): every change it makes, the changes to investigators and enemies and the cards drawn, or only what they do by hand. A quick game keeps the level as its own, a campaign for all its games (`ScenarioStart.reliance`). `OpenGame.reliance` is the campaign's for a game of a campaign, else the game's; the game log changes it (`AppState.setReliance`), a setting outside the steps, so undo never takes it back. The changes notice shows only the lines of kinds the level shows (`showsNotice`). The drawn cards and what to do by hand show at every level: the drawn-cards notice is where the players place a card whose revelation the engine left to them.
@@ -66,7 +68,7 @@ UI strings live in [`i18n/`](../../apps/web/src/i18n/), one folder per language:
 ## Extension points
 
 - **A new game action:** add it to `GameActions` as one `PlayTable` verb (add the verb to `PlayTable` first). Only actions outside the open game get their own `AppState` method.
-- **A new screen:** a route in `App.tsx`, a component in `screens/`, an E2E flow tagged `@flow` or a screenshot tagged `@shot`, strings in English and German.
+- **A new screen:** a route in `App.tsx`, a component in `screens/` that names itself in the app bar (`useAppBar`), an E2E flow tagged `@flow` or a screenshot tagged `@shot`, strings in English and German.
 - **A new refusal or skippable effect:** its `rejections.<code>` or `skipped.effects.<type>` string in English and German.
 - **A new decision prompt or option label:** its string under the engine's key (`decision.<key>`, or the scenario's `scenario.<scenario>.<card>.<key>`) in English and German.
 - **A new campaign's strings:** a `<campaign>.ts` file in both `i18n/en/` and `i18n/de/`, holding only the `CAMPAIGN_SECTIONS`, and listed in `campaignTexts`.

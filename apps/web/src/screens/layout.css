@@ -8,27 +8,6 @@
   padding: var(--safe-top) var(--safe-right) var(--safe-bottom) var(--safe-left);
 }
 
-#app > header {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  padding: 0 var(--space-3);
-  border-bottom: var(--border-width) solid var(--color-border);
-  background: var(--color-surface);
-}
-
-#app > header > a:first-child {
-  margin-right: auto;
-  font-family: var(--font-family-print);
-  font-size: var(--font-size-subtitle);
-}
-
-#app > header > nav {
-  display: flex;
-  gap: var(--space-3);
-  align-items: center;
-}
-
 #app > main {
   display: grid;
   align-content: start;

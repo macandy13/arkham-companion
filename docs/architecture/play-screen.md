@@ -10,7 +10,7 @@ The [game screen](../../apps/web/src/screens/GameScreen.tsx) shows, from top to 
 The first open decision shows as a dialog over the board ([decisions](play-screen-decisions.md)).
 Each part has its own page, so changes to different parts touch different files.
 
-The [status row](../../apps/web/src/screens/GameStatus.tsx) has the round, the phase track, Next (the brass primary pill the investigator's Start turn and End take too) and round icon buttons for adjust, undo, the game log and a ☰ menu (the play screen hides the app's title bar, so its links and the export sit in that menu).
+The [status row](../../apps/web/src/screens/GameStatus.tsx) has the round, the phase track, Next (the brass primary pill the investigator's Start turn and End take too) and round icon buttons for adjust, undo, the game log and a ☰ menu (the play screen hides the [app bar](../../apps/web/src/screens/AppBar.tsx), so its places and the export sit in that menu).
 
 ## Symbols
 
