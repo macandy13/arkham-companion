@@ -1,3 +1,4 @@
+import { sum } from '@arkham/util';
 import {
   cardDbWith,
   cardName,
@@ -23,15 +24,26 @@ import {
 } from '@arkham/scenarios';
 
 /**
+ * The bots (product.md "Continuous play tester"), each a weighting of the steps the board offers
+ * (`botStep`): `random` any step, `goal` the steps that move the game on (clues, the act, the
+ * enemies engaged), `chaos` undo, corrections and resigning far more often than players do.
+ */
+export const BOT_KINDS = ['random', 'goal', 'chaos'] as const;
+
+/** One of `BOT_KINDS`. */
+export type BotKind = (typeof BOT_KINDS)[number];
+
+/**
  * One game the tester plays: the scenario, its difficulty, the investigators by printed name in
- * seat order (the first is the lead), the game seed (the engine's shuffles) and the bot seed (the
- * bot's choices). The same run always plays the same game, so a passing game needs no record.
+ * seat order (the first is the lead), the game seed (the engine's shuffles), the bot and its seed
+ * (the bot's choices). The same run always plays the same game, so a passing game needs no record.
  */
 export interface Run {
   readonly scenario: ScenarioId;
   readonly difficulty: Difficulty;
   readonly seats: readonly CardName[];
   readonly gameSeed: number;
+  readonly bot: BotKind;
   readonly botSeed: number;
 }
 
@@ -71,10 +83,10 @@ export function setUpTable(run: Run): PlayTable {
 
 /**
  * `games` runs drawn from `seed`: each picks a scenario, a difficulty, one to all of the real
- * investigators in a random seat order, and its two seeds. The same seed gives the same runs, so a
- * night's runs are named by their seed.
+ * investigators in a random seat order, one of `bots` and its two seeds. The same seed gives the
+ * same runs, so a night's runs are named by their seed.
  */
-export function runsFrom(seed: number, games: number): Run[] {
+export function runsFrom(seed: number, games: number, bots: readonly BotKind[] = BOT_KINDS): Run[] {
   const random = new SeededRandom(seed);
   return Array.from({ length: games }, (): Run => {
     const pool = INVESTIGATORS.map(({ name }) => cardName(name));
@@ -86,6 +98,7 @@ export function runsFrom(seed: number, games: number): Run[] {
         () => pool.splice(random.below(pool.length), 1)[0]!,
       ),
       gameSeed: random.u32(),
+      bot: random.pick(bots),
       botSeed: random.u32(),
     };
   });
@@ -124,5 +137,22 @@ export class SeededRandom {
   /** One of `items`, picked uniformly; fails for an empty list. */
   pick<T>(items: readonly T[]): T {
     return items[this.below(items.length)]!;
+  }
+
+  /**
+   * The index of one of `weights`, each picked by its share of their sum; fails when they add up
+   * to nothing.
+   */
+  pickWeighted(weights: readonly number[]): number {
+    const total = sum(weights);
+    if (!(total > 0)) throw new Error('nothing to pick: every weight is 0');
+    let left = this.fraction() * total;
+    let picked = 0;
+    // Rounding can leave a sliver past the last weight; the last one that counts takes it.
+    weights.forEach((weight, index) => {
+      if (weight > 0 && left >= 0) picked = index;
+      left -= weight;
+    });
+    return picked;
   }
 }

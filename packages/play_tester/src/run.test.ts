@@ -24,6 +24,7 @@ describe('setting up a run', () => {
     difficulty: 'standard',
     seats: [cardName('Daisy Walker'), cardName('Roland Banks')],
     gameSeed: 24,
+    bot: 'random',
     botSeed: 1,
   };
 

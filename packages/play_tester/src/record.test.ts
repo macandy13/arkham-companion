@@ -19,6 +19,7 @@ const run: Run = {
   difficulty: 'standard',
   seats: [cardName('Roland Banks')],
   gameSeed: 24,
+  bot: 'random',
   botSeed: 1,
 };
 const tester = { version: '0.0.0', commit: 'abc123' };
@@ -36,7 +37,7 @@ const crashAtStart: Finding = {
 function recordWith(finding: Finding, steps: readonly Step[]): RunRecord {
   return {
     format: 'arkham-run',
-    version: 1,
+    version: 2,
     tester,
     run,
     finding,
@@ -77,13 +78,15 @@ describe('recording a failing game', () => {
   it.each([
     { text: '{"format":"arkham-game"}', error: 'not a play tester record' },
     { text: '[]', error: 'not a play tester record' },
-    { text: '{"format":"arkham-run","version":2}', error: 'record of another version' },
+    { text: '{"format":"arkham-run","version":1}', error: 'record of another version' },
   ])('refuses $text', ({ text, error }) => {
     expect(() => parseRecord(text)).toThrow(error);
   });
 
   it('names the file after the check and the seeds', () => {
-    expect(recordFileName({ run, finding: crashAtStart })).toBe('crash-24-1.arkham-run.json');
+    expect(recordFileName({ run, finding: crashAtStart })).toBe(
+      'crash-random-24-1.arkham-run.json',
+    );
   });
 });
 

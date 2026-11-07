@@ -1,14 +1,15 @@
 import { addCount, sum } from '@arkham/util';
 import type { RejectionCode } from '@arkham/engine';
 import type { CheckId, RunResult } from './play_run';
+import type { BotKind } from './run';
 
 /**
- * A night's (or a session's) runs counted up: games, how they ended, findings by check, and the
+ * A night's (or a session's) runs counted up: games, how they ended by bot, findings by check, and the
  * refusals and misuses the bot met, which are only reported (product.md "Continuous play tester").
  */
 export interface Summary {
   readonly games: number;
-  readonly ends: Partial<Record<RunResult['end'], number>>;
+  readonly ends: Partial<Record<BotKind, Partial<Record<RunResult['end'], number>>>>;
   readonly findings: Partial<Record<CheckId, number>>;
   readonly steps: number;
   readonly refusals: Partial<Record<RejectionCode, number>>;
@@ -17,11 +18,11 @@ export interface Summary {
 
 /** The counts over `results`. */
 export function summarise(results: readonly RunResult[]): Summary {
-  const ends: Partial<Record<RunResult['end'], number>> = {};
+  const ends: Partial<Record<BotKind, Partial<Record<RunResult['end'], number>>>> = {};
   const findings: Partial<Record<CheckId, number>> = {};
   const refusals: Partial<Record<RejectionCode, number>> = {};
   for (const result of results) {
-    addCount(ends, result.end);
+    addCount((ends[result.run.bot] ??= {}), result.end);
     if (result.finding) addCount(findings, result.finding.check);
     for (const [code, times] of Object.entries(result.refusals) as [RejectionCode, number][])
       addCount(refusals, code, times);
@@ -42,7 +43,11 @@ export function formatSummary(summary: Summary): string {
   const refused = sum(Object.values(refusals));
   return [
     `Games: ${games}, steps played: ${steps}`,
-    `Ends: ${byCountDescending(ends)}`,
+    `Ends: ${
+      Object.entries(ends)
+        .map(([bot, byEnd]) => `${bot}: ${byCountDescending(byEnd)}`)
+        .join('; ') || 'none'
+    }`,
     `Findings: ${byCountDescending(findings)}`,
     `Expected refusals: ${refused} (${byCountDescending(refusals)}); misused steps: ${misuses}`,
   ].join('\n');

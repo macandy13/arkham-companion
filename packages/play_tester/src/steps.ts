@@ -4,6 +4,7 @@ import {
   byName,
   type CardName,
   type ChaosToken,
+  type BasicAction,
   type InstanceId,
   type PlayTable,
   type SkillTestResult,
@@ -63,8 +64,64 @@ export type Step =
       readonly result: SkillTestResult;
     };
 
-/** Plays `step` on `table`; a refusal or misuse throws as the `PlayTable` call does. */
+/** The basic action each action verb takes, which the players count off before they take it. */
+const BASIC_ACTION_OF: Partial<Record<Step['verb'], BasicAction>> = {
+  investigate: 'investigate',
+  moveTo: 'move',
+  drawCard: 'draw',
+  takeResource: 'resource',
+  playCard: 'play',
+  engage: 'engage',
+  fight: 'fight',
+  evade: 'evade',
+};
+
+/**
+ * The actions `step` costs the investigator who takes it: what the board says its basic action
+ * costs now (`BoardView.actionCost`, a card can raise it), one for a card action unless it is
+ * free, none for a step that is no action.
+ */
+export function actionCostOf(table: PlayTable, step: Step): number {
+  const { board } = table;
+  if (step.verb === 'useCardAction') {
+    const { id } = board.investigator(byName(step.investigator));
+    const offered = board
+      .cardActions(id)
+      .find(({ cardId, action }) => cardId === step.card && action === step.action);
+    return offered?.free ? 0 : 1;
+  }
+  const action = BASIC_ACTION_OF[step.verb];
+  if (action === undefined || !('investigator' in step)) return 0;
+  return board.actionCost(board.investigator(byName(step.investigator)).id, action);
+}
+
+/**
+ * Plays `step` on `table`; a refusal or misuse throws as the `PlayTable` call does. An action
+ * first counts off what it costs, as the app's action buttons do, since the engine leaves counting
+ * actions to the players; both are one step, so a refused action leaves the actions as they were.
+ */
 export function playStep(table: PlayTable, step: Step): void {
+  if (step.verb === 'useCardAction' || BASIC_ACTION_OF[step.verb] !== undefined)
+    table.step(() => {
+      countOffAction(table, step);
+      playVerb(table, step);
+    });
+  else playVerb(table, step);
+}
+
+/** Counts off the action `step` takes, as the app does (`spendActionFor`, `spendAction`). */
+function countOffAction(table: PlayTable, step: Step): void {
+  if (step.verb === 'useCardAction') {
+    if (actionCostOf(table, step) > 0) table.spendAction(byName(step.investigator));
+    return;
+  }
+  const action = BASIC_ACTION_OF[step.verb];
+  if (action !== undefined && 'investigator' in step)
+    table.spendActionFor(byName(step.investigator), action);
+}
+
+/** Plays the `PlayTable` call `step` names. */
+function playVerb(table: PlayTable, step: Step): void {
   switch (step.verb) {
     case 'nextPhase':
       table.nextPhase();

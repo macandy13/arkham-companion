@@ -9,7 +9,7 @@ import {
   type PlayTable,
   type RejectionCode,
 } from '@arkham/engine';
-import { randomStep } from './random_bot';
+import { botStep } from './bots';
 import { refusalKind } from './refusals';
 import { SeededRandom, setUpTable, type Run } from './run';
 import { describeStep, playStep, type Step } from './steps';
@@ -68,7 +68,7 @@ export const STEP_CAP = 5000;
 export const ROUND_CAP = 30;
 
 /**
- * Plays `run` with the random bot until the game ends, a check fails (round `roundCap` passing
+ * Plays `run` with its bot until the game ends, a check fails (round `roundCap` passing
  * is one) or `stepCap` steps were tried, checking after every step.
  */
 export function playRun(run: Run, { stepCap = STEP_CAP, roundCap = ROUND_CAP } = {}): RunResult {
@@ -97,7 +97,7 @@ export function playRun(run: Run, { stepCap = STEP_CAP, roundCap = ROUND_CAP } =
         message: `the game is still going in round ${table.board.round}, past the cap of ${roundCap}`,
         boardBefore: table.formatted(),
       });
-    const step = randomStep(table, random);
+    const step = botStep(run.bot, table, random);
     const outcome = checkedStep(table, step);
     if (outcome.kind === 'played') steps.push(step);
     else if (outcome.kind === 'refused') addCount(refusals, outcome.code);

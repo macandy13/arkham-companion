@@ -39,6 +39,27 @@ describe('playing a step', () => {
     expect(table.board.investigator(alice).at).toBe('hallway');
   });
 
+  it('counts off an action before taking it, as the app does', () => {
+    const table = PlayTable.start(game);
+
+    playStep(table, { verb: 'takeResource', investigator: cardName('alice') });
+
+    expect(table.board.investigator(alice)).toMatchObject({ actions: 2, resources: 6 });
+  });
+
+  it('leaves the actions as they were when the action is refused', () => {
+    const table = PlayTable.start(game);
+
+    expect(() =>
+      playStep(table, {
+        verb: 'moveTo',
+        investigator: cardName('alice'),
+        location: cardName('study'),
+      }),
+    ).toThrow();
+    expect(table.board.investigator(alice).actions).toBe(3);
+  });
+
   it('leaves an investigation open and answers it by the card it is about', () => {
     const table = PlayTable.start(game);
 
