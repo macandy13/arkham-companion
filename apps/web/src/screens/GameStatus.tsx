@@ -99,7 +99,7 @@ export function GameStatus({
       )}
       <GameMenu
         store={store}
-        scenario={open.scenarioNameKey ? t(open.scenarioNameKey) : t('header.thisGame')}
+        heading={open.scenarioNameKey ? t(open.scenarioNameKey) : t('header.thisGame')}
       >
         {(close) => (
           <>
@@ -187,12 +187,12 @@ function LogButton({ onOpen, inMenu = false }: { onOpen: () => void; inMenu?: bo
  */
 function GameMenu({
   store,
-  scenario,
+  heading,
   children,
 }: {
   store: StoreApi<AppState>;
-  /** Heads the game's own entries. */
-  scenario: string;
+  /** Heads the game's own entries: the scenario's name, or "This game" without one. */
+  heading: string;
   children: (close: () => void) => ReactNode;
 }) {
   const { t } = useTranslation();
@@ -209,7 +209,7 @@ function GameMenu({
       {expanded && (
         <div>
           <section aria-labelledby="game-menu-game">
-            <h3 id="game-menu-game">{scenario}</h3>
+            <h3 id="game-menu-game">{heading}</h3>
             <ul>
               {children(() => setExpanded(false))}
               <li>

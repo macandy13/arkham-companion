@@ -136,9 +136,11 @@ button[data-icon][aria-expanded] {
   list-style: none;
 }
 
-/* An entry's row is its link or button; the screens' own list rules (home's covers) stay out. */
+/*
+ * An entry's row is its link or button; the screens' own list rules (home's covers) stay out. It
+ * leaves `display` alone, so the play screen still hides its phone-only entries (game.css).
+ */
 #app button[data-icon][aria-expanded] + * li {
-  display: block;
   padding: 0;
   border: 0;
   background: none;

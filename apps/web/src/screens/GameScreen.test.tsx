@@ -563,12 +563,19 @@ describe('GameScreen header', () => {
     fireEvent.click(button('Menu'));
     const menu = within(screen.getByRole('navigation', { name: 'Main' }));
 
-    fireEvent.click(menu.getByRole('button', { name: 'By day' }));
+    try {
+      fireEvent.click(menu.getByRole('button', { name: 'By day' }));
 
-    expect(loadSettings().theme).toBe('light');
-    expect(document.documentElement.dataset.theme).toBe('light');
-    expect(menu.getByRole('button', { name: 'By day' }).getAttribute('aria-pressed')).toBe('true');
-    localStorage.clear();
+      expect(loadSettings().theme).toBe('light');
+      expect(document.documentElement.dataset.theme).toBe('light');
+      expect(menu.getByRole('button', { name: 'By day' }).getAttribute('aria-pressed')).toBe(
+        'true',
+      );
+    } finally {
+      // The table stays by night for the tests after this one.
+      localStorage.clear();
+      delete document.documentElement.dataset.theme;
+    }
   });
 
   it.each([

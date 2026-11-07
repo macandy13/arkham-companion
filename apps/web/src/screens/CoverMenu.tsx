@@ -8,6 +8,8 @@ export type CoverActionIcon = 'campaign-log' | 'rename' | 'duplicate' | 'export'
 export interface CoverAction {
   readonly label: string;
   readonly icon: CoverActionIcon;
+  /** Removes something, so the entry is red. */
+  readonly danger?: true;
   readonly onSelect: () => void;
 }
 
@@ -37,12 +39,12 @@ export function CoverMenu({
       />
       {expanded && (
         <ul>
-          {actions.map(({ label, icon, onSelect }) => (
+          {actions.map(({ label, icon, danger, onSelect }) => (
             <li key={label}>
               <button
                 type="button"
                 data-icon={icon}
-                data-danger={icon === 'delete' || undefined}
+                data-danger={danger}
                 onClick={() => {
                   setExpanded(false);
                   onSelect();

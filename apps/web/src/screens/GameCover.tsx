@@ -78,7 +78,12 @@ export function GameCover({
             { label: t('games.rename'), icon: 'rename', onSelect: () => setRenaming(true) },
             { label: t('games.duplicate'), icon: 'duplicate', onSelect: onDuplicate },
             { label: t('games.export'), icon: 'export', onSelect: onExport },
-            { label: t('games.delete'), icon: 'delete', onSelect: () => setConfirmingDelete(true) },
+            {
+              label: t('games.delete'),
+              icon: 'delete',
+              danger: true,
+              onSelect: () => setConfirmingDelete(true),
+            },
           ]}
         />
       </footer>
