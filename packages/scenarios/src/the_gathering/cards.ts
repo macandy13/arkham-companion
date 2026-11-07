@@ -326,7 +326,10 @@ export const theGatheringCardDefs: readonly CardStats[] = [
     code: codes.litaChantler,
     name: 'Lita Chantler',
     typeCode: 'asset',
+    unique: true,
     traits: [trait('Ally')],
+    // Her printed sanity (3) isn't entered: no rule reads an ally's sanity yet.
+    health: fixed(3),
     encounterCode: sets.theGathering,
     quantity: 1,
     // The Parlor grants this "while Lita Chantler is not controlled by a player". She comes into
@@ -393,6 +396,7 @@ export const theGatheringCardDefs: readonly CardStats[] = [
     traits: ghoulTraits,
     fight: 3,
     evade: 3,
+    // Her printed sanity (3) isn't entered: no rule reads an ally's sanity yet.
     health: fixed(3),
     damage: 1,
     horror: 1,

@@ -345,6 +345,7 @@ export const theDevourerBelowCardDefs: readonly CardStats[] = [
     code: '01157',
     name: 'Umôrdhoth',
     set: own,
+    unique: true,
     traits: ['Ancient One', 'Elite'],
     fight: 5,
     evade: 6,

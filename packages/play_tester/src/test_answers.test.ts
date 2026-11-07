@@ -13,7 +13,7 @@ import { answersByDraw, drawnTestAnswer } from './test_answers';
 const alice = investigatorId('alice');
 const study = instanceId('study');
 
-describe('answering a skill test by drawing a chaos token', () => {
+describe('answering a skill test by drawing chaos tokens', () => {
   const game = newGame()
     .withLocation(study, blankLocation('study', { shroud: 2 }), { revealed: true, clues: 2 })
     .withInvestigator(alice, {
@@ -36,7 +36,7 @@ describe('answering a skill test by drawing a chaos token', () => {
       expect(drawnTestAnswer(table, new SeededRandom(1))).toEqual({
         verb: 'resolveTest',
         investigator: cardName('alice'),
-        token,
+        tokens: [token],
         result,
       });
     },
@@ -48,7 +48,18 @@ describe('answering a skill test by drawing a chaos token', () => {
 
     expect(drawnTestAnswer(table, new SeededRandom(1))).toMatchObject({
       verb: 'resolveTest',
-      token: 'elderSign',
+      tokens: ['elderSign'],
+    });
+  });
+
+  it('draws another token after a bless and counts both', () => {
+    const table = PlayTable.start(game.withChaosBag(['bless', '-3']));
+    table.investigate(alice, { result: 'open' });
+
+    // Seed 2 draws the bless first; bless +2 and −3 leave intellect 2 at 1 against shroud 2.
+    expect(drawnTestAnswer(table, new SeededRandom(2))).toMatchObject({
+      tokens: ['bless', '-3'],
+      result: { failedBy: 1 },
     });
   });
 

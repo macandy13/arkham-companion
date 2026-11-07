@@ -32,7 +32,7 @@ const RARE_ODDS = 100;
  * The _random_ bot (product.md "Continuous play tester"): any verb the board offers, picked
  * uniformly, then any of that verb's steps. Picking the verb first keeps one verb with many
  * targets (moves) from crowding out the rest. Rare steps (`isRare`) are only one in `RARE_ODDS`.
- * An open skill test of one investigator is answered first, by a chaos token the bot draws
+ * An open skill test of one investigator is answered first, by chaos tokens the bot draws
  * (`drawnTestAnswer`), like players who settle a test before anything else.
  */
 export function randomStep(table: PlayTable, random: SeededRandom): Step {

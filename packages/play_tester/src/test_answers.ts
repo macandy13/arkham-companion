@@ -1,4 +1,5 @@
 import {
+  drawTokens,
   suggestSkillTest,
   type Decision,
   type PlayTable,
@@ -36,20 +37,20 @@ export function answersByDraw(table: PlayTable, decision: Decision): boolean {
 }
 
 /**
- * The answer to the first open skill test the bot answers by drawing (`answersByDraw`): a token
- * drawn from the scenario's chaos bag, valued by `suggestSkillTest`, a random modifier for a token
- * it cannot value, and the pass or fail (with the margin) that follows. None while no such test is
- * open.
+ * The answer to the first open skill test the bot answers by drawing (`answersByDraw`): tokens
+ * drawn from the scenario's chaos bag as the players draw them (`drawTokens`: another while the
+ * last says so), valued by `suggestSkillTest`, a random modifier for tokens it cannot value, and
+ * the pass or fail (with the margin) that follows. None while no such test is open.
  */
 export function drawnTestAnswer(table: PlayTable, random: SeededRandom): Step | undefined {
   const decision = table.state.pending.find((pending) => answersByDraw(table, pending));
   if (!decision || decision.decider.kind !== 'investigator') return undefined;
-  const token = random.pick(table.board.chaosBag);
-  const valued = suggestSkillTest(table.ctx, table.state, decision, { tokens: [token] });
+  const tokens = drawTokens(table.board.chaosBag, [], () => random.fraction());
+  const valued = suggestSkillTest(table.ctx, table.state, decision, { tokens });
   const suggestion =
     valued && valued.unknownTokens.length > 0
       ? suggestSkillTest(table.ctx, table.state, decision, {
-          tokens: [token],
+          tokens,
           modifier: random.below(2 * UNKNOWN_TOKEN_RANGE + 1) - UNKNOWN_TOKEN_RANGE,
         })
       : valued;
@@ -57,5 +58,5 @@ export function drawnTestAnswer(table: PlayTable, random: SeededRandom): Step | 
   const result: SkillTestResult =
     suggestion.outcome === 'pass' ? 'pass' : { failedBy: suggestion.margin };
   const { name } = table.board.investigator(decision.decider.investigatorId);
-  return { verb: 'resolveTest', investigator: name, token, result };
+  return { verb: 'resolveTest', investigator: name, tokens, result };
 }

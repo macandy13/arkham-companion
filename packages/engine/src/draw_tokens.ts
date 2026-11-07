@@ -1,4 +1,5 @@
-import { revealsAnotherToken, type ChaosToken } from '@arkham/engine';
+import type { ChaosToken } from './state';
+import { revealsAnotherToken } from './skill_modifiers';
 
 /** Whether `revealed` ends the test: the last token revealed makes the tester reveal no other. */
 export function testFinished(revealed: readonly ChaosToken[]): boolean {
@@ -9,7 +10,8 @@ export function testFinished(revealed: readonly ChaosToken[]): boolean {
 /**
  * Draws from `bag` as the players would: one token, then another while the last one says so,
  * without putting any back. A test still waiting for its next token goes on from `revealed`.
- * `random` gives a number in [0, 1) like `Math.random`, so tests can pick the tokens.
+ * `random` gives a number in [0, 1) like `Math.random`: the app passes that, the play tester its
+ * seeded random, and tests pick the tokens.
  */
 export function drawTokens(
   bag: readonly ChaosToken[],

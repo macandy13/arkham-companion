@@ -2,6 +2,14 @@
 
 The sections dated up to 2026-10-22 were released as 1.0.0 to 1.8.0 by mistake: Release Please starts at 1.0.0 by default. Versioning restarted at 0.1.0 (see "Versions" in docs/product.md).
 
+## [0.1.27](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v0.1.26...arkham-companion-v0.1.27) (2026-11-07)
+
+
+### Features
+
+* **play_tester:** answer skill tests by chaos bag draws and add liveness checks (M1V.4) ([21d25a7](https://github.com/macandy13/arkham-companion/commit/21d25a7307ab3f987247f1f6f73b3e8efb6eaf56))
+* **web:** campaign covers show their box's key art from FFG (MD.3b3) ([6c3a46a](https://github.com/macandy13/arkham-companion/commit/6c3a46a015bdd8ad26135931f7255e53b69c1c44))
+
 ## [0.1.26](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v0.1.25...arkham-companion-v0.1.26) (2026-11-07)
 
 
