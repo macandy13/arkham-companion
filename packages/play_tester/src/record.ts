@@ -7,7 +7,7 @@ import type { Step } from './steps';
 export const RECORD_SUFFIX = '.arkham-run.json';
 
 /** The layout version of `RunRecord`; a record of another version is refused, not misread. */
-const RECORD_VERSION = 2;
+const RECORD_VERSION = 3;
 
 /**
  * Which tester wrote a record: the package version and the git commit it ran on, so a replay on a

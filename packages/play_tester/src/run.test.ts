@@ -1,7 +1,15 @@
 import { describe, expect, it } from 'vitest';
-import { scenarioId, cardName } from '@arkham/engine';
+import { scenarioId, cardName, investigatorCode } from '@arkham/engine';
 import { theGathering } from '@arkham/scenarios';
-import { runsFrom, scenarioContext, SeededRandom, setUpTable, type Run } from './run';
+import { range, sum } from '@arkham/util';
+import {
+  blankInvestigator,
+  runsFrom,
+  scenarioContext,
+  SeededRandom,
+  setUpTable,
+  type Run,
+} from './run';
 
 describe('the runs of a seed', () => {
   it('plays only the bots asked for', () => {
@@ -12,14 +20,40 @@ describe('the runs of a seed', () => {
     expect(runsFrom(7, 3)).toEqual(runsFrom(7, 3));
   });
 
-  it('seats one to three different real investigators in each run', () => {
+  it('seats one to four different investigators in each run', () => {
     const runs = runsFrom(7, 20);
 
     expect(runs.map(({ seats }) => new Set(seats).size)).toEqual(
       runs.map(({ seats }) => seats.length),
     );
-    expect(runs.every(({ seats }) => seats.length >= 1 && seats.length <= 3)).toBe(true);
+    expect(runs.every(({ seats }) => seats.length >= 1 && seats.length <= 4)).toBe(true);
   });
+
+  it('seats real and blank investigators, each blank one with its stats in the run', () => {
+    const runs = runsFrom(7, 20);
+    const seated = runs.flatMap(({ seats }) => seats);
+
+    expect(seated).toContain('Roland Banks');
+    expect(seated).toContain('Blank 1');
+    expect(
+      runs.every(({ seats, blanks }) => blanks.every(({ name }) => seats.includes(cardName(name)))),
+    ).toBe(true);
+  });
+});
+
+describe('a blank investigator', () => {
+  it.each(range(20))(
+    'has health and sanity 14 or 15 together and skills 12, as real ones (seed %i)',
+    (seed) => {
+      const blank = blankInvestigator(1, new SeededRandom(seed));
+
+      expect(blank).toMatchObject({ code: 'blank_1', name: 'Blank 1' });
+      expect([14, 15]).toContain(blank.health + blank.sanity);
+      expect(Math.min(blank.health, blank.sanity)).toBeGreaterThanOrEqual(1);
+      expect(sum(Object.values(blank.skills))).toBe(12);
+      expect(Object.values(blank.skills).every((skill) => skill >= 0 && skill <= 6)).toBe(true);
+    },
+  );
 });
 
 describe('picking by weight', () => {
@@ -52,6 +86,7 @@ describe('setting up a run', () => {
     scenario: theGathering.id,
     difficulty: 'standard',
     seats: [cardName('Daisy Walker'), cardName('Roland Banks')],
+    blanks: [],
     gameSeed: 24,
     bot: 'random',
     botSeed: 1,
@@ -65,6 +100,29 @@ describe('setting up a run', () => {
       'Roland Banks',
     ]);
     expect(table.board.act?.name).toBe('Trapped');
+  });
+
+  it('seats a blank investigator with the stats the run gives it', () => {
+    const table = setUpTable({
+      ...run,
+      seats: [cardName('Blank 1')],
+      blanks: [
+        {
+          code: investigatorCode('blank_1'),
+          name: 'Blank 1',
+          health: 1,
+          sanity: 2,
+          skills: { willpower: 0, intellect: 1, combat: 2, agility: 0 },
+        },
+      ],
+    });
+
+    expect(table.board.investigators[0]).toMatchObject({
+      name: 'Blank 1',
+      health: 1,
+      sanity: 2,
+      skills: { willpower: 0, intellect: 1, combat: 2, agility: 0 },
+    });
   });
 
   it('fails for a scenario the tester does not know', () => {

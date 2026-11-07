@@ -18,6 +18,7 @@ const run: Run = {
   scenario: theGathering.id,
   difficulty: 'standard',
   seats: [cardName('Roland Banks')],
+  blanks: [],
   gameSeed: 24,
   bot: 'random',
   botSeed: 1,
@@ -37,7 +38,7 @@ const crashAtStart: Finding = {
 function recordWith(finding: Finding, steps: readonly Step[]): RunRecord {
   return {
     format: 'arkham-run',
-    version: 2,
+    version: 3,
     tester,
     run,
     finding,
