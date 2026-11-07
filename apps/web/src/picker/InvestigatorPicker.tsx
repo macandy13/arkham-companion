@@ -1,11 +1,11 @@
 import type { CardCatalog } from '@arkham/carddata';
+import { rotateTo } from '@arkham/util';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { CARD_IMAGE_HOST } from '../catalog/cardImageUrl';
 import { InvestigatorSheet } from './InvestigatorSheet';
 import { PickerFilterBar } from './PickerFilterBar';
 import { applyPickerFilters, seatNumber, type PickerFilters } from './pickerLogic';
-import { rotateTo } from '@arkham/util';
 import { PortraitPages } from './PortraitPages';
 import './picker.css';
 
