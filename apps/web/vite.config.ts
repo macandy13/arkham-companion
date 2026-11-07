@@ -24,9 +24,21 @@ export default defineConfig({
         short_name: 'Arkham',
         display: 'standalone',
         orientation: 'any',
-        background_color: '#1b1b1f',
-        theme_color: '#1b1b1f',
-        icons: [{ src: 'icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' }],
+        // The night table of the playmat (tokens.css `--color-background`), so the splash matches the app.
+        background_color: '#0b1614',
+        theme_color: '#0b1614',
+        // Written by scripts/app_icon.ts from the app mark (src/brand/appMark.ts).
+        icons: [
+          { src: 'icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' },
+          { src: 'icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+          { src: 'icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
+          {
+            src: 'icon-maskable-512.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'maskable',
+          },
+        ],
       },
     }),
   ],
