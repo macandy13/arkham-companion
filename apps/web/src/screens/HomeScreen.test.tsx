@@ -277,9 +277,10 @@ describe('HomeScreen', () => {
     expect(await screen.findByText('No games yet')).toBeTruthy();
   });
 
-  it('renames a campaign from its menu, then deletes it with its game once confirmed', async () => {
+  /** Home over a stored Night of the Zealot campaign titled `title`, with its game of The Gathering. */
+  async function renderCampaign(title: string) {
     const gameStore = new IndexedDbStore(`home-test-${n++}`);
-    const campaignId = await gameStore.createCampaign({ title: 'Zealot' });
+    const campaignId = await gameStore.createCampaign({ title });
     await gameStore.appendCampaignEvents(campaignId, [
       {
         type: 'CampaignStarted',
@@ -297,6 +298,11 @@ describe('HomeScreen', () => {
         <HomeScreen store={createAppStore(gameStore)} catalog={catalogLoading} />
       </MemoryRouter>,
     );
+    return gameStore;
+  }
+
+  it('renames a campaign from its menu', async () => {
+    await renderCampaign('Zealot');
 
     fireEvent.click(await screen.findByRole('button', { name: 'More for Zealot' }));
     fireEvent.click(screen.getByRole('button', { name: 'Rename' }));
@@ -304,16 +310,32 @@ describe('HomeScreen', () => {
       target: { value: 'Zealot – Roland' },
     });
     fireEvent.click(screen.getByRole('button', { name: 'Save' }));
-    fireEvent.click(await screen.findByRole('button', { name: 'More for Zealot – Roland' }));
+
+    expect(await screen.findByText('Zealot – Roland')).toBeTruthy();
+  });
+
+  it('warns that deleting a campaign takes its games along', async () => {
+    await renderCampaign('Zealot');
+
+    fireEvent.click(await screen.findByRole('button', { name: 'More for Zealot' }));
     fireEvent.click(screen.getByRole('button', { name: 'Delete' }));
-    const dialog = screen.getByRole('alertdialog', { name: 'Delete "Zealot – Roland"?' });
 
     expect(
-      within(dialog).getByText(
+      within(screen.getByRole('alertdialog', { name: 'Delete "Zealot"?' })).getByText(
         'The campaign log and the games of its scenarios are removed from this device. This cannot be undone.',
       ),
     ).toBeTruthy();
-    fireEvent.click(within(dialog).getByRole('button', { name: 'Delete' }));
+  });
+
+  it('deletes a campaign with its game once confirmed', async () => {
+    const gameStore = await renderCampaign('Zealot');
+
+    fireEvent.click(await screen.findByRole('button', { name: 'More for Zealot' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Delete' }));
+    fireEvent.click(
+      within(screen.getByRole('alertdialog')).getByRole('button', { name: 'Delete' }),
+    );
+
     expect(await screen.findByText('No games yet')).toBeTruthy();
     expect(await gameStore.listGames()).toEqual([]);
   });

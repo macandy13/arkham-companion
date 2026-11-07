@@ -6,10 +6,10 @@
 - undo by `commandId`,
 - and an `expectedSeq` check so two tabs cannot overwrite each other.
 
-A campaign has its own event log in the same store (`createCampaign`, `appendCampaignEvents`, `loadCampaign`, `undoLastCampaign`, `listCampaigns`) with the same `commandId` undo groups and `expectedSeq` check, so a confirmed resolution is undone as one step.
+A campaign has its own event log in the same store (`createCampaign`, `appendCampaignEvents`, `loadCampaign`, `undoLastCampaign`, `listCampaigns`, `renameCampaign`, `deleteCampaign`) with the same `commandId` undo groups and `expectedSeq` check, so a confirmed resolution is undone as one step.
 Campaign logs stay short, so they are always replayed whole and have no snapshots.
 An event the game or a resolution wrote by itself keeps its cause (`StoredEvent.cause`, `StoredCampaignEvent.cause`, from the engine's [change causes](command-handling.md)), passed to `appendEvents`/`appendCampaignEvents` beside the events; the players' own events have none. Replay never reads it: it is there so the log can say why, after a reload too. Export and import carry it.
-A game links to its campaign through `NewGame.campaignId`; the [campaign log](campaign.md) records each played scenario and its outcome, not the game, so deleting a game leaves the campaign unchanged.
+A game links to its campaign through `NewGame.campaignId`; the [campaign log](campaign.md) records each played scenario and its outcome, not the game, so deleting a game leaves the campaign unchanged. Deleting a campaign goes the other way: its games can't go on without it, so `deleteCampaign` removes them with it, in one transaction.
 
 A game row and a campaign row also keep how much the players rely on the helpers ([`Reliance`](../../packages/engine/src/reliance.ts): `display`, `assist` or `auto`; `createGame`/`createCampaign`, `setGameReliance`/`setCampaignReliance`), absent until chosen and read as `DEFAULT_RELIANCE`. It is a setting rather than play, so it lives on the row, not in the log: changing it is no step to undo and leaves `updatedAt` alone. A game of a campaign follows the campaign's level, which the caller reads; the store doesn't resolve it. A duplicate keeps it; export and import don't carry it. `showsNotice` says which notice kinds (`NoticeKind`) each level shows.
 

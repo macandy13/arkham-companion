@@ -340,7 +340,7 @@ export interface AppState {
   duplicateGame(gameId: GameId, title: string): Promise<GameId>;
   /** Deletes a saved game and reloads the list; closes it if it is the open one. */
   deleteGame(gameId: GameId): Promise<void>;
-  /** Renames a campaign and reloads the list. */
+  /** Renames a campaign, the open one too, and reloads the list. */
   renameCampaign(campaignId: CampaignId, title: string): Promise<void>;
   /**
    * Deletes a campaign with its log and its games and reloads the list; closes the open game if it
@@ -806,6 +806,8 @@ export function createAppStore(
       },
       async renameCampaign(campaignId, title) {
         await gameStore.renameCampaign(campaignId, title);
+        const open = get().campaign;
+        if (open?.campaignId === campaignId) set({ campaign: { ...open, title } });
         await get().refresh();
       },
       async deleteCampaign(campaignId) {
