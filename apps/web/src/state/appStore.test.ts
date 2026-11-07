@@ -29,7 +29,7 @@ import {
 } from '@arkham/scenarios';
 import { GameImportError } from '../storage/gameExport';
 import { IndexedDbStore, SeqConflictError } from '../storage/IndexedDbStore';
-import { createAppStore } from './appStore';
+import { createAppStore, type ImportedFile } from './appStore';
 import type { GameActions } from './gameActions';
 
 const started: Event = {
@@ -106,9 +106,9 @@ describe('appStore', () => {
     const id = await gameStore.createGame({ title: 'Night' });
     await gameStore.appendEvents(id, [started, doom]);
 
-    const importedId = await store.getState().importGame(await store.getState().exportGame(id));
-
-    expect(importedId).not.toBe(id);
+    const imported = await store.getState().importFile(await store.getState().exportGame(id));
+    expect(imported).toMatchObject({ kind: 'game', gameId: expect.not.stringMatching(id) });
+    const { gameId: importedId } = imported as Extract<ImportedFile, { kind: 'game' }>;
     await store.getState().openGame(id);
     const original = store.getState().current?.state;
     await store.getState().openGame(importedId);
@@ -121,7 +121,7 @@ describe('appStore', () => {
 
   it('refuses to import text that is not an export', async () => {
     const store = createAppStore(new IndexedDbStore('appstore-badimport-test'));
-    await expect(store.getState().importGame('{}')).rejects.toBeInstanceOf(GameImportError);
+    await expect(store.getState().importFile('{}')).rejects.toBeInstanceOf(GameImportError);
     expect(store.getState().games).toEqual([]);
   });
 
@@ -230,6 +230,25 @@ describe('appStore', () => {
 
         expect(store.getState().campaigns.map((c) => c.title)).toEqual(['Zealot with Alder']);
         expect(store.getState().campaign?.title).toBe('Zealot with Alder');
+      });
+
+      it('exports the campaign with its game and imports both as a new campaign', async () => {
+        const store = createAppStore(new IndexedDbStore('appstore-export-campaign-test'));
+        await store.getState().startCampaign(campaignStart);
+        const original = store.getState().campaigns[0]!.campaignId;
+        const text = await store.getState().exportCampaign(original);
+        await store.getState().deleteCampaign(original);
+
+        const imported = await store.getState().importFile(text);
+
+        expect(imported.kind).toBe('campaign');
+        const [restored] = store.getState().campaigns;
+        expect(restored).toMatchObject({ title: 'Night of the Zealot', difficulty: 'easy' });
+        expect(restored?.campaignId).not.toBe(original);
+        const [game] = store.getState().games;
+        expect(game).toMatchObject({ title: 'The Gathering', campaignId: restored?.campaignId });
+        await store.getState().openGame(game!.gameId);
+        expect(store.getState().current?.state.campaign?.campaignId).toBe(restored?.campaignId);
       });
 
       it('deletes the campaign with its game and closes both', async () => {

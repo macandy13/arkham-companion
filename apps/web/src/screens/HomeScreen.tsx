@@ -8,7 +8,7 @@ import { useCatalog, type CatalogSource } from '../catalog/useCatalog';
 import type { AppState } from '../state/appStore';
 import { GameImportError } from '../storage/gameExport';
 import { CampaignCover } from './CampaignCover';
-import { downloadGameExport } from './downloadFile';
+import { downloadCampaignExport, downloadGameExport } from './downloadFile';
 import { GameCover, untitledLabel } from './GameCover';
 import { HomeTitle } from './HomeTitle';
 import { shelfEntries } from './shelf';
@@ -43,7 +43,7 @@ export function HomeScreen({
 
   async function importFile(file: File) {
     try {
-      await store.getState().importGame(await file.text());
+      await store.getState().importFile(await file.text());
       setImportError(undefined);
     } catch (error) {
       console.warn('Could not import the game file.', error);
@@ -104,6 +104,13 @@ export function HomeScreen({
                   lastPlayed={lastPlayed}
                   onRename={(title) =>
                     void store.getState().renameCampaign(entry.campaign.campaignId, title)
+                  }
+                  onExport={() =>
+                    void downloadCampaignExport(
+                      store,
+                      entry.campaign.campaignId,
+                      entry.campaign.title,
+                    )
                   }
                   onDelete={() => void store.getState().deleteCampaign(entry.campaign.campaignId)}
                 />

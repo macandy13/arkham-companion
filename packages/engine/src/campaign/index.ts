@@ -9,6 +9,7 @@ export * from './campaign_definition';
 export * from './resolution';
 export * from './interlude';
 export * from './campaign_notices';
+export { moveCampaignEvent, moveGameEvent } from './campaign_import';
 export {
   CampaignCommandRejected,
   type CampaignRejection,

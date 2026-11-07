@@ -24,6 +24,7 @@ import {
   type GameSummary,
   type ReadNotices,
   type StepNotice,
+  type ImportedCampaign,
   type ImportedGame,
   type LoadedGame,
   type NewGame,
@@ -368,6 +369,41 @@ export class IndexedDbStore implements GameStore {
     });
   }
 
+  async importCampaign(imported: ImportedCampaign): Promise<CampaignId> {
+    const campaignId = newCampaignId();
+    const now = Date.now();
+    const tables = [this.db.campaigns, this.db.campaignEvents, this.db.games, this.db.events];
+    await this.db.transaction('rw', tables, async () => {
+      await this.db.campaigns.add({
+        campaignId,
+        title: imported.title,
+        ...(imported.reliance === undefined ? {} : { reliance: imported.reliance }),
+        createdAt: imported.events[0]?.timestamp ?? now,
+        updatedAt: imported.events.at(-1)?.timestamp ?? now,
+        lastSeq: imported.events.length,
+      });
+      await this.db.campaignEvents.bulkAdd(
+        imported.events.map((e, i) => ({
+          ...e,
+          campaignId,
+          seq: i + 1,
+          event: campaign.moveCampaignEvent(e.event, campaignId),
+        })),
+      );
+      for (const game of imported.games) {
+        const gameId = await this.importGame({
+          ...game,
+          events: game.events.map((e) => ({
+            ...e,
+            event: campaign.moveGameEvent(e.event, campaignId),
+          })),
+        });
+        await this.db.games.update(gameId, { campaignId });
+      }
+    });
+    return campaignId;
+  }
+
   async appendCampaignEvents(
     campaignId: CampaignId,
     events: readonly CampaignEvent[],
@@ -441,7 +477,7 @@ export class IndexedDbStore implements GameStore {
     return loaded.flatMap((loadedCampaign) => (loadedCampaign ? [loadedCampaign.summary] : []));
   }
 
-  private async loadCampaignEvents(campaignId: CampaignId): Promise<StoredCampaignEvent[]> {
+  async loadCampaignEvents(campaignId: CampaignId): Promise<StoredCampaignEvent[]> {
     return this.db.campaignEvents
       .where('[campaignId+seq]')
       .between([campaignId, Dexie.minKey], [campaignId, Dexie.maxKey])

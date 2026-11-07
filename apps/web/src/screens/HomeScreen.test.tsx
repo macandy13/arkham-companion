@@ -340,6 +340,22 @@ describe('HomeScreen', () => {
     expect(await gameStore.listGames()).toEqual([]);
   });
 
+  it('downloads an export of a campaign from its menu, named for the campaign', async () => {
+    Object.assign(URL, { createObjectURL: vi.fn(() => 'blob:test'), revokeObjectURL: vi.fn() });
+    const downloaded: string[] = [];
+    vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function (
+      this: HTMLAnchorElement,
+    ) {
+      downloaded.push(this.download);
+    });
+    await renderCampaign('Zealot');
+
+    fireEvent.click(await screen.findByRole('button', { name: 'More for Zealot' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Export' }));
+
+    await vi.waitFor(() => expect(downloaded).toEqual(['Zealot.arkham.json']));
+  });
+
   it('downloads an export of a game from its menu', async () => {
     const createObjectURL = vi.fn(() => 'blob:test');
     Object.assign(URL, { createObjectURL, revokeObjectURL: vi.fn() });
