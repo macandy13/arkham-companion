@@ -1,4 +1,5 @@
 import type { CardCatalog } from '@arkham/carddata';
+import { rotateTo } from '@arkham/util';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { CARD_IMAGE_HOST } from '../catalog/cardImageUrl';
@@ -6,7 +7,6 @@ import { InvestigatorSheet } from './InvestigatorSheet';
 import { PickerFilterBar } from './PickerFilterBar';
 import { applyPickerFilters, seatNumber, type PickerFilters } from './pickerLogic';
 import { PortraitPages } from './PortraitPages';
-import { SeatList } from './SeatList';
 import './picker.css';
 
 /** Seats at the table; the core game supports up to four investigators. */
@@ -27,9 +27,12 @@ interface InvestigatorPickerProps {
 }
 
 /**
- * Investigator picker (product.md "UI concept"): the search and filter control, the seat list and
- * the investigators' portraits in pages of ten (`PortraitPages`). Tapping a portrait opens the
- * detail sheet over the screen; "select" there assigns the next free seat.
+ * Investigator picker (product.md "UI concept", MD.3d2): the search and filter control and the
+ * investigators' portraits in pages of ten (`PortraitPages`), each picked one numbered in pick
+ * order. Tapping a portrait opens the detail sheet over the screen: "Select" there takes the next
+ * free seat; a picked investigator's sheet makes them the lead investigator or removes them. The
+ * seats are the order round the table, so making one lead turns the table to them rather than
+ * moving them alone (Rules Reference, "Player Order"); any other order is picked again.
  */
 export function InvestigatorPicker({
   catalog,
@@ -45,7 +48,6 @@ export function InvestigatorPicker({
 
   const byCode = new Map(catalog.investigators.map((i) => [i.code, i]));
   const imageUrl = (src: string) => `${imageHost}${src}`;
-  const seated = seats.flatMap((code) => byCode.get(code) ?? []);
   const visible = applyPickerFilters(catalog.investigators, filters, ownedPacks);
   const open = openCode === undefined ? undefined : byCode.get(openCode);
 
@@ -53,8 +55,8 @@ export function InvestigatorPicker({
     setOpenCode(undefined);
   }
 
-  function select(code: string) {
-    onSeatsChange([...seats, code]);
+  function changeSeats(next: string[]) {
+    onSeatsChange(next);
     closeSheet();
   }
 
@@ -67,7 +69,6 @@ export function InvestigatorPicker({
         canFilterByCollection={ownedPacks !== undefined}
         onChange={setFilters}
       />
-      <SeatList seats={seated} onSeatsChange={onSeatsChange} />
       {visible.length === 0 ? (
         <p>{t('picker.noResults')}</p>
       ) : (
@@ -87,7 +88,9 @@ export function InvestigatorPicker({
           seatNumber={seatNumber(seats, open.code)}
           seatsFull={seats.length >= maxSeats}
           imageUrl={imageUrl}
-          onSelect={() => select(open.code)}
+          onSelect={() => changeSeats([...seats, open.code])}
+          onMakeLead={() => changeSeats(rotateTo(seats, seats.indexOf(open.code)))}
+          onRemove={() => changeSeats(seats.filter((code) => code !== open.code))}
           onShowOtherChapter={() => setOpenCode(open.otherChapterCode)}
           onClose={closeSheet}
         />
