@@ -342,6 +342,32 @@ export class IndexedDbStore implements GameStore {
     }
   }
 
+  async renameCampaign(campaignId: CampaignId, title: string): Promise<void> {
+    if ((await this.db.campaigns.update(campaignId, { title })) === 0) {
+      throw new Error(`Unknown campaign ${campaignId}`);
+    }
+  }
+
+  async deleteCampaign(campaignId: CampaignId): Promise<void> {
+    const tables = [
+      this.db.campaigns,
+      this.db.campaignEvents,
+      this.db.games,
+      this.db.events,
+      this.db.snapshots,
+    ];
+    await this.db.transaction('rw', tables, async () => {
+      // Games carry no index on their campaign; a device holds few enough to scan.
+      const games = await this.db.games.filter((game) => game.campaignId === campaignId).toArray();
+      for (const { gameId } of games) await this.deleteGame(gameId);
+      await this.db.campaignEvents
+        .where('[campaignId+seq]')
+        .between([campaignId, Dexie.minKey], [campaignId, Dexie.maxKey])
+        .delete();
+      await this.db.campaigns.delete(campaignId);
+    });
+  }
+
   async appendCampaignEvents(
     campaignId: CampaignId,
     events: readonly CampaignEvent[],

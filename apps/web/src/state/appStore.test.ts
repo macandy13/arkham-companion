@@ -220,6 +220,23 @@ describe('appStore', () => {
         expect(store.getState().current?.state.campaign?.campaignId).toBe(stored?.campaignId);
       });
 
+      it('renames the campaign, then deletes it with its game and closes both', async () => {
+        const store = createAppStore(new IndexedDbStore('appstore-delete-campaign-test'));
+        await store.getState().startScenario({ ...start, title: 'A quick game' });
+        await store.getState().startCampaign(campaignStart);
+        const campaignId = store.getState().campaigns[0]!.campaignId;
+        await store.getState().openCampaign(campaignId);
+
+        await store.getState().renameCampaign(campaignId, 'Zealot with Alder');
+        expect(store.getState().campaigns.map((c) => c.title)).toEqual(['Zealot with Alder']);
+
+        await store.getState().deleteCampaign(campaignId);
+        expect(store.getState().campaigns).toEqual([]);
+        expect(store.getState().games.map((g) => g.title)).toEqual(['A quick game']);
+        expect(store.getState().current).toBeUndefined();
+        expect(store.getState().campaign).toBeUndefined();
+      });
+
       it.each([
         [
           'a team with Alder twice',

@@ -277,6 +277,47 @@ describe('HomeScreen', () => {
     expect(await screen.findByText('No games yet')).toBeTruthy();
   });
 
+  it('renames a campaign from its menu, then deletes it with its game once confirmed', async () => {
+    const gameStore = new IndexedDbStore(`home-test-${n++}`);
+    const campaignId = await gameStore.createCampaign({ title: 'Zealot' });
+    await gameStore.appendCampaignEvents(campaignId, [
+      {
+        type: 'CampaignStarted',
+        campaignId,
+        definitionId: campaignDefinitionId('night-of-the-zealot'),
+        difficulty: 'hard',
+        investigators: [],
+        chaosBag: ['0'],
+        scenarioIds: [scenarioId('the-gathering')],
+      },
+    ]);
+    await gameStore.createGame({ title: 'The Gathering', campaignId });
+    render(
+      <MemoryRouter>
+        <HomeScreen store={createAppStore(gameStore)} catalog={catalogLoading} />
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(await screen.findByRole('button', { name: 'More for Zealot' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Rename' }));
+    fireEvent.change(screen.getByRole('textbox', { name: 'Name' }), {
+      target: { value: 'Zealot – Roland' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'More for Zealot – Roland' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Delete' }));
+    const dialog = screen.getByRole('alertdialog', { name: 'Delete "Zealot – Roland"?' });
+
+    expect(
+      within(dialog).getByText(
+        'The campaign log and the games of its scenarios are removed from this device. This cannot be undone.',
+      ),
+    ).toBeTruthy();
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Delete' }));
+    expect(await screen.findByText('No games yet')).toBeTruthy();
+    expect(await gameStore.listGames()).toEqual([]);
+  });
+
   it('downloads an export of a game from its menu', async () => {
     const createObjectURL = vi.fn(() => 'blob:test');
     Object.assign(URL, { createObjectURL, revokeObjectURL: vi.fn() });

@@ -340,6 +340,13 @@ export interface AppState {
   duplicateGame(gameId: GameId, title: string): Promise<GameId>;
   /** Deletes a saved game and reloads the list; closes it if it is the open one. */
   deleteGame(gameId: GameId): Promise<void>;
+  /** Renames a campaign and reloads the list. */
+  renameCampaign(campaignId: CampaignId, title: string): Promise<void>;
+  /**
+   * Deletes a campaign with its log and its games and reloads the list; closes the open game if it
+   * is one of them, and the campaign if it is open.
+   */
+  deleteCampaign(campaignId: CampaignId): Promise<void>;
   /** JSON export text of a saved game (metadata, events, `stateVersion`). Rejects for unknown games. */
   exportGame(gameId: GameId): Promise<string>;
   /**
@@ -795,6 +802,20 @@ export function createAppStore(
           currentCampaignId = undefined;
           set({ current: undefined });
         }
+        await get().refresh();
+      },
+      async renameCampaign(campaignId, title) {
+        await gameStore.renameCampaign(campaignId, title);
+        await get().refresh();
+      },
+      async deleteCampaign(campaignId) {
+        await gameStore.deleteCampaign(campaignId);
+        if (currentCampaignId === campaignId) {
+          session = undefined;
+          currentCampaignId = undefined;
+          set({ current: undefined });
+        }
+        if (get().campaign?.campaignId === campaignId) set({ campaign: undefined });
         await get().refresh();
       },
       async exportGame(gameId) {

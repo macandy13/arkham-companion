@@ -102,6 +102,10 @@ export function HomeScreen({
                   games={entry.games}
                   images={images}
                   lastPlayed={lastPlayed}
+                  onRename={(title) =>
+                    void store.getState().renameCampaign(entry.campaign.campaignId, title)
+                  }
+                  onDelete={() => void store.getState().deleteCampaign(entry.campaign.campaignId)}
                 />
               );
             }

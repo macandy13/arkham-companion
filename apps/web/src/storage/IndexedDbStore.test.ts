@@ -520,6 +520,43 @@ describe('IndexedDbStore campaigns', () => {
     expect((await store.loadCampaign(id))?.summary.lastSeq).toBe(1);
   });
 
+  it('renames a campaign without counting it as play', async () => {
+    const id = await store.createCampaign({ title: 'Zealot' });
+    await store.appendCampaignEvents(id, [campaignStarted(id)]);
+    const before = (await store.listCampaigns())[0]!.updatedAt;
+
+    await store.renameCampaign(id, 'Zealot – Roland');
+
+    expect((await store.listCampaigns())[0]).toMatchObject({
+      title: 'Zealot – Roland',
+      updatedAt: before,
+    });
+    await expect(store.renameCampaign(campaignId('nope'), 'x')).rejects.toThrow(/Unknown campaign/);
+  });
+
+  it('deletes a campaign with its log and its games, leaving other campaigns and games alone', async () => {
+    const zealot = await store.createCampaign();
+    const other = await store.createCampaign();
+    const zealotGame = await store.createGame({ campaignId: zealot });
+    const otherGame = await store.createGame({ campaignId: other });
+    const quickGame = await store.createGame();
+    await store.appendCampaignEvents(zealot, [campaignStarted(zealot)]);
+    await store.appendCampaignEvents(other, [campaignStarted(other)]);
+    for (const game of [zealotGame, otherGame, quickGame])
+      await store.appendEvents(game, [started]);
+    await store.saveSnapshot(zealotGame, 1, replay([started]));
+
+    await store.deleteCampaign(zealot);
+
+    expect(await store.loadCampaign(zealot)).toBeUndefined();
+    expect(await store.loadGame(zealotGame)).toBeUndefined();
+    expect(await store.loadEvents(zealotGame)).toEqual([]);
+    expect((await store.listCampaigns()).map((c) => c.campaignId)).toEqual([other]);
+    expect((await store.listGames()).map((g) => g.gameId).sort()).toEqual(
+      [otherGame, quickGame].sort(),
+    );
+  });
+
   it('deleting a game leaves its campaign and other campaigns untouched', async () => {
     const zealot = await store.createCampaign();
     const other = await store.createCampaign();

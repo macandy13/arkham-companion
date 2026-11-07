@@ -7,6 +7,7 @@ import { findScenario } from '../scenarios/scenarioCatalog';
 import { ConfirmDialog } from './ConfirmDialog';
 import { CoverArt } from './CoverArt';
 import { CoverMenu } from './CoverMenu';
+import { CoverRename } from './CoverRename';
 import { TeamPortraits, type PortraitImages } from './TeamPortraits';
 
 interface GameCoverProps {
@@ -53,12 +54,6 @@ export function GameCover({
   const title = game.title || untitledLabel;
   const scenario = findScenario(game.scenarioId);
 
-  function submitRename(form: HTMLFormElement) {
-    const name = new FormData(form).get('title');
-    if (typeof name === 'string' && name.trim()) onRename(name.trim());
-    setRenaming(false);
-  }
-
   return (
     <li>
       {lastPlayed && <p data-ribbon>{t('home.lastPlayed')}</p>}
@@ -69,21 +64,7 @@ export function GameCover({
         {!renaming && <p>{title}</p>}
       </hgroup>
       {renaming && (
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            submitRename(e.currentTarget);
-          }}
-        >
-          <label>
-            {t('games.name')}
-            <input name="title" defaultValue={game.title} required />
-          </label>
-          <button type="button" onClick={() => setRenaming(false)}>
-            {t('games.cancel')}
-          </button>
-          <button type="submit">{t('games.save')}</button>
-        </form>
+        <CoverRename title={game.title} onRename={onRename} onClose={() => setRenaming(false)} />
       )}
       <p>{t('games.roundPhase', { round: game.round, phase: t(`games.phases.${game.phase}`) })}</p>
       <TeamPortraits team={game.investigators} images={images} />
