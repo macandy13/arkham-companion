@@ -76,7 +76,7 @@ describe('the steps the random bot is offered', () => {
     expect(randomStep(table, new SeededRandom(7))).toMatchObject({
       verb: 'resolveTest',
       investigator: 'alice',
-      token: '+1',
+      tokens: ['+1'],
     });
     expect(offeredSteps(table)).toEqual([{ verb: 'undo' }]);
   });

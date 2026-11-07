@@ -116,6 +116,11 @@ export class SeededRandom {
     return value;
   }
 
+  /** A number from 0 to below 1, like `Math.random`, for engine helpers that take one (`drawTokens`). */
+  fraction(): number {
+    return this.u32() / 2 ** 32;
+  }
+
   /** One of `items`, picked uniformly; fails for an empty list. */
   pick<T>(items: readonly T[]): T {
     return items[this.below(items.length)]!;
