@@ -44,6 +44,7 @@ import {
 import {
   handleAdjustInvestigator,
   deferToPlayers,
+  handleSpendCluesAsGroup,
   handleGainResources,
   handleHealInvestigator,
   handleDefeatInvestigator,
@@ -209,6 +210,7 @@ const COMMAND_SPECS: CommandSpecs = {
   SearchDeck: { handle: deferToPlayers },
   DiscardFromHand: { handle: deferToPlayers },
   DiscardAsset: { handle: deferToPlayers },
+  SpendCluesAsGroup: { handle: handleSpendCluesAsGroup },
   PlayCard: { handle: handlePlayCard, provokes: asAction },
   AdjustInvestigator: {
     handle: handleAdjustInvestigator,

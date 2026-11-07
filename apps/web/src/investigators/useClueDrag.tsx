@@ -29,6 +29,8 @@ export function useClueDrag(
     const { act } = board;
     const advance = act?.advance;
     if (!act || !advance || board.turn === undefined) return;
+    // The act asks for the clues itself when the round ends.
+    if (advance.kind === 'spendCluesAtRoundEnd') return;
     if (advance.kind === 'spendClues') {
       if (advance.held >= advance.threshold)
         pay(advance.threshold, act.id, (spend) => void actions.advanceAct(spend));

@@ -35,7 +35,8 @@ The scripted golden game is [`end_to_end.test.ts`](../../packages/scenarios/src/
 
 **Act 2, The Barrier**
 
-- [ ] Spending 3 clues per investigator reveals the Parlor, puts Lita Chantler there and spawns the Ghoul Priest in the Hallway.
+- [ ] It offers no spend during a turn. When the round ends with 3 clues per investigator held by those in the Hallway, the lead is asked whether to spend them.
+- [ ] Spending them reveals the Parlor, puts Lita Chantler there and spawns the Ghoul Priest in the Hallway.
 - [ ] The Ghoul Priest hunts the investigator with the highest combat (asks on a tie) and retaliates.
 - [ ] Parleying with Lita (intellect 4) gives the investigator control of her.
 
@@ -70,7 +71,6 @@ These are done by hand at the table; the app does not do them.
 
 - Discarding player cards: agenda 1's random card from each hand and Crypt Chill's asset. The app doesn't know your cards, so it lists them under "Do this by hand".
 - Lita Chantler's abilities once you control her (+1 combat at her location, +1 damage against Monsters).
-- Act 2's clues: spend them as the act says (investigators in the Hallway, at the end of the round). The app offers the spend at any time during a turn and from any location. ([#118](https://github.com/macandy13/arkham-companion/issues/118))
 - The resolutions' deck changes and upgrades (adding Lita to a deck, spending experience, replacing a killed investigator).
 
 ## Reporting a problem

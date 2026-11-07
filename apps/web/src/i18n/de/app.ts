@@ -655,6 +655,9 @@ export const appTexts = {
     evade: 'Entkommen vor {{card}}',
     cardTest: 'Probe für {{card}}',
     chooseSkill: '{{card}}: Auf welche Fertigkeit legst du die Probe ab?',
+    spendCluesAtRoundEnd: 'Die Runde endet: Hinweise ausgeben, damit der Akt vorrückt?',
+    spendClues: 'Hinweise ausgeben und vorrücken',
+    keepClues: 'Hinweise behalten',
     attackOfOpportunity: 'Gelegenheitsangriff von {{card}}',
     provokedBy: {
       MoveInvestigator: '{{name}} bewegt sich nach {{card}}: Zuerst greift {{enemy}} an',

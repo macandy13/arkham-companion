@@ -196,6 +196,8 @@ export {
   checkDoomThreshold,
   discardAsset,
   discardAtRandom,
+  advanceBySpendingCluesAtRoundEnd,
+  spendCluesAsGroup,
   drawCards,
   drawFromScenarioDeck,
   searchDeck,

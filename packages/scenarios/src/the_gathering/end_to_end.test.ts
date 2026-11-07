@@ -48,6 +48,7 @@ import {
   BURN_THE_HOUSE_DECISION,
   GATHERING_CODES,
   CRYPT_CHILL_DECISION,
+  THE_BARRIER_DECISION,
   WHATS_GOING_ON_DECISION,
   theGathering,
   theGatheringCards,
@@ -798,7 +799,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     expect(table.formatted()).toMatchInlineSnapshot(`
       "Round 7, upkeep phase
       Agenda: Rise of the Ghouls – doom 5/7
-      Act: The Barrier – needs 9 clues
+      Act: The Barrier – needs 9 clues at Hallway when the round ends
       Map Study:
         no locations
       Map House:
@@ -929,8 +930,8 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     expect(table.board.location(byName('Attic')).attachments).toEqual(['Obscuring Fog']);
     expect(table.board.location(byName('Cellar')).attachments).toEqual(['Obscuring Fog']);
 
-    // Round 9 – investigation: The Barrier asks for the investigators in the
-    // Hallway at the end of the round. Roland shoots the new Ghoul Minion,
+    // Round 9 – investigation: The Barrier asks for the clues of the investigators
+    // in the Hallway as the round ends. Roland shoots the new Ghoul Minion,
     // takes another Attic clue and walks to the Hallway; Daisy evades both
     // ghouls again and follows him.
     expect(table.nextPhase()).toEqual({ round: 9, phase: 'investigation' });
@@ -962,14 +963,45 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
       { prompt: 'decision.chooseEngagement', about: ghoulMinion },
     ]);
     table.answer(byName(ghoulMinion), 'Roland Banks');
-    expect(table.nextPhase()).toEqual({ round: 9, phase: 'upkeep' });
+
+    // As the round ends, They're Getting Out! places 1 doom for each Ghoul enemy
+    // in the Hallway or Parlor: the two ghouls. Roland and Daisy, both in the
+    // Hallway, hold 9 clues, the 3 per investigator act 2 asks for (Wendy still
+    // counts), so the act asks whether they spend them.
+    expect(table.nextPhase()).toEqual({ round: 9, phase: 'upkeep', step: 'endRound' });
+    expect(table.board.agenda).toMatchObject({ name: "They're Getting Out!", doom: 2 });
+    expect(table.board.act?.advance).toEqual({
+      kind: 'spendCluesAtRoundEnd',
+      held: 9,
+      threshold: 9,
+    });
+    expect(table.board.decisions).toEqual([
+      {
+        prompt: 'decision.spendCluesAtRoundEnd',
+        kind: 'chooseOption',
+        options: ['spend clues', 'keep clues'],
+        labels: { 'spend clues': 'decision.spendClues', 'keep clues': 'decision.keepClues' },
+      },
+    ]);
+
+    // They spend them, Roland his 7 and Daisy her 2; the act's reverse side
+    // reveals the Parlor (on the house map, unrevealed, since act 1), puts Lita
+    // Chantler there and spawns the Ghoul Priest in the Hallway. Its prey
+    // (highest combat) picks Roland (combat 4) over Daisy (combat 2).
+    table.play(answer(THE_BARRIER_DECISION, 'spend'));
+
+    expect(table.board.perInvestigator('clues')).toEqual({ roland: 0, daisy: 0, wendy: 0 });
+    expect(table.board.act?.name).toBe('What Have You Done?');
+    expect(table.board.location(byName('Parlor'))).toMatchObject({
+      revealed: true,
+      cards: ['Lita Chantler'],
+    });
+    expect(table.board.location(byName('Parlor')).forbidden).toBeUndefined();
     expect(table.board.enemies).toEqual([
+      { name: 'Ghoul Priest', at: 'Hallway', health: 15, engagedWith: roland },
       { name: ghoulMinion, at: 'Hallway', health: 2, engagedWith: roland },
       { name: ravenousGhoul, at: 'Hallway', health: 3, engagedWith: daisy },
     ]);
-    // At the end of the round They're Getting Out! places 1 doom for each
-    // Ghoul enemy in the Hallway or Parlor: the two ghouls.
-    expect(table.board.agenda).toMatchObject({ name: "They're Getting Out!", doom: 2 });
 
     // Round 10 – mythos: Roland draws Dissonant Voices, Daisy Rotting Remains
     // (willpower 3 against 3: she passes).
@@ -994,36 +1026,8 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     expect(table.board.investigator(roland).forbidden).toEqual({ cards: ['play'] });
 
     expect(table.nextPhase()).toEqual({ round: 10, phase: 'investigation' });
+    // Round 10 – investigation: Daisy goes first and fights.
     table.startTurn(daisy);
-    // Round 10 – investigation: both are in the Hallway holding 9 clues, the 3
-    // per investigator act 2 asks for (Wendy still counts). Daisy goes first and
-    // spends them with Roland as her turn begins; the act's reverse side reveals
-    // the Parlor (on the house map, unrevealed, since act 1), puts Lita Chantler
-    // there and spawns the Ghoul Priest in the Hallway. Its prey (highest combat)
-    // picks Roland (combat 4) over Daisy (combat 2).
-    expect(table.board.perInvestigator('at')).toEqual({
-      roland: 'Hallway',
-      daisy: 'Hallway',
-      wendy: 'Cellar',
-    });
-    table.spendCluesToAdvanceAct([
-      [roland, 7],
-      [daisy, 2],
-    ]);
-
-    expect(table.board.act?.name).toBe('What Have You Done?');
-    expect(table.board.location(byName('Parlor'))).toMatchObject({
-      revealed: true,
-      cards: ['Lita Chantler'],
-    });
-    expect(table.board.location(byName('Parlor')).forbidden).toBeUndefined();
-    expect(table.board.enemy(byName('Ghoul Priest'))).toEqual({
-      name: 'Ghoul Priest',
-      at: 'Hallway',
-      health: 15,
-      engagedWith: roland,
-    });
-
     table.fight(daisy, byName(ghoulMinion));
     table.fight(daisy, byName(ghoulMinion));
     table.fight(daisy, byName('Ghoul Priest'));

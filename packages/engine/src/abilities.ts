@@ -38,7 +38,13 @@ import {
   nearestEnemies,
   type EnemyFilter,
 } from './enemies';
-import { isActiveInvestigator, playerOrder, requireInvestigator, statValue } from './investigators';
+import {
+  clueSpendersAt,
+  isActiveInvestigator,
+  playerOrder,
+  requireInvestigator,
+  statValue,
+} from './investigators';
 import { cardsInZone, currentCard, requireCard } from './lookup';
 import { inVictoryDisplay } from './victory';
 import type { AddMapStep } from './setup';
@@ -317,6 +323,7 @@ export type AbilityCommand =
           | 'PlaceDoom'
           | 'CheckDoomThreshold'
           | 'PlaceTokens'
+          | 'SpendCluesAsGroup'
           | 'ChangeChaosBag'
           | 'MoveCard'
           | 'DiscardCard'
@@ -420,7 +427,12 @@ export type AbilityCondition =
    */
   | ({ kind: 'victoryDisplayHolds'; filter: VictoryDisplayFilter } & StatRange)
   /** The card with the ability holds at least `atLeast` tokens of `token` ("2 clues per investigator on this Act"). */
-  | { kind: 'tokensOnSelf'; token: TokenKind; atLeast: ScaledValue };
+  | { kind: 'tokensOnSelf'; token: TokenKind; atLeast: ScaledValue }
+  /**
+   * The investigators at the only copy of `location` who may spend clues (`clueSpendersAt`) hold
+   * at least `atLeast` between them, so they can pay a `spendCluesAsGroup` there (The Barrier).
+   */
+  | { kind: 'cluesHeldAt'; location: CardCode; atLeast: ScaledValue };
 
 /**
  * The cards a `victoryDisplayHolds` condition counts: those with `trait` and, if `unique`, only
@@ -693,6 +705,12 @@ function conditionHolds(
     }
     case 'tokensOnSelf': {
       const held = state.cards[opened.cardId]?.tokens[condition.token] ?? 0;
+      return held >= resolveValue(condition.atLeast, state.meta.playerCount);
+    }
+    case 'cluesHeldAt': {
+      const location = theOnlyCopy(state, condition.location);
+      if (location === undefined) return false;
+      const held = clueSpendersAt(ctx, state, location).reduce((sum, inv) => sum + inv.clues, 0);
       return held >= resolveValue(condition.atLeast, state.meta.playerCount);
     }
     default:
@@ -1269,6 +1287,22 @@ export function tokenObjective(stats: CardStats, token: TokenKind): ScaledValue 
 }
 
 /**
+ * The clues an act's `advanceBySpendingCluesAtRoundEnd` asks of the investigators at `location`
+ * (The Barrier's Hallway); none for an act without one.
+ */
+export function roundEndClueObjective(
+  stats: CardStats,
+): { clues: ScaledValue; location: CardCode } | undefined {
+  const objective = (stats.abilities ?? [])
+    .filter((ability) => ability.window.kind === 'roundEnds')
+    .map((ability) => ability.condition)
+    .find((condition) => condition?.kind === 'cluesHeldAt');
+  return objective?.kind === 'cluesHeldAt'
+    ? { clues: objective.atLeast, location: objective.location }
+    : undefined;
+}
+
+/**
  * The reverse side of an agenda or act, written
  * `whenAdvanced(revealLocation(onlyCopy(codes.parlor)))`.
  */
@@ -1601,6 +1635,41 @@ export function addChaosToken(token: ChaosToken, lasts: ChaosBagChangeLasts): Ab
 /** "Remove 1 [token] token from the chaos bag", for the scenario or for the rest of the campaign. */
 export function removeChaosToken(token: ChaosToken, lasts: ChaosBagChangeLasts): AbilityEffect {
   return { type: 'ChangeChaosBag', token, change: 'remove', lasts };
+}
+
+/**
+ * "Investigators in the Hallway may, as a group, spend the requisite number of clues" (The
+ * Barrier): those at `location` pay `amount` together, written
+ * `spendCluesAsGroup(perInvestigator(3), onlyCopy(codes.hallway))`.
+ */
+export function spendCluesAsGroup(amount: ScaledValue, location: RelativeCard): AbilityEffect {
+  return { type: 'SpendCluesAsGroup', amount, locationId: location };
+}
+
+/**
+ * "When the round ends, investigators in the Hallway may, as a group, spend the requisite number
+ * of clues to advance" (The Barrier): at the end of each round, once those at `location` hold
+ * `clues`, the lead decides for the group (`decision`) whether they spend them and advance the act.
+ */
+export function advanceBySpendingCluesAtRoundEnd(
+  decision: DecisionId,
+  clues: ScaledValue,
+  location: CardCode,
+): Ability {
+  return {
+    window: { kind: 'roundEnds' },
+    condition: { kind: 'cluesHeldAt', location, atLeast: clues },
+    effects: [
+      leadDecides(decision, 'decision.spendCluesAtRoundEnd', [
+        {
+          id: 'spend',
+          label: 'decision.spendClues',
+          effects: [spendCluesAsGroup(clues, onlyCopy(location)), advanceAct()],
+        },
+        { id: 'keep', label: 'decision.keepClues', effects: [] },
+      ]),
+    ],
+  };
 }
 
 /** "Place N doom on the current agenda". */

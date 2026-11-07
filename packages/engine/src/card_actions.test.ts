@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   advanceBySpendingClues,
+  advanceBySpendingCluesAtRoundEnd,
   atLocation,
   attachedTo,
   blankAct,
@@ -28,6 +29,7 @@ import {
   drawCards,
   youMustEither,
   type ActionLimit,
+  type Command,
   type CardAction,
   type CardCode,
   type InstanceId,
@@ -669,6 +671,97 @@ describe('advancing the act by spending clues', () => {
     const table = PlayTable.start(firstActForOneCluePerInvestigator);
 
     expect(table.board.act?.advance).toEqual({ kind: 'spendClues', held: 2, threshold: 2 });
+  });
+});
+
+describe('advancing the act by spending clues at the end of the round', () => {
+  const firstAct = instanceId('first_act');
+  const spendAtRoundEnd = decisionId('spend_at_round_end');
+  /** Both turns, then the enemy and upkeep phases, which end the round. */
+  const endTheRound: Command[] = [
+    { type: 'EndTurn', investigatorId: alice },
+    { type: 'StartTurn', investigatorId: bob },
+    { type: 'EndTurn', investigatorId: bob },
+    { type: 'NextPhase' },
+    { type: 'NextPhase' },
+  ];
+  /**
+   * The first act lets the investigators in the hall spend 1 clue per investigator as the round
+   * ends; alice holds 1 clue in the hall and it is her turn, bob holds 1 clue at `bobAt`.
+   */
+  const firstActWithBobAt = (bobAt: InstanceId) =>
+    newGame()
+      .withLocation(hall, blankLocation('hall'), { revealed: true })
+      .withLocation(cellar, blankLocation('cellar'), { revealed: true })
+      .withAct(
+        firstAct,
+        blankAct('first_act', {
+          abilities: [
+            advanceBySpendingCluesAtRoundEnd(spendAtRoundEnd, perInvestigator(1), cardCode('hall')),
+          ],
+        }),
+      )
+      .withAct(instanceId('second_act'), blankAct('second_act'))
+      .withInvestigator(alice, { locationId: hall, clues: 1 })
+      .withInvestigator(bob, { locationId: bobAt, clues: 1 })
+      .withTurnOf(alice);
+
+  it('offers no spend during alice`s turn', () => {
+    const table = PlayTable.start(firstActWithBobAt(hall));
+
+    expect(table.board.cardActions(alice)).toEqual([]);
+    expect(table.board.act?.advance).toEqual({
+      kind: 'spendCluesAtRoundEnd',
+      held: 2,
+      threshold: 2,
+    });
+  });
+
+  it('asks as the round ends with alice and bob in the hall, and both pay a clue to advance', () => {
+    const { context, state } = firstActWithBobAt(hall).start();
+    const asked = stateAfter(context, state, ...endTheRound);
+
+    const spent = stateAfter(context, asked, answer(spendAtRoundEnd, 'spend'));
+
+    expect(asked.pending.map((decision) => decision.id)).toEqual([spendAtRoundEnd]);
+    expect(spent.act.current).toBe(instanceId('second_act'));
+    expect(spent.investigators.map((inv) => [inv.id, inv.clues])).toEqual([
+      [alice, 0],
+      [bob, 0],
+    ]);
+  });
+
+  it('does not ask with bob in the cellar, as alice alone holds 1 of the 2 clues', () => {
+    const table = PlayTable.start(firstActWithBobAt(cellar));
+
+    endTheRound.forEach((command) => table.play(command));
+
+    expect(table.board.act?.advance).toEqual({
+      kind: 'spendCluesAtRoundEnd',
+      held: 1,
+      threshold: 2,
+    });
+    expect(table.state.pending).toEqual([]);
+  });
+
+  it('rejects bob in the cellar paying for the investigators in the hall', () => {
+    const { context, state } = firstActWithBobAt(cellar).start();
+
+    const rejection = rejectionFrom(context, state, {
+      type: 'SpendCluesAsGroup',
+      amount: perInvestigator(1),
+      locationId: hall,
+      spend: [
+        { investigatorId: alice, amount: 1 },
+        { investigatorId: bob, amount: 1 },
+      ],
+    });
+
+    expect(rejection).toEqual({
+      code: 'investigatorNotAtLocation',
+      investigatorId: bob,
+      locationId: hall,
+    });
   });
 });
 
