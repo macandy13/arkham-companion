@@ -42,7 +42,7 @@ The scripted golden game is [`end_to_end.test.ts`](../../packages/scenarios/src/
 **Agenda 3, They're Getting Out!**
 
 - [ ] At the end of the enemy phase, unengaged Ghouls move one step toward the Parlor.
-- [ ] At the end of the round, each Ghoul in the Hallway or the Parlor places 1 doom.
+- [ ] At the end of the round, each Ghoul in the Hallway or the Parlor places 1 doom on the agenda.
 - [ ] If it advances during act 1 or 2, the scenario ends with resolution 3; during act 3, every investigator is defeated with 1 physical trauma (no resolution).
 
 **Act 3, What Have You Done?**
@@ -59,7 +59,8 @@ The scripted golden game is [`end_to_end.test.ts`](../../packages/scenarios/src/
 
 **Resolution**
 
-- [ ] The campaign log records what the resolution says (house standing, Ghoul Priest alive, Lita earned or not, trauma, killed investigators in resolution 3), and the experience is the victory display plus 2.
+- [ ] The campaign log records what the resolution says (house standing, Ghoul Priest alive, Lita earned or not, trauma, killed investigators in resolution 3).
+- [ ] Experience: the victory display plus 2 after resolution 1 or no resolution; the same plus 1 more for the lead after resolution 2; none after resolution 3.
 
 ## Left to the players
 
