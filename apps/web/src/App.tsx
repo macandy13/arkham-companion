@@ -8,6 +8,7 @@ import { HomeScreen } from './screens/HomeScreen';
 import { NewGameScreen } from './screens/NewGameScreen';
 import { CollectionScreen } from './screens/CollectionScreen';
 import { SettingsScreen } from './screens/SettingsScreen';
+import { Startup, type StartupTasks } from './screens/Startup';
 import type { AppState } from './state/appStore';
 // The app's fonts, self-hosted so the PWA has them offline: only the Latin subsets and the
 // weights the stylesheets use.
@@ -48,13 +49,23 @@ export function AppRoutes({ store, catalog }: AppProps) {
   );
 }
 
-/** Root component. Hash routing keeps deep links working on static GitHub Pages without server rewrites. */
-export function App({ store, catalog }: Partial<AppProps>) {
-  if (!store || !catalog) return null;
+/** Props of `App`: the routes' props and what the app loads before its first screen. */
+interface RootProps extends AppProps {
+  startup: StartupTasks;
+}
+
+/**
+ * Root component: the loading screen until the start-up steps have finished, then the routes.
+ * Hash routing keeps deep links working on static GitHub Pages without server rewrites.
+ */
+export function App({ store, catalog, startup }: Partial<RootProps>) {
+  if (!store || !catalog || !startup) return null;
   return (
-    <HashRouter>
-      <AppRoutes store={store} catalog={catalog} />
-    </HashRouter>
+    <Startup tasks={startup}>
+      <HashRouter>
+        <AppRoutes store={store} catalog={catalog} />
+      </HashRouter>
+    </Startup>
   );
 }
 

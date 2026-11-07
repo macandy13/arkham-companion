@@ -34,6 +34,7 @@ import '@fontsource/caveat/latin-500.css';
 import '@fontsource/caveat/latin-700.css';
 import '@fontsource/libre-caslon-text/latin-700.css';
 import './campaign_log.css';
+import { Spinner } from '../brand/AppMark';
 
 /**
  * Route `/campaign/:id`: the campaign log, drawn after the campaign log sheet of the Core Set
@@ -70,7 +71,13 @@ export function CampaignScreen({
   }, [store, campaignId]);
 
   if (opened === null) return <p role="alert">{t('campaignLog.missing')}</p>;
-  if (!shown) return <p>{t('campaignLog.loading')}</p>;
+  if (!shown)
+    return (
+      <p>
+        <Spinner />
+        {t('campaignLog.loading')}
+      </p>
+    );
   const { log, games } = shown;
 
   return (

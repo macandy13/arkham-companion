@@ -25,6 +25,7 @@ import {
   type WizardStep,
 } from '../wizard/wizardState';
 import '../wizard/wizard.css';
+import { Spinner } from '../brand/AppMark';
 
 interface NewGameScreenProps {
   readonly store: StoreApi<AppState>;
@@ -167,7 +168,12 @@ function Wizard({ store, catalogSource, mode, step }: WizardProps) {
       </ol>
       <section id="wizard" aria-label={t(`wizard.steps.${step}`)}>
         {step === 'setup' && <SetupStep choices={choices} onChange={update} />}
-        {step !== 'setup' && catalog.status === 'loading' && <p>{t('wizard.loadingCatalog')}</p>}
+        {step !== 'setup' && catalog.status === 'loading' && (
+          <p>
+            <Spinner />
+            {t('wizard.loadingCatalog')}
+          </p>
+        )}
         {step !== 'setup' && catalog.status === 'failed' && (
           <p role="alert">{t('wizard.catalogFailed')}</p>
         )}

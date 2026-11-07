@@ -1,0 +1,59 @@
+/* The loading screen on the table (MD.4b, `StartupScreen`): the mark over the name and the steps. */
+#startup {
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: var(--space-3);
+  min-height: 100dvh;
+  padding: var(--space-4);
+  box-sizing: border-box;
+  text-align: center;
+  color: var(--color-text-muted);
+}
+
+#startup > [role='progressbar'] {
+  inline-size: var(--mark-startup-size);
+  block-size: var(--mark-startup-size);
+  color: var(--color-accent);
+}
+
+#startup > [role='progressbar'] > svg {
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
+}
+
+#startup > h1 {
+  margin: 0;
+  font-family: var(--font-family-display);
+  font-size: var(--font-size-title);
+  font-weight: normal;
+  color: var(--color-accent);
+}
+
+#startup > p {
+  margin: 0;
+  font-family: var(--font-family-label);
+  font-style: italic;
+}
+
+#startup > ul {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--font-size-note);
+}
+
+#startup > ul > li::before {
+  content: '○ ';
+}
+
+#startup > ul > li[data-done] {
+  color: var(--color-text);
+}
+
+#startup > ul > li[data-done]::before {
+  content: '✓ ';
+}

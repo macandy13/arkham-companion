@@ -1,6 +1,12 @@
 /** The app's own English UI strings, those every campaign shares. */
 export const appTexts = {
   app: { title: 'Arkham Companion' },
+  startup: {
+    progress: 'Starting the app',
+    tagline: 'Shuffling the encounter deck…',
+    steps: 'Start-up steps',
+    step: { games: 'Your games', cards: 'Card data' },
+  },
   detail: {
     close: 'Back to the overview',
     openMap: 'Show the map on the whole screen',
