@@ -205,13 +205,9 @@ function asksAboutHunters({ prompt }: BoardView['decisions'][number]): boolean {
 
 /** Whether the step from `before` to `after` ran enemy step 1, in which the hunters move. */
 function huntersMoved(before: BoardView, after: BoardView): boolean {
-  const beforeHunters =
-    before.phase === 'investigation' || (before.phase === 'enemy' && before.step === 'huntersMove');
-  const enemyPhase = 4 * before.round + ROUND_PHASES.indexOf('enemy');
-  const pastHunters =
-    position(after) > enemyPhase ||
-    (position(after) === enemyPhase && after.step !== 'huntersMove');
-  return beforeHunters && pastHunters;
+  // The phase assistant takes a step off its list before running it, so no settled board shows
+  // the hunter step still to come: the "Next" out of the investigation phase runs it.
+  return before.phase === 'investigation' && position(after) > position(before);
 }
 
 /** A hunter that enemy step 1 moves, as `before` shows it: ready, unengaged, at a location. */

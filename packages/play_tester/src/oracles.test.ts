@@ -269,6 +269,32 @@ describe('moving the hunters', () => {
     expect(brokenRule(before, table.board, next)).toBeUndefined();
   });
 
+  it('does not judge the answer that moves a hunter later in the enemy phase', () => {
+    const table = afterTurns(house(hallway).withInvestigator(bob, { locationId: cellar }), [
+      alice,
+      bob,
+    ]);
+    table.nextPhase();
+    const asked = table.board;
+    table.answer(ghoul, 'bob');
+
+    expect(table.board.enemiesAt(cellar)).toMatchObject([{ name: 'ghoul' }]);
+    expect(
+      brokenRule(asked, table.board, { verb: 'answer', about: ghoul, option: 'bob' }),
+    ).toBeUndefined();
+  });
+
+  it.each([
+    { name: 'with an investigator at its location', game: house(study) },
+    { name: 'with no way to an investigator', game: house(vault) },
+  ])('accepts a hunter staying $name', ({ game }) => {
+    const table = afterTurns(game);
+    const before = table.board;
+    table.nextPhase();
+
+    expect(brokenRule(before, table.board, next)).toBeUndefined();
+  });
+
   it('catches a hunter that stays away from the nearest investigator', () => {
     const table = afterTurns(house(attic));
     const before = table.board;
