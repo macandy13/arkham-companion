@@ -78,3 +78,17 @@ export function campaignStanding(
     ? { kind: 'playing', chapter, scenarioId, game }
     : { kind: 'setUp', chapter, scenarioId };
 }
+
+/**
+ * The scenario whose art a campaign's cover shows (`CoverArt`): the chapter at hand while one is
+ * open, else the last one played, since the log moves past a scenario once its resolution is
+ * written: the final chapter once all are played, the one a lost campaign ended in.
+ */
+export function campaignArtScenario(
+  campaign: CampaignSummary,
+  standing: CampaignStanding,
+  scenarios: readonly ScenarioId[],
+): ScenarioId | undefined {
+  if (standing.kind === 'playing' || standing.kind === 'setUp') return standing.scenarioId;
+  return scenarios[Math.max(campaign.position - 1, 0)];
+}

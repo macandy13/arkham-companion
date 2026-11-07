@@ -28,10 +28,12 @@ test(
     await importGame(page, houseOpenedExport('The house is open'));
 
     await expect(page.getByRole('link', { name: 'Set up chapter 2' })).toBeVisible();
+    // Both covers wear their scenario's agenda art: The Midnight Masks', and The Gathering's.
+    await expect(page.locator('#shelf > li > svg[data-picture="shown"]')).toHaveCount(2);
   },
 );
 
-test('a game’s menu open on its cover', async ({ page }) => {
+test('a game’s menu open on its cover', { tag: '@shot' }, async ({ page }) => {
   await importGame(page, houseOpenedExport('The house is open'));
 
   await page.getByRole('button', { name: 'More for The house is open' }).click();

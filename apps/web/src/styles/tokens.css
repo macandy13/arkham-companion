@@ -812,6 +812,9 @@
   --cover-min-width: 14.5rem;
   /* A team member's round portrait on a cover. */
   --cover-portrait-size: 2.5rem;
+  /* The art band across a cover's top, lower on an upright phone. */
+  --cover-art-height: 8rem;
+  --cover-art-height-phone: 5.25rem;
   --home-title-width: 35rem;
   --home-title-width-phone: 21rem;
   /* The title's foot fades into the tagline, so the two overlap a little. */

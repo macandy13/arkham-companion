@@ -5,6 +5,7 @@ import { Link } from 'react-router';
 import type { GameSummary } from '@arkham/engine';
 import { findScenario } from '../scenarios/scenarioCatalog';
 import { ConfirmDialog } from './ConfirmDialog';
+import { CoverArt } from './CoverArt';
 import { CoverMenu } from './CoverMenu';
 import { TeamPortraits, type PortraitImages } from './TeamPortraits';
 
@@ -32,7 +33,7 @@ export function untitledLabel(t: TFunction, games: readonly GameSummary[], index
 }
 
 /**
- * One game of one scenario on the home shelf (MD.3b): its scenario, the players' title for it
+ * One game of one scenario on the home shelf (MD.3b): its first agenda's art, its scenario, the players' title for it
  * in hand, the round it stands at, the team's portraits, Continue, and a ⋮ menu to rename, duplicate,
  * export or delete it.
  */
@@ -61,6 +62,7 @@ export function GameCover({
   return (
     <li>
       {lastPlayed && <p data-ribbon>{t('home.lastPlayed')}</p>}
+      <CoverArt scenarioId={game.scenarioId} />
       <hgroup>
         <p>{t('home.oneScenario')}</p>
         <h2>{scenario ? t(scenario.nameKey) : t('games.notStarted')}</h2>

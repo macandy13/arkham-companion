@@ -2,16 +2,17 @@ import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router';
 import type { CampaignSummary, GameSummary } from '@arkham/engine';
 import { findCampaign, findScenario } from '../scenarios/scenarioCatalog';
+import { CoverArt } from './CoverArt';
 import { CoverMenu } from './CoverMenu';
-import { campaignStanding } from './shelf';
+import { campaignArtScenario, campaignStanding } from './shelf';
 import { TeamPortraits, type PortraitImages } from './TeamPortraits';
 
 /**
- * One campaign on the home shelf (MD.3b), its scenario games included: the campaign's name, the
- * players' title for it in hand, where it stands, the team's portraits, and one way on. A chapter under way continues
- * its game, a chapter without one is set up from the log, and a campaign that is over (or waits
- * for its ending) opens its log, which stays readable. While a chapter is open, the log is in
- * the ⋮ menu instead.
+ * One campaign on the home shelf (MD.3b), its scenario games included: the art of the chapter at
+ * hand (`CoverArt`), the campaign's name, the players' title for it in hand, where it stands, the
+ * team's portraits, and one way on. A chapter under way continues its game, a chapter without one
+ * is set up from the log, and a campaign that is over (or waits for its ending) opens its log,
+ * which stays readable. While a chapter is open, the log is in the ⋮ menu instead.
  */
 export function CampaignCover({
   campaign,
@@ -33,6 +34,7 @@ export function CampaignCover({
   const standing = campaignStanding(campaign, games, entry?.definition.scenarios ?? []);
   const log = `/campaign/${campaign.campaignId}`;
   const primary = lastPlayed || undefined;
+  const artScenario = campaignArtScenario(campaign, standing, entry?.definition.scenarios ?? []);
   const scenarioName = (id: GameSummary['scenarioId']) => {
     const scenario = findScenario(id);
     return scenario ? t(scenario.nameKey) : id;
@@ -41,6 +43,7 @@ export function CampaignCover({
   return (
     <li>
       {lastPlayed && <p data-ribbon>{t('home.lastPlayed')}</p>}
+      <CoverArt scenarioId={artScenario} />
       <hgroup>
         <p>
           {t('home.campaignKicker', {
