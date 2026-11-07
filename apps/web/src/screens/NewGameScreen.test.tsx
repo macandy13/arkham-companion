@@ -3,7 +3,7 @@ import 'fake-indexeddb/auto';
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
-import type { CardCatalog, InvestigatorDef } from '@arkham/carddata';
+import { type CardCatalog, type InvestigatorDef, toCardCode } from '@arkham/carddata';
 import { initI18n } from '../i18n';
 import { createAppStore } from '../state/appStore';
 import { IndexedDbStore } from '../storage/IndexedDbStore';
@@ -11,7 +11,7 @@ import { NewGameScreen } from './NewGameScreen';
 
 function makeInvestigator(code: string, name: string, health: number, sanity: number) {
   return {
-    code,
+    code: toCardCode(code),
     name,
     factionCode: 'seeker',
     health,
@@ -139,8 +139,8 @@ describe('NewGameScreen', () => {
       scenarioId: 'the-gathering',
       title: 'The Gathering – Birch – Alder',
       investigators: [
-        { code: 'b1', name: 'Birch' },
-        { code: 'a1', name: 'Alder' },
+        { code: toCardCode('b1'), name: 'Birch' },
+        { code: toCardCode('a1'), name: 'Alder' },
       ],
     });
     expect((await gameStore.loadGame(game!.gameId))?.state.meta.difficulty).toBe('hard');
@@ -166,7 +166,7 @@ describe('NewGameScreen', () => {
       difficulty: 'hard',
       position: 0,
       scenarioCount: 3,
-      investigators: [{ code: 'a1', name: 'Alder' }],
+      investigators: [{ code: toCardCode('a1'), name: 'Alder' }],
       reliance: 'auto',
     });
     const [game] = await gameStore.listGames();

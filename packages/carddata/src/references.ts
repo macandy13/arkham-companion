@@ -1,3 +1,4 @@
+import { CardCodeSchema, type CardCode } from './card_code';
 import { z } from 'zod';
 import { opt } from './raw_schema';
 
@@ -37,7 +38,7 @@ const TOKEN_NAMES: Readonly<Record<string, ReferenceToken>> = {
 
 /** Raw ArkhamDB scenario card shape, checked at runtime because the API is external. */
 const RawScenarioSchema = z.object({
-  code: z.string(),
+  code: CardCodeSchema,
   type_code: z.literal('scenario'),
   text: opt(z.string()),
   back_text: opt(z.string()),
@@ -58,7 +59,7 @@ function scenarioCards(rawCards: unknown): z.infer<typeof RawScenarioSchema>[] {
  * The reference card texts of every scenario card in `rawCards` (ArkhamDB's cards list), by card
  * code (`ScenarioDefinition.referenceCode`). Cards of other types are left out.
  */
-export function buildReferences(rawCards: unknown): Record<string, ReferenceTexts> {
+export function buildReferences(rawCards: unknown): Record<CardCode, ReferenceTexts> {
   return Object.fromEntries(
     scenarioCards(rawCards).map(({ code, text, back_text }) => {
       const texts: ReferenceTexts = {
@@ -75,7 +76,7 @@ export function buildReferences(rawCards: unknown): Record<string, ReferenceText
  * (`ScenarioDefinition.referenceCode`), for the card pictures theme. Cards of other types are left
  * out.
  */
-export function buildReferencePictures(rawCards: unknown): Record<string, ReferencePictures> {
+export function buildReferencePictures(rawCards: unknown): Record<CardCode, ReferencePictures> {
   return Object.fromEntries(
     scenarioCards(rawCards).map(({ code, imagesrc, backimagesrc }) => {
       const pictures: ReferencePictures = { easyStandard: imagesrc, hardExpert: backimagesrc };

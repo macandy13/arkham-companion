@@ -1,4 +1,4 @@
-import type { InvestigatorDef } from '@arkham/carddata';
+import { type InvestigatorDef, toCardCode } from '@arkham/carddata';
 import {
   campaign,
   investigatorCode,
@@ -25,8 +25,8 @@ function member(code: string, fate: CampaignInvestigator['fate']): CampaignInves
 
 function def(code: string, parallelOfCode?: string): InvestigatorDef {
   return {
-    code,
-    ...(parallelOfCode === undefined ? {} : { parallelOfCode }),
+    code: toCardCode(code),
+    ...(parallelOfCode === undefined ? {} : { parallelOfCode: toCardCode(parallelOfCode) }),
     name: code,
     factionCode: 'neutral',
     health: 7,

@@ -1,4 +1,4 @@
-import type { InvestigatorDef } from '@arkham/carddata';
+import type { CardCode, InvestigatorDef } from '@arkham/carddata';
 import {
   cardImagePath,
   investigatorCode,
@@ -14,7 +14,7 @@ import {
  */
 export function chosenInvestigators(
   catalog: readonly InvestigatorDef[],
-  codes: readonly string[],
+  codes: readonly CardCode[],
 ): InvestigatorCard[] {
   const byCode = new Map(catalog.map((def) => [def.code, def]));
   return codes

@@ -1,4 +1,4 @@
-import type { CardCatalog } from '@arkham/carddata';
+import type { CardCatalog, CardCode } from '@arkham/carddata';
 import { rotateTo } from '@arkham/util';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -17,8 +17,8 @@ const NO_FILTERS: PickerFilters = { search: '', factions: [], onlyOwned: false }
 interface InvestigatorPickerProps {
   readonly catalog: CardCatalog;
   /** Investigator codes in seat order; the picker is controlled so the wizard owns the state. */
-  readonly seats: readonly string[];
-  readonly onSeatsChange: (codes: string[]) => void;
+  readonly seats: readonly CardCode[];
+  readonly onSeatsChange: (codes: CardCode[]) => void;
   /** Pack codes the player owns (settings, M2.4); without it the "my collection" filter is hidden. */
   readonly ownedPacks?: ReadonlySet<string>;
   readonly maxSeats?: number;
@@ -44,7 +44,7 @@ export function InvestigatorPicker({
 }: InvestigatorPickerProps) {
   const { t } = useTranslation();
   const [filters, setFilters] = useState(NO_FILTERS);
-  const [openCode, setOpenCode] = useState<string>();
+  const [openCode, setOpenCode] = useState<CardCode>();
 
   const byCode = new Map(catalog.investigators.map((i) => [i.code, i]));
   const imageUrl = (src: string) => `${imageHost}${src}`;
@@ -55,7 +55,7 @@ export function InvestigatorPicker({
     setOpenCode(undefined);
   }
 
-  function changeSeats(next: string[]) {
+  function changeSeats(next: CardCode[]) {
     onSeatsChange(next);
     closeSheet();
   }

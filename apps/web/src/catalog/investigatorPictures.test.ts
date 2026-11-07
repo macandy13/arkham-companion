@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import type { CardCatalog, InvestigatorDef } from '@arkham/carddata';
+import { type CardCatalog, type InvestigatorDef, toCardCode } from '@arkham/carddata';
 import { investigatorPictures } from './investigatorPictures';
 
 /** An investigator `code` of the core set, with the card picture `imageSrc` when given. */
 function investigator(code: string, imageSrc?: string): InvestigatorDef {
   return {
-    code,
+    code: toCardCode(code),
     name: code,
     factionCode: 'guardian',
     health: 9,
