@@ -2,6 +2,46 @@
 
 The sections dated up to 2026-10-22 were released as 1.0.0 to 1.8.0 by mistake: Release Please starts at 1.0.0 by default. Versioning restarted at 0.1.0 (see "Versions" in docs/product.md).
 
+## [0.1.26](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v0.1.25...arkham-companion-v0.1.26) (2026-11-07)
+
+
+### Features
+
+* **carddata:** import chaos bags and setup steps from the ArkhamCards campaign guides (M4.1b) ([ac2c31a](https://github.com/macandy13/arkham-companion/commit/ac2c31a49e7b14faa19a849ba43a76083a7d221f))
+* **engine:** build connections from the printed location symbols (M4.2b) ([d1e6065](https://github.com/macandy13/arkham-companion/commit/d1e6065374dbec6509a6404c7b9ebe79f9932c1a))
+* **engine:** build connections from the printed location symbols (M4.2b) ([599f8ba](https://github.com/macandy13/arkham-companion/commit/599f8baf84e98adbc043e3282b8eb9fd9b78aa63))
+* **engine:** change the chaos bag during a scenario (M1C.3) ([1f143df](https://github.com/macandy13/arkham-companion/commit/1f143df53581cb46e52ff77ea1b80ad6b4c9e4c5))
+* **engine:** change the chaos bag during a scenario (M1C.3) ([c5be1d4](https://github.com/macandy13/arkham-companion/commit/c5be1d476dbd57950d92353a19f073d0ac35497d))
+* **engine:** leave and join a campaign, and the devoured fate (M1C.4d) ([41f5c45](https://github.com/macandy13/arkham-companion/commit/41f5c45f076e0b593fcc32c7d92d1817022c761a))
+* **engine:** leave and join a campaign, and the devoured fate (M1C.4d) ([b6f9983](https://github.com/macandy13/arkham-companion/commit/b6f998362faa4216728af18e9ab69c8b0d15260e))
+* **engine:** markDevoured resolution step, review fixes and rules notes ([090bddf](https://github.com/macandy13/arkham-companion/commit/090bddf23377c9d8acac41a225b0da489110a130))
+* **engine:** printed connection symbols on locations, entered for Night of the Zealot (M4.2a) ([47b077c](https://github.com/macandy13/arkham-companion/commit/47b077ccdfd7e3f94b90cef5ec16c6c6b9816361))
+* **engine:** printed connection symbols on locations, entered for Night of the Zealot (M4.2a) ([8bc02f0](https://github.com/macandy13/arkham-companion/commit/8bc02f0583e3d4e8d6fcfdcaba37a378a2c60312))
+* **play_tester:** add the play tester package with the random bot and step checks (M1V.4) ([f48498f](https://github.com/macandy13/arkham-companion/commit/f48498fbc9e5c5cafc1ad56396789d9f838dccb2))
+* **play_tester:** record failing games, replay them and add pnpm playtest (M1V.4) ([4ac34ae](https://github.com/macandy13/arkham-companion/commit/4ac34aef68f47474d0bb193854286a2b4a3e3d00))
+* **play_tester:** record failing games, replay them and add pnpm playtest (M1V.4) ([7e0b8d8](https://github.com/macandy13/arkham-companion/commit/7e0b8d8ca5580c6329887f9aa422c994ea4b9d79)), closes [#954](https://github.com/macandy13/arkham-companion/issues/954)
+* **web:** cover art from each scenario's first agenda (MD.3b3) ([9719e6e](https://github.com/macandy13/arkham-companion/commit/9719e6e7b18457aaee2e33d6b56d95b0d05f9b3e))
+* **web:** cover art from each scenario's first agenda (MD.3b3) ([cc469aa](https://github.com/macandy13/arkham-companion/commit/cc469aa4cd54bb9a62c150c0ea3dc7109f833e07))
+* **web:** home covers, one per campaign (MD.3b2) ([5479f38](https://github.com/macandy13/arkham-companion/commit/5479f383be733628f563b7daca9dd3ff8f99cc86))
+* **web:** home covers, one per campaign (MD.3b2) ([4e42944](https://github.com/macandy13/arkham-companion/commit/4e429442bf5ce12c7e73adb9b0f07006205e51fe))
+* **web:** team portraits and last played ribbon on home covers (MD.3b4) ([7347ec0](https://github.com/macandy13/arkham-companion/commit/7347ec0db6ea72fb6a292bb6c8fc58e2882f1496))
+* **web:** team portraits and last played ribbon on home covers (MD.3b4) ([0b2ac55](https://github.com/macandy13/arkham-companion/commit/0b2ac55873b0090e70a0d39383b8d5be864fca30))
+
+
+### Bug fixes
+
+* **engine:** join a printed one-way connection and its declared way back into one edge ([57a99dd](https://github.com/macandy13/arkham-companion/commit/57a99dd8d225be5d7caaa21399fa24de4ac3cb07))
+* **engine:** leave out permanent removals of tokens the log's bag lacks, test card-driven bag notices ([5ba577c](https://github.com/macandy13/arkham-companion/commit/5ba577cf2ccd850efdfd9e9dd5df174081a5758f))
+* **engine:** removing a missing chaos token does nothing, note the rules ([f455183](https://github.com/macandy13/arkham-companion/commit/f455183e334cbd44da9d6cc879eab3b3ec371b1d))
+
+
+### Refactoring
+
+* **play_tester:** address review: sum and addCount from util, boardAfter test ([903b66b](https://github.com/macandy13/arkham-companion/commit/903b66b927859b5521d16e17f1be6d38f1f0263b))
+* **web:** home covers review fixes (MD.3b2) ([de41bd7](https://github.com/macandy13/arkham-companion/commit/de41bd7c5a2bc08bb4c13efef8253befd371d2c0))
+* **web:** home portraits review fixes (MD.3b4) ([0fe9abf](https://github.com/macandy13/arkham-companion/commit/0fe9abfdd039b72162c22203e427c56d5f7a89ee))
+* **web:** pick a campaign cover's art in shelf.ts, tag changed shots ([4f4c99c](https://github.com/macandy13/arkham-companion/commit/4f4c99cd84ceb18636d40e8f401140083537f958))
+
 ## [0.1.25](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v0.1.24...arkham-companion-v0.1.25) (2026-11-06)
 
 
