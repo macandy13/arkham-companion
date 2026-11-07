@@ -35,15 +35,16 @@ flowchart LR
 - any other error is a `crash`;
 - after a played step, each rule oracle compares the board before and after it (`brokenRule` in [`oracles.ts`](../../packages/play_tester/src/oracles.ts)) and a broken rule is a `rules` finding naming the oracle and its `docs/rules/` page. The oracles read only `BoardView` and never run the engine's phase or advance logic, so a bug there does not pass its own check; they trust the values the board shows (a threshold, doom in play, a clue requirement). Undo is not judged:
   - `phaseOrder`: phases only move on, the round grows by at most 1, round 1 has no mythos phase;
-  - `upkeep`: once the upkeep is through, every active investigator has 3 actions and 1 resource more, and no enemy is exhausted;
+  - `upkeep`: once the upkeep is through, every active investigator has 3 actions and 1 resource more, and no enemy is exhausted, each checked only when its upkeep step ran in the step judged (a "Next" can start partway, after a question and a correction);
   - `mythosDoom`, `doomThreshold`: a new round's mythos phase puts doom on the agenda, and with doom in play at its threshold the agenda advances or the players are asked to confirm it;
   - `agendaOnlyAtCheck`: doom placed by hand never advances the agenda;
   - `actAdvance`: spending clues takes exactly the act's requirement and advances the act, unless its back side is still asking the players something;
   - `hunterMove`: in the step that runs enemy step 1, each ready, unengaged hunter with no investigator at its location moves one connection closer to a nearest investigator, and one with no way to any stays. Prey and the lead's picks don't show on the board, so any such step is accepted; while a hunter question is open, nothing is judged, and the answer's later step isn't either. Blocked moves aren't modelled for hunters yet, so the oracle walks the open connections (`connectedTo`);
 - after a played step, `replay` of the whole log must equal the live state (`replay`);
+- after a played step that logged something, undo on a copy of the table (`PlayTable.resume` from the log) must give back exactly the state before it (`undo`); an undo step is not undone again;
 - an offered answer (`answer`, `resolveTest`) that is refused, or a "Next" that is accepted but changes nothing, is a `liveness` finding.
 
-`checkRun` plays a run twice; another event log the second time is a `determinism` finding.
+`checkRun` plays a run twice; another event log the second time is a `determinism` finding. It then replays the steps up to one the run's seeds pick, resumes a new table from that log (`resumeDifference`, as the app resumes a saved game) and plays the rest there; another log is a `resume` finding. Group ids are compared by their place in the log, since a resumed table numbers its groups on from the log while the straight play also counted the groups an undo took back. One resume point per run keeps a run's cost linear.
 A game still going past `ROUND_CAP` (30 rounds) is a `liveness` finding too.
 
 ## Records and replay

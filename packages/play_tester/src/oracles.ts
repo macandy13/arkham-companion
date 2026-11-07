@@ -1,5 +1,5 @@
 import { sum } from '@arkham/util';
-import { ROUND_PHASES, type BoardView, type InstanceId } from '@arkham/engine';
+import { ROUND_PHASES, type BoardView, type InstanceId, type PhaseStepId } from '@arkham/engine';
 import type { Step } from './steps';
 
 /** The rule oracles (product.md "Continuous play tester", check 4), one per rule they check. */
@@ -33,6 +33,14 @@ export interface BrokenRule {
   readonly oracle: Oracle;
   readonly message: string;
 }
+
+/** The upkeep's steps in their order (round-structure.md, Upkeep), as `BoardView.step` names them. */
+const UPKEEP_STEPS: readonly PhaseStepId[] = [
+  'resetActions',
+  'readyExhausted',
+  'drawAndGain',
+  'endRound',
+];
 
 /** The actions every investigator has again at upkeep (round-structure.md, Upkeep 1). */
 const ACTIONS_PER_ROUND = 3;
@@ -76,17 +84,22 @@ export const ORACLES: readonly Oracle[] = [
         after.step === undefined &&
         !(before.phase === 'upkeep' && before.step === undefined);
       if (!finished) return undefined;
-      const wholeUpkeep = before.phase !== 'upkeep';
+      // A "Next" can start partway through the upkeep, after a correction between its steps, so
+      // each check needs the step that it checks to have run in this one.
+      const ran = (upkeepStep: PhaseStepId) =>
+        before.phase !== 'upkeep' ||
+        UPKEEP_STEPS.indexOf(before.step ?? 'endRound') <= UPKEEP_STEPS.indexOf(upkeepStep);
       for (const investigator of after.investigators) {
         const was = before.investigators.find(({ id }) => id === investigator.id);
         if (investigator.status !== 'active' || was?.status !== 'active') continue;
-        if (investigator.actions !== ACTIONS_PER_ROUND)
+        if (ran('resetActions') && investigator.actions !== ACTIONS_PER_ROUND)
           return `${investigator.name} has ${investigator.actions} actions after the upkeep`;
-        if (wholeUpkeep && investigator.resources !== was.resources + 1)
+        if (ran('drawAndGain') && investigator.resources !== was.resources + 1)
           return `${investigator.name} went from ${was.resources} to ${investigator.resources} resources in the upkeep`;
       }
       const exhausted = after.enemies.find(({ exhausted }) => exhausted);
-      if (exhausted) return `${exhausted.name} is still exhausted after the upkeep`;
+      if (ran('readyExhausted') && exhausted)
+        return `${exhausted.name} is still exhausted after the upkeep`;
       return undefined;
     },
   },
