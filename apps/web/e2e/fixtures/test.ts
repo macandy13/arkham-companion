@@ -1,6 +1,7 @@
 import { expect, test as base } from '@playwright/test';
 import cards from './cards.json' with { type: 'json' };
 import packs from './packs.json' with { type: 'json' };
+import { campaignKeyArts } from '../../src/catalog/campaignKeyArt';
 import { localCardPicture } from './card_pictures';
 
 /** ArkhamDB endpoints the app reads, answered with the invented catalog. */
@@ -13,7 +14,8 @@ const catalogFixtures = new Map<string, unknown>([
  * Where ArkhamDB serves card pictures. The hand-written test scenario names its cards' pictures,
  * so the app asks for them; the guard answers them from the local copies the global setup
  * downloaded (`card_pictures.ts`), and turns down the rest, as when the player is offline, so
- * those card faces keep their pattern.
+ * those card faces keep their pattern. A campaign's key art from FFG (`campaignKeyArt`) is answered
+ * from its local copy the same way.
  */
 const CARD_PICTURES = /^\/bundles\/cards\//;
 
@@ -39,6 +41,10 @@ export const test = base.extend<{ externalRequests: string[] }>({
               json: catalogFixtures.get(url.pathname),
               headers: { 'Access-Control-Allow-Origin': '*' },
             });
+          }
+          if (campaignKeyArts.includes(url.href)) {
+            const keyArt = localCardPicture(url.pathname);
+            return keyArt ? route.fulfill({ path: keyArt }) : route.abort();
           }
           if (!CARD_PICTURES.test(url.pathname)) {
             unexpected.push(url.href);

@@ -2,15 +2,16 @@ import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router';
 import type { CampaignSummary, GameSummary } from '@arkham/engine';
 import { findCampaign, findScenario } from '../scenarios/scenarioCatalog';
+import { campaignKeyArt } from '../catalog/campaignKeyArt';
 import { CoverArt } from './CoverArt';
 import { CoverMenu } from './CoverMenu';
 import { campaignArtScenario, campaignStanding } from './shelf';
 import { TeamPortraits, type PortraitImages } from './TeamPortraits';
 
 /**
- * One campaign on the home shelf (MD.3b), its scenario games included: the art of the chapter at
- * hand (`CoverArt`), the campaign's name, the players' title for it in hand, where it stands, the
- * team's portraits, and one way on. A chapter under way continues its game, a chapter without one
+ * One campaign on the home shelf (MD.3b), its scenario games included: its box's key art over the
+ * art of the chapter at hand (`CoverArt`), the campaign's name, the players' title for it in hand,
+ * where it stands, the team's portraits, and one way on. A chapter under way continues its game, a chapter without one
  * is set up from the log, and a campaign that is over (or waits for its ending) opens its log,
  * which stays readable. While a chapter is open, the log is in the ⋮ menu instead.
  */
@@ -43,7 +44,7 @@ export function CampaignCover({
   return (
     <li>
       {lastPlayed && <p data-ribbon>{t('home.lastPlayed')}</p>}
-      <CoverArt scenarioId={artScenario} />
+      <CoverArt scenarioId={artScenario} keyArt={campaignKeyArt(campaign.definitionId)} />
       <hgroup>
         <p>
           {t('home.campaignKicker', {

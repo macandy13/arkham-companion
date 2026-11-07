@@ -9,7 +9,7 @@ import { houseOpenedExport, importGame } from '../fixtures/saved_games';
 
 // Situations on the home screen, each photographed as it ends (`@shot`, coding guidelines §3).
 
-test('the game list with one saved game', { tag: '@shot' }, async ({ page }) => {
+test('the game list with one saved game', async ({ page }) => {
   await importGame(page, houseOpenedExport('The house is open'));
 
   await expect(page.getByRole('list', { name: 'Your games' })).toContainText('The house is open');
@@ -28,12 +28,13 @@ test(
     await importGame(page, houseOpenedExport('The house is open'));
 
     await expect(page.getByRole('link', { name: 'Set up chapter 2' })).toBeVisible();
-    // Both covers wear their scenario's agenda art: The Midnight Masks', and The Gathering's.
-    await expect(page.locator('#shelf > li > svg[data-picture="shown"]')).toHaveCount(2);
+    // Three pictures loaded: the campaign's box key art over The Midnight Masks' agenda, and The
+    // Gathering's agenda on the game's cover.
+    await expect(page.locator('#shelf > li > svg > svg[data-picture="shown"]')).toHaveCount(3);
   },
 );
 
-test('a game’s menu open on its cover', { tag: '@shot' }, async ({ page }) => {
+test('a game’s menu open on its cover', async ({ page }) => {
   await importGame(page, houseOpenedExport('The house is open'));
 
   await page.getByRole('button', { name: 'More for The house is open' }).click();
