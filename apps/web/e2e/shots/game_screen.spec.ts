@@ -635,13 +635,17 @@ test('the Tangled Thicket revealed with its double slash, the other Arkham Woods
   await expect(map.getByRole('img', { name: 'Connection symbol: square' })).toHaveCount(3);
 });
 
-test('the menu open, holding "Adjust board" and the game log on a phone', async ({ page }) => {
-  await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
+test(
+  'the menu open, holding "Adjust board" and the game log on a phone',
+  { tag: '@shot' },
+  async ({ page }) => {
+    await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
 
-  await page.getByRole('button', { name: 'Menu' }).click();
+    await page.getByRole('button', { name: 'Menu' }).click();
 
-  await expect(page.getByRole('link', { name: 'Settings' })).toBeVisible();
-});
+    await expect(page.getByRole('link', { name: 'Settings' })).toBeVisible();
+  },
+);
 
 test('Daisy Walker swiped into view on a phone, Roland Banks beside her', async ({
   page,

@@ -73,12 +73,14 @@ function AppMenu() {
       {expanded && (
         <ul>
           <li>
-            <NavLink to="/" end>
+            <NavLink to="/" end data-icon="games">
               {t('appBar.games')}
             </NavLink>
           </li>
           <li>
-            <NavLink to="/settings">{t('settings.title')}</NavLink>
+            <NavLink to="/settings" data-icon="settings">
+              {t('settings.title')}
+            </NavLink>
           </li>
         </ul>
       )}

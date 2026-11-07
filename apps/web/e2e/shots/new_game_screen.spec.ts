@@ -17,7 +17,7 @@ test("a quick game's setup step: the scenario, the difficulty and what the app t
   await expect(page.getByRole('group', { name: 'What the app tells you' })).toBeVisible();
 });
 
-test('the investigator picker with its filter menu open', async ({ page }) => {
+test('the investigator picker with its filter menu open', { tag: '@shot' }, async ({ page }) => {
   await page.goto('/#/new');
   await page.getByRole('link', { name: 'Quick game' }).first().click();
   await page.getByRole('button', { name: 'Next' }).click();

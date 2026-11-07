@@ -9,15 +9,11 @@ import { houseOpenedExport, importGame } from '../fixtures/saved_games';
 
 // Situations on the home screen, each photographed as it ends (`@shot`, coding guidelines §3).
 
-test(
-  'the welcome page on a first start, with nothing stored',
-  { tag: '@shot' },
-  async ({ page }) => {
-    await page.goto('/#/');
+test('the welcome page on a first start, with nothing stored', async ({ page }) => {
+  await page.goto('/#/');
 
-    await expect(page.getByRole('article')).toContainText('unofficial fan project');
-  },
-);
+  await expect(page.getByRole('article')).toContainText('unofficial fan project');
+});
 
 test('the game list with one saved game', async ({ page }) => {
   await importGame(page, houseOpenedExport('The house is open'));
@@ -52,12 +48,15 @@ test('the question before a campaign is deleted with its games', async ({ page }
   await expect(page.getByRole('alertdialog')).toContainText('the games of its scenarios');
 });
 
-test('a game’s menu open on its cover', async ({ page }) => {
+test('a game’s menu open on its cover', { tag: '@shot' }, async ({ page }) => {
   await importGame(page, houseOpenedExport('The house is open'));
 
   await page.getByRole('button', { name: 'More for The house is open' }).click();
 
-  await expect(page.getByRole('button', { name: 'Duplicate' })).toBeVisible();
+  // The menu reaches below the cover; the photograph shows it down to Delete.
+  const deleteEntry = page.getByRole('button', { name: 'Delete' });
+  await deleteEntry.scrollIntoViewIfNeeded();
+  await expect(deleteEntry).toBeInViewport();
 });
 
 test('the question before a saved game is deleted', async ({ page }) => {

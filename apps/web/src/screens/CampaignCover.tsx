@@ -111,11 +111,17 @@ export function CampaignCover({
           title={campaign.title}
           actions={[
             ...(standing.kind === 'playing' || standing.kind === 'setUp'
-              ? [{ label: t('campaignList.readLog'), onSelect: () => void navigate(log) }]
+              ? [
+                  {
+                    label: t('campaignList.readLog'),
+                    icon: 'campaign-log' as const,
+                    onSelect: () => void navigate(log),
+                  },
+                ]
               : []),
-            { label: t('games.rename'), onSelect: () => setRenaming(true) },
-            { label: t('games.export'), onSelect: onExport },
-            { label: t('games.delete'), onSelect: () => setConfirmingDelete(true) },
+            { label: t('games.rename'), icon: 'rename', onSelect: () => setRenaming(true) },
+            { label: t('games.export'), icon: 'export', onSelect: onExport },
+            { label: t('games.delete'), icon: 'delete', onSelect: () => setConfirmingDelete(true) },
           ]}
         />
       </footer>

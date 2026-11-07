@@ -82,10 +82,13 @@ select {
 }
 
 /*
- * A round icon button that opens a menu (the play screen's ☰, the picker's filters) and the menu
- * it opens: a panel under the button over what lies below, framed in brass. The button's parent
- * is positioned, so the menu lines up with its end. The menu's selector names `#app`, so it beats
- * the screens' plain list rules (`#app > main ul`).
+ * A round icon button that opens a menu (the app bar's ⋮, the play screen's ☰, a cover's ⋮, the
+ * picker's filters) and the menu it opens (MD.5a): a panel of the table under the button, over
+ * what lies below, even where it opens over paper, so it takes back the table's colours. Its
+ * sections are headed in the display face's small caps and parted by rules; each entry is a row
+ * with its line icon (`data-icon`), a check mark on the current page or the chosen setting, and a
+ * destructive one (`data-danger`) in red. The button's parent is positioned, so the menu lines up
+ * with its end. The selectors name `#app`, so they beat the screens' plain list rules.
  */
 button[data-icon][aria-expanded] {
   min-width: var(--button-compact);
@@ -95,19 +98,148 @@ button[data-icon][aria-expanded] {
 }
 
 #app button[data-icon][aria-expanded] + * {
+  --color-background: var(--table-background);
+  --color-text: var(--table-text);
+  --color-text-muted: var(--table-text-muted);
+  --color-border: var(--table-border);
+  --color-surface: var(--table-surface);
+  --color-accent: var(--table-accent);
+  --color-accent-text: var(--table-accent-text);
+
   position: absolute;
   z-index: var(--layer-menu);
   top: 100%;
   inset-inline-end: 0;
   display: grid;
   gap: var(--space-1);
-  min-width: max-content;
+  width: max-content;
+  min-width: var(--menu-min-width);
+  max-width: calc(100vw - 2 * var(--space-3));
   margin: var(--space-1) 0 0;
   padding: var(--space-2);
+  box-sizing: border-box;
   list-style: none;
-  border: var(--border-width) solid var(--color-accent);
+  border: var(--border-width) solid var(--color-border);
   border-radius: var(--radius);
-  background: var(--color-background);
+  background: var(--color-menu);
+  box-shadow: var(--menu-shadow);
+  color: var(--color-text);
+  font-family: var(--font-family);
+  text-align: start;
+}
+
+#app button[data-icon][aria-expanded] + * :is(ul, section) {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* An entry's row is its link or button; the screens' own list rules (home's covers) stay out. */
+#app button[data-icon][aria-expanded] + * li {
+  display: block;
+  padding: 0;
+  border: 0;
+  background: none;
+}
+
+#app button[data-icon][aria-expanded] + * h3 {
+  margin: 0;
+  padding: var(--space-2) var(--space-2) 0;
+  color: var(--color-accent);
+  font-family: var(--font-family-display);
+  font-size: var(--font-size-body);
+  font-weight: normal;
+}
+
+#app button[data-icon][aria-expanded] + * hr {
+  width: 100%;
+  margin: var(--space-1) 0;
+  border: 0;
+  border-top: var(--border-width) solid var(--color-border);
+}
+
+#app button[data-icon][aria-expanded] + * li > :is(a, button) {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: var(--space-3);
+  width: 100%;
+  min-height: var(--touch-target);
+  padding: var(--space-1) var(--space-2);
+  box-sizing: border-box;
+  border: 0;
+  border-radius: var(--radius);
+  background: none;
+  color: var(--color-text);
+  font: inherit;
+  text-align: start;
+  text-decoration: none;
+}
+
+#app button[data-icon][aria-expanded] + * li > :is(a, button):not(:disabled):hover {
+  background: var(--color-menu-hover);
+}
+
+#app button[data-icon][aria-expanded] + * li > :is(a, button)[data-icon]::before {
+  margin: 0;
+  color: var(--color-accent);
+}
+
+#app
+  button[data-icon][aria-expanded]
+  + *
+  li
+  > :is(a[aria-current='page'], button[aria-pressed='true'])::after {
+  content: '✓';
+  margin-inline-start: auto;
+  color: var(--color-accent);
+}
+
+#app button[data-icon][aria-expanded] + * li > button[data-danger] {
+  color: var(--color-menu-danger);
+}
+
+#app button[data-icon][aria-expanded] + * li > button[data-danger]::before {
+  color: inherit;
+}
+
+/* The menus' line icons. */
+:is(a, button)[data-icon='games']::before {
+  mask-image: url('../screens/icons/games.svg');
+}
+
+:is(a, button)[data-icon='settings']::before {
+  mask-image: url('../screens/icons/settings.svg');
+}
+
+:is(a, button)[data-icon='export']::before {
+  mask-image: url('../screens/icons/export.svg');
+}
+
+:is(a, button)[data-icon='rename']::before {
+  mask-image: url('../screens/icons/adjust.svg');
+}
+
+:is(a, button)[data-icon='duplicate']::before {
+  mask-image: url('../screens/icons/duplicate.svg');
+}
+
+:is(a, button)[data-icon='delete']::before {
+  mask-image: url('../screens/icons/delete.svg');
+}
+
+:is(a, button)[data-icon='campaign-log']::before {
+  mask-image: url('../screens/icons/book.svg');
+}
+
+:is(a, button)[data-icon='night']::before {
+  mask-image: url('../screens/icons/night.svg');
+}
+
+:is(a, button)[data-icon='day']::before {
+  mask-image: url('../screens/icons/day.svg');
 }
 
 button:disabled {

@@ -129,6 +129,7 @@ export const appTexts = {
     phases: 'Phases',
     menu: 'Menu',
     allGames: 'All games',
+    thisGame: 'This game',
     next: 'Next',
     undo: 'Undo',
     adjust: 'Adjust board',

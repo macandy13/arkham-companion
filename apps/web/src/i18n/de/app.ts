@@ -129,6 +129,7 @@ export const appTexts = {
     phases: 'Phasen',
     menu: 'Menü',
     allGames: 'Alle Spiele',
+    thisGame: 'Dieses Spiel',
     next: 'Weiter',
     undo: 'Rückgängig',
     adjust: 'Spielfeld anpassen',
