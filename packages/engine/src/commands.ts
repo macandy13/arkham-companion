@@ -1,7 +1,7 @@
 import type { BasicAction } from './action_costs';
 import type { AbilityEffect, OpenedWindow, TimingWindow } from './abilities';
 import type { CampaignLog, TraumaKind } from './campaign/campaign_log';
-import type { CardType, TokenAmount, Trait } from './cards';
+import type { CardType, ScaledValue, TokenAmount, Trait } from './cards';
 import type {
   CardCode,
   DecisionId,
@@ -49,6 +49,7 @@ export type Command =
   | DiscardFromHand
   | DiscardAsset
   | PlayCard
+  | SpendCluesAsGroup
   | TakeDamageAndHorror
   | DefeatInvestigator
   | DiscoverClues
@@ -546,6 +547,20 @@ export interface BecomeActAndAgenda {
 export interface ClueSpend {
   investigatorId: InvestigatorId;
   amount: number;
+}
+
+/**
+ * "Investigators in the Hallway may, as a group, spend the requisite number of clues" (The
+ * Barrier): the active investigators at `locationId`, or anywhere without one, pay `amount`
+ * clues together, each what `spend` lists (omitted, the lead pays what they can, then the
+ * others in seat order). Rejected like a `groupClues` cost (`groupCluePayments`), and for a
+ * payer elsewhere (`investigatorNotAtLocation`). Produces an `InvestigatorChanged` per payment.
+ */
+export interface SpendCluesAsGroup {
+  type: 'SpendCluesAsGroup';
+  amount: ScaledValue;
+  locationId?: InstanceId;
+  spend?: ClueSpend[];
 }
 
 /**

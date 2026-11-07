@@ -2,6 +2,7 @@ import {
   GRID_CELLS_PER_CARD,
   advanceAct,
   checkDoomThreshold,
+  advanceBySpendingCluesAtRoundEnd,
   afterEntering,
   afterTest,
   atEndOfPhase,
@@ -106,6 +107,9 @@ export const WHATS_GOING_ON_DECISION = decisionId('theGathering.whatsGoingOn');
  * or take 2 damage if they control none.
  */
 export const CRYPT_CHILL_DECISION = decisionId('theGathering.cryptChill');
+
+/** Id of act 2's question as the round ends: do the investigators in the Hallway spend the clues? */
+export const THE_BARRIER_DECISION = decisionId('theGathering.theBarrier');
 
 /** Id of act 3's question to the lead investigator: burn the house down or not. */
 export const BURN_THE_HOUSE_DECISION = decisionId('theGathering.burnTheHouse');
@@ -238,9 +242,10 @@ export const theGatheringCardDefs: readonly CardStats[] = [
     set: sets.theGathering,
     name: 'The Barrier',
     stage: 2,
-    cluesPerInvestigator: 3,
-    // The Parlor has been in play, unrevealed, since act 1 put the house into play.
+    // Objective: no spend during a turn; the investigators in the Hallway are asked as the round
+    // ends. The Parlor has been in play, unrevealed, since act 1 put the house into play.
     abilities: [
+      advanceBySpendingCluesAtRoundEnd(THE_BARRIER_DECISION, perInvestigator(3), codes.hallway),
       whenAdvanced(
         revealLocation(onlyCopy(codes.parlor)),
         putSetAsideIntoPlay(codes.litaChantler, onlyCopy(codes.parlor)),

@@ -1,5 +1,5 @@
 import { neighbours, requireLocationInPlay, revealEvents } from './board';
-import type { EngineContext } from './cards';
+import { resolveValue, type EngineContext } from './cards';
 import type {
   AdjustInvestigator,
   GainResources,
@@ -11,6 +11,7 @@ import type {
   MoveInvestigator,
   PlaceClues,
   SetLeadInvestigator,
+  SpendCluesAsGroup,
   TakeDamageAndHorror,
 } from './commands';
 import { investigatorLeavesEvents, woundEvents } from './elimination';
@@ -25,7 +26,10 @@ import type {
 } from './events';
 import {
   activeInvestigator,
+  clueSpendersAt,
   cluesToLocationEvents,
+  defaultCluePayments,
+  groupCluePayments,
   defeatCause,
   discoverCluesEvents,
   statValue,
@@ -283,4 +287,31 @@ export function handlePlaceClues(
   const placed = Math.min(cmd.amount, investigator.clues);
   if (placed === 0 || investigator.locationId === undefined) return [];
   return cluesToLocationEvents(investigator.id, investigator.locationId, placed);
+}
+
+/**
+ * `SpendCluesAsGroup`: the investigators at its location (anywhere without one) pay its clues,
+ * each what `spend` lists, or the lead first and then the others in seat order.
+ */
+export function handleSpendCluesAsGroup(
+  ctx: EngineContext,
+  state: GameState,
+  cmd: SpendCluesAsGroup,
+): InvestigatorChanged[] {
+  const required = resolveValue(cmd.amount, state.meta.playerCount);
+  const payers = clueSpendersAt(ctx, state, cmd.locationId);
+  const spend =
+    cmd.spend ?? defaultCluePayments(ctx, state, state.meta.leadInvestigator, required, payers);
+  if (cmd.locationId !== undefined) {
+    const elsewhere = spend.find(
+      ({ investigatorId }) => !payers.some((inv) => inv.id === investigatorId),
+    );
+    if (elsewhere !== undefined)
+      throw new CommandRejected({
+        code: 'investigatorNotAtLocation',
+        investigatorId: elsewhere.investigatorId,
+        locationId: cmd.locationId,
+      });
+  }
+  return groupCluePayments(ctx, state, spend, required);
 }

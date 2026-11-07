@@ -1,5 +1,5 @@
 import { comparableName, type CardType, type EngineContext } from './cards';
-import type { InstanceId } from './ids';
+import type { CardCode, InstanceId } from './ids';
 import { CommandRejected } from './rejection';
 import type { CardInstance, GameState } from './state';
 import { zoneKey, type Zone } from './zone';
@@ -79,4 +79,13 @@ export function cardsNamed(
 export function currentCard(state: GameState, deck: 'agenda' | 'act'): CardInstance | undefined {
   const id = state[deck].current;
   return id === undefined ? undefined : state.cards[id];
+}
+
+/**
+ * The id of the only copy of `code` in the game, any zone; none when there is no copy or several,
+ * so a card effect naming it ("the Hallway", `onlyCopy`) can't pick the wrong one.
+ */
+export function theOnlyCopy(state: GameState, code: CardCode): InstanceId | undefined {
+  const copies = Object.values(state.cards).filter((card) => card.code === code);
+  return copies.length === 1 ? copies[0]?.id : undefined;
 }

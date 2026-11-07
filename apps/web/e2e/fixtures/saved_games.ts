@@ -146,9 +146,29 @@ export function houseOpenedExport(title: string): Buffer {
 }
 
 /**
+ * An export file of a solo game of The Gathering titled `title`, on Roland Banks' first turn, once he
+ * has taken the Study's two clues: the 2 act 1 (Trapped) needs, not spent yet.
+ */
+export function studyCluesTakenExport(title: string): Buffer {
+  const table = PlayTable.setUp(
+    {
+      cards: cardDbWith(theGatheringCards, [investigatorCardStats(roland)]),
+      scenario: theGathering,
+    },
+    { investigators: [{ id: rolandId, code: roland.code }], seed: 3 },
+  );
+  table.nextPhase();
+  table.startTurn(rolandId);
+  table.investigate(rolandId);
+  table.investigate(rolandId);
+  return exportOf(title, table, 'study_clues_taken');
+}
+
+/**
  * Like `houseOpenedExport`, but the setup set two Ghoul Priests aside, and Roland Banks holds the 3 clues
- * act 2 (The Barrier) needs, given by hand to keep the script short. Advancing the act then cannot
- * tell which Ghoul Priest to spawn, so the screen asks the players to do it by hand.
+ * act 2 (The Barrier) needs in the Hallway, given by hand to keep the script short. Advancing the act
+ * at the end of the round then cannot tell which Ghoul Priest to spawn, so the screen asks the
+ * players to do it by hand.
  */
 export function twoGhoulPriestsExport(title: string): Buffer {
   const twoPriests: ScenarioDefinition = {

@@ -1,5 +1,6 @@
 import { neighbours } from './board';
 import { resolveValue, type EngineContext } from './cards';
+import { roundEndClueObjective } from './abilities';
 import { cluesToAdvance } from './card_actions';
 import { describeDecision } from './describe_decision';
 import { agendaThreshold, doomInPlay } from './doom';
@@ -88,11 +89,15 @@ function actLine(ctx: EngineContext, state: GameState): string {
   const act = currentCard(state, state.act.current);
   if (!act) return 'Act: none';
   const stats = ctx.cards.get(act.code);
-  const clues = stats && cluesToAdvance(stats);
+  const atRoundEnd = stats && roundEndClueObjective(stats);
+  const clues = stats && (cluesToAdvance(stats) ?? atRoundEnd?.clues);
+  const where = atRoundEnd
+    ? ` at ${ctx.cards.get(atRoundEnd.location)?.name ?? atRoundEnd.location} when the round ends`
+    : '';
   const requirement =
     clues === undefined
       ? 'no clue requirement'
-      : `needs ${resolveValue(clues, state.meta.playerCount)} clues`;
+      : `needs ${resolveValue(clues, state.meta.playerCount)} clues${where}`;
   return `Act: ${nameOf(ctx, act)} – ${requirement}`;
 }
 
@@ -131,18 +136,26 @@ function locationLines(ctx: EngineContext, state: GameState, locationId: Instanc
   ];
 }
 
-/** An enemy (or other card) at a location, with what the players track on it. */
+/**
+ * An enemy (or other card) at a location, with what the players track on it. Only an enemy is
+ * engaged or unengaged: a story asset at a location (Lita Chantler in the Parlor) is neither.
+ */
 function cardAtLocationLine(ctx: EngineContext, state: GameState, card: CardInstance): string {
   const zone = card.zone;
+  const enemy = ctx.cards.get(card.code)?.typeCode === 'enemy';
   const details = [
     ...(card.tokens.damage ? [`${card.tokens.damage} damage`] : []),
     ...(card.tokens.doom ? [`${card.tokens.doom} doom`] : []),
     ...(card.exhausted ? ['exhausted'] : []),
-    zone.kind === 'engaged'
-      ? `engaged with ${investigatorName(state, zone.investigatorId)}`
-      : 'unengaged',
+    ...(zone.kind === 'engaged'
+      ? [`engaged with ${investigatorName(state, zone.investigatorId)}`]
+      : enemy
+        ? ['unengaged']
+        : []),
   ];
-  return `${labelOf(ctx, card)} – ${details.join(', ')}`;
+  return details.length === 0
+    ? labelOf(ctx, card)
+    : `${labelOf(ctx, card)} – ${details.join(', ')}`;
 }
 
 function investigatorLine(

@@ -652,6 +652,9 @@ export const appTexts = {
     evade: 'Evade {{card}}',
     cardTest: 'Test for {{card}}',
     chooseSkill: '{{card}}: which skill do you test?',
+    spendCluesAtRoundEnd: 'The round ends: spend the clues to advance the act?',
+    spendClues: 'Spend the clues and advance',
+    keepClues: 'Keep the clues',
     attackOfOpportunity: 'Attack of opportunity by {{card}}',
     provokedBy: {
       MoveInvestigator: '{{name}} moves to {{card}}: {{enemy}} attacks first',

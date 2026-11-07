@@ -4,6 +4,7 @@ export { theGathering } from './the_gathering/scenario';
 export {
   BURN_THE_HOUSE_DECISION,
   CRYPT_CHILL_DECISION,
+  THE_BARRIER_DECISION,
   WHATS_GOING_ON_DECISION,
   GATHERING_CODES,
   GATHERING_RESOLUTIONS,

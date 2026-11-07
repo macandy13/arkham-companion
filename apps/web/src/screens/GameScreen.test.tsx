@@ -276,6 +276,23 @@ describe('GameScreen header', () => {
     expect(store.getState().current?.board?.investigator(investigatorId('alder')).clues).toBe(0);
   });
 
+  it('shows The Barrier against the clues Alder holds in the Hallway, without an Advance button', async () => {
+    const store = await renderTheGathering('game-screen-act-round-end-test');
+    // Trapped needs 2 clues for one investigator; The Barrier 3, spent as the round ends.
+    const { actions } = store.getState();
+    await actions.nextPhase();
+    await actions.startTurn(investigatorId('alder'));
+    await actions.takeClue(study);
+    await actions.takeClue(study);
+    await screen.findByRole('img', { name: 'Clues 2 / 2' });
+
+    fireEvent.click(button('Advance'));
+    await screen.findByText('The Barrier');
+
+    expect(await screen.findByRole('img', { name: 'Clues 0 / 3' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Advance' })).toBeNull();
+  });
+
   it('opens the agenda as a full card from its name, with its doom, and closes it again', async () => {
     await renderTheGathering('game-screen-agenda-details-test');
 

@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import {
   advanceBySpendingClues,
+  atLocation,
   attachedTo,
   blankAct,
+  blankAsset,
   blankAgenda,
   blankEnemy,
   blankLocation,
@@ -231,6 +233,20 @@ describe('formatBoard', () => {
     });
 
     expect(formatBoard(context, state)).toContain('discard: 0 cards\nResolving: Dread\n');
+  });
+
+  it('lists a story asset at a location without calling it unengaged, unlike an enemy there', () => {
+    const parlor = instanceId('parlor');
+    const { context: parlorContext, state } = newGame()
+      .withLocation(parlor, blankLocation('parlor', { name: 'Parlor' }), { revealed: true })
+      .withCard(instanceId('lita'), blankAsset('lita', { name: 'Lita' }), atLocation(parlor))
+      .withCard(instanceId('ghoul'), blankEnemy('ghoul', { name: 'Ghoul' }), atLocation(parlor))
+      .start();
+
+    const lines = formatBoard(parlorContext, state).split('\n');
+
+    expect(lines).toContain('    Lita [lita]');
+    expect(lines).toContain('    Ghoul [ghoul] – unengaged');
   });
 
   it('marks a hidden map, an empty map and a missing agenda and act', () => {

@@ -552,7 +552,7 @@ function ActStatus({
           {...(advance && clues !== undefined
             ? {
                 value: {
-                  name: t(advance.kind === 'spendClues' ? 'header.cluesHeld' : 'header.cluesOnAct'),
+                  name: t(advance.kind === 'cluesOnAct' ? 'header.cluesOnAct' : 'header.cluesHeld'),
                   count: clues,
                   threshold: advance.threshold,
                 },
@@ -788,5 +788,5 @@ function CardFace({
  * investigators hold for an act they advance by spending clues, else those lying on it.
  */
 export function actClues(act: ActView, advance: ActAdvance): number {
-  return advance.kind === 'spendClues' ? advance.held : act.clues;
+  return advance.kind === 'cluesOnAct' ? act.clues : advance.held;
 }

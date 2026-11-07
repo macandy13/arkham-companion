@@ -228,6 +228,25 @@ export function cluesHeldByGroup(ctx: EngineContext, state: GameState): number {
   return clueSpenders(ctx, state).reduce((sum, inv) => sum + inv.clues, 0);
 }
 
+/** The clues the investigators at `locationId` who may spend clues hold between them (`clueSpendersAt`). */
+export function cluesHeldAt(ctx: EngineContext, state: GameState, locationId: InstanceId): number {
+  return clueSpendersAt(ctx, state, locationId).reduce((sum, inv) => sum + inv.clues, 0);
+}
+
+/**
+ * The investigators who may spend clues as a group at `locationId` ("investigators in the
+ * Hallway", The Barrier): the `clueSpenders` there, or all of them without a location.
+ */
+export function clueSpendersAt(
+  ctx: EngineContext,
+  state: GameState,
+  locationId: InstanceId | undefined,
+): Investigator[] {
+  return clueSpenders(ctx, state).filter(
+    (inv) => locationId === undefined || inv.locationId === locationId,
+  );
+}
+
 /** The active investigators no card forbids to spend clues, in seat order. */
 export function clueSpenders(ctx: EngineContext, state: GameState): Investigator[] {
   return activeInvestigators(state).filter(
@@ -307,19 +326,18 @@ export function groupCluePayments(
 
 /**
  * A group payment of `required` clues when the players name no payers: `first` pays all they
- * can, then the other active investigators in seat order, leaving out those a card forbids to
- * spend clues. The players change it by naming the payers (`UseCardAction.spend`); the app has
+ * can, then the other active investigators in seat order (or only those `among`, `clueSpendersAt`),
+ * leaving out those a card forbids to spend clues. The players change it by naming the payers (`UseCardAction.spend`); the app has
  * no way to name them yet (#488).
  */
 export function defaultCluePayments(
   ctx: EngineContext,
   state: GameState,
-  first: InvestigatorId,
+  first: InvestigatorId | undefined,
   required: number,
+  among: readonly Investigator[] = clueSpenders(ctx, state),
 ): ClueSpend[] {
-  const payers = clueSpenders(ctx, state).sort(
-    (a, b) => Number(b.id === first) - Number(a.id === first),
-  );
+  const payers = [...among].sort((a, b) => Number(b.id === first) - Number(a.id === first));
   let left = required;
   return payers.flatMap((investigator) => {
     const amount = Math.min(left, investigator.clues);
