@@ -9,6 +9,7 @@ const run: Run = {
   scenario: theGathering.id,
   difficulty: 'standard',
   seats: [cardName('Roland Banks')],
+  blanks: [],
   gameSeed: 24,
   bot: 'random',
   botSeed: 1,
