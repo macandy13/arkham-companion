@@ -53,6 +53,10 @@ A game still going past `ROUND_CAP` (30 rounds) is a `liveness` finding too.
 - `replaySteps` plays a record's steps on a fresh table with today's engine, judging each, and stops at the first finding; `reproduced` says whether it is the recorded one. `loggedBoard` shows what the record's own log replays to.
 - [`cli.ts`](../../packages/play_tester/src/cli.ts) is `pnpm playtest --games 500 --seed 7` (`--bot goal` for one bot; prints the [summary](../../packages/play_tester/src/summary.ts) with the ends by bot, writes records to the gitignored `packages/play_tester/.runs/`, exits 1 on a finding) and `pnpm playtest --replay <record>`.
 
+## Web replay
+
+The app's own path is checked in the app, since a package must not depend on it: [`webReplayDifference`](../../apps/web/src/playtest/webReplay.ts) starts a saved game like the run's table (`startGame` with `setupOptions`, on `IndexedDbStore` over fake-indexeddb), plays the steps through `GameSession.play` and `GameSession.undo` as the screen does, and compares the log with the table's, by events and the place of their undo groups (`numberedGroups`). It then compares the game opened again from storage and the game after `serialiseGameExport` and `parseGameExport`. [`cli.ts`](../../apps/web/src/playtest/cli.ts) is `pnpm --filter @arkham/web playtest --games 5 --seed 7`, which also replays every record in `packages/play_tester/findings/` (`--records <dir>` for another directory); it is not part of `pnpm test`, the nightly run calls it on a few runs. The play tester exports what it needs from [`index.ts`](../../packages/play_tester/src/index.ts).
+
 ## Extension points
 
 - **A new scenario:** an entry in `SCENARIOS` (`run.ts`) with its card data.

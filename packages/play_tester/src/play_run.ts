@@ -183,7 +183,7 @@ export function resumeDifference(
  * groups on from the log, while the straight play also counted groups an undo took back, so the
  * ids differ though the events and their grouping are the same.
  */
-function numberedGroups(
+export function numberedGroups(
   log: readonly LoggedEvent[],
 ): { group: number; event: LoggedEvent['event'] }[] {
   const groups = new Map<string, number>();

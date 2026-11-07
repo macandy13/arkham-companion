@@ -18,6 +18,7 @@ import {
   type ScenarioId,
   type SkillName,
   type SkillValues,
+  type StandaloneSetupOptions,
 } from '@arkham/engine';
 import {
   daisyWalker,
@@ -91,7 +92,15 @@ export function scenarioContext(run: Run): ScenarioContext {
 
 /** A table with `run`'s scenario set up for its seats, difficulty and game seed. */
 export function setUpTable(run: Run): PlayTable {
-  return PlayTable.setUp(scenarioContext(run), {
+  return PlayTable.setUp(scenarioContext(run), setupOptions(run));
+}
+
+/**
+ * How `run`'s scenario is set up: its seats, difficulty and game seed. The web replay starts a
+ * saved game with them (`startGame`), so it plays the same game as `setUpTable`.
+ */
+export function setupOptions(run: Run): StandaloneSetupOptions {
+  return {
     seed: run.gameSeed,
     difficulty: run.difficulty,
     investigators: run.seats.map((name) => {
@@ -101,7 +110,7 @@ export function setUpTable(run: Run): PlayTable {
       if (!card) throw new Error(`the play tester knows no investigator ${name}`);
       return { id: investigatorId(card.code), code: card.code };
     }),
-  });
+  };
 }
 
 /**
