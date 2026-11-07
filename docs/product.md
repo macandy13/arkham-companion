@@ -151,7 +151,7 @@ Designs for parts that have a milestone but no code yet. The PR that builds one 
    - Agenda: it advances at the threshold check exactly when doom in play (on the agenda and every other card) is at or above its threshold, flat or per investigator, and the agenda has no "Objective –".
    - Upkeep: actions back to 3, each active investigator gets 1 resource, enemies and investigators ready.
    - Hunter: a ready, unengaged hunter with no investigator at its location moves 1 step along a shortest path towards the nearest investigator (prey, then the lead, picks between equally near ones), and stays when that step is blocked; a hunter that should have moved and didn't is a finding too.
-   - Act: a clue advance takes the requirement minus the clues already on the act from the investigators; an objective advance takes none; either clears the act's tokens.
+   - Act: a clue advance takes exactly the requirement from the investigators (clues on the act don't count towards it); an objective advance takes none; either clears the act's tokens.
    - Defeat is already an invariant (`investigatorErrors`), so it needs no oracle.
 5. **Replay and undo (differential checks):**
    - `replay(events)` equals the live state (the end-to-end test checks this once at the end; the tester checks it after every step).
