@@ -8,7 +8,7 @@ import {
 
 // Journey: a campaign is backed up from its cover's menu, deleted, and loaded back from the file,
 // where it stands as before.
-test('a campaign is exported, deleted and loaded back', { tag: '@flow' }, async ({ page }) => {
+test('a campaign is exported, deleted and loaded back', async ({ page }) => {
   const covers = page.getByRole('list', { name: 'Your games' }).locator(':scope > li');
   const choose = async (action: string) => {
     await page.getByRole('button', { name: 'More for Sunday with Kim', exact: true }).click();

@@ -6,6 +6,7 @@ import { AppBarFrame } from './screens/AppBar';
 import { GameScreen } from './screens/GameScreen';
 import { HomeScreen } from './screens/HomeScreen';
 import { NewGameScreen } from './screens/NewGameScreen';
+import { CollectionScreen } from './screens/CollectionScreen';
 import { SettingsScreen } from './screens/SettingsScreen';
 import type { AppState } from './state/appStore';
 // The app's fonts, self-hosted so the PWA has them offline: only the Latin subsets and the
@@ -41,6 +42,7 @@ export function AppRoutes({ store, catalog }: AppProps) {
         <Route path="game/:id" element={<GameScreen store={store} catalog={catalog} />} />
         <Route path="campaign/:id" element={<CampaignScreen store={store} catalog={catalog} />} />
         <Route path="settings" element={<SettingsRoute catalog={catalog} />} />
+        <Route path="settings/collection" element={<CollectionRoute catalog={catalog} />} />
       </Route>
     </Routes>
   );
@@ -75,4 +77,10 @@ function Layout() {
 function SettingsRoute({ catalog }: { catalog: CatalogSource }) {
   const state = useCatalog(catalog);
   return <SettingsScreen packs={state.status === 'ready' ? state.catalog.packs : undefined} />;
+}
+
+/** The collection with the pack list of the card catalog, empty until the catalog has loaded. */
+function CollectionRoute({ catalog }: { catalog: CatalogSource }) {
+  const state = useCatalog(catalog);
+  return <CollectionScreen packs={state.status === 'ready' ? state.catalog.packs : undefined} />;
 }

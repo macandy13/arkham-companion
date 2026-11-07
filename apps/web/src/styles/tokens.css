@@ -220,6 +220,13 @@
   /* A circle: round buttons, pips and tokens. */
   --radius-round: 50%;
   --border-width: 1px;
+  /* The line a field is written on (Settings, MD.3c), a little heavier than a rule. */
+  --border-width-line: 1.5px;
+  /* What is written on that line. */
+  --font-size-field: 1.0625rem;
+  /* The column of a settings row's label, and the height of a segmented choice's pill. */
+  --settings-label-width: 10rem;
+  --segment-height: 2.25rem;
   /* Minimum size of anything tappable, for use on a shared tablet. */
   --touch-target: 2.75rem;
   /* Buttons on a card (the agenda's doom steppers, the act's advance), small so the card stays compact. */

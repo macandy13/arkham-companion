@@ -1,27 +1,195 @@
-/* Settings screen (product.md "UI concept"). */
+/*
+ * Settings and Collection (MD.3c), written like a form of the campaign guide: one row per subject,
+ * its label in a column of spaced capitals, its fields as lines to write on.
+ */
 #settings,
-#settings > section {
+#collection {
   display: grid;
-  gap: var(--space-3);
 }
 
-#settings fieldset {
+#settings > section,
+#app > main > section[aria-labelledby='settings-about'] {
   display: grid;
-  gap: var(--space-2);
+  grid-template-columns: var(--settings-label-width) 1fr;
+  gap: var(--space-2) var(--space-4);
+  align-items: end;
+  padding-block: var(--space-3);
+  border-bottom: var(--border-width) solid var(--color-border);
+}
+
+#settings > section > :not(h2) {
+  grid-column: 2;
+}
+
+#settings > section:has(> label + label) {
+  grid-template-columns: var(--settings-label-width) 1fr 1fr;
+}
+
+#settings > section:has(> label + label) > label + label {
+  grid-column: 3;
+  grid-row: 1;
+}
+
+#settings h2,
+#app > main > section[aria-labelledby='settings-about'] > h2 {
+  grid-row: 1 / span 2;
+  align-self: start;
   margin: 0;
-  padding: var(--space-2) var(--space-3);
-  border: var(--border-width) solid var(--color-border);
-  border-radius: var(--radius);
+  padding-top: var(--space-3);
+  font-family: var(--font-family-label);
+  font-size: var(--font-size-log-label);
+  font-weight: bold;
+  letter-spacing: var(--log-label-tracking);
+  text-transform: uppercase;
 }
 
+#app > main > section[aria-labelledby='settings-about'] {
+  border-bottom: 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-note);
+}
+
+#app > main > section[aria-labelledby='settings-about'] > p {
+  grid-column: 2;
+  margin: 0;
+}
+
+/* A field is its small label over a line to write on, the choice written in the guide's type. */
 #settings label {
   display: grid;
   gap: var(--space-1);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-note);
 }
 
-#settings label:has(input[type='checkbox']) {
+#settings select,
+#settings > section > a {
+  min-height: var(--touch-target);
+  padding: 0;
+  border: 0;
+  border-bottom: var(--border-width-line) solid var(--color-border);
+  border-radius: 0;
+  background: none;
+  color: var(--color-text);
+  font-family: var(--font-family-label);
+  font-size: var(--font-size-field);
+}
+
+/* The collection's line opens its page: the owned boxes, how many campaigns, and a chevron. */
+#settings > section > a {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  text-decoration: none;
+}
+
+#settings > section > a > span {
+  margin-left: auto;
+  color: var(--color-text-muted);
+  font-family: inherit;
+  font-size: var(--font-size-note);
+}
+
+#settings > section > a::after {
+  content: '›';
+  color: var(--color-text-muted);
+  font-size: var(--font-size-title);
+}
+
+#settings > section > p,
+#app > main:has(#collection) > p {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-note);
+}
+
+#app > main:has(#collection) > p {
+  text-align: center;
+}
+
+/* One of a few, side by side: the choices as pills in one outline, the chosen one inked. */
+#settings fieldset {
+  display: inline-flex;
+  justify-self: start;
+  gap: var(--space-1);
+  margin: 0;
+  padding: var(--space-1);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-pill);
+}
+
+#settings fieldset > label {
+  display: flex;
+  align-items: center;
+  min-height: var(--segment-height);
+  padding-inline: var(--space-3);
+  border-radius: var(--radius-pill);
+  color: var(--color-text);
+  font-size: inherit;
+  cursor: pointer;
+}
+
+#settings fieldset > label:has(:checked) {
+  background: var(--color-text);
+  color: var(--color-background);
+}
+
+#settings fieldset > label:has(:focus-visible) {
+  outline: var(--focus-ring-width) solid var(--color-accent);
+}
+
+#settings fieldset input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+/* The collection: a campaign's name over its boxes, each a tick on the line. */
+#collection fieldset {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 var(--space-4);
+  margin: 0;
+  padding: var(--space-2) 0;
+  border: 0;
+  border-bottom: var(--border-width) solid var(--color-border);
+}
+
+#collection legend {
+  float: left;
+  width: 100%;
+  padding: 0;
+  font-family: var(--font-family-label);
+  font-size: var(--font-size-field);
+}
+
+#collection label {
   display: flex;
   align-items: center;
   gap: var(--space-2);
   min-height: var(--touch-target);
+  font-family: var(--font-family-label);
+}
+
+/* On a phone the label stands over its fields, and two fields share a row no longer. */
+@media (max-width: 40rem) {
+  #settings > section,
+  #settings > section:has(> label + label),
+  #app > main > section[aria-labelledby='settings-about'] {
+    grid-template-columns: 1fr;
+  }
+
+  #settings > section > :not(h2),
+  #settings > section:has(> label + label) > label + label,
+  #app > main > section[aria-labelledby='settings-about'] > p {
+    grid-column: 1;
+    grid-row: auto;
+  }
+
+  #settings h2,
+  #app > main > section[aria-labelledby='settings-about'] > h2 {
+    grid-row: auto;
+    padding-top: 0;
+  }
 }
