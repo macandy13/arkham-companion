@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   STATE_VERSION,
+  campaign,
   campaignDefinitionId,
   campaignId,
   cardCode,
@@ -34,7 +35,8 @@ const xpEarned: CampaignEvent = {
   delta: 2,
 };
 
-const gatheringStarted: Event = {
+/** The Gathering set up on its own, outside any campaign. */
+const standaloneGatheringStarted: Event = {
   type: 'ScenarioStarted',
   scenarioId: scenarioId('the-gathering'),
   difficulty: 'hard',
@@ -55,6 +57,12 @@ const gatheringStarted: Event = {
   chaosBag: ['0'],
 };
 
+/** The Gathering set up as the Zealot campaign's first chapter, with its copy of the log. */
+const gatheringStarted: Event = {
+  ...standaloneGatheringStarted,
+  campaign: campaign.replayEvents([started]),
+};
+
 const gathering = {
   title: 'The Gathering',
   createdAt: 2000,
@@ -63,20 +71,22 @@ const gathering = {
   ],
 };
 
+const zealotLog = [
+  { campaignId: zealot, seq: 1, timestamp: 1000, commandId: 'start', event: started },
+  {
+    campaignId: zealot,
+    seq: 2,
+    timestamp: 3000,
+    commandId: 'resolution',
+    event: xpEarned,
+    cause: { kind: 'interlude' as const, interludeId: interludeId('the_interlude') },
+  },
+];
+
 /** The Zealot campaign's export: its start, 2 XP written by an interlude, and The Gathering. */
 const zealotExport = serialiseCampaignExport(
   { title: 'Zealot – Roland', createdAt: 1000, reliance: 'assist' },
-  [
-    { campaignId: zealot, seq: 1, timestamp: 1000, commandId: 'start', event: started },
-    {
-      campaignId: zealot,
-      seq: 2,
-      timestamp: 3000,
-      commandId: 'resolution',
-      event: xpEarned,
-      cause: { kind: 'interlude', interludeId: interludeId('the_interlude') },
-    },
-  ],
+  zealotLog,
   [gathering],
 );
 
@@ -131,6 +141,33 @@ describe('campaign export', () => {
     {
       case: 'a game with an unknown event',
       text: zealotExport.replace('"ScenarioStarted"', '"NoSuchEvent"'),
+      reason: 'invalid',
+    },
+    {
+      case: 'a cause the log could not word',
+      text: zealotExport.replace('"interludeId":"the_interlude"', '"interlude":"the_interlude"'),
+      reason: 'invalid',
+    },
+    {
+      case: 'a log that does not start the campaign',
+      text: JSON.stringify({
+        ...JSON.parse(zealotExport),
+        events: JSON.parse(zealotExport).events.slice(1),
+      }),
+      reason: 'invalid',
+    },
+    {
+      case: 'a game that is not the campaign’s',
+      text: serialiseCampaignExport(
+        { title: 'Zealot', createdAt: 1000, reliance: 'assist' },
+        zealotLog,
+        [
+          {
+            ...gathering,
+            events: [{ ...gathering.events[0]!, event: standaloneGatheringStarted }],
+          },
+        ],
+      ),
       reason: 'invalid',
     },
     {

@@ -30,20 +30,17 @@ test('the shelf with a campaign waiting for its second chapter beside a game of 
   await expect(page.locator('#shelf > li > svg > svg[data-picture="shown"]')).toHaveCount(3);
 });
 
-test(
-  'the question before a campaign is deleted with its games',
-  async ({ page }) => {
-    await openStoredCampaign(page, 'Sunday with Kim', (id) =>
-      gatheringKilledEvents(id, [rolandBanks, fakeSeeker], fakeSeeker),
-    );
-    await page.goto('/#/');
+test('the question before a campaign is deleted with its games', async ({ page }) => {
+  await openStoredCampaign(page, 'Sunday with Kim', (id) =>
+    gatheringKilledEvents(id, [rolandBanks, fakeSeeker], fakeSeeker),
+  );
+  await page.goto('/#/');
 
-    await page.getByRole('button', { name: 'More for Sunday with Kim' }).click();
-    await page.getByRole('button', { name: 'Delete' }).click();
+  await page.getByRole('button', { name: 'More for Sunday with Kim' }).click();
+  await page.getByRole('button', { name: 'Delete' }).click();
 
-    await expect(page.getByRole('alertdialog')).toContainText('the games of its scenarios');
-  },
-);
+  await expect(page.getByRole('alertdialog')).toContainText('the games of its scenarios');
+});
 
 test('a game’s menu open on its cover', async ({ page }) => {
   await importGame(page, houseOpenedExport('The house is open'));

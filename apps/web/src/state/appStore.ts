@@ -368,6 +368,11 @@ export type ImportedFile =
   | { readonly kind: 'game'; readonly gameId: GameId }
   | { readonly kind: 'campaign'; readonly campaignId: CampaignId };
 
+/** The games of campaign `campaignId`, most recently played first. */
+async function gamesOf(gameStore: GameStore, campaignId: CampaignId): Promise<GameSummary[]> {
+  return (await gameStore.listGames()).filter((game) => game.campaignId === campaignId);
+}
+
 /** The rules a game of the catalog's scenario `entry` runs with: its definition and cards. */
 function contextFor(entry: ScenarioEntry): ScenarioContext {
   // Investigator cards are not needed: after setup the engine reads investigators from the state.
@@ -492,7 +497,7 @@ export function createAppStore(
         set({ campaign: null });
         return;
       }
-      const games = (await gameStore.listGames()).filter((g) => g.campaignId === campaignId);
+      const games = await gamesOf(gameStore, campaignId);
       const { title, endedAt } = loaded.summary;
       const entry = campaigns(loaded.log.definitionId);
       const interlude = entry && campaign.findDueInterlude(entry.definition, loaded.log);
@@ -841,7 +846,7 @@ export function createAppStore(
       async exportCampaign(campaignId) {
         const loaded = await gameStore.loadCampaign(campaignId);
         if (!loaded) throw new Error(`Unknown campaign ${campaignId}`);
-        const games = (await gameStore.listGames()).filter((g) => g.campaignId === campaignId);
+        const games = await gamesOf(gameStore, campaignId);
         return serialiseCampaignExport(
           loaded.summary,
           await gameStore.loadCampaignEvents(campaignId),

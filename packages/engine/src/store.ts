@@ -261,7 +261,8 @@ export interface GameStore {
   /**
    * Creates a campaign under a new UUID from an exported log, with its games linked to it, and
    * moves every event that names the campaign to the new id (`campaign.moveCampaignEvent`,
-   * `campaign.moveGameEvent`). Keeps the events' timestamps like `importGame`.
+   * `campaign.moveGameEvent`). Keeps the events' timestamps like `importGame`; its games follow
+   * the campaign's reliance, as a campaign's games do.
    */
   importCampaign(campaign: ImportedCampaign): Promise<CampaignId>;
   /**

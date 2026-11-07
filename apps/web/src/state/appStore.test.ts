@@ -17,7 +17,6 @@ import {
   revealLocation,
   whenAdvanced,
   type Event,
-  type GameId,
   type InvestigatorCard,
 } from '@arkham/engine';
 import {
@@ -30,7 +29,7 @@ import {
 } from '@arkham/scenarios';
 import { GameImportError } from '../storage/gameExport';
 import { IndexedDbStore, SeqConflictError } from '../storage/IndexedDbStore';
-import { createAppStore } from './appStore';
+import { createAppStore, type ImportedFile } from './appStore';
 import type { GameActions } from './gameActions';
 
 const started: Event = {
@@ -108,9 +107,8 @@ describe('appStore', () => {
     await gameStore.appendEvents(id, [started, doom]);
 
     const imported = await store.getState().importFile(await store.getState().exportGame(id));
-    expect(imported.kind).toBe('game');
-    const importedId = (imported as { gameId: GameId }).gameId;
-    expect(importedId).not.toBe(id);
+    expect(imported).toMatchObject({ kind: 'game', gameId: expect.not.stringMatching(id) });
+    const { gameId: importedId } = imported as Extract<ImportedFile, { kind: 'game' }>;
     await store.getState().openGame(id);
     const original = store.getState().current?.state;
     await store.getState().openGame(importedId);

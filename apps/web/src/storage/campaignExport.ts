@@ -14,7 +14,7 @@ import {
   exportedEvent,
   exportedGame,
   exportedGameSchema,
-  parseGameExport,
+  gameFromExportJson,
   readExportJson,
   toImportedGame,
 } from './gameExport';
@@ -23,9 +23,26 @@ import {
 const FORMAT = 'arkham-companion-campaign';
 
 /**
+ * A log event's `CampaignChangeCause`, checked in full: replay never reads it, but the log's notices
+ * do, so nothing later would catch one they cannot word.
+ */
+const causeSchema = z.discriminatedUnion('kind', [
+  z.object({ kind: z.literal('player') }),
+  z.object({
+    kind: z.literal('resolution'),
+    scenarioId: z.string(),
+    outcome: z.discriminatedUnion('kind', [
+      z.object({ kind: z.literal('resolution'), id: z.string() }),
+      z.object({ kind: z.literal('noResolution') }),
+    ]),
+  }),
+  z.object({ kind: z.literal('interlude'), interludeId: z.string() }),
+]);
+
+/**
  * Envelope of an exported campaign: its log and the games of its scenarios. Like a game's events,
- * the log's events are only checked for being objects with a `type` here, and its causes for a
- * `kind`: `parseExportFile` replays the log, which refuses what it can't read.
+ * the log's events are only checked for being objects with a `type` here: `parseExportFile`
+ * replays the log, which refuses what it can't read.
  */
 const exportSchema = z.object({
   format: z.literal(FORMAT),
@@ -40,7 +57,7 @@ const exportSchema = z.object({
       timestamp: z.number(),
       commandId: z.string(),
       event: z.looseObject({ type: z.string() }),
-      cause: z.looseObject({ kind: z.string() }).optional(),
+      cause: causeSchema.optional(),
     }),
   ),
   games: z.array(exportedGameSchema),
@@ -88,15 +105,27 @@ export type ParsedExport =
 export function parseExportFile(text: string): ParsedExport {
   const json = readExportJson(text);
   const format = z.looseObject({ format: z.literal(FORMAT) }).safeParse(json);
-  if (!format.success) return { kind: 'game', game: parseGameExport(text) };
+  if (!format.success) return { kind: 'game', game: gameFromExportJson(json) };
   const parsed = exportSchema.safeParse(json);
   if (!parsed.success) throw new GameImportError('invalid');
-  // The schema cannot vouch for event payloads or causes, but the cast is checked by the replay.
+  // The schema cannot vouch for event payloads, but the cast is checked by the replay below; it
+  // checked the causes in full.
   const events = parsed.data.events as unknown as ImportedCampaign['events'];
   try {
     if (!campaign.replayEvents(events.map((e) => e.event))) throw new Error('unknown event');
   } catch (error) {
     console.warn('Import rejected: the campaign log does not replay.', error);
+    throw new GameImportError('invalid');
+  }
+  const games = parsed.data.games.map(toImportedGame);
+  // The new id is moved into the log's start and each game's copy of the log
+  // (`GameStore.importCampaign`); a file without them would leave a campaign that names no id.
+  const startsCampaign = events[0]?.event.type === 'CampaignStarted';
+  const gamesOfCampaign = games.every(
+    ({ events: [first] }) => first?.event.type === 'ScenarioStarted' && !!first.event.campaign,
+  );
+  if (!startsCampaign || !gamesOfCampaign) {
+    console.warn('Import rejected: the campaign log or one of its games is not a campaign’s.');
     throw new GameImportError('invalid');
   }
   return {
@@ -107,7 +136,7 @@ export function parseExportFile(text: string): ParsedExport {
         ? {}
         : { reliance: parsed.data.campaign.reliance }),
       events,
-      games: parsed.data.games.map(toImportedGame),
+      games,
     },
   };
 }

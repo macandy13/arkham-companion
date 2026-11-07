@@ -126,7 +126,12 @@ export function readExportJson(text: string): unknown {
  * `GameImportError`.
  */
 export function parseGameExport(text: string): ImportedGame {
-  const parsed = exportSchema.safeParse(readExportJson(text));
+  return gameFromExportJson(readExportJson(text));
+}
+
+/** The game in the JSON of a game's export file (`readExportJson`); throws `GameImportError`. */
+export function gameFromExportJson(json: unknown): ImportedGame {
+  const parsed = exportSchema.safeParse(json);
   if (!parsed.success) throw new GameImportError('invalid');
   return toImportedGame(parsed.data);
 }
