@@ -20,10 +20,10 @@ The wizard's first step also asks how much the players rely on the helpers (`Rel
 The new game wizard's [investigator picker](../../apps/web/src/picker/InvestigatorPicker.tsx) shows the catalog's investigators alphabetically in pages of ten ([`PortraitPages.tsx`](../../apps/web/src/picker/PortraitPages.tsx)):
 
 - one list, laid out by the stylesheet in two rows of five per page (the first five of every ten in the top row), which scrolls sideways and snaps a page at a time;
-- each portrait is the figure cut from the picture of the card's front (`--picker-portrait-*` in tokens.css) over the name, the class in its colour (`--color-class-*`) and the skills, health and sanity as icons with values.
+- each portrait (MD.3d2) is the figure cut from the picture of the card's front (`--picker-portrait-*` in tokens.css) with the class symbol in its colour (`--color-class-*`) on a disc at its corner, over the name and health and sanity as icons with values; a picked one is ringed in ink and wears its seat number on a brass disc.
 
 Its filters sit behind one round button that opens a menu, drawn like the play screen's ☰ menu (`button[data-icon][aria-expanded] + *` in base.css), and the button counts the filters set.
-A tap on a portrait opens the detail sheet as a dialog.
+A tap on a portrait opens the detail sheet as a dialog: Select takes the next free seat, and a picked investigator's sheet makes them the lead investigator or removes them. There is no seat list: only the lead's seat matters to the rules, and the wizard's pinned line names the team in order.
 
 ## Campaign log
 
