@@ -1,0 +1,57 @@
+/* The app mark (`AppMark`) and its ring as the inline spinner (`Spinner`), MD.4b. */
+svg[data-mark],
+svg[data-spinner] {
+  fill: none;
+  stroke: currentColor;
+}
+
+svg[data-mark] path {
+  fill: currentColor;
+  stroke: none;
+}
+
+svg[data-mark] path[data-short] {
+  opacity: var(--mark-short-star-opacity);
+}
+
+svg:is([data-mark], [data-spinner]) line:not([data-lit]) {
+  opacity: var(--mark-unlit-opacity);
+}
+
+svg[data-spinner] {
+  inline-size: var(--spinner-size);
+  block-size: var(--spinner-size);
+  vertical-align: middle;
+  margin-inline-end: var(--space-2);
+}
+
+svg[data-spinner] line {
+  stroke-width: var(--spinner-tick-width);
+}
+
+/* Motion only where the player has not asked for less: the ticks then simply stand lit or dim. */
+@media (prefers-reduced-motion: no-preference) {
+  svg[data-mark] line {
+    transition: opacity var(--duration-slide);
+  }
+
+  svg[data-mark] line[data-next] {
+    animation: mark-next-tick var(--duration-mark-pulse) ease-in-out infinite alternate;
+  }
+
+  svg[data-spinner] {
+    animation: mark-spin var(--duration-spinner) steps(36) infinite;
+  }
+}
+
+@keyframes mark-next-tick {
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes mark-spin {
+  to {
+    transform: rotate(1turn);
+  }
+}

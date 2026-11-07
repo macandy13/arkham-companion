@@ -17,6 +17,7 @@ import { eliminatedMembers, replacementCandidates, teamAfter } from './replaceme
 import { ReplacementPicker } from './ReplacementPicker';
 import { storyReadLines, type StoryReadLine } from './storyReads';
 import './campaign_dialogs.css';
+import { Spinner } from '../brand/AppMark';
 
 /**
  * The setup preview of a campaign's next scenario (MC1.6d1, docs/product.md "Campaign screen"):
@@ -218,7 +219,12 @@ export function NextScenarioDialog({
             </dl>
           </section>
         )}
-        {catalog.status === 'loading' && <p>{t('wizard.loadingCatalog')}</p>}
+        {catalog.status === 'loading' && (
+          <p>
+            <Spinner />
+            {t('wizard.loadingCatalog')}
+          </p>
+        )}
         {catalog.status === 'failed' && <p role="alert">{t('wizard.catalogFailed')}</p>}
         {failed && <p role="alert">{t('nextScenario.failed')}</p>}
         <footer>

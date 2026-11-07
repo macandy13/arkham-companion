@@ -1,6 +1,12 @@
 /** The app's own German UI strings, those every campaign shares. */
 export const appTexts = {
   app: { title: 'Arkham Companion' },
+  startup: {
+    progress: 'Die App startet',
+    tagline: 'Das Begegnungsdeck wird gemischt …',
+    steps: 'Schritte beim Start',
+    step: { games: 'Deine Spiele', cards: 'Kartendaten' },
+  },
   detail: {
     close: 'Zurück zur Übersicht',
     openMap: 'Karte auf dem ganzen Bildschirm zeigen',

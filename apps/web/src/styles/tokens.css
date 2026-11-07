@@ -241,6 +241,18 @@
   --duration-pulse: 0.4s;
   --duration-delta: 1.2s;
   --pulse-scale: 1.3;
+  /*
+   * The app mark (MD.4b, `AppMark`): its unlit ticks and short star are faint; the loading screen's
+   * next tick breathes, and the inline spinner turns once in this time, a tick at a step.
+   */
+  --mark-unlit-opacity: 0.25;
+  --mark-short-star-opacity: 0.55;
+  --duration-mark-pulse: 0.7s;
+  --duration-spinner: 1.8s;
+  --mark-startup-size: 9.5rem;
+  --spinner-size: 1.25em;
+  /* The spinner's ticks, in the mark's 100-unit grid, bold enough to read at a line's height. */
+  --spinner-tick-width: 9;
   /* How long the game's own changes stay readable before their notice fades away. */
   --duration-notice: 6s;
   /* The keyboard focus ring, in the accent colour. */

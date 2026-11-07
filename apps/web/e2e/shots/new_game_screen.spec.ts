@@ -2,22 +2,20 @@ import { expect, test } from '../fixtures/test';
 
 // Situations in the new game wizard, each photographed as it ends (`@shot`, coding guidelines §3).
 
-test(
-  "a quick game's setup step: the scenario, the difficulty and what the app tells the players",
-  { tag: '@shot' },
-  async ({ page }) => {
-    await page.goto('/#/new');
-    await page.getByRole('link', { name: 'Quick game' }).first().click();
+test("a quick game's setup step: the scenario, the difficulty and what the app tells the players", async ({
+  page,
+}) => {
+  await page.goto('/#/new');
+  await page.getByRole('link', { name: 'Quick game' }).first().click();
 
-    await page
-      .getByRole('radio', {
-        name: 'Changes to investigators, enemies and the chaos bag, and the cards drawn',
-      })
-      .check();
+  await page
+    .getByRole('radio', {
+      name: 'Changes to investigators, enemies and the chaos bag, and the cards drawn',
+    })
+    .check();
 
-    await expect(page.getByRole('group', { name: 'What the app tells you' })).toBeVisible();
-  },
-);
+  await expect(page.getByRole('group', { name: 'What the app tells you' })).toBeVisible();
+});
 
 test('the investigator picker with its filter menu open', async ({ page }) => {
   await page.goto('/#/new');
@@ -56,7 +54,7 @@ test('the investigators step with two picked, their names pinned beside the next
   await expect(page.getByText('Fake Guardian and Fake Seeker')).toBeVisible();
 });
 
-test('the summary of a quick game with two investigators', { tag: '@shot' }, async ({ page }) => {
+test('the summary of a quick game with two investigators', async ({ page }) => {
   await page.goto('/#/new');
   await page.getByRole('link', { name: 'Quick game' }).first().click();
   await page.getByRole('radio', { name: 'Hard' }).check();
