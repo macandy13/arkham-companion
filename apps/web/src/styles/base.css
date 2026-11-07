@@ -198,6 +198,80 @@ dialog[role='alertdialog'] button[type='submit'] {
   opacity: var(--disabled-opacity);
 }
 
+/*
+ * One of a few, side by side (MD.3c): the choices as pills, the chosen one inked, the radios
+ * themselves hidden. Without a legend the pills share one outline; with one, the legend stands
+ * over them like a form's label and each pill has its own.
+ */
+fieldset[data-segmented] {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  margin: 0;
+  padding: var(--space-1);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-pill);
+}
+
+fieldset[data-segmented]:has(> legend) {
+  display: flex;
+  gap: var(--space-2);
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+}
+
+fieldset[data-segmented] > legend {
+  float: left;
+  width: 100%;
+  padding: 0;
+}
+
+fieldset[data-segmented] > label {
+  display: flex;
+  align-items: center;
+  min-height: var(--segment-height);
+  padding-inline: var(--space-3);
+  border: var(--border-width) solid transparent;
+  border-radius: var(--radius-pill);
+  color: var(--color-text);
+  font-size: inherit;
+  cursor: pointer;
+}
+
+fieldset[data-segmented]:has(> legend) > label {
+  border-color: var(--color-border);
+}
+
+fieldset[data-segmented] > label:has(:checked) {
+  border-color: var(--color-text);
+  background: var(--color-text);
+  color: var(--color-background);
+}
+
+fieldset[data-segmented] > label:has(:focus-visible) {
+  outline: var(--focus-ring-width) solid var(--color-accent);
+}
+
+fieldset[data-segmented] input {
+  position: absolute;
+  width: var(--hidden-size);
+  height: var(--hidden-size);
+  opacity: 0;
+}
+
+/* The labels of the guide's forms (Settings, the wizard), in spaced capitals. */
+#settings h2,
+#app > main > section[aria-labelledby='settings-about'] > h2,
+#wizard > fieldset > legend,
+#wizard dt {
+  font-family: var(--font-family-label);
+  font-size: var(--font-size-log-label);
+  font-weight: bold;
+  letter-spacing: var(--log-label-tracking);
+  text-transform: uppercase;
+}
+
 /* A screen's title stands centred over a small zodiac ring between two rules. */
 #app > main:not(:has(#board)) > h1 {
   text-align: center;

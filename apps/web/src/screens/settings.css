@@ -36,11 +36,6 @@
   align-self: start;
   margin: 0;
   padding-top: var(--space-3);
-  font-family: var(--font-family-label);
-  font-size: var(--font-size-log-label);
-  font-weight: bold;
-  letter-spacing: var(--log-label-tracking);
-  text-transform: uppercase;
 }
 
 #app > main > section[aria-labelledby='settings-about'] {
@@ -55,7 +50,7 @@
 }
 
 /* A field is its small label over a line to write on, the choice written in the guide's type. */
-#settings label {
+#settings > section > label {
   display: grid;
   gap: var(--space-1);
   color: var(--color-text-muted);
@@ -107,42 +102,9 @@
   text-align: center;
 }
 
-/* One of a few, side by side: the choices as pills in one outline, the chosen one inked. */
+/* The table's light is a segmented choice (base.css), standing at the start of its row. */
 #settings fieldset {
-  display: inline-flex;
   justify-self: start;
-  gap: var(--space-1);
-  margin: 0;
-  padding: var(--space-1);
-  border: var(--border-width) solid var(--color-border);
-  border-radius: var(--radius-pill);
-}
-
-#settings fieldset > label {
-  display: flex;
-  align-items: center;
-  min-height: var(--segment-height);
-  padding-inline: var(--space-3);
-  border-radius: var(--radius-pill);
-  color: var(--color-text);
-  font-size: inherit;
-  cursor: pointer;
-}
-
-#settings fieldset > label:has(:checked) {
-  background: var(--color-text);
-  color: var(--color-background);
-}
-
-#settings fieldset > label:has(:focus-visible) {
-  outline: var(--focus-ring-width) solid var(--color-accent);
-}
-
-#settings fieldset input {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  opacity: 0;
 }
 
 /* The collection: a campaign's name over its boxes, each a tick on the line. */

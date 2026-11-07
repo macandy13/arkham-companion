@@ -9,7 +9,7 @@ import {
 // Journey: The Barrier asks for its clues only as the round ends, from the investigators in the
 // Hallway – in a game whose setup put two Ghoul Priests aside, so the act's reverse side cannot
 // tell which one spawns and asks the players to do it by hand.
-test('advance the act at the end of the round', { tag: '@flow' }, async ({ page }) => {
+test('advance the act at the end of the round', async ({ page }) => {
   const act = page.getByRole('region', { name: 'Act' });
 
   await test.step('Import a game at act 2 with two Ghoul Priests set aside', async () => {
@@ -44,7 +44,7 @@ test('advance the act at the end of the round', { tag: '@flow' }, async ({ page 
 });
 
 // Journey: advance act 1 by dragging one of Roland Banks' clues onto it, as its button would.
-test('advance the act by dragging a clue onto it', { tag: '@flow' }, async ({ page }) => {
+test('advance the act by dragging a clue onto it', async ({ page }) => {
   const act = page.getByRole('region', { name: 'Act' });
 
   await test.step("Import a game on Roland Banks' first turn, holding the 2 clues Trapped needs", async () => {
