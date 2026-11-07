@@ -100,7 +100,7 @@ test('the Hallway’s details, its card with Roland Banks on it, on Roland Banks
 
 test('the house map by day', async ({ page }) => {
   await page.goto('/#/settings');
-  await page.getByLabel('Theme').selectOption('Light');
+  await page.getByRole('radio', { name: 'By day' }).check();
   await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
 
   await expect(page.getByRole('region', { name: 'Roland Banks' })).toBeVisible();

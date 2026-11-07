@@ -1,52 +1,41 @@
 import type { PackDef } from '@arkham/carddata';
-import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router';
 import { sortedPacks } from '../picker/pickerLogic';
 import { campaignCatalog } from '../scenarios/scenarioCatalog';
-import { applySettings } from '../settings/applySettings';
 import {
   CARD_LANGUAGES,
   CARD_THEMES,
   ENEMY_TOKEN_FACES,
-  loadSettings,
-  saveSettings,
   THEMES,
   UI_LANGUAGES,
   type Settings,
 } from '../settings/settings';
+import { useSettings } from '../settings/useSettings';
 import { useAppBar } from './AppBar';
 import './settings.css';
 
 interface SettingsScreenProps {
-  /**
-   * Packs of the card catalog; empty until the catalog is loaded. Only the packs of campaigns the
-   * app plays (`CampaignEntry.packCodes`) are listed.
-   */
+  /** Packs of the card catalog, to name the owned ones; empty until the catalog is loaded. */
   readonly packs?: readonly PackDef[];
 }
 
 /**
- * Route `/settings`: owned packs of the campaigns the app plays, card and UI language and theme, saved on every change, and the
- * notice that the app is an unofficial fan project, with the publisher's copyright credit. The fan
- * content policy requires the notice for using the game's names; card art is never bundled, only
- * fetched from ArkhamDB on the player's device.
+ * Route `/settings` (MD.3c), written like a form of the campaign guide: one row per subject, its
+ * label in a column of spaced capitals and its fields as written lines. The collection is one line
+ * that opens its own page (`CollectionScreen`); the table's light is a segmented choice. Every
+ * change is saved at once (`useSettings`). It ends with the notice that the app is an unofficial
+ * fan project, with the publisher's copyright credit, which the fan content policy requires for
+ * using the game's names; card art is never bundled, only fetched from ArkhamDB on the device.
  */
 export function SettingsScreen({ packs = [] }: SettingsScreenProps) {
   const { t, i18n } = useTranslation();
-  const [settings, setSettings] = useState<Settings>(loadSettings);
+  const [settings, update] = useSettings();
   useAppBar({ title: t('settings.title'), subtitle: t('appBar.settings'), up: '/' });
-
-  function update(changes: Partial<Settings>) {
-    const next = { ...settings, ...changes };
-    setSettings(next);
-    saveSettings(next);
-    applySettings(next);
-  }
-
-  function togglePack(code: string, owned: boolean) {
-    const others = settings.ownedPacks.filter((c) => c !== code);
-    update({ ownedPacks: owned ? [...others, code] : others });
-  }
+  const owned = sortedPacks(packs).filter((pack) => settings.ownedPacks.includes(pack.code));
+  const ownedCampaigns = campaignCatalog.filter((campaign) =>
+    campaign.packCodes.some((code) => settings.ownedPacks.includes(code)),
+  );
 
   return (
     <>
@@ -54,30 +43,21 @@ export function SettingsScreen({ packs = [] }: SettingsScreenProps) {
       <form id="settings">
         <section aria-labelledby="settings-collection">
           <h2 id="settings-collection">{t('settings.collection')}</h2>
-          {packs.length === 0 ? (
-            <p>{t('settings.noPacks')}</p>
-          ) : (
-            campaignCatalog.map((campaign) => (
-              <fieldset key={campaign.id}>
-                <legend>{t(campaign.nameKey)}</legend>
-                {sortedPacks(packs)
-                  .filter((pack) => campaign.packCodes.includes(pack.code))
-                  .map((pack) => (
-                    <label key={pack.code}>
-                      <input
-                        type="checkbox"
-                        checked={settings.ownedPacks.includes(pack.code)}
-                        onChange={(e) => togglePack(pack.code, e.target.checked)}
-                      />
-                      {pack.name}
-                    </label>
-                  ))}
-              </fieldset>
-            ))
-          )}
+          <Link to="/settings/collection">
+            {owned.length > 0
+              ? owned.map((pack) => pack.name).join(', ')
+              : t('settings.nothingOwned')}
+            <span>
+              {t('settings.campaignsOwned', {
+                count: campaignCatalog.length,
+                owned: ownedCampaigns.length,
+              })}
+            </span>
+          </Link>
+          <p>{t('settings.collectionNote')}</p>
         </section>
-        <section aria-labelledby="settings-preferences">
-          <h2 id="settings-preferences">{t('settings.preferences')}</h2>
+        <section aria-labelledby="settings-languages">
+          <h2 id="settings-languages">{t('settings.languagesTitle')}</h2>
           <label>
             {t('settings.cardLanguage')}
             <select
@@ -104,19 +84,25 @@ export function SettingsScreen({ packs = [] }: SettingsScreenProps) {
               ))}
             </select>
           </label>
-          <label>
-            {t('settings.theme')}
-            <select
-              value={settings.theme}
-              onChange={(e) => update({ theme: e.target.value as Settings['theme'] })}
-            >
-              {THEMES.map((theme) => (
-                <option key={theme} value={theme}>
-                  {t(`settings.themes.${theme}`)}
-                </option>
-              ))}
-            </select>
-          </label>
+        </section>
+        <section aria-labelledby="settings-table">
+          <h2 id="settings-table">{t('settings.table')}</h2>
+          <fieldset aria-label={t('settings.theme')}>
+            {THEMES.map((theme) => (
+              <label key={theme}>
+                <input
+                  type="radio"
+                  name="theme"
+                  checked={settings.theme === theme}
+                  onChange={() => update({ theme })}
+                />
+                {t(`settings.themes.${theme}`)}
+              </label>
+            ))}
+          </fieldset>
+        </section>
+        <section aria-labelledby="settings-cards">
+          <h2 id="settings-cards">{t('settings.cards')}</h2>
           <label>
             {t('settings.cardTheme')}
             <select
