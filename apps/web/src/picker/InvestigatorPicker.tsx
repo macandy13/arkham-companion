@@ -4,7 +4,8 @@ import { useTranslation } from 'react-i18next';
 import { CARD_IMAGE_HOST } from '../catalog/cardImageUrl';
 import { InvestigatorSheet } from './InvestigatorSheet';
 import { PickerFilterBar } from './PickerFilterBar';
-import { applyPickerFilters, moveSeat, seatNumber, type PickerFilters } from './pickerLogic';
+import { applyPickerFilters, seatNumber, type PickerFilters } from './pickerLogic';
+import { rotateTo } from '@arkham/util';
 import { PortraitPages } from './PortraitPages';
 import './picker.css';
 
@@ -29,8 +30,9 @@ interface InvestigatorPickerProps {
  * Investigator picker (product.md "UI concept", MD.3d2): the search and filter control and the
  * investigators' portraits in pages of ten (`PortraitPages`), each picked one numbered in pick
  * order. Tapping a portrait opens the detail sheet over the screen: "Select" there takes the next
- * free seat; a picked investigator's sheet makes them the lead investigator or removes them. Only
- * the lead's seat matters to the rules, so there is no other reordering.
+ * free seat; a picked investigator's sheet makes them the lead investigator or removes them. The
+ * seats are the order round the table, so making one lead turns the table to them rather than
+ * moving them alone (Rules Reference, "Player Order"); any other order is picked again.
  */
 export function InvestigatorPicker({
   catalog,
@@ -87,7 +89,7 @@ export function InvestigatorPicker({
           seatsFull={seats.length >= maxSeats}
           imageUrl={imageUrl}
           onSelect={() => changeSeats([...seats, open.code])}
-          onMakeLead={() => changeSeats(moveSeat(seats, seats.indexOf(open.code), 0))}
+          onMakeLead={() => changeSeats(rotateTo(seats, seats.indexOf(open.code)))}
           onRemove={() => changeSeats(seats.filter((code) => code !== open.code))}
           onShowOtherChapter={() => setOpenCode(open.otherChapterCode)}
           onClose={closeSheet}

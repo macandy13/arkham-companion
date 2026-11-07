@@ -4,7 +4,6 @@ import {
   activeFilterCount,
   applyPickerFilters,
   cyclePositions,
-  moveSeat,
   seatNumber,
   sortedPacks,
 } from './pickerLogic';
@@ -108,17 +107,6 @@ describe('pack helpers', () => {
 
   it('sorts packs by cycle, then position', () => {
     expect(sortedPacks(packs).map((p) => p.code)).toEqual(['a', 'b', 'c']);
-  });
-});
-
-describe('moveSeat', () => {
-  it('moves an entry to a new index', () => {
-    expect(moveSeat(['a', 'b', 'c'], 0, 2)).toEqual(['b', 'c', 'a']);
-  });
-
-  it('ignores out-of-range moves', () => {
-    expect(moveSeat(['a', 'b'], 0, -1)).toEqual(['a', 'b']);
-    expect(moveSeat(['a', 'b'], 5, 0)).toEqual(['a', 'b']);
   });
 });
 

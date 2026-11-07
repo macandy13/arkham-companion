@@ -4,6 +4,7 @@ import {
   firstDifference,
   matchingFirst,
   range,
+  rotateTo,
   runsBy,
   unique,
   withoutFirst,
@@ -144,5 +145,16 @@ describe('firstDifference', () => {
     { first: ['a'], second: ['a', 'b'], at: 1 },
   ])('finds $at for $first and $second', ({ first, second, at }) => {
     expect(firstDifference(first, second, same)).toBe(at);
+  });
+});
+
+describe('rotateTo', () => {
+  it.each([
+    { index: 2, rotated: ['c', 'd', 'a', 'b'] },
+    { index: 0, rotated: ['a', 'b', 'c', 'd'] },
+    { index: 4, rotated: ['a', 'b', 'c', 'd'] },
+    { index: -1, rotated: ['a', 'b', 'c', 'd'] },
+  ])('turns a b c d to start at index $index', ({ index, rotated }) => {
+    expect(rotateTo(['a', 'b', 'c', 'd'], index)).toEqual(rotated);
   });
 });

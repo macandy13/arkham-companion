@@ -352,16 +352,14 @@ describe('InvestigatorPicker', () => {
     expect(seatOnPortrait('Cedar')).toBe('1');
   });
 
-  it('makes a picked investigator the lead from their sheet', () => {
+  it('turns the table to the investigator made lead, keeping the order round it', () => {
     const emitted: string[][] = [];
-    render(<Harness initialSeats={['b1', 'c1', 'd1']} onSeats={(c) => emitted.push(c)} />);
-    openPortrait('Dogwood');
+    render(<Harness initialSeats={['a1', 'b1', 'c1', 'd1']} onSeats={(c) => emitted.push(c)} />);
+    openPortrait('Cedar');
 
-    expect(
-      within(screen.getByRole('dialog', { name: 'Dogwood' })).getByText('Seat 3'),
-    ).toBeTruthy();
+    expect(within(screen.getByRole('dialog', { name: 'Cedar' })).getByText('Seat 3')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Make lead investigator' }));
 
-    expect(emitted).toEqual([['d1', 'b1', 'c1']]);
+    expect(emitted).toEqual([['c1', 'd1', 'a1', 'b1']]);
   });
 });
