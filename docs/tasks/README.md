@@ -20,4 +20,4 @@ A fixed recipe keeps each new scenario small and predictable, and forces shared 
 2. **Connections (Opus):** connection symbol extraction and review (M4.2) for the pack's locations. The symbols each campaign needs are listed in [location-symbols.md](../location-symbols.md).
 3. **Definition (Opus):** `ScenarioDefinition`, setup steps, setup test.
 4. **Mechanics (Opus):** special rules as card abilities; promote anything a second scenario needs into an engine primitive.
-5. **Playtest (Sonnet):** golden replay and the playtest checklist.
+5. **Playtest (Sonnet):** golden replay (the scenario's `end_to_end.test.ts`) and the playtest checklist in `docs/playtests/` ([the-gathering.md](../playtests/the-gathering.md) is the first).
