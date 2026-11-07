@@ -120,7 +120,7 @@ export interface CardStats {
   clues?: ScaledValue;
   fight?: number;
   evade?: number;
-  /** Enemy health, or an investigator's printed health (always `fixed`). */
+  /** Enemy health, or the printed health of an investigator or an ally asset (always `fixed`). */
   health?: ScaledValue;
   /** Only on investigators. */
   sanity?: number;

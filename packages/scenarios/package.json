@@ -10,5 +10,9 @@
   },
   "dependencies": {
     "@arkham/engine": "workspace:*"
+  },
+  "devDependencies": {
+    "@arkham/carddata": "workspace:*",
+    "@types/node": "^26.6.6"
   }
 }
