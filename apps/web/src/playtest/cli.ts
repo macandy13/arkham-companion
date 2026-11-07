@@ -8,7 +8,7 @@
  *                        (`packages/play_tester/findings/`); a missing directory holds none
  *
  * It lives in the app, as a package must not depend on the app, and is not part of `pnpm test`:
- * the nightly run calls it on a few of the night's runs. Exits with 1 when the app differs.
+ * it is meant for the nightly run, on a few of the night's runs. Exits with 1 when the app differs.
  */
 import 'fake-indexeddb/auto';
 import { existsSync, readdirSync, readFileSync } from 'node:fs';

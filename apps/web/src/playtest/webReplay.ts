@@ -1,9 +1,7 @@
-import { isDeepStrictEqual } from 'node:util';
-import type { GameStore, LoggedEvent } from '@arkham/engine';
-import { firstDifference } from '@arkham/util';
+import type { GameStore } from '@arkham/engine';
 import {
   describeStep,
-  numberedGroups,
+  logDifference,
   playStep,
   scenarioContext,
   setUpTable,
@@ -62,21 +60,4 @@ export async function webReplayDifference(
     session.entries,
     (await GameSession.open(store, importedId, ctx)).entries,
   );
-}
-
-/**
- * Where `actual` (what `who` logged) first differs from `expected`, by event and by the place of
- * its undo group (`numberedGroups`: each table numbers its groups its own way).
- */
-export function logDifference(
-  who: string,
-  expected: readonly LoggedEvent[],
-  actual: readonly LoggedEvent[],
-): string | undefined {
-  const want = numberedGroups(expected);
-  const got = numberedGroups(actual);
-  const at = firstDifference(want, got, isDeepStrictEqual);
-  return at === undefined
-    ? undefined
-    : `${who} logs another event at ${at}: ${JSON.stringify(got[at])} instead of ${JSON.stringify(want[at])}`;
 }

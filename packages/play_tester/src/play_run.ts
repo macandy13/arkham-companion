@@ -170,12 +170,25 @@ export function resumeDifference(
   } catch (error) {
     return `resumed at step ${resumeAt}, the game refused a step it played straight through: ${error instanceof Error ? error.message : String(error)}`;
   }
-  const straight = numberedGroups(log);
-  const resumed = numberedGroups(table.entries);
-  const at = firstDifference(straight, resumed, isDeepStrictEqual);
+  return logDifference(`resumed at step ${resumeAt}, the game`, log, table.entries);
+}
+
+/**
+ * Where `actual` (what `who` logged) first differs from `expected`, by event and by the place of
+ * its undo group (`numberedGroups`), or `undefined`. Shared by the resume check and the web
+ * replay (`apps/web/src/playtest/`).
+ */
+export function logDifference(
+  who: string,
+  expected: readonly LoggedEvent[],
+  actual: readonly LoggedEvent[],
+): string | undefined {
+  const want = numberedGroups(expected);
+  const got = numberedGroups(actual);
+  const at = firstDifference(want, got, isDeepStrictEqual);
   return at === undefined
     ? undefined
-    : `resumed at step ${resumeAt}, the game logs another event at ${at}: ${JSON.stringify(resumed[at])} instead of ${JSON.stringify(straight[at])}`;
+    : `${who} logs another event at ${at}: ${JSON.stringify(got[at])} instead of ${JSON.stringify(want[at])}`;
 }
 
 /**
@@ -183,7 +196,7 @@ export function resumeDifference(
  * groups on from the log, while the straight play also counted groups an undo took back, so the
  * ids differ though the events and their grouping are the same.
  */
-export function numberedGroups(
+function numberedGroups(
   log: readonly LoggedEvent[],
 ): { group: number; event: LoggedEvent['event'] }[] {
   const groups = new Map<string, number>();

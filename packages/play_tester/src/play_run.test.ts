@@ -6,9 +6,10 @@ import {
   newGame,
   PlayTable,
   cardName,
+  type LoggedEvent,
 } from '@arkham/engine';
 import { theGathering } from '@arkham/scenarios';
-import { checkedStep, checkRun, playRun, resumeDifference } from './play_run';
+import { checkedStep, checkRun, logDifference, playRun, resumeDifference } from './play_run';
 import type { Run } from './run';
 import type { Step } from './steps';
 
@@ -140,6 +141,57 @@ describe('playing a run', () => {
 
     expect(resumeDifference(withoutLastEvent)).toMatch(
       /^resumed at step \d+, the game logs another event at \d+/,
+    );
+  });
+});
+
+describe('comparing two logs', () => {
+  const doomOnAgenda: LoggedEvent['event'] = {
+    type: 'TokensChanged',
+    cardId: instanceId('agenda'),
+    token: 'doom',
+    delta: 1,
+  };
+  const clueOnStudy: LoggedEvent['event'] = {
+    type: 'TokensChanged',
+    cardId: instanceId('study'),
+    token: 'clue',
+    delta: -1,
+  };
+
+  it('accepts the same events in the same groups, whatever the groups are called', () => {
+    const table = [
+      { commandId: 'command-0', event: doomOnAgenda },
+      { commandId: 'command-3', event: clueOnStudy },
+    ];
+    const app = [
+      { commandId: 'command-0', event: doomOnAgenda },
+      { commandId: 'command-1', event: clueOnStudy },
+    ];
+
+    expect(logDifference('the app', table, app)).toBeUndefined();
+  });
+
+  it('reports two events the app logs in one group that the table logs in two', () => {
+    const table = [
+      { commandId: 'command-0', event: doomOnAgenda },
+      { commandId: 'command-1', event: clueOnStudy },
+    ];
+    const app = [
+      { commandId: 'command-0', event: doomOnAgenda },
+      { commandId: 'command-0', event: clueOnStudy },
+    ];
+
+    expect(logDifference('the app', table, app)).toBe(
+      `the app logs another event at 1: ${JSON.stringify({ group: 0, event: clueOnStudy })} instead of ${JSON.stringify({ group: 1, event: clueOnStudy })}`,
+    );
+  });
+
+  it('reports an event the app leaves out', () => {
+    const table = [{ commandId: 'command-0', event: doomOnAgenda }];
+
+    expect(logDifference('the app', table, [])).toBe(
+      `the app logs another event at 0: undefined instead of ${JSON.stringify({ group: 0, event: doomOnAgenda })}`,
     );
   });
 });
