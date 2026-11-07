@@ -326,7 +326,9 @@ export const theGatheringCardDefs: readonly CardStats[] = [
     code: codes.litaChantler,
     name: 'Lita Chantler',
     typeCode: 'asset',
+    unique: true,
     traits: [trait('Ally')],
+    health: fixed(3),
     encounterCode: sets.theGathering,
     quantity: 1,
     // The Parlor grants this "while Lita Chantler is not controlled by a player". She comes into

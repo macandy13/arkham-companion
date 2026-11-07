@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - 'packages/carddata/**'
+      - 'packages/scenarios/**'
       - '.github/workflows/carddata-check.yml'
 
 permissions:
@@ -21,6 +22,9 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm carddata:fetch --lang en,de
+      # Skipped in CI's unit tests, which have no fetched cards: holds the hand-entered
+      # scenario cards to ArkhamDB's data.
+      - run: pnpm vitest run packages/scenarios/src/arkhamdb_check.test.ts
       - name: Summarise fetched data
         run: |
           {
