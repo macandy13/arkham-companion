@@ -17,16 +17,19 @@ const store = createAppStore(database);
 
 const settings = loadSettings();
 
-const catalog = () => loadCatalog(database, loadSettings().cardLanguage);
+/** Read on every use: the card language can change in Settings while the app runs. */
+const cardLanguage = () => loadSettings().cardLanguage;
+const catalog = () => loadCatalog(database, cardLanguage());
 
 /**
  * The start-up waits for the saved games and for card data to be at hand: the cached catalog
  * when there is one, so a start at the table never waits for the network (the screens refresh
- * it), else the first download.
+ * it), else the first download. Reading the cached catalog only to see that it is there costs
+ * one IndexedDB read, which keeps the store's interface as it is.
  */
 const startup: StartupTasks = {
   games: () => store.getState().refresh(),
-  cards: async () => (await database.getCatalog(settings.cardLanguage)) ?? catalog(),
+  cards: async () => (await database.getCatalog(cardLanguage())) ?? catalog(),
 };
 
 void initI18n(settings.uiLanguage).then(() => {

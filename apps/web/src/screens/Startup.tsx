@@ -45,11 +45,17 @@ export function Startup({ tasks, children }: StartupProps) {
   return finished.size < STARTUP_STEPS.length ? <StartupScreen finished={finished} /> : children;
 }
 
+/** Props of `StartupScreen`. */
+interface StartupScreenProps {
+  /** The steps that have finished, whether they succeeded or not. */
+  readonly finished: ReadonlySet<StartupStep>;
+}
+
 /**
  * The loading screen on the table (design language "Screens"): the app mark, whose ring of ticks
  * fills as the steps finish, over the app's name and the steps, each ticked off when done.
  */
-export function StartupScreen({ finished }: { readonly finished: ReadonlySet<StartupStep> }) {
+function StartupScreen({ finished }: StartupScreenProps) {
   const { t } = useTranslation();
   const lit = Math.round((finished.size / STARTUP_STEPS.length) * MARK_TICK_COUNT);
   return (

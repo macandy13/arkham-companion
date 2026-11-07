@@ -18,13 +18,13 @@ describe('AppMark', () => {
   });
 
   it.each([
-    { lit: 0, firstLit: [], next: [0] },
-    { lit: 3, firstLit: [0, 1, 2], next: [3] },
-  ])('lights the first $lit ticks clockwise and marks the next', ({ lit, firstLit, next }) => {
+    { lit: 0, litTicks: [], nextTick: [0] },
+    { lit: 3, litTicks: [0, 1, 2], nextTick: [3] },
+  ])('lights the first $lit ticks clockwise and marks the next', ({ lit, litTicks, nextTick }) => {
     const { container } = render(<AppMark lit={lit} />);
 
-    expect(ticks(container, 'lit')).toEqual(firstLit);
-    expect(ticks(container, 'next')).toEqual(next);
+    expect(ticks(container, 'lit')).toEqual(litTicks);
+    expect(ticks(container, 'next')).toEqual(nextTick);
   });
 });
 
