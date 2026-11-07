@@ -46,13 +46,6 @@
   line-height: var(--picker-count-size);
 }
 
-#investigator-picker ol > li {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-2);
-}
-
 /*
  * The filter menu: the class icons in wrapping rows, then each other filter's name beside its
  * choice. It keeps to the screen's width rather than its content's. Two ids, so its rules beat the
@@ -141,25 +134,6 @@
 #investigator-picker button[aria-pressed='true'] {
   background: var(--color-accent);
   color: var(--color-accent-text);
-}
-
-#investigator-picker ol {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  display: grid;
-  gap: var(--space-2);
-}
-
-#investigator-picker ol > li {
-  padding: var(--space-2);
-  border: var(--border-width) solid var(--color-border);
-  border-radius: var(--radius);
-  background: var(--color-surface);
-}
-
-#investigator-picker ol > li > span {
-  margin-right: auto;
 }
 
 /*
@@ -257,10 +231,12 @@
 }
 
 /*
- * A portrait: the investigator's figure on parchment over their name, like a small investigator
- * card. Two ids, so it beats the plain buttons' look.
+ * A portrait (MD.3d2): the investigator's figure in a rounded window with their class symbol on a
+ * disc at its corner, their name under it and health and sanity under that. A picked one is ringed
+ * in ink and wears its seat number on a brass disc. Two ids, so it beats the plain buttons' look.
  */
 #app #investigator-picker > div > ul > li > button {
+  position: relative;
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   align-content: start;
@@ -269,39 +245,46 @@
   min-width: 0;
   height: 100%;
   padding: var(--space-1);
-  border: var(--card-border-width) solid var(--picker-class-colour, var(--color-card-edge));
-  background: linear-gradient(var(--color-parchment), var(--color-parchment-shade));
+  border: 0;
+  border-radius: var(--radius);
+  background: none;
   color: var(--color-ink);
   font-size: var(--font-size-note);
   text-align: center;
 }
 
-/* Each class in its colour, on the portrait's edge and its class line, as the cards print it. */
+/* Each class's colour and symbol, for the portrait's badge. */
 #investigator-picker [data-faction='guardian'] {
   --picker-class-colour: var(--color-class-guardian);
+  --picker-class-icon: url('../symbols/guardian.svg');
 }
 
 #investigator-picker [data-faction='seeker'] {
   --picker-class-colour: var(--color-class-seeker);
+  --picker-class-icon: url('../symbols/seeker.svg');
 }
 
 #investigator-picker [data-faction='rogue'] {
   --picker-class-colour: var(--color-class-rogue);
+  --picker-class-icon: url('../symbols/rogue.svg');
 }
 
 #investigator-picker [data-faction='mystic'] {
   --picker-class-colour: var(--color-class-mystic);
+  --picker-class-icon: url('../symbols/mystic.svg');
 }
 
 #investigator-picker [data-faction='survivor'] {
   --picker-class-colour: var(--color-class-survivor);
+  --picker-class-icon: url('../symbols/survivor.svg');
 }
 
 #investigator-picker [data-faction='neutral'] {
   --picker-class-colour: var(--color-class-neutral);
+  --picker-class-icon: url('../symbols/neutral.svg');
 }
 
-#app #investigator-picker > div > ul > li > button:hover {
+#app #investigator-picker > div > ul > li > button:hover picture {
   border-color: var(--color-accent);
 }
 
@@ -328,6 +311,11 @@
   overflow: hidden;
 }
 
+#investigator-picker button:has(> [data-seat]) > picture {
+  outline: var(--card-border-width) solid var(--color-ink);
+  outline-offset: var(--border-width);
+}
+
 #investigator-picker picture > img {
   position: absolute;
   width: calc(100% / var(--picker-portrait-width));
@@ -348,24 +336,55 @@
   color: var(--color-accent);
 }
 
-#investigator-picker > div small {
+/* The class badge and the seat disc over the portrait's top corners, their words hidden. */
+#investigator-picker > div button > small:is([data-class], [data-seat]) {
+  position: absolute;
+  top: var(--space-2);
+  display: grid;
+  place-items: center;
+  width: var(--picker-badge-size);
+  height: var(--picker-badge-size);
+  overflow: hidden;
+  border-radius: var(--radius-round);
+  font-size: 0;
+}
+
+#investigator-picker > div button > small[data-class] {
+  display: block;
+  left: var(--space-2);
+  padding: var(--picker-badge-inset);
+  box-sizing: border-box;
+  background: var(--color-paper);
+}
+
+#investigator-picker > div button > small[data-class]::before {
+  content: '';
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: var(--picker-class-colour);
+  mask: var(--picker-class-icon) center / contain no-repeat;
+}
+
+#investigator-picker > div button > small[data-seat] {
+  right: var(--space-2);
+  border: var(--border-width) solid var(--color-brass-deep);
+  background: var(--brass-button);
   color: var(--color-ink);
 }
 
-/* The class line under the name, in the class's colour. */
-#investigator-picker > div button > span + small {
-  color: var(--picker-class-colour);
-  font-weight: bold;
-  letter-spacing: var(--card-type-spacing);
-  text-transform: uppercase;
+#investigator-picker > div button > small[data-seat]::before {
+  content: attr(data-seat);
+  font-family: var(--font-family-print);
+  font-size: var(--font-size-note);
 }
 
-/* The skills, then health and sanity: each a value after its icon, its name for screen readers. */
-#investigator-picker > div small:has(> [data-skill], > [data-stat]) {
+/* Health and sanity: each a value after its icon, its name for screen readers. */
+#investigator-picker > div small:has(> [data-stat]) {
   display: flex;
-  flex-wrap: wrap;
   justify-content: center;
   gap: 0 var(--space-2);
+  color: var(--color-ink);
   font-weight: bold;
   font-variant-numeric: lining-nums;
 }
@@ -378,7 +397,8 @@
   gap: calc(var(--space-1) / 2);
 }
 
-#investigator-picker > div small > span > span {
+#investigator-picker > div small > span > span,
+#investigator-picker > div button > small[data-seat] > span {
   position: absolute;
   width: var(--hidden-size);
   height: var(--hidden-size);
@@ -387,28 +407,12 @@
   white-space: nowrap;
 }
 
-#investigator-picker > div small > span::before {
+#investigator-picker > div small > span[data-stat]::before {
   content: '';
   width: var(--stat-icon-size);
   height: var(--stat-icon-size);
-  background: var(--picker-stat-colour, var(--color-ink));
+  background: var(--picker-stat-colour);
   mask: var(--picker-stat-icon) center / contain no-repeat;
-}
-
-#investigator-picker [data-skill='willpower'] {
-  --picker-stat-icon: url('../symbols/willpower.svg');
-}
-
-#investigator-picker [data-skill='intellect'] {
-  --picker-stat-icon: url('../symbols/intellect.svg');
-}
-
-#investigator-picker [data-skill='combat'] {
-  --picker-stat-icon: url('../symbols/combat.svg');
-}
-
-#investigator-picker [data-skill='agility'] {
-  --picker-stat-icon: url('../symbols/agility.svg');
 }
 
 #investigator-picker [data-stat='health'] {
@@ -446,6 +450,19 @@
 
 #investigator-picker dialog p {
   margin: 0;
+}
+
+/* A picked investigator's seat, then making them lead and removing them. */
+#investigator-picker dialog > footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+#investigator-picker dialog > footer > p {
+  margin-right: auto;
+  font-family: var(--font-family-print);
 }
 
 #investigator-picker dialog dl {

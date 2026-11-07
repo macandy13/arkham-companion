@@ -3,7 +3,6 @@ import { expect, test } from './fixtures/test';
 // Journey: the new game wizard from the entry points to a started game.
 test('start a new game', { tag: '@flow' }, async ({ page }) => {
   const portraits = page.getByRole('list', { name: 'Investigators' });
-  const seats = page.getByRole('region', { name: 'Seats' });
   const search = page.getByRole('searchbox', { name: 'Search by name' });
 
   await test.step('Choose a quick game', async () => {
@@ -28,7 +27,7 @@ test('start a new game', { tag: '@flow' }, async ({ page }) => {
   await test.step('Seat the guardian', async () => {
     await portraits.getByRole('button', { name: /Fake Guardian/ }).click();
     await page.getByRole('button', { name: 'Select', exact: true }).click();
-    await expect(seats.getByRole('listitem')).toHaveCount(1);
+    await expect(portraits.getByRole('button', { name: /Fake Guardian.*Seat 1/ })).toBeVisible();
   });
 
   await test.step('Filter by class and seat the seeker', async () => {
@@ -39,12 +38,18 @@ test('start a new game', { tag: '@flow' }, async ({ page }) => {
     await expect(portraits.getByRole('listitem')).toHaveCount(1);
     await portraits.getByRole('button', { name: /Fake Seeker/ }).click();
     await page.getByRole('button', { name: 'Select', exact: true }).click();
-    await expect(seats).toContainText('Fake Seeker');
+    await expect(page.getByText('Fake Guardian and Fake Seeker')).toBeVisible();
+  });
+
+  await test.step('Make the seeker the lead investigator', async () => {
+    await portraits.getByRole('button', { name: /Fake Seeker/ }).click();
+    await page.getByRole('button', { name: 'Make lead investigator' }).click();
+    await expect(page.getByText('Fake Seeker and Fake Guardian')).toBeVisible();
   });
 
   await test.step('Reload: the choices are kept', async () => {
     await page.reload();
-    await expect(seats.getByRole('listitem')).toHaveCount(2);
+    await expect(page.getByText('Fake Seeker and Fake Guardian')).toBeVisible();
   });
 
   await test.step('Go back to the setup', async () => {

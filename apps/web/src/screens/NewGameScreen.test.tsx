@@ -198,7 +198,7 @@ describe('NewGameScreen', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Back' }));
 
-    expect(screen.getByRole('region', { name: 'Seats' }).textContent).toContain('Alder');
+    expect(screen.getByRole('button', { name: /Alder.*Seat 1/ })).toBeTruthy();
   });
 
   it('keeps the choices over a page refresh', async () => {

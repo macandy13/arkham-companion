@@ -545,6 +545,9 @@
   --color-class-neutral: #6b6259;
   /* Portraits side by side on one of the picker's pages (`PORTRAITS_PER_PAGE` is twice this). */
   --picker-columns: 5;
+  /* The class badge and seat disc on a picker portrait (MD.3d2). */
+  --picker-badge-size: 1.5rem;
+  --picker-badge-inset: 0.1875rem;
   /*
    * The portrait on each of the picker's investigators: where it is on the scan of their card's
    * front (landscape, 419 × 300), in fractions of its width and height: the figure at the left,
@@ -963,6 +966,8 @@
  */
 @media (orientation: portrait) and (max-width: 40rem) {
   :root {
+    --picker-badge-size: 1.125rem;
+    --picker-badge-inset: 0.125rem;
     --dialog-padding: var(--space-4) var(--space-3);
     --test-token-size: 2.625rem;
     --test-token-symbol-size: 1.5rem;
