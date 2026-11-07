@@ -39,4 +39,4 @@ A round is mythos → investigation → enemy → upkeep.
 2. Ready every exhausted card simultaneously.
 3. In player order each investigator draws 1 card, then each gains 1 resource.
 4. In player order, anyone holding more than 8 cards discards down to 8.
-5. The upkeep phase and the round end together (framework step 4.6): "until the end of the round" effects expire and "at the end of the round" forced abilities resolve (Dissonant Voices is discarded).
+5. The upkeep phase and the round end together (framework step 4.6): "until the end of the round" effects expire and "at the end of the round" forced abilities resolve (Dissonant Voices is discarded), then a round-end objective that is not forced, such as The Barrier's clue spend ([objectives](cards/objectives.md)).

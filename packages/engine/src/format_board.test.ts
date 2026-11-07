@@ -240,7 +240,7 @@ describe('formatBoard', () => {
     const { context: parlorContext, state } = newGame()
       .withLocation(parlor, blankLocation('parlor', { name: 'Parlor' }), { revealed: true })
       .withCard(instanceId('lita'), blankAsset('lita', { name: 'Lita' }), atLocation(parlor))
-      .withCard(instanceId('ghoul'), ghoulCard, atLocation(parlor))
+      .withCard(instanceId('ghoul'), blankEnemy('ghoul', { name: 'Ghoul' }), atLocation(parlor))
       .start();
 
     const lines = formatBoard(parlorContext, state).split('\n');

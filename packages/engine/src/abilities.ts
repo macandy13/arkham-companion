@@ -39,13 +39,13 @@ import {
   type EnemyFilter,
 } from './enemies';
 import {
-  clueSpendersAt,
+  cluesHeldAt,
   isActiveInvestigator,
   playerOrder,
   requireInvestigator,
   statValue,
 } from './investigators';
-import { cardsInZone, currentCard, requireCard } from './lookup';
+import { cardsInZone, currentCard, requireCard, theOnlyCopy } from './lookup';
 import { inVictoryDisplay } from './victory';
 import type { AddMapStep } from './setup';
 import type {
@@ -709,9 +709,10 @@ function conditionHolds(
     }
     case 'cluesHeldAt': {
       const location = theOnlyCopy(state, condition.location);
-      if (location === undefined) return false;
-      const held = clueSpendersAt(ctx, state, location).reduce((sum, inv) => sum + inv.clues, 0);
-      return held >= resolveValue(condition.atLeast, state.meta.playerCount);
+      return (
+        location !== undefined &&
+        cluesHeldAt(ctx, state, location) >= resolveValue(condition.atLeast, state.meta.playerCount)
+      );
     }
     default:
       return assertNever(condition);
@@ -1022,11 +1023,6 @@ function eachId(
 function activeLead(state: GameState): InvestigatorId | undefined {
   const lead = state.meta.leadInvestigator;
   return lead !== undefined && isActiveInvestigator(state, lead) ? lead : undefined;
-}
-
-function theOnlyCopy(state: GameState, code: CardCode): InstanceId | undefined {
-  const copies = Object.values(state.cards).filter((card) => card.code === code);
-  return copies.length === 1 ? copies[0]?.id : undefined;
 }
 
 /**

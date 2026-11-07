@@ -731,6 +731,19 @@ describe('advancing the act by spending clues at the end of the round', () => {
     ]);
   });
 
+  it('leaves the act and both clues as they are when the lead keeps them', () => {
+    const { context, state } = firstActWithBobAt(hall).start();
+    const asked = stateAfter(context, state, ...endTheRound);
+
+    const kept = stateAfter(context, asked, answer(spendAtRoundEnd, 'keep'));
+
+    expect(kept.act.current).toBe(firstAct);
+    expect(kept.investigators.map((inv) => [inv.id, inv.clues])).toEqual([
+      [alice, 1],
+      [bob, 1],
+    ]);
+  });
+
   it('does not ask with bob in the cellar, as alice alone holds 1 of the 2 clues', () => {
     const table = PlayTable.start(firstActWithBobAt(cellar));
 

@@ -228,6 +228,11 @@ export function cluesHeldByGroup(ctx: EngineContext, state: GameState): number {
   return clueSpenders(ctx, state).reduce((sum, inv) => sum + inv.clues, 0);
 }
 
+/** The clues the investigators at `locationId` who may spend clues hold between them (`clueSpendersAt`). */
+export function cluesHeldAt(ctx: EngineContext, state: GameState, locationId: InstanceId): number {
+  return clueSpendersAt(ctx, state, locationId).reduce((sum, inv) => sum + inv.clues, 0);
+}
+
 /**
  * The investigators who may spend clues as a group at `locationId` ("investigators in the
  * Hallway", The Barrier): the `clueSpenders` there, or all of them without a location.

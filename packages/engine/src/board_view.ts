@@ -56,7 +56,7 @@ import {
   type MapId,
   type ResolutionId,
 } from './ids';
-import { cardsInZone, cardsOfType, currentCard } from './lookup';
+import { cardsInZone, cardsOfType, currentCard, theOnlyCopy } from './lookup';
 import { mapLocations, type Edge, type GameMap, type GridCell } from './map';
 import { attacksStillDue } from './phases';
 import {
@@ -70,7 +70,7 @@ import { NAMED_AMOUNTS } from './state';
 import {
   boostedSkills,
   cluesHeldByGroup,
-  clueSpendersAt,
+  cluesHeldAt,
   clueSpenders,
   defaultCluePayments,
   requireInvestigator,
@@ -1305,13 +1305,10 @@ function actAdvance(
     return { kind: 'cluesOnAct', threshold: resolveValue(onAct, state.meta.playerCount) };
   const atRoundEnd = roundEndClueObjective(stats);
   if (atRoundEnd !== undefined) {
-    const location = Object.values(state.cards).find((card) => card.code === atRoundEnd.location);
+    const location = theOnlyCopy(state, atRoundEnd.location);
     return {
       kind: 'spendCluesAtRoundEnd',
-      held:
-        location === undefined
-          ? 0
-          : clueSpendersAt(ctx, state, location.id).reduce((sum, inv) => sum + inv.clues, 0),
+      held: location === undefined ? 0 : cluesHeldAt(ctx, state, location),
       threshold: resolveValue(atRoundEnd.clues, state.meta.playerCount),
     };
   }

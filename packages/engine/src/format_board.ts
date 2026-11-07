@@ -1,5 +1,5 @@
 import { neighbours } from './board';
-import { cardStats, resolveValue, type EngineContext } from './cards';
+import { resolveValue, type EngineContext } from './cards';
 import { roundEndClueObjective } from './abilities';
 import { cluesToAdvance } from './card_actions';
 import { describeDecision } from './describe_decision';
@@ -142,7 +142,7 @@ function locationLines(ctx: EngineContext, state: GameState, locationId: Instanc
  */
 function cardAtLocationLine(ctx: EngineContext, state: GameState, card: CardInstance): string {
   const zone = card.zone;
-  const enemy = cardStats(ctx.cards, card.code).typeCode === 'enemy';
+  const enemy = ctx.cards.get(card.code)?.typeCode === 'enemy';
   const details = [
     ...(card.tokens.damage ? [`${card.tokens.damage} damage`] : []),
     ...(card.tokens.doom ? [`${card.tokens.doom} doom`] : []),
