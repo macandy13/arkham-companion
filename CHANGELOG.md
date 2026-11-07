@@ -2,6 +2,26 @@
 
 The sections dated up to 2026-10-22 were released as 1.0.0 to 1.8.0 by mistake: Release Please starts at 1.0.0 by default. Versioning restarted at 0.1.0 (see "Versions" in docs/product.md).
 
+## [0.1.29](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v0.1.28...arkham-companion-v0.1.29) (2026-11-07)
+
+
+### Features
+
+* **play_tester:** goal and chaos bots, actions counted off (M1V.4) ([c5e824f](https://github.com/macandy13/arkham-companion/commit/c5e824ff37716688ea2a0e6da0097e08bd871242))
+* **web:** export and import a campaign with its games (MD.3b5b) ([ccb1a22](https://github.com/macandy13/arkham-companion/commit/ccb1a229cd682358349596e38fc38b7e93cf6b55))
+* **web:** settings as written lines, collection on its own page (MD.3c) ([552a2b0](https://github.com/macandy13/arkham-companion/commit/552a2b0109eb29855db46eacb181d9de7cee9ecd))
+* **web:** settings as written lines, collection on its own page (MD.3c) ([d561771](https://github.com/macandy13/arkham-companion/commit/d561771f17659a74548de223ee968b6072af0a6b))
+
+
+### Bug fixes
+
+* **web:** check campaign causes in full and refuse logs that name no campaign ([78a1ea3](https://github.com/macandy13/arkham-companion/commit/78a1ea34655f06cdc89b88895b237f9f30bbc2fa))
+
+
+### Refactoring
+
+* one BoardView.cardAction lookup; review nits ([9e3ee94](https://github.com/macandy13/arkham-companion/commit/9e3ee94cee4662221ef4797ee4677eaa80af799f))
+
 ## [0.1.28](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v0.1.27...arkham-companion-v0.1.28) (2026-11-07)
 
 
