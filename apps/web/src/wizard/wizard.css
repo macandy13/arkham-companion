@@ -1,17 +1,35 @@
-/* New game wizard (product.md "UI concept"). */
-#app > main > ol {
+/* New game wizard (product.md "UI concept", MD.3d). */
+
+/* The step's kicker ("Step 2 of 3") over its title, with no ornament: the step dots stand in for it. */
+#app > main:has(> #wizard) > hgroup > h1 {
+  width: auto;
+  margin: 0;
+}
+
+/* One dot per step, the steps done and the current one inked; the names stay for screen readers. */
+#app > main > ol:has(+ #wizard) {
   display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-3);
+  justify-content: center;
+  gap: var(--space-2);
   margin: 0;
   padding: 0;
   list-style: none;
-  color: var(--color-text-muted);
 }
 
-#app > main > ol > li[aria-current='step'] {
-  color: var(--color-text);
-  font-weight: bold;
+#app > main > ol:has(+ #wizard) > li {
+  box-sizing: border-box;
+  width: var(--step-dot-size);
+  height: var(--step-dot-size);
+  overflow: hidden;
+  border: var(--border-width) solid var(--color-text-muted);
+  border-radius: var(--radius-round);
+  color: transparent;
+  font-size: 0;
+}
+
+#app > main > ol:has(+ #wizard) > li:is([aria-current='step'], [data-done]) {
+  border-color: var(--color-text);
+  background: var(--color-text);
 }
 
 #app > main > #wizard {
@@ -51,9 +69,47 @@
   padding-left: var(--space-4);
 }
 
-#app > main > footer,
 #app > main > nav {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-3);
+}
+
+/*
+ * The next step pinned at the foot of the screen: Back, what the players carry on, and the brass
+ * primary that takes them there.
+ */
+#app > main:has(> #wizard) > footer {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+  /* Over the page's own padding, so no band of the page shows under it. */
+  margin: 0 calc(-1 * var(--space-3)) calc(-1 * var(--space-4));
+  padding: var(--space-4) var(--space-3);
+  border-radius: 0 0 var(--radius) var(--radius);
+  background: linear-gradient(to top, var(--color-paper) 70%, transparent);
+}
+
+#app > main:has(> #wizard) > footer > p {
+  flex: 1;
+  margin: 0;
+  color: var(--color-text-muted);
+  font-family: var(--font-family-label);
+  font-style: italic;
+  text-align: end;
+}
+
+#app > main:has(> #wizard) > footer > [data-primary] {
+  margin-left: auto;
+}
+
+/* On a phone what is carried on stands over the two buttons. */
+@media (max-width: 40rem) {
+  #app > main:has(> #wizard) > footer > p {
+    flex-basis: 100%;
+    order: -1;
+  }
 }

@@ -10,7 +10,7 @@ test('start a new game', async ({ page }) => {
     await page.goto('/#/new');
     await expect(page.getByRole('heading', { level: 1, name: 'New game' })).toBeVisible();
     await page.getByRole('link', { name: 'Quick game' }).click();
-    await expect(page.getByRole('heading', { level: 1, name: 'Quick game' })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1, name: 'Setup' })).toBeVisible();
   });
 
   await test.step('Pick the difficulty', async () => {

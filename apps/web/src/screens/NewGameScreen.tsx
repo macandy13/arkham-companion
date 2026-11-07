@@ -80,7 +80,7 @@ interface WizardProps {
 }
 
 function Wizard({ store, catalogSource, mode, step }: WizardProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const [choices, setChoices] = useState(() => loadChoices(mode));
   const [startFailed, setStartFailed] = useState(false);
@@ -139,13 +139,28 @@ function Wizard({ store, catalogSource, mode, step }: WizardProps) {
   const previous = WIZARD_STEPS[index - 1];
   const next = WIZARD_STEPS[index + 1];
   const canContinue = step === 'setup' ? scenario !== undefined : investigators.length > 0;
+  const target = chosenCampaign(choices) ?? scenario;
+  // The pinned button says what the players take with them to the next step.
+  const carried =
+    step === 'setup'
+      ? target && `${t(target.nameKey)} · ${t(`wizard.difficulties.${choices.difficulty}`)}`
+      : new Intl.ListFormat(i18n.language, { type: 'conjunction' }).format(
+          investigators.map((i) => i.name),
+        );
 
   return (
     <>
-      <h1>{t(mode === 'campaign' ? 'games.newCampaign' : 'games.quickGame')}</h1>
+      <hgroup>
+        <p>{t('wizard.stepOf', { step: index + 1, count: WIZARD_STEPS.length })}</p>
+        <h1>{t(`wizard.steps.${step}`)}</h1>
+      </hgroup>
       <ol aria-label={t('wizard.steps.label')}>
-        {WIZARD_STEPS.map((name) => (
-          <li key={name} aria-current={name === step ? 'step' : undefined}>
+        {WIZARD_STEPS.map((name, at) => (
+          <li
+            key={name}
+            aria-current={name === step ? 'step' : undefined}
+            data-done={at < index || undefined}
+          >
             {t(`wizard.steps.${name}`)}
           </li>
         ))}
@@ -171,13 +186,13 @@ function Wizard({ store, catalogSource, mode, step }: WizardProps) {
       </section>
       <footer>
         {previous && <button onClick={() => goTo(previous)}>{t('wizard.back')}</button>}
-        {next && (
-          <button disabled={!canContinue} onClick={() => goTo(next)}>
-            {t('wizard.next')}
+        {next && carried && <p>{carried}</p>}
+        {next ? (
+          <button data-primary disabled={!canContinue} onClick={() => goTo(next)}>
+            {t('wizard.nextTo', { step: t(`wizard.steps.${next}`) })}
           </button>
-        )}
-        {!next && (
-          <button disabled={!canContinue} onClick={() => void start()}>
+        ) : (
+          <button data-primary disabled={!canContinue} onClick={() => void start()}>
             {t('wizard.start')}
           </button>
         )}

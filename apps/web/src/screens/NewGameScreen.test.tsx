@@ -80,15 +80,51 @@ describe('NewGameScreen', () => {
     );
   });
 
+  it.each([
+    { path: '/new?mode=quick', kicker: 'Step 1 of 3', title: 'Setup' },
+    { path: '/new?mode=quick&step=investigators', kicker: 'Step 2 of 3', title: 'Investigators' },
+    { path: '/new?mode=quick&step=summary', kicker: 'Step 3 of 3', title: 'Summary' },
+  ])('heads $path with "$kicker" over the step title $title', ({ path, kicker, title }) => {
+    renderWizard(path);
+
+    expect(screen.getByRole('heading', { level: 1 }).textContent).toBe(title);
+    expect(screen.getByText(kicker)).toBeTruthy();
+  });
+
+  it('marks the current step in the step dots', () => {
+    renderWizard('/new?mode=quick&step=investigators');
+
+    const steps = within(screen.getByRole('list', { name: 'Steps' })).getAllByRole('listitem');
+    expect(steps.map((step) => step.getAttribute('aria-current'))).toEqual([null, 'step', null]);
+  });
+
+  it('pins the scenario and difficulty beside the way to the investigators', () => {
+    renderWizard('/new?mode=quick');
+
+    fireEvent.click(screen.getByRole('radio', { name: 'Hard' }));
+
+    expect(screen.getByText('The Gathering · Hard')).toBeTruthy();
+  });
+
+  it('pins the chosen team beside the way to the summary', async () => {
+    renderWizard('/new?mode=quick&step=investigators');
+    await screen.findByRole('list', { name: 'Investigators' });
+
+    selectInvestigator('Birch');
+    selectInvestigator('Alder');
+
+    expect(screen.getByText('Birch and Alder')).toBeTruthy();
+  });
+
   it('starts a quick game and opens it', async () => {
     const { gameStore } = renderWizard('/new?mode=quick');
 
     fireEvent.click(screen.getByRole('radio', { name: 'Hard' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Next' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Next: Investigators' }));
     await screen.findByRole('list', { name: 'Investigators' });
     selectInvestigator('Birch');
     selectInvestigator('Alder');
-    fireEvent.click(screen.getByRole('button', { name: 'Next' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Next: Summary' }));
     const summary = screen.getByRole('region', { name: 'Summary' });
     expect(
       within(summary)
@@ -116,10 +152,10 @@ describe('NewGameScreen', () => {
     expect(screen.getByRole('radio', { name: 'Night of the Zealot' })).toBeTruthy();
     fireEvent.click(screen.getByRole('radio', { name: 'Hard' }));
     fireEvent.click(screen.getByRole('radio', { name: 'Only what you do by hand' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Next' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Next: Investigators' }));
     await screen.findByRole('list', { name: 'Investigators' });
     selectInvestigator('Alder');
-    fireEvent.click(screen.getByRole('button', { name: 'Next' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Next: Summary' }));
     fireEvent.click(screen.getByRole('button', { name: 'Start game' }));
 
     await screen.findByText('Game page');
@@ -149,14 +185,16 @@ describe('NewGameScreen', () => {
 
     await screen.findByRole('list', { name: 'Investigators' });
 
-    expect((screen.getByRole('button', { name: 'Next' }) as HTMLButtonElement).disabled).toBe(true);
+    expect(
+      (screen.getByRole('button', { name: 'Next: Summary' }) as HTMLButtonElement).disabled,
+    ).toBe(true);
   });
 
   it('keeps the choices when going back', async () => {
     renderWizard('/new?mode=quick&step=investigators');
     await screen.findByRole('list', { name: 'Investigators' });
     selectInvestigator('Alder');
-    fireEvent.click(screen.getByRole('button', { name: 'Next' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Next: Summary' }));
 
     fireEvent.click(screen.getByRole('button', { name: 'Back' }));
 
@@ -183,7 +221,7 @@ describe('NewGameScreen', () => {
     const { store } = renderWizard('/new?mode=quick&step=investigators');
     await screen.findByRole('list', { name: 'Investigators' });
     selectInvestigator('Alder');
-    fireEvent.click(screen.getByRole('button', { name: 'Next' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Next: Summary' }));
     const failure = new Error('rejected');
     vi.spyOn(store.getState(), 'startScenario').mockRejectedValue(failure);
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
