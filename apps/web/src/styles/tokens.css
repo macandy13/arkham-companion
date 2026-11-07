@@ -224,8 +224,8 @@
   --border-width-line: 1.5px;
   /* What is written on that line. */
   --font-size-field: 1.0625rem;
-  /* The column of a settings row's label, and the height of a segmented choice's pill. */
-  --settings-label-width: 10rem;
+  /* The column of a form row's label (Settings, the wizard summary), and the height of a segmented choice's pill. */
+  --form-label-width: 10rem;
   --segment-height: 2.25rem;
   /* The wizard's step dots (MD.3d). */
   --step-dot-size: 0.5rem;

@@ -94,41 +94,41 @@
   outline: var(--focus-ring-width) solid var(--color-accent);
 }
 
-#wizard dl {
+#wizard > dl {
   display: grid;
-  grid-template-columns: var(--settings-label-width) 1fr;
+  grid-template-columns: var(--form-label-width) 1fr;
   column-gap: var(--space-4);
   margin: 0;
 }
 
-#wizard :is(dt, dd) {
+#wizard > dl > :is(dt, dd) {
   padding-block: var(--space-3);
   border-bottom: var(--border-width) solid var(--color-border);
 }
 
-#wizard dd {
+#wizard > dl > dd {
   margin: 0;
   font-family: var(--font-family-label);
   font-size: var(--font-size-field);
 }
 
-#wizard dd ol {
+#wizard > dl > dd ol {
   margin: 0;
   padding-left: var(--space-4);
 }
 
 /* On a phone each label stands over what was chosen. */
 @media (orientation: portrait) and (max-width: 40rem) {
-  #wizard dl {
+  #wizard > dl {
     grid-template-columns: 1fr;
   }
 
-  #wizard dt {
+  #wizard > dl > dt {
     padding-bottom: 0;
     border-bottom: 0;
   }
 
-  #wizard dd {
+  #wizard > dl > dd {
     padding-top: var(--space-1);
   }
 }

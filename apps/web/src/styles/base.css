@@ -232,7 +232,6 @@ fieldset[data-segmented] > label {
   align-items: center;
   min-height: var(--segment-height);
   padding-inline: var(--space-3);
-  border: var(--border-width) solid transparent;
   border-radius: var(--radius-pill);
   color: var(--color-text);
   font-size: inherit;
@@ -240,7 +239,7 @@ fieldset[data-segmented] > label {
 }
 
 fieldset[data-segmented]:has(> legend) > label {
-  border-color: var(--color-border);
+  border: var(--border-width) solid var(--color-border);
 }
 
 fieldset[data-segmented] > label:has(:checked) {
@@ -264,7 +263,7 @@ fieldset[data-segmented] input {
 #settings h2,
 #app > main > section[aria-labelledby='settings-about'] > h2,
 #wizard > fieldset > legend,
-#wizard dt {
+#wizard > dl > dt {
   font-family: var(--font-family-label);
   font-size: var(--font-size-log-label);
   font-weight: bold;

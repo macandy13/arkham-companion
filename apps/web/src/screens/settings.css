@@ -10,7 +10,7 @@
 #settings > section,
 #app > main > section[aria-labelledby='settings-about'] {
   display: grid;
-  grid-template-columns: var(--settings-label-width) 1fr;
+  grid-template-columns: var(--form-label-width) 1fr;
   gap: var(--space-2) var(--space-4);
   align-items: end;
   padding-block: var(--space-3);
@@ -22,7 +22,7 @@
 }
 
 #settings > section:has(> label + label) {
-  grid-template-columns: var(--settings-label-width) 1fr 1fr;
+  grid-template-columns: var(--form-label-width) 1fr 1fr;
 }
 
 #settings > section:has(> label + label) > label + label {
