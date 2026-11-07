@@ -328,6 +328,7 @@ export const theGatheringCardDefs: readonly CardStats[] = [
     typeCode: 'asset',
     unique: true,
     traits: [trait('Ally')],
+    // Her printed sanity (3) isn't entered: no rule reads an ally's sanity yet.
     health: fixed(3),
     encounterCode: sets.theGathering,
     quantity: 1,
@@ -395,6 +396,7 @@ export const theGatheringCardDefs: readonly CardStats[] = [
     traits: ghoulTraits,
     fight: 3,
     evade: 3,
+    // Her printed sanity (3) isn't entered: no rule reads an ally's sanity yet.
     health: fixed(3),
     damage: 1,
     horror: 1,

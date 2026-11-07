@@ -25,6 +25,8 @@ jobs:
       # Skipped in CI's unit tests, which have no fetched cards: holds the hand-entered
       # scenario cards to ArkhamDB's data.
       - run: pnpm vitest run packages/scenarios/src/arkhamdb_check.test.ts
+        env:
+          ARKHAMDB_CHECK: required
       - name: Summarise fetched data
         run: |
           {

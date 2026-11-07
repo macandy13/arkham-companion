@@ -1,6 +1,7 @@
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { CardDef } from '@arkham/carddata';
+// The cache's path lives with the Node-side fetch, not in the package index, which the browser loads.
 import { CACHE_DIR } from '@arkham/carddata/src/fetch';
 import type { CardStats, ScaledValue } from '@arkham/engine';
 import { describe, expect, it } from 'vitest';
@@ -11,6 +12,7 @@ import { MIDNIGHT_MASKS_CODES, theMidnightMasksCardDefs } from './the_midnight_m
 // The scenarios' card stats are entered by hand; this check holds them to ArkhamDB's data so a
 // typo can't hide. It needs the cards `pnpm carddata:fetch` caches (never committed), so it runs
 // where they were fetched (the "Carddata check" workflow) and is skipped elsewhere.
+// `toEqual` leaves out the stats a card has in neither source (`undefined`).
 
 /** The printed values both sources have, in one shape so a mismatch shows as a plain diff. */
 interface PrintedStats {
@@ -42,7 +44,7 @@ function printedValue({ fixed, perInvestigator }: ScaledValue): string {
 
 /** What the card prints, from the hand-entered stats. */
 function enteredStats(stats: CardStats): PrintedStats {
-  return withoutUndefined({
+  return {
     name: stats.name,
     typeCode: stats.typeCode,
     traits: [...stats.traits].sort(),
@@ -59,7 +61,7 @@ function enteredStats(stats: CardStats): PrintedStats {
     horror: stats.horror,
     victory: stats.victory,
     doom: stats.doom && printedValue(stats.doom),
-  });
+  };
 }
 
 /** What the card prints, from ArkhamDB. */
@@ -71,7 +73,7 @@ function arkhamDbStats(def: CardDef): PrintedStats {
         ? `${value} per investigator`
         : `${value}`;
   const enemy = def.typeCode === 'enemy';
-  return withoutUndefined({
+  return {
     name: def.name,
     typeCode: def.typeCode,
     traits: [...def.traits].sort(),
@@ -90,21 +92,19 @@ function arkhamDbStats(def: CardDef): PrintedStats {
     horror: def.horror ?? (enemy ? 0 : undefined),
     victory: def.victory,
     doom: scaled(def.doom, false),
-  });
+  };
 }
 
-function withoutUndefined<T extends object>(value: T): T {
-  return Object.fromEntries(Object.entries(value).filter(([, v]) => v !== undefined)) as T;
-}
-
-/** The Core Set's cards as `pnpm carddata:fetch` cached them, or none when it hasn't run. */
+/**
+ * The Core Set's cards as `pnpm carddata:fetch` cached them, or none when it hasn't run. Where the
+ * workflow fetched them (`ARKHAMDB_CHECK=required`) a missing file fails instead, so a renamed
+ * pack or path can't turn the check into a silent skip.
+ */
 function cachedCoreSet(): readonly CardDef[] {
-  try {
-    return JSON.parse(readFileSync(join(CACHE_DIR, 'en', 'core.json'), 'utf8')) as CardDef[];
-  } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === 'ENOENT') return [];
-    throw error;
-  }
+  const file = join(CACHE_DIR, 'en', 'core.json');
+  if (existsSync(file)) return JSON.parse(readFileSync(file, 'utf8')) as CardDef[];
+  if (process.env.ARKHAMDB_CHECK === 'required') throw new Error(`no fetched cards at ${file}`);
+  return [];
 }
 
 /**
