@@ -45,7 +45,7 @@ describe('opening a play tester record with "Import game"', () => {
     boardBefore: 'recorded',
   } as const;
 
-  it("reads as the app's own export, with every event and its undo group", () => {
+  it("reads as the app's own export, with every event, its undo group and its cause", () => {
     const imported = parseGameExport(gameExport({ run, finding, log }));
 
     expect(imported.title).toBe('Play tester: refusal, goal 24');
