@@ -1,6 +1,7 @@
 import type { PackDef } from '@arkham/carddata';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
+import { sortedPacks } from '../picker/pickerLogic';
 import { campaignCatalog } from '../scenarios/scenarioCatalog';
 import {
   CARD_LANGUAGES,
@@ -31,7 +32,7 @@ export function SettingsScreen({ packs = [] }: SettingsScreenProps) {
   const { t, i18n } = useTranslation();
   const [settings, update] = useSettings();
   useAppBar({ title: t('settings.title'), subtitle: t('appBar.settings'), up: '/' });
-  const owned = packs.filter((pack) => settings.ownedPacks.includes(pack.code));
+  const owned = sortedPacks(packs).filter((pack) => settings.ownedPacks.includes(pack.code));
   const ownedCampaigns = campaignCatalog.filter((campaign) =>
     campaign.packCodes.some((code) => settings.ownedPacks.includes(code)),
   );

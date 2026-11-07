@@ -5,6 +5,7 @@ import { MemoryRouter } from 'react-router';
 import { afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { i18next, initI18n } from '../i18n';
 import { loadSettings, saveSettings, DEFAULT_SETTINGS } from '../settings/settings';
+import { campaignCatalog } from '../scenarios/scenarioCatalog';
 import { SettingsScreen } from './SettingsScreen';
 
 const packs: PackDef[] = [
@@ -33,15 +34,24 @@ describe('SettingsScreen', () => {
   });
 
   it.each([
-    { owned: [], line: 'Nothing ticked yet0 of 1 campaign' },
-    { owned: ['core', 'rcore'], line: 'Core Set, Revised Core Set1 of 1 campaign' },
-  ])('writes the collection $owned as one line that opens its page', ({ owned, line }) => {
+    { owned: [], boxes: 'Nothing ticked yet' },
+    { owned: ['core', 'rcore'], boxes: 'Core Set, Revised Core Set' },
+  ])('writes the owned boxes $owned on the line that opens the collection', ({ owned, boxes }) => {
     saveSettings({ ...DEFAULT_SETTINGS, ownedPacks: owned });
     renderSettings();
 
-    const collection = screen.getByRole('link', { name: /campaign/ });
-    expect(collection.textContent).toBe(line);
+    const collection = screen.getByRole('link', { name: new RegExp(boxes) });
     expect(collection.getAttribute('href')).toBe('/settings/collection');
+  });
+
+  it('counts the campaigns of the app whose boxes are owned', () => {
+    saveSettings({ ...DEFAULT_SETTINGS, ownedPacks: ['core'] });
+    renderSettings();
+
+    // Out of every campaign the app plays, so the count grows as campaigns are added.
+    expect(
+      screen.getByText(`1 of ${campaignCatalog.length} campaign`, { exact: false }),
+    ).toBeTruthy();
   });
 
   it('says the app is an unofficial fan project and credits the publisher', () => {
