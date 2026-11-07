@@ -1,8 +1,7 @@
 import { unique } from '@arkham/util';
 import { byId, type InvestigatorView, type PlayTable } from '@arkham/engine';
-import type { SeededRandom } from './run';
-import { answersByDraw, drawnTestAnswer } from './test_answers';
-import { INVESTIGATOR_VERBS, type InvestigatorVerb, type Step } from './steps';
+import { answersByDraw } from './test_answers';
+import { actionCostOf, INVESTIGATOR_VERBS, type InvestigatorVerb, type Step } from './steps';
 
 /** The verbs any active investigator may use outside their turn, as a card lets them. */
 const ANYTIME_VERBS: readonly InvestigatorVerb[] = ['drawEncounterCard'];
@@ -29,22 +28,37 @@ const TURN_VERBS: readonly InvestigatorVerb[] = INVESTIGATOR_VERBS.filter(
 const RARE_ODDS = 100;
 
 /**
- * The _random_ bot (product.md "Continuous play tester"): any verb the board offers, picked
- * uniformly, then any of that verb's steps. Picking the verb first keeps one verb with many
- * targets (moves) from crowding out the rest. Rare steps (`isRare`) are only one in `RARE_ODDS`.
- * An open skill test of one investigator is answered first, by chaos tokens the bot draws
- * (`drawnTestAnswer`), like players who settle a test before anything else.
+ * The _random_ bot's weights (product.md "Continuous play tester") for the `offered` steps: any
+ * verb the board offers, picked uniformly, then any of that verb's steps, with the rare steps
+ * (`isRare`) only one in `RARE_ODDS`.
  */
-export function randomStep(table: PlayTable, random: SeededRandom): Step {
-  const drawn = drawnTestAnswer(table, random);
-  if (drawn) return drawn;
-  const offered = offeredSteps(table);
-  const rare = offered.filter(isRare);
-  const usual = offered.filter((step) => !isRare(step));
-  const pool =
-    usual.length === 0 || (rare.length > 0 && random.below(RARE_ODDS) === 0) ? rare : usual;
-  const verb = random.pick(unique(pool.map((step) => step.verb)));
-  return random.pick(pool.filter((step) => step.verb === verb));
+export function randomWeights(offered: readonly Step[]): number[] {
+  return rareShareWeights(offered, isRare, 1 / RARE_ODDS);
+}
+
+/**
+ * Weights for the `offered` steps that give the `rare` ones `rareShare` of the picks (all of them
+ * when the board offers nothing else), and the rest the remainder. Within each share every verb
+ * weighs the same and splits its weight over its steps, so one verb with many targets (moves)
+ * does not crowd out the rest.
+ */
+export function rareShareWeights(
+  offered: readonly Step[],
+  rare: (step: Step) => boolean,
+  rareShare: number,
+): number[] {
+  const isRareStep = offered.map(rare);
+  const rareCount = isRareStep.filter(Boolean).length;
+  const share = (stepIsRare: boolean) => {
+    if (rareCount === 0 || rareCount === offered.length) return 1;
+    return stepIsRare ? rareShare : 1 - rareShare;
+  };
+  return offered.map((step, i) => {
+    const pool = offered.filter((_, j) => isRareStep[j] === isRareStep[i]);
+    const verbs = unique(pool.map(({ verb }) => verb)).length;
+    const sameVerb = pool.filter(({ verb }) => verb === step.verb).length;
+    return share(isRareStep[i]!) / verbs / sameVerb;
+  });
 }
 
 /**
@@ -78,7 +92,7 @@ export function offeredSteps(table: PlayTable): Step[] {
 }
 
 /** Corrections by hand, encounter cards a card effect draws, and undo: what players do seldom. */
-function isRare(step: Step): boolean {
+export function isRare(step: Step): boolean {
   return (
     step.verb === 'placeDoom' ||
     step.verb === 'undo' ||
@@ -100,7 +114,10 @@ function decisionAnswers(table: PlayTable): Step[] {
   });
 }
 
-/** The steps of `investigator`'s turn: the basic actions, moves, enemy and card actions. */
+/**
+ * The steps of `investigator`'s turn: the basic actions, moves, enemy and card actions, those
+ * that cost actions only while they have enough left (`actionCostOf`), as players count them.
+ */
 function turnSteps(table: PlayTable, investigator: InvestigatorView): Step[] {
   const { board } = table;
   const { id, name } = investigator;
@@ -129,5 +146,5 @@ function turnSteps(table: PlayTable, investigator: InvestigatorView): Step[] {
       card: cardId,
       action,
     })),
-  ];
+  ].filter((step) => actionCostOf(table, step) <= investigator.actions);
 }

@@ -4,6 +4,8 @@
  *   pnpm playtest --games 500 --seed 7   plays 500 runs drawn from seed 7, prints the summary and
  *                                        writes each failing game's record to
  *                                        `packages/play_tester/.runs/` (or `--out <dir>`)
+ *   pnpm playtest --bot goal             plays only runs of that bot (`random`, `goal`, `chaos`;
+ *                                        all of them by default)
  *   pnpm playtest --replay <record>      replays a record's steps on today's engine and stops at
  *                                        its failing step
  *
@@ -24,7 +26,7 @@ import {
   serialiseRecord,
   type TesterVersion,
 } from './record';
-import { runsFrom } from './run';
+import { BOT_KINDS, runsFrom, type BotKind } from './run';
 import { describeStep } from './steps';
 import { formatSummary, summarise } from './summary';
 
@@ -34,6 +36,7 @@ const { values } = parseArgs({
     seed: { type: 'string', default: '1' },
     replay: { type: 'string' },
     out: { type: 'string' },
+    bot: { type: 'string' },
   },
 });
 
@@ -45,7 +48,7 @@ process.exitCode = values.replay === undefined ? playGames() : replayRecord(valu
 function playGames(): number {
   const games = Number(values.games);
   const seed = Number(values.seed);
-  const results = runsFrom(seed, games).map((run) => checkRun(run));
+  const results = runsFrom(seed, games, bots(values.bot)).map((run) => checkRun(run));
   console.log(`Play tester, seed ${seed}\n${formatSummary(summarise(results))}`);
   const failing = results.filter(({ finding }) => finding);
   if (failing.length === 0) return 0;
@@ -80,6 +83,14 @@ function replayRecord(path: string): number {
     `${now.reproduced ? 'Reproduced' : 'Today it fails differently'}: ${now.finding.check} at step ${now.finding.step}\n${now.finding.message}`,
   );
   return 1;
+}
+
+/** The bots `--bot` names, or all of them; fails for a bot the tester does not have. */
+function bots(named: string | undefined): readonly BotKind[] {
+  if (named === undefined) return BOT_KINDS;
+  const bot = BOT_KINDS.find((kind) => kind === named);
+  if (!bot) throw new Error(`no bot ${named}; the bots are ${BOT_KINDS.join(', ')}`);
+  return [bot];
 }
 
 /** This package's version and the commit it runs on; `unknown` outside a git checkout. */

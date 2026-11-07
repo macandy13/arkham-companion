@@ -704,6 +704,20 @@ export class BoardView {
       }));
   }
 
+  /**
+   * The card action `cardActions` offers `investigator` on the card `card` at index `action`
+   * (`UseCardAction.action`); `undefined` when it offers none there now.
+   */
+  cardAction(
+    investigator: InvestigatorId,
+    card: InstanceId,
+    action: number,
+  ): CardActionView | undefined {
+    return this.cardActions(investigator).find(
+      (offered) => offered.cardId === card && offered.action === action,
+    );
+  }
+
   /** Locations on a map, in map order. */
   get locations(): readonly LocationView[] {
     return Object.keys(this.state.board.maps).flatMap((id) =>

@@ -7,7 +7,7 @@ import type { Step } from './steps';
 export const RECORD_SUFFIX = '.arkham-run.json';
 
 /** The layout version of `RunRecord`; a record of another version is refused, not misread. */
-const RECORD_VERSION = 1;
+const RECORD_VERSION = 2;
 
 /**
  * Which tester wrote a record: the package version and the git commit it ran on, so a replay on a
@@ -101,7 +101,7 @@ export function loggedBoard(record: RunRecord): string {
   return formatBoard(scenarioContext(record.run), replay(record.log.map(({ event }) => event)));
 }
 
-/** A record's file name: the check, the run's two seeds, the ending; unique per failing run. */
+/** A record's file name: the check, the run's bot and its two seeds; unique per failing run. */
 export function recordFileName({ run, finding }: Pick<RunRecord, 'run' | 'finding'>): string {
-  return `${finding.check}-${run.gameSeed}-${run.botSeed}${RECORD_SUFFIX}`;
+  return `${finding.check}-${run.bot}-${run.gameSeed}-${run.botSeed}${RECORD_SUFFIX}`;
 }

@@ -244,9 +244,7 @@ export function gameActions(
     endTurn: () => onTurn((table, investigator) => table.endTurn(investigator)),
     useCardAction: (card, action, spend) =>
       onTurn((table, investigator) => {
-        const offered = table.board
-          .cardActions(investigator)
-          .find((option) => option.cardId === card && option.action === action);
+        const offered = table.board.cardAction(investigator, card, action);
         if (!offered?.free) table.spendAction(investigator);
         table.useCardAction(
           investigator,

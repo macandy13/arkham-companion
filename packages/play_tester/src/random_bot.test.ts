@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest';
-import { range } from '@arkham/util';
 import {
   blankEnemy,
   blankLocation,
@@ -10,8 +9,8 @@ import {
   PlayTable,
   cardName,
 } from '@arkham/engine';
-import { offeredSteps, randomStep } from './random_bot';
-import { SeededRandom } from './run';
+import { offeredSteps, rareShareWeights } from './random_bot';
+import type { Step } from './steps';
 
 const alice = investigatorId('alice');
 const study = instanceId('study');
@@ -58,6 +57,22 @@ describe('the steps the random bot is offered', () => {
     );
   });
 
+  it('offers no action once the actions are spent', () => {
+    const table = PlayTable.start(game.withTurnOf(alice));
+    table.spendAction(alice);
+    table.spendAction(alice);
+    table.spendAction(alice);
+
+    expect(offeredSteps(table)).not.toContainEqual({
+      verb: 'investigate',
+      investigator: cardName('alice'),
+    });
+    expect(offeredSteps(table)).toContainEqual({
+      verb: 'endTurn',
+      investigator: cardName('alice'),
+    });
+  });
+
   it('offers only the options of an open decision, and undo', () => {
     const table = PlayTable.start(game.withTurnOf(alice));
     table.investigate(alice, { result: 'open' });
@@ -68,25 +83,29 @@ describe('the steps the random bot is offered', () => {
       { verb: 'undo' },
     ]);
   });
+});
 
-  it('answers an open test by a token drawn from the bag, and offers only undo besides', () => {
-    const table = PlayTable.start(game.withChaosBag(['+1']).withTurnOf(alice));
-    table.investigate(alice, { result: 'open' });
+describe('weighing the steps by their share', () => {
+  const next = { verb: 'nextPhase' } as const;
+  const undo = { verb: 'undo' } as const;
+  const doom = { verb: 'placeDoom' } as const;
+  const moveTo = (location: string) =>
+    ({ verb: 'moveTo', investigator: cardName('alice'), location: cardName(location) }) as const;
+  const rare = (step: Step) => step.verb === 'undo' || step.verb === 'placeDoom';
 
-    expect(randomStep(table, new SeededRandom(7))).toMatchObject({
-      verb: 'resolveTest',
-      investigator: 'alice',
-      tokens: ['+1'],
-    });
-    expect(offeredSteps(table)).toEqual([{ verb: 'undo' }]);
+  it('gives each verb the same weight, split over its steps', () => {
+    expect(rareShareWeights([next, moveTo('hallway'), moveTo('attic')], rare, 1 / 100)).toEqual([
+      1 / 2,
+      1 / 4,
+      1 / 4,
+    ]);
   });
 
-  it('picks the same steps from the same seed', () => {
-    const table = PlayTable.start(game.withTurnOf(alice));
-    const fivePicks = (random: SeededRandom) => range(5).map(() => randomStep(table, random));
+  it('gives the rare steps their share, split over their verbs', () => {
+    expect(rareShareWeights([next, undo, doom], rare, 1 / 100)).toEqual([0.99, 0.005, 0.005]);
+  });
 
-    const picked = fivePicks(new SeededRandom(7));
-
-    expect(fivePicks(new SeededRandom(7))).toEqual(picked);
+  it('gives the rare steps everything when nothing else is offered', () => {
+    expect(rareShareWeights([undo], rare, 1 / 100)).toEqual([1]);
   });
 });

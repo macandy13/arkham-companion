@@ -10,6 +10,7 @@ import {
   newGame,
   PlayTable,
   cardName,
+  resignAction,
 } from '@arkham/engine';
 import { describeStep, playStep } from './steps';
 
@@ -18,6 +19,7 @@ const study = instanceId('study');
 const hallway = instanceId('hallway');
 const ghoul = instanceId('ghoul');
 const agenda = instanceId('agenda');
+const parlor = instanceId('parlor');
 
 describe('playing a step', () => {
   const game = newGame()
@@ -37,6 +39,48 @@ describe('playing a step', () => {
     });
 
     expect(table.board.investigator(alice).at).toBe('hallway');
+  });
+
+  it('counts off an action before taking it, as the app does', () => {
+    const table = PlayTable.start(game);
+
+    playStep(table, { verb: 'takeResource', investigator: cardName('alice') });
+
+    expect(table.board.investigator(alice)).toMatchObject({ actions: 2, resources: 6 });
+  });
+
+  it.each([
+    { printed: 'a resign', action: resignAction(), actions: 2 },
+    { printed: 'a free resign', action: { ...resignAction(), free: true as const }, actions: 3 },
+  ])('counts off what $printed on a card costs: $actions left', ({ action, actions }) => {
+    const table = PlayTable.start(
+      newGame()
+        .withLocation(parlor, blankLocation('parlor', { actions: [action] }), { revealed: true })
+        .withInvestigator(alice, { locationId: parlor })
+        .withTurnOf(alice),
+    );
+
+    playStep(table, {
+      verb: 'useCardAction',
+      investigator: cardName('alice'),
+      card: parlor,
+      action: 0,
+    });
+
+    expect(table.board.investigator(alice)).toMatchObject({ status: 'resigned', actions });
+  });
+
+  it('leaves the actions as they were when the action is refused', () => {
+    const table = PlayTable.start(game);
+
+    expect(() =>
+      playStep(table, {
+        verb: 'moveTo',
+        investigator: cardName('alice'),
+        location: cardName('study'),
+      }),
+    ).toThrow();
+    expect(table.board.investigator(alice).actions).toBe(3);
   });
 
   it('leaves an investigation open and answers it by the card it is about', () => {

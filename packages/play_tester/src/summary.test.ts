@@ -10,6 +10,7 @@ const run: Run = {
   difficulty: 'standard',
   seats: [cardName('Roland Banks')],
   gameSeed: 24,
+  bot: 'random',
   botSeed: 1,
 };
 
@@ -24,7 +25,7 @@ describe('summing up runs', () => {
     misuses: 1,
   };
   const crashed: RunResult = {
-    run,
+    run: { ...run, bot: 'goal' },
     steps: [{ verb: 'nextPhase' }],
     log: [],
     end: 'finding',
@@ -34,10 +35,10 @@ describe('summing up runs', () => {
     misuses: 0,
   };
 
-  it('counts games, ends, findings, steps, refusals and misuses', () => {
+  it('counts games, ends by bot, findings, steps, refusals and misuses', () => {
     expect(summarise([eliminated, crashed])).toEqual({
       games: 2,
-      ends: { eliminated: 1, finding: 1 },
+      ends: { random: { eliminated: 1 }, goal: { finding: 1 } },
       findings: { crash: 1 },
       steps: 3,
       refusals: { notConnected: 3, decisionPending: 1 },
@@ -49,7 +50,7 @@ describe('summing up runs', () => {
     expect(formatSummary(summarise([eliminated, crashed]))).toBe(
       [
         'Games: 2, steps played: 3',
-        'Ends: eliminated 1, finding 1',
+        'Ends: random: eliminated 1; goal: finding 1',
         'Findings: crash 1',
         'Expected refusals: 4 (notConnected 3, decisionPending 1); misused steps: 1',
       ].join('\n'),

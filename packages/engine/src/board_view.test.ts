@@ -1657,6 +1657,19 @@ describe('card actions', () => {
     ]);
   });
 
+  it('finds one card action by its card and index, and none the card does not offer', () => {
+    const { context, state } = newGame()
+      .withLocation(study, blankLocation('study', { actions: [resignAction()] }), {
+        revealed: true,
+      })
+      .withInvestigator(alice, { locationId: study })
+      .start();
+    const board = boardView(context, state);
+
+    expect(board.cardAction(alice, study, 0)).toMatchObject({ designator: 'resign' });
+    expect(board.cardAction(alice, study, 1)).toBeUndefined();
+  });
+
   it.each([
     { printed: 'one plain action', actions: [{ effects: [] }], numbers: [undefined] },
     {

@@ -98,6 +98,7 @@ describe('playing a run', () => {
     difficulty: 'standard',
     seats: [cardName('Roland Banks')],
     gameSeed: 24,
+    bot: 'random',
     botSeed: 1,
   };
 

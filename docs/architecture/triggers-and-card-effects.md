@@ -135,7 +135,7 @@ The `investigatorTurn` condition ("during any investigator's turn") holds while 
 
 ### Offering actions
 
-`BoardView.cardActions(investigator)` lists the actions the cards in play offer them (`cardActionsOfferedTo`), which the turn row and the card screens show as buttons.
+`BoardView.cardActions(investigator)` lists the actions the cards in play offer them (`cardActionsOfferedTo`), which the turn row and the card screens show as buttons; `cardAction(investigator, card, action)` finds one of them, e.g. to see whether it is free.
 
 - When a card prints more than one action of a kind (two plain ones, two Parleys) each gets a `number` over the printed actions, so its button has a name of its own ("Action 2 · Parlor") that stays put when another drops out.
 - The act's spend-clues advance is left out of that list and of the numbering, since `act.advance` shows it.
