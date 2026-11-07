@@ -45,11 +45,6 @@ function resigns(table: PlayTable, step: Step): boolean {
   const turn = table.board.turn;
   return (
     turn !== undefined &&
-    table.board
-      .cardActions(turn)
-      .some(
-        ({ cardId, action, designator }) =>
-          cardId === step.card && action === step.action && designator === 'resign',
-      )
+    table.board.cardAction(turn, step.card, step.action)?.designator === 'resign'
   );
 }

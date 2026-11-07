@@ -101,7 +101,7 @@ export function loggedBoard(record: RunRecord): string {
   return formatBoard(scenarioContext(record.run), replay(record.log.map(({ event }) => event)));
 }
 
-/** A record's file name: the check, the run's two seeds, the ending; unique per failing run. */
+/** A record's file name: the check, the run's bot and its two seeds; unique per failing run. */
 export function recordFileName({ run, finding }: Pick<RunRecord, 'run' | 'finding'>): string {
   return `${finding.check}-${run.bot}-${run.gameSeed}-${run.botSeed}${RECORD_SUFFIX}`;
 }

@@ -64,8 +64,26 @@ export type Step =
       readonly result: SkillTestResult;
     };
 
-/** The basic action each action verb takes, which the players count off before they take it. */
-const BASIC_ACTION_OF: Partial<Record<Step['verb'], BasicAction>> = {
+/**
+ * The basic action each action verb takes, which the players count off before they take it;
+ * `undefined` for a verb that is no basic action. A full record, so a new verb has to say.
+ */
+const BASIC_ACTION_OF: Record<Step['verb'], BasicAction | undefined> = {
+  nextPhase: undefined,
+  resolveEnemyAttacks: undefined,
+  spendCluesToAdvanceAct: undefined,
+  undo: undefined,
+  placeDoom: undefined,
+  startTurn: undefined,
+  endTurn: undefined,
+  drawEncounterCard: undefined,
+  spendAction: undefined,
+  takeDamage: undefined,
+  takeHorror: undefined,
+  gainResources: undefined,
+  useCardAction: undefined,
+  answer: undefined,
+  resolveTest: undefined,
   investigate: 'investigate',
   moveTo: 'move',
   drawCard: 'draw',
@@ -85,10 +103,7 @@ export function actionCostOf(table: PlayTable, step: Step): number {
   const { board } = table;
   if (step.verb === 'useCardAction') {
     const { id } = board.investigator(byName(step.investigator));
-    const offered = board
-      .cardActions(id)
-      .find(({ cardId, action }) => cardId === step.card && action === step.action);
-    return offered?.free ? 0 : 1;
+    return board.cardAction(id, step.card, step.action)?.free ? 0 : 1;
   }
   const action = BASIC_ACTION_OF[step.verb];
   if (action === undefined || !('investigator' in step)) return 0;
