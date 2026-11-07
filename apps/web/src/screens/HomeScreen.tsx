@@ -19,10 +19,11 @@ import '@fontsource/caveat/latin-500.css';
 import './home.css';
 
 /**
- * Route `/`: while nothing is stored, the welcome page (`WelcomePage`); else the app's title over its three ways in (a new campaign, one scenario, loading an
- * export file), then the shelf: one cover per campaign, its scenario games included, and one per
- * game of one scenario, last played first (`shelfEntries`). It lies on the table rather than on a
- * page (MD.3b).
+ * Route `/`: while nothing is stored, the welcome page on paper (`WelcomePage`, MD.4c). Otherwise
+ * the app's title over its three ways in (a new campaign, one scenario, loading an export file),
+ * then the shelf: one cover per campaign, its scenario games included, and one per game of one
+ * scenario, last played first (`shelfEntries`); this view lies on the table rather than on a page
+ * (MD.3b).
  */
 export function HomeScreen({
   store,

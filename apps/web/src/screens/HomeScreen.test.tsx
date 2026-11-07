@@ -92,14 +92,12 @@ describe('HomeScreen', () => {
 
     expect(await screen.findByText(/Your decks and the cards in your hands stay/)).toBeTruthy();
     const ways = screen.getByRole('navigation', { name: 'Start or load a game' });
-    expect(
-      within(ways)
-        .getAllByRole('link')
-        .map((link) => [link.textContent, link.getAttribute('href')]),
-    ).toEqual([
-      ['New campaignScenario by scenario, with a campaign log', '/new?mode=campaign'],
-      ['One scenarioA standalone game, no campaign log', '/new?mode=quick'],
-    ]);
+    const newCampaign = within(ways).getByRole('link', { name: /New campaign/ });
+    expect(newCampaign.getAttribute('href')).toBe('/new?mode=campaign');
+    expect(within(newCampaign).getByText('Scenario by scenario, with a campaign log')).toBeTruthy();
+    const oneScenario = within(ways).getByRole('link', { name: /One scenario/ });
+    expect(oneScenario.getAttribute('href')).toBe('/new?mode=quick');
+    expect(within(oneScenario).getByText('A standalone game, no campaign log')).toBeTruthy();
     expect(within(ways).getByLabelText('Load a saved game')).toBeTruthy();
     expect(screen.getByText(/unofficial fan project/)).toBeTruthy();
   });
