@@ -72,6 +72,14 @@ export interface RunResult {
   readonly misuses: number;
 }
 
+/** The steps of `result` with its failing one last, as a replay of it plays them. */
+export function attempts({
+  steps,
+  finding,
+}: Pick<RunResult, 'steps' | 'finding'>): readonly Step[] {
+  return finding?.attempted ? [...steps, finding.attempted] : steps;
+}
+
 /** How many steps a game may take before it is cut off, a bound on the tester's own time. */
 export const STEP_CAP = 5000;
 

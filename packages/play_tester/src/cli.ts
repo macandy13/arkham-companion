@@ -28,6 +28,7 @@ import {
 } from './record';
 import { BOT_KINDS, runsFrom, type BotKind } from './run';
 import { describeStep } from './steps';
+import { shrink } from './shrink';
 import { formatSummary, summarise } from './summary';
 
 const { values } = parseArgs({
@@ -59,7 +60,7 @@ function playGames(): number {
   mkdirSync(out, { recursive: true });
   const tester = testerVersion();
   for (const result of failing) {
-    const record = recordOf(result, tester);
+    const record = recordOf(shrink(result), tester);
     const path = join(out, recordFileName(record));
     writeFileSync(path, serialiseRecord(record));
     console.log(`${record.finding.check}: ${path}`);
