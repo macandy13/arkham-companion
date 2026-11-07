@@ -9,7 +9,7 @@ import {
 
 // The setup preview after The Gathering killed Fake Seeker (`@shot`, coding guidelines §3).
 
-test('the replacement picker for the killed Fake Seeker', { tag: '@shot' }, async ({ page }) => {
+test('the replacement picker for the killed Fake Seeker', async ({ page }) => {
   await openStoredCampaign(page, 'Zealot – Fake Seeker', (id) =>
     gatheringKilledEvents(id, [fakeSeeker], fakeSeeker),
   );

@@ -33,7 +33,7 @@ export function SetupStep({ choices, onChange }: SetupStepProps) {
           </label>
         ))}
       </fieldset>
-      <fieldset>
+      <fieldset data-segmented>
         <legend>{t('wizard.difficulty')}</legend>
         {DIFFICULTIES.map((difficulty: Difficulty) => (
           <label key={difficulty}>
