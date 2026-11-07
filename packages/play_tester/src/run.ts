@@ -133,7 +133,7 @@ export function runsFrom(seed: number, games: number, bots: readonly BotKind[] =
 
 /** Blank investigator number `number` of a run (`Blank 1`), with stats drawn from `BLANK_STATS`. */
 export function blankInvestigator(number: number, random: SeededRandom): InvestigatorCard {
-  const between = ([low, high]: readonly [number, number]) => low + random.below(high - low + 1);
+  const between = ([low, high]: readonly [number, number]) => random.between(low, high);
   return {
     code: investigatorCode(`blank_${number}`),
     name: `Blank ${number}`,
@@ -161,6 +161,11 @@ export class SeededRandom {
     const [value, next] = nextInt(this.state, bound);
     this.state = next;
     return value;
+  }
+
+  /** A whole number from `low` to `high`, both included. */
+  between(low: number, high: number): number {
+    return low + this.below(high - low + 1);
   }
 
   /** An unsigned 32-bit number, e.g. a seed. */

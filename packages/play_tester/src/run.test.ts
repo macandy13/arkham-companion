@@ -120,6 +120,8 @@ describe('setting up a run', () => {
 
     expect(table.board.investigators[0]).toMatchObject({
       name: 'Blank 1',
+      health: 1,
+      sanity: 2,
       skills: { willpower: 0, intellect: 1, combat: 2, agility: 0 },
     });
   });
