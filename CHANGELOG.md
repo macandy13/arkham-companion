@@ -2,6 +2,21 @@
 
 The sections dated up to 2026-10-22 were released as 1.0.0 to 1.8.0 by mistake: Release Please starts at 1.0.0 by default. Versioning restarted at 0.1.0 (see "Versions" in docs/product.md).
 
+## [0.1.30](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v0.1.29...arkham-companion-v0.1.30) (2026-11-07)
+
+
+### Features
+
+* **play_tester:** blank stats add up like a real investigator's ([aa786b8](https://github.com/macandy13/arkham-companion/commit/aa786b80d6bb21cf863b8b7a234ce2ca449a89b6))
+* **play_tester:** seat blank investigators with random stats (M1V.4) ([7e0eca1](https://github.com/macandy13/arkham-companion/commit/7e0eca1452daf5988dcf645e2007ac4d5ea3f62e))
+* **web:** wizard step kicker, dots and pinned next step (MD.3d1) ([0d1ccba](https://github.com/macandy13/arkham-companion/commit/0d1ccba228c46f4d512053ffc0573ab98ad8e73f))
+* **web:** wizard step kicker, dots and pinned next step (MD.3d1) ([312951e](https://github.com/macandy13/arkham-companion/commit/312951ed00c27129e79fde4f10f86aa8975fdd1a))
+
+
+### Refactoring
+
+* **web:** share the page kicker rule, wizard review fixes ([36f7924](https://github.com/macandy13/arkham-companion/commit/36f7924bba0ca2b315d894c86d2083663c7f4b27))
+
 ## [0.1.29](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v0.1.28...arkham-companion-v0.1.29) (2026-11-07)
 
 
