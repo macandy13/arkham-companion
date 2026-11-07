@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { scenarioId, cardName, investigatorCode } from '@arkham/engine';
 import { theGathering } from '@arkham/scenarios';
-import { range } from '@arkham/util';
+import { range, sum } from '@arkham/util';
 import {
   blankInvestigator,
   runsFrom,
@@ -42,19 +42,18 @@ describe('the runs of a seed', () => {
 });
 
 describe('a blank investigator', () => {
-  it.each(range(20))('has health and sanity 1 to 9 and skills 0 to 5 (seed %i)', (seed) => {
-    const blank = blankInvestigator(1, new SeededRandom(seed));
+  it.each(range(20))(
+    'has health and sanity 14 or 15 together and skills 12, as real ones (seed %i)',
+    (seed) => {
+      const blank = blankInvestigator(1, new SeededRandom(seed));
 
-    expect(blank).toMatchObject({ code: 'blank_1', name: 'Blank 1' });
-    for (const value of [blank.health, blank.sanity]) {
-      expect(value).toBeGreaterThanOrEqual(1);
-      expect(value).toBeLessThanOrEqual(9);
-    }
-    for (const value of Object.values(blank.skills)) {
-      expect(value).toBeGreaterThanOrEqual(0);
-      expect(value).toBeLessThanOrEqual(5);
-    }
-  });
+      expect(blank).toMatchObject({ code: 'blank_1', name: 'Blank 1' });
+      expect([14, 15]).toContain(blank.health + blank.sanity);
+      expect(Math.min(blank.health, blank.sanity)).toBeGreaterThanOrEqual(1);
+      expect(sum(Object.values(blank.skills))).toBe(12);
+      expect(Object.values(blank.skills).every((skill) => skill >= 0 && skill <= 6)).toBe(true);
+    },
+  );
 });
 
 describe('picking by weight', () => {

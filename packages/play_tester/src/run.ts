@@ -16,6 +16,7 @@ import {
   type RngState,
   type ScenarioContext,
   type ScenarioId,
+  type SkillName,
   type SkillValues,
 } from '@arkham/engine';
 import {
@@ -69,10 +70,12 @@ const INVESTIGATORS: readonly InvestigatorCard[] = [rolandBanks, daisyWalker, we
 const MAX_SEATS = 4;
 
 /**
- * The stats a blank investigator draws from: health and sanity 1 to 9, each skill 0 to 5. Real
- * investigators have 5 to 9 and 1 to 5; lower ones make defeat and elimination happen often.
+ * What a blank investigator's stats add up to, as a real investigator card's do: health and
+ * sanity 14 or 15 together, the four skills 12 (Roland Banks: 9 + 5 and 3 + 3 + 4 + 2). How they
+ * split is random, down to sanity 1 or a skill of 0, so defeat and elimination happen often; a
+ * skill stays at most `maxSkill`.
  */
-const BLANK_STATS = { health: [1, 9], sanity: [1, 9], skill: [0, 5] } as const;
+const BLANK_STATS = { healthAndSanity: [14, 15], skills: 12, maxSkill: 6 } as const;
 
 const DIFFICULTIES: readonly Difficulty[] = ['easy', 'standard', 'hard', 'expert'];
 
@@ -131,18 +134,44 @@ export function runsFrom(seed: number, games: number, bots: readonly BotKind[] =
   });
 }
 
-/** Blank investigator number `number` of a run (`Blank 1`), with stats drawn from `BLANK_STATS`. */
+/**
+ * Blank investigator number `number` of a run (`Blank 1`), with stats that add up as
+ * `BLANK_STATS` says, split at random.
+ */
 export function blankInvestigator(number: number, random: SeededRandom): InvestigatorCard {
-  const between = ([low, high]: readonly [number, number]) => random.between(low, high);
+  const [fewest, most] = BLANK_STATS.healthAndSanity;
+  const healthAndSanity = random.between(fewest, most);
+  const health = random.between(1, healthAndSanity - 1);
   return {
     code: investigatorCode(`blank_${number}`),
     name: `Blank ${number}`,
-    health: between(BLANK_STATS.health),
-    sanity: between(BLANK_STATS.sanity),
-    skills: Object.fromEntries(
-      SKILL_NAMES.map((skill) => [skill, between(BLANK_STATS.skill)]),
-    ) as SkillValues,
+    health,
+    sanity: healthAndSanity - health,
+    skills: randomSkills(random),
   };
+}
+
+/**
+ * Skills that add up to `BLANK_STATS.skills`, each from 0 to `maxSkill`. They are drawn in a
+ * random order, each from what the ones still to draw leave possible, so no skill is always the
+ * leftover.
+ */
+function randomSkills(random: SeededRandom): SkillValues {
+  const { maxSkill } = BLANK_STATS;
+  const order = [...SKILL_NAMES];
+  const skills: Partial<Record<SkillName, number>> = {};
+  let left: number = BLANK_STATS.skills;
+  while (order.length > 0) {
+    const skill = order.splice(random.below(order.length), 1)[0]!;
+    const after = order.length * maxSkill;
+    const value =
+      order.length === 0
+        ? left
+        : random.between(Math.max(0, left - after), Math.min(maxSkill, left));
+    skills[skill] = value;
+    left -= value;
+  }
+  return Object.fromEntries(SKILL_NAMES.map((skill) => [skill, skills[skill]])) as SkillValues;
 }
 
 /**
