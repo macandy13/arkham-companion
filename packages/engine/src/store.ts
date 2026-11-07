@@ -238,6 +238,13 @@ export interface GameStore {
    * play, so `updatedAt` stays. Rejects for unknown campaigns.
    */
   setCampaignReliance(campaignId: CampaignId, reliance: Reliance): Promise<void>;
+  /** Changes the title of a campaign, like `renameGame`: not play, so `updatedAt` stays. Rejects for unknown campaigns. */
+  renameCampaign(campaignId: CampaignId, title: string): Promise<void>;
+  /**
+   * Permanently removes a campaign with its log and every game of its scenarios (`NewGame.campaignId`),
+   * since those games can't go on without it. Unknown campaigns are ignored.
+   */
+  deleteCampaign(campaignId: CampaignId): Promise<void>;
   /**
    * Appends campaign events like `appendEvents` does for a game: one call is one
    * undo group, a stale `expectedSeq` rejects and writes nothing, and `causes`

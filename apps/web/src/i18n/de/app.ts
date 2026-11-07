@@ -934,6 +934,8 @@ export const appTexts = {
   },
   campaignList: {
     readLog: 'Protokoll lesen',
+    deleteWarning:
+      'Das Kampagnenprotokoll und die Spiele seiner Szenarien werden von diesem Gerät entfernt. Das kann nicht rückgängig gemacht werden.',
     result: {
       won: 'Die Ermittler haben gewonnen',
       lost: 'Die Ermittler haben verloren',

@@ -929,6 +929,8 @@ export const appTexts = {
   },
   campaignList: {
     readLog: 'Read the log',
+    deleteWarning:
+      'The campaign log and the games of its scenarios are removed from this device. This cannot be undone.',
     result: {
       won: 'The investigators won',
       lost: 'The investigators lost',
