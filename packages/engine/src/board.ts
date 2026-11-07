@@ -82,7 +82,7 @@ export function openConnections(ctx: EngineContext, state: GameState): Edge[] {
  * connection cut one way is left one-way the other, and one cut every way it goes is gone.
  */
 export function uncutPrintedConnections(ctx: EngineContext, state: GameState): Edge[] {
-  const cuts = Object.values(state.board.maps).flatMap((map) => map.cutConnections);
+  const cuts = Object.values(state.board.maps).flatMap((map) => map.cutConnections ?? []);
   const cut = (from: InstanceId, to: InstanceId) =>
     cuts.some((edge) => neighboursOver([edge], from).includes(to));
   return printedConnections(ctx, state).flatMap((edge): Edge[] => {
@@ -111,6 +111,12 @@ function joinOpposites(edges: readonly Edge[]): Edge[] {
     else joined.push(edge);
   }
   return joined;
+}
+
+/** Whether `edges` allow any move `edge` allows: from its `from`, or back unless one-way. */
+export function allowsSomeMove(edges: readonly Edge[], edge: Edge): boolean {
+  const leads = (from: InstanceId, to: InstanceId) => neighboursOver(edges, from).includes(to);
+  return leads(edge.from, edge.to) || (!edge.oneWay && leads(edge.to, edge.from));
 }
 
 /** Whether `edges` already allow each move `edge` allows: from its `from`, and back unless one-way. */

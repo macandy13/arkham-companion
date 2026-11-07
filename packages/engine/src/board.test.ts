@@ -314,7 +314,6 @@ describe('AddMap', () => {
       name: 'Wing',
       visible: true,
       connections: [edge('attic', 'hall')],
-      cutConnections: [],
       layout: {},
     });
     expect(next.cards[attic]).toMatchObject({ zone: { kind: 'location', mapId: wing } });
@@ -538,6 +537,23 @@ describe('neighbours along the printed connection symbols', () => {
       expect(state.board.maps[main]?.cutConnections).toEqual([cut]);
     },
   );
+
+  it('lose a move both declared and printed when an effect removes it', () => {
+    const { context, state: started } = woodsByThePath
+      .withConnection(path, woods, { oneWay: true })
+      .start();
+
+    const state = stateAfter(context, started, {
+      type: 'RemoveConnection',
+      from: path,
+      to: woods,
+      oneWay: true,
+    });
+
+    expect(neighbours(context, state, path)).toEqual([]);
+    expect(neighbours(context, state, woods)).toEqual([path]);
+    expect(state.board.maps[main]?.connections).toEqual([]);
+  });
 
   it('stay cut when a revealed side prints the connection again', () => {
     const { context, state: started } = woodsByThePath.start();

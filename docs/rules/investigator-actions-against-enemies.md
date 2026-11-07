@@ -18,6 +18,7 @@
 - [Move](https://arkhamdb.com/rules#Move): to a connecting location unless the effect says otherwise.
   - The connections are read from the card of the location you leave, on its side that is up: a location connects to each one whose symbol it prints at its foot. So a connection only one of the two cards prints goes one way; the 2026 rulebook ("Move") notes that revealing a location can change its connections, into a one-way route among others.
   - Card text can add connections no symbol shows, as long as its side is up (the Main Path "is connected to each other Woods location").
+  - Card text can also remove one ("X is no longer connected to Y"): no move over it remains, even where the symbols still show it, also after a location flips (it doesn't leave play). Removing it from X only, when Y still prints X, leaves the way back open (our reading; no rule says which way it applies). This is not blocking: a connection a card ability blocks still counts for hunters and "nearest" ([Nearest](https://arkhamdb.com/rules#Nearest)), so the hunter doesn't move ([Hunter](https://arkhamdb.com/rules#Hunter)).
   - Hunters, patrols and "nearest" go by the same one-way connections ([Hunter](https://arkhamdb.com/rules#Hunter), [Nearest](https://arkhamdb.com/rules#Nearest)).
   - Leaving and entering happen together, and "moved to X" goes straight there.
   - A move to the current location, or one with no valid destination, can't happen.

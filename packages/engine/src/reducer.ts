@@ -331,7 +331,7 @@ function applyConnectionChanged(state: GameState, e: ConnectionChanged): GameSta
       changed = { ...map, connections: map.connections.filter((edge) => !sameEdge(edge, e.edge)) };
       break;
     case 'cut':
-      changed = { ...map, cutConnections: [...map.cutConnections, e.edge] };
+      changed = { ...map, cutConnections: [...(map.cutConnections ?? []), e.edge] };
       break;
   }
   return {

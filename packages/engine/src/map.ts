@@ -52,12 +52,13 @@ export interface GameMap {
   /** Connections between locations of this map. */
   connections: Edge[];
   /**
-   * Printed connections from this map's locations that an effect cut ("is no longer connected
-   * to", `RemoveConnection`): each blocks the moves it allows, so `openConnections` leaves them out
-   * whatever the symbols say. Printed connections are derived, never stored, so a cut is the only
-   * way to take one away.
+   * Printed connections from this map's locations that card text removed ("is no longer connected
+   * to", `RemoveConnection`): `openConnections` leaves out the moves each allows, whatever the
+   * symbols say. Printed connections are derived, never stored, so a cut is the only way to take
+   * one away. Not for an effect that blocks a move: a blocked connection still counts for
+   * "nearest" and hunter paths (RR "Nearest", "Hunter"). Absent until the first cut.
    */
-  cutConnections: Edge[];
+  cutConnections?: Edge[];
   /**
    * Where the book layout draws each location of this map. A location without a cell has no
    * book position (the screen places it itself); a cell whose location has left play is ignored.
@@ -91,7 +92,6 @@ export function createMap(spec: MapSpec): GameMap {
     name: spec.name,
     visible: spec.visible ?? true,
     connections: [...(spec.connections ?? [])],
-    cutConnections: [],
     layout: { ...spec.layout },
   };
 }

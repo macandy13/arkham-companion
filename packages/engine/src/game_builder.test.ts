@@ -134,7 +134,6 @@ describe('newGame', () => {
       name: 'Annex',
       visible: false,
       connections: [{ from: study, to: hallway, oneWay: false }],
-      cutConnections: [],
       layout: {},
     });
     expect(state.board.maps[mapId('main')]?.connections).toEqual([]);
