@@ -1,4 +1,4 @@
-import { checkedStep, type Finding, type RunResult } from './play_run';
+import { attempts, checkedStep, type Finding, type RunResult } from './play_run';
 import { setUpTable, type Run } from './run';
 import type { Step } from './steps';
 
@@ -24,6 +24,7 @@ export function shrink(result: RunResult, tries = SHRINK_TRIES): RunResult {
   const budget = { left: tries };
   let best = result;
   for (const seat of result.run.seats.slice(1)) {
+    if (budget.left <= 0) return best;
     const fewer = failsAlike(
       withoutSeat(best.run, seat),
       withoutInvestigator(best, seat),
@@ -55,14 +56,13 @@ export function shrink(result: RunResult, tries = SHRINK_TRIES): RunResult {
   return best;
 }
 
-/** The steps of a failing `result` with the failing one last. */
-function attempts({ steps, finding }: RunResult): readonly Step[] {
-  return finding?.attempted ? [...steps, finding.attempted] : steps;
-}
-
-/** `run` without the investigator in `seat`. */
+/** `run` without the investigator in `seat`, a blank one's card included. */
 function withoutSeat(run: Run, seat: Run['seats'][number]): Run {
-  return { ...run, seats: run.seats.filter((name) => name !== seat) };
+  return {
+    ...run,
+    seats: run.seats.filter((name) => name !== seat),
+    blanks: run.blanks.filter(({ name }) => name !== seat),
+  };
 }
 
 /** The steps of `result` without those the investigator in `seat` takes. */

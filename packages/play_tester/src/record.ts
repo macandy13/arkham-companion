@@ -1,5 +1,5 @@
 import { formatBoard, replay, type LoggedEvent } from '@arkham/engine';
-import { checkedStep, checkRun, type Finding, type RunResult } from './play_run';
+import { attempts, checkedStep, checkRun, type Finding, type RunResult } from './play_run';
 import { scenarioContext, setUpTable, type Run } from './run';
 import type { Step } from './steps';
 
@@ -77,14 +77,13 @@ export interface StepReplay {
  * own tests cover the comparison; an engine that is not deterministic cannot be built for a test).
  */
 export function replaySteps(record: RunRecord): StepReplay {
-  const { run, steps, finding: recorded } = record;
+  const { run, finding: recorded } = record;
   if (recorded.check === 'determinism' || recorded.check === 'resume') {
     const { finding } = checkRun(run);
     return { ...(finding && { finding }), reproduced: finding?.check === recorded.check };
   }
   const table = setUpTable(run);
-  const attempts: readonly Step[] = recorded.attempted ? [...steps, recorded.attempted] : steps;
-  for (const [index, step] of attempts.entries()) {
+  for (const [index, step] of attempts(record).entries()) {
     const outcome = checkedStep(table, step);
     if (outcome.kind !== 'failed') continue;
     const finding: Finding = { ...outcome.failed, step: index, attempted: step };
