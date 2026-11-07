@@ -1,4 +1,4 @@
-import type { Chapter, InvestigatorDef, PackDef } from '@arkham/carddata';
+import type { CardCode, Chapter, InvestigatorDef, PackDef } from '@arkham/carddata';
 
 /** Filter state of the investigator picker; an empty/absent field means "no restriction". */
 export interface PickerFilters {
@@ -62,7 +62,7 @@ export function sortedPacks(packs: readonly PackDef[]): PackDef[] {
 }
 
 /** The seat (1-based) that `code` holds in `seats`, or nothing when it is not seated. */
-export function seatNumber(seats: readonly string[], code: string): number | undefined {
+export function seatNumber(seats: readonly CardCode[], code: CardCode): number | undefined {
   const index = seats.indexOf(code);
   return index < 0 ? undefined : index + 1;
 }

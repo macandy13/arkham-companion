@@ -1,4 +1,4 @@
-import type { InvestigatorDef } from '@arkham/carddata';
+import type { CardCode, InvestigatorDef } from '@arkham/carddata';
 import type {
   CampaignInvestigator,
   CampaignLog,
@@ -23,7 +23,7 @@ export function replacementCandidates(
   code: InvestigatorCode,
 ): InvestigatorDef[] {
   const byCode = new Map(investigators.map((investigator) => [investigator.code, investigator]));
-  const original = (taken: string) => {
+  const original = (taken: CardCode) => {
     const investigator = byCode.get(taken);
     return investigator ? originalOf(investigator) : taken;
   };

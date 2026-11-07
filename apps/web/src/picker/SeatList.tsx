@@ -1,11 +1,11 @@
-import type { InvestigatorDef } from '@arkham/carddata';
+import type { CardCode, InvestigatorDef } from '@arkham/carddata';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { moveSeat } from './pickerLogic';
 
 interface SeatListProps {
   readonly seats: readonly InvestigatorDef[];
-  readonly onSeatsChange: (codes: string[]) => void;
+  readonly onSeatsChange: (codes: CardCode[]) => void;
 }
 
 /**

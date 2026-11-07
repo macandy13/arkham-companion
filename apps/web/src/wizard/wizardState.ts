@@ -1,3 +1,4 @@
+import type { CardCode } from '@arkham/carddata';
 import {
   DEFAULT_RELIANCE,
   RELIANCES,
@@ -32,7 +33,7 @@ export interface WizardChoices {
   /** How much the players rely on the helpers in the game or the whole campaign. */
   reliance: Reliance;
   /** Investigator codes in seat order. */
-  seats: string[];
+  seats: CardCode[];
 }
 
 const STORAGE_KEY = 'arkham.newGameWizard';

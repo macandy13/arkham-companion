@@ -2,13 +2,18 @@
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { useState } from 'react';
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
-import type { CardCatalog, InvestigatorDef } from '@arkham/carddata';
+import {
+  type CardCatalog,
+  type CardCode,
+  type InvestigatorDef,
+  toCardCode,
+} from '@arkham/carddata';
 import { initI18n } from '../i18n';
 import { InvestigatorPicker } from './InvestigatorPicker';
 
 function makeInvestigator(overrides: Partial<InvestigatorDef>): InvestigatorDef {
   return {
-    code: 'x',
+    code: toCardCode('x'),
     name: 'X',
     factionCode: 'neutral',
     health: 7,
@@ -24,12 +29,12 @@ function makeInvestigator(overrides: Partial<InvestigatorDef>): InvestigatorDef 
 
 const catalog: CardCatalog = {
   packs: [
-    { code: 'pack1', name: 'First Pack', position: 1, cyclePosition: 1, chapter: 1 },
-    { code: 'pack2', name: 'Second Pack', position: 1, cyclePosition: 2, chapter: 2 },
+    { code: toCardCode('pack1'), name: 'First Pack', position: 1, cyclePosition: 1, chapter: 1 },
+    { code: toCardCode('pack2'), name: 'Second Pack', position: 1, cyclePosition: 2, chapter: 2 },
   ],
   investigators: [
     makeInvestigator({
-      code: 'a1',
+      code: toCardCode('a1'),
       name: 'Alder',
       factionCode: 'seeker',
       health: 6,
@@ -37,21 +42,21 @@ const catalog: CardCatalog = {
       skills: { willpower: 1, intellect: 4, combat: 2, agility: 3 },
       imageSrc: '/front.png',
       backImageSrc: '/back.png',
-      otherChapterCode: 'a2',
+      otherChapterCode: toCardCode('a2'),
     }),
     makeInvestigator({
-      code: 'a2',
+      code: toCardCode('a2'),
       name: 'Alder',
       factionCode: 'seeker',
       chapter: 2,
       packCode: 'pack2',
       cyclePosition: 2,
-      otherChapterCode: 'a1',
+      otherChapterCode: toCardCode('a1'),
     }),
-    makeInvestigator({ code: 'b1', name: 'Birch', factionCode: 'rogue' }),
-    makeInvestigator({ code: 'c1', name: 'Cedar', factionCode: 'mystic' }),
-    makeInvestigator({ code: 'd1', name: 'Dogwood' }),
-    makeInvestigator({ code: 'e1', name: 'Elm' }),
+    makeInvestigator({ code: toCardCode('b1'), name: 'Birch', factionCode: 'rogue' }),
+    makeInvestigator({ code: toCardCode('c1'), name: 'Cedar', factionCode: 'mystic' }),
+    makeInvestigator({ code: toCardCode('d1'), name: 'Dogwood' }),
+    makeInvestigator({ code: toCardCode('e1'), name: 'Elm' }),
   ],
 };
 
@@ -62,9 +67,9 @@ function Harness({
 }: {
   initialSeats?: string[];
   ownedPacks?: ReadonlySet<string>;
-  onSeats?: (codes: string[]) => void;
+  onSeats?: (codes: CardCode[]) => void;
 }) {
-  const [seats, setSeats] = useState(initialSeats);
+  const [seats, setSeats] = useState(initialSeats.map(toCardCode));
   return (
     <InvestigatorPicker
       catalog={catalog}
@@ -281,7 +286,7 @@ describe('InvestigatorPicker', () => {
       'Rowan',
       'Willow',
     ];
-    const trees = eleven.map((name) => makeInvestigator({ code: name, name }));
+    const trees = eleven.map((name) => makeInvestigator({ code: toCardCode(name), name }));
     render(
       <InvestigatorPicker
         catalog={{ packs: catalog.packs, investigators: trees }}

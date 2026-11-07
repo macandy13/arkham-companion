@@ -2,7 +2,7 @@
 import 'fake-indexeddb/auto';
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter, Route, Routes, useParams } from 'react-router';
-import type { CardCatalog } from '@arkham/carddata';
+import { type CardCatalog, toCardCode } from '@arkham/carddata';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import {
   campaignDefinitionId,
@@ -62,10 +62,12 @@ async function storeCampaign(events: (id: CampaignId) => CampaignEvent[]) {
 
 /** The catalog the setup preview takes the team's card stats from: Roland Banks alone. */
 const rolandCatalog: CardCatalog = {
-  packs: [{ code: 'core', name: 'Core Set', position: 1, cyclePosition: 1, chapter: 1 }],
+  packs: [
+    { code: toCardCode('core'), name: 'Core Set', position: 1, cyclePosition: 1, chapter: 1 },
+  ],
   investigators: [
     {
-      code: '01001',
+      code: toCardCode('01001'),
       name: 'Roland Banks',
       factionCode: 'guardian',
       health: 9,
@@ -85,7 +87,7 @@ const rolandAndDaisyCatalog: CardCatalog = {
   investigators: [
     ...rolandCatalog.investigators,
     {
-      code: '01002',
+      code: toCardCode('01002'),
       name: 'Daisy Walker',
       factionCode: 'seeker',
       health: 5,

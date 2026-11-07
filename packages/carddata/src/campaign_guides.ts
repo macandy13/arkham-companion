@@ -1,3 +1,4 @@
+import { toCardCode, type CardCode } from './card_code';
 import { z } from 'zod';
 import { opt } from './raw_schema';
 
@@ -32,7 +33,7 @@ export interface LayoutPosition {
 export type LayoutSlot =
   | {
       readonly kind: 'card';
-      readonly code: string;
+      readonly code: CardCode;
       readonly side: CardSide;
       readonly at: LayoutPosition;
     }
@@ -159,7 +160,8 @@ function layoutSlot(
   names: ReadonlyMap<string, string>,
 ): LayoutSlot {
   const card = CARD_CELL.exec(cell);
-  if (card?.[1]) return { kind: 'card', code: card[1], side: card[2] ? 'back' : 'front', at };
+  if (card?.[1])
+    return { kind: 'card', code: toCardCode(card[1]), side: card[2] ? 'back' : 'front', at };
   const name = names.get(cell);
   return { kind: 'named', key: cell, ...(name === undefined ? {} : { name }), at };
 }

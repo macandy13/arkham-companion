@@ -1,3 +1,4 @@
+import { CardCodeSchema, type CardCode } from './card_code';
 import { z } from 'zod';
 import { opt } from './raw_schema';
 import { chapterOfPack, type Chapter, type PackDef } from './packs';
@@ -22,7 +23,7 @@ export function classOf(factionCode: string | undefined): InvestigatorClass | un
 
 /** Investigator entry of the catalog the picker lists; see `buildInvestigatorCatalog`. */
 export interface InvestigatorDef {
-  code: string;
+  code: CardCode;
   name: string;
   subname?: string;
   factionCode: string;
@@ -49,18 +50,18 @@ export interface InvestigatorDef {
   imageSrc?: string;
   backImageSrc?: string;
   /** ArkhamDB `duplicate_of_code`; true reprints are removed from the catalog. */
-  duplicateOfCode?: string;
+  duplicateOfCode?: CardCode;
   /** True for parallel versions; they stay in the catalog and point to their original. */
   parallel: boolean;
-  parallelOfCode?: string;
+  parallelOfCode?: CardCode;
   chapter: Chapter;
   /** The same investigator in the other chapter, if the catalog has one. */
-  otherChapterCode?: string;
+  otherChapterCode?: CardCode;
 }
 
 /** Raw ArkhamDB investigator shape, checked at runtime because the API is external. */
 const RawInvestigatorSchema = z.object({
-  code: z.string(),
+  code: CardCodeSchema,
   name: z.string(),
   subname: opt(z.string()),
   faction_code: z.string(),
@@ -76,8 +77,8 @@ const RawInvestigatorSchema = z.object({
   pack_code: z.string(),
   imagesrc: opt(z.string()),
   backimagesrc: opt(z.string()),
-  duplicate_of_code: opt(z.string()),
-  alternate_of_code: opt(z.string()),
+  duplicate_of_code: opt(CardCodeSchema),
+  alternate_of_code: opt(CardCodeSchema),
 });
 
 /** Keep only investigator entries of a full `/api/public/cards/` response. */

@@ -1,4 +1,4 @@
-import type { CardCatalog } from '@arkham/carddata';
+import type { CardCatalog, CardCode } from '@arkham/carddata';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { investigatorCode, type InvestigatorCode } from '@arkham/engine';
@@ -23,7 +23,7 @@ export function ReplacementPicker({
 }) {
   const { t } = useTranslation();
   const dialog = useRef<HTMLDialogElement>(null);
-  const [seats, setSeats] = useState<string[]>([]);
+  const [seats, setSeats] = useState<CardCode[]>([]);
   const [chosen] = seats;
 
   useEffect(() => {

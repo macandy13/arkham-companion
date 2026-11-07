@@ -3,7 +3,7 @@ import 'fake-indexeddb/auto';
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
-import type { CardCatalog } from '@arkham/carddata';
+import { type CardCatalog, toCardCode } from '@arkham/carddata';
 import { STATE_VERSION, campaignDefinitionId, investigatorCode, scenarioId } from '@arkham/engine';
 import { initI18n } from '../i18n';
 import { createAppStore } from '../state/appStore';
@@ -18,7 +18,7 @@ const rolandCatalog: CardCatalog = {
   packs: [],
   investigators: [
     {
-      code: '01001',
+      code: toCardCode('01001'),
       name: 'Roland Banks',
       factionCode: 'guardian',
       health: 9,

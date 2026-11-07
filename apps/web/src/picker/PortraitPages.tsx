@@ -1,4 +1,4 @@
-import type { InvestigatorDef } from '@arkham/carddata';
+import type { CardCode, InvestigatorDef } from '@arkham/carddata';
 import { SKILL_NAMES } from '@arkham/engine';
 import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -14,9 +14,9 @@ interface PortraitPagesProps {
   /** The investigators to show, already filtered and in alphabetical order (`applyPickerFilters`). */
   readonly investigators: readonly InvestigatorDef[];
   /** Investigator codes in seat order, to mark the seated ones. */
-  readonly seats: readonly string[];
+  readonly seats: readonly CardCode[];
   readonly imageUrl: (src: string) => string;
-  readonly onOpen: (code: string) => void;
+  readonly onOpen: (code: CardCode) => void;
 }
 
 /**

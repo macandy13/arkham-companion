@@ -5,6 +5,7 @@ import {
   fetchCatalog,
   normalisePacks,
   printedInvestigatorOf,
+  toCardCode,
   type FetchFn,
 } from './index';
 
@@ -274,12 +275,12 @@ describe('printedInvestigatorOf', () => {
       packs,
     };
 
-    expect(printedInvestigatorOf(catalog, '1001')).toMatchObject({
+    expect(printedInvestigatorOf(catalog, toCardCode('1001'))).toMatchObject({
       subname: 'The Tester',
       factionCode: 'guardian',
       traits: 'Tester.',
     });
-    expect(printedInvestigatorOf(catalog, '9999')).toBeUndefined();
+    expect(printedInvestigatorOf(catalog, toCardCode('9999'))).toBeUndefined();
   });
 });
 

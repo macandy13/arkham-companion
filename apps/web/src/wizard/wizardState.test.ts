@@ -1,3 +1,4 @@
+import { toCardCode } from '@arkham/carddata';
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
@@ -51,20 +52,24 @@ describe('chosenScenario', () => {
 
 describe('saved choices', () => {
   it('restores what was saved for the same mode', () => {
-    const choices = { ...defaultChoices('quick'), difficulty: 'hard' as const, seats: ['a', 'b'] };
+    const choices = {
+      ...defaultChoices('quick'),
+      difficulty: 'hard' as const,
+      seats: [toCardCode('a'), toCardCode('b')],
+    };
     saveChoices(choices);
 
     expect(loadChoices('quick')).toEqual(choices);
   });
 
   it('starts fresh for the other mode', () => {
-    saveChoices({ ...defaultChoices('quick'), seats: ['a'] });
+    saveChoices({ ...defaultChoices('quick'), seats: [toCardCode('a')] });
 
     expect(loadChoices('campaign')).toEqual(defaultChoices('campaign'));
   });
 
   it('starts fresh after clearChoices', () => {
-    saveChoices({ ...defaultChoices('quick'), seats: ['a'] });
+    saveChoices({ ...defaultChoices('quick'), seats: [toCardCode('a')] });
     clearChoices();
 
     expect(loadChoices('quick')).toEqual(defaultChoices('quick'));

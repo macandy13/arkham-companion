@@ -1,3 +1,4 @@
+import type { CardCode } from './card_code';
 import { buildInvestigatorCatalog, type InvestigatorDef } from './investigators';
 import { normalisePacks, type PackDef } from './packs';
 import {
@@ -23,12 +24,12 @@ export interface CardCatalog {
    * The printed texts of the scenario reference cards, by card code (`buildReferences`); absent in
    * a catalog cached before the app read them, until its next refresh.
    */
-  references?: Record<string, ReferenceTexts>;
+  references?: Record<CardCode, ReferenceTexts>;
   /**
    * The pictures of the scenario reference cards' sides, by card code (`buildReferencePictures`);
    * absent in a catalog cached before the app read them, until its next refresh.
    */
-  referencePictures?: Record<string, ReferencePictures>;
+  referencePictures?: Record<CardCode, ReferencePictures>;
   /** `Last-Modified` of the cards response; sent back as `If-Modified-Since` on refresh. */
   lastModified?: string;
 }
@@ -47,7 +48,7 @@ export type PrintedInvestigator = Pick<
 /** What the investigator card `code` prints, if the catalog lists it. */
 export function printedInvestigatorOf(
   catalog: CardCatalog,
-  code: string,
+  code: CardCode,
 ): PrintedInvestigator | undefined {
   return catalog.investigators.find((investigator) => investigator.code === code);
 }

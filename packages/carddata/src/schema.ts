@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { CardCodeSchema, type CardCode } from './card_code';
 import { opt } from './raw_schema';
 import { entersThreatArea, parseKeywords, type Keyword } from './keywords';
 
@@ -8,7 +9,7 @@ import { entersThreatArea, parseKeywords, type Keyword } from './keywords';
  * after the raw ArkhamDB input has been validated by `RawCardSchema`.
  */
 export interface CardDef {
-  code: string;
+  code: CardCode;
   name: string;
   subname?: string;
   typeCode: string;
@@ -24,7 +25,7 @@ export interface CardDef {
   backText?: string;
   backFlavor?: string;
   doubleSided: boolean;
-  linkedToCode?: string;
+  linkedToCode?: CardCode;
   isUnique: boolean;
   stage?: number;
   // Locations
@@ -56,7 +57,7 @@ export interface CardDef {
  * because ArkhamDB is an external API whose fields can be null, missing or renamed.
  */
 const RawCardSchema = z.object({
-  code: z.string(),
+  code: CardCodeSchema,
   name: z.string(),
   subname: opt(z.string()),
   type_code: z.string(),
@@ -72,7 +73,7 @@ const RawCardSchema = z.object({
   back_text: opt(z.string()),
   back_flavor: opt(z.string()),
   double_sided: opt(z.boolean()),
-  linked_to_code: opt(z.string()),
+  linked_to_code: opt(CardCodeSchema),
   is_unique: opt(z.boolean()),
   stage: opt(z.number().int()),
   shroud: opt(z.number().int()),

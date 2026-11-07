@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { InvestigatorDef, PackDef } from '@arkham/carddata';
+import { type InvestigatorDef, type PackDef, toCardCode } from '@arkham/carddata';
 import {
   activeFilterCount,
   applyPickerFilters,
@@ -11,7 +11,7 @@ import {
 
 function makeInvestigator(overrides: Partial<InvestigatorDef>): InvestigatorDef {
   return {
-    code: 'x',
+    code: toCardCode('x'),
     name: 'X',
     factionCode: 'neutral',
     health: 7,
@@ -26,21 +26,28 @@ function makeInvestigator(overrides: Partial<InvestigatorDef>): InvestigatorDef 
 }
 
 function makePack(overrides: Partial<PackDef>): PackDef {
-  return { code: 'p1', name: 'Pack', position: 1, cyclePosition: 1, chapter: 1, ...overrides };
+  return {
+    code: toCardCode('p1'),
+    name: 'Pack',
+    position: 1,
+    cyclePosition: 1,
+    chapter: 1,
+    ...overrides,
+  };
 }
 
 describe('applyPickerFilters', () => {
   const none = { search: '', factions: [], onlyOwned: false };
-  const alder = makeInvestigator({ code: 'a', name: 'Alder', factionCode: 'seeker' });
+  const alder = makeInvestigator({ code: toCardCode('a'), name: 'Alder', factionCode: 'seeker' });
   const alder2 = makeInvestigator({
-    code: 'a2',
+    code: toCardCode('a2'),
     name: 'Alder',
     factionCode: 'seeker',
     chapter: 2,
     packCode: 'p2',
   });
   const birch = makeInvestigator({
-    code: 'b',
+    code: toCardCode('b'),
     name: 'Birch',
     factionCode: 'rogue',
     cyclePosition: 2,
@@ -53,9 +60,9 @@ describe('applyPickerFilters', () => {
   });
 
   it('sorts names in quotes by their letters', () => {
-    const ashcan = makeInvestigator({ code: 'ashcan', name: '"Ashcan" Pete' });
-    const agnes = makeInvestigator({ code: 'agnes', name: 'Agnes Baker' });
-    const bob = makeInvestigator({ code: 'bob', name: 'Bob Jenkins' });
+    const ashcan = makeInvestigator({ code: toCardCode('ashcan'), name: '"Ashcan" Pete' });
+    const agnes = makeInvestigator({ code: toCardCode('agnes'), name: 'Agnes Baker' });
+    const bob = makeInvestigator({ code: toCardCode('bob'), name: 'Bob Jenkins' });
 
     const sorted = applyPickerFilters([bob, ashcan, agnes], none).map((i) => i.code);
 
@@ -97,9 +104,9 @@ describe('applyPickerFilters', () => {
 
 describe('pack helpers', () => {
   const packs = [
-    makePack({ code: 'c', cyclePosition: 2, position: 1 }),
-    makePack({ code: 'b', cyclePosition: 1, position: 2 }),
-    makePack({ code: 'a', cyclePosition: 1, position: 1 }),
+    makePack({ code: toCardCode('c'), cyclePosition: 2, position: 1 }),
+    makePack({ code: toCardCode('b'), cyclePosition: 1, position: 2 }),
+    makePack({ code: toCardCode('a'), cyclePosition: 1, position: 1 }),
   ];
 
   it('lists distinct cycles ascending', () => {
@@ -142,6 +149,6 @@ describe('seatNumber', () => {
     ['the second seat', 'daisy', 2],
     ['no one not seated', 'skids', undefined],
   ])('gives %s', (_, code, seat) => {
-    expect(seatNumber(['roland', 'daisy'], code)).toBe(seat);
+    expect(seatNumber([toCardCode('roland'), toCardCode('daisy')], toCardCode(code))).toBe(seat);
   });
 });
