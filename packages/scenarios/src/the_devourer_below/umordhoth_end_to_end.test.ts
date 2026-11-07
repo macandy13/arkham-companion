@@ -199,12 +199,12 @@ describe('The Devourer Below end to end: Roland and Daisy, seed 7', () => {
     table.resolveEnemyAttacks();
     table.nextPhase();
 
-    // Round 5 – Roland fails Grasping Hands; Daisy draws Ancient Evils and
-    // places its doom by hand.
+    // Round 5 – Roland fails Grasping Hands; Daisy draws Ancient Evils, which
+    // places 1 doom on the agenda.
     expect(table.nextPhase()).toMatchObject({ round: 5, phase: 'mythos' });
     table.answer(byName('Grasping Hands'), 'fail');
     table.nextPhase();
-    table.play({ type: 'PlaceDoom', amount: 1 });
+    expect(table.board.agenda).toMatchObject({ name: 'The Ritual Begins', doom: 2 });
     table.nextPhase();
     quietTurn(roland);
     quietTurn(daisy);

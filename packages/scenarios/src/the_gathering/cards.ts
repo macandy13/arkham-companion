@@ -1,6 +1,7 @@
 import {
   GRID_CELLS_PER_CARD,
   advanceAct,
+  checkDoomThreshold,
   afterEntering,
   afterTest,
   atEndOfPhase,
@@ -468,7 +469,7 @@ export const theGatheringCardDefs: readonly CardStats[] = [
     set: sets.ancientEvils,
     traits: ['Omen'],
     quantity: 3,
-    abilities: [whenRevealed(placeDoomOnAgenda(1))],
+    abilities: [whenRevealed(placeDoomOnAgenda(1), checkDoomThreshold())],
   }),
   treachery({
     code: '01167',

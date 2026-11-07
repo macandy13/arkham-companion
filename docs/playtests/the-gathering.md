@@ -56,7 +56,7 @@ The scripted golden game is [`end_to_end.test.ts`](../../packages/scenarios/src/
 - [ ] Frozen in Fear: the first move, fight or evade each round costs 1 more action; the end-of-turn willpower test discards it on a pass.
 - [ ] Dissonant Voices: no assets or events can be played until the end of the round.
 - [ ] Obscuring Fog: +2 shroud on the location until a successful investigation there.
-- [ ] Ancient Evils: 1 doom on the agenda.
+- [ ] Ancient Evils: 1 doom on the agenda; if that reaches the threshold, the app asks to advance the agenda right away.
 - [ ] Crypt Chill: on a failed test the drawer is asked to discard an asset (shown under "Do this by hand") or, controlling none, take 2 damage.
 
 **Resolution**

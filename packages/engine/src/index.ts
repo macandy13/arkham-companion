@@ -193,6 +193,7 @@ export {
   heal,
   gainResources,
   gainClues,
+  checkDoomThreshold,
   discardAsset,
   discardAtRandom,
   drawCards,

@@ -195,67 +195,78 @@ describe("What's Going On?!", () => {
     const asked = stateAfter(context, started, { type: 'AdvanceAgenda' });
 
     const { events } = runFrom(context, asked, [answer(WHATS_GOING_ON_DECISION, 'discard')]);
+    const deferred = events.filter((event) => event.type === 'CommandDeferred');
 
-    expect(events.filter((event) => event.type === 'CommandDeferred')).toEqual(
-      [alice, bob].map((investigator) => ({
-        type: 'CommandDeferred',
-        command: {
-          type: 'DiscardFromHand',
-          investigatorId: investigator,
-          amount: 1,
-          atRandom: true,
-          source: { cardId: agenda1, window: 'advanced' },
-        },
-      })),
-    );
+    const randomDiscard = { type: 'DiscardFromHand', amount: 1, atRandom: true };
+    const source = { cardId: agenda1, window: 'advanced' };
+    expect(deferred).toEqual([
+      { type: 'CommandDeferred', command: { ...randomDiscard, investigatorId: alice, source } },
+      { type: 'CommandDeferred', command: { ...randomDiscard, investigatorId: bob, source } },
+    ]);
   });
 });
 
 describe('The Gathering treacheries', () => {
   const alice = investigatorId('alice');
   const study = instanceId('study');
+  const agenda1 = instanceId('whats_going_on');
   const aliceDraws: Command = { type: 'DrawEncounter', investigatorId: alice };
-  /** Alice in the revealed Study, with agenda 1 in play. */
+  /** Alice in the revealed Study, with agenda 1 (doom threshold 3) in play. */
   const aliceInTheStudy = newGame()
     .withLocation(study, cardOf('01111'), { revealed: true })
     .withInvestigator(alice, { locationId: study })
-    .withAgenda(instanceId('whats_going_on'), cardOf('01105'));
-
-  it('places 1 doom on the agenda when alice draws Ancient Evils', () => {
-    const { context, state } = aliceInTheStudy
-      .withCard(instanceId('ancient_evils'), cardOf('01166'), { kind: 'encounterDeck' })
-      .start();
-
-    const drawn = stateAfter(context, state, aliceDraws);
-
-    expect(drawn.cards[instanceId('whats_going_on')]?.tokens.doom).toBe(1);
-  });
+    .withAgenda(agenda1, cardOf('01105'));
 
   it.each([
-    { optionId: 'asset', damage: 0, deferred: [{ type: 'DiscardAsset', investigatorId: alice }] },
-    { optionId: 'damage', damage: 2, deferred: [] },
+    { doomBefore: 0, asked: [] },
+    { doomBefore: 2, asked: ['advanceAgenda:whats_going_on'] },
   ])(
-    'makes alice, failing Crypt Chill, answer $optionId: $damage damage',
-    ({ optionId, damage, deferred }) => {
-      const cryptChill = instanceId('crypt_chill');
+    'places 1 doom on agenda 1 at $doomBefore doom when alice draws Ancient Evils, asking $asked',
+    ({ doomBefore, asked }) => {
       const { context, state } = aliceInTheStudy
-        .withCard(cryptChill, cardOf('01167'), { kind: 'encounterDeck' })
+        .withCard(instanceId('ancient_evils'), cardOf('01166'), { kind: 'encounterDeck' })
         .start();
-      const failed = stateAfter(context, state, aliceDraws, answer('test:crypt_chill', 'fail'));
+      const withDoom =
+        doomBefore === 0
+          ? state
+          : stateAfter(context, state, { type: 'PlaceDoom', amount: doomBefore });
 
-      const { state: after, events } = runFrom(context, failed, [
-        answer(CRYPT_CHILL_DECISION, optionId),
-      ]);
+      const drawn = stateAfter(context, withDoom, aliceDraws);
 
-      expect(requireInvestigator(after, alice)).toMatchObject({ health: { damage } });
-      expect(
-        events.flatMap((event) => (event.type === 'CommandDeferred' ? [event.command] : [])),
-      ).toEqual(
-        deferred.map((command) => ({
-          ...command,
-          source: { cardId: cryptChill, window: 'revealed' },
-        })),
-      );
+      expect(drawn.cards[agenda1]?.tokens.doom).toBe(doomBefore + 1);
+      expect(drawn.pending.map((decision) => decision.id)).toEqual(asked);
     },
   );
+
+  describe('Crypt Chill', () => {
+    const cryptChill = instanceId('crypt_chill');
+    const source = { cardId: cryptChill, window: 'revealed' };
+
+    it.each([
+      {
+        optionId: 'asset',
+        damage: 0,
+        deferred: [{ type: 'DiscardAsset', investigatorId: alice, source }],
+      },
+      { optionId: 'damage', damage: 2, deferred: [] },
+    ])(
+      'makes alice, failing its test, answer $optionId: $damage damage',
+      ({ optionId, damage, deferred }) => {
+        const { context, state } = aliceInTheStudy
+          .withCard(cryptChill, cardOf('01167'), { kind: 'encounterDeck' })
+          .start();
+        const failed = stateAfter(context, state, aliceDraws, answer('test:crypt_chill', 'fail'));
+
+        const { state: after, events } = runFrom(context, failed, [
+          answer(CRYPT_CHILL_DECISION, optionId),
+        ]);
+        const deferredCommands = events.flatMap((event) =>
+          event.type === 'CommandDeferred' ? [event.command] : [],
+        );
+
+        expect(requireInvestigator(after, alice)).toMatchObject({ health: { damage } });
+        expect(deferredCommands).toEqual(deferred);
+      },
+    );
+  });
 });

@@ -315,6 +315,7 @@ export type AbilityCommand =
           | 'DiscardAsset'
           | 'TakeDamageAndHorror'
           | 'PlaceDoom'
+          | 'CheckDoomThreshold'
           | 'PlaceTokens'
           | 'ChangeChaosBag'
           | 'MoveCard'
@@ -1607,6 +1608,14 @@ export function placeDoomOnAgenda(amount: number): AbilityEffect {
   return { type: 'PlaceDoom', amount };
 }
 
+/**
+ * "This effect can cause the current agenda to advance" (Ancient Evils): checks the doom
+ * threshold right away, as the mythos phase does in step 1.3, after the doom an effect placed.
+ */
+export function checkDoomThreshold(): AbilityEffect {
+  return { type: 'CheckDoomThreshold' };
+}
+
 /** "Place N doom on [card]", such as `placeDoomOn(nearestEnemy(trait('Cultist')), 2)`. */
 export function placeDoomOn(card: RelativeCard, amount: number): AbilityEffect {
   return { type: 'PlaceDoom', cardId: card, amount };
@@ -1834,8 +1843,8 @@ export function leadDecides(
  * "You must either …": the same choice for the investigator the window names
  * (the drawer of a revelation), written
  * `youMustEither(id, prompt, [{ id: 'horror', label, effects: [takeHorror(2)] }, …])`.
- * An option that hits player cards ("draw 2 cards") runs only the rest of its
- * effects; the players do the player-card part at the table, as its label says.
+ * A command on player cards in an option ("discard an asset", `discardAsset`) is
+ * deferred to the players (`CommandDeferred`) once the option is picked.
  */
 export function youMustEither(
   id: DecisionId,
