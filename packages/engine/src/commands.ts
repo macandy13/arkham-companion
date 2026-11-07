@@ -47,6 +47,7 @@ export type Command =
   | DrawCards
   | SearchDeck
   | DiscardFromHand
+  | DiscardAsset
   | PlayCard
   | TakeDamageAndHorror
   | DefeatInvestigator
@@ -380,16 +381,27 @@ export interface PlayCard extends ActionCommand, AskedByCard {
 
 /**
  * "Choose and discard N cards from your hand" (Herman Collins' Parley cost): the investigator
- * discards from their own hand. Left to the players like `DrawCards`.
+ * discards from their own hand, or `atRandom` ("discards 1 card at random from their hand", What's
+ * Going On?!). Left to the players like `DrawCards`.
  */
 export interface DiscardFromHand extends AskedByCard {
   type: 'DiscardFromHand';
   investigatorId: InvestigatorId;
   amount: number;
+  atRandom?: true;
+}
+
+/**
+ * "Choose and discard 1 asset you control" (Crypt Chill): the investigator discards one of their
+ * own assets. The game holds no player cards, so it is left to the players like `DrawCards`.
+ */
+export interface DiscardAsset extends AskedByCard {
+  type: 'DiscardAsset';
+  investigatorId: InvestigatorId;
 }
 
 /** The commands on player cards, which the engine defers to the players (`CommandDeferred`). */
-export type PlayerCardCommand = DrawCards | SearchDeck | PlayCard | DiscardFromHand;
+export type PlayerCardCommand = DrawCards | SearchDeck | PlayCard | DiscardFromHand | DiscardAsset;
 
 /**
  * Whether the players took `command` as an action at the table (the draw or play action), rather
@@ -402,6 +414,7 @@ export function takenAsAction(command: PlayerCardCommand): boolean {
       return command.asAction === true;
     case 'SearchDeck':
     case 'DiscardFromHand':
+    case 'DiscardAsset':
       return false;
   }
 }

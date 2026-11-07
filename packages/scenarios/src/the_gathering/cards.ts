@@ -13,6 +13,8 @@ import {
   cardDbFrom,
   decisionId,
   defeatEachInvestigator,
+  discardAsset,
+  discardAtRandom,
   discardEachEnemyAt,
   discardSelf,
   eachEnemy,
@@ -28,6 +30,7 @@ import {
   onlyCopy,
   parleyAction,
   perInvestigator,
+  placeDoomOnAgenda,
   placeDoomOnSelf,
   putIntoThreatArea,
   putMapIntoPlay,
@@ -44,6 +47,7 @@ import {
   whenAdvanced,
   whenEnemyDefeated,
   whenRevealed,
+  youMustEither,
   type AddMapStep,
   type CardDb,
   type CardStats,
@@ -96,6 +100,12 @@ export const GATHERING_RESOLUTIONS = {
 /** Id of agenda 1's question to the lead investigator: each investigator discards a random card, or the lead takes 2 horror. */
 export const WHATS_GOING_ON_DECISION = decisionId('theGathering.whatsGoingOn');
 
+/**
+ * Id of Crypt Chill's question to its drawer after a failed test: discard an asset they control,
+ * or take 2 damage if they control none.
+ */
+export const CRYPT_CHILL_DECISION = decisionId('theGathering.cryptChill');
+
 /** Id of act 3's question to the lead investigator: burn the house down or not. */
 export const BURN_THE_HOUSE_DECISION = decisionId('theGathering.burnTheHouse');
 
@@ -103,6 +113,7 @@ const codes = GATHERING_CODES;
 const sets = GATHERING_SETS;
 const whatsGoingOn = 'scenario.theGathering.whatsGoingOn';
 const burnTheHouse = 'scenario.theGathering.burnTheHouse';
+const cryptChill = 'scenario.theGathering.cryptChill';
 const ghoulTraits = ['Humanoid', 'Monster', 'Ghoul'];
 
 /** One card step on the layout grid, which is finer than a card. */
@@ -146,10 +157,13 @@ export const theGatheringCardDefs: readonly CardStats[] = [
     stage: 1,
     doom: 3,
     abilities: [
-      // The random discard from each hand is done at the table: the app does not track hands.
       whenAdvanced(
         leadDecides(WHATS_GOING_ON_DECISION, `${whatsGoingOn}.prompt`, [
-          { id: 'discard', label: `${whatsGoingOn}.discard`, effects: [] },
+          {
+            id: 'discard',
+            label: `${whatsGoingOn}.discard`,
+            effects: [discardAtRandom(1, { ref: 'eachInvestigator' })],
+          },
           {
             id: 'horror',
             label: `${whatsGoingOn}.horror`,
@@ -454,6 +468,7 @@ export const theGatheringCardDefs: readonly CardStats[] = [
     set: sets.ancientEvils,
     traits: ['Omen'],
     quantity: 3,
+    abilities: [whenRevealed(placeDoomOnAgenda(1))],
   }),
   treachery({
     code: '01167',
@@ -461,7 +476,19 @@ export const theGatheringCardDefs: readonly CardStats[] = [
     set: sets.chillingCold,
     traits: ['Hazard'],
     quantity: 2,
-    abilities: [whenRevealed(skillTest('willpower', 4))],
+    abilities: [
+      whenRevealed(
+        skillTest('willpower', 4, {
+          // "If you cannot" discard an asset: the players know whether they control one, the game doesn't.
+          onFail: [
+            youMustEither(CRYPT_CHILL_DECISION, `${cryptChill}.prompt`, [
+              { id: 'asset', label: `${cryptChill}.asset`, effects: [discardAsset()] },
+              { id: 'damage', label: `${cryptChill}.damage`, effects: [takeDamage(2)] },
+            ]),
+          ],
+        }),
+      ),
+    ],
   }),
   treachery({
     code: '01168',

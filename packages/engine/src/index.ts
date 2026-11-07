@@ -193,6 +193,8 @@ export {
   heal,
   gainResources,
   gainClues,
+  discardAsset,
+  discardAtRandom,
   drawCards,
   drawFromScenarioDeck,
   searchDeck,

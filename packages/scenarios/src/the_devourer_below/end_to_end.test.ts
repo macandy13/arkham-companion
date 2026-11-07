@@ -419,14 +419,13 @@ describe('The Devourer Below end to end: Roland and Daisy, seed 9', () => {
     expect(table.nextPhase()).toEqual({ round: 5, phase: 'upkeep' });
     expect(table.board.location(ritualSite)).toMatchObject({ clues: 4 });
 
-    // Round 6 – mythos: Daisy draws Ancient Evils and places its doom by hand,
-    // 4 of 5. Alone, she places her 3 clues on the act; with Roland's that
+    // Round 6 – mythos: Daisy draws Ancient Evils, which places 1 doom on the
+    // agenda, 4 of 5. Alone, she places her 3 clues on the act; with Roland's that
     // makes 4, 2 per investigator, and the act's objective advances it by
     // itself: the ritual is broken (R1) a round before the agenda would have
     // advanced.
     expect(table.nextPhase()).toEqual({ round: 6, phase: 'mythos' });
     expect(table.board.namesIn({ kind: 'encounterDiscard' })[0]).toBe('Ancient Evils');
-    table.play({ type: 'PlaceDoom', amount: 1 });
     expect(table.board.doomInPlay).toBe(4);
     expect(table.nextPhase()).toEqual({ round: 6, phase: 'investigation' });
     table.startTurn(daisy);

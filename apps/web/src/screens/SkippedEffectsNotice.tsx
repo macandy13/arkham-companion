@@ -40,7 +40,14 @@ export function SkippedEffectsNotice({
       case 'DrawCards':
         return t('skipped.deferred.draw', { count: command.amount });
       case 'DiscardFromHand':
-        return t('skipped.deferred.discard', { count: command.amount });
+        return t(
+          command.atRandom ? 'skipped.deferred.discardAtRandom' : 'skipped.deferred.discard',
+          {
+            count: command.amount,
+          },
+        );
+      case 'DiscardAsset':
+        return t('skipped.deferred.discardAsset');
       case 'SearchDeck':
         return t(
           command.top === undefined ? 'skipped.deferred.search' : 'skipped.deferred.searchTop',

@@ -47,6 +47,7 @@ import { answer } from '@arkham/engine/test/utils';
 import {
   BURN_THE_HOUSE_DECISION,
   GATHERING_CODES,
+  CRYPT_CHILL_DECISION,
   WHATS_GOING_ON_DECISION,
   theGathering,
   theGatheringCards,
@@ -187,6 +188,15 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
         test: { skill: 'willpower', difficulty: 4 },
         options: ['pass', 'fail'],
         labels: { pass: 'decision.pass', fail: 'decision.fail' },
+        followUps: {
+          fail: {
+            prompt: 'scenario.theGathering.cryptChill.prompt',
+            options: [
+              'scenario.theGathering.cryptChill.asset',
+              'scenario.theGathering.cryptChill.damage',
+            ],
+          },
+        },
       },
     ]);
     // Crypt Chill is discarded only once its revelation has resolved.
@@ -202,7 +212,6 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     // 1.4 continues: Wendy draws Ancient Evils, 1 doom on the agenda. The
     // mythos phase has run all its steps; the next "Next" moves on.
     expect(table.nextPhase()).toEqual({ round: 2, phase: 'mythos' });
-    table.placeDoom(1);
 
     expect(table.board.agenda).toMatchObject({ name: "What's Going On?!", doom: 2, threshold: 3 });
     expect(table.board.namesIn({ kind: 'encounterDiscard' })).toEqual([
@@ -308,7 +317,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     ]);
 
     // Roland, already shaken by the Attic, picks the random discard from each
-    // hand, done at the table; nobody takes horror.
+    // hand, which the players do at the table; nobody takes horror.
     table.play(answer(WHATS_GOING_ON_DECISION, 'discard'));
 
     expect(table.board.investigator(roland)).toMatchObject({ horror: 1 });
@@ -317,7 +326,6 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
 
     // 1.4: Roland draws the Swarm of Rats, Daisy a Ghoul Minion, Wendy Ancient Evils.
     expect(table.nextPhase()).toEqual({ round: 3, phase: 'mythos' });
-    table.placeDoom(1);
 
     expect(table.board.enemies).toEqual([
       { name: icyGhoul, at: 'Cellar', health: 4, engagedWith: wendy },
@@ -818,8 +826,8 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
 
     // Round 8 – mythos: Roland draws Dissonant Voices and Daisy a Ghoul Minion;
     // Wendy fails her willpower test against Crypt Chill. She has no asset to
-    // discard, so she takes 2 damage: 7 of 7, and she is defeated. Her 3 clues
-    // go to the Cellar and Frozen in Fear is discarded.
+    // discard, so she answers that she takes 2 damage: 7 of 7, and she is
+    // defeated. Her 3 clues go to the Cellar and Frozen in Fear is discarded.
     expect(table.nextPhase()).toEqual({ round: 8, phase: 'mythos', step: 'drawEncounterCard' });
     expect(table.board.decisions).toEqual([
       {
@@ -831,16 +839,29 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
         test: { skill: 'willpower', difficulty: 4 },
         options: ['pass', 'fail'],
         labels: { pass: 'decision.pass', fail: 'decision.fail' },
+        followUps: {
+          fail: {
+            prompt: 'scenario.theGathering.cryptChill.prompt',
+            options: [
+              'scenario.theGathering.cryptChill.asset',
+              'scenario.theGathering.cryptChill.damage',
+            ],
+          },
+        },
       },
     ]);
     table.answer(byName('Crypt Chill'), 'fail');
-    table.takeDamage(wendy, 2);
+    table.play(answer(CRYPT_CHILL_DECISION, 'damage'));
 
     expect(table.board.investigator(wendy).status).toBe('defeated');
     expect(table.board.perInvestigator('clues')).toEqual({ roland: 5, daisy: 1, wendy: 0 });
     expect(table.board.location(byName('Cellar')).clues).toBe(3);
     expect(table.board.namesIn({ kind: 'threatArea', investigatorId: wendy })).toEqual([]);
-    expect(table.board.namesIn({ kind: 'encounterDiscard' })[0]).toBe('Frozen in Fear');
+    // Frozen in Fear goes with her defeat, Crypt Chill once its revelation has resolved.
+    expect(table.board.namesIn({ kind: 'encounterDiscard' }).slice(0, 2)).toEqual([
+      'Crypt Chill',
+      'Frozen in Fear',
+    ]);
 
     // Round 8 – investigation: the phase goes on without Wendy. Roland empties his .38 Special
     // into the Flesh-Eater (2 damage a shot) and searches the Attic again.
@@ -1047,8 +1068,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     expect(table.board.namesIn({ kind: 'threatArea', investigatorId: roland })).toEqual([]);
 
     // Round 11 – mythos: 1.2 places the agenda's sixth doom, 4 short of its threshold. Roland draws
-    // Rotting Remains (willpower 3 against 3), Daisy Crypt Chill (willpower 3
-    // against 4, and a +1 token): both pass.
+    // Rotting Remains (willpower 3 against 3) and passes; Daisy draws Frozen in Fear.
     expect(table.nextPhase()).toEqual({ round: 11, phase: 'mythos', step: 'drawEncounterCard' });
     expect(table.board.agenda).toMatchObject({
       name: "They're Getting Out!",
@@ -1056,13 +1076,16 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
       threshold: 10,
     });
     table.answer(byName('Rotting Remains'), 'pass');
-    expect(table.nextPhase()).toEqual({ round: 11, phase: 'mythos', step: 'drawEncounterCard' });
-    table.answer(byName('Crypt Chill'), 'pass');
+    expect(table.nextPhase()).toEqual({ round: 11, phase: 'mythos' });
+    expect(table.board.namesIn({ kind: 'threatArea', investigatorId: daisy })).toEqual([
+      'Frozen in Fear',
+    ]);
 
     // Round 11 – investigation: Roland shoots the Priest twice, each with a Vicious Blow and
     // Lita at his side (4 damage each: her +1 against a Monster, played by hand like her other
     // abilities), and evades it, so it cannot attack him: its attack (2 horror) would drive him
-    // insane at 4 of 5. Daisy defeats the Ravenous Ghoul with three blows.
+    // insane at 4 of 5. Daisy evades the Ravenous Ghoul, whose next attack would defeat her, and
+    // shakes off Frozen in Fear at the end of her turn.
     expect(table.nextPhase()).toEqual({ round: 11, phase: 'investigation' });
     table.startTurn(roland);
     table.fight(roland, byName('Ghoul Priest'), { damage: 4 });
@@ -1070,26 +1093,31 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     table.evade(roland, byName('Ghoul Priest'));
     table.endTurn(roland);
     table.startTurn(daisy);
-    table.fight(daisy, byName(ravenousGhoul));
-    table.fight(daisy, byName(ravenousGhoul));
-    table.fight(daisy, byName(ravenousGhoul));
+    table.evade(daisy, byName(ravenousGhoul));
     table.endTurn(daisy);
+    table.answer(byName('Frozen in Fear'), 'pass');
 
+    expect(table.board.namesIn({ kind: 'threatArea', investigatorId: daisy })).toEqual([]);
     expect(table.board.enemies).toEqual([
       { name: 'Ghoul Priest', at: 'Parlor', health: 15, damage: 9, exhausted: true },
+      { name: ravenousGhoul, at: 'Hallway', health: 3, exhausted: true },
     ]);
 
-    // Round 11 – enemy and upkeep phases: nothing attacks; the Priest readies and engages Roland
-    // again, and as the round ends it adds the agenda's seventh doom.
+    // Round 11 – enemy and upkeep phases: nothing attacks. At the end of the enemy phase They're
+    // Getting Out! moves the evaded Ravenous Ghoul into the Parlor; both ghouls ready and engage
+    // Roland there, and as the round ends they add the agenda's seventh and eighth doom.
     expect(table.nextPhase()).toEqual({ round: 11, phase: 'enemy' });
     expect(table.nextPhase()).toEqual({ round: 11, phase: 'upkeep' });
-    expect(table.board.enemy(byName('Ghoul Priest'))).toMatchObject({ engagedWith: roland });
-    expect(table.board.agenda).toMatchObject({ doom: 7 });
-
-    // Round 12 – mythos: the eighth doom. Roland draws Dissonant Voices again, Daisy a Ghoul
-    // Minion, which spawns engaged with her in the Hallway.
-    expect(table.nextPhase()).toEqual({ round: 12, phase: 'mythos' });
+    expect(table.board.enemies).toEqual([
+      { name: 'Ghoul Priest', at: 'Parlor', health: 15, damage: 9, engagedWith: roland },
+      { name: ravenousGhoul, at: 'Parlor', health: 3, engagedWith: roland },
+    ]);
     expect(table.board.agenda).toMatchObject({ doom: 8 });
+
+    // Round 12 – mythos: the ninth doom, one short of the threshold. Roland draws Dissonant Voices
+    // again, Daisy a Ghoul Minion, which spawns engaged with her in the Hallway.
+    expect(table.nextPhase()).toEqual({ round: 12, phase: 'mythos' });
+    expect(table.board.agenda).toMatchObject({ doom: 9 });
     expect(table.board.namesIn({ kind: 'threatArea', investigatorId: roland })).toEqual([
       'Dissonant Voices',
     ]);

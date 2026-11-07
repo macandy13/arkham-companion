@@ -208,6 +208,7 @@ const COMMAND_SPECS: CommandSpecs = {
   DrawCards: { handle: deferToPlayers, provokes: asAction },
   SearchDeck: { handle: deferToPlayers },
   DiscardFromHand: { handle: deferToPlayers },
+  DiscardAsset: { handle: deferToPlayers },
   PlayCard: { handle: handlePlayCard, provokes: asAction },
   AdjustInvestigator: {
     handle: handleAdjustInvestigator,
