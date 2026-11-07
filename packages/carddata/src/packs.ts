@@ -4,9 +4,19 @@ import { z } from 'zod';
  * Pack codes that belong to Chapter Two (the revised Arkham Horror LCG line, starting with
  * `core_2026`), for pack data without a `chapter` field. ArkhamDB marks every pack with its
  * chapter; this list only covers a response that leaves it out, so every
- * other pack without one counts as Chapter One.
+ * other pack without one counts as Chapter One. It holds the packs ArkhamDB's
+ * `/api/public/packs/` marked `chapter: 2` on 2026-11-07.
  */
-export const CHAPTER_TWO_PACK_CODES: readonly string[] = ['core_2026', 'cob'];
+export const CHAPTER_TWO_PACK_CODES: readonly string[] = [
+  'core_2026',
+  'tom',
+  'car',
+  'and',
+  'mar',
+  'mig',
+  'cob',
+  'traces_to_nowhere_pack',
+];
 
 /** Rules edition a pack belongs to; Chapter One and Chapter Two cards are different for play. */
 export type Chapter = 1 | 2;

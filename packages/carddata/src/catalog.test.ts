@@ -36,6 +36,12 @@ describe('normalisePacks', () => {
     { name: 'a Chapter Two pack the data marks', raw: { code: 'new_box', chapter: 2 }, chapter: 2 },
     { name: 'a pack the data marks Chapter One', raw: { code: 'cob', chapter: 1 }, chapter: 1 },
     { name: 'Children of Blood without a chapter', raw: { code: 'cob' }, chapter: 2 },
+    { name: 'the Miguel de la Cruz starter without a chapter', raw: { code: 'mig' }, chapter: 2 },
+    {
+      name: 'Traces to Nowhere without a chapter',
+      raw: { code: 'traces_to_nowhere_pack' },
+      chapter: 2,
+    },
     { name: 'an unknown pack without a chapter', raw: { code: 'old_box' }, chapter: 1 },
   ])('reads the chapter of $name', ({ raw, chapter }) => {
     const [pack] = normalisePacks([{ name: 'Box', position: 1, cycle_position: 1, ...raw }]);
