@@ -314,6 +314,7 @@ describe('AddMap', () => {
       name: 'Wing',
       visible: true,
       connections: [edge('attic', 'hall')],
+      cutConnections: [],
       layout: {},
     });
     expect(next.cards[attic]).toMatchObject({ zone: { kind: 'location', mapId: wing } });
@@ -520,6 +521,56 @@ describe('neighbours along the printed connection symbols', () => {
       expect(openConnections(context, state)).toEqual(open);
     },
   );
+
+  it.each([
+    { cut: edge('woods', 'path'), fromPath: [], fromWoods: [] },
+    { cut: edge('path', 'woods', { oneWay: true }), fromPath: [], fromWoods: [path] },
+    { cut: edge('woods', 'path', { oneWay: true }), fromPath: [woods], fromWoods: [] },
+  ])(
+    'lead from the path to $fromPath and back to $fromWoods once an effect cuts $cut',
+    ({ cut, fromPath, fromWoods }) => {
+      const { context, state: started } = woodsByThePath.start();
+
+      const state = stateAfter(context, started, { type: 'RemoveConnection', ...cut });
+
+      expect(neighbours(context, state, path)).toEqual(fromPath);
+      expect(neighbours(context, state, woods)).toEqual(fromWoods);
+      expect(state.board.maps[main]?.cutConnections).toEqual([cut]);
+    },
+  );
+
+  it('stay cut when a revealed side prints the connection again', () => {
+    const { context, state: started } = woodsByThePath.start();
+
+    const state = stateAfter(
+      context,
+      started,
+      { type: 'RemoveConnection', from: woods, to: path },
+      revealed(woods),
+    );
+
+    expect(neighbours(context, state, woods)).toEqual([]);
+  });
+
+  it.each([
+    {
+      reason: 'already cut',
+      before: [{ type: 'RemoveConnection', from: path, to: woods }] satisfies Command[],
+      cut: edge('path', 'woods'),
+    },
+    {
+      reason: 'printed only the other way',
+      before: [revealed(woods)],
+      cut: edge('path', 'woods', { oneWay: true }),
+    },
+  ])('cannot be cut where they are $reason', ({ before, cut }) => {
+    const { context, state: started } = woodsByThePath.start();
+    const state = stateAfter(context, started, ...before);
+
+    const rejection = rejectionFrom(context, state, { type: 'RemoveConnection', ...cut });
+
+    expect(rejection).toEqual({ code: 'connectionNotFound', from: path, to: woods });
+  });
 });
 
 describe('shortestPaths', () => {

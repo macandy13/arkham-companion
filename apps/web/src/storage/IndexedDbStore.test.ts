@@ -54,7 +54,9 @@ const started: ScenarioStarted = {
       status: 'active',
     },
   ],
-  maps: { [mapId('m')]: { name: 'Map', visible: true, connections: [], layout: {} } },
+  maps: {
+    [mapId('m')]: { name: 'Map', visible: true, connections: [], cutConnections: [], layout: {} },
+  },
   cards: [card('c1'), card('c2')],
   chaosBag: ['0', 'skull'],
 };

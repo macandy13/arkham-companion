@@ -1,7 +1,9 @@
 import {
   allConnections,
+  allowsEveryMove,
   revealEvents,
   sameEdge,
+  uncutPrintedConnections,
   validateConnections,
   validateEnds,
   validateGridCell,
@@ -94,7 +96,11 @@ export function handlePutLocationIntoPlay(
   return [moved, { type: 'LayoutCellSet', mapId: cmd.mapId, cardId: card.id, at: cmd.at }];
 }
 
-/** `RemoveConnection`: finds the map that owns the edge; rejects an edge that is not on the board. */
+/**
+ * `RemoveConnection`: removes the edge from the map that declares it; otherwise cuts it where the
+ * cards print every move it allows, on the map of its `from` location (printed connections are
+ * derived, so a cut is all there is to store). Rejects an edge that is neither.
+ */
 export function handleRemoveConnection(
   ctx: EngineContext,
   state: GameState,
@@ -102,9 +108,12 @@ export function handleRemoveConnection(
 ): [ConnectionChanged] {
   const edge = validatedEdge(ctx, state, cmd);
   const owned = allConnections(state).find(({ edge: existing }) => sameEdge(existing, edge));
-  if (!owned)
-    throw new CommandRejected({ code: 'connectionNotFound', from: edge.from, to: edge.to });
-  return [{ type: 'ConnectionChanged', change: 'removed', mapId: owned.mapId, edge: owned.edge }];
+  if (owned)
+    return [{ type: 'ConnectionChanged', change: 'removed', mapId: owned.mapId, edge: owned.edge }];
+  const from = state.cards[edge.from]?.zone;
+  if (from?.kind === 'location' && allowsEveryMove(uncutPrintedConnections(ctx, state), edge))
+    return [{ type: 'ConnectionChanged', change: 'cut', mapId: from.mapId, edge }];
+  throw new CommandRejected({ code: 'connectionNotFound', from: edge.from, to: edge.to });
 }
 
 /** The edge a connection command describes, after checking both ends. */

@@ -4,7 +4,8 @@ import { zoneKey } from './zone';
 
 /**
  * A connection between two location instances. `printedConnections` derives the ones the cards
- * print; a `GameMap` stores only those effects add (`AddConnection`).
+ * print; a `GameMap` stores only those no card prints (`AddConnection`) and the printed ones an
+ * effect cut (`RemoveConnection`).
  */
 export interface Edge {
   from: InstanceId;
@@ -51,6 +52,13 @@ export interface GameMap {
   /** Connections between locations of this map. */
   connections: Edge[];
   /**
+   * Printed connections from this map's locations that an effect cut ("is no longer connected
+   * to", `RemoveConnection`): each blocks the moves it allows, so `openConnections` leaves them out
+   * whatever the symbols say. Printed connections are derived, never stored, so a cut is the only
+   * way to take one away.
+   */
+  cutConnections: Edge[];
+  /**
    * Where the book layout draws each location of this map. A location without a cell has no
    * book position (the screen places it itself); a cell whose location has left play is ignored.
    */
@@ -83,6 +91,7 @@ export function createMap(spec: MapSpec): GameMap {
     name: spec.name,
     visible: spec.visible ?? true,
     connections: [...(spec.connections ?? [])],
+    cutConnections: [],
     layout: { ...spec.layout },
   };
 }

@@ -142,6 +142,7 @@ describe('StartScenario', () => {
       name: 'Main',
       visible: true,
       connections: [{ from: study, to: other, oneWay: true }],
+      cutConnections: [],
       layout: {},
     });
     expect(mapLocations(state, main)).toEqual([study, other]);
