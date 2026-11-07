@@ -8,6 +8,7 @@ import {
   decisionId,
   engagedWith,
   execute,
+  gainClues,
   handle,
   instanceId,
   investigatorId,
@@ -530,6 +531,24 @@ describe('decisions raised by card abilities', () => {
 
     expect(asked.pending.map((decision) => decision.id)).toEqual(['offer_resource']);
     expect(answered.pending.map((decision) => decision.id)).toEqual(['offer_again']);
+  });
+
+  it('asks the lead once for a choice with an option on each investigator, then gives alice and bob 1 clue each', () => {
+    const offerEach = leadDecides(decisionId('offer_each'), 'decision.applyForcedEffect', [
+      { id: 'yes', label: 'decision.yes', effects: [gainClues(1, { ref: 'eachInvestigator' })] },
+    ]);
+    const { context, state } = hallWithAliceAndBob
+      .withAct(firstAct, blankAct('offering_act', { abilities: [whenAdvanced(offerEach)] }))
+      .withAct(instanceId('second_act'), blankAct('second_act'))
+      .start();
+    const asked = stateAfter(context, state, { type: 'AdvanceAct' });
+
+    const answered = stateAfter(context, asked, answer('offer_each', 'yes'));
+
+    expect(asked.pending.map((decision) => decision.id)).toEqual(['offer_each']);
+    expect(answered.pending).toEqual([]);
+    expect(requireInvestigator(answered, alice).clues).toBe(1);
+    expect(requireInvestigator(answered, bob).clues).toBe(1);
   });
 
   it('rejects an ability that raises a decision that is already pending', () => {

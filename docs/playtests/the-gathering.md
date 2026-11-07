@@ -19,7 +19,7 @@ The scripted golden game is [`end_to_end.test.ts`](../../packages/scenarios/src/
 
 **Agenda 1, What's Going On?!**
 
-- [ ] When it advances, the lead is asked: each investigator discards a random card, or the lead takes 2 horror.
+- [ ] When it advances, the lead is asked: each investigator discards a random card, or the lead takes 2 horror. The discard shows up under "Do this by hand" for each investigator.
 
 **Act 1, Trapped**
 
@@ -56,6 +56,8 @@ The scripted golden game is [`end_to_end.test.ts`](../../packages/scenarios/src/
 - [ ] Frozen in Fear: the first move, fight or evade each round costs 1 more action; the end-of-turn willpower test discards it on a pass.
 - [ ] Dissonant Voices: no assets or events can be played until the end of the round.
 - [ ] Obscuring Fog: +2 shroud on the location until a successful investigation there.
+- [ ] Ancient Evils: 1 doom on the agenda; if that reaches the threshold, the app asks to advance the agenda right away.
+- [ ] Crypt Chill: on a failed test the drawer is asked to discard an asset (shown under "Do this by hand") or, controlling none, take 2 damage.
 
 **Resolution**
 
@@ -66,9 +68,7 @@ The scripted golden game is [`end_to_end.test.ts`](../../packages/scenarios/src/
 
 These are done by hand at the table; the app does not do them.
 
-- Agenda 1's "discard a random card": the app doesn't know your hands. ([#992](https://github.com/macandy13/arkham-companion/issues/992))
-- Ancient Evils: place 1 doom on the agenda yourself. ([#992](https://github.com/macandy13/arkham-companion/issues/992))
-- Crypt Chill: on a failed test, discard an asset or take 2 damage. ([#992](https://github.com/macandy13/arkham-companion/issues/992))
+- Discarding player cards: agenda 1's random card from each hand and Crypt Chill's asset. The app doesn't know your cards, so it lists them under "Do this by hand".
 - Lita Chantler's abilities once you control her (+1 combat at her location, +1 damage against Monsters).
 - Act 2's clues: spend them as the act says (investigators in the Hallway, at the end of the round). The app offers the spend at any time during a turn and from any location. ([#118](https://github.com/macandy13/arkham-companion/issues/118))
 - The resolutions' deck changes and upgrades (adding Lita to a deck, spending experience, replacing a killed investigator).

@@ -9,6 +9,11 @@ export const nightOfTheZealotTexts = {
         discard: 'Each investigator discards 1 random card from their hand',
         horror: 'The lead investigator takes 2 horror',
       },
+      cryptChill: {
+        prompt: '{{card}}: you must',
+        asset: 'Choose and discard 1 asset you control',
+        damage: 'If you control no asset: take 2 damage',
+      },
       burnTheHouse: {
         prompt: 'The lead investigator must decide',
         burn: 'Burn the house to the ground',

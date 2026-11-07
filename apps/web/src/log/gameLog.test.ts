@@ -163,6 +163,15 @@ describe('gameLog', () => {
     },
     {
       step: (table: PlayTable) =>
+        table.play({ type: 'DiscardFromHand', investigatorId: roland, amount: 1, atRandom: true }),
+      line: 'Roland Banks discards 1 random card from their hand',
+    },
+    {
+      step: (table: PlayTable) => table.play({ type: 'DiscardAsset', investigatorId: roland }),
+      line: 'Roland Banks discards an asset',
+    },
+    {
+      step: (table: PlayTable) =>
         table.play({ type: 'ChangeChaosBag', token: 'cultist', change: 'add', lasts: 'scenario' }),
       line: 'Cultist token added to the chaos bag until the end of the scenario',
     },

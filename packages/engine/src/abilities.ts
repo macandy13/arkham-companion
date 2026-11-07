@@ -311,8 +311,11 @@ export type AbilityCommand =
           | 'GainResources'
           | 'DrawCards'
           | 'SearchDeck'
+          | 'DiscardFromHand'
+          | 'DiscardAsset'
           | 'TakeDamageAndHorror'
           | 'PlaceDoom'
+          | 'CheckDoomThreshold'
           | 'PlaceTokens'
           | 'ChangeChaosBag'
           | 'MoveCard'
@@ -763,12 +766,24 @@ export function resolveEffect(
  * `effect` with a test's outcomes as `ResolveEffect` commands, so each
  * outcome effect resolves after the answer against the state then, in turn:
  * a drawer the fail's damage defeated names nobody for the rest. The walks
- * over references (`findRef`, `resolveRefs`) leave them as they are.
+ * over references (`findRef`, `resolveRefs`) leave them as they are. A
+ * choice's option effect on each of several (`eachInvestigator`, "each
+ * investigator discards 1 card at random") is deferred the same way, so it
+ * repeats itself after the answer instead of repeating the whole choice.
  */
 function withDeferredOutcomes(effect: AbilityEffect, opened: OpenedWindow): unknown {
-  if (effect.type !== 'TestSkill') return effect;
   const defer = (effects: readonly AbilityEffect[]): ResolveEffect[] =>
     effects.map((outcome) => ({ type: 'ResolveEffect', effect: outcome, opened }));
+  if (effect.type === 'RequestDecision') {
+    const options = effect.decision.options.map((option) => ({
+      ...option,
+      commands: option.commands.map((inner) =>
+        repeatedRef(inner) === undefined ? inner : defer([inner])[0],
+      ),
+    }));
+    return { ...effect, decision: { ...effect.decision, options } };
+  }
+  if (effect.type !== 'TestSkill') return effect;
   return { ...effect, onPass: defer(effect.onPass), onFail: defer(effect.onFail) };
 }
 
@@ -909,9 +924,8 @@ type RepeatedRef = Extract<RelativeCard | RelativeInvestigator, { ref: `each${st
 
 /**
  * The first reference in `effect` that repeats it. An effect holds at most
- * one, and a choice's options none: one there would repeat the whole choice.
- * A test's outcomes are deferred (`withDeferredOutcomes`), so one there
- * repeats only its own outcome effect.
+ * one. A test's outcomes and a choice's option effects that hold one are
+ * deferred (`withDeferredOutcomes`), so one there repeats only its own effect.
  */
 function repeatedRef(effect: unknown): RepeatedRef | undefined {
   return findRef(effect, (ref) =>
@@ -1389,6 +1403,7 @@ function withSource<C extends { readonly type: string }>(command: C, source: Com
     case 'SearchDeck':
     case 'PlayCard':
     case 'DiscardFromHand':
+    case 'DiscardAsset':
       return { ...command, source };
     case 'RequestDecision': {
       // Narrowing on `type` doesn't reach a generic `C`; the type says it is a `RequestDecision`.
@@ -1439,6 +1454,24 @@ export function drawCards(
   who: RelativeInvestigator = { ref: 'windowInvestigator' },
 ): AbilityEffect {
   return { type: 'DrawCards', investigatorId: who, amount };
+}
+
+/**
+ * "Discard N cards at random from your hand", of `who` ("each investigator discards 1 card at
+ * random", What's Going On?!).
+ */
+export function discardAtRandom(
+  amount: number,
+  who: RelativeInvestigator = { ref: 'windowInvestigator' },
+): AbilityEffect {
+  return { type: 'DiscardFromHand', investigatorId: who, amount, atRandom: true };
+}
+
+/** "Choose and discard 1 asset you control" (Crypt Chill). */
+export function discardAsset(
+  who: RelativeInvestigator = { ref: 'windowInvestigator' },
+): AbilityEffect {
+  return { type: 'DiscardAsset', investigatorId: who };
 }
 
 /**
@@ -1573,6 +1606,14 @@ export function removeChaosToken(token: ChaosToken, lasts: ChaosBagChangeLasts):
 /** "Place N doom on the current agenda". */
 export function placeDoomOnAgenda(amount: number): AbilityEffect {
   return { type: 'PlaceDoom', amount };
+}
+
+/**
+ * "This effect can cause the current agenda to advance" (Ancient Evils): checks the doom
+ * threshold right away, as the mythos phase does in step 1.3, after the doom an effect placed.
+ */
+export function checkDoomThreshold(): AbilityEffect {
+  return { type: 'CheckDoomThreshold' };
 }
 
 /** "Place N doom on [card]", such as `placeDoomOn(nearestEnemy(trait('Cultist')), 2)`. */
@@ -1802,8 +1843,8 @@ export function leadDecides(
  * "You must either …": the same choice for the investigator the window names
  * (the drawer of a revelation), written
  * `youMustEither(id, prompt, [{ id: 'horror', label, effects: [takeHorror(2)] }, …])`.
- * An option that hits player cards ("draw 2 cards") runs only the rest of its
- * effects; the players do the player-card part at the table, as its label says.
+ * A command on player cards in an option ("discard an asset", `discardAsset`) is
+ * deferred to the players (`CommandDeferred`) once the option is picked.
  */
 export function youMustEither(
   id: DecisionId,

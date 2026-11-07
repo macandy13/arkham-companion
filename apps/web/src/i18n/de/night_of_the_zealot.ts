@@ -9,6 +9,11 @@ export const nightOfTheZealotTexts = {
         discard: 'Jeder Ermittler wirft 1 zufällige Karte aus seiner Hand ab',
         horror: 'Der Ermittlungsleiter erleidet 2 Horror',
       },
+      cryptChill: {
+        prompt: '{{card}}: Du musst',
+        asset: '1 Vorteilskarte, die du kontrollierst, wählen und abwerfen',
+        damage: 'Keine Vorteilskarte unter deiner Kontrolle: 2 Schaden erleiden',
+      },
       burnTheHouse: {
         prompt: 'Der Ermittlungsleiter muss entscheiden',
         burn: 'Das Haus niederbrennen',

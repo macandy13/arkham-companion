@@ -94,6 +94,9 @@ export const appTexts = {
       draw_other: '{{investigator}} draws {{count}} cards',
       discard_one: '{{investigator}} discards {{count}} card from their hand',
       discard_other: '{{investigator}} discards {{count}} cards from their hand',
+      discardAtRandom_one: '{{investigator}} discards {{count}} random card from their hand',
+      discardAtRandom_other: '{{investigator}} discards {{count}} random cards from their hand',
+      discardAsset: '{{investigator}} discards an asset',
       play: '{{investigator}} plays a card',
       search: '{{investigator}} searches their deck',
     },
@@ -232,6 +235,9 @@ export const appTexts = {
       draw_other: 'draw {{count}} cards',
       discard_one: 'choose and discard 1 card from your hand',
       discard_other: 'choose and discard {{count}} cards from your hand',
+      discardAtRandom_one: 'discard 1 card at random from your hand',
+      discardAtRandom_other: 'discard {{count}} cards at random from your hand',
+      discardAsset: 'choose and discard 1 asset you control',
       search:
         'search your deck for a card with the trait {{traits}}, add it to your hand and shuffle your deck',
       searchTop:

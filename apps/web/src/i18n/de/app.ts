@@ -94,6 +94,9 @@ export const appTexts = {
       draw_other: '{{investigator}} zieht {{count}} Karten',
       discard_one: '{{investigator}} wirft {{count}} Karte aus der Hand ab',
       discard_other: '{{investigator}} wirft {{count}} Karten aus der Hand ab',
+      discardAtRandom_one: '{{investigator}} wirft {{count}} zufällige Karte aus der Hand ab',
+      discardAtRandom_other: '{{investigator}} wirft {{count}} zufällige Karten aus der Hand ab',
+      discardAsset: '{{investigator}} wirft eine Vorteilskarte ab',
       play: '{{investigator}} spielt eine Karte',
       search: '{{investigator}} durchsucht das eigene Deck',
     },
@@ -232,6 +235,9 @@ export const appTexts = {
       draw_other: 'Ziehe {{count}} Karten',
       discard_one: 'Wähle 1 Karte aus deiner Hand und wirf sie ab',
       discard_other: 'Wähle {{count}} Karten aus deiner Hand und wirf sie ab',
+      discardAtRandom_one: 'Wirf 1 zufällige Karte aus deiner Hand ab',
+      discardAtRandom_other: 'Wirf {{count}} zufällige Karten aus deiner Hand ab',
+      discardAsset: 'Wähle 1 Vorteilskarte, die du kontrollierst, und wirf sie ab',
       search:
         'Durchsuche dein Deck nach einer Karte mit dem Merkmal {{traits}}, nimm sie auf die Hand und mische dein Deck',
       searchTop:

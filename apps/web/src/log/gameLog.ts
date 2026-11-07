@@ -396,7 +396,12 @@ function playerCardLine(t: TFunction, names: Names, command: PlayerCardCommand):
     case 'DrawCards':
       return t('log.playerCards.draw', { investigator, count: command.amount });
     case 'DiscardFromHand':
-      return t('log.playerCards.discard', { investigator, count: command.amount });
+      return t(command.atRandom ? 'log.playerCards.discardAtRandom' : 'log.playerCards.discard', {
+        investigator,
+        count: command.amount,
+      });
+    case 'DiscardAsset':
+      return t('log.playerCards.discardAsset', { investigator });
     case 'PlayCard':
       return t('log.playerCards.play', { investigator });
     case 'SearchDeck':
