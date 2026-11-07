@@ -91,6 +91,19 @@ export interface ImportedGame {
   events: readonly Pick<StoredEvent, 'timestamp' | 'commandId' | 'event' | 'cause'>[];
 }
 
+/**
+ * A campaign to be restored by `GameStore.importCampaign`, as found in an export file: its log and
+ * the games of its scenarios, all without ids.
+ */
+export interface ImportedCampaign {
+  title: string;
+  /** How much the players relied on the helpers, if they chose. */
+  reliance?: Reliance;
+  /** Timestamps, command ids and causes are kept for the reasons `ImportedGame.events` gives. */
+  events: readonly Pick<StoredCampaignEvent, 'timestamp' | 'commandId' | 'event' | 'cause'>[];
+  games: readonly ImportedGame[];
+}
+
 /** Optional metadata given to `GameStore.createCampaign`. */
 export interface NewCampaign {
   /** Human-readable name shown in the campaign list. */
@@ -246,6 +259,12 @@ export interface GameStore {
    */
   deleteCampaign(campaignId: CampaignId): Promise<void>;
   /**
+   * Creates a campaign under a new UUID from an exported log, with its games linked to it, and
+   * moves every event that names the campaign to the new id (`campaign.moveCampaignEvent`,
+   * `campaign.moveGameEvent`). Keeps the events' timestamps like `importGame`.
+   */
+  importCampaign(campaign: ImportedCampaign): Promise<CampaignId>;
+  /**
    * Appends campaign events like `appendEvents` does for a game: one call is one
    * undo group, a stale `expectedSeq` rejects and writes nothing, and `causes`
    * gives each event at the same index its `StoredCampaignEvent.cause`.
@@ -267,6 +286,8 @@ export interface GameStore {
     campaignId: CampaignId,
     expectedSeq?: number,
   ): Promise<LoadedCampaign | undefined>;
+  /** Stored events of a campaign's log, oldest first (for export), like `loadEvents` for a game. */
+  loadCampaignEvents(campaignId: CampaignId): Promise<StoredCampaignEvent[]>;
   /** All campaigns, most recently updated first. */
   listCampaigns(): Promise<CampaignSummary[]>;
 }

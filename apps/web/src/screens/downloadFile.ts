@@ -1,5 +1,5 @@
 import type { StoreApi } from 'zustand/vanilla';
-import type { GameId } from '@arkham/engine';
+import type { CampaignId, GameId } from '@arkham/engine';
 import type { AppState } from '../state/appStore';
 
 /**
@@ -25,6 +25,21 @@ export async function downloadGameExport(
   title: string,
 ): Promise<void> {
   downloadTextFile(`${toFileStem(title)}.arkham.json`, await store.getState().exportGame(gameId));
+}
+
+/**
+ * Downloads the export of a campaign with its games as `<title>.arkham.json`, like
+ * `downloadGameExport`; home loads both kinds of file through the same button.
+ */
+export async function downloadCampaignExport(
+  store: StoreApi<AppState>,
+  campaignId: CampaignId,
+  title: string,
+): Promise<void> {
+  downloadTextFile(
+    `${toFileStem(title)}.arkham.json`,
+    await store.getState().exportCampaign(campaignId),
+  );
 }
 
 /** Turns a game title into a safe file name stem (no path separators or reserved characters). */

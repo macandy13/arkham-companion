@@ -17,7 +17,7 @@ import { TeamPortraits, type PortraitImages } from './TeamPortraits';
  * where it stands, the team's portraits, and one way on. A chapter under way continues its game, a chapter without one
  * is set up from the log, and a campaign that is over (or waits for its ending) opens its log,
  * which stays readable. While a chapter is open, the log is in the ⋮ menu instead. The ⋮ menu also
- * renames the campaign and deletes it with its games, after a question.
+ * renames the campaign, exports it with its games, and deletes it with them, after a question.
  */
 export function CampaignCover({
   campaign,
@@ -25,6 +25,7 @@ export function CampaignCover({
   images,
   lastPlayed,
   onRename,
+  onExport,
   onDelete,
 }: {
   readonly campaign: CampaignSummary;
@@ -35,6 +36,8 @@ export function CampaignCover({
   /** Whether this is the cover played last, which wears the ribbon and the brass button. */
   readonly lastPlayed: boolean;
   readonly onRename: (title: string) => void;
+  /** Downloads the campaign's export, its games included. */
+  readonly onExport: () => void;
   /** Deletes the campaign with its games, once the players confirmed it. */
   readonly onDelete: () => void;
 }) {
@@ -111,6 +114,7 @@ export function CampaignCover({
               ? [{ label: t('campaignList.readLog'), onSelect: () => void navigate(log) }]
               : []),
             { label: t('games.rename'), onSelect: () => setRenaming(true) },
+            { label: t('games.export'), onSelect: onExport },
             { label: t('games.delete'), onSelect: () => setConfirmingDelete(true) },
           ]}
         />

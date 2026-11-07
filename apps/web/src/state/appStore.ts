@@ -45,7 +45,8 @@ import {
   type CampaignEntry,
   type ScenarioEntry,
 } from '../scenarios/scenarioCatalog';
-import { parseGameExport, serialiseGameExport } from '../storage/gameExport';
+import { parseExportFile, serialiseCampaignExport } from '../storage/campaignExport';
+import { serialiseGameExport } from '../storage/gameExport';
 import { seatsFor } from '../wizard/seating';
 
 /** Everything the new game wizard has decided; input to `AppState.startScenario`. */
@@ -350,11 +351,22 @@ export interface AppState {
   /** JSON export text of a saved game (metadata, events, `stateVersion`). Rejects for unknown games. */
   exportGame(gameId: GameId): Promise<string>;
   /**
-   * Creates a saved game from export text under a new id and reloads the list.
-   * Rejects with a `GameImportError` if the text is not a valid export of this or an older version.
+   * JSON export text of a campaign with its log and the games of its scenarios
+   * (`serialiseCampaignExport`). Rejects for unknown campaigns.
    */
-  importGame(text: string): Promise<GameId>;
+  exportCampaign(campaignId: CampaignId): Promise<string>;
+  /**
+   * Restores a saved game, or a campaign with its games, from export text under new ids and
+   * reloads the lists; says which it was and its new id. Rejects with a `GameImportError` if the
+   * text is not a valid export of this or an older version.
+   */
+  importFile(text: string): Promise<ImportedFile>;
 }
+
+/** What `AppState.importFile` restored: a game or a campaign, under its new id. */
+export type ImportedFile =
+  | { readonly kind: 'game'; readonly gameId: GameId }
+  | { readonly kind: 'campaign'; readonly campaignId: CampaignId };
 
 /** The rules a game of the catalog's scenario `entry` runs with: its definition and cards. */
 function contextFor(entry: ScenarioEntry): ScenarioContext {
@@ -826,10 +838,30 @@ export function createAppStore(
         const { title, createdAt } = loaded.summary;
         return serialiseGameExport(title, createdAt, await gameStore.loadEvents(gameId));
       },
-      async importGame(text) {
-        const gameId = await gameStore.importGame(parseGameExport(text));
+      async exportCampaign(campaignId) {
+        const loaded = await gameStore.loadCampaign(campaignId);
+        if (!loaded) throw new Error(`Unknown campaign ${campaignId}`);
+        const games = (await gameStore.listGames()).filter((g) => g.campaignId === campaignId);
+        return serialiseCampaignExport(
+          loaded.summary,
+          await gameStore.loadCampaignEvents(campaignId),
+          await Promise.all(
+            games.map(async ({ gameId, title, createdAt }) => ({
+              title,
+              createdAt,
+              events: await gameStore.loadEvents(gameId),
+            })),
+          ),
+        );
+      },
+      async importFile(text) {
+        const parsed = parseExportFile(text);
+        const imported: ImportedFile =
+          parsed.kind === 'game'
+            ? { kind: 'game', gameId: await gameStore.importGame(parsed.game) }
+            : { kind: 'campaign', campaignId: await gameStore.importCampaign(parsed.campaign) };
         await get().refresh();
-        return gameId;
+        return imported;
       },
     };
   });

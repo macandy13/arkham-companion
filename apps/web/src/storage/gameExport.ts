@@ -30,13 +30,12 @@ const causeSchema = z.discriminatedUnion('kind', [
 ]);
 
 /**
- * Envelope of an exported game. Events are only checked for being objects with a `type`: the full
- * `Event` union lives in the engine and would have to be duplicated here. Structural errors inside
- * an event are caught by `parseGameExport` replaying the log instead.
+ * One game in an export: its title and its log. Events are only checked for being objects with a
+ * `type`: the full `Event` union lives in the engine and would have to be duplicated here.
+ * Structural errors inside an event are caught by `toImportedGame` replaying the log instead. A
+ * campaign's export holds its games in this shape too (`campaignExport`).
  */
-const exportSchema = z.object({
-  format: z.literal(FORMAT),
-  stateVersion: z.number().int().positive(),
+export const exportedGameSchema = z.object({
   game: z.object({ title: z.string(), createdAt: z.number() }),
   events: z.array(
     z.object({
@@ -46,6 +45,12 @@ const exportSchema = z.object({
       cause: causeSchema.optional(),
     }),
   ),
+});
+
+/** Envelope of an exported game: the game, marked as a game of this app's `stateVersion`. */
+const exportSchema = exportedGameSchema.extend({
+  format: z.literal(FORMAT),
+  stateVersion: z.number().int().positive(),
 });
 
 /** Why `parseGameExport` refused a file; the UI maps it to a translated message. */
@@ -72,22 +77,36 @@ export function serialiseGameExport(
   return JSON.stringify({
     format: FORMAT,
     stateVersion: STATE_VERSION,
-    game: { title, createdAt },
-    events: events.map(({ timestamp, commandId, event, cause }) => ({
-      timestamp,
-      commandId,
-      event,
-      ...(cause === undefined ? {} : { cause }),
-    })),
+    ...exportedGame(title, createdAt, events),
   });
 }
 
+/** A game as an export holds it (`exportedGameSchema`): the store's ids and sequence numbers left out. */
+export function exportedGame(title: string, createdAt: number, events: readonly StoredEvent[]) {
+  return { game: { title, createdAt }, events: events.map(exportedEvent) };
+}
+
+/** An event of a game or a campaign log as an export holds it: without the store's ids. */
+export function exportedEvent<E>({
+  timestamp,
+  commandId,
+  event,
+  cause,
+}: {
+  timestamp: number;
+  commandId: string;
+  event: E;
+  cause?: unknown;
+}) {
+  return { timestamp, commandId, event, ...(cause === undefined ? {} : { cause }) };
+}
+
 /**
- * Parses and validates an export file into something `GameStore.importGame` accepts.
- * The version is checked before the rest of the schema so a file from a newer app reports
+ * The JSON of an export file, refused as `invalid` if it is none and as `newerVersion` if a newer
+ * app wrote it. The version is checked before any schema so a file from a newer app reports
  * `newerVersion` even if its layout has changed. Throws `GameImportError`.
  */
-export function parseGameExport(text: string): ImportedGame {
+export function readExportJson(text: string): unknown {
   let json: unknown;
   try {
     json = JSON.parse(text);
@@ -99,17 +118,29 @@ export function parseGameExport(text: string): ImportedGame {
   if (version.success && version.data.stateVersion > STATE_VERSION) {
     throw new GameImportError('newerVersion');
   }
-  const parsed = exportSchema.safeParse(json);
-  if (!parsed.success) throw new GameImportError('invalid');
+  return json;
+}
 
-  // The schema above cannot vouch for event payloads, but the cast is checked by the replay below;
-  // it checked the causes in full.
-  const events = parsed.data.events as unknown as ImportedGame['events'];
+/**
+ * Parses and validates an export file into something `GameStore.importGame` accepts. Throws
+ * `GameImportError`.
+ */
+export function parseGameExport(text: string): ImportedGame {
+  const parsed = exportSchema.safeParse(readExportJson(text));
+  if (!parsed.success) throw new GameImportError('invalid');
+  return toImportedGame(parsed.data);
+}
+
+/** The game an export holds, once its log replays; throws `GameImportError` if it doesn't. */
+export function toImportedGame(exported: z.infer<typeof exportedGameSchema>): ImportedGame {
+  // The schema cannot vouch for event payloads, but the cast is checked by the replay below; it
+  // checked the causes in full.
+  const events = exported.events as unknown as ImportedGame['events'];
   try {
     if (!replay(events.map((e) => e.event))) throw new Error('unknown event');
   } catch (error) {
     console.warn('Import rejected: the event log does not replay.', error);
     throw new GameImportError('invalid');
   }
-  return { title: parsed.data.game.title, events };
+  return { title: exported.game.title, events };
 }

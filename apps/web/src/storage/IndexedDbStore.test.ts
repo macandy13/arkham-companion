@@ -557,6 +557,35 @@ describe('IndexedDbStore campaigns', () => {
     );
   });
 
+  it('imports a campaign under a new id, its log and its game moved to that id', async () => {
+    const elsewhere = campaignId('on-the-other-device');
+    const gameOfTheCampaign: ScenarioStarted = {
+      ...started,
+      campaign: campaign.replayEvents([campaignStarted(elsewhere)]),
+    };
+
+    const id = await store.importCampaign({
+      title: 'Zealot',
+      reliance: 'assist',
+      events: [{ timestamp: 1000, commandId: 'start', event: campaignStarted(elsewhere) }],
+      games: [
+        {
+          title: 'The Gathering',
+          events: [{ timestamp: 2000, commandId: 'start', event: gameOfTheCampaign }],
+        },
+      ],
+    });
+
+    expect(id).not.toBe(elsewhere);
+    expect(await store.loadCampaign(id)).toMatchObject({
+      summary: { title: 'Zealot', reliance: 'assist', createdAt: 1000 },
+      log: { campaignId: id },
+    });
+    const [game] = await store.listGames();
+    expect(game).toMatchObject({ title: 'The Gathering', campaignId: id });
+    expect((await store.loadGame(game!.gameId))?.state.campaign?.campaignId).toBe(id);
+  });
+
   it('deleting a game leaves its campaign and other campaigns untouched', async () => {
     const zealot = await store.createCampaign();
     const other = await store.createCampaign();

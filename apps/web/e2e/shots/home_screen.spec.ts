@@ -32,7 +32,6 @@ test('the shelf with a campaign waiting for its second chapter beside a game of 
 
 test(
   'the question before a campaign is deleted with its games',
-  { tag: '@shot' },
   async ({ page }) => {
     await openStoredCampaign(page, 'Sunday with Kim', (id) =>
       gatheringKilledEvents(id, [rolandBanks, fakeSeeker], fakeSeeker),
