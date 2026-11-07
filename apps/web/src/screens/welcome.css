@@ -1,0 +1,112 @@
+/*
+ * Home's welcome page (MD.4c, `WelcomePage`): a title page on the guide's paper. The mark and the
+ * name stand centred over what the app does; the two ways in are ruled rows led by a symbol, the
+ * way the guide lists its choices; loading a game and the fan notice close the page.
+ */
+#welcome {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-3);
+  text-align: center;
+}
+
+#welcome > svg[data-mark] {
+  inline-size: var(--welcome-mark-size);
+  block-size: var(--welcome-mark-size);
+  color: var(--color-accent);
+}
+
+#welcome > hgroup > h1 {
+  margin: 0;
+  font-family: var(--font-family-print);
+  font-size: var(--font-size-print-title);
+  font-weight: normal;
+}
+
+#welcome > hgroup > h1::after {
+  content: '';
+  display: block;
+  width: var(--title-ornament-width);
+  height: var(--title-ornament-height);
+  margin: var(--space-2) auto 0;
+  background: var(--color-accent);
+  mask: var(--title-ornament) center / contain no-repeat;
+}
+
+#welcome > hgroup > p {
+  margin: var(--space-1) 0 0;
+  color: var(--color-text-muted);
+  font-family: var(--font-family-label);
+  font-style: italic;
+}
+
+#welcome > p {
+  max-inline-size: var(--welcome-text-width);
+  margin: 0;
+  font-family: var(--font-family-label);
+  line-height: var(--welcome-text-line-height);
+}
+
+#welcome > nav {
+  display: grid;
+  inline-size: min(100%, var(--welcome-text-width));
+  border-top: var(--border-width) solid var(--color-border);
+  text-align: start;
+}
+
+#welcome > nav > a {
+  display: grid;
+  grid-template-columns: var(--welcome-symbol-size) 1fr;
+  column-gap: var(--space-3);
+  align-items: center;
+  min-height: var(--touch-target);
+  padding-block: var(--space-2);
+  border-bottom: var(--border-width) solid var(--color-border);
+  color: var(--color-text);
+  font-family: var(--font-family-print);
+  font-size: var(--font-size-subtitle);
+  text-decoration: none;
+}
+
+#welcome > nav > a::before {
+  content: '';
+  grid-row: span 2;
+  inline-size: var(--welcome-symbol-size);
+  block-size: var(--welcome-symbol-size);
+  background: var(--color-accent);
+  mask: var(--welcome-symbol) center / contain no-repeat;
+}
+
+#welcome > nav > a[data-way='campaign'] {
+  --welcome-symbol: url('../symbols/elder_sign.svg');
+}
+
+#welcome > nav > a[data-way='quick'] {
+  --welcome-symbol: url('../symbols/skull.svg');
+}
+
+#welcome > nav > a > small {
+  color: var(--color-text-muted);
+  font-family: var(--font-family-label);
+  font-size: var(--font-size-note);
+  font-style: italic;
+}
+
+#welcome > nav > a:hover {
+  background: var(--color-surface);
+}
+
+/* Loading a saved game is a line of the page, underlined like a link. */
+#welcome > nav > label {
+  justify-self: start;
+  margin-top: var(--space-3);
+  color: var(--color-accent);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+#welcome > footer > p {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-note);
+}

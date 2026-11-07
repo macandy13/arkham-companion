@@ -128,7 +128,8 @@ button:not(:disabled):hover {
  * both themes. The table's colour tokens are redefined on the paper, so what lies on it (text,
  * buttons, fields, lines, the game's clue and doom colours) turns to ink without rules of its own.
  * The campaign log brings its own papers on a starfield, so it keeps the table's tokens, and home
- * lays its title straight on the table, with each game a cover of its own paper (`#shelf`).
+ * lays its title straight on the table, with each game a cover of its own paper (`#shelf`). Home's
+ * welcome page has no title on the table, so it is a paper page like the others.
  */
 #app > main:not(:has(#board, #campaign-log, #home-title)),
 #shelf > li,

@@ -9,6 +9,16 @@ import { houseOpenedExport, importGame } from '../fixtures/saved_games';
 
 // Situations on the home screen, each photographed as it ends (`@shot`, coding guidelines §3).
 
+test(
+  'the welcome page on a first start, with nothing stored',
+  { tag: '@shot' },
+  async ({ page }) => {
+    await page.goto('/#/');
+
+    await expect(page.getByRole('article')).toContainText('unofficial fan project');
+  },
+);
+
 test('the game list with one saved game', async ({ page }) => {
   await importGame(page, houseOpenedExport('The house is open'));
 

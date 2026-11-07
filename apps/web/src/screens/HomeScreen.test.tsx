@@ -37,6 +37,8 @@ async function renderHome(titles: string[]) {
   const gameStore = new IndexedDbStore(`home-test-${n++}`);
   for (const title of titles) await gameStore.createGame({ title });
   const store = createAppStore(gameStore);
+  // As at start-up (`Startup`), the games are loaded before home shows.
+  await store.getState().refresh();
   render(
     <MemoryRouter>
       <HomeScreen store={store} catalog={catalogLoading} />
@@ -73,7 +75,7 @@ describe('HomeScreen', () => {
   });
 
   it('marks New campaign as the brass primary of the title', async () => {
-    await renderHome([]);
+    await renderHome(['The house is open']);
 
     const ways = await screen.findByRole('navigation', { name: 'Start or load a game' });
 
@@ -85,10 +87,26 @@ describe('HomeScreen', () => {
     ).toEqual(['New campaign']);
   });
 
-  it('says there are no saved games yet', async () => {
+  it('welcomes a player with no saved games: what stays on the table and the two ways in', async () => {
     await renderHome([]);
 
-    expect(await screen.findByText('No games yet')).toBeTruthy();
+    expect(await screen.findByText(/Your decks and the cards in your hands stay/)).toBeTruthy();
+    const ways = screen.getByRole('navigation', { name: 'Start or load a game' });
+    const newCampaign = within(ways).getByRole('link', { name: /New campaign/ });
+    expect(newCampaign.getAttribute('href')).toBe('/new?mode=campaign');
+    expect(within(newCampaign).getByText('Scenario by scenario, with a campaign log')).toBeTruthy();
+    const oneScenario = within(ways).getByRole('link', { name: /One scenario/ });
+    expect(oneScenario.getAttribute('href')).toBe('/new?mode=quick');
+    expect(within(oneScenario).getByText('A standalone game, no campaign log')).toBeTruthy();
+    expect(within(ways).getByLabelText('Load a saved game')).toBeTruthy();
+    expect(screen.getByText(/unofficial fan project/)).toBeTruthy();
+  });
+
+  it('shows the welcome page instead of the title on the table while nothing is stored', async () => {
+    await renderHome([]);
+
+    expect(await screen.findByRole('article')).toBeTruthy();
+    expect(screen.queryByRole('list', { name: 'Your games' })).toBeNull();
   });
 
   it.each([
@@ -274,7 +292,7 @@ describe('HomeScreen', () => {
       within(screen.getByRole('alertdialog')).getByRole('button', { name: 'Delete' }),
     );
 
-    expect(await screen.findByText('No games yet')).toBeTruthy();
+    expect(await screen.findByText(/stay on the table/)).toBeTruthy();
   });
 
   /** Home over a stored Night of the Zealot campaign titled `title`, with its game of The Gathering. */
@@ -336,7 +354,7 @@ describe('HomeScreen', () => {
       within(screen.getByRole('alertdialog')).getByRole('button', { name: 'Delete' }),
     );
 
-    expect(await screen.findByText('No games yet')).toBeTruthy();
+    expect(await screen.findByText(/stay on the table/)).toBeTruthy();
     expect(await gameStore.listGames()).toEqual([]);
   });
 
