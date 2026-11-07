@@ -4,7 +4,8 @@ import { zoneKey } from './zone';
 
 /**
  * A connection between two location instances. `printedConnections` derives the ones the cards
- * print; a `GameMap` stores only those effects add (`AddConnection`).
+ * print; a `GameMap` stores only those no card prints (`AddConnection`) and the printed ones an
+ * effect cut (`RemoveConnection`).
  */
 export interface Edge {
   from: InstanceId;
@@ -50,6 +51,14 @@ export interface GameMap {
   visible: boolean;
   /** Connections between locations of this map. */
   connections: Edge[];
+  /**
+   * Printed connections from this map's locations that card text removed ("is no longer connected
+   * to", `RemoveConnection`): `openConnections` leaves out the moves each allows, whatever the
+   * symbols say. Printed connections are derived, never stored, so a cut is the only way to take
+   * one away. Not for an effect that blocks a move: a blocked connection still counts for
+   * "nearest" and hunter paths (RR "Nearest", "Hunter"). Absent until the first cut.
+   */
+  cutConnections?: Edge[];
   /**
    * Where the book layout draws each location of this map. A location without a cell has no
    * book position (the screen places it itself); a cell whose location has left play is ignored.

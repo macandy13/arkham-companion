@@ -1,7 +1,10 @@
 import {
   allConnections,
+  allowsEveryMove,
+  allowsSomeMove,
   revealEvents,
   sameEdge,
+  uncutPrintedConnections,
   validateConnections,
   validateEnds,
   validateGridCell,
@@ -94,17 +97,32 @@ export function handlePutLocationIntoPlay(
   return [moved, { type: 'LayoutCellSet', mapId: cmd.mapId, cardId: card.id, at: cmd.at }];
 }
 
-/** `RemoveConnection`: finds the map that owns the edge; rejects an edge that is not on the board. */
+/**
+ * `RemoveConnection` ("is no longer connected to"): removes the edge from the map that declares
+ * it, and cuts what the cards print of it on the map of its `from` location (printed connections
+ * are derived, so a cut is all there is to store), so no move it allows is left. Without a
+ * declared edge, the cards must print every move it allows; anything else is rejected.
+ */
 export function handleRemoveConnection(
   ctx: EngineContext,
   state: GameState,
   cmd: RemoveConnection,
-): [ConnectionChanged] {
+): ConnectionChanged[] {
   const edge = validatedEdge(ctx, state, cmd);
   const owned = allConnections(state).find(({ edge: existing }) => sameEdge(existing, edge));
-  if (!owned)
-    throw new CommandRejected({ code: 'connectionNotFound', from: edge.from, to: edge.to });
-  return [{ type: 'ConnectionChanged', change: 'removed', mapId: owned.mapId, edge: owned.edge }];
+  const printed = uncutPrintedConnections(ctx, state);
+  const fromZone = state.cards[edge.from]?.zone;
+  const cut: ConnectionChanged[] =
+    fromZone?.kind === 'location' && allowsSomeMove(printed, edge)
+      ? [{ type: 'ConnectionChanged', change: 'cut', mapId: fromZone.mapId, edge }]
+      : [];
+  if (owned)
+    return [
+      { type: 'ConnectionChanged', change: 'removed', mapId: owned.mapId, edge: owned.edge },
+      ...cut,
+    ];
+  if (allowsEveryMove(printed, edge)) return cut;
+  throw new CommandRejected({ code: 'connectionNotFound', from: edge.from, to: edge.to });
 }
 
 /** The edge a connection command describes, after checking both ends. */

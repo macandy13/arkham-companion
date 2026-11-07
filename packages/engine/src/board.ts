@@ -63,18 +63,34 @@ export function printedConnections(ctx: EngineContext, state: GameState): Edge[]
 }
 
 /**
- * Every connection that holds now: the printed ones (`printedConnections`), then the open ones the
- * maps declare for what no card prints (`GameMap.connections`: card text such as the Main Path's
- * "is connected to each other Woods location", or an effect), less those the printed ones already
- * make.
+ * Every connection that holds now: the printed ones no effect cut (`uncutPrintedConnections`),
+ * then the open ones the maps declare for what no card prints (`GameMap.connections`: card text
+ * such as the Main Path's "is connected to each other Woods location", or an effect), less those
+ * the printed ones already make.
  */
 export function openConnections(ctx: EngineContext, state: GameState): Edge[] {
-  const printed = printedConnections(ctx, state);
+  const printed = uncutPrintedConnections(ctx, state);
   const declared = allConnections(state)
     .map(({ edge }) => edge)
     .filter((edge) => isConnectionOpen(state, edge))
     .filter((edge) => !allowsEveryMove(printed, edge));
   return joinOpposites([...printed, ...declared]);
+}
+
+/**
+ * The printed connections less the moves an effect cut (`GameMap.cutConnections`): a two-way
+ * connection cut one way is left one-way the other, and one cut every way it goes is gone.
+ */
+export function uncutPrintedConnections(ctx: EngineContext, state: GameState): Edge[] {
+  const cuts = Object.values(state.board.maps).flatMap((map) => map.cutConnections ?? []);
+  const cut = (from: InstanceId, to: InstanceId) =>
+    cuts.some((edge) => neighboursOver([edge], from).includes(to));
+  return printedConnections(ctx, state).flatMap((edge): Edge[] => {
+    const forth = !cut(edge.from, edge.to);
+    const back = !edge.oneWay && !cut(edge.to, edge.from);
+    if (forth) return [{ ...edge, oneWay: !back }];
+    return back ? [{ from: edge.to, to: edge.from, oneWay: true }] : [];
+  });
 }
 
 /**
@@ -97,8 +113,14 @@ function joinOpposites(edges: readonly Edge[]): Edge[] {
   return joined;
 }
 
+/** Whether `edges` allow any move `edge` allows: from its `from`, or back unless one-way. */
+export function allowsSomeMove(edges: readonly Edge[], edge: Edge): boolean {
+  const leads = (from: InstanceId, to: InstanceId) => neighboursOver(edges, from).includes(to);
+  return leads(edge.from, edge.to) || (!edge.oneWay && leads(edge.to, edge.from));
+}
+
 /** Whether `edges` already allow each move `edge` allows: from its `from`, and back unless one-way. */
-function allowsEveryMove(edges: readonly Edge[], edge: Edge): boolean {
+export function allowsEveryMove(edges: readonly Edge[], edge: Edge): boolean {
   const leads = (from: InstanceId, to: InstanceId) => neighboursOver(edges, from).includes(to);
   return leads(edge.from, edge.to) && (edge.oneWay || leads(edge.to, edge.from));
 }

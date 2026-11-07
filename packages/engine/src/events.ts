@@ -169,13 +169,13 @@ export interface LayoutCellSet {
 }
 
 /**
- * An edge was added to or removed from `GameMap.connections` of map `mapId`.
- * Produced by `AddConnection`/`RemoveConnection`; `edge` is the stored edge,
- * so removal matches exactly what was added.
+ * A connection of map `mapId` changed. Produced by `AddConnection`/`RemoveConnection`: `added`
+ * and `removed` change `GameMap.connections`, and `edge` is the stored edge, so removal matches
+ * exactly what was added; `cut` adds `edge` to `GameMap.cutConnections`, for a printed connection.
  */
 export interface ConnectionChanged {
   type: 'ConnectionChanged';
-  change: 'added' | 'removed';
+  change: 'added' | 'removed' | 'cut';
   /** The map that owns the edge. */
   mapId: MapId;
   edge: Edge;

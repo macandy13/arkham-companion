@@ -21,7 +21,7 @@ import type {
   TokensChanged,
 } from './events';
 import type { InstanceId } from './ids';
-import type { Edge } from './map';
+import type { GameMap } from './map';
 import { seedRng } from './rng';
 import { withStatDelta } from './investigators';
 import {
@@ -322,18 +322,21 @@ function applyCardFlipped(state: GameState, e: CardFlipped): GameState {
 function applyConnectionChanged(state: GameState, e: ConnectionChanged): GameState {
   const map = state.board.maps[e.mapId];
   if (!map) return state;
-  let connections: Edge[];
+  let changed: GameMap;
   switch (e.change) {
     case 'added':
-      connections = [...map.connections, e.edge];
+      changed = { ...map, connections: [...map.connections, e.edge] };
       break;
     case 'removed':
-      connections = map.connections.filter((edge) => !sameEdge(edge, e.edge));
+      changed = { ...map, connections: map.connections.filter((edge) => !sameEdge(edge, e.edge)) };
+      break;
+    case 'cut':
+      changed = { ...map, cutConnections: [...(map.cutConnections ?? []), e.edge] };
       break;
   }
   return {
     ...state,
-    board: { ...state.board, maps: { ...state.board.maps, [e.mapId]: { ...map, connections } } },
+    board: { ...state.board, maps: { ...state.board.maps, [e.mapId]: changed } },
   };
 }
 
