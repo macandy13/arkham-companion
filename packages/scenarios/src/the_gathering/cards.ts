@@ -135,8 +135,8 @@ export const theGatheringHouse: AddMapStep = {
  * traits, keywords and abilities (revelation test skills and difficulties
  * checked against ArkhamDB's `core_encounter.json`) and where each side's picture
  * is on ArkhamDB – no card text, no ArkhamDB JSON, no images – so it may be
- * committed (see CLAUDE.md). It is the test scenario for the generic rules
- * until real scenario data arrives (M4).
+ * committed (see CLAUDE.md). `arkhamdb_check.test.ts` holds it to ArkhamDB's
+ * data; it is also the test scenario for the generic rules.
  */
 export const theGatheringCardDefs: readonly CardStats[] = [
   agenda({
@@ -396,7 +396,6 @@ export const theGatheringCardDefs: readonly CardStats[] = [
     traits: ghoulTraits,
     fight: 3,
     evade: 3,
-    // Her printed sanity (3) isn't entered: no rule reads an ally's sanity yet.
     health: fixed(3),
     damage: 1,
     horror: 1,

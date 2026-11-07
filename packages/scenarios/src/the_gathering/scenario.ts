@@ -37,10 +37,10 @@ const ghoulsAtYourLocation: TokenValue = (ctx, state, test) => {
  * the campaign guide describes: the Study is the only location in play, the
  * other locations, the Ghoul Priest and Lita Chantler are set aside, and the
  * rest of the six encounter sets is shuffled into the encounter deck. Card
- * data is hand-entered (`theGatheringCardDefs`); it is the shared test
- * scenario for the generic rules until real scenario data arrives (M4).
- * Every reverse side but agenda 1's, and act 3's objective, are abilities on
- * their card data; agenda 1's choice is left to the players. Pass the whole
+ * data is hand-entered (`theGatheringCardDefs`, checked against ArkhamDB by
+ * `arkhamdb_check.test.ts`); it is also the shared test scenario for the
+ * generic rules. Every reverse side and act 3's objective are abilities on
+ * their card data; agenda 1's is the lead's choice (`leadDecides`). Pass the whole
  * definition as `EngineContext.scenario`, so the engine gets `reference` and
  * `modifiers` (the skull's "-X") for skill test suggestions. The reference
  * card's modifiers are hand-entered from the 2016 Core Set card as known
