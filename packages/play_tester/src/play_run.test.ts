@@ -8,7 +8,7 @@ import {
   cardName,
 } from '@arkham/engine';
 import { theGathering } from '@arkham/scenarios';
-import { checkedStep, checkRun, playRun } from './play_run';
+import { checkedStep, checkRun, playRun, resumeDifference } from './play_run';
 import type { Run } from './run';
 import type { Step } from './steps';
 
@@ -119,5 +119,25 @@ describe('playing a run', () => {
 
   it('plays the same game twice, so the determinism check passes', () => {
     expect(checkRun(run, { stepCap: 40 }).finding).toBeUndefined();
+  });
+
+  it('resumes the game from its log partway and plays on to the same log', () => {
+    expect(resumeDifference(playRun(run, { stepCap: 40 }))).toBeUndefined();
+  });
+
+  it('resumes a game with undos alike, though its group ids number on from the log', () => {
+    const played = playRun({ ...run, bot: 'chaos' }, { stepCap: 80 });
+
+    expect(played.steps).toContainEqual({ verb: 'undo' });
+    expect(resumeDifference(played)).toBeUndefined();
+  });
+
+  it('fails the resume check when the resumed game logs other events', () => {
+    const played = playRun(run, { stepCap: 40 });
+    const withoutLastEvent = { ...played, log: played.log.slice(0, -1) };
+
+    expect(resumeDifference(withoutLastEvent)).toMatch(
+      /^resumed at step \d+, the game logs another event at \d+/,
+    );
   });
 });

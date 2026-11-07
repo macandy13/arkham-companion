@@ -5,6 +5,7 @@ import {
   blankAgenda,
   blankEnemy,
   blankLocation,
+  engagedWith,
   fixed,
   instanceId,
   investigatorId,
@@ -89,6 +90,58 @@ describe('the round structure', () => {
     expect(brokenRule(upkeep, table.board, next)).toMatchObject({
       oracle: { id: 'mythosDoom' },
       message: 'the mythos phase left 0 doom on agenda, which had 0',
+    });
+  });
+});
+
+describe('an upkeep that stops for a question', () => {
+  const bob = investigatorId('bob');
+  const ghoul = instanceId('ghoul');
+
+  /**
+   * Alice evaded the ghoul in round 1, so the upkeep readies it in the study with alice and bob
+   * there and stops to ask whom it engages; alice is answered, then she gives up an action.
+   */
+  const atUpkeepQuestion = () => {
+    const table = PlayTable.start(
+      newGame()
+        .withLocation(study, blankLocation('study'), { revealed: true })
+        .withInvestigator(alice, { locationId: study, resources: 5 })
+        .withInvestigator(bob, { locationId: study, resources: 5 })
+        .withCard(ghoul, blankEnemy('ghoul'), engagedWith(alice)),
+    );
+    table.nextPhase();
+    table.startTurn(alice);
+    table.evade(alice, ghoul);
+    table.endTurn(alice);
+    table.startTurn(bob);
+    table.endTurn(bob);
+    table.nextPhase();
+    table.nextPhase();
+    table.answer(ghoul, 'alice');
+    table.adjustActions(alice, -1);
+    return table;
+  };
+
+  it('does not ask for 3 actions from a "Next" that starts after the actions were reset', () => {
+    const table = atUpkeepQuestion();
+    const before = table.board;
+    table.nextPhase();
+
+    expect(before.step).toBe('drawAndGain');
+    expect(table.board.investigator(alice).actions).toBe(2);
+    expect(brokenRule(before, table.board, next)).toBeUndefined();
+  });
+
+  it('still checks the resource that the rest of the upkeep gives', () => {
+    const table = atUpkeepQuestion();
+    const before = table.board;
+    table.nextPhase();
+    table.gainResources(bob, 1);
+
+    expect(brokenRule(before, table.board, next)).toMatchObject({
+      oracle: { id: 'upkeep' },
+      message: 'bob went from 5 to 7 resources in the upkeep',
     });
   });
 });

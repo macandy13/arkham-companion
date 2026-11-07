@@ -3,10 +3,11 @@ import { addCount, firstDifference } from '@arkham/util';
 import {
   CommandRejected,
   InvariantBroken,
+  PlayTable,
   replay,
   TableError,
+  type GameState,
   type LoggedEvent,
-  type PlayTable,
   type RejectionCode,
 } from '@arkham/engine';
 import { botStep } from './bots';
@@ -18,12 +19,23 @@ import { describeStep, playStep, type Step } from './steps';
 /**
  * The checks a game is judged by (product.md "Continuous play tester"): `crash` an error other
  * than a refusal or a misused table, `refusal` a refusal marked `never`, `invariants` a state
- * `checkInvariants` rejects, `rules` a step that breaks a rule an oracle checks (`brokenRule`), `replay` an event log that no longer replays to the live state,
- * `determinism` a run whose second play logs other events than its first, `liveness` a game that
- * gets stuck: an offered answer refused, a "Next" that changes nothing, a game past the round cap.
+ * `checkInvariants` rejects, `rules` a step that breaks a rule an oracle checks (`brokenRule`),
+ * `replay` an event log that no longer replays to the live state, `undo` a step that undo right
+ * after it does not take back exactly, `determinism` a run whose second play logs other events
+ * than its first, `resume` a run that logs other events when resumed from its log partway, and
+ * `liveness` a game that gets stuck: an offered answer refused, a "Next" that changes nothing, a
+ * game past the round cap.
  */
 export type CheckId =
-  'crash' | 'refusal' | 'invariants' | 'rules' | 'replay' | 'determinism' | 'liveness';
+  | 'crash'
+  | 'refusal'
+  | 'invariants'
+  | 'rules'
+  | 'replay'
+  | 'undo'
+  | 'determinism'
+  | 'resume'
+  | 'liveness';
 
 /**
  * A failed check: which one, the step that failed it (`step` counts the played steps before it,
@@ -110,8 +122,9 @@ export function playRun(run: Run, { stepCap = STEP_CAP, roundCap = ROUND_CAP } =
 }
 
 /**
- * Plays `run` twice (`playRun`) and adds the `determinism` check: both plays must log the same
- * events in the same undo groups. Returns the first play, with the finding if any.
+ * Plays `run` twice (`playRun`) and adds the whole-game checks: both plays must log the same
+ * events in the same undo groups (`determinism`), and so must a table resumed from the log
+ * partway (`resumeDifference`). Returns the first play, with the finding if any.
  */
 export function checkRun(
   run: Run,
@@ -121,17 +134,58 @@ export function checkRun(
   if (first.finding) return first;
   const second = playRun(run, options);
   const at = firstDifference(first.log, second.log, isDeepStrictEqual);
-  if (at === undefined) return first;
-  return {
+  const failed = (check: CheckId, message: string): RunResult => ({
     ...first,
     end: 'finding',
-    finding: {
-      check: 'determinism',
-      step: first.steps.length,
-      message: `the second play of the run logs another event at ${at}: ${JSON.stringify(second.log[at])} instead of ${JSON.stringify(first.log[at])}`,
-      boardBefore: setUpTable(run).formatted(),
-    },
-  };
+    finding: { check, step: first.steps.length, message, boardBefore: setUpTable(run).formatted() },
+  });
+  if (at !== undefined)
+    return failed(
+      'determinism',
+      `the second play of the run logs another event at ${at}: ${JSON.stringify(second.log[at])} instead of ${JSON.stringify(first.log[at])}`,
+    );
+  const resumed = resumeDifference(first);
+  return resumed === undefined ? first : failed('resume', resumed);
+}
+
+/**
+ * Replays the steps of `played` up to one its run's seeds pick, resumes a new table from that
+ * log (`PlayTable.resume`, as the app does with a saved game) and plays the rest there. What
+ * differs from the straight play, or `undefined`. One resume point per run keeps a run's cost
+ * linear; across a night's runs it lands on every kind of step.
+ */
+export function resumeDifference(played: RunResult): string | undefined {
+  const { run, steps, log } = played;
+  const resumeAt = new SeededRandom(run.gameSeed ^ run.botSeed).between(0, steps.length);
+  const before = setUpTable(run);
+  steps.slice(0, resumeAt).forEach((step) => playStep(before, step));
+  const table = PlayTable.resume(before.ctx, before.entries);
+  try {
+    steps.slice(resumeAt).forEach((step) => playStep(table, step));
+  } catch (error) {
+    return `resumed at step ${resumeAt}, the game refused a step it played straight through: ${error instanceof Error ? error.message : String(error)}`;
+  }
+  const straight = numberedGroups(log);
+  const resumed = numberedGroups(table.entries);
+  const at = firstDifference(straight, resumed, isDeepStrictEqual);
+  return at === undefined
+    ? undefined
+    : `resumed at step ${resumeAt}, the game logs another event at ${at}: ${JSON.stringify(resumed[at])} instead of ${JSON.stringify(straight[at])}`;
+}
+
+/**
+ * `log` with each group id replaced by the group's place in it. A resumed table numbers its
+ * groups on from the log, while the straight play also counted groups an undo took back, so the
+ * ids differ though the events and their grouping are the same.
+ */
+function numberedGroups(
+  log: readonly LoggedEvent[],
+): { group: number; event: LoggedEvent['event'] }[] {
+  const groups = new Map<string, number>();
+  return log.map(({ commandId, event }) => {
+    if (!groups.has(commandId)) groups.set(commandId, groups.size);
+    return { group: groups.get(commandId) ?? 0, event };
+  });
 }
 
 /** What one step did: played, refused as expected, misused the table, or failed a check. */
@@ -151,6 +205,7 @@ type StepOutcome =
  */
 export function checkedStep(table: PlayTable, step: Step): StepOutcome {
   const boardBefore = table.formatted();
+  const stateBefore = table.state;
   const viewBefore = table.board;
   const failed = (check: CheckId, message: string): StepOutcome => {
     const boardAfter = table.formatted();
@@ -194,7 +249,24 @@ export function checkedStep(table: PlayTable, step: Step): StepOutcome {
       'replay',
       `after ${describeStep(step)} the event log no longer replays to the live state`,
     );
+  // Undo after an undo would take back an older step, not this one; a step that logged nothing
+  // has nothing to take back.
+  if (step.verb !== 'undo' && table.events.length > logged && !undoesTo(table, stateBefore))
+    return failed(
+      'undo',
+      `undo right after ${describeStep(step)} does not give back the state before it`,
+    );
   return { kind: 'played' };
+}
+
+/**
+ * Whether undo right after the last step gives back `before`. It undoes on a table resumed from
+ * the log, so the game goes on from the step it played.
+ */
+function undoesTo(table: PlayTable, before: GameState): boolean {
+  const copy = PlayTable.resume(table.ctx, table.entries);
+  copy.undo();
+  return isDeepStrictEqual(copy.state, before);
 }
 
 /** How the game on `table` has ended, if it has. */
