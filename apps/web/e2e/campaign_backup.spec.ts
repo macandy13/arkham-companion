@@ -37,7 +37,7 @@ test('a campaign is exported, deleted and loaded back', async ({ page }) => {
   await test.step('Delete the campaign', async () => {
     await choose('Delete');
     await page.getByRole('alertdialog').getByRole('button', { name: 'Delete' }).click();
-    await expect(page.getByText('No games yet')).toBeVisible();
+    await expect(page.getByText(/stay on the table/)).toBeVisible();
   });
 
   await test.step('Load the file: the campaign is back where it stood', async () => {

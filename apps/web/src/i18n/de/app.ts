@@ -916,10 +916,15 @@ export const appTexts = {
     newCampaign: 'Neue Kampagne',
     oneScenario: 'Ein Szenario',
     load: 'Gespeichertes Spiel laden',
+    welcome: {
+      intro:
+        'Die App führt das Begegnungsdeck, Agenda und Szene, die Karte, den Chaosbeutel und das Kampagnenlogbuch. Eure Decks und die Karten auf der Hand bleiben auf dem Tisch.',
+      campaignWhy: 'Szenario für Szenario, mit Kampagnenlogbuch',
+      quickWhy: 'Ein einzelnes Spiel, ohne Kampagnenlogbuch',
+    },
   },
   games: {
     new: 'Neues Spiel',
-    empty: 'Noch keine Spiele',
     untitled: 'Spiel {{n}}',
     open: 'Öffnen',
     newCampaign: 'Neue Kampagne',

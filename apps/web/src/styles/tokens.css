@@ -251,6 +251,11 @@
   --duration-spinner: 1.8s;
   --mark-startup-size: 9.5rem;
   --spinner-size: 1.25em;
+  /* Home's welcome page (MD.4c): the mark over the name, the text's measure, the rows' symbols. */
+  --welcome-mark-size: 7rem;
+  --welcome-text-width: 34rem;
+  --welcome-text-line-height: 1.5;
+  --welcome-symbol-size: 2rem;
   /* The spinner's ticks, in the mark's 100-unit grid, bold enough to read at a line's height. */
   --spinner-tick-width: 9;
   /* How long the game's own changes stay readable before their notice fades away. */

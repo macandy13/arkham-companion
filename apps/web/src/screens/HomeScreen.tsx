@@ -11,13 +11,15 @@ import { CampaignCover } from './CampaignCover';
 import { downloadCampaignExport, downloadGameExport } from './downloadFile';
 import { GameCover, untitledLabel } from './GameCover';
 import { HomeTitle } from './HomeTitle';
+import { LoadGameLabel } from './LoadGameLabel';
 import { shelfEntries } from './shelf';
 import type { PortraitImages } from './TeamPortraits';
+import { WelcomePage } from './WelcomePage';
 import '@fontsource/caveat/latin-500.css';
 import './home.css';
 
 /**
- * Route `/`: the app's title over its three ways in (a new campaign, one scenario, loading an
+ * Route `/`: while nothing is stored, the welcome page (`WelcomePage`); else the app's title over its three ways in (a new campaign, one scenario, loading an
  * export file), then the shelf: one cover per campaign, its scenario games included, and one per
  * game of one scenario, last played first (`shelfEntries`). It lies on the table rather than on a
  * page (MD.3b).
@@ -61,6 +63,16 @@ export function HomeScreen({
     void store.getState().refresh();
   }, [store]);
 
+  const importAlert = importError && <p role="alert">{importError}</p>;
+  if (games.length === 0 && campaigns.length === 0) {
+    return (
+      <>
+        <WelcomePage onLoad={(file) => void importFile(file)} />
+        {importAlert}
+      </>
+    );
+  }
+
   return (
     <>
       <hgroup>
@@ -74,67 +86,52 @@ export function HomeScreen({
           {t('home.newCampaign')}
         </Link>
         <Link to="/new?mode=quick">{t('home.oneScenario')}</Link>
-        <label>
-          {t('home.load')}
-          <input
-            type="file"
-            accept=".json,application/json"
-            onChange={(e) => {
-              const file = e.currentTarget.files?.[0];
-              e.currentTarget.value = '';
-              if (file) void importFile(file);
-            }}
-          />
-        </label>
+        <LoadGameLabel onLoad={(file) => void importFile(file)} />
       </nav>
-      {importError && <p role="alert">{importError}</p>}
-      {games.length === 0 && campaigns.length === 0 ? (
-        <p>{t('games.empty')}</p>
-      ) : (
-        <ul id="shelf" aria-label={t('home.shelf')}>
-          {shelfEntries(campaigns, games).map((entry, index) => {
-            const lastPlayed = index === 0;
-            if (entry.kind === 'campaign') {
-              return (
-                <CampaignCover
-                  key={entry.campaign.campaignId}
-                  campaign={entry.campaign}
-                  games={entry.games}
-                  images={images}
-                  lastPlayed={lastPlayed}
-                  onRename={(title) =>
-                    void store.getState().renameCampaign(entry.campaign.campaignId, title)
-                  }
-                  onExport={() =>
-                    void downloadCampaignExport(
-                      store,
-                      entry.campaign.campaignId,
-                      entry.campaign.title,
-                    )
-                  }
-                  onDelete={() => void store.getState().deleteCampaign(entry.campaign.campaignId)}
-                />
-              );
-            }
-            const { game } = entry;
-            const untitled = untitledLabel(t, games, games.indexOf(game));
-            const copyTitle = t('games.copyTitle', { title: game.title || untitled });
+      {importAlert}
+      <ul id="shelf" aria-label={t('home.shelf')}>
+        {shelfEntries(campaigns, games).map((entry, index) => {
+          const lastPlayed = index === 0;
+          if (entry.kind === 'campaign') {
             return (
-              <GameCover
-                key={game.gameId}
-                game={game}
-                untitledLabel={untitled}
-                onRename={(title) => void store.getState().renameGame(game.gameId, title)}
-                onDuplicate={() => void store.getState().duplicateGame(game.gameId, copyTitle)}
-                onExport={() => void downloadGameExport(store, game.gameId, game.title || untitled)}
-                onDelete={() => void store.getState().deleteGame(game.gameId)}
+              <CampaignCover
+                key={entry.campaign.campaignId}
+                campaign={entry.campaign}
+                games={entry.games}
                 images={images}
                 lastPlayed={lastPlayed}
+                onRename={(title) =>
+                  void store.getState().renameCampaign(entry.campaign.campaignId, title)
+                }
+                onExport={() =>
+                  void downloadCampaignExport(
+                    store,
+                    entry.campaign.campaignId,
+                    entry.campaign.title,
+                  )
+                }
+                onDelete={() => void store.getState().deleteCampaign(entry.campaign.campaignId)}
               />
             );
-          })}
-        </ul>
-      )}
+          }
+          const { game } = entry;
+          const untitled = untitledLabel(t, games, games.indexOf(game));
+          const copyTitle = t('games.copyTitle', { title: game.title || untitled });
+          return (
+            <GameCover
+              key={game.gameId}
+              game={game}
+              untitledLabel={untitled}
+              onRename={(title) => void store.getState().renameGame(game.gameId, title)}
+              onDuplicate={() => void store.getState().duplicateGame(game.gameId, copyTitle)}
+              onExport={() => void downloadGameExport(store, game.gameId, game.title || untitled)}
+              onDelete={() => void store.getState().deleteGame(game.gameId)}
+              images={images}
+              lastPlayed={lastPlayed}
+            />
+          );
+        })}
+      </ul>
     </>
   );
 }

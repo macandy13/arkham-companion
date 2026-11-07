@@ -912,10 +912,15 @@ export const appTexts = {
     newCampaign: 'New campaign',
     oneScenario: 'One scenario',
     load: 'Load a saved game',
+    welcome: {
+      intro:
+        'The app runs the encounter deck, the agenda and act, the map, the chaos bag and the campaign log. Your decks and the cards in your hands stay on the table.',
+      campaignWhy: 'Scenario by scenario, with a campaign log',
+      quickWhy: 'A standalone game, no campaign log',
+    },
   },
   games: {
     new: 'New game',
-    empty: 'No games yet',
     untitled: 'Game {{n}}',
     open: 'Open',
     newCampaign: 'New campaign',

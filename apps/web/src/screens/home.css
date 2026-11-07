@@ -218,15 +218,18 @@
   mask: url('./icons/load.svg') center / contain no-repeat;
 }
 
-/* The file input stays reachable from the keyboard; its label shows where the focus is. */
-#app > main > nav > label > input {
+/*
+ * The file input stays reachable from the keyboard; its label shows where the focus is. The
+ * welcome page's load line (welcome.css) hides its input the same way.
+ */
+:is(#app > main, #welcome) > nav > label > input {
   position: absolute;
   width: 1px;
   height: 1px;
   opacity: 0;
 }
 
-#app > main > nav > label:focus-within {
+:is(#app > main, #welcome) > nav > label:focus-within {
   outline: var(--focus-ring-width) solid var(--color-accent);
   outline-offset: var(--focus-ring-width);
 }
