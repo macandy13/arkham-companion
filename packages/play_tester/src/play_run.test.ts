@@ -65,6 +65,20 @@ describe('judging one step', () => {
     expect(outcome).toMatchObject({ kind: 'failed', failed: { check: 'refusal' } });
   });
 
+  it('fails the liveness check when an answer to an open test is refused', () => {
+    const table = PlayTable.start(game);
+    table.investigate(alice, { result: 'open' });
+
+    const outcome = checkedStep(table, {
+      verb: 'resolveTest',
+      investigator: cardName('alice'),
+      token: '-1',
+      result: { failedBy: -1 },
+    });
+
+    expect(outcome).toMatchObject({ kind: 'failed', failed: { check: 'liveness' } });
+  });
+
   it('fails the crash check for any other error, with the board before the step', () => {
     const table = PlayTable.start(game);
     // No bot offers a verb the table lacks; this one stands in for a bug that throws.
@@ -93,6 +107,12 @@ describe('playing a run', () => {
     expect(result).toMatchObject({ end: 'stepCap', run });
     expect(result.finding).toBeUndefined();
     expect(result.steps.length).toBeGreaterThan(0);
+  });
+
+  it('fails the liveness check when the game goes past the round cap', () => {
+    const result = playRun(run, { roundCap: 1 });
+
+    expect(result).toMatchObject({ end: 'finding', rounds: 2, finding: { check: 'liveness' } });
   });
 
   it('plays the same game twice, so the determinism check passes', () => {

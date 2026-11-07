@@ -1,6 +1,7 @@
 import { unique } from '@arkham/util';
 import { byId, type InvestigatorView, type PlayTable } from '@arkham/engine';
 import type { SeededRandom } from './run';
+import { answersByDraw, drawnTestAnswer } from './test_answers';
 import { INVESTIGATOR_VERBS, type InvestigatorVerb, type Step } from './steps';
 
 /** The verbs any active investigator may use outside their turn, as a card lets them. */
@@ -31,8 +32,12 @@ const RARE_ODDS = 100;
  * The _random_ bot (product.md "Continuous play tester"): any verb the board offers, picked
  * uniformly, then any of that verb's steps. Picking the verb first keeps one verb with many
  * targets (moves) from crowding out the rest. Rare steps (`isRare`) are only one in `RARE_ODDS`.
+ * An open skill test of one investigator is answered first, by a chaos token the bot draws
+ * (`drawnTestAnswer`), like players who settle a test before anything else.
  */
 export function randomStep(table: PlayTable, random: SeededRandom): Step {
+  const drawn = drawnTestAnswer(table, random);
+  if (drawn) return drawn;
   const offered = offeredSteps(table);
   const rare = offered.filter(isRare);
   const usual = offered.filter((step) => !isRare(step));
@@ -44,9 +49,10 @@ export function randomStep(table: PlayTable, random: SeededRandom): Step {
 
 /**
  * Every step the board offers now, as players at the table would see them. While a decision is
- * open, only its options and undo, since the engine waits for the answer. Otherwise "Next", undo,
- * the attacks due, the investigation turns to start, the turn's actions, the draws a card may ask
- * of anyone, and the corrections. Never empty: a decision has options, and "Next" is always there.
+ * open, only the options (but for a test the bot answers by a draw, `answersByDraw`) and undo,
+ * since the engine waits for the answer. Otherwise "Next", undo, the attacks due, the
+ * investigation turns to start, the turn's actions, the draws a card may ask of anyone, and the
+ * corrections. Never empty: a decision has options, and "Next" is always there.
  */
 export function offeredSteps(table: PlayTable): Step[] {
   const { board } = table;
@@ -85,7 +91,9 @@ function isRare(step: Step): boolean {
 function decisionAnswers(table: PlayTable): Step[] {
   const { pending } = table.state;
   return table.board.decisions.flatMap((view, i) => {
-    const about = pending[i]?.subject;
+    const decision = pending[i];
+    if (decision && answersByDraw(table, decision)) return [];
+    const about = decision?.subject;
     return view.options.map((option): Step =>
       about === undefined ? { verb: 'answer', option } : { verb: 'answer', about, option },
     );

@@ -18,9 +18,10 @@ import { describeStep, playStep, type Step } from './steps';
  * The checks a game is judged by (product.md "Continuous play tester"): `crash` an error other
  * than a refusal or a misused table, `refusal` a refusal marked `never`, `invariants` a state
  * `checkInvariants` rejects, `replay` an event log that no longer replays to the live state,
- * `determinism` a run whose second play logs other events than its first.
+ * `determinism` a run whose second play logs other events than its first, `liveness` a game that
+ * gets stuck: an offered answer refused, a "Next" that changes nothing, a game past the round cap.
  */
-export type CheckId = 'crash' | 'refusal' | 'invariants' | 'replay' | 'determinism';
+export type CheckId = 'crash' | 'refusal' | 'invariants' | 'replay' | 'determinism' | 'liveness';
 
 /**
  * A failed check: which one, the step that failed it (`step` counts the played steps before it,
@@ -57,14 +58,20 @@ export interface RunResult {
   readonly misuses: number;
 }
 
-/** How many steps a game may take before it is cut off; slice 2 adds a round cap. */
-export const STEP_CAP = 2000;
+/** How many steps a game may take before it is cut off, a bound on the tester's own time. */
+export const STEP_CAP = 5000;
 
 /**
- * Plays `run` with the random bot until the game ends, a check fails or `stepCap` steps were
- * tried, checking after every step.
+ * The round a game must have ended by. The Gathering's agendas run out after about 15 rounds of
+ * doom; a game still going at twice that is stuck, so it is a `liveness` finding.
  */
-export function playRun(run: Run, { stepCap = STEP_CAP } = {}): RunResult {
+export const ROUND_CAP = 30;
+
+/**
+ * Plays `run` with the random bot until the game ends, a check fails (round `roundCap` passing
+ * is one) or `stepCap` steps were tried, checking after every step.
+ */
+export function playRun(run: Run, { stepCap = STEP_CAP, roundCap = ROUND_CAP } = {}): RunResult {
   const table = setUpTable(run);
   const random = new SeededRandom(run.botSeed);
   const steps: Step[] = [];
@@ -83,6 +90,13 @@ export function playRun(run: Run, { stepCap = STEP_CAP } = {}): RunResult {
   for (let tried = 0; tried < stepCap; tried++) {
     const end = gameEnd(table);
     if (end) return result(end);
+    if (table.board.round > roundCap)
+      return result('finding', {
+        check: 'liveness',
+        step: steps.length,
+        message: `the game is still going in round ${table.board.round}, past the cap of ${roundCap}`,
+        boardBefore: table.formatted(),
+      });
     const step = randomStep(table, random);
     const outcome = checkedStep(table, step);
     if (outcome.kind === 'played') steps.push(step);
@@ -97,7 +111,10 @@ export function playRun(run: Run, { stepCap = STEP_CAP } = {}): RunResult {
  * Plays `run` twice (`playRun`) and adds the `determinism` check: both plays must log the same
  * events in the same undo groups. Returns the first play, with the finding if any.
  */
-export function checkRun(run: Run, options: { stepCap?: number } = {}): RunResult {
+export function checkRun(
+  run: Run,
+  options: { stepCap?: number; roundCap?: number } = {},
+): RunResult {
   const first = playRun(run, options);
   if (first.finding) return first;
   const second = playRun(run, options);
@@ -123,8 +140,9 @@ type StepOutcome =
   | { kind: 'failed'; failed: Omit<Finding, 'step' | 'attempted'> };
 
 /**
- * Plays `step` and judges it: a refusal by its kind (`refusalKind`), a broken invariant, a crash,
- * then the replay of the whole log against the live state. A `TableError` is the bot asking for
+ * Plays `step` and judges it: a refused answer the board offered, a refusal by its kind
+ * (`refusalKind`), a broken invariant, a crash, a "Next" that changed nothing, then the replay of
+ * the whole log against the live state. A `TableError` is the bot asking for
  * something the board lets it name but not do (a test that waits for attacks of opportunity, a
  * decision whose card has several), so it only counts.
  */
@@ -137,11 +155,17 @@ export function checkedStep(table: PlayTable, step: Step): StepOutcome {
       failed: { check, message, boardBefore, ...(boardAfter !== boardBefore && { boardAfter }) },
     };
   };
+  const logged = table.events.length;
   try {
     playStep(table, step);
   } catch (error) {
     if (error instanceof CommandRejected) {
       const { code } = error.rejection;
+      if (step.verb === 'answer' || step.verb === 'resolveTest')
+        return failed(
+          'liveness',
+          `the offered answer ${describeStep(step)} was refused: ${error.message}`,
+        );
       return refusalKind(code) === 'expected'
         ? { kind: 'refused', code }
         : failed('refusal', `${describeStep(step)} refused: ${error.message}`);
@@ -153,6 +177,8 @@ export function checkedStep(table: PlayTable, step: Step): StepOutcome {
       `${describeStep(step)} threw: ${error instanceof Error ? error.stack : String(error)}`,
     );
   }
+  if (step.verb === 'nextPhase' && table.events.length === logged)
+    return failed('liveness', '"Next" was accepted but changed nothing');
   if (!isDeepStrictEqual(replay(table.events), table.state))
     return failed(
       'replay',
