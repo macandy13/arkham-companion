@@ -258,7 +258,8 @@ dialog[data-shell] > article:has(> button[data-icon='close']) > hgroup {
   padding-inline: var(--touch-target);
 }
 
-dialog hgroup > p {
+dialog hgroup > p,
+#app > main > hgroup > p {
   margin: 0;
   color: var(--color-text-muted);
   font-family: var(--font-family-label);

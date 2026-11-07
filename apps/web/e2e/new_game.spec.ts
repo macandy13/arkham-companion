@@ -1,7 +1,7 @@
 import { expect, test } from './fixtures/test';
 
 // Journey: the new game wizard from the entry points to a started game.
-test('start a new game', async ({ page }) => {
+test('start a new game', { tag: '@flow' }, async ({ page }) => {
   const portraits = page.getByRole('list', { name: 'Investigators' });
   const seats = page.getByRole('region', { name: 'Seats' });
   const search = page.getByRole('searchbox', { name: 'Search by name' });
@@ -10,7 +10,7 @@ test('start a new game', async ({ page }) => {
     await page.goto('/#/new');
     await expect(page.getByRole('heading', { level: 1, name: 'New game' })).toBeVisible();
     await page.getByRole('link', { name: 'Quick game' }).click();
-    await expect(page.getByRole('heading', { level: 1, name: 'Quick game' })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1, name: 'Setup' })).toBeVisible();
   });
 
   await test.step('Pick the difficulty', async () => {
@@ -70,7 +70,7 @@ test('start a new game', async ({ page }) => {
 
 // Journey: a campaign from the wizard to its first game, then back to it from the home screen
 // through its campaign log.
-test('start a campaign and resume it from its log', async ({ page }) => {
+test('start a campaign and resume it from its log', { tag: '@flow' }, async ({ page }) => {
   await test.step('Choose a new campaign', async () => {
     await page.goto('/#/new');
     await page.getByRole('link', { name: 'New campaign' }).click();

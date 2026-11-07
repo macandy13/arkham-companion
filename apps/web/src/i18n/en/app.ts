@@ -835,6 +835,7 @@ export const appTexts = {
     scenario: 'Scenario',
     difficulty: 'Difficulty',
     difficulties: { easy: 'Easy', standard: 'Standard', hard: 'Hard', expert: 'Expert' },
+    stepOf: 'Step {{step}} of {{count}}',
     steps: {
       label: 'Steps',
       setup: 'Setup',
@@ -846,7 +847,7 @@ export const appTexts = {
     catalogFailed: 'The investigators could not be loaded. Check your connection and retry.',
     startFailed: 'The game could not be started.',
     back: 'Back',
-    next: 'Next',
+    nextTo: 'Next: {{step}}',
     start: 'Start game',
   },
   picker: {

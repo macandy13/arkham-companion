@@ -169,13 +169,6 @@
   fill: url('#home-title-fade');
 }
 
-#app > main > hgroup > p {
-  margin: 0;
-  color: var(--color-text-muted);
-  font-family: var(--font-family-label);
-  font-style: italic;
-}
-
 /* New campaign is the brass primary (base.css); the other two are outlined pills beside it. */
 #app > main > nav {
   display: flex;

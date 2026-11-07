@@ -838,6 +838,7 @@ export const appTexts = {
     scenario: 'Szenario',
     difficulty: 'Schwierigkeit',
     difficulties: { easy: 'Leicht', standard: 'Standard', hard: 'Schwer', expert: 'Experte' },
+    stepOf: 'Schritt {{step}} von {{count}}',
     steps: {
       label: 'Schritte',
       setup: 'Einrichtung',
@@ -850,7 +851,7 @@ export const appTexts = {
       'Die Ermittler konnten nicht geladen werden. Prüfe die Verbindung und versuche es erneut.',
     startFailed: 'Das Spiel konnte nicht gestartet werden.',
     back: 'Zurück',
-    next: 'Weiter',
+    nextTo: 'Weiter: {{step}}',
     start: 'Spiel starten',
   },
   picker: {
