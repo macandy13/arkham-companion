@@ -2,7 +2,7 @@
  * The app mark (MD.4, design language "Screens"): a brass ring with the zodiac's 36 ticks and an
  * eight-point star, drawn on a 100 × 100 grid. One geometry for the icon files
  * `scripts/app_icon.ts` writes and the screens that draw the mark, so it is the same everywhere.
- * Plain data without imports, so the Node script can load it too.
+ * It has no imports, so `node scripts/app_icon.ts` can load it without a bundler.
  */
 
 /** Side of the square the mark is drawn in. */
@@ -45,8 +45,16 @@ export const MARK_TICKS: readonly MarkTick[] = Array.from({ length: MARK_TICK_CO
 /** The rings' radii: the outer rim and the inner ring the ticks stand on. */
 export const MARK_RINGS = { outer: OUTER_RADIUS, inner: INNER_RADIUS } as const;
 
-/** The star's four long points, then the four short ones between them. */
+/**
+ * The icon's colours: the night table and the brass of the playmat (tokens.css
+ * `--color-background`, `--color-brass-light`). The manifest takes the ground too, so the splash
+ * screen and the icons can't drift apart.
+ */
+export const MARK_COLOURS = { ground: '#0b1614', ink: '#d9b86e' } as const;
+
+/** The star's four long points. */
 export const MARK_STAR = 'M50 22 L55 45 L78 50 L55 55 L50 78 L45 55 L22 50 L45 45 Z';
+/** The four short points between the long ones, drawn rotated by 45° and fainter. */
 export const MARK_STAR_SHORT = 'M50 34 L53 47 L66 50 L53 53 L50 66 L47 53 L34 50 L47 47 Z';
 
 /** The small hole at the star's centre, cut from both stars (`fill-rule="evenodd"`). */

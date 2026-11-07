@@ -1,6 +1,7 @@
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
+import { MARK_COLOURS } from './src/brand/appMark';
 import { appShellNavigation } from './src/pwa/appShellNavigation';
 import { cardImageCaching } from './src/pwa/cardImageCaching';
 
@@ -24,9 +25,9 @@ export default defineConfig({
         short_name: 'Arkham',
         display: 'standalone',
         orientation: 'any',
-        // The night table of the playmat (tokens.css `--color-background`), so the splash matches the app.
-        background_color: '#0b1614',
-        theme_color: '#0b1614',
+        // The icons' ground, the night table, so the splash screen matches the app and its icon.
+        background_color: MARK_COLOURS.ground,
+        theme_color: MARK_COLOURS.ground,
         // Written by scripts/app_icon.ts from the app mark (src/brand/appMark.ts).
         icons: [
           { src: 'icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' },

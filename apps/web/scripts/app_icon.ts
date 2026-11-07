@@ -8,19 +8,15 @@
 import { writeFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { chromium } from '@playwright/test';
-import { appMarkSvg } from '../src/brand/appMark.ts';
-
-/** The night table and the brass of the playmat (tokens.css `--color-background`, `--color-brass-light`). */
-const GROUND = '#0b1614';
-const INK = '#d9b86e';
+import { appMarkSvg, MARK_COLOURS } from '../src/brand/appMark.ts';
 
 /** A maskable icon keeps its content in the middle 80 % (the safe zone), so the mark is inset. */
 const MASKABLE_INSET = 0.12;
 
 const publicDir = (name: string) => fileURLToPath(new URL(`../public/${name}`, import.meta.url));
 
-const plain = appMarkSvg({ ink: INK, ground: GROUND });
-const maskable = appMarkSvg({ ink: INK, ground: GROUND, inset: MASKABLE_INSET });
+const plain = appMarkSvg(MARK_COLOURS);
+const maskable = appMarkSvg({ ...MARK_COLOURS, inset: MASKABLE_INSET });
 
 const pngs: { file: string; size: number; svg: string }[] = [
   { file: 'icon-192.png', size: 192, svg: plain },
