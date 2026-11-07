@@ -64,7 +64,7 @@ export function gameExport({
 }
 
 /** The file name ending of a record's app export (`gameExport`), which sits beside the record. */
-export const GAME_EXPORT_SUFFIX = '.arkham-game.json';
+const GAME_EXPORT_SUFFIX = '.arkham-game.json';
 
 /** Where the app export of the record at `recordPath` goes: beside it, with its own ending. */
 export function gameExportPath(recordPath: string): string {

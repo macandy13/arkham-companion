@@ -49,8 +49,8 @@ describe('opening a play tester record with "Import game"', () => {
     const imported = parseGameExport(gameExport({ run, finding, log }));
 
     expect(imported.title).toBe('Play tester: refusal, goal 24');
-    expect(imported.events.map(({ commandId, event }) => ({ commandId, event }))).toEqual(
-      log.map(({ commandId, event }) => ({ commandId, event })),
-    );
+    expect(
+      imported.events.map(({ commandId, event, cause }) => ({ commandId, event, cause })),
+    ).toEqual(log.map(({ commandId, event, cause }) => ({ commandId, event, cause })));
   });
 });
