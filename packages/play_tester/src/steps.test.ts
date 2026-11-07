@@ -55,7 +55,7 @@ describe('playing a step', () => {
     playStep(table, {
       verb: 'resolveTest',
       investigator: cardName('alice'),
-      token: '+1',
+      tokens: ['+1'],
       result: 'pass',
     });
 

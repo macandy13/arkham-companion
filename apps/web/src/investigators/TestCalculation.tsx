@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
+  drawTokens,
   SKILL_NAMES,
+  testFinished,
   type BoardView,
   type ChaosToken,
   type InvestigatorId,
@@ -13,7 +15,6 @@ import {
   type SkillTestSuggestion,
 } from '@arkham/engine';
 import { assertNever, sum } from '@arkham/util';
-import { drawTokens, testFinished } from './drawTokens';
 import './test_calculation.css';
 
 /** The skills a test adds up: the tested one first, then the one a card adds to it. */

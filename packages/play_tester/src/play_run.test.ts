@@ -72,7 +72,7 @@ describe('judging one step', () => {
     const outcome = checkedStep(table, {
       verb: 'resolveTest',
       investigator: cardName('alice'),
-      token: '-1',
+      tokens: ['-1'],
       result: { failedBy: -1 },
     });
 

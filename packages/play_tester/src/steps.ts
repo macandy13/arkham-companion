@@ -52,13 +52,14 @@ export type Step =
   /** Answers the open decision about the card `about`, or the only one when it is about none. */
   | { readonly verb: 'answer'; readonly about?: InstanceId; readonly option: string }
   /**
-   * Reports the investigator's open skill test with the `result` the drawn chaos `token` gives;
-   * the token is only for the reader, the table takes the result.
+   * Reports the investigator's open skill test with the `result` the drawn chaos `tokens` give
+   * (more than one when a bless, curse, frost or blood token makes them draw another); the tokens
+   * are only for the reader, the table takes the result.
    */
   | {
       readonly verb: 'resolveTest';
       readonly investigator: CardName;
-      readonly token: ChaosToken;
+      readonly tokens: readonly ChaosToken[];
       readonly result: SkillTestResult;
     };
 

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import type { ChaosToken } from '@arkham/engine';
-import { drawTokens, testFinished } from './drawTokens';
+import type { ChaosToken } from './state';
+import { drawTokens, testFinished } from './draw_tokens';
 
 /** A `random` that picks the bag's tokens in turn: the first left, then the first left again. */
 const firstLeft = () => 0;

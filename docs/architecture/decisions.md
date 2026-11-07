@@ -21,6 +21,8 @@ Skill tests ([`skill_tests.ts`](../../packages/engine/src/skill_tests.ts)) carry
 - one player-entered modifier
 - and the chaos tokens.
 
+The tokens are drawn as the players draw them by [`drawTokens`](../../packages/engine/src/draw_tokens.ts): one, then another while the last is a bless, curse, frost or blood token. It takes its random numbers from the caller, since a draw is not game state: the app's "Draw a token" passes `Math.random`, the play tester its seeded random.
+
 The answer stays the players' pass or fail.
 
 ## Extension points
