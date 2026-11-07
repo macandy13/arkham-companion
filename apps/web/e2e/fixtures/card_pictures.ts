@@ -7,6 +7,7 @@ import {
   theGatheringCardDefs,
   theMidnightMasksCardDefs,
 } from '@arkham/scenarios';
+import { campaignKeyArts } from '../../src/catalog/campaignKeyArt';
 
 /** Where ArkhamDB serves the card pictures the app names (`CardStats.imageSrc`). */
 const ARKHAMDB = 'https://arkhamdb.com';
@@ -42,7 +43,7 @@ function e2ePictures(): CardImagePath[] {
   return [...new Set([...sides, GATHERING_REFERENCE_PICTURE, ROLAND_PICTURE])];
 }
 
-/** The local copy of the picture at `path` (an ArkhamDB path), if it has been downloaded. */
+/** The local copy of the picture at `path` (an ArkhamDB path or a key art address), if downloaded. */
 export function localCardPicture(path: string): string | undefined {
   const file = join(CARD_PICTURE_DIR, basename(path));
   return existsSync(file) ? file : undefined;
@@ -54,9 +55,10 @@ const PARALLEL_DOWNLOADS = 4;
 /** Tries per picture, a second apart, so one dropped connection doesn't leave a card without art. */
 const TRIES = 3;
 
-/** Downloads the picture at `path` (an ArkhamDB path) into the local folder. */
-async function download(path: CardImagePath): Promise<void> {
-  const response = await fetch(`${ARKHAMDB}${path}`, { signal: AbortSignal.timeout(15_000) });
+/** Downloads the picture at `path` (an ArkhamDB path, or a campaign's key art) into the local folder. */
+async function download(path: string): Promise<void> {
+  const url = path.startsWith('https://') ? path : `${ARKHAMDB}${path}`;
+  const response = await fetch(url, { signal: AbortSignal.timeout(15_000) });
   if (!response.ok) throw new Error(`HTTP ${response.status}`);
   // A challenge or error page served with 200 would otherwise stay in CI's cache for good.
   const type = response.headers.get('content-type') ?? '';
@@ -68,7 +70,7 @@ async function download(path: CardImagePath): Promise<void> {
 }
 
 /** Downloads the picture at `path`, trying again after a failure; resolves to the last error. */
-async function downloadWithRetries(path: CardImagePath): Promise<string | undefined> {
+async function downloadWithRetries(path: string): Promise<string | undefined> {
   let lastError = '';
   for (let attempt = 1; attempt <= TRIES; attempt++) {
     try {
@@ -84,7 +86,8 @@ async function downloadWithRetries(path: CardImagePath): Promise<string | undefi
 }
 
 /**
- * Playwright's global setup: downloads the pictures that have no local copy yet, a few at a time.
+ * Playwright's global setup: downloads the pictures that have no local copy yet, the campaigns'
+ * key art included (`campaignKeyArts`), a few at a time.
  * A picture that still fails (no network, ArkhamDB down) is only warned about, since the app then
  * shows the card's pattern, as it does offline, and no test depends on the art. After the first
  * such failure the rest are skipped: ArkhamDB stops answering a CI runner after a few dozen
@@ -93,7 +96,9 @@ async function downloadWithRetries(path: CardImagePath): Promise<string | undefi
  */
 export default async function fetchCardPictures(): Promise<void> {
   await mkdir(CARD_PICTURE_DIR, { recursive: true });
-  const queue = e2ePictures().filter((path) => localCardPicture(path) === undefined);
+  const queue = [...e2ePictures(), ...campaignKeyArts].filter(
+    (path) => localCardPicture(path) === undefined,
+  );
   const failed: string[] = [];
   const worker = async (): Promise<void> => {
     for (let path = queue.shift(); path !== undefined; path = queue.shift()) {

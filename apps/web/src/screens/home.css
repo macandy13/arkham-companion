@@ -410,7 +410,7 @@
   background: var(--card-art-pattern), var(--color-paper-surface);
 }
 
-#shelf > li > svg:not([data-picture]) > image {
+#shelf > li > svg > svg:not([data-picture]) > image {
   visibility: hidden;
 }
 
