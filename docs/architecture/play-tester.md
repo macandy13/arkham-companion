@@ -39,6 +39,7 @@ flowchart LR
   - `mythosDoom`, `doomThreshold`: a new round's mythos phase puts doom on the agenda, and with doom in play at its threshold the agenda advances or the players are asked to confirm it;
   - `agendaOnlyAtCheck`: doom placed by hand never advances the agenda;
   - `actAdvance`: spending clues takes exactly the act's requirement and advances the act, unless its back side is still asking the players something;
+  - `hunterMove`: in the step that runs enemy step 1, each ready, unengaged hunter with no investigator at its location moves one connection closer to a nearest investigator, and one with no way to any stays. Prey and the lead's picks don't show on the board, so any such step is accepted; while a hunter question is open, nothing is judged, and the answer's later step isn't either. Blocked moves aren't modelled for hunters yet, so the oracle walks the open connections (`connectedTo`);
 - after a played step, `replay` of the whole log must equal the live state (`replay`);
 - an offered answer (`answer`, `resolveTest`) that is refused, or a "Next" that is accepted but changes nothing, is a `liveness` finding.
 

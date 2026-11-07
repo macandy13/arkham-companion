@@ -3,6 +3,7 @@ import {
   advanceBySpendingClues,
   blankAct,
   blankAgenda,
+  blankEnemy,
   blankLocation,
   fixed,
   instanceId,
@@ -206,6 +207,127 @@ describe('advancing the act', () => {
     expect(brokenRule(withFourClues, played.board, advance)).toMatchObject({
       oracle: { id: 'actAdvance' },
       message: 'advancing first_act took 3 clues, not 2',
+    });
+  });
+});
+
+describe('moving the hunters', () => {
+  const bob = investigatorId('bob');
+  const ghoul = instanceId('ghoul');
+  const hunterGhoul = blankEnemy('ghoul', { keywords: [{ name: 'hunter' }] });
+  const attic = instanceId('attic');
+  const hallway = instanceId('hallway');
+  const cellar = instanceId('cellar');
+  const vault = instanceId('vault');
+
+  /**
+   * The attic and the cellar each joined to the hallway, which is joined to the study; the vault
+   * joined to nothing. Alice is in the study, the ghoul hunter at `ghoulAt`.
+   */
+  const house = (ghoulAt: typeof attic) =>
+    newGame()
+      .withLocation(attic, blankLocation('attic'), { revealed: true })
+      .withLocation(hallway, blankLocation('hallway'), { revealed: true })
+      .withLocation(study, blankLocation('study'), { revealed: true })
+      .withLocation(cellar, blankLocation('cellar'), { revealed: true })
+      .withLocation(vault, blankLocation('vault'), { revealed: true })
+      .withConnection(attic, hallway)
+      .withConnection(cellar, hallway)
+      .withConnection(hallway, study)
+      .withInvestigator(alice, { locationId: study })
+      .withCard(ghoul, hunterGhoul, { kind: 'atLocation', locationId: ghoulAt });
+
+  /** A table of `game` at the end of round 1's investigation phase, every turn taken. */
+  const afterTurns = (game: ReturnType<typeof house>, investigators = [alice]) => {
+    const table = PlayTable.start(game);
+    table.nextPhase();
+    for (const investigator of investigators) {
+      table.startTurn(investigator);
+      table.endTurn(investigator);
+    }
+    return table;
+  };
+
+  it('accepts a hunter moving one step towards the nearest investigator', () => {
+    const table = afterTurns(house(attic));
+    const before = table.board;
+    table.nextPhase();
+
+    expect(table.board.enemiesAt(hallway)).toMatchObject([{ name: 'ghoul' }]);
+    expect(brokenRule(before, table.board, next)).toBeUndefined();
+  });
+
+  it('leaves a hunter alone while the players choose which investigator it goes for', () => {
+    const table = afterTurns(house(hallway).withInvestigator(bob, { locationId: cellar }), [
+      alice,
+      bob,
+    ]);
+    const before = table.board;
+    table.nextPhase();
+
+    expect(table.board.decisions).toMatchObject([{ prompt: 'decision.chooseHunterTarget' }]);
+    expect(brokenRule(before, table.board, next)).toBeUndefined();
+  });
+
+  it('does not judge the answer that moves a hunter later in the enemy phase', () => {
+    const table = afterTurns(house(hallway).withInvestigator(bob, { locationId: cellar }), [
+      alice,
+      bob,
+    ]);
+    table.nextPhase();
+    const asked = table.board;
+    table.answer(ghoul, 'bob');
+
+    expect(table.board.enemiesAt(cellar)).toMatchObject([{ name: 'ghoul' }]);
+    expect(
+      brokenRule(asked, table.board, { verb: 'answer', about: ghoul, option: 'bob' }),
+    ).toBeUndefined();
+  });
+
+  it.each([
+    { name: 'with an investigator at its location', game: house(study) },
+    { name: 'with no way to an investigator', game: house(vault) },
+  ])('accepts a hunter staying $name', ({ game }) => {
+    const table = afterTurns(game);
+    const before = table.board;
+    table.nextPhase();
+
+    expect(brokenRule(before, table.board, next)).toBeUndefined();
+  });
+
+  it('catches a hunter that stays away from the nearest investigator', () => {
+    const table = afterTurns(house(attic));
+    const before = table.board;
+    table.nextPhase();
+    table.moveEnemy(ghoul, attic);
+
+    expect(brokenRule(before, table.board, next)).toMatchObject({
+      oracle: { id: 'hunterMove', rules: 'hunter.md' },
+      message: 'ghoul stayed at attic instead of moving towards the nearest investigator',
+    });
+  });
+
+  it('catches a hunter that moves away from the nearest investigator', () => {
+    const table = afterTurns(house(attic));
+    const before = table.board;
+    table.nextPhase();
+    table.moveEnemy(ghoul, cellar);
+
+    expect(brokenRule(before, table.board, next)).toMatchObject({
+      oracle: { id: 'hunterMove' },
+      message: 'ghoul went from attic to cellar, not one step towards the nearest investigator',
+    });
+  });
+
+  it('catches a hunter that moves without a way to an investigator', () => {
+    const table = afterTurns(house(vault));
+    const before = table.board;
+    table.nextPhase();
+    table.moveEnemy(ghoul, hallway);
+
+    expect(brokenRule(before, table.board, next)).toMatchObject({
+      oracle: { id: 'hunterMove' },
+      message: 'ghoul moved from vault to hallway, though it had to stay',
     });
   });
 });

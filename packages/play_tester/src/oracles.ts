@@ -1,13 +1,20 @@
 import { sum } from '@arkham/util';
-import { ROUND_PHASES, type BoardView } from '@arkham/engine';
+import { ROUND_PHASES, type BoardView, type InstanceId } from '@arkham/engine';
 import type { Step } from './steps';
 
 /** The rule oracles (product.md "Continuous play tester", check 4), one per rule they check. */
 export type OracleId =
-  'phaseOrder' | 'upkeep' | 'mythosDoom' | 'doomThreshold' | 'agendaOnlyAtCheck' | 'actAdvance';
+  | 'phaseOrder'
+  | 'upkeep'
+  | 'mythosDoom'
+  | 'doomThreshold'
+  | 'agendaOnlyAtCheck'
+  | 'actAdvance'
+  | 'hunterMove';
 
 /** The `docs/rules/` pages the oracles are written from. */
-export type RulesPage = 'round-structure.md' | 'agenda-and-doom.md' | 'act-and-clues.md';
+export type RulesPage =
+  'round-structure.md' | 'agenda-and-doom.md' | 'act-and-clues.md' | 'hunter.md';
 
 /**
  * One rule a step must keep, judged from the board before and after it: what the step broke, or
@@ -140,6 +147,27 @@ export const ORACLES: readonly Oracle[] = [
         : undefined;
     },
   },
+  {
+    id: 'hunterMove',
+    rules: 'hunter.md',
+    judge: (before, after) => {
+      // A tie (which hunter first, which investigator, which way) waits for the players and moves
+      // nothing yet; the answer moves the hunter in a later step, which this oracle leaves alone.
+      if (!huntersMoved(before, after) || after.decisions.some(asksAboutHunters)) return undefined;
+      for (const hunter of movingHunters(before)) {
+        const to = locationOfEnemy(after, hunter.id);
+        if (to === undefined) continue;
+        const expected = hunterSteps(before, hunter.at);
+        if (expected.length === 0 && to !== hunter.at)
+          return `${hunter.name} moved from ${nameOf(before, hunter.at)} to ${nameOf(before, to)}, though it had to stay`;
+        if (expected.length > 0 && to === hunter.at)
+          return `${hunter.name} stayed at ${nameOf(before, hunter.at)} instead of moving towards the nearest investigator`;
+        if (expected.length > 0 && !expected.includes(to))
+          return `${hunter.name} went from ${nameOf(before, hunter.at)} to ${nameOf(before, to)}, not one step towards the nearest investigator`;
+      }
+      return undefined;
+    },
+  },
 ];
 
 /**
@@ -162,4 +190,94 @@ export function brokenRule(
 /** The clues the investigators hold between them. */
 function cluesHeld(board: BoardView): number {
   return sum(board.investigators.map(({ clues }) => clues));
+}
+
+/** The prompts of the questions a hunter's move waits for (`MoveHunters` in the engine). */
+const HUNTER_PROMPTS: ReadonlySet<string> = new Set([
+  'decision.chooseHunterOrder',
+  'decision.chooseHunterTarget',
+  'decision.chooseEnemyDestination',
+]);
+
+function asksAboutHunters({ prompt }: BoardView['decisions'][number]): boolean {
+  return HUNTER_PROMPTS.has(prompt);
+}
+
+/** Whether the step from `before` to `after` ran enemy step 1, in which the hunters move. */
+function huntersMoved(before: BoardView, after: BoardView): boolean {
+  // The phase assistant takes a step off its list before running it, so no settled board shows
+  // the hunter step still to come: the "Next" out of the investigation phase runs it.
+  return before.phase === 'investigation' && position(after) > position(before);
+}
+
+/** A hunter that enemy step 1 moves, as `before` shows it: ready, unengaged, at a location. */
+interface Hunter {
+  readonly id: InstanceId;
+  readonly name: string;
+  readonly at: InstanceId;
+}
+
+/**
+ * The ready, unengaged hunters on the maps of `board` (hunter.md). One with an open question
+ * about it stays until that is answered.
+ */
+function movingHunters(board: BoardView): Hunter[] {
+  const asked = new Set(board.decisions.map(({ about }) => about));
+  return board.maps.flatMap((map) =>
+    Object.entries(map.enemies).flatMap(([at, enemies]) =>
+      enemies
+        .filter(
+          (enemy) =>
+            enemy.engagedWith === undefined &&
+            enemy.exhausted === undefined &&
+            !asked.has(enemy.name) &&
+            board.enemyStats(enemy.id).keywords.some(({ name }) => name === 'hunter'),
+        )
+        .map((enemy) => ({ id: enemy.id, name: enemy.name, at: at as InstanceId })),
+    ),
+  );
+}
+
+/**
+ * Where a hunter at `from` may go in enemy step 1: each connected location one step closer to an
+ * investigator nearest to it (hunter.md). Empty when it stays: an investigator is at `from`, or
+ * none can be reached. Prey and the lead investigator choose among these, which the board does not
+ * show, so any of them is accepted.
+ */
+function hunterSteps(board: BoardView, from: InstanceId): InstanceId[] {
+  const targets = board.investigators
+    .filter(({ status }) => status === 'active')
+    .flatMap(({ id }) => board.locationOf(id) ?? []);
+  if (targets.includes(from)) return [];
+  const nearest = Math.min(...targets.map((target) => distance(board, from, target)));
+  if (!Number.isFinite(nearest)) return [];
+  return board
+    .connectedTo(from)
+    .filter((step) => targets.some((target) => distance(board, step, target) === nearest - 1));
+}
+
+/** The connections a move from `from` to `to` takes at least, `Infinity` when none leads there. */
+function distance(board: BoardView, from: InstanceId, to: InstanceId): number {
+  const seen = new Set([from]);
+  let frontier = [from];
+  for (let steps = 0; frontier.length > 0; steps++) {
+    if (frontier.includes(to)) return steps;
+    const reached = frontier.flatMap((location) => board.connectedTo(location));
+    frontier = [...new Set(reached)].filter((location) => !seen.has(location));
+    for (const location of frontier) seen.add(location);
+  }
+  return Infinity;
+}
+
+/** The location the enemy `id` is at on `board`, an engaged one at its investigator's location. */
+function locationOfEnemy(board: BoardView, id: InstanceId): InstanceId | undefined {
+  for (const map of board.maps)
+    for (const [at, enemies] of Object.entries(map.enemies))
+      if (enemies.some((enemy) => enemy.id === id)) return at as InstanceId;
+  return undefined;
+}
+
+/** The printed name of the location `id`, for a finding. */
+function nameOf(board: BoardView, id: InstanceId): string {
+  return board.locations.find((location) => location.id === id)?.name ?? id;
 }
