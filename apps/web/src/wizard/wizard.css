@@ -107,7 +107,7 @@
 }
 
 /* On a phone what is carried on stands over the two buttons. */
-@media (max-width: 40rem) {
+@media (orientation: portrait) and (max-width: 40rem) {
   #app > main:has(> #wizard) > footer > p {
     flex-basis: 100%;
     order: -1;

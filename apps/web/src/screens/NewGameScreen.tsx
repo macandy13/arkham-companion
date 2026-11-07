@@ -106,7 +106,7 @@ function Wizard({ store, catalogSource, mode, step }: WizardProps) {
     setStartFailed(false);
     const campaign = chosenCampaign(choices);
     const titled = (nameKey: string) =>
-      [t(nameKey), ...investigators.map((i) => i.name)].join(' – ');
+      [t(nameKey), ...investigators.map((investigator) => investigator.name)].join(' – ');
     const start = {
       title: titled(scenario.nameKey),
       ctx: {
@@ -145,7 +145,7 @@ function Wizard({ store, catalogSource, mode, step }: WizardProps) {
     step === 'setup'
       ? target && `${t(target.nameKey)} · ${t(`wizard.difficulties.${choices.difficulty}`)}`
       : new Intl.ListFormat(i18n.language, { type: 'conjunction' }).format(
-          investigators.map((i) => i.name),
+          investigators.map((investigator) => investigator.name),
         );
 
   return (
