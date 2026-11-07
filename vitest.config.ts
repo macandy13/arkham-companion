@@ -23,6 +23,7 @@ export default defineConfig({
         'apps/web/scripts/screencast/cli.ts',
         'packages/review_digest/src/cli.ts',
         'packages/play_tester/src/cli.ts',
+        'apps/web/src/playtest/cli.ts',
         'apps/web/scripts/tsconfig.json',
       ],
       reporter: ['text-summary', 'json-summary', 'html'],
