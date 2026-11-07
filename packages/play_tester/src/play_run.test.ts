@@ -128,8 +128,10 @@ describe('playing a run', () => {
   it('resumes a game with undos alike, though its group ids number on from the log', () => {
     const played = playRun({ ...run, bot: 'chaos' }, { stepCap: 80 });
 
-    expect(played.steps).toContainEqual({ verb: 'undo' });
-    expect(resumeDifference(played)).toBeUndefined();
+    const afterFirstUndo = played.steps.findIndex(({ verb }) => verb === 'undo') + 1;
+
+    expect(afterFirstUndo).toBeGreaterThan(0);
+    expect(resumeDifference(played, afterFirstUndo)).toBeUndefined();
   });
 
   it('fails the resume check when the resumed game logs other events', () => {

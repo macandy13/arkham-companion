@@ -39,7 +39,7 @@ export type CheckId =
 
 /**
  * A failed check: which one, the step that failed it (`step` counts the played steps before it,
- * so it is the index the failing step would have had; for `determinism`, which compares whole
+ * so it is the index the failing step would have had; for `determinism` and `resume`, which compare whole
  * games, all the steps of the first play), the error or difference, the board before that step and,
  * when the step left it changed (a log that no longer replays), the board after it; a refused or
  * broken step leaves the table as it was.
@@ -149,14 +149,19 @@ export function checkRun(
 }
 
 /**
- * Replays the steps of `played` up to one its run's seeds pick, resumes a new table from that
+ * Replays the steps of `played` up to `resumeAt` (by default one its run's seeds pick), resumes a new table from that
  * log (`PlayTable.resume`, as the app does with a saved game) and plays the rest there. What
  * differs from the straight play, or `undefined`. One resume point per run keeps a run's cost
  * linear; across a night's runs it lands on every kind of step.
  */
-export function resumeDifference(played: RunResult): string | undefined {
+export function resumeDifference(
+  played: RunResult,
+  resumeAt = new SeededRandom(played.run.gameSeed ^ played.run.botSeed).between(
+    0,
+    played.steps.length,
+  ),
+): string | undefined {
   const { run, steps, log } = played;
-  const resumeAt = new SeededRandom(run.gameSeed ^ run.botSeed).between(0, steps.length);
   const before = setUpTable(run);
   steps.slice(0, resumeAt).forEach((step) => playStep(before, step));
   const table = PlayTable.resume(before.ctx, before.entries);
@@ -198,8 +203,8 @@ type StepOutcome =
 /**
  * Plays `step` and judges it: a refused answer the board offered, a refusal by its kind
  * (`refusalKind`), a broken invariant, a crash, a "Next" that changed nothing, a rule an oracle
- * checks (`brokenRule`), then the replay of
- * the whole log against the live state. A `TableError` is the bot asking for
+ * checks (`brokenRule`), the replay of the whole log against the live state, then undo right
+ * after the step (`undoesTo`). A `TableError` is the bot asking for
  * something the board lets it name but not do (a test that waits for attacks of opportunity, a
  * decision whose card has several), so it only counts.
  */
@@ -261,7 +266,8 @@ export function checkedStep(table: PlayTable, step: Step): StepOutcome {
 
 /**
  * Whether undo right after the last step gives back `before`. It undoes on a table resumed from
- * the log, so the game goes on from the step it played.
+ * the log, so the game goes on from the step it played. Only its passing side has a test: an
+ * engine whose undo misses a step cannot be built for one.
  */
 function undoesTo(table: PlayTable, before: GameState): boolean {
   const copy = PlayTable.resume(table.ctx, table.entries);

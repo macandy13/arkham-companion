@@ -88,8 +88,7 @@ export const ORACLES: readonly Oracle[] = [
       // each check needs the step that it checks to have run in this one.
       const ran = (upkeepStep: PhaseStepId) =>
         before.phase !== 'upkeep' ||
-        (before.step === undefined ? UPKEEP_STEPS.length : UPKEEP_STEPS.indexOf(before.step)) <=
-          UPKEEP_STEPS.indexOf(upkeepStep);
+        UPKEEP_STEPS.indexOf(before.step ?? 'endRound') <= UPKEEP_STEPS.indexOf(upkeepStep);
       for (const investigator of after.investigators) {
         const was = before.investigators.find(({ id }) => id === investigator.id);
         if (investigator.status !== 'active' || was?.status !== 'active') continue;
