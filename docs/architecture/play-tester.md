@@ -49,6 +49,7 @@ A game still going past `ROUND_CAP` (30 rounds) is a `liveness` finding too.
 
 ## Records and replay
 
+- Before a failing game is recorded, [`shrink`](../../packages/play_tester/src/shrink.ts) cuts it down: without each investigator but the lead, then without ever smaller chunks of steps, as long as the shorter game still fails the same check at the same verb (the nightly run's issue signature). Each try plays from the start and leaves out steps the shorter game no longer allows; `SHRINK_TRIES` (400) bounds the time. Whole-game findings (`determinism`, `resume`) and a game past the round cap are kept as they are. Moving steps changes the game they lead to, so a shrunk game is shorter, not minimal (the #1023 game went from 130 steps to 95).
 - Only failing games are recorded: [`recordOf`](../../packages/play_tester/src/record.ts) makes a `RunRecord` (`*.arkham-run.json`) of the run, the finding with its boards, the steps before it and the event log, with the tester's version and commit.
 - `replaySteps` plays a record's steps on a fresh table with today's engine, judging each, and stops at the first finding; `reproduced` says whether it is the recorded one. `loggedBoard` shows what the record's own log replays to.
 - [`cli.ts`](../../packages/play_tester/src/cli.ts) is `pnpm playtest --games 500 --seed 7` (`--bot goal` for one bot; prints the [summary](../../packages/play_tester/src/summary.ts) with the ends by bot, writes records to the gitignored `packages/play_tester/.runs/`, exits 1 on a finding) and `pnpm playtest --replay <record>`.
