@@ -63,6 +63,10 @@ The open game (`OpenGame`) is the play screen's single source of truth:
 
 The play screen is described in [Play screen](play-screen.md) and its pages.
 
+## App mark
+
+The app's mark (MD.4) is a brass ring with the zodiac's 36 ticks around an eight-point star, drawn once on a 100 × 100 grid in [`brand/appMark.ts`](../../apps/web/src/brand/appMark.ts) (`MARK_TICKS`, `MARK_RINGS`, `MARK_STAR`): plain data, so the screens that draw the mark and the icon files share one geometry. [`scripts/app_icon.ts`](../../apps/web/scripts/app_icon.ts) writes the icon files from it (`appMarkSvg`) into `public/`: the SVG for the browser tab and the manifest, PNGs of 192 and 512 px, a maskable 512 with the mark in the safe zone, and the 180 px apple-touch icon. The files are committed, so the build needs no browser; run the script again after changing the mark.
+
 ## Strings
 
 UI strings live in [`i18n/`](../../apps/web/src/i18n/), one folder per language: `app.ts` holds the app's own strings, and each campaign has a file of its own (`night_of_the_zealot.ts`) with its name, scenario names, scenario choices and story records. [`index.ts`](../../apps/web/src/i18n/index.ts) joins them by section (`CAMPAIGN_SECTIONS`: `campaigns`, `scenarios`, `scenario`, `story`), so the app's file doesn't grow with every campaign. The tests check that German has every English key and that no two campaigns write the same key.
