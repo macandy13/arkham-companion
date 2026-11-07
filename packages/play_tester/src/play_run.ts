@@ -10,6 +10,7 @@ import {
   type RejectionCode,
 } from '@arkham/engine';
 import { botStep } from './bots';
+import { brokenRule } from './oracles';
 import { refusalKind } from './refusals';
 import { SeededRandom, setUpTable, type Run } from './run';
 import { describeStep, playStep, type Step } from './steps';
@@ -17,11 +18,12 @@ import { describeStep, playStep, type Step } from './steps';
 /**
  * The checks a game is judged by (product.md "Continuous play tester"): `crash` an error other
  * than a refusal or a misused table, `refusal` a refusal marked `never`, `invariants` a state
- * `checkInvariants` rejects, `replay` an event log that no longer replays to the live state,
+ * `checkInvariants` rejects, `rules` a step that breaks a rule an oracle checks (`brokenRule`), `replay` an event log that no longer replays to the live state,
  * `determinism` a run whose second play logs other events than its first, `liveness` a game that
  * gets stuck: an offered answer refused, a "Next" that changes nothing, a game past the round cap.
  */
-export type CheckId = 'crash' | 'refusal' | 'invariants' | 'replay' | 'determinism' | 'liveness';
+export type CheckId =
+  'crash' | 'refusal' | 'invariants' | 'rules' | 'replay' | 'determinism' | 'liveness';
 
 /**
  * A failed check: which one, the step that failed it (`step` counts the played steps before it,
@@ -141,13 +143,15 @@ type StepOutcome =
 
 /**
  * Plays `step` and judges it: a refused answer the board offered, a refusal by its kind
- * (`refusalKind`), a broken invariant, a crash, a "Next" that changed nothing, then the replay of
+ * (`refusalKind`), a broken invariant, a crash, a "Next" that changed nothing, a rule an oracle
+ * checks (`brokenRule`), then the replay of
  * the whole log against the live state. A `TableError` is the bot asking for
  * something the board lets it name but not do (a test that waits for attacks of opportunity, a
  * decision whose card has several), so it only counts.
  */
 export function checkedStep(table: PlayTable, step: Step): StepOutcome {
   const boardBefore = table.formatted();
+  const viewBefore = table.board;
   const failed = (check: CheckId, message: string): StepOutcome => {
     const boardAfter = table.formatted();
     return {
@@ -179,6 +183,12 @@ export function checkedStep(table: PlayTable, step: Step): StepOutcome {
   }
   if (step.verb === 'nextPhase' && table.events.length === logged)
     return failed('liveness', '"Next" was accepted but changed nothing');
+  const broken = brokenRule(viewBefore, table.board, step);
+  if (broken)
+    return failed(
+      'rules',
+      `${describeStep(step)} broke ${broken.oracle.id} (docs/rules/${broken.oracle.rules}): ${broken.message}`,
+    );
   if (!isDeepStrictEqual(replay(table.events), table.state))
     return failed(
       'replay',
