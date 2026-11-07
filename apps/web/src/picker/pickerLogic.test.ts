@@ -27,7 +27,7 @@ function makeInvestigator(overrides: Partial<InvestigatorDef>): InvestigatorDef 
 
 function makePack(overrides: Partial<PackDef>): PackDef {
   return {
-    code: toCardCode('p1'),
+    code: 'p1',
     name: 'Pack',
     position: 1,
     cyclePosition: 1,
@@ -104,9 +104,9 @@ describe('applyPickerFilters', () => {
 
 describe('pack helpers', () => {
   const packs = [
-    makePack({ code: toCardCode('c'), cyclePosition: 2, position: 1 }),
-    makePack({ code: toCardCode('b'), cyclePosition: 1, position: 2 }),
-    makePack({ code: toCardCode('a'), cyclePosition: 1, position: 1 }),
+    makePack({ code: 'c', cyclePosition: 2, position: 1 }),
+    makePack({ code: 'b', cyclePosition: 1, position: 2 }),
+    makePack({ code: 'a', cyclePosition: 1, position: 1 }),
   ];
 
   it('lists distinct cycles ascending', () => {

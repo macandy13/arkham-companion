@@ -29,8 +29,8 @@ function makeInvestigator(overrides: Partial<InvestigatorDef>): InvestigatorDef 
 
 const catalog: CardCatalog = {
   packs: [
-    { code: toCardCode('pack1'), name: 'First Pack', position: 1, cyclePosition: 1, chapter: 1 },
-    { code: toCardCode('pack2'), name: 'Second Pack', position: 1, cyclePosition: 2, chapter: 2 },
+    { code: 'pack1', name: 'First Pack', position: 1, cyclePosition: 1, chapter: 1 },
+    { code: 'pack2', name: 'Second Pack', position: 1, cyclePosition: 2, chapter: 2 },
   ],
   investigators: [
     makeInvestigator({

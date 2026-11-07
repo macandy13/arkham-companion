@@ -1,5 +1,5 @@
-import { toCardCode } from '@arkham/carddata';
 // @vitest-environment jsdom
+import { toCardCode } from '@arkham/carddata';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   chosenScenario,

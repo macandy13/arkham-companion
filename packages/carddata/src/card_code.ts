@@ -8,7 +8,10 @@ import { z } from 'zod';
  */
 export type CardCode = string & { readonly __brand: 'CardCode' };
 
-/** `code` as a card code, for data that names cards by their ArkhamDB code. */
+/**
+ * `code` as a card code, for data that names cards by their ArkhamDB code. Not called `cardCode`
+ * like the engine's constructor, so code that imports both packages (the web app) has no clash.
+ */
 export function toCardCode(code: string): CardCode {
   return code as CardCode;
 }

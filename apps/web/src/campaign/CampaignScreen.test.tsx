@@ -62,9 +62,7 @@ async function storeCampaign(events: (id: CampaignId) => CampaignEvent[]) {
 
 /** The catalog the setup preview takes the team's card stats from: Roland Banks alone. */
 const rolandCatalog: CardCatalog = {
-  packs: [
-    { code: toCardCode('core'), name: 'Core Set', position: 1, cyclePosition: 1, chapter: 1 },
-  ],
+  packs: [{ code: 'core', name: 'Core Set', position: 1, cyclePosition: 1, chapter: 1 }],
   investigators: [
     {
       code: toCardCode('01001'),

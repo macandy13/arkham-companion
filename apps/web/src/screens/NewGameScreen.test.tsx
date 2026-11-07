@@ -25,9 +25,7 @@ function makeInvestigator(code: string, name: string, health: number, sanity: nu
 }
 
 const catalog: CardCatalog = {
-  packs: [
-    { code: toCardCode('pack1'), name: 'First Pack', position: 1, cyclePosition: 1, chapter: 1 },
-  ],
+  packs: [{ code: 'pack1', name: 'First Pack', position: 1, cyclePosition: 1, chapter: 1 }],
   investigators: [makeInvestigator('a1', 'Alder', 6, 8), makeInvestigator('b1', 'Birch', 9, 5)],
 };
 
