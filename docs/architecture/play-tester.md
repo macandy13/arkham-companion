@@ -33,12 +33,12 @@ flowchart LR
 - `InvariantBroken` (the `PlayTable` error for a state `checkInvariants` rejects) is an `invariants` finding;
 - any other `TableError` is the bot naming something the table can't pick, and is counted as a misuse;
 - any other error is a `crash`;
-- after a played step, each rule oracle compares the board before and after it (`brokenRule` in [`oracles.ts`](../../packages/play_tester/src/oracles.ts)) and a broken rule is a `rules` finding naming the oracle and its `docs/rules/` page. The oracles read only `BoardView`, never the engine's rule helpers, so a bug in a helper does not pass its own check; undo is not judged:
+- after a played step, each rule oracle compares the board before and after it (`brokenRule` in [`oracles.ts`](../../packages/play_tester/src/oracles.ts)) and a broken rule is a `rules` finding naming the oracle and its `docs/rules/` page. The oracles read only `BoardView` and never run the engine's phase or advance logic, so a bug there does not pass its own check; they trust the values the board shows (a threshold, doom in play, a clue requirement). Undo is not judged:
   - `phaseOrder`: phases only move on, the round grows by at most 1, round 1 has no mythos phase;
   - `upkeep`: once the upkeep is through, every active investigator has 3 actions and 1 resource more, and no enemy is exhausted;
   - `mythosDoom`, `doomThreshold`: a new round's mythos phase puts doom on the agenda, and with doom in play at its threshold the agenda advances or the players are asked to confirm it;
   - `agendaOnlyAtCheck`: doom placed by hand never advances the agenda;
-  - `actAdvance`: spending clues advances the act, takes exactly its requirement, and the next act starts without clues;
+  - `actAdvance`: spending clues takes exactly the act's requirement and advances the act, unless its back side is still asking the players something;
 - after a played step, `replay` of the whole log must equal the live state (`replay`);
 - an offered answer (`answer`, `resolveTest`) that is refused, or a "Next" that is accepted but changes nothing, is a `liveness` finding.
 

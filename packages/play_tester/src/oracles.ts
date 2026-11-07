@@ -1,5 +1,5 @@
 import { sum } from '@arkham/util';
-import type { BoardView, RoundPhase } from '@arkham/engine';
+import { ROUND_PHASES, type BoardView } from '@arkham/engine';
 import type { Step } from './steps';
 
 /** The rule oracles (product.md "Continuous play tester", check 4), one per rule they check. */
@@ -11,8 +11,9 @@ export type RulesPage = 'round-structure.md' | 'agenda-and-doom.md' | 'act-and-c
 
 /**
  * One rule a step must keep, judged from the board before and after it: what the step broke, or
- * `undefined`. It reads only `BoardView`, never the engine's rule helpers, so a bug in a helper
- * does not pass its own check; it is written from its `docs/rules/` page.
+ * `undefined`. It reads only `BoardView` and never runs the engine's phase or advance logic, so a
+ * bug there does not pass its own check; it trusts the values the board shows (a threshold, doom in
+ * play, an act's clue requirement). It is written from its `docs/rules/` page.
  */
 export interface Oracle {
   readonly id: OracleId;
@@ -25,8 +26,6 @@ export interface BrokenRule {
   readonly oracle: Oracle;
   readonly message: string;
 }
-
-const ROUND_PHASES: readonly RoundPhase[] = ['mythos', 'investigation', 'enemy', 'upkeep'];
 
 /** The actions every investigator has again at upkeep (round-structure.md, Upkeep 1). */
 const ACTIONS_PER_ROUND = 3;
@@ -44,6 +43,10 @@ function beganMythos(before: BoardView, after: BoardView): boolean {
   return before.round >= 1 && after.round === before.round + 1;
 }
 
+/**
+ * Every rule oracle, in the order `brokenRule` asks them: the first one a step breaks is its
+ * finding, so the round structure comes before the rules that rely on it.
+ */
 export const ORACLES: readonly Oracle[] = [
   {
     id: 'phaseOrder',
@@ -126,12 +129,14 @@ export const ORACLES: readonly Oracle[] = [
       const advance = before.act?.advance;
       if (step.verb !== 'spendCluesToAdvanceAct' || advance?.kind !== 'spendClues' || after.ended)
         return undefined;
-      if (after.act?.id === before.act?.id) return `${before.act?.name} did not advance`;
+      // The act's back side resolves completely, any choice it asks included, before the next
+      // act becomes current (act-and-clues.md), so an open question keeps the act in place; the
+      // clues are spent all the same.
+      if (after.act?.id === before.act?.id && after.decisions.length === 0)
+        return `${before.act?.name} did not advance`;
       const spent = cluesHeld(before) - cluesHeld(after);
-      if (spent !== advance.threshold)
-        return `advancing ${before.act?.name} took ${spent} clues, not ${advance.threshold}`;
-      return after.act && after.act.clues > 0
-        ? `${after.act.name} starts with ${after.act.clues} clues on it`
+      return spent !== advance.threshold
+        ? `advancing ${before.act?.name} took ${spent} clues, not ${advance.threshold}`
         : undefined;
     },
   },

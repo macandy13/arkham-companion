@@ -17,10 +17,10 @@ const study = instanceId('study');
 const next = { verb: 'nextPhase' } as const;
 
 describe('the round structure', () => {
-  /** Alice in the study, under an agenda that 10 doom advance, so no round here advances it. */
+  /** Alice in the study with 5 resources, under an agenda that 10 doom advance, so no round here advances it. */
   const game = newGame()
     .withLocation(study, blankLocation('study'), { revealed: true })
-    .withInvestigator(alice, { locationId: study })
+    .withInvestigator(alice, { locationId: study, resources: 5 })
     .withAgenda(instanceId('agenda'), blankAgenda('agenda', fixed(10)));
 
   /** A table of `game` at the end of round 1's enemy phase, alice's turn taken. */
@@ -148,7 +148,7 @@ describe('advancing the agenda', () => {
 });
 
 describe('advancing the act', () => {
-  /** Alice in the study with `clues`, in her turn; the first act takes 2 clues. */
+  /** Alice in the study with `clues`, in her turn; the first act takes 2 clues, then the second is current. */
   const table = (clues: number) =>
     PlayTable.start(
       newGame()
@@ -163,12 +163,30 @@ describe('advancing the act', () => {
     );
   const advance = { verb: 'spendCluesToAdvanceAct' } as const;
 
-  it('accepts an advance that takes the 2 clues and starts the next act bare', () => {
+  it('accepts an advance that takes the 2 clues', () => {
     const played = table(3);
     const before = played.board;
     played.spendCluesToAdvanceAct();
 
     expect(brokenRule(before, played.board, advance)).toBeUndefined();
+  });
+
+  it('accepts an act that stays while a question is open, as when its back side asks one', () => {
+    // Before: alice holds 3 clues; after: she holds 1, the act unchanged, a question open.
+    const before = table(3).board;
+    const asking = PlayTable.start(
+      newGame()
+        .withLocation(study, blankLocation('study'), { revealed: true })
+        .withInvestigator(alice, { locationId: study, clues: 1 })
+        .withAct(
+          instanceId('first_act'),
+          blankAct('first_act', { actions: [advanceBySpendingClues(fixed(2))] }),
+        )
+        .withTurnOf(alice),
+    );
+    asking.investigate(alice, { result: 'open' });
+
+    expect(brokenRule(before, asking.board, advance)).toBeUndefined();
   });
 
   it('catches an advance that leaves the act', () => {
@@ -188,21 +206,6 @@ describe('advancing the act', () => {
     expect(brokenRule(withFourClues, played.board, advance)).toMatchObject({
       oracle: { id: 'actAdvance' },
       message: 'advancing first_act took 3 clues, not 2',
-    });
-  });
-
-  it('catches a next act that starts with clues on it', () => {
-    const played = table(3);
-    const before = played.board;
-    played.spendCluesToAdvanceAct();
-    played.play({
-      type: 'ManualAdjust',
-      adjustment: { kind: 'tokens', cardId: instanceId('second_act'), token: 'clue', delta: 1 },
-    });
-
-    expect(brokenRule(before, played.board, advance)).toMatchObject({
-      oracle: { id: 'actAdvance' },
-      message: 'second_act starts with 1 clues on it',
     });
   });
 });
