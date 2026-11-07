@@ -182,7 +182,7 @@ export function nearestEnemies(
   trait?: Trait,
 ): CardInstance[] {
   const candidates = enemiesOnTable(ctx, state, trait).map((card) => {
-    const [path] = shortestPaths(state, locationOf(state, card), from);
+    const [path] = shortestPaths(ctx, state, locationOf(state, card), from);
     return { card, distance: path ? path.length - 1 : Infinity };
   });
   const nearest = Math.min(...candidates.map(({ distance }) => distance));

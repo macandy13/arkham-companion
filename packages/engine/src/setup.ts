@@ -53,15 +53,14 @@ export interface MapLocation {
 }
 
 /**
- * A connection an `AddMapStep` declares between two of its own locations, by
- * card code. One-way connections only allow movement from `from` to `to`.
+ * A connection an `AddMapStep` declares between two of its own locations, by card code, for one
+ * no card prints (the cards' own come from their symbols, `printedConnections`). One-way
+ * connections only allow movement from `from` to `to`.
  */
 export interface MapConnection {
   from: CardCode;
   to: CardCode;
   oneWay?: boolean;
-  /** Printed on the revealed sides only (`Edge.revealedOnly`). */
-  revealedOnly?: boolean;
 }
 
 /**
@@ -681,7 +680,6 @@ function edge(locations: readonly CodedCard[], connection: MapConnection): Edge 
     from: targetId(locations, connection.from),
     to: targetId(locations, connection.to),
     oneWay: connection.oneWay ?? false,
-    ...(connection.revealedOnly && { revealedOnly: true }),
   };
 }
 

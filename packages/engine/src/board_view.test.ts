@@ -590,18 +590,24 @@ describe('locations', () => {
   });
 
   it.each([
-    { revealed: false, connections: [] },
-    {
-      revealed: true,
-      connections: [{ from: study, to: hallway, oneWay: false, revealedOnly: true }],
-    },
+    { revealed: false, connections: [{ from: study, to: hallway, oneWay: true }] },
+    { revealed: true, connections: [{ from: study, to: hallway, oneWay: false }] },
   ])(
-    'draws a connection printed on revealed sides only when both are revealed: $revealed',
+    "draws the study's printed connection, both ways once the hallway prints it back: $revealed",
     ({ revealed, connections }) => {
       const { context, state } = newGame()
-        .withLocation(study, blankLocation('study'), { revealed: true })
-        .withLocation(hallway, blankLocation('hallway'), { revealed })
-        .withConnection(study, hallway, { revealedOnly: true })
+        .withLocation(study, blankLocation('study', { symbol: 'circle', connectsTo: ['square'] }), {
+          revealed: true,
+        })
+        .withLocation(
+          hallway,
+          blankLocation('hallway', {
+            symbol: 'square',
+            connectsTo: ['circle'],
+            unrevealedConnectsTo: [],
+          }),
+          { revealed },
+        )
         .start();
 
       expect(boardView(context, state).maps[0]?.connections).toEqual(connections);

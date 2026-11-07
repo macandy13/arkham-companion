@@ -9,7 +9,6 @@ import {
   scenarioId,
   trait,
   type AddMapStep,
-  type MapConnection,
   type MapLocation,
   type ScenarioDefinition,
   type TokenValue,
@@ -48,10 +47,9 @@ const doomOfTheCult: TokenValue = (ctx, state) => {
 
 /**
  * Arkham's 3×3 grid as the campaign guide lays it out, Downtown and
- * Southside each one of their two versions. The connections are the symbols
- * printed on the location cards' revealed sides (read from the ArkhamDB
- * pictures; no card data has them); Rivertown is the hub. Without Your House
- * (burned down in The Gathering) the bottom right cell stays empty.
+ * Southside each one of their two versions; the cards' printed symbols connect
+ * them, with Rivertown as the hub. Without Your House (burned down in The
+ * Gathering) the bottom right cell stays empty.
  */
 function arkham(withYourHouse: boolean): AddMapStep {
   const locations: MapLocation[] = [
@@ -72,18 +70,6 @@ function arkham(withYourHouse: boolean): AddMapStep {
       at: { column: oneCard, row: 2 * oneCard },
     },
   ];
-  const connections: MapConnection[] = [
-    { from: codes.rivertown, to: codes.easttown },
-    { from: codes.rivertown, to: codes.miskatonicUniversity },
-    { from: codes.rivertown, to: codes.southsideHistoricalSociety },
-    { from: codes.rivertown, to: codes.graveyard },
-    { from: codes.southsideHistoricalSociety, to: codes.miskatonicUniversity },
-    { from: codes.southsideHistoricalSociety, to: codes.stMarysHospital },
-    { from: codes.stMarysHospital, to: codes.miskatonicUniversity },
-    { from: codes.miskatonicUniversity, to: codes.northside },
-    { from: codes.downtownFirstBank, to: codes.easttown },
-    { from: codes.downtownFirstBank, to: codes.northside },
-  ];
   return {
     kind: 'addMap',
     mapId: mapId('arkham'),
@@ -91,9 +77,6 @@ function arkham(withYourHouse: boolean): AddMapStep {
     locations: withYourHouse
       ? [...locations, { code: codes.yourHouse, at: { column: 2 * oneCard, row: 2 * oneCard } }]
       : locations,
-    connections: withYourHouse
-      ? [...connections, { from: codes.rivertown, to: codes.yourHouse }]
-      : connections,
   };
 }
 

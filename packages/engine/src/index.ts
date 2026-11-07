@@ -23,7 +23,14 @@ export { handle, handleWithCauses, type CausedEvents } from './handle';
 export { PLAYER_CAUSE, type ChangeCause } from './change_cause';
 export { DEFAULT_RELIANCE, RELIANCES, showsNotice, type Reliance } from './reliance';
 export { changeNotices, noticeKindOf, type ChangeNotice, type NoticeKind } from './change_notices';
-export { locationsNamed, neighbours, sameEdge, shortestPaths } from './board';
+export {
+  locationsNamed,
+  neighbours,
+  openConnections,
+  printedConnections,
+  sameEdge,
+  shortestPaths,
+} from './board';
 export { cardsNamed, zoneOf } from './lookup';
 export {
   byAny,

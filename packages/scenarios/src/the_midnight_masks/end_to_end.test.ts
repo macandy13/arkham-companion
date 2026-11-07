@@ -117,22 +117,22 @@ describe('The Midnight Masks end to end: Roland and Daisy, seed 40', () => {
       Act: Uncovering the Conspiracy – no clue requirement
       Map Arkham:
         Northside [01134#1] – unrevealed
-          connects to: Miskatonic University, Downtown
+          connects to: Downtown, Miskatonic University
         Downtown [01130#1] – unrevealed
-          connects to: Easttown, Northside
+          connects to: Northside, Easttown
         Easttown [01132#1] – unrevealed
-          connects to: Rivertown, Downtown
+          connects to: Downtown, Rivertown
         Miskatonic University [01129#1] – unrevealed
-          connects to: Rivertown, Southside, St. Mary's Hospital, Northside
+          connects to: Northside, Rivertown, St. Mary's Hospital, Southside
         Rivertown [01125#1] – unrevealed
-          connects to: Easttown, Miskatonic University, Southside, Graveyard, Your House
+          connects to: Easttown, Miskatonic University, Graveyard, Southside, Your House
         Graveyard [01133#1] – unrevealed
           connects to: Rivertown
         St. Mary's Hospital [01128#1] – unrevealed
-          connects to: Southside, Miskatonic University
+          connects to: Miskatonic University, Southside
         Southside [01126#1] – unrevealed
           Acolyte [01169#1] – 1 doom, unengaged
-          connects to: Rivertown, Miskatonic University, St. Mary's Hospital
+          connects to: Miskatonic University, Rivertown, St. Mary's Hospital
         Your House [01124#1] – revealed, 2 clues
           investigators: Roland Banks, Daisy Walker
           connects to: Rivertown
