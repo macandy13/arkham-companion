@@ -2,6 +2,23 @@
 
 The sections dated up to 2026-10-22 were released as 1.0.0 to 1.8.0 by mistake: Release Please starts at 1.0.0 by default. Versioning restarted at 0.1.0 (see "Versions" in docs/product.md).
 
+## [0.1.28](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v0.1.27...arkham-companion-v0.1.28) (2026-11-07)
+
+
+### Features
+
+* **play_tester:** draw chaos tokens as the players do (M1V.4) ([ee2e228](https://github.com/macandy13/arkham-companion/commit/ee2e228acf0a1c206a94be035cf07306492c5238))
+* **web:** rename and delete a campaign from its cover (MD.3b5a) ([9fe3ab2](https://github.com/macandy13/arkham-companion/commit/9fe3ab2c6156cdb97fda82ba63427d48b04a5549))
+* **web:** rename and delete a campaign from its cover (MD.3b5a) ([13dba0e](https://github.com/macandy13/arkham-companion/commit/13dba0e011e3d2a2d11d2f334cb51727311b039d))
+
+
+### Documentation
+
+* experience per resolution and where the doom goes in The Gathering's checklist ([ccb7cbb](https://github.com/macandy13/arkham-companion/commit/ccb7cbbd641af82032c92e040906751e21e5a066))
+* playtest checklist for The Gathering (M4.7) ([2ccf03d](https://github.com/macandy13/arkham-companion/commit/2ccf03d7329d03f15708d01eed6b8b5c41e73fe6))
+* playtest checklist for The Gathering (M4.7) ([6a12b41](https://github.com/macandy13/arkham-companion/commit/6a12b412da3a35997f05c3f5cf4df362b8126315))
+* point at drawTokens from the engine's skill tests ([072fc65](https://github.com/macandy13/arkham-companion/commit/072fc65624153692da4239421c2b9ea75571d5b1))
+
 ## [0.1.27](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v0.1.26...arkham-companion-v0.1.27) (2026-11-07)
 
 
