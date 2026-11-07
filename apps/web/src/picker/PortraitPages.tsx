@@ -1,5 +1,4 @@
 import type { CardCode, InvestigatorDef } from '@arkham/carddata';
-import { SKILL_NAMES } from '@arkham/engine';
 import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { seatNumber } from './pickerLogic';
@@ -54,7 +53,7 @@ export function PortraitPages({ investigators, seats, imageUrl, onOpen }: Portra
             >
               <Portrait src={investigator.imageSrc && imageUrl(investigator.imageSrc)} />
               <span>{investigator.name}</span>
-              <small>{t(`picker.faction.${investigator.factionCode}`)}</small>
+              <small data-class>{t(`picker.faction.${investigator.factionCode}`)}</small>
               <Stats investigator={investigator} />
               <SeatBadge n={seatNumber(seats, investigator.code)} />
             </button>
@@ -74,37 +73,35 @@ export function PortraitPages({ investigators, seats, imageUrl, onOpen }: Portra
 }
 
 /**
- * What a portrait tells about its investigator besides name and class, as on the card: the four skills in the order the
- * card prints them, then health and sanity, each a value after its icon. The stylesheet draws the
- * icons and keeps each value's name for screen readers only, so the portrait's button names them.
+ * Health and sanity under the portrait's name, each a value after its icon; the skills are on the
+ * detail sheet. The stylesheet draws the icons and keeps each value's name for screen readers
+ * only, so the portrait's button names them.
  */
 function Stats({ investigator }: { investigator: InvestigatorDef }) {
   const { t } = useTranslation();
   return (
-    <>
-      <small>
-        {SKILL_NAMES.map((skill) => (
-          <span key={skill} data-skill={skill}>
-            <span>{t(`skill.${skill}`)}</span> {investigator.skills[skill]}
-          </span>
-        ))}
-      </small>
-      <small>
-        <span data-stat="health">
-          <span>{t('picker.health')}</span> {investigator.health}
-        </span>
-        <span data-stat="sanity">
-          <span>{t('picker.sanity')}</span> {investigator.sanity}
-        </span>
-      </small>
-    </>
+    <small>
+      <span data-stat="health">
+        <span>{t('picker.health')}</span> {investigator.health}
+      </span>
+      <span data-stat="sanity">
+        <span>{t('picker.sanity')}</span> {investigator.sanity}
+      </span>
+    </small>
   );
 }
 
-/** The seat a portrait's investigator holds, if any. */
+/**
+ * The seat a portrait's investigator holds, if any: its number on a disc over the portrait
+ * (`data-seat`), the words for screen readers.
+ */
 function SeatBadge({ n }: { n: number | undefined }) {
   const { t } = useTranslation();
-  return n === undefined ? null : <small>{t('picker.seated', { n })}</small>;
+  return n === undefined ? null : (
+    <small data-seat={n}>
+      <span>{t('picker.seated', { n })}</span>
+    </small>
+  );
 }
 
 /**

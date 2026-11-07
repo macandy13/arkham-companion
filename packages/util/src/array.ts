@@ -85,3 +85,12 @@ export function firstDifference<T>(
   }
   return undefined;
 }
+
+/**
+ * `items` turned round so that the one at `index` comes first and the rest follow in their cycle,
+ * as when a table's order starts at another seat; an index out of range leaves them as they are.
+ */
+export function rotateTo<T>(items: readonly T[], index: number): T[] {
+  if (index < 0 || index >= items.length) return [...items];
+  return [...items.slice(index), ...items.slice(0, index)];
+}

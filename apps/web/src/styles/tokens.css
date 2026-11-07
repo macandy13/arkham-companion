@@ -224,11 +224,13 @@
   --border-width-line: 1.5px;
   /* What is written on that line. */
   --font-size-field: 1.0625rem;
-  /* The column of a settings row's label, and the height of a segmented choice's pill. */
-  --settings-label-width: 10rem;
+  /* The column of a form row's label (Settings, the wizard summary), and the height of a segmented choice's pill. */
+  --form-label-width: 10rem;
   --segment-height: 2.25rem;
   /* The wizard's step dots (MD.3d). */
   --step-dot-size: 0.5rem;
+  /* The radio mark on a ruled line of the wizard's setup (MD.3d3). */
+  --wizard-mark-size: 1.125rem;
   /* Minimum size of anything tappable, for use on a shared tablet. */
   --touch-target: 2.75rem;
   /* Buttons on a card (the agenda's doom steppers, the act's advance), small so the card stays compact. */
@@ -545,6 +547,9 @@
   --color-class-neutral: #6b6259;
   /* Portraits side by side on one of the picker's pages (`PORTRAITS_PER_PAGE` is twice this). */
   --picker-columns: 5;
+  /* The class badge and seat disc on a picker portrait (MD.3d2). */
+  --picker-badge-size: 1.5rem;
+  --picker-badge-inset: 0.1875rem;
   /*
    * The portrait on each of the picker's investigators: where it is on the scan of their card's
    * front (landscape, 419 × 300), in fractions of its width and height: the figure at the left,
@@ -963,6 +968,8 @@
  */
 @media (orientation: portrait) and (max-width: 40rem) {
   :root {
+    --picker-badge-size: 1.125rem;
+    --picker-badge-inset: 0.125rem;
     --dialog-padding: var(--space-4) var(--space-3);
     --test-token-size: 2.625rem;
     --test-token-symbol-size: 1.5rem;

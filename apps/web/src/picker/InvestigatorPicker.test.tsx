@@ -83,14 +83,13 @@ function Harness({
   );
 }
 
-function seatsSection() {
-  return screen.getByRole('region', { name: 'Seats' });
-}
-
-function seatNames() {
-  return within(seatsSection())
-    .queryAllByRole('listitem')
-    .map((item) => item.querySelector('span')?.textContent);
+/** The seat number on the named investigator's portrait, if they are picked. */
+function seatOnPortrait(name: string) {
+  const [portrait] = within(screen.getByRole('list', { name: 'Investigators' })).getAllByRole(
+    'button',
+    { name: new RegExp(name) },
+  );
+  return portrait!.querySelector('[data-seat]')?.getAttribute('data-seat');
 }
 
 function portraitNames() {
@@ -131,10 +130,6 @@ describe('InvestigatorPicker', () => {
   });
 
   it.each([
-    ['willpower', '[data-skill="willpower"]', 'Willpower 1'],
-    ['intellect', '[data-skill="intellect"]', 'Intellect 4'],
-    ['combat', '[data-skill="combat"]', 'Combat 2'],
-    ['agility', '[data-skill="agility"]', 'Agility 3'],
     ['health', '[data-stat="health"]', 'Health 6'],
     ['sanity', '[data-stat="sanity"]', 'Sanity 8'],
   ])("shows Alder's %s on the portrait", (_, selector, text) => {
@@ -319,23 +314,28 @@ describe('InvestigatorPicker', () => {
     expect(screen.queryByRole('dialog')).toBeNull();
   });
 
-  it('assigns selected investigators to the next seats in order', () => {
+  it('numbers the selected investigators on their portraits in pick order', () => {
     render(<Harness />);
 
     selectInvestigator('Birch');
     selectInvestigator('Cedar');
 
-    expect(seatNames()).toEqual(['Birch', 'Cedar']);
-    expect(screen.getByText('Lead investigator')).toBeTruthy();
+    expect([seatOnPortrait('Birch'), seatOnPortrait('Cedar'), seatOnPortrait('Dogwood')]).toEqual([
+      '1',
+      '2',
+      undefined,
+    ]);
   });
 
-  it('does not seat an investigator twice', () => {
+  it("names the lead investigator's seat in their sheet, with no way to select them again", () => {
     render(<Harness initialSeats={['b1']} />);
 
     openPortrait('Birch');
 
     const sheet = screen.getByRole('dialog', { name: 'Birch' });
-    expect(within(sheet).getByRole('button', { name: 'Seat 1' })).toHaveProperty('disabled', true);
+    expect(within(sheet).getByText('Lead investigator')).toBeTruthy();
+    expect(within(sheet).queryByRole('button', { name: 'Select' })).toBeNull();
+    expect(within(sheet).queryByRole('button', { name: 'Make lead investigator' })).toBeNull();
   });
 
   it('allows at most four seats', () => {
@@ -346,43 +346,25 @@ describe('InvestigatorPicker', () => {
     expect(screen.getByRole('button', { name: 'Select' })).toHaveProperty('disabled', true);
   });
 
-  it('removes a seat', () => {
+  it('removes a picked investigator from their sheet', () => {
     const emitted: string[][] = [];
     render(<Harness initialSeats={['b1', 'c1']} onSeats={(c) => emitted.push(c)} />);
+    openPortrait('Birch');
 
-    fireEvent.click(screen.getByRole('button', { name: 'Remove Birch' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Remove' }));
 
-    expect(seatNames()).toEqual(['Cedar']);
     expect(emitted).toEqual([['c1']]);
+    expect(seatOnPortrait('Cedar')).toBe('1');
   });
 
-  it('reorders seats with the move buttons', () => {
-    render(<Harness initialSeats={['b1', 'c1', 'd1']} />);
+  it('turns the table to the investigator made lead, keeping the order round it', () => {
+    const emitted: string[][] = [];
+    render(<Harness initialSeats={['a1', 'b1', 'c1', 'd1']} onSeats={(c) => emitted.push(c)} />);
+    openPortrait('Cedar');
 
-    fireEvent.click(screen.getByRole('button', { name: 'Move Birch down' }));
-    expect(seatNames()).toEqual(['Cedar', 'Birch', 'Dogwood']);
+    expect(within(screen.getByRole('dialog', { name: 'Cedar' })).getByText('Seat 3')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Make lead investigator' }));
 
-    fireEvent.click(screen.getByRole('button', { name: 'Move Dogwood up' }));
-    expect(seatNames()).toEqual(['Cedar', 'Dogwood', 'Birch']);
-  });
-
-  it('disables moving the first seat up and the last seat down', () => {
-    render(<Harness initialSeats={['b1', 'c1']} />);
-
-    expect(screen.getByRole('button', { name: 'Move Birch up' })).toHaveProperty('disabled', true);
-    expect(screen.getByRole('button', { name: 'Move Cedar down' })).toHaveProperty(
-      'disabled',
-      true,
-    );
-  });
-
-  it('reorders seats by dragging', () => {
-    render(<Harness initialSeats={['b1', 'c1', 'd1']} />);
-    const [first, , third] = within(seatsSection()).getAllByRole('listitem');
-
-    fireEvent.dragStart(first!);
-    fireEvent.drop(third!);
-
-    expect(seatNames()).toEqual(['Cedar', 'Dogwood', 'Birch']);
+    expect(emitted).toEqual([['c1', 'd1', 'a1', 'b1']]);
   });
 });

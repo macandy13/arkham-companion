@@ -87,7 +87,7 @@ export function SettingsScreen({ packs = [] }: SettingsScreenProps) {
         </section>
         <section aria-labelledby="settings-table">
           <h2 id="settings-table">{t('settings.table')}</h2>
-          <fieldset aria-label={t('settings.theme')}>
+          <fieldset aria-label={t('settings.theme')} data-segmented>
             {THEMES.map((theme) => (
               <label key={theme}>
                 <input

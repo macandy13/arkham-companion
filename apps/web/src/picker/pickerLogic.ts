@@ -66,13 +66,3 @@ export function seatNumber(seats: readonly CardCode[], code: CardCode): number |
   const index = seats.indexOf(code);
   return index < 0 ? undefined : index + 1;
 }
-
-/** Returns `seats` with the entry at `from` moved to index `to`; out-of-range moves change nothing. */
-export function moveSeat<T>(seats: readonly T[], from: number, to: number): T[] {
-  const inRange = (i: number) => i >= 0 && i < seats.length;
-  if (!inRange(from) || !inRange(to)) return [...seats];
-  const result = [...seats];
-  const [moved] = result.splice(from, 1);
-  result.splice(to, 0, moved as T);
-  return result;
-}

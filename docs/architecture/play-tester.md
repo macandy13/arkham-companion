@@ -33,6 +33,13 @@ flowchart LR
 - `InvariantBroken` (the `PlayTable` error for a state `checkInvariants` rejects) is an `invariants` finding;
 - any other `TableError` is the bot naming something the table can't pick, and is counted as a misuse;
 - any other error is a `crash`;
+- after a played step, each rule oracle compares the board before and after it (`brokenRule` in [`oracles.ts`](../../packages/play_tester/src/oracles.ts)) and a broken rule is a `rules` finding naming the oracle and its `docs/rules/` page. The oracles read only `BoardView` and never run the engine's phase or advance logic, so a bug there does not pass its own check; they trust the values the board shows (a threshold, doom in play, a clue requirement). Undo is not judged:
+  - `phaseOrder`: phases only move on, the round grows by at most 1, round 1 has no mythos phase;
+  - `upkeep`: once the upkeep is through, every active investigator has 3 actions and 1 resource more, and no enemy is exhausted;
+  - `mythosDoom`, `doomThreshold`: a new round's mythos phase puts doom on the agenda, and with doom in play at its threshold the agenda advances or the players are asked to confirm it;
+  - `agendaOnlyAtCheck`: doom placed by hand never advances the agenda;
+  - `actAdvance`: spending clues takes exactly the act's requirement and advances the act, unless its back side is still asking the players something;
+  - `hunterMove`: in the step that runs enemy step 1, each ready, unengaged hunter with no investigator at its location moves one connection closer to a nearest investigator, and one with no way to any stays. Prey and the lead's picks don't show on the board, so any such step is accepted; while a hunter question is open, nothing is judged, and the answer's later step isn't either. Blocked moves aren't modelled for hunters yet, so the oracle walks the open connections (`connectedTo`);
 - after a played step, `replay` of the whole log must equal the live state (`replay`);
 - an offered answer (`answer`, `resolveTest`) that is refused, or a "Next" that is accepted but changes nothing, is a `liveness` finding.
 
@@ -52,5 +59,6 @@ A game still going past `ROUND_CAP` (30 rounds) is a `liveness` finding too.
 - **A new rejection code:** its kind in `REFUSAL_KINDS`; typecheck fails until it is marked.
 - **A new verb:** a `Step` variant, its case in `playVerb` (and its basic action in `BASIC_ACTION_OF` when it is one), and where `offeredSteps` offers it.
 - **A new bot:** a `BOT_KINDS` entry and its weights in `bots.ts`.
+- **A new rule oracle:** an `Oracle` in `ORACLES` with its `docs/rules/` page; ask `rules-checker` to check it.
 - **A new check:** a `CheckId` and where `checkedStep` or `checkRun` finds it; `replaySteps` must find it again.
 - **A new record field:** raise `RECORD_VERSION`, so an old record is refused instead of misread.

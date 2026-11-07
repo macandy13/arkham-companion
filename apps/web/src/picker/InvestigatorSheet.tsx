@@ -12,12 +12,16 @@ interface InvestigatorSheetProps {
   readonly seatsFull: boolean;
   readonly imageUrl: (src: string) => string;
   readonly onSelect: () => void;
+  /** Moves the picked investigator to the first seat, the lead investigator's. */
+  readonly onMakeLead: () => void;
+  readonly onRemove: () => void;
   readonly onShowOtherChapter: () => void;
   readonly onClose: () => void;
 }
 
 /**
- * Detail sheet over the picker: both card faces, health, sanity, skills and the select action. A
+ * Detail sheet over the picker: both card faces, health, sanity, skills and the select action, or
+ * for a picked investigator their seat with the actions to make them lead or remove them. A
  * native modal `<dialog>` brings focus trapping and Escape; it stays open while it turns to the
  * other chapter's version.
  */
@@ -28,6 +32,8 @@ export function InvestigatorSheet({
   seatsFull,
   imageUrl,
   onSelect,
+  onMakeLead,
+  onRemove,
   onShowOtherChapter,
   onClose,
 }: InvestigatorSheetProps) {
@@ -81,9 +87,23 @@ export function InvestigatorSheet({
           {t('picker.otherChapter', { n: otherChapter.chapter })}
         </button>
       )}
-      <button type="button" disabled={seatNumber !== undefined || seatsFull} onClick={onSelect}>
-        {seatNumber === undefined ? t('picker.select') : t('picker.seated', { n: seatNumber })}
-      </button>
+      {seatNumber === undefined ? (
+        <button type="button" disabled={seatsFull} onClick={onSelect}>
+          {t('picker.select')}
+        </button>
+      ) : (
+        <footer>
+          <p>{t(seatNumber === 1 ? 'picker.lead' : 'picker.seated', { n: seatNumber })}</p>
+          {seatNumber > 1 && (
+            <button type="button" onClick={onMakeLead}>
+              {t('picker.makeLead')}
+            </button>
+          )}
+          <button type="button" onClick={onRemove}>
+            {t('picker.remove')}
+          </button>
+        </footer>
+      )}
     </dialog>
   );
 }
