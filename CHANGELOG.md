@@ -2,6 +2,13 @@
 
 The sections dated up to 2026-10-22 were released as 1.0.0 to 1.8.0 by mistake: Release Please starts at 1.0.0 by default. Versioning restarted at 0.1.0 (see "Versions" in docs/product.md).
 
+## [0.1.37](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v0.1.36...arkham-companion-v0.1.37) (2026-11-08)
+
+
+### Features
+
+* **scenarios:** Spreading Flames resolutions and quick-game entry (MC2.7d) ([73f13a9](https://github.com/macandy13/arkham-companion/commit/73f13a94ebf805cdf31a27e41b0f4798438fe84c))
+
 ## [0.1.36](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v0.1.35...arkham-companion-v0.1.36) (2026-11-08)
 
 
