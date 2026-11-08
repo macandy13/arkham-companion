@@ -196,6 +196,7 @@ export {
   checkDoomThreshold,
   discardAsset,
   discardAtRandom,
+  discardFromHand,
   advanceBySpendingCluesAtRoundEnd,
   spendCluesAsGroup,
   drawCards,

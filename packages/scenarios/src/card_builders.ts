@@ -30,6 +30,8 @@ export interface AgendaOptions {
   code: string;
   name: string;
   set: EncounterSetCode;
+  /** The file type of its pictures on ArkhamDB; PNG by default. */
+  pictures?: PictureFormat;
   stage: number;
   doom: number;
   /** Its reverse side (`whenAdvanced`). */
@@ -47,9 +49,10 @@ export function agenda({
   doom,
   abilities,
   actions,
+  pictures,
 }: AgendaOptions): CardStats {
   return {
-    ...scenarioCard(code, name, set),
+    ...scenarioCard(code, name, set, pictures),
     typeCode: 'agenda',
     stage: { number: stage },
     doom: fixed(doom),
@@ -66,6 +69,8 @@ export interface ActOptions {
   code: string;
   name: string;
   set: EncounterSetCode;
+  /** The file type of its pictures on ArkhamDB; PNG by default. */
+  pictures?: PictureFormat;
   stage: number;
   cluesPerInvestigator?: number;
   /** Its reverse side (`whenAdvanced`) and its objective. */
@@ -83,9 +88,10 @@ export function act({
   cluesPerInvestigator,
   abilities,
   actions,
+  pictures,
 }: ActOptions): CardStats {
   return {
-    ...scenarioCard(code, name, set),
+    ...scenarioCard(code, name, set, pictures),
     typeCode: 'act',
     stage: { number: stage },
     ...(abilities ? { abilities } : {}),
@@ -115,6 +121,8 @@ export interface LocationOptions {
   code: string;
   name: string;
   set: EncounterSetCode;
+  /** The file type of its pictures on ArkhamDB; PNG by default. */
+  pictures?: PictureFormat;
   shroud: number;
   cluesPerInvestigator: number;
   /** Printed traits such as Arkham or Central; none by default. */
@@ -151,9 +159,10 @@ export function location({
   connectsTo,
   unrevealedConnectsTo,
   restrictions,
+  pictures,
 }: LocationOptions): CardStats {
   return {
-    ...scenarioCard(code, name, set),
+    ...scenarioCard(code, name, set, pictures),
     typeCode: 'location',
     traits: traitsOf(traits),
     shroud,
@@ -174,6 +183,8 @@ export interface EnemyOptions {
   code: string;
   name: string;
   set: EncounterSetCode;
+  /** The file type of its pictures on ArkhamDB; PNG by default. */
+  pictures?: PictureFormat;
   traits: readonly string[];
   fight: number;
   evade: number;
@@ -202,13 +213,14 @@ export function enemy({
   victory,
   abilities,
   actions,
+  pictures,
   ...stats
 }: EnemyOptions): CardStats {
   return {
     ...stats,
     code: cardCode(code),
     typeCode: 'enemy',
-    ...picturesOf(code, 'front'),
+    ...picturesOf(code, 'front', pictures),
     traits: traitsOf(traits),
     encounterCode: set,
     quantity,
@@ -223,6 +235,8 @@ export interface TreacheryOptions {
   code: string;
   name: string;
   set: EncounterSetCode;
+  /** The file type of its pictures on ArkhamDB; PNG by default. */
+  pictures?: PictureFormat;
   traits: readonly string[];
   quantity: number;
   /** Keywords such as peril (Hunting Shadow). */
@@ -252,12 +266,13 @@ export function treachery({
   modifiers,
   actions,
   restrictions,
+  pictures,
 }: TreacheryOptions): CardStats {
   return {
     code: cardCode(code),
     name,
     typeCode: 'treachery',
-    ...picturesOf(code, 'front'),
+    ...picturesOf(code, 'front', pictures),
     traits: traitsOf(traits),
     encounterCode: set,
     quantity,
@@ -275,6 +290,7 @@ export function scenarioCard(
   code: string,
   name: string,
   set: EncounterSetCode,
+  pictures?: PictureFormat,
 ): Omit<CardStats, 'typeCode'> {
   return {
     code: cardCode(code),
@@ -282,9 +298,15 @@ export function scenarioCard(
     traits: [],
     encounterCode: set,
     quantity: 1,
-    ...picturesOf(code, 'both'),
+    ...picturesOf(code, 'both', pictures),
   };
 }
+
+/**
+ * The file type of a pack's pictures on ArkhamDB: the Core Set's are PNGs, the Core Set (2026)'s
+ * JPEGs; any other file name answers with an error page.
+ */
+export type PictureFormat = 'png' | 'jpg';
 
 /**
  * Where the pictures of card `code` are on ArkhamDB: its front, and its back when the card has
@@ -294,10 +316,13 @@ export function scenarioCard(
 export function picturesOf(
   code: string,
   sides: 'front' | 'both',
+  format: PictureFormat = 'png',
 ): Pick<CardStats, 'imageSrc' | 'backImageSrc'> {
   return {
-    imageSrc: cardImagePath(`/bundles/cards/${code}.png`),
-    ...(sides === 'both' ? { backImageSrc: cardImagePath(`/bundles/cards/${code}b.png`) } : {}),
+    imageSrc: cardImagePath(`/bundles/cards/${code}.${format}`),
+    ...(sides === 'both'
+      ? { backImageSrc: cardImagePath(`/bundles/cards/${code}b.${format}`) }
+      : {}),
   };
 }
 
