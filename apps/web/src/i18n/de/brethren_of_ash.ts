@@ -10,7 +10,7 @@ export const brethrenOfAshTexts = {
         wounds: '1 direkten Schaden und 1 direkten Horror erleiden; die Karte erhält Nachrücken',
       },
       stayOrGo: {
-        prompt: 'Der Ermittlungsleiter muss entscheiden',
+        prompt: 'Auflösung 1: Lest sie vor, dann muss der Ermittlungsleiter entscheiden',
         stay: 'Bleibt und bekämpft das Feuer!',
         go: '„Es bleibt keine Zeit. Wir müssen gehen.“',
       },

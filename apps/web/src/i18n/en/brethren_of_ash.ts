@@ -10,7 +10,7 @@ export const brethrenOfAshTexts = {
         wounds: 'Take 1 direct damage and 1 direct horror; Cosmic Evils gains surge',
       },
       stayOrGo: {
-        prompt: 'The lead investigator must decide',
+        prompt: 'Resolution 1: read it aloud, then the lead investigator must decide',
         stay: 'Stay and fight the fire!',
         go: '"There\'s no time. We have to go."',
       },
