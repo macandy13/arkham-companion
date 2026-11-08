@@ -628,6 +628,11 @@ export const appTexts = {
       rlyeh: 'Versunkenes R’lyeh',
     },
     tokens: 'Marker',
+    chaosBag: 'Chaosbeutel',
+    chaosDraw: 'Wer zieht die Marker',
+    chaosDraws: { app: 'Die App', table: 'Unser eigener Beutel' },
+    chaosDrawNote:
+      'Mit eurem eigenen Beutel zeigt die Fertigkeitsprobe keinen Ziehen-Knopf; ihr antwortet selbst mit Bestanden oder Misslungen.',
     tokenSet: 'Markerset',
     tokenSets: { resin: 'Harzkuppel', cardboard: 'Pappe' },
     themes: { dark: 'Bei Nacht', light: 'Bei Tag' },
