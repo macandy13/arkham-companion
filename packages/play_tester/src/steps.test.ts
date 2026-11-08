@@ -11,8 +11,9 @@ import {
   PlayTable,
   cardName,
   resignAction,
+  type InvestigatorView,
 } from '@arkham/engine';
-import { describeStep, playStep } from './steps';
+import { describeStep, playStep, type CardEffect } from './steps';
 
 const alice = investigatorId('alice');
 const study = instanceId('study');
@@ -127,6 +128,84 @@ describe('playing a step', () => {
     playStep(table, { verb, investigator: cardName('alice') });
 
     expect(table.board.investigator(alice)[stat]).toBe(after);
+  });
+
+  it('confirms the damage a weapon adds when a fight passes', () => {
+    const table = PlayTable.start(
+      game.withCard(ghoul, blankEnemy('ghoul', { health: fixed(3) }), engagedWith(alice)),
+    );
+
+    playStep(table, { verb: 'fight', investigator: cardName('alice'), enemy: ghoul });
+    playStep(table, {
+      verb: 'resolveTest',
+      investigator: cardName('alice'),
+      tokens: ['0'],
+      result: 'pass',
+      amount: 2,
+      cards: [cardName('Machete')],
+    });
+
+    expect(table.board.enemy(ghoul).damage).toBe(2);
+  });
+
+  it('plays the effects of a player card as table commands', () => {
+    const table = PlayTable.start(
+      game.withCard(ghoul, blankEnemy('ghoul', { health: fixed(3) }), engagedWith(alice)),
+    );
+
+    playStep(table, {
+      verb: 'playerCard',
+      investigator: cardName('alice'),
+      card: cardName('Sneak Attack'),
+      effects: [
+        { kind: 'resources', delta: -2 },
+        { kind: 'damageEnemy', enemy: ghoul, amount: 2 },
+      ],
+    });
+
+    expect(table.board.investigator(alice).resources).toBe(3);
+    expect(table.board.enemy(ghoul).damage).toBe(2);
+  });
+
+  it('takes no action for a player card, as its play action is a step of its own', () => {
+    const table = PlayTable.start(game);
+
+    playStep(table, {
+      verb: 'playerCard',
+      investigator: cardName('alice'),
+      card: cardName('Working a Hunch'),
+      effects: [
+        { kind: 'resources', delta: -2 },
+        { kind: 'discoverClues', amount: 1 },
+      ],
+    });
+
+    expect(table.board.investigator(alice)).toMatchObject({ actions: 3, resources: 3, clues: 1 });
+  });
+
+  it.each<{ effect: CardEffect; changed: Partial<InvestigatorView> }>([
+    { effect: { kind: 'hurt', damage: 1, horror: 2 }, changed: { damage: 1, horror: 2 } },
+    {
+      effect: { kind: 'skillBoost', skill: 'combat', delta: 1 },
+      changed: { boosts: { combat: 1 } },
+    },
+    { effect: { kind: 'actions', delta: 1 }, changed: { actions: 4 } },
+    { effect: { kind: 'doomOnPlayerCards', delta: 1 }, changed: { doom: 1 } },
+    {
+      effect: { kind: 'moveTo', location: cardName('hallway') },
+      changed: { at: cardName('hallway') },
+    },
+  ])('takes the effect $effect.kind on the table', ({ effect, changed }) => {
+    const table = PlayTable.start(game);
+
+    playStep(table, {
+      verb: 'playerCard',
+      investigator: cardName('alice'),
+      card: cardName('a card'),
+      effects: [effect],
+    });
+
+    expect(table.board.investigator(alice)).toMatchObject(changed);
   });
 
   it('places one doom on the agenda', () => {
