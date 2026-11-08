@@ -306,9 +306,11 @@ export type Templated<T> = T extends InstanceId
       : T;
 
 /**
- * The commands card data may use. A command joins when the first card
- * needs it; setup, corrections and phase flow (`StartScenario`,
- * `ManualAdjust`, `NextPhase`, …) never do, as no card performs them.
+ * The commands card data may use: every command of the engine that encounter
+ * cards print, whether or not a scenario uses it yet, so card data of a new
+ * campaign starts from one vocabulary (ME.1). Setup, corrections and phase
+ * flow (`StartScenario`, `ManualAdjust`, `NextPhase`, …) never join, as no
+ * card performs them.
  */
 export type AbilityCommand =
   | Extract<
@@ -334,10 +336,14 @@ export type AbilityCommand =
           | 'FromSetAside'
           | 'SpawnEnemy'
           | 'HealEnemy'
+          | 'DamageEnemy'
+          | 'DefeatEnemy'
           | 'MoveEnemyTowards'
+          | 'EngageEnemy'
           | 'DisengageEnemy'
           | 'EngageReadyEnemies'
           | 'ReadyEnemy'
+          | 'ExhaustEnemy'
           | 'GainSurge'
           | 'MoveInvestigator'
           | 'AddMap'
@@ -1754,6 +1760,41 @@ export function healSelf(amount: number): AbilityEffect {
 /** Readies the enemy that has the ability ("ready Umôrdhoth"). */
 export function readySelf(): AbilityEffect {
   return { type: 'ReadyEnemy', enemyId: { ref: 'self' } };
+}
+
+/**
+ * "Deal 1 damage to it / to each [[Monster]] enemy" (`DamageEnemy`): an enemy
+ * the damage brings to its health is defeated in the same step, so its
+ * `defeated` abilities fire. Written `dealDamageTo(eachEnemy({ trait: trait('Monster') }), 1)`.
+ */
+export function dealDamageTo(enemy: RelativeCard, amount: number): AbilityEffect {
+  return { type: 'DamageEnemy', enemyId: enemy, amount };
+}
+
+/**
+ * "Exhaust it / each enemy at your location" (`ExhaustEnemy`); an enemy that
+ * is exhausted already stays as it is.
+ */
+export function exhaustEnemy(enemy: RelativeCard): AbilityEffect {
+  return { type: 'ExhaustEnemy', enemyId: enemy };
+}
+
+/**
+ * "Defeat it" or "it is automatically defeated" (`DefeatEnemy`): defeated
+ * without damage, to the victory display or the encounter discard as usual.
+ */
+export function defeatEnemy(enemy: RelativeCard): AbilityEffect {
+  return { type: 'DefeatEnemy', enemyId: enemy };
+}
+
+/**
+ * "[Enemy] engages you" (`EngageEnemy`): it engages the investigator the
+ * window names. Like the engage action it needs them at the enemy's location
+ * and is rejected for a massive enemy, so it suits an enemy that arrived
+ * there, not one that must move first.
+ */
+export function engagesYou(enemy: RelativeCard): AbilityEffect {
+  return { type: 'EngageEnemy', enemyId: enemy, investigatorId: { ref: 'windowInvestigator' } };
 }
 
 /** The one copy of `code` in the game, for a scenario's unique cards (`{ ref: 'onlyCopy' }`). */

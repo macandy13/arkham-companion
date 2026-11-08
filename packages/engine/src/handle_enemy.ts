@@ -172,13 +172,17 @@ export function handleEvadeEnemy(ctx: EngineContext, state: GameState, cmd: Evad
   ];
 }
 
-/** `ExhaustEnemy`. */
+/**
+ * `ExhaustEnemy`: an exhausted enemy stays as it is, so "exhaust each enemy at
+ * your location" resolves whether or not some of them are exhausted.
+ */
 export function handleExhaustEnemy(
   ctx: EngineContext,
   state: GameState,
   cmd: ExhaustEnemy,
 ): ExhaustChanged[] {
-  return [exhaustChange(onTableEnemyOf(ctx, state, cmd.enemyId).enemy, true)];
+  const { enemy } = onTableEnemyOf(ctx, state, cmd.enemyId);
+  return enemy.exhausted ? [] : [exhaustChange(enemy, true)];
 }
 
 /**
@@ -215,7 +219,5 @@ function disengaged(state: GameState, enemy: CardInstance): EnemyDisengaged {
 }
 
 function exhaustChange(enemy: CardInstance, exhausted: boolean): ExhaustChanged {
-  if (enemy.exhausted === exhausted)
-    throw new CommandRejected({ code: 'exhaustUnchanged', cardId: enemy.id, exhausted });
   return { type: 'ExhaustChanged', cardId: enemy.id, exhausted };
 }
