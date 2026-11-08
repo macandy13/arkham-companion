@@ -25,8 +25,8 @@ function assertNotCurrentStage(state: GameState, cardId: InstanceId): void {
 
 /**
  * `MoveCard`: the same move a `ManualAdjust` makes, as a game event. A card it takes from play to
- * the set-aside area or out of the game leaves its tokens and attachments behind first (Rules
- * Reference, "In Play and Out of Play"; "Escape the Dorms" removes Your Friend's Room with its Fire! and sets
+ * the set-aside area or out of the game leaves its tokens and attachments behind first and is
+ * readied (Rules Reference, "Leaves Play"; "Escape the Dorms" removes Your Friend's Room with its Fire! and sets
  * the Servant of Flame aside healed); a correction moves the card alone.
  */
 export function handleMoveCard(state: GameState, cmd: MoveCard): Event[] {
@@ -36,7 +36,11 @@ export function handleMoveCard(state: GameState, cmd: MoveCard): Event[] {
   const attachments = cardsInZone(state, attachedTo(card.id)).flatMap((attachedId) =>
     discardEncounterCard(state, attachedId),
   );
-  return [...attachments, ...clearTokensEvents(card), moved];
+  // Cards enter play ready (RR "Ready"), so an evaded enemy set aside comes back able to engage.
+  const readied: Event[] = card.exhausted
+    ? [{ type: 'ExhaustChanged', cardId: card.id, exhausted: false }]
+    : [];
+  return [...attachments, ...clearTokensEvents(card), ...readied, moved];
 }
 
 /** Whether moving `card` to `to` takes it from play to the set-aside area or out of the game. */

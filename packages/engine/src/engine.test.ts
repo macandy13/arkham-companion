@@ -430,4 +430,14 @@ describe('MoveCard out of play', () => {
     expect(state.cards[ghoul]?.zone).toEqual(setAside);
     expect(state.cards[ghoul]?.tokens).toEqual({});
   });
+
+  it('readies an exhausted ghoul it sets aside, as cards enter play ready', () => {
+    const { state } = run(context, [
+      table.startCommand(),
+      { type: 'ExhaustEnemy', enemyId: ghoul },
+      { type: 'MoveCard', cardId: ghoul, to: setAside },
+    ]);
+
+    expect(state.cards[ghoul]?.exhausted).toBe(false);
+  });
 });
