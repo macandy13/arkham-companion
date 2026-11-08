@@ -624,6 +624,11 @@ export const appTexts = {
       rlyeh: 'Sunken R’lyeh',
     },
     tokens: 'Tokens',
+    chaosBag: 'Chaos bag',
+    chaosDraw: 'Who draws the tokens',
+    chaosDraws: { app: 'The app', table: 'Our own bag' },
+    chaosDrawNote:
+      'With your own bag the skill test shows no Draw button, only your total to hold against the token you draw.',
     tokenSet: 'Token set',
     tokenSets: { resin: 'Resin dome', cardboard: 'Cardboard' },
     themes: { dark: 'By night', light: 'By day' },

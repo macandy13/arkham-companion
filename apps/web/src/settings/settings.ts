@@ -56,6 +56,14 @@ export type CardTheme = (typeof CARD_THEMES)[number];
 export const ENEMY_TOKEN_FACES = ['art', 'initials'] as const;
 export type EnemyTokenFace = (typeof ENEMY_TOKEN_FACES)[number];
 
+/**
+ * Who draws the chaos tokens in a skill test: the app (`app`, its "Draw a token" button) or the
+ * players from their own bag (`table`), who then answer pass or fail themselves. Many groups
+ * enjoy the physical draw, so they can hide the app's.
+ */
+export const CHAOS_DRAWS = ['app', 'table'] as const;
+export type ChaosDraw = (typeof CHAOS_DRAWS)[number];
+
 /** What the card theme replaced: the old "Card pictures" setting, read once into the new one. */
 const CARD_LOOK_THEMES: Readonly<Record<string, CardTheme>> = {
   frames: 'exact',
@@ -74,6 +82,7 @@ export interface Settings {
   readonly tokenSet: TokenSet;
   readonly cardTheme: CardTheme;
   readonly enemyTokens: EnemyTokenFace;
+  readonly chaosDraw: ChaosDraw;
 }
 
 /** Defaults for a fresh device; dark because the app is used at a dim table. */
@@ -85,6 +94,7 @@ export const DEFAULT_SETTINGS: Settings = {
   tokenSet: 'resin',
   cardTheme: 'exact',
   enemyTokens: 'art',
+  chaosDraw: 'app',
 };
 
 const STORAGE_KEY = 'arkham-companion.settings';
@@ -112,6 +122,7 @@ function parseSettings(value: unknown): Settings {
       (typeof raw.cardLook === 'string' ? CARD_LOOK_THEMES[raw.cardLook] : undefined) ??
       DEFAULT_SETTINGS.cardTheme,
     enemyTokens: oneOf(ENEMY_TOKEN_FACES, raw.enemyTokens) ?? DEFAULT_SETTINGS.enemyTokens,
+    chaosDraw: oneOf(CHAOS_DRAWS, raw.chaosDraw) ?? DEFAULT_SETTINGS.chaosDraw,
   };
 }
 
