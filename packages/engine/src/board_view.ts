@@ -1,4 +1,4 @@
-import { assertNever, listIfAny, recordIfAny } from '@arkham/util';
+import { assertNever, listIfAny, recordIfAny, unique } from '@arkham/util';
 import { isLocationInPlay, neighbours, openConnections } from './board';
 import {
   cluesHeldForObjective,
@@ -621,6 +621,22 @@ export class BoardView {
 
   get investigators(): readonly InvestigatorView[] {
     return this.state.investigators.map((inv) => investigatorView(this.ctx, this.state, inv));
+  }
+
+  /**
+   * Every picture the game can show: both sides of each card in it, in or out of play (the
+   * encounter deck and set-aside cards included), and each investigator's card, without repeats.
+   * The screen downloads them before a game at a table without network (M6.4).
+   */
+  get pictures(): readonly CardImagePath[] {
+    const cards = Object.values(this.state.cards).flatMap(({ code }) => {
+      const { imageSrc, backImageSrc } = cardStats(this.ctx.cards, code);
+      return [imageSrc, backImageSrc];
+    });
+    const investigators = this.state.investigators.map(({ imageSrc }) => imageSrc);
+    return unique(
+      [...cards, ...investigators].filter((path): path is CardImagePath => path !== undefined),
+    );
   }
 
   /** Enemies in play, in card order. */

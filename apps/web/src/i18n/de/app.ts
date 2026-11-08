@@ -303,6 +303,13 @@ export const appTexts = {
   },
   network: { offline: 'Offline' },
   nav: { label: 'Hauptnavigation' },
+  offline: {
+    save: 'Bilder für offline speichern',
+    saving: 'Bilder werden gespeichert: {{count}} von {{total}}',
+    saved: 'Bilder gespeichert: {{count}} von {{total}}',
+    savedSome:
+      'Bilder gespeichert: {{count}} von {{total}}, {{failed}} fehlgeschlagen. Tippen zum Wiederholen',
+  },
   game: {
     unplayable:
       'Dieses Spiel kann nicht gespielt werden: Diese App-Version kennt sein Szenario nicht.',

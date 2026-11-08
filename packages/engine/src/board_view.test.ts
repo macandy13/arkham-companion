@@ -2024,3 +2024,32 @@ describe('clue payers', () => {
     ]);
   });
 });
+
+describe('pictures', () => {
+  it('lists both sides of every card in the game, set-aside ones too, and each investigator, once', () => {
+    const study = instanceId('study');
+    const ghoul = blankEnemy('ghoul', { imageSrc: cardImagePath('/cards/ghoul.png') });
+    const { context, state } = newGame()
+      .withLocation(
+        study,
+        blankLocation('study', {
+          imageSrc: cardImagePath('/cards/study.png'),
+          backImageSrc: cardImagePath('/cards/study_back.png'),
+        }),
+      )
+      .withCard(instanceId('ghoul_one'), ghoul, { kind: 'setAside' })
+      .withCard(instanceId('ghoul_two'), ghoul, { kind: 'setAside' })
+      .withInvestigator(investigatorId('roland'), {
+        locationId: study,
+        imageSrc: cardImagePath('/cards/roland.png'),
+      })
+      .start();
+
+    expect(boardView(context, state).pictures).toEqual([
+      '/cards/study.png',
+      '/cards/study_back.png',
+      '/cards/ghoul.png',
+      '/cards/roland.png',
+    ]);
+  });
+});

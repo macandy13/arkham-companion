@@ -293,6 +293,10 @@ p[data-offline]::before {
   mask-image: url('../screens/icons/export.svg');
 }
 
+:is(a, button)[data-icon='offline']::before {
+  mask-image: url('../screens/icons/offline.svg');
+}
+
 :is(a, button)[data-icon='rename']::before {
   mask-image: url('../screens/icons/adjust.svg');
 }

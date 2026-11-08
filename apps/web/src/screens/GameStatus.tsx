@@ -7,6 +7,7 @@ import type { AppState, OpenGame } from '../state/appStore';
 import { GameLogDialog } from '../log/GameLogDialog';
 import { GameExportButton } from './GameExportButton';
 import { OfflineMark } from './OfflineMark';
+import { SavePicturesButton } from './SavePicturesButton';
 import { isLightSkin, TABLE_SKINS } from '../settings/settings';
 import { useSettings } from '../settings/useSettings';
 
@@ -127,6 +128,9 @@ export function GameStatus({
                 />
               </li>
             )}
+            <li>
+              <SavePicturesButton board={board} />
+            </li>
           </>
         )}
       </GameMenu>
