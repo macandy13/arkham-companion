@@ -2,6 +2,13 @@
 
 The sections dated up to 2026-10-22 were released as 1.0.0 to 1.8.0 by mistake: Release Please starts at 1.0.0 by default. Versioning restarted at 0.1.0 (see "Versions" in docs/product.md).
 
+## [0.1.32](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v0.1.31...arkham-companion-v0.1.32) (2026-11-08)
+
+
+### Features
+
+* **play_tester:** finding report and app export beside each record (M1V.4) ([cda0356](https://github.com/macandy13/arkham-companion/commit/cda03564e9eca0a35ecafefb81887cb9545bc425))
+
 ## [0.1.31](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v0.1.30...arkham-companion-v0.1.31) (2026-11-08)
 
 
