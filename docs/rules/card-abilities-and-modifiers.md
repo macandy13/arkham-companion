@@ -16,6 +16,7 @@
   - a location's by investigators at that location,
   - an enemy's by investigators at its location (engaged with it or not),
   - a card's in a threat area by investigators at that investigator's location,
+  - a card's attached to a location (Locked Door, Arcane Lock) by investigators at that location ([Triggered Abilities](https://arkhamdb.com/rules#Triggered_Abilities): "a scenario card that is in play and at the same location as the investigator"),
   - and the current agenda's and act's by any investigator.
   - An unrevealed location offers none, as it has only its unrevealed side's text.
 - [Limits](https://arkhamdb.com/rules#Limits_and_Maximums): "(Limit once per turn/game.)" counts each investigator's uses apart, "(Group limit once per game.)" everyone's together.
