@@ -5,26 +5,35 @@
  *                                        writes each failing game's record to
  *                                        `packages/play_tester/.runs/` (or `--out <dir>`), with its
  *                                        report (`.md`) and app export (`.arkham-game.json`)
+ *                                        and replays every committed record in `--findings <dir>`
+ *                                        (`packages/play_tester/findings/` by default): one that
+ *                                        still fails is a fixed bug come back, written out alike
  *   pnpm playtest --bot goal             plays only runs of that bot (`random`, `goal`, `chaos`;
  *                                        all of them by default)
+ *   pnpm playtest --nightly              also writes `summary.md` (the job summary) and
+ *                                        `findings.json` (one `NightlyFinding` per signature, for
+ *                                        the issues) to the output directory, findings or not
  *   pnpm playtest --replay <record>      replays a record's steps on today's engine and stops at
  *                                        its failing step
  *
  * Exits with 1 when a game fails a check (or a replayed record still fails), so a script can stop.
  */
 import { execFileSync } from 'node:child_process';
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
 import { checkRun } from './play_run';
+import { nightlyFindings, nightlySummary, type WrittenRecord } from './nightly';
 import {
   loggedBoard,
   parseRecord,
+  RECORD_SUFFIX,
   recordFileName,
   recordOf,
   replaySteps,
   serialiseRecord,
+  type RunRecord,
   type TesterVersion,
 } from './record';
 import { BOT_KINDS, runsFrom, type BotKind } from './run';
@@ -40,6 +49,8 @@ const { values } = parseArgs({
     replay: { type: 'string' },
     out: { type: 'string' },
     bot: { type: 'string' },
+    findings: { type: 'string' },
+    nightly: { type: 'boolean', default: false },
   },
 });
 
@@ -52,24 +63,52 @@ function playGames(): number {
   const games = Number(values.games);
   const seed = Number(values.seed);
   const results = runsFrom(seed, games, bots(values.bot)).map((run) => checkRun(run));
-  console.log(`Play tester, seed ${seed}\n${formatSummary(summarise(results))}`);
-  const failing = results.filter(({ finding }) => finding);
-  if (failing.length === 0) return 0;
+  const summary = summarise(results);
+  console.log(`Play tester, seed ${seed}\n${formatSummary(summary)}`);
+  const tester = testerVersion();
+  const failing = results.flatMap((result) =>
+    result.finding ? [recordOf(shrink(result), tester)] : [],
+  );
+  const comeBack = committedRecords().filter(({ record }) => replaySteps(record).finding);
+  for (const { file } of comeBack) console.log(`${file} fails again`);
   const out =
     values.out === undefined
       ? fileURLToPath(new URL('../.runs', import.meta.url))
       : resolve(callerDirectory, values.out);
-  mkdirSync(out, { recursive: true });
-  const tester = testerVersion();
-  for (const result of failing) {
-    const record = recordOf(shrink(result), tester);
-    const path = join(out, recordFileName(record));
-    writeFileSync(path, serialiseRecord(record));
-    writeFileSync(gameExportPath(path), gameExport(record));
-    writeFileSync(reportPath(path), findingReport(record, relative(callerDirectory, path)));
-    console.log(`${record.finding.check}: ${reportPath(path)}`);
+  const written = [...failing, ...comeBack.map(({ record }) => record)].map((record) =>
+    writeRecord(out, record),
+  );
+  if (values.nightly) {
+    const findings = nightlyFindings(written);
+    const comeBackFiles = comeBack.map(({ file }) => file);
+    mkdirSync(out, { recursive: true });
+    writeFileSync(join(out, 'summary.md'), nightlySummary(seed, summary, findings, comeBackFiles));
+    writeFileSync(join(out, 'findings.json'), JSON.stringify(findings, undefined, 2));
   }
-  return 1;
+  return written.length === 0 ? 0 : 1;
+}
+
+/** Writes `record` to `out` with its app export and report beside it; prints the report's path. */
+function writeRecord(out: string, record: RunRecord): WrittenRecord {
+  mkdirSync(out, { recursive: true });
+  const path = join(out, recordFileName(record));
+  writeFileSync(path, serialiseRecord(record));
+  writeFileSync(gameExportPath(path), gameExport(record));
+  writeFileSync(reportPath(path), findingReport(record, relative(callerDirectory, path)));
+  console.log(`${record.finding.check}: ${reportPath(path)}`);
+  return { record, report: relative(out, reportPath(path)) };
+}
+
+/** The committed records of fixed bugs in `--findings`, by file name; a missing directory holds none. */
+function committedRecords(): { file: string; record: RunRecord }[] {
+  const directory =
+    values.findings === undefined
+      ? fileURLToPath(new URL('../findings', import.meta.url))
+      : resolve(callerDirectory, values.findings);
+  if (!existsSync(directory)) return [];
+  return readdirSync(directory)
+    .filter((file) => file.endsWith(RECORD_SUFFIX))
+    .map((file) => ({ file, record: parseRecord(readFileSync(join(directory, file), 'utf8')) }));
 }
 
 function replayRecord(path: string): number {
