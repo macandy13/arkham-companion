@@ -1,0 +1,130 @@
+/*
+ * The chaos tokens (MD.8c, `ChaosTokenFace`): a face per set from the nearest `data-token-set`,
+ * like the game's tokens (`game_tokens.css`); the symbol or number lies on it.
+ */
+:root,
+[data-token-set='resin'] {
+  --chaos-face-number: url('./resin/chaos_number.svg');
+  --chaos-face-skull: url('./resin/chaos_skull.svg');
+  --chaos-face-cultist: url('./resin/chaos_cultist.svg');
+  --chaos-face-tablet: url('./resin/chaos_tablet.svg');
+  --chaos-face-elder-thing: url('./resin/chaos_elder_thing.svg');
+  --chaos-face-auto-fail: url('./resin/chaos_auto_fail.svg');
+  --chaos-face-elder-sign: url('./resin/chaos_elder_sign.svg');
+  --chaos-face-bless: url('./resin/chaos_bless.svg');
+  --chaos-face-curse: url('./resin/chaos_curse.svg');
+  --chaos-face-frost: url('./resin/chaos_frost.svg');
+  --chaos-numeral-share: var(--chaos-resin-numeral-share);
+}
+
+/* Cardboard: every token the same black disc, as in the box. */
+[data-token-set='cardboard'] {
+  --chaos-face-number: url('./cardboard/chaos.svg');
+  --chaos-face-skull: var(--chaos-face-number);
+  --chaos-face-cultist: var(--chaos-face-number);
+  --chaos-face-tablet: var(--chaos-face-number);
+  --chaos-face-elder-thing: var(--chaos-face-number);
+  --chaos-face-auto-fail: var(--chaos-face-number);
+  --chaos-face-elder-sign: var(--chaos-face-number);
+  --chaos-face-bless: var(--chaos-face-number);
+  --chaos-face-curse: var(--chaos-face-number);
+  --chaos-face-frost: var(--chaos-face-number);
+  --chaos-numeral-share: var(--chaos-cardboard-numeral-share);
+}
+
+[data-chaos-face] {
+  --chaos-face: var(--chaos-face-number);
+
+  display: inline-grid;
+  place-items: center;
+  box-sizing: border-box;
+  width: var(--chaos-token-size);
+  height: var(--chaos-token-size);
+  background: var(--chaos-face) center / contain no-repeat;
+  color: var(--color-chaos-ink);
+  font-family: var(--font-family-print);
+  font-size: calc(var(--chaos-token-size) * var(--chaos-numeral-share));
+  font-weight: bold;
+  font-variant-numeric: lining-nums tabular-nums;
+  letter-spacing: var(--chaos-numeral-spacing);
+  line-height: 1;
+  text-shadow: var(--chaos-numeral-shadow);
+}
+
+/* A symbol token: the game's symbol in ivory, its name for screen readers only. */
+[data-chaos-face]:is(
+  [data-chaos-face='skull'],
+  [data-chaos-face='cultist'],
+  [data-chaos-face='tablet'],
+  [data-chaos-face='elderThing'],
+  [data-chaos-face='autoFail'],
+  [data-chaos-face='elderSign'],
+  [data-chaos-face='bless'],
+  [data-chaos-face='curse'],
+  [data-chaos-face='frost']
+) {
+  font-size: 0;
+}
+
+[data-chaos-face]:is(
+    [data-chaos-face='skull'],
+    [data-chaos-face='cultist'],
+    [data-chaos-face='tablet'],
+    [data-chaos-face='elderThing'],
+    [data-chaos-face='autoFail'],
+    [data-chaos-face='elderSign'],
+    [data-chaos-face='bless'],
+    [data-chaos-face='curse'],
+    [data-chaos-face='frost']
+  )::before {
+  content: '';
+  width: var(--chaos-symbol-share);
+  aspect-ratio: 1;
+  background: currentcolor;
+  mask: var(--chaos-symbol) center / contain no-repeat;
+}
+
+[data-chaos-face='skull'] {
+  --chaos-face: var(--chaos-face-skull);
+  --chaos-symbol: url('../symbols/skull.svg');
+}
+
+[data-chaos-face='cultist'] {
+  --chaos-face: var(--chaos-face-cultist);
+  --chaos-symbol: url('../symbols/cultist.svg');
+}
+
+[data-chaos-face='tablet'] {
+  --chaos-face: var(--chaos-face-tablet);
+  --chaos-symbol: url('../symbols/tablet.svg');
+}
+
+[data-chaos-face='elderThing'] {
+  --chaos-face: var(--chaos-face-elder-thing);
+  --chaos-symbol: url('../symbols/elder_thing.svg');
+}
+
+[data-chaos-face='autoFail'] {
+  --chaos-face: var(--chaos-face-auto-fail);
+  --chaos-symbol: url('../symbols/auto_fail.svg');
+}
+
+[data-chaos-face='elderSign'] {
+  --chaos-face: var(--chaos-face-elder-sign);
+  --chaos-symbol: url('../symbols/elder_sign.svg');
+}
+
+[data-chaos-face='bless'] {
+  --chaos-face: var(--chaos-face-bless);
+  --chaos-symbol: url('../symbols/bless.svg');
+}
+
+[data-chaos-face='curse'] {
+  --chaos-face: var(--chaos-face-curse);
+  --chaos-symbol: url('../symbols/curse.svg');
+}
+
+[data-chaos-face='frost'] {
+  --chaos-face: var(--chaos-face-frost);
+  --chaos-symbol: url('../symbols/frost.svg');
+}

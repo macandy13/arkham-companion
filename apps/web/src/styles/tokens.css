@@ -369,8 +369,20 @@
    * fit beside it), and the outcome's tight lines and spaced capitals.
    */
   --test-skill-icon-size: 1.625rem;
+  /*
+   * A chaos token (`ChaosTokenFace`, MD.8c): its size where nothing else sets it, its numbers'
+   * size as a share of it (larger in the cardboard set, whose disc has no star frame), the symbol's
+   * share, and the ivory ink with a shadow that keeps it readable on the resin colours.
+   */
+  --chaos-token-size: 2rem;
+  --chaos-bag-token-size: 2.5rem;
+  --chaos-resin-numeral-share: 0.4;
+  --chaos-cardboard-numeral-share: 0.42;
+  --chaos-numeral-spacing: -0.04em;
+  --chaos-symbol-share: 58%;
+  --color-chaos-ink: #f4efe2;
+  --chaos-numeral-shadow: 0 1px 1px rgb(0 0 0 / 60%);
   --test-token-size: 3.25rem;
-  --test-token-symbol-size: 1.875rem;
   --test-calculation-width: 7rem;
   --test-outcome-line-height: 1.1;
   --test-outcome-letter-spacing: 0.08em;
@@ -1075,7 +1087,6 @@
     --picker-badge-inset: 0.125rem;
     --dialog-padding: var(--space-4) var(--space-3);
     --test-token-size: 2.625rem;
-    --test-token-symbol-size: 1.5rem;
     --test-calculation-width: 5.75rem;
     --test-skill-icon-size: 1.375rem;
     --home-title-width: var(--home-title-width-phone);

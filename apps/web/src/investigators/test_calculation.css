@@ -167,96 +167,9 @@
   text-align: center;
 }
 
-/*
- * A token drawn, round like the cardboard one: a number token shows its number, a symbol token
- * the game's symbol, with its name kept for screen readers only.
- */
-#board dialog[data-shell] span[data-token] {
-  display: grid;
-  place-items: center;
-  box-sizing: border-box;
-  width: var(--test-token-size);
-  height: var(--test-token-size);
-  border: var(--piece-ring-width) solid var(--color-brass-deep);
-  border-radius: var(--radius-round);
-  background: var(--color-token-shroud);
-  box-shadow: var(--header-token-shadow);
-  color: var(--header-token-text);
-  font-family: var(--font-family-print);
-  font-size: var(--font-size-subtitle);
-  font-variant-numeric: lining-nums tabular-nums;
-}
-
-#board
-  dialog[data-shell]
-  span:is(
-    [data-token='skull'],
-    [data-token='cultist'],
-    [data-token='tablet'],
-    [data-token='elderThing'],
-    [data-token='autoFail'],
-    [data-token='elderSign'],
-    [data-token='bless'],
-    [data-token='curse'],
-    [data-token='frost']
-  ) {
-  font-size: 0;
-}
-
-#board
-  dialog[data-shell]
-  span:is(
-    [data-token='skull'],
-    [data-token='cultist'],
-    [data-token='tablet'],
-    [data-token='elderThing'],
-    [data-token='autoFail'],
-    [data-token='elderSign'],
-    [data-token='bless'],
-    [data-token='curse'],
-    [data-token='frost']
-  )::before {
-  content: '';
-  width: var(--test-token-symbol-size);
-  height: var(--test-token-symbol-size);
-  background: currentcolor;
-  mask: var(--token-symbol) center / contain no-repeat;
-}
-
-#board dialog[data-shell] span[data-token='skull'] {
-  --token-symbol: url('../symbols/skull.svg');
-}
-
-#board dialog[data-shell] span[data-token='cultist'] {
-  --token-symbol: url('../symbols/cultist.svg');
-}
-
-#board dialog[data-shell] span[data-token='tablet'] {
-  --token-symbol: url('../symbols/tablet.svg');
-}
-
-#board dialog[data-shell] span[data-token='elderThing'] {
-  --token-symbol: url('../symbols/elder_thing.svg');
-}
-
-#board dialog[data-shell] span[data-token='autoFail'] {
-  --token-symbol: url('../symbols/auto_fail.svg');
-}
-
-#board dialog[data-shell] span[data-token='elderSign'] {
-  --token-symbol: url('../symbols/elder_sign.svg');
-}
-
-#board dialog[data-shell] span[data-token='bless'] {
-  --token-symbol: url('../symbols/bless.svg');
-}
-
-#board dialog[data-shell] span[data-token='curse'] {
-  --token-symbol: url('../symbols/curse.svg');
-}
-
-#board dialog[data-shell] span[data-token='frost'] {
-  --token-symbol: url('../symbols/frost.svg');
+/* A token drawn (`ChaosTokenFace`), at the strip's size. */
+#board dialog[data-shell] section[data-part='strip'] {
+  --chaos-token-size: var(--test-token-size);
 }
 
 /* The outcome: PASS or FAIL, the total against the difficulty, and by how much. */

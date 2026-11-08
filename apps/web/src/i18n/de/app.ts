@@ -755,8 +755,6 @@ export const appTexts = {
     fallen: 'Getötete und wahnsinnige Ermittler',
     fallenAs: '{{name}} – {{fate}}',
     chaosBag: 'Chaosbeutel',
-    tokenCount_one: '{{token}}',
-    tokenCount_other: '{{token}} ×{{count}}',
   },
   interlude: {
     kicker: 'Zwischenspiel',
