@@ -409,7 +409,12 @@ describe('locations', () => {
 
   it('counts the facedown cards beneath a location, never naming them', () => {
     const { context, state } = house
-      .withCard(instanceId('suspect'), blankEnemy('suspect'), { kind: 'beneath', hostId: study })
+      .withCard(
+        instanceId('suspect'),
+        blankEnemy('suspect'),
+        { kind: 'beneath', hostId: study },
+        { faceUp: false },
+      )
       .start();
 
     const { locations } = boardView(context, state);

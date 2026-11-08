@@ -77,7 +77,7 @@ const { context, state: startState } = newGame()
   .withCard(instanceId('discarded_dread'), dreadCard, { kind: 'encounterDiscard' })
   .withCard(instanceId('rat_in_deck'), ratCard, { kind: 'encounterDeck' })
   .withCard(instanceId('set_aside_rat'), ratCard, { kind: 'setAside' })
-  .withCard(instanceId('hidden_rat'), ratCard, { kind: 'beneath', hostId: hall })
+  .withCard(instanceId('hidden_rat'), ratCard, { kind: 'beneath', hostId: hall }, { faceUp: false })
   .withCard(
     instanceId('questioned_rat'),
     ratCard,

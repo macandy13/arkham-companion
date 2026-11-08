@@ -602,15 +602,19 @@ describe('DrawBeneath', () => {
     expect(after.cards[suspect]?.zone).toEqual({ kind: 'atLocation', locationId: hall });
   });
 
-  it.each([
-    { beneathHall: 'nothing', faceUp: undefined },
-    { beneathHall: 'only a face-up card', faceUp: true },
-  ])('rejects the draw with $beneathHall beneath her location', ({ faceUp }) => {
-    const built =
-      faceUp === undefined
-        ? aliceInHall
-        : aliceInHall.withCard(suspect, foeCard, { kind: 'beneath', hostId: hall }, { faceUp });
-    const { context, state } = built.start();
+  it('rejects the draw with nothing beneath her location', () => {
+    const { context, state } = aliceInHall.start();
+
+    expect(rejectionFrom(context, state, drawBeneath)).toEqual({
+      code: 'nothingBeneath',
+      locationId: hall,
+    });
+  });
+
+  it('rejects the draw with only a face-up card beneath her location', () => {
+    const { context, state } = aliceInHall
+      .withCard(suspect, foeCard, { kind: 'beneath', hostId: hall }, { faceUp: true })
+      .start();
 
     expect(rejectionFrom(context, state, drawBeneath)).toEqual({
       code: 'nothingBeneath',
