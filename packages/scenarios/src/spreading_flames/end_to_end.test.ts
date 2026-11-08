@@ -118,13 +118,13 @@ describe('Spreading Flames, played end to end with Roland and Daisy, seed 1', ()
     table.startTurn(daisy);
     table.moveTo(daisy, byName('Dormitories'));
     table.moveTo(daisy, byName('Miskatonic Quad'));
-    table.endTurn(daisy);
 
-    // Escape the Dorms' objective (each undefeated investigator at the Quad) is the players' to
-    // check: they advance the act by hand. Its reverse side sets the Servant aside, removes Your
-    // Friend's Room from the game, its Fire! going to the discard pile as it leaves play, and puts
-    // Orne Library, Science Hall and Warren Observatory into play.
+    // Escape the Dorms' objective (each undefeated investigator at the Quad) is met as Daisy
+    // arrives. The players check it and advance the act by hand. Its reverse side sets the Servant
+    // aside, removes Your Friend's Room from the game, its Fire! going to the discard pile as it
+    // leaves play, and puts Orne Library, Science Hall and Warren Observatory into play.
     table.play({ type: 'AdvanceAct' });
+    table.endTurn(daisy);
 
     expect(table.board.act?.name).toBe('Searching for Dr. Armitage');
     expect(table.board.locationsOn(CAMPUS)).toEqual([
@@ -199,6 +199,8 @@ describe('Spreading Flames, played end to end with Roland and Daisy, seed 1', ()
     table.endTurn(roland);
     table.startTurn(daisy);
     table.fight(daisy, byName('Bystander'));
+    // The Bystander is Doomed: defeating it places 1 doom on the agenda, by hand.
+    table.placeDoom(1);
     table.moveTo(daisy, byName('Miskatonic Quad'));
     table.moveTo(daisy, byName('Orne Library'));
     table.endTurn(daisy);
@@ -212,12 +214,14 @@ describe('Spreading Flames, played end to end with Roland and Daisy, seed 1', ()
     expect(table.nextPhase()).toEqual({ round: 5, phase: 'mythos', step: 'drawEncounterCard' });
     table.play(answer(COSMIC_EVILS_DECISION, 'doom'));
     expect(table.nextPhase()).toEqual({ round: 5, phase: 'investigation' });
-    expect(table.board.agenda).toMatchObject({ name: 'Lit Up', doom: 2 });
+    expect(table.board.agenda).toMatchObject({ name: 'Lit Up', doom: 3 });
 
     // Round 5 – investigation: both take one of Orne Library's 2 clues, so they hold 6 there.
+    // Roland's third action plays his .45 Automatic (4 ammo).
     table.startTurn(roland);
     table.moveTo(roland, byName('Orne Library'));
     table.investigate(roland);
+    table.playCard(roland);
     table.endTurn(roland);
     table.startTurn(daisy);
     table.investigate(daisy);
@@ -231,7 +235,8 @@ describe('Spreading Flames, played end to end with Roland and Daisy, seed 1', ()
 
     // Round 5 – upkeep: they spend the 6 clues as the round ends. Searching for Dr. Armitage's
     // reverse side brings the Servant of Flame back to the Quad, healed, and places 6 clues there.
-    // Dr. Armitage joining an investigator and the lead's search for Fire! are the players' to do.
+    // Dr. Armitage joining an investigator is the players' to do, and so is Roland's search for two
+    // Fire!: as the lead, at Orne Library, he attaches one there and the next to the Quad.
     expect(table.nextPhase()).toEqual({ round: 5, phase: 'enemy' });
     expect(table.nextPhase()).toEqual({ round: 5, phase: 'upkeep', step: 'endRound' });
     table.play(answer(SEARCHING_FOR_ARMITAGE_DECISION, 'spend'));
@@ -256,6 +261,8 @@ describe('Spreading Flames, played end to end with Roland and Daisy, seed 1', ()
     // Round 6 – investigation: Roland goes to the Quad, where the Servant engages him, and hits it
     // twice with his .45 Automatic: the players confirm 2 damage each. Daisy defeats the Cantor and
     // follows him. (Blaze of Glory's group clue spend to damage the Servant is theirs to resolve.)
+    // As the phase ends, the Fire! on the Quad deals each of them 1 direct damage, by hand; the
+    // Servant is Elite and takes none.
     table.startTurn(roland);
     table.moveTo(roland, byName('Miskatonic Quad'));
     table.fight(roland, byName(servant), { damage: 2 });
@@ -269,20 +276,27 @@ describe('Spreading Flames, played end to end with Roland and Daisy, seed 1', ()
     expect(table.board.enemies).toEqual([
       { name: servant, at: 'Miskatonic Quad', health: 10, damage: 4, engagedWith: roland },
     ]);
+    table.takeDamage(roland, 1);
+    table.takeDamage(daisy, 1);
 
     // Round 6 – enemy phase: the Servant attacks Roland for 2 damage and 2 horror.
     expect(table.nextPhase()).toEqual({ round: 6, phase: 'enemy', step: 'enemiesAttack' });
     table.resolveEnemyAttacks();
-    expect(table.board.investigator(roland)).toMatchObject({ damage: 2, horror: 2 });
+    expect(table.board.investigator(roland)).toMatchObject({ damage: 3, horror: 2 });
 
     expect(table.nextPhase()).toEqual({ round: 6, phase: 'upkeep' });
 
-    // Round 7 – mythos: a Mutated Experiment engages Daisy.
+    // Round 7 – mythos: the fifth doom makes Lit Up advance to Wild Flames; its reverse side's
+    // agility tests are the players' to resolve. A Mutated Experiment engages Daisy.
+    expect(table.nextPhase()).toEqual({ round: 7, phase: 'mythos', step: 'checkDoomThreshold' });
+    table.answerOnly('yes');
+    expect(table.board.agenda).toMatchObject({ name: 'Wild Flames', doom: 0 });
     expect(table.nextPhase()).toEqual({ round: 7, phase: 'mythos' });
     expect(table.board.enemy(byName('Mutated Experiment')).engagedWith).toBe(daisy);
 
-    // Round 7 – investigation: Roland's three attacks defeat the Servant. Blaze of Glory advances
-    // by itself, and Resolution 1 asks the lead investigator to stay and fight the fire or go.
+    // Round 7 – investigation: Roland spends the last two ammo, then attacks without the .45 and
+    // commits Vicious Blow: 2 damage again, the Servant's tenth. Blaze of Glory advances by
+    // itself, and Resolution 1 asks the lead investigator to stay and fight the fire or go.
     expect(table.nextPhase()).toEqual({ round: 7, phase: 'investigation' });
     table.startTurn(roland);
     table.fight(roland, byName(servant), { damage: 2 });
