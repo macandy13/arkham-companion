@@ -83,7 +83,8 @@ const jpg = 'jpg';
  * with the scenario definition (MC2.8c).
  *
  * The Arkham locations print the same symbol on both sides; the connections are read from the
- * revealed sides, since ArkhamDB has no pictures of the unrevealed ones yet. The two Downtowns, the
+ * revealed sides: ArkhamDB has no pictures of the unrevealed ones yet, so their tiles fall back to
+ * the plain back until it does. The two Downtowns, the
  * two Uptowns and the two Miskatonic Universities share their names: setup puts one of each into
  * play and removes the other from the game.
  *
@@ -94,18 +95,19 @@ const jpg = 'jpg';
  *   with the suspects' Parley actions and reactions that trigger them
  * - the Elusive keyword (Servant of Flame, Sgt. Earl Monroe, Bat Horror; MC2.15)
  * - Augurs of Flame's action (draw the card beneath your location, MC2.8b) and its objective
- * - Arkham Alive's and Emergent Evils' reverse sides (MC2.8c)
+ * - Arkham Alive's, Emergent Evils' and Augurs of Flame's reverse sides (MC2.8c)
  * - Mark of Elokoss' damage as its holder's turn ends (assigned to an asset if able) and its
  *   two-action discard
- * - the Arkham locations' reactions and actions (resources, healing, a search, a clue for 5
- *   resources, a free move, cards drawn, a charge or secret: MC2.3, MC2.4), Waterfront District's
+ * - the Arkham locations' reactions and actions (resources, healing, two deck searches, a clue
+ *   for 5 resources, a free move, cards drawn, a charge or secret, a Tome or Spell played from the
+ *   discard pile: MC2.3, MC2.4), Waterfront District's
  *   additional action to investigate (MC2.4), and the damage Miskatonic University (In Flames)
  *   deals to allies
  * - Arcane Lock's additional action to enter or leave its location (MC2.4)
- * - Downpour's choice per point failed, Red Herring's +2 difficulty with 2 or more clues and its
- *   clue placed on the location, and Eager for Death's difficulty per damage (MC2.5)
- * - Raising Suspicions' doom on the nearest enemy without doom, and Aerial Pursuit's nearest
- *   non-Elite enemy moving and attacking
+ * - the whole revelations of Downpour (a choice per point failed), Red Herring (+2 difficulty with
+ *   2 or more clues, a clue placed on the location) and Eager for Death (difficulty per damage,
+ *   MC2.5), and of Raising Suspicions (doom on the nearest enemy without doom, else surge) and
+ *   Aerial Pursuit (the nearest non-Elite enemy moves and attacks; its surge keyword is entered)
  * - Rogue Gangster's lost resource (or attack) after it engages
  * - Whippoorwill's -1 to each skill of each investigator at its location
  */

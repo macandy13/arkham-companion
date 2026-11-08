@@ -4,6 +4,7 @@
 Card rulings: [Resolution order](cards/resolution-order.md).
 
 - When an investigator is dealt damage or horror, they may assign it to their assets that have health or sanity (no more than would defeat each asset), and the rest goes on the investigator. Prevention happens between assigning and applying, and everything is applied at once.
+- [Direct damage](https://arkhamdb.com/rules#Direct_Damage_Direct_Horror) or horror goes on the card named and can't be assigned elsewhere: "1 direct damage to each player card with health" (Miskatonic University (In Flames)) hits each investigator and each ally there separately; the engine deals the investigators' part, the players the allies'.
 - [Heal](https://arkhamdb.com/rules#Heal) X damage removes up to X damage tokens: no more than the card has, so healing an undamaged enemy does nothing.
   - The same holds for an investigator's damage and horror (St. Mary's Hospital's "heal 3 damage" with 1 damage heals 1).
 - Readying a ready enemy does nothing, so Umôrdhoth's "at the end of each investigator's turn: ready him" is no error while he is ready.

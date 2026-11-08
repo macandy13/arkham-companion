@@ -29,10 +29,10 @@ describe('Smoke and Mirrors card data', () => {
       back: '/bundles/cards/12134b.jpg',
     },
     {
-      code: '12149',
-      name: 'Northside',
-      front: '/bundles/cards/12149.jpg',
-      back: '/bundles/cards/12149b.jpg',
+      code: '12136',
+      name: 'Augurs of Flame',
+      front: '/bundles/cards/12136.jpg',
+      back: '/bundles/cards/12136b.jpg',
     },
     { code: '12139', name: 'David Renfield', front: '/bundles/cards/12139.jpg', back: undefined },
     { code: '12157', name: 'Arcane Lock', front: '/bundles/cards/12157.jpg', back: undefined },
@@ -125,7 +125,9 @@ describe('Smoke and Mirrors card data', () => {
         (card.typeCode === 'enemy' || card.typeCode === 'treachery'),
     );
 
-    expect(encounterCards.reduce((sum, card) => sum + (card.quantity ?? 1), 0)).toBe(copies);
+    const total = encounterCards.reduce((sum, card) => sum + (card.quantity ?? 1), 0);
+
+    expect(total).toBe(copies);
   });
 
   it('has the twelve Arkham locations, two versions each of Downtown, Uptown and Miskatonic University', () => {
@@ -276,6 +278,24 @@ describe('Smoke and Mirrors card abilities', () => {
         expect(state.cards[lock]?.zone).toEqual(zone);
       },
     );
+
+    it('discards a second Arcane Lock drawn where one is already attached', () => {
+      const first = instanceId('first_lock');
+      const second = instanceId('second_lock');
+      const { context, state: started } = newGame()
+        .withLocation(northside, cardOf('12149'), { revealed: true })
+        .withInvestigator(alice, { locationId: northside })
+        .withCard(first, cardOf('12157'), { kind: 'attachedTo', hostId: northside })
+        .withCard(second, cardOf('12157'), { kind: 'encounterDeck' })
+        // A card left in the deck, so the discard pile is not shuffled back into an empty one.
+        .withCard(instanceId('downpour'), cardOf('12158'), { kind: 'encounterDeck' })
+        .start();
+
+      const { state } = execute(context, started, aliceDraws('Arcane Lock'));
+
+      expect(state.cards[first]?.zone).toEqual({ kind: 'attachedTo', hostId: northside });
+      expect(state.cards[second]?.zone).toEqual({ kind: 'encounterDiscard' });
+    });
   });
 
   describe('Flash Flood', () => {
@@ -326,26 +346,10 @@ describe('Smoke and Mirrors card abilities', () => {
         const state = stateAfter(context, drawn, answer('test:crossfire', result));
 
         expect(drawn.pending).toMatchObject([{ skillTest: { skill: 'agility', difficulty: 3 } }]);
-        expect(
-          [alice, bob, carol].map((id) => requireInvestigator(state, id).health.damage),
-        ).toEqual([damage, damage, 0]);
+        expect(requireInvestigator(state, alice).health.damage).toBe(damage);
+        expect(requireInvestigator(state, bob).health.damage).toBe(damage);
+        expect(requireInvestigator(state, carol).health.damage).toBe(0);
       },
     );
-  });
-
-  it('keeps an Arcane Lock already attached when a second one is drawn at the same location', () => {
-    const first = instanceId('first_lock');
-    const second = instanceId('second_lock');
-    const { context, state: started } = newGame()
-      .withLocation(northside, cardOf('12149'), { revealed: true })
-      .withInvestigator(alice, { locationId: northside })
-      .withCard(first, cardOf('12157'), { kind: 'attachedTo', hostId: northside })
-      .withCard(second, cardOf('12157'), { kind: 'encounterDeck' })
-      .start();
-
-    const { state } = execute(context, started, aliceDraws('Arcane Lock'));
-
-    expect(state.cards[first]?.zone).toEqual({ kind: 'attachedTo', hostId: northside });
-    expect(state.cards[second]?.zone).not.toEqual({ kind: 'attachedTo', hostId: northside });
   });
 });
