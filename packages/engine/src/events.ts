@@ -44,6 +44,8 @@ export type Event =
   | CardMoved
   | TokensChanged
   | ChaosBagChanged
+  | ChaosTokenSealed
+  | ChaosTokenReleased
   | CardFlipped
   | ConnectionChanged
   | MapAdded
@@ -126,6 +128,23 @@ export interface ChaosBagChanged {
   token: ChaosToken;
   change: ChaosBagChangeKind;
   lasts: ChaosBagChangeLasts;
+}
+
+/** One copy of `token` left the chaos bag, sealed on `investigatorId`. Produced by `SealChaosToken`. */
+export interface ChaosTokenSealed {
+  type: 'ChaosTokenSealed';
+  token: ChaosToken;
+  investigatorId: InvestigatorId;
+}
+
+/**
+ * One copy of `token` sealed on `investigatorId` went back into the chaos bag. Produced by
+ * `ReleaseChaosToken` and by the investigator leaving the scenario.
+ */
+export interface ChaosTokenReleased {
+  type: 'ChaosTokenReleased';
+  token: ChaosToken;
+  investigatorId: InvestigatorId;
 }
 
 /** Tokens of one kind were added to (`delta` > 0) or removed from a card. */

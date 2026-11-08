@@ -180,6 +180,21 @@ describe('gameLog', () => {
         table.play({ type: 'ChangeChaosBag', token: 'cultist', change: 'add', lasts: 'campaign' }),
       line: 'Cultist token added to the chaos bag for the rest of the campaign',
     },
+    {
+      step: (table: PlayTable) => {
+        table.play({ type: 'ChangeChaosBag', token: 'cultist', change: 'add', lasts: 'scenario' });
+        table.play({ type: 'SealChaosToken', token: 'cultist', investigatorId: roland });
+      },
+      line: 'Cultist token sealed by Roland Banks',
+    },
+    {
+      step: (table: PlayTable) => {
+        table.play({ type: 'ChangeChaosBag', token: 'cultist', change: 'add', lasts: 'scenario' });
+        table.play({ type: 'SealChaosToken', token: 'cultist', investigatorId: roland });
+        table.play({ type: 'ReleaseChaosToken', token: 'cultist', investigatorId: roland });
+      },
+      line: 'Cultist token sealed by Roland Banks released into the chaos bag',
+    },
   ])('says "$line"', ({ step, line }) => {
     const table = PlayTable.start(rolandsTurn);
 

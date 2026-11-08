@@ -89,6 +89,7 @@ import type {
   AmountRange,
   CardInstance,
   ChaosToken,
+  SealedToken,
   Decision,
   DecisionOption,
   Difficulty,
@@ -851,6 +852,11 @@ export class BoardView {
   /** The chaos tokens in the bag for this scenario and difficulty, the players' to draw from. */
   get chaosBag(): readonly ChaosToken[] {
     return this.state.chaosBag;
+  }
+
+  /** The tokens out of the bag because a card sealed them, each with the investigator holding it. */
+  get sealedTokens(): readonly SealedToken[] {
+    return this.state.sealedTokens;
   }
 
   /**

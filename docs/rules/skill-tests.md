@@ -21,6 +21,15 @@ Card rulings: [Resolution order](cards/resolution-order.md), [Children of Blood]
 
 Bless (+2), curse (-2), frost (-1) and the blood token (-1) each make the tester reveal another token, whose modifier also applies.
 
+## Sealed tokens
+
+[Seal](https://arkhamdb.com/rules#Seal):
+
+- A card that seals a token takes it out of the bag and keeps it on the card, so no test can reveal it.
+- A token the bag doesn't hold can't be sealed.
+- A sealed token goes back into the bag when an effect releases it or when its card leaves play, such as when the investigator controlling it leaves the scenario.
+- The engine keeps each sealed token with the investigator who controls the sealing card (`GameState.sealedTokens`), since player cards are not modelled.
+
 ## Margin of success and failure
 
 A test [succeeds by](https://arkhamdb.com/rules#Skill_Test_Timing) the modified skill minus the difficulty ("succeed by 2 or more") and fails by the difficulty minus the modified skill; after an [auto-fail](https://arkhamdb.com/rules#Automatic_Failure_Success), whose skill is 0, that is the whole difficulty.

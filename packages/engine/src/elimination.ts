@@ -3,6 +3,7 @@ import { arrivalEngagements } from './engagement';
 import { decisionId } from './ids';
 import { requestDecision } from './decisions';
 import type {
+  ChaosTokenReleased,
   Event,
   InvestigatorChanged,
   InvestigatorDefeated,
@@ -30,8 +31,8 @@ const NEW_LEAD_DECISION = decisionId('newLeadInvestigator');
  * 1. `left` itself (`InvestigatorDefeated` or `InvestigatorResigned`).
  * 2. Their clues are placed on their location, enemies engaged with them stay
  *    at that location unengaged (keeping damage and exhaustion), cards in
- *    their threat area are discarded and cards they control are removed from
- *    the game.
+ *    their threat area are discarded, cards they control are removed from
+ *    the game and the tokens sealed on those cards go back into the chaos bag.
  * 3. The enemies left unengaged engage another investigator at that location,
  *    as any ready unengaged enemy does (Rules Reference, "Enemy Engagement").
  * 4. If nobody is left, the scenario ends without a resolution.
@@ -56,6 +57,7 @@ export function investigatorLeavesEvents(
     ...clueEvents(investigator),
     ...engagedEnemyEvents(state, investigator),
     ...threatAreaEvents(state, investigator),
+    ...sealedTokenEvents(state, investigator),
     ...controlledCardEvents(state, investigator),
   ];
   const cleared = replay(events, state);
@@ -132,6 +134,16 @@ function threatAreaEvents(state: GameState, investigator: Investigator): Event[]
   return cardsInZone(state, { kind: 'threatArea', investigatorId: investigator.id }).flatMap(
     (cardId) => discardEncounterCard(state, cardId),
   );
+}
+
+/**
+ * Tokens sealed on the cards they control go back into the bag: those cards leave play with them,
+ * and a sealed token is released when its card leaves play (Rules Reference, "Seal").
+ */
+function sealedTokenEvents(state: GameState, investigator: Investigator): ChaosTokenReleased[] {
+  return state.sealedTokens
+    .filter((sealed) => sealed.investigatorId === investigator.id)
+    .map(({ token }) => ({ type: 'ChaosTokenReleased', token, investigatorId: investigator.id }));
 }
 
 /**

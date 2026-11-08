@@ -50,6 +50,9 @@ export const appTexts = {
         scenario: '{{token}}-Marker bis zum Ende des Szenarios aus dem Chaosbeutel genommen',
         campaign: '{{token}}-Marker für den Rest der Kampagne aus dem Chaosbeutel genommen',
       },
+      sealed: '{{token}}-Marker von {{investigator}} versiegelt',
+      released:
+        '{{token}}-Marker von {{investigator}} freigegeben und zurück in den Chaosbeutel gelegt',
     },
     amount: {
       doom_one: '{{count}} Verderben',

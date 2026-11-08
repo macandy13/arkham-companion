@@ -62,6 +62,8 @@ import {
   handleBecomeActAndAgenda,
   handleEndScenario,
   handleChangeChaosBag,
+  handleReleaseChaosToken,
+  handleSealChaosToken,
   handlePlaceDoom,
   handlePlaceTokens,
 } from './handle_scenario';
@@ -223,6 +225,10 @@ const COMMAND_SPECS: CommandSpecs = {
   PlaceClues: { handle: (_ctx, state, command) => handlePlaceClues(state, command) },
   PlaceDoom: { handle: (_ctx, state, command) => handlePlaceDoom(state, command) },
   ChangeChaosBag: { handle: (_ctx, state, command) => handleChangeChaosBag(state, command) },
+  SealChaosToken: { handle: (_ctx, state, command) => handleSealChaosToken(state, command) },
+  ReleaseChaosToken: {
+    handle: (_ctx, state, command) => handleReleaseChaosToken(state, command),
+  },
   PlaceTokens: { handle: (_ctx, state, command) => handlePlaceTokens(state, command) },
   AdvanceAgenda: {
     handle: (_ctx, state, command) => handleAdvanceAgenda(state, command),

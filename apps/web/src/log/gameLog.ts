@@ -283,6 +283,15 @@ function eventLine(t: TFunction, names: Names, state: GameState, event: Event): 
       return t(`log.chaosBag.${event.change}.${event.lasts}`, {
         token: t(`chaosToken.${event.token}`),
       });
+    case 'ChaosTokenSealed':
+    case 'ChaosTokenReleased':
+      return t(
+        event.type === 'ChaosTokenSealed' ? 'log.chaosBag.sealed' : 'log.chaosBag.released',
+        {
+          token: t(`chaosToken.${event.token}`),
+          investigator: names.investigator(event.investigatorId),
+        },
+      );
     case 'InvestigatorChanged':
       return t(`log.investigator.${event.stat}.${event.delta > 0 ? 'up' : 'down'}`, {
         investigator: names.investigator(event.investigatorId),

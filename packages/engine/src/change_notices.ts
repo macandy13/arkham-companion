@@ -67,6 +67,8 @@ export function noticeKindOf(event: Event): NoticeKind | undefined {
     case 'CluesDiscovered':
       return 'tokens';
     case 'ChaosBagChanged':
+    case 'ChaosTokenSealed':
+    case 'ChaosTokenReleased':
       return 'chaosBag';
     case 'CardMoved':
     case 'CardFlipped':

@@ -50,6 +50,8 @@ export const appTexts = {
         scenario: '{{token}} token removed from the chaos bag until the end of the scenario',
         campaign: '{{token}} token removed from the chaos bag for the rest of the campaign',
       },
+      sealed: '{{token}} token sealed by {{investigator}}',
+      released: '{{token}} token sealed by {{investigator}} released into the chaos bag',
     },
     amount: {
       doom_one: '{{count}} doom',
