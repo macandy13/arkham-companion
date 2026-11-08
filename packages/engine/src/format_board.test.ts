@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
   advanceBySpendingClues,
+  advanceBySpendingCluesAtRoundEnd,
+  cardCode,
+  decisionId,
   atLocation,
   attachedTo,
   blankAct,
@@ -108,6 +111,34 @@ describe('formatBoard', () => {
       Victory display: Rat
       Pending decisions: none"
     `);
+  });
+
+  it.each([
+    {
+      objective: 'in the Hall',
+      act: blankAct('smoke', {
+        name: 'Smoke',
+        abilities: [
+          advanceBySpendingCluesAtRoundEnd(decisionId('smoke'), fixed(2), cardCode('hall')),
+        ],
+      }),
+      line: 'Act: Smoke – needs 2 clues at Hall when the round ends',
+    },
+    {
+      objective: 'anywhere',
+      act: blankAct('smoke', {
+        name: 'Smoke',
+        abilities: [advanceBySpendingCluesAtRoundEnd(decisionId('smoke'), fixed(2))],
+      }),
+      line: 'Act: Smoke – needs 2 clues when the round ends',
+    },
+  ])('names the round-end clue objective $objective', ({ act, line }) => {
+    const { context: actContext, state } = newGame()
+      .withLocation(hall, hallCard)
+      .withCard(instanceId('smoke'), act, { kind: 'actDeck' })
+      .start();
+
+    expect(formatBoard(actContext, state).split('\n')).toContain(line);
   });
 
   it('shows no doom threshold for a face-down agenda', () => {

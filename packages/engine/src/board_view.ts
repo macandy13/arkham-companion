@@ -1,6 +1,11 @@
 import { assertNever, listIfAny, recordIfAny } from '@arkham/util';
 import { isLocationInPlay, neighbours, openConnections } from './board';
-import { resolveEffect, roundEndClueObjective, tokenObjective } from './abilities';
+import {
+  cluesHeldForObjective,
+  resolveEffect,
+  roundEndClueObjective,
+  tokenObjective,
+} from './abilities';
 import {
   advanceActionOf,
   cardActionsOfferedTo,
@@ -56,7 +61,7 @@ import {
   type MapId,
   type ResolutionId,
 } from './ids';
-import { cardsInZone, cardsOfType, currentCard, theOnlyCopy } from './lookup';
+import { cardsInZone, cardsOfType, currentCard } from './lookup';
 import { mapLocations, type Edge, type GameMap, type GridCell } from './map';
 import { attacksStillDue } from './phases';
 import {
@@ -70,7 +75,6 @@ import { NAMED_AMOUNTS } from './state';
 import {
   boostedSkills,
   cluesHeldByGroup,
-  cluesHeldAt,
   clueSpenders,
   defaultCluePayments,
   requireInvestigator,
@@ -392,8 +396,9 @@ export interface ActView {
  * the investigators spend the clues they hold (`spendClues`, its `advanceBySpendingClues`
  * action, which the turn's investigator takes), or it advances itself once enough clues lie on it
  * (`cluesOnAct`, an objective like Disrupting the Ritual's, `whenTokensOnSelf`), or the
- * investigators at one location may spend them when the round ends (`spendCluesAtRoundEnd`, The
- * Barrier's `advanceBySpendingCluesAtRoundEnd`, which asks then): `held` counts only theirs.
+ * investigators (at one location, if it names one) may spend them when the round ends
+ * (`spendCluesAtRoundEnd`, The Barrier's `advanceBySpendingCluesAtRoundEnd`, which asks then):
+ * `held` counts only theirs.
  */
 export type ActAdvance =
   | { readonly kind: 'spendClues'; readonly held: number; readonly threshold: number }
@@ -1317,10 +1322,9 @@ function actAdvance(
     return { kind: 'cluesOnAct', threshold: resolveValue(onAct, state.meta.playerCount) };
   const atRoundEnd = roundEndClueObjective(stats);
   if (atRoundEnd !== undefined) {
-    const location = theOnlyCopy(state, atRoundEnd.location);
     return {
       kind: 'spendCluesAtRoundEnd',
-      held: location === undefined ? 0 : cluesHeldAt(ctx, state, location),
+      held: cluesHeldForObjective(ctx, state, atRoundEnd.location),
       threshold: resolveValue(atRoundEnd.clues, state.meta.playerCount),
     };
   }
