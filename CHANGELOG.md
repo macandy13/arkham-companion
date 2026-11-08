@@ -2,6 +2,22 @@
 
 The sections dated up to 2026-10-22 were released as 1.0.0 to 1.8.0 by mistake: Release Please starts at 1.0.0 by default. Versioning restarted at 0.1.0 (see "Versions" in docs/product.md).
 
+## [0.1.33](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v0.1.32...arkham-companion-v0.1.33) (2026-11-08)
+
+
+### Features
+
+* **play_tester:** nightly play tester workflow (M1V.4) ([0632e40](https://github.com/macandy13/arkham-companion/commit/0632e40e3251baf678f3df1aa4b74d2bfa226076))
+* **play_tester:** nightly play tester workflow (M1V.4) ([92013ba](https://github.com/macandy13/arkham-companion/commit/92013bad825571a44c46b8d98baafad2d4e21407))
+* **play_tester:** sturdier issue filing, branded signature ([a393f03](https://github.com/macandy13/arkham-companion/commit/a393f030c44257f564d4daa7cf864fbf0d2c7a5b))
+* **web:** toasts as table pills with text-link actions (MD.5b) ([e73b96b](https://github.com/macandy13/arkham-companion/commit/e73b96bab0a6f4ed46f9ac56ca9e8465b9c6b868))
+
+
+### Documentation
+
+* fold M7 card effect automation into M1V ([b6aaaa5](https://github.com/macandy13/arkham-companion/commit/b6aaaa51efec6dff8894dea053e11fed55d3f552))
+* name M1V.5 in the reliance comment, smoother wording ([5d2eae4](https://github.com/macandy13/arkham-companion/commit/5d2eae47c8ebdd0ee05b0a6395f9b7cfb3bf01f6))
+
 ## [0.1.32](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v0.1.31...arkham-companion-v0.1.32) (2026-11-08)
 
 
