@@ -407,6 +407,17 @@ describe('locations', () => {
     ]);
   });
 
+  it('counts the facedown cards beneath a location, never naming them', () => {
+    const { context, state } = house
+      .withCard(instanceId('suspect'), blankEnemy('suspect'), { kind: 'beneath', hostId: study })
+      .start();
+
+    const { locations } = boardView(context, state);
+
+    expect(locations[0]).toMatchObject({ name: 'study', facedownBeneath: 1 });
+    expect(locations[0]).not.toHaveProperty('cards');
+  });
+
   describe("the parlor's printed actions", () => {
     const parlor = instanceId('parlor');
     const parlorRevealed = (revealed: boolean) =>
@@ -1003,6 +1014,25 @@ describe('agenda and act', () => {
       clues: 0,
       advance: { kind: 'spendClues', held: 3, threshold: 4 },
     });
+  });
+
+  it('names the cards placed face up beneath the act', () => {
+    const firstAct = instanceId('first_act');
+    const { context, state } = newGame()
+      .withLocation(study, blankLocation('study'))
+      .withInvestigator(alice, { locationId: study })
+      .withAct(firstAct, blankAct('first_act'))
+      .withCard(
+        instanceId('questioned_suspect'),
+        blankEnemy('questioned_suspect'),
+        { kind: 'beneath', hostId: firstAct },
+        { faceUp: true },
+      )
+      .start();
+
+    const { act } = boardView(context, state);
+
+    expect(act?.beneath).toEqual(['questioned_suspect']);
   });
 
   it('counts the clues the players put on the act apart from its cost', () => {

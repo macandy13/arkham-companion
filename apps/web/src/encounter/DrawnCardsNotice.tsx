@@ -47,7 +47,8 @@ export function DrawnCardsNotice({
       case 'atLocation':
         return t('encounter.place.atLocation', { location: place.location });
       case 'attachedTo':
-        return t('encounter.place.attachedTo', { card: place.card });
+      case 'beneath':
+        return t(`encounter.place.${place.kind}`, { card: place.card });
       default:
         return assertNever(place);
     }

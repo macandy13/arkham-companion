@@ -569,6 +569,56 @@ describe('DrawFromScenarioDeck', () => {
   });
 });
 
+describe('DrawBeneath', () => {
+  const cellar = instanceId('cellar');
+  const suspect = instanceId('suspect');
+  const drawBeneath: Command = { type: 'DrawBeneath', investigatorId: alice };
+  /** Alice in the hall, which connects to nothing; the cellar is a second location. */
+  const aliceInHallWithCellar = aliceInHall.withLocation(cellar, blankLocation('cellar'), {
+    revealed: true,
+  });
+
+  it('turns up the facedown card beneath her location and spawns it engaged with her', () => {
+    const otherSuspect = instanceId('other_suspect');
+    const { context, state } = aliceInHallWithCellar
+      .withCard(suspect, foeCard, { kind: 'beneath', hostId: hall }, { faceUp: false })
+      .withCard(otherSuspect, foeCard, { kind: 'beneath', hostId: cellar }, { faceUp: false })
+      .start();
+
+    const after = stateAfter(context, state, drawBeneath);
+
+    expect(after.cards[suspect]).toMatchObject({ zone: engagedWith(alice), faceUp: true });
+    expect(after.cards[otherSuspect]?.zone).toEqual({ kind: 'beneath', hostId: cellar });
+  });
+
+  it('leaves an aloof enemy unengaged at her location', () => {
+    const aloofSuspect = blankEnemy('aloof_suspect', { keywords: [{ name: 'aloof' }] });
+    const { context, state } = aliceInHall
+      .withCard(suspect, aloofSuspect, { kind: 'beneath', hostId: hall }, { faceUp: false })
+      .start();
+
+    const after = stateAfter(context, state, drawBeneath);
+
+    expect(after.cards[suspect]?.zone).toEqual({ kind: 'atLocation', locationId: hall });
+  });
+
+  it.each([
+    { beneathHall: 'nothing', faceUp: undefined },
+    { beneathHall: 'only a face-up card', faceUp: true },
+  ])('rejects the draw with $beneathHall beneath her location', ({ faceUp }) => {
+    const built =
+      faceUp === undefined
+        ? aliceInHall
+        : aliceInHall.withCard(suspect, foeCard, { kind: 'beneath', hostId: hall }, { faceUp });
+    const { context, state } = built.start();
+
+    expect(rejectionFrom(context, state, drawBeneath)).toEqual({
+      code: 'nothingBeneath',
+      locationId: hall,
+    });
+  });
+});
+
 describe('ShuffleInto', () => {
   it('adds the set-aside cards to the deck and shuffles all of it', () => {
     const { context, state } = aliceInHall

@@ -77,6 +77,13 @@ const { context, state: startState } = newGame()
   .withCard(instanceId('discarded_dread'), dreadCard, { kind: 'encounterDiscard' })
   .withCard(instanceId('rat_in_deck'), ratCard, { kind: 'encounterDeck' })
   .withCard(instanceId('set_aside_rat'), ratCard, { kind: 'setAside' })
+  .withCard(instanceId('hidden_rat'), ratCard, { kind: 'beneath', hostId: hall })
+  .withCard(
+    instanceId('questioned_rat'),
+    ratCard,
+    { kind: 'beneath', hostId: instanceId('search') },
+    { faceUp: true },
+  )
   .start();
 
 function startedBoard(): GameState {
@@ -89,16 +96,18 @@ function startedBoard(): GameState {
 }
 
 describe('formatBoard', () => {
-  it('lists the agenda, act, locations, investigators and piles by card name', () => {
+  it('lists the agenda, act, locations, investigators, piles and the cards beneath by card name', () => {
     expect(formatBoard(context, startedBoard())).toMatchInlineSnapshot(`
       "Round 0, setup phase
       Agenda: The Plan – doom 1/2
       Act: The Search – needs 4 clues
+        beneath: Rat
       Map Manor:
         Hall [hall] – revealed, 3 clues
           investigators: Alice
           Ghoul [ghoul] – 2 damage, exhausted, engaged with Alice
           attached: Dread
+          beneath: 1 facedown
           connects to: none
         Attic [attic] – unrevealed
           investigators: Bob

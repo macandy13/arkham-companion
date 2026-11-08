@@ -214,6 +214,7 @@ export const appTexts = {
       playArea: 'controlled by {{name}}',
       atLocation: 'at {{location}}',
       attachedTo: 'attached to {{card}}',
+      beneath: 'beneath {{card}}',
     },
     discard: 'Discard pile',
     setAside: 'Set aside',

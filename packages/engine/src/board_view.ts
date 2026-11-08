@@ -253,6 +253,8 @@ interface LocationViewBase {
   investigators?: InvestigatorId[];
   cards?: CardName[];
   attachments?: CardName[];
+  /** How many facedown cards lie beneath it (Smoke and Mirrors' suspects); absent when none. */
+  facedownBeneath?: number;
   /**
    * What the cards in play forbid at it (`isRestricted`): moving into it (the Parlor's barrier),
    * investigating it (Locked Door). The screen offers neither; absent when nothing is forbidden.
@@ -389,6 +391,8 @@ export interface ActView {
   encounterSet?: EncounterSetCode;
   clues: number;
   advance?: ActAdvance;
+  /** The cards placed face up beneath it (Smoke and Mirrors' interviewed suspects); absent when none. */
+  beneath?: CardName[];
 }
 
 /**
@@ -565,7 +569,9 @@ export type CardPlaceView =
     }
   | { kind: 'threatArea' | 'engaged' | 'playArea'; investigator: InvestigatorId }
   | { kind: 'atLocation'; location: CardName }
-  | { kind: 'attachedTo'; card: CardName };
+  | { kind: 'attachedTo'; card: CardName }
+  /** Beneath a card, such as a location or the act. */
+  | { kind: 'beneath'; card: CardName };
 
 /** One enemy attack enemy step 3.3 lists: the enemy by printed name and the investigator it attacks. */
 export interface DueAttackView {
@@ -841,7 +847,8 @@ export class BoardView {
           location: nameOf(this.ctx, requireCard(this.state, zone.locationId)),
         };
       case 'attachedTo':
-        return { kind: 'attachedTo', card: nameOf(this.ctx, requireCard(this.state, zone.hostId)) };
+      case 'beneath':
+        return { kind: zone.kind, card: nameOf(this.ctx, requireCard(this.state, zone.hostId)) };
       case 'scenarioDeck':
       case 'outOfGame':
       case 'agendaDeck':
@@ -1226,6 +1233,9 @@ function locationView(ctx: EngineContext, state: GameState, location: CardInstan
   const { imageSrc, backImageSrc, actions, clues, encounterCode } = stats;
   const image = location.faceUp ? imageSrc : backImageSrc;
   const shownSymbol = printedSymbols(stats, location.faceUp ? 'revealed' : 'unrevealed').symbol;
+  const facedown = cardsInZone(state, { kind: 'beneath', hostId: location.id }).filter(
+    (id) => !requireCard(state, id).faceUp,
+  ).length;
   return {
     id: location.id,
     name: nameOf(ctx, location),
@@ -1250,6 +1260,7 @@ function locationView(ctx: EngineContext, state: GameState, location: CardInstan
     ),
     ...listIfAny('cards', namesIn(ctx, state, { kind: 'atLocation', locationId: location.id })),
     ...listIfAny('attachments', namesIn(ctx, state, { kind: 'attachedTo', hostId: location.id })),
+    ...(facedown > 0 ? { facedownBeneath: facedown } : {}),
     ...listIfAny(
       'forbidden',
       LOCATION_RESTRICTIONS.filter((cannot) => isRestricted(ctx, state, location, cannot)),
@@ -1325,6 +1336,7 @@ function actView(ctx: EngineContext, state: GameState): ActView | undefined {
     ...(stats.encounterCode === undefined ? {} : { encounterSet: stats.encounterCode }),
     clues: act.tokens.clue ?? 0,
     ...(advance === undefined ? {} : { advance }),
+    ...listIfAny('beneath', namesIn(ctx, state, { kind: 'beneath', hostId: act.id })),
   };
 }
 

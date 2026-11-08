@@ -5,6 +5,7 @@ The whole table is one serialisable value, [`GameState`](../../packages/engine/s
 - Every physical card is one `CardInstance` with a unique ID, its card code and exactly one [`Zone`](../../packages/engine/src/zone.ts), so moving a card anywhere is the same operation.
 - The state stores codes, not card data; rules look stats up in the `CardDb`.
 - Investigators are not card instances but seats with their own record.
+- A card beneath a location or the act is in the `beneath` zone of its host: out of play, face down until something flips it. `DrawBeneath` flips the facedown card beneath the investigator's location and spawns it like a drawn enemy (Smoke and Mirrors' suspects); the board view counts those under `facedownBeneath` and names the face-up ones beneath the act under `act.beneath`.
 
 Location connections come from the symbols the cards print, plus a graph on each [`GameMap`](../../packages/engine/src/map.ts) for those no card prints.
 
