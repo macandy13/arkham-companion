@@ -48,9 +48,13 @@ export {
   NOXIOUS_SMOKE_DECISION,
   SEARCHING_FOR_ARMITAGE_DECISION,
   SPREADING_FLAMES_CODES,
+  SPREADING_FLAMES_RESOLUTIONS,
+  STAY_OR_GO_DECISION,
   SPREADING_FLAMES_SETS,
   spreadingFlamesCardDefs,
   spreadingFlamesCards,
   WHERE_THERES_SMOKE_DECISION,
 } from './spreading_flames/cards';
 export { spreadingFlames } from './spreading_flames/scenario';
+export { spreadingFlamesResolutions } from './spreading_flames/resolutions';
+export { ASH_STORY } from './brethren_of_ash/story';

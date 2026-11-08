@@ -8,6 +8,7 @@ import {
   midnightMasksStartedExport,
   tangledThicketRevealedExport,
   rolandSurroundedExport,
+  rolandHurtExport,
   rolandThreatenedExport,
   houseOpenedExport,
   inTheParlorExport,
@@ -143,6 +144,16 @@ test('the house map in the card pictures style, the clues left on each card', as
   await expect(hallway.getByRole('img', { name: 'Clues 0' })).toBeVisible();
   await expect(page.locator('html')).toHaveAttribute('data-card-theme', 'pictures');
   await expect(page.locator('[data-card="scenario"]')).toHaveAttribute('data-picture', 'shown');
+});
+
+test('Roland Banks with 3 damage and 1 horror: 6 health and 4 sanity left, the pips taken greyed', async ({
+  page,
+}) => {
+  await resumeImportedGame(page, 'Roland hurt', rolandHurtExport('Roland hurt'));
+
+  const roland = page.getByRole('region', { name: 'Roland Banks' });
+  await expect(roland.getByRole('img', { name: '6/9' })).toBeVisible();
+  await expect(roland.getByRole('img', { name: '4/5' })).toBeVisible();
 });
 
 test('Roland Banks’ whole card in the card pictures style, his counters live on the printed card', async ({

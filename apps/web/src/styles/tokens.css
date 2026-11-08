@@ -562,15 +562,13 @@
   --investigator-art-button-top: 46;
   --investigator-art-button-width: 226;
   --investigator-art-button-height: 84;
-  /* The counters' tokens on the card and their count discs; the damage or horror token on the heart or brain and its disc. */
+  /* The counters' tokens on the card and their count discs. */
   --investigator-token-size: 28;
   --investigator-token-count-size: 15;
   --investigator-token-number-size: 11;
   --investigator-symbol-size: 36;
+  --investigator-symbol-cover: 1.2;
   --investigator-symbol-number-size: 24;
-  --investigator-count-size: 22;
-  --investigator-count-disc-size: 13;
-  --investigator-count-number-size: 9;
   /* The spiral and rules on the investigator card's notebook page, in scan units. */
   --face-spiral-width: 1.4px;
   --face-rules-width: 0.6px;
@@ -622,11 +620,12 @@
   --stat-token-size: 2.25rem;
   --stat-token-count-size: 1rem;
   /*
-   * Health's and sanity's printed symbol: the damage or horror token on its lower right, how far it
-   * reaches past the symbol's edge, and the dark edge that keeps the white maximum readable on the heart.
+   * Health's and sanity's printed symbol: its pips' width in the symbol drawing's units (so they
+   * scale with it), the colour of those taken, and the dark edge that keeps the white number
+   * readable on the heart.
    */
-  --stat-count-size: 1.5rem;
-  --stat-count-offset: -0.25rem;
+  --stat-pip-width: 2.5px;
+  --color-pip-taken: color-mix(in srgb, var(--color-face-ink) 35%, transparent);
   --stat-number-shadow: 0 0 2px var(--color-face-setting), 0 0 1px var(--color-face-setting);
   /* An empty header pile's symbol: a small card outline this tall. */
   --layout-pile-symbol-height: 2rem;
@@ -1062,7 +1061,6 @@
   #board:not([data-view='map'], [data-view='investigators']) {
     --stat-token-size: 1.75rem;
     --stat-token-count-size: 0.875rem;
-    --stat-count-size: 1.25rem;
   }
 }
 
