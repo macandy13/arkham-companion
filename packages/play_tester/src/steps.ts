@@ -157,7 +157,7 @@ export function actionCostOf(table: PlayTable, step: Step): number {
  * actions to the players; both are one step, so a refused action leaves the actions as they were.
  */
 export function playStep(table: PlayTable, step: Step): void {
-  if (step.verb === 'playerCard') table.step(() => playPlayerCard(table, step));
+  if (step.verb === 'playerCard') table.step(() => playVerb(table, step));
   else if (step.verb === 'useCardAction' || BASIC_ACTION_OF[step.verb] !== undefined)
     table.step(() => {
       countOffAction(table, step);

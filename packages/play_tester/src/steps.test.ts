@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   blankAgenda,
   blankEnemy,
+  blankTreachery,
   blankLocation,
   engagedWith,
   fixed,
@@ -165,6 +166,33 @@ describe('playing a step', () => {
 
     expect(table.board.investigator(alice).resources).toBe(3);
     expect(table.board.enemy(ghoul).damage).toBe(2);
+  });
+
+  it('evades an engaged enemy, heals what the card hurt and draws an encounter card', () => {
+    const topCard = instanceId('top_card');
+    const table = PlayTable.start(
+      game
+        .withCard(ghoul, blankEnemy('ghoul', { health: fixed(3) }), engagedWith(alice))
+        .withCard(topCard, blankTreachery('top_card'), { kind: 'encounterDeck' })
+        .withCard(instanceId('next_card'), blankTreachery('next_card'), { kind: 'encounterDeck' }),
+    );
+
+    playStep(table, {
+      verb: 'playerCard',
+      investigator: cardName('alice'),
+      card: cardName('a card'),
+      effects: [
+        { kind: 'evadeEnemy', enemy: ghoul },
+        { kind: 'hurt', damage: 2, horror: 0 },
+        { kind: 'heal', stat: 'damage', amount: 1 },
+        { kind: 'drawEncounterCard' },
+      ],
+    });
+
+    expect(table.board.enemy(ghoul).exhausted).toBe(true);
+    expect(table.board.enemy(ghoul).engagedWith).toBeUndefined();
+    expect(table.board.investigator(alice).damage).toBe(1);
+    expect(table.board.encounter.deckCount).toBe(1);
   });
 
   it('takes no action for a player card, as its play action is a step of its own', () => {

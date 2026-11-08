@@ -10,6 +10,7 @@ import {
   nextU32,
   PlayTable,
   seedRng,
+  shuffle,
   type CardName,
   type Difficulty,
   type InvestigatorCard,
@@ -199,6 +200,13 @@ export class SeededRandom {
     const [value, next] = nextInt(this.state, bound);
     this.state = next;
     return value;
+  }
+
+  /** `items` in a random order, by the engine's own seeded shuffle. */
+  shuffle<T>(items: readonly T[]): T[] {
+    const [shuffled, next] = shuffle(items, this.state);
+    this.state = next;
+    return shuffled;
   }
 
   /** A whole number from `low` to `high`, both included. */

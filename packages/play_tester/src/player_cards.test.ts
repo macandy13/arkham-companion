@@ -34,10 +34,14 @@ describe('a deck for the deck bot', () => {
 
 describe('a player card by name', () => {
   it('is the hand-entered card', () => {
-    expect(playerCard('Machete')).toMatchObject({ type: 'asset', class: 'guardian', cost: 3 });
+    expect(playerCard(cardName('Machete'))).toMatchObject({
+      type: 'asset',
+      class: 'guardian',
+      cost: 3,
+    });
   });
 
   it('fails for a card the deck bot does not know', () => {
-    expect(() => playerCard('Necronomicon')).toThrow('knows no player card');
+    expect(() => playerCard(cardName('Necronomicon'))).toThrow('knows no player card');
   });
 });

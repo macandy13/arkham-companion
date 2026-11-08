@@ -1,7 +1,7 @@
 import { cardCode, cardName, type CardCode, type CardName, type SkillName } from '@arkham/engine';
 import type { SeededRandom } from './run';
 
-/** A player card class; a card of no class is `neutral`. */
+/** A player card class. A signature card has none: it goes only to its investigator (`only`). */
 export type PlayerClass = 'guardian' | 'seeker' | 'rogue' | 'mystic' | 'survivor' | 'neutral';
 
 /**
@@ -32,7 +32,10 @@ export type CardUse =
   | { readonly kind: 'lasting'; readonly skill: SkillName }
   /** Discovers `amount` clues at the location; may first draw an encounter card. */
   | { readonly kind: 'clues'; readonly amount: number; readonly drawsEncounterCard?: boolean }
-  /** Deals `amount` damage to an enemy at the location, and `hurtsSelf` to the investigator. */
+  /**
+   * Deals `amount` damage to an enemy at the location, and `hurtsSelf` to the investigator: a card
+   * that hits everyone at a location the player picks (Dynamite Blast) is always aimed at the bot's own.
+   */
   | { readonly kind: 'damage'; readonly amount: number; readonly hurtsSelf?: number }
   /** Evades an enemy engaged with the investigator, dealing it `damage`. */
   | { readonly kind: 'evade'; readonly damage?: number }
@@ -540,7 +543,7 @@ export const PLAYER_CARDS: readonly PlayerCard[] = [
     type: 'event',
     class: 'survivor',
     cost: 5,
-    icons: { willpower: 1, wild: 1 },
+    icons: { intellect: 1, wild: 1 },
     use: { kind: 'evade' },
   },
   {
@@ -568,7 +571,7 @@ export const PLAYER_CARDS: readonly PlayerCard[] = [
     name: cardName('Survival Instinct'),
     type: 'skill',
     class: 'survivor',
-    icons: { agility: 1 },
+    icons: { agility: 2 },
     use: { kind: 'commit' },
   },
   {
@@ -641,18 +644,18 @@ export const PLAYER_CARDS: readonly PlayerCard[] = [
 ];
 
 /** The card named `name` in `PLAYER_CARDS`; fails for a card the deck bot doesn't know. */
-export function playerCard(name: string): PlayerCard {
+export function playerCard(name: CardName): PlayerCard {
   const card = PLAYER_CARDS.find((known) => known.name === name);
   if (!card) throw new Error(`the deck bot knows no player card ${name}`);
   return card;
 }
 
 /** The classes each real investigator takes cards from (level 0 only); a blank one takes `neutral`. */
-const CLASSES: Readonly<Record<string, readonly PlayerClass[]>> = {
-  'Roland Banks': ['guardian', 'seeker', 'neutral'],
-  'Daisy Walker': ['seeker', 'mystic', 'neutral'],
-  'Wendy Adams': ['survivor', 'rogue', 'neutral'],
-};
+const CLASSES: ReadonlyMap<CardName, readonly PlayerClass[]> = new Map([
+  [cardName('Roland Banks'), ['guardian', 'seeker', 'neutral']],
+  [cardName('Daisy Walker'), ['seeker', 'mystic', 'neutral']],
+  [cardName('Wendy Adams'), ['survivor', 'rogue', 'neutral']],
+]);
 
 /** The cards in a deck, as at the table (Rules Reference, "Deckbuilding"). */
 const DECK_SIZE = 30;
@@ -662,20 +665,10 @@ const DECK_SIZE = 30;
  * copies of each card of their classes (all there are when fewer).
  */
 export function deckFor(investigator: CardName, random: SeededRandom): PlayerCard[] {
-  const classes = CLASSES[investigator] ?? ['neutral'];
+  const classes = CLASSES.get(investigator) ?? ['neutral'];
   const signature = PLAYER_CARDS.filter(({ only }) => only === investigator);
   const pool = PLAYER_CARDS.filter((card) => card.class && classes.includes(card.class)).flatMap(
     (card) => [card, card],
   );
-  return shuffled([...signature, ...shuffled(pool, random).slice(0, DECK_SIZE)], random);
-}
-
-/** `items` in a random order (Fisher–Yates). */
-export function shuffled<T>(items: readonly T[], random: SeededRandom): T[] {
-  const result = [...items];
-  for (let i = result.length - 1; i > 0; i--) {
-    const j = random.below(i + 1);
-    [result[i], result[j]] = [result[j]!, result[i]!];
-  }
-  return result;
+  return random.shuffle([...signature, ...random.shuffle(pool).slice(0, DECK_SIZE)]);
 }
