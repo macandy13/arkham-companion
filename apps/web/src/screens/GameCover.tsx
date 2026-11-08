@@ -75,10 +75,15 @@ export function GameCover({
         <CoverMenu
           title={title}
           actions={[
-            { label: t('games.rename'), onSelect: () => setRenaming(true) },
-            { label: t('games.duplicate'), onSelect: onDuplicate },
-            { label: t('games.export'), onSelect: onExport },
-            { label: t('games.delete'), onSelect: () => setConfirmingDelete(true) },
+            { label: t('games.rename'), icon: 'rename', onSelect: () => setRenaming(true) },
+            { label: t('games.duplicate'), icon: 'duplicate', onSelect: onDuplicate },
+            { label: t('games.export'), icon: 'export', onSelect: onExport },
+            {
+              label: t('games.delete'),
+              icon: 'delete',
+              danger: true,
+              onSelect: () => setConfirmingDelete(true),
+            },
           ]}
         />
       </footer>

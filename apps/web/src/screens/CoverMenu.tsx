@@ -1,15 +1,22 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+/** The line icons a cover's menu entries take (base.css draws each). */
+export type CoverActionIcon = 'campaign-log' | 'rename' | 'duplicate' | 'export' | 'delete';
+
 /** One entry of a cover's ⋮ menu. */
 export interface CoverAction {
   readonly label: string;
+  readonly icon: CoverActionIcon;
+  /** Removes something, so the entry is red. */
+  readonly danger?: true;
   readonly onSelect: () => void;
 }
 
 /**
  * A cover's ⋮ menu at the end of its foot (MD.3b): a round icon button that opens its actions
- * under it, drawn by base.css's menu rule. Choosing an action closes it again.
+ * under it, drawn by base.css's menu rule, each with its line icon and Delete in red. Choosing an
+ * action closes it again.
  */
 export function CoverMenu({
   title,
@@ -32,10 +39,12 @@ export function CoverMenu({
       />
       {expanded && (
         <ul>
-          {actions.map(({ label, onSelect }) => (
+          {actions.map(({ label, icon, danger, onSelect }) => (
             <li key={label}>
               <button
                 type="button"
+                data-icon={icon}
+                data-danger={danger}
                 onClick={() => {
                   setExpanded(false);
                   onSelect();

@@ -21,7 +21,11 @@ export function GameExportButton({ store }: { store: StoreApi<AppState> }) {
   const index = games.findIndex((game) => game.gameId === open.gameId);
   const title = games[index]?.title || untitledLabel(t, games, index);
   return (
-    <button type="button" onClick={() => void downloadGameExport(store, open.gameId, title)}>
+    <button
+      type="button"
+      data-icon="export"
+      onClick={() => void downloadGameExport(store, open.gameId, title)}
+    >
       {t('games.export')}
     </button>
   );

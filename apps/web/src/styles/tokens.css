@@ -13,6 +13,24 @@
   --color-text-muted: #b5ab95;
   --color-accent: #c9a45c;
   --color-accent-text: #1b1408;
+  /*
+   * The table's own colours, captured here where no paper has redefined the colour tokens, so a
+   * menu opened over paper takes them back (MD.5a). `var()` resolves on the root element, by night
+   * or by day, and the captured values are inherited as they are.
+   */
+  --table-background: var(--color-background);
+  --table-text: var(--color-text);
+  --table-text-muted: var(--color-text-muted);
+  --table-border: var(--color-border);
+  --table-surface: var(--color-surface);
+  --table-accent: var(--color-accent);
+  --table-accent-text: var(--color-accent-text);
+  /* A menu's panel: a raised piece of the table, a row under the pointer, a destructive entry. */
+  --color-menu: #14241f;
+  --color-menu-hover: rgb(201 164 92 / 16%);
+  --color-menu-danger: #e0645a;
+  --menu-shadow: 0 var(--space-2) var(--space-4) rgb(0 0 0 / 45%);
+  --menu-min-width: 15rem;
   /* Behind an open dialog. */
   --color-scrim: rgb(3 8 7 / 78%);
   /* The play screen's header row darkens the playmat towards the top of the screen. */
@@ -936,6 +954,10 @@
   --color-health: #a8413b;
   --color-sanity: #3d63a0;
   --color-scrim: rgb(40 30 15 / 45%);
+  --color-menu: #f3ead3;
+  --color-menu-hover: rgb(138 106 44 / 14%);
+  --color-menu-danger: #a8413b;
+  --menu-shadow: 0 var(--space-2) var(--space-4) rgb(40 30 15 / 30%);
   --playmat: url('./playmat_light.svg');
   --panel-frame: url('./panel_frame_light.svg');
   /*

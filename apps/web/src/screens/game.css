@@ -781,22 +781,10 @@
 
 /*
  * The menu's copies of "Adjust board" and the game log are for a phone, whose status row leaves
- * them out; there they read as the menu's other entries, the icon before the name.
+ * them out; there they read as the menu's other entries (base.css).
  */
-#status nav li:has(> button[data-icon]) {
+#status nav li:has(> button:is([data-icon='adjust'], [data-icon='log'])) {
   display: none;
-}
-
-#status nav li > button[data-icon] {
-  justify-content: flex-start;
-  gap: var(--space-2);
-  width: 100%;
-  padding-inline: var(--space-3);
-  border-radius: var(--radius);
-}
-
-#status nav li > button[data-icon]::before {
-  margin: 0;
 }
 
 /*
@@ -1011,7 +999,7 @@
     display: none;
   }
 
-  #status nav li:has(> button[data-icon]) {
+  #status nav li:has(> button:is([data-icon='adjust'], [data-icon='log'])) {
     display: list-item;
   }
 

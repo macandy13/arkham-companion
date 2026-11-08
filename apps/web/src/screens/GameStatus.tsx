@@ -6,6 +6,8 @@ import { ROUND_PHASES, type BoardView } from '@arkham/engine';
 import type { AppState, OpenGame } from '../state/appStore';
 import { GameLogDialog } from '../log/GameLogDialog';
 import { GameExportButton } from './GameExportButton';
+import { THEMES } from '../settings/settings';
+import { useSettings } from '../settings/useSettings';
 
 /**
  * The play screen's status row under the header, as in the prototype: the round as its heading,
@@ -95,7 +97,10 @@ export function GameStatus({
           onClose={() => setLogOpen(false)}
         />
       )}
-      <GameMenu store={store}>
+      <GameMenu
+        store={store}
+        heading={open.scenarioNameKey ? t(open.scenarioNameKey) : t('header.thisGame')}
+      >
         {(close) => (
           <>
             <li>
@@ -174,16 +179,20 @@ function LogButton({ onOpen, inMenu = false }: { onOpen: () => void; inMenu?: bo
 }
 
 /**
- * The play screen's menu behind a round icon button: the way back to the game list, the game's
- * export and the settings, which the title bar holds on the other screens. The play screen leaves
- * the title bar out, so the table keeps its height. `children` adds the status row's own buttons
- * a phone moves into it, given the way to close the menu as they act.
+ * The play screen's menu behind a round icon button (MD.5a): the game's own entries under the
+ * scenario's name (the status row's buttons a phone moves into it, given by `children` with the
+ * way to close the menu as they act, and the game's export), the table by night or by day, then
+ * the way back to the game list and the settings, which the title bar holds on the other screens.
+ * The play screen leaves the title bar out, so the table keeps its height.
  */
 function GameMenu({
   store,
+  heading,
   children,
 }: {
   store: StoreApi<AppState>;
+  /** Heads the game's own entries: the scenario's name, or "This game" without one. */
+  heading: string;
   children: (close: () => void) => ReactNode;
 }) {
   const { t } = useTranslation();
@@ -198,19 +207,58 @@ function GameMenu({
         onClick={() => setExpanded(!expanded)}
       />
       {expanded && (
-        <ul>
-          {children(() => setExpanded(false))}
-          <li>
-            <NavLink to="/">{t('header.allGames')}</NavLink>
-          </li>
-          <li>
-            <GameExportButton store={store} />
-          </li>
-          <li>
-            <NavLink to="/settings">{t('settings.title')}</NavLink>
-          </li>
-        </ul>
+        <div>
+          <section aria-labelledby="game-menu-game">
+            <h3 id="game-menu-game">{heading}</h3>
+            <ul>
+              {children(() => setExpanded(false))}
+              <li>
+                <GameExportButton store={store} />
+              </li>
+            </ul>
+          </section>
+          <hr />
+          <TableMenuSection />
+          <hr />
+          <ul>
+            <li>
+              <NavLink to="/" data-icon="games">
+                {t('header.allGames')}
+              </NavLink>
+            </li>
+            <li>
+              <NavLink to="/settings" data-icon="settings">
+                {t('settings.title')}
+              </NavLink>
+            </li>
+          </ul>
+        </div>
       )}
     </nav>
+  );
+}
+
+/** The table by night or by day, as in Settings, so the players change it without leaving play. */
+function TableMenuSection() {
+  const { t } = useTranslation();
+  const [settings, update] = useSettings();
+  return (
+    <section aria-labelledby="game-menu-table">
+      <h3 id="game-menu-table">{t('settings.table')}</h3>
+      <ul>
+        {THEMES.map((theme) => (
+          <li key={theme}>
+            <button
+              type="button"
+              data-icon={theme === 'dark' ? 'night' : 'day'}
+              aria-pressed={settings.theme === theme}
+              onClick={() => update({ theme })}
+            >
+              {t(`settings.themes.${theme}`)}
+            </button>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }

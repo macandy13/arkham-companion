@@ -58,16 +58,3 @@
 #app > header > nav > button::before {
   mask-image: url('./icons/more.svg');
 }
-
-#app > header > nav li > a {
-  justify-content: flex-start;
-  width: 100%;
-  padding-inline: var(--space-3);
-  border-radius: var(--radius);
-  color: var(--color-text);
-  text-decoration: none;
-}
-
-#app > header > nav li > a[aria-current='page'] {
-  color: var(--color-accent);
-}
