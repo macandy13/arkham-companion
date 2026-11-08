@@ -3,6 +3,7 @@ import {
   cluesToShareExport,
   doomBesideDamageExport,
   ghoulPriestInCellarExport,
+  graspingHandsDrawnExport,
   graveyardTestExport,
   midnightMasksStartedExport,
   tangledThicketRevealedExport,
@@ -321,6 +322,28 @@ test('Roland Banks’ willpower test before a token is drawn, the draw button in
   await expect(test.getByRole('button', { name: 'Draw a token' })).toBeVisible();
 });
 
+test(
+  'Roland Banks’ willpower test with the group’s own chaos bag, no draw button',
+  { tag: '@shot' },
+  async ({ page }) => {
+    await page.goto('/#/settings');
+    await page
+      .getByRole('group', { name: 'Who draws the tokens' })
+      .getByRole('radio', { name: 'Our own bag' })
+      .check();
+    await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
+
+    await page
+      .getByRole('region', { name: 'Roland Banks' })
+      .getByRole('button', { name: /^Willpower/ })
+      .click();
+    const test = page.getByRole('dialog', { name: /^Skill test/ });
+
+    await expect(test.getByRole('region', { name: 'Result' })).toBeVisible();
+    await expect(test.getByRole('button', { name: 'Draw a token' })).toBeHidden();
+  },
+);
+
 test('Roland Banks’ willpower and agility test, the tablet drawn with its −2 under it', async ({
   page,
 }) => {
@@ -637,6 +660,22 @@ test('who pays the 4 clues to advance Trapped, Daisy Walker 3 and Roland Banks 1
   await expect(dialog.getByText(/^4 of 4 clues chosen/)).toBeVisible();
   await expect(dialog.getByRole('button', { name: 'Pay', exact: true })).toBeEnabled();
 });
+
+test(
+  'Grasping Hands failed by 2 with no token drawn in the app, its margin of failure on the Failed row',
+  { tag: '@shot' },
+  async ({ page }) => {
+    await resumeImportedGame(page, 'Grasping Hands', graspingHandsDrawnExport('Grasping Hands'));
+    const decision = page.getByRole('dialog', { name: 'Test for Grasping Hands' });
+
+    await decision.getByRole('button', { name: 'Failed' }).click();
+    await decision.getByRole('button', { name: 'Raise the Margin of failure' }).click();
+
+    await expect(
+      decision.getByRole('region', { name: 'Margin of failure' }).locator('data'),
+    ).toHaveText('2');
+  },
+);
 
 test('the Graveyard’s failed willpower test, its choice under the Failed row', async ({ page }) => {
   await resumeImportedGame(page, 'In the Graveyard', graveyardTestExport('In the Graveyard'));

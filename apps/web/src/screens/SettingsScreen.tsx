@@ -6,6 +6,7 @@ import { campaignCatalog } from '../scenarios/scenarioCatalog';
 import {
   CARD_LANGUAGES,
   CARD_THEMES,
+  CHAOS_DRAWS,
   ENEMY_TOKEN_FACES,
   TABLE_SKINS,
   TOKEN_SETS,
@@ -26,8 +27,8 @@ interface SettingsScreenProps {
  * Route `/settings` (MD.3c), written like a form of the campaign guide: one row per subject, its
  * label in a column of spaced capitals and its fields as written lines. The collection is one line
  * that opens its own page (`CollectionScreen`); the table is picked by its playmat, the token set
- * by a row of its tokens. Every
- * change is saved at once (`useSettings`). It ends with the notice that the app is an unofficial
+ * by a row of its tokens, and who draws the chaos tokens is a segmented choice. Every change is
+ * saved at once (`useSettings`). It ends with the notice that the app is an unofficial
  * fan project, with the publisher's copyright credit, which the fan content policy requires for
  * using the game's names; card art is never bundled, only fetched from ArkhamDB on the device.
  */
@@ -124,6 +125,23 @@ export function SettingsScreen({ packs = [] }: SettingsScreenProps) {
               </label>
             ))}
           </fieldset>
+        </section>
+        <section aria-labelledby="settings-chaos-bag">
+          <h2 id="settings-chaos-bag">{t('settings.chaosBag')}</h2>
+          <fieldset aria-label={t('settings.chaosDraw')} data-segmented>
+            {CHAOS_DRAWS.map((chaosDraw) => (
+              <label key={chaosDraw}>
+                <input
+                  type="radio"
+                  name="chaosDraw"
+                  checked={settings.chaosDraw === chaosDraw}
+                  onChange={() => update({ chaosDraw })}
+                />
+                {t(`settings.chaosDraws.${chaosDraw}`)}
+              </label>
+            ))}
+          </fieldset>
+          <p>{t('settings.chaosDrawNote')}</p>
         </section>
         <section aria-labelledby="settings-cards">
           <h2 id="settings-cards">{t('settings.cards')}</h2>

@@ -628,6 +628,11 @@ export const appTexts = {
       parchment: 'Pergament',
     },
     tokens: 'Marker',
+    chaosBag: 'Chaosbeutel',
+    chaosDraw: 'Wer zieht die Marker',
+    chaosDraws: { app: 'Die App', table: 'Unser eigener Beutel' },
+    chaosDrawNote:
+      'Mit eurem eigenen Beutel zeigt die Fertigkeitsprobe keinen Ziehen-Knopf, nur euren Wert für den Marker, den ihr zieht.',
     tokenSet: 'Markerset',
     tokenSets: { resin: 'Harzkuppel', cardboard: 'Pappe' },
     cardTheme: 'Kartenstil',
@@ -707,6 +712,7 @@ export const appTexts = {
     doesNotProvoke: 'Provoziert keinen Angriff',
     attackCancelled: 'Der Angriff wird verhindert',
     count: {
+      failedBy: 'Misslungen um',
       clues: 'Entdeckte Hinweise',
       dealt: 'Zugefügter Schaden',
       amount: 'Anzahl',

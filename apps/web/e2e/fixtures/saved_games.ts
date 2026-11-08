@@ -231,6 +231,25 @@ export function beforeFourthMythosExport(title: string): Buffer {
 }
 
 /**
+ * Like `houseOpenedExport`, but Roland Banks draws Grasping Hands, moved by hand to the top of the
+ * encounter deck: its agility (3) test, 1 damage for each point he fails it by, waits for its result.
+ */
+export function graspingHandsDrawnExport(title: string): Buffer {
+  const table = houseOpened(theGathering);
+  table.play({
+    type: 'ManualAdjust',
+    adjustment: {
+      kind: 'moveCard',
+      cardId: cardIn(table, cardCode('01162')),
+      to: { kind: 'encounterDeck' },
+      index: 0,
+    },
+  });
+  table.drawEncounterCard(rolandId);
+  return exportOf(title, table, 'grasping_hands_drawn');
+}
+
+/**
  * Like `houseOpenedExport`, but with every header pile holding cards, all moved by hand to keep the
  * script short: seven encounter cards lie on the discard pile, and the Ghoul Priest (2
  * victory) has left the set-aside cards for the victory display, so the header fans each pile.

@@ -624,6 +624,11 @@ export const appTexts = {
       parchment: 'Parchment',
     },
     tokens: 'Tokens',
+    chaosBag: 'Chaos bag',
+    chaosDraw: 'Who draws the tokens',
+    chaosDraws: { app: 'The app', table: 'Our own bag' },
+    chaosDrawNote:
+      'With your own bag the skill test shows no Draw button, only your total to hold against the token you draw.',
     tokenSet: 'Token set',
     tokenSets: { resin: 'Resin dome', cardboard: 'Cardboard' },
     cardTheme: 'Card style',
@@ -703,6 +708,7 @@ export const appTexts = {
     doesNotProvoke: 'Does not provoke',
     attackCancelled: 'The attack is cancelled',
     count: {
+      failedBy: 'Margin of failure',
       clues: 'Clues discovered',
       dealt: 'Damage dealt',
       amount: 'Count',

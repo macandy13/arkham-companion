@@ -114,6 +114,10 @@ export function DecisionPage({
   const run = useSkillTest(board, tested, test);
   const suggested = run?.finished ? run.result : undefined;
   const [counts, setCounts] = useState(() => defaultCounts(decision.counts));
+  // A per-point fail needs its margin; without a draw in the app (the group's own bag, or a draw
+  // that says pass) the players give it, from the engine's own default of 1.
+  const asksFailedBy = decision.perPointFailed !== undefined && suggested?.outcome !== 'fail';
+  const [failedBy, setFailedBy] = useState(1);
   const [chosen, setPicked] = useState<string>();
   const picked = chosen ?? pickedFirst(decision, suggested?.outcome);
   const [nextPicks, setNextPicks] = useState<Record<string, string>>({});
@@ -135,6 +139,7 @@ export function DecisionPage({
       {
         ...countsOf(counts[option]),
         ...(option === suggested?.outcome ? { margin: suggested.margin } : {}),
+        ...(option === 'fail' && asksFailedBy ? { margin: failedBy } : {}),
       },
       ...(next === undefined ? [] : [{ option: next, counts: countsOf(nextCounts[next]) }]),
     );
@@ -171,7 +176,11 @@ export function DecisionPage({
           {/* Two options can share a name (two enemies of one card), so the position is the key. */}
           {decision.options.map((option, index) => {
             const followUp = decision.followUps?.[option];
-            const withCounts = decision.counts?.[option] !== undefined || followUp !== undefined;
+            const fromTheGame = decision.counts?.[option] !== undefined || followUp !== undefined;
+            // The margin is part of the fail's answer, so its row is picked, then Done, like a
+            // row with counts; no max, since the dialog doesn't know the test's modified difficulty.
+            const failedByHere = option === 'fail' && asksFailedBy;
+            const withCounts = fromTheGame || failedByHere;
             return (
               <li key={index}>
                 <button
@@ -184,7 +193,19 @@ export function DecisionPage({
                   <span aria-hidden="true">{optionKey(option, index)}</span>
                   <span>{t(decision.labels?.[option] ?? option, { defaultValue: option })}</span>
                 </button>
-                {withCounts && <p>{t('decision.fromTheGame')}</p>}
+                {fromTheGame && <p>{t('decision.fromTheGame')}</p>}
+                {failedByHere && (
+                  <Stepper
+                    label={t('decision.count.failedBy')}
+                    value={failedBy}
+                    shown={String(failedBy)}
+                    min={0}
+                    onChange={(changed) => {
+                      setFailedBy(changed);
+                      setPicked(option);
+                    }}
+                  />
+                )}
                 <CountSteppers
                   choice={decision}
                   action={decision.action}
@@ -260,11 +281,11 @@ function actorOf(board: BoardView, decision: DecisionView) {
  * option without counts is never picked for them, since a tap on it answers at once.
  */
 function pickedFirst(decision: DecisionView, suggested: string | undefined): string | undefined {
-  const withCounts = (option: string) =>
+  const fromTheGame = (option: string) =>
     decision.counts?.[option] !== undefined || decision.followUps?.[option] !== undefined;
   if (decision.test)
-    return suggested !== undefined && withCounts(suggested) ? suggested : undefined;
-  return decision.options.find(withCounts);
+    return suggested !== undefined && fromTheGame(suggested) ? suggested : undefined;
+  return decision.options.find(fromTheGame);
 }
 
 /** The key of an option's row, like the guide's: ✓ for a pass, ✗ for a fail, else its number. */

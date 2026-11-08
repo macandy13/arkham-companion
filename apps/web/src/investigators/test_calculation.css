@@ -137,6 +137,16 @@
   gap: var(--space-2);
 }
 
+/* With their own bag (Settings, `chaosDraw`) the players draw at the table, so the app offers no draw. */
+:root[data-chaos-draw='table']
+  #board
+  dialog[data-shell]
+  section[data-part='strip']
+  > figure
+  > button {
+  display: none;
+}
+
 /* A token with the effect of its symbol under it. */
 #board dialog[data-shell] section[data-part='strip'] > figure > ol > li {
   display: grid;
