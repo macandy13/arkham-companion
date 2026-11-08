@@ -5,6 +5,7 @@ import type { CardDef } from '@arkham/carddata';
 import { CACHE_DIR } from '@arkham/carddata/src/fetch';
 import type { CardStats, ScaledValue } from '@arkham/engine';
 import { describe, expect, it } from 'vitest';
+import { smokeAndMirrorsCardDefs } from './smoke_and_mirrors/cards';
 import { spreadingFlamesCardDefs } from './spreading_flames/cards';
 import { theDevourerBelowCardDefs } from './the_devourer_below/cards';
 import { theGatheringCardDefs } from './the_gathering/cards';
@@ -129,7 +130,11 @@ describe.each<{ campaign: string; pack: CheckedPack; cards: readonly CardStats[]
     pack: 'core',
     cards: [...theGatheringCardDefs, ...theMidnightMasksCardDefs, ...theDevourerBelowCardDefs],
   },
-  { campaign: 'Brethren of Ash', pack: 'core_2026', cards: spreadingFlamesCardDefs },
+  {
+    campaign: 'Brethren of Ash',
+    pack: 'core_2026',
+    cards: [...spreadingFlamesCardDefs, ...smokeAndMirrorsCardDefs],
+  },
 ])('the hand-entered $campaign cards', ({ pack, cards }) => {
   const fetched = cachedPack(pack);
 
