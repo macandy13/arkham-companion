@@ -370,16 +370,17 @@
    */
   --test-skill-icon-size: 1.625rem;
   /*
-   * A chaos token (`ChaosTokenFace`, MD.8c): its size where nothing else sets it, its numbers'
-   * size as a share of it (larger in the cardboard set, whose disc has no star frame), the symbol's
-   * share, and the ivory ink with a shadow that keeps it readable on the resin colours.
+   * A chaos token (`ChaosTokenFace`, MD.8c): its size where nothing else sets it, its numbers' and
+   * symbol's size as a share of it per set (each kept inside the resin star's diamond or the
+   * cardboard's black disc), and the ivory ink with a shadow that keeps it readable on the resin.
    */
   --chaos-token-size: 2rem;
   --chaos-bag-token-size: 2.5rem;
-  --chaos-resin-numeral-share: 0.4;
-  --chaos-cardboard-numeral-share: 0.42;
+  --chaos-resin-numeral-share: 0.32;
+  --chaos-cardboard-numeral-share: 0.34;
   --chaos-numeral-spacing: -0.04em;
-  --chaos-symbol-share: 58%;
+  --chaos-resin-symbol-share: 58%;
+  --chaos-cardboard-symbol-share: 48%;
   --color-chaos-ink: #f4efe2;
   --chaos-numeral-shadow: 0 1px 1px rgb(0 0 0 / 60%);
   --test-token-size: 3.25rem;

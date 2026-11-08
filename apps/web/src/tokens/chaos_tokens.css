@@ -15,6 +15,7 @@
   --chaos-face-curse: url('./resin/chaos_curse.svg');
   --chaos-face-frost: url('./resin/chaos_frost.svg');
   --chaos-numeral-share: var(--chaos-resin-numeral-share);
+  --chaos-symbol-share: var(--chaos-resin-symbol-share);
 }
 
 /* Cardboard: every token the same black disc, as in the box. */
@@ -30,11 +31,13 @@
   --chaos-face-curse: var(--chaos-face-number);
   --chaos-face-frost: var(--chaos-face-number);
   --chaos-numeral-share: var(--chaos-cardboard-numeral-share);
+  --chaos-symbol-share: var(--chaos-cardboard-symbol-share);
 }
 
 [data-chaos-face] {
   --chaos-face: var(--chaos-face-number);
 
+  position: relative;
   display: inline-grid;
   place-items: center;
   box-sizing: border-box;
@@ -48,6 +51,8 @@
   font-variant-numeric: lining-nums tabular-nums;
   letter-spacing: var(--chaos-numeral-spacing);
   line-height: 1;
+  /* Centres the figures' cap height, not their em box, on the face. */
+  text-box: trim-both cap alphabetic;
   text-shadow: var(--chaos-numeral-shadow);
 }
 
@@ -77,9 +82,13 @@
     [data-chaos-face='curse'],
     [data-chaos-face='frost']
   )::before {
-  content: '';
+  /* Out of the flow, so the hidden name's empty line does not push the symbol off centre. */
+  position: absolute;
+  inset: 0;
   width: var(--chaos-symbol-share);
-  aspect-ratio: 1;
+  height: var(--chaos-symbol-share);
+  margin: auto;
+  content: '';
   background: currentcolor;
   mask: var(--chaos-symbol) center / contain no-repeat;
 }
