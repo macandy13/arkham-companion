@@ -324,27 +324,25 @@ test('Roland Banks’ willpower test before a token is drawn, the draw button in
   await expect(test.getByRole('button', { name: 'Draw a token' })).toBeVisible();
 });
 
-test(
-  'Roland Banks’ willpower test with the group’s own chaos bag, no draw button',
-  { tag: '@shot' },
-  async ({ page }) => {
-    await page.goto('/#/settings');
-    await page
-      .getByRole('group', { name: 'Who draws the tokens' })
-      .getByRole('radio', { name: 'Our own bag' })
-      .check();
-    await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
+test('Roland Banks’ willpower test with the group’s own chaos bag, no draw button', async ({
+  page,
+}) => {
+  await page.goto('/#/settings');
+  await page
+    .getByRole('group', { name: 'Who draws the tokens' })
+    .getByRole('radio', { name: 'Our own bag' })
+    .check();
+  await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
 
-    await page
-      .getByRole('region', { name: 'Roland Banks' })
-      .getByRole('button', { name: /^Willpower/ })
-      .click();
-    const test = page.getByRole('dialog', { name: /^Skill test/ });
+  await page
+    .getByRole('region', { name: 'Roland Banks' })
+    .getByRole('button', { name: /^Willpower/ })
+    .click();
+  const test = page.getByRole('dialog', { name: /^Skill test/ });
 
-    await expect(test.getByRole('region', { name: 'Result' })).toBeVisible();
-    await expect(test.getByRole('button', { name: 'Draw a token' })).toBeHidden();
-  },
-);
+  await expect(test.getByRole('region', { name: 'Result' })).toBeVisible();
+  await expect(test.getByRole('button', { name: 'Draw a token' })).toBeHidden();
+});
 
 test('Roland Banks’ willpower and agility test, the tablet drawn with its −2 under it', async ({
   page,

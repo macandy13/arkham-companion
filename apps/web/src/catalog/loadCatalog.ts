@@ -1,16 +1,17 @@
-import { CATALOG_FORMAT, fetchCatalog, type CardCatalog, type FetchFn } from '@arkham/carddata';
+import {
+  arkhamDbHost,
+  CATALOG_FORMAT,
+  fetchCatalog,
+  type CardCatalog,
+  type CardLanguage,
+  type FetchFn,
+} from '@arkham/carddata';
 
 /** The slice of `IndexedDbStore` the catalog loader needs; keeps the loader testable. */
 export interface CatalogCache {
   getCatalog(lang: string): Promise<CardCatalog | undefined>;
   putCatalog(lang: string, catalog: CardCatalog): Promise<void>;
 }
-
-/** ArkhamDB hosts per UI language (architecture "Card data"). */
-const HOSTS: Record<string, string> = {
-  en: 'https://arkhamdb.com',
-  de: 'https://de.arkhamdb.com',
-};
 
 /**
  * Returns the investigator catalog, refreshing the IndexedDB cache with `If-Modified-Since`.
@@ -19,14 +20,14 @@ const HOSTS: Record<string, string> = {
  */
 export async function loadCatalog(
   cache: CatalogCache,
-  lang: string,
+  lang: CardLanguage,
   fetchFn: FetchFn = (url, init) => fetch(url, init),
 ): Promise<CardCatalog> {
   const cached = await cache.getCatalog(lang);
   try {
     // A catalog cached in an older shape lacks data the app now reads, so it is fetched in full once.
     const since = cached?.format === CATALOG_FORMAT ? cached.lastModified : undefined;
-    const result = await fetchCatalog(HOSTS[lang] ?? HOSTS.en!, fetchFn, since);
+    const result = await fetchCatalog(arkhamDbHost(lang), fetchFn, since);
     if (result.status === 'ok') {
       await cache.putCatalog(lang, result.catalog);
       return result.catalog;

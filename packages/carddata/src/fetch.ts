@@ -2,14 +2,8 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
+import { arkhamDbHost, CARD_LANGUAGES, isCardLanguage, type CardLanguage } from './languages';
 import { normalisePack } from './schema';
-
-export type Lang = 'en' | 'de';
-
-export const HOSTS: Record<Lang, string> = {
-  en: 'https://arkhamdb.com',
-  de: 'https://de.arkhamdb.com',
-};
 
 /**
  * The packs `pnpm carddata:fetch` loads without arguments: the Chapter One core set first,
@@ -18,13 +12,17 @@ export const HOSTS: Record<Lang, string> = {
  */
 export const DEFAULT_PACKS = ['core', 'core_2026', 'cob'];
 
-export function packUrl(lang: Lang, pack: string): string {
-  return `${HOSTS[lang]}/api/public/cards/${pack}.json?encounter=1`;
+export function packUrl(lang: CardLanguage, pack: string): string {
+  return `${arkhamDbHost(lang)}/api/public/cards/${pack}.json?encounter=1`;
 }
 
 export const CACHE_DIR = join(dirname(fileURLToPath(import.meta.url)), '..', '.cache');
 
-export async function fetchPack(lang: Lang, pack: string, outDir = CACHE_DIR): Promise<string> {
+export async function fetchPack(
+  lang: CardLanguage,
+  pack: string,
+  outDir = CACHE_DIR,
+): Promise<string> {
   const res = await fetch(packUrl(lang, pack));
   if (!res.ok) throw new Error(`${packUrl(lang, pack)} -> HTTP ${res.status}`);
   const cards = normalisePack(await res.json());
@@ -41,7 +39,8 @@ async function main(): Promise<void> {
     allowPositionals: true,
   });
   const langs = values.lang.split(',').map((l) => {
-    if (l !== 'en' && l !== 'de') throw new Error(`Unsupported language: ${l}`);
+    if (!isCardLanguage(l))
+      throw new Error(`Unsupported language: ${l} (one of ${CARD_LANGUAGES.join(', ')})`);
     return l;
   });
   for (const lang of langs) {

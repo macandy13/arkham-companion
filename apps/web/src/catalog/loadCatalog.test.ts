@@ -116,12 +116,12 @@ describe('loadCatalog', () => {
     expect(await store.getCatalog('en')).toBeUndefined();
   });
 
-  it('uses the English host for unknown languages', async () => {
+  it('uses the French host for French cards', async () => {
     const requests: string[] = [];
 
-    await loadCatalog(store, 'xx', respondingWith(okCards('v1'), requests));
+    await loadCatalog(store, 'fr', respondingWith(okCards('v1'), requests));
 
-    expect(requests[0]).toBe('https://arkhamdb.com/api/public/packs/');
+    expect(requests[0]).toBe('https://fr.arkhamdb.com/api/public/packs/');
   });
 });
 

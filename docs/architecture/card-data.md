@@ -18,4 +18,4 @@ The engine reads card stats only through a [`CardDb`](../../packages/engine/src/
 
 - **A new card field:** read it in `RawCardSchema`, normalise it in [`schema.ts`](../../packages/carddata/src/schema.ts), and add it to `CardStats` only if a rule or view needs it.
 - **More from the campaign guides:** a zod schema for the step or effect type in `campaign_guides.ts` or `campaign_setup.ts`, and its own lines in the report.
-- **A new language:** its ArkhamDB host in `fetch.ts` and `loadCatalog.ts`, and UI strings in [`i18n`](../../apps/web/src/i18n/).
+- **A new language:** card data comes in every language of `CARD_LANGUAGES` ([`languages.ts`](../../packages/carddata/src/languages.ts)), the one list Settings, the catalog loader and `pnpm carddata:fetch` read, each from its host `arkhamDbHost(lang)`; ArkhamDB fills in English for a card it has no translation of. A UI language adds its strings in [`i18n`](../../apps/web/src/i18n/) and to `UI_LANGUAGES`.
