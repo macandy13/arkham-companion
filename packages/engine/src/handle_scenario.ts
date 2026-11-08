@@ -53,7 +53,8 @@ export function handleChangeChaosBag(state: GameState, cmd: ChangeChaosBag): Cha
 
 /**
  * `SealChaosToken`: one copy of a token out of the bag, sealed on an investigator still in the
- * scenario. A token the bag doesn't hold seals nothing, as with `ChangeChaosBag`.
+ * scenario, since only cards in play seal; a release needs no such check, as leaving releases
+ * everything. A token the bag doesn't hold seals nothing, as with `ChangeChaosBag`.
  */
 export function handleSealChaosToken(state: GameState, cmd: SealChaosToken): ChaosTokenSealed[] {
   const investigator = activeInvestigator(state, cmd.investigatorId);

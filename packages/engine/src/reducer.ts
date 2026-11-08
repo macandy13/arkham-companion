@@ -5,6 +5,7 @@ import type {
   CardFlipped,
   ChaosBagChanged,
   ChaosTokenReleased,
+  ChaosTokenSealed,
   CardMoved,
   ConnectionChanged,
   DeckShuffled,
@@ -97,14 +98,7 @@ export function apply(state: GameState, event: Event): GameState {
     case 'ChaosBagChanged':
       return applyChaosBagChanged(state, event);
     case 'ChaosTokenSealed':
-      return {
-        ...state,
-        chaosBag: withoutFirst(state.chaosBag, event.token),
-        sealedTokens: [
-          ...state.sealedTokens,
-          { token: event.token, investigatorId: event.investigatorId },
-        ],
-      };
+      return applyChaosTokenSealed(state, event);
     case 'ChaosTokenReleased':
       return applyChaosTokenReleased(state, event);
     case 'CardFlipped':
@@ -313,6 +307,15 @@ function applyChaosBagChanged(state: GameState, e: ChaosBagChanged): GameState {
       ? [...state.chaosBagChanges, { token: e.token, change: e.change }]
       : state.chaosBagChanges;
   return { ...state, chaosBag, chaosBagChanges };
+}
+
+function applyChaosTokenSealed(state: GameState, e: ChaosTokenSealed): GameState {
+  if (!state.chaosBag.includes(e.token)) return state;
+  return {
+    ...state,
+    chaosBag: withoutFirst(state.chaosBag, e.token),
+    sealedTokens: [...state.sealedTokens, { token: e.token, investigatorId: e.investigatorId }],
+  };
 }
 
 function applyChaosTokenReleased(state: GameState, e: ChaosTokenReleased): GameState {

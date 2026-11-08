@@ -825,6 +825,11 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
       Pending decisions: none"
     `);
 
+    // Wendy's player card seals the elder sign: out of the bag while the card is in play.
+    table.play({ type: 'SealChaosToken', token: 'elderSign', investigatorId: wendy });
+    expect(table.board.sealedTokens).toEqual([{ token: 'elderSign', investigatorId: wendy }]);
+    expect(table.board.chaosBag).not.toContain('elderSign');
+
     // Round 8 – mythos: Roland draws Dissonant Voices and Daisy a Ghoul Minion;
     // Wendy fails her willpower test against Crypt Chill. She has no asset to
     // discard, so she answers that she takes 2 damage: 7 of 7, and she is
@@ -858,6 +863,9 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     expect(table.board.perInvestigator('clues')).toEqual({ roland: 5, daisy: 1, wendy: 0 });
     expect(table.board.location(byName('Cellar')).clues).toBe(3);
     expect(table.board.namesIn({ kind: 'threatArea', investigatorId: wendy })).toEqual([]);
+    // Her cards leave play with her, so the elder sign they sealed goes back into the bag.
+    expect(table.board.sealedTokens).toEqual([]);
+    expect(table.board.chaosBag).toContain('elderSign');
     // Frozen in Fear goes with her defeat, Crypt Chill once its revelation has resolved.
     expect(table.board.namesIn({ kind: 'encounterDiscard' }).slice(0, 2)).toEqual([
       'Crypt Chill',

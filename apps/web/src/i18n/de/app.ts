@@ -52,7 +52,7 @@ export const appTexts = {
       },
       sealed: '{{token}}-Marker von {{investigator}} versiegelt',
       released:
-        '{{token}}-Marker von {{investigator}} freigegeben und zurück in den Chaosbeutel gelegt',
+        'Von {{investigator}} versiegelter {{token}}-Marker zurück in den Chaosbeutel gelegt',
     },
     amount: {
       doom_one: '{{count}} Verderben',

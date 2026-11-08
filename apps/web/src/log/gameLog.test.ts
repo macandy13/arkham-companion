@@ -193,7 +193,7 @@ describe('gameLog', () => {
         table.play({ type: 'SealChaosToken', token: 'cultist', investigatorId: roland });
         table.play({ type: 'ReleaseChaosToken', token: 'cultist', investigatorId: roland });
       },
-      line: 'Cultist token sealed by Roland Banks released into the chaos bag',
+      line: "Roland Banks's sealed Cultist token released into the chaos bag",
     },
   ])('says "$line"', ({ step, line }) => {
     const table = PlayTable.start(rolandsTurn);
