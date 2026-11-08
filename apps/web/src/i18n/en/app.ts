@@ -758,8 +758,6 @@ export const appTexts = {
     fallen: 'Killed and Insane Investigators',
     fallenAs: '{{name}} – {{fate}}',
     chaosBag: 'Chaos Bag',
-    tokenCount_one: '{{token}}',
-    tokenCount_other: '{{token}} ×{{count}}',
   },
   interlude: {
     kicker: 'Interlude',

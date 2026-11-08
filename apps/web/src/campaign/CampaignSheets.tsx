@@ -8,6 +8,7 @@ import {
 } from '@arkham/engine';
 import { assertNever } from '@arkham/util';
 import type { CampaignEntry } from '../scenarios/scenarioCatalog';
+import { ChaosTokenFace } from '../tokens/ChaosTokenFace';
 
 /**
  * The campaign notes, the campaign's own sheets in the order its `CampaignLogLayout` lists them,
@@ -96,7 +97,10 @@ function FallenInvestigators({ log }: { readonly log: CampaignLog }) {
   );
 }
 
-/** The chaos bag's tokens as the players note them: each kind once, with how many it holds. */
+/**
+ * The chaos bag's tokens as the players note them: each kind once (`ChaosTokenFace`), with how
+ * many it holds when more than one.
+ */
 function ChaosBag({ log }: { readonly log: CampaignLog }) {
   const { t } = useTranslation();
   const kinds = tokenCounts(log.chaosBag);
@@ -106,7 +110,13 @@ function ChaosBag({ log }: { readonly log: CampaignLog }) {
       <ul>
         {kinds.map(({ token, count }) => (
           <li key={token}>
-            {t('campaignLog.tokenCount', { token: t(`chaosToken.${token}`), count })}
+            <ChaosTokenFace token={token} />
+            {count > 1 && (
+              <>
+                {' '}
+                <data value={count}>×{count}</data>
+              </>
+            )}
           </li>
         ))}
       </ul>

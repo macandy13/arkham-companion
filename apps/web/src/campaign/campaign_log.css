@@ -422,7 +422,7 @@
   list-style: none;
 }
 
-/* The chaos bag: each kind of token once, with its count, written in a row like a shopping list. */
+/* The chaos bag: each kind of token once, with its count written beside it, in a row. */
 #campaign-chaos-bag {
   filter: var(--sheet-shadow);
 }
@@ -441,7 +441,7 @@
 #campaign-log > #campaign-chaos-bag > ul {
   display: flex;
   flex-wrap: wrap;
-  gap: 0 var(--space-3);
+  gap: var(--space-1) var(--space-3);
   margin: var(--space-2) 0 0;
   padding: 0;
   list-style: none;
@@ -476,4 +476,11 @@
   bottom: var(--space-3);
   grid-column: 1 / -1;
   justify-self: center;
+}
+
+/* A token and its count side by side; two ids beat the handwritten lines' `display: block`. */
+#campaign-log > #campaign-chaos-bag > ul > li {
+  display: flex;
+  gap: var(--space-1);
+  align-items: center;
 }

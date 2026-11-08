@@ -37,12 +37,12 @@
   align-items: center;
 }
 
-/*
- * The token drawn as in the skill test (test_calculation.css); the dialog opens inside the
- * header, whose own tokens sit in a card's corner, so it stays in the row here.
- */
-#board dialog[data-shell] section[data-part='chaos-bag'] span[data-token] {
-  position: static;
+/* The tokens (`ChaosTokenFace`), large enough for a number in its star frame, kept from shrinking in the row. */
+#board dialog[data-shell] section[data-part='chaos-bag'] {
+  --chaos-token-size: var(--chaos-bag-token-size);
+}
+
+#board dialog[data-shell] section[data-part='chaos-bag'] [data-chaos-face] {
   flex: none;
 }
 

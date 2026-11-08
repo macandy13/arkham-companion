@@ -15,6 +15,7 @@ import {
   type SkillTestSuggestion,
 } from '@arkham/engine';
 import { assertNever, sum } from '@arkham/util';
+import { ChaosTokenFace } from '../tokens/ChaosTokenFace';
 import './test_calculation.css';
 
 /** The skills a test adds up: the tested one first, then the one a card adds to it. */
@@ -222,7 +223,7 @@ export function ResultStrip({
           <ol aria-label={t('skillTest.drawn')}>
             {revealed.map((token, index) => (
               <li key={index}>
-                <span data-token={token}>{t(`chaosToken.${token}`)}</span>
+                <ChaosTokenFace token={token} />
                 {hasSymbol(token) && token !== 'autoFail' && (
                   <>
                     {' '}

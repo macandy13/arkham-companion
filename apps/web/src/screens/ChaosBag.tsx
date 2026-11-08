@@ -2,6 +2,7 @@ import { useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { tokenCounts, type BoardView, type ChaosToken } from '@arkham/engine';
 import type { GameActions } from '../state/gameActions';
+import { ChaosTokenFace } from '../tokens/ChaosTokenFace';
 import './chaos_bag.css';
 
 /**
@@ -40,8 +41,7 @@ export function ChaosBag({
               disabled={busy}
               onClick={() => setPicked(token === chosen ? undefined : token)}
             >
-              <span data-token={token}>{t(`chaosToken.${token}`)}</span>{' '}
-              <data value={count}>×{count}</data>
+              <ChaosTokenFace token={token} /> <data value={count}>×{count}</data>
             </button>
           </li>
         ))}
@@ -75,7 +75,7 @@ export function ChaosBag({
           <ul aria-labelledby={sealedId}>
             {board.sealedTokens.map(({ token, investigatorId }, index) => (
               <li key={index}>
-                <span data-token={token}>{t(`chaosToken.${token}`)}</span>{' '}
+                <ChaosTokenFace token={token} />{' '}
                 {t('chaosBag.sealedOn', { investigator: board.investigator(investigatorId).name })}{' '}
                 <button
                   type="button"
