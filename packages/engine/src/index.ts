@@ -185,6 +185,7 @@ export {
   putSetAsideIntoPlay,
   setAsideCard,
   fromSetAside,
+  eachSetAsideCopyTo,
   removeFromGame,
   addToVictoryDisplay,
   revealLocation,

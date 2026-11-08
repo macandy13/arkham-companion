@@ -13,6 +13,7 @@ import {
   eachInvestigatorAt,
   encounterSetCode,
   fixed,
+  eachSetAsideCopyTo,
   fromSetAside,
   gainSurge,
   heal,
@@ -197,10 +198,8 @@ export const spreadingFlamesCardDefs: readonly CardStats[] = [
         ...putLocationIntoPlay(codes.miskatonicQuad, CAMPUS, { at: CAMPUS_CELLS.miskatonicQuad }),
         spawnEnemyAt(onlyCopy(codes.servantOfFlame), onlyCopy(codes.dormitories)),
         fromSetAside([codes.fire], { kind: 'attachedTo', hostId: onlyCopy(codes.yourFriendsRoom) }),
-        // The other four of Fire!'s five copies.
-        fromSetAside([codes.fire, codes.fire, codes.fire, codes.fire], {
-          kind: 'encounterDiscard',
-        }),
+        // However many are left: Lit Up's reverse side may have placed four of them already.
+        eachSetAsideCopyTo(codes.fire, { kind: 'encounterDiscard' }),
       ),
     ],
   }),

@@ -243,11 +243,13 @@ export type RelativeCard =
    */
   | ({ ref: 'eachEnemy'; engagedWith?: RelativeInvestigator } & EnemyFilter)
   /**
-   * Each set-aside enemy with `trait` ("spawn each set-aside [[Cultist]] enemy"):
-   * the command repeats once per enemy, in card order, and none when no such
-   * enemy is set aside.
+   * Each set-aside enemy with `trait` ("spawn each set-aside [[Cultist]] enemy"), or each
+   * set-aside copy of `code` ("place each other set-aside copy of Fire! in the encounter discard
+   * pile"): the command repeats once per card, in card order, and none when no such card is set
+   * aside.
    */
   | { ref: 'eachSetAside'; trait: Trait }
+  | { ref: 'eachSetAside'; code: CardCode }
   /**
    * The enemy with `trait` (any enemy without one) nearest to the location of
    * the investigator the window names ("the nearest [[Cultist]] enemy",
@@ -1010,7 +1012,9 @@ function eachId(
     }
     case 'eachSetAside':
       return cardsInZone(state, { kind: 'setAside' }).filter((id) => {
-        const stats = cardStats(ctx.cards, requireCard(state.cards, id).code);
+        const code = requireCard(state.cards, id).code;
+        if ('code' in each) return code === each.code;
+        const stats = cardStats(ctx.cards, code);
         return stats.typeCode === 'enemy' && stats.traits.includes(each.trait);
       });
     default:
@@ -2036,6 +2040,14 @@ export function spawnEachSetAsideAt(trait: Trait, location: RelativeCard): Abili
  */
 export function fromSetAside(codes: readonly CardCode[], to: Templated<Zone>): AbilityEffect {
   return { type: 'FromSetAside', codes, to };
+}
+
+/**
+ * "Place each other set-aside copy of Fire! in the encounter discard pile": every copy of `code`
+ * still set aside moves to `to`, none when no copy is left.
+ */
+export function eachSetAsideCopyTo(code: CardCode, to: Templated<Zone>): AbilityEffect {
+  return { type: 'MoveCard', cardId: { ref: 'eachSetAside', code }, to };
 }
 
 /** "Put the set-aside Lita Chantler into play at the Parlor". */

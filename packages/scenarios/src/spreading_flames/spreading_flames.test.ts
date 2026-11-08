@@ -9,6 +9,8 @@ import {
   skillTestSuggestion,
   zoneKey,
   type Command,
+  type InvestigatorId,
+  type Zone,
   type GameState,
   type ScenarioContext,
 } from '@arkham/engine';
@@ -20,6 +22,8 @@ import {
 } from '@arkham/engine/test/utils';
 import {
   CAMPUS,
+  SEARCHING_FOR_ARMITAGE_DECISION,
+  WHERE_THERES_SMOKE_DECISION,
   SPREADING_FLAMES_CODES as codes,
   spreadingFlames,
   spreadingFlamesCards,
@@ -39,19 +43,49 @@ const warrenObservatory = instanceId('12119#1');
 const orneLibrary = instanceId('12120#1');
 const tank = investigatorId('tank');
 
-/** Card names in the encounter discard, top first. */
-function discardNames(state: GameState): string[] {
-  return (state.order[zoneKey({ kind: 'encounterDiscard' })] ?? []).map(
+/** Card names in `zone`, top first. */
+function namesIn(state: GameState, zone: Zone): string[] {
+  return (state.order[zoneKey(zone)] ?? []).map(
     (id) => cardStats(ctx.cards, state.cards[id]!.code).name,
   );
+}
+
+/** Card names in the encounter discard, top first. */
+function discardNames(state: GameState): string[] {
+  return namesIn(state, { kind: 'encounterDiscard' });
+}
+
+/** Both investigators' turns, then the enemy and upkeep phases, which end round 1. */
+const playRoundOne: Command[] = [
+  { type: 'NextPhase' },
+  { type: 'StartTurn', investigatorId: investigatorId('tank') },
+  { type: 'EndTurn', investigatorId: investigatorId('tank') },
+  { type: 'StartTurn', investigatorId: investigatorId('seeker') },
+  { type: 'EndTurn', investigatorId: investigatorId('seeker') },
+  { type: 'NextPhase' },
+  { type: 'NextPhase' },
+];
+
+/** `amount` clues for the investigator, as discovering them would give. */
+function cluesFor(investigator: InvestigatorId, amount: number): Command {
+  return { type: 'AdjustInvestigator', investigatorId: investigator, stat: 'clues', delta: amount };
 }
 
 describe('Spreading Flames setup', () => {
   it('puts the three agendas and four acts into their decks in stage order', () => {
     const state = startScenario(ctx, { playerCount: 2 });
 
-    expect(codesIn(state, { kind: 'agendaDeck' })).toEqual(['12106', '12107', '12108']);
-    expect(codesIn(state, { kind: 'actDeck' })).toEqual(['12109', '12110', '12111', '12112']);
+    expect(namesIn(state, { kind: 'agendaDeck' })).toEqual([
+      'Past Curfew',
+      'Lit Up',
+      'Wild Flames',
+    ]);
+    expect(namesIn(state, { kind: 'actDeck' })).toEqual([
+      "Where There's Smoke...",
+      'Escape the Dorms',
+      'Searching for Dr. Armitage',
+      'Blaze of Glory',
+    ]);
   });
 
   it("starts the investigators in the revealed Your Friend's Room with two clues per investigator", () => {
@@ -69,35 +103,35 @@ describe('Spreading Flames setup', () => {
   it('sets aside the five other locations, Dr. Henry Armitage, the Servant of Flame and the five Fire!', () => {
     const state = startScenario(ctx);
 
-    expect(codesIn(state, { kind: 'setAside' })).toEqual([
-      '12117',
-      '12116',
-      '12118',
-      '12119',
-      '12120',
-      '12115',
-      '12114',
-      ...['12129', '12129', '12129', '12129', '12129'],
+    expect(namesIn(state, { kind: 'setAside' })).toEqual([
+      'Dormitories',
+      'Miskatonic Quad',
+      'Science Hall',
+      'Warren Observatory',
+      'Orne Library',
+      'Dr. Henry Armitage',
+      'Servant of Flame',
+      ...['Fire!', 'Fire!', 'Fire!', 'Fire!', 'Fire!'],
     ]);
   });
 
   it('shuffles the other 24 enemies and treacheries of the nine sets into the encounter deck', () => {
     const state = startScenario(ctx);
 
-    const deck = codesIn(state, { kind: 'encounterDeck' }).sort();
+    const deck = namesIn(state, { kind: 'encounterDeck' }).sort();
 
     expect(deck).toEqual([
-      ...['12121', '12121'],
-      ...['12122', '12122'],
-      ...['12123', '12123', '12123'],
-      ...['12124', '12124', '12124'],
-      ...['12125', '12125'],
-      ...['12126', '12126'],
-      ...['12127', '12127'],
-      ...['12128', '12128'],
-      ...['12130', '12130'],
-      ...['12131', '12131'],
-      ...['12132', '12132'],
+      ...['Bystander', 'Bystander', 'Bystander'],
+      ...['Cantor of Flame', 'Cantor of Flame'],
+      ...['Cosmic Evils', 'Cosmic Evils', 'Cosmic Evils'],
+      ...['Extraplanar Visions', 'Extraplanar Visions'],
+      ...['Forbidden Secrets', 'Forbidden Secrets'],
+      ...['Hellhound', 'Hellhound'],
+      ...['Mutated Experiment', 'Mutated Experiment'],
+      ...['Mutated!', 'Mutated!'],
+      ...['Noxious Smoke', 'Noxious Smoke'],
+      ...['Unspeakable Truths', 'Unspeakable Truths'],
+      ...['Wild Compulsion', 'Wild Compulsion'],
     ]);
   });
 
@@ -202,6 +236,68 @@ describe("Spreading Flames act 1, Where There's Smoke...", () => {
     });
   });
 
+  it('asks as round 1 ends once the investigators hold 2 clues each between them, wherever they are', () => {
+    const state = stateAfter(
+      ctx,
+      startScenario(ctx, { playerCount: 2 }),
+      cluesFor(tank, 4),
+      ...playRoundOne,
+    );
+
+    expect(state.pending.map((decision) => decision.id)).toEqual([WHERE_THERES_SMOKE_DECISION]);
+  });
+
+  it('discards the enemies in play, engaged ones included', () => {
+    const cantorOfFlame = instanceId('12121#1');
+    const hellhound = instanceId('12122#1');
+    const withEnemies = stateAfter(
+      ctx,
+      startScenario(ctx, { playerCount: 2 }),
+      {
+        type: 'ManualAdjust',
+        adjustment: {
+          kind: 'moveCard',
+          cardId: cantorOfFlame,
+          to: { kind: 'atLocation', locationId: yourFriendsRoom },
+        },
+      },
+      {
+        type: 'ManualAdjust',
+        adjustment: {
+          kind: 'moveCard',
+          cardId: hellhound,
+          to: { kind: 'engaged', investigatorId: tank },
+        },
+      },
+    );
+
+    const state = stateAfter(ctx, withEnemies, ...advanceSmoke);
+
+    expect(discardNames(state)).toEqual(expect.arrayContaining(['Cantor of Flame', 'Hellhound']));
+    expect(state.cards[cantorOfFlame]?.zone).toEqual({ kind: 'encounterDiscard' });
+    expect(state.cards[hellhound]?.zone).toEqual({ kind: 'encounterDiscard' });
+  });
+
+  it('puts only the Fire! still set aside in the encounter discard after Lit Up placed four', () => {
+    const fourFireDiscarded = stateAfter(
+      ctx,
+      startScenario(ctx, { playerCount: 2 }),
+      ...['12129#1', '12129#2', '12129#3', '12129#4'].map((fire): Command => ({
+        type: 'ManualAdjust',
+        adjustment: {
+          kind: 'moveCard',
+          cardId: instanceId(fire),
+          to: { kind: 'encounterDiscard' },
+        },
+      })),
+    );
+
+    const state = stateAfter(ctx, fourFireDiscarded, ...advanceSmoke);
+
+    expect(codesIn(state, { kind: 'attachedTo', hostId: yourFriendsRoom })).toEqual([codes.fire]);
+    expect(discardNames(state)).toEqual(['Fire!', 'Fire!', 'Fire!', 'Fire!']);
+  });
+
   it("attaches one Fire! to Your Friend's Room and puts the other four in the encounter discard", () => {
     const state = stateAfter(ctx, startScenario(ctx, { playerCount: 2 }), ...advanceSmoke);
 
@@ -233,7 +329,7 @@ describe('Spreading Flames act 2, Escape the Dorms', () => {
       warrenObservatory,
       orneLibrary,
     ]);
-    expect(discardNames(state)).toHaveLength(5);
+    expect(discardNames(state)).toEqual(['Fire!', 'Fire!', 'Fire!', 'Fire!', 'Fire!']);
   });
 
   it('sets the Servant of Flame aside without its damage', () => {
@@ -252,6 +348,35 @@ describe('Spreading Flames act 2, Escape the Dorms', () => {
 describe('Spreading Flames act 3, Searching for Dr. Armitage', () => {
   const advanceToSearching: Command[] = [{ type: 'AdvanceAct' }, { type: 'AdvanceAct' }];
   const advanceSearching: Command[] = [{ type: 'AdvanceAct' }];
+
+  it.each([
+    { at: 'Orne Library', location: orneLibrary, asked: [SEARCHING_FOR_ARMITAGE_DECISION] },
+    { at: 'Miskatonic Quad', location: miskatonicQuad, asked: [] },
+  ])(
+    'asks as round 1 ends with both investigators and their 6 clues at $at: $asked',
+    ({ location, asked }) => {
+      const atSearching = stateAfter(
+        ctx,
+        startScenario(ctx, { playerCount: 2 }),
+        ...advanceToSearching,
+      );
+      const moved = stateAfter(
+        ctx,
+        atSearching,
+        ...[tank, investigatorId('seeker')].map((investigator): Command => ({
+          type: 'MoveInvestigator',
+          investigatorId: investigator,
+          to: location,
+          ignoreConnections: true,
+        })),
+        cluesFor(tank, 6),
+      );
+
+      const state = stateAfter(ctx, moved, ...playRoundOne);
+
+      expect(state.pending.map((decision) => decision.id)).toEqual(asked);
+    },
+  );
 
   it('puts the Servant of Flame at Miskatonic Quad with 3 clues per investigator on the Quad', () => {
     const atSearching = stateAfter(

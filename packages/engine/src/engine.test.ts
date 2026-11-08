@@ -431,6 +431,16 @@ describe('MoveCard out of play', () => {
     expect(state.cards[ghoul]?.tokens).toEqual({});
   });
 
+  it('keeps the damage of a ghoul set aside from the victory display, which is out of play', () => {
+    const { state } = run(context, [
+      table.startCommand(),
+      { type: 'MoveCard', cardId: ghoul, to: { kind: 'victoryDisplay' } },
+      { type: 'MoveCard', cardId: ghoul, to: setAside },
+    ]);
+
+    expect(state.cards[ghoul]?.tokens).toEqual({ damage: 3 });
+  });
+
   it('readies an exhausted ghoul it sets aside, as cards enter play ready', () => {
     const { state } = run(context, [
       table.startCommand(),
