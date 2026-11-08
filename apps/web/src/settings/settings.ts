@@ -1,8 +1,5 @@
 import { CARD_LANGUAGES, type CardLanguage } from '@arkham/carddata';
 
-/** The card languages, from the one list in `@arkham/carddata` (`languages.ts`). */
-export { CARD_LANGUAGES, type CardLanguage };
-
 /** UI languages that have translation strings (`i18n/index.ts`). */
 export const UI_LANGUAGES = ['en', 'de'] as const;
 export type UiLanguage = (typeof UI_LANGUAGES)[number];

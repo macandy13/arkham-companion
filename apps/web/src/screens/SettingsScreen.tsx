@@ -1,10 +1,10 @@
+import { CARD_LANGUAGES } from '@arkham/carddata';
 import type { PackDef } from '@arkham/carddata';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { sortedPacks } from '../picker/pickerLogic';
 import { campaignCatalog } from '../scenarios/scenarioCatalog';
 import {
-  CARD_LANGUAGES,
   CARD_THEMES,
   CHAOS_DRAWS,
   ENEMY_TOKEN_FACES,

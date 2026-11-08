@@ -9,8 +9,8 @@ import {
 
 /** The slice of `IndexedDbStore` the catalog loader needs; keeps the loader testable. */
 export interface CatalogCache {
-  getCatalog(lang: string): Promise<CardCatalog | undefined>;
-  putCatalog(lang: string, catalog: CardCatalog): Promise<void>;
+  getCatalog(lang: CardLanguage): Promise<CardCatalog | undefined>;
+  putCatalog(lang: CardLanguage, catalog: CardCatalog): Promise<void>;
 }
 
 /**
