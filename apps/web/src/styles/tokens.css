@@ -80,8 +80,9 @@
   --color-card-asset: #6f6a5c;
   /*
    * The colours of the location connection symbols, as the printed cards colour each symbol (map
-   * tiles), sampled from Night of the Zealot's card pictures; the same in both themes, like the
-   * cards.
+   * tiles), sampled from the card pictures: Night of the Zealot's, Return to the Night of the
+   * Zealot's for heart and star, the Core Set (2026)'s for spade and clover; the same in both
+   * themes, like the cards.
    */
   --color-connection-circle: #a78f32;
   --color-connection-square: #8f2e2f;
@@ -93,6 +94,10 @@
   --color-connection-hourglass: #3e1f28;
   --color-connection-t: #1d2129;
   --color-connection-double-slash: #2f3f2c;
+  --color-connection-heart: #ad6335;
+  --color-connection-star: #322331;
+  --color-connection-spade: #ab629b;
+  --color-connection-clover: #82946d;
   /*
    * The face of a card drawn by the app (map tiles, attachments): dark in both themes, like the
    * printed cards, so these are not redefined for the light theme.

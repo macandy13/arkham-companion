@@ -54,6 +54,30 @@ describe('Spreading Flames card data', () => {
   });
 
   it.each([
+    { code: '12113', name: "Your Friend's Room", symbol: 'spade', connectsTo: ['triangle'] },
+    {
+      code: '12116',
+      name: 'Miskatonic Quad',
+      symbol: 'plus',
+      connectsTo: ['triangle', 'hourglass', 'circle', 'heart', 'square', 'diamond'],
+    },
+    { code: '12117', name: 'Dormitories', symbol: 'triangle', connectsTo: ['spade', 'plus'] },
+    { code: '12118', name: 'Science Hall', symbol: 'hourglass', connectsTo: ['plus'] },
+    { code: '12119', name: 'Warren Observatory', symbol: 'square', connectsTo: ['plus'] },
+    { code: '12120', name: 'Orne Library', symbol: 'diamond', connectsTo: ['plus'] },
+  ])(
+    'gives $name its printed $symbol, connecting to $connectsTo on both sides',
+    ({ code, symbol, connectsTo }) => {
+      const card = cardOf(code);
+
+      expect(card.symbol).toBe(symbol);
+      expect(card.connectsTo).toEqual(connectsTo);
+      expect(card.unrevealedSymbol).toBeUndefined();
+      expect(card.unrevealedConnectsTo).toBeUndefined();
+    },
+  );
+
+  it.each([
     { set: 'spreading_flames', copies: 1, cards: 'Servant of Flame' },
     { set: 'ashen_pilgrims', copies: 4, cards: '2 Cantor of Flame, 2 Hellhound' },
     { set: 'bystanders', copies: 3, cards: '3 Bystander' },

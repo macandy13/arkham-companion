@@ -208,7 +208,11 @@ export type LocationSymbol =
   | 'moon'
   | 'hourglass'
   | 't'
-  | 'double_slash';
+  | 'double_slash'
+  | 'heart'
+  | 'star'
+  | 'spade'
+  | 'clover';
 
 /**
  * What a treachery attached to a location by its revelation does
