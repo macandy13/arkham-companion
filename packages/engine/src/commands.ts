@@ -57,6 +57,8 @@ export type Command =
   | PlaceDoom
   | PlaceTokens
   | ChangeChaosBag
+  | SealChaosToken
+  | ReleaseChaosToken
   | AdvanceAgenda
   | BecomeActAndAgenda
   | AdvanceAct
@@ -497,6 +499,28 @@ export interface ChangeChaosBag {
   token: ChaosToken;
   change: ChaosBagChangeKind;
   lasts: ChaosBagChangeLasts;
+}
+
+/**
+ * Seals one copy of `token` from the chaos bag on a card `investigatorId` controls, or on them
+ * (`GameState.sealedTokens`). Produces `ChaosTokenSealed`; a token the bag does not hold seals
+ * nothing, like `ChangeChaosBag`'s remove. `ReleaseChaosToken` puts it back.
+ */
+export interface SealChaosToken {
+  type: 'SealChaosToken';
+  token: ChaosToken;
+  investigatorId: InvestigatorId;
+}
+
+/**
+ * Releases one copy of `token` sealed on `investigatorId` back into the chaos bag. Produces
+ * `ChaosTokenReleased`; nothing when no such token is sealed on them. An investigator leaving
+ * the scenario releases theirs on their own (`investigatorLeavesEvents`).
+ */
+export interface ReleaseChaosToken {
+  type: 'ReleaseChaosToken';
+  token: ChaosToken;
+  investigatorId: InvestigatorId;
 }
 
 /**
