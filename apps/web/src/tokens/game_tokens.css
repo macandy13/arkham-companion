@@ -1,0 +1,105 @@
+/*
+ * The game's tokens (MD.8a, `GameToken`): each face is our own drawing of the token on the table,
+ * in the player's token set. A set is a group of custom properties on the nearest
+ * `data-token-set`, so a preview of the other set (Settings) can sit inside the chosen one; the
+ * root carries the resin dome set until the settings say otherwise (`applySettings`).
+ */
+:root,
+[data-token-set='resin'] {
+  --token-face-clue: url('./resin/clue.svg');
+  --token-face-doom: url('./resin/doom.svg');
+  --token-face-damage: url('./resin/damage.svg');
+  --token-face-horror: url('./resin/horror.svg');
+  --token-face-resource: url('./resin/resource.svg');
+  --token-plain-clue: url('./resin/clue_plain.svg');
+  --token-plain-doom: url('./resin/doom_plain.svg');
+  --token-plain-damage: url('./resin/damage_plain.svg');
+  --token-plain-horror: url('./resin/horror_plain.svg');
+  --token-plain-resource: url('./resin/resource_plain.svg');
+}
+
+/* Cardboard: matte, die-cut discs, and the resources hexagons, like the box's own tokens. */
+[data-token-set='cardboard'] {
+  --token-face-clue: url('./cardboard/clue.svg');
+  --token-face-doom: url('./cardboard/doom.svg');
+  --token-face-damage: url('./cardboard/damage.svg');
+  --token-face-horror: url('./cardboard/horror.svg');
+  --token-face-resource: url('./cardboard/resource.svg');
+  --token-plain-clue: url('./cardboard/clue_plain.svg');
+  --token-plain-doom: url('./cardboard/doom_plain.svg');
+  --token-plain-damage: url('./cardboard/damage_plain.svg');
+  --token-plain-horror: url('./cardboard/horror_plain.svg');
+  --token-plain-resource: url('./cardboard/resource_plain.svg');
+}
+
+/*
+ * The token is its own size container, so a small one takes the plain face: below 32 px (MD.8a)
+ * texture, gloss and shadow only blur, while rim and glyph still read.
+ */
+[data-game-token] {
+  position: relative;
+  display: inline-block;
+  box-sizing: border-box;
+  aspect-ratio: 1;
+  container-type: size;
+}
+
+[data-game-token]::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--token-face) center / contain no-repeat;
+}
+
+@container (width < 32px) {
+  [data-game-token]::before {
+    background-image: var(--token-plain);
+  }
+}
+
+[data-game-token='clue'] {
+  --token-face: var(--token-face-clue);
+  --token-plain: var(--token-plain-clue);
+}
+
+[data-game-token='doom'] {
+  --token-face: var(--token-face-doom);
+  --token-plain: var(--token-plain-doom);
+}
+
+[data-game-token='damage'] {
+  --token-face: var(--token-face-damage);
+  --token-plain: var(--token-plain-damage);
+}
+
+[data-game-token='horror'] {
+  --token-face: var(--token-face-horror);
+  --token-plain: var(--token-plain-horror);
+}
+
+[data-game-token='resource'] {
+  --token-face: var(--token-face-resource);
+  --token-plain: var(--token-plain-resource);
+}
+
+/* The count: a small dark disc with a pale rim at the token's lower right, over its edge. */
+[data-game-token] > data {
+  position: absolute;
+  inset-inline-end: var(--token-count-offset);
+  inset-block-end: var(--token-count-offset);
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  min-width: var(--token-count-size);
+  height: var(--token-count-size);
+  padding-inline: var(--space-1);
+  border: var(--face-count-rim-width) solid var(--color-count-rim);
+  border-radius: var(--radius-pill);
+  background: var(--color-token-count);
+  color: var(--color-count-rim);
+  font-family: var(--font-family);
+  font-size: var(--font-size-note);
+  font-weight: bold;
+  font-variant-numeric: lining-nums tabular-nums;
+  line-height: 1;
+}

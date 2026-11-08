@@ -502,8 +502,7 @@
  * The tentacles on an HTML doom token (`DoomMark`), behind its count: the count is positioned too,
  * so it paints over them.
  */
-:is(#board > header [data-token='doom'], [data-pool-token='doom'], [data-token-ghost='doom'])
-  > [data-part='doom-mark'] {
+#board > header [data-token='doom'] > [data-part='doom-mark'] {
   position: absolute;
   /* Half of what `DoomMark`'s MARK_SHARE leaves free; the side tentacles' tips reach past the box. */
   inset: 12%;
@@ -535,7 +534,6 @@
 }
 
 #board > header [data-pool-token] {
-  position: relative;
   display: block;
 }
 
@@ -1530,59 +1528,11 @@
   }
 }
 
-/* A loose token, coloured like the token on the table: one of the token pool's, and a dragged one. */
+/* A loose token, drawn like the token on the table (`GameToken`): the token pool's, a dragged one. */
 #board > header [data-pool-token],
 body > [data-token-ghost] {
-  box-sizing: border-box;
   width: var(--loose-token-size);
   height: var(--loose-token-size);
-  border: var(--header-token-border-width) solid var(--header-token-rim);
-  border-radius: var(--radius-round);
-  box-shadow: var(--header-token-shadow);
-}
-
-#board > header [data-pool-token='clue'],
-body > [data-token-ghost='clue'] {
-  background: var(--color-clue);
-}
-
-#board > header [data-pool-token='doom'],
-body > [data-token-ghost='doom'] {
-  background: var(--color-doom-token);
-}
-
-/*
- * Damage, horror and resources like their cardboard tokens: a red disc with a pale heart, a blue
- * one with a pale brain, and a milled gold coin.
- */
-#board > header [data-pool-token='damage'],
-body > [data-token-ghost='damage'] {
-  --loose-token-icon: url('../investigators/icons/health.svg');
-  background: var(--color-health);
-}
-
-#board > header [data-pool-token='horror'],
-body > [data-token-ghost='horror'] {
-  --loose-token-icon: url('../investigators/icons/sanity.svg');
-  background: var(--color-sanity);
-}
-
-#board > header [data-pool-token='resource'],
-body > [data-token-ghost='resource'] {
-  border-color: var(--color-resource-coin-rim);
-  background: var(--resource-coin-face);
-  box-shadow: var(--resource-coin-milling), var(--header-token-shadow);
-}
-
-:is(
-  #board > header :is([data-pool-token='damage'], [data-pool-token='horror']),
-  body > :is([data-token-ghost='damage'], [data-token-ghost='horror'])
-)::after {
-  content: '';
-  position: absolute;
-  inset: var(--loose-token-icon-inset);
-  background: var(--color-parchment);
-  mask: var(--loose-token-icon) center / contain no-repeat;
 }
 
 /*

@@ -611,6 +611,9 @@ export const appTexts = {
       stars: 'The Stars Are Right',
       rlyeh: 'Sunken R’lyeh',
     },
+    tokens: 'Tokens',
+    tokenSet: 'Token set',
+    tokenSets: { resin: 'Resin dome', cardboard: 'Cardboard' },
     themes: { dark: 'By night', light: 'By day' },
     cardTheme: 'Card style',
     cardThemes: {

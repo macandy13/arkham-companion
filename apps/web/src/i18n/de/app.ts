@@ -614,6 +614,9 @@ export const appTexts = {
       stars: 'Wenn die Sterne richtig stehen',
       rlyeh: 'Versunkenes R’lyeh',
     },
+    tokens: 'Marker',
+    tokenSet: 'Markerset',
+    tokenSets: { resin: 'Harzkuppel', cardboard: 'Pappe' },
     themes: { dark: 'Bei Nacht', light: 'Bei Tag' },
     cardTheme: 'Kartenstil',
     cardThemes: {

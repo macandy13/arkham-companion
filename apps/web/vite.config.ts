@@ -46,7 +46,9 @@ export default defineConfig({
   base,
   build: {
     // The game's symbols stay files of their own: inlined as base64 into the stylesheet they
-    // barely compress, and the service worker precaches them for offline play anyway.
-    assetsInlineLimit: (file) => (file.includes('/src/symbols/') ? false : undefined),
+    // barely compress, and the service worker precaches them for offline play anyway. So do the
+    // token faces: only one set of the two shows, and inlined the stylesheet would carry both.
+    assetsInlineLimit: (file) =>
+      file.includes('/src/symbols/') || file.includes('/src/tokens/') ? false : undefined,
   },
 });

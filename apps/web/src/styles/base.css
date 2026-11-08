@@ -435,7 +435,7 @@ fieldset[data-segmented] > label:has(:focus-visible) {
   outline: var(--focus-ring-width) solid var(--color-accent);
 }
 
-fieldset:is([data-segmented], [data-skins]) input {
+fieldset:is([data-segmented], [data-picks]) input {
   position: absolute;
   width: var(--hidden-size);
   height: var(--hidden-size);

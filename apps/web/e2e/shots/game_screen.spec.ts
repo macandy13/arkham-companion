@@ -22,7 +22,7 @@ import { dragTo } from '../fixtures/drag';
 
 // Situations on the game screen, each photographed as it ends (`@shot`, coding guidelines §3).
 
-test('the house map with Roland Banks in the Hallway', async ({ page }) => {
+test('the house map with Roland Banks in the Hallway', { tag: '@shot' }, async ({ page }) => {
   await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
 
   const hallway = page
@@ -113,21 +113,26 @@ for (const { skin, code, light, theme } of [
   { skin: 'Sunken R’lyeh', code: 'rlyeh', light: 'By night', theme: 'dark' },
   { skin: 'Sunken R’lyeh', code: 'rlyeh', light: 'By day', theme: 'light' },
 ]) {
-  test(
-    `the house map on the ${skin} table ${light.toLowerCase()}`,
-    { tag: '@shot' },
-    async ({ page }) => {
-      await page.goto('/#/settings');
-      await page.getByRole('radio', { name: skin }).check();
-      await page.getByRole('radio', { name: light }).check();
-      await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
+  test(`the house map on the ${skin} table ${light.toLowerCase()}`, async ({ page }) => {
+    await page.goto('/#/settings');
+    await page.getByRole('radio', { name: skin }).check();
+    await page.getByRole('radio', { name: light }).check();
+    await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
 
-      await expect(page.getByRole('region', { name: 'Roland Banks' })).toBeVisible();
-      await expect(page.locator('html')).toHaveAttribute('data-skin', code);
-      await expect(page.locator('html')).toHaveAttribute('data-theme', theme);
-    },
-  );
+    await expect(page.getByRole('region', { name: 'Roland Banks' })).toBeVisible();
+    await expect(page.locator('html')).toHaveAttribute('data-skin', code);
+    await expect(page.locator('html')).toHaveAttribute('data-theme', theme);
+  });
 }
+
+test('the token pool in the cardboard token set', { tag: '@shot' }, async ({ page }) => {
+  await page.goto('/#/settings');
+  await page.getByRole('radio', { name: 'Cardboard' }).check();
+  await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
+
+  await expect(page.getByRole('img', { name: 'Resource from the pool' })).toBeVisible();
+  await expect(page.locator('html')).toHaveAttribute('data-token-set', 'cardboard');
+});
 
 test('the house map in the card pictures style, the clues left on each card', async ({ page }) => {
   await page.goto('/#/settings');
