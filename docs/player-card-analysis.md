@@ -74,7 +74,7 @@ Of the 29 cards each investigator can take, the table takes every effect of 23 (
 | 01062 | Arcane Studies        | mystic asset   | +N to a skill test, spend resources for a boost                                           | yes          | Daisy                |
 | 01063 | Arcane Initiate       | mystic asset   | draw, search or hold player cards, doom on a player card, an asset takes damage or horror | approximated | Daisy                |
 | 01064 | Drawn to the Flame    | mystic event   | draw an encounter card, discover clues                                                    | yes          | Daisy                |
-| 01065 | Ward of Protection    | mystic event   | cancel a treachery's revelation, take 1 horror                                            | no           | Daisy                |
+| 01065 | Ward of Protection    | mystic event   | cancel a non-weakness treachery's revelation, take 1 horror                               | no           | Daisy                |
 | 01066 | Blinding Light        | mystic event   | evade an enemy, damage to an enemy, the investigator takes damage or horror               | yes          | Daisy                |
 | 01067 | Fearless              | mystic skill   | +N to a skill test, heal damage or horror                                                 | yes          | Daisy                |
 | 01072 | Leather Coat          | survivor asset | an asset takes damage or horror                                                           | approximated | Wendy                |

@@ -108,6 +108,15 @@ export function enemyPhaseAttackDecision(
   };
 }
 
+/**
+ * Whether `decision` is an enemy attack on an investigator (`forcedAttackDecision`,
+ * `enemyPhaseAttackDecision`), whose `skip` option is the attack cancelled (Dodge).
+ */
+export function isEnemyAttackDecision(decision: Pick<Decision, 'id'>): boolean {
+  const kind = decision.id.split(':')[0];
+  return kind === 'enemyAttack' || (kind !== undefined && kind in SKIP_LABELS);
+}
+
 /** The id of the `enemyPhaseAttackDecision` about `attack`. */
 export function enemyPhaseAttackDecisionId({ enemyId, investigatorId }: DueAttack): DecisionId {
   return decisionId(`enemyAttack:${enemyId}:${investigatorId}`);

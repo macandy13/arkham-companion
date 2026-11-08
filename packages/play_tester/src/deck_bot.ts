@@ -1,5 +1,7 @@
+import { sum } from '@arkham/util';
 import {
   byName,
+  isEnemyAttackDecision,
   optionName,
   type CardName,
   type Decision,
@@ -157,19 +159,22 @@ export class DeckBot {
 
   /**
    * The cancel of an open enemy attack on one of the bot's investigators who holds a card that
-   * cancels attacks (Dodge) and can pay for it: the attack decision's cancel option, then the card's
+   * cancels attacks (Dodge) and can pay for it (only their own: Dodge could also save another
+   * investigator at their location, which the bot leaves out): the attack decision's cancel option, then the card's
    * cost, since the table takes nothing else while the attack is open.
    */
   private cancelledAttack(table: PlayTable): Step[] | undefined {
     for (const decision of table.state.pending) {
-      if (decision.decider.kind !== 'investigator' || !ATTACK_DECISION.test(decision.id)) continue;
+      if (decision.decider.kind !== 'investigator' || !isEnemyAttackDecision(decision)) continue;
       const skip = decision.options.find(({ id }) => id === 'skip');
       if (!skip) continue;
       const investigator = table.board.investigator(decision.decider.investigatorId);
       const seat = this.seats.get(investigator.name);
+      // Spends wait in the queue while attacks are open, so what they will take is already gone.
+      const resources = investigator.resources + this.queuedResources(investigator.name);
       const card = seat?.hand.find(
         ({ use, cost }) =>
-          use.kind === 'cancel' && use.what === 'attack' && investigator.resources >= (cost ?? 0),
+          use.kind === 'cancel' && use.what === 'attack' && resources >= (cost ?? 0),
       );
       if (!seat || !card) continue;
       seat.hand.splice(seat.hand.indexOf(card), 1);
@@ -184,6 +189,17 @@ export class DeckBot {
       ];
     }
     return undefined;
+  }
+
+  /** The resources the queued steps of `investigator` will still add (a negative spend). */
+  private queuedResources(investigator: CardName): number {
+    return sum(
+      this.queue.flatMap((step) =>
+        step.verb === 'playerCard' && step.investigator === investigator
+          ? step.effects.map((effect) => (effect.kind === 'resources' ? effect.delta : 0))
+          : [],
+      ),
+    );
   }
 
   /**
@@ -498,12 +514,6 @@ interface Situation {
   readonly resources: number;
   readonly nearDefeat: boolean;
 }
-
-/**
- * The ids of the decisions of an enemy attack (`forcedAttackDecision`, `enemyPhaseAttackDecision`),
- * whose `skip` option is the attack cancelled (named "does not provoke" on an attack of opportunity).
- */
-const ATTACK_DECISION = /^(attackOfOpportunity|retaliate|alert|enemyAttack):/;
 
 /** The least `actScore` a card is played for. */
 const WORTH_PLAYING = 3;

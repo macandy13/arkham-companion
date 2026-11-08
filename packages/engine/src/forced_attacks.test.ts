@@ -7,6 +7,7 @@ import {
   fixed,
   instanceId,
   investigatorId,
+  isEnemyAttackDecision,
   newGame,
   type Command,
   type GameState,
@@ -201,5 +202,17 @@ describe('alert', () => {
     const after = stateAfter(context, state, ...before, aliceEvades, answer(evadeTest, result));
 
     expect(after.pending).toEqual([]);
+  });
+});
+
+describe('an enemy attack decision', () => {
+  it.each([
+    { id: 'attackOfOpportunity:ghoul', attack: true },
+    { id: 'retaliate:ghoul', attack: true },
+    { id: 'alert:ghoul', attack: true },
+    { id: 'enemyAttack:ghoul:alice', attack: true },
+    { id: 'investigate:alice', attack: false },
+  ])('is told by its id: $id', ({ id, attack }) => {
+    expect(isEnemyAttackDecision({ id: decisionId(id) })).toBe(attack);
   });
 });
