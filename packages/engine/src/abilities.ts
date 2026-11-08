@@ -1497,6 +1497,17 @@ export function discardAtRandom(
   return { type: 'DiscardFromHand', investigatorId: who, amount, atRandom: true };
 }
 
+/**
+ * "Choose and discard N cards from your hand", of `who` (Science Hall): the player picks which, so
+ * it is left to the players like `DrawCards`.
+ */
+export function discardFromHand(
+  amount: number,
+  who: RelativeInvestigator = { ref: 'windowInvestigator' },
+): AbilityEffect {
+  return { type: 'DiscardFromHand', investigatorId: who, amount };
+}
+
 /** "Choose and discard 1 asset you control" (Crypt Chill). */
 export function discardAsset(
   who: RelativeInvestigator = { ref: 'windowInvestigator' },
