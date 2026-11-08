@@ -366,3 +366,21 @@
     flex: 1;
   }
 }
+
+/*
+ * An encounter card just drawn (`justDrawn`, M6.5a) deals in from above, tilted, onto its place
+ * beside the page; the cards waiting behind it stay put. Motion only, so reduced motion has none.
+ */
+@keyframes card-deals {
+  from {
+    opacity: 0;
+    translate: 0 calc(-1 * var(--space-5));
+    rotate: var(--deal-tilt);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  #board dialog[data-shell] > figure[data-just-drawn] > button[data-part='subject'] {
+    animation: card-deals var(--duration-deal) ease-out;
+  }
+}

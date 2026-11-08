@@ -224,3 +224,22 @@
   min-height: var(--touch-target);
   font-size: var(--font-size-body);
 }
+
+/*
+ * A token just drawn (M6.5a) drops into the strip from above and lands with a bounce; the tokens
+ * drawn before it stay, since each keeps its place in the list, and the chaos bag's tokens, which
+ * share their look, do not move. Motion only, so reduced motion has none of it.
+ */
+@keyframes token-drops {
+  from {
+    opacity: 0;
+    translate: 0 calc(-1 * var(--space-4));
+    scale: var(--token-drop-scale);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  #board dialog[data-shell] section[data-part='strip'] span[data-token] {
+    animation: token-drops var(--duration-token-drop) var(--ease-land);
+  }
+}

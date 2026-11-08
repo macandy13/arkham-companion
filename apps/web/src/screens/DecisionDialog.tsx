@@ -33,6 +33,7 @@ export function DecisionDialog({
   decision,
   actions,
   busy,
+  justDrawn = false,
   picking = false,
   onPicking,
 }: {
@@ -40,6 +41,8 @@ export function DecisionDialog({
   decision: DecisionView;
   actions: GameActions;
   busy: boolean;
+  /** Whether its card is the encounter card just drawn, which deals in (`useJustDrawn`). */
+  justDrawn?: boolean;
   /** Whether the players are picking one of the decision's locations on the map. */
   picking?: boolean;
   /** Starts picking on the map, or stops it; without it the dialog offers no map. */
@@ -55,6 +58,7 @@ export function DecisionDialog({
     <CardDialog
       name="decision"
       {...(decision.card ? { card: decision.card } : {})}
+      justDrawn={justDrawn}
       {...decisionHeading(t, board, decision)}
       onCancel={(event) => event.preventDefault()}
       lowered={lowered || picking}

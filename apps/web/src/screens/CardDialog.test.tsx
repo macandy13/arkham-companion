@@ -121,6 +121,26 @@ describe('CardDialog', () => {
   });
 
   it.each([
+    { justDrawn: true, shown: 'true' },
+    { justDrawn: false, shown: undefined },
+  ])('with justDrawn $justDrawn, marks its card data-just-drawn $shown', ({ justDrawn, shown }) => {
+    render(
+      <CardDialog
+        name="decision"
+        card={ghoulPriest()!}
+        justDrawn={justDrawn}
+        title="Attack of opportunity"
+        onCancel={() => {}}
+      >
+        <p>The page</p>
+      </CardDialog>,
+    );
+
+    const card = screen.getByRole('button', { name: /Ghoul Priest/ });
+    expect(card.closest('figure')?.dataset['justDrawn']).toBe(shown);
+  });
+
+  it.each([
     { lowered: false, handle: 'Lower to reach the board', asks: true, shown: undefined },
     { lowered: true, handle: 'Raise the dialog', asks: false, shown: 'true' },
   ])(

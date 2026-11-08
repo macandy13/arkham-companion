@@ -274,6 +274,15 @@
   --duration-delta: 1.2s;
   --pulse-scale: 1.3;
   /*
+   * Draws (M6.5a): an encounter card just drawn deals in from above, tilted, and a chaos token
+   * drops into the skill test's strip, landing with a bounce.
+   */
+  --duration-deal: 0.35s;
+  --deal-tilt: -6deg;
+  --duration-token-drop: 0.3s;
+  --token-drop-scale: 1.4;
+  --ease-land: cubic-bezier(0.3, 1.4, 0.6, 1);
+  /*
    * The app mark (MD.4b, `AppMark`): its unlit ticks and short star are faint; the loading screen's
    * next tick breathes, and the inline spinner turns once in this time, a tick at a step.
    */

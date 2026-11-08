@@ -745,17 +745,13 @@ test('the Tangled Thicket revealed with its double slash, the other Arkham Woods
   await expect(map.getByRole('img', { name: 'Connection symbol: square' })).toHaveCount(3);
 });
 
-test(
-  'the status row marked offline once the network is gone',
-  { tag: '@shot' },
-  async ({ page }) => {
-    await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
+test('the status row marked offline once the network is gone', async ({ page }) => {
+  await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
 
-    await page.context().setOffline(true);
+  await page.context().setOffline(true);
 
-    await expect(page.getByRole('region', { name: 'Round 1' }).getByText('Offline')).toBeVisible();
-  },
-);
+  await expect(page.getByRole('region', { name: 'Round 1' }).getByText('Offline')).toBeVisible();
+});
 
 test('the menu open, holding "Adjust board" and the game log on a phone', async ({ page }) => {
   await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
