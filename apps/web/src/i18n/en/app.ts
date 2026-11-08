@@ -50,6 +50,8 @@ export const appTexts = {
         scenario: '{{token}} token removed from the chaos bag until the end of the scenario',
         campaign: '{{token}} token removed from the chaos bag for the rest of the campaign',
       },
+      sealed: '{{token}} token sealed by {{investigator}}',
+      released: "{{investigator}}'s sealed {{token}} token released into the chaos bag",
     },
     amount: {
       doom_one: '{{count}} doom',
@@ -123,6 +125,16 @@ export const appTexts = {
     roundEnded: 'Round {{round}} ends',
     turnStarted: "{{investigator}}'s turn begins",
     turnEnded: "{{investigator}}'s turn ends",
+  },
+  chaosBag: {
+    title: 'Chaos bag',
+    contents: 'Tokens in the bag',
+    sealOn: 'Seal {{token}} on {{investigator}}',
+    sealed: 'Sealed',
+    sealedOn: 'on {{investigator}}',
+    sealWhere: 'Seal {{token}} on',
+    releaseFrom: 'Release {{token}} from {{investigator}}',
+    release: 'Release',
   },
   header: {
     round: 'Round {{round}}',

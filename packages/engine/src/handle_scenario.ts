@@ -5,15 +5,19 @@ import type {
   EndScenario,
   PlaceDoom,
   PlaceTokens,
+  ReleaseChaosToken,
+  SealChaosToken,
 } from './commands';
 import { cardsWithDoom, isInPlay } from './doom';
-import { activeInvestigators } from './investigators';
+import { activeInvestigator, activeInvestigators } from './investigators';
 import type {
   ActAdvanced,
   AgendaAdvanced,
   CardFlipped,
   CardMoved,
   ChaosBagChanged,
+  ChaosTokenReleased,
+  ChaosTokenSealed,
   CurrentCardChanged,
   Event,
   InvestigatorChanged,
@@ -45,6 +49,29 @@ export function handlePlaceDoom(state: GameState, cmd: PlaceDoom): TokensChanged
 export function handleChangeChaosBag(state: GameState, cmd: ChangeChaosBag): ChaosBagChanged[] {
   if (cmd.change === 'remove' && !state.chaosBag.includes(cmd.token)) return [];
   return [{ type: 'ChaosBagChanged', token: cmd.token, change: cmd.change, lasts: cmd.lasts }];
+}
+
+/**
+ * `SealChaosToken`: one copy of a token out of the bag, sealed on an investigator still in the
+ * scenario, since only cards in play seal; a release needs no such check, as leaving releases
+ * everything. A token the bag doesn't hold seals nothing, as with `ChangeChaosBag`.
+ */
+export function handleSealChaosToken(state: GameState, cmd: SealChaosToken): ChaosTokenSealed[] {
+  const investigator = activeInvestigator(state, cmd.investigatorId);
+  if (!state.chaosBag.includes(cmd.token)) return [];
+  return [{ type: 'ChaosTokenSealed', token: cmd.token, investigatorId: investigator.id }];
+}
+
+/** `ReleaseChaosToken`: one copy of a token sealed on the investigator back into the bag. */
+export function handleReleaseChaosToken(
+  state: GameState,
+  cmd: ReleaseChaosToken,
+): ChaosTokenReleased[] {
+  const sealed = state.sealedTokens.some(
+    (each) => each.token === cmd.token && each.investigatorId === cmd.investigatorId,
+  );
+  if (!sealed) return [];
+  return [{ type: 'ChaosTokenReleased', token: cmd.token, investigatorId: cmd.investigatorId }];
 }
 
 /** `PlaceTokens`: tokens from the pool on a card in play. */

@@ -50,6 +50,9 @@ export const appTexts = {
         scenario: '{{token}}-Marker bis zum Ende des Szenarios aus dem Chaosbeutel genommen',
         campaign: '{{token}}-Marker für den Rest der Kampagne aus dem Chaosbeutel genommen',
       },
+      sealed: '{{token}}-Marker von {{investigator}} versiegelt',
+      released:
+        'Von {{investigator}} versiegelter {{token}}-Marker zurück in den Chaosbeutel gelegt',
     },
     amount: {
       doom_one: '{{count}} Verderben',
@@ -123,6 +126,16 @@ export const appTexts = {
     roundEnded: 'Runde {{round}} endet',
     turnStarted: '{{investigator}} ist am Zug',
     turnEnded: 'Der Zug von {{investigator}} endet',
+  },
+  chaosBag: {
+    title: 'Chaosbeutel',
+    contents: 'Marker im Beutel',
+    sealOn: '{{token}} bei {{investigator}} versiegeln',
+    sealed: 'Versiegelt',
+    sealedOn: 'bei {{investigator}}',
+    sealWhere: '{{token}} versiegeln bei',
+    releaseFrom: '{{token}} von {{investigator}} freigeben',
+    release: 'Freigeben',
   },
   header: {
     round: 'Runde {{round}}',

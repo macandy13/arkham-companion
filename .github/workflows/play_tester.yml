@@ -1,0 +1,89 @@
+name: Play tester
+
+# Nightly only, no PR job (product.md "Continuous play tester"): bots play fresh games of the real
+# scenarios and replay the committed records of fixed bugs; each new kind of failure becomes one
+# `play-tester` issue, a known one gets the night's count as a comment.
+on:
+  schedule:
+    - cron: '17 3 * * *'
+  workflow_dispatch:
+    inputs:
+      games:
+        description: Games to play
+        default: '2000'
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: play-tester
+
+jobs:
+  play:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      GAMES: ${{ inputs.games || '2000' }}
+      RUNS: ${{ github.workspace }}/play_tester_runs
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # Fresh seeds from the date, so each night plays new games and a night can be replayed.
+      - run: echo "SEED=$(date -u +%Y%m%d)" >> "$GITHUB_ENV"
+      - name: Play
+        # Exits with 1 when a game fails, which the issues report; only a missing summary is a broken run.
+        run: |
+          pnpm playtest --games "$GAMES" --seed "$SEED" --out "$RUNS" --nightly || true
+          test -f "$RUNS/summary.md"
+          cat "$RUNS/summary.md" >> "$GITHUB_STEP_SUMMARY"
+      - name: Replay through the app
+        # The web replay plays a few of the night's runs and the committed records through the app.
+        run: |
+          if pnpm --filter @arkham/web playtest --games 20 --seed "$SEED" > "$RUNS/web_replay.txt" 2>&1; then
+            echo ok > "$RUNS/web_replay_status"
+          fi
+          { echo '### Web replay'; echo '```'; tail -n 20 "$RUNS/web_replay.txt"; echo '```'; } > "$RUNS/web_replay.md"
+          { echo; cat "$RUNS/web_replay.md"; } >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v7
+        id: artifact
+        # Also after a broken run, so its output can be looked at.
+        if: ${{ !cancelled() }}
+        with:
+          name: play-tester-${{ env.SEED }}
+          path: ${{ env.RUNS }}
+          retention-days: 90
+      - name: File issues
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ARTIFACT: ${{ steps.artifact.outputs.artifact-url }}
+        run: |
+          gh label create play-tester --force --color 5319e7 --description 'Found by the nightly play tester'
+          # One open issue per signature: comment on it when there is one, open it otherwise. A
+          # failing call only warns, so one bad body doesn't hide the night's other findings.
+          file_issue() {
+            local title="Play tester: $1" existing
+            existing=$(gh issue list --label play-tester --state open --limit 200 --json number,title |
+              jq --arg title "$title" 'map(select(.title == $title))[0].number // empty')
+            if [ -n "$existing" ]; then
+              gh issue comment "$existing" --body "Night $SEED: $2. Records: $ARTIFACT"
+            else
+              # GitHub takes bodies up to 65,536 characters; a long game's report can be longer.
+              { head -c 60000 "$3"; echo; echo "Night $SEED: $2. Records (with this one's app export): $ARTIFACT"; } > "$RUNS/issue.md"
+              gh issue create --title "$title" --label play-tester --body-file "$RUNS/issue.md"
+            fi
+          }
+          while read -r finding; do
+            file_issue "$(jq -r .signature <<< "$finding")" "failing games: $(jq -r .games <<< "$finding")" \
+              "$RUNS/$(jq -r .report <<< "$finding")" || echo "::warning::could not file $finding"
+          done < <(jq -c '.[]' "$RUNS/findings.json")
+          if [ ! -f "$RUNS/web_replay_status" ]; then
+            file_issue 'the web replay differs from the table' 'the app replay failed' "$RUNS/web_replay.md" ||
+              echo '::warning::could not file the web replay difference'
+          fi

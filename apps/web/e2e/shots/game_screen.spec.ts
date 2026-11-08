@@ -480,21 +480,46 @@ test('The Barrier opened as a full card', async ({ page, isMobile }) => {
   await expect(card.getByRole('img', { name: 'Clues 0 / 3' })).toBeInViewport();
 });
 
-test('The Gathering’s reference card opened to read', async ({ page, isMobile }) => {
-  await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
-  const scenario = page.getByRole('region', { name: 'Scenario' });
+test(
+  'The Gathering’s reference card opened to read',
+  { tag: '@shot' },
+  async ({ page, isMobile }) => {
+    await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
+    const scenario = page.getByRole('region', { name: 'Scenario' });
 
-  // On a phone the first tap expands the header on the card, too narrow there for its rows.
-  if (isMobile) await scenario.locator('[data-card]').click();
-  await scenario.getByRole('button', { name: 'The Gathering' }).click();
+    // On a phone the first tap expands the header on the card, too narrow there for its rows.
+    if (isMobile) await scenario.locator('[data-card]').click();
+    await scenario.getByRole('button', { name: 'The Gathering' }).click();
 
-  await expect(
-    page
+    await expect(
+      page
+        .getByRole('dialog', { name: 'The Gathering' })
+        .getByRole('list', { name: 'Chaos tokens' })
+        .getByText('-1. On a failure, take 1 horror.'),
+    ).toBeInViewport();
+  },
+);
+
+test(
+  'the chaos bag on the reference card’s page, the elder sign sealed on Roland Banks',
+  { tag: '@shot' },
+  async ({ page, isMobile }) => {
+    await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
+    const scenario = page.getByRole('region', { name: 'Scenario' });
+    if (isMobile) await scenario.locator('[data-card]').click();
+    await scenario.getByRole('button', { name: 'The Gathering' }).click();
+    const bag = page
       .getByRole('dialog', { name: 'The Gathering' })
-      .getByRole('list', { name: 'Chaos tokens' })
-      .getByText('-1. On a failure, take 1 horror.'),
-  ).toBeInViewport();
-});
+      .getByRole('region', { name: 'Chaos bag' });
+
+    await bag.getByRole('button', { name: /^Elder Sign/ }).click();
+    await bag.getByRole('button', { name: 'Seal Elder Sign on Roland Banks' }).click();
+
+    const sealed = bag.getByRole('list', { name: 'Sealed' });
+    await expect(sealed).toHaveText(/Elder Sign on Roland Banks/);
+    await sealed.scrollIntoViewIfNeeded();
+  },
+);
 
 test('Frozen in Fear from Roland Banks’ threat area, on the card shell', async ({ page }) => {
   await resumeImportedGame(

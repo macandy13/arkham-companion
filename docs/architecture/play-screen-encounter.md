@@ -43,6 +43,7 @@ The header's small card shows only the name (a container query hides the rest fr
 - "Scenario" and the difficulty's side as the kicker;
 - the cards set aside and the victory points on the page;
 - one row per symbol token at the page's print size, so it reads even when only the card's top shows (the shell's phone sheet; the phone itself opens the header cards in the detail view).
+- the chaos bag ([`ChaosBag`](../../apps/web/src/screens/ChaosBag.tsx)): the tokens in it as pills with their counts (`tokenCounts`, which the campaign log's bag shares), and the sealed ones (`BoardView.sealedTokens`) with the investigator holding each and a Release button. A tap on a token picks it to seal and shows a "Seal … on …" button per active investigator; seal and release are steps of their own (`GameActions.sealToken`, `releaseToken`).
 
 The reference card is no instance in play, so the shell takes a `ShownCard` (a `CardFaceView` without its `id`, [`cardFace.tsx`](../../apps/web/src/catalog/cardFace.tsx)), as `CardZoom` does.
 

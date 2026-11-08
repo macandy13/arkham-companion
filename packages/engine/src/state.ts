@@ -278,6 +278,17 @@ export interface ChaosBagChange {
   readonly change: ChaosBagChangeKind;
 }
 
+/**
+ * A chaos token sealed on a card (Rules Reference, "Seal"): out of the chaos bag, so no test can
+ * reveal it, until an effect releases it or the card leaves play. Player cards are not modelled,
+ * so the token is kept with the investigator who controls the sealing card; a card that seals on
+ * the investigator themselves (Children of Blood's blood tokens) is the same.
+ */
+export interface SealedToken {
+  readonly token: ChaosToken;
+  readonly investigatorId: InvestigatorId;
+}
+
 /** Tokens in the chaos bag. */
 export type ChaosToken =
   | '+1'
@@ -701,6 +712,8 @@ export interface GameState {
    * the campaign log.
    */
   chaosBagChanges: ChaosBagChange[];
+  /** Tokens out of `chaosBag` because a card sealed them, in the order sealed (`SealChaosToken`). */
+  sealedTokens: SealedToken[];
   agenda: { current?: InstanceId };
   act: { current?: InstanceId };
   /** Typed per scenario (zod schema in the scenario package). */
@@ -728,6 +741,7 @@ export function emptyState(): GameState {
     board: { maps: {} },
     chaosBag: [],
     chaosBagChanges: [],
+    sealedTokens: [],
     agenda: {},
     act: {},
     scenario: undefined,
