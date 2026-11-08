@@ -100,29 +100,26 @@ test('the Hallway’s details, its card with Roland Banks on it, on Roland Banks
   await expect(details.getByRole('button', { name: 'Investigate · 1 action' })).toBeVisible();
 });
 
-test('the house map by day', async ({ page }) => {
+test('the house map on the parchment table', { tag: '@shot' }, async ({ page }) => {
   await page.goto('/#/settings');
-  await page.getByRole('radio', { name: 'By day' }).check();
+  await page.getByRole('radio', { name: 'Parchment' }).check();
   await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
 
   await expect(page.getByRole('region', { name: 'Roland Banks' })).toBeVisible();
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
 });
 
-for (const { skin, code, light, theme } of [
-  { skin: 'The Stars Are Right', code: 'stars', light: 'By night', theme: 'dark' },
-  { skin: 'Sunken R’lyeh', code: 'rlyeh', light: 'By night', theme: 'dark' },
-  { skin: 'Sunken R’lyeh', code: 'rlyeh', light: 'By day', theme: 'light' },
+for (const { skin, code } of [
+  { skin: 'The Stars Are Right', code: 'stars' },
+  { skin: 'Sunken R’lyeh', code: 'rlyeh' },
 ]) {
-  test(`the house map on the ${skin} table ${light.toLowerCase()}`, async ({ page }) => {
+  test(`the house map on the ${skin} table`, async ({ page }) => {
     await page.goto('/#/settings');
     await page.getByRole('radio', { name: skin }).check();
-    await page.getByRole('radio', { name: light }).check();
     await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
 
     await expect(page.getByRole('region', { name: 'Roland Banks' })).toBeVisible();
     await expect(page.locator('html')).toHaveAttribute('data-skin', code);
-    await expect(page.locator('html')).toHaveAttribute('data-theme', theme);
   });
 }
 
@@ -325,27 +322,25 @@ test('Roland Banks’ willpower test before a token is drawn, the draw button in
   await expect(test.getByRole('button', { name: 'Draw a token' })).toBeVisible();
 });
 
-test(
-  'Roland Banks’ willpower test with the group’s own chaos bag, no draw button',
-  { tag: '@shot' },
-  async ({ page }) => {
-    await page.goto('/#/settings');
-    await page
-      .getByRole('group', { name: 'Who draws the tokens' })
-      .getByRole('radio', { name: 'Our own bag' })
-      .check();
-    await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
+test('Roland Banks’ willpower test with the group’s own chaos bag, no draw button', async ({
+  page,
+}) => {
+  await page.goto('/#/settings');
+  await page
+    .getByRole('group', { name: 'Who draws the tokens' })
+    .getByRole('radio', { name: 'Our own bag' })
+    .check();
+  await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
 
-    await page
-      .getByRole('region', { name: 'Roland Banks' })
-      .getByRole('button', { name: /^Willpower/ })
-      .click();
-    const test = page.getByRole('dialog', { name: /^Skill test/ });
+  await page
+    .getByRole('region', { name: 'Roland Banks' })
+    .getByRole('button', { name: /^Willpower/ })
+    .click();
+  const test = page.getByRole('dialog', { name: /^Skill test/ });
 
-    await expect(test.getByRole('region', { name: 'Result' })).toBeVisible();
-    await expect(test.getByRole('button', { name: 'Draw a token' })).toBeHidden();
-  },
-);
+  await expect(test.getByRole('region', { name: 'Result' })).toBeVisible();
+  await expect(test.getByRole('button', { name: 'Draw a token' })).toBeHidden();
+});
 
 test('Roland Banks’ willpower and agility test, the tablet drawn with its −2 under it', async ({
   page,
@@ -664,21 +659,19 @@ test('who pays the 4 clues to advance Trapped, Daisy Walker 3 and Roland Banks 1
   await expect(dialog.getByRole('button', { name: 'Pay', exact: true })).toBeEnabled();
 });
 
-test(
-  'Grasping Hands failed by 2 with no token drawn in the app, its margin of failure on the Failed row',
-  { tag: '@shot' },
-  async ({ page }) => {
-    await resumeImportedGame(page, 'Grasping Hands', graspingHandsDrawnExport('Grasping Hands'));
-    const decision = page.getByRole('dialog', { name: 'Test for Grasping Hands' });
+test('Grasping Hands failed by 2 with no token drawn in the app, its margin of failure on the Failed row', async ({
+  page,
+}) => {
+  await resumeImportedGame(page, 'Grasping Hands', graspingHandsDrawnExport('Grasping Hands'));
+  const decision = page.getByRole('dialog', { name: 'Test for Grasping Hands' });
 
-    await decision.getByRole('button', { name: 'Failed' }).click();
-    await decision.getByRole('button', { name: 'Raise the Margin of failure' }).click();
+  await decision.getByRole('button', { name: 'Failed' }).click();
+  await decision.getByRole('button', { name: 'Raise the Margin of failure' }).click();
 
-    await expect(
-      decision.getByRole('region', { name: 'Margin of failure' }).locator('data'),
-    ).toHaveText('2');
-  },
-);
+  await expect(
+    decision.getByRole('region', { name: 'Margin of failure' }).locator('data'),
+  ).toHaveText('2');
+});
 
 test('the Graveyard’s failed willpower test, its choice under the Failed row', async ({ page }) => {
   await resumeImportedGame(page, 'In the Graveyard', graveyardTestExport('In the Graveyard'));
@@ -721,13 +714,17 @@ test('the Tangled Thicket revealed with its double slash, the other Arkham Woods
   await expect(map.getByRole('img', { name: 'Connection symbol: square' })).toHaveCount(3);
 });
 
-test('the menu open, holding "Adjust board" and the game log on a phone', async ({ page }) => {
-  await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
+test(
+  'the menu open, holding "Adjust board" and the game log on a phone',
+  { tag: '@shot' },
+  async ({ page }) => {
+    await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
 
-  await page.getByRole('button', { name: 'Menu' }).click();
+    await page.getByRole('button', { name: 'Menu' }).click();
 
-  await expect(page.getByRole('link', { name: 'Settings' })).toBeVisible();
-});
+    await expect(page.getByRole('link', { name: 'Settings' })).toBeVisible();
+  },
+);
 
 test('Daisy Walker swiped into view on a phone, Roland Banks beside her', async ({
   page,

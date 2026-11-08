@@ -6,7 +6,7 @@ import { ROUND_PHASES, type BoardView } from '@arkham/engine';
 import type { AppState, OpenGame } from '../state/appStore';
 import { GameLogDialog } from '../log/GameLogDialog';
 import { GameExportButton } from './GameExportButton';
-import { THEMES } from '../settings/settings';
+import { isLightSkin, TABLE_SKINS } from '../settings/settings';
 import { useSettings } from '../settings/useSettings';
 
 /**
@@ -181,7 +181,7 @@ function LogButton({ onOpen, inMenu = false }: { onOpen: () => void; inMenu?: bo
 /**
  * The play screen's menu behind a round icon button (MD.5a): the game's own entries under the
  * scenario's name (the status row's buttons a phone moves into it, given by `children` with the
- * way to close the menu as they act, and the game's export), the table by night or by day, then
+ * way to close the menu as they act, and the game's export), the table skins, then
  * the way back to the game list and the settings, which the title bar holds on the other screens.
  * The play screen leaves the title bar out, so the table keeps its height.
  */
@@ -238,7 +238,7 @@ function GameMenu({
   );
 }
 
-/** The table by night or by day, as in Settings, so the players change it without leaving play. */
+/** The table skins, as in Settings, so the players change the table without leaving play. */
 function TableMenuSection() {
   const { t } = useTranslation();
   const [settings, update] = useSettings();
@@ -246,15 +246,15 @@ function TableMenuSection() {
     <section aria-labelledby="game-menu-table">
       <h3 id="game-menu-table">{t('settings.table')}</h3>
       <ul>
-        {THEMES.map((theme) => (
-          <li key={theme}>
+        {TABLE_SKINS.map((tableSkin) => (
+          <li key={tableSkin}>
             <button
               type="button"
-              data-icon={theme === 'dark' ? 'night' : 'day'}
-              aria-pressed={settings.theme === theme}
-              onClick={() => update({ theme })}
+              data-icon={isLightSkin(tableSkin) ? 'day' : 'night'}
+              aria-pressed={settings.tableSkin === tableSkin}
+              onClick={() => update({ tableSkin })}
             >
-              {t(`settings.themes.${theme}`)}
+              {t(`settings.tableSkins.${tableSkin}`)}
             </button>
           </li>
         ))}

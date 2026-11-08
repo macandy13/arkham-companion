@@ -9,7 +9,6 @@ import {
   CHAOS_DRAWS,
   ENEMY_TOKEN_FACES,
   TABLE_SKINS,
-  THEMES,
   TOKEN_SETS,
   UI_LANGUAGES,
   type Settings,
@@ -27,9 +26,9 @@ interface SettingsScreenProps {
 /**
  * Route `/settings` (MD.3c), written like a form of the campaign guide: one row per subject, its
  * label in a column of spaced capitals and its fields as written lines. The collection is one line
- * that opens its own page (`CollectionScreen`); the table is picked by its playmat, its light is a
- * segmented choice, the token set by a row of its tokens, and who draws the chaos tokens a
- * segmented choice too. Every change is saved at once (`useSettings`). It ends with the notice that the app is an unofficial
+ * that opens its own page (`CollectionScreen`); the table is picked by its playmat, the token set
+ * by a row of its tokens, and who draws the chaos tokens is a segmented choice. Every change is
+ * saved at once (`useSettings`). It ends with the notice that the app is an unofficial
  * fan project, with the publisher's copyright credit, which the fan content policy requires for
  * using the game's names; card art is never bundled, only fetched from ArkhamDB on the device.
  */
@@ -102,19 +101,6 @@ export function SettingsScreen({ packs = [] }: SettingsScreenProps) {
                   onChange={() => update({ tableSkin })}
                 />
                 {t(`settings.tableSkins.${tableSkin}`)}
-              </label>
-            ))}
-          </fieldset>
-          <fieldset aria-label={t('settings.theme')} data-segmented>
-            {THEMES.map((theme) => (
-              <label key={theme}>
-                <input
-                  type="radio"
-                  name="theme"
-                  checked={settings.theme === theme}
-                  onChange={() => update({ theme })}
-                />
-                {t(`settings.themes.${theme}`)}
               </label>
             ))}
           </fieldset>

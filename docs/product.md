@@ -238,7 +238,7 @@ The mockup of all card types in the three drawn themes, with the measuring overl
 
 **Three materials.**
 
-- **Table:** the playmat, by night or by day. It carries the game screen, the app bar, menus, toasts and the loading screen. A *skin* is a playmat plus the table tokens (background tones, an accent with light and deep shades, text, lines, header shade): Night and brass (today's), The Stars Are Right (a dark star chart with a nebula), Sunken R'lyeh (a drowned city with tentacles). The resource colour gets its own token instead of the accent.
+- **Table:** the playmat. It carries the game screen, the app bar, menus, toasts and the loading screen. A *skin* is a playmat plus the table tokens (background tones, an accent with light and deep shades, text, lines, header shade): Night and brass (today's), The Stars Are Right (a dark star chart with a nebula), Sunken R'lyeh (a drowned city with tentacles) and Parchment, the one light table for a bright room. The resource colour gets its own token instead of the accent.
 - **Paper:** a campaign-guide page (`#dccaa2`, edge `#bba06e`, ink `#2c2216`), the same in both themes. Every dialog and every screen's content is printed on it.
 - **Cards:** the [card themes](#card-themes-m310), unchanged. Paper, ink, cards and game colours never change with the skin.
 

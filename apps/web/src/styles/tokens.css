@@ -20,12 +20,12 @@
   --color-accent-light: var(--color-brass-light);
   --color-accent-deep: var(--color-brass-deep);
   --table-button: linear-gradient(var(--color-accent-light), var(--color-accent-deep));
-  /* Resources stay gold on every table, whatever the skin's accent; darker by day. */
+  /* Resources stay gold on every table, whatever the skin's accent; darker on parchment. */
   --color-resource: #c9a45c;
   /*
    * The table's own colours, captured here where no paper has redefined the colour tokens, so a
-   * menu opened over paper takes them back (MD.5a). `var()` resolves on the root element, by night
-   * or by day, and the captured values are inherited as they are.
+   * menu opened over paper takes them back (MD.5a). `var()` resolves on the root element, on every
+   * table, and the captured values are inherited as they are.
    */
   --table-background: var(--color-background);
   --table-text: var(--color-text);
@@ -47,12 +47,13 @@
   /* The play screen's header row darkens the playmat towards the top of the screen. */
   --header-shade: linear-gradient(to bottom, rgb(5 12 10 / 90%), rgb(5 12 10 / 35%));
   /*
-   * Every table's playmat by night, our own drawings, for the skins and the Settings page's
+   * Every table's playmat, our own drawings, for the skins and the Settings page's
    * previews of them; `--playmat` lies behind every screen.
    */
   --playmat-night-and-brass: url('./playmat.svg');
   --playmat-stars: url('./playmat_stars.svg');
   --playmat-rlyeh: url('./playmat_rlyeh.svg');
+  --playmat-parchment: url('./playmat_parchment.svg');
   --playmat: var(--playmat-night-and-brass);
   /* Tokens on the map, coloured like the game's own: blue-green clues, red doom. */
   --color-clue: #3f9bb5;
@@ -739,7 +740,7 @@
   /*
    * The paper every screen outside play and every dialog is printed on (MD.1): a campaign guide's
    * page, the same in both themes, with ink for text and rules and a deep brass for accents. Its
-   * rim is a shade darker, like a worn page. The game's colours take their deeper shades by day,
+   * rim is a shade darker, like a worn page. The game's colours take their deeper shades on parchment,
    * which read on the paper.
    */
   --color-paper: #dccaa2;
@@ -970,7 +971,7 @@
 :root[data-theme='light'] {
   color-scheme: light;
 
-  /* The playmat by day: parchment, dark brass for lines and accents, ink for text. */
+  /* The parchment table (`TableSkin`): dark brass for lines and accents, ink for text. */
   --color-background: #e8dcbf;
   --color-surface: rgb(250 245 232 / 85%);
   --color-border: rgb(138 106 44 / 40%);
@@ -988,11 +989,11 @@
   --color-menu-hover: rgb(138 106 44 / 14%);
   --color-menu-danger: #a8413b;
   --menu-shadow: 0 var(--space-2) var(--space-4) rgb(40 30 15 / 30%);
-  --playmat: url('./playmat_light.svg');
+  --playmat: var(--playmat-parchment);
   --panel-frame: url('./panel_frame_light.svg');
   /*
-   * By day the notices are parchment, a shade darker towards their edges like an old page; by
-   * night they stay the see-through night.
+   * On the parchment table the notices are parchment, a shade darker towards their edges like an
+   * old page; on the dark tables they stay see-through.
    */
   --panel-paper: radial-gradient(
     ellipse at center,
@@ -1003,11 +1004,10 @@
 }
 
 /*
- * The table skins (MD.7, `TableSkin`): each brings its playmat and table colours by night; by day
- * the table is the parchment one with the skin's accent as its ink. Paper, cards and the game's
- * colours stay as they are. Each playmat is fetched only where it is shown.
+ * The dark table skins (MD.7, `TableSkin`): each brings its playmat and table colours. Paper, cards
+ * and the game's colours stay as they are. Each playmat is fetched only where it is shown.
  */
-:root[data-skin='stars']:not([data-theme='light']) {
+:root[data-skin='stars'] {
   /* The Stars Are Right: a star chart in the night sky, a nebula, lines in pale violet. */
   --color-background: #0a0820;
   --color-surface: rgb(18 16 48 / 88%);
@@ -1021,9 +1021,11 @@
   --color-menu-hover: rgb(185 179 230 / 16%);
   --header-shade: linear-gradient(to bottom, rgb(8 7 22 / 90%), rgb(8 7 22 / 35%));
   --playmat: var(--playmat-stars);
+  --color-accent-light: #dcd8f7;
+  --color-accent-deep: #8d85c8;
 }
 
-:root[data-skin='rlyeh']:not([data-theme='light']) {
+:root[data-skin='rlyeh'] {
   /* Sunken R'lyeh: a drowned city under deep water, lines in sea green. */
   --color-background: #031416;
   --color-surface: rgb(5 30 32 / 88%);
@@ -1037,28 +1039,8 @@
   --color-menu-hover: rgb(95 196 176 / 16%);
   --header-shade: linear-gradient(to bottom, rgb(2 14 16 / 90%), rgb(2 14 16 / 35%));
   --playmat: var(--playmat-rlyeh);
-}
-
-:root[data-skin='stars'] {
-  --color-accent-light: #dcd8f7;
-  --color-accent-deep: #8d85c8;
-}
-
-:root[data-skin='rlyeh'] {
   --color-accent-light: #93e3d2;
   --color-accent-deep: #3a9a88;
-}
-
-:root[data-skin='stars'][data-theme='light'] {
-  --color-border: rgb(79 71 150 / 40%);
-  --color-accent: #4f4796;
-  --color-menu-hover: rgb(79 71 150 / 14%);
-}
-
-:root[data-skin='rlyeh'][data-theme='light'] {
-  --color-border: rgb(44 122 108 / 40%);
-  --color-accent: #2c7a6c;
-  --color-menu-hover: rgb(44 122 108 / 14%);
 }
 
 /*

@@ -624,12 +624,12 @@ export const appTexts = {
     uiLanguage: 'App-Sprache',
     table: 'Tisch',
     cards: 'Karten',
-    theme: 'Licht',
     tableSkin: 'Tischdesign',
     tableSkins: {
       nightAndBrass: 'Nacht und Messing',
       stars: 'Wenn die Sterne richtig stehen',
       rlyeh: 'Versunkenes R’lyeh',
+      parchment: 'Pergament',
     },
     tokens: 'Marker',
     chaosBag: 'Chaosbeutel',
@@ -639,7 +639,6 @@ export const appTexts = {
       'Mit eurem eigenen Beutel zeigt die Fertigkeitsprobe keinen Ziehen-Knopf, nur euren Wert für den Marker, den ihr zieht.',
     tokenSet: 'Markerset',
     tokenSets: { resin: 'Harzkuppel', cardboard: 'Pappe' },
-    themes: { dark: 'Bei Nacht', light: 'Bei Tag' },
     cardTheme: 'Kartenstil',
     cardThemes: {
       exact: 'Exakt',

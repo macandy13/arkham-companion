@@ -1,7 +1,7 @@
 import { expect, test } from './fixtures/test';
 
 // Journey: change the preferences and see the app react.
-test('change the settings', async ({ page }) => {
+test('change the settings', { tag: '@flow' }, async ({ page }) => {
   await test.step('Open the settings', async () => {
     await page.goto('/#/settings');
     await expect(page.getByRole('heading', { level: 1, name: 'Settings' })).toBeVisible();
@@ -26,8 +26,8 @@ test('change the settings', async ({ page }) => {
     await expect(page.getByRole('heading', { level: 1, name: 'Einstellungen' })).toBeVisible();
   });
 
-  await test.step('Lay the table by day', async () => {
-    await page.getByRole('radio', { name: 'Bei Tag' }).check();
+  await test.step('Lay the parchment table', async () => {
+    await page.getByRole('radio', { name: 'Pergament' }).check();
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
   });
 

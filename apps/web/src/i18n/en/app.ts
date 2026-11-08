@@ -620,12 +620,12 @@ export const appTexts = {
     uiLanguage: 'App language',
     table: 'Table',
     cards: 'Cards',
-    theme: 'Light',
     tableSkin: 'Table skin',
     tableSkins: {
       nightAndBrass: 'Night and brass',
       stars: 'The Stars Are Right',
       rlyeh: 'Sunken R’lyeh',
+      parchment: 'Parchment',
     },
     tokens: 'Tokens',
     chaosBag: 'Chaos bag',
@@ -635,7 +635,6 @@ export const appTexts = {
       'With your own bag the skill test shows no Draw button, only your total to hold against the token you draw.',
     tokenSet: 'Token set',
     tokenSets: { resin: 'Resin dome', cardboard: 'Cardboard' },
-    themes: { dark: 'By night', light: 'By day' },
     cardTheme: 'Card style',
     cardThemes: {
       exact: 'Exact',
