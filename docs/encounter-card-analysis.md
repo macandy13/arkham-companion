@@ -28,7 +28,7 @@ The scripts, the patterns with their statuses and the per-card results live in t
 
 ## Support tiers
 
-Each special case is put in one tier. The tier decides how much code a card needs. The names match the per-game automation level planned in [M7](https://github.com/macandy13/arkham-companion/issues/270) (display / assist / auto).
+Each special case is put in one tier. The tier decides how much code a card needs. The names match the per-game automation level planned in [M1V.5 Card effect automation](https://github.com/macandy13/arkham-companion/issues/310): display / assist / auto.
 
 - **Auto** – The engine applies the effect. When: It only touches state the app tracks: doom, clues, enemies, locations, encounter deck, damage and horror, actions, resources.
 - **Assist** – The engine raises a decision with prefilled options and applies the answer. When: The effect needs a choice or a test result, but its outcome is tracked state.
