@@ -40,6 +40,7 @@ import {
 } from './enemies';
 import {
   cluesHeldAt,
+  cluesHeldByGroup,
   isActiveInvestigator,
   playerOrder,
   requireInvestigator,
@@ -430,9 +431,10 @@ export type AbilityCondition =
   | { kind: 'tokensOnSelf'; token: TokenKind; atLeast: ScaledValue }
   /**
    * The investigators at the only copy of `location` who may spend clues (`clueSpendersAt`) hold
-   * at least `atLeast` between them, so they can pay a `spendCluesAsGroup` there (The Barrier).
+   * at least `atLeast` between them, so they can pay a `spendCluesAsGroup` there (The Barrier);
+   * without a location, all of them anywhere ("Where There's Smoke…").
    */
-  | { kind: 'cluesHeldAt'; location: CardCode; atLeast: ScaledValue };
+  | { kind: 'cluesHeldAt'; location?: CardCode; atLeast: ScaledValue };
 
 /**
  * The cards a `victoryDisplayHolds` condition counts: those with `trait` and, if `unique`, only
@@ -708,11 +710,8 @@ function conditionHolds(
       return held >= resolveValue(condition.atLeast, state.meta.playerCount);
     }
     case 'cluesHeldAt': {
-      const location = theOnlyCopy(state, condition.location);
-      return (
-        location !== undefined &&
-        cluesHeldAt(ctx, state, location) >= resolveValue(condition.atLeast, state.meta.playerCount)
-      );
+      const held = cluesHeldForObjective(ctx, state, condition.location);
+      return held >= resolveValue(condition.atLeast, state.meta.playerCount);
     }
     default:
       return assertNever(condition);
@@ -1284,11 +1283,11 @@ export function tokenObjective(stats: CardStats, token: TokenKind): ScaledValue 
 
 /**
  * The clues an act's `advanceBySpendingCluesAtRoundEnd` asks of the investigators at `location`
- * (The Barrier's Hallway); none for an act without one.
+ * (The Barrier's Hallway), or of all of them when it names none; undefined for an act without one.
  */
 export function roundEndClueObjective(
   stats: CardStats,
-): { clues: ScaledValue; location: CardCode } | undefined {
+): { clues: ScaledValue; location?: CardCode } | undefined {
   const objective = (stats.abilities ?? [])
     .filter((ability) => ability.window.kind === 'roundEnds')
     .map((ability) => ability.condition)
@@ -1296,6 +1295,21 @@ export function roundEndClueObjective(
   return objective?.kind === 'cluesHeldAt'
     ? { clues: objective.atLeast, location: objective.location }
     : undefined;
+}
+
+/**
+ * The clues a round-end objective can count on: those of the investigators at the only copy of
+ * `location` (none while it is out of play), or of every investigator who may spend clues when
+ * the objective names no location.
+ */
+export function cluesHeldForObjective(
+  ctx: EngineContext,
+  state: GameState,
+  location: CardCode | undefined,
+): number {
+  if (location === undefined) return cluesHeldByGroup(ctx, state);
+  const locationId = theOnlyCopy(state, location);
+  return locationId === undefined ? 0 : cluesHeldAt(ctx, state, locationId);
 }
 
 /**
@@ -1647,21 +1661,23 @@ export function removeChaosToken(token: ChaosToken, lasts: ChaosBagChangeLasts):
 /**
  * "Investigators in the Hallway may, as a group, spend the requisite number of clues" (The
  * Barrier): those at `location` pay `amount` together, written
- * `spendCluesAsGroup(perInvestigator(3), onlyCopy(codes.hallway))`.
+ * `spendCluesAsGroup(perInvestigator(3), onlyCopy(codes.hallway))`; without a location, the
+ * investigators anywhere do.
  */
-export function spendCluesAsGroup(amount: ScaledValue, location: RelativeCard): AbilityEffect {
-  return { type: 'SpendCluesAsGroup', amount, locationId: location };
+export function spendCluesAsGroup(amount: ScaledValue, location?: RelativeCard): AbilityEffect {
+  return { type: 'SpendCluesAsGroup', amount, ...(location && { locationId: location }) };
 }
 
 /**
  * "When the round ends, investigators in the Hallway may, as a group, spend the requisite number
  * of clues to advance" (The Barrier): at the end of each round, once those at `location` hold
  * `clues`, the lead decides for the group (`decision`) whether they spend them and advance the act.
+ * Without a location ("Where There's Smoke…") every investigator's clues count.
  */
 export function advanceBySpendingCluesAtRoundEnd(
   decision: DecisionId,
   clues: ScaledValue,
-  location: CardCode,
+  location?: CardCode,
 ): Ability {
   return {
     window: { kind: 'roundEnds' },
@@ -1671,7 +1687,7 @@ export function advanceBySpendingCluesAtRoundEnd(
         {
           id: 'spend',
           label: 'decision.spendClues',
-          effects: [spendCluesAsGroup(clues, onlyCopy(location)), advanceAct()],
+          effects: [spendCluesAsGroup(clues, location && onlyCopy(location)), advanceAct()],
         },
         { id: 'keep', label: 'decision.keepClues', effects: [] },
       ]),

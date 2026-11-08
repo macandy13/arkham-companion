@@ -778,6 +778,61 @@ describe('advancing the act by spending clues at the end of the round', () => {
   });
 });
 
+describe('advancing the act by spending clues anywhere at the end of the round', () => {
+  const firstAct = instanceId('first_act');
+  const spendAnywhere = decisionId('spend_anywhere');
+  /** Both turns, then the enemy and upkeep phases, which end the round. */
+  const endTheRound: Command[] = [
+    { type: 'EndTurn', investigatorId: alice },
+    { type: 'StartTurn', investigatorId: bob },
+    { type: 'EndTurn', investigatorId: bob },
+    { type: 'NextPhase' },
+    { type: 'NextPhase' },
+  ];
+  /**
+   * The first act names no location: the investigators anywhere spend 1 clue per investigator as
+   * the round ends. Alice holds 1 clue in the hall, bob 1 in the cellar.
+   */
+  const actWithoutLocation = () =>
+    newGame()
+      .withLocation(hall, blankLocation('hall'), { revealed: true })
+      .withLocation(cellar, blankLocation('cellar'), { revealed: true })
+      .withAct(
+        firstAct,
+        blankAct('first_act', {
+          abilities: [advanceBySpendingCluesAtRoundEnd(spendAnywhere, perInvestigator(1))],
+        }),
+      )
+      .withAct(instanceId('second_act'), blankAct('second_act'))
+      .withInvestigator(alice, { locationId: hall, clues: 1 })
+      .withInvestigator(bob, { locationId: cellar, clues: 1 })
+      .withTurnOf(alice);
+
+  it('counts the clues of alice in the hall and bob in the cellar together', () => {
+    const table = PlayTable.start(actWithoutLocation());
+
+    expect(table.board.act?.advance).toEqual({
+      kind: 'spendCluesAtRoundEnd',
+      held: 2,
+      threshold: 2,
+    });
+  });
+
+  it('asks as the round ends, and alice and bob each pay a clue to advance', () => {
+    const { context, state } = actWithoutLocation().start();
+    const asked = stateAfter(context, state, ...endTheRound);
+
+    const spent = stateAfter(context, asked, answer(spendAnywhere, 'spend'));
+
+    expect(asked.pending.map((decision) => decision.id)).toEqual([spendAnywhere]);
+    expect(spent.act.current).toBe(instanceId('second_act'));
+    expect(spent.investigators.map((inv) => [inv.id, inv.clues])).toEqual([
+      [alice, 0],
+      [bob, 0],
+    ]);
+  });
+});
+
 describe('the card a deferred step came from', () => {
   const library = instanceId('library');
   const choiceId = decisionId('library.choice');

@@ -91,9 +91,10 @@ function actLine(ctx: EngineContext, state: GameState): string {
   const stats = ctx.cards.get(act.code);
   const atRoundEnd = stats && roundEndClueObjective(stats);
   const clues = stats && (cluesToAdvance(stats) ?? atRoundEnd?.clues);
-  const where = atRoundEnd
-    ? ` at ${ctx.cards.get(atRoundEnd.location)?.name ?? atRoundEnd.location} when the round ends`
-    : '';
+  const at = atRoundEnd?.location;
+  const where =
+    (at === undefined ? '' : ` at ${ctx.cards.get(at)?.name ?? at}`) +
+    (atRoundEnd ? ' when the round ends' : '');
   const requirement =
     clues === undefined
       ? 'no clue requirement'
