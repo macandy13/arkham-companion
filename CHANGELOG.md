@@ -2,6 +2,14 @@
 
 The sections dated up to 2026-10-22 were released as 1.0.0 to 1.8.0 by mistake: Release Please starts at 1.0.0 by default. Versioning restarted at 0.1.0 (see "Versions" in docs/product.md).
 
+## [0.1.34](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v0.1.33...arkham-companion-v0.1.34) (2026-11-08)
+
+
+### Features
+
+* **web:** chaos bag on the scenario card's page, seal and release (M6.1b) ([75e5db7](https://github.com/macandy13/arkham-companion/commit/75e5db73e620097d2c210211b34efc685ccc7b3e))
+* **web:** table skins The Stars Are Right and Sunken R'lyeh (MD.7) ([781ee74](https://github.com/macandy13/arkham-companion/commit/781ee74ae3a246c6c15537d19312fc1e76e2345e))
+
 ## [0.1.33](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v0.1.32...arkham-companion-v0.1.33) (2026-11-08)
 
 
