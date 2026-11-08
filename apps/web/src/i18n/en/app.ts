@@ -300,6 +300,11 @@ export const appTexts = {
     campaignLog: 'Campaign log',
   },
   nav: { label: 'Main' },
+  offline: {
+    save: 'Save pictures for offline play',
+    saving: 'Saving pictures: {{count}} of {{total}}',
+    saved: 'Pictures saved: {{count}} of {{total}}',
+  },
   game: {
     unplayable: "This game can't be played: this version of the app does not have its scenario.",
   },

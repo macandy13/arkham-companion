@@ -6,6 +6,7 @@ import { ROUND_PHASES, type BoardView } from '@arkham/engine';
 import type { AppState, OpenGame } from '../state/appStore';
 import { GameLogDialog } from '../log/GameLogDialog';
 import { GameExportButton } from './GameExportButton';
+import { SavePicturesButton } from './SavePicturesButton';
 import { isLightSkin, TABLE_SKINS } from '../settings/settings';
 import { useSettings } from '../settings/useSettings';
 
@@ -125,6 +126,9 @@ export function GameStatus({
                 />
               </li>
             )}
+            <li>
+              <SavePicturesButton board={board} />
+            </li>
           </>
         )}
       </GameMenu>
