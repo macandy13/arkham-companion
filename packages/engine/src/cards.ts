@@ -196,7 +196,7 @@ export interface CardStats {
 /**
  * A location's connection symbol (`CardStats.symbol`). The game prints fifteen
  * (`docs/location-symbols.md`); each joins this union with the first location that needs it,
- * together with its glyph in the web app.
+ * together with its glyph in the web app (the Core Set (2026)'s four joined together).
  */
 export type LocationSymbol =
   | 'circle'

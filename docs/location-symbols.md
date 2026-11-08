@@ -12,23 +12,23 @@ Front and back are ArkhamDB's sides: for most packs the back is the unrevealed s
 
 Fifteen glyphs, each always in the same colour. The hex values are the ones the app uses, sampled from Night of the Zealot's pictures, heart and star from Return to the Night of the Zealot's (Bedroom, Bathroom), spade and clover from the Core Set (2026)'s (Your Friend's Room, Sewer Tunnels); comma gets its value with its task, checked against a card. The name is the suggested `LocationSymbol` value.
 
-| Symbol         | Glyph       | Colour                | Sides | First needed by                             | Task            |
-| -------------- | ----------- | --------------------- | ----- | ------------------------------------------- | --------------- |
-| `circle`       | circle      | gold `#a78f32`        | 143   | The Gathering                               | M3.14d ([#448]) |
-| `square`       | square      | red `#8f2e2f`         | 163   | The Gathering                               | M3.14d ([#448]) |
-| `triangle`     | triangle    | blue `#3b5775`        | 154   | The Gathering                               | M3.14d ([#448]) |
-| `plus`         | plus        | dark red `#4a2219`    | 105   | The Gathering                               | M3.14d ([#448]) |
-| `diamond`      | diamond     | green `#557f47`       | 138   | The Gathering                               | M3.14d ([#448]) |
-| `tilde`        | squiggle    | brown `#5c4a2e`       | 125   | The Midnight Masks (Your House)             | [#626]          |
-| `moon`         | crescent    | purple-pink `#74404f` | 148   | The Midnight Masks (Easttown)               | [#626]          |
-| `hourglass`    | hourglass   | maroon `#3e1f28`      | 87    | The Midnight Masks (Graveyard)              | [#626]          |
-| `t`            | T           | navy `#1d2129`        | 83    | The Midnight Masks (Northside)              | [#626]          |
-| `double_slash` | two slashes | dark green `#2f3f2c`  | 96    | The Devourer Below (Arkham Woods)           | [#626]          |
-| `heart`        | heart       | orange `#ad6335`      | 80    | Core Set (2026) (Miskatonic Quad's foot)    | [#638]          |
-| `star`         | star        | dark purple `#322331` | 88    | Core Set (2026) (Sewer Tunnels)             | [#638]          |
-| `comma`        | curl        | rust                  | 36    | Return to the Devourer Below (Arkham Woods) | [#637]          |
-| `spade`        | spade       | pink `#ab629b`        | 15    | Core Set (2026) (Your Friend's Room)        | [#638]          |
-| `clover`       | clover      | sage `#82946d`        | 31    | Core Set (2026) (Sewer Tunnels)             | [#638]          |
+| Symbol         | Glyph       | Colour                | Sides | First needed by                                 | Task            |
+| -------------- | ----------- | --------------------- | ----- | ----------------------------------------------- | --------------- |
+| `circle`       | circle      | gold `#a78f32`        | 143   | The Gathering                                   | M3.14d ([#448]) |
+| `square`       | square      | red `#8f2e2f`         | 163   | The Gathering                                   | M3.14d ([#448]) |
+| `triangle`     | triangle    | blue `#3b5775`        | 154   | The Gathering                                   | M3.14d ([#448]) |
+| `plus`         | plus        | dark red `#4a2219`    | 105   | The Gathering                                   | M3.14d ([#448]) |
+| `diamond`      | diamond     | green `#557f47`       | 138   | The Gathering                                   | M3.14d ([#448]) |
+| `tilde`        | squiggle    | brown `#5c4a2e`       | 125   | The Midnight Masks (Your House)                 | [#626]          |
+| `moon`         | crescent    | purple-pink `#74404f` | 148   | The Midnight Masks (Easttown)                   | [#626]          |
+| `hourglass`    | hourglass   | maroon `#3e1f28`      | 87    | The Midnight Masks (Graveyard)                  | [#626]          |
+| `t`            | T           | navy `#1d2129`        | 83    | The Midnight Masks (Northside)                  | [#626]          |
+| `double_slash` | two slashes | dark green `#2f3f2c`  | 96    | The Devourer Below (Arkham Woods)               | [#626]          |
+| `heart`        | heart       | orange `#ad6335`      | 80    | Core Set (2026) (Miskatonic Quad's connections) | [#638]          |
+| `star`         | star        | dark purple `#322331` | 88    | Core Set (2026) (Sewer Tunnels)                 | [#638]          |
+| `comma`        | curl        | rust                  | 36    | Return to the Devourer Below (Arkham Woods)     | [#637]          |
+| `spade`        | spade       | pink `#ab629b`        | 15    | Core Set (2026) (Your Friend's Room)            | [#638]          |
+| `clover`       | clover      | sage `#82946d`        | 31    | Core Set (2026) (Sewer Tunnels)                 | [#638]          |
 
 Two more cases are not glyphs:
 
