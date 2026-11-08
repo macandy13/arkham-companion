@@ -11,6 +11,7 @@ import {
   type InvestigatorStat,
   type PlayTable,
   type BasicAction,
+  type ChaosToken,
   type ResolveDecision,
   type SkillName,
   type TokenKind,
@@ -168,6 +169,10 @@ export interface GameActions {
    * engages it there by the rules (prey, Aloof), as if a card effect spawned it there.
    */
   spawnEnemy(enemy: InstanceId, location: InstanceId): Promise<void>;
+  /** Seals one `token` from the chaos bag on a card `investigator` controls, as the card says. */
+  sealToken(investigator: InvestigatorId, token: ChaosToken): Promise<void>;
+  /** Releases one `token` sealed on `investigator` back into the chaos bag. */
+  releaseToken(investigator: InvestigatorId, token: ChaosToken): Promise<void>;
   /** Doom on the current agenda. */
   placeDoom(amount: number): Promise<void>;
   /** Doom taken off the current agenda by hand (a card effect, a miscount). */
@@ -351,6 +356,12 @@ export function gameActions(
       ),
     spawnEnemy: (enemy, location) =>
       play((table) => table.play({ type: 'SpawnEnemy', enemyId: enemy, at: location })),
+    sealToken: (investigator, token) =>
+      play((table) => table.play({ type: 'SealChaosToken', token, investigatorId: investigator })),
+    releaseToken: (investigator, token) =>
+      play((table) =>
+        table.play({ type: 'ReleaseChaosToken', token, investigatorId: investigator }),
+      ),
     placeDoom: (amount) => play((table) => table.placeDoom(amount)),
     removeDoom: (amount) => play((table) => table.removeDoom(amount)),
     revealLocation: (location) =>

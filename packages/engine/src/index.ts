@@ -106,6 +106,7 @@ export { enemyAttackList, type EnemyAttack } from './enemies';
 export { describeDecision, optionName, optionNamed } from './describe_decision';
 export { confirmOptions, skillTestDecision, type SkillTestOutcomes } from './decisions';
 export { drawTokens, testFinished } from './draw_tokens';
+export { tokenCounts, type TokenCount } from './chaos_bag';
 export {
   revealsAnotherToken,
   skillTestContext,
