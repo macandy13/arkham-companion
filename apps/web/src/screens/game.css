@@ -57,7 +57,7 @@
     stretch;
 }
 
-/* By day the notices are parchment. */
+/* On the parchment table the notices are parchment. */
 :root[data-theme='light'] #notices > aside:not([data-toast]) {
   background: var(--panel-paper);
 }

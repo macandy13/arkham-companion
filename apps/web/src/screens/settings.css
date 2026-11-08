@@ -108,7 +108,7 @@
 }
 
 /*
- * The table skins as small pictures of their playmats by night, each named under it; the chosen
+ * The table skins as small pictures of their playmats, each named under it; the chosen
  * one framed in the accent's ink, the radios themselves hidden
  * (base.css).
  */
@@ -162,6 +162,10 @@
 
 #settings label[data-skin='rlyeh'] {
   --skin-playmat: var(--playmat-rlyeh);
+}
+
+#settings label[data-skin='parchment'] {
+  --skin-playmat: var(--playmat-parchment);
 }
 
 /* The collection: a campaign's name over its boxes, each a tick on the line. */

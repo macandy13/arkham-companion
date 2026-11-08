@@ -18,16 +18,13 @@ export const CARD_LANGUAGES = [
 ] as const;
 export type CardLanguage = (typeof CARD_LANGUAGES)[number];
 
-export const THEMES = ['dark', 'light'] as const;
-export type Theme = (typeof THEMES)[number];
-
 /**
  * The table the app lies on (MD.7, product.md "Design language"): a playmat with its own table
- * colours, by night or by day (`Theme`). `nightAndBrass` is the sea-green table with brass,
- * `stars` a dark star chart with a nebula, `rlyeh` a drowned city. Paper, cards and the game's
- * colours stay the same on every table.
+ * colours. `nightAndBrass` is the sea-green table with brass, `stars` a dark star chart with a
+ * nebula, `rlyeh` a drowned city, `parchment` the one light table, for a bright room. Paper, cards
+ * and the game's colours stay the same on every table.
  */
-export const TABLE_SKINS = ['nightAndBrass', 'stars', 'rlyeh'] as const;
+export const TABLE_SKINS = ['nightAndBrass', 'stars', 'rlyeh', 'parchment'] as const;
 export type TableSkin = (typeof TABLE_SKINS)[number];
 
 /**
@@ -62,17 +59,15 @@ export interface Settings {
   readonly cardLanguage: CardLanguage;
   /** Unset means "follow the browser language" until the player picks one. */
   readonly uiLanguage?: UiLanguage;
-  readonly theme: Theme;
   readonly tableSkin: TableSkin;
   readonly cardTheme: CardTheme;
   readonly enemyTokens: EnemyTokenFace;
 }
 
-/** Defaults for a fresh device; dark because the app is used at a dim table. */
+/** Defaults for a fresh device; a dark table because the app is used at a dim one. */
 export const DEFAULT_SETTINGS: Settings = {
   ownedPacks: [],
   cardLanguage: 'en',
-  theme: 'dark',
   tableSkin: 'nightAndBrass',
   cardTheme: 'exact',
   enemyTokens: 'art',
@@ -95,8 +90,11 @@ function parseSettings(value: unknown): Settings {
         : DEFAULT_SETTINGS.ownedPacks,
     cardLanguage: oneOf(CARD_LANGUAGES, raw.cardLanguage) ?? DEFAULT_SETTINGS.cardLanguage,
     ...(uiLanguage && { uiLanguage }),
-    theme: oneOf(THEMES, raw.theme) ?? DEFAULT_SETTINGS.theme,
-    tableSkin: oneOf(TABLE_SKINS, raw.tableSkin) ?? DEFAULT_SETTINGS.tableSkin,
+    tableSkin:
+      oneOf(TABLE_SKINS, raw.tableSkin) ??
+      // The light table used to be its own setting, by night or by day.
+      (raw.theme === 'light' ? 'parchment' : undefined) ??
+      DEFAULT_SETTINGS.tableSkin,
     cardTheme:
       oneOf(CARD_THEMES, raw.cardTheme) ??
       (typeof raw.cardLook === 'string' ? CARD_LOOK_THEMES[raw.cardLook] : undefined) ??

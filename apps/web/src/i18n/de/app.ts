@@ -620,14 +620,13 @@ export const appTexts = {
     uiLanguage: 'App-Sprache',
     table: 'Tisch',
     cards: 'Karten',
-    theme: 'Licht',
     tableSkin: 'Tischdesign',
     tableSkins: {
       nightAndBrass: 'Nacht und Messing',
       stars: 'Wenn die Sterne richtig stehen',
       rlyeh: 'Versunkenes R’lyeh',
+      parchment: 'Pergament',
     },
-    themes: { dark: 'Bei Nacht', light: 'Bei Tag' },
     cardTheme: 'Kartenstil',
     cardThemes: {
       exact: 'Exakt',

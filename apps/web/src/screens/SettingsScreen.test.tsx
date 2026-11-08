@@ -83,13 +83,13 @@ describe('SettingsScreen', () => {
     expect(loadSettings().uiLanguage).toBe('de');
   });
 
-  it('applies and saves the theme', () => {
+  it('lays the light colours with the parchment table', () => {
     renderSettings();
 
-    fireEvent.click(screen.getByRole('radio', { name: 'By day' }));
+    fireEvent.click(screen.getByRole('radio', { name: 'Parchment' }));
 
     expect(document.documentElement.dataset.theme).toBe('light');
-    expect(loadSettings().theme).toBe('light');
+    expect(loadSettings().tableSkin).toBe('parchment');
   });
 
   it('applies and saves the table skin', () => {
