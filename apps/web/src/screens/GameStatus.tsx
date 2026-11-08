@@ -6,7 +6,7 @@ import { ROUND_PHASES, type BoardView } from '@arkham/engine';
 import type { AppState, OpenGame } from '../state/appStore';
 import { GameLogDialog } from '../log/GameLogDialog';
 import { GameExportButton } from './GameExportButton';
-import { TABLE_SKINS } from '../settings/settings';
+import { isLightSkin, TABLE_SKINS } from '../settings/settings';
 import { useSettings } from '../settings/useSettings';
 
 /**
@@ -250,7 +250,7 @@ function TableMenuSection() {
           <li key={tableSkin}>
             <button
               type="button"
-              data-icon={tableSkin === 'parchment' ? 'day' : 'night'}
+              data-icon={isLightSkin(tableSkin) ? 'day' : 'night'}
               aria-pressed={settings.tableSkin === tableSkin}
               onClick={() => update({ tableSkin })}
             >

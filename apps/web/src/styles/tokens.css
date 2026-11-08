@@ -53,7 +53,7 @@
   --playmat-night-and-brass: url('./playmat.svg');
   --playmat-stars: url('./playmat_stars.svg');
   --playmat-rlyeh: url('./playmat_rlyeh.svg');
-  --playmat-parchment: url('./playmat_light.svg');
+  --playmat-parchment: url('./playmat_parchment.svg');
   --playmat: var(--playmat-night-and-brass);
   /* Tokens on the map, coloured like the game's own: blue-green clues, red doom. */
   --color-clue: #3f9bb5;

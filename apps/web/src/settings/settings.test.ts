@@ -63,13 +63,17 @@ describe('settings storage', () => {
   });
 
   it.each([
-    { theme: 'light', tableSkin: 'parchment' },
-    { theme: 'dark', tableSkin: 'nightAndBrass' },
-  ] as const)('reads the old $theme theme as the $tableSkin table', ({ theme, tableSkin }) => {
-    localStorage.setItem(KEY, JSON.stringify({ theme }));
+    { theme: 'light', saved: 'nightAndBrass', tableSkin: 'parchment' },
+    { theme: 'light', saved: 'stars', tableSkin: 'parchment' },
+    { theme: 'dark', saved: 'stars', tableSkin: 'stars' },
+  ] as const)(
+    'reads the old $theme theme beside the $saved skin as the $tableSkin table',
+    ({ theme, saved, tableSkin }) => {
+      localStorage.setItem(KEY, JSON.stringify({ theme, tableSkin: saved }));
 
-    expect(loadSettings().tableSkin).toBe(tableSkin);
-  });
+      expect(loadSettings().tableSkin).toBe(tableSkin);
+    },
+  );
 
   it.each([
     { cardLook: 'frames', cardTheme: 'exact' },

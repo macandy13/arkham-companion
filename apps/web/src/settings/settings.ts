@@ -27,6 +27,11 @@ export type CardLanguage = (typeof CARD_LANGUAGES)[number];
 export const TABLE_SKINS = ['nightAndBrass', 'stars', 'rlyeh', 'parchment'] as const;
 export type TableSkin = (typeof TABLE_SKINS)[number];
 
+/** Whether `skin` is a light table, which the stylesheets' light colours (`data-theme`) go with. */
+export function isLightSkin(skin: TableSkin): boolean {
+  return skin === 'parchment';
+}
+
 /**
  * How card faces look (product.md, "Card themes"): `exact` draws the printed card's frame
  * ourselves and cuts the card's ArkhamDB picture out into its art area (`cardArt.ts`), `pictures`
@@ -90,10 +95,11 @@ function parseSettings(value: unknown): Settings {
         : DEFAULT_SETTINGS.ownedPacks,
     cardLanguage: oneOf(CARD_LANGUAGES, raw.cardLanguage) ?? DEFAULT_SETTINGS.cardLanguage,
     ...(uiLanguage && { uiLanguage }),
+    // The light table used to be its own setting, by night or by day, saved beside a skin; it
+    // goes on the next save, which no longer writes it.
     tableSkin:
-      oneOf(TABLE_SKINS, raw.tableSkin) ??
-      // The light table used to be its own setting, by night or by day.
       (raw.theme === 'light' ? 'parchment' : undefined) ??
+      oneOf(TABLE_SKINS, raw.tableSkin) ??
       DEFAULT_SETTINGS.tableSkin,
     cardTheme:
       oneOf(CARD_THEMES, raw.cardTheme) ??

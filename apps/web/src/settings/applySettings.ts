@@ -1,8 +1,5 @@
 import { i18next } from '../i18n';
-import type { Settings, TableSkin } from './settings';
-
-/** The one light table; the stylesheets' light colours (`data-theme`) go with it. */
-const LIGHT_SKINS: readonly TableSkin[] = ['parchment'];
+import { isLightSkin, type Settings } from './settings';
 
 /**
  * Pushes the settings that act on the document: the table skin (via `data-skin`, and `data-theme`
@@ -12,9 +9,7 @@ const LIGHT_SKINS: readonly TableSkin[] = ['parchment'];
  * module stays free of DOM and i18next.
  */
 export function applySettings(settings: Settings): void {
-  document.documentElement.dataset.theme = LIGHT_SKINS.includes(settings.tableSkin)
-    ? 'light'
-    : 'dark';
+  document.documentElement.dataset.theme = isLightSkin(settings.tableSkin) ? 'light' : 'dark';
   document.documentElement.dataset.skin = settings.tableSkin;
   document.documentElement.dataset.cardTheme = settings.cardTheme;
   document.documentElement.dataset.enemyTokens = settings.enemyTokens;
