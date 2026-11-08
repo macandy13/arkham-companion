@@ -109,7 +109,8 @@
 
 /*
  * The table skins as small pictures of their playmats by night, each named under it; the chosen
- * one framed in the accent's ink, the radios themselves hidden like the segmented choice's.
+ * one framed in the accent's ink, the radios themselves hidden
+ * (base.css).
  */
 #settings fieldset[data-skins] {
   display: flex;
@@ -149,13 +150,6 @@
 
 #settings fieldset[data-skins] > label:has(:focus-visible)::before {
   outline: var(--focus-ring-width) solid var(--color-accent);
-}
-
-#settings fieldset[data-skins] input {
-  position: absolute;
-  width: var(--hidden-size);
-  height: var(--hidden-size);
-  opacity: 0;
 }
 
 #settings label[data-skin='nightAndBrass'] {

@@ -20,8 +20,8 @@
   --color-accent-light: var(--color-brass-light);
   --color-accent-deep: var(--color-brass-deep);
   --table-button: linear-gradient(var(--color-accent-light), var(--color-accent-deep));
-  /* Resources are gold on every table, like the coins, whatever the skin's accent. */
-  --color-resource: #d6a743;
+  /* Resources stay gold on every table, whatever the skin's accent; darker by day. */
+  --color-resource: #c9a45c;
   /*
    * The table's own colours, captured here where no paper has redefined the colour tokens, so a
    * menu opened over paper takes them back (MD.5a). `var()` resolves on the root element, by night
@@ -969,6 +969,7 @@
   --color-text-muted: #6b5a3c;
   --color-accent: #8a6a2c;
   --color-accent-text: #fffaf0;
+  --color-resource: #8a6a2c;
   --color-clue: #2f7896;
   --color-doom: #a33a37;
   --color-health: #a8413b;
@@ -995,7 +996,7 @@
 /*
  * The table skins (MD.7, `TableSkin`): each brings its playmat and table colours by night; by day
  * the table is the parchment one with the skin's accent as its ink. Paper, cards and the game's
- * colours stay as they are. The playmats are fetched only on the table that shows them.
+ * colours stay as they are. Each playmat is fetched only where it is shown.
  */
 :root[data-skin='stars']:not([data-theme='light']) {
   /* The Stars Are Right: a star chart in the night sky, a nebula, lines in pale violet. */
