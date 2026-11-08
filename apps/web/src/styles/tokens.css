@@ -127,8 +127,6 @@
    * and rules, and a dark sepia edge. The same in both themes, like printed cards.
    */
   --color-parchment: #ebdfc2;
-  /* The text box of a printed card, a shade lighter than its paper. */
-  --color-parchment-light: rgb(250 244 228 / 55%);
   --color-parchment-shade: #d3bf93;
   --color-ink: #2b1e12;
   --color-ink-muted: #6a5536;
@@ -564,12 +562,15 @@
   --investigator-art-button-top: 46;
   --investigator-art-button-width: 226;
   --investigator-art-button-height: 84;
+  /* The counters' tokens on the card and their count discs; the damage or horror token on the heart or brain and its disc. */
   --investigator-token-size: 28;
-  --investigator-token-number-size: 14;
+  --investigator-token-count-size: 15;
+  --investigator-token-number-size: 11;
   --investigator-symbol-size: 36;
   --investigator-symbol-number-size: 24;
-  --investigator-count-size: 17;
-  --investigator-count-number-size: 11;
+  --investigator-count-size: 22;
+  --investigator-count-disc-size: 13;
+  --investigator-count-number-size: 9;
   /* The spiral and rules on the investigator card's notebook page, in scan units. */
   --face-spiral-width: 1.4px;
   --face-rules-width: 0.6px;
@@ -647,6 +648,7 @@
   --loose-token-size: 2.5rem;
   /* A game token's count (`GameToken`): a small dark disc over the token's lower right edge. */
   --token-count-size: 1.25rem;
+  --token-count-font-size: var(--font-size-note);
   --token-count-offset: calc(-1 * var(--space-1));
   --color-token-count: #1b1510;
   /* An enemy on the map engaged with an investigator, shown in full in their threat area. */

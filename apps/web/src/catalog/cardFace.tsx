@@ -60,7 +60,8 @@ export type CountKind = Extract<GameTokenKind, 'clue' | 'damage' | 'doom'>;
 /**
  * The current count on a printed value, in scan units: its token (`SvgGameToken`, MD.8b) on the
  * value's lower right with the count in its disc (the clues left on a location's clue value, the
- * damage on an enemy's health), so one element shows both. Every card type and every card theme
+ * damage on an enemy's health), so one element shows both, or a count of its own, such as a
+ * location's doom. Every card type and every card theme
  * draws it the same way; a count of none fades (`data-empty`). Named for assistive technology by
  * `label`, since the number alone does not say what it counts. A change of the count while it
  * shows plays its effect (`useCountChange`, `RisingDelta`).

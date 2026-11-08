@@ -86,6 +86,23 @@
   --token-plain: var(--token-plain-resource);
 }
 
+/*
+ * The count disc's sizes are lengths by the time they reach it: set inside a container in that
+ * container's units (the investigator card's scan units), they would otherwise resolve inside the
+ * token, which is a size container itself, and shrink with it.
+ */
+@property --token-count-size {
+  syntax: '<length>';
+  inherits: true;
+  initial-value: 0px;
+}
+
+@property --token-count-font-size {
+  syntax: '<length>';
+  inherits: true;
+  initial-value: 0px;
+}
+
 /* The count: a small dark disc with a pale rim at the token's lower right, over its edge. */
 [data-game-token] > data {
   position: absolute;
@@ -102,7 +119,7 @@
   background: var(--color-token-count);
   color: var(--color-count-rim);
   font-family: var(--font-family);
-  font-size: var(--font-size-note);
+  font-size: var(--token-count-font-size);
   font-weight: bold;
   font-variant-numeric: lining-nums tabular-nums;
   line-height: 1;

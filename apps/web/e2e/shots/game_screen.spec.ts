@@ -153,20 +153,22 @@ test(
   },
 );
 
-test('Roland Banks’ whole card in the card pictures style, his counters live on the printed card', async ({
-  page,
-}) => {
-  await page.goto('/#/settings');
-  await page.getByLabel('Card style').selectOption('Card pictures');
-  await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
-  const roland = page.getByRole('region', { name: 'Roland Banks' });
-  await expect(roland.getByRole('article')).toHaveAttribute('data-picture', 'shown');
+test(
+  'Roland Banks’ whole card in the card pictures style, his counters live on the printed card',
+  { tag: '@shot' },
+  async ({ page }) => {
+    await page.goto('/#/settings');
+    await page.getByLabel('Card style').selectOption('Card pictures');
+    await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
+    const roland = page.getByRole('region', { name: 'Roland Banks' });
+    await expect(roland.getByRole('article')).toHaveAttribute('data-picture', 'shown');
 
-  await roland.getByRole('button', { name: "Show Roland Banks's card" }).click();
+    await roland.getByRole('button', { name: "Show Roland Banks's card" }).click();
 
-  const card = page.getByRole('dialog', { name: 'Roland Banks' }).getByRole('article');
-  await expect(card).toHaveAttribute('data-picture', 'shown');
-});
+    const card = page.getByRole('dialog', { name: 'Roland Banks' }).getByRole('article');
+    await expect(card).toHaveAttribute('data-picture', 'shown');
+  },
+);
 
 test('the house map in the Eldritch card style', async ({ page }) => {
   await page.goto('/#/settings');
@@ -224,24 +226,28 @@ test("the Ghoul Priest's details in the Eldritch card style: a blackletter name,
   await expect(page.getByRole('dialog', { name: 'Ghoul Priest' })).toBeVisible();
 });
 
-test("the Ghoul Priest's details in the card pictures style, its damage on the printed health", async ({
-  page,
-}) => {
-  await page.goto('/#/settings');
-  await page.getByLabel('Card style').selectOption('Card pictures');
-  await resumeImportedGame(
-    page,
-    'Roland Banks threatened',
-    rolandThreatenedExport('Roland Banks threatened'),
-  );
-  const roland = page.getByRole('region', { name: 'Roland Banks' });
-  await roland.getByRole('button', { name: 'Later cards in the threat area' }).click();
+test(
+  "the Ghoul Priest's details in the card pictures style, its damage on the printed health",
+  { tag: '@shot' },
+  async ({ page }) => {
+    await page.goto('/#/settings');
+    await page.getByLabel('Card style').selectOption('Card pictures');
+    await resumeImportedGame(
+      page,
+      'Roland Banks threatened',
+      rolandThreatenedExport('Roland Banks threatened'),
+    );
+    const roland = page.getByRole('region', { name: 'Roland Banks' });
+    await roland.getByRole('button', { name: 'Later cards in the threat area' }).click();
 
-  await roland.getByRole('button', { name: 'Details of Ghoul Priest' }).click();
+    await roland.getByRole('button', { name: 'Details of Ghoul Priest' }).click();
 
-  const card = page.getByRole('dialog', { name: 'Ghoul Priest' }).locator('svg[data-card="enemy"]');
-  await expect(card).toHaveAttribute('data-picture', 'shown');
-});
+    const card = page
+      .getByRole('dialog', { name: 'Ghoul Priest' })
+      .locator('svg[data-card="enemy"]');
+    await expect(card).toHaveAttribute('data-picture', 'shown');
+  },
+);
 
 test('the house map in the Night and brass card style', async ({ page }) => {
   await page.goto('/#/settings');
@@ -304,17 +310,19 @@ test('Roland Banks’ combat boosted by 2, as an ally in play gives it', async (
   await expect(roland.getByRole('button', { name: 'Combat 6, boosted +2' })).toBeVisible();
 });
 
-test('Roland Banks’ card while the players adjust the board, its steppers out', async ({
-  page,
-}) => {
-  await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
-  const roland = page.getByRole('region', { name: 'Roland Banks' });
+test(
+  'Roland Banks’ card while the players adjust the board, its steppers out',
+  { tag: '@shot' },
+  async ({ page }) => {
+    await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
+    const roland = page.getByRole('region', { name: 'Roland Banks' });
 
-  await page.getByRole('button', { name: 'Adjust board' }).click();
+    await page.getByRole('button', { name: 'Adjust board' }).click();
 
-  await expect(roland.getByRole('button', { name: 'Raise the Combat boost' })).toBeVisible();
-  await expect(roland.getByRole('button', { name: 'Take damage' })).toBeVisible();
-});
+    await expect(roland.getByRole('button', { name: 'Raise the Combat boost' })).toBeVisible();
+    await expect(roland.getByRole('button', { name: 'Take damage' })).toBeVisible();
+  },
+);
 
 test('Roland Banks’ willpower test before a token is drawn, the draw button in its place', async ({
   page,

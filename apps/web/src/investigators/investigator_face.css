@@ -338,6 +338,7 @@
 /* On the card, the tokens, the printed symbols and their counts take the face's sizes. */
 #investigators [data-card='investigator']:not([data-adjusting]) {
   --stat-token-size: calc(var(--investigator-token-size) * var(--scan-unit));
+  --stat-token-count-size: calc(var(--investigator-token-count-size) * var(--scan-unit));
   --stat-count-size: calc(var(--investigator-count-size) * var(--scan-unit));
   --stat-count-offset: calc(-4 * var(--scan-unit));
 }
@@ -346,8 +347,8 @@
   margin: 0;
 }
 
-#investigators [data-card='investigator']:not([data-adjusting]) dd > data {
-  font-size: calc(var(--investigator-token-number-size) * var(--scan-unit));
+#investigators [data-card='investigator']:not([data-adjusting]) dd > [data-game-token] {
+  --token-count-font-size: calc(var(--investigator-token-number-size) * var(--scan-unit));
 }
 
 #investigators [data-card='investigator']:not([data-adjusting]) dd > [data-printed] {
@@ -364,7 +365,8 @@
 }
 
 #investigators [data-card='investigator']:not([data-adjusting]) dd > [data-printed] > [data-count] {
-  font-size: calc(var(--investigator-count-number-size) * var(--scan-unit));
+  --token-count-size: calc(var(--investigator-count-disc-size) * var(--scan-unit));
+  --token-count-font-size: calc(var(--investigator-count-number-size) * var(--scan-unit));
 }
 
 /*
