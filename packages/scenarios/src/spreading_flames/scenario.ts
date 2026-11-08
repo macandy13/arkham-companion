@@ -8,6 +8,7 @@ import {
   type TokenValue,
 } from '@arkham/engine';
 import { CAMPUS, CAMPUS_CELLS, SPREADING_FLAMES_CODES, SPREADING_FLAMES_SETS } from './cards';
+import { spreadingFlamesResolutions } from './resolutions';
 
 const codes = SPREADING_FLAMES_CODES;
 
@@ -102,4 +103,5 @@ export const spreadingFlames: ScenarioDefinition = {
     { kind: 'buildEncounterDeck', sets: Object.values(SPREADING_FLAMES_SETS) },
   ],
   modifiers: { tokenValues: { skull: actNumber } },
+  resolutions: spreadingFlamesResolutions,
 };
