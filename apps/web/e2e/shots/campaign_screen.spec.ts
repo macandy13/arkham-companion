@@ -19,28 +19,24 @@ test('the log of a campaign just started', async ({ page }) => {
   await expect(page.getByRole('region', { name: 'Scenarios' })).toContainText('The Gathering');
 });
 
-test(
-  'the chaos bag on the log of a campaign just started, its tokens drawn',
-  { tag: '@shot' },
-  async ({ page }) => {
-    await page.goto('/#/new');
-    await page.getByRole('link', { name: 'New campaign' }).click();
-    await page.getByRole('button', { name: 'Next' }).click();
-    await page.getByRole('button', { name: /Fake Seeker/ }).click();
-    await page.getByRole('button', { name: 'Select', exact: true }).click();
-    await page.getByRole('button', { name: 'Next' }).click();
-    await page.getByRole('button', { name: 'Start game' }).click();
-    await expect(page).toHaveURL(/#\/game\/.+/);
+test('the chaos bag on the log of a campaign just started, its tokens drawn', async ({ page }) => {
+  await page.goto('/#/new');
+  await page.getByRole('link', { name: 'New campaign' }).click();
+  await page.getByRole('button', { name: 'Next' }).click();
+  await page.getByRole('button', { name: /Fake Seeker/ }).click();
+  await page.getByRole('button', { name: 'Select', exact: true }).click();
+  await page.getByRole('button', { name: 'Next' }).click();
+  await page.getByRole('button', { name: 'Start game' }).click();
+  await expect(page).toHaveURL(/#\/game\/.+/);
 
-    await page.goto('/#/');
-    await page.getByRole('button', { name: /^More for / }).click();
-    await page.getByRole('button', { name: 'Read the log' }).click();
-    const bag = page.getByRole('region', { name: 'Chaos Bag' });
-    await bag.scrollIntoViewIfNeeded();
+  await page.goto('/#/');
+  await page.getByRole('button', { name: /^More for / }).click();
+  await page.getByRole('button', { name: 'Read the log' }).click();
+  const bag = page.getByRole('region', { name: 'Chaos Bag' });
+  await bag.scrollIntoViewIfNeeded();
 
-    await expect(bag.getByText('Skull')).toBeVisible();
-  },
-);
+  await expect(bag.getByText('Skull')).toBeVisible();
+});
 
 test('the resolution of a game its only investigator lost to horror', async ({ page }) => {
   await page.goto('/#/new');
