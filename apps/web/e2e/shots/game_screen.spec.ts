@@ -652,7 +652,9 @@ test(
     await decision.getByRole('button', { name: 'Failed' }).click();
     await decision.getByRole('button', { name: 'Raise the Margin of failure' }).click();
 
-    await expect(decision.getByRole('region', { name: 'Margin of failure' })).toContainText('2');
+    await expect(
+      decision.getByRole('region', { name: 'Margin of failure' }).locator('data'),
+    ).toHaveText('2');
   },
 );
 

@@ -177,6 +177,8 @@ export function DecisionPage({
           {decision.options.map((option, index) => {
             const followUp = decision.followUps?.[option];
             const fromTheGame = decision.counts?.[option] !== undefined || followUp !== undefined;
+            // The margin is part of the fail's answer, so its row is picked, then Done, like a
+            // row with counts; no max, since the dialog doesn't know the test's modified difficulty.
             const failedByHere = option === 'fail' && asksFailedBy;
             const withCounts = fromTheGame || failedByHere;
             return (
@@ -279,11 +281,11 @@ function actorOf(board: BoardView, decision: DecisionView) {
  * option without counts is never picked for them, since a tap on it answers at once.
  */
 function pickedFirst(decision: DecisionView, suggested: string | undefined): string | undefined {
-  const withCounts = (option: string) =>
+  const fromTheGame = (option: string) =>
     decision.counts?.[option] !== undefined || decision.followUps?.[option] !== undefined;
   if (decision.test)
-    return suggested !== undefined && withCounts(suggested) ? suggested : undefined;
-  return decision.options.find(withCounts);
+    return suggested !== undefined && fromTheGame(suggested) ? suggested : undefined;
+  return decision.options.find(fromTheGame);
 }
 
 /** The key of an option's row, like the guide's: ✓ for a pass, ✗ for a fail, else its number. */
