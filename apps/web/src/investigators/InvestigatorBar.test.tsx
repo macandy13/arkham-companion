@@ -99,11 +99,11 @@ describe('InvestigatorBar', () => {
   });
 
   it.each([
-    { stat: 'Health', left: '4/7', printed: '7', taken: '3' },
-    { stat: 'Sanity', left: '5/6', printed: '6', taken: '1' },
+    { stat: 'Health', name: '4/7', left: '4', pips: 7, greyed: 3 },
+    { stat: 'Sanity', name: '5/6', left: '5', pips: 6, greyed: 1 },
   ])(
-    'draws $stat as the card prints it: $printed on its symbol, $taken taken on its count',
-    ({ stat, left, printed, taken }) => {
+    'draws $stat as the card prints it, $left left on its symbol in a ring of $pips pips, $greyed greyed',
+    ({ stat, name, left, pips, greyed }) => {
       const table = PlayTable.start(
         newGame()
           .withLocation(study, blankLocation('study'))
@@ -122,16 +122,15 @@ describe('InvestigatorBar', () => {
         />,
       );
 
-      const symbol = within(panel('alder')).getByRole('img', { name: left });
-      // The two numbers are presentational inside the named image, so they are read by position.
-      const [onSymbol, count] = symbol.querySelectorAll('data');
+      const symbol = within(panel('alder')).getByRole('img', { name });
       expect(symbol.closest('[data-stat]')?.querySelector('dt')?.textContent).toBe(stat);
-      expect(onSymbol?.textContent).toBe(printed);
-      expect(count?.textContent).toBe(taken);
+      expect(symbol.querySelector('data')?.textContent).toBe(left);
+      expect(symbol.querySelectorAll('[data-pips] path')).toHaveLength(pips);
+      expect(symbol.querySelectorAll('[data-pips] [data-taken]')).toHaveLength(greyed);
     },
   );
 
-  it('marks the damage taken on the health count, not the health left, when it changes', () => {
+  it('marks the health left on its symbol when damage is taken', () => {
     const table = PlayTable.start(
       newGame()
         .withLocation(study, blankLocation('study'))
@@ -151,7 +150,7 @@ describe('InvestigatorBar', () => {
     rerender(bar());
 
     const health = within(panel('alder')).getByRole('img', { name: '3/7' });
-    expect(health.querySelector('[data-count]')?.getAttribute('data-delta')).toBe('+1');
+    expect(health.querySelector('data')?.getAttribute('data-delta')).toBe('−1');
   });
 
   it('shows the four skills in the printed order, each named for screen readers', () => {

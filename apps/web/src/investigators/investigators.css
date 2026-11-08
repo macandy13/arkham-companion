@@ -215,8 +215,7 @@
 
 /*
  * Health and sanity as the card prints them: the anatomical heart or brain (card_face.css colours
- * it) with the printed maximum on it in white, and the damage or horror token taken on its lower
- * right, faded while none is taken, like the map's counts.
+ * it) with what is left on it in white, in a ring of pips.
  */
 #investigators dd > [data-printed] {
   grid-column: 1 / -1;
@@ -236,7 +235,7 @@
   overflow: visible;
 }
 
-#investigators dd > [data-printed] > data:not([data-count]) {
+#investigators dd > [data-printed] > data {
   position: relative;
   color: var(--color-face-stat);
   font-family: var(--font-family);
@@ -246,15 +245,16 @@
   text-shadow: var(--stat-number-shadow);
 }
 
-#investigators dd > [data-printed] > [data-count] {
-  position: absolute;
-  inset-inline-end: var(--stat-count-offset);
-  inset-block-end: var(--stat-count-offset);
-  width: var(--stat-count-size);
+/* The pips round it: one per point, in the symbol's colour, those taken greyed. */
+#investigators dd > [data-printed] [data-pips] path {
+  fill: none;
+  stroke: var(--stat-colour);
+  stroke-width: var(--stat-pip-width);
+  stroke-linecap: round;
 }
 
-#investigators dd > [data-printed] > [data-count][data-empty] {
-  opacity: var(--token-empty-opacity);
+#investigators dd > [data-printed] [data-pips] [data-taken] {
+  stroke: var(--color-pip-taken);
 }
 
 /* The turn controls under the card: "Start turn", or the action pips, investigate and End. */
