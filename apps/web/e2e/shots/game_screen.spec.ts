@@ -722,7 +722,7 @@ test(
 
     await page.context().setOffline(true);
 
-    await expect(page.locator('#status').getByText('Offline')).toBeVisible();
+    await expect(page.getByRole('region', { name: 'Round 1' }).getByText('Offline')).toBeVisible();
   },
 );
 

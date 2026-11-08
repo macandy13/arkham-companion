@@ -26,4 +26,12 @@ describe('OfflineMark', () => {
     act(() => void window.dispatchEvent(new Event('online')));
     expect(screen.queryByText('Offline')).toBeNull();
   });
+
+  it('shows "Offline" from the start on a device without network', () => {
+    vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false);
+
+    render(<OfflineMark />);
+
+    expect(screen.getByText('Offline')).toBeTruthy();
+  });
 });

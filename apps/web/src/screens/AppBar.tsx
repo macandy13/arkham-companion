@@ -33,9 +33,9 @@ export function useAppBar({ title, subtitle, up }: AppBarContent) {
 
 /**
  * The bar on the table over every screen outside play (design language "Screens"): a back
- * chevron up to the screen above, the screen's name in the display face with its subtitle, and
- * an "Offline" mark while there is no network (`OfflineMark`), and a ⋮ menu with the app's places. `children` is the screen below, which names itself with
- * `useAppBar`.
+ * chevron up to the screen above, the screen's name in the display face with its subtitle, an
+ * "Offline" mark while there is no network (`OfflineMark`), and a ⋮ menu with the app's places.
+ * `children` is the screen below, which names itself with `useAppBar`.
  */
 export function AppBarFrame({ children }: { readonly children: ReactNode }) {
   const { t } = useTranslation();
