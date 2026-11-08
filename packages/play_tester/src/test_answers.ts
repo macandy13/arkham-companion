@@ -1,7 +1,9 @@
 import {
   drawTokens,
   suggestSkillTest,
+  type ChaosToken,
   type Decision,
+  type InvestigatorId,
   type PlayTable,
   type SkillTestResult,
 } from '@arkham/engine';
@@ -38,25 +40,58 @@ export function answersByDraw(table: PlayTable, decision: Decision): boolean {
 
 /**
  * The answer to the first open skill test the bot answers by drawing (`answersByDraw`): tokens
- * drawn from the scenario's chaos bag as the players draw them (`drawTokens`: another while the
- * last says so), valued by `suggestSkillTest`, a random modifier for tokens it cannot value, and
- * the pass or fail (with the margin) that follows. None while no such test is open.
+ * drawn from the scenario's chaos bag as the players draw them, and the pass or fail that follows
+ * (`drawnResult`). None while no such test is open.
  */
 export function drawnTestAnswer(table: PlayTable, random: SeededRandom): Step | undefined {
-  const decision = table.state.pending.find((pending) => answersByDraw(table, pending));
-  if (!decision || decision.decider.kind !== 'investigator') return undefined;
+  const decision = openDrawnTest(table);
+  if (!decision) return undefined;
+  const drawn = drawnResult(table, decision, random);
+  if (!drawn) return undefined;
+  const { name } = table.board.investigator(drawn.investigator);
+  return { verb: 'resolveTest', investigator: name, tokens: drawn.tokens, result: drawn.result };
+}
+
+/** The first open skill test the bot answers by drawing (`answersByDraw`), if any. */
+export function openDrawnTest(table: PlayTable): Decision | undefined {
+  return table.state.pending.find((pending) => answersByDraw(table, pending));
+}
+
+/**
+ * The result of `decision` with tokens drawn as the players draw them (`drawTokens`: another
+ * while the last says so), valued by `suggestSkillTest` with the players' `modifier` (committed
+ * icons, a weapon) and a random one for tokens it cannot value, and its margin either way.
+ */
+export function drawnResult(
+  table: PlayTable,
+  decision: Decision,
+  random: SeededRandom,
+  modifier = 0,
+):
+  | {
+      readonly investigator: InvestigatorId;
+      readonly tokens: readonly ChaosToken[];
+      readonly result: SkillTestResult;
+      readonly margin: number;
+    }
+  | undefined {
+  if (decision.decider.kind !== 'investigator') return undefined;
   const tokens = drawTokens(table.board.chaosBag, [], () => random.fraction());
-  const valued = suggestSkillTest(table.ctx, table.state, decision, { tokens });
+  const valued = suggestSkillTest(table.ctx, table.state, decision, { tokens, modifier });
   const suggestion =
     valued && valued.unknownTokens.length > 0
       ? suggestSkillTest(table.ctx, table.state, decision, {
           tokens,
-          modifier: random.below(2 * UNKNOWN_TOKEN_RANGE + 1) - UNKNOWN_TOKEN_RANGE,
+          modifier: modifier + random.below(2 * UNKNOWN_TOKEN_RANGE + 1) - UNKNOWN_TOKEN_RANGE,
         })
       : valued;
   if (!suggestion) return undefined;
   const result: SkillTestResult =
     suggestion.outcome === 'pass' ? 'pass' : { failedBy: suggestion.margin };
-  const { name } = table.board.investigator(decision.decider.investigatorId);
-  return { verb: 'resolveTest', investigator: name, tokens, result };
+  return {
+    investigator: decision.decider.investigatorId,
+    tokens,
+    result,
+    margin: suggestion.margin,
+  };
 }

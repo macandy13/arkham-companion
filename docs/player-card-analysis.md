@@ -98,7 +98,8 @@ Of the 29 cards each investigator can take, the table takes every effect of 23 (
 
 ## The deck bot
 
-- **Deck:** 30 cards drawn from the cards above an investigator can take (two copies each at most) plus the signature asset, shuffled with the game seed; a blank investigator takes Neutral cards. Each card's cost, class, skill icons, health, sanity and effects are entered by hand per card code in the play tester, with no card text, as the test scenario's cards are.
-- **Turn:** an opening hand of 5, a card drawn in each upkeep, a resource each upkeep (the table's own). Up to 3 cards a turn are played or committed: an asset or event when the bot can pay for it (`AdjustInvestigator` `resources`, negative) and its effect fits the board (a weapon when an enemy is engaged, a clue event at a location with clues), skill cards and test bonuses committed to the bot's own tests as `modifier`.
-- **Steps:** each card the bot plays is one step that names the card and plays its effects as table commands, so a record replays it and its report reads like a session.
-- **Then:** the statistics compare the deck bot with the goal bot: outcomes, rounds and which act and agenda abilities now fire.
+Built in [`deck_bot.ts`](../packages/play_tester/src/deck_bot.ts) with the cards in [`player_cards.ts`](../packages/play_tester/src/player_cards.ts); how it plays is on the [play tester page](architecture/play-tester.md#the-deck-bot).
+
+- **Deck:** 30 cards drawn from the cards above an investigator can take (two copies each at most) plus the signature asset, shuffled with the bot seed; a blank investigator takes Neutral cards. Each card's cost, class, skill icons, health, sanity and effects are entered by hand per card code, with no card text, as the test scenario's cards are.
+- **Goal:** advance the act fastest. Of the cards it can pay for and whose effect fits the board, it plays the one that does most for the act: clues and intellect boosts while the location has clues, then an extra action, then resources when it runs low, then cards against an engaged enemy, then healing when near defeat. Skill cards go up to two to an investigation or a fight, one to any other test.
+- **Then:** cancelling an attack or a treachery (Dodge, Ward of Protection) needs engine commands first; slice 8c adds them, and the bot plays those cards after it.
