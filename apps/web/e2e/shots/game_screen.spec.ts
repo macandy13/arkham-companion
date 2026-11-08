@@ -23,7 +23,7 @@ import { dragTo } from '../fixtures/drag';
 
 // Situations on the game screen, each photographed as it ends (`@shot`, coding guidelines §3).
 
-test('the house map with Roland Banks in the Hallway', async ({ page }) => {
+test('the house map with Roland Banks in the Hallway', { tag: '@shot' }, async ({ page }) => {
   await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
 
   const hallway = page
@@ -32,15 +32,19 @@ test('the house map with Roland Banks in the Hallway', async ({ page }) => {
   await expect(hallway.getByRole('img', { name: 'Roland Banks' })).toBeVisible();
 });
 
-test('the Ghoul Priest in the Cellar with doom beside its damage, and doom on the Cellar', async ({
-  page,
-}) => {
-  await resumeImportedGame(page, 'Doom and damage', doomBesideDamageExport('Doom and damage'));
+test(
+  'the Ghoul Priest in the Cellar with doom beside its damage, and doom on the Cellar',
+  { tag: '@shot' },
+  async ({ page }) => {
+    await resumeImportedGame(page, 'Doom and damage', doomBesideDamageExport('Doom and damage'));
 
-  const cellar = page.getByRole('figure', { name: 'House' }).getByRole('group', { name: 'Cellar' });
-  await expect(cellar.getByRole('img', { name: 'Ghoul Priest, 2 damage, Doom 1' })).toBeVisible();
-  await expect(cellar.getByRole('img', { name: 'Doom 1', exact: true })).toBeVisible();
-});
+    const cellar = page
+      .getByRole('figure', { name: 'House' })
+      .getByRole('group', { name: 'Cellar' });
+    await expect(cellar.getByRole('img', { name: 'Ghoul Priest, 2 damage, Doom 1' })).toBeVisible();
+    await expect(cellar.getByRole('img', { name: 'Doom 1', exact: true })).toBeVisible();
+  },
+);
 
 test('Roland Banks’ card opened whole from its art, to read its abilities', async ({ page }) => {
   await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
@@ -100,7 +104,7 @@ test('the Hallway’s details, its card with Roland Banks on it, on Roland Banks
   await expect(details.getByRole('button', { name: 'Investigate · 1 action' })).toBeVisible();
 });
 
-test('the house map on the parchment table', { tag: '@shot' }, async ({ page }) => {
+test('the house map on the parchment table', async ({ page }) => {
   await page.goto('/#/settings');
   await page.getByRole('radio', { name: 'Parchment' }).check();
   await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
@@ -132,18 +136,22 @@ test('the token pool in the cardboard token set', async ({ page }) => {
   await expect(page.locator('html')).toHaveAttribute('data-token-set', 'cardboard');
 });
 
-test('the house map in the card pictures style, the clues left on each card', async ({ page }) => {
-  await page.goto('/#/settings');
-  await page.getByLabel('Card style').selectOption('Card pictures');
-  await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
+test(
+  'the house map in the card pictures style, the clues left on each card',
+  { tag: '@shot' },
+  async ({ page }) => {
+    await page.goto('/#/settings');
+    await page.getByLabel('Card style').selectOption('Card pictures');
+    await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
 
-  const hallway = page
-    .getByRole('figure', { name: 'House' })
-    .getByRole('group', { name: 'Hallway' });
-  await expect(hallway.getByRole('img', { name: 'Clues 0' })).toBeVisible();
-  await expect(page.locator('html')).toHaveAttribute('data-card-theme', 'pictures');
-  await expect(page.locator('[data-card="scenario"]')).toHaveAttribute('data-picture', 'shown');
-});
+    const hallway = page
+      .getByRole('figure', { name: 'House' })
+      .getByRole('group', { name: 'Hallway' });
+    await expect(hallway.getByRole('img', { name: 'Clues 0' })).toBeVisible();
+    await expect(page.locator('html')).toHaveAttribute('data-card-theme', 'pictures');
+    await expect(page.locator('[data-card="scenario"]')).toHaveAttribute('data-picture', 'shown');
+  },
+);
 
 test('Roland Banks’ whole card in the card pictures style, his counters live on the printed card', async ({
   page,
@@ -714,17 +722,13 @@ test('the Tangled Thicket revealed with its double slash, the other Arkham Woods
   await expect(map.getByRole('img', { name: 'Connection symbol: square' })).toHaveCount(3);
 });
 
-test(
-  'the menu open, holding "Adjust board" and the game log on a phone',
-  { tag: '@shot' },
-  async ({ page }) => {
-    await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
+test('the menu open, holding "Adjust board" and the game log on a phone', async ({ page }) => {
+  await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
 
-    await page.getByRole('button', { name: 'Menu' }).click();
+  await page.getByRole('button', { name: 'Menu' }).click();
 
-    await expect(page.getByRole('link', { name: 'Settings' })).toBeVisible();
-  },
-);
+  await expect(page.getByRole('link', { name: 'Settings' })).toBeVisible();
+});
 
 test('Daisy Walker swiped into view on a phone, Roland Banks beside her', async ({
   page,

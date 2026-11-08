@@ -187,7 +187,8 @@ describe('MapBoard', () => {
         backImageSrc: cardImagePath('/bundles/cards/cellar_back.png'),
       }),
     );
-    const pictureOf = (name: string) => tile(name).querySelector('image');
+    // The tokens on a tile are images too, one face per token set.
+    const pictureOf = (name: string) => tile(name).querySelector('image:not([data-token-face])');
     const requiredPictureOf = (name: string) => {
       const picture = pictureOf(name);
       if (!picture) throw new Error(`${name} has no picture`);
@@ -894,7 +895,7 @@ describe('MapBoard', () => {
           const badge = tile('study').querySelector<SVGElement>('[data-marker="doom"]');
           expect(badge?.textContent).toBe('1');
           expect(badge?.dataset['drag']).toBe('doom');
-          expect(badge?.querySelector('[data-part="doom-mark"]')).not.toBeNull();
+          expect(badge?.querySelector('[data-svg-game-token="doom"]')).not.toBeNull();
         });
 
         it("opens the ghoul's details, not the study's, on a tap on its doom badge", async () => {

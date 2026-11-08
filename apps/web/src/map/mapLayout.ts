@@ -70,6 +70,9 @@ export const BADGE_RADIUS = CONTENT.pawnRadius / 2;
  */
 export const BADGE_GRIP_RADIUS = BADGE_RADIUS * 1.5;
 
+/** A badge's count disc (`SvgGameToken`): most of the badge, since the badge itself is small. */
+export const BADGE_COUNT_RADIUS = BADGE_RADIUS * 0.7;
+
 /**
  * The centre of the damage badge on a piece centred on `piece`: on its rim at the lower right, so
  * it keeps clear of the initial, of the pieces beside it in the row and of a pawn's lead marker

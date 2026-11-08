@@ -1,6 +1,8 @@
 import { useId } from 'react';
 import type { CardFaceView, EncounterSetCode } from '@arkham/engine';
 import type { Point } from '../map/mapLayout';
+import type { GameTokenKind } from '../tokens/GameToken';
+import { SvgGameToken } from '../tokens/SvgGameToken';
 import { type CountChange, deltaText, useCountChange } from '../screens/countChange';
 import '../symbols/sets.css';
 import { PORTRAIT_SCAN } from './cardArt';
@@ -50,25 +52,24 @@ export function CardFaceCorners() {
 }
 
 /**
- * What a count circle counts: the stylesheet colours each like its token in the game. Clues on a
- * location and damage on an enemy so far; the agenda's doom and the investigator's horror join
- * with their card faces.
+ * What a count circle counts, the token it shows: clues and doom on a location and damage on an
+ * enemy so far; the agenda's doom and the investigator's horror join with their card faces.
  */
-export type CountKind = 'clue' | 'damage';
+export type CountKind = Extract<GameTokenKind, 'clue' | 'damage' | 'doom'>;
 
 /**
- * The current count on a printed value, in scan units: a small circle on the value's lower right
- * (the clues left on a location's clue value, the doom on an agenda's threshold, the damage on an
- * enemy's health), so one element shows both. Every card type and every card theme draws it the
- * same way; `data-count` gives its colour, and a count of none fades (`data-empty`). Named for
- * assistive technology by `label`, since the number alone does not say what it counts. A change of
- * the count while it shows plays its effect (`useCountChange`, `RisingDelta`).
+ * The current count on a printed value, in scan units: its token (`SvgGameToken`, MD.8b) on the
+ * value's lower right with the count in its disc (the clues left on a location's clue value, the
+ * damage on an enemy's health), so one element shows both. Every card type and every card theme
+ * draws it the same way; a count of none fades (`data-empty`). Named for assistive technology by
+ * `label`, since the number alone does not say what it counts. A change of the count while it
+ * shows plays its effect (`useCountChange`, `RisingDelta`).
  */
 export function CountCircle({
   kind,
   value,
   label,
-  centre: { x, y },
+  centre,
   radius = COUNT_RADIUS,
 }: {
   kind: CountKind;
@@ -87,11 +88,14 @@ export function CountCircle({
       data-empty={value === 0 || undefined}
       data-changed={change && ''}
     >
-      <circle cx={x} cy={y} r={radius} />
-      <text x={x} y={y}>
-        {value}
-      </text>
-      <RisingDelta change={change} x={x} y={y - radius} />
+      <SvgGameToken
+        kind={kind}
+        centre={centre}
+        radius={radius}
+        count={value}
+        countRadius={COUNT_DISC_RADIUS}
+      />
+      <RisingDelta change={change} x={centre.x} y={centre.y - radius} />
     </g>
   );
 }
@@ -119,10 +123,13 @@ export function RisingDelta({
 }
 
 /**
- * A count circle's radius in scan units: a little larger than the mockup's 9, so the count stays
+ * A count's token radius in scan units: a little larger than the mockup's 9, so its glyph stays
  * readable on a map tile at its smallest.
  */
 const COUNT_RADIUS = 11;
+
+/** Its count disc's radius in scan units: room for two digits at `--face-count-size`. */
+const COUNT_DISC_RADIUS = 8;
 
 /**
  * The icon of an encounter set (`set`, its `CardStats.encounterCode`) centred on `x`, `y` and

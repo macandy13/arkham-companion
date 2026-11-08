@@ -16,6 +16,8 @@
   --token-plain-damage: url('./resin/damage_plain.svg');
   --token-plain-horror: url('./resin/horror_plain.svg');
   --token-plain-resource: url('./resin/resource_plain.svg');
+  --token-drawn-resin: inline;
+  --token-drawn-cardboard: none;
 }
 
 /* Cardboard: matte, die-cut discs, and the resources hexagons, like the box's own tokens. */
@@ -30,6 +32,8 @@
   --token-plain-damage: url('./cardboard/damage_plain.svg');
   --token-plain-horror: url('./cardboard/horror_plain.svg');
   --token-plain-resource: url('./cardboard/resource_plain.svg');
+  --token-drawn-resin: none;
+  --token-drawn-cardboard: inline;
 }
 
 /*
@@ -102,4 +106,33 @@
   font-weight: bold;
   font-variant-numeric: lining-nums tabular-nums;
   line-height: 1;
+}
+
+/*
+ * A token in a drawing (`SvgGameToken`) carries the faces of both sets, since an SVG image takes
+ * its file from markup; each set shows only its own.
+ */
+[data-svg-game-token] > image[data-token-face='resin'] {
+  display: var(--token-drawn-resin);
+}
+
+[data-svg-game-token] > image[data-token-face='cardboard'] {
+  display: var(--token-drawn-cardboard);
+}
+
+/* Under the board's id, so the map's rules for its own discs and numbers do not reach the count. */
+#board svg [data-svg-game-token] > [data-part='count'] circle {
+  fill: var(--color-token-count);
+  stroke: var(--color-count-rim);
+  stroke-width: var(--svg-token-count-rim);
+}
+
+#board svg [data-svg-game-token] > [data-part='count'] text {
+  fill: var(--color-count-rim);
+  font-family: var(--font-family);
+  font-size: var(--svg-token-count-size);
+  font-weight: bold;
+  font-variant-numeric: lining-nums tabular-nums;
+  text-anchor: middle;
+  dominant-baseline: central;
 }

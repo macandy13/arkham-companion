@@ -273,8 +273,7 @@
 
 /*
  * The printed discs on a face: the shroud a dark disc with a white number, the clue value a pale
- * one with a dark number and the per investigator symbol, both ringed in the ornament line, and
- * doom on a location in its token's colour.
+ * one with a dark number and the per investigator symbol, both ringed in the ornament line.
  */
 #map svg [data-face] [data-token] circle {
   fill: var(--color-face-shroud);
@@ -294,11 +293,6 @@
 
 #map svg [data-face] [data-token='clue-value'] text {
   fill: var(--color-face-setting);
-}
-
-#map svg [data-face] [data-token='doom'] circle {
-  fill: var(--color-doom-token);
-  stroke: var(--color-count-rim);
 }
 
 #map svg [data-face] [data-token] foreignObject span {
@@ -441,27 +435,10 @@
   opacity: var(--engaged-enemy-opacity);
 }
 
-/* The damage and doom badges on an enemy's rim, ringed like a pawn; damage red like the printed damage tokens. */
-#map svg :is([data-marker='damage'], [data-marker='doom']) circle:not([data-part]) {
-  fill: var(--color-health);
-  stroke: var(--color-parchment);
-  stroke-width: var(--border-width);
-}
-
-/* The doom badge on a cultist's other rim, in the doom tokens' colour. */
-#map svg [data-marker='doom'] circle:not([data-part]) {
-  fill: var(--color-doom-token);
-}
-
-/* The tentacles on a doom token (`DoomMarkPath`), black on its near-black disc. */
-#map svg [data-part='doom-mark'] {
-  fill: var(--color-doom-mark);
-}
-
-#map svg :is([data-marker='damage'], [data-marker='doom']) text {
-  fill: var(--header-token-text);
-  font-size: var(--card-badge-size);
-  font-weight: bold;
+/* The damage and doom tokens on an enemy's rim are drawn at the tile's size, not a card scan's. */
+#map svg [data-marker] {
+  --svg-token-count-size: var(--card-badge-size);
+  --svg-token-count-rim: var(--border-width);
 }
 
 /* An attached card peeks out at the tile's edge in the treachery frame colour. */

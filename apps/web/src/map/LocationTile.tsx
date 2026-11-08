@@ -36,13 +36,14 @@ import {
 import { useCardPicture } from '../catalog/cardImages';
 import { cardActionCaption } from '../screens/ActionRow';
 import { type CountChange, useCountChange } from '../screens/countChange';
-import { DoomMarkPath } from '../screens/DoomMark';
+import { SvgGameToken } from '../tokens/SvgGameToken';
 import { LOCATION_FACE, LocationOrnament } from './cardOrnament';
 import { connectionGlyph } from './connectionSymbol';
 import {
   ART_WINDOW,
   ATTACHMENT,
   attachmentOrigin,
+  BADGE_COUNT_RADIUS,
   BADGE_GRIP_RADIUS,
   BADGE_RADIUS,
   CONTENT,
@@ -178,8 +179,7 @@ export function LocationTile({
         <NameBand location={location} />
         {location.revealed && (
           <>
-            <Token
-              kind="shroud"
+            <Shroud
               value={location.shroud}
               label={t('map.shroud', { shroud: location.shroud })}
               centre={LOCATION_FACE.shroud}
@@ -193,11 +193,12 @@ export function LocationTile({
         )}
         {location.doom ? (
           <Grip drag={dragOf({ doom: location })} kind="doom" centre={LOCATION_FACE.doom}>
-            <Token
+            <CountCircle
               kind="doom"
               value={location.doom}
               label={t('map.doom', { count: location.doom })}
               centre={LOCATION_FACE.doom}
+              radius={LOCATION_FACE.disc.radius}
             />
           </Grip>
         ) : null}
@@ -383,19 +384,20 @@ function Grip({
   );
 }
 
-/** What a tile shows as a round token: the kind it counts, its value and its accessible name. */
-interface TokenCount {
-  kind: 'shroud' | 'clue' | 'doom';
+/**
+ * The shroud the location prints, a disc with its number on the face, in scan units, centred on
+ * `centre` and named `label` for assistive technology. A change of the value plays its effect
+ * (`RisingDelta`).
+ */
+function Shroud({
+  value,
+  label,
+  centre: { x, y },
+}: {
   value: number;
   label: string;
-}
-
-/**
- * A printed disc with its number on the face, in scan units, centred on `centre`: the shroud, or
- * the doom on the location. `kind` (`data-token`) lets the stylesheet colour each like the card
- * prints it or its token on the table. A change of the value plays its effect (`RisingDelta`).
- */
-function Token({ kind, value, label, centre: { x, y } }: TokenCount & { centre: Point }) {
+  centre: Point;
+}) {
   const change = useCountChange(value);
   const { radius } = LOCATION_FACE.disc;
   return (
@@ -403,11 +405,10 @@ function Token({ kind, value, label, centre: { x, y } }: TokenCount & { centre: 
       key={change?.key}
       role="img"
       aria-label={label}
-      data-token={kind}
+      data-token="shroud"
       data-changed={change && ''}
     >
       <circle cx={x} cy={y} r={radius} />
-      {kind === 'doom' && <DoomMarkPath centre={{ x, y }} radius={radius} />}
       <text x={x} y={y}>
         {value}
       </text>
@@ -789,11 +790,13 @@ function Badge({
       })}
     >
       {drag && <circle data-part="grip" cx={x} cy={y} r={BADGE_GRIP_RADIUS} />}
-      <circle cx={x} cy={y} r={BADGE_RADIUS} />
-      {kind === 'doom' && <DoomMarkPath centre={{ x, y }} radius={BADGE_RADIUS} />}
-      <text x={x} y={y}>
-        {value}
-      </text>
+      <SvgGameToken
+        kind={kind}
+        centre={{ x, y }}
+        radius={BADGE_RADIUS}
+        count={value}
+        countRadius={BADGE_COUNT_RADIUS}
+      />
       <RisingDelta change={change} x={x} y={y - BADGE_RADIUS} />
     </g>
   );

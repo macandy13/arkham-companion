@@ -95,31 +95,9 @@
   opacity: var(--face-star-opacity);
 }
 
-/* The count on a printed value: a small circle in its token's colour, with a pale rim. */
-#board svg [data-count] circle {
-  stroke: var(--color-count-rim);
-  stroke-width: var(--face-count-rim-width);
-  filter: var(--piece-shadow);
-}
-
-#board svg [data-count='clue'] circle {
-  fill: var(--color-count-clue);
-}
-
-#board svg g[data-count] text {
-  text-anchor: middle;
-  dominant-baseline: middle;
-  fill: var(--color-token-text);
-  font-size: var(--face-count-size);
-  font-weight: bold;
-}
-
+/* The count on a printed value: its token, faded while there is none. */
 #board svg [data-count][data-empty] {
   opacity: var(--token-empty-opacity);
-}
-
-#board svg [data-count='damage'] circle {
-  fill: var(--color-count-damage);
 }
 
 /* An ornament line: a dark outline, the pale body and a fine highlight, like printed scrollwork. */
