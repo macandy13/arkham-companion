@@ -1,6 +1,6 @@
 import { useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { CHAOS_TOKENS, type BoardView, type ChaosToken, type InvestigatorId } from '@arkham/engine';
+import { tokenCounts, type BoardView, type ChaosToken } from '@arkham/engine';
 import type { GameActions } from '../state/gameActions';
 import './chaos_bag.css';
 
@@ -23,17 +23,16 @@ export function ChaosBag({
 }) {
   const { t } = useTranslation();
   const titleId = useId();
+  const sealedId = useId();
   const [picked, setPicked] = useState<ChaosToken>();
   const counts = tokenCounts(board.chaosBag);
   const sealers = board.investigators.filter((investigator) => investigator.status === 'active');
-  const nameOf = (id: InvestigatorId) =>
-    board.investigators.find((investigator) => investigator.id === id)?.name ?? id;
-  const chosen = picked !== undefined && counts.has(picked) ? picked : undefined;
+  const chosen = counts.some(({ token }) => token === picked) ? picked : undefined;
   return (
     <section aria-labelledby={titleId} data-part="chaos-bag">
       <h3 id={titleId}>{t('chaosBag.title')}</h3>
       <ul aria-label={t('chaosBag.contents')}>
-        {[...counts].map(([token, count]) => (
+        {counts.map(({ token, count }) => (
           <li key={token}>
             <button
               type="button"
@@ -48,7 +47,10 @@ export function ChaosBag({
         ))}
       </ul>
       {chosen !== undefined && (
-        <footer>
+        <div
+          role="group"
+          aria-label={t('chaosBag.sealWhere', { token: t(`chaosToken.${chosen}`) })}
+        >
           {sealers.map((investigator) => (
             <button
               key={investigator.id}
@@ -65,18 +67,22 @@ export function ChaosBag({
               })}
             </button>
           ))}
-        </footer>
+        </div>
       )}
       {board.sealedTokens.length > 0 && (
         <>
-          <h4>{t('chaosBag.sealed')}</h4>
-          <ul aria-label={t('chaosBag.sealed')}>
+          <h4 id={sealedId}>{t('chaosBag.sealed')}</h4>
+          <ul aria-labelledby={sealedId}>
             {board.sealedTokens.map(({ token, investigatorId }, index) => (
               <li key={index}>
                 <span data-token={token}>{t(`chaosToken.${token}`)}</span>{' '}
-                {t('chaosBag.sealedOn', { investigator: nameOf(investigatorId) })}{' '}
+                {t('chaosBag.sealedOn', { investigator: board.investigator(investigatorId).name })}{' '}
                 <button
                   type="button"
+                  aria-label={t('chaosBag.releaseFrom', {
+                    token: t(`chaosToken.${token}`),
+                    investigator: board.investigator(investigatorId).name,
+                  })}
                   disabled={busy}
                   onClick={() => void actions.releaseToken(investigatorId, token)}
                 >
@@ -89,14 +95,4 @@ export function ChaosBag({
       )}
     </section>
   );
-}
-
-/** How many of each token `bag` holds, in `CHAOS_TOKENS` order, leaving out those it has none of. */
-export function tokenCounts(bag: readonly ChaosToken[]): Map<ChaosToken, number> {
-  const counts = new Map<ChaosToken, number>();
-  for (const token of CHAOS_TOKENS) {
-    const count = bag.filter((each) => each === token).length;
-    if (count > 0) counts.set(token, count);
-  }
-  return counts;
 }

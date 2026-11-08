@@ -1,39 +1,14 @@
 // @vitest-environment jsdom
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
-import {
-  blankLocation,
-  instanceId,
-  investigatorId,
-  newGame,
-  PlayTable,
-  type ChaosToken,
-} from '@arkham/engine';
+import { blankLocation, instanceId, investigatorId, newGame, PlayTable } from '@arkham/engine';
 import { initI18n } from '../i18n';
 import { actionsOn } from '../state/gameActions.test_support';
-import { ChaosBag, tokenCounts } from './ChaosBag';
+import { ChaosBag } from './ChaosBag';
 
 const study = instanceId('study');
 const roland = investigatorId('roland');
 const daisy = investigatorId('daisy');
-
-describe('tokenCounts', () => {
-  it.each<[string, ChaosToken[], [ChaosToken, number][]]>([
-    ['an empty bag', [], []],
-    [
-      'tokens in the game order, not the bag order',
-      ['skull', '-1', '0', '-1', 'autoFail'],
-      [
-        ['0', 1],
-        ['-1', 2],
-        ['skull', 1],
-        ['autoFail', 1],
-      ],
-    ],
-  ])('counts %s', (_, bag, counts) => {
-    expect([...tokenCounts(bag)]).toEqual(counts);
-  });
-});
 
 describe('ChaosBag', () => {
   beforeAll(async () => {
@@ -80,7 +55,9 @@ describe('ChaosBag', () => {
 
     const sealed = screen.getByRole('list', { name: 'Sealed' });
     expect(within(sealed).getByRole('listitem').textContent).toBe('Skull on Roland Banks Release');
-    fireEvent.click(within(sealed).getByRole('button', { name: 'Release' }));
+    fireEvent.click(
+      within(sealed).getByRole('button', { name: 'Release Skull from Roland Banks' }),
+    );
 
     await waitFor(() => expect(table.board.sealedTokens).toEqual([]));
     expect(table.board.chaosBag).toEqual(['-1', '-1', 'elderSign', 'skull']);

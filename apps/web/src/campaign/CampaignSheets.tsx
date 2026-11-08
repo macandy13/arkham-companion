@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import {
-  CHAOS_TOKENS,
+  tokenCounts,
   type CampaignLog,
   type CrossableEntry,
   type LogSheet,
@@ -99,10 +99,7 @@ function FallenInvestigators({ log }: { readonly log: CampaignLog }) {
 /** The chaos bag's tokens as the players note them: each kind once, with how many it holds. */
 function ChaosBag({ log }: { readonly log: CampaignLog }) {
   const { t } = useTranslation();
-  const kinds = CHAOS_TOKENS.flatMap((token) => {
-    const count = log.chaosBag.filter((inBag) => inBag === token).length;
-    return count > 0 ? [{ token, count }] : [];
-  });
+  const kinds = tokenCounts(log.chaosBag);
   return (
     <section id="campaign-chaos-bag" aria-labelledby="campaign-chaos-bag-title">
       <h2 id="campaign-chaos-bag-title">{t('campaignLog.chaosBag')}</h2>

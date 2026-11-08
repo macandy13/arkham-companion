@@ -133,6 +133,8 @@ export const appTexts = {
     sealOn: '{{token}} bei {{investigator}} versiegeln',
     sealed: 'Versiegelt',
     sealedOn: 'bei {{investigator}}',
+    sealWhere: '{{token}} versiegeln bei',
+    releaseFrom: '{{token}} von {{investigator}} freigeben',
     release: 'Freigeben',
   },
   header: {

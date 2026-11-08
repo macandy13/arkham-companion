@@ -132,6 +132,8 @@ export const appTexts = {
     sealOn: 'Seal {{token}} on {{investigator}}',
     sealed: 'Sealed',
     sealedOn: 'on {{investigator}}',
+    sealWhere: 'Seal {{token}} on',
+    releaseFrom: 'Release {{token}} from {{investigator}}',
     release: 'Release',
   },
   header: {

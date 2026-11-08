@@ -51,7 +51,7 @@
   align-items: flex-start;
 }
 
-#board dialog[data-shell] section[data-part='chaos-bag'] > footer {
+#board dialog[data-shell] section[data-part='chaos-bag'] > [role='group'] {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-2);

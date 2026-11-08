@@ -12,6 +12,8 @@ import {
   type ChaosToken,
   type Command,
   type SealedToken,
+  type TokenCount,
+  tokenCounts,
 } from './index';
 import { stateAfter } from '../test/utils';
 
@@ -153,5 +155,23 @@ describe('SealChaosToken and ReleaseChaosToken', () => {
       ['autoFail', 'skull'],
       [{ token: '-1', investigatorId: bob }],
     ]);
+  });
+});
+
+describe('tokenCounts', () => {
+  it.each<[string, ChaosToken[], TokenCount[]]>([
+    ['an empty bag', [], []],
+    [
+      'each kind once, in the game order rather than the bag order',
+      ['skull', '-1', '0', '-1', 'autoFail'],
+      [
+        { token: '0', count: 1 },
+        { token: '-1', count: 2 },
+        { token: 'skull', count: 1 },
+        { token: 'autoFail', count: 1 },
+      ],
+    ],
+  ])('counts %s', (_, bag, counts) => {
+    expect(tokenCounts(bag)).toEqual(counts);
   });
 });
