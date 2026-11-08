@@ -92,12 +92,14 @@ describe('Spreading Flames, played end to end with Roland and Daisy, seed 1', ()
     ]);
     expect(table.board.location(byName("Your Friend's Room")).attachments).toEqual(['Fire!']);
     expect(table.board.enemies).toEqual([{ name: servant, at: 'Dormitories', health: 10 }]);
-    expect(
-      table.board.namesIn({ kind: 'encounterDiscard' }).filter((name) => name === 'Fire!'),
-    ).toHaveLength(4);
+    const firesDiscarded = table.board
+      .namesIn({ kind: 'encounterDiscard' })
+      .filter((name) => name === 'Fire!');
+    expect(firesDiscarded).toEqual(['Fire!', 'Fire!', 'Fire!', 'Fire!']);
 
     // Round 2 – mythos: Roland draws Noxious Smoke and tests willpower; he passes. Daisy draws
-    // Unspeakable Truths into her threat area (its horror after she discovers clues is hers to take).
+    // Unspeakable Truths into her threat area: from now on she takes 1 horror by hand each time
+    // she discovers clues.
     expect(table.nextPhase()).toEqual({ round: 2, phase: 'mythos', step: 'drawEncounterCard' });
     table.answerOnly('skill.willpower');
     table.answerOnly('pass');
@@ -133,16 +135,19 @@ describe('Spreading Flames, played end to end with Roland and Daisy, seed 1', ()
       'Warren Observatory',
     ]);
     expect(table.board.namesIn({ kind: 'outOfGame' })).toContain("Your Friend's Room");
-    expect(
-      table.board.namesIn({ kind: 'encounterDiscard' }).filter((name) => name === 'Fire!'),
-    ).toHaveLength(5);
+    const allFiresDiscarded = table.board
+      .namesIn({ kind: 'encounterDiscard' })
+      .filter((name) => name === 'Fire!');
+    expect(allFiresDiscarded).toEqual(['Fire!', 'Fire!', 'Fire!', 'Fire!', 'Fire!']);
     expect(table.board.enemies).toEqual([]);
     expect(table.board.namesIn({ kind: 'setAside' })).toContain(servant);
 
-    // Round 3 – mythos: a Cantor of Flame engages Roland. Daisy's Extraplanar Visions tests a
-    // difficulty the engine can't count yet, so the players resolve it from the card.
+    // Round 2 ends without enemies or attacks.
     expect(table.nextPhase()).toEqual({ round: 2, phase: 'enemy' });
     expect(table.nextPhase()).toEqual({ round: 2, phase: 'upkeep' });
+
+    // Round 3 – mythos: a Cantor of Flame engages Roland. Daisy's Extraplanar Visions tests a
+    // difficulty the engine can't count yet, so the players resolve it from the card.
     expect(table.nextPhase()).toEqual({ round: 3, phase: 'mythos' });
     expect(table.board.enemies).toEqual([
       { name: cantor, at: 'Miskatonic Quad', health: 2, engagedWith: roland },
@@ -159,15 +164,23 @@ describe('Spreading Flames, played end to end with Roland and Daisy, seed 1', ()
     table.startTurn(daisy);
     table.moveTo(daisy, byName('Warren Observatory'));
     table.investigate(daisy);
+    table.takeHorror(daisy, 1);
     table.investigate(daisy);
+    table.takeHorror(daisy, 1);
     table.endTurn(daisy);
     expect(table.board.enemies).toEqual([]);
-    expect(table.board.investigator(daisy)).toMatchObject({ at: 'Warren Observatory', clues: 2 });
+    expect(table.board.investigator(daisy)).toMatchObject({
+      at: 'Warren Observatory',
+      clues: 2,
+      horror: 2,
+    });
+
+    // Round 3 ends without enemies or attacks.
+    expect(table.nextPhase()).toEqual({ round: 3, phase: 'enemy' });
+    expect(table.nextPhase()).toEqual({ round: 3, phase: 'upkeep' });
 
     // Round 4 – mythos: the third doom makes Past Curfew advance to Lit Up. Its reverse side's
     // willpower tests are the players' to resolve. Daisy draws a Bystander, which engages her.
-    expect(table.nextPhase()).toEqual({ round: 3, phase: 'enemy' });
-    expect(table.nextPhase()).toEqual({ round: 3, phase: 'upkeep' });
     expect(table.nextPhase()).toEqual({ round: 4, phase: 'mythos', step: 'checkDoomThreshold' });
     table.answerOnly('yes');
     expect(table.board.agenda).toMatchObject({ name: 'Lit Up', doom: 0 });
@@ -190,10 +203,12 @@ describe('Spreading Flames, played end to end with Roland and Daisy, seed 1', ()
     table.moveTo(daisy, byName('Orne Library'));
     table.endTurn(daisy);
 
-    // Round 5 – mythos: Roland's Forbidden Secrets is the players' to resolve. Daisy draws Cosmic
-    // Evils and places its doom on the agenda.
+    // Round 4 ends without enemies or attacks.
     expect(table.nextPhase()).toEqual({ round: 4, phase: 'enemy' });
     expect(table.nextPhase()).toEqual({ round: 4, phase: 'upkeep' });
+
+    // Round 5 – mythos: Roland's Forbidden Secrets is the players' to resolve. Daisy draws Cosmic
+    // Evils and places its doom on the agenda.
     expect(table.nextPhase()).toEqual({ round: 5, phase: 'mythos', step: 'drawEncounterCard' });
     table.play(answer(COSMIC_EVILS_DECISION, 'doom'));
     expect(table.nextPhase()).toEqual({ round: 5, phase: 'investigation' });
@@ -206,6 +221,7 @@ describe('Spreading Flames, played end to end with Roland and Daisy, seed 1', ()
     table.endTurn(roland);
     table.startTurn(daisy);
     table.investigate(daisy);
+    table.takeHorror(daisy, 1);
     table.endTurn(daisy);
     expect(table.board.act?.advance).toEqual({
       kind: 'spendCluesAtRoundEnd',
@@ -223,14 +239,15 @@ describe('Spreading Flames, played end to end with Roland and Daisy, seed 1', ()
     expect(table.board.act?.name).toBe('Blaze of Glory');
     expect(table.board.enemies).toEqual([{ name: servant, at: 'Miskatonic Quad', health: 10 }]);
     expect(table.board.location(byName('Miskatonic Quad')).clues).toBe(6);
-    expect(table.board.investigators.map(({ clues }) => clues)).toEqual([0, 0]);
+    expect(table.board.investigator(roland).clues).toBe(0);
+    expect(table.board.investigator(daisy).clues).toBe(0);
 
     // Round 6 – mythos: Daisy draws Cosmic Evils again; this time she takes 1 damage and 1 horror
     // and draws again, a Cantor of Flame that engages her.
     expect(table.nextPhase()).toEqual({ round: 6, phase: 'mythos', step: 'drawEncounterCard' });
     table.play(answer(COSMIC_EVILS_DECISION, 'wounds'));
     expect(table.nextPhase()).toEqual({ round: 6, phase: 'investigation' });
-    expect(table.board.investigator(daisy)).toMatchObject({ damage: 1, horror: 1 });
+    expect(table.board.investigator(daisy)).toMatchObject({ damage: 1, horror: 4 });
     expect(table.board.enemy(byName(cantor))).toMatchObject({
       at: 'Orne Library',
       engagedWith: daisy,
@@ -258,10 +275,14 @@ describe('Spreading Flames, played end to end with Roland and Daisy, seed 1', ()
     table.resolveEnemyAttacks();
     expect(table.board.investigator(roland)).toMatchObject({ damage: 2, horror: 2 });
 
+    expect(table.nextPhase()).toEqual({ round: 6, phase: 'upkeep' });
+
+    // Round 7 – mythos: a Mutated Experiment engages Daisy.
+    expect(table.nextPhase()).toEqual({ round: 7, phase: 'mythos' });
+    expect(table.board.enemy(byName('Mutated Experiment')).engagedWith).toBe(daisy);
+
     // Round 7 – investigation: Roland's three attacks defeat the Servant. Blaze of Glory advances
     // by itself, and Resolution 1 asks the lead investigator to stay and fight the fire or go.
-    expect(table.nextPhase()).toEqual({ round: 6, phase: 'upkeep' });
-    expect(table.nextPhase()).toEqual({ round: 7, phase: 'mythos' });
     expect(table.nextPhase()).toEqual({ round: 7, phase: 'investigation' });
     table.startTurn(roland);
     table.fight(roland, byName(servant), { damage: 2 });
