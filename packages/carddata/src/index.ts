@@ -1,5 +1,6 @@
 export const PACKAGE_NAME = '@arkham/carddata';
 export * from './card_code';
+export * from './languages';
 export * from './schema';
 export * from './helpers';
 export * from './packs';

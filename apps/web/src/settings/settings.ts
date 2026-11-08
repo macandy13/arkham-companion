@@ -1,22 +1,8 @@
+import { CARD_LANGUAGES, type CardLanguage } from '@arkham/carddata';
+
 /** UI languages that have translation strings (`i18n/index.ts`). */
 export const UI_LANGUAGES = ['en', 'de'] as const;
 export type UiLanguage = (typeof UI_LANGUAGES)[number];
-
-/** Languages ArkhamDB serves card text in; each one has its own subdomain (`de.arkhamdb.com`). */
-export const CARD_LANGUAGES = [
-  'en',
-  'de',
-  'es',
-  'fr',
-  'it',
-  'ko',
-  'pl',
-  'pt',
-  'ru',
-  'uk',
-  'zh',
-] as const;
-export type CardLanguage = (typeof CARD_LANGUAGES)[number];
 
 /**
  * The table the app lies on (MD.7, product.md "Design language"): a playmat with its own table

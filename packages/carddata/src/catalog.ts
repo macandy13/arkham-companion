@@ -55,10 +55,11 @@ export function printedInvestigatorOf(
 
 /**
  * The catalog's current shape. Raise it whenever the catalog gains data an older cached copy
- * lacks (2: the investigators' traits, ability and flavour texts), so the app fetches it in full
- * once instead of revalidating the old copy.
+ * lacks (2: the investigators' traits, ability and flavour texts), or an older copy may hold the
+ * wrong data (3: languages without a host of their own cached English cards), so the app fetches
+ * it in full once instead of revalidating the old copy.
  */
-export const CATALOG_FORMAT = 2;
+export const CATALOG_FORMAT = 3;
 
 /** Result of a refresh: `notModified` means the cached catalog is still current. */
 export type CatalogFetchResult = { status: 'notModified' } | { status: 'ok'; catalog: CardCatalog };

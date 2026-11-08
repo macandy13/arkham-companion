@@ -100,7 +100,7 @@ test('the Hallway’s details, its card with Roland Banks on it, on Roland Banks
   await expect(details.getByRole('button', { name: 'Investigate · 1 action' })).toBeVisible();
 });
 
-test('the house map on the parchment table', { tag: '@shot' }, async ({ page }) => {
+test('the house map on the parchment table', async ({ page }) => {
   await page.goto('/#/settings');
   await page.getByRole('radio', { name: 'Parchment' }).check();
   await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
@@ -714,17 +714,13 @@ test('the Tangled Thicket revealed with its double slash, the other Arkham Woods
   await expect(map.getByRole('img', { name: 'Connection symbol: square' })).toHaveCount(3);
 });
 
-test(
-  'the menu open, holding "Adjust board" and the game log on a phone',
-  { tag: '@shot' },
-  async ({ page }) => {
-    await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
+test('the menu open, holding "Adjust board" and the game log on a phone', async ({ page }) => {
+  await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
 
-    await page.getByRole('button', { name: 'Menu' }).click();
+  await page.getByRole('button', { name: 'Menu' }).click();
 
-    await expect(page.getByRole('link', { name: 'Settings' })).toBeVisible();
-  },
-);
+  await expect(page.getByRole('link', { name: 'Settings' })).toBeVisible();
+});
 
 test('Daisy Walker swiped into view on a phone, Roland Banks beside her', async ({
   page,
