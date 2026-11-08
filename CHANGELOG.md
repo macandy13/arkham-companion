@@ -2,6 +2,63 @@
 
 The sections dated up to 2026-10-22 were released as 1.0.0 to 1.8.0 by mistake: Release Please starts at 1.0.0 by default. Versioning restarted at 0.1.0 (see "Versions" in docs/product.md).
 
+## [0.1.31](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v0.1.30...arkham-companion-v0.1.31) (2026-11-08)
+
+
+### Features
+
+* **engine:** cut printed connections ([#978](https://github.com/macandy13/arkham-companion/issues/978)) ([4ae6542](https://github.com/macandy13/arkham-companion/commit/4ae6542173aef29b66bb1d6fa1927c9118dd713c))
+* **engine:** cut printed connections (M4.8) ([0c0f24d](https://github.com/macandy13/arkham-companion/commit/0c0f24d4f2fcd8799a95fbd08b17044d3b5c53b3))
+* **play_tester:** hunter movement oracle (M1V.4) ([301d2e2](https://github.com/macandy13/arkham-companion/commit/301d2e29dd1b6faa4bd2415709e559381577778c))
+* **play_tester:** hunter movement oracle (M1V.4) ([6948f6b](https://github.com/macandy13/arkham-companion/commit/6948f6b98096a4259cf91ad90c80dd7c4a9e7d36))
+* **play_tester:** rule oracles for rounds, upkeep, doom and the act (M1V.4) ([0d13b04](https://github.com/macandy13/arkham-companion/commit/0d13b0431d2987e9187e3b922a2c488b0caaa3ea))
+* **play_tester:** rule oracles for rounds, upkeep, doom and the act (M1V.4) ([4a0aab8](https://github.com/macandy13/arkham-companion/commit/4a0aab889102e6bbe7d872f3ba70f6bc19dfd0af))
+* **play_tester:** shrink failing games before recording them (M1V.4) ([bebe531](https://github.com/macandy13/arkham-companion/commit/bebe5313f51a4300a8e32df11f18cef0788222b0))
+* **play_tester:** shrink failing games before recording them (M1V.4) ([30c3122](https://github.com/macandy13/arkham-companion/commit/30c3122c486ec4830466a26b54e206a95719e1d9))
+* **play_tester:** undo and resume checks (M1V.4) ([0deb239](https://github.com/macandy13/arkham-companion/commit/0deb239952136a9d585e35060560f70d0e1602c3))
+* **play_tester:** undo and resume checks (M1V.4) ([4ed0551](https://github.com/macandy13/arkham-companion/commit/4ed055110a53e942537d52459b1103739cd062d1))
+* **web:** draw the app mark and write the PWA icons from it (MD.4a) ([c728901](https://github.com/macandy13/arkham-companion/commit/c7289014aa72bbf848334a55cb1e707a0539f523))
+* **web:** draw the app mark and write the PWA icons from it (MD.4a) ([bb43442](https://github.com/macandy13/arkham-companion/commit/bb4344274bae664fa86aa2e533ca9078b5cbca97))
+* **web:** loading screen that fills the mark's ring, and the inline spinner (MD.4b) ([37de3b8](https://github.com/macandy13/arkham-companion/commit/37de3b87ff3ed555f5ced4ac952878c84d082642))
+* **web:** loading screen that fills the mark's ring, and the inline spinner (MD.4b) ([b9bd615](https://github.com/macandy13/arkham-companion/commit/b9bd6153bac343d8dbc2ea30ab4608ec51ceac03))
+* **web:** menus as table panels with sections, line icons and check marks (MD.5a) ([fef7502](https://github.com/macandy13/arkham-companion/commit/fef7502de99000016cf5ab011710040ec4c39536))
+* **web:** menus as table panels with sections, line icons and check marks (MD.5a) ([69868d7](https://github.com/macandy13/arkham-companion/commit/69868d75c18423eaebfae69652ceadb57842110a))
+* **web:** replay play tester runs through GameSession and export (M1V.4) ([c3f3713](https://github.com/macandy13/arkham-companion/commit/c3f3713a13d12985800c1c44dfbc4ad06dd9890c))
+* **web:** replay play tester runs through GameSession and export (M1V.4) ([993bbfd](https://github.com/macandy13/arkham-companion/commit/993bbfd58104b8deab2bdd18cb94672ba6b4d7ac))
+* **web:** welcome page on home while nothing is stored (MD.4c) ([7b003bb](https://github.com/macandy13/arkham-companion/commit/7b003bb39d8b28f429c2f9216e6f70483df7d9b7))
+* **web:** welcome page on home while nothing is stored (MD.4c) ([df5ea72](https://github.com/macandy13/arkham-companion/commit/df5ea72aced246ca0635bd2b159ccf081d70f668))
+* **web:** wizard portraits with class and seat badges, lead and remove in the sheet (MD.3d2) ([144cfc6](https://github.com/macandy13/arkham-companion/commit/144cfc6ecd2e94f0d07802daca914cece9a906f3))
+* **web:** wizard portraits with class and seat badges, lead and remove in the sheet (MD.3d2) ([4f57c09](https://github.com/macandy13/arkham-companion/commit/4f57c09e73c3ba10e01ca5822345f71a0dd641d9))
+* **web:** wizard setup and summary as the guide's form (MD.3d3) ([b9f9a4f](https://github.com/macandy13/arkham-companion/commit/b9f9a4fffb4cdda8d7ea565cd727617947d29fa8))
+* **web:** wizard setup and summary as the guide's form (MD.3d3) ([e3f11f4](https://github.com/macandy13/arkham-companion/commit/e3f11f4873eadda5b596020351d4bb10cdbeeecc))
+
+
+### Bug fixes
+
+* **carddata:** list every Chapter Two pack ArkhamDB has ([#120](https://github.com/macandy13/arkham-companion/issues/120)) ([c6e0c59](https://github.com/macandy13/arkham-companion/commit/c6e0c5958619cdc3b96074d312cc2dc03699b86e))
+* **carddata:** list every Chapter Two pack ArkhamDB has ([#120](https://github.com/macandy13/arkham-companion/issues/120)) ([dcee8e0](https://github.com/macandy13/arkham-companion/commit/dcee8e04327a8cf21f22d56a35045ecdd0e4f378))
+* **engine:** remove both a declared and printed move, keep old saves loading ([4ffb0a8](https://github.com/macandy13/arkham-companion/commit/4ffb0a8cdf1720ceddfcf66adfe4772575969546))
+* **play_tester:** judge hunters only on the step out of the investigation phase ([c4b4df8](https://github.com/macandy13/arkham-companion/commit/c4b4df8b542d389bb3510be4a6cfd7915677a2ee))
+* **play_tester:** oracle review fixes ([030d477](https://github.com/macandy13/arkham-companion/commit/030d4779e3fe300681d2798ce31d0d222618c963))
+* **web:** keep the play menu's phone-only entries hidden on a tablet; danger as data ([376b12f](https://github.com/macandy13/arkham-companion/commit/376b12fab4987a7a14eec19819e5992b68125392))
+* **web:** making a lead turns the table round them (rotateTo) ([f3ade46](https://github.com/macandy13/arkham-companion/commit/f3ade46e43ee6f990be66fd4e0662a749cfde080))
+* **web:** scope the summary rules to its list, review nits ([40a1544](https://github.com/macandy13/arkham-companion/commit/40a1544364092f8e1c22321b5556bc0b36202e86))
+
+
+### Refactoring
+
+* **carddata:** brand card codes ([#956](https://github.com/macandy13/arkham-companion/issues/956)) ([a773052](https://github.com/macandy13/arkham-companion/commit/a773052e0182a9557ad2248be71c28414108565a))
+* **carddata:** brand card codes ([#956](https://github.com/macandy13/arkham-companion/issues/956)) ([1242362](https://github.com/macandy13/arkham-companion/commit/12423620aa0339386ec7aa05b7de845711f45ea5))
+* **play_tester:** share the log comparison with the web replay ([6e41ad1](https://github.com/macandy13/arkham-companion/commit/6e41ad1c7e71633327666556e90a695ab585e989))
+* **web:** one source for the card language, named props for the loading screen ([518fb96](https://github.com/macandy13/arkham-companion/commit/518fb9642ed357c53dff1038441c9dc499c27469))
+* **web:** share the mark's colours with the manifest ([b220fb7](https://github.com/macandy13/arkham-companion/commit/b220fb7d3fdec9d384f4df9eaab249bb19bc0b4a))
+
+
+### Documentation
+
+* **carddata:** name the source of the Chapter Two pack list ([436f7e7](https://github.com/macandy13/arkham-companion/commit/436f7e756cdddd98476410e1f46e4341112bd8fe))
+* **web:** say where the welcome page gets its paper; tidy the welcome tests ([bbb6062](https://github.com/macandy13/arkham-companion/commit/bbb6062100d748e495960b7468f414484b5f48ff))
+
 ## [0.1.30](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v0.1.29...arkham-companion-v0.1.30) (2026-11-07)
 
 
