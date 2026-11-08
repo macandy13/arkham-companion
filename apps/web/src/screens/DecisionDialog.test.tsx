@@ -4,6 +4,7 @@ import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import {
   atLocation,
   blankEnemy,
+  blankTreachery,
   decisionId,
   fixed,
   blankLocation,
@@ -12,6 +13,8 @@ import {
   investigatorId,
   newGame,
   PlayTable,
+  skillTest,
+  whenRevealed,
   zoneOf,
 } from '@arkham/engine';
 import { initI18n } from '../i18n';
@@ -489,6 +492,40 @@ describe('DecisionDialog', () => {
       expect(table.board.investigator(alder)).toMatchObject({ horror, damage });
     },
   );
+
+  describe('a test that costs 1 damage for each point failed, no token drawn in the app', () => {
+    /** Alder draws "Test agility (3). Take 1 damage for each point you fail by." */
+    const graspingHandsDrawn = () => {
+      const table = PlayTable.start(
+        newGame()
+          .withLocation(study, blankLocation('study', { name: 'Study' }), { revealed: true })
+          .withInvestigator(alder, { name: 'Alder', locationId: study })
+          .withCard(
+            instanceId('grasping_hands'),
+            blankTreachery('Grasping Hands', {
+              abilities: [whenRevealed(skillTest('agility', 3, { perPointFailed: 'damage' }))],
+            }),
+            { kind: 'encounterDeck' },
+          )
+          .withTurnOf(alder),
+      );
+      table.drawEncounterCard(alder);
+      return table;
+    };
+
+    it.each([
+      { taps: ['Failed', 'Done'], damage: 1 },
+      { taps: ['Raise the Margin of failure', 'Raise the Margin of failure', 'Done'], damage: 3 },
+      { taps: ['Lower the Margin of failure', 'Done'], damage: 0 },
+    ])('asks how much it failed by: $taps deals $damage damage', ({ taps, damage }) => {
+      const table = graspingHandsDrawn();
+      renderFirstDecision(table);
+
+      for (const tap of taps) fireEvent.click(screen.getByRole('button', { name: tap }));
+
+      expect(table.board.investigator(alder).damage).toBe(damage);
+    });
+  });
 
   it('takes back the step that raised it with Undo, and offers no Adjust board of its own', () => {
     const table = aldersTurnInTheStudy();

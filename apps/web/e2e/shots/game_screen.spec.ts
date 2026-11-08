@@ -3,6 +3,7 @@ import {
   cluesToShareExport,
   doomBesideDamageExport,
   ghoulPriestInCellarExport,
+  graspingHandsDrawnExport,
   graveyardTestExport,
   midnightMasksStartedExport,
   tangledThicketRevealedExport,
@@ -99,29 +100,26 @@ test('the Hallway’s details, its card with Roland Banks on it, on Roland Banks
   await expect(details.getByRole('button', { name: 'Investigate · 1 action' })).toBeVisible();
 });
 
-test('the house map by day', async ({ page }) => {
+test('the house map on the parchment table', async ({ page }) => {
   await page.goto('/#/settings');
-  await page.getByRole('radio', { name: 'By day' }).check();
+  await page.getByRole('radio', { name: 'Parchment' }).check();
   await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
 
   await expect(page.getByRole('region', { name: 'Roland Banks' })).toBeVisible();
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
 });
 
-for (const { skin, code, light, theme } of [
-  { skin: 'The Stars Are Right', code: 'stars', light: 'By night', theme: 'dark' },
-  { skin: 'Sunken R’lyeh', code: 'rlyeh', light: 'By night', theme: 'dark' },
-  { skin: 'Sunken R’lyeh', code: 'rlyeh', light: 'By day', theme: 'light' },
+for (const { skin, code } of [
+  { skin: 'The Stars Are Right', code: 'stars' },
+  { skin: 'Sunken R’lyeh', code: 'rlyeh' },
 ]) {
-  test(`the house map on the ${skin} table ${light.toLowerCase()}`, async ({ page }) => {
+  test(`the house map on the ${skin} table`, async ({ page }) => {
     await page.goto('/#/settings');
     await page.getByRole('radio', { name: skin }).check();
-    await page.getByRole('radio', { name: light }).check();
     await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
 
     await expect(page.getByRole('region', { name: 'Roland Banks' })).toBeVisible();
     await expect(page.locator('html')).toHaveAttribute('data-skin', code);
-    await expect(page.locator('html')).toHaveAttribute('data-theme', theme);
   });
 }
 
@@ -659,6 +657,20 @@ test('who pays the 4 clues to advance Trapped, Daisy Walker 3 and Roland Banks 1
 
   await expect(dialog.getByText(/^4 of 4 clues chosen/)).toBeVisible();
   await expect(dialog.getByRole('button', { name: 'Pay', exact: true })).toBeEnabled();
+});
+
+test('Grasping Hands failed by 2 with no token drawn in the app, its margin of failure on the Failed row', async ({
+  page,
+}) => {
+  await resumeImportedGame(page, 'Grasping Hands', graspingHandsDrawnExport('Grasping Hands'));
+  const decision = page.getByRole('dialog', { name: 'Test for Grasping Hands' });
+
+  await decision.getByRole('button', { name: 'Failed' }).click();
+  await decision.getByRole('button', { name: 'Raise the Margin of failure' }).click();
+
+  await expect(
+    decision.getByRole('region', { name: 'Margin of failure' }).locator('data'),
+  ).toHaveText('2');
 });
 
 test('the Graveyard’s failed willpower test, its choice under the Failed row', async ({ page }) => {

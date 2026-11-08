@@ -541,7 +541,7 @@ describe('GameScreen header', () => {
     ]);
   });
 
-  it('heads the game’s own entries with the scenario and the table by night or by day', async () => {
+  it('heads the game’s own entries with the scenario and the table skins', async () => {
     localStorage.clear();
     await renderTheGathering('game-screen-menu-sections-test');
 
@@ -552,29 +552,30 @@ describe('GameScreen header', () => {
       'The Gathering',
       'Table',
     ]);
-    expect(menu.getByRole('button', { name: 'By night' }).getAttribute('aria-pressed')).toBe(
+    expect(menu.getByRole('button', { name: 'Night and brass' }).getAttribute('aria-pressed')).toBe(
       'true',
     );
   });
 
-  it('turns the table to day from the menu', async () => {
+  it('lays the parchment table from the menu', async () => {
     localStorage.clear();
     await renderTheGathering('game-screen-menu-day-test');
     fireEvent.click(button('Menu'));
     const menu = within(screen.getByRole('navigation', { name: 'Main' }));
 
     try {
-      fireEvent.click(menu.getByRole('button', { name: 'By day' }));
+      fireEvent.click(menu.getByRole('button', { name: 'Parchment' }));
 
-      expect(loadSettings().theme).toBe('light');
+      expect(loadSettings().tableSkin).toBe('parchment');
       expect(document.documentElement.dataset.theme).toBe('light');
-      expect(menu.getByRole('button', { name: 'By day' }).getAttribute('aria-pressed')).toBe(
+      expect(menu.getByRole('button', { name: 'Parchment' }).getAttribute('aria-pressed')).toBe(
         'true',
       );
     } finally {
-      // The table stays by night for the tests after this one.
+      // The tests after this one play on the dark default table.
       localStorage.clear();
       delete document.documentElement.dataset.theme;
+      delete document.documentElement.dataset.skin;
     }
   });
 

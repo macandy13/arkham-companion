@@ -19,7 +19,6 @@ describe('settings storage', () => {
       ownedPacks: ['core_2026', 'dwl'],
       cardLanguage: 'de',
       uiLanguage: 'de',
-      theme: 'light',
       tableSkin: 'stars',
       tokenSet: 'cardboard',
       cardTheme: 'pictures',
@@ -56,17 +55,29 @@ describe('settings storage', () => {
         ownedPacks: [1],
         cardLanguage: 'xx',
         uiLanguage: 'fr',
-        theme: 'light',
         tableSkin: 'moon',
         tokenSet: 'glass',
         cardTheme: 'scans',
-        enemyTokens: 'portraits',
+        enemyTokens: 'initials',
         chaosDraw: 'nobody',
       }),
     );
 
-    expect(loadSettings()).toEqual({ ...DEFAULT_SETTINGS, theme: 'light' });
+    expect(loadSettings()).toEqual({ ...DEFAULT_SETTINGS, enemyTokens: 'initials' });
   });
+
+  it.each([
+    { theme: 'light', saved: 'nightAndBrass', tableSkin: 'parchment' },
+    { theme: 'light', saved: 'stars', tableSkin: 'parchment' },
+    { theme: 'dark', saved: 'stars', tableSkin: 'stars' },
+  ] as const)(
+    'reads the old $theme theme beside the $saved skin as the $tableSkin table',
+    ({ theme, saved, tableSkin }) => {
+      localStorage.setItem(KEY, JSON.stringify({ theme, tableSkin: saved }));
+
+      expect(loadSettings().tableSkin).toBe(tableSkin);
+    },
+  );
 
   it.each([
     { cardLook: 'frames', cardTheme: 'exact' },

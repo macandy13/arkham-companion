@@ -102,7 +102,7 @@
   text-align: center;
 }
 
-/* The table's skins and its light (a segmented choice, base.css) stand at the start of the row. */
+/* The table's skins stand at the start of the row. */
 #settings fieldset {
   justify-self: start;
 }
@@ -172,6 +172,10 @@
 
 #settings label[data-skin='rlyeh'] {
   --skin-playmat: var(--playmat-rlyeh);
+}
+
+#settings label[data-skin='parchment'] {
+  --skin-playmat: var(--playmat-parchment);
 }
 
 /* A token set: its five tokens in a row on a piece of the table. */

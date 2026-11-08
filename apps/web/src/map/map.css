@@ -558,6 +558,22 @@
   --connection-colour: var(--color-connection-double-slash);
 }
 
+#map svg g[data-connection='heart'] {
+  --connection-colour: var(--color-connection-heart);
+}
+
+#map svg g[data-connection='star'] {
+  --connection-colour: var(--color-connection-star);
+}
+
+#map svg g[data-connection='spade'] {
+  --connection-colour: var(--color-connection-spade);
+}
+
+#map svg g[data-connection='clover'] {
+  --connection-colour: var(--color-connection-clover);
+}
+
 #map svg g[role='button']:focus-visible {
   outline: var(--border-width) solid var(--color-accent);
 }

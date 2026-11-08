@@ -28,9 +28,40 @@ export function connectionGlyph(symbol: LocationSymbol, s: number): string {
       return `M ${-s} ${-s * 0.7} H ${s} M 0 ${-s * 0.7} V ${s}`;
     case 'double_slash':
       return `M ${-s * 0.9} ${s * 0.5} L ${-s * 0.2} ${-s * 0.7} M ${s * 0.2} ${s * 0.7} L ${s * 0.9} ${-s * 0.5}`;
+    case 'heart':
+      return `M 0 ${s} C ${-s * 1.3} 0 ${-s * 0.7} ${-s * 1.2} 0 ${-s * 0.4} C ${s * 0.7} ${-s * 1.2} ${s * 1.3} 0 0 ${s} Z`;
+    case 'star':
+      return star(s);
+    case 'spade':
+      return `M 0 ${-s} C ${s * 1.2} ${-s * 0.1} ${s * 0.8} ${s * 0.75} 0 ${s * 0.25} C ${-s * 0.8} ${s * 0.75} ${-s * 1.2} ${-s * 0.1} 0 ${-s} Z M 0 ${s * 0.25} L ${s * 0.35} ${s} H ${-s * 0.35} Z`;
+    case 'clover':
+      return clover(s);
     default:
       return assertNever(symbol);
   }
+}
+
+/** A five-pointed star, point up, its inner corners at 40 % of its reach. */
+function star(s: number): string {
+  const corners = Array.from({ length: 10 }, (_, i) => {
+    const angle = (i * Math.PI) / 5 - Math.PI / 2;
+    const reach = i % 2 === 0 ? s : s * 0.4;
+    return `${(reach * Math.cos(angle)).toFixed(2)} ${(reach * Math.sin(angle)).toFixed(2)}`;
+  });
+  return `M ${corners.join(' L ')} Z`;
+}
+
+/** A clover of three round leaves, one up and two at the sides, on a short stem. */
+function clover(s: number): string {
+  const r = s * 0.42;
+  const leaf = (x: number, y: number) =>
+    `M ${x - r} ${y} A ${r} ${r} 0 1 0 ${x + r} ${y} A ${r} ${r} 0 1 0 ${x - r} ${y} Z`;
+  return [
+    leaf(0, -s * 0.5),
+    leaf(-s * 0.5, s * 0.1),
+    leaf(s * 0.5, s * 0.1),
+    `M 0 ${s * 0.1} V ${s}`,
+  ].join(' ');
 }
 
 /**
