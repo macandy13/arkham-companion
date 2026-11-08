@@ -17,6 +17,8 @@ The cards below add when an objective is checked, what counts towards it, and ac
 - "When the round ends, investigators in the Hallway may, as a group, spend the requisite number of clues to advance" (The Barrier, The Gathering act 2) replaces the usual spend: it can't be spent during a turn, and only clues of investigators in the Hallway count.
   - The app asks the lead as the round ends, once those in the Hallway hold enough; the group may also keep them.
   - It resolves after They're Getting Out!'s forced round-end doom (forced before non-forced, RR "Forced Abilities"), so a Ghoul Priest it spawns adds no doom that round.
+- "At the end of the round, investigators may spend the requisite clues, as a group, to advance" (Where There's Smoke…, Spreading Flames act 1) is the same objective without a place: the clues of every investigator count, wherever they are.
+  - Searching for Dr. Armitage (act 3) names a place again: only investigators at Orne Library.
 
 ## Acts that advance on their own clues
 

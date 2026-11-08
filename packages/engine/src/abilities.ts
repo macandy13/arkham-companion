@@ -434,7 +434,7 @@ export type AbilityCondition =
    * at least `atLeast` between them, so they can pay a `spendCluesAsGroup` there (The Barrier);
    * without a location, all of them anywhere ("Where There's Smoke…").
    */
-  | { kind: 'cluesHeldAt'; location?: CardCode; atLeast: ScaledValue };
+  | { kind: 'groupCluesHeld'; location?: CardCode; atLeast: ScaledValue };
 
 /**
  * The cards a `victoryDisplayHolds` condition counts: those with `trait` and, if `unique`, only
@@ -709,7 +709,7 @@ function conditionHolds(
       const held = state.cards[opened.cardId]?.tokens[condition.token] ?? 0;
       return held >= resolveValue(condition.atLeast, state.meta.playerCount);
     }
-    case 'cluesHeldAt': {
+    case 'groupCluesHeld': {
       const held = cluesHeldForObjective(ctx, state, condition.location);
       return held >= resolveValue(condition.atLeast, state.meta.playerCount);
     }
@@ -1291,8 +1291,8 @@ export function roundEndClueObjective(
   const objective = (stats.abilities ?? [])
     .filter((ability) => ability.window.kind === 'roundEnds')
     .map((ability) => ability.condition)
-    .find((condition) => condition?.kind === 'cluesHeldAt');
-  return objective?.kind === 'cluesHeldAt'
+    .find((condition) => condition?.kind === 'groupCluesHeld');
+  return objective?.kind === 'groupCluesHeld'
     ? { clues: objective.atLeast, location: objective.location }
     : undefined;
 }
@@ -1681,7 +1681,7 @@ export function advanceBySpendingCluesAtRoundEnd(
 ): Ability {
   return {
     window: { kind: 'roundEnds' },
-    condition: { kind: 'cluesHeldAt', location, atLeast: clues },
+    condition: { kind: 'groupCluesHeld', location, atLeast: clues },
     effects: [
       leadDecides(decision, 'decision.spendCluesAtRoundEnd', [
         {
