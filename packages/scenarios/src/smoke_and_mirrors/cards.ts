@@ -92,7 +92,7 @@ const jpg = 'jpg';
  *
  * - the codex entries (each suspect's and the Servant of Flame's), read from the campaign guide,
  *   with the suspects' Parley actions and reactions that trigger them
- * - the Elusive keyword (Servant of Flame, Sgt. Earl Monroe, Bat Horror)
+ * - the Elusive keyword (Servant of Flame, Sgt. Earl Monroe, Bat Horror; MC2.15)
  * - Augurs of Flame's action (draw the card beneath your location, MC2.8b) and its objective
  * - Arkham Alive's and Emergent Evils' reverse sides (MC2.8c)
  * - Mark of Elokoss' damage as its holder's turn ends (assigned to an asset if able) and its
