@@ -25,6 +25,7 @@ import { deltaText, useCountChange } from '../screens/countChange';
 import type { TokenDragHandlers } from '../screens/useTokenDrag';
 import { useReturnToPool } from '../screens/useReturnToPool';
 import { GameToken, type GameTokenKind } from '../tokens/GameToken';
+import { PipRing } from './PipRing';
 import { useClueDrag } from './useClueDrag';
 import './investigators.css';
 
@@ -575,8 +576,8 @@ function statusLine(
 type StatKind = 'health' | 'sanity' | 'clues' | 'resources' | 'doom';
 
 /**
- * The token each counter shows its count on (MD.8b): health and sanity count the damage and
- * horror taken, on the printed heart and brain.
+ * The token each counter counts (MD.8b), which it shows its count on. Health and sanity count the
+ * damage and horror taken, but show what is left on their printed symbol instead (`PipRing`).
  */
 const STAT_TOKENS: Record<StatKind, GameTokenKind> = {
   health: 'damage',
@@ -589,12 +590,12 @@ const STAT_TOKENS: Record<StatKind, GameTokenKind> = {
 /**
  * One counter of the panel (`kind`): its name (`short` where the full one does not fit its column,
  * with the full one as its title), its `value` (written as `shown` where the panel says more, such
- * as health against its maximum) and its steppers (`children`). The others show their count on
- * their token (`GameToken`, `STAT_TOKENS`). Health and sanity show as the card prints them
- * (`printed`): the printed maximum on an anatomical heart or a brain, with the damage or horror
- * token taken on its lower right, like the location's clues on its clue value; the pair is one
- * image named by `shown`, since the two numbers alone do not say what is left. A change of the count while it shows plays its effect (`useCountChange`): of the damage or
- * horror taken on health and sanity.
+ * as health against its maximum) and its steppers (`children`). Most show their count on their
+ * token (`GameToken`, `STAT_TOKENS`). Health and sanity show as the card prints them (`printed`):
+ * an anatomical heart or a brain with what is left on it, in a ring of a pip per point of the
+ * printed maximum whose last pips, the damage or horror taken, are greyed (`PipRing`); the whole is
+ * one image named by `shown` ("4/7"). A change of the count while it shows plays its effect
+ * (`useCountChange`).
  */
 function Stat({
   kind,
@@ -620,7 +621,7 @@ function Stat({
   children?: ReactNode;
 }) {
   const origin = { x: 0, y: 0 };
-  const change = useCountChange(printed ? printed.taken : value);
+  const change = useCountChange(value);
   return (
     <div data-stat={kind}>
       <dt>{short ? <abbr title={label}>{short}</abbr> : label}</dt>
@@ -633,16 +634,11 @@ function Stat({
               ) : (
                 <Brain centre={origin} scale={1} />
               )}
+              <PipRing max={printed.max} taken={printed.taken} radius={PIP_RING_RADIUS} />
             </svg>
-            <data value={printed.max}>{printed.max}</data>
-            <GameToken
-              key={change?.key}
-              kind={STAT_TOKENS[kind]}
-              count={printed.taken}
-              data-count=""
-              data-empty={printed.taken === 0 || undefined}
-              data-delta={deltaText(change)}
-            />
+            <data key={change?.key} value={value} data-delta={deltaText(change)}>
+              {value}
+            </data>
           </span>
         ) : (
           <GameToken
@@ -663,6 +659,9 @@ function Stat({
 
 /** The square around the heart's and brain's drawings (`Heart`, `Brain`), centred on the origin. */
 const PRINTED_SYMBOL_VIEW_BOX = '-15 -15 30 30';
+
+/** The pips' circle round the heart or brain, in its drawing's units: just clear of the symbol. */
+const PIP_RING_RADIUS = 17;
 
 /** What one stepper of a counter says it does (`label`), since its sign alone does not say. */
 interface StepperSide {

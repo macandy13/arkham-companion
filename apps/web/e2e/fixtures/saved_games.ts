@@ -356,6 +356,17 @@ export function ghoulPriestInCellarExport(title: string): Buffer {
 }
 
 /**
+ * Like `houseOpenedExport`, with Roland Banks hurt: 3 damage and 1 horror, given by hand, so his
+ * health and sanity show what is left with some pips greyed.
+ */
+export function rolandHurtExport(title: string): Buffer {
+  const table = houseOpened(theGathering);
+  table.play({ type: 'AdjustInvestigator', investigatorId: rolandId, stat: 'damage', delta: 3 });
+  table.play({ type: 'AdjustInvestigator', investigatorId: rolandId, stat: 'horror', delta: 1 });
+  return exportOf(title, table, 'roland_hurt');
+}
+
+/**
  * Like `ghoulPriestInCellarExport`, with doom beside damage: the Ghoul Priest has taken 2 damage
  * and carries 1 doom, placed by hand as on a cultist, and the Cellar holds 1 doom, all given by hand.
  */

@@ -8,6 +8,7 @@ import {
   midnightMasksStartedExport,
   tangledThicketRevealedExport,
   rolandSurroundedExport,
+  rolandHurtExport,
   rolandThreatenedExport,
   houseOpenedExport,
   inTheParlorExport,
@@ -32,19 +33,15 @@ test('the house map with Roland Banks in the Hallway', { tag: '@shot' }, async (
   await expect(hallway.getByRole('img', { name: 'Roland Banks' })).toBeVisible();
 });
 
-test(
-  'the Ghoul Priest in the Cellar with doom beside its damage, and doom on the Cellar',
-  { tag: '@shot' },
-  async ({ page }) => {
-    await resumeImportedGame(page, 'Doom and damage', doomBesideDamageExport('Doom and damage'));
+test('the Ghoul Priest in the Cellar with doom beside its damage, and doom on the Cellar', async ({
+  page,
+}) => {
+  await resumeImportedGame(page, 'Doom and damage', doomBesideDamageExport('Doom and damage'));
 
-    const cellar = page
-      .getByRole('figure', { name: 'House' })
-      .getByRole('group', { name: 'Cellar' });
-    await expect(cellar.getByRole('img', { name: 'Ghoul Priest, 2 damage, Doom 1' })).toBeVisible();
-    await expect(cellar.getByRole('img', { name: 'Doom 1', exact: true })).toBeVisible();
-  },
-);
+  const cellar = page.getByRole('figure', { name: 'House' }).getByRole('group', { name: 'Cellar' });
+  await expect(cellar.getByRole('img', { name: 'Ghoul Priest, 2 damage, Doom 1' })).toBeVisible();
+  await expect(cellar.getByRole('img', { name: 'Doom 1', exact: true })).toBeVisible();
+});
 
 test('Roland Banks’ card opened whole from its art, to read its abilities', async ({ page }) => {
   await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
@@ -136,20 +133,28 @@ test('the token pool in the cardboard token set', async ({ page }) => {
   await expect(page.locator('html')).toHaveAttribute('data-token-set', 'cardboard');
 });
 
+test('the house map in the card pictures style, the clues left on each card', async ({ page }) => {
+  await page.goto('/#/settings');
+  await page.getByLabel('Card style').selectOption('Card pictures');
+  await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
+
+  const hallway = page
+    .getByRole('figure', { name: 'House' })
+    .getByRole('group', { name: 'Hallway' });
+  await expect(hallway.getByRole('img', { name: 'Clues 0' })).toBeVisible();
+  await expect(page.locator('html')).toHaveAttribute('data-card-theme', 'pictures');
+  await expect(page.locator('[data-card="scenario"]')).toHaveAttribute('data-picture', 'shown');
+});
+
 test(
-  'the house map in the card pictures style, the clues left on each card',
+  'Roland Banks with 3 damage and 1 horror: 6 health and 4 sanity left, the pips taken greyed',
   { tag: '@shot' },
   async ({ page }) => {
-    await page.goto('/#/settings');
-    await page.getByLabel('Card style').selectOption('Card pictures');
-    await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
+    await resumeImportedGame(page, 'Roland hurt', rolandHurtExport('Roland hurt'));
 
-    const hallway = page
-      .getByRole('figure', { name: 'House' })
-      .getByRole('group', { name: 'Hallway' });
-    await expect(hallway.getByRole('img', { name: 'Clues 0' })).toBeVisible();
-    await expect(page.locator('html')).toHaveAttribute('data-card-theme', 'pictures');
-    await expect(page.locator('[data-card="scenario"]')).toHaveAttribute('data-picture', 'shown');
+    const roland = page.getByRole('region', { name: 'Roland Banks' });
+    await expect(roland.getByRole('img', { name: '6/9' })).toBeVisible();
+    await expect(roland.getByRole('img', { name: '4/5' })).toBeVisible();
   },
 );
 
@@ -226,28 +231,24 @@ test("the Ghoul Priest's details in the Eldritch card style: a blackletter name,
   await expect(page.getByRole('dialog', { name: 'Ghoul Priest' })).toBeVisible();
 });
 
-test(
-  "the Ghoul Priest's details in the card pictures style, its damage on the printed health",
-  { tag: '@shot' },
-  async ({ page }) => {
-    await page.goto('/#/settings');
-    await page.getByLabel('Card style').selectOption('Card pictures');
-    await resumeImportedGame(
-      page,
-      'Roland Banks threatened',
-      rolandThreatenedExport('Roland Banks threatened'),
-    );
-    const roland = page.getByRole('region', { name: 'Roland Banks' });
-    await roland.getByRole('button', { name: 'Later cards in the threat area' }).click();
+test("the Ghoul Priest's details in the card pictures style, its damage on the printed health", async ({
+  page,
+}) => {
+  await page.goto('/#/settings');
+  await page.getByLabel('Card style').selectOption('Card pictures');
+  await resumeImportedGame(
+    page,
+    'Roland Banks threatened',
+    rolandThreatenedExport('Roland Banks threatened'),
+  );
+  const roland = page.getByRole('region', { name: 'Roland Banks' });
+  await roland.getByRole('button', { name: 'Later cards in the threat area' }).click();
 
-    await roland.getByRole('button', { name: 'Details of Ghoul Priest' }).click();
+  await roland.getByRole('button', { name: 'Details of Ghoul Priest' }).click();
 
-    const card = page
-      .getByRole('dialog', { name: 'Ghoul Priest' })
-      .locator('svg[data-card="enemy"]');
-    await expect(card).toHaveAttribute('data-picture', 'shown');
-  },
-);
+  const card = page.getByRole('dialog', { name: 'Ghoul Priest' }).locator('svg[data-card="enemy"]');
+  await expect(card).toHaveAttribute('data-picture', 'shown');
+});
 
 test('the house map in the Night and brass card style', async ({ page }) => {
   await page.goto('/#/settings');
