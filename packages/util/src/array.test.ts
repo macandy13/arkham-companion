@@ -5,6 +5,7 @@ import {
   matchingFirst,
   range,
   rotateTo,
+  groupBy,
   runsBy,
   unique,
   withoutFirst,
@@ -115,6 +116,21 @@ describe('matchingFirst', () => {
     { items: [], first: 'roland', expected: [] },
   ])('puts $first ahead of $items', ({ items, first, expected }) => {
     expect(matchingFirst(items, (item) => item === first)).toEqual(expected);
+  });
+});
+
+describe('groupBy', () => {
+  it('puts every item with its key in one group, in the order the keys first appear', () => {
+    const steps = ['move-hall', 'draw-ghoul', 'move-cellar'];
+
+    expect(groupBy(steps, (step) => step.split('-')[0])).toEqual([
+      { key: 'move', items: ['move-hall', 'move-cellar'] },
+      { key: 'draw', items: ['draw-ghoul'] },
+    ]);
+  });
+
+  it('has no groups for no items', () => {
+    expect(groupBy([], (step: string) => step)).toEqual([]);
   });
 });
 

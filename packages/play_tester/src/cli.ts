@@ -10,9 +10,10 @@
  *                                        still fails is a fixed bug come back, written out alike
  *   pnpm playtest --bot goal             plays only runs of that bot (`random`, `goal`, `chaos`;
  *                                        all of them by default)
- *   pnpm playtest --nightly              also writes `summary.md` (the job summary) and
- *                                        `findings.json` (one `NightlyFinding` per signature, for
- *                                        the issues) to the output directory, findings or not
+ *   pnpm playtest --nightly              also writes `summary.md` (the job summary, with the
+ *                                        statistics) and `findings.json` (one `NightlyFinding` per
+ *                                        signature, for the issues) to the output directory,
+ *                                        findings or not
  *   pnpm playtest --replay <record>      replays a record's steps on today's engine and stops at
  *                                        its failing step
  *
@@ -40,6 +41,7 @@ import { BOT_KINDS, runsFrom, type BotKind } from './run';
 import { describeStep } from './steps';
 import { findingReport, gameExport, gameExportPath, reportPath } from './report';
 import { shrink } from './shrink';
+import { gameStatistics, statisticsReport } from './statistics';
 import { formatSummary, summarise } from './summary';
 
 const { values } = parseArgs({
@@ -82,7 +84,11 @@ function playGames(): number {
     const findings = nightlyFindings(written);
     const comeBackFiles = comeBack.map(({ file }) => file);
     mkdirSync(out, { recursive: true });
-    writeFileSync(join(out, 'summary.md'), nightlySummary(seed, summary, findings, comeBackFiles));
+    const statistics = statisticsReport(results.map(gameStatistics));
+    writeFileSync(
+      join(out, 'summary.md'),
+      `${nightlySummary(seed, summary, findings, comeBackFiles)}\n\n${statistics}`,
+    );
     writeFileSync(join(out, 'findings.json'), JSON.stringify(findings, undefined, 2));
   }
   return written.length === 0 ? 0 : 1;
