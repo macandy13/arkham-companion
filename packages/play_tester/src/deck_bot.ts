@@ -1,5 +1,6 @@
 import {
   byName,
+  optionName,
   type CardName,
   type Decision,
   type InstanceId,
@@ -85,6 +86,7 @@ export class DeckBot {
     if (!open && this.queue.length > 0) return this.queue.shift()!;
     const steps =
       (open ? undefined : this.soaked(table)) ??
+      this.cancelledAttack(table) ??
       this.answeredTest(table, random) ??
       this.playedCard(table, random);
     if (steps) {
@@ -149,6 +151,37 @@ export class DeckBot {
         ];
         return [{ verb: 'playerCard', investigator: name, card: soaker.card.name, effects }];
       }
+    }
+    return undefined;
+  }
+
+  /**
+   * The cancel of an open enemy attack on one of the bot's investigators who holds a card that
+   * cancels attacks (Dodge) and can pay for it: the attack decision's cancel option, then the card's
+   * cost, since the table takes nothing else while the attack is open.
+   */
+  private cancelledAttack(table: PlayTable): Step[] | undefined {
+    for (const decision of table.state.pending) {
+      if (decision.decider.kind !== 'investigator' || !ATTACK_DECISION.test(decision.id)) continue;
+      const skip = decision.options.find(({ id }) => id === 'skip');
+      if (!skip) continue;
+      const investigator = table.board.investigator(decision.decider.investigatorId);
+      const seat = this.seats.get(investigator.name);
+      const card = seat?.hand.find(
+        ({ use, cost }) =>
+          use.kind === 'cancel' && use.what === 'attack' && investigator.resources >= (cost ?? 0),
+      );
+      if (!seat || !card) continue;
+      seat.hand.splice(seat.hand.indexOf(card), 1);
+      this.turn.plays++;
+      return [
+        {
+          verb: 'answer',
+          ...(decision.subject && { about: decision.subject }),
+          option: optionName(skip),
+        },
+        spending(investigator.name, card.name, card.cost ?? 0),
+      ];
     }
     return undefined;
   }
@@ -389,6 +422,7 @@ export class DeckBot {
         ];
       case 'lucky':
       case 'commit':
+      case 'cancel':
         return undefined;
     }
   }
@@ -465,6 +499,12 @@ interface Situation {
   readonly nearDefeat: boolean;
 }
 
+/**
+ * The ids of the decisions of an enemy attack (`forcedAttackDecision`, `enemyPhaseAttackDecision`),
+ * whose `skip` option is the attack cancelled (named "does not provoke" on an attack of opportunity).
+ */
+const ATTACK_DECISION = /^(attackOfOpportunity|retaliate|alert|enemyAttack):/;
+
 /** The least `actScore` a card is played for. */
 const WORTH_PLAYING = 3;
 
@@ -502,6 +542,7 @@ function actScore(card: PlayerCard, situation: Situation): number {
       return use.doom ? 0 : 3;
     case 'lucky':
     case 'commit':
+    case 'cancel':
       return 0;
   }
 }

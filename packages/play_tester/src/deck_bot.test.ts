@@ -193,6 +193,28 @@ describe('the deck bot', () => {
     },
   );
 
+  it('cancels an attack of opportunity with Dodge, then pays for it', () => {
+    const table = PlayTable.start(
+      game.withCard(ghoul, blankEnemy('ghoul', { damage: 1 }), engagedWith(alice)),
+    );
+    playStep(table, { verb: 'takeResource', investigator: cardName('alice') });
+    const bot = botWithHand('Dodge');
+
+    const cancel = bot.step(table, random);
+    playStep(table, cancel);
+
+    expect([cancel, bot.step(table, random)]).toEqual([
+      { verb: 'answer', about: ghoul, option: 'does not provoke' },
+      {
+        verb: 'playerCard',
+        investigator: 'alice',
+        card: 'Dodge',
+        effects: [{ kind: 'resources', delta: -1 }],
+      },
+    ]);
+    expect(table.board.investigator(alice).damage).toBe(0);
+  });
+
   it('heals the damage armour in play soaks, until its health is used up', () => {
     const table = PlayTable.start(game);
     const bot = botWithHand('Leather Coat');
