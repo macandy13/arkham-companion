@@ -5,6 +5,8 @@
 - A constant ability applies only while its card is in play.
   - Set-aside, removed, in-deck, in-hand, discarded and victory-display cards are out of play, so their abilities do nothing.
   - An attachment is in play while its host is.
+- A card that leaves play loses its tokens and its attachments are discarded ([In play and out of play](https://arkhamdb.com/rules#In_Play_and_Out_of_Play)): Escape the Dorms removes Your Friend's Room with its Fire! and sets the Servant of Flame aside without its damage.
+  - The app does this when an effect sets a card aside or removes it from the game; a correction by hand moves the card alone.
 - An unrevealed location has only its unrevealed side's text. Its revealed side's abilities ("each enemy at this location gets +1 fight") apply once it is revealed. This is our reading of "do not read the revealed side" (Grimoire, Location Cards); no rule says it in one sentence.
 - A modified value is the printed value plus all active modifiers, applied together and recalculated whenever one starts or stops. A result below zero counts as zero.
 - "Cannot" is absolute: no ability or effect overrides it ([Cannot](https://arkhamdb.com/rules#Cannot)). Card rulings: [Restrictions](cards/restrictions.md).

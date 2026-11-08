@@ -3,6 +3,8 @@ import {
   blankAgenda,
   blankEnemy,
   blankLocation,
+  attachedTo,
+  atLocation,
   blankTreachery,
   cardCode,
   checkInvariants,
@@ -392,5 +394,40 @@ describe('MoveCard', () => {
     });
 
     expect(rejection).toEqual({ code: 'unknownCard', cardId: missing });
+  });
+});
+
+describe('MoveCard out of play', () => {
+  const hall = instanceId('hall');
+  const fire = instanceId('fire');
+  /**
+   * Alice in the study; next door the hall holds 2 clues and has the fire attached, and the ghoul
+   * at the hall has 3 damage.
+   */
+  const table = aliceInStudy
+    .withLocation(hall, blankLocation('hall'), { revealed: true, clues: 2 })
+    .withCard(fire, blankTreachery('fire'), attachedTo(hall))
+    .withCard(ghoul, ghoulCard, atLocation(hall), { tokens: { damage: 3 } });
+  const context = table.context();
+
+  it('discards what is attached to the hall and its clues when it is removed from the game', () => {
+    const { state } = run(context, [
+      table.startCommand(),
+      { type: 'MoveCard', cardId: hall, to: { kind: 'outOfGame' } },
+    ]);
+
+    expect(state.cards[hall]?.zone).toEqual({ kind: 'outOfGame' });
+    expect(state.cards[hall]?.tokens).toEqual({});
+    expect(state.cards[fire]?.zone).toEqual({ kind: 'encounterDiscard' });
+  });
+
+  it('sets the ghoul aside without its damage', () => {
+    const { state } = run(context, [
+      table.startCommand(),
+      { type: 'MoveCard', cardId: ghoul, to: setAside },
+    ]);
+
+    expect(state.cards[ghoul]?.zone).toEqual(setAside);
+    expect(state.cards[ghoul]?.tokens).toEqual({});
   });
 });

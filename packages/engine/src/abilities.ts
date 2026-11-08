@@ -1737,6 +1737,11 @@ export function placeCluesOnSelfUpTo(upTo: TokenAmount): AbilityEffect {
   return { type: 'PlaceTokens', cardId: { ref: 'self' }, token: 'clue', upTo };
 }
 
+/** "Place 3 [per_investigator] clues on Miskatonic Quad": clues from the token pool on `card`. */
+export function placeCluesOn(card: RelativeCard, amount: TokenAmount): AbilityEffect {
+  return { type: 'PlaceTokens', cardId: card, token: 'clue', amount };
+}
+
 /** Heals up to `amount` damage from the enemy that has the ability ("heal 2 damage from it"). */
 export function healSelf(amount: number): AbilityEffect {
   return { type: 'HealEnemy', enemyId: { ref: 'self' }, amount };
@@ -1792,6 +1797,19 @@ export function moveEachInvestigatorTo(location: RelativeCard): AbilityEffect {
 /** "Discard each enemy in the Study", engaged ones included (`DiscardCard` each). */
 export function discardEachEnemyAt(location: RelativeCard): AbilityEffect {
   return { type: 'DiscardCard', cardId: { ref: 'eachEnemyAt', location } };
+}
+
+/** "Discard each enemy in play", engaged ones included (`DiscardCard` each). */
+export function discardEachEnemy(): AbilityEffect {
+  return { type: 'DiscardCard', cardId: eachEnemy() };
+}
+
+/**
+ * "Set the Servant of Flame aside, out of play": it leaves play without its tokens and
+ * attachments (`MoveCard`), so it comes back healed.
+ */
+export function setAsideCard(card: RelativeCard): AbilityEffect {
+  return { type: 'MoveCard', cardId: card, to: { kind: 'setAside' } };
 }
 
 /** "Remove the Study from the game". */
@@ -2009,6 +2027,15 @@ export function putLocationIntoPlay(
  */
 export function spawnEachSetAsideAt(trait: Trait, location: RelativeCard): AbilityEffect {
   return { type: 'SpawnEnemy', enemyId: { ref: 'eachSetAside', trait }, at: location };
+}
+
+/**
+ * "Attach 1 set-aside copy of Fire! to Your Friend's Room": one set-aside copy of each of `codes`
+ * (a code listed twice takes two) moves to `to`, written
+ * `fromSetAside([codes.fire], { kind: 'attachedTo', hostId: onlyCopy(codes.yourFriendsRoom) })`.
+ */
+export function fromSetAside(codes: readonly CardCode[], to: Templated<Zone>): AbilityEffect {
+  return { type: 'FromSetAside', codes, to };
 }
 
 /** "Put the set-aside Lita Chantler into play at the Parlor". */

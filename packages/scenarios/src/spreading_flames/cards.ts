@@ -1,25 +1,36 @@
 import {
+  GRID_CELLS_PER_CARD,
+  advanceBySpendingCluesAtRoundEnd,
   afterDiscoveringClues,
   cardCode,
   cardDbFrom,
   checkDoomThreshold,
   decisionId,
   defeatEachInvestigator,
+  discardEachEnemy,
   discardFromHand,
   discardSelf,
   eachInvestigatorAt,
   encounterSetCode,
   fixed,
+  fromSetAside,
   gainSurge,
   heal,
   ifYouHave,
   itsLocation,
+  mapId,
+  onlyCopy,
   perInvestigator,
+  placeCluesOn,
   placeDoomOnAgenda,
   putIntoThreatArea,
+  putLocationIntoPlay,
+  removeFromGame,
   resignAction,
+  setAsideCard,
   skillTest,
   skillTestOfEither,
+  spawnEnemyAt,
   takeDamageAndHorror,
   takeHorror,
   trait,
@@ -29,6 +40,7 @@ import {
   youMustEither,
   type CardDb,
   type CardStats,
+  type GridCell,
 } from '@arkham/engine';
 import { act, agenda, enemy, location, picturesOf, prey, treachery } from '../card_builders';
 
@@ -77,6 +89,34 @@ export const COSMIC_EVILS_DECISION = decisionId('spreadingFlames.cosmicEvils');
 /** Id of Noxious Smoke's question to its drawer: test willpower or agility. */
 export const NOXIOUS_SMOKE_DECISION = decisionId('spreadingFlames.noxiousSmoke');
 
+/** Id of "Where There's Smoke…"'s question as the round ends: spend the clues to advance? */
+export const WHERE_THERES_SMOKE_DECISION = decisionId('spreadingFlames.whereTheresSmoke');
+
+/** Id of "Searching for Dr. Armitage"'s question as the round ends: spend the clues to advance? */
+export const SEARCHING_FOR_ARMITAGE_DECISION = decisionId('spreadingFlames.searchingForArmitage');
+
+/** The campus, the one map of Spreading Flames: setup starts it with Your Friend's Room. */
+export const CAMPUS = mapId('campus');
+
+/** The layout cell `columns` and `rows` card steps from the top left corner. */
+function cardStep(columns: number, rows: number): GridCell {
+  return { column: columns * GRID_CELLS_PER_CARD, row: rows * GRID_CELLS_PER_CARD };
+}
+
+/**
+ * Where each campus location goes. The campaign guide gives no layout, so the cells are our own:
+ * Miskatonic Quad in the middle with Science Hall above it, Warren Observatory to its right, Orne
+ * Library below it and the Dormitories to its left, under Your Friend's Room.
+ */
+export const CAMPUS_CELLS = {
+  yourFriendsRoom: cardStep(0, 0),
+  dormitories: cardStep(0, 1),
+  miskatonicQuad: cardStep(1, 1),
+  scienceHall: cardStep(1, 0),
+  warrenObservatory: cardStep(2, 1),
+  orneLibrary: cardStep(1, 2),
+} as const;
+
 const codes = SPREADING_FLAMES_CODES;
 const sets = SPREADING_FLAMES_SETS;
 const own = sets.spreadingFlames;
@@ -90,10 +130,14 @@ const jpg = 'jpg';
  * difficulties checked against ArkhamDB's Core Set (2026) data), no card text, JSON or images.
  * `arkhamdb_check.test.ts` holds the stats to ArkhamDB's data.
  *
- * The acts' objectives and the agendas' and acts' reverse sides come with the scenario's setup, as
- * most of them name its locations; only Wild Flames' defeat and Blaze of Glory's Resign are entered
- * here. Effects the engine has no rule for yet are left out, so the players resolve them from the
- * card:
+ * Blaze of Glory's objective and reverse side come with the resolutions. Effects the engine has no
+ * rule for yet are left out, so the players resolve them from the card:
+ *
+ * - Past Curfew's and Lit Up's reverse sides (each investigator tests, MC2.13; Lit Up's Fire! "if
+ *   they are still set aside")
+ * - Escape the Dorms' objective (each undefeated investigator at Miskatonic Quad)
+ * - Searching for Dr. Armitage's reverse side: Dr. Henry Armitage under any investigator's control
+ *   and the lead's search for Fire!
  *
  * - the agendas' Parley (test intellect (2) to discard a Bystander at your location): it can be
  *   taken only with a Bystander there, a condition actions can't state yet; Wild Flames draws Fire!
@@ -145,6 +189,21 @@ export const spreadingFlamesCardDefs: readonly CardStats[] = [
     set: own,
     pictures: jpg,
     stage: 1,
+    // The Dormitories come into play before the Servant of Flame spawns there.
+    abilities: [
+      advanceBySpendingCluesAtRoundEnd(WHERE_THERES_SMOKE_DECISION, perInvestigator(2)),
+      whenAdvanced(
+        discardEachEnemy(),
+        ...putLocationIntoPlay(codes.dormitories, CAMPUS, { at: CAMPUS_CELLS.dormitories }),
+        ...putLocationIntoPlay(codes.miskatonicQuad, CAMPUS, { at: CAMPUS_CELLS.miskatonicQuad }),
+        spawnEnemyAt(onlyCopy(codes.servantOfFlame), onlyCopy(codes.dormitories)),
+        fromSetAside([codes.fire], { kind: 'attachedTo', hostId: onlyCopy(codes.yourFriendsRoom) }),
+        // The other four of Fire!'s five copies.
+        fromSetAside([codes.fire, codes.fire, codes.fire, codes.fire], {
+          kind: 'encounterDiscard',
+        }),
+      ),
+    ],
   }),
   act({
     code: codes.escapeTheDorms,
@@ -152,6 +211,19 @@ export const spreadingFlamesCardDefs: readonly CardStats[] = [
     set: own,
     pictures: jpg,
     stage: 2,
+    // Setting it aside heals the Servant of Flame, wherever it is, even from the victory display.
+    abilities: [
+      whenAdvanced(
+        setAsideCard(onlyCopy(codes.servantOfFlame)),
+        discardEachEnemy(),
+        removeFromGame(onlyCopy(codes.yourFriendsRoom)),
+        ...putLocationIntoPlay(codes.orneLibrary, CAMPUS, { at: CAMPUS_CELLS.orneLibrary }),
+        ...putLocationIntoPlay(codes.scienceHall, CAMPUS, { at: CAMPUS_CELLS.scienceHall }),
+        ...putLocationIntoPlay(codes.warrenObservatory, CAMPUS, {
+          at: CAMPUS_CELLS.warrenObservatory,
+        }),
+      ),
+    ],
   }),
   act({
     code: codes.searchingForDrArmitage,
@@ -159,6 +231,18 @@ export const spreadingFlamesCardDefs: readonly CardStats[] = [
     set: own,
     pictures: jpg,
     stage: 3,
+    abilities: [
+      advanceBySpendingCluesAtRoundEnd(
+        SEARCHING_FOR_ARMITAGE_DECISION,
+        perInvestigator(3),
+        codes.orneLibrary,
+      ),
+      // "Put into play" engages like a spawn: a ready enemy engages an investigator at its location.
+      whenAdvanced(
+        spawnEnemyAt(onlyCopy(codes.servantOfFlame), onlyCopy(codes.miskatonicQuad)),
+        placeCluesOn(onlyCopy(codes.miskatonicQuad), perInvestigator(3)),
+      ),
+    ],
   }),
   act({
     code: codes.blazeOfGlory,
