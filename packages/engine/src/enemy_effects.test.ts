@@ -10,7 +10,6 @@ import {
   eachEnemy,
   encounterDiscard,
   engagedWith,
-  engagesYou,
   exhaustEnemy,
   fixed,
   instanceId,
@@ -67,7 +66,7 @@ describe('card effects that deal damage to enemies', () => {
   });
 });
 
-describe('card effects that exhaust, engage or defeat an enemy', () => {
+describe('card effects that exhaust or defeat an enemy', () => {
   const ready = instanceId('ready_ghoul');
   const tired = instanceId('tired_ghoul');
   const ghoulCard = blankEnemy('ghoul');
@@ -95,30 +94,6 @@ describe('card effects that exhaust, engage or defeat an enemy', () => {
     });
 
     expect(after.cards[ready]?.exhausted).toBe(true);
-    expect(after.cards[tired]?.exhausted).toBe(true);
-  });
-
-  it('lets an exhausted enemy at the entered location engage the investigator', () => {
-    /** "After you enter the attic: each enemy here engages you." */
-    const atticCard = blankLocation('attic', {
-      abilities: [afterEntering(engagesYou({ ref: 'eachEnemyAt', location: itsLocation() }))],
-    });
-    const { context, state } = newGame()
-      .withLocation(hall, blankLocation('hall'), { revealed: true })
-      .withLocation(attic, atticCard, { revealed: true })
-      .withInvestigator(alice, { locationId: hall })
-      .withCard(tired, ghoulCard, atLocation(attic))
-      .start();
-    const tiredExhausted = stateAfter(context, state, { type: 'ExhaustEnemy', enemyId: tired });
-
-    const after = stateAfter(context, tiredExhausted, {
-      type: 'MoveInvestigator',
-      investigatorId: alice,
-      to: attic,
-      ignoreConnections: true,
-    });
-
-    expect(after.cards[tired]?.zone).toEqual(engagedWith(alice));
     expect(after.cards[tired]?.exhausted).toBe(true);
   });
 

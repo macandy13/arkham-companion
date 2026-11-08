@@ -156,7 +156,6 @@ export type Rejection =
    * Reference, "Massive"), so there is nothing to engage.
    */
   | { code: 'massiveNotEngageable'; cardId: InstanceId }
-  /** Exhausting an exhausted card or readying a ready one. */
   /** A hunter command names an enemy that is not an unengaged hunter at a location. */
   | { code: 'notAHunter'; cardId: InstanceId }
   /** `MoveHunter` to a location that is not connected to the hunter's. */

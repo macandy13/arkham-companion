@@ -339,7 +339,6 @@ export type AbilityCommand =
           | 'DamageEnemy'
           | 'DefeatEnemy'
           | 'MoveEnemyTowards'
-          | 'EngageEnemy'
           | 'DisengageEnemy'
           | 'EngageReadyEnemies'
           | 'ReadyEnemy'
@@ -1785,16 +1784,6 @@ export function exhaustEnemy(enemy: RelativeCard): AbilityEffect {
  */
 export function defeatEnemy(enemy: RelativeCard): AbilityEffect {
   return { type: 'DefeatEnemy', enemyId: enemy };
-}
-
-/**
- * "[Enemy] engages you" (`EngageEnemy`): it engages the investigator the
- * window names. Like the engage action it needs them at the enemy's location
- * and is rejected for a massive enemy, so it suits an enemy that arrived
- * there, not one that must move first.
- */
-export function engagesYou(enemy: RelativeCard): AbilityEffect {
-  return { type: 'EngageEnemy', enemyId: enemy, investigatorId: { ref: 'windowInvestigator' } };
 }
 
 /** The one copy of `code` in the game, for a scenario's unique cards (`{ ref: 'onlyCopy' }`). */

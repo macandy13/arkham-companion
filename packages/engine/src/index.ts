@@ -181,7 +181,6 @@ export {
   dealDamageTo,
   exhaustEnemy,
   defeatEnemy,
-  engagesYou,
   putIntoThreatArea,
   takeControl,
   putMapIntoPlay,
