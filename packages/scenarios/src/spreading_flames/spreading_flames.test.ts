@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
+  campaign,
   cardDbWith,
   cardStats,
   checkInvariants,
   instanceId,
+  investigatorCode,
   investigatorId,
   neighbours,
   skillTestSuggestion,
@@ -15,18 +17,22 @@ import {
   type ScenarioContext,
 } from '@arkham/engine';
 import {
+  answer,
   codesIn,
   standardInvestigatorCards,
   startScenario,
   stateAfter,
 } from '@arkham/engine/test/utils';
 import {
+  ASH_STORY,
   CAMPUS,
   SEARCHING_FOR_ARMITAGE_DECISION,
+  STAY_OR_GO_DECISION,
   WHERE_THERES_SMOKE_DECISION,
   SPREADING_FLAMES_CODES as codes,
   spreadingFlames,
   spreadingFlamesCards,
+  spreadingFlamesResolutions,
 } from '../index';
 
 const ctx: ScenarioContext = {
@@ -392,5 +398,106 @@ describe('Spreading Flames act 3, Searching for Dr. Armitage', () => {
       locationId: miskatonicQuad,
     });
     expect(state.cards[miskatonicQuad]?.tokens.clue).toBe(6);
+  });
+});
+
+describe('Spreading Flames act 4, Blaze of Glory, and the resolutions', () => {
+  /** Acts 1 to 3 advance without paying; act 3 puts the Servant of Flame at Miskatonic Quad. */
+  function atBlazeOfGlory(): GameState {
+    return stateAfter(
+      ctx,
+      startScenario(ctx, { playerCount: 2 }),
+      { type: 'AdvanceAct' },
+      { type: 'AdvanceAct' },
+      { type: 'AdvanceAct' },
+    );
+  }
+
+  it('asks the lead to stay or go once the Servant of Flame is defeated', () => {
+    const asked = stateAfter(ctx, atBlazeOfGlory(), {
+      type: 'DefeatEnemy',
+      enemyId: servantOfFlame,
+    });
+
+    expect(asked.pending).toMatchObject([
+      {
+        id: STAY_OR_GO_DECISION,
+        decider: { kind: 'lead' },
+        options: [{ id: 'stay' }, { id: 'go' }],
+      },
+    ]);
+  });
+
+  it.each([
+    { option: 'stay', resolution: 'R2', saved: true, trauma: 'physical' },
+    { option: 'go', resolution: 'R3', saved: false, trauma: 'mental' },
+  ] as const)(
+    'ends with $resolution when the lead chooses to $option, recording saved=$saved and $trauma trauma',
+    ({ option, resolution, saved, trauma }) => {
+      const asked = stateAfter(ctx, atBlazeOfGlory(), {
+        type: 'DefeatEnemy',
+        enemyId: servantOfFlame,
+      });
+
+      const ended = stateAfter(ctx, asked, answer(STAY_OR_GO_DECISION, option));
+      const proposal = campaign.proposeResolution(ctx, ended, spreadingFlamesResolutions) ?? [];
+
+      expect(ended.meta).toMatchObject({ ended: true, resolution });
+      expect(proposal).toContainEqual({
+        kind: 'command',
+        command: {
+          type: 'RecordStory',
+          key: ASH_STORY.savedMiskatonicUniversity,
+          value: { kind: 'flag', value: saved },
+        },
+      });
+      expect(proposal).toContainEqual({
+        kind: 'command',
+        command: {
+          type: 'RecordStory',
+          key: ASH_STORY.defeatedTheirMaskedPursuer,
+          value: { kind: 'flag', value: true },
+        },
+      });
+      expect(proposal).toContainEqual({
+        kind: 'choice',
+        options: [tank, investigatorId('seeker')].map((investigator) => ({
+          type: 'EarnCard',
+          code: investigatorCode(investigator),
+          card: codes.drHenryArmitage,
+        })),
+      });
+      expect(proposal).toContainEqual({
+        kind: 'command',
+        command: { type: 'AddTrauma', code: investigatorCode(tank), kind: trauma, amount: 1 },
+      });
+    },
+  );
+});
+
+describe('Spreading Flames without a resolution', () => {
+  it('records the burned university and 1 mental trauma each once Wild Flames defeats everyone', () => {
+    const ended = stateAfter(
+      ctx,
+      startScenario(ctx, { playerCount: 2 }),
+      { type: 'AdvanceAgenda' },
+      { type: 'AdvanceAgenda' },
+      { type: 'AdvanceAgenda' },
+    );
+
+    const proposal = campaign.proposeResolution(ctx, ended, spreadingFlamesResolutions) ?? [];
+
+    expect(proposal).toContainEqual({
+      kind: 'command',
+      command: {
+        type: 'RecordStory',
+        key: ASH_STORY.savedMiskatonicUniversity,
+        value: { kind: 'flag', value: false },
+      },
+    });
+    expect(proposal).toContainEqual({
+      kind: 'command',
+      command: { type: 'AddTrauma', code: investigatorCode(tank), kind: 'mental', amount: 1 },
+    });
   });
 });

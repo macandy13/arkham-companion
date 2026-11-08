@@ -339,8 +339,6 @@
 #investigators [data-card='investigator']:not([data-adjusting]) {
   --stat-token-size: calc(var(--investigator-token-size) * var(--scan-unit));
   --stat-token-count-size: calc(var(--investigator-token-count-size) * var(--scan-unit));
-  --stat-count-size: calc(var(--investigator-count-size) * var(--scan-unit));
-  --stat-count-offset: calc(-4 * var(--scan-unit));
 }
 
 #investigators [data-card='investigator']:not([data-adjusting]) > dl {
@@ -356,17 +354,8 @@
   height: calc(var(--investigator-symbol-size) * var(--scan-unit));
 }
 
-#investigators
-  [data-card='investigator']:not([data-adjusting])
-  dd
-  > [data-printed]
-  > data:not([data-count]) {
+#investigators [data-card='investigator']:not([data-adjusting]) dd > [data-printed] > data {
   font-size: calc(var(--investigator-symbol-number-size) * var(--scan-unit));
-}
-
-#investigators [data-card='investigator']:not([data-adjusting]) dd > [data-printed] > [data-count] {
-  --token-count-size: calc(var(--investigator-count-disc-size) * var(--scan-unit));
-  --token-count-font-size: calc(var(--investigator-count-number-size) * var(--scan-unit));
 }
 
 /*
@@ -578,12 +567,14 @@
   scale: 1 var(--investigator-pictures-page-stretch);
 }
 
-/* On the whole card the printed heart and brain show the maximum; ours give way to them. */
+/* On the whole card our heart and brain lie over the printed ones, a little larger to cover them. */
 :root[data-card-theme='pictures']
   #investigators
   [data-card='investigator'][data-picture][data-shape='full']
   dd
   > [data-printed]
-  > :is(svg, data:not([data-count])) {
-  visibility: hidden;
+  [data-symbol] {
+  transform-box: fill-box;
+  transform-origin: center;
+  scale: var(--investigator-symbol-cover);
 }

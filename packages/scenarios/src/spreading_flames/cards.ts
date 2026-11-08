@@ -1,5 +1,6 @@
 import {
   GRID_CELLS_PER_CARD,
+  advanceAct,
   advanceBySpendingCluesAtRoundEnd,
   afterDiscoveringClues,
   cardCode,
@@ -14,11 +15,13 @@ import {
   encounterSetCode,
   fixed,
   eachSetAsideCopyTo,
+  endScenario,
   fromSetAside,
   gainSurge,
   heal,
   ifYouHave,
   itsLocation,
+  leadDecides,
   mapId,
   onlyCopy,
   perInvestigator,
@@ -28,6 +31,7 @@ import {
   putLocationIntoPlay,
   removeFromGame,
   resignAction,
+  resolutionId,
   setAsideCard,
   skillTest,
   skillTestOfEither,
@@ -37,6 +41,7 @@ import {
   trait,
   whenAdvanced,
   whenDefeated,
+  whenEnemyDefeated,
   whenRevealed,
   youMustEither,
   type CardDb,
@@ -93,6 +98,18 @@ export const NOXIOUS_SMOKE_DECISION = decisionId('spreadingFlames.noxiousSmoke')
 /** Id of "Where There's Smoke…"'s question as the round ends: spend the clues to advance? */
 export const WHERE_THERES_SMOKE_DECISION = decisionId('spreadingFlames.whereTheresSmoke');
 
+/**
+ * Spreading Flames' resolutions as the campaign guide numbers them. Resolution 1 always leads on
+ * to 2 or 3 (stay and fight the fire, or go with Dr. Armitage), so the game ends with one of those.
+ */
+export const SPREADING_FLAMES_RESOLUTIONS = {
+  stayed: resolutionId('R2'),
+  went: resolutionId('R3'),
+} as const;
+
+/** Id of Resolution 1's question to the lead investigator: stay and fight the fire, or go? */
+export const STAY_OR_GO_DECISION = decisionId('spreadingFlames.stayOrGo');
+
 /** Id of "Searching for Dr. Armitage"'s question as the round ends: spend the clues to advance? */
 export const SEARCHING_FOR_ARMITAGE_DECISION = decisionId('spreadingFlames.searchingForArmitage');
 
@@ -122,6 +139,7 @@ const codes = SPREADING_FLAMES_CODES;
 const sets = SPREADING_FLAMES_SETS;
 const own = sets.spreadingFlames;
 const cosmicEvils = 'scenario.spreadingFlames.cosmicEvils';
+const stayOrGo = 'scenario.spreadingFlames.stayOrGo';
 /** ArkhamDB has the Core Set (2026)'s pictures as JPEGs. */
 const jpg = 'jpg';
 
@@ -131,8 +149,7 @@ const jpg = 'jpg';
  * difficulties checked against ArkhamDB's Core Set (2026) data), no card text, JSON or images.
  * `arkhamdb_check.test.ts` holds the stats to ArkhamDB's data.
  *
- * Blaze of Glory's objective and reverse side come with the resolutions. Effects the engine has no
- * rule for yet are left out, so the players resolve them from the card:
+ * Effects the engine has no rule for yet are left out, so the players resolve them from the card:
  *
  * - Past Curfew's and Lit Up's reverse sides (each investigator tests, MC2.13; Lit Up's Fire! "if
  *   they are still set aside")
@@ -249,6 +266,25 @@ export const spreadingFlamesCardDefs: readonly CardStats[] = [
     pictures: jpg,
     stage: 4,
     actions: [resignAction()],
+    // Objective: the act advances by itself once the Servant of Flame is defeated; its reverse
+    // side is Resolution 1, whose last step chooses between Resolutions 2 and 3.
+    abilities: [
+      whenEnemyDefeated(codes.servantOfFlame, advanceAct()),
+      whenAdvanced(
+        leadDecides(STAY_OR_GO_DECISION, `${stayOrGo}.prompt`, [
+          {
+            id: 'stay',
+            label: `${stayOrGo}.stay`,
+            effects: [endScenario(SPREADING_FLAMES_RESOLUTIONS.stayed)],
+          },
+          {
+            id: 'go',
+            label: `${stayOrGo}.go`,
+            effects: [endScenario(SPREADING_FLAMES_RESOLUTIONS.went)],
+          },
+        ]),
+      ),
+    ],
   }),
   location({
     code: codes.yourFriendsRoom,
