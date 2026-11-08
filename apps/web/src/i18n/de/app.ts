@@ -301,6 +301,7 @@ export const appTexts = {
     quick: 'Ein Szenario, ohne Kampagnenlogbuch',
     campaignLog: 'Kampagnenlogbuch',
   },
+  network: { offline: 'Offline' },
   nav: { label: 'Hauptnavigation' },
   game: {
     unplayable:

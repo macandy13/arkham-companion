@@ -299,6 +299,7 @@ export const appTexts = {
     quick: 'One scenario, no campaign log',
     campaignLog: 'Campaign log',
   },
+  network: { offline: 'Offline' },
   nav: { label: 'Main' },
   game: {
     unplayable: "This game can't be played: this version of the app does not have its scenario.",

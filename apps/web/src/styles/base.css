@@ -255,6 +255,31 @@ aside[data-toast] button:disabled {
   text-decoration: none;
 }
 
+/*
+ * The "Offline" mark in the app bar and the play screen's status row (OfflineMark): a quiet pill
+ * with a struck-through cloud, in the muted text colour, so it informs without alarming.
+ */
+p[data-offline] {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--space-1);
+  margin: 0;
+  padding: var(--space-1) var(--space-2);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-pill);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-note);
+}
+
+p[data-offline]::before {
+  content: '';
+  width: var(--icon-size);
+  height: var(--icon-size);
+  background: currentcolor;
+  mask: url('../screens/icons/offline_mark.svg') center / contain no-repeat;
+}
+
 /* The menus' line icons. */
 :is(a, button)[data-icon='games']::before {
   mask-image: url('../screens/icons/games.svg');
