@@ -48,7 +48,7 @@ test('the question before a campaign is deleted with its games', async ({ page }
   await expect(page.getByRole('alertdialog')).toContainText('the games of its scenarios');
 });
 
-test('a game’s menu open on its cover', { tag: '@shot' }, async ({ page }) => {
+test('a game’s menu open on its cover', async ({ page }) => {
   await importGame(page, houseOpenedExport('The house is open'));
 
   await page.getByRole('button', { name: 'More for The house is open' }).click();

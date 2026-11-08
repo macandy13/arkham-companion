@@ -36,7 +36,7 @@ test('what an interlude writes into the log', async ({ page }) => {
   ).toBeVisible();
 });
 
-test('the log after an interlude was written', async ({ page }) => {
+test('the log after an interlude was written', { tag: '@shot' }, async ({ page }) => {
   await openStoredCampaign(page, 'Interlude – Roland and Fake Seeker', (id) =>
     interludeDueEvents(id, [rolandBanks, fakeSeeker]),
   );

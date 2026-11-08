@@ -31,6 +31,8 @@
   --color-menu-danger: #e0645a;
   --menu-shadow: 0 var(--space-2) var(--space-4) rgb(0 0 0 / 45%);
   --menu-min-width: 15rem;
+  /* A toast's actions are text links, underlined a little below the text (MD.5b). */
+  --toast-link-offset: 0.2em;
   /* Behind an open dialog. */
   --color-scrim: rgb(3 8 7 / 78%);
   /* The play screen's header row darkens the playmat towards the top of the screen. */

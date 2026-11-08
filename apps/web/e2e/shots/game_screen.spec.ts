@@ -18,6 +18,7 @@ import {
   resumeImportedGame,
   twoMapsExport,
 } from '../fixtures/saved_games';
+import { dragTo } from '../fixtures/drag';
 
 // Situations on the game screen, each photographed as it ends (`@shot`, coding guidelines §3).
 
@@ -635,17 +636,13 @@ test('the Tangled Thicket revealed with its double slash, the other Arkham Woods
   await expect(map.getByRole('img', { name: 'Connection symbol: square' })).toHaveCount(3);
 });
 
-test(
-  'the menu open, holding "Adjust board" and the game log on a phone',
-  { tag: '@shot' },
-  async ({ page }) => {
-    await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
+test('the menu open, holding "Adjust board" and the game log on a phone', async ({ page }) => {
+  await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
 
-    await page.getByRole('button', { name: 'Menu' }).click();
+  await page.getByRole('button', { name: 'Menu' }).click();
 
-    await expect(page.getByRole('link', { name: 'Settings' })).toBeVisible();
-  },
-);
+  await expect(page.getByRole('link', { name: 'Settings' })).toBeVisible();
+});
 
 test('Daisy Walker swiped into view on a phone, Roland Banks beside her', async ({
   page,
@@ -659,3 +656,21 @@ test('Daisy Walker swiped into view on a phone, Roland Banks beside her', async 
   await expect(daisy).toBeVisible();
   if (isMobile) await expect(daisy).toHaveAttribute('data-focus', 'true');
 });
+
+test(
+  'the refusal toast after Roland Banks is dragged from the Attic to the Cellar, which it does not connect to',
+  { tag: '@shot' },
+  async ({ page }) => {
+    await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
+    const house = page.getByRole('figure', { name: 'House' });
+    const roland = (location: string) =>
+      house.getByRole('group', { name: location }).getByRole('img', { name: 'Roland Banks' });
+    await dragTo(page, roland('Hallway'), house.getByRole('group', { name: 'Attic' }));
+
+    await dragTo(page, roland('Attic'), house.getByRole('group', { name: 'Cellar' }));
+
+    await expect(page.getByRole('alert', { name: 'Not possible' })).toContainText(
+      'Those locations are not connected.',
+    );
+  },
+);

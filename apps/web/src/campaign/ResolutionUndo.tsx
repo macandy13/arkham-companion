@@ -6,7 +6,7 @@ import type { WrittenKind } from '../state/appStore';
  * The toast under the campaign log after a resolution or an interlude (`kind`) was written into it
  * (`AppState.writtenResolution`): the entries are in ink now, and "Undo" takes them back out
  * (`AppState.undoResolution`), so the game proposes its resolution, or the campaign its
- * interlude, again. "OK" keeps them.
+ * interlude, again. "OK" keeps them. A toast (`data-toast`): a pill with its actions as text links.
  */
 export function ResolutionUndo({
   kind,
@@ -22,7 +22,12 @@ export function ResolutionUndo({
   const [busy, setBusy] = useState(false);
 
   return (
-    <aside id="resolution-written" role="status" aria-label={t('resolution.written.label')}>
+    <aside
+      id="resolution-written"
+      role="status"
+      data-toast
+      aria-label={t('resolution.written.label')}
+    >
       <p>
         {t(failed ? `resolution.written.undoFailed.${kind}` : `resolution.written.text.${kind}`)}
       </p>

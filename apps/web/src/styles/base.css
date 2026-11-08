@@ -207,6 +207,54 @@ button[data-icon][aria-expanded] {
   color: inherit;
 }
 
+/*
+ * A toast (MD.5b, `data-toast`): a pill of the raised table at the foot of the screen, its message
+ * and then its actions as text links (the refusal's OK, the campaign log's Undo and OK). Like a
+ * menu it keeps the table's colours wherever it lies; each screen places it.
+ */
+aside[data-toast] {
+  --color-text: var(--table-text);
+  --color-text-muted: var(--table-text-muted);
+  --color-border: var(--table-border);
+  --color-accent: var(--table-accent);
+
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-3);
+  padding: var(--space-1) var(--space-2) var(--space-1) var(--space-4);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-pill);
+  background: var(--color-menu);
+  box-shadow: var(--menu-shadow);
+  color: var(--color-text);
+}
+
+aside[data-toast] > p {
+  margin: 0;
+}
+
+aside[data-toast] > footer {
+  display: flex;
+  gap: var(--space-1);
+}
+
+aside[data-toast] button {
+  min-height: var(--touch-target);
+  padding-inline: var(--space-2);
+  border: 0;
+  background: none;
+  color: var(--color-accent);
+  font-weight: bold;
+  text-decoration: underline;
+  text-underline-offset: var(--toast-link-offset);
+}
+
+aside[data-toast] button:disabled {
+  color: var(--color-text-muted);
+  text-decoration: none;
+}
+
 /* The menus' line icons. */
 :is(a, button)[data-icon='games']::before {
   mask-image: url('../screens/icons/games.svg');
