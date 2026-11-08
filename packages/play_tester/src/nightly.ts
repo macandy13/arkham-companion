@@ -1,6 +1,10 @@
+import type { Brand } from '@arkham/engine';
 import type { Finding } from './play_run';
 import type { RunRecord } from './record';
 import { formatSummary, type Summary } from './summary';
+
+/** What a finding is filed under, `findingSignature`'s text: `refusal at takeResource`. */
+export type FindingSignature = Brand<string, 'FindingSignature'>;
 
 /**
  * What a finding is filed under (product.md "Who runs it and where it writes"): its check and the
@@ -11,11 +15,11 @@ import { formatSummary, type Summary } from './summary';
 export function findingSignature({
   check,
   attempted,
-}: Pick<Finding, 'check' | 'attempted'>): string {
-  return `${check} at ${attempted ? attempted.verb : 'the whole game'}`;
+}: Pick<Finding, 'check' | 'attempted'>): FindingSignature {
+  return `${check} at ${attempted ? attempted.verb : 'the whole game'}` as FindingSignature;
 }
 
-/** A record the night wrote, with the path of its report (`findingReport`). */
+/** A record the night wrote, with the path of its report (`findingReport`) from the output directory. */
 export interface WrittenRecord {
   readonly record: RunRecord;
   readonly report: string;
@@ -26,14 +30,14 @@ export interface WrittenRecord {
  * which becomes the body of the signature's issue. The nightly workflow reads these as JSON.
  */
 export interface NightlyFinding {
-  readonly signature: string;
+  readonly signature: FindingSignature;
   readonly games: number;
   readonly report: string;
 }
 
 /** `written` grouped by signature, most games first; each names the report with the fewest steps. */
 export function nightlyFindings(written: readonly WrittenRecord[]): NightlyFinding[] {
-  const groups = new Map<string, WrittenRecord[]>();
+  const groups = new Map<FindingSignature, WrittenRecord[]>();
   for (const entry of written) {
     const signature = findingSignature(entry.record.finding);
     groups.set(signature, [...(groups.get(signature) ?? []), entry]);

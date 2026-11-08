@@ -26,7 +26,6 @@ jobs:
     env:
       GAMES: ${{ inputs.games || '2000' }}
       RUNS: ${{ github.workspace }}/play_tester_runs
-      GH_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v6
@@ -53,31 +52,38 @@ jobs:
           { echo; cat "$RUNS/web_replay.md"; } >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@v7
         id: artifact
+        # Also after a broken run, so its output can be looked at.
+        if: ${{ !cancelled() }}
         with:
           name: play-tester-${{ env.SEED }}
           path: ${{ env.RUNS }}
           retention-days: 90
       - name: File issues
+        shell: bash
         env:
+          GH_TOKEN: ${{ github.token }}
           ARTIFACT: ${{ steps.artifact.outputs.artifact-url }}
         run: |
           gh label create play-tester --force --color 5319e7 --description 'Found by the nightly play tester'
-          # One open issue per signature: comment on it when there is one, open it otherwise.
-          file() {
-            title="Play tester: $1"
-            existing=$(gh issue list --label play-tester --state open --limit 200 --json number,title \
-              --jq "map(select(.title == \"$title\"))[0].number // empty")
+          # One open issue per signature: comment on it when there is one, open it otherwise. A
+          # failing call only warns, so one bad body doesn't hide the night's other findings.
+          file_issue() {
+            local title="Play tester: $1" existing
+            existing=$(gh issue list --label play-tester --state open --limit 200 --json number,title |
+              jq --arg title "$title" 'map(select(.title == $title))[0].number // empty')
             if [ -n "$existing" ]; then
               gh issue comment "$existing" --body "Night $SEED: $2. Records: $ARTIFACT"
             else
-              { cat "$3"; echo; echo "Night $SEED: $2. Records (with this one's app export): $ARTIFACT"; } > "$RUNS/issue.md"
+              # GitHub takes bodies up to 65,536 characters; a long game's report can be longer.
+              { head -c 60000 "$3"; echo; echo "Night $SEED: $2. Records (with this one's app export): $ARTIFACT"; } > "$RUNS/issue.md"
               gh issue create --title "$title" --label play-tester --body-file "$RUNS/issue.md"
             fi
           }
-          jq -c '.[]' "$RUNS/findings.json" | while read -r finding; do
-            file "$(jq -r .signature <<< "$finding")" "failing games: $(jq -r .games <<< "$finding")" \
-              "$RUNS/$(jq -r .report <<< "$finding")"
-          done
+          while read -r finding; do
+            file_issue "$(jq -r .signature <<< "$finding")" "failing games: $(jq -r .games <<< "$finding")" \
+              "$RUNS/$(jq -r .report <<< "$finding")" || echo "::warning::could not file $finding"
+          done < <(jq -c '.[]' "$RUNS/findings.json")
           if [ ! -f "$RUNS/web_replay_status" ]; then
-            file 'the web replay differs from the table' 'the app replay failed' "$RUNS/web_replay.md"
+            file_issue 'the web replay differs from the table' 'the app replay failed' "$RUNS/web_replay.md" ||
+              echo '::warning::could not file the web replay difference'
           fi

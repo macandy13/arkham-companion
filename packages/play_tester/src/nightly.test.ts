@@ -23,7 +23,7 @@ describe('the signature a finding is filed under', () => {
     { check: 'determinism', signature: 'determinism at the whole game' },
   ];
 
-  it.each(cases)('$check at $attempted.verb is "$signature"', ({ check, attempted, signature }) => {
+  it.each(cases)('$signature', ({ check, attempted, signature }) => {
     expect(findingSignature({ check, ...(attempted && { attempted }) })).toBe(signature);
   });
 });
@@ -61,11 +61,11 @@ describe("a night's findings", () => {
   }
 
   const findings = nightlyFindings([
+    { record: recordFailingAtNextPhase('liveness', 2, []), report: 'liveness-goal-2-1.md' },
     {
       record: recordFailingAtNextPhase('invariants', 1, [takeResource, takeResource]),
       report: 'invariants-goal-1-1.md',
     },
-    { record: recordFailingAtNextPhase('liveness', 2, []), report: 'liveness-goal-2-1.md' },
     {
       record: recordFailingAtNextPhase('invariants', 3, [takeResource]),
       report: 'invariants-goal-3-1.md',
