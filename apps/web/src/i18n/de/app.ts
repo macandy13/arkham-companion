@@ -632,7 +632,7 @@ export const appTexts = {
     chaosDraw: 'Wer zieht die Marker',
     chaosDraws: { app: 'Die App', table: 'Unser eigener Beutel' },
     chaosDrawNote:
-      'Mit eurem eigenen Beutel zeigt die Fertigkeitsprobe keinen Ziehen-Knopf; ihr antwortet selbst mit Bestanden oder Misslungen.',
+      'Mit eurem eigenen Beutel zeigt die Fertigkeitsprobe keinen Ziehen-Knopf, nur euren Wert für den Marker, den ihr zieht.',
     tokenSet: 'Markerset',
     tokenSets: { resin: 'Harzkuppel', cardboard: 'Pappe' },
     themes: { dark: 'Bei Nacht', light: 'Bei Tag' },

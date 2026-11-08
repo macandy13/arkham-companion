@@ -29,8 +29,7 @@ interface SettingsScreenProps {
  * label in a column of spaced capitals and its fields as written lines. The collection is one line
  * that opens its own page (`CollectionScreen`); the table is picked by its playmat, its light is a
  * segmented choice, the token set by a row of its tokens, and who draws the chaos tokens a
- * segmented choice too. Every
- * change is saved at once (`useSettings`). It ends with the notice that the app is an unofficial
+ * segmented choice too. Every change is saved at once (`useSettings`). It ends with the notice that the app is an unofficial
  * fan project, with the publisher's copyright credit, which the fan content policy requires for
  * using the game's names; card art is never bundled, only fetched from ArkhamDB on the device.
  */
