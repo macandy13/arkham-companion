@@ -4,10 +4,13 @@ import {
   byName,
   type CardName,
   type ChaosToken,
+  type Command,
   type BasicAction,
   type InstanceId,
   type PlayTable,
+  type SkillName,
   type SkillTestResult,
+  type WoundKind,
 } from '@arkham/engine';
 
 /** The `PlayTable` verbs that take only the investigator who acts or is corrected. */
@@ -55,14 +58,51 @@ export type Step =
   /**
    * Reports the investigator's open skill test with the `result` the drawn chaos `tokens` give
    * (more than one when a bless, curse, frost or blood token makes them draw another); the tokens
-   * are only for the reader, the table takes the result.
+   * are only for the reader, the table takes the result. A pass may confirm an `amount` (a
+   * weapon's damage, a skill card's extra clue); `cards` names the player cards committed or used
+   * for it, only for the reader.
    */
   | {
       readonly verb: 'resolveTest';
       readonly investigator: CardName;
       readonly tokens: readonly ChaosToken[];
       readonly result: SkillTestResult;
+      readonly amount?: number;
+      readonly cards?: readonly CardName[];
+    }
+  /**
+   * The `effects` of the player card `card` the deck bot played or used. The engine holds no
+   * player cards, so the step carries what the card did; `card` is for the reader
+   * (player-card-analysis.md). A card played with an action comes after a `playCard` step, which
+   * counts off the action and lets attacks of opportunity come first.
+   */
+  | {
+      readonly verb: 'playerCard';
+      readonly investigator: CardName;
+      readonly card: CardName;
+      readonly effects: readonly CardEffect[];
     };
+
+/**
+ * What a player card does on the table, in the commands the table already has
+ * (player-card-analysis.md, "Effects in table terms"): for the investigator who plays it, at their
+ * location; enemies by instance id like the other steps.
+ */
+export type CardEffect =
+  | { readonly kind: 'damageEnemy'; readonly enemy: InstanceId; readonly amount: number }
+  | { readonly kind: 'evadeEnemy'; readonly enemy: InstanceId }
+  | { readonly kind: 'disengage'; readonly enemy: InstanceId }
+  | { readonly kind: 'discoverClues'; readonly amount: number }
+  | { readonly kind: 'heal'; readonly stat: WoundKind; readonly amount: number }
+  | { readonly kind: 'hurt'; readonly damage: number; readonly horror: number }
+  /** Resources gained, or spent when negative (a card's cost, a paid boost). */
+  | { readonly kind: 'resources'; readonly delta: number }
+  /** A skill raised while the card is in play, or lowered when it leaves. */
+  | { readonly kind: 'skillBoost'; readonly skill: SkillName; readonly delta: number }
+  | { readonly kind: 'actions'; readonly delta: number }
+  | { readonly kind: 'doomOnPlayerCards'; readonly delta: number }
+  | { readonly kind: 'drawEncounterCard' }
+  | { readonly kind: 'moveTo'; readonly location: CardName };
 
 /**
  * The basic action each action verb takes, which the players count off before they take it;
@@ -83,6 +123,7 @@ const BASIC_ACTION_OF: Record<Step['verb'], BasicAction | undefined> = {
   gainResources: undefined,
   useCardAction: undefined,
   answer: undefined,
+  playerCard: undefined,
   resolveTest: undefined,
   investigate: 'investigate',
   moveTo: 'move',
@@ -116,7 +157,8 @@ export function actionCostOf(table: PlayTable, step: Step): number {
  * actions to the players; both are one step, so a refused action leaves the actions as they were.
  */
 export function playStep(table: PlayTable, step: Step): void {
-  if (step.verb === 'useCardAction' || BASIC_ACTION_OF[step.verb] !== undefined)
+  if (step.verb === 'playerCard') table.step(() => playVerb(table, step));
+  else if (step.verb === 'useCardAction' || BASIC_ACTION_OF[step.verb] !== undefined)
     table.step(() => {
       countOffAction(table, step);
       playVerb(table, step);
@@ -180,14 +222,89 @@ function playVerb(table: PlayTable, step: Step): void {
       table.useCardAction(byName(step.investigator), byId(step.card), step.action);
       return;
     case 'resolveTest':
-      table.resolveTest(step.result, { for: byName(step.investigator) });
+      table.resolveTest(step.result, {
+        for: byName(step.investigator),
+        ...(step.amount !== undefined && { amount: step.amount }),
+      });
       return;
     case 'answer':
       if (step.about === undefined) table.answerOnly(step.option);
       else table.answer(byId(step.about), step.option);
       return;
+    case 'playerCard':
+      playPlayerCard(table, step);
+      return;
     default:
       assertNever(step);
+  }
+}
+
+/** Each effect of `step` as the command the table takes it with. */
+function playPlayerCard(table: PlayTable, step: Extract<Step, { verb: 'playerCard' }>): void {
+  for (const effect of step.effects)
+    table.play(cardEffectCommand(table, step.investigator, effect));
+}
+
+/** The command `effect` is for `investigator`, at their location. */
+function cardEffectCommand(table: PlayTable, investigator: CardName, effect: CardEffect): Command {
+  const { board } = table;
+  const { id: investigatorId, at } = board.investigator(byName(investigator));
+  const here = () => {
+    if (at === undefined) throw new Error(`${investigator} is at no location`);
+    return board.location(byName(at)).id;
+  };
+  switch (effect.kind) {
+    case 'damageEnemy':
+      return { type: 'DamageEnemy', enemyId: effect.enemy, amount: effect.amount };
+    case 'evadeEnemy':
+      return { type: 'EvadeEnemy', enemyId: effect.enemy, investigatorId };
+    case 'disengage':
+      return { type: 'DisengageEnemy', enemyId: effect.enemy };
+    case 'discoverClues':
+      return { type: 'DiscoverClues', investigatorId, locationId: here(), amount: effect.amount };
+    case 'heal':
+      return { type: 'HealInvestigator', investigatorId, stat: effect.stat, amount: effect.amount };
+    case 'hurt':
+      return {
+        type: 'TakeDamageAndHorror',
+        investigatorId,
+        damage: effect.damage,
+        horror: effect.horror,
+      };
+    case 'resources':
+      return { type: 'AdjustInvestigator', investigatorId, stat: 'resources', delta: effect.delta };
+    case 'doomOnPlayerCards':
+      return {
+        type: 'AdjustInvestigator',
+        investigatorId,
+        stat: 'doomOnPlayerCards',
+        delta: effect.delta,
+      };
+    case 'skillBoost':
+      return {
+        type: 'ManualAdjust',
+        adjustment: {
+          kind: 'skillBoost',
+          investigatorId,
+          skill: effect.skill,
+          delta: effect.delta,
+        },
+      };
+    case 'actions':
+      return {
+        type: 'ManualAdjust',
+        adjustment: { kind: 'actions', investigatorId, delta: effect.delta },
+      };
+    case 'drawEncounterCard':
+      return { type: 'DrawEncounter', investigatorId };
+    case 'moveTo':
+      return {
+        type: 'MoveInvestigator',
+        investigatorId,
+        to: board.location(byName(effect.location)).id,
+      };
+    default:
+      return assertNever(effect);
   }
 }
 
