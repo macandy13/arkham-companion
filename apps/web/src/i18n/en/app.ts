@@ -709,6 +709,7 @@ export const appTexts = {
     doesNotProvoke: 'Does not provoke',
     attackCancelled: 'The attack is cancelled',
     count: {
+      failedBy: 'Margin of failure',
       clues: 'Clues discovered',
       dealt: 'Damage dealt',
       amount: 'Count',

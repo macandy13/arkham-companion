@@ -396,6 +396,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
         for: roland,
         test: { skill: 'agility', difficulty: 3 },
         options: ['pass', 'fail'],
+        perPointFailed: 'damage',
         labels: { pass: 'decision.pass', fail: 'decision.fail' },
       },
     ]);
@@ -471,6 +472,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
         for: roland,
         test: { skill: 'willpower', difficulty: 3 },
         options: ['pass', 'fail'],
+        perPointFailed: 'horror',
         labels: { pass: 'decision.pass', fail: 'decision.fail' },
       },
     ]);
@@ -566,6 +568,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
         for: roland,
         test: { skill: 'willpower', difficulty: 3 },
         options: ['pass', 'fail'],
+        perPointFailed: 'horror',
         labels: { pass: 'decision.pass', fail: 'decision.fail' },
       },
     ]);
@@ -639,6 +642,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
         for: roland,
         test: { skill: 'agility', difficulty: 3 },
         options: ['pass', 'fail'],
+        perPointFailed: 'damage',
         labels: { pass: 'decision.pass', fail: 'decision.fail' },
       },
     ]);
@@ -661,6 +665,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
         for: roland,
         test: { skill: 'agility', difficulty: 3 },
         options: ['pass', 'fail'],
+        perPointFailed: 'damage',
         labels: { pass: 'decision.pass', fail: 'decision.fail' },
       },
     ]);
@@ -679,6 +684,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
         for: daisy,
         test: { skill: 'agility', difficulty: 3 },
         options: ['pass', 'fail'],
+        perPointFailed: 'damage',
         labels: { pass: 'decision.pass', fail: 'decision.fail' },
       },
     ]);
@@ -1023,6 +1029,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
         for: daisy,
         test: { skill: 'willpower', difficulty: 3 },
         options: ['pass', 'fail'],
+        perPointFailed: 'horror',
         labels: { pass: 'decision.pass', fail: 'decision.fail' },
       },
     ]);
