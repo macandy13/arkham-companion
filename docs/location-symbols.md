@@ -10,25 +10,25 @@ Front and back are ArkhamDB's sides: for most packs the back is the unrevealed s
 
 ## The symbols
 
-Fifteen glyphs, each always in the same colour. The hex values of the first ten are the ones the app uses, sampled from Night of the Zealot's pictures; the others get theirs with their task, checked against a card. The name is the suggested `LocationSymbol` value.
+Fifteen glyphs, each always in the same colour. The hex values are the ones the app uses, sampled from Night of the Zealot's pictures, heart and star from Return to the Night of the Zealot's (Bedroom, Bathroom), spade and clover from the Core Set (2026)'s (Your Friend's Room, Sewer Tunnels); comma gets its value with its task, checked against a card. The name is the suggested `LocationSymbol` value.
 
-| Symbol         | Glyph       | Colour                | Sides | First needed by                             | Task            |
-| -------------- | ----------- | --------------------- | ----- | ------------------------------------------- | --------------- |
-| `circle`       | circle      | gold `#a78f32`        | 143   | The Gathering                               | M3.14d ([#448]) |
-| `square`       | square      | red `#8f2e2f`         | 163   | The Gathering                               | M3.14d ([#448]) |
-| `triangle`     | triangle    | blue `#3b5775`        | 154   | The Gathering                               | M3.14d ([#448]) |
-| `plus`         | plus        | dark red `#4a2219`    | 105   | The Gathering                               | M3.14d ([#448]) |
-| `diamond`      | diamond     | green `#557f47`       | 138   | The Gathering                               | M3.14d ([#448]) |
-| `tilde`        | squiggle    | brown `#5c4a2e`       | 125   | The Midnight Masks (Your House)             | [#626]          |
-| `moon`         | crescent    | purple-pink `#74404f` | 148   | The Midnight Masks (Easttown)               | [#626]          |
-| `hourglass`    | hourglass   | maroon `#3e1f28`      | 87    | The Midnight Masks (Graveyard)              | [#626]          |
-| `t`            | T           | navy `#1d2129`        | 83    | The Midnight Masks (Northside)              | [#626]          |
-| `double_slash` | two slashes | dark green `#2f3f2c`  | 96    | The Devourer Below (Arkham Woods)           | [#626]          |
-| `heart`        | heart       | orange                | 80    | Return to the Gathering (Bedroom)           | [#637]          |
-| `star`         | star        | dark purple           | 88    | Return to the Gathering (Bathroom)          | [#637]          |
-| `comma`        | curl        | rust                  | 36    | Return to the Devourer Below (Arkham Woods) | [#637]          |
-| `spade`        | spade       | pink                  | 15    | Core Set (2026) (Your Friend's Room)        | [#638]          |
-| `clover`       | clover      | teal                  | 31    | Core Set (2026) (Sewer Tunnels)             | [#638]          |
+| Symbol         | Glyph       | Colour                | Sides | First needed by                                 | Task            |
+| -------------- | ----------- | --------------------- | ----- | ----------------------------------------------- | --------------- |
+| `circle`       | circle      | gold `#a78f32`        | 143   | The Gathering                                   | M3.14d ([#448]) |
+| `square`       | square      | red `#8f2e2f`         | 163   | The Gathering                                   | M3.14d ([#448]) |
+| `triangle`     | triangle    | blue `#3b5775`        | 154   | The Gathering                                   | M3.14d ([#448]) |
+| `plus`         | plus        | dark red `#4a2219`    | 105   | The Gathering                                   | M3.14d ([#448]) |
+| `diamond`      | diamond     | green `#557f47`       | 138   | The Gathering                                   | M3.14d ([#448]) |
+| `tilde`        | squiggle    | brown `#5c4a2e`       | 125   | The Midnight Masks (Your House)                 | [#626]          |
+| `moon`         | crescent    | purple-pink `#74404f` | 148   | The Midnight Masks (Easttown)                   | [#626]          |
+| `hourglass`    | hourglass   | maroon `#3e1f28`      | 87    | The Midnight Masks (Graveyard)                  | [#626]          |
+| `t`            | T           | navy `#1d2129`        | 83    | The Midnight Masks (Northside)                  | [#626]          |
+| `double_slash` | two slashes | dark green `#2f3f2c`  | 96    | The Devourer Below (Arkham Woods)               | [#626]          |
+| `heart`        | heart       | orange `#ad6335`      | 80    | Core Set (2026) (Miskatonic Quad's connections) | [#638]          |
+| `star`         | star        | dark purple `#322331` | 88    | Core Set (2026) (Sewer Tunnels)                 | [#638]          |
+| `comma`        | curl        | rust                  | 36    | Return to the Devourer Below (Arkham Woods)     | [#637]          |
+| `spade`        | spade       | pink `#ab629b`        | 15    | Core Set (2026) (Your Friend's Room)            | [#638]          |
+| `clover`       | clover      | sage `#82946d`        | 31    | Core Set (2026) (Sewer Tunnels)                 | [#638]          |
 
 Two more cases are not glyphs:
 
@@ -37,24 +37,24 @@ Two more cases are not glyphs:
 
 ## Symbols per campaign
 
-After Core Set (2026) the app draws all fifteen glyphs, so later campaigns only enter their data (recipe step 2 in [tasks/README.md](tasks/README.md#recipe-per-new-scenario)).
+Once comma is in (Return to the Night of the Zealot) the app draws all fifteen glyphs, so later campaigns only enter their data (recipe step 2 in [tasks/README.md](tasks/README.md#recipe-per-new-scenario)).
 
-| Campaign                  | Location cards | Glyphs beyond the first five                          | New for the app             | Sides differ | No symbol |
-| ------------------------- | -------------- | ----------------------------------------------------- | --------------------------- | ------------ | --------- |
-| Night of the Zealot       | 24             | tilde, moon, hourglass, t, double_slash               | those five (built, [#626])  | 6            | 0         |
-| Return to NotZ            | 17             | heart, star, comma, t, moon, tilde                    | heart, star, comma ([#637]) | 4            | 0         |
-| Core Set (2026)           | 26             | spade, clover, star, hourglass, t, moon, double_slash | spade, clover ([#638])      | 5            | 0         |
-| Children of Blood         | 42             | unknown: no pictures on ArkhamDB yet                  | rescan ([#639])             | ?            | ?         |
-| The Dunwich Legacy        | 109            | all but spade                                         | blank disc ([#640])         | 3            | 15        |
-| The Path to Carcosa       | 119            | all but spade                                         | none                        | 0            | 16        |
-| The Forgotten Age         | 114            | all but spade, clover                                 | none                        | 0            | 5         |
-| The Innsmouth Conspiracy  | 101            | all but spade                                         | none                        | 9            | 68        |
-| The Circle Undone         | 131            | all but comma                                         | none                        | 14           | 13        |
-| The Dream-Eaters          | 93             | all but spade, clover                                 | none                        | 10           | 16        |
-| The Edge of the Earth     | 74             | all ten                                               | none                        | 0            | 42        |
-| The Scarlet Keys          | 93             | all but comma, clover                                 | none                        | 12           | 17        |
-| The Feast of Hemlock Vale | 102            | all but t, tilde, comma                               | none                        | 0            | 67        |
-| The Drowned City          | 93             | all but tilde, hourglass, clover                      | none                        | 0            | 56        |
+| Campaign                  | Location cards | Glyphs beyond the first five                                 | New for the app                             | Sides differ | No symbol |
+| ------------------------- | -------------- | ------------------------------------------------------------ | ------------------------------------------- | ------------ | --------- |
+| Night of the Zealot       | 24             | tilde, moon, hourglass, t, double_slash                      | those five (built, [#626])                  | 6            | 0         |
+| Return to NotZ            | 17             | heart, star, comma, t, moon, tilde                           | comma ([#637]); heart, star built in [#638] | 4            | 0         |
+| Core Set (2026)           | 26             | spade, clover, star, heart, hourglass, t, moon, double_slash | spade, clover, star, heart ([#638])         | 5            | 0         |
+| Children of Blood         | 42             | unknown: no pictures on ArkhamDB yet                         | rescan ([#639])                             | ?            | ?         |
+| The Dunwich Legacy        | 109            | all but spade                                                | blank disc ([#640])                         | 3            | 15        |
+| The Path to Carcosa       | 119            | all but spade                                                | none                                        | 0            | 16        |
+| The Forgotten Age         | 114            | all but spade, clover                                        | none                                        | 0            | 5         |
+| The Innsmouth Conspiracy  | 101            | all but spade                                                | none                                        | 9            | 68        |
+| The Circle Undone         | 131            | all but comma                                                | none                                        | 14           | 13        |
+| The Dream-Eaters          | 93             | all but spade, clover                                        | none                                        | 10           | 16        |
+| The Edge of the Earth     | 74             | all ten                                                      | none                                        | 0            | 42        |
+| The Scarlet Keys          | 93             | all but comma, clover                                        | none                                        | 12           | 17        |
+| The Feast of Hemlock Vale | 102            | all but t, tilde, comma                                      | none                                        | 0            | 67        |
+| The Drowned City          | 93             | all but tilde, hourglass, clover                             | none                                        | 0            | 56        |
 
 "Location cards" counts each campaign's packs including its Return to box; "sides differ" counts cards with a different glyph on each side (a blank disc, no symbol or a missing picture doesn't count) (Arkham Woods, Sewer Tunnels, Enchanted Woods …), which need `unrevealedSymbol` ([#626]); "no symbol" counts fronts without one. Standalone scenarios (Curse of the Rougarou, Carnevale of Horrors, The Labyrinths of Lunacy …) use the same fifteen glyphs.
 
