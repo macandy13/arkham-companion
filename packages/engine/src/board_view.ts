@@ -98,6 +98,7 @@ import type {
   Investigator,
   InvestigatorStatus,
   NamedAmount,
+  PerPointFailed,
   Phase,
   PhaseStepId,
   QueuedStep,
@@ -429,6 +430,11 @@ export interface DecisionView extends ChoiceView {
   test?: SkillTest;
   /** The basic action a skill test belongs to (`Decision.testKind`), which says what its pass `amount` counts. */
   action?: SkillTestKind['kind'];
+  /**
+   * What a fail costs for each point it fails by (`Decision.perPointFailed`), so the dialog asks
+   * how much the test failed by when no draw in the app worked it out.
+   */
+  perPointFailed?: PerPointFailed;
   /**
    * By option name, the choice that option asks right after it is picked (`followUpChoice`: a
    * failed test's "you must either …"), so the dialog offers it under the option.
@@ -1359,6 +1365,7 @@ function decisionView(ctx: EngineContext, state: GameState, decision: Decision):
     ...(decision.decider.kind === 'investigator' ? { for: decision.decider.investigatorId } : {}),
     ...(decision.skillTest ? { test: decision.skillTest } : {}),
     ...(decision.testKind ? { action: decision.testKind.kind } : {}),
+    ...(decision.perPointFailed ? { perPointFailed: decision.perPointFailed } : {}),
     ...choiceView(decision),
     ...(Object.keys(followUps).length > 0 ? { followUps } : {}),
     ...recordIfAny('locations', locations),

@@ -708,6 +708,7 @@ export const appTexts = {
     doesNotProvoke: 'Provoziert keinen Angriff',
     attackCancelled: 'Der Angriff wird verhindert',
     count: {
+      failedBy: 'Misslungen um',
       clues: 'Entdeckte Hinweise',
       dealt: 'Zugefügter Schaden',
       amount: 'Anzahl',

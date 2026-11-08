@@ -3,6 +3,7 @@ import {
   cluesToShareExport,
   doomBesideDamageExport,
   ghoulPriestInCellarExport,
+  graspingHandsDrawnExport,
   graveyardTestExport,
   midnightMasksStartedExport,
   tangledThicketRevealedExport,
@@ -22,7 +23,7 @@ import { dragTo } from '../fixtures/drag';
 
 // Situations on the game screen, each photographed as it ends (`@shot`, coding guidelines §3).
 
-test('the house map with Roland Banks in the Hallway', { tag: '@shot' }, async ({ page }) => {
+test('the house map with Roland Banks in the Hallway', async ({ page }) => {
   await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
 
   const hallway = page
@@ -125,7 +126,7 @@ for (const { skin, code, light, theme } of [
   });
 }
 
-test('the token pool in the cardboard token set', { tag: '@shot' }, async ({ page }) => {
+test('the token pool in the cardboard token set', async ({ page }) => {
   await page.goto('/#/settings');
   await page.getByRole('radio', { name: 'Cardboard' }).check();
   await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
@@ -640,6 +641,20 @@ test('who pays the 4 clues to advance Trapped, Daisy Walker 3 and Roland Banks 1
   await expect(dialog.getByText(/^4 of 4 clues chosen/)).toBeVisible();
   await expect(dialog.getByRole('button', { name: 'Pay', exact: true })).toBeEnabled();
 });
+
+test(
+  'Grasping Hands failed by 2 with no token drawn in the app, its margin of failure on the Failed row',
+  { tag: '@shot' },
+  async ({ page }) => {
+    await resumeImportedGame(page, 'Grasping Hands', graspingHandsDrawnExport('Grasping Hands'));
+    const decision = page.getByRole('dialog', { name: 'Test for Grasping Hands' });
+
+    await decision.getByRole('button', { name: 'Failed' }).click();
+    await decision.getByRole('button', { name: 'Raise the Margin of failure' }).click();
+
+    await expect(decision.getByRole('region', { name: 'Margin of failure' })).toContainText('2');
+  },
+);
 
 test('the Graveyard’s failed willpower test, its choice under the Failed row', async ({ page }) => {
   await resumeImportedGame(page, 'In the Graveyard', graveyardTestExport('In the Graveyard'));
