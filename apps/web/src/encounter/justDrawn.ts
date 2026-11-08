@@ -16,7 +16,8 @@ export interface ResolvingShown {
  * deals that card in only as it is drawn (M6.5a): the decisions after it for the same card, and a
  * game opened, reloaded or gone back to with the card already drawn, show it in place. Worked out
  * while rendering, like `useCountChange`, so the dialog mounts with it and its animation starts
- * once.
+ * once. It stays true while that first decision is open, so a dialog that mounts again for it
+ * (raised after the players adjusted the board) deals the card in again, as it comes back.
  */
 export function useJustDrawn(shown: ResolvingShown | undefined): boolean {
   const [drawn, setDrawn] = useState<ResolvingShown | undefined>(seenAtOpen(shown));
