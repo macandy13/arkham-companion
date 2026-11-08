@@ -193,6 +193,8 @@
 
 /* The token, then the − and + steppers side by side under it while adjusting. */
 #investigators dd {
+  --token-count-size: var(--stat-token-count-size);
+
   display: grid;
   grid-template-columns: repeat(2, auto);
   justify-content: center;
@@ -200,46 +202,21 @@
   margin: 0;
 }
 
-#investigators dd > data {
+/* The counter's token (`GameToken`), its count in the token's disc. */
+#investigators dd > [data-game-token] {
   grid-column: 1 / -1;
   justify-self: center;
-  display: grid;
-  place-items: center;
-  box-sizing: border-box;
   width: var(--stat-token-size);
-  height: var(--stat-token-size);
-  border: var(--piece-ring-width) solid var(--color-parchment-light);
-  border-radius: var(--radius-round);
-  background: var(--stat-colour);
-  box-shadow: var(--header-token-shadow);
-  color: var(--header-token-text);
-  font-size: var(--font-size-note);
-  font-weight: bold;
-  /* The UI face's old-style figures make a 0 read as an o. */
-  font-variant-numeric: lining-nums tabular-nums;
-  white-space: nowrap;
 }
 
 #investigators dd > button {
   padding: 0;
 }
 
-/* Clues and resources as the game's tokens: a teal clue token and a milled gold resource coin. */
-#investigators [data-stat='clues'] dd > data {
-  border-color: var(--color-clue-token-rim);
-  background: var(--clue-token-face);
-}
-
-#investigators [data-stat='resources'] dd > data {
-  border-color: var(--color-resource-coin-rim);
-  background: var(--resource-coin-face);
-  box-shadow: var(--resource-coin-milling), var(--header-token-shadow);
-}
-
 /*
  * Health and sanity as the card prints them: the anatomical heart or brain (card_face.css colours
- * it) with the printed maximum on it in white, and the damage or horror taken as a count circle on
- * its lower right in its token's colour, faded while none is taken, like the map's count circles.
+ * it) with the printed maximum on it in white, and the damage or horror token taken on its lower
+ * right, faded while none is taken, like the map's counts.
  */
 #investigators dd > [data-printed] {
   grid-column: 1 / -1;
@@ -273,23 +250,7 @@
   position: absolute;
   inset-inline-end: var(--stat-count-offset);
   inset-block-end: var(--stat-count-offset);
-  display: grid;
-  place-items: center;
-  box-sizing: border-box;
   width: var(--stat-count-size);
-  height: var(--stat-count-size);
-  border: var(--border-width) solid var(--color-count-rim);
-  border-radius: var(--radius-round);
-  background: var(--color-count-damage);
-  color: var(--color-face-stat);
-  font-size: var(--font-size-note);
-  font-weight: bold;
-  font-variant-numeric: lining-nums;
-  line-height: 1;
-}
-
-#investigators [data-stat='sanity'] dd > [data-printed] > [data-count] {
-  background: var(--color-count-horror);
 }
 
 #investigators dd > [data-printed] > [data-count][data-empty] {

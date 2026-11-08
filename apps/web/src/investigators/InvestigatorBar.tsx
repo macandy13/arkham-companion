@@ -24,6 +24,7 @@ import { InvestigatorCard, WholeCard } from './InvestigatorCard';
 import { deltaText, useCountChange } from '../screens/countChange';
 import type { TokenDragHandlers } from '../screens/useTokenDrag';
 import { useReturnToPool } from '../screens/useReturnToPool';
+import { GameToken, type GameTokenKind } from '../tokens/GameToken';
 import { useClueDrag } from './useClueDrag';
 import './investigators.css';
 
@@ -574,13 +575,25 @@ function statusLine(
 type StatKind = 'health' | 'sanity' | 'clues' | 'resources' | 'doom';
 
 /**
+ * The token each counter shows its count on (MD.8b): health and sanity count the damage and
+ * horror taken, on the printed heart and brain.
+ */
+const STAT_TOKENS: Record<StatKind, GameTokenKind> = {
+  health: 'damage',
+  sanity: 'horror',
+  clues: 'clue',
+  resources: 'resource',
+  doom: 'doom',
+};
+
+/**
  * One counter of the panel (`kind`): its name (`short` where the full one does not fit its column,
  * with the full one as its title), its `value` (written as `shown` where the panel says more, such
- * as health against its maximum) and its steppers (`children`). Health and sanity show as the card
- * prints them (`printed`): the printed maximum on an anatomical heart or a brain, with the damage
- * or horror taken as a count circle on its lower right, like the location's clues on its clue
- * value; the pair is one image named by `shown`, since the two numbers alone do not say what is
- * left. A change of the count while it shows plays its effect (`useCountChange`): of the damage or
+ * as health against its maximum) and its steppers (`children`). The others show their count on
+ * their token (`GameToken`, `STAT_TOKENS`). Health and sanity show as the card prints them
+ * (`printed`): the printed maximum on an anatomical heart or a brain, with the damage or horror
+ * token taken on its lower right, like the location's clues on its clue value; the pair is one
+ * image named by `shown`, since the two numbers alone do not say what is left. A change of the count while it shows plays its effect (`useCountChange`): of the damage or
  * horror taken on health and sanity.
  */
 function Stat({
@@ -622,26 +635,25 @@ function Stat({
               )}
             </svg>
             <data value={printed.max}>{printed.max}</data>
-            <data
+            <GameToken
               key={change?.key}
-              value={printed.taken}
+              kind={STAT_TOKENS[kind]}
+              count={printed.taken}
               data-count=""
               data-empty={printed.taken === 0 || undefined}
               data-delta={deltaText(change)}
-            >
-              {printed.taken}
-            </data>
+            />
           </span>
         ) : (
-          <data
+          <GameToken
             key={change?.key}
-            value={value}
+            kind={STAT_TOKENS[kind]}
+            count={value}
+            label={shown}
             data-delta={deltaText(change)}
             data-drag={drag && kind}
             {...drag}
-          >
-            {shown}
-          </data>
+          />
         )}
         {children}
       </dd>

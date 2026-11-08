@@ -127,8 +127,6 @@
    * and rules, and a dark sepia edge. The same in both themes, like printed cards.
    */
   --color-parchment: #ebdfc2;
-  /* The text box of a printed card, a shade lighter than its paper. */
-  --color-parchment-light: rgb(250 244 228 / 55%);
   --color-parchment-shade: #d3bf93;
   --color-ink: #2b1e12;
   --color-ink-muted: #6a5536;
@@ -201,10 +199,7 @@
   --color-face-fight-icon: #8a4a32;
   --color-face-evade-icon: #3f6b3c;
   --color-face-stat: #ffffff;
-  /* The count circle on a printed value: the count's token colour inside a pale rim. */
-  --color-count-clue: #2f8aa6;
-  --color-count-damage: #b3302b;
-  --color-count-horror: #3a64a8;
+  /* The rim and number of a token's count disc. */
   --color-count-rim: #f3ecd8;
   /* The tiles under the skill icons on an investigator card, in each skill's printed colour. */
   --color-skill-willpower: #2f5f94;
@@ -213,15 +208,6 @@
   --color-skill-agility: #3c7340;
   /* The skill symbols on those tiles, pale paper in every card theme. */
   --color-skill-symbol: #ebdfc2;
-  /*
-   * The investigator's clue token and resource coin: a teal token lit from its upper left in a
-   * dark rim, and a gold coin with a milled ring inside its rim.
-   */
-  --color-clue-token-rim: #1d5566;
-  --clue-token-face: radial-gradient(circle at 35% 30%, #7cc6d6, #2f8aa6 55%, #1f6478);
-  --color-resource-coin-rim: #7a561c;
-  --resource-coin-face: radial-gradient(circle at 35% 30%, #f6dc8e, #d6a743 55%, #9c7226);
-  --resource-coin-milling: inset 0 0 0 2px #f1d27c, inset 0 0 0 3px #8a6420;
 
   --space-1: 0.25rem;
   --space-2: 0.5rem;
@@ -433,6 +419,9 @@
   --face-type-spacing: 1.4px;
   --face-number-size: 28px;
   --face-count-size: 14px;
+  /* A token's count disc in a drawing (`SvgGameToken`), in scan units; the map's badges set their own. */
+  --svg-token-count-size: var(--face-count-size);
+  --svg-token-count-rim: var(--face-count-rim-width);
   /* A count's rising change (`RisingDelta`) on a card face, in scan units: about 16px on a tile. */
   --face-delta-size: 32px;
   /* Its halo, wide enough to read over the printed value the count sits on. */
@@ -573,12 +562,15 @@
   --investigator-art-button-top: 46;
   --investigator-art-button-width: 226;
   --investigator-art-button-height: 84;
+  /* The counters' tokens on the card and their count discs; the damage or horror token on the heart or brain and its disc. */
   --investigator-token-size: 28;
-  --investigator-token-number-size: 14;
+  --investigator-token-count-size: 15;
+  --investigator-token-number-size: 11;
   --investigator-symbol-size: 36;
   --investigator-symbol-number-size: 24;
-  --investigator-count-size: 17;
-  --investigator-count-number-size: 11;
+  --investigator-count-size: 22;
+  --investigator-count-disc-size: 13;
+  --investigator-count-number-size: 9;
   /* The spiral and rules on the investigator card's notebook page, in scan units. */
   --face-spiral-width: 1.4px;
   --face-rules-width: 0.6px;
@@ -626,13 +618,14 @@
   --picker-portrait-height: 0.8;
   /* The disc on the picker's filter button that counts the filters set. */
   --picker-count-size: 1.125rem;
-  /* The round counters along the foot of an investigator card. */
+  /* The round counters along the foot of an investigator card, and their tokens' count discs. */
   --stat-token-size: 2.25rem;
+  --stat-token-count-size: 1rem;
   /*
-   * Health's and sanity's printed symbol: the count circle on its lower right, how far it reaches
-   * past the symbol's edge, and the dark edge that keeps the white maximum readable on the heart.
+   * Health's and sanity's printed symbol: the damage or horror token on its lower right, how far it
+   * reaches past the symbol's edge, and the dark edge that keeps the white maximum readable on the heart.
    */
-  --stat-count-size: 1.125rem;
+  --stat-count-size: 1.5rem;
   --stat-count-offset: -0.25rem;
   --stat-number-shadow: 0 0 2px var(--color-face-setting), 0 0 1px var(--color-face-setting);
   /* An empty header pile's symbol: a small card outline this tall. */
@@ -655,6 +648,7 @@
   --loose-token-size: 2.5rem;
   /* A game token's count (`GameToken`): a small dark disc over the token's lower right edge. */
   --token-count-size: 1.25rem;
+  --token-count-font-size: var(--font-size-note);
   --token-count-offset: calc(-1 * var(--space-1));
   --color-token-count: #1b1510;
   /* An enemy on the map engaged with an investigator, shown in full in their threat area. */
@@ -1067,7 +1061,8 @@
   /* The compact investigator stays under the expanded header too; expanded it shows them whole. */
   #board:not([data-view='map'], [data-view='investigators']) {
     --stat-token-size: 1.75rem;
-    --stat-count-size: 0.875rem;
+    --stat-token-count-size: 0.875rem;
+    --stat-count-size: 1.25rem;
   }
 }
 
