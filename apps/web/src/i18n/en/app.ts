@@ -304,6 +304,7 @@ export const appTexts = {
     save: 'Save pictures for offline play',
     saving: 'Saving pictures: {{count}} of {{total}}',
     saved: 'Pictures saved: {{count}} of {{total}}',
+    savedSome: 'Pictures saved: {{count}} of {{total}}, {{failed}} failed. Tap to try again',
   },
   game: {
     unplayable: "This game can't be played: this version of the app does not have its scenario.",

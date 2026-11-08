@@ -19,6 +19,7 @@ describe('SavePicturesButton', () => {
   afterEach(() => {
     cleanup();
     vi.unstubAllGlobals();
+    vi.restoreAllMocks();
   });
 
   it('fetches the pictures of the game and says how many it saved', async () => {
@@ -45,5 +46,33 @@ describe('SavePicturesButton', () => {
       'https://arkhamdb.com/cards/study.png',
       'https://arkhamdb.com/cards/roland.png',
     ]);
+  });
+
+  it('says how many pictures failed, for a tap to try again', async () => {
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+    vi.stubGlobal('fetch', async (url: string) => {
+      if (url.endsWith('study.png')) throw new TypeError('Failed to fetch');
+    });
+    const study = instanceId('study');
+    const table = PlayTable.start(
+      newGame()
+        .withLocation(
+          study,
+          blankLocation('study', { imageSrc: cardImagePath('/cards/study.png') }),
+        )
+        .withInvestigator(investigatorId('roland'), {
+          locationId: study,
+          imageSrc: cardImagePath('/cards/roland.png'),
+        }),
+    );
+    render(<SavePicturesButton board={table.board} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Save pictures for offline play' }));
+
+    expect(
+      await screen.findByRole('button', {
+        name: 'Pictures saved: 1 of 2, 1 failed. Tap to try again',
+      }),
+    ).toBeTruthy();
   });
 });
