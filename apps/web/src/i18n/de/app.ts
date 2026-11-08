@@ -608,6 +608,12 @@ export const appTexts = {
     table: 'Tisch',
     cards: 'Karten',
     theme: 'Licht',
+    tableSkin: 'Tischdesign',
+    tableSkins: {
+      nightAndBrass: 'Nacht und Messing',
+      stars: 'Wenn die Sterne richtig stehen',
+      rlyeh: 'Versunkenes R’lyeh',
+    },
     themes: { dark: 'Bei Nacht', light: 'Bei Tag' },
     cardTheme: 'Kartenstil',
     cardThemes: {

@@ -14,6 +14,15 @@
   --color-accent: #c9a45c;
   --color-accent-text: #1b1408;
   /*
+   * The accent's light and deep shades, for the table's own primary button (`--table-button`); a
+   * table skin tints them, while the paper's brass buttons stay brass on every table.
+   */
+  --color-accent-light: var(--color-brass-light);
+  --color-accent-deep: var(--color-brass-deep);
+  --table-button: linear-gradient(var(--color-accent-light), var(--color-accent-deep));
+  /* Resources are gold on every table, like the coins, whatever the skin's accent. */
+  --color-resource: #d6a743;
+  /*
    * The table's own colours, captured here where no paper has redefined the colour tokens, so a
    * menu opened over paper takes them back (MD.5a). `var()` resolves on the root element, by night
    * or by day, and the captured values are inherited as they are.
@@ -37,8 +46,14 @@
   --color-scrim: rgb(3 8 7 / 78%);
   /* The play screen's header row darkens the playmat towards the top of the screen. */
   --header-shade: linear-gradient(to bottom, rgb(5 12 10 / 90%), rgb(5 12 10 / 35%));
-  /* The playmat behind every screen, our own drawing (styles/playmat.svg). */
-  --playmat: url('./playmat.svg');
+  /*
+   * Every table's playmat by night, our own drawings, for the skins and the Settings page's
+   * previews of them; `--playmat` lies behind every screen.
+   */
+  --playmat-night-and-brass: url('./playmat.svg');
+  --playmat-stars: url('./playmat_stars.svg');
+  --playmat-rlyeh: url('./playmat_rlyeh.svg');
+  --playmat: var(--playmat-night-and-brass);
   /* Tokens on the map, coloured like the game's own: blue-green clues, red doom. */
   --color-clue: #3f9bb5;
   /* The health and sanity icons on an investigator's counters, red and blue like the printed ones. */
@@ -246,6 +261,9 @@
   --font-size-field: 1.0625rem;
   /* The column of a form row's label (Settings, the wizard summary), and the height of a segmented choice's pill. */
   --form-label-width: 10rem;
+  /* A table skin's pick on the Settings page: its playmat small, in the playmat's proportions. */
+  --skin-pick-width: 7.5rem;
+  --skin-pick-ratio: 8 / 5;
   --segment-height: 2.25rem;
   /* The wizard's step dots (MD.3d). */
   --step-dot-size: 0.5rem;
@@ -972,6 +990,65 @@
     var(--color-parchment-shade)
   );
   --header-shade: linear-gradient(to bottom, rgb(250 245 232 / 90%), rgb(250 245 232 / 35%));
+}
+
+/*
+ * The table skins (MD.7, `TableSkin`): each brings its playmat and table colours by night; by day
+ * the table is the parchment one with the skin's accent as its ink. Paper, cards and the game's
+ * colours stay as they are. The playmats are fetched only on the table that shows them.
+ */
+:root[data-skin='stars']:not([data-theme='light']) {
+  /* The Stars Are Right: a star chart in the night sky, a nebula, lines in pale violet. */
+  --color-background: #0a0820;
+  --color-surface: rgb(18 16 48 / 88%);
+  --color-border: rgb(185 179 230 / 32%);
+  --color-text: #e8e6f4;
+  --color-text-muted: #aaa6c4;
+  --color-accent: #b9b3e6;
+  --color-accent-text: #0a0820;
+  --color-scrim: rgb(4 3 14 / 78%);
+  --color-menu: #14122e;
+  --color-menu-hover: rgb(185 179 230 / 16%);
+  --header-shade: linear-gradient(to bottom, rgb(8 7 22 / 90%), rgb(8 7 22 / 35%));
+  --playmat: var(--playmat-stars);
+}
+
+:root[data-skin='rlyeh']:not([data-theme='light']) {
+  /* Sunken R'lyeh: a drowned city under deep water, lines in sea green. */
+  --color-background: #031416;
+  --color-surface: rgb(5 30 32 / 88%);
+  --color-border: rgb(95 196 176 / 32%);
+  --color-text: #e2efe9;
+  --color-text-muted: #9fbab2;
+  --color-accent: #5fc4b0;
+  --color-accent-text: #031416;
+  --color-scrim: rgb(1 10 11 / 78%);
+  --color-menu: #051e20;
+  --color-menu-hover: rgb(95 196 176 / 16%);
+  --header-shade: linear-gradient(to bottom, rgb(2 14 16 / 90%), rgb(2 14 16 / 35%));
+  --playmat: var(--playmat-rlyeh);
+}
+
+:root[data-skin='stars'] {
+  --color-accent-light: #dcd8f7;
+  --color-accent-deep: #8d85c8;
+}
+
+:root[data-skin='rlyeh'] {
+  --color-accent-light: #93e3d2;
+  --color-accent-deep: #3a9a88;
+}
+
+:root[data-skin='stars'][data-theme='light'] {
+  --color-border: rgb(79 71 150 / 40%);
+  --color-accent: #4f4796;
+  --color-menu-hover: rgb(79 71 150 / 14%);
+}
+
+:root[data-skin='rlyeh'][data-theme='light'] {
+  --color-border: rgb(44 122 108 / 40%);
+  --color-accent: #2c7a6c;
+  --color-menu-hover: rgb(44 122 108 / 14%);
 }
 
 /*

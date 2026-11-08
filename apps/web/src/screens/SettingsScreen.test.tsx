@@ -92,6 +92,15 @@ describe('SettingsScreen', () => {
     expect(loadSettings().theme).toBe('light');
   });
 
+  it('applies and saves the table skin', () => {
+    renderSettings();
+
+    fireEvent.click(screen.getByRole('radio', { name: 'The Stars Are Right' }));
+
+    expect(document.documentElement.dataset.skin).toBe('stars');
+    expect(loadSettings().tableSkin).toBe('stars');
+  });
+
   it('applies and saves the card theme', () => {
     renderSettings();
 

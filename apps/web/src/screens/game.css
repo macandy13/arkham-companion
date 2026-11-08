@@ -733,13 +733,14 @@
  * The board's next steps follow the design language (base.css): "Next" (or "Done" while
  * adjusting) in the status row and the turn's own step in an investigator's panel ("Start turn",
  * "End") are one brass pill of one size, so the two read as the same kind of button. It stands
- * under #board, or the panel's outlined pills (investigators.css) would win over the brass.
+ * under #board, or the panel's outlined pills (investigators.css) would win over the brass. It
+ * lies on the table, so a table skin tints it.
  */
 #board > :is(#status, #investigators) button[data-primary] {
   padding-inline: var(--space-3);
-  border-color: var(--color-brass-deep);
+  border-color: var(--color-accent-deep);
   border-radius: var(--radius-pill);
-  background: var(--brass-button);
+  background: var(--table-button);
   color: var(--color-ink);
   font-family: var(--font-family-print);
   font-size: var(--font-size-body);

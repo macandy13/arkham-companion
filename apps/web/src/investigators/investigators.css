@@ -183,7 +183,7 @@
 
 :is(#investigators, [data-strip]) [data-stat='resources'] {
   --stat-icon: url('./icons/token.svg');
-  --stat-colour: var(--color-accent);
+  --stat-colour: var(--color-resource);
 }
 
 :is(#investigators, [data-strip]) [data-stat='doom'] {
