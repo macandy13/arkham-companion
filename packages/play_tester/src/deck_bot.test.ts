@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   blankEnemy,
+  blankTreachery,
   blankLocation,
   cardName,
   engagedWith,
@@ -63,12 +64,17 @@ describe('the deck bot', () => {
   });
 
   it('plays 3 cards a turn at most, then leaves the turn to the goal bot', () => {
-    const table = PlayTable.start(game);
+    const table = PlayTable.start(
+      newGame()
+        .withLocation(study, blankLocation('study'), { revealed: true, clues: 5 })
+        .withInvestigator(alice, { locationId: study, resources: 10 })
+        .withTurnOf(alice),
+    );
     const bot = botWithHand(
-      'Magnifying Glass',
-      'Magnifying Glass',
-      'Magnifying Glass',
-      'Magnifying Glass',
+      'Working a Hunch',
+      'Working a Hunch',
+      'Working a Hunch',
+      'Working a Hunch',
     );
 
     const played = Array.from({ length: 6 }, () => {
@@ -77,8 +83,69 @@ describe('the deck bot', () => {
       return step.verb === 'playerCard' ? step.card : step.verb;
     });
 
-    expect(played.filter((card) => card === 'Magnifying Glass')).toHaveLength(3);
+    expect(played.filter((card) => card === 'Working a Hunch')).toHaveLength(3);
   });
+
+  it('puts one copy of an asset into play', () => {
+    const table = PlayTable.start(game);
+    const bot = botWithHand('Magnifying Glass', 'Magnifying Glass');
+
+    const played = Array.from({ length: 3 }, () => {
+      const step = bot.step(table, random);
+      playStep(table, step);
+      return step.verb === 'playerCard' ? step.card : step.verb;
+    });
+
+    expect(played.filter((card) => card === 'Magnifying Glass')).toHaveLength(1);
+  });
+
+  it('discovers the clues of Drawn to the Flame in a step after its encounter draw', () => {
+    const table = PlayTable.start(
+      game.withCard(instanceId('top_card'), blankTreachery('top_card'), { kind: 'encounterDeck' }),
+    );
+    const bot = botWithHand('Drawn to the Flame');
+
+    const steps = [bot.step(table, random), bot.step(table, random), bot.step(table, random)];
+
+    expect(steps).toEqual([
+      { verb: 'playCard', investigator: 'alice' },
+      {
+        verb: 'playerCard',
+        investigator: 'alice',
+        card: 'Drawn to the Flame',
+        effects: [{ kind: 'drawEncounterCard' }],
+      },
+      {
+        verb: 'playerCard',
+        investigator: 'alice',
+        card: 'Drawn to the Flame',
+        effects: [{ kind: 'discoverClues', amount: 2 }],
+      },
+    ]);
+  });
+
+  it.each([
+    { token: '0', played: true },
+    { token: 'autoFail', played: false },
+  ] as const)(
+    'plays Lucky! to pass a fight it fails by 1, never on an auto-fail ($token)',
+    ({ token, played }) => {
+      const table = PlayTable.start(
+        game
+          .withChaosBag([token])
+          .withCard(ghoul, blankEnemy('ghoul', { fight: 4, health: fixed(3) }), engagedWith(alice)),
+      );
+      table.fight(alice, ghoul, { result: 'open' });
+      const bot = botWithHand('Lucky!');
+
+      const answer = bot.step(table, random);
+      playStep(table, answer);
+      const next = bot.step(table, random);
+
+      expect(answer.verb === 'resolveTest' && answer.result === 'pass').toBe(played);
+      expect(next.verb === 'playerCard' && next.card === 'Lucky!').toBe(played);
+    },
+  );
 
   it('plays the card that discovers clues before one that only gains resources', () => {
     const table = PlayTable.start(game);
@@ -126,7 +193,7 @@ describe('the deck bot', () => {
     },
   );
 
-  it('heals the damage an ally in play soaks, until its health is used up', () => {
+  it('heals the damage armour in play soaks, until its health is used up', () => {
     const table = PlayTable.start(game);
     const bot = botWithHand('Leather Coat');
     playStep(table, bot.step(table, random));

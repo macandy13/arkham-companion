@@ -107,8 +107,19 @@ export class DeckBot {
       this.round = board.round;
     }
     const turn = board.turn === undefined ? undefined : board.investigator(board.turn).name;
-    if (turn !== this.turn.investigator)
+    if (turn !== this.turn.investigator) {
       this.turn = { ...(turn && { investigator: turn }), plays: 0 };
+      const extra =
+        turn && this.seats.get(turn)?.inPlay.find(({ card }) => card.use.kind === 'extraAction');
+      // An extra action "each turn" (Leo De Luca) comes back at the start of every turn it's in play for.
+      if (turn && extra)
+        this.queue.push({
+          verb: 'playerCard',
+          investigator: turn,
+          card: extra.card.name,
+          effects: [{ kind: 'actions', delta: 1 }],
+        });
+    }
   }
 
   /**
@@ -203,10 +214,12 @@ export class DeckBot {
     if (
       lucky?.use.kind === 'lucky' &&
       drawn.result !== 'pass' &&
+      !drawn.tokens.includes('autoFail') &&
       drawn.margin <= lucky.use.bonus &&
       investigator.resources - spend >= (lucky.cost ?? 0)
     ) {
       seat.hand.splice(seat.hand.indexOf(lucky), 1);
+      this.turn.plays++;
       before.push(spending(investigator.name, lucky.name, lucky.cost ?? 0));
       drawn = { ...drawn, result: 'pass' };
     }
@@ -286,6 +299,9 @@ export class DeckBot {
     if (card.type === 'skill' || this.turn.plays >= PLAYS_PER_TURN || view.resources < cost)
       return undefined;
     if (!card.fast && view.actions < 1) return undefined;
+    // The bot keeps no slots; one copy of an asset in play stands in for the slot limits.
+    if (card.type === 'asset' && seat.inPlay.some((inPlay) => inPlay.card.name === card.name))
+      return undefined;
     const location = view.at === undefined ? undefined : board.location(byName(view.at));
     const engaged = board.enemiesEngagedWith(view.id);
     const here = location ? board.enemiesAt(location.id) : [];
@@ -299,15 +315,19 @@ export class DeckBot {
     };
     const effects = this.playEffects(card, situation);
     if (!effects) return undefined;
-    const played: Step = {
-      verb: 'playerCard',
-      investigator: name,
-      card: card.name,
-      effects: [...(cost > 0 ? [{ kind: 'resources', delta: -cost } as const] : []), ...effects],
-    };
+    const all: CardEffect[] = [
+      ...(cost > 0 ? [{ kind: 'resources', delta: -cost } as const] : []),
+      ...effects,
+    ];
+    // A drawn encounter card resolves before the rest of the effect, and may open a decision the
+    // rest has to wait for, so the rest is a step of its own.
+    const drawn = all.findIndex(({ kind }) => kind === 'drawEncounterCard') + 1;
+    const played: Step[] = (
+      drawn > 0 && drawn < all.length ? [all.slice(0, drawn), all.slice(drawn)] : [all]
+    ).map((part) => ({ verb: 'playerCard', investigator: name, card: card.name, effects: part }));
     return {
       score: actScore(card, situation),
-      steps: card.fast ? [played] : [{ verb: 'playCard', investigator: name }, played],
+      steps: card.fast ? played : [{ verb: 'playCard', investigator: name }, ...played],
       commit: () => {
         seat.hand.splice(seat.hand.indexOf(card), 1);
         if (card.type === 'asset')
@@ -449,8 +469,8 @@ interface Situation {
 const WORTH_PLAYING = 3;
 
 /**
- * How much playing `card` now gets the act advanced (Andy's aim for the bot: advance the act as
- * fast as the cards allow): clues first, then what finds clues faster, then what pays for it,
+ * How much playing `card` now gets the act advanced (the bot's aim: advance the act as fast as
+ * the cards allow, so the scenario's later paths get played): clues first, then what finds clues faster, then what pays for it,
  * then clearing the enemies in the way, then staying in the game. Doom on a player card brings
  * the agenda closer, so the bot never plays it.
  */
