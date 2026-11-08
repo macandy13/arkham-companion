@@ -96,12 +96,15 @@ function arkhamDbStats(def: CardDef): PrintedStats {
   };
 }
 
+/** The ArkhamDB packs whose hand-entered cards this check holds to the fetched ones. */
+type CheckedPack = 'core' | 'core_2026';
+
 /**
  * The cards of ArkhamDB pack `pack` as `pnpm carddata:fetch` cached them, or none when it hasn't
  * run. Where the workflow fetched them (`ARKHAMDB_CHECK=required`) a missing file fails instead,
  * so a renamed pack or path can't turn the check into a silent skip.
  */
-function cachedPack(pack: string): readonly CardDef[] {
+function cachedPack(pack: CheckedPack): readonly CardDef[] {
   const file = join(CACHE_DIR, 'en', `${pack}.json`);
   if (existsSync(file)) return JSON.parse(readFileSync(file, 'utf8')) as CardDef[];
   if (process.env.ARKHAMDB_CHECK === 'required') throw new Error(`no fetched cards at ${file}`);
@@ -120,7 +123,7 @@ const labelled = (cards: readonly CardStats[]) =>
     .filter((stats) => !reverseSides.includes(stats.code))
     .map((stats) => ({ label: `${stats.code} ${stats.name}`, stats }));
 
-describe.each([
+describe.each<{ campaign: string; pack: CheckedPack; cards: readonly CardStats[] }>([
   {
     campaign: 'Night of the Zealot',
     pack: 'core',

@@ -7,6 +7,7 @@ import {
   investigatorId,
   newGame,
   requireInvestigator,
+  resignAction,
   resolveValue,
   threatAreaOf,
   type CardStats,
@@ -91,6 +92,10 @@ describe('Spreading Flames card data', () => {
     { code: '12124', name: 'Cosmic Evils', keywords: ['peril'] },
   ])('lists the keywords of $name', ({ code, keywords }) => {
     expect(cardOf(code).keywords?.map((keyword) => keyword.name)).toEqual(keywords);
+  });
+
+  it('lets the investigators resign at Blaze of Glory, act 4', () => {
+    expect(cardOf('12112').actions).toEqual([resignAction()]);
   });
 
   it.each([
@@ -196,6 +201,17 @@ describe('Spreading Flames card abilities', () => {
 
       expect(state.cards[agenda]?.tokens.doom).toBe(1);
       expect(state.cards[noxiousSmoke]?.zone).toEqual({ kind: 'encounterDeck' });
+    });
+
+    it('lets the doom advance the agenda when it reaches the threshold', () => {
+      const { context, state: started } = aliceDrawsCosmicEvils.start();
+      const atTwoDoom = stateAfter(context, started, { type: 'PlaceDoom', amount: 2 });
+      const drawn = stateAfter(context, atTwoDoom, aliceDraws('Cosmic Evils'));
+
+      const state = stateAfter(context, drawn, answer(COSMIC_EVILS_DECISION, 'doom'));
+
+      expect(state.cards[agenda]?.tokens.doom).toBe(3);
+      expect(state.pending.map((decision) => decision.id)).toEqual(['advanceAgenda:past_curfew']);
     });
 
     it('gives alice 1 damage and 1 horror, then surges into Noxious Smoke, when she picks the wounds', () => {

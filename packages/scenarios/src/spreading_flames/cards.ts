@@ -14,10 +14,10 @@ import {
   heal,
   ifYouHave,
   itsLocation,
-  parleyAction,
   perInvestigator,
   placeDoomOnAgenda,
   putIntoThreatArea,
+  resignAction,
   skillTest,
   skillTestOfEither,
   takeDamageAndHorror,
@@ -84,30 +84,32 @@ const cosmicEvils = 'scenario.spreadingFlames.cosmicEvils';
 /** ArkhamDB has the Core Set (2026)'s pictures as JPEGs. */
 const jpg = 'jpg';
 
-/** "Parley. Test [intellect] (2)", printed on each agenda; discarding the Bystander is by hand. */
-const parleyWithBystander = parleyAction({ effects: [skillTest('intellect', 2)] });
-
 /**
  * Hand-entered card data for Spreading Flames, keyed by the real ArkhamDB codes; like The
  * Gathering's, only names, codes, numbers, traits, keywords and abilities (test skills and
  * difficulties checked against ArkhamDB's Core Set (2026) data), no card text, JSON or images.
  * `arkhamdb_check.test.ts` holds the stats to ArkhamDB's data.
  *
- * The agendas and acts carry only what doesn't depend on the map; their other reverse sides come
- * with the scenario's setup. Effects the engine has no rule for yet are left out, so the players
- * resolve them from the card:
+ * The acts' objectives and the agendas' and acts' reverse sides come with the scenario's setup, as
+ * most of them name its locations; only Wild Flames' defeat and Blaze of Glory's Resign are entered
+ * here. Effects the engine has no rule for yet are left out, so the players resolve them from the
+ * card:
  *
- * - the agendas' Parley discards a Bystander at the taker's location after a passed test, and
- *   agenda 1's and 2's reverse sides test each investigator; Wild Flames draws Fire! after doom
- *   is placed on it (MC2.1)
+ * - the agendas' Parley (test intellect (2) to discard a Bystander at your location): it can be
+ *   taken only with a Bystander there, a condition actions can't state yet; Wild Flames draws Fire!
+ *   after doom is placed on it (MC2.1)
+ * - Blaze of Glory's group clue spend to deal damage to an enemy
  * - Your Friend's Room's Engage action, Miskatonic Quad's free move, Warren Observatory's draw
  *   (MC2.3) and Orne Library's two-action draw (MC1.12)
  * - Dr. Henry Armitage's skill bonus and free first action: his controller's to apply, like a
  *   player card's
  * - Hellhound's discard after its enemy phase attacks, and Bystander's Doomed (MC2.6)
- * - Unspeakable Truths' horror after its holder discovers clues and its two-action discard
- * - Forbidden Secrets' and Wild Compulsion's choice per point failed, and the X difficulties of
- *   Extraplanar Visions and Mutated! (MC2.5)
+ * - Unspeakable Truths' limit of 1 per investigator, its horror after its holder discovers clues
+ *   and its two-action discard
+ * - Forbidden Secrets' intellect (3) test (when its drawer has clues) and Wild Compulsion's
+ *   willpower (3) test, each with a choice per point failed
+ * - Extraplanar Visions' test of X difficulty, and Mutated!'s test with its +2 difficulty while an
+ *   enemy is at the drawer's location and its choice on a fail (MC2.5)
  * - Fire!'s attachment to the nearest location without one and its damage as the investigation
  *   phase ends
  */
@@ -119,7 +121,6 @@ export const spreadingFlamesCardDefs: readonly CardStats[] = [
     pictures: jpg,
     stage: 1,
     doom: 3,
-    actions: [parleyWithBystander],
   }),
   agenda({
     code: codes.litUp,
@@ -128,7 +129,6 @@ export const spreadingFlamesCardDefs: readonly CardStats[] = [
     pictures: jpg,
     stage: 2,
     doom: 5,
-    actions: [parleyWithBystander],
   }),
   agenda({
     code: codes.wildFlames,
@@ -137,7 +137,6 @@ export const spreadingFlamesCardDefs: readonly CardStats[] = [
     pictures: jpg,
     stage: 3,
     doom: 10,
-    actions: [parleyWithBystander],
     abilities: [whenAdvanced(defeatEachInvestigator({ trauma: 'physical' }))],
   }),
   act({
@@ -167,6 +166,7 @@ export const spreadingFlamesCardDefs: readonly CardStats[] = [
     set: own,
     pictures: jpg,
     stage: 4,
+    actions: [resignAction()],
   }),
   location({
     code: codes.yourFriendsRoom,
