@@ -21,6 +21,7 @@ import { RejectionToast } from './RejectionToast';
 import { DrawnCardsNotice } from '../encounter/DrawnCardsNotice';
 import { ResolutionPrompt } from '../campaign/ResolutionPrompt';
 import { SpawnPrompt } from '../encounter/SpawnPrompt';
+import { useJustDrawn } from '../encounter/justDrawn';
 import { SkippedEffectsNotice } from './SkippedEffectsNotice';
 import { ChangesNotice } from '../log/ChangesNotice';
 import { useDetailView } from './useDetailView';
@@ -69,6 +70,14 @@ export function GameScreen({
   const [pickingFor, setPickingFor] = useState<DecisionId>();
   const [hosted, setHosted] = useState(false);
   const boardElement = useRef<HTMLDivElement>(null);
+  const resolving = open?.board?.resolving?.id;
+  const pending = open?.state.pending[0]?.id;
+  const justDrawn = useJustDrawn(
+    open?.board && {
+      ...(resolving === undefined ? {} : { card: resolving }),
+      ...(pending === undefined ? {} : { decision: pending }),
+    },
+  );
   const detailTarget = phone ? detail.target : undefined;
   // The expanded header leaves the map and the investigator in view, so they open their rows from there.
   const showDetail = phone ? (detailTarget ? detail.go : detail.open) : undefined;
@@ -235,6 +244,7 @@ export function GameScreen({
             decision={decision}
             actions={store.getState().actions}
             busy={open.busy}
+            justDrawn={justDrawn && decision.card?.id === board.resolving?.id}
             picking={picking}
             onPicking={(to) => setPickingFor(to ? decisionId : undefined)}
           />

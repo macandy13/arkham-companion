@@ -19,7 +19,7 @@ const LANDSCAPE: ReadonlySet<CardType> = new Set<CardType>(['agenda', 'act']);
  * page is a sheet along the bottom with the card peeking out beside its title (card_dialog.css).
  * The card is a button that opens it whole (`CardZoom`), since on a phone only its top shows.
  * The cards of the decisions that wait after this one (`waiting`, the next enemies to attack) fan
- * out behind it.
+ * out behind it, and a card just drawn (`justDrawn`) deals in.
  * Opening and closing stay the caller's: the shell opens as a modal when it mounts and passes on
  * `cancel` (Escape), so a dialog that must be answered can refuse it; one the players may leave
  * gets an × (`onClose`), and one that must be answered can be lowered out of the board's way
@@ -31,6 +31,7 @@ export function CardDialog({
   name,
   card,
   drawn,
+  justDrawn = false,
   waiting = [],
   actor,
   kicker,
@@ -49,6 +50,8 @@ export function CardDialog({
    * picture over itself once loaded (an enemy's `EnemyCard`, a location's `LocationCard`), so it reads offline too.
    */
   drawn?: ReactNode;
+  /** Whether `card` was just drawn, so it deals in (card_dialog.css) rather than standing there. */
+  justDrawn?: boolean;
   /** The cards behind `card`, next first (`DecisionView.waiting`). */
   waiting?: readonly CardFaceView[];
   actor?: InvestigatorView;
@@ -90,7 +93,7 @@ export function CardDialog({
       data-lowered={lowered || undefined}
     >
       {card && (
-        <figure data-part="cards">
+        <figure data-part="cards" data-just-drawn={justDrawn || undefined}>
           {waiting.length > 0 && (
             <ul aria-label={t('cardDialog.waiting')}>
               {waiting.map((each) => (
