@@ -156,8 +156,6 @@ export type Rejection =
    * Reference, "Massive"), so there is nothing to engage.
    */
   | { code: 'massiveNotEngageable'; cardId: InstanceId }
-  /** Exhausting an exhausted card or readying a ready one. */
-  | { code: 'exhaustUnchanged'; cardId: InstanceId; exhausted: boolean }
   /** A hunter command names an enemy that is not an unengaged hunter at a location. */
   | { code: 'notAHunter'; cardId: InstanceId }
   /** `MoveHunter` to a location that is not connected to the hunter's. */
@@ -408,8 +406,6 @@ function describe(r: Rejection): string {
       return `${r.cardId} is aloof and must be engaged before it can be attacked`;
     case 'massiveNotEngageable':
       return `${r.cardId} is massive and already engaged with everyone at its location`;
-    case 'exhaustUnchanged':
-      return `${r.cardId} is already ${r.exhausted ? 'exhausted' : 'ready'}`;
     case 'notAHunter':
       return `${r.cardId} is not an unengaged hunter at a location`;
     case 'hunterCannotMove':

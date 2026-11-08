@@ -873,15 +873,13 @@ describe('exhaust and ready', () => {
     expect(events).toEqual([]);
   });
 
-  it('rejects exhausting an exhausted enemy', () => {
+  it('exhausts nothing on an exhausted enemy', () => {
     const { context, state } = aliceInHall.withCard(ghoul, ghoulCard, engagedWith(alice)).start();
     const exhausted = stateAfter(context, state, { type: 'ExhaustEnemy', enemyId: ghoul });
 
-    expect(rejectionFrom(context, exhausted, { type: 'ExhaustEnemy', enemyId: ghoul })).toEqual({
-      code: 'exhaustUnchanged',
-      cardId: ghoul,
-      exhausted: true,
-    });
+    const { events } = execute(context, exhausted, { type: 'ExhaustEnemy', enemyId: ghoul });
+
+    expect(events).toEqual([]);
   });
 
   it('engages when a readied unengaged enemy shares a location with an investigator', () => {

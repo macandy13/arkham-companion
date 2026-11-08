@@ -166,19 +166,23 @@ export function handleEvadeEnemy(ctx: EngineContext, state: GameState, cmd: Evad
   const { enemy } = onTableEnemyOf(ctx, state, cmd.enemyId);
   const investigator = activeInvestigator(state, cmd.investigatorId);
   return [
-    ...(enemy.exhausted ? [] : [exhaustChange(enemy, true)]),
+    ...(enemy.exhausted ? [] : [exhaustChange(enemy.id, true)]),
     ...(isEngagedWith(enemy, investigator) ? [disengaged(state, enemy)] : []),
     { type: 'EnemyEvaded', enemyId: enemy.id, investigatorId: investigator.id },
   ];
 }
 
-/** `ExhaustEnemy`. */
+/**
+ * `ExhaustEnemy`: an exhausted enemy stays as it is, so "exhaust each enemy at
+ * your location" resolves whether or not some of them are exhausted.
+ */
 export function handleExhaustEnemy(
   ctx: EngineContext,
   state: GameState,
   cmd: ExhaustEnemy,
 ): ExhaustChanged[] {
-  return [exhaustChange(onTableEnemyOf(ctx, state, cmd.enemyId).enemy, true)];
+  const { enemy } = onTableEnemyOf(ctx, state, cmd.enemyId);
+  return enemy.exhausted ? [] : [exhaustChange(enemy.id, true)];
 }
 
 /**
@@ -189,7 +193,7 @@ export function handleExhaustEnemy(
 export function handleReadyEnemy(ctx: EngineContext, state: GameState, cmd: ReadyEnemy): Event[] {
   const { enemy } = onTableEnemyOf(ctx, state, cmd.enemyId);
   if (!enemy.exhausted) return [];
-  const change = exhaustChange(enemy, false);
+  const change = exhaustChange(enemy.id, false);
   return [change, ...engageEvents(ctx, replay([change], state), cmd.enemyId)];
 }
 
@@ -214,8 +218,6 @@ function disengaged(state: GameState, enemy: CardInstance): EnemyDisengaged {
   return { type: 'EnemyDisengaged', enemyId: enemy.id, locationId: locationOf(state, enemy) };
 }
 
-function exhaustChange(enemy: CardInstance, exhausted: boolean): ExhaustChanged {
-  if (enemy.exhausted === exhausted)
-    throw new CommandRejected({ code: 'exhaustUnchanged', cardId: enemy.id, exhausted });
-  return { type: 'ExhaustChanged', cardId: enemy.id, exhausted };
+function exhaustChange(cardId: InstanceId, exhausted: boolean): ExhaustChanged {
+  return { type: 'ExhaustChanged', cardId, exhausted };
 }

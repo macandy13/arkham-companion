@@ -830,7 +830,10 @@ export interface EvadeEnemy {
   investigatorId: InvestigatorId;
 }
 
-/** Exhausts a ready enemy in play (after it attacked, or by a card effect). Produces `ExhaustChanged`. */
+/**
+ * Exhausts an enemy in play (after it attacked, or by a card effect). Exhausting an exhausted
+ * enemy does nothing, as readying a ready one does. Produces `ExhaustChanged`.
+ */
 export interface ExhaustEnemy {
   type: 'ExhaustEnemy';
   enemyId: InstanceId;
