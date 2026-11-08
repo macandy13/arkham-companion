@@ -40,6 +40,9 @@ const hallAndAttic = (effect: AbilityEffect) =>
     });
 
 describe('card effects that take actions away', () => {
+  /** The actions an investigator has as their turn begins, before anything takes some away. */
+  const startOfTurnActions = 3;
+
   it.each([
     { loses: 1, before: 3, after: 2 },
     { loses: 2, before: 1, after: 0 },
@@ -54,15 +57,33 @@ describe('card effects that take actions away', () => {
         .withTurnOf(alice)
         .start();
       const spent =
-        before === 3
+        before === startOfTurnActions
           ? state
           : stateAfter(context, state, {
               type: 'AdjustActions',
               investigatorId: alice,
-              delta: before - 3,
+              delta: before - startOfTurnActions,
             });
 
       const moved = stateAfter(context, spent, aliceEntersAttic);
+
+      expect(requireInvestigator(moved, alice).actionsRemaining).toBe(after);
+    },
+  );
+
+  it.each([
+    { loses: 1, after: 2 },
+    { loses: 'all', after: 3 },
+  ] as const)(
+    "leaves alice $after actions when she loses $loses during bob's turn",
+    ({ loses, after }) => {
+      const { context, state } = hallAndAttic(loseActions(loses))
+        .withInvestigator(alice, { locationId: hall })
+        .withInvestigator(bob, { locationId: hall })
+        .withTurnOf(bob)
+        .start();
+
+      const moved = stateAfter(context, state, aliceEntersAttic);
 
       expect(requireInvestigator(moved, alice).actionsRemaining).toBe(after);
     },

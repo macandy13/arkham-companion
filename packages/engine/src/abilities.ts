@@ -1572,7 +1572,8 @@ export function gainClues(
 }
 
 /**
- * "Discover 1 clue at your location" (`DiscoverClues`), or at another location ("discover 1 clue
+ * "Discover 1 clue at your location" (`DiscoverClues`: the window's location, else the location of
+ * the investigator it names), or at another location ("discover 1 clue
  * at a [[Central]] location", `discoverClues(1, locationWith(trait('Central')))`): as many as the
  * location has, none for an investigator who may not discover clues, unlike `gainClues`, which
  * takes them from the token pool.
@@ -1591,7 +1592,7 @@ export function discoverClues(
 
 /**
  * "Lose 1 action" or "lose all remaining actions" (`AdjustActions`): no more than remain, none
- * once they are gone.
+ * once they are gone, and "all remaining" none outside that investigator's turn.
  */
 export function loseActions(amount: number | 'all'): AbilityEffect {
   return {

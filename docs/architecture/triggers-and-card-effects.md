@@ -76,9 +76,9 @@ Commands on player cards (`DrawCards`, `SearchDeck`, `PlayCard`, `DiscardFromHan
 
 Commands the players also send themselves and that refuse when they have nothing to do (`AdjustActions`, `EndTurn`, `DiscoverClues`) carry the same `source` when a card asks for them, and then do as much as they can (Rules Reference, "Effects"), so one effect never fails the whole ability. The players' buttons send them without one and keep refusing, since the board offers a button by dry-running its command.
 
-- `loseActions(1)` takes no more actions than remain, `loseActions('all')` all of them (`delta: 'allRemaining'`, which the players may send too).
+- `loseActions(1)` takes no more actions than remain, `loseActions('all')` all of them during that investigator's turn and none outside it (`delta: 'allRemaining'`, which the players may send too).
 - `endYourTurn()` does nothing outside the turn of the investigator the window names.
-- `discoverClues(amount, location)` takes as many clues as the location has, at any location (your own by default), and none for an investigator a card forbids to discover clues.
+- `discoverClues(amount, location)` takes as many clues as the location has, at any location (by default the window's location, else the investigator's own), and none for an investigator a card forbids to discover clues.
 
 Factories write effects the way the card reads:
 
