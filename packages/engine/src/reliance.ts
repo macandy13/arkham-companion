@@ -4,7 +4,7 @@ import type { NoticeKind } from './change_notices';
  * How much the players rely on the app's helpers, chosen per campaign or standalone game (M1C.2d):
  * `display` shows them every change the app makes, `assist` the ones that matter at the table,
  * `auto` only what they must do themselves. For now it only filters the change notices; card
- * automation (M7) is to read the same level, so it is the engine's concept, not the screen's.
+ * effect automation (M1V.5, #310) is to read the same level, so it is the engine's concept, not the screen's.
  */
 export type Reliance = 'display' | 'assist' | 'auto';
 
