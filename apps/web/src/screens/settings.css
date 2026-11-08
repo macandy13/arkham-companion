@@ -108,8 +108,9 @@
 }
 
 /*
- * Picks with a picture (the table skins, the token sets): each a small picture named under it, the
- * chosen one framed in the accent's ink, the radios themselves hidden (base.css).
+ * Picks with a picture (a table skin's playmat drawn before its name, a token set's row of tokens):
+ * each a small picture named under it, the chosen one framed in the accent's ink, the radios
+ * themselves hidden (base.css).
  */
 #settings fieldset[data-picks] {
   display: flex;
@@ -131,6 +132,7 @@
   cursor: pointer;
 }
 
+#settings fieldset[data-picks] > label:is([data-skin])::before,
 #settings fieldset[data-picks] > label > span {
   box-sizing: border-box;
   width: 100%;
@@ -139,10 +141,12 @@
   box-shadow: var(--button-lift);
 }
 
+#settings fieldset[data-picks] > label:has(:checked):is([data-skin])::before,
 #settings fieldset[data-picks] > label:has(:checked) > span {
   border-color: var(--color-accent);
 }
 
+#settings fieldset[data-picks] > label:has(:focus-visible):is([data-skin])::before,
 #settings fieldset[data-picks] > label:has(:focus-visible) > span {
   outline: var(--focus-ring-width) solid var(--color-accent);
 }
@@ -152,7 +156,8 @@
   width: var(--skin-pick-width);
 }
 
-#settings label[data-skin] > span {
+#settings label[data-skin]::before {
+  content: '';
   aspect-ratio: var(--skin-pick-ratio);
   background: var(--skin-playmat) center / cover no-repeat;
 }

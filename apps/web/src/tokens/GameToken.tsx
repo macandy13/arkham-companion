@@ -10,7 +10,8 @@ export type GameTokenKind = (typeof GAME_TOKEN_KINDS)[number];
  * token set (`TokenSet`, `game_tokens.css`), the nearest `data-token-set` above it, the root's by
  * default. A `count` stands in a small disc at its lower edge rather than as a stack of tokens.
  * Without a `label` it is decoration (a dragged token, a preview) and hidden from assistive
- * technology. Other attributes (drag handlers, `data-*` hooks, a `ref`) pass through to its element.
+ * technology. It is its own size container (`game_tokens.css`), so it has no size of its own: the
+ * stylesheet where it is used sets its width. Other attributes (drag handlers, `data-*` hooks, a `ref`) pass through to its element.
  */
 export function GameToken({
   kind,

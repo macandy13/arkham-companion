@@ -100,7 +100,6 @@ export function SettingsScreen({ packs = [] }: SettingsScreenProps) {
                   checked={settings.tableSkin === tableSkin}
                   onChange={() => update({ tableSkin })}
                 />
-                <span />
                 {t(`settings.tableSkins.${tableSkin}`)}
               </label>
             ))}
