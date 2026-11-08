@@ -46,16 +46,20 @@ export interface Glide {
   offset: Point;
 }
 
-/** A piece the players dropped on the map, and where, which then glides from there. */
+/**
+ * A piece the players dropped on the map, where, and on which location's tile, which then glides
+ * from there if the move took it to that location.
+ */
 export interface Drop {
   piece: MapPiece;
   at: Point;
+  to: InstanceId;
 }
 
 /**
  * The pieces that went to another location between `before` and `after` (M6.5b), each gliding from
- * where it stood: from where it was `dropped`, if the players dragged it there, else from its old
- * place. A piece that only shifted on its own tile (another piece came or left) or that is new on
+ * where it stood: from where it was `dropped`, if the players dragged it to that location, else
+ * from its old place (a drop the game refused never reaches the piece's next move elsewhere). A piece that only shifted on its own tile (another piece came or left) or that is new on
  * the map does not glide.
  */
 export function glides(
@@ -66,7 +70,10 @@ export function glides(
   return after.flatMap(({ piece, location, centre }) => {
     const was = before.find((place) => samePiece(place.piece, piece));
     if (!was || was.location === location) return [];
-    const from = dropped && samePiece(dropped.piece, piece) ? dropped.at : was.centre;
+    const from =
+      dropped && samePiece(dropped.piece, piece) && dropped.to === location
+        ? dropped.at
+        : was.centre;
     return [{ piece, offset: { x: from.x - centre.x, y: from.y - centre.y } }];
   });
 }
@@ -103,7 +110,7 @@ function elementsOf(drawing: SVGSVGElement, piece: MapPiece): Element[] {
  * shown, and a map shown again, move nothing. Motion only, so reduced motion has none; the glide's
  * time is the stylesheet's `--duration-glide`. Returns how to tell it that the players dropped a
  * piece, so that piece glides from where it was dropped into its place; the drop counts for the
- * next board only.
+ * next board only, so one the game refused (no new board) goes with the next change.
  */
 export function useGlides(
   drawing: RefObject<SVGSVGElement | null>,

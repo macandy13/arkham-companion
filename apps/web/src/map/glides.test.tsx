@@ -15,7 +15,13 @@ import { initI18n } from '../i18n';
 import { actionsOn } from '../state/gameActions.test_support';
 import { glides, piecePlaces, type PiecePlace } from './glides';
 import { MapBoard } from './MapBoard';
-import { tileCells } from './mapLayout';
+import { piecesOnTile, tileCells, tileOrigin, type Point } from './mapLayout';
+
+/** `offset` from the tile's top left corner, in the drawing's coordinates. */
+const at = (origin: Point, offset: Point): Point => ({
+  x: origin.x + offset.x,
+  y: origin.y + offset.y,
+});
 
 const study = instanceId('study');
 const hallway = instanceId('hallway');
@@ -63,11 +69,20 @@ describe('glides', () => {
     expect(glides(before, after).map(({ offset }) => offset)).toEqual(offsets);
   });
 
-  it('lets a piece the players dropped glide from where they dropped it', () => {
-    const dropped = { piece: { investigator: alder }, at: { x: 100, y: 60 } };
-
+  it.each([
+    {
+      what: 'from where they dropped it on the Hallway',
+      dropped: { piece: { investigator: alder }, at: { x: 100, y: 60 }, to: hallway },
+      offset: { x: -10, y: -30 },
+    },
+    {
+      what: 'from the Study when they had dropped it on another tile, a move the game refused',
+      dropped: { piece: { investigator: alder }, at: { x: 100, y: 260 }, to: instanceId('cellar') },
+      offset: { x: -100, y: 0 },
+    },
+  ])('lets a pawn the players dropped glide $what', ({ dropped, offset }) => {
     expect(glides([alderIn(study, 10, 90)], [alderIn(hallway, 110, 90)], dropped)).toEqual([
-      { piece: { investigator: alder }, offset: { x: -10, y: -30 } },
+      { piece: { investigator: alder }, offset },
     ]);
   });
 });
@@ -86,9 +101,11 @@ describe('piecePlaces', () => {
 
     const places = piecePlaces(map!, tileCells(map!), board);
 
-    expect(places.map(({ piece, location }) => ({ piece, location }))).toEqual([
-      { piece: { investigator: alder }, location: study },
-      { piece: { enemy: ghoul }, location: study },
+    const onStudy = piecesOnTile(board.investigatorsAt(study), map!.enemies[study] ?? []).pieces;
+    const origin = tileOrigin({ column: 0, row: 0 });
+    expect(places).toEqual([
+      { piece: { investigator: alder }, location: study, centre: at(origin, onStudy[0]!.centre) },
+      { piece: { enemy: ghoul }, location: study, centre: at(origin, onStudy[1]!.centre) },
     ]);
   });
 });

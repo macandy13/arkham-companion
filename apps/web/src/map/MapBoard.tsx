@@ -254,6 +254,7 @@ function MapDrawing({
         piece:
           'enemy' in piece ? { enemy: piece.enemy.id } : { investigator: piece.investigator.id },
         at: point,
+        to,
       });
       void ('enemy' in piece ? actions.moveEnemy(piece.enemy.id, to) : actions.moveTo(to));
     },
