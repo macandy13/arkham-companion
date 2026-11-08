@@ -214,6 +214,7 @@ button[data-icon][aria-expanded] {
  */
 aside[data-toast] {
   --color-text: var(--table-text);
+  --color-text-muted: var(--table-text-muted);
   --color-border: var(--table-border);
   --color-accent: var(--table-accent);
 
