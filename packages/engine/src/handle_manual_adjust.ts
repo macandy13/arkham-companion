@@ -1,15 +1,16 @@
 import { assertNever, withoutKey } from '@arkham/util';
 import type { EngineContext } from './cards';
 import type { Adjustment, ManualAdjust, MoveCard } from './commands';
-import { agendaThresholdDecision } from './doom';
+import { agendaThresholdDecision, isInPlay } from './doom';
 import type { ActionsAdjusted, CardMoved, Event, SkillBoostChanged, TokensChanged } from './events';
 import type { InstanceId } from './ids';
 import { activeInvestigator } from './investigators';
-import { requireCard } from './lookup';
-import { cardMoved } from './placement';
+import { cardsInZone, requireCard } from './lookup';
+import { cardMoved, clearTokensEvents, discardEncounterCard } from './placement';
 import { apply } from './reducer';
 import { CommandRejected } from './rejection';
-import type { GameState } from './state';
+import type { CardInstance, GameState } from './state';
+import { attachedTo, type Zone } from './zone';
 import { actionsAdjusted } from './turns';
 
 /**
@@ -22,9 +23,29 @@ function assertNotCurrentStage(state: GameState, cardId: InstanceId): void {
   if (deck) throw new CommandRejected({ code: 'currentStageCard', cardId, deck });
 }
 
-/** `MoveCard`: the same move a `ManualAdjust` makes, as a game event. */
-export function handleMoveCard(state: GameState, cmd: MoveCard): CardMoved {
-  return cardMoved(state, requireCard(state.cards, cmd.cardId), cmd.to, cmd.index);
+/**
+ * `MoveCard`: the same move a `ManualAdjust` makes, as a game event. A card it takes from play to
+ * the set-aside area or out of the game leaves its tokens and attachments behind first and is
+ * readied (Rules Reference, "Leaves Play"; "Escape the Dorms" removes Your Friend's Room with its Fire! and sets
+ * the Servant of Flame aside healed); a correction moves the card alone.
+ */
+export function handleMoveCard(state: GameState, cmd: MoveCard): Event[] {
+  const card = requireCard(state.cards, cmd.cardId);
+  const moved = cardMoved(state, card, cmd.to, cmd.index);
+  if (!leavesPlay(state, card, cmd.to)) return [moved];
+  const attachments = cardsInZone(state, attachedTo(card.id)).flatMap((attachedId) =>
+    discardEncounterCard(state, attachedId),
+  );
+  // Cards enter play ready (RR "Ready"), so an evaded enemy set aside comes back able to engage.
+  const readied: Event[] = card.exhausted
+    ? [{ type: 'ExhaustChanged', cardId: card.id, exhausted: false }]
+    : [];
+  return [...attachments, ...clearTokensEvents(card), ...readied, moved];
+}
+
+/** Whether moving `card` to `to` takes it from play to the set-aside area or out of the game. */
+function leavesPlay(state: GameState, card: CardInstance, to: Zone): boolean {
+  return (to.kind === 'setAside' || to.kind === 'outOfGame') && isInPlay(state, card);
 }
 
 /**

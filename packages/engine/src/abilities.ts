@@ -243,11 +243,13 @@ export type RelativeCard =
    */
   | ({ ref: 'eachEnemy'; engagedWith?: RelativeInvestigator } & EnemyFilter)
   /**
-   * Each set-aside enemy with `trait` ("spawn each set-aside [[Cultist]] enemy"):
-   * the command repeats once per enemy, in card order, and none when no such
-   * enemy is set aside.
+   * Each set-aside enemy with `trait` ("spawn each set-aside [[Cultist]] enemy"), or each
+   * set-aside copy of `code` ("place each other set-aside copy of Fire! in the encounter discard
+   * pile"): the command repeats once per card, in card order, and none when no such card is set
+   * aside.
    */
   | { ref: 'eachSetAside'; trait: Trait }
+  | { ref: 'eachSetAside'; code: CardCode }
   /**
    * The enemy with `trait` (any enemy without one) nearest to the location of
    * the investigator the window names ("the nearest [[Cultist]] enemy",
@@ -1010,7 +1012,9 @@ function eachId(
     }
     case 'eachSetAside':
       return cardsInZone(state, { kind: 'setAside' }).filter((id) => {
-        const stats = cardStats(ctx.cards, requireCard(state.cards, id).code);
+        const code = requireCard(state.cards, id).code;
+        if ('code' in each) return code === each.code;
+        const stats = cardStats(ctx.cards, code);
         return stats.typeCode === 'enemy' && stats.traits.includes(each.trait);
       });
     default:
@@ -1737,6 +1741,11 @@ export function placeCluesOnSelfUpTo(upTo: TokenAmount): AbilityEffect {
   return { type: 'PlaceTokens', cardId: { ref: 'self' }, token: 'clue', upTo };
 }
 
+/** "Place 3 [per_investigator] clues on Miskatonic Quad": clues from the token pool on `card`. */
+export function placeCluesOn(card: RelativeCard, amount: TokenAmount): AbilityEffect {
+  return { type: 'PlaceTokens', cardId: card, token: 'clue', amount };
+}
+
 /** Heals up to `amount` damage from the enemy that has the ability ("heal 2 damage from it"). */
 export function healSelf(amount: number): AbilityEffect {
   return { type: 'HealEnemy', enemyId: { ref: 'self' }, amount };
@@ -1792,6 +1801,19 @@ export function moveEachInvestigatorTo(location: RelativeCard): AbilityEffect {
 /** "Discard each enemy in the Study", engaged ones included (`DiscardCard` each). */
 export function discardEachEnemyAt(location: RelativeCard): AbilityEffect {
   return { type: 'DiscardCard', cardId: { ref: 'eachEnemyAt', location } };
+}
+
+/** "Discard each enemy in play", engaged ones included (`DiscardCard` each). */
+export function discardEachEnemy(): AbilityEffect {
+  return { type: 'DiscardCard', cardId: eachEnemy() };
+}
+
+/**
+ * "Set the Servant of Flame aside, out of play": it leaves play without its tokens and
+ * attachments (`MoveCard`), so it comes back healed.
+ */
+export function setAsideCard(card: RelativeCard): AbilityEffect {
+  return { type: 'MoveCard', cardId: card, to: { kind: 'setAside' } };
 }
 
 /** "Remove the Study from the game". */
@@ -2009,6 +2031,23 @@ export function putLocationIntoPlay(
  */
 export function spawnEachSetAsideAt(trait: Trait, location: RelativeCard): AbilityEffect {
   return { type: 'SpawnEnemy', enemyId: { ref: 'eachSetAside', trait }, at: location };
+}
+
+/**
+ * "Attach 1 set-aside copy of Fire! to Your Friend's Room": one set-aside copy of each of `codes`
+ * (a code listed twice takes two) moves to `to`, written
+ * `fromSetAside([codes.fire], { kind: 'attachedTo', hostId: onlyCopy(codes.yourFriendsRoom) })`.
+ */
+export function fromSetAside(codes: readonly CardCode[], to: Templated<Zone>): AbilityEffect {
+  return { type: 'FromSetAside', codes, to };
+}
+
+/**
+ * "Place each other set-aside copy of Fire! in the encounter discard pile": every copy of `code`
+ * still set aside moves to `to`, none when no copy is left.
+ */
+export function eachSetAsideCopyTo(code: CardCode, to: Templated<Zone>): AbilityEffect {
+  return { type: 'MoveCard', cardId: { ref: 'eachSetAside', code }, to };
 }
 
 /** "Put the set-aside Lita Chantler into play at the Parlor". */

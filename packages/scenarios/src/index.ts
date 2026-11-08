@@ -42,10 +42,15 @@ export { theDevourerBelow } from './the_devourer_below/scenario';
 export { theDevourerBelowResolutions } from './the_devourer_below/resolutions';
 export { daisyWalker, rolandBanks, wendyAdams, zealotInvestigatorCards } from './investigators';
 export {
+  CAMPUS,
+  CAMPUS_CELLS,
   COSMIC_EVILS_DECISION,
   NOXIOUS_SMOKE_DECISION,
+  SEARCHING_FOR_ARMITAGE_DECISION,
   SPREADING_FLAMES_CODES,
   SPREADING_FLAMES_SETS,
   spreadingFlamesCardDefs,
   spreadingFlamesCards,
+  WHERE_THERES_SMOKE_DECISION,
 } from './spreading_flames/cards';
+export { spreadingFlames } from './spreading_flames/scenario';

@@ -192,7 +192,7 @@ const COMMAND_SPECS: CommandSpecs = {
     allowedWhilePending: true,
     allowedAfterEnd: true,
   },
-  MoveCard: { handle: (_ctx, state, command) => [handleMoveCard(state, command)] },
+  MoveCard: { handle: (_ctx, state, command) => handleMoveCard(state, command) },
   DiscardCard: { handle: (_ctx, state, command) => handleDiscardCard(state, command) },
   AddMap: { handle: handleAddMap },
   PutLocationIntoPlay: { handle: handlePutLocationIntoPlay },

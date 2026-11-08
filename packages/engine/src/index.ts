@@ -31,7 +31,7 @@ export {
   sameEdge,
   shortestPaths,
 } from './board';
-export { cardsNamed, zoneOf } from './lookup';
+export { cardsNamed, currentCard, zoneOf } from './lookup';
 export {
   byAny,
   byCode,
@@ -144,6 +144,7 @@ export {
   attachToLocation,
   atEndOfTurn,
   defeatEachInvestigator,
+  discardEachEnemy,
   discardEachEnemyAt,
   eachEnemy,
   moveEnemyTowards,
@@ -160,6 +161,7 @@ export {
   removeChaosToken,
   placeDoomOn,
   placeDoomOnSelf,
+  placeCluesOn,
   placeCluesOnSelf,
   placeCluesOnSelfUpTo,
   nearestEnemy,
@@ -181,6 +183,9 @@ export {
   putMapIntoPlay,
   putLocationIntoPlay,
   putSetAsideIntoPlay,
+  setAsideCard,
+  fromSetAside,
+  eachSetAsideCopyTo,
   removeFromGame,
   addToVictoryDisplay,
   revealLocation,
