@@ -126,6 +126,14 @@ export const appTexts = {
     turnStarted: "{{investigator}}'s turn begins",
     turnEnded: "{{investigator}}'s turn ends",
   },
+  chaosBag: {
+    title: 'Chaos bag',
+    contents: 'Tokens in the bag',
+    sealOn: 'Seal {{token}} on {{investigator}}',
+    sealed: 'Sealed',
+    sealedOn: 'on {{investigator}}',
+    release: 'Release',
+  },
   header: {
     round: 'Round {{round}}',
     phases: 'Phases',

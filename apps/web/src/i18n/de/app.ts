@@ -127,6 +127,14 @@ export const appTexts = {
     turnStarted: '{{investigator}} ist am Zug',
     turnEnded: 'Der Zug von {{investigator}} endet',
   },
+  chaosBag: {
+    title: 'Chaosbeutel',
+    contents: 'Marker im Beutel',
+    sealOn: '{{token}} bei {{investigator}} versiegeln',
+    sealed: 'Versiegelt',
+    sealedOn: 'bei {{investigator}}',
+    release: 'Freigeben',
+  },
   header: {
     round: 'Runde {{round}}',
     phases: 'Phasen',

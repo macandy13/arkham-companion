@@ -22,6 +22,7 @@ import type { AppState, OpenGame } from '../state/appStore';
 import type { GameActions } from '../state/gameActions';
 import { ActionGroup, CardActions, cardActionsOn } from './ActionRow';
 import { CardDialog } from './CardDialog';
+import { ChaosBag } from './ChaosBag';
 import { BookFace } from './BookFace';
 import { ScenarioFace } from './ScenarioFace';
 import { useCluePayment } from './CluePaymentDialog';
@@ -95,7 +96,13 @@ export function GameHeader({
         onOpen={onOpenCard}
       />
       <HeaderSlot label={t('header.scenario')} card="scenario" onOpen={onOpenCard}>
-        <ScenarioStatus open={open} board={board} printed={printedReference} opens={!onOpenCard} />
+        <ScenarioStatus
+          open={open}
+          board={board}
+          actions={piles.actions}
+          printed={printedReference}
+          opens={!onOpenCard}
+        />
         <HeaderPile pile="setAside" {...piles} />
       </HeaderSlot>
       <HeaderSlot label={t('header.victory')}>
@@ -137,11 +144,13 @@ export function printedReferenceOf(
 function ScenarioStatus({
   open,
   board,
+  actions,
   printed,
   opens,
 }: {
   open: OpenGame;
   board: BoardView;
+  actions: GameActions;
   printed: PrintedReference | undefined;
   opens: boolean;
 }) {
@@ -169,6 +178,8 @@ function ScenarioStatus({
       {zoomed && (
         <ScenarioDetails
           board={board}
+          actions={actions}
+          busy={open.busy}
           name={name}
           printed={printed}
           onClose={() => setZoomed(false)}
@@ -185,17 +196,22 @@ function ScenarioStatus({
  * - "Scenario" and the side the game's difficulty plays with as the kicker, its name as the title;
  * - on the page the cards set aside and the victory points so far (`BoardView.victoryPoints`);
  * - one row per symbol token at the page's print size, the token beside its printed text, since
- *   on the card they stay too small to read on a tablet.
+ *   on the card they stay too small to read on a tablet;
+ * - the chaos bag, where the players seal and release tokens (`ChaosBag`).
  * The card is no instance in play (`BoardView.reference`), so the shell shows it as a `ShownCard`
  * built from its name and picture. Escape and its × close it.
  */
 function ScenarioDetails({
   board,
+  actions,
+  busy,
   name,
   printed,
   onClose,
 }: {
   board: BoardView;
+  actions: GameActions;
+  busy: boolean;
   name: string;
   printed: PrintedReference | undefined;
   onClose: () => void;
@@ -239,6 +255,7 @@ function ScenarioDetails({
         </div>
       </dl>
       {reference && <ReferenceRows reference={reference} printed={printed} />}
+      <ChaosBag board={board} actions={actions} busy={busy} />
     </CardDialog>
   );
 }

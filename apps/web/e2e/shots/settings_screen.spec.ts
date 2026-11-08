@@ -25,7 +25,7 @@ test('the collection, the Core Set ticked', async ({ page }) => {
   await expect(page.getByRole('group', { name: 'Night of the Zealot' })).toContainText('Core Set');
 });
 
-test('the app bar’s menu open over the settings', { tag: '@shot' }, async ({ page }) => {
+test('the app bar’s menu open over the settings', async ({ page }) => {
   await page.goto('/#/settings');
 
   await page.getByRole('button', { name: 'Menu' }).click();
