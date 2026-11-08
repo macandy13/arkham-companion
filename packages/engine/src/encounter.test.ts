@@ -2,12 +2,14 @@ import { describe, expect, it } from 'vitest';
 import {
   attachedTo,
   attachToLocation,
+  blankAct,
   blankAsset,
   blankEnemy,
   blankLocation,
   blankTreachery,
   checkInvariants,
   CommandRejected,
+  drawBeneathYourLocation,
   encounterDeck,
   encounterDiscard,
   engagedWith,
@@ -600,6 +602,33 @@ describe('DrawBeneath', () => {
     const after = stateAfter(context, state, drawBeneath);
 
     expect(after.cards[suspect]?.zone).toEqual({ kind: 'atLocation', locationId: hall });
+  });
+
+  it("draws the suspect through the act's action", () => {
+    const act = instanceId('act');
+    const { context, state } = aliceInHall
+      .withAct(act, blankAct('act', { actions: [{ effects: [drawBeneathYourLocation()] }] }))
+      .withCard(suspect, foeCard, { kind: 'beneath', hostId: hall }, { faceUp: false })
+      .withTurnOf(alice)
+      .start();
+
+    const after = stateAfter(context, state, {
+      type: 'UseCardAction',
+      investigatorId: alice,
+      cardId: act,
+      action: 0,
+    });
+
+    expect(after.cards[suspect]?.zone).toEqual(engagedWith(alice));
+  });
+
+  it('rejects the draw for an investigator without a location', () => {
+    const { context, state } = aliceNowhere.start();
+
+    expect(rejectionFrom(context, state, drawBeneath)).toEqual({
+      code: 'investigatorHasNoLocation',
+      investigatorId: alice,
+    });
   });
 
   it('rejects the draw with nothing beneath her location', () => {
