@@ -2,6 +2,43 @@
 
 The sections dated up to 2026-10-22 were released as 1.0.0 to 1.8.0 by mistake: Release Please starts at 1.0.0 by default. Versioning restarted at 0.1.0 (see "Versions" in docs/product.md).
 
+## [0.1.35](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v0.1.34...arkham-companion-v0.1.35) (2026-11-08)
+
+
+### Features
+
+* **engine:** round-end clue objective without a location (MC2.7b) ([7825120](https://github.com/macandy13/arkham-companion/commit/7825120960972220832ecd1a280e4f5e69bccf36))
+* **engine:** round-end clue objective without a location (MC2.7b) ([930c7f3](https://github.com/macandy13/arkham-companion/commit/930c7f3131b99e8a9d344fcb4cf2cde8ebe86894))
+* **scenarios:** add Spreading Flames cards (MC2.7a) ([ff46cb7](https://github.com/macandy13/arkham-companion/commit/ff46cb7aa96d16bdda191306d0d67382c492935e))
+* **web:** ask the margin of failure for per-point tests no draw worked out (M6.1e) ([8323ff9](https://github.com/macandy13/arkham-companion/commit/8323ff96f9162dda13804c00abc96df06cc6a80f))
+* **web:** ask the margin of failure for per-point tests no draw worked out (M6.1e) ([b5e2a7a](https://github.com/macandy13/arkham-companion/commit/b5e2a7ad013985c43163ce43bba73c11d45097e5)), closes [#1066](https://github.com/macandy13/arkham-companion/issues/1066)
+* **web:** draw heart, star, spade and clover connection symbols (MC2.11) ([72d8e03](https://github.com/macandy13/arkham-companion/commit/72d8e031e0b5dc392a6de5f662d18085f5a61185))
+* **web:** draw heart, star, spade and clover connection symbols (MC2.11) ([abcc089](https://github.com/macandy13/arkham-companion/commit/abcc0894f7f54191aca1917dcb0fb4ec34161e6f))
+* **web:** Parchment as a fourth table instead of by night or by day ([3aa9769](https://github.com/macandy13/arkham-companion/commit/3aa97690cfcc34650c8b783b33a8008e3b5c16fe))
+* **web:** Parchment as a fourth table instead of by night or by day ([31572cd](https://github.com/macandy13/arkham-companion/commit/31572cd49d98f10cacf69925c6e00b67a7cf8143))
+* **web:** setting to draw chaos tokens from the group's own bag (M6.1c) ([96026c4](https://github.com/macandy13/arkham-companion/commit/96026c428932a923fdc2cdc40f38b2541b10cf43))
+* **web:** setting to draw chaos tokens from the group's own bag (M6.1c) ([9f957f0](https://github.com/macandy13/arkham-companion/commit/9f957f0b83d831eb319d3e0eec5b1b45530c0cbc))
+* **web:** token faces, GameToken and the token set setting (MD.8a) ([634c0a2](https://github.com/macandy13/arkham-companion/commit/634c0a2dd4e1d921cd195613568320c02229a250))
+* **web:** token faces, GameToken and the token set setting (MD.8a) ([ee934ba](https://github.com/macandy13/arkham-companion/commit/ee934ba66853d97e9e4e1c47e8fb2da29a7e4617))
+
+
+### Bug fixes
+
+* **web:** read an old light theme beside a saved skin, review nits ([b467392](https://github.com/macandy13/arkham-companion/commit/b4673925ec7d2d528e6b4e2e177ade740decea58))
+* **web:** review findings for the token faces ([22b6b97](https://github.com/macandy13/arkham-companion/commit/22b6b970b3e55620597ff916e4ba9f54af688003))
+
+
+### Refactoring
+
+* **engine:** name the round-end clue condition groupCluesHeld ([e0d6f92](https://github.com/macandy13/arkham-companion/commit/e0d6f924178656bcfb6a2fd5ee08941d0f2e4431))
+* **web:** name the margin row's two taps, tighten its shot check ([227c2ef](https://github.com/macandy13/arkham-companion/commit/227c2ef80b9fae7b470041f9424e33c69d2f579b))
+
+
+### Documentation
+
+* clarify where the Core Set (2026) symbols come from ([761048c](https://github.com/macandy13/arkham-companion/commit/761048c73e59c9e1dacf5a8a7fb6009919d21f9d))
+* **web:** settings note fits both skill test dialogs ([1c45e60](https://github.com/macandy13/arkham-companion/commit/1c45e60d23ca28b518877106ad4006a15314cfcb))
+
 ## [0.1.34](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v0.1.33...arkham-companion-v0.1.34) (2026-11-08)
 
 
