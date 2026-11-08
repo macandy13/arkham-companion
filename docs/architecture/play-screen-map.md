@@ -1,6 +1,6 @@
 # Play screen: map and locations
 
-The [map](../../apps/web/src/map/MapBoard.tsx) is an SVG of location tiles at their layout cells with pan, zoom and drag-to-play pieces (its tabs and small zoom icons float over its top corners, and its name is for screen readers only).
+The [map](../../apps/web/src/map/MapBoard.tsx) is an SVG of location tiles at their layout cells with pan, zoom and drag-to-play pieces (its tabs and small zoom icons float over its top corners, and its name is for screen readers only). A location without a book cell gets one from [`tileCells`](../../apps/web/src/map/mapLayout.ts): the first free card step beside a placed location it connects to (right, below, left, above), else a spare row below the map, so locations put into play without a cell still sit by their neighbours (M6.3).
 The map tabs follow the WAI-ARIA tabs pattern: one Tab stop, the arrow keys, Home and End choose the map.
 
 A tap on a tile (or its "i" button, for the keyboard) opens the location's [details](../../apps/web/src/map/LocationDetails.tsx) on the card shell (`DetailsDialog`; on a phone in the map row instead, the [location mode](play-screen.md#location-mode)):
