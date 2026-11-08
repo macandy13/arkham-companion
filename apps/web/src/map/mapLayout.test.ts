@@ -32,8 +32,15 @@ const study = instanceId('study');
 const hallway = instanceId('hallway');
 const attic = instanceId('attic');
 
-/** A map named `house` with the given locations, unrevealed and without clues, in this order. */
-function houseWith(ids: InstanceId[], cells: MapView['cells']): MapView {
+/**
+ * A map named `house` with the given locations, unrevealed and without clues, in this order, and
+ * the given two-way connections between them.
+ */
+function houseWith(
+  ids: InstanceId[],
+  cells: MapView['cells'],
+  connected: [InstanceId, InstanceId][] = [],
+): MapView {
   return {
     id: mapId('house'),
     name: 'House',
@@ -46,7 +53,7 @@ function houseWith(ids: InstanceId[], cells: MapView['cells']): MapView {
       clues: 0,
     })),
     cells,
-    connections: [],
+    connections: connected.map(([from, to]) => ({ from, to, oneWay: false })),
     enemies: {},
   };
 }
@@ -73,6 +80,77 @@ describe('tileCells', () => {
       [study]: { column: 0, row: 5 },
       [hallway]: { column: 4, row: 2 },
       [attic]: { column: 3, row: 5 },
+    });
+  });
+
+  it('puts a location without a cell a card step right of a location it connects to', () => {
+    const house = houseWith([study, hallway], { [study]: { column: 0, row: 0 } }, [
+      [study, hallway],
+    ]);
+
+    expect(tileCells(house)).toEqual({
+      [study]: { column: 0, row: 0 },
+      [hallway]: { column: 3, row: 0 },
+    });
+  });
+
+  it('takes the next free side, below, when a tile is right of the neighbour already', () => {
+    const house = houseWith(
+      [study, hallway, attic],
+      { [study]: { column: 0, row: 0 }, [hallway]: { column: 3, row: 0 } },
+      [[study, attic]],
+    );
+
+    expect(tileCells(house)).toEqual({
+      [study]: { column: 0, row: 0 },
+      [hallway]: { column: 3, row: 0 },
+      [attic]: { column: 0, row: 3 },
+    });
+  });
+
+  it('puts it in the spare row when every side of its neighbour is taken or off the map', () => {
+    const cellar = instanceId('cellar');
+    const house = houseWith(
+      [study, hallway, attic, cellar],
+      {
+        [study]: { column: 0, row: 0 },
+        [hallway]: { column: 3, row: 0 },
+        [attic]: { column: 0, row: 3 },
+      },
+      [[study, cellar]],
+    );
+
+    expect(tileCells(house)[cellar]).toEqual({ column: 0, row: 6 });
+  });
+
+  it('skips a spare-row spot a tile beside its neighbour took already', () => {
+    const cellar = instanceId('cellar');
+    const house = houseWith(
+      [study, hallway, attic, cellar],
+      { [study]: { column: 0, row: 0 }, [attic]: { column: 3, row: 0 } },
+      [[study, hallway]],
+    );
+
+    // The Attic is right of the Study, so the Hallway goes below it, on the spare row's first
+    // spot; the Cellar, connected to nothing, takes the next one.
+    expect(tileCells(house)).toEqual({
+      [study]: { column: 0, row: 0 },
+      [hallway]: { column: 0, row: 3 },
+      [attic]: { column: 3, row: 0 },
+      [cellar]: { column: 3, row: 3 },
+    });
+  });
+
+  it('gathers connected locations around the first one when no location has a cell', () => {
+    const house = houseWith([study, hallway, attic], {}, [
+      [study, hallway],
+      [hallway, attic],
+    ]);
+
+    expect(tileCells(house)).toEqual({
+      [study]: { column: 0, row: 0 },
+      [hallway]: { column: 3, row: 0 },
+      [attic]: { column: 6, row: 0 },
     });
   });
 

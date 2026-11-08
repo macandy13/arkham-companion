@@ -1,5 +1,6 @@
 import {
   GRID_CELLS_PER_CARD,
+  type Edge,
   type GridCell,
   type InstanceId,
   type InvestigatorView,
@@ -162,20 +163,85 @@ export function attachmentOrigin(index: number): Point {
 }
 
 /**
- * Where each location of `map` is drawn: its book layout cell, or for a location without one a
- * place in a row one card step below the lowest laid-out tile, one card step apart in map
- * order, so a scenario without a layout still shows every location.
+ * Where each location of `map` is drawn: its book layout cell, or for a location without one the
+ * first free card step beside a location it connects to that already has a place (right, below,
+ * left, above), so a location put into play mid-game lands next to its neighbour. One with no
+ * placed neighbour starts a row one card step below the lowest tile, a card step apart in map
+ * order, and its own neighbours then gather around it, so a scenario without a layout still
+ * shows every location, connected ones side by side. The places are worked out again on every
+ * render, not kept: a book cell that later takes a spot moves the location that sat there.
  */
 export function tileCells(map: MapView): Record<InstanceId, GridCell> {
-  const laidOut = Object.values(map.cells);
+  const placed = new Map<InstanceId, GridCell>();
+  for (const { id } of map.locations) {
+    const cell = map.cells[id];
+    if (cell) placed.set(id, cell);
+  }
+  const laidOut = [...placed.values()];
   const spareRow =
     laidOut.length === 0 ? 0 : Math.max(...laidOut.map(({ row }) => row)) + GRID_CELLS_PER_CARD;
   let spare = 0;
-  return Object.fromEntries(
-    map.locations.map(({ id }) => [
-      id,
-      map.cells[id] ?? { column: GRID_CELLS_PER_CARD * spare++, row: spareRow },
-    ]),
+  const unplaced = map.locations.map(({ id }) => id).filter((id) => !placed.has(id));
+  while (unplaced.length > 0) {
+    let cell: GridCell | undefined;
+    const next = unplaced.findIndex(
+      (id) => (cell = besideNeighbour(map, placed, id)) !== undefined,
+    );
+    // No location left has a placed neighbour: the first in map order starts the spare row.
+    const [id] = unplaced.splice(next === -1 ? 0 : next, 1);
+    placed.set(id!, cell ?? spareCell());
+  }
+  return Object.fromEntries(map.locations.map(({ id }) => [id, placed.get(id)!]));
+
+  function spareCell(): GridCell {
+    let cell: GridCell;
+    do cell = { column: GRID_CELLS_PER_CARD * spare++, row: spareRow };
+    while (!isFree(placed, cell));
+    return cell;
+  }
+}
+
+/** The card steps beside a tile, in the order a neighbour is put there. */
+const SIDE_STEPS: readonly GridCell[] = [
+  { column: GRID_CELLS_PER_CARD, row: 0 },
+  { column: 0, row: GRID_CELLS_PER_CARD },
+  { column: -GRID_CELLS_PER_CARD, row: 0 },
+  { column: 0, row: -GRID_CELLS_PER_CARD },
+];
+
+/**
+ * The first free cell a card step beside a placed location `id` connects to, in connection order,
+ * or `undefined` when none of its neighbours has a place or every side is taken. Cells left of
+ * or above the drawing's origin are not used, since the drawing starts there.
+ */
+function besideNeighbour(
+  map: MapView,
+  placed: ReadonlyMap<InstanceId, GridCell>,
+  id: InstanceId,
+): GridCell | undefined {
+  for (const connection of map.connections) {
+    const other = otherEnd(connection, id);
+    const anchor = other && placed.get(other);
+    if (!anchor) continue;
+    for (const step of SIDE_STEPS) {
+      const cell = { column: anchor.column + step.column, row: anchor.row + step.row };
+      if (cell.column >= 0 && cell.row >= 0 && isFree(placed, cell)) return cell;
+    }
+  }
+  return undefined;
+}
+
+/** The location at the other end of `connection` from `id`, or `undefined` when `id` is at neither end. */
+function otherEnd({ from, to }: Edge, id: InstanceId): InstanceId | undefined {
+  return from === id ? to : to === id ? from : undefined;
+}
+
+/** Whether a tile in `cell` would overlap none of the tiles already `placed`. */
+function isFree(placed: ReadonlyMap<InstanceId, GridCell>, cell: GridCell): boolean {
+  return [...placed.values()].every(
+    ({ column, row }) =>
+      Math.abs(column - cell.column) >= GRID_CELLS_PER_CARD ||
+      Math.abs(row - cell.row) >= GRID_CELLS_PER_CARD,
   );
 }
 
@@ -353,8 +419,9 @@ export function neighboursOf(map: MapView, location: InstanceId): Neighbour[] {
   const cells = tileCells(map);
   const from = cells[location];
   if (!from) return [];
-  return map.connections.flatMap(({ from: start, to, oneWay }) => {
-    const id = start === location ? to : to === location ? start : undefined;
+  return map.connections.flatMap((connection) => {
+    const { from: start, oneWay } = connection;
+    const id = otherEnd(connection, location);
     const cell = id && cells[id];
     if (!id || !cell) return [];
     const neighbour: Neighbour = { id, side: sideOf(from, cell) };
