@@ -71,6 +71,24 @@ export function runsBy<T, K>(items: readonly T[], keyOf: (item: T) => K): { key:
 }
 
 /**
+ * `items` grouped by `keyOf`, each group with its key, in the order each key first appears; unlike
+ * `runsBy`, a key that comes back joins its group. Total: empty for an empty list.
+ */
+export function groupBy<T, K>(
+  items: readonly T[],
+  keyOf: (item: T) => K,
+): { key: K; items: T[] }[] {
+  const groups = new Map<K, T[]>();
+  for (const item of items) {
+    const key = keyOf(item);
+    const group = groups.get(key);
+    if (group) group.push(item);
+    else groups.set(key, [item]);
+  }
+  return [...groups].map(([key, grouped]) => ({ key, items: grouped }));
+}
+
+/**
  * The first index at which `first` and `second` differ by `equals`, a list that ends early
  * counting as a difference there; `undefined` when they are equal. Total: two empty lists are equal.
  */

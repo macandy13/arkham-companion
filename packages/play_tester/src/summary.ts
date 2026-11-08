@@ -54,7 +54,7 @@ export function formatSummary(summary: Summary): string {
 }
 
 /** `{ a: 2, b: 1 }` as `a 2, b 1`, most first; `none` when empty. */
-function byCountDescending(byKey: Partial<Record<string, number>>): string {
+export function byCountDescending(byKey: Partial<Record<string, number>>): string {
   const entries = Object.entries(byKey) as [string, number][];
   if (entries.length === 0) return 'none';
   return entries
