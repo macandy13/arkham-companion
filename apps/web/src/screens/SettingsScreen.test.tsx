@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import type { PackDef } from '@arkham/carddata';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import { afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { i18next, initI18n } from '../i18n';
@@ -130,5 +130,16 @@ describe('SettingsScreen', () => {
 
     expect(document.documentElement.dataset.enemyTokens).toBe('initials');
     expect(loadSettings().enemyTokens).toBe('initials');
+  });
+
+  it('lets the players draw the chaos tokens from their own bag, which the app draws by default', () => {
+    renderSettings();
+    const draw = screen.getByRole('group', { name: 'Who draws the tokens' });
+    expect(within(draw).getByRole('radio', { name: 'The app' })).toHaveProperty('checked', true);
+
+    fireEvent.click(within(draw).getByRole('radio', { name: 'Our own bag' }));
+
+    expect(document.documentElement.dataset.chaosDraw).toBe('table');
+    expect(loadSettings().chaosDraw).toBe('table');
   });
 });

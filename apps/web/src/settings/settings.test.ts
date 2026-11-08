@@ -24,6 +24,7 @@ describe('settings storage', () => {
       tokenSet: 'cardboard',
       cardTheme: 'pictures',
       enemyTokens: 'initials',
+      chaosDraw: 'table',
     } as const;
 
     saveSettings(settings);
@@ -60,6 +61,7 @@ describe('settings storage', () => {
         tokenSet: 'glass',
         cardTheme: 'scans',
         enemyTokens: 'portraits',
+        chaosDraw: 'nobody',
       }),
     );
 
