@@ -1,5 +1,5 @@
 import type { CardDb, CardInstance, Difficulty, InstanceId, ScenarioId } from '@arkham/engine';
-import { addCount, groupBy, sum, unique } from '@arkham/util';
+import { addCount, assertNever, groupBy, sum, unique } from '@arkham/util';
 import type { RunResult } from './play_run';
 import { scenarioContext } from './run';
 import { byCountDescending } from './summary';
@@ -56,13 +56,22 @@ export function gameStatistics(result: RunResult): GameStatistics {
 
 /** The resolution `result` reached, or how it ended without one. */
 function outcome({ end, log }: RunResult): string {
-  if (end === 'eliminated') return 'no resolution';
-  if (end === 'stepCap') return 'step cap';
-  if (end === 'finding') return 'finding';
-  const resolutions = log.flatMap(({ event }) =>
-    event.type === 'ScenarioEnded' && event.resolution ? [event.resolution] : [],
-  );
-  return resolutions.at(-1) ?? 'no resolution';
+  switch (end) {
+    case 'eliminated':
+      return 'no resolution';
+    case 'stepCap':
+      return 'step cap';
+    case 'finding':
+      return 'finding';
+    case 'resolution': {
+      const resolutions = log.flatMap(({ event }) =>
+        event.type === 'ScenarioEnded' && event.resolution ? [event.resolution] : [],
+      );
+      return resolutions.at(-1) ?? 'no resolution';
+    }
+    default:
+      return assertNever(end);
+  }
 }
 
 /** Every forced and action ability of the cards in `setUp`, once per card name. */
@@ -114,7 +123,10 @@ export function statisticsReport(games: readonly GameStatistics[]): string {
   ].join('\n');
 }
 
-/** A table row per encounter card of `games`, most copies in the deck first. */
+/**
+ * A table row per encounter card of `games`, most copies in the deck first; a card drawn without
+ * being in the set-up deck (one shuffled in later) comes last, with no share of the deck.
+ */
 function drawShares(games: readonly GameStatistics[]): string[] {
   const inDeck: Record<string, number> = {};
   const drawn: Record<string, number> = {};
@@ -124,6 +136,7 @@ function drawShares(games: readonly GameStatistics[]): string[] {
   }
   const deckTotal = sum(games.map(({ deck }) => deck.length));
   const drawTotal = sum(games.map(({ drawn }) => drawn.length));
+  for (const name of Object.keys(drawn)) inDeck[name] ??= 0;
   return Object.entries(inDeck)
     .sort(([a, x], [b, y]) => y - x || a.localeCompare(b))
     .map(([name, copies]) => {

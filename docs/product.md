@@ -158,7 +158,7 @@ Designs for parts that have a milestone but no code yet. The PR that builds one 
    - `PlayTable.resume` from the log at any step, then playing on, gives the same game as playing straight through.
    - The same steps through the web app's `GameSession` (on `IndexedDbStore` over fake-indexeddb, as the web tests do) give the same events and undo groups as through `PlayTable`, and the log survives the export and import round trip (`serialiseGameExport`, `parseGameExport`). These live in `apps/web`, and a package must not depend on the app, so this check is a script in `apps/web` (`pnpm --filter @arkham/web playtest`) that the nightly run calls on a few of the night's runs and the `findings/` records. It is not part of `pnpm test`.
 6. **Liveness:** there is always a next step (an answer or "Next"), every offered option of a pending decision is accepted, "Next" never leaves the board unchanged, and the game ends before the round cap.
-7. **Statistics (reported, never a failure):** wins per scenario and difficulty, rounds per game, how often each encounter card is drawn compared with its share of the deck (a shuffle bias shows here), and which card abilities and decisions never fired (untested paths).
+7. **Statistics (reported, never a failure):** wins per scenario and difficulty, rounds per game, how often each encounter card is drawn compared with its share of the deck (a shuffle bias shows here), and which card abilities never fired (untested paths; decisions are not counted, as the cards don't list the ones they can ask).
 
 **Recording and replay**
 

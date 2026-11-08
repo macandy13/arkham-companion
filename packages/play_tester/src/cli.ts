@@ -11,9 +11,9 @@
  *   pnpm playtest --bot goal             plays only runs of that bot (`random`, `goal`, `chaos`;
  *                                        all of them by default)
  *   pnpm playtest --nightly              also writes `summary.md` (the job summary, with the
- *                                        statistics) and
- *                                        `findings.json` (one `NightlyFinding` per signature, for
- *                                        the issues) to the output directory, findings or not
+ *                                        statistics) and `findings.json` (one `NightlyFinding` per
+ *                                        signature, for the issues) to the output directory,
+ *                                        findings or not
  *   pnpm playtest --replay <record>      replays a record's steps on today's engine and stops at
  *                                        its failing step
  *

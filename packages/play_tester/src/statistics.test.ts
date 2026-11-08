@@ -7,7 +7,10 @@ import { playStep } from './steps';
 
 describe("a game's statistics", () => {
   const roland = cardName('Roland Banks');
-  /** The Gathering for Roland, whose game seed 24 puts Icy Ghoul and then Crypt Chill on top. */
+  /**
+   * The Gathering for Roland, whose game seed 24 puts Icy Ghoul and then Crypt Chill on top of its
+   * 26-card encounter deck.
+   */
   const run: Run = {
     scenario: theGathering.id,
     difficulty: 'standard',
@@ -51,7 +54,10 @@ describe("a game's statistics", () => {
 });
 
 describe('the statistics report', () => {
-  /** Two standard games of The Gathering with a deck of 3 Ancient Evils and 1 Crypt Chill. */
+  /**
+   * Two standard games of The Gathering with a deck of 3 Ancient Evils and 1 Crypt Chill; the won
+   * one also draws a Ghoul Priest that wasn't in the deck at setup.
+   */
   const game = {
     scenario: theGathering.id,
     difficulty: 'standard',
@@ -69,7 +75,7 @@ describe('the statistics report', () => {
     ...game,
     outcome: 'R1',
     rounds: 9,
-    drawn: ['Crypt Chill', 'Ancient Evils'],
+    drawn: ['Crypt Chill', 'Ancient Evils', 'Ghoul Priest'],
     fired: ['Ancient Evils: revealed', 'Crypt Chill: revealed'],
   };
 
@@ -86,8 +92,9 @@ describe('the statistics report', () => {
         '',
         '| Card | Drawn | Share of draws | Share of deck |',
         '| --- | --- | --- | --- |',
-        '| Ancient Evils | 3 | 75.0 % | 75.0 % |',
-        '| Crypt Chill | 1 | 25.0 % | 25.0 % |',
+        '| Ancient Evils | 3 | 60.0 % | 75.0 % |',
+        '| Crypt Chill | 1 | 20.0 % | 25.0 % |',
+        '| Ghoul Priest | 1 | 20.0 % | 0.0 % |',
         '',
         'Abilities that never fired: Parlor: action 1',
       ].join('\n'),
