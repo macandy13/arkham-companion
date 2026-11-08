@@ -135,8 +135,8 @@ const jpg = 'jpg';
  *
  * - Past Curfew's and Lit Up's reverse sides (each investigator tests, MC2.13; Lit Up's Fire! "if
  *   they are still set aside")
- * - Escape the Dorms' objective (each undefeated investigator at Miskatonic Quad)
- * - Searching for Dr. Armitage's reverse side: Dr. Henry Armitage under any investigator's control
+ * - Escape the Dorms' objective (each undefeated investigator at Miskatonic Quad, MC2.14)
+ * - Searching for Dr. Armitage's reverse side: Dr. Henry Armitage under any investigator's control (MC2.14)
  *   and the lead's search for Fire!
  *
  * - the agendas' Parley (test intellect (2) to discard a Bystander at your location): it can be
