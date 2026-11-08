@@ -74,6 +74,12 @@ Commands on player cards (`DrawCards`, `SearchDeck`, `PlayCard`, `DiscardFromHan
 - The basic draw and play actions are these commands taken `asAction`, and the resource action is `GainResources` (which card effects use too) taken `asAction`, so all three provoke attacks of opportunity like the actions the engine carries out.
 - Supporting player cards later only changes those handlers.
 
+Commands the players also send themselves and that refuse when they have nothing to do (`AdjustActions`, `EndTurn`, `DiscoverClues`) carry the same `source` when a card asks for them, and then do as much as they can (Rules Reference, "Effects"), so one effect never fails the whole ability. The players' buttons send them without one and keep refusing, since the board offers a button by dry-running its command.
+
+- `loseActions(1)` takes no more actions than remain, `loseActions('all')` all of them (`delta: 'allRemaining'`, which the players may send too).
+- `endYourTurn()` does nothing outside the turn of the investigator the window names.
+- `discoverClues(amount, location)` takes as many clues as the location has, at any location (your own by default), and none for an investigator a card forbids to discover clues.
+
 Factories write effects the way the card reads:
 
 ```ts

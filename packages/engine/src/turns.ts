@@ -44,6 +44,7 @@ export function handleStartTurn(state: GameState, cmd: StartTurn): TurnStarted[]
  * area (Frozen in Fear's test).
  */
 export function handleEndTurn(state: GameState, cmd: EndTurn): TurnEnded[] {
+  if (cmd.source && state.meta.turn?.investigatorId !== cmd.investigatorId) return [];
   requirePhase(state, 'investigation');
   requireTurnOf(state, cmd.investigatorId);
   return [{ type: 'TurnEnded', investigatorId: cmd.investigatorId }];
@@ -77,6 +78,12 @@ export function requireTurnOf(state: GameState, investigatorId: InvestigatorId):
 
 /** `AdjustActions`: changes the investigator's remaining actions. */
 export function handleAdjustActions(state: GameState, cmd: AdjustActions): ActionsAdjusted[] {
+  if (cmd.source) return cardActionsAdjusted(state, cmd.investigatorId, cmd.delta);
+  if (cmd.delta === 'allRemaining') {
+    const remaining = remainingActions(state, cmd.investigatorId);
+    // Not `-remaining`: with none left that is -0, which a rejection would report.
+    return [actionsAdjusted(state, cmd.investigatorId, 0 - remaining)];
+  }
   if (cmd.for === undefined) return [actionsAdjusted(state, cmd.investigatorId, cmd.delta)];
   // A free action costs nothing but is still performed, so it is recorded with no change.
   if (cmd.delta === 0)
@@ -98,6 +105,24 @@ export function handleAdjustActions(state: GameState, cmd: AdjustActions): Actio
       actionsRemaining: activeInvestigator(state, cmd.investigatorId).actionsRemaining,
     });
   return [{ ...adjusted, for: cmd.for }];
+}
+
+/**
+ * The `ActionsAdjusted` of an `AdjustActions` a card asked for: a loss stops at zero remaining
+ * actions, so it is none at all once they are gone.
+ */
+function cardActionsAdjusted(
+  state: GameState,
+  investigatorId: InvestigatorId,
+  delta: AdjustActions['delta'],
+): ActionsAdjusted[] {
+  const remaining = remainingActions(state, investigatorId);
+  const actual = delta === 'allRemaining' ? -remaining : Math.max(delta, -remaining);
+  return actual === 0 ? [] : [actionsAdjusted(state, investigatorId, actual)];
+}
+
+function remainingActions(state: GameState, investigatorId: InvestigatorId): number {
+  return activeInvestigator(state, investigatorId).actionsRemaining;
 }
 
 /**
