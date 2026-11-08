@@ -49,16 +49,16 @@
 
 /*
  * The play screen's notices wear the playmat's frame, drawn small so the board keeps its room. The
- * investigator panels have their card instead (investigators.css).
+ * investigator panels have their card instead (investigators.css). A toast is a pill (base.css).
  */
-#notices > aside {
+#notices > aside:not([data-toast]) {
   border: var(--panel-frame-width-compact) solid;
   border-image: var(--panel-frame) var(--panel-frame-slice) / var(--panel-frame-width-compact)
     stretch;
 }
 
 /* By day the notices are parchment. */
-:root[data-theme='light'] #notices > aside {
+:root[data-theme='light'] #notices > aside:not([data-toast]) {
   background: var(--panel-paper);
 }
 
@@ -187,11 +187,15 @@
   display: none;
 }
 
-#notices > aside {
+#notices > aside:not([data-toast]) {
   display: flex;
   gap: var(--space-3);
   align-items: center;
   background: var(--color-background);
+}
+
+#notices > aside[data-toast] {
+  align-self: center;
 }
 
 /*
