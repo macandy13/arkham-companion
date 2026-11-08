@@ -726,29 +726,33 @@ test('the Tangled Thicket revealed with its double slash, the other Arkham Woods
 });
 
 test(
-  'the menu open, holding "Adjust board" and the game log on a phone',
+  'the status row marked offline once the network is gone',
   { tag: '@shot' },
   async ({ page }) => {
     await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
 
-    await page.getByRole('button', { name: 'Menu' }).click();
+    await page.context().setOffline(true);
 
-    await expect(page.getByRole('link', { name: 'Settings' })).toBeVisible();
+    await expect(page.getByRole('region', { name: 'Round 1' }).getByText('Offline')).toBeVisible();
   },
 );
 
-test(
-  'the menu after saving the pictures of the game for offline play',
-  { tag: '@shot' },
-  async ({ page }) => {
-    await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
-    await page.getByRole('button', { name: 'Menu' }).click();
+test('the menu open, holding "Adjust board" and the game log on a phone', async ({ page }) => {
+  await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
 
-    await page.getByRole('button', { name: 'Save pictures for offline play' }).click();
+  await page.getByRole('button', { name: 'Menu' }).click();
 
-    await expect(page.getByRole('button', { name: /^Pictures saved: \d+ of \d+$/ })).toBeVisible();
-  },
-);
+  await expect(page.getByRole('link', { name: 'Settings' })).toBeVisible();
+});
+
+test('the menu after saving the pictures of the game for offline play', async ({ page }) => {
+  await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
+  await page.getByRole('button', { name: 'Menu' }).click();
+
+  await page.getByRole('button', { name: 'Save pictures for offline play' }).click();
+
+  await expect(page.getByRole('button', { name: /^Pictures saved: \d+ of \d+$/ })).toBeVisible();
+});
 
 test('Daisy Walker swiped into view on a phone, Roland Banks beside her', async ({
   page,

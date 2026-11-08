@@ -1006,6 +1006,12 @@
     display: list-item;
   }
 
+  /* The offline mark keeps only its icon, so the round and the phase keep their room. */
+  #board > #status > p[data-offline] {
+    gap: 0;
+    font-size: 0;
+  }
+
   #board > #status > button,
   #board > #status > nav > button {
     min-width: var(--touch-target);

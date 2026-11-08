@@ -299,6 +299,7 @@ export const appTexts = {
     quick: 'One scenario, no campaign log',
     campaignLog: 'Campaign log',
   },
+  network: { offline: 'Offline' },
   nav: { label: 'Main' },
   offline: {
     save: 'Save pictures for offline play',
