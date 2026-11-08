@@ -2,6 +2,33 @@
 
 The sections dated up to 2026-10-22 were released as 1.0.0 to 1.8.0 by mistake: Release Please starts at 1.0.0 by default. Versioning restarted at 0.1.0 (see "Versions" in docs/product.md).
 
+## [0.1.36](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v0.1.35...arkham-companion-v0.1.36) (2026-11-08)
+
+
+### Features
+
+* **carddata:** card languages in one config, with an ArkhamDB host for each (M6.2a) ([fb7ae12](https://github.com/macandy13/arkham-companion/commit/fb7ae1203f6fe9d1e00ba7eb42454af7e6131ffa))
+* **play_tester:** statistics report in the nightly summary (M1V.4) ([4733c33](https://github.com/macandy13/arkham-companion/commit/4733c33de46d79748a42e5bfa679c33dd3f8429c))
+* **scenarios:** Spreading Flames setup and acts (MC2.7c) ([f1456d4](https://github.com/macandy13/arkham-companion/commit/f1456d4c6f5061cb5fc169c4666cd9742f363252))
+* **web:** draw the tokens on cards from the token set (MD.8b) ([29258bf](https://github.com/macandy13/arkham-companion/commit/29258bfa0bb46c464f6bfffda4b8b2aab6583df1))
+* **web:** place a location without a book cell beside a neighbour (M6.3) ([bede4bd](https://github.com/macandy13/arkham-companion/commit/bede4bdbee5f8b5cf7af8ba7ceca1cc2763c50c5))
+* **web:** place a location without a book cell beside a neighbour (M6.3) ([b21d553](https://github.com/macandy13/arkham-companion/commit/b21d553ee337fbaf90cbab71af22c005cbb33829))
+* **web:** show health and sanity left in a ring of pips (MD.11) ([50e9415](https://github.com/macandy13/arkham-companion/commit/50e9415a8e5fe6be50e89c95557cc4335df0a4f9))
+* **web:** show health and sanity left in a ring of pips (MD.11) ([0a74c70](https://github.com/macandy13/arkham-companion/commit/0a74c7032e4ef1f92fe9d67420329774be55d6b7))
+
+
+### Refactoring
+
+* **web:** name the other end of a connection, test the layout's fallbacks ([6cd6497](https://github.com/macandy13/arkham-companion/commit/6cd649780adf74c3969c8368dbc1b6bd13e6897d))
+* **web:** use range for the pips and derive the taken colour from the face ink ([fd0154a](https://github.com/macandy13/arkham-companion/commit/fd0154af3d0317076a9bd5582755233fa24a3569))
+
+
+### Documentation
+
+* name the cards' cost to the investigator in the analysis ([bcdb384](https://github.com/macandy13/arkham-companion/commit/bcdb384af034743c77cbfcea3ff7f52959c552f0))
+* player card analysis for the deck bot (M1V.4) ([f5ba1a8](https://github.com/macandy13/arkham-companion/commit/f5ba1a8fd51551f0e47207ec67a0b80b14194b24))
+* player card analysis for the deck bot (M1V.4) ([8853842](https://github.com/macandy13/arkham-companion/commit/8853842306515e59d9e24628d9b8dc2925b0bb52))
+
 ## [0.1.35](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v0.1.34...arkham-companion-v0.1.35) (2026-11-08)
 
 
