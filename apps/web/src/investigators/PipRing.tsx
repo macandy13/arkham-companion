@@ -1,3 +1,5 @@
+import { range } from '@arkham/util';
+
 /**
  * The widest gap between two pips, in degrees: wide enough to tell the pips apart, while a large
  * maximum takes narrower gaps so its pips keep some length.
@@ -9,14 +11,15 @@ const MAX_GAP = 12;
  * `InvestigatorBar`): one arc per point of the `max`, clockwise from the top, the last `taken` of
  * them marked `data-taken` (the damage or horror taken), so the stylesheet greys them and the ring
  * shows at a glance how much is left. Drawn in the symbol's SVG on a circle of `radius` round its
- * centre; decoration only, as the symbol's image says what is left.
+ * centre; decoration only, as the symbol's image says what is left. Both counts are whole points
+ * of 0 or more; more taken than the maximum greys every pip.
  */
 export function PipRing({ max, taken, radius }: { max: number; taken: number; radius: number }) {
   const step = 360 / max;
   const gap = Math.min(MAX_GAP, step / 3);
   return (
     <g data-pips="">
-      {Array.from({ length: max }, (_, i) => (
+      {range(max).map((i) => (
         <path
           key={i}
           data-taken={i >= max - taken || undefined}

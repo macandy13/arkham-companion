@@ -625,7 +625,7 @@
    * readable on the heart.
    */
   --stat-pip-width: 2.5px;
-  --color-pip-taken: rgb(90 74 60 / 35%);
+  --color-pip-taken: color-mix(in srgb, var(--color-face-ink) 35%, transparent);
   --stat-number-shadow: 0 0 2px var(--color-face-setting), 0 0 1px var(--color-face-setting);
   /* An empty header pile's symbol: a small card outline this tall. */
   --layout-pile-symbol-height: 2rem;
