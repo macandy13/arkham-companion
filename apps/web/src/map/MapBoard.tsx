@@ -30,7 +30,8 @@ import { usePieceDrag } from './usePieceDrag';
 import { investigatorAt } from '../investigators/dropTarget';
 import { enemyAt } from './dropTarget';
 import { overHeaderCard, overTokenPool } from '../screens/headerDropTarget';
-import { TokenGhost, type GhostKind } from '../screens/TokenGhost';
+import { TokenGhost } from '../screens/TokenGhost';
+import type { GameTokenKind } from '../tokens/GameToken';
 import './map.css';
 
 /**
@@ -366,7 +367,7 @@ function enemyOf(piece: TilePiece): MapEnemyView | undefined {
 /** Which token a dragged token piece shows over the page (`TokenGhost`). */
 function tokenKind(
   piece: Exclude<TilePiece, { investigator: unknown } | { enemy: unknown }>,
-): GhostKind {
+): GameTokenKind {
   if ('clue' in piece) return 'clue';
   if ('enemyDamage' in piece) return 'damage';
   return 'doom';
