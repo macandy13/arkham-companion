@@ -35,7 +35,10 @@ export function inVictoryDisplay(
   const act = state.act.current;
   const beneathAct =
     filter.beneathAct && act !== undefined
-      ? cardsInZone(state, { kind: 'beneath', hostId: act })
+      ? // A facedown card shows no traits, so only the face-up ones can count.
+        cardsInZone(state, { kind: 'beneath', hostId: act }).filter(
+          (id) => requireCard(state.cards, id).faceUp,
+        )
       : [];
   return [...cardsInZone(state, victoryDisplay), ...beneathAct]
     .map((id) => requireCard(state.cards, id))

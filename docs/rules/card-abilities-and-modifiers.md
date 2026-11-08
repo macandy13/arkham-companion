@@ -4,6 +4,7 @@
 
 - A constant ability applies only while its card is in play.
   - Set-aside, removed, in-deck, in-hand, discarded and victory-display cards are out of play, so their abilities do nothing.
+  - A card placed beneath a location or the act is out of play too, face down unless the effect says otherwise: our reading of [In Play and Out of Play](https://arkhamdb.com/rules#In_Play_and_Out_of_Play) (only cards in a threat area or at a location are in play), as the Smoke and Mirrors guide separates "in play" from "beneath a location". Moving an in-play card there makes it leave play.
   - An attachment is in play while its host is.
 - A card that leaves play loses its tokens, its attachments are discarded and lasting effects on it expire ([Leaves Play](https://arkhamdb.com/rules#Leaves_Play)): Escape the Dorms removes Your Friend's Room with its Fire! and sets the Servant of Flame aside without its damage.
   - Cards enter play ready ([Ready](https://arkhamdb.com/rules#Ready)), so a Servant of Flame evaded before it was set aside engages again when act 3 puts it into play.

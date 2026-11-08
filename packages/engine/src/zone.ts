@@ -37,7 +37,9 @@ export type Zone =
   /** Attachment to a location, enemy, agenda, … */
   | { kind: 'attachedTo'; hostId: InstanceId }
   /**
-   * Beneath another card, out of play (Rules Reference, "Out of Play"): the facedown suspects
+   * Beneath another card, out of play: our reading of RR "In Play and Out of Play" (only cards in a
+   * threat area or at a location are in play), as the Smoke and Mirrors guide separates "in play"
+   * from "beneath a location". It holds the facedown suspects
    * Smoke and Mirrors deals beneath its locations, the interviewed ones placed beneath the act.
    * `CardInstance.faceUp` says whether the players may look at it; the act's action draws a
    * facedown one (`DrawBeneath`).
