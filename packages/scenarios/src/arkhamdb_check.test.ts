@@ -5,6 +5,7 @@ import type { CardDef } from '@arkham/carddata';
 import { CACHE_DIR } from '@arkham/carddata/src/fetch';
 import type { CardStats, ScaledValue } from '@arkham/engine';
 import { describe, expect, it } from 'vitest';
+import { spreadingFlamesCardDefs } from './spreading_flames/cards';
 import { theDevourerBelowCardDefs } from './the_devourer_below/cards';
 import { theGatheringCardDefs } from './the_gathering/cards';
 import { MIDNIGHT_MASKS_CODES, theMidnightMasksCardDefs } from './the_midnight_masks/cards';
@@ -95,13 +96,16 @@ function arkhamDbStats(def: CardDef): PrintedStats {
   };
 }
 
+/** The ArkhamDB packs whose hand-entered cards this check holds to the fetched ones. */
+type CheckedPack = 'core' | 'core_2026';
+
 /**
- * The Core Set's cards as `pnpm carddata:fetch` cached them, or none when it hasn't run. Where the
- * workflow fetched them (`ARKHAMDB_CHECK=required`) a missing file fails instead, so a renamed
- * pack or path can't turn the check into a silent skip.
+ * The cards of ArkhamDB pack `pack` as `pnpm carddata:fetch` cached them, or none when it hasn't
+ * run. Where the workflow fetched them (`ARKHAMDB_CHECK=required`) a missing file fails instead,
+ * so a renamed pack or path can't turn the check into a silent skip.
  */
-function cachedCoreSet(): readonly CardDef[] {
-  const file = join(CACHE_DIR, 'en', 'core.json');
+function cachedPack(pack: CheckedPack): readonly CardDef[] {
+  const file = join(CACHE_DIR, 'en', `${pack}.json`);
   if (existsSync(file)) return JSON.parse(readFileSync(file, 'utf8')) as CardDef[];
   if (process.env.ARKHAMDB_CHECK === 'required') throw new Error(`no fetched cards at ${file}`);
   return [];
@@ -113,15 +117,28 @@ function cachedCoreSet(): readonly CardDef[] {
  */
 const reverseSides: readonly string[] = [MIDNIGHT_MASKS_CODES.theMaskedHunter];
 
-const coreSet = cachedCoreSet();
-const entered = [...theGatheringCardDefs, ...theMidnightMasksCardDefs, ...theDevourerBelowCardDefs]
-  .filter((stats) => !reverseSides.includes(stats.code))
-  .map((stats) => ({ label: `${stats.code} ${stats.name}`, stats }));
+/** Each hand-entered card with a label for the test name. */
+const labelled = (cards: readonly CardStats[]) =>
+  cards
+    .filter((stats) => !reverseSides.includes(stats.code))
+    .map((stats) => ({ label: `${stats.code} ${stats.name}`, stats }));
 
-describe.skipIf(coreSet.length === 0)('the hand-entered Night of the Zealot cards', () => {
-  it.each(entered)('print what ArkhamDB has for $label', ({ stats }) => {
-    const def = coreSet.find((card) => card.code === stats.code);
+describe.each<{ campaign: string; pack: CheckedPack; cards: readonly CardStats[] }>([
+  {
+    campaign: 'Night of the Zealot',
+    pack: 'core',
+    cards: [...theGatheringCardDefs, ...theMidnightMasksCardDefs, ...theDevourerBelowCardDefs],
+  },
+  { campaign: 'Brethren of Ash', pack: 'core_2026', cards: spreadingFlamesCardDefs },
+])('the hand-entered $campaign cards', ({ pack, cards }) => {
+  const fetched = cachedPack(pack);
 
-    expect(def && arkhamDbStats(def)).toEqual(enteredStats(stats));
-  });
+  it.skipIf(fetched.length === 0).each(labelled(cards))(
+    'print what ArkhamDB has for $label',
+    ({ stats }) => {
+      const def = fetched.find((card) => card.code === stats.code);
+
+      expect(def && arkhamDbStats(def)).toEqual(enteredStats(stats));
+    },
+  );
 });

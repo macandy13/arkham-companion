@@ -1,8 +1,10 @@
 import i18next from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import { appTexts as appDe } from './de/app';
+import { brethrenOfAshTexts as brethrenOfAshDe } from './de/brethren_of_ash';
 import { nightOfTheZealotTexts as nightOfTheZealotDe } from './de/night_of_the_zealot';
 import { appTexts as appEn } from './en/app';
+import { brethrenOfAshTexts as brethrenOfAshEn } from './en/brethren_of_ash';
 import { interludeTestTexts } from './en/interlude_test';
 import { nightOfTheZealotTexts as nightOfTheZealotEn } from './en/night_of_the_zealot';
 
@@ -39,8 +41,12 @@ function translation<A extends object>(app: A, campaigns: readonly CampaignTexts
  * test campaign's (`interludeTestCampaign`).
  */
 export const campaignTexts: Record<'en' | 'de', readonly CampaignTexts[]> = {
-  en: [nightOfTheZealotEn, ...(import.meta.env.MODE === 'e2e' ? [interludeTestTexts] : [])],
-  de: [nightOfTheZealotDe],
+  en: [
+    nightOfTheZealotEn,
+    brethrenOfAshEn,
+    ...(import.meta.env.MODE === 'e2e' ? [interludeTestTexts] : []),
+  ],
+  de: [nightOfTheZealotDe, brethrenOfAshDe],
 };
 
 /** UI strings (not card text) per language; `en` is the fallback. */

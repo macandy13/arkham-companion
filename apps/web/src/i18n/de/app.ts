@@ -627,6 +627,9 @@ export const appTexts = {
       rlyeh: 'Versunkenes R’lyeh',
       parchment: 'Pergament',
     },
+    tokens: 'Marker',
+    tokenSet: 'Markerset',
+    tokenSets: { resin: 'Harzkuppel', cardboard: 'Pappe' },
     cardTheme: 'Kartenstil',
     cardThemes: {
       exact: 'Exakt',

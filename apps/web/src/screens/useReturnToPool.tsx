@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { overTokenPool } from './headerDropTarget';
-import { TokenGhost, type GhostKind } from './TokenGhost';
+import type { GameTokenKind } from '../tokens/GameToken';
+import { TokenGhost } from './TokenGhost';
 import { useTokenDrag, type TokenDragHandlers } from './useTokenDrag';
 
 /**
@@ -9,7 +10,7 @@ import { useTokenDrag, type TokenDragHandlers } from './useTokenDrag';
  * (`overTokenPool`) calls `onReturn`, which heals or spends it; a drop anywhere else leaves it.
  */
 export function useReturnToPool(
-  kind: GhostKind,
+  kind: GameTokenKind,
   onReturn: () => void,
 ): { handlers: TokenDragHandlers; shown: ReactNode } {
   const drag = useTokenDrag((client) => {

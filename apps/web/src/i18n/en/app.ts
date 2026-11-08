@@ -623,6 +623,9 @@ export const appTexts = {
       rlyeh: 'Sunken R’lyeh',
       parchment: 'Parchment',
     },
+    tokens: 'Tokens',
+    tokenSet: 'Token set',
+    tokenSets: { resin: 'Resin dome', cardboard: 'Cardboard' },
     cardTheme: 'Card style',
     cardThemes: {
       exact: 'Exact',

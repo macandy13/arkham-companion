@@ -122,6 +122,15 @@ for (const { skin, code } of [
   });
 }
 
+test('the token pool in the cardboard token set', async ({ page }) => {
+  await page.goto('/#/settings');
+  await page.getByRole('radio', { name: 'Cardboard' }).check();
+  await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
+
+  await expect(page.getByRole('img', { name: 'Resource from the pool' })).toBeVisible();
+  await expect(page.locator('html')).toHaveAttribute('data-token-set', 'cardboard');
+});
+
 test('the house map in the card pictures style, the clues left on each card', async ({ page }) => {
   await page.goto('/#/settings');
   await page.getByLabel('Card style').selectOption('Card pictures');

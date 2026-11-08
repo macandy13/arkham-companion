@@ -101,6 +101,15 @@ describe('SettingsScreen', () => {
     expect(loadSettings().tableSkin).toBe('stars');
   });
 
+  it('applies and saves the token set', () => {
+    renderSettings();
+
+    fireEvent.click(screen.getByRole('radio', { name: 'Cardboard' }));
+
+    expect(document.documentElement.dataset.tokenSet).toBe('cardboard');
+    expect(loadSettings().tokenSet).toBe('cardboard');
+  });
+
   it('applies and saves the card theme', () => {
     renderSettings();
 

@@ -14,9 +14,9 @@ const TENTACLES =
 const MARK_SHARE = 0.76;
 
 /**
- * The doom mark filling an HTML token (the header's agenda doom, the token pool, a dragged doom),
- * drawn behind its count (`data-part='doom-mark'`, placed by the stylesheet). Decoration only: the
- * token's own name says it is doom.
+ * The doom mark filling an HTML token (the header's agenda doom), drawn behind its count
+ * (`data-part='doom-mark'`, placed by the stylesheet). Decoration only: the token's own name says
+ * it is doom.
  */
 export function DoomMark() {
   return (

@@ -8,10 +8,12 @@ import {
   CARD_THEMES,
   ENEMY_TOKEN_FACES,
   TABLE_SKINS,
+  TOKEN_SETS,
   UI_LANGUAGES,
   type Settings,
 } from '../settings/settings';
 import { useSettings } from '../settings/useSettings';
+import { GAME_TOKEN_KINDS, GameToken } from '../tokens/GameToken';
 import { useAppBar } from './AppBar';
 import './settings.css';
 
@@ -23,7 +25,8 @@ interface SettingsScreenProps {
 /**
  * Route `/settings` (MD.3c), written like a form of the campaign guide: one row per subject, its
  * label in a column of spaced capitals and its fields as written lines. The collection is one line
- * that opens its own page (`CollectionScreen`); the table is picked by its playmat. Every
+ * that opens its own page (`CollectionScreen`); the table is picked by its playmat, the token set
+ * by a row of its tokens. Every
  * change is saved at once (`useSettings`). It ends with the notice that the app is an unofficial
  * fan project, with the publisher's copyright credit, which the fan content policy requires for
  * using the game's names; card art is never bundled, only fetched from ArkhamDB on the device.
@@ -87,7 +90,7 @@ export function SettingsScreen({ packs = [] }: SettingsScreenProps) {
         </section>
         <section aria-labelledby="settings-table">
           <h2 id="settings-table">{t('settings.table')}</h2>
-          <fieldset aria-label={t('settings.tableSkin')} data-skins>
+          <fieldset aria-label={t('settings.tableSkin')} data-picks>
             {TABLE_SKINS.map((tableSkin) => (
               <label key={tableSkin} data-skin={tableSkin}>
                 <input
@@ -97,6 +100,27 @@ export function SettingsScreen({ packs = [] }: SettingsScreenProps) {
                   onChange={() => update({ tableSkin })}
                 />
                 {t(`settings.tableSkins.${tableSkin}`)}
+              </label>
+            ))}
+          </fieldset>
+        </section>
+        <section aria-labelledby="settings-tokens">
+          <h2 id="settings-tokens">{t('settings.tokens')}</h2>
+          <fieldset aria-label={t('settings.tokenSet')} data-picks>
+            {TOKEN_SETS.map((tokenSet) => (
+              <label key={tokenSet} data-token-set={tokenSet}>
+                <input
+                  type="radio"
+                  name="tokenSet"
+                  checked={settings.tokenSet === tokenSet}
+                  onChange={() => update({ tokenSet })}
+                />
+                <span>
+                  {GAME_TOKEN_KINDS.map((kind) => (
+                    <GameToken key={kind} kind={kind} />
+                  ))}
+                </span>
+                {t(`settings.tokenSets.${tokenSet}`)}
               </label>
             ))}
           </fieldset>

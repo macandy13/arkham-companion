@@ -265,6 +265,8 @@
   /* A table skin's pick on the Settings page: its playmat small, in the playmat's proportions. */
   --skin-pick-width: 7.5rem;
   --skin-pick-ratio: 8 / 5;
+  /* A token set's pick: its tokens big enough to show their full faces (MD.8a). */
+  --token-pick-size: 2.25rem;
   --segment-height: 2.25rem;
   /* The wizard's step dots (MD.3d). */
   --step-dot-size: 0.5rem;
@@ -646,8 +648,10 @@
   --map-ghost-opacity: 0.6;
   /* A loose token (the token pool's, a dragged one, `TokenGhost`): finger-sized, so a finger picks it up and it shows beside the finger that carries it. */
   --loose-token-size: 2.5rem;
-  /* How far a loose token's printed symbol (the damage token's heart, the horror token's brain) keeps from its rim. */
-  --loose-token-icon-inset: 22%;
+  /* A game token's count (`GameToken`): a small dark disc over the token's lower right edge. */
+  --token-count-size: 1.25rem;
+  --token-count-offset: calc(-1 * var(--space-1));
+  --color-token-count: #1b1510;
   /* An enemy on the map engaged with an investigator, shown in full in their threat area. */
   --engaged-enemy-opacity: 0.5;
   /* A token with nothing on it (a location's clues once found) fades, so it reads as empty. */

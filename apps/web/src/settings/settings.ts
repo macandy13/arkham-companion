@@ -33,6 +33,13 @@ export function isLightSkin(skin: TableSkin): boolean {
 }
 
 /**
+ * How the game's tokens look (MD.8, `GameToken`): `resin` the fans' resin domes, glossy with a
+ * bronze rim; `cardboard` the box's matte die-cut tokens, its resources hexagons.
+ */
+export const TOKEN_SETS = ['resin', 'cardboard'] as const;
+export type TokenSet = (typeof TOKEN_SETS)[number];
+
+/**
  * How card faces look (product.md, "Card themes"): `exact` draws the printed card's frame
  * ourselves and cuts the card's ArkhamDB picture out into its art area (`cardArt.ts`), `pictures`
  * shows the whole scanned card. Without a picture both show our frame with a pattern for the art.
@@ -65,6 +72,7 @@ export interface Settings {
   /** Unset means "follow the browser language" until the player picks one. */
   readonly uiLanguage?: UiLanguage;
   readonly tableSkin: TableSkin;
+  readonly tokenSet: TokenSet;
   readonly cardTheme: CardTheme;
   readonly enemyTokens: EnemyTokenFace;
 }
@@ -74,6 +82,7 @@ export const DEFAULT_SETTINGS: Settings = {
   ownedPacks: [],
   cardLanguage: 'en',
   tableSkin: 'nightAndBrass',
+  tokenSet: 'resin',
   cardTheme: 'exact',
   enemyTokens: 'art',
 };
@@ -101,6 +110,7 @@ function parseSettings(value: unknown): Settings {
       (raw.theme === 'light' ? 'parchment' : undefined) ??
       oneOf(TABLE_SKINS, raw.tableSkin) ??
       DEFAULT_SETTINGS.tableSkin,
+    tokenSet: oneOf(TOKEN_SETS, raw.tokenSet) ?? DEFAULT_SETTINGS.tokenSet,
     cardTheme:
       oneOf(CARD_THEMES, raw.cardTheme) ??
       (typeof raw.cardLook === 'string' ? CARD_LOOK_THEMES[raw.cardLook] : undefined) ??

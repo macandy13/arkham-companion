@@ -108,11 +108,11 @@
 }
 
 /*
- * The table skins as small pictures of their playmats, each named under it; the chosen
- * one framed in the accent's ink, the radios themselves hidden
- * (base.css).
+ * Picks with a picture (a table skin's playmat drawn before its name, a token set's row of tokens):
+ * each a small picture named under it, the chosen one framed in the accent's ink, the radios
+ * themselves hidden (base.css).
  */
-#settings fieldset[data-skins] {
+#settings fieldset[data-picks] {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-3);
@@ -121,35 +121,45 @@
   border: 0;
 }
 
-#settings fieldset[data-skins] > label {
+#settings fieldset[data-picks] > label {
   display: grid;
   justify-items: center;
   align-content: start;
   gap: var(--space-1);
-  width: var(--skin-pick-width);
   font-family: var(--font-family-label);
   font-size: var(--font-size-note);
   text-align: center;
   cursor: pointer;
 }
 
-#settings fieldset[data-skins] > label::before {
-  content: '';
+#settings fieldset[data-picks] > label:is([data-skin])::before,
+#settings fieldset[data-picks] > label > span {
   box-sizing: border-box;
   width: 100%;
-  aspect-ratio: var(--skin-pick-ratio);
   border: var(--focus-ring-width) solid transparent;
   border-radius: var(--radius);
-  background: var(--skin-playmat) center / cover no-repeat;
   box-shadow: var(--button-lift);
 }
 
-#settings fieldset[data-skins] > label:has(:checked)::before {
+#settings fieldset[data-picks] > label:has(:checked):is([data-skin])::before,
+#settings fieldset[data-picks] > label:has(:checked) > span {
   border-color: var(--color-accent);
 }
 
-#settings fieldset[data-skins] > label:has(:focus-visible)::before {
+#settings fieldset[data-picks] > label:has(:focus-visible):is([data-skin])::before,
+#settings fieldset[data-picks] > label:has(:focus-visible) > span {
   outline: var(--focus-ring-width) solid var(--color-accent);
+}
+
+/* A table skin: its playmat by night, small, in the playmat's proportions. */
+#settings label[data-skin] {
+  width: var(--skin-pick-width);
+}
+
+#settings label[data-skin]::before {
+  content: '';
+  aspect-ratio: var(--skin-pick-ratio);
+  background: var(--skin-playmat) center / cover no-repeat;
 }
 
 #settings label[data-skin='nightAndBrass'] {
@@ -166,6 +176,19 @@
 
 #settings label[data-skin='parchment'] {
   --skin-playmat: var(--playmat-parchment);
+}
+
+/* A token set: its five tokens in a row on a piece of the table. */
+#settings label[data-token-set] > span {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-1);
+  padding: var(--space-2);
+  background: var(--table-background);
+}
+
+#settings label[data-token-set] [data-game-token] {
+  width: var(--token-pick-size);
 }
 
 /* The collection: a campaign's name over its boxes, each a tick on the line. */

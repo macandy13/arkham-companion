@@ -20,6 +20,7 @@ describe('settings storage', () => {
       cardLanguage: 'de',
       uiLanguage: 'de',
       tableSkin: 'stars',
+      tokenSet: 'cardboard',
       cardTheme: 'pictures',
       enemyTokens: 'initials',
     } as const;
@@ -54,6 +55,7 @@ describe('settings storage', () => {
         cardLanguage: 'xx',
         uiLanguage: 'fr',
         tableSkin: 'moon',
+        tokenSet: 'glass',
         cardTheme: 'scans',
         enemyTokens: 'initials',
       }),
