@@ -167,7 +167,7 @@ Designs for parts that have a milestone but no code yet. The PR that builds one 
 - Only **failing games are recorded.** A passing game needs no file: its run (scenario, difficulty, seats, both seeds, bot) plays it again, and every run's report lists its runs.
 - A **record** (`*.arkham-run.json`) holds the tester version and git commit, the run, the failed check with its step and `formatBoard` before and after, the steps as `PlayTable` calls with arguments by name (`moveTo('Daisy Walker', 'Attic')`), and the event log in the export format.
 - **Replay** a record two ways: the steps through a fresh `PlayTable` (works on a newer engine, shows what it does now), or the event log through `replay` (shows what happened then). Comparing the two shows how the engine's behaviour changed.
-- The event log is the app's export format, so a record **opens in the app** with "Import game" and can be clicked through on the board.
+- Beside each record the tester writes its game in the app's export format (`.arkham-game.json`), so it **opens in the app** with "Import game" and can be clicked through on the board, and a Markdown report of the finding.
 - **Shrinking:** before saving, the tester cuts the game down (drop steps, drop investigators, end earlier) while the same check still fails, so the record is the shortest game that breaks.
 - **From finding to test:** the fix PR adds the shrunk game as an example-based test (in `timing.test.ts` or a scenario's end-to-end test) with named cards. Random play stays in the tester and never runs in `pnpm test`, so the rule "no property-based testing" in unit tests still holds.
 

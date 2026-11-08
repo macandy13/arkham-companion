@@ -5,5 +5,6 @@
  */
 export { logDifference, playRun } from './play_run';
 export { parseRecord, RECORD_SUFFIX } from './record';
+export { gameExport } from './report';
 export { runsFrom, scenarioContext, setUpTable, setupOptions, type Run } from './run';
 export { describeStep, playStep, type Step } from './steps';

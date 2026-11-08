@@ -3,7 +3,8 @@
  *
  *   pnpm playtest --games 500 --seed 7   plays 500 runs drawn from seed 7, prints the summary and
  *                                        writes each failing game's record to
- *                                        `packages/play_tester/.runs/` (or `--out <dir>`)
+ *                                        `packages/play_tester/.runs/` (or `--out <dir>`), with its
+ *                                        report (`.md`) and app export (`.arkham-game.json`)
  *   pnpm playtest --bot goal             plays only runs of that bot (`random`, `goal`, `chaos`;
  *                                        all of them by default)
  *   pnpm playtest --replay <record>      replays a record's steps on today's engine and stops at
@@ -13,7 +14,7 @@
  */
 import { execFileSync } from 'node:child_process';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { join, resolve } from 'node:path';
+import { join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
 import { checkRun } from './play_run';
@@ -28,6 +29,7 @@ import {
 } from './record';
 import { BOT_KINDS, runsFrom, type BotKind } from './run';
 import { describeStep } from './steps';
+import { findingReport, gameExport, gameExportPath, reportPath } from './report';
 import { shrink } from './shrink';
 import { formatSummary, summarise } from './summary';
 
@@ -63,7 +65,9 @@ function playGames(): number {
     const record = recordOf(shrink(result), tester);
     const path = join(out, recordFileName(record));
     writeFileSync(path, serialiseRecord(record));
-    console.log(`${record.finding.check}: ${path}`);
+    writeFileSync(gameExportPath(path), gameExport(record));
+    writeFileSync(reportPath(path), findingReport(record, relative(callerDirectory, path)));
+    console.log(`${record.finding.check}: ${reportPath(path)}`);
   }
   return 1;
 }
