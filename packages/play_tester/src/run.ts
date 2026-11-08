@@ -33,9 +33,10 @@ import {
 /**
  * The bots (product.md "Continuous play tester"), each a weighting of the steps the board offers
  * (`botStep`): `random` any step, `goal` the steps that move the game on (clues, the act, the
- * enemies engaged), `chaos` undo, corrections and resigning far more often than players do.
+ * enemies engaged), `chaos` undo, corrections and resigning far more often than players do, `deck` the goal bot playing
+ * player cards (`DeckBot`).
  */
-export const BOT_KINDS = ['random', 'goal', 'chaos'] as const;
+export const BOT_KINDS = ['random', 'goal', 'chaos', 'deck'] as const;
 
 /** One of `BOT_KINDS`. */
 export type BotKind = (typeof BOT_KINDS)[number];

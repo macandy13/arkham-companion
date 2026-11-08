@@ -11,6 +11,7 @@ import {
   type RejectionCode,
 } from '@arkham/engine';
 import { botStep } from './bots';
+import { DeckBot } from './deck_bot';
 import { brokenRule } from './oracles';
 import { refusalKind } from './refusals';
 import { SeededRandom, setUpTable, type Run } from './run';
@@ -96,6 +97,7 @@ export const ROUND_CAP = 30;
 export function playRun(run: Run, { stepCap = STEP_CAP, roundCap = ROUND_CAP } = {}): RunResult {
   const table = setUpTable(run);
   const random = new SeededRandom(run.botSeed);
+  const deck = run.bot === 'deck' ? DeckBot.forRun(run, random) : undefined;
   const steps: Step[] = [];
   const refusals: Partial<Record<RejectionCode, number>> = {};
   let misuses = 0;
@@ -119,7 +121,7 @@ export function playRun(run: Run, { stepCap = STEP_CAP, roundCap = ROUND_CAP } =
         message: `the game is still going in round ${table.board.round}, past the cap of ${roundCap}`,
         boardBefore: table.formatted(),
       });
-    const step = botStep(run.bot, table, random);
+    const step = deck ? deck.step(table, random) : botStep(run.bot, table, random);
     const outcome = checkedStep(table, step);
     if (outcome.kind === 'played') steps.push(step);
     else if (outcome.kind === 'refused') addCount(refusals, outcome.code);

@@ -23,8 +23,19 @@ flowchart LR
   - _random_: any verb, then any of its steps; rare steps (corrections, encounter draws a card effect asks for, undo) are one step in a hundred (`rareShareWeights`).
   - _goal_ ([`goal_bot.ts`](../../packages/play_tester/src/goal_bot.ts)): fifty times rather a step that moves the game on: investigate where there are clues, else move towards the nearest clues or unrevealed location, advance the act, fight what is engaged, resolve the attacks due, end the turn with no actions left, "Next" once all turns are taken. Never a rare step.
   - _chaos_: like random, but rare steps are a quarter of the picks, and resigning weighs as much.
+  - _deck_: the goal bot playing player cards too ([The deck bot](#the-deck-bot)).
 - Tests are left open; a test of one investigator is answered first, by every bot, by chaos tokens drawn from the bag as the players draw them (the engine's `drawTokens`, also behind the app's "Draw a token": another while a bless, curse, frost or blood says so) and valued by `suggestSkillTest` ([`test_answers.ts`](../../packages/play_tester/src/test_answers.ts), a random modifier for a token the engine can't value), any other like any decision.
 - [`playRun`](../../packages/play_tester/src/play_run.ts) plays until a resolution, every investigator out, a finding, or the step cap.
+
+## The deck bot
+
+[`DeckBot`](../../packages/play_tester/src/deck_bot.ts) gives each investigator a deck of player cards (`deckFor`, [player-card-analysis.md](../player-card-analysis.md#the-deck-bot)) and plays up to 3 of them a turn before the goal bot takes the turn's other steps.
+
+- **Its own state:** deck, hand and cards in play (uses left, exhausted, health and sanity left to soak) live in the bot, never on the table, as the players' cards do in the app. Upkeep draws a card and readies its cards.
+- **A play is steps:** a `playCard` step (the play action, which may provoke attacks of opportunity) then a `playerCard` step with the card's effects, so a record replays without the bot. A fast card skips the action.
+- **Act first:** each card it can pay for and whose effect fits the board gets a score for how much it moves the act on (`actScore`: clues and intellect while the location has clues, an extra action, resources when low, then fight, evade and healing when they're needed); it plays the best one above a floor.
+- **Its tests:** skill cards with the tested icon (two to an investigation or fight, one to another test), the best weapon on a fight, a boost paid with resources and Lucky! near a fail add to the `modifier`; a pass confirms the extra damage or clues within the range the decision offers. What the test spent comes as steps after `resolveTest`, since the table takes nothing else while the test is open.
+- **Soaking** is approximated: an ally or armour heals the damage or horror it would have taken right after, until its health or sanity is used up.
 
 ## How a step is judged
 

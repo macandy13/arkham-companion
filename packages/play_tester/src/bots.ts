@@ -16,6 +16,8 @@ const CHAOS_SHARE = 1 / 4;
 const WEIGHTS: Record<BotKind, (table: PlayTable, offered: readonly Step[]) => number[]> = {
   random: (_table, offered) => randomWeights(offered),
   goal: goalWeights,
+  // The deck bot's own steps come from `DeckBot`; the rest it leaves to the goal bot's weights.
+  deck: goalWeights,
   chaos: (table, offered) =>
     rareShareWeights(offered, isRare, CHAOS_SHARE).map((weight, i) =>
       resigns(table, offered[i]!) ? CHAOS_SHARE : weight,
