@@ -108,6 +108,39 @@ describe('tileCells', () => {
     });
   });
 
+  it('puts it in the spare row when every side of its neighbour is taken or off the map', () => {
+    const cellar = instanceId('cellar');
+    const house = houseWith(
+      [study, hallway, attic, cellar],
+      {
+        [study]: { column: 0, row: 0 },
+        [hallway]: { column: 3, row: 0 },
+        [attic]: { column: 0, row: 3 },
+      },
+      [[study, cellar]],
+    );
+
+    expect(tileCells(house)[cellar]).toEqual({ column: 0, row: 6 });
+  });
+
+  it('skips a spare-row spot a tile beside its neighbour took already', () => {
+    const cellar = instanceId('cellar');
+    const house = houseWith(
+      [study, hallway, attic, cellar],
+      { [study]: { column: 0, row: 0 }, [attic]: { column: 3, row: 0 } },
+      [[study, hallway]],
+    );
+
+    // The Attic is right of the Study, so the Hallway goes below it, on the spare row's first
+    // spot; the Cellar, connected to nothing, takes the next one.
+    expect(tileCells(house)).toEqual({
+      [study]: { column: 0, row: 0 },
+      [hallway]: { column: 0, row: 3 },
+      [attic]: { column: 3, row: 0 },
+      [cellar]: { column: 3, row: 3 },
+    });
+  });
+
   it('gathers connected locations around the first one when no location has a cell', () => {
     const house = houseWith([study, hallway, attic], {}, [
       [study, hallway],

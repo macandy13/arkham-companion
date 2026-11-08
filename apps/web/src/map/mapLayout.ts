@@ -1,5 +1,6 @@
 import {
   GRID_CELLS_PER_CARD,
+  type Edge,
   type GridCell,
   type InstanceId,
   type InvestigatorView,
@@ -164,7 +165,8 @@ export function attachmentOrigin(index: number): Point {
  * left, above), so a location put into play mid-game lands next to its neighbour. One with no
  * placed neighbour starts a row one card step below the lowest tile, a card step apart in map
  * order, and its own neighbours then gather around it, so a scenario without a layout still
- * shows every location, connected ones side by side.
+ * shows every location, connected ones side by side. The places are worked out again on every
+ * render, not kept: a book cell that later takes a spot moves the location that sat there.
  */
 export function tileCells(map: MapView): Record<InstanceId, GridCell> {
   const placed = new Map<InstanceId, GridCell>();
@@ -178,10 +180,13 @@ export function tileCells(map: MapView): Record<InstanceId, GridCell> {
   let spare = 0;
   const unplaced = map.locations.map(({ id }) => id).filter((id) => !placed.has(id));
   while (unplaced.length > 0) {
-    const next = unplaced.findIndex((id) => besideNeighbour(map, placed, id) !== undefined);
-    const id = unplaced.splice(Math.max(next, 0), 1)[0]!;
-    const cell = besideNeighbour(map, placed, id) ?? spareCell();
-    placed.set(id, cell);
+    let cell: GridCell | undefined;
+    const next = unplaced.findIndex(
+      (id) => (cell = besideNeighbour(map, placed, id)) !== undefined,
+    );
+    // No location left has a placed neighbour: the first in map order starts the spare row.
+    const [id] = unplaced.splice(next === -1 ? 0 : next, 1);
+    placed.set(id!, cell ?? spareCell());
   }
   return Object.fromEntries(map.locations.map(({ id }) => [id, placed.get(id)!]));
 
@@ -211,8 +216,8 @@ function besideNeighbour(
   placed: ReadonlyMap<InstanceId, GridCell>,
   id: InstanceId,
 ): GridCell | undefined {
-  for (const { from, to } of map.connections) {
-    const other = from === id ? to : to === id ? from : undefined;
+  for (const connection of map.connections) {
+    const other = otherEnd(connection, id);
     const anchor = other && placed.get(other);
     if (!anchor) continue;
     for (const step of SIDE_STEPS) {
@@ -221,6 +226,11 @@ function besideNeighbour(
     }
   }
   return undefined;
+}
+
+/** The location at the other end of `connection` from `id`, or `undefined` when `id` is at neither end. */
+function otherEnd({ from, to }: Edge, id: InstanceId): InstanceId | undefined {
+  return from === id ? to : to === id ? from : undefined;
 }
 
 /** Whether a tile in `cell` would overlap none of the tiles already `placed`. */
@@ -406,8 +416,9 @@ export function neighboursOf(map: MapView, location: InstanceId): Neighbour[] {
   const cells = tileCells(map);
   const from = cells[location];
   if (!from) return [];
-  return map.connections.flatMap(({ from: start, to, oneWay }) => {
-    const id = start === location ? to : to === location ? start : undefined;
+  return map.connections.flatMap((connection) => {
+    const { from: start, oneWay } = connection;
+    const id = otherEnd(connection, location);
     const cell = id && cells[id];
     if (!id || !cell) return [];
     const neighbour: Neighbour = { id, side: sideOf(from, cell) };
