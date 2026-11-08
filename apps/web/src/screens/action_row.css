@@ -127,7 +127,7 @@
   :is(dialog, dialog > article, [data-mode='location'], header > section)
   > footer:has(> section > h3)
   button[data-icon='clue']::before {
-  mask-image: url('../investigators/icons/token.svg');
+  mask-image: url('../tokens/glyphs/clue.svg');
 }
 
 #board
