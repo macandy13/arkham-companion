@@ -102,9 +102,66 @@
   text-align: center;
 }
 
-/* The table's light is a segmented choice (base.css), standing at the start of its row. */
+/* The table's skins and its light (a segmented choice, base.css) stand at the start of the row. */
 #settings fieldset {
   justify-self: start;
+}
+
+/*
+ * The table skins as small pictures of their playmats by night, each named under it; the chosen
+ * one framed in the accent's ink, the radios themselves hidden
+ * (base.css).
+ */
+#settings fieldset[data-skins] {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+#settings fieldset[data-skins] > label {
+  display: grid;
+  justify-items: center;
+  align-content: start;
+  gap: var(--space-1);
+  width: var(--skin-pick-width);
+  font-family: var(--font-family-label);
+  font-size: var(--font-size-note);
+  text-align: center;
+  cursor: pointer;
+}
+
+#settings fieldset[data-skins] > label::before {
+  content: '';
+  box-sizing: border-box;
+  width: 100%;
+  aspect-ratio: var(--skin-pick-ratio);
+  border: var(--focus-ring-width) solid transparent;
+  border-radius: var(--radius);
+  background: var(--skin-playmat) center / cover no-repeat;
+  box-shadow: var(--button-lift);
+}
+
+#settings fieldset[data-skins] > label:has(:checked)::before {
+  border-color: var(--color-accent);
+}
+
+#settings fieldset[data-skins] > label:has(:focus-visible)::before {
+  outline: var(--focus-ring-width) solid var(--color-accent);
+}
+
+#settings label[data-skin='nightAndBrass'] {
+  --skin-playmat: var(--playmat-night-and-brass);
+}
+
+#settings label[data-skin='stars'] {
+  --skin-playmat: var(--playmat-stars);
+}
+
+#settings label[data-skin='rlyeh'] {
+  --skin-playmat: var(--playmat-rlyeh);
 }
 
 /* The collection: a campaign's name over its boxes, each a tick on the line. */

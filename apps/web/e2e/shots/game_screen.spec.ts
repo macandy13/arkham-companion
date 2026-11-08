@@ -108,6 +108,27 @@ test('the house map by day', async ({ page }) => {
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
 });
 
+for (const { skin, code, light, theme } of [
+  { skin: 'The Stars Are Right', code: 'stars', light: 'By night', theme: 'dark' },
+  { skin: 'Sunken R’lyeh', code: 'rlyeh', light: 'By night', theme: 'dark' },
+  { skin: 'Sunken R’lyeh', code: 'rlyeh', light: 'By day', theme: 'light' },
+]) {
+  test(
+    `the house map on the ${skin} table ${light.toLowerCase()}`,
+    { tag: '@shot' },
+    async ({ page }) => {
+      await page.goto('/#/settings');
+      await page.getByRole('radio', { name: skin }).check();
+      await page.getByRole('radio', { name: light }).check();
+      await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
+
+      await expect(page.getByRole('region', { name: 'Roland Banks' })).toBeVisible();
+      await expect(page.locator('html')).toHaveAttribute('data-skin', code);
+      await expect(page.locator('html')).toHaveAttribute('data-theme', theme);
+    },
+  );
+}
+
 test('the house map in the card pictures style, the clues left on each card', async ({ page }) => {
   await page.goto('/#/settings');
   await page.getByLabel('Card style').selectOption('Card pictures');
@@ -657,20 +678,18 @@ test('Daisy Walker swiped into view on a phone, Roland Banks beside her', async 
   if (isMobile) await expect(daisy).toHaveAttribute('data-focus', 'true');
 });
 
-test(
-  'the refusal toast after Roland Banks is dragged from the Attic to the Cellar, which it does not connect to',
-  { tag: '@shot' },
-  async ({ page }) => {
-    await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
-    const house = page.getByRole('figure', { name: 'House' });
-    const roland = (location: string) =>
-      house.getByRole('group', { name: location }).getByRole('img', { name: 'Roland Banks' });
-    await dragTo(page, roland('Hallway'), house.getByRole('group', { name: 'Attic' }));
+test('the refusal toast after Roland Banks is dragged from the Attic to the Cellar, which it does not connect to', async ({
+  page,
+}) => {
+  await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
+  const house = page.getByRole('figure', { name: 'House' });
+  const roland = (location: string) =>
+    house.getByRole('group', { name: location }).getByRole('img', { name: 'Roland Banks' });
+  await dragTo(page, roland('Hallway'), house.getByRole('group', { name: 'Attic' }));
 
-    await dragTo(page, roland('Attic'), house.getByRole('group', { name: 'Cellar' }));
+  await dragTo(page, roland('Attic'), house.getByRole('group', { name: 'Cellar' }));
 
-    await expect(page.getByRole('alert', { name: 'Not possible' })).toContainText(
-      'Those locations are not connected.',
-    );
-  },
-);
+  await expect(page.getByRole('alert', { name: 'Not possible' })).toContainText(
+    'Those locations are not connected.',
+  );
+});
