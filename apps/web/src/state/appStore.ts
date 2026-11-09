@@ -45,8 +45,6 @@ import {
   type CampaignEntry,
   type ScenarioEntry,
 } from '../scenarios/scenarioCatalog';
-import { parseExportFile, serialiseCampaignExport } from '../storage/campaignExport';
-import { serialiseGameExport } from '../storage/gameExport';
 import { seatsFor } from '../wizard/seating';
 
 /** Everything the new game wizard has decided; input to `AppState.startScenario`. */
@@ -841,12 +839,16 @@ export function createAppStore(
         const loaded = await gameStore.loadGame(gameId);
         if (!loaded) throw new Error(`Unknown game ${gameId}`);
         const { title, createdAt } = loaded.summary;
+        // The export modules bring zod, so they load when a file is exported or imported, not
+        // with the app.
+        const { serialiseGameExport } = await import('../storage/gameExport');
         return serialiseGameExport(title, createdAt, await gameStore.loadEvents(gameId));
       },
       async exportCampaign(campaignId) {
         const loaded = await gameStore.loadCampaign(campaignId);
         if (!loaded) throw new Error(`Unknown campaign ${campaignId}`);
         const games = await gamesOf(gameStore, campaignId);
+        const { serialiseCampaignExport } = await import('../storage/campaignExport');
         return serialiseCampaignExport(
           loaded.summary,
           await gameStore.loadCampaignEvents(campaignId),
@@ -860,6 +862,7 @@ export function createAppStore(
         );
       },
       async importFile(text) {
+        const { parseExportFile } = await import('../storage/campaignExport');
         const parsed = parseExportFile(text);
         const imported: ImportedFile =
           parsed.kind === 'game'

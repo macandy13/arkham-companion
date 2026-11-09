@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   camelCaseToWords,
   escapeRegExp,
+  fileStem,
   numberedDuplicates,
   sentences,
   stripTrailingDot,
@@ -75,5 +76,30 @@ describe('numberedDuplicates', () => {
     { name: 'keeps an empty list', texts: [], expected: [] },
   ])('$name', ({ texts, expected }) => {
     expect(numberedDuplicates(texts)).toEqual(expected);
+  });
+});
+
+describe('fileStem', () => {
+  it.each([
+    { name: 'joins words with dashes', text: 'The Gathering', expected: 'The-Gathering' },
+    {
+      name: 'turns a slash and a colon into dashes',
+      text: 'Night of the Zealot: 1/3',
+      expected: 'Night-of-the-Zealot-1-3',
+    },
+    { name: 'drops dashes at either end', text: '  (Roland) ', expected: 'Roland' },
+    {
+      name: 'keeps letters beyond ASCII',
+      text: 'Rückkehr nach Arkham',
+      expected: 'Rückkehr-nach-Arkham',
+    },
+    {
+      name: 'turns a long run of dashes into one',
+      text: `A${'-'.repeat(100_000)}B`,
+      expected: 'A-B',
+    },
+    { name: 'gives the fallback when no letter or digit is left', text: '?!', expected: 'game' },
+  ])('$name', ({ text, expected }) => {
+    expect(fileStem(text, 'game')).toBe(expected);
   });
 });

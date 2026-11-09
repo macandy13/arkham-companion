@@ -5,6 +5,7 @@ import type { CardDef } from '@arkham/carddata';
 import { CACHE_DIR } from '@arkham/carddata/src/fetch';
 import type { CardStats, ScaledValue } from '@arkham/engine';
 import { describe, expect, it } from 'vitest';
+import { queenOfAshCardDefs } from './queen_of_ash/cards';
 import { smokeAndMirrorsCardDefs } from './smoke_and_mirrors/cards';
 import { spreadingFlamesCardDefs } from './spreading_flames/cards';
 import { theDevourerBelowCardDefs } from './the_devourer_below/cards';
@@ -133,7 +134,7 @@ describe.each<{ campaign: string; pack: CheckedPack; cards: readonly CardStats[]
   {
     campaign: 'Brethren of Ash',
     pack: 'core_2026',
-    cards: [...spreadingFlamesCardDefs, ...smokeAndMirrorsCardDefs],
+    cards: [...spreadingFlamesCardDefs, ...smokeAndMirrorsCardDefs, ...queenOfAshCardDefs],
   },
 ])('the hand-entered $campaign cards', ({ pack, cards }) => {
   const fetched = cachedPack(pack);

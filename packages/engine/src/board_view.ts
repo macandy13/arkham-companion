@@ -61,7 +61,7 @@ import {
   type MapId,
   type ResolutionId,
 } from './ids';
-import { cardsInZone, cardsOfType, currentCard } from './lookup';
+import { cardsInZone, cardsOfType, currentCard, locationOfCard } from './lookup';
 import { mapLocations, type Edge, type GameMap, type GridCell } from './map';
 import { attacksStillDue } from './phases';
 import {
@@ -1090,7 +1090,7 @@ export class BoardView {
       (enemy) =>
         (engagedId === undefined ||
           (enemy.zone.kind === 'engaged' && enemy.zone.investigatorId === engagedId)) &&
-        (atId === undefined || enemyLocation(this.state, enemy) === atId),
+        (atId === undefined || locationOfCard(this.state, enemy) === atId),
     );
     const [only, ...others] = matches;
     if (!only) throw this.error(`no enemy in play ${describeMatcher(selector)}`);
@@ -1226,14 +1226,6 @@ function enemiesInPlay(ctx: EngineContext, state: GameState): CardInstance[] {
   return cardsOfType(ctx, state, 'enemy').filter((card) => isInPlay(state, card));
 }
 
-/** The location an enemy is at: its own, or that of the investigator it is engaged with. */
-function enemyLocation(state: GameState, enemy: CardInstance): InstanceId | undefined {
-  const { zone } = enemy;
-  if (zone.kind === 'atLocation') return zone.locationId;
-  if (zone.kind !== 'engaged') return undefined;
-  return state.investigators.find((inv) => inv.id === zone.investigatorId)?.locationId;
-}
-
 function mapEnemyView(ctx: EngineContext, state: GameState, enemy: CardInstance): MapEnemyView {
   const { imageSrc } = cardStats(ctx.cards, enemy.code);
   return {
@@ -1244,7 +1236,7 @@ function mapEnemyView(ctx: EngineContext, state: GameState, enemy: CardInstance)
 }
 
 function enemyView(ctx: EngineContext, state: GameState, enemy: CardInstance): EnemyView {
-  const at = nameOfId(ctx, state, enemyLocation(state, enemy));
+  const at = nameOfId(ctx, state, locationOfCard(state, enemy));
   const health = enemyHealth(cardStats(ctx.cards, enemy.code), state);
   return {
     name: nameOf(ctx, enemy),
@@ -1330,7 +1322,7 @@ function enemiesByLocation(
 ): Record<InstanceId, MapEnemyView[]> {
   const byLocation: Record<InstanceId, MapEnemyView[]> = {};
   for (const enemy of enemiesInPlay(ctx, state)) {
-    const at = enemyLocation(state, enemy);
+    const at = locationOfCard(state, enemy);
     if (at === undefined || !locations.includes(at)) continue;
     (byLocation[at] ??= []).push(mapEnemyView(ctx, state, enemy));
   }

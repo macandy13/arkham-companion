@@ -2,6 +2,7 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from './App';
 import { loadCatalog } from './catalog/loadCatalog';
+import { sharedCatalog } from './catalog/useCatalog';
 import { initI18n } from './i18n';
 import { applySettings } from './settings/applySettings';
 import { loadSettings } from './settings/settings';
@@ -19,7 +20,7 @@ const settings = loadSettings();
 
 /** Read on every use: the card language can change in Settings while the app runs. */
 const cardLanguage = () => loadSettings().cardLanguage;
-const catalog = () => loadCatalog(database, cardLanguage());
+const catalog = sharedCatalog((language) => loadCatalog(database, language), cardLanguage);
 
 /**
  * The start-up waits for the saved games and for card data to be at hand: the cached catalog

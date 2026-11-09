@@ -6,7 +6,7 @@ import type { StoreApi } from 'zustand/vanilla';
 import { investigatorPictures } from '../catalog/investigatorPictures';
 import { useCatalog, type CatalogSource } from '../catalog/useCatalog';
 import type { AppState } from '../state/appStore';
-import { GameImportError } from '../storage/gameExport';
+import { GameImportError } from '../storage/importError';
 import { CampaignCover } from './CampaignCover';
 import { downloadCampaignExport, downloadGameExport } from './downloadFile';
 import { GameCover, untitledLabel } from './GameCover';

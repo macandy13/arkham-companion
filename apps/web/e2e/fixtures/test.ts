@@ -99,6 +99,12 @@ export const test = base.extend<PictureOptions & { externalRequests: string[]; p
 export { expect };
 
 /**
+ * ArkhamDB's card list, for a test that holds or turns down its answer to show the card data on
+ * its way or not loaded; a route the test adds wins over the guard's.
+ */
+export const isCardList = (url: URL) => url.pathname === '/api/public/cards/';
+
+/**
  * Waits until the page has fetched what it shows (card pictures, the fonts its text uses). A
  * click scrolls its target into view, and text that changes font afterwards moves the page under
  * it, so the preview's pictures (scripts/screencast/cli.ts) would differ from run to run; going

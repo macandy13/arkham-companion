@@ -31,7 +31,14 @@ export {
   sameEdge,
   shortestPaths,
 } from './board';
-export { cardsInZones, cardsNamed, currentCard, zoneOf, type CardFilter } from './lookup';
+export {
+  cardsInZones,
+  cardsNamed,
+  currentCard,
+  locationOfCard,
+  zoneOf,
+  type CardFilter,
+} from './lookup';
 export {
   byAny,
   byCode,
@@ -183,6 +190,9 @@ export {
   healSelf,
   gainSurge,
   ifYouHave,
+  ifValue,
+  statOf,
+  tokensOn,
   ifThereAre,
   ifNoCandidate,
   forEachEnemy,
@@ -209,6 +219,7 @@ export {
   setAsideCard,
   fromSetAside,
   eachInZone,
+  eachInPlay,
   eachSetAsideCopyTo,
   removeFromGame,
   addToVictoryDisplay,
@@ -239,6 +250,8 @@ export {
   itsLocation,
   you,
   yourLocation,
+  lead,
+  self,
   whenAdvanced,
   whenDefeated,
   whenEnemyDefeated,

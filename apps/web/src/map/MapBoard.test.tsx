@@ -922,6 +922,8 @@ describe('MapBoard', () => {
           const badge = tile('study').querySelector<SVGElement>('[data-marker="doom"]');
           if (!badge) throw new Error('The ghoul shows no doom badge');
 
+          // The details open once no second tap came, so the wait runs on fake timers.
+          vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
           fireEvent.pointerDown(badge, {
             pointerId: 1,
             clientX: ghoulDoomBadge.x,
@@ -933,6 +935,8 @@ describe('MapBoard', () => {
             clientY: ghoulDoomBadge.y,
           });
           fireEvent.click(badge, { clientX: ghoulDoomBadge.x, clientY: ghoulDoomBadge.y });
+          act(() => vi.advanceTimersByTime(DOUBLE_TAP_MS));
+          vi.useRealTimers();
           await act(async () => {});
 
           expect(screen.getByRole('dialog', { name: 'ghoul' })).toBeTruthy();
@@ -1141,12 +1145,21 @@ describe('MapBoard', () => {
         .queryAllByRole('button')
         .map((button) => button.getAttribute('aria-label'));
 
-    /** Presses the piece named `name` on the tile of `location` and lets go where it went down. */
-    async function tapPiece(location: string, name: string) {
+    /**
+     * Presses the piece named `name` on the tile of `location` and lets go where it went down,
+     * `times` times in quick succession, then waits out a second tap (`DOUBLE_TAP_MS`, on fake
+     * timers).
+     */
+    async function tapPiece(location: string, name: string, times = 1) {
       const piece = within(tile(location)).getByRole('img', { name });
-      fireEvent.pointerDown(piece, { pointerId: 1, clientX: 50, clientY: 50 });
-      fireEvent.pointerUp(piece, { pointerId: 1, clientX: 50, clientY: 50 });
-      fireEvent.click(piece, { clientX: 50, clientY: 50 });
+      vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+      for (let tap = 0; tap < times; tap++) {
+        fireEvent.pointerDown(piece, { pointerId: 1, clientX: 50, clientY: 50 });
+        fireEvent.pointerUp(piece, { pointerId: 1, clientX: 50, clientY: 50 });
+        fireEvent.click(piece, { clientX: 50, clientY: 50 });
+      }
+      act(() => vi.advanceTimersByTime(DOUBLE_TAP_MS));
+      vi.useRealTimers();
       await act(async () => {});
     }
 
@@ -1165,6 +1178,35 @@ describe('MapBoard', () => {
           )
           .withTurnOf(alder),
       );
+
+    it.each([
+      { button: 'Deal 1 damage', damage: 1, doom: 0 },
+      { button: 'Add doom', damage: 0, doom: 1 },
+    ])(
+      'opens the damage and doom bubble of the rats on a double tap, where "$button" leaves $damage damage and $doom doom',
+      async ({ button, damage, doom }) => {
+        const table = aldersTurnWithRats();
+        render(
+          <MapBoard
+            board={table.board}
+            actions={actionsOn(table)}
+            busy={false}
+            adjusting={false}
+          />,
+        );
+
+        await tapPiece('study', 'rats', 2);
+        fireEvent.click(
+          within(screen.getByRole('complementary', { name: 'rats' })).getByRole('button', {
+            name: button,
+          }),
+        );
+
+        expect(screen.queryByRole('dialog')).toBeNull();
+        await expect.poll(() => table.board.enemy(rats).damage ?? 0).toBe(damage);
+        expect(table.board.enemy(rats).doom ?? 0).toBe(doom);
+      },
+    );
 
     it("opens the enemy's details, not the tile's, with engage for an aloof enemy at the investigator's location", async () => {
       const table = aldersTurnWithRats();
