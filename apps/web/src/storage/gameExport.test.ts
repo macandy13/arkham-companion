@@ -9,7 +9,8 @@ import {
   type Event,
   type StoredEvent,
 } from '@arkham/engine';
-import { GameImportError, parseGameExport, serialiseGameExport } from './gameExport';
+import { parseGameExport, serialiseGameExport } from './gameExport';
+import { GameImportError } from './importError';
 
 const started: Event = {
   type: 'ScenarioStarted',

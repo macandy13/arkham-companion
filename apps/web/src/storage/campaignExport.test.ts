@@ -14,7 +14,8 @@ import {
   type Event,
 } from '@arkham/engine';
 import { parseExportFile, serialiseCampaignExport } from './campaignExport';
-import { GameImportError, serialiseGameExport } from './gameExport';
+import { serialiseGameExport } from './gameExport';
+import { GameImportError } from './importError';
 
 const zealot = campaignId('zealot');
 
