@@ -314,6 +314,24 @@ describe('specs the base also records', () => {
     ]);
   });
 
+  it('are left out when the phone fails on both sides and the desktop picture is unchanged', () => {
+    const failedOnPhone = (picture: string) => ({
+      title: 'attic',
+      file: 'map.spec.ts',
+      tests: [
+        {
+          projectName: 'screenshot',
+          results: [{ status: 'passed', attachments: [{ name: 'screenshot', path: picture }] }],
+        },
+        { projectName: 'screenshot-phone', results: [{ status: 'failed', attachments: [] }] },
+      ],
+    });
+    const head: PlaywrightReport = { suites: [{ specs: [failedOnPhone('/head/desk.png')] }] };
+    const base: PlaywrightReport = { suites: [{ specs: [failedOnPhone('/base/desk.png')] }] };
+
+    expect(screenshots(head, { report: base, samePicture })).toEqual([]);
+  });
+
   it.each([
     { name: 'both unchanged, left out', headPhone: '/head/phone_old.png', shown: [] },
     { name: 'only the phone changed, shown', headPhone: '/head/phone_new.png', shown: ['attic'] },

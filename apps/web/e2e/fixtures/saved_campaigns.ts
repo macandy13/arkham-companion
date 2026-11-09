@@ -1,4 +1,5 @@
 import type { Page } from '@playwright/test';
+import { waitUntilSettled } from './test';
 
 /** A Night of the Zealot investigator in the campaign log as `CampaignStarted` writes them. */
 interface LoggedInvestigator {
@@ -167,4 +168,5 @@ export async function openStoredCampaign(
     { campaignId, title, events: events(campaignId) },
   );
   await page.goto(`/#/campaign/${campaignId}`);
+  await waitUntilSettled(page);
 }
