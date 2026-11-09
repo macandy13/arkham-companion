@@ -43,7 +43,7 @@ test('take a turn from the investigator panel', async ({ page }) => {
 
 // Journey: the play action pays the card's cost: tap the resources it costs on the play sheet, and
 // the card is played with them spent, one action gone.
-test('play a card and pay its cost', { tag: '@flow' }, async ({ page }) => {
+test('play a card and pay its cost', async ({ page }) => {
   const roland = page.getByRole('region', { name: 'Roland Banks' });
   const resources = roland.locator('[data-stat="resources"] data');
 

@@ -333,22 +333,18 @@ test('Roland Banks’ willpower test before a token is drawn, the draw button in
   await expect(test.getByRole('button', { name: 'Draw a token' })).toBeVisible();
 });
 
-test(
-  'Roland Banks playing a card, 3 of his 5 resources tapped to pay it',
-  { tag: '@shot' },
-  async ({ page }) => {
-    await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
+test('Roland Banks playing a card, 3 of his 5 resources tapped to pay it', async ({ page }) => {
+  await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
 
-    await page
-      .getByRole('region', { name: 'Roland Banks' })
-      .getByRole('button', { name: 'Play a card' })
-      .click();
-    const sheet = page.getByRole('dialog', { name: 'Play a card' });
-    await sheet.getByRole('button', { name: 'resource 3' }).click();
+  await page
+    .getByRole('region', { name: 'Roland Banks' })
+    .getByRole('button', { name: 'Play a card' })
+    .click();
+  const sheet = page.getByRole('dialog', { name: 'Play a card' });
+  await sheet.getByRole('button', { name: 'resource 3' }).click();
 
-    await expect(sheet.getByRole('button', { name: 'Play · pay 3' })).toBeEnabled();
-  },
-);
+  await expect(sheet.getByRole('button', { name: 'Play · pay 3' })).toBeEnabled();
+});
 
 test('Roland Banks’ willpower test with the group’s own chaos bag, no draw button', async ({
   page,
