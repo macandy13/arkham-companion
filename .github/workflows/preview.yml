@@ -111,11 +111,8 @@ jobs:
         working-directory: apps/web
         continue-on-error: true
         run: |
-          {
-            echo 'grep<<END_OF_GREP'
-            node scripts/screencast/cli.ts flows screencasts/report.json screencasts/base.json
-            echo 'END_OF_GREP'
-          } >> "$GITHUB_OUTPUT"
+          grep=$(node scripts/screencast/cli.ts flows screencasts/report.json screencasts/base.json)
+          printf 'grep<<END_OF_GREP\n%s\nEND_OF_GREP\n' "$grep" >> "$GITHUB_OUTPUT"
       - if: steps.changes.outputs.web == 'true' && steps.flows.outputs.grep != ''
         continue-on-error: true
         run: pnpm --filter @arkham/web e2e:screencast --grep "$FLOWS"

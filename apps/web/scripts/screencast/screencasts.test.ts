@@ -92,15 +92,42 @@ describe('flowVideos', () => {
 });
 
 describe('flowGrep', () => {
-  it('matches each title at the end of the full title, with special characters taken literally', () => {
-    const grep = new RegExp(
-      flowGrep([{ title: 'start a new game' }, { title: 'fits a 1180 × 820 tablet (landscape)' }]),
-    );
+  const grep = new RegExp(
+    flowGrep([
+      { title: 'the settings', file: 'settings.spec.ts' },
+      { title: 'fits a 1180 × 820 tablet (landscape)', file: 'tablet.spec.ts' },
+    ]),
+  );
 
-    expect(grep.test('screencast new_game.spec.ts start a new game')).toBe(true);
-    expect(grep.test('screencast tablet.spec.ts fits a 1180 × 820 tablet (landscape)')).toBe(true);
-    expect(grep.test('screencast new_game.spec.ts restart a new game')).toBe(false);
-    expect(grep.test('screencast new_game.spec.ts start a new game twice')).toBe(false);
+  it.each([
+    { name: 'the flow itself', title: 'screencast settings.spec.ts the settings', picked: true },
+    {
+      name: 'special characters, taken literally',
+      title: 'screencast tablet.spec.ts fits a 1180 × 820 tablet (landscape)',
+      picked: true,
+    },
+    {
+      name: 'a describe block and a tag',
+      title: 'screencast settings.spec.ts menu the settings @slow',
+      picked: true,
+    },
+    {
+      name: 'a title in another file ending in the flow title',
+      title: 'screencast accessibility.spec.ts change the settings',
+      picked: false,
+    },
+    {
+      name: 'the same title in another file',
+      title: 'screencast other.spec.ts the settings',
+      picked: false,
+    },
+    {
+      name: 'a title going on',
+      title: 'screencast settings.spec.ts the settings twice',
+      picked: false,
+    },
+  ])('matches $name: $picked', ({ title, picked }) => {
+    expect(grep.test(title)).toBe(picked);
   });
 });
 

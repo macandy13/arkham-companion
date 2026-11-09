@@ -151,13 +151,20 @@ export function changedFlows(pictures: PlaywrightReport, base: BaseRun = NO_BASE
 }
 
 /**
- * The `playwright test --grep` pattern that selects `flows`: each title at the end of the full
- * title (project, file, title, joined by spaces), so a flow whose title ends another's isn't picked too.
+ * The `playwright test --grep` pattern that selects `flows`. Playwright greps the full title
+ * (project, file, describe blocks, title and tags, joined by spaces), so each flow is matched by
+ * its file and its whole title: `the settings` must not also pick `change the settings` in
+ * another file. In the same file, a describe block can't be told from the title's first words.
  */
 export function flowGrep(flows: readonly ChangedFlow[]): string {
   // Plain `node` can't load @arkham/util's extensionless imports, so its escapeRegExp is repeated here.
   const escape = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  return flows.map((flow) => ` ${escape(flow.title)}$`).join('|');
+  return flows
+    .map((flow) => {
+      const file = flow.file === undefined ? '' : `${escape(flow.file)} (.+ )?`;
+      return ` ${file}${escape(flow.title)}( @\\S+)*$`;
+    })
+    .join('|');
 }
 
 /**
