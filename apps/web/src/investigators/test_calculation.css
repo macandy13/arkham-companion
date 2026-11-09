@@ -120,6 +120,21 @@
   font-size: var(--font-size-subtitle);
 }
 
+/* Before the draw, the chance to pass in the outcome's place, as quiet as the skill value's terms. */
+#board dialog[data-shell] section[data-part='strip'] > ul[data-part='odds'] {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-note);
+  font-variant-numeric: tabular-nums;
+  text-align: end;
+}
+
+#board dialog[data-shell] section[data-part='strip'] > ul[data-part='odds'] > li:first-child {
+  color: var(--color-text);
+}
+
 /* The tokens drawn and, while the test waits for one, the draw button where the next one goes. */
 #board dialog[data-shell] section[data-part='strip'] > figure {
   display: flex;

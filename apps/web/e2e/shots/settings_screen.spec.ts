@@ -1,6 +1,6 @@
 import { expect, test } from '../fixtures/test';
 
-// Situations on the settings screen, each photographed as it ends (`@shot`, coding guidelines §3).
+// Situations on the settings screen, each photographed as it ends (coding guidelines §3).
 
 test('the settings with the unofficial fan project notice', async ({ page }) => {
   await page.goto('/#/settings');
@@ -15,6 +15,14 @@ test('the settings on the parchment table', async ({ page }) => {
   await page.getByRole('radio', { name: 'Parchment' }).check();
 
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
+});
+
+test('the settings telling the players only what they do by hand', async ({ page }) => {
+  await page.goto('/#/settings');
+
+  await page.getByRole('radio', { name: 'Only what you do by hand' }).check();
+
+  await expect(page.getByRole('group', { name: 'What the app tells you' })).toBeVisible();
 });
 
 test('the collection, the Core Set ticked', async ({ page }) => {

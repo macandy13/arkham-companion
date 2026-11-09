@@ -1,0 +1,64 @@
+/*
+ * A counter's − / + bubble (CounterBubble) on the guide's paper (base.css), over the page where
+ * the bubble placed itself (`--bubble-left`, `--bubble-top`), its point on the counter
+ * (`--bubble-arrow`), above the counter or, `data-below`, under it.
+ */
+[data-counter-bubble] {
+  position: fixed;
+  inset-inline-start: var(--bubble-left);
+  inset-block-start: var(--bubble-top);
+  z-index: var(--layer-counter-bubble);
+  display: grid;
+  grid-template-columns: repeat(3, auto);
+  gap: var(--space-1) var(--space-2);
+  align-items: center;
+  padding: var(--space-2) var(--space-3);
+}
+
+/* What the steps change, over them, so a step is never taken on the wrong counter. */
+[data-counter-bubble] > h2 {
+  grid-column: 1 / -1;
+  margin: 0;
+  font-family: var(--font-family-label);
+  font-size: var(--font-size-note);
+  font-weight: normal;
+  color: var(--color-text-muted);
+  text-align: center;
+  white-space: nowrap;
+}
+
+[data-counter-bubble]::after {
+  content: '';
+  position: absolute;
+  inset-inline-start: var(--bubble-arrow);
+  inset-block-start: 100%;
+  width: var(--bubble-point);
+  height: var(--bubble-point);
+  translate: -50% -50%;
+  rotate: 45deg;
+  border: inherit;
+  border-block-start: none;
+  border-inline-start: none;
+  background: var(--color-paper);
+}
+
+[data-counter-bubble][data-below]::after {
+  inset-block-start: 0;
+  rotate: -135deg;
+}
+
+[data-counter-bubble] > button {
+  width: var(--touch-target);
+  height: var(--touch-target);
+  padding: 0;
+  border-radius: var(--radius-round);
+  font-size: var(--font-size-title);
+}
+
+[data-counter-bubble] > output {
+  min-width: var(--touch-target);
+  font-family: var(--font-family-print);
+  font-size: var(--font-size-title);
+  font-variant-numeric: lining-nums tabular-nums;
+  text-align: center;
+}

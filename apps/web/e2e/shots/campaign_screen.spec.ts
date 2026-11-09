@@ -1,6 +1,6 @@
 import { expect, test } from '../fixtures/test';
 
-// Situations on the campaign log, each photographed as it ends (`@shot`, coding guidelines §3).
+// Situations on the campaign log, each photographed as it ends (coding guidelines §3).
 
 test('the log of a campaign just started', async ({ page }) => {
   await page.goto('/#/new');

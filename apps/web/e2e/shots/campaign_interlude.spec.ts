@@ -6,7 +6,7 @@ import {
   rolandBanks,
 } from '../fixtures/saved_campaigns';
 
-// The interlude dialog of the E2E build's test campaign, after The Gathering (`@shot`, coding
+// The interlude dialog of the E2E build's test campaign, after The Gathering (coding
 // guidelines §3): no campaign the app plays has an interlude yet.
 
 test('the decision of an interlude', async ({ page }) => {

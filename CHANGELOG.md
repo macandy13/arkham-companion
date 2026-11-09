@@ -2,6 +2,43 @@
 
 The sections dated up to 2026-10-22 were released as 1.0.0 to 1.8.0 by mistake: Release Please starts at 1.0.0 by default. Versioning restarted at 0.1.0 (see "Versions" in docs/product.md).
 
+## [0.1.40](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v0.1.39...arkham-companion-v0.1.40) (2026-11-09)
+
+
+### Features
+
+* **engine:** ask before a drawn treachery's revelation (M1V.4) ([62a44f5](https://github.com/macandy13/arkham-companion/commit/62a44f52e0d1b353654096506e6e94a5c4e4ae11))
+* **engine:** ask before a drawn treachery's revelation (M1V.4) ([d800e37](https://github.com/macandy13/arkham-companion/commit/d800e379f6acf7c53d5ddd0f46333c71c5aea547))
+* **scenarios:** Smoke and Mirrors resolutions and quick-game entry (MC2.8d) ([467a1cd](https://github.com/macandy13/arkham-companion/commit/467a1cdf60807d825569e828663fe4fb1193eda8))
+* **web:** change investigator counters in place with a double-tap bubble (M6.9) ([a5d3780](https://github.com/macandy13/arkham-companion/commit/a5d37806cf97551af00a7e5c658de872c07322ca))
+* **web:** change investigator counters in place with a double-tap bubble (M6.9) ([a17178f](https://github.com/macandy13/arkham-companion/commit/a17178f6d982687d97942d583ebcc3c71dbe3327))
+* **web:** pay a played card's cost by tapping resource tokens (M6.8) ([b758077](https://github.com/macandy13/arkham-companion/commit/b7580773de7a63c8efcc94810da2e1376a382baa))
+* **web:** show the chance to pass before a skill test's draw (M6.7c) ([496faa7](https://github.com/macandy13/arkham-companion/commit/496faa7e47d2d1490b2a1642e7abce428d30d586))
+* **web:** title the counter bubble with what it changes (M6.9) ([cf751d5](https://github.com/macandy13/arkham-companion/commit/cf751d5d9eafeea4c1a01b120d3be91a1ce62bab))
+
+
+### Bug fixes
+
+* **web:** bubble margin in pixels, Escape closes only the bubble, close on scroll ([db78220](https://github.com/macandy13/arkham-companion/commit/db782201ee6b03c024ab0d643620953ef8802f40))
+* **web:** photograph preview pictures once the screen has settled ([f296d67](https://github.com/macandy13/arkham-companion/commit/f296d67415efb640671ca4ed1975f7697eeb6a60))
+* **web:** photograph preview pictures once the screen has settled ([e37f848](https://github.com/macandy13/arkham-companion/commit/e37f84878b693b55530b0ce759a38f799cc146e8))
+* **web:** settle on fetched resources, seed Math.random everywhere ([3218d4f](https://github.com/macandy13/arkham-companion/commit/3218d4f52e2294276786871d8219dd2e544c77dc))
+
+
+### Refactoring
+
+* **engine:** name the revelation decision's id prefix and cancel option ([0dfe01b](https://github.com/macandy13/arkham-companion/commit/0dfe01b6be0a7251bb3bcc20e9c5d2344dfae0b8))
+
+## [0.1.39](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v0.1.38...arkham-companion-v0.1.39) (2026-11-09)
+
+
+### Features
+
+* **engine:** let card data remove doom (ME.2) ([156a6ca](https://github.com/macandy13/arkham-companion/commit/156a6cab3e728f0f0beeff4f74ef0e8bbfa4b4ee))
+* **engine:** pay player card costs before their effect (M1V.4) ([65e53c0](https://github.com/macandy13/arkham-companion/commit/65e53c00e524a9953019516083ac4c25cb718a03))
+* **engine:** work out a skill test's odds over the chaos bag (M6.7a) ([a0a0029](https://github.com/macandy13/arkham-companion/commit/a0a002986f405775ba20bafa84863d0a5c07388b))
+* **engine:** work out a skill test's odds over the chaos bag (M6.7a) ([9a95f45](https://github.com/macandy13/arkham-companion/commit/9a95f45bda8ee7211061738145bfc9e04f221ead))
+
 ## [0.1.38](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v0.1.37...arkham-companion-v0.1.38) (2026-11-09)
 
 

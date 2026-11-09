@@ -142,4 +142,17 @@ describe('SettingsScreen', () => {
     expect(document.documentElement.dataset.chaosDraw).toBe('table');
     expect(loadSettings().chaosDraw).toBe('table');
   });
+
+  it('tells every change by default and saves a lighter level for the next games', () => {
+    renderSettings();
+    const reliance = screen.getByRole('group', { name: 'What the app tells you' });
+    expect(within(reliance).getByRole('radio', { name: 'Every change it makes' })).toHaveProperty(
+      'checked',
+      true,
+    );
+
+    fireEvent.click(within(reliance).getByRole('radio', { name: 'Only what you do by hand' }));
+
+    expect(loadSettings().reliance).toBe('auto');
+  });
 });

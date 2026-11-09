@@ -159,6 +159,10 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     expect(table.board.perInvestigator('clues')).toEqual({ roland: 0, daisy: 0, wendy: 0 });
     expect(table.board.namesIn({ kind: 'outOfGame' })).toEqual(['Study', 'Trapped']);
 
+    // Wendy plays a card and pays its cost of 2 from her 5 resources.
+    table.playCard(wendy, 2);
+    expect(table.board.investigator(wendy)).toMatchObject({ resources: 3 });
+
     table.endTurn(wendy);
 
     // Round 1 – enemy phase: no enemy is in play yet
@@ -171,7 +175,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     expect(table.nextPhase()).toEqual({ round: 1, phase: 'upkeep' });
 
     expect(table.board.perInvestigator('actions')).toEqual({ roland: 3, daisy: 3, wendy: 3 });
-    expect(table.board.perInvestigator('resources')).toEqual({ roland: 6, daisy: 6, wendy: 6 });
+    expect(table.board.perInvestigator('resources')).toEqual({ roland: 6, daisy: 6, wendy: 4 });
 
     // Round 2 – mythos: 1.2 doom, 1.3 below the threshold, 1.4 Roland draws the
     // Icy Ghoul, which spawns in the Cellar, and Daisy draws Crypt Chill: its
@@ -179,6 +183,23 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     expect(table.nextPhase()).toEqual({ round: 2, phase: 'mythos', step: 'drawEncounterCard' });
 
     expect(table.board.enemies).toEqual([{ name: icyGhoul, at: 'Cellar', health: 4 }]);
+    // A treachery asks first whether its revelation resolves, as a card such as Ward of
+    // Protection could cancel it; nobody here holds one.
+    expect(table.board.decisions).toEqual([
+      {
+        prompt: 'decision.revelation',
+        kind: 'confirm',
+        about: 'Crypt Chill',
+        card: expect.objectContaining({ name: 'Crypt Chill' }),
+        for: daisy,
+        options: ['resolve revelation', 'cancel revelation'],
+        labels: {
+          'resolve revelation': 'decision.resolveRevelation',
+          'cancel revelation': 'decision.cancelRevelation',
+        },
+      },
+    ]);
+    table.resolveRevelation(byName('Crypt Chill'));
     expect(table.board.decisions).toEqual([
       {
         prompt: 'decision.cardTest',
@@ -210,9 +231,10 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     expect(table.board.namesIn({ kind: 'resolving' })).toEqual([]);
     expect(table.board.namesIn({ kind: 'encounterDiscard' })).toEqual(['Crypt Chill']);
 
-    // 1.4 continues: Wendy draws Ancient Evils, 1 doom on the agenda. The
-    // mythos phase has run all its steps; the next "Next" moves on.
-    expect(table.nextPhase()).toEqual({ round: 2, phase: 'mythos' });
+    // 1.4 continues: Wendy draws Ancient Evils, 1 doom on the agenda. Its answer ends the
+    // mythos phase's steps; the next "Next" moves on.
+    expect(table.nextPhase()).toEqual({ round: 2, phase: 'mythos', step: 'drawEncounterCard' });
+    table.resolveRevelation(byName('Ancient Evils'));
 
     expect(table.board.agenda).toMatchObject({ name: "What's Going On?!", doom: 2, threshold: 3 });
     expect(table.board.namesIn({ kind: 'encounterDiscard' })).toEqual([
@@ -326,7 +348,8 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     expect(table.board.decisions).toEqual([]);
 
     // 1.4: Roland draws the Swarm of Rats, Daisy a Ghoul Minion, Wendy Ancient Evils.
-    expect(table.nextPhase()).toEqual({ round: 3, phase: 'mythos' });
+    expect(table.nextPhase()).toEqual({ round: 3, phase: 'mythos', step: 'drawEncounterCard' });
+    table.resolveRevelation(byName('Ancient Evils'));
 
     expect(table.board.enemies).toEqual([
       { name: icyGhoul, at: 'Cellar', health: 4, engagedWith: wendy },
@@ -387,6 +410,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
 
     // Round 4 – mythos: Roland draws Grasping Hands, an agility (3) test
     expect(table.nextPhase()).toEqual({ round: 4, phase: 'mythos', step: 'drawEncounterCard' });
+    table.resolveRevelation(byName('Grasping Hands'));
     expect(table.board.decisions).toEqual([
       {
         prompt: 'decision.cardTest',
@@ -463,6 +487,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
 
     // Round 5 – mythos: Roland draws Rotting Remains, a willpower (3) test
     expect(table.nextPhase()).toEqual({ round: 5, phase: 'mythos', step: 'drawEncounterCard' });
+    table.resolveRevelation(byName('Rotting Remains'));
     expect(table.board.decisions).toEqual([
       {
         prompt: 'decision.cardTest',
@@ -480,7 +505,8 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     // With willpower 3 he passes and takes no horror.
     table.answer(byName('Rotting Remains'), 'pass');
     // 1.4 continues: Daisy draws the Ravenous Ghoul, Wendy Frozen in Fear.
-    expect(table.nextPhase()).toEqual({ round: 5, phase: 'mythos' });
+    expect(table.nextPhase()).toEqual({ round: 5, phase: 'mythos', step: 'drawEncounterCard' });
+    table.resolveRevelation(byName('Frozen in Fear'));
 
     expect(table.board.agenda).toMatchObject({ name: 'Rise of the Ghouls', doom: 3, threshold: 7 });
     expect(table.board.namesIn({ kind: 'threatArea', investigatorId: wendy })).toEqual([
@@ -554,11 +580,12 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     // Round 5 – upkeep
     expect(table.nextPhase()).toEqual({ round: 5, phase: 'upkeep' });
 
-    expect(table.board.perInvestigator('resources')).toEqual({ roland: 11, daisy: 10, wendy: 10 });
+    expect(table.board.perInvestigator('resources')).toEqual({ roland: 11, daisy: 10, wendy: 8 });
 
     // Round 6 – mythos: Roland draws Rotting Remains again and passes with willpower 3;
     // the Swarms of Rats Daisy and Wendy draw spawn engaged with them.
     expect(table.nextPhase()).toEqual({ round: 6, phase: 'mythos', step: 'drawEncounterCard' });
+    table.resolveRevelation(byName('Rotting Remains'));
     expect(table.board.decisions).toEqual([
       {
         prompt: 'decision.cardTest',
@@ -626,26 +653,21 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     table.resolveEnemyAttacks();
     expect(table.nextPhase()).toEqual({ round: 6, phase: 'upkeep' });
 
-    // Round 7 – mythos: one command, one undo group. Raising the doom, drawing
-    // Grasping Hands and its revelation test are one chain, so taking the
+    // Round 7 – mythos: one command, one undo group. Raising the doom and drawing
+    // Grasping Hands, which asks whether its revelation resolves, are one chain, so taking the
     // command back removes all of it, and running it again gives the same events.
     const eventsBefore = table.events.length;
     expect(table.nextPhase()).toEqual({ round: 7, phase: 'mythos', step: 'drawEncounterCard' });
     const drawn = table.events.slice(eventsBefore);
-
-    expect(table.board.decisions).toEqual([
-      {
-        prompt: 'decision.cardTest',
-        kind: 'skillTestResult',
+    const graspingHandsAsks = [
+      expect.objectContaining({
+        prompt: 'decision.revelation',
         about: 'Grasping Hands',
-        card: expect.objectContaining({ name: 'Grasping Hands' }),
         for: roland,
-        test: { skill: 'agility', difficulty: 3 },
-        options: ['pass', 'fail'],
-        perPointFailed: 'damage',
-        labels: { pass: 'decision.pass', fail: 'decision.fail' },
-      },
-    ]);
+      }),
+    ];
+
+    expect(table.board.decisions).toEqual(graspingHandsAsks);
 
     table.undo();
 
@@ -656,6 +678,21 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
 
     expect(table.events.slice(eventsBefore)).toEqual(drawn);
     expect(table.board.agenda).toMatchObject({ name: 'Rise of the Ghouls', doom: 5, threshold: 7 });
+    expect(table.board.decisions).toEqual(graspingHandsAsks);
+
+    // Had Roland a card that cancels a revelation (Ward of Protection), he would cancel it here:
+    // Grasping Hands goes to the discard pile without its test, and Daisy draws next. Taken
+    // back, so the game goes on as drawn.
+    table.cancelRevelation(byName('Grasping Hands'));
+
+    expect(table.board.namesIn({ kind: 'encounterDiscard' })[0]).toBe('Grasping Hands');
+    expect(table.board.decisions).toEqual([]);
+
+    table.undo();
+
+    expect(table.board.decisions).toEqual(graspingHandsAsks);
+
+    table.resolveRevelation(byName('Grasping Hands'));
     expect(table.board.decisions).toEqual([
       {
         prompt: 'decision.cardTest',
@@ -675,6 +712,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     // 1.4 continues: Daisy's Grasping Hands (agility 3, she passes), then Wendy
     // draws Dissonant Voices, which stays in play in her threat area.
     expect(table.nextPhase()).toEqual({ round: 7, phase: 'mythos', step: 'drawEncounterCard' });
+    table.resolveRevelation(byName('Grasping Hands'));
     expect(table.board.decisions).toEqual([
       {
         prompt: 'decision.cardTest',
@@ -689,7 +727,8 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
       },
     ]);
     table.answer(byName('Grasping Hands'), 'pass');
-    expect(table.nextPhase()).toEqual({ round: 7, phase: 'mythos' });
+    expect(table.nextPhase()).toEqual({ round: 7, phase: 'mythos', step: 'drawEncounterCard' });
+    table.resolveRevelation(byName('Dissonant Voices'));
 
     expect(table.board.namesIn({ kind: 'threatArea', investigatorId: wendy })).toContain(
       'Dissonant Voices',
@@ -824,7 +863,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
       Investigators:
         Roland Banks – Attic; damage 5/9, horror 4/5, 5 clues, 13 resources, actions left 3; threat area: none
         Daisy Walker – Cellar; damage 3/5, horror 2/9, 1 clues, 13 resources, actions left 3; threat area: none
-        Wendy Adams – Cellar; damage 5/7, horror 2/7, 3 clues, 12 resources, actions left 3; threat area: Frozen in Fear
+        Wendy Adams – Cellar; damage 5/7, horror 2/7, 3 clues, 10 resources, actions left 3; threat area: Frozen in Fear
       Encounter deck: 8 cards; discard: 14 cards, top: Dissonant Voices
       Set aside: 2 cards
       Victory display: Icy Ghoul
@@ -841,6 +880,9 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     // discard, so she answers that she takes 2 damage: 7 of 7, and she is
     // defeated. Her 3 clues go to the Cellar and Frozen in Fear is discarded.
     expect(table.nextPhase()).toEqual({ round: 8, phase: 'mythos', step: 'drawEncounterCard' });
+    table.resolveRevelation(byName('Dissonant Voices'));
+    expect(table.nextPhase()).toEqual({ round: 8, phase: 'mythos', step: 'drawEncounterCard' });
+    table.resolveRevelation(byName('Crypt Chill'));
     expect(table.board.decisions).toEqual([
       {
         prompt: 'decision.cardTest',
@@ -940,7 +982,10 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
 
     // 1.4: both draw Obscuring Fog, which attaches to the drawer's location
     // (+2 shroud) until that location is investigated successfully.
-    expect(table.nextPhase()).toEqual({ round: 9, phase: 'mythos' });
+    expect(table.nextPhase()).toEqual({ round: 9, phase: 'mythos', step: 'drawEncounterCard' });
+    table.resolveRevelation(byName('Obscuring Fog'));
+    expect(table.nextPhase()).toEqual({ round: 9, phase: 'mythos', step: 'drawEncounterCard' });
+    table.resolveRevelation(byName('Obscuring Fog'));
     expect(table.board.location(byName('Attic')).attachments).toEqual(['Obscuring Fog']);
     expect(table.board.location(byName('Cellar')).attachments).toEqual(['Obscuring Fog']);
 
@@ -1020,6 +1065,9 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     // Round 10 – mythos: Roland draws Dissonant Voices, Daisy Rotting Remains
     // (willpower 3 against 3: she passes).
     expect(table.nextPhase()).toEqual({ round: 10, phase: 'mythos', step: 'drawEncounterCard' });
+    table.resolveRevelation(byName('Dissonant Voices'));
+    expect(table.nextPhase()).toEqual({ round: 10, phase: 'mythos', step: 'drawEncounterCard' });
+    table.resolveRevelation(byName('Rotting Remains'));
     expect(table.board.decisions).toEqual([
       {
         prompt: 'decision.cardTest',
@@ -1094,8 +1142,10 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
       doom: 6,
       threshold: 10,
     });
+    table.resolveRevelation(byName('Rotting Remains'));
     table.answer(byName('Rotting Remains'), 'pass');
-    expect(table.nextPhase()).toEqual({ round: 11, phase: 'mythos' });
+    expect(table.nextPhase()).toEqual({ round: 11, phase: 'mythos', step: 'drawEncounterCard' });
+    table.resolveRevelation(byName('Frozen in Fear'));
     expect(table.board.namesIn({ kind: 'threatArea', investigatorId: daisy })).toEqual([
       'Frozen in Fear',
     ]);
@@ -1135,6 +1185,8 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
 
     // Round 12 – mythos: the ninth doom, one short of the threshold. Roland draws Dissonant Voices
     // again, Daisy a Ghoul Minion, which spawns engaged with her in the Hallway.
+    expect(table.nextPhase()).toEqual({ round: 12, phase: 'mythos', step: 'drawEncounterCard' });
+    table.resolveRevelation(byName('Dissonant Voices'));
     expect(table.nextPhase()).toEqual({ round: 12, phase: 'mythos' });
     expect(table.board.agenda).toMatchObject({ doom: 9 });
     expect(table.board.namesIn({ kind: 'threatArea', investigatorId: roland })).toEqual([

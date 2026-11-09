@@ -108,18 +108,24 @@ export { isEnemyAttackDecision } from './forced_attacks';
 export { confirmOptions, skillTestDecision, type SkillTestOutcomes } from './decisions';
 export { drawTokens, testFinished } from './draw_tokens';
 export { tokenCounts, type TokenCount } from './chaos_bag';
+export { skillTestOdds, type SkillTestOdds } from './skill_test_odds';
 export {
   revealsAnotherToken,
   skillTestContext,
   skillTestSuggestion,
   suggestSkillTest,
+  tokenModifier,
   type SkillModifierRegistry,
   type SkillTestContext,
   type SkillTestInput,
   type TokenValue,
 } from './skill_modifiers';
 export { enemiesAt, type EnemyFilter, enemiesOnTable } from './enemies';
-export { matchesEncounter } from './handle_encounter';
+export {
+  CANCEL_REVELATION_OPTION,
+  isRevelationDecision,
+  matchesEncounter,
+} from './handle_encounter';
 export { doomInPlay, isInPlay } from './doom';
 export { checkInvariants } from './invariants';
 export { PHASE_OF_STEP, PHASE_STEP_TITLES } from './phases';

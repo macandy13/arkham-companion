@@ -17,7 +17,14 @@ import {
   type CardStats,
   type Command,
 } from '@arkham/engine';
-import { answer, cardIn, rejectionFrom, stateAfter } from '@arkham/engine/test/utils';
+import {
+  answer,
+  cardIn,
+  rejectionFrom,
+  resolveRevelation,
+  runFrom,
+  stateAfter,
+} from '@arkham/engine/test/utils';
 import {
   GRAVEYARD_DECISION,
   HUNTING_SHADOW_DECISION,
@@ -525,7 +532,7 @@ describe('The Midnight Masks card abilities', () => {
         .withInvestigator(alice, { locationId: rivertown, clues: 1 })
         .withCard(shadow, cardOf('01135'), { kind: 'encounterDeck' })
         .start();
-      const drawn = stateAfter(context, started, aliceDraws);
+      const drawn = stateAfter(context, started, aliceDraws, resolveRevelation('hunting_shadow'));
 
       const state = stateAfter(context, drawn, answer(HUNTING_SHADOW_DECISION, optionId));
 
@@ -575,9 +582,9 @@ describe('The Midnight Masks card abilities', () => {
         .withCard(shadow, cardOf('01135'), { kind: 'encounterDeck' })
         .start();
 
-      const { state } = execute(context, started, aliceDraws);
+      const { state } = runFrom(context, started, [aliceDraws, resolveRevelation('false_lead')]);
 
-      expect(state.pending).toMatchObject([{ id: HUNTING_SHADOW_DECISION }]);
+      expect(state.pending).toMatchObject([{ id: 'revelation:hunting_shadow' }]);
     });
 
     it('places 2 of her 3 clues on Rivertown for a failed intellect (4) test by 2', () => {
@@ -586,7 +593,7 @@ describe('The Midnight Masks card abilities', () => {
         .withInvestigator(alice, { locationId: rivertown, clues: 3 })
         .withCard(falseLead, cardOf('01136'), { kind: 'encounterDeck' })
         .start();
-      const drawn = stateAfter(context, started, aliceDraws);
+      const drawn = stateAfter(context, started, aliceDraws, resolveRevelation('false_lead'));
 
       const state = stateAfter(context, drawn, { ...answer('test:false_lead', 'fail'), margin: 2 });
 
@@ -647,7 +654,10 @@ describe('The Midnight Masks card abilities', () => {
       .withCard(instanceId('mysterious_chanting'), cardOf('01171'), { kind: 'encounterDeck' })
       .start();
 
-    const { state } = execute(context, started, aliceDraws);
+    const { state } = runFrom(context, started, [
+      aliceDraws,
+      resolveRevelation('mysterious_chanting'),
+    ]);
 
     expect(state.cards[wizard]?.tokens.doom).toBe(2);
     expect(state.cards[nightgaunt]?.tokens.doom).toBeUndefined();
@@ -666,7 +676,10 @@ describe('The Midnight Masks card abilities', () => {
       .withCard(acolyte, cardOf('01169'), { kind: 'encounterDeck' })
       .start();
 
-    const { state, events } = execute(context, started, aliceDraws);
+    const { state, events } = runFrom(context, started, [
+      aliceDraws,
+      resolveRevelation('mysterious_chanting'),
+    ]);
 
     expect(state.cards[acolyte]?.zone.kind).toBe('encounterDeck');
     expect(events).toContainEqual(
@@ -686,7 +699,12 @@ describe('The Midnight Masks card abilities', () => {
       .withCard(wizard, cardOf('01170'), { kind: 'encounterDeck' })
       .start();
 
-    const state = stateAfter(context, started, aliceDraws);
+    const state = stateAfter(
+      context,
+      started,
+      aliceDraws,
+      resolveRevelation('mysterious_chanting'),
+    );
 
     // "Spawn - Any empty location": alice stands in Rivertown, so only the Graveyard is empty.
     expect(state.cards[wizard]?.zone).toEqual(atLocation(graveyard));
@@ -703,7 +721,7 @@ describe('The Midnight Masks card abilities', () => {
       })
       .withCard(instanceId('on_wings'), cardOf('01173'), { kind: 'encounterDeck' })
       .start();
-    const drawn = stateAfter(context, started, aliceDraws);
+    const drawn = stateAfter(context, started, aliceDraws, resolveRevelation('on_wings'));
 
     const state = stateAfter(context, drawn, answer('test:on_wings', 'fail'));
 
@@ -725,7 +743,7 @@ describe('The Midnight Masks card abilities', () => {
       .withCard(nightgaunt, cardOf('01172'), engagedWith(alice))
       .withCard(instanceId('on_wings'), cardOf('01173'), { kind: 'encounterDeck' })
       .start();
-    const drawn = stateAfter(context, started, aliceDraws);
+    const drawn = stateAfter(context, started, aliceDraws, resolveRevelation('on_wings'));
     expect(drawn.pending).toMatchObject([{ skillTest: { skill: 'agility', difficulty: 4 } }]);
 
     const state = stateAfter(context, drawn, answer('test:on_wings', 'fail'));

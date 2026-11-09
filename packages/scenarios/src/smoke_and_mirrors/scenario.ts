@@ -18,6 +18,7 @@ import {
 import { ASH_STORY } from '../brethren_of_ash/story';
 import { spreadingFlames } from '../spreading_flames/scenario';
 import { SMOKE_AND_MIRRORS_CODES, SMOKE_AND_MIRRORS_SETS } from './cards';
+import { smokeAndMirrorsResolutions } from './resolutions';
 
 const codes = SMOKE_AND_MIRRORS_CODES;
 
@@ -129,7 +130,7 @@ const peopleOfArkham: SetupStep = {
  * university. The chaos bag is Spreading Flames' for a standalone game, the log's in a campaign.
  * A standalone game has no log, so it takes the university In Flames: our reading, as the
  * ArkhamCards guide has no standalone note for this scenario. The 2 cultist tokens stay in the
- * campaign bag through the resolutions (MC2.8d).
+ * campaign bag through the resolutions (`smokeAndMirrorsResolutions`).
  * The reference card (12133) is entered by hand from ArkhamDB; the cultist's "reveal another
  * token" against an Elite enemy, the tablet's clue placed on a failure and putting Dr. Henry
  * Armitage into play under his bearer's control are done by hand.
@@ -178,4 +179,5 @@ export const smokeAndMirrors: ScenarioDefinition = {
     { kind: 'addChaosTokens', tokens: ['cultist', 'cultist'] },
   ],
   modifiers: { tokenValues: { skull: eliteCount, elderThing: cluesYouControl } },
+  resolutions: smokeAndMirrorsResolutions,
 };

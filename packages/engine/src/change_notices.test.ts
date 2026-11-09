@@ -22,7 +22,7 @@ import {
   type ExecuteResult,
   type NoticeKind,
 } from './index';
-import { answer, stateAfter } from '../test/utils';
+import { answer, resolveRevelation, stateAfter } from '../test/utils';
 
 const agenda = instanceId('agenda');
 const lastAgenda = instanceId('last_agenda');
@@ -126,13 +126,16 @@ describe('changeNotices', () => {
       .start();
     const upkeep = stateAfter(context, state, ...toUpkeep);
 
-    const result = execute(context, upkeep, next);
+    const drawn = execute(context, upkeep, next);
+    const result = execute(context, drawn.state, resolveRevelation('rotting_treachery'));
 
     const drawStep = { kind: 'rule', step: 'drawEncounterCard' } as const;
-    expect(noticesOf(result)).toEqual([
+    expect(noticesOf(drawn)).toEqual([
       { kind: 'tokens', cause: { kind: 'rule', step: 'placeDoom' }, events: ['TokensChanged'] },
       { kind: 'encounter', cause: drawStep, events: ['EncounterCardDrawn'] },
       { kind: 'board', cause: drawStep, events: ['CardMoved', 'CardFlipped'] },
+    ]);
+    expect(noticesOf(result)).toEqual([
       {
         kind: 'investigator',
         cause: { kind: 'card', cardId: rottingTreachery, window: { kind: 'revealed' } },
@@ -178,7 +181,13 @@ describe('changeNotices', () => {
         encounterDeck,
       )
       .start();
-    const asked = stateAfter(context, state, ...toUpkeep, next);
+    const asked = stateAfter(
+      context,
+      state,
+      ...toUpkeep,
+      next,
+      resolveRevelation('testing_treachery'),
+    );
 
     const result = execute(context, asked, answer('test:testing_treachery', 'pass'));
 

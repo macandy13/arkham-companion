@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { signed } from '../investigators/TestCalculation';
+import { signed } from '../tokens/tokenValue';
 
 /** The last change of a shown count (`useCountChange`): by how much, and a key new to each change. */
 export interface CountChange {

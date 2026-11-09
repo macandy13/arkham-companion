@@ -2,6 +2,7 @@ import { expect, test } from './fixtures/test';
 import { dragTo } from './fixtures/drag';
 import {
   ghoulPriestInCellarExport,
+  houseOpenedExport,
   inTheParlorExport,
   resumeImportedGame,
   rolandThreatenedExport,
@@ -37,6 +38,57 @@ test('take a turn from the investigator panel', async ({ page }) => {
   await test.step('End the turn', async () => {
     await bar.getByRole('button', { name: 'End turn' }).click();
     await expect(bar.getByText(/^Turn taken · /)).toBeVisible();
+  });
+});
+
+// Journey: the play action pays the card's cost: tap the resources it costs on the play sheet, and
+// the card is played with them spent, one action gone.
+test('play a card and pay its cost', async ({ page }) => {
+  const roland = page.getByRole('region', { name: 'Roland Banks' });
+  const resources = roland.locator('[data-stat="resources"] data');
+
+  await test.step('Resume a game on Roland Banks’ turn with 5 resources', async () => {
+    await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
+    await expect(resources).toHaveText('5');
+  });
+
+  await test.step('Play a card and tap the 3 resources it costs', async () => {
+    await roland.getByRole('button', { name: 'Play a card' }).click();
+    const sheet = page.getByRole('dialog', { name: 'Play a card' });
+    await sheet.getByRole('button', { name: 'resource 3' }).click();
+    await expect(sheet.getByText('Pays 3 · 2 left')).toBeVisible();
+    await sheet.getByRole('button', { name: 'Play · pay 3' }).click();
+    await expect(sheet).toBeHidden();
+  });
+
+  await test.step('The 3 resources are spent with the action', async () => {
+    await expect(resources).toHaveText('2');
+    await expect(roland.getByRole('list', { name: '2 actions left' })).toBeVisible();
+  });
+});
+
+// Journey: change a counter on the investigator's card in place: a double tap on Roland Banks'
+// resources opens their − / + bubble, a step gains one, and a press beside it closes it.
+test('gain a resource from the counter bubble', async ({ page }) => {
+  const roland = page.getByRole('region', { name: 'Roland Banks' });
+  const resources = roland.locator('[data-stat="resources"] data');
+
+  await test.step('Resume a game with Roland Banks holding 5 resources', async () => {
+    await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
+    await expect(resources).toHaveText('5');
+  });
+
+  await test.step('Double tap the resources and gain one in the bubble', async () => {
+    await roland.getByRole('img', { name: '5', exact: true }).dblclick();
+    const bubble = page.getByRole('complementary', { name: 'Roland Banks · Resources' });
+    await bubble.getByRole('button', { name: 'Gain a resource' }).click();
+    await expect(bubble.getByRole('status')).toHaveText('6');
+    await expect(resources).toHaveText('6');
+  });
+
+  await test.step('Press beside the bubble to close it', async () => {
+    await page.getByRole('heading', { name: 'Round 1' }).click();
+    await expect(page.getByRole('complementary', { name: /^Roland Banks · / })).toBeHidden();
   });
 });
 

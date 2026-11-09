@@ -1,4 +1,5 @@
 import { defineConfig, devices } from '@playwright/test';
+import type { PictureOptions } from './e2e/fixtures/test';
 import { RECORDING_PROJECTS, SCREENCAST_STEP_MS } from './scripts/screencast/screencasts';
 
 // The app's primary device is a landscape tablet (product.md "UI concept").
@@ -18,18 +19,33 @@ const phone = {
   hasTouch: true,
 };
 
+// The screenshot specs.
+const shotSpecs = /[\\/]shots[\\/].*\.spec\.ts$/;
+// Not pictures of a change: the shots, and the accessibility checks, which would otherwise take
+// the first recording slots whenever a change shows on every screen.
+const notFlows = [shotSpecs, /accessibility\.spec\.ts$/];
+
+// The pictures the preview compares with the base's (scripts/screencast/cli.ts), taken once the
+// screen has settled (e2e/fixtures/test.ts): a glide or a
+// fade still running as the test ends would make the same screen differ from run to run, and the
+// app leaves its animations out for reduced motion.
+// A spec that can't reach its situation (some don't yet on a phone) fails after 10 s instead
+// of Playwright's 30 s test timeout, which made those few specs most of the run's time.
+const picture = { endPicture: true, reducedMotion: 'reduce', actionTimeout: 10_000 } as const;
+
 // Lets local/cloud sessions use a preinstalled Chromium instead of downloading one.
 const executablePath = process.env.PW_CHROMIUM_PATH;
 
 /**
  * E2E tests run against the production build (`vite preview`), the same bundle users get, built
  * in mode `e2e` only to add a test campaign the app plays no real one for (`findCampaign`).
- * `tablet-landscape` runs every spec (`pnpm e2e`). For the PR description, `screencast`
- * re-runs only the specs tagged `@flow`, slowed down and recorded, and `screenshot` and
- * `screenshot-phone` only the specs tagged `@shot`, photographed as they end on the tablet and on
- * a phone (`pnpm e2e:screencast`, see docs/automation.md).
+ * `tablet-landscape` runs every spec (`pnpm e2e`). For the PR description, `flow-picture`
+ * photographs every flow (the specs outside `e2e/shots/` but the accessibility checks) as it ends, and `screenshot` and `screenshot-phone` every spec in
+ * `e2e/shots/` on the tablet and on a phone (`pnpm e2e:pictures`); `screencast` re-runs the flows
+ * whose end state the PR changes, slowed down and recorded (`pnpm e2e:screencast`, see
+ * docs/automation.md).
  */
-export default defineConfig({
+export default defineConfig<PictureOptions>({
   testDir: './e2e',
   // Downloads the card pictures the tests show into a gitignored folder (e2e/fixtures/card_pictures.ts).
   globalSetup: './e2e/fixtures/card_pictures.ts',
@@ -48,13 +64,17 @@ export default defineConfig({
       use: { ...tablet, launchOptions: { executablePath } },
     },
     {
+      name: RECORDING_PROJECTS.flowPictures,
+      testIgnore: notFlows,
+      outputDir: 'test-results/flow-picture',
+      use: { ...tablet, ...picture, launchOptions: { executablePath } },
+    },
+    {
       name: RECORDING_PROJECTS.flows,
-      grep: /@flow/,
+      testIgnore: notFlows,
       outputDir: 'test-results/screencast',
       use: {
         ...tablet,
-        // The end state, so the preview can tell whether this PR changed the flow (cli.ts render).
-        screenshot: 'on',
         video: {
           mode: 'on',
           size: tablet.viewport,
@@ -72,18 +92,18 @@ export default defineConfig({
     },
     {
       name: RECORDING_PROJECTS.shots,
-      grep: /@shot/,
+      testMatch: shotSpecs,
       outputDir: 'test-results/screenshot',
-      use: { ...tablet, screenshot: 'on', launchOptions: { executablePath } },
+      use: { ...tablet, ...picture, launchOptions: { executablePath } },
     },
     {
       name: RECORDING_PROJECTS.phoneShots,
-      grep: /@shot/,
+      testMatch: shotSpecs,
       outputDir: 'test-results/screenshot-phone',
       // Until the phone layout exists (M3.14) some shots can't reach their situation on a phone;
       // a retry would only fail again and slow the preview.
       retries: 0,
-      use: { ...phone, screenshot: 'on', launchOptions: { executablePath } },
+      use: { ...phone, ...picture, launchOptions: { executablePath } },
     },
   ],
   webServer: {

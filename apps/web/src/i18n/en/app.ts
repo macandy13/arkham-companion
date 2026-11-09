@@ -96,6 +96,7 @@ export const appTexts = {
     actAdvanced: 'The act {{card}} advances',
     drawn: '{{investigator}} draws {{card}}',
     surge: '{{card}} gains surge',
+    revelationCancelled: '{{investigator}} cancels the revelation of {{card}}',
     cardAction: '{{investigator}} uses {{card}}',
     playerCards: {
       draw_one: '{{investigator}} draws {{count}} card',
@@ -135,6 +136,7 @@ export const appTexts = {
     sealWhere: 'Seal {{token}} on',
     releaseFrom: 'Release {{token}} from {{investigator}}',
     release: 'Release',
+    value: 'Value',
   },
   header: {
     round: 'Round {{round}}',
@@ -429,6 +431,12 @@ export const appTexts = {
     outcome: { pass: 'Pass', fail: 'Fail' },
     against: { pass: '{{skill}} ≥ {{difficulty}}', fail: '{{skill}} < {{difficulty}}' },
     margin: 'by {{margin}}',
+    odds: {
+      title: 'Chance to pass',
+      pass: '{{chance}} to pass',
+      unknown: '{{chance}} decided by a card',
+      more: 'With {{icons}}: {{chance}}',
+    },
   },
   chaosToken: {
     '+1': '+1',
@@ -490,6 +498,17 @@ export const appTexts = {
     ofMax: 'of {{max}}',
     healthLeft: '{{left}} / {{max}}',
     victory: 'Victory {{points}}.',
+  },
+  playCard: {
+    title: 'Play a card',
+    tapResources: 'Tap the resources the card costs.',
+    noResources: 'No resources to pay with.',
+    resources_one: '{{count}} resource held',
+    resources_other: '{{count}} resources held',
+    resource: 'resource {{number}}',
+    pays: 'Pays {{pays}} · {{left}} left',
+    free: 'Play without paying',
+    pay: 'Play · pay {{count}}',
   },
   cluePayment: {
     title: 'Who pays the clues?',
@@ -588,6 +607,9 @@ export const appTexts = {
     healHorror: 'Heal horror',
     spendResource: 'Spend a resource',
     gainResource: 'Gain a resource',
+    placeClue: 'Place a clue on their location',
+    takeClue: 'Take a clue from their location',
+    counterBubble: '{{investigator}} · {{counter}}',
     turnAt: 'Turn · {{location}}',
     turnTakenAt: 'Turn taken · {{location}}',
     offMap: 'Not at a location',
@@ -639,6 +661,9 @@ export const appTexts = {
     chaosBag: 'Chaos bag',
     chaosDraw: 'Who draws the tokens',
     chaosDraws: { app: 'The app', table: 'Our own bag' },
+    reliance: 'Helpers',
+    relianceNote:
+      "New games and campaigns start with this. A game's own log changes it for that game alone.",
     chaosDrawNote:
       'With your own bag the skill test shows no Draw button, only your total to hold against the token you draw.',
     tokenSet: 'Token set',
@@ -720,6 +745,9 @@ export const appTexts = {
     attack: 'Take the attack',
     doesNotProvoke: 'Does not provoke',
     attackCancelled: 'The attack is cancelled',
+    revelation: 'Revelation of {{card}}',
+    resolveRevelation: 'Resolve',
+    cancelRevelation: 'Cancel revelation',
     count: {
       failedBy: 'Margin of failure',
       clues: 'Clues discovered',

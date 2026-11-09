@@ -3,10 +3,13 @@ name: PR preview
 # Builds every PR and publishes it to
 # https://macandy13.github.io/arkham-companion/pr-preview/pr-<number>/
 # The action comments the link on the PR and removes the preview when the PR closes.
-# When apps/web changes, the `@flow` E2E specs are recorded and the `@shot` specs
-# photographed, both published next to the preview (pr-<number>/screencasts/), and the PR
-# description's screencast section is rewritten to show them (see docs/automation.md). Only
-# the specs whose picture this PR changes are shown, compared with a run on the base commit.
+# When apps/web changes, every E2E spec is photographed as it ends, on this PR and on its base
+# commit; the screenshot specs whose picture this PR changes and recordings of the flows whose
+# end state it changes are published next to the preview (pr-<number>/screencasts/), and the PR
+# description's screencast section is rewritten to show them (see docs/automation.md). The base's
+# pictures usually come from main-pictures.yml's cache; otherwise the base and the PR are
+# photographed in parallel sharded jobs, the slow part. The preview job then films the changed
+# flows and publishes everything.
 # Living inside the preview directory means they are removed with it.
 # PRs from forks are skipped (no write token).
 
@@ -17,107 +20,203 @@ on:
 permissions:
   contents: write
   pull-requests: write
+  # The preview job downloads the picture jobs' artifacts with `gh run download`.
+  actions: read
 
 concurrency:
   group: preview-${{ github.event.number }}
   cancel-in-progress: true
 
 jobs:
-  preview:
-    if: github.event.pull_request.head.repo.full_name == github.repository
+  changes:
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.event.action != 'closed'
     runs-on: ubuntu-latest
+    outputs:
+      web: ${{ steps.filter.outputs.web }}
+      base-key: ${{ steps.base.outputs.key }}
+      base-path: ${{ steps.base.outputs.path }}
+      base-cached: ${{ steps.base-cached.outputs.cache-hit }}
     steps:
+      # The merge commit and its first parent, the base it was built on (the event's base sha can
+      # lag behind it).
       - uses: actions/checkout@v7
         with:
-          # The PR's merge commit plus its first parent, the base commit its pictures are compared with.
           fetch-depth: 2
-      - if: github.event.action != 'closed'
-        uses: pnpm/action-setup@v6
-      - if: github.event.action != 'closed'
-        uses: actions/setup-node@v7
-        with:
-          node-version: 22
-          cache: pnpm
-      - if: github.event.action != 'closed'
-        run: pnpm install --frozen-lockfile
-      - id: changes
-        if: github.event.action != 'closed'
+      - id: filter
         uses: dorny/paths-filter@v4
         with:
           filters: |
             web:
               - 'apps/web/**'
-              # So a change to this workflow runs (and times) the steps it changes.
+              # So a change to this workflow runs (and times) the jobs it changes.
               - '.github/workflows/preview.yml'
-      # The card pictures the E2E shots show, downloaded by Playwright's global setup
-      # (apps/web/e2e/fixtures/card_pictures.ts) and kept here, never in the repo. ArkhamDB stops
-      # answering a runner after a few dozen pictures, so each run saves what it has under its own
-      # key and the next run restores the newest and fetches only what is still missing.
-      - if: steps.changes.outputs.web == 'true'
-        uses: actions/cache@v6
+              - '.github/actions/e2e_setup/**'
+              - '.github/actions/main_pictures/**'
+      # main-pictures.yml has usually photographed the base already.
+      - id: base
+        if: steps.filter.outputs.web == 'true'
+        uses: ./.github/actions/main_pictures
         with:
-          path: apps/web/e2e/.card_pictures
-          key: card-pictures-${{ hashFiles('packages/scenarios/src/the_gathering/cards.ts', 'packages/scenarios/src/the_midnight_masks/cards.ts', 'packages/scenarios/src/the_devourer_below/cards.ts', 'packages/scenarios/src/card_builders.ts', 'apps/web/e2e/fixtures/card_pictures.ts') }}-${{ github.run_id }}-${{ github.run_attempt }}
-          restore-keys: |
-            card-pictures-${{ hashFiles('packages/scenarios/src/the_gathering/cards.ts', 'packages/scenarios/src/the_midnight_masks/cards.ts', 'packages/scenarios/src/the_devourer_below/cards.ts', 'packages/scenarios/src/card_builders.ts', 'apps/web/e2e/fixtures/card_pictures.ts') }}-
-            card-pictures-
-      # Headless runs only need Chromium's headless shell, cached per Playwright version. No
-      # `--with-deps`: the runner image already has the libraries it needs, and apt only added
-      # fonts the app doesn't use (it bundles its own) from Ubuntu's mirror, which can drop to
-      # 55 kB/s when many jobs start at once and stall a run for 10 minutes.
-      - id: playwright
-        if: steps.changes.outputs.web == 'true'
+          dir: .
+          rev: HEAD^1
+      - id: base-cached
+        if: steps.filter.outputs.web == 'true'
+        uses: actions/cache/restore@v6
+        with:
+          key: ${{ steps.base.outputs.key }}
+          path: ${{ steps.base.outputs.path }}
+          lookup-only: true
+
+  # Photographs the base commit's specs when main-pictures.yml hasn't cached them (yet), so only
+  # the specs whose picture (a shot, or a flow's end state) this PR changes are shown. A checkout
+  # of its own with its own install and its own `e2e:pictures` script, so the base builds with its
+  # own packages and photographs with its own projects (naming a project the base doesn't have
+  # would fail its run). Its report names its pictures under `base/`, where the preview job
+  # unpacks them. Specs it doesn't photograph are all shown. Split into shards like pictures-head.
+  pictures-base:
+    needs: changes
+    if: needs.changes.outputs.web == 'true' && needs.changes.outputs.base-cached != 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        shard: [1, 2, 3]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 2
+          path: base
+      - run: git -C base checkout --detach HEAD^1
+      - uses: ./.github/actions/e2e_setup
+        with:
+          dir: base
+          cache-name: base-${{ matrix.shard }}
+      - working-directory: base
+        timeout-minutes: 20
+        continue-on-error: true
+        env:
+          SHARD: ${{ matrix.shard }}
         run: |
-          echo "version=$(pnpm --filter @arkham/web exec playwright --version | awk '{ print $2 }')" >> "$GITHUB_OUTPUT"
-          echo "image=$ImageOS" >> "$GITHUB_OUTPUT"
-      - if: steps.changes.outputs.web == 'true'
-        uses: actions/cache@v6
+          pnpm --filter @arkham/web e2e:pictures --workers=100% --shard="$SHARD/3" || echo "::warning::Some specs failed on the base; they are shown."
+          mkdir -p apps/web/screencasts/pictures
+          mv apps/web/screencasts/report.json "apps/web/screencasts/pictures/$SHARD.json"
+      - uses: actions/upload-artifact@v7
         with:
-          path: ~/.cache/ms-playwright
-          key: playwright-shell-${{ steps.playwright.outputs.image }}-${{ steps.playwright.outputs.version }}
-      - if: steps.changes.outputs.web == 'true'
-        timeout-minutes: 5
-        run: pnpm --filter @arkham/web exec playwright install --only-shell chromium
-      # Records the base commit's tagged specs too, so the render step can leave out every spec
-      # whose picture (a shot, or a flow's end state) this PR doesn't change, including specs an
-      # earlier PR left tagged on main. Its own install and its own `e2e:screencast` script, so the
-      # base builds with its own packages and records with its own projects (naming a project the
-      # base doesn't have would fail its run). Specs the base run doesn't photograph are all shown.
-      - if: steps.changes.outputs.web == 'true'
-        timeout-minutes: 15
+          name: pictures-base-${{ matrix.shard }}
+          # package.json always exists, so the artifact's root stays base/apps/web.
+          path: |
+            base/apps/web/package.json
+            base/apps/web/screencasts/pictures/
+            base/apps/web/test-results/**/*.png
+          if-no-files-found: ignore
+          retention-days: 1
+
+  # Photographs this PR's specs. The runs are CPU-bound, so they are split over three runners
+  # (`--shard`) and each uses every core (Playwright's default leaves half of them idle); each
+  # shard writes its own report, and cli.ts joins the reports of a directory.
+  pictures-head:
+    needs: changes
+    if: needs.changes.outputs.web == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        shard: [1, 2, 3]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/e2e_setup
+        with:
+          cache-name: head-${{ matrix.shard }}
+      # A failing spec must not block the preview; the E2E check reports it.
+      - timeout-minutes: 20
+        continue-on-error: true
+        env:
+          SHARD: ${{ matrix.shard }}
+        run: |
+          pnpm --filter @arkham/web e2e:pictures --workers=100% --shard="$SHARD/3" || echo "::warning::Some specs failed; the E2E check reports them."
+          mkdir -p apps/web/screencasts/pictures
+          mv apps/web/screencasts/report.json "apps/web/screencasts/pictures/$SHARD.json"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: pictures-head-${{ matrix.shard }}
+          # package.json always exists, so the artifact's root stays apps/web.
+          path: |
+            apps/web/package.json
+            apps/web/screencasts/pictures/
+            apps/web/test-results/**/*.png
+          if-no-files-found: ignore
+          retention-days: 1
+
+  preview:
+    needs: [changes, pictures-base, pictures-head]
+    # Also when the picture jobs are skipped (no apps/web change, or the base is cached) or the PR
+    # closed, to update or remove the preview.
+    if: ${{ !cancelled() && github.event.pull_request.head.repo.full_name == github.repository }}
+    runs-on: ubuntu-latest
+    env:
+      WEB: ${{ needs.changes.outputs.web }}
+      BASE_CACHED: ${{ needs.changes.outputs.base-cached }}
+    steps:
+      - uses: actions/checkout@v7
+      - if: github.event.action != 'closed'
+        uses: ./.github/actions/e2e_setup
+        with:
+          cache-name: preview
+      # Unpacked where each picture was taken, since the reports name them by absolute path: the
+      # base's from main-pictures.yml's cache or from pictures-base, both under base/. A shard that
+      # failed leaves no artifact: its base specs are then shown, and without any of this PR's
+      # pictures the section is left as it is.
+      - id: base-cache
+        if: env.WEB == 'true' && env.BASE_CACHED == 'true'
+        uses: actions/cache/restore@v6
+        with:
+          key: ${{ needs.changes.outputs.base-key }}
+          path: ${{ needs.changes.outputs.base-path }}
+      # Evicted since the changes job found it: pictures-base was skipped, so nothing is left to compare with.
+      - if: env.WEB == 'true' && env.BASE_CACHED == 'true' && steps.base-cache.outputs.cache-hit != 'true'
+        run: echo "::warning::The base pictures left the cache; every spec is shown."
+      - if: env.WEB == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          shopt -s nullglob
+          unpack() {
+            mkdir -p "$2"
+            gh run download "$GITHUB_RUN_ID" -p "$1-*" -D "$RUNNER_TEMP/$1" ||
+              echo "::warning::No $1 artifacts."
+            for shard in "$RUNNER_TEMP/$1"/*/; do cp -r "$shard." "$2"; done
+          }
+          [ "$BASE_CACHED" = true ] || unpack pictures-base base/apps/web
+          unpack pictures-head apps/web
+      # Only the flows whose end state differs from the base are filmed, slowed down, since
+      # recording them is slow (cli.ts flows caps them at SCREENCAST_LIMIT). Recorded before the
+      # preview build: Playwright builds with the root base path, and the preview build below
+      # empties dist/ anyway.
+      - id: flows
+        if: env.WEB == 'true' && hashFiles('apps/web/screencasts/pictures/*.json') != ''
+        working-directory: apps/web
         continue-on-error: true
         run: |
-          mkdir -p apps/web/screencasts
-          echo '{}' > apps/web/screencasts/base.json
-          if ! (git worktree add --detach "$RUNNER_TEMP/base" HEAD^1 &&
-              { cp -r apps/web/e2e/.card_pictures "$RUNNER_TEMP/base/apps/web/e2e/" ||
-                echo "::notice::No cached card pictures; the base run downloads them."; } &&
-              cd "$RUNNER_TEMP/base" && pnpm install --frozen-lockfile --prefer-offline &&
-              pnpm --filter @arkham/web e2e:screencast); then
-            echo "::warning::The base commit's run failed; specs it didn't photograph are all shown."
-          fi
-          cp "$RUNNER_TEMP/base/apps/web/screencasts/report.json" apps/web/screencasts/base.json ||
-            echo "::warning::The base commit's run wrote no report; every tagged spec is shown."
-      # Recorded before the preview build: Playwright builds with the root base path,
-      # and the preview build below empties dist/ anyway.
-      - if: steps.changes.outputs.web == 'true'
-        # A failing flow must not block the preview; the E2E check reports it.
+          grep=$(node scripts/screencast/cli.ts flows screencasts/pictures ../../base/apps/web/screencasts/pictures)
+          printf 'grep<<END_OF_GREP\n%s\nEND_OF_GREP\n' "$grep" >> "$GITHUB_OUTPUT"
+      - if: env.WEB == 'true' && steps.flows.outputs.grep != ''
         continue-on-error: true
-        run: pnpm --filter @arkham/web e2e:screencast
-      # ffmpeg only turns flow videos into GIFs, and it comes from Ubuntu's mirror (see above), so
+        run: pnpm --filter @arkham/web e2e:screencast --grep "$FLOWS"
+        env:
+          FLOWS: ${{ steps.flows.outputs.grep }}
+      # ffmpeg only turns flow videos into GIFs, and it comes from Ubuntu's mirror (see .github/actions/e2e_setup), so
       # it is installed only when a flow was recorded, and a slow mirror times the step out instead
       # of stalling the run. Without ffmpeg the render step fails and the description keeps its
       # old section, but the preview is still deployed.
-      - if: steps.changes.outputs.web == 'true' && hashFiles('apps/web/test-results/screencast/**/*.webm') != ''
+      - if: env.WEB == 'true' && hashFiles('apps/web/test-results/screencast/**/*.webm') != ''
         timeout-minutes: 5
         continue-on-error: true
         run: |
           command -v ffmpeg || { sudo apt-get update && sudo apt-get install -y --no-install-recommends ffmpeg; }
-      - if: steps.changes.outputs.web == 'true' && hashFiles('apps/web/screencasts/report.json') != ''
+      - if: env.WEB == 'true' && hashFiles('apps/web/screencasts/pictures/*.json') != ''
         working-directory: apps/web
         continue-on-error: true
         run: >-
-          node scripts/screencast/cli.ts render screencasts/report.json screencasts/base.json screencasts/out
+          node scripts/screencast/cli.ts render screencasts/pictures ../../base/apps/web/screencasts/pictures screencasts/recording.json screencasts/out
           "https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/pr-preview/pr-${{ github.event.number }}/screencasts/"
           "https://raw.githubusercontent.com/${{ github.repository }}/gh-pages/pr-preview/pr-${{ github.event.number }}/screencasts/"
           "${HEAD_SHA::7}"

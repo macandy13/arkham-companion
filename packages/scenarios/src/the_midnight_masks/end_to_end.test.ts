@@ -210,6 +210,7 @@ describe('The Midnight Masks end to end: Roland and Daisy, seed 40', () => {
 
     // Daisy draws Hunting Shadow: she spends a clue rather than take 2 damage.
     expect(table.nextPhase()).toEqual({ round: 2, phase: 'mythos', step: 'drawEncounterCard' });
+    table.resolveRevelation(byName('Hunting Shadow'));
     expect(table.board.decisions).toEqual([
       {
         prompt: 'scenario.theMidnightMasks.huntingShadow.prompt',
@@ -273,8 +274,10 @@ describe('The Midnight Masks end to end: Roland and Daisy, seed 40', () => {
     // against 4). Daisy draws Mysterious Chanting: 2 doom on the nearest
     // Cultist, the Acolyte two steps away. With the Wizard's, doom is 7 of 6.
     expect(table.nextPhase()).toEqual({ round: 3, phase: 'mythos', step: 'drawEncounterCard' });
+    table.resolveRevelation(byName('Crypt Chill'));
     table.answer(byName('Crypt Chill'), 'pass');
-    expect(table.nextPhase()).toEqual({ round: 3, phase: 'mythos' });
+    expect(table.nextPhase()).toEqual({ round: 3, phase: 'mythos', step: 'drawEncounterCard' });
+    table.resolveRevelation(byName('Mysterious Chanting'));
     expect(table.board.doomInPlay).toBe(6);
     expect(table.nextPhase()).toEqual({ round: 3, phase: 'investigation' });
     expect(table.board.doomInPlay).toBe(7);
@@ -361,6 +364,7 @@ describe('The Midnight Masks end to end: Roland and Daisy, seed 40', () => {
       at: 'Downtown',
       engagedWith: roland,
     });
+    table.resolveRevelation(byName('On Wings of Darkness'));
     table.answer(byName('On Wings of Darkness'), 'pass');
     expect(table.board.investigator(daisy)).toMatchObject({
       at: 'Rivertown',
@@ -420,7 +424,8 @@ describe('The Midnight Masks end to end: Roland and Daisy, seed 40', () => {
     expect(table.nextPhase()).toEqual({ round: 5, phase: 'mythos', step: 'drawEncounterCard' });
     table.answer(byName('Acolyte'), "St. Mary's Hospital");
     acolyteDoomAt(byName("St. Mary's Hospital"));
-    expect(table.nextPhase()).toEqual({ round: 5, phase: 'mythos' });
+    expect(table.nextPhase()).toEqual({ round: 5, phase: 'mythos', step: 'drawEncounterCard' });
+    table.resolveRevelation(byName('Locked Door'));
     // Downtown can't be investigated while the door is attached.
     expect(table.board.location(byName('Downtown'))).toMatchObject({
       clues: 2,
@@ -455,11 +460,13 @@ describe('The Midnight Masks end to end: Roland and Daisy, seed 40', () => {
     // Round 6 – mythos: Roland draws Hunting Shadow with no clue to spend, so he
     // takes the 2 damage; Daisy passes Crypt Chill.
     expect(table.nextPhase()).toEqual({ round: 6, phase: 'mythos', step: 'drawEncounterCard' });
+    table.resolveRevelation(byName('Hunting Shadow'));
     expect(table.board.decisions).toMatchObject([
       { for: roland, options: ['scenario.theMidnightMasks.huntingShadow.damage'] },
     ]);
     table.play(answer(HUNTING_SHADOW_DECISION, 'damage'));
     expect(table.nextPhase()).toEqual({ round: 6, phase: 'mythos', step: 'drawEncounterCard' });
+    table.resolveRevelation(byName('Crypt Chill'));
     table.answer(byName('Crypt Chill'), 'pass');
     expect(table.board.investigator(roland)).toMatchObject({ damage: 6 });
 
@@ -495,9 +502,11 @@ describe('The Midnight Masks end to end: Roland and Daisy, seed 40', () => {
     // carried back to Rivertown.
     expect(table.nextPhase()).toEqual({ round: 7, phase: 'mythos', step: 'drawEncounterCard' });
     expect(table.board.doomInPlay).toBe(7);
+    table.resolveRevelation(byName('Locked Door'));
     table.answer(byName('Locked Door'), 'Rivertown');
     expect(table.board.location(byName('Rivertown')).attachments).toEqual(['Locked Door']);
     expect(table.nextPhase()).toEqual({ round: 7, phase: 'mythos', step: 'drawEncounterCard' });
+    table.resolveRevelation(byName('On Wings of Darkness'));
     table.answer(byName('On Wings of Darkness'), 'fail');
     expect(table.board.investigator(daisy)).toMatchObject({
       at: 'Rivertown',

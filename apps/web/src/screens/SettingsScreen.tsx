@@ -1,5 +1,6 @@
 import { CARD_LANGUAGES } from '@arkham/carddata';
 import type { PackDef } from '@arkham/carddata';
+import { RELIANCES } from '@arkham/engine';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { sortedPacks } from '../picker/pickerLogic';
@@ -27,7 +28,8 @@ interface SettingsScreenProps {
  * Route `/settings` (MD.3c), written like a form of the campaign guide: one row per subject, its
  * label in a column of spaced capitals and its fields as written lines. The collection is one line
  * that opens its own page (`CollectionScreen`); the table is picked by its playmat, the token set
- * by a row of its tokens, and who draws the chaos tokens is a segmented choice. Every change is
+ * by a row of its tokens, who draws the chaos tokens is a segmented choice, and what the app tells
+ * the players (`Settings.reliance`, the level new games start with) is a ruled list. Every change is
  * saved at once (`useSettings`). It ends with the notice that the app is an unofficial
  * fan project, with the publisher's copyright credit, which the fan content policy requires for
  * using the game's names; card art is never bundled, only fetched from ArkhamDB on the device.
@@ -142,6 +144,23 @@ export function SettingsScreen({ packs = [] }: SettingsScreenProps) {
             ))}
           </fieldset>
           <p>{t('settings.chaosDrawNote')}</p>
+        </section>
+        <section aria-labelledby="settings-reliance">
+          <h2 id="settings-reliance">{t('settings.reliance')}</h2>
+          <fieldset aria-label={t('reliance.title')} data-ruled>
+            {RELIANCES.map((reliance) => (
+              <label key={reliance}>
+                <input
+                  type="radio"
+                  name="reliance"
+                  checked={settings.reliance === reliance}
+                  onChange={() => update({ reliance })}
+                />
+                {t(`reliance.levels.${reliance}`)}
+              </label>
+            ))}
+          </fieldset>
+          <p>{t('settings.relianceNote')}</p>
         </section>
         <section aria-labelledby="settings-cards">
           <h2 id="settings-cards">{t('settings.cards')}</h2>

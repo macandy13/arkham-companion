@@ -76,6 +76,40 @@ describe('SkillTestDialog', () => {
     expect(within(result()!).queryByRole('status')).toBeNull();
   });
 
+  const chances = () =>
+    screen.queryByRole('list', { name: 'Chance to pass' })
+      ? within(screen.getByRole('list', { name: 'Chance to pass' }))
+          .getAllByRole('listitem')
+          .map((item) => item.textContent)
+      : [];
+
+  it.each<{ bag: ChaosToken[]; raises: number; shown: string[] }>([
+    {
+      bag: ['0', '-1', '-2', 'elderSign'],
+      raises: 0,
+      shown: ['25% to pass', '25% decided by a card', 'With +1: 50%', 'With +2: 75%'],
+    },
+    { bag: ['0', '-1'], raises: 0, shown: ['50% to pass', 'With +1: 100%'] },
+    { bag: ['0', '-1'], raises: 1, shown: ['100% to pass'] },
+  ])(
+    'shows the chance to pass willpower 3 against 3 from $bag with the modifier raised $raises times',
+    ({ bag, raises, shown }) => {
+      renderWillpowerTest(bag);
+
+      for (let i = 0; i < raises; i++) fireEvent.click(button('Raise the Modifier'));
+
+      expect(chances()).toEqual(shown);
+    },
+  );
+
+  it('shows no chance once the token is drawn', () => {
+    renderWillpowerTest(['0']);
+
+    fireEvent.click(button('Draw a token'));
+
+    expect(chances()).toEqual([]);
+  });
+
   it('hides the draw button once the token is drawn', () => {
     renderWillpowerTest(['-1']);
 

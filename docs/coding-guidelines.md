@@ -70,19 +70,18 @@ How code in this repo should look, so every task lands in the same style.
 - **Invariants are covered by example-based table tests** (`it.each` over a few named, readable cases), not property-based testing. Unit tests for concrete rules and edge cases.
 - Never use real card text, ArkhamDB JSON or images in fixtures; the hand-written test scenario uses real codes and names with hand-entered stats only (see `CLAUDE.md`).
 
-**E2E flow specs** (`apps/web/e2e/`) walk through user journeys; the ones tagged `@flow` are recorded as screencasts into the PR description (`docs/automation.md`). Keep them few and stable:
+**E2E flow specs** (`apps/web/e2e/`) walk through user journeys; the ones whose end state a PR changes are recorded as screencasts into its description (`docs/automation.md`). Keep them few and stable:
 
-- **A UI PR shows its change, and only its change, in a screencast.** The `@flow` tags belong to the PR at hand, so every PR updates them. A PR that changes the UI tags the flows that walk through its change: a new flow (a new spec, or a new test in its journey's spec) for a new screen or interaction, the existing flow it extends, and every existing flow whose recorded behavior it changes, even if that spec's code stays the same (a reworded button, a moved panel). It removes the tag from every other spec, so main stays clean for the next PR. The preview workflow backs this up: it also runs the base commit's tagged specs and leaves out every spec whose picture (a flow's end state) the PR doesn't change, so a tag an earlier PR left on main shows only when this PR changes that picture. A PR without a visible UI change leaves no spec tagged. Untagged specs keep running as plain E2E tests.
+- **A UI PR shows its change, and only its change, without tagging anything.** The preview workflow photographs every spec as it ends, on the PR and on its base commit, and shows only the shots whose picture differs and recordings of the flows whose end state differs. A PR that changes the UI adds or extends the flow or shot that ends on its change (a new test in its journey's spec for a new screen or interaction), since a change only in the middle of a flow is not caught.
 - **One spec per user journey, not per feature.** A UI change extends the journey it belongs to before it adds a new one. Cap: 8 specs; past that, merge journeys.
 - **They check wiring, not rules.** Game rules are tested in engine unit tests; a flow only asserts that the screen reacts and the journey completes.
 - **Locate by role and accessible name** (`getByRole('button', { name: … })`), never by CSS class or DOM shape – the markup rules make this always possible.
 - **Narrate with steps.** Group the flow into `test.step('Create an empty game', …)` blocks named as what the user does; the names are shown as captions in the screencast.
 - **Deterministic.** Start from a fixed state (seeded game) so every recording of the same code looks the same.
 
-**E2E screenshot specs** (`apps/web/e2e/shots/`) show situations: one spec per screen, one test per situation, photographed as the test ends (`@shot`). They are the cheap way to show a change that is a look, not a journey:
+**E2E screenshot specs** (`apps/web/e2e/shots/`) show situations: one spec per screen, one test per situation, photographed as the test ends. They are the cheap way to show a change that is a look, not a journey:
 
-- **Pick the lighter recording.** A change you can judge from one picture (a new panel, a state of a screen, a layout change) gets a screenshot; a change you have to see happen (an interaction, a sequence of screens) gets a flow. A PR may tag both.
-- **Tagged like flows.** A PR tags the `@shot` tests that show its change, a new one for a new situation and every existing one whose picture it changes, and removes the tag from all others, so the PR description shows only what this PR changed. Untagged shots keep running as plain E2E tests.
+- **Pick the lighter recording.** A change you can judge from one picture (a new panel, a state of a screen, a layout change) gets a screenshot; a change you have to see happen (an interaction, a sequence of screens) gets a flow. A PR may add both.
 - **Short and still.** A shot test only brings the screen into its situation, with fixtures doing the work (`resumeImportedGame` with a prepared export), and asserts that the situation is shown; the screenshot is taken after the last line, so it ends with the screen settled. Name it after what it shows (`'the house map with Alder in the Hallway'`), since the name is the caption.
 - **Deterministic** like flows: fixed exports and seeds, so the same code gives the same picture.
 

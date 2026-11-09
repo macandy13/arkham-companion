@@ -87,7 +87,13 @@ import {
   type Forbidden,
   type LocationRestriction,
 } from './restrictions';
-import { skillTestSuggestion, type SkillTestInput } from './skill_modifiers';
+import {
+  skillTestSuggestion,
+  tokenModifier,
+  type SkillTestContext,
+  type SkillTestInput,
+} from './skill_modifiers';
+import { skillTestOdds, type SkillTestOdds } from './skill_test_odds';
 import { victoryPoints } from './victory';
 import type {
   AmountRange,
@@ -888,6 +894,14 @@ export class BoardView {
     return this.state.chaosBag;
   }
 
+  /**
+   * The modifier `token` gives any skill test of this game (`tokenModifier`), for the chaos bag to
+   * list beside it; `undefined` where the test or the players decide it.
+   */
+  tokenModifier(token: ChaosToken): number | undefined {
+    return tokenModifier(this.ctx, this.state, token);
+  }
+
   /** The tokens out of the bag because a card sealed them, each with the investigator holding it. */
   get sealedTokens(): readonly SealedToken[] {
     return this.state.sealedTokens;
@@ -904,17 +918,36 @@ export class BoardView {
     test: SkillTest,
     input: SkillTestInput = {},
   ): SkillTestSuggestion {
-    const { locationId } = requireInvestigator(this.state, investigator);
-    return skillTestSuggestion(
+    return skillTestSuggestion(this.ctx, this.state, this.testContext(investigator, test), input);
+  }
+
+  /**
+   * How likely that skill test is to pass when the players draw from the chaos bag
+   * (`skillTestOdds`), with their modifier and any second skill but no token drawn yet. The skill
+   * test dialog asks again with each extra committed icon.
+   */
+  skillTestOdds(
+    investigator: InvestigatorId,
+    test: SkillTest,
+    input: Omit<SkillTestInput, 'tokens'> = {},
+  ): SkillTestOdds {
+    return skillTestOdds(
       this.ctx,
       this.state,
-      {
-        investigatorId: investigator,
-        ...test,
-        ...(locationId === undefined ? {} : { locationId }),
-      },
+      this.testContext(investigator, test),
+      this.state.chaosBag,
       input,
     );
+  }
+
+  /** `investigator`'s `test` at their location, as token values see it. */
+  private testContext(investigator: InvestigatorId, test: SkillTest): SkillTestContext {
+    const { locationId } = requireInvestigator(this.state, investigator);
+    return {
+      investigatorId: investigator,
+      ...test,
+      ...(locationId === undefined ? {} : { locationId }),
+    };
   }
 
   /**

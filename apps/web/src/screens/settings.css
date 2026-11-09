@@ -108,6 +108,53 @@
 }
 
 /*
+ * A choice of a few long answers ("What the app tells you", MD.3g): its options as ruled lines,
+ * each with a mark drawn in ink, an open ring filled at its centre once chosen.
+ */
+#settings fieldset[data-ruled] {
+  display: grid;
+  justify-self: stretch;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+#settings fieldset[data-ruled] > label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: var(--touch-target);
+  padding-block: var(--space-1);
+  border-bottom: var(--border-width) solid var(--color-paper-rule);
+  font-family: var(--font-family-label);
+  font-size: var(--font-size-field);
+  cursor: pointer;
+}
+
+#settings fieldset[data-ruled] > label:last-child {
+  border-bottom: 0;
+}
+
+#settings fieldset[data-ruled] input {
+  flex: none;
+  width: var(--form-mark-size);
+  height: var(--form-mark-size);
+  margin: 0;
+  border: var(--border-width-line) solid var(--color-ink);
+  border-radius: var(--radius-round);
+  background: none;
+  appearance: none;
+}
+
+#settings fieldset[data-ruled] input:checked {
+  background: radial-gradient(var(--color-ink) 45%, transparent 50%);
+}
+
+#settings fieldset[data-ruled] input:focus-visible {
+  outline: var(--focus-ring-width) solid var(--color-accent);
+}
+
+/*
  * Picks with a picture (a table skin's playmat drawn before its name, a token set's row of tokens):
  * each a small picture named under it, the chosen one framed in the accent's ink, the radios
  * themselves hidden (base.css).

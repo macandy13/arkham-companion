@@ -10,7 +10,8 @@
     "typecheck": "tsc -p tsconfig.json && tsc -p scripts",
     "e2e": "playwright test --project=tablet-landscape",
     "playtest": "tsx src/playtest/cli.ts",
-    "e2e:screencast": "PLAYWRIGHT_JSON_OUTPUT_FILE=screencasts/report.json playwright test --project=screencast --project=screenshot --project=screenshot-phone --reporter=list,json --pass-with-no-tests"
+    "e2e:pictures": "PLAYWRIGHT_JSON_OUTPUT_FILE=screencasts/report.json playwright test --project=flow-picture --project=screenshot --project=screenshot-phone --reporter=list,json",
+    "e2e:screencast": "PLAYWRIGHT_JSON_OUTPUT_FILE=screencasts/recording.json playwright test --project=screencast --reporter=list,json"
   },
   "dependencies": {
     "@arkham/carddata": "workspace:*",
@@ -27,31 +28,31 @@
     "@fontsource/im-fell-english-sc": "^5.3.0",
     "@fontsource/libre-caslon-text": "^5.3.0",
     "dexie": "^4.4.7",
-    "i18next": "^26.5.11",
+    "i18next": "^26.7.2",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
-    "react-i18next": "^17.1.9",
+    "react-i18next": "^17.1.13",
     "react-router": "^8.5.1",
     "react-zoom-pan-pinch": "^4.2.0",
     "zod": "^4.6.7",
-    "zustand": "^5.0.16"
+    "zustand": "^5.1.0"
   },
   "devDependencies": {
     "@arkham/play_tester": "workspace:*",
     "@axe-core/playwright": "^4.14.0",
-    "@playwright/test": "^1.64.1",
+    "@playwright/test": "^1.65.0",
     "@testing-library/react": "^16.3.3",
     "@types/node": "^26.6.6",
     "@types/pngjs": "^6.0.5",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
-    "@vitejs/plugin-react": "^6.1.2",
+    "@vitejs/plugin-react": "^6.2.1",
     "fake-indexeddb": "^6.2.7",
     "jsdom": "^31.0.0",
     "pixelmatch": "^8.0.0",
     "pngjs": "^7.0.0",
     "tsx": "^4.23.15",
-    "vite": "^8.3.5",
+    "vite": "^8.3.6",
     "vite-plugin-pwa": "^2.0.0"
   }
 }

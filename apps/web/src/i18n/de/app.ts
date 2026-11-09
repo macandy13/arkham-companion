@@ -97,6 +97,7 @@ export const appTexts = {
     actAdvanced: 'Der Akt {{card}} rückt vor',
     drawn: '{{investigator}} zieht {{card}}',
     surge: '{{card}} erhält Nachrücken',
+    revelationCancelled: '{{investigator}} verhindert die Enthüllung von {{card}}',
     cardAction: '{{investigator}} nutzt {{card}}',
     playerCards: {
       draw_one: '{{investigator}} zieht {{count}} Karte',
@@ -136,6 +137,7 @@ export const appTexts = {
     sealWhere: '{{token}} versiegeln bei',
     releaseFrom: '{{token}} von {{investigator}} freigeben',
     release: 'Freigeben',
+    value: 'Wert',
   },
   header: {
     round: 'Runde {{round}}',
@@ -433,6 +435,12 @@ export const appTexts = {
     outcome: { pass: 'Bestanden', fail: 'Misslungen' },
     against: { pass: '{{skill}} ≥ {{difficulty}}', fail: '{{skill}} < {{difficulty}}' },
     margin: 'um {{margin}}',
+    odds: {
+      title: 'Erfolgschance',
+      pass: '{{chance}} Erfolg',
+      unknown: '{{chance}} je nach Karte',
+      more: 'Mit {{icons}}: {{chance}}',
+    },
   },
   chaosToken: {
     '+1': '+1',
@@ -494,6 +502,17 @@ export const appTexts = {
     ofMax: 'von {{max}}',
     healthLeft: '{{left}} / {{max}}',
     victory: 'Sieg {{points}}.',
+  },
+  playCard: {
+    title: 'Karte spielen',
+    tapResources: 'Tippe die Ressourcen an, die die Karte kostet.',
+    noResources: 'Keine Ressourcen zum Bezahlen.',
+    resources_one: '{{count}} Ressource vorhanden',
+    resources_other: '{{count}} Ressourcen vorhanden',
+    resource: 'Ressource {{number}}',
+    pays: 'Zahlt {{pays}} · {{left}} übrig',
+    free: 'Ohne Bezahlen spielen',
+    pay: 'Spielen · {{count}} zahlen',
   },
   cluePayment: {
     title: 'Wer zahlt die Hinweise?',
@@ -593,6 +612,9 @@ export const appTexts = {
     healHorror: 'Horror heilen',
     spendResource: 'Ressource ausgeben',
     gainResource: 'Ressource erhalten',
+    placeClue: 'Einen Hinweis auf den eigenen Ort legen',
+    takeClue: 'Einen Hinweis vom eigenen Ort nehmen',
+    counterBubble: '{{investigator}} · {{counter}}',
     turnAt: 'Am Zug · {{location}}',
     turnTakenAt: 'Zug beendet · {{location}}',
     offMap: 'An keinem Ort',
@@ -644,6 +666,9 @@ export const appTexts = {
     chaosBag: 'Chaosbeutel',
     chaosDraw: 'Wer zieht die Marker',
     chaosDraws: { app: 'Die App', table: 'Unser eigener Beutel' },
+    reliance: 'Hilfen',
+    relianceNote:
+      'Neue Spiele und Kampagnen beginnen damit. Der Spielverlauf eines Spiels ändert es nur für dieses Spiel.',
     chaosDrawNote:
       'Mit eurem eigenen Beutel zeigt die Fertigkeitsprobe keinen Ziehen-Knopf, nur euren Wert für den Marker, den ihr zieht.',
     tokenSet: 'Markerset',
@@ -725,6 +750,9 @@ export const appTexts = {
     attack: 'Angriff hinnehmen',
     doesNotProvoke: 'Provoziert keinen Angriff',
     attackCancelled: 'Der Angriff wird verhindert',
+    revelation: 'Enthüllung von {{card}}',
+    resolveRevelation: 'Abhandeln',
+    cancelRevelation: 'Enthüllung verhindern',
     count: {
       failedBy: 'Misslungen um',
       clues: 'Entdeckte Hinweise',

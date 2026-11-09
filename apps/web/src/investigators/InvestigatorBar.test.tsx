@@ -666,6 +666,119 @@ describe('InvestigatorBar', () => {
     });
   });
 
+  describe('the − / + bubble a double tap opens on a counter', () => {
+    // Alder has 2 damage of 7 health, 2 horror of 6 sanity, 1 clue and 3 resources, in the
+    // revealed study, which holds 2 clues.
+    const alderInStudy = newGame()
+      .withLocation(study, blankLocation('study', { clues: perInvestigator(2) }), {
+        revealed: true,
+      })
+      .withInvestigator(alder, {
+        locationId: study,
+        health: { max: 7, damage: 2 },
+        sanity: { max: 6, horror: 2 },
+        clues: 1,
+        resources: 3,
+      });
+    const bubble = () => screen.getByRole('complementary', { name: /^alder · / });
+    const doubleTap = (counter: HTMLElement) => {
+      fireEvent.click(counter);
+      fireEvent.click(counter);
+    };
+
+    it.each([
+      { counter: '5/7', button: 'Take damage', stat: 'damage', after: 3 },
+      { counter: '5/7', button: 'Heal damage', stat: 'damage', after: 1 },
+      { counter: '4/6', button: 'Take horror', stat: 'horror', after: 3 },
+      { counter: '4/6', button: 'Heal horror', stat: 'horror', after: 1 },
+      { counter: '1', button: 'Take a clue from their location', stat: 'clues', after: 2 },
+      { counter: '1', button: 'Place a clue on their location', stat: 'clues', after: 0 },
+      { counter: '3', button: 'Spend a resource', stat: 'resources', after: 2 },
+      { counter: '3', button: 'Gain a resource', stat: 'resources', after: 4 },
+    ] as const)(
+      'on the counter "$counter", "$button" leaves alder with $after $stat',
+      async ({ counter, button, stat, after }) => {
+        const table = PlayTable.start(alderInStudy);
+        render(
+          <InvestigatorBar
+            board={table.board}
+            actions={actionsOn(table)}
+            busy={false}
+            adjusting={false}
+          />,
+        );
+
+        doubleTap(within(panel('alder')).getByRole('img', { name: counter }));
+        fireEvent.click(within(bubble()).getByRole('button', { name: button }));
+
+        await expect.poll(() => table.board.investigator(alder)[stat]).toBe(after);
+      },
+    );
+
+    it('is titled with whose counter it changes', () => {
+      const table = PlayTable.start(alderInStudy);
+      render(
+        <InvestigatorBar
+          board={table.board}
+          actions={actionsOn(table)}
+          busy={false}
+          adjusting={false}
+        />,
+      );
+
+      doubleTap(within(panel('alder')).getByRole('img', { name: '5/7' }));
+
+      expect(within(bubble()).getByRole('heading').textContent).toBe('alder · Health');
+    });
+
+    it('opens on a double tap only, not on a single tap', () => {
+      const table = PlayTable.start(alderInStudy);
+      render(
+        <InvestigatorBar
+          board={table.board}
+          actions={actionsOn(table)}
+          busy={false}
+          adjusting={false}
+        />,
+      );
+
+      fireEvent.click(within(panel('alder')).getByRole('img', { name: '3' }));
+
+      expect(screen.queryByRole('complementary', { name: /^alder · / })).toBeNull();
+    });
+
+    it.each([
+      { how: 'a press beside it', close: () => fireEvent.pointerDown(document.body) },
+      { how: 'Escape', close: () => fireEvent.keyDown(document, { key: 'Escape' }) },
+    ])('closes on $how', ({ close }) => {
+      const table = PlayTable.start(alderInStudy);
+      render(
+        <InvestigatorBar
+          board={table.board}
+          actions={actionsOn(table)}
+          busy={false}
+          adjusting={false}
+        />,
+      );
+      doubleTap(within(panel('alder')).getByRole('img', { name: '3' }));
+
+      act(close);
+
+      expect(screen.queryByRole('complementary', { name: /^alder · / })).toBeNull();
+    });
+
+    it('stays shut while the players adjust the board, whose steppers are out', () => {
+      const table = PlayTable.start(alderInStudy);
+      render(
+        <InvestigatorBar board={table.board} actions={actionsOn(table)} busy={false} adjusting />,
+      );
+
+      doubleTap(within(panel('alder')).getByRole('img', { name: '3' }));
+
+      expect(screen.queryByRole('complementary', { name: /^alder · / })).toBeNull();
+    });
+  });
+
   describe('the steppers, while adjusting', () => {
     // Alder has 2 damage of 7 health, 2 horror of 6 sanity and 3 resources.
     const hurtAlder = newGame()
@@ -1086,6 +1199,59 @@ describe('InvestigatorBar', () => {
         'disabled',
         true,
       );
+    });
+
+    describe('"Play a card" with alder holding 5 resources on their turn', () => {
+      const aldersTurnWithFive = () =>
+        PlayTable.start(
+          newGame()
+            .withLocation(study, blankLocation('study'))
+            .withInvestigator(alder, { locationId: study, resources: 5 })
+            .withTurnOf(alder),
+        );
+      const playSheet = () => screen.getByRole('dialog', { name: 'Play a card' });
+
+      it.each([
+        { tapped: 'resource 3', button: 'Play · pay 3', left: 2 },
+        { tapped: 'resource 5', button: 'Play · pay 5', left: 0 },
+        { tapped: 'resource 1', button: 'Play without paying', left: 5 },
+      ])('taps $tapped, plays with "$button" and keeps $left', async ({ tapped, button, left }) => {
+        const table = aldersTurnWithFive();
+        render(
+          <InvestigatorBar
+            board={table.board}
+            actions={actionsOn(table)}
+            busy={false}
+            adjusting={false}
+          />,
+        );
+
+        fireEvent.click(within(panel('alder')).getByRole('button', { name: 'Play a card' }));
+        fireEvent.click(within(playSheet()).getByRole('button', { name: tapped }));
+        fireEvent.click(within(playSheet()).getByRole('button', { name: button }));
+
+        await expect
+          .poll(() => table.board.investigator(alder))
+          .toMatchObject({ resources: left, actions: 2 });
+      });
+
+      it('closes with × without playing, so alder keeps all three actions', () => {
+        const table = aldersTurnWithFive();
+        render(
+          <InvestigatorBar
+            board={table.board}
+            actions={actionsOn(table)}
+            busy={false}
+            adjusting={false}
+          />,
+        );
+
+        fireEvent.click(within(panel('alder')).getByRole('button', { name: 'Play a card' }));
+        fireEvent.click(within(playSheet()).getByRole('button', { name: 'Close' }));
+
+        expect(screen.queryByRole('dialog', { name: 'Play a card' })).toBeNull();
+        expect(table.board.investigator(alder)).toMatchObject({ resources: 5, actions: 3 });
+      });
     });
 
     it('turns "Investigate" off while a locked door on the study forbids it', () => {

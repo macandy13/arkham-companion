@@ -811,12 +811,24 @@
   display: none;
 }
 
-#board :is(dialog[data-dialog='decision'], dialog[data-dialog='clue-payment'] > article) h2 {
+#board
+  :is(
+    dialog[data-dialog='decision'],
+    dialog[data-dialog='clue-payment'] > article,
+    dialog[data-dialog='play-card'] > article
+  )
+  h2 {
   margin: 0;
   font-size: var(--font-size-subtitle);
 }
 
-#board :is(dialog[data-dialog='decision'], dialog[data-dialog='clue-payment'] > article) p {
+#board
+  :is(
+    dialog[data-dialog='decision'],
+    dialog[data-dialog='clue-payment'] > article,
+    dialog[data-dialog='play-card'] > article
+  )
+  p {
   margin: 0;
 }
 
@@ -928,7 +940,13 @@
   gap: var(--space-2);
 }
 
-#board :is(dialog[data-dialog='decision'], dialog[data-dialog='clue-payment'] > article) footer {
+#board
+  :is(
+    dialog[data-dialog='decision'],
+    dialog[data-dialog='clue-payment'] > article,
+    dialog[data-dialog='play-card'] > article
+  )
+  footer {
   display: flex;
   justify-content: flex-end;
   gap: var(--space-2);

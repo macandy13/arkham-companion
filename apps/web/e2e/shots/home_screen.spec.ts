@@ -7,7 +7,7 @@ import {
 } from '../fixtures/saved_campaigns';
 import { houseOpenedExport, importGame } from '../fixtures/saved_games';
 
-// Situations on the home screen, each photographed as it ends (`@shot`, coding guidelines §3).
+// Situations on the home screen, each photographed as it ends (coding guidelines §3).
 
 test('the welcome page on a first start, with nothing stored', async ({ page }) => {
   await page.goto('/#/');

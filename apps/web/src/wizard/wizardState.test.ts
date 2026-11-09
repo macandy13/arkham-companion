@@ -58,15 +58,27 @@ describe('offeredTargets', () => {
   it.each([
     {
       owned: undefined,
-      scenarios: ['the-gathering', 'the-midnight-masks', 'the-devourer-below', 'spreading-flames'],
+      scenarios: [
+        'the-gathering',
+        'the-midnight-masks',
+        'the-devourer-below',
+        'spreading-flames',
+        'smoke-and-mirrors',
+      ],
     },
     {
       owned: ['rcore'],
-      scenarios: ['the-gathering', 'the-midnight-masks', 'the-devourer-below', 'spreading-flames'],
+      scenarios: [
+        'the-gathering',
+        'the-midnight-masks',
+        'the-devourer-below',
+        'spreading-flames',
+        'smoke-and-mirrors',
+      ],
     },
-    { owned: ['dwl'], scenarios: ['spreading-flames'] },
+    { owned: ['dwl'], scenarios: ['spreading-flames', 'smoke-and-mirrors'] },
   ])(
-    'offers the scenarios of the packs $owned, a scenario outside any campaign always',
+    'offers the scenarios of the packs $owned, the scenarios outside any campaign always',
     ({ owned, scenarios }) => {
       expect(ids('quick', owned)).toEqual(scenarios);
     },

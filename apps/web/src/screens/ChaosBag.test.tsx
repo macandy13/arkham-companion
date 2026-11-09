@@ -36,6 +36,27 @@ describe('ChaosBag', () => {
     ).toEqual(['−1 ×2', 'Skull ×1', 'Elder Sign ×1']);
   });
 
+  it.each([
+    { what: 'without a number on the reference card', skull: undefined, row: 'Skull ×1 ?' },
+    { what: 'by the reference card', skull: -2, row: 'Skull ×1 −2' },
+  ])('lists a symbol $what with its value', ({ skull, row }) => {
+    const table = PlayTable.start(
+      game.withReferenceCard({
+        easyStandard: { skull: { modifier: skull, effectKey: 'test.skull' } },
+        hardExpert: {},
+      }),
+    );
+
+    render(<ChaosBag board={table.board} actions={actionsOn(table)} busy={false} />);
+
+    const contents = screen.getByRole('list', { name: 'Tokens in the bag' });
+    expect(
+      within(contents)
+        .getAllByRole('listitem')
+        .map((item) => item.textContent),
+    ).toEqual(['−1 ×2', row, 'Elder Sign ×1 ?']);
+  });
+
   it('seals the token tapped on the investigator picked', async () => {
     const table = PlayTable.start(game);
     render(<ChaosBag board={table.board} actions={actionsOn(table)} busy={false} />);

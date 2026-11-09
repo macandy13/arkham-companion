@@ -77,11 +77,11 @@ export const SMOKE_AND_MIRRORS_CODES = {
 
 /**
  * Smoke and Mirrors' resolutions as the campaign guide numbers them: Augurs of Flame's reverse
- * side leads to Resolution 1; Resolution 2 is the guide's own follow-up (MC2.8d).
+ * side leads to Resolution 1. Resolution 2 only follows another one, so no game ends with it
+ * (`smokeAndMirrorsResolutions`).
  */
 export const SMOKE_AND_MIRRORS_RESOLUTIONS = {
   culpritFound: resolutionId('R1'),
-  servantEscaped: resolutionId('R2'),
 } as const;
 
 /** Id of Arcane Lock's question to the investigator who tests to discard it: willpower or intellect? */

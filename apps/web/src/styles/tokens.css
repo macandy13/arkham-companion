@@ -261,8 +261,8 @@
   --segment-height: 2.25rem;
   /* The wizard's step dots (MD.3d). */
   --step-dot-size: 0.5rem;
-  /* The radio mark on a ruled line of the wizard's setup (MD.3d3). */
-  --wizard-mark-size: 1.125rem;
+  /* The radio mark on a ruled line of the settings form ("What the app tells you", MD.3g). */
+  --form-mark-size: 1.125rem;
   /* Minimum size of anything tappable, for use on a shared tablet. */
   --touch-target: 2.75rem;
   /* Buttons on a card (the agenda's doom steppers, the act's advance), small so the card stays compact. */
@@ -311,6 +311,12 @@
   --layer-menu: 2;
   /* A card dialog lowered out of the board's way (card_dialog.css), over the board's own layers. */
   --layer-lowered-dialog: 4;
+  /* A counter's − / + bubble (`CounterBubble`), over the menu and the map's controls. */
+  --layer-counter-bubble: 3;
+  /* How far the bubble keeps from its counter and from the screen's edges. */
+  --bubble-margin: var(--space-2);
+  /* The side of the square turned into the bubble's point. */
+  --bubble-point: 0.75rem;
   /* A dragged token (`TokenGhost`), over the lowered card dialog. */
   --layer-token-ghost: 5;
 

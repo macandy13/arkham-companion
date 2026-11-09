@@ -1,6 +1,6 @@
 /*
  * The chaos bag on the scenario card's page (ChaosBag): the tokens in the bag as a wrapping row of
- * pills, each the token beside its count, the one picked to seal pressed; under it a button per
+ * pills, each the token beside its count and followed by its value in muted text when it shows a symbol, the one picked to seal pressed; under it a button per
  * investigator to seal it on, then the sealed tokens, one per line with their Release button.
  */
 #board dialog[data-shell] section[data-part='chaos-bag'] {
@@ -35,6 +35,11 @@
   display: flex;
   gap: var(--space-2);
   align-items: center;
+}
+
+#board dialog[data-shell] section[data-part='chaos-bag'] > ul > li > data {
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
 }
 
 /* The tokens (`ChaosTokenFace`), large enough for a number in its star frame, kept from shrinking in the row. */

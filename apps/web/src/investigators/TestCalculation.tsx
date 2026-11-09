@@ -12,10 +12,12 @@ import {
   type ModifierStep,
   type SkillName,
   type SkillTest,
+  type SkillTestOdds,
   type SkillTestSuggestion,
 } from '@arkham/engine';
 import { assertNever, sum } from '@arkham/util';
 import { ChaosTokenFace } from '../tokens/ChaosTokenFace';
+import { hasSymbol, signed, signedOrUnknown } from '../tokens/tokenValue';
 import './test_calculation.css';
 
 /** The skills a test adds up: the tested one first, then the one a card adds to it. */
@@ -38,7 +40,16 @@ export interface SkillTestRun {
   result: SkillTestSuggestion;
   /** Whether the tokens drawn settle the test: false before the first and while one asks for another. */
   finished: boolean;
+  /**
+   * Before a token is drawn from a bag with tokens in it, how likely the test is to pass
+   * (`BoardView.skillTestOdds`): with the players' modifier, then with each of `EXTRA_ICONS` more
+   * committed icons, so they see how far to over-commit (M6.7c).
+   */
+  odds?: readonly SkillTestOdds[];
 }
+
+/** How many more committed icons the skill test shows the odds of, besides the players' own modifier. */
+const EXTRA_ICONS = 2;
 
 /**
  * The run of `investigator`'s `test`, or nothing when there is no test or no one takes it (a
@@ -58,11 +69,19 @@ export function useSkillTest(
   if (investigator === undefined || test === undefined) return undefined;
   const skills = picked ?? [test.skill];
   const [tested, added] = skills;
-  const result = board.skillTest(
-    investigator,
-    { skill: tested, difficulty: test.difficulty },
-    { modifier, tokens: revealed, ...(added === undefined ? {} : { addedSkill: added }) },
-  );
+  const taken = { skill: tested, difficulty: test.difficulty };
+  const addedSkill = added === undefined ? {} : { addedSkill: added };
+  const result = board.skillTest(investigator, taken, {
+    modifier,
+    tokens: revealed,
+    ...addedSkill,
+  });
+  const odds =
+    revealed.length === 0 && board.chaosBag.length > 0
+      ? Array.from({ length: EXTRA_ICONS + 1 }, (_, extra) =>
+          board.skillTestOdds(investigator, taken, { modifier: modifier + extra, ...addedSkill }),
+        )
+      : undefined;
   return {
     skills,
     pick: (each) => setSkills(pickSkill(skills, each)),
@@ -72,6 +91,7 @@ export function useSkillTest(
     draw: () => setRevealed(drawTokens(board.chaosBag, revealed, Math.random)),
     result,
     finished: testFinished(revealed),
+    ...(odds ? { odds } : {}),
   };
 }
 
@@ -130,6 +150,7 @@ export function SkillTestBlock({
         revealed={run.revealed}
         skill={run.skills[0]}
         finished={run.finished}
+        {...(run.odds ? { odds: run.odds } : {})}
         {...(board.chaosBag.length > 0 ? { onDraw: run.draw } : {})}
       />
     </>
@@ -191,12 +212,14 @@ export function ResultStrip({
   revealed,
   skill,
   finished,
+  odds,
   onDraw,
 }: {
   result: SkillTestSuggestion;
   revealed: readonly ChaosToken[];
   skill: SkillName;
   finished: boolean;
+  odds?: readonly SkillTestOdds[];
   onDraw?: () => void;
 }) {
   const { t } = useTranslation();
@@ -248,6 +271,7 @@ export function ResultStrip({
           </figcaption>
         )}
       </figure>
+      {odds && <PassChances odds={odds} />}
       {revealed.length > 0 &&
         (finished ? (
           <output data-outcome={result.outcome}>
@@ -387,23 +411,33 @@ function tokenEffects(
     return step.change;
   });
 }
-
 /**
- * Whether the token shows a symbol rather than its number, so the strip spells out its effect:
- * the scenario's symbols, the elder sign, auto-fail and the tokens a campaign adds (bless, curse,
- * frost, blood).
+ * The chance to pass before a token is drawn (M6.7c), in the outcome's place: with the players'
+ * modifier, the part a card decides (the elder sign, a symbol without a number) when there is
+ * one, then with each extra committed icon that makes it pass more often.
  */
-function hasSymbol(token: ChaosToken): boolean {
-  return Number.isNaN(Number(token));
-}
-
-/** A token's effect with its sign, or "?" when the app cannot tell it (`tokenEffects`). */
-function signedOrUnknown(effect: number | undefined): string {
-  return effect === undefined ? '?' : signed(effect);
-}
-
-/** A modifier with its sign, as the players say it: +1, 0, −2. */
-export function signed(value: number): string {
-  if (value > 0) return `+${value}`;
-  return value < 0 ? `−${-value}` : '0';
+function PassChances({ odds }: { odds: readonly SkillTestOdds[] }) {
+  const { t, i18n } = useTranslation();
+  const percent = new Intl.NumberFormat(i18n.language, {
+    style: 'percent',
+    maximumFractionDigits: 0,
+  });
+  const [now, ...more] = odds;
+  if (!now) return null;
+  const better = more
+    .map((each, index) => ({ icons: index + 1, pass: each.pass, before: odds[index]?.pass ?? 1 }))
+    .filter(({ pass, before }) => pass > before);
+  return (
+    <ul aria-label={t('skillTest.odds.title')} data-part="odds">
+      <li>{t('skillTest.odds.pass', { chance: percent.format(now.pass) })}</li>
+      {now.unknown > 0 && (
+        <li>{t('skillTest.odds.unknown', { chance: percent.format(now.unknown) })}</li>
+      )}
+      {better.map(({ icons, pass }) => (
+        <li key={icons}>
+          {t('skillTest.odds.more', { icons: signed(icons), chance: percent.format(pass) })}
+        </li>
+      ))}
+    </ul>
+  );
 }
