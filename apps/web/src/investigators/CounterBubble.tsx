@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef } from 'react';
+import { useEffect, useId, useLayoutEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import './counter_bubble.css';
 
@@ -10,8 +10,8 @@ export interface BubbleSide {
 
 /**
  * The − / + bubble of a counter on the investigator's card (M6.9): opened by a double tap on the
- * counter (`anchor`), it stands on paper over it, pointing at it, with what it is about (`label`),
- * its count (`value`) between a − and a + the size of a touch target. Each tap is one step
+ * counter (`anchor`), it stands on paper over it, pointing at it, titled with what it changes
+ * (`label`, such as "Roland Banks · Health"), over its count (`value`) between a − and a + the size of a touch target. Each tap is one step
  * (`onStep` with −1 or +1 for the count as shown). A press anywhere else, or Escape, closes it
  * (`onClose`), as does a scroll or a resize, which would move the counter away from under it.
  * It goes to the page's body, so the card's clipped panels can't cut it, or into the
@@ -36,6 +36,7 @@ export function CounterBubble({
   onClose: () => void;
 }) {
   const bubble = useRef<HTMLElement>(null);
+  const title = useId();
   useLayoutEffect(() => {
     const element = bubble.current;
     if (!element) return;
@@ -80,7 +81,8 @@ export function CounterBubble({
     };
   }, [anchor, onClose]);
   return createPortal(
-    <aside ref={bubble} aria-label={label} data-counter-bubble="">
+    <aside ref={bubble} aria-labelledby={title} data-counter-bubble="">
+      <h2 id={title}>{label}</h2>
       <button
         type="button"
         aria-label={lower.label}

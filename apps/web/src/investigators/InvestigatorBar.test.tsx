@@ -715,6 +715,22 @@ describe('InvestigatorBar', () => {
       },
     );
 
+    it('is titled with whose counter it changes', () => {
+      const table = PlayTable.start(alderInStudy);
+      render(
+        <InvestigatorBar
+          board={table.board}
+          actions={actionsOn(table)}
+          busy={false}
+          adjusting={false}
+        />,
+      );
+
+      doubleTap(within(panel('alder')).getByRole('img', { name: '5/7' }));
+
+      expect(within(bubble()).getByRole('heading').textContent).toBe('alder · Health');
+    });
+
     it('opens on a double tap only, not on a single tap', () => {
       const table = PlayTable.start(alderInStudy);
       render(
