@@ -512,20 +512,10 @@
   margin: 0;
 }
 
-/* The card's traits and abilities, emphasised as the play screen's notebook page sets them. */
+/* The card's traits and abilities, a notebook page (`card_text.css`). */
 #investigator-picker dialog > section {
   display: grid;
   gap: var(--space-1);
-}
-
-#investigator-picker dialog [data-traits] {
-  font-style: italic;
-  font-weight: bold;
-  text-align: center;
-}
-
-#investigator-picker dialog > section em {
-  font-weight: bold;
 }
 
 #investigator-picker dialog figure {

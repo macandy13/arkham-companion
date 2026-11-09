@@ -22,11 +22,10 @@ interface InvestigatorSheetProps {
 
 /**
  * Detail sheet over the picker: both card faces, health, sanity, skills, the card's traits and
- * ability text (ArkhamDB markup, its symbols as icons; readable when the pictures don't load) and
- * the select action, or
- * for a picked investigator their seat with the actions to make them lead or remove them. A
- * native modal `<dialog>` brings focus trapping and Escape; it stays open while it turns to the
- * other chapter's version.
+ * ability text as a notebook page (ArkhamDB markup, its symbols as icons; readable when the
+ * pictures don't load) and the select action, or for a picked investigator their seat with the
+ * actions to make them lead or remove them. A native modal `<dialog>` brings focus trapping and
+ * Escape; it stays open while it turns to the other chapter's version.
  */
 export function InvestigatorSheet({
   investigator,
@@ -86,7 +85,7 @@ export function InvestigatorSheet({
         ))}
       </dl>
       {(investigator.traits || investigator.text) && (
-        <section aria-label={t('picker.cardText')}>
+        <section aria-label={t('picker.cardText')} data-page="">
           {investigator.traits && <p data-traits="">{investigator.traits}</p>}
           {investigator.text && cardParagraphs(investigator.text)}
         </section>
