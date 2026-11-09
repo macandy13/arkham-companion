@@ -25,6 +25,7 @@ test("a new campaign's first step: Night of the Zealot's cover with its key art,
   await page.getByRole('link', { name: 'New campaign' }).click();
 
   await expect(page.getByRole('radio', { name: 'Night of the Zealot' })).toBeChecked();
+  await expect(page.getByRole('radio', { name: 'Brethren of Ash' })).toBeVisible();
 });
 
 test('the investigator picker with its filter menu open', async ({ page }) => {
