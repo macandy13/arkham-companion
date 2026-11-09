@@ -35,6 +35,7 @@ flowchart LR
 - **A play is steps:** a `playCard` step (the play action, which may provoke attacks of opportunity) then a `playerCard` step with the card's effects, so a record replays without the bot. A fast card skips the action.
 - **Act first:** each card it can pay for and whose effect fits the board gets a score for how much it moves the act on (`actScore`: clues and intellect while the location has clues, an extra action, resources when low, then fight, evade and healing when they're needed); it plays the best one above a floor.
 - **Its tests:** skill cards with the tested icon (two to an investigation or fight, one to another test), the best weapon on a fight, a boost paid with resources and Lucky! near a fail add to the `modifier`; a pass confirms the extra damage or clues within the range the decision offers. What the test spent comes as steps after `resolveTest`, since the table takes nothing else while the test is open.
+- **Cancelling an attack:** an open attack on one of its investigators who holds Dodge and can pay is answered with the attack decision's cancel option, then the card's cost.
 - **Soaking** is approximated: an ally or armour heals the damage or horror it would have taken right after, until its health or sanity is used up.
 
 ## How a step is judged

@@ -215,6 +215,7 @@ export const appTexts = {
       playArea: 'unter der Kontrolle von {{name}}',
       atLocation: 'Ort: {{location}}',
       attachedTo: 'an {{card}} angehängt',
+      beneath: 'unter {{card}}',
     },
     discard: 'Ablagestapel',
     setAside: 'Beiseitegelegt',

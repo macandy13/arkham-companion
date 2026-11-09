@@ -1691,6 +1691,63 @@ describe('objectives on the victory display', () => {
   });
 });
 
+describe('objectives on the victory display and beneath the act', () => {
+  const elite = trait('Elite');
+  const suspect = instanceId('suspect');
+  const eliteSuspect = blankEnemy('elite_suspect', { traits: [elite], victory: 1 });
+  /** "If there are 2 Elite enemies in the victory display and/or under the act, advance." */
+  const displayOrBeneathAct = blankAct('display_or_beneath_act', {
+    abilities: [whenVictoryDisplayHolds({ trait: elite, beneathAct: true }, 2, advanceAct())],
+  });
+  /** The same objective on the victory display alone. */
+  const displayOnlyAct = blankAct('display_only_act', {
+    abilities: [whenVictoryDisplayHolds({ trait: elite }, 2, advanceAct())],
+  });
+  /**
+   * Alice in the hall with an Elite suspect there; one Elite enemy is in the victory display
+   * already, and act 1 (`firstAct`) waits for two.
+   */
+  const suspectTable = (firstAct: CardStats) =>
+    newGame()
+      .withAgenda(agenda1, firstAgendaCard)
+      .withAct(act1, firstAct)
+      .withAct(act2, secondActCard)
+      .withLocation(hall, blankLocation('hall'), { revealed: true })
+      .withCard(instanceId('defeated_elite'), eliteSuspect, victoryDisplay)
+      .withCard(suspect, eliteSuspect, atLocation(hall), { faceUp: true })
+      .withInvestigator(alice, { locationId: hall });
+
+  it.each([
+    { objective: 'the display and beneath the act', act: displayOrBeneathAct, current: act2 },
+    { objective: 'the display alone', act: displayOnlyAct, current: act1 },
+  ])(
+    'counting $objective, a suspect placed beneath the act leaves act $current current',
+    ({ act, current }) => {
+      const { context, state: started } = suspectTable(act).start();
+
+      const { state } = execute(context, started, {
+        type: 'MoveCard',
+        cardId: suspect,
+        to: { kind: 'beneath', hostId: act1 },
+      });
+
+      expect(state.act.current).toBe(current);
+    },
+  );
+
+  it('does not count a card beneath a location', () => {
+    const { context, state: started } = suspectTable(displayOrBeneathAct).start();
+
+    const { state } = execute(context, started, {
+      type: 'MoveCard',
+      cardId: suspect,
+      to: { kind: 'beneath', hostId: hall },
+    });
+
+    expect(state.act.current).toBe(act1);
+  });
+});
+
 describe("objectives on a card's own tokens", () => {
   /** "If there are 2 clues on this Act, advance." */
   const twoClueAct = blankAct('two_clue_act', {

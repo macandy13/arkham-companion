@@ -36,6 +36,8 @@ An objective is an ability of its act or agenda, with a window that opens only w
 - "If an investigator enters the Ritual Site, advance": `whenAnInvestigatorEnters(codes.ritualSite, advanceAct())`.
 - "If there are 6 unique Cultist enemies in the victory display, advance":
   `whenVictoryDisplayHolds({ trait: trait('Cultist'), unique: true }, 6, advanceAct())`.
+- "If there are 6 Elite enemies beneath this act and/or in the victory display, advance" (Augurs of Flame):
+  `whenVictoryDisplayHolds({ trait: trait('Elite'), beneathAct: true }, 6, advanceAct())`; its action that "draws" the facedown card beneath your location is `drawBeneathYourLocation()`.
 - An act that advances on the clues on it (Disrupting the Ritual): `whenTokensOnSelf('clue', perInvestigator(2), advanceAct())`, and its action places them with `placeCluesOnSelf(1)`.
 - A location topping up its clues at round end (Ritual Site): `atEndOfRound(placeCluesOnSelfUpTo(perInvestigator(2)))`.
 - Doom per enemy (They're Getting Out!): `forEachEnemy({ trait: trait('Ghoul'), at: [codes.hallway, codes.parlor] }, atEndOfRound(placeDoomOnSelf(1)))`.

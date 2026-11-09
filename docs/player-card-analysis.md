@@ -28,7 +28,7 @@ Each card does one or more of these, including what it costs the investigator (D
 | enemies cannot move in or attack        | 1     | none                                                                    | no     |
 | draw, search or hold player cards       | 14    | the bot's own hand and deck, nothing on the table                       | bot    |
 
-Of the 29 cards each investigator can take, the table takes every effect of 23 (Roland, Daisy) and 26 (Wendy), and every effect but cancelling and blocking of 27, 27 and 29 when soaking is approximated: an ally or an accessory that would take damage or horror is played as healing the investigator right after, until the card's health and sanity are used up. Only Dodge, Ward of Protection and Barricade do something the table can't take; the bot leaves them in the deck as cards it never plays.
+Of the 29 cards each investigator can take, the table takes every effect of 23 (Roland, Daisy) and 26 (Wendy), and every effect but cancelling and blocking of 27, 27 and 29 when soaking is approximated: an ally or an accessory that would take damage or horror is played as healing the investigator right after, until the card's health and sanity are used up. Only Ward of Protection and Barricade do something the table can't take; the bot leaves them in the deck as cards it never plays. Dodge's cancel is the attack decision's own cancel option.
 
 ## Cards
 
@@ -44,7 +44,7 @@ Of the 29 cards each investigator can take, the table takes every effect of 23 (
 | 01020 | Machete               | guardian asset | +N to a skill test, damage to an enemy                                                    | yes          | Roland               |
 | 01021 | Guard Dog             | guardian asset | an asset takes damage or horror, damage to an enemy                                       | approximated | Roland               |
 | 01022 | Evidence!             | guardian event | discover clues                                                                            | yes          | Roland               |
-| 01023 | Dodge                 | guardian event | cancel an attack or a revelation                                                          | no           | Roland               |
+| 01023 | Dodge                 | guardian event | cancel an enemy attack                                                                    | yes          | Roland               |
 | 01024 | Dynamite Blast        | guardian event | damage to an enemy, the investigator takes damage or horror                               | yes          | Roland               |
 | 01025 | Vicious Blow          | guardian skill | +N to a skill test, damage to an enemy                                                    | yes          | Roland               |
 | 01030 | Magnifying Glass      | seeker asset   | +N to a skill test                                                                        | yes          | Roland, Daisy        |
@@ -74,7 +74,7 @@ Of the 29 cards each investigator can take, the table takes every effect of 23 (
 | 01062 | Arcane Studies        | mystic asset   | +N to a skill test, spend resources for a boost                                           | yes          | Daisy                |
 | 01063 | Arcane Initiate       | mystic asset   | draw, search or hold player cards, doom on a player card, an asset takes damage or horror | approximated | Daisy                |
 | 01064 | Drawn to the Flame    | mystic event   | draw an encounter card, discover clues                                                    | yes          | Daisy                |
-| 01065 | Ward of Protection    | mystic event   | cancel an attack or a revelation                                                          | no           | Daisy                |
+| 01065 | Ward of Protection    | mystic event   | cancel a non-weakness treachery's revelation, take 1 horror                               | no           | Daisy                |
 | 01066 | Blinding Light        | mystic event   | evade an enemy, damage to an enemy, the investigator takes damage or horror               | yes          | Daisy                |
 | 01067 | Fearless              | mystic skill   | +N to a skill test, heal damage or horror                                                 | yes          | Daisy                |
 | 01072 | Leather Coat          | survivor asset | an asset takes damage or horror                                                           | approximated | Wendy                |
@@ -102,4 +102,4 @@ Built in [`deck_bot.ts`](../packages/play_tester/src/deck_bot.ts) with the cards
 
 - **Deck:** 30 cards drawn from the cards above an investigator can take (two copies each at most) plus the signature asset, shuffled with the bot seed; a blank investigator takes Neutral cards. Each card's cost, class, skill icons, health, sanity and effects are entered by hand per card code, with no card text, as the test scenario's cards are.
 - **Goal:** advance the act fastest. Of the cards it can pay for and whose effect fits the board, it plays the one that does most for the act: clues and intellect boosts while the location has clues, then an extra action, then resources when it runs low, then cards against an engaged enemy, then healing when near defeat. Skill cards go up to two to an investigation or a fight, one to any other test.
-- **Then:** cancelling an attack or a treachery (Dodge, Ward of Protection) needs engine commands first; slice 8c adds them, and the bot plays those cards after it.
+- **Cancelling:** an enemy attack's decision already has a cancel option, so the bot answers it with Dodge when it holds one and can pay. Cancelling a treachery's revelation (Ward of Protection) needs the engine first (#1099).

@@ -104,6 +104,7 @@ export * as scenario from './scenario_api';
 export * from './investigators';
 export { enemyAttackList, type EnemyAttack } from './enemies';
 export { describeDecision, optionName, optionNamed } from './describe_decision';
+export { isEnemyAttackDecision } from './forced_attacks';
 export { confirmOptions, skillTestDecision, type SkillTestOutcomes } from './decisions';
 export { drawTokens, testFinished } from './draw_tokens';
 export { tokenCounts, type TokenCount } from './chaos_bag';
@@ -124,7 +125,7 @@ export { checkInvariants } from './invariants';
 export { PHASE_OF_STEP, PHASE_STEP_TITLES } from './phases';
 export { BASE_ACTIONS_PER_TURN } from './turns';
 export { formatBoard } from './format_board';
-export { victoryPoints } from './victory';
+export { inVictoryDisplay, victoryPoints } from './victory';
 export {
   advanceAct,
   afterDiscoveringClues,
@@ -209,6 +210,7 @@ export {
   advanceBySpendingCluesAtRoundEnd,
   spendCluesAsGroup,
   drawCards,
+  drawBeneathYourLocation,
   drawFromScenarioDeck,
   searchDeck,
   spendClues,

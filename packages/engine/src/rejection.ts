@@ -125,6 +125,8 @@ export type Rejection =
   | { code: 'noGroupCost' }
   /** `DrawFromScenarioDeck` on a deck with no cards left. */
   | { code: 'scenarioDeckEmpty'; deck: ScenarioDeck }
+  /** `DrawBeneath` where no facedown card lies beneath the investigator's location. */
+  | { code: 'nothingBeneath'; locationId: InstanceId }
   /** `DrawEncounter` brought an enemy for an investigator who is not at a location. */
   | { code: 'investigatorHasNoLocation'; investigatorId: InvestigatorId }
   /** No card with code `match` is set aside. */
@@ -384,6 +386,8 @@ function describe(r: Rejection): string {
       return 'only a cost paid as a group names its payers';
     case 'scenarioDeckEmpty':
       return `the ${r.deck} deck is empty`;
+    case 'nothingBeneath':
+      return `no facedown card lies beneath ${r.locationId}`;
     case 'investigatorHasNoLocation':
       return `investigator ${r.investigatorId} is not at a location`;
     case 'cardNotInZone':
