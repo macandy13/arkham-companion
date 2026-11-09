@@ -4,10 +4,18 @@ name: Release
 # CHANGELOG.md up to date and maintains a "chore(main): release x.y.z" PR.
 # Merging that PR creates the git tag and the GitHub release.
 # Repo setting needed: Actions → General → "Allow GitHub Actions to create and approve pull requests".
+#
+# The release PR is opened or refreshed only once a week (or by hand), so the
+# owner gets at most one new release PR a week instead of one after every
+# merged release. Pushes to main still run it, but only to tag a release PR
+# that was just merged, without opening the next one.
 
 on:
   push:
     branches: [main]
+  schedule:
+    - cron: '0 6 * * 1' # Mondays 06:00 UTC
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -21,3 +29,4 @@ jobs:
         with:
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
+          skip-github-pull-request: ${{ github.event_name == 'push' }}
