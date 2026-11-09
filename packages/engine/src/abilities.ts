@@ -425,13 +425,13 @@ export type AbilityCondition =
    */
   | ({ kind: 'investigatorHas'; stat: InvestigatorStat } & StatRange)
   /**
-   * The number of enemies or investigators the `each…` reference `of` names as the window opens
+   * The number of cards or investigators the `each…` reference `of` names as the window opens
    * is within the range, counted as an effect on each of them would repeat ("If there are no
    * [[Cultist]] enemies in play", "if there is an enemy at your location", "if no enemy is
    * engaged with you"). A reference that names nothing, such as `windowLocation` in a window
    * without one, counts none.
    */
-  | ({ kind: 'count'; of: RepeatedRef } & StatRange)
+  | ({ kind: 'countOf'; of: RepeatedRef } & StatRange)
   /**
    * `ref` stands for nothing as the window opens ("If there is no such
    * location, Locked Door gains surge"), counted like the effect that names it.
@@ -717,7 +717,7 @@ function conditionHolds(
       const value = statValue(requireInvestigator(state, investigatorId), condition.stat);
       return inRange(value, condition);
     }
-    case 'count':
+    case 'countOf':
       return inRange(
         eachId(ctx, state, condition.of, windowRefs(ctx, state, opened)).length,
         condition,
@@ -2056,12 +2056,12 @@ export function ifEnemiesInPlay(trait: Trait, range: StatRange, ability: Ability
 
 /**
  * "If there is an enemy at your location, …", "if no enemy is engaged with you, …": `ability`
- * fires only while the number of enemies or investigators the `each…` reference `of` names is
+ * fires only while the number of cards or investigators the `each…` reference `of` names is
  * within `range`, written `ifThereAre(eachEnemyAt({ ref: 'windowLocation' }), { min: 1 }, …)` or
  * `ifThereAre(eachEnemy({ engagedWith: { ref: 'windowInvestigator' } }), { max: 0 }, …)`.
  */
 export function ifThereAre(of: RepeatedRef, range: StatRange, ability: Ability): Ability {
-  return { ...ability, condition: { kind: 'count', of, ...range } };
+  return { ...ability, condition: { kind: 'countOf', of, ...range } };
 }
 
 /**

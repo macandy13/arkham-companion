@@ -127,25 +127,28 @@ describe('a condition on the current agenda', () => {
     abilities: [duringAgenda([cardCode('second_agenda')], whenRevealed(takeHorror(1)))],
   });
 
-  it.each([
-    { current: 'first_agenda', horror: 0 },
-    { current: 'second_agenda', horror: 1 },
-  ])('gives alice $horror horror while the $current is current', ({ current, horror }) => {
-    const table = newGame()
-      .withAgenda(firstAgenda, blankAgenda('first_agenda', fixed(5)))
-      .withAgenda(secondAgenda, blankAgenda('second_agenda', fixed(5), { stage: { number: 2 } }))
-      .withLocation(hall, blankLocation('hall'), { revealed: true })
-      .withInvestigator(alice, { locationId: hall })
-      .withCard(omen, omenCard, encounterDeck)
-      .start();
-    const { context } = table;
-    const state =
-      current === 'first_agenda'
-        ? table.state
-        : stateAfter(context, table.state, { type: 'AdvanceAgenda' });
+  const twoAgendas = newGame()
+    .withAgenda(firstAgenda, blankAgenda('first_agenda', fixed(5)))
+    .withAgenda(secondAgenda, blankAgenda('second_agenda', fixed(5), { stage: { number: 2 } }))
+    .withLocation(hall, blankLocation('hall'), { revealed: true })
+    .withInvestigator(alice, { locationId: hall })
+    .withCard(omen, omenCard, encounterDeck);
+
+  it('gives alice no horror during the first agenda', () => {
+    const { context, state } = twoAgendas.start();
 
     const after = stateAfter(context, state, aliceDraws);
 
-    expect(investigatorOf(after, alice).sanity.horror).toBe(horror);
+    expect(investigatorOf(after, alice).sanity.horror).toBe(0);
+  });
+
+  it('gives alice 1 horror once the second agenda is current', () => {
+    const { context, state } = twoAgendas.start();
+    const advanced = stateAfter(context, state, { type: 'AdvanceAgenda' });
+
+    const after = stateAfter(context, advanced, aliceDraws);
+
+    expect(advanced.agenda.current).toBe(secondAgenda);
+    expect(investigatorOf(after, alice).sanity.horror).toBe(1);
   });
 });
