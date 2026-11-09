@@ -20,8 +20,15 @@ export const brethrenOfAshTexts = {
         upgradeDecks: 'Each investigator spends experience on deck upgrades.',
       },
     },
+    smokeAndMirrors: {
+      resolution: {
+        drawForTheHarbinger:
+          "Gather each Elite enemy in play and/or beneath a location when the scenario ended, shuffle them facedown with the harbinger of Elokoss and draw one at random: if it is the harbinger, the investigators discovered the cult's whereabouts.",
+        upgradeDecks: 'Each investigator spends experience on deck upgrades.',
+      },
+    },
   },
-  scenarios: { spreadingFlames: 'Spreading Flames' },
+  scenarios: { spreadingFlames: 'Spreading Flames', smokeAndMirrors: 'Smoke and Mirrors' },
   campaigns: {},
   story: {},
 } satisfies CampaignTexts;

@@ -36,16 +36,17 @@ A scenario's resolutions are data on `ScenarioDefinition.resolutions` ([`resolut
 
 - record,
 - chaos tokens,
-- XP from a bonus and the [victory points](../../packages/engine/src/victory.ts),
+- XP from a bonus and the [victory points](../../packages/engine/src/victory.ts), plus 1 per card in a `perCardIn` place ("1 bonus experience for each enemy beneath the act"),
 - trauma,
 - killed/insane,
 - a story card earned (`earnCard`, by each target or, with `choose`, a `choice` of one of them),
 - the end of the campaign,
+- a record the players pick among `values` (`recordChoice`, a `choice`, when a draw at the table decides),
 - or a step the players do by hand.
 
 Steps that read the ended game:
 
-- `when` picks its steps by a `GameCondition` (a card in play, set aside, in a scenario deck or in the victory display, the current agenda, or any of these)
+- `when` picks its steps by a `GameCondition` (a card in play, set aside, in a scenario deck, in the victory display, out of the game (an agenda or act that advanced) or beneath an act, at least N cards of a trait in such places (`cardsIn`), the current agenda, or any of these)
 - and `recordNames` writes the names of the cards whose condition holds as a list record.
 
 Steps name their target (`each`, `lead`, `notResigned`, `resigned`) instead of investigators, so `campaign.proposeResolution` reads the ended game and turns them into campaign commands. In a campaign game they are followed by an `AddChaosToken` or `RemoveChaosToken` for each chaos bag change a card made "permanently" during the scenario (the game's `ChangeChaosBag` with `lasts: 'campaign'`, kept in `GameState.chaosBagChanges`; a change for the scenario only stays out of the log), then by the trauma of each defeat:

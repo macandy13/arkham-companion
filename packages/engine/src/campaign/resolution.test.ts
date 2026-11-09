@@ -9,18 +9,22 @@ import {
   stateAfter,
 } from '../../test/utils';
 import {
+  blankAct,
   blankAgenda,
   blankEnemy,
   cardCode,
   blankLocation,
   campaign,
   CUSTOM_SCENARIO,
+  endScenario,
   instanceId,
   investigatorCode,
   investigatorId,
   newGame,
   resolutionId,
   scenarioId,
+  trait,
+  whenAdvanced,
   type Command,
   type InvestigatorId,
   type ResolutionId,
@@ -785,6 +789,132 @@ describe('proposeResolution with steps that read the game', () => {
     });
 
     expect(proposal).toEqual([]);
+  });
+});
+
+describe('proposeResolution with steps that read the cards beneath the act', () => {
+  const elite = trait('Elite');
+  const act = instanceId('act');
+  const eliteSuspect = blankEnemy('elite_suspect', { traits: [elite] });
+  const plainSuspect = blankEnemy('plain_suspect');
+  /**
+   * The act is current, ending the game in R1 once it advances, with two Elite suspects and a
+   * plain one beneath it; one more Elite suspect is beneath the study and one in the victory
+   * display.
+   */
+  const suspectsTable = table
+    .withAct(act, blankAct('act', { abilities: [whenAdvanced(endScenario(r1))] }))
+    .withCard(
+      instanceId('questioned_a'),
+      eliteSuspect,
+      { kind: 'beneath', hostId: act },
+      { faceUp: true },
+    )
+    .withCard(
+      instanceId('questioned_b'),
+      eliteSuspect,
+      { kind: 'beneath', hostId: act },
+      { faceUp: true },
+    )
+    .withCard(
+      instanceId('questioned_plain'),
+      plainSuspect,
+      { kind: 'beneath', hostId: act },
+      { faceUp: true },
+    )
+    .withCard(
+      instanceId('hidden'),
+      eliteSuspect,
+      { kind: 'beneath', hostId: study },
+      { faceUp: false },
+    )
+    .withCard(instanceId('defeated'), eliteSuspect, { kind: 'victoryDisplay' });
+  const proposalFor = (...steps: ResolutionStep[]) => {
+    const { context, state } = suspectsTable.start();
+    return campaign.proposeResolution(context, stateAfter(context, state, endWith(r1)), {
+      byId: { [r1]: steps },
+      none: [],
+    });
+  };
+  const scoured = { kind: 'record', key: 'scoured', value: { kind: 'flag', value: true } } as const;
+
+  it.each([
+    { places: ['beneathAct'], atLeast: 2, holds: true },
+    { places: ['beneathAct'], atLeast: 3, holds: false },
+    { places: ['beneathAct', 'victoryDisplay'], atLeast: 3, holds: true },
+    { places: ['victoryDisplay'], atLeast: 2, holds: false },
+  ] as const)('counts $atLeast Elite cards in $places: $holds', ({ places, atLeast, holds }) => {
+    const proposal = proposalFor({
+      kind: 'when',
+      condition: { kind: 'cardsIn', trait: elite, places, atLeast },
+      then: [scoured],
+    });
+
+    expect(proposal).toHaveLength(holds ? 1 : 0);
+  });
+
+  it('still finds them beneath the act once it advanced out of the game', () => {
+    const { context, state } = suspectsTable.start();
+    const advanced = stateAfter(context, state, { type: 'AdvanceAct' });
+
+    const proposal = campaign.proposeResolution(context, advanced, {
+      byId: {
+        [r1]: [
+          {
+            kind: 'when',
+            condition: { kind: 'cardIn', code: cardCode('act'), places: ['outOfGame'] },
+            then: [scoured],
+          },
+          { kind: 'awardXp', to: 'each', bonus: 0, victoryDisplay: false, perCardIn: 'beneathAct' },
+        ],
+      },
+      none: [],
+    });
+
+    expect(proposal).toEqual([
+      {
+        kind: 'command',
+        command: { type: 'RecordStory', key: 'scoured', value: { kind: 'flag', value: true } },
+      },
+      { kind: 'command', command: { type: 'AwardXp', code: aliceCode, amount: 3 } },
+      { kind: 'command', command: { type: 'AwardXp', code: bobCode, amount: 3 } },
+    ]);
+  });
+
+  it('offers the values of a recorded choice as one choice, in order', () => {
+    const proposal = proposalFor({
+      kind: 'recordChoice',
+      key: 'foundTheCult',
+      values: [
+        { kind: 'flag', value: true },
+        { kind: 'flag', value: false },
+      ],
+    });
+
+    expect(proposal).toEqual([
+      {
+        kind: 'choice',
+        options: [
+          { type: 'RecordStory', key: 'foundTheCult', value: { kind: 'flag', value: true } },
+          { type: 'RecordStory', key: 'foundTheCult', value: { kind: 'flag', value: false } },
+        ],
+      },
+    ]);
+  });
+
+  it('awards 1 experience more for each of the three cards beneath the act', () => {
+    const proposal = proposalFor({
+      kind: 'awardXp',
+      to: 'each',
+      bonus: 1,
+      victoryDisplay: false,
+      perCardIn: 'beneathAct',
+    });
+
+    expect(proposal).toEqual([
+      { kind: 'command', command: { type: 'AwardXp', code: aliceCode, amount: 4 } },
+      { kind: 'command', command: { type: 'AwardXp', code: bobCode, amount: 4 } },
+    ]);
   });
 });
 
