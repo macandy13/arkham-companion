@@ -57,6 +57,7 @@ describe('text contrast', () => {
         ['--color-text-muted', '--color-menu'],
         ['--color-accent', '--color-menu'],
         ['--color-accent-text', '--color-accent'],
+        ['--color-menu-danger', '--color-menu'],
       ].map(([text, ground]) => ({ skin, text: text!, ground: ground! })),
     ),
   )('on the $skin table, $text on $ground reaches 4.5', ({ skin, text, ground }) => {
@@ -75,5 +76,11 @@ describe('text contrast', () => {
     '--color-ink-sanity',
   ])('on the paper, %s reaches 4.5', (ink) => {
     expect(contrast(root[ink]!, root['--color-paper']!)).toBeGreaterThanOrEqual(4.5);
+  });
+
+  it('on the paper, a primary pill’s paper text on the ink accent reaches 4.5', () => {
+    expect(contrast(root['--color-paper']!, root['--color-ink-accent']!)).toBeGreaterThanOrEqual(
+      4.5,
+    );
   });
 });

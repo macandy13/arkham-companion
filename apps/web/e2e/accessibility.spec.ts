@@ -15,8 +15,9 @@ async function violations(page: Page) {
   return violations.map(({ id, nodes }) => ({ id, targets: nodes.map(({ target }) => target) }));
 }
 
-// Each main screen passes an automated accessibility check (WCAG 2.1 A and AA): names, roles,
-// contrast in the table and paper, and the structure screen readers read (M6.5c).
+// Each main screen passes an automated accessibility check (WCAG 2.1 A and AA): names, roles and
+// the structure screen readers read (M6.5c). Axe cannot measure contrast over the table's and the
+// paper's gradients, so `src/styles/contrast.test.ts` checks the text colours' tokens instead.
 
 test('the home screen', async ({ page }) => {
   await page.goto('/#/');
@@ -41,6 +42,7 @@ test('the settings', async ({ page }) => {
 
 test('the game screen', async ({ page }) => {
   await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
+  await expect(page.getByRole('figure', { name: 'House' })).toBeVisible();
 
   expect(await violations(page)).toEqual([]);
 });
