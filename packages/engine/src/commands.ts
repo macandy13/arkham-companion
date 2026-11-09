@@ -56,6 +56,7 @@ export type Command =
   | DiscoverClues
   | PlaceClues
   | PlaceDoom
+  | RemoveDoom
   | PlaceTokens
   | ChangeChaosBag
   | SealChaosToken
@@ -500,14 +501,28 @@ export interface PlaceClues {
 /**
  * Puts `amount` (positive) doom on a card in play, by default on the current
  * agenda. Produces `TokensChanged`. The threshold is not checked here: the agenda
- * only advances at a `CheckDoomThreshold` (mythos phase). Removing doom is a
- * `ManualAdjust` for now.
+ * only advances at a `CheckDoomThreshold` (mythos phase). `RemoveDoom` takes it off again.
  */
 export interface PlaceDoom {
   type: 'PlaceDoom';
   /** Defaults to the current agenda. */
   cardId?: InstanceId;
   amount: number;
+}
+
+/**
+ * A card's "remove N doom from the current agenda" or "remove all doom from it": takes `amount`
+ * (positive) doom, or `'all'`, off a card in play, by default the current agenda. Takes as much as
+ * there is and nothing from a card without doom or no longer in play, since a card effect does
+ * as much as it can (Rules Reference, "Effects"); the players' own corrections stay a
+ * `ManualAdjust`. Without a current agenda (never during a scenario) it refuses like `PlaceDoom`.
+ * Produces `TokensChanged`.
+ */
+export interface RemoveDoom {
+  type: 'RemoveDoom';
+  /** Defaults to the current agenda. */
+  cardId?: InstanceId;
+  amount: number | 'all';
 }
 
 /**
