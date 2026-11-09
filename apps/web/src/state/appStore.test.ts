@@ -27,7 +27,7 @@ import {
   theMidnightMasks,
   theMidnightMasksCards,
 } from '@arkham/scenarios';
-import { GameImportError } from '../storage/gameExport';
+import { GameImportError } from '../storage/importError';
 import { IndexedDbStore, SeqConflictError } from '../storage/IndexedDbStore';
 import { createAppStore, type ImportedFile } from './appStore';
 import type { GameActions } from './gameActions';

@@ -34,3 +34,13 @@ export function numberedDuplicates(texts: readonly string[]): string[] {
     return `${text} ${number}`;
   });
 }
+
+/**
+ * `text` as a file name stem: every run of characters other than letters and digits becomes one
+ * dash, with none at either end, so the stem holds no path separator or character a file system
+ * reserves (`Night of the Zealot: 1/3` becomes `Night-of-the-Zealot-1-3`). Gives `fallback` when
+ * nothing is left.
+ */
+export function fileStem(text: string, fallback: string): string {
+  return text.replace(/[^\p{L}\p{N}]+/gu, '-').replace(/^-+|-+$/g, '') || fallback;
+}
