@@ -6,6 +6,7 @@ import {
   flowGrep,
   flowVideos,
   gifArgs,
+  joinReports,
   PLAYER_PLACEHOLDER,
   playerPage,
   renderSection,
@@ -392,6 +393,18 @@ describe('specs the base also records', () => {
       ]);
     },
   );
+});
+
+describe('joinReports', () => {
+  it('puts the suites of every shard side by side, skipping a shard without any', () => {
+    const shardOne: PlaywrightReport = { suites: [{ specs: [] }] };
+    const brokenShard: PlaywrightReport = {};
+    const shardThree: PlaywrightReport = { suites: [{ suites: [] }] };
+
+    expect(joinReports([shardOne, brokenShard, shardThree])).toEqual({
+      suites: [{ specs: [] }, { suites: [] }],
+    });
+  });
 });
 
 describe('slugify', () => {
