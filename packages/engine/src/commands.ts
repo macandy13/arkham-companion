@@ -44,6 +44,7 @@ export type Command =
   | AdjustInvestigator
   | HealInvestigator
   | GainResources
+  | SpendResources
   | DrawCards
   | SearchDeck
   | DiscardFromHand
@@ -330,6 +331,18 @@ export interface HealInvestigator {
  */
 export interface GainResources extends ActionCommand {
   type: 'GainResources';
+  investigatorId: InvestigatorId;
+  amount: number;
+}
+
+/**
+ * The investigator pays `amount` resources (a positive integer) for a player card: its cost, or
+ * what a card asks to spend ("spend 1 resource: +1 skill"). Allowed while a decision is pending, as
+ * a fast card is paid for in the window the decision opens (Dodge against an attack, Lucky! on a
+ * test) before its effect. Produces `InvestigatorChanged`; rejected when they have too few.
+ */
+export interface SpendResources {
+  type: 'SpendResources';
   investigatorId: InvestigatorId;
   amount: number;
 }

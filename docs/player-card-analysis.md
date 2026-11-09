@@ -12,7 +12,7 @@ Each card does one or more of these, including what it costs the investigator (D
 | --------------------------------------- | ----- | ----------------------------------------------------------------------- | ------ |
 | +N to a skill test                      | 28    | `modifier` passed to `suggestSkillTest`, then its pass or fail answered | yes    |
 | the investigator takes damage or horror | 5     | `TakeDamageAndHorror`                                                   | yes    |
-| spend resources for a boost             | 5     | `AdjustInvestigator` `resources`, negative                              | yes    |
+| spend resources for a boost             | 5     | `SpendResources`                                                        | yes    |
 | +1 to a skill while in play             | 3     | `ManualAdjust` `skillBoost`                                             | yes    |
 | damage to an enemy                      | 15    | `DamageEnemy`                                                           | yes    |
 | discover clues                          | 5     | `DiscoverClues`                                                         | yes    |
