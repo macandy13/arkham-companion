@@ -122,6 +122,23 @@ export function revealsAnotherToken(token: ChaosToken): boolean {
 }
 
 /**
+ * The modifier `token` gives any skill test of this game: its fixed value, or the scenario
+ * reference card's printed number at the game's difficulty. `undefined` when the test or the
+ * players decide it: a "-X" the scenario counts per test, the elder sign (the investigator's
+ * ability), a symbol whose effect replaces its number, and auto-fail, which is no modifier. The
+ * chaos bag lists it beside each token (`BoardView.tokenModifier`).
+ */
+export function tokenModifier(
+  ctx: EngineContext,
+  state: GameState,
+  token: ChaosToken,
+): number | undefined {
+  const fixed = FIXED_TOKEN_VALUES[token];
+  if (fixed !== undefined || !isSymbolToken(token)) return fixed;
+  return ctx.scenario?.reference[pickReferenceSide(state.meta.difficulty)][token]?.modifier;
+}
+
+/**
  * The skill test behind a `skillTestResult` decision, as token values
  * see it; `undefined` for any other decision and for a test decided by the
  * lead or the group, since then nobody's skill is known.

@@ -3,11 +3,14 @@ import { useTranslation } from 'react-i18next';
 import { tokenCounts, type BoardView, type ChaosToken } from '@arkham/engine';
 import type { GameActions } from '../state/gameActions';
 import { ChaosTokenFace } from '../tokens/ChaosTokenFace';
+import { hasSymbol, signedOrUnknown } from '../tokens/tokenValue';
 import './chaos_bag.css';
 
 /**
  * The chaos bag on the scenario card's page (M6.1b): what is in it, one row per kind of token in
- * `CHAOS_TOKENS` order with its count, and the tokens player cards sealed, each with the
+ * `CHAOS_TOKENS` order with its count and, for a token that shows a symbol,
+ * its value in this game (`BoardView.tokenModifier`, "?" where the card or the test decides it,
+ * M6.7b), and the tokens player cards sealed, each with the
  * investigator holding it (`BoardView.sealedTokens`). The players seal a token as a card tells
  * them: they tap it in the bag, then the investigator whose card seals it; a sealed token has a
  * Release button. Both are steps of their own (`GameActions.sealToken`, `releaseToken`), so Undo
@@ -33,18 +36,29 @@ export function ChaosBag({
     <section aria-labelledby={titleId} data-part="chaos-bag">
       <h3 id={titleId}>{t('chaosBag.title')}</h3>
       <ul aria-label={t('chaosBag.contents')}>
-        {counts.map(({ token, count }) => (
-          <li key={token}>
-            <button
-              type="button"
-              aria-pressed={token === chosen}
-              disabled={busy}
-              onClick={() => setPicked(token === chosen ? undefined : token)}
-            >
-              <ChaosTokenFace token={token} /> <data value={count}>×{count}</data>
-            </button>
-          </li>
-        ))}
+        {counts.map(({ token, count }) => {
+          const value = board.tokenModifier(token);
+          return (
+            <li key={token}>
+              <button
+                type="button"
+                aria-pressed={token === chosen}
+                disabled={busy}
+                onClick={() => setPicked(token === chosen ? undefined : token)}
+              >
+                <ChaosTokenFace token={token} /> <data value={count}>×{count}</data>
+              </button>
+              {hasSymbol(token) && token !== 'autoFail' && (
+                <>
+                  {' '}
+                  <data value={value ?? ''} title={t('chaosBag.value')}>
+                    {signedOrUnknown(value)}
+                  </data>
+                </>
+              )}
+            </li>
+          );
+        })}
       </ul>
       {chosen !== undefined && (
         <div

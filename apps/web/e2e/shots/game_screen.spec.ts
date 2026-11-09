@@ -576,27 +576,28 @@ test('The Gathering’s reference card opened to read', async ({ page, isMobile 
   ).toBeInViewport();
 });
 
-test('the chaos bag on the reference card’s page, the elder sign sealed on Roland Banks', async ({
-  page,
-  isMobile,
-}) => {
-  await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
-  const scenario = page.getByRole('region', { name: 'Scenario' });
-  if (isMobile) await scenario.locator('[data-card]').click();
-  await scenario.getByRole('button', { name: 'The Gathering' }).click();
-  const bag = page
-    .getByRole('dialog', { name: 'The Gathering' })
-    .getByRole('region', { name: 'Chaos bag' });
+test(
+  'the chaos bag on the reference card’s page, the elder sign sealed on Roland Banks',
+  { tag: '@shot' },
+  async ({ page, isMobile }) => {
+    await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
+    const scenario = page.getByRole('region', { name: 'Scenario' });
+    if (isMobile) await scenario.locator('[data-card]').click();
+    await scenario.getByRole('button', { name: 'The Gathering' }).click();
+    const bag = page
+      .getByRole('dialog', { name: 'The Gathering' })
+      .getByRole('region', { name: 'Chaos bag' });
 
-  await bag.getByRole('button', { name: /^Elder Sign/ }).click();
-  await bag.getByRole('button', { name: 'Seal Elder Sign on Roland Banks' }).click();
+    await bag.getByRole('button', { name: /^Elder Sign/ }).click();
+    await bag.getByRole('button', { name: 'Seal Elder Sign on Roland Banks' }).click();
 
-  const sealed = bag.getByRole('list', { name: 'Sealed' });
-  await expect(sealed).toHaveText(/Elder Sign on Roland Banks/);
-  await sealed.scrollIntoViewIfNeeded();
-});
+    const sealed = bag.getByRole('list', { name: 'Sealed' });
+    await expect(sealed).toHaveText(/Elder Sign on Roland Banks/);
+    await sealed.scrollIntoViewIfNeeded();
+  },
+);
 
-test('the chaos bag in the cardboard token set', async ({ page, isMobile }) => {
+test('the chaos bag in the cardboard token set', { tag: '@shot' }, async ({ page, isMobile }) => {
   await page.goto('/#/settings');
   await page.getByRole('radio', { name: 'Cardboard' }).click();
   await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));

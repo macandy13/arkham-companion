@@ -13,8 +13,11 @@ import {
   skillTestDecision,
   skillTestSuggestion,
   suggestSkillTest,
+  tokenModifier,
   trait,
+  type ChaosToken,
   type Command,
+  type Difficulty,
   type ScenarioReference,
   type SkillName,
   type SkillTestContext,
@@ -281,6 +284,34 @@ describe('revealsAnotherToken', () => {
     { token: 'autoFail', reveals: false },
   ] as const)('$token makes the tester reveal another: $reveals', ({ token, reveals }) => {
     expect(revealsAnotherToken(token)).toBe(reveals);
+  });
+});
+
+describe('tokenModifier', () => {
+  /** Skull -2 and a cultist without a number on Easy/Standard; nothing on Hard/Expert. */
+  const reference: ScenarioReference = {
+    easyStandard: {
+      skull: { modifier: -2, effectKey: 'test.skull' },
+      cultist: { effectKey: 'test.cultist' },
+    },
+    hardExpert: {},
+  };
+
+  it.each<{ token: ChaosToken; difficulty: Difficulty; modifier: number | undefined }>([
+    { token: '-3', difficulty: 'standard', modifier: -3 },
+    { token: 'bless', difficulty: 'standard', modifier: 2 },
+    { token: 'skull', difficulty: 'standard', modifier: -2 },
+    { token: 'skull', difficulty: 'hard', modifier: undefined },
+    { token: 'cultist', difficulty: 'standard', modifier: undefined },
+    { token: 'elderSign', difficulty: 'standard', modifier: undefined },
+    { token: 'autoFail', difficulty: 'standard', modifier: undefined },
+  ])('gives the $token on $difficulty: $modifier', ({ token, difficulty, modifier }) => {
+    const { context, state } = aliceInStudy
+      .withDifficulty(difficulty)
+      .withReferenceCard(reference)
+      .start();
+
+    expect(tokenModifier(context, state, token)).toBe(modifier);
   });
 });
 
