@@ -53,9 +53,9 @@ export function handleSpawnEnemy(ctx: EngineContext, state: GameState, cmd: Spaw
  * rules as one spawned by a card effect. See `spawnPlan` for where it appears.
  *
  * Rules Reference, "Spawn": with several qualifying locations the investigator
- * chooses, with none the enemy is discarded. A choice (several matches, or
- * spawn text the engine cannot read) raises a `chooseLocation` decision (id
- * `spawn:<enemy>`) and leaves the enemy where it is; each option runs
+ * who drew it chooses (the lead for an enemy no one drew), with none the enemy is discarded. A
+ * choice (several matches, or spawn text the engine cannot read) raises a `chooseLocation`
+ * decision (id `spawn:<enemy>`) and leaves the enemy where it is; each option runs
  * `SpawnEnemy` with the chosen `at`, which then engages as usual.
  * A drawn enemy without a spawn instruction engages the drawer, whatever its
  * prey ("Spawn" in the Rules Reference); prey only picks among investigators
@@ -89,6 +89,10 @@ export function spawnEvents(
       'decision.chooseSpawnLocation',
       plan.candidates,
       (chosen) => ({ type: 'SpawnEnemy', enemyId, at: chosen }),
+      // Rules Reference, "Spawn": the investigator encountering the card chooses, not the lead.
+      target.investigatorId === undefined
+        ? { kind: 'lead' }
+        : { kind: 'investigator', investigatorId: target.investigatorId },
     );
   // Index 0 is the top, and the discard's top is what "topmost" effects look for.
   if (plan.kind === 'discard') return [cardMoved(state, enemy, ENCOUNTER_DISCARD, 0)];
