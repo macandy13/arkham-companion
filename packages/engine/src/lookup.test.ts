@@ -237,6 +237,16 @@ describe('locationOfCard', () => {
     expect(locationOfCard(state, requireCard(state.cards, card))).toBe(location);
   });
 
+  it('puts a card in the threat area of an investigator without a location nowhere', () => {
+    const carol = investigatorId('carol');
+    const { state } = table
+      .withInvestigator(carol)
+      .withCard(card, blankAsset('card'), threatAreaOf(carol))
+      .start();
+
+    expect(locationOfCard(state, requireCard(state.cards, card))).toBeUndefined();
+  });
+
   it('puts a location at itself', () => {
     const { state } = table.start();
 

@@ -11,6 +11,7 @@ import {
   eachInvestigator,
   eachInZone,
   eachInPlay,
+  placeDoomOn,
   blankAsset,
   ifValue,
   lead,
@@ -367,5 +368,36 @@ describe('a condition on the tokens on a named card', () => {
     const after = stateAfter(context, state, aliceDraws, resolveRevelation('omen'));
 
     expect(investigatorOf(after, alice).sanity.horror).toBe(horror);
+  });
+});
+
+describe('an effect on each card in play at your location', () => {
+  /** "Revelation – Place 1 doom on each [[Cultist]] at your location." */
+  const omenCard = blankTreachery('omen', {
+    abilities: [
+      whenRevealed(placeDoomOn(eachInPlay({ trait: trait('Cultist'), at: yourLocation() }), 1)),
+    ],
+  });
+  const cultist = blankEnemy('cultist', { traits: [trait('Cultist')] });
+  const hallCultist = instanceId('hall_cultist');
+  const studyCultist = instanceId('study_cultist');
+  const setAsideCultist = instanceId('set_aside_cultist');
+
+  it('places doom only on the Cultist in the hall with alice', () => {
+    const { context, state } = newGame()
+      .withLocation(hall, blankLocation('hall'), { revealed: true })
+      .withLocation(study, blankLocation('study'), { revealed: true })
+      .withInvestigator(alice, { locationId: hall })
+      .withCard(hallCultist, cultist, atLocation(hall))
+      .withCard(studyCultist, cultist, atLocation(study))
+      .withCard(setAsideCultist, cultist, setAside)
+      .withCard(omen, omenCard, encounterDeck)
+      .start();
+
+    const after = stateAfter(context, state, aliceDraws, resolveRevelation('omen'));
+
+    expect(after.cards[hallCultist]?.tokens.doom).toBe(1);
+    expect(after.cards[studyCultist]?.tokens.doom ?? 0).toBe(0);
+    expect(after.cards[setAsideCultist]?.tokens.doom ?? 0).toBe(0);
   });
 });

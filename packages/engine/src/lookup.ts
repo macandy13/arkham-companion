@@ -1,3 +1,4 @@
+import { assertNever } from '@arkham/util';
 import { comparableName, type CardType, type EngineContext, type Trait } from './cards';
 import type { CardCode, InstanceId } from './ids';
 import { CommandRejected } from './rejection';
@@ -155,7 +156,18 @@ export function locationOfCard(state: GameState, card: CardInstance): InstanceId
       // Hosting cycles are rejected when cards are placed, so the recursion ends.
       return host === undefined ? undefined : locationOfCard(state, host);
     }
-    default:
+    case 'encounterDeck':
+    case 'encounterDiscard':
+    case 'setAside':
+    case 'scenarioDeck':
+    case 'victoryDisplay':
+    case 'outOfGame':
+    case 'resolving':
+    case 'agendaDeck':
+    case 'actDeck':
+    case 'beneath':
       return undefined;
+    default:
+      return assertNever(zone);
   }
 }
