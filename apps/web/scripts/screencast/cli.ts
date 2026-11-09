@@ -12,7 +12,8 @@
  *     run) into `<outDir>/<slug>.gif` and `.webm`, copies every changed passing screenshot to
  *     `<outDir>/<slug>-<device>.png`, adds the player page (`player.html`, listing the recorded
  *     flows) and writes the PR description section to `<outDir>/section.md`, with pictures
- *     linked from `pictureBaseUrl` and the player from `baseUrl`.
+ *     linked from `pictureBaseUrl` and the player from `baseUrl`. Each picture shown also leaves
+ *     the PR's and the base's copy and their pixel difference in `<outDir>/diff/`.
  *   node cli.ts splice <body.md> <section.md>
  *     Prints the PR description with the screencast section replaced.
  */
@@ -60,6 +61,7 @@ function render(
   pictureBaseUrl: string,
   version: string,
 ): void {
+  diffDir = join(outDir, 'diff');
   const pictures = readReport(picturesPath, 'this PR');
   const base = baseRun(baseReportPath);
   const changed = changedFlows(pictures, base);
@@ -110,14 +112,36 @@ function samePicture(headPath: string, basePath: string): boolean {
     const head = PNG.sync.read(readFileSync(headPath));
     const base = PNG.sync.read(readFileSync(basePath));
     if (head.width !== base.width || head.height !== base.height) return false;
-    const differing = pixelmatch(head.data, base.data, undefined, head.width, head.height, {
+    const diff = new PNG({ width: head.width, height: head.height });
+    const differing = pixelmatch(head.data, base.data, diff.data, head.width, head.height, {
       threshold: 0.2,
     });
-    return differing <= NOISE_PIXELS;
+    if (differing <= NOISE_PIXELS) return true;
+    keepDifference(headPath, basePath, diff, differing);
+    return false;
   } catch (error) {
     console.warn(`Could not compare ${headPath} with ${basePath}; showing it:`, error);
     return false;
   }
+}
+
+/**
+ * Where `render` keeps, for each picture it shows, the base's picture and pixelmatch's map of the
+ * differing pixels next to the PR's (`DIFF_DIR` under its output, published with the preview), so
+ * a picture shown without a visible change can be checked against what it was compared with.
+ */
+let diffDir: string | undefined;
+let diffCount = 0;
+
+function keepDifference(headPath: string, basePath: string, diff: PNG, differing: number): void {
+  console.log(`${differing} pixels differ: ${headPath}`);
+  if (diffDir === undefined) return;
+  diffCount += 1;
+  const name = `${String(diffCount).padStart(3, '0')}-${differing}`;
+  mkdirSync(diffDir, { recursive: true });
+  copyFileSync(headPath, join(diffDir, `${name}-pr.png`));
+  copyFileSync(basePath, join(diffDir, `${name}-base.png`));
+  writeFileSync(join(diffDir, `${name}-diff.png`), PNG.sync.write(diff));
 }
 
 function baseRun(path: string): BaseRun {
