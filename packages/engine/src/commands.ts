@@ -397,11 +397,15 @@ export interface SearchDeck extends AskedByCard {
 /**
  * The investigator plays a card from their hand: the basic play action when `asAction`, which
  * provokes attacks of opportunity even though the engine never sees the card. The game holds no
- * player cards, so the card and its cost are left to the players like `DrawCards`.
+ * player cards, so the card is left to the players like `DrawCards`; its `cost`, when the players
+ * name it, is spent from the investigator's resources in the same step, so paying and playing
+ * stay one undo step.
  */
 export interface PlayCard extends ActionCommand, AskedByCard {
   type: 'PlayCard';
   investigatorId: InvestigatorId;
+  /** The resources paid for the card, a whole number up to what they hold. Unset: paid by hand. */
+  cost?: number;
 }
 
 /**

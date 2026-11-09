@@ -159,6 +159,10 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     expect(table.board.perInvestigator('clues')).toEqual({ roland: 0, daisy: 0, wendy: 0 });
     expect(table.board.namesIn({ kind: 'outOfGame' })).toEqual(['Study', 'Trapped']);
 
+    // Wendy plays a card and pays its cost of 2 from her 5 resources.
+    table.playCard(wendy, 2);
+    expect(table.board.investigator(wendy)).toMatchObject({ resources: 3 });
+
     table.endTurn(wendy);
 
     // Round 1 – enemy phase: no enemy is in play yet
@@ -171,7 +175,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     expect(table.nextPhase()).toEqual({ round: 1, phase: 'upkeep' });
 
     expect(table.board.perInvestigator('actions')).toEqual({ roland: 3, daisy: 3, wendy: 3 });
-    expect(table.board.perInvestigator('resources')).toEqual({ roland: 6, daisy: 6, wendy: 6 });
+    expect(table.board.perInvestigator('resources')).toEqual({ roland: 6, daisy: 6, wendy: 4 });
 
     // Round 2 – mythos: 1.2 doom, 1.3 below the threshold, 1.4 Roland draws the
     // Icy Ghoul, which spawns in the Cellar, and Daisy draws Crypt Chill: its
@@ -554,7 +558,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     // Round 5 – upkeep
     expect(table.nextPhase()).toEqual({ round: 5, phase: 'upkeep' });
 
-    expect(table.board.perInvestigator('resources')).toEqual({ roland: 11, daisy: 10, wendy: 10 });
+    expect(table.board.perInvestigator('resources')).toEqual({ roland: 11, daisy: 10, wendy: 8 });
 
     // Round 6 – mythos: Roland draws Rotting Remains again and passes with willpower 3;
     // the Swarms of Rats Daisy and Wendy draw spawn engaged with them.
@@ -824,7 +828,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
       Investigators:
         Roland Banks – Attic; damage 5/9, horror 4/5, 5 clues, 13 resources, actions left 3; threat area: none
         Daisy Walker – Cellar; damage 3/5, horror 2/9, 1 clues, 13 resources, actions left 3; threat area: none
-        Wendy Adams – Cellar; damage 5/7, horror 2/7, 3 clues, 12 resources, actions left 3; threat area: Frozen in Fear
+        Wendy Adams – Cellar; damage 5/7, horror 2/7, 3 clues, 10 resources, actions left 3; threat area: Frozen in Fear
       Encounter deck: 8 cards; discard: 14 cards, top: Dissonant Voices
       Set aside: 2 cards
       Victory display: Icy Ghoul

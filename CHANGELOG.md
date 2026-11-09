@@ -2,6 +2,16 @@
 
 The sections dated up to 2026-10-22 were released as 1.0.0 to 1.8.0 by mistake: Release Please starts at 1.0.0 by default. Versioning restarted at 0.1.0 (see "Versions" in docs/product.md).
 
+## [0.1.39](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v0.1.38...arkham-companion-v0.1.39) (2026-11-09)
+
+
+### Features
+
+* **engine:** let card data remove doom (ME.2) ([156a6ca](https://github.com/macandy13/arkham-companion/commit/156a6cab3e728f0f0beeff4f74ef0e8bbfa4b4ee))
+* **engine:** pay player card costs before their effect (M1V.4) ([65e53c0](https://github.com/macandy13/arkham-companion/commit/65e53c00e524a9953019516083ac4c25cb718a03))
+* **engine:** work out a skill test's odds over the chaos bag (M6.7a) ([a0a0029](https://github.com/macandy13/arkham-companion/commit/a0a002986f405775ba20bafa84863d0a5c07388b))
+* **engine:** work out a skill test's odds over the chaos bag (M6.7a) ([9a95f45](https://github.com/macandy13/arkham-companion/commit/9a95f45bda8ee7211061738145bfc9e04f221ead))
+
 ## [0.1.38](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v0.1.37...arkham-companion-v0.1.38) (2026-11-09)
 
 

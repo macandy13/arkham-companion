@@ -2,6 +2,7 @@ import { expect, test } from './fixtures/test';
 import { dragTo } from './fixtures/drag';
 import {
   ghoulPriestInCellarExport,
+  houseOpenedExport,
   inTheParlorExport,
   resumeImportedGame,
   rolandThreatenedExport,
@@ -37,6 +38,32 @@ test('take a turn from the investigator panel', async ({ page }) => {
   await test.step('End the turn', async () => {
     await bar.getByRole('button', { name: 'End turn' }).click();
     await expect(bar.getByText(/^Turn taken · /)).toBeVisible();
+  });
+});
+
+// Journey: the play action pays the card's cost: tap the resources it costs on the play sheet, and
+// the card is played with them spent, one action gone.
+test('play a card and pay its cost', async ({ page }) => {
+  const roland = page.getByRole('region', { name: 'Roland Banks' });
+  const resources = roland.locator('[data-stat="resources"] data');
+
+  await test.step('Resume a game on Roland Banks’ turn with 5 resources', async () => {
+    await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
+    await expect(resources).toHaveText('5');
+  });
+
+  await test.step('Play a card and tap the 3 resources it costs', async () => {
+    await roland.getByRole('button', { name: 'Play a card' }).click();
+    const sheet = page.getByRole('dialog', { name: 'Play a card' });
+    await sheet.getByRole('button', { name: 'resource 3' }).click();
+    await expect(sheet.getByText('Pays 3 · 2 left')).toBeVisible();
+    await sheet.getByRole('button', { name: 'Play · pay 3' }).click();
+    await expect(sheet).toBeHidden();
+  });
+
+  await test.step('The 3 resources are spent with the action', async () => {
+    await expect(resources).toHaveText('2');
+    await expect(roland.getByRole('list', { name: '2 actions left' })).toBeVisible();
   });
 });
 

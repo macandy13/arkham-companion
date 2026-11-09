@@ -497,6 +497,17 @@ export const appTexts = {
     healthLeft: '{{left}} / {{max}}',
     victory: 'Victory {{points}}.',
   },
+  playCard: {
+    title: 'Play a card',
+    tapResources: 'Tap the resources the card costs.',
+    noResources: 'No resources to pay with.',
+    resources_one: '{{count}} resource held',
+    resources_other: '{{count}} resources held',
+    resource: 'resource {{number}}',
+    pays: 'Pays {{pays}} · {{left}} left',
+    free: 'Play without paying',
+    pay: 'Play · pay {{count}}',
+  },
   cluePayment: {
     title: 'Who pays the clues?',
     total: '{{total}} of {{required}} clues chosen: tap a token to pay it or keep it',

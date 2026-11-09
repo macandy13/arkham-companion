@@ -599,9 +599,17 @@ export class PlayTable {
     });
   }
 
-  /** The basic play action; the card is played, and paid for, at the table. */
-  playCard(investigator: InvestigatorRef): void {
-    this.play({ type: 'PlayCard', investigatorId: this.seat(investigator), asAction: true });
+  /**
+   * The basic play action; the card is played at the table, its `cost` spent from the
+   * investigator's resources when named, else paid by hand.
+   */
+  playCard(investigator: InvestigatorRef, cost?: number): void {
+    this.play({
+      type: 'PlayCard',
+      investigatorId: this.seat(investigator),
+      asAction: true,
+      ...(cost === undefined ? {} : { cost }),
+    });
   }
 
   /** The players' correction of the resource count. */

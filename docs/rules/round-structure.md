@@ -16,6 +16,7 @@ A round is mythos → investigation → enemy → upkeep.
 
 - Investigators pick among themselves who goes next. A turn runs to completion before the next one starts, and each investigator takes exactly one turn.
 - A turn has 3 actions, in any order and repeatable: investigate, move, draw, resource, play, activate an [action] ability, fight, engage, evade.
+  - Play: the investigator pays the card's resource cost in full to play it ([Play](https://arkhamdb.com/rules#Play), [Costs](https://arkhamdb.com/rules#Costs)), so a cost above the resources they hold can't be paid. The app spends the cost the players tap (`PlayCard.cost`), after any attacks of opportunity, like a card action's cost for now.
   - [Basic actions](https://arkhamdb.com/rules#Basic_Action_Types) are draw, resource, move, investigate, fight, engage and evade.
 - An investigator may end the turn early.
   - A card's "end your turn" resolved outside that investigator's turn (mythos phase) does nothing ([Rite of Seeking FAQ](https://arkhamdb.com/card/02028)).
