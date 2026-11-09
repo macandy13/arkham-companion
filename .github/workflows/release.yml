@@ -5,28 +5,33 @@ name: Release
 # Merging that PR creates the git tag and the GitHub release.
 # Repo setting needed: Actions → General → "Allow GitHub Actions to create and approve pull requests".
 #
-# The release PR is opened or refreshed only once a week (or by hand), so the
-# owner gets at most one new release PR a week instead of one after every
-# merged release. Pushes to main still run it, but only to tag a release PR
-# that was just merged, without opening the next one.
+# A push waits an hour before Release Please runs, and every newer push cancels
+# the waiting run, so the release PR is opened or refreshed only once main has
+# been quiet for an hour instead of after each merge in a burst. Running the
+# workflow by hand skips the wait.
 
 on:
   push:
     branches: [main]
-  schedule:
-    - cron: '0 6 * * 1' # Mondays 06:00 UTC
   workflow_dispatch:
 
 permissions:
   contents: write
   pull-requests: write
 
+concurrency:
+  group: release
+  cancel-in-progress: true
+
 jobs:
   release-please:
     runs-on: ubuntu-latest
+    timeout-minutes: 75
     steps:
+      - name: Wait for an hour without a new push
+        if: github.event_name == 'push'
+        run: sleep 3600
       - uses: googleapis/release-please-action@v5
         with:
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
-          skip-github-pull-request: ${{ github.event_name == 'push' }}
