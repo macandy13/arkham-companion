@@ -244,6 +244,10 @@
  * of the strip, so the page arrows go.
  */
 @media (orientation: portrait) and (max-width: 40rem) {
+  #investigator-picker > div {
+    grid-template: 'pages' auto / minmax(0, 1fr);
+  }
+
   #app #investigator-picker > div > ul {
     grid-template-rows: none;
     grid-template-columns: repeat(var(--picker-columns), minmax(0, 1fr));
@@ -251,6 +255,7 @@
     scroll-snap-type: none;
   }
 
+  /* `:nth-child(n)` ties the page rows' rule above, so this one wins by coming later. */
   #app #investigator-picker > div > ul > li:nth-child(n) {
     grid-row: auto;
     scroll-snap-align: none;
