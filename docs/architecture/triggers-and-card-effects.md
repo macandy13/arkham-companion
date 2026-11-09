@@ -136,7 +136,8 @@ The `investigatorTurn` condition ("during any investigator's turn") holds while 
 
 ### Resign, Parley and story assets
 
-- `resignAction()` is the Resign of the Parlor, the Main Path and The Midnight Masks' agendas; an investigator resigns only through such a card, so `PlayTable` and `GameActions` offer no plain resign.
+- `resignAction()` is the Resign of the Parlor, the Main Path and The Midnight Masks' agendas; a player resigns only through such a card, so `PlayTable` and `GameActions` offer no plain resign.
+- `eachInvestigatorResigns()` is an effect that resigns them all at once (Emergent Evils' reverse side): its `Resign` is `immediately`, so it takes no action and skips the phase and turn checks.
 - `parleyAction({ cost, limit, effects })` marks any card action a Parley; its consequences are ordinary effects, so a cultist's "Parley. Add it to the victory display" is `addToVictoryDisplay({ ref: 'self' })` and another card's Parley can test, discard or take a cost with the same blocks.
 - A story asset an investigator takes control of (Lita Chantler's Parley at the Parlor, `takeControl()`) moves to their `playArea` zone:
   - it counts as in play,

@@ -61,7 +61,9 @@ export { ASH_STORY } from './brethren_of_ash/story';
 export {
   ARCANE_LOCK_DECISION,
   SMOKE_AND_MIRRORS_CODES,
+  SMOKE_AND_MIRRORS_RESOLUTIONS,
   SMOKE_AND_MIRRORS_SETS,
   smokeAndMirrorsCardDefs,
   smokeAndMirrorsCards,
 } from './smoke_and_mirrors/cards';
+export { ARKHAM, smokeAndMirrors } from './smoke_and_mirrors/scenario';

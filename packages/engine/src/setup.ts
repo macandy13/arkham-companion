@@ -126,6 +126,18 @@ export interface ShuffleStep {
   zone: Zone;
 }
 
+/**
+ * Deals one copy of each code face down beneath the locations with codes `beneath`, one card each
+ * in a random order ("shuffle each remaining card along with the Servant of Flame and deal 1 card
+ * facedown beneath Northside, Downtown, …"), with the setup's seed on the `ShuffleStep`s' stream.
+ * There are as many `codes` as locations; the players may not look at the cards (`beneath` zone).
+ */
+export interface DealBeneathStep {
+  kind: 'dealBeneath';
+  codes: readonly CardCode[];
+  beneath: readonly CardCode[];
+}
+
 /** Shuffles one copy of each code into the encounter deck, whatever its encounter set. */
 export interface ShuffleIntoEncounterDeckStep {
   kind: 'shuffleIntoEncounterDeck';
@@ -213,6 +225,7 @@ type PlacingStep =
   | ShuffleIntoEncounterDeckStep
   | ScenarioDeckStep
   | ShuffleStep
+  | DealBeneathStep
   | PlaceTokensStep
   | SpawnStep
   | MoveInvestigatorsStep
@@ -465,6 +478,7 @@ export function storyReadsOfSetup(
       case 'shuffleIntoEncounterDeck':
       case 'scenarioDeck':
       case 'shuffle':
+      case 'dealBeneath':
       case 'placeTokens':
       case 'spawn':
       case 'moveInvestigators':
@@ -599,6 +613,8 @@ function renamed(step: PlacingStep, picked: (code: CardCode) => CardCode): Placi
       return { ...step, at: picked(step.at) };
     case 'moveInvestigators':
       return { ...step, to: picked(step.to) };
+    case 'dealBeneath':
+      return { ...step, beneath: step.beneath.map(picked) };
     case 'setAside':
     case 'buildEncounterDeck':
     case 'shuffleIntoEncounterDeck':
@@ -628,6 +644,8 @@ function applyStep(draft: SetupDraft, step: PlacingStep, env: SetupEnv): SetupDr
       );
     case 'shuffle':
       return withShuffled(draft, step.zone, env.pick);
+    case 'dealBeneath':
+      return dealtBeneath(draft, step, env.pick);
     case 'buildEncounterDeck':
       return encounterDeckCards(step.sets, step.exclude ?? [], env).reduce(
         (state, code) => withCard(state, code, { kind: 'encounterDeck' }),
@@ -710,6 +728,28 @@ function withShuffled(draft: SetupDraft, zone: Zone, pick: (bound: number) => nu
       sameZone(card.zone, zone) ? (remaining.splice(pick(remaining.length), 1)[0] ?? card) : card,
     ),
   };
+}
+
+/** The draft with one of the step's cards face down beneath each of its locations, in a random order. */
+function dealtBeneath(
+  draft: SetupDraft,
+  step: DealBeneathStep,
+  pick: (bound: number) => number,
+): SetupDraft {
+  if (step.codes.length !== step.beneath.length)
+    throw new CommandRejected({
+      code: 'setupDealMismatch',
+      cards: step.codes.length,
+      locations: step.beneath.length,
+    });
+  const remaining = [...step.codes];
+  return step.beneath.reduce((state, location) => {
+    const [code] = remaining.splice(pick(remaining.length), 1);
+    // Never undefined after the length check; the type only can't tell.
+    return code === undefined
+      ? state
+      : withCard(state, code, { kind: 'beneath', hostId: targetId(state.cards, location) });
+  }, draft);
 }
 
 /**
@@ -816,6 +856,7 @@ function stepCodes(step: PlacingStep): readonly CardCode[] {
     case 'setAside':
     case 'shuffleIntoEncounterDeck':
     case 'scenarioDeck':
+    case 'dealBeneath':
       return step.codes;
     default:
       return [];

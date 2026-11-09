@@ -2061,6 +2061,11 @@ export function defeatEachInvestigator({ trauma }: { trauma?: TraumaKind } = {})
   };
 }
 
+/** "Each investigator immediately resigns" (Emergent Evils' reverse side), in any phase. */
+export function eachInvestigatorResigns(): AbilityEffect {
+  return { type: 'Resign', investigatorId: { ref: 'eachInvestigator' }, immediately: true };
+}
+
 /** One answer of a choice in card data: its label and what it does once picked. */
 export interface ChoiceOption {
   id: string;

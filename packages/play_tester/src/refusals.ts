@@ -73,6 +73,7 @@ const REFUSAL_KINDS: Readonly<Record<RejectionCode, RefusalKind>> = {
   selfConnection: 'never',
   setupTargetNotFound: 'never',
   setupTargetAmbiguous: 'never',
+  setupDealMismatch: 'never',
   unknownEncounterSet: 'never',
   invalidStartingTokens: 'never',
   // Cards the engine itself moves: a refusal means a rule sent a wrong command.

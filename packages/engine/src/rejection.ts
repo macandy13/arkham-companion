@@ -61,6 +61,8 @@ export type Rejection =
   | { code: 'setupTargetNotFound'; cardCode: CardCode }
   /** A setup step refers to `cardCode`, but several instances of it exist. */
   | { code: 'setupTargetAmbiguous'; cardCode: CardCode }
+  /** A `dealBeneath` setup step deals `cards` cards beneath `locations` locations, one each. */
+  | { code: 'setupDealMismatch'; cards: number; locations: number }
   /** No card in the `CardDb` belongs to `encounterCode` (usually a typo in scenario data). */
   | { code: 'unknownEncounterSet'; encounterCode: EncounterSetCode }
   /** A map's `layout` names a card that is not one of that map's locations. */
@@ -334,6 +336,8 @@ function describe(r: Rejection): string {
       return `setup refers to ${r.cardCode}, but no such card is available`;
     case 'setupTargetAmbiguous':
       return `setup refers to ${r.cardCode}, which exists more than once`;
+    case 'setupDealMismatch':
+      return `setup deals ${r.cards} cards beneath ${r.locations} locations, one each`;
     case 'unknownEncounterSet':
       return `no cards in encounter set ${r.encounterCode}`;
     case 'layoutNotOnMap':

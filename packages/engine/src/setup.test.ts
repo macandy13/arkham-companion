@@ -853,6 +853,89 @@ describe('compileSetup location versions', () => {
   });
 });
 
+describe('compileSetup dealBeneath', () => {
+  const northside = cardCode('northside');
+  const downtownBank = cardCode('downtown_bank');
+  const downtownAsylum = cardCode('downtown_asylum');
+  const suspectA = cardCode('suspect_a');
+  const suspectB = cardCode('suspect_b');
+  const suspects = encounterSetCode('suspects');
+  const ctx = {
+    cards: cardDbFrom([
+      blankLocation('northside'),
+      blankLocation('downtown_bank'),
+      blankLocation('downtown_asylum'),
+      blankEnemy('suspect_a', { encounterCode: suspects }),
+      blankEnemy('suspect_b', { encounterCode: suspects }),
+      ...standardInvestigatorCards,
+    ]),
+  };
+  /**
+   * Northside and Downtown each get one of the two suspects face down; the suspects' set then
+   * builds the encounter deck.
+   */
+  const def = makeDefinition({
+    setup: [
+      { ...mainMap(), locations: [{ code: northside }, { code: downtownBank }] },
+      { kind: 'dealBeneath', codes: [suspectA, suspectB], beneath: [northside, downtownBank] },
+      { kind: 'buildEncounterDeck', sets: [suspects] },
+    ],
+  });
+
+  it.each([
+    { seed: 1, underNorthside: 'suspect_b#1', underDowntown: 'suspect_a#1' },
+    { seed: 3, underNorthside: 'suspect_a#1', underDowntown: 'suspect_b#1' },
+  ])(
+    'deals $underNorthside beneath Northside with seed $seed, face down, none into the deck',
+    ({ seed, underNorthside, underDowntown }) => {
+      const command = scenario.compileSetup({ ...ctx, scenario: def }, makeSetupOptions({ seed }));
+
+      const beneath = command.cards.filter((card) => card.zone.kind === 'beneath');
+      expect(beneath.map((card) => [card.id, card.zone, card.faceUp])).toEqual([
+        [underNorthside, { kind: 'beneath', hostId: 'northside#1' }, false],
+        [underDowntown, { kind: 'beneath', hostId: 'downtown_bank#1' }, false],
+      ]);
+      expect(command.cards.filter((card) => card.zone.kind === 'encounterDeck')).toEqual([]);
+    },
+  );
+
+  it('deals beneath the version of a location the setup picked', () => {
+    const versioned = makeDefinition({
+      setup: [
+        { ...mainMap(), locations: [{ code: downtownBank, versions: [downtownAsylum] }] },
+        { kind: 'dealBeneath', codes: [suspectA], beneath: [downtownBank] },
+      ],
+    });
+
+    const command = scenario.compileSetup(
+      { ...ctx, scenario: versioned },
+      makeSetupOptions({ seed: 3 }),
+    );
+
+    expect(command.cards.map((card) => [card.id, card.zone])).toEqual([
+      ['downtown_asylum#1', { kind: 'location', mapId: main }],
+      ['suspect_a#1', { kind: 'beneath', hostId: 'downtown_asylum#1' }],
+    ]);
+  });
+
+  it('rejects a deal with more cards than locations', () => {
+    const uneven = makeDefinition({
+      setup: [
+        mainMap('northside'),
+        { kind: 'dealBeneath', codes: [suspectA, suspectB], beneath: [northside] },
+      ],
+    });
+
+    expect(
+      rejectionOf(() => scenario.compileSetup({ ...ctx, scenario: uneven }, makeSetupOptions())),
+    ).toEqual({
+      code: 'setupDealMismatch',
+      cards: 2,
+      locations: 1,
+    });
+  });
+});
+
 describe('compileSetup random locations', () => {
   const path = cardCode('path');
   const glade = cardCode('glade');
