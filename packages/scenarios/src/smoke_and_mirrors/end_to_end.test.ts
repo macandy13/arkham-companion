@@ -121,32 +121,35 @@ describe('Smoke and Mirrors end to end: Roland and Daisy, seed 1', () => {
     expect(table.board.enemy(byName('Rogue Gangster')).engagedWith).toBe(daisy);
 
     // Round 2 – investigation: Roland takes Augurs of Flame's action, the group spending its 4
-    // clues; it provokes the Bat Horror's attack of opportunity. He draws the card beneath
-    // Uptown: Naomi O'Bannion, who engages him.
+    // clues; it provokes the Bat Horror's attack of opportunity. The Bat Horror is Elusive: after its
+    // attack it disengages, moves to the empty university and exhausts, by hand (the script moves
+    // it; the exhaustion changes nothing here). Roland draws the card
+    // beneath Uptown: Naomi O'Bannion, who engages him.
     expect(table.nextPhase()).toEqual({ round: 2, phase: 'investigation' });
     table.startTurn(roland);
     table.useCardAction(roland, byName('Augurs of Flame'));
     table.takeAttackOfOpportunity(byName('Bat Horror'));
-    table.spendAction(roland);
+    table.moveEnemy(byName('Bat Horror'), byName('Miskatonic University'), { forced: true });
     expect(table.board.investigator(roland)).toMatchObject({ clues: 0, damage: 1, horror: 1 });
     expect(table.board.investigator(daisy).clues).toBe(0);
     expect(table.board.enemy(byName(naomi)).engagedWith).toBe(roland);
+    expect(table.board.enemy(byName('Bat Horror')).at).toBe('Miskatonic University');
 
-    // Roland parleys with her twice, reading her codex entry each time, by hand. The first time
-    // she has the non-Humanoid Bat Horror defeated and takes her first lead; the second lead (one
-    // per investigator) interrogates her, and she goes beneath the act.
-    table.spendAction(roland);
+    // Roland parleys with her twice, by hand: each Parley costs 1 resource per investigator and
+    // reads her codex entry. The first time she has the non-Humanoid Bat Horror defeated at the
+    // university and takes her first lead; the second lead (one per investigator) interrogates
+    // her, and she goes beneath the act.
+    table.spendResources(roland, 2);
     table.play({ type: 'DefeatEnemy', enemyId: table.board.enemyId(byName('Bat Horror')) });
-    table.spendAction(roland);
+    table.spendResources(roland, 2);
     table.play({
       type: 'MoveCard',
       cardId: table.board.enemyId(byName(naomi)),
-      to: { kind: 'beneath', hostId: table.state.act.current! },
+      to: { kind: 'beneath', hostId: table.board.act!.id },
     });
     table.endTurn(roland);
-    expect(table.board.namesIn({ kind: 'beneath', hostId: table.state.act.current! })).toEqual([
-      naomi,
-    ]);
+    expect(table.board.act?.beneath).toEqual([naomi]);
+    expect(table.board.investigator(roland).resources).toBe(2);
 
     // Daisy defeats the Rogue Gangster with three attacks.
     table.startTurn(daisy);
