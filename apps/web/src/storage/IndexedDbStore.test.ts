@@ -1,4 +1,5 @@
 import 'fake-indexeddb/auto';
+import Dexie from 'dexie';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   STATE_VERSION,
@@ -171,6 +172,25 @@ describe('IndexedDbStore', () => {
     });
   });
 
+  it('replays a game whose progress an app of another state version cached', async () => {
+    const name = `test-${n++}`;
+    const older = new IndexedDbStore(name);
+    const id = await older.createGame();
+    await older.appendEvents(id, [started]);
+    await older.listGames();
+    older.close();
+    const raw = await new Dexie(name).open();
+    await raw
+      .table('games')
+      .update(id, { 'progress.stateVersion': STATE_VERSION - 1, 'progress.scenarioId': 'old' });
+    raw.close();
+    store = new IndexedDbStore(name);
+
+    const [summary] = await store.listGames();
+
+    expect(summary).toMatchObject({ scenarioId: 'test' });
+  });
+
   it('replays a game played since the last list', async () => {
     const id = await store.createGame();
     await store.listGames();
@@ -181,7 +201,7 @@ describe('IndexedDbStore', () => {
     expect(summary).toMatchObject({ lastSeq: 1, scenarioId: 'test' });
   });
 
-  it('drops the cached progress on an undo, so a new step under the same seq is replayed', async () => {
+  it('lists the new step after an undo, which the next step takes the same seq for', async () => {
     const id = await store.createGame();
     await store.appendEvents(id, [started]);
     await store.listGames();

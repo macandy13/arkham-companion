@@ -47,12 +47,20 @@ function newCampaignId(): CampaignId {
 /**
  * The part of a `GameSummary` read from the replayed state, kept in the game's row with the
  * `seq` of the log it was read from, so the home screen lists games without replaying them.
+ * `stateVersion` is kept as a snapshot keeps it: an app whose replay reads the log differently
+ * reads it again.
  */
 interface CachedProgress extends Pick<
   GameSummary,
   'scenarioId' | 'round' | 'phase' | 'investigators'
 > {
   seq: number;
+  stateVersion: number;
+}
+
+/** Whether `row`'s cached progress was read from its whole log by this app's replay. */
+function hasCurrentProgress(row: GameRow): row is GameRow & { progress: CachedProgress } {
+  return row.progress?.seq === row.lastSeq && row.progress.stateVersion === STATE_VERSION;
 }
 
 /** Row of the `games` table: a `GameSummary` is derived from it plus the replayed state. */
@@ -229,7 +237,7 @@ export class IndexedDbStore implements GameStore {
       // Opportunistic snapshot so long games don't replay from scratch on every refresh.
       if (tail.length >= SNAPSHOT_INTERVAL) await this.saveSnapshot(gameId, game.lastSeq, state);
       const progress = progressOf(state, game.lastSeq);
-      if (game.progress?.seq !== game.lastSeq) await this.db.games.update(gameId, { progress });
+      if (!hasCurrentProgress(game)) await this.db.games.update(gameId, { progress });
       return { summary: toSummary(game, progress), state };
     });
   }
@@ -268,7 +276,7 @@ export class IndexedDbStore implements GameStore {
     // with the log; only the games played since the last list are replayed.
     const listed = await Promise.all(
       rows.map(async (row) =>
-        row.progress?.seq === row.lastSeq
+        hasCurrentProgress(row)
           ? toSummary(row, row.progress)
           : (await this.loadGame(row.gameId))?.summary,
       ),
@@ -555,6 +563,7 @@ export class IndexedDbStore implements GameStore {
 function progressOf(state: GameState, seq: number): CachedProgress {
   return {
     seq,
+    stateVersion: STATE_VERSION,
     scenarioId: state.meta.scenarioId,
     round: state.meta.round,
     phase: state.meta.phase,
