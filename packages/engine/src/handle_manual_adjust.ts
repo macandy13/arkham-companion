@@ -25,7 +25,7 @@ function assertNotCurrentStage(state: GameState, cardId: InstanceId): void {
 
 /**
  * `MoveCard`: the same move a `ManualAdjust` makes, as a game event. A card it takes from play to
- * the set-aside area or out of the game leaves its tokens and attachments behind first and is
+ * the set-aside area, out of the game or beneath another card leaves its tokens and attachments behind first and is
  * readied (Rules Reference, "Leaves Play"; "Escape the Dorms" removes Your Friend's Room with its Fire! and sets
  * the Servant of Flame aside healed); a correction moves the card alone.
  */
@@ -43,9 +43,12 @@ export function handleMoveCard(state: GameState, cmd: MoveCard): Event[] {
   return [...attachments, ...clearTokensEvents(card), ...readied, moved];
 }
 
-/** Whether moving `card` to `to` takes it from play to the set-aside area or out of the game. */
+/** Whether moving `card` to `to` takes it from play to the set-aside area, out of the game or beneath a card. */
 function leavesPlay(state: GameState, card: CardInstance, to: Zone): boolean {
-  return (to.kind === 'setAside' || to.kind === 'outOfGame') && isInPlay(state, card);
+  return (
+    (to.kind === 'setAside' || to.kind === 'outOfGame' || to.kind === 'beneath') &&
+    isInPlay(state, card)
+  );
 }
 
 /**

@@ -2,12 +2,14 @@ import { describe, expect, it } from 'vitest';
 import {
   attachedTo,
   attachToLocation,
+  blankAct,
   blankAsset,
   blankEnemy,
   blankLocation,
   blankTreachery,
   checkInvariants,
   CommandRejected,
+  drawBeneathYourLocation,
   encounterDeck,
   encounterDiscard,
   engagedWith,
@@ -565,6 +567,87 @@ describe('DrawFromScenarioDeck', () => {
     expect(rejectionFrom(context, state, drawCultist)).toEqual({
       code: 'scenarioDeckEmpty',
       deck: 'cultist',
+    });
+  });
+});
+
+describe('DrawBeneath', () => {
+  const cellar = instanceId('cellar');
+  const suspect = instanceId('suspect');
+  const drawBeneath: Command = { type: 'DrawBeneath', investigatorId: alice };
+  /** Alice in the hall, which connects to nothing; the cellar is a second location. */
+  const aliceInHallWithCellar = aliceInHall.withLocation(cellar, blankLocation('cellar'), {
+    revealed: true,
+  });
+
+  it('turns up the facedown card beneath her location and spawns it engaged with her', () => {
+    const otherSuspect = instanceId('other_suspect');
+    const { context, state } = aliceInHallWithCellar
+      .withCard(suspect, foeCard, { kind: 'beneath', hostId: hall }, { faceUp: false })
+      .withCard(otherSuspect, foeCard, { kind: 'beneath', hostId: cellar }, { faceUp: false })
+      .start();
+
+    const after = stateAfter(context, state, drawBeneath);
+
+    expect(after.cards[suspect]).toMatchObject({ zone: engagedWith(alice), faceUp: true });
+    expect(after.cards[otherSuspect]?.zone).toEqual({ kind: 'beneath', hostId: cellar });
+  });
+
+  it('leaves an aloof enemy unengaged at her location', () => {
+    const aloofSuspect = blankEnemy('aloof_suspect', { keywords: [{ name: 'aloof' }] });
+    const { context, state } = aliceInHall
+      .withCard(suspect, aloofSuspect, { kind: 'beneath', hostId: hall }, { faceUp: false })
+      .start();
+
+    const after = stateAfter(context, state, drawBeneath);
+
+    expect(after.cards[suspect]?.zone).toEqual({ kind: 'atLocation', locationId: hall });
+  });
+
+  it("draws the suspect through the act's action", () => {
+    const act = instanceId('act');
+    const { context, state } = aliceInHall
+      .withAct(act, blankAct('act', { actions: [{ effects: [drawBeneathYourLocation()] }] }))
+      .withCard(suspect, foeCard, { kind: 'beneath', hostId: hall }, { faceUp: false })
+      .withTurnOf(alice)
+      .start();
+
+    const after = stateAfter(context, state, {
+      type: 'UseCardAction',
+      investigatorId: alice,
+      cardId: act,
+      action: 0,
+    });
+
+    expect(after.cards[suspect]?.zone).toEqual(engagedWith(alice));
+  });
+
+  it('rejects the draw for an investigator without a location', () => {
+    const { context, state } = aliceNowhere.start();
+
+    expect(rejectionFrom(context, state, drawBeneath)).toEqual({
+      code: 'investigatorHasNoLocation',
+      investigatorId: alice,
+    });
+  });
+
+  it('rejects the draw with nothing beneath her location', () => {
+    const { context, state } = aliceInHall.start();
+
+    expect(rejectionFrom(context, state, drawBeneath)).toEqual({
+      code: 'nothingBeneath',
+      locationId: hall,
+    });
+  });
+
+  it('rejects the draw with only a face-up card beneath her location', () => {
+    const { context, state } = aliceInHall
+      .withCard(suspect, foeCard, { kind: 'beneath', hostId: hall }, { faceUp: true })
+      .start();
+
+    expect(rejectionFrom(context, state, drawBeneath)).toEqual({
+      code: 'nothingBeneath',
+      locationId: hall,
     });
   });
 });

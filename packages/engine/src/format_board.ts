@@ -39,6 +39,7 @@ export function formatBoard(ctx: EngineContext, state: GameState): string {
     ...turnLines(state),
     agendaLine(ctx, state),
     actLine(ctx, state),
+    ...(state.act.current === undefined ? [] : beneathLines(ctx, state, state.act.current, '  ')),
     ...Object.keys(state.board.maps).flatMap((id) => mapLines(ctx, state, id as MapId)),
     'Investigators:',
     ...state.investigators.map((investigator) => investigatorLine(ctx, state, investigator)),
@@ -102,6 +103,26 @@ function actLine(ctx: EngineContext, state: GameState): string {
   return `Act: ${nameOf(ctx, act)} – ${requirement}`;
 }
 
+/**
+ * The cards beneath `hostId`, if any: the face-up ones by name, the facedown ones only counted,
+ * as the players may not look at them.
+ */
+function beneathLines(
+  ctx: EngineContext,
+  state: GameState,
+  hostId: InstanceId,
+  indent: string,
+): string[] {
+  const beneath = cardsIn(state, { kind: 'beneath', hostId });
+  if (beneath.length === 0) return [];
+  const facedown = beneath.filter((card) => !card.faceUp).length;
+  const shown = [
+    ...beneath.filter((card) => card.faceUp).map((card) => nameOf(ctx, card)),
+    ...(facedown > 0 ? [`${facedown} facedown`] : []),
+  ];
+  return [`${indent}beneath: ${shown.join(', ')}`];
+}
+
 function mapLines(ctx: EngineContext, state: GameState, id: MapId): string[] {
   const map = state.board.maps[id];
   if (!map) return [];
@@ -133,6 +154,7 @@ function locationLines(ctx: EngineContext, state: GameState, locationId: Instanc
     ...(attached.length > 0
       ? [`    attached: ${attached.map((card) => nameOf(ctx, card)).join(', ')}`]
       : []),
+    ...beneathLines(ctx, state, locationId, '    '),
     `    connects to: ${listOrNone(neighbours(ctx, state, locationId).map((id) => nameOfId(ctx, state, id)))}`,
   ];
 }

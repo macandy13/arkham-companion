@@ -13,6 +13,8 @@ The cards below add when an objective is checked, what counts towards it, and ac
   - The app checks it whenever a card enters the victory display, by a defeat or by an effect such as a Parley.
   - Ruth Turner, who goes there once evaded, triggers it as well.
   - A card put there by hand, a correction, doesn't.
+- "If there are a total of 6 [[Elite]] enemies in the victory display and/or under the act, advance" (Augurs of Flame, Smoke and Mirrors act 1) counts the face-up cards beneath the current act together with the victory display.
+  - The app checks it whenever a card enters either place; cards beneath a location don't count.
 
 - "When the round ends, investigators in the Hallway may, as a group, spend the requisite number of clues to advance" (The Barrier, The Gathering act 2) replaces the usual spend: it can't be spent during a turn, and only clues of investigators in the Hallway count.
   - The app asks the lead as the round ends, once those in the Hallway hold enough; the group may also keep them.

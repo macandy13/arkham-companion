@@ -2,9 +2,13 @@ import type { Locator, Page } from '@playwright/test';
 
 /**
  * Drags `piece` (a pawn, an enemy, a token off a count) with the mouse to the middle of `target`,
- * in steps, as a player's finger would.
+ * in steps, as a player's finger would. A piece that just moved still glides to its place
+ * (`useGlides`), so the drag waits until it has arrived and grabs it there.
  */
 export async function dragTo(page: Page, piece: Locator, target: Locator): Promise<void> {
+  await piece.evaluate((element) =>
+    Promise.all(element.getAnimations().map((animation) => animation.finished)),
+  );
   const from = await piece.boundingBox();
   const to = await target.boundingBox();
   if (!from || !to) throw new Error('the piece or its target is not on screen');

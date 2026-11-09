@@ -21,6 +21,7 @@ import {
 } from './handle_board';
 import {
   handleDrawEncounter,
+  handleDrawBeneath,
   handleDrawFromScenarioDeck,
   handleGainSurge,
   handleFromSetAside,
@@ -261,6 +262,7 @@ const COMMAND_SPECS: CommandSpecs = {
   ResolveEffect: { handle: () => [] },
   SpawnEnemy: { handle: handleSpawnEnemy },
   DrawFromScenarioDeck: { handle: handleDrawFromScenarioDeck },
+  DrawBeneath: { handle: handleDrawBeneath },
   EngageEnemy: {
     handle: handleEngageEnemy,
     // The other engaged enemies attack: the one being engaged is not engaged yet, and a massive
