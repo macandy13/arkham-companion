@@ -16,10 +16,8 @@ on:
 permissions:
   contents: read
 
-# Only the newest commit matters: PRs are built on main's tip.
-concurrency:
-  group: main-pictures
-  cancel-in-progress: true
+# No concurrency limit: main often takes a merge a minute, and a run that a newer one cancelled
+# leaves its commit without pictures, so every PR built on it photographed its base itself.
 
 jobs:
   pictures:
