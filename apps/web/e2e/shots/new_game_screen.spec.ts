@@ -22,7 +22,9 @@ test("a new campaign's first step: Night of the Zealot's cover with its key art,
   await expect(page.getByRole('radio', { name: 'Brethren of Ash' })).toBeVisible();
 });
 
-test('the investigator picker with its filter menu open', async ({ page }) => {
+test('the investigator picker with its filter menu open, a cycle picked by its name', async ({
+  page,
+}) => {
   await page.goto('/#/new');
   await page.getByRole('link', { name: 'Quick game' }).first().click();
   await page.getByRole('button', { name: 'Next' }).click();
@@ -30,6 +32,7 @@ test('the investigator picker with its filter menu open', async ({ page }) => {
 
   await page.getByRole('button', { name: 'Filters' }).click();
   await page.getByRole('button', { name: 'Seeker', exact: true }).click();
+  await page.getByLabel('Cycle').selectOption({ label: 'Core Set' });
 
   await expect(page.getByRole('list', { name: 'Investigators' })).toContainText('Fake Seeker');
 });

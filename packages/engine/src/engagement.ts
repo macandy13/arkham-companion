@@ -14,7 +14,13 @@ import { cardOptionLabels, requestDecision } from './decisions';
 import { hasKeyword } from './keywords';
 import { cardsAtLocation, cardsOfType } from './lookup';
 import { replay } from './reducer';
-import { SKILL_NAMES, type CardInstance, type GameState, type Investigator } from './state';
+import {
+  SKILL_NAMES,
+  type CardInstance,
+  type Decider,
+  type GameState,
+  type Investigator,
+} from './state';
 
 /** A prey criterion: the tied best among the investigators given. */
 type PreyCriterion = (investigators: readonly Investigator[]) => Investigator[];
@@ -168,7 +174,11 @@ export function chooseInvestigator(
   });
 }
 
-/** A `chooseLocation` decision about `subject`, unless one with this id is already open. */
+/**
+ * A `chooseLocation` decision about `subject`, unless one with this id is already open. The lead
+ * investigator decides (Rules Reference, "Choices") unless the rule names someone else, as spawn
+ * does for the investigator who drew the enemy.
+ */
 export function chooseLocation(
   ctx: EngineContext,
   state: GameState,
@@ -177,6 +187,7 @@ export function chooseLocation(
   prompt: string,
   locations: readonly InstanceId[],
   answer: (chosen: InstanceId) => Command,
+  decider: Decider = { kind: 'lead' },
 ): DecisionRequested[] {
   const labels = cardOptionLabels(ctx, state, locations);
   return requestDecision(state, {
@@ -184,7 +195,7 @@ export function chooseLocation(
     kind: 'chooseLocation',
     subject,
     prompt,
-    decider: { kind: 'lead' },
+    decider,
     options: locations.map((locationId, i) => ({
       id: locationId,
       label: labels[i] ?? locationId,

@@ -11,6 +11,7 @@
     "campaign-guides": "tsx src/campaign_guides_fetch.ts"
   },
   "dependencies": {
+    "@arkham/util": "workspace:*",
     "zod": "^4.6.7"
   },
   "devDependencies": {

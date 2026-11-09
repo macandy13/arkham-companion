@@ -36,6 +36,29 @@ export function numberedDuplicates(texts: readonly string[]): string[] {
 }
 
 /**
+ * The words `a` and `b` both start with, joined by single spaces (`'Edge of the Earth Campaign
+ * Expansion'` and `'Edge of the Earth Investigator Expansion'` give `'Edge of the Earth'`); empty
+ * when their first words differ. Words are split at whitespace and compared exactly.
+ */
+export function commonWordPrefix(a: string, b: string): string {
+  const left = a.split(/\s+/).filter((word) => word !== '');
+  const right = b.split(/\s+/).filter((word) => word !== '');
+  const shared: string[] = [];
+  for (const [i, word] of left.entries()) {
+    if (right[i] !== word) break;
+    shared.push(word);
+  }
+  return shared.join(' ');
+}
+
+/** `text` without the characters of `characters` it ends in (`withoutTrailing('Name –', ' –')` is `Name`). */
+export function withoutTrailing(text: string, characters: string): string {
+  let end = text.length;
+  while (end > 0 && characters.includes(text.charAt(end - 1))) end -= 1;
+  return text.slice(0, end);
+}
+
+/**
  * `text` as a file name stem: every run of characters other than letters and digits becomes one
  * dash, with none at either end, so the stem holds no path separator or character a file system
  * reserves (`Night of the Zealot: 1/3` becomes `Night-of-the-Zealot-1-3`). Gives `fallback` when

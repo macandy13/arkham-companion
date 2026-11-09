@@ -1,11 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import {
   camelCaseToWords,
+  commonWordPrefix,
   escapeRegExp,
   fileStem,
   numberedDuplicates,
   sentences,
   stripTrailingDot,
+  withoutTrailing,
 } from './index';
 
 describe('sentences', () => {
@@ -76,6 +78,51 @@ describe('numberedDuplicates', () => {
     { name: 'keeps an empty list', texts: [], expected: [] },
   ])('$name', ({ texts, expected }) => {
     expect(numberedDuplicates(texts)).toEqual(expected);
+  });
+});
+
+describe('commonWordPrefix', () => {
+  it.each([
+    {
+      name: 'keeps the words both start with',
+      a: 'Edge of the Earth Campaign Expansion',
+      b: 'Edge of the Earth Investigator Expansion',
+      expected: 'Edge of the Earth',
+    },
+    {
+      name: 'keeps all of a text the other starts with',
+      a: 'The Dunwich Legacy',
+      b: 'The Dunwich Legacy Investigator Expansion',
+      expected: 'The Dunwich Legacy',
+    },
+    {
+      name: 'gives nothing when the first words differ',
+      a: 'Core Set',
+      b: 'Revised Core Set',
+      expected: '',
+    },
+    {
+      name: 'compares whole words, not letters',
+      a: 'Return to Dunwich',
+      b: 'Return tomorrow',
+      expected: 'Return',
+    },
+  ])('$name', ({ a, b, expected }) => {
+    expect(commonWordPrefix(a, b)).toBe(expected);
+  });
+});
+
+describe('withoutTrailing', () => {
+  it.each([
+    {
+      name: 'drops the given characters at the end',
+      text: 'Am Rande der Welt –',
+      expected: 'Am Rande der Welt',
+    },
+    { name: 'keeps them anywhere else', text: '– Name: Sub', expected: '– Name: Sub' },
+    { name: 'can leave nothing', text: ' – ', expected: '' },
+  ])('$name', ({ text, expected }) => {
+    expect(withoutTrailing(text, ' –:')).toBe(expected);
   });
 });
 

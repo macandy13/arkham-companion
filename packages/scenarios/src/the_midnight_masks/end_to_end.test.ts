@@ -185,7 +185,7 @@ describe('The Midnight Masks end to end: Roland and Daisy, seed 40', () => {
 
     // Round 2 – mythos: Roland draws the Wizard of the Order, which spawns at
     // any empty location: not Rivertown, where both investigators stand, nor
-    // Southside with its Acolyte. The players pick Northside, far away.
+    // Southside with its Acolyte. Roland, who drew it, picks Northside, far away.
     expect(table.nextPhase()).toEqual({ round: 2, phase: 'mythos', step: 'drawEncounterCard' });
     expect(table.board.decisions).toEqual([
       {
@@ -193,6 +193,7 @@ describe('The Midnight Masks end to end: Roland and Daisy, seed 40', () => {
         kind: 'chooseLocation',
         about: wizard,
         card: expect.objectContaining({ name: wizard }),
+        for: roland,
         options: [
           'Northside',
           'Downtown',
