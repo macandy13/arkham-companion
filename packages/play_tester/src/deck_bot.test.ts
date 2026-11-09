@@ -193,6 +193,52 @@ describe('the deck bot', () => {
     },
   );
 
+  it('cancels an attack of opportunity with Dodge, then pays for it', () => {
+    const table = PlayTable.start(
+      game.withCard(ghoul, blankEnemy('ghoul', { damage: 1 }), engagedWith(alice)),
+    );
+    playStep(table, { verb: 'takeResource', investigator: cardName('alice') });
+    const bot = botWithHand('Dodge');
+
+    const cancel = bot.step(table, random);
+    playStep(table, cancel);
+
+    expect([cancel, bot.step(table, random)]).toEqual([
+      { verb: 'answer', about: ghoul, option: 'does not provoke' },
+      {
+        verb: 'playerCard',
+        investigator: 'alice',
+        card: 'Dodge',
+        effects: [{ kind: 'resources', delta: -1 }],
+      },
+    ]);
+    expect(table.board.investigator(alice).damage).toBe(0);
+  });
+
+  it('cancels only the attacks of opportunity it can pay a Dodge for', () => {
+    const rat = instanceId('rat');
+    const table = PlayTable.start(
+      newGame()
+        .withLocation(study, blankLocation('study'), { revealed: true })
+        .withInvestigator(alice, { locationId: study, resources: 1 })
+        .withCard(ghoul, blankEnemy('ghoul', { damage: 1 }), engagedWith(alice))
+        .withCard(rat, blankEnemy('rat', { damage: 1 }), engagedWith(alice))
+        .withTurnOf(alice),
+    );
+    playStep(table, { verb: 'takeResource', investigator: cardName('alice') });
+    const bot = botWithHand('Dodge', 'Dodge');
+
+    const steps = Array.from({ length: 4 }, () => {
+      const step = bot.step(table, random);
+      playStep(table, step);
+      return step;
+    });
+
+    expect(
+      steps.filter((step) => step.verb === 'playerCard' && step.card === 'Dodge'),
+    ).toHaveLength(1);
+  });
+
   it('heals the damage armour in play soaks, until its health is used up', () => {
     const table = PlayTable.start(game);
     const bot = botWithHand('Leather Coat');

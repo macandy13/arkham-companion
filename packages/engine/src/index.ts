@@ -104,6 +104,7 @@ export * as scenario from './scenario_api';
 export * from './investigators';
 export { enemyAttackList, type EnemyAttack } from './enemies';
 export { describeDecision, optionName, optionNamed } from './describe_decision';
+export { isEnemyAttackDecision } from './forced_attacks';
 export { confirmOptions, skillTestDecision, type SkillTestOutcomes } from './decisions';
 export { drawTokens, testFinished } from './draw_tokens';
 export { tokenCounts, type TokenCount } from './chaos_bag';

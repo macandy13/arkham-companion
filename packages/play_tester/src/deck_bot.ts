@@ -1,5 +1,8 @@
+import { sum } from '@arkham/util';
 import {
   byName,
+  isEnemyAttackDecision,
+  optionName,
   type CardName,
   type Decision,
   type InstanceId,
@@ -85,6 +88,7 @@ export class DeckBot {
     if (!open && this.queue.length > 0) return this.queue.shift()!;
     const steps =
       (open ? undefined : this.soaked(table)) ??
+      this.cancelledAttack(table) ??
       this.answeredTest(table, random) ??
       this.playedCard(table, random);
     if (steps) {
@@ -151,6 +155,51 @@ export class DeckBot {
       }
     }
     return undefined;
+  }
+
+  /**
+   * The cancel of an open enemy attack on one of the bot's investigators who holds a card that
+   * cancels attacks (Dodge) and can pay for it (only their own: Dodge could also save another
+   * investigator at their location, which the bot leaves out): the attack decision's cancel option, then the card's
+   * cost, since the table takes nothing else while the attack is open.
+   */
+  private cancelledAttack(table: PlayTable): Step[] | undefined {
+    for (const decision of table.state.pending) {
+      if (decision.decider.kind !== 'investigator' || !isEnemyAttackDecision(decision)) continue;
+      const skip = decision.options.find(({ id }) => id === 'skip');
+      if (!skip) continue;
+      const investigator = table.board.investigator(decision.decider.investigatorId);
+      const seat = this.seats.get(investigator.name);
+      // Spends wait in the queue while attacks are open, so what they will take is already gone.
+      const resources = investigator.resources + this.queuedResources(investigator.name);
+      const card = seat?.hand.find(
+        ({ use, cost }) =>
+          use.kind === 'cancel' && use.what === 'attack' && resources >= (cost ?? 0),
+      );
+      if (!seat || !card) continue;
+      seat.hand.splice(seat.hand.indexOf(card), 1);
+      this.turn.plays++;
+      return [
+        {
+          verb: 'answer',
+          ...(decision.subject && { about: decision.subject }),
+          option: optionName(skip),
+        },
+        spending(investigator.name, card.name, card.cost ?? 0),
+      ];
+    }
+    return undefined;
+  }
+
+  /** The resources the queued steps of `investigator` will still add (a negative spend). */
+  private queuedResources(investigator: CardName): number {
+    return sum(
+      this.queue.flatMap((step) =>
+        step.verb === 'playerCard' && step.investigator === investigator
+          ? step.effects.map((effect) => (effect.kind === 'resources' ? effect.delta : 0))
+          : [],
+      ),
+    );
   }
 
   /**
@@ -389,6 +438,7 @@ export class DeckBot {
         ];
       case 'lucky':
       case 'commit':
+      case 'cancel':
         return undefined;
     }
   }
@@ -502,6 +552,7 @@ function actScore(card: PlayerCard, situation: Situation): number {
       return use.doom ? 0 : 3;
     case 'lucky':
     case 'commit':
+    case 'cancel':
       return 0;
   }
 }

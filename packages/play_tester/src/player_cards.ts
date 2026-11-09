@@ -58,7 +58,9 @@ export type CardUse =
   /** A skill card: its icons go to a test, and on a pass it `adds` damage, a clue or a heal. */
   | { readonly kind: 'commit'; readonly adds?: 'damage' | 'clue' | 'heal' }
   /** Nothing the table takes: the bot only commits its icons; `doom` it places when played. */
-  | { readonly kind: 'none'; readonly doom?: number };
+  | { readonly kind: 'none'; readonly doom?: number }
+  /** Cancels an enemy attack on the investigator, or a treachery's revelation and takes `horror`. */
+  | { readonly kind: 'cancel'; readonly what: 'attack' | 'revelation'; readonly horror?: number };
 
 /**
  * A player card as the deck bot knows it: printed cost, class and skill icons, the health and
@@ -184,7 +186,7 @@ export const PLAYER_CARDS: readonly PlayerCard[] = [
     cost: 1,
     fast: true,
     icons: { willpower: 1, agility: 1 },
-    use: { kind: 'none' },
+    use: { kind: 'cancel', what: 'attack' },
   },
   {
     code: cardCode('01024'),
@@ -462,7 +464,7 @@ export const PLAYER_CARDS: readonly PlayerCard[] = [
     cost: 1,
     fast: true,
     icons: { wild: 1 },
-    use: { kind: 'none' },
+    use: { kind: 'cancel', what: 'revelation', horror: 1 },
   },
   {
     code: cardCode('01066'),
