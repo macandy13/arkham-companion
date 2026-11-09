@@ -63,7 +63,7 @@ jobs:
 
   # Whether main-pictures.yml has cached the base's pictures. A PR is often pushed right after a
   # merge, while main's run for it is still photographing, so this waits for that run (up to 8
-  # minutes, about one run) rather than photographing the base again; pictures-head runs meanwhile.
+  # minutes; a sharded run takes about 4) rather than photographing the base again; pictures-head runs meanwhile.
   # When main's run fails late, the base is photographed that much later than it used to be.
   base-cache:
     needs: changes
