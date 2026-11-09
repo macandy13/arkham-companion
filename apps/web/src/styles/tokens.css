@@ -311,6 +311,12 @@
   --layer-menu: 2;
   /* A card dialog lowered out of the board's way (card_dialog.css), over the board's own layers. */
   --layer-lowered-dialog: 4;
+  /* A counter's − / + bubble (`CounterBubble`), over the menu and the map's controls. */
+  --layer-counter-bubble: 3;
+  /* How far the bubble keeps from its counter and from the screen's edges. */
+  --bubble-margin: var(--space-2);
+  /* The side of the square turned into the bubble's point. */
+  --bubble-point: 0.75rem;
   /* A dragged token (`TokenGhost`), over the lowered card dialog. */
   --layer-token-ghost: 5;
 

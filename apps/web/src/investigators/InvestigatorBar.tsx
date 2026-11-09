@@ -27,6 +27,8 @@ import { useReturnToPool } from '../screens/useReturnToPool';
 import { GameToken, type GameTokenKind } from '../tokens/GameToken';
 import { PipRing } from './PipRing';
 import { useClueDrag } from './useClueDrag';
+import { CounterBubble, type BubbleSide } from './CounterBubble';
+import { useDoubleTap } from '../screens/useDoubleTap';
 import './investigators.css';
 
 /**
@@ -457,7 +459,10 @@ function Skills({
  * steppers while the players adjust the board (`adjusting`); a step plays `actions` unless one is
  * queued (`busy`). A clue can be dragged off the clue count onto their location or the act
  * (`useClueDrag`), and damage, horror or a resource back onto the header's token pool, which heals
- * or spends it (`useReturnToPool`).
+ * or spends it (`useReturnToPool`). A double tap on a counter opens its − / + bubble
+ * (`CounterBubble`, M6.9), whose steps are the steppers' own: by rule, so damage can defeat; a
+ * clue goes to or comes from their location, as dragging it does, since the game's clues only
+ * move between investigators and locations.
  */
 function Counters({
   board,
@@ -485,6 +490,49 @@ function Counters({
   // Nothing comes off the card while the players adjust it with the steppers instead.
   const dragOff = (count: number, drag: TokenDragHandlers) =>
     off || adjusting || count === 0 ? undefined : drag;
+  const [open, setOpen] = useState<{ kind: SteppedKind; anchor: HTMLElement }>();
+  const at = board.locationOf(id);
+  const cluesAt = at === undefined ? 0 : board.location(at).clues;
+  const bubbles: Record<SteppedKind, Bubble> = {
+    health: {
+      label: t('investigators.health'),
+      value: health - damage,
+      lower: { label: t('investigators.takeDamage'), disabled: off },
+      raise: { label: t('investigators.healDamage'), disabled: off || damage === 0 },
+      onStep: (delta) => adjust('damage', -delta),
+    },
+    sanity: {
+      label: t('investigators.sanity'),
+      value: sanity - horror,
+      lower: { label: t('investigators.takeHorror'), disabled: off },
+      raise: { label: t('investigators.healHorror'), disabled: off || horror === 0 },
+      onStep: (delta) => adjust('horror', -delta),
+    },
+    clues: {
+      label: t('investigators.clues'),
+      value: investigator.clues,
+      lower: {
+        label: t('investigators.placeClue'),
+        disabled: off || at === undefined || investigator.clues === 0,
+      },
+      raise: { label: t('investigators.takeClue'), disabled: off || cluesAt === 0 },
+      onStep: (delta) => void (delta < 0 ? actions.placeClue(id) : at && actions.takeClue(at, id)),
+    },
+    resources: {
+      label: t('investigators.resources'),
+      value: investigator.resources,
+      lower: {
+        label: t('investigators.spendResource'),
+        disabled: off || investigator.resources === 0,
+      },
+      raise: { label: t('investigators.gainResource'), disabled: off },
+      onStep: (delta) => adjust('resources', delta),
+    },
+  };
+  // Not while the players adjust the board, whose steppers are out, nor once they left the game.
+  const bubbleFor = (kind: SteppedKind) =>
+    off || adjusting ? {} : { onDoubleTap: (anchor: HTMLElement) => setOpen({ kind, anchor }) };
+  const shown = open && !off && !adjusting ? bubbles[open.kind] : undefined;
   return (
     <>
       <dl>
@@ -495,6 +543,7 @@ function Counters({
           shown={t('investigators.left', { left: health - damage, max: health })}
           printed={{ max: health, taken: damage }}
           drag={dragOff(damage, damageBack.handlers)}
+          {...bubbleFor('health')}
         >
           {adjusting && (
             <Steppers
@@ -511,6 +560,7 @@ function Counters({
           shown={t('investigators.left', { left: sanity - horror, max: sanity })}
           printed={{ max: sanity, taken: horror }}
           drag={dragOff(horror, horrorBack.handlers)}
+          {...bubbleFor('sanity')}
         >
           {adjusting && (
             <Steppers
@@ -525,6 +575,7 @@ function Counters({
           label={t('investigators.clues')}
           value={investigator.clues}
           drag={dragOff(investigator.clues, clueDrag.handlers)}
+          {...bubbleFor('clues')}
         />
         <Stat
           kind="resources"
@@ -532,6 +583,7 @@ function Counters({
           short={t('investigators.resourcesShort')}
           value={investigator.resources}
           drag={dragOff(investigator.resources, resourceBack.handlers)}
+          {...bubbleFor('resources')}
         >
           {adjusting && (
             <Steppers
@@ -552,6 +604,20 @@ function Counters({
       {damageBack.shown}
       {horrorBack.shown}
       {resourceBack.shown}
+      {open && shown && (
+        <CounterBubble
+          anchor={open.anchor}
+          label={t('investigators.counterBubble', {
+            investigator: investigator.name,
+            counter: shown.label,
+          })}
+          value={String(shown.value)}
+          lower={shown.lower}
+          raise={shown.raise}
+          onStep={shown.onStep}
+          onClose={() => setOpen(undefined)}
+        />
+      )}
     </>
   );
 }
@@ -574,6 +640,18 @@ function statusLine(
 
 /** The counters of an investigator's panel, which the stylesheet gives their icons by. */
 type StatKind = 'health' | 'sanity' | 'clues' | 'resources' | 'doom';
+
+/** The counters a double tap opens a − / + bubble on: all but doom, which only cards place. */
+type SteppedKind = Exclude<StatKind, 'doom'>;
+
+/** What a counter's bubble shows and does (`CounterBubble`): its name, count and two steps. */
+interface Bubble {
+  label: string;
+  value: number;
+  lower: BubbleSide;
+  raise: BubbleSide;
+  onStep: (delta: -1 | 1) => void;
+}
 
 /**
  * The token each counter counts (MD.8b), which it shows its count on. Health and sanity count the
@@ -605,6 +683,7 @@ function Stat({
   shown = String(value),
   printed,
   drag,
+  onDoubleTap,
   children,
 }: {
   kind: StatKind;
@@ -618,16 +697,27 @@ function Stat({
    * the printed heart or brain for health and sanity, where the damage or horror lies.
    */
   drag?: TokenDragHandlers | undefined;
+  /** Opens the counter's − / + bubble on a double tap (`CounterBubble`), pointing at the counter. */
+  onDoubleTap?: (counter: HTMLElement) => void;
   children?: ReactNode;
 }) {
   const origin = { x: 0, y: 0 };
   const change = useCountChange(value);
+  const tap = useDoubleTap((counter) => onDoubleTap?.(counter));
+  const bubble = onDoubleTap ? { onClick: tap } : {};
   return (
     <div data-stat={kind}>
       <dt>{short ? <abbr title={label}>{short}</abbr> : label}</dt>
       <dd>
         {printed ? (
-          <span role="img" aria-label={shown} data-printed="" data-drag={drag && kind} {...drag}>
+          <span
+            role="img"
+            aria-label={shown}
+            data-printed=""
+            data-drag={drag && kind}
+            {...drag}
+            {...bubble}
+          >
             <svg viewBox={PRINTED_SYMBOL_VIEW_BOX} aria-hidden="true">
               {kind === 'health' ? (
                 <Heart centre={origin} scale={1} />
@@ -649,6 +739,7 @@ function Stat({
             data-delta={deltaText(change)}
             data-drag={drag && kind}
             {...drag}
+            {...bubble}
           />
         )}
         {children}
