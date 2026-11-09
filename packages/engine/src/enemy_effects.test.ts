@@ -269,10 +269,11 @@ describe('a card effect that makes an enemy engage you', () => {
   };
 
   it.each([
-    { ghoulStarts: 'in the cellar', zone: atLocation(cellar) },
-    { ghoulStarts: 'engaged with bob', zone: engagedWith(bob) },
-    { ghoulStarts: 'engaged with alice', zone: engagedWith(alice) },
-  ])('engages alice with the ghoul that starts $ghoulStarts', ({ zone }) => {
+    { ghoulStarts: 'in the cellar', zone: atLocation(cellar), exhausted: false },
+    { ghoulStarts: 'exhausted in the cellar', zone: atLocation(cellar), exhausted: true },
+    { ghoulStarts: 'engaged with bob', zone: engagedWith(bob), exhausted: false },
+    { ghoulStarts: 'engaged with alice', zone: engagedWith(alice), exhausted: false },
+  ])('engages alice with the ghoul that starts $ghoulStarts', ({ zone, exhausted }) => {
     const { context, state } = newGame()
       .withLocation(hall, blankLocation('hall'), { revealed: true })
       .withLocation(attic, atticCard, { revealed: true })
@@ -281,8 +282,11 @@ describe('a card effect that makes an enemy engage you', () => {
       .withInvestigator(bob, { locationId: cellar })
       .withCard(ghoul, blankEnemy('ghoul'), zone)
       .start();
+    const ghoulBefore = exhausted
+      ? stateAfter(context, state, { type: 'ExhaustEnemy', enemyId: ghoul })
+      : state;
 
-    const after = stateAfter(context, state, aliceEntersAttic);
+    const after = stateAfter(context, ghoulBefore, aliceEntersAttic);
 
     expect(requireInvestigator(after, alice)).toMatchObject({ locationId: attic });
     expect(after.cards[ghoul]?.zone).toEqual(engagedWith(alice));
@@ -301,6 +305,20 @@ describe('a card effect that makes an enemy engage you', () => {
 
     expect(requireInvestigator(after, alice)).toMatchObject({ locationId: attic });
     expect(after.cards[ghoul]?.zone).toEqual(atLocation(cellar));
+  });
+
+  it('changes nothing when the ghoul has left play', () => {
+    const { context, state } = newGame()
+      .withLocation(hall, blankLocation('hall'), { revealed: true })
+      .withLocation(attic, atticCard, { revealed: true })
+      .withInvestigator(alice, { locationId: hall })
+      .withCard(ghoul, blankEnemy('ghoul'), encounterDiscard)
+      .start();
+
+    const after = stateAfter(context, state, aliceEntersAttic);
+
+    expect(requireInvestigator(after, alice)).toMatchObject({ locationId: attic });
+    expect(after.cards[ghoul]?.zone).toEqual(encounterDiscard);
   });
 
   it('keeps refusing the engage action on an enemy at another location', () => {
