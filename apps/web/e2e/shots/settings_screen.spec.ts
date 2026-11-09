@@ -1,6 +1,6 @@
 import { expect, test } from '../fixtures/test';
 
-// Situations on the settings screen, each photographed as it ends (`@shot`, coding guidelines §3).
+// Situations on the settings screen, each photographed as it ends (coding guidelines §3).
 
 test('the settings with the unofficial fan project notice', async ({ page }) => {
   await page.goto('/#/settings');

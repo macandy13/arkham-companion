@@ -5,7 +5,7 @@ Where the players must choose, or the engine needs an answer it cannot know (a s
 - Each option carries the commands it triggers, so outcomes are data; counts the players may adjust are written as `{ answer: 'damage' }` placeholders.
 - Basic action tests name the action (`testKind`) and compute their consequences on the answer, so corrections made meanwhile count.
 - Options are answered by readable name (`optionNamed`), so options that pick a card are labelled with [`cardOptionLabels`](../../packages/engine/src/decisions.ts): the printed name, with the location added for copies of one card ("Ghoul Minion (Cellar)") and a number where that still leaves two alike.
-- `ResolveDecision` runs the chosen option; while a decision is pending, only answers and `ManualAdjust` are allowed.
+- `ResolveDecision` runs the chosen option; while a decision is pending, only answers, `ManualAdjust` and `SpendResources` (paying for a fast player card played in the decision's window, Dodge or Lucky!) are allowed.
 - A decision about a card goes when that card leaves (defeated, evaded, an advanced agenda or act), and an enemy phase attack question (`enemyPhaseAttackDecision`) goes when the investigator it asks leaves the game, as their enemies leave them.
 
 Card data asks with `leadDecides` ("the lead investigator must decide") or `youMustEither` (the investigator the window names), an `AbilityChoice` whose options run ability effects.

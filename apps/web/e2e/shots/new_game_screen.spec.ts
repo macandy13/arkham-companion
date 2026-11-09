@@ -1,6 +1,6 @@
 import { expect, test } from '../fixtures/test';
 
-// Situations in the new game wizard, each photographed as it ends (`@shot`, coding guidelines §3).
+// Situations in the new game wizard, each photographed as it ends (coding guidelines §3).
 
 test(
   "a quick game's setup step after the scenario: only the difficulty",
