@@ -11,7 +11,7 @@ describe('TargetCovers', () => {
 
   it.each([
     { name: 'The Gathering', kicker: 'Night of the Zealot' },
-    { name: 'Spreading Flames', kicker: 'Standalone' },
+    { name: 'Spreading Flames', kicker: 'Brethren of Ash' },
   ])('names the cover of $name and describes it as $kicker', ({ name, kicker }) => {
     render(<TargetCovers choices={defaultChoices('quick')} onChange={() => {}} />);
 
@@ -30,11 +30,11 @@ describe('TargetCovers', () => {
     );
   });
 
-  it('hides the Night of the Zealot scenarios without its packs, keeps the standalone ones', () => {
+  it('hides the Night of the Zealot scenarios without its packs, keeps the Brethren of Ash ones', () => {
     render(
       <TargetCovers
         choices={defaultChoices('quick')}
-        ownedPacks={new Set(['dwl'])}
+        ownedPacks={new Set(['core_2026'])}
         onChange={() => {}}
       />,
     );

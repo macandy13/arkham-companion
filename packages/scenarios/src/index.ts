@@ -57,6 +57,7 @@ export {
 } from './spreading_flames/cards';
 export { spreadingFlames } from './spreading_flames/scenario';
 export { spreadingFlamesResolutions } from './spreading_flames/resolutions';
+export { brethrenOfAsh } from './brethren_of_ash/campaign';
 export { ASH_STORY } from './brethren_of_ash/story';
 export {
   ARCANE_LOCK_DECISION,

@@ -10,6 +10,7 @@ const packs: PackDef[] = [
   { code: 'core', name: 'Core Set', position: 1, cyclePosition: 1, chapter: 1 },
   { code: 'rcore', name: 'Revised Core Set', position: 2, cyclePosition: 1, chapter: 1 },
   { code: 'dwl', name: 'The Dunwich Legacy', position: 1, cyclePosition: 2, chapter: 1 },
+  { code: 'core_2026', name: 'Core Set (2026)', position: 1, cyclePosition: 1, chapter: 2 },
 ];
 
 describe('CollectionScreen', () => {
@@ -24,6 +25,7 @@ describe('CollectionScreen', () => {
 
     expect(screen.getAllByRole('group').map((g) => g.textContent)).toEqual([
       'Night of the ZealotCore SetRevised Core Set',
+      'Brethren of AshCore Set (2026)',
     ]);
   });
 

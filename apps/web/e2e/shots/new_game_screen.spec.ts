@@ -18,7 +18,7 @@ test("a quick game's setup step after the scenario: the difficulty and what the 
   await expect(page.getByRole('group', { name: 'What the app tells you' })).toBeVisible();
 });
 
-test("a new campaign's first step: Night of the Zealot's cover with its key art, nothing else", async ({
+test("a new campaign's first step: Night of the Zealot's cover with its key art, then Brethren of Ash's", async ({
   page,
 }) => {
   await page.goto('/#/new');
