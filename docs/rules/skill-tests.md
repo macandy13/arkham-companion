@@ -19,7 +19,7 @@ Card rulings: [Resolution order](cards/resolution-order.md), [Children of Blood]
    - That includes "after you successfully investigate" and "after attached location is successfully investigated" (Obscuring Fog is discarded before the clue is discovered).
 8. Discard committed cards and return the tokens to the bag.
 
-Bless (+2), curse (-2), frost (-1) and the blood token (-1) each make the tester reveal another token, whose modifier also applies.
+Bless (+2), curse (-2), frost (-1) and the blood token (-1) each make the tester reveal another token, whose modifier also applies. When the bag has no token left to reveal, the app reveals none and resolves the test with the tokens already revealed: no rule says so, it is our reading of resolving as much as possible ("Golden Rules").
 
 ## Sealed tokens
 
