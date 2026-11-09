@@ -93,6 +93,11 @@ describe('fileStem', () => {
       text: 'Rückkehr nach Arkham',
       expected: 'Rückkehr-nach-Arkham',
     },
+    {
+      name: 'turns a long run of dashes into one',
+      text: `A${'-'.repeat(100_000)}B`,
+      expected: 'A-B',
+    },
     { name: 'gives the fallback when no letter or digit is left', text: '?!', expected: 'game' },
   ])('$name', ({ text, expected }) => {
     expect(fileStem(text, 'game')).toBe(expected);

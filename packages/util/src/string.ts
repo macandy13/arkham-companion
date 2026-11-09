@@ -42,5 +42,12 @@ export function numberedDuplicates(texts: readonly string[]): string[] {
  * nothing is left.
  */
 export function fileStem(text: string, fallback: string): string {
-  return text.replace(/[^\p{L}\p{N}]+/gu, '-').replace(/^-+|-+$/g, '') || fallback;
+  // Splitting at the runs and joining the words takes linear time; trimming dashes with an
+  // anchored `-+$` can backtrack on a long run of them (CodeQL js/polynomial-redos).
+  return (
+    text
+      .split(/[^\p{L}\p{N}]+/u)
+      .filter((word) => word !== '')
+      .join('-') || fallback
+  );
 }
