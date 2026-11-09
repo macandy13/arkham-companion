@@ -87,7 +87,7 @@ describe('SkillTestDialog', () => {
     {
       bag: ['0', '-1', '-2', 'elderSign'],
       raises: 0,
-      shown: ['25% to pass', '25% up to a card', 'With +1: 50%', 'With +2: 75%'],
+      shown: ['25% to pass', '25% decided by a card', 'With +1: 50%', 'With +2: 75%'],
     },
     { bag: ['0', '-1'], raises: 0, shown: ['50% to pass', 'With +1: 100%'] },
     { bag: ['0', '-1'], raises: 1, shown: ['100% to pass'] },

@@ -432,7 +432,7 @@ export const appTexts = {
     odds: {
       title: 'Chance to pass',
       pass: '{{chance}} to pass',
-      unknown: '{{chance}} up to a card',
+      unknown: '{{chance}} decided by a card',
       more: 'With {{icons}}: {{chance}}',
     },
   },

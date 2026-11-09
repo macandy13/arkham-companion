@@ -270,7 +270,7 @@ export function ResultStrip({
           </figcaption>
         )}
       </figure>
-      {revealed.length === 0 && odds && <PassChances odds={odds} />}
+      {odds && <PassChances odds={odds} />}
       {revealed.length > 0 &&
         (finished ? (
           <output data-outcome={result.outcome}>
@@ -434,7 +434,7 @@ export function signed(value: number): string {
 /**
  * The chance to pass before a token is drawn (M6.7c), in the outcome's place: with the players'
  * modifier, the part a card decides (the elder sign, a symbol without a number) when there is
- * one, then with each extra committed icon while the test can still pass more often.
+ * one, then with each extra committed icon that makes it pass more often.
  */
 function PassChances({ odds }: { odds: readonly SkillTestOdds[] }) {
   const { t, i18n } = useTranslation();
@@ -444,10 +444,9 @@ function PassChances({ odds }: { odds: readonly SkillTestOdds[] }) {
   });
   const [now, ...more] = odds;
   if (!now) return null;
-  // Each icon more passes at least as often, so once a test is sure to pass the rest add nothing.
   const better = more
     .map((each, index) => ({ icons: index + 1, pass: each.pass, before: odds[index]?.pass ?? 1 }))
-    .filter(({ before }) => before < 1);
+    .filter(({ pass, before }) => pass > before);
   return (
     <ul aria-label={t('skillTest.odds.title')} data-part="odds">
       <li>{t('skillTest.odds.pass', { chance: percent.format(now.pass) })}</li>
