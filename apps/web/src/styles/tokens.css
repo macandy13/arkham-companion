@@ -1112,8 +1112,8 @@
  */
 @media (orientation: portrait) and (max-width: 40rem) {
   :root {
-    /* Two portraits and the edge of a third, wide enough to read, the rest a swipe away (MD.3e). */
-    --picker-columns: 2.5;
+    /* Three portraits a row, the rows running down the page (MD.3h). */
+    --picker-columns: 3;
     --picker-badge-size: 1.125rem;
     --picker-badge-inset: 0.125rem;
     --dialog-padding: var(--space-4) var(--space-3);

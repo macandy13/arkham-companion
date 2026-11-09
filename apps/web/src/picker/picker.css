@@ -185,7 +185,8 @@
  * Pages of two rows of five portraits (`PORTRAITS_PER_PAGE`), side by side. The first five of
  * every ten go to the top row and the next five to the bottom one; the grid places each row's
  * portraits one after the other, so the eleventh starts the next page's top row beside the first
- * page. Five columns (`--picker-columns`) fill the strip's width, which scrolls and snaps a page at a time; a phone has its own count and snaps to every column.
+ * page. Five columns (`--picker-columns`) fill the strip's width, which scrolls and snaps a page at
+ * a time; a phone has its own count, sideways a strip that snaps to every column, upright rows.
  */
 #app #investigator-picker > div > ul {
   grid-area: pages;
@@ -230,14 +231,33 @@
   scroll-snap-align: start;
 }
 
-/*
- * A phone shows part of a page or more than one (`--picker-columns`), so the strip snaps to every
- * column.
- */
-@media (orientation: portrait) and (max-width: 40rem),
-  (orientation: landscape) and (max-height: 30rem) {
+/* A phone held sideways shows more than one page (`--picker-columns`), so the strip snaps to every column. */
+@media (orientation: landscape) and (max-height: 30rem) {
   #app #investigator-picker > div > ul > li {
     scroll-snap-align: start;
+  }
+}
+
+/*
+ * An upright phone is too narrow for pages side by side (MD.3h): the portraits fill rows of
+ * `--picker-columns` that run down the screen, the seated ones first, and the page scrolls instead
+ * of the strip, so the page arrows go.
+ */
+@media (orientation: portrait) and (max-width: 40rem) {
+  #app #investigator-picker > div > ul {
+    grid-template-rows: none;
+    grid-template-columns: repeat(var(--picker-columns), minmax(0, 1fr));
+    overflow-x: visible;
+    scroll-snap-type: none;
+  }
+
+  #app #investigator-picker > div > ul > li:nth-child(n) {
+    grid-row: auto;
+    scroll-snap-align: none;
+  }
+
+  #investigator-picker > div > button {
+    display: none;
   }
 }
 
