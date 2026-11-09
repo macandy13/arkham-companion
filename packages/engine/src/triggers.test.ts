@@ -40,7 +40,7 @@ import {
   engageReadyEnemies,
   eachEnemy,
   forEachEnemy,
-  eachInvestigatorAt,
+  eachInvestigator,
   engagedWith,
   duringAct,
   endScenario,
@@ -896,7 +896,7 @@ describe('trigger bus', () => {
      */
     const wailingSpawnCard = blankEnemy('wailing_spawn', {
       keywords: [{ name: 'aloof' }],
-      abilities: [whenDefeated(takeHorror(1, eachInvestigatorAt(itsLocation())))],
+      abilities: [whenDefeated(takeHorror(1, eachInvestigator({ at: itsLocation() })))],
     });
 
     // Alice and bob are in the hall with the wailing spawn, carol is in the cellar.
@@ -2282,7 +2282,7 @@ describe('an effect repeated for each Ghoul enemy in the Hall or Parlor', () => 
   const omenCard = blankTreachery('omen', {
     abilities: [
       forEachEnemy(
-        { trait: trait('Ghoul'), at: [cardCode('hall'), cardCode('parlor')] },
+        { trait: trait('Ghoul'), at: [onlyCopy(cardCode('hall')), onlyCopy(cardCode('parlor'))] },
         whenRevealed(placeDoomOnAgenda(1)),
       ),
     ],

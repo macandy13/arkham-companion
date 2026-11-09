@@ -25,7 +25,7 @@ export function victoryPoints(ctx: EngineContext, state: GameState): number {
 
 /**
  * The cards in the victory display that match `filter`, and those beneath the current act when it
- * says `beneathAct`, for objectives (`victoryDisplayHolds`) and token values that count them.
+ * says `beneathAct`, for objectives (`eachInVictoryDisplay`) and token values that count them.
  */
 export function inVictoryDisplay(
   ctx: EngineContext,

@@ -22,14 +22,17 @@ An [`Ability`](../../packages/engine/src/abilities.ts) is:
   - `cluesDiscovered`,
   - `defeated` for the enemy itself, naming where it was,
   - `tokensPlaced` for tokens placed on the card;
-- an optional condition:
-  - the current act or agenda: `duringAct([codes.trapped], …)`, `duringAgenda([codes.theyreGettingOut], …)`,
-  - the tokens on the card itself: `whenTokensOnSelf('clue', perInvestigator(2), advanceAct())` for an objective on the act's own clues, whose count the act's view shows as its threshold,
-  - what the window's investigator has: `ifYouHave('clues', { max: 0 }, …)`,
-  - how many enemies or investigators an `each…` reference names, counted with the references effects use: `ifThereAre(eachEnemyAt({ ref: 'windowLocation' }), { min: 1 }, …)` for "if there is an enemy at your location", `ifThereAre(eachEnemy({ engagedWith: { ref: 'windowInvestigator' } }), { max: 0 }, …)` for "if no enemy is engaged with you", and `ifEnemiesInPlay(trait('Cultist'), { max: 0 }, …)` as the short form of `eachEnemy({ trait })`,
-  - how many cards of a trait, unique ones only if asked (`CardStats.unique`), the victory display holds, with the cards beneath the current act if asked (`beneathAct`): `whenVictoryDisplayHolds({ trait: trait('Cultist'), unique: true }, 6, advanceAct())`,
-  - or that a reference with candidates stands for nothing: `ifNoCandidate(locationWithMost('clue'), whenRevealed(gainSurge()))` for Locked Door's "If there is no such location, Locked Door gains surge";
-- an optional repeat once per matching enemy (`forEachEnemy({ trait, at }, …)`, counted with the condition as the window opens);
+- an optional condition, in one of three shapes over the references effects use (`AbilityCondition`):
+  - `currentCard`, the current act or agenda: `duringAct([codes.trapped], …)`, `duringAgenda([codes.theyreGettingOut], …)`;
+  - `countOf`, how many things a reference names as the window opens:
+    - the enemies or investigators of an `each…` reference: `ifThereAre(eachEnemy({ at: yourLocation() }), { min: 1 }, …)` for "if there is an enemy at your location", `ifThereAre(eachEnemy({ engagedWith: you() }), { max: 0 }, …)` for "if no enemy is engaged with you", `ifEnemiesInPlay(trait('Cultist'), { max: 0 }, …)` as the short form of `eachEnemy({ trait })`;
+    - the cards of a trait in the victory display (`eachInVictoryDisplay`), unique ones only if asked (`CardStats.unique`), with the cards beneath the current act if asked (`beneathAct`): `whenVictoryDisplayHolds({ trait: trait('Cultist'), unique: true }, 6, advanceAct())`;
+    - the candidates of a picked reference: `ifNoCandidate(locationWithMost('clue'), whenRevealed(gainSurge()))` for Locked Door's "If there is no such location, Locked Door gains surge";
+  - `valueOf`, a value on the table (`Quantity`), within a range whose bounds may be per investigator:
+    - a stat of each investigator a reference names: `ifYouHave('clues', { max: 0 }, …)`;
+    - the tokens on a card: `whenTokensOnSelf('clue', perInvestigator(2), advanceAct())` for an objective on the act's own clues, whose count the act's view shows as its threshold;
+    - the clues a group holds (`groupClues`, see The Barrier below);
+- an optional repeat once per enemy an `eachEnemy` filter names (`forEachEnemy({ trait, at: [onlyCopy(codes.hallway), onlyCopy(codes.parlor)] }, …)`, counted with the condition as the window opens);
 - and a list of effects.
 
 Some effects in detail:
@@ -52,11 +55,12 @@ Some effects in detail:
 Effects are **templated commands**: a command card data may use (`AbilityCommand`) with every ID replaced by a reference relative to the ability:
 
 - `self`,
-- `windowInvestigator`,
+- `windowInvestigator` (`you()`), `windowLocation` (`yourLocation()`, `itsLocation()`),
 - `lead`,
 - `onlyCopy(code)`,
-- `eachInvestigator`,
-- `eachEnemy({ trait, withoutTrait, unengaged, engagedWith })`,
+- `eachInvestigator({ at })`,
+- `eachEnemy({ trait, withoutTrait, unengaged, at, engagedWith })`, where `at` is one location reference or a list of them, so "each enemy at your location" is a filter of `eachEnemy`, not a reference of its own,
+- `eachInVictoryDisplay` (for conditions that count it),
 - `nearestEnemy(trait)`,
 - `locationWith(trait)`,
 - `locationWithMost(token)`,
@@ -131,7 +135,7 @@ An action ability provokes attacks of opportunity unless it is a Resign or Parle
 The `investigatorTurn` condition ("during any investigator's turn") holds while anyone's turn is in progress.
 
 - `advanceBySpendingClues(clues)` is the act's group clue spend as a free action with that condition, a `groupClues` cost and `AdvanceAct`, which the act builders give every act with a clue threshold (after its printed actions, so their indices stay).
-- An act whose objective sets its own time and place (The Barrier: "When the round ends, investigators in the Hallway may, as a group, spend the requisite number of clues to advance") has no such action but `advanceBySpendingCluesAtRoundEnd(decision, clues, location)`: a `roundEnds` ability that, once those at the location hold the clues (`groupCluesHeld`), lets the lead decide; its spend option pays with `SpendCluesAsGroup` (only investigators at the location, the lead first by default) and advances the act. Without a location (Spreading Flames' "Where There's Smoke…": "At the end of the round, investigators may spend the requisite number of clues, as a group") every investigator who may spend clues counts and pays (`cluesHeldForObjective`).
+- An act whose objective sets its own time and place (The Barrier: "When the round ends, investigators in the Hallway may, as a group, spend the requisite number of clues to advance") has no such action but `advanceBySpendingCluesAtRoundEnd(decision, clues, location)`: a `roundEnds` ability that, once those at the location hold the clues (a `groupClues` value), lets the lead decide; its spend option pays with `SpendCluesAsGroup` (only investigators at the location, the lead first by default) and advances the act. Without a location (Spreading Flames' "Where There's Smoke…": "At the end of the round, investigators may spend the requisite number of clues, as a group") every investigator who may spend clues counts and pays (`cluesHeldForObjective`).
 - `AdvanceAct` itself pays nothing: it is that action's effect, an objective's or another card's.
 - `BoardView.act.advance` says how clues advance the act (`ActAdvance`): `spendClues`, the clues the investigators hold against that cost (`cluesToAdvance`), `spendCluesAtRoundEnd`, the clues of those at the objective's location (`roundEndClueObjective`), shown without an Advance button, or `cluesOnAct`, an objective counting the clues on it (`tokenObjective`).
 - `PlayTable.spendCluesToAdvanceAct` takes the action for the investigator whose turn it is.
@@ -183,5 +187,5 @@ A card can also make basic actions cost more (an `actionCost` modifier, [`Action
 ## Extension points
 
 - **A card's ability, action or modifier:** list it in the card's data; no code. [Card patterns](card-patterns.md) shows how card text maps to it.
-- **A new window or condition:** a case in `TimingWindow` / `windowsOpenedBy` or `AbilityCondition` / `actionConditionHolds`.
+- **A new window or condition:** a case in `TimingWindow` / `windowsOpenedBy`; a condition is usually a new reference to count or a new `Quantity` to read, rarely a new `AbilityCondition` kind.
 - **A new kind of effect:** add its command to `AbilityCommand` (and a factory); a new reference is a case in `resolveRefs`.

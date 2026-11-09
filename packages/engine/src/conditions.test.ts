@@ -8,8 +8,7 @@ import {
   cardCode,
   duringAgenda,
   eachEnemy,
-  eachEnemyAt,
-  eachInvestigatorAt,
+  eachInvestigator,
   encounterDeck,
   engagedWith,
   fixed,
@@ -20,6 +19,8 @@ import {
   onlyCopy,
   takeHorror,
   whenRevealed,
+  you,
+  yourLocation,
   type Command,
 } from './index';
 import { investigatorOf, stateAfter } from '../test/utils';
@@ -36,7 +37,7 @@ describe('a condition on the enemies at your location', () => {
   /** "Revelation – If there is an enemy at your location, take 1 horror." */
   const omenCard = blankTreachery('omen', {
     abilities: [
-      ifThereAre(eachEnemyAt({ ref: 'windowLocation' }), { min: 1 }, whenRevealed(takeHorror(1))),
+      ifThereAre(eachEnemy({ at: yourLocation() }), { min: 1 }, whenRevealed(takeHorror(1))),
     ],
   });
 
@@ -59,15 +60,38 @@ describe('a condition on the enemies at your location', () => {
   });
 });
 
+describe('a condition on the enemies at one of several locations', () => {
+  /** "Revelation – If there is an enemy in the hall or the attic, take 1 horror." */
+  const omenCard = blankTreachery('omen', {
+    abilities: [
+      ifThereAre(
+        eachEnemy({ at: [onlyCopy(cardCode('hall')), onlyCopy(cardCode('attic'))] }),
+        { min: 1 },
+        whenRevealed(takeHorror(1)),
+      ),
+    ],
+  });
+
+  it('counts the ghoul in the hall while the attic is not in play', () => {
+    const { context, state } = newGame()
+      .withLocation(hall, blankLocation('hall'), { revealed: true })
+      .withLocation(study, blankLocation('study'), { revealed: true })
+      .withInvestigator(alice, { locationId: study })
+      .withCard(ghoul, blankEnemy('ghoul'), atLocation(hall))
+      .withCard(omen, omenCard, encounterDeck)
+      .start();
+
+    const after = stateAfter(context, state, aliceDraws);
+
+    expect(investigatorOf(after, alice).sanity.horror).toBe(1);
+  });
+});
+
 describe('a condition on the enemies engaged with you', () => {
   /** "Revelation – If no enemy is engaged with you, take 1 horror." */
   const omenCard = blankTreachery('omen', {
     abilities: [
-      ifThereAre(
-        eachEnemy({ engagedWith: { ref: 'windowInvestigator' } }),
-        { max: 0 },
-        whenRevealed(takeHorror(1)),
-      ),
+      ifThereAre(eachEnemy({ engagedWith: you() }), { max: 0 }, whenRevealed(takeHorror(1))),
     ],
   });
 
@@ -94,7 +118,7 @@ describe('a condition on the investigators at a location', () => {
   const omenCard = blankTreachery('omen', {
     abilities: [
       ifThereAre(
-        eachInvestigatorAt(onlyCopy(cardCode('study'))),
+        eachInvestigator({ at: onlyCopy(cardCode('study')) }),
         { max: 0 },
         whenRevealed(takeHorror(1)),
       ),
