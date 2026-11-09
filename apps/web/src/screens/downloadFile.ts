@@ -41,7 +41,7 @@ export async function downloadCampaignExport(
   title: string,
 ): Promise<void> {
   downloadTextFile(
-    `${fileStem(title, 'game')}.arkham.json`,
+    `${fileStem(title, 'campaign')}.arkham.json`,
     await store.getState().exportCampaign(campaignId),
   );
 }
