@@ -9,10 +9,24 @@ export interface BubbleSide {
 }
 
 /**
- * The − / + bubble of a counter on the investigator's card (M6.9): opened by a double tap on the
- * counter (`anchor`), it stands on paper over it, pointing at it, titled with what it changes
- * (`label`, such as "Roland Banks · Health"), over its count (`value`) between a − and a + the size of a touch target. Each tap is one step
- * (`onStep` with −1 or +1 for the count as shown). A press anywhere else, or Escape, closes it
+ * One count the bubble steps (`CounterBubble`): its name (`label`, shown over its buttons when the
+ * bubble steps more than one count), the count as shown (`value`), its − (`lower`) and + (`raise`),
+ * and `onStep` with −1 or +1 for the count as shown.
+ */
+export interface BubbleCount {
+  label: string;
+  value: string;
+  lower: BubbleSide;
+  raise: BubbleSide;
+  onStep: (delta: -1 | 1) => void;
+}
+
+/**
+ * The − / + bubble of the counts on a card (M6.9, M6.10): opened by a double tap on the counter
+ * or the card (`anchor`), it stands on paper over it, pointing at it, titled with what it changes
+ * (`title`, such as "Roland Banks · Health" or "Study"), over each count (`counts`) between a −
+ * and a + the size of a touch target; a count is named over its buttons where there are several
+ * (a location's clues and doom). Each tap is one step. A press anywhere else, or Escape, closes it
  * (`onClose`), as does a scroll or a resize, which would move the counter away from under it.
  * It goes to the page's body, so the card's clipped panels can't cut it, or into the
  * open dialog the counter lies in (the whole card), since a modal dialog makes the rest of the page
@@ -20,23 +34,17 @@ export interface BubbleSide {
  */
 export function CounterBubble({
   anchor,
-  label,
-  value,
-  lower,
-  raise,
-  onStep,
+  title,
+  counts,
   onClose,
 }: {
-  anchor: HTMLElement;
-  label: string;
-  value: string;
-  lower: BubbleSide;
-  raise: BubbleSide;
-  onStep: (delta: -1 | 1) => void;
+  anchor: Element;
+  title: string;
+  counts: readonly BubbleCount[];
   onClose: () => void;
 }) {
   const bubble = useRef<HTMLElement>(null);
-  const title = useId();
+  const heading = useId();
   useLayoutEffect(() => {
     const element = bubble.current;
     if (!element) return;
@@ -81,25 +89,30 @@ export function CounterBubble({
     };
   }, [anchor, onClose]);
   return createPortal(
-    <aside ref={bubble} aria-labelledby={title} data-counter-bubble="">
-      <h2 id={title}>{label}</h2>
-      <button
-        type="button"
-        aria-label={lower.label}
-        disabled={lower.disabled}
-        onClick={() => onStep(-1)}
-      >
-        −
-      </button>
-      <output>{value}</output>
-      <button
-        type="button"
-        aria-label={raise.label}
-        disabled={raise.disabled}
-        onClick={() => onStep(1)}
-      >
-        +
-      </button>
+    <aside ref={bubble} aria-labelledby={heading} data-counter-bubble="">
+      <h2 id={heading}>{title}</h2>
+      {counts.map((count) => (
+        <section key={count.label} aria-label={count.label}>
+          {counts.length > 1 && <h3>{count.label}</h3>}
+          <button
+            type="button"
+            aria-label={count.lower.label}
+            disabled={count.lower.disabled}
+            onClick={() => count.onStep(-1)}
+          >
+            −
+          </button>
+          <output>{count.value}</output>
+          <button
+            type="button"
+            aria-label={count.raise.label}
+            disabled={count.raise.disabled}
+            onClick={() => count.onStep(1)}
+          >
+            +
+          </button>
+        </section>
+      ))}
     </aside>,
     anchor.closest('dialog') ?? document.body,
   );
