@@ -47,12 +47,14 @@ const experience: ResolutionStep = {
   to: 'each',
   bonus: 0,
   victoryDisplay: true,
-  perCardIn: 'beneathAct',
+  perCardIn: ['beneathAct'],
 };
 
 /**
  * The guide's question whether anyone was told to add Mark of Elokoss: Arkham Alive's reverse
  * side gave each investigator one, so once it advanced (out of the game) they are its bearers.
+ * Like the guide, it asks the whole group: someone eliminated before the agenda advanced drew
+ * none, and the players drop their entry from the proposal.
  */
 const bearMarkOfElokoss: ResolutionStep = {
   kind: 'when',

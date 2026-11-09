@@ -187,6 +187,20 @@ describe('ResolutionDialog', () => {
     });
   });
 
+  it('lists a choice between two records under the campaign notes', () => {
+    const houseStanding: CampaignCommand = {
+      ...houseBurned,
+      value: { kind: 'flag', value: true },
+    };
+    renderChanges(gatheringEndedWith('R1'), [
+      { kind: 'choice', options: [houseBurned, houseStanding] },
+    ]);
+
+    const notes = within(screen.getByRole('region', { name: 'Campaign Notes' }));
+    expect(notes.getByRole('radio', { name: 'Your house burned to the ground.' })).toBeTruthy();
+    expect(notes.getByRole('radio', { name: 'Your house is still standing.' })).toBeTruthy();
+  });
+
   describe('when The Gathering ended with resolution 1', () => {
     const options: readonly ResolutionOption[] = [
       { outcome: r1, changes: [{ kind: 'command', command: houseBurned }] },

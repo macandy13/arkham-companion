@@ -36,7 +36,7 @@ A scenario's resolutions are data on `ScenarioDefinition.resolutions` ([`resolut
 
 - record,
 - chaos tokens,
-- XP from a bonus and the [victory points](../../packages/engine/src/victory.ts), plus 1 per card in a `perCardIn` place ("1 bonus experience for each enemy beneath the act"),
+- XP from a bonus and the [victory points](../../packages/engine/src/victory.ts), plus 1 per card in the `perCardIn` places ("1 bonus experience for each enemy beneath the act"),
 - trauma,
 - killed/insane,
 - a story card earned (`earnCard`, by each target or, with `choose`, a `choice` of one of them),

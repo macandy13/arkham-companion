@@ -5,6 +5,7 @@ import {
   cardStats,
   investigatorCode,
   investigatorId,
+  type CardCode,
   type CardInstance,
   type Command,
   type GameState,
@@ -26,7 +27,8 @@ const ctx: ScenarioContext = {
   scenario: smokeAndMirrors,
 };
 
-const tank = investigatorCode(investigatorId('tank'));
+const tankSeat = investigatorId('tank');
+const tank = investigatorCode(tankSeat);
 
 /** The six cards setup dealt beneath locations: five suspects and the Servant of Flame. */
 function dealt(state: GameState): CardInstance[] {
@@ -34,7 +36,7 @@ function dealt(state: GameState): CardInstance[] {
 }
 
 /** The dealt card with `code`; fails the test if setup did not deal it. */
-function dealtCopy(state: GameState, code: string): InstanceId {
+function dealtCopy(state: GameState, code: CardCode): InstanceId {
   const card = dealt(state).find((candidate) => candidate.code === code);
   if (!card) throw new Error(`${code} was not dealt`);
   return card.id;
@@ -50,12 +52,25 @@ function toVictoryDisplay(cards: readonly InstanceId[]): Command[] {
   return cards.map((cardId) => ({ type: 'MoveCard', cardId, to: { kind: 'victoryDisplay' } }));
 }
 
-/** Moves `cards` beneath the act, as their codex entries would after they were drawn face up. */
+/**
+ * Tank draws each of `cards` from beneath its location, face up, and its codex entry puts it
+ * beneath the act.
+ */
 function beneathTheAct(state: GameState, cards: readonly InstanceId[]): Command[] {
-  return cards.flatMap((cardId): Command[] => [
-    { type: 'MoveCard', cardId, to: { kind: 'engaged', investigatorId: investigatorId('tank') } },
-    { type: 'MoveCard', cardId, to: { kind: 'beneath', hostId: actOf(state) } },
-  ]);
+  return cards.flatMap((cardId): Command[] => {
+    const zone = state.cards[cardId]!.zone;
+    if (zone.kind !== 'beneath') throw new Error(`${cardId} is not beneath a location`);
+    return [
+      {
+        type: 'MoveInvestigator',
+        investigatorId: tankSeat,
+        to: zone.hostId,
+        ignoreConnections: true,
+      },
+      { type: 'DrawBeneath', investigatorId: tankSeat },
+      { type: 'MoveCard', cardId, to: { kind: 'beneath', hostId: actOf(state) } },
+    ];
+  });
 }
 
 /** The proposal once `commands`, the last of which ends the game, have run from `state`. */
@@ -160,8 +175,7 @@ describe('Smoke and Mirrors Resolution 1', () => {
     ]);
   });
 
-  // The six moved beneath the act stay face down, so the objective waits for the act to advance;
-  // the sixth in the victory display meets it at once.
+  // The sixth Elite enemy beneath the act or in the victory display meets the act's objective.
   it.each([
     { where: 'beneath the act', record: ASH_STORY.scouredArkhamForAnswers, beneath: true },
     { where: 'in the victory display', record: ASH_STORY.stirredUpTrouble, beneath: false },
@@ -171,7 +185,7 @@ describe('Smoke and Mirrors Resolution 1', () => {
 
     const proposal = proposalAfter(
       state,
-      ...(beneath ? [...beneathTheAct(state, six), endInR1] : toVictoryDisplay(six)),
+      ...(beneath ? beneathTheAct(state, six) : toVictoryDisplay(six)),
     );
 
     expect(proposal).toContainEqual({

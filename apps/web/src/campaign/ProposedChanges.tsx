@@ -91,8 +91,11 @@ function groupOf(change: ProposedChange): ChangeGroup {
   switch (change.kind) {
     case 'byHand':
       return 'atTheTable';
-    case 'choice':
-      return 'investigators';
+    // The options of a choice are alike (a trauma, a card, a record), so the first one decides.
+    case 'choice': {
+      const [first] = change.options;
+      return first === undefined ? 'investigators' : commandGroup(first);
+    }
     case 'command':
       return commandGroup(change.command);
     default:

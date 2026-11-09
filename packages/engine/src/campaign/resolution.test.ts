@@ -799,8 +799,8 @@ describe('proposeResolution with steps that read the cards beneath the act', () 
   const plainSuspect = blankEnemy('plain_suspect');
   /**
    * The act is current, ending the game in R1 once it advances, with two Elite suspects and a
-   * plain one beneath it; one more Elite suspect is beneath the study and one in the victory
-   * display.
+   * plain one face up beneath it and an Elite one face down, which nothing counts; one more Elite
+   * suspect is beneath the study and one in the victory display.
    */
   const suspectsTable = table
     .withAct(act, blankAct('act', { abilities: [whenAdvanced(endScenario(r1))] }))
@@ -821,6 +821,12 @@ describe('proposeResolution with steps that read the cards beneath the act', () 
       plainSuspect,
       { kind: 'beneath', hostId: act },
       { faceUp: true },
+    )
+    .withCard(
+      instanceId('unquestioned'),
+      eliteSuspect,
+      { kind: 'beneath', hostId: act },
+      { faceUp: false },
     )
     .withCard(
       instanceId('hidden'),
@@ -865,7 +871,13 @@ describe('proposeResolution with steps that read the cards beneath the act', () 
             condition: { kind: 'cardIn', code: cardCode('act'), places: ['outOfGame'] },
             then: [scoured],
           },
-          { kind: 'awardXp', to: 'each', bonus: 0, victoryDisplay: false, perCardIn: 'beneathAct' },
+          {
+            kind: 'awardXp',
+            to: 'each',
+            bonus: 0,
+            victoryDisplay: false,
+            perCardIn: ['beneathAct'],
+          },
         ],
       },
       none: [],
@@ -908,7 +920,7 @@ describe('proposeResolution with steps that read the cards beneath the act', () 
       to: 'each',
       bonus: 1,
       victoryDisplay: false,
-      perCardIn: 'beneathAct',
+      perCardIn: ['beneathAct'],
     });
 
     expect(proposal).toEqual([

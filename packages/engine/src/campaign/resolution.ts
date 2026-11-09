@@ -58,14 +58,14 @@ export type ResolutionStep =
    * Experience: `bonus` plus, with `victoryDisplay`, the scenario's victory
    * points (`victoryPoints`), as in "each investigator earns experience equal
    * to the Victory X value of each card in the victory display", plus 1 for
-   * each card in `perCardIn` ("1 bonus experience for each enemy beneath the act").
+   * each card in the `perCardIn` places ("1 bonus experience for each enemy beneath the act").
    */
   | {
       readonly kind: 'awardXp';
       readonly to: ResolutionTarget;
       readonly bonus: number;
       readonly victoryDisplay: boolean;
-      readonly perCardIn?: CardPlace;
+      readonly perCardIn?: readonly CardPlace[];
     }
   | {
       readonly kind: 'addTrauma';
@@ -117,8 +117,8 @@ export type ResolutionStep =
 /**
  * Where a card is when the game ends, as resolutions ask about it: `scenarioDeck` is any deck
  * of the scenario's own (The Midnight Masks' Cultist deck), `outOfGame` also holds the agendas
- * and acts that advanced, `beneathAct` beneath an act, the
- * last one even after it advanced (Smoke and Mirrors' questioned suspects).
+ * and acts that advanced, and `beneathAct` is face up beneath any act, one that advanced out of
+ * the game included (Smoke and Mirrors' questioned suspects).
  */
 export type CardPlace =
   'inPlay' | 'setAside' | 'scenarioDeck' | 'victoryDisplay' | 'outOfGame' | 'beneathAct';
@@ -311,7 +311,7 @@ function proposeStep(ctx: EngineContext, game: GameState, step: ResolutionStep):
       const amount =
         step.bonus +
         (step.victoryDisplay ? victoryPoints(ctx, game) : 0) +
-        (step.perCardIn === undefined ? 0 : cardsAt(ctx, game, [step.perCardIn]).length);
+        (step.perCardIn === undefined ? 0 : cardsAt(ctx, game, step.perCardIn).length);
       // `AwardXp` takes only positive amounts; earning nothing is no change to confirm.
       if (amount <= 0) return [];
       return targetCodes(game, step.to).map((code) => command({ type: 'AwardXp', code, amount }));
@@ -369,7 +369,7 @@ function gameHolds(ctx: EngineContext, game: GameState, condition: GameCondition
     case 'cardsIn':
       return (
         cardsAt(ctx, game, condition.places).filter((card) =>
-          cardStats(ctx.cards, card.code).traits?.includes(condition.trait),
+          cardStats(ctx.cards, card.code).traits.includes(condition.trait),
         ).length >= condition.atLeast
       );
     default:
@@ -398,8 +398,9 @@ function isAt(ctx: EngineContext, game: GameState, card: CardInstance, place: Ca
     case 'outOfGame':
       return card.zone.kind === place;
     case 'beneathAct': {
-      // The act a resolution follows has left the game by then, so any act host counts.
-      if (card.zone.kind !== 'beneath') return false;
+      // The act a resolution follows has left the game by then, so any act host counts; a
+      // facedown card there is left out, as the act's own count leaves it out (`inVictoryDisplay`).
+      if (card.zone.kind !== 'beneath' || !card.faceUp) return false;
       const host = game.cards[card.zone.hostId];
       return host !== undefined && cardStats(ctx.cards, host.code).typeCode === 'act';
     }
