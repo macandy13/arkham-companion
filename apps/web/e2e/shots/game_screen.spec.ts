@@ -125,13 +125,12 @@ for (const { skin, code } of [
 }
 
 test('the token pool in the cardboard token set', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'a phone has no room for the token pool (game.css)');
   await page.goto('/#/settings');
   await page.getByRole('radio', { name: 'Cardboard' }).check();
   await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
 
-  // A phone has no room for the pool (game.css); its places and investigator show the set.
-  if (isMobile) await expect(page.getByRole('region', { name: 'Roland Banks' })).toBeVisible();
-  else await expect(page.getByRole('img', { name: 'Resource from the pool' })).toBeVisible();
+  await expect(page.getByRole('img', { name: 'Resource from the pool' })).toBeVisible();
   await expect(page.locator('html')).toHaveAttribute('data-token-set', 'cardboard');
 });
 

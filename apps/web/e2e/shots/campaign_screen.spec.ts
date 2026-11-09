@@ -52,7 +52,7 @@ test('the resolution of a game its only investigator lost to horror', async ({
   await page.getByRole('button', { name: 'Select', exact: true }).click();
   await page.getByRole('button', { name: 'Next' }).click();
   await page.getByRole('button', { name: 'Start game' }).click();
-  // A phone keeps "Adjust board" in the menu of the play screen, not the one of the wizard.
+  // The wizard has a Menu of its own; on a phone the play screen's Menu holds "Adjust board".
   await expect(page.getByRole('region', { name: 'Fake Seeker' })).toBeVisible();
   if (isMobile) await page.getByRole('button', { name: 'Menu' }).click();
   await page.getByRole('button', { name: 'Adjust board' }).click();
@@ -72,7 +72,7 @@ test('the log right after that resolution was written', async ({ page, isMobile 
   await page.getByRole('button', { name: 'Select', exact: true }).click();
   await page.getByRole('button', { name: 'Next' }).click();
   await page.getByRole('button', { name: 'Start game' }).click();
-  // A phone keeps "Adjust board" in the menu of the play screen, not the one of the wizard.
+  // The wizard has a Menu of its own; on a phone the play screen's Menu holds "Adjust board".
   await expect(page.getByRole('region', { name: 'Fake Seeker' })).toBeVisible();
   if (isMobile) await page.getByRole('button', { name: 'Menu' }).click();
   await page.getByRole('button', { name: 'Adjust board' }).click();
@@ -95,7 +95,7 @@ test('the setup preview of The Midnight Masks', async ({ page, isMobile }) => {
   await page.getByRole('button', { name: 'Select', exact: true }).click();
   await page.getByRole('button', { name: 'Next' }).click();
   await page.getByRole('button', { name: 'Start game' }).click();
-  // A phone keeps "Adjust board" in the menu of the play screen, not the one of the wizard.
+  // The wizard has a Menu of its own; on a phone the play screen's Menu holds "Adjust board".
   await expect(page.getByRole('region', { name: 'Fake Seeker' })).toBeVisible();
   if (isMobile) await page.getByRole('button', { name: 'Menu' }).click();
   await page.getByRole('button', { name: 'Adjust board' }).click();
