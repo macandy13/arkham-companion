@@ -1,5 +1,5 @@
 import type { EngineContext } from './cards';
-import type { DealEnemyAttack } from './commands';
+import type { DealEnemyAttack, EnemyAttacks } from './commands';
 import { requestDecision } from './decisions';
 import { enemyAttackEvents, readyEngagedEnemies } from './enemies';
 import type { DecisionRequested, Event } from './events';
@@ -67,4 +67,24 @@ export function handleDealEnemyAttack(
     throw new CommandRejected({ code: 'unknownInvestigator', investigatorId: cmd.investigatorId });
   const dealt = enemyAttackEvents(ctx, state, cmd.enemyId, investigator, cmd.damage, cmd.horror);
   return investigator.status === 'active' && isEnemyOnTable(enemy) ? dealt : [];
+}
+
+/**
+ * `EnemyAttacks`: the `cardAttack` decision for the attacked investigator, unless the enemy is off
+ * the table or the investigator no longer active, which leaves nothing to attack (see the command).
+ */
+export function handleEnemyAttacks(
+  ctx: EngineContext,
+  state: GameState,
+  cmd: EnemyAttacks,
+): DecisionRequested[] {
+  const { enemy } = enemyOf(ctx, state, cmd.enemyId);
+  const investigator = state.investigators.find((inv) => inv.id === cmd.investigatorId);
+  if (!investigator)
+    throw new CommandRejected({ code: 'unknownInvestigator', investigatorId: cmd.investigatorId });
+  if (investigator.status !== 'active' || !isEnemyOnTable(enemy)) return [];
+  return requestDecision(
+    state,
+    forcedAttackDecision(ctx, state, 'cardAttack', enemy.id, investigator.id),
+  );
 }

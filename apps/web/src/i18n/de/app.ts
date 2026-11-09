@@ -717,6 +717,7 @@ export const appTexts = {
     enemyAttack: '{{card}} greift an',
     retaliate: '{{card}} schlägt zurück',
     alert: '{{card}} greift nach dem misslungenen Entkommen an',
+    cardAttack: '{{card}} greift an',
     pass: 'Bestanden',
     fail: 'Misslungen',
     yes: 'Ja',

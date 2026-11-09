@@ -21,13 +21,14 @@ import { hasKeyword } from './keywords';
 import { moveCardEvent } from './placement';
 import { replay } from './reducer';
 import { CommandRejected } from './rejection';
-import type { CardInstance, GameState } from './state';
+import type { CardInstance, GameState, Investigator } from './state';
 import { encounterDiscard, victoryDisplay } from './zone';
 
 /**
  * `EngageEnemy`: the enemy engages the investigator, who must be at its
  * location. A massive enemy is rejected rather than ignored, so the UI can
  * explain that it already counts as engaged with everyone at its location.
+ * A card's "engages you" does what it can instead (`cardEngagement`).
  */
 export function handleEngageEnemy(
   ctx: EngineContext,
@@ -35,9 +36,10 @@ export function handleEngageEnemy(
   cmd: EngageEnemy,
 ): EnemyEngaged[] {
   const { enemy, stats } = onTableEnemyOf(ctx, state, cmd.enemyId);
+  const investigator = activeInvestigator(state, cmd.investigatorId);
+  if (cmd.source !== undefined) return cardEngagement(enemy, stats, investigator);
   if (hasKeyword(stats, 'massive'))
     throw new CommandRejected({ code: 'massiveNotEngageable', cardId: enemy.id });
-  const investigator = activeInvestigator(state, cmd.investigatorId);
   if (isEngagedWith(enemy, investigator))
     throw new CommandRejected({
       code: 'alreadyEngaged',
@@ -51,6 +53,22 @@ export function handleEngageEnemy(
       investigatorId: investigator.id,
       locationId: enemyLocation,
     });
+  return [{ type: 'EnemyEngaged', enemyId: enemy.id, investigatorId: investigator.id }];
+}
+
+/**
+ * "[It] engages you" from a card (`EngageEnemy` with a `source`): the enemy goes to the
+ * investigator's threat area from wherever it is, so it ends up at their location without moving
+ * (our reading of Rules Reference, "Enemy Engagement"; a card that means a move says "moves to …
+ * and engages you"). A massive enemy never enters a threat area and one engaged with the
+ * investigator already has nothing to do, so both change nothing.
+ */
+function cardEngagement(
+  enemy: CardInstance,
+  stats: CardStats,
+  investigator: Investigator,
+): EnemyEngaged[] {
+  if (hasKeyword(stats, 'massive') || isEngagedWith(enemy, investigator)) return [];
   return [{ type: 'EnemyEngaged', enemyId: enemy.id, investigatorId: investigator.id }];
 }
 

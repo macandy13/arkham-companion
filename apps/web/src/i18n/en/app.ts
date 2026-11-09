@@ -712,6 +712,7 @@ export const appTexts = {
     enemyAttack: '{{card}} attacks',
     retaliate: '{{card}} retaliates',
     alert: '{{card}} attacks after the failed evasion',
+    cardAttack: '{{card}} attacks',
     pass: 'Passed',
     fail: 'Failed',
     yes: 'Yes',

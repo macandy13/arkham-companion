@@ -189,6 +189,8 @@ export {
   endYourTurn,
   exhaustEnemy,
   defeatEnemy,
+  enemyAttacks,
+  engagesYou,
   putIntoThreatArea,
   takeControl,
   putMapIntoPlay,
