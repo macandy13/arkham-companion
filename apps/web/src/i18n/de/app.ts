@@ -883,12 +883,19 @@ export const appTexts = {
     failed: 'Das Szenario ließ sich nicht aus dem Kampagnenprotokoll aufbauen.',
   },
   wizard: {
+    noneOwned:
+      'Keine Packung in deiner <collection>Sammlung</collection> enthält eines, das die App schon spielen kann.',
+    scenarioCount_one: '{{count}} Szenario',
+    scenarioCount_other: '{{count}} Szenarien',
+    standalone: 'Einzelszenario',
     campaign: 'Kampagne',
     scenario: 'Szenario',
     difficulty: 'Schwierigkeit',
     difficulties: { easy: 'Leicht', standard: 'Standard', hard: 'Schwer', expert: 'Experte' },
     stepOf: 'Schritt {{step}} von {{count}}',
     steps: {
+      scenario: 'Szenario',
+      campaign: 'Kampagne',
       label: 'Schritte',
       setup: 'Einrichtung',
       investigators: 'Ermittler',

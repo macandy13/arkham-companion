@@ -18,6 +18,8 @@ export async function startQuickGame(
  * seating the named investigators of the invented catalog in order, and ends on the game route.
  */
 export async function seatQuickGame(page: Page, investigators: readonly string[]): Promise<void> {
+  // Past the scenario, then past the setup.
+  await page.getByRole('button', { name: 'Next' }).click();
   await page.getByRole('button', { name: 'Next' }).click();
   for (const name of investigators) {
     await page.getByRole('list', { name: 'Investigators' }).getByRole('button', { name }).click();
