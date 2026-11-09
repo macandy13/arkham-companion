@@ -1,6 +1,6 @@
 import type { CampaignTexts } from '../index';
 
-/** Brethren of Ash's English strings (the Core Set (2026) campaign): its scenarios and their choices so far. */
+/** Brethren of Ash's English strings (the Core Set (2026) campaign): its name, scenarios, scenario choices and story records. */
 export const brethrenOfAshTexts = {
   scenario: {
     spreadingFlames: {
@@ -29,6 +29,24 @@ export const brethrenOfAshTexts = {
     },
   },
   scenarios: { spreadingFlames: 'Spreading Flames', smokeAndMirrors: 'Smoke and Mirrors' },
-  campaigns: {},
-  story: {},
+  campaigns: { brethrenOfAsh: 'Brethren of Ash' },
+  // The campaign notes in our own words, not the campaign guide's.
+  story: {
+    brethrenOfAsh: {
+      savedMiskatonicUniversity: {
+        yes: 'You saved Miskatonic University from the fire.',
+        no: 'Miskatonic University burned.',
+      },
+      defeatedTheirMaskedPursuer: { yes: 'You defeated the masked figure hunting you.' },
+      discoveredTheCultsWhereabouts: {
+        yes: 'You found out where the cult is hiding.',
+        no: 'Your search for the cult came to nothing.',
+      },
+      killedTheServantOfFlame: { yes: 'You killed the Servant of Flame.' },
+      theServantOfFlameEscaped: { yes: 'The Servant of Flame got away.' },
+      scouredArkhamForAnswers: { yes: 'You searched all of Arkham for answers.' },
+      stirredUpTrouble: { yes: 'You stirred up trouble across Arkham.' },
+      harbingerOfElokoss: 'Harbinger of Elokoss',
+    },
+  },
 } satisfies CampaignTexts;

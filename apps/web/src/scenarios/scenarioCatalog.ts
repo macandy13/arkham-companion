@@ -1,4 +1,5 @@
 import {
+  brethrenOfAsh,
   nightOfTheZealot,
   smokeAndMirrors,
   smokeAndMirrorsCards,
@@ -73,7 +74,6 @@ export const scenarioCatalog: readonly ScenarioEntry[] = [
     definition: theDevourerBelow,
     cards: theDevourerBelowCards,
   },
-  // Standalone for now: Brethren of Ash joins the campaigns with its campaign definition.
   {
     id: spreadingFlames.id,
     nameKey: 'scenarios.spreadingFlames',
@@ -97,6 +97,13 @@ export const campaignCatalog: readonly CampaignEntry[] = [
     storyKey: 'story.nightOfTheZealot',
     // The Revised Core Set reprints the Core Set with the same campaign.
     packCodes: ['core', 'rcore'],
+  },
+  {
+    id: brethrenOfAsh.id,
+    nameKey: 'campaigns.brethrenOfAsh',
+    definition: brethrenOfAsh,
+    storyKey: 'story.brethrenOfAsh',
+    packCodes: ['core_2026'],
   },
 ];
 

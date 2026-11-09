@@ -12,10 +12,12 @@ const FFG_IMAGES =
  * The key art of each campaign's box, by campaign definition id, for its cover on the home shelf
  * (`CoverArt`). The address is dated, so a campaign whose page moves its picture loses its key
  * art and its cover falls back to its chapter's agenda art until the address here is updated.
- * Night of the Zealot is the campaign of the Revised Core Set (product AHC60).
+ * Night of the Zealot is the campaign of the Revised Core Set (product AHC60), Brethren of Ash
+ * that of the Core Set (2026) (product AHC100).
  */
 const KEY_ART: Readonly<Record<string, string>> = {
   'night-of-the-zealot': `${FFG_IMAGES}/2026/09/FFG_AHC60_Hero-Slider.webp`,
+  'brethren-of-ash': `${FFG_IMAGES}/2026/09/FFG_AHC100_Hero-Slider.webp`,
 };
 
 /** The address of the key art of campaign `id`, if it has one. */

@@ -1,1 +1,4 @@
-[{ "code": "core", "name": "Core Set", "position": 1, "cycle_position": 1 }]
+[
+  { "code": "core", "name": "Core Set", "position": 1, "cycle_position": 1 },
+  { "code": "core_2026", "name": "Core Set (2026)", "position": 1, "cycle_position": 1 }
+]

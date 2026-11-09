@@ -12,13 +12,14 @@ test("a quick game's setup step after the scenario: only the difficulty", async 
   await expect(page.getByRole('group', { name: 'What the app tells you' })).toHaveCount(0);
 });
 
-test("a new campaign's first step: Night of the Zealot's cover with its key art, nothing else", async ({
+test("a new campaign's first step: Night of the Zealot's cover with its key art, then Brethren of Ash's", async ({
   page,
 }) => {
   await page.goto('/#/new');
   await page.getByRole('link', { name: 'New campaign' }).click();
 
   await expect(page.getByRole('radio', { name: 'Night of the Zealot' })).toBeChecked();
+  await expect(page.getByRole('radio', { name: 'Brethren of Ash' })).toBeVisible();
 });
 
 test('the investigator picker with its filter menu open', async ({ page }) => {

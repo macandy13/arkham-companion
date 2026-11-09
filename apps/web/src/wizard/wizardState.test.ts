@@ -68,25 +68,18 @@ describe('offeredTargets', () => {
     },
     {
       owned: ['rcore'],
-      scenarios: [
-        'the-gathering',
-        'the-midnight-masks',
-        'the-devourer-below',
-        'spreading-flames',
-        'smoke-and-mirrors',
-      ],
+      scenarios: ['the-gathering', 'the-midnight-masks', 'the-devourer-below'],
     },
-    { owned: ['dwl'], scenarios: ['spreading-flames', 'smoke-and-mirrors'] },
-  ])(
-    'offers the scenarios of the packs $owned, the scenarios outside any campaign always',
-    ({ owned, scenarios }) => {
-      expect(ids('quick', owned)).toEqual(scenarios);
-    },
-  );
+    { owned: ['core_2026'], scenarios: ['spreading-flames', 'smoke-and-mirrors'] },
+    { owned: ['dwl'], scenarios: [] },
+  ])('offers the scenarios of the packs $owned', ({ owned, scenarios }) => {
+    expect(ids('quick', owned)).toEqual(scenarios);
+  });
 
   it.each([
-    { owned: undefined, campaigns: ['night-of-the-zealot'] },
+    { owned: undefined, campaigns: ['night-of-the-zealot', 'brethren-of-ash'] },
     { owned: ['core'], campaigns: ['night-of-the-zealot'] },
+    { owned: ['core_2026'], campaigns: ['brethren-of-ash'] },
     { owned: ['dwl'], campaigns: [] },
   ])('offers the campaigns of the packs $owned', ({ owned, campaigns }) => {
     expect(ids('campaign', owned)).toEqual(campaigns);

@@ -11,7 +11,7 @@ A campaign is its own event-sourced aggregate in [`campaign/`](../../packages/en
 
 A game keeps a copy in `GameState.campaign`.
 Reached through the `campaign` namespace (`campaign.handleCommand`).
-First definition: [Night of the Zealot](../../packages/scenarios/src/night_of_the_zealot/campaign.ts).
+Definitions: [Night of the Zealot](../../packages/scenarios/src/night_of_the_zealot/campaign.ts) and [Brethren of Ash](../../packages/scenarios/src/brethren_of_ash/campaign.ts) (Spreading Flames and Smoke and Mirrors so far).
 
 ## Lifecycle
 
