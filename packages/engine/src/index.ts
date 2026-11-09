@@ -168,6 +168,8 @@ export {
   removeChaosToken,
   placeDoomOn,
   placeDoomOnSelf,
+  removeDoomFrom,
+  removeDoomFromAgenda,
   placeCluesOn,
   placeCluesOnSelf,
   placeCluesOnSelfUpTo,

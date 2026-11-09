@@ -5,6 +5,7 @@ import type {
   EndScenario,
   PlaceDoom,
   PlaceTokens,
+  RemoveDoom,
   ReleaseChaosToken,
   SealChaosToken,
 } from './commands';
@@ -39,6 +40,22 @@ export function handlePlaceDoom(state: GameState, cmd: PlaceDoom): TokensChanged
   const card =
     cmd.cardId === undefined ? currentCard(state, 'agenda') : requireCard(state.cards, cmd.cardId);
   return tokensPlaced(state, card, 'doom', cmd.amount);
+}
+
+/**
+ * `RemoveDoom`: as much of the doom as the card holds (see the command). The amount must still
+ * be a positive whole number, since anything else is a mistake in the card data.
+ */
+export function handleRemoveDoom(state: GameState, cmd: RemoveDoom): TokensChanged[] {
+  if (cmd.amount !== 'all' && (!Number.isInteger(cmd.amount) || cmd.amount <= 0))
+    throw new CommandRejected({ code: 'invalidTokenDelta', delta: -cmd.amount });
+  const card =
+    cmd.cardId === undefined ? currentCard(state, 'agenda') : requireCard(state.cards, cmd.cardId);
+  const doom = isInPlay(state, card) ? (card.tokens.doom ?? 0) : 0;
+  const removed = cmd.amount === 'all' ? doom : Math.min(cmd.amount, doom);
+  return removed === 0
+    ? []
+    : [{ type: 'TokensChanged', cardId: card.id, token: 'doom', delta: -removed }];
 }
 
 /**

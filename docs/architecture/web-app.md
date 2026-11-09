@@ -82,7 +82,7 @@ UI strings live in [`i18n/`](../../apps/web/src/i18n/), one folder per language:
 ## Extension points
 
 - **A new game action:** add it to `GameActions` as one `PlayTable` verb (add the verb to `PlayTable` first). Only actions outside the open game get their own `AppState` method.
-- **A new screen:** a route in `App.tsx`, a component in `screens/` that names itself in the app bar (`useAppBar`), an E2E flow tagged `@flow` or a screenshot tagged `@shot`, a case in the accessibility check ([`accessibility.spec.ts`](../../apps/web/e2e/accessibility.spec.ts), axe, WCAG 2.1 AA, M6.5c), strings in English and German.
+- **A new screen:** a route in `App.tsx`, a component in `screens/` that names itself in the app bar (`useAppBar`), an E2E flow or a screenshot spec, a case in the accessibility check ([`accessibility.spec.ts`](../../apps/web/e2e/accessibility.spec.ts), axe, WCAG 2.1 AA, M6.5c), strings in English and German.
 - **A new refusal or skippable effect:** its `rejections.<code>` or `skipped.effects.<type>` string in English and German.
 - **A new decision prompt or option label:** its string under the engine's key (`decision.<key>`, or the scenario's `scenario.<scenario>.<card>.<key>`) in English and German.
 - **A new campaign's strings:** a `<campaign>.ts` file in both `i18n/en/` and `i18n/de/`, holding only the `CAMPAIGN_SECTIONS`, and listed in `campaignTexts`.
