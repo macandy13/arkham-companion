@@ -1697,7 +1697,7 @@ describe('InvestigatorBar', () => {
       expect(healthLeft?.dataset.delta).toBe('−1');
     });
 
-    it("opens an enemy's details from its card", () => {
+    it("opens an enemy's details from its card", async () => {
       const table = PlayTable.start(
         newGame()
           .withLocation(study, blankLocation('study'))
@@ -1717,8 +1717,52 @@ describe('InvestigatorBar', () => {
         within(panel('alder')).getByRole('button', { name: 'Details of ghoul_minion' }),
       );
 
-      expect(screen.getByRole('dialog', { name: 'ghoul_minion' })).toBeTruthy();
+      // Once no second tap came, which would have opened its − / + bubble instead.
+      expect(await screen.findByRole('dialog', { name: 'ghoul_minion' })).toBeTruthy();
     });
+
+    it.each([
+      { button: 'Deal 1 damage', stat: 'damage', after: 2 },
+      { button: 'Heal 1 damage', stat: 'damage', after: 0 },
+      { button: 'Add doom', stat: 'doom', after: 2 },
+      { button: 'Remove doom', stat: 'doom', after: 0 },
+    ] as const)(
+      'on a ghoul minion with 1 damage and 1 doom, "$button" in its bubble leaves $after $stat',
+      async ({ button, stat, after }) => {
+        const table = PlayTable.start(
+          newGame()
+            .withLocation(study, blankLocation('study'))
+            .withInvestigator(alder, { locationId: study })
+            .withCard(
+              instanceId('ghoul'),
+              blankEnemy('ghoul_minion', { health: perInvestigator(3) }),
+              engagedWith(alder),
+              { tokens: { damage: 1, doom: 1 } },
+            ),
+        );
+        render(
+          <InvestigatorBar
+            board={table.board}
+            actions={actionsOn(table)}
+            busy={false}
+            adjusting={false}
+          />,
+        );
+        const card = within(panel('alder')).getByRole('button', {
+          name: 'Details of ghoul_minion',
+        });
+
+        fireEvent.click(card);
+        fireEvent.click(card);
+        fireEvent.click(
+          within(screen.getByRole('complementary', { name: 'ghoul_minion' })).getByRole('button', {
+            name: button,
+          }),
+        );
+
+        await expect.poll(() => table.board.enemy(instanceId('ghoul'))[stat] ?? 0).toBe(after);
+      },
+    );
 
     it("opens a treachery on the card shell, in alder's threat area by the kicker", () => {
       const table = PlayTable.start(

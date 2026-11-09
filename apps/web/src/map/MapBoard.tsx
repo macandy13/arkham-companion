@@ -14,6 +14,8 @@ import type {
 import { cycledIndex } from '@arkham/util';
 import { EnemyDetails } from '../enemies/EnemyDetails';
 import type { GameActions } from '../state/gameActions';
+import { EnemyBubble } from '../enemies/EnemyBubble';
+import { useDoubleTapOn } from '../screens/useDoubleTap';
 import { LocationBubble } from './LocationBubble';
 import { LocationDetails } from './LocationDetails';
 import { CardPatterns, EnemyToken, LocationTile, Pawn, type TilePiece } from './LocationTile';
@@ -216,6 +218,13 @@ function MapDrawing({
   const [detailsFor, setDetailsFor] = useState<InstanceId>();
   const [enemyFor, setEnemyFor] = useState<InstanceId>();
   const [bubble, setBubble] = useState<{ location: InstanceId; anchor: Element }>();
+  const [enemyBubble, setEnemyBubble] = useState<{ enemy: InstanceId; anchor: Element }>();
+  const tapEnemy = useDoubleTapOn<InstanceId>(
+    (enemy, anchor) => setEnemyBubble({ enemy, anchor }),
+    setEnemyFor,
+  );
+  // A step of play, so not while one is queued, while picking a location or adjusting the board.
+  const stepping = !busy && !adjusting && !onPick;
   const glideFromDrop = useGlides(svg, board, places);
   const onPawnOf = (investigator: InvestigatorId, point: Point) => {
     const centre = pawnCentre(places, investigator);
@@ -263,19 +272,20 @@ function MapDrawing({
       });
       void ('enemy' in piece ? actions.moveEnemy(piece.enemy.id, to) : actions.moveTo(to));
     },
-    (piece) => {
+    (piece, event) => {
       const enemy = enemyOf(piece);
       if (!enemy) return false;
-      setEnemyFor(enemy.id);
+      if (stepping) tapEnemy(enemy.id, event.currentTarget, event.timeStamp);
+      else setEnemyFor(enemy.id);
       return true;
     },
   );
-  const tappedEnemy = Object.values(map.enemies)
-    .flat()
-    .find(({ id }) => id === enemyFor);
+  const enemiesHere = Object.values(map.enemies).flat();
+  const tappedEnemy = enemiesHere.find(({ id }) => id === enemyFor);
+  // Gone once defeated, or moved off this map, which closes its bubble.
+  const bubbleEnemy =
+    adjusting || onPick ? undefined : enemiesHere.find(({ id }) => id === enemyBubble?.enemy);
   const detailsLocation = map.locations.find(({ id }) => id === detailsFor);
-  // A step of play, so not while one is queued, while picking a location or adjusting the board.
-  const stepping = !busy && !adjusting && !onPick;
   // Kept open while its own step is queued, its buttons off, so it doesn't flicker on each tap.
   const bubbleLocation =
     adjusting || onPick ? undefined : map.locations.find(({ id }) => id === bubble?.location);
@@ -374,6 +384,15 @@ function MapDrawing({
           actions={actions}
           busy={busy}
           onClose={() => setBubble(undefined)}
+        />
+      )}
+      {bubbleEnemy && enemyBubble && (
+        <EnemyBubble
+          enemy={bubbleEnemy}
+          anchor={enemyBubble.anchor}
+          actions={actions}
+          busy={busy}
+          onClose={() => setEnemyBubble(undefined)}
         />
       )}
       {tappedEnemy && (
