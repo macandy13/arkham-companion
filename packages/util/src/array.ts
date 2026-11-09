@@ -112,3 +112,22 @@ export function rotateTo<T>(items: readonly T[], index: number): T[] {
   if (index < 0 || index >= items.length) return [...items];
   return [...items.slice(index), ...items.slice(0, index)];
 }
+
+/**
+ * `count` of `items` (at most all of them), drawn one by one without putting any back, each with
+ * `pick(left)` choosing the index among the `left` still undrawn, and the items left over in their
+ * order. `pick` is the caller's seeded random source, so the draw stays deterministic.
+ */
+export function drawWithoutReplacement<T>(
+  items: readonly T[],
+  count: number,
+  pick: (left: number) => number,
+): { drawn: T[]; left: T[] } {
+  const left = [...items];
+  const drawn = Array.from(
+    { length: Math.min(count, left.length) },
+    // Never undefined: `pick` returns an index below the length it is given.
+    () => left.splice(pick(left.length), 1)[0]!,
+  );
+  return { drawn, left };
+}

@@ -109,16 +109,6 @@ describe('storyReadLines', () => {
       effect:
         '2 of Ghoul Priest, picked at random, spawn each at a different one of The Arkham Woods',
     },
-    {
-      step: 'addChaosTokens by difficulty, on the log’s Standard',
-      steps: [
-        {
-          kind: 'addChaosTokens',
-          tokens: { easy: ['skull'], standard: ['tablet'], hard: [], expert: [] },
-        },
-      ],
-      effect: 'Tablet goes into the chaos bag',
-    },
   ] as { step: string; steps: StoryRead['steps']; effect: string }[])(
     'words a $step step',
     ({ steps, effect }) => {
@@ -133,6 +123,36 @@ describe('storyReadLines', () => {
       ).toEqual([{ entry: 'The Ghoul Priest is still out there.', effects: [effect] }]);
     },
   );
+
+  it("names the chaos tokens a step adds on the log's difficulty, Hard", () => {
+    const onHard: CampaignLog = { ...twoInvestigators, difficulty: 'hard' };
+
+    const lines = storyReadLines(
+      i18next.t,
+      (key) => i18next.exists(key),
+      'story.nightOfTheZealot',
+      onHard,
+      [
+        {
+          condition: { kind: 'flag', key: 'ghoulPriestStillAlive', value: true },
+          holds: true,
+          steps: [
+            {
+              kind: 'addChaosTokens',
+              tokens: { easy: ['skull'], standard: ['skull'], hard: ['tablet'], expert: ['skull'] },
+            },
+          ],
+        },
+      ],
+    );
+
+    expect(lines).toEqual([
+      {
+        entry: 'The Ghoul Priest is still out there.',
+        effects: ['Tablet goes into the chaos bag'],
+      },
+    ]);
+  });
 
   it.each([
     [

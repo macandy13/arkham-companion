@@ -113,7 +113,8 @@ const sewerTunnels = {
  *   opportunity, her clue spend toward Resolution 2, or her Mother of Flame side
  * - Queen's Knight's damage to Elokoss, Herald of Flame's healing after it attacks, and the
  *   Servant of Flame's codex entry as it is defeated
- * - Zealot's doom as it enters play and Dark Magician's as the round ends
+ * - Zealot's doom as it enters play (setup places it on the Zealots it spawns) and Dark
+ *   Magician's as the round ends
  * - the whole revelations of Ashen Rebirth (2 direct damage or horror, whichever its drawer has
  *   more of), Blasphemous Invocation (doom per point failed, else a Cultist drawn), Unnatural Decay
  *   (doom on an asset or 2 damage), Dissonance and Torment (cards of a named type discarded), and

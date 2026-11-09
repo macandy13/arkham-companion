@@ -111,7 +111,11 @@ function stepWords(t: TFunction, log: CampaignLog, step: SetupStep): string[] {
         }),
       ];
     case 'investigatorsStartWith':
-      return [t('nextScenario.steps.startClues', { count: step.clues })];
+      return [
+        t('nextScenario.steps.startClues', {
+          count: resolveAmount(step.clues, log.investigators.length),
+        }),
+      ];
     case 'spawnAtRandom':
       return [
         t('nextScenario.steps.spawnAtRandom', {

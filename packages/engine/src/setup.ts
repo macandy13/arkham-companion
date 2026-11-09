@@ -1,4 +1,4 @@
-import { assertNever } from '@arkham/util';
+import { assertNever, drawWithoutReplacement } from '@arkham/util';
 import {
   findCurrentScenarioId,
   findInvestigator,
@@ -205,7 +205,7 @@ export interface AddChaosTokensStep {
 /** Each investigator begins the game with `clues` clues from the token pool. */
 export interface InvestigatorsStartWithStep {
   kind: 'investigatorsStartWith';
-  clues: number;
+  clues: TokenAmount;
 }
 
 /**
@@ -506,7 +506,6 @@ export function storyReadsOfSetup(
       // Which option a oneAtRandom step takes depends on the seed, not the log, so the preview
       // can't name it before setup.
       case 'oneAtRandom':
-      case 'spawnAtRandom':
       case 'addMap':
       case 'setAside':
       case 'buildEncounterDeck':
@@ -517,6 +516,7 @@ export function storyReadsOfSetup(
       case 'placeTokens':
       case 'spawn':
       case 'moveInvestigators':
+      case 'spawnAtRandom':
       case 'investigatorsStartWith':
       case 'addChaosTokens':
         return [];
@@ -590,21 +590,21 @@ function placingSteps(steps: readonly SetupStep[], picks: StepPicks): readonly P
 /** One `SpawnStep` for each enemy a `SpawnAtRandomStep` picks, at the location picked for it. */
 function randomSpawns(step: SpawnAtRandomStep, picks: StepPicks): readonly SpawnStep[] {
   const count = resolveAmount(step.count, picks.playerCount);
-  const codes = pickedFrom(step.codes, count, picks.pick);
-  const locations = pickedFrom(step.at, count, picks.pick);
-  return codes.map((code, index) => {
+  if (count > step.codes.length || count > step.at.length)
+    throw new CommandRejected({
+      code: 'setupSpawnMismatch',
+      count,
+      cards: step.codes.length,
+      locations: step.at.length,
+    });
+  const codes = drawWithoutReplacement(step.codes, count, picks.pick).drawn;
+  const locations = drawWithoutReplacement(step.at, count, picks.pick).drawn;
+  return codes.flatMap((code, index) => {
+    const at = locations[index];
     const tokens = step.tokens?.[code];
-    return { kind: 'spawn', code, at: locations[index]!, ...(tokens ? { tokens } : {}) };
+    // `at` is never undefined after the count check; the type only can't tell.
+    return at === undefined ? [] : [{ kind: 'spawn', code, at, ...(tokens ? { tokens } : {}) }];
   });
-}
-
-/** `count` entries of `from`, picked at random without putting one back. */
-function pickedFrom<T>(from: readonly T[], count: number, pick: (bound: number) => number): T[] {
-  const left = [...from];
-  return Array.from(
-    { length: Math.min(count, left.length) },
-    () => left.splice(pick(left.length), 1)[0]!,
-  );
 }
 
 /**
@@ -633,12 +633,9 @@ function withPickedLocations(steps: readonly PlacingStep[], seed: number): reado
 function withRandomLocations(step: AddMapStep, pick: (bound: number) => number): AddMapStep {
   const { atRandom, ...map } = step;
   if (!atRandom) return step;
-  const remaining = [...atRandom.codes];
-  const placed: MapLocation[] = atRandom.cells.flatMap((at) => {
-    const [code] = remaining.splice(pick(remaining.length), 1);
-    return code === undefined ? [] : [{ code, at }];
-  });
-  const leftOut = new Set(remaining);
+  const { drawn, left } = drawWithoutReplacement(atRandom.codes, atRandom.cells.length, pick);
+  const placed: MapLocation[] = drawn.map((code, index) => ({ code, at: atRandom.cells[index]! }));
+  const leftOut = new Set(left);
   return {
     ...map,
     locations: [...step.locations, ...placed],
@@ -723,7 +720,10 @@ function applyStep(draft: SetupDraft, step: PlacingStep, env: SetupEnv): SetupDr
     case 'moveInvestigators':
       return moveInvestigators(draft, targetId(draft.cards, step.to));
     case 'investigatorsStartWith':
-      return { ...draft, investigatorClues: draft.investigatorClues + step.clues };
+      return {
+        ...draft,
+        investigatorClues: draft.investigatorClues + resolveAmount(step.clues, env.playerCount),
+      };
     case 'addChaosTokens':
       return {
         ...draft,
@@ -820,9 +820,9 @@ function dealtBeneath(
       cards: step.codes.length,
       locations: step.beneath.length,
     });
-  const remaining = [...step.codes];
-  return step.beneath.reduce((state, location) => {
-    const [code] = remaining.splice(pick(remaining.length), 1);
+  const { drawn } = drawWithoutReplacement(step.codes, step.codes.length, pick);
+  return step.beneath.reduce((state, location, index) => {
+    const code = drawn[index];
     // Never undefined after the length check; the type only can't tell.
     return code === undefined
       ? state

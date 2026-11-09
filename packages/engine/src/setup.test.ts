@@ -1116,21 +1116,24 @@ describe('compileSetup spawnAtRandom', () => {
       { kind: 'buildEncounterDeck', sets: [cultists] },
     ],
   });
-  const spawned = (seed: number) =>
+  /** The locations the cultists spawn at with 2 investigators and `seed`. */
+  const spawnedAt = (seed: number) =>
     scenario
       .compileSetup(
         { ...ctx, scenario: def },
         makeSetupOptions({ seed, investigators: investigatorSeats(2) }),
       )
-      .cards.filter((card) => card.zone.kind === 'atLocation');
+      .cards.flatMap(({ zone }) => (zone.kind === 'atLocation' ? [zone.locationId] : []));
 
   it.each([1, 2, 3, 4, 5])(
     'spawns 2 cultists with 2 investigators, each at a different tunnel (seed %i)',
     (seed) => {
-      const enemies = spawned(seed);
+      const [first, second, ...more] = spawnedAt(seed);
 
-      expect(enemies).toHaveLength(2);
-      expect(new Set(enemies.map((card) => JSON.stringify(card.zone))).size).toBe(2);
+      expect(first).toBeDefined();
+      expect(second).toBeDefined();
+      expect(first).not.toBe(second);
+      expect(more).toEqual([]);
     },
   );
 
@@ -1164,10 +1167,26 @@ describe('compileSetup spawnAtRandom', () => {
     ).toEqual([{ doom: 1 }, { doom: 1 }]);
   });
 
-  it('picks other cultists and tunnels with other seeds', () => {
-    const picks = [1, 2, 3, 4, 5, 6, 7, 8].map((seed) => JSON.stringify(spawned(seed)));
+  it('rejects spawning 2 cultists with only 1 tunnel to put them at', () => {
+    const tooFew = makeDefinition({
+      setup: [
+        mainMap('tunnel_a'),
+        {
+          kind: 'spawnAtRandom',
+          codes: ['zealot', 'zealot'].map(cardCode),
+          count: fixed(2),
+          at: [cardCode('tunnel_a')],
+        },
+      ],
+    });
 
-    expect(new Set(picks).size).toBeGreaterThan(1);
+    expect(
+      rejectionOf(() => scenario.compileSetup({ ...ctx, scenario: tooFew }, makeSetupOptions())),
+    ).toEqual({ code: 'setupSpawnMismatch', count: 2, cards: 2, locations: 1 });
+  });
+
+  it('picks other tunnels with another seed', () => {
+    expect(spawnedAt(1)).not.toEqual(spawnedAt(2));
   });
 });
 
