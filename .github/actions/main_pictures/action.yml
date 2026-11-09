@@ -5,7 +5,9 @@ description: >-
   use them as their base instead of photographing it again.
 inputs:
   dir:
-    description: The checkout of the commit, relative to the workspace.
+    description: >-
+      The git checkout holding the commit, relative to the workspace. The cached paths are always
+      under base/, whichever checkout names the key.
     default: base
   rev:
     description: The commit in that checkout.
@@ -15,7 +17,7 @@ outputs:
     description: The cache key.
     value: ${{ steps.key.outputs.key }}
   path:
-    description: The cached paths (a cache is only found with the paths it was saved with).
+    description: The cached paths, under base/ (a cache is only found with the paths it was saved with).
     value: ${{ steps.key.outputs.path }}
 runs:
   using: composite
@@ -28,9 +30,11 @@ runs:
       working-directory: ${{ inputs.dir }}
       env:
         REV: ${{ inputs.rev }}
+      # The workflow and this action are in the key too, since they decide how main is photographed.
+      # A commit from before them gets a key no run saves.
       run: |
-        trees=$(git rev-parse "$REV:apps" "$REV:packages" "$REV:package.json" "$REV:pnpm-lock.yaml" "$REV:.github/actions/e2e_setup")
+        trees=$(git rev-parse "$REV:apps" "$REV:packages" "$REV:package.json" "$REV:pnpm-lock.yaml" \
+          "$REV:.github/actions/e2e_setup" "$REV:.github/actions/main_pictures" "$REV:.github/workflows/main-pictures.yml") ||
+          trees="no cache before main-pictures.yml: $(git rev-parse "$REV")"
         echo "key=e2e-pictures-$(sha256sum <<< "$trees" | cut -c1-40)" >> "$GITHUB_OUTPUT"
-        printf 'path<<END_OF_PATH\n%s\n%s\nEND_OF_PATH\n' \
-          "${{ inputs.dir }}/apps/web/screencasts/pictures" \
-          "${{ inputs.dir }}/apps/web/test-results/**/*.png" >> "$GITHUB_OUTPUT"
+        printf 'path<<END_OF_PATH\nbase/apps/web/screencasts/pictures\nbase/apps/web/test-results/**/*.png\nEND_OF_PATH\n' >> "$GITHUB_OUTPUT"

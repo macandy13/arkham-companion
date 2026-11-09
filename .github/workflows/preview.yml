@@ -165,11 +165,15 @@ jobs:
       # base's from main-pictures.yml's cache or from pictures-base, both under base/. A shard that
       # failed leaves no artifact: its base specs are then shown, and without any of this PR's
       # pictures the section is left as it is.
-      - if: env.WEB == 'true' && env.BASE_CACHED == 'true'
+      - id: base-cache
+        if: env.WEB == 'true' && env.BASE_CACHED == 'true'
         uses: actions/cache/restore@v6
         with:
           key: ${{ needs.changes.outputs.base-key }}
           path: ${{ needs.changes.outputs.base-path }}
+      # Evicted since the changes job found it: pictures-base was skipped, so nothing is left to compare with.
+      - if: env.WEB == 'true' && env.BASE_CACHED == 'true' && steps.base-cache.outputs.cache-hit != 'true'
+        run: echo "::warning::The base pictures left the cache; every spec is shown."
       - if: env.WEB == 'true'
         env:
           GH_TOKEN: ${{ github.token }}

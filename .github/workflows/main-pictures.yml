@@ -4,7 +4,9 @@ name: Main pictures
 # pictures (see .github/actions/main_pictures), so a PR preview built on this commit takes its
 # base pictures from the cache instead of photographing the base itself (preview.yml). Checked out
 # under base/, where the preview job unpacks base pictures, since the report names them by
-# absolute path. Caches saved on main are readable from every PR.
+# absolute path. Caches saved on main are readable from every PR (a dispatch from another branch
+# saves where PRs can't read it). An entry is never photographed again: a spec that failed by
+# chance stays failed on the base, and so shown, until main's trees change.
 
 on:
   push:
