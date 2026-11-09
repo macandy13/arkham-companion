@@ -8,6 +8,7 @@ import {
   cardCode,
   encounterDeck,
   encounterDiscard,
+  execute,
   fixed,
   instanceId,
   investigatorId,
@@ -157,9 +158,13 @@ describe('card effects that shuffle cards into the encounter deck', () => {
       .withCard(filler, fillerCard, encounterDeck)
       .start();
 
-    const after = stateAfter(context, state, { type: 'DrawEncounter', investigatorId: alice });
+    const { state: after, events } = execute(context, state, {
+      type: 'DrawEncounter',
+      investigatorId: alice,
+    });
 
     expect(after.cards[omen]?.zone).toEqual(encounterDiscard);
     expect(after.cards[filler]?.zone).toEqual(encounterDeck);
+    expect(events.map((event) => event.type)).not.toContain('DeckShuffled');
   });
 });

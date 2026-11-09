@@ -179,7 +179,7 @@ export function handleShuffleInto(state: GameState, cmd: ShuffleInto): Event[] {
   const cardIds = takeFromSetAside(state, cmd.codes, {
     asManyAsThereAre: cmd.source !== undefined,
   });
-  return cardIds.length === 0 ? [] : shuffleInto(state, cardIds, cmd.zone);
+  return shuffleInto(state, cardIds, cmd.zone);
 }
 
 /** `ShuffleEncounterDeck`: the deck in a new order; an empty deck stays as it is. */

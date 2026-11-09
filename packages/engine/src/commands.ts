@@ -241,7 +241,8 @@ export interface AddConnection {
 /**
  * Removes an existing declared edge (`GameMap.connections`) from whichever map owns
  * it (no `mapId` needed, an edge exists once on the board). A connection the cards
- * print (`printedConnections`) has no stored edge, so it can't be removed this way. An undirected edge matches in either direction; a
+ * print (`printedConnections`) has no stored edge, so it is cut instead. An undirected edge
+ * matches in either direction; a
  * one-way edge must match `from` and `to` exactly. Asked by a card (`source`), a connection
  * that is already gone is no error: nothing changes. Produces `ConnectionChanged`.
  */

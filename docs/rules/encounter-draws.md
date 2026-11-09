@@ -22,3 +22,4 @@ For each draw:
    - If the card eliminates the drawer, our reading (no explicit ruling exists): the surge draw is lost, since Surge makes "the investigator who drew it" draw again and an eliminated investigator no longer takes part; the others play on (2026 Core rulebook, Surge and Elimination).
 
 An ability that shuffles an empty discard pile into a deck does not shuffle the deck ([discard piles](https://arkhamdb.com/rules#Discard_Piles)).
+Likewise, our reading: "shuffle the set-aside [card] into the encounter deck" with no such card set aside changes nothing and does not shuffle the deck.
