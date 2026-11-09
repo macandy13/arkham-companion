@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 import {
   effectiveValue,
   encounterSetCode,
-  execute,
   instanceId,
   investigatorId,
   newGame,
@@ -14,7 +13,7 @@ import {
   type Command,
   type LocationSymbol,
 } from '@arkham/engine';
-import { answer, cardIn, stateAfter } from '@arkham/engine/test/utils';
+import { answer, cardIn, resolveRevelation, runFrom, stateAfter } from '@arkham/engine/test/utils';
 import { ARCANE_LOCK_DECISION, smokeAndMirrorsCardDefs, smokeAndMirrorsCards } from './cards';
 
 /** The card with `code` in the scenario's card data. */
@@ -230,7 +229,10 @@ describe('Smoke and Mirrors card abilities', () => {
         .withCard(mark, cardOf('12137'), { kind: 'encounterDeck' })
         .start();
 
-      const { state } = execute(context, started, aliceDraws('Mark of Elokoss'));
+      const { state } = runFrom(context, started, [
+        aliceDraws('Mark of Elokoss'),
+        resolveRevelation('mark_of_elokoss'),
+      ]);
 
       expect(state.cards[mark]?.zone).toEqual(threatAreaOf(alice));
     });
@@ -246,7 +248,10 @@ describe('Smoke and Mirrors card abilities', () => {
         .withCard(lock, cardOf('12157'), { kind: 'encounterDeck' })
         .start();
 
-      const { state } = execute(context, started, aliceDraws('Arcane Lock'));
+      const { state } = runFrom(context, started, [
+        aliceDraws('Arcane Lock'),
+        resolveRevelation('arcane_lock'),
+      ]);
 
       expect(state.cards[lock]?.zone).toEqual({ kind: 'attachedTo', hostId: northside });
     });
@@ -291,7 +296,10 @@ describe('Smoke and Mirrors card abilities', () => {
         .withCard(instanceId('downpour'), cardOf('12158'), { kind: 'encounterDeck' })
         .start();
 
-      const { state } = execute(context, started, aliceDraws('Arcane Lock'));
+      const { state } = runFrom(context, started, [
+        aliceDraws('Arcane Lock'),
+        resolveRevelation('second_lock'),
+      ]);
 
       expect(state.cards[first]?.zone).toEqual({ kind: 'attachedTo', hostId: northside });
       expect(state.cards[second]?.zone).toEqual({ kind: 'encounterDiscard' });
@@ -308,7 +316,12 @@ describe('Smoke and Mirrors card abilities', () => {
         .withCard(flood, cardOf('12159'), { kind: 'encounterDeck' })
         .withTurnOf(alice)
         .start();
-      const flooded = stateAfter(context, started, aliceDraws('Flash Flood'));
+      const flooded = stateAfter(
+        context,
+        started,
+        aliceDraws('Flash Flood'),
+        resolveRevelation('flash_flood'),
+      );
 
       const roundOver = stateAfter(
         context,
@@ -341,7 +354,12 @@ describe('Smoke and Mirrors card abilities', () => {
           .withInvestigator(carol, { locationId: southside })
           .withCard(instanceId('crossfire'), cardOf('12165'), { kind: 'encounterDeck' })
           .start();
-        const drawn = stateAfter(context, started, aliceDraws('Crossfire'));
+        const drawn = stateAfter(
+          context,
+          started,
+          aliceDraws('Crossfire'),
+          resolveRevelation('crossfire'),
+        );
 
         const state = stateAfter(context, drawn, answer('test:crossfire', result));
 

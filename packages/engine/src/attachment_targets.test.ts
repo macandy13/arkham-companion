@@ -15,7 +15,7 @@ import {
   whenRevealed,
   type Command,
 } from './index';
-import { answer, stateAfter } from '../test/utils';
+import { answer, resolveRevelation, stateAfter } from '../test/utils';
 
 const alice = investigatorId('alice');
 const bob = investigatorId('bob');
@@ -68,7 +68,7 @@ describe('a treachery that attaches to the location with the most clues (Locked 
   it('attaches to the study with 3 clues, not to the hall alice drew it in', () => {
     const { context, state } = doorDrawnWith({ hallClues: 1, studyClues: 3 }).start();
 
-    const after = stateAfter(context, state, aliceDraws);
+    const after = stateAfter(context, state, aliceDraws, resolveRevelation('door'));
 
     expect(after.cards[door]?.zone).toEqual(attachedTo(study));
     expect(after.cards[nextCard]?.zone).toEqual(encounterDeck);
@@ -79,7 +79,7 @@ describe('a treachery that attaches to the location with the most clues (Locked 
       .withCard(instanceId('old_door'), lockingDoor, attachedTo(study))
       .start();
 
-    const after = stateAfter(context, state, aliceDraws);
+    const after = stateAfter(context, state, aliceDraws, resolveRevelation('door'));
 
     expect(after.cards[door]?.zone).toEqual(attachedTo(hall));
   });
@@ -92,7 +92,7 @@ describe('a treachery that attaches to the location with the most clues (Locked 
     ({ hallClues, studyClues, studyRevealed }) => {
       const { context, state } = doorDrawnWith({ hallClues, studyClues, studyRevealed }).start();
 
-      const asked = stateAfter(context, state, aliceDraws);
+      const asked = stateAfter(context, state, aliceDraws, resolveRevelation('door'));
 
       expect(asked.pending).toMatchObject([
         {
@@ -114,7 +114,7 @@ describe('a treachery that attaches to the location with the most clues (Locked 
       .withCard(instanceId('study_door'), lockingDoor, attachedTo(study))
       .start();
 
-    const after = stateAfter(context, state, aliceDraws);
+    const after = stateAfter(context, state, aliceDraws, resolveRevelation('door'));
 
     expect(after.cards[door]?.zone).toEqual(encounterDiscard);
     expect(after.cards[nextCard]?.zone).toEqual(encounterDiscard);

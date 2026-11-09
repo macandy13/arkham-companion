@@ -874,6 +874,7 @@ describe('appStore', () => {
         it('shows the encounter card a draw put in a threat area until the players dismiss it', async () => {
           const store = await aldersTurn('actions-drawn-cards-test');
           await store.getState().actions.drawEncounter(investigatorId('alder'));
+          await store.getState().actions.answer('resolve');
           const shown = store.getState().current?.drawnCards;
 
           store.getState().dismissNotice('drawnCards');

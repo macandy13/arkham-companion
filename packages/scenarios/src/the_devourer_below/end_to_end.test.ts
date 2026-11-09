@@ -211,8 +211,10 @@ describe('The Devourer Below end to end: Roland and Daisy, seed 9', () => {
     // horror rather than 2 more doom, which would advance the agenda. Daisy
     // draws Frozen in Fear.
     expect(table.nextPhase()).toEqual({ round: 2, phase: 'mythos', step: 'drawEncounterCard' });
+    table.resolveRevelation(byName('Offer of Power'));
     table.play(answer(OFFER_OF_POWER_DECISION, 'horror'));
-    expect(table.nextPhase()).toEqual({ round: 2, phase: 'mythos' });
+    expect(table.nextPhase()).toEqual({ round: 2, phase: 'mythos', step: 'drawEncounterCard' });
+    table.resolveRevelation(byName('Frozen in Fear'));
     expect(table.board.investigator(roland)).toMatchObject({ horror: 2 });
     expect(table.board.investigator(daisy).threatArea).toEqual(['Frozen in Fear']);
     expect(table.board.doomInPlay).toBe(3);
@@ -264,6 +266,7 @@ describe('The Devourer Below end to end: Roland and Daisy, seed 9', () => {
     // Grasping Hands and takes 1 damage.
     expect(table.nextPhase()).toEqual({ round: 3, phase: 'mythos', step: 'drawEncounterCard' });
     expect(table.board.enemy(byName(priest))).toMatchObject({ engagedWith: roland });
+    table.resolveRevelation(byName('Grasping Hands'));
     table.answer(byName('Grasping Hands'), 'fail');
     expect(table.board.investigator(daisy)).toMatchObject({ damage: 1 });
 
@@ -310,7 +313,8 @@ describe('The Devourer Below end to end: Roland and Daisy, seed 9', () => {
     // cards; Daisy draws Dissonant Voices. The Priest is ready again and
     // engages Roland.
     expect(table.nextPhase()).toEqual({ round: 3, phase: 'upkeep' });
-    expect(table.nextPhase()).toEqual({ round: 4, phase: 'mythos' });
+    expect(table.nextPhase()).toEqual({ round: 4, phase: 'mythos', step: 'drawEncounterCard' });
+    table.resolveRevelation(byName('Dissonant Voices'));
     expect(table.board.enemy(byName(priest))).toMatchObject({ engagedWith: roland });
     expect(table.board.doomInPlay).toBe(2);
 
@@ -368,8 +372,10 @@ describe('The Devourer Below end to end: Roland and Daisy, seed 9', () => {
     // the 2 doom. Daisy draws Frozen in Fear again. Doom is 5 of 5: unless it
     // leaves play, the agenda advances next round.
     expect(table.nextPhase()).toEqual({ round: 5, phase: 'mythos', step: 'drawEncounterCard' });
+    table.resolveRevelation(byName('Mysterious Chanting'));
     table.answer(byName('Mysterious Chanting'), 'Peter Warren');
-    expect(table.nextPhase()).toEqual({ round: 5, phase: 'mythos' });
+    expect(table.nextPhase()).toEqual({ round: 5, phase: 'mythos', step: 'drawEncounterCard' });
+    table.resolveRevelation(byName('Frozen in Fear'));
     expect(table.board.doomInPlay).toBe(5);
 
     // Round 5 – Roland finishes the Yithian Observer and Peter Warren with his
@@ -424,7 +430,8 @@ describe('The Devourer Below end to end: Roland and Daisy, seed 9', () => {
     // makes 4, 2 per investigator, and the act's objective advances it by
     // itself: the ritual is broken (R1) a round before the agenda would have
     // advanced.
-    expect(table.nextPhase()).toEqual({ round: 6, phase: 'mythos' });
+    expect(table.nextPhase()).toEqual({ round: 6, phase: 'mythos', step: 'drawEncounterCard' });
+    table.resolveRevelation(byName('Ancient Evils'));
     expect(table.board.namesIn({ kind: 'encounterDiscard' })[0]).toBe('Ancient Evils');
     expect(table.board.doomInPlay).toBe(4);
     expect(table.nextPhase()).toEqual({ round: 6, phase: 'investigation' });

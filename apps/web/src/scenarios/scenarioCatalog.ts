@@ -1,5 +1,7 @@
 import {
   nightOfTheZealot,
+  smokeAndMirrors,
+  smokeAndMirrorsCards,
   spreadingFlames,
   spreadingFlamesCards,
   theDevourerBelow,
@@ -71,12 +73,18 @@ export const scenarioCatalog: readonly ScenarioEntry[] = [
     definition: theDevourerBelow,
     cards: theDevourerBelowCards,
   },
-  // Standalone for now: Brethren of Ash joins the campaigns once its second scenario is in.
+  // Standalone for now: Brethren of Ash joins the campaigns with its campaign definition.
   {
     id: spreadingFlames.id,
     nameKey: 'scenarios.spreadingFlames',
     definition: spreadingFlames,
     cards: spreadingFlamesCards,
+  },
+  {
+    id: smokeAndMirrors.id,
+    nameKey: 'scenarios.smokeAndMirrors',
+    definition: smokeAndMirrors,
+    cards: smokeAndMirrorsCards,
   },
 ];
 
