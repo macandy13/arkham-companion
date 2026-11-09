@@ -36,6 +36,7 @@ import {
 import { useCardPicture } from '../catalog/cardImages';
 import { cardActionCaption } from '../screens/ActionRow';
 import { type CountChange, useCountChange } from '../screens/countChange';
+import { useDoubleTap } from '../screens/useDoubleTap';
 import { SvgGameToken } from '../tokens/SvgGameToken';
 import { LOCATION_FACE, LocationOrnament } from './cardOrnament';
 import { connectionGlyph } from './connectionSymbol';
@@ -96,7 +97,9 @@ export type TilePiece =
  * says whose pawns carry the lead and turn markers; `dragOf` gives the drag handlers of each
  * piece that can be dragged now. A tap on the tile, or its details button in
  * the top right corner, calls `onOpen`; a press that moves further (`isTap`: a pan, a piece
- * dragged) is no tap. Without `onOpen` (the card in the location details) it has neither.
+ * dragged) is no tap. Without `onOpen` (the card in the location details) it has neither. With
+ * `onDoubleTap` a double tap on the tile calls it with the tile instead (`useDoubleTap`, the − / +
+ * bubble of its clues and doom), so a single tap opens the details only once no second one came.
  */
 export function LocationTile({
   location,
@@ -105,6 +108,7 @@ export function LocationTile({
   turnOrder,
   dragOf,
   onOpen,
+  onDoubleTap,
   pickable = false,
   x,
   y,
@@ -115,6 +119,7 @@ export function LocationTile({
   turnOrder: TurnOrder;
   dragOf: (piece: TilePiece) => DragHandlers | undefined;
   onOpen?: () => void;
+  onDoubleTap?: (tile: SVGGElement) => void;
   /** Lit as a location the players may pick now (`MapBoard`'s `pickable`). */
   pickable?: boolean;
   x: number;
@@ -124,6 +129,7 @@ export function LocationTile({
   const picture = useCardPicture(location.image);
   const { pieces, separator } = piecesOnTile(investigators, enemies);
   const pressedAt = useRef<Point>(undefined);
+  const tap = useDoubleTap<SVGGElement>((tile) => onDoubleTap?.(tile), onOpen);
   const onPointerDown = (event: PointerEvent<SVGGElement>) => {
     pressedAt.current = { x: event.clientX, y: event.clientY };
   };
@@ -131,7 +137,8 @@ export function LocationTile({
     const from = pressedAt.current;
     pressedAt.current = undefined;
     if (from && !isTap(from, { x: event.clientX, y: event.clientY })) return;
-    onOpen?.();
+    if (onDoubleTap) tap(event);
+    else onOpen?.();
   };
 
   return (
@@ -560,12 +567,18 @@ function DetailsButton({ location, onOpen }: { location: LocationView; onOpen: (
     event.preventDefault();
     onOpen();
   };
+  // At once, without the tile's wait for a second tap: the button opens nothing else.
+  const onClick = (event: MouseEvent<SVGGElement>) => {
+    event.stopPropagation();
+    onOpen();
+  };
   return (
     <g
       role="button"
       tabIndex={0}
       aria-label={t('map.details', { location: location.name })}
       onKeyDown={onKeyDown}
+      onClick={onClick}
     >
       <circle cx={x} cy={y} r={radius} />
       <text x={x} y={y}>

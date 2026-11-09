@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   attachedTo,
   atLocation,
@@ -22,6 +22,7 @@ import {
 } from '@arkham/engine';
 import { initI18n } from '../i18n';
 import { MapBoard } from './MapBoard';
+import { DOUBLE_TAP_MS } from '../screens/useDoubleTap';
 import type { Point } from './mapLayout';
 import { actionsOn } from '../state/gameActions.test_support';
 
@@ -48,6 +49,16 @@ const house = newGame()
   .withConnection(hallway, attic, { oneWay: true });
 
 const tile = (name: string) => screen.getByRole('group', { name });
+/**
+ * A single tap on a tile (`init` its pointer), which opens the location's details once no second
+ * tap came within `DOUBLE_TAP_MS`, so the wait runs on fake timers.
+ */
+const tapOnce = (element: Element, init?: MouseEventInit) => {
+  vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+  fireEvent.click(element, init);
+  act(() => vi.advanceTimersByTime(DOUBLE_TAP_MS));
+  vi.useRealTimers();
+};
 
 describe('MapBoard', () => {
   // jsdom lays nothing out and has no pointer capture: the drawing's screen matrix is stubbed to
@@ -636,7 +647,7 @@ describe('MapBoard', () => {
         );
 
         await drag('study', 'Clues 2', clueCount, clueCount.x, clueCount.y);
-        fireEvent.click(within(tile('study')).getByRole('img', { name: 'Clues 2' }), {
+        tapOnce(within(tile('study')).getByRole('img', { name: 'Clues 2' }), {
           clientX: clueCount.x,
           clientY: clueCount.y,
         });
@@ -1256,7 +1267,7 @@ describe('MapBoard', () => {
         <MapBoard board={table.board} actions={actionsOn(table)} busy={false} adjusting={false} />,
       );
 
-      fireEvent.click(tile('hallway'));
+      tapOnce(tile('hallway'));
       expect(details('hallway')).toBeTruthy();
 
       tap('Close');
@@ -1276,7 +1287,7 @@ describe('MapBoard', () => {
         />,
       );
 
-      fireEvent.click(tile('hallway'));
+      tapOnce(tile('hallway'));
 
       expect(picked).toEqual(['hallway']);
       expect(screen.queryByRole('dialog')).toBeNull();
@@ -1335,7 +1346,7 @@ describe('MapBoard', () => {
         <MapBoard board={table.board} actions={actionsOn(table)} busy={false} adjusting={false} />,
       );
 
-      fireEvent.click(tile('study'));
+      tapOnce(tile('study'));
 
       const texts = (role: 'term' | 'definition') =>
         within(details('study'))
@@ -1363,7 +1374,7 @@ describe('MapBoard', () => {
         <MapBoard board={table.board} actions={actionsOn(table)} busy={false} adjusting={false} />,
       );
 
-      fireEvent.click(tile('study'));
+      tapOnce(tile('study'));
 
       expect(within(details('study')).getByRole('img', { name: 'The card of study' })).toBeTruthy();
       const attached = within(details('study')).getByRole('region', { name: 'Attached' });
@@ -1381,7 +1392,7 @@ describe('MapBoard', () => {
       render(
         <MapBoard board={table.board} actions={actionsOn(table)} busy={false} adjusting={false} />,
       );
-      fireEvent.click(tile('study'));
+      tapOnce(tile('study'));
 
       fireEvent.click(within(details('study')).getByRole('button', { name: 'Read obscuring_fog' }));
       fireEvent(screen.getByRole('dialog', { name: 'obscuring_fog' }), new Event('cancel'));
@@ -1406,7 +1417,7 @@ describe('MapBoard', () => {
         <MapBoard board={table.board} actions={actionsOn(table)} busy={false} adjusting={false} />,
       );
 
-      fireEvent.click(tile(location));
+      tapOnce(tile(location));
 
       expect(offered(location)).toEqual(buttons);
     });
@@ -1417,7 +1428,7 @@ describe('MapBoard', () => {
         <MapBoard board={table.board} actions={actionsOn(table)} busy={false} adjusting={false} />,
       );
 
-      fireEvent.click(tile('hallway'));
+      tapOnce(tile('hallway'));
 
       const moves = within(details('hallway')).getByRole('region', { name: 'Actions' });
       expect(
@@ -1452,7 +1463,7 @@ describe('MapBoard', () => {
         <MapBoard board={table.board} actions={actionsOn(table)} busy={false} adjusting={false} />,
       );
 
-      fireEvent.click(tile('hallway'));
+      tapOnce(tile('hallway'));
 
       const moves = within(details('hallway')).getByRole('region', { name: 'Actions' });
       expect(
@@ -1479,7 +1490,7 @@ describe('MapBoard', () => {
         <MapBoard board={table.board} actions={actionsOn(table)} busy={false} adjusting={false} />,
       );
 
-      fireEvent.click(tile('study'));
+      tapOnce(tile('study'));
 
       expect(
         within(details('study')).getByRole('button', { name: 'Take a clue, no test' }),
@@ -1511,13 +1522,13 @@ describe('MapBoard', () => {
         <MapBoard board={table.board} actions={actionsOn(table)} busy={false} adjusting={false} />,
       );
 
-      fireEvent.click(tile('study'));
+      tapOnce(tile('study'));
       const investigate = within(details('study')).getByRole('button', {
         name: 'Investigate · 1 action',
       });
       expect(investigate).toHaveProperty('disabled', true);
       tap('Close');
-      fireEvent.click(tile('hallway'));
+      tapOnce(tile('hallway'));
       expect(offered('hallway')).toEqual(['Close']);
     });
 
@@ -1543,7 +1554,7 @@ describe('MapBoard', () => {
             adjusting={false}
           />,
         );
-        fireEvent.click(tile('parlor'));
+        tapOnce(tile('parlor'));
         const cardActions = within(details('parlor')).getByRole('region', { name: 'Card actions' });
 
         fireEvent.click(within(cardActions).getByRole('button', { name: 'Resign · parlor' }));
@@ -1557,7 +1568,7 @@ describe('MapBoard', () => {
         const table = aldersTurnInTheParlor();
         render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} adjusting />);
 
-        fireEvent.click(tile('parlor'));
+        tapOnce(tile('parlor'));
 
         expect(
           within(details('parlor')).queryByRole('button', { name: 'Resign · parlor' }),
@@ -1572,7 +1583,7 @@ describe('MapBoard', () => {
       render(
         <MapBoard board={table.board} actions={actionsOn(table)} busy={false} adjusting={false} />,
       );
-      fireEvent.click(tile('hallway'));
+      tapOnce(tile('hallway'));
 
       tap('Move here · 1 action');
       await act(async () => {});
@@ -1586,13 +1597,102 @@ describe('MapBoard', () => {
       render(
         <MapBoard board={table.board} actions={actionsOn(table)} busy={false} adjusting={false} />,
       );
-      fireEvent.click(tile('study'));
+      tapOnce(tile('study'));
 
       tap('Take a clue, no test');
       await act(async () => {});
 
       expect(table.board.investigator(alder)).toMatchObject({ clues: 1, actions: 3 });
       expect(details('study')).toBeTruthy();
+    });
+  });
+
+  describe('the − / + bubble a double tap on a tile opens', () => {
+    const doubleTap = (element: Element) => {
+      fireEvent.click(element);
+      fireEvent.click(element);
+    };
+    const bubble = (name: string) => screen.getByRole('complementary', { name });
+
+    it.each([
+      { button: 'Add a clue', clues: 3, doom: 1 },
+      { button: 'Remove a clue', clues: 1, doom: 1 },
+      { button: 'Add doom', clues: 2, doom: 2 },
+      { button: 'Remove doom', clues: 2, doom: 0 },
+    ])(
+      'on the study with 2 clues and 1 doom, "$button" leaves $clues clues and $doom doom',
+      async ({ button, clues, doom }) => {
+        const table = PlayTable.start(house);
+        render(
+          <MapBoard
+            board={table.board}
+            actions={actionsOn(table)}
+            busy={false}
+            adjusting={false}
+          />,
+        );
+
+        doubleTap(tile('study'));
+        fireEvent.click(within(bubble('study')).getByRole('button', { name: button }));
+
+        await expect.poll(() => table.board.location(study).clues).toBe(clues);
+        expect(table.board.location(study).doom ?? 0).toBe(doom);
+      },
+    );
+
+    it('names the counts it steps, clues and doom, and opens no details', () => {
+      const table = PlayTable.start(house);
+      render(
+        <MapBoard board={table.board} actions={actionsOn(table)} busy={false} adjusting={false} />,
+      );
+
+      vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+      doubleTap(tile('study'));
+      act(() => vi.advanceTimersByTime(DOUBLE_TAP_MS));
+      vi.useRealTimers();
+
+      expect(
+        within(bubble('study'))
+          .getAllByRole('heading', { level: 3 })
+          .map((name) => name.textContent),
+      ).toEqual(['Clues', 'Doom']);
+      expect(screen.queryByRole('dialog')).toBeNull();
+    });
+
+    it('offers only doom on the unrevealed hallway, which holds no clues yet', () => {
+      const table = PlayTable.start(house);
+      render(
+        <MapBoard board={table.board} actions={actionsOn(table)} busy={false} adjusting={false} />,
+      );
+
+      doubleTap(tile('hallway'));
+
+      expect(
+        within(bubble('hallway'))
+          .getAllByRole('button')
+          .map((button) => button.getAttribute('aria-label')),
+      ).toEqual(['Remove doom', 'Add doom']);
+    });
+
+    it.each([
+      { why: 'a step is queued', busy: true, adjusting: false, onPick: undefined },
+      { why: 'the players adjust the board', busy: false, adjusting: true, onPick: undefined },
+      { why: 'the players pick a location', busy: false, adjusting: false, onPick: () => {} },
+    ])('stays shut while $why', ({ busy, adjusting, onPick }) => {
+      const table = PlayTable.start(house);
+      render(
+        <MapBoard
+          board={table.board}
+          actions={actionsOn(table)}
+          busy={busy}
+          adjusting={adjusting}
+          onPick={onPick}
+        />,
+      );
+
+      doubleTap(tile('study'));
+
+      expect(screen.queryByRole('complementary')).toBeNull();
     });
   });
 
@@ -1606,7 +1706,7 @@ describe('MapBoard', () => {
       );
       render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} adjusting />);
 
-      fireEvent.click(tile('study'));
+      tapOnce(tile('study'));
 
       expect(
         within(menu('study'))
@@ -1618,7 +1718,7 @@ describe('MapBoard', () => {
     it('reveals an unrevealed location', async () => {
       const table = PlayTable.start(house);
       render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} adjusting />);
-      fireEvent.click(tile('hallway'));
+      tapOnce(tile('hallway'));
 
       tap('Reveal');
       await act(async () => {});
@@ -1636,7 +1736,7 @@ describe('MapBoard', () => {
       async ({ button, clues, doom }) => {
         const table = PlayTable.start(house);
         render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} adjusting />);
-        fireEvent.click(tile('study'));
+        tapOnce(tile('study'));
 
         tap(button);
         await act(async () => {});
@@ -1649,7 +1749,7 @@ describe('MapBoard', () => {
     it('turns off removing tokens at the hallway, which has no clues or doom', () => {
       const table = PlayTable.start(house);
       render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} adjusting />);
-      fireEvent.click(tile('hallway'));
+      tapOnce(tile('hallway'));
       const disabled = (name: string) =>
         screen.getByRole('button', { name }).hasAttribute('disabled');
 
@@ -1661,7 +1761,7 @@ describe('MapBoard', () => {
     it('turns every change off while a step is still queued', () => {
       const table = PlayTable.start(house);
       render(<MapBoard board={table.board} actions={actionsOn(table)} busy adjusting />);
-      fireEvent.click(tile('hallway'));
+      tapOnce(tile('hallway'));
 
       const enabled = within(menu('hallway'))
         .getAllByRole('button')

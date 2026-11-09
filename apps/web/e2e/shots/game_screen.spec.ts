@@ -361,6 +361,16 @@ test('Roland Banks’ health bubble, opened by a double tap on his heart', async
   ).toBeEnabled();
 });
 
+test('the Hallway’s clue and doom bubble, opened by a double tap on its tile', async ({ page }) => {
+  await resumeImportedGame(page, 'Roland Banks hurt', rolandHurtExport('Roland Banks hurt'));
+
+  await page.getByRole('group', { name: 'Hallway' }).dblclick();
+
+  await expect(
+    page.getByRole('complementary', { name: 'Hallway' }).getByRole('button', { name: 'Add doom' }),
+  ).toBeEnabled();
+});
+
 test('Roland Banks’ willpower test with the group’s own chaos bag, no draw button', async ({
   page,
 }) => {

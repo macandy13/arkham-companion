@@ -14,6 +14,7 @@ import type {
 import { cycledIndex } from '@arkham/util';
 import { EnemyDetails } from '../enemies/EnemyDetails';
 import type { GameActions } from '../state/gameActions';
+import { LocationBubble } from './LocationBubble';
 import { LocationDetails } from './LocationDetails';
 import { CardPatterns, EnemyToken, LocationTile, Pawn, type TilePiece } from './LocationTile';
 import {
@@ -176,7 +177,10 @@ type DraggedPiece = TilePiece & { from: InstanceId };
  *
  * A tap on a tile opens its details (`LocationDetails`): what the investigator whose turn it is
  * can do there, or while adjusting the corrections, when no piece is dragged; on a phone it calls
- * `onOpenLocation` instead, which shows the location in place of the map. A tap on an enemy
+ * `onOpenLocation` instead, which shows the location in place of the map. A double tap on a tile
+ * opens the − / + bubble of its clues and doom instead (`LocationBubble`), unless a step is queued,
+ * the players pick a location or adjust the board; the map's own zoom on a double click is off
+ * over the tiles for it. A tap on an enemy
  * token opens the enemy's details (`EnemyDetails`), the same as from the threat area, with what
  * the investigator whose turn it is may do to it (`BoardView.enemyActions`): an enemy at their
  * location that is not engaged with them stands only on the map, so this is where they engage
@@ -211,6 +215,7 @@ function MapDrawing({
   const moverCentre = mover && pawnCentre(places, mover.id);
   const [detailsFor, setDetailsFor] = useState<InstanceId>();
   const [enemyFor, setEnemyFor] = useState<InstanceId>();
+  const [bubble, setBubble] = useState<{ location: InstanceId; anchor: Element }>();
   const glideFromDrop = useGlides(svg, board, places);
   const onPawnOf = (investigator: InvestigatorId, point: Point) => {
     const centre = pawnCentre(places, investigator);
@@ -269,6 +274,11 @@ function MapDrawing({
     .flat()
     .find(({ id }) => id === enemyFor);
   const detailsLocation = map.locations.find(({ id }) => id === detailsFor);
+  // A step of play, so not while one is queued, while picking a location or adjusting the board.
+  const stepping = !busy && !adjusting && !onPick;
+  const bubbleLocation = stepping
+    ? map.locations.find(({ id }) => id === bubble?.location)
+    : undefined;
   const draggable = (piece: TilePiece) =>
     !busy && !adjusting && ('investigator' in piece ? piece.investigator.id === mover?.id : true);
   const { width, height } = drawingSize(Object.values(cells));
@@ -283,6 +293,7 @@ function MapDrawing({
       <TransformWrapper
         maxScale={MAX_ZOOM}
         panning={{ excluded: ['g[data-drag]', 'g[role="button"]'] }}
+        doubleClick={{ excluded: ['g[data-location]'] }}
       >
         <ZoomControls />
         <TransformComponent>
@@ -321,6 +332,11 @@ function MapDrawing({
                       turnOrder={board}
                       pickable={onPick !== undefined && (pickable?.includes(location.id) ?? true)}
                       onOpen={() => (onPick ?? onOpenLocation ?? setDetailsFor)(location.id)}
+                      onDoubleTap={
+                        stepping
+                          ? (anchor) => setBubble({ location: location.id, anchor })
+                          : undefined
+                      }
                       dragOf={(piece) =>
                         draggable(piece)
                           ? drag.handlers({ ...piece, from: location.id })
@@ -349,6 +365,14 @@ function MapDrawing({
           busy={busy}
           adjusting={adjusting}
           onClose={() => setDetailsFor(undefined)}
+        />
+      )}
+      {bubbleLocation && bubble && (
+        <LocationBubble
+          location={bubbleLocation}
+          anchor={bubble.anchor}
+          actions={actions}
+          onClose={() => setBubble(undefined)}
         />
       )}
       {tappedEnemy && (

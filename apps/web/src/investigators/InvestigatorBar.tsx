@@ -27,7 +27,7 @@ import { useReturnToPool } from '../screens/useReturnToPool';
 import { GameToken, type GameTokenKind } from '../tokens/GameToken';
 import { PipRing } from './PipRing';
 import { useClueDrag } from './useClueDrag';
-import { CounterBubble, type BubbleSide } from './CounterBubble';
+import { CounterBubble, type BubbleSide } from '../screens/CounterBubble';
 import { useDoubleTap } from '../screens/useDoubleTap';
 import './investigators.css';
 
@@ -490,7 +490,7 @@ function Counters({
   // Nothing comes off the card while the players adjust it with the steppers instead.
   const dragOff = (count: number, drag: TokenDragHandlers) =>
     off || adjusting || count === 0 ? undefined : drag;
-  const [open, setOpen] = useState<{ kind: SteppedKind; anchor: HTMLElement }>();
+  const [open, setOpen] = useState<{ kind: SteppedKind; anchor: Element }>();
   const at = board.locationOf(id);
   const cluesAt = at === undefined ? 0 : board.location(at).clues;
   const bubbles: Record<SteppedKind, Bubble> = {
@@ -531,7 +531,7 @@ function Counters({
   };
   // Not while the players adjust the board, whose steppers are out, nor once they left the game.
   const bubbleFor = (kind: SteppedKind) =>
-    off || adjusting ? {} : { onDoubleTap: (anchor: HTMLElement) => setOpen({ kind, anchor }) };
+    off || adjusting ? {} : { onDoubleTap: (anchor: Element) => setOpen({ kind, anchor }) };
   const shown = open && !off && !adjusting ? bubbles[open.kind] : undefined;
   return (
     <>
@@ -607,14 +607,11 @@ function Counters({
       {open && shown && (
         <CounterBubble
           anchor={open.anchor}
-          label={t('investigators.counterBubble', {
+          title={t('investigators.counterBubble', {
             investigator: investigator.name,
             counter: shown.label,
           })}
-          value={String(shown.value)}
-          lower={shown.lower}
-          raise={shown.raise}
-          onStep={shown.onStep}
+          counts={[{ ...shown, value: String(shown.value) }]}
           onClose={() => setOpen(undefined)}
         />
       )}
@@ -698,7 +695,7 @@ function Stat({
    */
   drag?: TokenDragHandlers | undefined;
   /** Opens the counter's − / + bubble on a double tap (`CounterBubble`), pointing at the counter. */
-  onDoubleTap?: (counter: HTMLElement) => void;
+  onDoubleTap?: (counter: Element) => void;
   children?: ReactNode;
 }) {
   const origin = { x: 0, y: 0 };

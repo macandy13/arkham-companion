@@ -1,5 +1,5 @@
 /*
- * A counter's − / + bubble (CounterBubble) on the guide's paper (base.css), over the page where
+ * A card's − / + bubble (CounterBubble) on the guide's paper (base.css), over the page where
  * the bubble placed itself (`--bubble-left`, `--bubble-top`), its point on the counter
  * (`--bubble-arrow`), above the counter or, `data-below`, under it.
  */
@@ -13,6 +13,27 @@
   gap: var(--space-1) var(--space-2);
   align-items: center;
   padding: var(--space-2) var(--space-3);
+}
+
+/* With a name per count (a location's clues and doom), the names take a column of their own. */
+[data-counter-bubble]:has(h3) {
+  grid-template-columns: repeat(4, auto);
+}
+
+/* Each count a row, its name, − , count and + lined up with the other rows' (subgrid). */
+[data-counter-bubble] > section {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: subgrid;
+  align-items: center;
+}
+
+[data-counter-bubble] h3 {
+  margin: 0;
+  font-family: var(--font-family-label);
+  font-size: var(--font-size-note);
+  font-weight: normal;
+  text-align: start;
 }
 
 /* What the steps change, over them, so a step is never taken on the wrong counter. */
@@ -47,7 +68,7 @@
   rotate: -135deg;
 }
 
-[data-counter-bubble] > button {
+[data-counter-bubble] button {
   width: var(--touch-target);
   height: var(--touch-target);
   padding: 0;
@@ -55,7 +76,7 @@
   font-size: var(--font-size-title);
 }
 
-[data-counter-bubble] > output {
+[data-counter-bubble] output {
   min-width: var(--touch-target);
   font-family: var(--font-family-print);
   font-size: var(--font-size-title);

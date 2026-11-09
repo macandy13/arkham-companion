@@ -667,7 +667,8 @@ describe('GameScreen map', () => {
     await actions.nextPhase();
     await actions.startTurn(investigatorId('alder'));
     fireEvent.click(screen.getByRole('group', { name: 'Study' }));
-    const details = screen.getByRole('dialog', { name: 'Study' });
+    // Once no second tap came, which would have opened the Study's − / + bubble instead.
+    const details = await screen.findByRole('dialog', { name: 'Study' });
 
     fireEvent.click(within(details).getByRole('button', { name: 'Investigate · 1 action' }));
     const investigation = await screen.findByRole('dialog', { name: 'Investigate Study' });
