@@ -1086,11 +1086,6 @@
   }
 }
 
-/*
- * The upright phone's header expanded in place (`data-view='cards'`) shows the cards in full
- * again, larger, and its dialogs keep to the phone's width. Every dialog on an upright phone keeps
- * less paper around its content.
- */
 /* A phone held sideways: smaller portraits, so a row with its names fits the low screen (MD.3e). */
 @media (orientation: landscape) and (max-height: 30rem) {
   :root {
@@ -1098,6 +1093,11 @@
   }
 }
 
+/*
+ * The upright phone's header expanded in place (`data-view='cards'`) shows the cards in full
+ * again, larger, and its dialogs keep to the phone's width. Every dialog on an upright phone keeps
+ * less paper around its content.
+ */
 @media (orientation: portrait) and (max-width: 40rem) {
   :root {
     /* Two portraits and the edge of a third, wide enough to read, the rest a swipe away (MD.3e). */

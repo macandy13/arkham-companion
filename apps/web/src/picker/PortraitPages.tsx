@@ -27,7 +27,7 @@ interface PortraitPagesProps {
 export function PortraitPages({ investigators, seats, imageUrl, onOpen }: PortraitPagesProps) {
   const { t } = useTranslation();
   const pages = useRef<HTMLUListElement>(null);
-  // The strip snaps to whole pages, so a scroll by its width always ends on the next one.
+  // A scroll by the strip's width ends on the next page, or on a phone the next unseen column.
   const turn = (direction: -1 | 1) => {
     const strip = pages.current;
     strip?.scrollBy({ left: direction * strip.clientWidth, behavior: 'smooth' });

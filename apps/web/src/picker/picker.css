@@ -185,7 +185,7 @@
  * Pages of two rows of five portraits (`PORTRAITS_PER_PAGE`), side by side. The first five of
  * every ten go to the top row and the next five to the bottom one; the grid places each row's
  * portraits one after the other, so the eleventh starts the next page's top row beside the first
- * page. Five columns (`--picker-columns`, other counts on a phone) fill the strip's width, which scrolls and snaps a page at a time.
+ * page. Five columns (`--picker-columns`) fill the strip's width, which scrolls and snaps a page at a time; a phone has its own count and snaps to every column.
  */
 #app #investigator-picker > div > ul {
   grid-area: pages;

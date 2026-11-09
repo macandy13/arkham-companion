@@ -1,7 +1,7 @@
 import { expect, test } from './fixtures/test';
 
 // Journey: the new game wizard from the entry points to a started game.
-test('start a new game', async ({ page }) => {
+test('start a new game', { tag: '@flow' }, async ({ page }) => {
   const portraits = page.getByRole('list', { name: 'Investigators' });
   const search = page.getByRole('searchbox', { name: 'Search by name' });
 
@@ -35,7 +35,8 @@ test('start a new game', async ({ page }) => {
     await page.getByRole('button', { name: 'Filters' }).click();
     await page.getByRole('button', { name: 'Seeker', exact: true }).click();
     await page.getByRole('button', { name: 'Filters (1 set)' }).click();
-    await expect(portraits.getByRole('listitem')).toHaveCount(1);
+    // The seated guardian stays first, whatever the filters.
+    await expect(portraits.getByRole('listitem')).toHaveText([/Fake Guardian/, /Fake Seeker/]);
     await portraits.getByRole('button', { name: /Fake Seeker/ }).click();
     await page.getByRole('button', { name: 'Select', exact: true }).click();
     await expect(page.getByText('Fake Guardian and Fake Seeker')).toBeVisible();
