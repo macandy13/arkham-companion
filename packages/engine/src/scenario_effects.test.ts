@@ -232,6 +232,24 @@ describe('card effects that remove doom', () => {
     expect(after.cards[ghoul]?.tokens.doom).toBe(1);
   });
 
+  it('removes nothing from a card that has left play', () => {
+    const acolyte = instanceId('acolyte');
+    const { context, state } = newGame()
+      .withLocation(hall, blankLocation('hall'), { revealed: true })
+      .withInvestigator(alice, { locationId: hall })
+      .withCard(acolyte, blankEnemy('acolyte'), encounterDiscard, { tokens: { doom: 1 } })
+      .start();
+
+    const { state: after, events } = execute(context, state, {
+      type: 'RemoveDoom',
+      cardId: acolyte,
+      amount: 1,
+    });
+
+    expect(events).toEqual([]);
+    expect(after.cards[acolyte]?.tokens.doom).toBe(1);
+  });
+
   it('refuses card data that removes no doom at all', () => {
     const { context, state } = newGame()
       .withAgenda(agenda, blankAgenda('agenda', fixed(5)))

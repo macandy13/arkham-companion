@@ -502,7 +502,8 @@ export interface PlaceDoom {
  * (positive) doom, or `'all'`, off a card in play, by default the current agenda. Takes as much as
  * there is and nothing from a card without doom or no longer in play, since a card effect does
  * as much as it can (Rules Reference, "Effects"); the players' own corrections stay a
- * `ManualAdjust`. Produces `TokensChanged`.
+ * `ManualAdjust`. Without a current agenda (never during a scenario) it refuses like `PlaceDoom`.
+ * Produces `TokensChanged`.
  */
 export interface RemoveDoom {
   type: 'RemoveDoom';

@@ -1797,6 +1797,11 @@ export function nearestEnemy(trait?: Trait): RelativeCard {
   return trait === undefined ? { ref: 'nearestEnemy' } : { ref: 'nearestEnemy', trait };
 }
 
+/** "Place N doom on it": doom on the card with the ability. */
+export function placeDoomOnSelf(amount: number): AbilityEffect {
+  return { type: 'PlaceDoom', cardId: { ref: 'self' }, amount };
+}
+
 /**
  * "Remove N doom from the current agenda" (`RemoveDoom`), or `'all'` of it; as much as there is.
  */
@@ -1810,11 +1815,6 @@ export function removeDoomFromAgenda(amount: number | 'all'): AbilityEffect {
  */
 export function removeDoomFrom(card: RelativeCard, amount: number | 'all'): AbilityEffect {
   return { type: 'RemoveDoom', cardId: card, amount };
-}
-
-/** "Place N doom on it": doom on the card with the ability. */
-export function placeDoomOnSelf(amount: number): AbilityEffect {
-  return { type: 'PlaceDoom', cardId: { ref: 'self' }, amount };
 }
 
 /** "Place N clues on this act": clues from the token pool on the card with the ability. */
