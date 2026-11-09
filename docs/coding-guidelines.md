@@ -101,6 +101,7 @@ The DOM is a clearly structured document tree – good structure _is_ accessibil
 ## 5. CSS
 
 - **Tokens first.** Raw values (colours, spacing, font sizes, radii, borders, layout sizes) live only in `apps/web/src/styles/tokens.css` as custom properties. Everything else uses `var(--…)`. A new raw value means a new token, named by its role (`--color-danger`, not `--red`).
+- **Readable colours.** A colour text is set in reaches a contrast of 4.5 against what it is printed on, in every table skin and on the paper (WCAG AA). [`contrast.test.ts`](../apps/web/src/styles/contrast.test.ts) checks the text tokens; a new pair of text and background tokens joins its table. [`e2e/accessibility.spec.ts`](../apps/web/e2e/accessibility.spec.ts) runs axe over the main screens for names, roles and structure; a new screen joins it.
 - **Spacing scale.** Margin, padding and gap use `--space-1` … `--space-5` only. If none fits, discuss extending the scale instead of using a one-off value.
 - **Shared terminology.** Name things once and reuse the name: a "panel", a "card", a "stepper" means the same component everywhere and is styled in one place. If two rules look alike, extract a shared selector or token instead of copying declarations.
 - **Minimal styles.** Only write what changes the browser default or the inherited value. Prefer layout primitives (`grid`, `flex` + `gap`) over margins on children.

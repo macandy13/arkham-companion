@@ -758,7 +758,8 @@
    * The paper every screen outside play and every dialog is printed on (MD.1): a campaign guide's
    * page, the same in both themes, with ink for text and rules and a deep brass for accents. Its
    * rim is a shade darker, like a worn page. The game's colours take their deeper shades on parchment,
-   * which read on the paper.
+   * which read on the paper: each ink, the accent and the game's colours, reaches a contrast of 4.5
+   * against the paper, enough for text of any size (WCAG AA, M6.5c).
    */
   --color-paper: #dccaa2;
   --color-paper-rim: #bba06e;
@@ -766,11 +767,11 @@
   --color-paper-rule: rgb(44 34 22 / 30%);
   --color-ink: #2c2216;
   --color-ink-muted: #5c4b33;
-  --color-ink-accent: #7d5b22;
-  --color-ink-clue: #2f7896;
-  --color-ink-doom: #a33a37;
-  --color-ink-health: #a8413b;
-  --color-ink-sanity: #3d63a0;
+  --color-ink-accent: #6d4f1e;
+  --color-ink-clue: #245b72;
+  --color-ink-doom: #943532;
+  --color-ink-health: #903833;
+  --color-ink-sanity: #34558a;
   --guide-paper:
     radial-gradient(ellipse at 50% 40%, transparent 55%, rgb(120 90 40 / 22%) 130%),
     var(--color-paper);
@@ -988,16 +989,19 @@
 :root[data-theme='light'] {
   color-scheme: light;
 
-  /* The parchment table (`TableSkin`): dark brass for lines and accents, ink for text. */
+  /*
+   * The parchment table (`TableSkin`): dark brass for lines and accents, ink for text, each dark
+   * enough for text on the table and its menu (a contrast of 4.5, WCAG AA, M6.5c).
+   */
   --color-background: #e8dcbf;
   --color-surface: rgb(250 245 232 / 85%);
   --color-border: rgb(138 106 44 / 40%);
   --color-text: #2a2114;
   --color-text-muted: #6b5a3c;
-  --color-accent: #8a6a2c;
+  --color-accent: #775b26;
   --color-accent-text: #fffaf0;
   --color-resource: #8a6a2c;
-  --color-clue: #2f7896;
+  --color-clue: #28667f;
   --color-doom: #a33a37;
   --color-health: #a8413b;
   --color-sanity: #3d63a0;
