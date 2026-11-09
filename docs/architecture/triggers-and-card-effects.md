@@ -39,6 +39,8 @@ Some effects in detail:
 - "Take 1 horror and 1 damage" is one `TakeDamageAndHorror` (`takeDamageAndHorror({ damage, horror })`), placed at once through the same `woundEvents` as an enemy attack, so a defeat by one does not lose the other.
 - An effect that leaves an enemy unengaged next to an investigator ends with `engageReadyEnemies()` (`EngageReadyEnemies`), which runs the engagement rule for every enemy at a location, as setup does.
 - Effects on an enemy take a reference to it: `dealDamageTo(enemy, amount)` (`DamageEnemy`, which defeats the enemy once the damage reaches its health), `exhaustEnemy` and `defeatEnemy` ("it is automatically defeated"), next to `healSelf` and `readySelf`. Exhausting an exhausted enemy, like readying a ready one, does nothing, so an `each…` reference resolves whatever state its enemies are in.
+- `advanceAgenda()` advances the current agenda as its doom threshold would, and `removeConnection(from, to)` removes a declared connection or cuts a printed one, and does nothing when it is already gone (`source`, below).
+- "Shuffle it into the encounter deck" is `shuffleSelfIntoEncounterDeck()` (`MoveCard`, then `ShuffleEncounterDeck`): a drawn card moved there while it resolves is not placed afterwards. `shuffleSetAsideIntoEncounterDeck(codes)` (`ShuffleInto`) takes the set-aside copies there are (`source`, below), and shuffles nothing in when there is none.
 - "This card gains surge" (`GainSurge`) marks the resolving card (`CardInstance.gainedSurge`), and placing it queues the surge draw a printed surge would have queued.
 
 `windowsOpenedBy` maps an event to the windows it opens.
@@ -74,7 +76,7 @@ Commands on player cards (`DrawCards`, `SearchDeck`, `PlayCard`, `DiscardFromHan
 - The basic draw and play actions are these commands taken `asAction`, and the resource action is `GainResources` (which card effects use too) taken `asAction`, so all three provoke attacks of opportunity like the actions the engine carries out.
 - Supporting player cards later only changes those handlers.
 
-Commands the players also send themselves and that refuse when they have nothing to do (`AdjustActions`, `EndTurn`, `DiscoverClues`) carry the same `source` when a card asks for them, and then do as much as they can (Rules Reference, "Effects"), so one effect never fails the whole ability. The players' buttons send them without one and keep refusing, since the board offers a button by dry-running its command.
+Commands also sent without a card (by the players or a rule step) that refuse when they have nothing to do (`AdjustActions`, `EndTurn`, `DiscoverClues`, `RemoveConnection`, `ShuffleInto`) carry the same `source` when a card asks for them, and then do as much as they can (Rules Reference, "Effects"), so one effect never fails the whole ability. The players' buttons send them without one and keep refusing, since the board offers a button by dry-running its command.
 
 - `loseActions(1)` takes no more actions than remain, `loseActions('all')` all of them, outside the turn too, where they come off the round's actions (`delta: 'allRemaining'`, which the players may send too).
 - `endYourTurn()` does nothing outside the turn of the investigator the window names.

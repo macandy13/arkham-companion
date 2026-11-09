@@ -101,7 +101,8 @@ export function handlePutLocationIntoPlay(
  * `RemoveConnection` ("is no longer connected to"): removes the edge from the map that declares
  * it, and cuts what the cards print of it on the map of its `from` location (printed connections
  * are derived, so a cut is all there is to store), so no move it allows is left. Without a
- * declared edge, the cards must print every move it allows; anything else is rejected.
+ * declared edge, the cards must print every move it allows; anything else is rejected, unless a
+ * card asks (`source`): then it is already gone and nothing changes.
  */
 export function handleRemoveConnection(
   ctx: EngineContext,
@@ -121,7 +122,7 @@ export function handleRemoveConnection(
       { type: 'ConnectionChanged', change: 'removed', mapId: owned.mapId, edge: owned.edge },
       ...cut,
     ];
-  if (allowsEveryMove(printed, edge)) return cut;
+  if (allowsEveryMove(printed, edge) || cmd.source !== undefined) return cut;
   throw new CommandRejected({ code: 'connectionNotFound', from: edge.from, to: edge.to });
 }
 

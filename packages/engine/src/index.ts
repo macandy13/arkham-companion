@@ -128,6 +128,10 @@ export { formatBoard } from './format_board';
 export { inVictoryDisplay, victoryPoints } from './victory';
 export {
   advanceAct,
+  advanceAgenda,
+  removeConnection,
+  shuffleSetAsideIntoEncounterDeck,
+  shuffleSelfIntoEncounterDeck,
   afterDiscoveringClues,
   afterAttacking,
   afterEvaded,

@@ -176,7 +176,9 @@ export function handleFromSetAside(state: GameState, cmd: FromSetAside): CardMov
 
 /** `ShuffleInto`: adds one set-aside copy of each code to the zone and shuffles it. */
 export function handleShuffleInto(state: GameState, cmd: ShuffleInto): Event[] {
-  const cardIds = takeFromSetAside(state, cmd.codes);
+  const cardIds = takeFromSetAside(state, cmd.codes, {
+    asManyAsThereAre: cmd.source !== undefined,
+  });
   return shuffleInto(state, cardIds, cmd.zone);
 }
 
@@ -329,11 +331,19 @@ function shuffleInto(state: GameState, cardIds: readonly InstanceId[], zone: Zon
   return [...moves, shuffled];
 }
 
-/** One set-aside copy of each code, in the order of `codes`; rejects a code with no copy left. */
-function takeFromSetAside(state: GameState, codes: readonly CardCode[]): InstanceId[] {
+/**
+ * One set-aside copy of each code, in the order of `codes`; rejects a code with no copy left,
+ * unless `asManyAsThereAre`, which skips it.
+ */
+function takeFromSetAside(
+  state: GameState,
+  codes: readonly CardCode[],
+  { asManyAsThereAre = false }: { asManyAsThereAre?: boolean } = {},
+): InstanceId[] {
   const { taken } = codes.reduce(
     (acc, code) => {
       const cardId = acc.available.find((id) => requireCard(state.cards, id).code === code);
+      if (cardId === undefined && asManyAsThereAre) return acc;
       if (cardId === undefined)
         throw new CommandRejected({ code: 'cardNotInZone', zone: 'setAside', match: code });
       return {
