@@ -602,7 +602,7 @@ function dragAttributes({
 export type TurnOrder = Pick<BoardView, 'lead' | 'turn'>;
 
 /**
- * An investigator's pawn (`data-pawn`): a circle with their initial, centred on `centre`, and
+ * An investigator's pawn (`data-pawn`, their id): a circle with their initial, centred on `centre`, and
  * over it their face from their card's picture once loaded (`TokenPicture`). The
  * `lead` investigator's pawn carries a pentagon like the game's lead investigator token, and the
  * pawn of the investigator whose turn it is (`onTurn`, `data-turn`) a bolder ring; both are also
@@ -633,7 +633,7 @@ export function Pawn({
   ].join(', ');
   return (
     <g
-      data-pawn
+      data-pawn={investigator.id}
       data-turn={onTurn || undefined}
       {...dragAttributes({ name, kind: 'pawn', drag, ghost })}
     >

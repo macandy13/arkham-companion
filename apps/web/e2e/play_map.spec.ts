@@ -71,7 +71,7 @@ test('read the map', async ({ page }) => {
 
 // Journey: move by dragging the pawn of the investigator whose turn it is, to a connected
 // location and then to one that is not, which the game refuses.
-test('move on the map', async ({ page }) => {
+test('move on the map', { tag: '@flow' }, async ({ page }) => {
   const house = page.getByRole('figure', { name: 'House' });
   const room = (name: string) => house.getByRole('group', { name });
 
@@ -96,7 +96,7 @@ test('move on the map', async ({ page }) => {
 // Journey: move an enemy by dragging it as a card instruction says: to a location with no
 // connection, then to the investigator's, where it engages them, and away again, which
 // disengages it.
-test('move an enemy on the map', async ({ page }) => {
+test('move an enemy on the map', { tag: '@flow' }, async ({ page }) => {
   const house = page.getByRole('figure', { name: 'House' });
   const room = (name: string) => house.getByRole('group', { name });
   const priest = (name: string) => room(name).getByRole('img', { name: /^Ghoul Priest/ });
@@ -182,7 +182,7 @@ test('fight an enemy from the map', async ({ page }) => {
 // action, which reveals it, and takes a clue there as a card grants it; the next clue they take
 // is dragged off the Attic's clue count onto their card, and one goes back from the card onto
 // the Attic, as a card tells them to place one there.
-test('move and take a clue from the location details', async ({ page }) => {
+test('move and take a clue from the location details', { tag: '@flow' }, async ({ page }) => {
   const house = page.getByRole('figure', { name: 'House' });
   const room = (name: string) => house.getByRole('group', { name });
   const details = (name: string) => page.getByRole('dialog', { name });

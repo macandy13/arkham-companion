@@ -20,13 +20,13 @@ import {
   connectionEnds,
   drawingSize,
   onPawn,
-  piecesOnTile,
   tileAt,
   tileCells,
   tileOrigin,
   type Point,
 } from './mapLayout';
 import { usePieceDrag } from './usePieceDrag';
+import { piecePlaces, useGlides, type PiecePlace } from './glides';
 import { investigatorAt } from '../investigators/dropTarget';
 import { enemyAt } from './dropTarget';
 import { overHeaderCard, overTokenPool } from '../screens/headerDropTarget';
@@ -207,11 +207,13 @@ function MapDrawing({
   const svg = useRef<SVGSVGElement>(null);
   const cells = tileCells(map);
   const mover = investigators.find(({ id }) => id === board.turn);
-  const moverCentre = mover && pawnCentre(map, cells, board, mover.id);
+  const places = piecePlaces(map, cells, board);
+  const moverCentre = mover && pawnCentre(places, mover.id);
   const [detailsFor, setDetailsFor] = useState<InstanceId>();
   const [enemyFor, setEnemyFor] = useState<InstanceId>();
+  const glideFromDrop = useGlides(svg, board, places);
   const onPawnOf = (investigator: InvestigatorId, point: Point) => {
-    const centre = pawnCentre(map, cells, board, investigator);
+    const centre = pawnCentre(places, investigator);
     return centre !== undefined && onPawn(centre, point);
   };
   const drag = usePieceDrag<DraggedPiece>(
@@ -248,6 +250,12 @@ function MapDrawing({
       }
       const to = tileAt(cells, point);
       if (to === undefined || to === piece.from) return;
+      glideFromDrop({
+        piece:
+          'enemy' in piece ? { enemy: piece.enemy.id } : { investigator: piece.investigator.id },
+        at: point,
+        to,
+      });
       void ('enemy' in piece ? actions.moveEnemy(piece.enemy.id, to) : actions.moveTo(to));
     },
     (piece) => {
@@ -403,28 +411,13 @@ function Ghost({
   );
 }
 
-/**
- * Where the pawn of `investigator` stands on `map`, in the drawing's coordinates: among the
- * pieces on their location's tile (`piecesOnTile`).
- */
+/** Where the pawn of `investigator` stands among the map's `places`, in the drawing's coordinates. */
 function pawnCentre(
-  map: MapView,
-  cells: Record<InstanceId, GridCell>,
-  board: BoardView,
+  places: readonly PiecePlace[],
   investigator: InvestigatorId,
 ): Point | undefined {
-  const location = map.locations.find(({ investigators }) => investigators?.includes(investigator));
-  const cell = location && cells[location.id];
-  if (!cell) return undefined;
-  const offset = piecesOnTile(
-    board.investigatorsAt(location.id),
-    map.enemies[location.id] ?? [],
-  ).pieces.find(
-    (piece) => 'investigator' in piece && piece.investigator.id === investigator,
-  )?.centre;
-  if (!offset) return undefined;
-  const tile = tileOrigin(cell);
-  return { x: tile.x + offset.x, y: tile.y + offset.y };
+  return places.find(({ piece }) => 'investigator' in piece && piece.investigator === investigator)
+    ?.centre;
 }
 
 /**
