@@ -42,6 +42,14 @@ export interface PlaywrightReport {
   readonly suites?: readonly ReportSuite[];
 }
 
+/**
+ * One report of the specs in all of `shards`, the reports of one run split with `--shard`: each
+ * shard ran a disjoint part of the specs, so their suites are just put side by side.
+ */
+export function joinReports(shards: readonly PlaywrightReport[]): PlaywrightReport {
+  return { suites: shards.flatMap((shard) => shard.suites ?? []) };
+}
+
 interface ReportSuite {
   readonly suites?: readonly ReportSuite[];
   readonly specs?: readonly ReportSpec[];

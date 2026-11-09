@@ -3,6 +3,7 @@
  * `.github/workflows/preview.yml`:
  *
  *   node cli.ts flows <pictures.json> <base.json>
+ *     (Each report may also be a directory holding one report per shard.)
  *     Prints the `--grep` pattern for the flows to record: those whose end state in
  *     `pictures.json` (this PR's `e2e:pictures` run) differs from `base.json` (the base commit's),
  *     at most SCREENCAST_LIMIT of them, on one line; nothing when no flow changed.
@@ -16,7 +17,15 @@
  *     Prints the PR description with the screencast section replaced.
  */
 import { execFileSync } from 'node:child_process';
-import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import {
+  copyFileSync,
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  readFileSync,
+  statSync,
+  writeFileSync,
+} from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import pixelmatch from 'pixelmatch';
@@ -27,6 +36,7 @@ import {
   flowVideos,
   SCREENCAST_LIMIT,
   gifArgs,
+  joinReports,
   playerPage,
   renderSection,
   replaceSection,
@@ -117,9 +127,20 @@ function baseRun(path: string): BaseRun {
 /**
  * A run's report, or an empty one when the run broke off before writing a whole report (or, for
  * the recording, didn't run because no flow changed): on the base, every spec is then shown.
+ * `path` may also be a directory of reports, one per shard of a sharded run (`--shard`), which
+ * are joined into one; a shard whose report is missing or broken just leaves out its specs.
  */
 function readReport(path: string, run: string): PlaywrightReport {
   if (!existsSync(path)) return {};
+  if (!statSync(path).isDirectory()) return readReportFile(path, run);
+  const shards = readdirSync(path)
+    .filter((name) => name.endsWith('.json'))
+    .sort()
+    .map((name) => readReportFile(join(path, name), run));
+  return joinReports(shards);
+}
+
+function readReportFile(path: string, run: string): PlaywrightReport {
   try {
     return JSON.parse(readFileSync(path, 'utf8')) as PlaywrightReport;
   } catch (error) {

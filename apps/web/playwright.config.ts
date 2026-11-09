@@ -29,7 +29,9 @@ const notFlows = [shotSpecs, /accessibility\.spec\.ts$/];
 // screen has settled (e2e/fixtures/test.ts): a glide or a
 // fade still running as the test ends would make the same screen differ from run to run, and the
 // app leaves its animations out for reduced motion.
-const picture = { endPicture: true, reducedMotion: 'reduce' } as const;
+// A spec that can't reach its situation (some don't yet on a phone) fails after 10 s instead
+// of Playwright's 30 s test timeout, which made those few specs most of the run's time.
+const picture = { endPicture: true, reducedMotion: 'reduce', actionTimeout: 10_000 } as const;
 
 // Lets local/cloud sessions use a preinstalled Chromium instead of downloading one.
 const executablePath = process.env.PW_CHROMIUM_PATH;
