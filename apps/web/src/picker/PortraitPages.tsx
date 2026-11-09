@@ -10,7 +10,7 @@ import { seatNumber } from './pickerLogic';
 export const PORTRAITS_PER_PAGE = 10;
 
 interface PortraitPagesProps {
-  /** The investigators to show, already filtered and in alphabetical order (`applyPickerFilters`). */
+  /** The investigators to show, already filtered and in order (`pickerList`). */
   readonly investigators: readonly InvestigatorDef[];
   /** Investigator codes in seat order, to mark the seated ones. */
   readonly seats: readonly CardCode[];

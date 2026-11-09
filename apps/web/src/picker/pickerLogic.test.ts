@@ -3,6 +3,7 @@ import { type InvestigatorDef, type PackDef, toCardCode } from '@arkham/carddata
 import {
   activeFilterCount,
   applyPickerFilters,
+  pickerList,
   cyclePositions,
   seatNumber,
   sortedPacks,
@@ -114,6 +115,33 @@ describe('pack helpers', () => {
 
   it('sorts packs by cycle, then position', () => {
     expect(sortedPacks(packs).map((p) => p.code)).toEqual(['a', 'b', 'c']);
+  });
+});
+
+describe('pickerList', () => {
+  const none = { search: '', factions: [], onlyOwned: false };
+  const agnes = makeInvestigator({ code: toCardCode('agnes'), name: 'Agnes Baker' });
+  const daisy = makeInvestigator({ code: toCardCode('daisy'), name: 'Daisy Walker' });
+  const roland = makeInvestigator({ code: toCardCode('roland'), name: 'Roland Banks' });
+  const wendy = makeInvestigator({ code: toCardCode('wendy'), name: 'Wendy Adams' });
+  const all = [agnes, daisy, roland, wendy];
+
+  it.each([
+    { seats: [], list: ['agnes', 'daisy', 'roland', 'wendy'] },
+    { seats: ['wendy'], list: ['wendy', 'agnes', 'daisy', 'roland'] },
+    { seats: ['roland', 'agnes'], list: ['roland', 'agnes', 'daisy', 'wendy'] },
+  ])('lists the seats $seats first, the lead first, then the rest by name', ({ seats, list }) => {
+    const codes = pickerList(all, none, seats.map(toCardCode)).map((i) => i.code);
+
+    expect(codes).toEqual(list);
+  });
+
+  it('keeps a seated investigator the filters would hide', () => {
+    const codes = pickerList(all, { ...none, search: 'daisy' }, [toCardCode('wendy')]).map(
+      (i) => i.code,
+    );
+
+    expect(codes).toEqual(['wendy', 'daisy']);
   });
 });
 
