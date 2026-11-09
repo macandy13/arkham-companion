@@ -5,14 +5,14 @@ import { spreadingFlames } from '../spreading_flames/scenario';
 import { brethrenOfAsh } from './campaign';
 
 describe('Brethren of Ash campaign definition', () => {
-  it('lists Spreading Flames, then Smoke and Mirrors', () => {
+  it('lists Spreading Flames, Smoke and Mirrors, then Queen of Ash', () => {
     const start = campaign.compileStart(brethrenOfAsh, {
       campaignId: campaignId('campaign_a'),
       difficulty: 'standard',
       investigators: [roland.code],
     });
     expect(start.definitionId).toBe('brethren-of-ash');
-    expect(start.scenarioIds).toEqual(['spreading-flames', 'smoke-and-mirrors']);
+    expect(start.scenarioIds).toEqual(['spreading-flames', 'smoke-and-mirrors', 'queen-of-ash']);
   });
 
   it.each(['easy', 'standard', 'hard', 'expert'] as const)(

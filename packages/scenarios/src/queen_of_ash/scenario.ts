@@ -19,6 +19,7 @@ import { ASH_STORY } from '../brethren_of_ash/story';
 import { SPREADING_FLAMES_CODES } from '../spreading_flames/cards';
 import { spreadingFlames } from '../spreading_flames/scenario';
 import { QUEEN_OF_ASH_CODES, QUEEN_OF_ASH_SETS } from './cards';
+import { queenOfAshResolutions } from './resolutions';
 
 const codes = QUEEN_OF_ASH_CODES;
 const fire = SPREADING_FLAMES_CODES.fire;
@@ -207,4 +208,5 @@ export const queenOfAsh: ScenarioDefinition = {
     },
   ],
   modifiers: { tokenValues: { skull: firesInPlay, tablet: ritualSite } },
+  resolutions: queenOfAshResolutions,
 };

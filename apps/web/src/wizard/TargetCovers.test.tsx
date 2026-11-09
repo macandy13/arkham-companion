@@ -42,6 +42,7 @@ describe('TargetCovers', () => {
     expect(screen.getAllByRole('radio')).toEqual([
       screen.getByRole('radio', { name: 'Spreading Flames' }),
       screen.getByRole('radio', { name: 'Smoke and Mirrors' }),
+      screen.getByRole('radio', { name: 'Queen of Ash' }),
     ]);
   });
 
