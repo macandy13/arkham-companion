@@ -16,7 +16,7 @@ import type { GameActions, SteppedStat } from '../state/gameActions';
 import { classOf, type PrintedInvestigator } from '@arkham/carddata';
 import { InvestigatorFace, type InvestigatorFaceShape } from './InvestigatorFace';
 import { SkillTestDialog } from './SkillTestDialog';
-import { signed } from './TestCalculation';
+import { signed } from '../tokens/tokenValue';
 import { PlayArea } from './PlayArea';
 import { ThreatArea } from './ThreatArea';
 import { TurnControls } from './TurnControls';

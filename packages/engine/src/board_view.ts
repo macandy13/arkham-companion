@@ -87,7 +87,7 @@ import {
   type Forbidden,
   type LocationRestriction,
 } from './restrictions';
-import { skillTestSuggestion, type SkillTestInput } from './skill_modifiers';
+import { skillTestSuggestion, tokenModifier, type SkillTestInput } from './skill_modifiers';
 import { victoryPoints } from './victory';
 import type {
   AmountRange,
@@ -886,6 +886,14 @@ export class BoardView {
   /** The chaos tokens in the bag for this scenario and difficulty, the players' to draw from. */
   get chaosBag(): readonly ChaosToken[] {
     return this.state.chaosBag;
+  }
+
+  /**
+   * The modifier `token` gives any skill test of this game (`tokenModifier`), for the chaos bag to
+   * list beside it; `undefined` where the test or the players decide it.
+   */
+  tokenModifier(token: ChaosToken): number | undefined {
+    return tokenModifier(this.ctx, this.state, token);
   }
 
   /** The tokens out of the bag because a card sealed them, each with the investigator holding it. */

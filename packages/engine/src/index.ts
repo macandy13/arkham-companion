@@ -113,6 +113,7 @@ export {
   skillTestContext,
   skillTestSuggestion,
   suggestSkillTest,
+  tokenModifier,
   type SkillModifierRegistry,
   type SkillTestContext,
   type SkillTestInput,

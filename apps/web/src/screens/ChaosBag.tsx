@@ -3,11 +3,14 @@ import { useTranslation } from 'react-i18next';
 import { tokenCounts, type BoardView, type ChaosToken } from '@arkham/engine';
 import type { GameActions } from '../state/gameActions';
 import { ChaosTokenFace } from '../tokens/ChaosTokenFace';
+import { hasSymbol, signedOrUnknown } from '../tokens/tokenValue';
 import './chaos_bag.css';
 
 /**
  * The chaos bag on the scenario card's page (M6.1b): what is in it, one row per kind of token in
- * `CHAOS_TOKENS` order with its count, and the tokens player cards sealed, each with the
+ * `CHAOS_TOKENS` order with its count, the chance to draw it and, for a token that shows a symbol,
+ * its value in this game (`BoardView.tokenModifier`, "?" where the card or the test decides it,
+ * M6.7b), and the tokens player cards sealed, each with the
  * investigator holding it (`BoardView.sealedTokens`). The players seal a token as a card tells
  * them: they tap it in the bag, then the investigator whose card seals it; a sealed token has a
  * Release button. Both are steps of their own (`GameActions.sealToken`, `releaseToken`), so Undo
@@ -22,12 +25,16 @@ export function ChaosBag({
   actions: GameActions;
   busy: boolean;
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const titleId = useId();
   const sealedId = useId();
   const [picked, setPicked] = useState<ChaosToken>();
   const counts = tokenCounts(board.chaosBag);
   const sealers = board.investigators.filter((investigator) => investigator.status === 'active');
+  const percent = new Intl.NumberFormat(i18n.language, {
+    style: 'percent',
+    maximumFractionDigits: 0,
+  });
   const chosen = counts.some(({ token }) => token === picked) ? picked : undefined;
   return (
     <section aria-labelledby={titleId} data-part="chaos-bag">
@@ -42,7 +49,17 @@ export function ChaosBag({
               onClick={() => setPicked(token === chosen ? undefined : token)}
             >
               <ChaosTokenFace token={token} /> <data value={count}>×{count}</data>
-            </button>
+            </button>{' '}
+            {hasSymbol(token) && token !== 'autoFail' && (
+              <>
+                <data value={board.tokenModifier(token) ?? ''}>
+                  {signedOrUnknown(board.tokenModifier(token))}
+                </data>{' '}
+              </>
+            )}
+            <data value={count / board.chaosBag.length}>
+              {percent.format(count / board.chaosBag.length)}
+            </data>
           </li>
         ))}
       </ul>

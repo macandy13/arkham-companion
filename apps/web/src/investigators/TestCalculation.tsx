@@ -16,6 +16,7 @@ import {
 } from '@arkham/engine';
 import { assertNever, sum } from '@arkham/util';
 import { ChaosTokenFace } from '../tokens/ChaosTokenFace';
+import { hasSymbol, signed, signedOrUnknown } from '../tokens/tokenValue';
 import './test_calculation.css';
 
 /** The skills a test adds up: the tested one first, then the one a card adds to it. */
@@ -386,24 +387,4 @@ function tokenEffects(
     next += 1;
     return step.change;
   });
-}
-
-/**
- * Whether the token shows a symbol rather than its number, so the strip spells out its effect:
- * the scenario's symbols, the elder sign, auto-fail and the tokens a campaign adds (bless, curse,
- * frost, blood).
- */
-function hasSymbol(token: ChaosToken): boolean {
-  return Number.isNaN(Number(token));
-}
-
-/** A token's effect with its sign, or "?" when the app cannot tell it (`tokenEffects`). */
-function signedOrUnknown(effect: number | undefined): string {
-  return effect === undefined ? '?' : signed(effect);
-}
-
-/** A modifier with its sign, as the players say it: +1, 0, −2. */
-export function signed(value: number): string {
-  if (value > 0) return `+${value}`;
-  return value < 0 ? `−${-value}` : '0';
 }
