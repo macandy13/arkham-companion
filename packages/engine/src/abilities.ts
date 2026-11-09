@@ -235,29 +235,25 @@ export type RelativeCard =
    */
   | ({ ref: 'eachInVictoryDisplay' } & VictoryDisplayFilter)
   /**
-   * Each set-aside enemy with `trait` ("spawn each set-aside [[Cultist]] enemy"), or each
-   * set-aside copy of `code` ("place each other set-aside copy of Fire! in the encounter discard
-   * pile"): the command repeats once per card, in card order, and none when no such card is set
-   * aside.
+   * Each set-aside card its filter matches (`SetAsideFilter`: "spawn each set-aside [[Cultist]]
+   * enemy", "place each other set-aside copy of Fire! in the encounter discard pile"): the
+   * command repeats once per card, in card order, and none when no such card is set aside.
    */
-  | { ref: 'eachSetAside'; trait: Trait }
-  | { ref: 'eachSetAside'; code: CardCode }
+  | ({ ref: 'eachSetAside' } & SetAsideFilter)
   /**
-   * The enemy with `trait` (any enemy without one) nearest to the location of
-   * the investigator the window names ("the nearest [[Cultist]] enemy",
-   * `nearestEnemies`); none when there is no such enemy. When several are
-   * equally near, the lead investigator picks one (Rules Reference, "Choices"):
-   * the effect becomes a decision with an option per enemy.
+   * The enemy its filter matches (`EnemyFilter`) nearest to the location of the investigator the
+   * window names ("the nearest [[Cultist]] enemy", `nearestEnemies`); none when there is no such
+   * enemy. When several are equally near, the lead investigator picks one (Rules Reference,
+   * "Choices"): the effect becomes a decision with an option per enemy.
    */
-  | { ref: 'nearestEnemy'; trait?: Trait }
+  | ({ ref: 'nearestEnemy' } & EnemyFilter)
   /**
-   * A location in play with `trait` ("move to a [[Central]] location"), other
-   * than the one the investigator the window names is at, since moving there
-   * would be no move; none when there is no other. When there are several,
-   * that investigator picks one: the effect becomes a decision with an option
-   * per location.
+   * A location in play its filter matches (`LocationFilter`: "move to a [[Central]] location"),
+   * other than the one the investigator the window names is at, since moving there would be no
+   * move; none when there is no other. When there are several, that investigator picks one: the
+   * effect becomes a decision with an option per location.
    */
-  | { ref: 'locationWith'; trait: Trait }
+  | ({ ref: 'locationWith' } & LocationFilter)
   /**
    * The location in play with the most `token`s that the card with the ability
    * may attach to ("attach to the location with the most clues and without a
@@ -279,6 +275,20 @@ export type RelativeInvestigator =
   | { ref: 'lead' }
   /** Each investigator still in the scenario, in player order; only those at `at` when given. */
   | { ref: 'eachInvestigator'; at?: RelativeCard };
+
+/**
+ * Which set-aside cards an `eachSetAside` reference names: the enemies with `trait` ("each
+ * set-aside [[Cultist]] enemy"), the copies of `code`, or both together.
+ */
+export interface SetAsideFilter {
+  trait?: Trait;
+  code?: CardCode;
+}
+
+/** Which locations in play a `locationWith` reference may stand for: those with `trait`. */
+export interface LocationFilter {
+  trait?: Trait;
+}
 
 /**
  * Which enemies an `eachEnemy` reference names: those with `trait` and without `withoutTrait`,
@@ -931,11 +941,13 @@ function candidatesFor(
 ): CardInstance[] {
   switch (picked.ref) {
     case 'nearestEnemy':
-      return from === undefined ? [] : nearestEnemies(ctx, state, from, picked.trait);
+      return from === undefined ? [] : nearestEnemies(ctx, state, from, picked);
     case 'locationWith':
       return locationsInPlay(ctx, state).filter(
         (location) =>
-          location.id !== from && cardStats(ctx.cards, location.code).traits.includes(picked.trait),
+          location.id !== from &&
+          (picked.trait === undefined ||
+            cardStats(ctx.cards, location.code).traits.includes(picked.trait)),
       );
     case 'locationWithMost': {
       const open = locationsInPlay(ctx, state).filter((location) =>
@@ -1085,7 +1097,8 @@ function eachId(
     case 'eachSetAside':
       return cardsInZone(state, { kind: 'setAside' }).filter((id) => {
         const code = requireCard(state.cards, id).code;
-        if ('code' in each) return code === each.code;
+        if (each.code !== undefined && code !== each.code) return false;
+        if (each.trait === undefined) return true;
         const stats = cardStats(ctx.cards, code);
         return stats.typeCode === 'enemy' && stats.traits.includes(each.trait);
       });
@@ -1684,7 +1697,7 @@ export function gainClues(
 /**
  * "Discover 1 clue at your location" (`DiscoverClues`: the window's location, else the location of
  * the investigator it names), or at another location ("discover 1 clue
- * at a [[Central]] location", `discoverClues(1, locationWith(trait('Central')))`): as many as the
+ * at a [[Central]] location", `discoverClues(1, locationWith({ trait: trait('Central') }))`): as many as the
  * location has, none for an investigator who may not discover clues, unlike `gainClues`, which
  * takes them from the token pool.
  */
@@ -1774,9 +1787,9 @@ export function engageReadyEnemies(): AbilityEffect {
   return { type: 'EngageReadyEnemies' };
 }
 
-/** "A [[Central]] location" (`locationWith`), picked by the investigator the window names: `moveTo(locationWith(trait('Central')))`. */
-export function locationWith(trait: Trait): RelativeCard {
-  return { ref: 'locationWith', trait };
+/** "A [[Central]] location" (`locationWith`), picked by the investigator the window names: `moveTo(locationWith({ trait: trait('Central') }))`. */
+export function locationWith(filter: LocationFilter = {}): RelativeCard {
+  return { ref: 'locationWith', ...filter };
 }
 
 /**
@@ -1885,14 +1898,21 @@ export function checkDoomThreshold(): AbilityEffect {
   return { type: 'CheckDoomThreshold' };
 }
 
-/** "Place N doom on [card]", such as `placeDoomOn(nearestEnemy(trait('Cultist')), 2)`. */
+/** "Place N doom on [card]", such as `placeDoomOn(nearestEnemy({ trait: trait('Cultist') }), 2)`. */
 export function placeDoomOn(card: RelativeCard, amount: number): AbilityEffect {
   return { type: 'PlaceDoom', cardId: card, amount };
 }
 
-/** "The nearest [[trait]] enemy", or the nearest enemy without a trait (`{ ref: 'nearestEnemy' }`). */
-export function nearestEnemy(trait?: Trait): RelativeCard {
-  return trait === undefined ? { ref: 'nearestEnemy' } : { ref: 'nearestEnemy', trait };
+/** "The nearest [[trait]] enemy" (`nearestEnemy`), written `nearestEnemy({ trait: trait('Cultist') })`. */
+export function nearestEnemy(filter: EnemyFilter = {}): RelativeCard {
+  return { ref: 'nearestEnemy', ...filter };
+}
+
+/** "Each set-aside [[trait]] enemy" or "each set-aside copy of [card]" (`eachSetAside`), which repeats the effect for each. */
+export function eachSetAside(
+  filter: SetAsideFilter,
+): Extract<RelativeCard, { ref: 'eachSetAside' }> {
+  return { ref: 'eachSetAside', ...filter };
 }
 
 /** "Place N doom on it": doom on the card with the ability. */
@@ -2131,15 +2151,6 @@ export function ifYouHave(stat: InvestigatorStat, range: StatRange, ability: Abi
 }
 
 /**
- * "If there are no [[Cultist]] enemies in play, …": `ability` fires only while
- * the number of enemies with `trait` on the table is within `range`, written
- * `ifEnemiesInPlay(trait('Cultist'), { max: 0 }, whenRevealed(…))` (Mysterious Chanting).
- */
-export function ifEnemiesInPlay(trait: Trait, range: StatRange, ability: Ability): Ability {
-  return ifThereAre(eachEnemy({ trait }), range, ability);
-}
-
-/**
  * "If there is an enemy at your location, …", "if no enemy is engaged with you, …": `ability`
  * fires only while the number of cards or investigators the `each…` reference `of` names is
  * within `range`, written `ifThereAre(eachEnemy({ at: yourLocation() }), { min: 1 }, …)` or
@@ -2322,7 +2333,7 @@ export function putLocationIntoPlay(
  * set aside.
  */
 export function spawnEachSetAsideAt(trait: Trait, location: RelativeCard): AbilityEffect {
-  return { type: 'SpawnEnemy', enemyId: { ref: 'eachSetAside', trait }, at: location };
+  return { type: 'SpawnEnemy', enemyId: eachSetAside({ trait }), at: location };
 }
 
 /**
@@ -2339,7 +2350,7 @@ export function fromSetAside(codes: readonly CardCode[], to: Templated<Zone>): A
  * still set aside moves to `to`, none when no copy is left.
  */
 export function eachSetAsideCopyTo(code: CardCode, to: Templated<Zone>): AbilityEffect {
-  return { type: 'MoveCard', cardId: { ref: 'eachSetAside', code }, to };
+  return { type: 'MoveCard', cardId: eachSetAside({ code }), to };
 }
 
 /** "Put the set-aside Lita Chantler into play at the Parlor". */

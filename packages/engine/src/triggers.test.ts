@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  ifThereAre,
   resolutionId,
   atEndOfPhase,
   atEndOfEachTurn,
@@ -7,7 +8,6 @@ import {
   healSelf,
   gainSurge,
   ifYouHave,
-  ifEnemiesInPlay,
   searchAndDraw,
   shuffleEncounterDeck,
   readySelf,
@@ -2074,9 +2074,9 @@ describe('doom on the nearest Cultist enemy, or a search for one', () => {
    */
   const chantingCard = blankTreachery('chanting', {
     abilities: [
-      whenRevealed(placeDoomOn(nearestEnemy(trait('Cultist')), 2)),
-      ifEnemiesInPlay(
-        trait('Cultist'),
+      whenRevealed(placeDoomOn(nearestEnemy({ trait: trait('Cultist') }), 2)),
+      ifThereAre(
+        eachEnemy({ trait: trait('Cultist') }),
         { max: 0 },
         whenRevealed(searchAndDraw({ trait: trait('Cultist'), typeCode: 'enemy' })),
       ),
@@ -2402,7 +2402,7 @@ describe("disengaging and moving after a card's test", () => {
       whenRevealed(
         skillTest('agility', 4, { onFail: [takeHorror(1)] }),
         disengageFromEachEnemy({ withoutTrait: trait('Nightgaunt') }),
-        moveTo(locationWith(trait('Central'))),
+        moveTo(locationWith({ trait: trait('Central') })),
         engageReadyEnemies(),
       ),
     ],

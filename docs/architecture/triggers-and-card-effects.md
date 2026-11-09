@@ -25,7 +25,7 @@ An [`Ability`](../../packages/engine/src/abilities.ts) is:
 - an optional condition, in one of three shapes over the references effects use (`AbilityCondition`):
   - `currentCard`, the current act or agenda: `duringAct([codes.trapped], …)`, `duringAgenda([codes.theyreGettingOut], …)`;
   - `countOf`, how many things a reference names as the window opens:
-    - the enemies or investigators of an `each…` reference: `ifThereAre(eachEnemy({ at: yourLocation() }), { min: 1 }, …)` for "if there is an enemy at your location", `ifThereAre(eachEnemy({ engagedWith: you() }), { max: 0 }, …)` for "if no enemy is engaged with you", `ifEnemiesInPlay(trait('Cultist'), { max: 0 }, …)` as the short form of `eachEnemy({ trait })`;
+    - the enemies or investigators of an `each…` reference: `ifThereAre(eachEnemy({ at: yourLocation() }), { min: 1 }, …)` for "if there is an enemy at your location", `ifThereAre(eachEnemy({ engagedWith: you() }), { max: 0 }, …)` for "if no enemy is engaged with you", `ifThereAre(eachEnemy({ trait: trait('Cultist') }), { max: 0 }, …)` for "if there are no [[Cultist]] enemies in play";
     - the cards of a trait in the victory display (`eachInVictoryDisplay`), unique ones only if asked (`CardStats.unique`), with the cards beneath the current act if asked (`beneathAct`): `whenVictoryDisplayHolds({ trait: trait('Cultist'), unique: true }, 6, advanceAct())`;
     - the candidates of a picked reference: `ifNoCandidate(locationWithMost('clue'), whenRevealed(gainSurge()))` for Locked Door's "If there is no such location, Locked Door gains surge";
   - `valueOf`, a value on the table (`Quantity`), within a range whose bounds may be per investigator:
@@ -61,10 +61,10 @@ Effects are **templated commands**: a command card data may use (`AbilityCommand
 - `eachInvestigator({ at })`,
 - `eachEnemy({ trait, withoutTrait, unengaged, at, engagedWith })`, where `at` is one location reference or a list of them, so "each enemy at your location" is a filter of `eachEnemy`, not a reference of its own,
 - `eachInVictoryDisplay({ trait, unique, beneathAct })`, the cards in the victory display,
-- `nearestEnemy(trait)`,
-- `locationWith(trait)`,
+- `nearestEnemy({ trait, withoutTrait, unengaged })`,
+- `locationWith({ trait })`,
 - `locationWithMost(token)`,
-- `eachSetAside(trait)`,
+- `eachSetAside({ trait, code })`,
 - …
 
 An `each…` reference repeats the command once per investigator or card.

@@ -167,8 +167,7 @@ export function enemiesAt(
 }
 
 /**
- * The enemies on the table with `trait` (any enemy without one) nearest to
- * `from`, counted in connections along each enemy's path there, engaged ones
+ * The enemies on the table `filter` matches nearest to `from`, counted in connections along each enemy's path there, engaged ones
  * where their investigator is ("the nearest [[Cultist]] enemy"). Several when
  * they are equally near, in card order; none when there is no such enemy. An
  * enemy with no path counts as farther than every enemy with one (FAQ:
@@ -179,9 +178,9 @@ export function nearestEnemies(
   ctx: EngineContext,
   state: GameState,
   from: InstanceId,
-  trait?: Trait,
+  filter: EnemyFilter = {},
 ): CardInstance[] {
-  const candidates = enemiesOnTable(ctx, state, trait).map((card) => {
+  const candidates = enemiesMatching(ctx, state, filter).map((card) => {
     const [path] = shortestPaths(ctx, state, locationOf(state, card), from);
     return { card, distance: path ? path.length - 1 : Infinity };
   });

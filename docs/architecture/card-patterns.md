@@ -68,13 +68,13 @@ A cost is `CardAction.cost`, paid before the effects.
   - `locationAttachment: { onePerLocation: true }`, which `locationWithMost` respects,
   - `whenRevealed(attachTo(locationWithMost('clue')))`,
   - `ifNoCandidate(locationWithMost('clue'), whenRevealed(gainSurge()))`.
-- Mysterious Chanting's search: `ifEnemiesInPlay(trait('Cultist'), { max: 0 }, whenRevealed(searchAndDraw({ trait: trait('Cultist'), typeCode: 'enemy' })))`, then `whenRevealed(shuffleEncounterDeck())` as its own ability.
+- Mysterious Chanting's search: `ifThereAre(eachEnemy({ trait: trait('Cultist') }), { max: 0 }, whenRevealed(searchAndDraw({ trait: trait('Cultist'), typeCode: 'enemy' })))`, then `whenRevealed(shuffleEncounterDeck())` as its own ability.
 - The Midnight Masks' Cultist deck: a `scenarioDeck` setup step, drawn by the act's action with `drawFromScenarioDeck('cultist')`.
 - Rise of the Ghouls: `whenAdvanced(shuffleEncounterDiscard(), leadDrawsDiscardingUntil({ trait: trait('Ghoul'), typeCode: 'enemy' }))`.
 - False Lead's surge when its drawer has no clues: `ifYouHave('clues', { max: 0 }, whenRevealed(gainSurge()))`.
 
 ## Resolution order
 
-- An effect after a test that resolves either way (On Wings of Darkness's "Then, …") is the next effect of the same ability, after the `skillTest`: `disengageFromEachEnemy(…)`, `moveTo(locationWith(trait('Central')))`, `engageReadyEnemies()`.
+- An effect after a test that resolves either way (On Wings of Darkness's "Then, …") is the next effect of the same ability, after the `skillTest`: `disengageFromEachEnemy(…)`, `moveTo(locationWith({ trait: trait('Central') }))`, `engageReadyEnemies()`.
 - A per-point fail cost: `skillTest('intellect', 4, { perPointFailed: 'clues' })` (False Lead).
 - An ability after the enemy is evaded (Ruth Turner): `afterEvaded(addToVictoryDisplay({ ref: 'self' }))`.
