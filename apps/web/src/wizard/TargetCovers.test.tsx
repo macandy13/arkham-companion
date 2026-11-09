@@ -30,7 +30,7 @@ describe('TargetCovers', () => {
     );
   });
 
-  it('offers only the scenarios of the owned packs', () => {
+  it('hides the Night of the Zealot scenarios without its packs, keeps a standalone one', () => {
     render(
       <TargetCovers
         choices={defaultChoices('quick')}

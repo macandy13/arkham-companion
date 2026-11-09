@@ -19,6 +19,17 @@ test(
   },
 );
 
+test(
+  "a new campaign's setup step: Night of the Zealot's cover with its key art",
+  { tag: '@shot' },
+  async ({ page }) => {
+    await page.goto('/#/new');
+    await page.getByRole('link', { name: 'New campaign' }).click();
+
+    await expect(page.getByRole('radio', { name: 'Night of the Zealot' })).toBeChecked();
+  },
+);
+
 test('the investigator picker with its filter menu open', async ({ page }) => {
   await page.goto('/#/new');
   await page.getByRole('link', { name: 'Quick game' }).first().click();

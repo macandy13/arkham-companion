@@ -8,6 +8,7 @@ import { initI18n } from '../i18n';
 import { createAppStore } from '../state/appStore';
 import { IndexedDbStore } from '../storage/IndexedDbStore';
 import { NewGameScreen } from './NewGameScreen';
+import { loadSettings, saveSettings } from '../settings/settings';
 
 function makeInvestigator(code: string, name: string, health: number, sanity: number) {
   return {
@@ -66,7 +67,22 @@ describe('NewGameScreen', () => {
   afterEach(() => {
     cleanup();
     sessionStorage.clear();
+    localStorage.clear();
     vi.restoreAllMocks();
+  });
+
+  it('keeps Next closed while the owned packs hide the chosen scenario, and says where to change them', () => {
+    saveSettings({ ...loadSettings(), ownedPacks: ['dwl'] });
+    renderWizard('/new?mode=campaign');
+
+    expect(within(screen.getByRole('group', { name: 'Campaign' })).queryByRole('radio')).toBeNull();
+    expect(screen.getByRole('link', { name: 'collection' }).getAttribute('href')).toBe(
+      '/settings/collection',
+    );
+    expect(screen.getByRole('button', { name: 'Next: Investigators' })).toHaveProperty(
+      'disabled',
+      true,
+    );
   });
 
   it('offers both entry points without a mode', () => {

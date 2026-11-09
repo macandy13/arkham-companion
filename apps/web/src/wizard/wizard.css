@@ -139,16 +139,9 @@
 }
 
 #wizard > fieldset[data-covers] > label > svg {
-  display: block;
   width: calc(100% + 2 * var(--space-3));
   height: var(--cover-art-height);
   margin: 0 calc(-1 * var(--space-3)) var(--space-1);
-  border-bottom: var(--border-width) solid var(--color-paper-rim);
-  background: var(--card-art-pattern), var(--color-paper-surface);
-}
-
-#wizard > fieldset[data-covers] > label > svg > svg:not([data-picture]) > image {
-  visibility: hidden;
 }
 
 #wizard > fieldset[data-covers] > label > small {

@@ -882,6 +882,8 @@ export const appTexts = {
     failed: 'Das Szenario ließ sich nicht aus dem Kampagnenprotokoll aufbauen.',
   },
   wizard: {
+    noneOwned:
+      'Keine Packung in deiner <collection>Sammlung</collection> enthält eines, das die App schon spielen kann.',
     scenarioCount_one: '{{count}} Szenario',
     scenarioCount_other: '{{count}} Szenarien',
     standalone: 'Einzelszenario',

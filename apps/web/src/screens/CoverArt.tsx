@@ -13,7 +13,8 @@ const KEY_ART = { width: 1920, height: 1080 } as const;
  * `scenarioId`, the same crop the play screen's agenda shows. Each picture comes from the web on
  * the device and shows once it has loaded (`data-picture`), so the agenda art stands in while the
  * key art loads or when it can't (offline, where the service worker still has the agenda's), and
- * the band stays plain paper while neither has. Decoration only.
+ * the band stays plain paper while neither has. Decoration only; `data-cover-art` takes the band's
+ * look from base.css, and each place sets its size.
  */
 export function CoverArt({
   scenarioId,
@@ -32,7 +33,7 @@ export function CoverArt({
   const keyArtShown = keyArt !== undefined && loadedKeyArt === keyArt;
   const shown = (isShown: boolean) => (isShown ? 'shown' : undefined);
   return (
-    <svg aria-hidden="true" data-picture={shown(keyArtShown || !!picture?.shown)}>
+    <svg aria-hidden="true" data-cover-art="" data-picture={shown(keyArtShown || !!picture?.shown)}>
       <svg
         width="100%"
         height="100%"
