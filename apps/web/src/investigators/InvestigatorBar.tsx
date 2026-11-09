@@ -532,7 +532,9 @@ function Counters({
   // Not while the players adjust the board, whose steppers are out, nor once they left the game.
   const bubbleFor = (kind: SteppedKind) =>
     off || adjusting ? {} : { onDoubleTap: (anchor: Element) => setOpen({ kind, anchor }) };
-  const shown = open && !off && !adjusting ? bubbles[open.kind] : undefined;
+  // Kept open while its own step is queued (`busy`), its buttons off, so it doesn't flicker.
+  const shown =
+    open && investigator.status === 'active' && !adjusting ? bubbles[open.kind] : undefined;
   return (
     <>
       <dl>

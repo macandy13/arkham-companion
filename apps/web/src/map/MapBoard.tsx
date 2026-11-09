@@ -276,9 +276,9 @@ function MapDrawing({
   const detailsLocation = map.locations.find(({ id }) => id === detailsFor);
   // A step of play, so not while one is queued, while picking a location or adjusting the board.
   const stepping = !busy && !adjusting && !onPick;
-  const bubbleLocation = stepping
-    ? map.locations.find(({ id }) => id === bubble?.location)
-    : undefined;
+  // Kept open while its own step is queued, its buttons off, so it doesn't flicker on each tap.
+  const bubbleLocation =
+    adjusting || onPick ? undefined : map.locations.find(({ id }) => id === bubble?.location);
   const draggable = (piece: TilePiece) =>
     !busy && !adjusting && ('investigator' in piece ? piece.investigator.id === mover?.id : true);
   const { width, height } = drawingSize(Object.values(cells));
@@ -372,6 +372,7 @@ function MapDrawing({
           location={bubbleLocation}
           anchor={bubble.anchor}
           actions={actions}
+          busy={busy}
           onClose={() => setBubble(undefined)}
         />
       )}
