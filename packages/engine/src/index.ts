@@ -125,7 +125,7 @@ export { checkInvariants } from './invariants';
 export { PHASE_OF_STEP, PHASE_STEP_TITLES } from './phases';
 export { BASE_ACTIONS_PER_TURN } from './turns';
 export { formatBoard } from './format_board';
-export { victoryPoints } from './victory';
+export { inVictoryDisplay, victoryPoints } from './victory';
 export {
   advanceAct,
   afterDiscoveringClues,
@@ -210,6 +210,7 @@ export {
   advanceBySpendingCluesAtRoundEnd,
   spendCluesAsGroup,
   drawCards,
+  drawBeneathYourLocation,
   drawFromScenarioDeck,
   searchDeck,
   spendClues,

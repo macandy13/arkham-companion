@@ -1,10 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import {
+  blankAct,
   blankEnemy,
   blankLocation,
+  inVictoryDisplay,
   instanceId,
   investigatorId,
   newGame,
+  trait,
   victoryPoints,
 } from './index';
 
@@ -54,5 +57,37 @@ describe('victoryPoints', () => {
       .start();
 
     expect(victoryPoints(context, state)).toBe(0);
+  });
+});
+
+describe('inVictoryDisplay', () => {
+  const elite = trait('Elite');
+  const act = instanceId('act');
+  const eliteSuspect = blankEnemy('elite_suspect', { traits: [elite] });
+  /** Alice in the study; one Elite suspect is in the victory display. */
+  const table = newGame()
+    .withAct(act, blankAct('act'))
+    .withLocation(study, blankLocation('study'))
+    .withInvestigator(alice, { locationId: study })
+    .withCard(instanceId('defeated_suspect'), eliteSuspect, victoryDisplay);
+
+  it.each([
+    { beneathAct: 'a face-up suspect', faceUp: true, count: 2 },
+    { beneathAct: 'a facedown suspect', faceUp: false, count: 1 },
+  ])('counts $count Elite cards with $beneathAct beneath the act', ({ faceUp, count }) => {
+    const { context, state } = table
+      .withCard(
+        instanceId('questioned_suspect'),
+        eliteSuspect,
+        { kind: 'beneath', hostId: act },
+        {
+          faceUp,
+        },
+      )
+      .start();
+
+    expect(inVictoryDisplay(context, state, { trait: elite, beneathAct: true })).toHaveLength(
+      count,
+    );
   });
 });

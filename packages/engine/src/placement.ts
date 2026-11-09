@@ -31,7 +31,8 @@ export function validateZone(refs: ZoneRefs, cardId: InstanceId, zone: Zone): vo
       }
       return;
     case 'atLocation':
-    case 'attachedTo': {
+    case 'attachedTo':
+    case 'beneath': {
       const hostId = zone.kind === 'atLocation' ? zone.locationId : zone.hostId;
       // Follow the host chain; reaching the moved card again would be a cycle.
       const seen = new Set<InstanceId>();
@@ -50,10 +51,10 @@ export function validateZone(refs: ZoneRefs, cardId: InstanceId, zone: Zone): vo
   }
 }
 
-/** The card hosting a card in `zone`, if any (enemy at a location, attachment). */
+/** The card hosting a card in `zone`, if any (enemy at a location, attachment, card beneath). */
 function hostOf(zone: Zone): InstanceId | undefined {
   if (zone.kind === 'atLocation') return zone.locationId;
-  if (zone.kind === 'attachedTo') return zone.hostId;
+  if (zone.kind === 'attachedTo' || zone.kind === 'beneath') return zone.hostId;
   return undefined;
 }
 

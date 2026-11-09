@@ -1,5 +1,6 @@
 import { cardStats, type CardStats, type EngineContext } from './cards';
 import type {
+  DrawBeneath,
   DrawEncounter,
   DrawFromScenarioDeck,
   EncounterMatch,
@@ -144,6 +145,26 @@ export function handleDrawFromScenarioDeck(
   const [top] = cardsInZone(state, scenarioDeck(cmd.deck));
   if (top === undefined) throw new CommandRejected({ code: 'scenarioDeckEmpty', deck: cmd.deck });
   return spawnEvents(ctx, state, top, { investigatorId: investigator.id });
+}
+
+/** `DrawBeneath`: the facedown card beneath the investigator's location, turned up and spawned. */
+export function handleDrawBeneath(ctx: EngineContext, state: GameState, cmd: DrawBeneath): Event[] {
+  const investigator = activeInvestigator(state, cmd.investigatorId);
+  const { locationId } = investigator;
+  if (locationId === undefined)
+    throw new CommandRejected({
+      code: 'investigatorHasNoLocation',
+      investigatorId: investigator.id,
+    });
+  const facedown = cardsInZone(state, { kind: 'beneath', hostId: locationId }).find(
+    (id) => !requireCard(state.cards, id).faceUp,
+  );
+  if (facedown === undefined) throw new CommandRejected({ code: 'nothingBeneath', locationId });
+  const flipped: CardFlipped = { type: 'CardFlipped', cardId: facedown, faceUp: true };
+  return [
+    flipped,
+    ...spawnEvents(ctx, replay([flipped], state), facedown, { investigatorId: investigator.id }),
+  ];
 }
 
 /** `FromSetAside`: moves one set-aside copy of each code to `to`. */

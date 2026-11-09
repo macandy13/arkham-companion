@@ -71,6 +71,7 @@ export type Command =
   | EngageReadyEnemies
   | SpawnEnemy
   | DrawFromScenarioDeck
+  | DrawBeneath
   | EngageEnemy
   | DisengageEnemy
   | DamageEnemy
@@ -728,6 +729,18 @@ export interface DrawFromScenarioDeck {
   type: 'DrawFromScenarioDeck';
   investigatorId: InvestigatorId;
   deck: ScenarioDeck;
+}
+
+/**
+ * "Draw the facedown card beneath your location" (Augurs of Flame): `investigatorId` draws the
+ * facedown card beneath the location they are at, turns it face up, and it spawns like
+ * `SpawnEnemy` with them as the drawing investigator (Smoke and Mirrors deals only enemies there).
+ * Rejected when no facedown card is beneath it (`nothingBeneath`). Produces `CardFlipped`, then
+ * `SpawnEnemy`'s events.
+ */
+export interface DrawBeneath {
+  type: 'DrawBeneath';
+  investigatorId: InvestigatorId;
 }
 
 /**

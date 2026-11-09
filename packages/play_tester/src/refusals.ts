@@ -88,6 +88,8 @@ const REFUSAL_KINDS: Readonly<Record<RejectionCode, RefusalKind>> = {
   unexpectedResolution: 'never',
   noGroupCost: 'never',
   scenarioDeckEmpty: 'never',
+  // The act's action is offered wherever the investigator is; a location with nothing beneath refuses it.
+  nothingBeneath: 'expected',
   currentStageCard: 'never',
   notAnEnemy: 'never',
   enemyAlreadyInPlay: 'never',

@@ -27,6 +27,13 @@ The Midnight Masks' Cultist deck is a deck of its own, out of play:
 - "Draw the top card of the Cultist deck" puts that enemy into play like a drawn enemy: it [spawns](../spawn-and-engagement.md) by its spawn instruction, else engaged with the drawer.
 - With the deck empty the act's action can't change the game state, so it can't be taken and its clues aren't spent (an ability can be initiated only if its effect could change the game state, [Abilities](https://arkhamdb.com/rules#Abilities)); the engine refuses the action as a whole, so nobody pays, though it still offers the action.
 
+## The card beneath your location
+
+"Draw the facedown card beneath your location" (Augurs of Flame, Smoke and Mirrors act 1):
+
+- The card is turned face up and [spawns](../spawn-and-engagement.md) like a drawn enemy: by its spawn instruction, else engaged with the drawer; an aloof one stays unengaged at the location.
+- With no facedown card there the action can't change the game state, so it isn't taken and its clues aren't spent, as with an empty Cultist deck above.
+
 ## Discarding until a card turns up
 
 "Discard cards from the top until a Ghoul enemy is discarded, draw it" with no such card left:

@@ -169,9 +169,10 @@ export type TimingWindow =
   | { kind: 'investigatorEntered'; location: CardCode }
   /**
    * A card entered the victory display (`CardMoved`, or `EnemyDefeated` for an enemy with
-   * victory): an objective of the current agenda or act
+   * victory) or was placed beneath the current act: an objective of the current agenda or act
    * on what the display holds ("If there are 6 unique [[Cultist]] enemies in the victory display,
-   * advance"), opened for both, naming no investigator; a `victoryDisplayHolds` condition counts.
+   * advance"), opened for both, naming no investigator; a `victoryDisplayHolds` condition counts,
+   * the cards beneath the act too when its filter says so (`VictoryDisplayFilter.beneathAct`).
    */
   | { kind: 'addedToVictoryDisplay' }
   /**
@@ -354,6 +355,7 @@ export type AbilityCommand =
           | 'ShuffleEncounterDeck'
           | 'DrawEncounter'
           | 'DrawFromScenarioDeck'
+          | 'DrawBeneath'
           | 'DefeatInvestigator'
           | 'Resign'
           | 'EndScenario';
@@ -446,11 +448,13 @@ export type AbilityCondition =
 /**
  * The cards a `victoryDisplayHolds` condition counts: those with `trait` and, if `unique`, only
  * unique ones. The trait stands in for "[[Cultist]] enemies": in Night of the Zealot only enemies
- * carry it.
+ * carry it, as only enemies carry [[Elite]] in Smoke and Mirrors. With `beneathAct` the cards
+ * beneath the current act count too ("in the victory display and/or under the act").
  */
 export interface VictoryDisplayFilter {
   trait: Trait;
   unique?: true;
+  beneathAct?: true;
 }
 
 /** Bounds on a value, both included; at least one is given, so the range always says something. */
@@ -611,7 +615,9 @@ export function windowsOpenedBy(
     case 'ActAdvanced':
       return [{ window: { kind: 'advanced' }, cardId: event.cardId }];
     case 'CardMoved':
-      return event.to.kind === 'victoryDisplay' ? addedToVictoryDisplay(state) : [];
+      return event.to.kind === 'victoryDisplay' || isBeneathAct(state, event.to)
+        ? addedToVictoryDisplay(state)
+        : [];
     case 'TokensChanged':
       if (event.delta <= 0) return [];
       return [{ window: { kind: 'tokensPlaced', token: event.token }, cardId: event.cardId }];
@@ -646,6 +652,11 @@ export function windowsOpenedBy(
 function objectiveCards(state: GameState): InstanceId[] {
   // One card that is act and agenda at once (`BecomeActAndAgenda`) fulfils its objective once.
   return unique([state.agenda.current, state.act.current].filter((cardId) => cardId !== undefined));
+}
+
+/** Whether `zone` is beneath the current act, which some objectives count with the victory display. */
+function isBeneathAct(state: GameState, zone: Zone): boolean {
+  return zone.kind === 'beneath' && zone.hostId === state.act.current;
 }
 
 function addedToVictoryDisplay(state: GameState): OpenedWindow[] {
@@ -1499,6 +1510,13 @@ export function drawFromScenarioDeck(
   who: RelativeInvestigator = { ref: 'windowInvestigator' },
 ): AbilityEffect {
   return { type: 'DrawFromScenarioDeck', investigatorId: who, deck };
+}
+
+/** "Draw the facedown card beneath your location" (Augurs of Flame): `DrawBeneath`. */
+export function drawBeneathYourLocation(
+  who: RelativeInvestigator = { ref: 'windowInvestigator' },
+): AbilityEffect {
+  return { type: 'DrawBeneath', investigatorId: who };
 }
 
 /** "Draw N cards" (Your House, Southside's Historical Society). */
