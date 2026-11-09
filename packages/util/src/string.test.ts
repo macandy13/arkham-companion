@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   camelCaseToWords,
+  commonWordPrefix,
   escapeRegExp,
   numberedDuplicates,
   sentences,
@@ -75,5 +76,36 @@ describe('numberedDuplicates', () => {
     { name: 'keeps an empty list', texts: [], expected: [] },
   ])('$name', ({ texts, expected }) => {
     expect(numberedDuplicates(texts)).toEqual(expected);
+  });
+});
+
+describe('commonWordPrefix', () => {
+  it.each([
+    {
+      name: 'keeps the words both start with',
+      a: 'Edge of the Earth Campaign Expansion',
+      b: 'Edge of the Earth Investigator Expansion',
+      expected: 'Edge of the Earth',
+    },
+    {
+      name: 'keeps all of a text the other starts with',
+      a: 'The Dunwich Legacy',
+      b: 'The Dunwich Legacy Investigator Expansion',
+      expected: 'The Dunwich Legacy',
+    },
+    {
+      name: 'gives nothing when the first words differ',
+      a: 'Core Set',
+      b: 'Revised Core Set',
+      expected: '',
+    },
+    {
+      name: 'compares whole words, not letters',
+      a: 'Return to Dunwich',
+      b: 'Return tomorrow',
+      expected: 'Return',
+    },
+  ])('$name', ({ a, b, expected }) => {
+    expect(commonWordPrefix(a, b)).toBe(expected);
   });
 });

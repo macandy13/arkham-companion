@@ -34,3 +34,19 @@ export function numberedDuplicates(texts: readonly string[]): string[] {
     return `${text} ${number}`;
   });
 }
+
+/**
+ * The words `a` and `b` both start with, joined by single spaces (`'Edge of the Earth Campaign
+ * Expansion'` and `'Edge of the Earth Investigator Expansion'` give `'Edge of the Earth'`); empty
+ * when their first words differ. Words are split at whitespace and compared exactly.
+ */
+export function commonWordPrefix(a: string, b: string): string {
+  const left = a.split(/\s+/).filter((word) => word !== '');
+  const right = b.split(/\s+/).filter((word) => word !== '');
+  const shared: string[] = [];
+  for (const [i, word] of left.entries()) {
+    if (right[i] !== word) break;
+    shared.push(word);
+  }
+  return shared.join(' ');
+}
