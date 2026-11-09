@@ -99,6 +99,7 @@ export type Command =
   | AdjustActions
   | ResolveEnemyAttack
   | DealEnemyAttack
+  | EnemyAttacks
   | Investigate
   | Fight
   | Evade;
@@ -346,7 +347,7 @@ export interface CommandSource {
 /**
  * A command a card can ask for: one on the players' own cards (`PlayerCardCommand`), or one also
  * sent without a card (by the players or a rule step) that refuses when it has nothing to do (`AdjustActions`, `EndTurn`,
- * `DiscoverClues`, `RemoveConnection`, `ShuffleInto`). The ability step that resolves it stamps its `source` (`withSource`), as does
+ * `DiscoverClues`, `RemoveConnection`, `ShuffleInto`, `EngageEnemy`). The ability step that resolves it stamps its `source` (`withSource`), as does
  * an action's hand card cost. Without one it is the players' own or a rule step's (the upkeep
  * draw); the play screen relies on that to leave it out of the "Do this by hand" notice
  * (`skippedEffects`). With one, a command that the players' version refuses for having nothing
@@ -780,9 +781,11 @@ export interface SpawnEnemy {
 /**
  * Engages an enemy in play with an active investigator at its location (an
  * unengaged enemy must be at the investigator's location; an engaged one
- * switches investigator). Produces `EnemyEngaged`.
+ * switches investigator). Asked by a card ("it engages you"), it takes the enemy from any
+ * location and does nothing for a massive enemy or one engaged with the investigator already
+ * (`AskedByCard`). Produces `EnemyEngaged`.
  */
-export interface EngageEnemy extends ActionCommand {
+export interface EngageEnemy extends ActionCommand, AskedByCard {
   type: 'EngageEnemy';
   enemyId: InstanceId;
   investigatorId: InvestigatorId;
@@ -1212,6 +1215,20 @@ export interface DealEnemyAttack {
   investigatorId: InvestigatorId;
   damage: number;
   horror: number;
+}
+
+/**
+ * A card says the enemy attacks the investigator ("it attacks you", "it attacks each investigator
+ * at its location"). Asks the investigator a `forcedAttackDecision` (`cardAttack:<enemy>:<investigator>`)
+ * whose `attack` option deals the printed damage and horror, which the players may lower for what
+ * their assets soak (`DealEnemyAttack`), and whose `skip` is a card that cancels the attack. The
+ * enemy attacks ready or exhausted and stays as it is. Nothing for an enemy not on the table or an
+ * investigator no longer active. Produces `DecisionRequested`.
+ */
+export interface EnemyAttacks {
+  type: 'EnemyAttacks';
+  enemyId: InstanceId;
+  investigatorId: InvestigatorId;
 }
 
 /**

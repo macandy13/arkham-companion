@@ -34,6 +34,7 @@ const QUESTIONS: Readonly<Record<string, (subject: string) => string>> = {
   'decision.attackOfOpportunity': (subject) => `Attack of opportunity by ${subject}:`,
   'decision.retaliate': (subject) => `${subject} retaliates:`,
   'decision.alert': (subject) => `${subject} attacks after the failed evasion:`,
+  'decision.cardAttack': (subject) => `${subject} attacks:`,
   'decision.enemyAttack': (subject) => `${subject} attacks:`,
   'decision.spendCluesAtRoundEnd': () => 'The round ends: spend the clues to advance the act?',
 };

@@ -15,7 +15,7 @@ import type {
 import { chooseLocation, engageEvents } from './engagement';
 import type { EnemyDefeated, EnemyDisengaged, EnemyEngaged, Event, ExhaustChanged } from './events';
 import { enemyHealth, enemyOf, isEngagedWith, isEnemyOnTable, locationOf } from './enemies';
-import { activeInvestigator } from './investigators';
+import { activeInvestigator, requireInvestigator } from './investigators';
 import type { InstanceId } from './ids';
 import { hasKeyword } from './keywords';
 import { moveCardEvent } from './placement';
@@ -28,12 +28,14 @@ import { encounterDiscard, victoryDisplay } from './zone';
  * `EngageEnemy`: the enemy engages the investigator, who must be at its
  * location. A massive enemy is rejected rather than ignored, so the UI can
  * explain that it already counts as engaged with everyone at its location.
+ * A card's "engages you" does what it can instead (`cardEngagement`).
  */
 export function handleEngageEnemy(
   ctx: EngineContext,
   state: GameState,
   cmd: EngageEnemy,
 ): EnemyEngaged[] {
+  if (cmd.source !== undefined) return cardEngagement(ctx, state, cmd);
   const { enemy, stats } = onTableEnemyOf(ctx, state, cmd.enemyId);
   if (hasKeyword(stats, 'massive'))
     throw new CommandRejected({ code: 'massiveNotEngageable', cardId: enemy.id });
@@ -51,6 +53,27 @@ export function handleEngageEnemy(
       investigatorId: investigator.id,
       locationId: enemyLocation,
     });
+  return [{ type: 'EnemyEngaged', enemyId: enemy.id, investigatorId: investigator.id }];
+}
+
+/**
+ * "[It] engages you" from a card (`EngageEnemy` with a `source`): the enemy goes to the
+ * investigator's threat area from wherever it is, so it ends up at their location without moving
+ * (our reading of Rules Reference, "Enemy Engagement"; a card that means a move says "moves to …
+ * and engages you"). A massive enemy never enters a threat area, and an enemy engaged with the
+ * investigator already, one that has left play or an investigator no longer active leave
+ * nothing to do, so all of them change nothing.
+ */
+function cardEngagement(ctx: EngineContext, state: GameState, cmd: EngageEnemy): EnemyEngaged[] {
+  const { enemy, stats } = enemyOf(ctx, state, cmd.enemyId);
+  const investigator = requireInvestigator(state, cmd.investigatorId);
+  if (
+    !isEnemyOnTable(enemy) ||
+    investigator.status !== 'active' ||
+    hasKeyword(stats, 'massive') ||
+    isEngagedWith(enemy, investigator)
+  )
+    return [];
   return [{ type: 'EnemyEngaged', enemyId: enemy.id, investigatorId: investigator.id }];
 }
 

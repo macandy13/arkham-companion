@@ -344,6 +344,8 @@ export type AbilityCommand =
           | 'DefeatEnemy'
           | 'MoveEnemyTowards'
           | 'DisengageEnemy'
+          | 'EnemyAttacks'
+          | 'EngageEnemy'
           | 'EngageReadyEnemies'
           | 'ReadyEnemy'
           | 'ExhaustEnemy'
@@ -1480,6 +1482,7 @@ function withSource<C extends { readonly type: string }>(command: C, source: Com
     case 'DiscoverClues':
     case 'RemoveConnection':
     case 'ShuffleInto':
+    case 'EngageEnemy':
       return { ...command, source };
     case 'RequestDecision': {
       // Narrowing on `type` doesn't reach a generic `C`; the type says it is a `RequestDecision`.
@@ -1850,6 +1853,29 @@ export function exhaustEnemy(enemy: RelativeCard): AbilityEffect {
  */
 export function defeatEnemy(enemy: RelativeCard): AbilityEffect {
   return { type: 'DefeatEnemy', enemyId: enemy };
+}
+
+/**
+ * "It engages you" (`EngageEnemy`): from any location, into the investigator's threat area; a
+ * massive enemy or one engaged with them already stays as it is.
+ */
+export function engagesYou(
+  enemy: RelativeCard = { ref: 'self' },
+  who: RelativeInvestigator = { ref: 'windowInvestigator' },
+): AbilityEffect {
+  return { type: 'EngageEnemy', enemyId: enemy, investigatorId: who };
+}
+
+/**
+ * "It attacks you" (`EnemyAttacks`): the players confirm the printed damage and horror, less what
+ * their assets soak, or cancel the attack. "Readies and attacks each investigator at its location"
+ * is `readySelf()` followed by `enemyAttacks({ ref: 'self' }, eachInvestigatorAt(itsLocation()))`.
+ */
+export function enemyAttacks(
+  enemy: RelativeCard = { ref: 'self' },
+  who: RelativeInvestigator = { ref: 'windowInvestigator' },
+): AbilityEffect {
+  return { type: 'EnemyAttacks', enemyId: enemy, investigatorId: who };
 }
 
 /** The one copy of `code` in the game, for a scenario's unique cards (`{ ref: 'onlyCopy' }`). */

@@ -7,7 +7,7 @@ import type {
   CommandType,
   DrawEncounter,
 } from './commands';
-import { handleDealEnemyAttack } from './attacks_of_opportunity';
+import { handleDealEnemyAttack, handleEnemyAttacks } from './attacks_of_opportunity';
 import { handleRequestDecision, handleResolveDecision } from './decisions';
 import { agendaThresholdDecision } from './doom';
 import { readyEnemyEngagements } from './engagement';
@@ -315,6 +315,7 @@ const COMMAND_SPECS: CommandSpecs = {
         : [],
   },
   DealEnemyAttack: { handle: handleDealEnemyAttack },
+  EnemyAttacks: { handle: handleEnemyAttacks },
   Investigate: { handle: handleInvestigate, provokes: asAction },
   Fight: { handle: handleFight },
   Evade: { handle: handleEvade },

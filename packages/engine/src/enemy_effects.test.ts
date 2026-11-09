@@ -5,10 +5,14 @@ import {
   atLocation,
   blankEnemy,
   blankLocation,
+  cardCode,
   dealDamageTo,
   defeatEnemy,
   eachEnemy,
+  eachInvestigatorAt,
   encounterDiscard,
+  enemyAttacks,
+  engagesYou,
   engagedWith,
   exhaustEnemy,
   fixed,
@@ -16,14 +20,18 @@ import {
   investigatorId,
   itsLocation,
   newGame,
+  onlyCopy,
   trait,
   victoryDisplay,
+  type Command,
 } from './index';
-import { stateAfter } from '../test/utils';
+import { requireInvestigator } from './investigators';
+import { answer, investigatorOf, pendingIds, rejectionFrom, stateAfter } from '../test/utils';
 
 const hall = instanceId('hall');
 const attic = instanceId('attic');
 const alice = investigatorId('alice');
+const bob = investigatorId('bob');
 
 describe('card effects that deal damage to enemies', () => {
   const frail = instanceId('frail_monster');
@@ -125,4 +133,204 @@ describe('card effects that exhaust or defeat an enemy', () => {
       expect(after.cards[shade]?.zone).toEqual(zone);
     },
   );
+});
+
+describe('card effects that make an enemy attack', () => {
+  const ghoul = instanceId('ghoul');
+  const cellar = instanceId('cellar');
+  /** A ghoul that deals 1 damage and 2 horror, kept in the cellar, away from the investigators. */
+  const ghoulCard = blankEnemy('ghoul', { damage: 1, horror: 2 });
+  const aliceEntersAttic: Command = {
+    type: 'MoveInvestigator',
+    investigatorId: alice,
+    to: attic,
+    ignoreConnections: true,
+  };
+
+  it('asks alice to take the printed attack, lowered by what her assets soak', () => {
+    /** "After you enter the attic: the ghoul attacks you." */
+    const atticCard = blankLocation('attic', {
+      abilities: [afterEntering(enemyAttacks(onlyCopy(cardCode('ghoul'))))],
+    });
+    const { context, state } = newGame()
+      .withLocation(hall, blankLocation('hall'), { revealed: true })
+      .withLocation(attic, atticCard, { revealed: true })
+      .withInvestigator(alice, { locationId: hall })
+      .withLocation(cellar, blankLocation('cellar'), { revealed: true })
+      .withCard(ghoul, ghoulCard, atLocation(cellar))
+      .start();
+
+    const asked = stateAfter(context, state, aliceEntersAttic);
+    const attacked = stateAfter(context, asked, {
+      ...answer(`cardAttack:${ghoul}:${alice}`, 'attack'),
+      amounts: { damage: 1, horror: 1 },
+    });
+
+    expect(asked.pending[0]).toMatchObject({
+      prompt: 'decision.cardAttack',
+      options: [
+        { id: 'attack', amounts: { damage: { default: 1 }, horror: { default: 2 } } },
+        { id: 'skip', label: 'decision.attackCancelled' },
+      ],
+    });
+    expect(investigatorOf(attacked, alice)).toMatchObject({
+      health: { damage: 1 },
+      sanity: { horror: 1 },
+    });
+    expect(attacked.cards[ghoul]).toMatchObject({ exhausted: false, zone: atLocation(cellar) });
+  });
+
+  it('lets alice cancel the attack', () => {
+    /** "After you enter the attic: the ghoul attacks you." */
+    const atticCard = blankLocation('attic', {
+      abilities: [afterEntering(enemyAttacks(onlyCopy(cardCode('ghoul'))))],
+    });
+    const { context, state } = newGame()
+      .withLocation(hall, blankLocation('hall'), { revealed: true })
+      .withLocation(attic, atticCard, { revealed: true })
+      .withInvestigator(alice, { locationId: hall })
+      .withLocation(cellar, blankLocation('cellar'), { revealed: true })
+      .withCard(ghoul, ghoulCard, atLocation(cellar))
+      .start();
+    const asked = stateAfter(context, state, aliceEntersAttic);
+
+    const cancelled = stateAfter(context, asked, answer(`cardAttack:${ghoul}:${alice}`, 'skip'));
+
+    expect(investigatorOf(cancelled, alice)).toMatchObject({
+      health: { damage: 0 },
+      sanity: { horror: 0 },
+    });
+    expect(cancelled.pending).toEqual([]);
+  });
+
+  it('asks each investigator in the attic in turn, when the ghoul attacks each of them', () => {
+    /** "After you enter the attic: the ghoul attacks each investigator in the attic." */
+    const atticCard = blankLocation('attic', {
+      abilities: [
+        afterEntering(
+          enemyAttacks(
+            onlyCopy(cardCode('ghoul')),
+            eachInvestigatorAt(onlyCopy(cardCode('attic'))),
+          ),
+        ),
+      ],
+    });
+    const { context, state } = newGame()
+      .withLocation(hall, blankLocation('hall'), { revealed: true })
+      .withLocation(attic, atticCard, { revealed: true })
+      .withInvestigator(alice, { locationId: hall })
+      .withInvestigator(bob, { locationId: attic })
+      .withLocation(cellar, blankLocation('cellar'), { revealed: true })
+      .withCard(ghoul, ghoulCard, atLocation(cellar))
+      .start();
+
+    const asked = stateAfter(context, state, aliceEntersAttic);
+    const aliceTookIt = stateAfter(
+      context,
+      asked,
+      answer(`cardAttack:${ghoul}:${alice}`, 'attack'),
+    );
+
+    expect(pendingIds(asked)).toEqual([`cardAttack:${ghoul}:${alice}`]);
+    expect(pendingIds(aliceTookIt)).toEqual([`cardAttack:${ghoul}:${bob}`]);
+  });
+
+  it('asks nothing when the ghoul has left play', () => {
+    /** "After you enter the attic: the ghoul attacks you." */
+    const atticCard = blankLocation('attic', {
+      abilities: [afterEntering(enemyAttacks(onlyCopy(cardCode('ghoul'))))],
+    });
+    const { context, state } = newGame()
+      .withLocation(hall, blankLocation('hall'), { revealed: true })
+      .withLocation(attic, atticCard, { revealed: true })
+      .withInvestigator(alice, { locationId: hall })
+      .withCard(ghoul, ghoulCard, encounterDiscard)
+      .start();
+
+    const after = stateAfter(context, state, aliceEntersAttic);
+
+    expect(requireInvestigator(after, alice)).toMatchObject({ locationId: attic });
+    expect(after.pending).toEqual([]);
+  });
+});
+
+describe('a card effect that makes an enemy engage you', () => {
+  const ghoul = instanceId('ghoul');
+  const cellar = instanceId('cellar');
+  /** "After you enter the attic: the ghoul engages you." */
+  const atticCard = blankLocation('attic', {
+    abilities: [afterEntering(engagesYou(onlyCopy(cardCode('ghoul'))))],
+  });
+  const aliceEntersAttic: Command = {
+    type: 'MoveInvestigator',
+    investigatorId: alice,
+    to: attic,
+    ignoreConnections: true,
+  };
+
+  it.each([
+    { ghoulStarts: 'in the cellar', zone: atLocation(cellar), exhausted: false },
+    { ghoulStarts: 'exhausted in the cellar', zone: atLocation(cellar), exhausted: true },
+    { ghoulStarts: 'engaged with bob', zone: engagedWith(bob), exhausted: false },
+    { ghoulStarts: 'engaged with alice', zone: engagedWith(alice), exhausted: false },
+  ])('engages alice with the ghoul that starts $ghoulStarts', ({ zone, exhausted }) => {
+    const { context, state } = newGame()
+      .withLocation(hall, blankLocation('hall'), { revealed: true })
+      .withLocation(attic, atticCard, { revealed: true })
+      .withLocation(cellar, blankLocation('cellar'), { revealed: true })
+      .withInvestigator(alice, { locationId: hall })
+      .withInvestigator(bob, { locationId: cellar })
+      .withCard(ghoul, blankEnemy('ghoul'), zone)
+      .start();
+    const ghoulBefore = exhausted
+      ? stateAfter(context, state, { type: 'ExhaustEnemy', enemyId: ghoul })
+      : state;
+
+    const after = stateAfter(context, ghoulBefore, aliceEntersAttic);
+
+    expect(requireInvestigator(after, alice)).toMatchObject({ locationId: attic });
+    expect(after.cards[ghoul]?.zone).toEqual(engagedWith(alice));
+  });
+
+  it('leaves a massive ghoul where it is', () => {
+    const { context, state } = newGame()
+      .withLocation(hall, blankLocation('hall'), { revealed: true })
+      .withLocation(attic, atticCard, { revealed: true })
+      .withLocation(cellar, blankLocation('cellar'), { revealed: true })
+      .withInvestigator(alice, { locationId: hall })
+      .withCard(ghoul, blankEnemy('ghoul', { keywords: [{ name: 'massive' }] }), atLocation(cellar))
+      .start();
+
+    const after = stateAfter(context, state, aliceEntersAttic);
+
+    expect(requireInvestigator(after, alice)).toMatchObject({ locationId: attic });
+    expect(after.cards[ghoul]?.zone).toEqual(atLocation(cellar));
+  });
+
+  it('changes nothing when the ghoul has left play', () => {
+    const { context, state } = newGame()
+      .withLocation(hall, blankLocation('hall'), { revealed: true })
+      .withLocation(attic, atticCard, { revealed: true })
+      .withInvestigator(alice, { locationId: hall })
+      .withCard(ghoul, blankEnemy('ghoul'), encounterDiscard)
+      .start();
+
+    const after = stateAfter(context, state, aliceEntersAttic);
+
+    expect(requireInvestigator(after, alice)).toMatchObject({ locationId: attic });
+    expect(after.cards[ghoul]?.zone).toEqual(encounterDiscard);
+  });
+
+  it('keeps refusing the engage action on an enemy at another location', () => {
+    const { context, state } = newGame()
+      .withLocation(hall, blankLocation('hall'), { revealed: true })
+      .withLocation(cellar, blankLocation('cellar'), { revealed: true })
+      .withInvestigator(alice, { locationId: hall })
+      .withCard(ghoul, blankEnemy('ghoul'), atLocation(cellar))
+      .start();
+
+    expect(
+      rejectionFrom(context, state, { type: 'EngageEnemy', investigatorId: alice, enemyId: ghoul }),
+    ).toMatchObject({ code: 'investigatorNotAtLocation' });
+  });
 });

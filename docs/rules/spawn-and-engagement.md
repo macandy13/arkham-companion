@@ -18,5 +18,8 @@
 - A card effect that moves an enemy ("move it to the Hallway") needs no connection unless its text says "connecting location" (Elusive does).
   - An engaged enemy moves only with its investigator, so a plain effect must disengage it first (Elusive disengages, then moves), but a forced instruction is followed whatever the engagement: the enemy disengages and moves.
   - At the destination it engages by the rule above.
+- A card that says an enemy "engages you" puts it in your threat area even from another location: it ends up at your location without moving, so no connection is needed and nothing that triggers on a move fires (our reading of [Enemy Engagement](https://arkhamdb.com/rules#Enemy_Engagement); a card that means a move says "moves to … and engages you"). It works on exhausted and aloof enemies too.
+  - An enemy already engaged with you stays as it is; one engaged with another investigator leaves their threat area for yours ([Engage Action](https://arkhamdb.com/rules#Engage_Action)).
+  - A massive enemy never goes into a threat area, so "engages you" changes nothing for it, and one at another location stays there (our reading of [Massive](https://arkhamdb.com/rules#Massive)).
 - [Aloof](https://arkhamdb.com/rules#Aloof): never engages on its own and spawns unengaged. It can only be engaged by the engage action or a card, and can't be attacked while unengaged.
 - [Being at no location](https://arkhamdb.com/rules#Being_at_No_Location): enemies and investigators must always be at a location, and effects that would remove them from one are ignored.
