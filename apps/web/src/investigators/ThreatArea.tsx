@@ -8,6 +8,8 @@ import type {
   MapEnemyView,
 } from '@arkham/engine';
 import { useCardPicture } from '../catalog/cardImages';
+import { useDoubleTap } from '../screens/useDoubleTap';
+import { EnemyBubble } from '../enemies/EnemyBubble';
 import { EnemyDetails } from '../enemies/EnemyDetails';
 import { healthLeft } from '../enemies/enemyHealth';
 import { enemyConditions } from '../map/LocationTile';
@@ -129,7 +131,9 @@ export function SmallCard({
  * (`EnemyView.health` less `damage`), named for screen readers with that, its damage and whether
  * it is exhausted, as on the map; damage dealt plays its effect on the health left
  * (`useCountChange`). A tap on the card opens its details (`EnemyDetails`), with what
- * the players can do to it; the button lies over the whole card, which is too small for more.
+ * the players can do to it; the button lies over the whole card, which is too small for more. A
+ * double tap opens the − / + bubble of its damage and doom instead (`EnemyBubble`, M6.10), so a
+ * single tap opens the details only once no second one came (`useDoubleTap`).
  */
 function EnemyCard({
   board,
@@ -144,6 +148,8 @@ function EnemyCard({
 }) {
   const { t } = useTranslation();
   const [detailsOpen, setDetailsOpen] = useState(false);
+  const [bubbleAnchor, setBubbleAnchor] = useState<Element>();
+  const tap = useDoubleTap<HTMLButtonElement>(setBubbleAnchor, () => setDetailsOpen(true));
   const left = healthLeft(enemy);
   const change = useCountChange(left ?? 0);
   return (
@@ -168,8 +174,17 @@ function EnemyCard({
         type="button"
         aria-haspopup="dialog"
         aria-label={t('enemy.open', { name: enemy.name })}
-        onClick={() => setDetailsOpen(true)}
+        onClick={tap}
       />
+      {bubbleAnchor && (
+        <EnemyBubble
+          enemy={enemy}
+          anchor={bubbleAnchor}
+          actions={actions}
+          busy={busy}
+          onClose={() => setBubbleAnchor(undefined)}
+        />
+      )}
       {detailsOpen && (
         <EnemyDetails
           board={board}

@@ -380,6 +380,22 @@ test('the Hallway’s clue and doom bubble, opened by a double tap on its tile',
   ).toBeEnabled();
 });
 
+test('the agenda’s doom bubble, opened by a double tap on the agenda', async ({
+  page,
+  isMobile,
+}) => {
+  await resumeImportedGame(page, 'Roland Banks hurt', rolandHurtExport('Roland Banks hurt'));
+  const agenda = page.getByRole('region', { name: 'Agenda' });
+  // The phone's compact header opens its detail view on a tap first, where the card takes taps.
+  if (isMobile) await agenda.click();
+
+  await agenda.locator('[data-card="agenda"]').dblclick();
+
+  await expect(
+    page.getByRole('complementary', { name: /· Doom$/ }).getByRole('button', { name: 'Add doom' }),
+  ).toBeEnabled();
+});
+
 test('Roland Banks’ willpower test with the group’s own chaos bag, no draw button', async ({
   page,
 }) => {

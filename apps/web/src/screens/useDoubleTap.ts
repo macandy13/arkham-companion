@@ -22,17 +22,33 @@ export function useDoubleTap<E extends Element>(
   onDoubleTap: (element: E) => void,
   onTap?: () => void,
 ): (event: MouseEvent<E>) => void {
-  const last = useRef<number>(undefined);
+  const tapOn = useDoubleTapOn<true, E>(
+    (_, element) => onDoubleTap(element),
+    onTap && (() => onTap()),
+  );
+  return (event) => tapOn(true, event.currentTarget, event.timeStamp);
+}
+
+/**
+ * `useDoubleTap` for taps that come as a `key` (which piece, such as an enemy on the map), its
+ * `element` and the event's `timeStamp` rather than as a click, as the map's piece drags report
+ * them; two taps make a double tap only on the same key.
+ */
+export function useDoubleTapOn<K, E extends Element = Element>(
+  onDoubleTap: (key: K, element: E) => void,
+  onTap?: (key: K) => void,
+): (key: K, element: E, timeStamp: number) => void {
+  const last = useRef<{ key: K; at: number }>(undefined);
   const pending = useRef<ReturnType<typeof setTimeout>>(undefined);
   useEffect(() => () => clearTimeout(pending.current), []);
-  return (event) => {
+  return (key, element, timeStamp) => {
     clearTimeout(pending.current);
-    if (isDoubleTap(last.current, event.timeStamp)) {
+    if (last.current?.key === key && isDoubleTap(last.current.at, timeStamp)) {
       last.current = undefined;
-      onDoubleTap(event.currentTarget);
+      onDoubleTap(key, element);
       return;
     }
-    last.current = event.timeStamp;
-    if (onTap) pending.current = setTimeout(onTap, DOUBLE_TAP_MS);
+    last.current = { key, at: timeStamp };
+    if (onTap) pending.current = setTimeout(() => onTap(key), DOUBLE_TAP_MS);
   };
 }

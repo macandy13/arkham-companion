@@ -192,6 +192,21 @@ describe('GameScreen header', () => {
     });
   });
 
+  it('adds doom to the agenda from the bubble a double tap on it opens, without the zoom', async () => {
+    await renderTheGathering('game-screen-agenda-bubble-test');
+    const doom = within(screen.getByRole('region', { name: 'Agenda' })).getByRole('img', {
+      name: 'Doom 0 / 3',
+    });
+
+    fireEvent.click(doom);
+    fireEvent.click(doom);
+    const bubble = screen.getByRole('complementary', { name: "What's Going On?! · Doom" });
+    fireEvent.click(within(bubble).getByRole('button', { name: 'Add doom' }));
+
+    expect(await screen.findByRole('img', { name: 'Doom 1 / 3' })).toBeTruthy();
+    expect(screen.queryByRole('dialog')).toBeNull();
+  });
+
   it('shows the steppers only while adjusting, with "Done" and "Cancel" in place of "Next"', async () => {
     await renderTheGathering('game-screen-adjust-mode-test');
     const before = screen.queryByRole('button', { name: 'Add doom' });

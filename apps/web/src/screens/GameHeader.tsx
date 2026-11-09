@@ -23,6 +23,7 @@ import type { GameActions } from '../state/gameActions';
 import { ActionGroup, CardActions, cardActionsOn } from './ActionRow';
 import { CardDialog } from './CardDialog';
 import { ChaosBag } from './ChaosBag';
+import { CounterBubble, type BubbleCount } from './CounterBubble';
 import { BookFace } from './BookFace';
 import { ScenarioFace } from './ScenarioFace';
 import { useCluePayment } from './CluePaymentDialog';
@@ -30,6 +31,7 @@ import { DetailsDialog, useDecisionHost } from './DetailsDialog';
 import { Token } from './Token';
 import { TokenPool } from './TokenPool';
 import type { HeaderCardKind } from './useDetailView';
+import { useDoubleTap } from './useDoubleTap';
 
 /**
  * The play screen's header, laid out like the scenario's cards on the table, centred and each under
@@ -404,6 +406,23 @@ function AgendaStatus({
       </button>
     </>
   );
+  const counter = t('header.doomCounter');
+  // Not while the players adjust the board, whose steppers are out.
+  const bubble = adjusting
+    ? undefined
+    : {
+        title: t('header.counterBubble', { card: agenda.name, counter }),
+        counts: [
+          {
+            label: counter,
+            value: String(agenda.doom),
+            lower: { label: t('header.removeDoom'), disabled: blocked || agenda.doom === 0 },
+            raise: { label: t('header.addDoom'), disabled: blocked },
+            onStep: (delta: -1 | 1) =>
+              void (delta < 0 ? actions.removeDoom(1) : actions.placeDoom(1)),
+          },
+        ],
+      };
   const tokenAndPlate = (
     <>
       {doomToken}
@@ -420,6 +439,7 @@ function AgendaStatus({
         set={agenda.encounterSet}
         threshold={agenda.threshold}
         onOpen={full ? undefined : () => setZoomed(true)}
+        bubble={bubble}
       >
         {tokenAndPlate}
       </HeaderCard>
@@ -515,6 +535,23 @@ function ActStatus({
       </button>
     </>
   );
+  const counter = t('header.clueCounter');
+  // Only for clues lying on the act: the clues the investigators hold are on their cards.
+  const bubble =
+    advance?.kind === 'cluesOnAct' && !adjusting
+      ? {
+          title: t('header.counterBubble', { card: act.name, counter }),
+          counts: [
+            {
+              label: counter,
+              value: String(act.clues),
+              lower: { label: t('header.removeClue'), disabled: blocked || act.clues === 0 },
+              raise: { label: t('header.addClue'), disabled: blocked },
+              onStep: (delta: -1 | 1) => void actions.adjustActClues(delta),
+            },
+          ],
+        }
+      : undefined;
   /** The act's advance, for an act the investigators advance by spending clues (`primary` in its full card). */
   const advanceButton = (onAdvance?: () => void, primary = false) =>
     advance?.kind === 'spendClues' && (
@@ -553,6 +590,7 @@ function ActStatus({
         set={act.encounterSet}
         threshold={advance?.threshold}
         onOpen={full ? undefined : () => setZoomed(true)}
+        bubble={bubble}
       >
         {tokenAndPlate}
       </HeaderCard>
@@ -628,7 +666,9 @@ function HeaderSlot({
  * The landscape card of the agenda or act (`kind`) in the header: its face printing `threshold`,
  * its name and, as `children`, its token and plate. A tap on the card, or on its name, which is a button for the
  * keyboard, calls `onOpen`; a tap on the plate's buttons only does what the button says. Without
- * `onOpen` (the card shown full) the name is plain text and a tap does nothing.
+ * `onOpen` (the card shown full) the name is plain text and a tap does nothing. With `bubble` a
+ * double tap on the card opens the − / + bubble of its count (`CounterBubble`, M6.10),
+ * so a single tap opens the card only once no second one came (`useDoubleTap`).
  */
 function HeaderCard({
   kind,
@@ -637,6 +677,7 @@ function HeaderCard({
   set,
   threshold,
   onOpen,
+  bubble,
   children,
 }: {
   kind: 'agenda' | 'act';
@@ -645,32 +686,47 @@ function HeaderCard({
   set: EncounterSetCode | undefined;
   threshold: number | undefined;
   onOpen: (() => void) | undefined;
+  bubble?: { title: string; counts: readonly BubbleCount[] } | undefined;
   children: ReactNode;
 }) {
+  const [anchor, setAnchor] = useState<Element>();
+  const tap = useDoubleTap<HTMLDivElement>(setAnchor, onOpen);
+  const onCard = bubble ? tap : onOpen;
+  // Beside the face, not in it: React passes the bubble's clicks up through the portal.
   return (
-    <CardFace
-      kind={kind}
-      image={image}
-      set={set}
-      threshold={threshold}
-      onClick={
-        onOpen &&
-        ((event) => {
-          if (!(event.target instanceof Element && event.target.closest('button'))) onOpen();
-        })
-      }
-    >
-      <h2>
-        {onOpen ? (
-          <button type="button" onClick={onOpen}>
-            {name}
-          </button>
-        ) : (
-          name
-        )}
-      </h2>
-      {children}
-    </CardFace>
+    <>
+      <CardFace
+        kind={kind}
+        image={image}
+        set={set}
+        threshold={threshold}
+        onClick={
+          onCard &&
+          ((event) => {
+            if (!(event.target instanceof Element && event.target.closest('button'))) onCard(event);
+          })
+        }
+      >
+        <h2>
+          {onOpen ? (
+            <button type="button" onClick={onOpen}>
+              {name}
+            </button>
+          ) : (
+            name
+          )}
+        </h2>
+        {children}
+      </CardFace>
+      {anchor && bubble && (
+        <CounterBubble
+          anchor={anchor}
+          title={bubble.title}
+          counts={bubble.counts}
+          onClose={() => setAnchor(undefined)}
+        />
+      )}
+    </>
   );
 }
 

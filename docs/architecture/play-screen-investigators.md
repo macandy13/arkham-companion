@@ -25,6 +25,8 @@ Their [threat area](../../apps/web/src/investigators/ThreatArea.tsx) is a row of
 - treacheries
 - and engaged enemies, the enemies with their health left (`EnemyView.health`, scaled by the player count through `enemyHealth`).
 
+A double tap on an engaged enemy opens the − / + bubble of its damage and doom ([`EnemyBubble`](../../apps/web/src/enemies/EnemyBubble.tsx), M6.10: `damageEnemy` by rule, `healEnemy`, `adjustTokens`), the same as on the map; a single tap opens its details once no second tap came.
+
 Each is a small card face in the card theme's colours (`SmallCard`, frame in its card type's colour): an art strip over a name plate, the enemies' health left on the art's corner. The strip shows the card's picture (`SmallCardArt`, an `img` at the card's width enlarged by `--small-card-art-zoom`), slid up to where the type prints its art (`--small-card-*-art-y` in tokens.css, fractions of the scan's height), with the art pattern until it loads; in the card pictures theme the whole scan is the card and the plate gives way to its printed name.
 
 The threat area shows four cards (`THREAT_CARDS_SHOWN`); more scroll by whole cards with a swipe or its round arrows (CSS scroll snap). The row and its arrows are the shared [`CardStrip`](../../apps/web/src/screens/CardStrip.tsx), which the encounter dialog's pile uses too.
