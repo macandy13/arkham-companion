@@ -346,6 +346,21 @@ test('Roland Banks playing a card, 3 of his 5 resources tapped to pay it', async
   await expect(sheet.getByRole('button', { name: 'Play · pay 3' })).toBeEnabled();
 });
 
+test('Roland Banks’ health bubble, opened by a double tap on his heart', async ({ page }) => {
+  await resumeImportedGame(page, 'Roland Banks hurt', rolandHurtExport('Roland Banks hurt'));
+
+  await page
+    .getByRole('region', { name: 'Roland Banks' })
+    .getByRole('img', { name: '6/9' })
+    .dblclick();
+
+  await expect(
+    page
+      .getByRole('complementary', { name: 'Roland Banks · Health' })
+      .getByRole('button', { name: 'Heal damage' }),
+  ).toBeEnabled();
+});
+
 test('Roland Banks’ willpower test with the group’s own chaos bag, no draw button', async ({
   page,
 }) => {
