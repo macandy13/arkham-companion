@@ -34,6 +34,7 @@ A round is mythos → investigation → enemy → upkeep.
    - The enemy exhausts after its attack and any triggered abilities resolve.
    - A cancelled attack (Dodge) has no further consequences, but the enemy still exhausts ([Dodge FAQ](https://arkhamdb.com/card/01023)).
    - The app asks about all of the step's attacks at once and leaves their order, across investigators too, to the players at the table.
+   - An attack a card makes outside this step ("it attacks you") deals the enemy's printed damage and horror the same way, can go to assets and be cancelled, and counts as an enemy attack for "after it attacks you". It needs no engagement and doesn't exhaust the enemy unless the text says "as if it were the enemy phase" ([As if…](https://arkhamdb.com/rules#As_if) FAQ). It needs no ready enemy either unless the text says so (our reading). "Attacks each investigator at its location" attacks them one at a time; the lead investigator picks the order, which the app leaves to the table and asks in player order.
 3. The phase ends (3.4): "at the end of the enemy phase" forced abilities resolve.
 
 ## Upkeep

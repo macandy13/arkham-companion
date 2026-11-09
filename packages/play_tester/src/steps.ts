@@ -102,6 +102,8 @@ export type CardEffect =
   | { readonly kind: 'actions'; readonly delta: number }
   | { readonly kind: 'doomOnPlayerCards'; readonly delta: number }
   | { readonly kind: 'drawEncounterCard' }
+  /** Pays `resources` for the card (its cost, or what it spends); allowed while a decision is open. */
+  | { readonly kind: 'pay'; readonly resources: number }
   | { readonly kind: 'moveTo'; readonly location: CardName };
 
 /**
@@ -273,6 +275,8 @@ function cardEffectCommand(table: PlayTable, investigator: CardName, effect: Car
       };
     case 'resources':
       return { type: 'AdjustInvestigator', investigatorId, stat: 'resources', delta: effect.delta };
+    case 'pay':
+      return { type: 'SpendResources', investigatorId, amount: effect.resources };
     case 'doomOnPlayerCards':
       return {
         type: 'AdjustInvestigator',

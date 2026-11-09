@@ -41,7 +41,7 @@ describe('the deck bot', () => {
         investigator: 'alice',
         card: 'Holy Rosary',
         effects: [
-          { kind: 'resources', delta: -2 },
+          { kind: 'pay', resources: 2 },
           { kind: 'skillBoost', skill: 'willpower', delta: 1 },
         ],
       },
@@ -57,7 +57,7 @@ describe('the deck bot', () => {
       investigator: 'alice',
       card: 'Working a Hunch',
       effects: [
-        { kind: 'resources', delta: -2 },
+        { kind: 'pay', resources: 2 },
         { kind: 'discoverClues', amount: 1 },
       ],
     });
@@ -124,28 +124,34 @@ describe('the deck bot', () => {
     ]);
   });
 
-  it.each([
-    { token: '0', played: true },
-    { token: 'autoFail', played: false },
-  ] as const)(
-    'plays Lucky! to pass a fight it fails by 1, never on an auto-fail ($token)',
-    ({ token, played }) => {
-      const table = PlayTable.start(
-        game
-          .withChaosBag([token])
-          .withCard(ghoul, blankEnemy('ghoul', { fight: 4, health: fixed(3) }), engagedWith(alice)),
-      );
-      table.fight(alice, ghoul, { result: 'open' });
-      const bot = botWithHand('Lucky!');
+  /** A fight against a ghoul of fight 4 that alice, with combat 3 and Lucky! in hand, has opened. */
+  const fightWithLucky = (token: '0' | 'autoFail') => {
+    const table = PlayTable.start(
+      game
+        .withChaosBag([token])
+        .withCard(ghoul, blankEnemy('ghoul', { fight: 4, health: fixed(3) }), engagedWith(alice)),
+    );
+    table.fight(alice, ghoul, { result: 'open' });
+    return { table, bot: botWithHand('Lucky!') };
+  };
 
-      const answer = bot.step(table, random);
-      playStep(table, answer);
-      const next = bot.step(table, random);
+  it('pays for Lucky! to pass a fight it fails by 1, then passes the test', () => {
+    const { table, bot } = fightWithLucky('0');
 
-      expect(answer.verb === 'resolveTest' && answer.result === 'pass').toBe(played);
-      expect(next.verb === 'playerCard' && next.card === 'Lucky!').toBe(played);
-    },
-  );
+    const paid = bot.step(table, random);
+    playStep(table, paid);
+
+    expect([paid, bot.step(table, random)]).toMatchObject([
+      { verb: 'playerCard', card: 'Lucky!', effects: [{ kind: 'pay', resources: 1 }] },
+      { verb: 'resolveTest', result: 'pass' },
+    ]);
+  });
+
+  it('plays no Lucky! on an auto-fail', () => {
+    const { table, bot } = fightWithLucky('autoFail');
+
+    expect(bot.step(table, random)).toMatchObject({ verb: 'resolveTest', result: { failedBy: 4 } });
+  });
 
   it('plays the card that discovers clues before one that only gains resources', () => {
     const table = PlayTable.start(game);
@@ -193,24 +199,26 @@ describe('the deck bot', () => {
     },
   );
 
-  it('cancels an attack of opportunity with Dodge, then pays for it', () => {
+  it('pays for Dodge, then cancels the attack of opportunity with it', () => {
     const table = PlayTable.start(
       game.withCard(ghoul, blankEnemy('ghoul', { damage: 1 }), engagedWith(alice)),
     );
     playStep(table, { verb: 'takeResource', investigator: cardName('alice') });
     const bot = botWithHand('Dodge');
 
+    const paid = bot.step(table, random);
+    playStep(table, paid);
     const cancel = bot.step(table, random);
     playStep(table, cancel);
 
-    expect([cancel, bot.step(table, random)]).toEqual([
-      { verb: 'answer', about: ghoul, option: 'does not provoke' },
+    expect([paid, cancel]).toEqual([
       {
         verb: 'playerCard',
         investigator: 'alice',
         card: 'Dodge',
-        effects: [{ kind: 'resources', delta: -1 }],
+        effects: [{ kind: 'pay', resources: 1 }],
       },
+      { verb: 'answer', about: ghoul, option: 'does not provoke' },
     ]);
     expect(table.board.investigator(alice).damage).toBe(0);
   });

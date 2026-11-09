@@ -12,10 +12,12 @@ import type { CardInstance, Decision, DueAttack, GameState } from './state';
  *   (`attackOfOpportunityDecisions`).
  * - `retaliate`: a failed attack against the ready retaliate enemy (`keywordAttackCommands`).
  * - `alert`: a failed evade against the ready alert enemy (`keywordAttackCommands`).
+ * - `cardAttack`: a card that says the enemy attacks (`EnemyAttacks`), asked
+ *   `cardAttack:<enemy>:<investigator>`, since one card may attack each investigator at a location.
  *
  * None of them exhausts the enemy (`DealEnemyAttack`).
  */
-export type ForcedAttackKind = 'attackOfOpportunity' | 'retaliate' | 'alert';
+export type ForcedAttackKind = 'attackOfOpportunity' | 'retaliate' | 'alert' | 'cardAttack';
 
 /**
  * The way out of each kind, for what the engine cannot read: a card that
@@ -25,6 +27,7 @@ const SKIP_LABELS: Readonly<Record<ForcedAttackKind, string>> = {
   attackOfOpportunity: 'decision.doesNotProvoke',
   retaliate: 'decision.attackCancelled',
   alert: 'decision.attackCancelled',
+  cardAttack: 'decision.attackCancelled',
 };
 
 /**
@@ -41,7 +44,9 @@ export function forcedAttackDecision(
   investigatorId: InvestigatorId,
 ): Decision {
   return {
-    id: decisionId(`${kind}:${enemyId}`),
+    id: decisionId(
+      kind === 'cardAttack' ? `${kind}:${enemyId}:${investigatorId}` : `${kind}:${enemyId}`,
+    ),
     kind: 'confirm',
     subject: enemyId,
     prompt: forcedAttackPrompt(kind),

@@ -7,7 +7,7 @@ import type {
   CommandType,
   DrawEncounter,
 } from './commands';
-import { handleDealEnemyAttack } from './attacks_of_opportunity';
+import { handleDealEnemyAttack, handleEnemyAttacks } from './attacks_of_opportunity';
 import { handleRequestDecision, handleResolveDecision } from './decisions';
 import { agendaThresholdDecision } from './doom';
 import { readyEnemyEngagements } from './engagement';
@@ -47,6 +47,7 @@ import {
   deferToPlayers,
   handleSpendCluesAsGroup,
   handleGainResources,
+  handleSpendResources,
   handleHealInvestigator,
   handleDefeatInvestigator,
   handleDiscoverClues,
@@ -66,6 +67,7 @@ import {
   handleReleaseChaosToken,
   handleSealChaosToken,
   handlePlaceDoom,
+  handleRemoveDoom,
   handlePlaceTokens,
 } from './handle_scenario';
 import { handleStartScenario } from './handle_start_scenario';
@@ -209,6 +211,10 @@ const COMMAND_SPECS: CommandSpecs = {
     handle: (_ctx, state, command) => handleGainResources(state, command),
     provokes: asAction,
   },
+  SpendResources: {
+    handle: (_ctx, state, command) => handleSpendResources(state, command),
+    allowedWhilePending: true,
+  },
   DrawCards: { handle: deferToPlayers, provokes: asAction },
   SearchDeck: { handle: deferToPlayers },
   DiscardFromHand: { handle: deferToPlayers },
@@ -225,6 +231,7 @@ const COMMAND_SPECS: CommandSpecs = {
   DiscoverClues: { handle: handleDiscoverClues },
   PlaceClues: { handle: (_ctx, state, command) => handlePlaceClues(state, command) },
   PlaceDoom: { handle: (_ctx, state, command) => handlePlaceDoom(state, command) },
+  RemoveDoom: { handle: (_ctx, state, command) => handleRemoveDoom(state, command) },
   ChangeChaosBag: { handle: (_ctx, state, command) => handleChangeChaosBag(state, command) },
   SealChaosToken: { handle: (_ctx, state, command) => handleSealChaosToken(state, command) },
   ReleaseChaosToken: {
@@ -315,6 +322,7 @@ const COMMAND_SPECS: CommandSpecs = {
         : [],
   },
   DealEnemyAttack: { handle: handleDealEnemyAttack },
+  EnemyAttacks: { handle: handleEnemyAttacks },
   Investigate: { handle: handleInvestigate, provokes: asAction },
   Fight: { handle: handleFight },
   Evade: { handle: handleEvade },

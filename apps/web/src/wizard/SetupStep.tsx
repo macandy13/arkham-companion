@@ -1,6 +1,5 @@
 import { RELIANCES, type Difficulty } from '@arkham/engine';
 import { useTranslation } from 'react-i18next';
-import { campaignCatalog, scenarioCatalog } from '../scenarios/scenarioCatalog';
 import { DIFFICULTIES, type WizardChoices } from './wizardState';
 
 interface SetupStepProps {
@@ -9,30 +8,14 @@ interface SetupStepProps {
 }
 
 /**
- * First wizard step: which campaign (or, in a quick game, which scenario), the difficulty and how
- * much the players rely on the helpers.
+ * Second wizard step, after the scenario or campaign (`TargetCovers`): the difficulty and how much
+ * the players rely on the helpers.
  */
 export function SetupStep({ choices, onChange }: SetupStepProps) {
   const { t } = useTranslation();
-  const isCampaign = choices.mode === 'campaign';
-  const targets = isCampaign ? campaignCatalog : scenarioCatalog;
 
   return (
     <>
-      <fieldset>
-        <legend>{t(isCampaign ? 'wizard.campaign' : 'wizard.scenario')}</legend>
-        {targets.map((target) => (
-          <label key={target.id}>
-            <input
-              type="radio"
-              name="target"
-              checked={choices.targetId === target.id}
-              onChange={() => onChange({ targetId: target.id })}
-            />
-            {t(target.nameKey)}
-          </label>
-        ))}
-      </fieldset>
       <fieldset data-segmented>
         <legend>{t('wizard.difficulty')}</legend>
         {DIFFICULTIES.map((difficulty: Difficulty) => (

@@ -712,6 +712,7 @@ export const appTexts = {
     enemyAttack: '{{card}} attacks',
     retaliate: '{{card}} retaliates',
     alert: '{{card}} attacks after the failed evasion',
+    cardAttack: '{{card}} attacks',
     pass: 'Passed',
     fail: 'Failed',
     yes: 'Yes',
@@ -877,12 +878,19 @@ export const appTexts = {
     failed: 'The scenario could not be set up from the campaign log.',
   },
   wizard: {
+    noneOwned:
+      'None of the packs in your <collection>collection</collection> has one the app can play yet.',
+    scenarioCount_one: '{{count}} scenario',
+    scenarioCount_other: '{{count}} scenarios',
+    standalone: 'Standalone',
     campaign: 'Campaign',
     scenario: 'Scenario',
     difficulty: 'Difficulty',
     difficulties: { easy: 'Easy', standard: 'Standard', hard: 'Hard', expert: 'Expert' },
     stepOf: 'Step {{step}} of {{count}}',
     steps: {
+      scenario: 'Scenario',
+      campaign: 'Campaign',
       label: 'Steps',
       setup: 'Setup',
       investigators: 'Investigators',

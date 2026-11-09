@@ -192,7 +192,7 @@ sequenceDiagram
 
 Where this lives in `GameState` ([`state.ts`](../packages/engine/src/state.ts)):
 
-- `pending: Decision[]`: the open questions. Each option carries the commands it runs, so the answer is data; only a basic action's skill test works out its consequences when the answer arrives (`testKind`, so corrections made meanwhile count). While one is pending, only `ResolveDecision` and `ManualAdjust` are accepted (`allowedWhilePending`).
+- `pending: Decision[]`: the open questions. Each option carries the commands it runs, so the answer is data; only a basic action's skill test works out its consequences when the answer arrives (`testKind`, so corrections made meanwhile count). While one is pending, only `ResolveDecision`, `ManualAdjust` and `SpendResources` are accepted (`allowedWhilePending`).
 - `meta.queue: QueuedStep[]`: the rest of a resolution waiting for those answers, next first. The command that clears the last decision resumes it after its own steps.
 - A held action (`kind: 'action'`) is an action waiting for the attacks of opportunity it provoked. It runs once they are all answered, or is dropped (`ActionDropped`) if the investigator was defeated or the action became illegal meanwhile, so the answer stays valid.
 - `meta.steps: PhaseStep[]`: the automated steps left in the current phase (doom, encounter draws, hunters, attacks, upkeep). They are not queued: the players go on with the next `NextPhase`.

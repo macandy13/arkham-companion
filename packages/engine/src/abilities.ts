@@ -330,6 +330,7 @@ export type AbilityCommand =
           | 'DiscardAsset'
           | 'TakeDamageAndHorror'
           | 'PlaceDoom'
+          | 'RemoveDoom'
           | 'CheckDoomThreshold'
           | 'PlaceTokens'
           | 'SpendCluesAsGroup'
@@ -344,6 +345,8 @@ export type AbilityCommand =
           | 'DefeatEnemy'
           | 'MoveEnemyTowards'
           | 'DisengageEnemy'
+          | 'EnemyAttacks'
+          | 'EngageEnemy'
           | 'EngageReadyEnemies'
           | 'ReadyEnemy'
           | 'ExhaustEnemy'
@@ -1480,6 +1483,7 @@ function withSource<C extends { readonly type: string }>(command: C, source: Com
     case 'DiscoverClues':
     case 'RemoveConnection':
     case 'ShuffleInto':
+    case 'EngageEnemy':
       return { ...command, source };
     case 'RequestDecision': {
       // Narrowing on `type` doesn't reach a generic `C`; the type says it is a `RequestDecision`.
@@ -1798,6 +1802,21 @@ export function placeDoomOnSelf(amount: number): AbilityEffect {
   return { type: 'PlaceDoom', cardId: { ref: 'self' }, amount };
 }
 
+/**
+ * "Remove N doom from the current agenda" (`RemoveDoom`), or `'all'` of it; as much as there is.
+ */
+export function removeDoomFromAgenda(amount: number | 'all'): AbilityEffect {
+  return { type: 'RemoveDoom', amount };
+}
+
+/**
+ * "Remove all doom from it" or "remove 1 doom from each [[Cultist]] enemy" (`RemoveDoom`):
+ * `removeDoomFrom(eachEnemy({ trait: trait('Cultist') }), 1)`, as much as each card holds.
+ */
+export function removeDoomFrom(card: RelativeCard, amount: number | 'all'): AbilityEffect {
+  return { type: 'RemoveDoom', cardId: card, amount };
+}
+
 /** "Place N clues on this act": clues from the token pool on the card with the ability. */
 export function placeCluesOnSelf(amount: TokenAmount): AbilityEffect {
   return { type: 'PlaceTokens', cardId: { ref: 'self' }, token: 'clue', amount };
@@ -1850,6 +1869,29 @@ export function exhaustEnemy(enemy: RelativeCard): AbilityEffect {
  */
 export function defeatEnemy(enemy: RelativeCard): AbilityEffect {
   return { type: 'DefeatEnemy', enemyId: enemy };
+}
+
+/**
+ * "It engages you" (`EngageEnemy`): from any location, into the investigator's threat area; a
+ * massive enemy or one engaged with them already stays as it is.
+ */
+export function engagesYou(
+  enemy: RelativeCard = { ref: 'self' },
+  who: RelativeInvestigator = { ref: 'windowInvestigator' },
+): AbilityEffect {
+  return { type: 'EngageEnemy', enemyId: enemy, investigatorId: who };
+}
+
+/**
+ * "It attacks you" (`EnemyAttacks`): the players confirm the printed damage and horror, less what
+ * their assets soak, or cancel the attack. "Readies and attacks each investigator at its location"
+ * is `readySelf()` followed by `enemyAttacks({ ref: 'self' }, eachInvestigatorAt(itsLocation()))`.
+ */
+export function enemyAttacks(
+  enemy: RelativeCard = { ref: 'self' },
+  who: RelativeInvestigator = { ref: 'windowInvestigator' },
+): AbilityEffect {
+  return { type: 'EnemyAttacks', enemyId: enemy, investigatorId: who };
 }
 
 /** The one copy of `code` in the game, for a scenario's unique cards (`{ ref: 'onlyCopy' }`). */

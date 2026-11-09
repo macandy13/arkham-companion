@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
+  blankEnemy,
   blankInvestigator,
   blankLocation,
   bySkill,
   checkInvariants,
+  engagedWith,
   execute,
   instanceId,
   investigatorId,
@@ -287,6 +289,52 @@ describe('GainResources', () => {
     expect(
       rejectionFrom(context, state, { type: 'GainResources', investigatorId: alice, amount }),
     ).toMatchObject({ code: 'invalidTokenDelta' });
+  });
+});
+
+describe('SpendResources', () => {
+  const ghoul = instanceId('ghoul');
+  const { context, state } = hallCellarAttic
+    .withInvestigator(alice, { locationId: hall, resources: 2 })
+    .withCard(ghoul, blankEnemy('ghoul', { damage: 1 }), engagedWith(alice))
+    .withTurnOf(alice)
+    .start();
+
+  it('takes the cost of a card off alice, at 2 resources', () => {
+    const after = stateAfter(context, state, {
+      type: 'SpendResources',
+      investigatorId: alice,
+      amount: 1,
+    });
+
+    expect(investigatorOf(after, alice).resources).toBe(1);
+  });
+
+  it('pays while the attack of opportunity her resource action provoked is open', () => {
+    const attacked = stateAfter(context, state, {
+      type: 'GainResources',
+      investigatorId: alice,
+      amount: 1,
+      asAction: true,
+    });
+
+    const after = stateAfter(context, attacked, {
+      type: 'SpendResources',
+      investigatorId: alice,
+      amount: 1,
+    });
+
+    expect(after.pending).toHaveLength(1);
+    expect(investigatorOf(after, alice).resources).toBe(1);
+  });
+
+  it.each([
+    { amount: 3, code: 'negativeInvestigatorStat' },
+    { amount: 0, code: 'invalidTokenDelta' },
+  ])('rejects spending $amount of her 2 resources', ({ amount, code }) => {
+    expect(
+      rejectionFrom(context, state, { type: 'SpendResources', investigatorId: alice, amount }),
+    ).toMatchObject({ code });
   });
 });
 

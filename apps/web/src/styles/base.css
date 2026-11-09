@@ -558,3 +558,17 @@ dialog::backdrop {
 [aria-current='page'] {
   font-weight: bold;
 }
+
+/*
+ * A cover's art band (`CoverArt`, MD.3b) on the home shelf and the wizard's covers: plain paper
+ * under its pictures, each picture hidden until it has loaded. Each place sets its size.
+ */
+svg[data-cover-art] {
+  display: block;
+  border-bottom: var(--border-width) solid var(--color-paper-rim);
+  background: var(--card-art-pattern), var(--color-paper-surface);
+}
+
+svg[data-cover-art] > svg:not([data-picture]) > image {
+  visibility: hidden;
+}

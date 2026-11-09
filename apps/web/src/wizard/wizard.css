@@ -94,6 +94,104 @@
   outline: var(--focus-ring-width) solid var(--color-accent);
 }
 
+/*
+ * The campaigns or scenarios as covers (MD.3f), as many side by side as fit like the home shelf:
+ * the art band edge to edge (`CoverArt`, plain paper until it loads), the kicker in spaced
+ * capitals and the name. The radio is hidden; the chosen cover is ringed in ink.
+ */
+#wizard > fieldset[data-covers] {
+  position: relative;
+  display: grid;
+  padding-bottom: 0;
+  border-bottom: 0;
+  grid-template-columns: repeat(auto-fill, minmax(var(--cover-min-width), 1fr));
+  gap: var(--space-3);
+}
+
+/* The step's title already says what is chosen, so the group's name is for screen readers only. */
+#wizard > fieldset[data-covers] > legend {
+  position: absolute;
+  width: var(--hidden-size);
+  height: var(--hidden-size);
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+#wizard > fieldset[data-covers] > p {
+  grid-column: 1 / -1;
+}
+
+#wizard > fieldset[data-covers] > label {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  overflow: hidden;
+  padding: 0 var(--space-3) var(--space-3);
+  border: var(--border-width) solid var(--color-paper-rim);
+  border-radius: var(--radius);
+  background: var(--guide-paper);
+  text-align: center;
+  cursor: pointer;
+}
+
+#wizard > fieldset[data-covers] > label:has(> input:checked) {
+  outline: var(--card-border-width) solid var(--color-ink);
+  outline-offset: var(--border-width);
+}
+
+#wizard > fieldset[data-covers] > label:has(> input:focus-visible) {
+  outline: var(--focus-ring-width) solid var(--color-accent);
+}
+
+#wizard > fieldset[data-covers] > label > input {
+  position: absolute;
+  opacity: 0;
+}
+
+#wizard > fieldset[data-covers] > label > svg {
+  width: calc(100% + 2 * var(--space-3));
+  height: var(--cover-art-height);
+  margin: 0 calc(-1 * var(--space-3)) var(--space-1);
+}
+
+#wizard > fieldset[data-covers] > label > small {
+  color: var(--color-text-muted);
+  font-family: var(--font-family-label);
+  font-size: var(--font-size-log-label);
+  letter-spacing: var(--log-label-tracking);
+  text-transform: uppercase;
+}
+
+#wizard > fieldset[data-covers] > label > span {
+  font-family: var(--font-family-print);
+  font-size: var(--font-size-title);
+  line-height: var(--app-bar-title-line-height);
+}
+
+/* On a phone two covers stand side by side, so the step shows more than one before scrolling. */
+@media (orientation: portrait) and (max-width: 40rem) {
+  #wizard > fieldset[data-covers] {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-2);
+  }
+
+  #wizard > fieldset[data-covers] > label {
+    padding: 0 var(--space-2) var(--space-2);
+  }
+
+  #wizard > fieldset[data-covers] > label > svg {
+    width: calc(100% + 2 * var(--space-2));
+    height: var(--cover-art-height-phone);
+    margin-inline: calc(-1 * var(--space-2));
+  }
+
+  #wizard > fieldset[data-covers] > label > span {
+    font-size: var(--font-size-subtitle);
+  }
+}
+
 #wizard > dl {
   display: grid;
   grid-template-columns: var(--form-label-width) 1fr;
