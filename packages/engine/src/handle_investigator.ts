@@ -3,6 +3,7 @@ import { resolveValue, type EngineContext } from './cards';
 import type {
   AdjustInvestigator,
   GainResources,
+  SpendResources,
   HealInvestigator,
   PlayCard,
   PlayerCardCommand,
@@ -117,6 +118,29 @@ export function handleGainResources(state: GameState, cmd: GainResources): Inves
       investigatorId: investigator.id,
       stat: 'resources',
       delta: cmd.amount,
+    },
+  ];
+}
+
+/** `SpendResources`: a positive whole amount the investigator has, taken off their resources. */
+export function handleSpendResources(state: GameState, cmd: SpendResources): InvestigatorChanged[] {
+  const investigator = activeInvestigator(state, cmd.investigatorId);
+  if (!Number.isInteger(cmd.amount) || cmd.amount <= 0)
+    throw new CommandRejected({ code: 'invalidTokenDelta', delta: cmd.amount });
+  if (investigator.resources < cmd.amount)
+    throw new CommandRejected({
+      code: 'negativeInvestigatorStat',
+      investigatorId: investigator.id,
+      stat: 'resources',
+      current: investigator.resources,
+      delta: -cmd.amount,
+    });
+  return [
+    {
+      type: 'InvestigatorChanged',
+      investigatorId: investigator.id,
+      stat: 'resources',
+      delta: -cmd.amount,
     },
   ];
 }

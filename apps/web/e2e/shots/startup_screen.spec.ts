@@ -1,6 +1,6 @@
 import { expect, test } from '../fixtures/test';
 
-// The loading screen and the inline spinner (`@shot`, coding guidelines §3).
+// The loading screen and the inline spinner (coding guidelines §3).
 
 /** ArkhamDB's card list; while its answer is held, the card data stays on its way. */
 const isCardList = (url: URL) => url.pathname === '/api/public/cards/';
@@ -26,6 +26,7 @@ test('the spinner on paper while the wizard refreshes the investigators', async 
 
   await page.goto('/#/new');
   await page.getByRole('link', { name: 'Quick game' }).first().click();
+  await page.getByRole('button', { name: 'Next' }).click();
   await page.getByRole('button', { name: 'Next' }).click();
 
   await expect(page.getByText('Loading investigators…')).toBeVisible();

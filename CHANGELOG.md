@@ -2,6 +2,86 @@
 
 The sections dated up to 2026-10-22 were released as 1.0.0 to 1.8.0 by mistake: Release Please starts at 1.0.0 by default. Versioning restarted at 0.1.0 (see "Versions" in docs/product.md).
 
+## [0.1.38](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v0.1.37...arkham-companion-v0.1.38) (2026-11-09)
+
+
+### Features
+
+* **engine:** cards beneath a location or the act (MC2.8b) ([7591d21](https://github.com/macandy13/arkham-companion/commit/7591d21f2bf302f5c9d409dfb2e1d1304e203d33))
+* **engine:** cards beneath a location or the act (MC2.8b) ([6dc6993](https://github.com/macandy13/arkham-companion/commit/6dc6993df6789c6c59a02081fc29a7f2264bf4a3))
+* **engine:** let card data advance the agenda, remove connections and shuffle cards in (ME.1c) ([7524fbc](https://github.com/macandy13/arkham-companion/commit/7524fbc9e600f9c1c55e6c4dbaad81e133c36eb4))
+* **engine:** let card data advance the agenda, remove connections and shuffle cards in (ME.1c) ([0f6db09](https://github.com/macandy13/arkham-companion/commit/0f6db09462e90c46ef0f6159ea05337a42b70421))
+* **engine:** let card data damage, exhaust and defeat enemies (ME.1a) ([e8885fa](https://github.com/macandy13/arkham-companion/commit/e8885faf0f19c1a2957ca125355c547a311ebdd8))
+* **engine:** let card data damage, exhaust, engage and defeat enemies (ME.1a) ([db8d66c](https://github.com/macandy13/arkham-companion/commit/db8d66c4508bda44da2503508435170eec1ec371))
+* **engine:** let card data say an enemy engages or attacks you (ME.1d) ([0bdfc19](https://github.com/macandy13/arkham-companion/commit/0bdfc19ac581a34fdd2c2213a254acc283b8c356))
+* **engine:** let card data say an enemy engages or attacks you (ME.1d) ([7a1086e](https://github.com/macandy13/arkham-companion/commit/7a1086e4199be8f1110620c68945fe03d038a7cf))
+* **engine:** let card data take actions, end the turn and discover clues (ME.1b) ([4ae7735](https://github.com/macandy13/arkham-companion/commit/4ae773541646e933371bb9b752d357d561055e66))
+* **engine:** let card data take actions, end the turn and discover clues (ME.1b) ([b43ebfe](https://github.com/macandy13/arkham-companion/commit/b43ebfe9af86051d620ec55d10743e0548e23615))
+* **play_tester:** deck bot cancels attacks with Dodge (M1V.4) ([0f79ba0](https://github.com/macandy13/arkham-companion/commit/0f79ba0016089738a4bd8f64e7f7d53b28406027))
+* **play_tester:** deck bot cancels attacks with Dodge (M1V.4) ([dff5d88](https://github.com/macandy13/arkham-companion/commit/dff5d88b2055e90ade015ca9c5c3a2d306458ab2))
+* **play_tester:** deck bot that plays player cards toward the act (M1V.4) ([331d5ce](https://github.com/macandy13/arkham-companion/commit/331d5ce3809f47e1a80fdb3509e0fb373d78443b))
+* **play_tester:** deck bot that plays player cards toward the act (M1V.4) ([ca6e050](https://github.com/macandy13/arkham-companion/commit/ca6e0506c791d90e74a5fd056cabdbd54f8df1c0))
+* **play_tester:** player card table and the playerCard step (M1V.4) ([fa8b949](https://github.com/macandy13/arkham-companion/commit/fa8b9491382c45d9254a403506852ef577c52d0e))
+* **play_tester:** player card table and the playerCard step (M1V.4) ([592c6dc](https://github.com/macandy13/arkham-companion/commit/592c6dc18858f2ab08804071c23083c1fbf720c0))
+* **scenarios:** add Smoke and Mirrors cards (MC2.8a) ([ec2fbde](https://github.com/macandy13/arkham-companion/commit/ec2fbde78861925131ce2ed8716a3d8f8b492f59))
+* **scenarios:** add Smoke and Mirrors cards (MC2.8a) ([4836836](https://github.com/macandy13/arkham-companion/commit/4836836494f13a52755610f50e281109f564b1de))
+* **scenarios:** Smoke and Mirrors setup, agendas and act (MC2.8c) ([d63094d](https://github.com/macandy13/arkham-companion/commit/d63094d89c57d72dd7ae2a29a6ef18b18301ca0d))
+* **scenarios:** Smoke and Mirrors setup, agendas and act (MC2.8c) ([f9d9241](https://github.com/macandy13/arkham-companion/commit/f9d924157ed86e2488efa77d37ec31584790c634))
+* **web:** accessibility pass (M6.5c) ([dad1d2a](https://github.com/macandy13/arkham-companion/commit/dad1d2a2cafe0c93f8dffc645d21169e9b58052d))
+* **web:** accessibility pass (M6.5c) ([9ee411f](https://github.com/macandy13/arkham-companion/commit/9ee411fd1eb3f2c32efe6672674c7b5405c36a8d))
+* **web:** animate draws (M6.5a) ([916e8db](https://github.com/macandy13/arkham-companion/commit/916e8dbc3090bfca11918d66f13fb21f63895df9))
+* **web:** animate draws (M6.5a) ([3fadb15](https://github.com/macandy13/arkham-companion/commit/3fadb15c069df982b67527395e03d1f6e15020bd))
+* **web:** choose the scenario or campaign from covers with art (MD.3f) ([0308370](https://github.com/macandy13/arkham-companion/commit/0308370be2b283b8813c15ca12823ba57ae39f8a))
+* **web:** choose the scenario or campaign from covers with art (MD.3f) ([9cbdd76](https://github.com/macandy13/arkham-companion/commit/9cbdd76ca443c96d80a219cd1f3ca27ba8f5880c))
+* **web:** draw the chaos tokens in both token sets (MD.8c) ([258ca8f](https://github.com/macandy13/arkham-companion/commit/258ca8f432d762e6c486be1322b92620cdc80901))
+* **web:** draw the chaos tokens in both token sets (MD.8c) ([fe950a8](https://github.com/macandy13/arkham-companion/commit/fe950a8705f9d779f025b100723fa1e145f0dbb7))
+* **web:** draw the stat and count icons from the token glyphs (MD.8d) ([2b34a54](https://github.com/macandy13/arkham-companion/commit/2b34a54bb9f4fbeebccf5bf2602d7b8293b16e12))
+* **web:** draw the stat and count icons from the token glyphs (MD.8d) ([549074b](https://github.com/macandy13/arkham-companion/commit/549074b651cef41ea4678dd9506d066683f4a9d6))
+* **web:** let pieces glide to their new location on the map (M6.5b) ([1ac5f32](https://github.com/macandy13/arkham-companion/commit/1ac5f322c977225e5b1ed6e12d755e206a062436))
+* **web:** let pieces glide to their new location on the map (M6.5b) ([2e8454e](https://github.com/macandy13/arkham-companion/commit/2e8454e7a47df472a514c095141edc400769953c))
+* **web:** list the picked investigators first and fit the picker to phones (MD.3e) ([ae7c628](https://github.com/macandy13/arkham-companion/commit/ae7c6287048ec48c8c239fca885bf34599118d02))
+* **web:** list the picked investigators first and fit the picker to phones (MD.3e) ([9c611bc](https://github.com/macandy13/arkham-companion/commit/9c611bce2e1c1cb454b999d186eb05ee97781c5e))
+* **web:** make the scenario or campaign choice the wizard's first step on its own ([6a0433c](https://github.com/macandy13/arkham-companion/commit/6a0433c5ef72140f7ffb6acf327ab4f6359a7669))
+* **web:** mark the app offline in the app bar and the status row (M6.4b) ([4698ea0](https://github.com/macandy13/arkham-companion/commit/4698ea0d63b38b5a01ea345baa5532ca7e0726cb))
+* **web:** mark the app offline in the app bar and the status row (M6.4b) ([4166785](https://github.com/macandy13/arkham-companion/commit/4166785f8ff93cbb6eceb045d9fa5ca2469330bc)), closes [#1088](https://github.com/macandy13/arkham-companion/issues/1088)
+* **web:** save a game's pictures for offline play (M6.4a) ([5ad2044](https://github.com/macandy13/arkham-companion/commit/5ad204484ddb767c7c6da3d252af9b16657da180))
+
+
+### Bug fixes
+
+* **engine:** a card moved beneath another leaves play ([f92bce9](https://github.com/macandy13/arkham-companion/commit/f92bce9df5d7437146cb078808d305131c2f2e1f))
+* **engine:** a card's engage changes nothing for an enemy that left play ([565b9dd](https://github.com/macandy13/arkham-companion/commit/565b9dd0a00e8e8fd931dd87154f04facdaa7869))
+* **engine:** address review of ME.1a ([82ab991](https://github.com/macandy13/arkham-companion/commit/82ab99148e819acd56d4acc1ee296ac10e1b607f))
+* **engine:** address review of ME.1b ([668e941](https://github.com/macandy13/arkham-companion/commit/668e9411e9aa355c22ed8f0f307e93552d7206bf))
+* **engine:** address review of ME.1c ([c95fada](https://github.com/macandy13/arkham-companion/commit/c95fada67771b6f6a1060939c83e4aff76dab94a))
+* **engine:** count only face-up cards beneath the act; rules pages for cards beneath ([763083d](https://github.com/macandy13/arkham-companion/commit/763083d4ebf0d5eb76a74183edf4c829fd0eeb67))
+* **engine:** lose all remaining actions outside the turn too (ME.1b) ([0861770](https://github.com/macandy13/arkham-companion/commit/0861770a8d82d1601a12182e23cfa972f46433ef))
+* **play_tester:** card icons, engine shuffle and effect tests from review ([77d07bb](https://github.com/macandy13/arkham-companion/commit/77d07bbcda5427ea5cd7a14af96d0c91db64f485))
+* **play_tester:** count queued spends for Dodge; engine tells attack decisions ([b5ea626](https://github.com/macandy13/arkham-companion/commit/b5ea6264eb3f96bfa56a3000ecc9f8ac89743f34))
+* **play_tester:** Lucky! on auto-fail, Leo each turn, encounter draw first, one copy per asset ([ccb498f](https://github.com/macandy13/arkham-companion/commit/ccb498fd62787f272ab7fb3c5072308dfe09c695))
+* **scenarios:** review and rules-check fixes for Smoke and Mirrors setup ([d1e06f0](https://github.com/macandy13/arkham-companion/commit/d1e06f0a3d4b512faedea61e324f3265b2681790))
+* **web:** glide from a drop only onto the tile it was dropped on ([8a3bc19](https://github.com/macandy13/arkham-companion/commit/8a3bc19d36bcafd572bbf9c8c78e6e493e75c20b))
+* **web:** keep the doom glyph's tip inside its icon ([e5be6c5](https://github.com/macandy13/arkham-companion/commit/e5be6c5a0d533bb4024c47e443bde17ad0ef01a4))
+* **web:** mute the resin chaos tokens and keep their numbers and symbols centred ([560ccf2](https://github.com/macandy13/arkham-companion/commit/560ccf2691b1314564d8eff3c5434fe4446f8f30))
+
+
+### Performance
+
+* **web:** draw the card ornaments once (M6.5d) ([b9c9080](https://github.com/macandy13/arkham-companion/commit/b9c9080bfb44d988309aba8cadc66077a0817e49))
+* **web:** draw the card ornaments once (M6.5d) ([2211141](https://github.com/macandy13/arkham-companion/commit/221114161ba4c8f36062555bff6327aa798a5606))
+* **web:** read the cached sky first; restore spies after each test ([a08ff85](https://github.com/macandy13/arkham-companion/commit/a08ff855026ab95a47466455c03d8d0f302eba77))
+
+
+### Refactoring
+
+* **web:** share the cover art band, guard and show the covers with nothing owned ([66e96be](https://github.com/macandy13/arkham-companion/commit/66e96beca04cf4bbaffa1fa39abf0bfa4384af1f))
+
+
+### Documentation
+
+* **scenarios:** point Elusive at its task ([7b34f9c](https://github.com/macandy13/arkham-companion/commit/7b34f9ccd42c9f55107795b53d61fdf4880c35de))
+* **web:** name the offline mark in the status row, test it from the start ([d9cec52](https://github.com/macandy13/arkham-companion/commit/d9cec52f5f9441f9b0fdcced044c0592cdcc7e0e))
+
 ## [0.1.37](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v0.1.36...arkham-companion-v0.1.37) (2026-11-08)
 
 

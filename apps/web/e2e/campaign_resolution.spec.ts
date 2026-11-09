@@ -9,6 +9,7 @@ test('write a scenario resolution into the campaign log', async ({ page }) => {
     await page.goto('/#/new');
     await page.getByRole('link', { name: 'New campaign' }).click();
     await page.getByRole('button', { name: 'Next' }).click();
+    await page.getByRole('button', { name: 'Next' }).click();
     await page.getByRole('button', { name: /Fake Seeker/ }).click();
     await page.getByRole('button', { name: 'Select', exact: true }).click();
     await page.getByRole('button', { name: 'Next' }).click();

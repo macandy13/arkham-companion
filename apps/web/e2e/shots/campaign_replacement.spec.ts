@@ -7,7 +7,7 @@ import {
   rolandBanks,
 } from '../fixtures/saved_campaigns';
 
-// The setup preview after The Gathering killed Fake Seeker (`@shot`, coding guidelines §3).
+// The setup preview after The Gathering killed Fake Seeker (coding guidelines §3).
 
 test('the replacement picker for the killed Fake Seeker', async ({ page }) => {
   await openStoredCampaign(page, 'Zealot – Fake Seeker', (id) =>

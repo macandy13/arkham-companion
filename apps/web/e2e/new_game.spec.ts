@@ -9,6 +9,12 @@ test('start a new game', async ({ page }) => {
     await page.goto('/#/new');
     await expect(page.getByRole('heading', { level: 1, name: 'New game' })).toBeVisible();
     await page.getByRole('link', { name: 'Quick game' }).click();
+    await expect(page.getByRole('heading', { level: 1, name: 'Scenario' })).toBeVisible();
+  });
+
+  await test.step('Choose the scenario', async () => {
+    await page.getByRole('radio', { name: 'The Gathering' }).check();
+    await page.getByRole('button', { name: 'Next: Setup' }).click();
     await expect(page.getByRole('heading', { level: 1, name: 'Setup' })).toBeVisible();
   });
 
@@ -84,6 +90,7 @@ test('start a campaign and resume it from its log', async ({ page }) => {
   });
 
   await test.step('Pick the difficulty and the team', async () => {
+    await page.getByRole('button', { name: 'Next: Setup' }).click();
     await page.getByRole('radio', { name: 'Hard' }).check();
     await page.getByRole('button', { name: 'Next' }).click();
     await page

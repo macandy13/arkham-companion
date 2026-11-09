@@ -2,12 +2,16 @@
  * Command-line entry for the PR screencasts, run with plain `node` (type stripping) by
  * `.github/workflows/preview.yml`:
  *
- *   node cli.ts render <report.json> <base.json> <outDir> <baseUrl> <pictureBaseUrl> <version>
- *     Converts every passing flow video into `<outDir>/<slug>.gif` and `.webm`, copies every
- *     passing screenshot to `<outDir>/<slug>-<device>.png`, adds the player page (`player.html`, listing
- *     the recorded flows) and writes the PR description section to `<outDir>/section.md`, with
- *     pictures linked from `pictureBaseUrl` and the player from `baseUrl`.
- *     Specs whose picture is the same in `base.json` (the base commit's run) are skipped.
+ *   node cli.ts flows <pictures.json> <base.json>
+ *     Prints the `--grep` pattern for the flows to record: those whose end state in
+ *     `pictures.json` (this PR's `e2e:pictures` run) differs from `base.json` (the base commit's),
+ *     at most SCREENCAST_LIMIT of them, on one line; nothing when no flow changed.
+ *   node cli.ts render <pictures.json> <base.json> <recording.json> <outDir> <baseUrl> <pictureBaseUrl> <version>
+ *     Converts the passing video of every changed flow in `recording.json` (the `e2e:screencast`
+ *     run) into `<outDir>/<slug>.gif` and `.webm`, copies every changed passing screenshot to
+ *     `<outDir>/<slug>-<device>.png`, adds the player page (`player.html`, listing the recorded
+ *     flows) and writes the PR description section to `<outDir>/section.md`, with pictures
+ *     linked from `pictureBaseUrl` and the player from `baseUrl`.
  *   node cli.ts splice <body.md> <section.md>
  *     Prints the PR description with the screencast section replaced.
  */
@@ -18,7 +22,10 @@ import { fileURLToPath } from 'node:url';
 import pixelmatch from 'pixelmatch';
 import { PNG } from 'pngjs';
 import {
+  changedFlows,
+  flowGrep,
   flowVideos,
+  SCREENCAST_LIMIT,
   gifArgs,
   playerPage,
   renderSection,
@@ -29,21 +36,29 @@ import {
 } from './screencasts.ts';
 import type { BaseRun, PlaywrightReport } from './screencasts.ts';
 
+function flows(picturesPath: string, baseReportPath: string): void {
+  const changed = changedFlows(readReport(picturesPath, 'this PR'), baseRun(baseReportPath));
+  if (changed.length > 0) process.stdout.write(`${flowGrep(changed.slice(0, SCREENCAST_LIMIT))}\n`);
+}
+
 function render(
-  reportPath: string,
+  picturesPath: string,
   baseReportPath: string,
+  recordingPath: string,
   outDir: string,
   baseUrl: string,
   pictureBaseUrl: string,
   version: string,
 ): void {
-  const report = JSON.parse(readFileSync(reportPath, 'utf8')) as PlaywrightReport;
-  const base: BaseRun = {
-    report: readBaseReport(baseReportPath),
-    samePicture,
-  };
-  const flows = flowVideos(report, base);
-  const shots = screenshots(report, base);
+  const pictures = readReport(picturesPath, 'this PR');
+  const base = baseRun(baseReportPath);
+  const changed = changedFlows(pictures, base);
+  const flows = flowVideos(
+    changed.slice(0, SCREENCAST_LIMIT),
+    readReport(recordingPath, 'the recording'),
+  );
+  const moreFlows = changed.slice(SCREENCAST_LIMIT).map((flow) => flow.title);
+  const shots = screenshots(pictures, base);
   mkdirSync(outDir, { recursive: true });
   for (const { slug, pictures } of shots) {
     for (const device of SHOT_DEVICE_NAMES) {
@@ -63,7 +78,7 @@ function render(
   writeFileSync(join(outDir, 'player.html'), playerPage(template, { flows, version }));
   writeFileSync(
     join(outDir, 'section.md'),
-    renderSection({ flows, shots, baseUrl, pictureBaseUrl, version }),
+    renderSection({ flows, shots, moreFlows, baseUrl, pictureBaseUrl, version }),
   );
 }
 
@@ -87,12 +102,20 @@ function samePicture(headPath: string, basePath: string): boolean {
   }
 }
 
-/** The base run's report, or none when the run broke off before writing a whole report. */
-function readBaseReport(path: string): PlaywrightReport {
+function baseRun(path: string): BaseRun {
+  return { report: readReport(path, 'the base commit'), samePicture };
+}
+
+/**
+ * A run's report, or an empty one when the run broke off before writing a whole report (or, for
+ * the recording, didn't run because no flow changed): on the base, every spec is then shown.
+ */
+function readReport(path: string, run: string): PlaywrightReport {
+  if (!existsSync(path)) return {};
   try {
     return JSON.parse(readFileSync(path, 'utf8')) as PlaywrightReport;
   } catch (error) {
-    console.warn(`Ignoring the base run's report ${path}; every tagged spec is shown:`, error);
+    console.warn(`Ignoring the report of ${run} in ${path}:`, error);
     return {};
   }
 }
@@ -104,22 +127,19 @@ function splice(bodyPath: string, sectionPath: string): void {
 }
 
 const [command, ...args] = process.argv.slice(2);
-if (command === 'render' && args.length === 6) {
-  const [reportPath, baseReportPath, outDir, baseUrl, pictureBaseUrl, version] = args as [
-    string,
-    string,
-    string,
-    string,
-    string,
-    string,
-  ];
-  render(reportPath, baseReportPath, outDir, baseUrl, pictureBaseUrl, version);
+if (command === 'flows' && args.length === 2) {
+  const [picturesPath, baseReportPath] = args as [string, string];
+  flows(picturesPath, baseReportPath);
+} else if (command === 'render' && args.length === 7) {
+  const [picturesPath, baseReportPath, recordingPath, outDir, baseUrl, pictureBaseUrl, version] =
+    args as [string, string, string, string, string, string, string];
+  render(picturesPath, baseReportPath, recordingPath, outDir, baseUrl, pictureBaseUrl, version);
 } else if (command === 'splice' && args.length === 2) {
   const [bodyPath, sectionPath] = args as [string, string];
   splice(bodyPath, sectionPath);
 } else {
   console.error(
-    'usage: cli.ts render <report> <base> <outDir> <baseUrl> <pictureBaseUrl> <version> | splice <body> <section>',
+    'usage: cli.ts flows <pictures> <base> | render <pictures> <base> <recording> <outDir> <baseUrl> <pictureBaseUrl> <version> | splice <body> <section>',
   );
   process.exit(1);
 }

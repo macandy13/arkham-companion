@@ -22,7 +22,7 @@ import {
 } from '../fixtures/saved_games';
 import { dragTo } from '../fixtures/drag';
 
-// Situations on the game screen, each photographed as it ends (`@shot`, coding guidelines §3).
+// Situations on the game screen, each photographed as it ends (coding guidelines §3).
 
 test('the house map with Roland Banks in the Hallway', async ({ page }) => {
   await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));

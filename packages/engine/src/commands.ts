@@ -44,6 +44,7 @@ export type Command =
   | AdjustInvestigator
   | HealInvestigator
   | GainResources
+  | SpendResources
   | DrawCards
   | SearchDeck
   | DiscardFromHand
@@ -55,6 +56,7 @@ export type Command =
   | DiscoverClues
   | PlaceClues
   | PlaceDoom
+  | RemoveDoom
   | PlaceTokens
   | ChangeChaosBag
   | SealChaosToken
@@ -335,6 +337,18 @@ export interface GainResources extends ActionCommand {
 }
 
 /**
+ * The investigator pays `amount` resources (a positive integer) for a player card: its cost, or
+ * what a card asks to spend ("spend 1 resource: +1 skill"). Allowed while a decision is pending, as
+ * a fast card is paid for in the window the decision opens (Dodge against an attack, Lucky! on a
+ * test) before its effect. Produces `InvestigatorChanged`; rejected when they have too few.
+ */
+export interface SpendResources {
+  type: 'SpendResources';
+  investigatorId: InvestigatorId;
+  amount: number;
+}
+
+/**
  * The card whose ability asked for a command on the players' own cards, and the timing window it
  * resolved in (`action` for a card action and its cost), so the notice can name the card. Absent
  * on a command the players issued themselves, such as the draw action.
@@ -491,14 +505,28 @@ export interface PlaceClues {
 /**
  * Puts `amount` (positive) doom on a card in play, by default on the current
  * agenda. Produces `TokensChanged`. The threshold is not checked here: the agenda
- * only advances at a `CheckDoomThreshold` (mythos phase). Removing doom is a
- * `ManualAdjust` for now.
+ * only advances at a `CheckDoomThreshold` (mythos phase). `RemoveDoom` takes it off again.
  */
 export interface PlaceDoom {
   type: 'PlaceDoom';
   /** Defaults to the current agenda. */
   cardId?: InstanceId;
   amount: number;
+}
+
+/**
+ * A card's "remove N doom from the current agenda" or "remove all doom from it": takes `amount`
+ * (positive) doom, or `'all'`, off a card in play, by default the current agenda. Takes as much as
+ * there is and nothing from a card without doom or no longer in play, since a card effect does
+ * as much as it can (Rules Reference, "Effects"); the players' own corrections stay a
+ * `ManualAdjust`. Without a current agenda (never during a scenario) it refuses like `PlaceDoom`.
+ * Produces `TokensChanged`.
+ */
+export interface RemoveDoom {
+  type: 'RemoveDoom';
+  /** Defaults to the current agenda. */
+  cardId?: InstanceId;
+  amount: number | 'all';
 }
 
 /**
