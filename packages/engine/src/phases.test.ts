@@ -52,7 +52,7 @@ const massiveGhoulCard = blankEnemy('massive_ghoul', {
   keywords: [{ name: 'massive' }],
 });
 const unreadableSpawnGhoulCard = blankEnemy('unreadable_spawn_ghoul', {
-  keywords: [{ name: 'spawn', detail: 'the location with the most clues' }],
+  keywords: [{ name: 'spawn', detail: 'wherever the stars are right' }],
 });
 const plainTreachery = blankTreachery('plain_treachery');
 /** Dissonant Voices stays in the threat area until the end of the round. */

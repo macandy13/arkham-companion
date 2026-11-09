@@ -12,6 +12,7 @@ import {
   instanceId,
   investigatorId,
   newGame,
+  trait,
   zoneOf,
   perInvestigator,
   zoneKey,
@@ -50,7 +51,7 @@ const cellarSpawnGhoulCard = blankEnemy('cellar_spawn_ghoul', {
   keywords: [{ name: 'spawn', detail: 'Cellar' }],
 });
 const unreadableSpawnGhoulCard = blankEnemy('unreadable_spawn_ghoul', {
-  keywords: [{ name: 'spawn', detail: 'the location with the most clues' }],
+  keywords: [{ name: 'spawn', detail: 'wherever the stars are right' }],
 });
 const relicCard = blankAsset('relic');
 
@@ -1118,5 +1119,108 @@ describe('SpawnEnemy with "Spawn - Engaged with prey" and prey "Most clues"', ()
     ]);
     expect(zoneOf(asked, hunter)).toEqual(setAside);
     expect(zoneOf(after, hunter)).toEqual(engagedWith(bob));
+  });
+});
+
+describe('SpawnEnemy with a filtered spawn instruction', () => {
+  const library = instanceId('library');
+  const spawner = instanceId('spawner');
+  /**
+   * Alice draws in the hall; hall - cellar - attic in a line. The cellar has 1 clue, the attic
+   * is a Woods location with 2; the library is set aside.
+   */
+  const hallToWoodsAttic = newGame()
+    .withLocation(hall, hallCard)
+    .withLocation(cellar, cellarCard, { clues: 1 })
+    .withLocation(attic, blankLocation('attic', { traits: [trait('Woods')] }), { clues: 2 })
+    .withConnection(hall, cellar)
+    .withConnection(cellar, attic)
+    .withCard(library, blankLocation('library'), setAside)
+    .withInvestigator(alice, { locationId: hall });
+
+  it.each([
+    { spawn: 'Farthest empty location', spawnsIn: attic },
+    { spawn: 'Nearest empty location', spawnsIn: cellar },
+    { spawn: 'Location farthest from you', spawnsIn: attic },
+    { spawn: 'Any location connected to yours', spawnsIn: cellar },
+    { spawn: 'Location with the most clues', spawnsIn: attic },
+    { spawn: 'Any Woods location', spawnsIn: attic },
+    { spawn: 'Attic or Cellar (whichever is nearest to you)', spawnsIn: cellar },
+    { spawn: 'Library. Otherwise, Attic', spawnsIn: attic },
+  ])('spawns "$spawn" in the $spawnsIn', ({ spawn, spawnsIn }) => {
+    const { context, state } = hallToWoodsAttic
+      .withCard(
+        spawner,
+        blankEnemy('spawner', { keywords: [{ name: 'spawn', detail: spawn }] }),
+        setAside,
+      )
+      .start();
+
+    const after = stateAfter(context, state, {
+      type: 'SpawnEnemy',
+      enemyId: spawner,
+      investigatorId: alice,
+    });
+
+    expect(zoneOf(after, spawner)).toEqual(atLocation(spawnsIn));
+  });
+
+  const anyLocationIfEmpty = blankEnemy('spawner', {
+    keywords: [{ name: 'spawn', detail: 'Any location (empty, if able)' }],
+  });
+
+  it('spawns "Any location (empty, if able)" in the only empty location', () => {
+    const { context, state } = aliceInHall
+      .withCard(ghoul, ghoulCard, atLocation(cellar))
+      .withCard(spawner, anyLocationIfEmpty, setAside)
+      .start();
+
+    const after = stateAfter(context, state, {
+      type: 'SpawnEnemy',
+      enemyId: spawner,
+      investigatorId: alice,
+    });
+
+    expect(zoneOf(after, spawner)).toEqual(atLocation(attic));
+  });
+
+  it('asks among every location for "Any location (empty, if able)" when none is empty', () => {
+    const { context, state } = aliceInHall
+      .withCard(ghoul, ghoulCard, atLocation(cellar))
+      .withCard(instanceId('second_ghoul'), ghoulCard, atLocation(attic))
+      .withCard(spawner, anyLocationIfEmpty, setAside)
+      .start();
+
+    const after = stateAfter(context, state, {
+      type: 'SpawnEnemy',
+      enemyId: spawner,
+      investigatorId: alice,
+    });
+
+    expect(after.pending).toMatchObject([
+      {
+        kind: 'chooseLocation',
+        options: [{ target: hall }, { target: cellar }, { target: attic }],
+      },
+    ]);
+  });
+
+  it('lets the players choose when nobody spawns a "Farthest" enemy', () => {
+    const { context, state } = hallToWoodsAttic
+      .withCard(
+        spawner,
+        blankEnemy('spawner', { keywords: [{ name: 'spawn', detail: 'Farthest empty location' }] }),
+        setAside,
+      )
+      .start();
+
+    const after = stateAfter(context, state, { type: 'SpawnEnemy', enemyId: spawner });
+
+    expect(after.pending).toMatchObject([
+      {
+        kind: 'chooseLocation',
+        options: [{ target: hall }, { target: cellar }, { target: attic }],
+      },
+    ]);
   });
 });

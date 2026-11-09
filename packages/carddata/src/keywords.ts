@@ -37,6 +37,7 @@ const PLAIN_KEYWORDS: ReadonlySet<string> = new Set([
   'alert',
 ]);
 const VICTORY_SENTENCE = /^victory\s+\d+$/i;
+const OTHERWISE = /^otherwise,/i;
 const DETAIL_KEYWORD_NAME = /^(patrol|prey|spawn)/i;
 const DASHES = '-–—';
 const PUT_WORD = /\b(?:put|place)s?\b/i;
@@ -200,7 +201,16 @@ function keywordsOfLine(line: string): Keyword[] {
     .split(/(?<=\.)\s+/)
     .map((sentence) => sentence.replace(/\.$/, '').trim())
     .filter((sentence) => sentence !== '' && !VICTORY_SENTENCE.test(sentence));
-  const keywords = sentences.map(parseSentence);
+  const keywords: (Keyword | undefined)[] = [];
+  for (const sentence of sentences) {
+    const previous = keywords.at(-1);
+    // "Spawn - Your House. Otherwise, Rivertown.": the fallback is part of the spawn instruction.
+    if (previous?.name === 'spawn' && OTHERWISE.test(sentence)) {
+      keywords[keywords.length - 1] = { ...previous, detail: `${previous.detail}. ${sentence}` };
+    } else {
+      keywords.push(parseSentence(sentence));
+    }
+  }
   return keywords.every((k) => k !== undefined) ? keywords : [];
 }
 

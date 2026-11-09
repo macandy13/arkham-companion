@@ -1,5 +1,11 @@
-import { locationsInPlay, locationsNamed, requireLocationInPlay } from './board';
-import { comparableName, type CardStats, type EngineContext } from './cards';
+import {
+  locationsInPlay,
+  locationsNamed,
+  neighbours,
+  requireLocationInPlay,
+  shortestPaths,
+} from './board';
+import { cardStats, comparableName, type CardStats, type EngineContext } from './cards';
 import type { SpawnEnemy } from './commands';
 import {
   chooseInvestigator,
@@ -122,7 +128,8 @@ function spawnPlan(
     return { kind: 'at', locationId: requireLocationInPlay(state, target.at).id };
   if (target.engagedWith !== undefined) return engagedSpawn(state, target.engagedWith);
   const detail = stats.keywords?.find((keyword) => keyword.name === 'spawn')?.detail;
-  if (detail !== undefined) return instructedSpawn(ctx, state, stats, detail);
+  if (detail !== undefined)
+    return instructedSpawn(ctx, state, stats, detail, target.investigatorId);
   if (target.investigatorId === undefined)
     throw new CommandRejected({ code: 'noSpawnLocation', cardId: enemy.id });
   const drawer = activeInvestigator(state, target.investigatorId);
@@ -146,27 +153,129 @@ function engagedSpawn(state: GameState, investigatorId: InvestigatorId): SpawnPl
 }
 
 /**
- * Reads a spawn instruction: "Any empty location", "Engaged with prey", or one that names a
- * location, e.g. "Spawn - Hallway". Text that matches no location card at all (e.g. "the
- * location with the most clues") cannot be interpreted, so the players choose among all
- * locations in play instead of the engine guessing. A name that no location in play has (the
- * location is set aside or gone) discards the enemy.
+ * Reads a spawn instruction (Rules Reference, "Spawn"), alternative by alternative: "Your House.
+ * Otherwise, Rivertown." tries Rivertown only when Your House gives no location. Each alternative
+ * is "Engaged with prey", a location filter (`spawnFilter`), or a location name. A name that no
+ * location in play has (the location is set aside or gone) gives no location; text that is
+ * neither a filter nor a location card's name cannot be interpreted, so the players choose among
+ * all locations in play instead of the engine guessing. No location at all discards the enemy.
  */
 function instructedSpawn(
   ctx: EngineContext,
   state: GameState,
   stats: CardStats,
   detail: string,
+  drawer: InvestigatorId | undefined,
 ): SpawnPlan {
-  const text = comparableName(detail);
-  if (text === 'any empty location') return locationAmong(emptyLocations(ctx, state));
-  if (text === 'engaged with prey') return preySpawn(state, stats);
-  const inPlay = locationsNamed(ctx, state, detail, { inPlay: true });
-  const [only] = inPlay;
-  if (only !== undefined && inPlay.length === 1) return { kind: 'at', locationId: only.id };
-  if (inPlay.length > 1) return { kind: 'choose', candidates: inPlay.map((card) => card.id) };
-  if (locationsNamed(ctx, state, detail).length > 0) return { kind: 'discard' };
+  const from = drawer === undefined ? undefined : activeInvestigator(state, drawer).locationId;
+  for (const alternative of detail.split(OTHERWISE)) {
+    const plan = alternativeSpawn(ctx, state, stats, alternative.trim(), from);
+    if (plan.kind !== 'discard') return plan;
+  }
+  return { kind: 'discard' };
+}
+
+const OTHERWISE = /\.\s*otherwise,\s*/i;
+
+function alternativeSpawn(
+  ctx: EngineContext,
+  state: GameState,
+  stats: CardStats,
+  text: string,
+  from: InstanceId | undefined,
+): SpawnPlan {
+  if (comparableName(text) === 'engaged with prey') return preySpawn(state, stats);
+  const filtered = spawnFilter(ctx, state, text, from);
+  if (filtered !== undefined) return locationAmong(filtered);
+  const inPlay = locationsNamed(ctx, state, text, { inPlay: true });
+  if (inPlay.length > 0) return locationAmong(inPlay.map((card) => card.id));
+  if (locationsNamed(ctx, state, text).length > 0) return { kind: 'discard' };
   return { kind: 'choose', candidates: locationsInPlay(ctx, state).map((card) => card.id) };
+}
+
+/**
+ * The locations a filtered spawn instruction allows, or undefined for text that is no filter (a
+ * location name, or one the engine can't read). Distances count from `from`, the location of the
+ * investigator spawning the enemy ("you"); without one a distance filter can't be read either.
+ *
+ * - "Any empty location", "Any location (empty, if able)": no investigators and no enemies there
+ *   (`emptyLocations`), the second falling back to any location.
+ * - "Nearest / Farthest [empty] location", "Location nearest to / farthest from you".
+ * - "Any [[Trait]] location", "Location with the most clues", "Any location connected to yours".
+ * - "A or B (whichever is nearest to you)".
+ */
+function spawnFilter(
+  ctx: EngineContext,
+  state: GameState,
+  text: string,
+  from: InstanceId | undefined,
+): InstanceId[] | undefined {
+  const lower = comparableName(text);
+  const all = locationsInPlay(ctx, state);
+  const ids = all.map((card) => card.id);
+  if (lower === 'any empty location') return emptyLocations(ctx, state);
+  if (lower === 'any location (empty, if able)') {
+    const empty = emptyLocations(ctx, state);
+    return empty.length > 0 ? empty : ids;
+  }
+  if (lower.replace(/^the /, '') === 'location with the most clues') {
+    const most = Math.max(...all.map((card) => card.tokens.clue ?? 0));
+    return all.filter((card) => (card.tokens.clue ?? 0) === most).map((card) => card.id);
+  }
+  const distance = DISTANCE.exec(lower);
+  if (distance !== null) {
+    if (from === undefined) return undefined;
+    const pool = distance.groups?.['empty'] === undefined ? ids : emptyLocations(ctx, state);
+    const extreme = distance.groups?.['near'] ?? distance.groups?.['nearYou'];
+    return extremes(ctx, state, from, pool, extreme === undefined ? 'farthest' : 'nearest');
+  }
+  if (lower === 'any location connected to yours')
+    return from === undefined ? undefined : neighbours(ctx, state, from);
+  const whichever = WHICHEVER_NEAREST.exec(text);
+  if (whichever !== null) {
+    if (from === undefined) return undefined;
+    const named = [whichever[1], whichever[2]].flatMap((name) =>
+      locationsNamed(ctx, state, name ?? '', { inPlay: true }).map((card) => card.id),
+    );
+    return extremes(ctx, state, from, named, 'nearest');
+  }
+  const withTrait = TRAIT_LOCATION.exec(text);
+  if (withTrait !== null && comparableName(withTrait[1] ?? '') !== 'empty') {
+    const wanted = comparableName(withTrait[1] ?? '');
+    return all
+      .filter((card) =>
+        cardStats(ctx.cards, card.code).traits.some((t) => comparableName(t) === wanted),
+      )
+      .map((card) => card.id);
+  }
+  return undefined;
+}
+
+const DISTANCE =
+  /^(?:the )?(?:(?:(?<near>nearest)|farthest) (?<empty>empty )?location|location (?:(?<nearYou>nearest to)|farthest from) you)$/;
+const WHICHEVER_NEAREST = /^(.+?) or (.+?) \(whichever is nearest to you\)\.?$/i;
+const TRAIT_LOCATION = /^any (\S+) location\.?$/i;
+
+/**
+ * The locations of `pool` nearest to or farthest from `from`, counted in connections; one with
+ * no path there is never the farthest, as "farthest" needs a distance.
+ */
+function extremes(
+  ctx: EngineContext,
+  state: GameState,
+  from: InstanceId,
+  pool: readonly InstanceId[],
+  which: 'nearest' | 'farthest',
+): InstanceId[] {
+  const reachable = pool
+    .map((id) => {
+      const [path] = shortestPaths(ctx, state, from, id);
+      return { id, distance: path === undefined ? undefined : path.length - 1 };
+    })
+    .filter((entry): entry is { id: InstanceId; distance: number } => entry.distance !== undefined);
+  const distances = reachable.map(({ distance }) => distance);
+  const best = which === 'nearest' ? Math.min(...distances) : Math.max(...distances);
+  return reachable.filter(({ distance }) => distance === best).map(({ id }) => id);
 }
 
 /** The only candidate, a choice between several, or a discard when there is none. */
