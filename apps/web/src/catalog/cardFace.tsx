@@ -1,4 +1,4 @@
-import { useId } from 'react';
+import { useId, useMemo } from 'react';
 import type { CardFaceView, EncounterSetCode } from '@arkham/engine';
 import type { Point } from '../map/mapLayout';
 import type { GameTokenKind } from '../tokens/GameToken';
@@ -256,6 +256,22 @@ export function skyStars(scan: { width: number; height: number }, count = SKY_ST
   }).join(' ');
 }
 
+/**
+ * The night sky of a `scan` sized card, worked out once per size (M6.5d): every card on the
+ * table in the Eldritch theme draws one, and each change of the table redraws them all.
+ */
+function skyOf(scan: { width: number; height: number }): string {
+  const key = `${scan.width}x${scan.height}`;
+  const cached = SKIES.get(key);
+  if (cached !== undefined) return cached;
+  const sky = skyStars(scan);
+  SKIES.set(key, sky);
+  return sky;
+}
+
+/** The night skies `skyOf` worked out, by scan size; there are only the card shapes' few. */
+const SKIES = new Map<string, string>();
+
 /** How many stars a card's night sky holds, and their sizes in turn, in scan units. */
 const SKY_STARS = 36;
 const STAR_SIZES = [2, 3.5, 1.5, 2.5] as const;
@@ -282,7 +298,7 @@ export function NightSky({
       <clipPath id={clipId}>
         <path d={page} />
       </clipPath>
-      <path clipPath={`url(#${clipId})`} d={skyStars(scan)} />
+      <path clipPath={`url(#${clipId})`} d={skyOf(scan)} />
     </g>
   );
 }
@@ -409,12 +425,15 @@ const TENTACLE_WIDTH = 9;
  * along the same line instead (`data-part` tentacle). Decoration only.
  */
 export function OrnamentLine({ d }: { d: string }) {
+  // Only the Eldritch theme shows the tentacle, yet every frame on the table draws it with each
+  // change of the table, so it is worked out again only for a new line (M6.5d).
+  const tentacle = useMemo(() => tapered(d, TENTACLE_WIDTH), [d]);
   return (
     <g data-ornament-line="" aria-hidden="true">
       <path data-part="outline" d={d} />
       <path data-part="body" d={d} />
       <path data-part="highlight" d={d} />
-      <path data-part="tentacle" d={tapered(d, TENTACLE_WIDTH)} />
+      <path data-part="tentacle" d={tentacle} />
     </g>
   );
 }

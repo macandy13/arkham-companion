@@ -48,7 +48,12 @@ function insetOutline(inset: number, corner: number): string {
   ].join(' ');
 }
 
-/** The frame's parts as SVG paths in scan units, each named for the stylesheet. */
+/**
+ * The frame's parts as SVG paths in scan units, each named for the stylesheet. The same on every
+ * card, so worked out once (M6.5d): every scenario card on screen redraws with the table.
+ */
+const FRAME_PATHS = framePaths();
+
 function framePaths() {
   const { width } = PORTRAIT_SCAN;
   const middle = width / 2;
@@ -100,7 +105,7 @@ export function ScenarioFace({ set }: { set: EncounterSetCode | undefined }) {
   const paperId = useId();
   const clipId = useId();
   const { width, height } = PORTRAIT_SCAN;
-  const paths = framePaths();
+  const paths = FRAME_PATHS;
   const { medallion, rule } = SCENARIO_FACE;
   return (
     <svg

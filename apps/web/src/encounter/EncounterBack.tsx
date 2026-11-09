@@ -77,7 +77,12 @@ const TENTACLES: readonly { curve: [Point, Point, Point, Point]; curl: number; s
   },
 ];
 
-/** The back's parts as SVG paths in scan units, each named for the stylesheet. */
+/**
+ * The back's parts as SVG paths in scan units, each named for the stylesheet. The same on every
+ * card, so worked out once (M6.5d): the encounter piles redraw with every change of the table.
+ */
+const BACK_PATHS = backPaths();
+
 function backPaths() {
   const { width, height } = PORTRAIT_SCAN;
   const { eye, beams, body, ground, tentacleWidth } = ENCOUNTER_BACK;
@@ -144,7 +149,7 @@ export function EncounterBack() {
   const clipId = useId();
   const { width, height } = PORTRAIT_SCAN;
   const { sky, eye } = ENCOUNTER_BACK;
-  const paths = backPaths();
+  const paths = BACK_PATHS;
   return (
     <svg
       viewBox={`0 0 ${width} ${height}`}
