@@ -50,3 +50,10 @@ export function commonWordPrefix(a: string, b: string): string {
   }
   return shared.join(' ');
 }
+
+/** `text` without the characters of `characters` it ends in (`withoutTrailing('Name –', ' –')` is `Name`). */
+export function withoutTrailing(text: string, characters: string): string {
+  let end = text.length;
+  while (end > 0 && characters.includes(text.charAt(end - 1))) end -= 1;
+  return text.slice(0, end);
+}

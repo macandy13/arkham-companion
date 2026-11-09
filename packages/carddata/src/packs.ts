@@ -1,4 +1,4 @@
-import { commonWordPrefix } from '@arkham/util';
+import { commonWordPrefix, withoutTrailing } from '@arkham/util';
 import { z } from 'zod';
 
 /**
@@ -70,19 +70,43 @@ export function normalisePacks(raw: unknown): PackDef[] {
   });
 }
 
-/**
- * ArkhamDB numbers the campaign cycles from 1 and puts the other product lines at 50 and above
- * (Return to… boxes 50, starter decks 60/61, side stories 70/73, novellas and promos 80, parallel
- * investigators 90; checked against `/api/public/packs/` on 2026-11-09).
- */
+/** ArkhamDB numbers the campaign cycles from 1 and the other product lines (`PRODUCT_LINES`) from here. */
 export const FIRST_PRODUCT_LINE_CYCLE = 50;
+
+/** The product lines ArkhamDB numbers as cycles from `FIRST_PRODUCT_LINE_CYCLE` on. */
+export type ProductLine =
+  | 'returnTo'
+  | 'starterDecks'
+  | 'chapterTwoStarterDecks'
+  | 'sideStories'
+  | 'chapterTwoSideStories'
+  | 'novellasAndPromos'
+  | 'parallel';
+
+/**
+ * Each product line by its cycle position (checked against `/api/public/packs/` on 2026-11-09).
+ * Their packs share no name to read one from, so the UI names them in its own language.
+ */
+export const PRODUCT_LINES: Readonly<Partial<Record<number, ProductLine>>> = {
+  50: 'returnTo',
+  60: 'starterDecks',
+  61: 'chapterTwoStarterDecks',
+  70: 'sideStories',
+  73: 'chapterTwoSideStories',
+  80: 'novellasAndPromos',
+  90: 'parallel',
+};
+
+/** What may stand between a cycle's name and the part its packs differ in (`Name – Expansion`). */
+const NAME_SEPARATORS = ' -–—:,';
 
 /**
  * The name of the campaign cycle at `cyclePosition`, read from its packs because ArkhamDB's pack
  * data names no cycles: the words its first two packs share (`The Dunwich Legacy` and `The Dunwich
  * Legacy Investigator Expansion`, `Edge of the Earth Investigator Expansion` and `… Campaign
- * Expansion`), else its first pack's name (`Core Set` before `Revised Core Set`). Read from the
- * packs of the card language, so it comes translated. `undefined` for a product line
+ * Expansion`), without a separator it ends in, else its first pack's name (`Core Set` before
+ * `Revised Core Set`). Packs at the same position keep their order in the data. Read from the packs
+ * of the card language, so it comes translated. `undefined` for a product line
  * (`FIRST_PRODUCT_LINE_CYCLE`), whose packs share no name, and for a cycle without packs.
  */
 export function campaignCycleName(
@@ -94,5 +118,8 @@ export function campaignCycleName(
     .filter((pack) => pack.cyclePosition === cyclePosition)
     .sort((a, b) => a.position - b.position);
   if (!first) return undefined;
-  return (second && commonWordPrefix(first.name, second.name)) || first.name;
+  const shared = second
+    ? withoutTrailing(commonWordPrefix(first.name, second.name), NAME_SEPARATORS)
+    : '';
+  return shared || first.name;
 }

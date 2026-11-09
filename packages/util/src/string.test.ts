@@ -6,6 +6,7 @@ import {
   numberedDuplicates,
   sentences,
   stripTrailingDot,
+  withoutTrailing,
 } from './index';
 
 describe('sentences', () => {
@@ -107,5 +108,19 @@ describe('commonWordPrefix', () => {
     },
   ])('$name', ({ a, b, expected }) => {
     expect(commonWordPrefix(a, b)).toBe(expected);
+  });
+});
+
+describe('withoutTrailing', () => {
+  it.each([
+    {
+      name: 'drops the given characters at the end',
+      text: 'Am Rande der Welt –',
+      expected: 'Am Rande der Welt',
+    },
+    { name: 'keeps them anywhere else', text: '– Name: Sub', expected: '– Name: Sub' },
+    { name: 'can leave nothing', text: ' – ', expected: '' },
+  ])('$name', ({ text, expected }) => {
+    expect(withoutTrailing(text, ' –:')).toBe(expected);
   });
 });

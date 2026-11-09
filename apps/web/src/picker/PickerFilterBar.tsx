@@ -1,13 +1,13 @@
-import { FACTION_CODES, campaignCycleName, type Chapter, type PackDef } from '@arkham/carddata';
+import {
+  FACTION_CODES,
+  PRODUCT_LINES,
+  campaignCycleName,
+  type Chapter,
+  type PackDef,
+} from '@arkham/carddata';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  PRODUCT_LINES,
-  activeFilterCount,
-  cyclePositions,
-  sortedPacks,
-  type PickerFilters,
-} from './pickerLogic';
+import { activeFilterCount, cyclePositions, sortedPacks, type PickerFilters } from './pickerLogic';
 
 interface PickerFilterBarProps {
   readonly filters: PickerFilters;
@@ -34,7 +34,7 @@ export function PickerFilterBar({
   const count = activeFilterCount(filters);
 
   /** A cycle's name, its product line's, or its number when ArkhamDB adds one we don't know. */
-  function cycleLabel(packs: readonly PackDef[], position: number): string {
+  function cycleLabel(position: number): string {
     const line = PRODUCT_LINES[position];
     return (
       campaignCycleName(packs, position) ??
@@ -96,7 +96,7 @@ export function PickerFilterBar({
               <option value="">{t('picker.all')}</option>
               {cyclePositions(packs).map((position) => (
                 <option key={position} value={position}>
-                  {cycleLabel(packs, position)}
+                  {cycleLabel(position)}
                 </option>
               ))}
             </select>

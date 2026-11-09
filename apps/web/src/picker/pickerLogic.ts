@@ -68,30 +68,6 @@ export function activeFilterCount(filters: PickerFilters): number {
   ].filter(Boolean).length;
 }
 
-/** The product lines ArkhamDB numbers as cycles from 50 on (`FIRST_PRODUCT_LINE_CYCLE`). */
-export type ProductLine =
-  | 'returnTo'
-  | 'starterDecks'
-  | 'chapterTwoStarterDecks'
-  | 'sideStories'
-  | 'chapterTwoSideStories'
-  | 'novellasAndPromos'
-  | 'parallel';
-
-/**
- * Each product line by its cycle position, so the cycle filter names it in the UI language; its
- * packs share no name to read one from (checked against `/api/public/packs/` on 2026-11-09).
- */
-export const PRODUCT_LINES: Readonly<Partial<Record<number, ProductLine>>> = {
-  50: 'returnTo',
-  60: 'starterDecks',
-  61: 'chapterTwoStarterDecks',
-  70: 'sideStories',
-  73: 'chapterTwoSideStories',
-  80: 'novellasAndPromos',
-  90: 'parallel',
-};
-
 /** Distinct cycle positions of the packs, ascending. */
 export function cyclePositions(packs: readonly PackDef[]): number[] {
   return [...new Set(packs.map((p) => p.cyclePosition))].sort((a, b) => a - b);
