@@ -927,6 +927,7 @@ export const appTexts = {
     investigatorLine: '{{name}} (health {{health}}, sanity {{sanity}})',
     loadingCatalog: 'Loading investigators…',
     catalogFailed: 'The investigators could not be loaded. Check your connection and retry.',
+    retry: 'Retry',
     startFailed: 'The game could not be started.',
     back: 'Back',
     nextTo: 'Next: {{step}}',

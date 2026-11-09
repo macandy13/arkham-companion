@@ -78,3 +78,20 @@ test('the summary of a quick game with two investigators', async ({ page }) => {
 
   await expect(page.getByRole('region', { name: 'Summary' })).toContainText('Hard');
 });
+
+test('the investigators step when the card data could not be loaded, with its retry', async ({
+  page,
+}) => {
+  // A first start without network: nothing is cached, so the wizard has no investigators.
+  await page.route(
+    (url) => url.pathname === '/api/public/cards/',
+    (route) => route.abort(),
+  );
+  await page.goto('/#/new');
+  await page.getByRole('link', { name: 'Quick game' }).first().click();
+  await page.getByRole('button', { name: 'Next' }).click();
+  await page.getByRole('button', { name: 'Next' }).click();
+
+  await expect(page.getByRole('alert')).toContainText('could not be loaded');
+  await expect(page.getByRole('button', { name: 'Retry' })).toBeVisible();
+});

@@ -933,6 +933,7 @@ export const appTexts = {
     loadingCatalog: 'Ermittler werden geladen…',
     catalogFailed:
       'Die Ermittler konnten nicht geladen werden. Prüfe die Verbindung und versuche es erneut.',
+    retry: 'Erneut versuchen',
     startFailed: 'Das Spiel konnte nicht gestartet werden.',
     back: 'Zurück',
     nextTo: 'Weiter: {{step}}',
