@@ -3,10 +3,10 @@ name: PR preview
 # Builds every PR and publishes it to
 # https://macandy13.github.io/arkham-companion/pr-preview/pr-<number>/
 # The action comments the link on the PR and removes the preview when the PR closes.
-# When apps/web changes, the `@flow` E2E specs are recorded and the `@shot` specs
-# photographed, both published next to the preview (pr-<number>/screencasts/), and the PR
-# description's screencast section is rewritten to show them (see docs/automation.md). Only
-# the specs whose picture this PR changes are shown, compared with a run on the base commit.
+# When apps/web changes, every E2E spec is photographed as it ends, on this PR and on its base
+# commit; the screenshot specs whose picture this PR changes and recordings of the flows whose
+# end state it changes are published next to the preview (pr-<number>/screencasts/), and the PR
+# description's screencast section is rewritten to show them (see docs/automation.md).
 # Living inside the preview directory means they are removed with it.
 # PRs from forks are skipped (no write token).
 
@@ -78,13 +78,13 @@ jobs:
       - if: steps.changes.outputs.web == 'true'
         timeout-minutes: 5
         run: pnpm --filter @arkham/web exec playwright install --only-shell chromium
-      # Records the base commit's tagged specs too, so the render step can leave out every spec
-      # whose picture (a shot, or a flow's end state) this PR doesn't change, including specs an
-      # earlier PR left tagged on main. Its own install and its own `e2e:screencast` script, so the
-      # base builds with its own packages and records with its own projects (naming a project the
-      # base doesn't have would fail its run). Specs the base run doesn't photograph are all shown.
+      # Photographs the base commit's specs too, so only the specs whose picture (a shot, or a
+      # flow's end state) this PR changes are shown. Its own install and its own `e2e:pictures`
+      # script, so the base builds with its own packages and photographs with its own projects
+      # (naming a project the base doesn't have would fail its run). Specs the base run doesn't
+      # photograph are all shown.
       - if: steps.changes.outputs.web == 'true'
-        timeout-minutes: 15
+        timeout-minutes: 20
         continue-on-error: true
         run: |
           mkdir -p apps/web/screencasts
@@ -93,17 +93,34 @@ jobs:
               { cp -r apps/web/e2e/.card_pictures "$RUNNER_TEMP/base/apps/web/e2e/" ||
                 echo "::notice::No cached card pictures; the base run downloads them."; } &&
               cd "$RUNNER_TEMP/base" && pnpm install --frozen-lockfile --prefer-offline &&
-              pnpm --filter @arkham/web e2e:screencast); then
+              pnpm --filter @arkham/web e2e:pictures); then
             echo "::warning::The base commit's run failed; specs it didn't photograph are all shown."
           fi
           cp "$RUNNER_TEMP/base/apps/web/screencasts/report.json" apps/web/screencasts/base.json ||
-            echo "::warning::The base commit's run wrote no report; every tagged spec is shown."
-      # Recorded before the preview build: Playwright builds with the root base path,
-      # and the preview build below empties dist/ anyway.
+            echo "::warning::The base commit's run wrote no report; every spec is shown."
+      # Photographed and recorded before the preview build: Playwright builds with the root base
+      # path, and the preview build below empties dist/ anyway.
       - if: steps.changes.outputs.web == 'true'
-        # A failing flow must not block the preview; the E2E check reports it.
+        # A failing spec must not block the preview; the E2E check reports it.
         continue-on-error: true
-        run: pnpm --filter @arkham/web e2e:screencast
+        run: pnpm --filter @arkham/web e2e:pictures
+      # Only the flows whose end state differs from the base are filmed, slowed down, since
+      # recording them is slow (cli.ts flows caps them at SCREENCAST_LIMIT).
+      - id: flows
+        if: steps.changes.outputs.web == 'true' && hashFiles('apps/web/screencasts/report.json') != ''
+        working-directory: apps/web
+        continue-on-error: true
+        run: |
+          {
+            echo 'grep<<END_OF_GREP'
+            node scripts/screencast/cli.ts flows screencasts/report.json screencasts/base.json
+            echo 'END_OF_GREP'
+          } >> "$GITHUB_OUTPUT"
+      - if: steps.changes.outputs.web == 'true' && steps.flows.outputs.grep != ''
+        continue-on-error: true
+        run: pnpm --filter @arkham/web e2e:screencast --grep "$FLOWS"
+        env:
+          FLOWS: ${{ steps.flows.outputs.grep }}
       # ffmpeg only turns flow videos into GIFs, and it comes from Ubuntu's mirror (see above), so
       # it is installed only when a flow was recorded, and a slow mirror times the step out instead
       # of stalling the run. Without ffmpeg the render step fails and the description keeps its
@@ -117,7 +134,7 @@ jobs:
         working-directory: apps/web
         continue-on-error: true
         run: >-
-          node scripts/screencast/cli.ts render screencasts/report.json screencasts/base.json screencasts/out
+          node scripts/screencast/cli.ts render screencasts/report.json screencasts/base.json screencasts/recording.json screencasts/out
           "https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/pr-preview/pr-${{ github.event.number }}/screencasts/"
           "https://raw.githubusercontent.com/${{ github.repository }}/gh-pages/pr-preview/pr-${{ github.event.number }}/screencasts/"
           "${HEAD_SHA::7}"

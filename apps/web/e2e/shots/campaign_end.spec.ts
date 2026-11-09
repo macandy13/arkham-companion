@@ -8,7 +8,7 @@ import {
   zealotWonEvents,
 } from '../fixtures/saved_campaigns';
 
-// How a campaign's log reads once the campaign is over (`@shot`, coding guidelines §3).
+// How a campaign's log reads once the campaign is over (coding guidelines §3).
 
 test('the log of a campaign lost for want of investigators', async ({ page }) => {
   await openStoredCampaign(page, 'Zealot – everyone', (id) =>

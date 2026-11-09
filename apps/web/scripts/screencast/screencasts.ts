@@ -20,6 +20,13 @@ export const SCREENCAST_STEP_MS = 250;
  */
 export const SCREENCAST_SLOWDOWN = 4;
 
+/**
+ * Most flows recorded per push. A change to something every screen shows (the app bar, a token)
+ * changes the end state of nearly every flow, and recording them all slowed down would take
+ * longer than the rest of the preview; the others are listed by name.
+ */
+export const SCREENCAST_LIMIT = 5;
+
 /** Width the GIFs are scaled to; enough to read the UI inline in a PR description. */
 export const GIF_WIDTH = 800;
 
@@ -64,7 +71,16 @@ export interface FlowVideo {
 }
 
 /**
- * One screenshot spec (tagged `@shot`). `pictures` holds, per device, the `.png` Playwright
+ * A flow spec whose end state the PR changes, named by its file and title so its recording can be
+ * found in the `screencast` run (`flowGrep` selects it there).
+ */
+export interface ChangedFlow {
+  readonly title: string;
+  readonly file?: string;
+}
+
+/**
+ * One screenshot spec (in `e2e/shots/`). `pictures` holds, per device, the `.png` Playwright
  * took when the test ended, or `undefined` when the spec did not pass on that device.
  */
 export interface Screenshot {
@@ -74,18 +90,20 @@ export interface Screenshot {
 }
 
 /**
- * The Playwright projects that record for the PR (`playwright.config.ts`): `screencast` films
- * the `@flow` specs, `screenshot` and `screenshot-phone` photograph the `@shot` specs as they
- * end, on the tablet and on a phone. All run in one report, so each spec is read from its own
- * projects only.
+ * The Playwright projects that record for the PR (`playwright.config.ts`): `flow-picture`
+ * photographs every flow spec (outside `e2e/shots/`) as it ends, `screenshot` and
+ * `screenshot-phone` photograph every shot spec as it ends, on the tablet and on a phone. These
+ * run in one report on the PR and on its base, so only the specs whose picture differs are
+ * shown. `screencast` then films just the changed flows, slowed down, in a second run.
  */
 export const RECORDING_PROJECTS = {
+  flowPictures: 'flow-picture',
   flows: 'screencast',
   shots: 'screenshot',
   phoneShots: 'screenshot-phone',
 } as const;
 
-/** The screens every `@shot` spec is photographed on, shown side by side in the PR. */
+/** The screens every shot spec is photographed on, shown side by side in the PR. */
 export type ShotDevice = 'desktop' | 'phone';
 
 /**
@@ -112,7 +130,7 @@ export function shotFile(slug: string, device: ShotDevice): string {
  * The base commit's run of the same projects (`playwright test` on the merge commit's first
  * parent) and how to compare two picture files. A spec the base also records is left out when
  * its last picture (the shot, or a flow's end state) is the same on both sides: the PR didn't
- * change it, an earlier PR only left its tag on `main`. Without a base, every tagged spec shows.
+ * change it. Without a base, every spec shows.
  */
 export interface BaseRun {
   readonly report: PlaywrightReport;
@@ -122,15 +140,45 @@ export interface BaseRun {
 const NO_BASE: BaseRun = { report: {}, samePicture: () => false };
 
 /**
- * Flattens the report into one entry per flow spec, in report order, using the last passing
- * attempt, leaving out flows whose end state `base` shows unchanged.
+ * The flow specs in `pictures` (the `flow-picture` run), in report order, except those whose end
+ * state `base` shows unchanged. Only the end state is compared, so a flow that changes only in
+ * its middle is not caught.
  */
-export function flowVideos(report: PlaywrightReport, base: BaseRun = NO_BASE): FlowVideo[] {
-  return changedSpecs(report, [RECORDING_PROJECTS.flows], base).map((spec) => ({
-    title: spec.title,
-    slug: slugify(spec.title),
-    videoPath: passingAttachment(spec, RECORDING_PROJECTS.flows, 'video'),
-  }));
+export function changedFlows(pictures: PlaywrightReport, base: BaseRun = NO_BASE): ChangedFlow[] {
+  return changedSpecs(pictures, [RECORDING_PROJECTS.flowPictures], base).map(({ title, file }) =>
+    file === undefined ? { title } : { title, file },
+  );
+}
+
+/**
+ * The `playwright test --grep` pattern that selects `flows`: each title at the end of the full
+ * title (project, file, title, joined by spaces), so a flow whose title ends another's isn't picked too.
+ */
+export function flowGrep(flows: readonly ChangedFlow[]): string {
+  // Plain `node` can't load @arkham/util's extensionless imports, so its escapeRegExp is repeated here.
+  const escape = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return flows.map((flow) => ` ${escape(flow.title)}$`).join('|');
+}
+
+/**
+ * One entry per flow in `flows`, with the video of its last passing attempt in `recording` (the
+ * `screencast` run), or none when it failed there or wasn't recorded.
+ */
+export function flowVideos(
+  flows: readonly ChangedFlow[],
+  recording: PlaywrightReport,
+): FlowVideo[] {
+  const recorded = new Map(
+    specsIn(recording, [RECORDING_PROJECTS.flows]).map((spec) => [specKey(spec), spec]),
+  );
+  return flows.map((flow) => {
+    const spec = recorded.get(specKey(flow));
+    return {
+      title: flow.title,
+      slug: slugify(flow.title),
+      videoPath: spec && passingAttachment(spec, RECORDING_PROJECTS.flows, 'video'),
+    };
+  });
 }
 
 /**
@@ -190,7 +238,7 @@ function specsIn(report: PlaywrightReport, projects: readonly string[]): ReportS
 }
 
 // The leaf title is enough: specs repeating a title in one file would already collide on their slug.
-function specKey(spec: ReportSpec): string {
+function specKey(spec: { readonly file?: string; readonly title: string }): string {
   return `${spec.file ?? ''} › ${spec.title}`;
 }
 
@@ -236,8 +284,9 @@ export function gifArgs({ input, output }: { input: string; output: string }): s
  * The Markdown section (including its markers) listing every screenshot inline, desktop and
  * phone side by side, then every
  * flow with an inline GIF and a link to the player page, which plays the full-quality video
- * with pause, seeking and speed; just the markers when nothing is tagged, which empties a
- * section an earlier push wrote. Pictures are linked from `pictureBaseUrl` (the gh-pages
+ * with pause, seeking and speed, and by name the changed flows past {@link SCREENCAST_LIMIT}
+ * (`moreFlows`); just the markers when the PR changes no picture, which empties a section an
+ * earlier push wrote. Pictures are linked from `pictureBaseUrl` (the gh-pages
  * branch on raw.githubusercontent.com, which serves a push at once, while Pages takes a minute
  * or more to deploy it; the workflow pins the branch to the commit it pushed), the player from
  * `baseUrl` (Pages, the only host that serves it as a page). `version` (the commit) is appended
@@ -250,15 +299,18 @@ export function renderSection({
   baseUrl,
   pictureBaseUrl,
   version,
+  moreFlows = [],
 }: {
   flows: readonly FlowVideo[];
   shots: readonly Screenshot[];
+  moreFlows?: readonly string[];
   baseUrl: string;
   pictureBaseUrl: string;
   version: string;
 }): string {
-  // Nothing tagged means the PR changed no flow or situation: the markers stay, so a later push can fill them.
-  if (flows.length === 0 && shots.length === 0) return [SECTION_START, SECTION_END].join('\n');
+  // The markers stay, so a later push can fill them.
+  if (flows.length === 0 && shots.length === 0 && moreFlows.length === 0)
+    return [SECTION_START, SECTION_END].join('\n');
   const withSlash = (url: string) => (url.endsWith('/') ? url : `${url}/`);
   const base = withSlash(baseUrl);
   const pictures = withSlash(pictureBaseUrl);
@@ -296,7 +348,12 @@ export function renderSection({
     SECTION_START,
     intro,
     ...(shots.length > 0 ? ['## Screenshots', ...shotEntries] : []),
-    ...(flows.length > 0 ? ['## Screencasts', ...flowEntries] : []),
+    ...(flows.length > 0 || moreFlows.length > 0 ? ['## Screencasts', ...flowEntries] : []),
+    ...(moreFlows.length > 0
+      ? [
+          `_Also changed, not recorded (at most ${SCREENCAST_LIMIT} per push): ${moreFlows.join('; ')}._`,
+        ]
+      : []),
     SECTION_END,
   ].join('\n\n');
 }

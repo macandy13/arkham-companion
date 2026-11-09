@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 import {
   SECTION_END,
   SECTION_START,
+  changedFlows,
+  flowGrep,
   flowVideos,
   gifArgs,
   PLAYER_PLACEHOLDER,
@@ -18,22 +20,24 @@ function result(status: string, video?: string) {
 }
 
 describe('flowVideos', () => {
-  it('collects specs from nested suites in report order', () => {
+  it('lists the changed flows in their order, each with its video from the recording', () => {
     const report: PlaywrightReport = {
       suites: [
         {
           specs: [
             {
-              title: 'First flow',
-              tests: [{ projectName: 'screencast', results: [result('passed', '/a.webm')] }],
+              title: 'Second flow',
+              file: 'b.spec.ts',
+              tests: [{ projectName: 'screencast', results: [result('passed', '/b.webm')] }],
             },
           ],
           suites: [
             {
               specs: [
                 {
-                  title: 'Second flow',
-                  tests: [{ projectName: 'screencast', results: [result('passed', '/b.webm')] }],
+                  title: 'First flow',
+                  file: 'a.spec.ts',
+                  tests: [{ projectName: 'screencast', results: [result('passed', '/a.webm')] }],
                 },
               ],
             },
@@ -42,7 +46,13 @@ describe('flowVideos', () => {
       ],
     };
 
-    const flows = flowVideos(report);
+    const flows = flowVideos(
+      [
+        { title: 'First flow', file: 'a.spec.ts' },
+        { title: 'Second flow', file: 'b.spec.ts' },
+      ],
+      report,
+    );
 
     expect(flows).toEqual([
       { title: 'First flow', slug: 'first-flow', videoPath: '/a.webm' },
@@ -60,28 +70,56 @@ describe('flowVideos', () => {
     { name: 'the passing run has no video', results: [result('passed')], video: undefined },
   ])('picks the last passing video when $name', ({ results, video }) => {
     const report: PlaywrightReport = {
-      suites: [{ specs: [{ title: 'Flow', tests: [{ projectName: 'screencast', results }] }] }],
+      suites: [
+        {
+          specs: [
+            { title: 'Flow', file: 'f.spec.ts', tests: [{ projectName: 'screencast', results }] },
+          ],
+        },
+      ],
     };
 
-    const [flow] = flowVideos(report);
+    const [flow] = flowVideos([{ title: 'Flow', file: 'f.spec.ts' }], report);
 
     expect(flow?.videoPath).toBe(video);
   });
 
-  it('returns nothing for an empty report', () => {
-    expect(flowVideos({})).toEqual([]);
+  it('shows a changed flow the recording lacks as not recorded', () => {
+    expect(flowVideos([{ title: 'Flow', file: 'f.spec.ts' }], {})).toEqual([
+      { title: 'Flow', slug: 'flow', videoPath: undefined },
+    ]);
+  });
+});
+
+describe('flowGrep', () => {
+  it('matches each title at the end of the full title, with special characters taken literally', () => {
+    const grep = new RegExp(
+      flowGrep([{ title: 'start a new game' }, { title: 'fits a 1180 × 820 tablet (landscape)' }]),
+    );
+
+    expect(grep.test('screencast new_game.spec.ts start a new game')).toBe(true);
+    expect(grep.test('screencast tablet.spec.ts fits a 1180 × 820 tablet (landscape)')).toBe(true);
+    expect(grep.test('screencast new_game.spec.ts restart a new game')).toBe(false);
+    expect(grep.test('screencast new_game.spec.ts start a new game twice')).toBe(false);
   });
 });
 
 describe('screenshots', () => {
-  it('reads each spec from its own project: screenshots from screenshot, videos from screencast', () => {
+  it('reads only the screenshot projects, not the flow pictures', () => {
     const report: PlaywrightReport = {
       suites: [
         {
           specs: [
             {
               title: 'Read the map',
-              tests: [{ projectName: 'screencast', results: [result('passed', '/map.webm')] }],
+              tests: [
+                {
+                  projectName: 'flow-picture',
+                  results: [
+                    { status: 'passed', attachments: [{ name: 'screenshot', path: '/map.png' }] },
+                  ],
+                },
+              ],
             },
             {
               title: 'Map tabs',
@@ -106,9 +144,7 @@ describe('screenshots', () => {
         pictures: { desktop: '/tabs.png', phone: undefined },
       },
     ]);
-    expect(flowVideos(report)).toEqual([
-      { title: 'Read the map', slug: 'read-the-map', videoPath: '/map.webm' },
-    ]);
+    expect(changedFlows(report)).toEqual([{ title: 'Read the map' }]);
   });
 
   it('takes the desktop picture from screenshot and the phone picture from screenshot-phone', () => {
@@ -180,21 +216,13 @@ describe('specs the base also records', () => {
         : []),
     ],
   });
-  const flow = (file: string, title: string, video: string, endPicture: string) => ({
+  const flow = (file: string, title: string, endPicture: string) => ({
     title,
     file,
     tests: [
       {
-        projectName: 'screencast',
-        results: [
-          {
-            status: 'passed',
-            attachments: [
-              { name: 'video', path: video },
-              { name: 'screenshot', path: endPicture },
-            ],
-          },
-        ],
+        projectName: 'flow-picture',
+        results: [{ status: 'passed', attachments: [{ name: 'screenshot', path: endPicture }] }],
       },
     ],
   });
@@ -291,22 +319,20 @@ describe('specs the base also records', () => {
     { name: 'a changed end state is shown', headEnd: '/head/end_new.png', shown: ['play a turn'] },
   ])('compare a flow by its end state: $name', ({ headEnd, shown }) => {
     const head: PlaywrightReport = {
-      suites: [{ specs: [flow('play.spec.ts', 'play a turn', '/head/turn.webm', headEnd)] }],
+      suites: [{ specs: [flow('play.spec.ts', 'play a turn', headEnd)] }],
     };
     const base: PlaywrightReport = {
-      suites: [
-        { specs: [flow('play.spec.ts', 'play a turn', '/base/turn.webm', '/base/end_old.png')] },
-      ],
+      suites: [{ specs: [flow('play.spec.ts', 'play a turn', '/base/end_old.png')] }],
     };
 
-    expect(flowVideos(head, { report: base, samePicture }).map((f) => f.title)).toEqual(shown);
+    expect(changedFlows(head, { report: base, samePicture }).map((f) => f.title)).toEqual(shown);
   });
 
   it.each([
     { name: 'another file', baseSpec: shot('other.spec.ts', 'the attic', '/base/attic.png') },
     {
       name: 'the flow project',
-      baseSpec: flow('map.spec.ts', 'the attic', '/base/attic.webm', '/base/attic.png'),
+      baseSpec: flow('map.spec.ts', 'the attic', '/base/attic.png'),
     },
   ])(
     'are matched by file, title and project, so a base spec in $name is no match',
@@ -463,7 +489,23 @@ describe('renderSection', () => {
     expect(section).not.toContain('## Screencasts');
   });
 
-  it('is just the markers when no flow is tagged', () => {
+  it('lists the changed flows past the recording limit by name under the screencasts', () => {
+    const section = renderSection({
+      flows: [recorded],
+      shots: [],
+      moreFlows: ['Play a turn', 'Win the game'],
+      baseUrl: 'https://x.test/s',
+      pictureBaseUrl: 'https://raw.x.test/s',
+      version: 'abc123',
+    });
+
+    expect(section).toContain(
+      '_Also changed, not recorded (at most 5 per push): Play a turn; Win the game._',
+    );
+    expect(section.indexOf('### Create a game')).toBeLessThan(section.indexOf('Also changed'));
+  });
+
+  it('is just the markers when the PR changes no picture', () => {
     const section = renderSection({
       flows: [],
       shots: [],
