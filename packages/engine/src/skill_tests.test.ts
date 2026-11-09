@@ -26,7 +26,7 @@ import {
   type Zone,
 } from './index';
 import { requireInvestigator } from './investigators';
-import { answer, rejectionFrom, stateAfter } from '../test/utils';
+import { answer, rejectionFrom, resolveRevelation, stateAfter } from '../test/utils';
 
 const alice = investigatorId('alice');
 const bob = investigatorId('bob');
@@ -604,7 +604,7 @@ describe('revelation test', () => {
   it('asks the drawer for the test of a treachery that has one', () => {
     const { context, state } = chillOnTop.start();
 
-    const drawn = stateAfter(context, state, draw);
+    const drawn = stateAfter(context, state, draw, resolveRevelation('chill'));
 
     expect(drawn.pending).toEqual([
       {
@@ -626,7 +626,7 @@ describe('revelation test', () => {
   it('keeps the card out of the discard while its revelation is resolved', () => {
     const { context, state } = chillOnTop.start();
 
-    const drawn = stateAfter(context, state, draw);
+    const drawn = stateAfter(context, state, draw, resolveRevelation('chill'));
 
     expect(drawn.cards[chill]!.zone).toEqual({ kind: 'resolving' });
   });
@@ -634,7 +634,13 @@ describe('revelation test', () => {
   it.each(['pass', 'fail'])('discards the card on top of the discard on a %s', (optionId) => {
     const { context, state } = chillOnTop.start();
 
-    const resolved = stateAfter(context, state, draw, answer('test:chill', optionId));
+    const resolved = stateAfter(
+      context,
+      state,
+      draw,
+      resolveRevelation('chill'),
+      answer('test:chill', optionId),
+    );
 
     expect(resolved.order[zoneKey({ kind: 'encounterDiscard' })]).toEqual([chill]);
   });
@@ -642,7 +648,13 @@ describe('revelation test', () => {
   it('leaves what failing costs to the players', () => {
     const { context, state } = chillOnTop.start();
 
-    const failed = stateAfter(context, state, draw, answer('test:chill', 'fail'));
+    const failed = stateAfter(
+      context,
+      state,
+      draw,
+      resolveRevelation('chill'),
+      answer('test:chill', 'fail'),
+    );
 
     expect(failed.pending).toEqual([]);
     expect(requireInvestigator(failed, alice)).toMatchObject({
@@ -657,7 +669,7 @@ describe('revelation test', () => {
       .withCard(clinging, clingingTreachery, { kind: 'encounterDeck' })
       .start();
 
-    const drawn = stateAfter(context, state, draw);
+    const drawn = stateAfter(context, state, draw, resolveRevelation('clinging'));
     const answered = stateAfter(context, drawn, answer('test:clinging', 'fail'));
 
     expect(drawn.cards[clinging]!.zone).toEqual({ kind: 'threatArea', investigatorId: alice });
@@ -695,7 +707,7 @@ describe('test of either of two skills', () => {
       .withCard(sway, swayingTreachery, { kind: 'encounterDeck' })
       .start();
 
-    const drawn = stateAfter(context, state, draw);
+    const drawn = stateAfter(context, state, draw, resolveRevelation('sway'));
 
     expect(drawn.pending).toMatchObject([
       {
@@ -720,7 +732,13 @@ describe('test of either of two skills', () => {
       const { context, state } = aliceInStudy
         .withCard(sway, swayingTreachery, { kind: 'encounterDeck' })
         .start();
-      const picked = stateAfter(context, state, draw, answer(swayChoice, skill));
+      const picked = stateAfter(
+        context,
+        state,
+        draw,
+        resolveRevelation('sway'),
+        answer(swayChoice, skill),
+      );
 
       const resolved = stateAfter(context, picked, answer('test:sway', result));
 

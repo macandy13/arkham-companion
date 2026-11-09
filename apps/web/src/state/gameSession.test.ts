@@ -295,7 +295,10 @@ describe('GameSession on The Gathering', () => {
     const { store, gameId } = await storedGame('session-drawn-cards-test');
     const session = await GameSession.open(store, gameId, ctx);
 
-    await session.play((table) => table.drawEncounterCard(investigatorId('alder')));
+    await session.play((table) => {
+      table.drawEncounterCard(investigatorId('alder'));
+      table.resolveRevelation(byName('Dissonant Voices'));
+    });
     const drawn = session.drawnCards.map(({ card, drawnFor, place }) => [
       card.name,
       drawnFor,
@@ -313,7 +316,10 @@ describe('GameSession on The Gathering', () => {
   it("shows the last step's drawn cards again when the game is opened anew", async () => {
     const { store, gameId } = await storedGame('session-drawn-cards-reload-test');
     const session = await GameSession.open(store, gameId, ctx);
-    await session.play((table) => table.drawEncounterCard(investigatorId('alder')));
+    await session.play((table) => {
+      table.drawEncounterCard(investigatorId('alder'));
+      table.resolveRevelation(byName('Dissonant Voices'));
+    });
 
     const reopened = await GameSession.open(store, gameId, ctx);
 
@@ -325,7 +331,10 @@ describe('GameSession on The Gathering', () => {
   it("shows the earlier step's drawn cards again after the later step was undone", async () => {
     const { store, gameId } = await storedGame('session-undone-step-notices-test');
     const session = await GameSession.open(store, gameId, ctx);
-    await session.play((table) => table.drawEncounterCard(investigatorId('alder')));
+    await session.play((table) => {
+      table.drawEncounterCard(investigatorId('alder'));
+      table.resolveRevelation(byName('Dissonant Voices'));
+    });
     await session.play((table) => table.nextPhase());
     await session.undo();
 
@@ -337,7 +346,10 @@ describe('GameSession on The Gathering', () => {
   it('keeps drawn cards the players dismissed hidden when the game is opened anew', async () => {
     const { store, gameId } = await storedGame('session-dismissed-notice-test');
     const session = await GameSession.open(store, gameId, ctx);
-    await session.play((table) => table.drawEncounterCard(investigatorId('alder')));
+    await session.play((table) => {
+      table.drawEncounterCard(investigatorId('alder'));
+      table.resolveRevelation(byName('Dissonant Voices'));
+    });
     await session.dismissNotice('drawnCards');
 
     const reopened = await GameSession.open(store, gameId, ctx);
@@ -349,11 +361,17 @@ describe('GameSession on The Gathering', () => {
   it('shows the drawn cards of a step played again after a reload once its dismissed one was undone', async () => {
     const { store, gameId } = await storedGame('session-dismissed-then-undone-test');
     const session = await GameSession.open(store, gameId, ctx);
-    await session.play((table) => table.drawEncounterCard(investigatorId('alder')));
+    await session.play((table) => {
+      table.drawEncounterCard(investigatorId('alder'));
+      table.resolveRevelation(byName('Dissonant Voices'));
+    });
     await session.dismissNotice('drawnCards');
     await session.undo();
     const reloaded = await GameSession.open(store, gameId, ctx);
-    await reloaded.play((table) => table.drawEncounterCard(investigatorId('alder')));
+    await reloaded.play((table) => {
+      table.drawEncounterCard(investigatorId('alder'));
+      table.resolveRevelation(byName('Dissonant Voices'));
+    });
 
     const reopened = await GameSession.open(store, gameId, ctx);
 
@@ -371,7 +389,10 @@ describe('GameSession on The Gathering', () => {
   it("opens a game whose last step drew nothing without the earlier step's notices", async () => {
     const { store, gameId } = await storedGame('session-later-step-notices-test');
     const session = await GameSession.open(store, gameId, ctx);
-    await session.play((table) => table.drawEncounterCard(investigatorId('alder')));
+    await session.play((table) => {
+      table.drawEncounterCard(investigatorId('alder'));
+      table.resolveRevelation(byName('Dissonant Voices'));
+    });
     await session.play((table) => table.nextPhase());
 
     const reopened = await GameSession.open(store, gameId, ctx);

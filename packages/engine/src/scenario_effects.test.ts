@@ -29,7 +29,7 @@ import {
   type Command,
 } from './index';
 import { requireInvestigator } from './investigators';
-import { rejectionFrom, stateAfter } from '../test/utils';
+import { rejectionFrom, resolveRevelation, runFrom, stateAfter } from '../test/utils';
 
 const hall = instanceId('hall');
 const study = instanceId('study');
@@ -127,7 +127,12 @@ describe('card effects that shuffle cards into the encounter deck', () => {
       .withCard(filler, fillerCard, encounterDeck)
       .start();
 
-    const after = stateAfter(context, state, { type: 'DrawEncounter', investigatorId: alice });
+    const after = stateAfter(
+      context,
+      state,
+      { type: 'DrawEncounter', investigatorId: alice },
+      resolveRevelation('omen'),
+    );
 
     expect(after.cards[omen]?.zone).toEqual(encounterDeck);
     expect(after.cards[filler]?.zone).toEqual(encounterDeck);
@@ -146,7 +151,12 @@ describe('card effects that shuffle cards into the encounter deck', () => {
       .withCard(lurker, blankTreachery('lurker'), setAside)
       .start();
 
-    const after = stateAfter(context, state, { type: 'DrawEncounter', investigatorId: alice });
+    const after = stateAfter(
+      context,
+      state,
+      { type: 'DrawEncounter', investigatorId: alice },
+      resolveRevelation('omen'),
+    );
 
     expect(after.cards[lurker]?.zone).toEqual(encounterDeck);
     expect(after.cards[omen]?.zone).toEqual(encounterDiscard);
@@ -164,10 +174,13 @@ describe('card effects that shuffle cards into the encounter deck', () => {
       .withCard(filler, fillerCard, encounterDeck)
       .start();
 
-    const { state: after, events } = execute(context, state, {
-      type: 'DrawEncounter',
-      investigatorId: alice,
-    });
+    const { state: after, events } = runFrom(context, state, [
+      {
+        type: 'DrawEncounter',
+        investigatorId: alice,
+      },
+      resolveRevelation('omen'),
+    ]);
 
     expect(after.cards[omen]?.zone).toEqual(encounterDiscard);
     expect(after.cards[filler]?.zone).toEqual(encounterDeck);

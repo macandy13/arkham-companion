@@ -21,6 +21,8 @@ import {
   cardIn,
   makeCampaignLog,
   rejectionFrom,
+  resolveRevelation,
+  runFrom,
   stateAfter,
 } from '@arkham/engine/test/utils';
 import {
@@ -240,7 +242,12 @@ describe('The Devourer Below card abilities', () => {
         .withAgenda(agenda, cardOf('01143'))
         .withCard(offer, cardOf('01178'), { kind: 'encounterDeck' })
         .start();
-      const drawn = stateAfter(context, started, aliceDraws('Offer of Power'));
+      const drawn = stateAfter(
+        context,
+        started,
+        aliceDraws('Offer of Power'),
+        resolveRevelation('offer_of_power'),
+      );
 
       const state = stateAfter(context, drawn, answer(OFFER_OF_POWER_DECISION, optionId));
 
@@ -259,7 +266,12 @@ describe('The Devourer Below card abilities', () => {
         .withInvestigator(alice, { locationId: mainPath })
         .withCard(instanceId('yellow_sign'), cardOf('01176'), { kind: 'encounterDeck' })
         .start();
-      const drawn = stateAfter(context, started, aliceDraws('The Yellow Sign'));
+      const drawn = stateAfter(
+        context,
+        started,
+        aliceDraws('The Yellow Sign'),
+        resolveRevelation('yellow_sign'),
+      );
 
       const state = stateAfter(context, drawn, answer('test:yellow_sign', result));
 
@@ -278,7 +290,10 @@ describe('The Devourer Below card abilities', () => {
         .withCard(dreams, cardOf('01182'), { kind: 'encounterDeck' })
         .start();
 
-      const { state } = execute(context, started, aliceDraws("Dreams of R'lyeh"));
+      const { state } = runFrom(context, started, [
+        aliceDraws("Dreams of R'lyeh"),
+        resolveRevelation('dreams_of_rlyeh'),
+      ]);
 
       expect(state.cards[dreams]?.zone).toEqual(threatAreaOf(alice));
     });

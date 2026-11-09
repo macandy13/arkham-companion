@@ -1260,6 +1260,7 @@ describe('the encounter card being resolved', () => {
     const table = aliceDraws();
 
     table.play({ type: 'DrawEncounter', investigatorId: alice });
+    table.resolveRevelation(byName('crypt_chill'));
 
     expect(table.board.decisions).toEqual([
       expect.objectContaining({
@@ -1286,6 +1287,7 @@ describe('the encounter card being resolved', () => {
     );
 
     table.play({ type: 'DrawEncounter', investigatorId: alice });
+    table.resolveRevelation(byName('false_lead'));
 
     expect(table.board.resolving?.keywords).toEqual([{ name: 'surge' }]);
   });
@@ -1293,6 +1295,7 @@ describe('the encounter card being resolved', () => {
   it('shows nothing once the card has resolved', () => {
     const table = aliceDraws();
     table.play({ type: 'DrawEncounter', investigatorId: alice });
+    table.resolveRevelation(byName('crypt_chill'));
 
     table.answer(byName('crypt_chill'), 'pass');
 

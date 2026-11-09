@@ -14,7 +14,14 @@ import {
   type CardStats,
   type Command,
 } from '@arkham/engine';
-import { answer, cardIn, rejectionFrom, runFrom, stateAfter } from '@arkham/engine/test/utils';
+import {
+  answer,
+  cardIn,
+  rejectionFrom,
+  resolveRevelation,
+  runFrom,
+  stateAfter,
+} from '@arkham/engine/test/utils';
 import { CRYPT_CHILL_DECISION, WHATS_GOING_ON_DECISION, theGatheringCards } from './cards';
 
 /** The card with `code` in the scenario's card data. */
@@ -231,7 +238,7 @@ describe('The Gathering treacheries', () => {
           ? state
           : stateAfter(context, state, { type: 'PlaceDoom', amount: doomBefore });
 
-      const drawn = stateAfter(context, withDoom, aliceDraws);
+      const drawn = stateAfter(context, withDoom, aliceDraws, resolveRevelation('ancient_evils'));
 
       expect(drawn.cards[agenda1]?.tokens.doom).toBe(doomBefore + 1);
       expect(drawn.pending.map((decision) => decision.id)).toEqual(asked);
@@ -255,7 +262,13 @@ describe('The Gathering treacheries', () => {
         const { context, state } = aliceInTheStudy
           .withCard(cryptChill, cardOf('01167'), { kind: 'encounterDeck' })
           .start();
-        const failed = stateAfter(context, state, aliceDraws, answer('test:crypt_chill', 'fail'));
+        const failed = stateAfter(
+          context,
+          state,
+          aliceDraws,
+          resolveRevelation('crypt_chill'),
+          answer('test:crypt_chill', 'fail'),
+        );
 
         const { state: after, events } = runFrom(context, failed, [
           answer(CRYPT_CHILL_DECISION, optionId),

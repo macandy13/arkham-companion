@@ -8,6 +8,9 @@ import {
   investigatorId,
   newGame,
   PlayTable,
+  blankTreachery,
+  takeDamage,
+  whenRevealed,
 } from '@arkham/engine';
 import { goalWeights } from './goal_bot';
 import { offeredSteps } from './random_bot';
@@ -43,6 +46,28 @@ describe('the steps the goal bot wants', () => {
   it('moves towards the nearest clues', () => {
     expect(wanted(PlayTable.start(game))).toEqual([
       { verb: 'moveTo', investigator: cardName('alice'), location: cardName('study') },
+    ]);
+  });
+
+  it('resolves a drawn treachery`s revelation and never cancels it', () => {
+    const table = PlayTable.start(
+      game
+        .withCard(
+          instanceId('burning_treachery'),
+          blankTreachery('burning_treachery', { abilities: [whenRevealed(takeDamage(1))] }),
+          { kind: 'encounterDeck' },
+        )
+        .withCard(instanceId('next_card'), blankTreachery('next_card'), {
+          kind: 'encounterDeck',
+        }),
+    );
+    table.play({ type: 'DrawEncounter', investigatorId: alice });
+
+    const offered = offeredSteps(table);
+    const weights = goalWeights(table, offered);
+
+    expect(offered.filter((_, i) => weights[i]! > 0)).toEqual([
+      { verb: 'answer', about: 'burning_treachery', option: 'resolve revelation' },
     ]);
   });
 

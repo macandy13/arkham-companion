@@ -102,7 +102,7 @@ import {
 } from './index';
 import { agendaThresholdDecision } from './doom';
 import { requireInvestigator } from './investigators';
-import { answer, rejectionFrom, stateAfter } from '../test/utils';
+import { answer, rejectionFrom, resolveRevelation, runFrom, stateAfter } from '../test/utils';
 
 const hall = instanceId('hall');
 const cellar = instanceId('cellar');
@@ -959,7 +959,7 @@ describe('trigger bus', () => {
       { case: 'a fail by 0', answered: 0, damage: 0 },
     ])('$case deals $damage damage', ({ answered, damage }) => {
       const { context, state: started } = treacheryTable.start();
-      const drawn = stateAfter(context, started, aliceDraws);
+      const drawn = stateAfter(context, started, aliceDraws, resolveRevelation('grasping_hands'));
 
       const { state, events } = execute(context, drawn, {
         ...answer('test:grasping_hands', 'fail'),
@@ -979,8 +979,10 @@ describe('trigger bus', () => {
         context,
         started,
         aliceDraws,
+        resolveRevelation('grasping_hands'),
         answer('test:grasping_hands', 'pass'),
         aliceDraws,
+        resolveRevelation('rotting_remains'),
       );
 
       const { state } = execute(context, secondDraw, {
@@ -993,7 +995,7 @@ describe('trigger bus', () => {
 
     it('deals nothing on a pass', () => {
       const { context, state: started } = treacheryTable.start();
-      const drawn = stateAfter(context, started, aliceDraws);
+      const drawn = stateAfter(context, started, aliceDraws, resolveRevelation('grasping_hands'));
 
       const { state } = execute(context, drawn, answer('test:grasping_hands', 'pass'));
 
@@ -1015,7 +1017,7 @@ describe('trigger bus', () => {
           .withInvestigator(alice, { locationId: hall, clues })
           .withCard(instanceId('losing_trail'), losingTrailCard, { kind: 'encounterDeck' })
           .start();
-        const drawn = stateAfter(context, started, aliceDraws);
+        const drawn = stateAfter(context, started, aliceDraws, resolveRevelation('losing_trail'));
 
         const { state } = execute(context, drawn, {
           ...answer('test:losing_trail', 'fail'),
@@ -1911,7 +1913,7 @@ describe('a choice for the investigator who drew the card', () => {
   it('asks the drawer, not the lead', () => {
     const { context, state: started } = offerTable.start();
 
-    const { state } = execute(context, started, bobDraws);
+    const { state } = runFrom(context, started, [bobDraws, resolveRevelation('offer')]);
 
     expect(state.pending).toMatchObject([
       {
@@ -1927,7 +1929,7 @@ describe('a choice for the investigator who drew the card', () => {
     { optionId: 'horror', agendaDoom: undefined, bobHorror: 2 },
   ])('runs the effects of the answer $optionId', ({ optionId, agendaDoom, bobHorror }) => {
     const { context, state: started } = offerTable.start();
-    const asked = stateAfter(context, started, bobDraws);
+    const asked = stateAfter(context, started, bobDraws, resolveRevelation('offer'));
 
     const state = stateAfter(context, asked, answer('offer', optionId));
 
@@ -1963,7 +1965,10 @@ describe('a choice without the options that cannot be resolved', () => {
         .withCard(shadow, shadowCard, { kind: 'encounterDeck' })
         .start();
 
-      const { state } = execute(context, started, { type: 'DrawEncounter', investigatorId: alice });
+      const { state } = runFrom(context, started, [
+        { type: 'DrawEncounter', investigatorId: alice },
+        resolveRevelation('shadow'),
+      ]);
 
       expect(state.pending).toMatchObject([{ id: decisionId('shadow'), options }]);
     },
@@ -1999,7 +2004,12 @@ describe('a choice without the options that cannot be resolved', () => {
       .withCard(drained, drainedCard, { kind: 'encounterDeck' })
       .start();
 
-    const state = stateAfter(context, started, { type: 'DrawEncounter', investigatorId: alice });
+    const state = stateAfter(
+      context,
+      started,
+      { type: 'DrawEncounter', investigatorId: alice },
+      resolveRevelation('drained'),
+    );
 
     expect(state.pending).toEqual([]);
     expect(requireInvestigator(state, alice)).toMatchObject({ clues: 0, resources: 0 });
@@ -2011,7 +2021,12 @@ describe('a choice without the options that cannot be resolved', () => {
       .withInvestigator(alice, { locationId: hall, clues: 1 })
       .withCard(shadow, shadowCard, { kind: 'encounterDeck' })
       .start();
-    const asked = stateAfter(context, started, { type: 'DrawEncounter', investigatorId: alice });
+    const asked = stateAfter(
+      context,
+      started,
+      { type: 'DrawEncounter', investigatorId: alice },
+      resolveRevelation('shadow'),
+    );
 
     const state = stateAfter(context, asked, answer('shadow', 'clue'));
 
@@ -2103,7 +2118,7 @@ describe('doom on the nearest Cultist enemy, or a search for one', () => {
       .withCard(instanceId('monster'), monsterCard, atLocation(hall))
       .start();
 
-    const after = stateAfter(context, state, aliceDraws);
+    const after = stateAfter(context, state, aliceDraws, resolveRevelation('chanting'));
 
     expect(after.cards[instanceId('near_cultist')]?.tokens.doom).toBe(2);
     expect(after.cards[instanceId('far_cultist')]?.tokens.doom).toBeUndefined();
@@ -2116,7 +2131,7 @@ describe('doom on the nearest Cultist enemy, or a search for one', () => {
       .withCard(instanceId('engaged_cultist'), cultistCard, engagedWith(alice))
       .start();
 
-    const after = stateAfter(context, state, aliceDraws);
+    const after = stateAfter(context, state, aliceDraws, resolveRevelation('chanting'));
 
     expect(after.cards[instanceId('engaged_cultist')]?.tokens.doom).toBe(2);
     expect(after.cards[instanceId('near_cultist')]?.tokens.doom).toBeUndefined();
@@ -2129,7 +2144,7 @@ describe('doom on the nearest Cultist enemy, or a search for one', () => {
       .withCard(instanceId('cellar_cultist'), cultistCard, atLocation(cellar))
       .withCard(instanceId('garden_cultist'), cultistCard, atLocation(instanceId('garden')))
       .start();
-    const asked = stateAfter(context, state, aliceDraws);
+    const asked = stateAfter(context, state, aliceDraws, resolveRevelation('chanting'));
 
     const after = stateAfter(context, asked, answer('nearest:chanting', 'garden_cultist'));
 
@@ -2154,7 +2169,7 @@ describe('doom on the nearest Cultist enemy, or a search for one', () => {
       .withCard(instanceId('shed_cultist'), cultistCard, atLocation(shed))
       .start();
 
-    const after = stateAfter(context, state, aliceDraws);
+    const after = stateAfter(context, state, aliceDraws, resolveRevelation('chanting'));
 
     expect(after.cards[instanceId('shed_cultist')]?.tokens.doom).toBe(2);
   });
@@ -2167,7 +2182,7 @@ describe('doom on the nearest Cultist enemy, or a search for one', () => {
       .withCard(instanceId('attic_cultist'), cultistCard, atLocation(attic))
       .start();
 
-    const after = stateAfter(context, state, aliceDraws);
+    const after = stateAfter(context, state, aliceDraws, resolveRevelation('chanting'));
 
     expect(after.cards[instanceId('attic_cultist')]?.tokens.doom).toBe(2);
     expect(after.cards[instanceId('shed_cultist')]?.tokens.doom).toBeUndefined();
@@ -2179,7 +2194,10 @@ describe('doom on the nearest Cultist enemy, or a search for one', () => {
       .withCard(instanceId('deck_card'), blankTreachery('deck_card'), { kind: 'encounterDeck' })
       .start();
 
-    const { state: after, events } = execute(context, state, aliceDraws);
+    const { state: after, events } = runFrom(context, state, [
+      aliceDraws,
+      resolveRevelation('chanting'),
+    ]);
 
     const draws = events.filter((event) => event.type === 'EncounterCardDrawn');
     expect(draws.map((event) => event.cardId)).toEqual([chanting]);
@@ -2198,7 +2216,10 @@ describe('doom on the nearest Cultist enemy, or a search for one', () => {
       .withCard(instanceId('hidden_cultist'), cultistCard, zone)
       .start();
 
-    const { state: after, events } = execute(context, state, aliceDraws);
+    const { state: after, events } = runFrom(context, state, [
+      aliceDraws,
+      resolveRevelation('chanting'),
+    ]);
 
     // The cultist is drawn and placed, the deck shuffled, and only then is the chanting discarded.
     expect(
@@ -2216,7 +2237,10 @@ describe('doom on the nearest Cultist enemy, or a search for one', () => {
       .withCard(instanceId('hidden_cultist'), cultistCard, { kind: 'encounterDeck' })
       .start();
 
-    const { state: after, events } = execute(context, state, aliceDraws);
+    const { state: after, events } = runFrom(context, state, [
+      aliceDraws,
+      resolveRevelation('chanting'),
+    ]);
 
     const draws = events.filter((event) => event.type === 'EncounterCardDrawn');
     expect(draws.map((event) => event.cardId)).toEqual([chanting]);
@@ -2265,7 +2289,12 @@ describe('each unengaged Ghoul enemy moving towards a location', () => {
       .withCard(cellarRat, ratCard, atLocation(cellar))
       .start();
 
-    const after = stateAfter(context, state, { type: 'DrawEncounter', investigatorId: alice });
+    const after = stateAfter(
+      context,
+      state,
+      { type: 'DrawEncounter', investigatorId: alice },
+      resolveRevelation('call'),
+    );
 
     expect(after.cards[hallGhoul]?.zone).toEqual(atLocation(parlor));
     // Arriving ready at alice's location, it engages her.
@@ -2309,7 +2338,7 @@ describe('an effect repeated for each Ghoul enemy in the Hall or Parlor', () => 
       .withCard(instanceId('parlor_rat'), ratCard, atLocation(parlor))
       .start();
 
-    const after = stateAfter(context, state, aliceDraws);
+    const after = stateAfter(context, state, aliceDraws, resolveRevelation('omen'));
 
     expect(after.cards[agenda1]?.tokens.doom).toBe(2);
   });
@@ -2319,7 +2348,7 @@ describe('an effect repeated for each Ghoul enemy in the Hall or Parlor', () => 
       .withCard(instanceId('cellar_ghoul'), ghoulTraitCard, atLocation(cellar))
       .start();
 
-    const after = stateAfter(context, state, aliceDraws);
+    const after = stateAfter(context, state, aliceDraws, resolveRevelation('omen'));
 
     expect(after.cards[agenda1]?.tokens.doom).toBeUndefined();
   });
@@ -2360,7 +2389,7 @@ describe("a card test's outcomes, resolved after the answer", () => {
       .withInvestigator(bob, { locationId: hall, sanity: { max: 6, horror: 0 } })
       .withCard(swoop, swoopCard, { kind: 'encounterDeck' })
       .start();
-    const asked = stateAfter(context, state, aliceDraws);
+    const asked = stateAfter(context, state, aliceDraws, resolveRevelation('swoop'));
 
     const after = stateAfter(context, asked, answer('test:swoop', 'fail'));
 
@@ -2375,7 +2404,7 @@ describe("a card test's outcomes, resolved after the answer", () => {
     const { context, state } = hallTable
       .withCard(instanceId('scream'), screamCard, { kind: 'encounterDeck' })
       .start();
-    const asked = stateAfter(context, state, aliceDraws);
+    const asked = stateAfter(context, state, aliceDraws, resolveRevelation('scream'));
     expect(asked.pending.map((decision) => decision.id)).toEqual(['test:scream']);
 
     const after = stateAfter(context, asked, answer('test:scream', 'fail'));
@@ -2421,7 +2450,7 @@ describe("disengaging and moving after a card's test", () => {
       .withCard(nightgaunt, nightgauntCard, engagedWith(alice))
       .withCard(wings, wingsCard, { kind: 'encounterDeck' })
       .start();
-    const asked = stateAfter(context, state, aliceDraws);
+    const asked = stateAfter(context, state, aliceDraws, resolveRevelation('wings'));
     expect(asked.cards[monster]?.zone).toEqual(engagedWith(alice));
 
     const after = stateAfter(context, asked, answer('test:wings', 'pass'));
@@ -2443,7 +2472,13 @@ describe("disengaging and moving after a card's test", () => {
       .withCard(wings, wingsCard, { kind: 'encounterDeck' })
       .start();
 
-    const after = stateAfter(context, state, aliceDraws, answer('test:wings', 'pass'));
+    const after = stateAfter(
+      context,
+      state,
+      aliceDraws,
+      resolveRevelation('wings'),
+      answer('test:wings', 'pass'),
+    );
 
     expect(after.cards[monster]?.zone).toEqual(engagedWith(bob));
     expect(after.cards[bobsMonster]?.zone).toEqual(engagedWith(bob));
@@ -2459,7 +2494,13 @@ describe("disengaging and moving after a card's test", () => {
       .withCard(wings, wingsCard, { kind: 'encounterDeck' })
       .start();
 
-    const after = stateAfter(context, state, aliceDraws, answer('test:wings', 'fail'));
+    const after = stateAfter(
+      context,
+      state,
+      aliceDraws,
+      resolveRevelation('wings'),
+      answer('test:wings', 'fail'),
+    );
 
     expect(requireInvestigator(after, alice)).toMatchObject({
       status: 'defeated',
@@ -2477,7 +2518,13 @@ describe("disengaging and moving after a card's test", () => {
       .withInvestigator(alice, { locationId: hall })
       .withCard(wings, wingsCard, { kind: 'encounterDeck' })
       .start();
-    const asked = stateAfter(context, state, aliceDraws, answer('test:wings', 'pass'));
+    const asked = stateAfter(
+      context,
+      state,
+      aliceDraws,
+      resolveRevelation('wings'),
+      answer('test:wings', 'pass'),
+    );
     expect(asked.pending).toMatchObject([
       {
         id: decisionId('location:wings'),
@@ -2500,7 +2547,13 @@ describe("disengaging and moving after a card's test", () => {
       .withCard(wings, wingsCard, { kind: 'encounterDeck' })
       .start();
 
-    const after = stateAfter(context, state, aliceDraws, answer('test:wings', 'pass'));
+    const after = stateAfter(
+      context,
+      state,
+      aliceDraws,
+      resolveRevelation('wings'),
+      answer('test:wings', 'pass'),
+    );
 
     expect(after.pending).toEqual([]);
     expect(requireInvestigator(after, alice).locationId).toBe(square);
@@ -2514,7 +2567,13 @@ describe("disengaging and moving after a card's test", () => {
       .withCard(wings, wingsCard, { kind: 'encounterDeck' })
       .start();
 
-    const after = stateAfter(context, state, aliceDraws, answer('test:wings', 'pass'));
+    const after = stateAfter(
+      context,
+      state,
+      aliceDraws,
+      resolveRevelation('wings'),
+      answer('test:wings', 'pass'),
+    );
 
     expect(after.pending).toEqual([]);
     expect(requireInvestigator(after, alice).locationId).toBe(hall);
@@ -2525,6 +2584,9 @@ describe("disengaging and moving after a card's test", () => {
 describe('a card that gains surge without clues', () => {
   const falseTrail = instanceId('false_trail');
   const nextCard = instanceId('next_card');
+  const aliceDraws: Command = { type: 'DrawEncounter', investigatorId: alice };
+  /** "It gains surge", and nothing else. */
+  const gainerAbilities = { abilities: [whenRevealed(gainSurge())] };
   /** "If you have no clues, it gains surge. If you have 1 or more clues, test intellect (4)." */
   const falseTrailCard = blankTreachery('false_trail', {
     abilities: [
@@ -2544,10 +2606,10 @@ describe('a card that gains surge without clues', () => {
       .withCard(nextCard, blankTreachery('next_card'), { kind: 'encounterDeck' })
       .start();
 
-    const { state: after, events } = execute(context, state, {
-      type: 'DrawEncounter',
-      investigatorId: alice,
-    });
+    const { state: after, events } = runFrom(context, state, [
+      aliceDraws,
+      resolveRevelation('false_trail'),
+    ]);
 
     const draws = events.filter((event) => event.type === 'EncounterCardDrawn');
     expect(draws.map((event) => event.cardId)).toEqual(drawn);
@@ -2563,7 +2625,7 @@ describe('a card that gains surge without clues', () => {
       .withCard(instanceId('untouched'), blankTreachery('untouched'), { kind: 'encounterDeck' })
       .start();
 
-    const after = stateAfter(context, state, { type: 'DrawEncounter', investigatorId: alice });
+    const after = stateAfter(context, state, aliceDraws, resolveRevelation('false_trail'));
 
     expect(after.order[zoneKey({ kind: 'encounterDiscard' })]).toEqual([nextCard, falseTrail]);
   });
@@ -2579,12 +2641,13 @@ describe('a card that gains surge without clues', () => {
     const surged = stateAfter(
       context,
       state,
-      { type: 'DrawEncounter', investigatorId: alice },
+      aliceDraws,
+      resolveRevelation('false_trail'),
       { type: 'MoveCard', cardId: falseTrail, to: { kind: 'encounterDeck' }, index: 0 },
       { type: 'AdjustInvestigator', investigatorId: alice, stat: 'clues', delta: 1 },
     );
 
-    const { events } = execute(context, surged, { type: 'DrawEncounter', investigatorId: alice });
+    const { events } = runFrom(context, surged, [aliceDraws, resolveRevelation('false_trail')]);
 
     const draws = events.filter((event) => event.type === 'EncounterCardDrawn');
     expect(draws.map((event) => event.cardId)).toEqual([falseTrail]);
@@ -2602,7 +2665,7 @@ describe('a card that gains surge without clues', () => {
       .withCard(nextCard, blankTreachery('next_card'), { kind: 'encounterDeck' })
       .withCard(instanceId('untouched'), blankTreachery('untouched'), { kind: 'encounterDeck' })
       .start();
-    const asked = stateAfter(context, state, { type: 'DrawEncounter', investigatorId: alice });
+    const asked = stateAfter(context, state, aliceDraws, resolveRevelation('asking_trail'));
 
     const { events } = execute(context, asked, answer('test:asking_trail', 'pass'));
 
@@ -2623,10 +2686,10 @@ describe('a card that gains surge without clues', () => {
       .withCard(instanceId('untouched'), blankTreachery('untouched'), { kind: 'encounterDeck' })
       .start();
 
-    const { state: after, events } = execute(context, state, {
-      type: 'DrawEncounter',
-      investigatorId: alice,
-    });
+    const { state: after, events } = runFrom(context, state, [
+      aliceDraws,
+      resolveRevelation('clinging_trail'),
+    ]);
 
     const draws = events.filter((event) => event.type === 'EncounterCardDrawn');
     expect(draws.map((event) => event.cardId)).toEqual([clinging, nextCard]);
@@ -2646,33 +2709,52 @@ describe('a card that gains surge without clues', () => {
       .withCard(nextCard, blankTreachery('next_card'), { kind: 'encounterDeck' })
       .start();
 
-    const { events } = execute(context, state, { type: 'DrawEncounter', investigatorId: alice });
+    const { events } = runFrom(context, state, [aliceDraws, resolveRevelation('deadly_trail')]);
 
     const draws = events.filter((event) => event.type === 'EncounterCardDrawn');
     expect(draws.map((event) => event.cardId)).toEqual([deadly]);
   });
 
-  it.each([
-    { deck: ['first_gainer'], drawn: ['first_gainer'] },
-    { deck: ['first_gainer', 'second_gainer'], drawn: ['first_gainer', 'second_gainer'] },
-    {
-      deck: ['first_gainer', 'second_gainer', 'third_gainer'],
-      drawn: ['first_gainer', 'second_gainer', 'third_gainer'],
-    },
-  ])('draws $drawn from a deck of only $deck, like printed surge', ({ deck, drawn }) => {
-    let game = newGame()
+  it('draws a lone gainer once, like printed surge, with no other card to draw', () => {
+    const { context, state } = newGame()
       .withLocation(hall, blankLocation('hall'), { revealed: true })
-      .withInvestigator(alice, { locationId: hall });
-    for (const code of deck) {
-      const gainer = blankTreachery(code, { abilities: [whenRevealed(gainSurge())] });
-      game = game.withCard(instanceId(code), gainer, { kind: 'encounterDeck' });
-    }
-    const { context, state } = game.start();
+      .withInvestigator(alice, { locationId: hall })
+      .withCard(instanceId('lone_gainer'), blankTreachery('lone_gainer', gainerAbilities), {
+        kind: 'encounterDeck',
+      })
+      .start();
 
-    const { events } = execute(context, state, { type: 'DrawEncounter', investigatorId: alice });
+    const { state: after, events } = runFrom(context, state, [
+      aliceDraws,
+      resolveRevelation('lone_gainer'),
+    ]);
 
     const draws = events.filter((event) => event.type === 'EncounterCardDrawn');
-    expect(draws.map((event) => event.cardId)).toEqual(drawn.map((code) => instanceId(code)));
+    expect(draws.map((event) => event.cardId)).toEqual([instanceId('lone_gainer')]);
+    expect(after.pending).toEqual([]);
+  });
+
+  it('asks again for each card a chain of gainers draws, so the chain waits for the players', () => {
+    const { context, state } = newGame()
+      .withLocation(hall, blankLocation('hall'), { revealed: true })
+      .withInvestigator(alice, { locationId: hall })
+      .withCard(instanceId('first_gainer'), blankTreachery('first_gainer', gainerAbilities), {
+        kind: 'encounterDeck',
+      })
+      .withCard(instanceId('second_gainer'), blankTreachery('second_gainer', gainerAbilities), {
+        kind: 'encounterDeck',
+      })
+      .start();
+
+    const after = stateAfter(
+      context,
+      state,
+      aliceDraws,
+      resolveRevelation('first_gainer'),
+      resolveRevelation('second_gainer'),
+    );
+
+    expect(after.pending.map((decision) => decision.id)).toEqual(['revelation:first_gainer']);
   });
 
   it('draws only once more for a card with printed surge that also gains it', () => {
@@ -2689,7 +2771,7 @@ describe('a card that gains surge without clues', () => {
       .withCard(instanceId('untouched'), blankTreachery('untouched'), { kind: 'encounterDeck' })
       .start();
 
-    const { events } = execute(context, state, { type: 'DrawEncounter', investigatorId: alice });
+    const { events } = runFrom(context, state, [aliceDraws, resolveRevelation('doubled_trail')]);
 
     const draws = events.filter((event) => event.type === 'EncounterCardDrawn');
     expect(draws.map((event) => event.cardId)).toEqual([doubled, nextCard]);

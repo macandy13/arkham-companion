@@ -493,6 +493,25 @@ test('the discard pile of seven cards on its wide page, the top card chosen, scr
   await expect(dialog.getByRole('button', { pressed: true })).toBeVisible();
 });
 
+test(
+  'Crypt Chill drawn for Roland Banks, asking whether its revelation resolves',
+  { tag: '@shot' },
+  async ({ page, isMobile }) => {
+    await resumeImportedGame(page, 'Two mythos draws', mythosDrawnExport('Two mythos draws'));
+    await page.getByRole('button', { name: 'Start turn' }).click();
+    const deck = page.getByRole('region', { name: 'Encounter deck' });
+    // A phone's compact header shows the deck alone, and a tap expands the header on its piles.
+    if (isMobile) await deck.click();
+    await deck.getByRole('button', { name: '24 cards left in the encounter deck' }).click();
+
+    await page.getByRole('button', { name: 'Draw for Roland Banks' }).click();
+
+    const revelation = page.getByRole('dialog', { name: 'Revelation of Crypt Chill' });
+    await expect(revelation.getByRole('button', { name: 'Resolve' })).toBeVisible();
+    await expect(revelation.getByRole('button', { name: 'Cancel revelation' })).toBeVisible();
+  },
+);
+
 test('Crypt Chill drawn for Roland Banks, its willpower test waiting', async ({
   page,
   isMobile,
@@ -505,6 +524,10 @@ test('Crypt Chill drawn for Roland Banks, its willpower test waiting', async ({
   await deck.getByRole('button', { name: '24 cards left in the encounter deck' }).click();
 
   await page.getByRole('button', { name: 'Draw for Roland Banks' }).click();
+  await page
+    .getByRole('dialog', { name: 'Revelation of Crypt Chill' })
+    .getByRole('button', { name: 'Resolve' })
+    .click();
 
   const cryptChill = page.getByRole('dialog', { name: 'Test for Crypt Chill' });
   await expect(cryptChill.getByText('Crypt Chill, drawn for Roland Banks')).toBeVisible();

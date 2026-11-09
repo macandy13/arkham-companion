@@ -550,6 +550,19 @@ export class PlayTable {
     this.answerWith(decision, option, amount);
   }
 
+  /**
+   * Answers the question the drawn treachery `card` names asks first (`revelationDecision`) with
+   * "Resolve"; `cancelRevelation` is the answer of a card such as Ward of Protection.
+   */
+  resolveRevelation(card: CardRef): void {
+    this.answer(card, 'resolve revelation');
+  }
+
+  /** Cancels the revelation of the drawn treachery `card` names (Ward of Protection). */
+  cancelRevelation(card: CardRef): void {
+    this.answer(card, 'cancel revelation');
+  }
+
   /** Answers the only open decision, whatever it is about, by picking the option shown as `option`. */
   answerOnly(option: string): void {
     const decision = this.onlyOne(this.current.pending, 'open decision');

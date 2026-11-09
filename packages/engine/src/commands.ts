@@ -79,6 +79,7 @@ export type Command =
   | DamageEnemy
   | HealEnemy
   | GainSurge
+  | ResolveRevelation
   | DefeatEnemy
   | ExhaustEnemy
   | EvadeEnemy
@@ -841,6 +842,22 @@ export interface DamageEnemy {
   type: 'DamageEnemy';
   enemyId: InstanceId;
   amount: number;
+}
+
+/**
+ * Answers the question every drawn treachery asks before its revelation
+ * (`revelationDecision`): resolve it, which opens the card's `revealed`
+ * window for `investigatorId`, its drawer, or with `cancelled` (a card such
+ * as Ward of Protection) resolve none of it. Either way the card is then
+ * placed as usual (discarded) and keywords such as surge still apply.
+ * Rejected for a card that is not resolving (`notResolving`). Produces
+ * `RevelationResolved`.
+ */
+export interface ResolveRevelation {
+  type: 'ResolveRevelation';
+  cardId: InstanceId;
+  investigatorId: InvestigatorId;
+  cancelled?: true;
 }
 
 /**

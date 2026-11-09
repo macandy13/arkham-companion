@@ -7,10 +7,10 @@ import {
 } from './fixtures/saved_games';
 
 // Journey: a player card tells Roland Banks to draw from the encounter deck on his turn – open the
-// encounter dialog from the header, draw for him, answer its test and see where the card went. A
-// reload while the test waits, and another after it, lose neither the test nor the notice; once
+// encounter dialog from the header, draw for him, resolve the revelation of the treachery he drew,
+// answer its test and see where the card went. A reload while the test waits, and another after it, lose neither the test nor the notice; once
 // dismissed, the notice stays away after a reload.
-test('draw an encounter card for Roland Banks on his turn', async ({ page }) => {
+test('draw an encounter card for Roland Banks on his turn', { tag: '@flow' }, async ({ page }) => {
   await test.step('Resume a game after two mythos phases and start Roland Banks’ turn', async () => {
     await resumeImportedGame(page, 'Two mythos draws', mythosDrawnExport('Two mythos draws'));
     await page.getByRole('button', { name: 'Start turn' }).click();
@@ -24,11 +24,18 @@ test('draw an encounter card for Roland Banks on his turn', async ({ page }) => 
       .click();
   });
 
-  await test.step('Crypt Chill is drawn: Roland Banks passes its willpower test', async () => {
-    const cryptChill = page.getByRole('dialog', { name: 'Test for Crypt Chill' });
+  await test.step('Crypt Chill is drawn: the players resolve its revelation', async () => {
     await expect(
       page.getByRole('button', { name: '23 cards left in the encounter deck' }),
     ).toBeVisible();
+    await page
+      .getByRole('dialog', { name: 'Revelation of Crypt Chill' })
+      .getByRole('button', { name: 'Resolve' })
+      .click();
+  });
+
+  await test.step('Roland Banks passes its willpower test', async () => {
+    const cryptChill = page.getByRole('dialog', { name: 'Test for Crypt Chill' });
     await page.reload();
     await cryptChill.getByRole('button', { name: 'Passed' }).click();
   });
@@ -59,6 +66,40 @@ test('draw an encounter card for Roland Banks on his turn', async ({ page }) => 
     await expect(notice).toBeHidden();
   });
 });
+
+// Journey: Roland Banks holds a Ward of Protection and plays it on the Crypt Chill he draws – the
+// players cancel its revelation, so no test starts and the card goes to the discard pile.
+test(
+  'cancel the revelation of the Crypt Chill Roland Banks draws',
+  { tag: '@flow' },
+  async ({ page }) => {
+    await test.step('Resume a game after two mythos phases and draw for Roland Banks', async () => {
+      await resumeImportedGame(page, 'Two mythos draws', mythosDrawnExport('Two mythos draws'));
+      await page.getByRole('button', { name: 'Start turn' }).click();
+      await page.getByRole('button', { name: '24 cards left in the encounter deck' }).click();
+      await page
+        .getByRole('dialog', { name: 'Encounter deck' })
+        .getByRole('button', { name: 'Draw for Roland Banks' })
+        .click();
+    });
+
+    await test.step('Crypt Chill asks before its revelation: cancel it', async () => {
+      const revelation = page.getByRole('dialog', { name: 'Revelation of Crypt Chill' });
+      await revelation.getByRole('button', { name: 'Cancel revelation' }).click();
+      await expect(revelation).toBeHidden();
+    });
+
+    await test.step('No test starts, and Crypt Chill lies on the discard pile', async () => {
+      await expect(page.getByRole('dialog', { name: 'Test for Crypt Chill' })).toHaveCount(0);
+      await expect(page.getByRole('status', { name: 'Encounter cards drawn' })).toHaveText(
+        /Crypt Chill for Roland Banks: discard pile/,
+      );
+      await expect(
+        page.getByRole('button', { name: 'Encounter discard pile, 2 cards, Crypt Chill on top' }),
+      ).toBeVisible();
+    });
+  },
+);
 
 // Journey: Dissonant Voices was discarded, but a revelation the app left to the players puts it
 // into Roland Banks' threat area – open the discard pile, where it lies on top, and move it there.

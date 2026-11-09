@@ -98,6 +98,7 @@ export function noticeKindOf(event: Event): NoticeKind | undefined {
       return 'enemy';
     case 'DeckShuffled':
     case 'EncounterCardDrawn':
+    case 'RevelationResolved':
     case 'SurgeGained':
       return 'encounter';
     case 'CommandDeferred':
