@@ -138,7 +138,8 @@ export const smokeAndMirrorsCardDefs: readonly CardStats[] = [
     doom: 10,
     actions: [resignAction()],
     // "Each investigator draws 1 copy of the set-aside Mark of Elokoss": its revelation puts it
-    // into their threat area. That they become its bearer goes into their deck by hand.
+    // into their threat area, which makes them its bearer (Grimoire, "Weakness"); adding it to
+    // their deck for the rest of the campaign is done by hand.
     abilities: [
       whenAdvanced(
         fromSetAside([codes.markOfElokoss], {

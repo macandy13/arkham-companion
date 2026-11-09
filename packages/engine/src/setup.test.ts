@@ -871,8 +871,8 @@ describe('compileSetup dealBeneath', () => {
     ]),
   };
   /**
-   * Northside and Downtown, the bank version picked by every seed below, each get one of the two
-   * suspects face down; the suspects' set then builds the encounter deck.
+   * Northside and Downtown each get one of the two suspects face down; the suspects' set then
+   * builds the encounter deck.
    */
   const def = makeDefinition({
     setup: [
@@ -890,10 +890,12 @@ describe('compileSetup dealBeneath', () => {
     ({ seed, underNorthside, underDowntown }) => {
       const command = scenario.compileSetup({ ...ctx, scenario: def }, makeSetupOptions({ seed }));
 
-      expect(command.cards.slice(2).map((card) => [card.id, card.zone, card.faceUp])).toEqual([
+      const beneath = command.cards.filter((card) => card.zone.kind === 'beneath');
+      expect(beneath.map((card) => [card.id, card.zone, card.faceUp])).toEqual([
         [underNorthside, { kind: 'beneath', hostId: 'northside#1' }, false],
         [underDowntown, { kind: 'beneath', hostId: 'downtown_bank#1' }, false],
       ]);
+      expect(command.cards.filter((card) => card.zone.kind === 'encounterDeck')).toEqual([]);
     },
   );
 

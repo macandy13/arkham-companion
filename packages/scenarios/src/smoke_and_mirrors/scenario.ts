@@ -120,6 +120,9 @@ const peopleOfArkham: SetupStep = {
  * Flame face down beneath six of them; 1 doom per investigator on the agenda; every Mark of
  * Elokoss set aside; and 2 cultist tokens more in the bag. The investigators start at the
  * university. The chaos bag is Spreading Flames' for a standalone game, the log's in a campaign.
+ * A standalone game has no log, so it takes the university In Flames: our reading, as the
+ * ArkhamCards guide has no standalone note for this scenario. The 2 cultist tokens stay in the
+ * campaign bag through the resolutions (MC2.8d).
  * The reference card (12133) is entered by hand from ArkhamDB; the cultist's "reveal another
  * token" against an Elite enemy, the tablet's clue placed on a failure and putting Dr. Henry
  * Armitage into play under his bearer's control are done by hand.

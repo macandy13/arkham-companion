@@ -745,6 +745,7 @@ function dealtBeneath(
   const remaining = [...step.codes];
   return step.beneath.reduce((state, location) => {
     const [code] = remaining.splice(pick(remaining.length), 1);
+    // Never undefined after the length check; the type only can't tell.
     return code === undefined
       ? state
       : withCard(state, code, { kind: 'beneath', hostId: targetId(state.cards, location) });

@@ -297,6 +297,30 @@ describe('Smoke and Mirrors act, Augurs of Flame', () => {
     expect(state.investigators[0]?.clues).toBe(0);
   });
 
+  /** The six cards dealt beneath locations, all Elite, moved to the victory display in turn. */
+  function toVictoryDisplay(state: GameState, count: number): Command[] {
+    const dealt = Object.values(state.cards).filter((card) => card.zone.kind === 'beneath');
+    return dealt.slice(0, count).map((card) => ({
+      type: 'MoveCard',
+      cardId: card.id,
+      to: { kind: 'victoryDisplay' },
+    }));
+  }
+
+  it.each([
+    { elite: 5, ended: undefined },
+    { elite: 6, ended: true },
+  ])(
+    'advances to Resolution 1 with $elite Elite enemies in the victory display: $ended',
+    ({ elite, ended }) => {
+      const started = startScenario(ctx);
+
+      const state = stateAfter(ctx, started, ...toVictoryDisplay(started, elite));
+
+      expect(state.meta.ended).toBe(ended);
+    },
+  );
+
   it('ends the scenario in Resolution 1 once it advances', () => {
     const state = stateAfter(ctx, startScenario(ctx), { type: 'AdvanceAct' });
 
