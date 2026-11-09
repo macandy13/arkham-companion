@@ -156,6 +156,66 @@ describe('IndexedDbStore', () => {
     });
   });
 
+  it('lists a game it listed before from the cached progress, without replaying its log', async () => {
+    const id = await store.createGame();
+    await store.appendEvents(id, [started]);
+    await store.listGames();
+    const load = vi.spyOn(store, 'loadGame');
+
+    const [summary] = await store.listGames();
+
+    expect(load).not.toHaveBeenCalled();
+    expect(summary).toMatchObject({
+      scenarioId: 'test',
+      investigators: [{ code: 'inv', name: 'Tester' }],
+    });
+  });
+
+  it('replays a game whose progress an app of an older state version cached', async () => {
+    vi.resetModules();
+    vi.doMock('@arkham/engine', async (original) => ({
+      ...(await original<typeof import('@arkham/engine')>()),
+      STATE_VERSION: STATE_VERSION - 1,
+    }));
+    const { IndexedDbStore: OlderStore } = await import('./IndexedDbStore');
+    vi.doUnmock('@arkham/engine');
+    const name = `test-${n++}`;
+    const older = new OlderStore(name);
+    const id = await older.createGame();
+    await older.appendEvents(id, [started]);
+    await older.listGames();
+    older.close();
+    store = new IndexedDbStore(name);
+    const load = vi.spyOn(store, 'loadGame');
+
+    const [summary] = await store.listGames();
+
+    expect(load).toHaveBeenCalledWith(id);
+    expect(summary).toMatchObject({ scenarioId: 'test' });
+  });
+
+  it('replays a game played since the last list', async () => {
+    const id = await store.createGame();
+    await store.listGames();
+    await store.appendEvents(id, [started]);
+
+    const [summary] = await store.listGames();
+
+    expect(summary).toMatchObject({ lastSeq: 1, scenarioId: 'test' });
+  });
+
+  it('lists the new step after an undo, which the next step takes the same seq for', async () => {
+    const id = await store.createGame();
+    await store.appendEvents(id, [started]);
+    await store.listGames();
+    await store.undoLast(id);
+    await store.appendEvents(id, [{ ...started, scenarioId: scenarioId('other') }]);
+
+    const [summary] = await store.listGames();
+
+    expect(summary).toMatchObject({ lastSeq: 1, scenarioId: 'other' });
+  });
+
   it('renames a game without counting it as play', async () => {
     const id = await store.createGame({ title: 'Old' });
     const before = (await store.listGames())[0]!.updatedAt;
