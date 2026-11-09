@@ -27,6 +27,7 @@ import {
 import { range } from '@arkham/util';
 import { initI18n } from '../i18n';
 import { InvestigatorBar } from './InvestigatorBar';
+import { DOUBLE_TAP_MS } from '../screens/useDoubleTap';
 import { textLength } from './InvestigatorCard';
 import { actionsOn } from '../state/gameActions.test_support';
 
@@ -754,6 +755,28 @@ describe('InvestigatorBar', () => {
       );
 
       await expect.poll(() => table.board.investigator(alder).boosts).toEqual(boosts);
+    });
+
+    it('opens the skill test on a single tap on a skill, once no second tap came', () => {
+      const table = PlayTable.start(alderInStudy);
+      render(
+        <InvestigatorBar
+          board={table.board}
+          actions={actionsOn(table)}
+          busy={false}
+          adjusting={false}
+        />,
+      );
+
+      vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+      fireEvent.click(within(panel('alder')).getByRole('button', { name: /^Combat/ }));
+      const beforeTheWait = screen.queryByRole('dialog');
+      act(() => vi.advanceTimersByTime(DOUBLE_TAP_MS));
+      vi.useRealTimers();
+
+      expect(beforeTheWait).toBeNull();
+      expect(screen.getByRole('dialog')).toBeTruthy();
+      expect(screen.queryByRole('complementary')).toBeNull();
     });
 
     it('opens on a double tap only, not on a single tap', () => {
