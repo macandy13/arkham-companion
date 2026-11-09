@@ -67,3 +67,4 @@ export {
   smokeAndMirrorsCards,
 } from './smoke_and_mirrors/cards';
 export { ARKHAM, smokeAndMirrors } from './smoke_and_mirrors/scenario';
+export { smokeAndMirrorsResolutions } from './smoke_and_mirrors/resolutions';

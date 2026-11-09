@@ -1,5 +1,5 @@
 import { assertNever, withoutFirst } from '@arkham/util';
-import { cardStats, type EngineContext } from '../cards';
+import { cardStats, type EngineContext, type Trait } from '../cards';
 import { isInPlay } from '../doom';
 import { currentCard } from '../lookup';
 import type { CardCode, InvestigatorCode, ResolutionId } from '../ids';
@@ -42,18 +42,30 @@ export type ResolutionTarget =
  */
 export type ResolutionStep =
   | { readonly kind: 'record'; readonly key: string; readonly value: StoryValue }
+  /**
+   * The players record one of `values` as `key`, as something at the table decides (Smoke and
+   * Mirrors: "draw one of them at random. If it is the harbinger…"): offered as a choice, the
+   * first value picked until they change it.
+   */
+  | {
+      readonly kind: 'recordChoice';
+      readonly key: string;
+      readonly values: readonly StoryValue[];
+    }
   | { readonly kind: 'addChaosToken'; readonly token: ChaosToken }
   | { readonly kind: 'removeChaosToken'; readonly token: ChaosToken }
   /**
    * Experience: `bonus` plus, with `victoryDisplay`, the scenario's victory
    * points (`victoryPoints`), as in "each investigator earns experience equal
-   * to the Victory X value of each card in the victory display".
+   * to the Victory X value of each card in the victory display", plus 1 for
+   * each card in the `perCardIn` places ("1 bonus experience for each enemy beneath the act").
    */
   | {
       readonly kind: 'awardXp';
       readonly to: ResolutionTarget;
       readonly bonus: number;
       readonly victoryDisplay: boolean;
+      readonly perCardIn?: readonly CardPlace[];
     }
   | {
       readonly kind: 'addTrauma';
@@ -104,9 +116,12 @@ export type ResolutionStep =
 
 /**
  * Where a card is when the game ends, as resolutions ask about it: `scenarioDeck` is any deck
- * of the scenario's own (The Midnight Masks' Cultist deck).
+ * of the scenario's own (The Midnight Masks' Cultist deck), `outOfGame` also holds the agendas
+ * and acts that advanced, and `beneathAct` is face up beneath any act, one that advanced out of
+ * the game included (Smoke and Mirrors' questioned suspects).
  */
-export type CardPlace = 'inPlay' | 'setAside' | 'scenarioDeck' | 'victoryDisplay';
+export type CardPlace =
+  'inPlay' | 'setAside' | 'scenarioDeck' | 'victoryDisplay' | 'outOfGame' | 'beneathAct';
 
 /** A question about the ended game that a `when` or `recordNames` step asks. */
 export type GameCondition =
@@ -114,7 +129,17 @@ export type GameCondition =
   | { readonly kind: 'cardIn'; readonly code: CardCode; readonly places: readonly CardPlace[] }
   /** The current agenda is one of `agendas`, as in "if it is Agenda 1" (like `AbilityCondition.currentAct`). */
   | { readonly kind: 'currentAgenda'; readonly agendas: readonly CardCode[] }
-  | { readonly kind: 'anyOf'; readonly conditions: readonly GameCondition[] };
+  | { readonly kind: 'anyOf'; readonly conditions: readonly GameCondition[] }
+  /**
+   * At least `atLeast` cards of `trait` are in `places` together ("if there are 6 Elite enemies
+   * under the act").
+   */
+  | {
+      readonly kind: 'cardsIn';
+      readonly trait: Trait;
+      readonly places: readonly CardPlace[];
+      readonly atLeast: number;
+    };
 
 /** A scenario's resolutions, on `ScenarioDefinition.resolutions`. */
 export interface ScenarioResolutions {
@@ -271,12 +296,22 @@ function proposeStep(ctx: EngineContext, game: GameState, step: ResolutionStep):
   switch (step.kind) {
     case 'record':
       return [command({ type: 'RecordStory', key: step.key, value: step.value })];
+    case 'recordChoice':
+      return [
+        {
+          kind: 'choice',
+          options: step.values.map((value) => ({ type: 'RecordStory', key: step.key, value })),
+        },
+      ];
     case 'addChaosToken':
       return [command({ type: 'AddChaosToken', token: step.token })];
     case 'removeChaosToken':
       return [command({ type: 'RemoveChaosToken', token: step.token })];
     case 'awardXp': {
-      const amount = step.bonus + (step.victoryDisplay ? victoryPoints(ctx, game) : 0);
+      const amount =
+        step.bonus +
+        (step.victoryDisplay ? victoryPoints(ctx, game) : 0) +
+        (step.perCardIn === undefined ? 0 : cardsAt(ctx, game, step.perCardIn).length);
       // `AwardXp` takes only positive amounts; earning nothing is no change to confirm.
       if (amount <= 0) return [];
       return targetCodes(game, step.to).map((code) => command({ type: 'AwardXp', code, amount }));
@@ -305,12 +340,12 @@ function proposeStep(ctx: EngineContext, game: GameState, step: ResolutionStep):
     case 'byHand':
       return [{ kind: 'byHand', textKey: step.textKey }];
     case 'when': {
-      const steps = gameHolds(game, step.condition) ? step.then : (step.otherwise ?? []);
+      const steps = gameHolds(ctx, game, step.condition) ? step.then : (step.otherwise ?? []);
       return steps.flatMap((inner) => proposeStep(ctx, game, inner));
     }
     case 'recordNames': {
       const entries = step.names
-        .filter(({ when }) => gameHolds(game, when))
+        .filter(({ when }) => gameHolds(ctx, game, when))
         .map(({ code }) => cardStats(ctx.cards, code).name);
       if (entries.length === 0) return [];
       return [command({ type: 'RecordStory', key: step.key, value: { kind: 'list', entries } })];
@@ -321,32 +356,54 @@ function proposeStep(ctx: EngineContext, game: GameState, step: ResolutionStep):
 }
 
 /** Whether the ended `game` answers `condition` with yes. */
-function gameHolds(game: GameState, condition: GameCondition): boolean {
+function gameHolds(ctx: EngineContext, game: GameState, condition: GameCondition): boolean {
   switch (condition.kind) {
     case 'cardIn':
-      return Object.values(game.cards).some(
-        (card) =>
-          card.code === condition.code && condition.places.some((place) => isAt(game, card, place)),
-      );
+      return cardsAt(ctx, game, condition.places).some((card) => card.code === condition.code);
     case 'currentAgenda': {
       const agenda = currentCard(game, 'agenda');
       return agenda !== undefined && condition.agendas.includes(agenda.code);
     }
     case 'anyOf':
-      return condition.conditions.some((inner) => gameHolds(game, inner));
+      return condition.conditions.some((inner) => gameHolds(ctx, game, inner));
+    case 'cardsIn':
+      return (
+        cardsAt(ctx, game, condition.places).filter((card) =>
+          cardStats(ctx.cards, card.code).traits.includes(condition.trait),
+        ).length >= condition.atLeast
+      );
     default:
       return assertNever(condition);
   }
 }
 
-function isAt(game: GameState, card: CardInstance, place: CardPlace): boolean {
+/** The ended game's cards in any of `places`. */
+function cardsAt(
+  ctx: EngineContext,
+  game: GameState,
+  places: readonly CardPlace[],
+): CardInstance[] {
+  return Object.values(game.cards).filter((card) =>
+    places.some((place) => isAt(ctx, game, card, place)),
+  );
+}
+
+function isAt(ctx: EngineContext, game: GameState, card: CardInstance, place: CardPlace): boolean {
   switch (place) {
     case 'inPlay':
       return isInPlay(game, card);
     case 'setAside':
     case 'scenarioDeck':
     case 'victoryDisplay':
+    case 'outOfGame':
       return card.zone.kind === place;
+    case 'beneathAct': {
+      // The act a resolution follows has left the game by then, so any act host counts; a
+      // facedown card there is left out, as the act's own count leaves it out (`inVictoryDisplay`).
+      if (card.zone.kind !== 'beneath' || !card.faceUp) return false;
+      const host = game.cards[card.zone.hostId];
+      return host !== undefined && cardStats(ctx.cards, host.code).typeCode === 'act';
+    }
     default:
       return assertNever(place);
   }
