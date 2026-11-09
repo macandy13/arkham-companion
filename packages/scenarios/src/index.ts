@@ -69,3 +69,9 @@ export {
 } from './smoke_and_mirrors/cards';
 export { ARKHAM, smokeAndMirrors } from './smoke_and_mirrors/scenario';
 export { smokeAndMirrorsResolutions } from './smoke_and_mirrors/resolutions';
+export {
+  QUEEN_OF_ASH_CODES,
+  QUEEN_OF_ASH_SETS,
+  queenOfAshCardDefs,
+  queenOfAshCards,
+} from './queen_of_ash/cards';
