@@ -20,7 +20,7 @@ import {
   type Zone,
 } from './index';
 import { requireInvestigator } from './investigators';
-import { answer } from '../test/utils';
+import { answer, resolveRevelation } from '../test/utils';
 
 /** A log entry as the store keeps it, reduced to what undo looks at. */
 interface LogEntry {
@@ -81,6 +81,7 @@ const startTurn: Command = { type: 'StartTurn', investigatorId: alice };
 const endTurn: Command = { type: 'EndTurn', investigatorId: alice };
 const moveToCellar: Command = { type: 'MoveInvestigator', investigatorId: alice, to: cellar };
 const spendAction: Command = { type: 'AdjustActions', investigatorId: alice, delta: -1 };
+const resolveChill: Command = resolveRevelation('chill');
 const passChillTest: Command = answer('test:chill', 'pass');
 const pick: Decision = {
   id: decisionId('pick'),
@@ -175,21 +176,22 @@ describe('undo with the seeded RNG', () => {
 
 describe('undoing group by group', () => {
   it.each<[string, Command[]]>([
-    ['draws and a revelation test', [draw, passChillTest, draw, draw]],
+    ['draws and a revelation test', [draw, resolveChill, passChillTest, draw, draw]],
     ['token and move adjustments', [addClue, moveFirstPlainToDiscard, addClue]],
-    ['a shuffle between draws', [draw, passChillTest, shuffleInto, draw]],
+    ['a shuffle between draws', [draw, resolveChill, passChillTest, shuffleInto, draw]],
     ['phase changes with their steps', [...intoInvestigation, startTurn, endTurn, nextPhase]],
     [
       'a turn with a move and the players counting it',
       [...intoInvestigation, startTurn, moveToCellar, spendAction, endTurn],
     ],
-    ['a revelation test answered', [draw, passChillTest, draw]],
+    ['a revelation test answered', [draw, resolveChill, passChillTest, draw]],
     ['a decision asked and answered', [ask, answerPick, draw]],
     [
       'every kind of command',
       [
         addClue,
         draw,
+        resolveChill,
         passChillTest,
         shuffleInto,
         ...intoInvestigation,
@@ -255,7 +257,7 @@ describe('undo and the turn', () => {
 
 describe('undo and a revelation test', () => {
   it('puts the treachery back in the resolving zone with its decision pending', () => {
-    const commands = [draw, passChillTest];
+    const commands = [draw, resolveChill, passChillTest];
     const answered = play(commands).states.at(-1)!;
 
     const afterUndo = afterUndoOf(commands);

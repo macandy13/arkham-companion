@@ -18,3 +18,16 @@ export function answer(id: string, optionId: string, amount?: number): ResolveDe
 export function pendingIds(state: GameState): string[] {
   return state.pending.map((decision) => decision.id);
 }
+
+/**
+ * The players' answer to the question the drawn treachery `card` asks before its revelation
+ * (`revelationDecision`): resolve it.
+ */
+export function resolveRevelation(card: string): ResolveDecision {
+  return answer(`revelation:${card}`, 'resolve');
+}
+
+/** The players' answer to the drawn treachery `card`'s question: cancel its revelation. */
+export function cancelRevelation(card: string): ResolveDecision {
+  return answer(`revelation:${card}`, 'cancel');
+}

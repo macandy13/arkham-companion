@@ -101,9 +101,11 @@ describe('Spreading Flames, played end to end with Roland and Daisy, seed 1', ()
     // Unspeakable Truths into her threat area: from now on she takes 1 horror by hand each time
     // she discovers clues.
     expect(table.nextPhase()).toEqual({ round: 2, phase: 'mythos', step: 'drawEncounterCard' });
+    table.resolveRevelation(byName('Noxious Smoke'));
     table.answerOnly('skill.willpower');
     table.answerOnly('pass');
-    expect(table.nextPhase()).toEqual({ round: 2, phase: 'mythos' });
+    expect(table.nextPhase()).toEqual({ round: 2, phase: 'mythos', step: 'drawEncounterCard' });
+    table.resolveRevelation(byName('Unspeakable Truths'));
     expect(table.nextPhase()).toEqual({ round: 2, phase: 'investigation' });
     expect(table.board.investigator(daisy)).toMatchObject({ damage: 0, horror: 0 });
 
@@ -212,6 +214,9 @@ describe('Spreading Flames, played end to end with Roland and Daisy, seed 1', ()
     // Round 5 – mythos: Roland's Forbidden Secrets is the players' to resolve. Daisy draws Cosmic
     // Evils and places its doom on the agenda.
     expect(table.nextPhase()).toEqual({ round: 5, phase: 'mythos', step: 'drawEncounterCard' });
+    table.resolveRevelation(byName('Forbidden Secrets'));
+    expect(table.nextPhase()).toEqual({ round: 5, phase: 'mythos', step: 'drawEncounterCard' });
+    table.resolveRevelation(byName('Cosmic Evils'));
     table.play(answer(COSMIC_EVILS_DECISION, 'doom'));
     expect(table.nextPhase()).toEqual({ round: 5, phase: 'investigation' });
     expect(table.board.agenda).toMatchObject({ name: 'Lit Up', doom: 3 });
@@ -248,9 +253,12 @@ describe('Spreading Flames, played end to end with Roland and Daisy, seed 1', ()
     expect(table.board.investigator(daisy).clues).toBe(0);
 
     // Round 6 – mythos: Daisy draws Cosmic Evils again; this time she takes 1 damage and 1 horror
-    // and draws again, a Cantor of Flame that engages her.
+    // and draws again: Forbidden Secrets, which surges as she has no clues, into a Cantor of Flame
+    // that engages her.
     expect(table.nextPhase()).toEqual({ round: 6, phase: 'mythos', step: 'drawEncounterCard' });
+    table.resolveRevelation(byName('Cosmic Evils'));
     table.play(answer(COSMIC_EVILS_DECISION, 'wounds'));
+    table.resolveRevelation(byName('Forbidden Secrets'));
     expect(table.nextPhase()).toEqual({ round: 6, phase: 'investigation' });
     expect(table.board.investigator(daisy)).toMatchObject({ damage: 1, horror: 4 });
     expect(table.board.enemy(byName(cantor))).toMatchObject({

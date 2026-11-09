@@ -92,8 +92,11 @@ export interface GameActions {
   takeResource(): Promise<void>;
   /** The draw action; the card is drawn at the table. */
   drawCard(): Promise<void>;
-  /** The play action; the card is played, and paid for, at the table. */
-  playCard(): Promise<void>;
+  /**
+   * The play action; the card is played at the table, its `cost` spent from the turn
+   * investigator's resources in the same step (`PlayCard.cost`), else paid by hand.
+   */
+  playCard(cost?: number): Promise<void>;
   /**
    * One clue from `location`, the investigator's own, without a test, as a card grants it: for the
    * investigator whose turn it is, or for `investigator`, as a clue dragged onto their pawn says.
@@ -281,7 +284,7 @@ export function gameActions(
     takeResource: () =>
       taking('resource')((table, investigator) => table.takeResource(investigator)),
     drawCard: () => taking('draw')((table, investigator) => table.drawCard(investigator)),
-    playCard: () => taking('play')((table, investigator) => table.playCard(investigator)),
+    playCard: (cost) => taking('play')((table, investigator) => table.playCard(investigator, cost)),
     takeClue: (location, investigator) =>
       play((table) =>
         table.play({

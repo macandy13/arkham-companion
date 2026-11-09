@@ -13,7 +13,14 @@ import {
   type CardStats,
   type Command,
 } from '@arkham/engine';
-import { answer, cardIn, rejectionFrom, stateAfter } from '@arkham/engine/test/utils';
+import {
+  answer,
+  cardIn,
+  rejectionFrom,
+  resolveRevelation,
+  runFrom,
+  stateAfter,
+} from '@arkham/engine/test/utils';
 import {
   COSMIC_EVILS_DECISION,
   NOXIOUS_SMOKE_DECISION,
@@ -219,7 +226,12 @@ describe('Spreading Flames card abilities', () => {
 
     it('places 1 doom on the agenda when alice picks the doom', () => {
       const { context, state: started } = aliceDrawsCosmicEvils.start();
-      const drawn = stateAfter(context, started, aliceDraws('Cosmic Evils'));
+      const drawn = stateAfter(
+        context,
+        started,
+        aliceDraws('Cosmic Evils'),
+        resolveRevelation('cosmic_evils'),
+      );
 
       const state = stateAfter(context, drawn, answer(COSMIC_EVILS_DECISION, 'doom'));
 
@@ -230,7 +242,12 @@ describe('Spreading Flames card abilities', () => {
     it('lets the doom advance the agenda when it reaches the threshold', () => {
       const { context, state: started } = aliceDrawsCosmicEvils.start();
       const atTwoDoom = stateAfter(context, started, { type: 'PlaceDoom', amount: 2 });
-      const drawn = stateAfter(context, atTwoDoom, aliceDraws('Cosmic Evils'));
+      const drawn = stateAfter(
+        context,
+        atTwoDoom,
+        aliceDraws('Cosmic Evils'),
+        resolveRevelation('cosmic_evils'),
+      );
 
       const state = stateAfter(context, drawn, answer(COSMIC_EVILS_DECISION, 'doom'));
 
@@ -240,7 +257,12 @@ describe('Spreading Flames card abilities', () => {
 
     it('gives alice 1 damage and 1 horror, then surges into Noxious Smoke, when she picks the wounds', () => {
       const { context, state: started } = aliceDrawsCosmicEvils.start();
-      const drawn = stateAfter(context, started, aliceDraws('Cosmic Evils'));
+      const drawn = stateAfter(
+        context,
+        started,
+        aliceDraws('Cosmic Evils'),
+        resolveRevelation('cosmic_evils'),
+      );
 
       const state = stateAfter(context, drawn, answer(COSMIC_EVILS_DECISION, 'wounds'));
 
@@ -249,7 +271,7 @@ describe('Spreading Flames card abilities', () => {
         sanity: { horror: 1 },
       });
       expect(state.cards[agenda]?.tokens.doom ?? 0).toBe(0);
-      expect(state.pending).toMatchObject([{ id: NOXIOUS_SMOKE_DECISION }]);
+      expect(state.pending).toMatchObject([{ id: 'revelation:noxious_smoke' }]);
     });
   });
 
@@ -260,7 +282,12 @@ describe('Spreading Flames card abilities', () => {
         .withInvestigator(alice, { locationId: quad })
         .withCard(instanceId('noxious_smoke'), cardOf('12130'), { kind: 'encounterDeck' })
         .start();
-      const drawn = stateAfter(context, started, aliceDraws('Noxious Smoke'));
+      const drawn = stateAfter(
+        context,
+        started,
+        aliceDraws('Noxious Smoke'),
+        resolveRevelation('noxious_smoke'),
+      );
       const chosen = stateAfter(context, drawn, answer(NOXIOUS_SMOKE_DECISION, 'agility'));
 
       const state = stateAfter(context, chosen, {
@@ -288,9 +315,15 @@ describe('Spreading Flames card abilities', () => {
         .withCard(noxiousSmoke, cardOf('12130'), { kind: 'encounterDeck' })
         .start();
 
-      const { state } = execute(context, started, aliceDraws('Forbidden Secrets'));
+      const { state } = runFrom(context, started, [
+        aliceDraws('Forbidden Secrets'),
+        resolveRevelation('forbidden_secrets'),
+      ]);
 
-      expect(state.pending.some((decision) => decision.id === NOXIOUS_SMOKE_DECISION)).toBe(surges);
+      const noxiousAsks = state.pending.some(
+        (decision) => decision.id === 'revelation:noxious_smoke',
+      );
+      expect(noxiousAsks).toBe(surges);
     });
   });
 
@@ -303,7 +336,10 @@ describe('Spreading Flames card abilities', () => {
         .withCard(truths, cardOf('12125'), { kind: 'encounterDeck' })
         .start();
 
-      const { state } = execute(context, started, aliceDraws('Unspeakable Truths'));
+      const { state } = runFrom(context, started, [
+        aliceDraws('Unspeakable Truths'),
+        resolveRevelation('unspeakable_truths'),
+      ]);
 
       expect(state.cards[truths]?.zone).toEqual(threatAreaOf(alice));
     });

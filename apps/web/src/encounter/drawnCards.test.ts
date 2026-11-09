@@ -62,6 +62,8 @@ describe('drawnCards', () => {
       table.play({ type: 'DrawEncounter', investigatorId: alder }),
     );
     expect(drawnCards(drawing.before, drawing.after, drawing.events)).toEqual([]);
+    const resolving = stepOn(table, () => table.resolveRevelation(byName('top_card')));
+    expect(drawnCards(resolving.before, resolving.after, resolving.events)).toEqual([]);
 
     const answering = stepOn(table, () => table.answer(byName('top_card'), 'pass'));
 

@@ -3,6 +3,7 @@ import { resolveValue, type EngineContext } from './cards';
 import type {
   AdjustInvestigator,
   GainResources,
+  SpendResources,
   HealInvestigator,
   PlayCard,
   PlayerCardCommand,
@@ -121,6 +122,29 @@ export function handleGainResources(state: GameState, cmd: GainResources): Inves
   ];
 }
 
+/** `SpendResources`: a positive whole amount the investigator has, taken off their resources. */
+export function handleSpendResources(state: GameState, cmd: SpendResources): InvestigatorChanged[] {
+  const investigator = activeInvestigator(state, cmd.investigatorId);
+  if (!Number.isInteger(cmd.amount) || cmd.amount <= 0)
+    throw new CommandRejected({ code: 'invalidTokenDelta', delta: cmd.amount });
+  if (investigator.resources < cmd.amount)
+    throw new CommandRejected({
+      code: 'negativeInvestigatorStat',
+      investigatorId: investigator.id,
+      stat: 'resources',
+      current: investigator.resources,
+      delta: -cmd.amount,
+    });
+  return [
+    {
+      type: 'InvestigatorChanged',
+      investigatorId: investigator.id,
+      stat: 'resources',
+      delta: -cmd.amount,
+    },
+  ];
+}
+
 /**
  * `DrawCards`, `SearchDeck`, `PlayCard`, `DiscardFromHand` and `DiscardAsset`: the engine holds no
  * player cards, so it hands the command to the players (`CommandDeferred`), for an active
@@ -138,7 +162,9 @@ export function deferToPlayers(
 /**
  * `PlayCard`: left to the players like `deferToPlayers`, but rejected for an investigator a card
  * forbids to play every card (`isRestrictedFor`, Dissonant Voices' "assets or events", the only
- * cards played), which the engine can refuse without seeing the card.
+ * cards played), which the engine can refuse without seeing the card. A named `cost` is spent
+ * first (`InvestigatorChanged` on resources), rejected when it is no whole number or more than
+ * they hold.
  */
 export function handlePlayCard(ctx: EngineContext, state: GameState, cmd: PlayCard): Event[] {
   if (isRestrictedFor(ctx, state, cmd.investigatorId, 'play', 'cards'))
@@ -148,7 +174,32 @@ export function handlePlayCard(ctx: EngineContext, state: GameState, cmd: PlayCa
       what: 'cards',
       investigatorId: cmd.investigatorId,
     });
-  return deferToPlayers(ctx, state, cmd);
+  return [...costEvents(state, cmd), ...deferToPlayers(ctx, state, cmd)];
+}
+
+/** The resources `PlayCard` spends on its `cost`: none when unset or 0. */
+function costEvents(state: GameState, cmd: PlayCard): InvestigatorChanged[] {
+  if (cmd.cost === undefined) return [];
+  const investigator = activeInvestigator(state, cmd.investigatorId);
+  if (!Number.isInteger(cmd.cost) || cmd.cost < 0)
+    throw new CommandRejected({ code: 'invalidTokenDelta', delta: cmd.cost });
+  if (cmd.cost > investigator.resources)
+    throw new CommandRejected({
+      code: 'negativeInvestigatorStat',
+      investigatorId: investigator.id,
+      stat: 'resources',
+      current: investigator.resources,
+      delta: -cmd.cost,
+    });
+  if (cmd.cost === 0) return [];
+  return [
+    {
+      type: 'InvestigatorChanged',
+      investigatorId: investigator.id,
+      stat: 'resources',
+      delta: -cmd.cost,
+    },
+  ];
 }
 
 /**

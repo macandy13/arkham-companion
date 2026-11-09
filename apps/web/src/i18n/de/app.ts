@@ -97,6 +97,7 @@ export const appTexts = {
     actAdvanced: 'Der Akt {{card}} rückt vor',
     drawn: '{{investigator}} zieht {{card}}',
     surge: '{{card}} erhält Nachrücken',
+    revelationCancelled: '{{investigator}} verhindert die Enthüllung von {{card}}',
     cardAction: '{{investigator}} nutzt {{card}}',
     playerCards: {
       draw_one: '{{investigator}} zieht {{count}} Karte',
@@ -434,6 +435,12 @@ export const appTexts = {
     outcome: { pass: 'Bestanden', fail: 'Misslungen' },
     against: { pass: '{{skill}} ≥ {{difficulty}}', fail: '{{skill}} < {{difficulty}}' },
     margin: 'um {{margin}}',
+    odds: {
+      title: 'Erfolgschance',
+      pass: '{{chance}} Erfolg',
+      unknown: '{{chance}} je nach Karte',
+      more: 'Mit {{icons}}: {{chance}}',
+    },
   },
   chaosToken: {
     '+1': '+1',
@@ -495,6 +502,17 @@ export const appTexts = {
     ofMax: 'von {{max}}',
     healthLeft: '{{left}} / {{max}}',
     victory: 'Sieg {{points}}.',
+  },
+  playCard: {
+    title: 'Karte spielen',
+    tapResources: 'Tippe die Ressourcen an, die die Karte kostet.',
+    noResources: 'Keine Ressourcen zum Bezahlen.',
+    resources_one: '{{count}} Ressource vorhanden',
+    resources_other: '{{count}} Ressourcen vorhanden',
+    resource: 'Ressource {{number}}',
+    pays: 'Zahlt {{pays}} · {{left}} übrig',
+    free: 'Ohne Bezahlen spielen',
+    pay: 'Spielen · {{count}} zahlen',
   },
   cluePayment: {
     title: 'Wer zahlt die Hinweise?',
@@ -726,6 +744,9 @@ export const appTexts = {
     attack: 'Angriff hinnehmen',
     doesNotProvoke: 'Provoziert keinen Angriff',
     attackCancelled: 'Der Angriff wird verhindert',
+    revelation: 'Enthüllung von {{card}}',
+    resolveRevelation: 'Abhandeln',
+    cancelRevelation: 'Enthüllung verhindern',
     count: {
       failedBy: 'Misslungen um',
       clues: 'Entdeckte Hinweise',

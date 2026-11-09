@@ -12,7 +12,7 @@ The [investigator bar](../../apps/web/src/investigators/InvestigatorBar.tsx) sho
 - and the turn controls under the card, as the design language's buttons: the actions outlined pills, start turn and end the brass primary (`data-primary`) in the same pill as the status row's Next, a whole touch target tall and wide on a phone:
   - start turn,
   - actions left,
-  - icon pills for investigate (off where a card forbids investigating their location, `LocationView.forbidden`: Locked Door), take a resource, draw and play (off while a card forbids them to play assets or events, `InvestigatorView.forbidden`: Dissonant Voices),
+  - icon pills for investigate (off where a card forbids investigating their location, `LocationView.forbidden`: Locked Door), take a resource, draw and play (off while a card forbids them to play assets or events, `InvestigatorView.forbidden`: Dissonant Voices); play first opens its sheet on the card dialog shell, [`PlayCardDialog`](../../apps/web/src/investigators/PlayCardDialog.tsx), with their resources as tokens to tap like the clue payment's clues (one tap pays up to and with that token, `paysAfterTap`), and plays without paying or, the brass primary, pays what is tapped (`GameActions.playCard(cost)`, `PlayCard.cost`, one step); the × leaves without spending the action,
   - a button per card action the cards offer them (`BoardView.cardActions`, "Resign · Parlor"),
   - end.
 

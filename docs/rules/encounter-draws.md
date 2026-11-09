@@ -10,6 +10,7 @@ For each draw:
 2. [Peril](https://arkhamdb.com/rules#Peril): while it resolves, other players can't confer, play cards, trigger abilities or commit cards to that investigator's tests.
 3. Resolve its [revelation](https://arkhamdb.com/rules#Revelation) ability before it enters play (or, for a treachery, before it is discarded).
    - A treachery is discarded afterwards unless its revelation put it into play (2026 Core rulebook p. 18).
+   - A [cancelled](https://arkhamdb.com/rules#Cancel) revelation (Ward of Protection: "When you draw a non-weakness treachery card … Cancel that card's revelation effect. Then, discard that card") resolves none of it; the card is still placed as usual, and its keywords (surge, peril) still apply, as they are not part of the revelation.
    - If the revelation eliminates the drawer, our reading (no explicit ruling exists): a treachery is discarded; an enemy with a spawn instruction still spawns there; an enemy without one would spawn engaged with the drawer, which can no longer be fulfilled, so it is discarded (2026 Core rulebook p. 19).
 4. An enemy [spawns](spawn-and-engagement.md).
 5. A treachery goes to the encounter discard pile unless its text says otherwise.

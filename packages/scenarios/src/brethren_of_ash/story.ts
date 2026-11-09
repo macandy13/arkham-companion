@@ -12,4 +12,19 @@ export const ASH_STORY = {
   savedMiskatonicUniversity: 'savedMiskatonicUniversity',
   /** "The investigators defeated their masked pursuer." (Spreading Flames' R1). */
   defeatedTheirMaskedPursuer: 'defeatedTheirMaskedPursuer',
+  /** The suspect "… is the harbinger of Elokoss." (Smoke and Mirrors), a list of one name. */
+  harbingerOfElokoss: 'harbingerOfElokoss',
+  /**
+   * "The investigators discovered the cult's whereabouts." (`true`, Smoke and Mirrors' R1 or a
+   * lucky draw without a resolution) or "The investigators failed in their search." (`false`).
+   */
+  discoveredTheCultsWhereabouts: 'discoveredTheCultsWhereabouts',
+  /** "The investigators killed the Servant of Flame." (Smoke and Mirrors). */
+  killedTheServantOfFlame: 'killedTheServantOfFlame',
+  /** "The investigators scoured Arkham for answers." (Smoke and Mirrors' R1, 6 Elite beneath the act). */
+  scouredArkhamForAnswers: 'scouredArkhamForAnswers',
+  /** "The investigators stirred up trouble." (Smoke and Mirrors' R1, 6 Elite in the victory display). */
+  stirredUpTrouble: 'stirredUpTrouble',
+  /** "The Servant of Flame escaped." (Smoke and Mirrors' R2, the Servant beneath the act). */
+  theServantOfFlameEscaped: 'theServantOfFlameEscaped',
 } as const;

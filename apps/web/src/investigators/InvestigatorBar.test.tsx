@@ -1088,6 +1088,59 @@ describe('InvestigatorBar', () => {
       );
     });
 
+    describe('"Play a card" with alder holding 5 resources on their turn', () => {
+      const aldersTurnWithFive = () =>
+        PlayTable.start(
+          newGame()
+            .withLocation(study, blankLocation('study'))
+            .withInvestigator(alder, { locationId: study, resources: 5 })
+            .withTurnOf(alder),
+        );
+      const playSheet = () => screen.getByRole('dialog', { name: 'Play a card' });
+
+      it.each([
+        { tapped: 'resource 3', button: 'Play · pay 3', left: 2 },
+        { tapped: 'resource 5', button: 'Play · pay 5', left: 0 },
+        { tapped: 'resource 1', button: 'Play without paying', left: 5 },
+      ])('taps $tapped, plays with "$button" and keeps $left', async ({ tapped, button, left }) => {
+        const table = aldersTurnWithFive();
+        render(
+          <InvestigatorBar
+            board={table.board}
+            actions={actionsOn(table)}
+            busy={false}
+            adjusting={false}
+          />,
+        );
+
+        fireEvent.click(within(panel('alder')).getByRole('button', { name: 'Play a card' }));
+        fireEvent.click(within(playSheet()).getByRole('button', { name: tapped }));
+        fireEvent.click(within(playSheet()).getByRole('button', { name: button }));
+
+        await expect
+          .poll(() => table.board.investigator(alder))
+          .toMatchObject({ resources: left, actions: 2 });
+      });
+
+      it('closes with × without playing, so alder keeps all three actions', () => {
+        const table = aldersTurnWithFive();
+        render(
+          <InvestigatorBar
+            board={table.board}
+            actions={actionsOn(table)}
+            busy={false}
+            adjusting={false}
+          />,
+        );
+
+        fireEvent.click(within(panel('alder')).getByRole('button', { name: 'Play a card' }));
+        fireEvent.click(within(playSheet()).getByRole('button', { name: 'Close' }));
+
+        expect(screen.queryByRole('dialog', { name: 'Play a card' })).toBeNull();
+        expect(table.board.investigator(alder)).toMatchObject({ resources: 5, actions: 3 });
+      });
+    });
+
     it('turns "Investigate" off while a locked door on the study forbids it', () => {
       const lockedDoor = blankTreachery('locked_door', {
         restrictions: [{ cannot: 'investigate', of: 'host' }],

@@ -550,6 +550,19 @@ export class PlayTable {
     this.answerWith(decision, option, amount);
   }
 
+  /**
+   * Answers the question the drawn treachery `card` names asks first (`revelationDecision`) with
+   * "Resolve"; `cancelRevelation` is the answer of a card such as Ward of Protection.
+   */
+  resolveRevelation(card: CardRef): void {
+    this.answer(card, 'resolve revelation');
+  }
+
+  /** Cancels the revelation of the drawn treachery `card` names (Ward of Protection). */
+  cancelRevelation(card: CardRef): void {
+    this.answer(card, 'cancel revelation');
+  }
+
   /** Answers the only open decision, whatever it is about, by picking the option shown as `option`. */
   answerOnly(option: string): void {
     const decision = this.onlyOne(this.current.pending, 'open decision');
@@ -599,9 +612,17 @@ export class PlayTable {
     });
   }
 
-  /** The basic play action; the card is played, and paid for, at the table. */
-  playCard(investigator: InvestigatorRef): void {
-    this.play({ type: 'PlayCard', investigatorId: this.seat(investigator), asAction: true });
+  /**
+   * The basic play action; the card is played at the table, its `cost` spent from the
+   * investigator's resources when named, else paid by hand.
+   */
+  playCard(investigator: InvestigatorRef, cost?: number): void {
+    this.play({
+      type: 'PlayCard',
+      investigatorId: this.seat(investigator),
+      asAction: true,
+      ...(cost === undefined ? {} : { cost }),
+    });
   }
 
   /** The players' correction of the resource count. */

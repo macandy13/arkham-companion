@@ -1,5 +1,6 @@
 import type { Page } from '@playwright/test';
 import {
+  byName,
   cardCode,
   cardDbWith,
   gameId,
@@ -29,6 +30,7 @@ import {
 } from '@arkham/scenarios';
 import { serialiseGameExport } from '../../src/storage/gameExport';
 import { ROLAND_PICTURE } from './card_pictures';
+import { waitUntilSettled } from './test';
 
 /**
  * Roland Banks with his printed stats, entered by hand: the exported game reads him from its log,
@@ -206,6 +208,7 @@ function mythosDrawn(): PlayTable {
   table.nextPhase();
   table.nextPhase();
   table.nextPhase();
+  table.resolveRevelation(byName('Dissonant Voices'));
   table.nextPhase();
   table.startTurn(rolandId);
   table.endTurn(rolandId);
@@ -246,6 +249,7 @@ export function graspingHandsDrawnExport(title: string): Buffer {
     },
   });
   table.drawEncounterCard(rolandId);
+  table.resolveRevelation(byName('Grasping Hands'));
   return exportOf(title, table, 'grasping_hands_drawn');
 }
 
@@ -541,4 +545,5 @@ export async function resumeImportedGame(page: Page, title: string, file: Buffer
     .filter({ has: page.getByText(title, { exact: true }) })
     .getByRole('link', { name: 'Continue' })
     .click();
+  await waitUntilSettled(page);
 }

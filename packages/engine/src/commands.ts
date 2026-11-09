@@ -44,6 +44,7 @@ export type Command =
   | AdjustInvestigator
   | HealInvestigator
   | GainResources
+  | SpendResources
   | DrawCards
   | SearchDeck
   | DiscardFromHand
@@ -55,6 +56,7 @@ export type Command =
   | DiscoverClues
   | PlaceClues
   | PlaceDoom
+  | RemoveDoom
   | PlaceTokens
   | ChangeChaosBag
   | SealChaosToken
@@ -77,6 +79,7 @@ export type Command =
   | DamageEnemy
   | HealEnemy
   | GainSurge
+  | ResolveRevelation
   | DefeatEnemy
   | ExhaustEnemy
   | EvadeEnemy
@@ -335,6 +338,18 @@ export interface GainResources extends ActionCommand {
 }
 
 /**
+ * The investigator pays `amount` resources (a positive integer) for a player card: its cost, or
+ * what a card asks to spend ("spend 1 resource: +1 skill"). Allowed while a decision is pending, as
+ * a fast card is paid for in the window the decision opens (Dodge against an attack, Lucky! on a
+ * test) before its effect. Produces `InvestigatorChanged`; rejected when they have too few.
+ */
+export interface SpendResources {
+  type: 'SpendResources';
+  investigatorId: InvestigatorId;
+  amount: number;
+}
+
+/**
  * The card whose ability asked for a command on the players' own cards, and the timing window it
  * resolved in (`action` for a card action and its cost), so the notice can name the card. Absent
  * on a command the players issued themselves, such as the draw action.
@@ -383,11 +398,15 @@ export interface SearchDeck extends AskedByCard {
 /**
  * The investigator plays a card from their hand: the basic play action when `asAction`, which
  * provokes attacks of opportunity even though the engine never sees the card. The game holds no
- * player cards, so the card and its cost are left to the players like `DrawCards`.
+ * player cards, so the card is left to the players like `DrawCards`; its `cost`, when the players
+ * name it, is spent from the investigator's resources in the same step, so paying and playing
+ * stay one undo step.
  */
 export interface PlayCard extends ActionCommand, AskedByCard {
   type: 'PlayCard';
   investigatorId: InvestigatorId;
+  /** The resources paid for the card, a whole number up to what they hold. Unset: paid by hand. */
+  cost?: number;
 }
 
 /**
@@ -487,14 +506,28 @@ export interface PlaceClues {
 /**
  * Puts `amount` (positive) doom on a card in play, by default on the current
  * agenda. Produces `TokensChanged`. The threshold is not checked here: the agenda
- * only advances at a `CheckDoomThreshold` (mythos phase). Removing doom is a
- * `ManualAdjust` for now.
+ * only advances at a `CheckDoomThreshold` (mythos phase). `RemoveDoom` takes it off again.
  */
 export interface PlaceDoom {
   type: 'PlaceDoom';
   /** Defaults to the current agenda. */
   cardId?: InstanceId;
   amount: number;
+}
+
+/**
+ * A card's "remove N doom from the current agenda" or "remove all doom from it": takes `amount`
+ * (positive) doom, or `'all'`, off a card in play, by default the current agenda. Takes as much as
+ * there is and nothing from a card without doom or no longer in play, since a card effect does
+ * as much as it can (Rules Reference, "Effects"); the players' own corrections stay a
+ * `ManualAdjust`. Without a current agenda (never during a scenario) it refuses like `PlaceDoom`.
+ * Produces `TokensChanged`.
+ */
+export interface RemoveDoom {
+  type: 'RemoveDoom';
+  /** Defaults to the current agenda. */
+  cardId?: InstanceId;
+  amount: number | 'all';
 }
 
 /**
@@ -809,6 +842,22 @@ export interface DamageEnemy {
   type: 'DamageEnemy';
   enemyId: InstanceId;
   amount: number;
+}
+
+/**
+ * Answers the question every drawn treachery asks before its revelation
+ * (`revelationDecision`): resolve it, which opens the card's `revealed`
+ * window for `investigatorId`, its drawer, or with `cancelled` (a card such
+ * as Ward of Protection) resolve none of it. Either way the card is then
+ * placed as usual (discarded) and keywords such as surge still apply.
+ * Rejected for a card that is not resolving (`notResolving`). Produces
+ * `RevelationResolved`.
+ */
+export interface ResolveRevelation {
+  type: 'ResolveRevelation';
+  cardId: InstanceId;
+  investigatorId: InvestigatorId;
+  cancelled?: true;
 }
 
 /**

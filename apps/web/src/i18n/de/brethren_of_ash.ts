@@ -20,8 +20,15 @@ export const brethrenOfAshTexts = {
         upgradeDecks: 'Jeder Ermittler gibt Erfahrung für Deckverbesserungen aus.',
       },
     },
+    smokeAndMirrors: {
+      resolution: {
+        drawForTheHarbinger:
+          'Sammelt jeden Elite-Gegner, der bei Szenarioende im Spiel und/oder unter einem Ort war, mischt sie verdeckt mit dem Vorboten von Elokoss und zieht einen zufällig: Ist es der Vorbote, haben die Ermittler den Aufenthaltsort des Kults entdeckt.',
+        upgradeDecks: 'Jeder Ermittler gibt Erfahrung für Deckverbesserungen aus.',
+      },
+    },
   },
-  scenarios: { spreadingFlames: 'Spreading Flames' },
+  scenarios: { spreadingFlames: 'Spreading Flames', smokeAndMirrors: 'Smoke and Mirrors' },
   campaigns: {},
   story: {},
 } satisfies CampaignTexts;

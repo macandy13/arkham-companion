@@ -218,6 +218,7 @@ describe('playing a step', () => {
       changed: { boosts: { combat: 1 } },
     },
     { effect: { kind: 'actions', delta: 1 }, changed: { actions: 4 } },
+    { effect: { kind: 'pay', resources: 2 }, changed: { resources: 3 } },
     { effect: { kind: 'doomOnPlayerCards', delta: 1 }, changed: { doom: 1 } },
     {
       effect: { kind: 'moveTo', location: cardName('hallway') },

@@ -30,7 +30,7 @@ describe('TargetCovers', () => {
     );
   });
 
-  it('hides the Night of the Zealot scenarios without its packs, keeps a standalone one', () => {
+  it('hides the Night of the Zealot scenarios without its packs, keeps the standalone ones', () => {
     render(
       <TargetCovers
         choices={defaultChoices('quick')}
@@ -41,6 +41,7 @@ describe('TargetCovers', () => {
 
     expect(screen.getAllByRole('radio')).toEqual([
       screen.getByRole('radio', { name: 'Spreading Flames' }),
+      screen.getByRole('radio', { name: 'Smoke and Mirrors' }),
     ]);
   });
 

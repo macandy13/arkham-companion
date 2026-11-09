@@ -5,6 +5,7 @@ import {
   atLocation,
   blankEnemy,
   blankTreachery,
+  byName,
   decisionId,
   fixed,
   blankLocation,
@@ -514,11 +515,27 @@ describe('DecisionDialog', () => {
     };
 
     it.each([
+      { tap: 'Resolve', tests: ['agility'] },
+      { tap: 'Cancel revelation', tests: [] },
+    ])(
+      'asks first whether to resolve its revelation: $tap starts tests of $tests',
+      ({ tap, tests }) => {
+        const table = graspingHandsDrawn();
+        renderFirstDecision(table);
+
+        fireEvent.click(screen.getByRole('button', { name: tap }));
+
+        expect(table.board.decisions.map(({ test }) => test?.skill)).toEqual(tests);
+      },
+    );
+
+    it.each([
       { taps: ['Failed', 'Done'], damage: 1 },
       { taps: ['Raise the Margin of failure', 'Raise the Margin of failure', 'Done'], damage: 3 },
       { taps: ['Lower the Margin of failure', 'Done'], damage: 0 },
     ])('asks how much it failed by: $taps deals $damage damage', ({ taps, damage }) => {
       const table = graspingHandsDrawn();
+      table.resolveRevelation(byName('Grasping Hands'));
       renderFirstDecision(table);
 
       for (const tap of taps) fireEvent.click(screen.getByRole('button', { name: tap }));

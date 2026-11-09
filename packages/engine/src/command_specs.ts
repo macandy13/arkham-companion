@@ -24,6 +24,7 @@ import {
   handleDrawBeneath,
   handleDrawFromScenarioDeck,
   handleGainSurge,
+  handleResolveRevelation,
   handleFromSetAside,
   handleShuffleEncounterDeck,
   handleShuffleEncounterDiscard,
@@ -47,6 +48,7 @@ import {
   deferToPlayers,
   handleSpendCluesAsGroup,
   handleGainResources,
+  handleSpendResources,
   handleHealInvestigator,
   handleDefeatInvestigator,
   handleDiscoverClues,
@@ -66,6 +68,7 @@ import {
   handleReleaseChaosToken,
   handleSealChaosToken,
   handlePlaceDoom,
+  handleRemoveDoom,
   handlePlaceTokens,
 } from './handle_scenario';
 import { handleStartScenario } from './handle_start_scenario';
@@ -209,6 +212,10 @@ const COMMAND_SPECS: CommandSpecs = {
     handle: (_ctx, state, command) => handleGainResources(state, command),
     provokes: asAction,
   },
+  SpendResources: {
+    handle: (_ctx, state, command) => handleSpendResources(state, command),
+    allowedWhilePending: true,
+  },
   DrawCards: { handle: deferToPlayers, provokes: asAction },
   SearchDeck: { handle: deferToPlayers },
   DiscardFromHand: { handle: deferToPlayers },
@@ -225,6 +232,7 @@ const COMMAND_SPECS: CommandSpecs = {
   DiscoverClues: { handle: handleDiscoverClues },
   PlaceClues: { handle: (_ctx, state, command) => handlePlaceClues(state, command) },
   PlaceDoom: { handle: (_ctx, state, command) => handlePlaceDoom(state, command) },
+  RemoveDoom: { handle: (_ctx, state, command) => handleRemoveDoom(state, command) },
   ChangeChaosBag: { handle: (_ctx, state, command) => handleChangeChaosBag(state, command) },
   SealChaosToken: { handle: (_ctx, state, command) => handleSealChaosToken(state, command) },
   ReleaseChaosToken: {
@@ -248,6 +256,7 @@ const COMMAND_SPECS: CommandSpecs = {
     continueWith: placeDrawnCard,
   },
   GainSurge: { handle: (_ctx, state, command) => handleGainSurge(state, command) },
+  ResolveRevelation: { handle: (_ctx, state, command) => handleResolveRevelation(state, command) },
   FromSetAside: { handle: (_ctx, state, command) => handleFromSetAside(state, command) },
   ShuffleInto: { handle: (_ctx, state, command) => handleShuffleInto(state, command) },
   ShuffleEncounterDiscard: { handle: (_ctx, state) => handleShuffleEncounterDiscard(state) },
