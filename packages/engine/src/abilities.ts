@@ -319,6 +319,9 @@ export type AbilityCommand =
       {
         type:
           | 'AdjustInvestigator'
+          | 'AdjustActions'
+          | 'EndTurn'
+          | 'DiscoverClues'
           | 'HealInvestigator'
           | 'GainResources'
           | 'DrawCards'
@@ -1458,8 +1461,9 @@ export function takeDamage(
 }
 
 /**
- * `command` with `source` on each command on the players' own cards in it (`PlayerCardCommand`),
- * the options of a choice included, so the notice of a deferred one names the card that asked.
+ * `command` with `source` on each command a card can ask for in it (`AskedByCard`), the options of
+ * a choice included, so the notice of a deferred one names the card that asked and one the players
+ * also send does what it can instead of refusing.
  */
 function withSource<C extends { readonly type: string }>(command: C, source: CommandSource): C {
   switch (command.type) {
@@ -1468,6 +1472,9 @@ function withSource<C extends { readonly type: string }>(command: C, source: Com
     case 'PlayCard':
     case 'DiscardFromHand':
     case 'DiscardAsset':
+    case 'AdjustActions':
+    case 'EndTurn':
+    case 'DiscoverClues':
       return { ...command, source };
     case 'RequestDecision': {
       // Narrowing on `type` doesn't reach a generic `C`; the type says it is a `RequestDecision`.
@@ -1580,6 +1587,42 @@ export function gainClues(
   who: RelativeInvestigator = { ref: 'windowInvestigator' },
 ): AbilityEffect {
   return { type: 'AdjustInvestigator', investigatorId: who, stat: 'clues', delta: amount };
+}
+
+/**
+ * "Discover 1 clue at your location" (`DiscoverClues`: the window's location, else the location of
+ * the investigator it names), or at another location ("discover 1 clue
+ * at a [[Central]] location", `discoverClues(1, locationWith(trait('Central')))`): as many as the
+ * location has, none for an investigator who may not discover clues, unlike `gainClues`, which
+ * takes them from the token pool.
+ */
+export function discoverClues(
+  amount: number,
+  location: RelativeCard = { ref: 'windowLocation' },
+): AbilityEffect {
+  return {
+    type: 'DiscoverClues',
+    investigatorId: { ref: 'windowInvestigator' },
+    locationId: location,
+    amount,
+  };
+}
+
+/**
+ * "Lose 1 action" or "lose all remaining actions" (`AdjustActions`): no more than remain, none
+ * once they are gone; outside the turn they come off this round's actions.
+ */
+export function loseActions(amount: number | 'all'): AbilityEffect {
+  return {
+    type: 'AdjustActions',
+    investigatorId: { ref: 'windowInvestigator' },
+    delta: amount === 'all' ? 'allRemaining' : -amount,
+  };
+}
+
+/** "End your turn" (`EndTurn`): does nothing outside the turn of the investigator the window names. */
+export function endYourTurn(): AbilityEffect {
+  return { type: 'EndTurn', investigatorId: { ref: 'windowInvestigator' } };
 }
 
 /** "Gain N resources" (First Bank of Arkham). */

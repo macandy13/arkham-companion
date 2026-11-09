@@ -342,10 +342,14 @@ export interface CommandSource {
 }
 
 /**
- * A command on the players' own cards that a card can ask for (`PlayerCardCommand`). The ability
- * step that resolves it stamps its `source` (`withSource`), as does an action's hand card cost.
- * Without one it is the players' own or a rule step's (the upkeep draw); the play screen relies on
- * that to leave it out of the "Do this by hand" notice (`skippedEffects`).
+ * A command a card can ask for: one on the players' own cards (`PlayerCardCommand`), or one the
+ * players also send themselves that refuses when it has nothing to do (`AdjustActions`, `EndTurn`,
+ * `DiscoverClues`). The ability step that resolves it stamps its `source` (`withSource`), as does
+ * an action's hand card cost. Without one it is the players' own or a rule step's (the upkeep
+ * draw); the play screen relies on that to leave it out of the "Do this by hand" notice
+ * (`skippedEffects`). With one, a command that the players' version refuses for having nothing
+ * to do does as much as it can instead (Rules Reference, "Effects"), so a card's "lose 1 action"
+ * with none left doesn't fail the whole revelation; the players' buttons keep refusing it.
  */
 interface AskedByCard {
   source?: CommandSource;
@@ -452,10 +456,12 @@ export interface DefeatInvestigator {
 
 /**
  * An active investigator takes `amount` clues from the location they are at.
- * Produces `TokensChanged` (clues leave the location) and `InvestigatorChanged`
+ * Asked by a card (`source`, "discover 1 clue at a location"), the location may be any, as many
+ * clues as it has are taken, and an investigator who may not discover clues (The Masked Hunter)
+ * takes none. Produces `TokensChanged` (clues leave the location) and `InvestigatorChanged`
  * (clues arrive).
  */
-export interface DiscoverClues {
+export interface DiscoverClues extends AskedByCard {
   type: 'DiscoverClues';
   investigatorId: InvestigatorId;
   locationId: InstanceId;
@@ -1076,9 +1082,10 @@ export interface StartTurn {
 /**
  * Rules Reference 2.2.2: the investigator whose turn is in progress ends it,
  * whether or not they used all their actions; sets the per-round "turn
- * taken" flag (`GameMeta.turnsTaken`). Produces `TurnEnded`.
+ * taken" flag (`GameMeta.turnsTaken`). Asked by a card (`source`, "end your turn") outside
+ * that investigator's turn, it does nothing. Produces `TurnEnded`.
  */
-export interface EndTurn {
+export interface EndTurn extends AskedByCard {
   type: 'EndTurn';
   investigatorId: InvestigatorId;
 }
@@ -1141,12 +1148,14 @@ export interface SetLeadInvestigator {
  * encounter card or player card that takes or grants an action passes its
  * delta, in any phase. Upkeep step 4.2 resets the count to 3; an
  * investigator whose cards grant an additional action each turn gets it by
- * the players passing +1 after that reset. Produces `ActionsAdjusted`.
+ * the players passing +1 after that reset. `allRemaining` takes all that remain ("lose all
+ * remaining actions"); asked by a card (`source`), any loss takes no more than remain. Produces
+ * `ActionsAdjusted`, with the actual change.
  */
-export interface AdjustActions {
+export interface AdjustActions extends AskedByCard {
   type: 'AdjustActions';
   investigatorId: InvestigatorId;
-  delta: number;
+  delta: number | 'allRemaining';
   /**
    * The basic action the players count off, when it is one (`delta` is then minus what it costs,
    * `actionCost`, and may be 0 for a free one, which is performed all the same): recorded for the round (`GameMeta.actionsTaken`), so a card that raises the

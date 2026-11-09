@@ -18,6 +18,9 @@ A round is mythos → investigation → enemy → upkeep.
 - A turn has 3 actions, in any order and repeatable: investigate, move, draw, resource, play, activate an [action] ability, fight, engage, evade.
   - [Basic actions](https://arkhamdb.com/rules#Basic_Action_Types) are draw, resource, move, investigate, fight, engage and evade.
 - An investigator may end the turn early.
+  - A card's "end your turn" resolved outside that investigator's turn (mythos phase) does nothing ([Rite of Seeking FAQ](https://arkhamdb.com/card/02028)).
+- A card's "lose N actions" takes as many as remain and none once they are gone; its other parts still resolve ([Effects](https://arkhamdb.com/rules#Effects)), unless they follow a "then" ([Then](https://arkhamdb.com/rules#Then)). Lost outside the turn (mythos phase), they come off that round's turn (RR "Action").
+  - "Lose all remaining actions" takes every action left this round, outside the turn too: drawn in the mythos phase, it leaves the investigator none for their turn, as upkeep has already refilled the round's 3.
   - "At the end of your turn" forced abilities (Frozen in Fear) resolve when the turn ends (framework step 2.2.2).
   - A turn cut short by defeat or resignation triggers none: elimination has already discarded the threat area.
   - "When your turn begins" forced abilities resolve as the turn starts (2.2).

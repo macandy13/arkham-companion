@@ -44,6 +44,7 @@ export function handleStartTurn(state: GameState, cmd: StartTurn): TurnStarted[]
  * area (Frozen in Fear's test).
  */
 export function handleEndTurn(state: GameState, cmd: EndTurn): TurnEnded[] {
+  if (cmd.source && state.meta.turn?.investigatorId !== cmd.investigatorId) return [];
   requirePhase(state, 'investigation');
   requireTurnOf(state, cmd.investigatorId);
   return [{ type: 'TurnEnded', investigatorId: cmd.investigatorId }];
@@ -77,9 +78,13 @@ export function requireTurnOf(state: GameState, investigatorId: InvestigatorId):
 
 /** `AdjustActions`: changes the investigator's remaining actions. */
 export function handleAdjustActions(state: GameState, cmd: AdjustActions): ActionsAdjusted[] {
-  if (cmd.for === undefined) return [actionsAdjusted(state, cmd.investigatorId, cmd.delta)];
+  if (cmd.source) return cardActionsAdjusted(state, cmd.investigatorId, cmd.delta);
+  // Not `-remaining`: with none left that is -0, which a rejection would report.
+  const delta =
+    cmd.delta === 'allRemaining' ? 0 - remainingActions(state, cmd.investigatorId) : cmd.delta;
+  if (cmd.for === undefined) return [actionsAdjusted(state, cmd.investigatorId, delta)];
   // A free action costs nothing but is still performed, so it is recorded with no change.
-  if (cmd.delta === 0)
+  if (delta === 0)
     return [
       {
         type: 'ActionsAdjusted',
@@ -88,16 +93,36 @@ export function handleAdjustActions(state: GameState, cmd: AdjustActions): Actio
         for: cmd.for,
       },
     ];
-  const adjusted = actionsAdjusted(state, cmd.investigatorId, cmd.delta);
+  const adjusted = actionsAdjusted(state, cmd.investigatorId, delta);
   // Only counting an action off takes it; a correction upwards must not use up the first one.
-  if (cmd.delta > 0)
+  if (delta > 0)
     throw new CommandRejected({
       code: 'invalidActionAdjustment',
       investigatorId: cmd.investigatorId,
-      delta: cmd.delta,
+      delta,
       actionsRemaining: activeInvestigator(state, cmd.investigatorId).actionsRemaining,
     });
   return [{ ...adjusted, for: cmd.for }];
+}
+
+/**
+ * The `ActionsAdjusted` of an `AdjustActions` a card asked for: a loss stops at zero remaining
+ * actions, so it is none at all once they are gone. Outside the investigator's turn it takes from
+ * the actions upkeep gave them for this round (Rules Reference, "Action"), so "lose all remaining
+ * actions" in the mythos phase leaves them none for their turn.
+ */
+function cardActionsAdjusted(
+  state: GameState,
+  investigatorId: InvestigatorId,
+  delta: AdjustActions['delta'],
+): ActionsAdjusted[] {
+  const remaining = remainingActions(state, investigatorId);
+  const actual = delta === 'allRemaining' ? -remaining : Math.max(delta, -remaining);
+  return actual === 0 ? [] : [actionsAdjusted(state, investigatorId, actual)];
+}
+
+function remainingActions(state: GameState, investigatorId: InvestigatorId): number {
+  return activeInvestigator(state, investigatorId).actionsRemaining;
 }
 
 /**
