@@ -13,7 +13,7 @@
   list-style: none;
 }
 
-/* Two ids' worth, so the home screen's framed list items (`#app > main ul > li`) stay off. */
+/* One id plus the dialog's attribute, so it outranks the home screen's framed `#app > main ul > li`. */
 #board dialog[data-dialog='play-card'] > article > ul > li {
   padding: 0;
   border: none;

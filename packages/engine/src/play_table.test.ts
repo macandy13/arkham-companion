@@ -379,6 +379,18 @@ describe('turns, actions and tokens', () => {
     ]);
   });
 
+  it('plays a card for a cost of 2, spending both of alice’s resources', () => {
+    const table = PlayTable.start(
+      newGame()
+        .withLocation(study, blankLocation('study'), { revealed: true })
+        .withInvestigator(alice, { locationId: study, resources: 2 }),
+    );
+
+    table.playCard(alice, 2);
+
+    expect(table.board.investigator(alice).resources).toBe(0);
+  });
+
   it('gains and spends resources and takes damage and horror', () => {
     const table = PlayTable.start(game);
 

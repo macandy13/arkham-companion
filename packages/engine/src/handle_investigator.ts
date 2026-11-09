@@ -158,7 +158,7 @@ function costEvents(state: GameState, cmd: PlayCard): InvestigatorChanged[] {
   if (cmd.cost === undefined) return [];
   const investigator = activeInvestigator(state, cmd.investigatorId);
   if (!Number.isInteger(cmd.cost) || cmd.cost < 0)
-    throw new CommandRejected({ code: 'invalidTokenDelta', delta: -cmd.cost });
+    throw new CommandRejected({ code: 'invalidTokenDelta', delta: cmd.cost });
   if (cmd.cost > investigator.resources)
     throw new CommandRejected({
       code: 'negativeInvestigatorStat',
