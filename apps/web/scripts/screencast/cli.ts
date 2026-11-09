@@ -134,7 +134,8 @@ let diffDir: string | undefined;
 let diffCount = 0;
 
 function keepDifference(headPath: string, basePath: string, diff: PNG, differing: number): void {
-  console.log(`${differing} pixels differ: ${headPath}`);
+  // stderr: `flows` prints its pattern on stdout.
+  console.warn(`${differing} pixels differ: ${headPath}`);
   if (diffDir === undefined) return;
   diffCount += 1;
   const name = `${String(diffCount).padStart(3, '0')}-${differing}`;

@@ -122,7 +122,6 @@ jobs:
       - uses: ./.github/actions/e2e_setup
         with:
           dir: base
-          cache-name: base-${{ matrix.shard }}
       - working-directory: base
         timeout-minutes: 20
         continue-on-error: true
@@ -156,8 +155,6 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: ./.github/actions/e2e_setup
-        with:
-          cache-name: head-${{ matrix.shard }}
       # A failing spec must not block the preview; the E2E check reports it.
       - timeout-minutes: 20
         continue-on-error: true
@@ -191,8 +188,6 @@ jobs:
       - uses: actions/checkout@v7
       - if: github.event.action != 'closed'
         uses: ./.github/actions/e2e_setup
-        with:
-          cache-name: preview
       # Unpacked where each picture was taken, since the reports name them by absolute path: the
       # base's from main-pictures.yml's cache or from pictures-base, both under base/. A shard that
       # failed leaves no artifact: its base specs are then shown, and without any of this PR's
