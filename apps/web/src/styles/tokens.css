@@ -1092,6 +1092,13 @@
   }
 }
 
+/* A phone held sideways: smaller portraits, so a row with its names fits the low screen (MD.3e). */
+@media (orientation: landscape) and (max-height: 30rem) {
+  :root {
+    --picker-columns: 8;
+  }
+}
+
 /*
  * The upright phone's header expanded in place (`data-view='cards'`) shows the cards in full
  * again, larger, and its dialogs keep to the phone's width. Every dialog on an upright phone keeps
@@ -1099,6 +1106,8 @@
  */
 @media (orientation: portrait) and (max-width: 40rem) {
   :root {
+    /* Two portraits and the edge of a third, wide enough to read, the rest a swipe away (MD.3e). */
+    --picker-columns: 2.5;
     --picker-badge-size: 1.125rem;
     --picker-badge-inset: 0.125rem;
     --dialog-padding: var(--space-4) var(--space-3);

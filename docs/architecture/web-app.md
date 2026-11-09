@@ -21,9 +21,9 @@ The wizard's first step also asks how much the players rely on the helpers (`Rel
 
 ## Investigator picker
 
-The new game wizard's [investigator picker](../../apps/web/src/picker/InvestigatorPicker.tsx) shows the catalog's investigators alphabetically in pages of ten ([`PortraitPages.tsx`](../../apps/web/src/picker/PortraitPages.tsx)):
+The new game wizard's [investigator picker](../../apps/web/src/picker/InvestigatorPicker.tsx) shows the catalog's investigators in pages of ten ([`PortraitPages.tsx`](../../apps/web/src/picker/PortraitPages.tsx)), the picked ones first in seat order and then the rest alphabetically, the filters never hiding a picked one ([`pickerList`](../../apps/web/src/picker/pickerLogic.ts), MD.3e):
 
-- one list, laid out by the stylesheet in two rows of five per page (the first five of every ten in the top row), which scrolls sideways and snaps a page at a time;
+- one list, laid out by the stylesheet in two rows of five per page (the first five of every ten in the top row), which scrolls sideways and snaps a page at a time; a phone shows its own number of columns (`--picker-columns`: two and a half upright, so names stay readable, eight sideways, so a row fits the low screen) and snaps to every column;
 - each portrait (MD.3d2) is the figure cut from the picture of the card's front (`--picker-portrait-*` in tokens.css) with the class symbol in its colour (`--color-class-*`) on a disc at its corner, over the name and health and sanity as icons with values; a picked one is ringed in ink and wears its seat number on a brass disc.
 
 Its filters sit behind one round button that opens a menu, drawn like the play screen's ☰ menu (`button[data-icon][aria-expanded] + *` in base.css), and the button counts the filters set.

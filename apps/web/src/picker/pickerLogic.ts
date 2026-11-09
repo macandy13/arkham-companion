@@ -40,6 +40,23 @@ export function applyPickerFilters(
     );
 }
 
+/**
+ * The picker's list (MD.3e): the seated investigators first in seat order, the lead first, so a
+ * pick stays in sight while the players browse, then the others as `applyPickerFilters` leaves
+ * them. The filters never hide a seated one, since the sheet that removes them opens from its
+ * portrait.
+ */
+export function pickerList(
+  investigators: readonly InvestigatorDef[],
+  filters: PickerFilters,
+  seats: readonly CardCode[],
+  ownedPacks?: ReadonlySet<string>,
+): InvestigatorDef[] {
+  const seated = seats.flatMap((code) => investigators.filter((i) => i.code === code));
+  const others = investigators.filter((i) => !seats.includes(i.code));
+  return [...seated, ...applyPickerFilters(others, filters, ownedPacks)];
+}
+
 /** How many of the filters other than the search are set, as the filter button counts them. */
 export function activeFilterCount(filters: PickerFilters): number {
   return [
