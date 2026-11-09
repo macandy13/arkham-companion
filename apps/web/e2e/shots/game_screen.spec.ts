@@ -124,12 +124,14 @@ for (const { skin, code } of [
   });
 }
 
-test('the token pool in the cardboard token set', async ({ page }) => {
+test('the token pool in the cardboard token set', async ({ page, isMobile }) => {
   await page.goto('/#/settings');
   await page.getByRole('radio', { name: 'Cardboard' }).check();
   await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
 
-  await expect(page.getByRole('img', { name: 'Resource from the pool' })).toBeVisible();
+  // A phone has no room for the pool (game.css); its places and investigator show the set.
+  if (isMobile) await expect(page.getByRole('region', { name: 'Roland Banks' })).toBeVisible();
+  else await expect(page.getByRole('img', { name: 'Resource from the pool' })).toBeVisible();
   await expect(page.locator('html')).toHaveAttribute('data-token-set', 'cardboard');
 });
 
@@ -295,10 +297,15 @@ test("the upkeep's notice of what the game did, its cause and how to set it righ
   ]);
 });
 
-test('Roland Banks’ combat boosted by 2, as an ally in play gives it', async ({ page }) => {
+test('Roland Banks’ combat boosted by 2, as an ally in play gives it', async ({
+  page,
+  isMobile,
+}) => {
   await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
   const roland = page.getByRole('region', { name: 'Roland Banks' });
 
+  // A phone keeps "Adjust board" in the header's menu.
+  if (isMobile) await page.getByRole('button', { name: 'Menu' }).click();
   await page.getByRole('button', { name: 'Adjust board' }).click();
   await roland.getByRole('button', { name: 'Raise the Combat boost' }).click();
   await roland.getByRole('button', { name: 'Raise the Combat boost' }).click();
@@ -309,10 +316,13 @@ test('Roland Banks’ combat boosted by 2, as an ally in play gives it', async (
 
 test('Roland Banks’ card while the players adjust the board, its steppers out', async ({
   page,
+  isMobile,
 }) => {
   await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
   const roland = page.getByRole('region', { name: 'Roland Banks' });
 
+  // A phone keeps "Adjust board" in the header's menu.
+  if (isMobile) await page.getByRole('button', { name: 'Menu' }).click();
   await page.getByRole('button', { name: 'Adjust board' }).click();
 
   await expect(roland.getByRole('button', { name: 'Raise the Combat boost' })).toBeVisible();
