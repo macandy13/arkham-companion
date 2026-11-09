@@ -134,6 +134,15 @@ function bookPaths(kind: BookKind) {
 }
 
 /**
+ * The book's paths for each kind of book, worked out once (M6.5d): they are the same on every
+ * agenda and every act, which redraw with every change of the table.
+ */
+const BOOK_PATHS: Readonly<Record<BookKind, ReturnType<typeof bookPaths>>> = {
+  agenda: bookPaths('agenda'),
+  act: bookPaths('act'),
+};
+
+/**
  * The face of an agenda or act (`kind`) in the Exact card theme, in landscape scan units: our own
  * drawing of the printed layout (`BOOK_FACE`, no FFG art), the art cut from the card's `picture`
  * once it has loaded (a hatch until then, and for good offline), the open book beside it with its
@@ -154,7 +163,7 @@ export function BookFace({
   set: EncounterSetCode | undefined;
 }) {
   const pageId = useId();
-  const paths = bookPaths(kind);
+  const paths = BOOK_PATHS[kind];
   const artArea = kind === 'act' ? ACT_ART : AGENDA_ART;
   const { disc } = paths;
   return (

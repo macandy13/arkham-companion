@@ -127,8 +127,11 @@ export function useGlides(
     dropped.current = undefined;
     const svg = drawing.current;
     if (!last || !svg || prefersReducedMotion()) return;
+    const moved = glides(last.places, places, drop);
+    // Reading the stylesheet forces the browser to work out the styles, so only for a glide (M6.5d).
+    if (moved.length === 0) return;
     const duration = seconds(getComputedStyle(svg).getPropertyValue('--duration-glide')) * 1000;
-    for (const { piece, offset } of glides(last.places, places, drop)) {
+    for (const { piece, offset } of moved) {
       for (const element of elementsOf(svg, piece)) {
         element.animate([{ translate: `${offset.x}px ${offset.y}px` }, { translate: '0px 0px' }], {
           duration,

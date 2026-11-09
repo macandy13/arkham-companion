@@ -152,6 +152,18 @@ describe('useGlides in the map', () => {
     expect(element?.getAttribute('data-pawn')).toBe(alder);
   });
 
+  it('reads no style from the stylesheet when the board changed but no piece moved', () => {
+    motion(false);
+    const styles = vi.spyOn(window, 'getComputedStyle');
+    const { rerender } = render(mapOf(alderAt(study)));
+    styles.mockClear();
+
+    rerender(mapOf(alderAt(study)));
+
+    expect(styles).not.toHaveBeenCalled();
+    styles.mockRestore();
+  });
+
   it('moves nothing when the players prefer reduced motion', () => {
     motion(true);
     const animate = vi.fn();
