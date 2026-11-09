@@ -16,6 +16,7 @@ import {
   chosenScenario,
   clearChoices,
   loadChoices,
+  offeredTargets,
   parseMode,
   parseStep,
   saveChoices,
@@ -139,7 +140,12 @@ function Wizard({ store, catalogSource, mode, step }: WizardProps) {
   const index = WIZARD_STEPS.indexOf(step);
   const previous = WIZARD_STEPS[index - 1];
   const next = WIZARD_STEPS[index + 1];
-  const canContinue = step === 'setup' ? scenario !== undefined : investigators.length > 0;
+  // A choice the owned packs no longer offer has no cover to show it, so it can't go on.
+  const offered = offeredTargets(mode, ownedPacks()).some(
+    (target) => target.entry.id === choices.targetId,
+  );
+  const canContinue =
+    step === 'setup' ? scenario !== undefined && offered : investigators.length > 0;
   const target = chosenCampaign(choices) ?? scenario;
   // The pinned button says what the players take with them to the next step.
   const carried =
@@ -167,7 +173,9 @@ function Wizard({ store, catalogSource, mode, step }: WizardProps) {
         ))}
       </ol>
       <section id="wizard" aria-label={t(`wizard.steps.${step}`)}>
-        {step === 'setup' && <SetupStep choices={choices} onChange={update} />}
+        {step === 'setup' && (
+          <SetupStep choices={choices} ownedPacks={ownedPacks()} onChange={update} />
+        )}
         {step !== 'setup' && catalog.status === 'loading' && (
           <p>
             <Spinner />

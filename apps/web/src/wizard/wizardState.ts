@@ -8,6 +8,7 @@ import {
 } from '@arkham/engine';
 import {
   campaignCatalog,
+  findCampaignOfScenario,
   findScenario,
   scenarioCatalog,
   type CampaignEntry,
@@ -61,6 +62,31 @@ export function defaultChoices(mode: WizardMode): WizardChoices {
     reliance: DEFAULT_RELIANCE,
     seats: [],
   };
+}
+
+/** A campaign or a scenario the wizard offers, tagged so its cover knows which art to show. */
+export type WizardTarget =
+  | { readonly kind: 'campaign'; readonly entry: CampaignEntry }
+  | { readonly kind: 'scenario'; readonly entry: ScenarioEntry };
+
+/**
+ * What the first step offers in `mode` (MD.3f): the campaigns, or in a quick game the scenarios,
+ * of the packs the players own. A scenario belongs to its campaign's packs; one outside any
+ * campaign has no packs listed and is always offered. Without owned packs (none set in Settings)
+ * everything is offered.
+ */
+export function offeredTargets(mode: WizardMode, ownedPacks?: ReadonlySet<string>): WizardTarget[] {
+  const owned = (packCodes: readonly string[] | undefined) =>
+    ownedPacks === undefined ||
+    packCodes === undefined ||
+    packCodes.some((code) => ownedPacks.has(code));
+  return mode === 'campaign'
+    ? campaignCatalog
+        .filter((entry) => owned(entry.packCodes))
+        .map((entry) => ({ kind: 'campaign', entry }))
+    : scenarioCatalog
+        .filter((entry) => owned(findCampaignOfScenario(entry.definition.id)?.packCodes))
+        .map((entry) => ({ kind: 'scenario', entry }));
 }
 
 /** The campaign the choices will start; `undefined` in a quick game. */

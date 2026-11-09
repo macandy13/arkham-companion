@@ -882,6 +882,9 @@ export const appTexts = {
     failed: 'Das Szenario ließ sich nicht aus dem Kampagnenprotokoll aufbauen.',
   },
   wizard: {
+    scenarioCount_one: '{{count}} Szenario',
+    scenarioCount_other: '{{count}} Szenarien',
+    standalone: 'Einzelszenario',
     campaign: 'Kampagne',
     scenario: 'Szenario',
     difficulty: 'Schwierigkeit',

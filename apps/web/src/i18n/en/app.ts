@@ -877,6 +877,9 @@ export const appTexts = {
     failed: 'The scenario could not be set up from the campaign log.',
   },
   wizard: {
+    scenarioCount_one: '{{count}} scenario',
+    scenarioCount_other: '{{count}} scenarios',
+    standalone: 'Standalone',
     campaign: 'Campaign',
     scenario: 'Scenario',
     difficulty: 'Difficulty',

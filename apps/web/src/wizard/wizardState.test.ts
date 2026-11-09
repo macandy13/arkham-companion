@@ -6,6 +6,7 @@ import {
   clearChoices,
   defaultChoices,
   loadChoices,
+  offeredTargets,
   parseMode,
   parseStep,
   saveChoices,
@@ -47,6 +48,36 @@ describe('chosenScenario', () => {
   it('is undefined for unknown ids', () => {
     expect(chosenScenario({ ...defaultChoices('quick'), targetId: 'nope' })).toBeUndefined();
     expect(chosenScenario({ ...defaultChoices('campaign'), targetId: 'nope' })).toBeUndefined();
+  });
+});
+
+describe('offeredTargets', () => {
+  const ids = (mode: 'campaign' | 'quick', owned?: string[]) =>
+    offeredTargets(mode, owned && new Set(owned)).map((target) => target.entry.id);
+
+  it.each([
+    {
+      owned: undefined,
+      scenarios: ['the-gathering', 'the-midnight-masks', 'the-devourer-below', 'spreading-flames'],
+    },
+    {
+      owned: ['rcore'],
+      scenarios: ['the-gathering', 'the-midnight-masks', 'the-devourer-below', 'spreading-flames'],
+    },
+    { owned: ['dwl'], scenarios: ['spreading-flames'] },
+  ])(
+    'offers the scenarios of the packs $owned, a scenario outside any campaign always',
+    ({ owned, scenarios }) => {
+      expect(ids('quick', owned)).toEqual(scenarios);
+    },
+  );
+
+  it.each([
+    { owned: undefined, campaigns: ['night-of-the-zealot'] },
+    { owned: ['core'], campaigns: ['night-of-the-zealot'] },
+    { owned: ['dwl'], campaigns: [] },
+  ])('offers the campaigns of the packs $owned', ({ owned, campaigns }) => {
+    expect(ids('campaign', owned)).toEqual(campaigns);
   });
 });
 
