@@ -28,7 +28,7 @@ import { GameToken, type GameTokenKind } from '../tokens/GameToken';
 import { PipRing } from './PipRing';
 import { useClueDrag } from './useClueDrag';
 import { CounterBubble, type BubbleSide } from '../screens/CounterBubble';
-import { useDoubleTap } from '../screens/useDoubleTap';
+import { useDoubleTap, useDoubleTapOn } from '../screens/useDoubleTap';
 import './investigators.css';
 
 /**
@@ -370,7 +370,9 @@ function InvestigatorPanel({
  * value with its lasting boost (`InvestigatorView.boosts`, what player cards in play add), the
  * boost shown beside it, so the printed value stays recognisable. The icon alone does not say
  * which skill it is, so each one is named for screen readers. Tapping one opens a skill test
- * against it (`SkillTestDialog`), a calculator that changes nothing. While the players adjust the
+ * against it (`SkillTestDialog`), a calculator that changes nothing; a double tap opens the − / +
+ * bubble of its boost instead (`CounterBubble`, M6.10), so a single tap opens the test only once no
+ * second one came (`useDoubleTapOn`, keyed by skill). While the players adjust the
  * board, a row under the card holds each skill's boost with its steppers, named by the skill's icon,
  * since two steppers are wider than a link on the chain; a step waits while one is queued (`busy`).
  */
@@ -389,9 +391,16 @@ function Skills({
 }) {
   const { t } = useTranslation();
   const [testing, setTesting] = useState<SkillName>();
+  const [boosting, setBoosting] = useState<{ skill: SkillName; anchor: Element }>();
+  const tapSkill = useDoubleTapOn<SkillName>(
+    (skill, anchor) => setBoosting({ skill, anchor }),
+    setTesting,
+  );
   const { boostedSkills, boosts } = investigator;
   // A defeated or resigned investigator has left the game, so their boosts no longer change.
   const off = busy || investigator.status !== 'active';
+  // Not while the players adjust the board, whose steppers are out, nor once they left the game.
+  const bubbled = !adjusting && investigator.status === 'active';
   return (
     <>
       <ul aria-label={t('investigators.skills')}>
@@ -412,7 +421,11 @@ function Skills({
                         boost: signed(boost),
                       })
                 }
-                onClick={() => setTesting(skill)}
+                onClick={(event) =>
+                  bubbled
+                    ? tapSkill(skill, event.currentTarget, event.timeStamp)
+                    : setTesting(skill)
+                }
               >
                 <data value={value}>{value}</data>
                 {boost !== 0 && <data value={boost}>{signed(boost)}</data>}
@@ -441,6 +454,31 @@ function Skills({
             );
           })}
         </dl>
+      )}
+      {boosting && bubbled && (
+        <CounterBubble
+          anchor={boosting.anchor}
+          title={t('investigators.counterBubble', {
+            investigator: investigator.name,
+            counter: t('investigators.skillBoost', { skill: t(`skill.${boosting.skill}`) }),
+          })}
+          counts={[
+            {
+              label: t(`skill.${boosting.skill}`),
+              value: signed(boosts?.[boosting.skill] ?? 0),
+              lower: {
+                label: t('investigators.lowerBoost', { skill: t(`skill.${boosting.skill}`) }),
+                disabled: off,
+              },
+              raise: {
+                label: t('investigators.raiseBoost', { skill: t(`skill.${boosting.skill}`) }),
+                disabled: off,
+              },
+              onStep: (delta) => void actions.boostSkill(investigator.id, boosting.skill, delta),
+            },
+          ]}
+          onClose={() => setBoosting(undefined)}
+        />
       )}
       {testing && (
         <SkillTestDialog

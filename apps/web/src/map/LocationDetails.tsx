@@ -171,6 +171,8 @@ function LocationPage({
   const { t } = useTranslation();
   const offered = adjusting ? [] : locationActions(board, location, actions);
   const printed = adjusting ? [] : cardActionsOn(board, location.id);
+  // Revealing by hand, as a card can tell the players to, without adjusting the board (M6.10).
+  const revealable = !adjusting && !location.revealed;
   const button = ({ key, icon, cost, play, then }: LocationAction) => (
     <ActionButton
       key={key}
@@ -204,7 +206,7 @@ function LocationPage({
         <Attached cards={board.cardsIn({ kind: 'attachedTo', hostId: location.id })} />
       )}
       {adjusting && <Corrections location={location} actions={actions} busy={busy} />}
-      {offered.length + printed.length > 0 && (
+      {offered.length + printed.length > 0 || revealable ? (
         <footer>
           {offered.length > 0 && (
             <ActionGroup title={t('location.actions')}>{offered.map(button)}</ActionGroup>
@@ -218,8 +220,19 @@ function LocationPage({
               onUse={onLeave}
             />
           )}
+          {revealable && (
+            <ActionGroup title={t('location.corrections')}>
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => void actions.revealLocation(location.id)}
+              >
+                {t('location.reveal')}
+              </button>
+            </ActionGroup>
+          )}
         </footer>
-      )}
+      ) : null}
     </>
   );
 }

@@ -15,6 +15,8 @@ A tap on a tile (or its "i" button, for the keyboard) opens the location's [deta
   - where a card forbids it (`LocationView.forbidden`) investigate off and no move (Locked Door, the unrevealed Parlor's barrier), and taking a clue off while a card forbids the investigator to discover clues (`InvestigatorView.forbidden`, The Masked Hunter),
   - plus the location's own card actions (`CardActions`, the Parlor's Resign),
 
+  An unrevealed location offers Reveal under "Correct the board" (`revealLocation`), as a card can tell the players to reveal one (M6.10).
+
   While adjusting, the corrections (reveal, clue and doom steppers) take its place.
 
   A move closes the details; an investigation shows its test in their place, the location still beside it ([decisions](play-screen-decisions.md#in-a-details-dialog)).

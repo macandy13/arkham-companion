@@ -731,6 +731,31 @@ describe('InvestigatorBar', () => {
       expect(within(bubble()).getByRole('heading').textContent).toBe('alder · Health');
     });
 
+    it.each([
+      { button: 'Raise the Combat boost', boosts: { combat: 1 } },
+      { button: 'Lower the Combat boost', boosts: { combat: -1 } },
+    ])('on the Combat skill, "$button" leaves alder with $boosts', async ({ button, boosts }) => {
+      const table = PlayTable.start(alderInStudy);
+      render(
+        <InvestigatorBar
+          board={table.board}
+          actions={actionsOn(table)}
+          busy={false}
+          adjusting={false}
+        />,
+      );
+
+      doubleTap(within(panel('alder')).getByRole('button', { name: /^Combat/ }));
+      fireEvent.click(
+        within(screen.getByRole('complementary', { name: 'alder · Combat boost' })).getByRole(
+          'button',
+          { name: button },
+        ),
+      );
+
+      await expect.poll(() => table.board.investigator(alder).boosts).toEqual(boosts);
+    });
+
     it('opens on a double tap only, not on a single tap', () => {
       const table = PlayTable.start(alderInStudy);
       render(
