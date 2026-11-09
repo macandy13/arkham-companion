@@ -1592,7 +1592,7 @@ export function discoverClues(
 
 /**
  * "Lose 1 action" or "lose all remaining actions" (`AdjustActions`): no more than remain, none
- * once they are gone, and "all remaining" none outside that investigator's turn.
+ * once they are gone; outside the turn they come off this round's actions.
  */
 export function loseActions(amount: number | 'all'): AbilityEffect {
   return {

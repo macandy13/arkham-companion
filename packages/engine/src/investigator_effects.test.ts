@@ -73,7 +73,7 @@ describe('card effects that take actions away', () => {
 
   it.each([
     { loses: 1, after: 2 },
-    { loses: 'all', after: 3 },
+    { loses: 'all', after: 0 },
   ] as const)(
     "leaves alice $after actions when she loses $loses during bob's turn",
     ({ loses, after }) => {

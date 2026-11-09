@@ -107,16 +107,15 @@ export function handleAdjustActions(state: GameState, cmd: AdjustActions): Actio
 
 /**
  * The `ActionsAdjusted` of an `AdjustActions` a card asked for: a loss stops at zero remaining
- * actions, so it is none at all once they are gone. "Lose all remaining actions" outside the
- * investigator's turn finds none to lose (Rite of Seeking FAQ), while "lose 1 action" in the
- * mythos phase takes one of the coming turn's (Rules Reference, "Action").
+ * actions, so it is none at all once they are gone. Outside the investigator's turn it takes from
+ * the actions upkeep gave them for this round (Rules Reference, "Action"), so "lose all remaining
+ * actions" in the mythos phase leaves them none for their turn.
  */
 function cardActionsAdjusted(
   state: GameState,
   investigatorId: InvestigatorId,
   delta: AdjustActions['delta'],
 ): ActionsAdjusted[] {
-  if (delta === 'allRemaining' && state.meta.turn?.investigatorId !== investigatorId) return [];
   const remaining = remainingActions(state, investigatorId);
   const actual = delta === 'allRemaining' ? -remaining : Math.max(delta, -remaining);
   return actual === 0 ? [] : [actionsAdjusted(state, investigatorId, actual)];
