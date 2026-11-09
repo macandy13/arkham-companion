@@ -1,4 +1,7 @@
 import {
+  eachInZone,
+  eachEnemy,
+  ifThereAre,
   advanceAct,
   afterAttacking,
   afterEntering,
@@ -23,7 +26,6 @@ import {
   discardSelf,
   heal,
   healSelf,
-  ifEnemiesInPlay,
   ifNoCandidate,
   ifYouHave,
   locationWith,
@@ -169,7 +171,11 @@ export const theMidnightMasksCardDefs: readonly CardStats[] = [
     set: own,
     stage: 1,
     abilities: [
-      whenVictoryDisplayHolds({ trait: trait('Cultist'), unique: true }, 6, advanceAct()),
+      whenVictoryDisplayHolds(
+        eachInZone({ kind: 'victoryDisplay' }, { trait: trait('Cultist'), unique: true }),
+        6,
+        advanceAct(),
+      ),
       whenAdvanced(endScenario(MIDNIGHT_MASKS_RESOLUTIONS.conspiracyUncovered)),
     ],
     actions: [
@@ -499,9 +505,9 @@ export const theMidnightMasksCardDefs: readonly CardStats[] = [
     traits: ['Hex'],
     quantity: 2,
     abilities: [
-      whenRevealed(placeDoomOn(nearestEnemy(trait('Cultist')), 2)),
-      ifEnemiesInPlay(
-        trait('Cultist'),
+      whenRevealed(placeDoomOn(nearestEnemy({ trait: trait('Cultist') }), 2)),
+      ifThereAre(
+        eachEnemy({ trait: trait('Cultist') }),
         { max: 0 },
         whenRevealed(searchAndDraw({ trait: trait('Cultist'), typeCode: 'enemy' })),
       ),
@@ -531,7 +537,7 @@ export const theMidnightMasksCardDefs: readonly CardStats[] = [
       whenRevealed(
         skillTest('agility', 4, { onFail: [takeDamageAndHorror({ damage: 1, horror: 1 })] }),
         disengageFromEachEnemy({ withoutTrait: trait('Nightgaunt') }),
-        moveTo(locationWith(trait('Central'))),
+        moveTo(locationWith({ trait: trait('Central') })),
         engageReadyEnemies(),
       ),
     ],

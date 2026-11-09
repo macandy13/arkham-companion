@@ -2,7 +2,7 @@ import { shortestPaths } from './board';
 import { cardStats, resolveValue, type CardStats, type EngineContext, type Trait } from './cards';
 import { woundEvents } from './elimination';
 import type { EnemyAttacked, Event } from './events';
-import type { CardCode, InstanceId, InvestigatorId } from './ids';
+import type { InstanceId, InvestigatorId } from './ids';
 import { cardsInZone, requireCard } from './lookup';
 import { playerOrder } from './investigators';
 import { hasKeyword } from './keywords';
@@ -167,8 +167,7 @@ export function enemiesAt(
 }
 
 /**
- * The enemies on the table with `trait` (any enemy without one) nearest to
- * `from`, counted in connections along each enemy's path there, engaged ones
+ * The enemies on the table `filter` matches nearest to `from`, counted in connections along each enemy's path there, engaged ones
  * where their investigator is ("the nearest [[Cultist]] enemy"). Several when
  * they are equally near, in card order; none when there is no such enemy. An
  * enemy with no path counts as farther than every enemy with one (FAQ:
@@ -179,9 +178,9 @@ export function nearestEnemies(
   ctx: EngineContext,
   state: GameState,
   from: InstanceId,
-  trait?: Trait,
+  filter: EnemyFilter = {},
 ): CardInstance[] {
-  const candidates = enemiesOnTable(ctx, state, trait).map((card) => {
+  const candidates = enemiesMatching(ctx, state, filter).map((card) => {
     const [path] = shortestPaths(ctx, state, locationOf(state, card), from);
     return { card, distance: path ? path.length - 1 : Infinity };
   });
@@ -191,16 +190,14 @@ export function nearestEnemies(
 
 /**
  * Which enemies on the table a card means: those with `trait` (any enemy
- * without one) and without `withoutTrait` ("each non-Nightgaunt enemy"), only
- * the unengaged ones with `unengaged`, and only those at a location of one of
- * the codes in `at` when it is given ("each Ghoul enemy in the Hallway or
- * Parlor").
+ * without one) and without `withoutTrait` ("each non-Nightgaunt enemy"), and only
+ * the unengaged ones with `unengaged`. Card data adds where they are and whom they
+ * are engaged with (`EachEnemyFilter`).
  */
 export interface EnemyFilter {
   trait?: Trait;
   withoutTrait?: Trait;
   unengaged?: true;
-  at?: readonly CardCode[];
 }
 
 /** The enemies on the table that `filter` matches, in card order. */
@@ -213,9 +210,7 @@ export function enemiesMatching(
     (card) =>
       (filter.withoutTrait === undefined ||
         !cardStats(ctx.cards, card.code).traits.includes(filter.withoutTrait)) &&
-      (filter.unengaged === undefined || card.zone.kind === 'atLocation') &&
-      (filter.at === undefined ||
-        filter.at.includes(requireCard(state.cards, locationOf(state, card)).code)),
+      (filter.unengaged === undefined || card.zone.kind === 'atLocation'),
   );
 }
 

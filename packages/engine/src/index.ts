@@ -31,7 +31,7 @@ export {
   sameEdge,
   shortestPaths,
 } from './board';
-export { cardsNamed, currentCard, zoneOf } from './lookup';
+export { cardsInZones, cardsNamed, currentCard, zoneOf, type CardFilter } from './lookup';
 export {
   byAny,
   byCode,
@@ -131,7 +131,7 @@ export { checkInvariants } from './invariants';
 export { PHASE_OF_STEP, PHASE_STEP_TITLES } from './phases';
 export { BASE_ACTIONS_PER_TURN } from './turns';
 export { formatBoard } from './format_board';
-export { inVictoryDisplay, victoryPoints } from './victory';
+export { victoryPoints } from './victory';
 export {
   advanceAct,
   advanceAgenda,
@@ -162,6 +162,7 @@ export {
   moveEnemyTowards,
   discardSelf,
   duringAct,
+  duringAgenda,
   endScenario,
   leadDecides,
   youMustEither,
@@ -182,7 +183,7 @@ export {
   healSelf,
   gainSurge,
   ifYouHave,
-  ifEnemiesInPlay,
+  ifThereAre,
   ifNoCandidate,
   forEachEnemy,
   searchAndDraw,
@@ -207,6 +208,7 @@ export {
   putSetAsideIntoPlay,
   setAsideCard,
   fromSetAside,
+  eachInZone,
   eachSetAsideCopyTo,
   removeFromGame,
   addToVictoryDisplay,
@@ -233,8 +235,10 @@ export {
   searchDeck,
   spendClues,
   moveTo,
-  eachInvestigatorAt,
+  eachInvestigator,
   itsLocation,
+  you,
+  yourLocation,
   whenAdvanced,
   whenDefeated,
   whenEnemyDefeated,
@@ -247,7 +251,6 @@ export type {
   Ability,
   AbilityChoice,
   AbilityCondition,
-  VictoryDisplayFilter,
   AbilityCommand,
   AbilityEffect,
   AbilityOption,

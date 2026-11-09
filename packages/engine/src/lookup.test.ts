@@ -9,11 +9,14 @@ import {
   cardCode,
   fixed,
   instanceId,
+  investigatorId,
   newGame,
+  trait,
 } from './index';
 import { locationsInPlay, locationsNamed } from './board';
 import {
   cardsAtLocation,
+  cardsInZones,
   cardsNamed,
   cardsOfType,
   currentCard,
@@ -164,5 +167,44 @@ describe('currentCard', () => {
     const { state } = newGame().start();
 
     expect(currentCard(state, 'act')).toBeUndefined();
+  });
+});
+
+describe('cardsInZones', () => {
+  const elite = trait('Elite');
+  const act = instanceId('act');
+  const study = instanceId('study');
+  const victoryDisplay = { kind: 'victoryDisplay' } as const;
+  const beneathAct = { kind: 'beneath', hostId: act } as const;
+  const eliteSuspect = blankEnemy('elite_suspect', { traits: [elite] });
+  /** One Elite suspect and one plain ghoul are in the victory display. */
+  const table = newGame()
+    .withAct(act, blankAct('act'))
+    .withLocation(study, blankLocation('study'))
+    .withInvestigator(investigatorId('alice'), { locationId: study })
+    .withCard(instanceId('defeated_suspect'), eliteSuspect, victoryDisplay)
+    .withCard(instanceId('defeated_ghoul'), blankEnemy('ghoul'), victoryDisplay);
+
+  it.each([
+    { beneathAct: 'a face-up suspect', faceUp: true, count: 2 },
+    { beneathAct: 'a facedown suspect', faceUp: false, count: 1 },
+  ])('counts $count Elite cards with $beneathAct beneath the act', ({ faceUp, count }) => {
+    const { context, state } = table
+      .withCard(instanceId('questioned_suspect'), eliteSuspect, beneathAct, { faceUp })
+      .start();
+
+    expect(
+      cardsInZones(context, state, [victoryDisplay, beneathAct], { trait: elite }),
+    ).toHaveLength(count);
+  });
+
+  it.each([
+    { filter: 'no filter', by: {}, count: 2 },
+    { filter: 'the ghoul code', by: { code: cardCode('ghoul') }, count: 1 },
+    { filter: 'type location', by: { typeCode: 'location' as const }, count: 0 },
+  ])('finds $count cards in the victory display with $filter', ({ by, count }) => {
+    const { context, state } = table.start();
+
+    expect(cardsInZones(context, state, [victoryDisplay], by)).toHaveLength(count);
   });
 });

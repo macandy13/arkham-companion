@@ -1,15 +1,17 @@
 import {
   cardCode,
   GRID_CELLS_PER_CARD,
-  inVictoryDisplay,
+  cardsInZones,
   mapId,
   perInvestigator,
   scenario,
   scenarioId,
   trait,
+  victoryDisplay,
   type AddMapStep,
   type CardCode,
   type ScenarioDefinition,
+  type Zone,
   type SetupStep,
   type TokenValue,
 } from '@arkham/engine';
@@ -53,7 +55,12 @@ const DEALT_BENEATH: readonly CardCode[] = [
  * the act, and 2 more on Hard/Expert. Both sides print a "-X", so the value checks the difficulty.
  */
 const eliteCount: TokenValue = (ctx, state) => {
-  const elite = inVictoryDisplay(ctx, state, { trait: trait('Elite'), beneathAct: true }).length;
+  const act = state.act.current;
+  const zones: Zone[] = [
+    victoryDisplay,
+    ...(act === undefined ? [] : [{ kind: 'beneath', hostId: act } as const]),
+  ];
+  const elite = cardsInZones(ctx, state, zones, { trait: trait('Elite') }).length;
   const more = scenario.pickReferenceSide(state.meta.difficulty) === 'hardExpert' ? 2 : 0;
   // Subtracting from 0 rather than negating keeps "none" a plain 0, not -0, in the trace.
   return 0 - (elite + more);

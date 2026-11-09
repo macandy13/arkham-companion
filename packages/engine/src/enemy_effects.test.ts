@@ -9,7 +9,7 @@ import {
   dealDamageTo,
   defeatEnemy,
   eachEnemy,
-  eachInvestigatorAt,
+  eachInvestigator,
   encounterDiscard,
   enemyAttacks,
   engagesYou,
@@ -82,7 +82,7 @@ describe('card effects that exhaust or defeat an enemy', () => {
   it('exhausts each enemy at the entered location, leaving an exhausted one as it is', () => {
     /** "After you enter the attic: exhaust each enemy here." */
     const atticCard = blankLocation('attic', {
-      abilities: [afterEntering(exhaustEnemy({ ref: 'eachEnemyAt', location: itsLocation() }))],
+      abilities: [afterEntering(exhaustEnemy(eachEnemy({ at: itsLocation() })))],
     });
     const { context, state } = newGame()
       .withLocation(hall, blankLocation('hall'), { revealed: true })
@@ -210,7 +210,7 @@ describe('card effects that make an enemy attack', () => {
         afterEntering(
           enemyAttacks(
             onlyCopy(cardCode('ghoul')),
-            eachInvestigatorAt(onlyCopy(cardCode('attic'))),
+            eachInvestigator({ at: onlyCopy(cardCode('attic')) }),
           ),
         ),
       ],

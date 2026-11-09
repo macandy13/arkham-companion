@@ -127,7 +127,7 @@ export type CardPlace =
 export type GameCondition =
   /** Some copy of `code` is in one of `places`; false when the game has none. */
   | { readonly kind: 'cardIn'; readonly code: CardCode; readonly places: readonly CardPlace[] }
-  /** The current agenda is one of `agendas`, as in "if it is Agenda 1" (like `AbilityCondition.currentAct`). */
+  /** The current agenda is one of `agendas`, as in "if it is Agenda 1" (like `AbilityCondition.currentCard` for the agenda). */
   | { readonly kind: 'currentAgenda'; readonly agendas: readonly CardCode[] }
   | { readonly kind: 'anyOf'; readonly conditions: readonly GameCondition[] }
   /**

@@ -11,7 +11,7 @@ import {
   discardEachEnemy,
   discardFromHand,
   discardSelf,
-  eachInvestigatorAt,
+  eachInvestigator,
   encounterSetCode,
   fixed,
   eachSetAsideCopyTo,
@@ -529,7 +529,7 @@ export const spreadingFlamesCardDefs: readonly CardStats[] = [
     damage: 1,
     horror: 1,
     quantity: 2,
-    abilities: [whenDefeated(takeHorror(1, eachInvestigatorAt(itsLocation())))],
+    abilities: [whenDefeated(takeHorror(1, eachInvestigator({ at: itsLocation() })))],
   }),
 ];
 

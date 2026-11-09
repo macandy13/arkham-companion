@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
+  eachInZone,
+  ifThereAre,
   resolutionId,
   atEndOfPhase,
   atEndOfEachTurn,
@@ -7,7 +9,6 @@ import {
   healSelf,
   gainSurge,
   ifYouHave,
-  ifEnemiesInPlay,
   searchAndDraw,
   shuffleEncounterDeck,
   readySelf,
@@ -40,7 +41,7 @@ import {
   engageReadyEnemies,
   eachEnemy,
   forEachEnemy,
-  eachInvestigatorAt,
+  eachInvestigator,
   engagedWith,
   duringAct,
   endScenario,
@@ -896,7 +897,7 @@ describe('trigger bus', () => {
      */
     const wailingSpawnCard = blankEnemy('wailing_spawn', {
       keywords: [{ name: 'aloof' }],
-      abilities: [whenDefeated(takeHorror(1, eachInvestigatorAt(itsLocation())))],
+      abilities: [whenDefeated(takeHorror(1, eachInvestigator({ at: itsLocation() })))],
     });
 
     // Alice and bob are in the hall with the wailing spawn, carol is in the cellar.
@@ -1633,7 +1634,13 @@ describe('objectives on the victory display', () => {
   const newcomer = instanceId('newcomer');
   /** "If there are 2 unique Cultist enemies in the victory display, advance." */
   const twoCultistsAct = blankAct('two_cultists_act', {
-    abilities: [whenVictoryDisplayHolds({ trait: cultist, unique: true }, 2, advanceAct())],
+    abilities: [
+      whenVictoryDisplayHolds(
+        eachInZone({ kind: 'victoryDisplay' }, { trait: cultist, unique: true }),
+        2,
+        advanceAct(),
+      ),
+    ],
   });
   /**
    * Alice in the hall with `newcomer`, an enemy worth 1 victory; one unique Cultist is in the
@@ -1699,11 +1706,25 @@ describe('objectives on the victory display and beneath the act', () => {
   const eliteSuspect = blankEnemy('elite_suspect', { traits: [elite], victory: 1 });
   /** "If there are 2 Elite enemies in the victory display and/or under the act, advance." */
   const displayOrBeneathAct = blankAct('display_or_beneath_act', {
-    abilities: [whenVictoryDisplayHolds({ trait: elite, beneathAct: true }, 2, advanceAct())],
+    abilities: [
+      whenVictoryDisplayHolds(
+        eachInZone([{ kind: 'victoryDisplay' }, { kind: 'beneath', hostId: { ref: 'self' } }], {
+          trait: elite,
+        }),
+        2,
+        advanceAct(),
+      ),
+    ],
   });
   /** The same objective on the victory display alone. */
   const displayOnlyAct = blankAct('display_only_act', {
-    abilities: [whenVictoryDisplayHolds({ trait: elite }, 2, advanceAct())],
+    abilities: [
+      whenVictoryDisplayHolds(
+        eachInZone({ kind: 'victoryDisplay' }, { trait: elite }),
+        2,
+        advanceAct(),
+      ),
+    ],
   });
   /**
    * Alice in the hall with an Elite suspect there; one Elite enemy is in the victory display
@@ -2089,9 +2110,9 @@ describe('doom on the nearest Cultist enemy, or a search for one', () => {
    */
   const chantingCard = blankTreachery('chanting', {
     abilities: [
-      whenRevealed(placeDoomOn(nearestEnemy(trait('Cultist')), 2)),
-      ifEnemiesInPlay(
-        trait('Cultist'),
+      whenRevealed(placeDoomOn(nearestEnemy({ trait: trait('Cultist') }), 2)),
+      ifThereAre(
+        eachEnemy({ trait: trait('Cultist') }),
         { max: 0 },
         whenRevealed(searchAndDraw({ trait: trait('Cultist'), typeCode: 'enemy' })),
       ),
@@ -2311,7 +2332,7 @@ describe('an effect repeated for each Ghoul enemy in the Hall or Parlor', () => 
   const omenCard = blankTreachery('omen', {
     abilities: [
       forEachEnemy(
-        { trait: trait('Ghoul'), at: [cardCode('hall'), cardCode('parlor')] },
+        { trait: trait('Ghoul'), at: [onlyCopy(cardCode('hall')), onlyCopy(cardCode('parlor'))] },
         whenRevealed(placeDoomOnAgenda(1)),
       ),
     ],
@@ -2431,7 +2452,7 @@ describe("disengaging and moving after a card's test", () => {
       whenRevealed(
         skillTest('agility', 4, { onFail: [takeHorror(1)] }),
         disengageFromEachEnemy({ withoutTrait: trait('Nightgaunt') }),
-        moveTo(locationWith(trait('Central'))),
+        moveTo(locationWith({ trait: trait('Central') })),
         engageReadyEnemies(),
       ),
     ],

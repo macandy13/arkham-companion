@@ -1,4 +1,4 @@
-import { comparableName, type CardType, type EngineContext } from './cards';
+import { comparableName, type CardType, type EngineContext, type Trait } from './cards';
 import type { CardCode, InstanceId } from './ids';
 import { CommandRejected } from './rejection';
 import type { CardInstance, GameState } from './state';
@@ -88,4 +88,44 @@ export function currentCard(state: GameState, deck: 'agenda' | 'act'): CardInsta
 export function theOnlyCopy(state: GameState, code: CardCode): InstanceId | undefined {
   const copies = Object.values(state.cards).filter((card) => card.code === code);
   return copies.length === 1 ? copies[0]?.id : undefined;
+}
+
+/**
+ * Which cards a card's text means by what is printed on them: those with `trait`, the copies of
+ * `code`, those of type `typeCode`, and with `unique` only unique ones. A field left out matches
+ * every card. The `eachInZone` reference filters with it.
+ */
+export interface CardFilter {
+  trait?: Trait;
+  code?: CardCode;
+  typeCode?: CardType;
+  unique?: true;
+}
+
+/**
+ * The cards in `zones` that `filter` matches, zone by zone in zone order ("each [[Elite]] enemy
+ * in the victory display and beneath the act"). A card beneath another one counts only face up:
+ * facedown it shows no traits.
+ */
+export function cardsInZones(
+  ctx: EngineContext,
+  state: GameState,
+  zones: readonly Zone[],
+  filter: CardFilter,
+): CardInstance[] {
+  return zones
+    .flatMap((zone) =>
+      cardsInZone(state, zone)
+        .map((id) => requireCard(state.cards, id))
+        .filter((card) => zone.kind !== 'beneath' || card.faceUp),
+    )
+    .filter((card) => {
+      const stats = ctx.cards.get(card.code);
+      return (
+        (filter.code === undefined || card.code === filter.code) &&
+        (filter.trait === undefined || stats?.traits.includes(filter.trait) === true) &&
+        (filter.typeCode === undefined || stats?.typeCode === filter.typeCode) &&
+        (filter.unique === undefined || stats?.unique === true)
+      );
+    });
 }

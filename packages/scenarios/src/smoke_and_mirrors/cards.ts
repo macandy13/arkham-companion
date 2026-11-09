@@ -1,4 +1,5 @@
 import {
+  eachInZone,
   advanceAct,
   attachToLocation,
   atEndOfPhase,
@@ -8,7 +9,7 @@ import {
   decisionId,
   discardSelf,
   drawBeneathYourLocation,
-  eachInvestigatorAt,
+  eachInvestigator,
   eachInvestigatorResigns,
   encounterSetCode,
   endScenario,
@@ -172,7 +173,13 @@ export const smokeAndMirrorsCardDefs: readonly CardStats[] = [
       },
     ],
     abilities: [
-      whenVictoryDisplayHolds({ trait: trait('Elite'), beneathAct: true }, 6, advanceAct()),
+      whenVictoryDisplayHolds(
+        eachInZone([{ kind: 'victoryDisplay' }, { kind: 'beneath', hostId: { ref: 'self' } }], {
+          trait: trait('Elite'),
+        }),
+        6,
+        advanceAct(),
+      ),
       whenAdvanced(endScenario(SMOKE_AND_MIRRORS_RESOLUTIONS.culpritFound)),
     ],
   }),
@@ -415,7 +422,9 @@ export const smokeAndMirrorsCardDefs: readonly CardStats[] = [
     cluesPerInvestigator: 1,
     victory: 1,
     // Direct damage, which the engine puts on the investigators; the players deal it to allies.
-    abilities: [atEndOfPhase('investigation', takeDamage(1, eachInvestigatorAt({ ref: 'self' })))],
+    abilities: [
+      atEndOfPhase('investigation', takeDamage(1, eachInvestigator({ at: { ref: 'self' } }))),
+    ],
   }),
   location({
     code: codes.miskatonicUniversityQuietCampus,
@@ -528,7 +537,9 @@ export const smokeAndMirrorsCardDefs: readonly CardStats[] = [
     quantity: 2,
     abilities: [
       whenRevealed(
-        skillTest('agility', 3, { onFail: [takeDamage(1, eachInvestigatorAt(itsLocation()))] }),
+        skillTest('agility', 3, {
+          onFail: [takeDamage(1, eachInvestigator({ at: itsLocation() }))],
+        }),
       ),
     ],
   }),

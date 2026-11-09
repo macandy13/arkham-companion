@@ -13,7 +13,7 @@ import {
   cardCode,
   cardDbWith,
   decisionId,
-  eachInvestigatorAt,
+  eachInvestigator,
   encounterSetCode,
   endScenario,
   fixed,
@@ -449,7 +449,7 @@ export const theDevourerBelowCardDefs: readonly CardStats[] = [
     horror: 0,
     quantity: 3,
     keywords: [{ name: 'hunter' }, { name: 'retaliate' }],
-    abilities: [whenDefeated(takeHorror(1, eachInvestigatorAt(itsLocation())))],
+    abilities: [whenDefeated(takeHorror(1, eachInvestigator({ at: itsLocation() })))],
   }),
   enemy({
     code: '01181',

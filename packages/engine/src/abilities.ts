@@ -1,7 +1,7 @@
 import { assertNever, range, shallowEqual, unique } from '@arkham/util';
 import {
   cardStats,
-  resolveValue,
+  resolveAmount,
   type CardStats,
   type EngineContext,
   type ScaledValue,
@@ -31,13 +31,7 @@ import {
 } from './ids';
 import type { GridCell } from './map';
 import { locationAttachments, locationsInPlay } from './board';
-import {
-  enemiesAt,
-  enemiesMatching,
-  enemiesOnTable,
-  nearestEnemies,
-  type EnemyFilter,
-} from './enemies';
+import { enemiesAt, enemiesMatching, nearestEnemies, type EnemyFilter } from './enemies';
 import {
   cluesHeldAt,
   cluesHeldByGroup,
@@ -46,8 +40,14 @@ import {
   requireInvestigator,
   statValue,
 } from './investigators';
-import { cardsInZone, currentCard, requireCard, theOnlyCopy } from './lookup';
-import { inVictoryDisplay } from './victory';
+import {
+  cardsInZone,
+  cardsInZones,
+  currentCard,
+  requireCard,
+  theOnlyCopy,
+  type CardFilter,
+} from './lookup';
 import type { AddMapStep } from './setup';
 import type {
   CardInstance,
@@ -171,14 +171,14 @@ export type TimingWindow =
    * A card entered the victory display (`CardMoved`, or `EnemyDefeated` for an enemy with
    * victory) or was placed beneath the current act: an objective of the current agenda or act
    * on what the display holds ("If there are 6 unique [[Cultist]] enemies in the victory display,
-   * advance"), opened for both, naming no investigator; a `victoryDisplayHolds` condition counts,
-   * the cards beneath the act too when its filter says so (`VictoryDisplayFilter.beneathAct`).
+   * advance"), opened for both, naming no investigator; a `countOf` condition over an `eachInZone`
+   * reference counts, the cards beneath the act too when it names that zone.
    */
   | { kind: 'addedToVictoryDisplay' }
   /**
    * Tokens of `token` were placed on the card (`TokensChanged` with a positive delta): for an
    * objective on the card's own tokens ("If there are 2 clues per investigator on this Act,
-   * advance", `whenTokensOnSelf`), which checks the count with a `tokensOnSelf` condition. Names
+   * advance", `whenTokensOnSelf`), which checks the count with a `valueOf` condition on the card's `tokens`. Names
    * no investigator. Corrections (`ManualAdjust`) fire no triggers, so tokens put on by hand
    * open nothing.
    */
@@ -229,44 +229,34 @@ export type RelativeCard =
    */
   | { ref: 'onlyCopy'; code: CardCode }
   /**
-   * Each enemy at the location named, engaged ones included (they are at
-   * their investigator's location): the command repeats once per enemy, in
-   * card order, and none when there is no enemy there.
+   * Each enemy on the table its filter matches (`EachEnemyFilter`: "each unengaged [[Ghoul]]
+   * enemy", "each enemy at your location", "each enemy engaged with you"): the command repeats
+   * once per enemy, in card order. Unlike hunters, nobody picks the order: one enemy's step
+   * towards a fixed location changes no other enemy's path.
    */
-  | { ref: 'eachEnemyAt'; location: RelativeCard }
+  | ({ ref: 'eachEnemy' } & EachEnemyFilter)
   /**
-   * Each enemy on the table `filter` matches ("each unengaged [[Ghoul]]
-   * enemy", `enemiesMatching`), and only those engaged with `engagedWith`
-   * when it is given ("each enemy engaged with you"; none when it names
-   * nobody): the command repeats once per enemy, in card order. Unlike
-   * hunters, nobody picks the order: one enemy's step towards a fixed
-   * location changes no other enemy's path.
+   * Each card in the zone `zone` names, or in each of a list of zones, that its filter matches
+   * (`CardFilter`): "each set-aside [[Cultist]] enemy", "6 unique [[Cultist]] enemies in the
+   * victory display", "[[Elite]] enemies in the victory display and beneath this act"
+   * (`cardsInZones`). The command repeats once per card, zone by zone in zone order, and none
+   * when no card matches.
    */
-  | ({ ref: 'eachEnemy'; engagedWith?: RelativeInvestigator } & EnemyFilter)
+  | ({ ref: 'eachInZone'; zone: Templated<Zone> | readonly Templated<Zone>[] } & CardFilter)
   /**
-   * Each set-aside enemy with `trait` ("spawn each set-aside [[Cultist]] enemy"), or each
-   * set-aside copy of `code` ("place each other set-aside copy of Fire! in the encounter discard
-   * pile"): the command repeats once per card, in card order, and none when no such card is set
-   * aside.
+   * The enemy its filter matches (`EnemyFilter`) nearest to the location of the investigator the
+   * window names ("the nearest [[Cultist]] enemy", `nearestEnemies`); none when there is no such
+   * enemy. When several are equally near, the lead investigator picks one (Rules Reference,
+   * "Choices"): the effect becomes a decision with an option per enemy.
    */
-  | { ref: 'eachSetAside'; trait: Trait }
-  | { ref: 'eachSetAside'; code: CardCode }
+  | ({ ref: 'nearestEnemy' } & EnemyFilter)
   /**
-   * The enemy with `trait` (any enemy without one) nearest to the location of
-   * the investigator the window names ("the nearest [[Cultist]] enemy",
-   * `nearestEnemies`); none when there is no such enemy. When several are
-   * equally near, the lead investigator picks one (Rules Reference, "Choices"):
-   * the effect becomes a decision with an option per enemy.
+   * A location in play its filter matches (`LocationFilter`: "move to a [[Central]] location"),
+   * other than the one the investigator the window names is at, since moving there would be no
+   * move; none when there is no other. When there are several, that investigator picks one: the
+   * effect becomes a decision with an option per location.
    */
-  | { ref: 'nearestEnemy'; trait?: Trait }
-  /**
-   * A location in play with `trait` ("move to a [[Central]] location"), other
-   * than the one the investigator the window names is at, since moving there
-   * would be no move; none when there is no other. When there are several,
-   * that investigator picks one: the effect becomes a decision with an option
-   * per location.
-   */
-  | { ref: 'locationWith'; trait: Trait }
+  | ({ ref: 'locationWith' } & LocationFilter)
   /**
    * The location in play with the most `token`s that the card with the ability
    * may attach to ("attach to the location with the most clues and without a
@@ -286,9 +276,26 @@ export type RelativeCard =
 export type RelativeInvestigator =
   | { ref: 'windowInvestigator' }
   | { ref: 'lead' }
-  | { ref: 'eachInvestigator' }
-  /** Each investigator still in the scenario at the location named, in player order. */
-  | { ref: 'eachInvestigatorAt'; location: RelativeCard };
+  /** Each investigator still in the scenario, in player order; only those at `at` when given. */
+  | { ref: 'eachInvestigator'; at?: RelativeCard };
+
+/** Which locations in play a `locationWith` reference may stand for: those with `trait`. */
+export interface LocationFilter {
+  trait?: Trait;
+}
+
+/**
+ * Which enemies an `eachEnemy` reference names: those with `trait` and without `withoutTrait`,
+ * only the unengaged ones with `unengaged`, only those at one of the locations `at` names
+ * (engaged ones are at their investigator's location), and only those engaged with `engagedWith`
+ * (none when it names nobody). A single `at` location out of play skips the effect, as any
+ * missing `onlyCopy` does; one of a list does not, so "each [[Ghoul]] enemy in the Hallway or
+ * Parlor" still finds the ghouls in the one that is there.
+ */
+export interface EachEnemyFilter extends EnemyFilter {
+  at?: RelativeCard | readonly RelativeCard[];
+  engagedWith?: RelativeInvestigator;
+}
 
 /**
  * `T` with every instance and investigator ID replaced by a relative
@@ -416,61 +423,57 @@ export type AbilityOption = Pick<DecisionOption, 'id' | 'label'> & { commands: A
 export type AbilityEffect = Templated<AbilityCommand>;
 
 /**
- * What must hold when the window opens for an ability to fire ("If it is act
- * 3, …"). Checked once, as the window opens; the effects then resolve
- * whatever they change. A new kind of condition is a new case here and in
- * `conditionHolds`.
+ * What must hold when the window opens for an ability to fire ("If it is act 3, …"). Checked
+ * once, as the window opens; the effects then resolve whatever they change. Three shapes cover
+ * the conditions cards print, each over the references effects use: which card is current, how
+ * many things a reference names, and a value on the table. A new condition is usually a new
+ * reference or `Quantity`, not a new kind.
  */
 export type AbilityCondition =
-  /** The current act is one of `acts`, by code. */
-  | { kind: 'currentAct'; acts: readonly CardCode[] }
+  /** The current act or agenda (`deck`) is one of `codes` ("If it is act 3", "if it is agenda 2"). */
+  | { kind: 'currentCard'; deck: 'act' | 'agenda'; codes: readonly CardCode[] }
   /**
-   * The investigator the window names has between `min` and `max` of
-   * `stat`, both included where given ("if you have no clues"). False in a
-   * window that names nobody.
+   * The number of things `of` names as the window opens is within the range: the cards or
+   * investigators of an `each…` reference, counted as an effect on each of them would repeat
+   * ("if there are no [[Cultist]] enemies in play", "if no enemy is engaged with you", "6 unique
+   * [[Cultist]] enemies in the victory display"), or the candidates of a picked reference ("if
+   * there is no such location", Locked Door). A reference that names nothing, such as
+   * `windowLocation` in a window without one, counts none.
    */
-  | ({ kind: 'investigatorHas'; stat: InvestigatorStat } & StatRange)
-  /**
-   * The number of enemies with `trait` on the table is within the range
-   * ("If there are no [[Cultist]] enemies in play", `enemiesOnTable`).
-   */
-  | ({ kind: 'enemiesInPlay'; trait: Trait } & StatRange)
-  /**
-   * `ref` stands for nothing as the window opens ("If there is no such
-   * location, Locked Door gains surge"), counted like the effect that names it.
-   */
-  | { kind: 'noCandidate'; ref: PickedRef }
-  /**
-   * The number of cards in the victory display that match `filter` is within the range ("6
-   * unique [[Cultist]] enemies").
-   */
-  | ({ kind: 'victoryDisplayHolds'; filter: VictoryDisplayFilter } & StatRange)
-  /** The card with the ability holds at least `atLeast` tokens of `token` ("2 clues per investigator on this Act"). */
-  | { kind: 'tokensOnSelf'; token: TokenKind; atLeast: ScaledValue }
-  /**
-   * The investigators at the only copy of `location` who may spend clues (`clueSpendersAt`) hold
-   * at least `atLeast` between them, so they can pay a `spendCluesAsGroup` there (The Barrier);
-   * without a location, all of them anywhere ("Where There's Smoke…").
-   */
-  | { kind: 'groupCluesHeld'; location?: CardCode; atLeast: ScaledValue };
+  | ({ kind: 'countOf'; of: RepeatedRef | PickedRef } & StatRange)
+  /** `value` is within the range ("if you have no clues", "2 clues per investigator on this act"). */
+  | ({ kind: 'valueOf'; value: Quantity } & StatRange);
 
 /**
- * The cards a `victoryDisplayHolds` condition counts: those with `trait` and, if `unique`, only
- * unique ones. The trait stands in for "[[Cultist]] enemies": in Night of the Zealot only enemies
- * carry it, as only enemies carry [[Elite]] in Smoke and Mirrors. With `beneathAct` the cards
- * beneath the current act count too ("in the victory display and/or under the act").
+ * A number on the table a `valueOf` condition reads:
+ * - `stat`: what each investigator `who` names has of `stat`; every one of them must be within
+ *   the range, and none named (a window without an investigator) fails.
+ * - `tokens`: the tokens of `token` on each card `on` names, likewise.
+ * - `groupClues`: the clues the investigators at the only copy of `location` who may spend them
+ *   (`clueSpendersAt`) hold between them, so they can pay a `spendCluesAsGroup` there (The
+ *   Barrier); without a location, all of them anywhere ("Where There's Smoke…").
  */
-export interface VictoryDisplayFilter {
-  trait: Trait;
-  unique?: true;
-  beneathAct?: true;
+export type Quantity =
+  | { kind: 'stat'; stat: InvestigatorStat; who: RelativeInvestigator }
+  | { kind: 'tokens'; token: TokenKind; on: RelativeCard }
+  | { kind: 'groupClues'; location?: CardCode };
+
+/**
+ * Bounds on a value, both included, each a number or one per investigator ("2 clues per
+ * investigator"); at least one is given, so the range always says something.
+ */
+export type StatRange =
+  { min: TokenAmount; max?: TokenAmount } | { min?: TokenAmount; max: TokenAmount };
+
+/** `amount` as a `ScaledValue`, for views that show an objective's count. */
+function asScaled(amount: TokenAmount): ScaledValue {
+  return typeof amount === 'number' ? { fixed: amount, perInvestigator: 0 } : amount;
 }
 
-/** Bounds on a value, both included; at least one is given, so the range always says something. */
-export type StatRange = { min: number; max?: number } | { min?: number; max: number };
-
-function inRange(value: number, range: StatRange): boolean {
-  return value >= (range.min ?? 0) && value <= (range.max ?? Infinity);
+function inRange(value: number, range: StatRange, playerCount: number): boolean {
+  const min = range.min === undefined ? 0 : resolveAmount(range.min, playerCount);
+  const max = range.max === undefined ? Infinity : resolveAmount(range.max, playerCount);
+  return value >= min && value <= max;
 }
 
 /**
@@ -488,7 +491,7 @@ export interface Ability {
    * once per enemy `perEnemy` matches, counted as the window opens like the
    * condition; not at all when none does.
    */
-  perEnemy?: EnemyFilter;
+  perEnemy?: Extract<RelativeCard, { ref: 'eachEnemy' }>;
   effects: readonly AbilityEffect[];
 }
 
@@ -697,13 +700,20 @@ export function abilitySteps(
       (ability) =>
         ability.condition === undefined || conditionHolds(ctx, state, ability.condition, opened),
     )
-    .flatMap((ability) => range(timesFor(ctx, state, ability)).flatMap(() => ability.effects))
+    .flatMap((ability) =>
+      range(timesFor(ctx, state, ability, opened)).flatMap(() => ability.effects),
+    )
     .map((effect) => ({ kind: 'ability', effect, opened, origin: effect.type }));
 }
 
-/** How often `ability`'s effects resolve: once, or once per enemy its `perEnemy` matches. */
-function timesFor(ctx: EngineContext, state: GameState, ability: Ability): number {
-  return ability.perEnemy === undefined ? 1 : enemiesMatching(ctx, state, ability.perEnemy).length;
+/** How often `ability`'s effects resolve: once, or once per enemy its `perEnemy` names. */
+function timesFor(
+  ctx: EngineContext,
+  state: GameState,
+  ability: Ability,
+  opened: OpenedWindow,
+): number {
+  return ability.perEnemy === undefined ? 1 : countOf(ctx, state, ability.perEnemy, opened);
 }
 
 function conditionHolds(
@@ -712,41 +722,73 @@ function conditionHolds(
   condition: AbilityCondition,
   opened: OpenedWindow,
 ): boolean {
+  const { playerCount } = state.meta;
   switch (condition.kind) {
-    case 'currentAct': {
-      const act = currentCard(state, 'act');
-      return act !== undefined && condition.acts.includes(act.code);
+    case 'currentCard': {
+      const current = currentCard(state, condition.deck);
+      return current !== undefined && condition.codes.includes(current.code);
     }
-    case 'investigatorHas': {
-      const { investigatorId } = opened;
-      if (investigatorId === undefined || !isActiveInvestigator(state, investigatorId))
-        return false;
-      const value = statValue(requireInvestigator(state, investigatorId), condition.stat);
-      return inRange(value, condition);
-    }
-    case 'enemiesInPlay':
-      return inRange(enemiesOnTable(ctx, state, condition.trait).length, condition);
-    case 'victoryDisplayHolds':
-      return inRange(inVictoryDisplay(ctx, state, condition.filter).length, condition);
-    case 'noCandidate': {
-      const { investigatorId } = opened;
-      const from =
-        investigatorId !== undefined && isActiveInvestigator(state, investigatorId)
-          ? requireInvestigator(state, investigatorId).locationId
-          : undefined;
-      return candidatesFor(ctx, state, condition.ref, opened.cardId, from).length === 0;
-    }
-    case 'tokensOnSelf': {
-      const held = state.cards[opened.cardId]?.tokens[condition.token] ?? 0;
-      return held >= resolveValue(condition.atLeast, state.meta.playerCount);
-    }
-    case 'groupCluesHeld': {
-      const held = cluesHeldForObjective(ctx, state, condition.location);
-      return held >= resolveValue(condition.atLeast, state.meta.playerCount);
+    case 'countOf':
+      return inRange(countOf(ctx, state, condition.of, opened), condition, playerCount);
+    case 'valueOf': {
+      const values = quantities(ctx, state, condition.value, opened);
+      return values.length > 0 && values.every((value) => inRange(value, condition, playerCount));
     }
     default:
       return assertNever(condition);
   }
+}
+
+/** How many things `of` names as `opened` opens (see `AbilityCondition.countOf`). */
+function countOf(
+  ctx: EngineContext,
+  state: GameState,
+  of: RepeatedRef | PickedRef,
+  opened: OpenedWindow,
+): number {
+  const refs = windowRefs(ctx, state, opened);
+  if (isRepeatedRef(of)) return eachId(ctx, state, of, refs).length;
+  const from =
+    refs.windowInvestigator === undefined
+      ? undefined
+      : requireInvestigator(state, refs.windowInvestigator).locationId;
+  return candidatesFor(ctx, state, of, opened.cardId, from).length;
+}
+
+/** The values `quantity` reads as `opened` opens, one per investigator or card it names. */
+function quantities(
+  ctx: EngineContext,
+  state: GameState,
+  quantity: Quantity,
+  opened: OpenedWindow,
+): number[] {
+  const refs = windowRefs(ctx, state, opened);
+  switch (quantity.kind) {
+    case 'stat':
+      return namedIds(ctx, state, quantity.who, refs).map((id) =>
+        statValue(requireInvestigator(state, id as InvestigatorId), quantity.stat),
+      );
+    case 'tokens':
+      return namedIds(ctx, state, quantity.on, refs).map(
+        (id) => state.cards[id as InstanceId]?.tokens[quantity.token] ?? 0,
+      );
+    case 'groupClues':
+      return [cluesHeldForObjective(ctx, state, quantity.location)];
+    default:
+      return assertNever(quantity);
+  }
+}
+
+/** The investigators or cards `ref` names: each one of an `each…` reference, else the one it stands for, if any. */
+function namedIds(
+  ctx: EngineContext,
+  state: GameState,
+  ref: RelativeCard | RelativeInvestigator,
+  refs: ResolvedRefs,
+): (InstanceId | InvestigatorId)[] {
+  if (isRepeatedRef(ref)) return eachId(ctx, state, ref, refs);
+  const id = resolveRefs(ref, refs) as InstanceId | InvestigatorId | undefined;
+  return id === undefined ? [] : [id];
 }
 
 /** An effect waiting to resolve: the queue step `abilitySteps` produces. */
@@ -755,7 +797,7 @@ export type AbilityStep = Extract<QueuedStep, { kind: 'ability' }>;
 /**
  * The commands `effect` stands for in `state`, with its references resolved
  * for `opened`. Usually one; one per investigator or enemy for an effect on
- * each of them (`eachInvestigator`, `eachEnemyAt`). None when a reference names nobody, such as
+ * each of them (`eachInvestigator`, `eachEnemy`). None when a reference names nobody, such as
  * `windowInvestigator` in a window that names no investigator (a location
  * revealed by a card effect), or one who has left the scenario meanwhile
  * (defeated by an earlier effect of the same revelation), whose threat area
@@ -768,20 +810,7 @@ export function resolveEffect(
   effect: AbilityEffect,
   opened: OpenedWindow,
 ): Command[] {
-  const { investigatorId } = opened;
-  const investigator =
-    investigatorId !== undefined && isActiveInvestigator(state, investigatorId)
-      ? requireInvestigator(state, investigatorId)
-      : undefined;
-  const refs: ResolvedRefs = {
-    self: opened.cardId,
-    windowInvestigator: investigator?.id,
-    lead: activeLead(state),
-    windowLocation:
-      opened.locationId ??
-      (investigator && attachableLocation(ctx, state, opened.cardId, investigator)),
-    onlyCopy: (code) => theOnlyCopy(state, code),
-  };
+  const refs = windowRefs(ctx, state, opened);
   const deferred = withDeferredOutcomes(effect, opened);
   const each = repeatedRef(deferred);
   const ids = each === undefined ? [undefined] : eachId(ctx, state, each, refs);
@@ -801,7 +830,8 @@ export function resolveEffect(
     });
   const picked = pickedRef(deferred);
   if (picked === undefined) return commandsFor();
-  if (investigator === undefined) return [];
+  if (refs.windowInvestigator === undefined) return [];
+  const investigator = requireInvestigator(state, refs.windowInvestigator);
   const candidates = candidatesFor(ctx, state, picked, opened.cardId, investigator.locationId);
   const [first, ...others] = candidates;
   if (first === undefined) return [];
@@ -897,11 +927,13 @@ function candidatesFor(
 ): CardInstance[] {
   switch (picked.ref) {
     case 'nearestEnemy':
-      return from === undefined ? [] : nearestEnemies(ctx, state, from, picked.trait);
+      return from === undefined ? [] : nearestEnemies(ctx, state, from, picked);
     case 'locationWith':
       return locationsInPlay(ctx, state).filter(
         (location) =>
-          location.id !== from && cardStats(ctx.cards, location.code).traits.includes(picked.trait),
+          location.id !== from &&
+          (picked.trait === undefined ||
+            cardStats(ctx.cards, location.code).traits.includes(picked.trait)),
       );
     case 'locationWithMost': {
       const open = locationsInPlay(ctx, state).filter((location) =>
@@ -969,7 +1001,7 @@ interface ResolvedRefs {
 }
 
 /** A reference that repeats the command, as `eachInvestigator` does. */
-type RepeatedRef = Extract<RelativeCard | RelativeInvestigator, { ref: `each${string}` }>;
+export type RepeatedRef = Extract<RelativeCard | RelativeInvestigator, { ref: `each${string}` }>;
 
 /**
  * The first reference in `effect` that repeats it. An effect holds at most
@@ -977,15 +1009,11 @@ type RepeatedRef = Extract<RelativeCard | RelativeInvestigator, { ref: `each${st
  * deferred (`withDeferredOutcomes`), so one there repeats only its own effect.
  */
 function repeatedRef(effect: unknown): RepeatedRef | undefined {
-  return findRef(effect, (ref) =>
-    ref.ref === 'eachInvestigator' ||
-    ref.ref === 'eachInvestigatorAt' ||
-    ref.ref === 'eachEnemyAt' ||
-    ref.ref === 'eachEnemy' ||
-    ref.ref === 'eachSetAside'
-      ? ref
-      : undefined,
-  );
+  return findRef(effect, (ref) => (isRepeatedRef(ref) ? ref : undefined));
+}
+
+function isRepeatedRef(ref: RelativeCard | RelativeInvestigator): ref is RepeatedRef {
+  return ref.ref === 'eachInvestigator' || ref.ref === 'eachEnemy' || ref.ref === 'eachInZone';
 }
 
 /** The first reference in `effect`, depth first, that `pick` returns something for. */
@@ -1013,25 +1041,31 @@ function eachId(
   refs: ResolvedRefs,
 ): (InstanceId | InvestigatorId)[] {
   switch (each.ref) {
-    case 'eachInvestigator':
-      return playerOrder(state).map((inv) => inv.id);
-    case 'eachInvestigatorAt': {
-      const location = resolveRefs(each.location, refs) as InstanceId | undefined;
-      if (location === undefined) return [];
+    case 'eachInvestigator': {
+      const at = each.at === undefined ? undefined : resolveRefs(each.at, refs);
+      if (each.at !== undefined && at === undefined) return [];
       return playerOrder(state)
-        .filter((inv) => inv.locationId === location)
+        .filter((inv) => at === undefined || inv.locationId === at)
         .map((inv) => inv.id);
-    }
-    case 'eachEnemyAt': {
-      const location = resolveRefs(each.location, refs) as InstanceId | undefined;
-      if (location === undefined) return [];
-      return enemiesAt(ctx, state, location).map((card) => card.id);
     }
     case 'eachEnemy': {
       const engagedWith =
         each.engagedWith === undefined ? undefined : resolveRefs(each.engagedWith, refs);
       if (each.engagedWith !== undefined && engagedWith === undefined) return [];
+      const there =
+        each.at === undefined
+          ? undefined
+          : new Set(
+              [each.at]
+                .flat()
+                .map((location) => resolveRefs(location, refs) as InstanceId | undefined)
+                .flatMap((location) =>
+                  location === undefined ? [] : enemiesAt(ctx, state, location),
+                )
+                .map((card) => card.id),
+            );
       return enemiesMatching(ctx, state, each)
+        .filter((card) => there === undefined || there.has(card.id))
         .filter(
           (card) =>
             engagedWith === undefined ||
@@ -1039,16 +1073,34 @@ function eachId(
         )
         .map((card) => card.id);
     }
-    case 'eachSetAside':
-      return cardsInZone(state, { kind: 'setAside' }).filter((id) => {
-        const code = requireCard(state.cards, id).code;
-        if ('code' in each) return code === each.code;
-        const stats = cardStats(ctx.cards, code);
-        return stats.typeCode === 'enemy' && stats.traits.includes(each.trait);
+    case 'eachInZone': {
+      const zones = [each.zone].flat().flatMap((zone) => {
+        const resolved = resolveRefs(zone, refs) as Zone | undefined;
+        return resolved === undefined ? [] : [resolved];
       });
+      return cardsInZones(ctx, state, zones, each).map((card) => card.id);
+    }
     default:
       return assertNever(each);
   }
+}
+
+/** What the references of an ability whose window `opened` stand for, before any repetition. */
+function windowRefs(ctx: EngineContext, state: GameState, opened: OpenedWindow): ResolvedRefs {
+  const { investigatorId } = opened;
+  const investigator =
+    investigatorId !== undefined && isActiveInvestigator(state, investigatorId)
+      ? requireInvestigator(state, investigatorId)
+      : undefined;
+  return {
+    self: opened.cardId,
+    windowInvestigator: investigator?.id,
+    lead: activeLead(state),
+    windowLocation:
+      opened.locationId ??
+      (investigator && attachableLocation(ctx, state, opened.cardId, investigator)),
+    onlyCopy: (code) => theOnlyCopy(state, code),
+  };
 }
 
 /** The lead investigator, while they are still in the scenario. */
@@ -1110,10 +1162,8 @@ function resolveRefs(value: unknown, refs: ResolvedRefs): unknown {
       case 'onlyCopy':
         return refs.onlyCopy(value.code);
       case 'eachInvestigator':
-      case 'eachInvestigatorAt':
-      case 'eachEnemyAt':
       case 'eachEnemy':
-      case 'eachSetAside':
+      case 'eachInZone':
         return refs.each;
       case 'nearestEnemy':
       case 'locationWith':
@@ -1139,7 +1189,12 @@ export function missingCopies(state: GameState, effect: AbilityEffect): CardCode
     if (Array.isArray(value)) {
       value.forEach(walk);
     } else if (isRelative(value)) {
-      if (value.ref === 'eachEnemyAt' || value.ref === 'eachInvestigatorAt') walk(value.location);
+      // A location of a list ("in the Hallway or Parlor") may be out of play without skipping the effect.
+      if (
+        (value.ref === 'eachEnemy' || value.ref === 'eachInvestigator') &&
+        !Array.isArray(value.at)
+      )
+        walk(value.at);
       if (value.ref !== 'onlyCopy' || missing.includes(value.code)) return;
       if (theOnlyCopy(state, value.code) === undefined) missing.push(value.code);
     } else {
@@ -1222,7 +1277,7 @@ export function afterEngaging(...effects: AbilityEffect[]): Ability {
   return { window: { kind: 'engaged' }, effects };
 }
 
-/** A forced ability "when [this enemy] is defeated", written `whenDefeated(takeHorror(1, eachInvestigatorAt(itsLocation())))`. */
+/** A forced ability "when [this enemy] is defeated", written `whenDefeated(takeHorror(1, eachInvestigator({ at: itsLocation() })))`. */
 export function whenDefeated(...effects: AbilityEffect[]): Ability {
   return { window: { kind: 'defeated' }, effects };
 }
@@ -1267,18 +1322,18 @@ export function whenAnInvestigatorEnters(location: CardCode, ...effects: Ability
 
 /**
  * An objective of an agenda or act on the victory display: `effects` resolve once a card entering
- * it brings the cards matching `filter` there to `atLeast`. "If there are 6 unique [[Cultist]]
- * enemies in the victory display, advance" is
- * `whenVictoryDisplayHolds({ trait: trait('Cultist'), unique: true }, 6, advanceAct())`.
+ * it (or beneath the act) brings the cards `cards` names to `atLeast`. "If there are 6 unique
+ * [[Cultist]] enemies in the victory display, advance" is
+ * `whenVictoryDisplayHolds(eachInZone({ kind: 'victoryDisplay' }, { trait: trait('Cultist'), unique: true }), 6, advanceAct())`.
  */
 export function whenVictoryDisplayHolds(
-  filter: VictoryDisplayFilter,
+  cards: Extract<RelativeCard, { ref: 'eachInZone' }>,
   atLeast: number,
   ...effects: AbilityEffect[]
 ): Ability {
   return {
     window: { kind: 'addedToVictoryDisplay' },
-    condition: { kind: 'victoryDisplayHolds', filter, min: atLeast },
+    condition: { kind: 'countOf', of: cards, min: atLeast },
     effects,
   };
 }
@@ -1297,7 +1352,11 @@ export function whenTokensOnSelf(
 ): Ability {
   return {
     window: { kind: 'tokensPlaced', token },
-    condition: { kind: 'tokensOnSelf', token, atLeast },
+    condition: {
+      kind: 'valueOf',
+      value: { kind: 'tokens', token, on: { ref: 'self' } },
+      min: atLeast,
+    },
     effects,
   };
 }
@@ -1308,10 +1367,17 @@ export function whenTokensOnSelf(
  * investigator).
  */
 export function tokenObjective(stats: CardStats, token: TokenKind): ScaledValue | undefined {
-  const objective = (stats.abilities ?? [])
-    .map((ability) => ability.condition)
-    .find((condition) => condition?.kind === 'tokensOnSelf' && condition.token === token);
-  return objective?.kind === 'tokensOnSelf' ? objective.atLeast : undefined;
+  for (const { condition } of stats.abilities ?? []) {
+    if (
+      condition?.kind === 'valueOf' &&
+      condition.value.kind === 'tokens' &&
+      condition.value.on.ref === 'self' &&
+      condition.value.token === token &&
+      condition.min !== undefined
+    )
+      return asScaled(condition.min);
+  }
+  return undefined;
 }
 
 /**
@@ -1321,13 +1387,16 @@ export function tokenObjective(stats: CardStats, token: TokenKind): ScaledValue 
 export function roundEndClueObjective(
   stats: CardStats,
 ): { clues: ScaledValue; location?: CardCode } | undefined {
-  const objective = (stats.abilities ?? [])
-    .filter((ability) => ability.window.kind === 'roundEnds')
-    .map((ability) => ability.condition)
-    .find((condition) => condition?.kind === 'groupCluesHeld');
-  return objective?.kind === 'groupCluesHeld'
-    ? { clues: objective.atLeast, location: objective.location }
-    : undefined;
+  for (const { window, condition } of stats.abilities ?? []) {
+    if (
+      window.kind === 'roundEnds' &&
+      condition?.kind === 'valueOf' &&
+      condition.value.kind === 'groupClues' &&
+      condition.min !== undefined
+    )
+      return { clues: asScaled(condition.min), location: condition.value.location };
+  }
+  return undefined;
 }
 
 /**
@@ -1442,7 +1511,7 @@ export function locationWithMost(
  * `ifNoCandidate(locationWithMost('clue'), whenRevealed(gainSurge()))` (Locked Door).
  */
 export function ifNoCandidate(ref: PickedRef, ability: Ability): Ability {
-  return { ...ability, condition: { kind: 'noCandidate', ref } };
+  return { ...ability, condition: { kind: 'countOf', of: ref, max: 0 } };
 }
 
 /**
@@ -1605,7 +1674,7 @@ export function gainClues(
 /**
  * "Discover 1 clue at your location" (`DiscoverClues`: the window's location, else the location of
  * the investigator it names), or at another location ("discover 1 clue
- * at a [[Central]] location", `discoverClues(1, locationWith(trait('Central')))`): as many as the
+ * at a [[Central]] location", `discoverClues(1, locationWith({ trait: trait('Central') }))`): as many as the
  * location has, none for an investigator who may not discover clues, unlike `gainClues`, which
  * takes them from the token pool.
  */
@@ -1646,7 +1715,7 @@ export function gainResources(
   return { type: 'GainResources', investigatorId: who, amount };
 }
 
-/** "Take N horror", like `takeDamage`: Goat Spawn is `whenDefeated(takeHorror(1, eachInvestigatorAt(itsLocation())))`. */
+/** "Take N horror", like `takeDamage`: Goat Spawn is `whenDefeated(takeHorror(1, eachInvestigator({ at: itsLocation() })))`. */
 export function takeHorror(
   amount: number,
   who: RelativeInvestigator = { ref: 'windowInvestigator' },
@@ -1655,11 +1724,24 @@ export function takeHorror(
 }
 
 /**
- * "Each [unengaged] [[trait]] enemy" (`eachEnemy`), which repeats the effect
- * for each, written `eachEnemy({ trait: trait('Ghoul'), unengaged: true })`.
+ * "Each [unengaged] [[trait]] enemy [at a location] [engaged with you]" (`eachEnemy`), which
+ * repeats the effect for each, written `eachEnemy({ trait: trait('Ghoul'), unengaged: true })`,
+ * `eachEnemy({ at: itsLocation() })` or `eachEnemy({ engagedWith: you() })`.
  */
-export function eachEnemy(filter: EnemyFilter = {}): RelativeCard {
+export function eachEnemy(
+  filter: EachEnemyFilter = {},
+): Extract<RelativeCard, { ref: 'eachEnemy' }> {
   return { ref: 'eachEnemy', ...filter };
+}
+
+/** "You": the investigator the window names (`windowInvestigator`), such as the drawer. */
+export function you(): RelativeInvestigator {
+  return { ref: 'windowInvestigator' };
+}
+
+/** "Your location": the location the window names, or the one of the investigator it names (`windowLocation`). */
+export function yourLocation(): RelativeCard {
+  return { ref: 'windowLocation' };
 }
 
 /**
@@ -1669,10 +1751,7 @@ export function eachEnemy(filter: EnemyFilter = {}): RelativeCard {
  * `disengageFromEachEnemy({ withoutTrait: trait('Nightgaunt') })`.
  */
 export function disengageFromEachEnemy(filter: EnemyFilter = {}): AbilityEffect {
-  return {
-    type: 'DisengageEnemy',
-    enemyId: { ref: 'eachEnemy', ...filter, engagedWith: { ref: 'windowInvestigator' } },
-  };
+  return { type: 'DisengageEnemy', enemyId: eachEnemy({ ...filter, engagedWith: you() }) };
 }
 
 /**
@@ -1685,9 +1764,9 @@ export function engageReadyEnemies(): AbilityEffect {
   return { type: 'EngageReadyEnemies' };
 }
 
-/** "A [[Central]] location" (`locationWith`), picked by the investigator the window names: `moveTo(locationWith(trait('Central')))`. */
-export function locationWith(trait: Trait): RelativeCard {
-  return { ref: 'locationWith', trait };
+/** "A [[Central]] location" (`locationWith`), picked by the investigator the window names: `moveTo(locationWith({ trait: trait('Central') }))`. */
+export function locationWith(filter: LocationFilter = {}): RelativeCard {
+  return { ref: 'locationWith', ...filter };
 }
 
 /**
@@ -1698,9 +1777,14 @@ export function moveEnemyTowards(enemy: RelativeCard, location: RelativeCard): A
   return { type: 'MoveEnemyTowards', enemyId: enemy, towards: location };
 }
 
-/** "Each investigator at [location]" (`eachInvestigatorAt`), which repeats the effect for each. */
-export function eachInvestigatorAt(location: RelativeCard): RelativeInvestigator {
-  return { ref: 'eachInvestigatorAt', location };
+/**
+ * "Each investigator [at a location]" (`eachInvestigator`), which repeats the effect for each, in
+ * player order: `takeHorror(1, eachInvestigator({ at: itsLocation() }))`.
+ */
+export function eachInvestigator(
+  filter: { at?: RelativeCard } = {},
+): Extract<RelativeInvestigator, { ref: 'eachInvestigator' }> {
+  return { ref: 'eachInvestigator', ...filter };
 }
 
 /** "Its location": the location the window names (`windowLocation`), such as where a defeated enemy was. */
@@ -1764,7 +1848,7 @@ export function advanceBySpendingCluesAtRoundEnd(
 ): Ability {
   return {
     window: { kind: 'roundEnds' },
-    condition: { kind: 'groupCluesHeld', location, atLeast: clues },
+    condition: { kind: 'valueOf', value: { kind: 'groupClues', location }, min: clues },
     effects: [
       leadDecides(decision, 'decision.spendCluesAtRoundEnd', [
         {
@@ -1791,14 +1875,26 @@ export function checkDoomThreshold(): AbilityEffect {
   return { type: 'CheckDoomThreshold' };
 }
 
-/** "Place N doom on [card]", such as `placeDoomOn(nearestEnemy(trait('Cultist')), 2)`. */
+/** "Place N doom on [card]", such as `placeDoomOn(nearestEnemy({ trait: trait('Cultist') }), 2)`. */
 export function placeDoomOn(card: RelativeCard, amount: number): AbilityEffect {
   return { type: 'PlaceDoom', cardId: card, amount };
 }
 
-/** "The nearest [[trait]] enemy", or the nearest enemy without a trait (`{ ref: 'nearestEnemy' }`). */
-export function nearestEnemy(trait?: Trait): RelativeCard {
-  return trait === undefined ? { ref: 'nearestEnemy' } : { ref: 'nearestEnemy', trait };
+/** "The nearest [[trait]] enemy" (`nearestEnemy`), written `nearestEnemy({ trait: trait('Cultist') })`. */
+export function nearestEnemy(filter: EnemyFilter = {}): RelativeCard {
+  return { ref: 'nearestEnemy', ...filter };
+}
+
+/**
+ * Each card in `zone` (or in each of a list of zones) that `filter` matches (`eachInZone`), which
+ * repeats the effect for each: `eachInZone({ kind: 'setAside' }, { trait, typeCode: 'enemy' })` for
+ * "each set-aside [[trait]] enemy".
+ */
+export function eachInZone(
+  zone: Templated<Zone> | readonly Templated<Zone>[],
+  filter: CardFilter = {},
+): Extract<RelativeCard, { ref: 'eachInZone' }> {
+  return { ref: 'eachInZone', zone, ...filter };
 }
 
 /** "Place N doom on it": doom on the card with the ability. */
@@ -1889,7 +1985,7 @@ export function engagesYou(
 /**
  * "It attacks you" (`EnemyAttacks`): the players confirm the printed damage and horror, less what
  * their assets soak, or cancel the attack. "Readies and attacks each investigator at its location"
- * is `readySelf()` followed by `enemyAttacks({ ref: 'self' }, eachInvestigatorAt(itsLocation()))`.
+ * is `readySelf()` followed by `enemyAttacks({ ref: 'self' }, eachInvestigator({ at: itsLocation() }))`.
  */
 export function enemyAttacks(
   enemy: RelativeCard = { ref: 'self' },
@@ -1942,7 +2038,7 @@ export function moveEachInvestigatorTo(location: RelativeCard): AbilityEffect {
 
 /** "Discard each enemy in the Study", engaged ones included (`DiscardCard` each). */
 export function discardEachEnemyAt(location: RelativeCard): AbilityEffect {
-  return { type: 'DiscardCard', cardId: { ref: 'eachEnemyAt', location } };
+  return { type: 'DiscardCard', cardId: eachEnemy({ at: location }) };
 }
 
 /** "Discard each enemy in play", engaged ones included (`DiscardCard` each). */
@@ -2016,7 +2112,12 @@ export function leadDrawsDiscardingUntil(match: EncounterMatch): AbilityEffect {
  * `acts`, written `duringAct([codes.whatHaveYouDone], whenAdvanced(…))`.
  */
 export function duringAct(acts: readonly CardCode[], ability: Ability): Ability {
-  return { ...ability, condition: { kind: 'currentAct', acts } };
+  return { ...ability, condition: { kind: 'currentCard', deck: 'act', codes: acts } };
+}
+
+/** "If it is agenda 2, …": `ability` fires only while the current agenda is one of `agendas`, like `duringAct`. */
+export function duringAgenda(agendas: readonly CardCode[], ability: Ability): Ability {
+  return { ...ability, condition: { kind: 'currentCard', deck: 'agenda', codes: agendas } };
 }
 
 /**
@@ -2025,16 +2126,20 @@ export function duringAct(acts: readonly CardCode[], ability: Ability): Ability 
  * `ifYouHave('clues', { max: 0 }, whenRevealed(gainSurge()))` (False Lead).
  */
 export function ifYouHave(stat: InvestigatorStat, range: StatRange, ability: Ability): Ability {
-  return { ...ability, condition: { kind: 'investigatorHas', stat, ...range } };
+  return {
+    ...ability,
+    condition: { kind: 'valueOf', value: { kind: 'stat', stat, who: you() }, ...range },
+  };
 }
 
 /**
- * "If there are no [[Cultist]] enemies in play, …": `ability` fires only while
- * the number of enemies with `trait` on the table is within `range`, written
- * `ifEnemiesInPlay(trait('Cultist'), { max: 0 }, whenRevealed(…))` (Mysterious Chanting).
+ * "If there is an enemy at your location, …", "if no enemy is engaged with you, …": `ability`
+ * fires only while the number of cards or investigators the `each…` reference `of` names is
+ * within `range`, written `ifThereAre(eachEnemy({ at: yourLocation() }), { min: 1 }, …)` or
+ * `ifThereAre(eachEnemy({ engagedWith: you() }), { max: 0 }, …)`.
  */
-export function ifEnemiesInPlay(trait: Trait, range: StatRange, ability: Ability): Ability {
-  return { ...ability, condition: { kind: 'enemiesInPlay', trait, ...range } };
+export function ifThereAre(of: RepeatedRef, range: StatRange, ability: Ability): Ability {
+  return { ...ability, condition: { kind: 'countOf', of, ...range } };
 }
 
 /**
@@ -2043,8 +2148,8 @@ export function ifEnemiesInPlay(trait: Trait, range: StatRange, ability: Ability
  * `forEachEnemy({ trait: trait('Ghoul'), at: [codes.hallway, codes.parlor] }, atEndOfRound(placeDoomOnSelf(1)))`
  * (They're Getting Out!).
  */
-export function forEachEnemy(filter: EnemyFilter, ability: Ability): Ability {
-  return { ...ability, perEnemy: filter };
+export function forEachEnemy(filter: EachEnemyFilter, ability: Ability): Ability {
+  return { ...ability, perEnemy: eachEnemy(filter) };
 }
 
 /**
@@ -2210,7 +2315,11 @@ export function putLocationIntoPlay(
  * set aside.
  */
 export function spawnEachSetAsideAt(trait: Trait, location: RelativeCard): AbilityEffect {
-  return { type: 'SpawnEnemy', enemyId: { ref: 'eachSetAside', trait }, at: location };
+  return {
+    type: 'SpawnEnemy',
+    enemyId: eachInZone({ kind: 'setAside' }, { trait, typeCode: 'enemy' }),
+    at: location,
+  };
 }
 
 /**
@@ -2227,7 +2336,7 @@ export function fromSetAside(codes: readonly CardCode[], to: Templated<Zone>): A
  * still set aside moves to `to`, none when no copy is left.
  */
 export function eachSetAsideCopyTo(code: CardCode, to: Templated<Zone>): AbilityEffect {
-  return { type: 'MoveCard', cardId: { ref: 'eachSetAside', code }, to };
+  return { type: 'MoveCard', cardId: eachInZone({ kind: 'setAside' }, { code }), to };
 }
 
 /** "Put the set-aside Lita Chantler into play at the Parlor". */

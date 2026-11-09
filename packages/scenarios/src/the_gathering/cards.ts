@@ -208,7 +208,7 @@ export const theGatheringCardDefs: readonly CardStats[] = [
         ),
       ),
       forEachEnemy(
-        { trait: trait('Ghoul'), at: [codes.hallway, codes.parlor] },
+        { trait: trait('Ghoul'), at: [onlyCopy(codes.hallway), onlyCopy(codes.parlor)] },
         atEndOfRound(placeDoomOnSelf(1)),
       ),
       duringAct(
