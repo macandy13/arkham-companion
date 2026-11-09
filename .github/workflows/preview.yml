@@ -55,22 +55,28 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+      # The merge commit's first parent, the base the PR's merge commit (photographed by
+      # pictures-head) was built on; the event's base sha can lag behind it.
       - uses: actions/checkout@v7
         with:
-          ref: ${{ github.event.pull_request.base.sha }}
+          fetch-depth: 2
           path: base
+      - run: git -C base checkout --detach HEAD^1
       - uses: ./.github/actions/e2e_setup
         with:
           dir: base
           cache-name: base
       # Every core: the runs are CPU-bound, and Playwright's default leaves half of them idle.
       - working-directory: base
+        timeout-minutes: 20
         continue-on-error: true
         run: pnpm --filter @arkham/web e2e:pictures --workers=100%
       - uses: actions/upload-artifact@v7
         with:
           name: pictures-base
+          # package.json always exists, so the artifact's root stays base/apps/web.
           path: |
+            base/apps/web/package.json
             base/apps/web/screencasts/report.json
             base/apps/web/test-results/**/*.png
           if-no-files-found: ignore
@@ -86,12 +92,15 @@ jobs:
         with:
           cache-name: head
       # A failing spec must not block the preview; the E2E check reports it.
-      - continue-on-error: true
+      - timeout-minutes: 20
+        continue-on-error: true
         run: pnpm --filter @arkham/web e2e:pictures --workers=100%
       - uses: actions/upload-artifact@v7
         with:
           name: pictures-head
+          # package.json always exists, so the artifact's root stays apps/web.
           path: |
+            apps/web/package.json
             apps/web/screencasts/report.json
             apps/web/test-results/**/*.png
           if-no-files-found: ignore
@@ -100,7 +109,7 @@ jobs:
   preview:
     needs: [changes, pictures-base, pictures-head]
     # Also when the picture jobs are skipped (no apps/web change) or the PR closed, to update or remove the preview.
-    if: always() && github.event.pull_request.head.repo.full_name == github.repository
+    if: ${{ !cancelled() && github.event.pull_request.head.repo.full_name == github.repository }}
     runs-on: ubuntu-latest
     env:
       WEB: ${{ needs.changes.outputs.web }}

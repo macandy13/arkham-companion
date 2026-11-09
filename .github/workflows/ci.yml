@@ -59,7 +59,7 @@ jobs:
           restore-keys: |
             card-pictures-${{ hashFiles('packages/scenarios/src/the_gathering/cards.ts', 'packages/scenarios/src/the_midnight_masks/cards.ts', 'packages/scenarios/src/the_devourer_below/cards.ts', 'packages/scenarios/src/card_builders.ts', 'apps/web/e2e/fixtures/card_pictures.ts') }}-
             card-pictures-
-      # Chromium's headless shell without apt, as in preview.yml (see there). This job also runs
+      # Chromium's headless shell without apt, as in .github/actions/e2e_setup (see there). This job also runs
       # on main, so its cache is the one every PR's preview and E2E job restore.
       - id: playwright
         run: |

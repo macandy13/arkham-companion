@@ -30,9 +30,9 @@ runs:
     - uses: actions/cache@v6
       with:
         path: ${{ inputs.dir }}/apps/web/e2e/.card_pictures
-        key: card-pictures-${{ hashFiles('packages/scenarios/src/the_gathering/cards.ts', 'packages/scenarios/src/the_midnight_masks/cards.ts', 'packages/scenarios/src/the_devourer_below/cards.ts', 'packages/scenarios/src/card_builders.ts', 'apps/web/e2e/fixtures/card_pictures.ts') }}-${{ github.run_id }}-${{ github.run_attempt }}-${{ inputs.cache-name }}
+        key: card-pictures-${{ hashFiles(format('{0}/packages/scenarios/src/the_gathering/cards.ts', inputs.dir), format('{0}/packages/scenarios/src/the_midnight_masks/cards.ts', inputs.dir), format('{0}/packages/scenarios/src/the_devourer_below/cards.ts', inputs.dir), format('{0}/packages/scenarios/src/card_builders.ts', inputs.dir), format('{0}/apps/web/e2e/fixtures/card_pictures.ts', inputs.dir)) }}-${{ github.run_id }}-${{ github.run_attempt }}-${{ inputs.cache-name }}
         restore-keys: |
-          card-pictures-${{ hashFiles('packages/scenarios/src/the_gathering/cards.ts', 'packages/scenarios/src/the_midnight_masks/cards.ts', 'packages/scenarios/src/the_devourer_below/cards.ts', 'packages/scenarios/src/card_builders.ts', 'apps/web/e2e/fixtures/card_pictures.ts') }}-
+          card-pictures-${{ hashFiles(format('{0}/packages/scenarios/src/the_gathering/cards.ts', inputs.dir), format('{0}/packages/scenarios/src/the_midnight_masks/cards.ts', inputs.dir), format('{0}/packages/scenarios/src/the_devourer_below/cards.ts', inputs.dir), format('{0}/packages/scenarios/src/card_builders.ts', inputs.dir), format('{0}/apps/web/e2e/fixtures/card_pictures.ts', inputs.dir)) }}-
           card-pictures-
     # Headless runs only need Chromium's headless shell, cached per Playwright version. No
     # `--with-deps`: the runner image already has the libraries it needs, and apt only added
