@@ -551,9 +551,8 @@ export class PlayTable {
   }
 
   /**
-   * Resolves the revelation of the drawn treachery `card` names, which asks first
-   * (`revelationDecision`): the usual answer, which a card such as Ward of Protection changes into
-   * `cancelRevelation`.
+   * Answers the question the drawn treachery `card` names asks first (`revelationDecision`) with
+   * "Resolve"; `cancelRevelation` is the answer of a card such as Ward of Protection.
    */
   resolveRevelation(card: CardRef): void {
     this.answer(card, 'resolve revelation');

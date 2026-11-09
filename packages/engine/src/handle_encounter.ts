@@ -112,13 +112,16 @@ export function handleResolveRevelation(
   ];
 }
 
+/** What every `revelationDecision`'s id starts with, before the card's instance id. */
+const REVELATION_ID_PREFIX = 'revelation:';
+
 /** Whether `decision` is a drawn treachery's question before its revelation (`revelationDecision`). */
 export function isRevelationDecision(decision: Pick<Decision, 'id'>): boolean {
-  return decision.id.startsWith('revelation:');
+  return decision.id.startsWith(REVELATION_ID_PREFIX);
 }
 
-/** The prompt of a `revelationDecision`. */
-export const REVELATION_PROMPT = 'decision.revelation';
+/** The id of `revelationDecision`'s option that cancels the revelation, which a bot looks for. */
+export const CANCEL_REVELATION_OPTION = 'cancel';
 
 /**
  * The question a drawn treachery asks its drawer before its revelation: resolve it, or cancel
@@ -134,14 +137,18 @@ export function revelationDecision(cardId: InstanceId, investigatorId: Investiga
     ...(cancelled && { cancelled: true }),
   });
   return {
-    id: decisionId(`revelation:${cardId}`),
+    id: decisionId(`${REVELATION_ID_PREFIX}${cardId}`),
     kind: 'confirm',
     subject: cardId,
-    prompt: REVELATION_PROMPT,
+    prompt: 'decision.revelation',
     decider: { kind: 'investigator', investigatorId },
     options: [
       { id: 'resolve', label: 'decision.resolveRevelation', commands: [answer(false)] },
-      { id: 'cancel', label: 'decision.cancelRevelation', commands: [answer(true)] },
+      {
+        id: CANCEL_REVELATION_OPTION,
+        label: 'decision.cancelRevelation',
+        commands: [answer(true)],
+      },
     ],
   };
 }

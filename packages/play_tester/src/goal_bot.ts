@@ -1,5 +1,6 @@
 import {
   byId,
+  CANCEL_REVELATION_OPTION,
   isRevelationDecision,
   optionName,
   type BoardView,
@@ -63,7 +64,7 @@ function cancelsRevelation(table: PlayTable, step: Step): boolean {
   const asked = table.state.pending.find(
     (decision) => isRevelationDecision(decision) && decision.subject === step.about,
   );
-  const cancel = asked?.options.find(({ id }) => id === 'cancel');
+  const cancel = asked?.options.find(({ id }) => id === CANCEL_REVELATION_OPTION);
   return cancel !== undefined && optionName(cancel) === step.option;
 }
 
