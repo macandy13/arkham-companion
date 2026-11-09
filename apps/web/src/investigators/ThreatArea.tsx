@@ -133,7 +133,8 @@ export function SmallCard({
  * (`useCountChange`). A tap on the card opens its details (`EnemyDetails`), with what
  * the players can do to it; the button lies over the whole card, which is too small for more. A
  * double tap opens the − / + bubble of its damage and doom instead (`EnemyBubble`, M6.10), so a
- * single tap opens the details only once no second one came (`useDoubleTap`).
+ * single tap opens the details only once no second one came (`useDoubleTap`). It takes no part in
+ * adjusting the board, which has no steppers for enemies, so the bubble opens then too.
  */
 function EnemyCard({
   board,

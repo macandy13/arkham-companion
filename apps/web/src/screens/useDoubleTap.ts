@@ -32,7 +32,8 @@ export function useDoubleTap<E extends Element>(
 /**
  * `useDoubleTap` for taps that come as a `key` (which piece, such as an enemy on the map), its
  * `element` and the event's `timeStamp` rather than as a click, as the map's piece drags report
- * them; two taps make a double tap only on the same key.
+ * them; two taps make a double tap only on the same key. A tap on another key drops the single tap
+ * still waiting for the one before, since only one piece's details can show at a time.
  */
 export function useDoubleTapOn<K, E extends Element = Element>(
   onDoubleTap: (key: K, element: E) => void,

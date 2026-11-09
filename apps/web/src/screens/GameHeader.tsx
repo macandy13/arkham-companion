@@ -406,7 +406,7 @@ function AgendaStatus({
       </button>
     </>
   );
-  const counter = t('header.doomCounter');
+  const counter = t('header.doomCount');
   // Not while the players adjust the board, whose steppers are out.
   const bubble = adjusting
     ? undefined
@@ -535,7 +535,7 @@ function ActStatus({
       </button>
     </>
   );
-  const counter = t('header.clueCounter');
+  const counter = t('header.clueCount');
   // Only for clues lying on the act: the clues the investigators hold are on their cards.
   const bubble =
     advance?.kind === 'cluesOnAct' && !adjusting
