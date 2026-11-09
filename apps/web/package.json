@@ -10,7 +10,8 @@
     "typecheck": "tsc -p tsconfig.json && tsc -p scripts",
     "e2e": "playwright test --project=tablet-landscape",
     "playtest": "tsx src/playtest/cli.ts",
-    "e2e:screencast": "PLAYWRIGHT_JSON_OUTPUT_FILE=screencasts/report.json playwright test --project=screencast --project=screenshot --project=screenshot-phone --reporter=list,json --pass-with-no-tests"
+    "e2e:pictures": "PLAYWRIGHT_JSON_OUTPUT_FILE=screencasts/report.json playwright test --project=flow-picture --project=screenshot --project=screenshot-phone --reporter=list,json",
+    "e2e:screencast": "PLAYWRIGHT_JSON_OUTPUT_FILE=screencasts/recording.json playwright test --project=screencast --reporter=list,json"
   },
   "dependencies": {
     "@arkham/carddata": "workspace:*",

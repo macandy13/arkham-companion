@@ -18,16 +18,23 @@ const phone = {
   hasTouch: true,
 };
 
+// The screenshot specs.
+const shotSpecs = /[\\/]shots[\\/].*\.spec\.ts$/;
+// Not pictures of a change: the shots, and the accessibility checks, which would otherwise take
+// the first recording slots whenever a change shows on every screen.
+const notFlows = [shotSpecs, /accessibility\.spec\.ts$/];
+
 // Lets local/cloud sessions use a preinstalled Chromium instead of downloading one.
 const executablePath = process.env.PW_CHROMIUM_PATH;
 
 /**
  * E2E tests run against the production build (`vite preview`), the same bundle users get, built
  * in mode `e2e` only to add a test campaign the app plays no real one for (`findCampaign`).
- * `tablet-landscape` runs every spec (`pnpm e2e`). For the PR description, `screencast`
- * re-runs only the specs tagged `@flow`, slowed down and recorded, and `screenshot` and
- * `screenshot-phone` only the specs tagged `@shot`, photographed as they end on the tablet and on
- * a phone (`pnpm e2e:screencast`, see docs/automation.md).
+ * `tablet-landscape` runs every spec (`pnpm e2e`). For the PR description, `flow-picture`
+ * photographs every flow (the specs outside `e2e/shots/` but the accessibility checks) as it ends, and `screenshot` and `screenshot-phone` every spec in
+ * `e2e/shots/` on the tablet and on a phone (`pnpm e2e:pictures`); `screencast` re-runs the flows
+ * whose end state the PR changes, slowed down and recorded (`pnpm e2e:screencast`, see
+ * docs/automation.md).
  */
 export default defineConfig({
   testDir: './e2e',
@@ -48,13 +55,17 @@ export default defineConfig({
       use: { ...tablet, launchOptions: { executablePath } },
     },
     {
+      name: RECORDING_PROJECTS.flowPictures,
+      testIgnore: notFlows,
+      outputDir: 'test-results/flow-picture',
+      use: { ...tablet, screenshot: 'on', launchOptions: { executablePath } },
+    },
+    {
       name: RECORDING_PROJECTS.flows,
-      grep: /@flow/,
+      testIgnore: notFlows,
       outputDir: 'test-results/screencast',
       use: {
         ...tablet,
-        // The end state, so the preview can tell whether this PR changed the flow (cli.ts render).
-        screenshot: 'on',
         video: {
           mode: 'on',
           size: tablet.viewport,
@@ -72,13 +83,13 @@ export default defineConfig({
     },
     {
       name: RECORDING_PROJECTS.shots,
-      grep: /@shot/,
+      testMatch: shotSpecs,
       outputDir: 'test-results/screenshot',
       use: { ...tablet, screenshot: 'on', launchOptions: { executablePath } },
     },
     {
       name: RECORDING_PROJECTS.phoneShots,
-      grep: /@shot/,
+      testMatch: shotSpecs,
       outputDir: 'test-results/screenshot-phone',
       // Until the phone layout exists (M3.14) some shots can't reach their situation on a phone;
       // a retry would only fail again and slow the preview.
