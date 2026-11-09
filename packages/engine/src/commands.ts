@@ -242,9 +242,10 @@ export interface AddConnection {
  * Removes an existing declared edge (`GameMap.connections`) from whichever map owns
  * it (no `mapId` needed, an edge exists once on the board). A connection the cards
  * print (`printedConnections`) has no stored edge, so it can't be removed this way. An undirected edge matches in either direction; a
- * one-way edge must match `from` and `to` exactly. Produces `ConnectionChanged`.
+ * one-way edge must match `from` and `to` exactly. Asked by a card (`source`), a connection
+ * that is already gone is no error: nothing changes. Produces `ConnectionChanged`.
  */
-export interface RemoveConnection {
+export interface RemoveConnection extends AskedByCard {
   type: 'RemoveConnection';
   from: InstanceId;
   to: InstanceId;
@@ -342,9 +343,9 @@ export interface CommandSource {
 }
 
 /**
- * A command a card can ask for: one on the players' own cards (`PlayerCardCommand`), or one the
- * players also send themselves that refuses when it has nothing to do (`AdjustActions`, `EndTurn`,
- * `DiscoverClues`). The ability step that resolves it stamps its `source` (`withSource`), as does
+ * A command a card can ask for: one on the players' own cards (`PlayerCardCommand`), or one also
+ * sent without a card (by the players or a rule step) that refuses when it has nothing to do (`AdjustActions`, `EndTurn`,
+ * `DiscoverClues`, `RemoveConnection`, `ShuffleInto`). The ability step that resolves it stamps its `source` (`withSource`), as does
  * an action's hand card cost. Without one it is the players' own or a rule step's (the upkeep
  * draw); the play screen relies on that to leave it out of the "Do this by hand" notice
  * (`skippedEffects`). With one, a command that the players' version refuses for having nothing
@@ -687,10 +688,11 @@ export interface FromSetAside {
 
 /**
  * Takes one set-aside copy of each code, adds it to `zone` and shuffles the
- * whole zone (usually the encounter deck). Produces `CardMoved` per card,
- * then `DeckShuffled`.
+ * whole zone (usually the encounter deck). Asked by a card (`source`), it takes the copies that
+ * are set aside and nothing at all when none is. Produces `CardMoved` per card, then
+ * `DeckShuffled`.
  */
-export interface ShuffleInto {
+export interface ShuffleInto extends AskedByCard {
   type: 'ShuffleInto';
   codes: readonly CardCode[];
   zone: Zone;

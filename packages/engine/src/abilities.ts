@@ -352,10 +352,13 @@ export type AbilityCommand =
           | 'AddMap'
           | 'PutLocationIntoPlay'
           | 'AddConnection'
+          | 'RemoveConnection'
           | 'AdvanceAct'
+          | 'AdvanceAgenda'
           | 'BecomeActAndAgenda'
           | 'ShuffleEncounterDiscard'
           | 'ShuffleEncounterDeck'
+          | 'ShuffleInto'
           | 'DrawEncounter'
           | 'DrawFromScenarioDeck'
           | 'DrawBeneath'
@@ -1475,6 +1478,8 @@ function withSource<C extends { readonly type: string }>(command: C, source: Com
     case 'AdjustActions':
     case 'EndTurn':
     case 'DiscoverClues':
+    case 'RemoveConnection':
+    case 'ShuffleInto':
       return { ...command, source };
     case 'RequestDecision': {
       // Narrowing on `type` doesn't reach a generic `C`; the type says it is a `RequestDecision`.
@@ -1922,6 +1927,23 @@ export function advanceAct(): AbilityEffect {
   return { type: 'AdvanceAct' };
 }
 
+/**
+ * "Advance the current agenda" (`AdvanceAgenda`), as its doom threshold would: its doom and all
+ * other doom in play are removed and its reverse side resolves.
+ */
+export function advanceAgenda(): AbilityEffect {
+  return { type: 'AdvanceAgenda' };
+}
+
+/**
+ * "[Location] is no longer connected to [location]" (`RemoveConnection`): removes the connection
+ * the map declares or cuts the one the cards print, written
+ * `removeConnection(onlyCopy(codes.hallway), onlyCopy(codes.parlor))`.
+ */
+export function removeConnection(from: RelativeCard, to: RelativeCard): AbilityEffect {
+  return { type: 'RemoveConnection', from, to };
+}
+
 /** "Replace the current act and agenda with this card", on an agenda's reverse side (Vengeance Awaits). */
 export function becomeActAndAgenda(): AbilityEffect {
   return { type: 'BecomeActAndAgenda' };
@@ -1992,6 +2014,22 @@ export function searchAndDraw(match: EncounterMatch): AbilityEffect {
     from: 'deckOrDiscard',
     match,
   };
+}
+
+/**
+ * "Shuffle the set-aside [card] into the encounter deck" (`ShuffleInto`): one set-aside copy of
+ * each code, a code listed twice taking two.
+ */
+export function shuffleSetAsideIntoEncounterDeck(codes: readonly CardCode[]): AbilityEffect {
+  return { type: 'ShuffleInto', codes, zone: { kind: 'encounterDeck' } };
+}
+
+/**
+ * "Shuffle it into the encounter deck": the card with the ability goes into the deck, which is
+ * then shuffled. A drawn card moved there while it resolves is not placed afterwards.
+ */
+export function shuffleSelfIntoEncounterDeck(): AbilityEffect[] {
+  return [moveSelf({ kind: 'encounterDeck' }), shuffleEncounterDeck()];
 }
 
 /** "Shuffle the encounter deck." */

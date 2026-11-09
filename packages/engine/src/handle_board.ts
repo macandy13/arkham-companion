@@ -121,7 +121,7 @@ export function handleRemoveConnection(
       { type: 'ConnectionChanged', change: 'removed', mapId: owned.mapId, edge: owned.edge },
       ...cut,
     ];
-  if (allowsEveryMove(printed, edge)) return cut;
+  if (allowsEveryMove(printed, edge) || cmd.source) return cut;
   throw new CommandRejected({ code: 'connectionNotFound', from: edge.from, to: edge.to });
 }
 
