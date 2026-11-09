@@ -41,7 +41,7 @@ describe('the deck bot', () => {
         investigator: 'alice',
         card: 'Holy Rosary',
         effects: [
-          { kind: 'resources', delta: -2 },
+          { kind: 'pay', resources: 2 },
           { kind: 'skillBoost', skill: 'willpower', delta: 1 },
         ],
       },
@@ -57,7 +57,7 @@ describe('the deck bot', () => {
       investigator: 'alice',
       card: 'Working a Hunch',
       effects: [
-        { kind: 'resources', delta: -2 },
+        { kind: 'pay', resources: 2 },
         { kind: 'discoverClues', amount: 1 },
       ],
     });
@@ -138,12 +138,12 @@ describe('the deck bot', () => {
       table.fight(alice, ghoul, { result: 'open' });
       const bot = botWithHand('Lucky!');
 
-      const answer = bot.step(table, random);
-      playStep(table, answer);
-      const next = bot.step(table, random);
+      const first = bot.step(table, random);
+      playStep(table, first);
+      const answer = first.verb === 'resolveTest' ? first : bot.step(table, random);
 
+      expect(first.verb === 'playerCard' && first.card === 'Lucky!').toBe(played);
       expect(answer.verb === 'resolveTest' && answer.result === 'pass').toBe(played);
-      expect(next.verb === 'playerCard' && next.card === 'Lucky!').toBe(played);
     },
   );
 
@@ -193,24 +193,26 @@ describe('the deck bot', () => {
     },
   );
 
-  it('cancels an attack of opportunity with Dodge, then pays for it', () => {
+  it('pays for Dodge, then cancels the attack of opportunity with it', () => {
     const table = PlayTable.start(
       game.withCard(ghoul, blankEnemy('ghoul', { damage: 1 }), engagedWith(alice)),
     );
     playStep(table, { verb: 'takeResource', investigator: cardName('alice') });
     const bot = botWithHand('Dodge');
 
+    const paid = bot.step(table, random);
+    playStep(table, paid);
     const cancel = bot.step(table, random);
     playStep(table, cancel);
 
-    expect([cancel, bot.step(table, random)]).toEqual([
-      { verb: 'answer', about: ghoul, option: 'does not provoke' },
+    expect([paid, cancel]).toEqual([
       {
         verb: 'playerCard',
         investigator: 'alice',
         card: 'Dodge',
-        effects: [{ kind: 'resources', delta: -1 }],
+        effects: [{ kind: 'pay', resources: 1 }],
       },
+      { verb: 'answer', about: ghoul, option: 'does not provoke' },
     ]);
     expect(table.board.investigator(alice).damage).toBe(0);
   });

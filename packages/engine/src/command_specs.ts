@@ -46,6 +46,7 @@ import {
   deferToPlayers,
   handleSpendCluesAsGroup,
   handleGainResources,
+  handleSpendResources,
   handleHealInvestigator,
   handleDefeatInvestigator,
   handleDiscoverClues,
@@ -207,6 +208,10 @@ const COMMAND_SPECS: CommandSpecs = {
   GainResources: {
     handle: (_ctx, state, command) => handleGainResources(state, command),
     provokes: asAction,
+  },
+  SpendResources: {
+    handle: (_ctx, state, command) => handleSpendResources(state, command),
+    allowedWhilePending: true,
   },
   DrawCards: { handle: deferToPlayers, provokes: asAction },
   SearchDeck: { handle: deferToPlayers },

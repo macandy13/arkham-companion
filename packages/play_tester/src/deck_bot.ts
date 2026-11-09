@@ -1,4 +1,3 @@
-import { sum } from '@arkham/util';
 import {
   byName,
   isEnemyAttackDecision,
@@ -85,14 +84,16 @@ export class DeckBot {
   step(table: PlayTable, random: SeededRandom): Step {
     this.keepUp(table);
     const open = table.state.pending.length > 0;
-    if (!open && this.queue.length > 0) return this.queue.shift()!;
+    const [next] = this.queue;
+    if (next && (!open || answersOpenDecision(next))) return this.queue.shift()!;
     const steps =
       (open ? undefined : this.soaked(table)) ??
       this.cancelledAttack(table) ??
       this.answeredTest(table, random) ??
       this.playedCard(table, random);
     if (steps) {
-      this.queue.push(...steps.slice(1));
+      // The rest of an answer to an open decision comes before effects still waiting for it.
+      this.queue.unshift(...steps.slice(1));
       return steps[0]!;
     }
     return botStep('goal', table, random);
@@ -160,8 +161,8 @@ export class DeckBot {
   /**
    * The cancel of an open enemy attack on one of the bot's investigators who holds a card that
    * cancels attacks (Dodge) and can pay for it (only their own: Dodge could also save another
-   * investigator at their location, which the bot leaves out): the attack decision's cancel option, then the card's
-   * cost, since the table takes nothing else while the attack is open.
+   * investigator at their location, which the bot leaves out): the card's cost, then the attack
+   * decision's cancel option.
    */
   private cancelledAttack(table: PlayTable): Step[] | undefined {
     for (const decision of table.state.pending) {
@@ -170,8 +171,7 @@ export class DeckBot {
       if (!skip) continue;
       const investigator = table.board.investigator(decision.decider.investigatorId);
       const seat = this.seats.get(investigator.name);
-      // Spends wait in the queue while attacks are open, so what they will take is already gone.
-      const resources = investigator.resources + this.queuedResources(investigator.name);
+      const resources = investigator.resources;
       const card = seat?.hand.find(
         ({ use, cost }) =>
           use.kind === 'cancel' && use.what === 'attack' && resources >= (cost ?? 0),
@@ -180,26 +180,15 @@ export class DeckBot {
       seat.hand.splice(seat.hand.indexOf(card), 1);
       this.turn.plays++;
       return [
+        spending(investigator.name, card.name, card.cost ?? 0),
         {
           verb: 'answer',
           ...(decision.subject && { about: decision.subject }),
           option: optionName(skip),
         },
-        spending(investigator.name, card.name, card.cost ?? 0),
       ];
     }
     return undefined;
-  }
-
-  /** The resources the queued steps of `investigator` will still add (a negative spend). */
-  private queuedResources(investigator: CardName): number {
-    return sum(
-      this.queue.flatMap((step) =>
-        step.verb === 'playerCard' && step.investigator === investigator
-          ? step.effects.map((effect) => (effect.kind === 'resources' ? effect.delta : 0))
-          : [],
-      ),
-    );
   }
 
   /**
@@ -285,8 +274,9 @@ export class DeckBot {
         card: card.name,
         effects: [{ kind: 'heal', stat: 'horror', amount: 1 }],
       }));
-    // The table takes no other command while the test is open, so what was spent on it comes after.
+    // What the test costs is paid first, as at the table; what a pass heals comes once it is resolved.
     return [
+      ...before,
       {
         verb: 'resolveTest',
         investigator: investigator.name,
@@ -295,7 +285,6 @@ export class DeckBot {
         ...(drawn.result === 'pass' && extra > 0 && passAmount(decision, extra)),
         ...(used.length > 0 && { cards: used }),
       },
-      ...before,
       ...after,
     ];
   }
@@ -365,7 +354,7 @@ export class DeckBot {
     const effects = this.playEffects(card, situation);
     if (!effects) return undefined;
     const all: CardEffect[] = [
-      ...(cost > 0 ? [{ kind: 'resources', delta: -cost } as const] : []),
+      ...(cost > 0 ? [{ kind: 'pay', resources: cost } as const] : []),
       ...effects,
     ];
     // A drawn encounter card resolves before the rest of the effect, and may open a decision the
@@ -568,14 +557,26 @@ function weaponBonus({ card }: InPlay): number {
   return card.use.kind === 'weapon' ? card.use.bonus + card.use.damage : 0;
 }
 
-/** The step of spending `amount` resources for `card`. */
+/** The step of paying `amount` resources for `card`, which the table takes while a decision is open. */
 function spending(investigator: CardName, card: CardName, amount: number): Step {
   return {
     verb: 'playerCard',
     investigator,
     card,
-    effects: [{ kind: 'resources', delta: -amount }],
+    effects: [{ kind: 'pay', resources: amount }],
   };
+}
+
+/**
+ * Whether `step` answers the open decision, so it doesn't wait for it: an answer, a test's result,
+ * or a payment for a card played in its window.
+ */
+function answersOpenDecision(step: Step): boolean {
+  return (
+    step.verb === 'answer' ||
+    step.verb === 'resolveTest' ||
+    (step.verb === 'playerCard' && step.effects.every(({ kind }) => kind === 'pay'))
+  );
 }
 
 /**
