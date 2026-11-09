@@ -1,18 +1,24 @@
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { BASE_ACTIONS_PER_TURN, type BoardView, type InvestigatorView } from '@arkham/engine';
 import { range } from '@arkham/util';
 import { cardActionLabel } from '../screens/ActionRow';
 import { useCluePayment } from '../screens/CluePaymentDialog';
 import type { GameActions } from '../state/gameActions';
+import { PlayCardDialog } from './PlayCardDialog';
 
-/** The basic actions the turn row offers, in its order, each a `GameActions` verb without arguments. */
+/**
+ * The basic actions the turn row offers, in its order, each a `GameActions` verb; play opens its
+ * sheet first, which pays the card's cost (`PlayCardDialog`).
+ */
 const BASIC_ACTIONS = ['investigate', 'takeResource', 'drawCard', 'playCard'] as const;
 
 /**
  * The turn controls on an investigator's panel. While it is their turn: a pip per action, filled
  * for each one left (`InvestigatorView.actions`), then the basic actions as icon buttons:
  * investigate (its test goes to the decision dialog), take a resource, and draw and play, whose cards
- * the players handle at the table (`BASIC_ACTIONS`), investigate off where a card forbids it
+ * the players handle at the table (`BASIC_ACTIONS`; play asks first which resources pay for the card,
+ * `PlayCardDialog`), investigate off where a card forbids it
  * (`LocationView.forbidden`, Locked Door) and play while a card forbids them to
  * play (`InvestigatorView.forbidden`, Dissonant Voices); then a button per card action the cards offer them (`BoardView.cardActions`, named by its
  * designator and card: "Resign · Parlor"; one with a group clue cost asks who pays, `useCluePayment`) and End, as in the prototype's turn row. Before it,
@@ -39,6 +45,7 @@ export function TurnControls({
 }) {
   const { t } = useTranslation();
   const { dialog, pay } = useCluePayment(board);
+  const [playing, setPlaying] = useState(false);
   if (canStart)
     return (
       <button
@@ -75,7 +82,7 @@ export function TurnControls({
           title={t(`investigators.${action}`)}
           data-icon={action}
           disabled={busy || isOff(action)}
-          onClick={() => void actions[action]()}
+          onClick={() => (action === 'playCard' ? setPlaying(true) : void actions[action]())}
         />
       ))}
       {board.cardActions(investigator.id).map((offer) => {
@@ -105,6 +112,16 @@ export function TurnControls({
         {t('investigators.end')}
       </button>
       {dialog}
+      {playing && (
+        <PlayCardDialog
+          investigator={investigator}
+          onPlay={(cost) => {
+            setPlaying(false);
+            void actions.playCard(cost);
+          }}
+          onClose={() => setPlaying(false)}
+        />
+      )}
     </div>
   );
 }

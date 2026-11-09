@@ -272,7 +272,7 @@
 }
 
 /* The game's action arrow per action, faded for each one spent. */
-#investigators [role='group'] ul {
+#investigators [role='group'] > ul {
   display: flex;
   gap: var(--space-1);
   margin: 0;
@@ -281,7 +281,7 @@
 }
 
 /* Two ids, so it beats the home screen's padded `#app > main ul > li` cards. */
-#board > #investigators [role='group'] li {
+#board > #investigators [role='group'] > ul > li {
   padding: 0;
   width: var(--action-pip-size);
   height: var(--action-pip-size);
@@ -290,7 +290,7 @@
   opacity: var(--action-spent-opacity);
 }
 
-#board > #investigators [role='group'] li[data-left] {
+#board > #investigators [role='group'] > ul > li[data-left] {
   opacity: 1;
 }
 

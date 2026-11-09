@@ -339,7 +339,9 @@ describe('SpendResources', () => {
 });
 
 describe('PlayCard', () => {
-  const { context, state } = hallCellarAttic.withInvestigator(alice, { locationId: hall }).start();
+  const { context, state } = hallCellarAttic
+    .withInvestigator(alice, { locationId: hall, resources: 3 })
+    .start();
 
   it('leaves the card alice plays to the players, as the game holds no player cards', () => {
     const { events } = execute(context, state, { type: 'PlayCard', investigatorId: alice });
@@ -347,6 +349,37 @@ describe('PlayCard', () => {
     expect(events).toEqual([
       { type: 'CommandDeferred', command: { type: 'PlayCard', investigatorId: alice } },
     ]);
+  });
+
+  it.each([
+    { cost: 0, left: 3 },
+    { cost: 2, left: 1 },
+    { cost: 3, left: 0 },
+  ])('spends a cost of $cost of her 3 resources, leaving $left', ({ cost, left }) => {
+    const played = stateAfter(context, state, { type: 'PlayCard', investigatorId: alice, cost });
+
+    expect(investigatorOf(played, alice).resources).toBe(left);
+  });
+
+  it('spends the cost before leaving the card to the players', () => {
+    const play: Command = { type: 'PlayCard', investigatorId: alice, cost: 2 };
+
+    expect(execute(context, state, play).events).toEqual([
+      { type: 'InvestigatorChanged', investigatorId: alice, stat: 'resources', delta: -2 },
+      { type: 'CommandDeferred', command: play },
+    ]);
+  });
+
+  it('rejects a cost of 4, more than her 3 resources', () => {
+    expect(
+      rejectionFrom(context, state, { type: 'PlayCard', investigatorId: alice, cost: 4 }),
+    ).toMatchObject({ code: 'negativeInvestigatorStat', stat: 'resources', current: 3, delta: -4 });
+  });
+
+  it.each([-1, 1.5])('rejects a cost of %s', (cost) => {
+    expect(
+      rejectionFrom(context, state, { type: 'PlayCard', investigatorId: alice, cost }),
+    ).toMatchObject({ code: 'invalidTokenDelta' });
   });
 });
 

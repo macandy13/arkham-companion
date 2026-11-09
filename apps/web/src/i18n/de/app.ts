@@ -495,6 +495,17 @@ export const appTexts = {
     healthLeft: '{{left}} / {{max}}',
     victory: 'Sieg {{points}}.',
   },
+  playCard: {
+    title: 'Karte spielen',
+    tapResources: 'Tippe die Ressourcen an, die die Karte kostet.',
+    noResources: 'Keine Ressourcen zum Bezahlen.',
+    resources_one: '{{count}} Ressource vorhanden',
+    resources_other: '{{count}} Ressourcen vorhanden',
+    resource: 'Ressource {{number}}',
+    pays: 'Zahlt {{pays}} · {{left}} übrig',
+    free: 'Ohne Bezahlen spielen',
+    pay: 'Spielen · {{count}} zahlen',
+  },
   cluePayment: {
     title: 'Wer zahlt die Hinweise?',
     total:
