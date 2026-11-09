@@ -27,10 +27,11 @@ An [`Ability`](../../packages/engine/src/abilities.ts) is:
   - `countOf`, how many things a reference names as the window opens:
     - the enemies or investigators of an `each…` reference: `ifThereAre(eachEnemy({ at: yourLocation() }), { min: 1 }, …)` for "if there is an enemy at your location", `ifThereAre(eachEnemy({ engagedWith: you() }), { max: 0 }, …)` for "if no enemy is engaged with you", `ifThereAre(eachEnemy({ trait: trait('Cultist') }), { max: 0 }, …)` for "if there are no [[Cultist]] enemies in play";
     - the cards in one or more zones (`eachInZone`), filtered by what is printed on them (`CardFilter`: trait, code, type, unique): `whenVictoryDisplayHolds(eachInZone({ kind: 'victoryDisplay' }, { trait: trait('Cultist'), unique: true }), 6, advanceAct())`, and with `[{ kind: 'victoryDisplay' }, { kind: 'beneath', hostId: { ref: 'self' } }]` for "in the victory display and beneath this act" (facedown cards beneath a card show no traits, so they never count);
+    - the cards in play (`eachInPlay`), by `CardFilter` and optionally where they are (`at`, `locationOfCard`): `ifThereAre(eachInPlay({ code: codes.maskedHunter }), { min: 1 }, …)` for "if the Masked Hunter is in play", `ifThereAre(eachInPlay({ code: codes.litaChantler, at: yourLocation() }), { min: 1 }, …)` for "if Lita Chantler is at your location";
     - the candidates of a picked reference: `ifNoCandidate(locationWithMost('clue'), whenRevealed(gainSurge()))` for Locked Door's "If there is no such location, Locked Door gains surge";
   - `valueOf`, a value on the table (`Quantity`), within a range whose bounds may be per investigator:
-    - a stat of each investigator a reference names: `ifYouHave('clues', { max: 0 }, …)`;
-    - the tokens on a card: `whenTokensOnSelf('clue', perInvestigator(2), advanceAct())` for an objective on the act's own clues, whose count the act's view shows as its threshold;
+    - a stat of each investigator a reference names (`statOf(who, stat)`): `ifYouHave('clues', { max: 0 }, …)`, short for `ifValue(statOf(you(), 'clues'), …)`, and `ifValue(statOf(lead(), 'clues'), { max: 0 }, …)` for the lead; over `eachInvestigator()` it holds only when each of them is in range;
+    - the tokens on a card (`tokensOn(card, token)`): `ifValue(tokensOn(self(), 'clue'), { max: 0 }, …)` for "if there are no clues on it", `whenTokensOnSelf('clue', perInvestigator(2), advanceAct())` for an objective on the act's own clues, whose count the act's view shows as its threshold;
     - the clues a group holds (`groupClues`, see The Barrier below);
 - an optional repeat once per enemy an `eachEnemy` filter names (`forEachEnemy({ trait, at: [onlyCopy(codes.hallway), onlyCopy(codes.parlor)] }, …)`, counted with the condition as the window opens);
 - and a list of effects.
@@ -55,13 +56,14 @@ Some effects in detail:
 
 Effects are **templated commands**: a command card data may use (`AbilityCommand`) with every ID replaced by a reference relative to the ability:
 
-- `self`,
+- `self` (`self()`),
 - `windowInvestigator` (`you()`), `windowLocation` (`yourLocation()`, `itsLocation()`),
-- `lead`,
+- `lead` (`lead()`),
 - `onlyCopy(code)`,
 - `eachInvestigator({ at })`,
 - `eachEnemy({ trait, withoutTrait, unengaged, at, engagedWith })`, where `at` is one location reference or a list of them, so "each enemy at your location" is a filter of `eachEnemy`, not a reference of its own,
 - `eachInZone(zone, { trait, code, typeCode, unique })`, the cards in a zone or a list of zones: the victory display, the set-aside cards (`eachInZone({ kind: 'setAside' }, { trait, typeCode: 'enemy' })` for "each set-aside [[Cultist]] enemy"), the cards beneath a card,
+- `eachInPlay({ trait, code, typeCode, unique, at })`, the cards in play, only those at one of the `at` locations when given,
 - `nearestEnemy({ trait, withoutTrait, unengaged })`,
 - `locationWith({ trait })`,
 - `locationWithMost(token)`,

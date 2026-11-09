@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
   atLocation,
+  attachedTo,
+  engagedWith,
+  setAside,
+  threatAreaOf,
+  type Zone,
   blankAct,
   blankAgenda,
   blankAsset,
@@ -20,6 +25,7 @@ import {
   cardsNamed,
   cardsOfType,
   currentCard,
+  locationOfCard,
   requireCard,
   zoneOf,
 } from './lookup';
@@ -206,5 +212,34 @@ describe('cardsInZones', () => {
     const { context, state } = table.start();
 
     expect(cardsInZones(context, state, [victoryDisplay], by)).toHaveLength(count);
+  });
+});
+
+describe('locationOfCard', () => {
+  const hall = instanceId('hall');
+  const alice = investigatorId('alice');
+  const ghoul = instanceId('ghoul');
+  const card = instanceId('card');
+  /** Alice is in the hall, engaged with a ghoul. */
+  const table = newGame()
+    .withLocation(hall, blankLocation('hall'), { revealed: true })
+    .withInvestigator(alice, { locationId: hall })
+    .withCard(ghoul, blankEnemy('ghoul'), engagedWith(alice));
+
+  it.each<{ cardIs: string; zone: Zone; location: typeof hall | undefined }>([
+    { cardIs: 'placed in the hall', zone: atLocation(hall), location: hall },
+    { cardIs: "in alice's threat area", zone: threatAreaOf(alice), location: hall },
+    { cardIs: 'attached to the engaged ghoul', zone: attachedTo(ghoul), location: hall },
+    { cardIs: 'set aside', zone: setAside, location: undefined },
+  ])('puts a card $cardIs at $location', ({ zone, location }) => {
+    const { state } = table.withCard(card, blankAsset('card'), zone).start();
+
+    expect(locationOfCard(state, requireCard(state.cards, card))).toBe(location);
+  });
+
+  it('puts a location at itself', () => {
+    const { state } = table.start();
+
+    expect(locationOfCard(state, requireCard(state.cards, hall))).toBe(hall);
   });
 });

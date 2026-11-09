@@ -10,6 +10,14 @@ import {
   eachEnemy,
   eachInvestigator,
   eachInZone,
+  eachInPlay,
+  blankAsset,
+  ifValue,
+  lead,
+  playAreaOf,
+  setAside,
+  statOf,
+  tokensOn,
   encounterDeck,
   engagedWith,
   fixed,
@@ -239,5 +247,125 @@ describe('an effect on each card in the victory display', () => {
 
     expect(after.cards[acolyte]?.zone).toEqual(encounterDeck);
     expect(after.cards[ghoulInDisplay]?.zone).toEqual(victoryDisplay);
+  });
+});
+
+describe('a condition on a named card in play', () => {
+  const hunter = instanceId('hunter');
+  /** "Revelation – If the hunter is in play, take 1 horror." */
+  const omenCard = blankTreachery('omen', {
+    abilities: [
+      ifThereAre(eachInPlay({ code: cardCode('hunter') }), { min: 1 }, whenRevealed(takeHorror(1))),
+    ],
+  });
+
+  it.each([
+    { hunterIs: 'in the study', zone: atLocation(study), horror: 1 },
+    { hunterIs: 'set aside', zone: setAside, horror: 0 },
+  ])('gives alice $horror horror while the hunter is $hunterIs', ({ zone, horror }) => {
+    const { context, state } = newGame()
+      .withLocation(hall, blankLocation('hall'), { revealed: true })
+      .withLocation(study, blankLocation('study'), { revealed: true })
+      .withInvestigator(alice, { locationId: hall })
+      .withCard(hunter, blankEnemy('hunter'), zone)
+      .withCard(omen, omenCard, encounterDeck)
+      .start();
+
+    const after = stateAfter(context, state, aliceDraws, resolveRevelation('omen'));
+
+    expect(investigatorOf(after, alice).sanity.horror).toBe(horror);
+  });
+});
+
+describe('a condition on a named card at your location', () => {
+  const lita = instanceId('lita');
+  /** "Revelation – If Lita is at your location, take 1 horror." */
+  const omenCard = blankTreachery('omen', {
+    abilities: [
+      ifThereAre(
+        eachInPlay({ code: cardCode('lita'), at: yourLocation() }),
+        { min: 1 },
+        whenRevealed(takeHorror(1)),
+      ),
+    ],
+  });
+
+  it.each([
+    { litaIs: 'with bob in the hall', bobIn: hall, zone: playAreaOf(bob), horror: 1 },
+    { litaIs: 'with bob in the study', bobIn: study, zone: playAreaOf(bob), horror: 0 },
+    { litaIs: 'placed in the hall', bobIn: study, zone: atLocation(hall), horror: 1 },
+  ])('gives alice in the hall $horror horror while Lita is $litaIs', ({ bobIn, zone, horror }) => {
+    const { context, state } = newGame()
+      .withLocation(hall, blankLocation('hall'), { revealed: true })
+      .withLocation(study, blankLocation('study'), { revealed: true })
+      .withInvestigator(alice, { locationId: hall })
+      .withInvestigator(bob, { locationId: bobIn })
+      .withCard(lita, blankAsset('lita'), zone)
+      .withCard(omen, omenCard, encounterDeck)
+      .start();
+
+    const after = stateAfter(context, state, aliceDraws, resolveRevelation('omen'));
+
+    expect(investigatorOf(after, alice).sanity.horror).toBe(horror);
+  });
+});
+
+describe('a condition on a stat of the lead investigator', () => {
+  /** "Revelation – If the lead investigator has no clues, take 1 horror." */
+  const omenCard = blankTreachery('omen', {
+    abilities: [ifValue(statOf(lead(), 'clues'), { max: 0 }, whenRevealed(takeHorror(1)))],
+  });
+
+  it.each([
+    { aliceClues: 0, horror: 1 },
+    { aliceClues: 2, horror: 0 },
+  ])(
+    'gives bob $horror horror while the lead, alice, holds $aliceClues clues',
+    ({ aliceClues, horror }) => {
+      const { context, state } = newGame()
+        .withLocation(hall, blankLocation('hall'), { revealed: true })
+        .withInvestigator(alice, { locationId: hall, clues: aliceClues })
+        .withInvestigator(bob, { locationId: hall })
+        .withCard(omen, omenCard, encounterDeck)
+        .start();
+
+      const after = stateAfter(
+        context,
+        state,
+        { type: 'DrawEncounter', investigatorId: bob },
+        resolveRevelation('omen'),
+      );
+
+      expect(state.meta.leadInvestigator).toBe(alice);
+      expect(investigatorOf(after, bob).sanity.horror).toBe(horror);
+    },
+  );
+});
+
+describe('a condition on the tokens on a named card', () => {
+  /** "Revelation – If there are no clues on the hall, take 1 horror." */
+  const omenCard = blankTreachery('omen', {
+    abilities: [
+      ifValue(
+        tokensOn(onlyCopy(cardCode('hall')), 'clue'),
+        { max: 0 },
+        whenRevealed(takeHorror(1)),
+      ),
+    ],
+  });
+
+  it.each([
+    { hallClues: 0, horror: 1 },
+    { hallClues: 2, horror: 0 },
+  ])('gives alice $horror horror while the hall has $hallClues clues', ({ hallClues, horror }) => {
+    const { context, state } = newGame()
+      .withLocation(hall, blankLocation('hall'), { revealed: true, clues: hallClues })
+      .withInvestigator(alice, { locationId: hall })
+      .withCard(omen, omenCard, encounterDeck)
+      .start();
+
+    const after = stateAfter(context, state, aliceDraws, resolveRevelation('omen'));
+
+    expect(investigatorOf(after, alice).sanity.horror).toBe(horror);
   });
 });

@@ -119,13 +119,43 @@ export function cardsInZones(
         .map((id) => requireCard(state.cards, id))
         .filter((card) => zone.kind !== 'beneath' || card.faceUp),
     )
-    .filter((card) => {
-      const stats = ctx.cards.get(card.code);
-      return (
-        (filter.code === undefined || card.code === filter.code) &&
-        (filter.trait === undefined || stats?.traits.includes(filter.trait) === true) &&
-        (filter.typeCode === undefined || stats?.typeCode === filter.typeCode) &&
-        (filter.unique === undefined || stats?.unique === true)
-      );
-    });
+    .filter((card) => matchesCard(ctx, card, filter));
+}
+
+/** Whether `card` has what `filter` asks to be printed on it. */
+export function matchesCard(ctx: EngineContext, card: CardInstance, filter: CardFilter): boolean {
+  const stats = ctx.cards.get(card.code);
+  return (
+    (filter.code === undefined || card.code === filter.code) &&
+    (filter.trait === undefined || stats?.traits.includes(filter.trait) === true) &&
+    (filter.typeCode === undefined || stats?.typeCode === filter.typeCode) &&
+    (filter.unique === undefined || stats?.unique === true)
+  );
+}
+
+/**
+ * The location `card` is at: a location is at itself, a card placed at a location is there, and a
+ * card engaged with an investigator or in their threat or play area is where that investigator
+ * is; an attachment is where its host is. None for a card off the table or an investigator
+ * without a location.
+ */
+export function locationOfCard(state: GameState, card: CardInstance): InstanceId | undefined {
+  const zone = card.zone;
+  switch (zone.kind) {
+    case 'location':
+      return card.id;
+    case 'atLocation':
+      return zone.locationId;
+    case 'engaged':
+    case 'threatArea':
+    case 'playArea':
+      return state.investigators.find(({ id }) => id === zone.investigatorId)?.locationId;
+    case 'attachedTo': {
+      const host = state.cards[zone.hostId];
+      // Hosting cycles are rejected when cards are placed, so the recursion ends.
+      return host === undefined ? undefined : locationOfCard(state, host);
+    }
+    default:
+      return undefined;
+  }
 }
