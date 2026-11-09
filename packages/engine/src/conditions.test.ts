@@ -9,6 +9,7 @@ import {
   duringAgenda,
   eachEnemy,
   eachInvestigator,
+  eachInZone,
   encounterDeck,
   engagedWith,
   fixed,
@@ -221,7 +222,7 @@ describe('an effect on each card in the victory display', () => {
       abilities: [
         whenRevealed({
           type: 'MoveCard',
-          cardId: { ref: 'eachInVictoryDisplay', trait: trait('Cultist') },
+          cardId: eachInZone({ kind: 'victoryDisplay' }, { trait: trait('Cultist') }),
           to: { kind: 'encounterDeck' },
         }),
       ],

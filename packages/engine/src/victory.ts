@@ -1,7 +1,6 @@
 import { locationsInPlay } from './board';
 import type { EngineContext } from './cards';
 import { cardsInZone, requireCard } from './lookup';
-import type { VictoryDisplayFilter } from './abilities';
 import type { CardInstance, GameState } from './state';
 import { victoryDisplay } from './zone';
 
@@ -21,34 +20,6 @@ export function victoryPoints(ctx: EngineContext, state: GameState): number {
     (total, card) => total + printedVictory(ctx, card),
     0,
   );
-}
-
-/**
- * The cards in the victory display that match `filter`, and those beneath the current act when it
- * says `beneathAct`, for objectives (`eachInVictoryDisplay`) and token values that count them.
- */
-export function inVictoryDisplay(
-  ctx: EngineContext,
-  state: GameState,
-  filter: VictoryDisplayFilter,
-): CardInstance[] {
-  const act = state.act.current;
-  const beneathAct =
-    filter.beneathAct && act !== undefined
-      ? // A facedown card shows no traits, so only the face-up ones can count.
-        cardsInZone(state, { kind: 'beneath', hostId: act }).filter(
-          (id) => requireCard(state.cards, id).faceUp,
-        )
-      : [];
-  return [...cardsInZone(state, victoryDisplay), ...beneathAct]
-    .map((id) => requireCard(state.cards, id))
-    .filter((card) => {
-      const stats = ctx.cards.get(card.code);
-      return (
-        stats?.traits?.includes(filter.trait) === true &&
-        (filter.unique === undefined || stats.unique === true)
-      );
-    });
 }
 
 function printedVictory(ctx: EngineContext, card: CardInstance): number {

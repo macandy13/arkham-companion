@@ -40,8 +40,14 @@ import {
   requireInvestigator,
   statValue,
 } from './investigators';
-import { cardsInZone, currentCard, requireCard, theOnlyCopy } from './lookup';
-import { inVictoryDisplay } from './victory';
+import {
+  cardsInZone,
+  cardsInZones,
+  currentCard,
+  requireCard,
+  theOnlyCopy,
+  type CardFilter,
+} from './lookup';
 import type { AddMapStep } from './setup';
 import type {
   CardInstance,
@@ -165,8 +171,8 @@ export type TimingWindow =
    * A card entered the victory display (`CardMoved`, or `EnemyDefeated` for an enemy with
    * victory) or was placed beneath the current act: an objective of the current agenda or act
    * on what the display holds ("If there are 6 unique [[Cultist]] enemies in the victory display,
-   * advance"), opened for both, naming no investigator; a `countOf` condition over `eachInVictoryDisplay` counts,
-   * the cards beneath the act too when its filter says so (`VictoryDisplayFilter.beneathAct`).
+   * advance"), opened for both, naming no investigator; a `countOf` condition over an `eachInZone`
+   * reference counts, the cards beneath the act too when it names that zone.
    */
   | { kind: 'addedToVictoryDisplay' }
   /**
@@ -230,16 +236,13 @@ export type RelativeCard =
    */
   | ({ ref: 'eachEnemy' } & EachEnemyFilter)
   /**
-   * Each card in the victory display its filter matches (`VictoryDisplayFilter`: "6 unique
-   * [[Cultist]] enemies in the victory display"), in card order.
+   * Each card in the zone `zone` names, or in each of a list of zones, that its filter matches
+   * (`CardFilter`): "each set-aside [[Cultist]] enemy", "6 unique [[Cultist]] enemies in the
+   * victory display", "[[Elite]] enemies in the victory display and beneath this act"
+   * (`cardsInZones`). The command repeats once per card, zone by zone in zone order, and none
+   * when no card matches.
    */
-  | ({ ref: 'eachInVictoryDisplay' } & VictoryDisplayFilter)
-  /**
-   * Each set-aside card its filter matches (`SetAsideFilter`: "spawn each set-aside [[Cultist]]
-   * enemy", "place each other set-aside copy of Fire! in the encounter discard pile"): the
-   * command repeats once per card, in card order, and none when no such card is set aside.
-   */
-  | ({ ref: 'eachSetAside' } & SetAsideFilter)
+  | ({ ref: 'eachInZone'; zone: Templated<Zone> | readonly Templated<Zone>[] } & CardFilter)
   /**
    * The enemy its filter matches (`EnemyFilter`) nearest to the location of the investigator the
    * window names ("the nearest [[Cultist]] enemy", `nearestEnemies`); none when there is no such
@@ -275,15 +278,6 @@ export type RelativeInvestigator =
   | { ref: 'lead' }
   /** Each investigator still in the scenario, in player order; only those at `at` when given. */
   | { ref: 'eachInvestigator'; at?: RelativeCard };
-
-/**
- * Which set-aside cards an `eachSetAside` reference names: the enemies with `trait` ("each
- * set-aside [[Cultist]] enemy"), the copies of `code`, or both together.
- */
-export interface SetAsideFilter {
-  trait?: Trait;
-  code?: CardCode;
-}
 
 /** Which locations in play a `locationWith` reference may stand for: those with `trait`. */
 export interface LocationFilter {
@@ -463,18 +457,6 @@ export type Quantity =
   | { kind: 'stat'; stat: InvestigatorStat; who: RelativeInvestigator }
   | { kind: 'tokens'; token: TokenKind; on: RelativeCard }
   | { kind: 'groupClues'; location?: CardCode };
-
-/**
- * The cards an `eachInVictoryDisplay` reference names: those with `trait` and, if `unique`, only
- * unique ones. The trait stands in for "[[Cultist]] enemies": in Night of the Zealot only enemies
- * carry it, as only enemies carry [[Elite]] in Smoke and Mirrors. With `beneathAct` the cards
- * beneath the current act count too ("in the victory display and/or under the act").
- */
-export interface VictoryDisplayFilter {
-  trait: Trait;
-  unique?: true;
-  beneathAct?: true;
-}
 
 /**
  * Bounds on a value, both included, each a number or one per investigator ("2 clues per
@@ -1027,12 +1009,7 @@ function repeatedRef(effect: unknown): RepeatedRef | undefined {
 }
 
 function isRepeatedRef(ref: RelativeCard | RelativeInvestigator): ref is RepeatedRef {
-  return (
-    ref.ref === 'eachInvestigator' ||
-    ref.ref === 'eachEnemy' ||
-    ref.ref === 'eachInVictoryDisplay' ||
-    ref.ref === 'eachSetAside'
-  );
+  return ref.ref === 'eachInvestigator' || ref.ref === 'eachEnemy' || ref.ref === 'eachInZone';
 }
 
 /** The first reference in `effect`, depth first, that `pick` returns something for. */
@@ -1092,16 +1069,13 @@ function eachId(
         )
         .map((card) => card.id);
     }
-    case 'eachInVictoryDisplay':
-      return inVictoryDisplay(ctx, state, each).map((card) => card.id);
-    case 'eachSetAside':
-      return cardsInZone(state, { kind: 'setAside' }).filter((id) => {
-        const code = requireCard(state.cards, id).code;
-        if (each.code !== undefined && code !== each.code) return false;
-        if (each.trait === undefined) return true;
-        const stats = cardStats(ctx.cards, code);
-        return stats.typeCode === 'enemy' && stats.traits.includes(each.trait);
+    case 'eachInZone': {
+      const zones = [each.zone].flat().flatMap((zone) => {
+        const resolved = resolveRefs(zone, refs) as Zone | undefined;
+        return resolved === undefined ? [] : [resolved];
       });
+      return cardsInZones(ctx, state, zones, each).map((card) => card.id);
+    }
     default:
       return assertNever(each);
   }
@@ -1185,8 +1159,7 @@ function resolveRefs(value: unknown, refs: ResolvedRefs): unknown {
         return refs.onlyCopy(value.code);
       case 'eachInvestigator':
       case 'eachEnemy':
-      case 'eachInVictoryDisplay':
-      case 'eachSetAside':
+      case 'eachInZone':
         return refs.each;
       case 'nearestEnemy':
       case 'locationWith':
@@ -1345,18 +1318,18 @@ export function whenAnInvestigatorEnters(location: CardCode, ...effects: Ability
 
 /**
  * An objective of an agenda or act on the victory display: `effects` resolve once a card entering
- * it brings the cards matching `filter` there to `atLeast`. "If there are 6 unique [[Cultist]]
- * enemies in the victory display, advance" is
- * `whenVictoryDisplayHolds({ trait: trait('Cultist'), unique: true }, 6, advanceAct())`.
+ * it (or beneath the act) brings the cards `cards` names to `atLeast`. "If there are 6 unique
+ * [[Cultist]] enemies in the victory display, advance" is
+ * `whenVictoryDisplayHolds(eachInZone({ kind: 'victoryDisplay' }, { trait: trait('Cultist'), unique: true }), 6, advanceAct())`.
  */
 export function whenVictoryDisplayHolds(
-  filter: VictoryDisplayFilter,
+  cards: Extract<RelativeCard, { ref: 'eachInZone' }>,
   atLeast: number,
   ...effects: AbilityEffect[]
 ): Ability {
   return {
     window: { kind: 'addedToVictoryDisplay' },
-    condition: { kind: 'countOf', of: { ref: 'eachInVictoryDisplay', ...filter }, min: atLeast },
+    condition: { kind: 'countOf', of: cards, min: atLeast },
     effects,
   };
 }
@@ -1908,11 +1881,16 @@ export function nearestEnemy(filter: EnemyFilter = {}): RelativeCard {
   return { ref: 'nearestEnemy', ...filter };
 }
 
-/** "Each set-aside [[trait]] enemy" or "each set-aside copy of [card]" (`eachSetAside`), which repeats the effect for each. */
-export function eachSetAside(
-  filter: SetAsideFilter,
-): Extract<RelativeCard, { ref: 'eachSetAside' }> {
-  return { ref: 'eachSetAside', ...filter };
+/**
+ * Each card in `zone` (or in each of a list of zones) that `filter` matches (`eachInZone`), which
+ * repeats the effect for each: `eachInZone({ kind: 'setAside' }, { trait, typeCode: 'enemy' })` for
+ * "each set-aside [[trait]] enemy".
+ */
+export function eachInZone(
+  zone: Templated<Zone> | readonly Templated<Zone>[],
+  filter: CardFilter = {},
+): Extract<RelativeCard, { ref: 'eachInZone' }> {
+  return { ref: 'eachInZone', zone, ...filter };
 }
 
 /** "Place N doom on it": doom on the card with the ability. */
@@ -2333,7 +2311,11 @@ export function putLocationIntoPlay(
  * set aside.
  */
 export function spawnEachSetAsideAt(trait: Trait, location: RelativeCard): AbilityEffect {
-  return { type: 'SpawnEnemy', enemyId: eachSetAside({ trait }), at: location };
+  return {
+    type: 'SpawnEnemy',
+    enemyId: eachInZone({ kind: 'setAside' }, { trait, typeCode: 'enemy' }),
+    at: location,
+  };
 }
 
 /**
@@ -2350,7 +2332,7 @@ export function fromSetAside(codes: readonly CardCode[], to: Templated<Zone>): A
  * still set aside moves to `to`, none when no copy is left.
  */
 export function eachSetAsideCopyTo(code: CardCode, to: Templated<Zone>): AbilityEffect {
-  return { type: 'MoveCard', cardId: eachSetAside({ code }), to };
+  return { type: 'MoveCard', cardId: eachInZone({ kind: 'setAside' }, { code }), to };
 }
 
 /** "Put the set-aside Lita Chantler into play at the Parlor". */

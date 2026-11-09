@@ -14,7 +14,7 @@ An [`Ability`](../../packages/engine/src/abilities.ts) is:
   - `phaseEnds`,
   - `roundEnds`,
   - `advanced`,
-  - `enemyDefeated`, `investigatorEntered` and `addedToVictoryDisplay`, objectives opened for the current agenda and act (`whenEnemyDefeated`, `whenAnInvestigatorEnters`, `whenVictoryDisplayHolds`); `addedToVictoryDisplay` also opens for a card placed beneath the current act, which counts for a filter with `beneathAct` (Augurs of Flame),
+  - `enemyDefeated`, `investigatorEntered` and `addedToVictoryDisplay`, objectives opened for the current agenda and act (`whenEnemyDefeated`, `whenAnInvestigatorEnters`, `whenVictoryDisplayHolds`); `addedToVictoryDisplay` also opens for a card placed beneath the current act, which counts when the reference names that zone too (Augurs of Flame),
   - `tested` after a basic action's test,
   - `engaged` either way round,
   - `attacked` (attacks of opportunity included),
@@ -26,7 +26,7 @@ An [`Ability`](../../packages/engine/src/abilities.ts) is:
   - `currentCard`, the current act or agenda: `duringAct([codes.trapped], …)`, `duringAgenda([codes.theyreGettingOut], …)`;
   - `countOf`, how many things a reference names as the window opens:
     - the enemies or investigators of an `each…` reference: `ifThereAre(eachEnemy({ at: yourLocation() }), { min: 1 }, …)` for "if there is an enemy at your location", `ifThereAre(eachEnemy({ engagedWith: you() }), { max: 0 }, …)` for "if no enemy is engaged with you", `ifThereAre(eachEnemy({ trait: trait('Cultist') }), { max: 0 }, …)` for "if there are no [[Cultist]] enemies in play";
-    - the cards of a trait in the victory display (`eachInVictoryDisplay`), unique ones only if asked (`CardStats.unique`), with the cards beneath the current act if asked (`beneathAct`): `whenVictoryDisplayHolds({ trait: trait('Cultist'), unique: true }, 6, advanceAct())`;
+    - the cards in one or more zones (`eachInZone`), filtered by what is printed on them (`CardFilter`: trait, code, type, unique): `whenVictoryDisplayHolds(eachInZone({ kind: 'victoryDisplay' }, { trait: trait('Cultist'), unique: true }), 6, advanceAct())`, and with `[{ kind: 'victoryDisplay' }, { kind: 'beneath', hostId: { ref: 'self' } }]` for "in the victory display and beneath this act" (facedown cards beneath a card show no traits, so they never count);
     - the candidates of a picked reference: `ifNoCandidate(locationWithMost('clue'), whenRevealed(gainSurge()))` for Locked Door's "If there is no such location, Locked Door gains surge";
   - `valueOf`, a value on the table (`Quantity`), within a range whose bounds may be per investigator:
     - a stat of each investigator a reference names: `ifYouHave('clues', { max: 0 }, …)`;
@@ -60,11 +60,10 @@ Effects are **templated commands**: a command card data may use (`AbilityCommand
 - `onlyCopy(code)`,
 - `eachInvestigator({ at })`,
 - `eachEnemy({ trait, withoutTrait, unengaged, at, engagedWith })`, where `at` is one location reference or a list of them, so "each enemy at your location" is a filter of `eachEnemy`, not a reference of its own,
-- `eachInVictoryDisplay({ trait, unique, beneathAct })`, the cards in the victory display,
+- `eachInZone(zone, { trait, code, typeCode, unique })`, the cards in a zone or a list of zones: the victory display, the set-aside cards (`eachInZone({ kind: 'setAside' }, { trait, typeCode: 'enemy' })` for "each set-aside [[Cultist]] enemy"), the cards beneath a card,
 - `nearestEnemy({ trait, withoutTrait, unengaged })`,
 - `locationWith({ trait })`,
 - `locationWithMost(token)`,
-- `eachSetAside({ trait, code })`,
 - …
 
 An `each…` reference repeats the command once per investigator or card.

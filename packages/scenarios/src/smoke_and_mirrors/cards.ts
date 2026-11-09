@@ -1,4 +1,5 @@
 import {
+  eachInZone,
   advanceAct,
   attachToLocation,
   atEndOfPhase,
@@ -172,7 +173,13 @@ export const smokeAndMirrorsCardDefs: readonly CardStats[] = [
       },
     ],
     abilities: [
-      whenVictoryDisplayHolds({ trait: trait('Elite'), beneathAct: true }, 6, advanceAct()),
+      whenVictoryDisplayHolds(
+        eachInZone([{ kind: 'victoryDisplay' }, { kind: 'beneath', hostId: { ref: 'self' } }], {
+          trait: trait('Elite'),
+        }),
+        6,
+        advanceAct(),
+      ),
       whenAdvanced(endScenario(SMOKE_AND_MIRRORS_RESOLUTIONS.culpritFound)),
     ],
   }),

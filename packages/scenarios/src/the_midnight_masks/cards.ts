@@ -1,4 +1,5 @@
 import {
+  eachInZone,
   eachEnemy,
   ifThereAre,
   advanceAct,
@@ -170,7 +171,11 @@ export const theMidnightMasksCardDefs: readonly CardStats[] = [
     set: own,
     stage: 1,
     abilities: [
-      whenVictoryDisplayHolds({ trait: trait('Cultist'), unique: true }, 6, advanceAct()),
+      whenVictoryDisplayHolds(
+        eachInZone({ kind: 'victoryDisplay' }, { trait: trait('Cultist'), unique: true }),
+        6,
+        advanceAct(),
+      ),
       whenAdvanced(endScenario(MIDNIGHT_MASKS_RESOLUTIONS.conspiracyUncovered)),
     ],
     actions: [
