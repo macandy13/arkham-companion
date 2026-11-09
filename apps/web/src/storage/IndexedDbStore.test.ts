@@ -156,6 +156,43 @@ describe('IndexedDbStore', () => {
     });
   });
 
+  it('lists a game it listed before from the cached progress, without replaying its log', async () => {
+    const id = await store.createGame();
+    await store.appendEvents(id, [started]);
+    await store.listGames();
+    const load = vi.spyOn(store, 'loadGame');
+
+    const [summary] = await store.listGames();
+
+    expect(load).not.toHaveBeenCalled();
+    expect(summary).toMatchObject({
+      scenarioId: 'test',
+      investigators: [{ code: 'inv', name: 'Tester' }],
+    });
+  });
+
+  it('replays a game played since the last list', async () => {
+    const id = await store.createGame();
+    await store.listGames();
+    await store.appendEvents(id, [started]);
+
+    const [summary] = await store.listGames();
+
+    expect(summary).toMatchObject({ lastSeq: 1, scenarioId: 'test' });
+  });
+
+  it('drops the cached progress on an undo, so a new step under the same seq is replayed', async () => {
+    const id = await store.createGame();
+    await store.appendEvents(id, [started]);
+    await store.listGames();
+    await store.undoLast(id);
+    await store.appendEvents(id, [{ ...started, scenarioId: scenarioId('other') }]);
+
+    const [summary] = await store.listGames();
+
+    expect(summary).toMatchObject({ lastSeq: 1, scenarioId: 'other' });
+  });
+
   it('renames a game without counting it as play', async () => {
     const id = await store.createGame({ title: 'Old' });
     const before = (await store.listGames())[0]!.updatedAt;

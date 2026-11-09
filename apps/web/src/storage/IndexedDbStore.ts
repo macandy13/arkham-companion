@@ -44,6 +44,17 @@ function newCampaignId(): CampaignId {
   return toCampaignId(crypto.randomUUID());
 }
 
+/**
+ * The part of a `GameSummary` read from the replayed state, kept in the game's row with the
+ * `seq` of the log it was read from, so the home screen lists games without replaying them.
+ */
+interface CachedProgress extends Pick<
+  GameSummary,
+  'scenarioId' | 'round' | 'phase' | 'investigators'
+> {
+  seq: number;
+}
+
 /** Row of the `games` table: a `GameSummary` is derived from it plus the replayed state. */
 interface GameRow {
   gameId: GameId;
@@ -56,6 +67,12 @@ interface GameRow {
   readNotices?: ReadNotices;
   /** Not indexed either; absent until chosen (`DEFAULT_RELIANCE`). */
   reliance?: Reliance;
+  /**
+   * Not indexed either. Written by `loadGame`, used only while its `seq` is still `lastSeq`;
+   * absent until the game is first loaded, and dropped by an undo, after which the same `seq`
+   * can name another event.
+   */
+  progress?: CachedProgress;
 }
 
 /** Row of the `campaigns` table: a `CampaignSummary` is derived from it plus the replayed log. */
@@ -193,22 +210,28 @@ export class IndexedDbStore implements GameStore {
   }
 
   async loadGame(gameId: GameId): Promise<LoadedGame | undefined> {
-    const game = await this.db.games.get(gameId);
-    if (!game) return undefined;
-    let snapshot = await this.db.snapshots.get(gameId);
-    if (snapshot && snapshot.stateVersion !== STATE_VERSION) snapshot = undefined; // no migrations yet: replay instead
-    const fromSeq = snapshot?.seq ?? 0;
-    const tail = await this.db.events
-      .where('[gameId+seq]')
-      .between([gameId, fromSeq], [gameId, Dexie.maxKey], false, true)
-      .toArray();
-    const state = replay(
-      tail.map((e) => e.event),
-      snapshot?.state,
-    );
-    // Opportunistic snapshot so long games don't replay from scratch on every refresh.
-    if (tail.length >= SNAPSHOT_INTERVAL) await this.saveSnapshot(gameId, game.lastSeq, state);
-    return { summary: toSummary(game, state), state };
+    // One transaction, so the cached progress is written for the log it was read from even when
+    // an undo and a new step land in between and give another event the same `seq`.
+    return this.db.transaction('rw', this.db.games, this.db.events, this.db.snapshots, async () => {
+      const game = await this.db.games.get(gameId);
+      if (!game) return undefined;
+      let snapshot = await this.db.snapshots.get(gameId);
+      if (snapshot && snapshot.stateVersion !== STATE_VERSION) snapshot = undefined; // no migrations yet: replay instead
+      const fromSeq = snapshot?.seq ?? 0;
+      const tail = await this.db.events
+        .where('[gameId+seq]')
+        .between([gameId, fromSeq], [gameId, Dexie.maxKey], false, true)
+        .toArray();
+      const state = replay(
+        tail.map((e) => e.event),
+        snapshot?.state,
+      );
+      // Opportunistic snapshot so long games don't replay from scratch on every refresh.
+      if (tail.length >= SNAPSHOT_INTERVAL) await this.saveSnapshot(gameId, game.lastSeq, state);
+      const progress = progressOf(state, game.lastSeq);
+      if (game.progress?.seq !== game.lastSeq) await this.db.games.update(gameId, { progress });
+      return { summary: toSummary(game, progress), state };
+    });
   }
 
   async undoLast(gameId: GameId, expectedSeq?: number): Promise<LoadedGame | undefined> {
@@ -227,7 +250,12 @@ export class IndexedDbStore implements GameStore {
       // Played again after a reload, the next step gets the undone step's id back, and the
       // players haven't read its notices.
       const readNotices = withoutValue(game.readNotices ?? {}, undone.commandId);
-      await this.db.games.update(gameId, { lastSeq, updatedAt: Date.now(), readNotices });
+      await this.db.games.update(gameId, {
+        lastSeq,
+        updatedAt: Date.now(),
+        readNotices,
+        progress: undefined,
+      });
       const snapshot = await this.db.snapshots.get(gameId);
       if (snapshot && snapshot.seq > lastSeq) await this.db.snapshots.delete(gameId);
     });
@@ -236,9 +264,16 @@ export class IndexedDbStore implements GameStore {
 
   async listGames(): Promise<GameSummary[]> {
     const rows = await this.db.games.orderBy('updatedAt').reverse().toArray();
-    // Progress is derived from the state rather than stored, so it can never disagree with the log.
-    const loaded = await Promise.all(rows.map((row) => this.loadGame(row.gameId)));
-    return loaded.flatMap((game) => (game ? [game.summary] : []));
+    // A cache older than the log is read again from the replayed state, so it never disagrees
+    // with the log; only the games played since the last list are replayed.
+    const listed = await Promise.all(
+      rows.map(async (row) =>
+        row.progress?.seq === row.lastSeq
+          ? toSummary(row, row.progress)
+          : (await this.loadGame(row.gameId))?.summary,
+      ),
+    );
+    return listed.flatMap((summary) => (summary ? [summary] : []));
   }
 
   async renameGame(gameId: GameId, title: string): Promise<void> {
@@ -516,16 +551,35 @@ export class IndexedDbStore implements GameStore {
   }
 }
 
-function toSummary(row: GameRow, state: GameState): GameSummary {
+/** What the home screen shows of `state`, the game's state after its event `seq`. */
+function progressOf(state: GameState, seq: number): CachedProgress {
   return {
-    ...row,
-    reliance: row.reliance ?? DEFAULT_RELIANCE,
+    seq,
     scenarioId: state.meta.scenarioId,
     round: state.meta.round,
     phase: state.meta.phase,
     investigators: [...state.investigators]
       .sort((a, b) => a.seat - b.seat)
       .map(({ code, name }) => ({ code, name })),
+  };
+}
+
+function toSummary(
+  row: GameRow,
+  { scenarioId, round, phase, investigators }: CachedProgress,
+): GameSummary {
+  return {
+    gameId: row.gameId,
+    title: row.title,
+    ...(row.campaignId === undefined ? {} : { campaignId: row.campaignId }),
+    createdAt: row.createdAt,
+    updatedAt: row.updatedAt,
+    lastSeq: row.lastSeq,
+    reliance: row.reliance ?? DEFAULT_RELIANCE,
+    scenarioId,
+    round,
+    phase,
+    investigators,
   };
 }
 

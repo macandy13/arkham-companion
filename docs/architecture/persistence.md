@@ -15,6 +15,8 @@ A game row and a campaign row also keep how much the players rely on the helpers
 
 Beside its log, a game row keeps which step's notices the players dismissed (`ReadNotices`, `markNoticeRead`), so opening the game again doesn't show them twice. It names the step by `commandId` and `undoLast` forgets the undone step's marks, because the next step reuses the undone step's `seq` and, after a reload, its id. It is outside the log: a duplicate keeps it, export and import don't carry it.
 
+The row also caches what the home screen shows of the state (scenario, round, phase, investigators), with the `seq` it was read at, so `listGames` replays only the games played since the last list. `loadGame` writes it in the same transaction as it reads the log, and `undoLast` drops it, because the next step reuses the undone step's `seq`.
+
 Every command is written before the UI updates, so a refresh or flat battery loses nothing.
 The log is also the export format: a game's file ([`gameExport`](../../apps/web/src/storage/gameExport.ts)) holds its log, a campaign's ([`campaignExport`](../../apps/web/src/storage/campaignExport.ts)) its log and its games' logs, and home loads either through one button (`parseExportFile`, told apart by `format`). An import gets new ids; a campaign's logs name their campaign (`CampaignStarted`, and the copy of the log in each game's `ScenarioStarted`), so `importCampaign` moves them to the new id (`campaign.moveCampaignEvent`, `campaign.moveGameEvent`).
 [`IndexedDbStore`](../../apps/web/src/storage/IndexedDbStore.ts) implements it with Dexie; localStorage holds only device settings.
