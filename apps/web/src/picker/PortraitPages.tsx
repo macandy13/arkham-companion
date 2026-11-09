@@ -22,7 +22,8 @@ interface PortraitPagesProps {
  * The investigators as pages of portraits, two rows of five, read row by row and page by page
  * like a book. One list holds them all, so screen readers read them in order; the stylesheet
  * places every tenth one on a new page beside the last, and the list scrolls sideways a page at a
- * time, with a swipe or its arrows.
+ * time, with a swipe or its arrows. An upright phone has no pages: the portraits run down the page
+ * in rows of three and the stylesheet hides the arrows.
  */
 export function PortraitPages({ investigators, seats, imageUrl, onOpen }: PortraitPagesProps) {
   const { t } = useTranslation();
