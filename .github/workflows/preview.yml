@@ -64,6 +64,7 @@ jobs:
   # Whether main-pictures.yml has cached the base's pictures. A PR is often pushed right after a
   # merge, while main's run for it is still photographing, so this waits for that run (up to 8
   # minutes, about one run) rather than photographing the base again; pictures-head runs meanwhile.
+  # When main's run fails late, the base is photographed that much later than it used to be.
   base-cache:
     needs: changes
     if: needs.changes.outputs.web == 'true'
@@ -77,18 +78,25 @@ jobs:
           KEY: ${{ needs.changes.outputs.base-key }}
           SHA: ${{ needs.changes.outputs.base-sha }}
         run: |
+          # A failed query counts as "no": photographing the base is the safe side.
           cached() {
-            [ "$(gh api "repos/$GITHUB_REPOSITORY/actions/caches?key=$KEY&ref=refs/heads/main" --jq .total_count)" != 0 ]
+            local n
+            n=$(gh api "repos/$GITHUB_REPOSITORY/actions/caches?key=$KEY&ref=refs/heads/main" --jq .total_count) || return 1
+            [ "$n" -gt 0 ]
           }
           photographing() {
-            [ "$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/main-pictures.yml/runs?head_sha=$SHA" \
-              --jq '[.workflow_runs[] | select(.status != "completed")] | length')" != 0 ]
+            local n
+            n=$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/main-pictures.yml/runs?head_sha=$SHA" \
+              --jq '[.workflow_runs[] | select(.status != "completed")] | length') || return 1
+            [ "$n" -gt 0 ]
           }
           for _ in $(seq 32); do
             if cached; then echo cached=true >> "$GITHUB_OUTPUT"; exit 0; fi
             photographing || break
             sleep 15
           done
+          # The run may have saved and finished between the two queries.
+          if cached; then echo cached=true >> "$GITHUB_OUTPUT"; exit 0; fi
           echo cached=false >> "$GITHUB_OUTPUT"
 
   # Photographs the base commit's specs when main-pictures.yml hasn't cached them (yet), so only
