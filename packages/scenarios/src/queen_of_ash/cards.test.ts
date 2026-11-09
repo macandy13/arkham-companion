@@ -94,12 +94,11 @@ describe('Queen of Ash card data', () => {
     {
       set: 'queen_of_ash',
       copies: 6,
-      cards: "2 Ashen Rebirth, Queen's Knight, Herald of Flame, Elokoss, Servant of Flame",
     },
-    { set: 'cultists_ch2', copies: 6, cards: '3 Zealot, Dark Magician, 2 Blasphemous Invocation' },
-    { set: 'reeking_decay', copies: 4, cards: '2 Unnatural Decay, 2 Putrid Vapors' },
-    { set: 'torment', copies: 6, cards: '2 Languor, 2 Dissonance, 2 Torment' },
-  ])('has $copies enemy and treachery copies in set $set: $cards', ({ set, copies }) => {
+    { set: 'cultists_ch2', copies: 6 },
+    { set: 'reeking_decay', copies: 4 },
+    { set: 'torment', copies: 6 },
+  ])('has $copies enemy and treachery copies in set $set', ({ set, copies }) => {
     const encounterCards = queenOfAshCardDefs.filter(
       (card) =>
         card.encounterCode === encounterSetCode(set) &&
@@ -217,6 +216,7 @@ describe('Queen of Ash card abilities', () => {
         .start();
 
       const { state } = runFrom(context, started, [
+        // ArkhamDB spells the card's name "Langour".
         aliceDraws('Langour'),
         resolveRevelation('languor'),
       ]);

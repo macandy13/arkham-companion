@@ -14,6 +14,7 @@ import {
   whenRevealed,
   type CardDb,
   type CardStats,
+  type EncounterSetCode,
 } from '@arkham/engine';
 import {
   act,
@@ -24,7 +25,7 @@ import {
   scenarioCard,
   treachery,
 } from '../card_builders';
-import { SPREADING_FLAMES_SETS, spreadingFlamesCardDefs } from '../spreading_flames/cards';
+import { SPREADING_FLAMES_SETS, spreadingFlamesCards } from '../spreading_flames/cards';
 
 /**
  * ArkhamDB encounter set codes of Queen of Ash, the third and last scenario of the Core Set
@@ -380,7 +381,7 @@ export const queenOfAshCardDefs: readonly CardStats[] = [
 ];
 
 /** The sets Queen of Ash shares with Spreading Flames, whose cards its card data reuses. */
-const sharedSets: readonly string[] = [
+const sharedSets: readonly EncounterSetCode[] = [
   sets.ashenPilgrims,
   sets.cosmicEvils,
   sets.hallucinations,
@@ -393,7 +394,5 @@ const sharedSets: readonly string[] = [
  */
 export const queenOfAshCards: CardDb = cardDbFrom([
   ...queenOfAshCardDefs,
-  ...spreadingFlamesCardDefs.filter(
-    (card) => card.encounterCode !== undefined && sharedSets.includes(card.encounterCode),
-  ),
+  ...sharedSets.flatMap((set) => spreadingFlamesCards.encounterSet(set)),
 ]);
