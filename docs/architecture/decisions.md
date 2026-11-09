@@ -23,7 +23,7 @@ Skill tests ([`skill_tests.ts`](../../packages/engine/src/skill_tests.ts)) carry
 
 The tokens are drawn as the players draw them by [`drawTokens`](../../packages/engine/src/draw_tokens.ts): one, then another while the last is a bless, curse, frost or blood token. It takes its random numbers from the caller, since a draw is not game state: the app's "Draw a token" passes `Math.random`, the play tester its seeded random.
 
-Before the draw, [`skillTestOdds`](../../packages/engine/src/skill_test_odds.ts) works out how likely the test is to pass from the bag: every way the draw can go, the same way, each valued by `skillTestSuggestion`. A draw with a token the engine has no number for (the elder sign, a symbol whose effect replaces its number) counts as `unknown` rather than a guess. Draws that revealed the same tokens share their odds, so a bag full of bless and curse tokens stays quick.
+Before the draw, [`skillTestOdds`](../../packages/engine/src/skill_test_odds.ts) works out how likely the test is to pass from the bag: every way `drawTokens` could draw, each valued by `skillTestSuggestion`. A draw with a token the engine has no number for (the elder sign, a symbol whose effect replaces its number) counts as `unknown` rather than a guess. Draws that revealed the same tokens share their odds, so a bag full of bless and curse tokens stays quick.
 
 Sealed tokens are out of `GameState.chaosBag` (`SealChaosToken`, `ReleaseChaosToken`, rules "Skill tests"), so no draw reveals them.
 

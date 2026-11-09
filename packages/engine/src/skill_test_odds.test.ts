@@ -15,7 +15,10 @@ import {
 const alice = investigatorId('alice');
 const study = instanceId('study');
 
-/** The reference card: the skull is -2, the cultist says what to do instead of a number. */
+/**
+ * The reference card's Easy/Standard side, which a new game at standard difficulty plays: the
+ * skull is -2, the cultist says what to do instead of a number.
+ */
 const reference: ScenarioReference = {
   easyStandard: {
     skull: { modifier: -2, effectKey: 'test.skull' },
@@ -31,6 +34,7 @@ const { context, state } = newGame()
     locationId: study,
     skills: { willpower: 2, intellect: 4, combat: 3, agility: 1 },
   })
+  .withDifficulty('standard')
   .withReferenceCard(reference)
   .start();
 
@@ -80,6 +84,11 @@ describe('skillTestOdds', () => {
       what: 'draws again after a bless: +2 then the -3 still passes',
       bag: ['bless', '-3'],
       odds: { pass: 1 / 2, fail: 1 / 2, unknown: 0 },
+    },
+    {
+      what: 'fails only on a curse, then the 0: a bless before or after the curse cancels it',
+      bag: ['bless', 'curse', '0'],
+      odds: { pass: 5 / 6, fail: 1 / 6, unknown: 0 },
     },
     {
       what: 'keeps a bless that is the last token: +2 and nothing more',
