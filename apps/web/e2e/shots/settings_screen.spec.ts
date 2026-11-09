@@ -9,7 +9,7 @@ test('the settings with the unofficial fan project notice', async ({ page }) => 
   await expect(page.getByRole('region', { name: 'About' })).toContainText('unofficial fan project');
 });
 
-test('the settings on the parchment table', async ({ page }) => {
+test('the settings on the parchment table', { tag: '@shot' }, async ({ page }) => {
   await page.goto('/#/settings');
 
   await page.getByRole('radio', { name: 'Parchment' }).check();
