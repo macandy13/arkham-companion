@@ -1,11 +1,12 @@
 import {
+  extremeLocations,
   locationsInPlay,
   locationsNamed,
+  locationsWithMostClues,
   neighbours,
   requireLocationInPlay,
-  shortestPaths,
 } from './board';
-import { cardStats, comparableName, type CardStats, type EngineContext } from './cards';
+import { comparableName, trait, type CardStats, type EngineContext } from './cards';
 import type { SpawnEnemy } from './commands';
 import {
   chooseInvestigator,
@@ -16,8 +17,9 @@ import {
 } from './engagement';
 import type { Event } from './events';
 import { enemiesAt, enemyOf, isEnemyOnTable } from './enemies';
-import { activeInvestigator, activeInvestigators } from './investigators';
+import { activeInvestigator, activeInvestigators, findInvestigator } from './investigators';
 import type { InstanceId, InvestigatorId } from './ids';
+import { matchesCard } from './lookup';
 import { cardMoved } from './placement';
 import { replay } from './reducer';
 import { CommandRejected } from './rejection';
@@ -167,7 +169,7 @@ function instructedSpawn(
   detail: string,
   drawer: InvestigatorId | undefined,
 ): SpawnPlan {
-  const from = drawer === undefined ? undefined : activeInvestigator(state, drawer).locationId;
+  const from = drawer === undefined ? undefined : findInvestigator(state, drawer)?.locationId;
   for (const alternative of detail.split(OTHERWISE)) {
     const plan = alternativeSpawn(ctx, state, stats, alternative.trim(), from);
     if (plan.kind !== 'discard') return plan;
@@ -196,7 +198,9 @@ function alternativeSpawn(
 /**
  * The locations a filtered spawn instruction allows, or undefined for text that is no filter (a
  * location name, or one the engine can't read). Distances count from `from`, the location of the
- * investigator spawning the enemy ("you"); without one a distance filter can't be read either.
+ * investigator spawning the enemy ("you"; for "Farthest empty location", which names nobody, our
+ * reading). Without one the players choose among the locations that meet the rest of the filter,
+ * and "connected to yours" can't be read at all.
  *
  * - "Any empty location", "Any location (empty, if able)": no investigators and no enemies there
  *   (`emptyLocations`), the second falling back to any location.
@@ -210,73 +214,49 @@ function spawnFilter(
   text: string,
   from: InstanceId | undefined,
 ): InstanceId[] | undefined {
-  const lower = comparableName(text);
-  const all = locationsInPlay(ctx, state);
-  const ids = all.map((card) => card.id);
+  const lower = comparableName(text).replace(/^the /, '');
+  const ids = locationsInPlay(ctx, state).map((card) => card.id);
+  const distance = DISTANCES[lower];
+  if (distance !== undefined) {
+    const pool = distance.empty ? emptyLocations(ctx, state) : ids;
+    return from === undefined ? pool : extremeLocations(ctx, state, from, pool, distance.which);
+  }
   if (lower === 'any empty location') return emptyLocations(ctx, state);
   if (lower === 'any location (empty, if able)') {
     const empty = emptyLocations(ctx, state);
     return empty.length > 0 ? empty : ids;
   }
-  if (lower.replace(/^the /, '') === 'location with the most clues') {
-    const most = Math.max(...all.map((card) => card.tokens.clue ?? 0));
-    return all.filter((card) => (card.tokens.clue ?? 0) === most).map((card) => card.id);
-  }
-  const distance = DISTANCE.exec(lower);
-  if (distance !== null) {
-    if (from === undefined) return undefined;
-    const pool = distance.groups?.['empty'] === undefined ? ids : emptyLocations(ctx, state);
-    const extreme = distance.groups?.['near'] ?? distance.groups?.['nearYou'];
-    return extremes(ctx, state, from, pool, extreme === undefined ? 'farthest' : 'nearest');
-  }
+  if (lower === 'location with the most clues') return locationsWithMostClues(ctx, state);
   if (lower === 'any location connected to yours')
     return from === undefined ? undefined : neighbours(ctx, state, from);
-  const whichever = WHICHEVER_NEAREST.exec(text);
-  if (whichever !== null) {
-    if (from === undefined) return undefined;
-    const named = [whichever[1], whichever[2]].flatMap((name) =>
-      locationsNamed(ctx, state, name ?? '', { inPlay: true }).map((card) => card.id),
+  if (lower.endsWith(WHICHEVER_NEAREST)) {
+    const names = text.trim().slice(0, -WHICHEVER_NEAREST.length).split(' or ');
+    const named = names.flatMap((name) =>
+      locationsNamed(ctx, state, name, { inPlay: true }).map((card) => card.id),
     );
-    return extremes(ctx, state, from, named, 'nearest');
+    return from === undefined ? named : extremeLocations(ctx, state, from, named, 'nearest');
   }
-  const withTrait = TRAIT_LOCATION.exec(text);
-  if (withTrait !== null && comparableName(withTrait[1] ?? '') !== 'empty') {
-    const wanted = comparableName(withTrait[1] ?? '');
-    return all
-      .filter((card) =>
-        cardStats(ctx.cards, card.code).traits.some((t) => comparableName(t) === wanted),
-      )
+  const traitName = lower.startsWith('any ') ? text.trim().slice('any '.length) : '';
+  if (traitName.length > ' location'.length && lower.endsWith(' location')) {
+    const wanted = trait(traitName.slice(0, -' location'.length));
+    return locationsInPlay(ctx, state)
+      .filter((card) => matchesCard(ctx, card, { trait: wanted }))
       .map((card) => card.id);
   }
   return undefined;
 }
 
-const DISTANCE =
-  /^(?:the )?(?:(?:(?<near>nearest)|farthest) (?<empty>empty )?location|location (?:(?<nearYou>nearest to)|farthest from) you)$/;
-const WHICHEVER_NEAREST = /^(.+?) or (.+?) \(whichever is nearest to you\)\.?$/i;
-const TRAIT_LOCATION = /^any (\S+) location\.?$/i;
-
-/**
- * The locations of `pool` nearest to or farthest from `from`, counted in connections; one with
- * no path there is never the farthest, as "farthest" needs a distance.
- */
-function extremes(
-  ctx: EngineContext,
-  state: GameState,
-  from: InstanceId,
-  pool: readonly InstanceId[],
-  which: 'nearest' | 'farthest',
-): InstanceId[] {
-  const reachable = pool
-    .map((id) => {
-      const [path] = shortestPaths(ctx, state, from, id);
-      return { id, distance: path === undefined ? undefined : path.length - 1 };
-    })
-    .filter((entry): entry is { id: InstanceId; distance: number } => entry.distance !== undefined);
-  const distances = reachable.map(({ distance }) => distance);
-  const best = which === 'nearest' ? Math.min(...distances) : Math.max(...distances);
-  return reachable.filter(({ distance }) => distance === best).map(({ id }) => id);
-}
+const DISTANCES: Readonly<
+  Record<string, { which: 'nearest' | 'farthest'; empty: boolean } | undefined>
+> = {
+  'nearest location': { which: 'nearest', empty: false },
+  'farthest location': { which: 'farthest', empty: false },
+  'nearest empty location': { which: 'nearest', empty: true },
+  'farthest empty location': { which: 'farthest', empty: true },
+  'location nearest to you': { which: 'nearest', empty: false },
+  'location farthest from you': { which: 'farthest', empty: false },
+};
+const WHICHEVER_NEAREST = ' (whichever is nearest to you)';
 
 /** The only candidate, a choice between several, or a discard when there is none. */
 function locationAmong(candidates: readonly InstanceId[]): SpawnPlan {
