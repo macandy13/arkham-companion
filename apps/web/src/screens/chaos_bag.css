@@ -42,6 +42,11 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* The value and the chance read as two figures, not one. */
+#board dialog[data-shell] section[data-part='chaos-bag'] > ul > li > data + data {
+  margin-inline-start: var(--space-2);
+}
+
 /* The tokens (`ChaosTokenFace`), large enough for a number in its star frame, kept from shrinking in the row. */
 #board dialog[data-shell] section[data-part='chaos-bag'] {
   --chaos-token-size: var(--chaos-bag-token-size);

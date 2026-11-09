@@ -40,28 +40,32 @@ export function ChaosBag({
     <section aria-labelledby={titleId} data-part="chaos-bag">
       <h3 id={titleId}>{t('chaosBag.title')}</h3>
       <ul aria-label={t('chaosBag.contents')}>
-        {counts.map(({ token, count }) => (
-          <li key={token}>
-            <button
-              type="button"
-              aria-pressed={token === chosen}
-              disabled={busy}
-              onClick={() => setPicked(token === chosen ? undefined : token)}
-            >
-              <ChaosTokenFace token={token} /> <data value={count}>×{count}</data>
-            </button>{' '}
-            {hasSymbol(token) && token !== 'autoFail' && (
-              <>
-                <data value={board.tokenModifier(token) ?? ''}>
-                  {signedOrUnknown(board.tokenModifier(token))}
-                </data>{' '}
-              </>
-            )}
-            <data value={count / board.chaosBag.length}>
-              {percent.format(count / board.chaosBag.length)}
-            </data>
-          </li>
-        ))}
+        {counts.map(({ token, count }) => {
+          const value = board.tokenModifier(token);
+          const chance = count / board.chaosBag.length;
+          return (
+            <li key={token}>
+              <button
+                type="button"
+                aria-pressed={token === chosen}
+                disabled={busy}
+                onClick={() => setPicked(token === chosen ? undefined : token)}
+              >
+                <ChaosTokenFace token={token} /> <data value={count}>×{count}</data>
+              </button>{' '}
+              {hasSymbol(token) && token !== 'autoFail' && (
+                <>
+                  <data value={value ?? ''} title={t('chaosBag.value')}>
+                    {signedOrUnknown(value)}
+                  </data>{' '}
+                </>
+              )}
+              <data value={chance} title={t('chaosBag.chance')}>
+                {percent.format(chance)}
+              </data>
+            </li>
+          );
+        })}
       </ul>
       {chosen !== undefined && (
         <div

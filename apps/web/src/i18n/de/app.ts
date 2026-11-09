@@ -136,6 +136,8 @@ export const appTexts = {
     sealWhere: '{{token}} versiegeln bei',
     releaseFrom: '{{token}} von {{investigator}} freigeben',
     release: 'Freigeben',
+    value: 'Wert',
+    chance: 'Chance beim Ziehen',
   },
   header: {
     round: 'Runde {{round}}',
