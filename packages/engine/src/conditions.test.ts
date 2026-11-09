@@ -26,7 +26,7 @@ import {
   yourLocation,
   type Command,
 } from './index';
-import { investigatorOf, stateAfter } from '../test/utils';
+import { investigatorOf, resolveRevelation, stateAfter } from '../test/utils';
 
 const hall = instanceId('hall');
 const study = instanceId('study');
@@ -57,7 +57,7 @@ describe('a condition on the enemies at your location', () => {
       .withCard(omen, omenCard, encounterDeck)
       .start();
 
-    const after = stateAfter(context, state, aliceDraws);
+    const after = stateAfter(context, state, aliceDraws, resolveRevelation('omen'));
 
     expect(investigatorOf(after, alice).sanity.horror).toBe(horror);
   });
@@ -84,7 +84,7 @@ describe('a condition on the enemies at one of several locations', () => {
       .withCard(omen, omenCard, encounterDeck)
       .start();
 
-    const after = stateAfter(context, state, aliceDraws);
+    const after = stateAfter(context, state, aliceDraws, resolveRevelation('omen'));
 
     expect(investigatorOf(after, alice).sanity.horror).toBe(1);
   });
@@ -110,7 +110,7 @@ describe('a condition on the enemies engaged with you', () => {
       .withCard(omen, omenCard, encounterDeck)
       .start();
 
-    const after = stateAfter(context, state, aliceDraws);
+    const after = stateAfter(context, state, aliceDraws, resolveRevelation('omen'));
 
     expect(investigatorOf(after, alice).sanity.horror).toBe(horror);
   });
@@ -140,7 +140,7 @@ describe('a condition on the investigators at a location', () => {
       .withCard(omen, omenCard, encounterDeck)
       .start();
 
-    const after = stateAfter(context, state, aliceDraws);
+    const after = stateAfter(context, state, aliceDraws, resolveRevelation('omen'));
 
     expect(investigatorOf(after, alice).sanity.horror).toBe(horror);
   });
@@ -164,7 +164,7 @@ describe('a condition on the current agenda', () => {
   it('gives alice no horror during the first agenda', () => {
     const { context, state } = twoAgendas.start();
 
-    const after = stateAfter(context, state, aliceDraws);
+    const after = stateAfter(context, state, aliceDraws, resolveRevelation('omen'));
 
     expect(investigatorOf(after, alice).sanity.horror).toBe(0);
   });
@@ -173,7 +173,7 @@ describe('a condition on the current agenda', () => {
     const { context, state } = twoAgendas.start();
     const advanced = stateAfter(context, state, { type: 'AdvanceAgenda' });
 
-    const after = stateAfter(context, advanced, aliceDraws);
+    const after = stateAfter(context, advanced, aliceDraws, resolveRevelation('omen'));
 
     expect(advanced.agenda.current).toBe(secondAgenda);
     expect(investigatorOf(after, alice).sanity.horror).toBe(1);
@@ -207,7 +207,7 @@ describe('a condition on a value every named investigator has', () => {
       .withCard(omen, omenCard, encounterDeck)
       .start();
 
-    const after = stateAfter(context, state, aliceDraws);
+    const after = stateAfter(context, state, aliceDraws, resolveRevelation('omen'));
 
     expect(investigatorOf(after, alice).sanity.horror).toBe(horror);
   });
@@ -235,7 +235,7 @@ describe('an effect on each card in the victory display', () => {
       .withCard(omen, omenCard, encounterDeck)
       .start();
 
-    const after = stateAfter(context, state, aliceDraws);
+    const after = stateAfter(context, state, aliceDraws, resolveRevelation('omen'));
 
     expect(after.cards[acolyte]?.zone).toEqual(encounterDeck);
     expect(after.cards[ghoulInDisplay]?.zone).toEqual(victoryDisplay);
