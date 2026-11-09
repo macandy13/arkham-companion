@@ -430,6 +430,12 @@ export const appTexts = {
     outcome: { pass: 'Pass', fail: 'Fail' },
     against: { pass: '{{skill}} ≥ {{difficulty}}', fail: '{{skill}} < {{difficulty}}' },
     margin: 'by {{margin}}',
+    odds: {
+      title: 'Chance to pass',
+      pass: '{{chance}} to pass',
+      unknown: '{{chance}} decided by a card',
+      more: 'With {{icons}}: {{chance}}',
+    },
   },
   chaosToken: {
     '+1': '+1',

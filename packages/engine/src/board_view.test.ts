@@ -302,6 +302,26 @@ describe('a skill test outside any decision', () => {
     },
   );
 
+  it("gives the odds of alice's willpower 3 against 3 from the bag, with the players' modifier", () => {
+    const { context: bagContext, state: bagState } = newGame()
+      .withLocation(study, blankLocation('study'))
+      .withInvestigator(alice, {
+        locationId: study,
+        skills: { willpower: 3, intellect: 2, combat: 1, agility: 4 },
+      })
+      .withChaosBag(['0', '-1', '-2', 'elderSign'])
+      .start();
+    const board = boardView(bagContext, bagState);
+    const test = { skill: 'willpower', difficulty: 3 } as const;
+
+    expect(board.skillTestOdds(alice, test)).toEqual({ pass: 1 / 4, fail: 2 / 4, unknown: 1 / 4 });
+    expect(board.skillTestOdds(alice, test, { modifier: 1 })).toEqual({
+      pass: 2 / 4,
+      fail: 1 / 4,
+      unknown: 1 / 4,
+    });
+  });
+
   it('lists the chaos bag the players draw from', () => {
     const { context: bagContext, state: bagState } = newGame()
       .withChaosBag(['+1', '-1', 'skull', 'autoFail'])
