@@ -1023,6 +1023,30 @@ describe('SpawnEnemy with "Spawn - Any empty location"', () => {
     ]);
   });
 
+  it.each([
+    {
+      spawnedBy: 'bob drawing it',
+      investigatorId: bob,
+      decider: { kind: 'investigator', investigatorId: bob },
+    },
+    { spawnedBy: 'a card effect', investigatorId: undefined, decider: { kind: 'lead' } },
+  ])('leaves the pick to $decider.kind after $spawnedBy', ({ investigatorId, decider }) => {
+    const { context, state } = hallCellarAttic
+      .withInvestigator(alice, { locationId: hall })
+      .withInvestigator(bob, { locationId: hall })
+      .withCard(acolyte, emptySpawnAcolyteCard, setAside)
+      .start();
+
+    const after = stateAfter(context, state, {
+      type: 'SpawnEnemy',
+      enemyId: acolyte,
+      ...(investigatorId === undefined ? {} : { investigatorId }),
+    });
+
+    expect(state.meta.leadInvestigator).toBe(alice);
+    expect(after.pending).toMatchObject([{ kind: 'chooseLocation', decider }]);
+  });
+
   it('discards the enemy when no location is empty', () => {
     const { context, state } = aliceInHall
       .withCard(ghoul, ghoulCard, atLocation(cellar))
