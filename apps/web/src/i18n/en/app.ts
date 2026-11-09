@@ -660,6 +660,9 @@ export const appTexts = {
     chaosBag: 'Chaos bag',
     chaosDraw: 'Who draws the tokens',
     chaosDraws: { app: 'The app', table: 'Our own bag' },
+    reliance: 'Helpers',
+    relianceNote:
+      "New games and campaigns start with this. A game's own log changes it for that game alone.",
     chaosDrawNote:
       'With your own bag the skill test shows no Draw button, only your total to hold against the token you draw.',
     tokenSet: 'Token set',

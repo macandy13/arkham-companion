@@ -665,6 +665,9 @@ export const appTexts = {
     chaosBag: 'Chaosbeutel',
     chaosDraw: 'Wer zieht die Marker',
     chaosDraws: { app: 'Die App', table: 'Unser eigener Beutel' },
+    reliance: 'Hilfen',
+    relianceNote:
+      'Neue Spiele und Kampagnen beginnen damit. Der Spielverlauf eines Spiels ändert es nur für dieses Spiel.',
     chaosDrawNote:
       'Mit eurem eigenen Beutel zeigt die Fertigkeitsprobe keinen Ziehen-Knopf, nur euren Wert für den Marker, den ihr zieht.',
     tokenSet: 'Markerset',
