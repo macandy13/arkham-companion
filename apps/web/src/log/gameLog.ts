@@ -314,14 +314,19 @@ function eventLine(t: TFunction, names: Names, state: GameState, event: Event): 
     case 'ActAdvanced':
       return t('log.actAdvanced', { card: names.card(event.cardId) });
     case 'EncounterCardDrawn':
-      return t(event.revelationCancelled ? 'log.drawnCancelled' : 'log.drawn', {
+      return t('log.drawn', {
         investigator: names.investigator(event.investigatorId),
         card: names.card(event.cardId),
       });
     case 'SurgeGained':
       return t('log.surge', { card: names.card(event.cardId) });
-    case 'NextRevelationCancelled':
-      return undefined;
+    case 'RevelationResolved':
+      // Resolving is the usual answer, which the revelation's own effects already show.
+      if (!event.cancelled) return undefined;
+      return t('log.revelationCancelled', {
+        investigator: names.investigator(event.investigatorId),
+        card: names.card(event.cardId),
+      });
     case 'CardActionUsed':
       return t('log.cardAction', {
         investigator: names.investigator(event.investigatorId),

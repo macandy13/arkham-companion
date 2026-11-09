@@ -79,7 +79,7 @@ export type Command =
   | DamageEnemy
   | HealEnemy
   | GainSurge
-  | CancelNextRevelation
+  | ResolveRevelation
   | DefeatEnemy
   | ExhaustEnemy
   | EvadeEnemy
@@ -841,17 +841,19 @@ export interface DamageEnemy {
 }
 
 /**
- * The next encounter card the investigator draws has its revelation cancelled (Ward of Protection):
- * it is revealed, but none of its revealed abilities resolve, and it is placed as usual (a
- * treachery to the discard; its keywords, surge among them, still apply). The players decide
- * after seeing the card, so the app takes the draw back and plays it again with this first: the
- * same card comes up, as the draw is replayed from the same state. Which cards a cancel fits
- * (Ward: a non-weakness treachery) is the players' card, so the app offers it, not the engine.
- * Produces `NextRevelationCancelled`.
+ * Answers the question every drawn treachery asks before its revelation
+ * (`revelationDecision`): resolve it, which opens the card's `revealed`
+ * window for `investigatorId`, its drawer, or with `cancelled` (a card such
+ * as Ward of Protection) resolve none of it. Either way the card is then
+ * placed as usual (discarded) and keywords such as surge still apply.
+ * Rejected for a card that is not resolving (`notResolving`). Produces
+ * `RevelationResolved`.
  */
-export interface CancelNextRevelation {
-  type: 'CancelNextRevelation';
+export interface ResolveRevelation {
+  type: 'ResolveRevelation';
+  cardId: InstanceId;
   investigatorId: InvestigatorId;
+  cancelled?: true;
 }
 
 /**

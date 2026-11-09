@@ -215,6 +215,7 @@ describe('gameLog', () => {
         .withCard(instanceId('next_card'), blankTreachery('Next card'), { kind: 'encounterDeck' }),
     );
     table.drawEncounterCard(byName('Roland Banks'));
+    table.resolveRevelation(byName('Grasping Hands'));
 
     table.answer(byName('Grasping Hands'), 'fail');
 
@@ -224,7 +225,7 @@ describe('gameLog', () => {
     ]);
   });
 
-  it('names the encounter card drawn with its revelation cancelled', () => {
+  it('tells that the revelation of a drawn treachery was cancelled', () => {
     const table = PlayTable.start(
       rolandsTurn
         .withCard(
@@ -234,13 +235,11 @@ describe('gameLog', () => {
         )
         .withCard(instanceId('next_card'), blankTreachery('Next card'), { kind: 'encounterDeck' }),
     );
-    table.cancelNextRevelation(byName('Roland Banks'));
-
     table.drawEncounterCard(byName('Roland Banks'));
 
-    expect(logOf(t, table).slice(-1).map(textOf)).toEqual([
-      ['Roland Banks draws Grasping Hands and cancels its revelation'],
-    ]);
+    table.cancelRevelation(byName('Grasping Hands'));
+
+    expect(lastStepOf(t, table)).toEqual(['Roland Banks cancels the revelation of Grasping Hands']);
   });
 
   it('tells a fight that defeats an enemy', () => {

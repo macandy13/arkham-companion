@@ -202,8 +202,10 @@ describe('The Devourer Below end to end: Roland and Daisy, seed 7', () => {
     // Round 5 – Roland fails Grasping Hands; Daisy draws Ancient Evils, which
     // places 1 doom on the agenda.
     expect(table.nextPhase()).toMatchObject({ round: 5, phase: 'mythos' });
+    table.resolveRevelation(byName('Grasping Hands'));
     table.answer(byName('Grasping Hands'), 'fail');
     table.nextPhase();
+    table.resolveRevelation(byName('Ancient Evils'));
     expect(table.board.agenda).toMatchObject({ name: 'The Ritual Begins', doom: 2 });
     table.nextPhase();
     quietTurn(roland);
@@ -219,6 +221,8 @@ describe('The Devourer Below end to end: Roland and Daisy, seed 7', () => {
     expect(table.nextPhase()).toMatchObject({ round: 6, phase: 'mythos' });
     table.answer(byName('The Ritual Begins'), 'yes');
     expect(table.board.agenda).toMatchObject({ name: 'Vengeance Awaits', doom: 0 });
+    table.nextPhase();
+    table.resolveRevelation(byName('Dissonant Voices'));
     table.nextPhase();
     table.nextPhase();
     evadeTurn(roland, secondGoat);
@@ -247,6 +251,8 @@ describe('The Devourer Below end to end: Roland and Daisy, seed 7', () => {
     // the Goat Spawn's 1 leave the agenda 1 short.
     expect(table.nextPhase()).toMatchObject({ round: 8, phase: 'mythos' });
     expect(table.board.doomInPlay).toBe(4);
+    table.resolveRevelation(byName('Dissonant Voices'));
+    table.nextPhase();
     table.nextPhase();
     evadeTurn(roland, firstGoat);
     evadeTurn(daisy, secondGoat, thirdGoat);
@@ -275,8 +281,10 @@ describe('The Devourer Below end to end: Roland and Daisy, seed 7', () => {
 
     // Roland fails Grasping Hands again; Daisy passes Rotting Remains.
     table.nextPhase();
+    table.resolveRevelation(byName('Grasping Hands'));
     table.answer(byName('Grasping Hands'), 'fail');
     table.nextPhase();
+    table.resolveRevelation(byName('Rotting Remains'));
     table.answer(byName('Rotting Remains'), 'pass');
     expect(table.nextPhase()).toEqual({ round: 9, phase: 'investigation' });
 
@@ -308,6 +316,7 @@ describe('The Devourer Below end to end: Roland and Daisy, seed 7', () => {
     // ends in R2.
     table.answer(byName('Acolyte'), 'Arkham Woods 2');
     table.nextPhase();
+    table.resolveRevelation(byName('Frozen in Fear'));
     expect(table.nextPhase()).toEqual({ round: 10, phase: 'investigation' });
     table.startTurn(roland);
     table.fight(roland, byName(umordhoth), { damage: 3 });

@@ -96,8 +96,8 @@ export const appTexts = {
     agendaAdvanced: 'Die Agenda {{card}} rückt vor',
     actAdvanced: 'Der Akt {{card}} rückt vor',
     drawn: '{{investigator}} zieht {{card}}',
-    drawnCancelled: '{{investigator}} zieht {{card}} und verhindert die Enthüllung',
     surge: '{{card}} erhält Nachrücken',
+    revelationCancelled: '{{investigator}} verhindert die Enthüllung von {{card}}',
     cardAction: '{{investigator}} nutzt {{card}}',
     playerCards: {
       draw_one: '{{investigator}} zieht {{count}} Karte',
@@ -726,6 +726,9 @@ export const appTexts = {
     attack: 'Angriff hinnehmen',
     doesNotProvoke: 'Provoziert keinen Angriff',
     attackCancelled: 'Der Angriff wird verhindert',
+    revelation: 'Enthüllung von {{card}}',
+    resolveRevelation: 'Abhandeln',
+    cancelRevelation: 'Enthüllung verhindern',
     count: {
       failedBy: 'Misslungen um',
       clues: 'Entdeckte Hinweise',

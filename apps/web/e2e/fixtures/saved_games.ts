@@ -1,5 +1,6 @@
 import type { Page } from '@playwright/test';
 import {
+  byName,
   cardCode,
   cardDbWith,
   gameId,
@@ -206,6 +207,7 @@ function mythosDrawn(): PlayTable {
   table.nextPhase();
   table.nextPhase();
   table.nextPhase();
+  table.resolveRevelation(byName('Dissonant Voices'));
   table.nextPhase();
   table.startTurn(rolandId);
   table.endTurn(rolandId);
@@ -246,6 +248,7 @@ export function graspingHandsDrawnExport(title: string): Buffer {
     },
   });
   table.drawEncounterCard(rolandId);
+  table.resolveRevelation(byName('Grasping Hands'));
   return exportOf(title, table, 'grasping_hands_drawn');
 }
 

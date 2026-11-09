@@ -33,7 +33,14 @@ import {
   type GameState,
   type Zone,
 } from './index';
-import { answer, rejectionFrom, stateAfter } from '../test/utils';
+import {
+  answer,
+  cancelRevelation,
+  rejectionFrom,
+  resolveRevelation,
+  runFrom,
+  stateAfter,
+} from '../test/utils';
 
 const hall = instanceId('hall');
 const alice = investigatorId('alice');
@@ -112,7 +119,7 @@ describe('DrawEncounter', () => {
       .withCard(instanceId('lingering_card'), lingeringTreachery, encounterDeck)
       .start();
 
-    const after = stateAfter(context, state, draw);
+    const after = stateAfter(context, state, draw, resolveRevelation('lingering_card'));
 
     expect(after.cards[instanceId('lingering_card')]?.zone).toEqual(threatAreaOf(alice));
   });
@@ -123,7 +130,7 @@ describe('DrawEncounter', () => {
         .withCard(instanceId('fog_card'), onePerLocationAttachment, encounterDeck)
         .start();
 
-      const after = stateAfter(context, state, draw);
+      const after = stateAfter(context, state, draw, resolveRevelation('fog_card'));
 
       expect(idsIn(after, attachedTo(hall))).toEqual(['fog_card']);
     });
@@ -136,7 +143,14 @@ describe('DrawEncounter', () => {
         .withCard(instanceId('bottom_card'), plainTreachery, encounterDeck)
         .start();
 
-      const after = stateAfter(context, stateAfter(context, state, draw), draw);
+      const after = stateAfter(
+        context,
+        state,
+        draw,
+        resolveRevelation('first_fog'),
+        draw,
+        resolveRevelation('second_fog'),
+      );
 
       expect(idsIn(after, attachedTo(hall))).toEqual(['first_fog']);
       expect(idsIn(after, encounterDiscard)).toEqual(['second_fog']);
@@ -149,7 +163,7 @@ describe('DrawEncounter', () => {
         .withCard(instanceId('bottom_card'), plainTreachery, encounterDeck)
         .start();
 
-      const after = stateAfter(context, state, draw);
+      const after = stateAfter(context, state, draw, resolveRevelation('fog_card'));
 
       expect(idsIn(after, encounterDiscard)).toEqual(['fog_card']);
     });
@@ -338,50 +352,6 @@ describe('DrawEncounter', () => {
     const command: Command = { type: 'DrawEncounter', investigatorId: investigatorId('nobody') };
 
     expect(rejectionFrom(context, state, command).code).toBe('unknownInvestigator');
-  });
-});
-
-describe('CancelNextRevelation', () => {
-  /** A treachery whose revelation deals 1 damage to its drawer, on top of a plain one. */
-  const hurtingTreachery = blankTreachery('hurting_treachery', {
-    abilities: [whenRevealed(takeDamage(1))],
-  });
-  const { context, state } = aliceInHall
-    .withCard(instanceId('hurting_card'), hurtingTreachery, encounterDeck)
-    .withCard(instanceId('second_card'), plainTreachery, encounterDeck)
-    .start();
-  const cancel: Command = { type: 'CancelNextRevelation', investigatorId: alice };
-
-  it('discards the next card alice draws without its revelation', () => {
-    const after = stateAfter(context, stateAfter(context, state, cancel), draw);
-
-    expect(after.investigators[0]?.health.damage).toBe(0);
-    expect(after.investigators[0]?.cancelsNextRevelation).toBeUndefined();
-    expect(idsIn(after, encounterDiscard)).toEqual(['hurting_card']);
-  });
-
-  it('records the cancel on the draw', () => {
-    const { events } = execute(context, stateAfter(context, state, cancel), draw);
-
-    expect(events[0]).toMatchObject({ type: 'EncounterCardDrawn', revelationCancelled: true });
-  });
-
-  it('still draws again for a cancelled card with surge', () => {
-    const { context, state: surging } = aliceInHall
-      .withCard(instanceId('surge_card'), surgeTreachery, encounterDeck)
-      .withCard(instanceId('next_card'), plainTreachery, encounterDeck)
-      .withCard(instanceId('last_card'), plainTreachery, encounterDeck)
-      .start();
-
-    const after = stateAfter(context, stateAfter(context, surging, cancel), draw);
-
-    expect(idsIn(after, encounterDiscard)).toEqual(['next_card', 'surge_card']);
-  });
-
-  it('resolves the revelation of a draw without it', () => {
-    const after = stateAfter(context, state, draw);
-
-    expect(after.investigators[0]?.health.damage).toBe(1);
   });
 });
 
@@ -890,6 +860,8 @@ describe('encounter deck invariants', () => {
       table: aliceInHall
         .withCard(instanceId('deck_lingering'), lingeringTreachery, encounterDeck)
         .withCard(instanceId('discarded_relic'), relicCard, encounterDiscard),
+      // The deck stays empty while the drawn card waits for the players' answer.
+      answers: [resolveRevelation('deck_lingering')],
     },
     {
       name: 'an empty deck, three cards in the discard',
@@ -910,10 +882,10 @@ describe('encounter deck invariants', () => {
         .withCard(instanceId('deck_a'), plainTreachery, encounterDeck)
         .withCard(instanceId('deck_b'), plainTreachery, encounterDeck),
     },
-  ])('never leaves the deck empty while the discard has cards: $name', ({ table }) => {
+  ])('never leaves the deck empty while the discard has cards: $name', ({ table, answers }) => {
     for (const seed of [1, 2, 3]) {
       const { context, state } = table.withSeed(seed).start();
-      const after = stateAfter(context, state, draw);
+      const after = stateAfter(context, state, draw, ...(answers ?? []));
 
       const deckSize = idsIn(after, encounterDeck).length;
       const discardSize = idsIn(after, encounterDiscard).length;
@@ -979,7 +951,7 @@ describe('surge after the drawn card has resolved', () => {
       .withCard(instanceId('after_surge'), plainTreachery, encounterDeck)
       .start();
 
-    const { events } = execute(context, state, draw);
+    const { events } = runFrom(context, state, [draw, resolveRevelation('burning_card')]);
 
     expect(resolutionOrder(events)).toEqual([
       'draws burning_card',
@@ -996,7 +968,7 @@ describe('surge after the drawn card has resolved', () => {
       .withCard(instanceId('after_surge'), plainTreachery, encounterDeck)
       .start();
 
-    const asked = stateAfter(context, state, draw);
+    const asked = stateAfter(context, state, draw, resolveRevelation('testing_card'));
 
     expect(asked.pending.map((decision) => decision.id)).toEqual(['test:testing_card']);
     expect(asked.meta.queue).toEqual([
@@ -1011,7 +983,7 @@ describe('surge after the drawn card has resolved', () => {
       .withCard(instanceId('testing_card'), testingSurge, encounterDeck)
       .withCard(instanceId('after_surge'), plainTreachery, encounterDeck)
       .start();
-    const asked = stateAfter(context, state, draw);
+    const asked = stateAfter(context, state, draw, resolveRevelation('testing_card'));
 
     const { state: answered, events } = execute(
       context,
@@ -1032,7 +1004,7 @@ describe('surge after the drawn card has resolved', () => {
       .withCard(instanceId('testing_card'), testingSurge, encounterDeck)
       .start();
 
-    const asked = stateAfter(context, state, draw);
+    const asked = stateAfter(context, state, draw, resolveRevelation('testing_card'));
 
     const { state: answered, events } = execute(
       context,
@@ -1050,7 +1022,7 @@ describe('surge after the drawn card has resolved', () => {
       .withCard(instanceId('after_surge'), plainTreachery, encounterDeck)
       .start();
 
-    const { events } = execute(context, state, draw);
+    const { events } = runFrom(context, state, [draw, resolveRevelation('deadly_card')]);
 
     expect(resolutionOrder(events)).toEqual([
       'draws deadly_card',
@@ -1131,7 +1103,7 @@ describe('revelation before the drawn card is placed', () => {
       .withCard(instanceId('drawn_card'), lethalLingering, encounterDeck)
       .start();
 
-    const { events } = execute(context, state, draw);
+    const { events } = runFrom(context, state, [draw, resolveRevelation('drawn_card')]);
 
     expect(resolutionOrder(events)).toEqual([
       'draws drawn_card',
@@ -1148,7 +1120,10 @@ describe('revelation before the drawn card is placed', () => {
       .withCard(instanceId('drawn_card'), lethalTesting, encounterDeck)
       .start();
 
-    const { state: after, events } = execute(context, state, draw);
+    const { state: after, events } = runFrom(context, state, [
+      draw,
+      resolveRevelation('drawn_card'),
+    ]);
 
     expect(after.pending).toEqual([]);
     expect(resolutionOrder(events)).toEqual([
@@ -1165,7 +1140,7 @@ describe('revelation before the drawn card is placed', () => {
     const { context, state } = aliceInHall
       .withCard(instanceId('drawn_card'), testingScorcher, encounterDeck)
       .start();
-    const asked = stateAfter(context, state, draw);
+    const asked = stateAfter(context, state, draw, resolveRevelation('drawn_card'));
 
     const { events } = execute(context, asked, answer('test:drawn_card', 'pass'));
 
@@ -1173,18 +1148,31 @@ describe('revelation before the drawn card is placed', () => {
     expect(resolutionOrder(events)).toEqual(['alice damage +1', 'drawn_card to encounterDiscard']);
   });
 
+  // A treachery asks the players first; an enemy's revelation resolves at once.
   it.each([
-    { drawn: scorchingTreachery, placed: 'drawn_card to encounterDiscard' },
-    { drawn: scorchingFoe, placed: 'drawn_card to atLocation' },
-    { drawn: scorchingLingering, placed: 'drawn_card to threatArea' },
-    { drawn: scorchingAttachment, placed: 'drawn_card to attachedTo' },
-  ])('resolves the revelation of $drawn.code before placing it', ({ drawn, placed }) => {
+    {
+      drawn: scorchingTreachery,
+      answers: [resolveRevelation('drawn_card')],
+      placed: 'drawn_card to encounterDiscard',
+    },
+    { drawn: scorchingFoe, answers: [], placed: 'drawn_card to atLocation' },
+    {
+      drawn: scorchingLingering,
+      answers: [resolveRevelation('drawn_card')],
+      placed: 'drawn_card to threatArea',
+    },
+    {
+      drawn: scorchingAttachment,
+      answers: [resolveRevelation('drawn_card')],
+      placed: 'drawn_card to attachedTo',
+    },
+  ])('resolves the revelation of $drawn.code before placing it', ({ drawn, answers, placed }) => {
     const { context, state } = aliceInHall
       .withCard(instanceId('drawn_card'), drawn, encounterDeck)
       .withCard(instanceId('next_card'), scorchingTreachery, encounterDeck)
       .start();
 
-    const { events } = execute(context, state, draw);
+    const { events } = runFrom(context, state, [draw, ...answers]);
 
     expect(resolutionOrder(events)).toEqual(['draws drawn_card', 'alice damage +1', placed]);
   });
@@ -1213,7 +1201,7 @@ describe('revelation before the drawn card is placed', () => {
       .withCard(instanceId('clinging_card'), clingingTreachery, encounterDeck)
       .start();
 
-    const after = stateAfter(context, state, draw);
+    const after = stateAfter(context, state, draw, resolveRevelation('clinging_card'));
 
     expect(after.cards[instanceId('clinging_card')]?.zone).toEqual(threatAreaOf(alice));
   });
@@ -1223,23 +1211,120 @@ describe('revelation before the drawn card is placed', () => {
       .withCard(instanceId('vanishing_card'), vanishingTreachery, encounterDeck)
       .start();
 
-    const after = stateAfter(context, state, draw);
+    const after = stateAfter(context, state, draw, resolveRevelation('vanishing_card'));
 
     expect(after.cards[instanceId('vanishing_card')]?.zone).toEqual({ kind: 'outOfGame' });
   });
 
   it.each([
-    { drawn: lethalTreachery, placed: 'lethal_card to encounterDiscard' },
-    { drawn: lethalFoe, placed: 'lethal_card to encounterDiscard' },
-    { drawn: lethalHallFoe, placed: 'lethal_card to atLocation' },
-  ])('places $drawn.code without the drawer it defeated: $placed', ({ drawn, placed }) => {
+    {
+      drawn: lethalTreachery,
+      answers: [resolveRevelation('lethal_card')],
+      placed: 'lethal_card to encounterDiscard',
+    },
+    { drawn: lethalFoe, answers: [], placed: 'lethal_card to encounterDiscard' },
+    { drawn: lethalHallFoe, answers: [], placed: 'lethal_card to atLocation' },
+  ])('places $drawn.code without the drawer it defeated: $placed', ({ drawn, answers, placed }) => {
     const { context, state } = aliceInHall
       .withCard(instanceId('lethal_card'), drawn, encounterDeck)
       .withCard(instanceId('next_foe'), scorchingFoe, encounterDeck)
       .start();
 
-    const { events } = execute(context, state, draw);
+    const { events } = runFrom(context, state, [draw, ...answers]);
 
     expect(resolutionOrder(events)).toEqual(['draws lethal_card', 'alice damage +8', placed]);
+  });
+});
+
+describe('the question a drawn treachery asks before its revelation', () => {
+  /** `burning_treachery` deals its drawer 1 damage; `burning_surge` too, and has surge. */
+  const burningTreachery = blankTreachery('burning_treachery', {
+    abilities: [whenRevealed(takeDamage(1))],
+  });
+  const burningSurge = blankTreachery('burning_surge', {
+    keywords: [{ name: 'surge' }],
+    abilities: [whenRevealed(takeDamage(1))],
+  });
+  const burningFoe = blankEnemy('burning_foe', { abilities: [whenRevealed(takeDamage(1))] });
+
+  it('asks alice before resolving anything, the card face up in the resolving zone', () => {
+    const { context, state } = aliceInHall
+      .withCard(instanceId('burning_card'), burningTreachery, encounterDeck)
+      .withCard(instanceId('next_card'), plainTreachery, encounterDeck)
+      .start();
+
+    const asked = stateAfter(context, state, draw);
+
+    expect(asked.pending).toEqual([
+      expect.objectContaining({
+        id: 'revelation:burning_card',
+        decider: { kind: 'investigator', investigatorId: alice },
+      }),
+    ]);
+    expect(asked.pending[0]?.options.map((option) => option.id)).toEqual(['resolve', 'cancel']);
+    expect(asked.cards[instanceId('burning_card')]).toMatchObject({
+      faceUp: true,
+      zone: { kind: 'resolving' },
+    });
+    expect(asked.investigators[0]?.health.damage).toBe(0);
+  });
+
+  it('discards a cancelled card without its revelation and records the cancel', () => {
+    const { context, state } = aliceInHall
+      .withCard(instanceId('burning_card'), burningTreachery, encounterDeck)
+      .withCard(instanceId('next_card'), plainTreachery, encounterDeck)
+      .start();
+
+    const { state: after, events } = runFrom(context, state, [
+      draw,
+      cancelRevelation('burning_card'),
+    ]);
+
+    expect(events).toContainEqual({
+      type: 'RevelationResolved',
+      cardId: 'burning_card',
+      investigatorId: alice,
+      cancelled: true,
+    });
+    expect(after.investigators[0]?.health.damage).toBe(0);
+    expect(idsIn(after, encounterDiscard)).toEqual(['burning_card']);
+  });
+
+  it('still draws again for a cancelled card with surge', () => {
+    const { context, state } = aliceInHall
+      .withCard(instanceId('surge_card'), burningSurge, encounterDeck)
+      .withCard(instanceId('after_surge'), plainTreachery, encounterDeck)
+      .withCard(instanceId('bottom_card'), plainTreachery, encounterDeck)
+      .start();
+
+    const after = stateAfter(context, state, draw, cancelRevelation('surge_card'));
+
+    expect(idsIn(after, encounterDiscard)).toEqual(['after_surge', 'surge_card']);
+  });
+
+  it.each([
+    { name: 'an enemy', drawn: burningFoe },
+    { name: 'a treachery without a revelation ability', drawn: plainTreachery },
+  ])('asks nothing for $name', ({ drawn }) => {
+    const { context, state } = aliceInHall
+      .withCard(instanceId('drawn_card'), drawn, encounterDeck)
+      .withCard(instanceId('next_card'), plainTreachery, encounterDeck)
+      .start();
+
+    expect(stateAfter(context, state, draw).pending).toEqual([]);
+  });
+
+  it('rejects an answer for a card that is not resolving', () => {
+    const { context, state } = aliceInHall
+      .withCard(instanceId('deck_card'), burningTreachery, encounterDeck)
+      .start();
+
+    expect(
+      rejectionFrom(context, state, {
+        type: 'ResolveRevelation',
+        cardId: instanceId('deck_card'),
+        investigatorId: alice,
+      }),
+    ).toEqual({ code: 'notResolving', cardId: 'deck_card' });
   });
 });

@@ -9,7 +9,7 @@ describe("a game's statistics", () => {
   const roland = cardName('Roland Banks');
   /**
    * The Gathering for Roland, whose game seed 24 puts Icy Ghoul and then Crypt Chill on top of its
-   * 26-card encounter deck.
+   * 26-card encounter deck. Crypt Chill's revelation is resolved when it asks.
    */
   const run: Run = {
     scenario: theGathering.id,
@@ -23,6 +23,7 @@ describe("a game's statistics", () => {
   const table = setUpTable(run);
   playStep(table, { verb: 'drawEncounterCard', investigator: roland });
   playStep(table, { verb: 'drawEncounterCard', investigator: roland });
+  playStep(table, { verb: 'answer', option: 'resolve revelation' });
   const statistics = gameStatistics({
     run,
     steps: [],

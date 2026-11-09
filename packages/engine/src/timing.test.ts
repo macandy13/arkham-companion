@@ -96,6 +96,7 @@ describe('a surge after its card`s revelation', () => {
     );
 
     table.play(draw);
+    table.resolveRevelation(byName('testing_surge'));
 
     expect(table.board.decisions).toMatchObject([
       { prompt: 'decision.cardTest', about: 'testing_surge' },
@@ -128,6 +129,7 @@ describe('a surge after its card`s revelation', () => {
     );
 
     table.play(draw);
+    table.resolveRevelation(byName('deadly_surge'));
 
     expect(table.board.perInvestigator('status')).toEqual({ alice: 'defeated', bob: 'active' });
     expect(table.board.ended).toBe(false);
@@ -380,6 +382,7 @@ describe('a surge with an empty encounter deck', () => {
     const table = PlayTable.start(game);
 
     table.play({ type: 'DrawEncounter', investigatorId: alice });
+    table.resolveRevelation(byName('clinging_treachery'));
 
     expect(table.board.enemy(byName('surging_rat')).engagedWith).toBe(alice);
     expect(table.board.investigator(alice).threatArea).toEqual(['clinging_treachery']);

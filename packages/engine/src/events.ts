@@ -63,7 +63,7 @@ export type Event =
   | ScenarioEnded
   | EncounterCardDrawn
   | SurgeGained
-  | NextRevelationCancelled
+  | RevelationResolved
   | CardActionUsed
   | CommandDeferred
   | AbilityEffectSkipped
@@ -361,17 +361,24 @@ export interface EncounterCardDrawn {
   cardId: InstanceId;
   peril: boolean;
   surge: boolean;
-  /** The drawer had cancelled this card's revelation (`CancelNextRevelation`): no revealed window opens. */
-  revelationCancelled?: true;
+  /**
+   * Set for a treachery: its revelation waits for the players' answer
+   * (`revelationDecision`) rather than resolving as it is turned face up.
+   */
+  asksRevelation?: true;
 }
 
 /**
- * The next encounter card the investigator draws has its revelation cancelled
- * (`Investigator.cancelsNextRevelation`). Produced by `CancelNextRevelation`.
+ * The players answered whether the drawn treachery `cardId` resolves its
+ * revelation (`ResolveRevelation`): its `revealed` window opens for
+ * `investigatorId` unless it was `cancelled`. Only a record; the reducer
+ * ignores it.
  */
-export interface NextRevelationCancelled {
-  type: 'NextRevelationCancelled';
+export interface RevelationResolved {
+  type: 'RevelationResolved';
+  cardId: InstanceId;
   investigatorId: InvestigatorId;
+  cancelled?: true;
 }
 
 /**

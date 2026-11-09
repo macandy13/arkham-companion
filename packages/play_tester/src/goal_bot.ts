@@ -1,5 +1,7 @@
 import {
   byId,
+  isRevelationDecision,
+  optionName,
   type BoardView,
   type CardName,
   type InstanceId,
@@ -19,7 +21,7 @@ const GOAL_WEIGHT = 50;
  * for clues (investigates where there are some, else moves towards the nearest location with
  * clues or still unrevealed), advances the act, fights what is engaged with it, resolves the
  * attacks due and moves the round on once there is nothing left to do. It never corrects the
- * board or undoes.
+ * board or undoes, and never cancels a revelation, which takes a card it doesn't hold.
  */
 export function goalWeights(table: PlayTable, offered: readonly Step[]): number[] {
   const { board } = table;
@@ -50,7 +52,19 @@ export function goalWeights(table: PlayTable, offered: readonly Step[]): number[
         return false;
     }
   };
-  return offered.map((step) => (isRare(step) ? 0 : movesOn(step) ? GOAL_WEIGHT : 1));
+  return offered.map((step) =>
+    isRare(step) || cancelsRevelation(table, step) ? 0 : movesOn(step) ? GOAL_WEIGHT : 1,
+  );
+}
+
+/** Whether `step` answers a drawn treachery's question by cancelling its revelation. */
+function cancelsRevelation(table: PlayTable, step: Step): boolean {
+  if (step.verb !== 'answer') return false;
+  const asked = table.state.pending.find(
+    (decision) => isRevelationDecision(decision) && decision.subject === step.about,
+  );
+  const cancel = asked?.options.find(({ id }) => id === 'cancel');
+  return cancel !== undefined && optionName(cancel) === step.option;
 }
 
 /**

@@ -6,8 +6,8 @@ import type {
   EncounterMatch,
   EncounterSource,
   FromSetAside,
-  CancelNextRevelation,
   GainSurge,
+  ResolveRevelation,
   ShuffleInto,
 } from './commands';
 import type {
@@ -15,11 +15,12 @@ import type {
   CardMoved,
   DeckShuffled,
   EncounterCardDrawn,
+  DecisionRequested,
   Event,
-  NextRevelationCancelled,
+  RevelationResolved,
   SurgeGained,
 } from './events';
-import type { CardCode, InstanceId, InvestigatorId } from './ids';
+import { decisionId, type CardCode, type InstanceId, type InvestigatorId } from './ids';
 import { activeInvestigator, isActiveInvestigator } from './investigators';
 import { hasKeyword } from './keywords';
 import { cardsInZone, requireCard } from './lookup';
@@ -28,7 +29,7 @@ import { spawnEvents } from './spawn';
 import { replay } from './reducer';
 import { CommandRejected } from './rejection';
 import { shuffle } from './rng';
-import type { CardInstance, GameState, Investigator } from './state';
+import type { CardInstance, Decision, GameState, Investigator } from './state';
 import {
   encounterDeck,
   encounterDiscard,
@@ -83,23 +84,66 @@ export function surgeDraw(events: readonly Event[]): DrawEncounter | undefined {
   return drawn?.surge ? { type: 'DrawEncounter', investigatorId: drawn.investigatorId } : undefined;
 }
 
-/**
- * `CancelNextRevelation`: marks the investigator (`Investigator.cancelsNextRevelation`), so their
- * next encounter draw resolves no revelation; rejected for an investigator out of the game.
- */
-export function handleCancelNextRevelation(
-  state: GameState,
-  cmd: CancelNextRevelation,
-): NextRevelationCancelled[] {
-  const investigator = activeInvestigator(state, cmd.investigatorId);
-  return [{ type: 'NextRevelationCancelled', investigatorId: investigator.id }];
-}
-
 /** `GainSurge`: the resolving card draws again once placed (`CardInstance.gainedSurge`). */
 export function handleGainSurge(state: GameState, cmd: GainSurge): SurgeGained[] {
   if (requireCard(state.cards, cmd.cardId).zone.kind !== 'resolving')
     throw new CommandRejected({ code: 'notResolving', cardId: cmd.cardId });
   return [{ type: 'SurgeGained', cardId: cmd.cardId }];
+}
+
+/**
+ * `ResolveRevelation`: the players' answer to `revelationDecision`, recorded for the revealed
+ * window (`windowsOpenedBy`) to open or not.
+ */
+export function handleResolveRevelation(
+  state: GameState,
+  cmd: ResolveRevelation,
+): RevelationResolved[] {
+  if (requireCard(state.cards, cmd.cardId).zone.kind !== 'resolving')
+    throw new CommandRejected({ code: 'notResolving', cardId: cmd.cardId });
+  const { cardId, investigatorId } = cmd;
+  return [
+    {
+      type: 'RevelationResolved',
+      cardId,
+      investigatorId,
+      ...(cmd.cancelled && { cancelled: true }),
+    },
+  ];
+}
+
+/** Whether `decision` is a drawn treachery's question before its revelation (`revelationDecision`). */
+export function isRevelationDecision(decision: Pick<Decision, 'id'>): boolean {
+  return decision.id.startsWith('revelation:');
+}
+
+/** The prompt of a `revelationDecision`. */
+export const REVELATION_PROMPT = 'decision.revelation';
+
+/**
+ * The question a drawn treachery asks its drawer before its revelation: resolve it, or cancel
+ * it with a card such as Ward of Protection ("When you draw a non-weakness treachery card"),
+ * which the players hold in their hands, out of the app's sight. So every treachery asks, and
+ * the players offer the cancel only where their card fits.
+ */
+export function revelationDecision(cardId: InstanceId, investigatorId: InvestigatorId): Decision {
+  const answer = (cancelled: boolean): ResolveRevelation => ({
+    type: 'ResolveRevelation',
+    cardId,
+    investigatorId,
+    ...(cancelled && { cancelled: true }),
+  });
+  return {
+    id: decisionId(`revelation:${cardId}`),
+    kind: 'confirm',
+    subject: cardId,
+    prompt: REVELATION_PROMPT,
+    decider: { kind: 'investigator', investigatorId },
+    options: [
+      { id: 'resolve', label: 'decision.resolveRevelation', commands: [answer(false)] },
+      { id: 'cancel', label: 'decision.cancelRevelation', commands: [answer(true)] },
+    ],
+  };
 }
 
 /**
@@ -236,13 +280,17 @@ function drawOne(
   if (cardId === undefined) return undefined;
 
   const stats = cardStats(ctx.cards, requireCard(state.cards, cardId).code);
+  // Only a revelation the app resolves asks; one it has no abilities for the players do by hand.
+  const asksRevelation =
+    stats.typeCode === 'treachery' &&
+    (stats.abilities ?? []).some((ability) => ability.window.kind === 'revealed');
   const drawn: EncounterCardDrawn = {
     type: 'EncounterCardDrawn',
     investigatorId: investigator.id,
     cardId,
     peril: hasKeyword(stats, 'peril'),
     surge: hasKeyword(stats, 'surge'),
-    ...(investigator.cancelsNextRevelation && { revelationCancelled: true }),
+    ...(asksRevelation && { asksRevelation: true }),
   };
   const resolving = cardMoved(
     replay(refill, state),
@@ -250,7 +298,10 @@ function drawOne(
     resolvingZone,
   );
   const revealed: CardFlipped = { type: 'CardFlipped', cardId, faceUp: true };
-  return [...refill, drawn, resolving, revealed];
+  const asked: DecisionRequested[] = asksRevelation
+    ? [{ type: 'DecisionRequested', decision: revelationDecision(cardId, investigator.id) }]
+    : [];
+  return [...refill, drawn, resolving, revealed, ...asked];
 }
 
 /**

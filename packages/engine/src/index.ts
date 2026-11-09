@@ -119,7 +119,7 @@ export {
   type TokenValue,
 } from './skill_modifiers';
 export { enemiesAt, type EnemyFilter, enemiesOnTable } from './enemies';
-export { matchesEncounter } from './handle_encounter';
+export { isRevelationDecision, matchesEncounter } from './handle_encounter';
 export { doomInPlay, isInPlay } from './doom';
 export { checkInvariants } from './invariants';
 export { PHASE_OF_STEP, PHASE_STEP_TITLES } from './phases';

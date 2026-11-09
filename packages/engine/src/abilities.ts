@@ -527,10 +527,14 @@ export function windowsOpenedBy(
         (e) => e.type === 'EncounterCardDrawn' && e.cardId === event.cardId,
       );
       if (drawn?.type !== 'EncounterCardDrawn') return [revealedWindow(event.cardId)];
-      // A cancelled revelation (Ward of Protection) resolves none of the card's revealed abilities.
-      if (drawn.revelationCancelled) return [];
+      // A treachery's revelation waits for the players' answer (`RevelationResolved`).
+      if (drawn.asksRevelation) return [];
       return [revealedWindow(event.cardId, drawn.investigatorId)];
     }
+    case 'RevelationResolved':
+      // A cancelled revelation (Ward of Protection) resolves none of the card's revealed abilities.
+      if (event.cancelled) return [];
+      return [revealedWindow(event.cardId, event.investigatorId)];
     case 'InvestigatorMoved': {
       if (event.from === undefined) return [];
       const { investigatorId } = event;

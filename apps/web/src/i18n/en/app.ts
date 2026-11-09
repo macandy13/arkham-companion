@@ -95,8 +95,8 @@ export const appTexts = {
     agendaAdvanced: 'The agenda {{card}} advances',
     actAdvanced: 'The act {{card}} advances',
     drawn: '{{investigator}} draws {{card}}',
-    drawnCancelled: '{{investigator}} draws {{card}} and cancels its revelation',
     surge: '{{card}} gains surge',
+    revelationCancelled: '{{investigator}} cancels the revelation of {{card}}',
     cardAction: '{{investigator}} uses {{card}}',
     playerCards: {
       draw_one: '{{investigator}} draws {{count}} card',
@@ -721,6 +721,9 @@ export const appTexts = {
     attack: 'Take the attack',
     doesNotProvoke: 'Does not provoke',
     attackCancelled: 'The attack is cancelled',
+    revelation: 'Revelation of {{card}}',
+    resolveRevelation: 'Resolve',
+    cancelRevelation: 'Cancel revelation',
     count: {
       failedBy: 'Margin of failure',
       clues: 'Clues discovered',
