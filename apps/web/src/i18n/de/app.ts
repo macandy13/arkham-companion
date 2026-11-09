@@ -955,6 +955,7 @@ export const appTexts = {
     },
     cycle: 'Zyklus',
     cycleNumber: 'Zyklus {{n}}',
+    cardText: 'Kartentext',
     pack: 'Pack',
     chapter: 'Kapitel',
     chapterBadge: 'Kap. {{n}}',

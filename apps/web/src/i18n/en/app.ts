@@ -949,6 +949,7 @@ export const appTexts = {
     },
     cycle: 'Cycle',
     cycleNumber: 'Cycle {{n}}',
+    cardText: 'Card text',
     pack: 'Pack',
     chapter: 'Chapter',
     chapterBadge: 'Ch. {{n}}',
