@@ -108,6 +108,7 @@ export { isEnemyAttackDecision } from './forced_attacks';
 export { confirmOptions, skillTestDecision, type SkillTestOutcomes } from './decisions';
 export { drawTokens, testFinished } from './draw_tokens';
 export { tokenCounts, type TokenCount } from './chaos_bag';
+export { skillTestOdds, type SkillTestOdds } from './skill_test_odds';
 export {
   revealsAnotherToken,
   skillTestContext,
