@@ -18,6 +18,8 @@ import {
   newGame,
   onlyCopy,
   takeHorror,
+  trait,
+  victoryDisplay,
   whenRevealed,
   you,
   yourLocation,
@@ -174,5 +176,67 @@ describe('a condition on the current agenda', () => {
 
     expect(advanced.agenda.current).toBe(secondAgenda);
     expect(investigatorOf(after, alice).sanity.horror).toBe(1);
+  });
+});
+
+describe('a condition on a value every named investigator has', () => {
+  /** "Revelation – If each investigator has no clues, take 1 horror." */
+  const omenCard = blankTreachery('omen', {
+    abilities: [
+      {
+        window: { kind: 'revealed' },
+        condition: {
+          kind: 'valueOf',
+          value: { kind: 'stat', stat: 'clues', who: eachInvestigator() },
+          max: 0,
+        },
+        effects: [takeHorror(1)],
+      },
+    ],
+  });
+
+  it.each([
+    { bobClues: 0, horror: 1 },
+    { bobClues: 1, horror: 0 },
+  ])('gives alice $horror horror while bob holds $bobClues clues', ({ bobClues, horror }) => {
+    const { context, state } = newGame()
+      .withLocation(hall, blankLocation('hall'), { revealed: true })
+      .withInvestigator(alice, { locationId: hall })
+      .withInvestigator(bob, { locationId: hall, clues: bobClues })
+      .withCard(omen, omenCard, encounterDeck)
+      .start();
+
+    const after = stateAfter(context, state, aliceDraws);
+
+    expect(investigatorOf(after, alice).sanity.horror).toBe(horror);
+  });
+});
+
+describe('an effect on each card in the victory display', () => {
+  it('shuffles each Cultist from the victory display into the encounter deck', () => {
+    const acolyte = instanceId('acolyte');
+    const ghoulInDisplay = instanceId('ghoul_in_display');
+    /** "Revelation – Shuffle each [[Cultist]] enemy in the victory display into the encounter deck." */
+    const omenCard = blankTreachery('omen', {
+      abilities: [
+        whenRevealed({
+          type: 'MoveCard',
+          cardId: { ref: 'eachInVictoryDisplay', trait: trait('Cultist') },
+          to: { kind: 'encounterDeck' },
+        }),
+      ],
+    });
+    const { context, state } = newGame()
+      .withLocation(hall, blankLocation('hall'), { revealed: true })
+      .withInvestigator(alice, { locationId: hall })
+      .withCard(acolyte, blankEnemy('acolyte', { traits: [trait('Cultist')] }), victoryDisplay)
+      .withCard(ghoulInDisplay, blankEnemy('ghoul'), victoryDisplay)
+      .withCard(omen, omenCard, encounterDeck)
+      .start();
+
+    const after = stateAfter(context, state, aliceDraws);
+
+    expect(after.cards[acolyte]?.zone).toEqual(encounterDeck);
+    expect(after.cards[ghoulInDisplay]?.zone).toEqual(victoryDisplay);
   });
 });

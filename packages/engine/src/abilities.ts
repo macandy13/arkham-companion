@@ -31,7 +31,7 @@ import {
 } from './ids';
 import type { GridCell } from './map';
 import { locationAttachments, locationsInPlay } from './board';
-import { enemiesMatching, locationOf, nearestEnemies, type EnemyFilter } from './enemies';
+import { enemiesAt, enemiesMatching, nearestEnemies, type EnemyFilter } from './enemies';
 import {
   cluesHeldAt,
   cluesHeldByGroup,
@@ -283,8 +283,10 @@ export type RelativeInvestigator =
 /**
  * Which enemies an `eachEnemy` reference names: those with `trait` and without `withoutTrait`,
  * only the unengaged ones with `unengaged`, only those at one of the locations `at` names
- * (engaged ones are at their investigator's location; a location out of play matches nothing),
- * and only those engaged with `engagedWith` (none when it names nobody).
+ * (engaged ones are at their investigator's location), and only those engaged with `engagedWith`
+ * (none when it names nobody). A single `at` location out of play skips the effect, as any
+ * missing `onlyCopy` does; one of a list does not, so "each [[Ghoul]] enemy in the Hallway or
+ * Parlor" still finds the ghouls in the one that is there.
  */
 export interface EachEnemyFilter extends EnemyFilter {
   at?: RelativeCard | readonly RelativeCard[];
@@ -1057,12 +1059,20 @@ function eachId(
       const engagedWith =
         each.engagedWith === undefined ? undefined : resolveRefs(each.engagedWith, refs);
       if (each.engagedWith !== undefined && engagedWith === undefined) return [];
-      const at =
+      const there =
         each.at === undefined
           ? undefined
-          : [each.at].flat().map((location) => resolveRefs(location, refs));
+          : new Set(
+              [each.at]
+                .flat()
+                .map((location) => resolveRefs(location, refs) as InstanceId | undefined)
+                .flatMap((location) =>
+                  location === undefined ? [] : enemiesAt(ctx, state, location),
+                )
+                .map((card) => card.id),
+            );
       return enemiesMatching(ctx, state, each)
-        .filter((card) => at === undefined || at.includes(locationOf(state, card)))
+        .filter((card) => there === undefined || there.has(card.id))
         .filter(
           (card) =>
             engagedWith === undefined ||

@@ -60,7 +60,7 @@ Effects are **templated commands**: a command card data may use (`AbilityCommand
 - `onlyCopy(code)`,
 - `eachInvestigator({ at })`,
 - `eachEnemy({ trait, withoutTrait, unengaged, at, engagedWith })`, where `at` is one location reference or a list of them, so "each enemy at your location" is a filter of `eachEnemy`, not a reference of its own,
-- `eachInVictoryDisplay` (for conditions that count it),
+- `eachInVictoryDisplay({ trait, unique, beneathAct })`, the cards in the victory display,
 - `nearestEnemy(trait)`,
 - `locationWith(trait)`,
 - `locationWithMost(token)`,
