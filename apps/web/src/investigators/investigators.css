@@ -165,29 +165,32 @@
   mask: var(--stat-icon) center / contain no-repeat;
 }
 
-/* The counters' icons and colours; the detail view's map strips (MapStrip) show them too. */
+/*
+ * The counters' icons, the glyphs of their tokens in one colour (MD.8d), and colours; the detail
+ * view's map strips (MapStrip) show them too.
+ */
 :is(#investigators, [data-strip]) [data-stat='health'] {
-  --stat-icon: url('./icons/health.svg');
+  --stat-icon: url('../tokens/glyphs/damage.svg');
   --stat-colour: var(--color-health);
 }
 
 :is(#investigators, [data-strip]) [data-stat='sanity'] {
-  --stat-icon: url('./icons/sanity.svg');
+  --stat-icon: url('../tokens/glyphs/horror.svg');
   --stat-colour: var(--color-sanity);
 }
 
 :is(#investigators, [data-strip]) [data-stat='clues'] {
-  --stat-icon: url('./icons/token.svg');
+  --stat-icon: url('../tokens/glyphs/clue.svg');
   --stat-colour: var(--color-clue);
 }
 
 :is(#investigators, [data-strip]) [data-stat='resources'] {
-  --stat-icon: url('./icons/token.svg');
+  --stat-icon: url('../tokens/glyphs/resource.svg');
   --stat-colour: var(--color-resource);
 }
 
 :is(#investigators, [data-strip]) [data-stat='doom'] {
-  --stat-icon: url('./icons/token.svg');
+  --stat-icon: url('../tokens/glyphs/doom.svg');
   --stat-colour: var(--color-doom);
 }
 

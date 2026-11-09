@@ -416,12 +416,12 @@
 }
 
 #investigator-picker [data-stat='health'] {
-  --picker-stat-icon: url('../investigators/icons/health.svg');
+  --picker-stat-icon: url('../tokens/glyphs/damage.svg');
   --picker-stat-colour: var(--color-health);
 }
 
 #investigator-picker [data-stat='sanity'] {
-  --picker-stat-icon: url('../investigators/icons/sanity.svg');
+  --picker-stat-icon: url('../tokens/glyphs/horror.svg');
   --picker-stat-colour: var(--color-sanity);
 }
 
