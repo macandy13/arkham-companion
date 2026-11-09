@@ -1,5 +1,4 @@
 import 'fake-indexeddb/auto';
-import Dexie from 'dexie';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   STATE_VERSION,
@@ -172,22 +171,26 @@ describe('IndexedDbStore', () => {
     });
   });
 
-  it('replays a game whose progress an app of another state version cached', async () => {
+  it('replays a game whose progress an app of an older state version cached', async () => {
+    vi.resetModules();
+    vi.doMock('@arkham/engine', async (original) => ({
+      ...(await original<typeof import('@arkham/engine')>()),
+      STATE_VERSION: STATE_VERSION - 1,
+    }));
+    const { IndexedDbStore: OlderStore } = await import('./IndexedDbStore');
+    vi.doUnmock('@arkham/engine');
     const name = `test-${n++}`;
-    const older = new IndexedDbStore(name);
+    const older = new OlderStore(name);
     const id = await older.createGame();
     await older.appendEvents(id, [started]);
     await older.listGames();
     older.close();
-    const raw = await new Dexie(name).open();
-    await raw
-      .table('games')
-      .update(id, { 'progress.stateVersion': STATE_VERSION - 1, 'progress.scenarioId': 'old' });
-    raw.close();
     store = new IndexedDbStore(name);
+    const load = vi.spyOn(store, 'loadGame');
 
     const [summary] = await store.listGames();
 
+    expect(load).toHaveBeenCalledWith(id);
     expect(summary).toMatchObject({ scenarioId: 'test' });
   });
 
