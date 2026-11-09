@@ -262,7 +262,9 @@ export function skyStars(scan: { width: number; height: number }, count = SKY_ST
  */
 function skyOf(scan: { width: number; height: number }): string {
   const key = `${scan.width}x${scan.height}`;
-  const sky = SKIES.get(key) ?? skyStars(scan);
+  const cached = SKIES.get(key);
+  if (cached !== undefined) return cached;
+  const sky = skyStars(scan);
   SKIES.set(key, sky);
   return sky;
 }

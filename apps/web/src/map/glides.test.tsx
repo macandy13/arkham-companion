@@ -117,6 +117,7 @@ describe('useGlides in the map', () => {
   afterEach(() => {
     cleanup();
     vi.unstubAllGlobals();
+    vi.restoreAllMocks();
     Reflect.deleteProperty(Element.prototype, 'animate');
   });
 
@@ -161,7 +162,6 @@ describe('useGlides in the map', () => {
     rerender(mapOf(alderAt(study)));
 
     expect(styles).not.toHaveBeenCalled();
-    styles.mockRestore();
   });
 
   it('moves nothing when the players prefer reduced motion', () => {
