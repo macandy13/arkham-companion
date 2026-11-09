@@ -44,6 +44,7 @@ Some effects in detail:
 - `advanceAgenda()` advances the current agenda as its doom threshold would, and `removeConnection(from, to)` removes a declared connection or cuts a printed one, and does nothing when it is already gone (`source`, below).
 - "Shuffle it into the encounter deck" is `shuffleSelfIntoEncounterDeck()` (`MoveCard`, then `ShuffleEncounterDeck`): a drawn card moved there while it resolves is not placed afterwards. `shuffleSetAsideIntoEncounterDeck(codes)` (`ShuffleInto`) takes the set-aside copies there are (`source`, below), and shuffles nothing in when there is none.
 - "This card gains surge" (`GainSurge`) marks the resolving card (`CardInstance.gainedSurge`), and placing it queues the surge draw a printed surge would have queued.
+- A cancelled revelation (Ward of Protection) is `CancelNextRevelation` before the draw (`Investigator.cancelsNextRevelation`): the draw records it (`EncounterCardDrawn.revelationCancelled`, which takes the mark off) and `windowsOpenedBy` opens no `revealed` window for the card. The players decide after seeing the card, so the app takes the draw back and plays it again with the cancel first; the replay draws the same card.
 
 `windowsOpenedBy` maps an event to the windows it opens.
 

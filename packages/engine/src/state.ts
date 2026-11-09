@@ -144,6 +144,11 @@ export interface Investigator {
    */
   skillBoosts?: Partial<SkillValues>;
   /**
+   * The next encounter card they draw has its revelation cancelled (`CancelNextRevelation`); the
+   * draw takes it off again (`EncounterCardDrawn.revelationCancelled`).
+   */
+  cancelsNextRevelation?: true;
+  /**
    * The picture of their investigator card (`InvestigatorCard.imageSrc`), copied at setup because
    * the investigator cards are not in the card data a resumed game runs with.
    */

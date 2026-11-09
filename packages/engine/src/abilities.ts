@@ -504,6 +504,11 @@ export interface OpenedWindow {
   locationId?: InstanceId;
 }
 
+/** The `revealed` window of the card turned face up, naming who drew it when it was drawn. */
+function revealedWindow(cardId: InstanceId, investigatorId?: InvestigatorId): OpenedWindow {
+  return { window: { kind: 'revealed' }, cardId, ...(investigatorId && { investigatorId }) };
+}
+
 /**
  * The windows `event` opens; `state` is the state right after it. `events`
  * is the whole batch it belongs to: a drawn card is turned face up in the
@@ -521,15 +526,10 @@ export function windowsOpenedBy(
       const drawn = events.find(
         (e) => e.type === 'EncounterCardDrawn' && e.cardId === event.cardId,
       );
-      const investigatorId =
-        drawn?.type === 'EncounterCardDrawn' ? drawn.investigatorId : undefined;
-      return [
-        {
-          window: { kind: 'revealed' },
-          cardId: event.cardId,
-          ...(investigatorId && { investigatorId }),
-        },
-      ];
+      if (drawn?.type !== 'EncounterCardDrawn') return [revealedWindow(event.cardId)];
+      // A cancelled revelation (Ward of Protection) resolves none of the card's revealed abilities.
+      if (drawn.revelationCancelled) return [];
+      return [revealedWindow(event.cardId, drawn.investigatorId)];
     }
     case 'InvestigatorMoved': {
       if (event.from === undefined) return [];

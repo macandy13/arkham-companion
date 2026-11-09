@@ -95,6 +95,7 @@ export const appTexts = {
     agendaAdvanced: 'The agenda {{card}} advances',
     actAdvanced: 'The act {{card}} advances',
     drawn: '{{investigator}} draws {{card}}',
+    drawnCancelled: '{{investigator}} draws {{card}} and cancels its revelation',
     surge: '{{card}} gains surge',
     cardAction: '{{investigator}} uses {{card}}',
     playerCards: {

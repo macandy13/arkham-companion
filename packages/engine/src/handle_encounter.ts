@@ -6,6 +6,7 @@ import type {
   EncounterMatch,
   EncounterSource,
   FromSetAside,
+  CancelNextRevelation,
   GainSurge,
   ShuffleInto,
 } from './commands';
@@ -15,6 +16,7 @@ import type {
   DeckShuffled,
   EncounterCardDrawn,
   Event,
+  NextRevelationCancelled,
   SurgeGained,
 } from './events';
 import type { CardCode, InstanceId, InvestigatorId } from './ids';
@@ -79,6 +81,18 @@ function rejectEmptyDeck(): never {
 export function surgeDraw(events: readonly Event[]): DrawEncounter | undefined {
   const drawn = events.find((event) => event.type === 'EncounterCardDrawn');
   return drawn?.surge ? { type: 'DrawEncounter', investigatorId: drawn.investigatorId } : undefined;
+}
+
+/**
+ * `CancelNextRevelation`: marks the investigator (`Investigator.cancelsNextRevelation`), so their
+ * next encounter draw resolves no revelation; rejected for an investigator out of the game.
+ */
+export function handleCancelNextRevelation(
+  state: GameState,
+  cmd: CancelNextRevelation,
+): NextRevelationCancelled[] {
+  const investigator = activeInvestigator(state, cmd.investigatorId);
+  return [{ type: 'NextRevelationCancelled', investigatorId: investigator.id }];
 }
 
 /** `GainSurge`: the resolving card draws again once placed (`CardInstance.gainedSurge`). */
@@ -228,6 +242,7 @@ function drawOne(
     cardId,
     peril: hasKeyword(stats, 'peril'),
     surge: hasKeyword(stats, 'surge'),
+    ...(investigator.cancelsNextRevelation && { revelationCancelled: true }),
   };
   const resolving = cardMoved(
     replay(refill, state),

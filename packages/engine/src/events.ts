@@ -63,6 +63,7 @@ export type Event =
   | ScenarioEnded
   | EncounterCardDrawn
   | SurgeGained
+  | NextRevelationCancelled
   | CardActionUsed
   | CommandDeferred
   | AbilityEffectSkipped
@@ -360,6 +361,17 @@ export interface EncounterCardDrawn {
   cardId: InstanceId;
   peril: boolean;
   surge: boolean;
+  /** The drawer had cancelled this card's revelation (`CancelNextRevelation`): no revealed window opens. */
+  revelationCancelled?: true;
+}
+
+/**
+ * The next encounter card the investigator draws has its revelation cancelled
+ * (`Investigator.cancelsNextRevelation`). Produced by `CancelNextRevelation`.
+ */
+export interface NextRevelationCancelled {
+  type: 'NextRevelationCancelled';
+  investigatorId: InvestigatorId;
 }
 
 /**

@@ -24,6 +24,7 @@ import {
   handleDrawBeneath,
   handleDrawFromScenarioDeck,
   handleGainSurge,
+  handleCancelNextRevelation,
   handleFromSetAside,
   handleShuffleEncounterDeck,
   handleShuffleEncounterDiscard,
@@ -255,6 +256,9 @@ const COMMAND_SPECS: CommandSpecs = {
     continueWith: placeDrawnCard,
   },
   GainSurge: { handle: (_ctx, state, command) => handleGainSurge(state, command) },
+  CancelNextRevelation: {
+    handle: (_ctx, state, command) => handleCancelNextRevelation(state, command),
+  },
   FromSetAside: { handle: (_ctx, state, command) => handleFromSetAside(state, command) },
   ShuffleInto: { handle: (_ctx, state, command) => handleShuffleInto(state, command) },
   ShuffleEncounterDiscard: { handle: (_ctx, state) => handleShuffleEncounterDiscard(state) },

@@ -632,6 +632,15 @@ export class PlayTable {
     this.play({ type: 'DrawEncounter', investigatorId: this.seat(investigator) });
   }
 
+  /**
+   * The next encounter card the investigator draws has its revelation cancelled (Ward of
+   * Protection). The players decide after seeing the card, so the app takes the draw back, plays
+   * this, then the draw again (`CancelNextRevelation`).
+   */
+  cancelNextRevelation(investigator: InvestigatorRef): void {
+    this.play({ type: 'CancelNextRevelation', investigatorId: this.seat(investigator) });
+  }
+
   /** Doom from a card effect (e.g. Ancient Evils) on the current agenda. */
   placeDoom(amount: number): void {
     this.play({ type: 'PlaceDoom', amount });

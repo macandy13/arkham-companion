@@ -341,6 +341,50 @@ describe('DrawEncounter', () => {
   });
 });
 
+describe('CancelNextRevelation', () => {
+  /** A treachery whose revelation deals 1 damage to its drawer, on top of a plain one. */
+  const hurtingTreachery = blankTreachery('hurting_treachery', {
+    abilities: [whenRevealed(takeDamage(1))],
+  });
+  const { context, state } = aliceInHall
+    .withCard(instanceId('hurting_card'), hurtingTreachery, encounterDeck)
+    .withCard(instanceId('second_card'), plainTreachery, encounterDeck)
+    .start();
+  const cancel: Command = { type: 'CancelNextRevelation', investigatorId: alice };
+
+  it('discards the next card alice draws without its revelation', () => {
+    const after = stateAfter(context, stateAfter(context, state, cancel), draw);
+
+    expect(after.investigators[0]?.health.damage).toBe(0);
+    expect(after.investigators[0]?.cancelsNextRevelation).toBeUndefined();
+    expect(idsIn(after, encounterDiscard)).toEqual(['hurting_card']);
+  });
+
+  it('records the cancel on the draw', () => {
+    const { events } = execute(context, stateAfter(context, state, cancel), draw);
+
+    expect(events[0]).toMatchObject({ type: 'EncounterCardDrawn', revelationCancelled: true });
+  });
+
+  it('still draws again for a cancelled card with surge', () => {
+    const { context, state: surging } = aliceInHall
+      .withCard(instanceId('surge_card'), surgeTreachery, encounterDeck)
+      .withCard(instanceId('next_card'), plainTreachery, encounterDeck)
+      .withCard(instanceId('last_card'), plainTreachery, encounterDeck)
+      .start();
+
+    const after = stateAfter(context, stateAfter(context, surging, cancel), draw);
+
+    expect(idsIn(after, encounterDiscard)).toEqual(['next_card', 'surge_card']);
+  });
+
+  it('resolves the revelation of a draw without it', () => {
+    const after = stateAfter(context, state, draw);
+
+    expect(after.investigators[0]?.health.damage).toBe(1);
+  });
+});
+
 describe('DrawEncounter with a match', () => {
   const ghoulFoe = blankEnemy('ghoul_foe', { name: 'Ghoul Minion', traits: [trait('Ghoul')] });
   const otherFoe = blankEnemy('other_foe', { name: 'Other Foe', traits: [trait('Monster')] });

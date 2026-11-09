@@ -96,6 +96,7 @@ export const appTexts = {
     agendaAdvanced: 'Die Agenda {{card}} rückt vor',
     actAdvanced: 'Der Akt {{card}} rückt vor',
     drawn: '{{investigator}} zieht {{card}}',
+    drawnCancelled: '{{investigator}} zieht {{card}} und verhindert die Enthüllung',
     surge: '{{card}} erhält Nachrücken',
     cardAction: '{{investigator}} nutzt {{card}}',
     playerCards: {

@@ -314,12 +314,14 @@ function eventLine(t: TFunction, names: Names, state: GameState, event: Event): 
     case 'ActAdvanced':
       return t('log.actAdvanced', { card: names.card(event.cardId) });
     case 'EncounterCardDrawn':
-      return t('log.drawn', {
+      return t(event.revelationCancelled ? 'log.drawnCancelled' : 'log.drawn', {
         investigator: names.investigator(event.investigatorId),
         card: names.card(event.cardId),
       });
     case 'SurgeGained':
       return t('log.surge', { card: names.card(event.cardId) });
+    case 'NextRevelationCancelled':
+      return undefined;
     case 'CardActionUsed':
       return t('log.cardAction', {
         investigator: names.investigator(event.investigatorId),

@@ -224,6 +224,25 @@ describe('gameLog', () => {
     ]);
   });
 
+  it('names the encounter card drawn with its revelation cancelled', () => {
+    const table = PlayTable.start(
+      rolandsTurn
+        .withCard(
+          instanceId('grasping_hands'),
+          blankTreachery('Grasping Hands', { abilities: [whenRevealed(skillTest('agility', 3))] }),
+          { kind: 'encounterDeck' },
+        )
+        .withCard(instanceId('next_card'), blankTreachery('Next card'), { kind: 'encounterDeck' }),
+    );
+    table.cancelNextRevelation(byName('Roland Banks'));
+
+    table.drawEncounterCard(byName('Roland Banks'));
+
+    expect(logOf(t, table).slice(-1).map(textOf)).toEqual([
+      ['Roland Banks draws Grasping Hands and cancels its revelation'],
+    ]);
+  });
+
   it('tells a fight that defeats an enemy', () => {
     const table = PlayTable.start(
       rolandsTurn.withCard(

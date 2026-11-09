@@ -80,6 +80,8 @@ export function apply(state: GameState, event: Event): GameState {
       return applyDeckShuffled(state, event);
     case 'CardMoved':
       return applyCardMoved(state, event);
+    case 'NextRevelationCancelled':
+      return applyInvestigator(state, event, (inv) => ({ ...inv, cancelsNextRevelation: true }));
     case 'SurgeGained':
       return updateCard(state, event.cardId, (card) => ({ ...card, gainedSurge: true }));
     case 'CardActionUsed': {
@@ -134,6 +136,9 @@ export function apply(state: GameState, event: Event): GameState {
     case 'ScenarioEnded':
       return applyScenarioEnded(state, event);
     case 'EncounterCardDrawn':
+      return event.revelationCancelled
+        ? applyInvestigator(state, event, (inv) => withoutKey(inv, 'cancelsNextRevelation'))
+        : state;
     case 'AbilityEffectSkipped':
     case 'CommandDeferred':
     case 'CluesDiscovered':
