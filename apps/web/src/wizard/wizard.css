@@ -100,13 +100,25 @@
  * capitals and the name. The radio is hidden; the chosen cover is ringed in ink.
  */
 #wizard > fieldset[data-covers] {
+  position: relative;
   display: grid;
+  padding-bottom: 0;
+  border-bottom: 0;
   grid-template-columns: repeat(auto-fill, minmax(var(--cover-min-width), 1fr));
   gap: var(--space-3);
 }
 
+/* The step's title already says what is chosen, so the group's name is for screen readers only. */
 #wizard > fieldset[data-covers] > legend {
-  float: left;
+  position: absolute;
+  width: var(--hidden-size);
+  height: var(--hidden-size);
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+#wizard > fieldset[data-covers] > p {
   grid-column: 1 / -1;
 }
 

@@ -27,8 +27,8 @@ describe('parseMode and parseStep', () => {
 
   it('falls back to the first step for unknown values', () => {
     expect(parseStep('summary')).toBe('summary');
-    expect(parseStep('nonsense')).toBe('setup');
-    expect(parseStep(null)).toBe('setup');
+    expect(parseStep('nonsense')).toBe('scenario');
+    expect(parseStep(null)).toBe('scenario');
   });
 });
 

@@ -16,8 +16,8 @@ interface TargetCoversProps {
 }
 
 /**
- * The campaigns, or in a quick game the scenarios, the players can start (MD.3f): one cover each
- * (`TargetCover`). Each cover is a radio of one group, so the choice reads and works like any other
+ * The wizard's first step (MD.3f): the campaigns, or in a quick game the scenarios, the players can
+ * start, one cover each (`TargetCover`), and nothing else on it. Each cover is a radio of one group, so the choice reads and works like any other
  * on the step.
  */
 export function TargetCovers({ choices, ownedPacks, onChange }: TargetCoversProps) {

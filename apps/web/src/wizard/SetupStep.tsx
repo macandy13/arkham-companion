@@ -1,25 +1,21 @@
 import { RELIANCES, type Difficulty } from '@arkham/engine';
 import { useTranslation } from 'react-i18next';
-import { TargetCovers } from './TargetCovers';
 import { DIFFICULTIES, type WizardChoices } from './wizardState';
 
 interface SetupStepProps {
   readonly choices: WizardChoices;
-  /** The packs the players own, to offer only their campaigns and scenarios. */
-  readonly ownedPacks?: ReadonlySet<string>;
   readonly onChange: (changes: Partial<WizardChoices>) => void;
 }
 
 /**
- * First wizard step: which campaign (or, in a quick game, which scenario) as covers with art
- * (`TargetCovers`), the difficulty and how much the players rely on the helpers.
+ * Second wizard step, after the scenario or campaign (`TargetCovers`): the difficulty and how much
+ * the players rely on the helpers.
  */
-export function SetupStep({ choices, ownedPacks, onChange }: SetupStepProps) {
+export function SetupStep({ choices, onChange }: SetupStepProps) {
   const { t } = useTranslation();
 
   return (
     <>
-      <TargetCovers choices={choices} ownedPacks={ownedPacks} onChange={onChange} />
       <fieldset data-segmented>
         <legend>{t('wizard.difficulty')}</legend>
         {DIFFICULTIES.map((difficulty: Difficulty) => (

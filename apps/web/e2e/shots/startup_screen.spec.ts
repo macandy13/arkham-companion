@@ -27,6 +27,7 @@ test('the spinner on paper while the wizard refreshes the investigators', async 
   await page.goto('/#/new');
   await page.getByRole('link', { name: 'Quick game' }).first().click();
   await page.getByRole('button', { name: 'Next' }).click();
+  await page.getByRole('button', { name: 'Next' }).click();
 
   await expect(page.getByText('Loading investigators…')).toBeVisible();
 });

@@ -9,6 +9,7 @@ import { loadSettings } from '../settings/settings';
 import type { AppState } from '../state/appStore';
 import { chosenInvestigators, seatsFor } from '../wizard/seating';
 import { SetupStep } from '../wizard/SetupStep';
+import { TargetCovers } from '../wizard/TargetCovers';
 import { SummaryStep } from '../wizard/SummaryStep';
 import { useAppBar } from './AppBar';
 import {
@@ -145,21 +146,32 @@ function Wizard({ store, catalogSource, mode, step }: WizardProps) {
     (target) => target.entry.id === choices.targetId,
   );
   const canContinue =
-    step === 'setup' ? scenario !== undefined && offered : investigators.length > 0;
+    step === 'scenario'
+      ? scenario !== undefined && offered
+      : step === 'setup' || investigators.length > 0;
   const target = chosenCampaign(choices) ?? scenario;
+  const targetName = target && t(target.nameKey);
   // The pinned button says what the players take with them to the next step.
   const carried =
-    step === 'setup'
-      ? target && `${t(target.nameKey)} · ${t(`wizard.difficulties.${choices.difficulty}`)}`
-      : new Intl.ListFormat(i18n.language, { type: 'conjunction' }).format(
-          investigators.map((investigator) => investigator.name),
-        );
+    step === 'scenario'
+      ? targetName
+      : step === 'setup'
+        ? targetName && `${targetName} · ${t(`wizard.difficulties.${choices.difficulty}`)}`
+        : new Intl.ListFormat(i18n.language, { type: 'conjunction' }).format(
+            investigators.map((investigator) => investigator.name),
+          );
+  // The first step is named after what it chooses: the campaign or the scenario.
+  const needsCatalog = step === 'investigators' || step === 'summary';
+  const stepName = (name: WizardStep) =>
+    t(
+      name === 'scenario' && mode === 'campaign' ? 'wizard.steps.campaign' : `wizard.steps.${name}`,
+    );
 
   return (
     <>
       <hgroup>
         <p>{t('wizard.stepOf', { step: index + 1, count: WIZARD_STEPS.length })}</p>
-        <h1>{t(`wizard.steps.${step}`)}</h1>
+        <h1>{stepName(step)}</h1>
       </hgroup>
       <ol aria-label={t('wizard.steps.label')}>
         {WIZARD_STEPS.map((name, at) => (
@@ -168,21 +180,22 @@ function Wizard({ store, catalogSource, mode, step }: WizardProps) {
             aria-current={name === step ? 'step' : undefined}
             data-done={at < index || undefined}
           >
-            {t(`wizard.steps.${name}`)}
+            {stepName(name)}
           </li>
         ))}
       </ol>
-      <section id="wizard" aria-label={t(`wizard.steps.${step}`)}>
-        {step === 'setup' && (
-          <SetupStep choices={choices} ownedPacks={ownedPacks()} onChange={update} />
+      <section id="wizard" aria-label={stepName(step)}>
+        {step === 'scenario' && (
+          <TargetCovers choices={choices} ownedPacks={ownedPacks()} onChange={update} />
         )}
-        {step !== 'setup' && catalog.status === 'loading' && (
+        {step === 'setup' && <SetupStep choices={choices} onChange={update} />}
+        {needsCatalog && catalog.status === 'loading' && (
           <p>
             <Spinner />
             {t('wizard.loadingCatalog')}
           </p>
         )}
-        {step !== 'setup' && catalog.status === 'failed' && (
+        {needsCatalog && catalog.status === 'failed' && (
           <p role="alert">{t('wizard.catalogFailed')}</p>
         )}
         {step === 'investigators' && catalog.status === 'ready' && (
@@ -203,7 +216,7 @@ function Wizard({ store, catalogSource, mode, step }: WizardProps) {
         {next && carried && <p>{carried}</p>}
         {next ? (
           <button data-primary disabled={!canContinue} onClick={() => goTo(next)}>
-            {t('wizard.nextTo', { step: t(`wizard.steps.${next}`) })}
+            {t('wizard.nextTo', { step: stepName(next) })}
           </button>
         ) : (
           <button data-primary disabled={!canContinue} onClick={() => void start()}>

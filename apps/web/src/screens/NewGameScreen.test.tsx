@@ -79,10 +79,7 @@ describe('NewGameScreen', () => {
     expect(screen.getByRole('link', { name: 'collection' }).getAttribute('href')).toBe(
       '/settings/collection',
     );
-    expect(screen.getByRole('button', { name: 'Next: Investigators' })).toHaveProperty(
-      'disabled',
-      true,
-    );
+    expect(screen.getByRole('button', { name: 'Next: Setup' })).toHaveProperty('disabled', true);
   });
 
   it('offers both entry points without a mode', () => {
@@ -97,9 +94,11 @@ describe('NewGameScreen', () => {
   });
 
   it.each([
-    { path: '/new?mode=quick', kicker: 'Step 1 of 3', title: 'Setup' },
-    { path: '/new?mode=quick&step=investigators', kicker: 'Step 2 of 3', title: 'Investigators' },
-    { path: '/new?mode=quick&step=summary', kicker: 'Step 3 of 3', title: 'Summary' },
+    { path: '/new?mode=quick', kicker: 'Step 1 of 4', title: 'Scenario' },
+    { path: '/new?mode=campaign', kicker: 'Step 1 of 4', title: 'Campaign' },
+    { path: '/new?mode=quick&step=setup', kicker: 'Step 2 of 4', title: 'Setup' },
+    { path: '/new?mode=quick&step=investigators', kicker: 'Step 3 of 4', title: 'Investigators' },
+    { path: '/new?mode=quick&step=summary', kicker: 'Step 4 of 4', title: 'Summary' },
   ])('heads $path with "$kicker" over the step title $title', ({ path, kicker, title }) => {
     renderWizard(path);
 
@@ -111,11 +110,24 @@ describe('NewGameScreen', () => {
     renderWizard('/new?mode=quick&step=investigators');
 
     const steps = within(screen.getByRole('list', { name: 'Steps' })).getAllByRole('listitem');
-    expect(steps.map((step) => step.getAttribute('aria-current'))).toEqual([null, 'step', null]);
+    expect(steps.map((step) => step.getAttribute('aria-current'))).toEqual([
+      null,
+      null,
+      'step',
+      null,
+    ]);
+  });
+
+  it('pins the chosen scenario beside the way to the setup', () => {
+    renderWizard('/new?mode=quick');
+
+    fireEvent.click(screen.getByRole('radio', { name: 'The Midnight Masks' }));
+
+    expect(screen.getByText('The Midnight Masks', { selector: 'footer > p' })).toBeTruthy();
   });
 
   it('pins the scenario and difficulty beside the way to the investigators', () => {
-    renderWizard('/new?mode=quick');
+    renderWizard('/new?mode=quick&step=setup');
 
     fireEvent.click(screen.getByRole('radio', { name: 'Hard' }));
 
@@ -135,6 +147,8 @@ describe('NewGameScreen', () => {
   it('starts a quick game and opens it', async () => {
     const { gameStore } = renderWizard('/new?mode=quick');
 
+    fireEvent.click(screen.getByRole('radio', { name: 'The Gathering' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Next: Setup' }));
     fireEvent.click(screen.getByRole('radio', { name: 'Hard' }));
     fireEvent.click(screen.getByRole('button', { name: 'Next: Investigators' }));
     await screen.findByRole('list', { name: 'Investigators' });
@@ -166,6 +180,7 @@ describe('NewGameScreen', () => {
     const { gameStore } = renderWizard('/new?mode=campaign');
 
     expect(screen.getByRole('radio', { name: 'Night of the Zealot' })).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Next: Setup' }));
     fireEvent.click(screen.getByRole('radio', { name: 'Hard' }));
     fireEvent.click(screen.getByRole('radio', { name: 'Only what you do by hand' }));
     fireEvent.click(screen.getByRole('button', { name: 'Next: Investigators' }));
@@ -218,11 +233,11 @@ describe('NewGameScreen', () => {
   });
 
   it('keeps the choices over a page refresh', async () => {
-    renderWizard('/new?mode=quick');
+    renderWizard('/new?mode=quick&step=setup');
     fireEvent.click(screen.getByRole('radio', { name: 'Expert' }));
     cleanup();
 
-    renderWizard('/new?mode=quick');
+    renderWizard('/new?mode=quick&step=setup');
 
     expect((screen.getByRole('radio', { name: 'Expert' }) as HTMLInputElement).checked).toBe(true);
   });

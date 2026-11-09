@@ -6,6 +6,7 @@ test('the log of a campaign just started', async ({ page }) => {
   await page.goto('/#/new');
   await page.getByRole('link', { name: 'New campaign' }).click();
   await page.getByRole('button', { name: 'Next' }).click();
+  await page.getByRole('button', { name: 'Next' }).click();
   await page.getByRole('button', { name: /Fake Seeker/ }).click();
   await page.getByRole('button', { name: 'Select', exact: true }).click();
   await page.getByRole('button', { name: 'Next' }).click();
@@ -22,6 +23,7 @@ test('the log of a campaign just started', async ({ page }) => {
 test('the chaos bag on the log of a campaign just started, its tokens drawn', async ({ page }) => {
   await page.goto('/#/new');
   await page.getByRole('link', { name: 'New campaign' }).click();
+  await page.getByRole('button', { name: 'Next' }).click();
   await page.getByRole('button', { name: 'Next' }).click();
   await page.getByRole('button', { name: /Fake Seeker/ }).click();
   await page.getByRole('button', { name: 'Select', exact: true }).click();
@@ -42,6 +44,7 @@ test('the resolution of a game its only investigator lost to horror', async ({ p
   await page.goto('/#/new');
   await page.getByRole('link', { name: 'New campaign' }).click();
   await page.getByRole('button', { name: 'Next' }).click();
+  await page.getByRole('button', { name: 'Next' }).click();
   await page.getByRole('button', { name: /Fake Seeker/ }).click();
   await page.getByRole('button', { name: 'Select', exact: true }).click();
   await page.getByRole('button', { name: 'Next' }).click();
@@ -57,6 +60,7 @@ test('the resolution of a game its only investigator lost to horror', async ({ p
 test('the log right after that resolution was written', async ({ page }) => {
   await page.goto('/#/new');
   await page.getByRole('link', { name: 'New campaign' }).click();
+  await page.getByRole('button', { name: 'Next' }).click();
   await page.getByRole('button', { name: 'Next' }).click();
   await page.getByRole('button', { name: /Fake Seeker/ }).click();
   await page.getByRole('button', { name: 'Select', exact: true }).click();
@@ -76,6 +80,7 @@ test('the log right after that resolution was written', async ({ page }) => {
 test('the setup preview of The Midnight Masks', async ({ page }) => {
   await page.goto('/#/new');
   await page.getByRole('link', { name: 'New campaign' }).click();
+  await page.getByRole('button', { name: 'Next' }).click();
   await page.getByRole('button', { name: 'Next' }).click();
   await page.getByRole('button', { name: /Fake Seeker/ }).click();
   await page.getByRole('button', { name: 'Select', exact: true }).click();

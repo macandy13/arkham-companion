@@ -19,7 +19,7 @@ import {
 export type WizardMode = 'campaign' | 'quick';
 
 /** Wizard steps in order; the current one is part of the URL so browser back/forward walks them. */
-export const WIZARD_STEPS = ['setup', 'investigators', 'summary'] as const;
+export const WIZARD_STEPS = ['scenario', 'setup', 'investigators', 'summary'] as const;
 export type WizardStep = (typeof WIZARD_STEPS)[number];
 
 /** Difficulties in the order they are offered. */

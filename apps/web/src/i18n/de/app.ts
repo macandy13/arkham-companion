@@ -893,6 +893,8 @@ export const appTexts = {
     difficulties: { easy: 'Leicht', standard: 'Standard', hard: 'Schwer', expert: 'Experte' },
     stepOf: 'Schritt {{step}} von {{count}}',
     steps: {
+      scenario: 'Szenario',
+      campaign: 'Kampagne',
       label: 'Schritte',
       setup: 'Einrichtung',
       investigators: 'Ermittler',
