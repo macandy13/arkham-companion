@@ -31,13 +31,7 @@ import {
 } from './ids';
 import type { GridCell } from './map';
 import { locationAttachments, locationsInPlay } from './board';
-import {
-  enemiesAt,
-  enemiesMatching,
-  enemiesOnTable,
-  nearestEnemies,
-  type EnemyFilter,
-} from './enemies';
+import { enemiesAt, enemiesMatching, nearestEnemies, type EnemyFilter } from './enemies';
 import {
   cluesHeldAt,
   cluesHeldByGroup,
@@ -422,8 +416,8 @@ export type AbilityEffect = Templated<AbilityCommand>;
  * `conditionHolds`.
  */
 export type AbilityCondition =
-  /** The current act is one of `acts`, by code. */
-  | { kind: 'currentAct'; acts: readonly CardCode[] }
+  /** The current act or agenda (`deck`) is one of `codes` ("If it is act 3", "if it is agenda 2"). */
+  | { kind: 'currentCard'; deck: 'act' | 'agenda'; codes: readonly CardCode[] }
   /**
    * The investigator the window names has between `min` and `max` of
    * `stat`, both included where given ("if you have no clues"). False in a
@@ -431,10 +425,13 @@ export type AbilityCondition =
    */
   | ({ kind: 'investigatorHas'; stat: InvestigatorStat } & StatRange)
   /**
-   * The number of enemies with `trait` on the table is within the range
-   * ("If there are no [[Cultist]] enemies in play", `enemiesOnTable`).
+   * The number of enemies or investigators the `each…` reference `of` names as the window opens
+   * is within the range, counted as an effect on each of them would repeat ("If there are no
+   * [[Cultist]] enemies in play", "if there is an enemy at your location", "if no enemy is
+   * engaged with you"). A reference that names nothing, such as `windowLocation` in a window
+   * without one, counts none.
    */
-  | ({ kind: 'enemiesInPlay'; trait: Trait } & StatRange)
+  | ({ kind: 'count'; of: RepeatedRef } & StatRange)
   /**
    * `ref` stands for nothing as the window opens ("If there is no such
    * location, Locked Door gains surge"), counted like the effect that names it.
@@ -709,9 +706,9 @@ function conditionHolds(
   opened: OpenedWindow,
 ): boolean {
   switch (condition.kind) {
-    case 'currentAct': {
-      const act = currentCard(state, 'act');
-      return act !== undefined && condition.acts.includes(act.code);
+    case 'currentCard': {
+      const current = currentCard(state, condition.deck);
+      return current !== undefined && condition.codes.includes(current.code);
     }
     case 'investigatorHas': {
       const { investigatorId } = opened;
@@ -720,8 +717,11 @@ function conditionHolds(
       const value = statValue(requireInvestigator(state, investigatorId), condition.stat);
       return inRange(value, condition);
     }
-    case 'enemiesInPlay':
-      return inRange(enemiesOnTable(ctx, state, condition.trait).length, condition);
+    case 'count':
+      return inRange(
+        eachId(ctx, state, condition.of, windowRefs(ctx, state, opened)).length,
+        condition,
+      );
     case 'victoryDisplayHolds':
       return inRange(inVictoryDisplay(ctx, state, condition.filter).length, condition);
     case 'noCandidate': {
@@ -764,20 +764,7 @@ export function resolveEffect(
   effect: AbilityEffect,
   opened: OpenedWindow,
 ): Command[] {
-  const { investigatorId } = opened;
-  const investigator =
-    investigatorId !== undefined && isActiveInvestigator(state, investigatorId)
-      ? requireInvestigator(state, investigatorId)
-      : undefined;
-  const refs: ResolvedRefs = {
-    self: opened.cardId,
-    windowInvestigator: investigator?.id,
-    lead: activeLead(state),
-    windowLocation:
-      opened.locationId ??
-      (investigator && attachableLocation(ctx, state, opened.cardId, investigator)),
-    onlyCopy: (code) => theOnlyCopy(state, code),
-  };
+  const refs = windowRefs(ctx, state, opened);
   const deferred = withDeferredOutcomes(effect, opened);
   const each = repeatedRef(deferred);
   const ids = each === undefined ? [undefined] : eachId(ctx, state, each, refs);
@@ -797,7 +784,8 @@ export function resolveEffect(
     });
   const picked = pickedRef(deferred);
   if (picked === undefined) return commandsFor();
-  if (investigator === undefined) return [];
+  if (refs.windowInvestigator === undefined) return [];
+  const investigator = requireInvestigator(state, refs.windowInvestigator);
   const candidates = candidatesFor(ctx, state, picked, opened.cardId, investigator.locationId);
   const [first, ...others] = candidates;
   if (first === undefined) return [];
@@ -965,7 +953,7 @@ interface ResolvedRefs {
 }
 
 /** A reference that repeats the command, as `eachInvestigator` does. */
-type RepeatedRef = Extract<RelativeCard | RelativeInvestigator, { ref: `each${string}` }>;
+export type RepeatedRef = Extract<RelativeCard | RelativeInvestigator, { ref: `each${string}` }>;
 
 /**
  * The first reference in `effect` that repeats it. An effect holds at most
@@ -1045,6 +1033,24 @@ function eachId(
     default:
       return assertNever(each);
   }
+}
+
+/** What the references of an ability whose window `opened` stand for, before any repetition. */
+function windowRefs(ctx: EngineContext, state: GameState, opened: OpenedWindow): ResolvedRefs {
+  const { investigatorId } = opened;
+  const investigator =
+    investigatorId !== undefined && isActiveInvestigator(state, investigatorId)
+      ? requireInvestigator(state, investigatorId)
+      : undefined;
+  return {
+    self: opened.cardId,
+    windowInvestigator: investigator?.id,
+    lead: activeLead(state),
+    windowLocation:
+      opened.locationId ??
+      (investigator && attachableLocation(ctx, state, opened.cardId, investigator)),
+    onlyCopy: (code) => theOnlyCopy(state, code),
+  };
 }
 
 /** The lead investigator, while they are still in the scenario. */
@@ -1651,11 +1657,19 @@ export function takeHorror(
 }
 
 /**
- * "Each [unengaged] [[trait]] enemy" (`eachEnemy`), which repeats the effect
- * for each, written `eachEnemy({ trait: trait('Ghoul'), unengaged: true })`.
+ * "Each [unengaged] [[trait]] enemy [engaged with you]" (`eachEnemy`), which repeats the effect
+ * for each, written `eachEnemy({ trait: trait('Ghoul'), unengaged: true })` or
+ * `eachEnemy({ engagedWith: { ref: 'windowInvestigator' } })`.
  */
-export function eachEnemy(filter: EnemyFilter = {}): RelativeCard {
+export function eachEnemy(
+  filter: EnemyFilter & { engagedWith?: RelativeInvestigator } = {},
+): Extract<RelativeCard, { ref: 'eachEnemy' }> {
   return { ref: 'eachEnemy', ...filter };
+}
+
+/** "Each enemy at [location]" (`eachEnemyAt`), engaged ones included, which repeats the effect for each. */
+export function eachEnemyAt(location: RelativeCard): Extract<RelativeCard, { ref: 'eachEnemyAt' }> {
+  return { ref: 'eachEnemyAt', location };
 }
 
 /**
@@ -1695,7 +1709,9 @@ export function moveEnemyTowards(enemy: RelativeCard, location: RelativeCard): A
 }
 
 /** "Each investigator at [location]" (`eachInvestigatorAt`), which repeats the effect for each. */
-export function eachInvestigatorAt(location: RelativeCard): RelativeInvestigator {
+export function eachInvestigatorAt(
+  location: RelativeCard,
+): Extract<RelativeInvestigator, { ref: 'eachInvestigatorAt' }> {
   return { ref: 'eachInvestigatorAt', location };
 }
 
@@ -2012,7 +2028,12 @@ export function leadDrawsDiscardingUntil(match: EncounterMatch): AbilityEffect {
  * `acts`, written `duringAct([codes.whatHaveYouDone], whenAdvanced(…))`.
  */
 export function duringAct(acts: readonly CardCode[], ability: Ability): Ability {
-  return { ...ability, condition: { kind: 'currentAct', acts } };
+  return { ...ability, condition: { kind: 'currentCard', deck: 'act', codes: acts } };
+}
+
+/** "If it is agenda 2, …": `ability` fires only while the current agenda is one of `agendas`, like `duringAct`. */
+export function duringAgenda(agendas: readonly CardCode[], ability: Ability): Ability {
+  return { ...ability, condition: { kind: 'currentCard', deck: 'agenda', codes: agendas } };
 }
 
 /**
@@ -2030,7 +2051,17 @@ export function ifYouHave(stat: InvestigatorStat, range: StatRange, ability: Abi
  * `ifEnemiesInPlay(trait('Cultist'), { max: 0 }, whenRevealed(…))` (Mysterious Chanting).
  */
 export function ifEnemiesInPlay(trait: Trait, range: StatRange, ability: Ability): Ability {
-  return { ...ability, condition: { kind: 'enemiesInPlay', trait, ...range } };
+  return ifThereAre(eachEnemy({ trait }), range, ability);
+}
+
+/**
+ * "If there is an enemy at your location, …", "if no enemy is engaged with you, …": `ability`
+ * fires only while the number of enemies or investigators the `each…` reference `of` names is
+ * within `range`, written `ifThereAre(eachEnemyAt({ ref: 'windowLocation' }), { min: 1 }, …)` or
+ * `ifThereAre(eachEnemy({ engagedWith: { ref: 'windowInvestigator' } }), { max: 0 }, …)`.
+ */
+export function ifThereAre(of: RepeatedRef, range: StatRange, ability: Ability): Ability {
+  return { ...ability, condition: { kind: 'count', of, ...range } };
 }
 
 /**
