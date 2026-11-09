@@ -1,4 +1,4 @@
-import { expect, test } from '../fixtures/test';
+import { expect, isCardList, test } from '../fixtures/test';
 
 // Situations in the new game wizard, each photographed as it ends (coding guidelines §3).
 
@@ -83,10 +83,7 @@ test('the investigators step when the card data could not be loaded, with its re
   page,
 }) => {
   // A first start without network: nothing is cached, so the wizard has no investigators.
-  await page.route(
-    (url) => url.pathname === '/api/public/cards/',
-    (route) => route.abort(),
-  );
+  await page.route(isCardList, (route) => route.abort());
   await page.goto('/#/new');
   await page.getByRole('link', { name: 'Quick game' }).first().click();
   await page.getByRole('button', { name: 'Next' }).click();

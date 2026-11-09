@@ -23,7 +23,10 @@ export function useCatalog(source: CatalogSource): CatalogState {
     };
     source().then(
       (catalog) => current && setState({ status: 'ready', catalog }),
-      () => current && setState({ status: 'failed', retry }),
+      (error: unknown) => {
+        console.warn('Could not load the card catalog.', error);
+        if (current) setState({ status: 'failed', retry });
+      },
     );
     return () => {
       current = false;
@@ -36,7 +39,8 @@ export function useCatalog(source: CatalogSource): CatalogState {
 /**
  * `load` for the card language of the moment, loaded once per language while the app runs, so
  * every screen that opens shares the first load instead of asking ArkhamDB again. A failed load
- * is forgotten, so a retry asks again.
+ * is forgotten, so a retry asks again. A load that fell back to the cached copy offline is kept:
+ * the catalog changes only with new packs, so the next start refreshing it is soon enough.
  */
 export function sharedCatalog(
   load: (language: CardLanguage) => Promise<CardCatalog>,

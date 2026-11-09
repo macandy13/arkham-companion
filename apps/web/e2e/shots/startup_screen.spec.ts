@@ -1,9 +1,6 @@
-import { expect, test } from '../fixtures/test';
+import { expect, isCardList, test } from '../fixtures/test';
 
 // The loading screen and the inline spinner (coding guidelines §3).
-
-/** ArkhamDB's card list; while its answer is held, the card data stays on its way. */
-const isCardList = (url: URL) => url.pathname === '/api/public/cards/';
 
 test('the loading screen with the games loaded and the card data on its way', async ({ page }) => {
   await page.route(isCardList, () => undefined);
