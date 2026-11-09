@@ -147,7 +147,7 @@ export function SettingsScreen({ packs = [] }: SettingsScreenProps) {
         </section>
         <section aria-labelledby="settings-reliance">
           <h2 id="settings-reliance">{t('settings.reliance')}</h2>
-          <fieldset aria-label={t('reliance.title')}>
+          <fieldset aria-label={t('reliance.title')} data-ruled>
             {RELIANCES.map((reliance) => (
               <label key={reliance}>
                 <input

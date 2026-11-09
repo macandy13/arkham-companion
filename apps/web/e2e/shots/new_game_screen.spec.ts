@@ -65,7 +65,7 @@ test('the investigators step with two picked, their names pinned beside the next
   await expect(page.getByText('Fake Guardian and Fake Seeker')).toBeVisible();
 });
 
-test('the summary of a quick game with two investigators', async ({ page }) => {
+test('the summary of a quick game with two investigators', { tag: '@shot' }, async ({ page }) => {
   await page.goto('/#/new');
   await page.getByRole('link', { name: 'Quick game' }).first().click();
   await page.getByRole('button', { name: 'Next' }).click();

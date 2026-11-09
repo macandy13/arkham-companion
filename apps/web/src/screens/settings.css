@@ -111,7 +111,7 @@
  * A choice of a few long answers ("What the app tells you", MD.3g): its options as ruled lines,
  * each with a mark drawn in ink, an open ring filled at its centre once chosen.
  */
-#settings fieldset:not([data-picks], [data-segmented]) {
+#settings fieldset[data-ruled] {
   display: grid;
   justify-self: stretch;
   margin: 0;
@@ -119,7 +119,7 @@
   border: 0;
 }
 
-#settings fieldset:not([data-picks], [data-segmented]) > label {
+#settings fieldset[data-ruled] > label {
   display: flex;
   align-items: center;
   gap: var(--space-3);
@@ -131,11 +131,11 @@
   cursor: pointer;
 }
 
-#settings fieldset:not([data-picks], [data-segmented]) > label:last-child {
+#settings fieldset[data-ruled] > label:last-child {
   border-bottom: 0;
 }
 
-#settings fieldset:not([data-picks], [data-segmented]) input {
+#settings fieldset[data-ruled] input {
   flex: none;
   width: var(--form-mark-size);
   height: var(--form-mark-size);
@@ -146,11 +146,11 @@
   appearance: none;
 }
 
-#settings fieldset:not([data-picks], [data-segmented]) input:checked {
+#settings fieldset[data-ruled] input:checked {
   background: radial-gradient(var(--color-ink) 45%, transparent 50%);
 }
 
-#settings fieldset:not([data-picks], [data-segmented]) input:focus-visible {
+#settings fieldset[data-ruled] input:focus-visible {
   outline: var(--focus-ring-width) solid var(--color-accent);
 }
 

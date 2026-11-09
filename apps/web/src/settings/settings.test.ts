@@ -61,7 +61,7 @@ describe('settings storage', () => {
         cardTheme: 'scans',
         enemyTokens: 'initials',
         chaosDraw: 'nobody',
-        reliance: 'everything',
+        reliance: 'telepathy',
       }),
     );
 
