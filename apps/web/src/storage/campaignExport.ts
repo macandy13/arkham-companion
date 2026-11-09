@@ -10,7 +10,6 @@ import {
   type StoredEvent,
 } from '@arkham/engine';
 import {
-  GameImportError,
   exportedEvent,
   exportedGame,
   exportedGameSchema,
@@ -18,6 +17,7 @@ import {
   readExportJson,
   toImportedGame,
 } from './gameExport';
+import { GameImportError } from './importError';
 
 /** Marker of a campaign's export, beside a single game's (`gameExport`). */
 const FORMAT = 'arkham-companion-campaign';

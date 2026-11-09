@@ -15,15 +15,22 @@ on:
 
 permissions:
   contents: read
+  # The save job downloads the shards' artifacts with `gh run download`.
+  actions: read
 
-# Only the newest commit matters: PRs are built on main's tip.
-concurrency:
-  group: main-pictures
-  cancel-in-progress: true
+# No concurrency limit: main often takes a merge a minute, and a run that a newer one cancelled
+# leaves its commit without pictures, so every PR built on it photographed its base itself.
 
+# Split into three shards like the preview's picture jobs, so a PR pushed right after a merge waits
+# about as long for its base as for its own pictures (preview.yml `base-cache`); the save job then
+# caches the shards' reports and pictures as one entry.
 jobs:
-  pictures:
+  lookup:
     runs-on: ubuntu-latest
+    outputs:
+      key: ${{ steps.cache.outputs.key }}
+      path: ${{ steps.cache.outputs.path }}
+      cached: ${{ steps.cached.outputs.cache-hit }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -36,23 +43,64 @@ jobs:
           key: ${{ steps.cache.outputs.key }}
           path: ${{ steps.cache.outputs.path }}
           lookup-only: true
-      - if: steps.cached.outputs.cache-hit != 'true'
-        uses: ./base/.github/actions/e2e_setup
+
+  pictures:
+    needs: lookup
+    if: needs.lookup.outputs.cached != 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        shard: [1, 2, 3]
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          path: base
+      - uses: ./base/.github/actions/e2e_setup
         with:
           dir: base
-          cache-name: main
+          cache-name: main-${{ matrix.shard }}
       # A failing spec is cached too: the preview shows it as not photographed on the base.
-      - if: steps.cached.outputs.cache-hit != 'true'
-        working-directory: base
-        timeout-minutes: 30
+      - working-directory: base
+        timeout-minutes: 20
         continue-on-error: true
+        env:
+          SHARD: ${{ matrix.shard }}
         run: |
-          pnpm --filter @arkham/web e2e:pictures --workers=100% || echo "::warning::Some specs failed; they are cached as not photographed."
+          pnpm --filter @arkham/web e2e:pictures --workers=100% --shard="$SHARD/3" || echo "::warning::Some specs failed; they are cached as not photographed."
           mkdir -p apps/web/screencasts/pictures
-          mv apps/web/screencasts/report.json apps/web/screencasts/pictures/main.json
-      # Without a report the run broke off; nothing is cached, so PRs photograph their base.
-      - if: steps.cached.outputs.cache-hit != 'true' && hashFiles('base/apps/web/screencasts/pictures/main.json') != ''
+          mv apps/web/screencasts/report.json "apps/web/screencasts/pictures/$SHARD.json"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: main-pictures-${{ matrix.shard }}
+          # package.json always exists, so the artifact's root stays base/apps/web.
+          path: |
+            base/apps/web/package.json
+            base/apps/web/screencasts/pictures/
+            base/apps/web/test-results/**/*.png
+          if-no-files-found: ignore
+          retention-days: 1
+
+  save:
+    needs: [lookup, pictures]
+    if: ${{ !cancelled() && needs.lookup.outputs.cached != 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          shopt -s nullglob
+          mkdir -p base/apps/web
+          gh run download "$GITHUB_RUN_ID" -R "$GITHUB_REPOSITORY" -p 'main-pictures-*' -D "$RUNNER_TEMP/shards" ||
+            echo "::warning::No shard artifacts."
+          for shard in "$RUNNER_TEMP"/shards/*/; do cp -r "$shard." base/apps/web; done
+      # Only a whole run is cached: without a shard's report its specs would all show on every PR.
+      - id: whole
+        run: |
+          reports=(base/apps/web/screencasts/pictures/*.json)
+          [ -e "${reports[0]}" ] && [ "${#reports[@]}" -eq 3 ] && echo "whole=true" >> "$GITHUB_OUTPUT" ||
+            echo "::warning::Not every shard reported; nothing is cached, so PRs photograph their base."
+      - if: steps.whole.outputs.whole == 'true'
         uses: actions/cache/save@v6
         with:
-          key: ${{ steps.cache.outputs.key }}
-          path: ${{ steps.cache.outputs.path }}
+          key: ${{ needs.lookup.outputs.key }}
+          path: ${{ needs.lookup.outputs.path }}

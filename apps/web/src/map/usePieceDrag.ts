@@ -26,7 +26,7 @@ export interface PieceDrag<Piece> {
  * down on a piece, `dragged` follows it; letting go calls `onDrop` with the piece and the point
  * (in the drawing and on the screen, for a drop outside the drawing), and the caller decides what
  * a drop there means. Letting go about where it went down (`isTap`) is a tap instead, which calls
- * `onTap` with the piece: when it returns true the tap was the piece's own, and the click it
+ * `onTap` with the piece and the event (whose element and time tell a double tap): when it returns true the tap was the piece's own, and the click it
  * makes goes no further, so the tile under the piece does not open as well. A drop that means
  * nothing, or a refused one, leaves the piece where it was, since the board still shows it where
  * the game has it; the screen's rejection toast gives the reason for a refusal, so the drop needs
@@ -35,7 +35,7 @@ export interface PieceDrag<Piece> {
 export function usePieceDrag<Piece>(
   svg: RefObject<SVGSVGElement | null>,
   onDrop: (piece: Piece, point: Point, client: Point) => void,
-  onTap: (piece: Piece) => boolean,
+  onTap: (piece: Piece, event: PointerEvent<SVGGElement>) => boolean,
 ): PieceDrag<Piece> {
   const [dragged, setDragged] = useState<{ piece: Piece; at: Point; client: Point }>();
   const pressedAt = useRef<Point>(undefined);
@@ -68,7 +68,7 @@ export function usePieceDrag<Piece>(
         setDragged(undefined);
         const pressed = pressedAt.current;
         const released = { x: event.clientX, y: event.clientY };
-        tapTaken.current = pressed !== undefined && isTap(pressed, released) && onTap(piece);
+        tapTaken.current = pressed !== undefined && isTap(pressed, released) && onTap(piece, event);
         if (tapTaken.current) return;
         const point = toDrawing(event);
         if (point) onDrop(piece, point, released);

@@ -16,7 +16,7 @@ import type {
   ResolveEffect,
   TestSkill,
 } from './commands';
-import { cardsWithActiveAbilities } from './doom';
+import { cardsInPlay, cardsWithActiveAbilities } from './doom';
 import { cardOptionLabels } from './decisions';
 import type { Event } from './events';
 import type { TraumaKind } from './campaign/campaign_log';
@@ -44,6 +44,8 @@ import {
   cardsInZone,
   cardsInZones,
   currentCard,
+  locationOfCard,
+  matchesCard,
   requireCard,
   theOnlyCopy,
   type CardFilter,
@@ -243,6 +245,13 @@ export type RelativeCard =
    * when no card matches.
    */
   | ({ ref: 'eachInZone'; zone: Templated<Zone> | readonly Templated<Zone>[] } & CardFilter)
+  /**
+   * Each card in play (`isInPlay`) its filter matches (`CardFilter`), in card order: "if the
+   * Masked Hunter is in play". With `at`, only those at one of the locations it names
+   * (`locationOfCard`: the location itself, a card placed there, and what an investigator there
+   * is engaged with, controls or has in their threat area): "if Lita Chantler is at your location".
+   */
+  | ({ ref: 'eachInPlay'; at?: RelativeCard | readonly RelativeCard[] } & CardFilter)
   /**
    * The enemy its filter matches (`EnemyFilter`) nearest to the location of the investigator the
    * window names ("the nearest [[Cultist]] enemy", `nearestEnemies`); none when there is no such
@@ -1013,7 +1022,7 @@ function repeatedRef(effect: unknown): RepeatedRef | undefined {
 }
 
 function isRepeatedRef(ref: RelativeCard | RelativeInvestigator): ref is RepeatedRef {
-  return ref.ref === 'eachInvestigator' || ref.ref === 'eachEnemy' || ref.ref === 'eachInZone';
+  return ref.ref.startsWith('each');
 }
 
 /** The first reference in `effect`, depth first, that `pick` returns something for. */
@@ -1079,6 +1088,21 @@ function eachId(
         return resolved === undefined ? [] : [resolved];
       });
       return cardsInZones(ctx, state, zones, each).map((card) => card.id);
+    }
+    case 'eachInPlay': {
+      const there =
+        each.at === undefined
+          ? undefined
+          : [each.at]
+              .flat()
+              .map((location) => resolveRefs(location, refs) as InstanceId | undefined);
+      return cardsInPlay(state)
+        .filter((card) => matchesCard(ctx, card, each))
+        .filter((card) => {
+          const location = locationOfCard(state, card);
+          return there === undefined || (location !== undefined && there.includes(location));
+        })
+        .map((card) => card.id);
     }
     default:
       return assertNever(each);
@@ -1164,6 +1188,7 @@ function resolveRefs(value: unknown, refs: ResolvedRefs): unknown {
       case 'eachInvestigator':
       case 'eachEnemy':
       case 'eachInZone':
+      case 'eachInPlay':
         return refs.each;
       case 'nearestEnemy':
       case 'locationWith':
@@ -1191,7 +1216,9 @@ export function missingCopies(state: GameState, effect: AbilityEffect): CardCode
     } else if (isRelative(value)) {
       // A location of a list ("in the Hallway or Parlor") may be out of play without skipping the effect.
       if (
-        (value.ref === 'eachEnemy' || value.ref === 'eachInvestigator') &&
+        (value.ref === 'eachEnemy' ||
+          value.ref === 'eachInvestigator' ||
+          value.ref === 'eachInPlay') &&
         !Array.isArray(value.at)
       )
         walk(value.at);
@@ -1734,6 +1761,26 @@ export function eachEnemy(
   return { ref: 'eachEnemy', ...filter };
 }
 
+/** "The lead investigator" (`lead`). */
+export function lead(): RelativeInvestigator {
+  return { ref: 'lead' };
+}
+
+/** "This card", "it": the card that has the ability (`self`). */
+export function self(): RelativeCard {
+  return { ref: 'self' };
+}
+
+/**
+ * Each card in play `filter` matches (`eachInPlay`), only those at the locations `at` names when
+ * given: `eachInPlay({ code: codes.litaChantler, at: yourLocation() })`.
+ */
+export function eachInPlay(
+  filter: CardFilter & { at?: RelativeCard | readonly RelativeCard[] } = {},
+): Extract<RelativeCard, { ref: 'eachInPlay' }> {
+  return { ref: 'eachInPlay', ...filter };
+}
+
 /** "You": the investigator the window names (`windowInvestigator`), such as the drawer. */
 export function you(): RelativeInvestigator {
   return { ref: 'windowInvestigator' };
@@ -2126,10 +2173,28 @@ export function duringAgenda(agendas: readonly CardCode[], ability: Ability): Ab
  * `ifYouHave('clues', { max: 0 }, whenRevealed(gainSurge()))` (False Lead).
  */
 export function ifYouHave(stat: InvestigatorStat, range: StatRange, ability: Ability): Ability {
-  return {
-    ...ability,
-    condition: { kind: 'valueOf', value: { kind: 'stat', stat, who: you() }, ...range },
-  };
+  return ifValue(statOf(you(), stat), range, ability);
+}
+
+/**
+ * "If the lead investigator has no clues, …", "if there are no clues on it, …": `ability` fires
+ * only while `value` is within `range`, written `ifValue(statOf(lead(), 'clues'), { max: 0 }, …)`
+ * or `ifValue(tokensOn(self(), 'clue'), { max: 0 }, …)`. A stat of several investigators
+ * (`eachInvestigator()`) holds only when each of them is in range; "any investigator" is a
+ * `countOf` over `eachInvestigator` instead.
+ */
+export function ifValue(value: Quantity, range: StatRange, ability: Ability): Ability {
+  return { ...ability, condition: { kind: 'valueOf', value, ...range } };
+}
+
+/** A stat of the investigator or investigators `who` names, for `ifValue`. */
+export function statOf(who: RelativeInvestigator, stat: InvestigatorStat): Quantity {
+  return { kind: 'stat', stat, who };
+}
+
+/** The `token`s on the card or cards `on` names, for `ifValue`. */
+export function tokensOn(on: RelativeCard, token: TokenKind): Quantity {
+  return { kind: 'tokens', token, on };
 }
 
 /**

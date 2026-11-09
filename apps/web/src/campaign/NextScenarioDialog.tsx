@@ -9,6 +9,7 @@ import {
   type InvestigatorCode,
   type ReplaceInvestigator,
 } from '@arkham/engine';
+import { CatalogFailed } from '../catalog/CatalogFailed';
 import { useCatalog, type CatalogSource } from '../catalog/useCatalog';
 import type { NextScenarioStart } from '../state/appStore';
 import type { CampaignEntry, ScenarioEntry } from '../scenarios/scenarioCatalog';
@@ -225,7 +226,7 @@ export function NextScenarioDialog({
             {t('wizard.loadingCatalog')}
           </p>
         )}
-        {catalog.status === 'failed' && <p role="alert">{t('wizard.catalogFailed')}</p>}
+        {catalog.status === 'failed' && <CatalogFailed retry={catalog.retry} />}
         {failed && <p role="alert">{t('nextScenario.failed')}</p>}
         <footer>
           <button type="button" onClick={onCancel}>

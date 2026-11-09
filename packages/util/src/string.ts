@@ -57,3 +57,20 @@ export function withoutTrailing(text: string, characters: string): string {
   while (end > 0 && characters.includes(text.charAt(end - 1))) end -= 1;
   return text.slice(0, end);
 }
+
+/**
+ * `text` as a file name stem: every run of characters other than letters and digits becomes one
+ * dash, with none at either end, so the stem holds no path separator or character a file system
+ * reserves (`Night of the Zealot: 1/3` becomes `Night-of-the-Zealot-1-3`). Gives `fallback` when
+ * nothing is left.
+ */
+export function fileStem(text: string, fallback: string): string {
+  // Splitting at the runs and joining the words takes linear time; trimming dashes with an
+  // anchored `-+$` can backtrack on a long run of them (CodeQL js/polynomial-redos).
+  return (
+    text
+      .split(/[^\p{L}\p{N}]+/u)
+      .filter((word) => word !== '')
+      .join('-') || fallback
+  );
+}

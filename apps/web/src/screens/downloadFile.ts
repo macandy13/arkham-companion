@@ -1,4 +1,5 @@
 import type { StoreApi } from 'zustand/vanilla';
+import { fileStem } from '@arkham/util';
 import type { CampaignId, GameId } from '@arkham/engine';
 import type { AppState } from '../state/appStore';
 
@@ -24,7 +25,10 @@ export async function downloadGameExport(
   gameId: GameId,
   title: string,
 ): Promise<void> {
-  downloadTextFile(`${toFileStem(title)}.arkham.json`, await store.getState().exportGame(gameId));
+  downloadTextFile(
+    `${fileStem(title, 'game')}.arkham.json`,
+    await store.getState().exportGame(gameId),
+  );
 }
 
 /**
@@ -37,12 +41,7 @@ export async function downloadCampaignExport(
   title: string,
 ): Promise<void> {
   downloadTextFile(
-    `${toFileStem(title)}.arkham.json`,
+    `${fileStem(title, 'campaign')}.arkham.json`,
     await store.getState().exportCampaign(campaignId),
   );
-}
-
-/** Turns a game title into a safe file name stem (no path separators or reserved characters). */
-export function toFileStem(title: string): string {
-  return title.replace(/[^\p{L}\p{N}]+/gu, '-').replace(/^-+|-+$/g, '') || 'game';
 }

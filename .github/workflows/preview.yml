@@ -35,7 +35,7 @@ jobs:
       web: ${{ steps.filter.outputs.web }}
       base-key: ${{ steps.base.outputs.key }}
       base-path: ${{ steps.base.outputs.path }}
-      base-cached: ${{ steps.base-cached.outputs.cache-hit }}
+      base-sha: ${{ steps.base-sha.outputs.sha }}
     steps:
       # The merge commit and its first parent, the base it was built on (the event's base sha can
       # lag behind it).
@@ -52,20 +52,52 @@ jobs:
               - '.github/workflows/preview.yml'
               - '.github/actions/e2e_setup/**'
               - '.github/actions/main_pictures/**'
-      # main-pictures.yml has usually photographed the base already.
       - id: base
         if: steps.filter.outputs.web == 'true'
         uses: ./.github/actions/main_pictures
         with:
           dir: .
           rev: HEAD^1
-      - id: base-cached
-        if: steps.filter.outputs.web == 'true'
-        uses: actions/cache/restore@v6
-        with:
-          key: ${{ steps.base.outputs.key }}
-          path: ${{ steps.base.outputs.path }}
-          lookup-only: true
+      - id: base-sha
+        run: echo "sha=$(git rev-parse HEAD^1)" >> "$GITHUB_OUTPUT"
+
+  # Whether main-pictures.yml has cached the base's pictures. A PR is often pushed right after a
+  # merge, while main's run for it is still photographing, so this waits for that run (up to 8
+  # minutes; a sharded run takes about 4) rather than photographing the base again; pictures-head runs meanwhile.
+  # When main's run fails late, the base is photographed that much later than it used to be.
+  base-cache:
+    needs: changes
+    if: needs.changes.outputs.web == 'true'
+    runs-on: ubuntu-latest
+    outputs:
+      cached: ${{ steps.wait.outputs.cached }}
+    steps:
+      - id: wait
+        env:
+          GH_TOKEN: ${{ github.token }}
+          KEY: ${{ needs.changes.outputs.base-key }}
+          SHA: ${{ needs.changes.outputs.base-sha }}
+        run: |
+          # A failed query counts as "no": photographing the base is the safe side.
+          cached() {
+            local n
+            n=$(gh api "repos/$GITHUB_REPOSITORY/actions/caches?key=$KEY&ref=refs/heads/main" --jq .total_count) || return 1
+            [ "$n" -gt 0 ]
+          }
+          photographing() {
+            local n
+            n=$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/main-pictures.yml/runs?head_sha=$SHA" \
+              --jq '[.workflow_runs[] | select(.status != "completed")] | length') || return 1
+            [ "$n" -gt 0 ]
+          }
+          for _ in $(seq 32); do
+            if cached; then echo cached=true >> "$GITHUB_OUTPUT"; exit 0; fi
+            photographing || break
+            sleep 15
+          done
+          # The run may have saved and finished between the two queries.
+          if cached; then echo cached=true >> "$GITHUB_OUTPUT"; exit 0; fi
+          echo cached=false >> "$GITHUB_OUTPUT"
 
   # Photographs the base commit's specs when main-pictures.yml hasn't cached them (yet), so only
   # the specs whose picture (a shot, or a flow's end state) this PR changes are shown. A checkout
@@ -74,8 +106,8 @@ jobs:
   # would fail its run). Its report names its pictures under `base/`, where the preview job
   # unpacks them. Specs it doesn't photograph are all shown. Split into shards like pictures-head.
   pictures-base:
-    needs: changes
-    if: needs.changes.outputs.web == 'true' && needs.changes.outputs.base-cached != 'true'
+    needs: [changes, base-cache]
+    if: needs.changes.outputs.web == 'true' && needs.base-cache.outputs.cached != 'true'
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -147,14 +179,14 @@ jobs:
           retention-days: 1
 
   preview:
-    needs: [changes, pictures-base, pictures-head]
+    needs: [changes, base-cache, pictures-base, pictures-head]
     # Also when the picture jobs are skipped (no apps/web change, or the base is cached) or the PR
     # closed, to update or remove the preview.
     if: ${{ !cancelled() && github.event.pull_request.head.repo.full_name == github.repository }}
     runs-on: ubuntu-latest
     env:
       WEB: ${{ needs.changes.outputs.web }}
-      BASE_CACHED: ${{ needs.changes.outputs.base-cached }}
+      BASE_CACHED: ${{ needs.base-cache.outputs.cached }}
     steps:
       - uses: actions/checkout@v7
       - if: github.event.action != 'closed'
@@ -171,7 +203,7 @@ jobs:
         with:
           key: ${{ needs.changes.outputs.base-key }}
           path: ${{ needs.changes.outputs.base-path }}
-      # Evicted since the changes job found it: pictures-base was skipped, so nothing is left to compare with.
+      # Evicted since base-cache found it: pictures-base was skipped, so nothing is left to compare with.
       - if: env.WEB == 'true' && env.BASE_CACHED == 'true' && steps.base-cache.outputs.cache-hit != 'true'
         run: echo "::warning::The base pictures left the cache; every spec is shown."
       - if: env.WEB == 'true'

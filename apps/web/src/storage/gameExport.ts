@@ -7,6 +7,7 @@ import {
   type PhaseStepId,
   type StoredEvent,
 } from '@arkham/engine';
+import { GameImportError } from './importError';
 
 /** Marker so arbitrary JSON files are rejected early with a clear reason. */
 const FORMAT = 'arkham-companion-game';
@@ -52,17 +53,6 @@ const exportSchema = exportedGameSchema.extend({
   format: z.literal(FORMAT),
   stateVersion: z.number().int().positive(),
 });
-
-/** Why `parseGameExport` refused a file; the UI maps it to a translated message. */
-export type GameImportFailure = 'invalid' | 'newerVersion';
-
-/** Thrown by `parseGameExport`; `reason` is a stable code, the message is for developers only. */
-export class GameImportError extends Error {
-  constructor(readonly reason: GameImportFailure) {
-    super(`Cannot import game: ${reason}`);
-    this.name = 'GameImportError';
-  }
-}
 
 /**
  * Serialises a game's metadata and event log to the JSON export format. `stateVersion` is
