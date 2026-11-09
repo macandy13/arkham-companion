@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Link, useNavigate, useSearchParams } from 'react-router';
 import type { StoreApi } from 'zustand/vanilla';
 import { cardDbWith, investigatorCardStats } from '@arkham/engine';
+import { CatalogFailed } from '../catalog/CatalogFailed';
 import { useCatalog, type CatalogSource } from '../catalog/useCatalog';
 import { InvestigatorPicker } from '../picker/InvestigatorPicker';
 import { loadSettings } from '../settings/settings';
@@ -195,9 +196,7 @@ function Wizard({ store, catalogSource, mode, step }: WizardProps) {
             {t('wizard.loadingCatalog')}
           </p>
         )}
-        {needsCatalog && catalog.status === 'failed' && (
-          <p role="alert">{t('wizard.catalogFailed')}</p>
-        )}
+        {needsCatalog && catalog.status === 'failed' && <CatalogFailed retry={catalog.retry} />}
         {step === 'investigators' && catalog.status === 'ready' && (
           <InvestigatorPicker
             catalog={catalog.catalog}

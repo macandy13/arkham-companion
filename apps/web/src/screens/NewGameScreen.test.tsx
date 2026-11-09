@@ -254,6 +254,20 @@ describe('NewGameScreen', () => {
     expect((await screen.findByRole('alert')).textContent).toContain('could not be loaded');
   });
 
+  it('loads the catalog again when the players retry a failed load', async () => {
+    const source = vi
+      .fn<() => Promise<CardCatalog>>()
+      .mockRejectedValueOnce(new Error('offline'))
+      .mockResolvedValueOnce(catalog);
+    renderWizard('/new?mode=quick&step=investigators', source);
+    await screen.findByRole('alert');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
+
+    expect(await screen.findByRole('list', { name: 'Investigators' })).toBeTruthy();
+    expect(screen.queryByRole('alert')).toBeNull();
+  });
+
   it('shows an alert and stays on the summary when the game cannot be started', async () => {
     const { store } = renderWizard('/new?mode=quick&step=investigators');
     await screen.findByRole('list', { name: 'Investigators' });
