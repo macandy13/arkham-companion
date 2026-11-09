@@ -127,7 +127,7 @@ function samePicture(headPath: string, basePath: string): boolean {
 
 /**
  * Where `render` keeps, for each picture it shows, the base's picture and pixelmatch's map of the
- * differing pixels next to the PR's (`DIFF_DIR` under its output, published with the preview), so
+ * differing pixels next to the PR's (`diff/` under its output, published with the preview), so
  * a picture shown without a visible change can be checked against what it was compared with.
  */
 let diffDir: string | undefined;

@@ -100,7 +100,7 @@ const COMPLETE_MARK = join(CARD_PICTURE_DIR, 'complete');
  * such failure the rest are skipped: ArkhamDB stops answering a CI runner after a few dozen
  * pictures, and waiting out every timeout cost a run eight minutes. CI keeps what this run got,
  * and a later run fetches the rest.
- * With `CARD_PICTURES_OFFLINE` set it downloads nothing: the preview's picture runs compare the
+ * With `CARD_PICTURES_OFFLINE=1` it downloads nothing: the preview's picture runs compare the
  * base's pictures with the PR's, so both must show exactly the set CI restored, not whatever each
  * runner managed to download.
  */
@@ -109,7 +109,7 @@ export default async function fetchCardPictures(): Promise<void> {
   const queue = [...e2ePictures(), ...campaignKeyArts].filter(
     (path) => localCardPicture(path) === undefined,
   );
-  if (process.env.CARD_PICTURES_OFFLINE) {
+  if (process.env.CARD_PICTURES_OFFLINE === '1') {
     if (queue.length > 0)
       console.warn(`${queue.length} card pictures are not here; their cards show the pattern.`);
     return;

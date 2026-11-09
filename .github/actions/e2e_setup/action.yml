@@ -33,8 +33,12 @@ runs:
       with:
         path: apps/web/e2e/.card_pictures
         key: card-pictures-complete-${{ hashFiles(format('{0}/packages/scenarios/src/the_gathering/cards.ts', inputs.dir), format('{0}/packages/scenarios/src/the_midnight_masks/cards.ts', inputs.dir), format('{0}/packages/scenarios/src/the_devourer_below/cards.ts', inputs.dir), format('{0}/packages/scenarios/src/card_builders.ts', inputs.dir), format('{0}/apps/web/e2e/fixtures/card_pictures.ts', inputs.dir), format('{0}/apps/web/src/catalog/campaignKeyArt.ts', inputs.dir)) }}
-        # A PR that changes which pictures the tests name has no set of its own yet; the newest
-        # complete one is then what its base restores too.
+        # A PR that changes which pictures the tests name has no set of its own yet and restores
+        # the newest complete one. Its base restores its own key when one exists, so the two
+        # sides can differ in exactly the pictures the PR adds or removes, which is a real change.
+        # On a push to main that changes the card lists, main-pictures can run before ci.yml has
+        # saved the new set and photograph main with the older one; the next push to main fixes
+        # that entry.
         restore-keys: card-pictures-complete-
     - shell: bash
       env:
