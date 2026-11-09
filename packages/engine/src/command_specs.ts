@@ -66,6 +66,7 @@ import {
   handleReleaseChaosToken,
   handleSealChaosToken,
   handlePlaceDoom,
+  handleRemoveDoom,
   handlePlaceTokens,
 } from './handle_scenario';
 import { handleStartScenario } from './handle_start_scenario';
@@ -225,6 +226,7 @@ const COMMAND_SPECS: CommandSpecs = {
   DiscoverClues: { handle: handleDiscoverClues },
   PlaceClues: { handle: (_ctx, state, command) => handlePlaceClues(state, command) },
   PlaceDoom: { handle: (_ctx, state, command) => handlePlaceDoom(state, command) },
+  RemoveDoom: { handle: (_ctx, state, command) => handleRemoveDoom(state, command) },
   ChangeChaosBag: { handle: (_ctx, state, command) => handleChangeChaosBag(state, command) },
   SealChaosToken: { handle: (_ctx, state, command) => handleSealChaosToken(state, command) },
   ReleaseChaosToken: {

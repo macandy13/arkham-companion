@@ -330,6 +330,7 @@ export type AbilityCommand =
           | 'DiscardAsset'
           | 'TakeDamageAndHorror'
           | 'PlaceDoom'
+          | 'RemoveDoom'
           | 'CheckDoomThreshold'
           | 'PlaceTokens'
           | 'SpendCluesAsGroup'
@@ -1794,6 +1795,21 @@ export function placeDoomOn(card: RelativeCard, amount: number): AbilityEffect {
 /** "The nearest [[trait]] enemy", or the nearest enemy without a trait (`{ ref: 'nearestEnemy' }`). */
 export function nearestEnemy(trait?: Trait): RelativeCard {
   return trait === undefined ? { ref: 'nearestEnemy' } : { ref: 'nearestEnemy', trait };
+}
+
+/**
+ * "Remove N doom from the current agenda" (`RemoveDoom`), or `'all'` of it; as much as there is.
+ */
+export function removeDoomFromAgenda(amount: number | 'all'): AbilityEffect {
+  return { type: 'RemoveDoom', amount };
+}
+
+/**
+ * "Remove all doom from it" or "remove 1 doom from each [[Cultist]] enemy" (`RemoveDoom`):
+ * `removeDoomFrom(eachEnemy({ trait: trait('Cultist') }), 1)`, as much as each card holds.
+ */
+export function removeDoomFrom(card: RelativeCard, amount: number | 'all'): AbilityEffect {
+  return { type: 'RemoveDoom', cardId: card, amount };
 }
 
 /** "Place N doom on it": doom on the card with the ability. */

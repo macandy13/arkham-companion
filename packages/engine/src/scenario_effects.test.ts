@@ -2,10 +2,13 @@ import { describe, expect, it } from 'vitest';
 import {
   advanceAgenda,
   afterEntering,
+  atLocation,
   blankAgenda,
+  blankEnemy,
   blankLocation,
   blankTreachery,
   cardCode,
+  eachEnemy,
   encounterDeck,
   encounterDiscard,
   execute,
@@ -16,14 +19,17 @@ import {
   newGame,
   onlyCopy,
   removeConnection,
+  removeDoomFrom,
+  removeDoomFromAgenda,
   setAside,
   shuffleSelfIntoEncounterDeck,
   shuffleSetAsideIntoEncounterDeck,
+  trait,
   whenRevealed,
   type Command,
 } from './index';
 import { requireInvestigator } from './investigators';
-import { stateAfter } from '../test/utils';
+import { rejectionFrom, stateAfter } from '../test/utils';
 
 const hall = instanceId('hall');
 const study = instanceId('study');
@@ -166,5 +172,75 @@ describe('card effects that shuffle cards into the encounter deck', () => {
     expect(after.cards[omen]?.zone).toEqual(encounterDiscard);
     expect(after.cards[filler]?.zone).toEqual(encounterDeck);
     expect(events.map((event) => event.type)).not.toContain('DeckShuffled');
+  });
+});
+
+describe('card effects that remove doom', () => {
+  const agenda = instanceId('agenda');
+
+  it.each([
+    { removes: 1, before: 3, after: 2 },
+    { removes: 2, before: 1, after: 0 },
+    { removes: 1, before: 0, after: 0 },
+    { removes: 'all', before: 3, after: 0 },
+  ] as const)(
+    'leaves $after of $before doom on the agenda when the attic removes $removes',
+    ({ removes, before, after }) => {
+      /** "After you enter the attic: remove N doom from the current agenda." */
+      const atticCard = blankLocation('attic', {
+        abilities: [afterEntering(removeDoomFromAgenda(removes))],
+      });
+      const { context, state } = newGame()
+        .withAgenda(agenda, blankAgenda('agenda', fixed(5)))
+        .withLocation(hall, blankLocation('hall'), { revealed: true })
+        .withLocation(attic, atticCard, { revealed: true })
+        .withInvestigator(alice, { locationId: hall })
+        .start();
+      const withDoom =
+        before === 0 ? state : stateAfter(context, state, { type: 'PlaceDoom', amount: before });
+
+      const moved = stateAfter(context, withDoom, aliceEntersAttic);
+
+      expect(requireInvestigator(moved, alice)).toMatchObject({ locationId: attic });
+      expect(moved.cards[agenda]?.tokens.doom ?? 0).toBe(after);
+    },
+  );
+
+  it('removes 1 doom from each Cultist enemy, as much as each holds', () => {
+    const acolyte = instanceId('acolyte');
+    const fanatic = instanceId('fanatic');
+    const ghoul = instanceId('ghoul');
+    const cultist = { traits: [trait('Cultist')] };
+    /** "After you enter the attic: remove 1 doom from each [[Cultist]] enemy." */
+    const atticCard = blankLocation('attic', {
+      abilities: [afterEntering(removeDoomFrom(eachEnemy({ trait: trait('Cultist') }), 1))],
+    });
+    const { context, state } = newGame()
+      .withLocation(hall, blankLocation('hall'), { revealed: true })
+      .withLocation(study, blankLocation('study'), { revealed: true })
+      .withLocation(attic, atticCard, { revealed: true })
+      .withInvestigator(alice, { locationId: hall })
+      .withCard(acolyte, blankEnemy('acolyte', cultist), atLocation(study), { tokens: { doom: 2 } })
+      .withCard(fanatic, blankEnemy('fanatic', cultist), atLocation(study))
+      .withCard(ghoul, blankEnemy('ghoul'), atLocation(study), { tokens: { doom: 1 } })
+      .start();
+
+    const after = stateAfter(context, state, aliceEntersAttic);
+
+    expect(after.cards[acolyte]?.tokens.doom).toBe(1);
+    expect(after.cards[fanatic]?.tokens.doom ?? 0).toBe(0);
+    expect(after.cards[ghoul]?.tokens.doom).toBe(1);
+  });
+
+  it('refuses card data that removes no doom at all', () => {
+    const { context, state } = newGame()
+      .withAgenda(agenda, blankAgenda('agenda', fixed(5)))
+      .withLocation(hall, blankLocation('hall'), { revealed: true })
+      .withInvestigator(alice, { locationId: hall })
+      .start();
+
+    expect(rejectionFrom(context, state, { type: 'RemoveDoom', amount: 0 })).toMatchObject({
+      code: 'invalidTokenDelta',
+    });
   });
 });
