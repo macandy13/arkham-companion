@@ -145,6 +145,7 @@ export {
   attachToLocation,
   atEndOfTurn,
   defeatEachInvestigator,
+  eachInvestigatorResigns,
   discardEachEnemy,
   discardEachEnemyAt,
   eachEnemy,

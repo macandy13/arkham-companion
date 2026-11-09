@@ -4,7 +4,8 @@
 Card rulings: [Story assets and earned cards](cards/story-assets.md).
 
 - Defeat or resigning eliminates the investigator. Resigning is not a defeat.
-- Resign is an action ability a card offers ("[action] Resign."): the Parlor, the Main Path and The Midnight Masks' agendas. There is no other way to resign. Like Parley it provokes no attacks of opportunity.
+- Resign is an action ability a card offers ("[action] Resign."): the Parlor, the Main Path and The Midnight Masks' agendas. Like Parley it provokes no attacks of opportunity.
+  - The only other way is a card effect that makes investigators resign ("Each investigator immediately resigns", Emergent Evils in Smoke and Mirrors), which takes no action and happens in whatever phase the effect resolves.
 - On elimination:
   - "when the game ends" effects on their weaknesses in play trigger, then those weaknesses are removed.
   - Cards they control and all their out-of-play cards are removed from the game.

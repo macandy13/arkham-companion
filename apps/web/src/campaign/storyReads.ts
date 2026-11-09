@@ -115,6 +115,7 @@ function stepWords(t: TFunction, log: CampaignLog, step: SetupStep): string[] {
     case 'buildEncounterDeck':
     case 'scenarioDeck':
     case 'shuffle':
+    case 'dealBeneath':
       return [];
     default:
       return assertNever(step);

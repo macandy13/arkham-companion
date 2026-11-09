@@ -1099,6 +1099,11 @@ export interface EndTurn {
 export interface Resign {
   type: 'Resign';
   investigatorId: InvestigatorId;
+  /**
+   * A card effect makes them resign now, whatever the phase or turn ("Each investigator
+   * immediately resigns", Emergent Evils' reverse side), rather than as their action.
+   */
+  immediately?: true;
 }
 
 /**

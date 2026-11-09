@@ -1,4 +1,5 @@
 import {
+  advanceAct,
   attachToLocation,
   atEndOfPhase,
   atEndOfRound,
@@ -6,17 +7,25 @@ import {
   cardDbFrom,
   decisionId,
   discardSelf,
+  drawBeneathYourLocation,
   eachInvestigatorAt,
+  eachInvestigatorResigns,
   encounterSetCode,
+  endScenario,
   fixed,
+  fromSetAside,
   itsLocation,
   perInvestigator,
   putIntoThreatArea,
   resignAction,
+  resolutionId,
   skillTest,
   skillTestOfEither,
   takeDamage,
+  trait,
+  whenAdvanced,
   whenRevealed,
+  whenVictoryDisplayHolds,
   type CardDb,
   type CardStats,
 } from '@arkham/engine';
@@ -65,6 +74,15 @@ export const SMOKE_AND_MIRRORS_CODES = {
   miskatonicUniversityQuietCampus: cardCode('12156'),
 } as const;
 
+/**
+ * Smoke and Mirrors' resolutions as the campaign guide numbers them: Augurs of Flame's reverse
+ * side leads to Resolution 1; Resolution 2 is the guide's own follow-up (MC2.8d).
+ */
+export const SMOKE_AND_MIRRORS_RESOLUTIONS = {
+  culpritFound: resolutionId('R1'),
+  servantEscaped: resolutionId('R2'),
+} as const;
+
 /** Id of Arcane Lock's question to the investigator who tests to discard it: willpower or intellect? */
 export const ARCANE_LOCK_DECISION = decisionId('smokeAndMirrors.arcaneLock');
 
@@ -80,7 +98,7 @@ const jpg = 'jpg';
  * Flames', only names, codes, numbers, traits, keywords and abilities (test skills and
  * difficulties checked against ArkhamDB's Core Set (2026) data), no card text, JSON or images.
  * `arkhamdb_check.test.ts` holds the stats to ArkhamDB's data. The scenario reference card comes
- * with the scenario definition (MC2.8c).
+ * with the scenario definition (`smokeAndMirrors`).
  *
  * The Arkham locations print the same symbol on both sides; the connections are read from the
  * revealed sides: ArkhamDB has no pictures of the unrevealed ones yet, so their tiles fall back to
@@ -94,8 +112,7 @@ const jpg = 'jpg';
  * - the codex entries (each suspect's and the Servant of Flame's), read from the campaign guide,
  *   with the suspects' Parley actions and reactions that trigger them
  * - the Elusive keyword (Servant of Flame, Sgt. Earl Monroe, Bat Horror; MC2.15)
- * - Augurs of Flame's action (draw the card beneath your location, MC2.8b) and its objective
- * - Arkham Alive's, Emergent Evils' and Augurs of Flame's reverse sides (MC2.8c)
+ * - the Mark of Elokoss each investigator draws as Arkham Alive advances goes into their deck
  * - Mark of Elokoss' damage as its holder's turn ends (assigned to an asset if able) and its
  *   two-action discard
  * - the Arkham locations' reactions and actions (resources, healing, two deck searches, a clue
@@ -120,6 +137,16 @@ export const smokeAndMirrorsCardDefs: readonly CardStats[] = [
     stage: 1,
     doom: 10,
     actions: [resignAction()],
+    // "Each investigator draws 1 copy of the set-aside Mark of Elokoss": its revelation puts it
+    // into their threat area. That they become its bearer goes into their deck by hand.
+    abilities: [
+      whenAdvanced(
+        fromSetAside([codes.markOfElokoss], {
+          kind: 'threatArea',
+          investigatorId: { ref: 'eachInvestigator' },
+        }),
+      ),
+    ],
   }),
   agenda({
     code: codes.emergentEvils,
@@ -129,6 +156,7 @@ export const smokeAndMirrorsCardDefs: readonly CardStats[] = [
     stage: 2,
     doom: 8,
     actions: [resignAction()],
+    abilities: [whenAdvanced(eachInvestigatorResigns())],
   }),
   act({
     code: codes.augursOfFlame,
@@ -136,6 +164,16 @@ export const smokeAndMirrorsCardDefs: readonly CardStats[] = [
     set: own,
     pictures: jpg,
     stage: 1,
+    actions: [
+      {
+        cost: { spend: 'groupClues', amount: perInvestigator(2) },
+        effects: [drawBeneathYourLocation()],
+      },
+    ],
+    abilities: [
+      whenVictoryDisplayHolds({ trait: trait('Elite'), beneathAct: true }, 6, advanceAct()),
+      whenAdvanced(endScenario(SMOKE_AND_MIRRORS_RESOLUTIONS.culpritFound)),
+    ],
   }),
   treachery({
     code: codes.markOfElokoss,

@@ -394,6 +394,18 @@ describe('DefeatInvestigator', () => {
     expect(investigatorOf(defeated, carol).status).toBe('defeated');
   });
 
+  it('lets an effect resign her immediately outside the investigation phase', () => {
+    const { context, state } = threeInvestigators.start();
+
+    const after = stateAfter(context, state, {
+      type: 'Resign',
+      investigatorId: bob,
+      immediately: true,
+    });
+
+    expect(after.investigators.find((inv) => inv.id === bob)?.status).toBe('resigned');
+  });
+
   it('rejects an investigator who already left', () => {
     const { context, state } = aliceTurn();
     const resigned = stateAfter(context, state, resign(alice), answer('newLeadInvestigator', bob));
