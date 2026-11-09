@@ -3,33 +3,27 @@ import { expect, test } from '../fixtures/test';
 // Situations in the new game wizard, each photographed as it ends (`@shot`, coding guidelines §3).
 
 test(
-  "a quick game's setup step after the scenario: the difficulty and what the app tells the players",
+  "a quick game's setup step after the scenario: only the difficulty",
   { tag: '@shot' },
   async ({ page }) => {
     await page.goto('/#/new');
     await page.getByRole('link', { name: 'Quick game' }).first().click();
     await page.getByRole('button', { name: 'Next' }).click();
 
-    await page
-      .getByRole('radio', {
-        name: 'Changes to investigators, enemies and the chaos bag, and the cards drawn',
-      })
-      .check();
+    await page.getByRole('radio', { name: 'Hard' }).check();
 
-    await expect(page.getByRole('group', { name: 'What the app tells you' })).toBeVisible();
+    await expect(page.getByRole('group', { name: 'What the app tells you' })).toHaveCount(0);
   },
 );
 
-test(
-  "a new campaign's first step: Night of the Zealot's cover with its key art, nothing else",
-  { tag: '@shot' },
-  async ({ page }) => {
-    await page.goto('/#/new');
-    await page.getByRole('link', { name: 'New campaign' }).click();
+test("a new campaign's first step: Night of the Zealot's cover with its key art, nothing else", async ({
+  page,
+}) => {
+  await page.goto('/#/new');
+  await page.getByRole('link', { name: 'New campaign' }).click();
 
-    await expect(page.getByRole('radio', { name: 'Night of the Zealot' })).toBeChecked();
-  },
-);
+  await expect(page.getByRole('radio', { name: 'Night of the Zealot' })).toBeChecked();
+});
 
 test('the investigator picker with its filter menu open', async ({ page }) => {
   await page.goto('/#/new');

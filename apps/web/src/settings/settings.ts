@@ -1,4 +1,5 @@
 import { CARD_LANGUAGES, type CardLanguage } from '@arkham/carddata';
+import { DEFAULT_RELIANCE, RELIANCES, type Reliance } from '@arkham/engine';
 
 /** UI languages that have translation strings (`i18n/index.ts`). */
 export const UI_LANGUAGES = ['en', 'de'] as const;
@@ -70,6 +71,12 @@ export interface Settings {
   readonly cardTheme: CardTheme;
   readonly enemyTokens: EnemyTokenFace;
   readonly chaosDraw: ChaosDraw;
+  /**
+   * How much the group relies on the helpers ("What the app tells you", MD.3g): the level a new
+   * game or campaign starts with (`ScenarioStart.reliance`). A preference of the group, not part
+   * of setting up a scenario; each game keeps its own level, which its game log changes.
+   */
+  readonly reliance: Reliance;
 }
 
 /** Defaults for a fresh device; a dark table because the app is used at a dim one. */
@@ -81,6 +88,7 @@ export const DEFAULT_SETTINGS: Settings = {
   cardTheme: 'exact',
   enemyTokens: 'art',
   chaosDraw: 'app',
+  reliance: DEFAULT_RELIANCE,
 };
 
 const STORAGE_KEY = 'arkham-companion.settings';
@@ -113,6 +121,7 @@ function parseSettings(value: unknown): Settings {
       DEFAULT_SETTINGS.cardTheme,
     enemyTokens: oneOf(ENEMY_TOKEN_FACES, raw.enemyTokens) ?? DEFAULT_SETTINGS.enemyTokens,
     chaosDraw: oneOf(CHAOS_DRAWS, raw.chaosDraw) ?? DEFAULT_SETTINGS.chaosDraw,
+    reliance: oneOf(RELIANCES, raw.reliance) ?? DEFAULT_SETTINGS.reliance,
   };
 }
 

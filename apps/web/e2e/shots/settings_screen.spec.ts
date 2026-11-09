@@ -17,6 +17,18 @@ test('the settings on the parchment table', async ({ page }) => {
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
 });
 
+test(
+  'the settings telling the players only what they do by hand',
+  { tag: '@shot' },
+  async ({ page }) => {
+    await page.goto('/#/settings');
+
+    await page.getByRole('radio', { name: 'Only what you do by hand' }).check();
+
+    await expect(page.getByRole('group', { name: 'What the app tells you' })).toBeVisible();
+  },
+);
+
 test('the collection, the Core Set ticked', async ({ page }) => {
   await page.goto('/#/settings/collection');
 

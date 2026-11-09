@@ -176,13 +176,13 @@ describe('NewGameScreen', () => {
     expect((await gameStore.loadGame(game!.gameId))?.state.meta.difficulty).toBe('hard');
   });
 
-  it("starts a campaign with its team, difficulty and reliance on the helpers, and its first scenario as the campaign's game", async () => {
+  it("starts a campaign with its team, difficulty, the settings' reliance on the helpers, and its first scenario as the campaign's game", async () => {
+    saveSettings({ ...loadSettings(), reliance: 'auto' });
     const { gameStore } = renderWizard('/new?mode=campaign');
 
     expect(screen.getByRole('radio', { name: 'Night of the Zealot' })).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Next: Setup' }));
     fireEvent.click(screen.getByRole('radio', { name: 'Hard' }));
-    fireEvent.click(screen.getByRole('radio', { name: 'Only what you do by hand' }));
     fireEvent.click(screen.getByRole('button', { name: 'Next: Investigators' }));
     await screen.findByRole('list', { name: 'Investigators' });
     selectInvestigator('Alder');
@@ -230,6 +230,12 @@ describe('NewGameScreen', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Back' }));
 
     expect(screen.getByRole('button', { name: /Alder.*Seat 1/ })).toBeTruthy();
+  });
+
+  it('leaves what the app tells the players to the settings', () => {
+    renderWizard('/new?mode=quick&step=setup');
+
+    expect(screen.queryByRole('group', { name: 'What the app tells you' })).toBeNull();
   });
 
   it('keeps the choices over a page refresh', async () => {

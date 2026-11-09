@@ -24,6 +24,7 @@ describe('settings storage', () => {
       cardTheme: 'pictures',
       enemyTokens: 'initials',
       chaosDraw: 'table',
+      reliance: 'auto',
     } as const;
 
     saveSettings(settings);
@@ -60,6 +61,7 @@ describe('settings storage', () => {
         cardTheme: 'scans',
         enemyTokens: 'initials',
         chaosDraw: 'nobody',
+        reliance: 'everything',
       }),
     );
 
