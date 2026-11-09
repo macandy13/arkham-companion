@@ -137,7 +137,6 @@ export const appTexts = {
     releaseFrom: '{{token}} von {{investigator}} freigeben',
     release: 'Freigeben',
     value: 'Wert',
-    chance: 'Chance beim Ziehen',
   },
   header: {
     round: 'Runde {{round}}',

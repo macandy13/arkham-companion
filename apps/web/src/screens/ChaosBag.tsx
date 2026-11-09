@@ -8,7 +8,7 @@ import './chaos_bag.css';
 
 /**
  * The chaos bag on the scenario card's page (M6.1b): what is in it, one row per kind of token in
- * `CHAOS_TOKENS` order with its count, the chance to draw it and, for a token that shows a symbol,
+ * `CHAOS_TOKENS` order with its count and, for a token that shows a symbol,
  * its value in this game (`BoardView.tokenModifier`, "?" where the card or the test decides it,
  * M6.7b), and the tokens player cards sealed, each with the
  * investigator holding it (`BoardView.sealedTokens`). The players seal a token as a card tells
@@ -25,16 +25,12 @@ export function ChaosBag({
   actions: GameActions;
   busy: boolean;
 }) {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const titleId = useId();
   const sealedId = useId();
   const [picked, setPicked] = useState<ChaosToken>();
   const counts = tokenCounts(board.chaosBag);
   const sealers = board.investigators.filter((investigator) => investigator.status === 'active');
-  const percent = new Intl.NumberFormat(i18n.language, {
-    style: 'percent',
-    maximumFractionDigits: 0,
-  });
   const chosen = counts.some(({ token }) => token === picked) ? picked : undefined;
   return (
     <section aria-labelledby={titleId} data-part="chaos-bag">
@@ -42,7 +38,6 @@ export function ChaosBag({
       <ul aria-label={t('chaosBag.contents')}>
         {counts.map(({ token, count }) => {
           const value = board.tokenModifier(token);
-          const chance = count / board.chaosBag.length;
           return (
             <li key={token}>
               <button
@@ -52,17 +47,15 @@ export function ChaosBag({
                 onClick={() => setPicked(token === chosen ? undefined : token)}
               >
                 <ChaosTokenFace token={token} /> <data value={count}>×{count}</data>
-              </button>{' '}
+              </button>
               {hasSymbol(token) && token !== 'autoFail' && (
                 <>
+                  {' '}
                   <data value={value ?? ''} title={t('chaosBag.value')}>
                     {signedOrUnknown(value)}
-                  </data>{' '}
+                  </data>
                 </>
               )}
-              <data value={chance} title={t('chaosBag.chance')}>
-                {percent.format(chance)}
-              </data>
             </li>
           );
         })}

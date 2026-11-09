@@ -37,9 +37,9 @@ describe('ChaosBag', () => {
   });
 
   it.each([
-    { what: 'without a number on the reference card', skull: undefined, row: 'Skull ×1 ? 25%' },
-    { what: 'by the reference card', skull: -2, row: 'Skull ×1 −2 25%' },
-  ])('lists each kind with its chance and a symbol $what with its value', ({ skull, row }) => {
+    { what: 'without a number on the reference card', skull: undefined, row: 'Skull ×1 ?' },
+    { what: 'by the reference card', skull: -2, row: 'Skull ×1 −2' },
+  ])('lists a symbol $what with its value', ({ skull, row }) => {
     const table = PlayTable.start(
       game.withReferenceCard({
         easyStandard: { skull: { modifier: skull, effectKey: 'test.skull' } },
@@ -54,7 +54,7 @@ describe('ChaosBag', () => {
       within(contents)
         .getAllByRole('listitem')
         .map((item) => item.textContent),
-    ).toEqual(['−1 ×2 50%', row, 'Elder Sign ×1 ? 25%']);
+    ).toEqual(['−1 ×2', row, 'Elder Sign ×1 ?']);
   });
 
   it('seals the token tapped on the investigator picked', async () => {
