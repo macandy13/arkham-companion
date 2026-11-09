@@ -209,7 +209,7 @@ export function screenshots(report: PlaywrightReport, base: BaseRun = NO_BASE): 
 
 /**
  * The specs `projects` record, in report order, except those whose last picture in every one of
- * the projects is the same in `base`.
+ * the projects is the same in `base`, or missing on both sides because the spec failed there too.
  */
 function changedSpecs(
   report: PlaywrightReport,
@@ -222,8 +222,11 @@ function changedSpecs(
       if (!spec.tests.some((test) => test.projectName === project)) return false;
       const headPicture = passingAttachment(spec, project, 'screenshot');
       const baseSpec = baseSpecs.get(specKey(spec));
+      const baseRan = baseSpec?.tests.some((test) => test.projectName === project) ?? false;
       const basePicture = baseSpec && passingAttachment(baseSpec, project, 'screenshot');
-      // A missing picture on either side (failed run, spec or device new to the PR) can't prove "unchanged".
+      // Failing on both sides is a known break, not this PR's change (the E2E check reports it).
+      if (!headPicture && baseRan && !basePicture) return false;
+      // A picture on one side only (a failed run, a spec or device new to the PR) can't prove "unchanged".
       return !headPicture || !basePicture || !base.samePicture(headPicture, basePicture);
     }),
   );

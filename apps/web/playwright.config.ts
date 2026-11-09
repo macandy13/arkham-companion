@@ -1,4 +1,5 @@
 import { defineConfig, devices } from '@playwright/test';
+import type { PictureOptions } from './e2e/fixtures/test';
 import { RECORDING_PROJECTS, SCREENCAST_STEP_MS } from './scripts/screencast/screencasts';
 
 // The app's primary device is a landscape tablet (product.md "UI concept").
@@ -24,6 +25,12 @@ const shotSpecs = /[\\/]shots[\\/].*\.spec\.ts$/;
 // the first recording slots whenever a change shows on every screen.
 const notFlows = [shotSpecs, /accessibility\.spec\.ts$/];
 
+// The pictures the preview compares with the base's (scripts/screencast/cli.ts), taken once the
+// screen has settled (e2e/fixtures/test.ts): a glide or a
+// fade still running as the test ends would make the same screen differ from run to run, and the
+// app leaves its animations out for reduced motion.
+const picture = { endPicture: true, reducedMotion: 'reduce' } as const;
+
 // Lets local/cloud sessions use a preinstalled Chromium instead of downloading one.
 const executablePath = process.env.PW_CHROMIUM_PATH;
 
@@ -36,7 +43,7 @@ const executablePath = process.env.PW_CHROMIUM_PATH;
  * whose end state the PR changes, slowed down and recorded (`pnpm e2e:screencast`, see
  * docs/automation.md).
  */
-export default defineConfig({
+export default defineConfig<PictureOptions>({
   testDir: './e2e',
   // Downloads the card pictures the tests show into a gitignored folder (e2e/fixtures/card_pictures.ts).
   globalSetup: './e2e/fixtures/card_pictures.ts',
@@ -58,7 +65,7 @@ export default defineConfig({
       name: RECORDING_PROJECTS.flowPictures,
       testIgnore: notFlows,
       outputDir: 'test-results/flow-picture',
-      use: { ...tablet, screenshot: 'on', launchOptions: { executablePath } },
+      use: { ...tablet, ...picture, launchOptions: { executablePath } },
     },
     {
       name: RECORDING_PROJECTS.flows,
@@ -85,7 +92,7 @@ export default defineConfig({
       name: RECORDING_PROJECTS.shots,
       testMatch: shotSpecs,
       outputDir: 'test-results/screenshot',
-      use: { ...tablet, screenshot: 'on', launchOptions: { executablePath } },
+      use: { ...tablet, ...picture, launchOptions: { executablePath } },
     },
     {
       name: RECORDING_PROJECTS.phoneShots,
@@ -94,7 +101,7 @@ export default defineConfig({
       // Until the phone layout exists (M3.14) some shots can't reach their situation on a phone;
       // a retry would only fail again and slow the preview.
       retries: 0,
-      use: { ...phone, screenshot: 'on', launchOptions: { executablePath } },
+      use: { ...phone, ...picture, launchOptions: { executablePath } },
     },
   ],
   webServer: {

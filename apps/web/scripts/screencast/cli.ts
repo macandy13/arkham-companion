@@ -83,8 +83,16 @@ function render(
 }
 
 /**
+ * How many pixels two pictures of the same screen may differ in: antialiasing at the edge of a
+ * curve sometimes lands a pixel or two differently from run to run. The smallest real change (a
+ * digit) covers far more.
+ */
+const NOISE_PIXELS = 20;
+
+/**
  * Whether two PNGs look the same. Pixels may differ slightly: the playmat's faint lines don't
- * render byte-identically from run to run, so this uses Playwright's own default tolerance.
+ * render byte-identically from run to run, so this uses Playwright's own default tolerance, and
+ * up to {@link NOISE_PIXELS} pixels may differ beyond it.
  */
 function samePicture(headPath: string, basePath: string): boolean {
   if (!existsSync(basePath)) return false;
@@ -95,7 +103,7 @@ function samePicture(headPath: string, basePath: string): boolean {
     const differing = pixelmatch(head.data, base.data, undefined, head.width, head.height, {
       threshold: 0.2,
     });
-    return differing === 0;
+    return differing <= NOISE_PIXELS;
   } catch (error) {
     console.warn(`Could not compare ${headPath} with ${basePath}; showing it:`, error);
     return false;

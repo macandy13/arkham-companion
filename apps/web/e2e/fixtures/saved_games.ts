@@ -29,6 +29,7 @@ import {
 } from '@arkham/scenarios';
 import { serialiseGameExport } from '../../src/storage/gameExport';
 import { ROLAND_PICTURE } from './card_pictures';
+import { waitUntilSettled } from './test';
 
 /**
  * Roland Banks with his printed stats, entered by hand: the exported game reads him from its log,
@@ -541,4 +542,5 @@ export async function resumeImportedGame(page: Page, title: string, file: Buffer
     .filter({ has: page.getByText(title, { exact: true }) })
     .getByRole('link', { name: 'Continue' })
     .click();
+  await waitUntilSettled(page);
 }
