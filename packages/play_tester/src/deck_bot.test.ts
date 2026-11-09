@@ -124,28 +124,34 @@ describe('the deck bot', () => {
     ]);
   });
 
-  it.each([
-    { token: '0', played: true },
-    { token: 'autoFail', played: false },
-  ] as const)(
-    'plays Lucky! to pass a fight it fails by 1, never on an auto-fail ($token)',
-    ({ token, played }) => {
-      const table = PlayTable.start(
-        game
-          .withChaosBag([token])
-          .withCard(ghoul, blankEnemy('ghoul', { fight: 4, health: fixed(3) }), engagedWith(alice)),
-      );
-      table.fight(alice, ghoul, { result: 'open' });
-      const bot = botWithHand('Lucky!');
+  /** A fight against a ghoul of fight 4 that alice, with combat 3 and Lucky! in hand, has opened. */
+  const fightWithLucky = (token: '0' | 'autoFail') => {
+    const table = PlayTable.start(
+      game
+        .withChaosBag([token])
+        .withCard(ghoul, blankEnemy('ghoul', { fight: 4, health: fixed(3) }), engagedWith(alice)),
+    );
+    table.fight(alice, ghoul, { result: 'open' });
+    return { table, bot: botWithHand('Lucky!') };
+  };
 
-      const first = bot.step(table, random);
-      playStep(table, first);
-      const answer = first.verb === 'resolveTest' ? first : bot.step(table, random);
+  it('pays for Lucky! to pass a fight it fails by 1, then passes the test', () => {
+    const { table, bot } = fightWithLucky('0');
 
-      expect(first.verb === 'playerCard' && first.card === 'Lucky!').toBe(played);
-      expect(answer.verb === 'resolveTest' && answer.result === 'pass').toBe(played);
-    },
-  );
+    const paid = bot.step(table, random);
+    playStep(table, paid);
+
+    expect([paid, bot.step(table, random)]).toMatchObject([
+      { verb: 'playerCard', card: 'Lucky!', effects: [{ kind: 'pay', resources: 1 }] },
+      { verb: 'resolveTest', result: 'pass' },
+    ]);
+  });
+
+  it('plays no Lucky! on an auto-fail', () => {
+    const { table, bot } = fightWithLucky('autoFail');
+
+    expect(bot.step(table, random)).toMatchObject({ verb: 'resolveTest', result: { failedBy: 4 } });
+  });
 
   it('plays the card that discovers clues before one that only gains resources', () => {
     const table = PlayTable.start(game);

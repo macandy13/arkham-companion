@@ -92,7 +92,8 @@ export class DeckBot {
       this.answeredTest(table, random) ??
       this.playedCard(table, random);
     if (steps) {
-      // The rest of an answer to an open decision comes before effects still waiting for it.
+      // Only answers come while a decision is open (soaking and card plays wait), and the rest of
+      // one goes before the card effects still waiting for that decision.
       this.queue.unshift(...steps.slice(1));
       return steps[0]!;
     }
