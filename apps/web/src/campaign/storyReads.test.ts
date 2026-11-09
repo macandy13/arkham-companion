@@ -91,6 +91,50 @@ describe('storyReadLines', () => {
   });
 
   it.each([
+    {
+      step: 'investigatorsStartWith',
+      steps: [{ kind: 'investigatorsStartWith', clues: 1 }],
+      effect: 'Each investigator begins with 1 clue',
+    },
+    {
+      step: 'spawnAtRandom',
+      steps: [
+        {
+          kind: 'spawnAtRandom',
+          codes: [ghoulPriest, ghoulPriest],
+          count: 2,
+          at: [theArkhamWoods],
+        },
+      ],
+      effect:
+        '2 of Ghoul Priest, picked at random, spawn each at a different one of The Arkham Woods',
+    },
+    {
+      step: 'addChaosTokens by difficulty, on the log’s Standard',
+      steps: [
+        {
+          kind: 'addChaosTokens',
+          tokens: { easy: ['skull'], standard: ['tablet'], hard: [], expert: [] },
+        },
+      ],
+      effect: 'Tablet goes into the chaos bag',
+    },
+  ] as { step: string; steps: StoryRead['steps']; effect: string }[])(
+    'words a $step step',
+    ({ steps, effect }) => {
+      expect(
+        linesOf([
+          {
+            condition: { kind: 'flag', key: 'ghoulPriestStillAlive', value: true },
+            holds: true,
+            steps,
+          },
+        ]),
+      ).toEqual([{ entry: 'The Ghoul Priest is still out there.', effects: [effect] }]);
+    },
+  );
+
+  it.each([
     [
       'a read that takes no step',
       {

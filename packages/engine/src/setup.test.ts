@@ -1046,6 +1046,131 @@ describe('compileSetup addChaosTokens', () => {
   });
 });
 
+describe('compileSetup addChaosTokens by difficulty', () => {
+  /** "On Easy, add an elder thing token; on Hard, an elder thing, a tablet and a skull token." */
+  const def = makeDefinition({
+    chaosBag: { easy: ['+1'], standard: ['+1'], hard: ['+1'], expert: ['+1'] },
+    setup: [
+      {
+        kind: 'addChaosTokens',
+        tokens: {
+          easy: ['elderThing'],
+          standard: ['elderThing', 'tablet'],
+          hard: ['elderThing', 'tablet', 'skull'],
+          expert: ['elderThing', 'tablet', 'cultist', 'skull'],
+        },
+      },
+    ],
+  });
+
+  it.each([
+    { difficulty: 'easy' as const, bag: ['+1', 'elderThing'] },
+    { difficulty: 'hard' as const, bag: ['+1', 'elderThing', 'tablet', 'skull'] },
+  ])('adds the tokens listed for $difficulty', ({ difficulty, bag }) => {
+    const command = scenario.compileSetup(
+      { cards: investigatorCards, scenario: def },
+      makeSetupOptions({ difficulty }),
+    );
+
+    expect(command.chaosBag).toEqual(bag);
+  });
+});
+
+describe('compileSetup investigatorsStartWith', () => {
+  it('gives each investigator 1 clue to begin the game with', () => {
+    const def = makeDefinition({ setup: [{ kind: 'investigatorsStartWith', clues: 1 }] });
+
+    const command = scenario.compileSetup(
+      { cards: investigatorCards, scenario: def },
+      makeSetupOptions({ investigators: investigatorSeats(2) }),
+    );
+
+    expect(command.investigators.map((investigator) => investigator.clues)).toEqual([1, 1]);
+  });
+});
+
+describe('compileSetup spawnAtRandom', () => {
+  const cultists = encounterSetCode('cultists');
+  const zealot = blankEnemy('zealot', { encounterCode: cultists, quantity: 3 });
+  const magician = blankEnemy('magician', { encounterCode: cultists });
+  const ctx = {
+    cards: cardDbFrom([
+      zealot,
+      magician,
+      blankLocation('tunnel_a'),
+      blankLocation('tunnel_b'),
+      blankLocation('tunnel_c'),
+      ...standardInvestigatorCards,
+    ]),
+  };
+  /** 1 per investigator of the 3 Zealots and the Magician, each at a different tunnel. */
+  const def = makeDefinition({
+    setup: [
+      mainMap('tunnel_a', 'tunnel_b', 'tunnel_c'),
+      {
+        kind: 'spawnAtRandom',
+        codes: ['zealot', 'zealot', 'zealot', 'magician'].map(cardCode),
+        count: perInvestigator(1),
+        at: ['tunnel_a', 'tunnel_b', 'tunnel_c'].map(cardCode),
+      },
+      { kind: 'buildEncounterDeck', sets: [cultists] },
+    ],
+  });
+  const spawned = (seed: number) =>
+    scenario
+      .compileSetup(
+        { ...ctx, scenario: def },
+        makeSetupOptions({ seed, investigators: investigatorSeats(2) }),
+      )
+      .cards.filter((card) => card.zone.kind === 'atLocation');
+
+  it.each([1, 2, 3, 4, 5])(
+    'spawns 2 cultists with 2 investigators, each at a different tunnel (seed %i)',
+    (seed) => {
+      const enemies = spawned(seed);
+
+      expect(enemies).toHaveLength(2);
+      expect(new Set(enemies.map((card) => JSON.stringify(card.zone))).size).toBe(2);
+    },
+  );
+
+  it('leaves the spawned copies out of the encounter deck', () => {
+    const command = scenario.compileSetup(
+      { ...ctx, scenario: def },
+      makeSetupOptions({ investigators: investigatorSeats(2) }),
+    );
+
+    expect(command.cards.filter((card) => card.zone.kind === 'encounterDeck')).toHaveLength(2);
+  });
+
+  it('gives each spawned zealot the doom it places as it enters play', () => {
+    const withDoom = makeDefinition({
+      setup: [
+        mainMap('tunnel_a', 'tunnel_b', 'tunnel_c'),
+        {
+          kind: 'spawnAtRandom',
+          codes: ['zealot', 'zealot', 'zealot'].map(cardCode),
+          count: fixed(2),
+          at: ['tunnel_a', 'tunnel_b', 'tunnel_c'].map(cardCode),
+          tokens: { [cardCode('zealot')]: { doom: 1 } },
+        },
+      ],
+    });
+
+    const command = scenario.compileSetup({ ...ctx, scenario: withDoom }, makeSetupOptions());
+
+    expect(
+      command.cards.filter((card) => card.zone.kind === 'atLocation').map((card) => card.tokens),
+    ).toEqual([{ doom: 1 }, { doom: 1 }]);
+  });
+
+  it('picks other cultists and tunnels with other seeds', () => {
+    const picks = [1, 2, 3, 4, 5, 6, 7, 8].map((seed) => JSON.stringify(spawned(seed)));
+
+    expect(new Set(picks).size).toBeGreaterThan(1);
+  });
+});
+
 describe('compileSetup whenPlayers', () => {
   const ctx = {
     cards: cardDbFrom([

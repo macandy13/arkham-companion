@@ -2,6 +2,7 @@ import type { TFunction } from 'i18next';
 import { assertNever } from '@arkham/util';
 import {
   resolveAmount,
+  scenario,
   type CardCode,
   type CampaignLog,
   type SetupStep,
@@ -103,7 +104,20 @@ function stepWords(t: TFunction, log: CampaignLog, step: SetupStep): string[] {
     case 'addChaosTokens':
       return [
         t('nextScenario.steps.chaosTokens', {
-          tokens: step.tokens.map((token) => t(`chaosToken.${token}`)).join(', '),
+          tokens: scenario
+            .chaosTokensAdded(step, log.difficulty)
+            .map((token) => t(`chaosToken.${token}`))
+            .join(', '),
+        }),
+      ];
+    case 'investigatorsStartWith':
+      return [t('nextScenario.steps.startClues', { count: step.clues })];
+    case 'spawnAtRandom':
+      return [
+        t('nextScenario.steps.spawnAtRandom', {
+          count: resolveAmount(step.count, log.investigators.length),
+          cards: cardNames([...new Set(step.codes)]),
+          locations: cardNames(step.at),
         }),
       ];
     // Nested branches have reads of their own; the rest build the table the players set up

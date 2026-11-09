@@ -895,6 +895,11 @@ export const appTexts = {
       setAside_other: '{{cards}} are set aside',
       spawn: '{{card}} spawns at {{location}}',
       chaosTokens: '{{tokens}} goes into the chaos bag',
+      startClues_one: 'Each investigator begins with {{count}} clue',
+      startClues_other: 'Each investigator begins with {{count}} clues',
+      spawnAtRandom_one: '1 of {{cards}}, picked at random, spawns at one of {{locations}}',
+      spawnAtRandom_other:
+        '{{count}} of {{cards}}, picked at random, spawn each at a different one of {{locations}}',
       tokens: {
         doom: '{{count}} doom on {{card}}',
         clue_one: '{{count}} clue on {{card}}',

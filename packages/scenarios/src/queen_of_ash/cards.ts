@@ -65,6 +65,9 @@ export const QUEEN_OF_ASH_CODES = {
   floodedCrypt: cardCode('12185'),
   smugglersCache: cardCode('12186'),
   toxicWastePit: cardCode('12187'),
+  cantorOfFlame: cardCode('12121'),
+  zealot: cardCode('12188'),
+  darkMagician: cardCode('12189'),
 } as const;
 
 const codes = QUEEN_OF_ASH_CODES;

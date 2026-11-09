@@ -900,6 +900,11 @@ export const appTexts = {
       setAside_other: '{{cards}} werden beiseitegelegt',
       spawn: '{{card}} erscheint in {{location}}',
       chaosTokens: '{{tokens}} kommt in den Chaosbeutel',
+      startClues_one: 'Jeder Ermittler beginnt mit {{count}} Hinweis',
+      startClues_other: 'Jeder Ermittler beginnt mit {{count}} Hinweisen',
+      spawnAtRandom_one: '1 zufällige Karte aus {{cards}} erscheint an einem Ort aus {{locations}}',
+      spawnAtRandom_other:
+        '{{count}} zufällige Karten aus {{cards}} erscheinen, jede an einem anderen Ort aus {{locations}}',
       tokens: {
         doom: '{{count}} Verderben auf {{card}}',
         clue_one: '{{count}} Hinweis auf {{card}}',
