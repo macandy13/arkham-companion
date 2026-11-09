@@ -37,6 +37,25 @@ describe('AppRoutes', () => {
     expect(screen.getByRole('heading', { level: 1, name: heading })).toBeTruthy();
   });
 
+  it('opens the next screen at its top, however far the last one was scrolled', async () => {
+    const page = document.documentElement;
+    let scrollTop = 0;
+    // jsdom lays nothing out, so it keeps no scroll position of its own.
+    vi.spyOn(page, 'scrollTop', 'get').mockImplementation(() => scrollTop);
+    vi.spyOn(page, 'scrollTop', 'set').mockImplementation((top) => {
+      scrollTop = top;
+    });
+    renderAt('/settings');
+    scrollTop = 400;
+
+    fireEvent.click(screen.getByRole('link', { name: 'Back' }));
+
+    await waitFor(() =>
+      expect(screen.getByRole('heading', { level: 1, name: 'Arkham Companion' })).toBeTruthy(),
+    );
+    expect(scrollTop).toBe(0);
+  });
+
   it('offers main navigation on every screen', () => {
     renderAt('/settings');
 

@@ -105,7 +105,8 @@ export { expect };
 export const isCardList = (url: URL) => url.pathname === '/api/public/cards/';
 
 /**
- * Waits until the page has fetched what it shows (card pictures, the fonts its text uses). A
+ * Waits until the page has fetched what it shows (card pictures, the fonts its text uses) and
+ * stopped scrolling. A
  * click scrolls its target into view, and text that changes font afterwards moves the page under
  * it, so the preview's pictures (scripts/screencast/cli.ts) would differ from run to run; going
  * offline before the pictures arrive leaves them out. Not `waitForLoadState('networkidle')`: it
@@ -120,5 +121,14 @@ export async function waitUntilSettled(page: Page): Promise<void> {
     }
     await Promise.all([...document.images].map((image) => image.decode().catch(() => undefined)));
     await document.fonts.ready;
+    // A screen that scrolls an element into view after a layout change can still be on its way.
+    const scrolled = () =>
+      [document.scrollingElement, ...document.querySelectorAll('*')]
+        .map((element) => (element ? `${element.scrollTop},${element.scrollLeft}` : ''))
+        .join(';');
+    for (let before = ''; before !== scrolled();) {
+      before = scrolled();
+      await new Promise((resolve) => setTimeout(resolve, 300));
+    }
   });
 }
