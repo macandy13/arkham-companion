@@ -8,6 +8,7 @@ import {
   perInvestigator,
   putIntoThreatArea,
   resignAction,
+  resolutionId,
   skillTest,
   takeHorror,
   trait,
@@ -68,6 +69,17 @@ export const QUEEN_OF_ASH_CODES = {
   cantorOfFlame: cardCode('12121'),
   zealot: cardCode('12188'),
   darkMagician: cardCode('12189'),
+} as const;
+
+/**
+ * Queen of Ash's resolutions, numbered like the campaign guide's: Elokoss defeated (R1, special
+ * agenda 3a and act 2b), her rebirth stopped with 5 clues on her (R2), or the sewers flooded from
+ * Sluice Control (R3).
+ */
+export const QUEEN_OF_ASH_RESOLUTIONS = {
+  elokossDefeated: resolutionId('R1'),
+  rebirthStopped: resolutionId('R2'),
+  ritualFlooded: resolutionId('R3'),
 } as const;
 
 const codes = QUEEN_OF_ASH_CODES;

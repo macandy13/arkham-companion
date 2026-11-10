@@ -64,13 +64,17 @@ describe('offeredTargets', () => {
         'the-devourer-below',
         'spreading-flames',
         'smoke-and-mirrors',
+        'queen-of-ash',
       ],
     },
     {
       owned: ['rcore'],
       scenarios: ['the-gathering', 'the-midnight-masks', 'the-devourer-below'],
     },
-    { owned: ['core_2026'], scenarios: ['spreading-flames', 'smoke-and-mirrors'] },
+    {
+      owned: ['core_2026'],
+      scenarios: ['spreading-flames', 'smoke-and-mirrors', 'queen-of-ash'],
+    },
     { owned: ['dwl'], scenarios: [] },
   ])('offers the scenarios of the packs $owned', ({ owned, scenarios }) => {
     expect(ids('quick', owned)).toEqual(scenarios);

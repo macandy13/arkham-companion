@@ -1,6 +1,8 @@
 import {
   brethrenOfAsh,
   nightOfTheZealot,
+  queenOfAsh,
+  queenOfAshCards,
   smokeAndMirrors,
   smokeAndMirrorsCards,
   spreadingFlames,
@@ -85,6 +87,12 @@ export const scenarioCatalog: readonly ScenarioEntry[] = [
     nameKey: 'scenarios.smokeAndMirrors',
     definition: smokeAndMirrors,
     cards: smokeAndMirrorsCards,
+  },
+  {
+    id: queenOfAsh.id,
+    nameKey: 'scenarios.queenOfAsh',
+    definition: queenOfAsh,
+    cards: queenOfAshCards,
   },
 ];
 

@@ -27,8 +27,18 @@ export const brethrenOfAshTexts = {
         upgradeDecks: 'Jeder Ermittler gibt Erfahrung für Deckverbesserungen aus.',
       },
     },
+    queenOfAsh: {
+      resolution: {
+        collector:
+          'Ihr habt die Belohnung Collector verdient: Nehmt beide Exemplare in euren Spielerkartenvorrat auf.',
+      },
+    },
   },
-  scenarios: { spreadingFlames: 'Spreading Flames', smokeAndMirrors: 'Smoke and Mirrors' },
+  scenarios: {
+    spreadingFlames: 'Spreading Flames',
+    smokeAndMirrors: 'Smoke and Mirrors',
+    queenOfAsh: 'Queen of Ash',
+  },
   campaigns: { brethrenOfAsh: 'Brethren of Ash' },
   // The campaign notes in our own words, not the campaign guide's.
   story: {
@@ -48,6 +58,10 @@ export const brethrenOfAshTexts = {
       theServantOfFlameEscaped: { yes: 'Der Diener der Flamme ist entkommen.' },
       scouredArkhamForAnswers: { yes: 'Ihr habt ganz Arkham nach Antworten abgesucht.' },
       stirredUpTrouble: { yes: 'Ihr habt in ganz Arkham für Unruhe gesorgt.' },
+      elokossWasReborn: { yes: 'Elokoss wurde in Flammen wiedergeboren.' },
+      defeatedElokossAndTheBrethren: { yes: 'Ihr habt Elokoss und die Brethren of Ash besiegt.' },
+      stoppedElokosssRebirth: { yes: 'Ihr habt die Wiedergeburt von Elokoss verhindert.' },
+      floodedTheSummoningRitual: { yes: 'Ihr habt das Beschwörungsritual des Kults überflutet.' },
       harbingerOfElokoss: 'Vorbote von Elokoss',
     },
   },
