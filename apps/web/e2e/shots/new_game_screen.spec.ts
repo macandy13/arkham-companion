@@ -37,15 +37,18 @@ test('the investigator picker with its filter menu open, a cycle picked by its n
   await expect(page.getByRole('list', { name: 'Investigators' })).toContainText('Fake Seeker');
 });
 
-test('the detail sheet of an investigator', async ({ page }) => {
+test('the detail sheet of an investigator, with the traits and abilities their card prints', async ({
+  page,
+}) => {
   await page.goto('/#/new');
   await page.getByRole('link', { name: 'Quick game' }).first().click();
   await page.getByRole('button', { name: 'Next' }).click();
   await page.getByRole('button', { name: 'Next' }).click();
 
-  await page.getByRole('button', { name: /Fake Seeker/ }).click();
+  await page.getByRole('button', { name: /Roland Banks/ }).click();
 
-  await expect(page.getByRole('dialog', { name: 'Fake Seeker' })).toBeVisible();
+  const sheet = page.getByRole('dialog', { name: 'Roland Banks' });
+  await expect(sheet.getByRole('region', { name: 'Card text' })).toContainText('Invented. Traits.');
 });
 
 test('the investigators step with two picked, their names pinned beside the next step', async ({

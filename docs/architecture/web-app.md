@@ -27,7 +27,7 @@ The new game wizard's [investigator picker](../../apps/web/src/picker/Investigat
 - each portrait (MD.3d2) is the figure cut from the picture of the card's front (`--picker-portrait-*` in tokens.css) with the class symbol in its colour (`--color-class-*`) on a disc at its corner, over the name and health and sanity as icons with values; a picked one is ringed in ink and wears its seat number on a brass disc.
 
 Its filters sit behind one round button that opens a menu, drawn like the play screen's ☰ menu (`button[data-icon][aria-expanded] + *` in base.css), and the button counts the filters set.
-A tap on a portrait opens the detail sheet as a dialog: Select takes the next free seat, and a picked investigator's sheet makes them the lead investigator or removes them. There is no seat list: the seats are the order round the table, so making one lead turns the table to them (`rotateTo`, Rules Reference "Player Order"), and the wizard's pinned line names the team in that order.
+A tap on a portrait opens the detail sheet as a dialog, with the card's faces, values, traits and ability text (`cardParagraphs`, so it reads without the pictures): Select takes the next free seat, and a picked investigator's sheet makes them the lead investigator or removes them. There is no seat list: the seats are the order round the table, so making one lead turns the table to them (`rotateTo`, Rules Reference "Player Order"), and the wizard's pinned line names the team in that order.
 
 ## Campaign log
 

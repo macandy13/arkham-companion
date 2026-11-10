@@ -959,6 +959,7 @@ export const appTexts = {
     },
     cycle: 'Cycle',
     cycleNumber: 'Cycle {{n}}',
+    cardText: 'Card text',
     productLine: {
       returnTo: 'Return to… boxes',
       starterDecks: 'Investigator Starter Decks',

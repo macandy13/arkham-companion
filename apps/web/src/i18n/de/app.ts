@@ -965,6 +965,7 @@ export const appTexts = {
     },
     cycle: 'Zyklus',
     cycleNumber: 'Zyklus {{n}}',
+    cardText: 'Kartentext',
     productLine: {
       returnTo: 'Rückkehr-Erweiterungen',
       starterDecks: 'Ermittler-Starterdecks',

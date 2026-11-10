@@ -67,3 +67,17 @@
 [data-symbol='curse'] {
   --symbol: url('../symbols/curse.svg');
 }
+
+/*
+ * A notebook page of card text (the investigator card's, the picker sheet's): the traits line and
+ * the emphasised runs set as the printed cards set them; each surface sizes its own text.
+ */
+:where([data-page]) > [data-traits] {
+  font-style: italic;
+  font-weight: bold;
+  text-align: center;
+}
+
+:where([data-page]) em {
+  font-weight: bold;
+}
