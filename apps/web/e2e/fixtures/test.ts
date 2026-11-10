@@ -135,6 +135,16 @@ export const test = base.extend<
           return route.abort();
         },
       );
+      // Temporary: which card pictures fail on a busy runner (M6.12b, flows ending without art).
+      context.on('requestfailed', (request) => {
+        if (CARD_PICTURES.test(new URL(request.url()).pathname))
+          console.warn(`picture failed: ${request.url()} ${request.failure()?.errorText}`);
+      });
+      context.on('weberror', (error) => console.warn(`page error: ${error.error().message}`));
+      context.on('console', (message) => {
+        if (message.type() === 'error' || message.type() === 'warning')
+          console.warn(`console ${message.type()}: ${message.text()}`);
+      });
       await use(unexpected);
       expect(unexpected, 'unexpected external requests').toEqual([]);
     },
