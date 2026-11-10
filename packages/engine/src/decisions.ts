@@ -165,15 +165,43 @@ export function answerCommands(state: GameState, command: Command): readonly Com
 }
 
 /**
- * What a per-point fail costs (`Decision.perPointFailed`): its commands once
- * for each point of the margin the answer confirms.
+ * What a per-point fail costs (`Decision.perPointFailed`) for the margin the
+ * answer confirms. Rules Reference, "For each": an effect that can be worked
+ * out at once is one effect, so "take 1 damage for each point" is one "take 3
+ * damage" (`timesMargin`); any other (a choice per point) resolves once for
+ * each point.
  */
 function perPointCommands(state: GameState, command: ResolveDecision): Command[] {
   const decision = pendingDecision(state, command.decisionId);
   const margin = decision && perPointMargin(decision, command);
   if (!decision?.perPointFailed || !margin) return [];
-  const perPoint = decision.perPointFailed;
-  return range(margin).flatMap(() => [...perPoint]);
+  return decision.perPointFailed.flatMap(
+    (perPoint) => timesMargin(perPoint, margin) ?? range(margin).map(() => perPoint),
+  );
+}
+
+/**
+ * `command` with its amount multiplied by `margin`, for an effect that is an amount (damage,
+ * horror, clues, doom), also when deferred as a card's effect (`ResolveEffect`); undefined for
+ * any other.
+ */
+function timesMargin(command: Command, margin: number): Command | undefined {
+  if (command.type === 'ResolveEffect') {
+    const effect = timesMargin(command.effect as Command, margin);
+    // A scaled effect keeps its templated references: only the number changed.
+    return effect && { ...command, effect: effect as typeof command.effect };
+  }
+  switch (command.type) {
+    case 'AdjustInvestigator':
+      return { ...command, delta: command.delta * margin };
+    case 'TakeDamageAndHorror':
+      return { ...command, damage: command.damage * margin, horror: command.horror * margin };
+    case 'PlaceClues':
+    case 'PlaceDoom':
+      return { ...command, amount: command.amount * margin };
+    default:
+      return undefined;
+  }
 }
 
 /**

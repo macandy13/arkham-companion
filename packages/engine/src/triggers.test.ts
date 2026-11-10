@@ -1015,6 +1015,18 @@ describe('trigger bus', () => {
       });
     });
 
+    it('deals a fail by 3 as one wound of 3, not three of 1 (Rules Reference, "For each")', () => {
+      const { context, state: started } = treacheryTable.start();
+      const drawn = stateAfter(context, started, aliceDraws, resolveRevelation('grasping_hands'));
+
+      const { events } = execute(context, drawn, {
+        ...answer('test:grasping_hands', 'fail'),
+        margin: 3,
+      });
+
+      expect(events.filter((event) => event.type === 'InvestigatorChanged')).toHaveLength(1);
+    });
+
     it('deals horror for a card that names it', () => {
       const { context, state: started } = treacheryTable.start();
       const secondDraw = stateAfter(

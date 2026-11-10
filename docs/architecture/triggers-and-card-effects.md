@@ -101,7 +101,7 @@ afterTest('investigate', 'pass', discardSelf())   // Obscuring Fog
 whenAdvanced(revealLocation(onlyCopy(codes.parlor)), …)
 ```
 
-- A card's test can cost the tester for each point it fails by (`skillTest(…, { perPointFailed })`): any ability effects, deferred like `onFail` and resolved once per point, ahead of `onFail` (`takeDamage(1)`, `placeYourClues(1)`, or a `youMustEither` asked again for each point); the fail answer's `margin` is the count.
+- A card's test can cost the tester for each point it fails by (`skillTest(…, { perPointFailed })`): any ability effects, deferred like `onFail` and ahead of it; an amount (`takeDamage(1)`, `placeYourClues(1)`, doom) is multiplied by the margin into one effect, as the Rules Reference's "For each" asks, and anything else (a `youMustEither`) resolves once for each point; the fail answer's `margin` is the count.
 - "Test [willpower] (3) or [agility] (3)" is `skillTestOfEither(id, ['willpower', 'agility'], 3, outcomes)`: a choice for the tester with one `skillTest` per skill, the same outcomes either way.
 - `PlaceTokens` puts clues from the token pool on a card in play (`placeCluesOnSelf(1)`, "place 1 clue on this act"), or tops it up to a count (`placeCluesOnSelfUpTo(perInvestigator(2))`, Ritual Site); doom keeps its own `PlaceDoom`.
 - Windows for every card in play (`eachTurnEnds`, `phaseEnds`, `roundEnds`) skip unrevealed locations, whose abilities are on their revealed side (`hasActiveAbilities`, also read by modifiers and card actions).

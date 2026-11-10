@@ -301,6 +301,34 @@ describe('The Devourer Below card abilities', () => {
       });
       expect(state.pending).toEqual([]);
     });
+
+    it('leaves the discard for a point to alice, by hand', () => {
+      const { context, state: started } = newGame()
+        .withLocation(mainPath, cardOf('01149'), { revealed: true })
+        .withInvestigator(alice, { locationId: mainPath })
+        .withCard(wrath, cardOf('01158'), { kind: 'encounterDeck' })
+        .start();
+      const failed = stateAfter(
+        context,
+        started,
+        aliceDraws("Umôrdhoth's Wrath"),
+        resolveRevelation('umordhoths_wrath'),
+        { ...failedByTwo, margin: 1 },
+      );
+
+      const { events } = execute(context, failed, answer(UMORDHOTHS_WRATH_DECISION, 'discard'));
+
+      expect(events).toContainEqual(
+        expect.objectContaining({
+          type: 'CommandDeferred',
+          command: expect.objectContaining({
+            type: 'DiscardFromHand',
+            investigatorId: alice,
+            amount: 1,
+          }),
+        }),
+      );
+    });
   });
 
   describe('The Yellow Sign', () => {
