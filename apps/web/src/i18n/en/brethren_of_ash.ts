@@ -29,8 +29,7 @@ export const brethrenOfAshTexts = {
     },
     queenOfAsh: {
       resolution: {
-        collector:
-          'Add both copies of Collector to your player card pool; any investigator may take one into their deck.',
+        collector: 'You earned the Collector reward: add both copies to your player card pool.',
       },
     },
   },

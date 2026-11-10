@@ -30,7 +30,7 @@ export const brethrenOfAshTexts = {
     queenOfAsh: {
       resolution: {
         collector:
-          'Nehmt beide Exemplare von Collector in euren Spielerkartenvorrat auf; jeder Ermittler darf eines in sein Deck nehmen.',
+          'Ihr habt die Belohnung Collector verdient: Nehmt beide Exemplare in euren Spielerkartenvorrat auf.',
       },
     },
   },
