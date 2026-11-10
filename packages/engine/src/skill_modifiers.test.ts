@@ -145,6 +145,25 @@ describe("skillTestSuggestion: base values, the players' modifier and tokens", (
     });
   });
 
+  it.each<{ name: string; tokens: ChaosToken[]; skill: number; outcome: 'pass' | 'fail' }>([
+    {
+      name: 'takes -1 for one frost token and adds the token it makes the players reveal: 4 - 1 + 0',
+      tokens: ['frost', '0'],
+      skill: 3,
+      outcome: 'pass',
+    },
+    {
+      name: 'fails on a second frost token in the same test, though 4 - 1 + 2 - 1 + 1 would pass',
+      tokens: ['frost', 'bless', 'frost', '+1'],
+      skill: 0,
+      outcome: 'fail',
+    },
+  ])('$name', ({ tokens, skill, outcome }) => {
+    const suggestion = skillTestSuggestion(context, state, investigateStudy, { tokens });
+
+    expect(suggestion).toMatchObject({ skill, outcome, unknownTokens: [] });
+  });
+
   it.each<{ name: string; input: SkillTestInput; outcome: 'pass' | 'fail'; margin: number }>([
     { name: 'a pass at intellect 4 against 3', input: {}, outcome: 'pass', margin: 1 },
     {
