@@ -16,7 +16,8 @@ import { campaignKeyArts } from '../../src/catalog/campaignKeyArt';
  * screenshots differed with whatever a runner got. Each artwork is drawn at its scan's size and
  * shape (portrait 300 × 419, an agenda, act or investigator front landscape), with its subject
  * where the app cuts the art out (`src/catalog/cardArt.ts`), so the card frames, art crops and
- * token avatars show as they would with the real scans.
+ * token avatars show as they would with the real scans. They are drawn in the playmats' style
+ * (night, fog, bone and brass, a sickly glow), so the shots look like the app with real cards.
  */
 const MOCK_ART_DIR = join(import.meta.dirname, 'mock_art');
 
