@@ -1,4 +1,4 @@
-import { useState, type SyntheticEvent } from 'react';
+import { useEffect, useState, type SyntheticEvent } from 'react';
 import type { CardImagePath } from '@arkham/engine';
 import { cardImageUrl } from './cardImageUrl';
 
@@ -25,6 +25,11 @@ function loadedShape(image: HTMLImageElement): PictureShape | undefined {
   return width > height ? 'landscape' : 'portrait';
 }
 
+/** Whether a picture that loaded as `loaded` lies the other way round from the card's `shape`. */
+function isSideways(loaded: PictureShape | undefined, shape: PictureShape | undefined): boolean {
+  return loaded !== undefined && shape !== undefined && loaded !== shape;
+}
+
 /**
  * The picture of a card face for `path` (a view's `image`), or nothing when the card data has
  * none. The loaded state is kept per address, so a face that turns to another side (a location
@@ -38,31 +43,32 @@ export function useCardPicture(
 ): CardPicture | undefined {
   const [loadedUrl, setLoadedUrl] = useState<string>();
   const [sidewaysUrl, setSidewaysUrl] = useState<string>();
-  if (path === undefined) return undefined;
-  const url = cardImageUrl(path);
+  const url = path === undefined ? undefined : cardImageUrl(path);
+  // A probe of its own as well as the face's load event: on a slow device the `image` of a face
+  // that turned to its other side (a location revealed) never reported its load, and the face
+  // kept its pattern for good. An SVG `image` has no size to read either, so the probe also tells
+  // the picture's shape. The probe of an address the face no longer shows is ignored.
+  useEffect(() => {
+    if (url === undefined) return;
+    let current = true;
+    const probe = new Image();
+    probe.onload = () => {
+      if (current) (isSideways(loadedShape(probe), shape) ? setSidewaysUrl : setLoadedUrl)(url);
+    };
+    probe.src = url;
+    return () => {
+      current = false;
+    };
+  }, [url, shape]);
+  if (url === undefined) return undefined;
   return {
     url,
     shown: loadedUrl === url && sidewaysUrl !== url,
     onLoad: (event) => {
-      if (!shape) {
-        setLoadedUrl(url);
-        return;
-      }
-      const settle = (loaded: PictureShape | undefined) => {
-        if (loaded && loaded !== shape) setSidewaysUrl(url);
-        else setLoadedUrl(url);
-      };
       const target = event.currentTarget;
-      if (target instanceof HTMLImageElement) {
-        settle(loadedShape(target));
-        return;
-      }
-      // An SVG `image` has no size to read, so a probe loads the same picture, cached by now, to
-      // tell its shape. A probe that fails tells nothing, and the picture shows as loaded.
-      const probe = new Image();
-      probe.onload = () => settle(loadedShape(probe));
-      probe.onerror = () => settle(undefined);
-      probe.src = url;
+      if (target instanceof HTMLImageElement)
+        (isSideways(loadedShape(target), shape) ? setSidewaysUrl : setLoadedUrl)(url);
+      else if (!shape) setLoadedUrl(url);
     },
     onError: () => setLoadedUrl(undefined),
   };
