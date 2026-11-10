@@ -105,43 +105,6 @@ export function withStats(
 }
 
 /**
- * Prey criterion "lowest remaining health" (architecture "Game state"). The prey helpers
- * return every active investigator tied for the extreme, in the order given,
- * because the players, not the engine, break ties (M1.8/M1.9). Defeated and
- * resigned investigators never count; the result is empty if none is active.
- */
-export function lowestRemainingHealth(investigators: readonly Investigator[]): Investigator[] {
-  return tiedFor(investigators, remainingHealth, 'lowest');
-}
-
-/** Prey "lowest remaining sanity"; see `lowestRemainingHealth` for tie handling. */
-export function lowestRemainingSanity(investigators: readonly Investigator[]): Investigator[] {
-  return tiedFor(investigators, remainingSanity, 'lowest');
-}
-
-/** Prey "most clues"; see `lowestRemainingHealth` for tie handling. */
-export function mostClues(investigators: readonly Investigator[]): Investigator[] {
-  return tiedFor(investigators, (inv) => inv.clues, 'highest');
-}
-
-/** Prey "most resources"; see `lowestRemainingHealth` for tie handling. */
-export function mostResources(investigators: readonly Investigator[]): Investigator[] {
-  return tiedFor(investigators, (inv) => inv.resources, 'highest');
-}
-
-/**
- * Prey "Highest [skill]" or "Lowest [skill]" (Ghoul Priest: "Highest [combat]"); see
- * `lowestRemainingHealth` for tie handling. Compares the skill values as modified (RR "Prey"):
- * the printed skill and its lasting boost (`Investigator.skillBoosts`, Beat Cop's +1 combat).
- */
-export function bySkill(
-  skill: SkillName,
-  extreme: 'lowest' | 'highest',
-): (investigators: readonly Investigator[]) => Investigator[] {
-  return (investigators) => tiedFor(investigators, (inv) => boostedSkills(inv)[skill], extreme);
-}
-
-/**
  * `investigator`'s skill values with their lasting boosts (`Investigator.skillBoosts`) added to
  * the printed ones: what Prey compares and what the investigator card shows. A skill test shows
  * the boost as a step of its own instead (`skillTestSuggestion`).
@@ -157,18 +120,6 @@ export function boostedSkills(
     combat: boosted('combat'),
     agility: boosted('agility'),
   };
-}
-
-function tiedFor(
-  investigators: readonly Investigator[],
-  value: (investigator: Investigator) => number,
-  extreme: 'lowest' | 'highest',
-): Investigator[] {
-  const active = investigators.filter((inv) => inv.status === 'active');
-  if (active.length === 0) return [];
-  const values = active.map(value);
-  const best = extreme === 'lowest' ? Math.min(...values) : Math.max(...values);
-  return active.filter((inv) => value(inv) === best);
 }
 
 /**

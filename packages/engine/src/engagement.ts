@@ -1,68 +1,18 @@
-import { cardStats, comparableName, type CardStats, type EngineContext } from './cards';
+import { cardStats, type EngineContext } from './cards';
 import type { Command } from './commands';
 import type { DecisionRequested, EnemyEngaged, Event } from './events';
 import { decisionId, type InstanceId, type InvestigatorId } from './ids';
-import {
-  activeInvestigators,
-  bySkill,
-  lowestRemainingHealth,
-  lowestRemainingSanity,
-  mostClues,
-  mostResources,
-} from './investigators';
+import { activeInvestigators } from './investigators';
 import { cardOptionLabels, requestDecision } from './decisions';
 import { hasKeyword } from './keywords';
 import { cardsAtLocation, cardsOfType } from './lookup';
+import { preferredByPrey, preyPrompt } from './prey';
 import { replay } from './reducer';
-import {
-  SKILL_NAMES,
-  type CardInstance,
-  type Decider,
-  type GameState,
-  type Investigator,
-} from './state';
-
-/** A prey criterion: the tied best among the investigators given. */
-type PreyCriterion = (investigators: readonly Investigator[]) => Investigator[];
-
-/** Prey criteria the engine can evaluate from investigator counters. */
-const PREY_CRITERIA: Record<string, PreyCriterion> = {
-  'lowest remaining health': lowestRemainingHealth,
-  'lowest remaining sanity': lowestRemainingSanity,
-  'most clues': mostClues,
-  'most resources': mostResources,
-};
+import type { CardInstance, Decider, GameState, Investigator } from './state';
 
 /** Active investigators standing at `locationId`, in seat order of `state.investigators`. */
 export function investigatorsAt(state: GameState, locationId: InstanceId): Investigator[] {
   return activeInvestigators(state).filter((inv) => inv.locationId === locationId);
-}
-
-/**
- * The investigators the enemy prefers among `candidates` according to its
- * `prey` keyword: the tied best. Without a prey keyword, or with a criterion
- * the engine cannot read (Yithian Observer's "Fewest cards in hand"), all
- * active candidates stay, so the players decide.
- */
-export function preferredByPrey(
-  stats: CardStats,
-  candidates: readonly Investigator[],
-): Investigator[] {
-  const active = candidates.filter((inv) => inv.status === 'active');
-  const detail = stats.keywords?.find((keyword) => keyword.name === 'prey')?.detail;
-  const criterion = detail === undefined ? undefined : preyCriterion(comparableName(detail));
-  return criterion ? criterion(active) : active;
-}
-
-/** The criterion of a prey text in `comparableName` form, e.g. "highest [combat]". */
-function preyCriterion(text: string): PreyCriterion | undefined {
-  const named = PREY_CRITERIA[text];
-  if (named) return named;
-  for (const extreme of ['highest', 'lowest'] as const) {
-    const skill = SKILL_NAMES.find((name) => text === `${extreme} [${name}]`);
-    if (skill) return bySkill(skill, extreme);
-  }
-  return undefined;
 }
 
 /**
@@ -87,7 +37,12 @@ export function engageEvents(
   if (hasKeyword(stats, 'aloof') || hasKeyword(stats, 'massive')) return [];
   const drawer = investigatorsAt(state, enemy.zone.locationId).find((inv) => inv.id === drawerId);
   if (drawer) return [engaged(enemyId, drawer)];
-  const preferred = preferredByPrey(stats, investigatorsAt(state, enemy.zone.locationId));
+  const preferred = preferredByPrey(
+    ctx,
+    state,
+    enemy,
+    investigatorsAt(state, enemy.zone.locationId),
+  );
   const [only] = preferred;
   if (only === undefined) return [];
   if (preferred.length === 1) return [engaged(enemyId, only)];
@@ -95,7 +50,7 @@ export function engageEvents(
     state,
     enemyId,
     `engage:${enemyId}`,
-    'decision.chooseEngagement',
+    preyPrompt(stats, 'decision.chooseEngagement'),
     preferred,
     (chosen) => ({ type: 'EngageEnemy', enemyId, investigatorId: chosen.id }),
   );

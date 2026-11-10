@@ -3,16 +3,11 @@ import {
   blankEnemy,
   blankInvestigator,
   blankLocation,
-  bySkill,
   checkInvariants,
   engagedWith,
   execute,
   instanceId,
   investigatorId,
-  lowestRemainingHealth,
-  lowestRemainingSanity,
-  mostClues,
-  mostResources,
   newGame,
   perInvestigator,
   withStatDelta,
@@ -688,82 +683,6 @@ describe('PlaceClues', () => {
   });
 });
 
-describe('prey helpers', () => {
-  const hurt = blankInvestigator(alice, {
-    health: { max: 7, damage: 4 },
-    sanity: { max: 6, horror: 1 },
-    clues: 3,
-    resources: 1,
-  });
-  const shaken = blankInvestigator(bob, {
-    seat: 1,
-    health: { max: 9, damage: 1 },
-    sanity: { max: 6, horror: 3 },
-    clues: 3,
-    resources: 4,
-  });
-
-  it('finds the lowest remaining health', () => {
-    expect(lowestRemainingHealth([hurt, shaken])).toEqual([hurt]);
-  });
-
-  it('finds the lowest remaining sanity', () => {
-    expect(lowestRemainingSanity([hurt, shaken])).toEqual([shaken]);
-  });
-
-  it('returns every investigator tied for most clues', () => {
-    expect(mostClues([hurt, shaken])).toEqual([hurt, shaken]);
-  });
-
-  it('finds the most resources', () => {
-    expect(mostResources([hurt, shaken])).toEqual([shaken]);
-  });
-
-  it.each([
-    { prey: 'highest combat (bob 5)', skill: 'combat', extreme: 'highest', expected: [bob] },
-    { prey: 'lowest combat (alice 2)', skill: 'combat', extreme: 'lowest', expected: [alice] },
-    {
-      prey: 'lowest agility, tied at 2',
-      skill: 'agility',
-      extreme: 'lowest',
-      expected: [alice, bob],
-    },
-  ] as const)('finds the $prey', ({ skill, extreme, expected }) => {
-    const weakAlice = blankInvestigator(alice, {
-      skills: { willpower: 3, intellect: 3, combat: 2, agility: 2 },
-    });
-    const strongBob = blankInvestigator(bob, {
-      skills: { willpower: 3, intellect: 3, combat: 5, agility: 2 },
-    });
-
-    expect(bySkill(skill, extreme)([weakAlice, strongBob]).map((inv) => inv.id)).toEqual(expected);
-  });
-
-  it('counts a lasting boost: alice, combat 2 boosted by 4, has the highest combat over bob at 5', () => {
-    const boostedAlice = blankInvestigator(alice, {
-      skills: { willpower: 3, intellect: 3, combat: 2, agility: 2 },
-      skillBoosts: { combat: 4 },
-    });
-    const strongBob = blankInvestigator(bob, {
-      skills: { willpower: 3, intellect: 3, combat: 5, agility: 2 },
-    });
-
-    expect(bySkill('combat', 'highest')([boostedAlice, strongBob]).map((inv) => inv.id)).toEqual([
-      alice,
-    ]);
-  });
-
-  it('ignores defeated and resigned investigators', () => {
-    const gone = { ...hurt, status: 'defeated' as const };
-
-    expect(lowestRemainingHealth([gone, shaken])).toEqual([shaken]);
-  });
-
-  it('is empty when nobody is active', () => {
-    expect(mostClues([{ ...hurt, status: 'resigned' }])).toEqual([]);
-  });
-});
-
 describe('investigator state over a sequence of adjustments', () => {
   const adjust = (stat: 'damage' | 'horror' | 'clues' | 'resources', delta: number): Command => ({
     type: 'AdjustInvestigator',
@@ -795,23 +714,6 @@ describe('investigator state over a sequence of adjustments', () => {
       expect(checkInvariants(end)).toEqual([]);
     },
   );
-});
-
-describe('lowestRemainingHealth with ties', () => {
-  const hurt = (id: string, maxHealth: number, damage: number) =>
-    withStats(blankInvestigator(id, { health: { max: maxHealth, damage: 0 } }), { damage });
-
-  it.each([
-    ['a single investigator', [hurt('a', 5, 4)], ['a']],
-    ['a clear minimum', [hurt('a', 9, 0), hurt('b', 6, 1)], ['b']],
-    [
-      'investigators tied on remaining health',
-      [hurt('a', 9, 4), hurt('b', 6, 1), hurt('c', 8, 0)],
-      ['a', 'b'],
-    ],
-  ])('returns the lowest for %s', (_, candidates, expectedIds) => {
-    expect(lowestRemainingHealth(candidates).map((inv) => inv.id)).toEqual(expectedIds);
-  });
 });
 
 describe('withStats', () => {

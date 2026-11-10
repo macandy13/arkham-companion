@@ -288,7 +288,12 @@ describe('SpawnEnemy', () => {
 
     expect(zoneOf(after, ghoul)).toEqual(atLocation(hall));
     expect(after.pending).toMatchObject([
-      { kind: 'chooseInvestigator', subject: ghoul, options: [{ target: alice }, { target: bob }] },
+      {
+        kind: 'chooseInvestigator',
+        subject: ghoul,
+        prompt: 'decision.choosePrey',
+        options: [{ target: alice }, { target: bob }],
+      },
     ]);
   });
 
