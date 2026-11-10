@@ -105,9 +105,6 @@ export default defineConfig<PictureOptions>({
       name: RECORDING_PROJECTS.phoneShots,
       testMatch: shotSpecs,
       outputDir: 'test-results/screenshot-phone',
-      // Until the phone layout exists (M3.14) some shots can't reach their situation on a phone;
-      // a retry would only fail again and slow the preview.
-      retries: 0,
       use: { ...phone, ...picture, launchOptions: { executablePath } },
     },
   ],

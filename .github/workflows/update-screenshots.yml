@@ -3,11 +3,13 @@ name: Update screenshots
 # Photographs every flow and screenshot spec on a branch and commits the goldens that changed
 # (apps/web/e2e/__screenshots__), as the repo's GitHub App bot. Goldens are made only here, on
 # the runner image CI's E2E job compares them on: another machine renders text a few pixels
-# differently, so a golden from a laptop would fail in CI. A session dispatches it after pushing
-# a change that alters what a screen shows, or labels the PR `update-screenshots` (the label
-# also works before this workflow is on main, which a dispatch needs), then merges the bot's
-# commit before its next push (docs/automation.md). The App token, not GITHUB_TOKEN, pushes the commit, because a push with
-# GITHUB_TOKEN starts no workflows and the PR's checks would not run again.
+# differently, so a golden from a laptop would fail in CI. A session labels the PR
+# `update-screenshots` after pushing a change that alters what a screen shows (the label works
+# before this workflow is on main, which a dispatch needs), or dispatches it with the branch,
+# then merges the bot's commit before its next push (docs/automation.md).
+# The App token, not GITHUB_TOKEN, pushes the commit, because a push with GITHUB_TOKEN starts no
+# workflows and the PR's checks would not run again. It is created only after the branch's own
+# code (install scripts, build, specs) has run, so that code never sees a write token.
 
 on:
   workflow_dispatch:
@@ -20,32 +22,32 @@ on:
 
 permissions: {}
 
-concurrency:
-  group: update-screenshots-${{ inputs.branch || github.head_ref }}
-  cancel-in-progress: true
-
 env:
   BRANCH: ${{ inputs.branch || github.head_ref }}
 
 jobs:
   update:
-    if: github.event_name == 'workflow_dispatch' || github.event.label.name == 'update-screenshots'
-    runs-on: ubuntu-latest
+    # Never main: its goldens change only through merged PRs.
+    if: >-
+      (github.event_name == 'workflow_dispatch' && inputs.branch != 'main') ||
+      github.event.label.name == 'update-screenshots'
+    # Inside the job, so the skipped runs other labels start don't cancel an update.
+    concurrency:
+      group: update-screenshots-${{ inputs.branch || github.head_ref }}
+      cancel-in-progress: true
+    # The image CI's E2E job compares on (ci.yml); a new image may render fonts differently.
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
+    permissions:
+      contents: read
     steps:
-      - uses: actions/create-github-app-token@v3
-        id: app
-        with:
-          app-id: ${{ vars.CLAUDE_BOT_APP_ID || secrets.CLAUDE_BOT_APP_ID }}
-          private-key: ${{ secrets.CLAUDE_BOT_PRIVATE_KEY }}
-          permission-contents: write
-          permission-pull-requests: write
       - uses: actions/checkout@v7
         with:
           ref: ${{ env.BRANCH }}
-          token: ${{ steps.app.outputs.token }}
+          persist-credentials: false
       - uses: ./.github/actions/e2e_setup
       # A spec that fails for another reason keeps its old golden; CI's E2E job reports it.
+      # `changed` never deletes: a renamed test's old golden stays until removed by hand.
       - name: Photograph
         working-directory: apps/web
         env:
@@ -54,7 +56,16 @@ jobs:
           pnpm exec playwright test --project=flow-picture --project=screenshot
           --project=screenshot-phone --workers=100% --update-snapshots=changed ||
           echo "::warning::Some specs failed; their goldens stay as they were."
+      - uses: actions/create-github-app-token@v3
+        id: app
+        with:
+          app-id: ${{ vars.CLAUDE_BOT_APP_ID || secrets.CLAUDE_BOT_APP_ID }}
+          private-key: ${{ secrets.CLAUDE_BOT_PRIVATE_KEY }}
+          permission-contents: write
+          permission-pull-requests: write
       - name: Commit the changed goldens
+        env:
+          GH_TOKEN: ${{ steps.app.outputs.token }}
         run: |
           git add apps/web/e2e/__screenshots__
           if git diff --cached --quiet; then
@@ -64,10 +75,10 @@ jobs:
           git -c user.name='arkham-claude[bot]' \
             -c user.email='arkham-claude[bot]@users.noreply.github.com' \
             commit -m 'test(web): update screenshot goldens'
-          git push origin "HEAD:$BRANCH"
+          git push "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "HEAD:$BRANCH"
           git show --stat --format= HEAD >> "$GITHUB_STEP_SUMMARY"
       # So the next change that needs new goldens can label the PR again.
-      - if: always() && github.event_name == 'pull_request'
+      - if: always() && github.event_name == 'pull_request' && steps.app.outputs.token != ''
         env:
           GH_TOKEN: ${{ steps.app.outputs.token }}
           PR: ${{ github.event.pull_request.number }}
