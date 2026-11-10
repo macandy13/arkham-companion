@@ -36,12 +36,15 @@ export interface PlaymatOptions {
   readonly realPlaymats: boolean;
 }
 
-/** The flat colour each playmat (by its file name, `src/styles/playmat*.svg`) is replaced with. */
+/**
+ * The flat colour each playmat (by its file name, `src/styles/playmat*.svg`) is replaced with:
+ * its table's `--color-background` in `tokens.css`, the colour the playmat lies on.
+ */
 const FLAT_PLAYMATS: Readonly<Record<string, string>> = {
-  playmat: '#1d3330',
-  playmat_stars: '#161b2c',
-  playmat_rlyeh: '#13262b',
-  playmat_parchment: '#ddd0b2',
+  playmat: '#0b1614',
+  playmat_stars: '#0a0820',
+  playmat_rlyeh: '#031416',
+  playmat_parchment: '#e8dcbf',
 };
 
 /** A built playmat's address: Vite adds a content hash to the file name. */

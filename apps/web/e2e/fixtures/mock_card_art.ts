@@ -6,6 +6,7 @@ import {
   theGatheringCardDefs,
   theMidnightMasksCardDefs,
 } from '@arkham/scenarios';
+import { sum } from '@arkham/util';
 import { campaignKeyArts } from '../../src/catalog/campaignKeyArt';
 
 /**
@@ -72,7 +73,7 @@ const KINDS: ReadonlyMap<string, ArtKind> = new Map([
 
 /** A stable pick from `count` artworks for `name`, so a card shows the same art every run. */
 function pick(name: string, count: number): number {
-  return [...name].reduce((sum, letter) => sum + letter.charCodeAt(0), 0) % count;
+  return sum([...name].map((letter) => letter.charCodeAt(0))) % count;
 }
 
 /**
