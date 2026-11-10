@@ -41,9 +41,11 @@ jobs:
     permissions:
       contents: read
     steps:
+      # On a PR, the merge with its base that CI's E2E job tests (GitHub's default ref for a PR
+      # event), so a change merged to main since the branch started is in the goldens too.
       - uses: actions/checkout@v7
         with:
-          ref: ${{ env.BRANCH }}
+          ref: ${{ github.event_name == 'pull_request' && github.ref || env.BRANCH }}
           persist-credentials: false
       - uses: ./.github/actions/e2e_setup
       # A spec that fails for another reason keeps its old golden; CI's E2E job reports it.
@@ -65,8 +67,15 @@ jobs:
           permission-pull-requests: write
       - name: Commit the changed goldens
         env:
-          GH_TOKEN: ${{ steps.app.outputs.token }}
+          REPO_URL: https://x-access-token:${{ steps.app.outputs.token }}@github.com/${{ github.repository }}.git
+        # The goldens go onto the branch itself, not onto the merge they were taken from.
         run: |
+          goldens=$(mktemp -d)
+          cp -r apps/web/e2e/__screenshots__/. "$goldens"
+          git fetch --depth=1 "$REPO_URL" "$BRANCH"
+          git checkout --force -B golden_update FETCH_HEAD
+          mkdir -p apps/web/e2e/__screenshots__
+          cp -r "$goldens"/. apps/web/e2e/__screenshots__
           git add apps/web/e2e/__screenshots__
           if git diff --cached --quiet; then
             echo "No golden changed." >> "$GITHUB_STEP_SUMMARY"
@@ -75,7 +84,7 @@ jobs:
           git -c user.name='arkham-claude[bot]' \
             -c user.email='arkham-claude[bot]@users.noreply.github.com' \
             commit -m 'test(web): update screenshot goldens'
-          git push "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "HEAD:$BRANCH"
+          git push "$REPO_URL" "HEAD:$BRANCH"
           git show --stat --format= HEAD >> "$GITHUB_STEP_SUMMARY"
       # So the next change that needs new goldens can label the PR again.
       - if: always() && github.event_name == 'pull_request' && steps.app.outputs.token != ''
