@@ -1,5 +1,6 @@
 import type { BasicAction } from './action_costs';
-import type { AbilityEffect, OpenedWindow, TimingWindow } from './abilities';
+import type { AbilityEffect, OpenedWindow, TestedAction, TimingWindow } from './abilities';
+import type { KeywordAttackKind } from './forced_attacks';
 import type { CampaignLog, TraumaKind } from './campaign/campaign_log';
 import type { CardType, ScaledValue, TokenAmount, Trait } from './cards';
 import type {
@@ -24,6 +25,7 @@ import type {
   PerPointFailed,
   SkillName,
   SkillTest,
+  SkillTestOutcome,
   TokenKind,
   WoundKind,
 } from './state';
@@ -106,7 +108,8 @@ export type Command =
   | EnemyAttacks
   | Investigate
   | Fight
-  | Evade;
+  | Evade
+  | EndSkillTest;
 
 /** A card instance to create when the scenario starts. */
 export interface StartingCard {
@@ -1293,6 +1296,24 @@ export interface EnemyAttacks {
   type: 'EnemyAttacks';
   enemyId: InstanceId;
   investigatorId: InvestigatorId;
+  /**
+   * The keyword that makes the attack (retaliate, alert; `keywordAbilities`): asked as
+   * `<keyword>:<enemy>`, and only by a ready enemy, which both keywords require.
+   */
+  keyword?: KeywordAttackKind;
+}
+
+/**
+ * The skill test of a basic action ends (ST.8): queued after the test's results
+ * (`testedActionCommands`) so that "after applying all results" abilities see them. Produces
+ * `SkillTestEnded`.
+ */
+export interface EndSkillTest {
+  type: 'EndSkillTest';
+  investigatorId: InvestigatorId;
+  subject: InstanceId;
+  action: TestedAction;
+  outcome: SkillTestOutcome;
 }
 
 /**

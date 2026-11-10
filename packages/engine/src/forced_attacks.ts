@@ -1,17 +1,15 @@
-import { cardStats, type CardStats, type EngineContext } from './cards';
-import type { Command, RequestDecision } from './commands';
+import { cardStats, type EngineContext } from './cards';
 import { decisionId, type DecisionId, type InstanceId, type InvestigatorId } from './ids';
 import { requireCard } from './lookup';
-import { hasKeyword } from './keywords';
-import type { CardInstance, Decision, DueAttack, GameState } from './state';
+import type { Decision, DueAttack, GameState } from './state';
 
 /**
  * The enemy attacks the rules force outside the enemy phase, each asked as a
  * `confirm` decision (`<kind>:<enemy>`) for the attacked investigator:
  * - `attackOfOpportunity`: an action taken while engaged with the ready enemy
  *   (`attackOfOpportunityDecisions`).
- * - `retaliate`: a failed attack against the ready retaliate enemy (`keywordAttackCommands`).
- * - `alert`: a failed evade against the ready alert enemy (`keywordAttackCommands`).
+ * - `retaliate`: a failed attack against the ready retaliate enemy (`KeywordAttackKind`).
+ * - `alert`: a failed evade against the ready alert enemy (`KeywordAttackKind`).
  * - `cardAttack`: a card that says the enemy attacks (`EnemyAttacks`), asked
  *   `cardAttack:<enemy>:<investigator>`, since one card may attack each investigator at a location.
  *
@@ -34,8 +32,7 @@ const SKIP_LABELS: Readonly<Record<ForcedAttackKind, string>> = {
  * The decision for one forced attack of the enemy on the investigator. Its
  * `attack` option deals the enemy's printed damage and horror, which the
  * players may lower (assets soak part of it) through
- * `ResolveDecision.amounts`; `skip` deals nothing and runs `afterSkip`, what follows the attack
- * whether or not it is made (an elusive enemy's retreat after a missed fight).
+ * `ResolveDecision.amounts`; `skip` deals nothing.
  */
 export function forcedAttackDecision(
   ctx: EngineContext,
@@ -43,7 +40,6 @@ export function forcedAttackDecision(
   kind: ForcedAttackKind,
   enemyId: InstanceId,
   investigatorId: InvestigatorId,
-  afterSkip: readonly Command[] = [],
 ): Decision {
   return {
     id: decisionId(
@@ -68,7 +64,7 @@ export function forcedAttackDecision(
         ],
         amounts: printedAttack(ctx, state, enemyId),
       },
-      { id: 'skip', label: SKIP_LABELS[kind], commands: [...afterSkip] },
+      { id: 'skip', label: SKIP_LABELS[kind], commands: [] },
     ],
   };
 }
@@ -143,32 +139,12 @@ export function forcedAttackPrompt(kind: ForcedAttackKind): string {
   return `decision.${kind}`;
 }
 
-/** The forced attacks a keyword triggers after a failed test; the kind is also the keyword's name. */
-export type KeywordAttackKind = Extract<ForcedAttackKind, 'retaliate' | 'alert'>;
-
 /**
- * Rules Reference, "Retaliate" and "Alert": after an investigator fails a
- * fight (retaliate) or an evade (alert) against a ready enemy with that
- * keyword, and after the test's other results, the enemy attacks that
- * investigator, engaged with them or not. The 2026 Core rulebook requires a
- * ready enemy for both; the older Rules Reference text leaves it out for
- * alert. Belongs at the end of the test's fail commands, which are computed
- * as the answer arrives (`testedActionCommands`), so readiness is read then.
+ * The forced attacks a keyword triggers after a failed test; the kind is also the keyword's name.
+ * Rules Reference, "Retaliate" and "Alert": after an investigator fails a fight (retaliate) or an
+ * evade (alert) against a ready enemy with that keyword, and after applying all results of the
+ * test, the enemy attacks that investigator, engaged with them or not (`keywordAbilities`, an
+ * `EnemyAttacks` with its `keyword`). The 2026 Core rulebook requires a ready enemy for both; the
+ * older Rules Reference text leaves it out for alert.
  */
-export function keywordAttackCommands(
-  ctx: EngineContext,
-  state: GameState,
-  kind: KeywordAttackKind,
-  enemy: CardInstance,
-  stats: CardStats,
-  investigatorId: InvestigatorId,
-  afterSkip: readonly Command[] = [],
-): RequestDecision[] {
-  if (!hasKeyword(stats, kind) || enemy.exhausted) return [];
-  return [
-    {
-      type: 'RequestDecision',
-      decision: forcedAttackDecision(ctx, state, kind, enemy.id, investigatorId, afterSkip),
-    },
-  ];
-}
+export type KeywordAttackKind = Extract<ForcedAttackKind, 'retaliate' | 'alert'>;

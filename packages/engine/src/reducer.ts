@@ -139,6 +139,7 @@ export function apply(state: GameState, event: Event): GameState {
     case 'CommandDeferred':
     case 'CluesDiscovered':
     case 'SkillTestResolved':
+    case 'SkillTestEnded':
     case 'EnemyAttacked':
     case 'EnemyEvaded':
       return state;

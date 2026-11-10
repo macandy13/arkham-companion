@@ -76,7 +76,13 @@ import { handleStartScenario } from './handle_start_scenario';
 import { handleMoveHunter, handleMoveHunters } from './hunters';
 import { attacksStillDue, handleNextPhase, handleResolveEnemyAttack } from './phases';
 import { handleDiscardCard } from './placement';
-import { handleEvade, handleFight, handleInvestigate, handleTestSkill } from './skill_tests';
+import {
+  handleEndSkillTest,
+  handleEvade,
+  handleFight,
+  handleInvestigate,
+  handleTestSkill,
+} from './skill_tests';
 import { handleSpawnEnemy } from './spawn';
 import type { GameState, HeldAction, QueuedStep } from './state';
 import { handleAdjustActions, handleEndTurn, handleResign, handleStartTurn } from './turns';
@@ -330,6 +336,7 @@ const COMMAND_SPECS: CommandSpecs = {
   Investigate: { handle: handleInvestigate, provokes: asAction },
   Fight: { handle: handleFight },
   Evade: { handle: handleEvade },
+  EndSkillTest: { handle: handleEndSkillTest },
 };
 
 /** The spec of `command`'s type (`CommandSpec`). */

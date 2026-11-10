@@ -1,7 +1,7 @@
 import { assertNever } from '@arkham/util';
 import { effectiveValue } from './modifiers';
 import type { CardStats, EngineContext } from './cards';
-import type { Command, Evade, Fight, Investigate, TestSkill } from './commands';
+import type { Command, EndSkillTest, Evade, Fight, Investigate, TestSkill } from './commands';
 import {
   answerOutcome,
   pendingDecision,
@@ -9,8 +9,7 @@ import {
   skillTestDecision,
   type SkillTestOutcomes,
 } from './decisions';
-import type { DecisionRequested } from './events';
-import { keywordAttackCommands } from './forced_attacks';
+import type { DecisionRequested, SkillTestEnded } from './events';
 import { enemyOf, isEngagedWith, isEnemyOnTable, locationOf } from './enemies';
 import { activeInvestigator } from './investigators';
 import { decisionId, type InstanceId } from './ids';
@@ -181,16 +180,48 @@ export function testedActionCommands(
     ...(command.amount === undefined ? {} : { amount: command.amount }),
   };
   const kind = decision.testKind;
+  const ended: EndSkillTest = {
+    type: 'EndSkillTest',
+    investigatorId: investigator.id,
+    subject: kind.kind === 'investigate' ? kind.locationId : kind.enemyId,
+    action: kind.kind,
+    outcome: answer.outcome,
+  };
+  return [...resultCommands(ctx, state, investigator, kind, answer), ended];
+}
+
+/** The results (ST.7) of the test of the basic action `kind`. */
+function resultCommands(
+  ctx: EngineContext,
+  state: GameState,
+  investigator: Investigator,
+  kind: SkillTestKind,
+  answer: TestAnswer,
+): Command[] {
   switch (kind.kind) {
     case 'investigate':
       return investigateCommands(ctx, state, investigator, kind.locationId, answer);
     case 'fight':
       return fightCommands(ctx, state, investigator, kind, answer);
     case 'evade':
-      return evadeCommands(ctx, state, investigator, kind.enemyId, answer);
+      return answer.outcome === 'pass'
+        ? [{ type: 'EvadeEnemy', enemyId: kind.enemyId, investigatorId: investigator.id }]
+        : [];
     default:
       return assertNever(kind);
   }
+}
+
+/**
+ * `EndSkillTest`: marks the end of the test (`SkillTestEnded`), which opens `testEnded` for the
+ * subject.
+ */
+export function handleEndSkillTest(
+  _ctx: EngineContext,
+  _state: GameState,
+  { investigatorId, subject, action, outcome }: EndSkillTest,
+): SkillTestEnded[] {
+  return [{ type: 'SkillTestEnded', investigatorId, subject, action, outcome }];
 }
 
 /** The outcome of an action's skill test and the count the players confirmed for a pass, if any. */
@@ -225,9 +256,8 @@ function investigateCommands(
 /**
  * A passed attack deals the confirmed damage (the attack's by default). A
  * failed one deals the attack's damage to the other investigator the enemy is
- * engaged with, if any (see `failedFightCommands`), and then lets a ready
- * retaliate enemy attack the fighter (`keywordAttackCommands`). An elusive enemy then retreats
- * (`RetreatEnemy`).
+ * engaged with, if any (see `failedFightCommands`). Retaliate and elusive act
+ * after these results, when the test ends (`keywordAbilities`).
  */
 function fightCommands(
   ctx: EngineContext,
@@ -236,44 +266,8 @@ function fightCommands(
   { enemyId, damage }: { enemyId: InstanceId; damage: number },
   { outcome, amount = damage }: TestAnswer,
 ): Command[] {
-  const { enemy, stats } = enemyOf(ctx, state, enemyId);
-  // Rules Reference, "Elusive": after it is attacked, hit or miss. A retaliate attack comes
-  // first; the enemy retreats after it as after any attack it makes (`keywordAbilities`), or
-  // when the players cancel it.
-  const retreat: Command[] = hasKeyword(stats, 'elusive')
-    ? [{ type: 'RetreatEnemy', enemyId }]
-    : [];
-  if (outcome === 'pass') return [{ type: 'DamageEnemy', enemyId, amount }, ...retreat];
-  const retaliation = keywordAttackCommands(
-    ctx,
-    state,
-    'retaliate',
-    enemy,
-    stats,
-    investigator.id,
-    retreat,
-  );
-  return [
-    ...failedFightCommands(state, investigator, enemy, damage),
-    ...(retaliation.length > 0 ? retaliation : retreat),
-  ];
-}
-
-/**
- * A passed evasion evades the enemy (`EvadeEnemy`). A failed one lets an
- * alert enemy attack the evader (`keywordAttackCommands`).
- */
-function evadeCommands(
-  ctx: EngineContext,
-  state: GameState,
-  investigator: Investigator,
-  enemyId: InstanceId,
-  { outcome }: TestAnswer,
-): Command[] {
-  const { enemy, stats } = enemyOf(ctx, state, enemyId);
-  if (outcome === 'fail')
-    return keywordAttackCommands(ctx, state, 'alert', enemy, stats, investigator.id);
-  return [{ type: 'EvadeEnemy', enemyId, investigatorId: investigator.id }];
+  if (outcome === 'pass') return [{ type: 'DamageEnemy', enemyId, amount }];
+  return failedFightCommands(state, investigator, enemyOf(ctx, state, enemyId).enemy, damage);
 }
 
 /**
