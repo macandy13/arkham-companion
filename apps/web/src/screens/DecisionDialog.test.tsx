@@ -544,7 +544,7 @@ describe('DecisionDialog', () => {
     });
   });
 
-  it('takes back the step that raised it with Undo, and offers no Adjust board of its own', () => {
+  it('takes back the step that raised it with Undo', () => {
     const table = aldersTurnInTheStudy();
     table.investigate(alder, { result: 'open' });
     const undone = vi.fn(async () => {});
@@ -553,6 +553,5 @@ describe('DecisionDialog', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Undo' }));
 
     expect(undone).toHaveBeenCalledOnce();
-    expect(screen.queryByRole('button', { name: 'Adjust board' })).toBeNull();
   });
 });

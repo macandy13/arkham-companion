@@ -21,7 +21,6 @@ A tap on the agenda or act (or its name, a button for the keyboard) opens it on 
 - the same face over the page as a landscape card, with its name and token, tapped to read it whole;
 - "Agenda" or "Act" as the kicker;
 - its count on the page (the doom in play; the clues the investigators hold, or the clues on the act);
-- while adjusting, its steppers in a group of their own ("On the agenda", "On the act");
 - the card actions it offers the investigator whose turn it is (`CardActions`);
 - the act's Advance as the dialog's one brass primary.
 
@@ -30,7 +29,7 @@ In the phone's [detail view](play-screen.md#detail-view) the agenda and act are 
 
 The act's Advance button takes its spend-clues action for the investigator whose turn it is (`GameActions.advanceAct`), so it waits for a turn and enough clues.
 When the players have a split to choose, it first asks who pays how many in the [clue payment dialog](../../apps/web/src/screens/CluePaymentDialog.tsx) (`useCluePayment` over `BoardView.cluePayers`, on the card shell since MD.6b4: the card the cost is paid for beside the page, an act over it; each payer a row with their round portrait, their name over what they pay, and their clues as tokens to tap, starting at the engine's split; a Split evenly shortcut, `evenClueSplit`, and Pay as the primary); card actions with a group clue cost (`CardActionView.groupClues`) ask the same.
-The clue steppers, a correction while adjusting, show only for an act that counts the clues on it.
+The act's clue bubble (a double tap on the act) shows only for an act that counts the clues on it.
 
 ## Scenario card
 

@@ -67,7 +67,7 @@ describe('TokenPool', () => {
       const resourcesBefore = table.board.investigator(alder).resources;
       render(
         <>
-          <TokenPool actions={actionsOn(table)} busy={false} adjusting={false} />
+          <TokenPool actions={actionsOn(table)} busy={false} />
           <section data-investigator="alder">
             <h3>alder</h3>
           </section>
@@ -89,7 +89,7 @@ describe('TokenPool', () => {
     const table = studyWithGhoul();
     render(
       <>
-        <TokenPool actions={actionsOn(table)} busy={false} adjusting={false} />
+        <TokenPool actions={actionsOn(table)} busy={false} />
         <section data-investigator="alder">
           <ul>
             <li data-enemy="ghoul">ghoul</li>
@@ -109,7 +109,7 @@ describe('TokenPool', () => {
     const table = studyWithGhoul();
     render(
       <>
-        <TokenPool actions={actionsOn(table)} busy={false} adjusting={false} />
+        <TokenPool actions={actionsOn(table)} busy={false} />
         <ul>
           <li data-enemy="ghoul">ghoul</li>
         </ul>
@@ -125,7 +125,7 @@ describe('TokenPool', () => {
 
   it('places nothing when a damage token is dropped on neither an investigator nor an enemy', async () => {
     const table = studyWithGhoul();
-    render(<TokenPool actions={actionsOn(table)} busy={false} adjusting={false} />);
+    render(<TokenPool actions={actionsOn(table)} busy={false} />);
 
     await dragOffPool('Damage from the pool');
 

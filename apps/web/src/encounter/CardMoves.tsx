@@ -9,7 +9,7 @@ import { cardMoves, type CardMove } from './cardMoves';
  * the engine left to them says: each one step (`GameActions.moveEncounterCard`), so one undo takes
  * it back. Spawn hands the enemy to `onSpawn` instead, which lets the players tap the location on
  * the map, where the engine spawns and engages it by the rules. Like the other moves, it carries
- * out a card effect the engine left to the players, so it stays open while they adjust the board.
+ * out a card effect the engine left to the players.
  * Nothing is tapped while a step is queued (`busy`).
  */
 export function CardMoves({

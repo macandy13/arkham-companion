@@ -1,9 +1,7 @@
 /*
  * An investigator's card (InvestigatorBar), drawn as the printed one: the face (InvestigatorFace)
  * fills the card's width, and the HTML lies over its places, sized in the face's scan units
- * (`--scan-unit`, a 419th of the card's width) so it scales with the card. While the players adjust
- * the board, the skills' boosts and the counters with their steppers leave the chain and the page's
- * strip for rows under the card.
+ * (`--scan-unit`, a 419th of the card's width) so it scales with the card.
  */
 /* A landscape scan is 419 units wide (LANDSCAPE_SCAN), as the scenario face divides by its 300. */
 #investigators [data-card='investigator'] {
@@ -274,7 +272,6 @@
   left: 0;
   top: calc(var(--investigator-art-button-top) * var(--scan-unit));
   width: calc(var(--investigator-art-button-width) * var(--scan-unit));
-  /* The face's height, not the card's: while adjusting, the counters' row hangs under the face. */
   height: calc(var(--investigator-art-button-height) * var(--scan-unit));
   min-width: 0;
   min-height: 0;
@@ -298,14 +295,14 @@
  * foot, with the clue token and the resource coin either side. Each sits on its centre; its name stays for
  * screen readers.
  */
-#investigators [data-card='investigator']:not([data-adjusting]) > dl > div {
+#investigators [data-card='investigator'] > dl > div {
   position: absolute;
   left: calc(var(--counter-x) * var(--scan-unit));
   top: calc(var(--investigator-counters-y) * var(--scan-unit));
   translate: -50% -50%;
 }
 
-#investigators [data-card='investigator']:not([data-adjusting]) > dl dt {
+#investigators [data-card='investigator'] > dl dt {
   position: absolute;
   width: var(--hidden-size);
   height: var(--hidden-size);
@@ -330,98 +327,32 @@
   --counter-x: var(--investigator-resources-x);
 }
 
-#investigators [data-card='investigator']:not([data-adjusting]) [data-stat='doom'] {
+#investigators [data-card='investigator'] [data-stat='doom'] {
   --counter-x: var(--investigator-doom-x);
   top: calc(var(--investigator-doom-y) * var(--scan-unit));
 }
 
 /* On the card, the tokens, the printed symbols and their counts take the face's sizes. */
-#investigators [data-card='investigator']:not([data-adjusting]) {
+#investigators [data-card='investigator'] {
   --stat-token-size: calc(var(--investigator-token-size) * var(--scan-unit));
   --stat-token-count-size: calc(var(--investigator-token-count-size) * var(--scan-unit));
 }
 
-#investigators [data-card='investigator']:not([data-adjusting]) > dl {
+#investigators [data-card='investigator'] > dl {
   margin: 0;
 }
 
-#investigators [data-card='investigator']:not([data-adjusting]) dd > [data-game-token] {
+#investigators [data-card='investigator'] dd > [data-game-token] {
   --token-count-font-size: calc(var(--investigator-token-number-size) * var(--scan-unit));
 }
 
-#investigators [data-card='investigator']:not([data-adjusting]) dd > [data-printed] {
+#investigators [data-card='investigator'] dd > [data-printed] {
   width: calc(var(--investigator-symbol-size) * var(--scan-unit));
   height: calc(var(--investigator-symbol-size) * var(--scan-unit));
 }
 
-#investigators [data-card='investigator']:not([data-adjusting]) dd > [data-printed] > data {
+#investigators [data-card='investigator'] dd > [data-printed] > data {
   font-size: calc(var(--investigator-symbol-number-size) * var(--scan-unit));
-}
-
-/*
- * While adjusting, the counters with their steppers form a row under the card on its paper, each
- * named under its token, as the steppers would not fit on the page. The skills' boosts form a row
- * above them the same way (`data-boosts`), as two steppers are wider than a link on the chain.
- */
-#investigators [data-card='investigator'][data-adjusting] > dl {
-  display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: minmax(0, 1fr);
-  gap: var(--space-1);
-  margin: 0;
-  padding: var(--space-1);
-  background: var(--color-face-page);
-}
-
-#investigators [data-card='investigator'][data-adjusting] > dl > div {
-  display: grid;
-  grid-template-rows: 1fr auto;
-  justify-items: center;
-  gap: var(--space-1);
-}
-
-#investigators [data-card='investigator'][data-adjusting] > dl > div > dd {
-  grid-row: 1;
-  align-self: start;
-}
-
-/*
- * A boost stands after its skill's icon, as the chain shows them, over its − and +, in a row only
- * as tall as the steppers and a line. The skill's name stays for screen readers.
- */
-#investigators [data-card='investigator'] > dl[data-boosts] {
-  padding-block-end: 0;
-}
-
-#investigators [data-card='investigator'] > dl[data-boosts] > div {
-  --stat-icon: var(--skill-icon);
-  --stat-colour: var(--color-face-ink);
-
-  grid-template-columns: repeat(2, auto);
-  grid-template-rows: auto auto;
-  justify-content: center;
-  align-items: center;
-}
-
-#investigators [data-card='investigator'] > dl[data-boosts] > div > dd {
-  display: contents;
-}
-
-#investigators [data-card='investigator'] > dl[data-boosts] dt {
-  justify-self: end;
-  font-size: 0;
-}
-
-#investigators [data-card='investigator'] > dl[data-boosts] dd > data {
-  grid-column: auto;
-  justify-self: start;
-  width: auto;
-  height: auto;
-  border: none;
-  background: none;
-  box-shadow: none;
-  color: var(--color-face-ink);
-  font-size: var(--font-size-body);
 }
 
 /*

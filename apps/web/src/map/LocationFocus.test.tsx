@@ -61,7 +61,6 @@ describe('LocationFocus', () => {
         location={table.board.location(hallway)}
         actions={actionsOn(table)}
         busy={false}
-        adjusting={false}
         onGo={onGo}
         onMap={() => {}}
       />,

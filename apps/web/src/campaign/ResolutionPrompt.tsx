@@ -21,9 +21,7 @@ export function ResolutionPrompt({
   const [later, setLater] = useState(false);
   const [failed, setFailed] = useState(false);
   const resolution = open.resolution;
-  // Adjusting the board may end the game on a tap the players take back, so the resolution waits
-  // for "Done".
-  if (later || open.adjusting || resolution === undefined) return null;
+  if (later || resolution === undefined) return null;
   return (
     <ResolutionDialog
       game={open.state}

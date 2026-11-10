@@ -1,4 +1,5 @@
 import { expect, test } from '../fixtures/test';
+import { stepInvestigatorCounter } from '../fixtures/counter_bubble';
 
 // Situations on the campaign log, each photographed as it ends (coding guidelines §3).
 
@@ -40,10 +41,7 @@ test('the chaos bag on the log of a campaign just started, its tokens drawn', as
   await expect(bag.getByText('Skull')).toBeVisible();
 });
 
-test('the resolution of a game its only investigator lost to horror', async ({
-  page,
-  isMobile,
-}) => {
+test('the resolution of a game its only investigator lost to horror', async ({ page }) => {
   await page.goto('/#/new');
   await page.getByRole('link', { name: 'New campaign' }).click();
   await page.getByRole('button', { name: 'Next' }).click();
@@ -52,18 +50,13 @@ test('the resolution of a game its only investigator lost to horror', async ({
   await page.getByRole('button', { name: 'Select', exact: true }).click();
   await page.getByRole('button', { name: 'Next' }).click();
   await page.getByRole('button', { name: 'Start game' }).click();
-  // The wizard has a Menu of its own; on a phone the play screen's Menu holds "Adjust board".
   await expect(page.getByRole('region', { name: 'Fake Seeker' })).toBeVisible();
-  if (isMobile) await page.getByRole('button', { name: 'Menu' }).click();
-  await page.getByRole('button', { name: 'Adjust board' }).click();
-  for (let horror = 0; horror < 8; horror++)
-    await page.getByRole('button', { name: 'Take horror' }).click();
-  await page.getByRole('button', { name: 'Done' }).click();
+  await stepInvestigatorCounter(page, 'Fake Seeker', 'sanity', 'Take horror', 8);
 
   await expect(page.getByRole('dialog', { name: 'The scenario is over' })).toBeVisible();
 });
 
-test('the log right after that resolution was written', async ({ page, isMobile }) => {
+test('the log right after that resolution was written', async ({ page }) => {
   await page.goto('/#/new');
   await page.getByRole('link', { name: 'New campaign' }).click();
   await page.getByRole('button', { name: 'Next' }).click();
@@ -72,13 +65,8 @@ test('the log right after that resolution was written', async ({ page, isMobile 
   await page.getByRole('button', { name: 'Select', exact: true }).click();
   await page.getByRole('button', { name: 'Next' }).click();
   await page.getByRole('button', { name: 'Start game' }).click();
-  // The wizard has a Menu of its own; on a phone the play screen's Menu holds "Adjust board".
   await expect(page.getByRole('region', { name: 'Fake Seeker' })).toBeVisible();
-  if (isMobile) await page.getByRole('button', { name: 'Menu' }).click();
-  await page.getByRole('button', { name: 'Adjust board' }).click();
-  for (let horror = 0; horror < 8; horror++)
-    await page.getByRole('button', { name: 'Take horror' }).click();
-  await page.getByRole('button', { name: 'Done' }).click();
+  await stepInvestigatorCounter(page, 'Fake Seeker', 'sanity', 'Take horror', 8);
   const dialog = page.locator('#resolution');
   await dialog.getByRole('button', { name: 'Next' }).click();
   await dialog.getByRole('button', { name: 'Write into the log' }).click();
@@ -86,7 +74,7 @@ test('the log right after that resolution was written', async ({ page, isMobile 
   await expect(page.getByRole('status', { name: 'Written into the log' })).toBeVisible();
 });
 
-test('the setup preview of The Midnight Masks', async ({ page, isMobile }) => {
+test('the setup preview of The Midnight Masks', async ({ page }) => {
   await page.goto('/#/new');
   await page.getByRole('link', { name: 'New campaign' }).click();
   await page.getByRole('button', { name: 'Next' }).click();
@@ -95,13 +83,8 @@ test('the setup preview of The Midnight Masks', async ({ page, isMobile }) => {
   await page.getByRole('button', { name: 'Select', exact: true }).click();
   await page.getByRole('button', { name: 'Next' }).click();
   await page.getByRole('button', { name: 'Start game' }).click();
-  // The wizard has a Menu of its own; on a phone the play screen's Menu holds "Adjust board".
   await expect(page.getByRole('region', { name: 'Fake Seeker' })).toBeVisible();
-  if (isMobile) await page.getByRole('button', { name: 'Menu' }).click();
-  await page.getByRole('button', { name: 'Adjust board' }).click();
-  for (let horror = 0; horror < 8; horror++)
-    await page.getByRole('button', { name: 'Take horror' }).click();
-  await page.getByRole('button', { name: 'Done' }).click();
+  await stepInvestigatorCounter(page, 'Fake Seeker', 'sanity', 'Take horror', 8);
   const dialog = page.locator('#resolution');
   await dialog.getByRole('button', { name: 'Next' }).click();
   await dialog.getByRole('button', { name: 'Write into the log' }).click();

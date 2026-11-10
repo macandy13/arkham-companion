@@ -265,7 +265,7 @@
   --form-mark-size: 1.125rem;
   /* Minimum size of anything tappable, for use on a shared tablet. */
   --touch-target: 2.75rem;
-  /* Buttons on a card (the agenda's doom steppers, the act's advance), small so the card stays compact. */
+  /* Buttons on a card (the act's advance), small so the card stays compact. */
   --button-compact: 1.75rem;
   /* How long a new location takes to slide in, in the phone's location mode. */
   --duration-slide: 0.25s;
@@ -305,8 +305,6 @@
   --duration-notice: 6s;
   /* The keyboard focus ring, in the accent colour. */
   --focus-ring-width: 2px;
-  /* The dashed line round the map while the players adjust the board. */
-  --adjust-outline-width: 2px;
   /* The play screen's menu, above the map and its floating controls. */
   --layer-menu: 2;
   /* A card dialog lowered out of the board's way (card_dialog.css), over the board's own layers. */

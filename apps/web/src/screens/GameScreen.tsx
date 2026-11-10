@@ -137,7 +137,6 @@ export function GameScreen({
 
   const host = {
     decision: decision && decisionId !== undefined ? { view: decision, id: decisionId } : undefined,
-    adjusting: open.adjusting,
     setHosted,
   };
 
@@ -147,7 +146,6 @@ export function GameScreen({
         id="board"
         ref={boardElement}
         data-view={detailTarget?.row}
-        data-adjusting={open.adjusting || undefined}
         data-spawning={open.spawning ? true : undefined}
       >
         <GameHeader
@@ -185,7 +183,6 @@ export function GameScreen({
               location={focused}
               actions={store.getState().actions}
               busy={open.busy}
-              adjusting={open.adjusting}
               onGo={(location) => detail.go({ row: 'map', location })}
               onMap={() => detail.go({ row: 'map' })}
             />
@@ -194,7 +191,6 @@ export function GameScreen({
               board={board}
               actions={store.getState().actions}
               busy={open.busy}
-              adjusting={open.adjusting}
               onPick={
                 spawning
                   ? (location) => {
@@ -219,7 +215,6 @@ export function GameScreen({
             board={board}
             actions={store.getState().actions}
             busy={open.busy}
-            adjusting={open.adjusting}
             onOpen={
               showDetail && detailTarget?.row !== 'investigators'
                 ? (investigator) => showDetail({ row: 'investigators', investigator })
@@ -236,8 +231,7 @@ export function GameScreen({
         {detailTarget && (
           <DetailControls board={boardElement} target={detailTarget} onClose={detail.close} />
         )}
-        {/* Adjusting the board is allowed with a decision open, so the dialog steps aside meanwhile. */}
-        {decision && !open.adjusting && !hosted && (
+        {decision && !hosted && (
           <DecisionDialog
             key={open.state.pending[0]?.id}
             board={board}

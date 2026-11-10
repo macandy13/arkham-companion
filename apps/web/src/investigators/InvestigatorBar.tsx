@@ -1,4 +1,4 @@
-import { useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   SKILL_NAMES,
@@ -34,10 +34,9 @@ import './investigators.css';
 /**
  * The bar of investigator panels along the foot of the play screen, one per investigator in seat
  * order (`BoardView.investigators`), so everyone's status is in view at once. It replaces the
- * health and sanity dials and the clue and resource piles on the table: each change is a tap on a
- * stepper, which plays `actions`; nothing is tapped while a step is queued (`busy`). The steppers
- * show only while the players adjust the board (`adjusting`, `OpenGame.adjusting`), and the turn
- * controls wait meanwhile, since a turn step is play, not a correction.
+ * health and sanity dials and the clue and resource piles on the table: a counter changes in its
+ * − / + bubble (`CounterBubble`), which plays `actions`; nothing is tapped while a step is queued
+ * (`busy`).
  *
  * A phone has room for one panel only, so in its compact view (`onOpen`) the stylesheet lays the
  * panels in a row a screen wide each, and the players swipe sideways between them; the one in
@@ -52,7 +51,6 @@ export function InvestigatorBar({
   board,
   actions,
   busy,
-  adjusting,
   onOpen,
   whole = false,
   printed,
@@ -60,7 +58,6 @@ export function InvestigatorBar({
   board: BoardView;
   actions: GameActions;
   busy: boolean;
-  adjusting: boolean;
   onOpen?: ((investigator: InvestigatorId) => void) | undefined;
   /** The phone's expanded bar: every panel shows the whole card, its text included. */
   whole?: boolean;
@@ -96,7 +93,6 @@ export function InvestigatorBar({
           }
           actions={actions}
           busy={busy}
-          adjusting={adjusting}
         />
       ))}
     </>
@@ -175,9 +171,7 @@ function turnKey(board: BoardView): string {
  * cards they control (`PlayArea`) and their turn controls. Before where they are, a pentagon marks
  * the lead investigator, like the game's lead investigator token; whose turn it is needs no
  * marker, since only their turn controls carry the action arrows. Health and sanity show what is left of the printed value, like
- * the dials, while their steppers place and heal damage and horror, like the tokens on the card.
- * Clues show without steppers: they
- * are found by investigating and spent on the act.
+ * the dials, while the damage and horror taken lie on them like the tokens on the card.
  */
 function InvestigatorPanel({
   board,
@@ -195,7 +189,6 @@ function InvestigatorPanel({
   canStart,
   actions,
   busy,
-  adjusting,
 }: {
   /** The board the skill tests (`SkillTestDialog`) and the card actions (`TurnControls`) read. */
   board: BoardView;
@@ -226,7 +219,6 @@ function InvestigatorPanel({
   canStart: boolean;
   actions: GameActions;
   busy: boolean;
-  adjusting: boolean;
 }) {
   const { t } = useTranslation();
   const nameId = useId();
@@ -235,20 +227,8 @@ function InvestigatorPanel({
   const section = useSwipedTo(focused, onShown);
   const stats = (
     <>
-      <Skills
-        board={board}
-        investigator={investigator}
-        adjusting={adjusting}
-        busy={busy}
-        actions={actions}
-      />
-      <Counters
-        board={board}
-        investigator={investigator}
-        adjusting={adjusting}
-        busy={busy}
-        actions={actions}
-      />
+      <Skills board={board} investigator={investigator} busy={busy} actions={actions} />
+      <Counters board={board} investigator={investigator} busy={busy} actions={actions} />
     </>
   );
   return (
@@ -273,24 +253,16 @@ function InvestigatorPanel({
         treacheries={board.cardsIn({ kind: 'threatArea', investigatorId: investigator.id })}
         enemies={engaged}
         actions={actions}
-        // Fighting and evading are play, so they wait while the players adjust, like the turn's.
-        busy={busy || adjusting}
+        busy={busy}
       />
       {whole ? (
-        <WholeCard
-          investigator={investigator}
-          printed={printed}
-          picture={picture}
-          nameId={nameId}
-          adjusting={adjusting}
-        >
+        <WholeCard investigator={investigator} printed={printed} picture={picture} nameId={nameId}>
           {stats}
         </WholeCard>
       ) : (
         <article
           data-card="investigator"
           data-picture={picture?.shown ? 'shown' : undefined}
-          data-adjusting={adjusting || undefined}
           data-shape={shape}
         >
           <InvestigatorFace
@@ -326,20 +298,8 @@ function InvestigatorPanel({
           picture={picture}
           onClose={() => setZoomed(false)}
         >
-          <Skills
-            board={board}
-            investigator={investigator}
-            adjusting={false}
-            busy={busy}
-            actions={actions}
-          />
-          <Counters
-            board={board}
-            investigator={investigator}
-            adjusting={false}
-            busy={busy}
-            actions={actions}
-          />
+          <Skills board={board} investigator={investigator} busy={busy} actions={actions} />
+          <Counters board={board} investigator={investigator} busy={busy} actions={actions} />
         </InvestigatorCard>
       )}
       <p data-whereabouts="">
@@ -351,7 +311,7 @@ function InvestigatorPanel({
         investigator={investigator}
         cards={board.cardsIn({ kind: 'playArea', investigatorId: investigator.id })}
         actions={actions}
-        busy={busy || adjusting}
+        busy={busy}
       />
       <TurnControls
         board={board}
@@ -359,7 +319,7 @@ function InvestigatorPanel({
         onTurn={onTurn}
         canStart={canStart}
         actions={actions}
-        busy={busy || adjusting}
+        busy={busy}
       />
     </section>
   );
@@ -372,20 +332,16 @@ function InvestigatorPanel({
  * which skill it is, so each one is named for screen readers. Tapping one opens a skill test
  * against it (`SkillTestDialog`), a calculator that changes nothing; a double tap opens the − / +
  * bubble of its boost instead (`CounterBubble`, M6.10), so a single tap opens the test only once no
- * second one came (`useDoubleTapOn`, keyed by skill). While the players adjust the
- * board, a row under the card holds each skill's boost with its steppers, named by the skill's icon,
- * since two steppers are wider than a link on the chain; a step waits while one is queued (`busy`).
+ * second one came (`useDoubleTapOn`, keyed by skill); a step waits while one is queued (`busy`).
  */
 function Skills({
   board,
   investigator,
-  adjusting,
   busy,
   actions,
 }: {
   board: BoardView;
   investigator: InvestigatorView;
-  adjusting: boolean;
   busy: boolean;
   actions: GameActions;
 }) {
@@ -399,8 +355,7 @@ function Skills({
   const { boostedSkills, boosts } = investigator;
   // A defeated or resigned investigator has left the game, so their boosts no longer change.
   const off = busy || investigator.status !== 'active';
-  // Not while the players adjust the board, whose steppers are out, nor once they left the game.
-  const bubbled = !adjusting && investigator.status === 'active';
+  const bubbled = investigator.status === 'active';
   return (
     <>
       <ul aria-label={t('investigators.skills')}>
@@ -434,27 +389,6 @@ function Skills({
           );
         })}
       </ul>
-      {adjusting && (
-        <dl aria-label={t('investigators.skillBoosts')} data-boosts="">
-          {SKILL_NAMES.map((skill) => {
-            const boost = boosts?.[skill] ?? 0;
-            const name = t(`skill.${skill}`);
-            return (
-              <div key={skill} data-skill={skill}>
-                <dt>{name}</dt>
-                <dd>
-                  <data value={boost}>{signed(boost)}</data>
-                  <Steppers
-                    lower={{ label: t('investigators.lowerBoost', { skill: name }), disabled: off }}
-                    raise={{ label: t('investigators.raiseBoost', { skill: name }), disabled: off }}
-                    onStep={(delta) => void actions.boostSkill(investigator.id, skill, delta)}
-                  />
-                </dd>
-              </div>
-            );
-          })}
-        </dl>
-      )}
       {boosting && bubbled && (
         <CounterBubble
           anchor={boosting.anchor}
@@ -493,26 +427,23 @@ function Skills({
 }
 
 /**
- * The counters on the card's notebook page, each a token like the ones on the table, with their
- * steppers while the players adjust the board (`adjusting`); a step plays `actions` unless one is
- * queued (`busy`). A clue can be dragged off the clue count onto their location or the act
+ * The counters on the card's notebook page, each a token like the ones on the table; a step plays
+ * `actions` unless one is queued (`busy`). A clue can be dragged off the clue count onto their location or the act
  * (`useClueDrag`), and damage, horror or a resource back onto the header's token pool, which heals
  * or spends it (`useReturnToPool`). A double tap on a counter opens its − / + bubble
- * (`CounterBubble`, M6.9), whose steps are the steppers' own: by rule, so damage can defeat; a
+ * (`CounterBubble`, M6.9), whose steps go by rule, so damage can defeat; a
  * clue goes to or comes from their location, as dragging it does, since the game's clues only
  * move between investigators and locations.
  */
 function Counters({
   board,
   investigator,
-  adjusting,
   busy,
   actions,
 }: {
   /** The board a clue dragged off the card lands on (`useClueDrag`). */
   board: BoardView;
   investigator: InvestigatorView;
-  adjusting: boolean;
   busy: boolean;
   actions: GameActions;
 }) {
@@ -525,9 +456,8 @@ function Counters({
   const damageBack = useReturnToPool('damage', () => adjust('damage', -1));
   const horrorBack = useReturnToPool('horror', () => adjust('horror', -1));
   const resourceBack = useReturnToPool('resource', () => adjust('resources', -1));
-  // Nothing comes off the card while the players adjust it with the steppers instead.
   const dragOff = (count: number, drag: TokenDragHandlers) =>
-    off || adjusting || count === 0 ? undefined : drag;
+    off || count === 0 ? undefined : drag;
   const [open, setOpen] = useState<{ kind: SteppedKind; anchor: Element }>();
   const at = board.locationOf(id);
   const cluesAt = at === undefined ? 0 : board.location(at).clues;
@@ -567,12 +497,11 @@ function Counters({
       onStep: (delta) => adjust('resources', delta),
     },
   };
-  // Not while the players adjust the board, whose steppers are out, nor once they left the game.
+  // Not while a step is queued, nor once they left the game.
   const bubbleFor = (kind: SteppedKind) =>
-    off || adjusting ? {} : { onDoubleTap: (anchor: Element) => setOpen({ kind, anchor }) };
+    off ? {} : { onDoubleTap: (anchor: Element) => setOpen({ kind, anchor }) };
   // Kept open while its own step is queued (`busy`), its buttons off, so it doesn't flicker.
-  const shown =
-    open && investigator.status === 'active' && !adjusting ? bubbles[open.kind] : undefined;
+  const shown = open && investigator.status === 'active' ? bubbles[open.kind] : undefined;
   return (
     <>
       <dl>
@@ -584,15 +513,7 @@ function Counters({
           printed={{ max: health, taken: damage }}
           drag={dragOff(damage, damageBack.handlers)}
           {...bubbleFor('health')}
-        >
-          {adjusting && (
-            <Steppers
-              lower={{ label: t('investigators.takeDamage'), disabled: off }}
-              raise={{ label: t('investigators.healDamage'), disabled: off || damage === 0 }}
-              onStep={(delta) => adjust('damage', -delta)}
-            />
-          )}
-        </Stat>
+        />
         <Stat
           kind="sanity"
           label={t('investigators.sanity')}
@@ -601,15 +522,7 @@ function Counters({
           printed={{ max: sanity, taken: horror }}
           drag={dragOff(horror, horrorBack.handlers)}
           {...bubbleFor('sanity')}
-        >
-          {adjusting && (
-            <Steppers
-              lower={{ label: t('investigators.takeHorror'), disabled: off }}
-              raise={{ label: t('investigators.healHorror'), disabled: off || horror === 0 }}
-              onStep={(delta) => adjust('horror', -delta)}
-            />
-          )}
-        </Stat>
+        />
         <Stat
           kind="clues"
           label={t('investigators.clues')}
@@ -624,18 +537,7 @@ function Counters({
           value={investigator.resources}
           drag={dragOff(investigator.resources, resourceBack.handlers)}
           {...bubbleFor('resources')}
-        >
-          {adjusting && (
-            <Steppers
-              lower={{
-                label: t('investigators.spendResource'),
-                disabled: off || investigator.resources === 0,
-              }}
-              raise={{ label: t('investigators.gainResource'), disabled: off }}
-              onStep={(delta) => adjust('resources', delta)}
-            />
-          )}
-        </Stat>
+        />
         {investigator.doom !== undefined && (
           <Stat kind="doom" label={t('investigators.doom')} value={investigator.doom} />
         )}
@@ -705,7 +607,7 @@ const STAT_TOKENS: Record<StatKind, GameTokenKind> = {
 /**
  * One counter of the panel (`kind`): its name (`short` where the full one does not fit its column,
  * with the full one as its title), its `value` (written as `shown` where the panel says more, such
- * as health against its maximum) and its steppers (`children`). Most show their count on their
+ * as health against its maximum). Most show their count on their
  * token (`GameToken`, `STAT_TOKENS`). Health and sanity show as the card prints them (`printed`):
  * an anatomical heart or a brain with what is left on it, in a ring of a pip per point of the
  * printed maximum whose last pips, the damage or horror taken, are greyed (`PipRing`); the whole is
@@ -721,7 +623,6 @@ function Stat({
   printed,
   drag,
   onDoubleTap,
-  children,
 }: {
   kind: StatKind;
   label: string;
@@ -736,7 +637,6 @@ function Stat({
   drag?: TokenDragHandlers | undefined;
   /** Opens the counter's − / + bubble on a double tap (`CounterBubble`), pointing at the counter. */
   onDoubleTap?: (counter: Element) => void;
-  children?: ReactNode;
 }) {
   const origin = { x: 0, y: 0 };
   const change = useCountChange(value);
@@ -779,7 +679,6 @@ function Stat({
             {...bubble}
           />
         )}
-        {children}
       </dd>
     </div>
   );
@@ -790,44 +689,3 @@ const PRINTED_SYMBOL_VIEW_BOX = '-15 -15 30 30';
 
 /** The pips' circle round the heart or brain, in its drawing's units: just clear of the symbol. */
 const PIP_RING_RADIUS = 17;
-
-/** What one stepper of a counter says it does (`label`), since its sign alone does not say. */
-interface StepperSide {
-  label: string;
-  disabled: boolean;
-}
-
-/**
- * The − and + buttons of a counter. `onStep` gets −1 or +1 for the counter as shown, so health and
- * sanity turn it around into damage and horror.
- */
-function Steppers({
-  lower,
-  raise,
-  onStep,
-}: {
-  lower: StepperSide;
-  raise: StepperSide;
-  onStep: (delta: -1 | 1) => void;
-}) {
-  return (
-    <>
-      <button
-        type="button"
-        aria-label={lower.label}
-        disabled={lower.disabled}
-        onClick={() => onStep(-1)}
-      >
-        −
-      </button>
-      <button
-        type="button"
-        aria-label={raise.label}
-        disabled={raise.disabled}
-        onClick={() => onStep(1)}
-      >
-        +
-      </button>
-    </>
-  );
-}

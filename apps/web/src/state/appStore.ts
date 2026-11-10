@@ -180,11 +180,6 @@ export interface OpenGame {
   busy: boolean;
   /** Whether `actions.undo` has a step to take back; the scenario start is never taken back. */
   canUndo: boolean;
-  /**
-   * Whether the players are adjusting the board (`GameActions.startAdjusting`): the steps since
-   * show, but are stored only on "Done", as one step.
-   */
-  adjusting: boolean;
   /** Why the last action was refused, until the next action or `dismissRejection`. */
   rejection?: Rejection;
   /**
@@ -471,7 +466,6 @@ export function createAppStore(
           reliance,
           busy: unfinishedSteps > 0,
           canUndo: session?.canUndo ?? false,
-          adjusting: false,
           ...lastNotices(session),
           resolution: session && pendingResolution(session.ctx, session.state, campaignLog),
         },
@@ -523,7 +517,6 @@ export function createAppStore(
           board: played.board,
           log: logSourceOf(played),
           canUndo: played.canUndo,
-          adjusting: played.adjusting,
           rejection,
           ...lastNotices(played),
           resolution: pendingResolution(played.ctx, played.state, campaignLog),
@@ -551,20 +544,6 @@ export function createAppStore(
         await (toStep === undefined ? played.undo() : played.undoTo(toStep));
       } finally {
         publish(played);
-      }
-    }
-
-    /** Runs `change` on the open game's adjustment (`GameSession`) and shows the result. */
-    async function adjustStep(
-      change: (played: GameSession) => Promise<Rejection | undefined>,
-    ): Promise<void> {
-      const played = session;
-      if (!played) throw new Error('No playable game is open');
-      try {
-        publish(played, await change(played));
-      } catch (error) {
-        publish(played);
-        throw error;
       }
     }
 
@@ -753,23 +732,6 @@ export function createAppStore(
       actions: gameActions(
         (step) => queueStep(() => playStep(step)),
         (toStep) => queueStep(() => undoStep(toStep)),
-        {
-          start: () =>
-            queueStep(() =>
-              adjustStep(async (played) => {
-                played.startAdjusting();
-                return undefined;
-              }),
-            ),
-          finish: () => queueStep(() => adjustStep((played) => played.finishAdjusting())),
-          cancel: () =>
-            queueStep(() =>
-              adjustStep(async (played) => {
-                played.cancelAdjusting();
-                return undefined;
-              }),
-            ),
-        },
       ),
       dismissRejection() {
         const open = get().current;

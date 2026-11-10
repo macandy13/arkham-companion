@@ -20,7 +20,7 @@ import { cardText } from '../catalog/cardText';
 import { EncounterPiles, HeaderPile, type PileProps } from '../encounter/EncounterPiles';
 import type { AppState, OpenGame } from '../state/appStore';
 import type { GameActions } from '../state/gameActions';
-import { ActionGroup, CardActions, cardActionsOn } from './ActionRow';
+import { CardActions, cardActionsOn } from './ActionRow';
 import { CardDialog } from './CardDialog';
 import { ChaosBag } from './ChaosBag';
 import { CounterBubble, type BubbleCount } from './CounterBubble';
@@ -38,8 +38,7 @@ import { useDoubleTap } from './useDoubleTap';
  * its label like the playmat's: the encounter deck and its discard pile, the agenda, the act and
  * the scenario card. The scenario's name is the screen's heading. The cards' buttons wait while a
  * step is queued (`OpenGame.busy`), since a second tap would act on whatever the first one leaves
- * open; the agenda's and act's steppers show only while the players adjust the board
- * (`OpenGame.adjusting`). The round, the phase and the buttons that run the game sit in the status
+ * open; the agenda's doom and the act's clues change in place through their − / + bubbles. The round, the phase and the buttons that run the game sit in the status
  * row below (`GameStatus`). A tap on the agenda or act opens it on the card shell (`BookDetails`).
  * `board` is the open game's `OpenGame.board`. On a phone's compact view a tap on any of the four
  * cards calls `onOpenCard` instead (the detail view opens on it), so the card's own buttons and
@@ -66,37 +65,21 @@ export function GameHeader({
 }) {
   const { t } = useTranslation();
   const blocked = open.busy;
-  const { adjusting } = open;
   const piles: PileProps = {
     board,
     actions: store.getState().actions,
     busy: blocked,
-    adjusting,
     onSpawn: (enemy) => store.getState().startSpawn(enemy),
   };
 
   return (
     <header>
-      <TokenPool actions={piles.actions} busy={blocked} adjusting={adjusting} />
+      <TokenPool actions={piles.actions} busy={blocked} />
       <HeaderSlot label={t('header.encounterDeck')} card="encounter" onOpen={onOpenCard}>
         <EncounterPiles {...piles} />
       </HeaderSlot>
-      <AgendaStatus
-        store={store}
-        board={board}
-        blocked={blocked}
-        adjusting={adjusting}
-        full={full}
-        onOpen={onOpenCard}
-      />
-      <ActStatus
-        store={store}
-        board={board}
-        blocked={blocked}
-        adjusting={adjusting}
-        full={full}
-        onOpen={onOpenCard}
-      />
+      <AgendaStatus store={store} board={board} blocked={blocked} full={full} onOpen={onOpenCard} />
+      <ActStatus store={store} board={board} blocked={blocked} full={full} onOpen={onOpenCard} />
       <HeaderSlot label={t('header.scenario')} card="scenario" onOpen={onOpenCard}>
         <ScenarioStatus
           open={open}
@@ -344,23 +327,21 @@ function ScenarioCard({
 
 /**
  * The current agenda as a landscape card (`data-card`, styled like the map's card faces): its
- * name, a big doom token with the doom its threshold counts (all doom in play, `doomInPlay`) and,
- * while adjusting, steppers on the plate at its foot for the doom on the agenda itself, which card
- * effects add or the players correct. The buttons sit on the card to keep the header compact.
+ * name and a big doom token with the doom its threshold counts (all doom in play, `doomInPlay`); a
+ * double tap opens the − / + bubble of the doom on the agenda itself, which card effects add or
+ * the players correct.
  * It takes doom dropped on it: from the token pool (`TokenPool`), or moved off a location.
  */
 function AgendaStatus({
   store,
   board,
   blocked,
-  adjusting,
   full,
   onOpen,
 }: {
   store: StoreApi<AppState>;
   board: BoardView;
   blocked: boolean;
-  adjusting: boolean;
   full: boolean;
   onOpen: ((card: HeaderCardKind) => void) | undefined;
 }) {
@@ -370,7 +351,7 @@ function AgendaStatus({
   if (!agenda) return null;
   const { actions } = store.getState();
   const close = () => setZoomed(false);
-  const offered = adjusting ? [] : cardActionsOn(board, agenda.id);
+  const offered = cardActionsOn(board, agenda.id);
   const actionRow = offered.length > 0 && (
     <CardActions board={board} offered={offered} actions={actions} busy={blocked} onUse={close} />
   );
@@ -386,49 +367,19 @@ function AgendaStatus({
       }
     />
   );
-  const doomSteppers = (
-    <>
-      <button
-        type="button"
-        aria-label={t('header.removeDoom')}
-        disabled={blocked || agenda.doom === 0}
-        onClick={() => void actions.removeDoom(1)}
-      >
-        −
-      </button>
-      <button
-        type="button"
-        aria-label={t('header.addDoom')}
-        disabled={blocked}
-        onClick={() => void actions.placeDoom(1)}
-      >
-        +
-      </button>
-    </>
-  );
   const counter = t('header.doomCount');
-  // Not while the players adjust the board, whose steppers are out.
-  const bubble = adjusting
-    ? undefined
-    : {
-        title: t('header.counterBubble', { card: agenda.name, counter }),
-        counts: [
-          {
-            label: counter,
-            value: String(agenda.doom),
-            lower: { label: t('header.removeDoom'), disabled: blocked || agenda.doom === 0 },
-            raise: { label: t('header.addDoom'), disabled: blocked },
-            onStep: (delta: -1 | 1) =>
-              void (delta < 0 ? actions.removeDoom(1) : actions.placeDoom(1)),
-          },
-        ],
-      };
-  const tokenAndPlate = (
-    <>
-      {doomToken}
-      {adjusting && <footer>{doomSteppers}</footer>}
-    </>
-  );
+  const bubble = {
+    title: t('header.counterBubble', { card: agenda.name, counter }),
+    counts: [
+      {
+        label: counter,
+        value: String(agenda.doom),
+        lower: { label: t('header.removeDoom'), disabled: blocked || agenda.doom === 0 },
+        raise: { label: t('header.addDoom'), disabled: blocked },
+        onStep: (delta: -1 | 1) => void (delta < 0 ? actions.removeDoom(1) : actions.placeDoom(1)),
+      },
+    ],
+  };
 
   return (
     <HeaderSlot label={t('header.agenda')} card="agenda" onOpen={onOpen}>
@@ -441,7 +392,7 @@ function AgendaStatus({
         onOpen={full ? undefined : () => setZoomed(true)}
         bubble={bubble}
       >
-        {tokenAndPlate}
+        {doomToken}
       </HeaderCard>
       {full && actionRow && <footer>{actionRow}</footer>}
       {zoomed && !full && (
@@ -458,9 +409,6 @@ function AgendaStatus({
             count: board.doomInPlay,
             ...(agenda.threshold === undefined ? {} : { threshold: agenda.threshold }),
           }}
-          corrections={
-            adjusting && <ActionGroup title={t('header.onAgenda')}>{doomSteppers}</ActionGroup>
-          }
           onClose={close}
         />
       )}
@@ -473,23 +421,20 @@ function AgendaStatus({
  * advancing it against the clues it needs (`ActAdvance`), and a plate at its foot. For an act the
  * investigators advance by spending clues, the token counts the clues they hold and the plate has
  * its advance, the act's own action, which the investigator whose turn it is takes once they hold
- * enough, after the players choose who pays when they can (`useCluePayment`); advancing is play,
- * not a correction, so it waits while the players adjust. For an act
- * that advances itself once clues lie on it, the token counts those and the plate has steppers for
- * them while adjusting, a correction by hand.
+ * enough, after the players choose who pays when they can (`useCluePayment`). For an act
+ * that advances itself once clues lie on it, the token counts those, and a double tap opens their
+ * − / + bubble, a correction by hand.
  */
 function ActStatus({
   store,
   board,
   blocked,
-  adjusting,
   full,
   onOpen,
 }: {
   store: StoreApi<AppState>;
   board: BoardView;
   blocked: boolean;
-  adjusting: boolean;
   full: boolean;
   onOpen: ((card: HeaderCardKind) => void) | undefined;
 }) {
@@ -501,7 +446,7 @@ function ActStatus({
   // Advancing can raise a decision (act 3's question), and that dialog must be the only one open.
   const close = () => setZoomed(false);
   const { actions } = store.getState();
-  const offered = adjusting ? [] : cardActionsOn(board, act.id);
+  const offered = cardActionsOn(board, act.id);
   const actionRow = offered.length > 0 && (
     <CardActions board={board} offered={offered} actions={actions} busy={blocked} onUse={close} />
   );
@@ -515,30 +460,10 @@ function ActStatus({
       label={t('header.cluesOf', { clues, threshold: advance.threshold })}
     />
   );
-  const clueSteppers = advance?.kind === 'cluesOnAct' && adjusting && (
-    <>
-      <button
-        type="button"
-        aria-label={t('header.removeClue')}
-        disabled={blocked || act.clues === 0}
-        onClick={() => void actions.adjustActClues(-1)}
-      >
-        −
-      </button>
-      <button
-        type="button"
-        aria-label={t('header.addClue')}
-        disabled={blocked}
-        onClick={() => void actions.adjustActClues(1)}
-      >
-        +
-      </button>
-    </>
-  );
   const counter = t('header.clueCount');
   // Only for clues lying on the act: the clues the investigators hold are on their cards.
   const bubble =
-    advance?.kind === 'cluesOnAct' && !adjusting
+    advance?.kind === 'cluesOnAct'
       ? {
           title: t('header.counterBubble', { card: act.name, counter }),
           counts: [
@@ -558,9 +483,7 @@ function ActStatus({
       <button
         type="button"
         data-primary={primary || undefined}
-        disabled={
-          blocked || adjusting || board.turn === undefined || advance.held < advance.threshold
-        }
+        disabled={blocked || board.turn === undefined || advance.held < advance.threshold}
         onClick={() =>
           pay(advance.threshold, act.id, (spend) => {
             onAdvance?.();
@@ -574,10 +497,7 @@ function ActStatus({
   const tokenAndPlate = advance && (
     <>
       {clueToken}
-      <footer>
-        {clueSteppers}
-        {advanceButton()}
-      </footer>
+      <footer>{advanceButton()}</footer>
     </>
   );
 
@@ -613,9 +533,6 @@ function ActStatus({
                 },
               }
             : {})}
-          corrections={
-            clueSteppers && <ActionGroup title={t('header.onAct')}>{clueSteppers}</ActionGroup>
-          }
           primary={advanceButton(close, true)}
           onClose={close}
         />
@@ -736,7 +653,6 @@ function HeaderCard({
  *   read it whole (`CardZoom`);
  * - what it is as the kicker, its name as the title;
  * - its count on the page (`value`: the doom in play, the clues that count towards advancing);
- * - while the players adjust, its steppers (`corrections`);
  * - the card actions it offers the investigator whose turn it is;
  * - the act's Advance as the dialog's one primary (`primary`).
  * A card action keeps it open and shows the decision it raises in place of its page
@@ -752,7 +668,6 @@ function BookDetails({
   threshold,
   token,
   value,
-  corrections,
   primary,
   onClose,
 }: {
@@ -764,7 +679,6 @@ function BookDetails({
   threshold: number | undefined;
   token: ReactNode;
   value?: { name: string; count: number; threshold?: number };
-  corrections: ReactNode;
   primary?: ReactNode;
   onClose: () => void;
 }) {
@@ -802,9 +716,8 @@ function BookDetails({
           </div>
         </dl>
       )}
-      {(corrections || offered.length > 0 || primary) && (
+      {(offered.length > 0 || primary) && (
         <footer>
-          {corrections}
           {offered.length > 0 && (
             <CardActions
               board={board}

@@ -1,4 +1,5 @@
 import { expect, test } from './fixtures/test';
+import { stepInvestigatorCounter } from './fixtures/counter_bubble';
 
 // Journey: a campaign's first game ends when its only investigator is driven out by horror; the
 // players confirm the resolution the game reached, check what it writes into the campaign log and
@@ -18,10 +19,7 @@ test('write a scenario resolution into the campaign log', async ({ page }) => {
   });
 
   await test.step('Fake Seeker takes 8 horror, all their sanity', async () => {
-    await page.getByRole('button', { name: 'Adjust board' }).click();
-    for (let horror = 0; horror < 8; horror++)
-      await page.getByRole('button', { name: 'Take horror' }).click();
-    await page.getByRole('button', { name: 'Done' }).click();
+    await stepInvestigatorCounter(page, 'Fake Seeker', 'sanity', 'Take horror', 8);
   });
 
   const dialog = page.locator('#resolution');

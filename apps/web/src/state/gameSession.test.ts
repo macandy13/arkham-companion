@@ -129,20 +129,6 @@ describe('GameSession on The Gathering', () => {
     expect(session.canUndo).toBe(false);
   });
 
-  it('does not go back while the players adjust the board', async () => {
-    const { store, gameId } = await storedGame('session-undo-to-adjusting-test');
-    const session = await GameSession.open(store, gameId, ctx);
-    const start = session.entries[0]?.commandId ?? '';
-    await session.play((table) => table.nextPhase());
-    session.startAdjusting();
-    await session.play((table) => table.gainResources(investigatorId('alder'), 1));
-    const adjusted = session.state;
-
-    await session.undoTo(start);
-
-    expect(session.state).toEqual(adjusted);
-  });
-
   it('keeps why the game did a change by itself, also after reopening the game', async () => {
     const { store, gameId } = await storedGame('session-causes-test');
     const session = await GameSession.open(store, gameId, ctx);
@@ -171,88 +157,6 @@ describe('GameSession on The Gathering', () => {
 
     expect(session.stepTimes.get(step)).toBe(stored?.timestamp);
     expect(reopened.stepTimes.get(step)).toBe(stored?.timestamp);
-  });
-
-  describe('adjusting the board', () => {
-    const alderId = investigatorId('alder');
-    // Alder starts with 5 resources and no damage.
-    const alderOn = (session: GameSession) => session.board.investigator(alderId);
-
-    it('shows each tap at once but stores nothing until the adjustment is done', async () => {
-      const { store, gameId } = await storedGame('session-adjust-unstored-test');
-      const session = await GameSession.open(store, gameId, ctx);
-      const atSetup = session.state;
-
-      session.startAdjusting();
-      await session.play((table) => table.gainResources(alderId, -2));
-
-      expect(alderOn(session)).toMatchObject({ resources: 3 });
-      expect((await store.loadGame(gameId))?.state).toEqual(atSetup);
-    });
-
-    it('stores every tap of the adjustment as one undo group on "Done"', async () => {
-      const { store, gameId } = await storedGame('session-adjust-done-test');
-      const session = await GameSession.open(store, gameId, ctx);
-      const atSetup = session.state;
-      session.startAdjusting();
-      await session.play((table) => table.gainResources(alderId, -2));
-      await session.play((table) => table.takeDamage(alderId, 1));
-
-      await session.finishAdjusting();
-      const adjusted = alderOn(session);
-      const storedAdjusted = (await store.loadGame(gameId))?.state;
-      const adjustedState = session.state;
-      await session.undo();
-
-      expect(adjusted).toMatchObject({ resources: 3, damage: 1 });
-      expect(storedAdjusted).toEqual(adjustedState);
-      expect(session.state).toEqual(atSetup);
-      expect((await store.loadGame(gameId))?.state).toEqual(atSetup);
-    });
-
-    it('drops the taps on "Cancel"', async () => {
-      const { store, gameId } = await storedGame('session-adjust-cancel-test');
-      const session = await GameSession.open(store, gameId, ctx);
-      const atSetup = session.state;
-      session.startAdjusting();
-      await session.play((table) => table.gainResources(alderId, -2));
-
-      session.cancelAdjusting();
-
-      expect(session.state).toEqual(atSetup);
-      expect((await store.loadGame(gameId))?.state).toEqual(atSetup);
-    });
-
-    it("takes back only the adjustment's last tap on undo, never a stored step", async () => {
-      const { store, gameId } = await storedGame('session-adjust-undo-test');
-      const session = await GameSession.open(store, gameId, ctx);
-      await session.play((table) => table.gainResources(alderId, 1));
-      session.startAdjusting();
-      await session.play((table) => table.takeDamage(alderId, 1));
-      await session.play((table) => table.takeDamage(alderId, 1));
-
-      await session.undo();
-      const afterOneUndo = alderOn(session);
-      await session.undo();
-      await session.undo();
-
-      expect(afterOneUndo).toMatchObject({ resources: 6, damage: 1 });
-      expect(alderOn(session)).toMatchObject({ resources: 6, damage: 0 });
-      expect(session.canUndo).toBe(false);
-    });
-
-    it('leaves a tap that changed nothing out of what undo takes back', async () => {
-      const { store, gameId } = await storedGame('session-adjust-empty-tap-test');
-      const session = await GameSession.open(store, gameId, ctx);
-      await session.play((table) => table.gainResources(alderId, 1));
-      session.startAdjusting();
-
-      await session.play(() => {});
-      await session.undo();
-
-      expect(session.canUndo).toBe(false);
-      expect(alderOn(session)).toMatchObject({ resources: 6 });
-    });
   });
 
   it('names the effects a step skipped for a missing card, after a reload too, until the next step', async () => {

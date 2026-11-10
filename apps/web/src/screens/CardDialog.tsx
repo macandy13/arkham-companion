@@ -23,7 +23,7 @@ const LANDSCAPE: ReadonlySet<CardType> = new Set<CardType>(['agenda', 'act']);
  * Opening and closing stay the caller's: the shell opens as a modal when it mounts and passes on
  * `cancel` (Escape), so a dialog that must be answered can refuse it; one the players may leave
  * gets an × (`onClose`), and one that must be answered can be lowered out of the board's way
- * (`lowered`, `onLower`), so the players can adjust the board on the game screen or pick a
+ * (`lowered`, `onLower`), so the players can correct the board on the game screen or pick a
  * location on the map first. The caller keeps whether it is lowered, since picking on the map
  * lowers it too.
  */

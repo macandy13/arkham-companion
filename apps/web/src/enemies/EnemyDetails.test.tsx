@@ -184,7 +184,7 @@ describe('EnemyDetails', () => {
       const enemy = table.board.enemiesEngagedWith(alder).find(({ id }) => id === ghoul);
       if (!enemy) throw new Error('the ghoul is engaged with alder');
       return (
-        <DecisionHostContext.Provider value={{ decision, adjusting: false, setHosted }}>
+        <DecisionHostContext.Provider value={{ decision, setHosted }}>
           <EnemyDetails
             board={table.board}
             enemy={enemy}

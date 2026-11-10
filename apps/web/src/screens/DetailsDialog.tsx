@@ -20,13 +20,11 @@ export interface OpenDecision {
 
 /**
  * What the game screen (`GameScreen`) shares with the details dialogs below it: the first open
- * decision, whether the players adjust the board (a hosted decision is lowered meanwhile, as the
- * screen hides its own), and the switch that tells the screen a details dialog shows the decisions
+ * decision and the switch that tells the screen a details dialog shows the decisions
  * in its place (`useDecisionHost`), so its own decision dialog stays shut meanwhile.
  */
 export interface DecisionHost {
   decision: OpenDecision | undefined;
-  adjusting: boolean;
   setHosted: (hosted: boolean) => void;
 }
 
@@ -37,8 +35,6 @@ export const DecisionHostContext = createContext<DecisionHost | undefined>(undef
 export interface HostedDecision {
   /** The decision the dialog shows in place of its page, once it hosts and while one is open. */
   decision: OpenDecision | undefined;
-  /** Whether the players adjust the board, which lowers the hosted decision out of its way. */
-  adjusting: boolean;
   /**
    * Makes the dialog show the decisions from now until it closes, called right before the step
    * that raises one (a fight, an evasion, an investigation, an engagement that provokes).
@@ -64,7 +60,6 @@ export function useDecisionHost(): HostedDecision {
   }, [hosting, setHosted]);
   return {
     decision: hosting ? shared?.decision : undefined,
-    adjusting: shared?.adjusting ?? false,
     host: () => {
       setHosting(true);
       setHosted?.(true);
@@ -134,11 +129,8 @@ export function DetailsDialog({
       drawn={own ? drawn : undefined}
       {...decisionHeading(t, board, view)}
       onCancel={(event) => event.preventDefault()}
-      lowered={loweredFor === id || hosted.adjusting}
-      // While the board is adjusted it stays lowered, so its handle offers nothing then.
-      {...(hosted.adjusting
-        ? {}
-        : { onLower: (to: boolean) => setLoweredFor(to ? id : undefined) })}
+      lowered={loweredFor === id}
+      onLower={(to) => setLoweredFor(to ? id : undefined)}
     >
       <DecisionPage key={id} board={board} decision={view} actions={actions} busy={busy} />
     </CardDialog>

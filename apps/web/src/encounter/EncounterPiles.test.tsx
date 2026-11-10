@@ -45,7 +45,6 @@ describe('EncounterPiles', () => {
         board={table.board}
         actions={actionsOn(table)}
         busy={false}
-        adjusting={false}
         onSpawn={() => {}}
       />,
     );
@@ -68,7 +67,6 @@ describe('EncounterPiles', () => {
         board={table.board}
         actions={actionsOn(table)}
         busy={false}
-        adjusting={false}
         onSpawn={() => {}}
       />,
     );
@@ -93,7 +91,6 @@ describe('EncounterPiles', () => {
         board={table.board}
         actions={actionsOn(table)}
         busy={false}
-        adjusting={false}
         onSpawn={() => {}}
       />,
     );
@@ -131,7 +128,6 @@ describe('EncounterPiles', () => {
         board={table.board}
         actions={actionsOn(table)}
         busy={false}
-        adjusting={false}
         onSpawn={() => {}}
       />,
     );
@@ -165,7 +161,6 @@ describe('EncounterPiles', () => {
           board={table.board}
           actions={actionsOn(table)}
           busy={false}
-          adjusting={false}
           onSpawn={() => {}}
         />,
       );
@@ -182,7 +177,6 @@ describe('EncounterPiles', () => {
           board={table.board}
           actions={actionsOn(table)}
           busy={false}
-          adjusting={false}
           onSpawn={() => {}}
         />,
       );
@@ -195,11 +189,10 @@ describe('EncounterPiles', () => {
       ).toBeTruthy();
     });
 
-    it.each<{ situation: string; deck: boolean; busy: boolean; adjusting: boolean }>([
-      { situation: 'deck and discard pile are empty', deck: false, busy: false, adjusting: false },
-      { situation: 'a step is queued', deck: true, busy: true, adjusting: false },
-      { situation: 'the players adjust the board', deck: true, busy: false, adjusting: true },
-    ])('draws nothing while $situation', ({ deck, busy, adjusting }) => {
+    it.each<{ situation: string; deck: boolean; busy: boolean }>([
+      { situation: 'deck and discard pile are empty', deck: false, busy: false },
+      { situation: 'a step is queued', deck: true, busy: true },
+    ])('draws nothing while $situation', ({ deck, busy }) => {
       const game = deck
         ? brooksTurn.withCard(instanceId('top_card'), blankTreachery('Rotting Remains'), {
             kind: 'encounterDeck',
@@ -211,7 +204,6 @@ describe('EncounterPiles', () => {
           board={table.board}
           actions={actionsOn(table)}
           busy={busy}
-          adjusting={adjusting}
           onSpawn={() => {}}
         />,
       );
@@ -240,7 +232,6 @@ describe('EncounterPiles', () => {
         board={table.board}
         actions={actionsOn(table)}
         busy={false}
-        adjusting={false}
         onSpawn={() => {}}
       />,
     );
@@ -262,7 +253,6 @@ describe('EncounterPiles', () => {
         board={table.board}
         actions={actionsOn(table)}
         busy={false}
-        adjusting={false}
         onSpawn={(enemy) => spawning.push(enemy.name)}
       />,
     );
@@ -290,7 +280,6 @@ describe('EncounterPiles', () => {
         board={table.board}
         actions={actionsOn(table)}
         busy={false}
-        adjusting={false}
         onSpawn={() => {}}
       />,
     );
@@ -329,7 +318,6 @@ describe('HeaderPile', () => {
         board={table.board}
         actions={actionsOn(table)}
         busy={false}
-        adjusting={false}
         onSpawn={() => {}}
       />,
     );
@@ -358,7 +346,6 @@ describe('HeaderPile', () => {
         board={table.board}
         actions={actionsOn(table)}
         busy={false}
-        adjusting={false}
         onSpawn={() => {}}
       />,
     );
@@ -379,7 +366,6 @@ describe('HeaderPile', () => {
         board={table.board}
         actions={actionsOn(table)}
         busy={false}
-        adjusting={false}
         onSpawn={() => {}}
       />,
     );
@@ -407,7 +393,6 @@ describe('HeaderPile', () => {
         board={table.board}
         actions={actionsOn(table)}
         busy={false}
-        adjusting={false}
         onSpawn={() => {}}
       />,
     );
@@ -440,7 +425,6 @@ describe('HeaderPile', () => {
         board={table.board}
         actions={actionsOn(table)}
         busy={false}
-        adjusting={false}
         onSpawn={() => {}}
       />,
     );

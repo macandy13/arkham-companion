@@ -177,19 +177,6 @@ describe('GameScreen header', () => {
 
       expect(await within(agenda).findByRole('img', { name: 'Doom 1 / 3' })).toBeTruthy();
     });
-
-    it('offers no token to drag while the players adjust the board', async () => {
-      await renderTheGathering('game-screen-pool-adjusting-test');
-      const draggable = screen.getByRole('img', { name: 'Doom from the pool' }).dataset['drag'];
-
-      fireEvent.click(button('Adjust board'));
-      await screen.findByRole('button', { name: 'Done' });
-
-      expect(draggable).toBe('doom');
-      expect(
-        screen.getByRole('img', { name: 'Doom from the pool' }).dataset['drag'],
-      ).toBeUndefined();
-    });
   });
 
   it('adds doom to the agenda from the bubble a double tap on it opens, without the zoom', async () => {
@@ -207,60 +194,26 @@ describe('GameScreen header', () => {
     expect(screen.queryByRole('dialog')).toBeNull();
   });
 
-  it('shows the steppers only while adjusting, with "Done" and "Cancel" in place of "Next"', async () => {
-    await renderTheGathering('game-screen-adjust-mode-test');
-    const before = screen.queryByRole('button', { name: 'Add doom' });
+  it('takes back only the last tap in the bubble with one undo, and removes no doom at none', async () => {
+    await renderTheGathering('game-screen-doom-test');
+    const doom = within(screen.getByRole('region', { name: 'Agenda' })).getByRole('img', {
+      name: 'Doom 0 / 3',
+    });
+    fireEvent.click(doom);
+    fireEvent.click(doom);
+    const bubble = screen.getByRole('complementary', { name: "What's Going On?! · Doom" });
+    const removeAtZero = within(bubble)
+      .getByRole('button', { name: 'Remove doom' })
+      .hasAttribute('disabled');
 
-    fireEvent.click(button('Adjust board'));
-    await screen.findByRole('button', { name: 'Done' });
-
-    expect(before).toBeNull();
-    expect(button('Add doom')).toBeTruthy();
-    expect(button('Cancel')).toBeTruthy();
-    expect(screen.queryByRole('button', { name: 'Next' })).toBeNull();
-  });
-
-  it('keeps an adjustment of several taps on "Done" and takes it all back with one undo', async () => {
-    await renderTheGathering('game-screen-adjust-done-test');
-    fireEvent.click(button('Adjust board'));
-    fireEvent.click(await screen.findByRole('button', { name: 'Add doom' }));
+    fireEvent.click(within(bubble).getByRole('button', { name: 'Add doom' }));
     await screen.findByRole('img', { name: 'Doom 1 / 3' });
-    fireEvent.click(button('Add doom'));
+    fireEvent.click(within(bubble).getByRole('button', { name: 'Add doom' }));
     await screen.findByRole('img', { name: 'Doom 2 / 3' });
-
-    fireEvent.click(button('Done'));
-    await screen.findByRole('button', { name: 'Next' });
-    const kept = screen.queryByRole('img', { name: 'Doom 2 / 3' });
     fireEvent.click(button('Undo'));
 
-    expect(kept).toBeTruthy();
-    expect(await screen.findByRole('img', { name: 'Doom 0 / 3' })).toBeTruthy();
-  });
-
-  it('drops the adjustment on "Cancel"', async () => {
-    await renderTheGathering('game-screen-adjust-cancel-test');
-    fireEvent.click(button('Adjust board'));
-    fireEvent.click(await screen.findByRole('button', { name: 'Add doom' }));
-    await screen.findByRole('img', { name: 'Doom 1 / 3' });
-
-    fireEvent.click(button('Cancel'));
-
-    expect(await screen.findByRole('img', { name: 'Doom 0 / 3' })).toBeTruthy();
-    expect(button('Undo').disabled).toBe(true);
-  });
-
-  it('adds doom to the agenda and takes it off again', async () => {
-    await renderTheGathering('game-screen-doom-test');
-    fireEvent.click(button('Adjust board'));
-    await screen.findByRole('button', { name: 'Done' });
-    const removeAtZero = button('Remove doom').disabled;
-
-    fireEvent.click(button('Add doom'));
-    await screen.findByRole('img', { name: 'Doom 1 / 3' });
-    fireEvent.click(button('Remove doom'));
-
     expect(removeAtZero).toBe(true);
-    expect(await screen.findByRole('img', { name: 'Doom 0 / 3' })).toBeTruthy();
+    expect(await screen.findByRole('img', { name: 'Doom 1 / 3' })).toBeTruthy();
   });
 
   it("shows the clues Alder holds against the act's cost", async () => {
@@ -321,17 +274,12 @@ describe('GameScreen header', () => {
     expect(screen.queryByRole('dialog')).toBeNull();
   });
 
-  it("shows the agenda's doom in play on its page, and its steppers only while adjusting", async () => {
-    await renderTheGathering('game-screen-agenda-page-test');
+  it("shows the agenda's doom in play on its page", async () => {
+    const store = await renderTheGathering('game-screen-agenda-page-test');
+    await store.getState().actions.placeDoom(1);
     fireEvent.click(button("What's Going On?!"));
     const card = await screen.findByRole('dialog', { name: "What's Going On?!" });
-    const stepperBeforeAdjusting = within(card).queryByRole('region', { name: 'On the agenda' });
 
-    fireEvent.click(button('Adjust board'));
-    const onAgenda = await within(card).findByRole('region', { name: 'On the agenda' });
-    fireEvent.click(within(onAgenda).getByRole('button', { name: 'Add doom' }));
-
-    expect(stepperBeforeAdjusting).toBeNull();
     expect(within(card).getByText('Agenda')).toBeTruthy();
     expect(await within(card).findByText('1 of 3')).toBeTruthy();
   });
@@ -594,24 +542,18 @@ describe('GameScreen header', () => {
     }
   });
 
-  it.each([
-    { entry: 'Adjust board', then: () => screen.findByRole('button', { name: 'Done' }) },
-    { entry: 'Game log', then: () => screen.findByRole('dialog', { name: 'Game log' }) },
-  ])(
-    'takes "$entry" from the menu, as a phone has no room for it in the row, and closes the menu',
-    async ({ entry, then }) => {
-      await renderTheGathering(`game-screen-menu-${entry}-test`);
-      fireEvent.click(button('Menu'));
-      const menu = within(screen.getByRole('navigation', { name: 'Main' }));
+  it('takes "Game log" from the menu, as a phone has no room for it in the row, and closes the menu', async () => {
+    await renderTheGathering('game-screen-menu-game-log-test');
+    fireEvent.click(button('Menu'));
+    const menu = within(screen.getByRole('navigation', { name: 'Main' }));
 
-      fireEvent.click(menu.getByRole('button', { name: entry }));
+    fireEvent.click(menu.getByRole('button', { name: 'Game log' }));
 
-      expect(await then()).toBeTruthy();
-      expect(screen.getByRole('button', { name: 'Menu' }).getAttribute('aria-expanded')).toBe(
-        'false',
-      );
-    },
-  );
+    expect(await screen.findByRole('dialog', { name: 'Game log' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Menu' }).getAttribute('aria-expanded')).toBe(
+      'false',
+    );
+  });
 
   it('lays the token pool, the encounter deck with its discard pile, agenda, act, scenario with the set-aside cards and victory display out under their labels', async () => {
     await renderTheGathering('game-screen-encounter-test');

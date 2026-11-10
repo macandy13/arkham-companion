@@ -52,7 +52,7 @@ describe('CardDetails', () => {
   ) => {
     const card = table.board.cardFace(fear);
     return (
-      <DecisionHostContext.Provider value={{ decision, adjusting: false, setHosted }}>
+      <DecisionHostContext.Provider value={{ decision, setHosted }}>
         <CardDetails
           board={table.board}
           card={card}

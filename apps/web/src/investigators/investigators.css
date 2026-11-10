@@ -194,26 +194,19 @@
   --stat-colour: var(--color-doom);
 }
 
-/* The token, then the − and + steppers side by side under it while adjusting. */
+/* The counter's token, centred in its column. */
 #investigators dd {
   --token-count-size: var(--stat-token-count-size);
 
   display: grid;
-  grid-template-columns: repeat(2, auto);
   justify-content: center;
-  gap: var(--space-1);
   margin: 0;
 }
 
 /* The counter's token (`GameToken`), its count in the token's disc. */
 #investigators dd > [data-game-token] {
-  grid-column: 1 / -1;
   justify-self: center;
   width: var(--stat-token-size);
-}
-
-#investigators dd > button {
-  padding: 0;
 }
 
 /*
@@ -221,7 +214,6 @@
  * it) with what is left on it in white, in a ring of pips.
  */
 #investigators dd > [data-printed] {
-  grid-column: 1 / -1;
   justify-self: center;
   position: relative;
   display: grid;

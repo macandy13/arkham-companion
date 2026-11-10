@@ -21,18 +21,10 @@ import { useTokenDrag, type TokenDragHandlers } from './useTokenDrag';
  *   its card lies on theirs;
  * - horror on an investigator's card, which they take (`adjust`), and a resource, which they gain.
  * The pool is also a drop target (`data-pool`): the map gives back a token dropped on it
- * (`overTokenPool`). Not drag sources while a step is queued or the players adjust the board. A
+ * (`overTokenPool`). Not drag sources while a step is queued. A
  * phone has no room for it (`game.css`).
  */
-export function TokenPool({
-  actions,
-  busy,
-  adjusting,
-}: {
-  actions: GameActions;
-  busy: boolean;
-  adjusting: boolean;
-}) {
+export function TokenPool({ actions, busy }: { actions: GameActions; busy: boolean }) {
   const { t } = useTranslation();
   const id = useId();
   const doom = useTokenDrag((client) => {
@@ -71,12 +63,12 @@ export function TokenPool({
     { kind: 'horror', label: t('header.poolHorror'), drag: horror },
     { kind: 'resource', label: t('header.poolResource'), drag: resource },
   ] as const;
-  const off = busy || adjusting;
+
   return (
     <section aria-labelledby={id} data-pool>
       <p id={id}>{t('header.pool')}</p>
       {tokens.map(({ kind, label, drag }) => (
-        <PoolToken key={kind} kind={kind} label={label} drag={off ? undefined : drag.handlers} />
+        <PoolToken key={kind} kind={kind} label={label} drag={busy ? undefined : drag.handlers} />
       ))}
       {tokens.map(
         ({ kind, drag }) => drag.at && <TokenGhost key={kind} kind={kind} at={drag.at} />,

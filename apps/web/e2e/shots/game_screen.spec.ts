@@ -307,36 +307,17 @@ test("the upkeep's notice of what the game did, its cause and how to set it righ
   ]);
 });
 
-test('Roland Banks’ combat boosted by 2, as an ally in play gives it', async ({
-  page,
-  isMobile,
-}) => {
+test('Roland Banks’ combat boosted by 2, as an ally in play gives it', async ({ page }) => {
   await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
   const roland = page.getByRole('region', { name: 'Roland Banks' });
 
-  // A phone keeps "Adjust board" in the header's menu.
-  if (isMobile) await page.getByRole('button', { name: 'Menu' }).click();
-  await page.getByRole('button', { name: 'Adjust board' }).click();
-  await roland.getByRole('button', { name: 'Raise the Combat boost' }).click();
-  await roland.getByRole('button', { name: 'Raise the Combat boost' }).click();
-  await page.getByRole('button', { name: 'Done' }).click();
+  await roland.getByRole('button', { name: /^Combat/ }).dblclick();
+  const bubble = page.getByRole('complementary', { name: 'Roland Banks · Combat boost' });
+  await bubble.getByRole('button', { name: 'Raise the Combat boost' }).click();
+  await bubble.getByRole('button', { name: 'Raise the Combat boost' }).click();
+  await page.keyboard.press('Escape');
 
   await expect(roland.getByRole('button', { name: 'Combat 6, boosted +2' })).toBeVisible();
-});
-
-test('Roland Banks’ card while the players adjust the board, its steppers out', async ({
-  page,
-  isMobile,
-}) => {
-  await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
-  const roland = page.getByRole('region', { name: 'Roland Banks' });
-
-  // A phone keeps "Adjust board" in the header's menu.
-  if (isMobile) await page.getByRole('button', { name: 'Menu' }).click();
-  await page.getByRole('button', { name: 'Adjust board' }).click();
-
-  await expect(roland.getByRole('button', { name: 'Raise the Combat boost' })).toBeVisible();
-  await expect(roland.getByRole('button', { name: 'Take damage' })).toBeVisible();
 });
 
 test('Roland Banks’ willpower test before a token is drawn, the draw button in its place', async ({
@@ -863,7 +844,7 @@ test('the status row marked offline once the network is gone', async ({ page }) 
   await expect(page.getByRole('region', { name: 'Round 1' }).getByText('Offline')).toBeVisible();
 });
 
-test('the menu open, holding "Adjust board" and the game log on a phone', async ({ page }) => {
+test('the menu open, holding the game log on a phone', async ({ page }) => {
   await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
 
   await page.getByRole('button', { name: 'Menu' }).click();
