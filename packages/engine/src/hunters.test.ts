@@ -285,6 +285,48 @@ describe('MoveHunters', () => {
   });
 });
 
+describe('MoveHunters with "Prey – Bob only"', () => {
+  const onlyBobHunter = blankEnemy('only_bob_hunter', {
+    keywords: [{ name: 'hunter' }, { name: 'prey', detail: 'Bob only' }],
+  });
+
+  it('moves towards bob past a nearer alice', () => {
+    const { context, state } = line('a', 'b', 'c')
+      .withInvestigator(alice, { locationId: instanceId('b') })
+      .withInvestigator(bob, { locationId: instanceId('c') })
+      .withCard(hunter, onlyBobHunter, at('a'))
+      .start();
+
+    const after = stateAfter(context, state, moveHunters);
+
+    expect(zoneOf(after, hunter)).toEqual(at('b'));
+  });
+
+  it('leaves alice at its location and moves on towards bob', () => {
+    const { context, state } = line('a', 'b')
+      .withInvestigator(alice, { locationId: instanceId('a') })
+      .withInvestigator(bob, { locationId: instanceId('b') })
+      .withCard(hunter, onlyBobHunter, at('a'))
+      .start();
+
+    const after = stateAfter(context, state, moveHunters);
+
+    expect(zoneOf(after, hunter)).toEqual(engagedWith(bob));
+  });
+
+  it('stays once bob is defeated', () => {
+    const { context, state } = line('a', 'b')
+      .withInvestigator(alice, { locationId: instanceId('b') })
+      .withInvestigator(bob, { status: 'defeated' })
+      .withCard(hunter, onlyBobHunter, at('a'))
+      .start();
+
+    const after = stateAfter(context, state, moveHunters);
+
+    expect(zoneOf(after, hunter)).toEqual(at('a'));
+  });
+});
+
 describe('MoveHunters order', () => {
   const first = instanceId('first_hunter');
   const second = instanceId('second_hunter');

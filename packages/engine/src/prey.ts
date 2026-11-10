@@ -1,3 +1,4 @@
+import { stripTrailingDot } from '@arkham/util';
 import { distance } from './board';
 import {
   cardStats,
@@ -8,8 +9,13 @@ import {
   type Trait,
 } from './cards';
 import { enemiesOnTable } from './enemies';
-import { locationOfCard } from './lookup';
-import { boostedSkills, remainingHealth, remainingSanity } from './investigators';
+import { locationOfCard, matchesCard } from './lookup';
+import {
+  activeInvestigators,
+  boostedSkills,
+  remainingHealth,
+  remainingSanity,
+} from './investigators';
 import { SKILL_NAMES, type CardInstance, type GameState, type Investigator } from './state';
 
 /**
@@ -23,14 +29,8 @@ type PreyMeasure = (
   investigator: Investigator,
 ) => number;
 
-/** A prey text read: which value to compare and whether the lowest or the highest wins. */
-interface PreyCriterion {
-  measure: PreyMeasure;
-  extreme: 'lowest' | 'highest';
-}
-
 /** The first word of a prey text: "Most clues", "Fewest …", "Least remaining sanity". */
-const EXTREME_WORDS: Readonly<Record<string, PreyCriterion['extreme'] | undefined>> = {
+const EXTREME_WORDS: Readonly<Record<string, 'lowest' | 'highest' | undefined>> = {
   highest: 'highest',
   most: 'highest',
   lowest: 'lowest',
@@ -48,14 +48,32 @@ const COUNTER_MEASURES: Readonly<Record<string, PreyMeasure | undefined>> = {
   horror: (_ctx, _state, _enemy, inv) => inv.sanity.horror,
 };
 
-const NEAREST_TO_ANOTHER = /^nearest to another (.+) enemy\.?$/i;
+/**
+ * A prey text read: which of the given investigators it picks, and whether it says "only".
+ * Comparing texts pick the tied best ("Most clues"); naming texts pick those they name ("Daisy
+ * Walker", "Investigator at a [[Woods]] location") and may pick nobody.
+ */
+interface Prey {
+  pick: (
+    ctx: EngineContext,
+    state: GameState,
+    enemy: CardInstance,
+    investigators: readonly Investigator[],
+  ) => Investigator[];
+  only: boolean;
+}
+
+const NEAREST_TO_ANOTHER = /^nearest to another (.+) enemy$/i;
+const AT_TRAIT_LOCATION = /^investigator at an? (.+) location$/i;
+const ONLY = /\s+only$/i;
 
 /**
  * The investigators among `candidates` that the prey keyword of `enemy` picks (Rules Reference,
- * "Prey"): the active ones tied for the lowest or highest value. Without a prey keyword, or with
- * a text the engine can't read from the board (Yithian Observer's "Fewest cards in hand", as the
- * engine doesn't track hands), every active candidate stays and the players decide, asked with
- * `preyPrompt`.
+ * "Prey"): the active ones it prefers, or all of them when it prefers none. With "only" it picks
+ * among every active investigator and keeps the candidates it picked, possibly none: the enemy
+ * ignores everyone else. Without a prey keyword, or with a text the engine can't read from the
+ * board (Yithian Observer's "Fewest cards in hand", as the engine doesn't track hands), every
+ * active candidate stays and the players decide, asked with `preyPrompt`.
  */
 export function preferredByPrey(
   ctx: EngineContext,
@@ -64,11 +82,32 @@ export function preferredByPrey(
   candidates: readonly Investigator[],
 ): Investigator[] {
   const active = candidates.filter((inv) => inv.status === 'active');
-  const criterion = preyCriterion(cardStats(ctx.cards, enemy.code));
-  if (criterion === undefined || active.length === 0) return active;
-  const values = active.map((inv) => criterion.measure(ctx, state, enemy, inv));
-  const best = criterion.extreme === 'lowest' ? Math.min(...values) : Math.max(...values);
-  return active.filter((_inv, i) => values[i] === best);
+  const prey = readPrey(state, cardStats(ctx.cards, enemy.code));
+  if (prey === undefined || active.length === 0) return active;
+  if (prey.only) {
+    const allowed = new Set(
+      prey.pick(ctx, state, enemy, activeInvestigators(state)).map((inv) => inv.id),
+    );
+    return active.filter((inv) => allowed.has(inv.id));
+  }
+  const picked = prey.pick(ctx, state, enemy, active);
+  return picked.length > 0 ? picked : active;
+}
+
+/**
+ * The investigators among `investigators` that `enemy` may move towards or engage on its own:
+ * with "Prey – … only" those its prey picks, otherwise all of them (Rules Reference, "Prey").
+ */
+export function preyAllows(
+  ctx: EngineContext,
+  state: GameState,
+  enemy: CardInstance,
+  investigators: readonly Investigator[],
+): Investigator[] {
+  const prey = readPrey(state, cardStats(ctx.cards, enemy.code));
+  return prey?.only === true
+    ? preferredByPrey(ctx, state, enemy, investigators)
+    : [...investigators];
 }
 
 /**
@@ -76,8 +115,8 @@ export function preferredByPrey(
  * prey was read and only a tie is left, `decision.choosePrey` when the players have to judge
  * the prey themselves.
  */
-export function preyPrompt(stats: CardStats, prompt: string): string {
-  return preyText(stats) !== undefined && preyCriterion(stats) === undefined
+export function preyPrompt(state: GameState, stats: CardStats, prompt: string): string {
+  return preyText(stats) !== undefined && readPrey(state, stats) === undefined
     ? 'decision.choosePrey'
     : prompt;
 }
@@ -86,18 +125,50 @@ function preyText(stats: CardStats): string | undefined {
   return stats.keywords?.find((keyword) => keyword.name === 'prey')?.detail;
 }
 
-/** The criterion of a prey text, e.g. "Highest [combat]", or undefined for one the engine can't read. */
-function preyCriterion(stats: CardStats): PreyCriterion | undefined {
+/** The prey of a card, e.g. "Highest [combat]" or "Daisy Walker only", or undefined for one the engine can't read. */
+function readPrey(state: GameState, stats: CardStats): Prey | undefined {
   const text = preyText(stats);
   if (text === undefined) return undefined;
-  const lower = comparableName(text);
-  const nearest = NEAREST_TO_ANOTHER.exec(text.trim());
-  if (nearest !== null)
-    return { measure: distanceToEnemyWith(trait(nearest[1] ?? '')), extreme: 'lowest' };
+  const plain = stripTrailingDot(text.trim());
+  const only = ONLY.test(plain);
+  const pick = preyPick(state, plain.replace(ONLY, ''));
+  return pick === undefined ? undefined : { pick, only };
+}
+
+/**
+ * How a prey text without its "only" picks: by a measure, by the trait of their location, or
+ * by an investigator's name in this game ("Daisy Walker"); undefined for any other text.
+ */
+function preyPick(state: GameState, text: string): Prey['pick'] | undefined {
+  const nearest = NEAREST_TO_ANOTHER.exec(text);
+  if (nearest !== null) return tiedBest(distanceToEnemyWith(trait(nearest[1] ?? '')), 'lowest');
+  const atTrait = AT_TRAIT_LOCATION.exec(text);
+  if (atTrait !== null) return atLocationWith(trait(atTrait[1] ?? ''));
+  const lower = text.toLowerCase();
   const space = lower.indexOf(' ');
   const extreme = EXTREME_WORDS[lower.slice(0, space)];
   const measure = measureNamed(lower.slice(space + 1));
-  return extreme === undefined || measure === undefined ? undefined : { measure, extreme };
+  if (extreme !== undefined && measure !== undefined) return tiedBest(measure, extreme);
+  if (!state.investigators.some((inv) => comparableName(inv.name) === lower)) return undefined;
+  return (_ctx, _state, _enemy, investigators) =>
+    investigators.filter((inv) => comparableName(inv.name) === lower);
+}
+/** Picks the investigators tied for the `extreme` of `measure`. */
+function tiedBest(measure: PreyMeasure, extreme: 'lowest' | 'highest'): Prey['pick'] {
+  return (ctx, state, enemy, investigators) => {
+    const values = investigators.map((inv) => measure(ctx, state, enemy, inv));
+    const best = extreme === 'lowest' ? Math.min(...values) : Math.max(...values);
+    return investigators.filter((_inv, i) => values[i] === best);
+  };
+}
+
+/** "Investigator at a [[Woods]] location": those whose location has the trait. */
+function atLocationWith(wanted: Trait): Prey['pick'] {
+  return (ctx, state, _enemy, investigators) =>
+    investigators.filter((inv) => {
+      const location = inv.locationId === undefined ? undefined : state.cards[inv.locationId];
+      return location !== undefined && matchesCard(ctx, location, { trait: wanted });
+    });
 }
 
 function measureNamed(name: string): PreyMeasure | undefined {

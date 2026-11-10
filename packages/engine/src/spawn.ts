@@ -79,7 +79,7 @@ export function spawnEvents(
       state,
       enemyId,
       `spawn:${enemyId}`,
-      preyPrompt(stats, 'decision.chooseEngagement'),
+      preyPrompt(state, stats, 'decision.chooseEngagement'),
       plan.candidates,
       (chosen) => ({ type: 'SpawnEnemy', enemyId, engagedWith: chosen.id }),
     );

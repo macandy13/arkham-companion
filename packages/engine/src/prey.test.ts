@@ -25,11 +25,12 @@ const atLocation = (locationId: InstanceId): Zone => ({ kind: 'atLocation', loca
 const preyCard = (detail: string, traits: string[] = []) =>
   blankEnemy('hunter', { keywords: [{ name: 'prey', detail }], traits: traits.map(trait) });
 
-/** The investigators the prey of the hunter picks among everyone in `game`. */
-function picked({ context, state }: BuiltGame): string[] {
+/** The investigators the prey of the hunter picks among `among` (everyone in `game` without it). */
+function picked({ context, state }: BuiltGame, among?: readonly string[]): string[] {
   const enemy = state.cards[hunter];
   if (enemy === undefined) throw new Error('no hunter in the test game');
-  return preferredByPrey(context, state, enemy, state.investigators).map((inv) => inv.id);
+  const candidates = state.investigators.filter((inv) => among?.includes(inv.id) ?? true);
+  return preferredByPrey(context, state, enemy, candidates).map((inv) => inv.id);
 }
 
 describe('preferredByPrey on counters and skills', () => {
@@ -143,6 +144,31 @@ describe('preferredByPrey "Nearest to another [[Cultist]] enemy"', () => {
   });
 });
 
+describe('preferredByPrey with "only" and naming texts', () => {
+  /** Alice (3 sanity left) in the hall, a Woods location; Bob (5 sanity left) in the cellar. */
+  const aliceInWoods = newGame()
+    .withLocation(hall, blankLocation('hall', { traits: [trait('Woods')] }))
+    .withLocation(cellar, blankLocation('cellar'))
+    .withInvestigator(alice, { locationId: hall, sanity: { max: 6, horror: 3 } })
+    .withInvestigator(bob, { locationId: cellar, sanity: { max: 6, horror: 1 } });
+
+  it.each([
+    { prey: 'Lowest remaining sanity only', among: ['alice', 'bob'], expected: ['alice'] },
+    { prey: 'Lowest remaining sanity only', among: ['bob'], expected: [] },
+    { prey: 'Lowest remaining sanity', among: ['bob'], expected: ['bob'] },
+    { prey: 'Bob only', among: ['alice', 'bob'], expected: ['bob'] },
+    { prey: 'Bob only', among: ['alice'], expected: [] },
+    { prey: 'Investigator at a Woods location only', among: ['alice', 'bob'], expected: ['alice'] },
+    { prey: 'Investigator at a Woods location only', among: ['bob'], expected: [] },
+    { prey: 'Investigator at a Woods location', among: ['bob'], expected: ['bob'] },
+    { prey: 'Carol only', among: ['alice', 'bob'], expected: ['alice', 'bob'] },
+  ])('"$prey" picks $expected among $among', ({ prey, among, expected }) => {
+    const game = aliceInWoods.withCard(hunter, preyCard(prey), setAside).start();
+
+    expect(picked(game, among)).toEqual(expected);
+  });
+});
+
 describe('preyPrompt', () => {
   it.each([
     {
@@ -152,6 +178,11 @@ describe('preyPrompt', () => {
     },
     { name: 'no prey', keywords: [], prompt: 'decision.chooseEngagement' },
     {
+      name: 'a name no investigator has',
+      keywords: [{ name: 'prey', detail: 'Bearer only' }],
+      prompt: 'decision.choosePrey',
+    },
+    {
       name: 'a prey the players judge',
       keywords: [{ name: 'prey', detail: 'Fewest cards in hand' }],
       prompt: 'decision.choosePrey',
@@ -159,6 +190,6 @@ describe('preyPrompt', () => {
   ] as const)('asks with $prompt for $name', ({ keywords, prompt }) => {
     const card = blankEnemy('hunter', { keywords: [...keywords] });
 
-    expect(preyPrompt(card, 'decision.chooseEngagement')).toBe(prompt);
+    expect(preyPrompt(newGame().start().state, card, 'decision.chooseEngagement')).toBe(prompt);
   });
 });
