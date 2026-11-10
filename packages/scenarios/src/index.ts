@@ -73,8 +73,11 @@ export {
   QUEEN_OF_ASH_CODES,
   QUEEN_OF_ASH_RESOLUTIONS,
   QUEEN_OF_ASH_SETS,
+  SEWERS,
+  SEWERS_CELLS,
+  SLUICE_CONTROL_DECISION,
   queenOfAshCardDefs,
   queenOfAshCards,
 } from './queen_of_ash/cards';
-export { SEWERS, queenOfAsh } from './queen_of_ash/scenario';
+export { queenOfAsh } from './queen_of_ash/scenario';
 export { queenOfAshResolutions } from './queen_of_ash/resolutions';

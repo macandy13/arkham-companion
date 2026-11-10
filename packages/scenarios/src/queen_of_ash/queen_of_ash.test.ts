@@ -1,10 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import {
+  atLocation,
   cardDbWith,
+  engagedWith,
   cardStats,
   checkInvariants,
   instanceId,
   investigatorId,
+  newGame,
   scenario,
   skillTestSuggestion,
   zoneKey,
@@ -16,6 +19,7 @@ import {
   type Zone,
 } from '@arkham/engine';
 import {
+  answer,
   makeCampaignLog,
   rolandMember,
   standardInvestigatorCards,
@@ -25,7 +29,9 @@ import {
 import {
   ASH_STORY,
   QUEEN_OF_ASH_CODES as codes,
+  QUEEN_OF_ASH_RESOLUTIONS,
   SEWERS,
+  SLUICE_CONTROL_DECISION,
   queenOfAsh,
   queenOfAshCards,
   spreadingFlames,
@@ -324,6 +330,190 @@ describe('Queen of Ash skull and tablet tokens', () => {
       });
 
       expect(tokenValue(state, 'tablet')).toBe(value);
+    },
+  );
+});
+
+describe('Queen of Ash agendas and acts', () => {
+  const seeker = investigatorId('seeker');
+  const aRitual = instanceId('12170#1');
+  const brethrenOfAsh = instanceId('12171#1');
+  const searchTheSewers = instanceId('12172#1');
+  const stopTheRite = instanceId('12173#1');
+  const elokoss = instanceId('12179#1');
+  const servantOfFlame = instanceId('12180#1');
+  const sluiceControl = instanceId('12175#1');
+  const atCistern = { kind: 'atLocation', locationId: undergroundCistern } as const;
+  const advanceAgenda: Command = { type: 'AdvanceAgenda' };
+  const tankEntersCistern: Command = {
+    type: 'MoveInvestigator',
+    investigatorId: tank,
+    to: undergroundCistern,
+    ignoreConnections: true,
+  };
+  /** The tank and the seeker after A Gathering advanced and both passed its willpower test. */
+  const afterAGathering = () =>
+    stateAfter(
+      ctx,
+      startScenario(ctx, { playerCount: 2 }),
+      advanceAgenda,
+      answer(`test:${aGathering}`, 'pass'),
+      answer(`test:${aGathering}`, 'pass'),
+    );
+
+  it('spawns the set-aside Servant of Flame at Underground Cistern as A Gathering advances', () => {
+    const state = afterAGathering();
+
+    expect(state.cards[servantOfFlame]?.zone).toEqual(atCistern);
+    expect(state.agenda.current).toBe(aRitual);
+  });
+
+  it('tests the willpower (4) of each investigator as A Gathering advances, 1 horror on a fail', () => {
+    const tested = stateAfter(ctx, startScenario(ctx, { playerCount: 2 }), advanceAgenda);
+
+    const state = stateAfter(
+      ctx,
+      tested,
+      answer(`test:${aGathering}`, 'fail'),
+      answer(`test:${aGathering}`, 'pass'),
+    );
+
+    expect(tested.pending).toMatchObject([
+      { decider: { investigatorId: tank }, skillTest: { skill: 'willpower', difficulty: 4 } },
+    ]);
+    expect(state.investigators.map((inv) => [inv.id, inv.sanity.horror])).toEqual([
+      [tank, 1],
+      [seeker, 0],
+    ]);
+  });
+
+  it('reveals Underground Cistern with Elokoss there and makes Brethren of Ash act and agenda as A Ritual advances during act 1', () => {
+    const state = stateAfter(ctx, afterAGathering(), advanceAgenda);
+
+    expect(revealed(state, undergroundCistern)).toBe(true);
+    expect(state.cards[elokoss]?.zone).toEqual(atCistern);
+    expect([state.agenda.current, state.act.current]).toEqual([brethrenOfAsh, brethrenOfAsh]);
+    expect(state.cards[searchTheSewers]?.zone).toEqual({ kind: 'outOfGame' });
+    expect(state.cards[stopTheRite]?.zone).toEqual({ kind: 'outOfGame' });
+  });
+
+  it('makes Brethren of Ash act and agenda without a second Elokoss as A Ritual advances during act 2', () => {
+    const state = stateAfter(ctx, afterAGathering(), tankEntersCistern, advanceAgenda);
+
+    expect(Object.values(state.cards).filter((card) => card.code === codes.elokoss)).toHaveLength(
+      1,
+    );
+    expect([state.agenda.current, state.act.current]).toEqual([brethrenOfAsh, brethrenOfAsh]);
+  });
+
+  it.each([
+    { act: 'Brethren of Ash', before: [advanceAgenda] },
+    { act: 'Stop the Rite', before: [tankEntersCistern] },
+  ])('ends in Resolution 1 when Elokoss is defeated during $act', ({ before }) => {
+    const state = stateAfter(ctx, afterAGathering(), ...before, {
+      type: 'DefeatEnemy',
+      enemyId: elokoss,
+    });
+
+    expect(state.meta.resolution).toBe(QUEEN_OF_ASH_RESOLUTIONS.elokossDefeated);
+  });
+
+  it('advances Search the Sewers when the tank enters Underground Cistern: Elokoss, a Fire! there, Sluice Control into play and the rest shuffled in', () => {
+    const state = stateAfter(ctx, startScenario(ctx), tankEntersCistern);
+
+    expect(state.act.current).toBe(stopTheRite);
+    expect(state.cards[elokoss]?.zone).toEqual(atCistern);
+    expect(state.cards[fire]?.zone).toEqual({ kind: 'attachedTo', hostId: undergroundCistern });
+    expect(state.cards[sluiceControl]?.zone).toEqual({ kind: 'location', mapId: SEWERS });
+    expect(namesIn(state, { kind: 'setAside' }).sort()).toEqual([
+      'Collector',
+      'Collector',
+      'Servant of Flame',
+    ]);
+    expect(namesIn(state, { kind: 'encounterDeck' })).toEqual(
+      expect.arrayContaining(['Fire!', "Queen's Knight", 'Herald of Flame']),
+    );
+  });
+
+  it.each([
+    {
+      skill: 'agility',
+      result: 'pass',
+      ends: 'Resolution 3',
+      resolution: QUEEN_OF_ASH_RESOLUTIONS.ritualFlooded,
+    },
+    {
+      skill: 'combat',
+      result: 'pass',
+      ends: 'Resolution 3',
+      resolution: QUEEN_OF_ASH_RESOLUTIONS.ritualFlooded,
+    },
+    { skill: 'agility', result: 'fail', ends: 'nothing', resolution: undefined },
+  ] as const)(
+    'ends $ends, each enemy defeated on a pass, when the tank resolves a Sluice Control $skill test (5): $result',
+    ({ skill, result, resolution }) => {
+      const atSluice = stateAfter(ctx, startScenario(ctx), tankEntersCistern, {
+        type: 'MoveInvestigator',
+        investigatorId: tank,
+        to: sluiceControl,
+        ignoreConnections: true,
+      });
+      const chosen = stateAfter(
+        ctx,
+        atSluice,
+        { type: 'NextPhase' },
+        { type: 'StartTurn', investigatorId: tank },
+        { type: 'UseCardAction', investigatorId: tank, cardId: sluiceControl, action: 0 },
+        answer(SLUICE_CONTROL_DECISION, skill),
+      );
+
+      const state = stateAfter(ctx, chosen, answer(`test:${sluiceControl}`, result));
+
+      expect(chosen.pending).toMatchObject([{ skillTest: { skill, difficulty: 5 } }]);
+      expect(state.meta.resolution).toBe(resolution);
+      expect(state.cards[elokoss]?.zone.kind).toBe(resolution ? 'victoryDisplay' : 'atLocation');
+      // Her defeat no longer reaches Stop the Rite's objective, which would end in R1.
+      expect(state.act.current).toBe(stopTheRite);
+    },
+  );
+});
+
+describe('Stop the Rite', () => {
+  const nextPhase: Command = { type: 'NextPhase' };
+  const alice = investigatorId('alice');
+  const zealot = instanceId('zealot');
+  const cistern = instanceId('underground_cistern');
+  const tunnels = instanceId('overgrown_tunnels');
+  const culvert = instanceId('sewer_culvert');
+
+  it.each([
+    { zealotIs: 'unengaged', zone: atLocation(culvert) },
+    { zealotIs: 'engaged with alice', zone: engagedWith(alice) },
+  ])(
+    'moves the Zealot from Sewer Culvert one location toward Underground Cistern as the round ends, $zealotIs',
+    ({ zone }) => {
+      const { context, state: started } = newGame()
+        .withAct(instanceId('stop_the_rite'), cardStats(ctx.cards, codes.stopTheRite))
+        .withLocation(cistern, cardStats(ctx.cards, codes.undergroundCistern), { revealed: true })
+        .withLocation(tunnels, cardStats(ctx.cards, codes.overgrownTunnels), { revealed: true })
+        .withLocation(culvert, cardStats(ctx.cards, codes.sewerCulvert), { revealed: true })
+        .withConnection(cistern, tunnels)
+        .withConnection(tunnels, culvert)
+        .withInvestigator(alice, { locationId: culvert })
+        .withCard(zealot, cardStats(ctx.cards, codes.zealot), zone)
+        .withTurnOf(alice)
+        .start();
+      // Exhausted, so it makes no attack in the enemy phase; upkeep readies it before the round ends.
+      let state = stateAfter(
+        context,
+        started,
+        { type: 'ExhaustEnemy', enemyId: zealot },
+        { type: 'EndTurn', investigatorId: alice },
+      );
+      const roundBefore = state.meta.round;
+      while (state.meta.round === roundBefore) state = stateAfter(context, state, nextPhase);
+
+      expect(state.cards[zealot]?.zone).toEqual(atLocation(tunnels));
     },
   );
 });

@@ -33,6 +33,9 @@ type PendingTrigger = (state: GameState) => readonly TriggeredStep[];
  * command's complete outcome. Order: by event. The lead leaving queues a
  * `newLeadInvestigator` step like a forced effect of the departure, so a
  * forced effect of an earlier event of the same command still sees no lead.
+ * Once the scenario has ended nothing triggers any more: the rest of a chain still resolves (Sluice
+ * Control's "(→R3)" then defeats each enemy), but an objective such as "if Elokoss is defeated,
+ * (→R1)" cannot end it a second time.
  */
 export function triggeredSteps(
   ctx: EngineContext,
@@ -43,6 +46,7 @@ export function triggeredSteps(
   let state = before;
   for (const event of events) {
     const next = apply(state, event);
+    if (next.meta.ended) break;
     if (leadLeft(state, event)) pending.push(() => [{ kind: 'newLeadInvestigator' }]);
     pending.push(
       ...windowsOpenedBy(next, event, events).map(

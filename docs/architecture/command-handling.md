@@ -12,7 +12,7 @@ interface EngineContext { cards: CardDb; scenario?: ScenarioDefinition; }  // co
 Inside one call a command resolves as a queue of steps, depth first:
 
 1. the command's own events,
-2. then the forced effects its events trigger (see [Triggers and card effects](triggers-and-card-effects.md)),
+2. then the forced effects its events trigger (see [Triggers and card effects](triggers-and-card-effects.md)); once an event has ended the scenario nothing triggers any more, though the rest of the chain still resolves (`triggeredSteps`),
 3. then its continuations:
    - an agenda's reverse side before the next agenda;
    - a drawn card's revelation before its placement;

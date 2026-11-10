@@ -1,6 +1,7 @@
 import type {
   AdvanceAct,
   AdvanceAgenda,
+  BecomeActAndAgenda,
   ChangeChaosBag,
   EndScenario,
   PlaceDoom,
@@ -181,14 +182,22 @@ function currentCardChanged(deck: Deck, cardId: InstanceId | undefined): Current
   return { type: 'CurrentCardChanged', deck, ...(cardId === undefined ? {} : { cardId }) };
 }
 
-/** `BecomeActAndAgenda`: the act deck leaves the game and the current agenda becomes the act too. */
-export function handleBecomeActAndAgenda(state: GameState): (CardMoved | CurrentCardChanged)[] {
-  const agenda = currentCard(state, 'agenda');
+/**
+ * `BecomeActAndAgenda`: the act deck leaves the game and the current agenda, or with `next` the
+ * agenda after it, becomes the act too.
+ */
+export function handleBecomeActAndAgenda(
+  state: GameState,
+  cmd: BecomeActAndAgenda,
+): (CardMoved | CurrentCardChanged)[] {
+  const current = currentCard(state, 'agenda');
+  const actAndAgenda = cmd.next === true ? nextCardId(state, 'agenda', current.id) : current.id;
+  if (actAndAgenda === undefined) throw new CommandRejected({ code: 'noNextAgenda' });
   return [
     ...cardsInZone(state, { kind: 'actDeck' }).map((cardId) =>
       moveCardEvent(requireCard(state.cards, cardId), { kind: 'outOfGame' }),
     ),
-    currentCardChanged('act', agenda.id),
+    currentCardChanged('act', actAndAgenda),
   ];
 }
 

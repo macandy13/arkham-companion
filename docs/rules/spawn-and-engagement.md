@@ -22,7 +22,7 @@
   - There is no limit on enemies engaged with one investigator.
 - An exhausted enemy doesn't engage, but engages the moment it readies if it shares a location with an investigator.
 - A card effect that moves an enemy ("move it to the Hallway") needs no connection unless its text says "connecting location" (Elusive does).
-  - An engaged enemy moves only with its investigator, so a plain effect must disengage it first (Elusive disengages, then moves), but a forced instruction is followed whatever the engagement: the enemy disengages and moves.
+  - An engaged enemy otherwise moves only with its investigator ([Enemy Engagement](https://arkhamdb.com/rules#Enemy_Engagement)). A card effect that moves an enemy moves it even when engaged, and it disengages, unless its text names unengaged enemies (They're Getting Out!); Elusive disengages, then moves. Our reading: no official ruling found, only player consensus. Stop the Rite's "each Cultist enemy moves once toward Underground Cistern" moves engaged Cultists too (the engine's `forced` move).
   - At the destination it engages by the rule above.
 - A card that says an enemy "engages you" puts it in your threat area even from another location: it ends up at your location without moving, so no connection is needed and nothing that triggers on a move fires (our reading of [Enemy Engagement](https://arkhamdb.com/rules#Enemy_Engagement); a card that means a move says "moves to … and engages you"). It works on exhausted and aloof enemies too.
   - An enemy already engaged with you stays as it is; one engaged with another investigator leaves their threat area for yours ([Engage Action](https://arkhamdb.com/rules#Engage_Action)).

@@ -53,6 +53,7 @@ const REFUSAL_KINDS: Readonly<Record<RejectionCode, RefusalKind>> = {
   noCurrentCard: 'expected',
   // Setup and card data: the scenario itself is broken.
   invalidSeed: 'never',
+  noNextAgenda: 'never',
   duplicateInvestigator: 'never',
   duplicateCard: 'never',
   unknownCard: 'never',

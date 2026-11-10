@@ -6,6 +6,7 @@ The cards below search or dig through a deck, draw from a deck of their own, or 
 
 ## Attaching
 
+- Queen of Ash, act 1b: the investigator at Underground Cistern draws a set-aside Fire!, whose revelation attaches it to the nearest location without Fire!. No Fire! is in play then, so it lands on the Cistern; the engine attaches it there directly, so cards that react to drawing a treachery get no window (a shortcut, low impact).
 - Locked Door ("Attach to the location with the most clues and without a copy of Locked Door attached. If there is no such location, Locked Door gains surge") attaches to the location in play with the most clues among those without a copy, wherever the drawer is.
   - Locations with equally many go to the lead investigator ([Choices](https://arkhamdb.com/rules#Choices_and_the_Grim_Rule)), and that includes every location without a copy when none has a clue.
   - With a copy everywhere it is discarded and surges.

@@ -244,7 +244,7 @@ const COMMAND_SPECS: CommandSpecs = {
     // The reverse side resolves before the next agenda becomes current.
     continueWith: finishAdvance,
   },
-  BecomeActAndAgenda: { handle: (_ctx, state) => handleBecomeActAndAgenda(state) },
+  BecomeActAndAgenda: { handle: (_ctx, state, cmd) => handleBecomeActAndAgenda(state, cmd) },
   AdvanceAct: {
     handle: (_ctx, state, command) => handleAdvanceAct(state, command),
     continueWith: finishAdvance,

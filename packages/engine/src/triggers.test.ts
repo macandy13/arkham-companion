@@ -21,6 +21,7 @@ import {
   afterEntering,
   afterEvaded,
   becomeActAndAgenda,
+  nextAgendaBecomesActAndAgenda,
   afterTest,
   atLocation,
   attachedTo,
@@ -41,9 +42,11 @@ import {
   engageReadyEnemies,
   eachEnemy,
   forEachEnemy,
+  forEachInvestigator,
   eachInvestigator,
   engagedWith,
   duringAct,
+  defeatEnemy,
   endScenario,
   execute,
   fixed,
@@ -342,6 +345,42 @@ describe('trigger bus', () => {
       const state = stateAfter(context, merged, { type: 'PlaceDoom', amount: 3 });
 
       expect(agendaThresholdDecision(context, state)).toEqual([]);
+    });
+  });
+
+  describe('a reverse side that makes the next agenda act and agenda', () => {
+    const ritual = instanceId('ritual');
+    const brethren = instanceId('brethren');
+    /** "Special agenda 3a replaces the current act and agenda" (Queen of Ash, agenda 2b). */
+    const ritualCard = blankAgenda('ritual', fixed(3), {
+      abilities: [whenAdvanced(nextAgendaBecomesActAndAgenda())],
+    });
+    /** The ritual with the brethren after it, and both acts still to come. */
+    const ritualTable = newGame()
+      .withAgenda(ritual, ritualCard)
+      .withAgenda(brethren, blankAgenda('brethren', fixed(4), { stage: { number: 3 } }))
+      .withAct(act1, firstActCard)
+      .withAct(act2, secondActCard);
+
+    it('puts the ritual and the acts out of the game and makes the brethren act and agenda', () => {
+      const { context, state: started } = ritualTable.start();
+
+      const state = stateAfter(context, started, { type: 'AdvanceAgenda' });
+
+      expect(state.agenda.current).toBe(brethren);
+      expect(state.act.current).toBe(brethren);
+      expect(state.cards[brethren]?.faceUp).toBe(true);
+      expect(state.cards[ritual]?.zone).toEqual({ kind: 'outOfGame' });
+      expect(state.cards[act1]?.zone).toEqual({ kind: 'outOfGame' });
+      expect(state.cards[act2]?.zone).toEqual({ kind: 'outOfGame' });
+    });
+
+    it('is rejected while no agenda follows', () => {
+      const { context, state } = newGame().withAgenda(ritual, ritualCard).start();
+
+      expect(rejectionFrom(context, state, { type: 'BecomeActAndAgenda', next: true })).toEqual({
+        code: 'noNextAgenda',
+      });
     });
   });
 
@@ -2372,6 +2411,72 @@ describe('an effect repeated for each Ghoul enemy in the Hall or Parlor', () => 
     const after = stateAfter(context, state, aliceDraws, resolveRevelation('omen'));
 
     expect(after.cards[agenda1]?.tokens.doom).toBeUndefined();
+  });
+});
+
+describe('an effect repeated for each investigator', () => {
+  const bob = investigatorId('bob');
+  /** "Each investigator must test willpower (4). Each investigator who fails takes 1 horror." */
+  const testingAgenda = blankAgenda('testing_agenda', fixed(3), {
+    abilities: [
+      forEachInvestigator(whenAdvanced(skillTest('willpower', 4, { onFail: [takeHorror(1)] }))),
+    ],
+  });
+  const { context, state: started } = newGame()
+    .withAgenda(agenda1, testingAgenda)
+    .withAgenda(agenda2, secondAgendaCard)
+    .withLocation(hall, blankLocation('hall'), { revealed: true })
+    .withInvestigator(alice, { locationId: hall })
+    .withInvestigator(bob, { locationId: hall })
+    .start();
+
+  it('asks alice, then bob, to test as the agenda advances; only bob, who fails, takes horror', () => {
+    const advanced = stateAfter(context, started, { type: 'AdvanceAgenda' });
+    const aliceTested = stateAfter(context, advanced, answer('test:agenda1', 'pass'));
+
+    const state = stateAfter(context, aliceTested, answer('test:agenda1', 'fail'));
+
+    expect(advanced.pending).toMatchObject([{ decider: { investigatorId: alice } }]);
+    expect(aliceTested.pending).toMatchObject([{ decider: { investigatorId: bob } }]);
+    expect(state.investigators.map((inv) => inv.sanity.horror)).toEqual([0, 1]);
+  });
+
+  it('asks bob first while he is the lead investigator, as player order begins with the lead', () => {
+    const bobLeads = { ...started, meta: { ...started.meta, leadInvestigator: bob } };
+
+    const advanced = stateAfter(context, bobLeads, { type: 'AdvanceAgenda' });
+
+    expect(advanced.pending).toMatchObject([{ decider: { investigatorId: bob } }]);
+  });
+});
+
+describe('a chain after the scenario ended', () => {
+  const elder = instanceId('elder');
+  /**
+   * "(→R1), and the elder is defeated" on its reverse side, beside an objective "If the elder is
+   * defeated, (→R2)" (Sluice Control's success, Queen of Ash).
+   */
+  const floodingAgenda = blankAgenda('flooding', fixed(3), {
+    abilities: [
+      whenAdvanced(endScenario(resolutionId('R1')), defeatEnemy(onlyCopy(cardCode('elder')))),
+      whenEnemyDefeated(cardCode('elder'), endScenario(resolutionId('R2'))),
+    ],
+  });
+
+  it('still defeats the elder, but its objective does not end the scenario a second time', () => {
+    const { context, state: started } = newGame()
+      .withAgenda(agenda1, floodingAgenda)
+      .withLocation(hall, blankLocation('hall'), { revealed: true })
+      .withInvestigator(alice, { locationId: hall })
+      .withCard(elder, blankEnemy('elder', { keywords: [{ name: 'aloof' }] }), atLocation(hall))
+      .start();
+
+    const { state, events } = execute(context, started, { type: 'AdvanceAgenda' });
+
+    expect(events.filter((event) => event.type === 'ScenarioEnded')).toEqual([
+      { type: 'ScenarioEnded', resolution: resolutionId('R1') },
+    ]);
+    expect(state.cards[elder]?.zone).toEqual({ kind: 'encounterDiscard' });
   });
 });
 

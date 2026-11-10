@@ -777,6 +777,14 @@ describe('MoveEnemyTowards', () => {
       investigatorId: alice,
     });
   });
+
+  it('disengages an enemy engaged with alice in the hall and moves it into the cellar when the move is forced', () => {
+    const { context, state } = aliceInHall.withCard(ghoul, ghoulCard, engagedWith(alice)).start();
+
+    const after = stateAfter(context, state, { ...moveGhoulTowards(attic), forced: true });
+
+    expect(zoneOf(after, ghoul)).toEqual(atLocation(cellar));
+  });
 });
 
 describe('damage and defeat', () => {

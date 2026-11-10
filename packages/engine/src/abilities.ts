@@ -501,6 +501,12 @@ export interface Ability {
    * condition; not at all when none does.
    */
   perEnemy?: Extract<RelativeCard, { ref: 'eachEnemy' }>;
+  /**
+   * "Each investigator must test [willpower] (4)": the effects resolve once for each active
+   * investigator, in player order (the lead first), each time naming that investigator as the window's
+   * (`windowInvestigator`), so `skillTest` and `you()` refer to them.
+   */
+  perInvestigator?: true;
   effects: readonly AbilityEffect[];
 }
 
@@ -710,9 +716,27 @@ export function abilitySteps(
         ability.condition === undefined || conditionHolds(ctx, state, ability.condition, opened),
     )
     .flatMap((ability) =>
-      range(timesFor(ctx, state, ability, opened)).flatMap(() => ability.effects),
+      openedFor(state, ability, opened).flatMap((each) =>
+        range(timesFor(ctx, state, ability, each)).flatMap(() =>
+          ability.effects.map((effect) => ({ effect, opened: each })),
+        ),
+      ),
     )
-    .map((effect) => ({ kind: 'ability', effect, opened, origin: effect.type }));
+    .map(({ effect, opened: each }) => ({
+      kind: 'ability',
+      effect,
+      opened: each,
+      origin: effect.type,
+    }));
+}
+
+/**
+ * The windows `ability` resolves in: `opened` itself, or with `perInvestigator` one copy naming
+ * each active investigator.
+ */
+function openedFor(state: GameState, ability: Ability, opened: OpenedWindow): OpenedWindow[] {
+  if (!ability.perInvestigator) return [opened];
+  return playerOrder(state).map(({ id }) => ({ ...opened, investigatorId: id }));
 }
 
 /** How often `ability`'s effects resolve: once, or once per enemy its `perEnemy` names. */
@@ -1819,9 +1843,20 @@ export function locationWith(filter: LocationFilter = {}): RelativeCard {
 /**
  * "[Enemy] moves 1 location towards [location]" (`MoveEnemyTowards`), written
  * `moveEnemyTowards(eachEnemy({ trait: trait('Ghoul'), unengaged: true }), onlyCopy(codes.parlor))`.
+ * With `forced`, an engaged enemy disengages and moves too ("Forced – When the round ends: each
+ * [[Cultist]] enemy moves once toward Underground Cistern").
  */
-export function moveEnemyTowards(enemy: RelativeCard, location: RelativeCard): AbilityEffect {
-  return { type: 'MoveEnemyTowards', enemyId: enemy, towards: location };
+export function moveEnemyTowards(
+  enemy: RelativeCard,
+  location: RelativeCard,
+  options: { forced?: true } = {},
+): AbilityEffect {
+  return {
+    type: 'MoveEnemyTowards',
+    enemyId: enemy,
+    towards: location,
+    ...(options.forced === true ? { forced: true } : {}),
+  };
 }
 
 /**
@@ -2138,6 +2173,14 @@ export function becomeActAndAgenda(): AbilityEffect {
   return { type: 'BecomeActAndAgenda' };
 }
 
+/**
+ * "The next agenda replaces the current act and agenda", on an agenda's reverse side (Queen of
+ * Ash, agenda 2): the agenda that follows becomes the act as well.
+ */
+export function nextAgendaBecomesActAndAgenda(): AbilityEffect {
+  return { type: 'BecomeActAndAgenda', next: true };
+}
+
 /** "Shuffle the encounter discard pile into the encounter deck". */
 export function shuffleEncounterDiscard(): AbilityEffect {
   return { type: 'ShuffleEncounterDiscard' };
@@ -2215,6 +2258,15 @@ export function ifThereAre(of: RepeatedRef, range: StatRange, ability: Ability):
  */
 export function forEachEnemy(filter: EachEnemyFilter, ability: Ability): Ability {
   return { ...ability, perEnemy: eachEnemy(filter) };
+}
+
+/**
+ * "Each investigator must test [willpower] (4). Each investigator who fails takes 1 direct
+ * horror": `ability`'s effects resolve once for each active investigator, naming them, written
+ * `forEachInvestigator(whenAdvanced(skillTest('willpower', 4, { onFail: [takeHorror(1)] })))`.
+ */
+export function forEachInvestigator(ability: Ability): Ability {
+  return { ...ability, perInvestigator: true };
 }
 
 /**
