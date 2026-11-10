@@ -118,8 +118,7 @@ export const test = base.extend<
     async ({ context, baseURL }, use) => {
       const localOrigin = new URL(baseURL ?? 'http://localhost').origin;
       const unexpected: string[] = [];
-      // On the context rather than the page, so it also sees what the service worker fetches
-      // (it serves card pictures cache-first), which a page route never does.
+      // On the context rather than the page, so it covers every page a test opens.
       await context.route(
         (url) => url.origin !== localOrigin && url.protocol.startsWith('http'),
         (route) => {

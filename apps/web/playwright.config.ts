@@ -61,6 +61,10 @@ export default defineConfig<PictureOptions>({
     baseURL: 'http://localhost:4173',
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
+    // The app's service worker takes over the page in the middle of a test (autoUpdate) and
+    // then fetches the card pictures itself; on a busy runner some of those loads failed and
+    // their tiles kept the pattern, so the same flow ended in different pictures.
+    serviceWorkers: 'block',
   },
   projects: [
     {
