@@ -14,7 +14,9 @@ const tablet = {
 const phone = {
   ...devices['Desktop Chrome'],
   viewport: { width: 390, height: 844 },
-  deviceScaleFactor: 2,
+  // 1×, as the tablet: the committed goldens (e2e/__screenshots__) would take four times the
+  // bytes at 2×, and a review sees the same layout.
+  deviceScaleFactor: 1,
   isMobile: true,
   hasTouch: true,
 };
@@ -39,15 +41,19 @@ const executablePath = process.env.PW_CHROMIUM_PATH;
 /**
  * E2E tests run against the production build (`vite preview`), the same bundle users get, built
  * in mode `e2e` only to add a test campaign the app plays no real one for (`findCampaign`).
- * `tablet-landscape` runs every spec (`pnpm e2e`). For the PR description, `flow-picture`
- * photographs every flow (the specs outside `e2e/shots/` but the accessibility checks) as it ends, and `screenshot` and `screenshot-phone` every spec in
- * `e2e/shots/` on the tablet and on a phone (`pnpm e2e:pictures`); `screencast` re-runs the flows
- * whose end state the PR changes, slowed down and recorded (`pnpm e2e:screencast`, see
- * docs/automation.md).
+ * `pnpm e2e` runs every spec once: the accessibility checks in `accessibility`, every flow (the
+ * specs outside `e2e/shots/`) in `flow-picture` and every spec in `e2e/shots/` in `screenshot`
+ * and `screenshot-phone`, the last three photographing each test as it ends and, with
+ * `GOLDENS=1` (CI), comparing it with its committed golden. The preview also runs those three
+ * (`pnpm e2e:pictures`); `screencast` re-runs the flows whose end state the PR changes, slowed
+ * down and recorded (`pnpm e2e:screencast`, see docs/automation.md).
  */
 export default defineConfig<PictureOptions>({
   testDir: './e2e',
   testMatch: '**/*.spec.ts',
+  // One golden per test and project, named after the test, so a PR's changed goldens name the
+  // screens it changed (e2e/fixtures/test.ts compares them).
+  snapshotPathTemplate: '{testDir}/__screenshots__/{projectName}/{testFilePath}/{testName}{ext}',
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI ? [['github'], ['html', { open: 'never' }]] : 'list',
@@ -58,7 +64,8 @@ export default defineConfig<PictureOptions>({
   },
   projects: [
     {
-      name: 'tablet-landscape',
+      name: 'accessibility',
+      testMatch: /accessibility\.spec\.ts$/,
       use: { ...tablet, launchOptions: { executablePath } },
     },
     {

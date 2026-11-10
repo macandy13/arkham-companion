@@ -1,8 +1,8 @@
 name: E2E setup
 description: >-
-  Installs the packages and Chromium's headless shell, and restores the complete set of card
-  pictures the E2E shots show, for the checkout in `dir` (the PR, or its base in a second
-  checkout), for the picture runs that preview.yml compares.
+  Installs the packages and Chromium's headless shell for the checkout in `dir` (the PR, or its
+  base in a second checkout), for the picture runs that preview.yml compares and for
+  update-screenshots.yml.
 inputs:
   dir:
     description: The checkout to set up, relative to the workspace.

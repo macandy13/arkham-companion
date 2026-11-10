@@ -1,5 +1,6 @@
 import { expect, test as base } from '@playwright/test';
 import type { Page } from '@playwright/test';
+import { readFile } from 'node:fs/promises';
 import cards from './cards.json' with { type: 'json' };
 import packs from './packs.json' with { type: 'json' };
 import { mockCardArt } from './mock_card_art';
@@ -19,12 +20,19 @@ const catalogFixtures = new Map<string, unknown>([
 const CARD_PICTURES = /^\/bundles\/cards\//;
 
 /**
- * The option `playwright.config.ts` sets for the projects that photograph each test as it ends
- * for the PR preview (`scripts/screencast/cli.ts` compares the picture with the base's).
+ * The option `playwright.config.ts` sets for the projects that photograph each test as it ends:
+ * for the PR preview (`scripts/screencast/cli.ts` compares the picture with the base's) and, with
+ * `GOLDENS=1`, against the test's committed golden in `e2e/__screenshots__/`.
  */
 export interface PictureOptions {
   readonly endPicture: boolean;
 }
+
+/**
+ * How many pixels of a picture may differ from its golden: antialiasing at edges varies by a few
+ * pixels between runs on the same runner image (the preview's base comparison allows the same).
+ */
+const GOLDEN_NOISE = 20;
 
 /**
  * The option a test sets (`test.use({ realPlaymats: true })`) to show the tables' own playmats.
@@ -98,6 +106,11 @@ export const test = base.extend<
       const path = testInfo.outputPath('end.png');
       await page.screenshot({ path, animations: 'disabled' });
       await testInfo.attach('screenshot', { path, contentType: 'image/png' });
+      // The settled picture itself, not `toHaveScreenshot`, which would photograph the screen
+      // twice more to see it stand still. Off by default because goldens are made on CI's runner
+      // image (update-screenshots.yml): another machine renders text a few pixels differently.
+      if (process.env.GOLDENS === '1')
+        expect(await readFile(path)).toMatchSnapshot('end.png', { maxDiffPixels: GOLDEN_NOISE });
     },
     { auto: true },
   ],
