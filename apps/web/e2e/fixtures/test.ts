@@ -151,8 +151,8 @@ export { expect };
 export const isCardList = (url: URL) => url.pathname === '/api/public/cards/';
 
 /**
- * Waits until the page has fetched what it shows (card pictures, the fonts its text uses) and
- * stopped scrolling. A click scrolls its target into view, and text that changes font afterwards
+ * Waits until the page has fetched and decoded what it shows (card pictures, the fonts its text
+ * uses), stopped changing and stopped scrolling. A click scrolls its target into view, and text that changes font afterwards
  * moves the page under it, so the preview's pictures (scripts/screencast/cli.ts) would differ
  * from run to run; going offline before the pictures arrive leaves them out. Not
  * `waitForLoadState('networkidle')`: it fires once per document, and the app changes screens

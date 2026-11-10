@@ -42,7 +42,8 @@ jobs:
       contents: read
     steps:
       # On a PR, the merge with its base that CI's E2E job tests (GitHub's default ref for a PR
-      # event), so a change merged to main since the branch started is in the goldens too.
+      # event), so a change merged to main since the branch started is in the goldens too. A PR
+      # with conflicts has no merge ref, so this checkout fails: merge main into it first.
       - uses: actions/checkout@v7
         with:
           ref: ${{ github.event_name == 'pull_request' && github.ref || env.BRANCH }}
@@ -70,12 +71,14 @@ jobs:
           REPO_URL: https://x-access-token:${{ steps.app.outputs.token }}@github.com/${{ github.repository }}.git
         # The goldens go onto the branch itself, not onto the merge they were taken from.
         run: |
-          goldens=$(mktemp -d)
-          cp -r apps/web/e2e/__screenshots__/. "$goldens"
+          # Only the goldens this run rewrote or added, so main's own goldens never show up as
+          # this PR's changes.
+          goldens=$(mktemp)
+          git ls-files --modified --others -- apps/web/e2e/__screenshots__ > "$goldens.list"
+          tar -cf "$goldens" -T "$goldens.list"
           git fetch --depth=1 "$REPO_URL" "$BRANCH"
           git checkout --force -B golden_update FETCH_HEAD
-          mkdir -p apps/web/e2e/__screenshots__
-          cp -r "$goldens"/. apps/web/e2e/__screenshots__
+          tar -xf "$goldens"
           git add apps/web/e2e/__screenshots__
           if git diff --cached --quiet; then
             echo "No golden changed." >> "$GITHUB_STEP_SUMMARY"
