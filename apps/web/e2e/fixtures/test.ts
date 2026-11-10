@@ -176,6 +176,25 @@ export async function waitUntilSettled(page: Page): Promise<void> {
         return picture.decode().catch(() => undefined);
       }),
     );
+    // A face shows its art only once a probe of the loaded picture reports its shape, a state
+    // change that can come well after the load on a busy runner; so the page must also have
+    // stopped changing for a moment (at most a few seconds, as a failed picture never shows).
+    await new Promise<void>((resolve) => {
+      let quiet: ReturnType<typeof setTimeout> | undefined;
+      const done = () => {
+        observer.disconnect();
+        clearTimeout(quiet);
+        clearTimeout(limit);
+        resolve();
+      };
+      const observer = new MutationObserver(() => {
+        clearTimeout(quiet);
+        quiet = setTimeout(done, 300);
+      });
+      observer.observe(document.body, { subtree: true, childList: true, attributes: true });
+      quiet = setTimeout(done, 300);
+      const limit = setTimeout(done, 5000);
+    });
     await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
     await document.fonts.ready;
     // A screen that scrolls an element into view after a layout change can still be on its way.
