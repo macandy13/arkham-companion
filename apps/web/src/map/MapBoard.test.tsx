@@ -1450,9 +1450,9 @@ describe('MapBoard', () => {
       },
       {
         location: 'hallway',
-        buttons: ['Close', 'Move here · 1 action', 'Move here, no action'],
+        buttons: ['Close', 'Move here · 1 action', 'Move here, no action', 'Reveal'],
       },
-      { location: 'attic', buttons: ['Close'] },
+      { location: 'attic', buttons: ['Close', 'Reveal'] },
     ])('offers alder in the study at the $location: $buttons', ({ location, buttons }) => {
       const table = aldersTurn();
       render(
@@ -1462,6 +1462,18 @@ describe('MapBoard', () => {
       tapOnce(tile(location));
 
       expect(offered(location)).toEqual(buttons);
+    });
+
+    it('reveals the unrevealed hallway from its details without adjusting the board', async () => {
+      const table = PlayTable.start(house);
+      render(
+        <MapBoard board={table.board} actions={actionsOn(table)} busy={false} adjusting={false} />,
+      );
+
+      tapOnce(tile('hallway'));
+      tap('Reveal');
+
+      await expect.poll(() => table.board.location(hallway).revealed).toBe(true);
     });
 
     it("lists the hallway's moves in one Actions group, the one that costs an action first", () => {
@@ -1571,7 +1583,8 @@ describe('MapBoard', () => {
       expect(investigate).toHaveProperty('disabled', true);
       tap('Close');
       tapOnce(tile('hallway'));
-      expect(offered('hallway')).toEqual(['Close']);
+      // Only the correction for the unrevealed hallway, no move past the barrier.
+      expect(offered('hallway')).toEqual(['Close', 'Reveal']);
     });
 
     describe("the parlor's Resign", () => {

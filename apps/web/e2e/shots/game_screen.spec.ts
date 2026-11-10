@@ -396,6 +396,23 @@ test('the agenda’s doom bubble, opened by a double tap on the agenda', async (
   ).toBeEnabled();
 });
 
+test('Roland Banks’ willpower boost bubble, opened by a double tap on the skill', async ({
+  page,
+}) => {
+  await resumeImportedGame(page, 'Roland Banks hurt', rolandHurtExport('Roland Banks hurt'));
+
+  await page
+    .getByRole('region', { name: 'Roland Banks' })
+    .getByRole('button', { name: /^Willpower/ })
+    .dblclick();
+
+  await expect(
+    page
+      .getByRole('complementary', { name: 'Roland Banks · Willpower boost' })
+      .getByRole('button', { name: 'Raise the Willpower boost' }),
+  ).toBeEnabled();
+});
+
 test('Roland Banks’ willpower test with the group’s own chaos bag, no draw button', async ({
   page,
 }) => {

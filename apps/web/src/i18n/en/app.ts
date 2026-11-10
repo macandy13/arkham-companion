@@ -605,6 +605,7 @@ export const appTexts = {
     skillValue: '{{skill}} {{value}}',
     boostedSkillValue: '{{skill}} {{value}}, boosted {{boost}}',
     skillBoosts: 'Skill boosts',
+    skillBoost: '{{skill}} boost',
     lowerBoost: 'Lower the {{skill}} boost',
     raiseBoost: 'Raise the {{skill}} boost',
     doom: 'Doom',
