@@ -1,4 +1,4 @@
-import { assertNever } from '@arkham/util';
+import { assertNever, drawWithoutReplacement } from '@arkham/util';
 import {
   findCurrentScenarioId,
   findInvestigator,
@@ -192,10 +192,36 @@ export interface OneAtRandomStep {
   options: readonly (readonly SetupStep[])[];
 }
 
-/** Adds chaos tokens to the scenario's chaos bag ("add 1 elder thing token to the chaos bag"). */
+/**
+ * Adds chaos tokens to the scenario's chaos bag ("add 1 elder thing token to the chaos bag"), the
+ * same for every difficulty or one list each ("on Easy, add an elder thing token; on Standard, an
+ * elder thing and a tablet token").
+ */
 export interface AddChaosTokensStep {
   kind: 'addChaosTokens';
-  tokens: readonly ChaosToken[];
+  tokens: readonly ChaosToken[] | Readonly<Record<Difficulty, readonly ChaosToken[]>>;
+}
+
+/** Each investigator begins the game with `clues` clues from the token pool. */
+export interface InvestigatorsStartWithStep {
+  kind: 'investigatorsStartWith';
+  clues: TokenAmount;
+}
+
+/**
+ * Spawns `count` of `codes`, one entry per copy, picked at random, each at a different one of the
+ * locations with codes `at`, also picked at random ("shuffle them together and put 1 per
+ * investigator enemies from that set into play, each at a different Sewer Tunnels location").
+ * Setup turns it into `SpawnStep`s with the seed, so the spawned copies stay out of the encounter
+ * deck, and a spawned copy of a code in `tokens` gets those tokens, as `SpawnStep.tokens` (a
+ * Zealot's doom as it enters play). There are at least `count` codes and locations.
+ */
+export interface SpawnAtRandomStep {
+  kind: 'spawnAtRandom';
+  codes: readonly CardCode[];
+  count: TokenAmount;
+  at: readonly CardCode[];
+  tokens?: Readonly<Partial<Record<CardCode, Partial<Record<TokenKind, number>>>>>;
 }
 
 /** Steps that apply only with at least `atLeast` investigators ("if there are 3 or more"). */
@@ -211,11 +237,12 @@ export interface WhenPlayersStep {
  * (`placeTokens`, `spawn.at`, `moveInvestigators`) needs exactly one instance
  * of that code created by an earlier step.
  */
-export type SetupStep = PlacingStep | WhenStoryStep | WhenPlayersStep | OneAtRandomStep;
+export type SetupStep =
+  PlacingStep | WhenStoryStep | WhenPlayersStep | OneAtRandomStep | SpawnAtRandomStep;
 
 /**
- * A setup step that changes the table; `WhenStoryStep`s, `WhenPlayersStep`s and
- * `OneAtRandomStep`s resolve to these, and locations to one of their versions, before any is
+ * A setup step that changes the table; `WhenStoryStep`s, `WhenPlayersStep`s,
+ * `OneAtRandomStep`s and `SpawnAtRandomStep`s resolve to these, and locations to one of their versions, before any is
  * applied.
  */
 type PlacingStep =
@@ -229,6 +256,7 @@ type PlacingStep =
   | PlaceTokensStep
   | SpawnStep
   | MoveInvestigatorsStep
+  | InvestigatorsStartWithStep
   | AddChaosTokensStep;
 
 /** Mixed into the setup seed for the location picks (`withPickedLocations`). */
@@ -291,12 +319,15 @@ interface SetupDraft {
   readonly investigatorLocation?: InstanceId;
   /** Tokens `addChaosTokens` steps add to the bag. */
   readonly chaosTokens: readonly ChaosToken[];
+  /** Clues each investigator begins with (`investigatorsStartWith`). */
+  readonly investigatorClues: number;
 }
 
 /** Read-only inputs every step needs. */
 interface SetupEnv {
   readonly ctx: EngineContext;
   readonly playerCount: number;
+  readonly difficulty: Difficulty;
   /** Copies of each code that steps other than `buildEncounterDeck` put on the table. */
   readonly usedCopies: ReadonlyMap<CardCode, number>;
   /** A random whole number below `bound`, from the setup's stream for `ShuffleStep`s. */
@@ -330,9 +361,11 @@ export function compileSetup(ctx: ScenarioContext, options: SetupOptions): Start
     }),
     options.seed,
   );
+  const difficulty = log ? log.difficulty : options.difficulty;
   const env: SetupEnv = {
     ctx,
     playerCount,
+    difficulty,
     usedCopies: usedCopies(def, steps),
     pick: seededPicker(options.seed ^ SHUFFLE_STREAM),
   };
@@ -343,8 +376,8 @@ export function compileSetup(ctx: ScenarioContext, options: SetupOptions): Start
       ...deckCards(def.actDeck, { kind: 'actDeck' }),
     ],
     chaosTokens: [],
+    investigatorClues: 0,
   };
-  const difficulty = log ? log.difficulty : options.difficulty;
   const draft = steps.reduce((state, step) => applyStep(state, step, env), initial);
   const location = draft.investigatorLocation;
   return {
@@ -354,6 +387,7 @@ export function compileSetup(ctx: ScenarioContext, options: SetupOptions): Start
     seed: options.seed,
     investigators: options.investigators.map((seat, index) => ({
       ...withTrauma(startingInvestigator(ctx, seat, index), log),
+      clues: draft.investigatorClues,
       ...(location === undefined ? {} : { locationId: location }),
     })),
     maps: draft.maps,
@@ -482,6 +516,8 @@ export function storyReadsOfSetup(
       case 'placeTokens':
       case 'spawn':
       case 'moveInvestigators':
+      case 'spawnAtRandom':
+      case 'investigatorsStartWith':
       case 'addChaosTokens':
         return [];
       default:
@@ -539,6 +575,8 @@ function placingSteps(steps: readonly SetupStep[], picks: StepPicks): readonly P
         return playerCount >= step.atLeast ? placingSteps(step.then, picks) : [];
       case 'oneAtRandom':
         return placingSteps(step.options[picks.pick(step.options.length)] ?? [], picks);
+      case 'spawnAtRandom':
+        return randomSpawns(step, picks);
       case 'whenStory': {
         const holds = storyAnswer(story, step.condition);
         return placingSteps(holds ? step.then : (step.otherwise ?? []), picks);
@@ -546,6 +584,26 @@ function placingSteps(steps: readonly SetupStep[], picks: StepPicks): readonly P
       default:
         return [step];
     }
+  });
+}
+
+/** One `SpawnStep` for each enemy a `SpawnAtRandomStep` picks, at the location picked for it. */
+function randomSpawns(step: SpawnAtRandomStep, picks: StepPicks): readonly SpawnStep[] {
+  const count = resolveAmount(step.count, picks.playerCount);
+  if (count > step.codes.length || count > step.at.length)
+    throw new CommandRejected({
+      code: 'setupSpawnMismatch',
+      count,
+      cards: step.codes.length,
+      locations: step.at.length,
+    });
+  const codes = drawWithoutReplacement(step.codes, count, picks.pick).drawn;
+  const locations = drawWithoutReplacement(step.at, count, picks.pick).drawn;
+  return codes.flatMap((code, index) => {
+    const at = locations[index];
+    const tokens = step.tokens?.[code];
+    // `at` is never undefined after the count check; the type only can't tell.
+    return at === undefined ? [] : [{ kind: 'spawn', code, at, ...(tokens ? { tokens } : {}) }];
   });
 }
 
@@ -575,12 +633,9 @@ function withPickedLocations(steps: readonly PlacingStep[], seed: number): reado
 function withRandomLocations(step: AddMapStep, pick: (bound: number) => number): AddMapStep {
   const { atRandom, ...map } = step;
   if (!atRandom) return step;
-  const remaining = [...atRandom.codes];
-  const placed: MapLocation[] = atRandom.cells.flatMap((at) => {
-    const [code] = remaining.splice(pick(remaining.length), 1);
-    return code === undefined ? [] : [{ code, at }];
-  });
-  const leftOut = new Set(remaining);
+  const { drawn, left } = drawWithoutReplacement(atRandom.codes, atRandom.cells.length, pick);
+  const placed: MapLocation[] = drawn.map((code, index) => ({ code, at: atRandom.cells[index]! }));
+  const leftOut = new Set(left);
   return {
     ...map,
     locations: [...step.locations, ...placed],
@@ -620,6 +675,7 @@ function renamed(step: PlacingStep, picked: (code: CardCode) => CardCode): Placi
     case 'shuffleIntoEncounterDeck':
     case 'scenarioDeck':
     case 'shuffle':
+    case 'investigatorsStartWith':
     case 'addChaosTokens':
       return step;
   }
@@ -663,9 +719,31 @@ function applyStep(draft: SetupDraft, step: PlacingStep, env: SetupEnv): SetupDr
       );
     case 'moveInvestigators':
       return moveInvestigators(draft, targetId(draft.cards, step.to));
+    case 'investigatorsStartWith':
+      return {
+        ...draft,
+        investigatorClues: draft.investigatorClues + resolveAmount(step.clues, env.playerCount),
+      };
     case 'addChaosTokens':
-      return { ...draft, chaosTokens: [...draft.chaosTokens, ...step.tokens] };
+      return {
+        ...draft,
+        chaosTokens: [...draft.chaosTokens, ...chaosTokensAdded(step, env.difficulty)],
+      };
   }
+}
+
+/** The tokens an `AddChaosTokensStep` adds on `difficulty`. */
+export function chaosTokensAdded(
+  step: AddChaosTokensStep,
+  difficulty: Difficulty,
+): readonly ChaosToken[] {
+  return isTokenList(step.tokens) ? step.tokens : step.tokens[difficulty];
+}
+
+/** Whether an `AddChaosTokensStep` adds the same tokens on every difficulty. */
+function isTokenList(tokens: AddChaosTokensStep['tokens']): tokens is readonly ChaosToken[] {
+  // Array.isArray doesn't narrow a readonly array out of a union.
+  return Array.isArray(tokens);
 }
 
 /** The draft with the step's map, its locations and its connections. */
@@ -742,9 +820,9 @@ function dealtBeneath(
       cards: step.codes.length,
       locations: step.beneath.length,
     });
-  const remaining = [...step.codes];
-  return step.beneath.reduce((state, location) => {
-    const [code] = remaining.splice(pick(remaining.length), 1);
+  const { drawn } = drawWithoutReplacement(step.codes, step.codes.length, pick);
+  return step.beneath.reduce((state, location, index) => {
+    const code = drawn[index];
     // Never undefined after the length check; the type only can't tell.
     return code === undefined
       ? state

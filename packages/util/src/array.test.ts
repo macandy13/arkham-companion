@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  drawWithoutReplacement,
   duplicates,
   firstDifference,
   matchingFirst,
@@ -173,4 +174,21 @@ describe('rotateTo', () => {
   ])('turns a b c d to start at index $index', ({ index, rotated }) => {
     expect(rotateTo(['a', 'b', 'c', 'd'], index)).toEqual(rotated);
   });
+});
+
+describe('drawWithoutReplacement', () => {
+  const alwaysLast = (left: number) => left - 1;
+  const alwaysFirst = () => 0;
+
+  it.each([
+    { pick: 'the first', picker: alwaysFirst, count: 2, drawn: ['a', 'b'], left: ['c', 'd'] },
+    { pick: 'the last', picker: alwaysLast, count: 2, drawn: ['d', 'c'], left: ['a', 'b'] },
+    { pick: 'the first', picker: alwaysFirst, count: 6, drawn: ['a', 'b', 'c', 'd'], left: [] },
+    { pick: 'the first', picker: alwaysFirst, count: 0, drawn: [], left: ['a', 'b', 'c', 'd'] },
+  ])(
+    'draws $drawn from a b c d, $count times picking $pick left, leaving $left',
+    ({ picker, count, drawn, left }) => {
+      expect(drawWithoutReplacement(['a', 'b', 'c', 'd'], count, picker)).toEqual({ drawn, left });
+    },
+  );
 });

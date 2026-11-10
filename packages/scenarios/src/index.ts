@@ -75,3 +75,4 @@ export {
   queenOfAshCardDefs,
   queenOfAshCards,
 } from './queen_of_ash/cards';
+export { SEWERS, queenOfAsh } from './queen_of_ash/scenario';
