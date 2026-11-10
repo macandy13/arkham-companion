@@ -167,6 +167,17 @@ export async function waitUntilSettled(page: Page): Promise<void> {
       await new Promise((resolve) => setTimeout(resolve, 300));
     }
     await Promise.all([...document.images].map((image) => image.decode().catch(() => undefined)));
+    // Card art is an SVG <image>, which `document.images` leaves out and which can paint a frame
+    // after it loads; on a busy runner a tile was photographed without it. Decoding the same
+    // address puts it in the image cache, and two frames let the SVG paint it.
+    await Promise.all(
+      [...document.querySelectorAll('image')].map((image) => {
+        const picture = new Image();
+        picture.src = new URL(image.href.baseVal, document.baseURI).href;
+        return picture.decode().catch(() => undefined);
+      }),
+    );
+    await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
     await document.fonts.ready;
     // A screen that scrolls an element into view after a layout change can still be on its way.
     const scrolled = () =>
