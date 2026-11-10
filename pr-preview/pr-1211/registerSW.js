@@ -1,0 +1,1 @@
+if('serviceWorker' in navigator) {window.addEventListener('load', () => {navigator.serviceWorker.register('/arkham-companion/pr-preview/pr-1211/sw.js', { scope: '/arkham-companion/pr-preview/pr-1211/' })})}
