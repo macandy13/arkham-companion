@@ -74,8 +74,9 @@ jobs:
           # Only the goldens this run rewrote or added, so main's own goldens never show up as
           # this PR's changes.
           goldens=$(mktemp)
-          git ls-files --modified --others -- apps/web/e2e/__screenshots__ > "$goldens.list"
-          tar -cf "$goldens" -T "$goldens.list"
+          # NUL-separated: a plain list quotes names with non-ASCII letters, which tar can't find.
+          git ls-files -z --modified --others -- apps/web/e2e/__screenshots__ > "$goldens.list"
+          tar -cf "$goldens" --null -T "$goldens.list"
           git fetch --depth=1 "$REPO_URL" "$BRANCH"
           git checkout --force -B golden_update FETCH_HEAD
           tar -xf "$goldens"
