@@ -21,32 +21,6 @@ runs:
     - shell: bash
       working-directory: ${{ inputs.dir }}
       run: pnpm install --frozen-lockfile
-    # The card pictures the shots show: exactly the complete set ci.yml saved on main once every
-    # picture had downloaded (apps/web/e2e/fixtures/card_pictures.ts), and nothing is downloaded
-    # here (CARD_PICTURES_OFFLINE). The base and the PR are compared picture by picture, so both
-    # must show the same art; ArkhamDB stops answering a runner after a few dozen pictures, so
-    # pictures downloaded per job differed from job to job and made unchanged pictures differ.
-    # Without a complete set, every job shows the cards' patterns alike. Always at the
-    # workspace's own apps/web path, whatever `dir` is (a cache is found only under the path it
-    # was saved with); a checkout in `dir` links to it.
-    - uses: actions/cache/restore@v6
-      with:
-        path: apps/web/e2e/.card_pictures
-        key: card-pictures-complete-${{ hashFiles(format('{0}/packages/scenarios/src/the_gathering/cards.ts', inputs.dir), format('{0}/packages/scenarios/src/the_midnight_masks/cards.ts', inputs.dir), format('{0}/packages/scenarios/src/the_devourer_below/cards.ts', inputs.dir), format('{0}/packages/scenarios/src/card_builders.ts', inputs.dir), format('{0}/apps/web/e2e/fixtures/card_pictures.ts', inputs.dir), format('{0}/apps/web/src/catalog/campaignKeyArt.ts', inputs.dir)) }}
-        # A PR that changes which pictures the tests name has no set of its own yet and restores
-        # the newest complete one. Its base restores its own key when one exists, so the two
-        # sides can differ in exactly the pictures the PR adds or removes, which is a real change.
-        # On a push to main that changes the card lists, main-pictures can run before ci.yml has
-        # saved the new set and photograph main with the older one; the next push to main fixes
-        # that entry.
-        restore-keys: card-pictures-complete-
-    - shell: bash
-      env:
-        DIR: ${{ inputs.dir }}
-      run: |
-        mkdir -p apps/web/e2e/.card_pictures
-        [ "$DIR" = . ] || ln -sfn "$GITHUB_WORKSPACE/apps/web/e2e/.card_pictures" "$DIR/apps/web/e2e/.card_pictures"
-        echo "CARD_PICTURES_OFFLINE=1" >> "$GITHUB_ENV"
     # Headless runs only need Chromium's headless shell, cached per Playwright version. No
     # `--with-deps`: the runner image already has the libraries it needs, and apt only added
     # fonts the app doesn't use (it bundles its own) from Ubuntu's mirror, which can drop to

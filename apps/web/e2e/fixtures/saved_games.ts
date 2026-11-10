@@ -29,13 +29,13 @@ import {
   theMidnightMasksCards,
 } from '@arkham/scenarios';
 import { serialiseGameExport } from '../../src/storage/gameExport';
-import { ROLAND_PICTURE } from './card_pictures';
+import { ROLAND_PICTURE } from './mock_card_art';
 import { waitUntilSettled } from './test';
 
 /**
  * Roland Banks with his printed stats, entered by hand: the exported game reads him from its log,
- * never from card data. His picture is the real scan (`ROLAND_PICTURE`), so the shots show the
- * investigator card's art crop.
+ * never from card data. His picture (`ROLAND_PICTURE`) is answered with a mock portrait, so the
+ * shots show the investigator card's art crop.
  */
 const roland: InvestigatorCard = {
   code: investigatorCode('01001'),

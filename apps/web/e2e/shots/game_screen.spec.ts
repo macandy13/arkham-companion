@@ -101,28 +101,39 @@ test('the Hallway’s details, its card with Roland Banks on it, on Roland Banks
   await expect(details.getByRole('button', { name: 'Investigate · 1 action' })).toBeVisible();
 });
 
-test('the house map on the parchment table', async ({ page }) => {
-  await page.goto('/#/settings');
-  await page.getByRole('radio', { name: 'Parchment' }).check();
-  await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
+test.describe('each table with its own playmat', () => {
+  test.use({ realPlaymats: true });
 
-  await expect(page.getByRole('region', { name: 'Roland Banks' })).toBeVisible();
-  await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
-});
-
-for (const { skin, code } of [
-  { skin: 'The Stars Are Right', code: 'stars' },
-  { skin: 'Sunken R’lyeh', code: 'rlyeh' },
-]) {
-  test(`the house map on the ${skin} table`, async ({ page }) => {
-    await page.goto('/#/settings');
-    await page.getByRole('radio', { name: skin }).check();
+  test('the house map on the Night and brass table', async ({ page }) => {
     await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
 
     await expect(page.getByRole('region', { name: 'Roland Banks' })).toBeVisible();
-    await expect(page.locator('html')).toHaveAttribute('data-skin', code);
+    await expect(page.locator('html')).toHaveAttribute('data-skin', 'nightAndBrass');
   });
-}
+
+  test('the house map on the parchment table', async ({ page }) => {
+    await page.goto('/#/settings');
+    await page.getByRole('radio', { name: 'Parchment' }).check();
+    await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
+
+    await expect(page.getByRole('region', { name: 'Roland Banks' })).toBeVisible();
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
+  });
+
+  for (const { skin, code } of [
+    { skin: 'The Stars Are Right', code: 'stars' },
+    { skin: 'Sunken R’lyeh', code: 'rlyeh' },
+  ]) {
+    test(`the house map on the ${skin} table`, async ({ page }) => {
+      await page.goto('/#/settings');
+      await page.getByRole('radio', { name: skin }).check();
+      await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
+
+      await expect(page.getByRole('region', { name: 'Roland Banks' })).toBeVisible();
+      await expect(page.locator('html')).toHaveAttribute('data-skin', code);
+    });
+  }
+});
 
 test('the token pool in the cardboard token set', async ({ page, isMobile }) => {
   test.skip(isMobile, 'a phone has no room for the token pool (game.css)');

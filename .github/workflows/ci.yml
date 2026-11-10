@@ -48,17 +48,6 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      # The card pictures the E2E shots show, downloaded by Playwright's global setup
-      # (apps/web/e2e/fixtures/card_pictures.ts) and kept here, never in the repo. ArkhamDB stops
-      # answering a runner after a few dozen pictures, so each run saves what it has under its own
-      # key and the next run restores the newest and fetches only what is still missing.
-      - uses: actions/cache@v6
-        with:
-          path: apps/web/e2e/.card_pictures
-          key: card-pictures-${{ hashFiles('packages/scenarios/src/the_gathering/cards.ts', 'packages/scenarios/src/the_midnight_masks/cards.ts', 'packages/scenarios/src/the_devourer_below/cards.ts', 'packages/scenarios/src/card_builders.ts', 'apps/web/e2e/fixtures/card_pictures.ts') }}-${{ github.run_id }}-${{ github.run_attempt }}
-          restore-keys: |
-            card-pictures-${{ hashFiles('packages/scenarios/src/the_gathering/cards.ts', 'packages/scenarios/src/the_midnight_masks/cards.ts', 'packages/scenarios/src/the_devourer_below/cards.ts', 'packages/scenarios/src/card_builders.ts', 'apps/web/e2e/fixtures/card_pictures.ts') }}-
-            card-pictures-
       # Chromium's headless shell without apt, as in .github/actions/e2e_setup (see there). This job also runs
       # on main, so its cache is the one every PR's preview and E2E job restore.
       - id: playwright
@@ -72,14 +61,6 @@ jobs:
       - timeout-minutes: 5
         run: pnpm --filter @arkham/web exec playwright install --only-shell chromium
       - run: pnpm e2e
-      # Once a run on main has every card picture (its global setup then leaves a `complete` mark),
-      # that set is kept under a key of its own: the preview's picture jobs restore exactly it and
-      # download nothing, so the base and the PR show the same art (.github/actions/e2e_setup).
-      - if: github.ref == 'refs/heads/main' && hashFiles('apps/web/e2e/.card_pictures/complete') != ''
-        uses: actions/cache/save@v6
-        with:
-          path: apps/web/e2e/.card_pictures
-          key: card-pictures-complete-${{ hashFiles('packages/scenarios/src/the_gathering/cards.ts', 'packages/scenarios/src/the_midnight_masks/cards.ts', 'packages/scenarios/src/the_devourer_below/cards.ts', 'packages/scenarios/src/card_builders.ts', 'apps/web/e2e/fixtures/card_pictures.ts', 'apps/web/src/catalog/campaignKeyArt.ts') }}
       - uses: actions/upload-artifact@v7
         if: failure()
         with:
