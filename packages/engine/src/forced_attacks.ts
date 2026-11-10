@@ -1,5 +1,5 @@
 import { cardStats, type CardStats, type EngineContext } from './cards';
-import type { RequestDecision } from './commands';
+import type { Command, RequestDecision } from './commands';
 import { decisionId, type DecisionId, type InstanceId, type InvestigatorId } from './ids';
 import { requireCard } from './lookup';
 import { hasKeyword } from './keywords';
@@ -34,7 +34,8 @@ const SKIP_LABELS: Readonly<Record<ForcedAttackKind, string>> = {
  * The decision for one forced attack of the enemy on the investigator. Its
  * `attack` option deals the enemy's printed damage and horror, which the
  * players may lower (assets soak part of it) through
- * `ResolveDecision.amounts`; `skip` deals nothing.
+ * `ResolveDecision.amounts`; `skip` deals nothing and runs `afterSkip`, what follows the attack
+ * whether or not it is made (an elusive enemy's retreat after a missed fight).
  */
 export function forcedAttackDecision(
   ctx: EngineContext,
@@ -42,6 +43,7 @@ export function forcedAttackDecision(
   kind: ForcedAttackKind,
   enemyId: InstanceId,
   investigatorId: InvestigatorId,
+  afterSkip: readonly Command[] = [],
 ): Decision {
   return {
     id: decisionId(
@@ -66,7 +68,7 @@ export function forcedAttackDecision(
         ],
         amounts: printedAttack(ctx, state, enemyId),
       },
-      { id: 'skip', label: SKIP_LABELS[kind], commands: [] },
+      { id: 'skip', label: SKIP_LABELS[kind], commands: [...afterSkip] },
     ],
   };
 }
@@ -160,12 +162,13 @@ export function keywordAttackCommands(
   enemy: CardInstance,
   stats: CardStats,
   investigatorId: InvestigatorId,
+  afterSkip: readonly Command[] = [],
 ): RequestDecision[] {
   if (!hasKeyword(stats, kind) || enemy.exhausted) return [];
   return [
     {
       type: 'RequestDecision',
-      decision: forcedAttackDecision(ctx, state, kind, enemy.id, investigatorId),
+      decision: forcedAttackDecision(ctx, state, kind, enemy.id, investigatorId, afterSkip),
     },
   ];
 }

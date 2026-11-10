@@ -238,12 +238,21 @@ function fightCommands(
 ): Command[] {
   const { enemy, stats } = enemyOf(ctx, state, enemyId);
   // Rules Reference, "Elusive": after it is attacked, hit or miss. A retaliate attack comes
-  // first, and the enemy retreats after it as after any attack it makes (`keywordAbilities`).
+  // first; the enemy retreats after it as after any attack it makes (`keywordAbilities`), or
+  // when the players cancel it.
   const retreat: Command[] = hasKeyword(stats, 'elusive')
     ? [{ type: 'RetreatEnemy', enemyId }]
     : [];
   if (outcome === 'pass') return [{ type: 'DamageEnemy', enemyId, amount }, ...retreat];
-  const retaliation = keywordAttackCommands(ctx, state, 'retaliate', enemy, stats, investigator.id);
+  const retaliation = keywordAttackCommands(
+    ctx,
+    state,
+    'retaliate',
+    enemy,
+    stats,
+    investigator.id,
+    retreat,
+  );
   return [
     ...failedFightCommands(state, investigator, enemy, damage),
     ...(retaliation.length > 0 ? retaliation : retreat),

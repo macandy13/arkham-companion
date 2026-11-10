@@ -128,9 +128,9 @@ describe('an elusive enemy after it attacks or is attacked', () => {
   const fight: Command = { type: 'Fight', investigatorId: alice, enemyId: bat };
 
   it.each([
-    { name: 'a hit', outcome: 'pass', damage: 1 },
-    { name: 'a miss', outcome: 'fail', damage: 0 },
-  ] as const)('retreats after $name', ({ outcome, damage }) => {
+    { name: 'a hit', outcome: 'pass', tokens: { damage: 1 } },
+    { name: 'a miss', outcome: 'fail', tokens: {} },
+  ] as const)('retreats after $name', ({ outcome, tokens }) => {
     const { context, state } = aliceEngagedWithBat
       .withCard(bat, elusiveBat, engagedWith(alice))
       .start();
@@ -139,13 +139,14 @@ describe('an elusive enemy after it attacks or is attacked', () => {
 
     expect(after.cards[bat]).toMatchObject({
       ...exhaustedAt(atLocation(cellar)),
-      tokens: damage > 0 ? { damage } : {},
+      tokens,
     });
   });
 
   it('stays defeated when the hit defeats it', () => {
+    const threeHealthBat = blankEnemy('bat', { health: fixed(3), keywords: [{ name: 'elusive' }] });
     const { context, state } = aliceEngagedWithBat
-      .withCard(bat, elusiveBat, engagedWith(alice))
+      .withCard(bat, threeHealthBat, engagedWith(alice))
       .start();
 
     const after = stateAfter(context, state, fight, answer('fight:alice:bat', 'pass', 3));
@@ -167,6 +168,22 @@ describe('an elusive enemy after it attacks or is attacked', () => {
     const after = stateAfter(context, missed, answer('retaliate:bat', 'attack'));
 
     expect(missed.cards[bat]?.zone).toEqual(engagedWith(alice));
+    expect(after.cards[bat]).toMatchObject(exhaustedAt(atLocation(cellar)));
+  });
+
+  it('retreats on a miss when the players cancel the retaliate attack', () => {
+    const retaliatingBat = blankEnemy('bat', {
+      fight: 2,
+      damage: 1,
+      keywords: [{ name: 'elusive' }, { name: 'retaliate' }],
+    });
+    const { context, state } = aliceEngagedWithBat
+      .withCard(bat, retaliatingBat, engagedWith(alice))
+      .start();
+    const missed = stateAfter(context, state, fight, answer('fight:alice:bat', 'fail'));
+
+    const after = stateAfter(context, missed, answer('retaliate:bat', 'skip'));
+
     expect(after.cards[bat]).toMatchObject(exhaustedAt(atLocation(cellar)));
   });
 
