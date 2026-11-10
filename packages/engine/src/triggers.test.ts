@@ -46,6 +46,7 @@ import {
   eachInvestigator,
   engagedWith,
   duringAct,
+  defeatEnemy,
   endScenario,
   execute,
   fixed,
@@ -2446,6 +2447,36 @@ describe('an effect repeated for each investigator', () => {
     const advanced = stateAfter(context, bobLeads, { type: 'AdvanceAgenda' });
 
     expect(advanced.pending).toMatchObject([{ decider: { investigatorId: bob } }]);
+  });
+});
+
+describe('a chain after the scenario ended', () => {
+  const elder = instanceId('elder');
+  /**
+   * "(→R1), and the elder is defeated" on its reverse side, beside an objective "If the elder is
+   * defeated, (→R2)" (Sluice Control's success, Queen of Ash).
+   */
+  const floodingAgenda = blankAgenda('flooding', fixed(3), {
+    abilities: [
+      whenAdvanced(endScenario(resolutionId('R1')), defeatEnemy(onlyCopy(cardCode('elder')))),
+      whenEnemyDefeated(cardCode('elder'), endScenario(resolutionId('R2'))),
+    ],
+  });
+
+  it('still defeats the elder, but its objective does not end the scenario a second time', () => {
+    const { context, state: started } = newGame()
+      .withAgenda(agenda1, floodingAgenda)
+      .withLocation(hall, blankLocation('hall'), { revealed: true })
+      .withInvestigator(alice, { locationId: hall })
+      .withCard(elder, blankEnemy('elder', { keywords: [{ name: 'aloof' }] }), atLocation(hall))
+      .start();
+
+    const { state, events } = execute(context, started, { type: 'AdvanceAgenda' });
+
+    expect(events.filter((event) => event.type === 'ScenarioEnded')).toEqual([
+      { type: 'ScenarioEnded', resolution: resolutionId('R1') },
+    ]);
+    expect(state.cards[elder]?.zone).toEqual({ kind: 'encounterDiscard' });
   });
 });
 

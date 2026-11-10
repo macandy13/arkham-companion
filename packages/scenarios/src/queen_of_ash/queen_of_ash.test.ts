@@ -472,6 +472,8 @@ describe('Queen of Ash agendas and acts', () => {
       expect(chosen.pending).toMatchObject([{ skillTest: { skill, difficulty: 5 } }]);
       expect(state.meta.resolution).toBe(resolution);
       expect(state.cards[elokoss]?.zone.kind).toBe(resolution ? 'victoryDisplay' : 'atLocation');
+      // Her defeat no longer reaches Stop the Rite's objective, which would end in R1.
+      expect(state.act.current).toBe(stopTheRite);
     },
   );
 });

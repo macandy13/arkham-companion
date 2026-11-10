@@ -294,9 +294,10 @@ export const queenOfAshCardDefs: readonly CardStats[] = [
       {
         effects: [
           skillTestOfEither(SLUICE_CONTROL_DECISION, ['agility', 'combat'], 5, {
+            // Ending first keeps Elokoss's defeat from reaching her R1 objectives.
             onPass: [
-              defeatEnemy(eachEnemy({})),
               endScenario(QUEEN_OF_ASH_RESOLUTIONS.ritualFlooded),
+              defeatEnemy(eachEnemy({})),
             ],
           }),
         ],
