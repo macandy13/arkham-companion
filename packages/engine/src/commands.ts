@@ -605,9 +605,13 @@ export interface AdvanceAgenda {
  * advance then leaves the card in play, turned to its reverse side, which prints neither a doom
  * threshold nor a clue requirement (`completeAdvance`). Produces `CardMoved` for each card of
  * the act deck, then `CurrentCardChanged`.
+ * With `next`, the agenda that follows takes both places instead ("Special agenda 3a replaces
+ * the current act and agenda", Queen of Ash, agenda 2's reverse side): the advance then puts the
+ * advancing agenda out of the game as usual and makes that card the current agenda too.
  */
 export interface BecomeActAndAgenda {
   type: 'BecomeActAndAgenda';
+  next?: true;
 }
 
 /** Clues one investigator pays towards advancing the act. */

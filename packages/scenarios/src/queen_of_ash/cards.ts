@@ -1,32 +1,52 @@
 import {
+  advanceAct,
   afterEntering,
+  atEndOfRound,
+  nextAgendaBecomesActAndAgenda,
   cardCode,
   cardDbFrom,
+  decisionId,
+  duringAct,
+  eachEnemy,
+  eachInZone,
+  endScenario,
   encounterSetCode,
   fixed,
+  forEachInvestigator,
+  fromSetAside,
+  GRID_CELLS_PER_CARD,
   loseActions,
+  mapId,
+  moveEnemyTowards,
+  onlyCopy,
   perInvestigator,
   putIntoThreatArea,
+  putLocationIntoPlay,
   resignAction,
   resolutionId,
+  revealLocation,
+  shuffleSetAsideIntoEncounterDeck,
   skillTest,
+  skillTestOfEither,
+  spawnEnemyAt,
   takeHorror,
   trait,
+  whenAdvanced,
+  whenAnInvestigatorEnters,
+  whenEnemyDefeated,
   whenRevealed,
   type CardDb,
+  type AbilityEffect,
+  type CardCode,
   type CardStats,
   type EncounterSetCode,
 } from '@arkham/engine';
+import { act, agenda, enemy, location, picturesOf, treachery } from '../card_builders';
 import {
-  act,
-  agenda,
-  enemy,
-  location,
-  picturesOf,
-  scenarioCard,
-  treachery,
-} from '../card_builders';
-import { SPREADING_FLAMES_SETS, spreadingFlamesCards } from '../spreading_flames/cards';
+  SPREADING_FLAMES_CODES,
+  SPREADING_FLAMES_SETS,
+  spreadingFlamesCards,
+} from '../spreading_flames/cards';
 
 /**
  * ArkhamDB encounter set codes of Queen of Ash, the third and last scenario of the Core Set
@@ -82,6 +102,22 @@ export const QUEEN_OF_ASH_RESOLUTIONS = {
   ritualFlooded: resolutionId('R3'),
 } as const;
 
+/** The map of the Arkham sewers, the only one Queen of Ash plays on. */
+export const SEWERS = mapId('sewers');
+
+/**
+ * The guide's layout cells: Underground Cistern above the row of five Sewer Tunnels, Sewer
+ * Culvert below them, and Sluice Control, which act 1b puts into play, beside the cistern.
+ */
+export const SEWERS_CELLS = {
+  undergroundCistern: { column: 2 * GRID_CELLS_PER_CARD, row: 0 },
+  sluiceControl: { column: 3 * GRID_CELLS_PER_CARD, row: 0 },
+  sewerCulvert: { column: 2 * GRID_CELLS_PER_CARD, row: 2 * GRID_CELLS_PER_CARD },
+} as const;
+
+/** Id of Sluice Control's question to the investigator who opens the valve: agility or combat? */
+export const SLUICE_CONTROL_DECISION = decisionId('queenOfAsh.sluiceControl');
+
 const codes = QUEEN_OF_ASH_CODES;
 const sets = QUEEN_OF_ASH_SETS;
 const own = sets.queenOfAsh;
@@ -101,6 +137,18 @@ const sewerTunnels = {
   unrevealedConnectsTo: ['hourglass', 'circle'],
 } as const;
 
+const fire = SPREADING_FLAMES_CODES.fire;
+
+/** "If the Servant of Flame enemy is set aside, spawn it at Underground Cistern" (agenda 1b). */
+const spawnServantIfSetAside: AbilityEffect = {
+  type: 'SpawnEnemy',
+  enemyId: eachInZone({ kind: 'setAside' }, { code: codes.servantOfFlame }),
+  at: onlyCopy(codes.undergroundCistern),
+};
+
+/** "Each investigator must test [willpower] (4). Each investigator who fails takes 1 direct horror." */
+const willpowerOrHorror = skillTest('willpower', 4, { onFail: [takeHorror(1)] });
+
 /**
  * Hand-entered card data for Queen of Ash, keyed by the real ArkhamDB codes; like Smoke and
  * Mirrors', only names, codes, numbers, traits, keywords and abilities (test skills and
@@ -110,15 +158,14 @@ const sewerTunnels = {
  * a Sewer Tunnels changes its symbol and, for Overgrown Tunnels, drops its way to Underground
  * Cistern, while Underground Cistern reaches only the triangle and three of the revealed tunnels.
  *
- * The agendas' and acts' abilities and reverse sides come with the scenario's setup (MC2.9b).
  * Effects the engine has no rule for yet are left out, so the players resolve them from the card:
  *
+ * - the agendas' rule that enemies at a location with Fire! attached cannot be damaged, Elokoss's
+ *   Mother of Flame side (agenda 2b), agenda 3a's damage instead of doom, and act 2a's clue spend
+ *   to discard a Fire!
  * - the additional clue costs to enter Underground Cistern and Sluice Control (MC2.4)
  * - Underground Cistern's clues placed again once it has none, and its discard of ready
  *   non-Elite Cultists as the investigation phase ends, with 1 doom each
- * - Sluice Control's action (agility or combat (5): each enemy defeated and each investigator who
- *   has not resigned killed, Resolution 3)
- * - Sewer Culvert's connection to each Sewer Tunnels, which setup declares (MC2.9b)
  * - Infested Pipes' discard until an enemy, which the entering investigator draws; Flooded
  *   Crypt's horror, Smuggler's Cache's resource and Toxic Waste Pit's discard as a turn ends there
  * - Elokoss: her extra health is entered, but not that she cannot move or make attacks of
@@ -143,22 +190,82 @@ export const queenOfAshCardDefs: readonly CardStats[] = [
     pictures: jpg,
     stage: 1,
     doom: 6,
+    abilities: [
+      whenAdvanced(spawnServantIfSetAside),
+      forEachInvestigator(whenAdvanced(willpowerOrHorror)),
+    ],
   }),
-  agenda({ code: codes.aRitual, name: 'A Ritual', set: own, pictures: jpg, stage: 2, doom: 10 }),
-  // Special agenda 3a is both the current act and agenda and prints no doom threshold.
-  {
-    ...scenarioCard(codes.brethrenOfAsh, 'Brethren of Ash', own, jpg),
-    typeCode: 'agenda',
-    stage: { number: 3 },
-  },
+  agenda({
+    code: codes.aRitual,
+    name: 'A Ritual',
+    set: own,
+    pictures: jpg,
+    stage: 2,
+    doom: 10,
+    // "If it is act 1": Elokoss is set aside until act 1b spawns her, so she spawns here instead.
+    // Her Mother of Flame side is flipped by hand.
+    abilities: [
+      duringAct(
+        [codes.searchTheSewers],
+        whenAdvanced(
+          revealLocation(onlyCopy(codes.undergroundCistern)),
+          spawnEnemyAt(onlyCopy(codes.elokoss), onlyCopy(codes.undergroundCistern)),
+        ),
+      ),
+      whenAdvanced(nextAgendaBecomesActAndAgenda()),
+    ],
+  }),
+  // Special agenda 3a is both the current act and agenda and prints no doom threshold. Its
+  // reverse side kills each investigator, as the end without a resolution does too.
+  agenda({
+    code: codes.brethrenOfAsh,
+    name: 'Brethren of Ash',
+    set: own,
+    pictures: jpg,
+    stage: 3,
+    abilities: [
+      whenEnemyDefeated(codes.elokoss, endScenario(QUEEN_OF_ASH_RESOLUTIONS.elokossDefeated)),
+    ],
+  }),
   act({
     code: codes.searchTheSewers,
     name: 'Search the Sewers',
     set: own,
     pictures: jpg,
     stage: 1,
+    // The investigator at the cistern draws a Fire!, whose revelation attaches it to the nearest
+    // location without one: the cistern itself, as no Fire! is in play before.
+    abilities: [
+      whenAnInvestigatorEnters(codes.undergroundCistern, advanceAct()),
+      whenAdvanced(
+        spawnEnemyAt(onlyCopy(codes.elokoss), onlyCopy(codes.undergroundCistern)),
+        fromSetAside([fire], { kind: 'attachedTo', hostId: onlyCopy(codes.undergroundCistern) }),
+        shuffleSetAsideIntoEncounterDeck([
+          ...Array<CardCode>(4).fill(fire),
+          codes.queensKnight,
+          codes.heraldOfFlame,
+        ]),
+        ...putLocationIntoPlay(codes.sluiceControl, SEWERS, { at: SEWERS_CELLS.sluiceControl }),
+      ),
+    ],
   }),
-  act({ code: codes.stopTheRite, name: 'Stop the Rite', set: own, pictures: jpg, stage: 2 }),
+  act({
+    code: codes.stopTheRite,
+    name: 'Stop the Rite',
+    set: own,
+    pictures: jpg,
+    stage: 2,
+    abilities: [
+      atEndOfRound(
+        moveEnemyTowards(
+          eachEnemy({ trait: trait('Cultist') }),
+          onlyCopy(codes.undergroundCistern),
+        ),
+      ),
+      whenEnemyDefeated(codes.elokoss, advanceAct()),
+      whenAdvanced(endScenario(QUEEN_OF_ASH_RESOLUTIONS.elokossDefeated)),
+    ],
+  }),
   location({
     code: codes.undergroundCistern,
     name: 'Underground Cistern',
@@ -180,6 +287,17 @@ export const queenOfAshCardDefs: readonly CardStats[] = [
     traits: ['Sewer'],
     shroud: 4,
     cluesPerInvestigator: 2,
+    // Each enemy defeated and each investigator who stayed killed: the scenario ends, and
+    // Resolution 3 kills them.
+    actions: [
+      {
+        effects: [
+          skillTestOfEither(SLUICE_CONTROL_DECISION, ['agility', 'combat'], 5, {
+            onPass: [endScenario(QUEEN_OF_ASH_RESOLUTIONS.ritualFlooded)],
+          }),
+        ],
+      },
+    ],
   }),
   treachery({
     code: '12176',

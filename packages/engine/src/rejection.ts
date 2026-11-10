@@ -104,6 +104,8 @@ export type Rejection =
   | { code: 'cardNotInPlay'; cardId: InstanceId }
   /** `AdvanceAgenda`/`AdvanceAct` while that deck has no current card. */
   | { code: 'noCurrentCard'; deck: 'agenda' | 'act' }
+  /** `BecomeActAndAgenda` with `next` while no agenda follows the current one. */
+  | { code: 'noNextAgenda' }
   /** The last card of a deck advances, but neither its reverse side nor the command names a resolution. */
   | { code: 'resolutionRequired'; deck: 'agenda' | 'act' }
   /** A command after the scenario ended (`GameMeta.ended`); only `ManualAdjust` is still accepted. */
@@ -377,6 +379,8 @@ function describe(r: Rejection): string {
       return `${r.cardId} is not in play`;
     case 'noCurrentCard':
       return `there is no current ${r.deck}`;
+    case 'noNextAgenda':
+      return 'no agenda follows the current one';
     case 'resolutionRequired':
       return `the last ${r.deck} needs a resolution`;
     case 'scenarioEnded':

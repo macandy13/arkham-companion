@@ -33,7 +33,8 @@ export interface AgendaOptions {
   /** The file type of its pictures on ArkhamDB; PNG by default. */
   pictures?: PictureFormat;
   stage: number;
-  doom: number;
+  /** Its doom threshold; a special agenda that is also the act (Brethren of Ash) prints none. */
+  doom?: number;
   /** Its reverse side (`whenAdvanced`). */
   abilities?: readonly Ability[];
   /** Its action abilities, such as `resignAction()`. */
@@ -55,7 +56,7 @@ export function agenda({
     ...scenarioCard(code, name, set, pictures),
     typeCode: 'agenda',
     stage: { number: stage },
-    doom: fixed(doom),
+    ...(doom === undefined ? {} : { doom: fixed(doom) }),
     ...(abilities ? { abilities } : {}),
     ...(actions ? { actions } : {}),
   };

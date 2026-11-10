@@ -4,7 +4,6 @@ import {
   fixed,
   GRID_CELLS_PER_CARD,
   isInPlay,
-  mapId,
   perInvestigator,
   scenario,
   scenarioId,
@@ -18,14 +17,11 @@ import {
 import { ASH_STORY } from '../brethren_of_ash/story';
 import { SPREADING_FLAMES_CODES } from '../spreading_flames/cards';
 import { spreadingFlames } from '../spreading_flames/scenario';
-import { QUEEN_OF_ASH_CODES, QUEEN_OF_ASH_SETS } from './cards';
+import { QUEEN_OF_ASH_CODES, QUEEN_OF_ASH_SETS, SEWERS, SEWERS_CELLS } from './cards';
 import { queenOfAshResolutions } from './resolutions';
 
 const codes = QUEEN_OF_ASH_CODES;
 const fire = SPREADING_FLAMES_CODES.fire;
-
-/** The map of the Arkham sewers, the only one Queen of Ash plays on. */
-export const SEWERS = mapId('sewers');
 
 /** Translation key prefix for Queen of Ash's reference card effects. */
 const reference = 'scenario.queenOfAsh.reference';
@@ -148,8 +144,8 @@ export const queenOfAsh: ScenarioDefinition = {
       mapId: SEWERS,
       name: 'Sewers',
       locations: [
-        { code: codes.undergroundCistern, at: { column: 2 * oneCard, row: 0 } },
-        { code: codes.sewerCulvert, at: { column: 2 * oneCard, row: 2 * oneCard } },
+        { code: codes.undergroundCistern, at: SEWERS_CELLS.undergroundCistern },
+        { code: codes.sewerCulvert, at: SEWERS_CELLS.sewerCulvert },
       ],
       atRandom: {
         codes: SEWER_TUNNELS,

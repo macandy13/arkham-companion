@@ -41,7 +41,8 @@ An objective is an ability of its act or agenda, with a window that opens only w
 - An act that advances on the clues on it (Disrupting the Ritual): `whenTokensOnSelf('clue', perInvestigator(2), advanceAct())`, and its action places them with `placeCluesOnSelf(1)`.
 - A location topping up its clues at round end (Ritual Site): `atEndOfRound(placeCluesOnSelfUpTo(perInvestigator(2)))`.
 - Doom per enemy (They're Getting Out!): `forEachEnemy({ trait: trait('Ghoul'), at: [onlyCopy(codes.hallway), onlyCopy(codes.parlor)] }, atEndOfRound(placeDoomOnSelf(1)))`.
-- One card as act and agenda (Vengeance Awaits): `whenAdvanced(becomeActAndAgenda())`.
+- One card as act and agenda (Vengeance Awaits): `whenAdvanced(becomeActAndAgenda())`; the next agenda as both (Queen of Ash's A Ritual, "special agenda 3a replaces the current act and agenda"): `whenAdvanced(nextAgendaBecomesActAndAgenda())`.
+- A test each investigator makes on a reverse side (A Gathering, "each investigator tests willpower (4)"): `forEachInvestigator(whenAdvanced(skillTest('willpower', 4, { onFail: [takeHorror(1)] })))`.
 - Reverse sides that hit each investigator (Smoke and Mirrors): "each investigator draws 1 copy of the set-aside Mark of Elokoss" is `whenAdvanced(fromSetAside([codes.markOfElokoss], { kind: 'threatArea', investigatorId: { ref: 'eachInvestigator' } }))`, and "each investigator immediately resigns" is `whenAdvanced(eachInvestigatorResigns())`.
 - A reverse side that depends on the current act: `duringAct([codes.trapped, codes.theBarrier], whenAdvanced(…))`.
 
