@@ -72,6 +72,14 @@ jobs:
       - timeout-minutes: 5
         run: pnpm --filter @arkham/web exec playwright install --only-shell chromium
       - run: pnpm e2e
+      # Once a run on main has every card picture (its global setup then leaves a `complete` mark),
+      # that set is kept under a key of its own: the preview's picture jobs restore exactly it and
+      # download nothing, so the base and the PR show the same art (.github/actions/e2e_setup).
+      - if: github.ref == 'refs/heads/main' && hashFiles('apps/web/e2e/.card_pictures/complete') != ''
+        uses: actions/cache/save@v6
+        with:
+          path: apps/web/e2e/.card_pictures
+          key: card-pictures-complete-${{ hashFiles('packages/scenarios/src/the_gathering/cards.ts', 'packages/scenarios/src/the_midnight_masks/cards.ts', 'packages/scenarios/src/the_devourer_below/cards.ts', 'packages/scenarios/src/card_builders.ts', 'apps/web/e2e/fixtures/card_pictures.ts', 'apps/web/src/catalog/campaignKeyArt.ts') }}
       - uses: actions/upload-artifact@v7
         if: failure()
         with:

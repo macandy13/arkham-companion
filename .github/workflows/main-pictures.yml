@@ -58,7 +58,6 @@ jobs:
       - uses: ./base/.github/actions/e2e_setup
         with:
           dir: base
-          cache-name: main-${{ matrix.shard }}
       # A failing spec is cached too: the preview shows it as not photographed on the base.
       - working-directory: base
         timeout-minutes: 20

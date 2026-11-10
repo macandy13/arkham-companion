@@ -1,5 +1,5 @@
 import { existsSync } from 'node:fs';
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, rm, writeFile } from 'node:fs/promises';
 import { basename, join } from 'node:path';
 import { cardImagePath, type CardImagePath } from '@arkham/engine';
 import {
@@ -86,19 +86,35 @@ async function downloadWithRetries(path: string): Promise<string | undefined> {
 }
 
 /**
+ * The mark the global setup leaves in the folder once it holds every picture the tests name, so
+ * CI keeps that complete set for the preview's picture runs (`.github/workflows/ci.yml`).
+ */
+const COMPLETE_MARK = join(CARD_PICTURE_DIR, 'complete');
+
+/**
  * Playwright's global setup: downloads the pictures that have no local copy yet, the campaigns'
- * key art included (`campaignKeyArts`), a few at a time.
+ * key art included (`campaignKeyArts`), a few at a time, and marks the folder complete when none
+ * is missing.
  * A picture that still fails (no network, ArkhamDB down) is only warned about, since the app then
  * shows the card's pattern, as it does offline, and no test depends on the art. After the first
  * such failure the rest are skipped: ArkhamDB stops answering a CI runner after a few dozen
  * pictures, and waiting out every timeout cost a run eight minutes. CI keeps what this run got,
  * and a later run fetches the rest.
+ * With `CARD_PICTURES_OFFLINE=1` it downloads nothing: the preview's picture runs compare the
+ * base's pictures with the PR's, so both must show exactly the set CI restored, not whatever each
+ * runner managed to download.
  */
 export default async function fetchCardPictures(): Promise<void> {
   await mkdir(CARD_PICTURE_DIR, { recursive: true });
   const queue = [...e2ePictures(), ...campaignKeyArts].filter(
     (path) => localCardPicture(path) === undefined,
   );
+  if (process.env.CARD_PICTURES_OFFLINE === '1') {
+    if (queue.length > 0)
+      console.warn(`${queue.length} card pictures are not here; their cards show the pattern.`);
+    return;
+  }
+  await rm(COMPLETE_MARK, { force: true });
   const failed: string[] = [];
   const worker = async (): Promise<void> => {
     for (let path = queue.shift(); path !== undefined; path = queue.shift()) {
@@ -114,4 +130,5 @@ export default async function fetchCardPictures(): Promise<void> {
       `Could not download ${failed.length} card pictures; their cards show the pattern:\n` +
         failed.join('\n'),
     );
+  else await writeFile(COMPLETE_MARK, '');
 }
