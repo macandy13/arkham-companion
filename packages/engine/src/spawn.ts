@@ -61,8 +61,8 @@ export function handleSpawnEnemy(ctx: EngineContext, state: GameState, cmd: Spaw
  * decision (id `spawn:<enemy>`) and leaves the enemy where it is; each option runs
  * `SpawnEnemy` with the chosen `at`, which then engages as usual.
  * A drawn enemy without a spawn instruction engages the drawer, whatever its
- * prey ("Spawn" in the Rules Reference); prey only picks among investigators
- * for an enemy that spawns elsewhere.
+ * prey ("Spawn" in the Rules Reference), unless its prey says "only" and leaves
+ * the drawer out; prey only picks among investigators for an enemy that spawns elsewhere.
  */
 export function spawnEvents(
   ctx: EngineContext,
@@ -100,16 +100,20 @@ export function spawnEvents(
   // Index 0 is the top, and the discard's top is what "topmost" effects look for.
   if (plan.kind === 'discard') return [cardMoved(state, enemy, ENCOUNTER_DISCARD, 0)];
   const placed = cardMoved(state, enemy, spawnZone(plan.locationId));
-  return [placed, ...engageEvents(ctx, replay([placed], state), enemyId, plan.engageId)];
+  return [
+    placed,
+    ...engageEvents(ctx, replay([placed], state), enemyId, plan.engageId, plan.whateverPrey),
+  ];
 }
 
 /**
  * Where the enemy spawns: `target.at`; else engaged with `target.engagedWith`; else its `spawn`
  * instruction; else the drawer's location. `engageId` is the investigator it engages there
- * regardless of prey: the drawer, or the one "Engaged with prey" settled on.
+ * before other prey: the drawer (unless an "only" prey leaves them out), or, `whateverPrey`,
+ * the one named by `engagedWith` or settled on by "Engaged with prey".
  */
 type SpawnPlan =
-  | { kind: 'at'; locationId: InstanceId; engageId?: InvestigatorId }
+  | { kind: 'at'; locationId: InstanceId; engageId?: InvestigatorId; whateverPrey?: boolean }
   | { kind: 'choose'; candidates: InstanceId[] }
   | { kind: 'chooseInvestigator'; candidates: Investigator[] }
   | { kind: 'discard' };
@@ -146,7 +150,12 @@ function engagedSpawn(state: GameState, investigatorId: InvestigatorId): SpawnPl
   const investigator = activeInvestigator(state, investigatorId);
   if (investigator.locationId === undefined)
     throw new CommandRejected({ code: 'investigatorHasNoLocation', investigatorId });
-  return { kind: 'at', locationId: investigator.locationId, engageId: investigator.id };
+  return {
+    kind: 'at',
+    locationId: investigator.locationId,
+    engageId: investigator.id,
+    whateverPrey: true,
+  };
 }
 
 /**

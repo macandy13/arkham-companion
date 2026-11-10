@@ -30,7 +30,10 @@ type PreyMeasure = (
 ) => number;
 
 /** The first word of a prey text: "Most clues", "Fewest …", "Least remaining sanity". */
-const EXTREME_WORDS: Readonly<Record<string, 'lowest' | 'highest' | undefined>> = {
+/** Whether the lowest or the highest value wins. */
+type PreyExtreme = 'lowest' | 'highest';
+
+const EXTREME_WORDS: Readonly<Record<string, PreyExtreme | undefined>> = {
   highest: 'highest',
   most: 'highest',
   lowest: 'lowest',
@@ -86,7 +89,14 @@ export function preferredByPrey(
   if (prey === undefined || active.length === 0) return active;
   if (prey.only) {
     const allowed = new Set(
-      prey.pick(ctx, state, enemy, activeInvestigators(state)).map((inv) => inv.id),
+      prey
+        .pick(
+          ctx,
+          state,
+          enemy,
+          activeInvestigators(state).filter((inv) => inv.locationId !== undefined),
+        )
+        .map((inv) => inv.id),
     );
     return active.filter((inv) => allowed.has(inv.id));
   }
@@ -154,7 +164,7 @@ function preyPick(state: GameState, text: string): Prey['pick'] | undefined {
     investigators.filter((inv) => comparableName(inv.name) === lower);
 }
 /** Picks the investigators tied for the `extreme` of `measure`. */
-function tiedBest(measure: PreyMeasure, extreme: 'lowest' | 'highest'): Prey['pick'] {
+function tiedBest(measure: PreyMeasure, extreme: PreyExtreme): Prey['pick'] {
   return (ctx, state, enemy, investigators) => {
     const values = investigators.map((inv) => measure(ctx, state, enemy, inv));
     const best = extreme === 'lowest' ? Math.min(...values) : Math.max(...values);
