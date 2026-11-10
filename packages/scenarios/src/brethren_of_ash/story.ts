@@ -27,4 +27,12 @@ export const ASH_STORY = {
   stirredUpTrouble: 'stirredUpTrouble',
   /** "The Servant of Flame escaped." (Smoke and Mirrors' R2, the Servant beneath the act). */
   theServantOfFlameEscaped: 'theServantOfFlameEscaped',
+  /** "Elokoss was reborn." (Queen of Ash without a resolution: the campaign is lost). */
+  elokossWasReborn: 'elokossWasReborn',
+  /** "The investigators defeated Elokoss and the Brethren of Ash." (Queen of Ash's R1). */
+  defeatedElokossAndTheBrethren: 'defeatedElokossAndTheBrethren',
+  /** "The investigators stopped Elokoss's glorious rebirth." (Queen of Ash's R2). */
+  stoppedElokosssRebirth: 'stoppedElokosssRebirth',
+  /** "The investigators flooded the Brethren of Ash's summoning ritual." (Queen of Ash's R3). */
+  floodedTheSummoningRitual: 'floodedTheSummoningRitual',
 } as const;
