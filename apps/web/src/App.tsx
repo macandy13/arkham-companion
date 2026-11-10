@@ -1,4 +1,5 @@
-import { HashRouter, Outlet, Route, Routes, useMatch } from 'react-router';
+import { useLayoutEffect } from 'react';
+import { HashRouter, Outlet, Route, Routes, useLocation, useMatch } from 'react-router';
 import type { StoreApi } from 'zustand/vanilla';
 import { CampaignScreen } from './campaign/CampaignScreen';
 import { useCatalog, type CatalogSource } from './catalog/useCatalog';
@@ -72,10 +73,16 @@ export function App({ store, catalog, startup }: Partial<RootProps>) {
 /**
  * Page frame shared by all screens: the app bar (`AppBarFrame`, MD.3a) over the active screen.
  * The play screen leaves the bar out, so the table keeps its height; its status row's menu
- * (`GameStatus`) holds the same links and the game's export.
+ * (`GameStatus`) holds the same links and the game's export. Each screen opens at its top: the
+ * page is one document, so without that a screen would open as far down as the last one was
+ * scrolled.
  */
 function Layout() {
   const playing = useMatch('/game/:id') !== null;
+  const { pathname } = useLocation();
+  useLayoutEffect(() => {
+    document.documentElement.scrollTop = 0;
+  }, [pathname]);
   const main = (
     <main>
       <Outlet />
