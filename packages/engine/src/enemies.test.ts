@@ -236,6 +236,67 @@ describe('SpawnEnemy', () => {
       expect(after.pending).toEqual([]);
     });
 
+    it('engages neither the drawer nor anyone else its "only" prey leaves out', () => {
+      const onlyBobGhoulCard = blankEnemy('only_bob_ghoul', {
+        keywords: [{ name: 'prey', detail: 'Bob only' }],
+      });
+      const { context, state } = aliceAndBob.withCard(ghoul, onlyBobGhoulCard, setAside).start();
+
+      const after = stateAfter(context, state, {
+        type: 'SpawnEnemy',
+        enemyId: ghoul,
+        investigatorId: alice,
+      });
+
+      expect(zoneOf(after, ghoul)).toEqual(engagedWith(bob));
+    });
+
+    it('engages whom an effect names, whatever its "only" prey', () => {
+      const onlyBobGhoulCard = blankEnemy('only_bob_ghoul', {
+        keywords: [{ name: 'prey', detail: 'Bob only' }],
+      });
+      const { context, state } = aliceAndBob.withCard(ghoul, onlyBobGhoulCard, setAside).start();
+
+      const after = stateAfter(context, state, {
+        type: 'SpawnEnemy',
+        enemyId: ghoul,
+        engagedWith: alice,
+      });
+
+      expect(zoneOf(after, ghoul)).toEqual(engagedWith(alice));
+    });
+
+    it('leaves a ready "only" enemy unengaged next to alice, whom it ignores', () => {
+      const onlyBobGhoulCard = blankEnemy('only_bob_ghoul', {
+        keywords: [{ name: 'prey', detail: 'Bob only' }],
+      });
+      const { context, state } = aliceInHall
+        .withInvestigator(bob, { locationId: cellar })
+        .withCard(ghoul, onlyBobGhoulCard, atLocation(hall))
+        .start();
+
+      expect(engageEvents(context, state, ghoul)).toEqual([]);
+    });
+
+    it('stays unengaged when its "only" prey is nobody at the location', () => {
+      const onlyCarolGhoulCard = blankEnemy('only_carol_ghoul', {
+        keywords: [{ name: 'prey', detail: 'Carol only' }],
+      });
+      const { context, state } = aliceAndBob
+        .withInvestigator(investigatorId('carol'), { locationId: cellar })
+        .withCard(ghoul, onlyCarolGhoulCard, setAside)
+        .start();
+
+      const after = stateAfter(context, state, {
+        type: 'SpawnEnemy',
+        enemyId: ghoul,
+        investigatorId: alice,
+      });
+
+      expect(zoneOf(after, ghoul)).toEqual(atLocation(hall));
+      expect(after.pending).toEqual([]);
+    });
+
     it('asks the players when there is no prey and no drawer', () => {
       const { context, state } = aliceAndBob.withCard(ghoul, ghoulCard, setAside).start();
 

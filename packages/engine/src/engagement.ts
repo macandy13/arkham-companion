@@ -6,7 +6,7 @@ import { activeInvestigators } from './investigators';
 import { cardOptionLabels, requestDecision } from './decisions';
 import { hasKeyword } from './keywords';
 import { cardsAtLocation, cardsOfType } from './lookup';
-import { preferredByPrey, preyPrompt } from './prey';
+import { preferredByPrey, preyAllows, preyPrompt } from './prey';
 import { replay } from './reducer';
 import type { CardInstance, Decider, GameState, Investigator } from './state';
 
@@ -22,7 +22,8 @@ export function investigatorsAt(state: GameState, locationId: InstanceId): Inves
  * players choose (`chooseInvestigator` decision whose options run
  * `EngageEnemy`). `drawerId` is the investigator who drew an enemy without a
  * spawn instruction: that one is engaged whatever the prey (Rules Reference,
- * "Spawn"). Nothing for aloof or exhausted enemies and when nobody is there.
+ * "Spawn"), unless an "only" prey leaves them out; `whateverPrey` engages
+ * `drawerId` even then, for an effect that names whom the enemy spawns engaged with. Nothing for aloof or exhausted enemies and when nobody is there.
  * Massive enemies never use the engaged zone (see `enemyAttackList`).
  */
 export function engageEvents(
@@ -30,12 +31,17 @@ export function engageEvents(
   state: GameState,
   enemyId: InstanceId,
   drawerId?: InvestigatorId,
+  whateverPrey = false,
 ): Event[] {
   const enemy = state.cards[enemyId];
   if (enemy?.zone.kind !== 'atLocation' || enemy.exhausted) return [];
   const stats = cardStats(ctx.cards, enemy.code);
   if (hasKeyword(stats, 'aloof') || hasKeyword(stats, 'massive')) return [];
-  const drawer = investigatorsAt(state, enemy.zone.locationId).find((inv) => inv.id === drawerId);
+  // Rules Reference, "Prey": with "only" the enemy engages nobody else, not even the drawer.
+  const present = investigatorsAt(state, enemy.zone.locationId);
+  const drawer = (whateverPrey ? present : preyAllows(ctx, state, enemy, present)).find(
+    (inv) => inv.id === drawerId,
+  );
   if (drawer) return [engaged(enemyId, drawer)];
   const preferred = preferredByPrey(
     ctx,
@@ -50,7 +56,7 @@ export function engageEvents(
     state,
     enemyId,
     `engage:${enemyId}`,
-    preyPrompt(stats, 'decision.chooseEngagement'),
+    preyPrompt(state, stats, 'decision.chooseEngagement'),
     preferred,
     (chosen) => ({ type: 'EngageEnemy', enemyId, investigatorId: chosen.id }),
   );
