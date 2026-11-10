@@ -355,7 +355,6 @@ function Skills({
   const { boostedSkills, boosts } = investigator;
   // A defeated or resigned investigator has left the game, so their boosts no longer change.
   const off = busy || investigator.status !== 'active';
-  // Not once they left the game.
   const bubbled = investigator.status === 'active';
   return (
     <>

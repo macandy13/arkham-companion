@@ -393,13 +393,11 @@ export const appTexts = {
     reveal: 'Reveal',
     clue: {
       label: 'Clues',
-      count: 'Clues {{count}}',
       add: 'Add a clue',
       remove: 'Remove a clue',
     },
     doom: {
       label: 'Doom',
-      count: 'Doom {{count}}',
       add: 'Add doom',
       remove: 'Remove doom',
     },

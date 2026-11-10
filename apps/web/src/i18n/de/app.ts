@@ -397,13 +397,11 @@ export const appTexts = {
     reveal: 'Aufdecken',
     clue: {
       label: 'Hinweise',
-      count: 'Hinweise {{count}}',
       add: 'Hinweis hinzufügen',
       remove: 'Hinweis entfernen',
     },
     doom: {
       label: 'Verderben',
-      count: 'Verderben {{count}}',
       add: 'Verderben hinzufügen',
       remove: 'Verderben entfernen',
     },

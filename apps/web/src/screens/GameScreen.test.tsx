@@ -194,7 +194,7 @@ describe('GameScreen header', () => {
     expect(screen.queryByRole('dialog')).toBeNull();
   });
 
-  it('adds doom to the agenda from its bubble and takes it off again, each one undo', async () => {
+  it('takes back only the last tap in the bubble with one undo, and removes no doom at none', async () => {
     await renderTheGathering('game-screen-doom-test');
     const doom = within(screen.getByRole('region', { name: 'Agenda' })).getByRole('img', {
       name: 'Doom 0 / 3',
@@ -208,10 +208,12 @@ describe('GameScreen header', () => {
 
     fireEvent.click(within(bubble).getByRole('button', { name: 'Add doom' }));
     await screen.findByRole('img', { name: 'Doom 1 / 3' });
-    fireEvent.click(within(bubble).getByRole('button', { name: 'Remove doom' }));
+    fireEvent.click(within(bubble).getByRole('button', { name: 'Add doom' }));
+    await screen.findByRole('img', { name: 'Doom 2 / 3' });
+    fireEvent.click(button('Undo'));
 
     expect(removeAtZero).toBe(true);
-    expect(await screen.findByRole('img', { name: 'Doom 0 / 3' })).toBeTruthy();
+    expect(await screen.findByRole('img', { name: 'Doom 1 / 3' })).toBeTruthy();
   });
 
   it("shows the clues Alder holds against the act's cost", async () => {
@@ -540,21 +542,18 @@ describe('GameScreen header', () => {
     }
   });
 
-  it.each([{ entry: 'Game log', then: () => screen.findByRole('dialog', { name: 'Game log' }) }])(
-    'takes "$entry" from the menu, as a phone has no room for it in the row, and closes the menu',
-    async ({ entry, then }) => {
-      await renderTheGathering(`game-screen-menu-${entry}-test`);
-      fireEvent.click(button('Menu'));
-      const menu = within(screen.getByRole('navigation', { name: 'Main' }));
+  it('takes "Game log" from the menu, as a phone has no room for it in the row, and closes the menu', async () => {
+    await renderTheGathering('game-screen-menu-game-log-test');
+    fireEvent.click(button('Menu'));
+    const menu = within(screen.getByRole('navigation', { name: 'Main' }));
 
-      fireEvent.click(menu.getByRole('button', { name: entry }));
+    fireEvent.click(menu.getByRole('button', { name: 'Game log' }));
 
-      expect(await then()).toBeTruthy();
-      expect(screen.getByRole('button', { name: 'Menu' }).getAttribute('aria-expanded')).toBe(
-        'false',
-      );
-    },
-  );
+    expect(await screen.findByRole('dialog', { name: 'Game log' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Menu' }).getAttribute('aria-expanded')).toBe(
+      'false',
+    );
+  });
 
   it('lays the token pool, the encounter deck with its discard pile, agenda, act, scenario with the set-aside cards and victory display out under their labels', async () => {
     await renderTheGathering('game-screen-encounter-test');

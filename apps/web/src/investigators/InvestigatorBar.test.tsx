@@ -636,6 +636,46 @@ describe('InvestigatorBar', () => {
       },
     );
 
+    it.each([
+      { stat: 'health', off: 'Heal damage' },
+      { stat: 'sanity', off: 'Heal horror' },
+      { stat: 'resources', off: 'Spend a resource' },
+    ])('turns "$off" off on the $stat counter, which holds none', ({ stat, off }) => {
+      // Alder has taken no damage or horror and holds no resource or clue.
+      const table = PlayTable.start(
+        newGame()
+          .withLocation(study, blankLocation('study'))
+          .withInvestigator(alder, {
+            locationId: study,
+            health: { max: 7, damage: 0 },
+            sanity: { max: 6, horror: 0 },
+            resources: 0,
+          }),
+      );
+      render(<InvestigatorBar board={table.board} actions={actionsOn(table)} busy={false} />);
+
+      const counter = panel('alder').querySelector<HTMLElement>(`[data-stat="${stat}"] dd > *`);
+      if (!counter) throw new Error(`alder has no ${stat} counter`);
+      doubleTap(counter);
+
+      expect(within(bubble()).getByRole('button', { name: off })).toHaveProperty('disabled', true);
+    });
+
+    it('keeps its buttons off while a step is queued', () => {
+      const table = PlayTable.start(alderInStudy);
+      const { rerender } = render(
+        <InvestigatorBar board={table.board} actions={actionsOn(table)} busy={false} />,
+      );
+      doubleTap(within(panel('alder')).getByRole('img', { name: '3' }));
+
+      rerender(<InvestigatorBar board={table.board} actions={actionsOn(table)} busy />);
+
+      const on = within(bubble())
+        .getAllByRole('button')
+        .filter((button) => !(button as HTMLButtonElement).disabled);
+      expect(on).toEqual([]);
+    });
+
     it('is titled with whose counter it changes', () => {
       const table = PlayTable.start(alderInStudy);
       render(<InvestigatorBar board={table.board} actions={actionsOn(table)} busy={false} />);
