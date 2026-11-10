@@ -33,6 +33,17 @@ describe('parseKeywords', () => {
     ]);
   });
 
+  it('keeps an "Otherwise" fallback as part of the spawn text', () => {
+    expect(parseKeywords('Spawn - Fake Room. Otherwise, Fake Hall. Hunter.', [])).toEqual([
+      { name: 'spawn', detail: 'Fake Room. Otherwise, Fake Hall' },
+      { name: 'hunter' },
+    ]);
+  });
+
+  it('reads no keywords from a line that starts with an "Otherwise" sentence', () => {
+    expect(parseKeywords('Otherwise, Fake Hall. Hunter.', [])).toEqual([]);
+  });
+
   it('reads patrol written with a location in parentheses', () => {
     expect(parseKeywords('Patrol (Fake Hall).', [])).toEqual([
       { name: 'patrol', detail: 'Fake Hall' },

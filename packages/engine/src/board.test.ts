@@ -19,6 +19,7 @@ import {
   type Rejection,
   type Zone,
 } from './index';
+import { extremeLocations, locationsWithMostClues } from './board';
 import { edge, rejectionFrom, rejectionOf, runFrom, stateAfter } from '../test/utils';
 
 const main = mapId('main');
@@ -632,6 +633,61 @@ describe('shortestPaths', () => {
     const { context, state } = table.withConnection(hall, cellar).start();
 
     expect(shortestPaths(context, state, hall, cellar)).toEqual([[hall, cellar]]);
+  });
+});
+
+describe('extremeLocations', () => {
+  const den = instanceId('den');
+  /** study - hall - cellar in a line; the den has no connection. */
+  const { context, state } = newGame()
+    .withLocation(study, studyCard)
+    .withLocation(hall, hallCard)
+    .withLocation(cellar, cellarCard)
+    .withLocation(den, blankLocation('den'))
+    .withConnection(study, hall)
+    .withConnection(hall, cellar)
+    .start();
+
+  it.each([
+    { which: 'nearest', pool: [hall, cellar], expected: [hall] },
+    { which: 'farthest', pool: [hall, cellar], expected: [cellar] },
+    { which: 'farthest', pool: [hall, den], expected: [den] },
+    { which: 'nearest', pool: [cellar, den], expected: [cellar] },
+    { which: 'nearest', pool: [den], expected: [den] },
+    { which: 'nearest', pool: [], expected: [] },
+  ] as const)('finds the $which of $pool from the study', ({ which, pool, expected }) => {
+    expect(extremeLocations(context, state, study, pool, which)).toEqual(expected);
+  });
+
+  it('keeps every location tied for the distance', () => {
+    const { context: forkContext, state: fork } = newGame()
+      .withLocation(study, studyCard)
+      .withLocation(hall, hallCard)
+      .withLocation(cellar, cellarCard)
+      .withConnection(study, hall)
+      .withConnection(study, cellar)
+      .start();
+
+    expect(extremeLocations(forkContext, fork, study, [hall, cellar], 'farthest')).toEqual([
+      hall,
+      cellar,
+    ]);
+  });
+});
+
+describe('locationsWithMostClues', () => {
+  it.each([
+    { name: 'the one with the most', clues: { study: 1, hall: 3 }, expected: [hall] },
+    { name: 'every tied one', clues: { study: 2, hall: 2 }, expected: [study, hall] },
+    { name: 'all of them with no clues', clues: { study: 0, hall: 0 }, expected: [study, hall] },
+  ])('returns $name', ({ clues, expected }) => {
+    const { context, state } = newGame()
+      .withLocation(study, studyCard, { clues: clues.study })
+      .withLocation(hall, hallCard, { clues: clues.hall })
+      .withCard(attic, atticCard, setAside)
+      .start();
+
+    expect(locationsWithMostClues(context, state)).toEqual(expected);
   });
 });
 

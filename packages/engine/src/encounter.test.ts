@@ -917,7 +917,7 @@ describe('surge after the drawn card has resolved', () => {
     abilities: [whenRevealed(takeDamage(8))],
   });
   const choosyFoe = blankEnemy('choosy_foe', {
-    keywords: [{ name: 'surge' }, { name: 'spawn', detail: 'the location with the most clues' }],
+    keywords: [{ name: 'surge' }, { name: 'spawn', detail: 'wherever the stars are right' }],
   });
 
   /**

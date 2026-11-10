@@ -10,6 +10,12 @@
 - "Spawn – Any empty location" (Acolyte, Wizard of the Order): an [empty location](https://arkhamdb.com/rules#Empty_Location) has no enemies and no investigators at it.
   - Other cards there, such as a story asset, don't count.
   - With none, the enemy is discarded.
+- "Spawn – Any location (empty, if able)": an empty location if there is one, else any location.
+- "Nearest / Farthest (empty) location", "Location farthest from you", "A or B (whichever is nearest to you)": counted in connections from the location of the investigator spawning the enemy (for the forms that don't say "you", our reading; not the same as [Farthest from all investigators](https://arkhamdb.com/rules#Farthest_from_all_investigators)).
+  - A location with no path there counts as farther than every location with one, so it can still be the nearest when nothing else qualifies ([FAQ on Mysterious Chanting](https://arkhamdb.com/card/03139), see [hunter.md](hunter.md); for "farthest", our reading).
+  - With nobody spawning it, the players choose among the locations that meet the rest of the instruction (for example, the empty ones), our reading.
+- "Any [[Trait]] location", "Location with the most clues", "Any location connected to yours": the locations in play that match; ties go to the investigator spawning it.
+- "X. Otherwise, Y." (Jeremiah Pierce): Y only when X gives no location in play.
 - An enemy is either engaged (in an investigator's threat area, which counts as that investigator's location and moves with them) or unengaged at a location.
 - A **ready, unengaged** enemy engages as soon as it shares a location with an investigator: when it spawns there, moves there, or an investigator moves in.
   - With several investigators present, [prey](prey.md) decides, then the lead investigator.

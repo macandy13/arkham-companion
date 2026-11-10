@@ -218,6 +218,35 @@ export function locationsNamed(
 }
 
 /**
+ * The locations of `pool` nearest to or farthest from `from`, counted in connections, ties kept
+ * for the players to resolve. A location with no path there is an infinite number of locations
+ * away (FAQ on Mysterious Chanting): it is the farthest whenever one is in the pool, and the
+ * nearest only when nothing in the pool can be reached.
+ */
+export function extremeLocations(
+  ctx: EngineContext,
+  state: GameState,
+  from: InstanceId,
+  pool: readonly InstanceId[],
+  which: 'nearest' | 'farthest',
+): InstanceId[] {
+  const distances = pool.map((id) => {
+    const [path] = shortestPaths(ctx, state, from, id);
+    return { id, distance: path === undefined ? Infinity : path.length - 1 };
+  });
+  const all = distances.map(({ distance }) => distance);
+  const best = which === 'nearest' ? Math.min(...all) : Math.max(...all);
+  return distances.filter(({ distance }) => distance === best).map(({ id }) => id);
+}
+
+/** The locations in play with the most clue tokens, all of them when tied ("the location with the most clues"). */
+export function locationsWithMostClues(ctx: EngineContext, state: GameState): InstanceId[] {
+  const locations = locationsInPlay(ctx, state);
+  const most = Math.max(...locations.map((card) => card.tokens.clue ?? 0));
+  return locations.filter((card) => (card.tokens.clue ?? 0) === most).map((card) => card.id);
+}
+
+/**
  * Breadth-first search from `from`, stopping after the level that reaches `to`.
  * Maps each visited location to all its neighbours one step closer to `from`.
  */
