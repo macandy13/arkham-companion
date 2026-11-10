@@ -1,4 +1,10 @@
-import { firstSteps, isLocationInPlay, requireLocationInPlay, shortestPaths } from './board';
+import {
+  firstSteps,
+  isLocationInPlay,
+  neighbours,
+  requireLocationInPlay,
+  shortestPaths,
+} from './board';
 import type { CardStats, EngineContext } from './cards';
 import type {
   DamageEnemy,
@@ -11,8 +17,9 @@ import type {
   MoveEnemy,
   MoveEnemyTowards,
   ReadyEnemy,
+  RetreatEnemy,
 } from './commands';
-import { chooseLocation, engageEvents } from './engagement';
+import { chooseLocation, engageEvents, investigatorsAt } from './engagement';
 import type { EnemyDefeated, EnemyDisengaged, EnemyEngaged, Event, ExhaustChanged } from './events';
 import { enemyHealth, enemyOf, isEngagedWith, isEnemyOnTable, locationOf } from './enemies';
 import { activeInvestigator, requireInvestigator } from './investigators';
@@ -235,6 +242,41 @@ function defeated(state: GameState, enemy: CardInstance, stats: CardStats): Enem
     to: hasVictory ? victoryDisplay : encounterDiscard,
     locationId: locationOf(state, enemy),
   };
+}
+
+/**
+ * `RetreatEnemy`: the elusive retreat. The destination is a connecting location without
+ * investigators if there is one, else any connecting location; with none the enemy only
+ * disengages and exhausts. It exhausts on arrival, so it engages nobody there.
+ */
+export function handleRetreatEnemy(
+  ctx: EngineContext,
+  state: GameState,
+  cmd: RetreatEnemy,
+): Event[] {
+  const enemy = state.cards[cmd.enemyId];
+  if (enemy === undefined || !isEnemyOnTable(enemy) || enemy.exhausted) return [];
+  const connecting = neighbours(ctx, state, locationOf(state, enemy));
+  if (cmd.to !== undefined && !connecting.includes(cmd.to))
+    throw new CommandRejected({ code: 'notConnected', from: locationOf(state, enemy), to: cmd.to });
+  const empty = connecting.filter((id) => investigatorsAt(state, id).length === 0);
+  const pool = empty.length > 0 ? empty : connecting;
+  if (cmd.to === undefined && pool.length > 1)
+    return chooseLocation(
+      ctx,
+      state,
+      enemy.id,
+      `retreat:${enemy.id}`,
+      'decision.chooseEnemyDestination',
+      pool,
+      (to) => ({ type: 'RetreatEnemy', enemyId: enemy.id, to }),
+    );
+  const to = cmd.to ?? pool[0];
+  const events: Event[] = enemy.zone.kind === 'engaged' ? [disengaged(state, enemy)] : [];
+  const unengaged = replay(events, state).cards[enemy.id] ?? enemy;
+  if (to !== undefined)
+    events.push(moveCardEvent(unengaged, { kind: 'atLocation', locationId: to }));
+  return [...events, exhaustChange(enemy.id, true)];
 }
 
 function disengaged(state: GameState, enemy: CardInstance): EnemyDisengaged {

@@ -226,7 +226,8 @@ function investigateCommands(
  * A passed attack deals the confirmed damage (the attack's by default). A
  * failed one deals the attack's damage to the other investigator the enemy is
  * engaged with, if any (see `failedFightCommands`), and then lets a ready
- * retaliate enemy attack the fighter (`keywordAttackCommands`).
+ * retaliate enemy attack the fighter (`keywordAttackCommands`). An elusive enemy then retreats
+ * (`RetreatEnemy`).
  */
 function fightCommands(
   ctx: EngineContext,
@@ -235,11 +236,17 @@ function fightCommands(
   { enemyId, damage }: { enemyId: InstanceId; damage: number },
   { outcome, amount = damage }: TestAnswer,
 ): Command[] {
-  if (outcome === 'pass') return [{ type: 'DamageEnemy', enemyId, amount }];
   const { enemy, stats } = enemyOf(ctx, state, enemyId);
+  // Rules Reference, "Elusive": after it is attacked, hit or miss. A retaliate attack comes
+  // first, and the enemy retreats after it as after any attack it makes (`keywordAbilities`).
+  const retreat: Command[] = hasKeyword(stats, 'elusive')
+    ? [{ type: 'RetreatEnemy', enemyId }]
+    : [];
+  if (outcome === 'pass') return [{ type: 'DamageEnemy', enemyId, amount }, ...retreat];
+  const retaliation = keywordAttackCommands(ctx, state, 'retaliate', enemy, stats, investigator.id);
   return [
     ...failedFightCommands(state, investigator, enemy, damage),
-    ...keywordAttackCommands(ctx, state, 'retaliate', enemy, stats, investigator.id),
+    ...(retaliation.length > 0 ? retaliation : retreat),
   ];
 }
 

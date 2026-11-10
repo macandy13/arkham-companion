@@ -50,6 +50,7 @@ import {
   theOnlyCopy,
   type CardFilter,
 } from './lookup';
+import { hasKeyword } from './keywords';
 import type { AddMapStep } from './setup';
 import type {
   CardInstance,
@@ -366,6 +367,7 @@ export type AbilityCommand =
           | 'EngageReadyEnemies'
           | 'ReadyEnemy'
           | 'ExhaustEnemy'
+          | 'RetreatEnemy'
           | 'GainSurge'
           | 'MoveInvestigator'
           | 'AddMap'
@@ -703,7 +705,8 @@ export function abilitySteps(
 ): AbilityStep[] {
   const card = state.cards[opened.cardId];
   if (!card) return [];
-  return (cardStats(ctx.cards, card.code).abilities ?? [])
+  const stats = cardStats(ctx.cards, card.code);
+  return [...(stats.abilities ?? []), ...keywordAbilities(stats)]
     .filter((ability) => shallowEqual<TimingWindow>(ability.window, opened.window))
     .filter(
       (ability) =>
@@ -713,6 +716,15 @@ export function abilitySteps(
       range(timesFor(ctx, state, ability, opened)).flatMap(() => ability.effects),
     )
     .map((effect) => ({ kind: 'ability', effect, opened, origin: effect.type }));
+}
+
+/**
+ * The forced abilities a keyword gives a card on top of its printed ones: an elusive enemy
+ * retreats after it attacks (Rules Reference, "Elusive"); after it is attacked is part of the
+ * fight's results (`fightCommands`), which no window covers.
+ */
+function keywordAbilities(stats: CardStats): Ability[] {
+  return hasKeyword(stats, 'elusive') ? [afterAttacking(retreatEnemy(self()))] : [];
 }
 
 /** How often `ability`'s effects resolve: once, or once per enemy its `perEnemy` names. */
@@ -2000,6 +2012,14 @@ export function readySelf(): AbilityEffect {
  */
 export function dealDamageTo(enemy: RelativeCard, amount: number): AbilityEffect {
   return { type: 'DamageEnemy', enemyId: enemy, amount };
+}
+
+/**
+ * The elusive retreat (`RetreatEnemy`): disengage, move to a connecting location (one without
+ * investigators if able) and exhaust.
+ */
+export function retreatEnemy(enemy: RelativeCard): AbilityEffect {
+  return { type: 'RetreatEnemy', enemyId: enemy };
 }
 
 /**

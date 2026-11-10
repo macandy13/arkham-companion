@@ -50,7 +50,7 @@ Some effects in detail:
 - "This card gains surge" (`GainSurge`) marks the resolving card (`CardInstance.gainedSurge`), and placing it queues the surge draw a printed surge would have queued.
 - A drawn treachery with a `revealed` ability asks before its revelation (`revelationDecision`, id `revelation:<card>`, `isRevelationDecision`): the draw marks itself (`EncounterCardDrawn.asksRevelation`), so `CardFlipped` opens no `revealed` window, and the players answer with `ResolveRevelation`. `RevelationResolved` opens the window, or none when `cancelled` (Ward of Protection), and the queued placement and surge go on either way. The players see the card before they choose, so a cancel needs no replay; a treachery without a `revealed` ability, which the players resolve by hand, asks nothing.
 
-`windowsOpenedBy` maps an event to the windows it opens.
+`windowsOpenedBy` maps an event to the windows it opens. `abilitySteps` adds the abilities a keyword gives (`keywordAbilities`): an elusive enemy's `afterAttacking(retreatEnemy(self()))`; its retreat after being attacked is part of the fight's results (`fightCommands`), as no window opens there.
 
 ## Templated commands
 

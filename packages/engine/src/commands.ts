@@ -82,6 +82,7 @@ export type Command =
   | ResolveRevelation
   | DefeatEnemy
   | ExhaustEnemy
+  | RetreatEnemy
   | EvadeEnemy
   | ReadyEnemy
   | MoveEnemy
@@ -902,6 +903,20 @@ export interface EvadeEnemy {
   type: 'EvadeEnemy';
   enemyId: InstanceId;
   investigatorId: InvestigatorId;
+}
+
+/**
+ * Rules Reference, "Elusive": after a ready elusive enemy attacks or is attacked, it disengages,
+ * moves to a connecting location (one without investigators if able) and exhausts. Without `to`
+ * the engine picks the destination, or asks the lead investigator between equal ones with a
+ * `chooseLocation` whose options name `to`. Does nothing for an exhausted enemy or one that left
+ * the table meanwhile. Produces `EnemyDisengaged`, `CardMoved` and `ExhaustChanged`.
+ */
+export interface RetreatEnemy {
+  type: 'RetreatEnemy';
+  enemyId: InstanceId;
+  /** A location connecting to the enemy's, as the answer to the choice. */
+  to?: InstanceId;
 }
 
 /**
