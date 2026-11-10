@@ -55,7 +55,7 @@
     #board dialog[data-shell],
     #board dialog[data-shell] hgroup > p,
     #shelf li[data-initial],
-    #wizard li > [data-initial]
+    #wizard > dl > dd li > [data-initial]
   )
   > picture
   > img {
@@ -71,7 +71,7 @@
     #board dialog[data-shell],
     #board dialog[data-shell] hgroup > p,
     #shelf li[data-initial],
-    #wizard li > [data-initial]
+    #wizard > dl > dd li > [data-initial]
   )
   > picture:not([data-picture])
   > img {
