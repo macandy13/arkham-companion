@@ -136,7 +136,7 @@ function failedFightCommands(
 /**
  * `Evade`: an agility test against the evade value of an enemy engaged with
  * the investigator (a massive enemy at their location counts, see
- * `enemyAttackList`). Its consequences follow the answer (`evadeCommands`).
+ * `enemyAttackList`). Its consequences follow the answer (`resultCommands`).
  */
 export function handleEvade(ctx: EngineContext, state: GameState, cmd: Evade): DecisionRequested[] {
   const investigator = activeInvestigator(state, cmd.investigatorId);
