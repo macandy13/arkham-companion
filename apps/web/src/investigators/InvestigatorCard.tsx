@@ -58,29 +58,25 @@ export function InvestigatorCard({
 /**
  * The whole card itself, as `InvestigatorCard` shows it and the phone's expanded investigator bar
  * in place of the strip: the face drawn `full`, the name (`nameId` names what it labels) and
- * subname on its plates, the skills and counters (`children`) and the notebook page. In the bar
- * the players may be `adjusting` the board, which brings out the counters' steppers.
+ * subname on its plates, the skills and counters (`children`) and the notebook page.
  */
 export function WholeCard({
   investigator,
   printed,
   picture,
   nameId,
-  adjusting = false,
   children,
 }: {
   investigator: InvestigatorView;
   printed: PrintedInvestigator | undefined;
   picture: CardPicture | undefined;
   nameId: string;
-  adjusting?: boolean;
   children: ReactNode;
 }) {
   return (
     <article
       data-card="investigator"
       data-picture={picture?.shown ? 'shown' : undefined}
-      data-adjusting={adjusting || undefined}
       data-shape="full"
     >
       <InvestigatorFace

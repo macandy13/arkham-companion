@@ -558,8 +558,7 @@
 /*
  * The phone's location mode (LocationFocus) and the page of the location details
  * (LocationDetails, on the card shell, card_dialog.css), the same parts (LocationPage): who is
- * there, the attached cards, then the corrections while adjusting (one row per token stepper) or
- * the action row (action_row.css). The location mode adds the name, the card and its shroud and
+ * there, the attached cards, then the action row (action_row.css). The location mode adds the name, the card and its shroud and
  * clues as a line, which the dialog shows as its title, its card and its values.
  */
 #map [data-mode='location'] {
@@ -590,7 +589,7 @@
   filter: var(--piece-shadow);
 }
 
-/* Who is there, the attached cards and the corrections: each a column under its small title. */
+/* Who is there and the attached cards: each a column under its small title. */
 #map :is(dialog[data-dialog='location'] > article, [data-mode='location']) > section {
   display: flex;
   flex-direction: column;
@@ -608,22 +607,6 @@
 #map :is(dialog[data-dialog='location'] > article, [data-mode='location']) > section > ul {
   margin: 0;
   padding-left: var(--space-3);
-}
-
-/* A token stepper of the corrections: its count, then − and +. */
-#map :is(dialog[data-dialog='location'] > article, [data-mode='location']) section section {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-}
-
-#map :is(dialog[data-dialog='location'] > article, [data-mode='location']) section section p {
-  flex: 1;
-  margin: 0;
-}
-
-#map :is(dialog[data-dialog='location'] > article, [data-mode='location']) section section button {
-  min-width: var(--touch-target);
 }
 
 /* A tap on a tile opens its details. */

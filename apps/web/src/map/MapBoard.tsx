@@ -47,14 +47,11 @@ import './map.css';
  * later). The players pan, zoom and pinch each map, and move pieces by dragging them
  * (`MapDrawing`), which plays `actions`; no piece moves while a step is still queued (`busy`,
  * `OpenGame.busy`), since the turn it was dragged in may have ended by the time the move plays.
- * While the players adjust the board (`adjusting`, `OpenGame.adjusting`), a tile's details offer
- * corrections and the pieces stay put, since a move is a step of play, not a correction.
  */
 export function MapBoard({
   board,
   actions,
   busy,
-  adjusting,
   onPick,
   pickable,
   onOpenLocation,
@@ -62,7 +59,6 @@ export function MapBoard({
   board: BoardView;
   actions: GameActions;
   busy: boolean;
-  adjusting: boolean;
   /**
    * While the players choose a location (an enemy's spawn, a decision's answer), a tap on a tile
    * picks it, the tiles they may pick lit (`pickable`).
@@ -87,7 +83,6 @@ export function MapBoard({
         board={board}
         actions={actions}
         busy={busy}
-        adjusting={adjusting}
         onPick={onPick}
         pickable={pickable}
         onOpenLocation={onOpenLocation}
@@ -139,7 +134,6 @@ export function MapBoard({
           board={board}
           actions={actions}
           busy={busy}
-          adjusting={adjusting}
           onPick={onPick}
           pickable={pickable}
           onOpenLocation={onOpenLocation}
@@ -178,10 +172,10 @@ type DraggedPiece = TilePiece & { from: InstanceId };
  *   which heals it; a drop anywhere else leaves the damage where it is.
  *
  * A tap on a tile opens its details (`LocationDetails`): what the investigator whose turn it is
- * can do there, or while adjusting the corrections, when no piece is dragged; on a phone it calls
+ * can do there, when no piece is dragged; on a phone it calls
  * `onOpenLocation` instead, which shows the location in place of the map. A double tap on a tile
- * opens the − / + bubble of its clues and doom instead (`LocationBubble`), unless a step is queued,
- * the players pick a location or adjust the board; the map's own zoom on a double click is off
+ * opens the − / + bubble of its clues and doom instead (`LocationBubble`), unless a step is queued
+ * or the players pick a location; the map's own zoom on a double click is off
  * over the tiles for it. A tap on an enemy
  * token opens the enemy's details (`EnemyDetails`), the same as from the threat area, with what
  * the investigator whose turn it is may do to it (`BoardView.enemyActions`): an enemy at their
@@ -193,7 +187,6 @@ function MapDrawing({
   board,
   actions,
   busy,
-  adjusting,
   onPick,
   pickable,
   onOpenLocation,
@@ -202,7 +195,6 @@ function MapDrawing({
   board: BoardView;
   actions: GameActions;
   busy: boolean;
-  adjusting: boolean;
   onPick?: (location: InstanceId) => void;
   pickable?: readonly InstanceId[] | undefined;
   onOpenLocation?: (location: InstanceId) => void;
@@ -223,8 +215,8 @@ function MapDrawing({
     (enemy, anchor) => setEnemyBubble({ enemy, anchor }),
     setEnemyFor,
   );
-  // A step of play, so not while one is queued, while picking a location or adjusting the board.
-  const stepping = !busy && !adjusting && !onPick;
+  // A step of play, so not while one is queued or while picking a location.
+  const stepping = !busy && !onPick;
   const glideFromDrop = useGlides(svg, board, places);
   const onPawnOf = (investigator: InvestigatorId, point: Point) => {
     const centre = pawnCentre(places, investigator);
@@ -283,14 +275,14 @@ function MapDrawing({
   const enemiesHere = Object.values(map.enemies).flat();
   const tappedEnemy = enemiesHere.find(({ id }) => id === enemyFor);
   // Gone once defeated, or moved off this map, which closes its bubble.
-  const bubbleEnemy =
-    adjusting || onPick ? undefined : enemiesHere.find(({ id }) => id === enemyBubble?.enemy);
+  const bubbleEnemy = onPick ? undefined : enemiesHere.find(({ id }) => id === enemyBubble?.enemy);
   const detailsLocation = map.locations.find(({ id }) => id === detailsFor);
   // Kept open while its own step is queued, its buttons off, so it doesn't flicker on each tap.
-  const bubbleLocation =
-    adjusting || onPick ? undefined : map.locations.find(({ id }) => id === bubble?.location);
+  const bubbleLocation = onPick
+    ? undefined
+    : map.locations.find(({ id }) => id === bubble?.location);
   const draggable = (piece: TilePiece) =>
-    !busy && !adjusting && ('investigator' in piece ? piece.investigator.id === mover?.id : true);
+    !busy && ('investigator' in piece ? piece.investigator.id === mover?.id : true);
   const { width, height } = drawingSize(Object.values(cells));
   return (
     <figure aria-labelledby={captionId}>
@@ -373,7 +365,6 @@ function MapDrawing({
           location={detailsLocation}
           actions={actions}
           busy={busy}
-          adjusting={adjusting}
           onClose={() => setDetailsFor(undefined)}
         />
       )}

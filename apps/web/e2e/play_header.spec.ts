@@ -3,8 +3,7 @@ import { houseOpenedExport, resumeImportedGame } from './fixtures/saved_games';
 import { startQuickGame } from './fixtures/wizard';
 
 // Journey: run the game clock from the header and the status row – read the agenda's doom and the
-// act's clues, correct the doom while adjusting the board and keep the correction with "Done", move
-// on a phase, see why a step is refused, go back to a step from the game log and take a step back,
+// act's clues, correct the doom in the agenda's − / + bubble, move on a phase, see why a step is refused, go back to a step from the game log and take a step back,
 // then back the game up from the menu.
 test('play the phases from the header', async ({ page }) => {
   await test.step('Start a quick game', async () => {
@@ -22,20 +21,13 @@ test('play the phases from the header', async ({ page }) => {
     ).toBeVisible();
   });
 
-  await test.step('Adjust the board: add doom to the agenda and take it off again', async () => {
-    await page.getByRole('button', { name: 'Adjust board' }).click();
-    await page.getByRole('button', { name: 'Add doom' }).click();
+  await test.step('Put doom on the agenda from the bubble a double tap on it opens', async () => {
+    await page.getByRole('region', { name: 'Agenda' }).locator('[data-card="agenda"]').dblclick();
+    const bubble = page.getByRole('complementary', { name: "What's Going On?! · Doom" });
+    await bubble.getByRole('button', { name: 'Add doom' }).click();
     await expect(page.getByRole('img', { name: 'Doom 1 / 3' })).toBeVisible();
-    await page.getByRole('button', { name: 'Remove doom' }).click();
-    await expect(page.getByRole('img', { name: 'Doom 0 / 3' })).toBeVisible();
-  });
-
-  await test.step('Put doom on the agenda and keep the correction with "Done"', async () => {
-    await page.getByRole('button', { name: 'Add doom' }).click();
-    await expect(page.getByRole('img', { name: 'Doom 1 / 3' })).toBeVisible();
-    await page.getByRole('button', { name: 'Done' }).click();
-    await expect(page.getByRole('button', { name: 'Add doom' })).toBeHidden();
-    await expect(page.getByRole('img', { name: 'Doom 1 / 3' })).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(bubble).toBeHidden();
   });
 
   await test.step('Move on to the investigation phase', async () => {
@@ -77,7 +69,7 @@ test('play the phases from the header', async ({ page }) => {
     await expect(page.getByRole('img', { name: 'Doom 1 / 3' })).toBeVisible();
   });
 
-  await test.step('Undo the whole correction in one step', async () => {
+  await test.step('Undo the doom correction', async () => {
     await page.getByRole('button', { name: 'Undo' }).click();
     await expect(page.getByRole('img', { name: 'Doom 0 / 3' })).toBeVisible();
   });

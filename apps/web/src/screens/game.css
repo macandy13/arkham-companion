@@ -665,19 +665,13 @@
   height: 100%;
 }
 
-/* Its footer: the steppers and card actions, then the act's Advance, centred like an action row. */
+/* Its footer: the card actions, then the act's Advance, centred like an action row. */
 #board > header dialog[data-dialog='book'] > article > footer {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-2);
   justify-content: center;
   align-items: end;
-}
-
-/* While the players adjust the board, a dashed brass line round the map says it is open for corrections. */
-#board[data-adjusting] > #map {
-  outline: var(--adjust-outline-width) dashed var(--color-accent);
-  outline-offset: calc(-1 * var(--space-1));
 }
 
 /*
@@ -728,8 +722,7 @@
 }
 
 /*
- * The board's next steps follow the design language (base.css): "Next" (or "Done" while
- * adjusting) in the status row and the turn's own step in an investigator's panel ("Start turn",
+ * The board's next steps follow the design language (base.css): "Next" in the status row and the turn's own step in an investigator's panel ("Start turn",
  * "End") are one brass pill of one size, so the two read as the same kind of button. It stands
  * under #board, or the panel's outlined pills (investigators.css) would win over the brass. It
  * lies on the table, so a table skin tints it.
@@ -761,10 +754,6 @@
   color: var(--color-accent);
 }
 
-#status button[data-icon='adjust']::before {
-  mask-image: url('./icons/adjust.svg');
-}
-
 #status button[data-icon='undo']::before {
   mask-image: url('./icons/undo.svg');
 }
@@ -783,10 +772,10 @@
 }
 
 /*
- * The menu's copies of "Adjust board" and the game log are for a phone, whose status row leaves
- * them out; there they read as the menu's other entries (base.css).
+ * The menu's copy of the game log is for a phone, whose status row leaves
+ * it out; there it reads as the menu's other entries (base.css).
  */
-#status nav li:has(> button:is([data-icon='adjust'], [data-icon='log'])) {
+#status nav li:has(> button[data-icon='log']) {
   display: none;
 }
 
@@ -1014,13 +1003,13 @@
 
   /*
    * Thumbs tap the status row, so it keeps Next, undo and the menu at a whole touch target, and
-   * "Adjust board" and the game log move into the menu.
+   * the game log moves into the menu.
    */
-  #board > #status > button:is([data-icon='adjust'], [data-icon='log']) {
+  #board > #status > button[data-icon='log'] {
     display: none;
   }
 
-  #status nav li:has(> button:is([data-icon='adjust'], [data-icon='log'])) {
+  #status nav li:has(> button[data-icon='log']) {
     display: list-item;
   }
 

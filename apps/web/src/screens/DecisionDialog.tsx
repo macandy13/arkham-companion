@@ -20,10 +20,10 @@ import { CardDialog } from './CardDialog';
  * card can test a different one), set their modifier and let the app draw, and the calculation
  * (`BoardView.skillTest`) marks the option it suggests, which then answers with its margin; the
  * other option overrides it without one. The screen mounts one dialog per decision, so a draw
- * never carries over to the next; adjusting the board, which unmounts it, starts the draw over.
+ * never carries over to the next.
  * The game cannot go on before it is answered, so Escape does not close it; Undo takes back
  * the step that raised it instead, and its grab handle lowers it out of the way, so the players
- * can adjust the board on the game screen first (the screen hides it while they adjust). A
+ * can change the board on the game screen first. A
  * decision whose options pick locations (`DecisionView.locations`) offers to pick one on the map:
  * the dialog lowers while the screen lights them (`picking`, `onPicking`), and raising it stops. The engine's labels are i18n keys or names already readable
  * (investigators, locations); a key the strings lack shows as the option's readable name.

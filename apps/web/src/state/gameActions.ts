@@ -22,11 +22,11 @@ import { assertNever } from '@arkham/util';
 
 /**
  * The tokens the players place, move and take back by hand (`adjustTokens`): the clues and doom a
- * location's steppers change, and those dragged to and from the token pool.
+ * location's − / + bubble changes, and those dragged to and from the token pool.
  */
 export type LooseToken = Extract<TokenKind, 'clue' | 'doom'>;
 
-/** The investigator counters the screen's +/− steppers change. */
+/** The investigator counters the screen's − / + bubbles change. */
 export type SteppedStat = Extract<InvestigatorStat, 'resources' | 'damage' | 'horror'>;
 
 /** Whether a step on the turn spends one of the investigator's actions or is free (a card allows it). */
@@ -144,7 +144,7 @@ export interface GameActions {
    */
   advanceAct(spend?: readonly ClueSpend[]): Promise<void>;
   /**
-   * The act card's +/− steppers: `delta` more (or, negative, fewer) clues on the current act, a
+   * The act's − / + bubble: `delta` more (or, negative, fewer) clues on the current act, a
    * correction by hand that leaves the investigators' clues alone.
    */
   adjustActClues(delta: number): Promise<void>;
@@ -197,31 +197,13 @@ export interface GameActions {
    * doom placed.
    */
   moveDoom(from: InstanceId, to: InstanceId): Promise<void>;
-  /** Takes back the last step; never the scenario start. While adjusting, the last tap. */
+  /** Takes back the last step; never the scenario start. */
   undo(): Promise<void>;
   /**
    * Goes back to right after the step `stepId` of the game log (`LogStep.id`): every later step is
-   * taken back. Does nothing while adjusting.
+   * taken back.
    */
   undoTo(stepId: string): Promise<void>;
-  /**
-   * "Adjust board": the actions after it change the screen only, until `finishAdjusting` stores
-   * them all as one step, so one undo takes the whole correction back, or `cancelAdjusting` drops
-   * them (`OpenGame.adjusting` meanwhile). Every action joins the adjustment, so the screen offers
-   * only corrections while it lasts.
-   */
-  startAdjusting(): Promise<void>;
-  /** "Done": stores the adjustment as one step. */
-  finishAdjusting(): Promise<void>;
-  /** "Cancel": drops the adjustment; the board is as it was before `startAdjusting`. */
-  cancelAdjusting(): Promise<void>;
-}
-
-/** How the open game starts, stores and drops an adjustment (`GameSession`'s adjusting verbs). */
-export interface Adjusting {
-  start(): Promise<void>;
-  finish(): Promise<void>;
-  cancel(): Promise<void>;
 }
 
 /**
@@ -232,7 +214,6 @@ export interface Adjusting {
 export function gameActions(
   play: (step: (table: PlayTable) => void) => Promise<void>,
   undo: (toStep?: string) => Promise<void>,
-  adjusting: Adjusting,
 ): GameActions {
   const onTurn = (action: (table: PlayTable, investigator: InvestigatorId) => void) =>
     play((table) => action(table, turnInvestigator(table.state)));
@@ -393,9 +374,6 @@ export function gameActions(
       }),
     undo: () => undo(),
     undoTo: (stepId) => undo(stepId),
-    startAdjusting: adjusting.start,
-    finishAdjusting: adjusting.finish,
-    cancelAdjusting: adjusting.cancel,
   };
 }
 

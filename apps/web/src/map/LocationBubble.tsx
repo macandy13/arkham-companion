@@ -7,7 +7,7 @@ import type { GameActions } from '../state/gameActions';
  * The − / + bubble a double tap on a location's tile opens (M6.10), titled with its name: its
  * clues once revealed, since an unrevealed location holds none yet, and its doom, also at none,
  * which the tile only shows once there is some. Each step is a correction of the tokens on it
- * (`GameActions.adjustTokens`), as the location details' steppers did while adjusting the board;
+ * (`GameActions.adjustTokens`);
  * its buttons are off while a step is queued (`busy`).
  */
 export function LocationBubble({

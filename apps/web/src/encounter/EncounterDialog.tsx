@@ -19,9 +19,8 @@ export type HeaderPileKind = 'discard' | 'setAside' | 'victoryDisplay';
  * cards are left with a "Draw for …" button per active investigator (the one whose turn it is
  * first), as player cards and effects make an investigator draw outside the mythos phase. A draw
  * closes the dialog, so the card resolves in front of the players (its decisions in the decision
- * dialog); nothing is drawn while a step is queued (`busy`), while the players adjust the board
- * (`adjusting`, since a draw is play, not a correction) or when deck and discard pile are both
- * empty. Opened on a pile, it shows the pile's cards in a row (`PileStrip`) with the places the
+ * dialog); nothing is drawn while a step is queued (`busy`) or when deck and discard pile are
+ * both empty. Opened on a pile, it shows the pile's cards in a row (`PileStrip`) with the places the
  * players can put the chosen one (`CardMoves`), for a revelation the engine left to them; its
  * Spawn closes the dialog and hands the enemy to `onSpawn`, so the players pick the location on
  * the map. It is a wide page of the card shell without a card (`CardDialog`), since the piles'
@@ -32,7 +31,6 @@ export function EncounterDialog({
   start,
   actions,
   busy,
-  adjusting,
   onSpawn,
   onClose,
 }: {
@@ -40,7 +38,6 @@ export function EncounterDialog({
   start: EncounterPile;
   actions: GameActions;
   busy: boolean;
-  adjusting: boolean;
   onSpawn: (card: EncounterCardView) => void;
   onClose: () => void;
 }) {
@@ -84,7 +81,7 @@ export function EncounterDialog({
             <button
               key={investigator.id}
               type="button"
-              disabled={busy || adjusting || empty}
+              disabled={busy || empty}
               onClick={() => {
                 onClose();
                 void actions.drawEncounter(investigator.id);

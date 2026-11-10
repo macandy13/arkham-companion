@@ -15,8 +15,7 @@ import './game_log.css';
  * scrolled to the end, so the newest step shows first under its own heading. Each step is one
  * list item with whose turn it was, when it was stored and a line per thing it did. `state` is the
  * game after `log`. Every step but the newest undo group offers to go back to it (`onGoBack`,
- * after a confirm, then the log closes), unless the screen can't take steps back now (busy or
- * adjusting), which leaves `onGoBack` out. It is not tied to a moment in the game and grows long,
+ * after a confirm, then the log closes), unless the screen can't take steps back now (busy), which leaves `onGoBack` out. It is not tied to a moment in the game and grows long,
  * so it is a page of its own on the card shell (`CardDialog`, without a card): the whole height of
  * a tablet at the wide dialog width, the whole screen of a phone held upright, its steps scrolling
  * inside under the scenario's name (`scenario`) and the title (game_log.css). Above the steps the

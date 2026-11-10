@@ -27,9 +27,9 @@ test('answer a decision in its dialog', async ({ page }) => {
 });
 
 // Journey: a decision waits, but the board needs a correction first – the players lower the dialog
-// out of the way, adjust the board from the header to boost Roland Banks' intellect, as a card in
-// play does, keep it, and the decision comes back raised with the boost in its test.
-test('lower a decision to adjust the board first', async ({ page }) => {
+// out of the way, boost Roland Banks' intellect in its bubble on his card, as a card in play does,
+// and raise the decision again with the boost in its test.
+test('lower a decision to correct the board first', async ({ page }) => {
   const decision = page.getByRole('dialog', { name: 'Investigate Hallway' });
   const roland = page.getByRole('region', { name: 'Roland Banks' });
 
@@ -43,14 +43,16 @@ test('lower a decision to adjust the board first', async ({ page }) => {
     await expect(decision.getByRole('button', { name: 'Raise the dialog' })).toBeVisible();
   });
 
-  await test.step("Boost Roland Banks' intellect while adjusting the board", async () => {
-    await page.getByRole('button', { name: 'Adjust board' }).click();
-    await expect(decision).toBeHidden();
-    await roland.getByRole('button', { name: 'Raise the Intellect boost' }).click();
-    await page.getByRole('button', { name: 'Done' }).click();
+  await test.step("Boost Roland Banks' intellect in the bubble on his card", async () => {
+    await roland.getByRole('button', { name: /^Intellect/ }).dblclick();
+    await page
+      .getByRole('complementary', { name: 'Roland Banks · Intellect boost' })
+      .getByRole('button', { name: 'Raise the Intellect boost' })
+      .click();
   });
 
-  await test.step('Find the decision back, raised, its intellect 4', async () => {
+  await test.step('Raise the decision again, its intellect 4', async () => {
+    await decision.getByRole('button', { name: 'Raise the dialog' }).click();
     await expect(decision.getByRole('button', { name: 'Lower to reach the board' })).toBeVisible();
     await expect(decision.getByRole('button', { name: 'Intellect 4' })).toBeVisible();
   });

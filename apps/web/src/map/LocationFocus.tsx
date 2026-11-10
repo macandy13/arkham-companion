@@ -21,7 +21,6 @@ export function LocationFocus({
   location,
   actions,
   busy,
-  adjusting,
   onGo,
   onMap,
 }: {
@@ -29,7 +28,6 @@ export function LocationFocus({
   location: LocationView;
   actions: GameActions;
   busy: boolean;
-  adjusting: boolean;
   onGo: (location: InstanceId) => void;
   onMap: () => void;
 }) {
@@ -61,7 +59,6 @@ export function LocationFocus({
         location={location}
         actions={actions}
         busy={busy}
-        adjusting={adjusting}
         titleId={titleId}
         around={(card) => (
           <Compass board={board} neighbours={neighbours} onGo={go}>

@@ -11,7 +11,7 @@ import {
   cardActionsOn,
   type ActionIcon,
 } from '../screens/ActionRow';
-import type { GameActions, LooseToken } from '../state/gameActions';
+import type { GameActions } from '../state/gameActions';
 import { CardPatterns, LocationTile } from './LocationTile';
 import { TILE } from './mapLayout';
 
@@ -29,14 +29,12 @@ export function LocationDetails({
   location,
   actions,
   busy,
-  adjusting,
   onClose,
 }: {
   board: BoardView;
   location: LocationView;
   actions: GameActions;
   busy: boolean;
-  adjusting: boolean;
   onClose: () => void;
 }) {
   const hosted = useDecisionHost();
@@ -58,7 +56,6 @@ export function LocationDetails({
         location={location}
         actions={actions}
         busy={busy}
-        adjusting={adjusting}
         onLeave={onClose}
         onTest={hosted.host}
       />
@@ -98,7 +95,6 @@ export function LocationContent({
   location,
   actions,
   busy,
-  adjusting,
   titleId,
   around,
   onLeave,
@@ -107,7 +103,6 @@ export function LocationContent({
   location: LocationView;
   actions: GameActions;
   busy: boolean;
-  adjusting: boolean;
   titleId: string;
   around?: (card: ReactNode) => ReactNode;
   onLeave?: () => void;
@@ -131,7 +126,6 @@ export function LocationContent({
         location={location}
         actions={actions}
         busy={busy}
-        adjusting={adjusting}
         {...(onLeave ? { onLeave } : {})}
       />
     </>
@@ -142,13 +136,12 @@ export function LocationContent({
  * The parts of a location both the details and the location mode show: who is there
  * (investigators and enemies), the cards attached to it, and under them one row of what the
  * investigator whose turn it is can do there (`locationActions`) and the actions the location's
- * card offers them (`CardActions`, such as the Parlor's Resign). While the players adjust the
- * board (`adjusting`), the row gives way to the corrections instead: reveal it and add or remove
- * its clues and doom, as a card effect or the table asks, so the screen keeps up with the physical
- * game; they are not steps of play, so the two never show together. It reads the location fresh
+ * card offers them (`CardActions`, such as the Parlor's Resign), and Reveal for an unrevealed one,
+ * as a card can tell the players to (its clues and doom change in its tile's − / + bubble,
+ * `LocationBubble`). It reads the location fresh
  * from the board, so its counts follow each step. A move, an investigation or a card action calls
  * `onLeave` first, for a view that should step aside then, except that an investigation calls
- * `onTest` instead when given, for a view that shows the test itself; corrections and a clue taken
+ * `onTest` instead when given, for a view that shows the test itself; Reveal and a clue taken
  * do neither, since those often come several at a time. Nothing is tapped while a step is queued (`busy`).
  */
 function LocationPage({
@@ -156,7 +149,6 @@ function LocationPage({
   location,
   actions,
   busy,
-  adjusting,
   onLeave,
   onTest,
 }: {
@@ -164,15 +156,13 @@ function LocationPage({
   location: LocationView;
   actions: GameActions;
   busy: boolean;
-  adjusting: boolean;
   onLeave?: () => void;
   onTest?: () => void;
 }) {
   const { t } = useTranslation();
-  const offered = adjusting ? [] : locationActions(board, location, actions);
-  const printed = adjusting ? [] : cardActionsOn(board, location.id);
-  // Revealing by hand, as a card can tell the players to, without adjusting the board (M6.10).
-  const revealable = !adjusting && !location.revealed;
+  const offered = locationActions(board, location, actions);
+  const printed = cardActionsOn(board, location.id);
+  const revealable = !location.revealed;
   const button = ({ key, icon, cost, play, then }: LocationAction) => (
     <ActionButton
       key={key}
@@ -205,7 +195,6 @@ function LocationPage({
       {location.attachments && (
         <Attached cards={board.cardsIn({ kind: 'attachedTo', hostId: location.id })} />
       )}
-      {adjusting && <Corrections location={location} actions={actions} busy={busy} />}
       {offered.length + printed.length > 0 || revealable ? (
         <footer>
           {offered.length > 0 && (
@@ -394,80 +383,6 @@ function Here({ board, location }: { board: BoardView; location: LocationView })
           ))}
         </ul>
       )}
-    </section>
-  );
-}
-
-/** The corrections while adjusting: reveal the location, and its clue and doom steppers. */
-function Corrections({
-  location,
-  actions,
-  busy,
-}: {
-  location: LocationView;
-  actions: GameActions;
-  busy: boolean;
-}) {
-  const { t } = useTranslation();
-  return (
-    <section aria-label={t('location.corrections')}>
-      {!location.revealed && (
-        <button
-          type="button"
-          disabled={busy}
-          onClick={() => void actions.revealLocation(location.id)}
-        >
-          {t('location.reveal')}
-        </button>
-      )}
-      <TokenStepper
-        token="clue"
-        count={location.clues}
-        onStep={(delta) => void actions.adjustTokens(location.id, 'clue', delta)}
-        busy={busy}
-      />
-      <TokenStepper
-        token="doom"
-        count={location.doom ?? 0}
-        onStep={(delta) => void actions.adjustTokens(location.id, 'doom', delta)}
-        busy={busy}
-      />
-    </section>
-  );
-}
-
-/** The count of one token on the location with − and + buttons; − is off at none. */
-function TokenStepper({
-  token,
-  count,
-  onStep,
-  busy,
-}: {
-  token: LooseToken;
-  count: number;
-  onStep: (delta: number) => void;
-  busy: boolean;
-}) {
-  const { t } = useTranslation();
-  return (
-    <section aria-label={t(`location.${token}.label`)}>
-      <p>{t(`location.${token}.count`, { count })}</p>
-      <button
-        type="button"
-        aria-label={t(`location.${token}.remove`)}
-        disabled={busy || count === 0}
-        onClick={() => onStep(-1)}
-      >
-        −
-      </button>
-      <button
-        type="button"
-        aria-label={t(`location.${token}.add`)}
-        disabled={busy}
-        onClick={() => onStep(1)}
-      >
-        +
-      </button>
     </section>
   );
 }

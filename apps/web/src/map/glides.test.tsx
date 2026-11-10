@@ -135,7 +135,7 @@ describe('useGlides in the map', () => {
         .withInvestigator(alder, { name: 'Alder', locationId: at }),
     );
   const mapOf = (table: ReturnType<typeof alderAt>) => (
-    <MapBoard board={table.board} actions={actionsOn(table)} busy={false} adjusting={false} />
+    <MapBoard board={table.board} actions={actionsOn(table)} busy={false} />
   );
   const motion = (reduce: boolean) =>
     vi.stubGlobal('matchMedia', () => ({ matches: reduce }) as MediaQueryList);
