@@ -8,7 +8,7 @@ Generic rules are small modules per subject, called by the handlers:
 - investigators and elimination ([`investigators.ts`](../../packages/engine/src/investigators.ts), [`elimination.ts`](../../packages/engine/src/elimination.ts)),
 - keywords ([`keywords.ts`](../../packages/engine/src/keywords.ts)).
 
-Keyword details are read from their printed text where the rule needs them: `spawn.ts` reads a spawn instruction alternative by alternative ("Your House. Otherwise, Rivertown.") as "Engaged with prey", a location filter (`spawnFilter`: empty, a trait, the most clues, connected to yours, nearest or farthest from the spawning investigator, via `extremeLocations` and `locationsWithMostClues` in `board.ts`) or a location name. Text it can't read becomes a choice among all locations in play, never a guess.
+Keyword details are read from their printed text where the rule needs them: `spawn.ts` reads a spawn instruction alternative by alternative ("Your House. Otherwise, Rivertown.") as "Engaged with prey", a location filter (`spawnFilter`: empty, a trait, the most clues, connected to yours, nearest or farthest from the spawning investigator, via `extremeLocations` and `locationsWithMostClues` in `board.ts`) or a location name. Text it can't read becomes a choice among all locations in play, never a guess. `prey.ts` reads a prey text as an extreme word (highest, most, lowest, fewest, least) and a measure (a counter, a skill with its lasting boost) or "nearest to another [[Trait]] enemy"; `preferredByPrey` keeps the tied investigators, and a prey it can't read (cards in hand, which the engine doesn't track) leaves all of them to the players with the `decision.choosePrey` prompt (`preyPrompt`).
 
 The rules are summarised in [rules.md](../rules.md).
 

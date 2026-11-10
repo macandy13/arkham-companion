@@ -2,7 +2,8 @@ import { firstSteps, neighbours, shortestPaths } from './board';
 import type { MoveHunter, MoveHunters } from './commands';
 import { CommandRejected } from './rejection';
 import { cardStats, type EngineContext } from './cards';
-import { chooseInvestigator, chooseLocation, engageEvents, preferredByPrey } from './engagement';
+import { chooseInvestigator, chooseLocation, engageEvents } from './engagement';
+import { preferredByPrey, preyPrompt } from './prey';
 import { cardOptionLabels, requestDecision } from './decisions';
 import type { Event } from './events';
 import { moveCardEvent } from './placement';
@@ -155,7 +156,9 @@ function hunterEvents(ctx: EngineContext, state: GameState, hunter: CardInstance
 
   const preferredIds = new Set(
     preferredByPrey(
-      stats,
+      ctx,
+      state,
+      hunter,
       nearest.map((route) => route.investigator),
     ).map((investigator) => investigator.id),
   );
@@ -168,7 +171,7 @@ function hunterEvents(ctx: EngineContext, state: GameState, hunter: CardInstance
       state,
       hunter.id,
       `hunter:${hunter.id}:investigator`,
-      'decision.chooseHunterTarget',
+      preyPrompt(stats, 'decision.chooseHunterTarget'),
       preferred.map((route) => route.investigator),
       (chosen) => ({ type: 'MoveHunter', enemyId: hunter.id, towards: chosen.id }),
     );

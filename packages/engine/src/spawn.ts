@@ -8,19 +8,14 @@ import {
 } from './board';
 import { comparableName, trait, type CardStats, type EngineContext } from './cards';
 import type { SpawnEnemy } from './commands';
-import {
-  chooseInvestigator,
-  chooseLocation,
-  engageEvents,
-  investigatorsAt,
-  preferredByPrey,
-} from './engagement';
+import { chooseInvestigator, chooseLocation, engageEvents, investigatorsAt } from './engagement';
 import type { Event } from './events';
 import { enemiesAt, enemyOf, isEnemyOnTable } from './enemies';
 import { activeInvestigator, activeInvestigators, findInvestigator } from './investigators';
 import type { InstanceId, InvestigatorId } from './ids';
 import { matchesCard } from './lookup';
 import { cardMoved } from './placement';
+import { preferredByPrey, preyPrompt } from './prey';
 import { replay } from './reducer';
 import { CommandRejected } from './rejection';
 import type { CardInstance, GameState, Investigator } from './state';
@@ -84,7 +79,7 @@ export function spawnEvents(
       state,
       enemyId,
       `spawn:${enemyId}`,
-      'decision.chooseEngagement',
+      preyPrompt(stats, 'decision.chooseEngagement'),
       plan.candidates,
       (chosen) => ({ type: 'SpawnEnemy', enemyId, engagedWith: chosen.id }),
     );
@@ -131,7 +126,7 @@ function spawnPlan(
   if (target.engagedWith !== undefined) return engagedSpawn(state, target.engagedWith);
   const detail = stats.keywords?.find((keyword) => keyword.name === 'spawn')?.detail;
   if (detail !== undefined)
-    return instructedSpawn(ctx, state, stats, detail, target.investigatorId);
+    return instructedSpawn(ctx, state, enemy, detail, target.investigatorId);
   if (target.investigatorId === undefined)
     throw new CommandRejected({ code: 'noSpawnLocation', cardId: enemy.id });
   const drawer = activeInvestigator(state, target.investigatorId);
@@ -165,13 +160,13 @@ function engagedSpawn(state: GameState, investigatorId: InvestigatorId): SpawnPl
 function instructedSpawn(
   ctx: EngineContext,
   state: GameState,
-  stats: CardStats,
+  enemy: CardInstance,
   detail: string,
   drawer: InvestigatorId | undefined,
 ): SpawnPlan {
   const from = drawer === undefined ? undefined : findInvestigator(state, drawer)?.locationId;
   for (const alternative of detail.split(OTHERWISE)) {
-    const plan = alternativeSpawn(ctx, state, stats, alternative.trim(), from);
+    const plan = alternativeSpawn(ctx, state, enemy, alternative.trim(), from);
     if (plan.kind !== 'discard') return plan;
   }
   return { kind: 'discard' };
@@ -182,11 +177,11 @@ const OTHERWISE = /\.\s*otherwise,\s*/i;
 function alternativeSpawn(
   ctx: EngineContext,
   state: GameState,
-  stats: CardStats,
+  enemy: CardInstance,
   text: string,
   from: InstanceId | undefined,
 ): SpawnPlan {
-  if (comparableName(text) === 'engaged with prey') return preySpawn(state, stats);
+  if (comparableName(text) === 'engaged with prey') return preySpawn(ctx, state, enemy);
   const filtered = spawnFilter(ctx, state, text, from);
   if (filtered !== undefined) return locationAmong(filtered);
   const inPlay = locationsNamed(ctx, state, text, { inPlay: true });
@@ -283,9 +278,11 @@ function emptyLocations(ctx: EngineContext, state: GameState): InstanceId[] {
  * investigator, wherever they are. A tie, or prey the engine can't read, goes to the lead
  * investigator; with nobody left the enemy is discarded.
  */
-function preySpawn(state: GameState, stats: CardStats): SpawnPlan {
+function preySpawn(ctx: EngineContext, state: GameState, enemy: CardInstance): SpawnPlan {
   const candidates = preferredByPrey(
-    stats,
+    ctx,
+    state,
+    enemy,
     activeInvestigators(state).filter((inv) => inv.locationId !== undefined),
   );
   const [only] = candidates;

@@ -722,6 +722,7 @@ export const appTexts = {
     test: 'Probe auf {{skill}} ({{difficulty}})',
     advanceAgenda: 'Schreitet die Agenda {{card}} voran?',
     chooseEngagement: 'Wen verwickelt {{card}} in einen Kampf?',
+    choosePrey: 'Wen wählt die Beute von {{card}}? Sieh auf der Karte nach.',
     chooseHunterOrder: 'Welcher Jäger bewegt sich zuerst?',
     chooseHunterTarget: 'Wen jagt {{card}}?',
     chooseEnemyDestination: 'Wohin bewegt sich {{card}}?',

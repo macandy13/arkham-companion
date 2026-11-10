@@ -218,6 +218,21 @@ export function locationsNamed(
 }
 
 /**
+ * The number of connections on a shortest path from `from` to `to` (Rules Reference, "Nearest"),
+ * Infinity when there is none: the FAQ on Mysterious Chanting treats such a location as an
+ * infinite number of locations away.
+ */
+export function distance(
+  ctx: EngineContext,
+  state: GameState,
+  from: InstanceId,
+  to: InstanceId,
+): number {
+  const [path] = shortestPaths(ctx, state, from, to);
+  return path === undefined ? Infinity : path.length - 1;
+}
+
+/**
  * The locations of `pool` nearest to or farthest from `from`, counted in connections, ties kept
  * for the players to resolve. A location with no path there is an infinite number of locations
  * away (FAQ on Mysterious Chanting): it is the farthest whenever one is in the pool, and the
@@ -230,10 +245,7 @@ export function extremeLocations(
   pool: readonly InstanceId[],
   which: 'nearest' | 'farthest',
 ): InstanceId[] {
-  const distances = pool.map((id) => {
-    const [path] = shortestPaths(ctx, state, from, id);
-    return { id, distance: path === undefined ? Infinity : path.length - 1 };
-  });
+  const distances = pool.map((id) => ({ id, distance: distance(ctx, state, from, id) }));
   const all = distances.map(({ distance }) => distance);
   const best = which === 'nearest' ? Math.min(...all) : Math.max(...all);
   return distances.filter(({ distance }) => distance === best).map(({ id }) => id);
