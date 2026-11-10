@@ -36,7 +36,6 @@ import {
   whenEnemyDefeated,
   whenRevealed,
   type CardDb,
-  type AbilityEffect,
   type CardCode,
   type CardStats,
   type EncounterSetCode,
@@ -140,11 +139,10 @@ const sewerTunnels = {
 const fire = SPREADING_FLAMES_CODES.fire;
 
 /** "If the Servant of Flame enemy is set aside, spawn it at Underground Cistern" (agenda 1b). */
-const spawnServantIfSetAside: AbilityEffect = {
-  type: 'SpawnEnemy',
-  enemyId: eachInZone({ kind: 'setAside' }, { code: codes.servantOfFlame }),
-  at: onlyCopy(codes.undergroundCistern),
-};
+const spawnServantIfSetAside = spawnEnemyAt(
+  eachInZone({ kind: 'setAside' }, { code: codes.servantOfFlame }),
+  onlyCopy(codes.undergroundCistern),
+);
 
 /** "Each investigator must test [willpower] (4). Each investigator who fails takes 1 direct horror." */
 const willpowerOrHorror = skillTest('willpower', 4, { onFail: [takeHorror(1)] });
@@ -257,9 +255,11 @@ export const queenOfAshCardDefs: readonly CardStats[] = [
     stage: 2,
     abilities: [
       atEndOfRound(
+        // A forced instruction: an engaged Cultist disengages and moves as well.
         moveEnemyTowards(
           eachEnemy({ trait: trait('Cultist') }),
           onlyCopy(codes.undergroundCistern),
+          { forced: true },
         ),
       ),
       whenEnemyDefeated(codes.elokoss, advanceAct()),

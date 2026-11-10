@@ -120,7 +120,7 @@ export function handleMoveEnemyTowards(
   cmd: MoveEnemyTowards,
 ): Event[] {
   const { enemy } = onTableEnemyOf(ctx, state, cmd.enemyId);
-  if (enemy.zone.kind === 'engaged')
+  if (enemy.zone.kind === 'engaged' && cmd.forced !== true)
     throw new CommandRejected({
       code: 'enemyEngaged',
       cardId: enemy.id,
@@ -131,7 +131,12 @@ export function handleMoveEnemyTowards(
   const steps = firstSteps(shortestPaths(ctx, state, locationOf(state, enemy), cmd.towards));
   const [only] = steps;
   if (only === undefined) return [];
-  const moveTo = (to: InstanceId): MoveEnemy => ({ type: 'MoveEnemy', enemyId: enemy.id, to });
+  const moveTo = (to: InstanceId): MoveEnemy => ({
+    type: 'MoveEnemy',
+    enemyId: enemy.id,
+    to,
+    ...(cmd.forced === true ? { forced: true } : {}),
+  });
   if (steps.length === 1) return handleMoveEnemy(ctx, state, moveTo(only));
   return chooseLocation(
     ctx,

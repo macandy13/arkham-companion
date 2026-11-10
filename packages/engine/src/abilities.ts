@@ -33,7 +33,6 @@ import type { GridCell } from './map';
 import { locationAttachments, locationsInPlay } from './board';
 import { enemiesAt, enemiesMatching, nearestEnemies, type EnemyFilter } from './enemies';
 import {
-  activeInvestigators,
   cluesHeldAt,
   cluesHeldByGroup,
   isActiveInvestigator,
@@ -504,7 +503,7 @@ export interface Ability {
   perEnemy?: Extract<RelativeCard, { ref: 'eachEnemy' }>;
   /**
    * "Each investigator must test [willpower] (4)": the effects resolve once for each active
-   * investigator, in seat order, each time naming that investigator as the window's
+   * investigator, in player order (the lead first), each time naming that investigator as the window's
    * (`windowInvestigator`), so `skillTest` and `you()` refer to them.
    */
   perInvestigator?: true;
@@ -737,7 +736,7 @@ export function abilitySteps(
  */
 function openedFor(state: GameState, ability: Ability, opened: OpenedWindow): OpenedWindow[] {
   if (!ability.perInvestigator) return [opened];
-  return activeInvestigators(state).map(({ id }) => ({ ...opened, investigatorId: id }));
+  return playerOrder(state).map(({ id }) => ({ ...opened, investigatorId: id }));
 }
 
 /** How often `ability`'s effects resolve: once, or once per enemy its `perEnemy` names. */
@@ -1844,9 +1843,20 @@ export function locationWith(filter: LocationFilter = {}): RelativeCard {
 /**
  * "[Enemy] moves 1 location towards [location]" (`MoveEnemyTowards`), written
  * `moveEnemyTowards(eachEnemy({ trait: trait('Ghoul'), unengaged: true }), onlyCopy(codes.parlor))`.
+ * With `forced`, an engaged enemy disengages and moves too ("Forced – When the round ends: each
+ * [[Cultist]] enemy moves once toward Underground Cistern").
  */
-export function moveEnemyTowards(enemy: RelativeCard, location: RelativeCard): AbilityEffect {
-  return { type: 'MoveEnemyTowards', enemyId: enemy, towards: location };
+export function moveEnemyTowards(
+  enemy: RelativeCard,
+  location: RelativeCard,
+  options: { forced?: true } = {},
+): AbilityEffect {
+  return {
+    type: 'MoveEnemyTowards',
+    enemyId: enemy,
+    towards: location,
+    ...(options.forced === true ? { forced: true } : {}),
+  };
 }
 
 /**

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   atLocation,
   cardDbWith,
+  engagedWith,
   cardStats,
   checkInvariants,
   instanceId,
@@ -356,8 +357,8 @@ describe('Queen of Ash agendas and acts', () => {
       ctx,
       startScenario(ctx, { playerCount: 2 }),
       advanceAgenda,
-      answer('test:12169#1', 'pass'),
-      answer('test:12169#1', 'pass'),
+      answer(`test:${aGathering}`, 'pass'),
+      answer(`test:${aGathering}`, 'pass'),
     );
 
   it('spawns the set-aside Servant of Flame at Underground Cistern as A Gathering advances', () => {
@@ -373,8 +374,8 @@ describe('Queen of Ash agendas and acts', () => {
     const state = stateAfter(
       ctx,
       tested,
-      answer('test:12169#1', 'fail'),
-      answer('test:12169#1', 'pass'),
+      answer(`test:${aGathering}`, 'fail'),
+      answer(`test:${aGathering}`, 'pass'),
     );
 
     expect(tested.pending).toMatchObject([
@@ -466,7 +467,7 @@ describe('Queen of Ash agendas and acts', () => {
         answer(SLUICE_CONTROL_DECISION, skill),
       );
 
-      const state = stateAfter(ctx, chosen, answer('test:12175#1', result));
+      const state = stateAfter(ctx, chosen, answer(`test:${sluiceControl}`, result));
 
       expect(chosen.pending).toMatchObject([{ skillTest: { skill, difficulty: 5 } }]);
       expect(state.meta.resolution).toBe(resolution);
@@ -482,22 +483,34 @@ describe('Stop the Rite', () => {
   const tunnels = instanceId('overgrown_tunnels');
   const culvert = instanceId('sewer_culvert');
 
-  it('moves each Cultist enemy one location toward Underground Cistern as the round ends', () => {
-    const { context, state: started } = newGame()
-      .withAct(instanceId('stop_the_rite'), cardStats(ctx.cards, codes.stopTheRite))
-      .withLocation(cistern, cardStats(ctx.cards, codes.undergroundCistern), { revealed: true })
-      .withLocation(tunnels, cardStats(ctx.cards, codes.overgrownTunnels), { revealed: true })
-      .withLocation(culvert, cardStats(ctx.cards, codes.sewerCulvert), { revealed: true })
-      .withConnection(cistern, tunnels)
-      .withConnection(tunnels, culvert)
-      .withInvestigator(alice, { locationId: culvert })
-      .withCard(zealot, cardStats(ctx.cards, codes.zealot), atLocation(culvert))
-      .withTurnOf(alice)
-      .start();
-    let state = stateAfter(context, started, { type: 'EndTurn', investigatorId: alice });
-    const roundBefore = state.meta.round;
-    while (state.meta.round === roundBefore) state = stateAfter(context, state, nextPhase);
+  it.each([
+    { zealotIs: 'unengaged', zone: atLocation(culvert) },
+    { zealotIs: 'engaged with alice', zone: engagedWith(alice) },
+  ])(
+    'moves the Zealot from Sewer Culvert one location toward Underground Cistern as the round ends, $zealotIs',
+    ({ zone }) => {
+      const { context, state: started } = newGame()
+        .withAct(instanceId('stop_the_rite'), cardStats(ctx.cards, codes.stopTheRite))
+        .withLocation(cistern, cardStats(ctx.cards, codes.undergroundCistern), { revealed: true })
+        .withLocation(tunnels, cardStats(ctx.cards, codes.overgrownTunnels), { revealed: true })
+        .withLocation(culvert, cardStats(ctx.cards, codes.sewerCulvert), { revealed: true })
+        .withConnection(cistern, tunnels)
+        .withConnection(tunnels, culvert)
+        .withInvestigator(alice, { locationId: culvert })
+        .withCard(zealot, cardStats(ctx.cards, codes.zealot), zone)
+        .withTurnOf(alice)
+        .start();
+      // Exhausted, so it makes no attack in the enemy phase; upkeep readies it before the round ends.
+      let state = stateAfter(
+        context,
+        started,
+        { type: 'ExhaustEnemy', enemyId: zealot },
+        { type: 'EndTurn', investigatorId: alice },
+      );
+      const roundBefore = state.meta.round;
+      while (state.meta.round === roundBefore) state = stateAfter(context, state, nextPhase);
 
-    expect(state.cards[zealot]?.zone).toEqual(atLocation(tunnels));
-  });
+      expect(state.cards[zealot]?.zone).toEqual(atLocation(tunnels));
+    },
+  );
 });

@@ -954,13 +954,17 @@ export interface MoveEnemy {
  * there already or has no path (also while `towards` is out of play); equally short first steps become a
  * `chooseLocation` decision for the lead investigator (`towards:<enemy>`),
  * answered with `MoveEnemy`. An engaged enemy moves only with its
- * investigator, so it is refused (`enemyEngaged`). Produces what `MoveEnemy`
- * produces, or the `DecisionRequested`.
+ * investigator, so it is refused (`enemyEngaged`), unless the move is
+ * `forced` ("each Cultist enemy moves once toward Underground Cistern",
+ * Stop the Rite): then it disengages and moves from its investigator's
+ * location. Produces what `MoveEnemy` produces, or the `DecisionRequested`.
  */
 export interface MoveEnemyTowards {
   type: 'MoveEnemyTowards';
   enemyId: InstanceId;
   towards: InstanceId;
+  /** A forced instruction, followed even for an engaged enemy. Default false. */
+  forced?: boolean;
 }
 
 /**

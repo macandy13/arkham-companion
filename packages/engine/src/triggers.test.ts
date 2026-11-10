@@ -2439,6 +2439,14 @@ describe('an effect repeated for each investigator', () => {
     expect(aliceTested.pending).toMatchObject([{ decider: { investigatorId: bob } }]);
     expect(state.investigators.map((inv) => inv.sanity.horror)).toEqual([0, 1]);
   });
+
+  it('asks bob first while he is the lead investigator, as player order begins with the lead', () => {
+    const bobLeads = { ...started, meta: { ...started.meta, leadInvestigator: bob } };
+
+    const advanced = stateAfter(context, bobLeads, { type: 'AdvanceAgenda' });
+
+    expect(advanced.pending).toMatchObject([{ decider: { investigatorId: bob } }]);
+  });
 });
 
 describe("a card test's outcomes, resolved after the answer", () => {
