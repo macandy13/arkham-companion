@@ -25,5 +25,5 @@ export function campaignKeyArt(id: CampaignDefinitionId): string | undefined {
   return KEY_ART[id];
 }
 
-/** Every campaign's key art, for the end-to-end tests to download ahead of a run. */
+/** Every campaign's key art, for the end-to-end tests to answer with a mock artwork. */
 export const campaignKeyArts: readonly string[] = Object.values(KEY_ART);

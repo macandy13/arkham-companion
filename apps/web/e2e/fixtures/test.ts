@@ -2,8 +2,7 @@ import { expect, test as base } from '@playwright/test';
 import type { Page } from '@playwright/test';
 import cards from './cards.json' with { type: 'json' };
 import packs from './packs.json' with { type: 'json' };
-import { campaignKeyArts } from '../../src/catalog/campaignKeyArt';
-import { localCardPicture } from './card_pictures';
+import { mockCardArt } from './mock_card_art';
 
 /** ArkhamDB endpoints the app reads, answered with the invented catalog. */
 const catalogFixtures = new Map<string, unknown>([
@@ -12,11 +11,10 @@ const catalogFixtures = new Map<string, unknown>([
 ]);
 
 /**
- * Where ArkhamDB serves card pictures. The hand-written test scenario names its cards' pictures,
- * so the app asks for them; the guard answers them from the local copies the global setup
- * downloaded (`card_pictures.ts`), and turns down the rest, as when the player is offline, so
- * those card faces keep their pattern. A campaign's key art from FFG (`campaignKeyArt`) is answered
- * from its local copy the same way.
+ * Where ArkhamDB serves card pictures. The guard answers those the E2E games name, and each
+ * campaign's key art from FFG, with our own mock artworks (`mock_card_art.ts`), so every run shows
+ * the same art without the network; the rest it turns down, as when the player is offline, so
+ * those card faces keep their pattern.
  */
 const CARD_PICTURES = /^\/bundles\/cards\//;
 
@@ -29,14 +27,56 @@ export interface PictureOptions {
 }
 
 /**
+ * The option a test sets (`test.use({ realPlaymats: true })`) to show the tables' own playmats.
+ * Every other test lies on a flat colour of its table: the playmats are large detailed drawings
+ * that fill most of each picture's bytes and differ by a few pixels from run to run, while one
+ * picture per playmat is enough to cover them.
+ */
+export interface PlaymatOptions {
+  readonly realPlaymats: boolean;
+}
+
+/**
+ * The flat colour each playmat (by its file name, `src/styles/playmat*.svg`) is replaced with:
+ * its table's `--color-background` in `tokens.css`, the colour the playmat lies on.
+ */
+const FLAT_PLAYMATS: Readonly<Record<string, string>> = {
+  playmat: '#0b1614',
+  playmat_stars: '#0a0820',
+  playmat_rlyeh: '#031416',
+  playmat_parchment: '#e8dcbf',
+};
+
+/** A built playmat's address: Vite adds a content hash to the file name. */
+const PLAYMAT = /\/assets\/(playmat(?:_[a-z]+)?)-[\w-]+\.svg$/;
+
+/**
  * `test` with a network guard: the ArkhamDB catalog (on any language host) is answered from the
- * invented fixtures in this folder, card pictures from their local copies, and every other non-local request
+ * invented fixtures in this folder, card pictures with mock artworks, and every other non-local request
  * is aborted and recorded, so a test fails instead of silently reaching the network (the tests themselves must not)
  * or real card data. Each page draws a fixed `Math.random` sequence, and in the picture projects
  * the test is photographed once it has settled (`endPicture`).
  */
-export const test = base.extend<PictureOptions & { externalRequests: string[]; picture: void }>({
+export const test = base.extend<
+  PictureOptions & PlaymatOptions & { externalRequests: string[]; picture: void; playmats: void }
+>({
   endPicture: [false, { option: true }],
+  realPlaymats: [false, { option: true }],
+  playmats: [
+    async ({ context, realPlaymats }, use) => {
+      if (!realPlaymats)
+        await context.route(PLAYMAT, (route) => {
+          const file = PLAYMAT.exec(new URL(route.request().url()).pathname)?.[1] ?? 'playmat';
+          const colour = FLAT_PLAYMATS[file] ?? FLAT_PLAYMATS.playmat;
+          return route.fulfill({
+            contentType: 'image/svg+xml',
+            body: `<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16'><rect width='16' height='16' fill='${colour}'/></svg>`,
+          });
+        });
+      await use();
+    },
+    { auto: true },
+  ],
   // Instead of Playwright's `screenshot: 'on'`, which photographs a screen that may still be
   // loading or moving, so the same code would give different pictures from run to run.
   picture: [
@@ -77,16 +117,10 @@ export const test = base.extend<PictureOptions & { externalRequests: string[]; p
               headers: { 'Access-Control-Allow-Origin': '*' },
             });
           }
-          if (campaignKeyArts.includes(url.href)) {
-            const keyArt = localCardPicture(url.pathname);
-            return keyArt ? route.fulfill({ path: keyArt }) : route.abort();
-          }
-          if (!CARD_PICTURES.test(url.pathname)) {
-            unexpected.push(url.href);
-            return route.abort();
-          }
-          const picture = localCardPicture(url.pathname);
-          return picture ? route.fulfill({ path: picture }) : route.abort();
+          const art = mockCardArt(CARD_PICTURES.test(url.pathname) ? url.pathname : url.href);
+          if (art) return route.fulfill({ path: art, contentType: 'image/svg+xml' });
+          if (!CARD_PICTURES.test(url.pathname)) unexpected.push(url.href);
+          return route.abort();
         },
       );
       await use(unexpected);
