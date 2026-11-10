@@ -1,6 +1,14 @@
-import { shortestPaths } from './board';
-import { cardStats, comparableName, type CardStats, type EngineContext } from './cards';
-import { enemiesOnTable, locationOf } from './enemies';
+import { distance } from './board';
+import {
+  cardStats,
+  comparableName,
+  trait,
+  type CardStats,
+  type EngineContext,
+  type Trait,
+} from './cards';
+import { enemiesOnTable } from './enemies';
+import { locationOfCard } from './lookup';
 import { boostedSkills, remainingHealth, remainingSanity } from './investigators';
 import { SKILL_NAMES, type CardInstance, type GameState, type Investigator } from './state';
 
@@ -40,7 +48,7 @@ const COUNTER_MEASURES: Readonly<Record<string, PreyMeasure | undefined>> = {
   horror: (_ctx, _state, _enemy, inv) => inv.sanity.horror,
 };
 
-const NEAREST_TO_ANOTHER = /^nearest to another (\S+) enemy$/;
+const NEAREST_TO_ANOTHER = /^nearest to another (.+) enemy\.?$/i;
 
 /**
  * The investigators among `candidates` that the prey keyword of `enemy` picks (Rules Reference,
@@ -83,9 +91,9 @@ function preyCriterion(stats: CardStats): PreyCriterion | undefined {
   const text = preyText(stats);
   if (text === undefined) return undefined;
   const lower = comparableName(text);
-  const nearest = NEAREST_TO_ANOTHER.exec(lower);
+  const nearest = NEAREST_TO_ANOTHER.exec(text.trim());
   if (nearest !== null)
-    return { measure: distanceToEnemyWith(nearest[1] ?? ''), extreme: 'lowest' };
+    return { measure: distanceToEnemyWith(trait(nearest[1] ?? '')), extreme: 'lowest' };
   const space = lower.indexOf(' ');
   const extreme = EXTREME_WORDS[lower.slice(0, space)];
   const measure = measureNamed(lower.slice(space + 1));
@@ -100,22 +108,19 @@ function measureNamed(name: string): PreyMeasure | undefined {
 
 /**
  * "Nearest to another [[Cultist]] enemy": connections from the investigator to the nearest other
- * enemy on the table with the trait (case-insensitive, as the trait comes from rules text);
- * infinite with none or no path, so then every investigator ties.
+ * enemy on the table with the trait (an engaged one is where its investigator is); infinite with
+ * none or no path, so then every investigator ties.
  */
-function distanceToEnemyWith(trait: string): PreyMeasure {
+function distanceToEnemyWith(wanted: Trait): PreyMeasure {
   return (ctx, state, enemy, investigator) => {
     const from = investigator.locationId;
     if (from === undefined) return Infinity;
-    const others = enemiesOnTable(ctx, state).filter(
-      (card) =>
-        card.id !== enemy.id &&
-        cardStats(ctx.cards, card.code).traits.some((t) => t.toLowerCase() === trait),
-    );
-    const distances = others.map((card) => {
-      const [path] = shortestPaths(ctx, state, from, locationOf(state, card));
-      return path === undefined ? Infinity : path.length - 1;
-    });
+    const distances = enemiesOnTable(ctx, state, wanted)
+      .filter((card) => card.id !== enemy.id)
+      .map((card) => {
+        const at = locationOfCard(state, card);
+        return at === undefined ? Infinity : distance(ctx, state, from, at);
+      });
     return Math.min(...distances);
   };
 }

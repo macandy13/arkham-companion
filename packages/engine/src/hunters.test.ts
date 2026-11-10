@@ -250,6 +250,27 @@ describe('MoveHunters', () => {
       expect(zoneOf(after, hunter)).toEqual(engagedWith(bob));
     });
 
+    it('asks the players to judge a prey the engine cannot read', () => {
+      const handPreyHunter = blankEnemy('hand_prey_hunter', {
+        keywords: [{ name: 'hunter' }, { name: 'prey', detail: 'Fewest cards in hand' }],
+      });
+      const { context, state } = split
+        .withInvestigator(alice, { locationId: instanceId('b') })
+        .withInvestigator(bob, { locationId: instanceId('c') })
+        .withCard(hunter, handPreyHunter, at('a'))
+        .start();
+
+      const { state: after } = execute(context, state, moveHunters);
+
+      expect(after.pending).toMatchObject([
+        {
+          kind: 'chooseInvestigator',
+          prompt: 'decision.choosePrey',
+          options: [{ target: alice }, { target: bob }],
+        },
+      ]);
+    });
+
     it('asks for the destination after prey picked one investigator with two routes', () => {
       const { context, state } = fork
         .withInvestigator(alice, { locationId: instanceId('d'), clues: 1 })
