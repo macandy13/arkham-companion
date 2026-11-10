@@ -24,11 +24,11 @@ Each card does one or more of these, including what it costs the investigator (D
 | draw an encounter card                  | 1     | `DrawEncounter`                                                         | yes    |
 | doom on a player card                   | 1     | `AdjustInvestigator` `doomOnPlayerCards`                                | yes    |
 | an asset takes damage or horror         | 9     | `HealInvestigator` right after, up to what the asset can take           | approx |
-| cancel an attack or a revelation        | 2     | none                                                                    | no     |
+| cancel an attack or a revelation        | 2     | the attack decision's cancel option, `ResolveRevelation` `cancelled`    | yes    |
 | enemies cannot move in or attack        | 1     | none                                                                    | no     |
 | draw, search or hold player cards       | 14    | the bot's own hand and deck, nothing on the table                       | bot    |
 
-Of the 29 cards each investigator can take, the table takes every effect of 23 (Roland, Daisy) and 26 (Wendy), and every effect but cancelling and blocking of 27, 27 and 29 when soaking is approximated: an ally or an accessory that would take damage or horror is played as healing the investigator right after, until the card's health and sanity are used up. Only Ward of Protection and Barricade do something the table can't take; the bot leaves them in the deck as cards it never plays. Dodge's cancel is the attack decision's own cancel option.
+Of the 29 cards each investigator can take, the table takes every effect of 23 (Roland, Daisy) and 26 (Wendy), and every effect but cancelling and blocking of 27, 27 and 29 when soaking is approximated: an ally or an accessory that would take damage or horror is played as healing the investigator right after, until the card's health and sanity are used up. Only Barricade does something the table can't take; the bot leaves it in the deck as a card it never plays. Dodge's cancel is the attack decision's own cancel option, and Ward of Protection's the cancel option of a drawn treachery's revelation question.
 
 ## Cards
 
@@ -74,7 +74,7 @@ Of the 29 cards each investigator can take, the table takes every effect of 23 (
 | 01062 | Arcane Studies        | mystic asset   | +N to a skill test, spend resources for a boost                                           | yes          | Daisy                |
 | 01063 | Arcane Initiate       | mystic asset   | draw, search or hold player cards, doom on a player card, an asset takes damage or horror | approximated | Daisy                |
 | 01064 | Drawn to the Flame    | mystic event   | draw an encounter card, discover clues                                                    | yes          | Daisy                |
-| 01065 | Ward of Protection    | mystic event   | cancel a non-weakness treachery's revelation, take 1 horror                               | no           | Daisy                |
+| 01065 | Ward of Protection    | mystic event   | cancel a non-weakness treachery's revelation, take 1 horror                               | yes          | Daisy                |
 | 01066 | Blinding Light        | mystic event   | evade an enemy, damage to an enemy, the investigator takes damage or horror               | yes          | Daisy                |
 | 01067 | Fearless              | mystic skill   | +N to a skill test, heal damage or horror                                                 | yes          | Daisy                |
 | 01072 | Leather Coat          | survivor asset | an asset takes damage or horror                                                           | approximated | Wendy                |
@@ -102,4 +102,4 @@ Built in [`deck_bot.ts`](../packages/play_tester/src/deck_bot.ts) with the cards
 
 - **Deck:** 30 cards drawn from the cards above an investigator can take (two copies each at most) plus the signature asset, shuffled with the bot seed; a blank investigator takes Neutral cards. Each card's cost, class, skill icons, health, sanity and effects are entered by hand per card code, with no card text, as the test scenario's cards are.
 - **Goal:** advance the act fastest. Of the cards it can pay for and whose effect fits the board, it plays the one that does most for the act: clues and intellect boosts while the location has clues, then an extra action, then resources when it runs low, then cards against an engaged enemy, then healing when near defeat. Skill cards go up to two to an investigation or a fight, one to any other test.
-- **Cancelling:** an enemy attack's decision already has a cancel option, so the bot answers it with Dodge when it holds one and can pay. Cancelling a treachery's revelation (Ward of Protection) needs the engine first (#1099).
+- **Cancelling:** an enemy attack's decision already has a cancel option, so the bot answers it with Dodge when it holds one and can pay. A drawn treachery asks before its revelation, so the bot answers that question's cancel with Ward of Protection the same way (#1167).

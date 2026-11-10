@@ -10,6 +10,8 @@ import {
   investigatorId,
   newGame,
   PlayTable,
+  skillTest,
+  whenRevealed,
 } from '@arkham/engine';
 import { DeckBot } from './deck_bot';
 import { playerCard } from './player_cards';
@@ -245,6 +247,67 @@ describe('the deck bot', () => {
     expect(
       steps.filter((step) => step.verb === 'playerCard' && step.card === 'Dodge'),
     ).toHaveLength(1);
+  });
+
+  describe('alice draws a treachery whose revelation tests her willpower', () => {
+    const crypt_chill = instanceId('crypt_chill');
+    const drawnWith = ({ resources }: { resources: number }) => {
+      const table = PlayTable.start(
+        newGame()
+          .withLocation(study, blankLocation('study'), { revealed: true })
+          .withInvestigator(alice, { locationId: study, resources })
+          .withCard(
+            crypt_chill,
+            blankTreachery('crypt_chill', {
+              abilities: [whenRevealed(skillTest('willpower', 4))],
+            }),
+            { kind: 'encounterDeck' },
+          )
+          .withTurnOf(alice),
+      );
+      table.drawEncounterCard(alice);
+      return table;
+    };
+
+    it('pays for Ward of Protection, cancels the revelation, then takes its 1 horror', () => {
+      const table = drawnWith({ resources: 1 });
+      const bot = botWithHand('Ward of Protection');
+
+      const steps = Array.from({ length: 3 }, () => {
+        const step = bot.step(table, random);
+        playStep(table, step);
+        return step;
+      });
+
+      expect(steps).toEqual([
+        {
+          verb: 'playerCard',
+          investigator: 'alice',
+          card: 'Ward of Protection',
+          effects: [{ kind: 'pay', resources: 1 }],
+        },
+        { verb: 'answer', about: crypt_chill, option: 'cancel revelation' },
+        {
+          verb: 'playerCard',
+          investigator: 'alice',
+          card: 'Ward of Protection',
+          effects: [{ kind: 'hurt', damage: 0, horror: 1 }],
+        },
+      ]);
+      expect(table.board.investigator(alice)).toMatchObject({ resources: 0, horror: 1 });
+      expect(table.board.decisions).toEqual([]);
+    });
+
+    it('resolves the revelation when alice cannot pay for Ward of Protection', () => {
+      const table = drawnWith({ resources: 0 });
+      const bot = botWithHand('Ward of Protection');
+
+      expect(bot.step(table, random)).toEqual({
+        verb: 'answer',
+        about: crypt_chill,
+        option: 'resolve revelation',
+      });
+    });
   });
 
   it('heals the damage armour in play soaks, until its health is used up', () => {

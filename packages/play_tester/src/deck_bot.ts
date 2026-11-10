@@ -1,15 +1,18 @@
 import {
   byName,
+  CANCEL_REVELATION_OPTION,
   isEnemyAttackDecision,
+  isRevelationDecision,
   optionName,
   type CardName,
   type Decision,
   type InstanceId,
+  type InvestigatorId,
   type PlayTable,
   type SkillName,
 } from '@arkham/engine';
 import { botStep } from './bots';
-import { deckFor, type PlayerCard } from './player_cards';
+import { deckFor, type CardUse, type PlayerCard } from './player_cards';
 import type { Run, SeededRandom } from './run';
 import type { CardEffect, Step } from './steps';
 import { drawnResult, openDrawnTest } from './test_answers';
@@ -89,6 +92,7 @@ export class DeckBot {
     const steps =
       (open ? undefined : this.soaked(table)) ??
       this.cancelledAttack(table) ??
+      this.cancelledRevelation(table) ??
       this.answeredTest(table, random) ??
       this.playedCard(table, random);
     if (steps) {
@@ -169,27 +173,71 @@ export class DeckBot {
     for (const decision of table.state.pending) {
       if (decision.decider.kind !== 'investigator' || !isEnemyAttackDecision(decision)) continue;
       const skip = decision.options.find(({ id }) => id === 'skip');
-      if (!skip) continue;
-      const investigator = table.board.investigator(decision.decider.investigatorId);
-      const seat = this.seats.get(investigator.name);
-      const resources = investigator.resources;
-      const card = seat?.hand.find(
-        ({ use, cost }) =>
-          use.kind === 'cancel' && use.what === 'attack' && resources >= (cost ?? 0),
-      );
-      if (!seat || !card) continue;
-      seat.hand.splice(seat.hand.indexOf(card), 1);
-      this.turn.plays++;
+      const played = skip && this.cancelPlayed(table, decision.decider.investigatorId, 'attack');
+      if (!skip || !played) continue;
+      return [played.paid, answering(decision, skip)];
+    }
+    return undefined;
+  }
+
+  /**
+   * The cancel of a drawn treachery's revelation (`isRevelationDecision`) by its drawer when they
+   * hold a card that cancels revelations (Ward of Protection: "When you draw a non-weakness
+   * treachery card", so only the drawer) and can pay for it: the card's cost, the question's cancel
+   * option, then the horror the card costs. Weaknesses aren't checked: the bot's decks hold none,
+   * and only encounter cards, never weaknesses, are drawn from the encounter deck in the
+   * scenarios it plays.
+   */
+  private cancelledRevelation(table: PlayTable): Step[] | undefined {
+    for (const decision of table.state.pending) {
+      if (decision.decider.kind !== 'investigator' || !isRevelationDecision(decision)) continue;
+      const cancel = decision.options.find(({ id }) => id === CANCEL_REVELATION_OPTION);
+      const played =
+        cancel && this.cancelPlayed(table, decision.decider.investigatorId, 'revelation');
+      if (!cancel || !played) continue;
+      const horror = played.use.horror ?? 0;
       return [
-        spending(investigator.name, card.name, card.cost ?? 0),
-        {
-          verb: 'answer',
-          ...(decision.subject && { about: decision.subject }),
-          option: optionName(skip),
-        },
+        played.paid,
+        answering(decision, cancel),
+        ...(horror > 0
+          ? [
+              {
+                verb: 'playerCard',
+                investigator: played.investigator,
+                card: played.card.name,
+                effects: [{ kind: 'hurt', damage: 0, horror }],
+              } as const,
+            ]
+          : []),
       ];
     }
     return undefined;
+  }
+
+  /**
+   * A card in `investigatorId`'s hand that cancels `what` and that they can pay for, taken from the
+   * hand and counted as a play, with the step that pays its cost; none when they hold no such card.
+   */
+  private cancelPlayed(
+    table: PlayTable,
+    investigatorId: InvestigatorId,
+    what: 'attack' | 'revelation',
+  ): { investigator: CardName; card: PlayerCard; use: CancelUse; paid: Step } | undefined {
+    const investigator = table.board.investigator(investigatorId);
+    const seat = this.seats.get(investigator.name);
+    const card = seat?.hand.find(
+      ({ use, cost }) =>
+        use.kind === 'cancel' && use.what === what && investigator.resources >= (cost ?? 0),
+    );
+    if (!seat || !card || card.use.kind !== 'cancel') return undefined;
+    seat.hand.splice(seat.hand.indexOf(card), 1);
+    this.turn.plays++;
+    return {
+      investigator: investigator.name,
+      card,
+      use: card.use,
+      paid: spending(investigator.name, card.name, card.cost ?? 0),
+    };
   }
 
   /**
@@ -565,6 +613,18 @@ function spending(investigator: CardName, card: CardName, amount: number): Step 
     investigator,
     card,
     effects: [{ kind: 'pay', resources: amount }],
+  };
+}
+
+/** The `use` of a card that cancels an attack or a revelation (Dodge, Ward of Protection). */
+type CancelUse = Extract<CardUse, { kind: 'cancel' }>;
+
+/** The answer to `decision` with `option`. */
+function answering(decision: Decision, option: Decision['options'][number]): Step {
+  return {
+    verb: 'answer',
+    ...(decision.subject && { about: decision.subject }),
+    option: optionName(option),
   };
 }
 
