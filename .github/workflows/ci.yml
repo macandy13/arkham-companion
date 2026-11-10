@@ -39,7 +39,9 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
 
   e2e:
-    runs-on: ubuntu-latest
+    # Pinned: the goldens are made on this image (update-screenshots.yml), and a new one may
+    # render fonts differently.
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v6
@@ -60,7 +62,11 @@ jobs:
           key: playwright-shell-${{ steps.playwright.outputs.image }}-${{ steps.playwright.outputs.version }}
       - timeout-minutes: 5
         run: pnpm --filter @arkham/web exec playwright install --only-shell chromium
-      - run: pnpm e2e
+      # Every picture against its committed golden (apps/web/e2e/__screenshots__, made by
+      # update-screenshots.yml on this same runner image).
+      - run: pnpm e2e --workers=100%
+        env:
+          GOLDENS: '1'
       - uses: actions/upload-artifact@v7
         if: failure()
         with:

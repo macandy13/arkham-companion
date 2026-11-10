@@ -1,5 +1,6 @@
 import { expect, test as base } from '@playwright/test';
 import type { Page } from '@playwright/test';
+import { readFile } from 'node:fs/promises';
 import cards from './cards.json' with { type: 'json' };
 import packs from './packs.json' with { type: 'json' };
 import { mockCardArt } from './mock_card_art';
@@ -19,12 +20,19 @@ const catalogFixtures = new Map<string, unknown>([
 const CARD_PICTURES = /^\/bundles\/cards\//;
 
 /**
- * The option `playwright.config.ts` sets for the projects that photograph each test as it ends
- * for the PR preview (`scripts/screencast/cli.ts` compares the picture with the base's).
+ * The option `playwright.config.ts` sets for the projects that photograph each test as it ends:
+ * for the PR preview (`scripts/screencast/cli.ts` compares the picture with the base's) and, with
+ * `GOLDENS=1`, against the test's committed golden in `e2e/__screenshots__/`.
  */
 export interface PictureOptions {
   readonly endPicture: boolean;
 }
+
+/**
+ * How many pixels of a picture may differ from its golden: antialiasing at edges varies by a few
+ * pixels between runs on the same runner image (the preview's base comparison allows the same).
+ */
+const GOLDEN_NOISE = 20;
 
 /**
  * The option a test sets (`test.use({ realPlaymats: true })`) to show the tables' own playmats.
@@ -98,6 +106,11 @@ export const test = base.extend<
       const path = testInfo.outputPath('end.png');
       await page.screenshot({ path, animations: 'disabled' });
       await testInfo.attach('screenshot', { path, contentType: 'image/png' });
+      // The settled picture itself, not `toHaveScreenshot`, which would photograph the screen
+      // twice more to see it stand still. Off by default because goldens are made on CI's runner
+      // image (update-screenshots.yml): another machine renders text a few pixels differently.
+      if (process.env.GOLDENS === '1')
+        expect(await readFile(path)).toMatchSnapshot('end.png', { maxDiffPixels: GOLDEN_NOISE });
     },
     { auto: true },
   ],
@@ -105,8 +118,7 @@ export const test = base.extend<
     async ({ context, baseURL }, use) => {
       const localOrigin = new URL(baseURL ?? 'http://localhost').origin;
       const unexpected: string[] = [];
-      // On the context rather than the page, so it also sees what the service worker fetches
-      // (it serves card pictures cache-first), which a page route never does.
+      // On the context rather than the page, so it covers every page a test opens.
       await context.route(
         (url) => url.origin !== localOrigin && url.protocol.startsWith('http'),
         (route) => {
@@ -139,8 +151,8 @@ export { expect };
 export const isCardList = (url: URL) => url.pathname === '/api/public/cards/';
 
 /**
- * Waits until the page has fetched what it shows (card pictures, the fonts its text uses) and
- * stopped scrolling. A click scrolls its target into view, and text that changes font afterwards
+ * Waits until the page has fetched and decoded what it shows (card pictures, the fonts its text
+ * uses), stopped changing and stopped scrolling. A click scrolls its target into view, and text that changes font afterwards
  * moves the page under it, so the preview's pictures (scripts/screencast/cli.ts) would differ
  * from run to run; going offline before the pictures arrive leaves them out. Not
  * `waitForLoadState('networkidle')`: it fires once per document, and the app changes screens
@@ -154,6 +166,36 @@ export async function waitUntilSettled(page: Page): Promise<void> {
       await new Promise((resolve) => setTimeout(resolve, 300));
     }
     await Promise.all([...document.images].map((image) => image.decode().catch(() => undefined)));
+    // Card art is an SVG <image>, which `document.images` leaves out and which can paint a frame
+    // after it loads; on a busy runner a tile was photographed without it. Decoding the same
+    // address puts it in the image cache, and two frames let the SVG paint it.
+    await Promise.all(
+      [...document.querySelectorAll('image')].map((image) => {
+        const picture = new Image();
+        picture.src = new URL(image.href.baseVal, document.baseURI).href;
+        return picture.decode().catch(() => undefined);
+      }),
+    );
+    // A face shows its art only once a probe of the loaded picture reports its shape, a state
+    // change that can come well after the load on a busy runner; so the page must also have
+    // stopped changing for a moment (at most a few seconds, as a failed picture never shows).
+    await new Promise<void>((resolve) => {
+      let quiet: ReturnType<typeof setTimeout> | undefined;
+      const done = () => {
+        observer.disconnect();
+        clearTimeout(quiet);
+        clearTimeout(limit);
+        resolve();
+      };
+      const observer = new MutationObserver(() => {
+        clearTimeout(quiet);
+        quiet = setTimeout(done, 300);
+      });
+      observer.observe(document.body, { subtree: true, childList: true, attributes: true });
+      quiet = setTimeout(done, 300);
+      const limit = setTimeout(done, 5000);
+    });
+    await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
     await document.fonts.ready;
     // A screen that scrolls an element into view after a layout change can still be on its way.
     const scrolled = () =>
