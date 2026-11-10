@@ -85,6 +85,7 @@ import {
   putIntoThreatArea,
   placeYourClues,
   takeDamage,
+  takeDamageAndHorror,
   takeHorror,
   threatAreaOf,
   trait,
@@ -1025,6 +1026,32 @@ describe('trigger bus', () => {
       });
 
       expect(events.filter((event) => event.type === 'InvestigatorChanged')).toHaveLength(1);
+    });
+
+    it('deals damage and horror together as one effect of each, times the margin', () => {
+      /** "Revelation – Test willpower (3). For each point you fail by, take 1 damage and 1 horror." */
+      const woundingCard = blankTreachery('wounding', {
+        abilities: [
+          whenRevealed(
+            skillTest('willpower', 3, {
+              perPointFailed: [takeDamageAndHorror({ damage: 1, horror: 1 })],
+            }),
+          ),
+        ],
+      });
+      const { context, state: started } = newGame()
+        .withLocation(hall, blankLocation('hall'), { revealed: true })
+        .withInvestigator(alice, { locationId: hall })
+        .withCard(instanceId('wounding'), woundingCard, { kind: 'encounterDeck' })
+        .start();
+      const drawn = stateAfter(context, started, aliceDraws, resolveRevelation('wounding'));
+
+      const { state } = execute(context, drawn, { ...answer('test:wounding', 'fail'), margin: 2 });
+
+      expect(state.investigators.find((inv) => inv.id === alice)).toMatchObject({
+        health: { damage: 2 },
+        sanity: { horror: 2 },
+      });
     });
 
     it('deals horror for a card that names it', () => {
