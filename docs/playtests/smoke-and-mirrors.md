@@ -48,9 +48,9 @@ The scripted golden game is [`end_to_end.test.ts`](../../packages/scenarios/src/
 **Resolution**
 
 - [ ] Both endings add 2 cultist tokens to the bag for the rest of the campaign and record the set-aside suspect as the harbinger of Elokoss.
-- [ ] Resolution 1 records that the cult's whereabouts were discovered, and records "scoured Arkham for answers" with 6 Elite enemies beneath the act or "stirred up trouble" with 6 in the victory display.
+- [ ] Resolution 1 records that the cult's whereabouts were discovered, and records "scoured Arkham for answers" with 6 Elite enemies beneath the act (reachable once [MC2.18](https://github.com/macandy13/arkham-companion/issues/1237) lands) or "stirred up trouble" with 6 in the victory display.
 - [ ] Without a resolution the players draw for the harbinger by hand and record whether they found the cult.
-- [ ] The Servant of Flame in the victory display records it killed; beneath the act, it escaped and each investigator earns 1 more experience.
+- [ ] The Servant of Flame in the victory display records it killed; beneath the act (once [MC2.18](https://github.com/macandy13/arkham-companion/issues/1237) lands), it escaped and each investigator earns 1 more experience.
 - [ ] Experience: the victory display plus 1 for each enemy beneath the act.
 - [ ] Once Arkham Alive has advanced, each investigator earns a Mark of Elokoss.
 

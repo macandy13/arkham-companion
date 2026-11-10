@@ -53,22 +53,22 @@ The scripted golden game is [`end_to_end.test.ts`](../../packages/scenarios/src/
 **Encounter cards**
 
 - [ ] Putrid Vapors: 1 horror on a failed agility (3) test.
-- [ ] Languor goes to the drawer's threat area.
+- [ ] Languor (spelled "Langour" in the app, as on ArkhamDB) goes to the drawer's threat area.
 - [ ] Cosmic Evils, Noxious Smoke and Fire! work as in _Spreading Flames_.
 
 **Resolution and campaign end**
 
-- [ ] Resolution 1 and 2: each investigator earns the victory display plus 5 experience and 2 mental and 2 physical trauma; the campaign is won.
+- [ ] Resolution 1 and 2 (2 only once [MC2.19](https://github.com/macandy13/arkham-companion/issues/1238) lets the players end the game in it): each investigator earns the victory display plus 5 experience and 2 mental and 2 physical trauma; the campaign is won.
 - [ ] Resolution 3: each investigator who did not resign is killed; those who resigned earn the victory display plus 3 experience and 3 mental trauma; the campaign is won.
 - [ ] Without a resolution Elokoss is reborn, each investigator is killed and the campaign is lost.
-- [ ] The Collector earned as a campaign reward shows under "Do this by hand".
+- [ ] The Collector earned as a campaign reward shows under "At the table" on the resolution screen.
 
 ## Left to the players
 
 These are done by hand at the table; the app does not do them.
 
 - The agendas' rule that enemies at a location with Fire! attached cannot be damaged, agenda 3a's damage instead of doom, and act 2a's clue spend to discard a Fire!.
-- Elokoss: that she cannot move or make attacks of opportunity, her Mother of Flame side and her clue spend toward resolution 2. The play screen can't end the game in resolution 2 yet ([MC2.17](https://github.com/macandy13/arkham-companion/issues/1236)).
+- Elokoss: that she cannot move or make attacks of opportunity, her Mother of Flame side and her clue spend toward resolution 2. The play screen can't end the game in resolution 2 yet ([MC2.19](https://github.com/macandy13/arkham-companion/issues/1238), [MC2.17](https://github.com/macandy13/arkham-companion/issues/1236)).
 - The additional clue costs to enter Underground Cistern and Sluice Control.
 - Underground Cistern's clues placed again once it has none, and its discard of ready non-Elite Cultists as the investigation phase ends, with 1 doom each.
 - Infested Pipes' discard until an enemy, and the turn-end effects of Flooded Crypt (horror), Smuggler's Cache (resource) and Toxic Waste Pit (discard).

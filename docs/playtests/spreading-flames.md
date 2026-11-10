@@ -16,7 +16,7 @@ The scripted golden game is [`end_to_end.test.ts`](../../packages/scenarios/src/
 
 - [ ] Every investigator starts in Your Friend's Room with its clues (2 per investigator).
 - [ ] The encounter deck holds the nine encounter sets less the set-aside cards.
-- [ ] The skull token's value is the current act's number.
+- [ ] The skull token is -X, X the current act's number (1 more on Hard and Expert).
 
 **Act 1, Where There's Smoke...**
 
@@ -24,6 +24,8 @@ The scripted golden game is [`end_to_end.test.ts`](../../packages/scenarios/src/
 - [ ] Its reverse side discards each enemy, puts the Dormitories and Miskatonic Quad into play, spawns the Servant of Flame in the Dormitories, attaches a Fire! to Your Friend's Room and puts the other set-aside Fire! cards into the encounter discard pile.
 
 **Act 2, Escape the Dorms**
+
+The app can't advance this act yet (see "Left to the players"), so a game at the table stops here until [MC2.19](https://github.com/macandy13/arkham-companion/issues/1238).
 
 - [ ] Its reverse side sets the Servant of Flame aside (healed), discards each enemy, removes Your Friend's Room with its Fire! and puts Orne Library, Science Hall and Warren Observatory into play.
 
@@ -66,7 +68,7 @@ The scripted golden game is [`end_to_end.test.ts`](../../packages/scenarios/src/
 These are done by hand at the table; the app does not do them.
 
 - The reverse sides of Past Curfew and Lit Up (each investigator tests; Lit Up's Fire! cards), the agendas' Parley to discard a Bystander, and Wild Flames' Fire! draw after doom is placed on it.
-- Escape the Dorms' objective: the act advances when each undefeated investigator is at Miskatonic Quad; advance it from the act card.
+- Escape the Dorms' objective: the act advances when each undefeated investigator is at Miskatonic Quad. The play screen has no way to advance it by hand yet ([MC2.19](https://github.com/macandy13/arkham-companion/issues/1238)).
 - Searching for Dr. Armitage's reverse side: Dr. Henry Armitage under an investigator's control and the lead's search for Fire!. His skill bonus and free first action are his controller's to apply.
 - Blaze of Glory's group clue spend to deal damage to an enemy.
 - Your Friend's Room's Engage action, Miskatonic Quad's free move, Warren Observatory's draw and Orne Library's two-action draw.
