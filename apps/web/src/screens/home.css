@@ -357,32 +357,6 @@
   margin-top: 0;
 }
 
-#app #shelf > li > ul > li {
-  position: relative;
-  display: grid;
-  place-items: center;
-  width: var(--cover-portrait-size);
-  height: var(--cover-portrait-size);
-  padding: 0;
-  overflow: hidden;
-  border: var(--border-width) solid var(--color-accent);
-  border-radius: var(--radius-round);
-  background: var(--color-paper-surface);
-  box-shadow: var(--button-lift);
-}
-
-#shelf > li > ul > li::before {
-  content: attr(data-initial);
-  color: var(--color-text-muted);
-  font-family: var(--font-family-print);
-}
-
-#shelf > li > ul > li > picture {
-  position: absolute;
-  inset: 0;
-  display: block;
-}
-
 #shelf > li > ul > li > span {
   position: absolute;
   width: var(--hidden-size);

@@ -47,14 +47,15 @@
 
 /*
  * The clue payment dialog cuts a payer's art out of their card's picture (`--investigator-art-*`),
- * a card dialog (CardDialog) the portrait of the investigator who acts, and home's covers the
- * team's portraits (`TeamPortraits`).
+ * a card dialog (CardDialog) the portrait of the investigator who acts, home's covers the
+ * team's portraits (`TeamPortraits`) and the wizard's summary the seated investigators'.
  */
 :is(
     #board dialog[data-dialog='clue-payment'] li,
     #board dialog[data-shell],
     #board dialog[data-shell] hgroup > p,
-    #shelf li[data-initial]
+    #shelf li[data-initial],
+    #wizard > dl > dd li > [data-initial]
   )
   > picture
   > img {
@@ -69,11 +70,43 @@
     #board dialog[data-dialog='clue-payment'] li,
     #board dialog[data-shell],
     #board dialog[data-shell] hgroup > p,
-    #shelf li[data-initial]
+    #shelf li[data-initial],
+    #wizard > dl > dd li > [data-initial]
   )
   > picture:not([data-picture])
   > img {
   visibility: hidden;
+}
+
+/*
+ * A round portrait: the investigator's initial until their card's picture has loaded, then their
+ * art cut from it (above). Home's covers show their team in them (`TeamPortraits`), the wizard's
+ * summary its seated investigators.
+ */
+:is(#app #shelf > li > ul > li, #app #wizard > dl > dd li > [data-initial]) {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: var(--cover-portrait-size);
+  height: var(--cover-portrait-size);
+  padding: 0;
+  overflow: hidden;
+  border: var(--border-width) solid var(--color-accent);
+  border-radius: var(--radius-round);
+  background: var(--color-paper-surface);
+  box-shadow: var(--button-lift);
+}
+
+:is(#shelf > li > ul > li, #wizard > dl > dd li > [data-initial])::before {
+  content: attr(data-initial);
+  color: var(--color-text-muted);
+  font-family: var(--font-family-print);
+}
+
+:is(#shelf > li > ul > li, #wizard > dl > dd li > [data-initial]) > picture {
+  position: absolute;
+  inset: 0;
+  display: block;
 }
 
 /*

@@ -170,9 +170,24 @@
   font-size: var(--font-size-field);
 }
 
+/* The seated investigators in seat order, each a round portrait before the line. */
 #wizard > dl > dd ol {
+  display: grid;
+  gap: var(--space-2);
   margin: 0;
-  padding-left: var(--space-4);
+  padding: 0;
+  list-style: none;
+}
+
+#wizard > dl > dd li {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+/* The portrait's circle is shared with home's covers (investigators.css); it keeps its size beside the line. */
+#wizard > dl > dd li > [data-initial] {
+  flex: none;
 }
 
 /* On a phone each label stands over what was chosen. */

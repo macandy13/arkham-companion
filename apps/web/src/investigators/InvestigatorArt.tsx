@@ -6,7 +6,7 @@ import { useCardPicture } from '../catalog/cardImages';
  * where the printed card has its art, cut out by the stylesheet once the picture has loaded
  * (`data-picture`); until then, and for good when it fails, its place shows what lies under it
  * (the panel's hatched art window, an avatar's initial). Shared by the investigator panels, their
- * avatars and the clue payment dialog.
+ * avatars, the clue payment dialog, home's team portraits and the wizard's summary.
  */
 export function InvestigatorArt({ image }: { image: CardImagePath | undefined }) {
   const picture = useCardPicture(image);
