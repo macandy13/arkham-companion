@@ -7,6 +7,7 @@ import {
   cardDbFrom,
   decisionId,
   duringAct,
+  defeatEnemy,
   eachEnemy,
   eachInZone,
   endScenario,
@@ -255,7 +256,7 @@ export const queenOfAshCardDefs: readonly CardStats[] = [
     stage: 2,
     abilities: [
       atEndOfRound(
-        // A forced instruction: an engaged Cultist disengages and moves as well.
+        // The card names no unengaged enemies, so an engaged Cultist disengages and moves too.
         moveEnemyTowards(
           eachEnemy({ trait: trait('Cultist') }),
           onlyCopy(codes.undergroundCistern),
@@ -293,7 +294,10 @@ export const queenOfAshCardDefs: readonly CardStats[] = [
       {
         effects: [
           skillTestOfEither(SLUICE_CONTROL_DECISION, ['agility', 'combat'], 5, {
-            onPass: [endScenario(QUEEN_OF_ASH_RESOLUTIONS.ritualFlooded)],
+            onPass: [
+              defeatEnemy(eachEnemy({})),
+              endScenario(QUEEN_OF_ASH_RESOLUTIONS.ritualFlooded),
+            ],
           }),
         ],
       },

@@ -450,7 +450,7 @@ describe('Queen of Ash agendas and acts', () => {
     },
     { skill: 'agility', result: 'fail', ends: 'nothing', resolution: undefined },
   ] as const)(
-    'ends $ends when the tank resolves a Sluice Control $skill test (5): $result',
+    'ends $ends, each enemy defeated on a pass, when the tank resolves a Sluice Control $skill test (5): $result',
     ({ skill, result, resolution }) => {
       const atSluice = stateAfter(ctx, startScenario(ctx), tankEntersCistern, {
         type: 'MoveInvestigator',
@@ -471,6 +471,7 @@ describe('Queen of Ash agendas and acts', () => {
 
       expect(chosen.pending).toMatchObject([{ skillTest: { skill, difficulty: 5 } }]);
       expect(state.meta.resolution).toBe(resolution);
+      expect(state.cards[elokoss]?.zone.kind).toBe(resolution ? 'victoryDisplay' : 'atLocation');
     },
   );
 });
