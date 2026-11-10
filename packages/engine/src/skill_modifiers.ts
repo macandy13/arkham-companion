@@ -127,10 +127,10 @@ export function revealsAnotherToken(token: ChaosToken): boolean {
  */
 export function revealsMore(revealed: readonly ChaosToken[]): boolean {
   const last = revealed.at(-1);
-  return last !== undefined && revealsAnotherToken(last) && !secondFrost(revealed);
+  return last !== undefined && revealsAnotherToken(last) && !hasSecondFrost(revealed);
 }
 
-function secondFrost(revealed: readonly ChaosToken[]): boolean {
+function hasSecondFrost(revealed: readonly ChaosToken[]): boolean {
   return revealed.filter((token) => token === 'frost').length >= 2;
 }
 
@@ -253,7 +253,7 @@ export function skillTestSuggestion(
  * second frost token revealed in the same test (Rules Reference, "Frost Tokens").
  */
 function failsAutomatically(tokens: readonly ChaosToken[]): boolean {
-  return tokens.includes('autoFail') || secondFrost(tokens);
+  return tokens.includes('autoFail') || hasSecondFrost(tokens);
 }
 
 /**
