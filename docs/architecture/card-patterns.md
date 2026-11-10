@@ -78,5 +78,5 @@ A cost is `CardAction.cost`, paid before the effects.
 ## Resolution order
 
 - An effect after a test that resolves either way (On Wings of Darkness's "Then, …") is the next effect of the same ability, after the `skillTest`: `disengageFromEachEnemy(…)`, `moveTo(locationWith({ trait: trait('Central') }))`, `engageReadyEnemies()`.
-- A per-point fail cost: `skillTest('intellect', 4, { perPointFailed: 'clues' })` (False Lead).
+- A per-point fail cost: effects that resolve once for each point failed, `skillTest('intellect', 4, { perPointFailed: [placeYourClues(1)] })` (False Lead); a choice repeats per point too (`perPointFailed: [youMustEither(…)]`, Umôrdhoth's Wrath).
 - An ability after the enemy is evaded (Ruth Turner): `afterEvaded(addToVictoryDisplay({ ref: 'self' }))`.

@@ -42,6 +42,7 @@ import {
   skillTest,
   skillTestOfEither,
   spendClues,
+  placeYourClues,
   takeDamage,
   takeDamageAndHorror,
   takeHorror,
@@ -360,7 +361,7 @@ export const theMidnightMasksCardDefs: readonly CardStats[] = [
       ifYouHave(
         'clues',
         { min: 1 },
-        whenRevealed(skillTest('intellect', 4, { perPointFailed: 'clues' })),
+        whenRevealed(skillTest('intellect', 4, { perPointFailed: [placeYourClues(1)] })),
       ),
     ],
   }),

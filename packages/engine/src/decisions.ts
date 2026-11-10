@@ -1,4 +1,4 @@
-import { assertNever, duplicates, numberedDuplicates } from '@arkham/util';
+import { assertNever, duplicates, numberedDuplicates, range } from '@arkham/util';
 import type { EngineContext } from './cards';
 import { isEnemyOnTable, locationOf } from './enemies';
 import type { Command, RequestDecision, ResolveDecision } from './commands';
@@ -18,7 +18,6 @@ import type {
   DecisionOption,
   GameState,
   NamedAmount,
-  PerPointFailed,
   SkillTest,
   SkillTestOutcome,
 } from './state';
@@ -166,31 +165,15 @@ export function answerCommands(state: GameState, command: Command): readonly Com
 }
 
 /**
- * What a per-point fail costs (`Decision.perPointFailed`): the margin the
- * answer confirms, as damage or horror on the tested investigator or as
- * their clues placed on their location.
+ * What a per-point fail costs (`Decision.perPointFailed`): its commands once
+ * for each point of the margin the answer confirms.
  */
 function perPointCommands(state: GameState, command: ResolveDecision): Command[] {
   const decision = pendingDecision(state, command.decisionId);
   const margin = decision && perPointMargin(decision, command);
-  if (!decision?.perPointFailed || !margin || decision.decider.kind !== 'investigator') return [];
-  const { investigatorId } = decision.decider;
-  switch (decision.perPointFailed) {
-    case 'damage':
-    case 'horror':
-      return [
-        {
-          type: 'AdjustInvestigator',
-          investigatorId,
-          stat: decision.perPointFailed,
-          delta: margin,
-        },
-      ];
-    case 'clues':
-      return [{ type: 'PlaceClues', investigatorId, amount: margin }];
-    default:
-      return assertNever(decision.perPointFailed);
-  }
+  if (!decision?.perPointFailed || !margin) return [];
+  const perPoint = decision.perPointFailed;
+  return range(margin).flatMap(() => [...perPoint]);
 }
 
 /**
@@ -368,11 +351,11 @@ export interface SkillTestOutcomes {
   onPass: Command[];
   onFail: Command[];
   /**
-   * "For each point you fail by": the tester takes 1 damage or horror per
-   * point of the fail answer's `margin` (1 when it gives none), and
-   * `SkillTestResolved.margin` records it.
+   * "For each point you fail by": commands run once per point of the fail
+   * answer's `margin` (1 when it gives none), and `SkillTestResolved.margin`
+   * records it.
    */
-  perPointFailed?: PerPointFailed;
+  perPointFailed?: readonly Command[];
 }
 
 /**

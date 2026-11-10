@@ -15,6 +15,7 @@ import {
   newGame,
   PlayTable,
   skillTest,
+  takeDamage,
   whenRevealed,
   zoneOf,
 } from '@arkham/engine';
@@ -504,7 +505,9 @@ describe('DecisionDialog', () => {
           .withCard(
             instanceId('grasping_hands'),
             blankTreachery('Grasping Hands', {
-              abilities: [whenRevealed(skillTest('agility', 3, { perPointFailed: 'damage' }))],
+              abilities: [
+                whenRevealed(skillTest('agility', 3, { perPointFailed: [takeDamage(1)] })),
+              ],
             }),
             { kind: 'encounterDeck' },
           )

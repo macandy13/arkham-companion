@@ -83,6 +83,7 @@ import {
   spendClues,
   moveTo,
   putIntoThreatArea,
+  placeYourClues,
   takeDamage,
   takeHorror,
   threatAreaOf,
@@ -980,11 +981,11 @@ describe('trigger bus', () => {
     const rottingRemains = instanceId('rotting_remains');
     /** "Revelation – Test agility (3). Take 1 damage for each point you fail by." */
     const graspingHandsCard = blankTreachery('grasping_hands', {
-      abilities: [whenRevealed(skillTest('agility', 3, { perPointFailed: 'damage' }))],
+      abilities: [whenRevealed(skillTest('agility', 3, { perPointFailed: [takeDamage(1)] }))],
     });
     /** "Revelation – Test willpower (3). Take 1 horror for each point you fail by." */
     const rottingRemainsCard = blankTreachery('rotting_remains', {
-      abilities: [whenRevealed(skillTest('willpower', 3, { perPointFailed: 'horror' }))],
+      abilities: [whenRevealed(skillTest('willpower', 3, { perPointFailed: [takeHorror(1)] }))],
     });
     /** Alice in the hall, with Grasping Hands on top of the encounter deck and Rotting Remains below. */
     const treacheryTable = newGame()
@@ -1051,7 +1052,9 @@ describe('trigger bus', () => {
       ({ clues, margin, kept, placed }) => {
         /** "Revelation – Test intellect (4). For each point you fail by, place 1 of your clues on your location." */
         const losingTrailCard = blankTreachery('losing_trail', {
-          abilities: [whenRevealed(skillTest('intellect', 4, { perPointFailed: 'clues' }))],
+          abilities: [
+            whenRevealed(skillTest('intellect', 4, { perPointFailed: [placeYourClues(1)] })),
+          ],
         });
         const { context, state: started } = newGame()
           .withLocation(hall, blankLocation('hall'), { revealed: true, clues: 0 })
