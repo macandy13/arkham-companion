@@ -13,6 +13,9 @@ Card rulings: [Children of Blood](cards/children-of-blood.md) (Predator).
   - The [2026 Core rulebook](https://images-cdn.fantasyflightgames.com/filer_public/0e/d0/0ed09507-1705-47ed-a630-cd15885cabb0/ahc100_rulebook-web.pdf) (keyword glossary: "fails an evasion test targeting a ready enemy with the alert keyword") names "ready"; the older Rules Reference text leaves it out.
 - An exhausted enemy makes no keyword, attack-of-opportunity or enemy-phase attack (2026 Core rulebook: exhausted enemies "do not perform attacks of opportunity" and do not attack in the enemy phase; retaliate and alert name a ready enemy). Any of these attacks can be cancelled by a card ([Cancel](https://arkhamdb.com/rules#Cancel)).
 - [Elusive](https://arkhamdb.com/rules#Elusive) (also on Core Set (2026) cards, e.g. Bat Horror): after it attacks or is attacked while ready, it disengages, moves to a connecting location (without investigators if possible) and exhausts.
+  - It retreats after the attack resolves, whether or not it was engaged with the attacker. "Is attacked" means a fight against it, hit or miss; a hit that defeats it leaves nothing to retreat. On a miss a retaliate enemy attacks first and retreats after that attack, or right away when the players cancel it.
+  - The app checks "ready" as the retreat resolves, so an effect that exhausts it in between (none known) stops the retreat.
+  - Between equal destinations the lead investigator picks. It arrives exhausted, so it engages nobody there; with no connecting location it only disengages and exhausts.
 - Doomed (Core Set (2026), reminder text on Bystander): when the enemy is defeated, place 1 doom on the current agenda.
   - This can make the agenda advance.
   - Discarding the enemy (e.g. Factory Worker's Parley) is not defeating it, so Doomed doesn't trigger (2026 Core rulebook glossary).

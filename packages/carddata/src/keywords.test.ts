@@ -56,11 +56,12 @@ describe('parseKeywords', () => {
     ]);
   });
 
-  it('reads massive, aloof and alert case-insensitively', () => {
-    expect(parseKeywords('MASSIVE. aloof. Alert.', [])).toEqual([
+  it('reads massive, aloof, alert and elusive case-insensitively', () => {
+    expect(parseKeywords('MASSIVE. aloof. Alert. Elusive.', [])).toEqual([
       { name: 'massive' },
       { name: 'aloof' },
       { name: 'alert' },
+      { name: 'elusive' },
     ]);
   });
 

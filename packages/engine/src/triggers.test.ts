@@ -921,6 +921,7 @@ describe('trigger bus', () => {
         'EnemyDisengaged',
         'EnemyEvaded',
         'CardMoved',
+        'SkillTestEnded',
       ]);
     });
   });

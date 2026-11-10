@@ -69,6 +69,7 @@ export type Event =
   | AbilityEffectSkipped
   | CluesDiscovered
   | SkillTestResolved
+  | SkillTestEnded
   | EnemyEngaged
   | EnemyAttacked
   | EnemyDisengaged
@@ -467,6 +468,20 @@ export interface SkillTestResolved {
    * (`Decision.perPointFailed`) deals without one.
    */
   margin?: number;
+}
+
+/**
+ * A basic action's skill test ended (ST.8), after all its results (ST.7). Changes no state: it
+ * marks the end for `windowsOpenedBy` (`testEnded`), where "after applying all results"
+ * keywords act (retaliate, alert, elusive). Produced by `EndSkillTest`.
+ */
+export interface SkillTestEnded {
+  type: 'SkillTestEnded';
+  investigatorId: InvestigatorId;
+  /** The location investigated or the enemy attacked or evaded. */
+  subject: InstanceId;
+  action: TestedAction;
+  outcome: SkillTestOutcome;
 }
 
 /**

@@ -1,5 +1,6 @@
 import type { BasicAction } from './action_costs';
-import type { AbilityEffect, OpenedWindow, TimingWindow } from './abilities';
+import type { AbilityEffect, OpenedWindow, TestedAction, TimingWindow } from './abilities';
+import type { KeywordAttackKind } from './forced_attacks';
 import type { CampaignLog, TraumaKind } from './campaign/campaign_log';
 import type { CardType, ScaledValue, TokenAmount, Trait } from './cards';
 import type {
@@ -24,6 +25,7 @@ import type {
   PerPointFailed,
   SkillName,
   SkillTest,
+  SkillTestOutcome,
   TokenKind,
   WoundKind,
 } from './state';
@@ -82,6 +84,7 @@ export type Command =
   | ResolveRevelation
   | DefeatEnemy
   | ExhaustEnemy
+  | RetreatEnemy
   | EvadeEnemy
   | ReadyEnemy
   | MoveEnemy
@@ -105,7 +108,8 @@ export type Command =
   | EnemyAttacks
   | Investigate
   | Fight
-  | Evade;
+  | Evade
+  | EndSkillTest;
 
 /** A card instance to create when the scenario starts. */
 export interface StartingCard {
@@ -909,6 +913,20 @@ export interface EvadeEnemy {
 }
 
 /**
+ * Rules Reference, "Elusive": after a ready elusive enemy attacks or is attacked, it disengages,
+ * moves to a connecting location (one without investigators if able) and exhausts. Without `to`
+ * the engine picks the destination, or asks the lead investigator between equal ones with a
+ * `chooseLocation` whose options name `to`. Does nothing for an exhausted enemy or one that left
+ * the table meanwhile. Produces `EnemyDisengaged`, `CardMoved` and `ExhaustChanged`.
+ */
+export interface RetreatEnemy {
+  type: 'RetreatEnemy';
+  enemyId: InstanceId;
+  /** A location connecting to the enemy's, as the answer to the choice. */
+  to?: InstanceId;
+}
+
+/**
  * Exhausts an enemy in play (after it attacked, or by a card effect). Exhausting an exhausted
  * enemy does nothing, as readying a ready one does. Produces `ExhaustChanged`.
  */
@@ -1286,6 +1304,24 @@ export interface EnemyAttacks {
   type: 'EnemyAttacks';
   enemyId: InstanceId;
   investigatorId: InvestigatorId;
+  /**
+   * The keyword that makes the attack (retaliate, alert; `keywordAbilities`): asked as
+   * `<keyword>:<enemy>`, and only by a ready enemy, which both keywords require.
+   */
+  keyword?: KeywordAttackKind;
+}
+
+/**
+ * The skill test of a basic action ends (ST.8): queued after the test's results
+ * (`testedActionCommands`) so that "after applying all results" abilities see them. Produces
+ * `SkillTestEnded`.
+ */
+export interface EndSkillTest {
+  type: 'EndSkillTest';
+  investigatorId: InvestigatorId;
+  subject: InstanceId;
+  action: TestedAction;
+  outcome: SkillTestOutcome;
 }
 
 /**

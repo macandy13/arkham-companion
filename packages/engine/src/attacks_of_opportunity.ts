@@ -70,8 +70,9 @@ export function handleDealEnemyAttack(
 }
 
 /**
- * `EnemyAttacks`: the `cardAttack` decision for the attacked investigator, unless the enemy is off
- * the table or the investigator no longer active, which leaves nothing to attack (see the command).
+ * `EnemyAttacks`: the `cardAttack` decision for the attacked investigator (the keyword's, for a
+ * keyword attack), unless the enemy is off the table, exhausted for a keyword attack, or the
+ * investigator no longer active, which leaves nothing to attack (see the command).
  */
 export function handleEnemyAttacks(
   ctx: EngineContext,
@@ -83,8 +84,9 @@ export function handleEnemyAttacks(
   if (!investigator)
     throw new CommandRejected({ code: 'unknownInvestigator', investigatorId: cmd.investigatorId });
   if (investigator.status !== 'active' || !isEnemyOnTable(enemy)) return [];
+  if (cmd.keyword !== undefined && enemy.exhausted) return [];
   return requestDecision(
     state,
-    forcedAttackDecision(ctx, state, 'cardAttack', enemy.id, investigator.id),
+    forcedAttackDecision(ctx, state, cmd.keyword ?? 'cardAttack', enemy.id, investigator.id),
   );
 }

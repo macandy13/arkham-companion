@@ -383,6 +383,7 @@ function eventLine(t: TFunction, names: Names, state: GameState, event: Event): 
     case 'ActionsAdjusted':
     case 'SkillBoostChanged':
     case 'ActionsReset':
+    case 'SkillTestEnded':
     case 'StepsQueued':
     case 'StepResumed':
     case 'ActionDropped':

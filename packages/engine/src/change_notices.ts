@@ -109,6 +109,7 @@ export function noticeKindOf(event: Event): NoticeKind | undefined {
     case 'DecisionResolved':
     case 'CardActionUsed':
     case 'SkillTestResolved':
+    case 'SkillTestEnded':
     case 'PhaseChanged':
     case 'PhaseStepsChanged':
     case 'RoundEnded':

@@ -50,6 +50,8 @@ import {
   theOnlyCopy,
   type CardFilter,
 } from './lookup';
+import { hasKeyword } from './keywords';
+import type { KeywordAttackKind } from './forced_attacks';
 import type { AddMapStep } from './setup';
 import type {
   CardInstance,
@@ -115,6 +117,12 @@ export type TimingWindow =
    * an `Investigate` command, so it opens it like the basic action.
    */
   | { kind: 'tested'; action: TestedAction; outcome: SkillTestOutcome }
+  /**
+   * "After applying all results of that skill test" (retaliate, alert) and "after it is attacked"
+   * (elusive): the skill test of a basic action against the card ended (`SkillTestEnded`, ST.8),
+   * its results applied. Opened for the location or enemy tested, naming the tester.
+   */
+  | { kind: 'testEnded'; action: TestedAction; outcome: SkillTestOutcome }
   /**
    * "After [this enemy] engages you": the enemy became engaged with an
    * investigator (`EnemyEngaged`), whether it engaged them or they engaged
@@ -366,6 +374,7 @@ export type AbilityCommand =
           | 'EngageReadyEnemies'
           | 'ReadyEnemy'
           | 'ExhaustEnemy'
+          | 'RetreatEnemy'
           | 'GainSurge'
           | 'MoveInvestigator'
           | 'AddMap'
@@ -637,6 +646,10 @@ export function windowsOpenedBy(
         (cardId) => ({ window, cardId, ...(investigatorId && { investigatorId }) }),
       );
     }
+    case 'SkillTestEnded': {
+      const { action, outcome, subject, investigatorId } = event;
+      return [{ window: { kind: 'testEnded', action, outcome }, cardId: subject, investigatorId }];
+    }
     case 'RoundEnded':
       return cardsWithActiveAbilities(state).map((card) => ({
         window: { kind: 'roundEnds' },
@@ -709,7 +722,8 @@ export function abilitySteps(
 ): AbilityStep[] {
   const card = state.cards[opened.cardId];
   if (!card) return [];
-  return (cardStats(ctx.cards, card.code).abilities ?? [])
+  const stats = cardStats(ctx.cards, card.code);
+  return [...(stats.abilities ?? []), ...keywordAbilities(stats)]
     .filter((ability) => shallowEqual<TimingWindow>(ability.window, opened.window))
     .filter(
       (ability) =>
@@ -737,6 +751,42 @@ export function abilitySteps(
 function openedFor(state: GameState, ability: Ability, opened: OpenedWindow): OpenedWindow[] {
   if (!ability.perInvestigator) return [opened];
   return playerOrder(state).map(({ id }) => ({ ...opened, investigatorId: id }));
+}
+
+/**
+ * The forced abilities a keyword gives a card on top of its printed ones (Rules Reference):
+ * a retaliate enemy attacks whoever failed to fight it, an alert one whoever failed to evade it
+ * (only when ready, `EnemyAttacks.keyword`), and an elusive enemy retreats after it attacks or is
+ * attacked, hit or miss. Retaliate comes before elusive, so the enemy retreats after its retaliate
+ * attack (`attacked`); its own retreat then finds it exhausted and does nothing, unless the players
+ * cancelled the attack.
+ */
+function keywordAbilities(stats: CardStats): Ability[] {
+  const retreat = retreatEnemy(self());
+  return [
+    ...(hasKeyword(stats, 'retaliate')
+      ? [afterTestEnds('fight', 'fail', enemyAttacks(self(), you(), 'retaliate'))]
+      : []),
+    ...(hasKeyword(stats, 'alert')
+      ? [afterTestEnds('evade', 'fail', enemyAttacks(self(), you(), 'alert'))]
+      : []),
+    ...(hasKeyword(stats, 'elusive')
+      ? [
+          afterAttacking(retreat),
+          afterTestEnds('fight', 'pass', retreat),
+          afterTestEnds('fight', 'fail', retreat),
+        ]
+      : []),
+  ];
+}
+
+/** A forced ability once a basic action's test against the card has ended, its results applied. */
+function afterTestEnds(
+  action: TestedAction,
+  outcome: SkillTestOutcome,
+  ...effects: AbilityEffect[]
+): Ability {
+  return { window: { kind: 'testEnded', action, outcome }, effects };
 }
 
 /** How often `ability`'s effects resolve: once, or once per enemy its `perEnemy` names. */
@@ -2038,6 +2088,14 @@ export function dealDamageTo(enemy: RelativeCard, amount: number): AbilityEffect
 }
 
 /**
+ * The elusive retreat (`RetreatEnemy`): disengage, move to a connecting location (one without
+ * investigators if able) and exhaust.
+ */
+export function retreatEnemy(enemy: RelativeCard): AbilityEffect {
+  return { type: 'RetreatEnemy', enemyId: enemy };
+}
+
+/**
  * "Exhaust it / each enemy at your location" (`ExhaustEnemy`); an enemy that
  * is exhausted already stays as it is.
  */
@@ -2072,8 +2130,9 @@ export function engagesYou(
 export function enemyAttacks(
   enemy: RelativeCard = { ref: 'self' },
   who: RelativeInvestigator = { ref: 'windowInvestigator' },
+  keyword?: KeywordAttackKind,
 ): AbilityEffect {
-  return { type: 'EnemyAttacks', enemyId: enemy, investigatorId: who };
+  return { type: 'EnemyAttacks', enemyId: enemy, investigatorId: who, ...(keyword && { keyword }) };
 }
 
 /** The one copy of `code` in the game, for a scenario's unique cards (`{ ref: 'onlyCopy' }`). */
