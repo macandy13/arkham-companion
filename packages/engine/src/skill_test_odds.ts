@@ -2,7 +2,7 @@ import { withoutFirst } from '@arkham/util';
 import type { EngineContext } from './cards';
 import { tokenCounts } from './chaos_bag';
 import {
-  revealsAnotherToken,
+  revealsMore,
   skillTestSuggestion,
   type SkillTestContext,
   type SkillTestInput,
@@ -24,7 +24,7 @@ export interface SkillTestOdds {
 /**
  * The odds of `test` with what the players entered so far (`input`, without tokens) when they
  * draw from `bag`: every way the draw can go, one token and another while the last one says so
- * (bless, curse, frost, blood), each weighed by its chance and valued as `skillTestSuggestion`
+ * (bless, curse, frost, blood; not after a second frost), each weighed by its chance and valued as `skillTestSuggestion`
  * values the revealed tokens. An empty bag reveals nothing, so the test is decided by its values
  * alone. Pure, so the skill test dialog can ask again for every extra committed icon.
  */
@@ -63,7 +63,7 @@ export function skillTestOdds(
     return tokenCounts(left).reduce<SkillTestOdds>(
       (sum, { token, count }) => {
         const drawn = [...revealed, token];
-        const odds = revealsAnotherToken(token)
+        const odds = revealsMore(drawn)
           ? oddsAfter(drawn, withoutFirst(left, token))
           : outcome(drawn);
         const chance = count / left.length;

@@ -91,6 +91,12 @@ describe('skillTestOdds', () => {
       odds: { pass: 5 / 6, fail: 1 / 6, unknown: 0 },
     },
     {
+      what: 'fails on a second frost, though 3 committed icons would cover its -2',
+      bag: ['frost', 'frost', '0'],
+      modifier: 3,
+      odds: { pass: 2 / 3, fail: 1 / 3, unknown: 0 },
+    },
+    {
       what: 'keeps a bless that is the last token: +2 and nothing more',
       bag: ['bless'],
       odds: { pass: 1, fail: 0, unknown: 0 },

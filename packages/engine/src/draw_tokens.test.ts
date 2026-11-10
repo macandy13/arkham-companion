@@ -11,6 +11,8 @@ describe('testFinished', () => {
     { revealed: ['frost'], finished: false },
     { revealed: ['frost', 'autoFail'], finished: true },
     { revealed: ['elderSign'], finished: true },
+    // A second frost ends the reveals at once, though frost says to reveal another.
+    { revealed: ['frost', 'bless', 'frost'], finished: true },
   ])('$revealed finishes the test: $finished', ({ revealed, finished }) => {
     expect(testFinished(revealed)).toBe(finished);
   });
@@ -23,6 +25,8 @@ describe('drawTokens', () => {
     // The bless on the table is not in the bag any more, so the next one is the −2.
     { bag: ['bless', '-2'], revealed: ['bless'], drawn: ['bless', '-2'] },
     { bag: ['-3', '+1'], revealed: ['+1'], drawn: ['-3'] },
+    // The second frost fails the test and ends the draw before the 0.
+    { bag: ['frost', 'frost', '0'], revealed: [], drawn: ['frost', 'frost'] },
     // A bag of only blesses runs out before the test ends.
     { bag: ['bless'], revealed: [], drawn: ['bless'] },
   ])('from $bag after $revealed draws $drawn', ({ bag, revealed, drawn }) => {

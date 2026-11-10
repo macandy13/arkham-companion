@@ -1,10 +1,12 @@
 import type { ChaosToken } from './state';
-import { revealsAnotherToken } from './skill_modifiers';
+import { revealsMore } from './skill_modifiers';
 
-/** Whether `revealed` ends the test: the last token revealed makes the tester reveal no other. */
+/**
+ * Whether `revealed` ends the test: the last token revealed makes the tester reveal no other, or
+ * it was a second frost (`revealsMore`).
+ */
 export function testFinished(revealed: readonly ChaosToken[]): boolean {
-  const last = revealed.at(-1);
-  return last !== undefined && !revealsAnotherToken(last);
+  return revealed.length > 0 && !revealsMore(revealed);
 }
 
 /**

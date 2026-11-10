@@ -115,10 +115,23 @@ const REVEALS_ANOTHER: ReadonlySet<ChaosToken> = new Set(['bless', 'curse', 'fro
 
 /**
  * Whether revealing `token` makes the tester reveal another one (bless, curse, frost, blood), so
- * a test that has revealed it is not finished yet.
+ * a test that has revealed it is not finished yet (unless it was a second frost: `revealsMore`).
  */
 export function revealsAnotherToken(token: ChaosToken): boolean {
   return REVEALS_ANOTHER.has(token);
+}
+
+/**
+ * Whether a test that has `revealed` these tokens reveals one more: the last one says so, and it
+ * is not a second frost, which ends the reveals at once (Rules Reference, "Frost Tokens").
+ */
+export function revealsMore(revealed: readonly ChaosToken[]): boolean {
+  const last = revealed.at(-1);
+  return last !== undefined && revealsAnotherToken(last) && !secondFrost(revealed);
+}
+
+function secondFrost(revealed: readonly ChaosToken[]): boolean {
+  return revealed.filter((token) => token === 'frost').length >= 2;
 }
 
 /**
@@ -194,7 +207,8 @@ export function withSuggestion(ctx: EngineContext, state: GameState, decision: D
  * `tokenValues`), against the test's printed difficulty (Rules Reference,
  * "Skill Tests", ST.5). Neither value goes below 0 (Rules Reference,
  * "Modifiers": a modified quantity cannot be reduced below zero), and the
- * auto-fail token makes the skill value 0 (ST.6). Rejects a modifier that is
+ * auto-fail token, or a second frost token, makes the skill value 0 (ST.6;
+ * `failsAutomatically`). Rejects a modifier that is
  * not a whole number (`invalidModifierAmount`), so a broken input or token
  * value shows up instead of skewing the numbers.
  */
@@ -218,7 +232,7 @@ export function skillTestSuggestion(
     ...tokenChanges.flatMap(({ change }) => change ?? []),
   ];
   for (const change of changes) assertWhole(change.change);
-  const autoFail = tokens.includes('autoFail');
+  const autoFail = failsAutomatically(tokens);
   const skill = targetTrace('skill', investigator.skills[test.skill], changes, autoFail);
   const difficulty = targetTrace('difficulty', test.difficulty, changes, false);
   const passes = !autoFail && skill.total >= difficulty.total;
@@ -232,6 +246,14 @@ export function skillTestSuggestion(
       .map(({ token }) => token),
     trace: [...skill.steps, ...difficulty.steps],
   };
+}
+
+/**
+ * Whether the revealed `tokens` fail the test whatever the values: the auto-fail token, or a
+ * second frost token revealed in the same test (Rules Reference, "Frost Tokens").
+ */
+function failsAutomatically(tokens: readonly ChaosToken[]): boolean {
+  return tokens.includes('autoFail') || secondFrost(tokens);
 }
 
 /**
