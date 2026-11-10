@@ -75,14 +75,17 @@ test('the summary of a quick game with two investigators', async ({ page }) => {
   await page.getByRole('radio', { name: 'Hard' }).check();
   await page.getByRole('button', { name: 'Next' }).click();
   const portraits = page.getByRole('list', { name: 'Investigators' });
-  for (const name of ['Fake Guardian', 'Fake Seeker']) {
+  for (const name of ['Roland Banks', 'Fake Seeker']) {
     await portraits.getByRole('button', { name: new RegExp(name) }).click();
     await page.getByRole('button', { name: 'Select', exact: true }).click();
   }
 
   await page.getByRole('button', { name: 'Next' }).click();
 
-  await expect(page.getByRole('region', { name: 'Summary' })).toContainText('Hard');
+  const summary = page.getByRole('region', { name: 'Summary' });
+  await expect(summary).toContainText('Hard');
+  // Roland's card has a picture, so his portrait shows; the Fake Seeker's has none: their initial.
+  await expect(summary.locator('picture[data-picture="shown"]')).toHaveCount(1);
 });
 
 test('the investigators step when the card data could not be loaded, with its retry', async ({
