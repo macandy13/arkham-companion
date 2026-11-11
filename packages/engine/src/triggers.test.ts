@@ -1075,7 +1075,7 @@ describe('trigger bus', () => {
         },
       );
 
-      it('discards one encounter card for each point failed by, in one go', () => {
+      it('discards one encounter card for each point failed by', () => {
         /** "Test willpower (3). For each point you fail by, discard the top card of the encounter deck." */
         const witchingCard = blankTreachery('witching', {
           abilities: [
