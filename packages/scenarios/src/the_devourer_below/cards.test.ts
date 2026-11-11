@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   atLocation,
+  decisionId,
   encounterSetCode,
   engagedWith,
   execute,
@@ -31,6 +32,7 @@ import {
   DISRUPTING_THE_RITUAL_DECISION,
   OFFER_OF_POWER_DECISION,
   QUIET_GLADE_DECISION,
+  UMORDHOTHS_WRATH_DECISION,
   theDevourerBelowCardDefs,
   theDevourerBelowCards,
 } from './cards';
@@ -253,6 +255,79 @@ describe('The Devourer Below card abilities', () => {
 
       expect(state.cards[agenda]?.tokens.doom ?? 0).toBe(doom);
       expect(requireInvestigator(state, alice).sanity.horror).toBe(horror);
+    });
+  });
+
+  describe("Umôrdhoth's Wrath", () => {
+    const wrath = instanceId('umordhoths_wrath');
+    const failedByTwo: Command = {
+      type: 'ResolveDecision',
+      decisionId: decisionId('test:umordhoths_wrath'),
+      optionId: 'fail',
+      margin: 2,
+    };
+
+    it.each([
+      { name: 'damage and horror twice', answers: ['wounds', 'wounds'], damage: 2, horror: 2 },
+      {
+        name: 'a discard, then damage and horror',
+        answers: ['discard', 'wounds'],
+        damage: 1,
+        horror: 1,
+      },
+    ])('asks alice once for each point she fails by: $name', ({ answers, damage, horror }) => {
+      const { context, state: started } = newGame()
+        .withLocation(mainPath, cardOf('01149'), { revealed: true })
+        .withInvestigator(alice, { locationId: mainPath })
+        .withCard(wrath, cardOf('01158'), { kind: 'encounterDeck' })
+        .start();
+      const failed = stateAfter(
+        context,
+        started,
+        aliceDraws("Umôrdhoth's Wrath"),
+        resolveRevelation('umordhoths_wrath'),
+        failedByTwo,
+      );
+
+      const state = stateAfter(
+        context,
+        failed,
+        ...answers.map((option) => answer(UMORDHOTHS_WRATH_DECISION, option)),
+      );
+
+      expect(requireInvestigator(state, alice)).toMatchObject({
+        health: { damage },
+        sanity: { horror },
+      });
+      expect(state.pending).toEqual([]);
+    });
+
+    it('leaves the discard for a point to alice, by hand', () => {
+      const { context, state: started } = newGame()
+        .withLocation(mainPath, cardOf('01149'), { revealed: true })
+        .withInvestigator(alice, { locationId: mainPath })
+        .withCard(wrath, cardOf('01158'), { kind: 'encounterDeck' })
+        .start();
+      const failed = stateAfter(
+        context,
+        started,
+        aliceDraws("Umôrdhoth's Wrath"),
+        resolveRevelation('umordhoths_wrath'),
+        { ...failedByTwo, margin: 1 },
+      );
+
+      const { events } = execute(context, failed, answer(UMORDHOTHS_WRATH_DECISION, 'discard'));
+
+      expect(events).toContainEqual(
+        expect.objectContaining({
+          type: 'CommandDeferred',
+          command: expect.objectContaining({
+            type: 'DiscardFromHand',
+            investigatorId: alice,
+            amount: 1,
+          }),
+        }),
+      );
     });
   });
 

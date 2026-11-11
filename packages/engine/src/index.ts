@@ -230,6 +230,7 @@ export {
   skillTestOfEither,
   spawnEachSetAsideAt,
   spawnEnemyAt,
+  placeYourClues,
   takeDamage,
   takeDamageAndHorror,
   takeHorror,

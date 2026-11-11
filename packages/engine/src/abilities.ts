@@ -62,7 +62,6 @@ import type {
   GameState,
   Investigator,
   InvestigatorStat,
-  PerPointFailed,
   Phase,
   SkillTestKind,
   SkillTestOutcome,
@@ -346,6 +345,7 @@ export type AbilityCommand =
           | 'AdjustActions'
           | 'EndTurn'
           | 'DiscoverClues'
+          | 'PlaceClues'
           | 'HealInvestigator'
           | 'GainResources'
           | 'DrawCards'
@@ -405,9 +405,10 @@ export type AbilityCommand =
  * it sees what the effects before it did, an `each…` reference in one
  * repeats only that effect, and one that names nobody is dropped alone.
  */
-export type AbilityTest = Omit<TestSkill, 'onPass' | 'onFail'> & {
+export type AbilityTest = Omit<TestSkill, 'onPass' | 'onFail' | 'perPointFailed'> & {
   onPass: readonly AbilityCommand[];
   onFail: readonly AbilityCommand[];
+  perPointFailed?: readonly AbilityCommand[];
 };
 
 /**
@@ -946,7 +947,12 @@ function withDeferredOutcomes(effect: AbilityEffect, opened: OpenedWindow): unkn
     return { ...effect, decision: { ...effect.decision, options } };
   }
   if (effect.type !== 'TestSkill') return effect;
-  return { ...effect, onPass: defer(effect.onPass), onFail: defer(effect.onFail) };
+  return {
+    ...effect,
+    onPass: defer(effect.onPass),
+    onFail: defer(effect.onFail),
+    ...(effect.perPointFailed && { perPointFailed: defer(effect.perPointFailed) }),
+  };
 }
 
 /** Who picks a candidate for `picked`, and how the decision asks. */
@@ -1525,10 +1531,10 @@ export function whenAdvanced(...effects: AbilityEffect[]): Ability {
 
 /**
  * "Test [skill] (difficulty)" for the investigator the window names, about
- * the card with the ability; `onPass` and `onFail` follow the answer. With
- * `perPointFailed`, the tester takes 1 damage or horror, or places 1 of their
- * clues on their location, for each point the test fails by, as the players
- * confirm it (`TestSkill.perPointFailed`).
+ * the card with the ability; `onPass` and `onFail` follow the answer. The
+ * effects of `perPointFailed` resolve once for each point the test fails by,
+ * as the players confirm it (`TestSkill.perPointFailed`): "for each point you
+ * fail by, take 1 damage" is `{ perPointFailed: [takeDamage(1)] }`.
  */
 export function skillTest(
   skill: SkillName,
@@ -1536,7 +1542,7 @@ export function skillTest(
   outcomes: {
     onPass?: AbilityEffect[];
     onFail?: AbilityEffect[];
-    perPointFailed?: PerPointFailed;
+    perPointFailed?: AbilityEffect[];
   } = {},
 ): AbilityEffect {
   return {
@@ -1638,6 +1644,17 @@ export function takeDamage(
   who: RelativeInvestigator = { ref: 'windowInvestigator' },
 ): AbilityEffect {
   return { type: 'AdjustInvestigator', investigatorId: who, stat: 'damage', delta: amount };
+}
+
+/**
+ * "Place N of your clues on your location" (`PlaceClues`, False Lead): as many as the investigator
+ * has.
+ */
+export function placeYourClues(
+  amount: number,
+  who: RelativeInvestigator = { ref: 'windowInvestigator' },
+): AbilityEffect {
+  return { type: 'PlaceClues', investigatorId: who, amount };
 }
 
 /**

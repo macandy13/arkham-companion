@@ -15,8 +15,8 @@
  * What the engine leaves to the players is done by hand, as at the table:
  * agenda 1's reverse side (shuffle the discard into the deck, the first
  * Monster spawns at the Main Path with 1 doom), agenda 2's reverse side (each
- * investigator's willpower test; both pass), Ancient Evils' doom, Umôrdhoth's
- * Wrath (each drawer discards 2 cards), Dissonant Voices and Frozen in Fear's
+ * investigator's willpower test; both pass), Ancient Evils' doom, the cards
+ * Umôrdhoth's Wrath discards (each drawer fails by 2 and discards 2), Dissonant Voices and Frozen in Fear's
  * extra action. The players count actions themselves.
  */
 import { describe, expect, it } from 'vitest';
@@ -131,6 +131,13 @@ describe('The Devourer Below end to end: Roland and Daisy, seed 7', () => {
     );
     expect(table.board.namesIn({ kind: 'setAside' })).toHaveLength(2);
 
+    /** The drawer fails Umôrdhoth's Wrath's willpower (5) test by 2 and discards a card for each point. */
+    const wrathDiscardsTwo = () => {
+      table.resolveRevelation(byName("Umôrdhoth's Wrath"));
+      table.resolveTest({ failedBy: 2 });
+      table.answerOnly('scenario.theDevourerBelow.umordhothsWrath.discard');
+      table.answerOnly('scenario.theDevourerBelow.umordhothsWrath.discard');
+    };
     const quietTurn = (investigator: InvestigatorId) => {
       table.startTurn(investigator);
       table.endTurn(investigator);
@@ -163,9 +170,11 @@ describe('The Devourer Below end to end: Roland and Daisy, seed 7', () => {
     table.nextPhase();
     table.nextPhase();
 
-    // Round 3 – Roland draws Umôrdhoth's Wrath and discards 2 cards by hand;
+    // Round 3 – Roland draws Umôrdhoth's Wrath, fails by 2 and discards 2 cards;
     // Daisy draws a Ghoul Minion, which Roland defeats.
     expect(table.nextPhase()).toMatchObject({ round: 3, phase: 'mythos' });
+    wrathDiscardsTwo();
+    expect(table.nextPhase()).toEqual({ round: 3, phase: 'mythos' });
     expect(table.nextPhase()).toEqual({ round: 3, phase: 'investigation' });
     table.startTurn(roland);
     table.fight(roland, byName('Ghoul Minion'), { damage: 2 });
@@ -236,8 +245,9 @@ describe('The Devourer Below end to end: Roland and Daisy, seed 7', () => {
     table.nextPhase();
 
     // Round 7 – another Goat Spawn engages Roland; Daisy draws Umôrdhoth's
-    // Wrath and discards 2 cards by hand.
+    // Wrath, fails by 2 and discards 2 cards.
     expect(table.nextPhase()).toMatchObject({ round: 7, phase: 'mythos' });
+    wrathDiscardsTwo();
     expect(table.nextPhase()).toEqual({ round: 7, phase: 'investigation' });
     evadeTurn(roland, firstGoat);
     evadeTurn(daisy, secondGoat);

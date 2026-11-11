@@ -22,7 +22,6 @@ import type {
   Investigator,
   InvestigatorStat,
   NamedAmount,
-  PerPointFailed,
   SkillName,
   SkillTest,
   SkillTestOutcome,
@@ -1050,12 +1049,11 @@ export interface TestSkill {
   onPass: readonly Command[];
   onFail: readonly Command[];
   /**
-   * "For each point you fail by, take 1 damage" (Grasping Hands), horror
-   * (Rotting Remains) or "place 1 of your clues on your location" (False
-   * Lead): the fail answer confirms how much the test failed by, and the
-   * investigator pays that much, ahead of `onFail`.
+   * "For each point you fail by, take 1 damage" (Grasping Hands), "you must
+   * either …" (Umôrdhoth's Wrath): the fail answer confirms how much the test
+   * failed by, and these commands run once for each point, ahead of `onFail`.
    */
-  perPointFailed?: PerPointFailed;
+  perPointFailed?: readonly Command[];
 }
 
 /**

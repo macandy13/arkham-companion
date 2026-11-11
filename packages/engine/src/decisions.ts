@@ -1,4 +1,4 @@
-import { assertNever, duplicates, numberedDuplicates } from '@arkham/util';
+import { assertNever, duplicates, numberedDuplicates, range } from '@arkham/util';
 import type { EngineContext } from './cards';
 import { isEnemyOnTable, locationOf } from './enemies';
 import type { Command, RequestDecision, ResolveDecision } from './commands';
@@ -18,7 +18,6 @@ import type {
   DecisionOption,
   GameState,
   NamedAmount,
-  PerPointFailed,
   SkillTest,
   SkillTestOutcome,
 } from './state';
@@ -166,30 +165,42 @@ export function answerCommands(state: GameState, command: Command): readonly Com
 }
 
 /**
- * What a per-point fail costs (`Decision.perPointFailed`): the margin the
- * answer confirms, as damage or horror on the tested investigator or as
- * their clues placed on their location.
+ * What a per-point fail costs (`Decision.perPointFailed`) for the margin the
+ * answer confirms. Rules Reference, "For each": an effect that can be worked
+ * out at once is one effect, so "take 1 damage for each point" is one "take 3
+ * damage" (`timesMargin`); any other (a choice per point) resolves once for
+ * each point.
  */
 function perPointCommands(state: GameState, command: ResolveDecision): Command[] {
   const decision = pendingDecision(state, command.decisionId);
   const margin = decision && perPointMargin(decision, command);
-  if (!decision?.perPointFailed || !margin || decision.decider.kind !== 'investigator') return [];
-  const { investigatorId } = decision.decider;
-  switch (decision.perPointFailed) {
-    case 'damage':
-    case 'horror':
-      return [
-        {
-          type: 'AdjustInvestigator',
-          investigatorId,
-          stat: decision.perPointFailed,
-          delta: margin,
-        },
-      ];
-    case 'clues':
-      return [{ type: 'PlaceClues', investigatorId, amount: margin }];
+  if (!decision?.perPointFailed || !margin) return [];
+  return decision.perPointFailed.flatMap(
+    (perPoint) => timesMargin(perPoint, margin) ?? range(margin).map(() => perPoint),
+  );
+}
+
+/**
+ * `command` with its amount multiplied by `margin`, for an effect that is an amount (damage,
+ * horror, clues, doom), also when deferred as a card's effect (`ResolveEffect`); undefined for
+ * any other.
+ */
+function timesMargin(command: Command, margin: number): Command | undefined {
+  if (command.type === 'ResolveEffect') {
+    const effect = timesMargin(command.effect as Command, margin);
+    // A scaled effect keeps its templated references: only the number changed.
+    return effect && { ...command, effect: effect as typeof command.effect };
+  }
+  switch (command.type) {
+    case 'AdjustInvestigator':
+      return { ...command, delta: command.delta * margin };
+    case 'TakeDamageAndHorror':
+      return { ...command, damage: command.damage * margin, horror: command.horror * margin };
+    case 'PlaceClues':
+    case 'PlaceDoom':
+      return { ...command, amount: command.amount * margin };
     default:
-      return assertNever(decision.perPointFailed);
+      return undefined;
   }
 }
 
@@ -368,11 +379,11 @@ export interface SkillTestOutcomes {
   onPass: Command[];
   onFail: Command[];
   /**
-   * "For each point you fail by": the tester takes 1 damage or horror per
-   * point of the fail answer's `margin` (1 when it gives none), and
-   * `SkillTestResolved.margin` records it.
+   * "For each point you fail by": commands run once per point of the fail
+   * answer's `margin` (1 when it gives none), and `SkillTestResolved.margin`
+   * records it.
    */
-  perPointFailed?: PerPointFailed;
+  perPointFailed?: readonly Command[];
 }
 
 /**

@@ -818,7 +818,13 @@ describe('answering decisions', () => {
           decider: { kind: 'investigator', investigatorId: alice },
           test: { skill: 'willpower', difficulty: 4 },
         },
-        { onPass: [], onFail: [], perPointFailed: 'horror' },
+        {
+          onPass: [],
+          onFail: [],
+          perPointFailed: [
+            { type: 'AdjustInvestigator', investigatorId: alice, stat: 'horror', delta: 1 },
+          ],
+        },
       ),
     });
 

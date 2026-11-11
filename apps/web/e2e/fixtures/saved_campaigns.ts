@@ -121,6 +121,12 @@ export function interludeDueEvents(
 }
 
 /**
+ * When every stored campaign event happened. Fixed, because the log's "Campaign over" heading
+ * prints the date the campaign ended, and a screenshot of it must not change with the day.
+ */
+const STORED_AT = Date.UTC(2026, 9, 28, 19, 0);
+
+/**
  * Stores a campaign whose log is `events(campaignId)` straight into the app's database, as the
  * app has no campaign import yet, and opens its log. The app must have created the database
  * first, so it loads the home screen and waits for the schema before writing.
@@ -139,13 +145,12 @@ export async function openStoredCampaign(
   );
   const campaignId = 'e2e-campaign';
   await page.evaluate(
-    async ({ campaignId, title, events }) => {
+    async ({ campaignId, title, events, now }) => {
       const db = await new Promise<IDBDatabase>((resolve, reject) => {
         const request = indexedDB.open('arkham-companion');
         request.onsuccess = () => resolve(request.result);
         request.onerror = () => reject(request.error ?? new Error('Could not open the database'));
       });
-      const now = Date.now();
       const write = db.transaction(['campaigns', 'campaignEvents'], 'readwrite');
       write.objectStore('campaigns').put({
         campaignId,
@@ -165,7 +170,7 @@ export async function openStoredCampaign(
       });
       db.close();
     },
-    { campaignId, title, events: events(campaignId) },
+    { campaignId, title, events: events(campaignId), now: STORED_AT },
   );
   await page.goto(`/#/campaign/${campaignId}`);
   await waitUntilSettled(page);

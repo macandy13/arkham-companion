@@ -20,8 +20,8 @@
  * agenda 1's reverse side (the Monster spawning at the Main Path with 1 doom),
  * act 2's reverse side (the enemy spawning at the Ritual Site),
  * Frozen in Fear's extra action, agenda 2's +1 fight and evade, Ancient
- * Evils' doom, Umôrdhoth's Wrath, Twisting Paths' test to leave it (Daisy
- * passes) and the 2 random cards "it is past midnight" discards from each
+ * Evils' doom, the cards Umôrdhoth's Wrath discards, Twisting Paths' test to
+ * leave it (Daisy passes) and the 2 random cards "it is past midnight" discards from each
  * opening hand. The players count actions themselves.
  */
 import { describe, expect, it } from 'vitest';
@@ -124,6 +124,9 @@ function afterTheMidnightMasks(): CampaignLog {
     started,
   );
 }
+
+/** Umôrdhoth's Wrath's answer for a point failed: discard a card (the players do so by hand). */
+const discardACard = 'scenario.theDevourerBelow.umordhothsWrath.discard';
 
 describe('The Devourer Below end to end: Roland and Daisy, seed 9', () => {
   it('plays from the campaign log to resolution 1: the Woods, the Cultists who got away at the Main Path, Roland falls holding them off, and Daisy breaks the ritual', () => {
@@ -309,10 +312,15 @@ describe('The Devourer Below end to end: Roland and Daisy, seed 9', () => {
     table.resolveEnemyAttacks();
     expect(table.board.investigator(daisy)).toMatchObject({ damage: 3, horror: 1 });
 
-    // Round 4 – mythos: Roland resolves Umôrdhoth's Wrath by hand, discarding
-    // cards; Daisy draws Dissonant Voices. The Priest is ready again and
-    // engages Roland.
+    // Round 4 – mythos: Roland fails Umôrdhoth's Wrath's willpower (5) test by
+    // 2 and discards a card for each point; Daisy draws Dissonant Voices. The
+    // Priest is ready again and engages Roland.
     expect(table.nextPhase()).toEqual({ round: 3, phase: 'upkeep' });
+    expect(table.nextPhase()).toEqual({ round: 4, phase: 'mythos', step: 'drawEncounterCard' });
+    table.resolveRevelation(byName("Umôrdhoth's Wrath"));
+    table.resolveTest({ failedBy: 2 });
+    table.answerOnly(discardACard);
+    table.answerOnly(discardACard);
     expect(table.nextPhase()).toEqual({ round: 4, phase: 'mythos', step: 'drawEncounterCard' });
     table.resolveRevelation(byName('Dissonant Voices'));
     expect(table.board.enemy(byName(priest))).toMatchObject({ engagedWith: roland });
