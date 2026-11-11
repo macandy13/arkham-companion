@@ -3,18 +3,20 @@ import {
   SECTION_END,
   SECTION_START,
   changedFlows,
+  changedShots,
   flowGrep,
   flowVideos,
   gifArgs,
-  joinReports,
+  goldenChanges,
+  goldenName,
+  listedTests,
   PLAYER_PLACEHOLDER,
   playerPage,
   renderSection,
   replaceSection,
-  screenshots,
   slugify,
 } from './screencasts.ts';
-import type { PlaywrightReport } from './screencasts.ts';
+import type { GoldenChange, ListedTest, PlaywrightReport } from './screencasts.ts';
 
 function result(status: string, video?: string) {
   return { status, attachments: video ? [{ name: 'video', path: video }] : [] };
@@ -132,278 +134,235 @@ describe('flowGrep', () => {
   });
 });
 
-describe('screenshots', () => {
-  it('reads only the screenshot projects, not the flow pictures', () => {
-    const report: PlaywrightReport = {
-      suites: [
-        {
-          specs: [
-            {
-              title: 'Read the map',
-              tests: [
-                {
-                  projectName: 'flow-picture',
-                  results: [
-                    { status: 'passed', attachments: [{ name: 'screenshot', path: '/map.png' }] },
-                  ],
-                },
-              ],
-            },
-            {
-              title: 'Map tabs',
-              tests: [
-                {
-                  projectName: 'screenshot',
-                  results: [
-                    { status: 'passed', attachments: [{ name: 'screenshot', path: '/tabs.png' }] },
-                  ],
-                },
-              ],
-            },
-          ],
-        },
-      ],
-    };
+describe('goldenChanges', () => {
+  it('reads added, rewritten and deleted goldens with their project, spec file and name', () => {
+    const nameStatus = [
+      'M\te2e/__screenshots__/screenshot/shots/home_screen.spec.ts/a-game’s-menu-open-on-its-cover.png',
+      'A\te2e/__screenshots__/screenshot-phone/shots/home_screen.spec.ts/the-game-list.png',
+      'D\te2e/__screenshots__/flow-picture/lifecycle.spec.ts/start-a-game.png',
+      '',
+    ].join('\n');
 
-    expect(screenshots(report)).toEqual([
+    expect(goldenChanges(nameStatus)).toEqual([
       {
-        title: 'Map tabs',
-        slug: 'map-tabs',
-        pictures: { desktop: '/tabs.png', phone: undefined },
+        status: 'changed',
+        project: 'screenshot',
+        file: 'shots/home_screen.spec.ts',
+        name: 'a-game’s-menu-open-on-its-cover',
+        path: 'e2e/__screenshots__/screenshot/shots/home_screen.spec.ts/a-game’s-menu-open-on-its-cover.png',
+      },
+      {
+        status: 'added',
+        project: 'screenshot-phone',
+        file: 'shots/home_screen.spec.ts',
+        name: 'the-game-list',
+        path: 'e2e/__screenshots__/screenshot-phone/shots/home_screen.spec.ts/the-game-list.png',
+      },
+      {
+        status: 'removed',
+        project: 'flow-picture',
+        file: 'lifecycle.spec.ts',
+        name: 'start-a-game',
+        path: 'e2e/__screenshots__/flow-picture/lifecycle.spec.ts/start-a-game.png',
       },
     ]);
-    expect(changedFlows(report)).toEqual([{ title: 'Read the map' }]);
   });
 
-  it('takes the desktop picture from screenshot and the phone picture from screenshot-phone', () => {
-    // Playwright lists the spec once per project.
-    const report: PlaywrightReport = {
-      suites: [
-        {
-          specs: [
-            {
-              title: 'Map tabs',
-              file: 'map.spec.ts',
-              tests: [
-                {
-                  projectName: 'screenshot',
-                  results: [
-                    { status: 'passed', attachments: [{ name: 'screenshot', path: '/wide.png' }] },
-                  ],
-                },
-              ],
-            },
-            {
-              title: 'Map tabs',
-              file: 'map.spec.ts',
-              tests: [
-                {
-                  projectName: 'screenshot-phone',
-                  results: [
-                    {
-                      status: 'passed',
-                      attachments: [{ name: 'screenshot', path: '/narrow.png' }],
-                    },
-                  ],
-                },
-              ],
-            },
-          ],
-        },
-      ],
-    };
-
-    expect(screenshots(report)).toEqual([
-      {
-        title: 'Map tabs',
-        slug: 'map-tabs',
-        pictures: { desktop: '/wide.png', phone: '/narrow.png' },
-      },
-    ]);
+  it.each([
+    { name: 'a file outside the goldens', line: 'M\tsrc/App.tsx' },
+    { name: 'a golden without a spec file', line: 'M\te2e/__screenshots__/screenshot/lonely.png' },
+    { name: 'a type change', line: 'T\te2e/__screenshots__/screenshot/a.spec.ts/shot.png' },
+  ])('skips $name', ({ line }) => {
+    expect(goldenChanges(line)).toEqual([]);
   });
 });
 
-describe('specs the base also records', () => {
-  const shot = (file: string, title: string, picture: string, phonePicture?: string) => ({
-    title,
-    file,
-    tests: [
-      {
-        projectName: 'screenshot',
-        results: [{ status: 'passed', attachments: [{ name: 'screenshot', path: picture }] }],
-      },
-      ...(phonePicture
-        ? [
-            {
-              projectName: 'screenshot-phone',
-              results: [
-                { status: 'passed', attachments: [{ name: 'screenshot', path: phonePicture }] },
-              ],
-            },
-          ]
-        : []),
-    ],
-  });
-  const flow = (file: string, title: string, endPicture: string) => ({
-    title,
-    file,
-    tests: [
-      {
-        projectName: 'flow-picture',
-        results: [{ status: 'passed', attachments: [{ name: 'screenshot', path: endPicture }] }],
-      },
-    ],
-  });
-  // Pictures count as the same when their names say so: '/head/attic_old.png' matches '/base/attic_old.png'.
-  const samePicture = (head: string, base: string) =>
-    head.replace('/head/', '') === base.replace('/base/', '');
-
-  it('are left out when their picture is unchanged, and shown when the PR changes it', () => {
-    const head: PlaywrightReport = {
-      suites: [
-        {
-          specs: [
-            shot('map.spec.ts', 'unchanged attic', '/head/attic_old.png'),
-            shot('map.spec.ts', 'restyled hallway', '/head/hallway_new.png'),
-            shot('map.spec.ts', 'new cellar', '/head/cellar.png'),
-          ],
-        },
-      ],
-    };
-    const base: PlaywrightReport = {
-      suites: [
-        {
-          specs: [
-            shot('map.spec.ts', 'unchanged attic', '/base/attic_old.png'),
-            shot('map.spec.ts', 'restyled hallway', '/base/hallway_old.png'),
-          ],
-        },
-      ],
-    };
-
-    const shown = screenshots(head, { report: base, samePicture }).map((s) => s.title);
-
-    expect(shown).toEqual(['restyled hallway', 'new cellar']);
-  });
-
-  it("are shown as not taken when the PR's run failed, even though the base has a picture", () => {
-    const head: PlaywrightReport = {
-      suites: [
-        {
-          specs: [
-            {
-              title: 'broken attic',
-              file: 'map.spec.ts',
-              tests: [
-                { projectName: 'screenshot', results: [{ status: 'failed', attachments: [] }] },
-              ],
-            },
-          ],
-        },
-      ],
-    };
-    const base: PlaywrightReport = {
-      suites: [{ specs: [shot('map.spec.ts', 'broken attic', '/base/attic.png')] }],
-    };
-
-    expect(screenshots(head, { report: base, samePicture })).toEqual([
-      {
-        title: 'broken attic',
-        slug: 'broken-attic',
-        pictures: { desktop: undefined, phone: undefined },
-      },
-    ]);
-  });
-
-  it('are left out when the phone fails on both sides and the desktop picture is unchanged', () => {
-    const failedOnPhone = (picture: string) => ({
-      title: 'attic',
-      file: 'map.spec.ts',
-      tests: [
-        {
-          projectName: 'screenshot',
-          results: [{ status: 'passed', attachments: [{ name: 'screenshot', path: picture }] }],
-        },
-        { projectName: 'screenshot-phone', results: [{ status: 'failed', attachments: [] }] },
-      ],
-    });
-    const head: PlaywrightReport = { suites: [{ specs: [failedOnPhone('/head/desk.png')] }] };
-    const base: PlaywrightReport = { suites: [{ specs: [failedOnPhone('/base/desk.png')] }] };
-
-    expect(screenshots(head, { report: base, samePicture })).toEqual([]);
-  });
-
+describe('goldenName', () => {
   it.each([
-    { name: 'both unchanged, left out', headPhone: '/head/phone_old.png', shown: [] },
-    { name: 'only the phone changed, shown', headPhone: '/head/phone_new.png', shown: ['attic'] },
-  ])('compare a shot on every device: $name', ({ headPhone, shown }) => {
-    const head: PlaywrightReport = {
-      suites: [{ specs: [shot('map.spec.ts', 'attic', '/head/desk_old.png', headPhone)] }],
-    };
-    const base: PlaywrightReport = {
-      suites: [
-        { specs: [shot('map.spec.ts', 'attic', '/base/desk_old.png', '/base/phone_old.png')] },
-      ],
-    };
-
-    expect(screenshots(head, { report: base, samePicture }).map((s) => s.title)).toEqual(shown);
-  });
-
-  it('show a shot the base took on the desktop only, since its phone picture is new', () => {
-    const head: PlaywrightReport = {
-      suites: [{ specs: [shot('map.spec.ts', 'attic', '/head/desk.png', '/head/phone.png')] }],
-    };
-    const base: PlaywrightReport = {
-      suites: [{ specs: [shot('map.spec.ts', 'attic', '/base/desk.png')] }],
-    };
-
-    expect(screenshots(head, { report: base, samePicture }).map((s) => s.title)).toEqual(['attic']);
-  });
-
-  it.each([
-    { name: 'an unchanged end state is left out', headEnd: '/head/end_old.png', shown: [] },
-    { name: 'a changed end state is shown', headEnd: '/head/end_new.png', shown: ['play a turn'] },
-  ])('compare a flow by its end state: $name', ({ headEnd, shown }) => {
-    const head: PlaywrightReport = {
-      suites: [{ specs: [flow('play.spec.ts', 'play a turn', headEnd)] }],
-    };
-    const base: PlaywrightReport = {
-      suites: [{ specs: [flow('play.spec.ts', 'play a turn', '/base/end_old.png')] }],
-    };
-
-    expect(changedFlows(head, { report: base, samePicture }).map((f) => f.title)).toEqual(shown);
-  });
-
-  it.each([
-    { name: 'another file', baseSpec: shot('other.spec.ts', 'the attic', '/base/attic.png') },
     {
-      name: 'the flow project',
-      baseSpec: flow('map.spec.ts', 'the attic', '/base/attic.png'),
+      titlePath: ["the app bar's menu open over the game list"],
+      name: 'the-app-bar-s-menu-open-over-the-game-list',
     },
-  ])(
-    'are matched by file, title and project, so a base spec in $name is no match',
-    ({ baseSpec }) => {
-      const head: PlaywrightReport = {
-        suites: [{ specs: [shot('map.spec.ts', 'the attic', '/head/attic.png')] }],
-      };
-      const base: PlaywrightReport = { suites: [{ specs: [baseSpec] }] };
+    { titlePath: ['a game’s menu open on its cover'], name: 'a-game’s-menu-open-on-its-cover' },
+    {
+      titlePath: ['each table with its own playmat', 'the house map on the parchment table'],
+      name: 'each-table-with-its-own-playmat-the-house-map-on-the-parchment-table',
+    },
+    {
+      titlePath: ['fits a 1180 × 820 tablet (landscape)'],
+      name: 'fits-a-1180-×-820-tablet-landscape-',
+    },
+    { titlePath: ['opens v1.2 of the log'], name: 'opens-v1.2-of-the-log' },
+  ])('names $titlePath as $name, the way Playwright does', ({ titlePath, name }) => {
+    expect(goldenName(titlePath)).toBe(name);
+  });
 
-      expect(screenshots(head, { report: base, samePicture }).map((s) => s.title)).toEqual([
-        'the attic',
-      ]);
-    },
-  );
+  it('cuts a title over 100 characters in the middle around a hash, keeping both ends', () => {
+    const name = goldenName([`starts here ${'and goes on '.repeat(10)}and ends here`]);
+
+    expect(name).toHaveLength(100);
+    expect(name).toMatch(/^starts-here-and-goes-on-.*-[0-9a-f]{5}-.*-and-ends-here$/);
+  });
 });
 
-describe('joinReports', () => {
-  it('puts the suites of every shard side by side, skipping a shard without any', () => {
-    const shardOne: PlaywrightReport = { suites: [{ specs: [] }] };
-    const brokenShard: PlaywrightReport = {};
-    const shardThree: PlaywrightReport = { suites: [{ suites: [] }] };
+describe('listedTests', () => {
+  it('lists each test per project with its describe blocks, not its spec file', () => {
+    const report: PlaywrightReport = {
+      suites: [
+        {
+          title: 'shots/game_screen.spec.ts',
+          specs: [
+            {
+              title: 'the house map',
+              file: 'shots/game_screen.spec.ts',
+              tests: [{ projectName: 'screenshot' }, { projectName: 'screenshot-phone' }],
+            },
+          ],
+          suites: [
+            {
+              title: 'each table',
+              specs: [
+                {
+                  title: 'on parchment',
+                  file: 'shots/game_screen.spec.ts',
+                  tests: [{ projectName: 'screenshot' }],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    };
 
-    expect(joinReports([shardOne, brokenShard, shardThree])).toEqual({
-      suites: [{ specs: [] }, { suites: [] }],
-    });
+    expect(listedTests(report)).toEqual([
+      { project: 'screenshot', file: 'shots/game_screen.spec.ts', titlePath: ['the house map'] },
+      {
+        project: 'screenshot-phone',
+        file: 'shots/game_screen.spec.ts',
+        titlePath: ['the house map'],
+      },
+      {
+        project: 'screenshot',
+        file: 'shots/game_screen.spec.ts',
+        titlePath: ['each table', 'on parchment'],
+      },
+    ]);
+  });
+});
+
+describe('changedFlows', () => {
+  const listed: ListedTest[] = [
+    { project: 'flow-picture', file: 'settings.spec.ts', titlePath: ["change the app's language"] },
+  ];
+
+  it('names a flow whose golden the PR rewrites by its title, for the grep', () => {
+    const changes: GoldenChange[] = [
+      {
+        status: 'changed',
+        project: 'flow-picture',
+        file: 'settings.spec.ts',
+        name: 'change-the-app-s-language',
+        path: 'e2e/__screenshots__/flow-picture/settings.spec.ts/change-the-app-s-language.png',
+      },
+    ];
+
+    expect(changedFlows(changes, listed)).toEqual([
+      { title: "change the app's language", file: 'settings.spec.ts' },
+    ]);
+  });
+
+  it('leaves out a deleted flow and the screenshot goldens', () => {
+    const changes: GoldenChange[] = [
+      {
+        status: 'removed',
+        project: 'flow-picture',
+        file: 'old.spec.ts',
+        name: 'a-gone-flow',
+        path: 'e2e/__screenshots__/flow-picture/old.spec.ts/a-gone-flow.png',
+      },
+      {
+        status: 'changed',
+        project: 'screenshot',
+        file: 'settings.spec.ts',
+        name: 'change-the-app-s-language',
+        path: 'e2e/__screenshots__/screenshot/settings.spec.ts/change-the-app-s-language.png',
+      },
+    ];
+
+    expect(changedFlows(changes, listed)).toEqual([]);
+  });
+});
+
+describe('changedShots', () => {
+  const listed: ListedTest[] = [
+    {
+      project: 'screenshot',
+      file: 'shots/home.spec.ts',
+      titlePath: ['the game list, with one game'],
+    },
+  ];
+
+  it('puts the desktop and phone goldens of one test into one shot, titled from the test list', () => {
+    const changes: GoldenChange[] = [
+      {
+        status: 'changed',
+        project: 'screenshot',
+        file: 'shots/home.spec.ts',
+        name: 'the-game-list-with-one-game',
+        path: 'e2e/__screenshots__/screenshot/shots/home.spec.ts/the-game-list-with-one-game.png',
+      },
+      {
+        status: 'added',
+        project: 'screenshot-phone',
+        file: 'shots/home.spec.ts',
+        name: 'the-game-list-with-one-game',
+        path: 'e2e/__screenshots__/screenshot-phone/shots/home.spec.ts/the-game-list-with-one-game.png',
+      },
+    ];
+
+    expect(changedShots(changes, listed)).toEqual([
+      {
+        title: 'the game list, with one game',
+        slug: 'the-game-list-with-one-game',
+        pictures: {
+          desktop: {
+            before:
+              'e2e/__screenshots__/screenshot/shots/home.spec.ts/the-game-list-with-one-game.png',
+            after:
+              'e2e/__screenshots__/screenshot/shots/home.spec.ts/the-game-list-with-one-game.png',
+          },
+          phone: {
+            after:
+              'e2e/__screenshots__/screenshot-phone/shots/home.spec.ts/the-game-list-with-one-game.png',
+          },
+        },
+      },
+    ]);
+  });
+
+  it('titles a deleted golden by its file name and leaves the unchanged device out', () => {
+    const changes: GoldenChange[] = [
+      {
+        status: 'removed',
+        project: 'screenshot-phone',
+        file: 'shots/home.spec.ts',
+        name: 'a-gone-shot',
+        path: 'e2e/__screenshots__/screenshot-phone/shots/home.spec.ts/a-gone-shot.png',
+      },
+    ];
+
+    expect(changedShots(changes, listed)).toEqual([
+      {
+        title: 'a gone shot',
+        slug: 'a-gone-shot',
+        pictures: {
+          desktop: undefined,
+          phone: {
+            before: 'e2e/__screenshots__/screenshot-phone/shots/home.spec.ts/a-gone-shot.png',
+          },
+        },
+      },
+    ]);
   });
 });
 
@@ -482,14 +441,17 @@ describe('renderSection', () => {
     );
   });
 
-  it('shows the desktop and phone screenshots side by side, cache-busted from the picture host, above the screencasts', () => {
+  it('shows the desktop and phone goldens side by side, before above after, cache-busted from the picture host, above the screencasts', () => {
     const section = renderSection({
       flows: [recorded],
       shots: [
         {
           title: 'Map tabs',
           slug: 'map-tabs',
-          pictures: { desktop: '/wide.png', phone: '/narrow.png' },
+          pictures: {
+            desktop: { before: 'wide.png', after: 'wide.png' },
+            phone: { before: 'narrow.png', after: 'narrow.png' },
+          },
         },
       ],
       baseUrl: 'https://x.test/s',
@@ -502,23 +464,32 @@ describe('renderSection', () => {
         '### Map tabs',
         '',
         '<table>',
-        '<tr><th>Desktop</th><th>Phone</th></tr>',
-        '<tr><td><img src="https://raw.x.test/s/map-tabs-desktop.png?v=abc123" alt="Desktop" width="560"></td>' +
-          '<td><img src="https://raw.x.test/s/map-tabs-phone.png?v=abc123" alt="Phone" width="180"></td></tr>',
+        '<tr><th></th><th>Desktop</th><th>Phone</th></tr>',
+        '<tr><th>Before</th>' +
+          '<td><img src="https://raw.x.test/s/map-tabs-desktop-before.png?v=abc123" alt="Desktop before" width="560"></td>' +
+          '<td><img src="https://raw.x.test/s/map-tabs-phone-before.png?v=abc123" alt="Phone before" width="180"></td></tr>',
+        '<tr><th>After</th>' +
+          '<td><img src="https://raw.x.test/s/map-tabs-desktop-after.png?v=abc123" alt="Desktop after" width="560"></td>' +
+          '<td><img src="https://raw.x.test/s/map-tabs-phone-after.png?v=abc123" alt="Phone after" width="180"></td></tr>',
         '</table>',
       ].join('\n'),
     );
     expect(section.indexOf('## Screenshots')).toBeLessThan(section.indexOf('## Screencasts'));
   });
 
-  it('notes a device whose screenshot failed next to the one that was taken', () => {
+  it('says which golden is new, removed or unchanged instead of linking a missing file', () => {
     const section = renderSection({
       flows: [],
       shots: [
         {
-          title: 'Map tabs',
-          slug: 'map-tabs',
-          pictures: { desktop: '/wide.png', phone: undefined },
+          title: 'New shot',
+          slug: 'new-shot',
+          pictures: { desktop: { after: 'n.png' }, phone: undefined },
+        },
+        {
+          title: 'Gone shot',
+          slug: 'gone-shot',
+          pictures: { desktop: undefined, phone: { before: 'g.png' } },
         },
       ],
       baseUrl: 'https://x.test/s',
@@ -526,25 +497,10 @@ describe('renderSection', () => {
       version: 'abc123',
     });
 
-    expect(section).toContain('map-tabs-desktop.png');
-    expect(section).toContain('<td>Not taken: the spec failed, see the E2E check.</td>');
-    expect(section).not.toContain('map-tabs-phone.png');
-  });
-
-  it('notes a failed screenshot instead of linking a missing file', () => {
-    const section = renderSection({
-      flows: [],
-      shots: [
-        { title: 'Map tabs', slug: 'map-tabs', pictures: { desktop: undefined, phone: undefined } },
-      ],
-      baseUrl: 'https://x.test/s',
-      pictureBaseUrl: 'https://raw.x.test/s',
-      version: 'abc123',
-    });
-
-    expect(section).toContain('Not taken');
-    expect(section).not.toContain('<table>');
-    expect(section).not.toContain('## Screencasts');
+    expect(section).toContain('<tr><th>Before</th><td>New</td><td>Unchanged</td></tr>');
+    expect(section).toContain('<tr><th>After</th><td>Unchanged</td><td>Removed</td></tr>');
+    expect(section).not.toContain('new-shot-desktop-before.png');
+    expect(section).not.toContain('gone-shot-phone-after.png');
   });
 
   it('lists the changed flows past the recording limit by name under the screencasts', () => {
@@ -563,7 +519,7 @@ describe('renderSection', () => {
     expect(section.indexOf('### Create a game')).toBeLessThan(section.indexOf('Also changed'));
   });
 
-  it('is just the markers when the PR changes no picture', () => {
+  it('is just the markers when the PR changes no golden', () => {
     const section = renderSection({
       flows: [],
       shots: [],

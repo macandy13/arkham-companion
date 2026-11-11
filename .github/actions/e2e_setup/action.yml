@@ -1,25 +1,16 @@
 name: E2E setup
 description: >-
-  Installs the packages and Chromium's headless shell for the checkout in `dir` (the PR, or its
-  base in a second checkout), for the picture runs that preview.yml compares and for
-  update-screenshots.yml.
-inputs:
-  dir:
-    description: The checkout to set up, relative to the workspace.
-    default: .
+  Installs the packages and Chromium's headless shell, for the recordings in preview.yml and
+  the goldens update-screenshots.yml takes.
 runs:
   using: composite
   steps:
     - uses: pnpm/action-setup@v6
-      with:
-        package_json_file: ${{ inputs.dir }}/package.json
     - uses: actions/setup-node@v7
       with:
         node-version: 22
         cache: pnpm
-        cache-dependency-path: ${{ inputs.dir }}/pnpm-lock.yaml
     - shell: bash
-      working-directory: ${{ inputs.dir }}
       run: pnpm install --frozen-lockfile
     # Headless runs only need Chromium's headless shell, cached per Playwright version. No
     # `--with-deps`: the runner image already has the libraries it needs, and apt only added
@@ -27,7 +18,6 @@ runs:
     # 55 kB/s when many jobs start at once and stall a run for 10 minutes.
     - id: playwright
       shell: bash
-      working-directory: ${{ inputs.dir }}
       run: |
         echo "version=$(pnpm --filter @arkham/web exec playwright --version | awk '{ print $2 }')" >> "$GITHUB_OUTPUT"
         echo "image=$ImageOS" >> "$GITHUB_OUTPUT"
@@ -36,5 +26,4 @@ runs:
         path: ~/.cache/ms-playwright
         key: playwright-shell-${{ steps.playwright.outputs.image }}-${{ steps.playwright.outputs.version }}
     - shell: bash
-      working-directory: ${{ inputs.dir }}
       run: timeout 300 pnpm --filter @arkham/web exec playwright install --only-shell chromium

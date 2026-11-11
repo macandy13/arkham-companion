@@ -44,9 +44,9 @@ const executablePath = process.env.PW_CHROMIUM_PATH;
  * `pnpm e2e` runs every spec once: the accessibility checks in `accessibility`, every flow (the
  * specs outside `e2e/shots/`) in `flow-picture` and every spec in `e2e/shots/` in `screenshot`
  * and `screenshot-phone`, the last three photographing each test as it ends and, with
- * `GOLDENS=1` (CI), comparing it with its committed golden. The preview also runs those three
- * (`pnpm e2e:pictures`); `screencast` re-runs the flows whose end state the PR changes, slowed
- * down and recorded (`pnpm e2e:screencast`, see docs/automation.md).
+ * `GOLDENS=1` (CI), comparing it with its committed golden. The preview shows the goldens a PR
+ * changes; `screencast` re-runs the flows whose golden changed, slowed down and recorded
+ * (`pnpm e2e:screencast`, see docs/automation.md).
  */
 export default defineConfig<PictureOptions>({
   testDir: './e2e',

@@ -1,10 +1,12 @@
 /**
- * Pure helpers behind the PR screencasts and screenshots: pick the flow videos and the
- * screenshots out of a Playwright JSON report, build the ffmpeg arguments that turn the videos
- * into GIFs, and render the Markdown section the preview workflow writes into the PR
+ * Pure helpers behind the PR screencasts and screenshots: read which committed goldens
+ * (`e2e/__screenshots__`) a PR changes, name their tests from a `playwright test --list` report,
+ * pick the flow videos out of the recording's report, build the ffmpeg arguments that turn the
+ * videos into GIFs, and render the Markdown section the preview workflow writes into the PR
  * description.
- * The side effects (ffmpeg, files) live in `cli.ts`.
+ * The side effects (git, ffmpeg, files) live in `cli.ts`.
  */
+import { createHash } from 'node:crypto';
 
 /**
  * Delay Playwright adds before every action while recording (`slowMo`), so a viewer can
@@ -42,15 +44,8 @@ export interface PlaywrightReport {
   readonly suites?: readonly ReportSuite[];
 }
 
-/**
- * One report of the specs in all of `shards`, the reports of one run split with `--shard`: each
- * shard ran a disjoint part of the specs, so their suites are just put side by side.
- */
-export function joinReports(shards: readonly PlaywrightReport[]): PlaywrightReport {
-  return { suites: shards.flatMap((shard) => shard.suites ?? []) };
-}
-
 interface ReportSuite {
+  readonly title?: string;
   readonly suites?: readonly ReportSuite[];
   readonly specs?: readonly ReportSpec[];
 }
@@ -61,7 +56,8 @@ interface ReportSpec {
   readonly file?: string;
   readonly tests: readonly {
     readonly projectName: string;
-    readonly results: readonly {
+    /** Absent in a `--list` report, which runs nothing. */
+    readonly results?: readonly {
       readonly status: string;
       readonly attachments: readonly { readonly name: string; readonly path?: string }[];
     }[];
@@ -79,8 +75,8 @@ export interface FlowVideo {
 }
 
 /**
- * A flow spec whose end state the PR changes, named by its file and title so its recording can be
- * found in the `screencast` run (`flowGrep` selects it there).
+ * A flow spec whose end-state golden the PR changes, named by its file and title so its recording
+ * can be found in the `screencast` run (`flowGrep` selects it there).
  */
 export interface ChangedFlow {
   readonly title: string;
@@ -88,21 +84,30 @@ export interface ChangedFlow {
 }
 
 /**
- * One screenshot spec (in `e2e/shots/`). `pictures` holds, per device, the `.png` Playwright
- * took when the test ended, or `undefined` when the spec did not pass on that device.
+ * A golden before and after the PR, as paths in the repository: `before` is missing for a golden
+ * the PR adds, `after` for one it deletes.
+ */
+export interface GoldenPair {
+  readonly before?: string;
+  readonly after?: string;
+}
+
+/**
+ * One screenshot spec (in `e2e/shots/`) whose golden the PR changes on at least one device.
+ * `pictures` holds, per device, its golden before and after, or `undefined` where the PR leaves
+ * that device's golden as it is.
  */
 export interface Screenshot {
   readonly title: string;
   readonly slug: string;
-  readonly pictures: Readonly<Record<ShotDevice, string | undefined>>;
+  readonly pictures: Readonly<Record<ShotDevice, GoldenPair | undefined>>;
 }
 
 /**
- * The Playwright projects that record for the PR (`playwright.config.ts`): `flow-picture`
- * photographs every flow spec (outside `e2e/shots/`) as it ends, `screenshot` and
- * `screenshot-phone` photograph every shot spec as it ends, on the tablet and on a phone. These
- * run in one report on the PR and on its base, so only the specs whose picture differs are
- * shown. `screencast` then films just the changed flows, slowed down, in a second run.
+ * The Playwright projects behind the preview (`playwright.config.ts`): `flow-picture` keeps a
+ * golden of every flow spec's end state (outside `e2e/shots/`), `screenshot` and
+ * `screenshot-phone` one of every shot spec, on the tablet and on a phone. The goldens a PR
+ * changes are what it shows; `screencast` films just the flows whose golden changed, slowed down.
  */
 export const RECORDING_PROJECTS = {
   flowPictures: 'flow-picture',
@@ -129,33 +134,178 @@ export const SHOT_DEVICES: Readonly<
 /** The devices in column order. */
 export const SHOT_DEVICE_NAMES = Object.keys(SHOT_DEVICES) as ShotDevice[];
 
-/** The published file name of one device's picture of a shot (`map-tabs-phone.png`). */
-export function shotFile(slug: string, device: ShotDevice): string {
-  return `${slug}-${device}.png`;
+/** Which side of the PR a golden shown in the description is from. */
+export type GoldenSide = 'before' | 'after';
+
+/** The published file name of one device's golden of a shot (`map-tabs-phone-after.png`). */
+export function shotFile(slug: string, device: ShotDevice, side: GoldenSide): string {
+  return `${slug}-${device}-${side}.png`;
+}
+
+/** Where the goldens live, relative to `apps/web` (`playwright.config.ts`'s `snapshotPathTemplate`). */
+export const GOLDEN_DIR = 'e2e/__screenshots__';
+
+/**
+ * One golden a PR adds, rewrites or deletes: `{project}/{testFilePath}/{testName}.png` under
+ * {@link GOLDEN_DIR}, split into its parts.
+ */
+export interface GoldenChange {
+  readonly status: 'added' | 'changed' | 'removed';
+  readonly project: string;
+  /** The spec file, relative to the test directory, as Playwright's reports name it. */
+  readonly file: string;
+  /** The test's title as Playwright puts it into file names (`goldenName`). */
+  readonly name: string;
+  /** The golden's path relative to `apps/web`, for `git show`. */
+  readonly path: string;
+}
+
+const GIT_STATUS: Readonly<Record<string, GoldenChange['status']>> = {
+  A: 'added',
+  M: 'changed',
+  D: 'removed',
+};
+
+/**
+ * The goldens in `nameStatus`, the output of `git diff --name-status --no-renames --relative`
+ * run in `apps/web` (with `core.quotePath=false`, so a name with a letter like `’` comes through
+ * as it is). Lines outside {@link GOLDEN_DIR} or of another status are skipped.
+ */
+export function goldenChanges(nameStatus: string): GoldenChange[] {
+  return nameStatus.split('\n').flatMap((line) => {
+    const [code, path] = line.split('\t');
+    const status = code === undefined ? undefined : GIT_STATUS[code];
+    if (!status || !path?.startsWith(`${GOLDEN_DIR}/`) || !path.endsWith('.png')) return [];
+    const [project, ...rest] = path.slice(GOLDEN_DIR.length + 1).split('/');
+    const fileName = rest.pop();
+    if (!project || !fileName || rest.length === 0) return [];
+    return [
+      { status, project, file: rest.join('/'), name: fileName.slice(0, -'.png'.length), path },
+    ];
+  });
 }
 
 /**
- * The base commit's run of the same projects (`playwright test` on the merge commit's first
- * parent) and how to compare two picture files. A spec the base also records is left out when
- * its last picture (the shot, or a flow's end state) is the same on both sides: the PR didn't
- * change it. Without a base, every spec shows.
+ * A test's title as Playwright writes it into a golden's file name (`{testName}`): its describe
+ * blocks and title joined by spaces, a title over 100 characters cut in the middle around a hash,
+ * then every run of characters a file name can't hold (ASCII punctuation and spaces) turned into
+ * `-`, on each side of the last dot. Repeats Playwright 1.65's `_fsSanitizedTestName`.
  */
-export interface BaseRun {
-  readonly report: PlaywrightReport;
-  readonly samePicture: (headPath: string, basePath: string) => boolean;
+export function goldenName(titlePath: readonly string[]): string {
+  const title = trimLongTitle(titlePath.join(' '));
+  const sanitize = (text: string) =>
+    // eslint-disable-next-line no-control-regex -- the ASCII ranges Playwright replaces, control characters included.
+    text.replace(/[\x00-\x2C\x2E-\x2F\x3A-\x40\x5B-\x60\x7B-\x7F]+/g, '-');
+  const dot = title.lastIndexOf('.');
+  return dot === -1
+    ? sanitize(title)
+    : `${sanitize(title.slice(0, dot))}.${sanitize(title.slice(dot + 1))}`;
 }
 
-const NO_BASE: BaseRun = { report: {}, samePicture: () => false };
+function trimLongTitle(title: string, length = 100): string {
+  if (title.length <= length) return title;
+  const middle = `-${createHash('sha1').update(title).digest('hex').slice(0, 5)}-`;
+  const start = Math.floor((length - middle.length) / 2);
+  return title.slice(0, start) + middle + title.slice(-(length - middle.length - start));
+}
+
+/** A test a `playwright test --list --reporter=json` run lists, in one project. */
+export interface ListedTest {
+  readonly project: string;
+  readonly file: string;
+  /** Its describe blocks and title, outermost first. */
+  readonly titlePath: readonly string[];
+}
 
 /**
- * The flow specs in `pictures` (the `flow-picture` run), in report order, except those whose end
- * state `base` shows unchanged. Only the end state is compared, so a flow that changes only in
- * its middle is not caught.
+ * Every test in `report` (a `--list` run), once per project. The report's top suites are the
+ * spec files; the suites inside them are describe blocks.
  */
-export function changedFlows(pictures: PlaywrightReport, base: BaseRun = NO_BASE): ChangedFlow[] {
-  return changedSpecs(pictures, [RECORDING_PROJECTS.flowPictures], base).map(({ title, file }) =>
-    file === undefined ? { title } : { title, file },
+export function listedTests(report: PlaywrightReport): ListedTest[] {
+  const walk = (suite: ReportSuite, describes: readonly string[]): ListedTest[] => [
+    ...(suite.specs ?? []).flatMap((spec) =>
+      spec.tests.map((test) => ({
+        project: test.projectName,
+        file: spec.file ?? '',
+        titlePath: [...describes, spec.title],
+      })),
+    ),
+    ...(suite.suites ?? []).flatMap((inner) => walk(inner, [...describes, inner.title ?? ''])),
+  ];
+  return (report.suites ?? []).flatMap((fileSuite) => walk(fileSuite, []));
+}
+
+/**
+ * The title shown for a golden: its test's, describe blocks included, from `listed`; when no
+ * listed test makes that file name (the PR deletes the test with its golden), the file name with
+ * its dashes read as spaces.
+ */
+function goldenTitle(change: GoldenChange, listed: readonly ListedTest[]): string {
+  return listedTestOf(change, listed)?.titlePath.join(' › ') ?? change.name.replaceAll('-', ' ');
+}
+
+/** The listed test whose golden `change` is, if the PR still has it. */
+function listedTestOf(change: GoldenChange, listed: readonly ListedTest[]): ListedTest | undefined {
+  return listed.find(
+    (test) =>
+      test.project === change.project &&
+      test.file === change.file &&
+      goldenName(test.titlePath) === change.name,
   );
+}
+
+/**
+ * The flow specs whose end-state golden (`flow-picture`) the PR adds or rewrites, in `changes`
+ * order, named from `listed` for `flowGrep`. A flow whose golden it deletes is gone and can't be
+ * filmed.
+ */
+export function changedFlows(
+  changes: readonly GoldenChange[],
+  listed: readonly ListedTest[],
+): ChangedFlow[] {
+  return changes
+    .filter(
+      (change) => change.project === RECORDING_PROJECTS.flowPictures && change.status !== 'removed',
+    )
+    .map((change) => ({
+      // flowGrep matches the leaf title; a describe block's words may stand before it.
+      title: listedTestOf(change, listed)?.titlePath.at(-1) ?? change.name.replaceAll('-', ' '),
+      file: change.file,
+    }));
+}
+
+/**
+ * One entry per shot spec whose golden the PR changes on any device, in `changes` order, with
+ * each device's golden before and after.
+ */
+export function changedShots(
+  changes: readonly GoldenChange[],
+  listed: readonly ListedTest[],
+): Screenshot[] {
+  const deviceOf = (project: string) =>
+    SHOT_DEVICE_NAMES.find((device) => SHOT_DEVICES[device].project === project);
+  const shots = new Map<
+    string,
+    { title: string; pictures: Partial<Record<ShotDevice, GoldenPair>> }
+  >();
+  for (const change of changes) {
+    const device = deviceOf(change.project);
+    if (!device) continue;
+    const key = `${change.file} › ${change.name}`;
+    const shot = shots.get(key) ?? { title: goldenTitle(change, listed), pictures: {} };
+    shot.pictures[device] = {
+      ...(change.status === 'added' ? {} : { before: change.path }),
+      ...(change.status === 'removed' ? {} : { after: change.path }),
+    };
+    shots.set(key, shot);
+  }
+  return [...shots.values()].map(({ title, pictures }) => ({
+    title,
+    slug: slugify(title),
+    pictures: Object.fromEntries(
+      SHOT_DEVICE_NAMES.map((device) => [device, pictures[device]]),
+    ) as Record<ShotDevice, GoldenPair | undefined>,
+  }));
 }
 
 /**
@@ -197,50 +347,6 @@ export function flowVideos(
 }
 
 /**
- * Flattens the report into one entry per screenshot spec, in report order, using the last
- * passing attempt per device, leaving out shots whose pictures `base` shows unchanged on every
- * device.
- */
-export function screenshots(report: PlaywrightReport, base: BaseRun = NO_BASE): Screenshot[] {
-  const projects = SHOT_DEVICE_NAMES.map((device) => SHOT_DEVICES[device].project);
-  return changedSpecs(report, projects, base).map((spec) => ({
-    title: spec.title,
-    slug: slugify(spec.title),
-    pictures: Object.fromEntries(
-      SHOT_DEVICE_NAMES.map((device) => [
-        device,
-        passingAttachment(spec, SHOT_DEVICES[device].project, 'screenshot'),
-      ]),
-    ) as Record<ShotDevice, string | undefined>,
-  }));
-}
-
-/**
- * The specs `projects` record, in report order, except those whose last picture in every one of
- * the projects is the same in `base`, or missing on both sides because the spec failed there too.
- */
-function changedSpecs(
-  report: PlaywrightReport,
-  projects: readonly string[],
-  base: BaseRun,
-): ReportSpec[] {
-  const baseSpecs = new Map(specsIn(base.report, projects).map((spec) => [specKey(spec), spec]));
-  return specsIn(report, projects).filter((spec) =>
-    projects.some((project) => {
-      if (!spec.tests.some((test) => test.projectName === project)) return false;
-      const headPicture = passingAttachment(spec, project, 'screenshot');
-      const baseSpec = baseSpecs.get(specKey(spec));
-      const baseRan = baseSpec?.tests.some((test) => test.projectName === project) ?? false;
-      const basePicture = baseSpec && passingAttachment(baseSpec, project, 'screenshot');
-      // Failing on both sides is a known break, not this PR's change (the E2E check reports it).
-      if (!headPicture && baseRan && !basePicture) return false;
-      // A picture on one side only (a failed run, a spec or device new to the PR) can't prove "unchanged".
-      return !headPicture || !basePicture || !base.samePicture(headPicture, basePicture);
-    }),
-  );
-}
-
-/**
  * One spec per file and title that `projects` ran, in report order. Playwright lists a spec once
  * per project, so the runs of the same spec are merged into one entry holding all their tests.
  */
@@ -267,7 +373,7 @@ function allSpecs(suites: readonly ReportSuite[]): ReportSpec[] {
 function passingAttachment(spec: ReportSpec, project: string, name: string): string | undefined {
   const passed = spec.tests
     .filter((test) => test.projectName === project)
-    .flatMap((test) => test.results)
+    .flatMap((test) => test.results ?? [])
     .filter((r) => r.status === 'passed');
   return passed.at(-1)?.attachments.find((a) => a.name === name)?.path;
 }
@@ -299,17 +405,16 @@ export function gifArgs({ input, output }: { input: string; output: string }): s
 }
 
 /**
- * The Markdown section (including its markers) listing every screenshot inline, desktop and
- * phone side by side, then every
- * flow with an inline GIF and a link to the player page, which plays the full-quality video
- * with pause, seeking and speed, and by name the changed flows past {@link SCREENCAST_LIMIT}
- * (`moreFlows`); just the markers when the PR changes no picture, which empties a section an
- * earlier push wrote. Pictures are linked from `pictureBaseUrl` (the gh-pages
- * branch on raw.githubusercontent.com, which serves a push at once, while Pages takes a minute
- * or more to deploy it; the workflow pins the branch to the commit it pushed), the player from
- * `baseUrl` (Pages, the only host that serves it as a page). `version` (the commit) is appended
- * as a query string because the player's file name stays the same across pushes and GitHub's
- * image proxy and Pages cache by URL.
+ * The Markdown section (including its markers): every shot whose golden the PR changes, its
+ * desktop and phone goldens side by side, before above after, then every changed flow with an
+ * inline GIF and a link to the player page, which plays the full-quality video with pause,
+ * seeking and speed, and by name the changed flows past {@link SCREENCAST_LIMIT} (`moreFlows`);
+ * just the markers when the PR changes no golden, which empties a section an earlier push wrote.
+ * Pictures are linked from `pictureBaseUrl` (the gh-pages branch on raw.githubusercontent.com,
+ * which serves a push at once, while Pages takes a minute or more to deploy it; the workflow pins
+ * the branch to the commit it pushed), the player from `baseUrl` (Pages, the only host that
+ * serves it as a page). `version` (the commit) is appended as a query string because the file
+ * names stay the same across pushes and GitHub's image proxy and Pages cache by URL.
  */
 export function renderSection({
   flows,
@@ -332,25 +437,27 @@ export function renderSection({
   const withSlash = (url: string) => (url.endsWith('/') ? url : `${url}/`);
   const base = withSlash(baseUrl);
   const pictures = withSlash(pictureBaseUrl);
+  const missing: Readonly<Record<GoldenSide, string>> = { before: 'New', after: 'Removed' };
   const shotEntries = shots.map((shot) => {
-    const heading = `### ${shot.title}`;
-    const notTaken = 'Not taken: the spec failed, see the E2E check.';
-    if (SHOT_DEVICE_NAMES.every((device) => !shot.pictures[device]))
-      return `${heading}\n\n_${notTaken}_`;
     // HTML rather than a Markdown table: only `width` keeps both pictures side by side at sizes that match.
-    const cell = (device: ShotDevice) => {
+    const cell = (device: ShotDevice, side: GoldenSide) => {
       const { label, width } = SHOT_DEVICES[device];
-      if (!shot.pictures[device]) return `<td>${notTaken}</td>`;
-      const src = `${pictures}${shotFile(shot.slug, device)}?v=${version}`;
-      return `<td><img src="${src}" alt="${label}" width="${width}"></td>`;
+      const pair = shot.pictures[device];
+      if (!pair) return '<td>Unchanged</td>';
+      if (!pair[side]) return `<td>${missing[side]}</td>`;
+      const src = `${pictures}${shotFile(shot.slug, device, side)}?v=${version}`;
+      return `<td><img src="${src}" alt="${label} ${side}" width="${width}"></td>`;
     };
+    const row = (side: GoldenSide, label: string) =>
+      `<tr><th>${label}</th>${SHOT_DEVICE_NAMES.map((device) => cell(device, side)).join('')}</tr>`;
     const headings = SHOT_DEVICE_NAMES.map((device) => `<th>${SHOT_DEVICES[device].label}</th>`);
     return [
-      heading,
+      `### ${shot.title}`,
       '',
       '<table>',
-      `<tr>${headings.join('')}</tr>`,
-      `<tr>${SHOT_DEVICE_NAMES.map(cell).join('')}</tr>`,
+      `<tr><th></th>${headings.join('')}</tr>`,
+      row('before', 'Before'),
+      row('after', 'After'),
       '</table>',
     ].join('\n');
   });
@@ -361,7 +468,7 @@ export function renderSection({
     const player = `${base}player.html?flow=${flow.slug}&v=${version}&speed=${1 / SCREENCAST_SLOWDOWN}`;
     return `${heading}\n\n![${flow.title}](${gif})\n\n[Play with pause and speed controls](${player})`;
   });
-  const intro = `_Recorded from ${version} by the PR preview workflow; updated on every push that changes \`apps/web\`._`;
+  const intro = `_The goldens this PR changes, as of ${version}, from the PR preview workflow; updated on every push that changes \`apps/web\`._`;
   return [
     SECTION_START,
     intro,
