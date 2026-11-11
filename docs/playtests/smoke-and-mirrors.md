@@ -2,7 +2,7 @@
 
 A checklist for playing _Smoke and Mirrors_ (Core Set (2026), scenario II of _Brethren of Ash_) at the table with the app, from setup to resolution.
 The app runs the scenario side; the players play their own cards and tell the app what they did.
-The scripted golden game is [`end_to_end.test.ts`](../../packages/scenarios/src/smoke_and_mirrors/end_to_end.test.ts) (Roland and Daisy, seed 1, from the campaign log after _Spreading Flames_ to both resigning in round 3); every unit test run replays it, so a regression there shows before the table does.
+The scripted golden game is [`end_to_end.test_support.ts`](../../packages/scenarios/src/smoke_and_mirrors/end_to_end.test_support.ts) (Roland and Daisy, seed 1, from the campaign log that _Spreading Flames'_ golden game wrote to both resigning in round 3); every unit test run replays it, so a regression there shows before the table does.
 
 ## Before the game
 
