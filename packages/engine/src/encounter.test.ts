@@ -756,12 +756,9 @@ describe('DiscardEncounterTop', () => {
     expect(idsIn(after, encounterDiscard)).toEqual(['top_card']);
   });
 
-  it.each([
-    { count: 2, inDeck: 2, inDiscard: 0 },
-    { count: 3, inDeck: 1, inDiscard: 1 },
-  ])(
-    'discarding $count of 2 shuffles the discard back in when the deck runs out: $inDeck in the deck, $inDiscard discarded',
-    ({ count, inDeck, inDiscard }) => {
+  it.each([2, 3])(
+    'discarding %i of 2 stops when the deck runs out, then shuffles the discard back in',
+    (count) => {
       const { context, state } = twoCardDeck.start();
 
       const { state: after, events } = execute(context, state, {
@@ -770,10 +767,21 @@ describe('DiscardEncounterTop', () => {
       });
 
       expect(events.filter((event) => event.type === 'DeckShuffled')).toHaveLength(1);
-      expect(idsIn(after, encounterDeck)).toHaveLength(inDeck);
-      expect(idsIn(after, encounterDiscard)).toHaveLength(inDiscard);
+      expect([...idsIn(after, encounterDeck)].sort()).toEqual(['second_card', 'top_card']);
+      expect(idsIn(after, encounterDiscard)).toEqual([]);
     },
   );
+
+  it('refills a deck left empty before it discards', () => {
+    const { context, state } = aliceInHall
+      .withCard(instanceId('discarded_card'), plainTreachery, encounterDiscard)
+      .start();
+
+    const { state: after } = execute(context, state, { type: 'DiscardEncounterTop', count: 1 });
+
+    expect(idsIn(after, encounterDiscard)).toEqual([]);
+    expect(idsIn(after, encounterDeck)).toEqual(['discarded_card']);
+  });
 
   it('does nothing with the deck and the discard both empty', () => {
     const { context, state } = aliceInHall.start();
