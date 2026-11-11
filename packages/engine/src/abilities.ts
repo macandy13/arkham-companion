@@ -252,9 +252,14 @@ export type RelativeCard =
    * (`CardFilter`): "each set-aside [[Cultist]] enemy", "6 unique [[Cultist]] enemies in the
    * victory display", "[[Elite]] enemies in the victory display and beneath this act"
    * (`cardsInZones`). The command repeats once per card, zone by zone in zone order, and none
-   * when no card matches.
+   * when no card matches. With `top`, only the top `top` cards of each zone count: "the top 3
+   * cards of the encounter deck", fewer when the zone holds fewer.
    */
-  | ({ ref: 'eachInZone'; zone: Templated<Zone> | readonly Templated<Zone>[] } & CardFilter)
+  | ({
+      ref: 'eachInZone';
+      zone: Templated<Zone> | readonly Templated<Zone>[];
+      top?: number;
+    } & CardFilter)
   /**
    * Each card in play (`isInPlay`) its filter matches (`CardFilter`), in card order: "if the
    * Masked Hunter is in play". With `at`, only those at one of the locations it names
@@ -388,7 +393,6 @@ export type AbilityCommand =
           | 'AdvanceAgenda'
           | 'BecomeActAndAgenda'
           | 'ShuffleEncounterDiscard'
-          | 'DiscardEncounterTop'
           | 'ShuffleEncounterDeck'
           | 'ShuffleInto'
           | 'DrawEncounter'
@@ -1195,7 +1199,7 @@ function eachId(
         const resolved = resolveRefs(zone, refs) as Zone | undefined;
         return resolved === undefined ? [] : [resolved];
       });
-      return cardsInZones(ctx, state, zones, each).map((card) => card.id);
+      return cardsInZones(ctx, state, zones, each, each.top).map((card) => card.id);
     }
     case 'eachInPlay': {
       const there =
@@ -2085,11 +2089,12 @@ export function nearestEnemy(filter: EnemyFilter = {}): RelativeCard {
 /**
  * Each card in `zone` (or in each of a list of zones) that `filter` matches (`eachInZone`), which
  * repeats the effect for each: `eachInZone({ kind: 'setAside' }, { trait, typeCode: 'enemy' })` for
- * "each set-aside [[trait]] enemy".
+ * "each set-aside [[trait]] enemy", `eachInZone(encounterDeck, { top: 3 })` for "the top 3 cards
+ * of the encounter deck".
  */
 export function eachInZone(
   zone: Templated<Zone> | readonly Templated<Zone>[],
-  filter: CardFilter = {},
+  filter: CardFilter & { top?: number } = {},
 ): Extract<RelativeCard, { ref: 'eachInZone' }> {
   return { ref: 'eachInZone', zone, ...filter };
 }
@@ -2305,17 +2310,19 @@ export function nextAgendaBecomesActAndAgenda(): AbilityEffect {
   return { type: 'BecomeActAndAgenda', next: true };
 }
 
+/**
+ * "Discard the top `count` cards of the encounter deck" (Out of This World): each is discarded
+ * like any encounter card (`DiscardCard`), fewer when the deck holds fewer. The deck is not
+ * refilled while the effect resolves (Smite the Wicked ruling): once its card is placed
+ * (`placeDrawnCard`), or at the next draw, the empty deck takes the discard back.
+ */
+export function discardEncounterTop(count: number): AbilityEffect {
+  return { type: 'DiscardCard', cardId: eachInZone({ kind: 'encounterDeck' }, { top: count }) };
+}
+
 /** "Shuffle the encounter discard pile into the encounter deck". */
 export function shuffleEncounterDiscard(): AbilityEffect {
   return { type: 'ShuffleEncounterDiscard' };
-}
-
-/**
- * "Discard the top `count` cards of the encounter deck" (`DiscardEncounterTop`); in a test's
- * outcome, `forEachPoint(discardEncounterTop(1))` discards one per point (The Witching Hour).
- */
-export function discardEncounterTop(count: number): AbilityEffect {
-  return { type: 'DiscardEncounterTop', count };
 }
 
 /**

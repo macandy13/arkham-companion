@@ -1,6 +1,5 @@
 import { cardStats, type CardStats, type EngineContext } from './cards';
 import type {
-  DiscardEncounterTop,
   DrawBeneath,
   DrawEncounter,
   DrawFromScenarioDeck,
@@ -263,31 +262,6 @@ export function handleShuffleEncounterDeck(state: GameState): DeckShuffled[] {
  */
 export function handleShuffleEncounterDiscard(state: GameState): Event[] {
   return shuffleInto(state, cardsInZone(state, encounterDiscard), encounterDeck);
-}
-
-/**
- * `DiscardEncounterTop`: a deck left empty by a manual correction is refilled first; then the top
- * cards are discarded one at a time, as many as the deck holds, and the discard is shuffled back
- * in only once the effect is done (`refillIfEmpty`), as after a draw (`placeDrawnCard`).
- */
-export function handleDiscardEncounterTop(state: GameState, cmd: DiscardEncounterTop): Event[] {
-  const refill = refillIfEmpty(state);
-  const refilled = replay(refill, state);
-  const discarded = cardsInZone(refilled, encounterDeck)
-    .slice(0, cmd.count)
-    .reduce<Event[]>(
-      (events, cardId) => [
-        ...events,
-        cardMoved(
-          replay(events, refilled),
-          requireCard(refilled.cards, cardId),
-          encounterDiscard,
-          0,
-        ),
-      ],
-      [],
-    );
-  return [...refill, ...discarded, ...refillIfEmpty(replay(discarded, refilled))];
 }
 
 /** Cards in the encounter deck and its discard, i.e. how many cards could still be drawn. */

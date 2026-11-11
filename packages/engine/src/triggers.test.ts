@@ -982,6 +982,62 @@ describe('trigger bus', () => {
     );
   });
 
+  describe('discarding from the top of the encounter deck', () => {
+    /** "Revelation – Discard the top 3 cards of the encounter deck." */
+    const outOfThisWorldCard = blankTreachery('out_of_this_world', {
+      abilities: [whenRevealed(discardEncounterTop(3))],
+    });
+    const aliceDraws: Command = { type: 'DrawEncounter', investigatorId: alice };
+
+    /** Alice in the hall with Out of This World on top of the encounter deck, `others` below it. */
+    const outOfThisWorldOn = (others: readonly string[]) =>
+      others.reduce(
+        (game, id) => game.withCard(instanceId(id), blankTreachery(id), { kind: 'encounterDeck' }),
+        newGame()
+          .withLocation(hall, blankLocation('hall'), { revealed: true })
+          .withInvestigator(alice, { locationId: hall })
+          .withCard(instanceId('out_of_this_world'), outOfThisWorldCard, {
+            kind: 'encounterDeck',
+          }),
+      );
+
+    it('discards the top 3 one by one onto the discard, below Out of This World', () => {
+      const { context, state } = outOfThisWorldOn([
+        'first_card',
+        'second_card',
+        'third_card',
+        'fourth_card',
+      ]).start();
+
+      const after = stateAfter(context, state, aliceDraws, resolveRevelation('out_of_this_world'));
+
+      expect(cardsInZone(after, { kind: 'encounterDeck' })).toEqual([instanceId('fourth_card')]);
+      expect(cardsInZone(after, { kind: 'encounterDiscard' })).toEqual([
+        instanceId('out_of_this_world'),
+        instanceId('third_card'),
+        instanceId('second_card'),
+        instanceId('first_card'),
+      ]);
+    });
+
+    it('discards the 2 left, then the empty deck takes the discard back once the card resolved', () => {
+      const { context, state } = outOfThisWorldOn(['first_card', 'second_card']).start();
+
+      const { state: after, events } = runFrom(context, state, [
+        aliceDraws,
+        resolveRevelation('out_of_this_world'),
+      ]);
+
+      expect(events.filter((event) => event.type === 'DeckShuffled')).toHaveLength(1);
+      expect([...cardsInZone(after, { kind: 'encounterDeck' })].sort()).toEqual([
+        instanceId('first_card'),
+        instanceId('out_of_this_world'),
+        instanceId('second_card'),
+      ]);
+      expect(cardsInZone(after, { kind: 'encounterDiscard' })).toEqual([]);
+    });
+  });
+
   describe('tests that cost something for each point failed', () => {
     const graspingHands = instanceId('grasping_hands');
     const rottingRemains = instanceId('rotting_remains');

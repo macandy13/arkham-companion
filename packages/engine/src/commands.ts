@@ -70,7 +70,6 @@ export type Command =
   | FromSetAside
   | ShuffleInto
   | ShuffleEncounterDiscard
-  | DiscardEncounterTop
   | ShuffleEncounterDeck
   | EngageReadyEnemies
   | SpawnEnemy
@@ -751,18 +750,6 @@ export interface ShuffleInto extends AskedByCard {
  */
 export interface ShuffleEncounterDiscard {
   type: 'ShuffleEncounterDiscard';
-}
-
-/**
- * "Discard the top 3 cards of the encounter deck" (Out of this World): the top `count` cards go
- * one by one to the top of the encounter discard. A deck that runs out stops the discarding, having
- * done as much as it could, and the discard is shuffled back in once the effect is done, never
- * while it resolves (Smite the Wicked ruling). Produces `CardMoved` per card, and the refill's
- * `CardMoved` and `DeckShuffled`.
- */
-export interface DiscardEncounterTop {
-  type: 'DiscardEncounterTop';
-  count: number;
 }
 
 /**

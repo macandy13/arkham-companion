@@ -28,7 +28,6 @@ import {
   handleFromSetAside,
   handleShuffleEncounterDeck,
   handleShuffleEncounterDiscard,
-  handleDiscardEncounterTop,
   handleShuffleInto,
   surgeDraw,
 } from './handle_encounter';
@@ -268,9 +267,6 @@ const COMMAND_SPECS: CommandSpecs = {
   FromSetAside: { handle: (_ctx, state, command) => handleFromSetAside(state, command) },
   ShuffleInto: { handle: (_ctx, state, command) => handleShuffleInto(state, command) },
   ShuffleEncounterDiscard: { handle: (_ctx, state) => handleShuffleEncounterDiscard(state) },
-  DiscardEncounterTop: {
-    handle: (_ctx, state, command) => handleDiscardEncounterTop(state, command),
-  },
   ShuffleEncounterDeck: { handle: (_ctx, state) => handleShuffleEncounterDeck(state) },
   EngageReadyEnemies: { handle: readyEnemyEngagements },
   // `handle` turns it into an `ability` step before any handler would see it.
