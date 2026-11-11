@@ -757,6 +757,7 @@ export const appTexts = {
     cancelRevelation: 'Enthüllung verhindern',
     count: {
       failedBy: 'Misslungen um',
+      passedBy: 'Gelungen um',
       clues: 'Entdeckte Hinweise',
       dealt: 'Zugefügter Schaden',
       amount: 'Anzahl',

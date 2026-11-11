@@ -14,6 +14,8 @@ import {
   investigatorId,
   newGame,
   PlayTable,
+  gainClues,
+  ifSucceedBy,
   skillTest,
   takeDamage,
   whenRevealed,
@@ -544,6 +546,42 @@ describe('DecisionDialog', () => {
       for (const tap of taps) fireEvent.click(screen.getByRole('button', { name: tap }));
 
       expect(table.board.investigator(alder).damage).toBe(damage);
+    });
+  });
+
+  describe('a test whose pass changes with its margin, no token drawn in the app', () => {
+    /** Alder draws "Test agility (3). If you succeed by 2 or more, gain 1 clue." */
+    const quickStepDrawn = () => {
+      const table = PlayTable.start(
+        newGame()
+          .withLocation(study, blankLocation('study', { name: 'Study' }), { revealed: true })
+          .withInvestigator(alder, { name: 'Alder', locationId: study })
+          .withCard(
+            instanceId('quick_step'),
+            blankTreachery('Quick Step', {
+              abilities: [
+                whenRevealed(skillTest('agility', 3, { byMargin: [ifSucceedBy(2, gainClues(1))] })),
+              ],
+            }),
+            { kind: 'encounterDeck' },
+          )
+          .withTurnOf(alder),
+      );
+      table.drawEncounterCard(alder);
+      table.resolveRevelation(byName('Quick Step'));
+      return table;
+    };
+
+    it.each([
+      { taps: ['Passed', 'Done'], clues: 0 },
+      { taps: ['Raise the Margin of success', 'Raise the Margin of success', 'Done'], clues: 1 },
+    ])('asks how much it passed by: $taps gains $clues clues', ({ taps, clues }) => {
+      const table = quickStepDrawn();
+      renderFirstDecision(table);
+
+      for (const tap of taps) fireEvent.click(screen.getByRole('button', { name: tap }));
+
+      expect(table.board.investigator(alder).clues).toBe(clues);
     });
   });
 

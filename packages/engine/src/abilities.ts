@@ -69,6 +69,7 @@ import type {
   SkillName,
   TokenKind,
   WoundKind,
+  MarginTier,
 } from './state';
 import type { ScenarioDeck, Zone } from './zone';
 
@@ -405,11 +406,17 @@ export type AbilityCommand =
  * it sees what the effects before it did, an `each…` reference in one
  * repeats only that effect, and one that names nobody is dropped alone.
  */
-export type AbilityTest = Omit<TestSkill, 'onPass' | 'onFail' | 'perPointFailed'> & {
+export type AbilityTest = Omit<TestSkill, 'onPass' | 'onFail' | 'perPointFailed' | 'byMargin'> & {
   onPass: readonly AbilityCommand[];
   onFail: readonly AbilityCommand[];
   perPointFailed?: readonly AbilityCommand[];
+  byMargin?: readonly (Omit<MarginTier, 'commands'> & { commands: readonly AbilityCommand[] })[];
 };
+
+/** A tier of `TestSkill.byMargin` as card data writes it (`ifSucceedBy`, `ifFailBy`). */
+export type AbilityMarginTier = NonNullable<
+  Extract<AbilityEffect, { type: 'TestSkill' }>['byMargin']
+>[number];
 
 /**
  * `RequestDecision` as card data writes it: a choice ("the lead investigator
@@ -952,6 +959,9 @@ function withDeferredOutcomes(effect: AbilityEffect, opened: OpenedWindow): unkn
     onPass: defer(effect.onPass),
     onFail: defer(effect.onFail),
     ...(effect.perPointFailed && { perPointFailed: defer(effect.perPointFailed) }),
+    ...(effect.byMargin && {
+      byMargin: effect.byMargin.map((tier) => ({ ...tier, commands: defer(tier.commands) })),
+    }),
   };
 }
 
@@ -1543,6 +1553,7 @@ export function skillTest(
     onPass?: AbilityEffect[];
     onFail?: AbilityEffect[];
     perPointFailed?: AbilityEffect[];
+    byMargin?: AbilityMarginTier[];
   } = {},
 ): AbilityEffect {
   return {
@@ -1553,7 +1564,25 @@ export function skillTest(
     onPass: outcomes.onPass ?? [],
     onFail: outcomes.onFail ?? [],
     ...(outcomes.perPointFailed ? { perPointFailed: outcomes.perPointFailed } : {}),
+    ...(outcomes.byMargin ? { byMargin: outcomes.byMargin } : {}),
   };
+}
+
+/**
+ * "If you succeed by `atLeast` or more, … instead": effects that replace the test's `onPass` once
+ * the players confirm such a margin (`TestSkill.byMargin`), as in
+ * `skillTest('agility', 3, { onPass: [x], byMargin: [ifSucceedBy(3, x, y)] })`.
+ */
+export function ifSucceedBy(atLeast: number, ...effects: AbilityEffect[]): AbilityMarginTier {
+  return { outcome: 'pass', atLeast, commands: effects };
+}
+
+/**
+ * "If you fail by `atLeast` or more, … instead": effects that replace the test's `onFail`, as in
+ * Blood and Rust's `skillTest(…, { onFail: [takeDamage(1)], byMargin: [ifFailBy(2, takeDamage(2))] })`.
+ */
+export function ifFailBy(atLeast: number, ...effects: AbilityEffect[]): AbilityMarginTier {
+  return { outcome: 'fail', atLeast, commands: effects };
 }
 
 /**

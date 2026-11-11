@@ -79,4 +79,5 @@ A cost is `CardAction.cost`, paid before the effects.
 
 - An effect after a test that resolves either way (On Wings of Darkness's "Then, …") is the next effect of the same ability, after the `skillTest`: `disengageFromEachEnemy(…)`, `moveTo(locationWith({ trait: trait('Central') }))`, `engageReadyEnemies()`.
 - A per-point fail cost: effects that resolve once for each point failed, `skillTest('intellect', 4, { perPointFailed: [placeYourClues(1)] })` (False Lead); a choice repeats per point too (`perPointFailed: [youMustEither(…)]`, Umôrdhoth's Wrath).
+- An outcome that changes with the margin: `skillTest(…, { onFail: [takeDamage(1)], byMargin: [ifFailBy(2, takeDamage(2))] })` (Blood and Rust); `ifSucceedBy(n, …)` for a pass. A tier replaces the outcome's effects, so a card that adds to them lists them in the tier too.
 - An ability after the enemy is evaded (Ruth Turner): `afterEvaded(addToVictoryDisplay({ ref: 'self' }))`.

@@ -20,6 +20,7 @@ import type {
   NamedAmount,
   SkillTest,
   SkillTestOutcome,
+  MarginTier,
 } from './state';
 
 /** The pending decision with `id`, if it is still open (`GameState.pending`). */
@@ -161,7 +162,25 @@ export function answerOutcome(command: ResolveDecision): SkillTestOutcome {
  */
 export function answerCommands(state: GameState, command: Command): readonly Command[] {
   if (command.type !== 'ResolveDecision') return [];
-  return [...perPointCommands(state, command), ...optionCommands(state, command)];
+  const chosen = optionCommands(state, command);
+  return [...perPointCommands(state, command), ...(marginTier(state, command)?.commands ?? chosen)];
+}
+
+/**
+ * The tier of `Decision.byMargin` the answer reaches: of the answered outcome, the one with the
+ * highest `atLeast` its `margin` is at least. None without a margin, as only the players can say
+ * how much a test passed or failed by.
+ */
+function marginTier(state: GameState, command: ResolveDecision): MarginTier | undefined {
+  const tiers = pendingDecision(state, command.decisionId)?.byMargin;
+  const { margin } = command;
+  if (tiers === undefined || margin === undefined) return undefined;
+  return tiers
+    .filter((tier) => tier.outcome === command.optionId && margin >= tier.atLeast)
+    .reduce<MarginTier | undefined>(
+      (best, tier) => (best === undefined || tier.atLeast > best.atLeast ? tier : best),
+      undefined,
+    );
 }
 
 /**
@@ -384,6 +403,8 @@ export interface SkillTestOutcomes {
    * records it.
    */
   perPointFailed?: readonly Command[];
+  /** "If you succeed / fail by N or more, … instead" (`Decision.byMargin`). */
+  byMargin?: readonly MarginTier[];
 }
 
 /**
@@ -406,5 +427,6 @@ export function skillTestDecision(
       { id: 'fail', label: 'decision.fail', commands: outcomes.onFail },
     ],
     ...(outcomes.perPointFailed ? { perPointFailed: outcomes.perPointFailed } : {}),
+    ...(outcomes.byMargin ? { byMargin: outcomes.byMargin } : {}),
   };
 }

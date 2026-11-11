@@ -190,6 +190,8 @@ export {
   nearestEnemy,
   healSelf,
   gainSurge,
+  ifFailBy,
+  ifSucceedBy,
   ifYouHave,
   ifValue,
   statOf,

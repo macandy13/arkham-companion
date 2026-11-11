@@ -118,10 +118,13 @@ export function DecisionPage({
   const run = useSkillTest(board, tested, test);
   const suggested = run?.finished ? run.result : undefined;
   const [counts, setCounts] = useState(() => defaultCounts(decision.counts));
-  // A per-point fail needs its margin; without a draw in the app (the group's own bag, or a draw
-  // that says pass) the players give it, from the engine's own default of 1.
-  const asksFailedBy = decision.perPointFailed !== undefined && suggested?.outcome !== 'fail';
-  const [failedBy, setFailedBy] = useState(1);
+  // An outcome that depends on its margin (a per-point fail, "if you succeed by 2 or more") needs
+  // it; without a draw in the app that gave this outcome, the players give it, from 1 for a fail
+  // (the engine's own default) and 0 for a pass.
+  const asksMarginOf = (option: string) =>
+    decision.asksMargin?.some((outcome) => outcome === option) === true &&
+    suggested?.outcome !== option;
+  const [margins, setMargins] = useState<Record<string, number>>({ pass: 0, fail: 1 });
   const [chosen, setPicked] = useState<string>();
   const picked = chosen ?? pickedFirst(decision, suggested?.outcome);
   const [nextPicks, setNextPicks] = useState<Record<string, string>>({});
@@ -143,7 +146,7 @@ export function DecisionPage({
       {
         ...countsOf(counts[option]),
         ...(option === suggested?.outcome ? { margin: suggested.margin } : {}),
-        ...(option === 'fail' && asksFailedBy ? { margin: failedBy } : {}),
+        ...(asksMarginOf(option) ? { margin: margins[option] } : {}),
       },
       ...(next === undefined ? [] : [{ option: next, counts: countsOf(nextCounts[next]) }]),
     );
@@ -181,10 +184,10 @@ export function DecisionPage({
           {decision.options.map((option, index) => {
             const followUp = decision.followUps?.[option];
             const fromTheGame = decision.counts?.[option] !== undefined || followUp !== undefined;
-            // The margin is part of the fail's answer, so its row is picked, then Done, like a
+            // The margin is part of the outcome's answer, so its row is picked, then Done, like a
             // row with counts; no max, since the dialog doesn't know the test's modified difficulty.
-            const failedByHere = option === 'fail' && asksFailedBy;
-            const withCounts = fromTheGame || failedByHere;
+            const marginHere = asksMarginOf(option);
+            const withCounts = fromTheGame || marginHere;
             return (
               <li key={index}>
                 <button
@@ -198,14 +201,16 @@ export function DecisionPage({
                   <span>{t(decision.labels?.[option] ?? option, { defaultValue: option })}</span>
                 </button>
                 {fromTheGame && <p>{t('decision.fromTheGame')}</p>}
-                {failedByHere && (
+                {marginHere && (
                   <Stepper
-                    label={t('decision.count.failedBy')}
-                    value={failedBy}
-                    shown={String(failedBy)}
+                    label={t(
+                      option === 'pass' ? 'decision.count.passedBy' : 'decision.count.failedBy',
+                    )}
+                    value={margins[option] ?? 0}
+                    shown={String(margins[option] ?? 0)}
                     min={0}
                     onChange={(changed) => {
-                      setFailedBy(changed);
+                      setMargins({ ...margins, [option]: changed });
                       setPicked(option);
                     }}
                   />

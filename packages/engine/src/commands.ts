@@ -27,6 +27,7 @@ import type {
   SkillTestOutcome,
   TokenKind,
   WoundKind,
+  MarginTier,
 } from './state';
 import type { ScenarioDeck, Zone } from './zone';
 
@@ -1054,6 +1055,8 @@ export interface TestSkill {
    * failed by, and these commands run once for each point, ahead of `onFail`.
    */
   perPointFailed?: readonly Command[];
+  /** "If you succeed / fail by N or more, … instead" (`Decision.byMargin`). */
+  byMargin?: readonly MarginTier[];
 }
 
 /**
@@ -1100,7 +1103,8 @@ export interface ResolveDecision {
    * Only for a `skillTestResult` decision: how much the test succeeded or
    * failed by, a whole number of 0 or more (the suggestion's `margin`, or
    * what the players worked out). A per-point fail deals that much
-   * (`Decision.perPointFailed`), and `SkillTestResolved.margin` records it.
+   * (`Decision.perPointFailed`), it picks the tier of `Decision.byMargin`,
+   * and `SkillTestResolved.margin` records it.
    */
   margin?: number;
   /**

@@ -86,7 +86,10 @@ import {
   placeYourClues,
   takeDamage,
   takeDamageAndHorror,
+  ifFailBy,
+  ifSucceedBy,
   takeHorror,
+  gainClues,
   threatAreaOf,
   trait,
   victoryDisplay,
@@ -1014,6 +1017,59 @@ describe('trigger bus', () => {
         outcome: 'fail',
         margin: damage,
       });
+    });
+
+    describe('outcomes that change with the margin', () => {
+      /**
+       * "Test willpower (3). If you fail, take 2 horror (if you fail by 4 or more, take 3 horror
+       * instead). If you succeed by 2 or more, gain 1 clue."
+       */
+      const locustsCard = blankTreachery('locusts', {
+        abilities: [
+          whenRevealed(
+            skillTest('willpower', 3, {
+              onFail: [takeHorror(2)],
+              byMargin: [ifFailBy(4, takeHorror(3)), ifSucceedBy(2, gainClues(1))],
+            }),
+          ),
+        ],
+      });
+      const locustsDrawn = () => {
+        const { context, state } = newGame()
+          .withLocation(hall, blankLocation('hall'), { revealed: true })
+          .withInvestigator(alice, { locationId: hall })
+          .withCard(instanceId('locusts'), locustsCard, { kind: 'encounterDeck' })
+          .start();
+        return {
+          context,
+          drawn: stateAfter(context, state, aliceDraws, resolveRevelation('locusts')),
+        };
+      };
+
+      it.each([
+        { outcome: 'fail', margin: undefined, horror: 2, clues: 0 },
+        { outcome: 'fail', margin: 3, horror: 2, clues: 0 },
+        { outcome: 'fail', margin: 4, horror: 3, clues: 0 },
+        { outcome: 'fail', margin: 6, horror: 3, clues: 0 },
+        { outcome: 'pass', margin: undefined, horror: 0, clues: 0 },
+        { outcome: 'pass', margin: 1, horror: 0, clues: 0 },
+        { outcome: 'pass', margin: 2, horror: 0, clues: 1 },
+      ] as const)(
+        'a $outcome by $margin gives $horror horror and $clues clues',
+        ({ outcome, margin, horror, clues }) => {
+          const { context, drawn } = locustsDrawn();
+
+          const { state } = execute(context, drawn, {
+            ...answer('test:locusts', outcome),
+            ...(margin === undefined ? {} : { margin }),
+          });
+
+          expect(state.investigators.find((inv) => inv.id === alice)).toMatchObject({
+            sanity: { horror },
+            clues,
+          });
+        },
+      );
     });
 
     it('deals a fail by 3 as one wound of 3, not three of 1 (Rules Reference, "For each")', () => {

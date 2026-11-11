@@ -379,8 +379,11 @@ export type SkillTestKind =
   | { kind: 'fight'; enemyId: InstanceId; damage: number }
   | { kind: 'evade'; enemyId: InstanceId };
 
+/** The two outcomes of a skill test, in the order the dialogs list them. */
+export const SKILL_TEST_OUTCOMES = ['pass', 'fail'] as const;
+
 /** Whether a skill test succeeded or failed (`SkillTestResolved`). */
-export type SkillTestOutcome = 'pass' | 'fail';
+export type SkillTestOutcome = (typeof SKILL_TEST_OUTCOMES)[number];
 
 /** Which number of a skill test a modifier changes: the investigator's skill value or the difficulty. */
 export type ModifierTarget = 'skill' | 'difficulty';
@@ -484,11 +487,29 @@ export interface Decision {
    */
   perPointFailed?: readonly Command[];
   /**
+   * Only for `skillTestResult`: "if you succeed / fail by N or more, …
+   * instead". The tier with the highest `atLeast` the answer's `margin`
+   * reaches runs in place of the option's commands (`answerCommands`).
+   */
+  byMargin?: readonly MarginTier[];
+  /**
    * The answers. Each carries the commands it triggers, so the mapping from
    * answer to consequence is data and any module (or scenario) can raise a
    * decision. A basic action's test carries none: its `testKind` decides.
    */
   options: DecisionOption[];
+}
+
+/**
+ * "If you fail by 2 or more, take 2 damage instead" (Blood and Rust): the
+ * commands that replace those of the `outcome` option once the test passed
+ * or failed by `atLeast` or more (`Decision.byMargin`). A card that adds to
+ * the outcome rather than replacing it lists the base effects here too.
+ */
+export interface MarginTier {
+  outcome: SkillTestOutcome;
+  atLeast: number;
+  commands: readonly Command[];
 }
 
 /** One answer the players can pick for a `Decision`. */
