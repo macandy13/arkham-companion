@@ -34,6 +34,7 @@ import {
   resolutionId,
   setAsideCard,
   skillTest,
+  forEachPoint,
   skillTestOfEither,
   spawnEnemyAt,
   takeDamage,
@@ -505,7 +506,7 @@ export const spreadingFlamesCardDefs: readonly CardStats[] = [
     abilities: [
       whenRevealed(
         skillTestOfEither(NOXIOUS_SMOKE_DECISION, ['willpower', 'agility'], 3, {
-          perPointFailed: [takeDamage(1)],
+          onFail: [forEachPoint(takeDamage(1))],
         }),
       ),
     ],

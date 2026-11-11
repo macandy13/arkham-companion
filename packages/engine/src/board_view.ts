@@ -29,7 +29,7 @@ import {
   type ScaledValue,
   type Trait,
 } from './cards';
-import { sameDecider } from './decisions';
+import { dependsOnMargin, sameDecider } from './decisions';
 import { optionName } from './describe_decision';
 import type { Command } from './commands';
 import { agendaThreshold, doomInPlay, isInPlay } from './doom';
@@ -113,9 +113,11 @@ import type {
   QueuedStep,
   SkillTest,
   SkillTestKind,
+  SkillTestOutcome,
   SkillTestSuggestion,
   SkillValues,
 } from './state';
+import { SKILL_TEST_OUTCOMES } from './state';
 import {
   encounterDeck,
   encounterDiscard,
@@ -445,10 +447,11 @@ export interface DecisionView extends ChoiceView {
   /** The basic action a skill test belongs to (`Decision.testKind`), which says what its pass `amount` counts. */
   action?: SkillTestKind['kind'];
   /**
-   * Whether a fail costs something for each point it fails by (`Decision.perPointFailed`), so the
-   * dialog asks how much the test failed by when no draw in the app worked it out.
+   * The outcomes whose margin changes what they do (`dependsOnMargin`: a `ForEachPoint` or a
+   * `ByMargin`), so the dialog asks how much the test passed or failed by when
+   * no draw in the app worked it out.
    */
-  perPointFailed?: true;
+  asksMargin?: readonly SkillTestOutcome[];
   /**
    * By option name, the choice that option asks right after it is picked (`followUpChoice`: a
    * failed test's "you must either …"), so the dialog offers it under the option.
@@ -1421,7 +1424,7 @@ function decisionView(ctx: EngineContext, state: GameState, decision: Decision):
     ...(decision.decider.kind === 'investigator' ? { for: decision.decider.investigatorId } : {}),
     ...(decision.skillTest ? { test: decision.skillTest } : {}),
     ...(decision.testKind ? { action: decision.testKind.kind } : {}),
-    ...(decision.perPointFailed ? { perPointFailed: true } : {}),
+    ...withAsksMargin(decision),
     ...choiceView(decision),
     ...(Object.keys(followUps).length > 0 ? { followUps } : {}),
     ...recordIfAny('locations', locations),
@@ -1570,4 +1573,13 @@ function dueAttacks(ctx: EngineContext, state: GameState): DueAttackView[] {
     enemy: nameOf(ctx, requireCard(state, attack.enemyId)),
     investigator: attack.investigatorId,
   }));
+}
+
+/** `DecisionView.asksMargin` of `decision`, left out when no outcome depends on the margin. */
+function withAsksMargin(decision: Decision): { asksMargin?: readonly SkillTestOutcome[] } {
+  if (decision.kind !== 'skillTestResult') return {};
+  const asked = SKILL_TEST_OUTCOMES.filter((outcome) =>
+    decision.options.some((option) => option.id === outcome && dependsOnMargin(option)),
+  );
+  return asked.length > 0 ? { asksMargin: asked } : {};
 }

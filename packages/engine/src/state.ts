@@ -379,8 +379,11 @@ export type SkillTestKind =
   | { kind: 'fight'; enemyId: InstanceId; damage: number }
   | { kind: 'evade'; enemyId: InstanceId };
 
+/** The two outcomes of a skill test, in the order the dialogs list them. */
+export const SKILL_TEST_OUTCOMES = ['pass', 'fail'] as const;
+
 /** Whether a skill test succeeded or failed (`SkillTestResolved`). */
-export type SkillTestOutcome = 'pass' | 'fail';
+export type SkillTestOutcome = (typeof SKILL_TEST_OUTCOMES)[number];
 
 /** Which number of a skill test a modifier changes: the investigator's skill value or the difficulty. */
 export type ModifierTarget = 'skill' | 'difficulty';
@@ -477,12 +480,6 @@ export interface Decision {
    * players' input (`suggestSkillTest`); the answer stays pass/fail either way.
    */
   suggestion?: SkillTestSuggestion;
-  /**
-   * Only for `skillTestResult`: "for each point you fail by, …". These
-   * commands run once for each point the fail answer's `margin` says, 1
-   * without one, ahead of the fail option's (`answerCommands`).
-   */
-  perPointFailed?: readonly Command[];
   /**
    * The answers. Each carries the commands it triggers, so the mapping from
    * answer to consequence is data and any module (or scenario) can raise a
