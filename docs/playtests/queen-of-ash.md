@@ -2,7 +2,7 @@
 
 A checklist for playing _Queen of Ash_ (Core Set (2026), scenario III of _Brethren of Ash_) at the table with the app, from setup to the campaign end.
 The app runs the scenario side; the players play their own cards and tell the app what they did.
-The scripted golden game is [`end_to_end.test.ts`](../../packages/scenarios/src/queen_of_ash/end_to_end.test.ts) (Roland and Daisy, seed 1, from the campaign log after _Smoke and Mirrors_ to resolution 3); every unit test run replays it, so a regression there shows before the table does.
+The scripted golden game is [`end_to_end.test.ts`](../../packages/scenarios/src/queen_of_ash/end_to_end.test.ts) (Roland and Daisy, seed 1, from the campaign log that _Smoke and Mirrors'_ golden game wrote to resolution 3: the whole campaign in one run); every unit test run replays it, so a regression there shows before the table does.
 
 ## Before the game
 
