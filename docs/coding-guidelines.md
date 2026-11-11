@@ -84,6 +84,7 @@ How code in this repo should look, so every task lands in the same style.
 - **Pick the lighter recording.** A change you can judge from one picture (a new panel, a state of a screen, a layout change) gets a screenshot; a change you have to see happen (an interaction, a sequence of screens) gets a flow. A PR may add both.
 - **Short and still.** A shot test only brings the screen into its situation, with fixtures doing the work (`resumeImportedGame` with a prepared export), and asserts that the situation is shown; the screenshot is taken after the last line, so it ends with the screen settled. Name it after what it shows (`'the house map with Alder in the Hallway'`), since the name is the caption.
 - **Deterministic** like flows: fixed exports and seeds, so the same code gives the same picture.
+- **Main screens and states only.** Each shot is a golden on two devices that every change to its screen rewrites, so the shots stay at about 30 to 40: each screen as players mostly see it, each dialog and panel once, and each card style and playmat once. A corner case of a screen (one more variant of a dialog, a counter's value, a symbol on a tile, a refusal) goes to that screen's spec in `apps/web/e2e/states/` instead: the same kind of test on the tablet and the phone, but it turns its picture off (`test.use({ endPicture: false })`) and checks the situation by what the page holds (roles, names, text, `toMatchAriaSnapshot`). Promote a state to a shot only when a picture shows something its DOM can't, a layout or a look.
 
 ## 4. Markup (JSX/HTML)
 
