@@ -162,8 +162,8 @@ describe('Queen of Ash end to end: Roland and Daisy, seed 1, after Spreading Fla
     expect(table.nextPhase()).toEqual({ round: 3, phase: 'upkeep' });
     expect(table.board.enemy(byName('Zealot')).at).toBe('Underground Cistern');
 
-    // Round 4 – mythos: Roland draws Cosmic Evils and picks the doom (5 of 6); a second Hellhound
-    // engages Daisy.
+    // Round 4 – mythos: the agenda's doom reaches 4; Roland draws Cosmic Evils and picks the doom
+    // (5 of 6); a second Hellhound engages Daisy.
     expect(table.nextPhase()).toEqual({ round: 4, phase: 'mythos', step: 'drawEncounterCard' });
     table.resolveRevelation(byName('Cosmic Evils'));
     table.answerOnly('scenario.spreadingFlames.cosmicEvils.doom');
@@ -209,7 +209,9 @@ describe('Queen of Ash end to end: Roland and Daisy, seed 1, after Spreading Fla
       { kind: 'command', command: { type: 'EndCampaign', result: 'won' } },
     ]);
 
-    // The players confirm it unchanged: the log holds the whole campaign.
+    // The players confirm it unchanged: the log holds the whole campaign. Killed, they earn nothing
+    // from Resolution 3, so they keep the 10 experience and 1 physical trauma that Spreading Flames
+    // and Smoke and Mirrors left them.
     const { log: next } = campaign.applyResolution(
       campaignCtx,
       log,
