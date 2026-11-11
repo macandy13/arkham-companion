@@ -21,11 +21,12 @@ const phone = {
   hasTouch: true,
 };
 
-// The screenshot specs.
-const shotSpecs = /[\\/]shots[\\/].*\.spec\.ts$/;
-// Not pictures of a change: the shots, and the accessibility checks, which would otherwise take
-// the first recording slots whenever a change shows on every screen.
-const notFlows = [shotSpecs, /accessibility\.spec\.ts$/];
+// The specs of one screen each, run on the tablet and the phone: the screenshots (`e2e/shots/`)
+// and the corner cases checked by their DOM alone (`e2e/states/`, which turn `endPicture` off).
+const screenSpecs = /[\\/](shots|states)[\\/].*\.spec\.ts$/;
+// Not pictures of a change: the screen specs, and the accessibility checks, which would otherwise
+// take the first recording slots whenever a change shows on every screen.
+const notFlows = [screenSpecs, /accessibility\.spec\.ts$/];
 
 // The end pictures the committed goldens are made from (update-screenshots.yml) and checked
 // against (CI), taken once the screen has settled (e2e/fixtures/test.ts): a glide or a
@@ -42,8 +43,9 @@ const executablePath = process.env.PW_CHROMIUM_PATH;
  * E2E tests run against the production build (`vite preview`), the same bundle users get, built
  * in mode `e2e` only to add a test campaign the app plays no real one for (`findCampaign`).
  * `pnpm e2e` runs every spec once: the accessibility checks in `accessibility`, every flow (the
- * specs outside `e2e/shots/`) in `flow-picture` and every spec in `e2e/shots/` in `screenshot`
- * and `screenshot-phone`, the last three photographing each test as it ends and, with
+ * specs outside `e2e/shots/` and `e2e/states/`) in `flow-picture` and every spec in those two in
+ * `screenshot` and `screenshot-phone`, the last three photographing each test as it ends (but
+ * those in `e2e/states/`) and, with
  * `GOLDENS=1` (CI), comparing it with its committed golden. The preview shows the goldens a PR
  * changes; `screencast` re-runs the flows whose golden changed, slowed down and recorded
  * (`pnpm e2e:screencast`, see docs/automation.md).
@@ -101,13 +103,13 @@ export default defineConfig<PictureOptions>({
     },
     {
       name: RECORDING_PROJECTS.shots,
-      testMatch: shotSpecs,
+      testMatch: screenSpecs,
       outputDir: 'test-results/screenshot',
       use: { ...tablet, ...picture, launchOptions: { executablePath } },
     },
     {
       name: RECORDING_PROJECTS.phoneShots,
-      testMatch: shotSpecs,
+      testMatch: screenSpecs,
       outputDir: 'test-results/screenshot-phone',
       use: { ...phone, ...picture, launchOptions: { executablePath } },
     },
