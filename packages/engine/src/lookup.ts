@@ -105,7 +105,7 @@ export interface CardFilter {
 
 /**
  * The cards in `zones` that `filter` matches, zone by zone in zone order ("each [[Elite]] enemy
- * in the victory display and beneath the act"). A card beneath another one counts only face up:
+ * in the victory display and beneath the act"); with `top`, among the top `top` cards of each. A card beneath another one counts only face up:
  * facedown it shows no traits.
  */
 export function cardsInZones(
@@ -113,10 +113,12 @@ export function cardsInZones(
   state: GameState,
   zones: readonly Zone[],
   filter: CardFilter,
+  top?: number,
 ): CardInstance[] {
   return zones
     .flatMap((zone) =>
       cardsInZone(state, zone)
+        .slice(0, top)
         .map((id) => requireCard(state.cards, id))
         .filter((card) => zone.kind !== 'beneath' || card.faceUp),
     )
