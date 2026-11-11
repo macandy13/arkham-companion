@@ -92,6 +92,8 @@ export type Command =
   | MoveHunter
   | RequestDecision
   | TestSkill
+  | ForEachPoint
+  | ByMargin
   | ResolveEffect
   | ResolveDecision
   | CheckDoomThreshold
@@ -1046,14 +1048,40 @@ export interface TestSkill {
   /** The card that asks for the test, which the decision is about. */
   cardId: InstanceId;
   test: SkillTest;
+  /** What a pass does; a `ForEachPoint` or `ByMargin` among them depends on how much it passed by. */
   onPass: readonly Command[];
+  /** What a fail does; a `ForEachPoint` or `ByMargin` among them depends on how much it failed by. */
   onFail: readonly Command[];
-  /**
-   * "For each point you fail by, take 1 damage" (Grasping Hands), "you must
-   * either …" (Umôrdhoth's Wrath): the fail answer confirms how much the test
-   * failed by, and these commands run once for each point, ahead of `onFail`.
-   */
-  perPointFailed?: readonly Command[];
+}
+
+/**
+ * "For each point you fail by, take 1 damage" (Grasping Hands), "you must either …" for each
+ * point (Umôrdhoth's Wrath): an entry of a skill test outcome (`TestSkill.onPass`, `onFail`) whose
+ * `commands` run once per point of the answer's margin (`ResolveDecision.margin`). An amount
+ * (damage, horror, clues, doom) becomes one effect of that many, as "for each" asks; anything else,
+ * such as a choice, repeats. `answerCommands` expands it, so it only means something there: on its
+ * own it is rejected (`marginOutsideTest`).
+ */
+export interface ForEachPoint {
+  type: 'ForEachPoint';
+  commands: readonly Command[];
+}
+
+/**
+ * "Take 1 damage. If you fail by 2 or more, take 2 damage instead" (Blood and Rust): an entry of a
+ * skill test outcome that runs the commands of the tier with the highest `atLeast` the answer's
+ * margin reaches, and nothing when it reaches none (no `atLeast: 0` tier). Expanded by
+ * `answerCommands` like `ForEachPoint`, and rejected on its own (`marginOutsideTest`).
+ */
+export interface ByMargin {
+  type: 'ByMargin';
+  tiers: readonly MarginTier[];
+}
+
+/** One tier of `ByMargin`: what the outcome does once its margin is `atLeast` or more. */
+export interface MarginTier {
+  atLeast: number;
+  commands: readonly Command[];
 }
 
 /**
@@ -1100,7 +1128,8 @@ export interface ResolveDecision {
    * Only for a `skillTestResult` decision: how much the test succeeded or
    * failed by, a whole number of 0 or more (the suggestion's `margin`, or
    * what the players worked out). A per-point fail deals that much
-   * (`Decision.perPointFailed`), and `SkillTestResolved.margin` records it.
+   * (`ForEachPoint`), it picks the tier of a `ByMargin`, and
+   * `SkillTestResolved.margin` records it.
    */
   margin?: number;
   /**

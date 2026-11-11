@@ -8,7 +8,7 @@ import type {
   DrawEncounter,
 } from './commands';
 import { handleDealEnemyAttack, handleEnemyAttacks } from './attacks_of_opportunity';
-import { handleRequestDecision, handleResolveDecision } from './decisions';
+import { handleMarginEntry, handleRequestDecision, handleResolveDecision } from './decisions';
 import { agendaThresholdDecision } from './doom';
 import { readyEnemyEngagements } from './engagement';
 import type { Event } from './events';
@@ -295,6 +295,8 @@ const COMMAND_SPECS: CommandSpecs = {
   MoveHunter: { handle: handleMoveHunter },
   RequestDecision: { handle: handleRequestDecision },
   TestSkill: { handle: handleTestSkill },
+  ForEachPoint: { handle: handleMarginEntry },
+  ByMargin: { handle: handleMarginEntry },
   ResolveDecision: {
     handle: (_ctx, state, command) => handleResolveDecision(state, command),
     allowedWhilePending: true,

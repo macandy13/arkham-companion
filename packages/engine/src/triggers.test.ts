@@ -78,6 +78,8 @@ import {
   removeFromGame,
   revealLocation,
   skillTest,
+  forEachPoint,
+  byMargin,
   spawnEachSetAsideAt,
   spawnEnemyAt,
   spendClues,
@@ -87,6 +89,7 @@ import {
   takeDamage,
   takeDamageAndHorror,
   takeHorror,
+  gainClues,
   threatAreaOf,
   trait,
   victoryDisplay,
@@ -982,11 +985,13 @@ describe('trigger bus', () => {
     const rottingRemains = instanceId('rotting_remains');
     /** "Revelation – Test agility (3). Take 1 damage for each point you fail by." */
     const graspingHandsCard = blankTreachery('grasping_hands', {
-      abilities: [whenRevealed(skillTest('agility', 3, { perPointFailed: [takeDamage(1)] }))],
+      abilities: [whenRevealed(skillTest('agility', 3, { onFail: [forEachPoint(takeDamage(1))] }))],
     });
     /** "Revelation – Test willpower (3). Take 1 horror for each point you fail by." */
     const rottingRemainsCard = blankTreachery('rotting_remains', {
-      abilities: [whenRevealed(skillTest('willpower', 3, { perPointFailed: [takeHorror(1)] }))],
+      abilities: [
+        whenRevealed(skillTest('willpower', 3, { onFail: [forEachPoint(takeHorror(1))] })),
+      ],
     });
     /** Alice in the hall, with Grasping Hands on top of the encounter deck and Rotting Remains below. */
     const treacheryTable = newGame()
@@ -1016,6 +1021,137 @@ describe('trigger bus', () => {
       });
     });
 
+    describe('outcomes that change with the margin', () => {
+      /**
+       * "Test willpower (3). If you fail, take 2 horror (if you fail by 4 or more, take 3 horror
+       * instead). If you succeed by 2 or more, gain 1 clue."
+       */
+      const locustsCard = blankTreachery('locusts', {
+        abilities: [
+          whenRevealed(
+            skillTest('willpower', 3, {
+              onPass: [byMargin({ 2: [gainClues(1)] })],
+              onFail: [byMargin({ 0: [takeHorror(2)], 4: [takeHorror(3)] })],
+            }),
+          ),
+        ],
+      });
+      const locustsDrawn = () => {
+        const { context, state } = newGame()
+          .withLocation(hall, blankLocation('hall'), { revealed: true })
+          .withInvestigator(alice, { locationId: hall })
+          .withCard(instanceId('locusts'), locustsCard, { kind: 'encounterDeck' })
+          .start();
+        return {
+          context,
+          drawn: stateAfter(context, state, aliceDraws, resolveRevelation('locusts')),
+        };
+      };
+
+      it.each([
+        { outcome: 'fail', by: 'no margin', margin: undefined, horror: 2, clues: 0 },
+        { outcome: 'fail', by: '3', margin: 3, horror: 2, clues: 0 },
+        { outcome: 'fail', by: '4', margin: 4, horror: 3, clues: 0 },
+        { outcome: 'fail', by: '6', margin: 6, horror: 3, clues: 0 },
+        { outcome: 'pass', by: 'no margin', margin: undefined, horror: 0, clues: 0 },
+        { outcome: 'pass', by: '1', margin: 1, horror: 0, clues: 0 },
+        { outcome: 'pass', by: '2', margin: 2, horror: 0, clues: 1 },
+      ] as const)(
+        'a $outcome by $by gives $horror horror and $clues clues',
+        ({ outcome, margin, horror, clues }) => {
+          const { context, drawn } = locustsDrawn();
+
+          const { state } = execute(context, drawn, {
+            ...answer('test:locusts', outcome),
+            ...(margin === undefined ? {} : { margin }),
+          });
+
+          expect(state.investigators.find((inv) => inv.id === alice)).toMatchObject({
+            sanity: { horror },
+            clues,
+          });
+        },
+      );
+
+      it('gives a pass for each point it succeeds by too', () => {
+        /** "Test agility (2). For each point you succeed by, gain 1 clue." */
+        const windfallCard = blankTreachery('windfall', {
+          abilities: [
+            whenRevealed(skillTest('agility', 2, { onPass: [forEachPoint(gainClues(1))] })),
+          ],
+        });
+        const { context, state: started } = newGame()
+          .withLocation(hall, blankLocation('hall'), { revealed: true })
+          .withInvestigator(alice, { locationId: hall })
+          .withCard(instanceId('windfall'), windfallCard, { kind: 'encounterDeck' })
+          .start();
+        const drawn = stateAfter(context, started, aliceDraws, resolveRevelation('windfall'));
+
+        const { state } = execute(context, drawn, {
+          ...answer('test:windfall', 'pass'),
+          margin: 3,
+        });
+
+        expect(state.investigators.find((inv) => inv.id === alice)?.clues).toBe(3);
+      });
+
+      describe('with effects next to the margin entry and one per point in its tier', () => {
+        /**
+         * "Test willpower (3). If you fail, take 1 damage. If you fail by 2 or more, also take 1
+         * horror for each point you fail by."
+         */
+        const gnawingCard = blankTreachery('gnawing', {
+          abilities: [
+            whenRevealed(
+              skillTest('willpower', 3, {
+                onFail: [takeDamage(1), byMargin({ 2: [forEachPoint(takeHorror(1))] })],
+              }),
+            ),
+          ],
+        });
+
+        it.each([
+          { margin: 1, damage: 1, horror: 0 },
+          { margin: 3, damage: 1, horror: 3 },
+        ])(
+          'a fail by $margin gives $damage damage and $horror horror',
+          ({ margin, damage, horror }) => {
+            const { context, state: started } = newGame()
+              .withLocation(hall, blankLocation('hall'), { revealed: true })
+              .withInvestigator(alice, { locationId: hall })
+              .withCard(instanceId('gnawing'), gnawingCard, { kind: 'encounterDeck' })
+              .start();
+            const drawn = stateAfter(context, started, aliceDraws, resolveRevelation('gnawing'));
+
+            const { state } = execute(context, drawn, {
+              ...answer('test:gnawing', 'fail'),
+              margin,
+            });
+
+            expect(state.investigators.find((inv) => inv.id === alice)).toMatchObject({
+              health: { damage },
+              sanity: { horror },
+            });
+          },
+        );
+      });
+
+      it.each([
+        { entry: 'ForEachPoint', command: { type: 'ForEachPoint', commands: [] } },
+        { entry: 'ByMargin', command: { type: 'ByMargin', tiers: [] } },
+      ] as const)(
+        'rejects a $entry outside a test, where no answer gives a margin',
+        ({ command }) => {
+          const { context, state } = newGame()
+            .withLocation(hall, blankLocation('hall'), { revealed: true })
+            .withInvestigator(alice, { locationId: hall })
+            .start();
+
+          expect(rejectionFrom(context, state, command)).toEqual({ code: 'marginOutsideTest' });
+        },
+      );
+    });
+
     it('deals a fail by 3 as one wound of 3, not three of 1 (Rules Reference, "For each")', () => {
       const { context, state: started } = treacheryTable.start();
       const drawn = stateAfter(context, started, aliceDraws, resolveRevelation('grasping_hands'));
@@ -1034,7 +1170,7 @@ describe('trigger bus', () => {
         abilities: [
           whenRevealed(
             skillTest('willpower', 3, {
-              perPointFailed: [takeDamageAndHorror({ damage: 1, horror: 1 })],
+              onFail: [forEachPoint(takeDamageAndHorror({ damage: 1, horror: 1 }))],
             }),
           ),
         ],
@@ -1092,7 +1228,7 @@ describe('trigger bus', () => {
         /** "Revelation – Test intellect (4). For each point you fail by, place 1 of your clues on your location." */
         const losingTrailCard = blankTreachery('losing_trail', {
           abilities: [
-            whenRevealed(skillTest('intellect', 4, { perPointFailed: [placeYourClues(1)] })),
+            whenRevealed(skillTest('intellect', 4, { onFail: [forEachPoint(placeYourClues(1))] })),
           ],
         });
         const { context, state: started } = newGame()

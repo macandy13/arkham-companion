@@ -464,8 +464,8 @@ export interface SkillTestResolved {
   outcome: SkillTestOutcome;
   /**
    * How much the test succeeded or failed by, when the answer says: its
-   * `margin`, or the 1 a per-point fail
-   * (`Decision.perPointFailed`) deals without one.
+   * `margin`, or, for an outcome that depends on it (`ForEachPoint`,
+   * `ByMargin`), the least the outcome means (a fail by 1, a pass by 0).
    */
   margin?: number;
 }

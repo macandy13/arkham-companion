@@ -28,6 +28,7 @@ import {
   readySelf,
   resolutionId,
   skillTest,
+  forEachPoint,
   skillTestOfEither,
   placeCluesOnSelf,
   placeCluesOnSelfUpTo,
@@ -376,15 +377,21 @@ export const theDevourerBelowCardDefs: readonly CardStats[] = [
     abilities: [
       whenRevealed(
         skillTest('willpower', 5, {
-          perPointFailed: [
-            youMustEither(UMORDHOTHS_WRATH_DECISION, `${umordhothsWrath}.prompt`, [
-              { id: 'discard', label: `${umordhothsWrath}.discard`, effects: [discardFromHand(1)] },
-              {
-                id: 'wounds',
-                label: `${umordhothsWrath}.wounds`,
-                effects: [takeDamageAndHorror({ damage: 1, horror: 1 })],
-              },
-            ]),
+          onFail: [
+            forEachPoint(
+              youMustEither(UMORDHOTHS_WRATH_DECISION, `${umordhothsWrath}.prompt`, [
+                {
+                  id: 'discard',
+                  label: `${umordhothsWrath}.discard`,
+                  effects: [discardFromHand(1)],
+                },
+                {
+                  id: 'wounds',
+                  label: `${umordhothsWrath}.wounds`,
+                  effects: [takeDamageAndHorror({ damage: 1, horror: 1 })],
+                },
+              ]),
+            ),
           ],
         }),
       ),

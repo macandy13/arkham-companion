@@ -820,9 +820,13 @@ describe('answering decisions', () => {
         },
         {
           onPass: [],
-          onFail: [],
-          perPointFailed: [
-            { type: 'AdjustInvestigator', investigatorId: alice, stat: 'horror', delta: 1 },
+          onFail: [
+            {
+              type: 'ForEachPoint',
+              commands: [
+                { type: 'AdjustInvestigator', investigatorId: alice, stat: 'horror', delta: 1 },
+              ],
+            },
           ],
         },
       ),

@@ -40,6 +40,7 @@ import {
   searchDeck,
   shuffleEncounterDeck,
   skillTest,
+  forEachPoint,
   skillTestOfEither,
   spendClues,
   placeYourClues,
@@ -361,7 +362,7 @@ export const theMidnightMasksCardDefs: readonly CardStats[] = [
       ifYouHave(
         'clues',
         { min: 1 },
-        whenRevealed(skillTest('intellect', 4, { perPointFailed: [placeYourClues(1)] })),
+        whenRevealed(skillTest('intellect', 4, { onFail: [forEachPoint(placeYourClues(1))] })),
       ),
     ],
   }),

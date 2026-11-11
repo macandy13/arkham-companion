@@ -752,6 +752,7 @@ export const appTexts = {
     cancelRevelation: 'Cancel revelation',
     count: {
       failedBy: 'Margin of failure',
+      passedBy: 'Margin of success',
       clues: 'Clues discovered',
       dealt: 'Damage dealt',
       amount: 'Count',
