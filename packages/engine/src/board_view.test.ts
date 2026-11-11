@@ -98,6 +98,24 @@ describe('the phase and turn', () => {
     expect(boardView(context, state).ended).toBe(false);
     expect(board).toMatchObject({ ended: true, resolution: resolutionId('r1') });
   });
+
+  it("lists the scenario's resolutions in the guide's order, and none without a scenario", () => {
+    const withResolutions = newGame()
+      .withLocation(study, blankLocation('study'))
+      .withResolutions({
+        byId: { [resolutionId('R1')]: [], [resolutionId('R2')]: [], [resolutionId('R3')]: [] },
+        none: [],
+      })
+      .start();
+    const bare = newGame().withLocation(study, blankLocation('study')).start();
+
+    expect(boardView(withResolutions.context, withResolutions.state).resolutions).toEqual([
+      resolutionId('R1'),
+      resolutionId('R2'),
+      resolutionId('R3'),
+    ]);
+    expect(boardView(bare.context, bare.state).resolutions).toEqual([]);
+  });
 });
 
 describe('investigators', () => {

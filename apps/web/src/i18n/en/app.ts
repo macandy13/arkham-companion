@@ -182,6 +182,15 @@ export const appTexts = {
     doomCount: 'Doom',
     clueCount: 'Clues',
     advanceAct: 'Advance',
+    advanceActByHand: 'Advance by hand',
+    advanceActByHandTitle: 'Advance {{act}} by hand?',
+    advanceActByHandText:
+      'For an objective the app leaves to you: the act turns over and its reverse side resolves as if you had met it.',
+    endScenario: 'End the scenario',
+    endScenarioTitle: 'End the scenario with which resolution?',
+    endScenarioText:
+      'For a resolution the app cannot reach yet. The game ends, and you read the resolution as usual.',
+    endScenarioConfirm: 'End the scenario',
     addDoom: 'Add doom',
     removeDoom: 'Remove doom',
     addClue: 'Add a clue',

@@ -339,6 +339,32 @@ describe('GameScreen header', () => {
     expect(screen.queryByRole('dialog')).toBeNull();
   });
 
+  it('advances the act by hand from its full card once the players confirm it, without a turn or clues', async () => {
+    await renderTheGathering('game-screen-act-by-hand-test');
+    fireEvent.click(button('Trapped'));
+    const card = await screen.findByRole('dialog', { name: 'Trapped' });
+
+    fireEvent.click(within(card).getByRole('button', { name: 'Advance by hand' }));
+    const confirm = await screen.findByRole('alertdialog', { name: 'Advance Trapped by hand?' });
+    fireEvent.click(within(confirm).getByRole('button', { name: 'Advance by hand' }));
+
+    expect(await screen.findByText('The Barrier')).toBeTruthy();
+    expect(screen.queryByRole('dialog', { name: 'Trapped' })).toBeNull();
+  });
+
+  it('keeps the act when the players cancel advancing it by hand', async () => {
+    await renderTheGathering('game-screen-act-by-hand-cancel-test');
+    fireEvent.click(button('Trapped'));
+    const card = await screen.findByRole('dialog', { name: 'Trapped' });
+
+    fireEvent.click(within(card).getByRole('button', { name: 'Advance by hand' }));
+    const confirm = await screen.findByRole('alertdialog', { name: 'Advance Trapped by hand?' });
+    fireEvent.click(within(confirm).getByRole('button', { name: 'Cancel' }));
+
+    expect(screen.queryByRole('alertdialog')).toBeNull();
+    expect(within(screen.getByRole('region', { name: 'Act' })).getByText('Trapped')).toBeTruthy();
+  });
+
   it.each([
     { card: "What's Going On?!", code: '01105' },
     { card: 'Trapped', code: '01108' },
@@ -553,6 +579,27 @@ describe('GameScreen header', () => {
     expect(screen.getByRole('button', { name: 'Menu' }).getAttribute('aria-expanded')).toBe(
       'false',
     );
+  });
+
+  it('ends the scenario from the menu with the resolution the players pick', async () => {
+    const store = await renderTheGathering('game-screen-menu-end-scenario-test');
+    fireEvent.click(button('Menu'));
+    const menu = within(screen.getByRole('navigation', { name: 'Main' }));
+
+    fireEvent.click(menu.getByRole('button', { name: 'End the scenario' }));
+    const dialog = await screen.findByRole('alertdialog', {
+      name: 'End the scenario with which resolution?',
+    });
+    const picks = within(dialog).getAllByRole('radio');
+    fireEvent.click(within(dialog).getByRole('radio', { name: 'Resolution 2' }));
+    fireEvent.click(within(dialog).getByRole('button', { name: 'End the scenario' }));
+
+    expect(picks.map((radio) => radio.parentElement?.textContent)).toEqual([
+      'Resolution 1',
+      'Resolution 2',
+      'Resolution 3',
+    ]);
+    await waitFor(() => expect(store.getState().current?.state.meta.resolution).toBe('R2'));
   });
 
   it('lays the token pool, the encounter deck with its discard pile, agenda, act, scenario with the set-aside cards and victory display out under their labels', async () => {

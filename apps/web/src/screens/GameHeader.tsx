@@ -23,6 +23,7 @@ import type { GameActions } from '../state/gameActions';
 import { CardActions, cardActionsOn } from './ActionRow';
 import { CardDialog } from './CardDialog';
 import { ChaosBag } from './ChaosBag';
+import { ConfirmDialog } from './ConfirmDialog';
 import { CounterBubble, type BubbleCount } from './CounterBubble';
 import { BookFace } from './BookFace';
 import { ScenarioFace } from './ScenarioFace';
@@ -423,7 +424,8 @@ function AgendaStatus({
  * its advance, the act's own action, which the investigator whose turn it is takes once they hold
  * enough, after the players choose who pays when they can (`useCluePayment`). For an act
  * that advances itself once clues lie on it, the token counts those, and a double tap opens their
- * − / + bubble, a correction by hand.
+ * − / + bubble, a correction by hand. Its full card also offers "Advance by hand", after a
+ * confirmation, for an objective the engine leaves to the players.
  */
 function ActStatus({
   store,
@@ -440,6 +442,7 @@ function ActStatus({
 }) {
   const { t } = useTranslation();
   const [zoomed, setZoomed] = useState(false);
+  const [confirming, setConfirming] = useState(false);
   const { dialog, pay } = useCluePayment(board);
   const { act } = board;
   if (!act) return null;
@@ -494,6 +497,19 @@ function ActStatus({
         {t('header.advanceAct')}
       </button>
     );
+  // Every act has it, since an objective the engine leaves to the players can only be met by hand.
+  const byHandButton = (
+    <button
+      type="button"
+      disabled={blocked}
+      onClick={() => {
+        close();
+        setConfirming(true);
+      }}
+    >
+      {t('header.advanceActByHand')}
+    </button>
+  );
   const tokenAndPlate = advance && (
     <>
       {clueToken}
@@ -514,7 +530,12 @@ function ActStatus({
       >
         {tokenAndPlate}
       </HeaderCard>
-      {full && actionRow && <footer>{actionRow}</footer>}
+      {full && (
+        <footer>
+          {actionRow}
+          {byHandButton}
+        </footer>
+      )}
       {zoomed && !full && (
         <BookDetails
           kind="act"
@@ -533,9 +554,27 @@ function ActStatus({
                 },
               }
             : {})}
-          primary={advanceButton(close, true)}
+          primary={
+            <>
+              {advanceButton(close, true)}
+              {byHandButton}
+            </>
+          }
           onClose={close}
         />
+      )}
+      {confirming && (
+        <ConfirmDialog
+          title={t('header.advanceActByHandTitle', { act: act.name })}
+          confirmLabel={t('header.advanceActByHand')}
+          onConfirm={() => {
+            setConfirming(false);
+            void actions.advanceActByHand();
+          }}
+          onCancel={() => setConfirming(false)}
+        >
+          <p>{t('header.advanceActByHandText')}</p>
+        </ConfirmDialog>
       )}
       {dialog}
     </HeaderSlot>
@@ -654,7 +693,7 @@ function HeaderCard({
  * - what it is as the kicker, its name as the title;
  * - its count on the page (`value`: the doom in play, the clues that count towards advancing);
  * - the card actions it offers the investigator whose turn it is;
- * - the act's Advance as the dialog's one primary (`primary`).
+ * - the act's Advance as the dialog's one primary and its "Advance by hand" (`primary`).
  * A card action keeps it open and shows the decision it raises in place of its page
  * (`useDecisionHost`); Advance closes it first, since the act it was about is gone. The card text
  * joins it once the card data has text.

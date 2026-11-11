@@ -633,6 +633,15 @@ export class BoardView {
     return this.state.meta.resolution;
   }
 
+  /**
+   * The resolutions the scenario defines (`ScenarioResolutions.byId`), in the guide's order: those
+   * the players can end the game with by hand (`EndScenario`) when the engine leaves the act's
+   * objective to them. Empty for a scenario without any.
+   */
+  get resolutions(): readonly ResolutionId[] {
+    return Object.keys(this.ctx.scenario?.resolutions?.byId ?? {}) as ResolutionId[];
+  }
+
   get investigators(): readonly InvestigatorView[] {
     return this.state.investigators.map((inv) => investigatorView(this.ctx, this.state, inv));
   }

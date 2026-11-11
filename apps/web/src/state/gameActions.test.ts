@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  blankAct,
   blankEnemy,
   blankLocation,
   blankTreachery,
@@ -10,6 +11,7 @@ import {
   investigatorId,
   newGame,
   PlayTable,
+  resolutionId,
   takeHorror,
   threatAreaOf,
   type CardPlaceView,
@@ -289,5 +291,31 @@ describe('gameActions', () => {
     await actionsOn(table).defeatEnemy(ghoul);
 
     expect(table.board.enemies.map(({ name }) => name)).toEqual(['lurker']);
+  });
+
+  it('advances an act by hand to the next one, whatever its objective', async () => {
+    const table = PlayTable.start(
+      newGame()
+        .withLocation(study, blankLocation('study'), { revealed: true })
+        .withInvestigator(alder, { locationId: study })
+        .withAct(instanceId('escape_the_dorms'), blankAct('escape_the_dorms'))
+        .withAct(instanceId('searching_for_armitage'), blankAct('searching_for_armitage')),
+    );
+
+    await actionsOn(table).advanceActByHand();
+
+    expect(table.board.act?.name).toBe('searching_for_armitage');
+  });
+
+  it('ends the scenario with the resolution the players pick', async () => {
+    const table = PlayTable.start(
+      newGame()
+        .withLocation(study, blankLocation('study'), { revealed: true })
+        .withInvestigator(alder, { locationId: study }),
+    );
+
+    await actionsOn(table).endScenario(resolutionId('R2'));
+
+    expect(table.board).toMatchObject({ ended: true, resolution: resolutionId('R2') });
   });
 });

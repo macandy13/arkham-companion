@@ -5,6 +5,7 @@ import type { StoreApi } from 'zustand/vanilla';
 import { ROUND_PHASES, type BoardView } from '@arkham/engine';
 import type { AppState, OpenGame } from '../state/appStore';
 import { GameLogDialog } from '../log/GameLogDialog';
+import { EndScenarioDialog } from './EndScenarioDialog';
 import { GameExportButton } from './GameExportButton';
 import { OfflineMark } from './OfflineMark';
 import { SavePicturesButton } from './SavePicturesButton';
@@ -16,7 +17,8 @@ import { useSettings } from '../settings/useSettings';
  * the phase track with the current phase marked, then "Next", which runs the phase assistant, and
  * round icon buttons for undo, the game log (`GameLogDialog`) and the menu. A phone
  * has room for only Next, undo and the menu at a touch size, so the menu also holds the game log,
- * which the stylesheet shows there only on a phone (game.css). The board's counts change in place
+ * which the stylesheet shows there only on a phone (game.css), and "End the scenario" with a
+ * resolution the players pick (`EndScenarioDialog`), for an ending the engine leaves to them. The board's counts change in place
  * through their − / + bubbles (`CounterBubble`, M6.10), so there is no mode for corrections.
  * Next is the row's primary (`data-primary`), the brass pill the turn's own step
  * in an investigator's panel takes too (game.css). Its buttons wait while a step is queued (`OpenGame.busy`), since a second tap would act
@@ -37,6 +39,7 @@ export function GameStatus({
   const blocked = open.busy;
   const { log } = open;
   const [logOpen, setLogOpen] = useState(false);
+  const [ending, setEnding] = useState(false);
   return (
     <section id="status" aria-labelledby="status-round">
       <h2 id="status-round">
@@ -99,9 +102,35 @@ export function GameStatus({
             <li>
               <SavePicturesButton board={board} />
             </li>
+            {board.resolutions.length > 0 && (
+              <li>
+                <button
+                  type="button"
+                  data-icon="campaign-log"
+                  aria-haspopup="dialog"
+                  disabled={blocked || board.ended}
+                  onClick={() => {
+                    close();
+                    setEnding(true);
+                  }}
+                >
+                  {t('header.endScenario')}
+                </button>
+              </li>
+            )}
           </>
         )}
       </GameMenu>
+      {ending && (
+        <EndScenarioDialog
+          resolutions={board.resolutions}
+          onEnd={(resolution) => {
+            setEnding(false);
+            void actions.endScenario(resolution);
+          }}
+          onCancel={() => setEnding(false)}
+        />
+      )}
     </section>
   );
 }

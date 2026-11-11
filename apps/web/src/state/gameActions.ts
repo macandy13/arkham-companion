@@ -13,6 +13,7 @@ import {
   type BasicAction,
   type ChaosToken,
   type ResolveDecision,
+  type ResolutionId,
   type SkillName,
   type TokenKind,
   type Zone,
@@ -143,6 +144,13 @@ export interface GameActions {
    * rest) and the act advances.
    */
   advanceAct(spend?: readonly ClueSpend[]): Promise<void>;
+  /**
+   * The act advances by hand (`AdvanceAct`), whatever its objective, once the players have met one
+   * the engine leaves to them; it costs nothing and needs no turn.
+   */
+  advanceActByHand(): Promise<void>;
+  /** The scenario ends with `resolution` by hand (`EndScenario`), one the players reached at the table. */
+  endScenario(resolution: ResolutionId): Promise<void>;
   /**
    * The act's − / + bubble: `delta` more (or, negative, fewer) clues on the current act, a
    * correction by hand that leaves the investigators' clues alone.
@@ -314,6 +322,8 @@ export function gameActions(
           spend?.map(({ investigator, clues }) => [investigator, clues]),
         ),
       ),
+    advanceActByHand: () => play((table) => table.play({ type: 'AdvanceAct' })),
+    endScenario: (resolution) => play((table) => table.play({ type: 'EndScenario', resolution })),
     adjustActClues: (delta) =>
       play((table) =>
         table.play({

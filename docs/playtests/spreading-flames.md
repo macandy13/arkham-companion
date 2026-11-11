@@ -25,8 +25,7 @@ The scripted golden game is [`end_to_end.test_support.ts`](../../packages/scenar
 
 **Act 2, Escape the Dorms**
 
-The app can't advance this act yet (see "Left to the players"), so a game at the table stops here until [MC2.19](https://github.com/macandy13/arkham-companion/issues/1238).
-
+- [ ] "Advance by hand" on the act's full card advances it once each undefeated investigator is at Miskatonic Quad.
 - [ ] Its reverse side sets the Servant of Flame aside (healed), discards each enemy, removes Your Friend's Room with its Fire! and puts Orne Library, Science Hall and Warren Observatory into play.
 
 **Act 3, Searching for Dr. Armitage**
@@ -68,7 +67,7 @@ The app can't advance this act yet (see "Left to the players"), so a game at the
 These are done by hand at the table; the app does not do them.
 
 - The reverse sides of Past Curfew and Lit Up (each investigator tests; Lit Up's Fire! cards), the agendas' Parley to discard a Bystander, and Wild Flames' Fire! draw after doom is placed on it.
-- Escape the Dorms' objective: the act advances when each undefeated investigator is at Miskatonic Quad. The play screen has no way to advance it by hand yet ([MC2.19](https://github.com/macandy13/arkham-companion/issues/1238)).
+- Escape the Dorms' objective: the act advances when each undefeated investigator is at Miskatonic Quad. The players advance it with "Advance by hand" on the act's full card.
 - Searching for Dr. Armitage's reverse side: Dr. Henry Armitage under an investigator's control and the lead's search for Fire!. His skill bonus and free first action are his controller's to apply.
 - Blaze of Glory's group clue spend to deal damage to an enemy.
 - Your Friend's Room's Engage action, Miskatonic Quad's free move, Warren Observatory's draw and Orne Library's two-action draw.

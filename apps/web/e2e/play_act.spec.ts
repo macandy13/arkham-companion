@@ -61,3 +61,40 @@ test('advance the act by dragging a clue onto it', async ({ page }) => {
     await expect(act.getByText('The Barrier')).toBeVisible();
   });
 });
+
+// Journey: an objective the app leaves to the players. They advance Trapped by hand from its full
+// card, then end the scenario from the menu with the resolution they reached at the table, and the
+// resolution dialog opens on it as after any other ending.
+test('advance the act by hand and end the scenario with a resolution', async ({ page }) => {
+  const act = page.getByRole('region', { name: 'Act' });
+
+  await test.step('Import a game on act 1, Trapped', async () => {
+    await resumeImportedGame(page, 'By hand', studyCluesTakenExport('By hand'));
+    await expect(act.getByText('Trapped')).toBeVisible();
+  });
+
+  await test.step('Advance Trapped by hand from its full card, confirming it', async () => {
+    await act.getByRole('button', { name: 'Trapped' }).click();
+    await page
+      .getByRole('dialog', { name: 'Trapped' })
+      .getByRole('button', { name: 'Advance by hand' })
+      .click();
+    const confirm = page.getByRole('alertdialog', { name: 'Advance Trapped by hand?' });
+    await confirm.getByRole('button', { name: 'Advance by hand' }).click();
+    await expect(act.getByText('The Barrier')).toBeVisible();
+  });
+
+  await test.step('End the scenario from the menu with Resolution 2', async () => {
+    await page.getByRole('button', { name: 'Menu' }).click();
+    await page.getByRole('button', { name: 'End the scenario' }).click();
+    const end = page.getByRole('alertdialog', { name: 'End the scenario with which resolution?' });
+    await end.getByRole('radio', { name: 'Resolution 2' }).check();
+    await end.getByRole('button', { name: 'End the scenario' }).click();
+  });
+
+  await test.step('The resolution dialog opens on Resolution 2', async () => {
+    const dialog = page.locator('#resolution');
+    await expect(dialog.getByRole('heading', { name: 'The scenario is over' })).toBeVisible();
+    await expect(dialog.getByRole('radio', { name: 'Resolution 2 from the game' })).toBeChecked();
+  });
+});
