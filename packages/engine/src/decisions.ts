@@ -224,7 +224,7 @@ function withMargin(entry: Command, margin: number): Command[] {
 
 /**
  * `command` with its amount multiplied by `margin`, for an effect that is an amount (damage,
- * horror, clues, doom), also when deferred as a card's effect (`ResolveEffect`); undefined for
+ * horror, clues, doom, encounter cards discarded), also when deferred as a card's effect (`ResolveEffect`); undefined for
  * any other.
  */
 function timesMargin(command: Command, margin: number): Command | undefined {
@@ -241,6 +241,8 @@ function timesMargin(command: Command, margin: number): Command | undefined {
     case 'PlaceClues':
     case 'PlaceDoom':
       return { ...command, amount: command.amount * margin };
+    case 'DiscardEncounterTop':
+      return { ...command, count: command.count * margin };
     default:
       return undefined;
   }

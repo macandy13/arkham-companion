@@ -1,5 +1,7 @@
+import { range } from '@arkham/util';
 import { cardStats, type CardStats, type EngineContext } from './cards';
 import type {
+  DiscardEncounterTop,
   DrawBeneath,
   DrawEncounter,
   DrawFromScenarioDeck,
@@ -262,6 +264,26 @@ export function handleShuffleEncounterDeck(state: GameState): DeckShuffled[] {
  */
 export function handleShuffleEncounterDiscard(state: GameState): Event[] {
   return shuffleInto(state, cardsInZone(state, encounterDiscard), encounterDeck);
+}
+
+/**
+ * `DiscardEncounterTop`: one card at a time, so a deck that runs out is refilled on the way and,
+ * like after a draw (`placeDrawnCard`), once more if the last discard left it empty.
+ */
+export function handleDiscardEncounterTop(state: GameState, cmd: DiscardEncounterTop): Event[] {
+  const discarded = range(cmd.count).reduce<Event[]>((events) => {
+    const current = replay(events, state);
+    const refill = refillIfEmpty(current);
+    const refilled = replay(refill, current);
+    const top = cardsInZone(refilled, encounterDeck)[0];
+    if (top === undefined) return events;
+    return [
+      ...events,
+      ...refill,
+      cardMoved(refilled, requireCard(refilled.cards, top), encounterDiscard, 0),
+    ];
+  }, []);
+  return [...discarded, ...refillIfEmpty(replay(discarded, state))];
 }
 
 /** Cards in the encounter deck and its discard, i.e. how many cards could still be drawn. */

@@ -741,6 +741,49 @@ describe('ShuffleEncounterDiscard', () => {
   });
 });
 
+describe('DiscardEncounterTop', () => {
+  /** Alice in the hall, the encounter deck holding top_card above second_card, the discard empty. */
+  const twoCardDeck = aliceInHall
+    .withCard(instanceId('top_card'), plainTreachery, encounterDeck)
+    .withCard(instanceId('second_card'), foeCard, encounterDeck);
+
+  it('discards the top card onto the discard', () => {
+    const { context, state } = twoCardDeck.start();
+
+    const { state: after } = execute(context, state, { type: 'DiscardEncounterTop', count: 1 });
+
+    expect(idsIn(after, encounterDeck)).toEqual(['second_card']);
+    expect(idsIn(after, encounterDiscard)).toEqual(['top_card']);
+  });
+
+  it.each([
+    { count: 2, inDeck: 2, inDiscard: 0 },
+    { count: 3, inDeck: 1, inDiscard: 1 },
+  ])(
+    'discarding $count of 2 shuffles the discard back in when the deck runs out: $inDeck in the deck, $inDiscard discarded',
+    ({ count, inDeck, inDiscard }) => {
+      const { context, state } = twoCardDeck.start();
+
+      const { state: after, events } = execute(context, state, {
+        type: 'DiscardEncounterTop',
+        count,
+      });
+
+      expect(events.filter((event) => event.type === 'DeckShuffled')).toHaveLength(1);
+      expect(idsIn(after, encounterDeck)).toHaveLength(inDeck);
+      expect(idsIn(after, encounterDiscard)).toHaveLength(inDiscard);
+    },
+  );
+
+  it('does nothing with the deck and the discard both empty', () => {
+    const { context, state } = aliceInHall.start();
+
+    const { events } = execute(context, state, { type: 'DiscardEncounterTop', count: 2 });
+
+    expect(events).toEqual([]);
+  });
+});
+
 describe('ShuffleEncounterDeck', () => {
   const shuffleDeck: Command = { type: 'ShuffleEncounterDeck' };
 

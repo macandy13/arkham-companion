@@ -22,5 +22,7 @@ For each draw:
    - "Resolving" covers the whole card: its revelation and revelation test, its spawn and engagement, and the forced effects it triggers (2026 Core rulebook p. 19: "after resolving its text"; FAQ §1.4).
    - If the card eliminates the drawer, our reading (no explicit ruling exists): the surge draw is lost, since Surge makes "the investigator who drew it" draw again and an eliminated investigator no longer takes part; the others play on (2026 Core rulebook, Surge and Elimination).
 
+Discarding cards from the top of the encounter deck ("Discard the top 3 cards of the encounter deck") follows the same refill: when the deck runs out on the way, the discard is shuffled back in and the discarding goes on ([encounter deck](https://arkhamdb.com/rules#Encounter_Deck)); with both piles empty it does as much as it can ([effects](https://arkhamdb.com/rules#Effects)).
+
 An ability that shuffles an empty discard pile into a deck does not shuffle the deck ([discard piles](https://arkhamdb.com/rules#Discard_Piles)).
 Likewise, our reading: "shuffle the set-aside [card] into the encounter deck" with no such card set aside changes nothing and does not shuffle the deck.

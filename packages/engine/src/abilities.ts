@@ -388,6 +388,7 @@ export type AbilityCommand =
           | 'AdvanceAgenda'
           | 'BecomeActAndAgenda'
           | 'ShuffleEncounterDiscard'
+          | 'DiscardEncounterTop'
           | 'ShuffleEncounterDeck'
           | 'ShuffleInto'
           | 'DrawEncounter'
@@ -2307,6 +2308,14 @@ export function nextAgendaBecomesActAndAgenda(): AbilityEffect {
 /** "Shuffle the encounter discard pile into the encounter deck". */
 export function shuffleEncounterDiscard(): AbilityEffect {
   return { type: 'ShuffleEncounterDiscard' };
+}
+
+/**
+ * "Discard the top `count` cards of the encounter deck" (`DiscardEncounterTop`); in a test's
+ * outcome, `forEachPoint(discardEncounterTop(1))` discards one per point (The Witching Hour).
+ */
+export function discardEncounterTop(count: number): AbilityEffect {
+  return { type: 'DiscardEncounterTop', count };
 }
 
 /**

@@ -73,6 +73,7 @@ A cost is `CardAction.cost`, paid before the effects.
 - Mysterious Chanting's search: `ifThereAre(eachEnemy({ trait: trait('Cultist') }), { max: 0 }, whenRevealed(searchAndDraw({ trait: trait('Cultist'), typeCode: 'enemy' })))`, then `whenRevealed(shuffleEncounterDeck())` as its own ability.
 - The Midnight Masks' Cultist deck: a `scenarioDeck` setup step, drawn by the act's action with `drawFromScenarioDeck('cultist')`.
 - Rise of the Ghouls: `whenAdvanced(shuffleEncounterDiscard(), leadDrawsDiscardingUntil({ trait: trait('Ghoul'), typeCode: 'enemy' }))`.
+- "Discard the top 3 cards of the encounter deck" (Out of this World): `discardEncounterTop(3)`; one per point failed by (The Witching Hour): `onFail: [forEachPoint(discardEncounterTop(1))]`, one command of the margin's count.
 - False Lead's surge when its drawer has no clues: `ifYouHave('clues', { max: 0 }, whenRevealed(gainSurge()))`.
 
 ## Resolution order

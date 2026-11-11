@@ -70,6 +70,7 @@ export type Command =
   | FromSetAside
   | ShuffleInto
   | ShuffleEncounterDiscard
+  | DiscardEncounterTop
   | ShuffleEncounterDeck
   | EngageReadyEnemies
   | SpawnEnemy
@@ -750,6 +751,18 @@ export interface ShuffleInto extends AskedByCard {
  */
 export interface ShuffleEncounterDiscard {
   type: 'ShuffleEncounterDiscard';
+}
+
+/**
+ * "Discard the top 3 cards of the encounter deck" (Out of this World): the top `count` cards go
+ * one by one to the top of the encounter discard. Whenever the deck runs out, on the way or at
+ * the end, the discard is shuffled back in, as the encounter deck's rule asks, and the discarding
+ * goes on; with both empty it stops, having done as much as it could. Produces `CardMoved` per
+ * card, and the refill's `CardMoved` and `DeckShuffled`.
+ */
+export interface DiscardEncounterTop {
+  type: 'DiscardEncounterTop';
+  count: number;
 }
 
 /**

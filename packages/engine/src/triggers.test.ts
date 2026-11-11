@@ -79,6 +79,7 @@ import {
   revealLocation,
   skillTest,
   forEachPoint,
+  discardEncounterTop,
   byMargin,
   spawnEachSetAsideAt,
   spawnEnemyAt,
@@ -112,6 +113,7 @@ import {
 import { agendaThresholdDecision } from './doom';
 import { requireInvestigator } from './investigators';
 import { answer, rejectionFrom, resolveRevelation, runFrom, stateAfter } from '../test/utils';
+import { cardsInZone } from './lookup';
 
 const hall = instanceId('hall');
 const cellar = instanceId('cellar');
@@ -1072,6 +1074,33 @@ describe('trigger bus', () => {
           });
         },
       );
+
+      it('discards one encounter card for each point failed by, in one go', () => {
+        /** "Test willpower (3). For each point you fail by, discard the top card of the encounter deck." */
+        const witchingCard = blankTreachery('witching', {
+          abilities: [
+            whenRevealed(
+              skillTest('willpower', 3, { onFail: [forEachPoint(discardEncounterTop(1))] }),
+            ),
+          ],
+        });
+        const { context, state: started } = newGame()
+          .withLocation(hall, blankLocation('hall'), { revealed: true })
+          .withInvestigator(alice, { locationId: hall })
+          .withCard(instanceId('witching'), witchingCard, { kind: 'encounterDeck' })
+          .withCard(instanceId('second_card'), blankTreachery('second'), { kind: 'encounterDeck' })
+          .withCard(instanceId('third_card'), blankTreachery('third'), { kind: 'encounterDeck' })
+          .withCard(instanceId('fourth_card'), blankTreachery('fourth'), { kind: 'encounterDeck' })
+          .start();
+        const drawn = stateAfter(context, started, aliceDraws, resolveRevelation('witching'));
+
+        const { state } = execute(context, drawn, {
+          ...answer('test:witching', 'fail'),
+          margin: 2,
+        });
+
+        expect(cardsInZone(state, { kind: 'encounterDeck' })).toEqual([instanceId('fourth_card')]);
+      });
 
       it('gives a pass for each point it succeeds by too', () => {
         /** "Test agility (2). For each point you succeed by, gain 1 clue." */

@@ -158,6 +158,7 @@ export {
   atEndOfRound,
   whenTurnBegins,
   leadDrawsDiscardingUntil,
+  discardEncounterTop,
   shuffleEncounterDiscard,
   attachTo,
   attachToLocation,
