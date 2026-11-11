@@ -9,7 +9,7 @@ import {
 } from './cards';
 import type { CardFlipped, TokensChanged } from './events';
 import type { InstanceId, MapId } from './ids';
-import { cardsInZone, cardsNamed, cardsOfType, requireCard } from './lookup';
+import { cardsNamed, cardsOfType, requireCard } from './lookup';
 import type { Edge, GameMap, GridCell } from './map';
 import { CommandRejected } from './rejection';
 import type { CardInstance, GameState } from './state';
