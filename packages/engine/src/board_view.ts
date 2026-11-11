@@ -29,7 +29,7 @@ import {
   type ScaledValue,
   type Trait,
 } from './cards';
-import { sameDecider } from './decisions';
+import { dependsOnMargin, sameDecider } from './decisions';
 import { optionName } from './describe_decision';
 import type { Command } from './commands';
 import { agendaThreshold, doomInPlay, isInPlay } from './doom';
@@ -447,8 +447,8 @@ export interface DecisionView extends ChoiceView {
   /** The basic action a skill test belongs to (`Decision.testKind`), which says what its pass `amount` counts. */
   action?: SkillTestKind['kind'];
   /**
-   * The outcomes whose margin changes what they do (a per-point fail, `Decision.perPointFailed`;
-   * a tier of `Decision.byMargin`), so the dialog asks how much the test passed or failed by when
+   * The outcomes whose margin changes what they do (`dependsOnMargin`: a `ForEachPoint` or a
+   * `ByMargin`), so the dialog asks how much the test passed or failed by when
    * no draw in the app worked it out.
    */
   asksMargin?: readonly SkillTestOutcome[];
@@ -1577,10 +1577,9 @@ function dueAttacks(ctx: EngineContext, state: GameState): DueAttackView[] {
 
 /** `DecisionView.asksMargin` of `decision`, left out when no outcome depends on the margin. */
 function withAsksMargin(decision: Decision): { asksMargin?: readonly SkillTestOutcome[] } {
-  const asked = SKILL_TEST_OUTCOMES.filter(
-    (outcome) =>
-      (outcome === 'fail' && decision.perPointFailed !== undefined) ||
-      decision.byMargin?.some((tier) => tier.outcome === outcome) === true,
+  if (decision.kind !== 'skillTestResult') return {};
+  const asked = SKILL_TEST_OUTCOMES.filter((outcome) =>
+    decision.options.some((option) => option.id === outcome && dependsOnMargin(option)),
   );
   return asked.length > 0 ? { asksMargin: asked } : {};
 }

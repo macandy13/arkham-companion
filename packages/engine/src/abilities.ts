@@ -15,6 +15,9 @@ import type {
   RequestDecision,
   ResolveEffect,
   TestSkill,
+  ForEachPoint,
+  ByMargin,
+  MarginTier,
 } from './commands';
 import { cardsInPlay, cardsWithActiveAbilities } from './doom';
 import { cardOptionLabels } from './decisions';
@@ -69,7 +72,6 @@ import type {
   SkillName,
   TokenKind,
   WoundKind,
-  MarginTier,
 } from './state';
 import type { ScenarioDeck, Zone } from './zone';
 
@@ -397,6 +399,8 @@ export type AbilityCommand =
       }
     >
   | AbilityTest
+  | AbilityForEachPoint
+  | AbilityByMargin
   | AbilityChoice;
 
 /**
@@ -406,20 +410,20 @@ export type AbilityCommand =
  * it sees what the effects before it did, an `each…` reference in one
  * repeats only that effect, and one that names nobody is dropped alone.
  */
-export type AbilityTest = Omit<TestSkill, 'onPass' | 'onFail' | 'perPointFailed' | 'byMargin'> & {
+export type AbilityTest = Omit<TestSkill, 'onPass' | 'onFail'> & {
   onPass: readonly AbilityCommand[];
   onFail: readonly AbilityCommand[];
-  perPointFailed?: readonly AbilityCommand[];
-  byMargin?: readonly (Omit<MarginTier, 'commands'> & { commands: readonly AbilityCommand[] })[];
 };
 
-/**
- * A tier of `TestSkill.byMargin` as card data writes it (`ifSucceedBy`, `ifFailBy`): read back out
- * of `AbilityEffect`, so its commands are templated like the rest of the test.
- */
-export type AbilityMarginTier = NonNullable<
-  Extract<AbilityEffect, { type: 'TestSkill' }>['byMargin']
->[number];
+/** `ForEachPoint` as card data writes it (`forEachPoint`), its commands ability commands too. */
+export type AbilityForEachPoint = Omit<ForEachPoint, 'commands'> & {
+  commands: readonly AbilityCommand[];
+};
+
+/** `ByMargin` as card data writes it (`byMargin`), its tiers' commands ability commands too. */
+export type AbilityByMargin = Omit<ByMargin, 'tiers'> & {
+  tiers: readonly (Omit<MarginTier, 'commands'> & { commands: readonly AbilityCommand[] })[];
+};
 
 /**
  * `RequestDecision` as card data writes it: a choice ("the lead investigator
@@ -947,6 +951,20 @@ export function resolveEffect(
 function withDeferredOutcomes(effect: AbilityEffect, opened: OpenedWindow): unknown {
   const defer = (effects: readonly AbilityEffect[]): ResolveEffect[] =>
     effects.map((outcome) => ({ type: 'ResolveEffect', effect: outcome, opened }));
+  // A margin entry stays itself for `answerCommands` to expand: what it holds is deferred.
+  const deferOutcomes = (effects: readonly AbilityEffect[]): unknown[] =>
+    effects.map((outcome) => {
+      if (outcome.type === 'ForEachPoint')
+        return { ...outcome, commands: deferOutcomes(outcome.commands) };
+      if (outcome.type === 'ByMargin') {
+        const tiers = outcome.tiers.map((tier) => ({
+          ...tier,
+          commands: deferOutcomes(tier.commands),
+        }));
+        return { ...outcome, tiers };
+      }
+      return defer([outcome])[0];
+    });
   if (effect.type === 'RequestDecision') {
     const options = effect.decision.options.map((option) => ({
       ...option,
@@ -959,12 +977,8 @@ function withDeferredOutcomes(effect: AbilityEffect, opened: OpenedWindow): unkn
   if (effect.type !== 'TestSkill') return effect;
   return {
     ...effect,
-    onPass: defer(effect.onPass),
-    onFail: defer(effect.onFail),
-    ...(effect.perPointFailed && { perPointFailed: defer(effect.perPointFailed) }),
-    ...(effect.byMargin && {
-      byMargin: effect.byMargin.map((tier) => ({ ...tier, commands: defer(tier.commands) })),
-    }),
+    onPass: deferOutcomes(effect.onPass),
+    onFail: deferOutcomes(effect.onFail),
   };
 }
 
@@ -1544,20 +1558,15 @@ export function whenAdvanced(...effects: AbilityEffect[]): Ability {
 
 /**
  * "Test [skill] (difficulty)" for the investigator the window names, about
- * the card with the ability; `onPass` and `onFail` follow the answer. The
- * effects of `perPointFailed` resolve once for each point the test fails by,
- * as the players confirm it (`TestSkill.perPointFailed`): "for each point you
- * fail by, take 1 damage" is `{ perPointFailed: [takeDamage(1)] }`.
+ * the card with the ability; `onPass` and `onFail` follow the answer. An
+ * outcome that depends on how much the test passed or failed by holds a
+ * `forEachPoint` or `byMargin` entry: "for each point you fail by, take 1
+ * damage" is `{ onFail: [forEachPoint(takeDamage(1))] }`.
  */
 export function skillTest(
   skill: SkillName,
   difficulty: number,
-  outcomes: {
-    onPass?: AbilityEffect[];
-    onFail?: AbilityEffect[];
-    perPointFailed?: AbilityEffect[];
-    byMargin?: AbilityMarginTier[];
-  } = {},
+  outcomes: { onPass?: AbilityEffect[]; onFail?: AbilityEffect[] } = {},
 ): AbilityEffect {
   return {
     type: 'TestSkill',
@@ -1566,26 +1575,32 @@ export function skillTest(
     test: { skill, difficulty },
     onPass: outcomes.onPass ?? [],
     onFail: outcomes.onFail ?? [],
-    ...(outcomes.perPointFailed ? { perPointFailed: outcomes.perPointFailed } : {}),
-    ...(outcomes.byMargin ? { byMargin: outcomes.byMargin } : {}),
   };
 }
 
 /**
- * "If you succeed by `atLeast` or more, … instead": effects that replace the test's `onPass` once
- * the players confirm such a margin (`TestSkill.byMargin`), as in
- * `skillTest('agility', 3, { onPass: [x], byMargin: [ifSucceedBy(3, x, y)] })`.
+ * "For each point you succeed / fail by, …" (`ForEachPoint`), an entry of a
+ * test's `onPass` or `onFail`: `effects` once per point, an amount multiplied
+ * by it.
  */
-export function ifSucceedBy(atLeast: number, ...effects: AbilityEffect[]): AbilityMarginTier {
-  return { outcome: 'pass', atLeast, commands: effects };
+export function forEachPoint(...effects: AbilityEffect[]): AbilityEffect {
+  return { type: 'ForEachPoint', commands: effects };
 }
 
 /**
- * "If you fail by `atLeast` or more, … instead": effects that replace the test's `onFail`, as in
- * Blood and Rust's `skillTest(…, { onFail: [takeDamage(1)], byMargin: [ifFailBy(2, takeDamage(2))] })`.
+ * "…. If you fail by 2 or more, … instead" (`ByMargin`), an entry of a test's
+ * `onPass` or `onFail`: by the least margin each tier needs, its effects, of
+ * which the highest tier reached runs. Blood and Rust's fail is
+ * `byMargin({ 0: [takeDamage(1)], 2: [takeDamage(2)] })`.
  */
-export function ifFailBy(atLeast: number, ...effects: AbilityEffect[]): AbilityMarginTier {
-  return { outcome: 'fail', atLeast, commands: effects };
+export function byMargin(tiers: Readonly<Record<number, AbilityEffect[]>>): AbilityEffect {
+  return {
+    type: 'ByMargin',
+    tiers: Object.entries(tiers).map(([atLeast, commands]) => ({
+      atLeast: Number(atLeast),
+      commands,
+    })),
+  };
 }
 
 /**

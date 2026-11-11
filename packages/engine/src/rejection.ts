@@ -253,6 +253,8 @@ export type Rejection =
   | { code: 'marginNotApplicable'; decisionId: DecisionId }
   /** `ResolveDecision` with a `margin` that is not a whole number of 0 or more. */
   | { code: 'invalidMargin'; decisionId: DecisionId; margin: number }
+  /** `ForEachPoint` or `ByMargin` outside a skill test's outcome, where no answer gives a margin. */
+  | { code: 'marginOutsideTest' }
   /** `ResolveDecision` with an `amount` (or the named one `name`) outside the option's range. */
   | {
       code: 'amountOutOfRange';
@@ -485,6 +487,8 @@ function describe(r: Rejection): string {
       return `decision ${r.decisionId} is not a skill test and takes no margin`;
     case 'invalidMargin':
       return `the margin of decision ${r.decisionId} must be a whole number of 0 or more, got ${r.margin}`;
+    case 'marginOutsideTest':
+      return 'only the outcome of a skill test can depend on how much it passed or failed by';
     case 'triggerLoop':
       return `forced effects triggered more than ${r.limit} follow-up commands`;
     case 'triggeredCommandRejected':

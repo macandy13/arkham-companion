@@ -119,6 +119,7 @@ const REFUSAL_KINDS: Readonly<Record<RejectionCode, RefusalKind>> = {
   amountNotAdjustable: 'never',
   marginNotApplicable: 'never',
   invalidMargin: 'never',
+  marginOutsideTest: 'never',
   amountOutOfRange: 'never',
 };
 

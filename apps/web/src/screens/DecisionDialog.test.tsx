@@ -14,8 +14,9 @@ import {
   investigatorId,
   newGame,
   PlayTable,
+  byMargin,
+  forEachPoint,
   gainClues,
-  ifSucceedBy,
   skillTest,
   takeDamage,
   whenRevealed,
@@ -508,7 +509,7 @@ describe('DecisionDialog', () => {
             instanceId('grasping_hands'),
             blankTreachery('Grasping Hands', {
               abilities: [
-                whenRevealed(skillTest('agility', 3, { perPointFailed: [takeDamage(1)] })),
+                whenRevealed(skillTest('agility', 3, { onFail: [forEachPoint(takeDamage(1))] })),
               ],
             }),
             { kind: 'encounterDeck' },
@@ -560,7 +561,9 @@ describe('DecisionDialog', () => {
             instanceId('quick_step'),
             blankTreachery('Quick Step', {
               abilities: [
-                whenRevealed(skillTest('agility', 3, { byMargin: [ifSucceedBy(2, gainClues(1))] })),
+                whenRevealed(
+                  skillTest('agility', 3, { onPass: [byMargin({ 2: [gainClues(1)] })] }),
+                ),
               ],
             }),
             { kind: 'encounterDeck' },

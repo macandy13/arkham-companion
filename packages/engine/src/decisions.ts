@@ -1,7 +1,7 @@
 import { assertNever, duplicates, numberedDuplicates, range } from '@arkham/util';
 import type { EngineContext } from './cards';
 import { isEnemyOnTable, locationOf } from './enemies';
-import type { Command, RequestDecision, ResolveDecision } from './commands';
+import type { Command, MarginTier, RequestDecision, ResolveDecision } from './commands';
 import type { DecisionRequested, DecisionResolved, SkillTestResolved } from './events';
 import type { DecisionId, InstanceId, InvestigatorId } from './ids';
 import { isActiveInvestigator } from './investigators';
@@ -20,7 +20,6 @@ import type {
   NamedAmount,
   SkillTest,
   SkillTestOutcome,
-  MarginTier,
 } from './state';
 
 /** The pending decision with `id`, if it is still open (`GameState.pending`). */
@@ -107,17 +106,18 @@ export function handleResolveDecision(
   };
   const decision = pendingDecision(state, command.decisionId);
   return decision?.skillTest
-    ? [resolved, skillTestResolved(decision, decision.skillTest, command)]
+    ? [resolved, skillTestResolved(state, decision, decision.skillTest, command)]
     : [resolved];
 }
 
 /** The outcome the answer `optionId` gives a `skillTestResult` decision (`skillTestDecision`). */
 function skillTestResolved(
+  state: GameState,
   decision: Decision,
   skillTest: SkillTest,
   command: ResolveDecision,
 ): SkillTestResolved {
-  const margin = command.margin ?? perPointMargin(decision, command);
+  const margin = answeredMargin(state, command);
   return {
     type: 'SkillTestResolved',
     decisionId: decision.id,
@@ -163,40 +163,63 @@ export function answerOutcome(command: ResolveDecision): SkillTestOutcome {
 export function answerCommands(state: GameState, command: Command): readonly Command[] {
   if (command.type !== 'ResolveDecision') return [];
   const chosen = optionCommands(state, command);
-  return [...perPointCommands(state, command), ...(marginTier(state, command)?.commands ?? chosen)];
+  const margin = answeredMargin(state, command);
+  return margin === undefined ? chosen : chosen.flatMap((entry) => withMargin(entry, margin));
 }
 
 /**
- * The tier of `Decision.byMargin` the answer reaches: of the answered outcome, the one with the
- * highest `atLeast` its `margin` is at least. None without a margin, as only the players can say
- * how much a test passed or failed by.
+ * Whether what an option does depends on how much its test passed or failed by: it holds a
+ * `ForEachPoint` or `ByMargin`, so the answer says the margin (`DecisionView.asksMargin`).
  */
-function marginTier(state: GameState, command: ResolveDecision): MarginTier | undefined {
-  const tiers = pendingDecision(state, command.decisionId)?.byMargin;
-  const { margin } = command;
-  if (tiers === undefined || margin === undefined) return undefined;
-  return tiers
-    .filter((tier) => tier.outcome === command.optionId && margin >= tier.atLeast)
-    .reduce<MarginTier | undefined>(
-      (best, tier) => (best === undefined || tier.atLeast > best.atLeast ? tier : best),
-      undefined,
-    );
-}
-
-/**
- * What a per-point fail costs (`Decision.perPointFailed`) for the margin the
- * answer confirms. Rules Reference, "For each": an effect that can be worked
- * out at once is one effect, so "take 1 damage for each point" is one "take 3
- * damage" (`timesMargin`); any other (a choice per point) resolves once for
- * each point.
- */
-function perPointCommands(state: GameState, command: ResolveDecision): Command[] {
-  const decision = pendingDecision(state, command.decisionId);
-  const margin = decision && perPointMargin(decision, command);
-  if (!decision?.perPointFailed || !margin) return [];
-  return decision.perPointFailed.flatMap(
-    (perPoint) => timesMargin(perPoint, margin) ?? range(margin).map(() => perPoint),
+export function dependsOnMargin(option: DecisionOption): boolean {
+  return option.commands.some(
+    (entry) => entry.type === 'ForEachPoint' || entry.type === 'ByMargin',
   );
+}
+
+/**
+ * How much the answered test passed or failed by: the answer's `margin`, or, for an option that
+ * depends on it (`dependsOnMargin`) but was answered without one, the least the outcome means
+ * (a fail by 1, a pass by 0). None for any other answer.
+ */
+function answeredMargin(state: GameState, command: ResolveDecision): number | undefined {
+  if (command.margin !== undefined) return command.margin;
+  const option = pendingDecision(state, command.decisionId)?.options.find(
+    (candidate) => candidate.id === command.optionId,
+  );
+  if (option === undefined || !dependsOnMargin(option)) return undefined;
+  return answerOutcome(command) === 'fail' ? 1 : 0;
+}
+
+/**
+ * An outcome entry with its margin applied: a `ForEachPoint` becomes its commands for each point,
+ * a `ByMargin` the commands of the highest tier `margin` reaches (none when it reaches none), and
+ * any other command stays as it is. Rules Reference, "For each": an effect that can be worked out
+ * at once is one effect, so "take 1 damage for each point" is one "take 3 damage" (`timesMargin`);
+ * any other (a choice per point) resolves once for each point.
+ */
+function withMargin(entry: Command, margin: number): Command[] {
+  switch (entry.type) {
+    case 'ForEachPoint':
+      // A fail by 0 (an auto-fail against difficulty 0) costs nothing, not an effect of 0.
+      if (margin === 0) return [];
+      return entry.commands.flatMap(
+        (perPoint) =>
+          timesMargin(perPoint, margin) ??
+          range(margin).flatMap(() => withMargin(perPoint, margin)),
+      );
+    case 'ByMargin': {
+      const reached = entry.tiers.filter((tier) => margin >= tier.atLeast);
+      const tier = reached.reduce<MarginTier | undefined>(
+        (best, candidate) =>
+          best === undefined || candidate.atLeast > best.atLeast ? candidate : best,
+        undefined,
+      );
+      return (tier?.commands ?? []).flatMap((inner) => withMargin(inner, margin));
+    }
+    default:
+      return [entry];
+  }
 }
 
 /**
@@ -224,13 +247,11 @@ function timesMargin(command: Command, margin: number): Command | undefined {
 }
 
 /**
- * How much a per-point fail failed by (`Decision.perPointFailed`): the
- * answer's `margin`, or 1 when it gives none. None for a pass or any other
- * decision. A fail by 0 (an auto-fail against difficulty 0) deals nothing.
+ * `ForEachPoint` and `ByMargin` on their own, outside a test's outcome: rejected
+ * (`marginOutsideTest`), as only the answer to a test says a margin to apply them with.
  */
-function perPointMargin(decision: Decision, command: ResolveDecision): number | undefined {
-  if (!decision.perPointFailed || command.optionId !== 'fail') return undefined;
-  return command.margin ?? 1;
+export function handleMarginEntry(): never {
+  throw new CommandRejected({ code: 'marginOutsideTest' });
 }
 
 /**
@@ -397,14 +418,6 @@ export function confirmOptions(onYes: Command[], target?: InstanceId): DecisionO
 export interface SkillTestOutcomes {
   onPass: Command[];
   onFail: Command[];
-  /**
-   * "For each point you fail by": commands run once per point of the fail
-   * answer's `margin` (1 when it gives none), and `SkillTestResolved.margin`
-   * records it.
-   */
-  perPointFailed?: readonly Command[];
-  /** "If you succeed / fail by N or more, … instead" (`Decision.byMargin`). */
-  byMargin?: readonly MarginTier[];
 }
 
 /**
@@ -426,7 +439,5 @@ export function skillTestDecision(
       { id: 'pass', label: 'decision.pass', commands: outcomes.onPass },
       { id: 'fail', label: 'decision.fail', commands: outcomes.onFail },
     ],
-    ...(outcomes.perPointFailed ? { perPointFailed: outcomes.perPointFailed } : {}),
-    ...(outcomes.byMargin ? { byMargin: outcomes.byMargin } : {}),
   };
 }

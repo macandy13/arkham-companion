@@ -481,35 +481,11 @@ export interface Decision {
    */
   suggestion?: SkillTestSuggestion;
   /**
-   * Only for `skillTestResult`: "for each point you fail by, …". These
-   * commands run once for each point the fail answer's `margin` says, 1
-   * without one, ahead of the fail option's (`answerCommands`).
-   */
-  perPointFailed?: readonly Command[];
-  /**
-   * Only for `skillTestResult`: "if you succeed / fail by N or more, …
-   * instead". The tier with the highest `atLeast` the answer's `margin`
-   * reaches runs in place of the option's commands (`answerCommands`).
-   */
-  byMargin?: readonly MarginTier[];
-  /**
    * The answers. Each carries the commands it triggers, so the mapping from
    * answer to consequence is data and any module (or scenario) can raise a
    * decision. A basic action's test carries none: its `testKind` decides.
    */
   options: DecisionOption[];
-}
-
-/**
- * "If you fail by 2 or more, take 2 damage instead" (Blood and Rust): the
- * commands that replace those of the `outcome` option once the test passed
- * or failed by `atLeast` or more (`Decision.byMargin`). A card that adds to
- * the outcome rather than replacing it lists the base effects here too.
- */
-export interface MarginTier {
-  outcome: SkillTestOutcome;
-  atLeast: number;
-  commands: readonly Command[];
 }
 
 /** One answer the players can pick for a `Decision`. */
