@@ -2,7 +2,7 @@
  * Smoke and Mirrors, played end to end: Roland Banks and Daisy Walker, seed 1, from the Brethren
  * of Ash campaign log that Spreading Flames' end-to-end game wrote (`playSpreadingFlames`) to the
  * end of round 3, when both resign, as `playSmokeAndMirrors`. Its own test plays it after
- * Spreading Flames, and the full Brethren of Ash run plays it second. An
+ * Spreading Flames. An
  * integration narrative rather than a rules test, like Spreading Flames': it shows setup reading
  * the log (the saved university, its extra doom), Augurs of Flame's group clue spend drawing the
  * suspect beneath Uptown, a suspect interrogated and put beneath the act, Arkham Alive's resign

@@ -1,7 +1,7 @@
 /**
  * Spreading Flames, played end to end: Roland Banks and Daisy Walker, seed 1, seven rounds to
  * resolution 2, as `playSpreadingFlames`. Its own test (`end_to_end.test.ts`) plays it from the start
- * of a campaign, and the full Brethren of Ash run plays it first. An integration narrative rather
+ * of a campaign, and Smoke and Mirrors' test plays on from the log it writes. An integration narrative rather
  * than a rules test, like The Gathering's: it shows the scenario's acts working together on a
  * `PlayTable` (act 1's clues spent from anywhere as the round ends, Escape the Dorms removing Your
  * Friend's Room with its Fire!, act 3's clues spent at Orne Library, the Servant of Flame's return
