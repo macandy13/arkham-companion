@@ -1,3 +1,4 @@
+import { resolutionIds } from './campaign/resolution';
 import { assertNever, listIfAny, recordIfAny, unique } from '@arkham/util';
 import { isLocationInPlay, neighbours, openConnections } from './board';
 import {
@@ -639,7 +640,8 @@ export class BoardView {
    * objective to them. Empty for a scenario without any.
    */
   get resolutions(): readonly ResolutionId[] {
-    return Object.keys(this.ctx.scenario?.resolutions?.byId ?? {}) as ResolutionId[];
+    const resolutions = this.ctx.scenario?.resolutions;
+    return resolutions ? resolutionIds(resolutions) : [];
   }
 
   get investigators(): readonly InvestigatorView[] {

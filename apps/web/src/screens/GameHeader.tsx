@@ -554,7 +554,7 @@ function ActStatus({
                 },
               }
             : {})}
-          primary={
+          advances={
             <>
               {advanceButton(close, true)}
               {byHandButton}
@@ -693,7 +693,7 @@ function HeaderCard({
  * - what it is as the kicker, its name as the title;
  * - its count on the page (`value`: the doom in play, the clues that count towards advancing);
  * - the card actions it offers the investigator whose turn it is;
- * - the act's Advance as the dialog's one primary and its "Advance by hand" (`primary`).
+ * - the act's advances (`advances`): Advance as the dialog's one primary, and "Advance by hand".
  * A card action keeps it open and shows the decision it raises in place of its page
  * (`useDecisionHost`); Advance closes it first, since the act it was about is gone. The card text
  * joins it once the card data has text.
@@ -707,7 +707,7 @@ function BookDetails({
   threshold,
   token,
   value,
-  primary,
+  advances,
   onClose,
 }: {
   kind: 'agenda' | 'act';
@@ -718,7 +718,7 @@ function BookDetails({
   threshold: number | undefined;
   token: ReactNode;
   value?: { name: string; count: number; threshold?: number };
-  primary?: ReactNode;
+  advances?: ReactNode;
   onClose: () => void;
 }) {
   const { t } = useTranslation();
@@ -755,7 +755,7 @@ function BookDetails({
           </div>
         </dl>
       )}
-      {(offered.length > 0 || primary) && (
+      {(offered.length > 0 || advances) && (
         <footer>
           {offered.length > 0 && (
             <CardActions
@@ -766,7 +766,7 @@ function BookDetails({
               onUse={hosted.host}
             />
           )}
-          {primary}
+          {advances}
         </footer>
       )}
     </DetailsDialog>

@@ -33,7 +33,7 @@ export function EndScenarioDialog({
     >
       <p>{t('header.endScenarioText')}</p>
       <fieldset>
-        <legend>{t('resolution.pickResolution')}</legend>
+        <legend>{t('header.endScenarioPick')}</legend>
         {resolutions.map((resolution) => (
           <label key={resolution}>
             <input

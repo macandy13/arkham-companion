@@ -190,6 +190,7 @@ export const appTexts = {
     endScenarioTitle: 'End the scenario with which resolution?',
     endScenarioText:
       'For a resolution the app cannot reach yet. The game ends, and you read the resolution as usual.',
+    endScenarioPick: 'The resolution you reached at the table',
     endScenarioConfirm: 'End the scenario',
     addDoom: 'Add doom',
     removeDoom: 'Remove doom',
