@@ -33,7 +33,8 @@ import {
   type ResolutionId,
 } from './ids';
 import type { GridCell } from './map';
-import { locationAttachments, locationsInPlay } from './board';
+import { locationsInPlay } from './board';
+import { limitReached } from './placement';
 import { enemiesAt, enemiesMatching, nearestEnemies, type EnemyFilter } from './enemies';
 import {
   cluesHeldAt,
@@ -230,7 +231,7 @@ export type RelativeCard =
    * The location the window names (where a defeated enemy was), or else the
    * location of the investigator the window names (the drawer's location).
    * For the drawer's location only: none once the card's limit of one per
-   * location is reached there (`LocationAttachment.onePerLocation`), so a
+   * location is reached there (`CardStats.limit`), so a
    * revelation that would attach it there does nothing.
    */
   | { ref: 'windowLocation' }
@@ -284,7 +285,7 @@ export type RelativeCard =
   /**
    * The location in play with the most `token`s that the card with the ability
    * may attach to ("attach to the location with the most clues and without a
-   * copy of Locked Door attached": its `LocationAttachment.onePerLocation`
+   * copy of Locked Door attached": its `CardStats.limit`
    * limit); none when it may attach nowhere. Equally many go to the lead
    * investigator (Rules Reference, "Choices"): the effect becomes a decision
    * with an option per location.
@@ -1262,20 +1263,14 @@ function attachableLocation(
   return mayAttach(ctx, state, cardId, location) ? location.id : undefined;
 }
 
-/** Whether `cardId` may attach to `location`: not while its one-per-location limit is reached there. */
+/** Whether `cardId` may attach to `location`: not while its limit is reached there (`limitReached`). */
 function mayAttach(
   ctx: EngineContext,
   state: GameState,
   cardId: InstanceId,
   location: CardInstance,
 ): boolean {
-  const stats = cardStats(ctx.cards, requireCard(state.cards, cardId).code);
-  return (
-    stats.locationAttachment?.onePerLocation !== true ||
-    !locationAttachments(ctx, state, location).some(
-      ({ card }) => cardStats(ctx.cards, card.code).name === stats.name,
-    )
-  );
+  return !limitReached(ctx, state, cardId, { kind: 'attachedTo', hostId: location.id });
 }
 
 function resolveRefs(value: unknown, refs: ResolvedRefs): unknown {

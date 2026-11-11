@@ -15,6 +15,7 @@ For each draw:
 4. An enemy [spawns](spawn-and-engagement.md).
 5. A treachery goes to the encounter discard pile unless its text says otherwise.
    - One whose revelation attaches it somewhere stays there; if there is nothing to attach it to, or a [limit](https://arkhamdb.com/rules#Limits_and_Maximums) ("Limit 1 per location", counted by title) keeps it from attaching, it is discarded ([Attach To](https://arkhamdb.com/rules#Attach_To)).
+   - Likewise one that goes into a threat area: with "Limit 1 per investigator" and a copy of its title already in the drawer's threat area, it is discarded.
    - An attached card's action ("[action]: Test [combat] (4) or [agility] (4). If you succeed, discard Locked Door") can be taken by an investigator at the location it is attached to ([Abilities](https://arkhamdb.com/rules#Abilities): a card's actions are available to investigators at its location).
    - A treachery or enemy with Victory X goes to the victory display instead when it is overcome (see [Victory display](https://arkhamdb.com/rules#Victory_Display_Victory_Points)).
 6. [Surge](https://arkhamdb.com/rules#Surge): after resolving, draw another encounter card and start over.

@@ -67,7 +67,7 @@ A cost is `CardAction.cost`, paid before the effects.
 ## Searching, drawing and attaching encounter cards
 
 - Locked Door, "Attach to the location with the most clues and without a copy of Locked Door attached. If there is no such location, Locked Door gains surge":
-  - `locationAttachment: { onePerLocation: true }`, which `locationWithMost` respects,
+  - `limit: 'onePerLocation'`, which `locationWithMost` respects (`limit: 'onePerInvestigator'` for a card put into a threat area),
   - `whenRevealed(attachTo(locationWithMost('clue')))`,
   - `ifNoCandidate(locationWithMost('clue'), whenRevealed(gainSurge()))`.
 - Mysterious Chanting's search: `ifThereAre(eachEnemy({ trait: trait('Cultist') }), { max: 0 }, whenRevealed(searchAndDraw({ trait: trait('Cultist'), typeCode: 'enemy' })))`, then `whenRevealed(shuffleEncounterDeck())` as its own ability.

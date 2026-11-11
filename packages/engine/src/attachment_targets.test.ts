@@ -29,7 +29,7 @@ const nextCard = instanceId('next_card');
  * there is no such location, Locked Door gains surge."
  */
 const lockingDoor = blankTreachery('locking_door', {
-  locationAttachment: { onePerLocation: true },
+  limit: 'onePerLocation',
   abilities: [
     whenRevealed(attachTo(locationWithMost('clue'))),
     ifNoCandidate(locationWithMost('clue'), whenRevealed(gainSurge())),
