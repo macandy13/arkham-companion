@@ -1,6 +1,6 @@
-import { CardCodeSchema, type CardCode } from './card_code';
+import type { CardCode } from './card_code';
 import { z } from 'zod';
-import { opt } from './raw_schema';
+import { CardCodeSchema, opt } from './raw_schema';
 
 /** A symbol chaos token a scenario reference card prints a row for, named as the engine names it. */
 export type ReferenceToken = 'skull' | 'cultist' | 'tablet' | 'elderThing';

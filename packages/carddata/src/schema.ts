@@ -1,6 +1,6 @@
 import { z } from 'zod';
-import { CardCodeSchema, type CardCode } from './card_code';
-import { opt } from './raw_schema';
+import type { CardCode } from './card_code';
+import { CardCodeSchema, opt } from './raw_schema';
 import { entersThreatArea, parseKeywords, type Keyword } from './keywords';
 
 /**

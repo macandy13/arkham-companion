@@ -1,5 +1,3 @@
-import { z } from 'zod';
-
 /**
  * ArkhamDB card code, e.g. '01111' for the Study. carddata doesn't depend on the engine, so it
  * declares the brand itself, in the same shape as the engine's `CardCode`
@@ -15,6 +13,3 @@ export type CardCode = string & { readonly __brand: 'CardCode' };
 export function toCardCode(code: string): CardCode {
   return code as CardCode;
 }
-
-/** A card code in raw ArkhamDB or ArkhamCards data, checked as a string. */
-export const CardCodeSchema = z.string().transform(toCardCode);
