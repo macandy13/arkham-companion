@@ -2,12 +2,12 @@
  * Smoke and Mirrors, played end to end: Roland Banks and Daisy Walker, seed 1, from the Brethren
  * of Ash campaign log that Spreading Flames' end-to-end game wrote (`playSpreadingFlames`) to the
  * end of round 3, when both resign, as `playSmokeAndMirrors`. Its own test plays it after
- * Spreading Flames. An
- * integration narrative rather than a rules test, like Spreading Flames': it shows setup reading
- * the log (the saved university, its extra doom), Augurs of Flame's group clue spend drawing the
- * suspect beneath Uptown, a suspect interrogated and put beneath the act, Arkham Alive's resign
- * action ending the game without a resolution, and what that writes to the campaign log, with the
- * facts a player would check at the table asserted where they happen.
+ * Spreading Flames. An integration narrative rather than a rules test, like Spreading Flames': it
+ * shows setup reading the log (the saved university, its extra doom, the trauma carried over),
+ * Augurs of Flame's group clue spend drawing the suspect beneath Uptown, a suspect interrogated and
+ * put beneath the act, Arkham Alive's resign action ending the game without a resolution, and what
+ * that writes to the campaign log, with the facts a player would check at the table asserted where
+ * they happen.
  *
  * Skill tests are resolved at the table: actions pass unless the script says otherwise. The
  * players count actions off themselves and resolve by hand what the engine leaves to them
