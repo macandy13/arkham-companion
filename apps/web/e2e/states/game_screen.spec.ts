@@ -39,6 +39,8 @@ test('map tabs for the Study and the house, the house chosen', async ({ page }) 
 
   await page.getByRole('tab', { name: 'House' }).click();
 
+  await expect(page.getByRole('tab', { name: 'Study' })).toBeVisible();
+  await expect(page.getByRole('tab', { name: 'House' })).toHaveAttribute('aria-selected', 'true');
   await expect(page.getByRole('tabpanel', { name: 'House' })).toBeVisible();
 });
 
@@ -94,9 +96,7 @@ test('the Ghoul Priest in the Cellar, its token showing its initial as the setti
   await expect(priest.locator('text').first()).toBeVisible();
 });
 
-test("the Ghoul Priest's details in the Eldritch card style: a blackletter name, tentacle scrolls, its set icon on the medallion", async ({
-  page,
-}) => {
+test("the Ghoul Priest's details in the Eldritch card style", async ({ page }) => {
   await page.goto('/#/settings');
   await page.getByLabel('Card style').selectOption('Eldritch');
   await resumeImportedGame(
@@ -110,6 +110,7 @@ test("the Ghoul Priest's details in the Eldritch card style: a blackletter name,
   await roland.getByRole('button', { name: 'Details of Ghoul Priest' }).click();
 
   await expect(page.getByRole('dialog', { name: 'Ghoul Priest' })).toBeVisible();
+  await expect(page.locator('html')).toHaveAttribute('data-card-theme', 'eldritch');
 });
 
 test("the Ghoul Priest's details in the card pictures style, its damage on the printed health", async ({
@@ -307,22 +308,7 @@ test('Crypt Chill drawn for Roland Banks, its willpower test waiting', async ({
   await expect(cryptChill.getByRole('button', { name: 'Read Crypt Chill' })).toBeVisible();
 });
 
-test('the chaos bag in the cardboard token set', async ({ page, isMobile }) => {
-  await page.goto('/#/settings');
-  await page.getByRole('radio', { name: 'Cardboard' }).click();
-  await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
-  const scenario = page.getByRole('region', { name: 'Scenario' });
-  if (isMobile) await scenario.locator('[data-card]').click();
-  await scenario.getByRole('button', { name: 'The Gathering' }).click();
-
-  const bag = page
-    .getByRole('dialog', { name: 'The Gathering' })
-    .getByRole('region', { name: 'Chaos bag' });
-  await bag.scrollIntoViewIfNeeded();
-  await expect(page.locator('html')).toHaveAttribute('data-token-set', 'cardboard');
-});
-
-test('Frozen in Fear from Roland Banks’ threat area, on the card shell', async ({ page }) => {
+test('Frozen in Fear opened from Roland Banks’ threat area', async ({ page }) => {
   await resumeImportedGame(
     page,
     'Roland Banks threatened',
@@ -453,12 +439,13 @@ test('the status row marked offline once the network is gone', async ({ page }) 
   await expect(page.getByRole('region', { name: 'Round 1' }).getByText('Offline')).toBeVisible();
 });
 
-test('the menu open, holding the game log on a phone', async ({ page }) => {
+test('the menu open, holding the game log on a phone', async ({ page, isMobile }) => {
+  test.skip(!isMobile, 'a tablet shows the game log in the header');
   await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
 
   await page.getByRole('button', { name: 'Menu' }).click();
 
-  await expect(page.getByRole('link', { name: 'Settings' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Game log' })).toBeVisible();
 });
 
 test('the menu after saving the pictures of the game for offline play', async ({ page }) => {

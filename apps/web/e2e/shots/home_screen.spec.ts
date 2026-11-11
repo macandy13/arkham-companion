@@ -36,3 +36,20 @@ test('the shelf with a campaign waiting for its second chapter beside a game of 
   // Gathering's agenda on the game's cover.
   await expect(page.locator('#shelf > li > svg > svg[data-picture="shown"]')).toHaveCount(3);
 });
+
+test('the question before a saved game is deleted', async ({ page }) => {
+  await importGame(page, houseOpenedExport('The house is open'));
+
+  await page.getByRole('button', { name: 'More for The house is open' }).click();
+  await page.getByRole('button', { name: 'Delete' }).click();
+
+  await expect(page.getByRole('alertdialog')).toBeVisible();
+});
+
+test("the app bar's menu open over the game list", async ({ page }) => {
+  await importGame(page, houseOpenedExport('The house is open'));
+
+  await page.getByRole('banner').getByRole('button', { name: 'Menu' }).click();
+
+  await expect(page.getByRole('banner').getByRole('link', { name: 'Settings' })).toBeVisible();
+});

@@ -105,8 +105,8 @@ export interface Screenshot {
 
 /**
  * The Playwright projects behind the preview (`playwright.config.ts`): `flow-picture` keeps a
- * golden of every flow spec's end state (outside `e2e/shots/`), `screenshot` and
- * `screenshot-phone` one of every shot spec, on the tablet and on a phone. The goldens a PR
+ * golden of every flow spec's end state (outside `e2e/shots/` and `e2e/states/`), `screenshot`
+ * and `screenshot-phone` one of every shot spec, on the tablet and on a phone. The goldens a PR
  * changes are what it shows; `screencast` films just the flows whose golden changed, slowed down.
  */
 export const RECORDING_PROJECTS = {

@@ -406,3 +406,18 @@ test('Arkham in The Midnight Masks, Easttown, the Graveyard and Northside with t
     ).toBeVisible();
   }
 });
+
+test('the chaos bag in the cardboard token set', async ({ page, isMobile }) => {
+  await page.goto('/#/settings');
+  await page.getByRole('radio', { name: 'Cardboard' }).click();
+  await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
+  const scenario = page.getByRole('region', { name: 'Scenario' });
+  if (isMobile) await scenario.locator('[data-card]').click();
+  await scenario.getByRole('button', { name: 'The Gathering' }).click();
+
+  const bag = page
+    .getByRole('dialog', { name: 'The Gathering' })
+    .getByRole('region', { name: 'Chaos bag' });
+  await bag.scrollIntoViewIfNeeded();
+  await expect(page.locator('html')).toHaveAttribute('data-token-set', 'cardboard');
+});

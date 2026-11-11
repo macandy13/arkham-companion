@@ -44,7 +44,7 @@ const executablePath = process.env.PW_CHROMIUM_PATH;
  * in mode `e2e` only to add a test campaign the app plays no real one for (`findCampaign`).
  * `pnpm e2e` runs every spec once: the accessibility checks in `accessibility`, every flow (the
  * specs outside `e2e/shots/` and `e2e/states/`) in `flow-picture` and every spec in those two in
- * `screenshot` and `screenshot-phone`, the last three photographing each test as it ends (but
+ * `screenshot` and `screenshot-phone`, the last three photographing each test as it ends (except
  * those in `e2e/states/`) and, with
  * `GOLDENS=1` (CI), comparing it with its committed golden. The preview shows the goldens a PR
  * changes; `screencast` re-runs the flows whose golden changed, slowed down and recorded

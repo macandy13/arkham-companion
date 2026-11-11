@@ -33,20 +33,3 @@ test('a game’s menu open on its cover', async ({ page }) => {
   await deleteEntry.scrollIntoViewIfNeeded();
   await expect(deleteEntry).toBeInViewport();
 });
-
-test('the question before a saved game is deleted', async ({ page }) => {
-  await importGame(page, houseOpenedExport('The house is open'));
-
-  await page.getByRole('button', { name: 'More for The house is open' }).click();
-  await page.getByRole('button', { name: 'Delete' }).click();
-
-  await expect(page.getByRole('alertdialog')).toBeVisible();
-});
-
-test("the app bar's menu open over the game list", async ({ page }) => {
-  await importGame(page, houseOpenedExport('The house is open'));
-
-  await page.getByRole('banner').getByRole('button', { name: 'Menu' }).click();
-
-  await expect(page.getByRole('banner').getByRole('link', { name: 'Settings' })).toBeVisible();
-});
