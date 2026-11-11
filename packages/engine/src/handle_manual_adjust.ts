@@ -28,7 +28,8 @@ function assertNotCurrentStage(state: GameState, cardId: InstanceId): void {
  * the set-aside area, out of the game or beneath another card leaves its tokens and attachments behind first and is
  * readied (Rules Reference, "Leaves Play"; "Escape the Dorms" removes Your Friend's Room with its Fire! and sets
  * the Servant of Flame aside healed); a correction moves the card alone. A card whose limit is
- * reached there (`limitReached`) stays where it is, as much as the effect can do.
+ * reached there (`limitReached`) does not move: the limit keeps it out, so a revelation leaves it
+ * in `resolving`, to be discarded.
  */
 export function handleMoveCard(ctx: EngineContext, state: GameState, cmd: MoveCard): Event[] {
   const card = requireCard(state.cards, cmd.cardId);

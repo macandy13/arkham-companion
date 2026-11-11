@@ -98,22 +98,22 @@ The keyword rules are in [rules, "Enemy keywords"](rules/enemy-keywords.md).
 
 ### Revelations and threat area
 
-| Rule                                                             | Ch. 2 | Ch. 1 | Status                                         |
-| ---------------------------------------------------------------- | ----- | ----- | ---------------------------------------------- |
-| Take damage or horror (direct included)                          | 33    | 670   | Covered                                        |
-| Lose or gain resources                                           | 9     | 140   | Covered                                        |
-| Skill test with a printed difficulty                             | 41    | 531   | Covered                                        |
-| Skill test whose difficulty is X or grows with the board         | 8     | 121   | Plan 20                                        |
-| Test one of two skills ("[willpower] or [intellect]")            | 5     | 83    | Plan 8                                         |
-| Skill test margin ("for each point you fail by", "by 2 or more") | 11    | 169   | Plan 3                                         |
-| Choose one of two costs ("you must either …")                    | 18    | 393   | Plan 4                                         |
-| Put into your threat area                                        | 7     | 116   | Covered                                        |
-| At the end of your turn (threat area)                            | 0     | 41    | Covered                                        |
-| At the end of the round                                          | 5     | 147   | Covered                                        |
-| When or after your turn begins                                   | 1     | 28    | Plan 2                                         |
-| Limit 1 per location / per investigator                          | 5     | 22    | Covered per location; per investigator Plan 14 |
-| Lose actions                                                     | 4     | 73    | Command (`AdjustActions`); Plan 5              |
-| Heal damage or horror                                            | 11    | 127   | Covered for investigators; enemies Plan 5      |
+| Rule                                                             | Ch. 2 | Ch. 1 | Status                                    |
+| ---------------------------------------------------------------- | ----- | ----- | ----------------------------------------- |
+| Take damage or horror (direct included)                          | 33    | 670   | Covered                                   |
+| Lose or gain resources                                           | 9     | 140   | Covered                                   |
+| Skill test with a printed difficulty                             | 41    | 531   | Covered                                   |
+| Skill test whose difficulty is X or grows with the board         | 8     | 121   | Plan 20                                   |
+| Test one of two skills ("[willpower] or [intellect]")            | 5     | 83    | Plan 8                                    |
+| Skill test margin ("for each point you fail by", "by 2 or more") | 11    | 169   | Plan 3                                    |
+| Choose one of two costs ("you must either …")                    | 18    | 393   | Plan 4                                    |
+| Put into your threat area                                        | 7     | 116   | Covered                                   |
+| At the end of your turn (threat area)                            | 0     | 41    | Covered                                   |
+| At the end of the round                                          | 5     | 147   | Covered                                   |
+| When or after your turn begins                                   | 1     | 28    | Plan 2                                    |
+| Limit 1 per location / per investigator                          | 5     | 22    | Covered                                   |
+| Lose actions                                                     | 4     | 73    | Command (`AdjustActions`); Plan 5         |
+| Heal damage or horror                                            | 11    | 127   | Covered for investigators; enemies Plan 5 |
 
 ### Player cards
 
@@ -239,7 +239,7 @@ The engine can't handle these cases yet, and the first version of the plan had n
 4. **Place clues from the token pool** (step 11) – 10 (7), 170. Hidden Laboratory 13052/13055, Locked Chamber 13053/13056, Foyer 13076 ("up to its clue threshold"), Abigail Foreman 12143, Elokoss 12179, Loading Dock 13042, act 13037. A `PlaceClues` command on any card, with an "up to threshold" option.
 5. **Objective conditions** (step 11) – 10 (5), 221. Enters play (13006), leaves play (13007), an investigator enters a location (12172, 13074), all undefeated investigators at a location (12110), every survivor resigned (13036–13038), a card not in play at round end (13073), a count reached (12136). New timing windows (enter location, enemy enters / leaves play) plus a condition check at round end.
 6. **Test difficulty from the board** (step 20) – 8 (5), 121. Mutated! 12131, Red Herring 12161, Grisly Compulsion 13100, Abigail Foreman 12143, Secret Chamber 13057, Javier Rivera 13061, Loading Dock 13047, Sgt. Earl Monroe 12142; hand size (Extraplanar Visions 12127) is entered by players. Difficulty as a `ScaledValue`-like expression read when the test is raised.
-7. **Limit 1 per investigator** (step 14) – 5 (4), 22. Unspeakable Truths 12125, Languor 12193, Echoing in Darkness 13065, The Blood Blight 13118. The per-location check of `LocationAttachment.onePerLocation` applied to threat areas.
+7. **Limit 1 per investigator** (step 14) – 5 (4), 22. Unspeakable Truths 12125, Languor 12193, Echoing in Darkness 13065 (The Blood Blight 13118 is "Limit 1 per deck", a deckbuilding limit). Done: `CardStats.limit: 'onePerInvestigator'` (`limitReached`, ME.5e).
 8. **Test one of two skills** (step 8) – 5 (2), 83. Arcane Lock 12157, Noxious Smoke 12130, Sluice Control 12175, Extraplanar Visions 12127, act 13075. `skillTest` with a list of skills, the investigator picks.
 9. **Constant modifiers** (step 9) – enemy stats 3 (2), 142: Dining Hall 13077, Unnatural Strength 13098, Zburamoarte's Lair 13051; investigator skills 2 (2), 44: Whippoorwill 12166, Blighted Blood 13099. Feed the skill test suggestion from the board (architecture review P3, constant abilities).
 10. **Location leaves play with its tokens and attachments** (step 12) – 4 (2), 155. Manager's Office 13041, act 12110, agendas 12170, 13072. `MoveCard` plus moving everyone at it first.

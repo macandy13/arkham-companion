@@ -212,10 +212,9 @@ export type LocationSymbol =
 
 /**
  * "Limit 1 per location" (Obscuring Fog, attached to a location) or "Limit 1 per investigator"
- * (Unspeakable Truths, in a threat area): what holds the card, its host or the investigator whose
- * threat area it is in, may hold one copy of its title (`limitReached`). A card that would come to
- * a second copy stays where it is, so a revelation that would put it there leaves it to be
- * discarded. Both read the same way; the two names keep the card's own words.
+ * (Unspeakable Truths, in a threat area): the location's attachments, or the investigator's threat
+ * area, may hold one copy of its title (`limitReached`). A card that would come to a second copy
+ * stays where it is, so a revelation that would put it there leaves it to be discarded.
  */
 export type CopyLimit = 'onePerLocation' | 'onePerInvestigator';
 
