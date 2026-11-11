@@ -982,6 +982,34 @@ describe('trigger bus', () => {
     );
   });
 
+  describe('putting a revealed card back on a deck', () => {
+    const aliceDraws: Command = { type: 'DrawEncounter', investigatorId: alice };
+
+    it.each([
+      { end: 'bottom', deck: [instanceId('other_card'), instanceId('returning')] },
+      { end: 'top', deck: [instanceId('returning'), instanceId('other_card')] },
+    ] as const)(
+      'places it on the $end of the encounter deck instead of the discard',
+      ({ end, deck }) => {
+        /** "Revelation – Place Returning on the top / bottom of the encounter deck." */
+        const returningCard = blankTreachery('returning', {
+          abilities: [whenRevealed(moveSelf({ kind: 'encounterDeck' }, end))],
+        });
+        const { context, state } = newGame()
+          .withLocation(hall, blankLocation('hall'), { revealed: true })
+          .withInvestigator(alice, { locationId: hall })
+          .withCard(instanceId('returning'), returningCard, { kind: 'encounterDeck' })
+          .withCard(instanceId('other_card'), blankTreachery('other'), { kind: 'encounterDeck' })
+          .start();
+
+        const after = stateAfter(context, state, aliceDraws, resolveRevelation('returning'));
+
+        expect(cardsInZone(after, { kind: 'encounterDeck' })).toEqual(deck);
+        expect(cardsInZone(after, { kind: 'encounterDiscard' })).toEqual([]);
+      },
+    );
+  });
+
   describe('discarding from the top of the encounter deck', () => {
     /** "Revelation – Discard the top 3 cards of the encounter deck." */
     const outOfThisWorldCard = blankTreachery('out_of_this_world', {

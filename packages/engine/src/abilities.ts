@@ -2608,7 +2608,12 @@ export function spawnEnemyAt(enemy: RelativeCard, location: RelativeCard): Abili
   return { type: 'SpawnEnemy', enemyId: enemy, at: location };
 }
 
-/** Moves the card with the ability ("Remove it from the game", "Put it into play in your threat area"). */
-export function moveSelf(to: Templated<Zone>): AbilityEffect {
-  return { type: 'MoveCard', cardId: { ref: 'self' }, to };
+/**
+ * Moves the card with the ability ("Remove it from the game", "Put it into play in your threat
+ * area"), to the bottom of `to` or, with `'top'`, onto its top: "Place it on the bottom of the
+ * Tekeli-li deck" is `moveSelf(scenarioDeck, 'bottom')`, "on top of the encounter deck"
+ * `moveSelf({ kind: 'encounterDeck' }, 'top')`.
+ */
+export function moveSelf(to: Templated<Zone>, end: 'top' | 'bottom' = 'bottom'): AbilityEffect {
+  return { type: 'MoveCard', cardId: { ref: 'self' }, to, ...(end === 'top' && { index: 0 }) };
 }
