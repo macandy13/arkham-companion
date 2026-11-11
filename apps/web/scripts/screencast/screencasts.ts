@@ -257,21 +257,20 @@ function listedTestOf(change: GoldenChange, listed: readonly ListedTest[]): List
 /**
  * The flow specs whose end-state golden (`flow-picture`) the PR adds or rewrites, in `changes`
  * order, named from `listed` for `flowGrep`. A flow whose golden it deletes is gone and can't be
- * filmed.
+ * filmed, and neither can one `listed` lacks (the test list failed): its title, which `--grep`
+ * needs, can't be told from a golden's file name.
  */
 export function changedFlows(
   changes: readonly GoldenChange[],
   listed: readonly ListedTest[],
 ): ChangedFlow[] {
-  return changes
-    .filter(
-      (change) => change.project === RECORDING_PROJECTS.flowPictures && change.status !== 'removed',
-    )
-    .map((change) => ({
-      // flowGrep matches the leaf title; a describe block's words may stand before it.
-      title: listedTestOf(change, listed)?.titlePath.at(-1) ?? change.name.replaceAll('-', ' '),
-      file: change.file,
-    }));
+  return changes.flatMap((change) => {
+    if (change.project !== RECORDING_PROJECTS.flowPictures || change.status === 'removed')
+      return [];
+    const test = listedTestOf(change, listed);
+    // flowGrep matches the leaf title; a describe block's words may stand before it.
+    return test ? [{ title: test.titlePath.at(-1) ?? '', file: change.file }] : [];
+  });
 }
 
 /**

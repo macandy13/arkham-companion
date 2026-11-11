@@ -271,6 +271,20 @@ describe('changedFlows', () => {
     ]);
   });
 
+  it('leaves out a flow the test list lacks, since its grep could not find it', () => {
+    const changes: GoldenChange[] = [
+      {
+        status: 'changed',
+        project: 'flow-picture',
+        file: 'settings.spec.ts',
+        name: 'an-unlisted-flow',
+        path: 'e2e/__screenshots__/flow-picture/settings.spec.ts/an-unlisted-flow.png',
+      },
+    ];
+
+    expect(changedFlows(changes, listed)).toEqual([]);
+  });
+
   it('leaves out a deleted flow and the screenshot goldens', () => {
     const changes: GoldenChange[] = [
       {
