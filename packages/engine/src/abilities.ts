@@ -413,7 +413,10 @@ export type AbilityTest = Omit<TestSkill, 'onPass' | 'onFail' | 'perPointFailed'
   byMargin?: readonly (Omit<MarginTier, 'commands'> & { commands: readonly AbilityCommand[] })[];
 };
 
-/** A tier of `TestSkill.byMargin` as card data writes it (`ifSucceedBy`, `ifFailBy`). */
+/**
+ * A tier of `TestSkill.byMargin` as card data writes it (`ifSucceedBy`, `ifFailBy`): read back out
+ * of `AbilityEffect`, so its commands are templated like the rest of the test.
+ */
 export type AbilityMarginTier = NonNullable<
   Extract<AbilityEffect, { type: 'TestSkill' }>['byMargin']
 >[number];

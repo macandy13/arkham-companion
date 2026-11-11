@@ -32,12 +32,12 @@ Bless (+2), curse (-2), frost (-1) and the blood token (-1) each make the tester
 
 ## Margin of success and failure
 
-A test [succeeds by](https://arkhamdb.com/rules#Skill_Test_Timing) the modified skill minus the difficulty ("succeed by 2 or more") and fails by the difficulty minus the modified skill; after an [auto-fail](https://arkhamdb.com/rules#Automatic_Failure_Success), whose skill is 0, that is the whole difficulty.
+A test [succeeds by](https://arkhamdb.com/rules#Skill_Test_Timing) the modified skill minus the difficulty ("succeed by 2 or more") and fails by the difficulty minus the modified skill; after an [auto-fail](https://arkhamdb.com/rules#Automatic_Failure_Success), whose skill is 0, that is the whole difficulty. The Rules Reference doesn't define the margin; this is our reading of ST.6, so a skill equal to the difficulty succeeds by 0.
 
 - "For each point you fail by" scales with it (Grasping Hands: 1 damage per point), so a fail by 0 (an auto-fail against difficulty 0) deals nothing. An effect that can be worked out at once is one effect ([For each](https://arkhamdb.com/rules#For_Each)): Grasping Hands failed by 3 is one "take 3 damage", not three wounds of 1.
 - False Lead's "place 1 of your clues on your location" for each point places as many as the investigator has when they have fewer ([golden rules](https://arkhamdb.com/rules#Golden_Rules): resolve as much as possible).
 - An effect that can't be resolved at once, such as a choice, resolves once for each point ([For each](https://arkhamdb.com/rules#For_Each)), and the choice may differ from point to point (Umôrdhoth's Wrath: discard a card or take 1 damage and 1 horror, for each point).
-- "If you fail by 2 or more, … instead" (Blood and Rust: 2 damage instead of 1) replaces the outcome's effect once the margin reaches it; with several thresholds, the highest one reached applies (Feast of Locusts: 2 horror, or 3 instead when failing by 4 or more). A threshold counts only with a margin the players confirm.
+- "If you fail by 2 or more, … instead" (Blood and Rust: 2 damage instead of 1) replaces the outcome's effect once the margin reaches it ([Instead](https://arkhamdb.com/rules#Instead): a replacement effect); Feast of Locusts gives 2 horror, or 3 instead when failing by 4 or more. With several thresholds the engine applies the highest one reached (our reading of "instead"). An additive bonus ("succeed by 3 or more, deal +1 damage", Mi-Go Weapon) is written as a tier that repeats the base effect with the bonus folded in. A threshold counts only with a margin the players confirm.
 - The players confirm the margin with their answer.
 
 ## Results that defeat the tester

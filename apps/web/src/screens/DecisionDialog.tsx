@@ -1,7 +1,13 @@
 import { useState, type ComponentProps } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
-import type { BoardView, ChoiceView, DecisionCounts, DecisionView } from '@arkham/engine';
+import type {
+  BoardView,
+  ChoiceView,
+  DecisionCounts,
+  DecisionView,
+  SkillTestOutcome,
+} from '@arkham/engine';
 import { assertNever } from '@arkham/util';
 import { ResolvingCard } from '../encounter/ResolvingCard';
 import { SkillTestBlock, Stepper, useSkillTest } from '../investigators/TestCalculation';
@@ -121,10 +127,10 @@ export function DecisionPage({
   // An outcome that depends on its margin (a per-point fail, "if you succeed by 2 or more") needs
   // it; without a draw in the app that gave this outcome, the players give it, from 1 for a fail
   // (the engine's own default) and 0 for a pass.
-  const asksMarginOf = (option: string) =>
+  const asksMarginOf = (option: string): option is SkillTestOutcome =>
     decision.asksMargin?.some((outcome) => outcome === option) === true &&
     suggested?.outcome !== option;
-  const [margins, setMargins] = useState<Record<string, number>>({ pass: 0, fail: 1 });
+  const [margins, setMargins] = useState<Record<SkillTestOutcome, number>>({ pass: 0, fail: 1 });
   const [chosen, setPicked] = useState<string>();
   const picked = chosen ?? pickedFirst(decision, suggested?.outcome);
   const [nextPicks, setNextPicks] = useState<Record<string, string>>({});
@@ -206,8 +212,8 @@ export function DecisionPage({
                     label={t(
                       option === 'pass' ? 'decision.count.passedBy' : 'decision.count.failedBy',
                     )}
-                    value={margins[option] ?? 0}
-                    shown={String(margins[option] ?? 0)}
+                    value={margins[option]}
+                    shown={String(margins[option])}
                     min={0}
                     onChange={(changed) => {
                       setMargins({ ...margins, [option]: changed });
