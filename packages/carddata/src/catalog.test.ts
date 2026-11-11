@@ -1,13 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import {
-  buildInvestigatorCatalog,
-  classOf,
-  fetchCatalog,
-  normalisePacks,
-  printedInvestigatorOf,
-  toCardCode,
-  type FetchFn,
-} from './index';
+import { fetchCatalog } from './catalog_fetch';
+import { classOf, printedInvestigatorOf, toCardCode, type FetchFn } from './index';
+import { buildInvestigatorCatalog } from './investigator_parsing';
+import { normalisePacks } from './pack_parsing';
 
 // Hand-written fake data – never real card text.
 const packs = normalisePacks([

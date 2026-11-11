@@ -1,7 +1,6 @@
 import {
   arkhamDbHost,
   CATALOG_FORMAT,
-  fetchCatalog,
   type CardCatalog,
   type CardLanguage,
   type FetchFn,
@@ -27,6 +26,8 @@ export async function loadCatalog(
   try {
     // A catalog cached in an older shape lacks data the app now reads, so it is fetched in full once.
     const since = cached?.format === CATALOG_FORMAT ? cached.lastModified : undefined;
+    // Loaded on demand: parsing the cards needs zod, which would otherwise weigh on the first load.
+    const { fetchCatalog } = await import('@arkham/carddata/catalog_fetch');
     const result = await fetchCatalog(arkhamDbHost(lang), fetchFn, since);
     if (result.status === 'ok') {
       await cache.putCatalog(lang, result.catalog);
