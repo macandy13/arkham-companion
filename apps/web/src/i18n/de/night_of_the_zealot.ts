@@ -55,6 +55,11 @@ export const nightOfTheZealotTexts = {
         damage: '1 Schaden heilen',
         horror: '1 Horror heilen',
       },
+      umordhothsWrath: {
+        prompt: '{{card}}: Für diesen Punkt musst du entweder',
+        discard: 'Eine Karte aus deiner Hand wählen und ablegen',
+        wounds: '1 Schaden und 1 Horror erleiden',
+      },
       resolution: {
         upgradeDecks: 'Jeder Ermittler gibt Erfahrung für Deckverbesserungen aus.',
         removeLita: 'Entfernt Lita Chantler aus dem Deck, in dem sie ist.',

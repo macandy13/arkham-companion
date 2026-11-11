@@ -30,6 +30,7 @@
 - "You must either A or B" (and "the lead investigator must decide") offers only the options that can change the game state ([Must](https://arkhamdb.com/rules#Must)):
   - with no clues, "spend 1 clue or take 2 damage" leaves only the damage,
   - and with no damage the Quiet Glade's "heal 1 damage or 1 horror" leaves only the horror.
+  - With an empty hand, Umôrdhoth's Wrath's "discard a card" can't be chosen, so each point costs 1 damage and 1 horror; the engine doesn't track hands, so the players keep to this at the table.
   - An option done at the table (no effect the engine runs) always stays.
   - With neither possible, nothing happens ([Effects](https://arkhamdb.com/rules#Effects): resolve as much as you are able).
   - An option that resolves only in part is still allowed by the rule; the engine drops it for now (no Night of the Zealot card has one).

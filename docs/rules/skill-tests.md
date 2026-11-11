@@ -34,8 +34,9 @@ Bless (+2), curse (-2), frost (-1) and the blood token (-1) each make the tester
 
 A test [succeeds by](https://arkhamdb.com/rules#Skill_Test_Timing) the modified skill minus the difficulty ("succeed by 2 or more") and fails by the difficulty minus the modified skill; after an [auto-fail](https://arkhamdb.com/rules#Automatic_Failure_Success), whose skill is 0, that is the whole difficulty.
 
-- "For each point you fail by" scales with it (Grasping Hands: 1 damage per point), so a fail by 0 (an auto-fail against difficulty 0) deals nothing.
+- "For each point you fail by" scales with it (Grasping Hands: 1 damage per point), so a fail by 0 (an auto-fail against difficulty 0) deals nothing. An effect that can be worked out at once is one effect ([For each](https://arkhamdb.com/rules#For_Each)): Grasping Hands failed by 3 is one "take 3 damage", not three wounds of 1.
 - False Lead's "place 1 of your clues on your location" for each point places as many as the investigator has when they have fewer ([golden rules](https://arkhamdb.com/rules#Golden_Rules): resolve as much as possible).
+- An effect that can't be resolved at once, such as a choice, resolves once for each point ([For each](https://arkhamdb.com/rules#For_Each)), and the choice may differ from point to point (Umôrdhoth's Wrath: discard a card or take 1 damage and 1 horror, for each point).
 - The players confirm the margin with their answer.
 
 ## Results that defeat the tester

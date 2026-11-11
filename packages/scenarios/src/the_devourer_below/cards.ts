@@ -32,6 +32,7 @@ import {
   placeCluesOnSelf,
   placeCluesOnSelfUpTo,
   discardSelf,
+  discardFromHand,
   spawnEachSetAsideAt,
   takeDamageAndHorror,
   takeHorror,
@@ -120,6 +121,9 @@ const RITUAL_SITE_CELL: GridCell = { column: oneCard, row: 0 };
 /** Id of Offer of Power's question to its drawer: draw 2 cards and place 2 doom, or take 2 horror. */
 export const OFFER_OF_POWER_DECISION = decisionId('theDevourerBelow.offerOfPower');
 
+/** Id of Umôrdhoth's Wrath's question for each point its test fails by: discard a card or take 1 damage and 1 horror. */
+export const UMORDHOTHS_WRATH_DECISION = decisionId('theDevourerBelow.umordhothsWrath');
+
 /** Id of the Quiet Glade action's question to its taker: heal 1 damage or 1 horror. */
 export const QUIET_GLADE_DECISION = decisionId('theDevourerBelow.quietGlade');
 
@@ -131,6 +135,7 @@ const codes = DEVOURER_BELOW_CODES;
 const own = sets.theDevourerBelow;
 const offerOfPower = 'scenario.theDevourerBelow.offerOfPower';
 const quietGlade = 'scenario.theDevourerBelow.quietGlade';
+const umordhothsWrath = 'scenario.theDevourerBelow.umordhothsWrath';
 const woods = ['Woods'];
 
 /**
@@ -149,7 +154,6 @@ const woods = ['Woods'];
  * - act 2's reverse side (the enemies at the Ritual Site)
  * - the Arkham Woods' moving-out test and skill swaps (setup connects the
  *   Main Path to each Woods location)
- * - Umôrdhoth's Wrath
  * - the Agents' constant and attack abilities (Screeching Byakhee, Yithian
  *   Observer), the madness weaknesses, Offer of Power's 2 cards, and Dreams of
  *   R'lyeh's -1 willpower and -1 sanity
@@ -369,6 +373,22 @@ export const theDevourerBelowCardDefs: readonly CardStats[] = [
     set: own,
     traits: ['Curse'],
     quantity: 2,
+    abilities: [
+      whenRevealed(
+        skillTest('willpower', 5, {
+          perPointFailed: [
+            youMustEither(UMORDHOTHS_WRATH_DECISION, `${umordhothsWrath}.prompt`, [
+              { id: 'discard', label: `${umordhothsWrath}.discard`, effects: [discardFromHand(1)] },
+              {
+                id: 'wounds',
+                label: `${umordhothsWrath}.wounds`,
+                effects: [takeDamageAndHorror({ damage: 1, horror: 1 })],
+              },
+            ]),
+          ],
+        }),
+      ),
+    ],
   }),
   enemy({
     code: '01175',

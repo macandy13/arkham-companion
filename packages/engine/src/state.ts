@@ -478,12 +478,11 @@ export interface Decision {
    */
   suggestion?: SkillTestSuggestion;
   /**
-   * Only for `skillTestResult`: "for each point you fail by, take 1 damage /
-   * horror / place 1 of your clues on your location". The deciding
-   * investigator pays as much as the fail answer's `margin` says, 1 without
-   * one (`answerCommands`).
+   * Only for `skillTestResult`: "for each point you fail by, …". These
+   * commands run once for each point the fail answer's `margin` says, 1
+   * without one, ahead of the fail option's (`answerCommands`).
    */
-  perPointFailed?: PerPointFailed;
+  perPointFailed?: readonly Command[];
   /**
    * The answers. Each carries the commands it triggers, so the mapping from
    * answer to consequence is data and any module (or scenario) can raise a
@@ -491,13 +490,6 @@ export interface Decision {
    */
   options: DecisionOption[];
 }
-
-/**
- * What a test costs the tester for each point it fails by
- * (`Decision.perPointFailed`, `TestSkill.perPointFailed`): 1 damage, 1
- * horror, or 1 of their clues placed on their location (`PlaceClues`).
- */
-export type PerPointFailed = 'damage' | 'horror' | 'clues';
 
 /** One answer the players can pick for a `Decision`. */
 export interface DecisionOption {
