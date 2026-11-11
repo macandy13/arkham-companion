@@ -27,8 +27,8 @@ const shotSpecs = /[\\/]shots[\\/].*\.spec\.ts$/;
 // the first recording slots whenever a change shows on every screen.
 const notFlows = [shotSpecs, /accessibility\.spec\.ts$/];
 
-// The pictures the preview compares with the base's (scripts/screencast/cli.ts), taken once the
-// screen has settled (e2e/fixtures/test.ts): a glide or a
+// The end pictures the committed goldens are made from (update-screenshots.yml) and checked
+// against (CI), taken once the screen has settled (e2e/fixtures/test.ts): a glide or a
 // fade still running as the test ends would make the same screen differ from run to run, and the
 // app leaves its animations out for reduced motion.
 // A spec that can't reach its situation (some don't yet on a phone) fails after 10 s instead
@@ -44,9 +44,9 @@ const executablePath = process.env.PW_CHROMIUM_PATH;
  * `pnpm e2e` runs every spec once: the accessibility checks in `accessibility`, every flow (the
  * specs outside `e2e/shots/`) in `flow-picture` and every spec in `e2e/shots/` in `screenshot`
  * and `screenshot-phone`, the last three photographing each test as it ends and, with
- * `GOLDENS=1` (CI), comparing it with its committed golden. The preview also runs those three
- * (`pnpm e2e:pictures`); `screencast` re-runs the flows whose end state the PR changes, slowed
- * down and recorded (`pnpm e2e:screencast`, see docs/automation.md).
+ * `GOLDENS=1` (CI), comparing it with its committed golden. The preview shows the goldens a PR
+ * changes; `screencast` re-runs the flows whose golden changed, slowed down and recorded
+ * (`pnpm e2e:screencast`, see docs/automation.md).
  */
 export default defineConfig<PictureOptions>({
   testDir: './e2e',

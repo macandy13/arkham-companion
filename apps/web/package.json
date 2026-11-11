@@ -10,7 +10,6 @@
     "typecheck": "tsc -p tsconfig.json && tsc -p scripts",
     "e2e": "playwright test --project=accessibility --project=flow-picture --project=screenshot --project=screenshot-phone",
     "playtest": "tsx src/playtest/cli.ts",
-    "e2e:pictures": "PLAYWRIGHT_JSON_OUTPUT_FILE=screencasts/report.json playwright test --project=flow-picture --project=screenshot --project=screenshot-phone --reporter=list,json",
     "e2e:screencast": "PLAYWRIGHT_JSON_OUTPUT_FILE=screencasts/recording.json playwright test --project=screencast --reporter=list,json"
   },
   "dependencies": {
@@ -43,14 +42,11 @@
     "@playwright/test": "^1.65.0",
     "@testing-library/react": "^16.3.3",
     "@types/node": "^26.6.6",
-    "@types/pngjs": "^6.0.5",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "@vitejs/plugin-react": "^6.2.1",
     "fake-indexeddb": "^6.2.7",
     "jsdom": "^31.0.0",
-    "pixelmatch": "^8.0.0",
-    "pngjs": "^7.0.0",
     "tsx": "^4.23.15",
     "vite": "^8.3.6",
     "vite-plugin-pwa": "^2.0.0"
