@@ -376,7 +376,10 @@ test('who pays the 4 clues to advance Trapped, Daisy Walker 3 and Roland Banks 1
   // A phone's compact header hides the act's plate; its detail view shows the act in full.
   if (isMobile) await page.getByRole('region', { name: 'Act' }).click();
 
-  await page.getByRole('region', { name: 'Act' }).getByRole('button', { name: 'Advance' }).click();
+  await page
+    .getByRole('region', { name: 'Act' })
+    .getByRole('button', { name: 'Advance', exact: true })
+    .click();
   const dialog = page.getByRole('dialog', { name: 'Who pays the clues?' });
   for (const token of [
     'clue 3 of Roland Banks',

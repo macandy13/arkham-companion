@@ -19,7 +19,7 @@ test('advance the act at the end of the round', async ({ page }) => {
   await test.step('Read the 3 clues Roland Banks holds in the Hallway on The Barrier, which has no Advance button', async () => {
     await expect(act.getByText('The Barrier')).toBeVisible();
     await expect(act.getByRole('img', { name: 'Clues 3 / 3' })).toBeVisible();
-    await expect(act.getByRole('button', { name: 'Advance' })).toHaveCount(0);
+    await expect(act.getByRole('button', { name: 'Advance', exact: true })).toHaveCount(0);
   });
 
   await test.step('End the turn and play on through the enemy and upkeep phases', async () => {
