@@ -1,4 +1,5 @@
 import {
+  byId,
   byName,
   CANCEL_REVELATION_OPTION,
   isEnemyAttackDecision,
@@ -14,7 +15,7 @@ import {
 import { botStep } from './bots';
 import { deckFor, type CardUse, type PlayerCard } from './player_cards';
 import type { Run, SeededRandom } from './run';
-import type { CardEffect, Step } from './steps';
+import { answerStep, type CardEffect, type Step } from './steps';
 import { drawnResult, openDrawnTest } from './test_answers';
 
 /** The cards an investigator plays or commits in one turn at most (player-card-analysis.md). */
@@ -175,7 +176,7 @@ export class DeckBot {
       const skip = decision.options.find(({ id }) => id === 'skip');
       const played = skip && this.cancelPlayed(table, decision.decider.investigatorId, 'attack');
       if (!skip || !played) continue;
-      return [played.paid, answering(decision, skip)];
+      return [played.paid, answerStep(table, decision, optionName(skip))];
     }
     return undefined;
   }
@@ -198,7 +199,7 @@ export class DeckBot {
       const horror = played.use.horror ?? 0;
       return [
         played.paid,
-        answering(decision, cancel),
+        answerStep(table, decision, optionName(cancel)),
         ...(horror > 0
           ? [
               {
@@ -389,7 +390,8 @@ export class DeckBot {
     // The bot keeps no slots; one copy of an asset in play stands in for the slot limits.
     if (card.type === 'asset' && seat.inPlay.some((inPlay) => inPlay.card.name === card.name))
       return undefined;
-    const location = view.at === undefined ? undefined : board.location(byName(view.at));
+    const at = board.locationOf(view.id);
+    const location = at === undefined ? undefined : board.location(byId(at));
     const engaged = board.enemiesEngagedWith(view.id);
     const here = location ? board.enemiesAt(location.id) : [];
     const situation: Situation = {
@@ -547,7 +549,7 @@ interface Situation {
   readonly clues: number;
   readonly engaged?: InstanceId;
   readonly here?: InstanceId;
-  readonly exit?: CardName;
+  readonly exit?: InstanceId;
   /** Resources left after paying for the card. */
   readonly resources: number;
   readonly nearDefeat: boolean;
@@ -619,15 +621,6 @@ function spending(investigator: CardName, card: CardName, amount: number): Step 
 /** The `use` of a card that cancels an attack or a revelation (Dodge, Ward of Protection). */
 type CancelUse = Extract<CardUse, { kind: 'cancel' }>;
 
-/** The answer to `decision` with `option`. */
-function answering(decision: Decision, option: Decision['options'][number]): Step {
-  return {
-    verb: 'answer',
-    ...(decision.subject && { about: decision.subject }),
-    option: optionName(option),
-  };
-}
-
 /**
  * Whether `step` answers the open decision, so it doesn't wait for it: an answer, a test's result,
  * or a payment for a card played in its window.
@@ -651,9 +644,8 @@ function passAmount(decision: Decision, extra: number): { amount?: number } {
   return { amount: Math.min(range.default + extra, range.max ?? Infinity) };
 }
 
-/** A revealed location connected to `location`, by name, to escape to. */
-function exitOf(table: PlayTable, location: InstanceId | undefined): CardName | undefined {
+/** A revealed location connected to `location`, to escape to. */
+function exitOf(table: PlayTable, location: InstanceId | undefined): InstanceId | undefined {
   if (location === undefined) return undefined;
-  const exit = table.board.connectedTo(location).find((id) => table.board.location(id).revealed);
-  return exit && table.board.location(exit).name;
+  return table.board.connectedTo(location).find((id) => table.board.location(id).revealed);
 }

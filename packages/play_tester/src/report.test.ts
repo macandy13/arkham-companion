@@ -9,7 +9,7 @@ describe('the report of a finding', () => {
   /** A recorded refusal after Roland's first resource, with the boards around it. */
   const record: RunRecord = {
     format: 'arkham-run',
-    version: 3,
+    version: 4,
     tester: { version: '0.0.0', commit: 'abc123' },
     run: {
       scenario: theGathering.id,

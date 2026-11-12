@@ -38,7 +38,7 @@ const crashAtStart: Finding = {
 function recordWith(finding: Finding, steps: readonly Step[]): RunRecord {
   return {
     format: 'arkham-run',
-    version: 3,
+    version: 4,
     tester,
     run,
     finding,

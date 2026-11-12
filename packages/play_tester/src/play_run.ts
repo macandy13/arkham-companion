@@ -13,7 +13,7 @@ import {
 import { botStep } from './bots';
 import { DeckBot } from './deck_bot';
 import { brokenRule } from './oracles';
-import { refusalKind } from './refusals';
+import { cardActionRefusal, refusalKind } from './refusals';
 import { SeededRandom, setUpTable, type Run } from './run';
 import { describeStep, playStep, type Step } from './steps';
 
@@ -247,7 +247,8 @@ export function checkedStep(table: PlayTable, step: Step): StepOutcome {
     playStep(table, step);
   } catch (error) {
     if (error instanceof CommandRejected) {
-      const { code } = error.rejection;
+      const { code } =
+        step.verb === 'useCardAction' ? cardActionRefusal(error.rejection) : error.rejection;
       if (step.verb === 'answer' || step.verb === 'resolveTest')
         return failed(
           'liveness',

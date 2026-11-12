@@ -166,7 +166,10 @@ export const ORACLES: readonly Oracle[] = [
     judge: (before, after) => {
       // A tie (which hunter first, which investigator, which way) waits for the players and moves
       // nothing yet; the answer moves the hunter in a later step, which this oracle leaves alone.
-      if (!huntersMoved(before, after) || after.decisions.some(asksAboutHunters)) return undefined;
+      // A game that ends as the investigation phase does (its last investigator defeated by a
+      // burning location) ends before any hunter moves.
+      if (after.ended || !huntersMoved(before, after) || after.decisions.some(asksAboutHunters))
+        return undefined;
       for (const hunter of movingHunters(before)) {
         const to = locationOfEnemy(after, hunter.id);
         if (to === undefined) continue;
@@ -218,9 +221,14 @@ function asksAboutHunters({ prompt }: BoardView['decisions'][number]): boolean {
 
 /** Whether the step from `before` to `after` ran enemy step 1, in which the hunters move. */
 function huntersMoved(before: BoardView, after: BoardView): boolean {
-  // The phase assistant takes a step off its list before running it, so no settled board shows
-  // the hunter step still to come: the "Next" out of the investigation phase runs it.
-  return before.phase === 'investigation' && position(after) > position(before);
+  // The phase assistant takes a step off its list before running it, so the "Next" out of the
+  // investigation phase runs it, unless a question as that phase ends (a new lead investigator)
+  // holds it still to come; the later "Next" that runs it then starts in the enemy phase.
+  return (
+    before.phase === 'investigation' &&
+    position(after) > position(before) &&
+    after.step !== 'huntersMove'
+  );
 }
 
 /** A hunter that enemy step 1 moves, as `before` shows it: ready, unengaged, at a location. */

@@ -14,7 +14,7 @@ import {
   resignAction,
   type InvestigatorView,
 } from '@arkham/engine';
-import { describeStep, playStep, type CardEffect } from './steps';
+import { answerStep, describeStep, playStep, type CardEffect } from './steps';
 
 const alice = investigatorId('alice');
 const study = instanceId('study');
@@ -37,7 +37,7 @@ describe('playing a step', () => {
     playStep(table, {
       verb: 'moveTo',
       investigator: cardName('alice'),
-      location: cardName('hallway'),
+      location: instanceId('hallway'),
     });
 
     expect(table.board.investigator(alice).at).toBe('hallway');
@@ -79,7 +79,7 @@ describe('playing a step', () => {
       playStep(table, {
         verb: 'moveTo',
         investigator: cardName('alice'),
-        location: cardName('study'),
+        location: instanceId('study'),
       }),
     ).toThrow();
     expect(table.board.investigator(alice).actions).toBe(3);
@@ -221,7 +221,7 @@ describe('playing a step', () => {
     { effect: { kind: 'pay', resources: 2 }, changed: { resources: 3 } },
     { effect: { kind: 'doomOnPlayerCards', delta: 1 }, changed: { doom: 1 } },
     {
-      effect: { kind: 'moveTo', location: cardName('hallway') },
+      effect: { kind: 'moveTo', location: instanceId('hallway') },
       changed: { at: cardName('hallway') },
     },
   ])('takes the effect $effect.kind on the table', ({ effect, changed }) => {
@@ -255,6 +255,56 @@ describe('playing a step', () => {
   });
 });
 
+describe('the step answering a decision', () => {
+  const bob = investigatorId('bob');
+  const massiveGhoul = instanceId('massive_ghoul');
+
+  /** The enemy phase's attacks, due from a massive ghoul at the study on `investigators` there. */
+  const attacksOn = (investigators: readonly (typeof alice)[]) => {
+    let game = newGame().withLocation(study, blankLocation('study'), { revealed: true });
+    for (const investigator of investigators)
+      game = game.withInvestigator(investigator, { locationId: study });
+    const table = PlayTable.start(
+      game.withCard(
+        massiveGhoul,
+        blankEnemy('massive_ghoul', { damage: 1, keywords: [{ name: 'massive' }] }),
+        { kind: 'atLocation', locationId: study },
+      ),
+    );
+    table.nextPhase();
+    for (const investigator of investigators) {
+      table.startTurn(investigator);
+      table.endTurn(investigator);
+    }
+    table.nextPhase();
+    return table;
+  };
+
+  it('names the card the decision is about', () => {
+    const table = attacksOn([alice]);
+
+    expect(answerStep(table, table.state.pending[0]!, 'attack')).toEqual({
+      verb: 'answer',
+      about: massiveGhoul,
+      option: 'attack',
+    });
+  });
+
+  it('also names the deciding investigator when another decision is about the same card', () => {
+    const table = attacksOn([alice, bob]);
+    const onBob = table.state.pending.find(
+      ({ decider }) => decider.kind === 'investigator' && decider.investigatorId === bob,
+    )!;
+
+    const step = answerStep(table, onBob, 'attack');
+    playStep(table, step);
+
+    expect(step).toEqual({ verb: 'answer', about: massiveGhoul, for: 'bob', option: 'attack' });
+    expect(table.board.investigator(bob).damage).toBe(1);
+    expect(table.board.investigator(alice).damage).toBe(0);
+  });
+});
+
 describe('a step as text', () => {
   it.each([
     { step: { verb: 'nextPhase' as const }, text: 'nextPhase()' },
@@ -262,9 +312,9 @@ describe('a step as text', () => {
       step: {
         verb: 'moveTo' as const,
         investigator: cardName('Daisy Walker'),
-        location: cardName('Attic'),
+        location: instanceId('attic'),
       },
-      text: 'moveTo("Daisy Walker", "Attic")',
+      text: 'moveTo("Daisy Walker", "attic")',
     },
     {
       step: { verb: 'answer' as const, about: instanceId('ghoul_minion'), option: 'attack' },

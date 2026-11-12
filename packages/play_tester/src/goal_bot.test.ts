@@ -45,7 +45,7 @@ describe('the steps the goal bot wants', () => {
 
   it('moves towards the nearest clues', () => {
     expect(wanted(PlayTable.start(game))).toEqual([
-      { verb: 'moveTo', investigator: cardName('alice'), location: cardName('study') },
+      { verb: 'moveTo', investigator: cardName('alice'), location: instanceId('study') },
     ]);
   });
 

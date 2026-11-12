@@ -1,7 +1,13 @@
 import { unique } from '@arkham/util';
-import { byId, type InvestigatorView, type PlayTable } from '@arkham/engine';
+import type { InvestigatorView, PlayTable } from '@arkham/engine';
 import { answersByDraw } from './test_answers';
-import { actionCostOf, INVESTIGATOR_VERBS, type InvestigatorVerb, type Step } from './steps';
+import {
+  actionCostOf,
+  answerStep,
+  INVESTIGATOR_VERBS,
+  type InvestigatorVerb,
+  type Step,
+} from './steps';
 
 /** The verbs any active investigator may use outside their turn, as a card lets them. */
 const ANYTIME_VERBS: readonly InvestigatorVerb[] = ['drawEncounterCard'];
@@ -107,9 +113,8 @@ function decisionAnswers(table: PlayTable): Step[] {
   return table.board.decisions.flatMap((view, i) => {
     const decision = pending[i];
     if (decision && answersByDraw(table, decision)) return [];
-    const about = decision?.subject;
     return view.options.map((option): Step =>
-      about === undefined ? { verb: 'answer', option } : { verb: 'answer', about, option },
+      decision ? answerStep(table, decision, option) : { verb: 'answer', option },
     );
   });
 }
@@ -133,7 +138,7 @@ function turnSteps(table: PlayTable, investigator: InvestigatorView): Step[] {
       : board.connectedTo(at).map((location): Step => ({
           verb: 'moveTo',
           investigator: name,
-          location: board.location(byId(location)).name,
+          location,
         }))),
     ...(at === undefined ? [] : board.enemiesAt(at)).flatMap((enemy) =>
       board

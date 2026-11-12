@@ -48,7 +48,7 @@ describe('the steps the random bot is offered', () => {
         { verb: 'nextPhase' },
         { verb: 'endTurn', investigator: cardName('alice') },
         { verb: 'investigate', investigator: cardName('alice') },
-        { verb: 'moveTo', investigator: cardName('alice'), location: cardName('hallway') },
+        { verb: 'moveTo', investigator: cardName('alice'), location: instanceId('hallway') },
         { verb: 'fight', investigator: cardName('alice'), enemy: 'ghoul' },
         { verb: 'evade', investigator: cardName('alice'), enemy: 'ghoul' },
         { verb: 'takeDamage', investigator: cardName('alice') },
@@ -90,7 +90,7 @@ describe('weighing the steps by their share', () => {
   const undo = { verb: 'undo' } as const;
   const doom = { verb: 'placeDoom' } as const;
   const moveTo = (location: string) =>
-    ({ verb: 'moveTo', investigator: cardName('alice'), location: cardName(location) }) as const;
+    ({ verb: 'moveTo', investigator: cardName('alice'), location: instanceId(location) }) as const;
   const rare = (step: Step) => step.verb === 'undo' || step.verb === 'placeDoom';
 
   it('gives each verb the same weight, split over its steps', () => {
