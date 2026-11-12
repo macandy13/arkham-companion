@@ -159,9 +159,10 @@ const willpowerOrHorror = skillTest('willpower', 4, { onFail: [takeHorror(1)] })
  *
  * Effects the engine has no rule for yet are left out, so the players resolve them from the card:
  *
- * - the agendas' rule that enemies at a location with Fire! attached cannot be damaged, Elokoss's
- *   Mother of Flame side (agenda 2b), agenda 3a's damage instead of doom, and act 2a's clue spend
- *   to discard a Fire!
+ * - the agendas' rule that enemies at a location with Fire! attached cannot be damaged (MC2.12):
+ *   until then the players heal what Fire!'s own damage deals them as the investigation phase ends
+ * - Elokoss's Mother of Flame side (agenda 2b), agenda 3a's damage instead of doom, and act 2a's
+ *   clue spend to discard a Fire!
  * - the additional clue costs to enter Underground Cistern and Sluice Control (MC2.4)
  * - Underground Cistern's clues placed again once it has none, and its discard of ready
  *   non-Elite Cultists as the investigation phase ends, with 1 doom each

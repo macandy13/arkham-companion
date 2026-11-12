@@ -9,6 +9,7 @@
 - A card effect on "the nearest [[Cultist]] enemy" (Mysterious Chanting) counts connections from the location of the investigator resolving it; an engaged enemy is at its investigator's location.
   - An enemy with no path there still counts, as farther than every enemy with one (FAQ: "Even if it has no valid path to an investigator, an enemy can still qualify as the 'nearest' enemy", asked about Mysterious Chanting).
   - The lead investigator picks between equally near enemies ([Choices](https://arkhamdb.com/rules#Choices_and_the_Grim_Rule)).
+- "The nearest location without Fire! attached" counts the same way from the drawer's location, which is 0 away, so it is the nearest unless it has a Fire! already; the lead investigator picks between equally near ones.
 - A card effect that moves an enemy "1 location towards" a location (They're Getting Out!) moves it one connection along a shortest path there, exhausted or not.
   - Equally short ways go to the lead investigator ([Choices](https://arkhamdb.com/rules#Choices_and_the_Grim_Rule)); an enemy with no path, or already there, stays.
   - Arriving ready at an investigator's location, it engages as any moving enemy does.

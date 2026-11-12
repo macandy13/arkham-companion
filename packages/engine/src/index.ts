@@ -192,6 +192,8 @@ export {
   placeCluesOnSelf,
   placeCluesOnSelfUpTo,
   nearestEnemy,
+  nearestLocation,
+  thisLocation,
   healSelf,
   gainSurge,
   ifYouHave,

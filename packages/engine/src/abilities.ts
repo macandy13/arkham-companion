@@ -33,7 +33,7 @@ import {
   type ResolutionId,
 } from './ids';
 import type { GridCell } from './map';
-import { locationsInPlay } from './board';
+import { extremeLocations, locationsInPlay } from './board';
 import { limitReached } from './placement';
 import { enemiesAt, enemiesMatching, nearestEnemies, type EnemyFilter } from './enemies';
 import {
@@ -236,6 +236,12 @@ export type RelativeCard =
    */
   | { ref: 'windowLocation' }
   /**
+   * The location the card with the ability is at, attached to or is itself (`locationOfCard`):
+   * "this location" on a card attached to one ("each investigator at this location", Fire!); none
+   * while the card is nowhere on the map.
+   */
+  | { ref: 'selfLocation' }
+  /**
    * The one copy of `code` in the game, in whatever zone: for a scenario's
    * unique cards ("the Parlor", "the Ghoul Priest"); none while the game holds
    * no copy or several, and the effect is skipped with `AbilityEffectSkipped`.
@@ -290,7 +296,15 @@ export type RelativeCard =
    * investigator (Rules Reference, "Choices"): the effect becomes a decision
    * with an option per location.
    */
-  | { ref: 'locationWithMost'; token: TokenKind };
+  | { ref: 'locationWithMost'; token: TokenKind }
+  /**
+   * The location in play nearest to the location of the investigator the window names, counted in
+   * connections (`extremeLocations`, the drawer's own location at 0), that the card with the
+   * ability may attach to ("attach to the nearest location without Fire! attached": its
+   * `CardStats.limit`); none when it may attach nowhere. Equally near ones go to the lead
+   * investigator (Rules Reference, "Choices"), as for `locationWithMost`.
+   */
+  | { ref: 'nearestLocation' };
 
 /**
  * An investigator an ability names relative to its window: the one the
@@ -1016,6 +1030,13 @@ function pickQuestion(
         prompt: 'decision.chooseLocationToAttach',
         decider: { kind: 'lead' },
       };
+    case 'nearestLocation':
+      return {
+        key: 'nearestLocation',
+        kind: 'chooseLocation',
+        prompt: 'decision.chooseLocationToAttach',
+        decider: { kind: 'lead' },
+      };
     default:
       return assertNever(picked);
   }
@@ -1024,13 +1045,19 @@ function pickQuestion(
 /** A reference that stands for one of several candidates, which someone may have to pick. */
 export type PickedRef = Extract<
   RelativeCard,
-  { ref: 'nearestEnemy' | 'locationWith' | 'locationWithMost' }
+  { ref: 'nearestEnemy' | 'locationWith' | 'locationWithMost' | 'nearestLocation' }
 >;
 
-/** The first reference in `effect` with candidates (`nearestEnemy`, `locationWith`, `locationWithMost`), if it holds one. */
+/**
+ * The first reference in `effect` with candidates (`nearestEnemy`, `locationWith`,
+ * `locationWithMost`, `nearestLocation`), if it holds one.
+ */
 function pickedRef(effect: unknown): PickedRef | undefined {
   return findRef(effect, (ref) =>
-    ref.ref === 'nearestEnemy' || ref.ref === 'locationWith' || ref.ref === 'locationWithMost'
+    ref.ref === 'nearestEnemy' ||
+    ref.ref === 'locationWith' ||
+    ref.ref === 'locationWithMost' ||
+    ref.ref === 'nearestLocation'
       ? ref
       : undefined,
   );
@@ -1065,6 +1092,21 @@ function candidatesFor(
       const held = (location: CardInstance) => location.tokens[picked.token] ?? 0;
       const most = Math.max(...open.map(held));
       return open.filter((location) => held(location) === most);
+    }
+    case 'nearestLocation': {
+      if (from === undefined) return [];
+      const open = locationsInPlay(ctx, state).filter((location) =>
+        mayAttach(ctx, state, cardId, location),
+      );
+      if (open.length === 0) return [];
+      const nearest = extremeLocations(
+        ctx,
+        state,
+        from,
+        open.map((location) => location.id),
+        'nearest',
+      );
+      return open.filter((location) => nearest.includes(location.id));
     }
     default:
       return assertNever(picked);
@@ -1113,6 +1155,8 @@ interface ResolvedRefs {
   windowInvestigator: InvestigatorId | undefined;
   lead: InvestigatorId | undefined;
   windowLocation: InstanceId | undefined;
+  /** Where the card with the ability is (`selfLocation`). */
+  selfLocation: InstanceId | undefined;
   onlyCopy: (code: CardCode) => InstanceId | undefined;
   /** The investigator or enemy of this repetition of an effect on each of them. */
   each?: InstanceId | InvestigatorId;
@@ -1237,6 +1281,7 @@ function windowRefs(ctx: EngineContext, state: GameState, opened: OpenedWindow):
     windowLocation:
       opened.locationId ??
       (investigator && attachableLocation(ctx, state, opened.cardId, investigator)),
+    selfLocation: locationOfCard(state, requireCard(state.cards, opened.cardId)),
     onlyCopy: (code) => theOnlyCopy(state, code),
   };
 }
@@ -1291,6 +1336,8 @@ function resolveRefs(value: unknown, refs: ResolvedRefs): unknown {
         return refs.lead;
       case 'windowLocation':
         return refs.windowLocation;
+      case 'selfLocation':
+        return refs.selfLocation;
       case 'onlyCopy':
         return refs.onlyCopy(value.code);
       case 'eachInvestigator':
@@ -1301,6 +1348,7 @@ function resolveRefs(value: unknown, refs: ResolvedRefs): unknown {
       case 'nearestEnemy':
       case 'locationWith':
       case 'locationWithMost':
+      case 'nearestLocation':
         return refs.picked;
       default:
         return assertNever(value);
@@ -1671,6 +1719,22 @@ export function locationWithMost(
   token: TokenKind,
 ): Extract<PickedRef, { ref: 'locationWithMost' }> {
   return { ref: 'locationWithMost', token };
+}
+
+/**
+ * "The nearest location without a copy of [this card] attached" (`nearestLocation`), picked by the
+ * lead investigator when several are equally near, written `attachTo(nearestLocation())` (Fire!).
+ */
+export function nearestLocation(): Extract<PickedRef, { ref: 'nearestLocation' }> {
+  return { ref: 'nearestLocation' };
+}
+
+/**
+ * "This location" on a card attached to a location (`selfLocation`): "each investigator at this
+ * location", written `takeDamage(1, eachInvestigator({ at: thisLocation() }))` (Fire!).
+ */
+export function thisLocation(): RelativeCard {
+  return { ref: 'selfLocation' };
 }
 
 /**
