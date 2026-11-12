@@ -342,6 +342,10 @@ test(
       .getByRole('dialog', { name: 'The Gathering' })
       .getByRole('region', { name: 'Chaos bag' });
 
+    await bag.getByRole('button', { name: 'Add a Bless token to the bag' }).click();
+    await expect(bag.getByRole('list', { name: 'Bless and curse' })).toHaveText(
+      /Bless 9 left in the pool/,
+    );
     await bag.getByRole('button', { name: /^Elder Sign/ }).click();
     await bag.getByRole('button', { name: 'Seal Elder Sign on Roland Banks' }).click();
 
