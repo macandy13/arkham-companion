@@ -320,6 +320,24 @@ export function investigationOpenExport(title: string): Buffer {
 }
 
 /**
+ * Like `investigationOpenExport`, but Obscuring Fog (+2 shroud) is attached to the Hallway, put
+ * there by hand to keep the script short, so the dialog names it under the test line.
+ */
+export function fogInvestigationExport(title: string): Buffer {
+  const table = houseOpened(theGathering);
+  table.play({
+    type: 'ManualAdjust',
+    adjustment: {
+      kind: 'moveCard',
+      cardId: cardIn(table, cardCode('01168')),
+      to: { kind: 'attachedTo', hostId: cardIn(table, GATHERING_CODES.hallway) },
+    },
+  });
+  table.investigate(rolandId, { result: 'open' });
+  return exportOf(title, table, 'fog_investigation');
+}
+
+/**
  * Like `houseOpenedExport`, but the Parlor is revealed, by hand to keep the script short (act 2
  * reveals it), and Roland Banks spends their last action moving into it, so their turn row offers the
  * Parlor's Resign.

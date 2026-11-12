@@ -5,7 +5,7 @@ The first open decision shows as a [dialog](../../apps/web/src/screens/DecisionD
 - beside the page, the card the decision is about, else the encounter card whose revelation asks it (`DecisionView.card`, a `CardFaceView`),
 - who decides, in the kicker with their portrait, over the translated question with the card it is about,
 - when a revelation asks the players something, whom the card being resolved was drawn for and its keywords as badges ([`ResolvingCard`](../../apps/web/src/encounter/ResolvingCard.tsx), `BoardView.resolving`: the card in the `resolving` zone with the investigator its queued placement names and its keywords, a gained surge included),
-- the test of a skill test,
+- the test of a skill test, and under it, when cards in play change its difficulty, the printed value and each card with its change (`DifficultyTerms`: "Printed 1 · Obscuring Fog +2", read from the trace's `card` steps),
 - and a choice row per option (MD.2c), its key (✓ for a pass, ✗ for a fail, else its number) before its readable name (`GameActions.answer` maps it to the option). A row without counts answers on tap; a row with counts is picked (`aria-pressed`) and waits for Done, the form's primary, so the players can change its numbers first. Done starts on the draw's outcome when that has counts, else on the first row with counts when no test decides (an attack of opportunity takes the attack).
 
 A skill test one investigator takes also brings the test block the skill test dialog shares ([`TestCalculation.tsx`](../../apps/web/src/investigators/TestCalculation.tsx), MD.2b): `useSkillTest` keeps the run (skills, modifier, tokens drawn, `BoardView.skillTest`'s result) and `SkillTestBlock` shows it:

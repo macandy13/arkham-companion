@@ -75,7 +75,7 @@ export function useSkillTest(
   if (investigator === undefined || test === undefined) return undefined;
   const skills = picked ?? [test.skill];
   const [tested, added] = skills;
-  const taken = { skill: tested, difficulty: test.difficulty };
+  const taken = { ...test, skill: tested };
   const addedSkill = added === undefined ? {} : { addedSkill: added };
   const result = board.skillTest(investigator, taken, {
     modifier,
@@ -301,6 +301,44 @@ export function ResultStrip({
   );
 }
 
+/**
+ * What made a test's difficulty when cards in play changed it (ME.7b): the printed value, then
+ * each card and what it adds ("Obscuring Fog +2"), from the trace's difficulty steps. Nothing when
+ * no card changes it, since the test line already gives the number.
+ */
+export function DifficultyTerms({
+  board,
+  trace,
+}: {
+  board: BoardView;
+  trace: readonly ModifierStep[];
+}) {
+  const { t } = useTranslation();
+  const steps = trace.filter(
+    (step) => step.target === 'difficulty' && step.source.kind !== 'minimumZero',
+  );
+  if (!steps.some((step) => step.source.kind === 'card')) return null;
+  return (
+    <ol aria-label={t('skillTest.difficulty')} data-part="difficulty">
+      {steps.map((step, index) => (
+        <li key={index}>
+          {difficultyTermName(board, step.source, t)}{' '}
+          <data value={step.change}>{index === 0 ? step.change : signed(step.change)}</data>
+        </li>
+      ))}
+    </ol>
+  );
+}
+
+/** The name of one term of the difficulty: the printed value or the card that changes it. */
+function difficultyTermName(
+  board: BoardView,
+  source: ModifierSource,
+  t: ReturnType<typeof useTranslation>['t'],
+): string {
+  return source.kind === 'card' ? board.cardFace(source.cardId).name : t('skillTest.printed');
+}
+
 /** One number with − and + buttons, the − off at `min` and the + at `max` when it has them. */
 export function Stepper({
   label,
@@ -362,6 +400,7 @@ function isSkillTerm(step: ModifierStep): step is SkillTerm {
     case 'playerModifier':
       return true;
     case 'baseDifficulty':
+    case 'card':
     case 'chaosToken':
     case 'autoFail':
     case 'minimumZero':

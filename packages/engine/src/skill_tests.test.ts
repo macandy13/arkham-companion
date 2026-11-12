@@ -253,7 +253,31 @@ describe('Investigate at a location with attachments', () => {
 
     const asked = stateAfter(context, state, investigate);
 
-    expect(asked.pending[0]?.skillTest).toEqual({ skill: 'intellect', difficulty: 6 });
+    expect(asked.pending[0]?.skillTest).toEqual({
+      skill: 'intellect',
+      difficulty: 6,
+      modifiedFrom: {
+        printed: 3,
+        changes: [
+          { cardId: fog, by: 2 },
+          { cardId: lastingFog, by: 1 },
+        ],
+      },
+    });
+  });
+
+  it('names each attachment in the trace of the difficulty', () => {
+    const { context, state } = bothFogsInStudy.start();
+
+    const asked = stateAfter(context, state, investigate);
+
+    expect(
+      asked.pending[0]?.suggestion?.trace.filter((step) => step.target === 'difficulty'),
+    ).toEqual([
+      { target: 'difficulty', source: { kind: 'baseDifficulty' }, change: 3, total: 3 },
+      { target: 'difficulty', source: { kind: 'card', cardId: fog }, change: 2, total: 5 },
+      { target: 'difficulty', source: { kind: 'card', cardId: lastingFog }, change: 1, total: 6 },
+    ]);
   });
 
   it('discards the fog on a pass and keeps the lasting fog', () => {
@@ -579,11 +603,19 @@ describe('Fight and Evade against values a location changes', () => {
   it.each<{ action: Command; skillTest: object }>([
     {
       action: { type: 'Fight', investigatorId: alice, enemyId: ghoul },
-      skillTest: { skill: 'combat', difficulty: 5 },
+      skillTest: {
+        skill: 'combat',
+        difficulty: 5,
+        modifiedFrom: { printed: 4, changes: [{ cardId: hallway, by: 1 }] },
+      },
     },
     {
       action: { type: 'Evade', investigatorId: alice, enemyId: ghoul },
-      skillTest: { skill: 'agility', difficulty: 4 },
+      skillTest: {
+        skill: 'agility',
+        difficulty: 4,
+        modifiedFrom: { printed: 2, changes: [{ cardId: hallway, by: 2 }] },
+      },
     },
   ])('raises $action.type against the changed value', ({ action, skillTest }) => {
     const { context, state } = ghoulOnAliceInDarkHall.start();

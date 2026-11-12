@@ -8,6 +8,7 @@ import {
   byName,
   decisionId,
   fixed,
+  attachedTo,
   blankLocation,
   engagedWith,
   instanceId,
@@ -77,6 +78,35 @@ describe('DecisionDialog', () => {
     expect(screen.getByText('Alder decides')).toBeDefined();
     expect(screen.getByText('Intellect test (2)')).toBeDefined();
     expect(optionButtons()).toEqual(['Passed', 'Failed']);
+  });
+
+  it('names the card that raises the shroud under the test line', () => {
+    const fog = instanceId('fog');
+    const table = PlayTable.start(
+      newGame()
+        .withLocation(study, blankLocation('study', { name: 'Study', shroud: 2 }), {
+          revealed: true,
+          clues: 1,
+        })
+        .withCard(
+          fog,
+          blankTreachery('fog', {
+            name: 'Obscuring Fog',
+            modifiers: [{ value: 'shroud', of: 'host', by: 2 }],
+          }),
+          attachedTo(study),
+        )
+        .withInvestigator(alder, { name: 'Alder', locationId: study })
+        .withTurnOf(alder),
+    );
+    table.investigate(alder, { result: 'open' });
+
+    renderFirstDecision(table);
+
+    expect(screen.getByText('Intellect test (4)')).toBeDefined();
+    expect(screen.getByRole('list', { name: 'Difficulty' }).textContent).toBe(
+      'Printed 2Obscuring Fog +2',
+    );
   });
 
   it.each([

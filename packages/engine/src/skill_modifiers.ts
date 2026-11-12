@@ -5,6 +5,7 @@ import { findInvestigator, requireInvestigator } from './investigators';
 import { CommandRejected } from './rejection';
 import { pickReferenceSide, type SymbolToken } from './scenario';
 import type {
+  CardChange,
   ChaosToken,
   Decision,
   GameState,
@@ -13,20 +14,23 @@ import type {
   ModifierStep,
   ModifierTarget,
   SkillName,
+  SkillTest,
   SkillValues,
   SkillTestSuggestion,
 } from './state';
 
 /**
  * What a token value sees of a skill test: who takes it, which skill
- * against which printed difficulty, and where it happens. Derived from a
+ * against which difficulty, and where it happens. Derived from a
  * `skillTestResult` decision by `skillTestContext`.
  */
 export interface SkillTestContext {
   investigatorId: InvestigatorId;
   skill: SkillName;
-  /** The printed difficulty (shroud, enemy value, card number), before modifiers. */
+  /** The difficulty (shroud, enemy value, card number), modifiers of cards included (`SkillTest.difficulty`). */
   difficulty: number;
+  /** The printed value and the cards in play that made `difficulty` (`SkillTest.modifiedFrom`). */
+  modifiedFrom?: SkillTest['modifiedFrom'];
   /** The investigator's location when the test is taken; absent while they are on none. */
   locationId?: InstanceId;
 }
@@ -169,6 +173,7 @@ export function skillTestContext(
     investigatorId,
     skill: test.skill,
     difficulty: test.difficulty,
+    ...(test.modifiedFrom ? { modifiedFrom: test.modifiedFrom } : {}),
     ...(locationId === undefined ? {} : { locationId }),
   };
 }
@@ -229,12 +234,14 @@ export function skillTestSuggestion(
     ...addedSkillChanges(investigator.skills, input.addedSkill),
     ...(input.addedSkill ? boostChanges(investigator, input.addedSkill) : []),
     ...playerChanges(input.modifier ?? 0),
+    ...difficultyChanges(test.modifiedFrom?.changes ?? []),
     ...tokenChanges.flatMap(({ change }) => change ?? []),
   ];
   for (const change of changes) assertWhole(change.change);
   const autoFail = failsAutomatically(tokens);
   const skill = targetTrace('skill', investigator.skills[test.skill], changes, autoFail);
-  const difficulty = targetTrace('difficulty', test.difficulty, changes, false);
+  const printed = test.modifiedFrom?.printed ?? test.difficulty;
+  const difficulty = targetTrace('difficulty', printed, changes, false);
   const passes = !autoFail && skill.total >= difficulty.total;
   return {
     skill: skill.total,
@@ -298,6 +305,15 @@ function boostChanges(investigator: Investigator, skill: SkillName): Change[] {
 function addedSkillChanges(skills: SkillValues, added: SkillName | undefined): Change[] {
   if (added === undefined) return [];
   return [{ target: 'skill', source: { kind: 'addedSkill', skill: added }, change: skills[added] }];
+}
+
+/** One step per card in play that changes the difficulty, so the trace can name it. */
+function difficultyChanges(modifiers: readonly CardChange[]): Change[] {
+  return modifiers.map(({ cardId, by }) => ({
+    target: 'difficulty',
+    source: { kind: 'card', cardId },
+    change: by,
+  }));
 }
 
 function playerChanges(modifier: number): Change[] {

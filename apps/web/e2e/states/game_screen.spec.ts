@@ -2,6 +2,7 @@ import { expect, test } from '../fixtures/test';
 import {
   cluesToShareExport,
   doomBesideDamageExport,
+  fogInvestigationExport,
   ghoulPriestInCellarExport,
   graspingHandsDrawnExport,
   graveyardTestExport,
@@ -235,6 +236,22 @@ test('the investigation decision lowered to reach the board', async ({ page }) =
   await decision.getByRole('button', { name: 'Lower to reach the board' }).click();
 
   await expect(decision.getByRole('button', { name: 'Raise the dialog' })).toBeVisible();
+});
+
+test('the investigation of the Hallway under Obscuring Fog, the fog named beside the printed shroud', async ({
+  page,
+}) => {
+  await resumeImportedGame(
+    page,
+    'Investigating in fog',
+    fogInvestigationExport('Investigating in fog'),
+  );
+  const decision = page.getByRole('dialog', { name: 'Investigate Hallway' });
+
+  await expect(decision.getByText('Intellect test (3)')).toBeVisible();
+  await expect(decision.getByRole('list', { name: 'Difficulty' })).toHaveText(
+    'Printed 1Obscuring Fog +2',
+  );
 });
 
 test("Roland Banks' fight against the Ghoul Priest, the damage raised to 2", async ({ page }) => {

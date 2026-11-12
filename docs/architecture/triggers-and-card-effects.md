@@ -168,7 +168,7 @@ The `investigatorTurn` condition ("during any investigator's turn") holds while 
 Constant abilities are data too. A buff or nerf of any number is a `CardStats.modifiers` entry ([`Modifier`](../../packages/engine/src/modifiers.ts)), keyed by the value it changes: `{ value: 'shroud', of: 'host', by: 2 }`. Each variant ties its value to the scope that may name it, so a card value never names an investigator.
 
 - [`modifiersOn`](../../packages/engine/src/modifiers.ts) is the one place that collects the active ones for a card or an investigator, each with its source card; a new value is one union member plus the reader that needs it.
-- [`effectiveValue`](../../packages/engine/src/modifiers.ts) answers "what is this card value now" (shroud, fight, evade), and `actionCost` what an action costs.
+- [`effectiveValue`](../../packages/engine/src/modifiers.ts) answers "what is this card value now" (shroud, fight, evade), `modifiedValue` the same in parts (the printed value and each card's change, which a skill test's trace names), and `actionCost` what an action costs.
 - Who a modifier or restriction is about is one shared vocabulary ([`scopes.ts`](../../packages/engine/src/scopes.ts)): cards by `CardScope` (`self`, `host`, `enemiesHere`, read by `namesCard`), investigators by `InvestigatorScope` (`threatArea`, read by `binds`).
 - The plan for further values (skills, health, doom threshold) and lasting modifiers is ME.7 (#865).
 

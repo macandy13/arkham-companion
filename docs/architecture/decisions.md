@@ -22,6 +22,8 @@ Skill tests ([`skill_tests.ts`](../../packages/engine/src/skill_tests.ts)) carry
 - one player-entered modifier
 - and the chaos tokens.
 
+Its difficulty is the card's value with its modifiers (`effectiveValue`). A test against a card value keeps how it was made (`SkillTest.modifiedFrom`: the printed value and each card's `CardChange`, from `modifiedValue`), so the trace has a `{ kind: 'card', cardId }` step per card in play that changes it ("Obscuring Fog +2").
+
 The tokens are drawn as the players draw them by [`drawTokens`](../../packages/engine/src/draw_tokens.ts): one, then another while the last is a bless, curse, frost or blood token, until a second frost, which ends the reveals and fails the test (`revealsMore`, `skillTestSuggestion`). It takes its random numbers from the caller, since a draw is not game state: the app's "Draw a token" passes `Math.random`, the play tester its seeded random.
 
 Player cards change a draw after it is out (ME.24), so the dialog keeps it as a [`TestDraw`](../../packages/engine/src/draw_tokens.ts), still outside game state: each drawn token is resolved, cancelled or ignored, and may be treated as another token. Pure functions change it as the cards say (`revealAnother`, `withTokenState`, `treatTokenAs`, `redrawToken`, which puts the token back and draws in its place), and `continueDraw` draws on until `drawFinished`. Cancelling, ignoring or redrawing a token also puts back the tokens it made the tester reveal (`DrawnToken.chained`). The calculation gets only `resolvedTokens`; the answer sends the resolved ones as they came out (`revealedTokens`) as `revealed`, since a cancelled or ignored token counts as never revealed.

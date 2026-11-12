@@ -427,6 +427,7 @@ export const appTexts = {
   skillTest: {
     title: 'Skill test',
     difficulty: 'Difficulty',
+    printed: 'Printed',
     modifier: 'Modifier',
     lower: 'Lower the {{what}}',
     raise: 'Raise the {{what}}',
