@@ -183,7 +183,8 @@ export const appTexts = {
     doomCount: 'Verderben',
     clueCount: 'Hinweise',
     advanceAct: 'Vorrücken',
-    beneathAct: 'Unter dem Akt',
+    beneathAct_one: 'Unter dem Akt, {{count}} Karte',
+    beneathAct_other: 'Unter dem Akt, {{count}} Karten',
     advanceActByHand: 'Von Hand vorrücken',
     advanceActByHandTitle: '{{act}} von Hand vorrücken?',
     advanceActByHandText:
@@ -231,6 +232,7 @@ export const appTexts = {
     discard: 'Ablagestapel',
     setAside: 'Beiseitegelegt',
     victoryDisplay: 'Siegpunktanzeige',
+    beneathAct: 'Unter dem Akt',
     pile: '{{pile}} ({{count}})',
     empty: 'Keine Karten',
     earlierCards: 'Frühere Karten',

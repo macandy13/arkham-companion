@@ -101,7 +101,7 @@ test('advance the act by hand and end the scenario with a resolution', async ({ 
 });
 
 // Journey: Smoke and Mirrors. Naomi O'Bannion's codex entry says she is interrogated, so the players
-// put her beneath Augurs of Flame from her card, and its full card lists her there.
+// put her beneath Augurs of Flame from her card, where she lies fanned at the act's corner.
 test('put an interrogated suspect beneath the act', async ({ page }) => {
   const naomi = page.getByRole('img', { name: /^Naomi O'Bannion/ }).first();
   const act = page.getByRole('region', { name: 'Act' });
@@ -120,9 +120,9 @@ test('put an interrogated suspect beneath the act', async ({ page }) => {
     await expect(page.getByRole('img', { name: /^Naomi O'Bannion/ })).toHaveCount(0);
   });
 
-  await test.step("Augurs of Flame's full card lists her beneath it", async () => {
-    await act.getByRole('button', { name: 'Augurs of Flame' }).click();
-    const card = page.getByRole('dialog', { name: 'Augurs of Flame' });
-    await expect(card.getByRole('definition')).toContainText(["Naomi O'Bannion"]);
+  await test.step('She lies fanned at the act, and a tap there shows her', async () => {
+    await act.getByRole('button', { name: 'Beneath the act, 1 card' }).click();
+    const pile = page.getByRole('dialog', { name: 'Beneath the act (1)' });
+    await expect(pile.getByRole('region', { name: "Naomi O'Bannion" })).toBeVisible();
   });
 });

@@ -1080,6 +1080,27 @@ describe('agenda and act', () => {
     expect(act?.beneath).toEqual(['questioned_suspect']);
   });
 
+  it('lists the cards beneath the act among the encounter piles, and none once there is no act', () => {
+    const firstAct = instanceId('first_act');
+    const { context, state } = newGame()
+      .withLocation(study, blankLocation('study'))
+      .withInvestigator(alice, { locationId: study })
+      .withAct(firstAct, blankAct('first_act'))
+      .withCard(
+        instanceId('questioned_suspect'),
+        blankEnemy('questioned_suspect'),
+        { kind: 'beneath', hostId: firstAct },
+        { faceUp: true },
+      )
+      .start();
+    const actless = newGame().withLocation(study, blankLocation('study')).start();
+
+    expect(boardView(context, state).encounter.beneathAct).toMatchObject([
+      { name: 'questioned_suspect' },
+    ]);
+    expect(boardView(actless.context, actless.state).encounter.beneathAct).toEqual([]);
+  });
+
   it.each([
     {
       act: 'an act whose objective counts the Elite enemies beneath it',
@@ -1258,6 +1279,7 @@ describe('encounter piles', () => {
           victory: 2,
         },
       ],
+      beneathAct: [],
     });
   });
 
@@ -1269,6 +1291,7 @@ describe('encounter piles', () => {
       discard: [],
       setAside: [],
       victoryDisplay: [],
+      beneathAct: [],
     });
   });
 });

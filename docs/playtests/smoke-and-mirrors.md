@@ -21,7 +21,7 @@ The scripted golden game is [`end_to_end.test_support.ts`](../../packages/scenar
 **Act, Augurs of Flame**
 
 - [ ] Its action spends 2 clues per investigator from the group and draws the card beneath the taker's location: a suspect or the Servant of Flame comes into play there.
-- [ ] "Put beneath the act" on an interrogated suspect's card moves it there, and the act's full card lists it.
+- [ ] "Put beneath the act" on an interrogated suspect's card moves it there, fanned at the act's corner, where a tap shows it.
 - [ ] Once 6 Elite enemies are in the victory display or beneath the act, the act advances to resolution 1.
 
 **Agenda 1, Arkham Alive**

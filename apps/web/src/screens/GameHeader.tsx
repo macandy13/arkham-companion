@@ -80,7 +80,14 @@ export function GameHeader({
         <EncounterPiles {...piles} />
       </HeaderSlot>
       <AgendaStatus store={store} board={board} blocked={blocked} full={full} onOpen={onOpenCard} />
-      <ActStatus store={store} board={board} blocked={blocked} full={full} onOpen={onOpenCard} />
+      <ActStatus
+        store={store}
+        board={board}
+        blocked={blocked}
+        full={full}
+        piles={piles}
+        onOpen={onOpenCard}
+      />
       <HeaderSlot label={t('header.scenario')} card="scenario" onOpen={onOpenCard}>
         <ScenarioStatus
           open={open}
@@ -424,7 +431,9 @@ function AgendaStatus({
  * its advance, the act's own action, which the investigator whose turn it is takes once they hold
  * enough, after the players choose who pays when they can (`useCluePayment`). For an act
  * that advances itself once clues lie on it, the token counts those, and a double tap opens their
- * − / + bubble, a correction by hand. Its full card also offers "Advance by hand", after a
+ * − / + bubble, a correction by hand. Where its objective counts the cards beneath it
+ * (`ActView.takesCardsBeneath`), they lie fanned at its corner like the discard pile at the deck's
+ * (`HeaderPile`), and a tap opens them in the encounter dialog. Its full card also offers "Advance by hand", after a
  * confirmation, for an objective the engine leaves to the players.
  */
 function ActStatus({
@@ -432,12 +441,14 @@ function ActStatus({
   board,
   blocked,
   full,
+  piles,
   onOpen,
 }: {
   store: StoreApi<AppState>;
   board: BoardView;
   blocked: boolean;
   full: boolean;
+  piles: PileProps;
   onOpen: ((card: HeaderCardKind) => void) | undefined;
 }) {
   const { t } = useTranslation();
@@ -530,6 +541,10 @@ function ActStatus({
       >
         {tokenAndPlate}
       </HeaderCard>
+      {/* Only where the act counts them, or once a correction left some there. */}
+      {(act.takesCardsBeneath || board.encounter.beneathAct.length > 0) && (
+        <HeaderPile pile="beneathAct" {...piles} />
+      )}
       {full && (
         <footer>
           {actionRow}
@@ -554,7 +569,6 @@ function ActStatus({
                 },
               }
             : {})}
-          beneath={act.beneath}
           advances={
             <>
               {advanceButton(close, true)}
@@ -692,8 +706,7 @@ function HeaderCard({
  * - the landscape card over the page, the same face as in the header with its `token`, tapped to
  *   read it whole (`CardZoom`);
  * - what it is as the kicker, its name as the title;
- * - its count on the page (`value`: the doom in play, the clues that count towards advancing), and
- *   for the act the cards beneath it (`beneath`, Smoke and Mirrors' interrogated suspects);
+ * - its count on the page (`value`: the doom in play, the clues that count towards advancing);
  * - the card actions it offers the investigator whose turn it is;
  * - the act's advances (`advances`): Advance as the dialog's one primary, and "Advance by hand".
  * A card action keeps it open and shows the decision it raises in place of its page
@@ -709,7 +722,6 @@ function BookDetails({
   threshold,
   token,
   value,
-  beneath,
   advances,
   onClose,
 }: {
@@ -721,7 +733,6 @@ function BookDetails({
   threshold: number | undefined;
   token: ReactNode;
   value?: { name: string; count: number; threshold?: number };
-  beneath?: readonly CardName[] | undefined;
   advances?: ReactNode;
   onClose: () => void;
 }) {
@@ -747,27 +758,16 @@ function BookDetails({
       title={card.name}
       onClose={onClose}
     >
-      {(value || beneath) && (
+      {value && (
         <dl>
-          {value && (
-            <div>
-              <dt>{value.name}</dt>
-              <dd>
-                {value.threshold === undefined
-                  ? value.count
-                  : t('header.countOf', { count: value.count, threshold: value.threshold })}
-              </dd>
-            </div>
-          )}
-          {beneath && (
-            <div>
-              <dt>{t('header.beneathAct')}</dt>
-              {/* Two copies of one enemy share a name. */}
-              {beneath.map((name, index) => (
-                <dd key={`${index}:${name}`}>{name}</dd>
-              ))}
-            </div>
-          )}
+          <div>
+            <dt>{value.name}</dt>
+            <dd>
+              {value.threshold === undefined
+                ? value.count
+                : t('header.countOf', { count: value.count, threshold: value.threshold })}
+            </dd>
+          </div>
         </dl>
       )}
       {(offered.length > 0 || advances) && (

@@ -529,6 +529,8 @@ export interface EncounterPilesView {
   discard: readonly EncounterCardView[];
   setAside: readonly EncounterCardView[];
   victoryDisplay: readonly EncounterCardView[];
+  /** The cards beneath the current act (Smoke and Mirrors' interrogated suspects), top first. */
+  beneathAct: readonly EncounterCardView[];
 }
 
 /**
@@ -821,6 +823,10 @@ export class BoardView {
       discard: cardsIn(encounterDiscard),
       setAside: cardsIn(setAside),
       victoryDisplay: cardsIn(victoryDisplay),
+      beneathAct:
+        this.state.act.current === undefined
+          ? []
+          : cardsIn({ kind: 'beneath', hostId: this.state.act.current }),
     };
   }
 
