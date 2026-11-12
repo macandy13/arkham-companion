@@ -41,6 +41,7 @@ import {
   PlayTable,
   replay,
   scenario,
+  suggestSkillTest,
   type ScenarioContext,
 } from '@arkham/engine';
 import { answer } from '@arkham/engine/test/utils';
@@ -382,7 +383,16 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     // Ghoul Minion engaged with him twice (combat 2 against 2: she commits her two
     // combat icons and the tokens are kind), which defeats it, then hits the
     // Ghoul Priest once (it has 5 health per investigator, 15).
-    table.fight(daisy, byName(ghoulMinion));
+    table.fight(daisy, byName(ghoulMinion), { result: 'open' });
+    // The engine suggests the outcome: combat 2 against the minion's fight 2 passes
+    // before any token, and the scenario's skull (-1 for each Ghoul at Daisy's
+    // location: the minion and the priest in the Cellar) would make it fail.
+    const fightTest = table.state.pending[0]!;
+    expect(fightTest.suggestion).toMatchObject({ skill: 2, difficulty: 2, outcome: 'pass' });
+    expect(
+      suggestSkillTest(table.ctx, table.state, fightTest, { tokens: ['skull'] }),
+    ).toMatchObject({ skill: 0, difficulty: 2, outcome: 'fail' });
+    table.resolveTest('pass');
     table.fight(daisy, byName(ghoulMinion));
     table.endTurn(daisy);
 
