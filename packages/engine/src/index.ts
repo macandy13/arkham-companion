@@ -183,6 +183,8 @@ export {
   removeChaosToken,
   placeDoomOn,
   placeDoomOnSelf,
+  moveTokens,
+  takeCluesFrom,
   removeDoomFrom,
   removeDoomFromAgenda,
   placeCluesOn,

@@ -71,6 +71,7 @@ import {
   handlePlaceDoom,
   handleRemoveDoom,
   handlePlaceTokens,
+  handleMoveTokens,
 } from './handle_scenario';
 import { handleStartScenario } from './handle_start_scenario';
 import { handleMoveHunter, handleMoveHunters } from './hunters';
@@ -246,6 +247,7 @@ const COMMAND_SPECS: CommandSpecs = {
     handle: (_ctx, state, command) => handleReleaseChaosToken(state, command),
   },
   PlaceTokens: { handle: (_ctx, state, command) => handlePlaceTokens(state, command) },
+  MoveTokens: { handle: handleMoveTokens },
   AdvanceAgenda: {
     handle: (_ctx, state, command) => handleAdvanceAgenda(state, command),
     // The reverse side resolves before the next agenda becomes current.

@@ -5,13 +5,15 @@ import type {
   ChangeChaosBag,
   EndScenario,
   PlaceDoom,
+  MoveTokens,
   PlaceTokens,
   RemoveDoom,
   ReleaseChaosToken,
   SealChaosToken,
 } from './commands';
 import { cardsWithDoom, isInPlay } from './doom';
-import { activeInvestigator, activeInvestigators } from './investigators';
+import { activeInvestigator, activeInvestigators, isActiveInvestigator } from './investigators';
+import { defeatedByDamage } from './enemies';
 import type {
   ActAdvanced,
   AgendaAdvanced,
@@ -28,7 +30,7 @@ import type {
 } from './events';
 import type { InstanceId, ResolutionId } from './ids';
 import { cardsInZone, requireCard } from './lookup';
-import { resolveAmount } from './cards';
+import { cardStats, resolveAmount, type EngineContext } from './cards';
 import { clearTokensEvents, moveCardEvent } from './placement';
 import { CommandRejected } from './rejection';
 import type { CardInstance, GameState, TokenKind } from './state';
@@ -57,6 +59,50 @@ export function handleRemoveDoom(state: GameState, cmd: RemoveDoom): TokensChang
   return removed === 0
     ? []
     : [{ type: 'TokensChanged', cardId: card.id, token: 'doom', delta: -removed }];
+}
+
+/**
+ * `MoveTokens`: as many of the tokens as `from` holds (see the command), as with `RemoveDoom`; an
+ * enemy given as much damage as its health is defeated (`defeatedByDamage`).
+ */
+export function handleMoveTokens(ctx: EngineContext, state: GameState, cmd: MoveTokens): Event[] {
+  if (cmd.amount !== 'all' && (!Number.isInteger(cmd.amount) || cmd.amount <= 0))
+    throw new CommandRejected({ code: 'invalidTokenDelta', delta: -cmd.amount });
+  const from = requireCard(state.cards, cmd.from);
+  const held = isInPlay(state, from) ? (from.tokens[cmd.token] ?? 0) : 0;
+  const moved = cmd.amount === 'all' ? held : Math.min(cmd.amount, held);
+  const taken: TokensChanged = {
+    type: 'TokensChanged',
+    cardId: from.id,
+    token: cmd.token,
+    delta: -moved,
+  };
+  if ('toInvestigator' in cmd) {
+    if (moved === 0 || !isActiveInvestigator(state, cmd.toInvestigator)) return [];
+    return [
+      taken,
+      {
+        type: 'InvestigatorChanged',
+        investigatorId: cmd.toInvestigator,
+        stat: 'clues',
+        delta: moved,
+      },
+    ];
+  }
+  const to = cmd.to === undefined ? currentCard(state, 'agenda') : requireCard(state.cards, cmd.to);
+  if (moved === 0 || to.id === from.id || !isInPlay(state, to)) return [];
+  const given: TokensChanged = {
+    type: 'TokensChanged',
+    cardId: to.id,
+    token: cmd.token,
+    delta: moved,
+  };
+  const stats = cardStats(ctx.cards, to.code);
+  const defeat =
+    cmd.token === 'damage' && stats.typeCode === 'enemy'
+      ? defeatedByDamage(state, to, stats, moved)
+      : [];
+  return [taken, given, ...defeat];
 }
 
 /**
