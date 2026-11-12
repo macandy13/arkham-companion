@@ -9,6 +9,15 @@ name: Release
 # the waiting run, so the release PR is opened or refreshed only once main has
 # been quiet for an hour instead of after each merge in a burst. Running the
 # workflow by hand skips the wait.
+#
+# Merging the release PR skips the wait too, so the release is created while
+# its commit is still main's head. GitHub refuses GITHUB_TOKEN a tag on an
+# older commit once a later commit on main changed a workflow file ("Resource
+# not accessible by integration"), since the token can't be given the
+# `workflows` permission. The tag runs have a concurrency group of their own,
+# so a push right after the merge doesn't cancel them. A release PR's merge is
+# recognised by its commit message, in both the concurrency group and the wait
+# step: keep the two checks the same.
 
 on:
   push:
@@ -20,7 +29,11 @@ permissions:
   pull-requests: write
 
 concurrency:
-  group: release
+  group: >-
+    release-${{
+    (contains(github.event.head_commit.message, 'release-please--branches--')
+    || startsWith(github.event.head_commit.message, 'chore(main): release'))
+    && 'tag' || 'wait' }}
   cancel-in-progress: true
 
 jobs:
@@ -29,7 +42,10 @@ jobs:
     timeout-minutes: 75
     steps:
       - name: Wait for an hour without a new push
-        if: github.event_name == 'push'
+        if: >-
+          github.event_name == 'push'
+          && !contains(github.event.head_commit.message, 'release-please--branches--')
+          && !startsWith(github.event.head_commit.message, 'chore(main): release')
         run: sleep 3600
       - uses: googleapis/release-please-action@v5
         with:
