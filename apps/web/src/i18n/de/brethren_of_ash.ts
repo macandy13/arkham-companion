@@ -28,6 +28,11 @@ export const brethrenOfAshTexts = {
       },
     },
     queenOfAsh: {
+      smugglersCache: {
+        prompt: '{{card}}: Du darfst 1 Ressource erhalten',
+        gain: '1 Ressource erhalten',
+        decline: 'Nicht',
+      },
       resolution: {
         collector:
           'Ihr habt die Belohnung Collector verdient: Nehmt beide Exemplare in euren Spielerkartenvorrat auf.',

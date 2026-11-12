@@ -47,6 +47,8 @@ The scripted golden game is [`end_to_end.test.ts`](../../packages/scenarios/src/
 
 - [ ] Sluice Control's action tests agility or combat (5); on a pass the scenario ends with resolution 3 and each enemy is defeated.
 - [ ] An investigator who enters the revealed Sewer Tunnels with the square (Overgrown Tunnels) loses 1 action.
+- [ ] Entering Infested Pipes (spade) discards from the encounter deck until an enemy, which the entering investigator draws.
+- [ ] Ending a turn in Flooded Crypt (star) gives 1 horror, in Toxic Waste Pit (double slash) asks for a card discarded from hand, and in Smuggler's Cache (clover) offers 1 resource, which the investigator may decline.
 - [ ] Sewer Culvert's resign action works.
 - [ ] Elokoss is massive and retaliates and has 5 plus 5 per investigator health; the Servant of Flame, Queen's Knight, Herald of Flame and Dark Magician hunt; Zealots are aloof.
 
@@ -71,7 +73,6 @@ These are done by hand at the table; the app does not do them.
 - Elokoss: that she cannot move or make attacks of opportunity, her Mother of Flame side and her clue spend toward resolution 2. When the clues are spent, end the game in resolution 2 from the menu's "End the scenario" (automating it is [MC2.17](https://github.com/macandy13/arkham-companion/issues/1236)).
 - The additional clue costs to enter Underground Cistern and Sluice Control.
 - Underground Cistern's clues placed again once it has none, and its discard of ready non-Elite Cultists as the investigation phase ends, with 1 doom each.
-- Infested Pipes' discard until an enemy, and the turn-end effects of Flooded Crypt (horror), Smuggler's Cache (resource) and Toxic Waste Pit (discard).
 - Queen's Knight's damage to Elokoss, Herald of Flame's healing after it attacks, and the Servant of Flame's codex entry as it is defeated.
 - The Zealot's doom as it enters play (setup places it) and the Dark Magician's as the round ends.
 - The revelations of Ashen Rebirth, Blasphemous Invocation, Unnatural Decay, Dissonance and Torment, and Putrid Vapors' asset discard.
