@@ -172,7 +172,7 @@ describe('Spreading Flames card abilities', () => {
         discards: true,
       },
       {
-        name: 'outside it (an attack of opportunity)',
+        name: 'outside the enemy phase',
         commands: [
           {
             type: 'DealEnemyAttack',

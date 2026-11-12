@@ -549,7 +549,9 @@ export const smokeAndMirrorsCardDefs: readonly CardStats[] = [
     horror: 0,
     quantity: 2,
     keywords: [{ name: 'hunter' }, prey('Most resources'), { name: 'retaliate' }],
-    // Both conditions are read as it engages, so losing the last resource does not also attack.
+    // Both conditions are read as the engagement's window opens, so losing the last resource does
+    // not also attack. Two Gangsters engaging at once with 1 resource left both take it instead of
+    // the second attacking; the players resolve that rare case by hand.
     abilities: [
       ifYouHave('resources', { min: 1 }, afterEngaging(loseResources(1))),
       ifYouHave('resources', { max: 0 }, afterEngaging(enemyAttacks())),

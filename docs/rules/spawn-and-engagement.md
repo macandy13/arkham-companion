@@ -20,6 +20,7 @@
 - A **ready, unengaged** enemy engages as soon as it shares a location with an investigator: when it spawns there, moves there, or an investigator moves in.
   - With several investigators present, [prey](prey.md) decides, then the lead investigator.
   - There is no limit on enemies engaged with one investigator.
+- Engaging an enemy and being engaged by it are the same ([engage action](https://arkhamdb.com/rules#Engage_Action)), so "after [this enemy] engages you" (Rogue Gangster) fires however the engagement came about: spawning engaged, a move by either side, the engage action or a card's "engages you".
 - An exhausted enemy doesn't engage, but engages the moment it readies if it shares a location with an investigator.
 - A card effect that moves an enemy ("move it to the Hallway") needs no connection unless its text says "connecting location" (Elusive does).
   - An engaged enemy otherwise moves only with its investigator ([Enemy Engagement](https://arkhamdb.com/rules#Enemy_Engagement)). A card effect that moves an enemy moves it even when engaged, and it disengages, unless its text names unengaged enemies (They're Getting Out!); Elusive disengages, then moves. Our reading: no official ruling found, only player consensus. Stop the Rite's "each Cultist enemy moves once toward Underground Cistern" moves engaged Cultists too (the engine's `forced` move), and so does Aerial Pursuit's "the nearest non-[[Elite]] enemy moves once toward your location".

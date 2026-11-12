@@ -480,9 +480,9 @@ export type AbilityEffect = Templated<AbilityCommand>;
 /**
  * What must hold when the window opens for an ability to fire ("If it is act 3, …"). Checked
  * once, as the window opens; the effects then resolve whatever they change. Three shapes cover
- * the conditions cards print, each over the references effects use: which card is current, how
- * many things a reference names, and a value on the table. A new condition is usually a new
- * reference or `Quantity`, not a new kind.
+ * most conditions cards print, each over the references effects use: which card is current, how
+ * many things a reference names, and a value on the table; the fourth is the phase the game is
+ * in. A new condition is usually a new reference or `Quantity`, not a new kind.
  */
 export type AbilityCondition =
   /** The current act or agenda (`deck`) is one of `codes` ("If it is act 3", "if it is agenda 2"). */
@@ -2598,7 +2598,8 @@ export function duringAgenda(agendas: readonly CardCode[], ability: Ability): Ab
 
 /**
  * "… during the enemy phase": `ability` fires only while the game is in `phase`, written
- * `duringPhase('enemy', afterAttacking(discardAsset()))` (Hellhound).
+ * `duringPhase('enemy', afterAttacking(discardAsset()))` (Hellhound). Like the other condition
+ * wrappers it replaces a condition `ability` already has, so they don't nest.
  */
 export function duringPhase(phase: Phase, ability: Ability): Ability {
   return { ...ability, condition: { kind: 'phase', phase } };

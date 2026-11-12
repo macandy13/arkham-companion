@@ -23,7 +23,7 @@ An [`Ability`](../../packages/engine/src/abilities.ts) is:
   - `cluesDiscovered`,
   - `defeated` for the enemy itself, naming where it was,
   - `tokensPlaced` for tokens placed on the card;
-- an optional condition, in one of three shapes over the references effects use (`AbilityCondition`):
+- an optional condition (`AbilityCondition`), mostly over the references effects use:
   - `currentCard`, the current act or agenda: `duringAct([codes.trapped], …)`, `duringAgenda([codes.theyreGettingOut], …)`;
   - `countOf`, how many things a reference names as the window opens:
     - the enemies or investigators of an `each…` reference: `ifThereAre(eachEnemy({ at: yourLocation() }), { min: 1 }, …)` for "if there is an enemy at your location", `ifThereAre(eachEnemy({ engagedWith: you() }), { max: 0 }, …)` for "if no enemy is engaged with you", `ifThereAre(eachEnemy({ trait: trait('Cultist') }), { max: 0 }, …)` for "if there are no [[Cultist]] enemies in play";
@@ -34,6 +34,7 @@ An [`Ability`](../../packages/engine/src/abilities.ts) is:
     - a stat of each investigator a reference names (`statOf(who, stat)`): `ifYouHave('clues', { max: 0 }, …)`, short for `ifValue(statOf(you(), 'clues'), …)`, and `ifValue(statOf(lead(), 'clues'), { max: 0 }, …)` for the lead; over `eachInvestigator()` it holds only when each of them is in range;
     - the tokens on a card (`tokensOn(card, token)`): `ifValue(tokensOn(self(), 'clue'), { max: 0 }, …)` for "if there are no clues on it", `whenTokensOnSelf('clue', perInvestigator(2), advanceAct())` for an objective on the act's own clues, whose count the act's view shows as its threshold;
     - the clues a group holds (`groupClues`, see The Barrier below);
+  - `phase`, the phase the game is in: `duringPhase('enemy', afterAttacking(discardAsset()))` for Hellhound's "after it attacks you during the enemy phase";
 - an optional repeat once per active investigator (`forEachInvestigator(…)`, `perInvestigator`), each copy of the window naming its investigator, so an effect that asks something (a skill test) asks each of them in turn;
 - an optional repeat once per enemy an `eachEnemy` filter names (`forEachEnemy({ trait, at: [onlyCopy(codes.hallway), onlyCopy(codes.parlor)] }, …)`, counted with the condition as the window opens);
 - and a list of effects.
