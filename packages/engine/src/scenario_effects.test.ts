@@ -32,7 +32,6 @@ import {
   placeDoomOnAgenda,
   gainResources,
   gainClues,
-  placeYourClues,
 } from './index';
 import { requireInvestigator } from './investigators';
 import { rejectionFrom, resolveRevelation, runFrom, stateAfter } from '../test/utils';
@@ -418,19 +417,6 @@ describe('card effects that move tokens between cards', () => {
     const after = stateAfter(context, state, move);
 
     expect(requireInvestigator(after, alice)).toMatchObject({ resources, clues });
-  });
-
-  it('places no clues for an investigator who has left the scenario', () => {
-    const bob = investigatorId('bob');
-    const { context, state } = newGame()
-      .withLocation(hall, blankLocation('hall'), { revealed: true, clues: 0 })
-      .withInvestigator(alice, { locationId: hall })
-      .withInvestigator(bob, { locationId: hall, clues: 2, status: 'resigned' })
-      .start();
-
-    const { events } = execute(context, state, placeYourClues(1, bob));
-
-    expect(events).toEqual([]);
   });
 
   it('moves nothing from a card that has left play', () => {

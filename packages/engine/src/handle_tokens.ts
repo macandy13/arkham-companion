@@ -51,9 +51,8 @@ function resolveHolder(state: GameState, holder: TokenHolder, token: TokenKind):
     return isInPlay(state, card) ? { kind: 'card', card } : { kind: 'absent' };
   }
   if ('locationOf' in holder) {
-    if (!isActiveInvestigator(state, holder.locationOf)) return { kind: 'absent' };
-    const { locationId } = requireInvestigator(state, holder.locationOf);
-    return locationId === undefined
+    const { id, locationId } = requireInvestigator(state, holder.locationOf);
+    return !isActiveInvestigator(state, id) || locationId === undefined
       ? { kind: 'absent' }
       : resolveHolder(state, { card: locationId }, token);
   }

@@ -664,6 +664,18 @@ describe('placing your clues on your location (placeYourClues)', () => {
     expect(investigatorOf(placed, bob).clues).toBe(1);
   });
 
+  it('places no clues for an investigator who has left the scenario', () => {
+    const { context, state } = newGame()
+      .withLocation(hall, blankLocation('hall'), { revealed: true, clues: 0 })
+      .withInvestigator(alice, { locationId: hall })
+      .withInvestigator(bob, { locationId: hall, clues: 2, status: 'resigned' })
+      .start();
+
+    const { events } = execute(context, state, placeYourClues(1, bob));
+
+    expect(events).toEqual([]);
+  });
+
   it('rejects an amount that is not positive', () => {
     const { context, state } = newGame()
       .withLocation(hall, blankLocation('hall'), { revealed: true })
