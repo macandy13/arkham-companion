@@ -394,6 +394,8 @@
   --chaos-bag-token-size-phone: 1.75rem;
   --chaos-resin-numeral-share: 0.32;
   --chaos-cardboard-numeral-share: 0.34;
+  /* A drawn token a card cancelled or ignored (ME.24b): faded, still there to change back. */
+  --drawn-token-set-aside-opacity: 0.4;
   --chaos-numeral-spacing: -0.04em;
   --chaos-resin-symbol-share: 58%;
   --chaos-cardboard-symbol-share: 48%;

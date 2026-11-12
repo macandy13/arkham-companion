@@ -26,6 +26,35 @@ test('answer a decision in its dialog', async ({ page }) => {
   });
 });
 
+// Journey: a player card makes Roland Banks redraw the token his investigation revealed (Wendy
+// Adams' "return it to the bag and reveal a new one"): he taps the token in the strip, picks
+// Redraw, and the test resolves with the token that came out in its place.
+test('redraw a drawn token as a card says', async ({ page }) => {
+  const decision = page.getByRole('dialog', { name: 'Investigate Hallway' });
+  const drawn = decision.getByRole('list', { name: 'Tokens drawn' });
+
+  await test.step('Resume a game whose investigation waits for its result, and draw', async () => {
+    await resumeImportedGame(page, 'Investigating', investigationOpenExport('Investigating'));
+    await decision.getByRole('button', { name: 'Draw a token' }).click();
+    await expect(decision.getByRole('status')).toBeVisible();
+  });
+
+  await test.step('Tap the token: what a card can do to it opens under the tokens', async () => {
+    await drawn
+      .getByRole('button', { name: /^Change / })
+      .first()
+      .click();
+    await expect(decision.getByRole('group', { name: /^What a card does to / })).toBeVisible();
+  });
+
+  await test.step('Redraw it: a new token takes its place and the test resolves again', async () => {
+    await decision.getByRole('button', { name: 'Redraw' }).click();
+    await expect(decision.getByRole('group', { name: /^What a card does to / })).toBeHidden();
+    await expect(drawn.getByRole('listitem').first()).toBeVisible();
+    await expect(decision.getByRole('status')).toBeVisible();
+  });
+});
+
 // Journey: a decision waits, but the board needs a correction first – the players lower the dialog
 // out of the way, boost Roland Banks' intellect in its bubble on his card, as a card in play does,
 // and raise the decision again with the boost in its test.

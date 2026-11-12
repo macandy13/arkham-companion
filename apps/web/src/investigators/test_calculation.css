@@ -175,6 +175,39 @@
   font-variant-numeric: lining-nums tabular-nums;
 }
 
+/* The token itself is the button that opens what a card can do to it, so it has no pill. */
+#board dialog[data-shell] section[data-part='strip'] > figure > ol > li > button {
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: none;
+}
+
+#board dialog[data-shell] section[data-part='strip'] > figure > ol > li > span {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-note);
+}
+
+#board
+  dialog[data-shell]
+  section[data-part='strip']
+  > figure
+  > ol
+  > li:is([data-state='cancelled'], [data-state='ignored'])
+  > button {
+  opacity: var(--drawn-token-set-aside-opacity);
+}
+
+/* What a card does to the token tapped: a wrapping row of pills under the tokens. */
+#board dialog[data-shell] section[data-part='strip'] > figure > [role='group'] {
+  display: flex;
+  flex-basis: 100%;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+  justify-content: center;
+}
+
 #board dialog[data-shell] section[data-part='strip'] > figure > figcaption {
   flex-basis: 100%;
   color: var(--color-text-muted);

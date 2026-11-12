@@ -4,7 +4,9 @@ import {
   continueDraw,
   drawFinished,
   resolvedTokens,
+  revealAnother,
   SKILL_NAMES,
+  tokenCounts,
   type BoardView,
   type ChaosToken,
   type InvestigatorId,
@@ -18,8 +20,9 @@ import {
   type TestDraw,
 } from '@arkham/engine';
 import { assertNever, sum } from '@arkham/util';
-import { ChaosTokenFace } from '../tokens/ChaosTokenFace';
-import { hasSymbol, signed, signedOrUnknown } from '../tokens/tokenValue';
+import { DrawnTokenList } from './DrawnTokenList';
+import { applyTokenAction, type DrawnTokenAction } from './drawn_token_action';
+import { signed, signedOrUnknown } from '../tokens/tokenValue';
 import './test_calculation.css';
 
 /** The skills a test adds up: the tested one first, then the one a card adds to it. */
@@ -41,6 +44,12 @@ export interface SkillTestRun {
   /** The tokens the test resolves (`resolvedTokens`), as the result strip shows them. */
   revealed: readonly ChaosToken[];
   draw: () => void;
+  /** What a card does to the drawn token at `index` (`applyTokenAction`). */
+  act: (index: number, action: DrawnTokenAction) => void;
+  /** One more token, as a card says (`revealAnother`); absent while the bag holds no other. */
+  revealAnother?: () => void;
+  /** The tokens a drawn one can be treated as: each kind in the bag, and the elder sign. */
+  treatOptions: readonly ChaosToken[];
   /** The calculation with the tokens drawn so far; its outcome counts only once `finished`. */
   result: SkillTestSuggestion;
   /** Whether the tokens drawn settle the test: false before the first and while one asks for another. */
@@ -96,10 +105,22 @@ export function useSkillTest(
     drawn,
     revealed,
     draw: () => setDrawn(continueDraw(board.chaosBag, drawn, Math.random)),
+    act: (index, action) =>
+      setDrawn(applyTokenAction(drawn, index, action, board.chaosBag, Math.random)),
+    ...(drawFinished(drawn) && board.chaosBag.length > drawn.length
+      ? { revealAnother: () => setDrawn(revealAnother(board.chaosBag, drawn, Math.random)) }
+      : {}),
+    treatOptions: treatOptions(board.chaosBag),
     result,
     finished: drawFinished(drawn),
     ...(odds ? { odds } : {}),
   };
+}
+
+/** Each kind of token in `bag`, then the elder sign if it holds none (Jim Culver, Father Mateo). */
+function treatOptions(bag: readonly ChaosToken[]): ChaosToken[] {
+  const kinds = tokenCounts(bag).map(({ token }) => token);
+  return kinds.includes('elderSign') ? kinds : [...kinds, 'elderSign'];
 }
 
 /**
@@ -154,7 +175,7 @@ export function SkillTestBlock({
       />
       <ResultStrip
         result={run.result}
-        revealed={run.revealed}
+        run={run}
         skill={run.skills[0]}
         finished={run.finished}
         {...(run.odds ? { odds: run.odds } : {})}
@@ -206,30 +227,32 @@ export function SkillToggles({
 
 /**
  * The result of a test in three columns (MD.2b), read left to right like the sum at the table:
- * the skill value and what was added to it, the tokens drawn in the order they came out (a
- * symbol token with its effect under it, and their sum when there are several), then the outcome
- * with the total against the difficulty and the margin. Before a token is out the draw button
- * (`onDraw`, left out when the bag is empty) stands where the tokens go and nothing stands in the
- * outcome's place; the draw takes every token the test reveals, so it is not offered again. A
- * token whose effect the app does not know shows a "?" and a reminder under the strip to add
- * it by hand.
+ * the skill value and what was added to it, the tokens drawn in the order they came out
+ * (`DrawnTokenList`: a symbol token with its effect under it, a token a card changed marked so,
+ * each tappable to change it as a card says, and their sum when several resolve), then the
+ * outcome with the total against the difficulty and the margin. Before a token is out the draw
+ * button (`onDraw`, left out when the bag is empty) stands where the tokens go and nothing stands
+ * in the outcome's place; the draw takes every token the test reveals, so it is not offered
+ * again, but a card can reveal another. A token whose effect the app does not know shows a "?"
+ * and a reminder under the strip to add it by hand.
  */
 export function ResultStrip({
   result,
-  revealed,
+  run,
   skill,
   finished,
   odds,
   onDraw,
 }: {
   result: SkillTestSuggestion;
-  revealed: readonly ChaosToken[];
+  run: Pick<SkillTestRun, 'drawn' | 'revealed' | 'act' | 'revealAnother' | 'treatOptions'>;
   skill: SkillName;
   finished: boolean;
   odds?: readonly SkillTestOdds[];
   onDraw?: () => void;
 }) {
   const { t } = useTranslation();
+  const { drawn, revealed } = run;
   const terms = result.trace.filter(isSkillTerm);
   const effects = tokenEffects(result.trace, revealed);
   const known = effects.flatMap((effect) => effect ?? []);
@@ -249,22 +272,8 @@ export function ResultStrip({
         </li>
       </ol>
       <figure>
-        {revealed.length > 0 && (
-          <ol aria-label={t('skillTest.drawn')}>
-            {revealed.map((token, index) => (
-              <li key={index}>
-                <ChaosTokenFace token={token} />
-                {hasSymbol(token) && token !== 'autoFail' && (
-                  <>
-                    {' '}
-                    <data value={effects[index] ?? ''}>{signedOrUnknown(effects[index])}</data>
-                  </>
-                )}
-              </li>
-            ))}
-          </ol>
-        )}
-        {revealed.length === 0 && onDraw && (
+        {drawn.length > 0 && <DrawnTokenList run={run} effects={effects} />}
+        {drawn.length === 0 && onDraw && (
           <button type="button" data-primary onClick={onDraw}>
             {t('skillTest.draw')}
           </button>
@@ -279,7 +288,7 @@ export function ResultStrip({
         )}
       </figure>
       {odds && <PassChances odds={odds} />}
-      {revealed.length > 0 &&
+      {drawn.length > 0 &&
         (finished ? (
           <output data-outcome={result.outcome}>
             <span>{t(`skillTest.outcome.${result.outcome}`)}</span>{' '}

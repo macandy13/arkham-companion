@@ -216,4 +216,93 @@ describe('SkillTestDialog', () => {
 
     expect(onClose).toHaveBeenCalledOnce();
   });
+
+  describe('changing a drawn token as a card says', () => {
+    const drawnTokens = () =>
+      within(screen.getByRole('list', { name: 'Tokens drawn' }))
+        .getAllByRole('listitem')
+        .map((token) => token.textContent);
+
+    it('cancels the −2, so willpower 3 passes difficulty 3 without it', () => {
+      renderWillpowerTest(['-2']);
+      fireEvent.click(button('Draw a token'));
+
+      fireEvent.click(button('Change −2'));
+      fireEvent.click(button('Cancel'));
+
+      expect(drawnTokens()).toEqual(['−2 Cancelled']);
+      expect(outcome()).toBe('Pass 3 ≥ 3 by 0');
+    });
+
+    it('resolves an ignored token again', () => {
+      renderWillpowerTest(['-2']);
+      fireEvent.click(button('Draw a token'));
+      fireEvent.click(button('Change −2'));
+      fireEvent.click(button('Ignore'));
+
+      fireEvent.click(button('Change −2'));
+      fireEvent.click(button('Resolve'));
+
+      expect(outcome()).toBe('Fail 1 < 3 by 2');
+    });
+
+    it('redraws the −2: back in the bag, the +1 comes out in its place', () => {
+      // The first token left comes out first: the −2. For the redraw the last one left: the +1.
+      vi.spyOn(Math, 'random').mockReturnValue(0);
+      renderWillpowerTest(['-2', '+1']);
+      fireEvent.click(button('Draw a token'));
+      vi.spyOn(Math, 'random').mockReturnValue(0.9);
+
+      fireEvent.click(button('Change −2'));
+      fireEvent.click(button('Redraw'));
+
+      expect(outcome()).toBe('Pass 4 ≥ 3 by 1');
+    });
+
+    it('treats the skull as an elder sign, saying what it was (Alder has no elder sign effect: "?")', () => {
+      renderWillpowerTest(['skull']);
+      fireEvent.click(button('Draw a token'));
+
+      fireEvent.click(button('Change Skull'));
+      fireEvent.click(button('Treat as Elder Sign'));
+
+      expect(drawnTokens()).toEqual(['Elder Sign was Skull ?']);
+      expect(button('Change Elder Sign')).toBeTruthy();
+    });
+
+    it('reveals the token a bless asks for again once the bless is resolved again', () => {
+      // Always the first token left: the bless, then the −1 it reveals; once the −1 is back, again.
+      vi.spyOn(Math, 'random').mockReturnValue(0);
+      renderWillpowerTest(['bless', '-1']);
+      fireEvent.click(button('Draw a token'));
+      fireEvent.click(button('Change Bless'));
+      fireEvent.click(button('Ignore'));
+
+      fireEvent.click(button('Change Bless'));
+      fireEvent.click(button('Resolve'));
+
+      expect(drawnTokens()).toEqual(['Bless +2', '−1']);
+      expect(outcome()).toBe('Pass 4 ≥ 3 by 1');
+    });
+
+    it('offers no other token while a bless still waits for its own', () => {
+      renderWillpowerTest(['bless']);
+
+      fireEvent.click(button('Draw a token'));
+
+      expect(screen.queryByRole('button', { name: 'Reveal another' })).toBeNull();
+    });
+
+    it('reveals another token once the draw is done', () => {
+      // Always the first token left: the −1, then the +1.
+      vi.spyOn(Math, 'random').mockReturnValue(0);
+      renderWillpowerTest(['-1', '+1']);
+      fireEvent.click(button('Draw a token'));
+
+      fireEvent.click(button('Reveal another'));
+
+      expect(outcome()).toBe('Pass 3 ≥ 3 by 0');
+      expect(screen.queryByRole('button', { name: 'Reveal another' })).toBeNull();
+    });
+  });
 });
