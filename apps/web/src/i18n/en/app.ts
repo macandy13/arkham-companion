@@ -443,6 +443,11 @@ export const appTexts = {
     outcome: { pass: 'Pass', fail: 'Fail' },
     against: { pass: '{{skill}} ≥ {{difficulty}}', fail: '{{skill}} < {{difficulty}}' },
     margin: 'by {{margin}}',
+    changeToken: 'Change {{token}}',
+    tokenActions: 'What a card does to {{token}}',
+    tokenAction: { ignore: 'Ignore', resolve: 'Resolve', redraw: 'Redraw', replace: 'Replace' },
+    replaceWith: 'Replace with {{token}}',
+    revealOneMore: 'Reveal another',
     odds: {
       title: 'Chance to pass',
       pass: '{{chance}} to pass',

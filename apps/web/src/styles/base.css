@@ -345,7 +345,7 @@ button:not(:disabled):hover {
 #app > main:not(:has(#board, #campaign-log, #home-title)),
 #shelf > li,
 dialog,
-[data-counter-bubble] {
+[data-bubble] {
   --color-background: var(--color-paper);
   --color-text: var(--color-ink);
   --color-text-muted: var(--color-ink-muted);
@@ -364,7 +364,7 @@ dialog,
 #shelf > li,
 dialog:where(:not([data-shell])),
 dialog[data-shell] > article,
-[data-counter-bubble] {
+[data-bubble] {
   border: var(--border-width) solid var(--color-paper-rim);
   border-radius: var(--radius);
   background: var(--guide-paper);

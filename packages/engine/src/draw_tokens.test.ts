@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { withoutEach } from '@arkham/util';
 import type { ChaosToken } from './state';
 import {
   continueDraw,
@@ -6,6 +7,7 @@ import {
   drawnTokens,
   drawTokens,
   redrawToken,
+  replaceToken,
   resolvedTokens,
   revealAnother,
   revealedTokens,
@@ -196,5 +198,59 @@ describe('a test draw', () => {
     const index = draw.findIndex(({ token }) => token === redrawn);
 
     expect(drawnTokens(redrawToken(bag, draw, index, firstLeft))).toEqual(after);
+  });
+
+  it.each<{
+    name: string;
+    bag: ChaosToken[];
+    draw: TestDraw;
+    replaced: ChaosToken;
+    by: ChaosToken;
+    after: ChaosToken[];
+    left: ChaosToken[];
+  }>([
+    {
+      name: 'swaps the −2 for the +1, so the −2 is the one left in the bag',
+      bag: ['-2', '+1'],
+      draw: minusTwo,
+      replaced: '-2',
+      by: '+1',
+      after: ['+1'],
+      left: ['-2'],
+    },
+    {
+      name: 'draws on when the new token is a bless',
+      bag: ['-2', 'bless', '0'],
+      draw: minusTwo,
+      replaced: '-2',
+      by: 'bless',
+      after: ['bless', '-2'],
+      left: ['0'],
+    },
+    {
+      name: 'puts back the −1 the replaced bless made the tester reveal',
+      bag: ['bless', '-1', '0'],
+      draw: blessThenMinusOne,
+      replaced: 'bless',
+      by: '0',
+      after: ['0'],
+      left: ['bless', '-1'],
+    },
+    {
+      name: 'keeps the draw when the bag holds no token of that kind',
+      bag: ['-2'],
+      draw: minusTwo,
+      replaced: '-2',
+      by: '+1',
+      after: ['-2'],
+      left: [],
+    },
+  ])('replaceToken $name', ({ bag, draw, replaced, by, after, left }) => {
+    const index = draw.findIndex(({ token }) => token === replaced);
+
+    const replacedDraw = replaceToken(bag, draw, index, by, firstLeft);
+
+    expect(drawnTokens(replacedDraw)).toEqual(after);
+    expect(withoutEach(bag, drawnTokens(replacedDraw))).toEqual(left);
   });
 });

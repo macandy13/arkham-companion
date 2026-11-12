@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { lengthInPixels } from './CounterBubble';
+import { lengthInPixels } from './PaperBubble';
 
 describe('lengthInPixels', () => {
   it.each([

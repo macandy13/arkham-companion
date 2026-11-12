@@ -135,21 +135,47 @@
   color: var(--color-text);
 }
 
-/* The tokens drawn and, while the test waits for one, the draw button where the next one goes. */
+/*
+ * The tokens drawn on one line with the + beside them and their sum under them; while the test
+ * waits for one, the draw button where they go. More tokens shrink, so the line still fits.
+ */
 #board dialog[data-shell] section[data-part='strip'] > figure {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
   gap: var(--space-1) var(--space-2);
-  align-items: flex-start;
+  align-items: start;
   justify-content: center;
   margin: 0;
 }
 
+/* The + takes a column of its own beside the tokens, so a lone draw button stays centred. */
+#board dialog[data-shell] section[data-part='strip'] > figure:has(> button[aria-controls]) {
+  grid-template-columns: auto auto;
+}
+
+#board dialog[data-shell] section[data-part='strip'] > figure:has(> ol > li:nth-child(4)) {
+  --chaos-token-size: calc(var(--test-token-size) * var(--test-token-crowded-scale));
+}
+
+#board dialog[data-shell] section[data-part='strip'] > figure:has(> ol > li:nth-child(6)) {
+  --chaos-token-size: calc(var(--test-token-size) * var(--test-token-packed-scale));
+}
+
+/* Shrunk tokens give up the touch target's width too, or the gaps between them would stay wide. */
+#board
+  dialog[data-shell]
+  section[data-part='strip']
+  > figure:has(> ol > li:nth-child(4))
+  > ol
+  > li
+  > button {
+  min-width: 0;
+  min-height: 0;
+}
+
 #board dialog[data-shell] section[data-part='strip'] > figure > ol {
   display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: var(--space-2);
+  align-items: flex-start;
+  gap: var(--space-1);
 }
 
 /* With their own bag (Settings, `chaosDraw`) the players draw at the table, so the app offers no draw. */
@@ -162,9 +188,10 @@
   display: none;
 }
 
-/* A token with the effect of its symbol under it. */
+/* A token with the effect of its symbol under it, the tokens' tops on one line. */
 #board dialog[data-shell] section[data-part='strip'] > figure > ol > li {
   display: grid;
+  align-content: start;
   justify-items: center;
   gap: var(--space-1);
 }
@@ -175,8 +202,46 @@
   font-variant-numeric: lining-nums tabular-nums;
 }
 
+/* The token itself is the button that opens what a card can do to it, so it has no pill. */
+#board dialog[data-shell] section[data-part='strip'] > figure > ol > li > button,
+[data-bubble='token'] > section > button:has(> [data-chaos-face]) {
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-round);
+  background: none;
+}
+
+#board
+  dialog[data-shell]
+  section[data-part='strip']
+  > figure
+  > ol
+  > li:is([data-state='cancelled'], [data-state='ignored'])
+  > button {
+  opacity: var(--drawn-token-set-aside-opacity);
+}
+
+/* The + that reveals one more token, a round button the size of a token beside them. */
+#board dialog[data-shell] section[data-part='strip'] > figure > button[aria-controls] {
+  width: var(--chaos-token-size);
+  height: var(--chaos-token-size);
+  padding: 0;
+  border-radius: var(--radius-round);
+  font-size: var(--font-size-title);
+}
+
+/* What a card does to a drawn token (DrawnTokenList): one row of pills, or the tokens to pick. */
+[data-bubble='token'] > section {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+  justify-content: center;
+  margin-block-start: var(--space-1);
+}
+
 #board dialog[data-shell] section[data-part='strip'] > figure > figcaption {
-  flex-basis: 100%;
+  grid-column: 1 / -1;
   color: var(--color-text-muted);
   font-size: var(--font-size-note);
   text-align: center;

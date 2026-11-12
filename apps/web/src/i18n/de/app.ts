@@ -447,6 +447,16 @@ export const appTexts = {
     outcome: { pass: 'Bestanden', fail: 'Misslungen' },
     against: { pass: '{{skill}} ≥ {{difficulty}}', fail: '{{skill}} < {{difficulty}}' },
     margin: 'um {{margin}}',
+    changeToken: '{{token}} ändern',
+    tokenActions: 'Was eine Karte mit {{token}} macht',
+    tokenAction: {
+      ignore: 'Ignorieren',
+      resolve: 'Abhandeln',
+      redraw: 'Neu ziehen',
+      replace: 'Ersetzen',
+    },
+    replaceWith: 'Durch {{token}} ersetzen',
+    revealOneMore: 'Weiteren enthüllen',
     odds: {
       title: 'Erfolgschance',
       pass: '{{chance}} Erfolg',

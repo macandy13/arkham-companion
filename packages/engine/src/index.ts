@@ -120,6 +120,7 @@ export {
   drawnTokens,
   drawTokens,
   redrawToken,
+  replaceToken,
   resolvedTokens,
   revealAnother,
   revealedTokens,
