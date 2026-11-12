@@ -1,4 +1,11 @@
-import type { CardDb, CardInstance, Difficulty, InstanceId, ScenarioId } from '@arkham/engine';
+import type {
+  CardDb,
+  CardInstance,
+  CardStats,
+  Difficulty,
+  InstanceId,
+  ScenarioId,
+} from '@arkham/engine';
 import { addCount, assertNever, groupBy, sum, unique } from '@arkham/util';
 import type { RunResult } from './play_run';
 import { scenarioContext } from './run';
@@ -22,12 +29,24 @@ export interface GameStatistics {
   readonly abilities: readonly string[];
   /** The abilities that fired: a forced one caused an event, an action was taken. */
   readonly fired: readonly string[];
+  /**
+   * What the players resolved by hand, once per time (M1V.5 picks what to automate from these):
+   * `Name: not scripted` for a drawn encounter card the engine holds no effect of (`isUnscripted`),
+   * `Name: DrawCards` for an effect of a card's ability the engine left to the players
+   * (`CommandDeferred`, `AbilityEffectSkipped`).
+   */
+  readonly byHand: readonly string[];
 }
 
-/** The statistics of `result`, read from its event log: the setup's cards, draws and causes. */
-export function gameStatistics(result: RunResult): GameStatistics {
+/**
+ * The statistics of `result`, read from its event log: the setup's cards, draws and causes.
+ * `cards` names them, the run's scenario card data unless a test plays other cards.
+ */
+export function gameStatistics(
+  result: RunResult,
+  cards: CardDb = scenarioContext(result.run).cards,
+): GameStatistics {
   const { run, log } = result;
-  const { cards } = scenarioContext(run);
   const setUp = log.flatMap(({ event }) => (event.type === 'ScenarioStarted' ? event.cards : []));
   const byId = new Map(setUp.map((card) => [card.id, card]));
   const nameOf = (id: InstanceId) => {
@@ -36,11 +55,21 @@ export function gameStatistics(result: RunResult): GameStatistics {
   };
   const fired = new Set<string>();
   const drawn: string[] = [];
+  const byHand: string[] = [];
   for (const { event, cause } of log) {
     if (cause?.kind === 'card') fired.add(`${nameOf(cause.cardId)}: ${cause.window.kind}`);
     if (event.type === 'CardActionUsed')
       fired.add(`${nameOf(event.cardId)}: action ${event.action + 1}`);
-    if (event.type === 'EncounterCardDrawn') drawn.push(nameOf(event.cardId));
+    if (event.type === 'EncounterCardDrawn') {
+      drawn.push(nameOf(event.cardId));
+      const code = byId.get(event.cardId)?.code;
+      const card = code && cards.get(code);
+      if (card && isUnscripted(card)) byHand.push(`${card.name}: not scripted`);
+    }
+    if (cause?.kind === 'card' && event.type === 'CommandDeferred')
+      byHand.push(`${nameOf(cause.cardId)}: ${event.command.type}`);
+    if (cause?.kind === 'card' && event.type === 'AbilityEffectSkipped')
+      byHand.push(`${nameOf(cause.cardId)}: ${event.effect}`);
   }
   return {
     scenario: run.scenario,
@@ -51,7 +80,23 @@ export function gameStatistics(result: RunResult): GameStatistics {
     drawn,
     abilities: abilitiesOf(setUp, cards),
     fired: [...fired],
+    byHand,
   };
+}
+
+/**
+ * Whether the engine holds none of `card`'s text as data, so the players read and resolve all of
+ * it: no forced or action ability, no modifier or restriction. Not an enemy, whose stats and
+ * keywords the engine plays even without an ability.
+ */
+function isUnscripted(card: CardStats): boolean {
+  return (
+    card.typeCode !== 'enemy' &&
+    !card.abilities?.length &&
+    !card.actions?.length &&
+    !card.modifiers?.length &&
+    !card.restrictions?.length
+  );
 }
 
 /** The resolution `result` reached, or how it ended without one. */
@@ -89,7 +134,8 @@ function abilitiesOf(setUp: readonly CardInstance[], cards: CardDb): string[] {
 /**
  * The statistics of `games` for the job summary: per scenario and difficulty the outcomes and
  * rounds; per scenario each encounter card's share of the draws next to its share of the deck (a
- * shuffle bias shows as a gap) and the abilities that never fired (paths no game tested).
+ * shuffle bias shows as a gap), the abilities that never fired (paths no game tested) and what
+ * the players resolved by hand, most often first.
  */
 export function statisticsReport(games: readonly GameStatistics[]): string {
   const scenarios = unique(games.map(({ scenario }) => scenario));
@@ -118,6 +164,10 @@ export function statisticsReport(games: readonly GameStatistics[]): string {
         ...drawShares(played),
         '',
         `Abilities that never fired: ${neverFired(played).join(', ') || 'none'}`,
+        '',
+        `#### Resolved by hand, ${scenario}`,
+        '',
+        ...byHandRows(played),
       ];
     }),
   ].join('\n');
@@ -150,6 +200,27 @@ function neverFired(games: readonly GameStatistics[]): string[] {
   const fired = new Set(games.flatMap((game) => game.fired));
   const abilities = new Set(games.flatMap((game) => game.abilities));
   return [...abilities].filter((ability) => !fired.has(ability)).sort();
+}
+
+/**
+ * A table row per thing the players resolved by hand in `games`, most often first, with the share
+ * of games it happened in; `Nothing` when the engine did it all.
+ */
+function byHandRows(games: readonly GameStatistics[]): string[] {
+  const times: Record<string, number> = {};
+  const inGames: Record<string, number> = {};
+  for (const game of games) {
+    for (const effect of game.byHand) addCount(times, effect);
+    for (const effect of unique(game.byHand)) addCount(inGames, effect);
+  }
+  const rows = Object.entries(times)
+    .sort(([a, x], [b, y]) => y - x || a.localeCompare(b))
+    .map(
+      ([effect, count]) =>
+        `| ${effect} | ${count} | ${percent(inGames[effect] ?? 0, games.length)} |`,
+    );
+  if (rows.length === 0) return ['Nothing'];
+  return ['| Effect | Times | Share of games |', '| --- | --- | --- |', ...rows];
 }
 
 /** `part` of `whole` as a percentage with one decimal; `-` of nothing. */
