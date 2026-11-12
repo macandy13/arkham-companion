@@ -84,7 +84,7 @@ function playGames(): number {
     const findings = nightlyFindings(written);
     const comeBackFiles = comeBack.map(({ file }) => file);
     mkdirSync(out, { recursive: true });
-    const statistics = statisticsReport(results.map(gameStatistics));
+    const statistics = statisticsReport(results.map((result) => gameStatistics(result)));
     writeFileSync(
       join(out, 'summary.md'),
       `${nightlySummary(seed, summary, findings, comeBackFiles)}\n\n${statistics}`,
