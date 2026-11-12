@@ -4,7 +4,7 @@ import { woundEvents } from './elimination';
 import type { EnemyAttacked, EnemyDefeated, Event } from './events';
 import type { InstanceId, InvestigatorId } from './ids';
 import { cardsInZone, requireCard } from './lookup';
-import { playerOrder } from './investigators';
+import { playerOrder, findInvestigator } from './investigators';
 import { hasKeyword } from './keywords';
 import { CommandRejected } from './rejection';
 import { encounterDiscard, victoryDisplay } from './zone';
@@ -139,7 +139,7 @@ export function locationOf(state: GameState, enemy: CardInstance): InstanceId {
   if (enemy.zone.kind === 'atLocation') return enemy.zone.locationId;
   if (enemy.zone.kind === 'engaged') {
     const { investigatorId } = enemy.zone;
-    const location = state.investigators.find((inv) => inv.id === investigatorId)?.locationId;
+    const location = findInvestigator(state, investigatorId)?.locationId;
     if (location !== undefined) return location;
     throw new CommandRejected({ code: 'investigatorHasNoLocation', investigatorId });
   }
@@ -162,7 +162,7 @@ export function enemiesAt(
     if (zone.kind === 'atLocation')
       return zone.locationId === locationId && cardStats(ctx.cards, card.code).typeCode === 'enemy';
     if (zone.kind !== 'engaged') return false;
-    const engaged = state.investigators.find((inv) => inv.id === zone.investigatorId);
+    const engaged = findInvestigator(state, zone.investigatorId);
     return engaged?.locationId === locationId;
   });
 }

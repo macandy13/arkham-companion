@@ -1,3 +1,4 @@
+import { findInvestigator, requireInvestigator } from './investigators';
 import type { EngineContext } from './cards';
 import type { DealEnemyAttack, EnemyAttacks } from './commands';
 import { requestDecision } from './decisions';
@@ -5,7 +6,6 @@ import { enemyAttackEvents, readyEngagedEnemies } from './enemies';
 import type { DecisionRequested, Event } from './events';
 import { forcedAttackDecision } from './forced_attacks';
 import { enemyOf, isEnemyOnTable } from './enemies';
-import { CommandRejected } from './rejection';
 import type { GameState, HeldAction } from './state';
 
 /**
@@ -31,7 +31,7 @@ export function attackOfOpportunityDecisions(
   state: GameState,
   action: HeldAction,
 ): DecisionRequested[] {
-  const investigator = state.investigators.find((inv) => inv.id === action.investigatorId);
+  const investigator = findInvestigator(state, action.investigatorId);
   if (investigator?.status !== 'active') return [];
   return readyEngagedEnemies(ctx, state, investigator).flatMap((enemyId) =>
     requestDecision(
@@ -62,9 +62,7 @@ export function handleDealEnemyAttack(
   cmd: DealEnemyAttack,
 ): Event[] {
   const { enemy } = enemyOf(ctx, state, cmd.enemyId);
-  const investigator = state.investigators.find((inv) => inv.id === cmd.investigatorId);
-  if (!investigator)
-    throw new CommandRejected({ code: 'unknownInvestigator', investigatorId: cmd.investigatorId });
+  const investigator = requireInvestigator(state, cmd.investigatorId);
   const dealt = enemyAttackEvents(ctx, state, cmd.enemyId, investigator, cmd.damage, cmd.horror);
   return investigator.status === 'active' && isEnemyOnTable(enemy) ? dealt : [];
 }
@@ -80,9 +78,7 @@ export function handleEnemyAttacks(
   cmd: EnemyAttacks,
 ): DecisionRequested[] {
   const { enemy } = enemyOf(ctx, state, cmd.enemyId);
-  const investigator = state.investigators.find((inv) => inv.id === cmd.investigatorId);
-  if (!investigator)
-    throw new CommandRejected({ code: 'unknownInvestigator', investigatorId: cmd.investigatorId });
+  const investigator = requireInvestigator(state, cmd.investigatorId);
   if (investigator.status !== 'active' || !isEnemyOnTable(enemy)) return [];
   if (cmd.keyword !== undefined && enemy.exhausted) return [];
   return requestDecision(

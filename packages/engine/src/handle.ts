@@ -1,3 +1,4 @@
+import { findInvestigator } from './investigators';
 import { missingCopies, resolveEffect } from './abilities';
 import type { EngineContext } from './cards';
 import { commandSpec, type CommandSpec, type Continuation, type Step } from './command_specs';
@@ -518,7 +519,7 @@ function resolveSurge(resolution: Resolution, surge: DrawEncounter): Step[] {
  * own, so a rejection anywhere in it drops all of it.
  */
 function resumeHeldAction(resolution: Resolution, held: HeldAction, budget: TriggerBudget): void {
-  const investigator = resolution.state.investigators.find((inv) => inv.id === held.investigatorId);
+  const investigator = findInvestigator(resolution.state, held.investigatorId);
   if (investigator?.status !== 'active') {
     emit(resolution, [
       {

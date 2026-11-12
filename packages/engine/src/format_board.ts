@@ -1,10 +1,11 @@
+import { findInvestigator } from './investigators';
 import { neighbours } from './board';
 import { resolveValue, type EngineContext } from './cards';
 import { roundEndClueObjective } from './abilities';
 import { cluesToAdvance } from './card_actions';
 import { describeDecision } from './describe_decision';
 import { agendaThreshold, doomInPlay } from './doom';
-import type { InstanceId, MapId } from './ids';
+import type { InstanceId, InvestigatorId, MapId } from './ids';
 import { cardsInZone } from './lookup';
 import { mapLocations } from './map';
 import { PHASE_STEP_TITLES } from './phases';
@@ -270,8 +271,8 @@ function nameOfId(ctx: EngineContext, state: GameState, id: InstanceId): string 
   return card ? nameOf(ctx, card) : id;
 }
 
-function investigatorName(state: GameState, id: string): string {
-  return state.investigators.find((investigator) => investigator.id === id)?.name ?? id;
+function investigatorName(state: GameState, id: InvestigatorId): string {
+  return findInvestigator(state, id)?.name ?? id;
 }
 
 function cardsIn(state: GameState, zone: Zone): CardInstance[] {
