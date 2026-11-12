@@ -1,4 +1,5 @@
 import { assertNever } from '@arkham/util';
+import { takeDamage } from './abilities';
 import { effectiveValue } from './modifiers';
 import type { CardStats, EngineContext } from './cards';
 import type { Command, EndSkillTest, Evade, Fight, Investigate, TestSkill } from './commands';
@@ -112,8 +113,8 @@ function isUnengagedAloof(enemy: CardInstance, stats: CardStats): boolean {
 
 /**
  * Rules Reference, "Fight": failing against an enemy engaged with another
- * single investigator deals the attack's damage to that investigator, through
- * `AdjustInvestigator` so the usual defeat check applies. A massive enemy is
+ * single investigator deals the attack's damage to that investigator, as a
+ * `TakeDamageAndHorror` (`takeDamage`), so the usual defeat check applies. A massive enemy is
  * never in the `engaged` zone (it is engaged with several investigators), so it
  * is not redirected, nor is an enemy that is unengaged or engaged with the
  * fighter.
@@ -128,9 +129,7 @@ function failedFightCommands(
   const engagedId = enemy.zone.investigatorId;
   const engaged = findInvestigator(state, engagedId);
   if (engaged?.status !== 'active') return [];
-  return [
-    { type: 'AdjustInvestigator', investigatorId: engaged.id, stat: 'damage', delta: damage },
-  ];
+  return [takeDamage(damage, engaged.id)];
 }
 
 /**

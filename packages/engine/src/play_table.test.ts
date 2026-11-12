@@ -27,6 +27,7 @@ import {
   TableRejected,
   whenAdvanced,
   type AbilityEffect,
+  takeHorror,
 } from './index';
 import {
   campaignMember,
@@ -825,9 +826,7 @@ describe('answering decisions', () => {
           onFail: [
             {
               type: 'ForEachPoint',
-              commands: [
-                { type: 'AdjustInvestigator', investigatorId: alice, stat: 'horror', delta: 1 },
-              ],
+              commands: [takeHorror(1, alice)],
             },
           ],
         },

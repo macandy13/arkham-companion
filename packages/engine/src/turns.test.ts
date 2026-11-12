@@ -16,6 +16,8 @@ import {
   type Command,
   type GameState,
   type InvestigatorId,
+  takeDamage,
+  takeHorror,
 } from './index';
 import { answer, investigatorOf, rejectionFrom, stateAfter } from '../test/utils';
 
@@ -88,12 +90,7 @@ describe('StartTurn', () => {
 
   it('rejects the turn of a defeated investigator', () => {
     const { context, state } = aliceAndBobInHall.start();
-    const investigation = stateAfter(context, state, next, {
-      type: 'AdjustInvestigator',
-      investigatorId: bob,
-      stat: 'horror',
-      delta: 6,
-    });
+    const investigation = stateAfter(context, state, next, takeHorror(6, bob));
 
     expect(rejectionFrom(context, investigation, startTurn(bob))).toEqual({
       code: 'investigatorNotActive',
@@ -133,12 +130,7 @@ describe('EndTurn', () => {
 
   it('ends the turn of an investigator who is defeated during it', () => {
     const { context, state } = aliceAndBobInHall.withTurnOf(alice).start();
-    const defeated = stateAfter(context, state, {
-      type: 'AdjustInvestigator',
-      investigatorId: alice,
-      stat: 'damage',
-      delta: 8,
-    });
+    const defeated = stateAfter(context, state, takeDamage(8, alice));
 
     expect(defeated.meta.turn).toBeUndefined();
     expect(defeated.meta.turnsTaken).toEqual([alice]);
@@ -271,12 +263,7 @@ describe('remaining actions', () => {
 
   it('reject a change for a defeated investigator', () => {
     const { context, state } = aliceAndBobInHall.start();
-    const defeated = stateAfter(context, state, {
-      type: 'AdjustInvestigator',
-      investigatorId: bob,
-      stat: 'horror',
-      delta: 6,
-    });
+    const defeated = stateAfter(context, state, takeHorror(6, bob));
 
     expect(rejectionFrom(context, defeated, adjustActions(bob, -1))).toEqual({
       code: 'investigatorNotActive',

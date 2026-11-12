@@ -24,6 +24,7 @@ import {
   type InvestigatorId,
   type Zone,
   placeDoomOn,
+  takeHorror,
 } from './index';
 import { cardOptionLabels, sameDecider } from './decisions';
 import { requireInvestigator } from './investigators';
@@ -65,12 +66,7 @@ const gainResource: Command = {
   stat: 'resources',
   delta: 1,
 };
-const gainHorror = (delta: number): Command => ({
-  type: 'AdjustInvestigator',
-  investigatorId: alice,
-  stat: 'horror',
-  delta,
-});
+const gainHorror = (delta: number): Command => takeHorror(delta, alice);
 
 describe('engagement choice', () => {
   const ghoulInHallWithAliceAndBob = hallWithAliceAndBob.withCard(
@@ -717,12 +713,7 @@ describe('who answers', () => {
   });
 
   it('rejects a defeated investigator answering for the group', () => {
-    const aliceDefeated: Command = {
-      type: 'AdjustInvestigator',
-      investigatorId: alice,
-      stat: 'horror',
-      delta: 6,
-    };
+    const aliceDefeated: Command = takeHorror(6, alice);
     const decider: Decider = { kind: 'group' };
 
     expect(rejectionFrom(context, askedBy(decider, aliceDefeated), answerBy(alice))).toEqual({

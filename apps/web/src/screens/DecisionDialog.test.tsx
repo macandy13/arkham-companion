@@ -18,9 +18,10 @@ import {
   forEachPoint,
   gainClues,
   skillTest,
-  takeDamage,
   whenRevealed,
   zoneOf,
+  takeDamage,
+  takeHorror,
 } from '@arkham/engine';
 import { initI18n } from '../i18n';
 import { DecisionDialog } from './DecisionDialog';
@@ -493,16 +494,12 @@ describe('DecisionDialog', () => {
                 {
                   id: 'horror',
                   label: 'Take 2 horror',
-                  commands: [
-                    { type: 'AdjustInvestigator', investigatorId: alder, stat: 'horror', delta: 2 },
-                  ],
+                  commands: [takeHorror(2, alder)],
                 },
                 {
                   id: 'damage',
                   label: 'Take 2 damage',
-                  commands: [
-                    { type: 'AdjustInvestigator', investigatorId: alder, stat: 'damage', delta: 2 },
-                  ],
+                  commands: [takeDamage(2, alder)],
                 },
               ],
             },

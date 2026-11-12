@@ -25,6 +25,8 @@ import {
   type GameState,
   type Zone,
   placeDoomOnAgenda,
+  takeDamage,
+  takeHorror,
 } from './index';
 import { requireInvestigator } from './investigators';
 import { answer, rejectionFrom, runFrom, stateAfter } from '../test/utils';
@@ -177,13 +179,7 @@ describe('NextPhase', () => {
     const { context, state } = aliceInHall
       .withInvestigator(bob, { locationId: hall, health: { max: 1, damage: 0 } })
       .start();
-    const investigation = stateAfter(
-      context,
-      state,
-      next,
-      { type: 'AdjustInvestigator', investigatorId: bob, stat: 'damage', delta: 1 },
-      ...turnsOf(alice),
-    );
+    const investigation = stateAfter(context, state, next, takeDamage(1, bob), ...turnsOf(alice));
 
     const enemy = stateAfter(context, investigation, next);
 
@@ -290,12 +286,7 @@ describe('mythos phase', () => {
     const { context, state } = aliceAndBob
       .withCard(instanceId('first_treachery'), plainTreachery, encounterDeck)
       .start();
-    const upkeep = stateAfter(context, upkeepOf(context, state), {
-      type: 'AdjustInvestigator',
-      investigatorId: alice,
-      stat: 'damage',
-      delta: 8,
-    });
+    const upkeep = stateAfter(context, upkeepOf(context, state), takeDamage(8, alice));
 
     expect(drawsOf(context, upkeep, next)).toEqual(['bob draws first_treachery']);
   });
@@ -562,13 +553,7 @@ describe('upkeep phase', () => {
       .withInvestigator(alice, { locationId: hall, resources: 0 })
       .withInvestigator(bob, { locationId: hall, resources: 0, sanity: { max: 3, horror: 0 } })
       .start();
-    const state = stateAfter(
-      context,
-      started,
-      next,
-      { type: 'AdjustInvestigator', investigatorId: bob, stat: 'horror', delta: 3 },
-      ...turnsOf(alice),
-    );
+    const state = stateAfter(context, started, next, takeHorror(3, bob), ...turnsOf(alice));
 
     const upkeep = stateAfter(context, state, next, next);
 
@@ -600,13 +585,7 @@ describe('upkeep phase', () => {
       .withInvestigator(alice, { locationId: hall })
       .withInvestigator(bob, { locationId: hall, sanity: { max: 3, horror: 0 } })
       .start();
-    const state = stateAfter(
-      context,
-      started,
-      next,
-      { type: 'AdjustInvestigator', investigatorId: bob, stat: 'horror', delta: 3 },
-      ...turnsOf(alice),
-    );
+    const state = stateAfter(context, started, next, takeHorror(3, bob), ...turnsOf(alice));
 
     const deferred = runFrom(context, state, [next, next]).events.filter(
       (event) => event.type === 'CommandDeferred',
