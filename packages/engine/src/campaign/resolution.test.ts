@@ -30,6 +30,8 @@ import {
   type ResolutionId,
   type ResolutionStep,
   type ScenarioResolutions,
+  takeDamage,
+  takeHorror,
 } from '../index';
 
 const alice = investigatorId('alice');
@@ -52,12 +54,6 @@ const resign = (investigator: InvestigatorId): Command => ({
 const startTurn = (investigator: InvestigatorId): Command => ({
   type: 'StartTurn',
   investigatorId: investigator,
-});
-const takeDamage = (investigator: InvestigatorId, delta: number): Command => ({
-  type: 'AdjustInvestigator',
-  investigatorId: investigator,
-  stat: 'damage',
-  delta,
 });
 
 /** Alice (the lead) and bob in the study, each with 8 health and 6 sanity. */
@@ -362,7 +358,7 @@ describe('proposeResolution', () => {
 
     const proposal = campaign.proposeResolution(
       context,
-      stateAfter(context, state, takeDamage(bob, 8), endWith(r3)),
+      stateAfter(context, state, takeDamage(8, bob), endWith(r3)),
       resolutions,
     );
 
@@ -475,7 +471,7 @@ describe('proposeResolution', () => {
 
     const proposal = campaign.proposeResolution(
       context,
-      stateAfter(context, state, takeDamage(bob, 8), endWith(r1)),
+      stateAfter(context, state, takeDamage(8, bob), endWith(r1)),
       resolutions,
     );
 
@@ -491,7 +487,7 @@ describe('proposeResolution', () => {
   it.each([
     [
       'by horror',
-      { type: 'AdjustInvestigator', investigatorId: alice, stat: 'horror', delta: 6 },
+      takeHorror(6, alice),
       [
         {
           kind: 'command',
@@ -588,7 +584,7 @@ describe('proposeResolution for a resolution the players picked', () => {
 
   it('still adds the trauma of the defeats the game had', () => {
     const { context, state } = table.withTurnOf(alice).start();
-    const ended = stateAfter(context, state, takeDamage(alice, 8), startTurn(bob), resign(bob));
+    const ended = stateAfter(context, state, takeDamage(8, alice), startTurn(bob), resign(bob));
 
     const proposal = campaign.proposeResolution(context, ended, resolutions, {
       kind: 'resolution',

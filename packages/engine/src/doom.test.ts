@@ -31,6 +31,7 @@ import {
   placeDoomOnAgenda,
   placeDoomOn,
   placeCluesOn,
+  takeDamage,
 } from './index';
 import { requireInvestigator } from './investigators';
 import { answer, rejectionFrom, stateAfter } from '../test/utils';
@@ -326,7 +327,7 @@ describe('doom total', () => {
       context,
       started,
       { type: 'AdjustInvestigator', investigatorId: alice, stat: 'doomOnPlayerCards', delta: 2 },
-      { type: 'AdjustInvestigator', investigatorId: alice, stat: 'damage', delta: 1 },
+      takeDamage(1, alice),
     );
 
     expect(doomInPlay(state)).toBe(0);
@@ -624,12 +625,7 @@ describe('AdvanceAct', () => {
   });
 
   it('keeps the starting player count after bob is defeated, so alice alone cannot pay', () => {
-    const defeated = stateAfter(context, state, {
-      type: 'AdjustInvestigator',
-      investigatorId: bob,
-      stat: 'damage',
-      delta: 8,
-    });
+    const defeated = stateAfter(context, state, takeDamage(8, bob));
 
     expect(
       rejectionFrom(context, defeated, spendOnFirstAct([{ investigatorId: alice, amount: 3 }]))

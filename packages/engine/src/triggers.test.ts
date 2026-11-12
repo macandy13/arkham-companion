@@ -2234,14 +2234,7 @@ describe('a choice for the lead investigator', () => {
           {
             id: 'spare',
             label: 'Leave it',
-            effects: [
-              {
-                type: 'AdjustInvestigator',
-                investigatorId: { ref: 'lead' },
-                stat: 'horror',
-                delta: 1,
-              },
-            ],
+            effects: [takeHorror(1, { ref: 'lead' })],
           },
         ]),
       ),
@@ -3379,14 +3372,7 @@ describe('effects on each investigator', () => {
   });
   /** "Each investigator takes 1 horror." */
   const horrorForAllAgenda = blankAgenda('horror_for_all_agenda', fixed(3), {
-    abilities: [
-      whenAdvanced({
-        type: 'AdjustInvestigator',
-        investigatorId: { ref: 'eachInvestigator' },
-        stat: 'horror',
-        delta: 1,
-      }),
-    ],
+    abilities: [whenAdvanced(takeHorror(1, { ref: 'eachInvestigator' }))],
   });
   /** One horror defeats an investigator with this sanity. */
   const frail = { max: 1, horror: 0 };

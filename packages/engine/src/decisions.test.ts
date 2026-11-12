@@ -24,6 +24,7 @@ import {
   type InvestigatorId,
   type Zone,
   placeDoomOn,
+  takeHorror,
 } from './index';
 import { cardOptionLabels, sameDecider } from './decisions';
 import { requireInvestigator } from './investigators';
@@ -65,12 +66,6 @@ const gainResource: Command = {
   stat: 'resources',
   delta: 1,
 };
-const gainHorror = (delta: number): Command => ({
-  type: 'AdjustInvestigator',
-  investigatorId: alice,
-  stat: 'horror',
-  delta,
-});
 
 describe('engagement choice', () => {
   const ghoulInHallWithAliceAndBob = hallWithAliceAndBob.withCard(
@@ -324,7 +319,7 @@ describe('skill test result', () => {
     },
     {
       onPass: [{ type: 'DiscoverClues', investigatorId: alice, locationId: hall, amount: 1 }],
-      onFail: [gainHorror(1)],
+      onFail: [takeHorror(1, alice)],
     },
   );
   const asked = stateAfter(context, aliceInHall, { type: 'RequestDecision', decision });
@@ -361,7 +356,7 @@ describe('skill test outcome record', () => {
     },
     {
       onPass: [{ type: 'DiscoverClues', investigatorId: alice, locationId: hall, amount: 1 }],
-      onFail: [gainHorror(1)],
+      onFail: [takeHorror(1, alice)],
     },
   );
   const asked = stateAfter(context, aliceInHall, { type: 'RequestDecision', decision });
@@ -623,7 +618,7 @@ describe('pending decision invariants', () => {
         decider: { kind: 'group' },
         options: [
           { id: 'resource', label: 'Resource', commands: [gainResource] },
-          { id: 'horror', label: 'Horror', commands: [gainHorror(1)] },
+          { id: 'horror', label: 'Horror', commands: [takeHorror(1, alice)] },
         ],
       },
     },
@@ -636,7 +631,7 @@ describe('pending decision invariants', () => {
           decider: { kind: 'lead' },
           test: { skill: 'willpower', difficulty: 2 },
         },
-        { onPass: [gainResource], onFail: [gainHorror(1)] },
+        { onPass: [gainResource], onFail: [takeHorror(1, alice)] },
       ),
     },
   ];
@@ -717,12 +712,7 @@ describe('who answers', () => {
   });
 
   it('rejects a defeated investigator answering for the group', () => {
-    const aliceDefeated: Command = {
-      type: 'AdjustInvestigator',
-      investigatorId: alice,
-      stat: 'horror',
-      delta: 6,
-    };
+    const aliceDefeated: Command = takeHorror(6, alice);
     const decider: Decider = { kind: 'group' };
 
     expect(rejectionFrom(context, askedBy(decider, aliceDefeated), answerBy(alice))).toEqual({

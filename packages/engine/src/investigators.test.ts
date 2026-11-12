@@ -14,6 +14,7 @@ import {
   withStats,
   type Command,
   placeYourClues,
+  takeDamageAndHorror,
 } from './index';
 import { investigatorOf, rejectionFrom, stateAfter } from '../test/utils';
 
@@ -523,12 +524,8 @@ describe('TakeDamageAndHorror', () => {
       sanity: { max: 2, horror: 1 },
     })
     .start();
-  const aliceTakes = (damage: number, horror: number): Command => ({
-    type: 'TakeDamageAndHorror',
-    investigatorId: alice,
-    damage,
-    horror,
-  });
+  const aliceTakes = (damage: number, horror: number): Command =>
+    takeDamageAndHorror({ damage, horror }, alice);
 
   it('places both on alice before the defeat either causes, so neither is lost', () => {
     const result = execute(context, state, aliceTakes(1, 1));

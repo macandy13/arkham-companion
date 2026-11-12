@@ -24,6 +24,8 @@ import {
   type GameState,
   type InvestigatorId,
   type Zone,
+  takeDamage,
+  takeHorror,
 } from './index';
 import { answer, investigatorOf, rejectionFrom, stateAfter } from '../test/utils';
 
@@ -55,21 +57,9 @@ const resign = (investigator: InvestigatorId): Command => ({
   type: 'Resign',
   investigatorId: investigator,
 });
-const takeDamage = (investigator: InvestigatorId, delta: number): Command => ({
-  type: 'AdjustInvestigator',
-  investigatorId: investigator,
-  stat: 'damage',
-  delta,
-});
 const defeat = (investigator: InvestigatorId): Command => ({
   type: 'DefeatInvestigator',
   investigatorId: investigator,
-});
-const takeHorror = (investigator: InvestigatorId, delta: number): Command => ({
-  type: 'AdjustInvestigator',
-  investigatorId: investigator,
-  stat: 'horror',
-  delta,
 });
 
 /** Ids of the cards in `zone`, top first. */
@@ -108,8 +98,8 @@ function aliceTurn(): BuiltGame {
 }
 
 describe.each([
-  ['is defeated by damage', takeDamage(alice, 8)],
-  ['is defeated by horror', takeHorror(alice, 6)],
+  ['is defeated by damage', takeDamage(8, alice)],
+  ['is defeated by horror', takeHorror(6, alice)],
   ['is defeated by a card effect', defeat(alice)],
   ['resigns', resign(alice)],
 ])('an investigator who %s', (_, leave) => {
@@ -188,7 +178,7 @@ describe('an investigator who leaves', () => {
       .withInvestigator(bob, { locationId: hall })
       .start();
 
-    const defeated = stateAfter(context, unplaced, takeDamage(alice, 8));
+    const defeated = stateAfter(context, unplaced, takeDamage(8, alice));
 
     expect(investigatorOf(defeated, alice).clues).toBe(2);
     expect(defeated.cards[hall]?.tokens.clue).toBeUndefined();
@@ -203,7 +193,7 @@ describe('an investigator who leaves', () => {
       .withCard(unplacedGhoul, ghoulCard, engagedWith(alice), { tokens: { damage: 1 } })
       .start();
 
-    const defeated = stateAfter(context, unplaced, takeDamage(alice, 8));
+    const defeated = stateAfter(context, unplaced, takeDamage(8, alice));
 
     expect(idsIn(defeated, { kind: 'encounterDiscard' })).toEqual([unplacedGhoul]);
     expect(defeated.cards[unplacedGhoul]?.tokens).toEqual({});
@@ -239,7 +229,7 @@ describe('an investigator who leaves', () => {
       endTurn(bob),
       startTurn(carol),
       endTurn(carol),
-      takeDamage(alice, 7),
+      takeDamage(7, alice),
       nextPhase,
     );
 
@@ -304,7 +294,7 @@ describe('the lead investigator leaving', () => {
 
   it('asks about a defeated lead too', () => {
     const { context, state } = threeInvestigators.start();
-    const defeated = stateAfter(context, state, takeHorror(alice, 6));
+    const defeated = stateAfter(context, state, takeHorror(6, alice));
 
     expect(defeated.pending.map((decision) => decision.id)).toEqual([
       decisionId('newLeadInvestigator'),
@@ -313,7 +303,7 @@ describe('the lead investigator leaving', () => {
 
   it('makes the last remaining investigator the lead without asking', () => {
     const { context, state } = aliceTurn();
-    const carolDefeatedFirst = stateAfter(context, state, takeDamage(carol, 8));
+    const carolDefeatedFirst = stateAfter(context, state, takeDamage(8, carol));
 
     const bobAlone = stateAfter(context, carolDefeatedFirst, resign(alice));
 
@@ -343,8 +333,8 @@ describe('the lead investigator leaving', () => {
         state,
         nextPhase,
         ...turns,
-        takeDamage(alice, 7),
-        takeDamage(bob, 7),
+        takeDamage(7, alice),
+        takeDamage(7, bob),
         nextPhase,
         answer(`enemyAttack:${aliceGhoul}:${alice}`, 'attack'),
       );
@@ -383,7 +373,7 @@ describe('the lead investigator leaving', () => {
 
   it('does not ask when another investigator leaves', () => {
     const { context, state } = threeInvestigators.start();
-    const defeated = stateAfter(context, state, takeHorror(bob, 6));
+    const defeated = stateAfter(context, state, takeHorror(6, bob));
 
     expect(defeated.pending).toEqual([]);
     expect(defeated.meta.leadInvestigator).toBe(alice);
@@ -393,7 +383,7 @@ describe('the lead investigator leaving', () => {
 describe('the last investigator leaving', () => {
   const lastInvestigator = (): BuiltGame => {
     const { context, state } = aliceTurn();
-    return { context, state: stateAfter(context, state, takeDamage(bob, 8), takeDamage(carol, 8)) };
+    return { context, state: stateAfter(context, state, takeDamage(8, bob), takeDamage(8, carol)) };
   };
 
   it('ends the scenario without a resolution', () => {
@@ -558,7 +548,7 @@ describe('SetLeadInvestigator', () => {
 
   it('rejects an investigator who left the scenario', () => {
     const { context, state } = threeInvestigators.start();
-    const defeated = stateAfter(context, state, takeHorror(bob, 6));
+    const defeated = stateAfter(context, state, takeHorror(6, bob));
 
     expect(rejectionFrom(context, defeated, setLead(bob))).toEqual({
       code: 'investigatorNotActive',

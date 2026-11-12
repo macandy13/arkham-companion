@@ -21,6 +21,7 @@ import type {
   MoveTokens,
   TokenHolder,
   TokenMoveAmount,
+  TakeDamageAndHorror,
 } from './commands';
 import { cardsInPlay, cardsWithActiveAbilities } from './doom';
 import { cardOptionLabels } from './decisions';
@@ -470,7 +471,7 @@ export type AbilityOption = Pick<DecisionOption, 'id' | 'label'> & { commands: A
 /**
  * One step of what an ability does: an allowed command written with
  * relative references instead of IDs ("Revelation – Take 1 horror" is
- * `AdjustInvestigator` on `{ ref: 'windowInvestigator' }`). Reusing the
+ * `TakeDamageAndHorror` on `{ ref: 'windowInvestigator' }`). Reusing the
  * command types keeps one vocabulary: a new kind of effect is a command
  * added to `AbilityCommand`, not a new effect type.
  */
@@ -1768,13 +1769,16 @@ export function discardSelf(): AbilityEffect {
 
 /**
  * "Take N damage": the investigator the window names takes `amount` damage,
- * or `who` does ("each investigator at its location takes 1 damage").
+ * or `who` does ("each investigator at its location takes 1 damage"). A `TakeDamageAndHorror`
+ * with no horror; for an investigator's ID it is a plain command (`takeDamage(2, alice)`).
  */
+export function takeDamage(amount: number, who: InvestigatorId): TakeDamageAndHorror;
+export function takeDamage(amount: number, who?: RelativeInvestigator): AbilityEffect;
 export function takeDamage(
   amount: number,
-  who: RelativeInvestigator = { ref: 'windowInvestigator' },
-): AbilityEffect {
-  return { type: 'AdjustInvestigator', investigatorId: who, stat: 'damage', delta: amount };
+  who: InvestigatorId | RelativeInvestigator = { ref: 'windowInvestigator' },
+): Wounds {
+  return wounds({ damage: amount, horror: 0 }, who);
 }
 
 /**
@@ -1826,13 +1830,37 @@ function withSource<C extends { readonly type: string }>(command: C, source: Com
 /**
  * "Take 1 horror and 1 damage": both at once (`TakeDamageAndHorror`), so a
  * defeat by one does not lose the other, written
- * `takeDamageAndHorror({ damage: 1, horror: 1 })` (On Wings of Darkness).
+ * `takeDamageAndHorror({ damage: 1, horror: 1 })` (On Wings of Darkness); for an
+ * investigator's ID it is a plain command.
  */
 export function takeDamageAndHorror(
-  amounts: { damage: number; horror: number },
-  who: RelativeInvestigator = { ref: 'windowInvestigator' },
-): AbilityEffect {
-  return { type: 'TakeDamageAndHorror', investigatorId: who, ...amounts };
+  amounts: WoundAmounts,
+  who: InvestigatorId,
+): TakeDamageAndHorror;
+export function takeDamageAndHorror(
+  amounts: WoundAmounts,
+  who?: RelativeInvestigator,
+): AbilityEffect;
+export function takeDamageAndHorror(
+  amounts: WoundAmounts,
+  who: InvestigatorId | RelativeInvestigator = { ref: 'windowInvestigator' },
+): Wounds {
+  return wounds(amounts, who);
+}
+
+/** The damage and horror one effect deals: `TakeDamageAndHorror`'s amounts. */
+type WoundAmounts = Pick<TakeDamageAndHorror, 'damage' | 'horror'>;
+
+/**
+ * What the wound factories return: a `TakeDamageAndHorror` for an investigator's ID, an
+ * `AbilityEffect` for a reference; their overloads give callers the one they asked for.
+ */
+type Wounds = TakeDamageAndHorror & AbilityEffect;
+
+/** The one command for an investigator's wounds (ME.9d): plain damage or horror is the other at 0. */
+function wounds(amounts: WoundAmounts, who: InvestigatorId | RelativeInvestigator): Wounds {
+  // One literal for both shapes, as in `tokenMove`.
+  return { type: 'TakeDamageAndHorror', investigatorId: who, ...amounts } as Wounds;
 }
 
 /** "Heal N damage" or "heal N horror" (St. Mary's Hospital, Arkham Asylum): as much as there is. */
@@ -1973,12 +2001,14 @@ export function gainResources(
   return tokenMove('resource', amount, 'pool', { investigator: who });
 }
 
-/** "Take N horror", like `takeDamage`: Goat Spawn is `whenDefeated(takeHorror(1, eachInvestigator({ at: itsLocation() })))`. */
+/** "Take N horror", like `takeDamage` (no damage; an ID gives a plain command): Goat Spawn is `whenDefeated(takeHorror(1, eachInvestigator({ at: itsLocation() })))`. */
+export function takeHorror(amount: number, who: InvestigatorId): TakeDamageAndHorror;
+export function takeHorror(amount: number, who?: RelativeInvestigator): AbilityEffect;
 export function takeHorror(
   amount: number,
-  who: RelativeInvestigator = { ref: 'windowInvestigator' },
-): AbilityEffect {
-  return { type: 'AdjustInvestigator', investigatorId: who, stat: 'horror', delta: amount };
+  who: InvestigatorId | RelativeInvestigator = { ref: 'windowInvestigator' },
+): Wounds {
+  return wounds({ damage: 0, horror: amount }, who);
 }
 
 /**

@@ -763,7 +763,7 @@ describe('card-driven skill test', () => {
         },
         {
           onPass: [],
-          onFail: [{ type: 'AdjustInvestigator', investigatorId: alice, stat: 'horror', delta: 2 }],
+          onFail: [takeHorror(2, alice)],
         },
       ),
     };
