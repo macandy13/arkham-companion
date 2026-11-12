@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
-  drawTokens,
+  continueDraw,
+  drawFinished,
+  resolvedTokens,
   SKILL_NAMES,
-  testFinished,
   type BoardView,
   type ChaosToken,
   type InvestigatorId,
@@ -14,6 +15,7 @@ import {
   type SkillTest,
   type SkillTestOdds,
   type SkillTestSuggestion,
+  type TestDraw,
 } from '@arkham/engine';
 import { assertNever, sum } from '@arkham/util';
 import { ChaosTokenFace } from '../tokens/ChaosTokenFace';
@@ -34,6 +36,9 @@ export interface SkillTestRun {
   pick: (skill: SkillName) => void;
   modifier: number;
   setModifier: (modifier: number) => void;
+  /** The tokens drawn so far, each with what the players' cards made of it (ME.24). */
+  drawn: TestDraw;
+  /** The tokens the test resolves (`resolvedTokens`), as the result strip shows them. */
   revealed: readonly ChaosToken[];
   draw: () => void;
   /** The calculation with the tokens drawn so far; its outcome counts only once `finished`. */
@@ -65,7 +70,8 @@ export function useSkillTest(
 ): SkillTestRun | undefined {
   const [picked, setSkills] = useState<TestedSkills>();
   const [modifier, setModifier] = useState(0);
-  const [revealed, setRevealed] = useState<readonly ChaosToken[]>([]);
+  const [drawn, setDrawn] = useState<TestDraw>([]);
+  const revealed = resolvedTokens(drawn);
   if (investigator === undefined || test === undefined) return undefined;
   const skills = picked ?? [test.skill];
   const [tested, added] = skills;
@@ -87,10 +93,11 @@ export function useSkillTest(
     pick: (each) => setSkills(pickSkill(skills, each)),
     modifier,
     setModifier,
+    drawn,
     revealed,
-    draw: () => setRevealed(drawTokens(board.chaosBag, revealed, Math.random)),
+    draw: () => setDrawn(continueDraw(board.chaosBag, drawn, Math.random)),
     result,
-    finished: testFinished(revealed),
+    finished: drawFinished(drawn),
     ...(odds ? { odds } : {}),
   };
 }

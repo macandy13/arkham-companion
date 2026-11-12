@@ -1,12 +1,13 @@
 import { useState, type ComponentProps } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
-import type {
-  BoardView,
-  ChoiceView,
-  DecisionCounts,
-  DecisionView,
-  SkillTestOutcome,
+import {
+  drawnTokens,
+  type BoardView,
+  type ChoiceView,
+  type DecisionCounts,
+  type DecisionView,
+  type SkillTestOutcome,
 } from '@arkham/engine';
 import { assertNever } from '@arkham/util';
 import { ResolvingCard } from '../encounter/ResolvingCard';
@@ -154,7 +155,7 @@ export function DecisionPage({
         ...countsOf(counts[option]),
         ...(option === suggested?.outcome ? { margin: suggested.margin } : {}),
         ...(asksMarginOf(option) ? { margin: margins[option] } : {}),
-        ...(run?.finished ? { revealed: run.revealed } : {}),
+        ...(run?.finished ? { revealed: drawnTokens(run.drawn) } : {}),
       },
       ...(next === undefined ? [] : [{ option: next, counts: countsOf(nextCounts[next]) }]),
     );
