@@ -394,6 +394,45 @@ describe('card effects that move tokens between cards', () => {
     expect(requireInvestigator(after, alice).clues).toBe(1);
   });
 
+  it.each([
+    {
+      name: "alice's clue to the pool",
+      from: { investigator: alice },
+      to: 'pool',
+      alice: 1,
+      hall: 1,
+    },
+    {
+      name: "alice's clue to the hall",
+      from: { investigator: alice },
+      to: { card: hall },
+      alice: 1,
+      hall: 2,
+    },
+    { name: 'a pool clue to alice', from: 'pool', to: { investigator: alice }, alice: 3, hall: 1 },
+  ] as const)(
+    'moves $name: alice has $alice, the hall $hall',
+    ({ from, to, alice: aliceClues, hall: hallClues }) => {
+      const { context, state } = newGame()
+        .withLocation(hall, blankLocation('hall', { shroud: 1, clues: fixed(1) }), {
+          revealed: true,
+        })
+        .withInvestigator(alice, { locationId: hall, clues: 2 })
+        .start();
+
+      const after = stateAfter(context, state, {
+        type: 'MoveTokens',
+        token: 'clue',
+        amount: 1,
+        from,
+        to,
+      });
+
+      expect(requireInvestigator(after, alice).clues).toBe(aliceClues);
+      expect(after.cards[hall]?.tokens.clue ?? 0).toBe(hallClues);
+    },
+  );
+
   it('moves nothing from a card that has left play', () => {
     const { context, state } = newGame()
       .withAgenda(agenda, blankAgenda('agenda', fixed(5)))

@@ -272,6 +272,10 @@ describe('placing clues (MoveTokens from the pool)', () => {
       code: 'invalidTokenMove',
     },
     {
+      move: { token: 'clue', amount: 1, from: 'pool', to: 'pool' },
+      code: 'invalidTokenMove',
+    },
+    {
       move: { token: 'doom', amount: 1, from: { investigator: alice }, to: 'pool' },
       code: 'tokenNotOnInvestigators',
     },

@@ -10,7 +10,7 @@ import { CommandRejected } from './rejection';
 import type { CardInstance, GameState, TokenKind } from './state';
 
 /** A `TokenHolder` looked up in the state: the pool, a card or an investigator, or nothing. */
-type Found =
+type ResolvedHolder =
   | { kind: 'pool' }
   | { kind: 'card'; card: CardInstance }
   | { kind: 'investigator'; investigatorId: InvestigatorId }
@@ -24,8 +24,8 @@ type Found =
 export function handleMoveTokens(ctx: EngineContext, state: GameState, cmd: MoveTokens): Event[] {
   if (cmd.from === 'pool' && (cmd.to === 'pool' || cmd.amount === 'all'))
     throw new CommandRejected({ code: 'invalidTokenMove' });
-  const from = found(state, cmd.from, cmd.token);
-  const to = found(state, cmd.to, cmd.token);
+  const from = resolveHolder(state, cmd.from, cmd.token);
+  const to = resolveHolder(state, cmd.to, cmd.token);
   const wanted = wantedAmount(state, cmd, to);
   if (wanted !== 'all' && (!Number.isInteger(wanted) || wanted <= 0)) {
     if (typeof cmd.amount === 'object' && 'upTo' in cmd.amount) return [];
@@ -42,7 +42,7 @@ export function handleMoveTokens(ctx: EngineContext, state: GameState, cmd: Move
   ];
 }
 
-function found(state: GameState, holder: TokenHolder, token: TokenKind): Found {
+function resolveHolder(state: GameState, holder: TokenHolder, token: TokenKind): ResolvedHolder {
   if (holder === 'pool') return { kind: 'pool' };
   if (holder === 'currentAgenda' || 'card' in holder) {
     const id = holder === 'currentAgenda' ? state.agenda.current : holder.card;
@@ -59,7 +59,7 @@ function found(state: GameState, holder: TokenHolder, token: TokenKind): Found {
 }
 
 /** The count the command asks for, before it is capped at what `from` holds. */
-function wantedAmount(state: GameState, cmd: MoveTokens, to: Found): number | 'all' {
+function wantedAmount(state: GameState, cmd: MoveTokens, to: ResolvedHolder): number | 'all' {
   const { playerCount } = state.meta;
   if (cmd.amount === 'all') return 'all';
   if (typeof cmd.amount === 'object' && 'upTo' in cmd.amount)
@@ -67,7 +67,7 @@ function wantedAmount(state: GameState, cmd: MoveTokens, to: Found): number | 'a
   return resolveAmount(cmd.amount, playerCount);
 }
 
-function heldBy(state: GameState, holder: Found, token: TokenKind): number {
+function heldBy(state: GameState, holder: ResolvedHolder, token: TokenKind): number {
   switch (holder.kind) {
     case 'pool':
       return Number.POSITIVE_INFINITY;
@@ -80,14 +80,14 @@ function heldBy(state: GameState, holder: Found, token: TokenKind): number {
   }
 }
 
-function sameHolder(a: Found, b: Found): boolean {
+function sameHolder(a: ResolvedHolder, b: ResolvedHolder): boolean {
   if (a.kind === 'card' && b.kind === 'card') return a.card.id === b.card.id;
   return (
     a.kind === 'investigator' && b.kind === 'investigator' && a.investigatorId === b.investigatorId
   );
 }
 
-function changed(holder: Found, token: TokenKind, delta: number): Event[] {
+function changed(holder: ResolvedHolder, token: TokenKind, delta: number): Event[] {
   switch (holder.kind) {
     case 'card':
       return [{ type: 'TokensChanged', cardId: holder.card.id, token, delta }];
@@ -119,7 +119,7 @@ function canHold(stats: CardStats, token: TokenKind): boolean {
 function defeatOf(
   ctx: EngineContext,
   state: GameState,
-  to: Found,
+  to: ResolvedHolder,
   token: TokenKind,
   moved: number,
 ): Event[] {
