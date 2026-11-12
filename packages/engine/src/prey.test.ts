@@ -2,9 +2,11 @@ import { describe, expect, it } from 'vitest';
 import {
   blankEnemy,
   blankLocation,
+  blankTreachery,
   instanceId,
   investigatorId,
   newGame,
+  threatAreaOf,
   trait,
   type InstanceId,
   type Zone,
@@ -92,6 +94,28 @@ describe('preferredByPrey on counters and skills', () => {
       .start();
 
     expect(picked(game)).toEqual(['alice']);
+  });
+
+  it("counts a card's skill modifier: bob, combat 5 with -3 from a treachery in his threat area, has the lowest combat", () => {
+    const game = newGame()
+      .withLocation(hall, blankLocation('hall'))
+      .withInvestigator(alice, {
+        locationId: hall,
+        skills: { willpower: 3, intellect: 3, combat: 3, agility: 3 },
+      })
+      .withInvestigator(bob, {
+        locationId: hall,
+        skills: { willpower: 3, intellect: 3, combat: 5, agility: 3 },
+      })
+      .withCard(
+        instanceId('weakness'),
+        blankTreachery('weakness', { modifiers: [{ value: 'combat', of: 'threatArea', by: -3 }] }),
+        threatAreaOf(bob),
+      )
+      .withCard(hunter, preyCard('Lowest [combat]'), setAside)
+      .start();
+
+    expect(picked(game)).toEqual(['bob']);
   });
 
   it('ignores a defeated investigator', () => {

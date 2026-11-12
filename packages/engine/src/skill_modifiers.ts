@@ -2,6 +2,7 @@ import { withRunningTotals } from '@arkham/util';
 import type { EngineContext } from './cards';
 import type { InstanceId, InvestigatorId } from './ids';
 import { findInvestigator, requireInvestigator } from './investigators';
+import { skillChanges } from './modifiers';
 import { CommandRejected } from './rejection';
 import { pickReferenceSide, type SymbolToken } from './scenario';
 import type {
@@ -205,8 +206,8 @@ export function withSuggestion(ctx: EngineContext, state: GameState, decision: D
 }
 
 /**
- * The modifier pipeline: the investigator's printed skill and its lasting
- * boost (`Investigator.skillBoosts`), changed by the players' modifier and
+ * The modifier pipeline: the investigator's printed skill, its lasting
+ * boost (`Investigator.skillBoosts`) and the cards in play that change it (`skillChanges`), changed by the players' modifier and
  * then by the revealed chaos tokens (fixed values, the
  * reference card side for the difficulty, then the scenario's
  * `tokenValues`), against the test's printed difficulty (Rules Reference,
@@ -231,8 +232,10 @@ export function skillTestSuggestion(
   }));
   const changes = [
     ...boostChanges(investigator, test.skill),
+    ...cardSkillChanges(ctx, state, investigator, test.skill),
     ...addedSkillChanges(investigator.skills, input.addedSkill),
     ...(input.addedSkill ? boostChanges(investigator, input.addedSkill) : []),
+    ...(input.addedSkill ? cardSkillChanges(ctx, state, investigator, input.addedSkill) : []),
     ...playerChanges(input.modifier ?? 0),
     ...difficultyChanges(test.modifiedFrom?.changes ?? []),
     ...tokenChanges.flatMap(({ change }) => change ?? []),
@@ -300,6 +303,20 @@ function boostChanges(investigator: Investigator, skill: SkillName): Change[] {
   return boost === 0
     ? []
     : [{ target: 'skill', source: { kind: 'skillBoost', skill }, change: boost }];
+}
+
+/** One step per card in play that changes `skill` ("You get -1 [willpower]", `skillChanges`). */
+function cardSkillChanges(
+  ctx: EngineContext,
+  state: GameState,
+  investigator: Investigator,
+  skill: SkillName,
+): Change[] {
+  return skillChanges(ctx, state, investigator.id, skill).map(({ cardId, by }) => ({
+    target: 'skill',
+    source: { kind: 'card', cardId },
+    change: by,
+  }));
 }
 
 function addedSkillChanges(skills: SkillValues, added: SkillName | undefined): Change[] {

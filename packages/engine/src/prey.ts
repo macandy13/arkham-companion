@@ -10,12 +10,8 @@ import {
 } from './cards';
 import { enemiesOnTable } from './enemies';
 import { locationOfCard, matchesCard } from './lookup';
-import {
-  activeInvestigators,
-  boostedSkills,
-  remainingHealth,
-  remainingSanity,
-} from './investigators';
+import { skillValues } from './modifiers';
+import { activeInvestigators, remainingHealth, remainingSanity } from './investigators';
 import { SKILL_NAMES, type CardInstance, type GameState, type Investigator } from './state';
 
 /**
@@ -183,7 +179,7 @@ function atLocationWith(wanted: Trait): Prey['pick'] {
 
 function measureNamed(name: string): PreyMeasure | undefined {
   const skill = SKILL_NAMES.find((skillName) => name === `[${skillName}]`);
-  if (skill !== undefined) return (_ctx, _state, _enemy, inv) => boostedSkills(inv)[skill];
+  if (skill !== undefined) return (ctx, state, _enemy, inv) => skillValues(ctx, state, inv)[skill];
   return COUNTER_MEASURES[name];
 }
 
