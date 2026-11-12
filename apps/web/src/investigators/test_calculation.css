@@ -135,21 +135,43 @@
   color: var(--color-text);
 }
 
-/* The tokens drawn and, while the test waits for one, the draw button where the next one goes. */
+/*
+ * The tokens drawn on one line with the + beside them and their sum under them; while the test
+ * waits for one, the draw button where they go. More tokens shrink, so the line still fits.
+ */
 #board dialog[data-shell] section[data-part='strip'] > figure {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: auto auto;
   gap: var(--space-1) var(--space-2);
-  align-items: flex-start;
+  align-items: start;
   justify-content: center;
   margin: 0;
 }
 
+#board dialog[data-shell] section[data-part='strip'] > figure:has(> ol > li:nth-child(4)) {
+  --chaos-token-size: calc(var(--test-token-size) * var(--test-token-crowded-scale));
+}
+
+#board dialog[data-shell] section[data-part='strip'] > figure:has(> ol > li:nth-child(6)) {
+  --chaos-token-size: calc(var(--test-token-size) * var(--test-token-packed-scale));
+}
+
+/* Shrunk tokens give up the touch target's width too, or the gaps between them would stay wide. */
+#board
+  dialog[data-shell]
+  section[data-part='strip']
+  > figure:has(> ol > li:nth-child(4))
+  > ol
+  > li
+  > button {
+  min-width: 0;
+  min-height: 0;
+}
+
 #board dialog[data-shell] section[data-part='strip'] > figure > ol {
   display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: var(--space-2);
+  align-items: flex-start;
+  gap: var(--space-1);
 }
 
 /* With their own bag (Settings, `chaosDraw`) the players draw at the table, so the app offers no draw. */
@@ -162,9 +184,10 @@
   display: none;
 }
 
-/* A token with the effect of its symbol under it. */
+/* A token with the effect of its symbol under it, the tokens' tops on one line. */
 #board dialog[data-shell] section[data-part='strip'] > figure > ol > li {
   display: grid;
+  align-content: start;
   justify-items: center;
   gap: var(--space-1);
 }
@@ -214,7 +237,7 @@
 }
 
 #board dialog[data-shell] section[data-part='strip'] > figure > figcaption {
-  flex-basis: 100%;
+  grid-column: 1 / -1;
   color: var(--color-text-muted);
   font-size: var(--font-size-note);
   text-align: center;

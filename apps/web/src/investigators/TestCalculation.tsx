@@ -118,15 +118,12 @@ export function useSkillTest(
 }
 
 /**
- * The kinds the token at `index` of `draw` can be replaced with: each kind `bag` holds more of than
- * the other drawn tokens show (each as the token it counts as), since a replacement swaps the
- * token for one from the bag, so the draw never shows more of a kind than the bag holds.
+ * The kinds the token at `index` of `draw` can be replaced with: each kind still in `bag` once the
+ * other drawn tokens are out of it, since the token itself goes back in when it is swapped.
  */
 function replaceOptions(bag: readonly ChaosToken[], draw: TestDraw, index: number): ChaosToken[] {
-  const othersShown = draw.flatMap((drawn, at) =>
-    at === index ? [] : [drawn.treatedAs ?? drawn.token],
-  );
-  return tokenCounts(withoutEach(bag, othersShown)).map(({ token }) => token);
+  const others = draw.flatMap((drawn, at) => (at === index ? [] : [drawn.token]));
+  return tokenCounts(withoutEach(bag, others)).map(({ token }) => token);
 }
 
 /**

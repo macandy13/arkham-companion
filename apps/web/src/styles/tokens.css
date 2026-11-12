@@ -402,6 +402,9 @@
   --color-chaos-ink: #f4efe2;
   --chaos-numeral-shadow: 0 1px 1px rgb(0 0 0 / 60%);
   --test-token-size: 3.25rem;
+  /* The drawn tokens' size from the fourth and from the sixth on, so they keep to one line. */
+  --test-token-crowded-scale: 0.75;
+  --test-token-packed-scale: 0.55;
   --test-calculation-width: 7rem;
   --test-outcome-line-height: 1.1;
   --test-outcome-letter-spacing: 0.08em;

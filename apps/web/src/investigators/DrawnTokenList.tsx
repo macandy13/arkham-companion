@@ -87,7 +87,7 @@ export function DrawnTokenList({
 /**
  * What a card can do to one drawn token (`drawn`), on a bubble over it (`anchor`): ignore it, or
  * resolve it again once ignored; redraw it; or replace it, which then offers the kinds still in
- * the bag (`replaceOptions`), and the token itself again once replaced.
+ * the bag (`replaceOptions`) to swap it for.
  */
 function DrawnTokenBubble({
   drawn,
@@ -105,10 +105,7 @@ function DrawnTokenBubble({
   const { t } = useTranslation();
   const [replacing, setReplacing] = useState(false);
   const shown = drawn.treatedAs ?? drawn.token;
-  const replacements = [
-    ...(drawn.treatedAs === undefined ? [] : [drawn.token]),
-    ...replaceOptions.filter((token) => token !== shown && token !== drawn.token),
-  ];
+  const replacements = replaceOptions.filter((token) => token !== drawn.token);
   return (
     <PaperBubble anchor={anchor} title={t(`chaosToken.${shown}`)} kind="token" onClose={onClose}>
       {replacing ? (
@@ -118,9 +115,7 @@ function DrawnTokenBubble({
               key={token}
               type="button"
               aria-label={t('skillTest.replaceWith', { token: t(`chaosToken.${token}`) })}
-              onClick={() =>
-                onAct(token === drawn.token ? { kind: 'treatAs' } : { kind: 'treatAs', as: token })
-              }
+              onClick={() => onAct({ kind: 'replace', token })}
             >
               <ChaosTokenFace token={token} />
             </button>

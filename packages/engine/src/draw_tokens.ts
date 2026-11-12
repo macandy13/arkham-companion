@@ -153,6 +153,26 @@ export function redrawToken(
   return drawOn(bag, [...kept.slice(0, index), replacement, ...kept.slice(index)], random);
 }
 
+/**
+ * The token at `index` swapped for a token of kind `token` from the bag, as the players replace it:
+ * the old token goes back into the bag, with the tokens it made the tester reveal, so later draws
+ * can bring it out and not the one taken in its place; then more while the new one makes the
+ * tester reveal another. Unchanged when the bag holds no `token` but the old one.
+ */
+export function replaceToken(
+  bag: readonly ChaosToken[],
+  draw: TestDraw,
+  index: number,
+  token: ChaosToken,
+  random: () => number,
+): TestDraw {
+  const old = draw[index];
+  const kept = withoutFollowers(draw, index).filter((_, at) => at !== index);
+  if (old === undefined || !withoutEach(bag, drawnTokens(kept)).includes(token)) return draw;
+  const replacement: DrawnToken = old.chained ? chained(token) : resolved(token);
+  return drawOn(bag, [...kept.slice(0, index), replacement, ...kept.slice(index)], random);
+}
+
 /** Draws on from `draw` while it is not finished and the bag holds tokens. */
 function drawOn(bag: readonly ChaosToken[], draw: TestDraw, random: () => number): TestDraw {
   let drawn = draw;

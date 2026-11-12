@@ -272,6 +272,19 @@ describe('SkillTestDialog', () => {
       expect(outcome()).toBe('Pass 4 ≥ 3 by 1');
     });
 
+    it('puts the replaced skull back in the bag, so the next token revealed is the skull', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0);
+      renderWillpowerTest(['skull', '+1']);
+      fireEvent.click(button('Draw a token'));
+      fireEvent.click(button('Change Skull'));
+      fireEvent.click(button('Replace'));
+      fireEvent.click(button('Replace with +1'));
+
+      fireEvent.click(button('Reveal another'));
+
+      expect(drawnTokens()).toEqual(['+1', 'Skull ?']);
+    });
+
     it('turns a replaced token back into itself', () => {
       vi.spyOn(Math, 'random').mockReturnValue(0);
       renderWillpowerTest(['skull', '+1']);
