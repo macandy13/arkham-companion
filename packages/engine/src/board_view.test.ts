@@ -1894,11 +1894,11 @@ describe('enemy actions', () => {
 
   it.each([
     {
-      name: 'alice and bob can evade a ready ghoul engaged with alice; only bob can be engaged',
+      name: 'only alice can evade a ready ghoul engaged with her; only bob can be engaged',
       card: blankEnemy('ghoul'),
       zone: engagedWith(alice),
       exhausted: false,
-      expected: { evade: [alice, bob], engage: [bob] },
+      expected: { evade: [alice], engage: [bob] },
     },
     {
       name: 'only alice can evade an exhausted ghoul engaged with her',

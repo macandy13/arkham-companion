@@ -719,8 +719,8 @@ export class BoardView {
    * Whom a player card's effect on `enemy` can apply to, for the enemy's card-effect buttons
    * ("automatically evade a non-Elite enemy at your location", "engage that enemy"), since the
    * players choose who plays the card: the active investigators at its location, in seat order.
-   * `evade` keeps those for whom `EvadeEnemy` changes something (it is ready, or engaged with
-   * them), `engage` those the players' `EngageEnemy` takes (not one engaged with it already, and
+   * `evade` keeps the one it is engaged with, or everyone there when it is unengaged and ready
+   * (someone else's evade would leave it engaged, so it is not offered), `engage` those the players' `EngageEnemy` takes (not one engaged with it already, and
    * nobody for a massive enemy, which never enters a threat area).
    */
   enemyCardEffects(enemy: InstanceId): EnemyCardEffectsView {
@@ -730,7 +730,11 @@ export class BoardView {
       (inv) => inv.status === 'active' && location !== undefined && inv.locationId === location,
     );
     return {
-      evade: here.filter((inv) => !card.exhausted || isEngagedWith(card, inv)).map(({ id }) => id),
+      evade: here
+        .filter(
+          (inv) => isEngagedWith(card, inv) || (card.zone.kind !== 'engaged' && !card.exhausted),
+        )
+        .map(({ id }) => id),
       engage: here
         .filter((inv) =>
           this.allows({ type: 'EngageEnemy', enemyId: enemy, investigatorId: inv.id }),

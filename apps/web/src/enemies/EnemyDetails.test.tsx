@@ -353,7 +353,6 @@ describe('EnemyDetails', () => {
       'Disengage',
       'Exhaust',
       'Evaded by alder',
-      'Evaded by brook',
       'Engages brook',
       'Defeat',
     ]);
