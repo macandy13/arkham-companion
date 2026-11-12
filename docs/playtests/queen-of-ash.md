@@ -50,6 +50,8 @@ The scripted golden game is [`end_to_end.test.ts`](../../packages/scenarios/src/
 - [ ] Entering Infested Pipes (spade) discards from the encounter deck until an enemy, which the entering investigator draws.
 - [ ] Ending a turn in Flooded Crypt (star) gives 1 horror, in Toxic Waste Pit (double slash) asks for a card discarded from hand, and in Smuggler's Cache (clover) offers 1 resource, which the investigator may decline.
 - [ ] Sewer Culvert's resign action works.
+- [ ] Discovering the last clue at Underground Cistern places 2 per investigator there again; as the investigation phase ends, each ready non-Elite Cultist there is discarded with 1 doom on the agenda for each.
+- [ ] Elokoss's fast ability spends 1 clue per investigator from the group and places 1 clue on her; her fifth clue ends the scenario with resolution 2.
 - [ ] Elokoss is massive and retaliates and has 5 plus 5 per investigator health; the Servant of Flame, Queen's Knight, Herald of Flame and Dark Magician hunt; Zealots are aloof.
 
 **Encounter cards**
@@ -60,7 +62,7 @@ The scripted golden game is [`end_to_end.test.ts`](../../packages/scenarios/src/
 
 **Resolution and campaign end**
 
-- [ ] Resolution 1 and 2 (2 from the menu's "End the scenario" once the players have spent the clues on Elokoss): each investigator earns the victory display plus 5 experience and 2 mental and 2 physical trauma; the campaign is won.
+- [ ] Resolution 1 and 2: each investigator earns the victory display plus 5 experience and 2 mental and 2 physical trauma; the campaign is won.
 - [ ] Resolution 3: each investigator who did not resign is killed; those who resigned earn the victory display plus 3 experience and 3 mental trauma; the campaign is won.
 - [ ] Without a resolution Elokoss is reborn, each investigator is killed and the campaign is lost.
 - [ ] The Collector earned as a campaign reward shows under "At the table" on the resolution screen.
@@ -70,9 +72,8 @@ The scripted golden game is [`end_to_end.test.ts`](../../packages/scenarios/src/
 These are done by hand at the table; the app does not do them.
 
 - The agendas' rule that enemies at a location with Fire! attached cannot be damaged (heal the damage Fire! itself deals them as the investigation phase ends), agenda 3a's damage instead of doom, and act 2a's clue spend to discard a Fire!.
-- Elokoss: that she cannot move or make attacks of opportunity, her Mother of Flame side and her clue spend toward resolution 2. When the clues are spent, end the game in resolution 2 from the menu's "End the scenario" (automating it is [MC2.17](https://github.com/macandy13/arkham-companion/issues/1236)).
+- Elokoss: that she cannot move or make attacks of opportunity, and her Mother of Flame side.
 - The additional clue costs to enter Underground Cistern and Sluice Control.
-- Underground Cistern's clues placed again once it has none, and its discard of ready non-Elite Cultists as the investigation phase ends, with 1 doom each.
 - Queen's Knight's damage to Elokoss, Herald of Flame's healing after it attacks, and the Servant of Flame's codex entry as it is defeated.
 - The Zealot's doom as it enters play (setup places it) and the Dark Magician's as the round ends.
 - The revelations of Ashen Rebirth, Blasphemous Invocation, Unnatural Decay, Dissonance and Torment, and Putrid Vapors' asset discard.

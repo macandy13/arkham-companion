@@ -1,12 +1,15 @@
 import {
   advanceAct,
+  afterDiscoveringClues,
   afterEntering,
+  atEndOfPhase,
   atEndOfRound,
   atEndOfTurn,
   nextAgendaBecomesActAndAgenda,
   cardCode,
   cardDbFrom,
   decisionId,
+  discardEachEnemy,
   discardFromHand,
   drawDiscardingUntil,
   duringAct,
@@ -16,30 +19,39 @@ import {
   endScenario,
   encounterSetCode,
   fixed,
+  forEachEnemy,
   forEachInvestigator,
   fromSetAside,
   gainResources,
+  ifValue,
   GRID_CELLS_PER_CARD,
   loseActions,
   mapId,
   moveEnemyTowards,
   onlyCopy,
   perInvestigator,
+  placeCluesOnSelf,
+  placeCluesOnSelfUpTo,
+  placeDoomOnAgenda,
   putIntoThreatArea,
   putLocationIntoPlay,
   resignAction,
   resolutionId,
   revealLocation,
+  self,
   shuffleSetAsideIntoEncounterDeck,
   skillTest,
   skillTestOfEither,
   spawnEnemyAt,
   takeHorror,
+  thisLocation,
+  tokensOn,
   trait,
   whenAdvanced,
   whenAnInvestigatorEnters,
   whenEnemyDefeated,
   whenRevealed,
+  whenTokensOnSelf,
   youMustEither,
   type CardDb,
   type CardCode,
@@ -154,6 +166,17 @@ const spawnServantIfSetAside = spawnEnemyAt(
   onlyCopy(codes.undergroundCistern),
 );
 
+/**
+ * Underground Cistern's "each ready non-Elite [[Cultist]] enemy at this location". Both its
+ * abilities count them as the investigation phase ends, so the doom matches the discards.
+ */
+const cultistsReadyHere = {
+  trait: trait('Cultist'),
+  withoutTrait: trait('Elite'),
+  ready: true,
+  at: thisLocation(),
+} as const;
+
 /** "Each investigator must test [willpower] (4). Each investigator who fails takes 1 direct horror." */
 const willpowerOrHorror = skillTest('willpower', 4, { onFail: [takeHorror(1)] });
 
@@ -173,10 +196,8 @@ const willpowerOrHorror = skillTest('willpower', 4, { onFail: [takeHorror(1)] })
  * - Elokoss's Mother of Flame side (agenda 2b), agenda 3a's damage instead of doom, and act 2a's
  *   clue spend to discard a Fire!
  * - the additional clue costs to enter Underground Cistern and Sluice Control (MC2.4)
- * - Underground Cistern's clues placed again once it has none, and its discard of ready
- *   non-Elite Cultists as the investigation phase ends, with 1 doom each
- * - Elokoss: her extra health is entered, but not that she cannot move or make attacks of
- *   opportunity, her clue spend toward Resolution 2, or her Mother of Flame side
+ * - Elokoss: her extra health and her clue spend toward Resolution 2 are entered, but not that
+ *   she cannot move or make attacks of opportunity, or her Mother of Flame side
  * - Queen's Knight's damage to Elokoss, Herald of Flame's healing after it attacks, and the
  *   Servant of Flame's codex entry as it is defeated
  * - Zealot's doom as it enters play (setup places it on the Zealots it spawns) and Dark
@@ -285,6 +306,16 @@ export const queenOfAshCardDefs: readonly CardStats[] = [
     traits: ['Ritual Site'],
     shroud: 4,
     cluesPerInvestigator: 2,
+    // Discovering clues is the only way its clues leave it, so the check waits for that.
+    abilities: [
+      ifValue(
+        tokensOn(self(), 'clue'),
+        { max: 0 },
+        afterDiscoveringClues(placeCluesOnSelfUpTo(perInvestigator(2))),
+      ),
+      forEachEnemy(cultistsReadyHere, atEndOfPhase('investigation', placeDoomOnAgenda(1))),
+      atEndOfPhase('investigation', discardEachEnemy(cultistsReadyHere)),
+    ],
   }),
   location({
     code: codes.sluiceControl,
@@ -365,6 +396,16 @@ export const queenOfAshCardDefs: readonly CardStats[] = [
     victory: 5,
     unique: true,
     keywords: [{ name: 'massive' }, { name: 'retaliate' }],
+    actions: [
+      {
+        free: true,
+        cost: { spend: 'groupClues', amount: perInvestigator(1) },
+        effects: [placeCluesOnSelf(1)],
+      },
+    ],
+    abilities: [
+      whenTokensOnSelf('clue', fixed(5), endScenario(QUEEN_OF_ASH_RESOLUTIONS.rebirthStopped)),
+    ],
   }),
   enemy({
     code: codes.servantOfFlame,

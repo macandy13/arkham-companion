@@ -2442,9 +2442,12 @@ export function discardEachEnemyAt(location: RelativeCard): AbilityEffect {
   return { type: 'DiscardCard', cardId: eachEnemy({ at: location }) };
 }
 
-/** "Discard each enemy in play", engaged ones included (`DiscardCard` each). */
-export function discardEachEnemy(): AbilityEffect {
-  return { type: 'DiscardCard', cardId: eachEnemy() };
+/**
+ * "Discard each enemy in play", engaged ones included (`DiscardCard` each), or each one `filter`
+ * matches: `discardEachEnemy({ ready: true, trait: trait('Cultist'), at: thisLocation() })`.
+ */
+export function discardEachEnemy(filter: EachEnemyFilter = {}): AbilityEffect {
+  return { type: 'DiscardCard', cardId: eachEnemy(filter) };
 }
 
 /**
