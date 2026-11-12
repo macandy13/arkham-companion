@@ -1,6 +1,7 @@
 import { expect, test } from './fixtures/test';
 import { dragTo } from './fixtures/drag';
 import {
+  naomiInPlayExport,
   resumeImportedGame,
   studyCluesTakenExport,
   twoGhoulPriestsExport,
@@ -96,5 +97,32 @@ test('advance the act by hand and end the scenario with a resolution', async ({ 
     const dialog = page.locator('#resolution');
     await expect(dialog.getByRole('heading', { name: 'The scenario is over' })).toBeVisible();
     await expect(dialog.getByRole('radio', { name: 'Resolution 2 from the game' })).toBeChecked();
+  });
+});
+
+// Journey: Smoke and Mirrors. Naomi O'Bannion's codex entry says she is interrogated, so the players
+// put her beneath Augurs of Flame from her card, and its full card lists her there.
+test('put an interrogated suspect beneath the act', async ({ page }) => {
+  const naomi = page.getByRole('img', { name: /^Naomi O'Bannion/ }).first();
+  const act = page.getByRole('region', { name: 'Act' });
+
+  await test.step("Import a game of Smoke and Mirrors with Naomi O'Bannion in play", async () => {
+    await resumeImportedGame(page, 'Interrogation', naomiInPlayExport('Interrogation'));
+    await expect(naomi).toBeVisible();
+  });
+
+  await test.step('Put her beneath the act from her card', async () => {
+    await naomi.click();
+    await page
+      .getByRole('dialog', { name: "Naomi O'Bannion" })
+      .getByRole('button', { name: 'Put beneath the act' })
+      .click();
+    await expect(page.getByRole('img', { name: /^Naomi O'Bannion/ })).toHaveCount(0);
+  });
+
+  await test.step("Augurs of Flame's full card lists her beneath it", async () => {
+    await act.getByRole('button', { name: 'Augurs of Flame' }).click();
+    const card = page.getByRole('dialog', { name: 'Augurs of Flame' });
+    await expect(card.getByRole('definition')).toContainText(["Naomi O'Bannion"]);
   });
 });

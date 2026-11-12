@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 import {
   advanceBySpendingClues,
   advanceAct,
+  eachInZone,
+  whenVictoryDisplayHolds,
   whenTokensOnSelf,
   resolutionId,
   cardImagePath,
@@ -1076,6 +1078,35 @@ describe('agenda and act', () => {
     const { act } = boardView(context, state);
 
     expect(act?.beneath).toEqual(['questioned_suspect']);
+  });
+
+  it.each([
+    {
+      act: 'an act whose objective counts the Elite enemies beneath it',
+      zones: [{ kind: 'victoryDisplay' }, { kind: 'beneath', hostId: { ref: 'self' } }] as const,
+      takes: true,
+    },
+    {
+      act: 'an act whose objective counts the victory display alone',
+      zones: [{ kind: 'victoryDisplay' }] as const,
+      takes: undefined,
+    },
+  ])('takes cards beneath it only for $act', ({ zones, takes }) => {
+    const objective = whenVictoryDisplayHolds(
+      eachInZone(zones, { trait: trait('Elite') }),
+      6,
+      advanceAct(),
+    );
+    const { context, state } = newGame()
+      .withLocation(study, blankLocation('study'))
+      .withInvestigator(alice, { locationId: study })
+      .withAct(
+        instanceId('augurs_of_flame'),
+        blankAct('augurs_of_flame', { abilities: [objective] }),
+      )
+      .start();
+
+    expect(boardView(context, state).act?.takesCardsBeneath).toBe(takes);
   });
 
   it('counts the clues the players put on the act apart from its cost', () => {

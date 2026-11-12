@@ -183,6 +183,7 @@ export const appTexts = {
     doomCount: 'Verderben',
     clueCount: 'Hinweise',
     advanceAct: 'Vorrücken',
+    beneathAct: 'Unter dem Akt',
     advanceActByHand: 'Von Hand vorrücken',
     advanceActByHandTitle: '{{act}} von Hand vorrücken?',
     advanceActByHandText:
@@ -499,6 +500,7 @@ export const appTexts = {
     removeDoom: 'Verderben entfernen',
     disengage: 'Aus dem Kampf lösen',
     defeat: 'Besiegen',
+    beneathAct: 'Unter den Akt legen',
     caption: {
       fight: 'Kämpfen',
       evade: 'Entkommen',
@@ -506,6 +508,7 @@ export const appTexts = {
       damage: 'Schaden',
       disengage: 'Lösen',
       defeat: 'Besiegen',
+      beneathAct: 'Unter Akt',
     },
     close: 'Schließen',
     engagedWith: 'Im Kampf mit {{name}}',

@@ -182,6 +182,7 @@ export const appTexts = {
     doomCount: 'Doom',
     clueCount: 'Clues',
     advanceAct: 'Advance',
+    beneathAct: 'Beneath the act',
     advanceActByHand: 'Advance by hand',
     advanceActByHandTitle: 'Advance {{act}} by hand?',
     advanceActByHandText:
@@ -495,6 +496,7 @@ export const appTexts = {
     removeDoom: 'Remove doom',
     disengage: 'Disengage',
     defeat: 'Defeat',
+    beneathAct: 'Put beneath the act',
     caption: {
       fight: 'Fight',
       evade: 'Evade',
@@ -502,6 +504,7 @@ export const appTexts = {
       damage: 'Damage',
       disengage: 'Disengage',
       defeat: 'Defeat',
+      beneathAct: 'Beneath act',
     },
     close: 'Close',
     engagedWith: 'Engaged with {{name}}',

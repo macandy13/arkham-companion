@@ -1515,6 +1515,19 @@ export function tokenObjective(stats: CardStats, token: TokenKind): ScaledValue 
 }
 
 /**
+ * Whether an objective of the card counts the cards beneath it ("6 Elite enemies in the victory
+ * display and/or beneath this act", Augurs of Flame): the players put cards there by hand, as a
+ * codex entry tells them, so the screen offers the move only where it counts.
+ */
+export function countsCardsBeneathSelf(stats: CardStats): boolean {
+  return (stats.abilities ?? []).some(({ condition }) => {
+    if (condition?.kind !== 'countOf' || condition.of.ref !== 'eachInZone') return false;
+    const zones = [condition.of.zone].flat();
+    return zones.some((zone) => zone.kind === 'beneath' && zone.hostId.ref === 'self');
+  });
+}
+
+/**
  * The clues an act's `advanceBySpendingCluesAtRoundEnd` asks of the investigators at `location`
  * (The Barrier's Hallway), or of all of them when it names none; undefined for an act without one.
  */

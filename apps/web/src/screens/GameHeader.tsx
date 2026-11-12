@@ -554,6 +554,7 @@ function ActStatus({
                 },
               }
             : {})}
+          beneath={act.beneath}
           advances={
             <>
               {advanceButton(close, true)}
@@ -691,7 +692,8 @@ function HeaderCard({
  * - the landscape card over the page, the same face as in the header with its `token`, tapped to
  *   read it whole (`CardZoom`);
  * - what it is as the kicker, its name as the title;
- * - its count on the page (`value`: the doom in play, the clues that count towards advancing);
+ * - its count on the page (`value`: the doom in play, the clues that count towards advancing), and
+ *   for the act the cards beneath it (`beneath`, Smoke and Mirrors' interrogated suspects);
  * - the card actions it offers the investigator whose turn it is;
  * - the act's advances (`advances`): Advance as the dialog's one primary, and "Advance by hand".
  * A card action keeps it open and shows the decision it raises in place of its page
@@ -707,6 +709,7 @@ function BookDetails({
   threshold,
   token,
   value,
+  beneath,
   advances,
   onClose,
 }: {
@@ -718,6 +721,7 @@ function BookDetails({
   threshold: number | undefined;
   token: ReactNode;
   value?: { name: string; count: number; threshold?: number };
+  beneath?: readonly CardName[] | undefined;
   advances?: ReactNode;
   onClose: () => void;
 }) {
@@ -743,16 +747,26 @@ function BookDetails({
       title={card.name}
       onClose={onClose}
     >
-      {value && (
+      {(value || beneath) && (
         <dl>
-          <div>
-            <dt>{value.name}</dt>
-            <dd>
-              {value.threshold === undefined
-                ? value.count
-                : t('header.countOf', { count: value.count, threshold: value.threshold })}
-            </dd>
-          </div>
+          {value && (
+            <div>
+              <dt>{value.name}</dt>
+              <dd>
+                {value.threshold === undefined
+                  ? value.count
+                  : t('header.countOf', { count: value.count, threshold: value.threshold })}
+              </dd>
+            </div>
+          )}
+          {beneath && (
+            <div>
+              <dt>{t('header.beneathAct')}</dt>
+              {beneath.map((name) => (
+                <dd key={name}>{name}</dd>
+              ))}
+            </div>
+          )}
         </dl>
       )}
       {(offered.length > 0 || advances) && (

@@ -61,7 +61,7 @@ Under it is one row of buttons ([`ActionRow`](../../apps/web/src/screens/ActionR
   - fight, evade and engage as an action (`ActionButton.actions`, marked, like the turn row's actions left, with the game's action arrow, [`action.svg`](../../apps/web/src/symbols/action.svg), one per action it costs, `BoardView.actionCost`: Frozen in Fear stacks a second arrow on the round's first fight or evade, and its name says "Fight · 2 actions")
   - then fight and evade, as some cards allow, without one (`actions={0}`, marked with the game's free-ability symbol, [`free.svg`](../../apps/web/src/symbols/free.svg), or with the arrows a card adds to it, "Fight without an action · 1 extra action"); each mark has a column of its own beside the icon,
 - the actions the enemy's own card offers them, such as a Parley,
-- and at any time the card effects deal 1 damage, disengage and defeat.
+- and at any time the card effects deal 1 damage, disengage and defeat, and, where an objective of the act counts the cards beneath it (`ActView.takesCardsBeneath`, read from its abilities by `countsCardsBeneathSelf`), put it beneath the act (`GameActions.putBeneathAct`, MC2.18). That is a `MoveCard`, not a correction, so the objective sees it: Smoke and Mirrors' interrogated suspect.
 
 Fight, evade and engage keep the details open and show the decisions they raise (the test, an attack of opportunity) in their place, the enemy still beside them ([decisions](play-screen-decisions.md#in-a-details-dialog)).
 

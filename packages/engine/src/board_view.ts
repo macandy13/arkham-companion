@@ -6,6 +6,7 @@ import {
   resolveEffect,
   roundEndClueObjective,
   tokenObjective,
+  countsCardsBeneathSelf,
 } from './abilities';
 import {
   advanceActionOf,
@@ -401,6 +402,11 @@ export interface ActView {
   advance?: ActAdvance;
   /** The cards placed face up beneath it (Smoke and Mirrors' interviewed suspects); absent when none. */
   beneath?: CardName[];
+  /**
+   * Set when an objective of it counts the cards beneath it (`countsCardsBeneathSelf`), so the
+   * players can put an enemy there by hand (`MoveCard`).
+   */
+  takesCardsBeneath?: true;
 }
 
 /**
@@ -1375,6 +1381,7 @@ function actView(ctx: EngineContext, state: GameState): ActView | undefined {
     clues: act.tokens.clue ?? 0,
     ...(advance === undefined ? {} : { advance }),
     ...listIfAny('beneath', namesIn(ctx, state, { kind: 'beneath', hostId: act.id })),
+    ...(countsCardsBeneathSelf(stats) ? { takesCardsBeneath: true as const } : {}),
   };
 }
 
