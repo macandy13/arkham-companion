@@ -320,18 +320,16 @@ describe('card effects that move tokens between cards', () => {
   );
 
   it.each([
-    { damage: 1, motherDefeated: false },
-    { damage: 2, motherDefeated: true },
+    { damage: 1, motherZone: atLocation(study), motherDefeated: false },
+    { damage: 2, motherZone: encounterDiscard, motherDefeated: true },
   ])(
     'moves $damage damage onto Mother with health 3 and 1 damage: defeated $motherDefeated',
-    ({ damage, motherDefeated }) => {
+    ({ damage, motherZone, motherDefeated }) => {
       const { context, state } = newGame()
         .withLocation(hall, blankLocation('hall'), { revealed: true })
         .withLocation(study, blankLocation('study'), { revealed: true })
         .withInvestigator(alice, { locationId: hall })
-        .withCard(acolyte, blankEnemy('acolyte', { health: fixed(3) }), atLocation(study), {
-          tokens: { damage },
-        })
+        .withCard(acolyte, blankEnemy('acolyte'), atLocation(study), { tokens: { damage } })
         .withCard(mother, blankEnemy('mother', { health: fixed(3) }), atLocation(study), {
           tokens: { damage: 1 },
         })
@@ -346,7 +344,10 @@ describe('card effects that move tokens between cards', () => {
       });
 
       expect(after.cards[acolyte]?.tokens.damage ?? 0).toBe(0);
-      expect(events.some((event) => event.type === 'EnemyDefeated')).toBe(motherDefeated);
+      expect(after.cards[mother]?.zone).toEqual(motherZone);
+      expect(
+        events.some((event) => event.type === 'EnemyDefeated' && event.enemyId === mother),
+      ).toBe(motherDefeated);
     },
   );
 
@@ -405,6 +406,71 @@ describe('card effects that move tokens between cards', () => {
 
     expect(events).toEqual([]);
     expect(after.cards[acolyte]?.tokens.doom).toBe(1);
+  });
+
+  it('moves nothing onto the card it comes from', () => {
+    const { context, state } = newGame()
+      .withLocation(hall, blankLocation('hall'), { revealed: true })
+      .withInvestigator(alice, { locationId: hall })
+      .withCard(acolyte, blankEnemy('acolyte'), atLocation(hall), { tokens: { doom: 1 } })
+      .start();
+
+    const { events } = execute(context, state, {
+      type: 'MoveTokens',
+      token: 'doom',
+      amount: 'all',
+      from: acolyte,
+      to: acolyte,
+    });
+
+    expect(events).toEqual([]);
+  });
+
+  it('gives no clues to an investigator who has left the scenario', () => {
+    const bob = investigatorId('bob');
+    const constance = instanceId('constance');
+    const { context, state } = newGame()
+      .withLocation(hall, blankLocation('hall'), { revealed: true })
+      .withLocation(study, blankLocation('study'), { revealed: true })
+      .withInvestigator(alice, { locationId: hall })
+      .withInvestigator(bob, { locationId: hall, status: 'resigned' })
+      .withCard(constance, blankEnemy('constance'), atLocation(study), { tokens: { clue: 2 } })
+      .start();
+
+    const { events } = execute(context, state, {
+      type: 'MoveTokens',
+      token: 'clue',
+      amount: 1,
+      from: constance,
+      toInvestigator: bob,
+    });
+
+    expect(events).toEqual([]);
+  });
+
+  it.each([
+    { token: 'damage', onto: 'the agenda, which has no health' },
+    { token: 'horror', onto: 'an enemy, which has no sanity' },
+  ] as const)('moves no $token onto $onto', ({ token }) => {
+    const { context, state } = newGame()
+      .withAgenda(agenda, blankAgenda('agenda', fixed(5)))
+      .withLocation(hall, blankLocation('hall'), { revealed: true })
+      .withLocation(study, blankLocation('study'), { revealed: true })
+      .withInvestigator(alice, { locationId: hall })
+      .withCard(acolyte, blankEnemy('acolyte'), atLocation(study), { tokens: { [token]: 1 } })
+      .withCard(mother, blankEnemy('mother', { health: fixed(3) }), atLocation(study))
+      .start();
+    const to = token === 'damage' ? agenda : mother;
+
+    const { events } = execute(context, state, {
+      type: 'MoveTokens',
+      token,
+      amount: 'all',
+      from: acolyte,
+      to,
+    });
+
+    expect(events).toEqual([]);
   });
 
   it('refuses card data that moves no tokens at all', () => {

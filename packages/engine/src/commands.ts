@@ -593,7 +593,8 @@ export type PlaceTokens = {
  * and nothing from a card not in play, to a card not in play or to an investigator out of the
  * scenario, since a card effect does as much as it can (Rules Reference, "Effects"). A card
  * counting its own tokens (`whenTokensOnSelf`) sees moved ones like placed ones, and an enemy
- * that ends up with as much damage as its health is defeated. Produces `TokensChanged` on both
+ * that ends up with as much damage as its health is defeated. Damage moves only onto a card with
+ * health and horror only onto one with sanity (FAQ, October 2024). Produces `TokensChanged` on both
  * cards, or `TokensChanged` and `InvestigatorChanged`, then any `EnemyDefeated`.
  */
 export type MoveTokens = {

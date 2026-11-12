@@ -30,7 +30,7 @@ import type {
 } from './events';
 import type { InstanceId, ResolutionId } from './ids';
 import { cardsInZone, requireCard } from './lookup';
-import { cardStats, resolveAmount, type EngineContext } from './cards';
+import { cardStats, resolveAmount, type CardStats, type EngineContext } from './cards';
 import { clearTokensEvents, moveCardEvent } from './placement';
 import { CommandRejected } from './rejection';
 import type { CardInstance, GameState, TokenKind } from './state';
@@ -90,19 +90,30 @@ export function handleMoveTokens(ctx: EngineContext, state: GameState, cmd: Move
     ];
   }
   const to = cmd.to === undefined ? currentCard(state, 'agenda') : requireCard(state.cards, cmd.to);
-  if (moved === 0 || to.id === from.id || !isInPlay(state, to)) return [];
+  const stats = cardStats(ctx.cards, to.code);
+  if (moved === 0 || to.id === from.id || !isInPlay(state, to) || !canHold(stats, cmd.token))
+    return [];
   const given: TokensChanged = {
     type: 'TokensChanged',
     cardId: to.id,
     token: cmd.token,
     delta: moved,
   };
-  const stats = cardStats(ctx.cards, to.code);
   const defeat =
     cmd.token === 'damage' && stats.typeCode === 'enemy'
       ? defeatedByDamage(state, to, stats, moved)
       : [];
   return [taken, given, ...defeat];
+}
+
+/**
+ * Whether moved `token`s may land on a card with `stats`: damage only on a card with health and
+ * horror only on one with sanity (FAQ, October 2024: no damage moves onto a card without health).
+ */
+function canHold(stats: CardStats, token: TokenKind): boolean {
+  if (token === 'damage') return stats.health !== undefined;
+  if (token === 'horror') return stats.sanity !== undefined;
+  return true;
 }
 
 /**
