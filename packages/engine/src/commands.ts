@@ -59,6 +59,7 @@ export type Command =
   | PlaceDoom
   | RemoveDoom
   | PlaceTokens
+  | MoveTokens
   | ChangeChaosBag
   | SealChaosToken
   | ReleaseChaosToken
@@ -583,6 +584,31 @@ export type PlaceTokens = {
   cardId: InstanceId;
   token: 'clue';
 } & ({ amount: TokenAmount } | { upTo: TokenAmount });
+
+/**
+ * A card's "move all doom from each [[Cultist]] enemy to the current agenda", "move all damage on
+ * that enemy to Mother" or "take control of 1 of the clues on Constance Dumaine": takes `amount`
+ * (positive) tokens, or `'all'`, off the card `from` and puts them on the card `to` (by default
+ * the current agenda), or clues on the investigator `toInvestigator`. Moves as much as there is,
+ * and nothing from a card not in play, to a card not in play or to an investigator out of the
+ * scenario, since a card effect does as much as it can (Rules Reference, "Effects"). A card
+ * counting its own tokens (`whenTokensOnSelf`) sees moved ones like placed ones, and an enemy
+ * that ends up with as much damage as its health is defeated. Damage moves only onto a card with
+ * health and horror only onto one with sanity (FAQ, October 2024). Produces `TokensChanged` on both
+ * cards, or `TokensChanged` and `InvestigatorChanged`, then any `EnemyDefeated`.
+ */
+export type MoveTokens = {
+  type: 'MoveTokens';
+  from: InstanceId;
+  amount: number | 'all';
+} & (
+  | {
+      token: TokenKind;
+      /** Defaults to the current agenda. */
+      to?: InstanceId;
+    }
+  | { token: 'clue'; toInvestigator: InvestigatorId }
+);
 
 /**
  * Advances the current agenda: all doom in play is removed, the agenda is

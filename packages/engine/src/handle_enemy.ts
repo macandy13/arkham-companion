@@ -5,7 +5,7 @@ import {
   requireLocationInPlay,
   shortestPaths,
 } from './board';
-import type { CardStats, EngineContext } from './cards';
+import type { EngineContext } from './cards';
 import type {
   DamageEnemy,
   HealEnemy,
@@ -21,7 +21,14 @@ import type {
 } from './commands';
 import { chooseLocation, engageEvents, investigatorsAt } from './engagement';
 import type { EnemyDefeated, EnemyDisengaged, EnemyEngaged, Event, ExhaustChanged } from './events';
-import { enemyHealth, enemyOf, isEngagedWith, isEnemyOnTable, locationOf } from './enemies';
+import {
+  defeatedByDamage,
+  enemyDefeatedEvent,
+  enemyOf,
+  isEngagedWith,
+  isEnemyOnTable,
+  locationOf,
+} from './enemies';
 import { activeInvestigator, requireInvestigator } from './investigators';
 import type { InstanceId } from './ids';
 import { hasKeyword } from './keywords';
@@ -29,7 +36,6 @@ import { moveCardEvent } from './placement';
 import { replay } from './reducer';
 import { CommandRejected } from './rejection';
 import type { CardInstance, GameState } from './state';
-import { encounterDiscard, victoryDisplay } from './zone';
 
 /**
  * `EngageEnemy`: the enemy engages the investigator, who must be at its
@@ -167,10 +173,7 @@ export function handleDamageEnemy(ctx: EngineContext, state: GameState, cmd: Dam
     token: 'damage',
     delta: cmd.amount,
   };
-  const total = (enemy.tokens.damage ?? 0) + cmd.amount;
-  const health = enemyHealth(stats, state);
-  if (health === undefined || total < health) return [damaged];
-  return [damaged, defeated(state, enemy, stats)];
+  return [damaged, ...defeatedByDamage(state, enemy, stats, cmd.amount)];
 }
 
 /** `HealEnemy`: removes as much of the damage as the enemy has, up to the amount. */
@@ -190,7 +193,7 @@ export function handleDefeatEnemy(
   cmd: DefeatEnemy,
 ): EnemyDefeated[] {
   const { enemy, stats } = onTableEnemyOf(ctx, state, cmd.enemyId);
-  return [defeated(state, enemy, stats)];
+  return [enemyDefeatedEvent(state, enemy, stats)];
 }
 
 /**
@@ -237,16 +240,6 @@ function onTableEnemyOf(ctx: EngineContext, state: GameState, enemyId: InstanceI
   if (!isEnemyOnTable(found.enemy))
     throw new CommandRejected({ code: 'enemyNotInPlay', cardId: enemyId });
   return found;
-}
-
-function defeated(state: GameState, enemy: CardInstance, stats: CardStats): EnemyDefeated {
-  const hasVictory = (stats.victory ?? 0) > 0;
-  return {
-    type: 'EnemyDefeated',
-    enemyId: enemy.id,
-    to: hasVictory ? victoryDisplay : encounterDiscard,
-    locationId: locationOf(state, enemy),
-  };
 }
 
 /**
