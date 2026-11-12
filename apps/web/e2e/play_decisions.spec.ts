@@ -39,17 +39,17 @@ test('redraw a drawn token as a card says', async ({ page }) => {
     await expect(decision.getByRole('status')).toBeVisible();
   });
 
-  await test.step('Tap the token: what a card can do to it opens under the tokens', async () => {
+  await test.step('Tap the token: what a card can do to it opens in a bubble over it', async () => {
     await drawn
       .getByRole('button', { name: /^Change / })
       .first()
       .click();
-    await expect(decision.getByRole('group', { name: /^What a card does to / })).toBeVisible();
+    await expect(decision.getByRole('region', { name: /^What a card does to / })).toBeVisible();
   });
 
   await test.step('Redraw it: a new token takes its place and the test resolves again', async () => {
     await decision.getByRole('button', { name: 'Redraw' }).click();
-    await expect(decision.getByRole('group', { name: /^What a card does to / })).toBeHidden();
+    await expect(decision.getByRole('region', { name: /^What a card does to / })).toBeHidden();
     await expect(drawn.getByRole('listitem').first()).toBeVisible();
     await expect(decision.getByRole('status')).toBeVisible();
   });

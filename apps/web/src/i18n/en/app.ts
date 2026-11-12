@@ -445,11 +445,8 @@ export const appTexts = {
     margin: 'by {{margin}}',
     changeToken: 'Change {{token}}',
     tokenActions: 'What a card does to {{token}}',
-    tokenState: { cancelled: 'Cancelled', ignored: 'Ignored' },
-    treatedFrom: 'was {{token}}',
-    tokenAction: { cancel: 'Cancel', ignore: 'Ignore', resolve: 'Resolve', redraw: 'Redraw' },
-    treatAs: 'Treat as {{token}}',
-    treatAsItself: 'Treat as {{token}} again',
+    tokenAction: { ignore: 'Ignore', resolve: 'Resolve', redraw: 'Redraw', replace: 'Replace' },
+    replaceWith: 'Replace with {{token}}',
     revealOneMore: 'Reveal another',
     odds: {
       title: 'Chance to pass',

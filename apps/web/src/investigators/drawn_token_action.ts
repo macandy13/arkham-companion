@@ -10,12 +10,12 @@ import {
 } from '@arkham/engine';
 
 /**
- * What the players do to one drawn token as a card says (ME.24b): cancel or ignore it, resolve it
- * again, put it back and draw another in its place, or treat it as another token (`as` left out
- * treats it as itself again).
+ * What the players do to one drawn token as a card says (ME.24b): ignore it (a cancel counts the
+ * same: as never revealed), resolve it again, put it back and draw another in its place, or treat
+ * it as another kind (`as` left out treats it as itself again).
  */
 export type DrawnTokenAction =
-  { kind: 'cancel' | 'ignore' | 'resolve' | 'redraw' } | { kind: 'treatAs'; as?: ChaosToken };
+  { kind: 'ignore' | 'resolve' | 'redraw' } | { kind: 'treatAs'; as?: ChaosToken };
 
 /**
  * `draw` after `action` on its token at `index`, drawing from `bag` with `random`. A token resolved
@@ -32,8 +32,6 @@ export function applyTokenAction(
   const drawOnWhileUnfinished = (changed: TestDraw) =>
     drawFinished(changed) ? changed : continueDraw(bag, changed, random);
   switch (action.kind) {
-    case 'cancel':
-      return withTokenState(draw, index, 'cancelled');
     case 'ignore':
       return withTokenState(draw, index, 'ignored');
     case 'resolve':

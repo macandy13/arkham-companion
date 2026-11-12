@@ -19,7 +19,7 @@ import {
   type SkillTestSuggestion,
   type TestDraw,
 } from '@arkham/engine';
-import { assertNever, sum } from '@arkham/util';
+import { assertNever, sum, withoutEach } from '@arkham/util';
 import { DrawnTokenList } from './DrawnTokenList';
 import { applyTokenAction, type DrawnTokenAction } from './drawn_token_action';
 import { signed, signedOrUnknown } from '../tokens/tokenValue';
@@ -48,8 +48,8 @@ export interface SkillTestRun {
   act: (index: number, action: DrawnTokenAction) => void;
   /** One more token, as a card says (`revealAnother`); absent while the bag holds no other. */
   revealAnother?: () => void;
-  /** The tokens a drawn one can be treated as: each kind in the bag, and the elder sign. */
-  treatOptions: readonly ChaosToken[];
+  /** The kinds the drawn token at `index` can be replaced with (`replaceOptions`). */
+  replaceOptions: (index: number) => readonly ChaosToken[];
   /** The calculation with the tokens drawn so far; its outcome counts only once `finished`. */
   result: SkillTestSuggestion;
   /** Whether the tokens drawn settle the test: false before the first and while one asks for another. */
@@ -110,17 +110,23 @@ export function useSkillTest(
     ...(drawFinished(drawn) && board.chaosBag.length > drawn.length
       ? { revealAnother: () => setDrawn(revealAnother(board.chaosBag, drawn, Math.random)) }
       : {}),
-    treatOptions: treatOptions(board.chaosBag),
+    replaceOptions: (index) => replaceOptions(board.chaosBag, drawn, index),
     result,
     finished: drawFinished(drawn),
     ...(odds ? { odds } : {}),
   };
 }
 
-/** Each kind of token in `bag`, then the elder sign if it holds none (Jim Culver, Father Mateo). */
-function treatOptions(bag: readonly ChaosToken[]): ChaosToken[] {
-  const kinds = tokenCounts(bag).map(({ token }) => token);
-  return kinds.includes('elderSign') ? kinds : [...kinds, 'elderSign'];
+/**
+ * The kinds the token at `index` of `draw` can be replaced with: each kind `bag` holds more of than
+ * the other drawn tokens show (each as the token it counts as), since a replacement swaps the
+ * token for one from the bag, so the draw never shows more of a kind than the bag holds.
+ */
+function replaceOptions(bag: readonly ChaosToken[], draw: TestDraw, index: number): ChaosToken[] {
+  const othersShown = draw.flatMap((drawn, at) =>
+    at === index ? [] : [drawn.treatedAs ?? drawn.token],
+  );
+  return tokenCounts(withoutEach(bag, othersShown)).map(({ token }) => token);
 }
 
 /**
@@ -245,7 +251,7 @@ export function ResultStrip({
   onDraw,
 }: {
   result: SkillTestSuggestion;
-  run: Pick<SkillTestRun, 'drawn' | 'revealed' | 'act' | 'revealAnother' | 'treatOptions'>;
+  run: Pick<SkillTestRun, 'drawn' | 'revealed' | 'act' | 'revealAnother' | 'replaceOptions'>;
   skill: SkillName;
   finished: boolean;
   odds?: readonly SkillTestOdds[];

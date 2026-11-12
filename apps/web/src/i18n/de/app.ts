@@ -449,16 +449,13 @@ export const appTexts = {
     margin: 'um {{margin}}',
     changeToken: '{{token}} ändern',
     tokenActions: 'Was eine Karte mit {{token}} macht',
-    tokenState: { cancelled: 'Aufgehoben', ignored: 'Ignoriert' },
-    treatedFrom: 'war {{token}}',
     tokenAction: {
-      cancel: 'Aufheben',
       ignore: 'Ignorieren',
       resolve: 'Abhandeln',
       redraw: 'Neu ziehen',
+      replace: 'Ersetzen',
     },
-    treatAs: 'Als {{token}} behandeln',
-    treatAsItself: 'Wieder als {{token}} behandeln',
+    replaceWith: 'Durch {{token}} ersetzen',
     revealOneMore: 'Weiteren enthüllen',
     odds: {
       title: 'Erfolgschance',

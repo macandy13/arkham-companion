@@ -223,14 +223,13 @@ describe('SkillTestDialog', () => {
         .getAllByRole('listitem')
         .map((token) => token.textContent);
 
-    it('cancels the −2, so willpower 3 passes difficulty 3 without it', () => {
+    it('ignores the −2, so willpower 3 passes difficulty 3 without it', () => {
       renderWillpowerTest(['-2']);
       fireEvent.click(button('Draw a token'));
 
       fireEvent.click(button('Change −2'));
-      fireEvent.click(button('Cancel'));
+      fireEvent.click(button('Ignore'));
 
-      expect(drawnTokens()).toEqual(['−2 Cancelled']);
       expect(outcome()).toBe('Pass 3 ≥ 3 by 0');
     });
 
@@ -259,15 +258,61 @@ describe('SkillTestDialog', () => {
       expect(outcome()).toBe('Pass 4 ≥ 3 by 1');
     });
 
-    it('treats the skull as an elder sign, saying what it was (Alder has no elder sign effect: "?")', () => {
-      renderWillpowerTest(['skull']);
+    it('replaces the skull with the +1 still in the bag', () => {
+      // Always the first token left: the skull comes out, the +1 stays in the bag.
+      vi.spyOn(Math, 'random').mockReturnValue(0);
+      renderWillpowerTest(['skull', '+1']);
       fireEvent.click(button('Draw a token'));
 
       fireEvent.click(button('Change Skull'));
-      fireEvent.click(button('Treat as Elder Sign'));
+      fireEvent.click(button('Replace'));
+      fireEvent.click(button('Replace with +1'));
 
-      expect(drawnTokens()).toEqual(['Elder Sign was Skull ?']);
-      expect(button('Change Elder Sign')).toBeTruthy();
+      expect(drawnTokens()).toEqual(['+1']);
+      expect(outcome()).toBe('Pass 4 ≥ 3 by 1');
+    });
+
+    it('turns a replaced token back into itself', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0);
+      renderWillpowerTest(['skull', '+1']);
+      fireEvent.click(button('Draw a token'));
+      fireEvent.click(button('Change Skull'));
+      fireEvent.click(button('Replace'));
+      fireEvent.click(button('Replace with +1'));
+
+      fireEvent.click(button('Change +1'));
+      fireEvent.click(button('Replace'));
+      fireEvent.click(button('Replace with Skull'));
+
+      expect(drawnTokens()).toEqual(['Skull ?']);
+    });
+
+    it("offers no second +1 once another token was replaced with the bag's only one", () => {
+      // The first token left comes out first: the skull; for the one revealed after it the last
+      // one left: the −1, so the bag's only +1 stays in it.
+      vi.spyOn(Math, 'random').mockReturnValue(0);
+      renderWillpowerTest(['skull', '+1', '-1']);
+      fireEvent.click(button('Draw a token'));
+      fireEvent.click(button('Change Skull'));
+      fireEvent.click(button('Replace'));
+      fireEvent.click(button('Replace with +1'));
+      vi.spyOn(Math, 'random').mockReturnValue(0.9);
+      fireEvent.click(button('Reveal another'));
+
+      fireEvent.click(button('Change −1'));
+      fireEvent.click(button('Replace'));
+
+      expect(screen.queryByRole('button', { name: 'Replace with +1' })).toBeNull();
+      expect(button('Replace with Skull')).toBeTruthy();
+    });
+
+    it('offers no replacement once the bag holds no other token', () => {
+      renderWillpowerTest(['-2']);
+      fireEvent.click(button('Draw a token'));
+
+      fireEvent.click(button('Change −2'));
+
+      expect(button('Replace').disabled).toBe(true);
     });
 
     it('reveals the token a bless asks for again once the bless is resolved again', () => {

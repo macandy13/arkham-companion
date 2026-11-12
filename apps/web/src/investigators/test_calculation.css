@@ -176,16 +176,12 @@
 }
 
 /* The token itself is the button that opens what a card can do to it, so it has no pill. */
-#board dialog[data-shell] section[data-part='strip'] > figure > ol > li > button {
+#board dialog[data-shell] section[data-part='strip'] > figure > ol > li > button,
+[data-bubble='token'] > section > button:has(> [data-chaos-face]) {
   padding: 0;
   border: none;
-  border-radius: 50%;
+  border-radius: var(--radius-round);
   background: none;
-}
-
-#board dialog[data-shell] section[data-part='strip'] > figure > ol > li > span {
-  color: var(--color-text-muted);
-  font-size: var(--font-size-note);
 }
 
 #board
@@ -198,14 +194,23 @@
   opacity: var(--drawn-token-set-aside-opacity);
 }
 
-/* What a card does to the token tapped: a wrapping row of pills under the tokens. */
-#board dialog[data-shell] section[data-part='strip'] > figure > [role='group'] {
+/* The + that reveals one more token, a round button the size of a token beside them. */
+#board dialog[data-shell] section[data-part='strip'] > figure > button[aria-controls] {
+  width: var(--chaos-token-size);
+  height: var(--chaos-token-size);
+  padding: 0;
+  border-radius: var(--radius-round);
+  font-size: var(--font-size-title);
+}
+
+/* What a card does to a drawn token (DrawnTokenList): one row of pills, or the tokens to pick. */
+[data-bubble='token'] > section {
   display: flex;
-  flex-basis: 100%;
   flex-wrap: wrap;
   gap: var(--space-2);
   align-items: center;
   justify-content: center;
+  margin-block-start: var(--space-1);
 }
 
 #board dialog[data-shell] section[data-part='strip'] > figure > figcaption {
