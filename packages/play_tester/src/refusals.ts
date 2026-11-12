@@ -1,4 +1,4 @@
-import type { RejectionCode } from '@arkham/engine';
+import type { Rejection, RejectionCode } from '@arkham/engine';
 
 /**
  * How the tester judges a refused step (product.md "Continuous play tester", check 2):
@@ -127,4 +127,16 @@ const REFUSAL_KINDS: Readonly<Record<RejectionCode, RefusalKind>> = {
 /** How the tester judges a step the engine refused with `code`. */
 export function refusalKind(code: RejectionCode): RefusalKind {
   return REFUSAL_KINDS[code];
+}
+
+/**
+ * Why the engine refused a card action, its effects' rejections unwrapped: the players took the
+ * action, so an effect refused for a reason they could be told at the table (Augurs of Flame's
+ * draw at a location with nothing beneath) is judged by that reason, not as a rule's broken
+ * command (`triggeredCommandRejected`).
+ */
+export function cardActionRefusal(rejection: Rejection): Rejection {
+  return rejection.code === 'triggeredCommandRejected'
+    ? cardActionRefusal(rejection.reason)
+    : rejection;
 }

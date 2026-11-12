@@ -530,12 +530,18 @@ export class PlayTable {
    * Answers the open decision about the card `subject` names by picking the
    * option shown as `option` (`answer(byName('Swarm of Rats'), 'Roland Banks')`,
    * `answer(byName('Crypt Chill'), 'fail')`), confirming `amount` where the option
-   * takes one. Fails when no decision, or several, are about that card or the
-   * option is not offered, so a script that answers the wrong question breaks
-   * where it happens.
+   * takes one. `for` picks the investigator who decides when several decisions
+   * are about that card (an enemy attacking two investigators). Fails when no
+   * decision, or several, are about that card or the option is not offered, so a
+   * script that answers the wrong question breaks where it happens.
    */
-  answer(subject: CardRef, option: string, { amount }: { amount?: number } = {}): void {
-    const { pending, cards } = this.current;
+  answer(
+    subject: CardRef,
+    option: string,
+    { amount, for: decider }: { amount?: number; for?: InvestigatorRef } = {},
+  ): void {
+    const pending = this.decidedBy(decider);
+    const { cards } = this.current;
     const matcher = cardMatcher(subject);
     const subjects = matchingCards(
       this.ctx,
@@ -564,10 +570,22 @@ export class PlayTable {
     this.answer(card, 'cancel revelation');
   }
 
-  /** Answers the only open decision, whatever it is about, by picking the option shown as `option`. */
-  answerOnly(option: string): void {
-    const decision = this.onlyOne(this.current.pending, 'open decision');
+  /**
+   * Answers the only open decision, whatever it is about, by picking the option shown as `option`;
+   * the only one of the investigator `for` names when given.
+   */
+  answerOnly(option: string, { for: decider }: { for?: InvestigatorRef } = {}): void {
+    const decision = this.onlyOne(this.decidedBy(decider), 'open decision');
     this.answerWith(decision, option);
+  }
+
+  /** The open decisions, only those the investigator `decider` names decides when given. */
+  private decidedBy(decider: InvestigatorRef | undefined): readonly Decision[] {
+    if (decider === undefined) return this.current.pending;
+    const seat = this.board.investigator(decider).id;
+    return this.current.pending.filter(
+      ({ decider: by }) => by.kind === 'investigator' && by.investigatorId === seat,
+    );
   }
 
   /**

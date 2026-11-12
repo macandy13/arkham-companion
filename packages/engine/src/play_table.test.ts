@@ -11,6 +11,7 @@ import {
   cardDbFrom,
   CommandRejected,
   decisionId,
+  atLocation,
   engagedWith,
   enemyMatching,
   fixed,
@@ -808,6 +809,29 @@ describe('answering decisions', () => {
       expect(table.board.investigator(alice).damage).toBe(1);
       expect(table.board.decisions).toMatchObject([{ about: 'ghoul' }]);
     });
+  });
+
+  it('answers the decision of the investigator named when two are about the same card', () => {
+    const massiveGhoul = blankEnemy('massive_ghoul', {
+      damage: 1,
+      keywords: [{ name: 'massive' }],
+    });
+    const table = PlayTable.start(
+      game
+        .withInvestigator(bob, { locationId: study })
+        .withCard(instanceId('massive_ghoul'), massiveGhoul, atLocation(study)),
+    );
+    table.nextPhase();
+    for (const investigator of [alice, bob]) {
+      table.startTurn(investigator);
+      table.endTurn(investigator);
+    }
+    table.nextPhase();
+
+    table.answer(byName('massive_ghoul'), 'attack', { for: bob });
+
+    expect(table.board.investigator(bob).damage).toBe(1);
+    expect(table.board.investigator(alice).damage).toBe(0);
   });
 
   it('reports a test failed by a margin as the margin a per-point test deals', () => {

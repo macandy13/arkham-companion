@@ -6,6 +6,7 @@ import {
   type ChaosToken,
   type Command,
   type BasicAction,
+  type Decision,
   type InstanceId,
   type PlayTable,
   type SkillName,
@@ -45,7 +46,7 @@ export type Step =
   | { readonly verb: 'nextPhase' | 'resolveEnemyAttacks' | 'spendCluesToAdvanceAct' | 'undo' }
   | { readonly verb: 'placeDoom' }
   | { readonly verb: InvestigatorVerb; readonly investigator: CardName }
-  | { readonly verb: 'moveTo'; readonly investigator: CardName; readonly location: CardName }
+  | { readonly verb: 'moveTo'; readonly investigator: CardName; readonly location: InstanceId }
   | { readonly verb: EnemyVerb; readonly investigator: CardName; readonly enemy: InstanceId }
   | {
       readonly verb: 'useCardAction';
@@ -53,8 +54,16 @@ export type Step =
       readonly card: InstanceId;
       readonly action: number;
     }
-  /** Answers the open decision about the card `about`, or the only one when it is about none. */
-  | { readonly verb: 'answer'; readonly about?: InstanceId; readonly option: string }
+  /**
+   * Answers the open decision about the card `about`, or the only one when it is about none; the
+   * one `for` decides when several open decisions are about the same card (`answerStep`).
+   */
+  | {
+      readonly verb: 'answer';
+      readonly about?: InstanceId;
+      readonly for?: CardName;
+      readonly option: string;
+    }
   /**
    * Reports the investigator's open skill test with the `result` the drawn chaos `tokens` give
    * (more than one when a bless, curse, frost or blood token makes them draw another); the tokens
@@ -104,7 +113,7 @@ export type CardEffect =
   | { readonly kind: 'drawEncounterCard' }
   /** Pays `resources` for the card (its cost, or what it spends); allowed while a decision is open. */
   | { readonly kind: 'pay'; readonly resources: number }
-  | { readonly kind: 'moveTo'; readonly location: CardName };
+  | { readonly kind: 'moveTo'; readonly location: InstanceId };
 
 /**
  * The basic action each action verb takes, which the players count off before they take it;
@@ -211,7 +220,7 @@ function playVerb(table: PlayTable, step: Step): void {
       table[step.verb](byName(step.investigator));
       return;
     case 'moveTo':
-      table.moveTo(byName(step.investigator), byName(step.location));
+      table.moveTo(byName(step.investigator), byId(step.location));
       return;
     case 'fight':
     case 'evade':
@@ -230,8 +239,10 @@ function playVerb(table: PlayTable, step: Step): void {
       });
       return;
     case 'answer':
-      if (step.about === undefined) table.answerOnly(step.option);
-      else table.answer(byId(step.about), step.option);
+      if (step.about === undefined)
+        table.answerOnly(step.option, { ...(step.for && { for: byName(step.for) }) });
+      else
+        table.answer(byId(step.about), step.option, { ...(step.for && { for: byName(step.for) }) });
       return;
     case 'playerCard':
       playPlayerCard(table, step);
@@ -250,10 +261,11 @@ function playPlayerCard(table: PlayTable, step: Extract<Step, { verb: 'playerCar
 /** The command `effect` is for `investigator`, at their location. */
 function cardEffectCommand(table: PlayTable, investigator: CardName, effect: CardEffect): Command {
   const { board } = table;
-  const { id: investigatorId, at } = board.investigator(byName(investigator));
+  const { id: investigatorId } = board.investigator(byName(investigator));
   const here = () => {
+    const at = board.locationOf(investigatorId);
     if (at === undefined) throw new Error(`${investigator} is at no location`);
-    return board.location(byName(at)).id;
+    return at;
   };
   switch (effect.kind) {
     case 'damageEnemy':
@@ -305,11 +317,31 @@ function cardEffectCommand(table: PlayTable, investigator: CardName, effect: Car
       return {
         type: 'MoveInvestigator',
         investigatorId,
-        to: board.location(byName(effect.location)).id,
+        to: effect.location,
       };
     default:
       return assertNever(effect);
   }
+}
+
+/**
+ * The step answering `decision` with the option shown as `option`: by the card it is about, and
+ * also by the investigator who decides when another open decision is about the same card (or
+ * about none), as when a massive enemy attacks two investigators.
+ */
+export function answerStep(table: PlayTable, decision: Decision, option: string): Step {
+  const shared = table.state.pending.filter(({ subject }) => subject === decision.subject);
+  const { decider } = decision;
+  const name =
+    shared.length > 1 && decider.kind === 'investigator'
+      ? table.board.investigator(decider.investigatorId).name
+      : undefined;
+  return {
+    verb: 'answer',
+    ...(decision.subject !== undefined && { about: decision.subject }),
+    ...(name !== undefined && { for: name }),
+    option,
+  };
 }
 
 /** `step` as the call it plays, e.g. `moveTo('Daisy Walker', 'Attic')`, for reports. */

@@ -39,7 +39,7 @@ describe('judging one step', () => {
       checkedStep(table, {
         verb: 'moveTo',
         investigator: cardName('alice'),
-        location: cardName('attic'),
+        location: instanceId('attic'),
       }),
     ).toEqual({
       kind: 'refused',

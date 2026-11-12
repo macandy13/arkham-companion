@@ -1,16 +1,19 @@
 import { describe, expect, it } from 'vitest';
 import {
   advanceBySpendingClues,
+  atEndOfPhase,
   blankAct,
   blankAgenda,
   blankEnemy,
   blankLocation,
+  eachInvestigator,
   engagedWith,
   fixed,
   instanceId,
   investigatorId,
   newGame,
   PlayTable,
+  takeDamage,
 } from '@arkham/engine';
 import { brokenRule } from './oracles';
 
@@ -345,6 +348,53 @@ describe('moving the hunters', () => {
     const before = table.board;
     table.nextPhase();
 
+    expect(brokenRule(before, table.board, next)).toBeUndefined();
+  });
+
+  it('accepts a hunter staying when the game ends as the investigation phase does', () => {
+    const burningStudy = blankLocation('study', {
+      abilities: [atEndOfPhase('investigation', takeDamage(1, eachInvestigator()))],
+    });
+    const table = afterTurns(
+      newGame()
+        .withLocation(attic, blankLocation('attic'), { revealed: true })
+        .withLocation(study, burningStudy, { revealed: true })
+        .withConnection(attic, study)
+        .withInvestigator(alice, { locationId: study, health: { max: 8, damage: 7 } })
+        .withCard(ghoul, hunterGhoul, { kind: 'atLocation', locationId: attic }),
+    );
+    const before = table.board;
+    table.nextPhase();
+
+    expect(table.board.ended).toBe(true);
+    expect(table.board.enemiesAt(attic)).toMatchObject([{ name: 'ghoul' }]);
+    expect(brokenRule(before, table.board, next)).toBeUndefined();
+  });
+
+  it('leaves a hunter alone while a new lead is chosen as the investigation phase ends', () => {
+    const carol = investigatorId('carol');
+    const burningStudy = blankLocation('study', {
+      abilities: [
+        atEndOfPhase('investigation', takeDamage(1, eachInvestigator({ at: { ref: 'self' } }))),
+      ],
+    });
+    const table = afterTurns(
+      newGame()
+        .withLocation(attic, blankLocation('attic'), { revealed: true })
+        .withLocation(study, burningStudy, { revealed: true })
+        .withLocation(hallway, blankLocation('hallway'), { revealed: true })
+        .withConnection(attic, study)
+        .withInvestigator(alice, { locationId: study, health: { max: 8, damage: 7 } })
+        .withInvestigator(bob, { locationId: hallway })
+        .withInvestigator(carol, { locationId: hallway })
+        .withCard(ghoul, hunterGhoul, { kind: 'atLocation', locationId: attic }),
+      [alice, bob, carol],
+    );
+    const before = table.board;
+    table.nextPhase();
+
+    expect(table.board).toMatchObject({ phase: 'enemy', step: 'huntersMove' });
+    expect(table.board.decisions).toMatchObject([{ prompt: 'decision.chooseLeadInvestigator' }]);
     expect(brokenRule(before, table.board, next)).toBeUndefined();
   });
 

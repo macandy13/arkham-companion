@@ -36,7 +36,7 @@ describe("a night's findings", () => {
   function recordFailingAtNextPhase(check: CheckId, gameSeed: number, steps: readonly Step[]) {
     const record: RunRecord = {
       format: 'arkham-run',
-      version: 3,
+      version: 4,
       tester: { version: '0.0.0', commit: 'abc123' },
       run: {
         scenario: theGathering.id,

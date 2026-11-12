@@ -23,9 +23,19 @@ import {
 } from '@arkham/engine';
 import {
   daisyWalker,
+  queenOfAsh,
+  queenOfAshCards,
   rolandBanks,
+  smokeAndMirrors,
+  smokeAndMirrorsCards,
+  spreadingFlames,
+  spreadingFlamesCards,
+  theDevourerBelow,
+  theDevourerBelowCards,
   theGathering,
   theGatheringCards,
+  theMidnightMasks,
+  theMidnightMasksCards,
   wendyAdams,
   zealotInvestigatorCards,
 } from '@arkham/scenarios';
@@ -64,6 +74,11 @@ export interface Run {
  */
 const SCENARIOS: readonly ScenarioContext[] = [
   { cards: cardDbWith(theGatheringCards, zealotInvestigatorCards), scenario: theGathering },
+  { cards: cardDbWith(theMidnightMasksCards, zealotInvestigatorCards), scenario: theMidnightMasks },
+  { cards: cardDbWith(theDevourerBelowCards, zealotInvestigatorCards), scenario: theDevourerBelow },
+  { cards: cardDbWith(spreadingFlamesCards, zealotInvestigatorCards), scenario: spreadingFlames },
+  { cards: cardDbWith(smokeAndMirrorsCards, zealotInvestigatorCards), scenario: smokeAndMirrors },
+  { cards: cardDbWith(queenOfAshCards, zealotInvestigatorCards), scenario: queenOfAsh },
 ];
 
 /** The real investigators a run seats, all of them in every scenario's card data. */

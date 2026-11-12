@@ -4,7 +4,6 @@ import {
   isRevelationDecision,
   optionName,
   type BoardView,
-  type CardName,
   type InstanceId,
   type PlayTable,
 } from '@arkham/engine';
@@ -69,11 +68,11 @@ function cancelsRevelation(table: PlayTable, step: Step): boolean {
 }
 
 /**
- * The names of the locations next to `from` that start a shortest way to the nearest location
+ * The locations next to `from` that start a shortest way to the nearest location
  * with clues on it or still unrevealed (revealing puts its clues there); none when there is no
  * such location left.
  */
-function firstStepsToClues(board: BoardView, from: InstanceId): CardName[] {
+function firstStepsToClues(board: BoardView, from: InstanceId): InstanceId[] {
   const wanted = (id: InstanceId) => {
     const location = board.location(byId(id));
     return !location.revealed || location.clues > 0;
@@ -87,7 +86,7 @@ function firstStepsToClues(board: BoardView, from: InstanceId): CardName[] {
   const seen = new Set([from, ...frontier]);
   while (frontier.length > 0) {
     const found = frontier.filter(wanted);
-    if (found.length > 0) return found.map((id) => board.location(byId(firstStep.get(id)!)).name);
+    if (found.length > 0) return found.map((id) => firstStep.get(id)!);
     const further: InstanceId[] = [];
     for (const id of frontier)
       for (const next of board.connectedTo(id)) {
