@@ -364,8 +364,20 @@ export const SKILL_NAMES: readonly SkillName[] = ['willpower', 'intellect', 'com
 /** The test the players resolve at the table for a `skillTestResult` decision. */
 export interface SkillTest {
   skill: SkillName;
-  /** Shroud, enemy value or the number printed on the card. */
+  /** What the test is against: shroud, enemy value or the number printed on the card, modifiers included. */
   difficulty: number;
+  /**
+   * How the constant abilities of cards in play made `difficulty` from a printed value when the
+   * test began (Obscuring Fog's +2 shroud), so the trace can name each card (`modifiedValue`).
+   * Absent when none changes it.
+   */
+  modifiedFrom?: { printed: number; changes: readonly CardChange[] };
+}
+
+/** What one card in play changes a number by (`SkillTest.modifiedFrom`, `modifiedValue`). */
+export interface CardChange {
+  cardId: InstanceId;
+  by: number;
 }
 
 /**
@@ -393,7 +405,8 @@ export type ModifierTarget = 'skill' | 'difficulty';
  * (`ModifierStep`), so the UI can name it: the investigator's printed skill,
  * the test's printed difficulty, a second skill a card adds to the test
  * (`SkillTestInput.addedSkill`), a lasting boost of a tested skill
- * (`Investigator.skillBoosts`), the one modifier the players enter
+ * (`Investigator.skillBoosts`), a card in play whose constant ability changes the
+ * difficulty (`SkillTest.modifiedFrom`), the one modifier the players enter
  * (`SkillTestInput.modifier`), a revealed chaos token (with the reference
  * card's effect text, if it has one), or the rules that cap the result
  * (auto-fail, nothing below 0).
@@ -403,6 +416,7 @@ export type ModifierSource =
   | { kind: 'baseDifficulty' }
   | { kind: 'addedSkill'; skill: SkillName }
   | { kind: 'skillBoost'; skill: SkillName }
+  | { kind: 'card'; cardId: InstanceId }
   | { kind: 'playerModifier' }
   | { kind: 'chaosToken'; token: ChaosToken; effectKey?: string }
   | { kind: 'autoFail' }

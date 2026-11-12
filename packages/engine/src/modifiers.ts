@@ -4,7 +4,7 @@ import { cardStats, type EngineContext } from './cards';
 import { cardsInPlay, hasActiveAbilities } from './doom';
 import type { InvestigatorId } from './ids';
 import { binds, namesCard, type CardScope, type InvestigatorScope } from './scopes';
-import type { CardInstance, GameState } from './state';
+import type { CardChange, CardInstance, GameState } from './state';
 
 /** The printed values of a location a modifier may change. */
 export type LocationValue = 'shroud';
@@ -84,10 +84,28 @@ export function effectiveValue(
   card: CardInstance,
   value: CardValue,
 ): number {
-  const modified = modifiersOn(ctx, state, { kind: 'card', card })
+  const { printed, changes } = modifiedValue(ctx, state, card, value);
+  return Math.max(
+    0,
+    changes.reduce((total, { by }) => total + by, printed),
+  );
+}
+
+/**
+ * `value` of `card` in parts: the printed value (0 when the card has none) and what each active
+ * modifier naming it changes, with its card, in the order the cards are in play. A skill test
+ * keeps the parts (`SkillTest.modifiedFrom`), so its trace can say which card raised the difficulty.
+ */
+export function modifiedValue(
+  ctx: EngineContext,
+  state: GameState,
+  card: CardInstance,
+  value: CardValue,
+): { printed: number; changes: CardChange[] } {
+  const changes = modifiersOn(ctx, state, { kind: 'card', card })
     .filter(({ modifier }) => modifier.value === value)
-    .reduce((sum, { modifier }) => sum + modifier.by, cardStats(ctx.cards, card.code)[value] ?? 0);
-  return Math.max(0, modified);
+    .map(({ source, modifier }) => ({ cardId: source.id, by: modifier.by }));
+  return { printed: cardStats(ctx.cards, card.code)[value] ?? 0, changes };
 }
 
 function names(

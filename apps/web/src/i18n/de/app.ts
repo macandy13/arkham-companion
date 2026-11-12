@@ -431,6 +431,7 @@ export const appTexts = {
   skillTest: {
     title: 'Fertigkeitsprobe',
     difficulty: 'Schwierigkeit',
+    printed: 'Aufgedruckt',
     modifier: 'Modifikator',
     lower: '{{what}} senken',
     raise: '{{what}} erhöhen',

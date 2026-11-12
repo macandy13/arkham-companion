@@ -1,6 +1,6 @@
 import { assertNever } from '@arkham/util';
 import { takeDamage } from './abilities';
-import { effectiveValue } from './modifiers';
+import { effectiveValue, modifiedValue, type CardValue } from './modifiers';
 import type { CardStats, EngineContext } from './cards';
 import type { Command, EndSkillTest, Evade, Fight, Investigate, TestSkill } from './commands';
 import {
@@ -25,14 +25,34 @@ import type {
   Decision,
   GameState,
   Investigator,
+  SkillName,
   SkillTest,
   SkillTestKind,
   SkillTestOutcome,
 } from './state';
 
 /**
+ * A `skill` test against `value` of `card` now (`effectiveValue`), with the printed value and the
+ * cards in play that changed it (`modifiedValue`), so the trace names each card.
+ */
+function testAgainst(
+  ctx: EngineContext,
+  state: GameState,
+  skill: SkillName,
+  card: CardInstance,
+  value: CardValue,
+): SkillTest {
+  const modifiedFrom = modifiedValue(ctx, state, card, value);
+  return {
+    skill,
+    difficulty: effectiveValue(ctx, state, card, value),
+    ...(modifiedFrom.changes.length > 0 ? { modifiedFrom } : {}),
+  };
+}
+
+/**
  * `Investigate`: an intellect test against the shroud of the investigator's
- * location (`effectiveValue`, constant abilities included). Its consequences follow
+ * location (`testAgainst`, constant abilities included). Its consequences follow
  * the answer (`investigateCommands`); a pass discovers 1 clue unless the
  * players confirm another count, up to the clues on the location when the
  * test starts. A location without clues makes the count not adjustable. Rejected at a location
@@ -57,7 +77,7 @@ export function handleInvestigate(
     id: `investigate:${investigator.id}`,
     prompt: 'decision.investigate',
     subject: location.id,
-    test: { skill: 'intellect', difficulty: effectiveValue(ctx, state, location, 'shroud') },
+    test: testAgainst(ctx, state, 'intellect', location, 'shroud'),
     testKind: { kind: 'investigate', locationId: location.id },
     ...(clues > 0 ? { passAmount: { default: 1, min: 1, max: clues } } : {}),
     outcomes: { onPass: [], onFail: [] },
@@ -92,7 +112,7 @@ export function handleFight(ctx: EngineContext, state: GameState, cmd: Fight): D
     id: `fight:${investigator.id}:${enemy.id}`,
     prompt: 'decision.fight',
     subject: enemy.id,
-    test: { skill: 'combat', difficulty: effectiveValue(ctx, state, enemy, 'fight') },
+    test: testAgainst(ctx, state, 'combat', enemy, 'fight'),
     testKind: { kind: 'fight', enemyId: enemy.id, damage },
     passAmount: { default: damage, min: 1 },
     outcomes: { onPass: [], onFail: [] },
@@ -151,7 +171,7 @@ export function handleEvade(ctx: EngineContext, state: GameState, cmd: Evade): D
     id: `evade:${investigator.id}:${enemy.id}`,
     prompt: 'decision.evade',
     subject: enemy.id,
-    test: { skill: 'agility', difficulty: effectiveValue(ctx, state, enemy, 'evade') },
+    test: testAgainst(ctx, state, 'agility', enemy, 'evade'),
     testKind: { kind: 'evade', enemyId: enemy.id },
     outcomes: { onPass: [], onFail: [] },
   });

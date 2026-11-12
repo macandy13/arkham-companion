@@ -87,6 +87,7 @@ export const GATHERING_CODES = {
   ghoulPriest: cardCode('01116'),
   ghoulMinion: cardCode('01160'),
   litaChantler: cardCode('01117'),
+  obscuringFog: cardCode('01168'),
 } as const;
 
 /**
@@ -498,7 +499,7 @@ export const theGatheringCardDefs: readonly CardStats[] = [
     ],
   }),
   treachery({
-    code: '01168',
+    code: codes.obscuringFog,
     name: 'Obscuring Fog',
     set: sets.chillingCold,
     traits: ['Hazard'],

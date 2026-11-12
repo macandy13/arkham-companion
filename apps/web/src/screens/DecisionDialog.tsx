@@ -11,7 +11,12 @@ import {
 } from '@arkham/engine';
 import { assertNever } from '@arkham/util';
 import { ResolvingCard } from '../encounter/ResolvingCard';
-import { SkillTestBlock, Stepper, useSkillTest } from '../investigators/TestCalculation';
+import {
+  DifficultyTerms,
+  SkillTestBlock,
+  Stepper,
+  useSkillTest,
+} from '../investigators/TestCalculation';
 import type { DecisionAmounts, GameActions } from '../state/gameActions';
 import { CardDialog } from './CardDialog';
 
@@ -179,6 +184,7 @@ export function DecisionPage({
           {t('decision.test', { skill: t(`skill.${test.skill}`), difficulty: test.difficulty })}
         </p>
       )}
+      {run && <DifficultyTerms board={board} trace={run.result.trace} />}
       {run && tested !== undefined && (
         <SkillTestBlock board={board} investigator={board.investigator(tested)} run={run} />
       )}
