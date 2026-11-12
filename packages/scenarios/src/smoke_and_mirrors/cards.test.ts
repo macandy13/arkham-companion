@@ -200,6 +200,33 @@ describe('Smoke and Mirrors card abilities', () => {
     match: { name: card },
   });
 
+  describe('Rogue Gangster', () => {
+    it.each([
+      { resources: 2, left: 1, attacks: false },
+      { resources: 0, left: 0, attacks: true },
+    ])(
+      'takes 1 of the $resources resources alice has as it engages her, or attacks her without any: attacks $attacks',
+      ({ resources, left, attacks }) => {
+        const gangster = instanceId('rogue_gangster');
+        const { context, state: started } = newGame()
+          .withLocation(northside, cardOf('12149'), { revealed: true })
+          .withInvestigator(alice, { locationId: northside, resources })
+          .withCard(gangster, cardOf('12164'), encounterDeck)
+          .withCard(instanceId('bottom_card'), cardOf('12164'), encounterDeck)
+          .withTurnOf(alice)
+          .start();
+
+        const state = stateAfter(context, started, aliceDraws('Rogue Gangster'));
+
+        expect(state.cards[gangster]?.zone).toEqual(engagedWith(alice));
+        expect(requireInvestigator(state, alice).resources).toBe(left);
+        expect(state.pending.map((decision) => decision.id)).toEqual(
+          attacks ? ['cardAttack:rogue_gangster:alice'] : [],
+        );
+      },
+    );
+  });
+
   describe('Miskatonic University (In Flames)', () => {
     it('deals 1 damage to each investigator there, and none elsewhere, as the investigation phase ends', () => {
       const university = instanceId('miskatonic_university');

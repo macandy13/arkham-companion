@@ -480,9 +480,9 @@ export type AbilityEffect = Templated<AbilityCommand>;
 /**
  * What must hold when the window opens for an ability to fire ("If it is act 3, …"). Checked
  * once, as the window opens; the effects then resolve whatever they change. Three shapes cover
- * the conditions cards print, each over the references effects use: which card is current, how
- * many things a reference names, and a value on the table. A new condition is usually a new
- * reference or `Quantity`, not a new kind.
+ * most conditions cards print, each over the references effects use: which card is current, how
+ * many things a reference names, and a value on the table; the fourth is the phase the game is
+ * in. A new condition is usually a new reference or `Quantity`, not a new kind.
  */
 export type AbilityCondition =
   /** The current act or agenda (`deck`) is one of `codes` ("If it is act 3", "if it is agenda 2"). */
@@ -497,7 +497,9 @@ export type AbilityCondition =
    */
   | ({ kind: 'countOf'; of: RepeatedRef | PickedRef } & StatRange)
   /** `value` is within the range ("if you have no clues", "2 clues per investigator on this act"). */
-  | ({ kind: 'valueOf'; value: Quantity } & StatRange);
+  | ({ kind: 'valueOf'; value: Quantity } & StatRange)
+  /** The game is in `phase` ("after Hellhound attacks you during the enemy phase"). */
+  | { kind: 'phase'; phase: Phase };
 
 /**
  * A number on the table a `valueOf` condition reads:
@@ -858,6 +860,8 @@ function conditionHolds(
       const values = quantities(ctx, state, condition.value, opened);
       return values.length > 0 && values.every((value) => inRange(value, condition, playerCount));
     }
+    case 'phase':
+      return state.meta.phase === condition.phase;
     default:
       return assertNever(condition);
   }
@@ -2098,6 +2102,14 @@ export function moveEnemyTowards(
   };
 }
 
+/** "Lose N resources": a `MoveTokens` back to the pool (Rogue Gangster). */
+export function loseResources(
+  amount: number,
+  who: RelativeInvestigator = { ref: 'windowInvestigator' },
+): AbilityEffect {
+  return tokenMove('resource', amount, { investigator: who }, 'pool');
+}
+
 /**
  * "Each investigator [at a location]" (`eachInvestigator`), which repeats the effect for each, in
  * player order: `takeHorror(1, eachInvestigator({ at: itsLocation() }))`.
@@ -2582,6 +2594,15 @@ export function duringAct(acts: readonly CardCode[], ability: Ability): Ability 
 /** "If it is agenda 2, …": `ability` fires only while the current agenda is one of `agendas`, like `duringAct`. */
 export function duringAgenda(agendas: readonly CardCode[], ability: Ability): Ability {
   return { ...ability, condition: { kind: 'currentCard', deck: 'agenda', codes: agendas } };
+}
+
+/**
+ * "… during the enemy phase": `ability` fires only while the game is in `phase`, written
+ * `duringPhase('enemy', afterAttacking(discardAsset()))` (Hellhound). Like the other condition
+ * wrappers it replaces a condition `ability` already has, so they don't nest.
+ */
+export function duringPhase(phase: Phase, ability: Ability): Ability {
+  return { ...ability, condition: { kind: 'phase', phase } };
 }
 
 /**

@@ -36,7 +36,7 @@ The scripted golden game is [`end_to_end.test_support.ts`](../../packages/scenar
 **Locations and enemies**
 
 - [ ] Miskatonic University (In Flames) deals 1 damage to each investigator there as the investigation phase ends.
-- [ ] The Servant of Flame hunts and retaliates; the Rogue Gangster hunts the investigator with the most resources.
+- [ ] The Servant of Flame hunts and retaliates; the Rogue Gangster hunts the investigator with the most resources, and as it engages takes 1 of their resources, or attacks them if they have none.
 - [ ] Each suspect has its keyword: David Renfield, Abigail Foreman and Margaret Liu are aloof, Cornelia Akely is alert, Naomi O'Bannion retaliates.
 
 **Encounter cards**
@@ -66,7 +66,8 @@ These are done by hand at the table; the app does not do them.
 - Adding the Mark of Elokoss to each deck, its damage as its holder's turn ends and its two-action discard.
 - The Arkham locations' reactions and actions, Waterfront District's additional action to investigate, Arcane Lock's additional action to enter or leave, and the damage Miskatonic University (In Flames) deals to allies.
 - The revelations of Downpour, Red Herring and Eager for Death.
-- Rogue Gangster's lost resource (or attack) after it engages, and Whippoorwill's -1 to each skill at its location.
+- Two Rogue Gangsters engaging the same investigator at once with 1 resource left: the second should attack instead of taking a resource.
+- Whippoorwill's -1 to each skill at its location.
 - The cultist's "reveal another token" against an Elite enemy, the tablet's clue placed on a failure, and Dr. Henry Armitage in play under his bearer's control.
 - The resolutions' deck changes and upgrades.
 
