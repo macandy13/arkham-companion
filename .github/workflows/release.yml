@@ -10,10 +10,12 @@ name: Release
 # been quiet for an hour instead of after each merge in a burst. Running the
 # workflow by hand skips the wait.
 #
-# The wait is a job of its own: while Release Please slept in its own job, the
-# job's GITHUB_TOKEN, an hour old by then, could still read the repo but was
-# refused creating the release ("Resource not accessible by integration").
-# Its job now starts after the wait, with a fresh token.
+# Merging the release PR skips the wait too, so the release is created while
+# its commit is still main's head. GitHub refuses GITHUB_TOKEN a tag on an
+# older commit once a later commit on main changed a workflow file ("Resource
+# not accessible by integration"), since the token can't be given the
+# `workflows` permission. The tag runs have a concurrency group of their own,
+# so a push right after the merge doesn't cancel them.
 
 on:
   push:
@@ -25,27 +27,24 @@ permissions:
   pull-requests: write
 
 concurrency:
-  group: release
+  group: >-
+    release-${{
+    (contains(github.event.head_commit.message, 'release-please--branches--')
+    || startsWith(github.event.head_commit.message, 'chore(main): release'))
+    && 'tag' || 'wait' }}
   cancel-in-progress: true
 
 jobs:
-  wait:
-    if: github.event_name == 'push'
+  release-please:
     runs-on: ubuntu-latest
-    timeout-minutes: 65
-    permissions: {}
+    timeout-minutes: 75
     steps:
       - name: Wait for an hour without a new push
+        if: >-
+          github.event_name == 'push'
+          && !contains(github.event.head_commit.message, 'release-please--branches--')
+          && !startsWith(github.event.head_commit.message, 'chore(main): release')
         run: sleep 3600
-
-  release-please:
-    needs: wait
-    # Runs after the wait, or straight away when the wait job was skipped
-    # because the workflow was started by hand.
-    if: ${{ !cancelled() && needs.wait.result != 'failure' }}
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
       - uses: googleapis/release-please-action@v5
         with:
           config-file: release-please-config.json
