@@ -9,6 +9,11 @@ name: Release
 # the waiting run, so the release PR is opened or refreshed only once main has
 # been quiet for an hour instead of after each merge in a burst. Running the
 # workflow by hand skips the wait.
+#
+# The wait is a job of its own: while Release Please slept in its own job, the
+# job's GITHUB_TOKEN, an hour old by then, could still read the repo but was
+# refused creating the release ("Resource not accessible by integration").
+# Its job now starts after the wait, with a fresh token.
 
 on:
   push:
@@ -24,13 +29,23 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  release-please:
+  wait:
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
-    timeout-minutes: 75
+    timeout-minutes: 65
+    permissions: {}
     steps:
       - name: Wait for an hour without a new push
-        if: github.event_name == 'push'
         run: sleep 3600
+
+  release-please:
+    needs: wait
+    # Runs after the wait, or straight away when the wait job was skipped
+    # because the workflow was started by hand.
+    if: ${{ !cancelled() && needs.wait.result != 'failure' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
       - uses: googleapis/release-please-action@v5
         with:
           config-file: release-please-config.json
