@@ -321,6 +321,66 @@ describe('the lead investigator leaving', () => {
     expect(bobAlone.meta.leadInvestigator).toBe(bob);
   });
 
+  describe('while the group still chooses, the enemy phase defeats bob too', () => {
+    /**
+     * The enemy phase with alice (the lead) and bob 1 damage from defeat, their ghouls about to
+     * attack, carol and `others` in the cellar. Alice's attack defeats her, so the group is asked
+     * for a new lead; bob's attack, answered next, defeats him.
+     */
+    const bothAttacked = (others: readonly InvestigatorId[]) => {
+      const { context, state } = others
+        .reduce(
+          (game, other) => game.withInvestigator(other, { locationId: cellar }),
+          threeInvestigators,
+        )
+        .start();
+      const turns = [alice, bob, carol, ...others].flatMap((investigator) => [
+        startTurn(investigator),
+        endTurn(investigator),
+      ]);
+      const aliceDefeated = stateAfter(
+        context,
+        state,
+        nextPhase,
+        ...turns,
+        takeDamage(alice, 7),
+        takeDamage(bob, 7),
+        nextPhase,
+        answer(`enemyAttack:${aliceGhoul}:${alice}`, 'attack'),
+      );
+      return { context, aliceDefeated };
+    };
+
+    it('makes carol, the one left, the lead', () => {
+      const { context, aliceDefeated } = bothAttacked([]);
+
+      const bobDefeated = stateAfter(
+        context,
+        aliceDefeated,
+        answer(`enemyAttack:${bobGhoul}:${bob}`, 'attack'),
+      );
+
+      expect(bobDefeated.pending.map((decision) => decision.id)).not.toContain(
+        'newLeadInvestigator',
+      );
+      expect(bobDefeated.meta.leadInvestigator).toBe(carol);
+    });
+
+    it('asks again among carol and dave, who are still in', () => {
+      const dave = investigatorId('dave');
+      const { context, aliceDefeated } = bothAttacked([dave]);
+
+      const bobDefeated = stateAfter(
+        context,
+        aliceDefeated,
+        answer(`enemyAttack:${bobGhoul}:${bob}`, 'attack'),
+      );
+
+      const newLead = bobDefeated.pending.find(({ id }) => id === 'newLeadInvestigator');
+      expect(newLead?.options.map((option) => option.target)).toEqual([carol, dave]);
+    });
+  });
+
   it('does not ask when another investigator leaves', () => {
     const { context, state } = threeInvestigators.start();
     const defeated = stateAfter(context, state, takeHorror(bob, 6));

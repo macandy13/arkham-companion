@@ -125,6 +125,7 @@ export function apply(state: GameState, event: Event): GameState {
     case 'DecisionRequested':
       return applyDecisionRequested(state, event);
     case 'DecisionResolved':
+    case 'DecisionWithdrawn':
       return { ...state, pending: state.pending.filter((d) => d.id !== event.decisionId) };
     case 'AgendaAdvanced':
     case 'ActAdvanced':

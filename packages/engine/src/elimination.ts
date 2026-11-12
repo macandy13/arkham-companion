@@ -4,6 +4,7 @@ import { decisionId } from './ids';
 import { requestDecision } from './decisions';
 import type {
   ChaosTokenReleased,
+  DecisionWithdrawn,
   Event,
   InvestigatorChanged,
   InvestigatorDefeated,
@@ -39,7 +40,9 @@ const NEW_LEAD_DECISION = decisionId('newLeadInvestigator');
  * 5. If they were the lead investigator, the group picks a new one: not here
  *    but in a `newLeadInvestigator` step (`newLeadInvestigatorEvents`) that `triggeredSteps`
  *    queues after the departure, so an effect on several investigators
- *    ("each investigator … is defeated") applies to all of them first.
+ *    ("each investigator … is defeated") applies to all of them first. A question for a new lead
+ *    already open when another investigator leaves is withdrawn and asked again here
+ *    (`reaskedNewLead`).
  *
  * All callers (damage, horror, resign) share this one function, so every way
  * out of the scenario leaves the same board. `state` is the state before
@@ -67,7 +70,19 @@ export function investigatorLeavesEvents(
       : arrivalEngagements(ctx, cleared, investigator.locationId);
   const after = replay(engagements, cleared);
   const nobodyLeft = activeInvestigators(after).length === 0;
-  return [...events, ...engagements, ...(nobodyLeft ? [{ type: 'ScenarioEnded' as const }] : [])];
+  if (nobodyLeft) return [...events, ...engagements, { type: 'ScenarioEnded' }];
+  return [...events, ...engagements, ...reaskedNewLead(after)];
+}
+
+/**
+ * The open question for a new lead asked again once another investigator has left too, so it
+ * offers only those still in (or makes the one left the lead): its options were fixed when it was
+ * asked, and answering it with someone who has left since would be refused.
+ */
+function reaskedNewLead(state: GameState): Event[] {
+  if (!state.pending.some(({ id }) => id === NEW_LEAD_DECISION)) return [];
+  const withdrawn: DecisionWithdrawn = { type: 'DecisionWithdrawn', decisionId: NEW_LEAD_DECISION };
+  return [withdrawn, ...newLeadInvestigatorEvents(replay([withdrawn], state))];
 }
 
 /**

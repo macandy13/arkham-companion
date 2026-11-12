@@ -57,6 +57,7 @@ export type Event =
   | LeadInvestigatorChanged
   | DecisionRequested
   | DecisionResolved
+  | DecisionWithdrawn
   | AgendaAdvanced
   | ActAdvanced
   | CurrentCardChanged
@@ -297,6 +298,16 @@ export interface DecisionResolved {
   type: 'DecisionResolved';
   decisionId: DecisionId;
   optionId: string;
+}
+
+/**
+ * A pending decision no longer fits the board and is taken back unanswered; removes it from
+ * `GameState.pending`. Produced when an investigator leaves while the group still chooses a new
+ * lead (`investigatorLeavesEvents`), which then asks again among those left.
+ */
+export interface DecisionWithdrawn {
+  type: 'DecisionWithdrawn';
+  decisionId: DecisionId;
 }
 
 /**
