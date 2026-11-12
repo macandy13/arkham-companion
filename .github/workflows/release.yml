@@ -15,7 +15,9 @@ name: Release
 # older commit once a later commit on main changed a workflow file ("Resource
 # not accessible by integration"), since the token can't be given the
 # `workflows` permission. The tag runs have a concurrency group of their own,
-# so a push right after the merge doesn't cancel them.
+# so a push right after the merge doesn't cancel them. A release PR's merge is
+# recognised by its commit message, in both the concurrency group and the wait
+# step: keep the two checks the same.
 
 on:
   push:
