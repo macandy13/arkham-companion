@@ -106,9 +106,10 @@ test('put an interrogated suspect beneath the act', async ({ page }) => {
   const naomi = page.getByRole('img', { name: /^Naomi O'Bannion/ }).first();
   const act = page.getByRole('region', { name: 'Act' });
 
-  await test.step("Import a game of Smoke and Mirrors with Naomi O'Bannion in play", async () => {
+  await test.step("Import a game of Smoke and Mirrors with Naomi O'Bannion in play, nothing beneath the act yet", async () => {
     await resumeImportedGame(page, 'Interrogation', naomiInPlayExport('Interrogation'));
     await expect(naomi).toBeVisible();
+    await expect(act.getByRole('button', { name: /^Beneath the act/ })).toHaveCount(0);
   });
 
   await test.step('Put her beneath the act from her card', async () => {

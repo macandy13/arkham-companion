@@ -352,7 +352,7 @@ describe('GameScreen header', () => {
     expect(within(pile).getByRole('region', { name: 'Ghoul Priest' })).toBeTruthy();
   });
 
-  it('fans no pile at the act while nothing lies beneath it and its objective counts nothing there', async () => {
+  it('fans no pile at the act while nothing lies beneath it', async () => {
     await renderTheGathering('game-screen-act-no-beneath-test');
 
     const act = screen.getByRole('region', { name: 'Act' });
