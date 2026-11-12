@@ -336,7 +336,23 @@ function difficultyTermName(
   source: ModifierSource,
   t: ReturnType<typeof useTranslation>['t'],
 ): string {
-  return source.kind === 'card' ? board.cardFace(source.cardId).name : t('skillTest.printed');
+  switch (source.kind) {
+    case 'card':
+      return board.cardFace(source.cardId).name;
+    case 'baseDifficulty':
+      return t('skillTest.printed');
+    case 'baseSkill':
+    case 'addedSkill':
+    case 'skillBoost':
+    case 'playerModifier':
+    case 'chaosToken':
+    case 'autoFail':
+    case 'minimumZero':
+      // No difficulty step has these; `DifficultyTerms` leaves out the cap at 0.
+      return '';
+    default:
+      return assertNever(source);
+  }
 }
 
 /** One number with − and + buttons, the − off at `min` and the + at `max` when it has them. */

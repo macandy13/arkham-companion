@@ -94,7 +94,7 @@ export function effectiveValue(
 /**
  * `value` of `card` in parts: the printed value (0 when the card has none) and what each active
  * modifier naming it changes, with its card, in the order the cards are in play. A skill test
- * keeps the parts (`SkillTest.modifiers`), so its trace can say which card raised the difficulty.
+ * keeps the parts (`SkillTest.modifiedFrom`), so its trace can say which card raised the difficulty.
  */
 export function modifiedValue(
   ctx: EngineContext,

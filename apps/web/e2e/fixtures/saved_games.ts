@@ -329,7 +329,7 @@ export function fogInvestigationExport(title: string): Buffer {
     type: 'ManualAdjust',
     adjustment: {
       kind: 'moveCard',
-      cardId: cardIn(table, cardCode('01168')),
+      cardId: cardIn(table, GATHERING_CODES.obscuringFog),
       to: { kind: 'attachedTo', hostId: cardIn(table, GATHERING_CODES.hallway) },
     },
   });
