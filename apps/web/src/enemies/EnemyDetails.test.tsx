@@ -369,7 +369,7 @@ describe('EnemyDetails', () => {
       fireEvent.click(screen.getByRole('button', { name: 'Put beneath the act' }));
 
       expect(onClose).toHaveBeenCalled();
-      expect(table.board.act?.beneath).toEqual(['ghoul']);
+      expect(table.board.encounter.beneathAct).toMatchObject([{ name: 'ghoul' }]);
       expect(table.board.enemies).toEqual([]);
     });
   });

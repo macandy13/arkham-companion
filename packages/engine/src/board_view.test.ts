@@ -1061,25 +1061,6 @@ describe('agenda and act', () => {
     });
   });
 
-  it('names the cards placed face up beneath the act', () => {
-    const firstAct = instanceId('first_act');
-    const { context, state } = newGame()
-      .withLocation(study, blankLocation('study'))
-      .withInvestigator(alice, { locationId: study })
-      .withAct(firstAct, blankAct('first_act'))
-      .withCard(
-        instanceId('questioned_suspect'),
-        blankEnemy('questioned_suspect'),
-        { kind: 'beneath', hostId: firstAct },
-        { faceUp: true },
-      )
-      .start();
-
-    const { act } = boardView(context, state);
-
-    expect(act?.beneath).toEqual(['questioned_suspect']);
-  });
-
   it('lists the cards beneath the act among the encounter piles, and none once there is no act', () => {
     const firstAct = instanceId('first_act');
     const { context, state } = newGame()
