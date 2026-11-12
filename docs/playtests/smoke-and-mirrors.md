@@ -45,6 +45,8 @@ The scripted golden game is [`end_to_end.test_support.ts`](../../packages/scenar
 - [ ] Flash Flood attaches to the drawer's location for +4 shroud and is discarded as the round ends.
 - [ ] Crossfire: on a failed agility (3) test each investigator at the location takes 1 damage.
 - [ ] Mark of Elokoss goes to the drawer's threat area.
+- [ ] Raising Suspicions puts 1 doom on the nearest enemy without doom, and surges when every enemy has some; the lead picks between equally near ones.
+- [ ] Aerial Pursuit moves the nearest non-Elite enemy once toward the drawer, engaged or not; if it engages someone there, it attacks them at once. It also surges.
 
 **Resolution**
 
@@ -63,7 +65,7 @@ These are done by hand at the table; the app does not do them.
 - The Elusive keyword of the Servant of Flame, Sgt. Earl Monroe and Bat Horror.
 - Adding the Mark of Elokoss to each deck, its damage as its holder's turn ends and its two-action discard.
 - The Arkham locations' reactions and actions, Waterfront District's additional action to investigate, Arcane Lock's additional action to enter or leave, and the damage Miskatonic University (In Flames) deals to allies.
-- The revelations of Downpour, Red Herring, Eager for Death, Raising Suspicions and Aerial Pursuit.
+- The revelations of Downpour, Red Herring and Eager for Death.
 - Rogue Gangster's lost resource (or attack) after it engages, and Whippoorwill's -1 to each skill at its location.
 - The cultist's "reveal another token" against an Elite enemy, the tablet's clue placed on a failure, and Dr. Henry Armitage in play under his bearer's control.
 - The resolutions' deck changes and upgrades.

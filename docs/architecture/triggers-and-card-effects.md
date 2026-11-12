@@ -67,7 +67,7 @@ Effects are **templated commands**: a command card data may use (`AbilityCommand
 - `eachEnemy({ trait, withoutTrait, unengaged, at, engagedWith })`, where `at` is one location reference or a list of them, so "each enemy at your location" is a filter of `eachEnemy`, not a reference of its own,
 - `eachInZone(zone, { trait, code, typeCode, unique })`, the cards in a zone or a list of zones: the victory display, the set-aside cards (`eachInZone({ kind: 'setAside' }, { trait, typeCode: 'enemy' })` for "each set-aside [[Cultist]] enemy"), the cards beneath a card,
 - `eachInPlay({ trait, code, typeCode, unique, at })`, the cards in play, only those at one of the `at` locations when given,
-- `nearestEnemy({ trait, withoutTrait, unengaged })`,
+- `nearestEnemy({ trait, withoutTrait, unengaged, withoutToken })`, `withoutToken: 'doom'` for "the nearest enemy with no doom on it",
 - `locationWith({ trait })`,
 - `locationWithMost(token)`,
 - `nearestLocation()`, the nearest location the card may attach to,

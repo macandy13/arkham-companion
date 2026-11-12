@@ -8,7 +8,7 @@ import { playerOrder } from './investigators';
 import { hasKeyword } from './keywords';
 import { CommandRejected } from './rejection';
 import { encounterDiscard, victoryDisplay } from './zone';
-import type { CardInstance, GameState, Investigator } from './state';
+import type { CardInstance, GameState, Investigator, TokenKind } from './state';
 
 /** One enemy attack of the enemy phase: who attacks whom, and for how much. */
 export interface EnemyAttack {
@@ -191,14 +191,16 @@ export function nearestEnemies(
 
 /**
  * Which enemies on the table a card means: those with `trait` (any enemy
- * without one) and without `withoutTrait` ("each non-Nightgaunt enemy"), and only
- * the unengaged ones with `unengaged`. Card data adds where they are and whom they
+ * without one) and without `withoutTrait` ("each non-Nightgaunt enemy"), only
+ * the unengaged ones with `unengaged`, and only those without any `withoutToken`
+ * ("the nearest enemy with no doom on it"). Card data adds where they are and whom they
  * are engaged with (`EachEnemyFilter`).
  */
 export interface EnemyFilter {
   trait?: Trait;
   withoutTrait?: Trait;
   unengaged?: true;
+  withoutToken?: TokenKind;
 }
 
 /** The enemies on the table that `filter` matches, in card order. */
@@ -211,7 +213,8 @@ export function enemiesMatching(
     (card) =>
       (filter.withoutTrait === undefined ||
         !cardStats(ctx.cards, card.code).traits.includes(filter.withoutTrait)) &&
-      (filter.unengaged === undefined || card.zone.kind === 'atLocation'),
+      (filter.unengaged === undefined || card.zone.kind === 'atLocation') &&
+      (filter.withoutToken === undefined || (card.tokens[filter.withoutToken] ?? 0) === 0),
   );
 }
 

@@ -19,6 +19,7 @@ import type {
   ReadyEnemy,
   RetreatEnemy,
 } from './commands';
+import { handleEnemyAttacks } from './attacks_of_opportunity';
 import { chooseLocation, engageEvents, investigatorsAt } from './engagement';
 import type { EnemyDefeated, EnemyDisengaged, EnemyEngaged, Event, ExhaustChanged } from './events';
 import {
@@ -35,7 +36,7 @@ import { hasKeyword } from './keywords';
 import { moveCardEvent } from './placement';
 import { replay } from './reducer';
 import { CommandRejected } from './rejection';
-import type { CardInstance, GameState } from './state';
+import type { AnswerableCommand, CardInstance, GameState } from './state';
 
 /**
  * `EngageEnemy`: the enemy engages the investigator, who must be at its
@@ -119,7 +120,50 @@ export function handleMoveEnemy(ctx: EngineContext, state: GameState, cmd: MoveE
       investigatorId: enemy.zone.investigatorId,
     });
   const moved = moveCardEvent(enemy, { kind: 'atLocation', locationId: cmd.to });
-  return [moved, ...engageEvents(ctx, replay([moved], state), enemy.id)];
+  const arrived = replay([moved], state);
+  const engaging = engageEvents(ctx, arrived, enemy.id);
+  return [
+    moved,
+    ...(cmd.attacksIfItEngages ? withAttackOnEngaging(ctx, arrived, engaging) : engaging),
+  ];
+}
+
+/**
+ * `engaging` (from `engageEvents`) with the enemy's immediate attack on the investigator it
+ * engages: the attack decision after an `EnemyEngaged`, and an `EnemyAttacks` after the
+ * `EngageEnemy` of each option when the players choose whom it engages.
+ */
+function withAttackOnEngaging(ctx: EngineContext, state: GameState, engaging: Event[]): Event[] {
+  return engaging.flatMap((event): Event[] => {
+    if (event.type === 'EnemyEngaged') {
+      const { enemyId, investigatorId } = event;
+      return [
+        event,
+        ...handleEnemyAttacks(ctx, replay([event], state), {
+          type: 'EnemyAttacks',
+          enemyId,
+          investigatorId,
+        }),
+      ];
+    }
+    if (event.type !== 'DecisionRequested') return [event];
+    const options = event.decision.options.map((option) => ({
+      ...option,
+      commands: option.commands.flatMap((command): AnswerableCommand[] =>
+        command.type === 'EngageEnemy'
+          ? [
+              command,
+              {
+                type: 'EnemyAttacks',
+                enemyId: command.enemyId,
+                investigatorId: command.investigatorId,
+              },
+            ]
+          : [command],
+      ),
+    }));
+    return [{ ...event, decision: { ...event.decision, options } }];
+  });
 }
 
 /**
@@ -149,6 +193,7 @@ export function handleMoveEnemyTowards(
     enemyId: enemy.id,
     to,
     ...(cmd.forced === true ? { forced: true } : {}),
+    ...(cmd.attacksIfItEngages && { attacksIfItEngages: true }),
   });
   if (steps.length === 1) return handleMoveEnemy(ctx, state, moveTo(only));
   return chooseLocation(

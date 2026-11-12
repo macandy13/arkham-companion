@@ -2036,18 +2036,20 @@ export function locationWith(filter: LocationFilter = {}): RelativeCard {
  * "[Enemy] moves 1 location towards [location]" (`MoveEnemyTowards`), written
  * `moveEnemyTowards(eachEnemy({ trait: trait('Ghoul'), unengaged: true }), onlyCopy(codes.parlor))`.
  * With `forced`, an engaged enemy disengages and moves too ("Forced – When the round ends: each
- * [[Cultist]] enemy moves once toward Underground Cistern").
+ * [[Cultist]] enemy moves once toward Underground Cistern"); with `attacksIfItEngages`, an enemy
+ * that engages an investigator where it arrives attacks them (Aerial Pursuit).
  */
 export function moveEnemyTowards(
   enemy: RelativeCard,
   location: RelativeCard,
-  options: { forced?: true } = {},
+  options: { forced?: true; attacksIfItEngages?: true } = {},
 ): AbilityEffect {
   return {
     type: 'MoveEnemyTowards',
     enemyId: enemy,
     towards: location,
     ...(options.forced === true ? { forced: true } : {}),
+    ...(options.attacksIfItEngages && { attacksIfItEngages: true }),
   };
 }
 
@@ -2155,7 +2157,9 @@ export function placeDoomOn(card: RelativeCard, amount: number): AbilityEffect {
 }
 
 /** "The nearest [[trait]] enemy" (`nearestEnemy`), written `nearestEnemy({ trait: trait('Cultist') })`. */
-export function nearestEnemy(filter: EnemyFilter = {}): RelativeCard {
+export function nearestEnemy(
+  filter: EnemyFilter = {},
+): Extract<PickedRef, { ref: 'nearestEnemy' }> {
   return { ref: 'nearestEnemy', ...filter };
 }
 

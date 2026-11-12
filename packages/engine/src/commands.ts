@@ -990,6 +990,12 @@ export interface MoveEnemy {
   to: InstanceId;
   /** A forced instruction, followed even for an engaged enemy. Default false. */
   forced?: boolean;
+  /**
+   * "If it engages an investigator, it makes an immediate attack" (Aerial Pursuit): the
+   * `EnemyAttacks` decision follows the engagement, or each option of the players' choice of whom
+   * it engages attacks the one it names.
+   */
+  attacksIfItEngages?: true;
 }
 
 /**
@@ -1010,6 +1016,8 @@ export interface MoveEnemyTowards {
   towards: InstanceId;
   /** A forced instruction, followed even for an engaged enemy. Default false. */
   forced?: boolean;
+  /** Passed on to the `MoveEnemy` it makes (`MoveEnemy.attacksIfItEngages`). */
+  attacksIfItEngages?: true;
 }
 
 /**

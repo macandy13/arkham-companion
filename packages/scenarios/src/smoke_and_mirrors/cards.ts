@@ -15,8 +15,13 @@ import {
   endScenario,
   fixed,
   fromSetAside,
+  gainSurge,
+  ifNoCandidate,
   itsLocation,
+  moveEnemyTowards,
+  nearestEnemy,
   perInvestigator,
+  placeDoomOn,
   putIntoThreatArea,
   resignAction,
   resolutionId,
@@ -27,6 +32,7 @@ import {
   whenAdvanced,
   whenRevealed,
   whenVictoryDisplayHolds,
+  yourLocation,
   type CardDb,
   type CardStats,
 } from '@arkham/engine';
@@ -124,8 +130,7 @@ const jpg = 'jpg';
  * - Arcane Lock's additional action to enter or leave its location (MC2.4)
  * - the whole revelations of Downpour (a choice per point failed), Red Herring (+2 difficulty with
  *   2 or more clues, a clue placed on the location) and Eager for Death (difficulty per damage,
- *   MC2.5), and of Raising Suspicions (doom on the nearest enemy without doom, else surge) and
- *   Aerial Pursuit (the nearest non-Elite enemy moves and attacks; its surge keyword is entered)
+ *   MC2.5)
  * - Rogue Gangster's lost resource (or attack) after it engages
  * - Whippoorwill's -1 to each skill of each investigator at its location
  */
@@ -482,6 +487,11 @@ export const smokeAndMirrorsCardDefs: readonly CardStats[] = [
     pictures: jpg,
     traits: ['Blunder'],
     quantity: 2,
+    // "If no doom was placed by this effect" happens exactly when no enemy is without doom.
+    abilities: [
+      whenRevealed(placeDoomOn(nearestEnemy({ withoutToken: 'doom' }), 1)),
+      ifNoCandidate(nearestEnemy({ withoutToken: 'doom' }), whenRevealed(gainSurge())),
+    ],
   }),
   treachery({
     code: '12161',
@@ -513,6 +523,15 @@ export const smokeAndMirrorsCardDefs: readonly CardStats[] = [
     traits: ['Scheme'],
     quantity: 2,
     keywords: [{ name: 'surge' }],
+    // "Moves once toward" is followed whatever the engagement, as Stop the Rite's.
+    abilities: [
+      whenRevealed(
+        moveEnemyTowards(nearestEnemy({ withoutTrait: trait('Elite') }), yourLocation(), {
+          forced: true,
+          attacksIfItEngages: true,
+        }),
+      ),
+    ],
   }),
   enemy({
     code: '12164',

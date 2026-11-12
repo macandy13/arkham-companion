@@ -6,7 +6,7 @@
 - "Nearest" counts connections even through moves a card blocks. If the next step on the path is blocked by a card, the hunter doesn't move.
 - Equidistant investigators: prey picks the target; if prey doesn't decide it or there is none, the lead investigator does. The lead investigator also picks between several shortest paths.
 - Several hunters move one at a time, in an order the lead investigator picks, each with its own choices before the next moves. This is our reading of [Choices](https://arkhamdb.com/rules#Choices_and_the_Grim_Rule); no rule says it explicitly.
-- A card effect on "the nearest [[Cultist]] enemy" (Mysterious Chanting) counts connections from the location of the investigator resolving it; an engaged enemy is at its investigator's location.
+- A card effect on "the nearest [[Cultist]] enemy" (Mysterious Chanting; Raising Suspicions, Aerial Pursuit) counts connections from the location of the investigator resolving it; an engaged enemy is at its investigator's location.
   - An enemy with no path there still counts, as farther than every enemy with one (FAQ: "Even if it has no valid path to an investigator, an enemy can still qualify as the 'nearest' enemy", asked about Mysterious Chanting).
   - The lead investigator picks between equally near enemies ([Choices](https://arkhamdb.com/rules#Choices_and_the_Grim_Rule)).
 - "The nearest location without Fire! attached" counts the same way from the drawer's location, which is 0 away, so it is the nearest unless it has a Fire! already; the lead investigator picks between equally near ones.

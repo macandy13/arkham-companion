@@ -785,6 +785,55 @@ describe('MoveEnemyTowards', () => {
 
     expect(zoneOf(after, ghoul)).toEqual(atLocation(cellar));
   });
+
+  it('leaves an enemy engaged with alice as it is when forced towards her own location', () => {
+    const { context, state } = aliceInHall.withCard(ghoul, ghoulCard, engagedWith(alice)).start();
+
+    const after = stateAfter(context, state, { ...moveGhoulTowards(hall), forced: true });
+
+    expect(zoneOf(after, ghoul)).toEqual(engagedWith(alice));
+    expect(after.pending).toEqual([]);
+  });
+
+  describe('when the enemy attacks if it engages (Aerial Pursuit)', () => {
+    const attackingMove = { ...moveGhoulTowards(hall), attacksIfItEngages: true } as const;
+
+    it('engages alice in the hall and attacks her', () => {
+      const { context, state } = aliceInHall.withCard(ghoul, ghoulCard, atLocation(cellar)).start();
+
+      const after = stateAfter(context, state, attackingMove);
+
+      expect(zoneOf(after, ghoul)).toEqual(engagedWith(alice));
+      expect(after.pending).toMatchObject([
+        {
+          id: `cardAttack:${ghoul}:${alice}`,
+          decider: { kind: 'investigator', investigatorId: alice },
+        },
+      ]);
+    });
+
+    it('attacks whichever of alice and bob the players pick for it to engage', () => {
+      const { context, state } = aliceAndBobAt(hall, { alice: 0, bob: 0 })
+        .withCard(ghoul, ghoulCard, atLocation(cellar))
+        .start();
+      const asked = stateAfter(context, state, attackingMove);
+
+      const after = stateAfter(context, asked, answer(`engage:${ghoul}`, bob));
+
+      expect(zoneOf(after, ghoul)).toEqual(engagedWith(bob));
+      expect(after.pending).toMatchObject([{ id: `cardAttack:${ghoul}:${bob}` }]);
+    });
+
+    it('attacks nobody when it arrives exhausted and engages nobody', () => {
+      const { context, state } = aliceInHall.withCard(ghoul, ghoulCard, atLocation(cellar)).start();
+      const exhausted = stateAfter(context, state, { type: 'ExhaustEnemy', enemyId: ghoul });
+
+      const after = stateAfter(context, exhausted, attackingMove);
+
+      expect(zoneOf(after, ghoul)).toEqual(atLocation(hall));
+      expect(after.pending).toEqual([]);
+    });
+  });
 });
 
 describe('damage and defeat', () => {
