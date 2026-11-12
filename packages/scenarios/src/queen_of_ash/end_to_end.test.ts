@@ -48,8 +48,7 @@ const toxicWastePit = instanceId('12187#1');
 const floodedCrypt = instanceId('12185#1');
 const infestedPipes = instanceId('12183#1');
 const overgrownTunnels = instanceId('12184#1');
-/** The two Hellhounds share their name too. */
-const daisysHellhound = instanceId('12122#1');
+const smugglersCache = instanceId('12186#1');
 const yes = { kind: 'flag', value: true } as const;
 
 describe('Queen of Ash end to end: Roland and Daisy, seed 1, after Spreading Flames and Smoke and Mirrors', () => {
@@ -76,8 +75,8 @@ describe('Queen of Ash end to end: Roland and Daisy, seed 1, after Spreading Fla
     );
 
     // Round 1 – investigation: Roland reveals Toxic Waste Pit, Daisy Flooded Crypt, and each takes
-    // both clues there. Ending a turn there costs Roland a card from his hand and Daisy 1 horror,
-    // both at the table.
+    // both clues there. Ending a turn there costs Roland a card from his hand (his to pick) and
+    // Daisy 1 horror.
     expect(table.nextPhase()).toEqual({ round: 1, phase: 'investigation' });
     for (const [investigator, tunnel] of [
       [roland, toxicWastePit],
@@ -90,7 +89,7 @@ describe('Queen of Ash end to end: Roland and Daisy, seed 1, after Spreading Fla
       table.endTurn(investigator);
     }
     expect(table.board.investigator(roland).clues).toBe(2);
-    expect(table.board.investigator(daisy).clues).toBe(2);
+    expect(table.board.investigator(daisy)).toMatchObject({ clues: 2, horror: 1 });
 
     // Round 2 – mythos: a Zealot spawns at Roland's tunnel (aloof, so it stays unengaged; its doom
     // as it enters play is the players'), and Daisy's Ashen Rebirth is hers to resolve.
@@ -103,38 +102,54 @@ describe('Queen of Ash end to end: Roland and Daisy, seed 1, after Spreading Fla
     expect(table.board.enemy(byName('Zealot')).engagedWith).toBeUndefined();
 
     // Round 2 – investigation: the tunnels connect only through Sewer Culvert and the cistern, so
-    // both walk through the culvert to Infested Pipes and take a clue each there (its discard
-    // until an enemy is the players'): 6 clues between them.
-    for (const investigator of [roland, daisy]) {
-      table.startTurn(investigator);
-      table.moveTo(investigator, byName('Sewer Culvert'));
-      table.moveTo(investigator, infestedPipes);
-      table.investigate(investigator);
-      table.endTurn(investigator);
-    }
+    // both walk through the culvert to Infested Pipes and take a clue each there: 6 clues between
+    // them. Entering it, each discards from the encounter deck until an enemy and draws it: Daisy,
+    // who goes first, a Hellhound, which engages her and attacks as she investigates, and Roland,
+    // past Noxious Smoke, a second Zealot, aloof.
+    table.startTurn(daisy);
+    table.moveTo(daisy, byName('Sewer Culvert'));
+    table.moveTo(daisy, infestedPipes);
+    expect(table.board.enemy(byName('Hellhound')).engagedWith).toBe(daisy);
+    table.investigate(daisy, { result: 'open' });
+    table.takeAttackOfOpportunity(byName('Hellhound'));
+    table.resolveTest('pass');
+    table.endTurn(daisy);
+    table.startTurn(roland);
+    table.moveTo(roland, byName('Sewer Culvert'));
+    table.moveTo(roland, infestedPipes);
+    table.investigate(roland);
+    table.endTurn(roland);
     expect(table.board.investigator(roland).clues).toBe(3);
     expect(table.board.investigator(daisy).clues).toBe(3);
+    expect(table.board.enemies.filter(({ name }) => name === 'Zealot')).toHaveLength(2);
+    expect(table.board.namesIn({ kind: 'encounterDiscard' })[0]).toBe('Noxious Smoke');
 
-    // Round 3 – mythos: a Hellhound engages Roland, and Daisy passes Noxious Smoke's willpower
-    // test.
-    expect(table.nextPhase()).toEqual({ round: 2, phase: 'enemy' });
+    // Round 2 – enemy: the Hellhound attacks Daisy (its asset discard after the attack is the
+    // players'). Round 3 – mythos: Roland passes Putrid Vapors' agility test, and Daisy draws a
+    // third Zealot at Infested Pipes.
+    expect(table.nextPhase()).toEqual({ round: 2, phase: 'enemy', step: 'enemiesAttack' });
+    table.resolveEnemyAttacks();
+    expect(table.board.investigator(daisy)).toMatchObject({ damage: 3, horror: 3 });
     expect(table.nextPhase()).toEqual({ round: 2, phase: 'upkeep' });
     expect(table.nextPhase()).toEqual({ round: 3, phase: 'mythos', step: 'drawEncounterCard' });
-    table.resolveRevelation(byName('Noxious Smoke'));
-    table.answerOnly('skill.willpower');
+    table.resolveRevelation(byName('Putrid Vapors'));
     table.answerOnly('pass');
+    expect(table.nextPhase()).toEqual({ round: 3, phase: 'mythos' });
     expect(table.nextPhase()).toEqual({ round: 3, phase: 'investigation' });
-    expect(table.board.enemy(byName('Hellhound')).engagedWith).toBe(roland);
+    expect(table.board.enemies.filter(({ name }) => name === 'Zealot')).toHaveLength(3);
 
-    // Round 3 – investigation: Roland evades the Hellhound so that it makes no attack of
-    // opportunity as he leaves. Entering Underground Cistern costs 3 clues per investigator, spent
-    // by the group by hand: all 6. Roland enters and act 1 advances: Elokoss spawns at the cistern,
-    // the Fire! he draws attaches to it, and Sluice Control comes into play beside it. Elokoss
-    // cannot make attacks of opportunity, so the players skip the one the engine offers as Roland
-    // takes a clue of the cistern's. Daisy walks to Overgrown Tunnels, where entering costs her
-    // the action she had left.
+    // Round 3 – investigation: Daisy evades the Hellhound so that it makes no attack of
+    // opportunity as she leaves, and walks to Overgrown Tunnels. Entering Underground Cistern costs
+    // 3 clues per investigator, spent by the group by hand: all 6. Roland enters and act 1
+    // advances: Elokoss spawns at the cistern, the Fire! he draws attaches to it, and Sluice
+    // Control comes into play beside it. Elokoss cannot make attacks of opportunity, so the players
+    // skip the one the engine offers as Roland takes a clue of the cistern's.
+    table.startTurn(daisy);
+    table.evade(daisy, byName('Hellhound'));
+    table.moveTo(daisy, byName('Sewer Culvert'));
+    table.moveTo(daisy, overgrownTunnels);
+    table.endTurn(daisy);
     table.startTurn(roland);
-    table.evade(roland, byName('Hellhound'));
     table.play({ type: 'AdjustInvestigator', investigatorId: roland, stat: 'clues', delta: -3 });
     table.play({ type: 'AdjustInvestigator', investigatorId: daisy, stat: 'clues', delta: -3 });
     table.moveTo(roland, byName('Underground Cistern'));
@@ -149,39 +164,42 @@ describe('Queen of Ash end to end: Roland and Daisy, seed 1, after Spreading Fla
     table.resolveTest('pass');
     table.endTurn(roland);
     expect(table.board.investigator(roland).clues).toBe(1);
-    table.startTurn(daisy);
-    table.moveTo(daisy, byName('Sewer Culvert'));
-    table.moveTo(daisy, overgrownTunnels);
-    table.endTurn(daisy);
 
     // Round 3 – the investigation phase ends with the Fire! at the cistern dealing Roland 1 damage
     // (Elokoss is Elite, so it spares her). Enemy: Elokoss attacks Roland; the evaded Hellhound
-    // stays exhausted. Round 3 ends with Stop the Rite: the Zealot, a Cultist, moves one step toward the cistern.
+    // stays exhausted. Round 3 ends with Stop the Rite: the three Zealots, Cultists, each move one step
+    // toward the cistern, which every tunnel connects to.
     expect(table.nextPhase()).toEqual({ round: 3, phase: 'enemy', step: 'enemiesAttack' });
     table.resolveEnemyAttacks();
     expect(table.board.investigator(roland)).toMatchObject({ damage: 5, horror: 3 });
     expect(table.nextPhase()).toEqual({ round: 3, phase: 'upkeep' });
-    expect(table.board.enemy(byName('Zealot')).at).toBe('Underground Cistern');
+    expect(table.board.enemies.filter(({ name }) => name === 'Zealot').map(({ at }) => at)).toEqual(
+      ['Underground Cistern', 'Underground Cistern', 'Underground Cistern'],
+    );
 
-    // Round 4 – mythos: the agenda's doom reaches 4; Roland draws Cosmic Evils and picks the doom
-    // (5 of 6); a second Hellhound engages Daisy.
+    // Round 4 – mythos: the agenda's doom reaches 4; Roland's Langour goes to his threat area and
+    // Daisy's Blasphemous Invocation is hers to resolve.
     expect(table.nextPhase()).toEqual({ round: 4, phase: 'mythos', step: 'drawEncounterCard' });
-    table.resolveRevelation(byName('Cosmic Evils'));
-    table.answerOnly('scenario.spreadingFlames.cosmicEvils.doom');
+    table.resolveRevelation(byName('Langour'));
     expect(table.nextPhase()).toEqual({ round: 4, phase: 'mythos' });
     expect(table.nextPhase()).toEqual({ round: 4, phase: 'investigation' });
-    expect(table.board.agenda).toMatchObject({ name: 'A Gathering', doom: 5 });
-    expect(table.board.enemy(daisysHellhound).engagedWith).toBe(daisy);
+    expect(table.board.agenda).toMatchObject({ name: 'A Gathering', doom: 4 });
+    expect(table.board.investigator(roland).threatArea).toEqual(['Langour']);
 
-    // Round 4 – investigation: Daisy evades her Hellhound and takes a clue at Overgrown Tunnels.
+    // Round 4 – investigation: Daisy takes a clue at Overgrown Tunnels and walks through the
+    // culvert to Smuggler's Cache, where ending her turn lets her gain 1 resource.
     // Entering Sluice Control costs 1 clue per investigator, spent by hand: Roland's and Daisy's.
     // Roland enters, skipping Elokoss's attack of opportunity again, and opens the sluice valve:
     // a combat test (5) he passes. Each enemy is defeated, Elokoss into the victory display, and the
     // scenario ends in Resolution 3.
     table.startTurn(daisy);
-    table.evade(daisy, daisysHellhound);
     table.investigate(daisy);
+    table.moveTo(daisy, byName('Sewer Culvert'));
+    table.moveTo(daisy, smugglersCache);
+    const resources = table.board.investigator(daisy).resources;
     table.endTurn(daisy);
+    table.answerOnly('scenario.queenOfAsh.smugglersCache.gain');
+    expect(table.board.investigator(daisy).resources).toBe(resources + 1);
     table.startTurn(roland);
     table.play({ type: 'AdjustInvestigator', investigatorId: roland, stat: 'clues', delta: -1 });
     table.play({ type: 'AdjustInvestigator', investigatorId: daisy, stat: 'clues', delta: -1 });

@@ -9,7 +9,7 @@ An [`Ability`](../../packages/engine/src/abilities.ts) is:
   - `revealed`,
   - `entered`,
   - `turnBegins`,
-  - `turnEnds`,
+  - `turnEnds` (the ending investigator's threat area and the location they end it at),
   - `eachTurnEnds` (any investigator's turn, for a card in play),
   - `phaseEnds`,
   - `roundEnds`,

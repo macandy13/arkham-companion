@@ -41,3 +41,4 @@ The Midnight Masks' Cultist deck is a deck of its own, out of play:
 
 - The players would discard the whole deck, shuffle the discard back in when the deck runs out ([encounter deck](https://arkhamdb.com/rules#Encounter_Deck)) and stop when no progress is possible ([effects](https://arkhamdb.com/rules#Effects): resolve as much as possible).
 - When the discard was just shuffled into the deck, as Rise of the Ghouls does first, that ends where it started, so the engine draws and discards nothing.
+- When the match is only in the discard (Infested Pipes late in Queen of Ash), the engine discards the rest of the deck, shuffles the discard back in and goes on discarding until the match turns up.
