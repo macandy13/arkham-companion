@@ -55,3 +55,4 @@ Each topic page links to its section on [ArkhamDB's copy of the Rules Reference]
 - [Searching, drawing and attaching encounter cards](rules/cards/encounter-searches.md)
 - [Resolution order](rules/cards/resolution-order.md)
 - [Children of Blood](rules/cards/children-of-blood.md)
+- [Bless and curse tokens](rules/cards/bless-and-curse.md)

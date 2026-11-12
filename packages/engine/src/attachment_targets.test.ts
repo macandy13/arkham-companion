@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
+  atEndOfPhase,
   attachedTo,
+  eachInvestigator,
+  requireInvestigator,
+  takeHorror,
+  thisLocation,
   attachTo,
   blankLocation,
   blankTreachery,
@@ -11,6 +16,7 @@ import {
   instanceId,
   investigatorId,
   locationWithMost,
+  nearestLocation,
   newGame,
   whenRevealed,
   type Command,
@@ -118,5 +124,123 @@ describe('a treachery that attaches to the location with the most clues (Locked 
 
     expect(after.cards[door]?.zone).toEqual(encounterDiscard);
     expect(after.cards[nextCard]?.zone).toEqual(encounterDiscard);
+  });
+});
+
+/** "Attach to the nearest location without a copy of [this card] attached" (Fire!). */
+const spreadingFire = blankTreachery('spreading_fire', {
+  limit: 'onePerLocation',
+  abilities: [whenRevealed(attachTo(nearestLocation()))],
+});
+
+describe('a treachery that attaches to the nearest location without a copy (Fire!)', () => {
+  const cellar = instanceId('cellar');
+  const fire = instanceId('fire');
+  /**
+   * The cellar and the study both connect to the hall, which has a fire, where alice (the lead)
+   * draws the next one; a plain treachery below it keeps the emptied deck from reshuffling.
+   */
+  const fireDrawnInTheHall = () =>
+    newGame()
+      .withLocation(hall, blankLocation('hall'), { revealed: true })
+      .withLocation(study, blankLocation('study'), { revealed: true })
+      .withLocation(cellar, blankLocation('cellar'), { revealed: true })
+      .withConnection(hall, study)
+      .withConnection(hall, cellar)
+      .withInvestigator(alice, { locationId: hall })
+      .withCard(instanceId('hall_fire'), spreadingFire, attachedTo(hall))
+      .withCard(fire, spreadingFire, encounterDeck)
+      .withCard(instanceId('bottom_card'), plainTreachery, encounterDeck);
+
+  it('asks alice, the lead, between the study and the cellar, each 1 away', () => {
+    const { context, state } = fireDrawnInTheHall().start();
+
+    const asked = stateAfter(context, state, aliceDraws, resolveRevelation('fire'));
+
+    expect(asked.pending).toMatchObject([
+      {
+        id: 'nearestLocation:fire',
+        kind: 'chooseLocation',
+        prompt: 'decision.chooseLocationToAttach',
+        decider: { kind: 'lead' },
+        options: [{ id: study }, { id: cellar }],
+      },
+    ]);
+    const after = stateAfter(context, asked, answer('nearestLocation:fire', cellar));
+    expect(after.cards[fire]?.zone).toEqual(attachedTo(cellar));
+  });
+
+  it('is discarded when every location has a copy', () => {
+    const { context, state } = fireDrawnInTheHall()
+      .withCard(instanceId('study_fire'), spreadingFire, attachedTo(study))
+      .withCard(instanceId('cellar_fire'), spreadingFire, attachedTo(cellar))
+      .start();
+
+    const after = stateAfter(context, state, aliceDraws, resolveRevelation('fire'));
+
+    expect(after.cards[fire]?.zone).toEqual(encounterDiscard);
+  });
+});
+
+describe('"this location" (thisLocation)', () => {
+  /** "When the investigation phase ends: each investigator at this location takes 1 horror." */
+  const scorching = {
+    abilities: [
+      atEndOfPhase('investigation', takeHorror(1, eachInvestigator({ at: thisLocation() }))),
+    ],
+  };
+
+  it.each([
+    { card: 'the hall itself', hallCard: blankLocation('hall', scorching), attached: undefined },
+    {
+      card: 'a treachery attached to the hall',
+      hallCard: blankLocation('hall'),
+      attached: blankTreachery('scorching_treachery', scorching),
+    },
+  ])(
+    'is the hall for $card: alice there takes 1 horror, bob in the study none',
+    ({ hallCard, attached }) => {
+      const builder = newGame()
+        .withLocation(hall, hallCard, { revealed: true })
+        .withLocation(study, blankLocation('study'), { revealed: true })
+        .withInvestigator(alice, { locationId: hall })
+        .withInvestigator(bob, { locationId: study })
+        .withTurnOf(alice);
+      const { context, state } = (
+        attached ? builder.withCard(instanceId('scorching'), attached, attachedTo(hall)) : builder
+      ).start();
+
+      const after = stateAfter(
+        context,
+        state,
+        { type: 'EndTurn', investigatorId: alice },
+        { type: 'StartTurn', investigatorId: bob },
+        { type: 'EndTurn', investigatorId: bob },
+        { type: 'NextPhase' },
+      );
+
+      expect([alice, bob].map((id) => requireInvestigator(after, id).sanity.horror)).toEqual([
+        1, 0,
+      ]);
+    },
+  );
+
+  it('names nobody for a revealed treachery, which is on no location', () => {
+    const { context, state } = newGame()
+      .withLocation(hall, blankLocation('hall'), { revealed: true })
+      .withInvestigator(alice, { locationId: hall })
+      .withCard(
+        instanceId('scorching_revelation'),
+        blankTreachery('scorching_revelation', {
+          abilities: [whenRevealed(takeHorror(1, eachInvestigator({ at: thisLocation() })))],
+        }),
+        encounterDeck,
+      )
+      .withCard(nextCard, plainTreachery, encounterDeck)
+      .start();
+
+    const after = stateAfter(context, state, aliceDraws, resolveRevelation('scorching_revelation'));
+
+    expect(requireInvestigator(after, alice).sanity.horror).toBe(0);
   });
 });

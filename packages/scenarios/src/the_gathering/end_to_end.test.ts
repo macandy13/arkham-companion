@@ -874,6 +874,10 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     table.play({ type: 'SealChaosToken', token: 'elderSign', investigatorId: wendy });
     expect(table.board.sealedTokens).toEqual([{ token: 'elderSign', investigatorId: wendy }]);
     expect(table.board.chaosBag).not.toContain('elderSign');
+    // Daisy's player card adds a bless token from its pool of 10.
+    table.play({ type: 'ChangeChaosBag', token: 'bless', change: 'add', lasts: 'campaign' });
+    expect(table.board.chaosBag).toContain('bless');
+    expect(table.board.poolTokensLeft('bless')).toBe(9);
 
     // Round 8 – mythos: Roland draws Dissonant Voices and Daisy a Ghoul Minion;
     // Wendy fails her willpower test against Crypt Chill. She has no asset to
@@ -904,7 +908,16 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
         },
       },
     ]);
-    table.answer(byName('Crypt Chill'), 'fail');
+    // The app drew the bless and then the -2 for her: the bless goes back to its pool.
+    const [cryptChillTest] = table.state.pending;
+    table.play({
+      type: 'ResolveDecision',
+      decisionId: cryptChillTest!.id,
+      optionId: 'fail',
+      revealed: ['bless', '-2'],
+    });
+    expect(table.board.chaosBag).not.toContain('bless');
+    expect(table.board.poolTokensLeft('bless')).toBe(10);
     table.play(answer(CRYPT_CHILL_DECISION, 'damage'));
 
     expect(table.board.investigator(wendy).status).toBe('defeated');

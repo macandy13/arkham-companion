@@ -253,7 +253,8 @@ export function playSpreadingFlames(start: CampaignLog): CampaignLog {
   // Round 5 – upkeep: they spend the 6 clues as the round ends. Searching for Dr. Armitage's
   // reverse side brings the Servant of Flame back to the Quad, healed, and places 6 clues there.
   // Dr. Armitage joining an investigator is the players' to do, and so is Roland's search for two
-  // Fire!: as the lead, at Orne Library, he attaches one there and the next to the Quad.
+  // Fire!, which they play as two draws from the discard pile: the first attaches to Orne Library,
+  // where he is, and the second to the nearest location without one, the Quad.
   expect(table.nextPhase()).toEqual({ round: 5, phase: 'enemy' });
   expect(table.nextPhase()).toEqual({ round: 5, phase: 'upkeep', step: 'endRound' });
   table.play(answer(SEARCHING_FOR_ARMITAGE_DECISION, 'spend'));
@@ -263,6 +264,19 @@ export function playSpreadingFlames(start: CampaignLog): CampaignLog {
   expect(table.board.location(byName('Miskatonic Quad')).clues).toBe(6);
   expect(table.board.investigator(roland).clues).toBe(0);
   expect(table.board.investigator(daisy).clues).toBe(0);
+  const rolandFindsAFire = () => {
+    table.play({
+      type: 'DrawEncounter',
+      investigatorId: roland,
+      from: 'deckOrDiscard',
+      match: { name: 'Fire!' },
+    });
+    table.resolveRevelation(byName('Fire!'));
+  };
+  rolandFindsAFire();
+  rolandFindsAFire();
+  expect(table.board.location(byName('Orne Library')).attachments).toEqual(['Fire!']);
+  expect(table.board.location(byName('Miskatonic Quad')).attachments).toEqual(['Fire!']);
 
   // Round 6 – mythos: Daisy draws Cosmic Evils again; this time she takes 1 damage and 1 horror
   // and draws again: Forbidden Secrets, which surges as she has no clues, into a Cantor of Flame
@@ -281,8 +295,8 @@ export function playSpreadingFlames(start: CampaignLog): CampaignLog {
   // Round 6 – investigation: Roland goes to the Quad, where the Servant engages him, and hits it
   // twice with his .45 Automatic: the players confirm 2 damage each. Daisy defeats the Cantor and
   // follows him. (Blaze of Glory's group clue spend to damage the Servant is theirs to resolve.)
-  // As the phase ends, the Fire! on the Quad deals each of them 1 direct damage, by hand; the
-  // Servant is Elite and takes none.
+  // As the phase ends, the Fire! on the Quad deals each of them 1 direct damage; the Servant is
+  // Elite and takes none.
   table.startTurn(roland);
   table.moveTo(roland, byName('Miskatonic Quad'));
   table.fight(roland, byName(servant), { damage: 2 });
@@ -296,8 +310,6 @@ export function playSpreadingFlames(start: CampaignLog): CampaignLog {
   expect(table.board.enemies).toEqual([
     { name: servant, at: 'Miskatonic Quad', health: 10, damage: 4, engagedWith: roland },
   ]);
-  table.takeDamage(roland, 1);
-  table.takeDamage(daisy, 1);
 
   // Round 6 – enemy phase: the Servant attacks Roland for 2 damage and 2 horror.
   expect(table.nextPhase()).toEqual({ round: 6, phase: 'enemy', step: 'enemiesAttack' });

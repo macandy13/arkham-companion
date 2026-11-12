@@ -1,8 +1,14 @@
-import { assertNever, duplicates, numberedDuplicates, range } from '@arkham/util';
+import { assertNever, duplicates, numberedDuplicates, range, withoutFirst } from '@arkham/util';
 import type { EngineContext } from './cards';
 import { isEnemyOnTable, locationOf } from './enemies';
 import type { Command, MarginTier, RequestDecision, ResolveDecision } from './commands';
-import type { DecisionRequested, DecisionResolved, SkillTestResolved } from './events';
+import { isPoolToken } from './chaos_bag';
+import type {
+  ChaosBagChanged,
+  DecisionRequested,
+  DecisionResolved,
+  SkillTestResolved,
+} from './events';
 import type { DecisionId, InstanceId, InvestigatorId } from './ids';
 import { isActiveInvestigator } from './investigators';
 import { requireCard } from './lookup';
@@ -13,6 +19,7 @@ import type {
   AmountRange,
   AnswerableCommand,
   AnsweredAmount,
+  ChaosToken,
   Decider,
   Decision,
   DecisionOption,
@@ -90,13 +97,14 @@ export function handleRequestDecision(
 
 /**
  * `ResolveDecision`: the decision is cleared, with the test's outcome
- * (`SkillTestResolved`) when it was a skill test; the option's commands
- * follow via `answerCommands`.
+ * (`SkillTestResolved`) when it was a skill test, and the bless and curse
+ * tokens it revealed back to their pool; the option's commands follow via
+ * `answerCommands`.
  */
 export function handleResolveDecision(
   state: GameState,
   command: ResolveDecision,
-): (DecisionResolved | SkillTestResolved)[] {
+): (DecisionResolved | SkillTestResolved | ChaosBagChanged)[] {
   optionCommands(state, command);
   checkMargin(state, command);
   const resolved: DecisionResolved = {
@@ -106,8 +114,26 @@ export function handleResolveDecision(
   };
   const decision = pendingDecision(state, command.decisionId);
   return decision?.skillTest
-    ? [resolved, skillTestResolved(state, decision, decision.skillTest, command)]
+    ? [
+        resolved,
+        skillTestResolved(state, decision, decision.skillTest, command),
+        ...poolTokensReturned(state, command.revealed ?? []),
+      ]
     : [resolved];
+}
+
+/**
+ * The bless and curse tokens among `revealed` leaving the bag for their pool (The Innsmouth
+ * Conspiracy, "Bless and Curse"), each one only while the bag still holds a copy, since the
+ * players may list a token the bag no longer has.
+ */
+function poolTokensReturned(state: GameState, revealed: readonly ChaosToken[]): ChaosBagChanged[] {
+  let bag = state.chaosBag;
+  return revealed.filter(isPoolToken).flatMap((token) => {
+    if (!bag.includes(token)) return [];
+    bag = withoutFirst(bag, token);
+    return [{ type: 'ChaosBagChanged', token, change: 'remove', lasts: 'scenario' }];
+  });
 }
 
 /** The outcome the answer `optionId` gives a `skillTestResult` decision (`skillTestDecision`). */

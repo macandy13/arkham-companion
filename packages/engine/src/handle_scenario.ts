@@ -7,6 +7,7 @@ import type {
   ReleaseChaosToken,
   SealChaosToken,
 } from './commands';
+import { isPoolToken, poolTokensLeft } from './chaos_bag';
 import { cardsWithDoom } from './doom';
 import { activeInvestigator, activeInvestigators } from './investigators';
 import type {
@@ -34,12 +35,18 @@ type Deck = 'agenda' | 'act';
 
 /**
  * `ChangeChaosBag`: a token into the chaos bag, or one copy of it out of the bag. Removing a token
- * the bag doesn't hold does nothing rather than refusing the step, since the players resolve as
- * much of an effect as they can (Rules Reference, "Effects").
+ * the bag doesn't hold, or adding a bless or curse token when its pool is empty, does nothing
+ * rather than refusing the step, since the players resolve as much of an effect as they can
+ * (Rules Reference, "Effects"; the FAQ on bless and curse tokens). A bless or curse token's change lasts for the scenario whatever
+ * the effect says, since neither carries over to the next one.
  */
 export function handleChangeChaosBag(state: GameState, cmd: ChangeChaosBag): ChaosBagChanged[] {
   if (cmd.change === 'remove' && !state.chaosBag.includes(cmd.token)) return [];
-  return [{ type: 'ChaosBagChanged', token: cmd.token, change: cmd.change, lasts: cmd.lasts }];
+  if (!isPoolToken(cmd.token))
+    return [{ type: 'ChaosBagChanged', token: cmd.token, change: cmd.change, lasts: cmd.lasts }];
+  if (cmd.change === 'add' && poolTokensLeft(cmd.token, state.chaosBag, state.sealedTokens) === 0)
+    return [];
+  return [{ type: 'ChaosBagChanged', token: cmd.token, change: cmd.change, lasts: 'scenario' }];
 }
 
 /**

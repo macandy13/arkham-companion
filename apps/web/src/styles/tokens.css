@@ -391,6 +391,7 @@
    */
   --chaos-token-size: 2rem;
   --chaos-bag-token-size: 2.5rem;
+  --chaos-bag-token-size-phone: 1.75rem;
   --chaos-resin-numeral-share: 0.32;
   --chaos-cardboard-numeral-share: 0.34;
   --chaos-numeral-spacing: -0.04em;

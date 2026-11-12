@@ -25,7 +25,8 @@ import { CardDialog } from './CardDialog';
  * dialog (`SkillTestBlock`): the players keep the test's skill, switch to another or add one (a
  * card can test a different one), set their modifier and let the app draw, and the calculation
  * (`BoardView.skillTest`) marks the option it suggests, which then answers with its margin; the
- * other option overrides it without one. The screen mounts one dialog per decision, so a draw
+ * other option overrides it without one. Either answer passes the tokens drawn, so the bless and
+ * curse among them go back to their pool. The screen mounts one dialog per decision, so a draw
  * never carries over to the next.
  * The game cannot go on before it is answered, so Escape does not close it; Undo takes back
  * the step that raised it instead, and its grab handle lowers it out of the way, so the players
@@ -153,6 +154,7 @@ export function DecisionPage({
         ...countsOf(counts[option]),
         ...(option === suggested?.outcome ? { margin: suggested.margin } : {}),
         ...(asksMarginOf(option) ? { margin: margins[option] } : {}),
+        ...(run?.finished ? { revealed: run.revealed } : {}),
       },
       ...(next === undefined ? [] : [{ option: next, counts: countsOf(nextCounts[next]) }]),
     );

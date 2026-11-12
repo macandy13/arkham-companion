@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
+  atLocation,
+  attachedTo,
+  encounterDeck,
+  encounterDiscard,
   encounterSetCode,
   engagedWith,
   execute,
@@ -353,6 +357,66 @@ describe('Spreading Flames card abilities', () => {
 
   describe('Fire!', () => {
     const fire = instanceId('fire');
+    const dormitories = instanceId('dormitories');
+    const scienceHall = instanceId('science_hall');
+    /** Dormitories, Miskatonic Quad and Science Hall in a row, alice in the Dormitories. */
+    const campusInARow = () =>
+      newGame()
+        .withLocation(dormitories, cardOf('12117'), { revealed: true })
+        .withLocation(quad, cardOf('12116'), { revealed: true })
+        .withLocation(scienceHall, cardOf('12118'), { revealed: true })
+        .withConnection(dormitories, quad)
+        .withConnection(quad, scienceHall)
+        .withInvestigator(alice, { locationId: dormitories });
+
+    it("attaches to alice's own location, the nearest, when it has no Fire!", () => {
+      const { context, state: started } = campusInARow()
+        .withCard(fire, cardOf('12129'), encounterDeck)
+        .start();
+
+      const state = stateAfter(context, started, aliceDraws('Fire!'), resolveRevelation('fire'));
+
+      expect(state.cards[fire]?.zone).toEqual(attachedTo(dormitories));
+    });
+
+    it('attaches to the quad, 1 away, when the Dormitories have a Fire!, not to the Science Hall 2 away', () => {
+      const { context, state: started } = campusInARow()
+        .withCard(instanceId('burning_dorms'), cardOf('12129'), attachedTo(dormitories))
+        .withCard(fire, cardOf('12129'), encounterDeck)
+        .start();
+
+      const state = stateAfter(context, started, aliceDraws('Fire!'), resolveRevelation('fire'));
+
+      expect(state.cards[fire]?.zone).toEqual(attachedTo(quad));
+    });
+
+    it('deals 1 damage to alice and the Bystander at its location as the investigation phase ends, not to the Elite Servant of Flame or to bob elsewhere', () => {
+      const bob = investigatorId('bob');
+      const bystander = instanceId('bystander');
+      const servant = instanceId('servant_of_flame');
+      const { context, state: started } = campusInARow()
+        .withInvestigator(bob, { locationId: quad })
+        .withCard(fire, cardOf('12129'), attachedTo(dormitories))
+        .withCard(bystander, cardOf('12123'), atLocation(dormitories))
+        .withCard(servant, cardOf('12114'), atLocation(dormitories))
+        .withTurnOf(alice)
+        .start();
+
+      const state = stateAfter(
+        context,
+        started,
+        { type: 'EndTurn', investigatorId: alice },
+        { type: 'StartTurn', investigatorId: bob },
+        { type: 'EndTurn', investigatorId: bob },
+        { type: 'NextPhase' },
+      );
+
+      expect([alice, bob].map((id) => requireInvestigator(state, id).health.damage)).toEqual([
+        1, 0,
+      ]);
+      expect(state.cards[bystander]?.zone).toEqual(encounterDiscard);
+      expect(state.cards[servant]?.tokens.damage ?? 0).toBe(0);
+    });
 
     it.each([
       { result: 'pass', zone: { kind: 'encounterDiscard' } },

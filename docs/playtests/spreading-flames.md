@@ -55,6 +55,8 @@ The scripted golden game is [`end_to_end.test_support.ts`](../../packages/scenar
 - [ ] Forbidden Secrets surges when its drawer has no clues.
 - [ ] Unspeakable Truths goes to the drawer's threat area.
 - [ ] Noxious Smoke: the drawer chooses willpower or agility (3), then 1 damage per point failed.
+- [ ] A drawn Fire! attaches to the nearest location without one, the drawer's own first; the lead picks between equally near ones.
+- [ ] As the investigation phase ends, each Fire! deals 1 damage to each investigator and non-Elite enemy at its location (each ally there takes 1 damage of its own, placed by hand).
 - [ ] Fire!'s action tests agility (3) and discards it on a pass.
 
 **Resolution**
@@ -71,7 +73,6 @@ These are done by hand at the table; the app does not do them.
 - Searching for Dr. Armitage's reverse side: Dr. Henry Armitage under an investigator's control and the lead's search for Fire!. His skill bonus and free first action are his controller's to apply.
 - Blaze of Glory's group clue spend to deal damage to an enemy.
 - Your Friend's Room's Engage action, Miskatonic Quad's free move, Warren Observatory's draw and Orne Library's two-action draw.
-- Fire!'s attachment to the nearest location without one and its damage as the investigation phase ends.
 - Hellhound's discard after its enemy phase attacks, and Bystander's Doomed keyword.
 - Unspeakable Truths' limit of 1 per investigator, its horror after its holder discovers clues and its two-action discard.
 - The tests of Forbidden Secrets, Wild Compulsion, Extraplanar Visions and Mutated!.

@@ -1,7 +1,9 @@
 /*
  * The chaos bag on the scenario card's page (ChaosBag): the tokens in the bag as a wrapping row of
- * pills, each the token beside its count and followed by its value in muted text when it shows a symbol, the one picked to seal pressed; under it a button per
- * investigator to seal it on, then the sealed tokens, one per line with their Release button.
+ * pills, each the token beside its count, the one picked to seal pressed; under it a button per
+ * investigator to seal it on, then bless and curse on one line, each − count +, then the sealed
+ * tokens, one per line with their Release button. On a phone the pills sit four to a row with
+ * smaller tokens, and the headings shrink to captions, so the page fits the sheet.
  */
 #board dialog[data-shell] section[data-part='chaos-bag'] {
   display: grid;
@@ -38,8 +40,13 @@
 }
 
 #board dialog[data-shell] section[data-part='chaos-bag'] > ul > li > data {
-  color: var(--color-text-muted);
   font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+/* Bless and curse: one line, a gap between the two steppers wider than within one. */
+#board dialog[data-shell] section[data-part='chaos-bag'] > ul:has(> li > button + data) {
+  column-gap: var(--space-5);
 }
 
 /* The tokens (`ChaosTokenFace`), large enough for a number in its star frame, kept from shrinking in the row. */
@@ -60,4 +67,29 @@
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-2);
+}
+
+@media (orientation: portrait) and (max-width: 40rem) {
+  #board dialog[data-shell] section[data-part='chaos-bag'] {
+    --chaos-token-size: var(--chaos-bag-token-size-phone);
+  }
+
+  #board dialog[data-shell] section[data-part='chaos-bag'] > ul:first-of-type {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  #board dialog[data-shell] section[data-part='chaos-bag'] > ul:first-of-type > li > button {
+    gap: var(--space-1);
+    justify-content: center;
+    width: 100%;
+    padding-inline: var(--space-1);
+  }
+
+  #board dialog[data-shell] section[data-part='chaos-bag'] > :is(h3, h4) {
+    font-size: var(--font-size-caption);
+    font-weight: normal;
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+  }
 }
