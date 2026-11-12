@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import {
   atLocation,
@@ -48,7 +48,10 @@ describe('DecisionDialog', () => {
   beforeAll(async () => {
     await initI18n('en');
   });
-  afterEach(cleanup);
+  afterEach(() => {
+    cleanup();
+    vi.restoreAllMocks();
+  });
 
   /** Alder at the Study (shroud 2, one clue), on their turn. */
   const aldersTurnInTheStudy = () =>
@@ -312,12 +315,16 @@ describe('DecisionDialog', () => {
       expect(pressed()).toEqual(['Willpower 1']);
       // Willpower 1 with the -2 is 0 against the shroud of 2, where intellect would fail by 1.
       fireEvent.click(screen.getByRole('button', { name: 'Failed' }));
-      expect(answered).toHaveBeenCalledWith('fail', { margin: 2 });
+      expect(answered).toHaveBeenCalledWith('fail', { margin: 2, revealed: ['-2'] });
     });
 
     it.each([
-      { answer: 'Failed', taps: ['Failed'], sends: ['fail', { margin: 1 }] },
-      { answer: 'Passed', taps: ['Passed', 'Done'], sends: ['pass', { amount: 1 }] },
+      { answer: 'Failed', taps: ['Failed'], sends: ['fail', { margin: 1, revealed: ['-2'] }] },
+      {
+        answer: 'Passed',
+        taps: ['Passed', 'Done'],
+        sends: ['pass', { amount: 1, revealed: ['-2'] }],
+      },
     ])('answering "$answer" after the draw sends $sends', ({ taps, sends }) => {
       const table = aldersInvestigationWithAMinusTwo();
       const answered = vi.fn(async () => {});
@@ -327,6 +334,25 @@ describe('DecisionDialog', () => {
       for (const tap of taps) fireEvent.click(screen.getByRole('button', { name: tap }));
 
       expect(answered).toHaveBeenCalledWith(...sends);
+    });
+
+    it('returns a bless token drawn to its pool once the test is answered', async () => {
+      const table = PlayTable.start(
+        newGame()
+          .withLocation(study, blankLocation('study', { shroud: 2 }), { revealed: true })
+          .withInvestigator(alder, { locationId: study })
+          .withChaosBag(['bless', '-2'])
+          .withTurnOf(alder),
+      );
+      table.investigate(alder, { result: 'open' });
+      renderFirstDecision(table);
+      // The first token in the bag each time: the bless, then the -2 it makes the draw reveal.
+      vi.spyOn(Math, 'random').mockReturnValue(0);
+
+      fireEvent.click(screen.getByRole('button', { name: 'Draw a token' }));
+      fireEvent.click(screen.getByRole('button', { name: 'Failed' }));
+
+      await waitFor(() => expect(table.board.chaosBag).toEqual(['-2']));
     });
 
     it('offers no draw for the attack of opportunity an investigation provokes first', () => {

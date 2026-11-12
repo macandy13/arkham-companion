@@ -12,6 +12,7 @@ import {
   type PlayTable,
   type BasicAction,
   type ChaosToken,
+  type PoolToken,
   type ResolveDecision,
   type ResolutionId,
   type SkillName,
@@ -41,6 +42,8 @@ export interface DecisionAmounts {
   amounts?: ResolveDecision['amounts'];
   /** For a skill test: how much it passed or failed by, as the chaos draw worked it out. */
   margin?: number;
+  /** For a skill test: the tokens the app drew, so the bless and curse among them go back to their pool. */
+  revealed?: readonly ChaosToken[];
 }
 
 /** The answer to the choice an option asks next (`DecisionView.followUps`): its option and counts. */
@@ -205,6 +208,10 @@ export interface GameActions {
   sealToken(investigator: InvestigatorId, token: ChaosToken): Promise<void>;
   /** Releases one `token` sealed on `investigator` back into the chaos bag. */
   releaseToken(investigator: InvestigatorId, token: ChaosToken): Promise<void>;
+  /** Adds one bless or curse `token` from its pool to the chaos bag, as a card says; none while the pool is empty. */
+  addPoolToken(token: PoolToken): Promise<void>;
+  /** Takes one bless or curse `token` out of the chaos bag back to its pool, as a card says. */
+  removePoolToken(token: PoolToken): Promise<void>;
   /** Doom on the current agenda. */
   placeDoom(amount: number): Promise<void>;
   /** Doom taken off the current agenda by hand (a card effect, a miscount). */
@@ -394,6 +401,14 @@ export function gameActions(
     releaseToken: (investigator, token) =>
       play((table) =>
         table.play({ type: 'ReleaseChaosToken', token, investigatorId: investigator }),
+      ),
+    addPoolToken: (token) =>
+      play((table) =>
+        table.play({ type: 'ChangeChaosBag', token, change: 'add', lasts: 'scenario' }),
+      ),
+    removePoolToken: (token) =>
+      play((table) =>
+        table.play({ type: 'ChangeChaosBag', token, change: 'remove', lasts: 'scenario' }),
       ),
     placeDoom: (amount) => play((table) => table.placeDoom(amount)),
     removeDoom: (amount) => play((table) => table.removeDoom(amount)),

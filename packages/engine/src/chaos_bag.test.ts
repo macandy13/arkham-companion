@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import {
   blankLocation,
+  decisionId,
   execute,
+  poolTokensLeft,
+  skillTestDecision,
   removeChaosToken,
   whenRevealed,
   instanceId,
@@ -155,6 +158,114 @@ describe('SealChaosToken and ReleaseChaosToken', () => {
       ['autoFail', 'skull'],
       [{ token: '-1', investigatorId: bob }],
     ]);
+  });
+});
+
+describe('bless and curse tokens', () => {
+  const nineBless = Array.from({ length: 9 }, () => 'bless' as const);
+  const tenBless = [...nineBless, 'bless' as const];
+
+  it.each<{
+    name: string;
+    bag: readonly ChaosToken[];
+    sealed: readonly SealedToken[];
+    left: number;
+  }>([
+    { name: 'all ten with none in play', bag: ['-1'], sealed: [], left: 10 },
+    { name: 'one less for each in the bag', bag: ['bless', '-1', 'bless'], sealed: [], left: 8 },
+    {
+      name: 'one less for each sealed',
+      bag: ['bless'],
+      sealed: [{ token: 'bless', investigatorId: alice }],
+      left: 8,
+    },
+    { name: 'curse tokens not counted', bag: ['curse', 'curse'], sealed: [], left: 10 },
+  ])('leaves $left bless tokens in the pool: $name', ({ bag, sealed, left }) => {
+    expect(poolTokensLeft('bless', bag, sealed)).toBe(left);
+  });
+
+  it.each<{ name: string; bag: readonly ChaosToken[]; sealed: boolean; count: number }>([
+    { name: 'adds the tenth bless token', bag: nineBless, sealed: false, count: 10 },
+    { name: 'adds none while all ten are in the bag', bag: tenBless, sealed: false, count: 10 },
+    { name: 'adds none while the tenth is sealed on Alice', bag: tenBless, sealed: true, count: 9 },
+  ])('$name', ({ bag, sealed, count }) => {
+    const { context, state } = table.withChaosBag(bag).start();
+    const seal: Command[] = sealed
+      ? [{ type: 'SealChaosToken', token: 'bless', investigatorId: alice }]
+      : [];
+
+    const after = stateAfter(context, state, ...seal, {
+      type: 'ChangeChaosBag',
+      token: 'bless',
+      change: 'add',
+      lasts: 'scenario',
+    });
+
+    expect(after.chaosBag.filter((token) => token === 'bless')).toHaveLength(count);
+  });
+
+  it('keeps a curse token added for the campaign out of the campaign log', () => {
+    const { context, state } = table.start();
+
+    const after = stateAfter(context, state, {
+      type: 'ChangeChaosBag',
+      token: 'curse',
+      change: 'add',
+      lasts: 'campaign',
+    });
+
+    expect([after.chaosBag, after.chaosBagChanges]).toEqual([
+      ['skull', '-1', 'autoFail', 'curse'],
+      [],
+    ]);
+  });
+
+  describe('revealed in a skill test', () => {
+    const testOfAlice = skillTestDecision(
+      {
+        id: decisionId('test_of_alice'),
+        prompt: 'decision.skillTest',
+        decider: { kind: 'investigator', investigatorId: alice },
+        test: { skill: 'willpower', difficulty: 2 },
+      },
+      { onPass: [], onFail: [] },
+    );
+
+    it.each<{ name: string; revealed: readonly ChaosToken[]; bag: readonly ChaosToken[] }>([
+      {
+        name: 'returns the bless and curse to the pool, the -1 to the bag',
+        revealed: ['bless', 'curse', '-1'],
+        bag: ['bless', 'curse', '-1'],
+      },
+      {
+        name: 'returns only the copies the bag holds',
+        revealed: ['curse', 'curse', 'curse', '0'],
+        bag: ['bless', 'bless', '-1'],
+      },
+      {
+        name: 'keeps the bag when the app drew no tokens',
+        revealed: [],
+        bag: ['bless', 'bless', 'curse', 'curse', '-1'],
+      },
+    ])('$name', ({ revealed, bag }) => {
+      const { context, state } = table
+        .withChaosBag(['bless', 'bless', 'curse', 'curse', '-1'])
+        .start();
+
+      const after = stateAfter(
+        context,
+        state,
+        { type: 'RequestDecision', decision: testOfAlice },
+        {
+          type: 'ResolveDecision',
+          decisionId: decisionId('test_of_alice'),
+          optionId: 'pass',
+          revealed,
+        },
+      );
+
+      expect(after.chaosBag).toEqual(bag);
+    });
   });
 });
 

@@ -137,7 +137,10 @@ export const appTexts = {
     sealWhere: '{{token}} versiegeln bei',
     releaseFrom: '{{token}} von {{investigator}} freigeben',
     release: 'Freigeben',
-    value: 'Wert',
+    pool: 'Segen und Fluch',
+    poolLeft: 'Noch {{count}} im Vorrat',
+    addFromPool: '{{token}}-Marker in den Beutel legen',
+    returnToPool: '{{token}}-Marker in den Vorrat zurücklegen',
   },
   header: {
     round: 'Runde {{round}}',
