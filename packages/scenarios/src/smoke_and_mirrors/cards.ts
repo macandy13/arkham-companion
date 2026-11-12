@@ -1,23 +1,29 @@
 import {
-  eachInZone,
   advanceAct,
-  attachToLocation,
+  afterEngaging,
   atEndOfPhase,
   atEndOfRound,
+  attachToLocation,
   cardCode,
+  type CardDb,
   cardDbFrom,
+  type CardStats,
   decisionId,
   discardSelf,
   drawBeneathYourLocation,
   eachInvestigator,
   eachInvestigatorResigns,
+  eachInZone,
   encounterSetCode,
   endScenario,
+  enemyAttacks,
   fixed,
   fromSetAside,
   gainSurge,
   ifNoCandidate,
+  ifYouHave,
   itsLocation,
+  loseResources,
   moveEnemyTowards,
   nearestEnemy,
   perInvestigator,
@@ -33,8 +39,6 @@ import {
   whenRevealed,
   whenVictoryDisplayHolds,
   yourLocation,
-  type CardDb,
-  type CardStats,
 } from '@arkham/engine';
 import { act, agenda, enemy, location, prey, treachery } from '../card_builders';
 
@@ -131,7 +135,6 @@ const jpg = 'jpg';
  * - the whole revelations of Downpour (a choice per point failed), Red Herring (+2 difficulty with
  *   2 or more clues, a clue placed on the location) and Eager for Death (difficulty per damage,
  *   MC2.5)
- * - Rogue Gangster's lost resource (or attack) after it engages
  * - Whippoorwill's -1 to each skill of each investigator at its location
  */
 export const smokeAndMirrorsCardDefs: readonly CardStats[] = [
@@ -546,6 +549,11 @@ export const smokeAndMirrorsCardDefs: readonly CardStats[] = [
     horror: 0,
     quantity: 2,
     keywords: [{ name: 'hunter' }, prey('Most resources'), { name: 'retaliate' }],
+    // Both conditions are read as it engages, so losing the last resource does not also attack.
+    abilities: [
+      ifYouHave('resources', { min: 1 }, afterEngaging(loseResources(1))),
+      ifYouHave('resources', { max: 0 }, afterEngaging(enemyAttacks())),
+    ],
   }),
   treachery({
     code: '12165',

@@ -1,27 +1,34 @@
 import {
-  GRID_CELLS_PER_CARD,
   advanceAct,
   advanceBySpendingCluesAtRoundEnd,
+  afterAttacking,
+  afterDiscoveringClues,
   atEndOfPhase,
   attachTo,
-  afterDiscoveringClues,
   cardCode,
+  type CardDb,
   cardDbFrom,
+  type CardStats,
   checkDoomThreshold,
   dealDamageTo,
   decisionId,
   defeatEachInvestigator,
+  discardAsset,
   discardEachEnemy,
   discardFromHand,
   discardSelf,
+  duringPhase,
   eachEnemy,
   eachInvestigator,
-  encounterSetCode,
-  fixed,
   eachSetAsideCopyTo,
+  encounterSetCode,
   endScenario,
+  fixed,
+  forEachPoint,
   fromSetAside,
   gainSurge,
+  GRID_CELLS_PER_CARD,
+  type GridCell,
   heal,
   ifYouHave,
   itsLocation,
@@ -39,7 +46,6 @@ import {
   resolutionId,
   setAsideCard,
   skillTest,
-  forEachPoint,
   skillTestOfEither,
   spawnEnemyAt,
   takeDamage,
@@ -52,9 +58,6 @@ import {
   whenEnemyDefeated,
   whenRevealed,
   youMustEither,
-  type CardDb,
-  type CardStats,
-  type GridCell,
 } from '@arkham/engine';
 import { act, agenda, enemy, location, picturesOf, prey, treachery } from '../card_builders';
 
@@ -172,7 +175,9 @@ const jpg = 'jpg';
  *   (MC2.3) and Orne Library's two-action draw (MC1.12)
  * - Dr. Henry Armitage's skill bonus and free first action: his controller's to apply, like a
  *   player card's
- * - Hellhound's discard after its enemy phase attacks, and Bystander's Doomed (MC2.6)
+ * - Hellhound's asset discard after its enemy phase attacks: the players pick the asset, as for
+ *   any player card
+ * - Bystander's Doomed (MC2.6)
  * - Unspeakable Truths' limit of 1 per investigator, its horror after its holder discovers clues
  *   and its two-action discard
  * - Forbidden Secrets' intellect (3) test (when its drawer has clues) and Wild Compulsion's
@@ -417,6 +422,7 @@ export const spreadingFlamesCardDefs: readonly CardStats[] = [
     horror: 1,
     quantity: 2,
     keywords: [{ name: 'hunter' }],
+    abilities: [duringPhase('enemy', afterAttacking(discardAsset()))],
   }),
   enemy({
     code: '12123',

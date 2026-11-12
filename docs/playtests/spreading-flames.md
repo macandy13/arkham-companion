@@ -47,6 +47,7 @@ The scripted golden game is [`end_to_end.test_support.ts`](../../packages/scenar
 - [ ] The Dormitories' action heals 1 damage and 1 horror, once per game.
 - [ ] Discovering clues at Science Hall asks the investigator to discard a card from hand (under "Do this by hand").
 - [ ] The Servant of Flame hunts the investigator with the lowest agility (asks on a tie) and retaliates.
+- [ ] After a Hellhound attacks in the enemy phase (not an attack of opportunity), the app asks the attacked investigator to discard an asset.
 - [ ] Defeating a Mutated Experiment deals 1 horror to each investigator at its location.
 
 **Encounter cards**
@@ -73,7 +74,7 @@ These are done by hand at the table; the app does not do them.
 - Searching for Dr. Armitage's reverse side: Dr. Henry Armitage under an investigator's control and the lead's search for Fire!. His skill bonus and free first action are his controller's to apply.
 - Blaze of Glory's group clue spend to deal damage to an enemy.
 - Your Friend's Room's Engage action, Miskatonic Quad's free move, Warren Observatory's draw and Orne Library's two-action draw.
-- Hellhound's discard after its enemy phase attacks, and Bystander's Doomed keyword.
+- Which asset Hellhound's enemy phase attack discards (the app asks for it by hand), and Bystander's Doomed keyword.
 - Unspeakable Truths' limit of 1 per investigator, its horror after its holder discovers clues and its two-action discard.
 - The tests of Forbidden Secrets, Wild Compulsion, Extraplanar Visions and Mutated!.
 - The tablet's "reveal another token" and damage, and the elder thing's Fire! draw.

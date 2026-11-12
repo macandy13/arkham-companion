@@ -157,6 +157,53 @@ describe('Spreading Flames card abilities', () => {
     match: { name: card },
   });
 
+  describe('Hellhound', () => {
+    const hellhound = instanceId('hellhound');
+    const discardAnAsset: Command = { type: 'DiscardAsset', investigatorId: alice };
+
+    it.each<{ name: string; commands: Command[]; discards: boolean }>([
+      {
+        name: 'in the enemy phase',
+        commands: [
+          { type: 'EndTurn', investigatorId: alice },
+          { type: 'NextPhase' },
+          answer('enemyAttack:hellhound:alice', 'attack'),
+        ],
+        discards: true,
+      },
+      {
+        name: 'outside it (an attack of opportunity)',
+        commands: [
+          {
+            type: 'DealEnemyAttack',
+            enemyId: hellhound,
+            investigatorId: alice,
+            damage: 1,
+            horror: 1,
+          },
+        ],
+        discards: false,
+      },
+    ])(
+      'leaves the discard of an asset of her choice to alice after it attacks her $name: $discards',
+      ({ commands, discards }) => {
+        const { context, state } = newGame()
+          .withLocation(quad, cardOf('12116'), { revealed: true })
+          .withInvestigator(alice, { locationId: quad })
+          .withCard(hellhound, cardOf('12122'), engagedWith(alice))
+          .withTurnOf(alice)
+          .start();
+
+        const { events } = runFrom(context, state, commands);
+
+        const deferred = events.flatMap((event) =>
+          event.type === 'CommandDeferred' ? [event.command] : [],
+        );
+        expect(deferred).toEqual(discards ? [expect.objectContaining(discardAnAsset)] : []);
+      },
+    );
+  });
+
   describe('Dormitories', () => {
     const dormitories = instanceId('dormitories');
     const useIt: Command = {
