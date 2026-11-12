@@ -10,7 +10,7 @@ import {
   type InvestigatorRef,
 } from './card_matchers';
 import { type EngineContext, type ScenarioContext } from './cards';
-import { placeDoomOnAgenda } from './abilities';
+import { placeDoomOnAgenda, takeDamage, takeHorror } from './abilities';
 import type { Command } from './commands';
 import { pendingDecision } from './decisions';
 import { describeDecision, optionNamed } from './describe_decision';
@@ -638,12 +638,12 @@ export class PlayTable {
 
   /** Damage from a failed treachery test or an attack. */
   takeDamage(investigator: InvestigatorRef, amount: number): void {
-    this.adjust(investigator, 'damage', amount);
+    this.play(takeDamage(amount, this.seat(investigator)));
   }
 
   /** Horror from a failed treachery test, an attack or an agenda's reverse side. */
   takeHorror(investigator: InvestigatorRef, amount: number): void {
-    this.adjust(investigator, 'horror', amount);
+    this.play(takeHorror(amount, this.seat(investigator)));
   }
 
   /**

@@ -370,7 +370,10 @@ export function gameActions(
         }),
       ),
     adjust: (investigator, stat, delta) =>
-      play((table) => adjustStat(table, investigator, stat, delta)),
+      play((table) =>
+        // A stepper is the players' correction, so it may also take a counter down.
+        table.play({ type: 'AdjustInvestigator', investigatorId: investigator, stat, delta }),
+      ),
     boostSkill: (investigator, skill, delta) =>
       play((table) =>
         table.play({
@@ -439,25 +442,6 @@ export function gameActions(
     undo: () => undo(),
     undoTo: (stepId) => undo(stepId),
   };
-}
-
-/** The `PlayTable` verb behind a stepper; a negative `delta` takes the counter down. */
-function adjustStat(
-  table: PlayTable,
-  investigator: InvestigatorId,
-  stat: SteppedStat,
-  delta: number,
-): void {
-  switch (stat) {
-    case 'resources':
-      return table.gainResources(investigator, delta);
-    case 'damage':
-      return table.takeDamage(investigator, delta);
-    case 'horror':
-      return table.takeHorror(investigator, delta);
-    default:
-      return assertNever(stat);
-  }
 }
 
 /** The zone (and, for the discard pile, the top) a `PileMove` puts a card in. */

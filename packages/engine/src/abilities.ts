@@ -1762,7 +1762,8 @@ export function discardSelf(): AbilityEffect {
 
 /**
  * "Take N damage": the investigator the window names takes `amount` damage,
- * or `who` does ("each investigator at its location takes 1 damage").
+ * or `who` does ("each investigator at its location takes 1 damage"). A `TakeDamageAndHorror`
+ * with no horror; for an investigator's ID it is a plain command (`takeDamage(2, alice)`).
  */
 export function takeDamage(amount: number, who: InvestigatorId): TakeDamageAndHorror;
 export function takeDamage(amount: number, who?: RelativeInvestigator): AbilityEffect;
@@ -1822,7 +1823,8 @@ function withSource<C extends { readonly type: string }>(command: C, source: Com
 /**
  * "Take 1 horror and 1 damage": both at once (`TakeDamageAndHorror`), so a
  * defeat by one does not lose the other, written
- * `takeDamageAndHorror({ damage: 1, horror: 1 })` (On Wings of Darkness).
+ * `takeDamageAndHorror({ damage: 1, horror: 1 })` (On Wings of Darkness); for an
+ * investigator's ID it is a plain command.
  */
 export function takeDamageAndHorror(
   amounts: WoundAmounts,
@@ -1992,7 +1994,7 @@ export function gainResources(
   return tokenMove('resource', amount, 'pool', { investigator: who });
 }
 
-/** "Take N horror", like `takeDamage`: Goat Spawn is `whenDefeated(takeHorror(1, eachInvestigator({ at: itsLocation() })))`. */
+/** "Take N horror", like `takeDamage` (no damage; an ID gives a plain command): Goat Spawn is `whenDefeated(takeHorror(1, eachInvestigator({ at: itsLocation() })))`. */
 export function takeHorror(amount: number, who: InvestigatorId): TakeDamageAndHorror;
 export function takeHorror(amount: number, who?: RelativeInvestigator): AbilityEffect;
 export function takeHorror(
