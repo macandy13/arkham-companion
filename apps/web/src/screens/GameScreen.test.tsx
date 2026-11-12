@@ -342,7 +342,8 @@ describe('GameScreen header', () => {
   it('lists the cards beneath the act on its full card', async () => {
     const store = await renderTheGathering('game-screen-act-beneath-test');
     // The set-aside Ghoul Priest, as a codex entry would put an interrogated suspect there.
-    await store.getState().actions.putBeneathAct(instanceId('01116#1'));
+    const ghoulPriest = instanceId('01116#1');
+    await store.getState().actions.putBeneathAct(ghoulPriest);
 
     fireEvent.click(button('Trapped'));
     const card = await screen.findByRole('dialog', { name: 'Trapped' });

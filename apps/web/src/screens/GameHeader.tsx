@@ -762,8 +762,9 @@ function BookDetails({
           {beneath && (
             <div>
               <dt>{t('header.beneathAct')}</dt>
-              {beneath.map((name) => (
-                <dd key={name}>{name}</dd>
+              {/* Two copies of one enemy share a name. */}
+              {beneath.map((name, index) => (
+                <dd key={`${index}:${name}`}>{name}</dd>
               ))}
             </div>
           )}
