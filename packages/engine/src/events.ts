@@ -217,7 +217,7 @@ export interface InvestigatorMoved {
 
 /**
  * One of an investigator's counters changed by `delta`. Produced by
- * `AdjustInvestigator`, `DiscoverClues` and `PlaceClues`; the reducer adds `delta` as is.
+ * `AdjustInvestigator`, `DiscoverClues` and `MoveTokens`; the reducer adds `delta` as is.
  */
 export interface InvestigatorChanged {
   type: 'InvestigatorChanged';

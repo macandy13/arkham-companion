@@ -5,6 +5,7 @@ import {
   threatAreaOf,
   optionNamed,
   placeDoomOn,
+  placeYourClues,
   type Decision,
   type GameState,
   type InstanceId,
@@ -110,7 +111,7 @@ export interface GameActions {
   /**
    * `investigator` places one of their clues on their location, as a card or a failed test tells
    * them to ("place 1 of your clues on your location"), and as a clue dragged off their card onto
-   * it says (`PlaceClues`).
+   * it says (`placeYourClues`).
    */
   placeClue(investigator: InvestigatorId): Promise<void>;
   /**
@@ -311,8 +312,7 @@ export function gameActions(
           amount: 1,
         }),
       ),
-    placeClue: (investigator) =>
-      play((table) => table.play({ type: 'PlaceClues', investigatorId: investigator, amount: 1 })),
+    placeClue: (investigator) => play((table) => table.play(placeYourClues(1, investigator))),
     fight: (enemy, cost = 'action') =>
       taking(
         'fight',

@@ -371,7 +371,6 @@ export type AbilityCommand =
           | 'AdjustActions'
           | 'EndTurn'
           | 'DiscoverClues'
-          | 'PlaceClues'
           | 'HealInvestigator'
           | 'GainResources'
           | 'DrawCards'
@@ -1772,14 +1771,16 @@ export function takeDamage(
 }
 
 /**
- * "Place N of your clues on your location" (`PlaceClues`, False Lead): as many as the investigator
- * has.
+ * "Place N of your clues on your location" (False Lead): a `MoveTokens` from the investigator to
+ * the location they are at, as many as they have; none without a location.
  */
+export function placeYourClues(amount: number, who: InvestigatorId): MoveTokens;
+export function placeYourClues(amount: number, who?: RelativeInvestigator): AbilityEffect;
 export function placeYourClues(
   amount: number,
-  who: RelativeInvestigator = { ref: 'windowInvestigator' },
-): AbilityEffect {
-  return { type: 'PlaceClues', investigatorId: who, amount };
+  who: InvestigatorId | RelativeInvestigator = { ref: 'windowInvestigator' },
+): TokenMove {
+  return tokenMove('clue', amount, { investigator: who }, { locationOf: who });
 }
 
 /**
@@ -1906,12 +1907,14 @@ export function searchDeck(
   };
 }
 
-/** "Gain N clues from the token pool" (Northside). */
+/** "Gain N clues from the token pool" (Northside): a `MoveTokens` from the pool. */
+export function gainClues(amount: number, who: InvestigatorId): MoveTokens;
+export function gainClues(amount: number, who?: RelativeInvestigator): AbilityEffect;
 export function gainClues(
   amount: number,
-  who: RelativeInvestigator = { ref: 'windowInvestigator' },
-): AbilityEffect {
-  return { type: 'AdjustInvestigator', investigatorId: who, stat: 'clues', delta: amount };
+  who: InvestigatorId | RelativeInvestigator = { ref: 'windowInvestigator' },
+): TokenMove {
+  return tokenMove('clue', amount, 'pool', { investigator: who });
 }
 
 /**
@@ -1950,12 +1953,17 @@ export function endYourTurn(): AbilityEffect {
   return { type: 'EndTurn', investigatorId: { ref: 'windowInvestigator' } };
 }
 
-/** "Gain N resources" (First Bank of Arkham). */
+/**
+ * "Gain N resources" (First Bank of Arkham): a `MoveTokens` from the pool. The basic resource
+ * action is `GainResources`, which provokes attacks of opportunity.
+ */
+export function gainResources(amount: number, who: InvestigatorId): MoveTokens;
+export function gainResources(amount: number, who?: RelativeInvestigator): AbilityEffect;
 export function gainResources(
   amount: number,
-  who: RelativeInvestigator = { ref: 'windowInvestigator' },
-): AbilityEffect {
-  return { type: 'GainResources', investigatorId: who, amount };
+  who: InvestigatorId | RelativeInvestigator = { ref: 'windowInvestigator' },
+): TokenMove {
+  return tokenMove('resource', amount, 'pool', { investigator: who });
 }
 
 /** "Take N horror", like `takeDamage`: Goat Spawn is `whenDefeated(takeHorror(1, eachInvestigator({ at: itsLocation() })))`. */
@@ -2149,7 +2157,8 @@ type TokenMove = MoveTokens & AbilityEffect;
 type AnyTokenHolder =
   | Exclude<TokenHolder, object>
   | { card: InstanceId | RelativeCard }
-  | { investigator: InvestigatorId | RelativeInvestigator };
+  | { investigator: InvestigatorId | RelativeInvestigator }
+  | { locationOf: InvestigatorId | RelativeInvestigator };
 
 function tokenMove(
   token: TokenKind,

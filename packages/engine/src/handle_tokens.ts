@@ -13,7 +13,7 @@ import type { CardInstance, GameState, TokenKind } from './state';
 type ResolvedHolder =
   | { kind: 'pool' }
   | { kind: 'card'; card: CardInstance }
-  | { kind: 'investigator'; investigatorId: InvestigatorId }
+  | { kind: 'investigator'; investigatorId: InvestigatorId; stat: 'clues' | 'resources' }
   | { kind: 'absent' };
 
 /**
@@ -50,12 +50,26 @@ function resolveHolder(state: GameState, holder: TokenHolder, token: TokenKind):
     const card = requireCard(state.cards, id);
     return isInPlay(state, card) ? { kind: 'card', card } : { kind: 'absent' };
   }
-  // Only clues sit on an investigator card here; their damage and horror are wounds (ME.9d).
-  if (token !== 'clue') throw new CommandRejected({ code: 'tokenNotOnInvestigators', token });
+  if ('locationOf' in holder) {
+    if (!isActiveInvestigator(state, holder.locationOf)) return { kind: 'absent' };
+    const { locationId } = requireInvestigator(state, holder.locationOf);
+    return locationId === undefined
+      ? { kind: 'absent' }
+      : resolveHolder(state, { card: locationId }, token);
+  }
+  const stat = investigatorStatOf(token);
   const investigator = requireInvestigator(state, holder.investigator);
   return isActiveInvestigator(state, investigator.id)
-    ? { kind: 'investigator', investigatorId: investigator.id }
+    ? { kind: 'investigator', investigatorId: investigator.id, stat }
     : { kind: 'absent' };
+}
+
+/** The investigator's counter that holds `token`s. */
+function investigatorStatOf(token: TokenKind): 'clues' | 'resources' {
+  // Their damage and horror are wounds, taken and healed by their own commands (ME.9d).
+  if (token === 'clue') return 'clues';
+  if (token === 'resource') return 'resources';
+  throw new CommandRejected({ code: 'tokenNotOnInvestigators', token });
 }
 
 /** The count the command asks for, before it is capped at what `from` holds. */
@@ -74,7 +88,7 @@ function heldBy(state: GameState, holder: ResolvedHolder, token: TokenKind): num
     case 'card':
       return holder.card.tokens[token] ?? 0;
     case 'investigator':
-      return requireInvestigator(state, holder.investigatorId).clues;
+      return requireInvestigator(state, holder.investigatorId)[holder.stat];
     case 'absent':
       return 0;
   }
@@ -96,7 +110,7 @@ function changed(holder: ResolvedHolder, token: TokenKind, delta: number): Event
         {
           type: 'InvestigatorChanged',
           investigatorId: holder.investigatorId,
-          stat: 'clues',
+          stat: holder.stat,
           delta,
         },
       ];
