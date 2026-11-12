@@ -70,6 +70,9 @@ A cost is `CardAction.cost`, paid before the effects.
   - `limit: 'onePerLocation'`, which `locationWithMost` respects (`limit: 'onePerInvestigator'` for a card put into a threat area),
   - `whenRevealed(attachTo(locationWithMost('clue')))`,
   - `ifNoCandidate(locationWithMost('clue'), whenRevealed(gainSurge()))`.
+- Fire!, "Attach to the nearest location without Fire! attached. Forced – When the investigation phase ends: each non-[[Elite]] card with health at this location takes 1 direct damage":
+  - `limit: 'onePerLocation'` and `whenRevealed(attachTo(nearestLocation()))`, counted from the drawer's location, which is nearest when it has no Fire!,
+  - `atEndOfPhase('investigation', takeDamage(1, eachInvestigator({ at: thisLocation() })), dealDamageTo(eachEnemy({ at: thisLocation(), withoutTrait: trait('Elite') }), 1))`; the direct damage stays on each investigator, and the players place each ally's own 1 damage by hand.
 - Mysterious Chanting's search: `ifThereAre(eachEnemy({ trait: trait('Cultist') }), { max: 0 }, whenRevealed(searchAndDraw({ trait: trait('Cultist'), typeCode: 'enemy' })))`, then `whenRevealed(shuffleEncounterDeck())` as its own ability.
 - The Midnight Masks' Cultist deck: a `scenarioDeck` setup step, drawn by the act's action with `drawFromScenarioDeck('cultist')`.
 - Rise of the Ghouls: `whenAdvanced(shuffleEncounterDiscard(), leadDrawsDiscardingUntil({ trait: trait('Ghoul'), typeCode: 'enemy' }))`.

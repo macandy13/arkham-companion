@@ -11,6 +11,7 @@ import {
   instanceId,
   investigatorId,
   locationWithMost,
+  nearestLocation,
   newGame,
   whenRevealed,
   type Command,
@@ -118,5 +119,60 @@ describe('a treachery that attaches to the location with the most clues (Locked 
 
     expect(after.cards[door]?.zone).toEqual(encounterDiscard);
     expect(after.cards[nextCard]?.zone).toEqual(encounterDiscard);
+  });
+});
+
+/** "Attach to the nearest location without a copy of [this card] attached" (Fire!). */
+const spreadingFire = blankTreachery('spreading_fire', {
+  limit: 'onePerLocation',
+  abilities: [whenRevealed(attachTo(nearestLocation()))],
+});
+
+describe('a treachery that attaches to the nearest location without a copy (Fire!)', () => {
+  const cellar = instanceId('cellar');
+  const fire = instanceId('fire');
+  /**
+   * The cellar and the study both connect to the hall, which has a fire, where alice (the lead)
+   * draws the next one; a plain treachery below it keeps the emptied deck from reshuffling.
+   */
+  const fireDrawnInTheHall = () =>
+    newGame()
+      .withLocation(hall, blankLocation('hall'), { revealed: true })
+      .withLocation(study, blankLocation('study'), { revealed: true })
+      .withLocation(cellar, blankLocation('cellar'), { revealed: true })
+      .withConnection(hall, study)
+      .withConnection(hall, cellar)
+      .withInvestigator(alice, { locationId: hall })
+      .withCard(instanceId('hall_fire'), spreadingFire, attachedTo(hall))
+      .withCard(fire, spreadingFire, encounterDeck)
+      .withCard(instanceId('bottom_card'), plainTreachery, encounterDeck);
+
+  it('asks alice, the lead, between the study and the cellar, each 1 away', () => {
+    const { context, state } = fireDrawnInTheHall().start();
+
+    const asked = stateAfter(context, state, aliceDraws, resolveRevelation('fire'));
+
+    expect(asked.pending).toMatchObject([
+      {
+        id: 'nearestLocation:fire',
+        kind: 'chooseLocation',
+        prompt: 'decision.chooseLocationToAttach',
+        decider: { kind: 'lead' },
+        options: [{ id: study }, { id: cellar }],
+      },
+    ]);
+    const after = stateAfter(context, asked, answer('nearestLocation:fire', cellar));
+    expect(after.cards[fire]?.zone).toEqual(attachedTo(cellar));
+  });
+
+  it('is discarded when every location has a copy', () => {
+    const { context, state } = fireDrawnInTheHall()
+      .withCard(instanceId('study_fire'), spreadingFire, attachedTo(study))
+      .withCard(instanceId('cellar_fire'), spreadingFire, attachedTo(cellar))
+      .start();
+
+    const after = stateAfter(context, state, aliceDraws, resolveRevelation('fire'));
+
+    expect(after.cards[fire]?.zone).toEqual(encounterDiscard);
   });
 });

@@ -154,11 +154,12 @@ describe('Queen of Ash end to end: Roland and Daisy, seed 1, after Spreading Fla
     table.moveTo(daisy, overgrownTunnels);
     table.endTurn(daisy);
 
-    // Round 3 – enemy: Elokoss attacks Roland; the evaded Hellhound stays exhausted. Round 3 ends
-    // with Stop the Rite: the Zealot, a Cultist, moves one step toward the cistern.
+    // Round 3 – the investigation phase ends with the Fire! at the cistern dealing Roland 1 damage
+    // (Elokoss is Elite, so it spares her). Enemy: Elokoss attacks Roland; the evaded Hellhound
+    // stays exhausted. Round 3 ends with Stop the Rite: the Zealot, a Cultist, moves one step toward the cistern.
     expect(table.nextPhase()).toEqual({ round: 3, phase: 'enemy', step: 'enemiesAttack' });
     table.resolveEnemyAttacks();
-    expect(table.board.investigator(roland)).toMatchObject({ damage: 4, horror: 3 });
+    expect(table.board.investigator(roland)).toMatchObject({ damage: 5, horror: 3 });
     expect(table.nextPhase()).toEqual({ round: 3, phase: 'upkeep' });
     expect(table.board.enemy(byName('Zealot')).at).toBe('Underground Cistern');
 

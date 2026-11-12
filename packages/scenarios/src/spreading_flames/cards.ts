@@ -2,15 +2,19 @@ import {
   GRID_CELLS_PER_CARD,
   advanceAct,
   advanceBySpendingCluesAtRoundEnd,
+  atEndOfPhase,
+  attachTo,
   afterDiscoveringClues,
   cardCode,
   cardDbFrom,
   checkDoomThreshold,
+  dealDamageTo,
   decisionId,
   defeatEachInvestigator,
   discardEachEnemy,
   discardFromHand,
   discardSelf,
+  eachEnemy,
   eachInvestigator,
   encounterSetCode,
   fixed,
@@ -23,6 +27,7 @@ import {
   itsLocation,
   leadDecides,
   mapId,
+  nearestLocation,
   onlyCopy,
   perInvestigator,
   placeCluesOn,
@@ -40,6 +45,7 @@ import {
   takeDamage,
   takeDamageAndHorror,
   takeHorror,
+  thisLocation,
   trait,
   whenAdvanced,
   whenDefeated,
@@ -173,8 +179,6 @@ const jpg = 'jpg';
  *   willpower (3) test, each with a choice per point failed
  * - Extraplanar Visions' test of X difficulty, and Mutated!'s test with its +2 difficulty while an
  *   enemy is at the drawer's location and its choice on a fail (MC2.5)
- * - Fire!'s attachment to the nearest location without one and its damage as the investigation
- *   phase ends
  */
 export const spreadingFlamesCardDefs: readonly CardStats[] = [
   agenda({
@@ -494,6 +498,17 @@ export const spreadingFlamesCardDefs: readonly CardStats[] = [
     pictures: jpg,
     traits: ['Hazard'],
     quantity: 5,
+    // "without Fire! attached" is the limit of one per location.
+    limit: 'onePerLocation',
+    abilities: [
+      whenRevealed(attachTo(nearestLocation())),
+      // Direct damage stays on each investigator; each ally there takes its own, which the players place.
+      atEndOfPhase(
+        'investigation',
+        takeDamage(1, eachInvestigator({ at: thisLocation() })),
+        dealDamageTo(eachEnemy({ at: thisLocation(), withoutTrait: trait('Elite') }), 1),
+      ),
+    ],
     actions: [{ effects: [skillTest('agility', 3, { onPass: [discardSelf()] })] }],
   }),
   treachery({
