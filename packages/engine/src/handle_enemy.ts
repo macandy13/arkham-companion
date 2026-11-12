@@ -1,3 +1,4 @@
+import { isClosedToEnemy } from './restrictions';
 import {
   firstSteps,
   isLocationInPlay,
@@ -107,12 +108,15 @@ export function handleDisengageEnemy(
  * `MoveEnemy`: places the enemy unengaged at `to`, then lets it engage there.
  * `to` must be a location; it need not be revealed or connected. An enemy
  * already there stays as it is, engaged or not: the effect has nothing to do,
- * which is not a mistake worth refusing.
+ * which is not a mistake worth refusing. Nor is a location closed to it
+ * (`isClosedToEnemy`, Barricade): it stays where it is.
  */
 export function handleMoveEnemy(ctx: EngineContext, state: GameState, cmd: MoveEnemy): Event[] {
   const { enemy } = onTableEnemyOf(ctx, state, cmd.enemyId);
-  requireLocationInPlay(state, cmd.to);
+  const destination = requireLocationInPlay(state, cmd.to);
   if (locationOf(state, enemy) === cmd.to) return [];
+  // Like a hunter's blocked step (RR "Hunter"), it stays where a card closes the way (Barricade).
+  if (isClosedToEnemy(ctx, state, enemy, destination)) return [];
   if (enemy.zone.kind === 'engaged' && !cmd.forced)
     throw new CommandRejected({
       code: 'enemyEngaged',
@@ -185,7 +189,10 @@ export function handleMoveEnemyTowards(
     });
   // A target not in play yet (the Parlor while act 1 holds it set aside) has no path to it.
   if (!isLocationInPlay(state, cmd.towards)) return [];
-  const steps = firstSteps(shortestPaths(ctx, state, locationOf(state, enemy), cmd.towards));
+  // Like a hunter, it does not move when its step is into a location closed to it (RR "Hunter").
+  const steps = firstSteps(shortestPaths(ctx, state, locationOf(state, enemy), cmd.towards)).filter(
+    (step) => !isClosedToEnemy(ctx, state, enemy, requireLocationInPlay(state, step)),
+  );
   const [only] = steps;
   if (only === undefined) return [];
   const moveTo = (to: InstanceId): MoveEnemy => ({

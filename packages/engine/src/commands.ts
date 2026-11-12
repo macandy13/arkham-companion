@@ -5,14 +5,17 @@ import type { CampaignLog, TraumaKind } from './campaign/campaign_log';
 import type { CardType, ScaledValue, TokenAmount, Trait } from './cards';
 import type {
   CardCode,
+  CardName,
   DecisionId,
   InstanceId,
   InvestigatorId,
   MapId,
+  PlayerAttachmentId,
   ResolutionId,
   ScenarioId,
 } from './ids';
 import type { GridCell, MapPlacement, MapSpec } from './map';
+import type { HostRestriction } from './restrictions';
 import type {
   Decision,
   ChaosBagChangeKind,
@@ -58,6 +61,8 @@ export type Command =
   | MoveTokens
   | ChangeChaosBag
   | SealChaosToken
+  | AttachPlayerCard
+  | DiscardPlayerAttachment
   | ReleaseChaosToken
   | AdvanceAgenda
   | BecomeActAndAgenda
@@ -505,6 +510,32 @@ export interface ChangeChaosBag {
   token: ChaosToken;
   change: ChaosBagChangeKind;
   lasts: ChaosBagChangeLasts;
+}
+
+/**
+ * The players attach a player card to an enemy or a location (`hostId`, a card in play), named
+ * as the catalog or the players name it (`name`, with its `code` when from the catalog), with the
+ * "cannot" abilities it gives its host (`restrictions`, each `of: 'host'`; Barricade's
+ * `enemiesMoveInto` but for Elite enemies). Produces `PlayerCardAttached` with a new
+ * `PlayerAttachment`; rejects a host that is no enemy or location in play
+ * (`invalidAttachmentHost`) and a blank name
+ * (`unnamedAttachment`).
+ */
+export interface AttachPlayerCard {
+  type: 'AttachPlayerCard';
+  hostId: InstanceId;
+  name: CardName;
+  code?: CardCode;
+  restrictions: readonly HostRestriction[];
+}
+
+/**
+ * The players discard a player card attached to an enemy or a location (Barricade once an
+ * investigator leaves). Produces `PlayerAttachmentDiscarded`; nothing for one no longer there.
+ */
+export interface DiscardPlayerAttachment {
+  type: 'DiscardPlayerAttachment';
+  attachmentId: PlayerAttachmentId;
 }
 
 /**

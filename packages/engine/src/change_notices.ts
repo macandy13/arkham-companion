@@ -79,6 +79,8 @@ export function noticeKindOf(event: Event): NoticeKind | undefined {
     case 'ActAdvanced':
     case 'CurrentCardChanged':
     case 'ScenarioEnded':
+    case 'PlayerCardAttached':
+    case 'PlayerAttachmentDiscarded':
       return 'board';
     case 'InvestigatorMoved':
     case 'InvestigatorChanged':

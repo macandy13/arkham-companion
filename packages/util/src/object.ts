@@ -71,6 +71,17 @@ export function withoutValue<K extends string, T>(
   >;
 }
 
+/** A shallow copy of `record` with only the entries whose value passes `keep`; the original stays. */
+export function filterValues<K extends string, T>(
+  record: Readonly<Record<K, T>>,
+  keep: (value: T) => boolean,
+): Record<K, T> {
+  // Object.fromEntries loses the key type; the filter keeps only keys and values from `record`.
+  return Object.fromEntries(
+    (Object.entries(record) as [K, T][]).filter(([, value]) => keep(value)),
+  ) as Record<K, T>;
+}
+
 /**
  * Adds `times` to the count `counts` keeps for `key`, starting from 0 for a key it has none for.
  * Mutates `counts`: it is meant for a tally built inside one function.

@@ -15,7 +15,7 @@ import type {
   TakeDamageAndHorror,
 } from './commands';
 import { investigatorLeavesEvents, woundEvents } from './elimination';
-import { arrivalEngagements } from './engagement';
+import { arrivalEngagements, engageEvents } from './engagement';
 import type {
   CluesDiscovered,
   Event,
@@ -34,10 +34,10 @@ import {
   statValue,
   withStatDelta,
 } from './investigators';
-import { requireCard } from './lookup';
+import { cardsInZone, requireCard } from './lookup';
 import { replay } from './reducer';
 import { CommandRejected } from './rejection';
-import { isRestricted, isRestrictedFor } from './restrictions';
+import { isClosedToEnemy, isRestricted, isRestrictedFor } from './restrictions';
 import type { GameState } from './state';
 
 /**
@@ -72,16 +72,31 @@ export function handleMoveInvestigator(
   if (isRestricted(ctx, state, destination, 'moveInto'))
     throw new CommandRejected({ code: 'restricted', cannot: 'moveInto', locationId: cmd.to });
 
+  const from = investigator.locationId;
+  // Barricade FAQ: an engaged enemy that cannot move into the destination disengages and stays.
+  const leftBehind: Event[] =
+    from === undefined
+      ? []
+      : cardsInZone(state, { kind: 'engaged', investigatorId: investigator.id })
+          .map((id) => requireCard(state.cards, id))
+          .filter((enemy) => isClosedToEnemy(ctx, state, enemy, destination))
+          .map((enemy) => ({ type: 'EnemyDisengaged', enemyId: enemy.id, locationId: from }));
   const moved: InvestigatorMoved = {
     type: 'InvestigatorMoved',
     investigatorId: investigator.id,
-    ...(investigator.locationId !== undefined && { from: investigator.locationId }),
+    ...(from !== undefined && { from }),
     to: cmd.to,
   };
   const reveal = destination.faceUp ? [] : revealEvents(ctx, state, cmd.to);
-  const arrived = [moved, ...reveal];
-  if (cmd.avoidEngagement) return arrived;
-  return [...arrived, ...arrivalEngagements(ctx, replay(arrived, state), cmd.to)];
+  const arrived = [...leftBehind, moved, ...reveal];
+  const afterMove = replay(arrived, state);
+  // Left behind ready and unengaged, it engages whoever is still there (RR "Enemy Engagement").
+  const staying = leftBehind.flatMap((event) =>
+    event.type === 'EnemyDisengaged' ? engageEvents(ctx, afterMove, event.enemyId) : [],
+  );
+  const settled = [...arrived, ...staying];
+  if (cmd.avoidEngagement) return settled;
+  return [...settled, ...arrivalEngagements(ctx, replay(settled, state), cmd.to)];
 }
 
 /** `HealInvestigator`: heals what the investigator has of `stat`, up to `amount`. */

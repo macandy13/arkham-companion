@@ -19,17 +19,20 @@ import type {
 import {
   scenarioId,
   type CardCode,
+  type CardName,
   type CardImagePath,
   type DecisionId,
   type InstanceId,
   type InvestigatorCode,
   type InvestigatorId,
   type MapId,
+  type PlayerAttachmentId,
   type ScenarioId,
   type ResolutionId,
 } from './ids';
 import type { Defeat, EncounterCardDrawn } from './events';
 import type { GameMap } from './map';
+import type { HostRestriction } from './restrictions';
 import type { RngState } from './rng';
 import type { Zone, ZoneKey } from './zone';
 
@@ -703,11 +706,31 @@ export interface GameState {
   chaosBagChanges: ChaosBagChange[];
   /** Tokens out of `chaosBag` because a card sealed them, in the order sealed (`SealChaosToken`). */
   sealedTokens: SealedToken[];
+  /** The player cards attached to enemies and locations (`AttachPlayerCard`), by ID. */
+  playerAttachments: Record<PlayerAttachmentId, PlayerAttachment>;
   agenda: { current?: InstanceId };
   act: { current?: InstanceId };
   /** Typed per scenario (zod schema in the scenario package). */
   scenario: unknown;
   pending: Decision[];
+}
+
+/**
+ * A player card attached to an enemy or a location (`hostId`), with the lasting effect the players
+ * gave it when they attached it (`AttachPlayerCard`): Barricade on a location, Handcuffs on an
+ * enemy. Player cards have no stats in the engine, so it is no `CardInstance`: it names the card
+ * by its `name` (the catalog's, or one the players typed) and its `code` when picked from the card
+ * catalog, and holds its "cannot"
+ * abilities itself, each about its host (`of: 'host'`), which `isRestricted` and the other
+ * restriction checks read next to the printed ones. It leaves play with its host
+ * (`PlayerAttachmentDiscarded` or its host's `CardMoved` out of play).
+ */
+export interface PlayerAttachment {
+  id: PlayerAttachmentId;
+  hostId: InstanceId;
+  name: CardName;
+  code?: CardCode;
+  restrictions: readonly HostRestriction[];
 }
 
 /** State before any `ScenarioStarted` event. */
@@ -731,6 +754,7 @@ export function emptyState(): GameState {
     chaosBag: [],
     chaosBagChanges: [],
     sealedTokens: [],
+    playerAttachments: {},
     agenda: {},
     act: {},
     scenario: undefined,

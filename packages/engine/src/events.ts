@@ -27,6 +27,7 @@ import type {
   InvestigatorStat,
   Phase,
   PhaseStep,
+  PlayerAttachment,
   SkillName,
   SkillTest,
   SkillTestOutcome,
@@ -45,6 +46,8 @@ export type Event =
   | TokensChanged
   | ChaosBagChanged
   | ChaosTokenSealed
+  | PlayerCardAttached
+  | PlayerAttachmentDiscarded
   | ChaosTokenReleased
   | CardFlipped
   | ConnectionChanged
@@ -131,6 +134,18 @@ export interface ChaosBagChanged {
   token: ChaosToken;
   change: ChaosBagChangeKind;
   lasts: ChaosBagChangeLasts;
+}
+
+/** A player card was attached to an enemy or a location. Produced by `AttachPlayerCard`. */
+export interface PlayerCardAttached {
+  type: 'PlayerCardAttached';
+  attachment: PlayerAttachment;
+}
+
+/** A player card attached to an enemy or a location left play. Produced by `DiscardPlayerAttachment`. */
+export interface PlayerAttachmentDiscarded {
+  type: 'PlayerAttachmentDiscarded';
+  attachment: PlayerAttachment;
 }
 
 /** One copy of `token` left the chaos bag, sealed on `investigatorId`. Produced by `SealChaosToken`. */

@@ -10,6 +10,7 @@ import type {
 import { handleDealEnemyAttack, handleEnemyAttacks } from './attacks_of_opportunity';
 import { handleMarginEntry, handleRequestDecision, handleResolveDecision } from './decisions';
 import { agendaThresholdDecision } from './doom';
+import { handleAttachPlayerCard, handleDiscardPlayerAttachment } from './handle_player_attachments';
 import { readyEnemyEngagements } from './engagement';
 import type { Event } from './events';
 import {
@@ -236,6 +237,10 @@ const COMMAND_SPECS: CommandSpecs = {
   DiscoverClues: { handle: handleDiscoverClues },
   ChangeChaosBag: { handle: (_ctx, state, command) => handleChangeChaosBag(state, command) },
   SealChaosToken: { handle: (_ctx, state, command) => handleSealChaosToken(state, command) },
+  AttachPlayerCard: { handle: handleAttachPlayerCard },
+  DiscardPlayerAttachment: {
+    handle: (_ctx, state, command) => handleDiscardPlayerAttachment(state, command),
+  },
   ReleaseChaosToken: {
     handle: (_ctx, state, command) => handleReleaseChaosToken(state, command),
   },

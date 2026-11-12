@@ -1,6 +1,6 @@
 import { withoutEmptyLists } from '@arkham/util';
 import { cardStats, type EngineContext, type Trait } from './cards';
-import { cardsInPlay } from './doom';
+import { cardsInPlay, isInPlay } from './doom';
 import type { InvestigatorId } from './ids';
 import { binds, namesCard, type CardScope, type InvestigatorScope } from './scopes';
 import type { CardInstance, GameState } from './state';
@@ -57,6 +57,17 @@ export type Forbidden = { [N in RestrictedNoun]?: RestrictedVerbs[N][] };
  */
 export type RestrictedLocation = Extract<CardScope, 'self' | 'host'>;
 
+/**
+ * A "cannot" about which enemies may enter a location: `{ cannot: 'enemiesMoveInto', of: 'host',
+ * exceptTraits: [trait('Elite')] }` is Barricade ("Non-Elite enemies cannot move into attached
+ * location"). Enemies with one of `exceptTraits` are not held back. Read by `isClosedToEnemy`.
+ */
+export interface EnemyLocationRestriction {
+  cannot: 'enemiesMoveInto';
+  of: RestrictedLocation;
+  exceptTraits?: readonly Trait[];
+}
+
 /** A "cannot" about a location: `{ cannot: 'investigate', of: 'host' }` is Locked Door. */
 export interface LocationCardRestriction {
   cannot: LocationRestriction;
@@ -96,10 +107,17 @@ export type InvestigatorCardRestriction =
  * A constant "cannot" ability (`CardStats.restrictions`), as card data. Like a `Modifier` it
  * holds while its card is in play, and a location's restriction only once it is revealed,
  * unless it is printed on the unrevealed side (`unrevealed`, the Parlor's barrier), which holds
- * until then. `isRestricted` and `isRestrictedFor` are the only places that read them, so the
+ * until then. `isRestricted`, `isRestrictedFor` and `isClosedToEnemy` are the only places that read them, so the
  * handlers and the views agree.
  */
-export type CardRestriction = LocationCardRestriction | InvestigatorCardRestriction;
+export type CardRestriction =
+  LocationCardRestriction | EnemyLocationRestriction | InvestigatorCardRestriction;
+
+/**
+ * A "cannot" a player card attached to a location gives it (`PlayerAttachment.restrictions`):
+ * one about the location it is attached to, the only kind its restriction checks read.
+ */
+export type HostRestriction = (LocationCardRestriction | EnemyLocationRestriction) & { of: 'host' };
 
 /**
  * Whether a card in play forbids `cannot` at `location` (Rules Reference, "Cannot": a "cannot"
@@ -112,12 +130,31 @@ export function isRestricted(
   location: CardInstance,
   cannot: LocationRestriction,
 ): boolean {
-  return cardsInPlay(state).some((source) =>
-    activeRestrictions(ctx, source).some(
+  return restrictionSources(ctx, state).some(({ restrictions, names }) =>
+    restrictions.some(
       (restriction) =>
-        'of' in restriction &&
-        restriction.cannot === cannot &&
-        namesCard(ctx, state, source, restriction.of, location),
+        'of' in restriction && restriction.cannot === cannot && names(restriction.of, location),
+    ),
+  );
+}
+
+/**
+ * Whether a card in play keeps `enemy` from moving into `location` (`EnemyLocationRestriction`):
+ * hunters go round it, and a card effect cannot move the enemy there.
+ */
+export function isClosedToEnemy(
+  ctx: EngineContext,
+  state: GameState,
+  enemy: CardInstance,
+  location: CardInstance,
+): boolean {
+  const traits = cardStats(ctx.cards, enemy.code).traits;
+  return restrictionSources(ctx, state).some(({ restrictions, names }) =>
+    restrictions.some(
+      (restriction) =>
+        restriction.cannot === 'enemiesMoveInto' &&
+        !(restriction.exceptTraits ?? []).some((trait) => traits.includes(trait)) &&
+        names(restriction.of, location),
     ),
   );
 }
@@ -161,6 +198,36 @@ export function forbiddenFor(
     cards: verbs('cards'),
   };
   return withoutEmptyLists(byNoun);
+}
+
+/**
+ * The restrictions in play, each with how its `of` names a location: a card's printed ones
+ * (`namesCard` from the card), and those of the player cards attached to a card in play
+ * (`PlayerAttachment`), whose host is the card they are attached to.
+ */
+function restrictionSources(
+  ctx: EngineContext,
+  state: GameState,
+): {
+  restrictions: readonly CardRestriction[];
+  names: (of: RestrictedLocation, location: CardInstance) => boolean;
+}[] {
+  const printed = cardsInPlay(state).map((source) => ({
+    restrictions: activeRestrictions(ctx, source),
+    names: (of: RestrictedLocation, location: CardInstance) =>
+      namesCard(ctx, state, source, of, location),
+  }));
+  const attached = Object.values(state.playerAttachments)
+    .filter((attachment) => {
+      const host = state.cards[attachment.hostId];
+      return host !== undefined && isInPlay(state, host);
+    })
+    .map((attachment) => ({
+      restrictions: attachment.restrictions,
+      names: (of: RestrictedLocation, location: CardInstance) =>
+        of === 'host' && attachment.hostId === location.id,
+    }));
+  return [...printed, ...attached];
 }
 
 function activeRestrictions(ctx: EngineContext, source: CardInstance): readonly CardRestriction[] {

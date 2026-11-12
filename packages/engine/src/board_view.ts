@@ -102,6 +102,7 @@ import type {
   AmountRange,
   CardInstance,
   ChaosToken,
+  PlayerAttachment,
   SealedToken,
   Decision,
   DecisionOption,
@@ -964,6 +965,16 @@ export class BoardView {
    */
   tokenModifier(token: ChaosToken): number | undefined {
     return tokenModifier(this.ctx, this.state, token);
+  }
+
+  /**
+   * The player cards attached to the card `hostId` (`AttachPlayerCard`), in the order attached:
+   * Barricade on a location, Handcuffs on an enemy. None for a card out of play.
+   */
+  playerAttachmentsOn(hostId: InstanceId): readonly PlayerAttachment[] {
+    return Object.values(this.state.playerAttachments).filter(
+      (attachment) => attachment.hostId === hostId,
+    );
   }
 
   /** The tokens out of the bag because a card sealed them, each with the investigator holding it. */

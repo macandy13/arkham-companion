@@ -64,9 +64,12 @@ export type CampaignId = Brand<string, 'CampaignId'>;
 export type MapId = Brand<string, 'MapId'>;
 /** ID of a pending `Decision`. */
 export type DecisionId = Brand<string, 'DecisionId'>;
+/** ID of a player card attached to an enemy or a location (`GameState.playerAttachments`). */
+export type PlayerAttachmentId = Brand<string, 'PlayerAttachmentId'>;
 
 /** Constructors that tag a plain string with the matching ID brand. */
 export const instanceId = (id: string) => id as InstanceId;
+export const playerAttachmentId = (id: string) => id as PlayerAttachmentId;
 export const investigatorId = (id: string) => id as InvestigatorId;
 export const investigatorCode = (code: string) => code as InvestigatorCode;
 export const cardCode = (code: string) => code as CardCode;
