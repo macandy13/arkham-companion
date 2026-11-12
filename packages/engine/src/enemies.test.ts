@@ -22,6 +22,7 @@ import {
 } from './index';
 import { requireInvestigator } from './investigators';
 import { engageEvents } from './engagement';
+import { enemiesMatching } from './enemies';
 import { replay } from './reducer';
 import { answer, rejectionFrom, stateAfter } from '../test/utils';
 
@@ -1371,5 +1372,20 @@ describe('SpawnEnemy with a filtered spawn instruction', () => {
     expect(after.pending).toMatchObject([
       { kind: 'chooseLocation', options: [{ target: cellar }, { target: attic }] },
     ]);
+  });
+});
+
+describe('enemiesMatching with withoutToken', () => {
+  it.each([
+    { doom: 0, matched: ['ghoul'] },
+    { doom: 1, matched: [] },
+  ])('matches the ghoul with $doom doom for "no doom on it": $matched', ({ doom, matched }) => {
+    const { context, state } = aliceInHall
+      .withCard(ghoul, ghoulCard, atLocation(cellar), { tokens: { doom } })
+      .start();
+
+    const enemies = enemiesMatching(context, state, { withoutToken: 'doom' });
+
+    expect(enemies.map((card) => card.id)).toEqual(matched);
   });
 });

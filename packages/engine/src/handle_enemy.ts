@@ -193,7 +193,7 @@ export function handleMoveEnemyTowards(
     enemyId: enemy.id,
     to,
     ...(cmd.forced === true ? { forced: true } : {}),
-    ...(cmd.attacksIfItEngages && { attacksIfItEngages: true }),
+    ...(cmd.attacksIfItEngages === true ? { attacksIfItEngages: true } : {}),
   });
   if (steps.length === 1) return handleMoveEnemy(ctx, state, moveTo(only));
   return chooseLocation(

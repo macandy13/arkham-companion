@@ -2049,7 +2049,7 @@ export function moveEnemyTowards(
     enemyId: enemy,
     towards: location,
     ...(options.forced === true ? { forced: true } : {}),
-    ...(options.attacksIfItEngages && { attacksIfItEngages: true }),
+    ...(options.attacksIfItEngages === true ? { attacksIfItEngages: true } : {}),
   };
 }
 
