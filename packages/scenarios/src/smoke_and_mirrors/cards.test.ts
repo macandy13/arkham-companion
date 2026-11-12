@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
+  atLocation,
+  blankTreachery,
   effectiveValue,
+  encounterDeck,
+  encounterDiscard,
+  engagedWith,
   encounterSetCode,
   instanceId,
   investigatorId,
@@ -334,6 +339,95 @@ describe('Smoke and Mirrors card abilities', () => {
       expect(flooded.cards[flood]?.zone).toEqual({ kind: 'attachedTo', hostId: northside });
       expect(effectiveValue(context, flooded, flooded.cards[northside]!, 'shroud')).toBe(7);
       expect(roundOver.cards[flood]?.zone).toEqual({ kind: 'encounterDiscard' });
+    });
+  });
+
+  describe('the nearest enemy (Raising Suspicions, Aerial Pursuit)', () => {
+    const southside = instanceId('southside');
+    const whippoorwill = instanceId('whippoorwill');
+    const batHorror = instanceId('bat_horror');
+    const nextCard = instanceId('next_card');
+    const plainTreachery = blankTreachery('plain_treachery');
+    /** Northside, where alice draws, and Southside, connected; a plain treachery below the card. */
+    const northAndSouthside = (card: string) =>
+      newGame()
+        .withLocation(northside, cardOf('12149'), { revealed: true })
+        .withLocation(southside, cardOf('12153'), { revealed: true })
+        .withConnection(northside, southside)
+        .withInvestigator(alice, { locationId: northside })
+        .withCard(instanceId('drawn'), cardOf(card), encounterDeck)
+        .withCard(nextCard, plainTreachery, encounterDeck)
+        .withCard(instanceId('bottom_card'), plainTreachery, encounterDeck);
+
+    it("Raising Suspicions puts 1 doom on the Bat Horror in Southside, as the Whippoorwill at alice's location has doom", () => {
+      const { context, state: started } = northAndSouthside('12160')
+        .withCard(whippoorwill, cardOf('12166'), atLocation(northside), { tokens: { doom: 1 } })
+        .withCard(batHorror, cardOf('12162'), atLocation(southside))
+        .start();
+
+      const state = stateAfter(
+        context,
+        started,
+        aliceDraws('Raising Suspicions'),
+        resolveRevelation('drawn'),
+      );
+
+      expect([whippoorwill, batHorror].map((id) => state.cards[id]?.tokens.doom ?? 0)).toEqual([
+        1, 1,
+      ]);
+      expect(state.cards[nextCard]?.zone).toEqual(encounterDeck);
+    });
+
+    it('Raising Suspicions surges into the next card when every enemy has doom', () => {
+      const { context, state: started } = northAndSouthside('12160')
+        .withCard(batHorror, cardOf('12162'), atLocation(southside), { tokens: { doom: 1 } })
+        .start();
+
+      const state = stateAfter(
+        context,
+        started,
+        aliceDraws('Raising Suspicions'),
+        resolveRevelation('drawn'),
+      );
+
+      expect(state.cards[batHorror]?.tokens.doom).toBe(1);
+      expect(state.cards[nextCard]?.zone).toEqual(encounterDiscard);
+    });
+
+    it('Aerial Pursuit moves the Bat Horror, not the Elite Servant of Flame, from Southside to alice, where it engages and attacks her', () => {
+      const servant = instanceId('servant_of_flame');
+      const { context, state: started } = northAndSouthside('12163')
+        .withCard(servant, cardOf('12138'), atLocation(southside))
+        .withCard(batHorror, cardOf('12162'), atLocation(southside))
+        .start();
+
+      const state = stateAfter(
+        context,
+        started,
+        aliceDraws('Aerial Pursuit'),
+        resolveRevelation('drawn'),
+      );
+
+      expect(state.cards[servant]?.zone).toEqual(atLocation(southside));
+      expect(state.cards[batHorror]?.zone).toEqual(engagedWith(alice));
+      expect(state.pending).toMatchObject([{ id: `cardAttack:${batHorror}:${alice}` }]);
+    });
+
+    it('Aerial Pursuit leaves the Bat Horror engaged with alice, the nearest, without an attack, and surges', () => {
+      const { context, state: started } = northAndSouthside('12163')
+        .withCard(batHorror, cardOf('12162'), engagedWith(alice))
+        .start();
+
+      const state = stateAfter(
+        context,
+        started,
+        aliceDraws('Aerial Pursuit'),
+        resolveRevelation('drawn'),
+      );
+
+      expect(state.cards[batHorror]?.zone).toEqual(engagedWith(alice));
+      expect(state.pending).toEqual([]);
+      expect(state.cards[nextCard]?.zone).toEqual(encounterDiscard);
     });
   });
 
