@@ -1,0 +1,2424 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="robots" content="noindex" />
+    <title>In-game dialogs</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Alegreya+Sans:wght@400;500;700&family=Federant&family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&display=swap"
+    />
+    <style>
+      /* Every in-game dialog in the design language, drawn at real size (tablet 1180x820, phone 390x844)
+   and scaled to fit, so a phone shows the same layout shrunk. Decided in MD.9 (#761). */
+      :root {
+        --table: #0e1f1d;
+        --table-line: #2b4a45;
+        --paper: #dccaa2;
+        --paper-rim: #bba06e;
+        --paper-deep: #cdb98c;
+        --ink: #2c2216;
+        --ink-muted: #5c4b33;
+        --accent: #7d5b22;
+        --brass: linear-gradient(#e6c983, #b48a4e);
+        --bone: #e9dfc8;
+        --bone-muted: #a99f8a;
+        --good: #2f7896;
+        --flag: #a33a37;
+        --font-title: 'Federant', 'Libre Caslon Text', Georgia, serif;
+        --font-label: 'Libre Caslon Text', Georgia, serif;
+        --font-body: 'Alegreya Sans', 'Segoe UI', system-ui, sans-serif;
+        color-scheme: dark;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--table);
+        color: var(--bone);
+        font: 16px/1.5 var(--font-body);
+        padding: 32px max(16px, env(safe-area-inset-right, 0px)) 64px
+          max(16px, env(safe-area-inset-left, 0px));
+      }
+      main {
+        max-width: 1120px;
+        margin: 0 auto;
+        display: grid;
+        gap: 24px;
+      }
+      h1,
+      h3 {
+        font-family: var(--font-title);
+        font-weight: 400;
+        margin: 0;
+      }
+      header p {
+        margin: 4px 0 0;
+        color: var(--bone-muted);
+        max-width: 75ch;
+      }
+      .page {
+        background: var(--paper);
+        color: var(--ink);
+        border: 1px solid var(--paper-rim);
+        border-radius: 8px;
+        padding: clamp(20px, 4vw, 40px);
+        display: grid;
+        gap: 20px;
+      }
+      .label {
+        font-family: var(--font-label);
+        font-size: 0.72rem;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--ink-muted);
+      }
+      figure {
+        margin: 0;
+      }
+      .pairs {
+        display: grid;
+        gap: 36px;
+      }
+      .pair {
+        display: grid;
+        gap: 10px;
+      }
+      .pair-head {
+        display: flex;
+        gap: 6px 16px;
+        align-items: baseline;
+        flex-wrap: wrap;
+      }
+      .pair-head h3 {
+        font-size: 1.25rem;
+      }
+      .note {
+        margin: 0;
+        color: var(--ink-muted);
+        font-size: 0.92rem;
+        max-width: 75ch;
+      }
+      .pair-shots {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 230px;
+        gap: 20px;
+        align-items: end;
+      }
+      .pair-shots figure {
+        display: grid;
+        gap: 6px;
+        justify-items: center;
+        min-width: 0;
+      }
+      @media (max-width: 820px) {
+        .pair-shots {
+          grid-template-columns: minmax(0, 1fr);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <h1>In-game dialogs</h1>
+        <p>
+          Every in-game dialog in the design language, on a tablet and on a phone. Card pictures
+          load from ArkhamDB; the app draws its own card faces. The rules are in docs/product.md,
+          "Design language".
+        </p>
+      </header>
+      <section class="page" id="all">
+        <div class="pairs">
+          <style>
+            #all .pair-shots {
+              grid-template-columns: minmax(0, 1fr) minmax(0, 300px);
+            }
+            @media (max-width: 820px) {
+              #all .pair-shots {
+                grid-template-columns: minmax(0, 1fr);
+              }
+              #all .pair-shots figure:last-child .frame {
+                width: min(100%, 330px);
+              }
+            }
+            .frame {
+              width: 100%;
+              border: 6px solid #050b0a;
+              border-radius: 16px;
+              overflow: hidden;
+              position: relative;
+              background: var(--table);
+              box-shadow: 0 10px 30px rgb(0 0 0 / 0.35);
+            }
+            .frame.ph {
+              border-radius: 30px;
+            }
+            .scr {
+              position: absolute;
+              top: 0;
+              left: 0;
+              transform-origin: 0 0;
+              overflow: hidden;
+              color: var(--ink);
+              font: 16px/1.4 var(--font-body);
+              background:
+                linear-gradient(rgb(0 0 0 / 0.5), rgb(0 0 0 / 0.5)),
+                repeating-linear-gradient(
+                  90deg,
+                  transparent 0 118px,
+                  var(--table-line) 118px 119px
+                ),
+                repeating-linear-gradient(0deg, transparent 0 118px, var(--table-line) 118px 119px),
+                var(--table);
+              display: grid;
+              place-items: center;
+            }
+            .scr.t {
+              width: 1180px;
+              height: 820px;
+            }
+            .scr.p {
+              width: 390px;
+              height: 844px;
+              place-items: end stretch;
+              font-size: 15px;
+            }
+            .d-card {
+              display: block;
+              border-radius: 12px;
+              box-shadow: 0 14px 30px rgb(0 0 0 / 0.6);
+              position: relative;
+              z-index: 2;
+            }
+            .d-page {
+              background: var(--paper)
+                radial-gradient(ellipse at 50% 40%, transparent 55%, var(--paper-deep) 130%);
+              border: 1px solid var(--paper-rim);
+              border-radius: 8px;
+              box-shadow: 0 18px 40px rgb(0 0 0 / 0.55);
+              padding: 30px 36px;
+              display: grid;
+              gap: 14px;
+              position: relative;
+              align-content: start;
+            }
+            .d-x {
+              position: absolute;
+              top: 14px;
+              right: 14px;
+              width: 40px;
+              height: 40px;
+              border-radius: 50%;
+              border: 1px solid var(--paper-rim);
+              display: grid;
+              place-items: center;
+              color: var(--ink-muted);
+              font-size: 20px;
+            }
+            .d-page hgroup,
+            .d-page .hg {
+              display: grid;
+              justify-items: center;
+              text-align: center;
+              gap: 2px;
+              padding-inline: 44px;
+            }
+            .d-page hgroup p {
+              margin: 0;
+              display: inline-flex;
+              gap: 8px;
+              align-items: center;
+              font-family: var(--font-label);
+              font-style: italic;
+              color: var(--ink-muted);
+              font-size: 15px;
+            }
+            .d-page h2 {
+              font-family: var(--font-title);
+              font-weight: 400;
+              font-size: 27px;
+              line-height: 1.15;
+              margin: 0;
+            }
+            .d-face {
+              width: 30px;
+              height: 30px;
+              border-radius: 50%;
+              flex: none;
+              background: url(https://arkhamdb.com/bundles/cards/01001.png) 3% 33% / 240% auto;
+              border: 1.5px solid var(--accent);
+            }
+            .d-face.daisy {
+              background: #3b2d1d;
+            }
+            .d-face.big {
+              width: 40px;
+              height: 40px;
+            }
+            .d-quote {
+              margin: 0;
+              font-style: italic;
+              color: var(--ink-muted);
+              text-align: center;
+              font-size: 15px;
+            }
+            .d-sk {
+              display: grid;
+              grid-template-columns: repeat(4, 1fr);
+              gap: 8px;
+            }
+            .d-sk span {
+              border: 1px solid var(--paper-rim);
+              border-radius: 8px;
+              padding: 5px 8px;
+              display: flex;
+              gap: 8px;
+              align-items: center;
+              justify-content: center;
+              background: rgb(255 255 255 / 0.18);
+            }
+            .d-sk i {
+              width: 30px;
+              height: 30px;
+              display: grid;
+              place-items: center;
+              flex: none;
+            }
+            .d-sk i::after {
+              content: '';
+              width: 26px;
+              height: 26px;
+              background: currentcolor;
+              mask: var(--ic) center / contain no-repeat;
+              -webkit-mask: var(--ic) center / contain no-repeat;
+            }
+            .d-sk b {
+              font-family: var(--font-title);
+              font-weight: 400;
+              font-size: 24px;
+            }
+            .d-sk span.on {
+              background: var(--accent);
+              border-color: var(--accent);
+              color: var(--paper);
+              box-shadow: 0 0 0 2px var(--accent);
+            }
+            .sk-willpower {
+              --sk: #2f5f94;
+              --ic: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cGF0aCBkPSJNODYuMyAzMC4zYTMzIDMzIDAgMCAxLTMgMTIuNSA4IDggMCAwIDEtMS44IDNsLS4xLjYtMi43IDVxLTEuNyAyLjgtMy41IDYuMy0xLjYgMy0xLjMgNi4zYTQ3IDQ3IDAgMCAwIDMuMyAxMy41bC0xLjYuNi0xLjQuNkg3NGwtLjMuM3EtNC42IDEuNi05LjQgNC44YTE2MSAxNjEgMCAwIDAtMTcgMTIuNWwtNC41IDMuN3EtLjMgMC0uNC0uM3YtMS42bC0uMS0xLjZxLS4zLS43LS4zLTEuOGwtLjMtMS45LS4yLTIuM3EwLTEtLjMtMmwtLjgtMi45cS0uMy0xLTEtMkwzOCA4MmwtMS4yLTItMS4zLTNxLS4yLS40LjUtMWwxLjYtMS40cS45LS43LjctMXQtLjYtLjNIMzdsLS4yLjEtMS44LjItMi44LjUtMi44LjYtMS40LjFhOSA5IDAgMCAxLTUuMi0xcS0xLjUtLjgtMi0yYTcgNyAwIDAgMS0uNS0yLjd2LTIuM2wuNC0yLjdhMyAzIDAgMCAwLS44LTIuMnEtLjctLjgtLjYtMS41IDAtLjkuNC0xLjJsLjItLjMtLjUtLjctLjUtLjYtLjItLjdxLS4zLTEuMiAwLTEuNi40LS41IDEtMiAuMy0uOC4yLTEuNC0uNC0uNy0xLjItMWgtLjhsLS43LS4xUTE1IDUwLjUgMTQgNDhxLS45LTIuMS41LTMuNmEyMSAyMSAwIDAgMSAzLjItNC4zbDEuOC0yIDEuNy0xLjkuNC0uNSAxLjEtMS41IDEuMi0xLjRxLjMtLjcgMC0xLjZsLS4zLTFxLTEuNC0xLjgtMS0zLjQuMi0xLjYuOC0zbC4xLS40LjUtMS4zLjYtMS44IDEuNi01cTEtMi40IDItNCAyLjMtMi45IDQuNS00LjdhMjAgMjAgMCAwIDEgNC45LTNBNTcgNTcgMCAwIDEgNTUuNCAwcTQuMiAwIDguNC44aC4yYTMzIDMzIDAgMCAxIDEyLjcgNS44cTUgNCA3LjIgOS4yIDEuMiAzLjUgMS43IDcgLjUgMy42LjcgNi44em0wIDAiLz48L3N2Zz4K);
+            }
+            .sk-intellect {
+              --sk: #6a3f86;
+              --ic: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cGF0aCBkPSJtOTguOCA4MC43LTEzLjIgMS40LTQuMi40QTg4IDg4IDAgMCAxIDgzLjMgOTVsLTkuOC00LjQtNS4zLTIuNEw1NSAxMDBhNDcgNDcgMCAwIDAtMS41LTcuNCA1NCA1NCAwIDAgMC0zLjktMTMuM3YtLjJsLS4yLS40LS4xLS4yYTUyIDUyIDAgMCAwLTMuOS03LjhsLTEuNi0yIDMwLTMuOHEyLjIgMi43IDMuOCA1Ljh0Mi43IDYuNGw2LjEtMS4zIDIuNS0uNUE0NiA0NiAwIDAgMSA4Ni41IDU4cS41LTMuNCAxLjctNS44TDU5LjUgNTZsLTcuOSAxLjMtNyAxLjEtNS4xIDFxLTQuMy45LTYuMyAyLjUtMiAxLjUtMyAzLS45IDEuOS0uNiAzLjl2My44bC4zIDMuNy41IDRxMCAxLjUgMi4yIDIuMiAyLjEuOSA4IC42bDIuNS0uMiAyLjktLjQgMS42IDIuN3EuOCAxLjQgMS4zIDEuOGwuMS43LjEgMS01IC43LTMuNy4ycS0zLjIuMS01LjYtLjEtMi4zLS4xLTMuOC0xLTEuNS0uNS0yLjQtMi0xLTEuMS0yLTMuMmwtMi43LTQuNy00LjYtOC41TDMuNyA0MS45bC0yLTMuNVEuOSAzNyAuNiAzMS44dC4zLTEyLjFxLjUtMy45IDEuNy02IDEuMi0yLjMgMi41LTMuNXQzLjUtMS44TDY5IDBsLjkuMS43LjIuNC40TDg5LjQgMzNsNC40IDcuNkw5NyA0NmwxLjMgMi4yLjQuOHYuN3EtLjIuMy0xIC42dC0yLjUuNWwtMy4yIDFxLS44IDEtMS4zIDIuNC0uNiAxLjItLjcgMi4zbC0uNSAyLjlBMjc4IDI3OCAwIDAgMSA5OCA3NS41bDEgMi41LjUgMS4ycTAgLjktLjMgMS4zem0wIDAiLz48L3N2Zz4K);
+            }
+            .sk-combat {
+              --sk: #9e3328;
+              --ic: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cGF0aCBkPSJNMzIuNiAzNy4ycS0uMy0uOC0xLjUtMi42TDI1LjQgMjZsLTIuOC00LS40LTEuNGEyIDIgMCAwIDEgMC0xLjdxMC0xIDEuMi0yLjIgMS0xLjMgMy40LTIuMiAyLS43IDMtLjYgMS4xLjEgMiAxIC44LjcgMS40IDEuOGwxLjMgMS44IDIgM0E4NyA4NyAwIDAgMSA0MyAzMi44bC4xIDEuM3EuMy45LjMgMS45dC0uMiAyLTEuMiAycS0xLjggMS0zLjIgMXQtMi42LS41YTcgNyAwIDAgMS0yLTEuNHptOS45LTEyLjZxLS43LTEuMy0yLjQtMy4zbC03LjctOS42cS0uMi0uNSAwLTEuNGE3IDcgMCAwIDEgNC45LTQuOHEyLjYtMS4xIDQuMy0uNHQyLjcgMi4ycTEgLjggMiAyLjdsMiAzLjggMiA1LTEuNiAxLTEuMiAxLjFxLS42LjUtLjcgMS0uMi4zIDAgMS40bDEuMiAyLjEgMS4zIDIgMS4yIDEuMnEuNi40IDEuNS40aDMuM3EuNiAwIC42LjMgMCAuNS0xLjMgMS40LTEuMyAxLTQuMSAxLjVhNCA0IDAgMCAxLTIuNy0uNCAxMSAxMSAwIDAgMS01LjMtNy4ybTEwLjMtNy4yLTMuMy01LjhMNDcgNy4zYTQgNCAwIDAgMS0uNy0yLjlxLjMtLjkgMS0xLjdBOCA4IDAgMCAxIDQ5LjYgMVE1Mi4xLS40IDU0IDB0Mi44LjhxMS4zLjUgMi42IDEuNSAxLjIgMSAyLjEgMi4zbDIuMSAzLjEtLjcuM2gtMWwtLjUtLjUtLjctLjctLjgtLjguMiAxLjJhNCA0IDAgMCAxLS4yIDIuMmwtMSAyLTIuMSAzcS0xLjIgMS43LTIuNCAyLjd0LTEuNi4ybS00LjEgNjIuOWExMjEgMTIxIDAgMCAxLTUuMi04LjRxLTIuMi0xLTQuMi0yLjNsLTMuNy0yLjJxLTEuOS0xLjItMy4yLTIuNEwzMCA2MS4yYTgxIDgxIDAgMCAwLTYuNS03LjlxLTEuNi0xLjYtMi40LTIuOC0xLjQtMi0zLjItMy41LTEuNi0xLjUtMi41LTMuN2wtLjktMi44LS43LTMuMUwxMyAzNGExMSAxMSAwIDAgMS0uNC02cS4zLTEuNSAxLjgtMi45IDMtMi4xIDQuNC0yLjN0My4yIDEuM2E4MiA4MiAwIDAgMSAxMC44IDE3LjFxLjMuOSAwIDEuOCAwIC45LTEuMyAxLjItMS4zIDEtMi42IDEtMS4yIDAtMi4zLS4zbC0yLS45LTEuNC0uN3EtLjYgMC0xLjctMS4xYTY0IDY0IDAgMCAxLTUuNS02LjRsMy42IDYuNC0yLjgtMSA0IDIgMS4yLjYgMS43IDJhNjYgNjYgMCAwIDAgNS40IDUuNXExLjYgMSAyLjYuOCAxIDAgMi0uOGwyLTEuOCAyLTJxMS0uOCAxLjctMSAxLjUgMCAzLTEuNiAxLjUtMS41IDMuOC0yLjYgMS40LTEuNSAyLjUtMi4xbDEuNi0uN3EuNiAwIC45LjNsLjMuNnEuMyAxLjMgMCAzLjR2NC4zcS4xIDEuMi42IDEuMXQxLTFhMzMgMzMgMCAwIDAgMy02cS41LTIuNyAxLjQtNC4ybDEuNy0yLjIgMS44LTEuNXEuOS0uNyAxLjgtMiAxLjgtMS42IDIuOC0xLjYgMSAuMiAxLjguNi40LjMgMS40LjRsMi4xLjIgMi45LjEtMy0xLjlxLTEuMi0uNi0yLjItMS42LS44LS43LS44LTEuNXYtMi4xcS4zLS43IDEuOC0uNiAxIDAgMS40LS4ydC41LS40bC41LS42IDEuNS0uNS42LS4xLTEuNS0uMnEtLjgtLjQtMS41LTEuMS0uNS0uOC44LTIuNiAxLjItMi4yLjYtMS44bC0yIDEuOEw2NyAyMnEtMiAxLjgtMy42IDIuM2wtMy44IDEuM3EtMS44LjYtMy4xLjd0LTIuNi0uNGE2IDYgMCAwIDEtMi40LTEuNmwtMi0xLjgtLjQtLjhxLS4xLS41LjMtLjZhMjIgMjIgMCAwIDAgNS4zLTIuNXExLjEtLjkgMS4zLTEuN2w0LjgtNC45YTE1IDE1IDAgMCAxIDQuNi0zLjNxLjgtLjIgMS40LS43bDEuNC0uOFE2OSA3IDcwIDdxMS4xIDAgMi41LjhhMzUgMzUgMCAwIDEgNS41IDQuNXExLjQgMS4yIDIuMyAyLjRsMS42IDEuOCAxLjMgMS42cTEgMSAxLjYgMyAuNiAxLjguNCA0LjQgMCAyLjgtMS41IDYuNGwtNC45IDEzLjhxLTIgNS42LTIgNi40bC4xIDEuOHEwIC42LjYgMi4xbC40LjIuNC41LjcuNWEzNyAzNyAwIDAgMS02LjIgNi43IDExNyAxMTcgMCAwIDEtMTcgMTIuMmwtNyA0LjJtMzguOC0xMy44cS4zLjQuMiAxbC0uMiAxLjEtMSAxLjVxLS44IDEuNi0yLjkgMy44dC00LjkgNC42bC02LjIgNWEyNjIgMjYyIDAgMCAxLTI0IDE2LjUgOTEgOTEgMCAwIDEtNy0xNS4yIDMgMyAwIDAgMSAuMi0yLjMgOSA5IDAgMCAxIDMuNi0zLjNsMS45IDMuNmExNjUgMTY1IDAgMCAwIDE4LjEtMTEuMXE2LjYtNSA5LjktOC40IDQtNCA1LTYuOWwtMS0uMmgyem0wIDAiLz48L3N2Zz4K);
+            }
+            .sk-agility {
+              --sk: #3c7340;
+              --ic: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cGF0aCBkPSJNNjcuNCA2Ni45cS0yLjQtMS00LjMtMi44LTEuNS0xLjUtMi45LTMuN1E1OSA1OCA1OSA1NC44YTI1IDI1IDAgMCAxIDMuMy0xMS45bDIuNy00LjMgMi42LTQgNC4xLTMuMmE0NSA0NSAwIDAgMCA4LjUtMTBxMS41LTIuNyAxLjYtNS4yYTY2IDY2IDAgMCAwLTEtMTAuNWwtMS0yLjhhMTMgMTMgMCAwIDEgMy41IDJxMS40IDEgMi43IDIuNiAxLjUgMS41IDIuMiAzLjkuNyAyLjUuNyA0LjZhMTEgMTEgMCAwIDEtLjYgMy42cS0uNyAxLjgtMS42IDMuM2guNGwuMy0uMS43LS40LjUtLjdxLjMtLjMuNC0uOSAxLjIuOSAyLjIgMi40LjggMS4yIDEuMiAzLjUuNSAyLjEuMiA1LjQtLjMgMy0xIDQuNy0uOCAxLjgtMS42IDIuOS0xIDEuMy0yIDEuNmguN2wuNS4xaC43bDEuMS0uOC43LS43cTAgMS42LS41IDMuNmExOSAxOSAwIDAgMS00LjUgOC4zIDI4IDI4IDAgMCAxLTcgNC4ycS0xLjQuNi0yLjUuNmwtMS0uNy0xLjctLjZxLTEtLjMtMi43LS4zLTIuOCAwLTMuNi44dC0uNC44aDUuNHEzLjkgMCAyLjcgNS45LS43IDMuMi0yLjggNC4xdC01LjcuM000My4yIDQ3LjVxMC0yLjEuMy00LjZsLjctNC41cS41LTIuNiAxLjQtNS4zIDIuMS0yLjcgMy44LTZsMi45LTYgMi41LTYuM3EwLTMuNi0uNy02LjRsLTEuNy00LjdxLTEuMi0yLTIuNi0zLjcgMS43LjIgMi43LjYgMS4yLjUgMS45IDEuMS44LjcgMS41IDEuNmwxLjYgMi4ycTEuNSAxLjUgMi4xIDN0MSAyLjlxLjMgMS41IDAgMyAuMyAwIC45LS42bC41LTEuN2ExMCAxMCAwIDAgMSAzLjIgNC44cS42IDEuNS43IDMuNWwtLjMgMy4zLS40IDIuMy0uNSAyLjFoLjRsLjUtLjUuMi0uMi4zLS41LjQtLjIuNCAyLjIuMiAyIC4xIDEuNy0yIDIuM2ExNCAxNCAwIDAgMC02LjcuM3EtMS41LjUtMi44IDEuNmE1IDUgMCAwIDAtMS42IDMgMTA1IDEwNSAwIDAgMC03LjYgNi4zTDQ0IDQ4LjdaTTc4IDYwLjRhMjEgMjEgMCAwIDEgMyA2LjZsMS4yIDUuMy0xNSAxMS4xLTMuNS00LjlxLTMgMy44LTYuMSA3LjRsLTYgNS44cS0zLjIgMy02LjMgNC41Yy0xIDEtMyAyLTUuNiAyLjVhNTUgNTUgMCAwIDEtOSAxLjJBODYgODYgMCAwIDEgNy45IDk4cS0uNy0yLS42LTQgMC0xLjggMS0zLjYgMS4xLTEuNyA0LTMuMiAyLjctMS41IDUtMi4yYTIwIDIwIDAgMCAxIDctMS4zcTEuNSAwIDMgLjVsMi4yLjloLjVxLS4xLS40LS43LS44bC0xLS45LTEuMy0uOGgtLjRsMi4yLTIgMi0xLjlhOSA5IDAgMCAwIDEuNy0yLjJBNzIgNzIgMCAwIDAgMzQgNjIuOGwuNi02LjVhMTAgMTAgMCAwIDEgMS4yLTQuNyA1IDUgMCAwIDEgNS0yLjhxMS4yLjMgMi41IDEuNWwzLjQgMi41cTIgMS40IDQuNCAyLjUgMi40IDEgNS41IDEgMCAyLjggMSA1LjMuOSAyIDIuOCAzLjkgMiAyIDUuOCAyLjggMy4zIDEgNS42LjJhOSA5IDAgMCAwIDMuOC0yLjFxMS41LTEuNSAyLjEtMy4xdC40LTNtMCAwIi8+PC9zdmc+Cg==);
+            }
+            .d-tok.skull::after {
+              content: '';
+              width: 30px;
+              height: 30px;
+              background: #f3ead6;
+              mask: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cGF0aCBkPSJNODUgNzEuOGE2IDYgMCAwIDEtLjUgMi42cS0uNC4zLS44IDFsLS44LjktLjYuOHEtLjQuMS0uNy42LS41LjgtMS40LjJsLS42LS4zcS0uMyAwLS41LS4zbC0uOS0uNC0uNy0uMnEtMi0xLjEtNC40LTEuM2gtMy44bC03LjUuNXEtLjUgMC0uNi4ybC0uNi4zcS0uNi4xLS43LjdsLS4yIDEuMi0uMiAxcS0uMyAxLjIgMCAyLjEgMCAuNS4yLjhsLjIuN3EuMi4zLjMuMmwyLjItLjJxLjMtLjEuNi40IDAgLjQuNC43bC4yLjNxLjMuNi40LjJsLjMtLjIuMy0uMnEuMy0uMS41LjJ2LjdsLjEuN3EwIC43LjUgMS41LjUgMSAuNyAybC41IDIuNnEuMy40LS43LjlINjZsLS4yLjNxLS4yIDAtLjUuNSAwIC4zLS4yLjRsLTIuMiAxLjhxLS4zLjItLjUtLjFMNjIgOTVsLS4zLTEtLjItMS4xdi0uOGwtLjItLjlINjFsLS4yIDFxLS4yIDEuMi4xIDJ2MS41cTAgMS0uNiAxLjRoLS4xbC0uMi4xLS44LjQtLjguNWgtLjJsLS4xLjFxLS44LjItLjgtLjVsLS4xLS43di0uNGwuMS0uNHEwLS4zLS4yLS41IDAtLjUtLjQgMGwtLjQuNC0xIC41di41cS44LjMuOS42bC4xLjdxMCAuMi0uNi40bC0uOC40LTEuNC41aC0xLjJxLS42LS40LS45LTFhNCA0IDAgMCAxLS4xLTJ2LS45bC4xLTEuMXYtMS4xbC0uMS0xLjNMNTEgOTFoLS4zbC0uNSAxLjUtLjMgMS40LS4yLjl2MS44bC4yLjcuMS42Vjk5cS0uMi41LS41LjctMSAuNS0xLjkuMi0uOCAwLTEtMWwtLjItMS40di0uOWwtLjEtLjMtLjIuMy0uMi40LS40IDEuMS0uMi40LS40LjJxLTEuNS0uMi0yLS41bC0xLS45cS0uNC0uNC0uNC0xLjRsLjMtNC42aC0uMmwtMSAyYTEyIDEyIDAgMCAwLS45IDN2LjNxLS4zLjMtLjYuMmEzIDMgMCAwIDEtMS4yLTFxLS43LTEuMy0uOS0yLjYtLjMtMS43LjEtMy41bC4zLTEuMi4zLTEuMnEuNC0yLjMgMi4yLTQuMmwuNC0uNC40LS4zLjctLjVxLjQtLjQuNC0xLjJ2LS4ybC4xLS4zcS0uMi0xLjMuNC0yLjh2LS44bC0uOC0uNC0uNi0uMS0uNi0uMmgtLjdsLS42LS4zLTEuOC0uMy0xLjctLjJoLTJhMTIgMTIgMCAwIDAtMy40LjJsLS44LjEtNC43IDEuNHEtLjMuMy0xLjMuNS0xLjQuMy0yLjYtLjdoLS4xYTIwIDIwIDAgMCAxLTIuOC0zLjdsLTEtMnEtLjMtMS40LjItMi42bC4yLS42LjMtLjkuNC0xIC41LTFxLjgtMS4yLjYtM2wtLjItMS42cTAtLjgtLjMtMS40bC0uMi0xLS40LTQuMi4xLTIuOC42LTMuNS45LTYuOHYtMmE0MCA0MCAwIDAgMC0xLTguNmgtLjF2NS4zbC0uMiAxLS4yIDEtLjMgMS0uMy43LS40LjdhMTEgMTEgMCAwIDAtLjggNS42bC0uMS45SDE2bC0uMi0uMS0uOS04LjRhODEgODEgMCAwIDEgMS4yLTEyLjdsLjMtMS42YTI1IDI1IDAgMCAxIDEuOC01LjkgMTUgMTUgMCAwIDEgNC00LjUgMzcgMzcgMCAwIDEgNy02LjlsMS43LTFxLjYtLjYgMS4zLS45bDEuNy0uNiAyLjMtLjdhNTQgNTQgMCAwIDEgMTgtMi43aDIuNmE1MCA1MCAwIDAgMSAxMS45IDQgMjMgMjMgMCAwIDEgNC41IDIuN3ExLjYgMS41IDIuOCAzLjQgMSAxLjUgMiAyLjVsMi40IDIuMyAxIDEuNSAxIDEuNXEuOCAxLjMgMS4yIDMuNGwuOSAzLjQuMiA0LjZWMzRsLS4yIDMuNS0uNCAyLjYtLjEgMS4yLS4xIDEuMnEwIDIuNi0uNCAzLjlsLS4yIDEuOS0uMy42aC0uMmwtLjMtLjctLjItLjd2LS44bC0uMi0xLjNhMjAgMjAgMCAwIDAtLjgtNS41bC0uMi0xLjh2LTRsLS4yLjF2LjNsLS4xLjQtLjYgNS0uMyAyLjQtLjIgMy4yLjQgMS44cS4xIDEgLjcgMS44bDEgMS44LjkgMS44cS40LjguNCAxLjJsLjIgMSAuNCAxLjcuNCAxLjMuNiAxLjRxLjUgMi4zLjIgNC4ybC0uNCAyLjctLjEgMi40LjQgMnYuNHpNNDIuNCA2NmwxLS44IDEuNi0uOC40LS44LjYtLjZoLjVsLjcuNS43LjYuMy4xcS4yIDAgLjItLjNhNiA2IDAgMCAwLS41LTIuM2wtLjMtMS4xcS0uMy0uOCAwLTEuNy4zLS41LjItMXYtMWwtLjEtMS40cTAtLjMtLjItLjNoLS4zbC0uMi4zLS4zIDFxLS4yLjMtLjMuMmwtLjctLjJ2LTEuMmE0IDQgMCAwIDAtMy0yLjJxLTEuMi0uOS0yLjctMS4yYTE3IDE3IDAgMCAwLTQtLjhxLS40IDAtMSAuNmwtLjItLjItLjItLjFxLS43LS41LTIuNS4xSDMybC0uMS4ycS0xLjIuNS0yIC40aC0uM2wtLjMtLjEtMS4yLS4xYTUgNSAwIDAgMC0yLjQuNWwtLjQuMXEtLjMuMy0uNyAwaC0uM3EtLjUgMC0uNS40IDAgLjktLjMgMS4yLS4zLjQtLjMuOXYyLjlsLS4yIDEtLjEgMXYuOHEwIDIuNC45IDQuNSAwIC42LjYgMS4yLjUgMS4yIDEuMSAybDEuNSAxIDEgMXEuMi41LjUuNmwuNC4ycTAgLjMuNC4ybC40LS4yLjQtLjdxLjYtMSAyLTFoNXExLjYtLjIgMy0uOS42LS4zIDEuMi0xem0xNS4zIDEyLjMuMy0xLjgtLjItLjgtLjUtMnEtLjItLjctLjctMS4zdC0xLjUtMS4xbC0uNy0xLS42LTEtLjQtLjctLjItLjdxLS4zLTEuMy0uNy0xLjYtLjgtLjYtMS40LS4zLTEuOCAxLjMtMi4zIDMuMyAwIC43LS42IDEuNmEyNiAyNiAwIDAgMS0yLjUgNC44cS0uNC43LS43IDEuOC0xLjkgMi41LjEgNGwuOSAxLjhxLjMuNi45IDFsLjcuNC42LjRxLjUuMy44LjIuNi4yIDEtLjNsLjMtLjUuMS0uNC4xLS4zcTAtLjguOC0xLjIuNi0uNCAxIC4ybC4zLjMuMy40cS42LjUgMS4yLjJsMS43LS43cTEtLjUgMS4zLTEuNFY4MWwuMy0xIC4yLTF6TTgxLjggNjN2LS43bC4xLTEtLjEtLjh2LTFxMC0uNi0uMy0xLjNsLTEtMi4xcS0uNi0xLjEtMS40LTItLjUgMC0uNi0uM2wtLjgtLjMtMi4xLTEtMi42LTEuM3EtLjYtLjQtMS44IDBsLS4yLjItLjIuMi0uNS4ycS0uNy4zLTEuNi4zbC0xLjQtLjMtMS4yLS41cS0uNi0uMi0uOC4zbC0uMi41cS0uMi41LS42LjUtLjggMC0xLjUuNmwtLjYuMi0uNi4zcS0uOS41LTEuNi4zbC0xLjYuNGgtLjFxLS41IDAtLjEuNmwuMi4yLjMuMi4zIDF2LjVxMCAxLS42IDIuMmwtLjQuNS0uNC42LS42IDEtLjQgMS4ydi4yaC4ybC41LS4yaC4zcS4yLjcuOCAxLjVsMS4yIDEuNCAxLjQgMS41cS40LjggMSAxLjRsMS4zLjdxMi4zIDEgNiAxLjZoMnExLjYgMCAzLjMtMSAxLjUtLjUgMy0xLjZsMy43LTMuMy4zLTEuMnptMCAwIi8+PC9zdmc+Cg==)
+                center / contain no-repeat;
+              -webkit-mask: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cGF0aCBkPSJNODUgNzEuOGE2IDYgMCAwIDEtLjUgMi42cS0uNC4zLS44IDFsLS44LjktLjYuOHEtLjQuMS0uNy42LS41LjgtMS40LjJsLS42LS4zcS0uMyAwLS41LS4zbC0uOS0uNC0uNy0uMnEtMi0xLjEtNC40LTEuM2gtMy44bC03LjUuNXEtLjUgMC0uNi4ybC0uNi4zcS0uNi4xLS43LjdsLS4yIDEuMi0uMiAxcS0uMyAxLjIgMCAyLjEgMCAuNS4yLjhsLjIuN3EuMi4zLjMuMmwyLjItLjJxLjMtLjEuNi40IDAgLjQuNC43bC4yLjNxLjMuNi40LjJsLjMtLjIuMy0uMnEuMy0uMS41LjJ2LjdsLjEuN3EwIC43LjUgMS41LjUgMSAuNyAybC41IDIuNnEuMy40LS43LjlINjZsLS4yLjNxLS4yIDAtLjUuNSAwIC4zLS4yLjRsLTIuMiAxLjhxLS4zLjItLjUtLjFMNjIgOTVsLS4zLTEtLjItMS4xdi0uOGwtLjItLjlINjFsLS4yIDFxLS4yIDEuMi4xIDJ2MS41cTAgMS0uNiAxLjRoLS4xbC0uMi4xLS44LjQtLjguNWgtLjJsLS4xLjFxLS44LjItLjgtLjVsLS4xLS43di0uNGwuMS0uNHEwLS4zLS4yLS41IDAtLjUtLjQgMGwtLjQuNC0xIC41di41cS44LjMuOS42bC4xLjdxMCAuMi0uNi40bC0uOC40LTEuNC41aC0xLjJxLS42LS40LS45LTFhNCA0IDAgMCAxLS4xLTJ2LS45bC4xLTEuMXYtMS4xbC0uMS0xLjNMNTEgOTFoLS4zbC0uNSAxLjUtLjMgMS40LS4yLjl2MS44bC4yLjcuMS42Vjk5cS0uMi41LS41LjctMSAuNS0xLjkuMi0uOCAwLTEtMWwtLjItMS40di0uOWwtLjEtLjMtLjIuMy0uMi40LS40IDEuMS0uMi40LS40LjJxLTEuNS0uMi0yLS41bC0xLS45cS0uNC0uNC0uNC0xLjRsLjMtNC42aC0uMmwtMSAyYTEyIDEyIDAgMCAwLS45IDN2LjNxLS4zLjMtLjYuMmEzIDMgMCAwIDEtMS4yLTFxLS43LTEuMy0uOS0yLjYtLjMtMS43LjEtMy41bC4zLTEuMi4zLTEuMnEuNC0yLjMgMi4yLTQuMmwuNC0uNC40LS4zLjctLjVxLjQtLjQuNC0xLjJ2LS4ybC4xLS4zcS0uMi0xLjMuNC0yLjh2LS44bC0uOC0uNC0uNi0uMS0uNi0uMmgtLjdsLS42LS4zLTEuOC0uMy0xLjctLjJoLTJhMTIgMTIgMCAwIDAtMy40LjJsLS44LjEtNC43IDEuNHEtLjMuMy0xLjMuNS0xLjQuMy0yLjYtLjdoLS4xYTIwIDIwIDAgMCAxLTIuOC0zLjdsLTEtMnEtLjMtMS40LjItMi42bC4yLS42LjMtLjkuNC0xIC41LTFxLjgtMS4yLjYtM2wtLjItMS42cTAtLjgtLjMtMS40bC0uMi0xLS40LTQuMi4xLTIuOC42LTMuNS45LTYuOHYtMmE0MCA0MCAwIDAgMC0xLTguNmgtLjF2NS4zbC0uMiAxLS4yIDEtLjMgMS0uMy43LS40LjdhMTEgMTEgMCAwIDAtLjggNS42bC0uMS45SDE2bC0uMi0uMS0uOS04LjRhODEgODEgMCAwIDEgMS4yLTEyLjdsLjMtMS42YTI1IDI1IDAgMCAxIDEuOC01LjkgMTUgMTUgMCAwIDEgNC00LjUgMzcgMzcgMCAwIDEgNy02LjlsMS43LTFxLjYtLjYgMS4zLS45bDEuNy0uNiAyLjMtLjdhNTQgNTQgMCAwIDEgMTgtMi43aDIuNmE1MCA1MCAwIDAgMSAxMS45IDQgMjMgMjMgMCAwIDEgNC41IDIuN3ExLjYgMS41IDIuOCAzLjQgMSAxLjUgMiAyLjVsMi40IDIuMyAxIDEuNSAxIDEuNXEuOCAxLjMgMS4yIDMuNGwuOSAzLjQuMiA0LjZWMzRsLS4yIDMuNS0uNCAyLjYtLjEgMS4yLS4xIDEuMnEwIDIuNi0uNCAzLjlsLS4yIDEuOS0uMy42aC0uMmwtLjMtLjctLjItLjd2LS44bC0uMi0xLjNhMjAgMjAgMCAwIDAtLjgtNS41bC0uMi0xLjh2LTRsLS4yLjF2LjNsLS4xLjQtLjYgNS0uMyAyLjQtLjIgMy4yLjQgMS44cS4xIDEgLjcgMS44bDEgMS44LjkgMS44cS40LjguNCAxLjJsLjIgMSAuNCAxLjcuNCAxLjMuNiAxLjRxLjUgMi4zLjIgNC4ybC0uNCAyLjctLjEgMi40LjQgMnYuNHpNNDIuNCA2NmwxLS44IDEuNi0uOC40LS44LjYtLjZoLjVsLjcuNS43LjYuMy4xcS4yIDAgLjItLjNhNiA2IDAgMCAwLS41LTIuM2wtLjMtMS4xcS0uMy0uOCAwLTEuNy4zLS41LjItMXYtMWwtLjEtMS40cTAtLjMtLjItLjNoLS4zbC0uMi4zLS4zIDFxLS4yLjMtLjMuMmwtLjctLjJ2LTEuMmE0IDQgMCAwIDAtMy0yLjJxLTEuMi0uOS0yLjctMS4yYTE3IDE3IDAgMCAwLTQtLjhxLS40IDAtMSAuNmwtLjItLjItLjItLjFxLS43LS41LTIuNS4xSDMybC0uMS4ycS0xLjIuNS0yIC40aC0uM2wtLjMtLjEtMS4yLS4xYTUgNSAwIDAgMC0yLjQuNWwtLjQuMXEtLjMuMy0uNyAwaC0uM3EtLjUgMC0uNS40IDAgLjktLjMgMS4yLS4zLjQtLjMuOXYyLjlsLS4yIDEtLjEgMXYuOHEwIDIuNC45IDQuNSAwIC42LjYgMS4yLjUgMS4yIDEuMSAybDEuNSAxIDEgMXEuMi41LjUuNmwuNC4ycTAgLjMuNC4ybC40LS4yLjQtLjdxLjYtMSAyLTFoNXExLjYtLjIgMy0uOS42LS4zIDEuMi0xem0xNS4zIDEyLjMuMy0xLjgtLjItLjgtLjUtMnEtLjItLjctLjctMS4zdC0xLjUtMS4xbC0uNy0xLS42LTEtLjQtLjctLjItLjdxLS4zLTEuMy0uNy0xLjYtLjgtLjYtMS40LS4zLTEuOCAxLjMtMi4zIDMuMyAwIC43LS42IDEuNmEyNiAyNiAwIDAgMS0yLjUgNC44cS0uNC43LS43IDEuOC0xLjkgMi41LjEgNGwuOSAxLjhxLjMuNi45IDFsLjcuNC42LjRxLjUuMy44LjIuNi4yIDEtLjNsLjMtLjUuMS0uNC4xLS4zcTAtLjguOC0xLjIuNi0uNCAxIC4ybC4zLjMuMy40cS42LjUgMS4yLjJsMS43LS43cTEtLjUgMS4zLTEuNFY4MWwuMy0xIC4yLTF6TTgxLjggNjN2LS43bC4xLTEtLjEtLjh2LTFxMC0uNi0uMy0xLjNsLTEtMi4xcS0uNi0xLjEtMS40LTItLjUgMC0uNi0uM2wtLjgtLjMtMi4xLTEtMi42LTEuM3EtLjYtLjQtMS44IDBsLS4yLjItLjIuMi0uNS4ycS0uNy4zLTEuNi4zbC0xLjQtLjMtMS4yLS41cS0uNi0uMi0uOC4zbC0uMi41cS0uMi41LS42LjUtLjggMC0xLjUuNmwtLjYuMi0uNi4zcS0uOS41LTEuNi4zbC0xLjYuNGgtLjFxLS41IDAtLjEuNmwuMi4yLjMuMi4zIDF2LjVxMCAxLS42IDIuMmwtLjQuNS0uNC42LS42IDEtLjQgMS4ydi4yaC4ybC41LS4yaC4zcS4yLjcuOCAxLjVsMS4yIDEuNCAxLjQgMS41cS40LjggMSAxLjRsMS4zLjdxMi4zIDEgNiAxLjZoMnExLjYgMCAzLjMtMSAxLjUtLjUgMy0xLjZsMy43LTMuMy4zLTEuMnptMCAwIi8+PC9zdmc+Cg==)
+                center / contain no-repeat;
+            }
+            .d-step {
+              display: flex;
+              align-items: center;
+              gap: 10px;
+            }
+            .d-step .lab {
+              flex: 1;
+              display: grid;
+              line-height: 1.2;
+            }
+            .d-step .lab small,
+            .d-row small {
+              color: var(--ink-muted);
+              font-size: 13px;
+            }
+            .d-num {
+              display: inline-flex;
+              align-items: center;
+              gap: 8px;
+            }
+            .d-num i {
+              font-style: normal;
+              width: 34px;
+              height: 34px;
+              border-radius: 50%;
+              border: 1px solid var(--paper-rim);
+              display: grid;
+              place-items: center;
+              font-size: 18px;
+              background: rgb(255 255 255 / 0.2);
+            }
+            .d-num b {
+              font-family: var(--font-title);
+              font-weight: 400;
+              font-size: 22px;
+              min-width: 30px;
+              text-align: center;
+            }
+            .d-num em {
+              font-style: normal;
+              font-size: 13px;
+              color: var(--ink-muted);
+            }
+            .d-test {
+              display: grid;
+              grid-template-columns: 112px 1fr auto;
+              gap: 12px;
+              align-items: center;
+              border-top: 1px solid var(--paper-rim);
+              border-bottom: 1px solid var(--paper-rim);
+              padding: 10px 0;
+            }
+            .d-calc {
+              display: grid;
+              gap: 0;
+              font-size: 12.5px;
+              color: var(--ink-muted);
+              line-height: 1.3;
+            }
+            .d-calc span {
+              display: flex;
+              justify-content: space-between;
+              gap: 8px;
+            }
+            .d-calc b {
+              font-family: var(--font-title);
+              font-weight: 400;
+              font-size: 19px;
+              color: var(--ink);
+              border-top: 1px solid var(--paper-rim);
+              margin-top: 2px;
+              text-align: right;
+            }
+            .d-tokcol {
+              display: grid;
+              justify-items: center;
+              gap: 4px;
+            }
+            .d-tsum {
+              margin: 0;
+              font-size: 13px;
+              color: var(--ink-muted);
+              white-space: nowrap;
+            }
+            .d-tsum b {
+              font-family: var(--font-title);
+              font-weight: 400;
+              font-size: 16px;
+              color: var(--ink);
+            }
+            .d-toks {
+              display: flex;
+              gap: 8px;
+              justify-content: center;
+            }
+            .d-tok.bless {
+              background: radial-gradient(circle at 35% 30%, #f3dc8a, #b0802c 70%);
+            }
+            .d-tok.curse {
+              background: radial-gradient(circle at 35% 30%, #6b4d78, #24162b 70%);
+            }
+            .d-tok.bless::after,
+            .d-tok.curse::after {
+              content: '';
+              width: 30px;
+              height: 30px;
+              background: #fff7e2;
+              mask: var(--ic) center / contain no-repeat;
+              -webkit-mask: var(--ic) center / contain no-repeat;
+            }
+            .d-tok.bless {
+              --ic: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cGF0aCBkPSJNMTIuNSA1Ni43cS41LTEgMi0xLjJhNCA0IDAgMCAxIDItLjVsMS4xLS4xcTEuNCAwIDIuNi4zbDQgLjZhMTQgMTQgMCAwIDAgNCAzLjJxMS40LjkgMyAuOWguOXEuOS0uMSAxLjgtMi44bC0uMy0uNy0uOC0xLS4xLTEuOC0uMi0xLjZ2LTQuMXEwLS45LjItMS41bC4xLTEuNy4zLS41LjUtLjYuMy0uN3EtLjktMi42LTEuOC0yLjZIMzFxLTEuNSAwLTIuOS43LTIgMS4xLTQgMy4ybC0zLjkuNi0zLjIuMnEtMS41IDAtMi40LS41LTEuNyAwLTIuMS0xdC0uNS0yLjZ2LS42cTAtMS42LjYtMi44dDEuMi0xLjZxLjYtLjggMS40LTEuMS4zIDIuNi44IDQgLjUgMS4yIDEuMiAxLjguNS40LjkuNGwuNy0uMXEuNS0uMS44LS44IDEtMS45IDMuMi00IDIuMi0yLjQgNi40LTMuMyAxLjUtLjMgMy4zLS4zbC4zLTMuMkExMiAxMiAwIDAgMSAzNiAyM3EyLjQtMi4yIDQuMS0zLjFsLjgtMS4xLjEtLjVxMC0uNS0uNC0xYTEyIDEyIDAgMCAwLTUuOC0ycS4zLS44IDEtMS40LjUtLjYgMS42LTEgMS0uNSAyLjktLjZoLjZxMS41IDAgMi40LjR0MS4yIDIuMXEuMyAxIC4zIDEuOWwuMiAxcTAgMS41LS4zIDIuNmwtLjUgNGExOSAxOSAwIDAgMC0zLjIgNHEtLjkgMS41LS45IDN2MXEuMi44IDIuNiAxLjdsLjgtLjNxLjItLjMuNi0uM3QuNi0uNWwxLjUtLjEgMS43LS4yYTE2IDE2IDAgMCAxIDQgMGwxLjcuMiAxLjcuMXEuNC41IDEgLjhsLjguM3EyLjQtLjkgMi41LTEuOGwuMS0xLjFxMC0xLjUtLjktMi45LS45LTEuOC0zLTQtLjUtMS45LS42LTMuOS0uNC0xLjUtLjMtMyAwLTEuNi40LTIuNS4zLTEuOCAxLjItMmE2IDYgMCAwIDEgMi41LS41aC43cTEuNiAwIDIuOC42IDEgLjQgMS42IDF0MSAxLjRxLTIuNi4zLTQgMS0xLjIuNS0xLjggMS0uNS41LS41IDFsLjIuNS45IDFhMTkgMTkgMCAwIDEgNCAzLjIgMTEgMTEgMCAwIDEgMy4xIDYuNHEuMyAxLjUuMyAzLjJsMy40LjNxNC4zIDEgNi40IDMuMiAyIDIuNCAzLjEgNC4xLjUuNiAxIC44bC42LjFxLjQgMCAuOS0uNC42LS42IDEuMi0xLjguNi0xLjQuOC00IC45LjQgMS4zIDEgLjcuNiAxIDEuNy41IDEuMi44IDIuOHYuNnEwIDEuNS0uNCAyLjYtLjQgMS0yLjEgMS0xIC41LTIuNS41bC0zLjItLjItMy44LS42YTIyIDIyIDAgMCAwLTQtMy4yIDcgNyAwIDAgMC0zLS43aC0xcS0uOSAwLTEuOCAyLjYgMCAuNC40LjcuMy44LjYgMWwuMyAxLjhWNDhhMTUgMTUgMCAwIDEgMCA0djEuNmwtLjMgMS43LS4zLjYtLjMuNS0uNC43cS45IDIuNyAxLjggMi44aDFxMS41IDAgMy0xIDItMSA0LTMuMWw2LjQtMSAxLjIuMmE0IDQgMCAwIDEgMS45LjVxMS44IDAgMiAxLjIuNiAxIC41IDIuM3YuN2wtLjcgMi44cS0uNSAxLjEtMSAxLjYtLjUuOS0xLjQgMS0uMi0yLjYtLjgtMy45dC0xLjItMS44cS0uNC0uNC0xLS40bC0uNS4xcS0uNS4yLTEgLjgtMSAxLjctMy4xIDRhMTEgMTEgMCAwIDEtNi40IDMuMXEtMS44LjUtMy40LjUgMCAxLjctLjMgMy4yLS44IDQuMy0zLjIgNi40YTI2IDI2IDAgMCAxLTQgMy4xbC0uOCAxLS4yLjZxMCAuNS41LjkuNi42IDEuOCAxLjIgMS40LjYgNCAuOC0uMy44LTEgMS41bC0xLjYuOXEtMS4yLjYtMi44LjdINTlhNiA2IDAgMCAxLTIuNS0uNHEtLjktLjQtMS4yLTIuMS0uNC0uOS0uNC0yLjUgMC0xLjQuMy0zLjIgMC0xLjguNi0zLjhhMTYgMTYgMCAwIDAgMy00IDUgNSAwIDAgMCAxLTIuOGwtLjItMXEwLTEtMi41LTItLjQgMC0uNy40bC0uOC41LS4zLjEtMS43LjMtMS42LjJoLTQuMXEtMSAwLTEuNy0uMmwtMS41LS4zLTEuMi0uNi0uOC0uNHEtMi40IDEtMi42IDJ2LjhxMCAxLjYgMSAzIDEgMiAzLjEgNGwuOCA2LjQtLjIgMS4ycTAgMS0uMyAxLjktLjMgMS44LTEuMiAyLS45LjUtMi40LjVoLS42YTggOCAwIDAgMS0zLS43cS0xLS40LTEuNi0xdC0uOS0xLjRxMi42LS4yIDMuOC0uOCAxLjUtLjYgMi0xLjIuNC0uNC40LTFsLS4xLS41cS0uMi0uNS0uOC0xLTEuOS0xLTQtMy4xYTEyIDEyIDAgMCAxLTMuMy02LjRxLS4zLTEuNC0uMy0zLjItMS44IDAtMy4zLS41LTQuMi0uOC02LjQtMy0yLjEtMi40LTMuMi00LjEtLjMtLjYtLjgtLjhsLS43LS4xcS0uNCAwLTEgLjRUMTYgNjEuMnQtLjggMy44YTIgMiAwIDAgMS0xLjQtLjlxLS42LS42LTEuMi0xLjZ0LS42LTIuOFY1OXEwLTEuNS41LTIuM20yMy43LTMuNSAxLjYgMi45cTEuMyAxLjMgMy40IDIuN2ExMCAxMCAwIDAgMCA1LjYgNC45cTEuNS42IDMuMi43dDMuMi0uN2wyLjctMS43cTEuNS0xIDMtMy4yYTE1IDE1IDAgMCAwIDQuOC01LjZxLjYtMS41LjctMy40IDAtMS41LS43LTMtLjYtMS40LTEuOC0yLjl0LTMtMi43YTE3IDE3IDAgMCAwLTMtMy4ycS0xLjYtMS4yLTIuNy0xLjctMS41LS42LTMuMi0uN2ExMiAxMiAwIDAgMC02LjIgMi40IDE1IDE1IDAgMCAwLTIuNiAzLjJxLTIuMiAxLjItMy40IDIuNy0xIDEuNS0xLjYgMy0uNSAxLjUtLjYgMyAwIDEuOC42IDMuM000My41IDlsMS4yLTEuNHEuNi0uNiAxLjItLjYgMCAuNC4zLjlsMSAuOHEuNS4zIDEuOS40aDEuN3ExLjMgMCAyLS40bC44LS44cS40LS40LjQtMSAuNCAwIDEuMi43TDU2LjQgOWwxIDJxLTIgMC0zIC43VDUzIDEzLjJsLS42IDIgLjQgNiAuNiA0LjMtLjktLjYtLjktLjQtMS4yLS42LS41LS4yLS4zLjJhNyA3IDAgMCAwLTIuMiAxbC0uNi42cTAtMS44LjQtNC4ybC41LTYuMS0uNi0ycS0uNS0uOC0xLjYtMS41LTEtLjgtMy0uOHptMiA3OS40cTEtLjcgMS41LTEuNWwuNi0yLjJhMTA2IDEwNiAwIDAgMC0xLTEwLjJsLjcuNmE1IDUgMCAwIDAgMi4yLjlsLjMuM3EuMyAwIC41LS4zYTUgNSAwIDAgMCAyLjEtMWwxLS41YTUyIDUyIDAgMCAwLTEuMSAxMC4ycTAgMS4zLjYgMi4yLjQuOCAxLjUgMS40IDEgLjggMyAuOGwtMSAyLTEuMiAxLjNxLS43LjYtMS4yLjYgMC0uNC0uNC0uOS0uMy0uNS0uOS0uOGwtMi0uNGgtMS42bC0yIC40LS45LjhxLS4zLjQtLjMgMS0uNiAwLTEuMi0uN0w0My41IDkxcS0uNy0xLTEuMS0yIDIgMCAzLS42bTI5LTM1IC40LS44cS44LS45IDEtMi4xbC40LS41LS4zLS41LS41LTEtLjYtMS0uNC0uOCAxMC4yLjlxMS4xLS4xIDIuMi0uNi44LS40IDEuNC0xLjYuOC0xIC44LTNsMiAxIDEuMSAxLjNxLjguNi44IDEuMi0uNSAwLS45LjUtLjUgMC0uOC45LS4zLjYtLjQgMS44djEuOHEwIDEuMy40IDEuOC4zLjcuOCAxdDEgLjNxMCAuOC0uOSAxLjNsLTEuMiAxcS0xIC43LTIgMS4xYTUgNSAwIDAgMC0yLTQuNXEtMS4yLS41LTIuMy0uNWExMDEgMTAxIDAgMCAwLTEwLjIgMU03IDUzLjdxLjQgMCAuOS0uNS4zIDAgLjYtLjdsLjUtMnYtMS4ycS0uMi0xLjUtLjUtMmwtLjYtLjlxLS40LS4zLTEtLjMgMC0uOC41LTEuNGwxLjYtMXEuNy0uNSAyLTFhNiA2IDAgMCAwIC42IDNxLjUgMSAxLjUgMS41dDIuMi42bDUuOC0uNSA0LjQtLjYtLjcgMWE1IDUgMCAwIDAtMSAydi40YTUgNSAwIDAgMCAxIDIuMnEuMy41LjcuNmwtNC40LS4zLTUuOC0uNnEtMS4yLjEtMi4yLjZ0LTEuNSAxLjZxLS43IDEtLjcgM2ExNyAxNyAwIDAgMS0zLjUtMi4xcS0uNC0uNi0uNC0xLjRNMS40IDQ4cS41LS42IDEuNS0xLjJ0Mi4xLS42cS40IDAgMSAuNmwuOCAxLjIuNiAxLjgtLjYgMnEtLjMuOS0uOSAxLjQtLjQuNi0uOS42YTQgNCAwIDAgMS0yLjEtLjZxLTEtLjUtMS41LTEuNC0xLS43LTEuNC0yem00NC44IDQ3cTAtLjcuNS0xLjJ0MS4zLS42cS44LS41IDItLjYgMSAwIDEuOC42LjggMCAxLjQuNnQuNiAxLjJxMCAxLS42IDJsLTEuNCAxLjZxLS43LjgtMS44IDEuNC0xLjItLjYtMi0xLjRUNDYuNyA5N3QtLjUtMm0uNi05MnEuNS0uOCAxLjItMS41LjgtLjggMi0xLjUgMSAuNyAxLjggMS41TDUzLjIgM3EuNiAxIC42IDIgMCAuNy0uNiAxLjJ0LTEuNC42cS0uNy41LTEuOC42LTEuMi0uMS0yLS42LS44IDAtMS4zLS42YTIgMiAwIDAgMS0uNS0xLjJxMC0xIC42LTJNOTMgNDhsLjgtMS4ycS41LS42IDEuMi0uNmEzIDMgMCAwIDEgMS44LjZsMS43IDEuMiAxLjUgMS44cS0uOCAxLjMtMS41IDItLjguOS0xLjcgMS40LS43LjYtMS44LjYtLjggMC0xLjItLjYtLjUtLjUtLjgtMS40bC0uNC0ycTAtLjkuNC0xLjhtMCAwIi8+PC9zdmc+Cg==);
+            }
+            .d-tok.curse {
+              --ic: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cGF0aCBkPSJNMTUuNyA2NS45cTMuOCA3LjUgNy41IDExLjYgMy43IDQuMiA3IDYgMy4zIDEuNiA1LjQgMS44bC44LTMuOS45LTIuOCAxLjItMS43IDEuNC0xLjZxNC4zLTQuNSA5LjUtN2E4MiA4MiAwIDAgMSA5LjQtNC4zUTY0IDYyLjUgNjkgNjJhNDEgNDEgMCAwIDAtMTAuOCA1LjVxLTQuMSAzLTYuNCA2LjItMi4yIDMuMi0zIDYuMmwtLjkgNS44cTAgMi4yLjggNC42bDEuOSA0LjcgMi42IDQuNi0xLjUuMnEtLjkgMC0xLjYuM2gtMi4ycS00IDAtNi42LS4zbC0zLS4zQTI4IDI4IDAgMCAxIDIzIDg5YTc4IDc4IDAgMCAxLTktMTdxLTItMy42LTMtOGExMzEgMTMxIDAgMCAxLTIuNS0xNi45QTk1IDk1IDAgMCAwIDE1LjcgNjZtMjEgMS45QTkyIDkyIDAgMCAxIDY3LjUgNDhhNjEgNjEgMCAwIDEgMjAtMy43aDEuN3EyLjIgNC42IDIuMiAxMS4xdjJBNjEgNjEgMCAwIDEgODguMSA3NGExMjMgMTIzIDAgMCAxLTExLjMgMjMuOCAxODYgMTg2IDAgMCAwIDMuMy0yNS40bC4xLTIuNmEzNyAzNyAwIDAgMC0xLjctMTAuOSA1IDUgMCAwIDAtMi41LTIuNmgtNC44UTY3IDU2LjMgNjEgNThhMTI5IDEyOSAwIDAgMC0yNC4zIDkuN20wLTQ0LjRBMzYgMzYgMCAwIDEgNDcuNCA2LjJsMi40LTJMNTEuNCAzbDEuNy0xTDU1LjMuOGwxLjItLjMtMSAuNnEwIC40LS41LjdsLTEgLjZMNTEgNWExOCAxOCAwIDAgMC0zLjMgNS40TDQ1LjggMTZhMzggMzggMCAwIDAtMS43IDkuNSAzOCAzOCAwIDAgMCAxIDkuM3EuNyAzIDIuMyA1LjQuOSAxLjggMi40IDIuM2wzLjYgMXE0IC40IDYuOC40IDMgMCA3LjItMUE2OCA2OCAwIDAgMCAzOSA1OC4zbC0uMi0uNC0uMy0uNi0uNy0xLjFxLTIuNi05LTMtMTMuOGwtLjMtNi40cTAtNi40IDIuMi0xMi43bTAgMCIvPjwvc3ZnPgo=);
+            }
+            .d-toks > span {
+              display: grid;
+              justify-items: center;
+              gap: 2px;
+              font-size: 12px;
+              line-height: 1.15;
+              text-align: center;
+              color: var(--ink-muted);
+            }
+            .d-tok {
+              width: 52px;
+              height: 52px;
+              border-radius: 50%;
+              flex: none;
+              display: grid;
+              place-items: center;
+              color: #f3ead6;
+              font-family: var(--font-title);
+              font-size: 20px;
+              background: radial-gradient(circle at 35% 30%, #5d5650, #1d1a17 70%);
+              box-shadow:
+                0 0 0 3px #8a6f45,
+                0 3px 6px rgb(0 0 0 / 0.4);
+            }
+            .d-out {
+              display: grid;
+              justify-items: center;
+              line-height: 1.1;
+              color: var(--good);
+            }
+            .d-out strong {
+              font-family: var(--font-title);
+              font-weight: 400;
+              font-size: 26px;
+              letter-spacing: 0.08em;
+            }
+            .d-out span {
+              font-family: var(--font-title);
+              font-size: 19px;
+            }
+            .d-out small {
+              font-size: 13px;
+              color: var(--ink-muted);
+            }
+            .d-out.bad {
+              color: var(--flag);
+            }
+            .d-draw {
+              justify-self: stretch;
+              text-align: center;
+              border: 1px solid var(--accent);
+              border-radius: 999px;
+              padding: 8px;
+              font-family: var(--font-title);
+              font-size: 17px;
+              background: rgb(255 255 255 / 0.25);
+            }
+            .d-row {
+              display: flex;
+              align-items: center;
+              gap: 10px;
+              min-height: 52px;
+              border: 1px solid var(--paper-rim);
+              border-radius: 8px;
+              padding: 6px 12px;
+              background: rgb(255 255 255 / 0.2);
+            }
+            .d-row .k {
+              font-family: var(--font-title);
+              width: 22px;
+              text-align: center;
+              font-size: 18px;
+            }
+            .d-row .w {
+              flex: 1;
+              display: grid;
+              line-height: 1.25;
+            }
+            .d-row .tag {
+              font-family: var(--font-label);
+              font-style: italic;
+              font-size: 13px;
+              color: var(--good);
+              white-space: nowrap;
+            }
+            .d-row.on {
+              border-color: var(--accent);
+              box-shadow: inset 0 0 0 1.5px var(--accent);
+            }
+            .d-row .nums {
+              display: grid;
+              gap: 4px;
+              justify-items: end;
+            }
+            .d-row .nums span {
+              display: inline-flex;
+              gap: 8px;
+              align-items: center;
+              font-size: 14px;
+              color: var(--ink-muted);
+            }
+            .p-sheet .d-row .nums > span {
+              display: grid;
+              justify-items: center;
+              gap: 2px;
+              font-size: 12px;
+            }
+            .d-calc em {
+              font-style: normal;
+            }
+            .d-sub {
+              display: flex;
+              gap: 8px;
+              margin-left: 32px;
+            }
+            .d-sub span {
+              flex: 1;
+              border: 1px solid var(--paper-rim);
+              border-radius: 8px;
+              padding: 6px 10px;
+              font-size: 14px;
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              gap: 6px;
+            }
+            .d-sub span.on {
+              border-color: var(--accent);
+              box-shadow: inset 0 0 0 1.5px var(--accent);
+            }
+            .d-foot {
+              display: flex;
+              justify-content: flex-end;
+              gap: 10px;
+              margin-top: 6px;
+            }
+            .d-pill {
+              border: 1px solid var(--paper-rim);
+              border-radius: 999px;
+              padding: 8px 20px;
+              font-size: 16px;
+              text-align: center;
+            }
+            .d-pill.pri {
+              background: var(--brass);
+              border-color: #a9843f;
+              font-family: var(--font-title);
+            }
+            .d-stats {
+              display: flex;
+              gap: 22px;
+              justify-content: center;
+            }
+            .d-stats span {
+              display: grid;
+              justify-items: center;
+              font-size: 12px;
+              text-transform: uppercase;
+              letter-spacing: 0.08em;
+              font-family: var(--font-label);
+              color: var(--ink-muted);
+            }
+            .d-stats b {
+              font-family: var(--font-title);
+              font-weight: 400;
+              font-size: 26px;
+              color: var(--ink);
+              letter-spacing: 0;
+              text-transform: none;
+            }
+            .d-acts {
+              display: grid;
+              gap: 6px;
+            }
+            .d-acts > small {
+              font-family: var(--font-label);
+              font-size: 12px;
+              letter-spacing: 0.1em;
+              text-transform: uppercase;
+              color: var(--ink-muted);
+            }
+            .d-acts div {
+              display: flex;
+              gap: 8px;
+              flex-wrap: wrap;
+            }
+            .d-acts div span {
+              border: 1px solid var(--paper-rim);
+              border-radius: 8px;
+              padding: 8px 14px;
+              background: rgb(255 255 255 / 0.2);
+              display: inline-flex;
+              gap: 8px;
+              align-items: center;
+            }
+            .d-acts i.ac {
+              width: 18px;
+              height: 18px;
+              background: var(--ink);
+              mask: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cGF0aCBkPSJNMTAwIDUwIDQ0LjQgODYuNiA1NC4yIDYyIDAgNzZsMTMuOS0yNkwwIDI0bDU0LjIgMTQtOS44LTI0LjZ6bTAgMCIvPjwvc3ZnPgo=)
+                center / contain no-repeat;
+              -webkit-mask: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cGF0aCBkPSJNMTAwIDUwIDQ0LjQgODYuNiA1NC4yIDYyIDAgNzZsMTMuOS0yNkwwIDI0bDU0LjIgMTQtOS44LTI0LjZ6bTAgMCIvPjwvc3ZnPgo=)
+                center / contain no-repeat;
+            }
+            .d-acts div span.d-face {
+              padding: 0;
+              border-radius: 50%;
+              background: url(https://arkhamdb.com/bundles/cards/01001.png) 3% 33% / 240% auto;
+            }
+            .d-acts i.ac + i.ac {
+              margin-left: -4px;
+            }
+            .d-acts i.fr {
+              width: 20px;
+              height: 20px;
+              background: var(--ink);
+              mask: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cGF0aCBkPSJNMTAwIDUxLjhBOTMgOTMgMCAwIDAgNzMuOSA1MyA4OCA4OCAwIDAgMCA1MSA2MGwtLjMtOS43LTEwIDQuOGE2MiA2MiAwIDAgMC05LjMgNS41bC0xLjctNi4xcS0uOC0zLTEuNy01LjVBODEgODEgMCAwIDAgMCA2OS43YTg0IDg0IDAgMCAxIDE0LjMtMjEuMyAxMDMgMTAzIDAgMCAxIDIxLjEtMTguMSA4NiA4NiAwIDAgMSA0LjEgMTRxNS0zIDExLTUuMSA2LTIuMiAxMi00YTEwMiAxMDIgMCAwIDEgMCAxMC43cTkuMy0uMSAxOC44IDEuNXQxOC43IDQuNG0wIDAiLz48L3N2Zz4K)
+                center / contain no-repeat;
+              -webkit-mask: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cGF0aCBkPSJNMTAwIDUxLjhBOTMgOTMgMCAwIDAgNzMuOSA1MyA4OCA4OCAwIDAgMCA1MSA2MGwtLjMtOS43LTEwIDQuOGE2MiA2MiAwIDAgMC05LjMgNS41bC0xLjctNi4xcS0uOC0zLTEuNy01LjVBODEgODEgMCAwIDAgMCA2OS43YTg0IDg0IDAgMCAxIDE0LjMtMjEuMyAxMDMgMTAzIDAgMCAxIDIxLjEtMTguMSA4NiA4NiAwIDAgMSA0LjEgMTRxNS0zIDExLTUuMSA2LTIuMiAxMi00YTEwMiAxMDIgMCAwIDEgMCAxMC43cTkuMy0uMSAxOC44IDEuNXQxOC43IDQuNG0wIDAiLz48L3N2Zz4K)
+                center / contain no-repeat;
+            }
+            .d-clues {
+              display: flex;
+              gap: 6px;
+            }
+            .d-clues i {
+              width: 26px;
+              height: 26px;
+              border-radius: 50%;
+              border: 2px solid #2a8a86;
+            }
+            .d-clues i.on {
+              background: radial-gradient(circle at 35% 30%, #6fd0c6, #1f7471);
+            }
+            .d-crow {
+              display: flex;
+              gap: 10px;
+              justify-content: center;
+            }
+            .d-crow img {
+              width: 132px;
+              border-radius: 8px;
+              box-shadow: 0 6px 14px rgb(0 0 0 / 0.35);
+            }
+            .d-crow img.on {
+              outline: 3px solid var(--accent);
+              outline-offset: 3px;
+            }
+            .d-logs {
+              display: grid;
+              gap: 10px;
+              overflow: hidden;
+            }
+            .t-alone .d-logs {
+              height: 600px;
+            }
+            .t-alone.tall .d-logs {
+              height: 660px;
+            }
+            .t-alone.tall .d-page {
+              height: 800px;
+            }
+            .p-full .d-logs {
+              height: 740px;
+              justify-self: stretch;
+              -webkit-mask-image: linear-gradient(black 90%, transparent);
+              mask-image: linear-gradient(black 90%, transparent);
+            }
+            .p-sheet .d-logs {
+              height: 640px;
+              -webkit-mask-image: linear-gradient(black 88%, transparent);
+              mask-image: linear-gradient(black 88%, transparent);
+            }
+            .d-log {
+              display: grid;
+              gap: 2px;
+              border-top: 1px solid var(--accent);
+              padding-top: 6px;
+              font-size: 15px;
+            }
+            .d-log small {
+              font-family: var(--font-label);
+              font-size: 12px;
+              letter-spacing: 0.1em;
+              text-transform: uppercase;
+              color: var(--ink-muted);
+            }
+            .d-log .gb {
+              justify-self: end;
+              border: 1px solid var(--paper-rim);
+              border-radius: 999px;
+              padding: 2px 12px;
+              font-size: 13px;
+            }
+
+            /* Tablet: the card beside the page, a landscape card above it, or the page alone */
+            .t-beside {
+              display: flex;
+              align-items: center;
+            }
+            .t-beside .d-card {
+              width: 330px;
+              transform: rotate(-1.5deg);
+              margin-right: -40px;
+            }
+            .t-beside .d-page {
+              width: 600px;
+              padding-left: 70px;
+            }
+            .t-above {
+              display: grid;
+              justify-items: center;
+            }
+            .t-above .d-card {
+              width: 420px;
+              margin-bottom: -30px;
+            }
+            .t-above .d-page {
+              width: 600px;
+              padding-top: 48px;
+            }
+            .t-alone .d-page {
+              width: 600px;
+            }
+            .t-alone.wide .d-page {
+              width: 880px;
+            }
+            .t-alone.narrow .d-page {
+              width: 440px;
+            }
+            .t-portrait {
+              display: grid;
+              justify-items: center;
+            }
+            .t-portrait .d-page {
+              width: 600px;
+              padding-top: 64px;
+            }
+            .d-portrait {
+              width: 112px;
+              height: 112px;
+              border-radius: 50%;
+              border: 3px solid var(--accent);
+              background: url(https://arkhamdb.com/bundles/cards/01001.png) 0% 30% / 210% auto;
+              box-shadow: 0 8px 20px rgb(0 0 0 / 0.5);
+              margin-bottom: -56px;
+              position: relative;
+              z-index: 2;
+            }
+
+            /* Phone: a bottom sheet, its card peeking out on the left; card dialogs fill the screen */
+            .p-sheet {
+              position: relative;
+              display: grid;
+            }
+            .p-sheet .d-page {
+              border-radius: 18px 18px 0 0;
+              border-bottom: 0;
+              padding: 22px 18px 22px;
+              gap: 12px;
+            }
+            .p-sheet .d-page::before {
+              content: '';
+              position: absolute;
+              top: 8px;
+              left: calc(50% - 20px);
+              width: 40px;
+              height: 4px;
+              border-radius: 2px;
+              background: var(--paper-rim);
+            }
+            .p-sheet.p-peek .d-card {
+              position: absolute;
+              left: 14px;
+              top: -118px;
+              width: 168px;
+              transform: rotate(-2deg);
+              z-index: 3;
+            }
+            .p-sheet.p-peek.p-land .d-card {
+              width: 200px;
+              top: -84px;
+            }
+            .p-sheet.p-peek.p-round .d-portrait {
+              position: absolute;
+              left: 18px;
+              top: -46px;
+              width: 96px;
+              height: 96px;
+              margin: 0;
+            }
+            .p-sheet.p-peek .d-page hgroup {
+              margin-left: 172px;
+              padding: 0;
+              justify-items: start;
+              text-align: left;
+              min-height: 96px;
+              align-content: end;
+            }
+            .p-sheet.p-peek.p-land .d-page hgroup {
+              margin-left: 204px;
+              min-height: 64px;
+            }
+            .p-sheet.p-peek.p-land .tap {
+              margin-left: 204px;
+            }
+            .p-sheet.p-peek.p-round .d-page hgroup {
+              margin-left: 108px;
+              min-height: 56px;
+            }
+            .p-sheet .d-page hgroup p {
+              font-size: 14px;
+            }
+            .p-sheet.p-peek .d-page:has(> .d-x) hgroup p {
+              padding-right: 40px;
+            }
+            .p-sheet .d-page h2 {
+              font-size: 23px;
+            }
+            .p-sheet .tap {
+              margin: 0;
+              margin-left: 172px;
+              margin-top: -8px;
+              font-size: 12px;
+              color: var(--ink-muted);
+              font-style: italic;
+              font-family: var(--font-label);
+            }
+            .p-sheet .d-foot {
+              justify-content: stretch;
+            }
+            .p-sheet .d-foot .d-pill {
+              flex: 1;
+            }
+            .p-sheet .d-row {
+              min-height: 48px;
+            }
+            .p-sheet .d-sk b {
+              font-size: 20px;
+            }
+            .p-sheet .d-sk span {
+              padding: 4px 6px;
+              gap: 6px;
+            }
+            .p-sheet .d-test {
+              grid-template-columns: 92px 1fr auto;
+              gap: 8px;
+            }
+            .p-sheet .d-toks {
+              gap: 5px;
+            }
+            .p-sheet .d-tok {
+              width: 42px;
+              height: 42px;
+              font-size: 17px;
+            }
+            .p-sheet .d-tok::after {
+              width: 24px !important;
+              height: 24px !important;
+            }
+            .p-sheet .d-out strong {
+              font-size: 22px;
+            }
+            .p-sheet .d-sk i {
+              width: 28px;
+              height: 28px;
+            }
+            .p-sheet .d-sk i::after {
+              width: 22px;
+              height: 22px;
+            }
+            .p-sheet .d-sub {
+              margin-left: 0;
+            }
+            .d-sub span {
+              white-space: nowrap;
+            }
+            .p-full {
+              position: absolute;
+              inset: 0;
+              background: var(--paper)
+                radial-gradient(ellipse at 50% 40%, transparent 55%, var(--paper-deep) 130%);
+              display: grid;
+              align-content: start;
+              justify-items: center;
+              gap: 12px;
+              padding: 64px 18px 20px;
+            }
+            .p-full {
+              padding-top: 22px;
+            }
+            .p-full .d-card {
+              width: 300px;
+              box-shadow: 0 8px 18px rgb(0 0 0 / 0.35);
+            }
+            .p-full .d-card.land {
+              width: 354px;
+            }
+            .p-full .d-acts {
+              justify-self: stretch;
+            }
+            .p-full hgroup {
+              padding: 0;
+              display: grid;
+              justify-items: center;
+              text-align: center;
+            }
+            .p-full hgroup p {
+              margin: 0;
+              font-family: var(--font-label);
+              font-style: italic;
+              color: var(--ink-muted);
+              font-size: 14px;
+            }
+            .p-full h2 {
+              font-family: var(--font-title);
+              font-weight: 400;
+              font-size: 24px;
+              margin: 0;
+            }
+          </style>
+
+          <article class="pair">
+            <div class="pair-head">
+              <h3>Investigate</h3>
+              <p class="note">
+                A full skill test: the tested skill, the modifier for committed cards, the token and
+                the calculation. Passed carries the clues discovered, 1 unless a card says more.
+              </p>
+            </div>
+            <div class="pair-shots">
+              <figure>
+                <div class="frame" data-w="1180" data-h="820">
+                  <div class="scr t">
+                    <div class="t-beside">
+                      <img
+                        class="d-card"
+                        src="https://arkhamdb.com/bundles/cards/01112.png"
+                        alt=""
+                      />
+                      <div class="d-page">
+                        <span class="d-x">×</span>
+                        <hgroup>
+                          <p>
+                            <span class="d-face"></span>Roland Banks · Intellect test against shroud
+                            1
+                          </p>
+                          <h2>Investigate Hallway</h2>
+                        </hgroup>
+                        <div class="d-sk">
+                          <span class="sk-willpower" title="Willpower"><i></i><b>3</b></span
+                          ><span class="sk-intellect on" title="Intellect"><i></i><b>3</b></span
+                          ><span class="sk-combat" title="Combat"><i></i><b>4</b></span
+                          ><span class="sk-agility" title="Agility"><i></i><b>2</b></span>
+                        </div>
+                        <div class="d-step">
+                          <span class="lab"
+                            >Modifier<small>Committed cards and card effects</small></span
+                          ><span class="d-num"><i>−</i><b>+1</b><i>+</i></span>
+                        </div>
+                        <div class="d-test">
+                          <div class="d-calc">
+                            <span>Intellect<em>3</em></span
+                            ><span>Modifier<em>+1</em></span
+                            ><b>4</b>
+                          </div>
+                          <div class="d-tokcol">
+                            <div class="d-toks">
+                              <span><span class="d-tok bless"></span>Bless +2</span
+                              ><span><span class="d-tok curse"></span>Curse −2</span
+                              ><span><span class="d-tok">−1</span></span>
+                            </div>
+                            <p class="d-tsum">Tokens +2 −2 −1 = <b>−1</b></p>
+                          </div>
+                          <div class="d-out">
+                            <strong>PASS</strong><span>3 ≥ 1</span><small>by 2</small>
+                          </div>
+                        </div>
+                        <div class="d-row on">
+                          <span class="k">✓</span
+                          ><span class="w"
+                            >Passed<small>Discover clues at the Hallway</small
+                            ><span class="tag">from the game</span></span
+                          ><span class="nums"
+                            ><span
+                              >Clues <span class="d-num"><i>−</i><b>1</b><i>+</i></span></span
+                            ></span
+                          >
+                        </div>
+                        <div class="d-row">
+                          <span class="k">✗</span><span class="w">Failed</span>
+                        </div>
+                        <div class="d-foot">
+                          <span class="d-pill">Undo</span><span class="d-pill pri">Done</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <figcaption class="label">Tablet</figcaption>
+              </figure>
+              <figure>
+                <div class="frame ph" data-w="390" data-h="844">
+                  <div class="scr p">
+                    <div class="p-sheet p-peek p-">
+                      <img
+                        class="d-card"
+                        src="https://arkhamdb.com/bundles/cards/01112.png"
+                        alt=""
+                      />
+                      <div class="d-page">
+                        <hgroup>
+                          <p><span class="d-face"></span>Roland Banks · Intellect (1)</p>
+                          <h2>Investigate Hallway</h2>
+                        </hgroup>
+                        <p class="tap">Tap the card to read it.</p>
+                        <div class="d-sk">
+                          <span class="sk-willpower" title="Willpower"><i></i><b>3</b></span
+                          ><span class="sk-intellect on" title="Intellect"><i></i><b>3</b></span
+                          ><span class="sk-combat" title="Combat"><i></i><b>4</b></span
+                          ><span class="sk-agility" title="Agility"><i></i><b>2</b></span>
+                        </div>
+                        <div class="d-step">
+                          <span class="lab"
+                            >Modifier<small>Committed cards and card effects</small></span
+                          ><span class="d-num"><i>−</i><b>+1</b><i>+</i></span>
+                        </div>
+                        <div class="d-test">
+                          <div class="d-calc">
+                            <span>Intellect<em>3</em></span
+                            ><span>Modifier<em>+1</em></span
+                            ><b>4</b>
+                          </div>
+                          <div class="d-tokcol">
+                            <div class="d-toks">
+                              <span><span class="d-tok bless"></span>Bless +2</span
+                              ><span><span class="d-tok curse"></span>Curse −2</span
+                              ><span><span class="d-tok">−1</span></span>
+                            </div>
+                            <p class="d-tsum">Tokens +2 −2 −1 = <b>−1</b></p>
+                          </div>
+                          <div class="d-out">
+                            <strong>PASS</strong><span>3 ≥ 1</span><small>by 2</small>
+                          </div>
+                        </div>
+                        <div class="d-row on">
+                          <span class="k">✓</span
+                          ><span class="w"
+                            >Passed<small>Discover clues at the Hallway</small
+                            ><span class="tag">from the game</span></span
+                          ><span class="nums"
+                            ><span
+                              >Clues <span class="d-num"><i>−</i><b>1</b><i>+</i></span></span
+                            ></span
+                          >
+                        </div>
+                        <div class="d-row">
+                          <span class="k">✗</span><span class="w">Failed</span>
+                        </div>
+                        <div class="d-foot">
+                          <span class="d-pill">Undo</span><span class="d-pill pri">Done</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <figcaption class="label">Phone</figcaption>
+              </figure>
+            </div>
+          </article>
+          <article class="pair">
+            <div class="pair-head">
+              <h3>Fight, evade</h3>
+              <p class="note">
+                Same test block. Damage dealt is a number in the Passed row: 1 for a basic fight,
+                raised for a weapon (here +1 from a .45 Automatic). Evade has no number.
+              </p>
+            </div>
+            <div class="pair-shots">
+              <figure>
+                <div class="frame" data-w="1180" data-h="820">
+                  <div class="scr t">
+                    <div class="t-beside">
+                      <img
+                        class="d-card"
+                        src="https://arkhamdb.com/bundles/cards/01116.png"
+                        alt=""
+                      />
+                      <div class="d-page">
+                        <span class="d-x">×</span>
+                        <hgroup>
+                          <p>
+                            <span class="d-face"></span>Roland Banks · Combat test against fight 4
+                          </p>
+                          <h2>Fight Ghoul Priest</h2>
+                        </hgroup>
+                        <div class="d-sk">
+                          <span class="sk-willpower" title="Willpower"><i></i><b>3</b></span
+                          ><span class="sk-intellect" title="Intellect"><i></i><b>3</b></span
+                          ><span class="sk-combat on" title="Combat"><i></i><b>4</b></span
+                          ><span class="sk-agility" title="Agility"><i></i><b>2</b></span>
+                        </div>
+                        <div class="d-step">
+                          <span class="lab"
+                            >Modifier<small>Committed cards and card effects</small></span
+                          ><span class="d-num"><i>−</i><b>+1</b><i>+</i></span>
+                        </div>
+                        <div class="d-test">
+                          <div class="d-calc">
+                            <span>Combat<em>4</em></span
+                            ><span>Modifier<em>+1</em></span
+                            ><b>5</b>
+                          </div>
+                          <div class="d-tokcol">
+                            <div class="d-toks">
+                              <span><span class="d-tok">−1</span></span>
+                            </div>
+                          </div>
+                          <div class="d-out">
+                            <strong>PASS</strong><span>4 ≥ 4</span><small>by 0</small>
+                          </div>
+                        </div>
+                        <div class="d-row on">
+                          <span class="k">✓</span
+                          ><span class="w"
+                            >Passed<small>Damage to the Ghoul Priest</small
+                            ><span class="tag">from the game</span></span
+                          ><span class="nums"
+                            ><span
+                              >Damage <span class="d-num"><i>−</i><b>2</b><i>+</i></span></span
+                            ></span
+                          >
+                        </div>
+                        <div class="d-row">
+                          <span class="k">✗</span
+                          ><span class="w"
+                            >Failed<small>Retaliate: the Ghoul Priest attacks</small></span
+                          >
+                        </div>
+                        <div class="d-foot">
+                          <span class="d-pill">Undo</span><span class="d-pill pri">Done</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <figcaption class="label">Tablet</figcaption>
+              </figure>
+              <figure>
+                <div class="frame ph" data-w="390" data-h="844">
+                  <div class="scr p">
+                    <div class="p-sheet p-peek p-">
+                      <img
+                        class="d-card"
+                        src="https://arkhamdb.com/bundles/cards/01116.png"
+                        alt=""
+                      />
+                      <div class="d-page">
+                        <hgroup>
+                          <p><span class="d-face"></span>Roland Banks · Combat (4)</p>
+                          <h2>Fight Ghoul Priest</h2>
+                        </hgroup>
+                        <p class="tap">Tap the card to read it.</p>
+                        <div class="d-sk">
+                          <span class="sk-willpower" title="Willpower"><i></i><b>3</b></span
+                          ><span class="sk-intellect" title="Intellect"><i></i><b>3</b></span
+                          ><span class="sk-combat on" title="Combat"><i></i><b>4</b></span
+                          ><span class="sk-agility" title="Agility"><i></i><b>2</b></span>
+                        </div>
+                        <div class="d-step">
+                          <span class="lab"
+                            >Modifier<small>Committed cards and card effects</small></span
+                          ><span class="d-num"><i>−</i><b>+1</b><i>+</i></span>
+                        </div>
+                        <div class="d-test">
+                          <div class="d-calc">
+                            <span>Combat<em>4</em></span
+                            ><span>Modifier<em>+1</em></span
+                            ><b>5</b>
+                          </div>
+                          <div class="d-tokcol">
+                            <div class="d-toks">
+                              <span><span class="d-tok">−1</span></span>
+                            </div>
+                          </div>
+                          <div class="d-out">
+                            <strong>PASS</strong><span>4 ≥ 4</span><small>by 0</small>
+                          </div>
+                        </div>
+                        <div class="d-row on">
+                          <span class="k">✓</span
+                          ><span class="w"
+                            >Passed<small>Damage to the Ghoul Priest</small
+                            ><span class="tag">from the game</span></span
+                          ><span class="nums"
+                            ><span
+                              >Damage <span class="d-num"><i>−</i><b>2</b><i>+</i></span></span
+                            ></span
+                          >
+                        </div>
+                        <div class="d-row">
+                          <span class="k">✗</span
+                          ><span class="w"
+                            >Failed<small>Retaliate: the Ghoul Priest attacks</small></span
+                          >
+                        </div>
+                        <div class="d-foot">
+                          <span class="d-pill">Undo</span><span class="d-pill pri">Done</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <figcaption class="label">Phone</figcaption>
+              </figure>
+            </div>
+          </article>
+          <article class="pair">
+            <div class="pair-head">
+              <h3>Attack of opportunity</h3>
+              <p class="note">
+                Damage and horror come from the enemy card and sit in the row as numbers, so a soak
+                or a card effect is changed before Done.
+              </p>
+            </div>
+            <div class="pair-shots">
+              <figure>
+                <div class="frame" data-w="1180" data-h="820">
+                  <div class="scr t">
+                    <div class="t-beside">
+                      <img
+                        class="d-card"
+                        src="https://arkhamdb.com/bundles/cards/01116.png"
+                        alt=""
+                      />
+                      <div class="d-page">
+                        <span class="d-x">×</span>
+                        <hgroup>
+                          <p><span class="d-face"></span>Roland Banks takes a resource</p>
+                          <h2>Attack of opportunity</h2>
+                        </hgroup>
+                        <p class="d-quote">The Ghoul Priest is engaged and ready, so it attacks.</p>
+                        <div class="d-row on">
+                          <span class="k">1</span
+                          ><span class="w"
+                            >Take the attack<small
+                              >Set by the enemy, change it for card effects</small
+                            ><span class="tag">from the game</span></span
+                          ><span class="nums"
+                            ><span
+                              >Damage <span class="d-num"><i>−</i><b>2</b><i>+</i></span></span
+                            ><span
+                              >Horror <span class="d-num"><i>−</i><b>2</b><i>+</i></span></span
+                            ></span
+                          >
+                        </div>
+                        <div class="d-row">
+                          <span class="k">2</span
+                          ><span class="w"
+                            >No attack<small>The action does not provoke</small></span
+                          >
+                        </div>
+                        <div class="d-foot">
+                          <span class="d-pill">Undo</span><span class="d-pill pri">Done</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <figcaption class="label">Tablet</figcaption>
+              </figure>
+              <figure>
+                <div class="frame ph" data-w="390" data-h="844">
+                  <div class="scr p">
+                    <div class="p-sheet p-peek p-">
+                      <img
+                        class="d-card"
+                        src="https://arkhamdb.com/bundles/cards/01116.png"
+                        alt=""
+                      />
+                      <div class="d-page">
+                        <hgroup>
+                          <p><span class="d-face"></span>Roland Banks takes a resource</p>
+                          <h2>Attack of opportunity</h2>
+                        </hgroup>
+                        <p class="tap">Tap the card to read it.</p>
+                        <div class="d-row on">
+                          <span class="k">1</span
+                          ><span class="w"
+                            >Take the attack<small
+                              >Set by the enemy, change it for card effects</small
+                            ><span class="tag">from the game</span></span
+                          ><span class="nums"
+                            ><span
+                              >Damage <span class="d-num"><i>−</i><b>2</b><i>+</i></span></span
+                            ><span
+                              >Horror <span class="d-num"><i>−</i><b>2</b><i>+</i></span></span
+                            ></span
+                          >
+                        </div>
+                        <div class="d-row">
+                          <span class="k">2</span
+                          ><span class="w"
+                            >No attack<small>The action does not provoke</small></span
+                          >
+                        </div>
+                        <div class="d-foot">
+                          <span class="d-pill">Undo</span><span class="d-pill pri">Done</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <figcaption class="label">Phone</figcaption>
+              </figure>
+            </div>
+          </article>
+          <article class="pair">
+            <div class="pair-head">
+              <h3>Encounter card test</h3>
+              <p class="note">
+                The treachery is the card and its revelation runs the same test block. A fail that
+                offers a choice shows it under the row, with its number.
+              </p>
+            </div>
+            <div class="pair-shots">
+              <figure>
+                <div class="frame" data-w="1180" data-h="820">
+                  <div class="scr t">
+                    <div class="t-beside">
+                      <img
+                        class="d-card"
+                        src="https://arkhamdb.com/bundles/cards/01167.png"
+                        alt=""
+                      />
+                      <div class="d-page">
+                        <span class="d-x">×</span>
+                        <hgroup>
+                          <p><span class="d-face"></span>Drawn by Roland Banks · Revelation</p>
+                          <h2>Crypt Chill</h2>
+                        </hgroup>
+                        <div class="d-sk">
+                          <span class="sk-willpower on" title="Willpower"><i></i><b>3</b></span
+                          ><span class="sk-intellect" title="Intellect"><i></i><b>3</b></span
+                          ><span class="sk-combat" title="Combat"><i></i><b>4</b></span
+                          ><span class="sk-agility" title="Agility"><i></i><b>2</b></span>
+                        </div>
+                        <div class="d-step">
+                          <span class="lab"
+                            >Modifier<small>Committed cards and card effects</small></span
+                          ><span class="d-num"><i>−</i><b>0</b><i>+</i></span>
+                        </div>
+                        <div class="d-test">
+                          <div class="d-calc">
+                            <span>Willpower<em>3</em></span
+                            ><span>Modifier<em>+0</em></span
+                            ><b>3</b>
+                          </div>
+                          <div class="d-tokcol">
+                            <div class="d-toks">
+                              <span><span class="d-tok skull"></span>Skull −1</span>
+                            </div>
+                          </div>
+                          <div class="d-out bad">
+                            <strong>FAIL</strong><span>2 < 4</span><small>by 2</small>
+                          </div>
+                        </div>
+                        <div class="d-row">
+                          <span class="k">✓</span
+                          ><span class="w">Passed<small>Nothing happens</small></span>
+                        </div>
+                        <div class="d-row on">
+                          <span class="k">✗</span
+                          ><span class="w"
+                            >Failed<small>Choose and discard 1 asset you control</small
+                            ><span class="tag">from the game</span></span
+                          >
+                        </div>
+                        <div class="d-sub">
+                          <span class="on">Discard an asset</span
+                          ><span
+                            >Take damage <span class="d-num"><i>−</i><b>2</b><i>+</i></span></span
+                          >
+                        </div>
+                        <div class="d-foot">
+                          <span class="d-pill">Undo</span><span class="d-pill pri">Done</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <figcaption class="label">Tablet</figcaption>
+              </figure>
+              <figure>
+                <div class="frame ph" data-w="390" data-h="844">
+                  <div class="scr p">
+                    <div class="p-sheet p-peek p-">
+                      <img
+                        class="d-card"
+                        src="https://arkhamdb.com/bundles/cards/01167.png"
+                        alt=""
+                      />
+                      <div class="d-page">
+                        <hgroup>
+                          <p><span class="d-face"></span>Drawn by Roland Banks</p>
+                          <h2>Crypt Chill</h2>
+                        </hgroup>
+                        <p class="tap">Tap the card to read it.</p>
+                        <div class="d-sk">
+                          <span class="sk-willpower on" title="Willpower"><i></i><b>3</b></span
+                          ><span class="sk-intellect" title="Intellect"><i></i><b>3</b></span
+                          ><span class="sk-combat" title="Combat"><i></i><b>4</b></span
+                          ><span class="sk-agility" title="Agility"><i></i><b>2</b></span>
+                        </div>
+                        <div class="d-step">
+                          <span class="lab"
+                            >Modifier<small>Committed cards and card effects</small></span
+                          ><span class="d-num"><i>−</i><b>0</b><i>+</i></span>
+                        </div>
+                        <div class="d-test">
+                          <div class="d-calc">
+                            <span>Willpower<em>3</em></span
+                            ><span>Modifier<em>+0</em></span
+                            ><b>3</b>
+                          </div>
+                          <div class="d-tokcol">
+                            <div class="d-toks">
+                              <span><span class="d-tok skull"></span>Skull −1</span>
+                            </div>
+                          </div>
+                          <div class="d-out bad">
+                            <strong>FAIL</strong><span>2 < 4</span><small>by 2</small>
+                          </div>
+                        </div>
+                        <div class="d-row">
+                          <span class="k">✓</span
+                          ><span class="w">Passed<small>Nothing happens</small></span>
+                        </div>
+                        <div class="d-row on">
+                          <span class="k">✗</span
+                          ><span class="w"
+                            >Failed<small>Choose and discard 1 asset you control</small
+                            ><span class="tag">from the game</span></span
+                          >
+                        </div>
+                        <div class="d-sub">
+                          <span class="on">Discard an asset</span
+                          ><span
+                            >Take damage <span class="d-num"><i>−</i><b>2</b><i>+</i></span></span
+                          >
+                        </div>
+                        <div class="d-foot">
+                          <span class="d-pill">Undo</span><span class="d-pill pri">Done</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <figcaption class="label">Phone</figcaption>
+              </figure>
+            </div>
+          </article>
+          <article class="pair">
+            <div class="pair-head">
+              <h3>Other decisions</h3>
+              <p class="note">
+                Spawn, Prey and card choices show the card whose text asks. Plain rows answer on
+                tap, so there is no Done. When the choice is a location, Pick on the map lowers the
+                dialog and lights up the allowed locations; tapping one answers.
+              </p>
+            </div>
+            <div class="pair-shots">
+              <figure>
+                <div class="frame" data-w="1180" data-h="820">
+                  <div class="scr t">
+                    <div class="t-beside">
+                      <img
+                        class="d-card"
+                        src="https://arkhamdb.com/bundles/cards/01160.png"
+                        alt=""
+                      />
+                      <div class="d-page">
+                        <span class="d-x">×</span>
+                        <hgroup>
+                          <p>Lead investigator decides</p>
+                          <h2>Where does the Ghoul Minion spawn?</h2>
+                        </hgroup>
+                        <div class="d-row on">
+                          <span class="k">1</span
+                          ><span class="w"
+                            >Hallway<small>Roland Banks is here</small
+                            ><span class="tag">from the game</span></span
+                          >
+                        </div>
+                        <div class="d-row">
+                          <span class="k">2</span><span class="w">Attic</span>
+                        </div>
+                        <div class="d-row">
+                          <span class="k">3</span><span class="w">Cellar</span>
+                        </div>
+                        <div class="d-foot">
+                          <span class="d-pill">Pick on the map</span
+                          ><span class="d-pill">Undo</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <figcaption class="label">Tablet</figcaption>
+              </figure>
+              <figure>
+                <div class="frame ph" data-w="390" data-h="844">
+                  <div class="scr p">
+                    <div class="p-sheet p-peek p-">
+                      <img
+                        class="d-card"
+                        src="https://arkhamdb.com/bundles/cards/01160.png"
+                        alt=""
+                      />
+                      <div class="d-page">
+                        <hgroup>
+                          <p>Lead investigator decides</p>
+                          <h2>Spawn Ghoul Minion</h2>
+                        </hgroup>
+                        <p class="tap">Tap the card to read it.</p>
+                        <div class="d-row on">
+                          <span class="k">1</span
+                          ><span class="w"
+                            >Hallway<small>Roland Banks is here</small
+                            ><span class="tag">from the game</span></span
+                          >
+                        </div>
+                        <div class="d-row">
+                          <span class="k">2</span><span class="w">Attic</span>
+                        </div>
+                        <div class="d-row">
+                          <span class="k">3</span><span class="w">Cellar</span>
+                        </div>
+                        <div class="d-foot">
+                          <span class="d-pill">Pick on the map</span
+                          ><span class="d-pill">Undo</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <figcaption class="label">Phone</figcaption>
+              </figure>
+            </div>
+          </article>
+          <article class="pair">
+            <div class="pair-head">
+              <h3>Skill test</h3>
+              <p class="note">
+                Opened from a skill on the investigator panel: the investigator shows as a round
+                portrait, not a card. A calculator, so no footer; tap a second skill to add it.
+              </p>
+            </div>
+            <div class="pair-shots">
+              <figure>
+                <div class="frame" data-w="1180" data-h="820">
+                  <div class="scr t">
+                    <div class="t-portrait">
+                      <span class="d-portrait"></span>
+                      <div class="d-page">
+                        <span class="d-x">×</span>
+                        <div class="hg">
+                          <h2>Skill test</h2>
+                          <p class="d-quote">Roland Banks</p>
+                        </div>
+                        <div class="d-sk">
+                          <span class="sk-willpower on" title="Willpower"><i></i><b>3</b></span
+                          ><span class="sk-intellect" title="Intellect"><i></i><b>3</b></span
+                          ><span class="sk-combat" title="Combat"><i></i><b>4</b></span
+                          ><span class="sk-agility on" title="Agility"><i></i><b>2</b></span>
+                        </div>
+                        <div class="d-step">
+                          <span class="lab">Difficulty</span
+                          ><span class="d-num"><i>−</i><b>3</b><i>+</i></span>
+                        </div>
+                        <div class="d-step">
+                          <span class="lab"
+                            >Modifier<small>Committed cards and card effects</small></span
+                          ><span class="d-num"><i>−</i><b>0</b><i>+</i></span>
+                        </div>
+                        <div class="d-test">
+                          <div class="d-calc">
+                            <span>Willpower<em>3</em></span
+                            ><span>Agility<em>+2</em></span
+                            ><span>Modifier<em>+0</em></span
+                            ><b>5</b>
+                          </div>
+                          <div class="d-tokcol">
+                            <div class="d-toks">
+                              <span><span class="d-tok skull"></span>Skull −1</span>
+                            </div>
+                          </div>
+                          <div class="d-out">
+                            <strong>PASS</strong><span>4 ≥ 3</span><small>by 1</small>
+                          </div>
+                        </div>
+                        <div class="d-draw">Draw again</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <figcaption class="label">Tablet</figcaption>
+              </figure>
+              <figure>
+                <div class="frame ph" data-w="390" data-h="844">
+                  <div class="scr p">
+                    <div class="p-sheet p-peek p-round">
+                      <span class="d-portrait"></span>
+                      <div class="d-page">
+                        <span class="d-x">×</span>
+                        <hgroup>
+                          <p>Roland Banks</p>
+                          <h2>Skill test</h2>
+                        </hgroup>
+                        <div class="d-sk">
+                          <span class="sk-willpower on" title="Willpower"><i></i><b>3</b></span
+                          ><span class="sk-intellect" title="Intellect"><i></i><b>3</b></span
+                          ><span class="sk-combat" title="Combat"><i></i><b>4</b></span
+                          ><span class="sk-agility on" title="Agility"><i></i><b>2</b></span>
+                        </div>
+                        <div class="d-step">
+                          <span class="lab">Difficulty</span
+                          ><span class="d-num"><i>−</i><b>3</b><i>+</i></span>
+                        </div>
+                        <div class="d-step">
+                          <span class="lab"
+                            >Modifier<small>Committed cards and card effects</small></span
+                          ><span class="d-num"><i>−</i><b>0</b><i>+</i></span>
+                        </div>
+                        <div class="d-test">
+                          <div class="d-calc">
+                            <span>Willpower<em>3</em></span
+                            ><span>Agility<em>+2</em></span
+                            ><span>Modifier<em>+0</em></span
+                            ><b>5</b>
+                          </div>
+                          <div class="d-tokcol">
+                            <div class="d-toks">
+                              <span><span class="d-tok skull"></span>Skull −1</span>
+                            </div>
+                          </div>
+                          <div class="d-out">
+                            <strong>PASS</strong><span>4 ≥ 3</span><small>by 1</small>
+                          </div>
+                        </div>
+                        <div class="d-draw">Draw again</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <figcaption class="label">Phone</figcaption>
+              </figure>
+            </div>
+          </article>
+          <article class="pair">
+            <div class="pair-head">
+              <h3>Clue payment</h3>
+              <p class="note">
+                The act lies on top on a tablet and peeks out on the left on a phone; payers are
+                rows with their faces and clue tokens to tap.
+              </p>
+            </div>
+            <div class="pair-shots">
+              <figure>
+                <div class="frame" data-w="1180" data-h="820">
+                  <div class="scr t">
+                    <div class="t-above">
+                      <img
+                        class="d-card"
+                        src="https://arkhamdb.com/bundles/cards/01109.png"
+                        alt=""
+                      />
+                      <div class="d-page">
+                        <span class="d-x">×</span>
+                        <hgroup>
+                          <p>Act 2 · 4 clues to advance</p>
+                          <h2>Who pays the clues?</h2>
+                        </hgroup>
+                        <p class="d-quote">4 of 4 clues chosen</p>
+                        <div class="d-row">
+                          <span class="d-face big roland"></span
+                          ><span class="w">Roland Banks<small>1 of 3 clues</small></span
+                          ><span class="d-clues"><i class="on"></i><i></i><i></i></span>
+                        </div>
+                        <div class="d-row">
+                          <span class="d-face big daisy"></span
+                          ><span class="w">Daisy Walker<small>3 of 3 clues</small></span
+                          ><span class="d-clues"
+                            ><i class="on"></i><i class="on"></i><i class="on"></i
+                          ></span>
+                        </div>
+                        <div class="d-foot">
+                          <span class="d-pill">Split evenly</span
+                          ><span class="d-pill pri">Pay</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <figcaption class="label">Tablet</figcaption>
+              </figure>
+              <figure>
+                <div class="frame ph" data-w="390" data-h="844">
+                  <div class="scr p">
+                    <div class="p-sheet p-peek p-land">
+                      <img
+                        class="d-card"
+                        src="https://arkhamdb.com/bundles/cards/01109.png"
+                        alt=""
+                      />
+                      <div class="d-page">
+                        <hgroup>
+                          <p>Act 2 · 4 clues to advance</p>
+                          <h2>Who pays the clues?</h2>
+                        </hgroup>
+                        <p class="d-quote">4 of 4 clues chosen</p>
+                        <div class="d-row">
+                          <span class="d-face big roland"></span
+                          ><span class="w">Roland Banks<small>1 of 3 clues</small></span
+                          ><span class="d-clues"><i class="on"></i><i></i><i></i></span>
+                        </div>
+                        <div class="d-row">
+                          <span class="d-face big daisy"></span
+                          ><span class="w">Daisy Walker<small>3 of 3 clues</small></span
+                          ><span class="d-clues"
+                            ><i class="on"></i><i class="on"></i><i class="on"></i
+                          ></span>
+                        </div>
+                        <div class="d-foot">
+                          <span class="d-pill">Split evenly</span
+                          ><span class="d-pill pri">Pay</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <figcaption class="label">Phone</figcaption>
+              </figure>
+            </div>
+          </article>
+          <article class="pair">
+            <div class="pair-head">
+              <h3>Enemy details</h3>
+              <p class="note">
+                Card left, stats and actions on the page. One row of actions: each action icon is
+                one action it costs (Fight shows two because Frozen in Fear makes the first fight
+                cost 1 more), and free ones carry the free-ability icon from the game. Fight turns
+                this page into the fight test above while the card stays put.
+              </p>
+            </div>
+            <div class="pair-shots">
+              <figure>
+                <div class="frame" data-w="1180" data-h="820">
+                  <div class="scr t">
+                    <div class="t-beside">
+                      <img
+                        class="d-card"
+                        src="https://arkhamdb.com/bundles/cards/01116.png"
+                        alt=""
+                      />
+                      <div class="d-page">
+                        <span class="d-x">×</span>
+                        <hgroup>
+                          <p><span class="d-face"></span>Engaged with Roland Banks · Hallway</p>
+                          <h2>Ghoul Priest</h2>
+                        </hgroup>
+                        <div class="d-stats">
+                          <span><b>4</b>Fight</span><span><b>3 / 5</b>Health</span
+                          ><span><b>4</b>Evade</span>
+                        </div>
+                        <div class="d-acts">
+                          <small>Actions</small>
+                          <div>
+                            <span><i class="ac"></i><i class="ac"></i>Fight</span
+                            ><span><i class="ac"></i>Evade</span
+                            ><span><i class="ac"></i>Engage</span
+                            ><span><i class="fr"></i>Fight</span
+                            ><span><i class="fr"></i>Evade</span>
+                          </div>
+                        </div>
+                        <div class="d-acts">
+                          <small>Card effects</small>
+                          <div><span>Damage</span><span>Disengage</span><span>Defeat</span></div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <figcaption class="label">Tablet</figcaption>
+              </figure>
+              <figure>
+                <div class="frame ph" data-w="390" data-h="844">
+                  <div class="scr p">
+                    <div class="p-sheet p-peek p-">
+                      <img
+                        class="d-card"
+                        src="https://arkhamdb.com/bundles/cards/01116.png"
+                        alt=""
+                      />
+                      <div class="d-page">
+                        <span class="d-x">×</span>
+                        <hgroup>
+                          <p><span class="d-face"></span>Engaged with Roland Banks</p>
+                          <h2>Ghoul Priest</h2>
+                        </hgroup>
+                        <p class="tap">Tap the card to read it.</p>
+                        <div class="d-stats">
+                          <span><b>4</b>Fight</span><span><b>3 / 5</b>Health</span
+                          ><span><b>4</b>Evade</span>
+                        </div>
+                        <div class="d-acts">
+                          <small>Actions</small>
+                          <div>
+                            <span><i class="ac"></i><i class="ac"></i>Fight</span
+                            ><span><i class="ac"></i>Evade</span><span><i class="fr"></i>Fight</span
+                            ><span><i class="fr"></i>Evade</span>
+                          </div>
+                        </div>
+                        <div class="d-acts">
+                          <small>Card effects</small>
+                          <div><span>Damage</span><span>Disengage</span><span>Defeat</span></div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <figcaption class="label">Phone</figcaption>
+              </figure>
+            </div>
+          </article>
+          <article class="pair">
+            <div class="pair-head">
+              <h3>Location details</h3>
+              <p class="note">
+                Same spread as the enemy. Clues read left / printed like enemy health (the Hallway
+                prints none; the Attic would show 2 / 2 and then 1 / 2). On phones every dialog,
+                card dialogs included, is the same sheet with the card peeking out on the left.
+              </p>
+            </div>
+            <div class="pair-shots">
+              <figure>
+                <div class="frame" data-w="1180" data-h="820">
+                  <div class="scr t">
+                    <div class="t-beside">
+                      <img
+                        class="d-card"
+                        src="https://arkhamdb.com/bundles/cards/01112.png"
+                        alt=""
+                      />
+                      <div class="d-page">
+                        <span class="d-x">×</span>
+                        <hgroup>
+                          <p>Revealed · Roland Banks is here</p>
+                          <h2>Hallway</h2>
+                        </hgroup>
+                        <div class="d-stats">
+                          <span><b>1</b>Shroud</span><span><b>0 / 0</b>Clues</span>
+                        </div>
+                        <div class="d-acts">
+                          <small>Here</small>
+                          <div>
+                            <span><span class="d-face"></span>Roland Banks</span>
+                          </div>
+                        </div>
+                        <div class="d-acts">
+                          <small>Actions</small>
+                          <div>
+                            <span><i class="ac"></i>Investigate</span
+                            ><span><i class="ac"></i>Move here</span
+                            ><span><i class="fr"></i>Clue</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <figcaption class="label">Tablet</figcaption>
+              </figure>
+              <figure>
+                <div class="frame ph" data-w="390" data-h="844">
+                  <div class="scr p">
+                    <div class="p-sheet p-peek p-">
+                      <img
+                        class="d-card"
+                        src="https://arkhamdb.com/bundles/cards/01112.png"
+                        alt=""
+                      />
+                      <div class="d-page">
+                        <span class="d-x">×</span>
+                        <hgroup>
+                          <p>Roland Banks is here</p>
+                          <h2>Hallway</h2>
+                        </hgroup>
+                        <p class="tap">Tap the card to read it.</p>
+                        <div class="d-stats">
+                          <span><b>1</b>Shroud</span><span><b>0 / 0</b>Clues</span>
+                        </div>
+                        <div class="d-acts">
+                          <small>Actions</small>
+                          <div>
+                            <span><i class="ac"></i>Investigate</span
+                            ><span><i class="ac"></i>Move here</span
+                            ><span><i class="fr"></i>Clue</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <figcaption class="label">Phone</figcaption>
+              </figure>
+            </div>
+          </article>
+          <article class="pair">
+            <div class="pair-head">
+              <h3>Card zoom</h3>
+              <p class="note">
+                Treacheries and player cards in play: the card beside its owner and its actions.
+                Test to discard opens the test block beside the same card.
+              </p>
+            </div>
+            <div class="pair-shots">
+              <figure>
+                <div class="frame" data-w="1180" data-h="820">
+                  <div class="scr t">
+                    <div class="t-beside">
+                      <img
+                        class="d-card"
+                        src="https://arkhamdb.com/bundles/cards/01164.png"
+                        alt=""
+                      />
+                      <div class="d-page">
+                        <span class="d-x">×</span>
+                        <hgroup>
+                          <p><span class="d-face"></span>In Roland Banks' threat area</p>
+                          <h2>Frozen in Fear</h2>
+                        </hgroup>
+                        <p class="d-quote">
+                          Your first move or fight each round costs 1 more action. At the end of
+                          your turn, test Willpower (3) to discard it.
+                        </p>
+                        <div class="d-acts">
+                          <small>Card actions</small>
+                          <div>
+                            <span><i class="fr"></i>Test to discard</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <figcaption class="label">Tablet</figcaption>
+              </figure>
+              <figure>
+                <div class="frame ph" data-w="390" data-h="844">
+                  <div class="scr p">
+                    <div class="p-sheet p-peek p-">
+                      <img
+                        class="d-card"
+                        src="https://arkhamdb.com/bundles/cards/01164.png"
+                        alt=""
+                      />
+                      <div class="d-page">
+                        <span class="d-x">×</span>
+                        <hgroup>
+                          <p><span class="d-face"></span>Roland Banks' threat area</p>
+                          <h2>Frozen in Fear</h2>
+                        </hgroup>
+                        <p class="tap">Tap the card to read it.</p>
+                        <div class="d-acts">
+                          <small>Card actions</small>
+                          <div>
+                            <span><i class="fr"></i>Test to discard</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <figcaption class="label">Phone</figcaption>
+              </figure>
+            </div>
+          </article>
+          <article class="pair">
+            <div class="pair-head">
+              <h3>Agenda and act</h3>
+              <p class="note">Landscape cards lie on top. Advance is the one primary.</p>
+            </div>
+            <div class="pair-shots">
+              <figure>
+                <div class="frame" data-w="1180" data-h="820">
+                  <div class="scr t">
+                    <div class="t-above">
+                      <img
+                        class="d-card"
+                        src="https://arkhamdb.com/bundles/cards/01109.png"
+                        alt=""
+                      />
+                      <div class="d-page">
+                        <span class="d-x">×</span>
+                        <hgroup>
+                          <p>Act 2</p>
+                          <h2>The Barrier</h2>
+                        </hgroup>
+                        <p class="d-quote">
+                          0 of 3 clues on the act. Advance when the investigators spend them.
+                        </p>
+                        <div class="d-acts">
+                          <small>On the act</small>
+                          <div><span>Put clues</span><span>Adjust</span></div>
+                        </div>
+                        <div class="d-foot"><span class="d-pill pri">Advance</span></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <figcaption class="label">Tablet</figcaption>
+              </figure>
+              <figure>
+                <div class="frame ph" data-w="390" data-h="844">
+                  <div class="scr p">
+                    <div class="p-sheet p-peek p-land">
+                      <img
+                        class="d-card"
+                        src="https://arkhamdb.com/bundles/cards/01109.png"
+                        alt=""
+                      />
+                      <div class="d-page">
+                        <span class="d-x">×</span>
+                        <hgroup>
+                          <p>Act 2 · 0 of 3 clues</p>
+                          <h2>The Barrier</h2>
+                        </hgroup>
+                        <p class="tap">Tap the card to read it.</p>
+                        <div class="d-acts">
+                          <small>On the act</small>
+                          <div><span>Put clues</span><span>Adjust</span></div>
+                        </div>
+                        <div class="d-foot"><span class="d-pill pri">Advance</span></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <figcaption class="label">Phone</figcaption>
+              </figure>
+            </div>
+          </article>
+          <article class="pair">
+            <div class="pair-head">
+              <h3>Scenario reference</h3>
+              <p class="note">
+                The reference card is upright, so it lies beside the page with its piles.
+              </p>
+            </div>
+            <div class="pair-shots">
+              <figure>
+                <div class="frame" data-w="1180" data-h="820">
+                  <div class="scr t">
+                    <div class="t-beside">
+                      <img
+                        class="d-card"
+                        src="https://arkhamdb.com/bundles/cards/01104.png"
+                        alt=""
+                      />
+                      <div class="d-page">
+                        <span class="d-x">×</span>
+                        <hgroup>
+                          <p>Scenario · Easy / Standard</p>
+                          <h2>The Gathering</h2>
+                        </hgroup>
+                        <div class="d-stats">
+                          <span><b>2</b>Set aside</span><span><b>0</b>Victory</span>
+                        </div>
+                        <p class="d-quote">
+                          Tap a chaos token on the card to read its effect larger.
+                        </p>
+                        <div class="d-acts">
+                          <small>Piles</small>
+                          <div><span>Set-aside cards</span><span>Victory display</span></div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <figcaption class="label">Tablet</figcaption>
+              </figure>
+              <figure>
+                <div class="frame ph" data-w="390" data-h="844">
+                  <div class="scr p">
+                    <div class="p-sheet p-peek p-">
+                      <img
+                        class="d-card"
+                        src="https://arkhamdb.com/bundles/cards/01104.png"
+                        alt=""
+                      />
+                      <div class="d-page">
+                        <span class="d-x">×</span>
+                        <hgroup>
+                          <p>Easy / Standard</p>
+                          <h2>The Gathering</h2>
+                        </hgroup>
+                        <p class="tap">Tap the card to read it.</p>
+                        <div class="d-acts">
+                          <small>Piles</small>
+                          <div><span>Set aside (2)</span><span>Victory (0)</span></div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <figcaption class="label">Phone</figcaption>
+              </figure>
+            </div>
+          </article>
+          <article class="pair">
+            <div class="pair-head">
+              <h3>Encounter piles</h3>
+              <p class="note">
+                No subject card: the cards are the content, so it stays a wide page.
+              </p>
+            </div>
+            <div class="pair-shots">
+              <figure>
+                <div class="frame" data-w="1180" data-h="820">
+                  <div class="scr t">
+                    <div class="t-alone wide">
+                      <div class="d-page">
+                        <span class="d-x">×</span>
+                        <hgroup>
+                          <p>Encounter deck</p>
+                          <h2>Discard pile (7)</h2>
+                        </hgroup>
+                        <div class="d-crow">
+                          <img
+                            class="on"
+                            src="https://arkhamdb.com/bundles/cards/01160.png"
+                            alt=""
+                          /><img
+                            class=""
+                            src="https://arkhamdb.com/bundles/cards/01160.png"
+                            alt=""
+                          /><img
+                            class=""
+                            src="https://arkhamdb.com/bundles/cards/01159.png"
+                            alt=""
+                          /><img
+                            class=""
+                            src="https://arkhamdb.com/bundles/cards/01159.png"
+                            alt=""
+                          /><img
+                            class=""
+                            src="https://arkhamdb.com/bundles/cards/01159.png"
+                            alt=""
+                          />
+                        </div>
+                        <div class="d-acts">
+                          <small>Ghoul Minion</small>
+                          <div><span>Spawn</span><span>Set aside</span></div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <figcaption class="label">Tablet</figcaption>
+              </figure>
+              <figure>
+                <div class="frame ph" data-w="390" data-h="844">
+                  <div class="scr p">
+                    <div class="p-sheet">
+                      <div class="d-page">
+                        <span class="d-x">×</span>
+                        <hgroup>
+                          <p>Encounter deck</p>
+                          <h2>Discard pile (7)</h2>
+                        </hgroup>
+                        <div class="d-crow">
+                          <img
+                            class="on"
+                            src="https://arkhamdb.com/bundles/cards/01160.png"
+                            alt=""
+                          /><img
+                            class=""
+                            src="https://arkhamdb.com/bundles/cards/01159.png"
+                            alt=""
+                          />
+                        </div>
+                        <div class="d-acts">
+                          <small>Ghoul Minion</small>
+                          <div><span>Spawn</span><span>Set aside</span></div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <figcaption class="label">Phone</figcaption>
+              </figure>
+            </div>
+          </article>
+          <article class="pair">
+            <div class="pair-head">
+              <h3>Game log</h3>
+              <p class="note">
+                Not tied to a moment in the game and can grow long, so it is a page of its own
+                rather than a dialog: the full height of the tablet at the wide width, the whole
+                phone screen, scrolling inside. × returns to the table.
+              </p>
+            </div>
+            <div class="pair-shots">
+              <figure>
+                <div class="frame" data-w="1180" data-h="820">
+                  <div class="scr t">
+                    <div class="t-alone wide tall">
+                      <div class="d-page">
+                        <span class="d-x">×</span>
+                        <hgroup>
+                          <p>The Gathering</p>
+                          <h2>Game log</h2>
+                        </hgroup>
+                        <div class="d-logs">
+                          <div class="d-log">
+                            <small>Round 1 · Investigation</small
+                            ><span>Roland Banks investigates the Study</span
+                            ><span>Roland Banks discovers 1 clue</span
+                            ><span>Roland Banks moves to the Hallway</span
+                            ><span class="gb">Go back here</span>
+                          </div>
+                          <div class="d-log">
+                            <small>Round 1 · Enemy</small><span>No enemies attack</span
+                            ><span class="gb">Go back here</span>
+                          </div>
+                          <div class="d-log">
+                            <small>Round 2 · Upkeep</small><span>Roland Banks gains 1 resource</span
+                            ><span>Roland Banks draws 1 card</span><span>Round 2 ends</span
+                            ><span class="gb">Go back here</span>
+                          </div>
+                          <div class="d-log">
+                            <small>Round 3 · Mythos</small><span>1 doom on What’s Going On?!</span
+                            ><span>Roland Banks draws Ravenous Ghoul</span
+                            ><span>Ravenous Ghoul engages Roland Banks</span
+                            ><span class="gb">Go back here</span>
+                          </div>
+                          <div class="d-log">
+                            <small>Round 3 · Investigation</small
+                            ><span>Roland Banks fights the Ravenous Ghoul</span
+                            ><span>Combat test passed by 1</span
+                            ><span>2 damage on the Ravenous Ghoul</span
+                            ><span class="gb">Go back here</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <figcaption class="label">Tablet</figcaption>
+              </figure>
+              <figure>
+                <div class="frame ph" data-w="390" data-h="844">
+                  <div class="scr p">
+                    <div class="p-full">
+                      <span class="d-x">×</span>
+                      <hgroup>
+                        <p>The Gathering</p>
+                        <h2>Game log</h2>
+                      </hgroup>
+                      <div class="d-logs">
+                        <div class="d-log">
+                          <small>Round 1 · Investigation</small
+                          ><span>Roland Banks investigates the Study</span
+                          ><span>Roland Banks discovers 1 clue</span
+                          ><span>Roland Banks moves to the Hallway</span
+                          ><span class="gb">Go back here</span>
+                        </div>
+                        <div class="d-log">
+                          <small>Round 1 · Enemy</small><span>No enemies attack</span
+                          ><span class="gb">Go back here</span>
+                        </div>
+                        <div class="d-log">
+                          <small>Round 2 · Upkeep</small><span>Roland Banks gains 1 resource</span
+                          ><span>Roland Banks draws 1 card</span><span>Round 2 ends</span
+                          ><span class="gb">Go back here</span>
+                        </div>
+                        <div class="d-log">
+                          <small>Round 3 · Mythos</small><span>1 doom on What’s Going On?!</span
+                          ><span>Roland Banks draws Ravenous Ghoul</span
+                          ><span>Ravenous Ghoul engages Roland Banks</span
+                          ><span class="gb">Go back here</span>
+                        </div>
+                        <div class="d-log">
+                          <small>Round 3 · Investigation</small
+                          ><span>Roland Banks fights the Ravenous Ghoul</span
+                          ><span>Combat test passed by 1</span
+                          ><span>2 damage on the Ravenous Ghoul</span
+                          ><span class="gb">Go back here</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <figcaption class="label">Phone</figcaption>
+              </figure>
+            </div>
+          </article>
+          <article class="pair">
+            <div class="pair-head">
+              <h3>Question</h3>
+              <p class="note">
+                Narrow page on a tablet, a full-width sheet on a phone with both buttons sharing the
+                width. No ×. A question before deleting something has a red primary instead.
+              </p>
+            </div>
+            <div class="pair-shots">
+              <figure>
+                <div class="frame" data-w="1180" data-h="820">
+                  <div class="scr t">
+                    <div class="t-alone narrow">
+                      <div class="d-page">
+                        <hgroup>
+                          <p>Round 3 · Mythos</p>
+                          <h2>Go back to this step?</h2>
+                        </hgroup>
+                        <p class="d-quote">The 4 steps after it are taken back.</p>
+                        <div class="d-foot">
+                          <span class="d-pill">Cancel</span><span class="d-pill pri">Go back</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <figcaption class="label">Tablet</figcaption>
+              </figure>
+              <figure>
+                <div class="frame ph" data-w="390" data-h="844">
+                  <div class="scr p">
+                    <div class="p-sheet">
+                      <div class="d-page">
+                        <hgroup>
+                          <p>Round 3 · Mythos</p>
+                          <h2>Go back to this step?</h2>
+                        </hgroup>
+                        <p class="d-quote">The 4 steps after it are taken back.</p>
+                        <div class="d-foot">
+                          <span class="d-pill">Cancel</span><span class="d-pill pri">Go back</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <figcaption class="label">Phone</figcaption>
+              </figure>
+            </div>
+          </article>
+          <script>
+            (() => {
+              const fit = () =>
+                document.querySelectorAll('.frame').forEach((f) => {
+                  const s = f.clientWidth / Number(f.dataset.w);
+                  f.firstElementChild.style.transform = `scale(${s})`;
+                  f.style.height = `${Number(f.dataset.h) * s + 12}px`;
+                });
+              fit();
+              new ResizeObserver(fit).observe(document.body);
+            })();
+          </script>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>
