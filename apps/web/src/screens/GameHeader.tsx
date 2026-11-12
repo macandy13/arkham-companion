@@ -431,9 +431,8 @@ function AgendaStatus({
  * its advance, the act's own action, which the investigator whose turn it is takes once they hold
  * enough, after the players choose who pays when they can (`useCluePayment`). For an act
  * that advances itself once clues lie on it, the token counts those, and a double tap opens their
- * − / + bubble, a correction by hand. Where its objective counts the cards beneath it
- * (`ActView.takesCardsBeneath`), they lie fanned at its corner like the discard pile at the deck's
- * (`HeaderPile`), and a tap opens them in the encounter dialog. Its full card also offers "Advance by hand", after a
+ * − / + bubble, a correction by hand. Once cards lie beneath it, they are fanned at its corner
+ * like the discard pile at the deck's (`HeaderPile`), and a tap opens them in the encounter dialog. Its full card also offers "Advance by hand", after a
  * confirmation, for an objective the engine leaves to the players.
  */
 function ActStatus({
@@ -541,10 +540,7 @@ function ActStatus({
       >
         {tokenAndPlate}
       </HeaderCard>
-      {/* Only where the act counts them, or once a correction left some there. */}
-      {(act.takesCardsBeneath || board.encounter.beneathAct.length > 0) && (
-        <HeaderPile pile="beneathAct" {...piles} />
-      )}
+      {board.encounter.beneathAct.length > 0 && <HeaderPile pile="beneathAct" {...piles} />}
       {full && (
         <footer>
           {actionRow}
