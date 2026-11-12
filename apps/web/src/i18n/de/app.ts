@@ -511,6 +511,7 @@ export const appTexts = {
       disengage: 'Lösen',
       exhaust: 'Erschöpfen',
       ready: 'Bereit',
+      evaded: 'Abgehängt',
       defeat: 'Besiegen',
     },
     close: 'Schließen',

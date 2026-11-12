@@ -119,6 +119,13 @@
 #board
   :is(dialog, dialog > article, [data-mode='location'], header > section)
   > footer:has(> section > h3)
+  button[data-icon='evaded']::before {
+  mask-image: url('../enemies/icons/evaded.svg');
+}
+
+#board
+  :is(dialog, dialog > article, [data-mode='location'], header > section)
+  > footer:has(> section > h3)
   button[data-icon='defeat']::before {
   mask-image: url('../enemies/icons/defeat.svg');
 }

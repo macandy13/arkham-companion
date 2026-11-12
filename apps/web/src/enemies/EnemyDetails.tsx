@@ -189,8 +189,8 @@ export function EnemyDetails({
           {effects.evade.map((investigator) => (
             <ActionButton
               key={investigator}
-              icon="evade"
-              caption={t('enemy.caption.evade')}
+              icon="evaded"
+              caption={t('enemy.caption.evaded')}
               name={t('enemy.evadedBy', { name: board.investigator(investigator).name })}
               disabled={busy}
               onClick={step(() => actions.evadeEnemy(enemy.id, investigator), 'close')}

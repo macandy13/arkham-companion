@@ -507,6 +507,7 @@ export const appTexts = {
       disengage: 'Disengage',
       exhaust: 'Exhaust',
       ready: 'Ready',
+      evaded: 'Evaded',
       defeat: 'Defeat',
     },
     close: 'Close',

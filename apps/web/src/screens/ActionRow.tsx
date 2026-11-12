@@ -14,6 +14,7 @@ export type ActionIcon =
   | 'damage'
   | 'disengage'
   | 'exhaust'
+  | 'evaded'
   | 'ready'
   | 'defeat'
   | 'investigate'
