@@ -8,7 +8,7 @@ import { cardOptionLabels, requestDecision } from './decisions';
 import type { Event } from './events';
 import { moveCardEvent } from './placement';
 import { decisionId, type InstanceId } from './ids';
-import { activeInvestigators } from './investigators';
+import { activeInvestigators, requireInvestigator } from './investigators';
 import { hasKeyword } from './keywords';
 import { cardsOfType, requireCard } from './lookup';
 import { replay } from './reducer';
@@ -107,9 +107,7 @@ export function handleMoveHunter(
       throw new CommandRejected({ code: 'hunterCannotMove', cardId: hunter.id, to: command.to });
     return moveTo(ctx, state, hunter, command.to);
   }
-  const investigator = state.investigators.find((inv) => inv.id === command.towards);
-  if (!investigator)
-    throw new CommandRejected({ code: 'unknownInvestigator', investigatorId: command.towards });
+  const investigator = requireInvestigator(state, command.towards);
   const routes = routeTo(ctx, state, hunter.zone.locationId, investigator);
   const steps = distinctSteps(routes);
   const [only] = steps;

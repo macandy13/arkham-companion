@@ -1,7 +1,7 @@
 import { hasActiveAbilities } from './doom';
 import { assertNever } from '@arkham/util';
 import { advanceAct, type AbilityEffect, type AbilityStep } from './abilities';
-import { findInvestigator } from './campaign/campaign_log';
+import { findInvestigator as findCampaignInvestigator } from './campaign/campaign_log';
 import { isLocationInPlay } from './board';
 import {
   cardStats,
@@ -20,6 +20,7 @@ import {
   defaultCluePayments,
   groupCluePayments,
   statValue,
+  findInvestigator,
 } from './investigators';
 import { currentCard, requireCard } from './lookup';
 import { CommandRejected } from './rejection';
@@ -100,7 +101,7 @@ export function actionConditionHolds(
       const copies = Object.values(state.cards).filter((card) => card.code === condition.card);
       if (copies.length === 0) {
         if (state.campaign === undefined) return true;
-        const member = findInvestigator(state.campaign, investigator.code);
+        const member = findCampaignInvestigator(state.campaign, investigator.code);
         return member?.earnedCards.includes(condition.card) === true;
       }
       return copies.some((card) => sameZone(card.zone, playAreaOf(investigator.id)));
@@ -292,7 +293,7 @@ export function offersActionsTo(
       return here === locationOf(state, card);
     case 'threatArea': {
       const ownerId = zone.investigatorId;
-      return here === state.investigators.find((inv) => inv.id === ownerId)?.locationId;
+      return here === findInvestigator(state, ownerId)?.locationId;
     }
     case 'attachedTo':
       return here === zone.hostId;

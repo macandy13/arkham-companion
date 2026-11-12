@@ -11,7 +11,7 @@ import {
 } from './decisions';
 import type { DecisionRequested, SkillTestEnded } from './events';
 import { enemyOf, isEngagedWith, isEnemyOnTable, locationOf } from './enemies';
-import { activeInvestigator } from './investigators';
+import { activeInvestigator, findInvestigator } from './investigators';
 import { decisionId, type InstanceId } from './ids';
 import { hasKeyword } from './keywords';
 import { requireCard } from './lookup';
@@ -126,7 +126,7 @@ function failedFightCommands(
 ): Command[] {
   if (enemy.zone.kind !== 'engaged' || enemy.zone.investigatorId === fighter.id) return [];
   const engagedId = enemy.zone.investigatorId;
-  const engaged = state.investigators.find((inv) => inv.id === engagedId);
+  const engaged = findInvestigator(state, engagedId);
   if (engaged?.status !== 'active') return [];
   return [
     { type: 'AdjustInvestigator', investigatorId: engaged.id, stat: 'damage', delta: damage },

@@ -21,7 +21,7 @@ import type {
   SurgeGained,
 } from './events';
 import { decisionId, type CardCode, type InstanceId, type InvestigatorId } from './ids';
-import { activeInvestigator, isActiveInvestigator } from './investigators';
+import { activeInvestigator, isActiveInvestigator, findInvestigator } from './investigators';
 import { hasKeyword } from './keywords';
 import { cardsInZone, requireCard } from './lookup';
 import { cardMoved } from './placement';
@@ -327,7 +327,7 @@ export function placeDrawnCard(
 ): Event[] {
   const card = requireCard(state.cards, drawn.cardId);
   if (card.zone.kind !== 'resolving') return refillIfEmpty(state);
-  const drawer = state.investigators.find((inv) => inv.id === drawn.investigatorId);
+  const drawer = findInvestigator(state, drawn.investigatorId);
   const stats = cardStats(ctx.cards, card.code);
   const placed =
     drawer?.status === 'active'

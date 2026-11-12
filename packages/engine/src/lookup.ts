@@ -1,3 +1,4 @@
+import { findInvestigator } from './investigators';
 import { assertNever } from '@arkham/util';
 import { comparableName, type CardType, type EngineContext, type Trait } from './cards';
 import type { CardCode, InstanceId } from './ids';
@@ -152,7 +153,7 @@ export function locationOfCard(state: GameState, card: CardInstance): InstanceId
     case 'engaged':
     case 'threatArea':
     case 'playArea':
-      return state.investigators.find(({ id }) => id === zone.investigatorId)?.locationId;
+      return findInvestigator(state, zone.investigatorId)?.locationId;
     case 'attachedTo': {
       const host = state.cards[zone.hostId];
       // Hosting cycles are rejected when cards are placed, so the recursion ends.
