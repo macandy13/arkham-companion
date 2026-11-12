@@ -18,7 +18,6 @@ import {
   type GameState,
   type InvestigatorId,
   takeDamage,
-  takeHorror,
 } from './index';
 import { requireInvestigator } from './investigators';
 import { answer, investigatorOf, rejectionFrom, stateAfter } from '../test/utils';
