@@ -6,6 +6,7 @@ import {
   resolveEffect,
   roundEndClueObjective,
   tokenObjective,
+  countsCardsBeneathSelf,
 } from './abilities';
 import {
   advanceActionOf,
@@ -35,7 +36,7 @@ import { optionName } from './describe_decision';
 import type { Command } from './commands';
 import { agendaThreshold, doomInPlay, isInPlay } from './doom';
 import { changesGameState, handle } from './handle';
-import { enemyHealth } from './enemies';
+import { enemyHealth, isEngagedWith } from './enemies';
 import type { Keyword } from './keywords';
 import { forcedAttackPrompt } from './forced_attacks';
 import { formatBoard } from './format_board';
@@ -357,6 +358,15 @@ export interface CluePayerView {
 }
 
 /**
+ * The investigators a player card's effect on one enemy can apply to (`BoardView.enemyCardEffects`):
+ * who can evade it and whom it can engage, without a test or an action.
+ */
+export interface EnemyCardEffectsView {
+  readonly evade: readonly InvestigatorId[];
+  readonly engage: readonly InvestigatorId[];
+}
+
+/**
  * An enemy on a map (`MapView.enemies`) or in a threat area (`BoardView.enemiesEngagedWith`): its
  * `EnemyView` with its instance id, since those are where the players act on an enemy (drag it to
  * move or engage it, fight or evade it), and copies share a name.
@@ -399,8 +409,11 @@ export interface ActView {
   encounterSet?: EncounterSetCode;
   clues: number;
   advance?: ActAdvance;
-  /** The cards placed face up beneath it (Smoke and Mirrors' interviewed suspects); absent when none. */
-  beneath?: CardName[];
+  /**
+   * Set when an objective of it counts the cards beneath it (`countsCardsBeneathSelf`), so the
+   * players can put an enemy there by hand (`MoveCard`); the cards are `EncounterPilesView.beneathAct`.
+   */
+  takesCardsBeneath?: true;
 }
 
 /**
@@ -523,6 +536,8 @@ export interface EncounterPilesView {
   discard: readonly EncounterCardView[];
   setAside: readonly EncounterCardView[];
   victoryDisplay: readonly EncounterCardView[];
+  /** The cards beneath the current act (Smoke and Mirrors' interrogated suspects), top first. */
+  beneathAct: readonly EncounterCardView[];
 }
 
 /**
@@ -703,16 +718,47 @@ export class BoardView {
       evade: { type: 'Evade', investigatorId: investigator, enemyId: enemy },
       engage: { type: 'EngageEnemy', investigatorId: investigator, enemyId: enemy },
     };
-    return ENEMY_ACTIONS.filter((action) => {
-      try {
-        handle(this.ctx, this.state, commands[action]);
-        return true;
-      } catch (error) {
-        // A refusal is the answer: the rules do not allow this action now.
-        if (!(error instanceof CommandRejected)) throw error;
-        return false;
-      }
-    });
+    return ENEMY_ACTIONS.filter((action) => this.allows(commands[action]));
+  }
+
+  /**
+   * Whom a player card's effect on `enemy` can apply to, for the enemy's card-effect buttons
+   * ("automatically evade a non-Elite enemy at your location", "engage that enemy"), since the
+   * players choose who plays the card: the active investigators at its location, in seat order.
+   * `evade` keeps the one it is engaged with, or everyone there when it is unengaged and ready
+   * (someone else's evade would leave it engaged, so it is not offered), `engage` those the players' `EngageEnemy` takes (not one engaged with it already, and
+   * nobody for a massive enemy, which never enters a threat area).
+   */
+  enemyCardEffects(enemy: InstanceId): EnemyCardEffectsView {
+    const card = requireCard(this.state, enemy);
+    const location = locationOfCard(this.state, card);
+    const here = this.state.investigators.filter(
+      (inv) => inv.status === 'active' && location !== undefined && inv.locationId === location,
+    );
+    return {
+      evade: here
+        .filter(
+          (inv) => isEngagedWith(card, inv) || (card.zone.kind !== 'engaged' && !card.exhausted),
+        )
+        .map(({ id }) => id),
+      engage: here
+        .filter((inv) =>
+          this.allows({ type: 'EngageEnemy', enemyId: enemy, investigatorId: inv.id }),
+        )
+        .map(({ id }) => id),
+    };
+  }
+
+  /** Whether `handle` takes `command` now: a dry run whose events are dropped. */
+  private allows(command: Command): boolean {
+    try {
+      handle(this.ctx, this.state, command);
+      return true;
+    } catch (error) {
+      // A refusal is the answer: the rules do not allow this command now.
+      if (!(error instanceof CommandRejected)) throw error;
+      return false;
+    }
   }
 
   /**
@@ -815,6 +861,10 @@ export class BoardView {
       discard: cardsIn(encounterDiscard),
       setAside: cardsIn(setAside),
       victoryDisplay: cardsIn(victoryDisplay),
+      beneathAct:
+        this.state.act.current === undefined
+          ? []
+          : cardsIn({ kind: 'beneath', hostId: this.state.act.current }),
     };
   }
 
@@ -1374,7 +1424,7 @@ function actView(ctx: EngineContext, state: GameState): ActView | undefined {
     ...(stats.encounterCode === undefined ? {} : { encounterSet: stats.encounterCode }),
     clues: act.tokens.clue ?? 0,
     ...(advance === undefined ? {} : { advance }),
-    ...listIfAny('beneath', namesIn(ctx, state, { kind: 'beneath', hostId: act.id })),
+    ...(countsCardsBeneathSelf(stats) ? { takesCardsBeneath: true as const } : {}),
   };
 }
 

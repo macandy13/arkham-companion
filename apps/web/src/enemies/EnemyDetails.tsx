@@ -16,7 +16,10 @@ import './enemies.css';
  * can do to it. On an investigator's turn, in one Actions group, the basic actions the rules
  * allow them against it (`BoardView.enemyActions`): fight, evade and engage as actions, which
  * count off what they cost (`BoardView.actionCost`), then fight and evade without an action, as some cards allow; at any time, in a
- * group of their own, what card effects do to an enemy: deal 1 damage, disengage it, defeat it.
+ * group of their own, what card effects do to an enemy: deal 1 damage, disengage it, exhaust or
+ * ready it, evade or engage it for each investigator `BoardView.enemyCardEffects` names, defeat it,
+ * and put it beneath the act where an objective counts the cards there (`ActView.takesCardsBeneath`,
+ * Smoke and Mirrors' interrogated suspects).
  * Each button shows a short word and is named in full ("Fight · 1 action"). Fight, evade and
  * engage keep it open and show the decisions they raise in place of its page
  * (`useDecisionHost`: the test's result, an attack of opportunity), with the enemy still beside
@@ -56,6 +59,7 @@ export function EnemyDetails({
     enemy.engagedWith === undefined ? undefined : board.investigator(enemy.engagedWith);
   const stats = board.enemyStats(enemy.id);
   const left = healthLeft(enemy);
+  const effects = board.enemyCardEffects(enemy.id);
 
   return (
     <DetailsDialog
@@ -167,6 +171,43 @@ export function EnemyDetails({
               onClick={step(() => actions.disengageEnemy(enemy.id), 'close')}
             />
           )}
+          {enemy.exhausted ? (
+            <ActionButton
+              icon="ready"
+              caption={t('enemy.caption.ready')}
+              name={t('enemy.ready')}
+              disabled={busy}
+              onClick={step(() => actions.readyEnemy(enemy.id), 'stay')}
+            />
+          ) : (
+            <ActionButton
+              icon="exhaust"
+              caption={t('enemy.caption.exhaust')}
+              name={t('enemy.exhaust')}
+              disabled={busy}
+              onClick={step(() => actions.exhaustEnemy(enemy.id), 'stay')}
+            />
+          )}
+          {effects.evade.map((investigator) => (
+            <ActionButton
+              key={investigator}
+              icon="evaded"
+              caption={t('enemy.caption.evaded')}
+              name={t('enemy.evadedBy', { name: board.investigator(investigator).name })}
+              disabled={busy}
+              onClick={step(() => actions.evadeEnemy(enemy.id, investigator), 'close')}
+            />
+          ))}
+          {effects.engage.map((investigator) => (
+            <ActionButton
+              key={investigator}
+              icon="engage"
+              caption={t('enemy.caption.engage')}
+              name={t('enemy.engages', { name: board.investigator(investigator).name })}
+              disabled={busy}
+              onClick={step(() => actions.engageEnemy(enemy.id, investigator), 'stay')}
+            />
+          ))}
           <ActionButton
             icon="defeat"
             caption={t('enemy.caption.defeat')}
@@ -174,6 +215,15 @@ export function EnemyDetails({
             disabled={busy}
             onClick={step(() => actions.defeatEnemy(enemy.id), 'close')}
           />
+          {board.act?.takesCardsBeneath && (
+            <ActionButton
+              icon="beneathAct"
+              caption={t('enemy.caption.beneathAct')}
+              name={t('enemy.beneathAct')}
+              disabled={busy}
+              onClick={step(() => actions.putBeneathAct(enemy.id), 'close')}
+            />
+          )}
         </ActionGroup>
       </footer>
     </DetailsDialog>

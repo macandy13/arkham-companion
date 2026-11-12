@@ -260,6 +260,7 @@ test("the Ghoul Priest's details opened from its card on Roland Banks' turn, bot
 
   const details = page.getByRole('dialog', { name: 'Ghoul Priest' });
   await expect(details.getByRole('button', { name: 'Fight · 3 actions' })).toBeVisible();
+  await expect(details.getByRole('button', { name: 'Evaded by Roland Banks' })).toBeVisible();
 });
 
 test('the header with its piles fanned: seven cards discarded, the set-aside cards on the scenario card, the Ghoul Priest in the victory display, the token pool beside it', async ({

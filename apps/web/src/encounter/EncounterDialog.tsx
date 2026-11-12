@@ -12,7 +12,7 @@ import { CardMoves } from './CardMoves';
 export type EncounterPile = 'deck' | HeaderPileKind;
 
 /** The piles the header fans beside its cards (`HeaderPile`), each opening the dialog on itself. */
-export type HeaderPileKind = 'discard' | 'setAside' | 'victoryDisplay';
+export type HeaderPileKind = 'discard' | 'setAside' | 'victoryDisplay' | 'beneathAct';
 
 /**
  * The deck or pile tapped in the header (`start`) in full. Opened on the deck, it shows how many
@@ -42,7 +42,7 @@ export function EncounterDialog({
   onClose: () => void;
 }) {
   const { t } = useTranslation();
-  const { deckCount, discard, setAside, victoryDisplay } = board.encounter;
+  const { deckCount, discard, setAside, victoryDisplay, beneathAct } = board.encounter;
   const drawers = matchingFirst(
     board.investigators.filter((investigator) => investigator.status === 'active'),
     (investigator) => investigator.id === board.turn,
@@ -65,6 +65,7 @@ export function EncounterDialog({
     discard: { title: t('encounter.discard'), cards: discard },
     setAside: { title: t('encounter.setAside'), cards: setAside },
     victoryDisplay: { title: t('encounter.victoryDisplay'), cards: victoryDisplay },
+    beneathAct: { title: t('encounter.beneathAct'), cards: beneathAct },
   };
 
   if (start === 'deck')

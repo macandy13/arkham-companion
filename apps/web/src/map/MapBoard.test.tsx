@@ -1033,6 +1033,9 @@ describe('MapBoard', () => {
         'Close',
         'Engage · 1 action',
         'Deal 1 damage',
+        'Exhaust',
+        'Evaded by alder',
+        'Engages alder',
         'Defeat',
       ]);
     });
@@ -1083,7 +1086,7 @@ describe('MapBoard', () => {
 
       await tapPiece('study', 'rats');
 
-      expect(offered()).toEqual(['Read rats', 'Close', 'Deal 1 damage', 'Defeat']);
+      expect(offered()).toEqual(['Read rats', 'Close', 'Deal 1 damage', 'Exhaust', 'Defeat']);
     });
   });
 

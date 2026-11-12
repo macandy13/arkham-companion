@@ -2,7 +2,11 @@
 import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import {
+  atLocation,
+  advanceAct,
+  blankAct,
   blankEnemy,
+  eachInZone,
   blankTreachery,
   decisionId,
   blankLocation,
@@ -15,6 +19,7 @@ import {
   PlayTable,
   threatAreaOf,
   trait,
+  whenVictoryDisplayHolds,
 } from '@arkham/engine';
 import { initI18n } from '../i18n';
 import { DecisionHostContext, type OpenDecision } from '../screens/DetailsDialog';
@@ -341,5 +346,118 @@ describe('EnemyDetails', () => {
     expect(onClose).toHaveBeenCalled();
     expect(table.board.enemies).toMatchObject(enemies);
     expect(table.board.enemiesEngagedWith(alder)).toEqual([]);
+  });
+
+  it('offers the card effects for alder, whom the ghoul is engaged with, and brook, who shares the study', () => {
+    renderGhoulDetails(PlayTable.start(ghoulOnAlder));
+
+    const offered = within(group('Card effect')).getAllByRole('button');
+    expect(offered.map((button) => button.getAttribute('aria-label'))).toEqual([
+      'Deal 1 damage',
+      'Disengage',
+      'Exhaust',
+      'Evaded by alder',
+      'Engages brook',
+      'Defeat',
+    ]);
+  });
+
+  it('"Evaded by alder" closes and leaves the ghoul exhausted and unengaged, without a test', () => {
+    const table = PlayTable.start(ghoulOnAlder);
+    const onClose = renderGhoulDetails(table);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Evaded by alder' }));
+
+    expect(onClose).toHaveBeenCalled();
+    expect(table.board.enemies).toMatchObject([{ name: 'ghoul', exhausted: true }]);
+    expect(table.board.enemiesEngagedWith(alder)).toEqual([]);
+    expect(table.board.decisions).toEqual([]);
+  });
+
+  it('"Engages brook" moves the ghoul to brook and stays open', () => {
+    const table = PlayTable.start(ghoulOnAlder);
+    const onClose = renderGhoulDetails(table);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Engages brook' }));
+
+    expect(onClose).not.toHaveBeenCalled();
+    expect(table.board.enemies).toMatchObject([{ name: 'ghoul', engagedWith: brook }]);
+  });
+
+  it('"Exhaust" leaves the ghoul engaged with alder, and then offers "Ready" in its place', () => {
+    const table = PlayTable.start(ghoulOnAlder);
+    renderGhoulDetails(table);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Exhaust' }));
+    cleanup();
+    renderGhoulDetails(table);
+
+    expect(table.board.enemies).toMatchObject([
+      { name: 'ghoul', engagedWith: alder, exhausted: true },
+    ]);
+    expect(screen.getByRole('button', { name: 'Ready' })).toBeDefined();
+    expect(screen.queryByRole('button', { name: 'Exhaust' })).toBeNull();
+  });
+
+  it('offers no engage for a massive ghoul in the study', () => {
+    const table = PlayTable.start(
+      newGame()
+        .withLocation(study, blankLocation('study'), { revealed: true })
+        .withInvestigator(alder, { locationId: study })
+        .withCard(
+          ghoul,
+          blankEnemy('ghoul', { keywords: [{ name: 'massive' }] }),
+          atLocation(study),
+        ),
+    );
+    const enemy = table.board.enemiesAt(study).find(({ id }) => id === ghoul);
+    if (!enemy) throw new Error('the ghoul is in the study');
+    render(
+      <EnemyDetails
+        board={table.board}
+        enemy={enemy}
+        actions={actionsOn(table)}
+        busy={false}
+        onClose={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole('button', { name: 'Evaded by alder' })).toBeDefined();
+    expect(screen.queryByRole('button', { name: 'Engages alder' })).toBeNull();
+  });
+
+  describe('under an act whose objective counts the Elite enemies beneath it, like Augurs of Flame', () => {
+    const augursOfFlame = blankAct('augurs_of_flame', {
+      abilities: [
+        whenVictoryDisplayHolds(
+          eachInZone([{ kind: 'victoryDisplay' }, { kind: 'beneath', hostId: { ref: 'self' } }], {
+            trait: trait('Elite'),
+          }),
+          6,
+          advanceAct(),
+        ),
+      ],
+    });
+
+    it('puts the interrogated ghoul beneath the act and closes', () => {
+      const table = PlayTable.start(
+        ghoulOnAlder.withAct(instanceId('augurs_of_flame'), augursOfFlame),
+      );
+      const onClose = renderGhoulDetails(table);
+
+      fireEvent.click(screen.getByRole('button', { name: 'Put beneath the act' }));
+
+      expect(onClose).toHaveBeenCalled();
+      expect(table.board.encounter.beneathAct).toMatchObject([{ name: 'ghoul' }]);
+      expect(table.board.enemies).toEqual([]);
+    });
+  });
+
+  it('offers no move beneath an act that counts no cards there', () => {
+    renderGhoulDetails(
+      PlayTable.start(ghoulOnAlder.withAct(instanceId('plain_act'), blankAct('plain_act'))),
+    );
+
+    expect(screen.queryByRole('button', { name: 'Put beneath the act' })).toBeNull();
   });
 });

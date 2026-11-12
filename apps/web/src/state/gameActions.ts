@@ -132,6 +132,21 @@ export interface GameActions {
   disengageEnemy(enemy: InstanceId): Promise<void>;
   /** A card effect defeats `enemy` outright. */
   defeatEnemy(enemy: InstanceId): Promise<void>;
+  /** A card effect exhausts `enemy`; an engaged one stays engaged (Stall for Time). */
+  exhaustEnemy(enemy: InstanceId): Promise<void>;
+  /** A card effect readies `enemy`; an unengaged one then engages by the rules. */
+  readyEnemy(enemy: InstanceId): Promise<void>;
+  /**
+   * `investigator` evades `enemy` as a card effect says ("automatically evade", Stray Cat): it
+   * exhausts and disengages as after a passed evasion, without a test, an action or attacks of
+   * opportunity, unlike `evade`.
+   */
+  evadeEnemy(enemy: InstanceId, investigator: InvestigatorId): Promise<void>;
+  /**
+   * `enemy` engages `investigator`, at its location, as a card effect says (Heroic Rescue), without
+   * the action `engage` spends.
+   */
+  engageEnemy(enemy: InstanceId, investigator: InvestigatorId): Promise<void>;
   /**
    * Picks `option` of the first open decision by its readable name (`DecisionView.options`), as the
    * decision dialog lists them, and with `then` the choice that option asks next
@@ -175,6 +190,12 @@ export interface GameActions {
    * area. Enemies spawn with `spawnEnemy` instead, so the engine engages them by the rules.
    */
   moveEncounterCard(card: InstanceId, move: PileMove): Promise<void>;
+  /**
+   * Puts `enemy` beneath the current act (`MoveCard`), as a codex entry tells the players (Smoke
+   * and Mirrors' interrogated suspect). A game move, not a correction, so an objective that counts
+   * the cards beneath the act sees it.
+   */
+  putBeneathAct(enemy: InstanceId): Promise<void>;
   /**
    * Spawns `enemy` from a pile at `location`, which the players chose on the map: the engine
    * engages it there by the rules (prey, Aloof), as if a card effect spawned it there.
@@ -304,6 +325,16 @@ export function gameActions(
     disengageEnemy: (enemy) =>
       play((table) => table.play({ type: 'DisengageEnemy', enemyId: enemy })),
     defeatEnemy: (enemy) => play((table) => table.play({ type: 'DefeatEnemy', enemyId: enemy })),
+    exhaustEnemy: (enemy) => play((table) => table.play({ type: 'ExhaustEnemy', enemyId: enemy })),
+    readyEnemy: (enemy) => play((table) => table.play({ type: 'ReadyEnemy', enemyId: enemy })),
+    evadeEnemy: (enemy, investigator) =>
+      play((table) =>
+        table.play({ type: 'EvadeEnemy', enemyId: enemy, investigatorId: investigator }),
+      ),
+    engageEnemy: (enemy, investigator) =>
+      play((table) =>
+        table.play({ type: 'EngageEnemy', enemyId: enemy, investigatorId: investigator }),
+      ),
     answer: (option, counts = {}, then) =>
       play((table) => {
         const decision = firstDecision(table.state);
@@ -345,6 +376,14 @@ export function gameActions(
         table.play({
           type: 'ManualAdjust',
           adjustment: { kind: 'moveCard', cardId: card, ...placeOf(move) },
+        }),
+      ),
+    putBeneathAct: (enemy) =>
+      play((table) =>
+        table.play({
+          type: 'MoveCard',
+          cardId: enemy,
+          to: { kind: 'beneath', hostId: currentAct(table.state) },
         }),
       ),
     spawnEnemy: (enemy, location) =>

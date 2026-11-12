@@ -339,6 +339,27 @@ describe('GameScreen header', () => {
     expect(screen.queryByRole('dialog')).toBeNull();
   });
 
+  it('fans the cards beneath the act at its corner, and opens them from there', async () => {
+    const store = await renderTheGathering('game-screen-act-beneath-test');
+    // The set-aside Ghoul Priest, as a codex entry would put an interrogated suspect there.
+    const ghoulPriest = instanceId('01116#1');
+    await store.getState().actions.putBeneathAct(ghoulPriest);
+    const act = screen.getByRole('region', { name: 'Act' });
+
+    fireEvent.click(await within(act).findByRole('button', { name: 'Beneath the act, 1 card' }));
+    const pile = await screen.findByRole('dialog', { name: 'Beneath the act (1)' });
+
+    expect(within(pile).getByRole('region', { name: 'Ghoul Priest' })).toBeTruthy();
+  });
+
+  it('fans no pile at the act while nothing lies beneath it', async () => {
+    await renderTheGathering('game-screen-act-no-beneath-test');
+
+    const act = screen.getByRole('region', { name: 'Act' });
+
+    expect(within(act).queryByRole('button', { name: /^Beneath the act/ })).toBeNull();
+  });
+
   it('advances the act by hand from its full card once the players confirm it, without a turn or clues', async () => {
     await renderTheGathering('game-screen-act-by-hand-test');
     fireEvent.click(button('Trapped'));

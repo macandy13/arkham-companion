@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 import {
   advanceBySpendingClues,
   advanceAct,
+  eachInZone,
+  whenVictoryDisplayHolds,
   whenTokensOnSelf,
   resolutionId,
   cardImagePath,
@@ -1068,7 +1070,7 @@ describe('agenda and act', () => {
     });
   });
 
-  it('names the cards placed face up beneath the act', () => {
+  it('lists the cards beneath the act among the encounter piles, and none once there is no act', () => {
     const firstAct = instanceId('first_act');
     const { context, state } = newGame()
       .withLocation(study, blankLocation('study'))
@@ -1081,10 +1083,41 @@ describe('agenda and act', () => {
         { faceUp: true },
       )
       .start();
+    const actless = newGame().withLocation(study, blankLocation('study')).start();
 
-    const { act } = boardView(context, state);
+    expect(boardView(context, state).encounter.beneathAct).toMatchObject([
+      { name: 'questioned_suspect' },
+    ]);
+    expect(boardView(actless.context, actless.state).encounter.beneathAct).toEqual([]);
+  });
 
-    expect(act?.beneath).toEqual(['questioned_suspect']);
+  it.each([
+    {
+      act: 'an act whose objective counts the Elite enemies beneath it',
+      zones: [{ kind: 'victoryDisplay' }, { kind: 'beneath', hostId: { ref: 'self' } }] as const,
+      takes: true,
+    },
+    {
+      act: 'an act whose objective counts the victory display alone',
+      zones: [{ kind: 'victoryDisplay' }] as const,
+      takes: undefined,
+    },
+  ])('takes cards beneath it only for $act', ({ zones, takes }) => {
+    const objective = whenVictoryDisplayHolds(
+      eachInZone(zones, { trait: trait('Elite') }),
+      6,
+      advanceAct(),
+    );
+    const { context, state } = newGame()
+      .withLocation(study, blankLocation('study'))
+      .withInvestigator(alice, { locationId: study })
+      .withAct(
+        instanceId('augurs_of_flame'),
+        blankAct('augurs_of_flame', { abilities: [objective] }),
+      )
+      .start();
+
+    expect(boardView(context, state).act?.takesCardsBeneath).toBe(takes);
   });
 
   it('counts the clues the players put on the act apart from its cost', () => {
@@ -1236,6 +1269,7 @@ describe('encounter piles', () => {
           victory: 2,
         },
       ],
+      beneathAct: [],
     });
   });
 
@@ -1247,6 +1281,7 @@ describe('encounter piles', () => {
       discard: [],
       setAside: [],
       victoryDisplay: [],
+      beneathAct: [],
     });
   });
 });
@@ -1899,6 +1934,51 @@ describe('enemy actions', () => {
     const { context, state } = studyWith(card, zone);
 
     expect(boardView(context, state).enemyActions(alice, ghoul)).toEqual(expected);
+  });
+
+  it.each([
+    {
+      name: 'only alice can evade a ready ghoul engaged with her; only bob can be engaged',
+      card: blankEnemy('ghoul'),
+      zone: engagedWith(alice),
+      exhausted: false,
+      expected: { evade: [alice], engage: [bob] },
+    },
+    {
+      name: 'only alice can evade an exhausted ghoul engaged with her',
+      card: blankEnemy('ghoul'),
+      zone: engagedWith(alice),
+      exhausted: true,
+      expected: { evade: [alice], engage: [bob] },
+    },
+    {
+      name: 'nobody can evade an exhausted aloof ghoul, but both can be engaged',
+      card: blankEnemy('aloof_ghoul', { keywords: [{ name: 'aloof' }] }),
+      zone: atLocation(study),
+      exhausted: true,
+      expected: { evade: [], engage: [alice, bob] },
+    },
+    {
+      name: 'nobody can be engaged by a massive ghoul, which both can evade',
+      card: blankEnemy('massive_ghoul', { keywords: [{ name: 'massive' }] }),
+      zone: atLocation(study),
+      exhausted: false,
+      expected: { evade: [alice, bob], engage: [] },
+    },
+    {
+      name: 'nobody in the study reaches a ghoul in the hallway',
+      card: blankEnemy('ghoul'),
+      zone: atLocation(hallway),
+      exhausted: false,
+      expected: { evade: [], engage: [] },
+    },
+  ])('card effects: $name', ({ card, zone, exhausted, expected }) => {
+    const { context, state } = studyWith(card, zone);
+    const now = exhausted
+      ? stateAfter(context, state, { type: 'ExhaustEnemy', enemyId: ghoul })
+      : state;
+
+    expect(boardView(context, now).enemyCardEffects(ghoul)).toEqual(expected);
   });
 });
 
