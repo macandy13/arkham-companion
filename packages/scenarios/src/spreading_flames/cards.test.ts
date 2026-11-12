@@ -16,6 +16,7 @@ import {
   threatAreaOf,
   type CardStats,
   type Command,
+  placeDoomOn,
   placeDoomOnAgenda,
 } from '@arkham/engine';
 import {
@@ -523,13 +524,36 @@ describe('Spreading Flames card abilities', () => {
         .withTurnOf(alice)
         .start();
 
-      const state = stateAfter(context, started, placeDoomOnAgenda(1));
+      const state = stateAfter(
+        context,
+        started,
+        placeDoomOnAgenda(1),
+        resolveRevelation('topmost_fire_in_discard'),
+      );
 
-      expect([topFire, lowerFire, fireInDeck].map((id) => state.cards[id]?.zone.kind)).toEqual([
-        'resolving',
-        'encounterDiscard',
-        'encounterDeck',
+      expect([topFire, lowerFire, fireInDeck].map((id) => state.cards[id]?.zone)).toEqual([
+        attachedTo(quad),
+        encounterDiscard,
+        encounterDeck,
       ]);
+    });
+
+    it('draws no Fire! when the doom is placed on an enemy instead of on it', () => {
+      const wildFlames = instanceId('wild_flames');
+      const fireInDiscard = instanceId('fire_in_discard');
+      const bystander = instanceId('bystander');
+      const { context, state: started } = newGame()
+        .withLocation(quad, cardOf('12116'), { revealed: true })
+        .withInvestigator(alice, { locationId: quad })
+        .withAgenda(wildFlames, cardOf('12108'))
+        .withCard(bystander, cardOf('12123'), atLocation(quad))
+        .withCard(fireInDiscard, cardOf('12129'), encounterDiscard)
+        .withTurnOf(alice)
+        .start();
+
+      const state = stateAfter(context, started, placeDoomOn(bystander, 1));
+
+      expect(state.cards[fireInDiscard]?.zone).toEqual(encounterDiscard);
     });
 
     it('defeats alice with 1 physical trauma as it advances', () => {
