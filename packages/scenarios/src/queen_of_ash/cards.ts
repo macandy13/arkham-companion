@@ -306,7 +306,8 @@ export const queenOfAshCardDefs: readonly CardStats[] = [
     traits: ['Ritual Site'],
     shroud: 4,
     cluesPerInvestigator: 2,
-    // Discovering clues is the only way its clues leave it, so the check waits for that.
+    // Discovering clues is the only way this scenario's cards take its clues, so the check waits
+    // for that; a player card that removes them otherwise is resolved by hand.
     abilities: [
       ifValue(
         tokensOn(self(), 'clue'),
@@ -399,7 +400,8 @@ export const queenOfAshCardDefs: readonly CardStats[] = [
     actions: [
       {
         free: true,
-        cost: { spend: 'groupClues', amount: perInvestigator(1) },
+        // Her cost says no "as a group", so whoever triggers it pays it alone (Rules Reference, "Costs").
+        cost: { spend: 'clues', amount: perInvestigator(1) },
         effects: [placeCluesOnSelf(1)],
       },
     ],

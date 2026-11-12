@@ -51,7 +51,7 @@ The scripted golden game is [`end_to_end.test.ts`](../../packages/scenarios/src/
 - [ ] Ending a turn in Flooded Crypt (star) gives 1 horror, in Toxic Waste Pit (double slash) asks for a card discarded from hand, and in Smuggler's Cache (clover) offers 1 resource, which the investigator may decline.
 - [ ] Sewer Culvert's resign action works.
 - [ ] Discovering the last clue at Underground Cistern places 2 per investigator there again; as the investigation phase ends, each ready non-Elite Cultist there is discarded with 1 doom on the agenda for each.
-- [ ] Elokoss's fast ability spends 1 clue per investigator from the group and places 1 clue on her; her fifth clue ends the scenario with resolution 2.
+- [ ] Elokoss's fast ability costs the investigator at her location 1 clue per investigator, from their own clues, and places 1 clue on her; her fifth clue ends the scenario with resolution 2.
 - [ ] Elokoss is massive and retaliates and has 5 plus 5 per investigator health; the Servant of Flame, Queen's Knight, Herald of Flame and Dark Magician hunt; Zealots are aloof.
 
 **Encounter cards**

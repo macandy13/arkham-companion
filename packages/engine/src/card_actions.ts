@@ -5,10 +5,12 @@ import { findInvestigator as findCampaignInvestigator } from './campaign/campaig
 import { isLocationInPlay } from './board';
 import {
   cardStats,
+  resolveAmount,
   resolveValue,
   type CardStats,
   type EngineContext,
   type ScaledValue,
+  type TokenAmount,
 } from './cards';
 import type { ClueSpend, UseCardAction } from './commands';
 import { locationOf } from './enemies';
@@ -120,7 +122,9 @@ export function actionConditionHolds(
  * holds no player cards, so the players discard by hand (`DiscardFromHand`, deferred).
  */
 export type ActionCost =
-  | { readonly spend: 'resources' | 'clues'; readonly amount: number }
+  | { readonly spend: 'resources'; readonly amount: number }
+  /** A per-investigator amount ("Spend 1 [per_investigator] clues:", Elokoss) is the taker's alone. */
+  | { readonly spend: 'clues'; readonly amount: TokenAmount }
   | { readonly spend: 'groupClues'; readonly amount: ScaledValue }
   | { readonly spend: 'handCards'; readonly amount: number };
 
@@ -142,7 +146,7 @@ export function canPay(
     case 'clues':
       return (
         !isRestrictedFor(ctx, state, investigator.id, 'spend', 'clues') &&
-        statValue(investigator, cost.spend) >= cost.amount
+        statValue(investigator, cost.spend) >= ownClueAmount(state, cost.amount)
       );
     case 'groupClues':
       return cluesHeldByGroup(ctx, state) >= groupClueAmount(state, cost.amount);
@@ -152,6 +156,11 @@ export function canPay(
     default:
       return assertNever(cost);
   }
+}
+
+/** The clues a taker's own cost asks for the starting player count ("1 [per_investigator]"). */
+function ownClueAmount(state: GameState, amount: TokenAmount): number {
+  return resolveAmount(amount, state.meta.playerCount);
 }
 
 /** The clues a group cost asks for the starting player count ("2 [per investigator]"). */
@@ -177,13 +186,21 @@ function costPayment(
   if (cost === undefined) return [];
   switch (cost.spend) {
     case 'resources':
-    case 'clues':
       return [
         {
           type: 'InvestigatorChanged',
           investigatorId: investigator.id,
           stat: cost.spend,
           delta: -cost.amount,
+        },
+      ];
+    case 'clues':
+      return [
+        {
+          type: 'InvestigatorChanged',
+          investigatorId: investigator.id,
+          stat: cost.spend,
+          delta: -ownClueAmount(state, cost.amount),
         },
       ];
     case 'groupClues': {
@@ -364,7 +381,7 @@ export function cardActionsOfferedTo(
               ...(cost?.spend === 'groupClues'
                 ? { groupClues: groupClueAmount(state, cost.amount) }
                 : {}),
-              ...(cost?.spend === 'clues' ? { clues: cost.amount } : {}),
+              ...(cost?.spend === 'clues' ? { clues: ownClueAmount(state, cost.amount) } : {}),
               ...numberOfKind(actions, action),
             },
           ]

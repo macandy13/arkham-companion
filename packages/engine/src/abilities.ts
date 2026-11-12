@@ -2439,7 +2439,7 @@ export function moveEachInvestigatorTo(location: RelativeCard): AbilityEffect {
 
 /** "Discard each enemy in the Study", engaged ones included (`DiscardCard` each). */
 export function discardEachEnemyAt(location: RelativeCard): AbilityEffect {
-  return { type: 'DiscardCard', cardId: eachEnemy({ at: location }) };
+  return discardEachEnemy({ at: location });
 }
 
 /**

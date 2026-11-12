@@ -16,7 +16,14 @@ import {
   type CardStats,
   type Command,
 } from '@arkham/engine';
-import { answer, cardIn, resolveRevelation, runFrom, stateAfter } from '@arkham/engine/test/utils';
+import {
+  answer,
+  cardIn,
+  rejectionFrom,
+  resolveRevelation,
+  runFrom,
+  stateAfter,
+} from '@arkham/engine/test/utils';
 import {
   QUEEN_OF_ASH_CODES,
   queenOfAshCardDefs,
@@ -362,6 +369,26 @@ describe('Queen of Ash card abilities', () => {
         action: 0,
       });
     };
+
+    it("refuses alice's spend when the 2 clues it costs 2 investigators need bob's clue beside her", () => {
+      const bob = investigatorId('bob');
+      const { context, state } = newGame()
+        .withLocation(cistern, cardOf('12174'), { revealed: true })
+        .withInvestigator(alice, { locationId: cistern, clues: 1 })
+        .withInvestigator(bob, { locationId: cistern, clues: 1 })
+        .withCard(elokoss, cardOf('12179'), atLocation(cistern))
+        .withTurnOf(alice)
+        .start();
+
+      expect(
+        rejectionFrom(context, state, {
+          type: 'UseCardAction',
+          investigatorId: alice,
+          cardId: elokoss,
+          action: 0,
+        }).code,
+      ).toBe('cardActionCostUnpaid');
+    });
 
     it('takes 1 clue per investigator from alice as a fast ability and places 1 clue on Elokoss', () => {
       const { state } = aliceSpendsAClueOn(0);
