@@ -71,7 +71,7 @@ describe('skillTestSuggestion: cards in play that change the tested skill', () =
     expect(suggestion.skill).toBe(3);
   });
 
-  it('leaves out a treachery that changes another skill', () => {
+  it('leaves out a treachery that changes another skill: no card step in her combat test', () => {
     const { context, state } = aliceInStudy.withCard(dread, dreadCard, threatAreaOf(alice)).start();
 
     const suggestion = skillTestSuggestion(context, state, {
@@ -79,7 +79,7 @@ describe('skillTestSuggestion: cards in play that change the tested skill', () =
       skill: 'combat',
     });
 
-    expect(suggestion.skill).toBe(3);
+    expect(suggestion.trace.filter((step) => step.source.kind === 'card')).toEqual([]);
   });
 });
 
