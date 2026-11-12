@@ -2,6 +2,47 @@
 
 The sections dated up to 2026-10-22 were released as 1.0.0 to 1.8.0 by mistake: Release Please starts at 1.0.0 by default. Versioning restarted at 0.1.0 (see "Versions" in docs/product.md).
 
+## [0.1.42](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v0.1.41...arkham-companion-v0.1.42) (2026-11-12)
+
+
+### Features
+
+* **engine:** skill test trace names the card behind each difficulty change (ME.7b) ([19bc00b](https://github.com/macandy13/arkham-companion/commit/19bc00b617231152f4e19c94aa791ec047834ee6))
+* **engine:** skill test trace names the card behind each difficulty change (ME.7b) ([7405ee0](https://github.com/macandy13/arkham-companion/commit/7405ee0b8119844fa887ad29346fe14c35498bcc))
+* **play_tester:** count what players resolve by hand in the statistics (M1V.5a) ([36131cb](https://github.com/macandy13/arkham-companion/commit/36131cb7b5594aa7558c3558103a5098bb89093b))
+* **play_tester:** count what players resolve by hand in the statistics (M1V.5a) ([51057f0](https://github.com/macandy13/arkham-companion/commit/51057f06fb6769593e49c2bfb687dd2261e8c6c3))
+* **play_tester:** play all six real scenarios (M1V.5b) ([7324240](https://github.com/macandy13/arkham-companion/commit/7324240f48ef1d146a6876f372790b466c2bf193))
+* **play_tester:** play all six real scenarios (M1V.5b) ([07464c2](https://github.com/macandy13/arkham-companion/commit/07464c2124c38cd541bfe8ffa01d6892b4e9dd62))
+* **scenarios:** Hellhound's asset discard and Rogue Gangster's engage effect (MC2.17c) ([0921339](https://github.com/macandy13/arkham-companion/commit/092133903398507e287d34b0c1fb1b34931f013a))
+* **scenarios:** Hellhound's asset discard and Rogue Gangster's engage effect (MC2.17c) ([840a852](https://github.com/macandy13/arkham-companion/commit/840a852e087eb4ecff460dbc28ae8d8cc79ac8e7))
+* **scenarios:** Sewer Tunnels' turn-end effects and Infested Pipes' draw (MC2.17a) ([b98e8e0](https://github.com/macandy13/arkham-companion/commit/b98e8e09e1b20b165c7bec99a46c5c02f9a765a2))
+* **scenarios:** Underground Cistern's forced abilities and Elokoss's clue spend (MC2.17b) ([4abcef8](https://github.com/macandy13/arkham-companion/commit/4abcef83a04751f2876046414e8c5e2d8eef3db7))
+* **scenarios:** Underground Cistern's forced abilities and Elokoss's clue spend (MC2.17b) ([d6aa2c4](https://github.com/macandy13/arkham-companion/commit/d6aa2c405b75f69a6da210f3d70091babf66d3e2))
+* **web:** change a drawn token in the result strip (ME.24b) ([29605da](https://github.com/macandy13/arkham-companion/commit/29605da1d13fed4cc1ac41fdc67d615e475a0b27))
+* **web:** drawn token bubble with ignore, redraw and replace (ME.24b) ([66e9aff](https://github.com/macandy13/arkham-companion/commit/66e9aff4ed6874fab33208e07ff04586fe8d048b))
+* **web:** drawn tokens on one line, replace swaps from the bag (ME.24b) ([606e033](https://github.com/macandy13/arkham-companion/commit/606e033a8c975dfa8513cc7bde34186d77d4a88e))
+
+
+### Bug fixes
+
+* **scenarios:** Elokoss's clue cost is the taker's own; review fixes (MC2.17b) ([c5c65f4](https://github.com/macandy13/arkham-companion/commit/c5c65f464230a00976c21cb3ba1339b089fc963f))
+* **web:** keep the lone draw button centred in the result strip (ME.24b) ([0bbada8](https://github.com/macandy13/arkham-companion/commit/0bbada85e87292e4c0a336dea8607ecf683332bf))
+
+
+### Refactoring
+
+* **engine:** one wound command for investigators (ME.9d) ([a8919b8](https://github.com/macandy13/arkham-companion/commit/a8919b86e3bcab2eb4497256bffedf9822abe4c2))
+* **engine:** one wound command for investigators (ME.9d) ([f4a0a68](https://github.com/macandy13/arkham-companion/commit/f4a0a68e2e9a3fe466c075cdc695d98ebfedbfb0))
+* **engine:** PlayTable wounds use the wound command (ME.9d) ([6215a11](https://github.com/macandy13/arkham-companion/commit/6215a11ab290d24f66d9f93002fe409900f2b38a))
+* name Obscuring Fog's code, label difficulty terms exhaustively (ME.7b) ([3e1101e](https://github.com/macandy13/arkham-companion/commit/3e1101ecef109e4c97ae17e071c0c2b821516e9f))
+
+
+### Documentation
+
+* **play_tester:** note the hunter step a new lead's question holds back ([8a432f4](https://github.com/macandy13/arkham-companion/commit/8a432f4ef159d65263742cc22a37854648e42d8a))
+* playtest wording (MC2.17c) ([01acda7](https://github.com/macandy13/arkham-companion/commit/01acda726022e97dc7275d5ea4e9eeb303df0609))
+* review fixes (MC2.17c) ([88e6b5c](https://github.com/macandy13/arkham-companion/commit/88e6b5c3266f85cd85030a16cb0c83e38d273fd5))
+
 ## [0.1.41](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v0.1.40...arkham-companion-v0.1.41) (2026-11-12)
 
 
