@@ -9,6 +9,7 @@ import {
   groupBy,
   runsBy,
   unique,
+  withoutEach,
   withoutFirst,
   withRunningTotals,
 } from './index';
@@ -38,6 +39,16 @@ describe('unique', () => {
 
   it('is empty for an empty list', () => {
     expect(unique([])).toEqual([]);
+  });
+});
+
+describe('withoutEach', () => {
+  it.each<{ name: string; out: string[]; left: string[] }>([
+    { name: 'one copy of each', out: ['-1', 'skull'], left: ['-1'] },
+    { name: 'both copies when both are out', out: ['-1', '-1'], left: ['skull'] },
+    { name: 'nothing for an item the bag lacks', out: ['cultist'], left: ['-1', 'skull', '-1'] },
+  ])('takes $name', ({ out, left }) => {
+    expect(withoutEach(['-1', 'skull', '-1'], out)).toEqual(left);
   });
 });
 

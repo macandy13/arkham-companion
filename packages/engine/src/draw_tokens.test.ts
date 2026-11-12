@@ -8,6 +8,7 @@ import {
   redrawToken,
   resolvedTokens,
   revealAnother,
+  revealedTokens,
   testFinished,
   treatTokenAs,
   withTokenState,
@@ -48,9 +49,10 @@ describe('drawTokens', () => {
 
 describe('a test draw', () => {
   const minusTwo: TestDraw = [{ token: '-2', state: 'resolved' }];
+  /** A bless and the −1 it made the tester reveal. */
   const blessThenMinusOne: TestDraw = [
     { token: 'bless', state: 'resolved' },
-    { token: '-1', state: 'resolved' },
+    { token: '-1', state: 'resolved', chained: true },
   ];
 
   it.each<{ name: string; draw: TestDraw; resolved: ChaosToken[]; finished: boolean }>([
@@ -75,22 +77,23 @@ describe('a test draw', () => {
       finished: true,
     },
     {
-      name: 'a skull treated as an elder sign',
-      draw: [{ token: 'skull', state: 'resolved', treatedAs: 'elderSign' }],
-      resolved: ['elderSign'],
+      name: 'an elder sign treated as a skull',
+      draw: [{ token: 'elderSign', state: 'resolved', treatedAs: 'skull' }],
+      resolved: ['skull'],
       finished: true,
     },
   ])('resolves $resolved from $name', ({ draw, resolved, finished }) => {
     expect([resolvedTokens(draw), drawFinished(draw)]).toEqual([resolved, finished]);
   });
 
-  it('returns every drawn token to the bag, whatever its state', () => {
+  it('lists every drawn token, and as revealed only the resolved ones as they came out', () => {
     const draw: TestDraw = [
       { token: 'bless', state: 'cancelled' },
-      { token: 'skull', state: 'resolved', treatedAs: 'elderSign' },
+      { token: 'elderSign', state: 'resolved', treatedAs: 'skull' },
     ];
 
-    expect(drawnTokens(draw)).toEqual(['bless', 'skull']);
+    expect(drawnTokens(draw)).toEqual(['bless', 'elderSign']);
+    expect(revealedTokens(draw)).toEqual(['elderSign']);
   });
 
   it.each<{ name: string; bag: ChaosToken[]; draw: TestDraw; after: ChaosToken[] }>([
@@ -118,13 +121,26 @@ describe('a test draw', () => {
     expect(drawnTokens(revealAnother(bag, minusTwo, firstLeft))).toEqual(after);
   });
 
-  it('cancels a token, ignores another and resolves the first again', () => {
+  it('puts back the −1 a cancelled bless made the tester reveal', () => {
     const cancelled = withTokenState(blessThenMinusOne, 0, 'cancelled');
-    const ignored = withTokenState(cancelled, 1, 'ignored');
 
-    expect(resolvedTokens(cancelled)).toEqual(['-1']);
-    expect(resolvedTokens(ignored)).toEqual([]);
-    expect(resolvedTokens(withTokenState(ignored, 0, 'resolved'))).toEqual(['bless']);
+    expect(cancelled).toEqual([{ token: 'bless', state: 'cancelled' }]);
+    expect(drawFinished(cancelled)).toBe(true);
+  });
+
+  it('asks for another token once the cancelled bless resolves again', () => {
+    const resolvedAgain = withTokenState([{ token: 'bless', state: 'cancelled' }], 0, 'resolved');
+
+    expect([resolvedTokens(resolvedAgain), drawFinished(resolvedAgain)]).toEqual([
+      ['bless'],
+      false,
+    ]);
+  });
+
+  it('ignores the −1 alone, keeping the bless', () => {
+    const ignored = withTokenState(blessThenMinusOne, 1, 'ignored');
+
+    expect(resolvedTokens(ignored)).toEqual(['bless']);
   });
 
   it('treats a token as another and back as itself', () => {
@@ -134,36 +150,51 @@ describe('a test draw', () => {
     expect(treatTokenAs(asElderSign, 0)).toEqual(minusTwo);
   });
 
-  it.each<{ name: string; bag: ChaosToken[]; draw: TestDraw; index: number; after: ChaosToken[] }>([
+  it.each<{
+    name: string;
+    bag: ChaosToken[];
+    draw: TestDraw;
+    redrawn: ChaosToken;
+    after: ChaosToken[];
+  }>([
     {
       name: 'puts the token back and draws one in its place',
       bag: ['0', '-2'],
       draw: minusTwo,
-      index: 0,
+      redrawn: '-2',
       after: ['0'],
     },
     {
       name: 'draws on when the new token is a bless',
       bag: ['bless', '-2', '+1'],
       draw: minusTwo,
-      index: 0,
+      redrawn: '-2',
       after: ['bless', '-2'],
+    },
+    {
+      name: 'puts back the −1 the redrawn bless made the tester reveal',
+      bag: ['0', 'bless', '-1'],
+      draw: blessThenMinusOne,
+      redrawn: 'bless',
+      after: ['0'],
     },
     {
       name: 'keeps the tokens before it in their place',
       bag: ['bless', '0', '-1'],
       draw: blessThenMinusOne,
-      index: 1,
+      redrawn: '-1',
       after: ['bless', '0'],
     },
     {
       name: 'can draw the same token again',
       bag: ['-2'],
       draw: minusTwo,
-      index: 0,
+      redrawn: '-2',
       after: ['-2'],
     },
-  ])('redrawToken $name', ({ bag, draw, index, after }) => {
+  ])('redrawToken $name', ({ bag, draw, redrawn, after }) => {
+    const index = draw.findIndex(({ token }) => token === redrawn);
+
     expect(drawnTokens(redrawToken(bag, draw, index, firstLeft))).toEqual(after);
   });
 });

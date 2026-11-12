@@ -26,6 +26,15 @@ export function withoutFirst<T>(items: readonly T[], item: T): T[] {
 }
 
 /**
+ * `items` without one copy of each item in `out` (`withoutFirst` for each): the multiset
+ * difference, such as the chaos bag less the tokens drawn from it. Items of `out` that `items`
+ * lacks are skipped.
+ */
+export function withoutEach<T>(items: readonly T[], out: readonly T[]): T[] {
+  return out.reduce<T[]>((left, item) => withoutFirst(left, item), [...items]);
+}
+
+/**
  * Each item of `items` with the running total of `valueOf` up to and
  * including it, starting from `start`: the last item's `total` is the sum of
  * all of them. Copies the items; empty for an empty list.

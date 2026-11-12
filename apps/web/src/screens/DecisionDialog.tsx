@@ -2,7 +2,7 @@ import { useState, type ComponentProps } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
 import {
-  drawnTokens,
+  revealedTokens,
   type BoardView,
   type ChoiceView,
   type DecisionCounts,
@@ -155,7 +155,7 @@ export function DecisionPage({
         ...countsOf(counts[option]),
         ...(option === suggested?.outcome ? { margin: suggested.margin } : {}),
         ...(asksMarginOf(option) ? { margin: margins[option] } : {}),
-        ...(run?.finished ? { revealed: drawnTokens(run.drawn) } : {}),
+        ...(run?.finished ? { revealed: revealedTokens(run.drawn) } : {}),
       },
       ...(next === undefined ? [] : [{ option: next, counts: countsOf(nextCounts[next]) }]),
     );

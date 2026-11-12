@@ -21,6 +21,13 @@ Card rulings: [Resolution order](cards/resolution-order.md), [Children of Blood]
 
 Bless (+2), curse (-2), frost (-1) and the blood token (-1) each make the tester reveal another token, whose modifier also applies. A second frost token in the same test ends the reveals at once (no further token, though frost says to reveal another) and the test fails automatically, whatever was revealed before it ([RR "Frost Tokens"](https://arkhamdb.com/rules#Frost_Tokens)); frost tokens go back into the bag after the test, unlike bless and curse, which go to the token pool (card rulings: [Bless and curse tokens](cards/bless-and-curse.md)). When the bag has no token left to reveal, the app reveals none and resolves the test with the tokens already revealed: no rule says so, it is our reading of resolving as much as possible ("Golden Rules").
 
+Player cards change revealed tokens (the app's `TestDraw`, ME.24):
+
+- A token cancelled or ignored in its entirety counts as never revealed: no modifier, no effect, no "reveal another", and it does not count as a second frost ([Counterspell FAQ](https://arkhamdb.com/card/04110)). The tokens it made the tester reveal go back too, since they would never have come out. A partial cancel (only the modifier) still counts as revealed.
+- A token treated as another resolves with the other's modifier and effect, but is still the token it is for other effects ([Jim Culver](https://arkhamdb.com/card/02004): an elder sign as a skull).
+- Wendy Adams cancels a token, returns it to the bag and reveals a new one: the returned token can come out again ([card](https://arkhamdb.com/card/01005)). Lucky Dice ignores the token and reveals another, so the ignored one stays out ([card](https://arkhamdb.com/card/02230)).
+- Olive McBride reveals three tokens and resolves two; the third is ignored ([card](https://arkhamdb.com/card/04197)).
+
 ## Sealed tokens
 
 [Seal](https://arkhamdb.com/rules#Seal):

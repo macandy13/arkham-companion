@@ -1,4 +1,4 @@
-import { withoutFirst, withoutKey } from '@arkham/util';
+import { drawWithoutReplacement, withoutEach, withoutKey } from '@arkham/util';
 import type { ChaosToken } from './state';
 import { revealsMore } from './skill_modifiers';
 
@@ -22,9 +22,10 @@ export function drawTokens(
   random: () => number,
 ): ChaosToken[] {
   let drawn = testFinished(revealed) ? [] : [...revealed];
-  let left = without(bag, drawn);
-  while (left.length > 0 && !testFinished(drawn)) {
+  let left = withoutEach(bag, drawn);
+  while (!testFinished(drawn)) {
     const [token, rest] = takeOne(left, random);
+    if (token === undefined) break;
     drawn = [...drawn, token];
     left = rest;
   }
@@ -32,21 +33,24 @@ export function drawTokens(
 }
 
 /**
- * What a player card made of a drawn token (ME.24): it resolves as drawn, or a card cancelled its
- * effects (Wendy Adams' "cancel that token") or had the players ignore it (Olive McBride's tokens
- * not chosen). Only resolved tokens count for the test; the others stay out of the bag until it
- * ends.
+ * What a player card made of a drawn token (ME.24): it resolves as drawn, or a card cancelled it
+ * (Counterspell) or had the players ignore it (Olive McBride's token not chosen, Lucky Dice). A
+ * cancelled or ignored token counts as never revealed (Counterspell FAQ): no modifier, no effect,
+ * no "reveal another"; it stays out of the bag until the test ends.
  */
 export type DrawnTokenState = 'resolved' | 'cancelled' | 'ignored';
 
 /**
- * One token of a skill test's draw: the token out of the bag, its state, and the token it counts
- * as when a card says to treat it as another (Jim Culver: "treat a skull as an elder sign").
+ * One token of a skill test's draw: the token out of the bag, its state, the token it counts as
+ * when a card says to treat it as another (Jim Culver: an elder sign as a skull), and whether it
+ * was drawn only because the token before it said to reveal another (`chained`), so it goes back
+ * into the bag when that one is cancelled, ignored or redrawn.
  */
 export interface DrawnToken {
   readonly token: ChaosToken;
   readonly state: DrawnTokenState;
   readonly treatedAs?: ChaosToken;
+  readonly chained?: true;
 }
 
 /**
@@ -56,9 +60,18 @@ export interface DrawnToken {
  */
 export type TestDraw = readonly DrawnToken[];
 
-/** The tokens out of the bag for the draw, whatever their state: the ones the test returns. */
+/** The tokens out of the bag for the draw, whatever their state. */
 export function drawnTokens(draw: TestDraw): ChaosToken[] {
   return draw.map(({ token }) => token);
+}
+
+/**
+ * The tokens the test revealed, as they came out of the bag: the resolved ones, each as the token
+ * it is, not as what it is treated as. A cancelled or ignored token counts as never revealed, so a
+ * bless or curse among those goes back into the bag rather than to its pool.
+ */
+export function revealedTokens(draw: TestDraw): ChaosToken[] {
+  return draw.flatMap(({ token, state }) => (state === 'resolved' ? [token] : []));
 }
 
 /** The tokens the test resolves: the resolved ones, each as the token it is treated as. */
@@ -97,30 +110,34 @@ export function revealAnother(
   draw: TestDraw,
   random: () => number,
 ): TestDraw {
-  const left = without(bag, drawnTokens(draw));
-  if (left.length === 0) return draw;
-  const [token] = takeOne(left, random);
-  return drawOn(bag, [...draw, resolved(token)], random);
+  const [token] = takeOne(withoutEach(bag, drawnTokens(draw)), random);
+  return token === undefined ? draw : drawOn(bag, [...draw, resolved(token)], random);
 }
 
-/** The draw with the token at `index` in `state`: cancelled, ignored, or resolved again. */
+/**
+ * The draw with the token at `index` in `state`: cancelled, ignored, or resolved again. Cancelled
+ * or ignored, the tokens it made the tester reveal go back into the bag, since they would never
+ * have come out; resolved again, it asks for them anew (`continueDraw`).
+ */
 export function withTokenState(draw: TestDraw, index: number, state: DrawnTokenState): TestDraw {
-  return draw.map((drawn, at) => (at === index ? { ...drawn, state } : drawn));
+  const changed = draw.map((drawn, at) => (at === index ? { ...drawn, state } : drawn));
+  return state === 'resolved' ? changed : withoutFollowers(changed, index);
 }
 
-/** The draw with the token at `index` treated as `as`, or as itself again without one. */
-export function treatTokenAs(draw: TestDraw, index: number, as?: ChaosToken): TestDraw {
+/** The draw with the token at `index` treated as `treatedAs`, or as itself again without one. */
+export function treatTokenAs(draw: TestDraw, index: number, treatedAs?: ChaosToken): TestDraw {
   return draw.map((drawn, at) => {
     if (at !== index) return drawn;
     const rest = withoutKey(drawn, 'treatedAs');
-    return as === undefined || as === drawn.token ? rest : { ...rest, treatedAs: as };
+    return treatedAs === undefined || treatedAs === drawn.token ? rest : { ...rest, treatedAs };
   });
 }
 
 /**
- * The token at `index` back into the bag and a new one drawn in its place, as a card says ("return
- * it to the chaos bag and reveal a new one", Lucky Dice), then more while it makes the tester
- * reveal another. The returned token can come out again.
+ * The token at `index` back into the bag, with the tokens it made the tester reveal, and a new one
+ * drawn in its place, as a card says (Wendy Adams: "return it to the bag; reveal a new chaos
+ * token"), then more while it makes the tester reveal another. The returned token can come out
+ * again. Lucky Dice keeps its token out instead: `withTokenState` ignored, then `revealAnother`.
  */
 export function redrawToken(
   bag: readonly ChaosToken[],
@@ -128,37 +145,49 @@ export function redrawToken(
   index: number,
   random: () => number,
 ): TestDraw {
-  const kept = draw.filter((_, at) => at !== index);
-  const left = without(bag, drawnTokens(kept));
-  if (left.length === 0) return kept;
-  const [token] = takeOne(left, random);
-  const replaced = [...kept.slice(0, index), resolved(token), ...kept.slice(index)];
-  return drawOn(bag, replaced, random);
+  const old = draw[index];
+  const kept = withoutFollowers(draw, index).filter((_, at) => at !== index);
+  const [token] = takeOne(withoutEach(bag, drawnTokens(kept)), random);
+  if (old === undefined || token === undefined) return kept;
+  const replacement: DrawnToken = old.chained ? chained(token) : resolved(token);
+  return drawOn(bag, [...kept.slice(0, index), replacement, ...kept.slice(index)], random);
 }
 
 /** Draws on from `draw` while it is not finished and the bag holds tokens. */
 function drawOn(bag: readonly ChaosToken[], draw: TestDraw, random: () => number): TestDraw {
   let drawn = draw;
-  let left = without(bag, drawnTokens(drawn));
-  while (left.length > 0 && !drawFinished(drawn)) {
+  let left = withoutEach(bag, drawnTokens(drawn));
+  while (!drawFinished(drawn)) {
     const [token, rest] = takeOne(left, random);
-    drawn = [...drawn, resolved(token)];
+    if (token === undefined) break;
+    drawn = [...drawn, drawn.length === 0 ? resolved(token) : chained(token)];
     left = rest;
   }
   return drawn;
+}
+
+/** The draw without the tokens drawn because of the one at `index`: the chained run right after it. */
+function withoutFollowers(draw: TestDraw, index: number): TestDraw {
+  const after = draw.slice(index + 1);
+  const followers = after.findIndex((drawn) => !drawn.chained);
+  return [...draw.slice(0, index + 1), ...after.slice(followers === -1 ? after.length : followers)];
 }
 
 function resolved(token: ChaosToken): DrawnToken {
   return { token, state: 'resolved' };
 }
 
-/** One token picked from `left` by `random`, and the tokens left after it. */
-function takeOne(left: readonly ChaosToken[], random: () => number): [ChaosToken, ChaosToken[]] {
-  const index = Math.floor(random() * left.length);
-  return [left[index] as ChaosToken, [...left.slice(0, index), ...left.slice(index + 1)]];
+function chained(token: ChaosToken): DrawnToken {
+  return { token, state: 'resolved', chained: true };
 }
 
-/** `bag` without one copy of each token in `out`. */
-function without(bag: readonly ChaosToken[], out: readonly ChaosToken[]): ChaosToken[] {
-  return out.reduce<ChaosToken[]>((left, token) => withoutFirst(left, token), [...bag]);
+/** One token picked from `left` by `random` (none from an empty bag), and the tokens left after it. */
+function takeOne(
+  left: readonly ChaosToken[],
+  random: () => number,
+): [ChaosToken | undefined, ChaosToken[]] {
+  const { drawn, left: rest } = drawWithoutReplacement(left, 1, (count) =>
+    Math.floor(random() * count),
+  );
+  return [drawn[0], rest];
 }

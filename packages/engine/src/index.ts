@@ -122,6 +122,7 @@ export {
   redrawToken,
   resolvedTokens,
   revealAnother,
+  revealedTokens,
   testFinished,
   treatTokenAs,
   withTokenState,
