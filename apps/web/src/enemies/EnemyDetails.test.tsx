@@ -2,6 +2,7 @@
 import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import {
+  atLocation,
   blankEnemy,
   blankTreachery,
   decisionId,
@@ -343,7 +344,7 @@ describe('EnemyDetails', () => {
     expect(table.board.enemiesEngagedWith(alder)).toEqual([]);
   });
 
-  it('offers the card effects for alder, its engaged investigator, and brook, who shares the study', () => {
+  it('offers the card effects for alder, whom the ghoul is engaged with, and brook, who shares the study', () => {
     renderGhoulDetails(PlayTable.start(ghoulOnAlder));
 
     const offered = within(group('Card effect')).getAllByRole('button');
@@ -352,6 +353,7 @@ describe('EnemyDetails', () => {
       'Disengage',
       'Exhaust',
       'Evaded by alder',
+      'Evaded by brook',
       'Engages brook',
       'Defeat',
     ]);
@@ -394,21 +396,30 @@ describe('EnemyDetails', () => {
     expect(screen.queryByRole('button', { name: 'Exhaust' })).toBeNull();
   });
 
-  it('offers no engage for a massive ghoul', () => {
-    renderGhoulDetails(
-      PlayTable.start(
-        newGame()
-          .withLocation(study, blankLocation('study'), { revealed: true })
-          .withInvestigator(alder, { locationId: study })
-          .withInvestigator(brook, { locationId: study })
-          .withCard(
-            ghoul,
-            blankEnemy('ghoul', { keywords: [{ name: 'massive' }] }),
-            engagedWith(alder),
-          ),
-      ),
+  it('offers no engage for a massive ghoul in the study', () => {
+    const table = PlayTable.start(
+      newGame()
+        .withLocation(study, blankLocation('study'), { revealed: true })
+        .withInvestigator(alder, { locationId: study })
+        .withCard(
+          ghoul,
+          blankEnemy('ghoul', { keywords: [{ name: 'massive' }] }),
+          atLocation(study),
+        ),
+    );
+    const enemy = table.board.enemiesAt(study).find(({ id }) => id === ghoul);
+    if (!enemy) throw new Error('the ghoul is in the study');
+    render(
+      <EnemyDetails
+        board={table.board}
+        enemy={enemy}
+        actions={actionsOn(table)}
+        busy={false}
+        onClose={vi.fn()}
+      />,
     );
 
-    expect(screen.queryByRole('button', { name: 'Engages brook' })).toBeNull();
+    expect(screen.getByRole('button', { name: 'Evaded by alder' })).toBeDefined();
+    expect(screen.queryByRole('button', { name: 'Engages alder' })).toBeNull();
   });
 });
