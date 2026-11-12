@@ -154,7 +154,13 @@ describe('pending decisions', () => {
   });
 
   it('rejects other commands', () => {
-    const rejection = rejectionFrom(context, asked, { type: 'PlaceDoom', cardId: hall, amount: 1 });
+    const rejection = rejectionFrom(context, asked, {
+      type: 'MoveTokens',
+      token: 'doom',
+      amount: 1,
+      from: 'pool',
+      to: { card: hall },
+    });
 
     expect(rejection).toEqual({ code: 'decisionPending', decisionId: 'pick_reward' });
   });
@@ -582,7 +588,7 @@ describe('decisions raised by card abilities', () => {
 describe('pending decision invariants', () => {
   const { context, state: aliceInHall } = hallWithAlice.start();
   const blocked: Command[] = [
-    { type: 'PlaceDoom', cardId: hall, amount: 1 },
+    { type: 'MoveTokens', token: 'doom', amount: 1, from: 'pool', to: { card: hall } },
     { type: 'MoveHunters' },
     { type: 'DrawEncounter', investigatorId: alice },
     gainResource,

@@ -193,7 +193,13 @@ describe('The Devourer Below end to end: Roland and Daisy, seed 7', () => {
     table.step(() => {
       table.play({ type: 'SpawnEnemy', enemyId: secondGoat, at: mainPath });
       table.answer(byName('Goat Spawn'), 'Roland Banks');
-      table.play({ type: 'PlaceDoom', amount: 1, cardId: secondGoat });
+      table.play({
+        type: 'MoveTokens',
+        token: 'doom',
+        amount: 1,
+        from: 'pool',
+        to: { card: secondGoat },
+      });
     });
     table.nextPhase();
     table.nextPhase();

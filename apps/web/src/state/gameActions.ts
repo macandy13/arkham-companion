@@ -193,9 +193,8 @@ export interface GameActions {
   /**
    * `delta` more (or, negative, fewer) of `token` on `card` in play (a location, an enemy): one tap
    * on a location's stepper, or a token dragged from or to the token pool. Doom added is placed by
-   * rule (`PlaceDoom`), so effects that count placed doom see it; the engine has no command that
-   * places or removes clues or removes doom yet, so the rest are corrections by hand
-   * (`ManualAdjust`), like the header's `removeDoom`.
+   * rule (`MoveTokens` from the pool), so effects that count placed doom see it; the rest are
+   * corrections by hand (`ManualAdjust`), like the header's `removeDoom`.
    */
   adjustTokens(card: InstanceId, token: LooseToken, delta: number): Promise<void>;
   /**
@@ -364,7 +363,7 @@ export function gameActions(
       play((table) =>
         table.play(
           token === 'doom' && delta > 0
-            ? { type: 'PlaceDoom', cardId: card, amount: delta }
+            ? { type: 'MoveTokens', token: 'doom', amount: delta, from: 'pool', to: { card } }
             : {
                 type: 'ManualAdjust',
                 adjustment: { kind: 'tokens', cardId: card, token, delta },

@@ -80,7 +80,8 @@ const REFUSAL_KINDS: Readonly<Record<RejectionCode, RefusalKind>> = {
   invalidStartingTokens: 'never',
   // Cards the engine itself moves: a refusal means a rule sent a wrong command.
   cardAlreadyInPlay: 'never',
-  cardNotInPlay: 'never',
+  tokenNotOnInvestigators: 'never',
+  invalidTokenMove: 'never',
   cardNotInZone: 'never',
   hostingCycle: 'never',
   indexOutOfRange: 'never',

@@ -167,7 +167,7 @@ describe('formatBoard', () => {
     const state = stateAfter(
       context,
       startedBoard(),
-      { type: 'PlaceDoom', amount: 1 },
+      { type: 'MoveTokens', token: 'doom', amount: 1, from: 'pool', to: 'currentAgenda' },
       { type: 'CheckDoomThreshold' },
     );
 

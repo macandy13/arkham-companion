@@ -275,7 +275,9 @@ function stepCommands(
 ): Command[] {
   switch (step.id) {
     case 'placeDoom':
-      return state.agenda.current === undefined ? [] : [{ type: 'PlaceDoom', amount: 1 }];
+      return state.agenda.current === undefined
+        ? []
+        : [{ type: 'MoveTokens', token: 'doom', amount: 1, from: 'pool', to: 'currentAgenda' }];
     case 'checkDoomThreshold':
       return [{ type: 'CheckDoomThreshold' }];
     case 'drawEncounterCard':

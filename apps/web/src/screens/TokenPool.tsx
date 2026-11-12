@@ -13,7 +13,7 @@ import { useTokenDrag, type TokenDragHandlers } from './useTokenDrag';
  * a resource token, the supply on the table that card effects take tokens from and that tokens
  * taken off go back to. A token dragged off it is placed where it is dropped, as a card effect
  * places it, one step a drop:
- * - doom on a location or an enemy (`adjustTokens`, `PlaceDoom`) or on the agenda (`placeDoom`),
+ * - doom on a location or an enemy (`adjustTokens`, `MoveTokens`) or on the agenda (`placeDoom`),
  *   so it counts towards the threshold;
  * - a clue on a location (`adjustTokens`), as a card adds one there;
  * - damage on an enemy (`damageEnemy`), which defeats it at its health, or on an investigator's

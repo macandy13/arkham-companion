@@ -261,7 +261,13 @@ describe('The Devourer Below end to end: Roland and Daisy, seed 9', () => {
     ]);
     table.step(() => {
       table.play({ type: 'SpawnEnemy', enemyId: yithianObserver, at: mainPath });
-      table.play({ type: 'PlaceDoom', amount: 1, cardId: yithianObserver });
+      table.play({
+        type: 'MoveTokens',
+        token: 'doom',
+        amount: 1,
+        from: 'pool',
+        to: { card: yithianObserver },
+      });
     });
 
     // Round 3 – mythos: Roland draws the Ghoul Priest, still alive from The

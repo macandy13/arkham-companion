@@ -655,7 +655,7 @@ export class PlayTable {
 
   /** Doom from a card effect (e.g. Ancient Evils) on the current agenda. */
   placeDoom(amount: number): void {
-    this.play({ type: 'PlaceDoom', amount });
+    this.play({ type: 'MoveTokens', token: 'doom', amount, from: 'pool', to: 'currentAgenda' });
   }
 
   /**

@@ -236,7 +236,13 @@ describe('The Gathering treacheries', () => {
       const withDoom =
         doomBefore === 0
           ? state
-          : stateAfter(context, state, { type: 'PlaceDoom', amount: doomBefore });
+          : stateAfter(context, state, {
+              type: 'MoveTokens',
+              token: 'doom',
+              amount: doomBefore,
+              from: 'pool',
+              to: 'currentAgenda',
+            });
 
       const drawn = stateAfter(context, withDoom, aliceDraws, resolveRevelation('ancient_evils'));
 

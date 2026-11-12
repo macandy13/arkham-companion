@@ -349,7 +349,13 @@ describe('trigger bus', () => {
       const { context, state: started } = devourerTable.start();
       const merged = stateAfter(context, started, { type: 'AdvanceAgenda' });
 
-      const state = stateAfter(context, merged, { type: 'PlaceDoom', amount: 3 });
+      const state = stateAfter(context, merged, {
+        type: 'MoveTokens',
+        token: 'doom',
+        amount: 3,
+        from: 'pool',
+        to: 'currentAgenda',
+      });
 
       expect(agendaThresholdDecision(context, state)).toEqual([]);
     });
@@ -2115,7 +2121,13 @@ describe("objectives on a card's own tokens", () => {
       .withAct(act2, secondActCard)
       .withLocation(hall, blankLocation('hall'), { revealed: true })
       .withInvestigator(alice, { locationId: hall });
-  const placeClueOnAct: Command = { type: 'PlaceTokens', cardId: act1, token: 'clue', amount: 1 };
+  const placeClueOnAct: Command = {
+    type: 'MoveTokens',
+    token: 'clue',
+    amount: 1,
+    from: 'pool',
+    to: { card: act1 },
+  };
 
   it.each([
     { clues: 1, current: act2, outcome: 'advances' },
@@ -2138,8 +2150,8 @@ describe("objectives on a card's own tokens", () => {
       type: 'MoveTokens',
       token: 'clue',
       amount: 1,
-      from: cultist,
-      to: act1,
+      from: { card: cultist },
+      to: { card: act1 },
     });
 
     expect(state.act.current).toBe(act2);

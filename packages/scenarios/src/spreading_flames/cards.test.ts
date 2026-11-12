@@ -241,7 +241,13 @@ describe('Spreading Flames card abilities', () => {
 
     it('lets the doom advance the agenda when it reaches the threshold', () => {
       const { context, state: started } = aliceDrawsCosmicEvils.start();
-      const atTwoDoom = stateAfter(context, started, { type: 'PlaceDoom', amount: 2 });
+      const atTwoDoom = stateAfter(context, started, {
+        type: 'MoveTokens',
+        token: 'doom',
+        amount: 2,
+        from: 'pool',
+        to: 'currentAgenda',
+      });
       const drawn = stateAfter(
         context,
         atTwoDoom,

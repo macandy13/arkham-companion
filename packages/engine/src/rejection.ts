@@ -100,8 +100,10 @@ export type Rejection =
       current: number;
       delta: number;
     }
-  /** `PlaceDoom` on a card that is not in play (deck, discard, set aside, …). */
-  | { code: 'cardNotInPlay'; cardId: InstanceId }
+  /** `MoveTokens` from or to an investigator for a token investigators don't hold (doom, …). */
+  | { code: 'tokenNotOnInvestigators'; token: TokenKind }
+  /** `MoveTokens` from the pool to the pool, or `'all'` from the pool, which holds no count. */
+  | { code: 'invalidTokenMove' }
   /** `AdvanceAgenda`/`AdvanceAct` while that deck has no current card. */
   | { code: 'noCurrentCard'; deck: 'agenda' | 'act' }
   /** `BecomeActAndAgenda` with `next` while no agenda follows the current one. */
@@ -377,8 +379,10 @@ function describe(r: Rejection): string {
       return `${r.cardId} has ${r.available} clues, ${r.requested} requested`;
     case 'negativeInvestigatorStat':
       return `${r.stat} of ${r.investigatorId} would become ${r.current + r.delta}`;
-    case 'cardNotInPlay':
-      return `${r.cardId} is not in play`;
+    case 'tokenNotOnInvestigators':
+      return `investigators hold no ${r.token} tokens`;
+    case 'invalidTokenMove':
+      return 'tokens move between the pool and a card or investigator, and never all of the pool';
     case 'noCurrentCard':
       return `there is no current ${r.deck}`;
     case 'noNextAgenda':

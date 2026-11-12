@@ -232,7 +232,13 @@ describe('mythos phase', () => {
 
   it('asks to advance the agenda at the threshold check (1.3) and draws only after the answer', () => {
     const { context, state } = aliceAndBobWithTwoTreacheries.start();
-    const upkeep = stateAfter(context, upkeepOf(context, state), { type: 'PlaceDoom', amount: 1 });
+    const upkeep = stateAfter(context, upkeepOf(context, state), {
+      type: 'MoveTokens',
+      token: 'doom',
+      amount: 1,
+      from: 'pool',
+      to: 'currentAgenda',
+    });
 
     const asked = stateAfter(context, upkeep, next);
     const answered = stateAfter(context, asked, answer('advanceAgenda:first_agenda', 'yes'));
@@ -254,7 +260,7 @@ describe('mythos phase', () => {
     const corrected = stateAfter(
       context,
       upkeepOf(context, state),
-      { type: 'PlaceDoom', amount: 2 },
+      { type: 'MoveTokens', token: 'doom', amount: 2, from: 'pool', to: 'currentAgenda' },
       {
         type: 'ManualAdjust',
         adjustment: { kind: 'tokens', cardId: firstAgenda, token: 'doom', delta: -2 },

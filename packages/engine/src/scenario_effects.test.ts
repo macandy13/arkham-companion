@@ -59,7 +59,13 @@ describe('a card effect that advances the agenda', () => {
       .withLocation(attic, atticCard, { revealed: true })
       .withInvestigator(alice, { locationId: hall })
       .start();
-    const withDoom = stateAfter(context, state, { type: 'PlaceDoom', amount: 2 });
+    const withDoom = stateAfter(context, state, {
+      type: 'MoveTokens',
+      token: 'doom',
+      amount: 2,
+      from: 'pool',
+      to: 'currentAgenda',
+    });
 
     const after = stateAfter(context, withDoom, aliceEntersAttic);
 
@@ -212,7 +218,15 @@ describe('card effects that remove doom', () => {
         .withInvestigator(alice, { locationId: hall })
         .start();
       const withDoom =
-        before === 0 ? state : stateAfter(context, state, { type: 'PlaceDoom', amount: before });
+        before === 0
+          ? state
+          : stateAfter(context, state, {
+              type: 'MoveTokens',
+              token: 'doom',
+              amount: before,
+              from: 'pool',
+              to: 'currentAgenda',
+            });
 
       const moved = stateAfter(context, withDoom, aliceEntersAttic);
 
@@ -256,9 +270,11 @@ describe('card effects that remove doom', () => {
       .start();
 
     const { state: after, events } = execute(context, state, {
-      type: 'RemoveDoom',
-      cardId: acolyte,
+      type: 'MoveTokens',
+      token: 'doom',
       amount: 1,
+      from: { card: acolyte },
+      to: 'pool',
     });
 
     expect(events).toEqual([]);
@@ -272,7 +288,15 @@ describe('card effects that remove doom', () => {
       .withInvestigator(alice, { locationId: hall })
       .start();
 
-    expect(rejectionFrom(context, state, { type: 'RemoveDoom', amount: 0 })).toMatchObject({
+    expect(
+      rejectionFrom(context, state, {
+        type: 'MoveTokens',
+        token: 'doom',
+        amount: 0,
+        from: 'currentAgenda',
+        to: 'pool',
+      }),
+    ).toMatchObject({
       code: 'invalidTokenDelta',
     });
   });
@@ -339,8 +363,8 @@ describe('card effects that move tokens between cards', () => {
         type: 'MoveTokens',
         token: 'damage',
         amount: 'all',
-        from: acolyte,
-        to: mother,
+        from: { card: acolyte },
+        to: { card: mother },
       });
 
       expect(after.cards[acolyte]?.tokens.damage ?? 0).toBe(0);
@@ -382,7 +406,8 @@ describe('card effects that move tokens between cards', () => {
       type: 'MoveTokens',
       token: 'doom',
       amount: 'all',
-      from: acolyte,
+      from: { card: acolyte },
+      to: 'currentAgenda',
     });
 
     expect(events).toEqual([]);
@@ -400,8 +425,8 @@ describe('card effects that move tokens between cards', () => {
       type: 'MoveTokens',
       token: 'doom',
       amount: 'all',
-      from: acolyte,
-      to: mother,
+      from: { card: acolyte },
+      to: { card: mother },
     });
 
     expect(events).toEqual([]);
@@ -419,8 +444,8 @@ describe('card effects that move tokens between cards', () => {
       type: 'MoveTokens',
       token: 'doom',
       amount: 'all',
-      from: acolyte,
-      to: acolyte,
+      from: { card: acolyte },
+      to: { card: acolyte },
     });
 
     expect(events).toEqual([]);
@@ -441,8 +466,8 @@ describe('card effects that move tokens between cards', () => {
       type: 'MoveTokens',
       token: 'clue',
       amount: 1,
-      from: constance,
-      toInvestigator: bob,
+      from: { card: constance },
+      to: { investigator: bob },
     });
 
     expect(events).toEqual([]);
@@ -464,10 +489,10 @@ describe('card effects that move tokens between cards', () => {
 
     const { events } = execute(context, state, {
       type: 'MoveTokens',
-      token,
+      token: token,
       amount: 'all',
-      from: acolyte,
-      to,
+      from: { card: acolyte },
+      to: { card: to },
     });
 
     expect(events).toEqual([]);
@@ -485,7 +510,8 @@ describe('card effects that move tokens between cards', () => {
         type: 'MoveTokens',
         token: 'doom',
         amount: 0,
-        from: acolyte,
+        from: { card: acolyte },
+        to: 'currentAgenda',
       }),
     ).toMatchObject({ code: 'invalidTokenDelta' });
   });
