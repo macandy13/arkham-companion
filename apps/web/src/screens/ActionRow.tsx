@@ -13,6 +13,8 @@ export type ActionIcon =
   | 'engage'
   | 'damage'
   | 'disengage'
+  | 'exhaust'
+  | 'ready'
   | 'defeat'
   | 'investigate'
   | 'move'

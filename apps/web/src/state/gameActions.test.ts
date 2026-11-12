@@ -273,16 +273,52 @@ describe('gameActions', () => {
       act: (actions) => actions.disengageEnemy(ghoul),
       ghoul: { at: 'study' },
     },
-  ])('a card effect can $effect the ghoul', async ({ act, ghoul: expected }) => {
-    const table = aldersTurn();
+    {
+      effect: 'exhaust',
+      act: (actions) => actions.exhaustEnemy(ghoul),
+      ghoul: { at: 'study', engagedWith: alder, exhausted: true },
+    },
+    {
+      effect: 'evade (for alder)',
+      act: (actions) => actions.evadeEnemy(ghoul, alder),
+      ghoul: { at: 'study', exhausted: true },
+    },
+    {
+      effect: 'engage (with brook)',
+      act: (actions) => actions.engageEnemy(ghoul, brook),
+      ghoul: { at: 'study', engagedWith: brook },
+    },
+  ])(
+    'a card effect can $effect the ghoul, spending no action',
+    async ({ act, ghoul: expected }) => {
+      const table = aldersTurn();
 
-    await act(actionsOn(table));
+      await act(actionsOn(table));
 
-    expect(table.board.enemies.find(({ name }) => name === 'ghoul')).toEqual({
-      name: 'ghoul',
-      health: 3,
-      ...expected,
-    });
+      expect(table.board.enemies.find(({ name }) => name === 'ghoul')).toEqual({
+        name: 'ghoul',
+        health: 3,
+        ...expected,
+      });
+      expect(table.board.investigator(alder)).toMatchObject({ actions: 3 });
+    },
+  );
+
+  it('a card effect can ready the exhausted ghoul, which then engages alder there again', async () => {
+    const table = PlayTable.start(
+      newGame()
+        .withLocation(study, blankLocation('study'), { revealed: true })
+        .withInvestigator(alder, { locationId: study })
+        .withCard(ghoul, blankEnemy('ghoul', { health: fixed(3) }), engagedWith(alder))
+        .withTurnOf(alder),
+    );
+    await actionsOn(table).evadeEnemy(ghoul, alder);
+
+    await actionsOn(table).readyEnemy(ghoul);
+
+    expect(table.board.enemies).toEqual([
+      { name: 'ghoul', at: 'study', engagedWith: alder, health: 3 },
+    ]);
   });
 
   it('a card effect can defeat the ghoul', async () => {
