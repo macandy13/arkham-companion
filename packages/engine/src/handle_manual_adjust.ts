@@ -6,7 +6,7 @@ import type { ActionsAdjusted, CardMoved, Event, SkillBoostChanged, TokensChange
 import type { InstanceId } from './ids';
 import { activeInvestigator } from './investigators';
 import { cardsInZone, requireCard } from './lookup';
-import { cardMoved, clearTokensEvents, discardEncounterCard } from './placement';
+import { cardMoved, clearTokensEvents, discardEncounterCard, limitReached } from './placement';
 import { apply } from './reducer';
 import { CommandRejected } from './rejection';
 import type { CardInstance, GameState } from './state';
@@ -27,10 +27,13 @@ function assertNotCurrentStage(state: GameState, cardId: InstanceId): void {
  * `MoveCard`: the same move a `ManualAdjust` makes, as a game event. A card it takes from play to
  * the set-aside area, out of the game or beneath another card leaves its tokens and attachments behind first and is
  * readied (Rules Reference, "Leaves Play"; "Escape the Dorms" removes Your Friend's Room with its Fire! and sets
- * the Servant of Flame aside healed); a correction moves the card alone.
+ * the Servant of Flame aside healed); a correction moves the card alone. A card whose limit is
+ * reached there (`limitReached`) does not move: the limit keeps it out, so a revelation leaves it
+ * in `resolving`, to be discarded.
  */
-export function handleMoveCard(state: GameState, cmd: MoveCard): Event[] {
+export function handleMoveCard(ctx: EngineContext, state: GameState, cmd: MoveCard): Event[] {
   const card = requireCard(state.cards, cmd.cardId);
+  if (limitReached(ctx, state, card.id, cmd.to)) return [];
   const moved = cardMoved(state, card, cmd.to, cmd.index);
   if (!leavesPlay(state, card, cmd.to)) return [moved];
   const attachments = cardsInZone(state, attachedTo(card.id)).flatMap((attachedId) =>

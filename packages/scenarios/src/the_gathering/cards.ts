@@ -503,7 +503,7 @@ export const theGatheringCardDefs: readonly CardStats[] = [
     set: sets.chillingCold,
     traits: ['Hazard'],
     quantity: 2,
-    locationAttachment: { onePerLocation: true },
+    limit: 'onePerLocation',
     modifiers: [{ value: 'shroud', of: 'host', by: 2 }],
     abilities: [whenRevealed(attachToLocation()), afterTest('investigate', 'pass', discardSelf())],
   }),

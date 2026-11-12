@@ -141,12 +141,8 @@ export interface CardStats {
   quantity?: number;
   /** Keywords parsed from the card text at load time; none when absent. */
   keywords?: readonly Keyword[];
-  /**
-   * Set for a treachery whose revelation attaches it to a location (Obscuring
-   * Fog to the drawer's, Locked Door to the one with the most clues), entered
-   * with the card data; its fields say what limits it there.
-   */
-  locationAttachment?: LocationAttachment;
+  /** "Limit 1 per location / investigator" (`CopyLimit`), entered with the card data. */
+  limit?: CopyLimit;
   /**
    * Its constant abilities that change a number while it is in play: a card's value ("Attached
    * location gets +2 shroud") or what an action costs ("The first move … costs 1 additional
@@ -215,17 +211,12 @@ export type LocationSymbol =
   | 'clover';
 
 /**
- * What a treachery attached to a location by its revelation does
- * (`CardStats.locationAttachment`). Only what the engine applies: anything
- * else the card says stays card text the players apply.
+ * "Limit 1 per location" (Obscuring Fog, attached to a location) or "Limit 1 per investigator"
+ * (Unspeakable Truths, in a threat area): the location's attachments, or the investigator's threat
+ * area, may hold one copy of its title (`limitReached`). A card that would come to a second copy
+ * stays where it is, so a revelation that would put it there leaves it to be discarded.
  */
-export interface LocationAttachment {
-  /**
-   * "Limit 1 per location": drawn while a card of the same title is attached
-   * there, it is discarded instead, since its revelation cannot attach it.
-   */
-  onePerLocation?: boolean;
-}
+export type CopyLimit = 'onePerLocation' | 'onePerInvestigator';
 
 /**
  * Read-only lookup of card definitions by code. The app backs it with the

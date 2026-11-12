@@ -1,3 +1,5 @@
+import { assertNever } from '@arkham/util';
+import { cardStats, type CopyLimit, type EngineContext } from './cards';
 import type { DiscardCard, MoveCard } from './commands';
 import type { CardMoved, Event, TokensChanged } from './events';
 import { requireCard } from './lookup';
@@ -146,4 +148,36 @@ export function handleDiscardCard(state: GameState, cmd: DiscardCard): Event[] {
  */
 export function discardToTop(cardId: InstanceId): MoveCard {
   return { type: 'MoveCard', cardId, to: { kind: 'encounterDiscard' }, index: 0 };
+}
+
+/**
+ * Whether moving `cardId` to `to` would break its `CardStats.limit`: what `to` puts it in (the
+ * location it attaches to, the investigator whose threat area it is) already holds another card of
+ * its title. Rules Reference, "Limits and Maximums": the limit counts copies by title.
+ */
+export function limitReached(
+  ctx: EngineContext,
+  state: GameState,
+  cardId: InstanceId,
+  to: Zone,
+): boolean {
+  const stats = cardStats(ctx.cards, requireCard(state.cards, cardId).code);
+  if (stats.limit === undefined || to.kind !== limitedZone(stats.limit)) return false;
+  return (state.order[zoneKey(to)] ?? []).some(
+    (heldId) =>
+      heldId !== cardId &&
+      cardStats(ctx.cards, requireCard(state.cards, heldId).code).name === stats.name,
+  );
+}
+
+/** The zone a `CopyLimit` counts copies in: a location's attachments, or a threat area. */
+function limitedZone(limit: CopyLimit): Zone['kind'] {
+  switch (limit) {
+    case 'onePerLocation':
+      return 'attachedTo';
+    case 'onePerInvestigator':
+      return 'threatArea';
+    default:
+      return assertNever(limit);
+  }
 }

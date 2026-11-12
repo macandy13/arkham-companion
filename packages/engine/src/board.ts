@@ -5,12 +5,11 @@ import {
   printsConnectionTo,
   resolveValue,
   type EngineContext,
-  type LocationAttachment,
   type PrintedSymbols,
 } from './cards';
 import type { CardFlipped, TokensChanged } from './events';
 import type { InstanceId, MapId } from './ids';
-import { cardsInZone, cardsNamed, cardsOfType, requireCard } from './lookup';
+import { cardsNamed, cardsOfType, requireCard } from './lookup';
 import type { Edge, GameMap, GridCell } from './map';
 import { CommandRejected } from './rejection';
 import type { CardInstance, GameState } from './state';
@@ -302,19 +301,6 @@ function pathsBack(
   return (predecessors.get(to) ?? []).flatMap((previous) =>
     pathsBack(predecessors, from, previous).map((path) => [...path, to]),
   );
-}
-
-/** The cards attached to `location` that came there through `CardStats.locationAttachment`, with it. */
-export function locationAttachments(
-  ctx: EngineContext,
-  state: GameState,
-  location: CardInstance,
-): { card: CardInstance; attachment: LocationAttachment }[] {
-  return cardsInZone(state, { kind: 'attachedTo', hostId: location.id }).flatMap((cardId) => {
-    const card = requireCard(state.cards, cardId);
-    const attachment = cardStats(ctx.cards, card.code).locationAttachment;
-    return attachment ? [{ card, attachment }] : [];
-  });
 }
 
 /**

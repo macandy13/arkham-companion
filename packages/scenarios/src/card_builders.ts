@@ -12,7 +12,7 @@ import {
   type CardStats,
   type EncounterSetCode,
   type Keyword,
-  type LocationAttachment,
+  type CopyLimit,
   type LocationSymbol,
   type ScaledValue,
   type Trait,
@@ -244,8 +244,8 @@ export interface TreacheryOptions {
   keywords?: readonly Keyword[];
   /** Its revelation and forced abilities (Frozen in Fear's end-of-turn test). */
   abilities?: readonly Ability[];
-  /** What it does attached to the drawer's location (Obscuring Fog). */
-  locationAttachment?: LocationAttachment;
+  /** "Limit 1 per location / investigator" (Obscuring Fog, attached to the drawer's location). */
+  limit?: CopyLimit;
   /** Its constant abilities (Obscuring Fog's +2 shroud on its location, Frozen in Fear's action cost). */
   modifiers?: readonly Modifier[];
   /** Its action abilities, offered while it is in a threat area (Dreams of R'lyeh). */
@@ -263,7 +263,7 @@ export function treachery({
   quantity,
   keywords,
   abilities,
-  locationAttachment,
+  limit,
   modifiers,
   actions,
   restrictions,
@@ -279,7 +279,7 @@ export function treachery({
     quantity,
     ...(keywords ? { keywords } : {}),
     ...(abilities ? { abilities } : {}),
-    ...(locationAttachment ? { locationAttachment } : {}),
+    ...(limit ? { limit } : {}),
     ...(modifiers ? { modifiers } : {}),
     ...(actions ? { actions } : {}),
     ...(restrictions ? { restrictions } : {}),

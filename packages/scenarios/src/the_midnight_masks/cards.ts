@@ -551,7 +551,7 @@ export const theMidnightMasksCardDefs: readonly CardStats[] = [
     traits: ['Obstacle'],
     quantity: 2,
     // "without a copy of Locked Door attached" is the limit of one per location.
-    locationAttachment: { onePerLocation: true },
+    limit: 'onePerLocation',
     abilities: [
       whenRevealed(attachTo(locationWithMost('clue'))),
       ifNoCandidate(locationWithMost('clue'), whenRevealed(gainSurge())),

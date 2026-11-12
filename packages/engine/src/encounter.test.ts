@@ -60,7 +60,7 @@ const lingeringTreachery = blankTreachery('lingering_treachery', {
   abilities: [whenRevealed(putIntoThreatArea())],
 });
 const onePerLocationAttachment = blankTreachery('one_per_location_attachment', {
-  locationAttachment: { onePerLocation: true },
+  limit: 'onePerLocation',
   abilities: [whenRevealed(attachToLocation())],
 });
 const relicCard = blankAsset('relic');
@@ -166,6 +166,39 @@ describe('DrawEncounter', () => {
       const after = stateAfter(context, state, draw, resolveRevelation('fog_card'));
 
       expect(idsIn(after, encounterDiscard)).toEqual(['fog_card']);
+    });
+  });
+
+  describe('a treachery in the threat area, limit 1 per investigator', () => {
+    /** "Revelation – Put it into play in your threat area. Limit 1 per investigator." */
+    const onePerInvestigatorTreachery = blankTreachery('one_per_investigator_treachery', {
+      limit: 'onePerInvestigator',
+      abilities: [whenRevealed(putIntoThreatArea())],
+    });
+
+    it('is discarded while the drawer already has a copy in their threat area', () => {
+      const { context, state } = aliceInHall
+        .withCard(instanceId('first_copy'), onePerInvestigatorTreachery, threatAreaOf(alice))
+        .withCard(instanceId('second_copy'), onePerInvestigatorTreachery, encounterDeck)
+        // Keeps the deck from running out, which would shuffle the discard back.
+        .withCard(instanceId('bottom_card'), plainTreachery, encounterDeck)
+        .start();
+
+      const after = stateAfter(context, state, draw, resolveRevelation('second_copy'));
+
+      expect(idsIn(after, threatAreaOf(alice))).toEqual(['first_copy']);
+      expect(idsIn(after, encounterDiscard)).toEqual(['second_copy']);
+    });
+
+    it('comes into play beside a card of another title', () => {
+      const { context, state } = aliceInHall
+        .withCard(instanceId('lingering_card'), lingeringTreachery, threatAreaOf(alice))
+        .withCard(instanceId('limited_card'), onePerInvestigatorTreachery, encounterDeck)
+        .start();
+
+      const after = stateAfter(context, state, draw, resolveRevelation('limited_card'));
+
+      expect(idsIn(after, threatAreaOf(alice))).toEqual(['lingering_card', 'limited_card']);
     });
   });
 
@@ -1064,7 +1097,7 @@ describe('revelation before the drawn card is placed', () => {
     abilities: [whenRevealed(takeDamage(1), putIntoThreatArea())],
   });
   const scorchingAttachment = blankTreachery('scorching_attachment', {
-    locationAttachment: { onePerLocation: true },
+    limit: 'onePerLocation',
     abilities: [whenRevealed(takeDamage(1), attachToLocation())],
   });
   const lethalTreachery = blankTreachery('lethal_treachery', {

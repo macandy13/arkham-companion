@@ -445,7 +445,7 @@ export const smokeAndMirrorsCardDefs: readonly CardStats[] = [
     pictures: jpg,
     traits: ['Hex', 'Obstacle'],
     quantity: 2,
-    locationAttachment: { onePerLocation: true },
+    limit: 'onePerLocation',
     abilities: [whenRevealed(attachToLocation())],
     actions: [
       {
