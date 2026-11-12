@@ -507,6 +507,31 @@ describe('Spreading Flames card abilities', () => {
   });
 
   describe('Wild Flames', () => {
+    it('has the lead investigator draw the topmost Fire! of the encounter discard after doom is placed on it, not one from the deck', () => {
+      const wildFlames = instanceId('wild_flames');
+      const topFire = instanceId('topmost_fire_in_discard');
+      const lowerFire = instanceId('lower_fire_in_discard');
+      const fireInDeck = instanceId('fire_in_deck');
+      const { context, state: started } = newGame()
+        .withLocation(quad, cardOf('12116'), { revealed: true })
+        .withInvestigator(alice, { locationId: quad })
+        .withAgenda(wildFlames, cardOf('12108'))
+        .withCard(fireInDeck, cardOf('12129'), encounterDeck)
+        .withCard(instanceId('treachery_on_top'), cardOf('12127'), encounterDiscard)
+        .withCard(topFire, cardOf('12129'), encounterDiscard)
+        .withCard(lowerFire, cardOf('12129'), encounterDiscard)
+        .withTurnOf(alice)
+        .start();
+
+      const state = stateAfter(context, started, placeDoomOnAgenda(1));
+
+      expect([topFire, lowerFire, fireInDeck].map((id) => state.cards[id]?.zone.kind)).toEqual([
+        'resolving',
+        'encounterDiscard',
+        'encounterDeck',
+      ]);
+    });
+
     it('defeats alice with 1 physical trauma as it advances', () => {
       const wildFlames = instanceId('wild_flames');
       const { context, state: started } = newGame()
