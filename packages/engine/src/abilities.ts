@@ -42,6 +42,7 @@ import { enemiesAt, enemiesMatching, nearestEnemies, type EnemyFilter } from './
 import {
   cluesHeldAt,
   cluesHeldByGroup,
+  findInvestigator,
   isActiveInvestigator,
   playerOrder,
   requireInvestigator,
@@ -613,7 +614,7 @@ export function windowsOpenedBy(
     }
     case 'TurnEnded': {
       const { investigatorId } = event;
-      const here = state.investigators.find((inv) => inv.id === investigatorId)?.locationId;
+      const here = findInvestigator(state, investigatorId)?.locationId;
       return [
         ...[
           ...cardsInZone(state, { kind: 'threatArea', investigatorId }),

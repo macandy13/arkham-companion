@@ -48,6 +48,7 @@ const toxicWastePit = instanceId('12187#1');
 const floodedCrypt = instanceId('12185#1');
 const infestedPipes = instanceId('12183#1');
 const overgrownTunnels = instanceId('12184#1');
+const smugglersCache = instanceId('12186#1');
 const yes = { kind: 'flag', value: true } as const;
 
 describe('Queen of Ash end to end: Roland and Daisy, seed 1, after Spreading Flames and Smoke and Mirrors', () => {
@@ -185,14 +186,20 @@ describe('Queen of Ash end to end: Roland and Daisy, seed 1, after Spreading Fla
     expect(table.board.agenda).toMatchObject({ name: 'A Gathering', doom: 4 });
     expect(table.board.investigator(roland).threatArea).toEqual(['Langour']);
 
-    // Round 4 – investigation: Daisy takes a clue at Overgrown Tunnels.
+    // Round 4 – investigation: Daisy takes a clue at Overgrown Tunnels and walks through the
+    // culvert to Smuggler's Cache, where ending her turn lets her gain 1 resource.
     // Entering Sluice Control costs 1 clue per investigator, spent by hand: Roland's and Daisy's.
     // Roland enters, skipping Elokoss's attack of opportunity again, and opens the sluice valve:
     // a combat test (5) he passes. Each enemy is defeated, Elokoss into the victory display, and the
     // scenario ends in Resolution 3.
     table.startTurn(daisy);
     table.investigate(daisy);
+    table.moveTo(daisy, byName('Sewer Culvert'));
+    table.moveTo(daisy, smugglersCache);
+    const resources = table.board.investigator(daisy).resources;
     table.endTurn(daisy);
+    table.answerOnly('scenario.queenOfAsh.smugglersCache.gain');
+    expect(table.board.investigator(daisy).resources).toBe(resources + 1);
     table.startTurn(roland);
     table.play({ type: 'AdjustInvestigator', investigatorId: roland, stat: 'clues', delta: -1 });
     table.play({ type: 'AdjustInvestigator', investigatorId: daisy, stat: 'clues', delta: -1 });

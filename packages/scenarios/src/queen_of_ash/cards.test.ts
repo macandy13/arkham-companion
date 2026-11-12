@@ -16,7 +16,12 @@ import {
   type Command,
 } from '@arkham/engine';
 import { answer, cardIn, resolveRevelation, runFrom, stateAfter } from '@arkham/engine/test/utils';
-import { queenOfAshCardDefs, queenOfAshCards, SMUGGLERS_CACHE_DECISION } from './cards';
+import {
+  QUEEN_OF_ASH_CODES,
+  queenOfAshCardDefs,
+  queenOfAshCards,
+  SMUGGLERS_CACHE_DECISION,
+} from './cards';
 
 /** The card with `code` in the scenario's card data. */
 const cardOf = (code: string): CardStats => cardIn(queenOfAshCards, code);
@@ -233,7 +238,7 @@ describe('Queen of Ash card abilities', () => {
     };
 
     it('gives alice, not bob in the culvert, 1 horror in Flooded Crypt', () => {
-      const { state, bob } = aliceEndsHerTurnIn('12185');
+      const { state, bob } = aliceEndsHerTurnIn(QUEEN_OF_ASH_CODES.floodedCrypt);
 
       expect([alice, bob].map((id) => requireInvestigator(state, id).sanity.horror)).toEqual([
         1, 0,
@@ -241,7 +246,7 @@ describe('Queen of Ash card abilities', () => {
     });
 
     it('leaves the discard of 1 card of her choice to alice in Toxic Waste Pit', () => {
-      const { events } = aliceEndsHerTurnIn('12187');
+      const { events } = aliceEndsHerTurnIn(QUEEN_OF_ASH_CODES.toxicWastePit);
 
       expect(events).toContainEqual({
         type: 'CommandDeferred',
@@ -260,7 +265,7 @@ describe('Queen of Ash card abilities', () => {
     ])(
       "lets alice gain 1 resource in Smuggler's Cache; answering $answered leaves her $resources",
       ({ answered, resources }) => {
-        const { context, state: asked } = aliceEndsHerTurnIn('12186');
+        const { context, state: asked } = aliceEndsHerTurnIn(QUEEN_OF_ASH_CODES.smugglersCache);
 
         const state = stateAfter(context, asked, answer(SMUGGLERS_CACHE_DECISION, answered));
 

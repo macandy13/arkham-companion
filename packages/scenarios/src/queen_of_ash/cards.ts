@@ -437,7 +437,8 @@ export const queenOfAshCardDefs: readonly CardStats[] = [
     connectsTo: ['hourglass', 'circle'],
     shroud: 3,
     cluesPerInvestigator: 0,
-    // A reaction, which its investigator may decline.
+    // A reaction, which its investigator may decline. It rides the forced turn-end window, so it is
+    // not held back until forced turn-end effects resolve; no card in this scenario meets it there.
     abilities: [
       atEndOfTurn(
         youMustEither(SMUGGLERS_CACHE_DECISION, `${smugglersCache}.prompt`, [
