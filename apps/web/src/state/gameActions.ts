@@ -191,6 +191,12 @@ export interface GameActions {
    */
   moveEncounterCard(card: InstanceId, move: PileMove): Promise<void>;
   /**
+   * Puts `enemy` beneath the current act (`MoveCard`), as a codex entry tells the players (Smoke
+   * and Mirrors' interrogated suspect). A game move, not a correction, so an objective that counts
+   * the cards beneath the act sees it.
+   */
+  putBeneathAct(enemy: InstanceId): Promise<void>;
+  /**
    * Spawns `enemy` from a pile at `location`, which the players chose on the map: the engine
    * engages it there by the rules (prey, Aloof), as if a card effect spawned it there.
    */
@@ -371,6 +377,14 @@ export function gameActions(
         table.play({
           type: 'ManualAdjust',
           adjustment: { kind: 'moveCard', cardId: card, ...placeOf(move) },
+        }),
+      ),
+    putBeneathAct: (enemy) =>
+      play((table) =>
+        table.play({
+          type: 'MoveCard',
+          cardId: enemy,
+          to: { kind: 'beneath', hostId: currentAct(table.state) },
         }),
       ),
     spawnEnemy: (enemy, location) =>

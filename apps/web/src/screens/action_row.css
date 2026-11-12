@@ -133,6 +133,13 @@
 #board
   :is(dialog, dialog > article, [data-mode='location'], header > section)
   > footer:has(> section > h3)
+  button[data-icon='beneathAct']::before {
+  mask-image: url('../enemies/icons/beneath_act.svg');
+}
+
+#board
+  :is(dialog, dialog > article, [data-mode='location'], header > section)
+  > footer:has(> section > h3)
   button[data-icon='investigate']::before {
   mask-image: url('../investigators/icons/investigate.svg');
 }

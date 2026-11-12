@@ -17,6 +17,7 @@ export type ActionIcon =
   | 'evaded'
   | 'ready'
   | 'defeat'
+  | 'beneathAct'
   | 'investigate'
   | 'move'
   | 'clue'

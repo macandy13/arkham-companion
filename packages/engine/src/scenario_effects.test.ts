@@ -18,12 +18,14 @@ import {
   neighbours,
   newGame,
   onlyCopy,
+  moveTokens,
   removeConnection,
   removeDoomFrom,
   removeDoomFromAgenda,
   setAside,
   shuffleSelfIntoEncounterDeck,
   shuffleSetAsideIntoEncounterDeck,
+  takeCluesFrom,
   trait,
   whenRevealed,
   type Command,
@@ -273,5 +275,218 @@ describe('card effects that remove doom', () => {
     expect(rejectionFrom(context, state, { type: 'RemoveDoom', amount: 0 })).toMatchObject({
       code: 'invalidTokenDelta',
     });
+  });
+});
+
+describe('card effects that move tokens between cards', () => {
+  const agenda = instanceId('agenda');
+  const acolyte = instanceId('acolyte');
+  const mother = instanceId('mother');
+
+  it.each([
+    { moves: 1, before: 3, onAcolyte: 2, onAgenda: 1 },
+    { moves: 2, before: 1, onAcolyte: 0, onAgenda: 1 },
+    { moves: 'all', before: 3, onAcolyte: 0, onAgenda: 3 },
+  ] as const)(
+    'moves $moves of $before doom from the Cultist acolyte to the current agenda',
+    ({ moves, before, onAcolyte, onAgenda }) => {
+      /** "After you enter the attic: move N doom from each [[Cultist]] enemy to the current agenda." */
+      const atticCard = blankLocation('attic', {
+        abilities: [
+          afterEntering(moveTokens('doom', moves, eachEnemy({ trait: trait('Cultist') }))),
+        ],
+      });
+      const { context, state } = newGame()
+        .withAgenda(agenda, blankAgenda('agenda', fixed(5)))
+        .withLocation(hall, blankLocation('hall'), { revealed: true })
+        .withLocation(study, blankLocation('study'), { revealed: true })
+        .withLocation(attic, atticCard, { revealed: true })
+        .withInvestigator(alice, { locationId: hall })
+        .withCard(
+          acolyte,
+          blankEnemy('acolyte', { traits: [trait('Cultist')] }),
+          atLocation(study),
+          {
+            tokens: { doom: before },
+          },
+        )
+        .start();
+
+      const after = stateAfter(context, state, aliceEntersAttic);
+
+      expect(after.cards[acolyte]?.tokens.doom ?? 0).toBe(onAcolyte);
+      expect(after.cards[agenda]?.tokens.doom ?? 0).toBe(onAgenda);
+    },
+  );
+
+  it.each([
+    { damage: 1, motherZone: atLocation(study), motherDefeated: false },
+    { damage: 2, motherZone: encounterDiscard, motherDefeated: true },
+  ])(
+    'moves $damage damage onto Mother with health 3 and 1 damage: defeated $motherDefeated',
+    ({ damage, motherZone, motherDefeated }) => {
+      const { context, state } = newGame()
+        .withLocation(hall, blankLocation('hall'), { revealed: true })
+        .withLocation(study, blankLocation('study'), { revealed: true })
+        .withInvestigator(alice, { locationId: hall })
+        .withCard(acolyte, blankEnemy('acolyte'), atLocation(study), { tokens: { damage } })
+        .withCard(mother, blankEnemy('mother', { health: fixed(3) }), atLocation(study), {
+          tokens: { damage: 1 },
+        })
+        .start();
+
+      const { state: after, events } = execute(context, state, {
+        type: 'MoveTokens',
+        token: 'damage',
+        amount: 'all',
+        from: acolyte,
+        to: mother,
+      });
+
+      expect(after.cards[acolyte]?.tokens.damage ?? 0).toBe(0);
+      expect(after.cards[mother]?.zone).toEqual(motherZone);
+      expect(
+        events.some((event) => event.type === 'EnemyDefeated' && event.enemyId === mother),
+      ).toBe(motherDefeated);
+    },
+  );
+
+  it('gives the clues on a card to the investigator who takes control of them', () => {
+    const constance = instanceId('constance');
+    /** "After you enter the attic: take control of 1 of the clues on Constance Dumaine." */
+    const atticCard = blankLocation('attic', {
+      abilities: [afterEntering(takeCluesFrom(onlyCopy(cardCode('constance')), 1))],
+    });
+    const { context, state } = newGame()
+      .withLocation(hall, blankLocation('hall'), { revealed: true })
+      .withLocation(attic, atticCard, { revealed: true })
+      .withInvestigator(alice, { locationId: hall, clues: 0 })
+      .withCard(constance, blankEnemy('constance'), atLocation(hall), { tokens: { clue: 2 } })
+      .start();
+
+    const after = stateAfter(context, state, aliceEntersAttic);
+
+    expect(after.cards[constance]?.tokens.clue).toBe(1);
+    expect(requireInvestigator(after, alice).clues).toBe(1);
+  });
+
+  it('moves nothing from a card that has left play', () => {
+    const { context, state } = newGame()
+      .withAgenda(agenda, blankAgenda('agenda', fixed(5)))
+      .withLocation(hall, blankLocation('hall'), { revealed: true })
+      .withInvestigator(alice, { locationId: hall })
+      .withCard(acolyte, blankEnemy('acolyte'), encounterDiscard, { tokens: { doom: 1 } })
+      .start();
+
+    const { events } = execute(context, state, {
+      type: 'MoveTokens',
+      token: 'doom',
+      amount: 'all',
+      from: acolyte,
+    });
+
+    expect(events).toEqual([]);
+  });
+
+  it('moves nothing onto a card that is not in play', () => {
+    const { context, state } = newGame()
+      .withLocation(hall, blankLocation('hall'), { revealed: true })
+      .withInvestigator(alice, { locationId: hall })
+      .withCard(acolyte, blankEnemy('acolyte'), atLocation(hall), { tokens: { doom: 1 } })
+      .withCard(mother, blankEnemy('mother'), setAside)
+      .start();
+
+    const { state: after, events } = execute(context, state, {
+      type: 'MoveTokens',
+      token: 'doom',
+      amount: 'all',
+      from: acolyte,
+      to: mother,
+    });
+
+    expect(events).toEqual([]);
+    expect(after.cards[acolyte]?.tokens.doom).toBe(1);
+  });
+
+  it('moves nothing onto the card it comes from', () => {
+    const { context, state } = newGame()
+      .withLocation(hall, blankLocation('hall'), { revealed: true })
+      .withInvestigator(alice, { locationId: hall })
+      .withCard(acolyte, blankEnemy('acolyte'), atLocation(hall), { tokens: { doom: 1 } })
+      .start();
+
+    const { events } = execute(context, state, {
+      type: 'MoveTokens',
+      token: 'doom',
+      amount: 'all',
+      from: acolyte,
+      to: acolyte,
+    });
+
+    expect(events).toEqual([]);
+  });
+
+  it('gives no clues to an investigator who has left the scenario', () => {
+    const bob = investigatorId('bob');
+    const constance = instanceId('constance');
+    const { context, state } = newGame()
+      .withLocation(hall, blankLocation('hall'), { revealed: true })
+      .withLocation(study, blankLocation('study'), { revealed: true })
+      .withInvestigator(alice, { locationId: hall })
+      .withInvestigator(bob, { locationId: hall, status: 'resigned' })
+      .withCard(constance, blankEnemy('constance'), atLocation(study), { tokens: { clue: 2 } })
+      .start();
+
+    const { events } = execute(context, state, {
+      type: 'MoveTokens',
+      token: 'clue',
+      amount: 1,
+      from: constance,
+      toInvestigator: bob,
+    });
+
+    expect(events).toEqual([]);
+  });
+
+  it.each([
+    { token: 'damage', onto: 'the agenda, which has no health' },
+    { token: 'horror', onto: 'an enemy, which has no sanity' },
+  ] as const)('moves no $token onto $onto', ({ token }) => {
+    const { context, state } = newGame()
+      .withAgenda(agenda, blankAgenda('agenda', fixed(5)))
+      .withLocation(hall, blankLocation('hall'), { revealed: true })
+      .withLocation(study, blankLocation('study'), { revealed: true })
+      .withInvestigator(alice, { locationId: hall })
+      .withCard(acolyte, blankEnemy('acolyte'), atLocation(study), { tokens: { [token]: 1 } })
+      .withCard(mother, blankEnemy('mother', { health: fixed(3) }), atLocation(study))
+      .start();
+    const to = token === 'damage' ? agenda : mother;
+
+    const { events } = execute(context, state, {
+      type: 'MoveTokens',
+      token,
+      amount: 'all',
+      from: acolyte,
+      to,
+    });
+
+    expect(events).toEqual([]);
+  });
+
+  it('refuses card data that moves no tokens at all', () => {
+    const { context, state } = newGame()
+      .withLocation(hall, blankLocation('hall'), { revealed: true })
+      .withInvestigator(alice, { locationId: hall })
+      .withCard(acolyte, blankEnemy('acolyte'), atLocation(hall), { tokens: { doom: 1 } })
+      .start();
+
+    expect(
+      rejectionFrom(context, state, {
+        type: 'MoveTokens',
+        token: 'doom',
+        amount: 0,
+        from: acolyte,
+      }),
+    ).toMatchObject({ code: 'invalidTokenDelta' });
   });
 });

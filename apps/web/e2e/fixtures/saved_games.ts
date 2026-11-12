@@ -20,6 +20,9 @@ import {
   DEVOURER_BELOW_CODES,
   GATHERING_CODES,
   MIDNIGHT_MASKS_CODES,
+  SMOKE_AND_MIRRORS_CODES,
+  smokeAndMirrors,
+  smokeAndMirrorsCards,
   theDevourerBelow,
   theDevourerBelowCards,
   theGathering,
@@ -515,6 +518,31 @@ export function tangledThicketRevealedExport(title: string): Buffer {
   table.startTurn(rolandId);
   table.moveTo(rolandId, cardIn(table, DEVOURER_BELOW_CODES.arkhamWoodsTangledThicket));
   return exportOf(title, table, 'tangled_thicket_revealed');
+}
+
+/**
+ * An export file of a solo game of Smoke and Mirrors titled `title`, started from the catalog's
+ * card data: on Roland Banks' first turn the suspect Naomi O'Bannion is in play at his location,
+ * as the act's action draws her, for the players to interrogate and put beneath Augurs of Flame.
+ */
+export function naomiInPlayExport(title: string): Buffer {
+  const table = PlayTable.setUp(
+    {
+      cards: cardDbWith(smokeAndMirrorsCards, [investigatorCardStats(roland)]),
+      scenario: smokeAndMirrors,
+    },
+    { investigators: [{ id: rolandId, code: roland.code }], seed: 3 },
+  );
+  table.nextPhase();
+  table.startTurn(rolandId);
+  const at = table.state.investigators.find(({ id }) => id === rolandId)?.locationId;
+  if (at === undefined) throw new Error('Roland Banks is at no location');
+  table.play({
+    type: 'SpawnEnemy',
+    enemyId: cardIn(table, SMOKE_AND_MIRRORS_CODES.naomiOBannion),
+    at,
+  });
+  return exportOf(title, table, 'naomi_in_play');
 }
 
 function cardIn(table: PlayTable, code: CardCode): InstanceId {

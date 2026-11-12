@@ -2128,6 +2128,23 @@ describe("objectives on a card's own tokens", () => {
     expect(state.act.current).toBe(current);
   });
 
+  it('advances when a clue is moved onto the act holding 1, as when one is placed', () => {
+    const cultist = instanceId('cultist');
+    const { context, state: started } = actWithClues(1)
+      .withCard(cultist, blankEnemy('cultist'), atLocation(hall), { tokens: { clue: 1 } })
+      .start();
+
+    const { state } = execute(context, started, {
+      type: 'MoveTokens',
+      token: 'clue',
+      amount: 1,
+      from: cultist,
+      to: act1,
+    });
+
+    expect(state.act.current).toBe(act2);
+  });
+
   it('does not fire for a clue put on by hand, a correction', () => {
     const { context, state: started } = actWithClues(1).start();
 

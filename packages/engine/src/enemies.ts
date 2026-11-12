@@ -1,12 +1,13 @@
 import { shortestPaths } from './board';
 import { cardStats, resolveValue, type CardStats, type EngineContext, type Trait } from './cards';
 import { woundEvents } from './elimination';
-import type { EnemyAttacked, Event } from './events';
+import type { EnemyAttacked, EnemyDefeated, Event } from './events';
 import type { InstanceId, InvestigatorId } from './ids';
 import { cardsInZone, requireCard } from './lookup';
 import { playerOrder } from './investigators';
 import { hasKeyword } from './keywords';
 import { CommandRejected } from './rejection';
+import { encounterDiscard, victoryDisplay } from './zone';
 import type { CardInstance, GameState, Investigator } from './state';
 
 /** One enemy attack of the enemy phase: who attacks whom, and for how much. */
@@ -231,4 +232,34 @@ export function enemiesOnTable(
       (trait === undefined || stats.traits.includes(trait))
     );
   });
+}
+
+/**
+ * The enemy's defeat once `added` damage gives it as much as its health, whether dealt
+ * (`DamageEnemy`) or moved onto it (`MoveTokens`); nothing for an enemy without health.
+ */
+export function defeatedByDamage(
+  state: GameState,
+  enemy: CardInstance,
+  stats: CardStats,
+  added: number,
+): EnemyDefeated[] {
+  const health = enemyHealth(stats, state);
+  if (health === undefined || (enemy.tokens.damage ?? 0) + added < health) return [];
+  return [enemyDefeatedEvent(state, enemy, stats)];
+}
+
+/** The `EnemyDefeated` of `enemy`: to the victory display if it has victory, else to the encounter discard. */
+export function enemyDefeatedEvent(
+  state: GameState,
+  enemy: CardInstance,
+  stats: CardStats,
+): EnemyDefeated {
+  const hasVictory = (stats.victory ?? 0) > 0;
+  return {
+    type: 'EnemyDefeated',
+    enemyId: enemy.id,
+    to: hasVictory ? victoryDisplay : encounterDiscard,
+    locationId: locationOf(state, enemy),
+  };
 }

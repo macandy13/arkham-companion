@@ -6,6 +6,7 @@ import {
   resolveEffect,
   roundEndClueObjective,
   tokenObjective,
+  countsCardsBeneathSelf,
 } from './abilities';
 import {
   advanceActionOf,
@@ -408,8 +409,11 @@ export interface ActView {
   encounterSet?: EncounterSetCode;
   clues: number;
   advance?: ActAdvance;
-  /** The cards placed face up beneath it (Smoke and Mirrors' interviewed suspects); absent when none. */
-  beneath?: CardName[];
+  /**
+   * Set when an objective of it counts the cards beneath it (`countsCardsBeneathSelf`), so the
+   * players can put an enemy there by hand (`MoveCard`); the cards are `EncounterPilesView.beneathAct`.
+   */
+  takesCardsBeneath?: true;
 }
 
 /**
@@ -532,6 +536,8 @@ export interface EncounterPilesView {
   discard: readonly EncounterCardView[];
   setAside: readonly EncounterCardView[];
   victoryDisplay: readonly EncounterCardView[];
+  /** The cards beneath the current act (Smoke and Mirrors' interrogated suspects), top first. */
+  beneathAct: readonly EncounterCardView[];
 }
 
 /**
@@ -855,6 +861,10 @@ export class BoardView {
       discard: cardsIn(encounterDiscard),
       setAside: cardsIn(setAside),
       victoryDisplay: cardsIn(victoryDisplay),
+      beneathAct:
+        this.state.act.current === undefined
+          ? []
+          : cardsIn({ kind: 'beneath', hostId: this.state.act.current }),
     };
   }
 
@@ -1414,7 +1424,7 @@ function actView(ctx: EngineContext, state: GameState): ActView | undefined {
     ...(stats.encounterCode === undefined ? {} : { encounterSet: stats.encounterCode }),
     clues: act.tokens.clue ?? 0,
     ...(advance === undefined ? {} : { advance }),
-    ...listIfAny('beneath', namesIn(ctx, state, { kind: 'beneath', hostId: act.id })),
+    ...(countsCardsBeneathSelf(stats) ? { takesCardsBeneath: true as const } : {}),
   };
 }
 

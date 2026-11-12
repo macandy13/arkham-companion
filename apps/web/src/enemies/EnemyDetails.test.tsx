@@ -3,7 +3,10 @@ import { act, cleanup, fireEvent, render, screen, within } from '@testing-librar
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import {
   atLocation,
+  advanceAct,
+  blankAct,
   blankEnemy,
+  eachInZone,
   blankTreachery,
   decisionId,
   blankLocation,
@@ -16,6 +19,7 @@ import {
   PlayTable,
   threatAreaOf,
   trait,
+  whenVictoryDisplayHolds,
 } from '@arkham/engine';
 import { initI18n } from '../i18n';
 import { DecisionHostContext, type OpenDecision } from '../screens/DetailsDialog';
@@ -420,5 +424,40 @@ describe('EnemyDetails', () => {
 
     expect(screen.getByRole('button', { name: 'Evaded by alder' })).toBeDefined();
     expect(screen.queryByRole('button', { name: 'Engages alder' })).toBeNull();
+  });
+
+  describe('under an act whose objective counts the Elite enemies beneath it, like Augurs of Flame', () => {
+    const augursOfFlame = blankAct('augurs_of_flame', {
+      abilities: [
+        whenVictoryDisplayHolds(
+          eachInZone([{ kind: 'victoryDisplay' }, { kind: 'beneath', hostId: { ref: 'self' } }], {
+            trait: trait('Elite'),
+          }),
+          6,
+          advanceAct(),
+        ),
+      ],
+    });
+
+    it('puts the interrogated ghoul beneath the act and closes', () => {
+      const table = PlayTable.start(
+        ghoulOnAlder.withAct(instanceId('augurs_of_flame'), augursOfFlame),
+      );
+      const onClose = renderGhoulDetails(table);
+
+      fireEvent.click(screen.getByRole('button', { name: 'Put beneath the act' }));
+
+      expect(onClose).toHaveBeenCalled();
+      expect(table.board.encounter.beneathAct).toMatchObject([{ name: 'ghoul' }]);
+      expect(table.board.enemies).toEqual([]);
+    });
+  });
+
+  it('offers no move beneath an act that counts no cards there', () => {
+    renderGhoulDetails(
+      PlayTable.start(ghoulOnAlder.withAct(instanceId('plain_act'), blankAct('plain_act'))),
+    );
+
+    expect(screen.queryByRole('button', { name: 'Put beneath the act' })).toBeNull();
   });
 });

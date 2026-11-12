@@ -12,6 +12,7 @@ Card rulings: [Resolution order](cards/resolution-order.md).
 - A turn ended by resignation or defeat opens no turn-end windows, not even for cards in play: our reading, as no rule says whether such a turn "ends".
 - An investigator with damage ≥ health or horror ≥ sanity is defeated and [eliminated](elimination-and-resign.md).
 - An enemy with damage ≥ health goes to the encounter discard, or to the victory display if it has Victory X, or to its owner's discard if it is a weakness.
+  - Damage moved onto an enemy ("move all damage on that enemy to Mother") defeats it the same way. Moving damage or horror is not dealing it, so nothing prevents or answers it ([Dealing Damage/Horror](https://arkhamdb.com/rules#Dealing_Damage_Horror) is assign then apply; our reading). Damage moves only onto a card with health and horror only onto one with sanity: the October 2024 FAQ is reported to rule this for damage; we could not read its text, and apply it to horror by analogy.
   - An enemy a card effect defeats ("it is automatically defeated") goes the same way ([Victory display](https://arkhamdb.com/rules#Victory_Display_Victory_Points); FAQ v2.5, Persistent Construct). An effect that discards an enemy is no defeat: it goes to the discard even with Victory X.
 - A defeated asset goes to its owner's discard.
 - A "when [this enemy] is defeated" forced ability ([When](https://arkhamdb.com/rules#Ability): before the defeat's impact) resolves after the enemy has gone, and "this location" is where it was (Goat Spawn: "each investigator at this location takes 1 horror").

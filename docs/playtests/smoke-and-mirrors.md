@@ -21,6 +21,7 @@ The scripted golden game is [`end_to_end.test_support.ts`](../../packages/scenar
 **Act, Augurs of Flame**
 
 - [ ] Its action spends 2 clues per investigator from the group and draws the card beneath the taker's location: a suspect or the Servant of Flame comes into play there.
+- [ ] "Put beneath the act" on an interrogated suspect's card moves it there, fanned at the act's corner, where a tap shows it.
 - [ ] Once 6 Elite enemies are in the victory display or beneath the act, the act advances to resolution 1.
 
 **Agenda 1, Arkham Alive**
@@ -48,9 +49,9 @@ The scripted golden game is [`end_to_end.test_support.ts`](../../packages/scenar
 **Resolution**
 
 - [ ] Both endings add 2 cultist tokens to the bag for the rest of the campaign and record the set-aside suspect as the harbinger of Elokoss.
-- [ ] Resolution 1 records that the cult's whereabouts were discovered, and records "scoured Arkham for answers" with 6 Elite enemies beneath the act (reachable once [MC2.18](https://github.com/macandy13/arkham-companion/issues/1237) lands) or "stirred up trouble" with 6 in the victory display.
+- [ ] Resolution 1 records that the cult's whereabouts were discovered, and records "scoured Arkham for answers" with 6 Elite enemies beneath the act or "stirred up trouble" with 6 in the victory display.
 - [ ] Without a resolution the players draw for the harbinger by hand and record whether they found the cult.
-- [ ] The Servant of Flame in the victory display records it killed; beneath the act (once [MC2.18](https://github.com/macandy13/arkham-companion/issues/1237) lands), it escaped and each investigator earns 1 more experience.
+- [ ] The Servant of Flame in the victory display records it killed; beneath the act, it escaped and each investigator earns 1 more experience.
 - [ ] Experience: the victory display plus 1 for each enemy beneath the act.
 - [ ] Once Arkham Alive has advanced, each investigator earns a Mark of Elokoss.
 
@@ -59,7 +60,6 @@ The scripted golden game is [`end_to_end.test_support.ts`](../../packages/scenar
 These are done by hand at the table; the app does not do them.
 
 - The codex entries of the suspects and the Servant of Flame, read from the campaign guide, with the suspects' Parley actions and reactions that trigger them.
-- Putting an interrogated suspect beneath the act: the play screen has no move for it yet ([MC2.18](https://github.com/macandy13/arkham-companion/issues/1237)), so the skull token, the act's objective and the experience don't count it.
 - The Elusive keyword of the Servant of Flame, Sgt. Earl Monroe and Bat Horror.
 - Adding the Mark of Elokoss to each deck, its damage as its holder's turn ends and its two-action discard.
 - The Arkham locations' reactions and actions, Waterfront District's additional action to investigate, Arcane Lock's additional action to enter or leave, and the damage Miskatonic University (In Flames) deals to allies.

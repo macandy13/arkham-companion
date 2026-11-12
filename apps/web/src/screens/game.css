@@ -303,7 +303,8 @@
 
 /*
  * The piles beside a card lie fanned on its lower right corner, as players leave them on the table:
- * the encounter discard pile on the deck, the set-aside cards on the scenario card. The victory
+ * the encounter discard pile on the deck, the set-aside cards on the scenario card, the cards
+ * beneath the act (Smoke and Mirrors' interrogated suspects) on the act. The victory
  * display lies on its own. Up to three of a pile's top cards fan out, the top one in
  * front, with the pile's count (the victory points for the victory display) on a disc at its foot.
  * An empty pile is only a small dashed card outline.
@@ -322,7 +323,7 @@
   aspect-ratio: 5 / 7;
 }
 
-#board > header :is([data-pile='discard'], [data-pile='setAside']) {
+#board > header :is([data-pile='discard'], [data-pile='setAside'], [data-pile='beneathAct']) {
   margin-inline-start: var(--pile-fan-tuck);
 }
 
@@ -393,6 +394,10 @@
 
 #board > header [data-pile='setAside'] > data {
   background: var(--color-card-scenario);
+}
+
+#board > header [data-pile='beneathAct'] > data {
+  background: var(--color-card-act);
 }
 
 /*

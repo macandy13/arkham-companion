@@ -30,6 +30,7 @@ In the phone's [detail view](play-screen.md#detail-view) the agenda and act are 
 The act's Advance button takes its spend-clues action for the investigator whose turn it is (`GameActions.advanceAct`), so it waits for a turn and enough clues.
 When the players have a split to choose, it first asks who pays how many in the [clue payment dialog](../../apps/web/src/screens/CluePaymentDialog.tsx) (`useCluePayment` over `BoardView.cluePayers`, on the card shell since MD.6b4: the card the cost is paid for beside the page, an act over it; each payer a row with their round portrait, their name over what they pay, and their clues as tokens to tap, starting at the engine's split; a Split evenly shortcut, `evenClueSplit`, and Pay as the primary); card actions with a group clue cost (`CardActionView.groupClues`) ask the same.
 The act's clue bubble (a double tap on the act) shows only for an act that counts the clues on it.
+Where the act's objective counts the cards beneath it (`ActView.takesCardsBeneath`), or once some lie there, they are fanned at its corner like the discard pile at the deck's (`HeaderPile` `beneathAct`, from `EncounterPilesView.beneathAct`). A tap opens them in the encounter dialog with their moves.
 Every act's full card (and its footer in the detail view) also has "Advance by hand" (MC2.19): after a confirmation it plays `AdvanceAct` (`GameActions.advanceActByHand`), with no turn or cost, for an objective the engine leaves to the players (Escape the Dorms in _Spreading Flames_).
 
 ## Scenario card

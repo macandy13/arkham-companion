@@ -49,7 +49,7 @@ export function EncounterPiles(props: PileProps) {
 
 /**
  * One of the header's piles fanned (`PileFan`): the encounter discard pile at the deck's corner,
- * the set-aside cards at the scenario card's, or the victory display in its own slot with the
+ * the set-aside cards at the scenario card's, the cards beneath the act at the act's, or the victory display in its own slot with the
  * victory points earned so far (`BoardView.victoryPoints`) on its disc. A tap opens the encounter
  * dialog on it.
  */
@@ -84,6 +84,7 @@ function pileLabel(
     }
     case 'setAside':
     case 'victoryDisplay':
+    case 'beneathAct':
       return t(`header.${pile}`, { count: value });
   }
 }

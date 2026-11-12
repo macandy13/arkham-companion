@@ -366,6 +366,7 @@ export type AbilityCommand =
           | 'RemoveDoom'
           | 'CheckDoomThreshold'
           | 'PlaceTokens'
+          | 'MoveTokens'
           | 'SpendCluesAsGroup'
           | 'ChangeChaosBag'
           | 'MoveCard'
@@ -1515,6 +1516,19 @@ export function tokenObjective(stats: CardStats, token: TokenKind): ScaledValue 
 }
 
 /**
+ * Whether an objective of the card counts the cards beneath it ("6 Elite enemies in the victory
+ * display and/or beneath this act", Augurs of Flame): the players put cards there by hand, as a
+ * codex entry tells them, so the screen offers the move only where it counts.
+ */
+export function countsCardsBeneathSelf(stats: CardStats): boolean {
+  return (stats.abilities ?? []).some(({ condition }) => {
+    if (condition?.kind !== 'countOf' || condition.of.ref !== 'eachInZone') return false;
+    const zones = [condition.of.zone].flat();
+    return zones.some((zone) => zone.kind === 'beneath' && zone.hostId.ref === 'self');
+  });
+}
+
+/**
  * The clues an act's `advanceBySpendingCluesAtRoundEnd` asks of the investigators at `location`
  * (The Barrier's Hallway), or of all of them when it names none; undefined for an act without one.
  */
@@ -2112,6 +2126,33 @@ export function removeDoomFromAgenda(amount: number | 'all'): AbilityEffect {
  */
 export function removeDoomFrom(card: RelativeCard, amount: number | 'all'): AbilityEffect {
   return { type: 'RemoveDoom', cardId: card, amount };
+}
+
+/**
+ * "Move all doom from each [[Cultist]] enemy to the current agenda" or "move all damage on that
+ * enemy to Mother" (`MoveTokens`): `amount` tokens, or `'all'`, from `from` to `to`, by default
+ * the current agenda, as many as each card holds:
+ * `moveTokens('doom', 'all', eachEnemy({ trait: trait('Cultist') }))`.
+ */
+export function moveTokens(
+  token: TokenKind,
+  amount: number | 'all',
+  from: RelativeCard,
+  to?: RelativeCard,
+): AbilityEffect {
+  return { type: 'MoveTokens', token, amount, from, ...(to === undefined ? {} : { to }) };
+}
+
+/**
+ * "Take control of 1 of the clues on Constance Dumaine" (`MoveTokens`): clues from `from` to
+ * `investigator`, by default the one the window names; as many as the card holds.
+ */
+export function takeCluesFrom(
+  from: RelativeCard,
+  amount: number | 'all',
+  investigator: RelativeInvestigator = { ref: 'windowInvestigator' },
+): AbilityEffect {
+  return { type: 'MoveTokens', token: 'clue', amount, from, toInvestigator: investigator };
 }
 
 /** "Place N clues on this act": clues from the token pool on the card with the ability. */
