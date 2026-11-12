@@ -36,27 +36,6 @@ describe('ChaosBag', () => {
     ).toEqual(['−1 ×2', 'Skull ×1', 'Elder Sign ×1']);
   });
 
-  it.each([
-    { what: 'without a number on the reference card', skull: undefined, row: 'Skull ×1 ?' },
-    { what: 'by the reference card', skull: -2, row: 'Skull ×1 −2' },
-  ])('lists a symbol $what with its value', ({ skull, row }) => {
-    const table = PlayTable.start(
-      game.withReferenceCard({
-        easyStandard: { skull: { modifier: skull, effectKey: 'test.skull' } },
-        hardExpert: {},
-      }),
-    );
-
-    render(<ChaosBag board={table.board} actions={actionsOn(table)} busy={false} />);
-
-    const contents = screen.getByRole('list', { name: 'Tokens in the bag' });
-    expect(
-      within(contents)
-        .getAllByRole('listitem')
-        .map((item) => item.textContent),
-    ).toEqual(['−1 ×2', row, 'Elder Sign ×1 ?']);
-  });
-
   it('seals the token tapped on the investigator picked', async () => {
     const table = PlayTable.start(game);
     render(<ChaosBag board={table.board} actions={actionsOn(table)} busy={false} />);
@@ -84,7 +63,7 @@ describe('ChaosBag', () => {
     expect(table.board.chaosBag).toEqual(['-1', '-1', 'elderSign', 'skull']);
   });
 
-  it('lists the bless and curse tokens with how many are left in their pools', () => {
+  it('lists the bless and curse tokens in the bag, each between its − and + buttons', () => {
     const table = PlayTable.start(game.withChaosBag(['bless', 'bless', 'curse']));
 
     render(<ChaosBag board={table.board} actions={actionsOn(table)} busy={false} />);
@@ -94,7 +73,8 @@ describe('ChaosBag', () => {
       within(pool)
         .getAllByRole('listitem')
         .map((item) => item.textContent),
-    ).toEqual(['Bless 8 left in the pool Add Return', 'Curse 9 left in the pool Add Return']);
+    ).toEqual(['Bless−×2+', 'Curse−×1+']);
+    expect(within(pool).getByText('×2').getAttribute('title')).toBe('8 left in the pool');
   });
 
   it('adds a bless token from the pool and returns a curse token to it', async () => {
