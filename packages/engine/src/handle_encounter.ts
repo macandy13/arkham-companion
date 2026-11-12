@@ -21,7 +21,7 @@ import type {
   SurgeGained,
 } from './events';
 import { decisionId, type CardCode, type InstanceId, type InvestigatorId } from './ids';
-import { activeInvestigator, isActiveInvestigator } from './investigators';
+import { activeInvestigator, isActiveInvestigator, findInvestigator } from './investigators';
 import { hasKeyword } from './keywords';
 import { cardsInZone, requireCard } from './lookup';
 import { cardMoved } from './placement';
@@ -56,16 +56,41 @@ export function handleDrawEncounter(
 ): Event[] {
   const investigator = activeInvestigator(state, cmd.investigatorId);
   if (!cmd.match) return drawOne(ctx, state, investigator) ?? rejectEmptyDeck();
-  const target = findMatch(ctx, state, cmd.from ?? 'deck', cmd.match);
-  // Nothing fits: the effect resolves as far as it can (Golden Rules). With the discard just shuffled
-  // in, discarding the whole deck and shuffling it back would end where it started.
-  if (target === undefined) return [];
+  const from = cmd.from ?? 'deck';
+  const target = findMatch(ctx, state, from, cmd.match);
+  if (target === undefined)
+    return cmd.discardSkipped && from === 'deck'
+      ? discardDeckForDiscardMatch(ctx, state, cmd, cmd.match)
+      : [];
   // Only a deck match has cards above it to discard; a discard match has none.
   const skipped = (cmd.discardSkipped ? cardsAbove(state, target) : []).map((id) =>
     cardMoved(state, requireCard(state.cards, id), encounterDiscard, 0),
   );
   const drawn = drawOne(ctx, replay(skipped, state), investigator, target) ?? rejectEmptyDeck();
   return [...skipped, ...drawn];
+}
+
+/**
+ * Discarding until a match turns up with no match left in the deck (Infested Pipes late in the
+ * scenario): Rules Reference, "Encounter Deck": the deck runs out, so the discard – now holding
+ * the whole deck – is shuffled back and the discarding goes on until the match from the discard
+ * turns up. Without a match in the discard either, nothing fits and the effect resolves as far as
+ * it can (Golden Rules): discarding and shuffling back would end where it started, as after Rise
+ * of the Ghouls' own shuffle.
+ */
+function discardDeckForDiscardMatch(
+  ctx: EngineContext,
+  state: GameState,
+  cmd: DrawEncounter,
+  match: EncounterMatch,
+): Event[] {
+  if (findMatch(ctx, state, 'discard', match) === undefined) return [];
+  const discarded = cardsInZone(state, encounterDeck).map((id) =>
+    cardMoved(state, requireCard(state.cards, id), encounterDiscard, 0),
+  );
+  const emptied = replay(discarded, state);
+  const shuffled = shuffleInto(emptied, cardsInZone(emptied, encounterDiscard), encounterDeck);
+  return [...discarded, ...shuffled, ...handleDrawEncounter(ctx, replay(shuffled, emptied), cmd)];
 }
 
 function rejectEmptyDeck(): never {
@@ -327,7 +352,7 @@ export function placeDrawnCard(
 ): Event[] {
   const card = requireCard(state.cards, drawn.cardId);
   if (card.zone.kind !== 'resolving') return refillIfEmpty(state);
-  const drawer = state.investigators.find((inv) => inv.id === drawn.investigatorId);
+  const drawer = findInvestigator(state, drawn.investigatorId);
   const stats = cardStats(ctx.cards, card.code);
   const placed =
     drawer?.status === 'active'

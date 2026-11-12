@@ -196,9 +196,11 @@ describe('rejected and broken steps', () => {
   it('passes on an error the engine throws that is not a rejection', () => {
     // Card data read from a file can hold what the types rule out: here a reference the engine does not know.
     const brokenEffect = {
-      type: 'PlaceDoom',
-      cardId: { ref: 'unknownReference' },
+      type: 'MoveTokens',
+      token: 'doom',
       amount: 1,
+      from: 'pool',
+      to: { card: { ref: 'unknownReference' } },
     } as unknown as AbilityEffect;
     const table = PlayTable.start(
       game

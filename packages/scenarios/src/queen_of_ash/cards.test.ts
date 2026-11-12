@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import {
+  atLocation,
+  encounterDeck,
+  encounterDiscard,
   encounterSetCode,
+  execute,
   instanceId,
   investigatorId,
   newGame,
@@ -12,7 +16,12 @@ import {
   type Command,
 } from '@arkham/engine';
 import { answer, cardIn, resolveRevelation, runFrom, stateAfter } from '@arkham/engine/test/utils';
-import { queenOfAshCardDefs, queenOfAshCards } from './cards';
+import {
+  QUEEN_OF_ASH_CODES,
+  queenOfAshCardDefs,
+  queenOfAshCards,
+  SMUGGLERS_CACHE_DECISION,
+} from './cards';
 
 /** The card with `code` in the scenario's card data. */
 const cardOf = (code: string): CardStats => cardIn(queenOfAshCards, code);
@@ -180,6 +189,95 @@ describe('Queen of Ash card abilities', () => {
 
       expect(requireInvestigator(state, alice).actionsRemaining).toBe(2);
     });
+  });
+
+  describe('Sewer Tunnels (Infested Pipes)', () => {
+    it('discards Putrid Vapors from the encounter deck as alice enters and draws the Zealot below it', () => {
+      const pipes = instanceId('infested_pipes');
+      const putridVapors = instanceId('putrid_vapors');
+      const zealot = instanceId('zealot');
+      const { context, state: started } = newGame()
+        .withLocation(culvert, cardOf('12182'), { revealed: true })
+        .withLocation(pipes, cardOf('12183'), { revealed: true })
+        .withConnection(culvert, pipes)
+        .withInvestigator(alice, { locationId: culvert })
+        .withCard(putridVapors, cardOf('12192'), encounterDeck)
+        .withCard(zealot, cardOf('12188'), encounterDeck)
+        .withCard(instanceId('bottom_card'), cardOf('12192'), encounterDeck)
+        .withTurnOf(alice)
+        .start();
+
+      const state = stateAfter(context, started, {
+        type: 'MoveInvestigator',
+        investigatorId: alice,
+        to: pipes,
+      });
+
+      expect(state.cards[putridVapors]?.zone).toEqual(encounterDiscard);
+      expect(state.cards[zealot]?.zone).toEqual(atLocation(pipes));
+    });
+  });
+
+  describe('Sewer Tunnels as alice ends her turn there', () => {
+    const tunnel = instanceId('sewer_tunnel');
+    /** Alice's turn in the tunnel with code `code`, with 1 resource; bob waits in the culvert. */
+    const aliceEndsHerTurnIn = (code: string) => {
+      const bob = investigatorId('bob');
+      const { context, state: started } = newGame()
+        .withLocation(culvert, cardOf('12182'), { revealed: true })
+        .withLocation(tunnel, cardOf(code), { revealed: true })
+        .withInvestigator(alice, { locationId: tunnel, resources: 1 })
+        .withInvestigator(bob, { locationId: culvert })
+        .withTurnOf(alice)
+        .start();
+      return {
+        context,
+        bob,
+        ...execute(context, started, { type: 'EndTurn', investigatorId: alice }),
+      };
+    };
+
+    it('gives alice, not bob in the culvert, 1 horror in Flooded Crypt', () => {
+      const { state, bob } = aliceEndsHerTurnIn(QUEEN_OF_ASH_CODES.floodedCrypt);
+
+      expect([alice, bob].map((id) => requireInvestigator(state, id).sanity.horror)).toEqual([
+        1, 0,
+      ]);
+    });
+
+    it('leaves the discard of 1 card of her choice to alice in Toxic Waste Pit', () => {
+      const { events } = aliceEndsHerTurnIn(QUEEN_OF_ASH_CODES.toxicWastePit);
+
+      expect(events).toContainEqual({
+        type: 'CommandDeferred',
+        command: {
+          type: 'DiscardFromHand',
+          investigatorId: alice,
+          amount: 1,
+          source: { cardId: tunnel, window: 'turnEnds' },
+        },
+      });
+    });
+
+    it.each([
+      { answered: 'gain', resources: 2 },
+      { answered: 'decline', resources: 1 },
+    ])(
+      "lets alice gain 1 resource in Smuggler's Cache; answering $answered leaves her $resources",
+      ({ answered, resources }) => {
+        const { context, state: asked } = aliceEndsHerTurnIn(QUEEN_OF_ASH_CODES.smugglersCache);
+
+        const state = stateAfter(context, asked, answer(SMUGGLERS_CACHE_DECISION, answered));
+
+        expect(asked.pending).toMatchObject([
+          {
+            id: SMUGGLERS_CACHE_DECISION,
+            decider: { kind: 'investigator', investigatorId: alice },
+          },
+        ]);
+        expect(requireInvestigator(state, alice).resources).toBe(resources);
+      },
+    );
   });
 
   describe('Putrid Vapors', () => {

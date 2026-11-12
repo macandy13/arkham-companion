@@ -2,10 +2,13 @@ import {
   advanceAct,
   afterEntering,
   atEndOfRound,
+  atEndOfTurn,
   nextAgendaBecomesActAndAgenda,
   cardCode,
   cardDbFrom,
   decisionId,
+  discardFromHand,
+  drawDiscardingUntil,
   duringAct,
   defeatEnemy,
   eachEnemy,
@@ -15,6 +18,7 @@ import {
   fixed,
   forEachInvestigator,
   fromSetAside,
+  gainResources,
   GRID_CELLS_PER_CARD,
   loseActions,
   mapId,
@@ -36,6 +40,7 @@ import {
   whenAnInvestigatorEnters,
   whenEnemyDefeated,
   whenRevealed,
+  youMustEither,
   type CardDb,
   type CardCode,
   type CardStats,
@@ -118,6 +123,10 @@ export const SEWERS_CELLS = {
 /** Id of Sluice Control's question to the investigator who opens the valve: agility or combat? */
 export const SLUICE_CONTROL_DECISION = decisionId('queenOfAsh.sluiceControl');
 
+/** Id of Smuggler's Cache's question as a turn ends there: gain 1 resource, or decline the reaction? */
+export const SMUGGLERS_CACHE_DECISION = decisionId('queenOfAsh.smugglersCache');
+const smugglersCache = 'scenario.queenOfAsh.smugglersCache';
+
 const codes = QUEEN_OF_ASH_CODES;
 const sets = QUEEN_OF_ASH_SETS;
 const own = sets.queenOfAsh;
@@ -166,8 +175,6 @@ const willpowerOrHorror = skillTest('willpower', 4, { onFail: [takeHorror(1)] })
  * - the additional clue costs to enter Underground Cistern and Sluice Control (MC2.4)
  * - Underground Cistern's clues placed again once it has none, and its discard of ready
  *   non-Elite Cultists as the investigation phase ends, with 1 doom each
- * - Infested Pipes' discard until an enemy, which the entering investigator draws; Flooded
- *   Crypt's horror, Smuggler's Cache's resource and Toxic Waste Pit's discard as a turn ends there
  * - Elokoss: her extra health is entered, but not that she cannot move or make attacks of
  *   opportunity, her clue spend toward Resolution 2, or her Mother of Flame side
  * - Queen's Knight's damage to Elokoss, Herald of Flame's healing after it attacks, and the
@@ -402,6 +409,7 @@ export const queenOfAshCardDefs: readonly CardStats[] = [
     connectsTo: ['hourglass', 'circle'],
     shroud: 1,
     cluesPerInvestigator: 1,
+    abilities: [afterEntering(drawDiscardingUntil({ typeCode: 'enemy' }))],
   }),
   location({
     ...sewerTunnels,
@@ -420,6 +428,7 @@ export const queenOfAshCardDefs: readonly CardStats[] = [
     shroud: 4,
     cluesPerInvestigator: 1,
     victory: 1,
+    abilities: [atEndOfTurn(takeHorror(1))],
   }),
   location({
     ...sewerTunnels,
@@ -428,6 +437,16 @@ export const queenOfAshCardDefs: readonly CardStats[] = [
     connectsTo: ['hourglass', 'circle'],
     shroud: 3,
     cluesPerInvestigator: 0,
+    // A reaction, which its investigator may decline. It rides the forced turn-end window, so it is
+    // not held back until forced turn-end effects resolve; no card in this scenario meets it there.
+    abilities: [
+      atEndOfTurn(
+        youMustEither(SMUGGLERS_CACHE_DECISION, `${smugglersCache}.prompt`, [
+          { id: 'gain', label: `${smugglersCache}.gain`, effects: [gainResources(1)] },
+          { id: 'decline', label: `${smugglersCache}.decline`, effects: [] },
+        ]),
+      ),
+    ],
   }),
   location({
     ...sewerTunnels,
@@ -437,6 +456,7 @@ export const queenOfAshCardDefs: readonly CardStats[] = [
     shroud: 3,
     cluesPerInvestigator: 1,
     victory: 1,
+    abilities: [atEndOfTurn(discardFromHand(1))],
   }),
   enemy({
     code: '12188',

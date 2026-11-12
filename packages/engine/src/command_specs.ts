@@ -55,7 +55,6 @@ import {
   handleDiscoverClues,
   handleMoveInvestigator,
   handlePlayCard,
-  handlePlaceClues,
   handleSetLeadInvestigator,
   handleTakeDamageAndHorror,
 } from './handle_investigator';
@@ -68,12 +67,9 @@ import {
   handleChangeChaosBag,
   handleReleaseChaosToken,
   handleSealChaosToken,
-  handlePlaceDoom,
-  handleRemoveDoom,
-  handlePlaceTokens,
-  handleMoveTokens,
 } from './handle_scenario';
 import { handleStartScenario } from './handle_start_scenario';
+import { handleMoveTokens } from './handle_tokens';
 import { handleMoveHunter, handleMoveHunters } from './hunters';
 import { attacksStillDue, handleNextPhase, handleResolveEnemyAttack } from './phases';
 import { handleDiscardCard } from './placement';
@@ -238,15 +234,11 @@ const COMMAND_SPECS: CommandSpecs = {
     handle: handleDefeatInvestigator,
   },
   DiscoverClues: { handle: handleDiscoverClues },
-  PlaceClues: { handle: (_ctx, state, command) => handlePlaceClues(state, command) },
-  PlaceDoom: { handle: (_ctx, state, command) => handlePlaceDoom(state, command) },
-  RemoveDoom: { handle: (_ctx, state, command) => handleRemoveDoom(state, command) },
   ChangeChaosBag: { handle: (_ctx, state, command) => handleChangeChaosBag(state, command) },
   SealChaosToken: { handle: (_ctx, state, command) => handleSealChaosToken(state, command) },
   ReleaseChaosToken: {
     handle: (_ctx, state, command) => handleReleaseChaosToken(state, command),
   },
-  PlaceTokens: { handle: (_ctx, state, command) => handlePlaceTokens(state, command) },
   MoveTokens: { handle: handleMoveTokens },
   AdvanceAgenda: {
     handle: (_ctx, state, command) => handleAdvanceAgenda(state, command),

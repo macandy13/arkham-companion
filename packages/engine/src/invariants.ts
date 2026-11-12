@@ -1,6 +1,6 @@
 import { allConnections, sameEdge } from './board';
 import type { InstanceId } from './ids';
-import { defeatCause, statValue } from './investigators';
+import { defeatCause, statValue, findInvestigator } from './investigators';
 import { INVESTIGATOR_STATS, type GameState } from './state';
 import { zoneKey } from './zone';
 
@@ -59,7 +59,7 @@ function turnErrors(state: GameState): string[] {
 function currentTurnErrors(state: GameState): string[] {
   const { turn, phase, turnsTaken } = state.meta;
   if (!turn) return [];
-  const investigator = state.investigators.find((inv) => inv.id === turn.investigatorId);
+  const investigator = findInvestigator(state, turn.investigatorId);
   return [
     ...(phase === 'investigation' ? [] : [`turn in progress in the ${phase} phase`]),
     ...(investigator?.status === 'active'

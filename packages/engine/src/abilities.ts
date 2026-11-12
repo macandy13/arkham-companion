@@ -18,6 +18,9 @@ import type {
   ForEachPoint,
   ByMargin,
   MarginTier,
+  MoveTokens,
+  TokenHolder,
+  TokenMoveAmount,
 } from './commands';
 import { cardsInPlay, cardsWithActiveAbilities } from './doom';
 import { cardOptionLabels } from './decisions';
@@ -39,6 +42,7 @@ import { enemiesAt, enemiesMatching, nearestEnemies, type EnemyFilter } from './
 import {
   cluesHeldAt,
   cluesHeldByGroup,
+  findInvestigator,
   isActiveInvestigator,
   playerOrder,
   requireInvestigator,
@@ -85,10 +89,10 @@ export type TimingWindow =
   /** The card is turned face up: a location revealed, or a drawn encounter card (its revelation). */
   | { kind: 'revealed' }
   /**
-   * "At the end of your turn" for a card in an investigator's threat area:
-   * the end of that investigator's turn (`EndTurn`), naming them. A turn cut
-   * short by resignation or defeat opens nothing, as the investigator has
-   * left with the card's reason to fire.
+   * "At the end of your turn" for a card in an investigator's threat area, and "when you end your
+   * turn at this location" for the location they end it at: the end of that investigator's turn
+   * (`EndTurn`), naming them. A turn cut short by resignation or defeat opens nothing, as the
+   * investigator has left with the card's reason to fire.
    */
   | { kind: 'turnEnds' }
   /**
@@ -368,7 +372,6 @@ export type AbilityCommand =
           | 'AdjustActions'
           | 'EndTurn'
           | 'DiscoverClues'
-          | 'PlaceClues'
           | 'HealInvestigator'
           | 'GainResources'
           | 'DrawCards'
@@ -376,10 +379,7 @@ export type AbilityCommand =
           | 'DiscardFromHand'
           | 'DiscardAsset'
           | 'TakeDamageAndHorror'
-          | 'PlaceDoom'
-          | 'RemoveDoom'
           | 'CheckDoomThreshold'
-          | 'PlaceTokens'
           | 'MoveTokens'
           | 'SpendCluesAsGroup'
           | 'ChangeChaosBag'
@@ -613,8 +613,12 @@ export function windowsOpenedBy(
     }
     case 'TurnEnded': {
       const { investigatorId } = event;
+      const here = findInvestigator(state, investigatorId)?.locationId;
       return [
-        ...cardsInZone(state, { kind: 'threatArea', investigatorId }).map((cardId) => ({
+        ...[
+          ...cardsInZone(state, { kind: 'threatArea', investigatorId }),
+          ...(here === undefined ? [] : [here]),
+        ].map((cardId) => ({
           window: { kind: 'turnEnds' } as const,
           cardId,
           investigatorId,
@@ -1407,7 +1411,9 @@ export function whenRevealed(...effects: AbilityEffect[]): Ability {
 
 /**
  * A forced ability "at the end of your turn" of a card in a threat area,
- * written `atEndOfTurn(skillTest('willpower', 3, { onPass: [discardSelf()] }))`.
+ * written `atEndOfTurn(skillTest('willpower', 3, { onPass: [discardSelf()] }))`, or "when you end
+ * your turn at this location" of a location, for the investigator ending it there:
+ * `atEndOfTurn(takeHorror(1))` (Flooded Crypt).
  */
 export function atEndOfTurn(...effects: AbilityEffect[]): Ability {
   return { window: { kind: 'turnEnds' }, effects };
@@ -1772,14 +1778,16 @@ export function takeDamage(
 }
 
 /**
- * "Place N of your clues on your location" (`PlaceClues`, False Lead): as many as the investigator
- * has.
+ * "Place N of your clues on your location" (False Lead): a `MoveTokens` from the investigator to
+ * the location they are at, as many as they have; none without a location.
  */
+export function placeYourClues(amount: number, who: InvestigatorId): MoveTokens;
+export function placeYourClues(amount: number, who?: RelativeInvestigator): AbilityEffect;
 export function placeYourClues(
   amount: number,
-  who: RelativeInvestigator = { ref: 'windowInvestigator' },
-): AbilityEffect {
-  return { type: 'PlaceClues', investigatorId: who, amount };
+  who: InvestigatorId | RelativeInvestigator = { ref: 'windowInvestigator' },
+): TokenMove {
+  return tokenMove('clue', amount, { investigator: who }, { locationOf: who });
 }
 
 /**
@@ -1906,12 +1914,14 @@ export function searchDeck(
   };
 }
 
-/** "Gain N clues from the token pool" (Northside). */
+/** "Gain N clues from the token pool" (Northside): a `MoveTokens` from the pool. */
+export function gainClues(amount: number, who: InvestigatorId): MoveTokens;
+export function gainClues(amount: number, who?: RelativeInvestigator): AbilityEffect;
 export function gainClues(
   amount: number,
-  who: RelativeInvestigator = { ref: 'windowInvestigator' },
-): AbilityEffect {
-  return { type: 'AdjustInvestigator', investigatorId: who, stat: 'clues', delta: amount };
+  who: InvestigatorId | RelativeInvestigator = { ref: 'windowInvestigator' },
+): TokenMove {
+  return tokenMove('clue', amount, 'pool', { investigator: who });
 }
 
 /**
@@ -1950,12 +1960,17 @@ export function endYourTurn(): AbilityEffect {
   return { type: 'EndTurn', investigatorId: { ref: 'windowInvestigator' } };
 }
 
-/** "Gain N resources" (First Bank of Arkham). */
+/**
+ * "Gain N resources" (First Bank of Arkham): a `MoveTokens` from the pool. The basic resource
+ * action is `GainResources`, which provokes attacks of opportunity.
+ */
+export function gainResources(amount: number, who: InvestigatorId): MoveTokens;
+export function gainResources(amount: number, who?: RelativeInvestigator): AbilityEffect;
 export function gainResources(
   amount: number,
-  who: RelativeInvestigator = { ref: 'windowInvestigator' },
-): AbilityEffect {
-  return { type: 'GainResources', investigatorId: who, amount };
+  who: InvestigatorId | RelativeInvestigator = { ref: 'windowInvestigator' },
+): TokenMove {
+  return tokenMove('resource', amount, 'pool', { investigator: who });
 }
 
 /** "Take N horror", like `takeDamage`: Goat Spawn is `whenDefeated(takeHorror(1, eachInvestigator({ at: itsLocation() })))`. */
@@ -2138,9 +2153,33 @@ export function advanceBySpendingCluesAtRoundEnd(
   };
 }
 
-/** "Place N doom on the current agenda". */
-export function placeDoomOnAgenda(amount: number): AbilityEffect {
-  return { type: 'PlaceDoom', amount };
+/**
+ * A token move that is a plain command and card data at once: the token factories below build
+ * both, a plain `MoveTokens` from instances (the UI, tests) and an `AbilityEffect` from
+ * references (card data), and their overloads say which comes back for which arguments.
+ */
+type TokenMove = MoveTokens & AbilityEffect;
+
+/** A `TokenHolder` as a plain command or card data names it: by instance or by reference. */
+type AnyTokenHolder =
+  | Exclude<TokenHolder, object>
+  | { card: InstanceId | RelativeCard }
+  | { investigator: InvestigatorId | RelativeInvestigator }
+  | { locationOf: InvestigatorId | RelativeInvestigator };
+
+function tokenMove(
+  token: TokenKind,
+  amount: TokenMoveAmount,
+  from: AnyTokenHolder,
+  to: AnyTokenHolder,
+): TokenMove {
+  // One literal for both shapes; each factory's overloads give the caller its precise type.
+  return { type: 'MoveTokens', token, amount, from, to } as TokenMove;
+}
+
+/** "Place N doom on the current agenda": doom from the token pool (`MoveTokens`). */
+export function placeDoomOnAgenda(amount: number): TokenMove {
+  return tokenMove('doom', amount, 'pool', 'currentAgenda');
 }
 
 /**
@@ -2152,8 +2191,10 @@ export function checkDoomThreshold(): AbilityEffect {
 }
 
 /** "Place N doom on [card]", such as `placeDoomOn(nearestEnemy({ trait: trait('Cultist') }), 2)`. */
-export function placeDoomOn(card: RelativeCard, amount: number): AbilityEffect {
-  return { type: 'PlaceDoom', cardId: card, amount };
+export function placeDoomOn(card: InstanceId, amount: number): MoveTokens;
+export function placeDoomOn(card: RelativeCard, amount: number): AbilityEffect;
+export function placeDoomOn(card: InstanceId | RelativeCard, amount: number): TokenMove {
+  return tokenMove('doom', amount, 'pool', { card });
 }
 
 /** "The nearest [[trait]] enemy" (`nearestEnemy`), written `nearestEnemy({ trait: trait('Cultist') })`. */
@@ -2178,22 +2219,26 @@ export function eachInZone(
 
 /** "Place N doom on it": doom on the card with the ability. */
 export function placeDoomOnSelf(amount: number): AbilityEffect {
-  return { type: 'PlaceDoom', cardId: { ref: 'self' }, amount };
+  return placeDoomOn({ ref: 'self' }, amount);
 }
 
 /**
- * "Remove N doom from the current agenda" (`RemoveDoom`), or `'all'` of it; as much as there is.
+ * "Remove N doom from the current agenda", or `'all'` of it, back to the token pool
+ * (`MoveTokens`); as much as there is.
  */
-export function removeDoomFromAgenda(amount: number | 'all'): AbilityEffect {
-  return { type: 'RemoveDoom', amount };
+export function removeDoomFromAgenda(amount: number | 'all'): TokenMove {
+  return tokenMove('doom', amount, 'currentAgenda', 'pool');
 }
 
 /**
- * "Remove all doom from it" or "remove 1 doom from each [[Cultist]] enemy" (`RemoveDoom`):
- * `removeDoomFrom(eachEnemy({ trait: trait('Cultist') }), 1)`, as much as each card holds.
+ * "Remove all doom from it" or "remove 1 doom from each [[Cultist]] enemy" (`MoveTokens`
+ * to the pool): `removeDoomFrom(eachEnemy({ trait: trait('Cultist') }), 1)`, as much as each card
+ * holds.
  */
-export function removeDoomFrom(card: RelativeCard, amount: number | 'all'): AbilityEffect {
-  return { type: 'RemoveDoom', cardId: card, amount };
+export function removeDoomFrom(card: InstanceId, amount: number | 'all'): MoveTokens;
+export function removeDoomFrom(card: RelativeCard, amount: number | 'all'): AbilityEffect;
+export function removeDoomFrom(card: InstanceId | RelativeCard, amount: number | 'all'): TokenMove {
+  return tokenMove('doom', amount, { card }, 'pool');
 }
 
 /**
@@ -2205,10 +2250,27 @@ export function removeDoomFrom(card: RelativeCard, amount: number | 'all'): Abil
 export function moveTokens(
   token: TokenKind,
   amount: number | 'all',
+  from: InstanceId,
+  to?: InstanceId,
+): MoveTokens;
+export function moveTokens(
+  token: TokenKind,
+  amount: number | 'all',
   from: RelativeCard,
   to?: RelativeCard,
-): AbilityEffect {
-  return { type: 'MoveTokens', token, amount, from, ...(to === undefined ? {} : { to }) };
+): AbilityEffect;
+export function moveTokens(
+  token: TokenKind,
+  amount: number | 'all',
+  from: InstanceId | RelativeCard,
+  to?: InstanceId | RelativeCard,
+): TokenMove {
+  return tokenMove(
+    token,
+    amount,
+    { card: from },
+    to === undefined ? 'currentAgenda' : { card: to },
+  );
 }
 
 /**
@@ -2216,16 +2278,26 @@ export function moveTokens(
  * `investigator`, by default the one the window names; as many as the card holds.
  */
 export function takeCluesFrom(
+  from: InstanceId,
+  amount: number | 'all',
+  investigator: InvestigatorId,
+): MoveTokens;
+export function takeCluesFrom(
   from: RelativeCard,
   amount: number | 'all',
-  investigator: RelativeInvestigator = { ref: 'windowInvestigator' },
-): AbilityEffect {
-  return { type: 'MoveTokens', token: 'clue', amount, from, toInvestigator: investigator };
+  investigator?: RelativeInvestigator,
+): AbilityEffect;
+export function takeCluesFrom(
+  from: InstanceId | RelativeCard,
+  amount: number | 'all',
+  investigator: InvestigatorId | RelativeInvestigator = { ref: 'windowInvestigator' },
+): TokenMove {
+  return tokenMove('clue', amount, { card: from }, { investigator });
 }
 
 /** "Place N clues on this act": clues from the token pool on the card with the ability. */
 export function placeCluesOnSelf(amount: TokenAmount): AbilityEffect {
-  return { type: 'PlaceTokens', cardId: { ref: 'self' }, token: 'clue', amount };
+  return placeCluesOn({ ref: 'self' }, amount);
 }
 
 /**
@@ -2234,12 +2306,26 @@ export function placeCluesOnSelf(amount: TokenAmount): AbilityEffect {
  * Site); none when it has as many already, which is also its "if there are fewer than".
  */
 export function placeCluesOnSelfUpTo(upTo: TokenAmount): AbilityEffect {
-  return { type: 'PlaceTokens', cardId: { ref: 'self' }, token: 'clue', upTo };
+  return placeCluesOn({ ref: 'self' }, { upTo });
 }
 
-/** "Place 3 [per_investigator] clues on Miskatonic Quad": clues from the token pool on `card`. */
-export function placeCluesOn(card: RelativeCard, amount: TokenAmount): AbilityEffect {
-  return { type: 'PlaceTokens', cardId: card, token: 'clue', amount };
+/**
+ * "Place 3 [per_investigator] clues on Miskatonic Quad": clues from the token pool on `card`, or
+ * as many as bring it up to a count (`{ upTo }`).
+ */
+export function placeCluesOn(
+  card: InstanceId,
+  amount: TokenAmount | { upTo: TokenAmount },
+): MoveTokens;
+export function placeCluesOn(
+  card: RelativeCard,
+  amount: TokenAmount | { upTo: TokenAmount },
+): AbilityEffect;
+export function placeCluesOn(
+  card: InstanceId | RelativeCard,
+  amount: TokenAmount | { upTo: TokenAmount },
+): TokenMove {
+  return tokenMove('clue', amount, 'pool', { card });
 }
 
 /** Heals up to `amount` damage from the enemy that has the ability ("heal 2 damage from it"). */
@@ -2437,7 +2523,19 @@ export function shuffleEncounterDiscard(): AbilityEffect {
  * as every such card does first.
  */
 export function leadDrawsDiscardingUntil(match: EncounterMatch): AbilityEffect {
-  return { type: 'DrawEncounter', investigatorId: { ref: 'lead' }, match, discardSkipped: true };
+  return drawDiscardingUntil(match, { ref: 'lead' });
+}
+
+/**
+ * "Discard cards from the top of the encounter deck until an enemy is discarded and draw it",
+ * drawn by the investigator the window names, or `who`, as `leadDrawsDiscardingUntil` (Infested
+ * Pipes: the investigator who entered).
+ */
+export function drawDiscardingUntil(
+  match: EncounterMatch,
+  who: RelativeInvestigator = { ref: 'windowInvestigator' },
+): AbilityEffect {
+  return { type: 'DrawEncounter', investigatorId: who, match, discardSkipped: true };
 }
 
 /**

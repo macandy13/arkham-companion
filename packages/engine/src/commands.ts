@@ -55,10 +55,6 @@ export type Command =
   | TakeDamageAndHorror
   | DefeatInvestigator
   | DiscoverClues
-  | PlaceClues
-  | PlaceDoom
-  | RemoveDoom
-  | PlaceTokens
   | MoveTokens
   | ChangeChaosBag
   | SealChaosToken
@@ -335,7 +331,8 @@ export interface HealInvestigator {
 
 /**
  * The investigator gains `amount` resources (a positive integer): the basic resource action, taken
- * `asAction` for 1, or a card effect. Produces `InvestigatorChanged`.
+ * `asAction` for 1. A card's "gain N resources" is a `MoveTokens` from the pool (`gainResources`).
+ * Produces `InvestigatorChanged`.
  */
 export interface GainResources extends ActionCommand {
   type: 'GainResources';
@@ -497,46 +494,6 @@ export interface DiscoverClues extends AskedByCard {
 }
 
 /**
- * An active investigator places up to `amount` of their clues on the location
- * they are at ("place 1 of your clues on your location" for each point a test
- * fails by): as many as they have, so none at all with no clues or with no
- * location (not on the map yet). `amount` is positive. Produces
- * `InvestigatorChanged` (clues leave) and `TokensChanged` (clues arrive).
- */
-export interface PlaceClues {
-  type: 'PlaceClues';
-  investigatorId: InvestigatorId;
-  amount: number;
-}
-
-/**
- * Puts `amount` (positive) doom on a card in play, by default on the current
- * agenda. Produces `TokensChanged`. The threshold is not checked here: the agenda
- * only advances at a `CheckDoomThreshold` (mythos phase). `RemoveDoom` takes it off again.
- */
-export interface PlaceDoom {
-  type: 'PlaceDoom';
-  /** Defaults to the current agenda. */
-  cardId?: InstanceId;
-  amount: number;
-}
-
-/**
- * A card's "remove N doom from the current agenda" or "remove all doom from it": takes `amount`
- * (positive) doom, or `'all'`, off a card in play, by default the current agenda. Takes as much as
- * there is and nothing from a card without doom or no longer in play, since a card effect does
- * as much as it can (Rules Reference, "Effects"); the players' own corrections stay a
- * `ManualAdjust`. Without a current agenda (never during a scenario) it refuses like `PlaceDoom`.
- * Produces `TokensChanged`.
- */
-export interface RemoveDoom {
-  type: 'RemoveDoom';
-  /** Defaults to the current agenda. */
-  cardId?: InstanceId;
-  amount: number | 'all';
-}
-
-/**
  * Adds `token` to the chaos bag, or removes one copy of it, during a scenario. Produces
  * `ChaosBagChanged`. A change `lasts: 'campaign'` is also kept in `GameState.chaosBagChanges`,
  * so that `proposeResolution` writes it into the campaign log. Removing a token the bag does not
@@ -573,43 +530,47 @@ export interface ReleaseChaosToken {
 }
 
 /**
- * Puts tokens from the token pool on a card in play: `amount` (positive) of them ("place 1 clue
- * on this act", Disrupting the Ritual), or as many as bring it `upTo` ("Add clues to it until it
- * has 2 clues per investigator on it", Ritual Site), none when it holds that many already. Only
- * clues for now: doom has `PlaceDoom`, which defaults to the current agenda, and damage and
- * horror on an enemy are wounds. Produces `TokensChanged`.
+ * Where `MoveTokens` takes tokens from or puts them: the token pool, the current agenda, a card,
+ * an investigator (their clues and resources), or the location an investigator is at ("place 1
+ * of your clues on your location"). The pool holds any number; a card holds tokens only while in
+ * play (Rules Reference, "Leaves Play": its tokens return to the pool), and an investigator only
+ * while in the scenario.
  */
-export type PlaceTokens = {
-  type: 'PlaceTokens';
-  cardId: InstanceId;
-  token: 'clue';
-} & ({ amount: TokenAmount } | { upTo: TokenAmount });
+export type TokenHolder =
+  | 'pool'
+  | 'currentAgenda'
+  | { card: InstanceId }
+  | { investigator: InvestigatorId }
+  | { locationOf: InvestigatorId };
 
 /**
- * A card's "move all doom from each [[Cultist]] enemy to the current agenda", "move all damage on
- * that enemy to Mother" or "take control of 1 of the clues on Constance Dumaine": takes `amount`
- * (positive) tokens, or `'all'`, off the card `from` and puts them on the card `to` (by default
- * the current agenda), or clues on the investigator `toInvestigator`. Moves as much as there is,
- * and nothing from a card not in play, to a card not in play or to an investigator out of the
- * scenario, since a card effect does as much as it can (Rules Reference, "Effects"). A card
- * counting its own tokens (`whenTokensOnSelf`) sees moved ones like placed ones, and an enemy
- * that ends up with as much damage as its health is defeated. Damage moves only onto a card with
- * health and horror only onto one with sanity (FAQ, October 2024). Produces `TokensChanged` on both
- * cards, or `TokensChanged` and `InvestigatorChanged`, then any `EnemyDefeated`.
+ * How many tokens `MoveTokens` moves: a number or one per investigator, `'all'` that `from`
+ * holds, or as many as bring `to` up to `upTo` ("add clues to it until it has 2 clues per
+ * investigator on it", Ritual Site), none when it holds that many already.
  */
-export type MoveTokens = {
-  type: 'MoveTokens';
-  from: InstanceId;
-  amount: number | 'all';
-} & (
-  | {
-      token: TokenKind;
-      /** Defaults to the current agenda. */
-      to?: InstanceId;
-    }
-  | { token: 'clue'; toInvestigator: InvestigatorId }
-);
+export type TokenMoveAmount = TokenAmount | 'all' | { upTo: TokenAmount };
 
+/**
+ * The one command for tokens changing holder by a card's effect: "place 1 doom on the current
+ * agenda" (from the pool), "remove all doom from it" (to the pool), "move all doom from each
+ * [[Cultist]] enemy to the current agenda", "move all damage on that enemy to Mother", "take
+ * control of 1 of the clues on Constance Dumaine". Moves as many as `from` holds, and none from
+ * or to a card out of play or an investigator out of the scenario, since a card effect does as
+ * much as it can (Rules Reference, "Effects"). Damage moves only onto a card with health and
+ * horror only onto one with sanity (FAQ, October 2024). A card counting its own tokens
+ * (`whenTokensOnSelf`) sees moved ones like placed ones, and an enemy that ends up with as much
+ * damage as its health is defeated. Doom on the agenda is checked at the mythos threshold step
+ * only (`CheckDoomThreshold`). The players' own corrections stay a `ManualAdjust`. Produces
+ * `TokensChanged` for each card and `InvestigatorChanged` for each investigator, then any
+ * `EnemyDefeated`.
+ */
+export interface MoveTokens {
+  type: 'MoveTokens';
+  token: TokenKind;
+  amount: TokenMoveAmount;
+  from: TokenHolder;
+  to: TokenHolder;
+}
 /**
  * Advances the current agenda: all doom in play is removed, the agenda is
  * flipped and its reverse side (its `advanced` abilities) resolves while it is
@@ -719,9 +680,9 @@ export interface DrawEncounter {
    * field has to match; the card is then revealed and placed exactly like a
    * top-of-deck draw, so surge and the empty-deck reshuffle apply as well.
    * Draws and discards nothing when no card matches: the effect resolves as
-   * far as it can. With `discardSkipped` this assumes the discard was just
-   * shuffled into the deck, as Rise of the Ghouls does first; a match left in
-   * the discard is not looked for.
+   * far as it can. With `discardSkipped` and a match only in the discard, the
+   * whole deck is discarded and the discard shuffled back in before the
+   * search goes on, as when the deck runs out mid-discard (Infested Pipes).
    */
   match?: EncounterMatch;
   /**
@@ -1206,7 +1167,7 @@ export interface CheckDoomThreshold {
  * while a turn is in progress or an active investigator has not taken their
  * turn (the group ends every turn first, even one without actions). Produces
  * `PhaseChanged`, then per step `PhaseStepsChanged` and the events of the
- * step (`PlaceDoom`, `CheckDoomThreshold`, `DrawEncounter`, `MoveHunters`,
+ * step (`MoveTokens`, `CheckDoomThreshold`, `DrawEncounter`, `MoveHunters`,
  * `ActionsReset`, `ReadyEnemy`, `AdjustInvestigator`, `RoundEnded`).
  */
 export interface NextPhase {

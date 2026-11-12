@@ -41,7 +41,7 @@ export function handleStartTurn(state: GameState, cmd: StartTurn): TurnStarted[]
 /**
  * `EndTurn`: ends the turn in progress, which must be the investigator's.
  * `TurnEnded` opens the `turnEnds` window for the cards in their threat
- * area (Frozen in Fear's test).
+ * area (Frozen in Fear's test) and for the location they end it at (Flooded Crypt).
  */
 export function handleEndTurn(state: GameState, cmd: EndTurn): TurnEnded[] {
   if (cmd.source && state.meta.turn?.investigatorId !== cmd.investigatorId) return [];

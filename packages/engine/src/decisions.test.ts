@@ -23,6 +23,7 @@ import {
   type GameState,
   type InvestigatorId,
   type Zone,
+  placeDoomOn,
 } from './index';
 import { cardOptionLabels, sameDecider } from './decisions';
 import { requireInvestigator } from './investigators';
@@ -154,7 +155,7 @@ describe('pending decisions', () => {
   });
 
   it('rejects other commands', () => {
-    const rejection = rejectionFrom(context, asked, { type: 'PlaceDoom', cardId: hall, amount: 1 });
+    const rejection = rejectionFrom(context, asked, placeDoomOn(hall, 1));
 
     expect(rejection).toEqual({ code: 'decisionPending', decisionId: 'pick_reward' });
   });
@@ -582,7 +583,7 @@ describe('decisions raised by card abilities', () => {
 describe('pending decision invariants', () => {
   const { context, state: aliceInHall } = hallWithAlice.start();
   const blocked: Command[] = [
-    { type: 'PlaceDoom', cardId: hall, amount: 1 },
+    placeDoomOn(hall, 1),
     { type: 'MoveHunters' },
     { type: 'DrawEncounter', investigatorId: alice },
     gainResource,

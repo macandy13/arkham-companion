@@ -29,6 +29,9 @@ import {
   trait,
   whenRevealed,
   type Command,
+  placeDoomOnAgenda,
+  gainResources,
+  gainClues,
 } from './index';
 import { requireInvestigator } from './investigators';
 import { rejectionFrom, resolveRevelation, runFrom, stateAfter } from '../test/utils';
@@ -59,7 +62,7 @@ describe('a card effect that advances the agenda', () => {
       .withLocation(attic, atticCard, { revealed: true })
       .withInvestigator(alice, { locationId: hall })
       .start();
-    const withDoom = stateAfter(context, state, { type: 'PlaceDoom', amount: 2 });
+    const withDoom = stateAfter(context, state, placeDoomOnAgenda(2));
 
     const after = stateAfter(context, withDoom, aliceEntersAttic);
 
@@ -211,8 +214,7 @@ describe('card effects that remove doom', () => {
         .withLocation(attic, atticCard, { revealed: true })
         .withInvestigator(alice, { locationId: hall })
         .start();
-      const withDoom =
-        before === 0 ? state : stateAfter(context, state, { type: 'PlaceDoom', amount: before });
+      const withDoom = before === 0 ? state : stateAfter(context, state, placeDoomOnAgenda(before));
 
       const moved = stateAfter(context, withDoom, aliceEntersAttic);
 
@@ -255,11 +257,7 @@ describe('card effects that remove doom', () => {
       .withCard(acolyte, blankEnemy('acolyte'), encounterDiscard, { tokens: { doom: 1 } })
       .start();
 
-    const { state: after, events } = execute(context, state, {
-      type: 'RemoveDoom',
-      cardId: acolyte,
-      amount: 1,
-    });
+    const { state: after, events } = execute(context, state, removeDoomFrom(acolyte, 1));
 
     expect(events).toEqual([]);
     expect(after.cards[acolyte]?.tokens.doom).toBe(1);
@@ -272,7 +270,7 @@ describe('card effects that remove doom', () => {
       .withInvestigator(alice, { locationId: hall })
       .start();
 
-    expect(rejectionFrom(context, state, { type: 'RemoveDoom', amount: 0 })).toMatchObject({
+    expect(rejectionFrom(context, state, removeDoomFromAgenda(0))).toMatchObject({
       code: 'invalidTokenDelta',
     });
   });
@@ -335,13 +333,11 @@ describe('card effects that move tokens between cards', () => {
         })
         .start();
 
-      const { state: after, events } = execute(context, state, {
-        type: 'MoveTokens',
-        token: 'damage',
-        amount: 'all',
-        from: acolyte,
-        to: mother,
-      });
+      const { state: after, events } = execute(
+        context,
+        state,
+        moveTokens('damage', 'all', acolyte, mother),
+      );
 
       expect(after.cards[acolyte]?.tokens.damage ?? 0).toBe(0);
       expect(after.cards[mother]?.zone).toEqual(motherZone);
@@ -370,6 +366,59 @@ describe('card effects that move tokens between cards', () => {
     expect(requireInvestigator(after, alice).clues).toBe(1);
   });
 
+  it.each([
+    {
+      name: "alice's clue to the pool",
+      from: { investigator: alice },
+      to: 'pool',
+      alice: 1,
+      hall: 1,
+    },
+    {
+      name: "alice's clue to the hall",
+      from: { investigator: alice },
+      to: { card: hall },
+      alice: 1,
+      hall: 2,
+    },
+    { name: 'a pool clue to alice', from: 'pool', to: { investigator: alice }, alice: 3, hall: 1 },
+  ] as const)(
+    'moves $name: alice has $alice, the hall $hall',
+    ({ from, to, alice: aliceClues, hall: hallClues }) => {
+      const { context, state } = newGame()
+        .withLocation(hall, blankLocation('hall', { shroud: 1, clues: fixed(1) }), {
+          revealed: true,
+        })
+        .withInvestigator(alice, { locationId: hall, clues: 2 })
+        .start();
+
+      const after = stateAfter(context, state, {
+        type: 'MoveTokens',
+        token: 'clue',
+        amount: 1,
+        from,
+        to,
+      });
+
+      expect(requireInvestigator(after, alice).clues).toBe(aliceClues);
+      expect(after.cards[hall]?.tokens.clue ?? 0).toBe(hallClues);
+    },
+  );
+
+  it.each([
+    { effect: 'gains 2 resources', move: gainResources(2, alice), resources: 5, clues: 0 },
+    { effect: 'gains 2 clues', move: gainClues(2, alice), resources: 3, clues: 2 },
+  ])('alice $effect from the pool', ({ move, resources, clues }) => {
+    const { context, state } = newGame()
+      .withLocation(hall, blankLocation('hall'), { revealed: true })
+      .withInvestigator(alice, { locationId: hall, resources: 3, clues: 0 })
+      .start();
+
+    const after = stateAfter(context, state, move);
+
+    expect(requireInvestigator(after, alice)).toMatchObject({ resources, clues });
+  });
+
   it('moves nothing from a card that has left play', () => {
     const { context, state } = newGame()
       .withAgenda(agenda, blankAgenda('agenda', fixed(5)))
@@ -378,12 +427,7 @@ describe('card effects that move tokens between cards', () => {
       .withCard(acolyte, blankEnemy('acolyte'), encounterDiscard, { tokens: { doom: 1 } })
       .start();
 
-    const { events } = execute(context, state, {
-      type: 'MoveTokens',
-      token: 'doom',
-      amount: 'all',
-      from: acolyte,
-    });
+    const { events } = execute(context, state, moveTokens('doom', 'all', acolyte));
 
     expect(events).toEqual([]);
   });
@@ -396,13 +440,11 @@ describe('card effects that move tokens between cards', () => {
       .withCard(mother, blankEnemy('mother'), setAside)
       .start();
 
-    const { state: after, events } = execute(context, state, {
-      type: 'MoveTokens',
-      token: 'doom',
-      amount: 'all',
-      from: acolyte,
-      to: mother,
-    });
+    const { state: after, events } = execute(
+      context,
+      state,
+      moveTokens('doom', 'all', acolyte, mother),
+    );
 
     expect(events).toEqual([]);
     expect(after.cards[acolyte]?.tokens.doom).toBe(1);
@@ -415,13 +457,7 @@ describe('card effects that move tokens between cards', () => {
       .withCard(acolyte, blankEnemy('acolyte'), atLocation(hall), { tokens: { doom: 1 } })
       .start();
 
-    const { events } = execute(context, state, {
-      type: 'MoveTokens',
-      token: 'doom',
-      amount: 'all',
-      from: acolyte,
-      to: acolyte,
-    });
+    const { events } = execute(context, state, moveTokens('doom', 'all', acolyte, acolyte));
 
     expect(events).toEqual([]);
   });
@@ -437,13 +473,7 @@ describe('card effects that move tokens between cards', () => {
       .withCard(constance, blankEnemy('constance'), atLocation(study), { tokens: { clue: 2 } })
       .start();
 
-    const { events } = execute(context, state, {
-      type: 'MoveTokens',
-      token: 'clue',
-      amount: 1,
-      from: constance,
-      toInvestigator: bob,
-    });
+    const { events } = execute(context, state, takeCluesFrom(constance, 1, bob));
 
     expect(events).toEqual([]);
   });
@@ -462,13 +492,7 @@ describe('card effects that move tokens between cards', () => {
       .start();
     const to = token === 'damage' ? agenda : mother;
 
-    const { events } = execute(context, state, {
-      type: 'MoveTokens',
-      token,
-      amount: 'all',
-      from: acolyte,
-      to,
-    });
+    const { events } = execute(context, state, moveTokens(token, 'all', acolyte, to));
 
     expect(events).toEqual([]);
   });
@@ -480,13 +504,8 @@ describe('card effects that move tokens between cards', () => {
       .withCard(acolyte, blankEnemy('acolyte'), atLocation(hall), { tokens: { doom: 1 } })
       .start();
 
-    expect(
-      rejectionFrom(context, state, {
-        type: 'MoveTokens',
-        token: 'doom',
-        amount: 0,
-        from: acolyte,
-      }),
-    ).toMatchObject({ code: 'invalidTokenDelta' });
+    expect(rejectionFrom(context, state, moveTokens('doom', 0, acolyte))).toMatchObject({
+      code: 'invalidTokenDelta',
+    });
   });
 });

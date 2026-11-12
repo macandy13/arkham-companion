@@ -24,6 +24,7 @@ import {
   type EngineContext,
   type GameState,
   type Zone,
+  placeDoomOnAgenda,
 } from './index';
 import { requireInvestigator } from './investigators';
 import { answer, rejectionFrom, runFrom, stateAfter } from '../test/utils';
@@ -232,7 +233,7 @@ describe('mythos phase', () => {
 
   it('asks to advance the agenda at the threshold check (1.3) and draws only after the answer', () => {
     const { context, state } = aliceAndBobWithTwoTreacheries.start();
-    const upkeep = stateAfter(context, upkeepOf(context, state), { type: 'PlaceDoom', amount: 1 });
+    const upkeep = stateAfter(context, upkeepOf(context, state), placeDoomOnAgenda(1));
 
     const asked = stateAfter(context, upkeep, next);
     const answered = stateAfter(context, asked, answer('advanceAgenda:first_agenda', 'yes'));
@@ -251,15 +252,10 @@ describe('mythos phase', () => {
 
   it('does not ask when doom reached the threshold earlier but was corrected before the check', () => {
     const { context, state } = aliceAndBob.start();
-    const corrected = stateAfter(
-      context,
-      upkeepOf(context, state),
-      { type: 'PlaceDoom', amount: 2 },
-      {
-        type: 'ManualAdjust',
-        adjustment: { kind: 'tokens', cardId: firstAgenda, token: 'doom', delta: -2 },
-      },
-    );
+    const corrected = stateAfter(context, upkeepOf(context, state), placeDoomOnAgenda(2), {
+      type: 'ManualAdjust',
+      adjustment: { kind: 'tokens', cardId: firstAgenda, token: 'doom', delta: -2 },
+    });
 
     const mythos = stateAfter(context, corrected, next);
 

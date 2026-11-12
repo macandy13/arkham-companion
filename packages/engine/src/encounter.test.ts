@@ -528,6 +528,26 @@ describe('DrawEncounter with a match', () => {
     expect(idsIn(after, encounterDeck)).toEqual(['top_card']);
   });
 
+  it('discards the whole deck and shuffles the discard back in when the only match is in the discard', () => {
+    const { context, state } = aliceInHall
+      .withCard(instanceId('deck_treachery'), plainTreachery, encounterDeck)
+      .withCard(instanceId('ghoul_in_discard'), ghoulFoe, encounterDiscard)
+      .start();
+
+    const { state: after, events } = execute(context, state, {
+      ...drawGhoulEnemy,
+      discardSkipped: true,
+    });
+
+    expect(events).toContainEqual(
+      expect.objectContaining({ type: 'DeckShuffled', zone: encounterDeck }),
+    );
+    expect(after.cards[instanceId('ghoul_in_discard')]?.zone).toEqual(engagedWith(alice));
+    expect([...idsIn(after, encounterDeck), ...idsIn(after, encounterDiscard)]).toEqual([
+      'deck_treachery',
+    ]);
+  });
+
   it('draws again from the top after a matched card with surge', () => {
     const { context, state } = aliceInHall
       .withCard(instanceId('top_card'), plainTreachery, encounterDeck)
