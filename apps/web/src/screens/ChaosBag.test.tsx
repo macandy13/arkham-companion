@@ -83,4 +83,47 @@ describe('ChaosBag', () => {
     await waitFor(() => expect(table.board.sealedTokens).toEqual([]));
     expect(table.board.chaosBag).toEqual(['-1', '-1', 'elderSign', 'skull']);
   });
+
+  it('lists the bless and curse tokens with how many are left in their pools', () => {
+    const table = PlayTable.start(game.withChaosBag(['bless', 'bless', 'curse']));
+
+    render(<ChaosBag board={table.board} actions={actionsOn(table)} busy={false} />);
+
+    const pool = screen.getByRole('list', { name: 'Bless and curse' });
+    expect(
+      within(pool)
+        .getAllByRole('listitem')
+        .map((item) => item.textContent),
+    ).toEqual(['Bless 8 left in the pool Add Return', 'Curse 9 left in the pool Add Return']);
+  });
+
+  it('adds a bless token from the pool and returns a curse token to it', async () => {
+    const table = PlayTable.start(game.withChaosBag(['curse', '-1']));
+    render(<ChaosBag board={table.board} actions={actionsOn(table)} busy={false} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Add a Bless token to the bag' }));
+    await waitFor(() => expect(table.board.chaosBag).toEqual(['curse', '-1', 'bless']));
+    fireEvent.click(screen.getByRole('button', { name: 'Return a Curse token to the pool' }));
+
+    await waitFor(() => expect(table.board.chaosBag).toEqual(['-1', 'bless']));
+  });
+
+  it.each([
+    {
+      what: 'add while all ten are in the bag',
+      bag: Array.from({ length: 10 }, () => 'bless' as const),
+      button: 'Add a Bless token to the bag',
+    },
+    {
+      what: 'return while the bag holds none',
+      bag: ['-1' as const],
+      button: 'Return a Bless token to the pool',
+    },
+  ])('offers no $what', ({ bag, button }) => {
+    const table = PlayTable.start(game.withChaosBag(bag));
+
+    render(<ChaosBag board={table.board} actions={actionsOn(table)} busy={false} />);
+
+    expect(screen.getByRole('button', { name: button })).toHaveProperty('disabled', true);
+  });
 });

@@ -1,4 +1,5 @@
 import { resolutionIds } from './campaign/resolution';
+import { poolTokensLeft, type PoolToken } from './chaos_bag';
 import { assertNever, listIfAny, recordIfAny, unique } from '@arkham/util';
 import { isLocationInPlay, neighbours, openConnections } from './board';
 import {
@@ -968,6 +969,14 @@ export class BoardView {
   /** The tokens out of the bag because a card sealed them, each with the investigator holding it. */
   get sealedTokens(): readonly SealedToken[] {
     return this.state.sealedTokens;
+  }
+
+  /**
+   * How many bless or curse tokens are left in their pool (`poolTokensLeft`), for the chaos bag to
+   * show beside its add button; a card adds none while the pool is empty.
+   */
+  poolTokensLeft(token: PoolToken): number {
+    return poolTokensLeft(token, this.state.chaosBag, this.state.sealedTokens);
   }
 
   /**

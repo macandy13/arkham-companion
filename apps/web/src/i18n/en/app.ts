@@ -137,6 +137,12 @@ export const appTexts = {
     releaseFrom: 'Release {{token}} from {{investigator}}',
     release: 'Release',
     value: 'Value',
+    pool: 'Bless and curse',
+    poolLeft: '{{count}} left in the pool',
+    add: 'Add',
+    remove: 'Return',
+    addFromPool: 'Add a {{token}} token to the bag',
+    returnToPool: 'Return a {{token}} token to the pool',
   },
   header: {
     round: 'Round {{round}}',

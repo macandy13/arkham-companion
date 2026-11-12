@@ -1159,6 +1159,12 @@ export interface ResolveDecision {
    */
   margin?: number;
   /**
+   * Only for a `skillTestResult` decision: the chaos tokens the players revealed, when the app
+   * drew them. The bless and curse tokens among them go back to their pool after the test
+   * (`ChaosBagChanged`) instead of into the bag. Ignored for any other decision.
+   */
+  revealed?: readonly ChaosToken[];
+  /**
    * The investigator giving the answer, when the app knows who it is (one
    * device per player). The answer is then rejected unless they may give it
    * (`Decision.decider`). Omitted when the table shares one device, which is

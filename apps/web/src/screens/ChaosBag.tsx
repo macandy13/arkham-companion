@@ -1,10 +1,13 @@
 import { useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { tokenCounts, type BoardView, type ChaosToken } from '@arkham/engine';
+import { tokenCounts, type BoardView, type ChaosToken, type PoolToken } from '@arkham/engine';
 import type { GameActions } from '../state/gameActions';
 import { ChaosTokenFace } from '../tokens/ChaosTokenFace';
 import { hasSymbol, signedOrUnknown } from '../tokens/tokenValue';
 import './chaos_bag.css';
+
+/** The tokens a card adds from their pool, in the order the chaos bag lists them. */
+const POOL_TOKENS: readonly PoolToken[] = ['bless', 'curse'];
 
 /**
  * The chaos bag on the scenario card's page (M6.1b): what is in it, one row per kind of token in
@@ -13,8 +16,10 @@ import './chaos_bag.css';
  * M6.7b), and the tokens player cards sealed, each with the
  * investigator holding it (`BoardView.sealedTokens`). The players seal a token as a card tells
  * them: they tap it in the bag, then the investigator whose card seals it; a sealed token has a
- * Release button. Both are steps of their own (`GameActions.sealToken`, `releaseToken`), so Undo
- * takes them back, and they wait while a step is queued (`busy`).
+ * Release button. The bless and curse tokens follow, each with how many are left in its pool
+ * (`BoardView.poolTokensLeft`) and buttons to add one to the bag or return one, as a card says.
+ * Each is a step of its own (`GameActions.sealToken`, `releaseToken`, `addPoolToken`,
+ * `removePoolToken`), so Undo takes it back, and they wait while a step is queued (`busy`).
  */
 export function ChaosBag({
   board,
@@ -28,6 +33,7 @@ export function ChaosBag({
   const { t } = useTranslation();
   const titleId = useId();
   const sealedId = useId();
+  const poolId = useId();
   const [picked, setPicked] = useState<ChaosToken>();
   const counts = tokenCounts(board.chaosBag);
   const sealers = board.investigators.filter((investigator) => investigator.status === 'active');
@@ -83,6 +89,35 @@ export function ChaosBag({
           ))}
         </div>
       )}
+      <h4 id={poolId}>{t('chaosBag.pool')}</h4>
+      <ul aria-labelledby={poolId}>
+        {POOL_TOKENS.map((token) => {
+          const left = board.poolTokensLeft(token);
+          const name = t(`chaosToken.${token}`);
+          return (
+            <li key={token}>
+              <ChaosTokenFace token={token} />{' '}
+              <data value={left}>{t('chaosBag.poolLeft', { count: left })}</data>{' '}
+              <button
+                type="button"
+                aria-label={t('chaosBag.addFromPool', { token: name })}
+                disabled={busy || left === 0}
+                onClick={() => void actions.addPoolToken(token)}
+              >
+                {t('chaosBag.add')}
+              </button>{' '}
+              <button
+                type="button"
+                aria-label={t('chaosBag.returnToPool', { token: name })}
+                disabled={busy || !board.chaosBag.includes(token)}
+                onClick={() => void actions.removePoolToken(token)}
+              >
+                {t('chaosBag.remove')}
+              </button>
+            </li>
+          );
+        })}
+      </ul>
       {board.sealedTokens.length > 0 && (
         <>
           <h4 id={sealedId}>{t('chaosBag.sealed')}</h4>

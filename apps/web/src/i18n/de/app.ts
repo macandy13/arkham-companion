@@ -138,6 +138,12 @@ export const appTexts = {
     releaseFrom: '{{token}} von {{investigator}} freigeben',
     release: 'Freigeben',
     value: 'Wert',
+    pool: 'Segen und Fluch',
+    poolLeft: 'Noch {{count}} im Vorrat',
+    add: 'Hinzufügen',
+    remove: 'Zurücklegen',
+    addFromPool: '{{token}}-Marker in den Beutel legen',
+    returnToPool: '{{token}}-Marker in den Vorrat zurücklegen',
   },
   header: {
     round: 'Runde {{round}}',
