@@ -10,6 +10,7 @@ import {
   newGame,
   putIntoThreatArea,
   skillTest,
+  takeHorror,
   threatAreaOf,
   whenRevealed,
   zoneKey,
@@ -19,6 +20,7 @@ import {
   takeDamage,
   takeHorror,
 } from './index';
+import { requireInvestigator } from './investigators';
 import { answer, investigatorOf, rejectionFrom, stateAfter } from '../test/utils';
 
 const alice = investigatorId('alice');
@@ -204,6 +206,33 @@ describe('the end of a turn', () => {
 
     expect(stateAfter(context, bobsTurn, endTurn(bob)).pending).toEqual([]);
   });
+});
+
+describe('the end of a turn at a location', () => {
+  it.each([
+    { who: 'alice, who ends her turn in the crypt', investigator: alice, horror: [1, 0] },
+    { who: 'bob, who ends his turn in the hall', investigator: bob, horror: [0, 0] },
+  ])(
+    'gives 1 horror only to an investigator ending a turn in the crypt: $who',
+    ({ investigator, horror }) => {
+      const crypt = instanceId('crypt');
+      /** "When you end your turn at this location: take 1 horror" (Flooded Crypt). */
+      const cryptCard = blankLocation('crypt', { abilities: [atEndOfTurn(takeHorror(1))] });
+      const { context, state } = newGame()
+        .withLocation(hall, blankLocation('hall'))
+        .withLocation(crypt, cryptCard)
+        .withInvestigator(alice, { locationId: crypt })
+        .withInvestigator(bob, { locationId: hall })
+        .withTurnOf(investigator)
+        .start();
+
+      const ended = stateAfter(context, state, endTurn(investigator));
+
+      expect([alice, bob].map((id) => requireInvestigator(ended, id).sanity.horror)).toEqual(
+        horror,
+      );
+    },
+  );
 });
 
 describe('remaining actions', () => {

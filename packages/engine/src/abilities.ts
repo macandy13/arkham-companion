@@ -43,6 +43,7 @@ import { enemiesAt, enemiesMatching, nearestEnemies, type EnemyFilter } from './
 import {
   cluesHeldAt,
   cluesHeldByGroup,
+  findInvestigator,
   isActiveInvestigator,
   playerOrder,
   requireInvestigator,
@@ -89,10 +90,10 @@ export type TimingWindow =
   /** The card is turned face up: a location revealed, or a drawn encounter card (its revelation). */
   | { kind: 'revealed' }
   /**
-   * "At the end of your turn" for a card in an investigator's threat area:
-   * the end of that investigator's turn (`EndTurn`), naming them. A turn cut
-   * short by resignation or defeat opens nothing, as the investigator has
-   * left with the card's reason to fire.
+   * "At the end of your turn" for a card in an investigator's threat area, and "when you end your
+   * turn at this location" for the location they end it at: the end of that investigator's turn
+   * (`EndTurn`), naming them. A turn cut short by resignation or defeat opens nothing, as the
+   * investigator has left with the card's reason to fire.
    */
   | { kind: 'turnEnds' }
   /**
@@ -613,8 +614,12 @@ export function windowsOpenedBy(
     }
     case 'TurnEnded': {
       const { investigatorId } = event;
+      const here = findInvestigator(state, investigatorId)?.locationId;
       return [
-        ...cardsInZone(state, { kind: 'threatArea', investigatorId }).map((cardId) => ({
+        ...[
+          ...cardsInZone(state, { kind: 'threatArea', investigatorId }),
+          ...(here === undefined ? [] : [here]),
+        ].map((cardId) => ({
           window: { kind: 'turnEnds' } as const,
           cardId,
           investigatorId,
@@ -1407,7 +1412,9 @@ export function whenRevealed(...effects: AbilityEffect[]): Ability {
 
 /**
  * A forced ability "at the end of your turn" of a card in a threat area,
- * written `atEndOfTurn(skillTest('willpower', 3, { onPass: [discardSelf()] }))`.
+ * written `atEndOfTurn(skillTest('willpower', 3, { onPass: [discardSelf()] }))`, or "when you end
+ * your turn at this location" of a location, for the investigator ending it there:
+ * `atEndOfTurn(takeHorror(1))` (Flooded Crypt).
  */
 export function atEndOfTurn(...effects: AbilityEffect[]): Ability {
   return { window: { kind: 'turnEnds' }, effects };
@@ -2546,7 +2553,19 @@ export function shuffleEncounterDiscard(): AbilityEffect {
  * as every such card does first.
  */
 export function leadDrawsDiscardingUntil(match: EncounterMatch): AbilityEffect {
-  return { type: 'DrawEncounter', investigatorId: { ref: 'lead' }, match, discardSkipped: true };
+  return drawDiscardingUntil(match, { ref: 'lead' });
+}
+
+/**
+ * "Discard cards from the top of the encounter deck until an enemy is discarded and draw it",
+ * drawn by the investigator the window names, or `who`, as `leadDrawsDiscardingUntil` (Infested
+ * Pipes: the investigator who entered).
+ */
+export function drawDiscardingUntil(
+  match: EncounterMatch,
+  who: RelativeInvestigator = { ref: 'windowInvestigator' },
+): AbilityEffect {
+  return { type: 'DrawEncounter', investigatorId: who, match, discardSkipped: true };
 }
 
 /**

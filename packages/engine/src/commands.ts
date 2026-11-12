@@ -680,9 +680,9 @@ export interface DrawEncounter {
    * field has to match; the card is then revealed and placed exactly like a
    * top-of-deck draw, so surge and the empty-deck reshuffle apply as well.
    * Draws and discards nothing when no card matches: the effect resolves as
-   * far as it can. With `discardSkipped` this assumes the discard was just
-   * shuffled into the deck, as Rise of the Ghouls does first; a match left in
-   * the discard is not looked for.
+   * far as it can. With `discardSkipped` and a match only in the discard, the
+   * whole deck is discarded and the discard shuffled back in before the
+   * search goes on, as when the deck runs out mid-discard (Infested Pipes).
    */
   match?: EncounterMatch;
   /**
