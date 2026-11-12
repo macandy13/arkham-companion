@@ -398,7 +398,7 @@ Every campaign after Chapter Two starts with a card-by-card read of its encounte
 17. **Text connections and movement costs** – Sewer Culvert; extra costs to enter (Underground Cistern, Sluice Control), to leave (Unvisited Isle) and to investigate (Waterfront District).
 18. **Replacement hooks** – "would … instead" (Brethren of Ash).
 19. **Patrol movement** and enemy restrictions (cannot move, no attacks of opportunity, cannot be damaged).
-20. **Test difficulty from the board** – difficulty as an expression read when the test is raised (Mutated!, Red Herring, Secret Chamber, Abigail Foreman).
+20. **Test difficulty from the board** – difficulty as an expression read when the test is raised (Mutated!, Red Herring, Secret Chamber, Abigail Foreman). Built: `TestSkill.difficultyChanges` (`plusDifficultyPer`, `plusDifficultyIf`; MC2.5a).
 21. **Attach to an enemy, asset or act** – Unnatural Strength, Sanguine Rebirth.
 22. **Blood tokens** – chaos bag counts in the campaign log, sealed tokens per investigator, limits; prey and difficulty read them.
 23. **Predator** – enemy phase step between hunters and attacks.

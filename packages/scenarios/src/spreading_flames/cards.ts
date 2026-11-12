@@ -39,6 +39,7 @@ import {
   perInvestigator,
   placeCluesOn,
   placeDoomOnAgenda,
+  plusDifficultyIf,
   putIntoThreatArea,
   putLocationIntoPlay,
   removeFromGame,
@@ -58,6 +59,7 @@ import {
   whenEnemyDefeated,
   whenRevealed,
   youMustEither,
+  yourLocation,
 } from '@arkham/engine';
 import { act, agenda, enemy, location, picturesOf, prey, treachery } from '../card_builders';
 
@@ -102,6 +104,12 @@ export const SPREADING_FLAMES_CODES = {
  * 1 horror and draw again (surge).
  */
 export const COSMIC_EVILS_DECISION = decisionId('spreadingFlames.cosmicEvils');
+
+/**
+ * Id of the question a failed Mutated! asks its drawer: take 2 damage, or each investigator at
+ * their location takes 1 horror.
+ */
+export const MUTATED_DECISION = decisionId('spreadingFlames.mutated');
 
 /** Id of Noxious Smoke's question to its drawer: test willpower or agility. */
 export const NOXIOUS_SMOKE_DECISION = decisionId('spreadingFlames.noxiousSmoke');
@@ -150,6 +158,7 @@ const codes = SPREADING_FLAMES_CODES;
 const sets = SPREADING_FLAMES_SETS;
 const own = sets.spreadingFlames;
 const cosmicEvils = 'scenario.spreadingFlames.cosmicEvils';
+const mutated = 'scenario.spreadingFlames.mutated';
 const stayOrGo = 'scenario.spreadingFlames.stayOrGo';
 /** ArkhamDB has the Core Set (2026)'s pictures as JPEGs. */
 const jpg = 'jpg';
@@ -182,8 +191,7 @@ const jpg = 'jpg';
  *   and its two-action discard
  * - Forbidden Secrets' intellect (3) test (when its drawer has clues) and Wild Compulsion's
  *   willpower (3) test, each with a choice per point failed
- * - Extraplanar Visions' test of X difficulty, and Mutated!'s test with its +2 difficulty while an
- *   enemy is at the drawer's location and its choice on a fail (MC2.5)
+ * - Extraplanar Visions' test of X difficulty, X the cards in its drawer's hand (MC2.5)
  */
 export const spreadingFlamesCardDefs: readonly CardStats[] = [
   agenda({
@@ -539,6 +547,25 @@ export const spreadingFlamesCardDefs: readonly CardStats[] = [
     pictures: jpg,
     traits: ['Mutation'],
     quantity: 2,
+    abilities: [
+      whenRevealed(
+        skillTest('willpower', 2, {
+          difficultyChanges: [
+            plusDifficultyIf({ kind: 'countOf', of: eachEnemy({ at: yourLocation() }), min: 1 }, 2),
+          ],
+          onFail: [
+            youMustEither(MUTATED_DECISION, `${mutated}.prompt`, [
+              { id: 'damage', label: `${mutated}.damage`, effects: [takeDamage(2)] },
+              {
+                id: 'horror',
+                label: `${mutated}.horror`,
+                effects: [takeHorror(1, eachInvestigator({ at: yourLocation() }))],
+              },
+            ]),
+          ],
+        }),
+      ),
+    ],
   }),
   enemy({
     code: '12132',

@@ -6,6 +6,7 @@ import {
   blankLocation,
   afterTest,
   blankTreachery,
+  eachEnemy,
   discardSelf,
   decisionId,
   engagedWith,
@@ -14,12 +15,17 @@ import {
   instanceId,
   investigatorId,
   newGame,
+  plusDifficultyIf,
+  plusDifficultyPer,
   putIntoThreatArea,
   skillTest,
   skillTestDecision,
   skillTestOfEither,
+  statOf,
   takeHorror,
   whenRevealed,
+  you,
+  yourLocation,
   zoneKey,
   type CardStats,
   type Command,
@@ -777,6 +783,118 @@ describe('test of either of two skills', () => {
 
       expect(picked.pending).toMatchObject([{ skillTest: { skill, difficulty: 3 } }]);
       expect(requireInvestigator(resolved, alice).sanity.horror).toBe(horror);
+    },
+  );
+});
+
+describe('test difficulty from the table', () => {
+  const test = instanceId('test');
+  const draw: Command = { type: 'DrawEncounter', investigatorId: alice };
+  /** Treacheries testing willpower (2) with +1 for each damage on the drawer, or -1 for each. */
+  const perDamageTreachery = blankTreachery('per_damage_treachery', {
+    abilities: [
+      whenRevealed(
+        skillTest('willpower', 2, {
+          difficultyChanges: [plusDifficultyPer(statOf(you(), 'damage'))],
+        }),
+      ),
+    ],
+  });
+  const lessPerDamageTreachery = blankTreachery('less_per_damage_treachery', {
+    abilities: [
+      whenRevealed(
+        skillTest('willpower', 2, {
+          difficultyChanges: [plusDifficultyPer(statOf(you(), 'damage'), -1)],
+        }),
+      ),
+    ],
+  });
+  /** A treachery testing intellect (2), +2 while the drawer has 2 or more clues. */
+  const cluesTreachery = blankTreachery('clues_treachery', {
+    abilities: [
+      whenRevealed(
+        skillTest('intellect', 2, {
+          difficultyChanges: [
+            plusDifficultyIf({ kind: 'valueOf', value: statOf(you(), 'clues'), min: 2 }, 2),
+          ],
+        }),
+      ),
+    ],
+  });
+  /** A treachery testing willpower (2), +2 while an enemy is at the drawer's location. */
+  const enemyHereTreachery = blankTreachery('enemy_here_treachery', {
+    abilities: [
+      whenRevealed(
+        skillTest('willpower', 2, {
+          difficultyChanges: [
+            plusDifficultyIf({ kind: 'countOf', of: eachEnemy({ at: yourLocation() }), min: 1 }, 2),
+          ],
+        }),
+      ),
+    ],
+  });
+  /** The revealed study next to the hallway, before alice joins. */
+  const studyNextToHallway = newGame()
+    .withLocation(study, studyCard, { revealed: true })
+    .withLocation(hallway, hallwayCard)
+    .withConnection(study, hallway);
+
+  it.each([
+    { damage: 0, difficulty: 2 },
+    { damage: 3, difficulty: 5 },
+  ])('adds 1 for each damage: with $damage damage it is $difficulty', ({ damage, difficulty }) => {
+    const { context, state } = studyNextToHallway
+      .withInvestigator(alice, { locationId: study, health: { max: 8, damage } })
+      .withCard(test, perDamageTreachery, { kind: 'encounterDeck' })
+      .start();
+
+    const drawn = stateAfter(context, state, draw, resolveRevelation('test'));
+
+    expect(drawn.pending).toMatchObject([{ skillTest: { skill: 'willpower', difficulty } }]);
+  });
+
+  it('never lowers the difficulty below 0', () => {
+    const { context, state } = studyNextToHallway
+      .withInvestigator(alice, { locationId: study, health: { max: 8, damage: 3 } })
+      .withCard(test, lessPerDamageTreachery, { kind: 'encounterDeck' })
+      .start();
+
+    const drawn = stateAfter(context, state, draw, resolveRevelation('test'));
+
+    expect(drawn.pending).toMatchObject([{ skillTest: { difficulty: 0 } }]);
+  });
+
+  it.each([
+    { clues: 1, difficulty: 2 },
+    { clues: 2, difficulty: 4 },
+  ])('adds 2 for 2 or more clues: with $clues clues it is $difficulty', ({ clues, difficulty }) => {
+    const { context, state } = studyNextToHallway
+      .withInvestigator(alice, { locationId: study, clues })
+      .withCard(test, cluesTreachery, { kind: 'encounterDeck' })
+      .start();
+
+    const drawn = stateAfter(context, state, draw, resolveRevelation('test'));
+
+    expect(drawn.pending).toMatchObject([{ skillTest: { skill: 'intellect', difficulty } }]);
+  });
+
+  it.each([
+    { case: 'no enemy', ghoulAt: undefined, difficulty: 2 },
+    { case: 'a ghoul in the study', ghoulAt: study, difficulty: 4 },
+    { case: 'a ghoul only in the hallway', ghoulAt: hallway, difficulty: 2 },
+  ])(
+    'adds 2 for an enemy at your location: with $case it is $difficulty',
+    ({ ghoulAt, difficulty }) => {
+      const setup = studyNextToHallway
+        .withInvestigator(alice, { locationId: study })
+        .withCard(test, enemyHereTreachery, { kind: 'encounterDeck' });
+      const { context, state } = (
+        ghoulAt === undefined ? setup : setup.withCard(ghoul, ghoulCard, atLocation(ghoulAt))
+      ).start();
+
+      const drawn = stateAfter(context, state, draw, resolveRevelation('test'));
+
+      expect(drawn.pending).toMatchObject([{ id: 'test:test', skillTest: { difficulty } }]);
     },
   );
 });

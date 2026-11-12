@@ -1,4 +1,4 @@
-import { assertNever, range, shallowEqual, unique } from '@arkham/util';
+import { assertNever, range, shallowEqual, sum, unique } from '@arkham/util';
 import {
   cardStats,
   resolveAmount,
@@ -516,6 +516,16 @@ export type Quantity =
   | { kind: 'groupClues'; location?: CardCode };
 
 /**
+ * What the table adds to a card's skill test difficulty (`TestSkill.difficultyChanges`):
+ * - `per`: `by` for each point of `quantity`, summed over everyone it names ("+1 difficulty for
+ *   each damage on you", Eager for Death);
+ * - `when`: `by` if `condition` holds ("+2 difficulty if you control 2 or more clues", Red
+ *   Herring).
+ */
+export type DifficultyChange =
+  { per: Quantity; by: number } | { when: AbilityCondition; by: number };
+
+/**
  * Bounds on a value, both included, each a number or one per investigator ("2 clues per
  * investigator"); at least one is given, so the range always says something.
  */
@@ -939,7 +949,7 @@ export function resolveEffect(
   opened: OpenedWindow,
 ): Command[] {
   const refs = windowRefs(ctx, state, opened);
-  const deferred = withDeferredOutcomes(effect, opened);
+  const deferred = withDeferredOutcomes(withDifficultyChanges(ctx, state, effect, opened), opened);
   const each = repeatedRef(deferred);
   const ids = each === undefined ? [undefined] : eachId(ctx, state, each, refs);
   const commandsFor = (picked?: InstanceId): AbilityCommand[] =>
@@ -967,6 +977,43 @@ export function resolveEffect(
   return [
     pickDecision(ctx, state, opened.cardId, picked, investigator.id, candidates, commandsFor),
   ];
+}
+
+/**
+ * `effect` with the `difficultyChanges` of each test in it read from the table as `opened`
+ * resolves and folded into its difficulty, which never drops below 0. Done before anything
+ * else, so a reference in a change (`eachEnemy` in "if there is an enemy at your location")
+ * isn't taken for one the effect repeats over. A test's outcomes are left alone: they resolve
+ * later (`withDeferredOutcomes`), and a test among them reads the table then.
+ */
+function withDifficultyChanges(
+  ctx: EngineContext,
+  state: GameState,
+  effect: AbilityEffect,
+  opened: OpenedWindow,
+): AbilityEffect {
+  const change = (entry: DifficultyChange): number =>
+    'per' in entry
+      ? entry.by * sum(quantities(ctx, state, entry.per, opened))
+      : conditionHolds(ctx, state, entry.when, opened)
+        ? entry.by
+        : 0;
+  const fold = (value: unknown): unknown => {
+    if (Array.isArray(value)) return value.map(fold);
+    if (typeof value !== 'object' || value === null) return value;
+    if ('type' in value && value.type === 'TestSkill') {
+      // Read as the command type: `Templated` would map the card codes inside the changes too.
+      const { difficultyChanges = [], ...test } = value as unknown as TestSkill;
+      const added = sum(difficultyChanges.map(change));
+      return {
+        ...test,
+        test: { ...test.test, difficulty: Math.max(0, test.test.difficulty + added) },
+      };
+    }
+    return Object.fromEntries(Object.entries(value).map(([key, inner]) => [key, fold(inner)]));
+  };
+  // The walk keeps every field but the changes, so the result is still an `AbilityEffect`.
+  return fold(effect) as AbilityEffect;
 }
 
 /**
@@ -1639,16 +1686,39 @@ export function whenAdvanced(...effects: AbilityEffect[]): Ability {
 export function skillTest(
   skill: SkillName,
   difficulty: number,
-  outcomes: { onPass?: AbilityEffect[]; onFail?: AbilityEffect[] } = {},
+  outcomes: {
+    onPass?: AbilityEffect[];
+    onFail?: AbilityEffect[];
+    difficultyChanges?: DifficultyChange[];
+  } = {},
 ): AbilityEffect {
   return {
     type: 'TestSkill',
     investigatorId: { ref: 'windowInvestigator' },
     cardId: { ref: 'self' },
     test: { skill, difficulty },
+    ...(outcomes.difficultyChanges === undefined
+      ? {}
+      : { difficultyChanges: outcomes.difficultyChanges }),
     onPass: outcomes.onPass ?? [],
     onFail: outcomes.onFail ?? [],
   };
+}
+
+/**
+ * "+1 difficulty for each damage on you" (`DifficultyChange.per`), a change of a `skillTest`'s
+ * difficulty: `by` for each point of `quantity`.
+ */
+export function plusDifficultyPer(quantity: Quantity, by = 1): DifficultyChange {
+  return { per: quantity, by };
+}
+
+/**
+ * "+2 difficulty if there is an enemy at your location" (`DifficultyChange.when`), a change of a
+ * `skillTest`'s difficulty: `by` while `condition` holds as the test starts.
+ */
+export function plusDifficultyIf(condition: AbilityCondition, by: number): DifficultyChange {
+  return { when: condition, by };
 }
 
 /**

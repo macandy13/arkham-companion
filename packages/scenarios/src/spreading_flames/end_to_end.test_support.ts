@@ -194,10 +194,16 @@ export function playSpreadingFlames(start: CampaignLog): CampaignLog {
   expect(table.nextPhase()).toEqual({ round: 3, phase: 'upkeep' });
 
   // Round 4 – mythos: the third doom makes Past Curfew advance to Lit Up. Its reverse side's
-  // willpower tests are the players' to resolve. Daisy draws a Bystander, which engages her.
+  // willpower tests are the players' to resolve. Roland draws Mutated! and passes its willpower
+  // (2) test: no enemy is at Science Hall to make it harder. Daisy draws a Bystander, which
+  // engages her.
   expect(table.nextPhase()).toEqual({ round: 4, phase: 'mythos', step: 'checkDoomThreshold' });
   table.answerOnly('yes');
   expect(table.board.agenda).toMatchObject({ name: 'Lit Up', doom: 0 });
+  expect(table.nextPhase()).toEqual({ round: 4, phase: 'mythos', step: 'drawEncounterCard' });
+  table.resolveRevelation(byName('Mutated!'));
+  expect(table.board.decisions).toMatchObject([{ test: { skill: 'willpower', difficulty: 2 } }]);
+  table.answerOnly('pass');
   expect(table.nextPhase()).toEqual({ round: 4, phase: 'mythos' });
   expect(table.board.enemies).toEqual([
     { name: 'Bystander', at: 'Warren Observatory', health: 1, engagedWith: daisy },
@@ -278,9 +284,12 @@ export function playSpreadingFlames(start: CampaignLog): CampaignLog {
   expect(table.board.location(byName('Orne Library')).attachments).toEqual(['Fire!']);
   expect(table.board.location(byName('Miskatonic Quad')).attachments).toEqual(['Fire!']);
 
-  // Round 6 – mythos: Daisy draws Cosmic Evils again; this time she takes 1 damage and 1 horror
+  // Round 6 – mythos: Roland draws the other Mutated! and passes its willpower (2) test. Daisy draws Cosmic Evils again; this time she takes 1 damage and 1 horror
   // and draws again: Forbidden Secrets, which surges as she has no clues, into a Cantor of Flame
   // that engages her.
+  expect(table.nextPhase()).toEqual({ round: 6, phase: 'mythos', step: 'drawEncounterCard' });
+  table.resolveRevelation(byName('Mutated!'));
+  table.answerOnly('pass');
   expect(table.nextPhase()).toEqual({ round: 6, phase: 'mythos', step: 'drawEncounterCard' });
   table.resolveRevelation(byName('Cosmic Evils'));
   table.play(answer(COSMIC_EVILS_DECISION, 'wounds'));
