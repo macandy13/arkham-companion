@@ -141,11 +141,15 @@
  */
 #board dialog[data-shell] section[data-part='strip'] > figure {
   display: grid;
-  grid-template-columns: auto auto;
   gap: var(--space-1) var(--space-2);
   align-items: start;
   justify-content: center;
   margin: 0;
+}
+
+/* The + takes a column of its own beside the tokens, so a lone draw button stays centred. */
+#board dialog[data-shell] section[data-part='strip'] > figure:has(> button[aria-controls]) {
+  grid-template-columns: auto auto;
 }
 
 #board dialog[data-shell] section[data-part='strip'] > figure:has(> ol > li:nth-child(4)) {
