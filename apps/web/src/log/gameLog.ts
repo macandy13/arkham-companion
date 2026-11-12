@@ -375,6 +375,7 @@ function eventLine(t: TFunction, names: Names, state: GameState, event: Event): 
     case 'ConnectionChanged':
     case 'DecisionRequested':
     case 'DecisionResolved':
+    case 'DecisionWithdrawn':
     case 'CurrentCardChanged':
     case 'AbilityEffectSkipped':
     case 'EnemyDisengaged':

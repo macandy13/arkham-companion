@@ -15,6 +15,7 @@ Card rulings: [Story assets and earned cards](cards/story-assets.md).
   - Other cards in their threat area go to the appropriate discard pile.
 - A new lead investigator is chosen if needed, from those still in the scenario.
   - One effect that eliminates several investigators ("each investigator … is defeated") eliminates them together ([simultaneous resolution](https://arkhamdb.com/rules#Priority_of_Simultaneous_Resolution)), so the new lead comes from those left afterwards.
+  - Another investigator who leaves before the group has chosen (a later attack of the same enemy phase) can't be chosen either: the engine asks again among those left, or makes the one left the lead.
   - If nobody is left, the scenario ends with "no resolution", and the players read the scenario's "if no resolution was reached" entry in the campaign guide (Learn to Play).
 - A card ability can defeat an investigator outright; what follows from that is only what the ability says ([investigator defeat](https://arkhamdb.com/rules#Investigator_Defeat)).
 - Eliminated investigators still count for per-investigator values.
