@@ -13,6 +13,7 @@ import {
   withStatDelta,
   withStats,
   type Command,
+  placeYourClues,
 } from './index';
 import { investigatorOf, rejectionFrom, stateAfter } from '../test/utils';
 
@@ -631,7 +632,7 @@ describe('DiscoverClues', () => {
   });
 });
 
-describe('PlaceClues', () => {
+describe('placing your clues on your location (placeYourClues)', () => {
   it.each([
     { clues: 2, amount: 1, kept: 1, onHall: 1 },
     { clues: 1, amount: 3, kept: 0, onHall: 1 },
@@ -644,11 +645,7 @@ describe('PlaceClues', () => {
         .withInvestigator(alice, { locationId: hall, clues })
         .start();
 
-      const placed = stateAfter(context, state, {
-        type: 'PlaceClues',
-        investigatorId: alice,
-        amount,
-      });
+      const placed = stateAfter(context, state, placeYourClues(amount, alice));
 
       expect(investigatorOf(placed, alice).clues).toBe(kept);
       expect(placed.cards[hall]?.tokens.clue ?? 0).toBe(onHall);
@@ -662,13 +659,21 @@ describe('PlaceClues', () => {
       .withInvestigator(bob, { clues: 1 })
       .start();
 
-    const placed = stateAfter(context, state, {
-      type: 'PlaceClues',
-      investigatorId: bob,
-      amount: 1,
-    });
+    const placed = stateAfter(context, state, placeYourClues(1, bob));
 
     expect(investigatorOf(placed, bob).clues).toBe(1);
+  });
+
+  it('places no clues for an investigator who has left the scenario', () => {
+    const { context, state } = newGame()
+      .withLocation(hall, blankLocation('hall'), { revealed: true, clues: 0 })
+      .withInvestigator(alice, { locationId: hall })
+      .withInvestigator(bob, { locationId: hall, clues: 2, status: 'resigned' })
+      .start();
+
+    const { events } = execute(context, state, placeYourClues(1, bob));
+
+    expect(events).toEqual([]);
   });
 
   it('rejects an amount that is not positive', () => {
@@ -677,9 +682,10 @@ describe('PlaceClues', () => {
       .withInvestigator(alice, { locationId: hall, clues: 1 })
       .start();
 
-    expect(
-      rejectionFrom(context, state, { type: 'PlaceClues', investigatorId: alice, amount: 0 }),
-    ).toEqual({ code: 'invalidTokenDelta', delta: 0 });
+    expect(rejectionFrom(context, state, placeYourClues(0, alice))).toEqual({
+      code: 'invalidTokenDelta',
+      delta: 0,
+    });
   });
 });
 

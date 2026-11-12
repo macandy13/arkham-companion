@@ -10,7 +10,6 @@ import type {
   DefeatInvestigator,
   DiscoverClues,
   MoveInvestigator,
-  PlaceClues,
   SetLeadInvestigator,
   SpendCluesAsGroup,
   TakeDamageAndHorror,
@@ -28,7 +27,6 @@ import type {
 import {
   activeInvestigator,
   clueSpendersAt,
-  cluesToLocationEvents,
   defaultCluePayments,
   groupCluePayments,
   defeatCause,
@@ -343,21 +341,6 @@ function cardDiscovery(
   const amount = Math.min(cmd.amount, location.tokens.clue ?? 0);
   if (amount === 0 || isRestrictedFor(ctx, state, investigator.id, 'discover', 'clues')) return [];
   return discoverCluesEvents(investigator.id, location.id, amount);
-}
-
-/** `PlaceClues`: the investigator's clues, as many as they have up to `amount`, move to their location. */
-export function handlePlaceClues(
-  state: GameState,
-  cmd: PlaceClues,
-): (InvestigatorChanged | TokensChanged)[] {
-  const investigator = activeInvestigator(state, cmd.investigatorId);
-  if (!Number.isInteger(cmd.amount) || cmd.amount <= 0)
-    throw new CommandRejected({ code: 'invalidTokenDelta', delta: cmd.amount });
-  // "Place 1 of your clues" for each point: an investigator who runs out places what they have,
-  // and one not on the map yet has no location to place them on.
-  const placed = Math.min(cmd.amount, investigator.clues);
-  if (placed === 0 || investigator.locationId === undefined) return [];
-  return cluesToLocationEvents(investigator.id, investigator.locationId, placed);
 }
 
 /**

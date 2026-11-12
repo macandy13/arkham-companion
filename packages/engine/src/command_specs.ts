@@ -55,7 +55,6 @@ import {
   handleDiscoverClues,
   handleMoveInvestigator,
   handlePlayCard,
-  handlePlaceClues,
   handleSetLeadInvestigator,
   handleTakeDamageAndHorror,
 } from './handle_investigator';
@@ -235,7 +234,6 @@ const COMMAND_SPECS: CommandSpecs = {
     handle: handleDefeatInvestigator,
   },
   DiscoverClues: { handle: handleDiscoverClues },
-  PlaceClues: { handle: (_ctx, state, command) => handlePlaceClues(state, command) },
   ChangeChaosBag: { handle: (_ctx, state, command) => handleChangeChaosBag(state, command) },
   SealChaosToken: { handle: (_ctx, state, command) => handleSealChaosToken(state, command) },
   ReleaseChaosToken: {

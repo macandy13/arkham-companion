@@ -30,6 +30,8 @@ import {
   whenRevealed,
   type Command,
   placeDoomOnAgenda,
+  gainResources,
+  gainClues,
 } from './index';
 import { requireInvestigator } from './investigators';
 import { rejectionFrom, resolveRevelation, runFrom, stateAfter } from '../test/utils';
@@ -402,6 +404,20 @@ describe('card effects that move tokens between cards', () => {
       expect(after.cards[hall]?.tokens.clue ?? 0).toBe(hallClues);
     },
   );
+
+  it.each([
+    { effect: 'gains 2 resources', move: gainResources(2, alice), resources: 5, clues: 0 },
+    { effect: 'gains 2 clues', move: gainClues(2, alice), resources: 3, clues: 2 },
+  ])('alice $effect from the pool', ({ move, resources, clues }) => {
+    const { context, state } = newGame()
+      .withLocation(hall, blankLocation('hall'), { revealed: true })
+      .withInvestigator(alice, { locationId: hall, resources: 3, clues: 0 })
+      .start();
+
+    const after = stateAfter(context, state, move);
+
+    expect(requireInvestigator(after, alice)).toMatchObject({ resources, clues });
+  });
 
   it('moves nothing from a card that has left play', () => {
     const { context, state } = newGame()

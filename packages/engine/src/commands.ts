@@ -55,7 +55,6 @@ export type Command =
   | TakeDamageAndHorror
   | DefeatInvestigator
   | DiscoverClues
-  | PlaceClues
   | MoveTokens
   | ChangeChaosBag
   | SealChaosToken
@@ -332,7 +331,8 @@ export interface HealInvestigator {
 
 /**
  * The investigator gains `amount` resources (a positive integer): the basic resource action, taken
- * `asAction` for 1, or a card effect. Produces `InvestigatorChanged`.
+ * `asAction` for 1. A card's "gain N resources" is a `MoveTokens` from the pool (`gainResources`).
+ * Produces `InvestigatorChanged`.
  */
 export interface GainResources extends ActionCommand {
   type: 'GainResources';
@@ -494,19 +494,6 @@ export interface DiscoverClues extends AskedByCard {
 }
 
 /**
- * An active investigator places up to `amount` of their clues on the location
- * they are at ("place 1 of your clues on your location" for each point a test
- * fails by): as many as they have, so none at all with no clues or with no
- * location (not on the map yet). `amount` is positive. Produces
- * `InvestigatorChanged` (clues leave) and `TokensChanged` (clues arrive).
- */
-export interface PlaceClues {
-  type: 'PlaceClues';
-  investigatorId: InvestigatorId;
-  amount: number;
-}
-
-/**
  * Adds `token` to the chaos bag, or removes one copy of it, during a scenario. Produces
  * `ChaosBagChanged`. A change `lasts: 'campaign'` is also kept in `GameState.chaosBagChanges`,
  * so that `proposeResolution` writes it into the campaign log. Removing a token the bag does not
@@ -543,12 +530,18 @@ export interface ReleaseChaosToken {
 }
 
 /**
- * Where `MoveTokens` takes tokens from or puts them: the token pool, the current agenda, a card
- * or an investigator (clues only for now). The pool holds any number; a card holds tokens only
- * while in play (Rules Reference, "Leaves Play": its tokens return to the pool).
+ * Where `MoveTokens` takes tokens from or puts them: the token pool, the current agenda, a card,
+ * an investigator (their clues and resources), or the location an investigator is at ("place 1
+ * of your clues on your location"). The pool holds any number; a card holds tokens only while in
+ * play (Rules Reference, "Leaves Play": its tokens return to the pool), and an investigator only
+ * while in the scenario.
  */
 export type TokenHolder =
-  'pool' | 'currentAgenda' | { card: InstanceId } | { investigator: InvestigatorId };
+  | 'pool'
+  | 'currentAgenda'
+  | { card: InstanceId }
+  | { investigator: InvestigatorId }
+  | { locationOf: InvestigatorId };
 
 /**
  * How many tokens `MoveTokens` moves: a number or one per investigator, `'all'` that `from`

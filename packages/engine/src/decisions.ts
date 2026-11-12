@@ -264,8 +264,6 @@ function timesMargin(command: Command, margin: number): Command | undefined {
       return { ...command, delta: command.delta * margin };
     case 'TakeDamageAndHorror':
       return { ...command, damage: command.damage * margin, horror: command.horror * margin };
-    case 'PlaceClues':
-      return { ...command, amount: command.amount * margin };
     case 'MoveTokens':
       return typeof command.amount === 'number'
         ? { ...command, amount: command.amount * margin }
