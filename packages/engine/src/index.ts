@@ -114,7 +114,22 @@ export { enemyAttackList, type EnemyAttack } from './enemies';
 export { describeDecision, optionName, optionNamed } from './describe_decision';
 export { isEnemyAttackDecision } from './forced_attacks';
 export { confirmOptions, skillTestDecision, type SkillTestOutcomes } from './decisions';
-export { drawTokens, testFinished } from './draw_tokens';
+export {
+  continueDraw,
+  drawFinished,
+  drawnTokens,
+  drawTokens,
+  redrawToken,
+  resolvedTokens,
+  revealAnother,
+  revealedTokens,
+  testFinished,
+  treatTokenAs,
+  withTokenState,
+  type DrawnToken,
+  type DrawnTokenState,
+  type TestDraw,
+} from './draw_tokens';
 export {
   isPoolToken,
   POOL_TOKEN_COUNT,
