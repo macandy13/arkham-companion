@@ -74,12 +74,14 @@ describe('what the players resolve by hand', () => {
     bot: 'goal',
     botSeed: 1,
   };
-  const printedCryptChill = theGatheringCards.get(cardCode('01167'))!;
+  const cryptChillCode = cardCode('01167');
+  const printedCryptChill = theGatheringCards.get(cryptChillCode)!;
 
   /**
    * The statistics of Roland's game of The Gathering with game seed 24, which draws Icy Ghoul and
-   * then Crypt Chill, played with `cryptChill` in place of the scenario's own. Only the card's
-   * stats change, so the encounter deck is built and shuffled as in the real game.
+   * then Crypt Chill, played with `cryptChill` in place of the scenario's own; it answers the
+   * revelation when the card asks one. Only `get` is replaced, not `cardDbWith`, because that
+   * moves the card to the end of its encounter set and so changes the shuffle.
    */
   function drawingCryptChill(cryptChill: CardStats) {
     const { cards: printed } = scenarioContext(run);
@@ -92,8 +94,10 @@ describe('what the players resolve by hand', () => {
     playStep(table, { verb: 'drawEncounterCard', investigator: roland });
     if (table.state.pending.length > 0)
       playStep(table, { verb: 'answer', option: 'resolve revelation' });
-    const result = { run, steps: [], log: table.entries, end: 'stepCap', rounds: 1 } as const;
-    return gameStatistics({ ...result, refusals: {}, misuses: 0 }, cards);
+    return gameStatistics(
+      { run, steps: [], log: table.entries, end: 'stepCap', rounds: 1, refusals: {}, misuses: 0 },
+      cards,
+    );
   }
 
   it('counts a drawn treachery whose text the engine does not hold as not scripted', () => {
