@@ -238,12 +238,12 @@ function playVerb(table: PlayTable, step: Step): void {
         ...(step.amount !== undefined && { amount: step.amount }),
       });
       return;
-    case 'answer':
-      if (step.about === undefined)
-        table.answerOnly(step.option, { ...(step.for && { for: byName(step.for) }) });
-      else
-        table.answer(byId(step.about), step.option, { ...(step.for && { for: byName(step.for) }) });
+    case 'answer': {
+      const decider = step.for === undefined ? {} : { for: byName(step.for) };
+      if (step.about === undefined) table.answerOnly(step.option, decider);
+      else table.answer(byId(step.about), step.option, decider);
       return;
+    }
     case 'playerCard':
       playPlayerCard(table, step);
       return;
@@ -344,7 +344,7 @@ export function answerStep(table: PlayTable, decision: Decision, option: string)
   };
 }
 
-/** `step` as the call it plays, e.g. `moveTo('Daisy Walker', 'Attic')`, for reports. */
+/** `step` as the call it plays, e.g. `moveTo("Daisy Walker", "01113#1")`, for reports. */
 export function describeStep(step: Step): string {
   const { verb, ...args } = step;
   return `${verb}(${Object.values(args)
