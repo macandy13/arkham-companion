@@ -1389,3 +1389,24 @@ describe('enemiesMatching with withoutToken', () => {
     expect(enemies.map((card) => card.id)).toEqual(matched);
   });
 });
+
+describe('enemiesMatching with ready', () => {
+  it.each([
+    { exhausted: false, matched: ['ghoul'] },
+    { exhausted: true, matched: [] },
+  ])(
+    'matches the ghoul for "each ready enemy" when exhausted is $exhausted: $matched',
+    ({ exhausted, matched }) => {
+      const { context, state: started } = aliceInHall
+        .withCard(ghoul, ghoulCard, atLocation(cellar))
+        .start();
+      const state = exhausted
+        ? stateAfter(context, started, { type: 'ExhaustEnemy', enemyId: ghoul })
+        : started;
+
+      const enemies = enemiesMatching(context, state, { ready: true });
+
+      expect(enemies.map((card) => card.id)).toEqual(matched);
+    },
+  );
+});

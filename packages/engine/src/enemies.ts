@@ -192,7 +192,8 @@ export function nearestEnemies(
 /**
  * Which enemies on the table a card means: those with `trait` (any enemy
  * without one) and without `withoutTrait` ("each non-Nightgaunt enemy"), only
- * the unengaged ones with `unengaged`, and only those without any `withoutToken`
+ * the unengaged ones with `unengaged`, only the ready ones with `ready` ("each ready
+ * non-Elite [[Cultist]] enemy"), and only those without any `withoutToken`
  * ("the nearest enemy with no doom on it"). Card data adds where they are and whom they
  * are engaged with (`EachEnemyFilter`).
  */
@@ -200,6 +201,7 @@ export interface EnemyFilter {
   trait?: Trait;
   withoutTrait?: Trait;
   unengaged?: true;
+  ready?: true;
   withoutToken?: TokenKind;
 }
 
@@ -214,6 +216,7 @@ export function enemiesMatching(
       (filter.withoutTrait === undefined ||
         !cardStats(ctx.cards, card.code).traits.includes(filter.withoutTrait)) &&
       (filter.unengaged === undefined || card.zone.kind === 'atLocation') &&
+      (filter.ready === undefined || !card.exhausted) &&
       (filter.withoutToken === undefined || (card.tokens[filter.withoutToken] ?? 0) === 0),
   );
 }

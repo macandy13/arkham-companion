@@ -4,6 +4,7 @@ import {
   encounterDeck,
   encounterDiscard,
   encounterSetCode,
+  engagedWith,
   execute,
   instanceId,
   investigatorId,
@@ -15,7 +16,14 @@ import {
   type CardStats,
   type Command,
 } from '@arkham/engine';
-import { answer, cardIn, resolveRevelation, runFrom, stateAfter } from '@arkham/engine/test/utils';
+import {
+  answer,
+  cardIn,
+  rejectionFrom,
+  resolveRevelation,
+  runFrom,
+  stateAfter,
+} from '@arkham/engine/test/utils';
 import {
   QUEEN_OF_ASH_CODES,
   queenOfAshCardDefs,
@@ -276,6 +284,128 @@ describe('Queen of Ash card abilities', () => {
           },
         ]);
         expect(requireInvestigator(state, alice).resources).toBe(resources);
+      },
+    );
+  });
+
+  describe('Underground Cistern', () => {
+    const cistern = instanceId('underground_cistern');
+
+    it.each([
+      { before: 2, after: 1 },
+      { before: 1, after: 2 },
+    ])(
+      'places its 2 clues again once alice discovers the last one: $before clues leave $after',
+      ({ before, after }) => {
+        const { context, state: started } = newGame()
+          .withLocation(cistern, cardOf('12174'), { revealed: true, clues: before })
+          .withInvestigator(alice, { locationId: cistern })
+          .withTurnOf(alice)
+          .start();
+
+        const state = stateAfter(context, started, {
+          type: 'DiscoverClues',
+          investigatorId: alice,
+          locationId: cistern,
+          amount: 1,
+        });
+
+        expect(state.cards[cistern]?.tokens.clue).toBe(after);
+      },
+    );
+
+    it('discards each ready non-Elite Cultist there as the investigation phase ends, with 1 doom on the agenda for each', () => {
+      const agenda = instanceId('a_gathering');
+      const readyZealot = instanceId('ready_zealot');
+      const engagedZealot = instanceId('engaged_zealot');
+      const exhaustedMagician = instanceId('exhausted_dark_magician');
+      const eliteServant = instanceId('elite_servant_of_flame');
+      const zealotInCulvert = instanceId('zealot_in_culvert');
+      const { context, state: started } = newGame()
+        .withLocation(cistern, cardOf('12174'), { revealed: true })
+        .withLocation(culvert, cardOf('12182'), { revealed: true })
+        .withAgenda(agenda, cardOf('12169'))
+        .withInvestigator(alice, { locationId: cistern })
+        .withCard(readyZealot, cardOf('12188'), atLocation(cistern))
+        .withCard(engagedZealot, cardOf('12188'), engagedWith(alice))
+        .withCard(exhaustedMagician, cardOf('12189'), atLocation(cistern))
+        .withCard(eliteServant, cardOf('12180'), atLocation(cistern))
+        .withCard(zealotInCulvert, cardOf('12188'), atLocation(culvert))
+        .withTurnOf(alice)
+        .start();
+
+      const state = stateAfter(
+        context,
+        started,
+        { type: 'ExhaustEnemy', enemyId: exhaustedMagician },
+        { type: 'EndTurn', investigatorId: alice },
+        { type: 'NextPhase' },
+      );
+
+      expect(
+        [readyZealot, engagedZealot, exhaustedMagician, eliteServant, zealotInCulvert].map(
+          (id) => state.cards[id]?.zone.kind === 'encounterDiscard',
+        ),
+      ).toEqual([true, true, false, false, false]);
+      expect(state.cards[agenda]?.tokens.doom).toBe(2);
+    });
+  });
+
+  describe('Elokoss', () => {
+    const elokoss = instanceId('elokoss');
+    const cistern = instanceId('underground_cistern');
+    /** Alice with 1 clue spends it on Elokoss, who has `onElokoss` clues already. */
+    const aliceSpendsAClueOn = (onElokoss: number) => {
+      const { context, state: started } = newGame()
+        .withLocation(cistern, cardOf('12174'), { revealed: true })
+        .withInvestigator(alice, { locationId: cistern, clues: 1 })
+        .withCard(elokoss, cardOf('12179'), atLocation(cistern), { tokens: { clue: onElokoss } })
+        .withTurnOf(alice)
+        .start();
+      return execute(context, started, {
+        type: 'UseCardAction',
+        investigatorId: alice,
+        cardId: elokoss,
+        action: 0,
+      });
+    };
+
+    it("refuses alice's spend when the 2 clues it costs 2 investigators need bob's clue beside her", () => {
+      const bob = investigatorId('bob');
+      const { context, state } = newGame()
+        .withLocation(cistern, cardOf('12174'), { revealed: true })
+        .withInvestigator(alice, { locationId: cistern, clues: 1 })
+        .withInvestigator(bob, { locationId: cistern, clues: 1 })
+        .withCard(elokoss, cardOf('12179'), atLocation(cistern))
+        .withTurnOf(alice)
+        .start();
+
+      expect(
+        rejectionFrom(context, state, {
+          type: 'UseCardAction',
+          investigatorId: alice,
+          cardId: elokoss,
+          action: 0,
+        }).code,
+      ).toBe('cardActionCostUnpaid');
+    });
+
+    it('takes 1 clue per investigator from alice as a fast ability and places 1 clue on Elokoss', () => {
+      const { state } = aliceSpendsAClueOn(0);
+
+      expect(requireInvestigator(state, alice)).toMatchObject({ clues: 0, actionsRemaining: 3 });
+      expect(state.cards[elokoss]?.tokens.clue).toBe(1);
+    });
+
+    it.each([
+      { onElokoss: 3, resolution: undefined },
+      { onElokoss: 4, resolution: 'R2' },
+    ])(
+      'ends the scenario in Resolution 2 once she has 5 clues: with $onElokoss before, $resolution',
+      ({ onElokoss, resolution }) => {
+        const { state } = aliceSpendsAClueOn(onElokoss);
+
+        expect(state.meta.resolution).toBe(resolution);
       },
     );
   });
