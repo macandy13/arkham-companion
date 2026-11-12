@@ -24,7 +24,6 @@ import type {
   Rejection,
   ScenarioOutcome,
   ScenarioContext,
-  ResolutionId,
   ScenarioId,
   StepNotice,
 } from '@arkham/engine';
@@ -404,7 +403,7 @@ function pendingResolution(
   if (log && campaign.findCurrentScenarioId(log) !== state.meta.scenarioId) return undefined;
   const reached = campaign.gameOutcome(state);
   const outcomes: ScenarioOutcome[] = [
-    ...(Object.keys(resolutions.byId) as ResolutionId[]).map((id) => ({
+    ...campaign.resolutionIds(resolutions).map((id) => ({
       kind: 'resolution' as const,
       id,
     })),

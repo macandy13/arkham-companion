@@ -10,7 +10,7 @@ The [game screen](../../apps/web/src/screens/GameScreen.tsx) shows, from top to 
 The first open decision shows as a dialog over the board ([decisions](play-screen-decisions.md)).
 Each part has its own page, so changes to different parts touch different files.
 
-The [status row](../../apps/web/src/screens/GameStatus.tsx) has the round, the phase track, Next (the brass primary pill the investigator's Start turn and End take too) and round icon buttons for undo, the game log and a ☰ menu, with an "Offline" mark before the menu while there is no network ([`OfflineMark`](../../apps/web/src/screens/OfflineMark.tsx); the play screen hides the [app bar](../../apps/web/src/screens/AppBar.tsx), so its places and the export sit in that menu).
+The [status row](../../apps/web/src/screens/GameStatus.tsx) has the round, the phase track, Next (the brass primary pill the investigator's Start turn and End take too) and round icon buttons for undo, the game log and a ☰ menu, with an "Offline" mark before the menu while there is no network ([`OfflineMark`](../../apps/web/src/screens/OfflineMark.tsx); the play screen hides the [app bar](../../apps/web/src/screens/AppBar.tsx), so its places and the export sit in that menu). The menu's "End the scenario" (MC2.19, for a scenario with resolutions, `BoardView.resolutions`) asks which resolution in [`EndScenarioDialog`](../../apps/web/src/screens/EndScenarioDialog.tsx) and plays `EndScenario` (`GameActions.endScenario`), for an ending the engine leaves to the players; the resolution dialog then opens as after any ending.
 
 ## Symbols
 

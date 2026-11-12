@@ -1,3 +1,4 @@
+import { resolutionIds } from './campaign/resolution';
 import { assertNever, listIfAny, recordIfAny, unique } from '@arkham/util';
 import { isLocationInPlay, neighbours, openConnections } from './board';
 import {
@@ -631,6 +632,16 @@ export class BoardView {
 
   get resolution(): ResolutionId | undefined {
     return this.state.meta.resolution;
+  }
+
+  /**
+   * The resolutions the scenario defines (`ScenarioResolutions.byId`), in the guide's order: those
+   * the players can end the game with by hand (`EndScenario`) when the engine leaves the act's
+   * objective to them. Empty for a scenario without any.
+   */
+  get resolutions(): readonly ResolutionId[] {
+    const resolutions = this.ctx.scenario?.resolutions;
+    return resolutions ? resolutionIds(resolutions) : [];
   }
 
   get investigators(): readonly InvestigatorView[] {

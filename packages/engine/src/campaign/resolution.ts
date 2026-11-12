@@ -149,6 +149,11 @@ export interface ScenarioResolutions {
   readonly none: readonly ResolutionStep[];
 }
 
+/** The ids of the resolutions `resolutions` defines (`byId`), in the guide's order. */
+export function resolutionIds(resolutions: ScenarioResolutions): ResolutionId[] {
+  return Object.keys(resolutions.byId) as ResolutionId[];
+}
+
 /**
  * One change `proposeResolution` proposes: a campaign command, a choice of
  * one command among `options` (the trauma of a defeat by damage and horror at

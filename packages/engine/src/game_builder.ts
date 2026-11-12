@@ -1,5 +1,6 @@
 import { cardDbFrom, resolveValue, type CardStats, type EngineContext } from './cards';
 import type { CampaignLog } from './campaign/campaign_log';
+import type { ScenarioResolutions } from './campaign/resolution';
 import type { Command, StartScenario, StartingCard, StartingInvestigator } from './commands';
 import { execute } from './execute';
 import {
@@ -111,11 +112,13 @@ interface GameSpec {
 }
 
 /**
- * What `withReferenceCard` and `withSkillModifiers` set: the
+ * What `withReferenceCard`, `withSkillModifiers` and `withResolutions` set: the
  * parts of a `ScenarioDefinition` the engine reads while it plays. The setup
  * parts don't apply, since the builder places the table itself.
  */
-type ScenarioRules = Partial<Pick<ScenarioDefinition, 'reference' | 'referenceCode' | 'modifiers'>>;
+type ScenarioRules = Partial<
+  Pick<ScenarioDefinition, 'reference' | 'referenceCode' | 'modifiers' | 'resolutions'>
+>;
 
 const EMPTY_SPEC: GameSpec = {
   locations: [],
@@ -258,10 +261,15 @@ export class GameBuilder {
     return this.withRules({ modifiers });
   }
 
+  /** The table playing a scenario with these resolutions in place of any given before. */
+  withResolutions(resolutions: ScenarioResolutions): GameBuilder {
+    return this.withRules({ resolutions });
+  }
+
   /**
    * A context whose card db holds the definition of every card on the table,
-   * and a scenario when `withReferenceCard` or `withSkillModifiers`
-   * gave one.
+   * and a scenario when `withReferenceCard`, `withSkillModifiers` or
+   * `withResolutions` gave one.
    */
   context(): EngineContext {
     const { rules } = this.spec;
@@ -383,7 +391,12 @@ function beginTurn(investigator: InvestigatorId): Command[] {
 }
 
 /** A scenario with `rules` and nothing to set up: the builder places the table itself. */
-function scenarioOf({ reference, referenceCode, modifiers }: ScenarioRules): ScenarioDefinition {
+function scenarioOf({
+  reference,
+  referenceCode,
+  modifiers,
+  resolutions,
+}: ScenarioRules): ScenarioDefinition {
   return {
     id: CUSTOM_SCENARIO,
     chaosBag: { easy: [], standard: [], hard: [], expert: [] },
@@ -393,6 +406,7 @@ function scenarioOf({ reference, referenceCode, modifiers }: ScenarioRules): Sce
     actDeck: [],
     setup: [],
     ...(modifiers ? { modifiers } : {}),
+    ...(resolutions ? { resolutions } : {}),
   };
 }
 

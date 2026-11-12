@@ -615,6 +615,14 @@ describe('proposeResolution for a resolution the players picked', () => {
   });
 });
 
+describe('resolutionIds', () => {
+  it("lists a scenario's resolutions in the guide's order", () => {
+    const resolutions = { byId: { [r1]: [], [resolutionId('R2')]: [], [r3]: [] }, none: [] };
+
+    expect(campaign.resolutionIds(resolutions)).toEqual(['R1', 'R2', 'R3']);
+  });
+});
+
 describe('sameOutcome', () => {
   it.each([
     ['R1 and R1', { kind: 'resolution', id: r1 }, { kind: 'resolution', id: r1 }, true],

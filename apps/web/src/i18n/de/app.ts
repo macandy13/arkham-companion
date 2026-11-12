@@ -183,6 +183,16 @@ export const appTexts = {
     doomCount: 'Verderben',
     clueCount: 'Hinweise',
     advanceAct: 'Vorrücken',
+    advanceActByHand: 'Von Hand vorrücken',
+    advanceActByHandTitle: '{{act}} von Hand vorrücken?',
+    advanceActByHandText:
+      'Für ein Ziel, das die App euch überlässt: Der Akt wird umgedreht und seine Rückseite abgehandelt, als hättet ihr es erreicht.',
+    endScenario: 'Szenario beenden',
+    endScenarioTitle: 'Mit welcher Auflösung soll das Szenario enden?',
+    endScenarioText:
+      'Für eine Auflösung, die die App noch nicht erreichen kann. Das Spiel endet, und ihr lest die Auflösung wie gewohnt.',
+    endScenarioPick: 'Die Auflösung, die ihr am Tisch erreicht habt',
+    endScenarioConfirm: 'Szenario beenden',
     addDoom: 'Verderben hinzufügen',
     removeDoom: 'Verderben entfernen',
     addClue: 'Hinweis hinzufügen',
