@@ -13,6 +13,7 @@ import {
   whenRevealed,
   type CardStats,
   type Command,
+  placeDoomOnAgenda,
 } from '@arkham/engine';
 import {
   answer,
@@ -234,15 +235,7 @@ describe('The Gathering treacheries', () => {
         .withCard(instanceId('ancient_evils'), cardOf('01166'), { kind: 'encounterDeck' })
         .start();
       const withDoom =
-        doomBefore === 0
-          ? state
-          : stateAfter(context, state, {
-              type: 'MoveTokens',
-              token: 'doom',
-              amount: doomBefore,
-              from: 'pool',
-              to: 'currentAgenda',
-            });
+        doomBefore === 0 ? state : stateAfter(context, state, placeDoomOnAgenda(doomBefore));
 
       const drawn = stateAfter(context, withDoom, aliceDraws, resolveRevelation('ancient_evils'));
 

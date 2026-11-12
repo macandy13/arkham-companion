@@ -39,6 +39,7 @@ import {
   type CampaignLog,
   type InvestigatorId,
   type ScenarioContext,
+  placeDoomOn,
 } from '@arkham/engine';
 import { answer } from '@arkham/engine/test/utils';
 import {
@@ -261,13 +262,7 @@ describe('The Devourer Below end to end: Roland and Daisy, seed 9', () => {
     ]);
     table.step(() => {
       table.play({ type: 'SpawnEnemy', enemyId: yithianObserver, at: mainPath });
-      table.play({
-        type: 'MoveTokens',
-        token: 'doom',
-        amount: 1,
-        from: 'pool',
-        to: { card: yithianObserver },
-      });
+      table.play(placeDoomOn(yithianObserver, 1));
     });
 
     // Round 3 – mythos: Roland draws the Ghoul Priest, still alive from The

@@ -1,3 +1,4 @@
+import { placeDoomOnAgenda } from './abilities';
 import type { EngineContext } from './cards';
 import type { InstanceId } from './ids';
 import type { Command, ResolveEnemyAttack } from './commands';
@@ -275,9 +276,7 @@ function stepCommands(
 ): Command[] {
   switch (step.id) {
     case 'placeDoom':
-      return state.agenda.current === undefined
-        ? []
-        : [{ type: 'MoveTokens', token: 'doom', amount: 1, from: 'pool', to: 'currentAgenda' }];
+      return state.agenda.current === undefined ? [] : [placeDoomOnAgenda(1)];
     case 'checkDoomThreshold':
       return [{ type: 'CheckDoomThreshold' }];
     case 'drawEncounterCard':

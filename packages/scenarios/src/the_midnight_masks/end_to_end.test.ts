@@ -39,6 +39,7 @@ import {
   type CampaignLog,
   type CardRef,
   type ScenarioContext,
+  placeDoomOn,
 } from '@arkham/engine';
 import { answer } from '@arkham/engine/test/utils';
 import {
@@ -158,13 +159,9 @@ describe('The Midnight Masks end to end: Roland and Daisy, seed 40', () => {
 
     /** An Acolyte entering play during the game places 1 doom on itself; the players do it. */
     const acolyteDoomAt = (location: CardRef) =>
-      table.play({
-        type: 'MoveTokens',
-        token: 'doom',
-        amount: 1,
-        from: 'pool',
-        to: { card: table.board.enemyId(enemyMatching(byName('Acolyte'), { at: location })) },
-      });
+      table.play(
+        placeDoomOn(table.board.enemyId(enemyMatching(byName('Acolyte'), { at: location })), 1),
+      );
 
     // Round 1 – the first round has no mythos phase. Both take a clue in Your
     // House and one in Rivertown.

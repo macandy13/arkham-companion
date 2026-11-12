@@ -28,6 +28,9 @@ import {
   type GameState,
   type InstanceId,
   type UseCardAction,
+  placeDoomOnAgenda,
+  placeDoomOn,
+  placeCluesOn,
 } from './index';
 import { requireInvestigator } from './investigators';
 import { answer, rejectionFrom, stateAfter } from '../test/utils';
@@ -94,26 +97,14 @@ describe('placing doom (MoveTokens from the pool)', () => {
   const { context, state } = aliceAndBob.start();
 
   it('puts doom on the current agenda by default', () => {
-    const next = stateAfter(context, state, {
-      type: 'MoveTokens',
-      token: 'doom',
-      amount: 2,
-      from: 'pool',
-      to: 'currentAgenda',
-    });
+    const next = stateAfter(context, state, placeDoomOnAgenda(2));
 
     expect(next.cards[agenda1]!.tokens.doom).toBe(2);
     expect(checkInvariants(next)).toEqual([]);
   });
 
   it('puts doom on another card in play', () => {
-    const next = stateAfter(context, state, {
-      type: 'MoveTokens',
-      token: 'doom',
-      amount: 1,
-      from: 'pool',
-      to: { card: ghoul },
-    });
+    const next = stateAfter(context, state, placeDoomOn(ghoul, 1));
 
     expect(next.cards[ghoul]!.tokens.doom).toBe(1);
   });
@@ -122,13 +113,7 @@ describe('placing doom (MoveTokens from the pool)', () => {
     { name: 'a treachery in the encounter deck', cardId: deckTreachery },
     { name: 'the agenda still waiting in the deck', cardId: agenda2 },
   ])('places no doom on $name, which is not in play', ({ cardId }) => {
-    const { events } = execute(context, state, {
-      type: 'MoveTokens',
-      token: 'doom',
-      amount: 1,
-      from: 'pool',
-      to: { card: cardId },
-    });
+    const { events } = execute(context, state, placeDoomOn(cardId, 1));
 
     expect(events).toEqual([]);
   });
@@ -136,39 +121,15 @@ describe('placing doom (MoveTokens from the pool)', () => {
   it('rejects an unknown card', () => {
     const missing = instanceId('missing');
 
-    expect(
-      rejectionFrom(context, state, {
-        type: 'MoveTokens',
-        token: 'doom',
-        amount: 1,
-        from: 'pool',
-        to: { card: missing },
-      }),
-    ).toEqual({
+    expect(rejectionFrom(context, state, placeDoomOn(missing, 1))).toEqual({
       code: 'unknownCard',
       cardId: missing,
     });
   });
 
   it('rejects a zero or fractional amount', () => {
-    expect(
-      rejectionFrom(context, state, {
-        type: 'MoveTokens',
-        token: 'doom',
-        amount: 0,
-        from: 'pool',
-        to: 'currentAgenda',
-      }).code,
-    ).toBe('invalidTokenDelta');
-    expect(
-      rejectionFrom(context, state, {
-        type: 'MoveTokens',
-        token: 'doom',
-        amount: 1.5,
-        from: 'pool',
-        to: 'currentAgenda',
-      }).code,
-    ).toBe('invalidTokenDelta');
+    expect(rejectionFrom(context, state, placeDoomOnAgenda(0)).code).toBe('invalidTokenDelta');
+    expect(rejectionFrom(context, state, placeDoomOnAgenda(1.5)).code).toBe('invalidTokenDelta');
   });
 
   it('rejects doom once the last agenda has ended the scenario', () => {
@@ -179,15 +140,7 @@ describe('placing doom (MoveTokens from the pool)', () => {
       { type: 'AdvanceAgenda', resolution: resolutionId('R1') },
     );
 
-    expect(
-      rejectionFrom(context, ended, {
-        type: 'MoveTokens',
-        token: 'doom',
-        amount: 1,
-        from: 'pool',
-        to: 'currentAgenda',
-      }),
-    ).toEqual({
+    expect(rejectionFrom(context, ended, placeDoomOnAgenda(1))).toEqual({
       code: 'scenarioEnded',
       command: 'MoveTokens',
     });
@@ -202,13 +155,8 @@ function expectedDoom(state: GameState): number {
   return agenda + onCard(hall) + onCard(ghoul) + counters;
 }
 
-const placeDoom = (cardId: typeof hall | undefined, amount: number): Command => ({
-  type: 'MoveTokens',
-  token: 'doom',
-  amount,
-  from: 'pool',
-  to: cardId === undefined ? 'currentAgenda' : { card: cardId },
-});
+const placeDoom = (cardId: typeof hall | undefined, amount: number): Command =>
+  cardId === undefined ? placeDoomOnAgenda(amount) : placeDoomOn(cardId, amount);
 const playerCardDoom = (investigator: typeof alice, delta: number): Command => ({
   type: 'AdjustInvestigator',
   investigatorId: investigator,
@@ -226,38 +174,20 @@ describe('placing clues (MoveTokens from the pool)', () => {
     .start();
 
   it('puts clues from the pool on the current act, not alice’s', () => {
-    const next = stateAfter(context, state, {
-      type: 'MoveTokens',
-      token: 'clue',
-      amount: 1,
-      from: 'pool',
-      to: { card: act1 },
-    });
+    const next = stateAfter(context, state, placeCluesOn(act1, 1));
 
     expect(next.cards[act1]!.tokens.clue).toBe(1);
     expect(requireInvestigator(next, alice).clues).toBe(1);
   });
 
   it('puts 2 clues per investigator on the current act for alice alone', () => {
-    const next = stateAfter(context, state, {
-      type: 'MoveTokens',
-      token: 'clue',
-      amount: perInvestigator(2),
-      from: 'pool',
-      to: { card: act1 },
-    });
+    const next = stateAfter(context, state, placeCluesOn(act1, perInvestigator(2)));
 
     expect(next.cards[act1]!.tokens.clue).toBe(2);
   });
 
   it('places no clues on the act still waiting in the deck', () => {
-    const { events } = execute(context, state, {
-      type: 'MoveTokens',
-      token: 'clue',
-      amount: 1,
-      from: 'pool',
-      to: { card: act2 },
-    });
+    const { events } = execute(context, state, placeCluesOn(act2, 1));
 
     expect(events).toEqual([]);
   });
@@ -298,13 +228,7 @@ describe('placing clues up to a count', () => {
         adjustment: { kind: 'tokens', cardId: act1, token: 'clue', delta: held },
       });
 
-      const next = stateAfter(context, holding, {
-        type: 'MoveTokens',
-        token: 'clue',
-        amount: { upTo: perInvestigator(2) },
-        from: 'pool',
-        to: { card: act1 },
-      });
+      const next = stateAfter(context, holding, placeCluesOn(act1, { upTo: perInvestigator(2) }));
 
       expect(next.cards[act1]!.tokens.clue).toBe(held + placed);
     },
@@ -366,13 +290,12 @@ describe('doom total', () => {
   it('adds agenda, other cards in play and investigators player-card doom', () => {
     const { context, state: started } = aliceAndBob.start();
 
-    const state = stateAfter(
-      context,
-      started,
-      { type: 'MoveTokens', token: 'doom', amount: 1, from: 'pool', to: 'currentAgenda' },
-      { type: 'MoveTokens', token: 'doom', amount: 1, from: 'pool', to: { card: ghoul } },
-      { type: 'AdjustInvestigator', investigatorId: alice, stat: 'doomOnPlayerCards', delta: 2 },
-    );
+    const state = stateAfter(context, started, placeDoomOnAgenda(1), placeDoomOn(ghoul, 1), {
+      type: 'AdjustInvestigator',
+      investigatorId: alice,
+      stat: 'doomOnPlayerCards',
+      delta: 2,
+    });
 
     expect(doomInPlay(state)).toBe(4);
   });
@@ -414,35 +337,19 @@ describe('threshold check', () => {
   const { context, state } = aliceAlone.start();
 
   it('stays silent below the threshold', () => {
-    const next = stateAfter(
-      context,
-      state,
-      { type: 'MoveTokens', token: 'doom', amount: 2, from: 'pool', to: 'currentAgenda' },
-      { type: 'CheckDoomThreshold' },
-    );
+    const next = stateAfter(context, state, placeDoomOnAgenda(2), { type: 'CheckDoomThreshold' });
 
     expect(next.pending).toEqual([]);
   });
 
   it('does not ask when doom reaches the threshold outside a check', () => {
-    const next = stateAfter(context, state, {
-      type: 'MoveTokens',
-      token: 'doom',
-      amount: 3,
-      from: 'pool',
-      to: 'currentAgenda',
-    });
+    const next = stateAfter(context, state, placeDoomOnAgenda(3));
 
     expect(next.pending).toEqual([]);
   });
 
   it('asks to advance the agenda when a check finds the threshold reached', () => {
-    const next = stateAfter(
-      context,
-      state,
-      { type: 'MoveTokens', token: 'doom', amount: 3, from: 'pool', to: 'currentAgenda' },
-      { type: 'CheckDoomThreshold' },
-    );
+    const next = stateAfter(context, state, placeDoomOnAgenda(3), { type: 'CheckDoomThreshold' });
 
     expect(next.pending).toEqual([
       {
@@ -469,7 +376,7 @@ describe('threshold check', () => {
     const next = stateAfter(
       context,
       state,
-      { type: 'MoveTokens', token: 'doom', amount: 2, from: 'pool', to: { card: ghoul } },
+      placeDoomOn(ghoul, 2),
       { type: 'AdjustInvestigator', investigatorId: alice, stat: 'doomOnPlayerCards', delta: 1 },
       { type: 'CheckDoomThreshold' },
     );
@@ -478,20 +385,9 @@ describe('threshold check', () => {
   });
 
   it('rejects more doom while the question is open', () => {
-    const asked = stateAfter(
-      context,
-      state,
-      { type: 'MoveTokens', token: 'doom', amount: 3, from: 'pool', to: 'currentAgenda' },
-      { type: 'CheckDoomThreshold' },
-    );
+    const asked = stateAfter(context, state, placeDoomOnAgenda(3), { type: 'CheckDoomThreshold' });
 
-    const rejection = rejectionFrom(context, asked, {
-      type: 'MoveTokens',
-      token: 'doom',
-      amount: 1,
-      from: 'pool',
-      to: 'currentAgenda',
-    });
+    const rejection = rejectionFrom(context, asked, placeDoomOnAgenda(1));
 
     expect(rejection).toEqual({
       code: 'decisionPending',
@@ -503,7 +399,7 @@ describe('threshold check', () => {
     const declined = stateAfter(
       context,
       state,
-      { type: 'MoveTokens', token: 'doom', amount: 3, from: 'pool', to: 'currentAgenda' },
+      placeDoomOnAgenda(3),
       { type: 'CheckDoomThreshold' },
       answer('advanceAgenda:agenda1', 'no'),
     );
@@ -515,12 +411,7 @@ describe('threshold check', () => {
   });
 
   it('advances the agenda when the question is answered yes', () => {
-    const asked = stateAfter(
-      context,
-      state,
-      { type: 'MoveTokens', token: 'doom', amount: 3, from: 'pool', to: 'currentAgenda' },
-      { type: 'CheckDoomThreshold' },
-    );
+    const asked = stateAfter(context, state, placeDoomOnAgenda(3), { type: 'CheckDoomThreshold' });
 
     const next = stateAfter(context, asked, answer('advanceAgenda:agenda1', 'yes'));
 
@@ -529,12 +420,7 @@ describe('threshold check', () => {
   });
 
   it('leaves the agenda alone when the question is answered no', () => {
-    const asked = stateAfter(
-      context,
-      state,
-      { type: 'MoveTokens', token: 'doom', amount: 3, from: 'pool', to: 'currentAgenda' },
-      { type: 'CheckDoomThreshold' },
-    );
+    const asked = stateAfter(context, state, placeDoomOnAgenda(3), { type: 'CheckDoomThreshold' });
 
     const next = stateAfter(context, asked, answer('advanceAgenda:agenda1', 'no'));
 
@@ -574,13 +460,12 @@ describe('threshold check', () => {
 
 describe('AdvanceAgenda', () => {
   const { context, state: started } = aliceAlone.start();
-  const state = stateAfter(
-    context,
-    started,
-    { type: 'MoveTokens', token: 'doom', amount: 2, from: 'pool', to: 'currentAgenda' },
-    { type: 'MoveTokens', token: 'doom', amount: 1, from: 'pool', to: { card: ghoul } },
-    { type: 'AdjustInvestigator', investigatorId: alice, stat: 'doomOnPlayerCards', delta: 1 },
-  );
+  const state = stateAfter(context, started, placeDoomOnAgenda(2), placeDoomOn(ghoul, 1), {
+    type: 'AdjustInvestigator',
+    investigatorId: alice,
+    stat: 'doomOnPlayerCards',
+    delta: 1,
+  });
 
   it('flips the agenda, removes it from the game and makes the next one current', () => {
     const next = stateAfter(context, state, { type: 'AdvanceAgenda' });
@@ -679,13 +564,7 @@ describe('AdvanceAct', () => {
   });
 
   it('keeps doom in play when an act advances', () => {
-    const withDoom = stateAfter(context, state, {
-      type: 'MoveTokens',
-      token: 'doom',
-      amount: 1,
-      from: 'pool',
-      to: 'currentAgenda',
-    });
+    const withDoom = stateAfter(context, state, placeDoomOnAgenda(1));
 
     const next = stateAfter(context, withDoom, { type: 'AdvanceAct' });
 
@@ -927,12 +806,7 @@ describe('cards without a threshold', () => {
     .start();
 
   it('never asks to advance an agenda that has no doom threshold', () => {
-    const next = stateAfter(
-      context,
-      state,
-      { type: 'MoveTokens', token: 'doom', amount: 50, from: 'pool', to: 'currentAgenda' },
-      { type: 'CheckDoomThreshold' },
-    );
+    const next = stateAfter(context, state, placeDoomOnAgenda(50), { type: 'CheckDoomThreshold' });
 
     expect(next.pending).toEqual([]);
   });

@@ -4,6 +4,7 @@ import {
   setAside,
   threatAreaOf,
   optionNamed,
+  placeDoomOn,
   type Decision,
   type GameState,
   type InstanceId,
@@ -417,7 +418,7 @@ export function gameActions(
       play((table) =>
         table.play(
           token === 'doom' && delta > 0
-            ? { type: 'MoveTokens', token: 'doom', amount: delta, from: 'pool', to: { card } }
+            ? placeDoomOn(card, delta)
             : {
                 type: 'ManualAdjust',
                 adjustment: { kind: 'tokens', cardId: card, token, delta },

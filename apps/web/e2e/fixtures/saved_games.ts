@@ -8,6 +8,7 @@ import {
   investigatorCode,
   investigatorId,
   PlayTable,
+  placeDoomOn,
   zoneOf,
   type CardCode,
   type CardStats,
@@ -386,14 +387,8 @@ export function doomBesideDamageExport(title: string): Buffer {
     type: 'ManualAdjust',
     adjustment: { kind: 'tokens', cardId: ghoulPriest, token: 'damage', delta: 2 },
   });
-  table.play({
-    type: 'MoveTokens',
-    token: 'doom',
-    amount: 1,
-    from: 'pool',
-    to: { card: ghoulPriest },
-  });
-  table.play({ type: 'MoveTokens', token: 'doom', amount: 1, from: 'pool', to: { card: cellar } });
+  table.play(placeDoomOn(ghoulPriest, 1));
+  table.play(placeDoomOn(cellar, 1));
   return exportOf(title, table, 'doom_beside_damage');
 }
 

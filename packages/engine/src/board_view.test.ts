@@ -51,6 +51,7 @@ import {
   type CardStats,
   type Decider,
   type Zone,
+  placeDoomOnAgenda,
 } from './index';
 import { answer, stateAfter } from '../test/utils';
 
@@ -1044,16 +1045,7 @@ describe('agenda and act', () => {
       })
       .start();
 
-    const board = boardView(
-      context,
-      stateAfter(context, state, {
-        type: 'MoveTokens',
-        token: 'doom',
-        amount: 2,
-        from: 'pool',
-        to: 'currentAgenda',
-      }),
-    );
+    const board = boardView(context, stateAfter(context, state, placeDoomOnAgenda(2)));
 
     expect(board.agenda).toEqual({
       id: instanceId('first_agenda'),

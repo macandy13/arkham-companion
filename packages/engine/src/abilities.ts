@@ -18,6 +18,9 @@ import type {
   ForEachPoint,
   ByMargin,
   MarginTier,
+  MoveTokens,
+  TokenHolder,
+  TokenMoveAmount,
 } from './commands';
 import { cardsInPlay, cardsWithActiveAbilities } from './doom';
 import { cardOptionLabels } from './decisions';
@@ -2133,9 +2136,32 @@ export function advanceBySpendingCluesAtRoundEnd(
   };
 }
 
+/**
+ * A token move that is a plain command and card data at once: the token factories below build
+ * both, a plain `MoveTokens` from instances (the UI, tests) and an `AbilityEffect` from
+ * references (card data), and their overloads say which comes back for which arguments.
+ */
+type TokenMove = MoveTokens & AbilityEffect;
+
+/** A `TokenHolder` as a plain command or card data names it: by instance or by reference. */
+type AnyTokenHolder =
+  | Exclude<TokenHolder, object>
+  | { card: InstanceId | RelativeCard }
+  | { investigator: InvestigatorId | RelativeInvestigator };
+
+function tokenMove(
+  token: TokenKind,
+  amount: TokenMoveAmount,
+  from: AnyTokenHolder,
+  to: AnyTokenHolder,
+): TokenMove {
+  // One literal for both shapes; each factory's overloads give the caller its precise type.
+  return { type: 'MoveTokens', token, amount, from, to } as TokenMove;
+}
+
 /** "Place N doom on the current agenda": doom from the token pool (`MoveTokens`). */
-export function placeDoomOnAgenda(amount: number): AbilityEffect {
-  return { type: 'MoveTokens', token: 'doom', amount, from: 'pool', to: 'currentAgenda' };
+export function placeDoomOnAgenda(amount: number): TokenMove {
+  return tokenMove('doom', amount, 'pool', 'currentAgenda');
 }
 
 /**
@@ -2147,8 +2173,10 @@ export function checkDoomThreshold(): AbilityEffect {
 }
 
 /** "Place N doom on [card]", such as `placeDoomOn(nearestEnemy({ trait: trait('Cultist') }), 2)`. */
-export function placeDoomOn(card: RelativeCard, amount: number): AbilityEffect {
-  return { type: 'MoveTokens', token: 'doom', amount, from: 'pool', to: { card } };
+export function placeDoomOn(card: InstanceId, amount: number): MoveTokens;
+export function placeDoomOn(card: RelativeCard, amount: number): AbilityEffect;
+export function placeDoomOn(card: InstanceId | RelativeCard, amount: number): TokenMove {
+  return tokenMove('doom', amount, 'pool', { card });
 }
 
 /** "The nearest [[trait]] enemy" (`nearestEnemy`), written `nearestEnemy({ trait: trait('Cultist') })`. */
@@ -2178,8 +2206,8 @@ export function placeDoomOnSelf(amount: number): AbilityEffect {
  * "Remove N doom from the current agenda", or `'all'` of it, back to the token pool
  * (`MoveTokens`); as much as there is.
  */
-export function removeDoomFromAgenda(amount: number | 'all'): AbilityEffect {
-  return { type: 'MoveTokens', token: 'doom', amount, from: 'currentAgenda', to: 'pool' };
+export function removeDoomFromAgenda(amount: number | 'all'): TokenMove {
+  return tokenMove('doom', amount, 'currentAgenda', 'pool');
 }
 
 /**
@@ -2187,8 +2215,10 @@ export function removeDoomFromAgenda(amount: number | 'all'): AbilityEffect {
  * to the pool): `removeDoomFrom(eachEnemy({ trait: trait('Cultist') }), 1)`, as much as each card
  * holds.
  */
-export function removeDoomFrom(card: RelativeCard, amount: number | 'all'): AbilityEffect {
-  return { type: 'MoveTokens', token: 'doom', amount, from: { card }, to: 'pool' };
+export function removeDoomFrom(card: InstanceId, amount: number | 'all'): MoveTokens;
+export function removeDoomFrom(card: RelativeCard, amount: number | 'all'): AbilityEffect;
+export function removeDoomFrom(card: InstanceId | RelativeCard, amount: number | 'all'): TokenMove {
+  return tokenMove('doom', amount, { card }, 'pool');
 }
 
 /**
@@ -2200,16 +2230,27 @@ export function removeDoomFrom(card: RelativeCard, amount: number | 'all'): Abil
 export function moveTokens(
   token: TokenKind,
   amount: number | 'all',
+  from: InstanceId,
+  to?: InstanceId,
+): MoveTokens;
+export function moveTokens(
+  token: TokenKind,
+  amount: number | 'all',
   from: RelativeCard,
   to?: RelativeCard,
-): AbilityEffect {
-  return {
-    type: 'MoveTokens',
+): AbilityEffect;
+export function moveTokens(
+  token: TokenKind,
+  amount: number | 'all',
+  from: InstanceId | RelativeCard,
+  to?: InstanceId | RelativeCard,
+): TokenMove {
+  return tokenMove(
     token,
     amount,
-    from: { card: from },
-    to: to === undefined ? 'currentAgenda' : { card: to },
-  };
+    { card: from },
+    to === undefined ? 'currentAgenda' : { card: to },
+  );
 }
 
 /**
@@ -2217,17 +2258,21 @@ export function moveTokens(
  * `investigator`, by default the one the window names; as many as the card holds.
  */
 export function takeCluesFrom(
+  from: InstanceId,
+  amount: number | 'all',
+  investigator: InvestigatorId,
+): MoveTokens;
+export function takeCluesFrom(
   from: RelativeCard,
   amount: number | 'all',
-  investigator: RelativeInvestigator = { ref: 'windowInvestigator' },
-): AbilityEffect {
-  return {
-    type: 'MoveTokens',
-    token: 'clue',
-    amount,
-    from: { card: from },
-    to: { investigator },
-  };
+  investigator?: RelativeInvestigator,
+): AbilityEffect;
+export function takeCluesFrom(
+  from: InstanceId | RelativeCard,
+  amount: number | 'all',
+  investigator: InvestigatorId | RelativeInvestigator = { ref: 'windowInvestigator' },
+): TokenMove {
+  return tokenMove('clue', amount, { card: from }, { investigator });
 }
 
 /** "Place N clues on this act": clues from the token pool on the card with the ability. */
@@ -2241,18 +2286,26 @@ export function placeCluesOnSelf(amount: TokenAmount): AbilityEffect {
  * Site); none when it has as many already, which is also its "if there are fewer than".
  */
 export function placeCluesOnSelfUpTo(upTo: TokenAmount): AbilityEffect {
-  return {
-    type: 'MoveTokens',
-    token: 'clue',
-    amount: { upTo },
-    from: 'pool',
-    to: { card: { ref: 'self' } },
-  };
+  return placeCluesOn({ ref: 'self' }, { upTo });
 }
 
-/** "Place 3 [per_investigator] clues on Miskatonic Quad": clues from the token pool on `card`. */
-export function placeCluesOn(card: RelativeCard, amount: TokenAmount): AbilityEffect {
-  return { type: 'MoveTokens', token: 'clue', amount, from: 'pool', to: { card } };
+/**
+ * "Place 3 [per_investigator] clues on Miskatonic Quad": clues from the token pool on `card`, or
+ * as many as bring it up to a count (`{ upTo }`).
+ */
+export function placeCluesOn(
+  card: InstanceId,
+  amount: TokenAmount | { upTo: TokenAmount },
+): MoveTokens;
+export function placeCluesOn(
+  card: RelativeCard,
+  amount: TokenAmount | { upTo: TokenAmount },
+): AbilityEffect;
+export function placeCluesOn(
+  card: InstanceId | RelativeCard,
+  amount: TokenAmount | { upTo: TokenAmount },
+): TokenMove {
+  return tokenMove('clue', amount, 'pool', { card });
 }
 
 /** Heals up to `amount` damage from the enemy that has the ability ("heal 2 damage from it"). */
