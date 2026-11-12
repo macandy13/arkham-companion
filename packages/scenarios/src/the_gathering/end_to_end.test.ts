@@ -386,7 +386,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     table.fight(daisy, byName(ghoulMinion), { result: 'open' });
     // The engine suggests the outcome: combat 2 against the minion's fight 2 passes
     // before any token, and the scenario's skull (-1 for each Ghoul at Daisy's
-    // location: the minion and the priest in the Cellar) would make it fail.
+    // location: the minion and the Icy Ghoul in the Cellar) would make it fail.
     const fightTest = table.state.pending[0]!;
     expect(fightTest.suggestion).toMatchObject({ skill: 2, difficulty: 2, outcome: 'pass' });
     expect(
