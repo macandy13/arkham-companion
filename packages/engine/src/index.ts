@@ -83,6 +83,7 @@ export {
   type EncounterCardView,
   type EncounterPilesView,
   type EnemyAction,
+  type EnemyCardEffectsView,
   type EnemyStatsView,
   type EnemyView,
   type InvestigatorView,

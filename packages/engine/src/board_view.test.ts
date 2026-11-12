@@ -1926,6 +1926,51 @@ describe('enemy actions', () => {
 
     expect(boardView(context, state).enemyActions(alice, ghoul)).toEqual(expected);
   });
+
+  it.each([
+    {
+      name: 'only alice can evade a ready ghoul engaged with her; only bob can be engaged',
+      card: blankEnemy('ghoul'),
+      zone: engagedWith(alice),
+      exhausted: false,
+      expected: { evade: [alice], engage: [bob] },
+    },
+    {
+      name: 'only alice can evade an exhausted ghoul engaged with her',
+      card: blankEnemy('ghoul'),
+      zone: engagedWith(alice),
+      exhausted: true,
+      expected: { evade: [alice], engage: [bob] },
+    },
+    {
+      name: 'nobody can evade an exhausted aloof ghoul, but both can be engaged',
+      card: blankEnemy('aloof_ghoul', { keywords: [{ name: 'aloof' }] }),
+      zone: atLocation(study),
+      exhausted: true,
+      expected: { evade: [], engage: [alice, bob] },
+    },
+    {
+      name: 'nobody can be engaged by a massive ghoul, which both can evade',
+      card: blankEnemy('massive_ghoul', { keywords: [{ name: 'massive' }] }),
+      zone: atLocation(study),
+      exhausted: false,
+      expected: { evade: [alice, bob], engage: [] },
+    },
+    {
+      name: 'nobody in the study reaches a ghoul in the hallway',
+      card: blankEnemy('ghoul'),
+      zone: atLocation(hallway),
+      exhausted: false,
+      expected: { evade: [], engage: [] },
+    },
+  ])('card effects: $name', ({ card, zone, exhausted, expected }) => {
+    const { context, state } = studyWith(card, zone);
+    const now = exhausted
+      ? stateAfter(context, state, { type: 'ExhaustEnemy', enemyId: ghoul })
+      : state;
+
+    expect(boardView(context, now).enemyCardEffects(ghoul)).toEqual(expected);
+  });
 });
 
 describe('TableError', () => {

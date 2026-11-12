@@ -36,7 +36,7 @@ import { optionName } from './describe_decision';
 import type { Command } from './commands';
 import { agendaThreshold, doomInPlay, isInPlay } from './doom';
 import { changesGameState, handle } from './handle';
-import { enemyHealth } from './enemies';
+import { enemyHealth, isEngagedWith } from './enemies';
 import type { Keyword } from './keywords';
 import { forcedAttackPrompt } from './forced_attacks';
 import { formatBoard } from './format_board';
@@ -355,6 +355,15 @@ export interface CluePayerView {
   readonly image?: CardImagePath;
   readonly clues: number;
   readonly pays: number;
+}
+
+/**
+ * The investigators a player card's effect on one enemy can apply to (`BoardView.enemyCardEffects`):
+ * who can evade it and whom it can engage, without a test or an action.
+ */
+export interface EnemyCardEffectsView {
+  readonly evade: readonly InvestigatorId[];
+  readonly engage: readonly InvestigatorId[];
 }
 
 /**
@@ -709,16 +718,47 @@ export class BoardView {
       evade: { type: 'Evade', investigatorId: investigator, enemyId: enemy },
       engage: { type: 'EngageEnemy', investigatorId: investigator, enemyId: enemy },
     };
-    return ENEMY_ACTIONS.filter((action) => {
-      try {
-        handle(this.ctx, this.state, commands[action]);
-        return true;
-      } catch (error) {
-        // A refusal is the answer: the rules do not allow this action now.
-        if (!(error instanceof CommandRejected)) throw error;
-        return false;
-      }
-    });
+    return ENEMY_ACTIONS.filter((action) => this.allows(commands[action]));
+  }
+
+  /**
+   * Whom a player card's effect on `enemy` can apply to, for the enemy's card-effect buttons
+   * ("automatically evade a non-Elite enemy at your location", "engage that enemy"), since the
+   * players choose who plays the card: the active investigators at its location, in seat order.
+   * `evade` keeps the one it is engaged with, or everyone there when it is unengaged and ready
+   * (someone else's evade would leave it engaged, so it is not offered), `engage` those the players' `EngageEnemy` takes (not one engaged with it already, and
+   * nobody for a massive enemy, which never enters a threat area).
+   */
+  enemyCardEffects(enemy: InstanceId): EnemyCardEffectsView {
+    const card = requireCard(this.state, enemy);
+    const location = locationOfCard(this.state, card);
+    const here = this.state.investigators.filter(
+      (inv) => inv.status === 'active' && location !== undefined && inv.locationId === location,
+    );
+    return {
+      evade: here
+        .filter(
+          (inv) => isEngagedWith(card, inv) || (card.zone.kind !== 'engaged' && !card.exhausted),
+        )
+        .map(({ id }) => id),
+      engage: here
+        .filter((inv) =>
+          this.allows({ type: 'EngageEnemy', enemyId: enemy, investigatorId: inv.id }),
+        )
+        .map(({ id }) => id),
+    };
+  }
+
+  /** Whether `handle` takes `command` now: a dry run whose events are dropped. */
+  private allows(command: Command): boolean {
+    try {
+      handle(this.ctx, this.state, command);
+      return true;
+    } catch (error) {
+      // A refusal is the answer: the rules do not allow this command now.
+      if (!(error instanceof CommandRejected)) throw error;
+      return false;
+    }
   }
 
   /**
