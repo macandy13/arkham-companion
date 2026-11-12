@@ -71,6 +71,7 @@ import {
   placeDoomOn,
   placeCluesOnSelfUpTo,
   placeDoomOnAgenda,
+  removeDoomFromAgenda,
   placeDoomOnSelf,
   putLocationIntoPlay,
   putMapIntoPlay,
@@ -109,6 +110,8 @@ import {
   type CardStats,
   type Command,
   type Zone,
+  placeCluesOn,
+  moveTokens,
 } from './index';
 import { agendaThresholdDecision } from './doom';
 import { requireInvestigator } from './investigators';
@@ -349,7 +352,7 @@ describe('trigger bus', () => {
       const { context, state: started } = devourerTable.start();
       const merged = stateAfter(context, started, { type: 'AdvanceAgenda' });
 
-      const state = stateAfter(context, merged, { type: 'PlaceDoom', amount: 3 });
+      const state = stateAfter(context, merged, placeDoomOnAgenda(3));
 
       expect(agendaThresholdDecision(context, state)).toEqual([]);
     });
@@ -1185,6 +1188,41 @@ describe('trigger bus', () => {
 
         expect(cardsInZone(state, { kind: 'encounterDeck' })).toEqual([instanceId('fourth_card')]);
       });
+
+      it.each([
+        { effect: 'place 1 doom', perPoint: placeDoomOnAgenda(1), before: 0, after: 2 },
+        { effect: 'remove all doom', perPoint: removeDoomFromAgenda('all'), before: 3, after: 0 },
+      ])(
+        '$effect on the agenda for each point failed by 2: $before doom becomes $after',
+        ({ perPoint, before, after }) => {
+          /** "Test willpower (3). For each point you fail by, <effect> on the current agenda." */
+          const omenCard = blankTreachery('omen', {
+            abilities: [
+              whenRevealed(skillTest('willpower', 3, { onFail: [forEachPoint(perPoint)] })),
+            ],
+          });
+          const agenda = instanceId('agenda');
+          const { context, state: started } = newGame()
+            .withCard(
+              agenda,
+              blankAgenda('agenda', fixed(9)),
+              { kind: 'agendaDeck' },
+              {
+                faceUp: true,
+                tokens: { doom: before },
+              },
+            )
+            .withLocation(hall, blankLocation('hall'), { revealed: true })
+            .withInvestigator(alice, { locationId: hall })
+            .withCard(instanceId('omen'), omenCard, { kind: 'encounterDeck' })
+            .start();
+          const drawn = stateAfter(context, started, aliceDraws, resolveRevelation('omen'));
+
+          const { state } = execute(context, drawn, { ...answer('test:omen', 'fail'), margin: 2 });
+
+          expect(state.cards[agenda]?.tokens.doom ?? 0).toBe(after);
+        },
+      );
 
       it('gives a pass for each point it succeeds by too', () => {
         /** "Test agility (2). For each point you succeed by, gain 1 clue." */
@@ -2115,7 +2153,7 @@ describe("objectives on a card's own tokens", () => {
       .withAct(act2, secondActCard)
       .withLocation(hall, blankLocation('hall'), { revealed: true })
       .withInvestigator(alice, { locationId: hall });
-  const placeClueOnAct: Command = { type: 'PlaceTokens', cardId: act1, token: 'clue', amount: 1 };
+  const placeClueOnAct: Command = placeCluesOn(act1, 1);
 
   it.each([
     { clues: 1, current: act2, outcome: 'advances' },
@@ -2134,13 +2172,7 @@ describe("objectives on a card's own tokens", () => {
       .withCard(cultist, blankEnemy('cultist'), atLocation(hall), { tokens: { clue: 1 } })
       .start();
 
-    const { state } = execute(context, started, {
-      type: 'MoveTokens',
-      token: 'clue',
-      amount: 1,
-      from: cultist,
-      to: act1,
-    });
+    const { state } = execute(context, started, moveTokens('clue', 1, cultist, act1));
 
     expect(state.act.current).toBe(act2);
   });

@@ -265,8 +265,11 @@ function timesMargin(command: Command, margin: number): Command | undefined {
     case 'TakeDamageAndHorror':
       return { ...command, damage: command.damage * margin, horror: command.horror * margin };
     case 'PlaceClues':
-    case 'PlaceDoom':
       return { ...command, amount: command.amount * margin };
+    case 'MoveTokens':
+      return typeof command.amount === 'number'
+        ? { ...command, amount: command.amount * margin }
+        : undefined;
     default:
       return undefined;
   }

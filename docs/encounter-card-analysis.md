@@ -306,7 +306,7 @@ Players trigger these with their own actions, so the app needs a way to activate
 - **Damage replacement: remove a snare instead, else no damage** – Cards: Julia Stern (River of Blood). Primitive: snare counter (`resource` tokens on her) and a damage hook. Tier: auto
 - **Reacts to its own damage: ready, damage others, damage another enemy, discard an attachment** – Cards: Queen's Knight 12177, Howard Wilkes, Unnatural Strength 13098. Primitive: trigger on `EnemyDamaged`. Tier: auto / assist
 - **Heals after dealing damage or attacking** – Cards: Zburamoarte, Spawn of Zburamoarte 13097, Night Feeder 13110, Herald of Flame 12178. Primitive: trigger on attack resolved. Tier: auto
-- **Places doom on itself or the nearest enemy without doom; doom counts toward the threshold** – Cards: Zealot 12188, Dark Magician 12189, Sanguine Cultist 13112, Blood-Crazed Zealot 13113. Primitive: `PlaceDoom` on enemies (doom count already includes them). Tier: auto
+- **Places doom on itself or the nearest enemy without doom; doom counts toward the threshold** – Cards: Zealot 12188, Dark Magician 12189, Sanguine Cultist 13112, Blood-Crazed Zealot 13113. Primitive: `placeDoomOn` (`MoveTokens` from the pool) on enemies (doom count already includes them). Tier: auto
 - **Reacts to clues discovered anywhere: ready, or disengage and move toward that location** – Cards: Night Watchman 13062. Primitive: trigger on `CluesDiscovered` + "move toward". Tier: auto
 - **Enemy vs enemy: deal damage to each other at phase end** – Cards: Julia Stern (Blood Money) 13087–13089. Primitive: trigger at enemy phase end. Tier: auto
 - **Lowers investigators' skills or raises test difficulty at its location** – Cards: Whippoorwill 12166, Javier Rivera 13061. Primitive: skill modifier sources for the suggestion. Tier: assist
@@ -336,7 +336,7 @@ Players trigger these with their own actions, so the app needs a way to activate
 - **Act and agenda merged into one card** – Cards: Brethren of Ash 12171. Primitive: scenario state: current act may be the agenda
 - **Reset the act deck to act 1** – Cards: Corner the Suspect 13007. Primitive: act deck operation
 - **Agenda or act chosen by version, difficulty or campaign record** – Cards: 13032–13035, 13070/13071. Primitive: setup picks decks (`campaignSetup`)
-- **Replacement effect: "when doom would be placed, deal damage instead"** – Cards: Brethren of Ash. Primitive: **replacement hook** on `PlaceDoom` (a new trigger kind)
+- **Replacement effect: "when doom would be placed, deal damage instead"** – Cards: Brethren of Ash. Primitive: **replacement hook** on doom placed (`MoveTokens` from the pool) (a new trigger kind)
 - **Constant agenda effects: cards of traits gain victory 0; enemies at Fire! locations cannot be damaged** – Cards: 13069–13071, 12169/12170. Primitive: derived stats from the current agenda
 - **Encounter cards placed facedown beneath locations; revealed one at a time later; drawn by an act ability** – Cards: 13002–13006; _Smoke and Mirrors_ act 12136. Primitive: zone `beneath` a card (also "under the act")
 - **Damage stored on the scenario reference card and moved back** – Cards: 13003, 13004. Primitive: tokens on the reference card instance

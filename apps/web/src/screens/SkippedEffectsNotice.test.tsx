@@ -34,7 +34,7 @@ describe('SkippedEffectsNotice', () => {
     render(
       <SkippedEffectsNotice
         skipped={[
-          { kind: 'missingCard', card: 'The Barrier', effect: 'PlaceDoom', missing: ['Parlor'] },
+          { kind: 'missingCard', card: 'The Barrier', effect: 'MoveTokens', missing: ['Parlor'] },
         ]}
         onDismiss={() => {}}
       />,

@@ -10,6 +10,7 @@ import {
   type InvestigatorRef,
 } from './card_matchers';
 import { type EngineContext, type ScenarioContext } from './cards';
+import { placeDoomOnAgenda } from './abilities';
 import type { Command } from './commands';
 import { pendingDecision } from './decisions';
 import { describeDecision, optionNamed } from './describe_decision';
@@ -655,7 +656,7 @@ export class PlayTable {
 
   /** Doom from a card effect (e.g. Ancient Evils) on the current agenda. */
   placeDoom(amount: number): void {
-    this.play({ type: 'PlaceDoom', amount });
+    this.play(placeDoomOnAgenda(amount));
   }
 
   /**

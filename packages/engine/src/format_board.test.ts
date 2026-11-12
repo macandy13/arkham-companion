@@ -22,6 +22,7 @@ import {
   perInvestigator,
   threatAreaOf,
   type GameState,
+  placeDoomOnAgenda,
 } from './index';
 import { stateAfter } from '../test/utils';
 
@@ -164,12 +165,9 @@ describe('formatBoard', () => {
   });
 
   it('lists pending decisions with their options', () => {
-    const state = stateAfter(
-      context,
-      startedBoard(),
-      { type: 'PlaceDoom', amount: 1 },
-      { type: 'CheckDoomThreshold' },
-    );
+    const state = stateAfter(context, startedBoard(), placeDoomOnAgenda(1), {
+      type: 'CheckDoomThreshold',
+    });
 
     expect(formatBoard(context, state).split('\n').slice(-2)).toMatchInlineSnapshot(`
       [

@@ -16,6 +16,7 @@ import {
   threatAreaOf,
   type CardStats,
   type Command,
+  placeDoomOnAgenda,
 } from '@arkham/engine';
 import {
   answer,
@@ -245,7 +246,7 @@ describe('Spreading Flames card abilities', () => {
 
     it('lets the doom advance the agenda when it reaches the threshold', () => {
       const { context, state: started } = aliceDrawsCosmicEvils.start();
-      const atTwoDoom = stateAfter(context, started, { type: 'PlaceDoom', amount: 2 });
+      const atTwoDoom = stateAfter(context, started, placeDoomOnAgenda(2));
       const drawn = stateAfter(
         context,
         atTwoDoom,

@@ -36,6 +36,7 @@ import {
   type InstanceId,
   type InvestigatorId,
   type ScenarioContext,
+  placeDoomOn,
 } from '@arkham/engine';
 import {
   DEVOURER_BELOW_CODES as codes,
@@ -193,7 +194,7 @@ describe('The Devourer Below end to end: Roland and Daisy, seed 7', () => {
     table.step(() => {
       table.play({ type: 'SpawnEnemy', enemyId: secondGoat, at: mainPath });
       table.answer(byName('Goat Spawn'), 'Roland Banks');
-      table.play({ type: 'PlaceDoom', amount: 1, cardId: secondGoat });
+      table.play(placeDoomOn(secondGoat, 1));
     });
     table.nextPhase();
     table.nextPhase();
