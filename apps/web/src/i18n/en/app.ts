@@ -182,6 +182,8 @@ export const appTexts = {
     doomCount: 'Doom',
     clueCount: 'Clues',
     advanceAct: 'Advance',
+    beneathAct_one: 'Beneath the act, {{count}} card',
+    beneathAct_other: 'Beneath the act, {{count}} cards',
     advanceActByHand: 'Advance by hand',
     advanceActByHandTitle: 'Advance {{act}} by hand?',
     advanceActByHandText:
@@ -229,6 +231,7 @@ export const appTexts = {
     discard: 'Discard pile',
     setAside: 'Set aside',
     victoryDisplay: 'Victory display',
+    beneathAct: 'Beneath the act',
     pile: '{{pile}} ({{count}})',
     empty: 'No cards',
     earlierCards: 'Earlier cards',
@@ -495,6 +498,7 @@ export const appTexts = {
     removeDoom: 'Remove doom',
     disengage: 'Disengage',
     defeat: 'Defeat',
+    beneathAct: 'Put beneath the act',
     caption: {
       fight: 'Fight',
       evade: 'Evade',
@@ -502,6 +506,7 @@ export const appTexts = {
       damage: 'Damage',
       disengage: 'Disengage',
       defeat: 'Defeat',
+      beneathAct: 'Beneath act',
     },
     close: 'Close',
     engagedWith: 'Engaged with {{name}}',

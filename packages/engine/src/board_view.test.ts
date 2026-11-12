@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 import {
   advanceBySpendingClues,
   advanceAct,
+  eachInZone,
+  whenVictoryDisplayHolds,
   whenTokensOnSelf,
   resolutionId,
   cardImagePath,
@@ -1059,7 +1061,7 @@ describe('agenda and act', () => {
     });
   });
 
-  it('names the cards placed face up beneath the act', () => {
+  it('lists the cards beneath the act among the encounter piles, and none once there is no act', () => {
     const firstAct = instanceId('first_act');
     const { context, state } = newGame()
       .withLocation(study, blankLocation('study'))
@@ -1072,10 +1074,41 @@ describe('agenda and act', () => {
         { faceUp: true },
       )
       .start();
+    const actless = newGame().withLocation(study, blankLocation('study')).start();
 
-    const { act } = boardView(context, state);
+    expect(boardView(context, state).encounter.beneathAct).toMatchObject([
+      { name: 'questioned_suspect' },
+    ]);
+    expect(boardView(actless.context, actless.state).encounter.beneathAct).toEqual([]);
+  });
 
-    expect(act?.beneath).toEqual(['questioned_suspect']);
+  it.each([
+    {
+      act: 'an act whose objective counts the Elite enemies beneath it',
+      zones: [{ kind: 'victoryDisplay' }, { kind: 'beneath', hostId: { ref: 'self' } }] as const,
+      takes: true,
+    },
+    {
+      act: 'an act whose objective counts the victory display alone',
+      zones: [{ kind: 'victoryDisplay' }] as const,
+      takes: undefined,
+    },
+  ])('takes cards beneath it only for $act', ({ zones, takes }) => {
+    const objective = whenVictoryDisplayHolds(
+      eachInZone(zones, { trait: trait('Elite') }),
+      6,
+      advanceAct(),
+    );
+    const { context, state } = newGame()
+      .withLocation(study, blankLocation('study'))
+      .withInvestigator(alice, { locationId: study })
+      .withAct(
+        instanceId('augurs_of_flame'),
+        blankAct('augurs_of_flame', { abilities: [objective] }),
+      )
+      .start();
+
+    expect(boardView(context, state).act?.takesCardsBeneath).toBe(takes);
   });
 
   it('counts the clues the players put on the act apart from its cost', () => {
@@ -1227,6 +1260,7 @@ describe('encounter piles', () => {
           victory: 2,
         },
       ],
+      beneathAct: [],
     });
   });
 
@@ -1238,6 +1272,7 @@ describe('encounter piles', () => {
       discard: [],
       setAside: [],
       victoryDisplay: [],
+      beneathAct: [],
     });
   });
 });

@@ -16,7 +16,9 @@ import './enemies.css';
  * can do to it. On an investigator's turn, in one Actions group, the basic actions the rules
  * allow them against it (`BoardView.enemyActions`): fight, evade and engage as actions, which
  * count off what they cost (`BoardView.actionCost`), then fight and evade without an action, as some cards allow; at any time, in a
- * group of their own, what card effects do to an enemy: deal 1 damage, disengage it, defeat it.
+ * group of their own, what card effects do to an enemy: deal 1 damage, disengage it, defeat it,
+ * and put it beneath the act where an objective counts the cards there (`ActView.takesCardsBeneath`,
+ * Smoke and Mirrors' interrogated suspects).
  * Each button shows a short word and is named in full ("Fight · 1 action"). Fight, evade and
  * engage keep it open and show the decisions they raise in place of its page
  * (`useDecisionHost`: the test's result, an attack of opportunity), with the enemy still beside
@@ -174,6 +176,15 @@ export function EnemyDetails({
             disabled={busy}
             onClick={step(() => actions.defeatEnemy(enemy.id), 'close')}
           />
+          {board.act?.takesCardsBeneath && (
+            <ActionButton
+              icon="beneathAct"
+              caption={t('enemy.caption.beneathAct')}
+              name={t('enemy.beneathAct')}
+              disabled={busy}
+              onClick={step(() => actions.putBeneathAct(enemy.id), 'close')}
+            />
+          )}
         </ActionGroup>
       </footer>
     </DetailsDialog>

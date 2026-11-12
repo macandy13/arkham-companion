@@ -126,7 +126,7 @@ export function playSmokeAndMirrors(start: CampaignLog): CampaignLog {
     to: { kind: 'beneath', hostId: table.board.act!.id },
   });
   table.endTurn(roland);
-  expect(table.board.act?.beneath).toEqual([naomi]);
+  expect(table.board.encounter.beneathAct.map(({ name }) => name)).toEqual([naomi]);
   expect(table.board.investigator(roland).resources).toBe(2);
 
   // Daisy defeats the Rogue Gangster with three attacks.

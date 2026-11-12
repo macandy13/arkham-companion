@@ -183,6 +183,8 @@ export const appTexts = {
     doomCount: 'Verderben',
     clueCount: 'Hinweise',
     advanceAct: 'Vorrücken',
+    beneathAct_one: 'Unter dem Akt, {{count}} Karte',
+    beneathAct_other: 'Unter dem Akt, {{count}} Karten',
     advanceActByHand: 'Von Hand vorrücken',
     advanceActByHandTitle: '{{act}} von Hand vorrücken?',
     advanceActByHandText:
@@ -230,6 +232,7 @@ export const appTexts = {
     discard: 'Ablagestapel',
     setAside: 'Beiseitegelegt',
     victoryDisplay: 'Siegpunktanzeige',
+    beneathAct: 'Unter dem Akt',
     pile: '{{pile}} ({{count}})',
     empty: 'Keine Karten',
     earlierCards: 'Frühere Karten',
@@ -499,6 +502,7 @@ export const appTexts = {
     removeDoom: 'Verderben entfernen',
     disengage: 'Aus dem Kampf lösen',
     defeat: 'Besiegen',
+    beneathAct: 'Unter den Akt legen',
     caption: {
       fight: 'Kämpfen',
       evade: 'Entkommen',
@@ -506,6 +510,7 @@ export const appTexts = {
       damage: 'Schaden',
       disengage: 'Lösen',
       defeat: 'Besiegen',
+      beneathAct: 'Unter Akt',
     },
     close: 'Schließen',
     engagedWith: 'Im Kampf mit {{name}}',
