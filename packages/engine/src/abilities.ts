@@ -985,6 +985,11 @@ export function resolveEffect(
  * else, so a reference in a change (`eachEnemy` in "if there is an enemy at your location")
  * isn't taken for one the effect repeats over. A test's outcomes are left alone: they resolve
  * later (`withDeferredOutcomes`), and a test among them reads the table then.
+ *
+ * The rules fix a variable difficulty only at ST.6, but the engine has no ST.6: it asks for the
+ * test once and the players answer pass or fail. So the difficulty is read as the test is asked,
+ * and a change in the commit window (a player card, played by hand) is the players' to count in
+ * their answer, as everything else they commit is.
  */
 function withDifficultyChanges(
   ctx: EngineContext,
@@ -1715,7 +1720,8 @@ export function plusDifficultyPer(quantity: Quantity, by = 1): DifficultyChange 
 
 /**
  * "+2 difficulty if there is an enemy at your location" (`DifficultyChange.when`), a change of a
- * `skillTest`'s difficulty: `by` while `condition` holds as the test starts.
+ * `skillTest`'s difficulty: `by` if `condition` holds as the test is asked for (see
+ * `withDifficultyChanges` on when the table is read).
  */
 export function plusDifficultyIf(condition: AbilityCondition, by: number): DifficultyChange {
   return { when: condition, by };

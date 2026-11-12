@@ -788,7 +788,7 @@ describe('test of either of two skills', () => {
 });
 
 describe('test difficulty from the table', () => {
-  const test = instanceId('test');
+  const drawnTreachery = instanceId('drawn_treachery');
   const draw: Command = { type: 'DrawEncounter', investigatorId: alice };
   /** Treacheries testing willpower (2) with +1 for each damage on the drawer, or -1 for each. */
   const perDamageTreachery = blankTreachery('per_damage_treachery', {
@@ -845,10 +845,10 @@ describe('test difficulty from the table', () => {
   ])('adds 1 for each damage: with $damage damage it is $difficulty', ({ damage, difficulty }) => {
     const { context, state } = studyNextToHallway
       .withInvestigator(alice, { locationId: study, health: { max: 8, damage } })
-      .withCard(test, perDamageTreachery, { kind: 'encounterDeck' })
+      .withCard(drawnTreachery, perDamageTreachery, { kind: 'encounterDeck' })
       .start();
 
-    const drawn = stateAfter(context, state, draw, resolveRevelation('test'));
+    const drawn = stateAfter(context, state, draw, resolveRevelation('drawn_treachery'));
 
     expect(drawn.pending).toMatchObject([{ skillTest: { skill: 'willpower', difficulty } }]);
   });
@@ -856,10 +856,10 @@ describe('test difficulty from the table', () => {
   it('never lowers the difficulty below 0', () => {
     const { context, state } = studyNextToHallway
       .withInvestigator(alice, { locationId: study, health: { max: 8, damage: 3 } })
-      .withCard(test, lessPerDamageTreachery, { kind: 'encounterDeck' })
+      .withCard(drawnTreachery, lessPerDamageTreachery, { kind: 'encounterDeck' })
       .start();
 
-    const drawn = stateAfter(context, state, draw, resolveRevelation('test'));
+    const drawn = stateAfter(context, state, draw, resolveRevelation('drawn_treachery'));
 
     expect(drawn.pending).toMatchObject([{ skillTest: { difficulty: 0 } }]);
   });
@@ -870,10 +870,10 @@ describe('test difficulty from the table', () => {
   ])('adds 2 for 2 or more clues: with $clues clues it is $difficulty', ({ clues, difficulty }) => {
     const { context, state } = studyNextToHallway
       .withInvestigator(alice, { locationId: study, clues })
-      .withCard(test, cluesTreachery, { kind: 'encounterDeck' })
+      .withCard(drawnTreachery, cluesTreachery, { kind: 'encounterDeck' })
       .start();
 
-    const drawn = stateAfter(context, state, draw, resolveRevelation('test'));
+    const drawn = stateAfter(context, state, draw, resolveRevelation('drawn_treachery'));
 
     expect(drawn.pending).toMatchObject([{ skillTest: { skill: 'intellect', difficulty } }]);
   });
@@ -887,14 +887,16 @@ describe('test difficulty from the table', () => {
     ({ ghoulAt, difficulty }) => {
       const setup = studyNextToHallway
         .withInvestigator(alice, { locationId: study })
-        .withCard(test, enemyHereTreachery, { kind: 'encounterDeck' });
+        .withCard(drawnTreachery, enemyHereTreachery, { kind: 'encounterDeck' });
       const { context, state } = (
         ghoulAt === undefined ? setup : setup.withCard(ghoul, ghoulCard, atLocation(ghoulAt))
       ).start();
 
-      const drawn = stateAfter(context, state, draw, resolveRevelation('test'));
+      const drawn = stateAfter(context, state, draw, resolveRevelation('drawn_treachery'));
 
-      expect(drawn.pending).toMatchObject([{ id: 'test:test', skillTest: { difficulty } }]);
+      expect(drawn.pending).toMatchObject([
+        { id: 'test:drawn_treachery', skillTest: { difficulty } },
+      ]);
     },
   );
 });

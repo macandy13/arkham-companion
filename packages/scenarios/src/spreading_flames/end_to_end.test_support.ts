@@ -284,9 +284,9 @@ export function playSpreadingFlames(start: CampaignLog): CampaignLog {
   expect(table.board.location(byName('Orne Library')).attachments).toEqual(['Fire!']);
   expect(table.board.location(byName('Miskatonic Quad')).attachments).toEqual(['Fire!']);
 
-  // Round 6 – mythos: Roland draws the other Mutated! and passes its willpower (2) test. Daisy draws Cosmic Evils again; this time she takes 1 damage and 1 horror
-  // and draws again: Forbidden Secrets, which surges as she has no clues, into a Cantor of Flame
-  // that engages her.
+  // Round 6 – mythos: Roland draws the other Mutated! and passes its willpower (2) test. Daisy
+  // draws Cosmic Evils again; this time she takes 1 damage and 1 horror and draws again:
+  // Forbidden Secrets, which surges as she has no clues, into a Cantor of Flame that engages her.
   expect(table.nextPhase()).toEqual({ round: 6, phase: 'mythos', step: 'drawEncounterCard' });
   table.resolveRevelation(byName('Mutated!'));
   table.answerOnly('pass');

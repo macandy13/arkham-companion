@@ -513,7 +513,7 @@ describe('Smoke and Mirrors card abilities', () => {
       expect(drawn.pending).toMatchObject([{ skillTest: { skill: 'intellect', difficulty } }]);
     });
 
-    it('gives alice 1 horror and places 1 of her clues on her location on a fail', () => {
+    it('gives alice 1 horror and places 1 of her clues on Northside (2 clues) on a fail', () => {
       const { context, state: started } = newGame()
         .withLocation(northside, cardOf('12149'), { revealed: true })
         .withInvestigator(alice, { locationId: northside, clues: 2 })
@@ -529,9 +529,8 @@ describe('Smoke and Mirrors card abilities', () => {
       );
 
       expect(requireInvestigator(state, alice)).toMatchObject({ clues: 1, sanity: { horror: 1 } });
-      expect(state.cards[northside]?.tokens.clue).toBe(
-        (started.cards[northside]?.tokens.clue ?? 0) + 1,
-      );
+      expect(started.cards[northside]?.tokens.clue).toBe(2);
+      expect(state.cards[northside]?.tokens.clue).toBe(3);
     });
   });
 
