@@ -20,7 +20,7 @@ import {
 
 export type { PrintedActionView };
 import { actionCost, type BasicAction } from './action_costs';
-import { effectiveValue } from './modifiers';
+import { effectiveValue, skillValues } from './modifiers';
 import {
   cardStats,
   printedSymbols,
@@ -76,7 +76,6 @@ import {
 } from './scenario';
 import { NAMED_AMOUNTS } from './state';
 import {
-  boostedSkills,
   cluesHeldByGroup,
   clueSpenders,
   defaultCluePayments,
@@ -173,7 +172,7 @@ export interface InvestigatorView {
   skills: SkillValues;
   /** The lasting boosts of their skills (`Investigator.skillBoosts`), left out while there are none. */
   boosts?: Partial<SkillValues>;
-  /** Their skill values with the boosts added (`boostedSkills`); the printed ones while there are none. */
+  /** Their skill values now, boosts and cards in play included (`skillValues`); the printed ones while nothing changes them. */
   boostedSkills: SkillValues;
   /** The picture of their investigator card (`Investigator.imageSrc`), when the card data has one. */
   image?: CardImagePath;
@@ -1278,7 +1277,7 @@ function investigatorView(
     ...(investigator.doomOnPlayerCards > 0 ? { doom: investigator.doomOnPlayerCards } : {}),
     skills: investigator.skills,
     ...(investigator.skillBoosts === undefined ? {} : { boosts: investigator.skillBoosts }),
-    boostedSkills: boostedSkills(investigator),
+    boostedSkills: skillValues(ctx, state, investigator),
     ...(investigator.imageSrc === undefined ? {} : { image: investigator.imageSrc }),
     actions: investigator.actionsRemaining,
     ...(state.meta.turnsTaken.includes(investigator.id) ? { turnTaken: true as const } : {}),

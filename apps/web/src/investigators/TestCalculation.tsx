@@ -177,6 +177,7 @@ export function SkillTestBlock({
         onChange={run.setModifier}
       />
       <ResultStrip
+        board={board}
         result={run.result}
         run={run}
         skill={run.skills[0]}
@@ -240,6 +241,7 @@ export function SkillToggles({
  * and a reminder under the strip to add it by hand.
  */
 export function ResultStrip({
+  board,
   result,
   run,
   skill,
@@ -247,6 +249,7 @@ export function ResultStrip({
   odds,
   onDraw,
 }: {
+  board: BoardView;
   result: SkillTestSuggestion;
   run: Pick<SkillTestRun, 'drawn' | 'revealed' | 'act' | 'revealAnother' | 'replaceOptions'>;
   skill: SkillName;
@@ -264,7 +267,7 @@ export function ResultStrip({
       <ol aria-label={t('skillTest.calculation')}>
         {terms.map((step, index) => (
           <li key={index}>
-            {termName(step, skill, t)}{' '}
+            {termName(board, step, skill, t)}{' '}
             <data value={step.change}>{index === 0 ? step.change : signed(step.change)}</data>
           </li>
         ))}
@@ -416,7 +419,7 @@ export function Stepper({
 
 /**
  * The steps that make the skill value before any token: the printed skill, a skill a card adds,
- * a lasting boost and the players' modifier. Tokens and the caps (auto-fail, nothing below 0)
+ * a lasting boost, each card in play that changes it ("You get −1 [willpower]") and the players' modifier. Tokens and the caps (auto-fail, nothing below 0)
  * show in the strip's other columns.
  */
 function isSkillTerm(step: ModifierStep): step is SkillTerm {
@@ -426,9 +429,9 @@ function isSkillTerm(step: ModifierStep): step is SkillTerm {
     case 'addedSkill':
     case 'skillBoost':
     case 'playerModifier':
+    case 'card':
       return true;
     case 'baseDifficulty':
-    case 'card':
     case 'chaosToken':
     case 'autoFail':
     case 'minimumZero':
@@ -442,12 +445,13 @@ function isSkillTerm(step: ModifierStep): step is SkillTerm {
 type SkillTerm = ModifierStep & {
   source: Extract<
     ModifierSource,
-    { kind: 'baseSkill' | 'addedSkill' | 'skillBoost' | 'playerModifier' }
+    { kind: 'baseSkill' | 'addedSkill' | 'skillBoost' | 'playerModifier' | 'card' }
   >;
 };
 
 /** The name of one term of the skill value, as the players say it. */
 function termName(
+  board: BoardView,
   step: SkillTerm,
   skill: SkillName,
   t: ReturnType<typeof useTranslation>['t'],
@@ -462,6 +466,8 @@ function termName(
       return t('skillTest.boost', { skill: t(`skill.${source.skill}`) });
     case 'playerModifier':
       return t('skillTest.modifier');
+    case 'card':
+      return board.cardFace(source.cardId).name;
     default:
       return assertNever(source);
   }

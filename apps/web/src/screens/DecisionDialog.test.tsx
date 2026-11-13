@@ -14,6 +14,7 @@ import {
   instanceId,
   investigatorId,
   newGame,
+  threatAreaOf,
   PlayTable,
   byMargin,
   forEachPoint,
@@ -107,6 +108,39 @@ describe('DecisionDialog', () => {
     expect(screen.getByRole('list', { name: 'Difficulty' }).textContent).toBe(
       'Printed 2Obscuring Fog +2',
     );
+  });
+
+  it("lists the card that lowers alder's intellect among the skill value's terms", () => {
+    const table = PlayTable.start(
+      newGame()
+        .withLocation(study, blankLocation('study', { name: 'Study', shroud: 2 }), {
+          revealed: true,
+          clues: 1,
+        })
+        .withInvestigator(alder, {
+          name: 'Alder',
+          locationId: study,
+          skills: { willpower: 1, intellect: 3, combat: 1, agility: 1 },
+        })
+        .withCard(
+          instanceId('dread'),
+          blankTreachery('dread', {
+            name: 'Dread',
+            modifiers: [{ value: 'intellect', of: 'threatArea', by: -1 }],
+          }),
+          threatAreaOf(alder),
+        )
+        .withTurnOf(alder),
+    );
+    table.investigate(alder, { result: 'open' });
+
+    renderFirstDecision(table);
+
+    expect(
+      within(screen.getByRole('list', { name: 'Skill value' }))
+        .getAllByRole('listitem')
+        .map((term) => term.textContent),
+    ).toEqual(['Intellect 3', 'Dread −1', '2']);
   });
 
   it.each([

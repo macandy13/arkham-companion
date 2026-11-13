@@ -12,9 +12,11 @@ import {
   modifiersOn,
   newGame,
   setAside,
+  skillValues,
   threatAreaOf,
   type CardValue,
 } from './index';
+import { requireInvestigator } from './investigators';
 import { requireCard } from './lookup';
 
 const alice = investigatorId('alice');
@@ -150,5 +152,49 @@ describe('modifiersOn', () => {
     expect(
       modifiersOn(context, state, { kind: 'card', card: requireCard(state.cards, study) }),
     ).toEqual([]);
+  });
+});
+
+describe('skillValues', () => {
+  const dread = instanceId('dread');
+  /** Alice (willpower 3, intellect 2, combat 1, agility 4) in the study, combat boosted by 1. */
+  const boostedAlice = newGame()
+    .withLocation(study, blankLocation('study'), { revealed: true })
+    .withInvestigator(alice, {
+      locationId: study,
+      skills: { willpower: 3, intellect: 2, combat: 1, agility: 4 },
+      skillBoosts: { combat: 1 },
+    });
+
+  it.each([
+    { name: 'in her threat area', zone: threatAreaOf(alice), willpower: 1 },
+    { name: 'set aside', zone: setAside, willpower: 3 },
+  ])('adds -2 willpower of a treachery $name to her boosted skills', ({ zone, willpower }) => {
+    const { context, state } = boostedAlice
+      .withCard(
+        dread,
+        blankTreachery('dread', { modifiers: [{ value: 'willpower', of: 'threatArea', by: -2 }] }),
+        zone,
+      )
+      .start();
+
+    expect(skillValues(context, state, requireInvestigator(state, alice))).toEqual({
+      willpower,
+      intellect: 2,
+      combat: 2,
+      agility: 4,
+    });
+  });
+
+  it('never goes below 0: intellect 2 with -5', () => {
+    const { context, state } = boostedAlice
+      .withCard(
+        dread,
+        blankTreachery('dread', { modifiers: [{ value: 'intellect', of: 'threatArea', by: -5 }] }),
+        threatAreaOf(alice),
+      )
+      .start();
+
+    expect(skillValues(context, state, requireInvestigator(state, alice)).intellect).toBe(0);
   });
 });

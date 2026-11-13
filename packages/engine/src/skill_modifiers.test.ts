@@ -3,12 +3,14 @@ import {
   CommandRejected,
   blankEnemy,
   blankLocation,
+  blankTreachery,
   decisionId,
   engagedWith,
   fixed,
   instanceId,
   investigatorId,
   newGame,
+  threatAreaOf,
   revealsAnotherToken,
   skillTestDecision,
   skillTestSuggestion,
@@ -49,6 +51,37 @@ const investigateStudy: SkillTestContext = {
   difficulty: 3,
   locationId: study,
 };
+
+describe('skillTestSuggestion: cards in play that change the tested skill', () => {
+  const dread = instanceId('dread');
+  /** A treachery in alice's threat area: "You get -1 [intellect]". */
+  const dreadCard = blankTreachery('dread', {
+    modifiers: [{ value: 'intellect', of: 'threatArea', by: -1 }],
+  });
+
+  it('adds a step for the treachery in her threat area: intellect 4 - 1 = 3', () => {
+    const { context, state } = aliceInStudy.withCard(dread, dreadCard, threatAreaOf(alice)).start();
+
+    const suggestion = skillTestSuggestion(context, state, investigateStudy);
+
+    expect(suggestion.trace.filter((step) => step.target === 'skill')).toEqual([
+      { target: 'skill', source: { kind: 'baseSkill' }, change: 4, total: 4 },
+      { target: 'skill', source: { kind: 'card', cardId: dread }, change: -1, total: 3 },
+    ]);
+    expect(suggestion.skill).toBe(3);
+  });
+
+  it('leaves out a treachery that changes another skill: no card step in her combat test', () => {
+    const { context, state } = aliceInStudy.withCard(dread, dreadCard, threatAreaOf(alice)).start();
+
+    const suggestion = skillTestSuggestion(context, state, {
+      ...investigateStudy,
+      skill: 'combat',
+    });
+
+    expect(suggestion.trace.filter((step) => step.source.kind === 'card')).toEqual([]);
+  });
+});
 
 describe("skillTestSuggestion: base values, the players' modifier and tokens", () => {
   const { context, state } = aliceInStudy.start();

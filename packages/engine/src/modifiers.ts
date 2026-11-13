@@ -4,7 +4,15 @@ import { cardStats, type EngineContext } from './cards';
 import { cardsInPlay, hasActiveAbilities } from './doom';
 import type { InvestigatorId } from './ids';
 import { binds, namesCard, type CardScope, type InvestigatorScope } from './scopes';
-import type { CardChange, CardInstance, GameState } from './state';
+import { boostedSkills } from './investigators';
+import type {
+  CardChange,
+  CardInstance,
+  GameState,
+  Investigator,
+  SkillName,
+  SkillValues,
+} from './state';
 
 /** The printed values of a location a modifier may change. */
 export type LocationValue = 'shroud';
@@ -35,7 +43,8 @@ export interface ActionCostModifier {
 
 /**
  * A constant ability that changes a number while its card is in play (`CardStats.modifiers`), as
- * card data: `{ value: 'shroud', of: 'host', by: 2 }` is Obscuring Fog. Each variant ties the value
+ * card data: `{ value: 'shroud', of: 'host', by: 2 }` is Obscuring Fog, `{ value: 'willpower', of:
+ * 'threatArea', by: -1 }` a treachery's "You get -1 [willpower]". Each variant ties the value
  * to what can have it, so a location scope never names an investigator. Like any constant ability
  * it holds while its card is in play, and a location's only once it is revealed
  * (`hasActiveAbilities`). `modifiersOn` is the one place that collects them.
@@ -43,6 +52,7 @@ export interface ActionCostModifier {
 export type Modifier =
   | { value: LocationValue; of: Exclude<CardScope, 'enemiesHere'>; by: number }
   | { value: EnemyValue; of: CardScope; by: number }
+  | { value: SkillName; of: InvestigatorScope; by: number }
   | ActionCostModifier;
 
 /** What a modifier is applied to: a card in play or an investigator. */
@@ -108,6 +118,48 @@ export function modifiedValue(
   return { printed: cardStats(ctx.cards, card.code)[value] ?? 0, changes };
 }
 
+/**
+ * What the cards in play change `investigator`'s `skill` by, each with its card, in the order the
+ * cards are in play. A skill test shows each as a step of its own (`skillTestSuggestion`).
+ */
+export function skillChanges(
+  ctx: EngineContext,
+  state: GameState,
+  investigator: InvestigatorId,
+  skill: SkillName,
+): CardChange[] {
+  return modifiersOn(ctx, state, { kind: 'investigator', investigatorId: investigator })
+    .filter(({ modifier }) => modifier.value === skill)
+    .map(({ source, modifier }) => ({ cardId: source.id, by: modifier.by }));
+}
+
+/**
+ * `investigator`'s skill values now: the printed ones with their lasting boosts
+ * (`boostedSkills`) and the changes of the cards in play (`skillChanges`), never below 0 (Rules
+ * Reference, "Modifiers"). What Prey compares and what the investigator card shows.
+ */
+export function skillValues(
+  ctx: EngineContext,
+  state: GameState,
+  investigator: Investigator,
+): SkillValues {
+  const boosted = boostedSkills(investigator);
+  const value = (skill: SkillName) =>
+    Math.max(
+      0,
+      skillChanges(ctx, state, investigator.id, skill).reduce(
+        (total, { by }) => total + by,
+        boosted[skill],
+      ),
+    );
+  return {
+    willpower: value('willpower'),
+    intellect: value('intellect'),
+    combat: value('combat'),
+    agility: value('agility'),
+  };
+}
+
 function names(
   ctx: EngineContext,
   state: GameState,
@@ -120,6 +172,10 @@ function names(
     case 'fight':
     case 'evade':
       return subject.kind === 'card' && namesCard(ctx, state, source, modifier.of, subject.card);
+    case 'willpower':
+    case 'intellect':
+    case 'combat':
+    case 'agility':
     case 'actionCost':
       return subject.kind === 'investigator' && binds(source, modifier.of, subject.investigatorId);
     default:
