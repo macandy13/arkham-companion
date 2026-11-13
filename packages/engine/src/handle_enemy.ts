@@ -115,14 +115,14 @@ export function handleMoveEnemy(ctx: EngineContext, state: GameState, cmd: MoveE
   const { enemy } = onTableEnemyOf(ctx, state, cmd.enemyId);
   const destination = requireLocationInPlay(state, cmd.to);
   if (locationOf(state, enemy) === cmd.to) return [];
-  // Like a hunter's blocked step (RR "Hunter"), it stays where a card closes the way (Barricade).
-  if (isClosedToEnemy(ctx, state, enemy, destination)) return [];
   if (enemy.zone.kind === 'engaged' && !cmd.forced)
     throw new CommandRejected({
       code: 'enemyEngaged',
       cardId: enemy.id,
       investigatorId: enemy.zone.investigatorId,
     });
+  // Like a hunter's blocked step (RR "Hunter"), it stays where a card closes the way (Barricade).
+  if (isClosedToEnemy(ctx, state, enemy, destination)) return [];
   const moved = moveCardEvent(enemy, { kind: 'atLocation', locationId: cmd.to });
   const arrived = replay([moved], state);
   const engaging = engageEvents(ctx, arrived, enemy.id);

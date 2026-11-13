@@ -7,11 +7,13 @@ import {
   blankTreachery,
   cardName,
   engagedWith,
+  boardView,
   instanceId,
   investigatorId,
   isInPlay,
   newGame,
   PlayTable,
+  takeHorror,
   trait,
   zoneOf,
   type Command,
@@ -19,7 +21,7 @@ import {
   type HostRestriction,
   type InstanceId,
 } from './index';
-import { rejectionFrom, stateAfter } from '../test/utils';
+import { investigatorOf, rejectionFrom, stateAfter } from '../test/utils';
 
 const alice = investigatorId('alice');
 const bob = investigatorId('bob');
@@ -70,6 +72,24 @@ describe('AttachPlayerCard', () => {
       typeCode: 'event',
       traits: [],
       restrictions: barricade,
+    });
+  });
+
+  it('attaches a second card to the same location, each with its own restrictions', () => {
+    const { context, state } = newGame().withLocation(hall, location).start();
+    const lockedOff: Command = {
+      type: 'AttachPlayerCard',
+      hostId: hall,
+      name: cardName('Ward'),
+      typeCode: 'asset',
+      restrictions: [{ cannot: 'investigate', of: 'host' }],
+    };
+
+    const after = stateAfter(context, state, barricadeOnHall, lockedOff);
+
+    expect(boardView(context, after).location(hall)).toMatchObject({
+      attachments: ['Barricade', 'Ward'],
+      forbidden: ['investigate'],
     });
   });
 
@@ -253,5 +273,21 @@ describe('BoardView of an attached player card', () => {
 
     expect(table.board.location(hall).attachments).toEqual(['Barricade']);
     expect(table.board.location(study).attachments).toBeUndefined();
+  });
+
+  it('still finds the cards of the table, so a card action can be taken', () => {
+    const table = PlayTable.start(
+      newGame()
+        .withLocation(hall, blankLocation('hall', { actions: [{ effects: [takeHorror(1)] }] }), {
+          revealed: true,
+        })
+        .withInvestigator(alice, { locationId: hall })
+        .withTurnOf(alice),
+    );
+    table.play(barricadeOnHall);
+
+    table.useCardAction(alice, hall);
+
+    expect(investigatorOf(table.state, alice).sanity.horror).toBe(1);
   });
 });
