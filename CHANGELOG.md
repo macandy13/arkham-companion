@@ -2,6 +2,13 @@
 
 The sections dated up to 2026-10-22 were released as 1.0.0 to 1.8.0 by mistake: Release Please starts at 1.0.0 by default. Versioning restarted at 0.1.0 (see "Versions" in docs/product.md).
 
+## [0.1.43](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v0.1.42...arkham-companion-v0.1.43) (2026-11-13)
+
+
+### Features
+
+* **engine:** test difficulty from the table (MC2.5a) ([e816235](https://github.com/macandy13/arkham-companion/commit/e8162358283aeaf4b5b9f3b4c85c25113b14056e))
+
 ## [0.1.42](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v0.1.41...arkham-companion-v0.1.42) (2026-11-12)
 
 
