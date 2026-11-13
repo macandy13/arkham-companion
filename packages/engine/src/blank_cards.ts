@@ -1,4 +1,4 @@
-import { cardCode, investigatorCode, investigatorId } from './ids';
+import { cardCode, encounterSetCode, investigatorCode, investigatorId } from './ids';
 import type { CardStats, CardType, ScaledValue } from './cards';
 import type { Investigator } from './state';
 
@@ -55,8 +55,16 @@ export function blankTreachery(code: string, stats: BlankCardStats = {}): CardSt
   return blankCard('treachery', code, {}, stats);
 }
 
-/** An asset (a story asset, as the encounter deck or setup puts into play) with no stats. */
+/**
+ * A story asset, as the encounter deck or setup puts into play, with no stats. It is of an
+ * encounter set (`story`), as a story asset is, so it is no player card (`isPlayerCard`).
+ */
 export function blankAsset(code: string, stats: BlankCardStats = {}): CardStats {
+  return blankCard('asset', code, { encounterCode: encounterSetCode('story') }, stats);
+}
+
+/** A player asset with no stats, such as one the players attach to an enemy (Handcuffs). */
+export function blankPlayerAsset(code: string, stats: BlankCardStats = {}): CardStats {
   return blankCard('asset', code, {}, stats);
 }
 

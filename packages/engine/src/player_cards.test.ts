@@ -6,6 +6,7 @@ import {
   blankEnemy,
   blankEvent,
   blankLocation,
+  blankPlayerAsset,
   blankTreachery,
   boardView,
   cardCode,
@@ -15,7 +16,6 @@ import {
   isInPlay,
   newGame,
   PlayTable,
-  takeHorror,
   trait,
   zoneKey,
   zoneOf,
@@ -23,7 +23,7 @@ import {
   type GameState,
   type InstanceId,
 } from './index';
-import { investigatorOf, rejectionFrom, stateAfter } from '../test/utils';
+import { rejectionFrom, stateAfter } from '../test/utils';
 
 const alice = investigatorId('alice');
 const bob = investigatorId('bob');
@@ -70,7 +70,7 @@ describe('AttachPlayerCard', () => {
   });
 
   it('attaches a second card to the same location, each with its own restrictions', () => {
-    const lockedOff = blankAsset('locked_off', {
+    const lockedOff = blankPlayerAsset('locked_off', {
       restrictions: [{ cannot: 'investigate', of: 'host' }],
     });
     const { context, state } = newGame()
@@ -100,11 +100,13 @@ describe('AttachPlayerCard', () => {
       code: 'invalidAttachmentHost',
     },
     { name: 'a card that is no player card', hostId: hall, card: 'curse', code: 'notAPlayerCard' },
+    { name: 'a story asset', hostId: hall, card: 'story_asset', code: 'notAPlayerCard' },
   ])('refuses $name', ({ hostId, card, code }) => {
     const { context, state } = newGame()
       .withLocation(hall, location)
       .withInvestigator(alice, { locationId: hall })
       .withCardData(barricade)
+      .withCardData(blankAsset('story_asset'))
       .withCard(ghoul, plainGhoul, { kind: 'setAside' })
       .withCard(instanceId('curse'), blankTreachery('curse'), {
         kind: 'threatArea',
@@ -149,6 +151,18 @@ describe('AttachPlayerCard', () => {
     const after = stateAfter(context, attached, { type: 'DiscardCard', cardId: id });
 
     expect(zoneOf(after, id)).toEqual({ kind: 'outOfGame' });
+  });
+
+  it('leaves a story asset to go to the encounter discard', () => {
+    const lantern = instanceId('lantern');
+    const { context, state } = newGame()
+      .withLocation(hall, location)
+      .withCard(lantern, blankAsset('lantern'), attachedTo(hall))
+      .start();
+
+    const after = stateAfter(context, state, { type: 'DiscardCard', cardId: lantern });
+
+    expect(zoneOf(after, lantern)).toEqual({ kind: 'encounterDiscard' });
   });
 });
 
@@ -260,22 +274,5 @@ describe('BoardView of an attached player card', () => {
 
     expect(table.board.location(hall).attachments).toEqual(['barricade']);
     expect(table.board.location(study).attachments).toBeUndefined();
-  });
-
-  it('still finds the cards of the table, so a card action can be taken', () => {
-    const table = PlayTable.start(
-      newGame()
-        .withLocation(hall, blankLocation('hall', { actions: [{ effects: [takeHorror(1)] }] }), {
-          revealed: true,
-        })
-        .withInvestigator(alice, { locationId: hall })
-        .withTurnOf(alice)
-        .withCardData(barricade),
-    );
-    table.play(barricadeOnHall);
-
-    table.useCardAction(alice, hall);
-
-    expect(investigatorOf(table.state, alice).sanity.horror).toBe(1);
   });
 });

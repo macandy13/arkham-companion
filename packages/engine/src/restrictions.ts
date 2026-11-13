@@ -136,7 +136,7 @@ export function isRestricted(
 
 /**
  * Whether a card in play keeps `enemy` from moving into `location` (`EnemyLocationRestriction`):
- * hunters go round it, and a card effect cannot move the enemy there.
+ * a hunter takes another equally short step or stays, and a card effect leaves the enemy where it is.
  */
 export function isClosedToEnemy(
   ctx: EngineContext,

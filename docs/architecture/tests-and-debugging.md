@@ -14,7 +14,7 @@ The three test tools live in the engine's source, so the app uses them too:
 
 ## Extension points
 
-- **A new table piece:** a `with*` method on `GameBuilder` that adds to the `StartScenario`; never set state directly.
+- **A new table piece:** a `with*` method on `GameBuilder` that adds to the `StartScenario`; never set state directly. `withCardData` adds only card data to the context, for a card that comes into play later (a player card the players attach).
 - **A new player step or read-back:** a `PlayTable` method, or a field or view in `board_view.ts`.
 - **A new way to find a card:** a `CardMatcher` variant with its cases in `matchingCards`, `matchingInvestigators` and `describeMatcher`.
 - **A rule change:** a step in the end-to-end test where it shows at the table.

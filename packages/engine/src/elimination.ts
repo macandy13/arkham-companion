@@ -148,7 +148,7 @@ function engagedEnemyEvents(
   return engaged.map((enemyId) => ({ type: 'EnemyDisengaged', enemyId, locationId }));
 }
 
-/** Threat-area cards are encounter cards (player cards are not modelled), so they go to the encounter discard. */
+/** Threat-area cards are discarded like any card leaving play (`discardEncounterCard`). */
 function threatAreaEvents(
   ctx: EngineContext,
   state: GameState,

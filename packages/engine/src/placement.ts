@@ -119,7 +119,8 @@ export function clearTokensEvents(
 
 /**
  * `cardId` and everything attached to it, attachments first, to the top of
- * the encounter discard, or a player card out of the game. Attachments go with
+ * the encounter discard, or a player card out of the game (the name is from
+ * before player cards were on the table). Attachments go with
  * their host because a card in the discard cannot host anything. Tokens are removed with each card: doom on a
  * discarded treachery must not come back if the discard is reshuffled into
  * the deck.

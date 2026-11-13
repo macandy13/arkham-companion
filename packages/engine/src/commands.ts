@@ -515,7 +515,7 @@ export interface ChangeChaosBag {
  * restriction (`enemiesMoveInto` but for Elite enemies). Produces `PlayerCardAttached`, a new card
  * attached to the host; rejects a host that is no enemy or location in play
  * (`invalidAttachmentHost`) and a card that is no player asset or event (`notAPlayerCard`). It leaves
- * play with its host, and `DiscardCard` discards it.
+ * play with its host, and `DiscardCard` discards it out of the game (`isPlayerCard`).
  */
 export interface AttachPlayerCard {
   type: 'AttachPlayerCard';
