@@ -715,9 +715,11 @@ export interface EncounterMatch {
 
 /**
  * Takes one set-aside copy of each code (a code listed twice takes two copies)
- * and moves it to `to`. Produces `CardMoved` per card.
+ * and moves it to `to`. Asked by a card (`source`), it takes the copies that are still set aside
+ * ("place 4 set-aside copies of Fire!" with fewer left) instead of refusing. Produces `CardMoved`
+ * per card.
  */
-export interface FromSetAside {
+export interface FromSetAside extends AskedByCard {
   type: 'FromSetAside';
   codes: readonly CardCode[];
   to: Zone;

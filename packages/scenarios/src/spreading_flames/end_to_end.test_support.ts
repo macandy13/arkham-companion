@@ -327,8 +327,9 @@ export function playSpreadingFlames(start: CampaignLog): CampaignLog {
 
   expect(table.nextPhase()).toEqual({ round: 6, phase: 'upkeep' });
 
-  // Round 7 – mythos: the fifth doom makes Lit Up advance to Wild Flames; its reverse side's
-  // agility tests are the players' to resolve. A Mutated Experiment engages Daisy.
+  // Round 7 – mythos: the fifth doom makes Lit Up advance to Wild Flames. Its reverse side places
+  // no Fire!, as act 1 put the set-aside copies out already, and its agility tests are the
+  // players' to resolve. A Mutated Experiment engages Daisy.
   expect(table.nextPhase()).toEqual({ round: 7, phase: 'mythos', step: 'checkDoomThreshold' });
   table.answerOnly('yes');
   expect(table.board.agenda).toMatchObject({ name: 'Wild Flames', doom: 0 });

@@ -50,6 +50,7 @@ An objective is an ability of its act or agenda, with a window that opens only w
 - Aerial Pursuit, "The nearest non-[[Elite]] enemy moves once toward your location. If it engages an investigator, it makes an immediate attack": `whenRevealed(moveEnemyTowards(nearestEnemy({ withoutTrait: trait('Elite') }), yourLocation(), { forced: true, attacksIfItEngages: true }))`. `attacksIfItEngages` follows the engagement on arrival with the enemy's attack, and adds it to each option when the players pick whom it engages.
 - Raising Suspicions, "Place 1 doom on the nearest enemy with no doom on it. If no doom was placed by this effect, Raising Suspicions gains surge": `whenRevealed(placeDoomOn(nearestEnemy({ withoutToken: 'doom' }), 1))` and `ifNoCandidate(nearestEnemy({ withoutToken: 'doom' }), whenRevealed(gainSurge()))`.
 - One card as act and agenda (Vengeance Awaits): `whenAdvanced(becomeActAndAgenda())`; the next agenda as both (Queen of Ash's A Ritual, "special agenda 3a replaces the current act and agenda"): `whenAdvanced(nextAgendaBecomesActAndAgenda())`.
+- Set-aside copies another card may have taken first (Lit Up, "place 4 set-aside copies of Fire! in the encounter discard pile"): `whenAdvanced(fromSetAside(Array<CardCode>(4).fill(codes.fire), { kind: 'encounterDiscard' }))`, which places whatever copies are left.
 - A test each investigator makes on a reverse side (A Gathering, "each investigator tests willpower (4)"): `forEachInvestigator(whenAdvanced(skillTest('willpower', 4, { onFail: [takeHorror(1)] })))`.
 - Reverse sides that hit each investigator (Smoke and Mirrors): "each investigator draws 1 copy of the set-aside Mark of Elokoss" is `whenAdvanced(fromSetAside([codes.markOfElokoss], { kind: 'threatArea', investigatorId: { ref: 'eachInvestigator' } }))`, and "each investigator immediately resigns" is `whenAdvanced(eachInvestigatorResigns())`.
 - A reverse side that depends on the current act: `duringAct([codes.trapped, codes.theBarrier], whenAdvanced(…))`.
@@ -57,6 +58,8 @@ An objective is an ability of its act or agenda, with a window that opens only w
 ## Costs of card actions
 
 A cost is `CardAction.cost`, paid before the effects.
+
+- Stop the Rite's "[fast] The investigators spend 1 [per_investigator] clues, as a group: discard the Fire! at your location": `{ free: true, cost: { spend: 'groupClues', amount: perInvestigator(1) }, effects: [{ type: 'DiscardCard', cardId: eachInPlay({ code: fire, at: yourLocation() }) }] }`. Without a Fire! there the discard would change nothing, so the action is neither offered nor taken (`changesNothing`).
 
 - "The investigators spend 2 clues per investigator, as a group" (Uncovering the Conspiracy):
   `cost: { spend: 'groupClues', amount: perInvestigator(2) }`.

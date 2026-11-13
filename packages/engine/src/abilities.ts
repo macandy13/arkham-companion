@@ -1901,6 +1901,7 @@ function withSource<C extends { readonly type: string }>(command: C, source: Com
     case 'DiscoverClues':
     case 'RemoveConnection':
     case 'ShuffleInto':
+    case 'FromSetAside':
     case 'EngageEnemy':
       return { ...command, source };
     case 'RequestDecision': {

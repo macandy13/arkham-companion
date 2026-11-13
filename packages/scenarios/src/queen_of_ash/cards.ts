@@ -5,29 +5,34 @@ import {
   atEndOfPhase,
   atEndOfRound,
   atEndOfTurn,
-  nextAgendaBecomesActAndAgenda,
   cardCode,
+  type CardCode,
+  type CardDb,
   cardDbFrom,
+  type CardStats,
   decisionId,
+  defeatEnemy,
   discardEachEnemy,
   discardFromHand,
   drawDiscardingUntil,
   duringAct,
-  defeatEnemy,
   eachEnemy,
+  eachInPlay,
   eachInZone,
-  endScenario,
+  type EncounterSetCode,
   encounterSetCode,
+  endScenario,
   fixed,
   forEachEnemy,
   forEachInvestigator,
   fromSetAside,
   gainResources,
-  ifValue,
   GRID_CELLS_PER_CARD,
+  ifValue,
   loseActions,
   mapId,
   moveEnemyTowards,
+  nextAgendaBecomesActAndAgenda,
   onlyCopy,
   perInvestigator,
   placeCluesOnSelf,
@@ -53,10 +58,7 @@ import {
   whenRevealed,
   whenTokensOnSelf,
   youMustEither,
-  type CardDb,
-  type CardCode,
-  type CardStats,
-  type EncounterSetCode,
+  yourLocation,
 } from '@arkham/engine';
 import { act, agenda, enemy, location, picturesOf, treachery } from '../card_builders';
 import {
@@ -193,8 +195,7 @@ const willpowerOrHorror = skillTest('willpower', 4, { onFail: [takeHorror(1)] })
  *
  * - the agendas' rule that enemies at a location with Fire! attached cannot be damaged (MC2.12):
  *   until then the players heal what Fire!'s own damage deals them as the investigation phase ends
- * - Elokoss's Mother of Flame side (agenda 2b), agenda 3a's damage instead of doom, and act 2a's
- *   clue spend to discard a Fire!
+ * - Elokoss's Mother of Flame side (agenda 2b) and agenda 3a's damage instead of doom
  * - the additional clue costs to enter Underground Cistern and Sluice Control (MC2.4)
  * - Elokoss: her extra health and her clue spend toward Resolution 2 are entered, but not that
  *   she cannot move or make attacks of opportunity, or her Mother of Flame side
@@ -283,6 +284,14 @@ export const queenOfAshCardDefs: readonly CardStats[] = [
     set: own,
     pictures: jpg,
     stage: 2,
+    actions: [
+      {
+        free: true,
+        cost: { spend: 'groupClues', amount: perInvestigator(1) },
+        // A location holds at most one Fire! (its limit), so each one there is "a copy".
+        effects: [{ type: 'DiscardCard', cardId: eachInPlay({ code: fire, at: yourLocation() }) }],
+      },
+    ],
     abilities: [
       atEndOfRound(
         // The card names no unengaged enemies, so an engaged Cultist disengages and moves too.
