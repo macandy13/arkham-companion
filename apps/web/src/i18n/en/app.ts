@@ -96,6 +96,7 @@ export const appTexts = {
     actAdvanced: 'The act {{card}} advances',
     drawn: '{{investigator}} draws {{card}}',
     surge: '{{card}} gains surge',
+    playerCardAttached: '{{card}} attached to {{host}}',
     revelationCancelled: '{{investigator}} cancels the revelation of {{card}}',
     cardAction: '{{investigator}} uses {{card}}',
     playerCards: {

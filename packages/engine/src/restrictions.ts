@@ -57,6 +57,17 @@ export type Forbidden = { [N in RestrictedNoun]?: RestrictedVerbs[N][] };
  */
 export type RestrictedLocation = Extract<CardScope, 'self' | 'host'>;
 
+/**
+ * A "cannot" about which enemies may enter a location: `{ cannot: 'enemiesMoveInto', of: 'host',
+ * exceptTraits: [trait('Elite')] }` is Barricade ("Non-Elite enemies cannot move into attached
+ * location"). Enemies with one of `exceptTraits` are not held back. Read by `isClosedToEnemy`.
+ */
+export interface EnemyLocationRestriction {
+  cannot: 'enemiesMoveInto';
+  of: RestrictedLocation;
+  exceptTraits?: readonly Trait[];
+}
+
 /** A "cannot" about a location: `{ cannot: 'investigate', of: 'host' }` is Locked Door. */
 export interface LocationCardRestriction {
   cannot: LocationRestriction;
@@ -96,10 +107,11 @@ export type InvestigatorCardRestriction =
  * A constant "cannot" ability (`CardStats.restrictions`), as card data. Like a `Modifier` it
  * holds while its card is in play, and a location's restriction only once it is revealed,
  * unless it is printed on the unrevealed side (`unrevealed`, the Parlor's barrier), which holds
- * until then. `isRestricted` and `isRestrictedFor` are the only places that read them, so the
- * handlers and the views agree.
+ * until then. `isRestricted`, `isRestrictedFor` and `isClosedToEnemy` are the only places that
+ * read them, so the handlers and the views agree.
  */
-export type CardRestriction = LocationCardRestriction | InvestigatorCardRestriction;
+export type CardRestriction =
+  LocationCardRestriction | EnemyLocationRestriction | InvestigatorCardRestriction;
 
 /**
  * Whether a card in play forbids `cannot` at `location` (Rules Reference, "Cannot": a "cannot"
@@ -117,6 +129,27 @@ export function isRestricted(
       (restriction) =>
         'of' in restriction &&
         restriction.cannot === cannot &&
+        namesCard(ctx, state, source, restriction.of, location),
+    ),
+  );
+}
+
+/**
+ * Whether a card in play keeps `enemy` from moving into `location` (`EnemyLocationRestriction`):
+ * a hunter takes another equally short step or stays, and a card effect leaves the enemy where it is.
+ */
+export function isClosedToEnemy(
+  ctx: EngineContext,
+  state: GameState,
+  enemy: CardInstance,
+  location: CardInstance,
+): boolean {
+  const traits = cardStats(ctx.cards, enemy.code).traits;
+  return cardsInPlay(state).some((source) =>
+    activeRestrictions(ctx, source).some(
+      (restriction) =>
+        restriction.cannot === 'enemiesMoveInto' &&
+        !(restriction.exceptTraits ?? []).some((trait) => traits.includes(trait)) &&
         namesCard(ctx, state, source, restriction.of, location),
     ),
   );

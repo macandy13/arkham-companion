@@ -45,6 +45,7 @@ export type Event =
   | TokensChanged
   | ChaosBagChanged
   | ChaosTokenSealed
+  | PlayerCardAttached
   | ChaosTokenReleased
   | CardFlipped
   | ConnectionChanged
@@ -131,6 +132,17 @@ export interface ChaosBagChanged {
   token: ChaosToken;
   change: ChaosBagChangeKind;
   lasts: ChaosBagChangeLasts;
+}
+
+/**
+ * The player card `code` came into play as the card `cardId`, attached to `hostId`. Produced by
+ * `AttachPlayerCard`.
+ */
+export interface PlayerCardAttached {
+  type: 'PlayerCardAttached';
+  cardId: InstanceId;
+  code: CardCode;
+  hostId: InstanceId;
 }
 
 /** One copy of `token` left the chaos bag, sealed on `investigatorId`. Produced by `SealChaosToken`. */

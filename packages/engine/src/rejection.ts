@@ -142,6 +142,10 @@ export type Rejection =
   | { code: 'notAnEnemy'; cardId: InstanceId }
   /** `SpawnEnemy` for an enemy that is already in play. */
   | { code: 'enemyAlreadyInPlay'; cardId: InstanceId }
+  /** `AttachPlayerCard` to a card that is no enemy or location in play. */
+  | { code: 'invalidAttachmentHost'; cardId: InstanceId }
+  /** `AttachPlayerCard` of a card that is no player asset or event (`isPlayerCard`). */
+  | { code: 'notAPlayerCard'; cardCode: CardCode }
   /** An enemy command (engage, damage, exhaust, …) for an enemy that is not in play. */
   | { code: 'enemyNotInPlay'; cardId: InstanceId }
   /** `MoveEnemy` for an engaged enemy, which moves only with its investigator, unless `forced`. */
@@ -413,6 +417,10 @@ function describe(r: Rejection): string {
       return `${r.cardId} is not an enemy`;
     case 'enemyAlreadyInPlay':
       return `${r.cardId} is already in play`;
+    case 'invalidAttachmentHost':
+      return `a player card attaches only to an enemy or a location in play, not ${r.cardId}`;
+    case 'notAPlayerCard':
+      return `${r.cardCode} is no player card to attach`;
     case 'enemyNotInPlay':
       return `${r.cardId} is not in play`;
     case 'noSpawnLocation':
