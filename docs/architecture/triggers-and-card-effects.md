@@ -22,7 +22,7 @@ An [`Ability`](../../packages/engine/src/abilities.ts) is:
   - `evaded` for the enemy, naming the evader, once `EvadeEnemy` (a passed evasion or an effect) has exhausted and disengaged it, so later than `tested` (`afterEvaded`, Ruth Turner),
   - `cluesDiscovered`,
   - `defeated` for the enemy itself, naming where it was,
-  - `tokensPlaced` for tokens placed on the card;
+  - `tokensPlaced` for tokens placed on the card (`afterTokensPlaced`, Wild Flames' "after doom is placed on the agenda"; `whenTokensOnSelf` for an objective on a count);
 - an optional condition (`AbilityCondition`), mostly over the references effects use:
   - `currentCard`, the current act or agenda: `duringAct([codes.trapped], …)`, `duringAgenda([codes.theyreGettingOut], …)`;
   - `countOf`, how many things a reference names as the window opens:

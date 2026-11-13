@@ -40,6 +40,7 @@ The scripted golden game is [`end_to_end.test_support.ts`](../../packages/scenar
 
 **Agendas**
 
+- [ ] Each time doom is placed on Wild Flames, the lead investigator draws the topmost Fire! of the encounter discard pile, if there is one.
 - [ ] Wild Flames advancing defeats each investigator with 1 physical trauma (no resolution).
 
 **Locations and enemies**
@@ -69,7 +70,8 @@ The scripted golden game is [`end_to_end.test_support.ts`](../../packages/scenar
 
 These are done by hand at the table; the app does not do them.
 
-- The reverse sides of Past Curfew and Lit Up (each investigator tests; Lit Up's Fire! cards), the agendas' Parley to discard a Bystander, and Wild Flames' Fire! draw after doom is placed on it.
+- Wild Flames' Fire! draw for doom added with a correction by hand: corrections open no forced abilities, so draw the topmost Fire! of the discard yourself.
+- The reverse sides of Past Curfew and Lit Up (each investigator tests; Lit Up's Fire! cards), and the agendas' Parley to discard a Bystander.
 - Escape the Dorms' objective: the act advances when each undefeated investigator is at Miskatonic Quad. The players advance it with "Advance by hand" on the act's full card.
 - Searching for Dr. Armitage's reverse side: Dr. Henry Armitage under an investigator's control and the lead's search for Fire!. His skill bonus and free first action are his controller's to apply.
 - Blaze of Glory's group clue spend to deal damage to an enemy.

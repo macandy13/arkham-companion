@@ -3,6 +3,7 @@ import {
   advanceBySpendingCluesAtRoundEnd,
   afterAttacking,
   afterDiscoveringClues,
+  afterTokensPlaced,
   atEndOfPhase,
   attachTo,
   cardCode,
@@ -17,6 +18,7 @@ import {
   discardEachEnemy,
   discardFromHand,
   discardSelf,
+  drawFromEncounterDiscard,
   duringPhase,
   eachEnemy,
   eachInvestigator,
@@ -32,6 +34,7 @@ import {
   heal,
   ifYouHave,
   itsLocation,
+  lead,
   leadDecides,
   mapId,
   nearestLocation,
@@ -168,8 +171,7 @@ const jpg = 'jpg';
  * - Searching for Dr. Armitage's reverse side: Dr. Henry Armitage under any investigator's
  *   control (MC2.14) and the lead's search for Fire!
  * - the agendas' Parley (test intellect (2) to discard a Bystander at your location): it can be
- *   taken only with a Bystander there, a condition actions can't state yet; Wild Flames draws Fire!
- *   after doom is placed on it (MC2.1)
+ *   taken only with a Bystander there, a condition actions can't state yet
  * - Blaze of Glory's group clue spend to deal damage to an enemy
  * - Your Friend's Room's Engage action, Miskatonic Quad's free move, Warren Observatory's draw
  *   (MC2.3) and Orne Library's two-action draw (MC1.12)
@@ -209,7 +211,10 @@ export const spreadingFlamesCardDefs: readonly CardStats[] = [
     pictures: jpg,
     stage: 3,
     doom: 10,
-    abilities: [whenAdvanced(defeatEachInvestigator({ trauma: 'physical' }))],
+    abilities: [
+      afterTokensPlaced('doom', drawFromEncounterDiscard({ name: 'Fire!' }, lead())),
+      whenAdvanced(defeatEachInvestigator({ trauma: 'physical' })),
+    ],
   }),
   act({
     code: codes.whereTheresSmoke,

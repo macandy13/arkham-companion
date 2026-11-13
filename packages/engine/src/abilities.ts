@@ -1533,6 +1533,16 @@ export function whenVictoryDisplayHolds(
 }
 
 /**
+ * A forced ability "after [tokens] are placed on [this card]", written
+ * `afterTokensPlaced('doom', drawFromEncounterDiscard({ name: 'Fire!' }, lead()))` (Wild Flames:
+ * "after doom is placed on the agenda"). Opened by each placement (`tokensPlaced`), not by
+ * corrections made by hand.
+ */
+export function afterTokensPlaced(token: TokenKind, ...effects: AbilityEffect[]): Ability {
+  return { window: { kind: 'tokensPlaced', token }, effects };
+}
+
+/**
  * "Objective – If there are 2 clues per investigator on this Act, advance": `effects` resolve
  * once tokens placed on the card bring it to `atLeast` tokens of `token`, written
  * `whenTokensOnSelf('clue', perInvestigator(2), advanceAct())`. Checked as tokens arrive
@@ -2662,6 +2672,17 @@ export function forEachEnemy(filter: EachEnemyFilter, ability: Ability): Ability
  */
 export function forEachInvestigator(ability: Ability): Ability {
   return { ...ability, perInvestigator: true };
+}
+
+/**
+ * "Draws the topmost copy of Fire! in the encounter discard pile": `who` draws the first card of
+ * the discard, top down, that fits `match` (`DrawEncounter` from `discard`); nothing when none does.
+ */
+export function drawFromEncounterDiscard(
+  match: EncounterMatch,
+  who: RelativeInvestigator = { ref: 'windowInvestigator' },
+): AbilityEffect {
+  return { type: 'DrawEncounter', investigatorId: who, from: 'discard', match };
 }
 
 /**
