@@ -401,6 +401,28 @@ describe('Spreading Flames act 3, Searching for Dr. Armitage', () => {
   });
 });
 
+describe('Spreading Flames agenda 2, Lit Up', () => {
+  const advanceLitUp: Command[] = [{ type: 'AdvanceAgenda' }, { type: 'AdvanceAgenda' }];
+
+  it('puts 4 of the set-aside Fire! in the encounter discard', () => {
+    const state = stateAfter(ctx, startScenario(ctx, { playerCount: 2 }), ...advanceLitUp);
+
+    expect(discardNames(state)).toEqual(['Fire!', 'Fire!', 'Fire!', 'Fire!']);
+    expect(codesIn(state, { kind: 'setAside' })).toContain(codes.fire);
+  });
+
+  it("puts no Fire! in the encounter discard once Where There's Smoke... took every copy", () => {
+    const smokeAdvanced = stateAfter(ctx, startScenario(ctx, { playerCount: 2 }), {
+      type: 'AdvanceAct',
+    });
+
+    const state = stateAfter(ctx, smokeAdvanced, ...advanceLitUp);
+
+    expect(codesIn(smokeAdvanced, { kind: 'setAside' })).not.toContain(codes.fire);
+    expect(discardNames(state)).toEqual(discardNames(smokeAdvanced));
+  });
+});
+
 describe('Spreading Flames act 4, Blaze of Glory, and the resolutions', () => {
   /** Acts 1 to 3 advance without paying; act 3 puts the Servant of Flame at Miskatonic Quad. */
   function atBlazeOfGlory(): GameState {

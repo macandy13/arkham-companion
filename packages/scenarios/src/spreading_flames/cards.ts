@@ -7,6 +7,7 @@ import {
   atEndOfPhase,
   attachTo,
   cardCode,
+  type CardCode,
   type CardDb,
   cardDbFrom,
   type CardStats,
@@ -174,11 +175,10 @@ const jpg = 'jpg';
  *
  * Effects the engine has no rule for yet are left out, so the players resolve them from the card:
  *
- * - Past Curfew's and Lit Up's reverse sides (each investigator tests, MC2.13; Lit Up's Fire! "if
- *   they are still set aside")
+ * - Past Curfew's and Lit Up's reverse sides' tests for each investigator (MC2.13)
  * - Escape the Dorms' objective (each undefeated investigator at Miskatonic Quad, MC2.14)
  * - Searching for Dr. Armitage's reverse side: Dr. Henry Armitage under any investigator's
- *   control (MC2.14) and the lead's search for Fire!
+ *   control (MC2.14) and the lead's search for Fire! (MC2.2b, #1328)
  * - the agendas' Parley (test intellect (2) to discard a Bystander at your location): it can be
  *   taken only with a Bystander there, a condition actions can't state yet
  * - Blaze of Glory's group clue spend to deal damage to an enemy
@@ -211,6 +211,10 @@ export const spreadingFlamesCardDefs: readonly CardStats[] = [
     pictures: jpg,
     stage: 2,
     doom: 5,
+    // Where There's Smoke… may have taken the copies already; then none is placed.
+    abilities: [
+      whenAdvanced(fromSetAside(Array<CardCode>(4).fill(codes.fire), { kind: 'encounterDiscard' })),
+    ],
   }),
   agenda({
     code: codes.wildFlames,

@@ -452,4 +452,47 @@ describe('Queen of Ash card abilities', () => {
       expect(state.cards[languor]?.zone).toEqual(threatAreaOf(alice));
     });
   });
+
+  describe('Stop the Rite', () => {
+    const cistern = instanceId('underground_cistern');
+    const fireHere = instanceId('fire_at_culvert');
+    const fireElsewhere = instanceId('fire_at_cistern');
+    /** Alice with 1 clue at Sewer Culvert, a Fire! attached to Underground Cistern, and one to `culvertHas`. */
+    const aliceWithFireAt = (culvertHas: 'fire' | 'no fire') => {
+      const builder = newGame()
+        .withAct(instanceId('stop_the_rite'), cardOf('12173'))
+        .withLocation(culvert, cardOf('12182'), { revealed: true })
+        .withLocation(cistern, cardOf('12174'), { revealed: true })
+        .withInvestigator(alice, { locationId: culvert, clues: 1 })
+        .withCard(fireElsewhere, cardOf('12129'), { kind: 'attachedTo', hostId: cistern })
+        .withTurnOf(alice);
+      return (
+        culvertHas === 'fire'
+          ? builder.withCard(fireHere, cardOf('12129'), { kind: 'attachedTo', hostId: culvert })
+          : builder
+      ).start();
+    };
+    const aliceUsesStopTheRite: Command = {
+      type: 'UseCardAction',
+      investigatorId: alice,
+      cardId: instanceId('stop_the_rite'),
+      action: 0,
+    };
+
+    it("discards the Fire! at alice's location as a fast ability for 1 clue per investigator", () => {
+      const { context, state: started } = aliceWithFireAt('fire');
+
+      const { state } = execute(context, started, aliceUsesStopTheRite);
+
+      expect(requireInvestigator(state, alice)).toMatchObject({ clues: 0, actionsRemaining: 3 });
+      expect(state.cards[fireHere]?.zone).toEqual(encounterDiscard);
+      expect(state.cards[fireElsewhere]?.zone).toEqual({ kind: 'attachedTo', hostId: cistern });
+    });
+
+    it("refuses the ability without a Fire! at alice's location", () => {
+      const { context, state } = aliceWithFireAt('no fire');
+
+      expect(rejectionFrom(context, state, aliceUsesStopTheRite).code).toBe('changesNothing');
+    });
+  });
 });
