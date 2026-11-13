@@ -1,6 +1,7 @@
 import {
   brethrenOfAsh,
   nightOfTheZealot,
+  playerCardDefs,
   queenOfAsh,
   queenOfAshCards,
   smokeAndMirrors,
@@ -23,7 +24,13 @@ import type {
   ScenarioDefinition,
   ScenarioId,
 } from '@arkham/engine';
+import { cardDbWith } from '@arkham/engine';
 import { interludeTestCampaign } from './interlude_test_campaign';
+
+/** A scenario's cards plus the player cards the players can attach (`playerCardDefs`). */
+function withPlayerCards(cards: CardDb): CardDb {
+  return cardDbWith(cards, playerCardDefs);
+}
 
 /** A scenario the wizard can start: its definition plus the card data the engine needs to run it. */
 export interface ScenarioEntry {
@@ -62,37 +69,37 @@ export const scenarioCatalog: readonly ScenarioEntry[] = [
     id: theGathering.id,
     nameKey: 'scenarios.theGathering',
     definition: theGathering,
-    cards: theGatheringCards,
+    cards: withPlayerCards(theGatheringCards),
   },
   {
     id: theMidnightMasks.id,
     nameKey: 'scenarios.theMidnightMasks',
     definition: theMidnightMasks,
-    cards: theMidnightMasksCards,
+    cards: withPlayerCards(theMidnightMasksCards),
   },
   {
     id: theDevourerBelow.id,
     nameKey: 'scenarios.theDevourerBelow',
     definition: theDevourerBelow,
-    cards: theDevourerBelowCards,
+    cards: withPlayerCards(theDevourerBelowCards),
   },
   {
     id: spreadingFlames.id,
     nameKey: 'scenarios.spreadingFlames',
     definition: spreadingFlames,
-    cards: spreadingFlamesCards,
+    cards: withPlayerCards(spreadingFlamesCards),
   },
   {
     id: smokeAndMirrors.id,
     nameKey: 'scenarios.smokeAndMirrors',
     definition: smokeAndMirrors,
-    cards: smokeAndMirrorsCards,
+    cards: withPlayerCards(smokeAndMirrorsCards),
   },
   {
     id: queenOfAsh.id,
     nameKey: 'scenarios.queenOfAsh',
     definition: queenOfAsh,
-    cards: queenOfAshCards,
+    cards: withPlayerCards(queenOfAshCards),
   },
 ];
 

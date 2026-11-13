@@ -98,7 +98,6 @@ import {
 } from './skill_modifiers';
 import { skillTestOdds, type SkillTestOdds } from './skill_test_odds';
 import { victoryPoints } from './victory';
-import { gameContext } from './player_cards';
 import type {
   AmountRange,
   CardInstance,
@@ -616,14 +615,10 @@ export interface DueAttackView {
  * date). Build a new one with `boardView` after each command.
  */
 export class BoardView {
-  private readonly ctx: EngineContext;
-
   constructor(
-    ctx: EngineContext,
+    private readonly ctx: EngineContext,
     private readonly state: GameState,
-  ) {
-    this.ctx = gameContext(ctx, state);
-  }
+  ) {}
 
   get round(): number {
     return this.state.meta.round;

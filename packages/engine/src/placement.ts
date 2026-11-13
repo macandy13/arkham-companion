@@ -124,20 +124,24 @@ export function clearTokensEvents(
  * discarded treachery must not come back if the discard is reshuffled into
  * the deck.
  */
-export function discardEncounterCard(state: GameState, cardId: InstanceId): Event[] {
+export function discardEncounterCard(
+  ctx: EngineContext,
+  state: GameState,
+  cardId: InstanceId,
+): Event[] {
   const card = state.cards[cardId];
   if (!card) return [];
   const attachments = (state.order[zoneKey({ kind: 'attachedTo', hostId: cardId })] ?? []).flatMap(
-    (attachedId) => discardEncounterCard(state, attachedId),
+    (attachedId) => discardEncounterCard(ctx, state, attachedId),
   );
   // A player card goes back to its owner, out of the scenario's game.
-  const to: Zone = isPlayerCard(state, card) ? { kind: 'outOfGame' } : { kind: 'encounterDiscard' };
+  const to: Zone = isPlayerCard(ctx, card) ? { kind: 'outOfGame' } : { kind: 'encounterDiscard' };
   return [...attachments, ...clearTokensEvents(card), moveCardEvent(card, to, 0)];
 }
 
 /** `DiscardCard`: discards the card the way a resolved encounter card is (`discardEncounterCard`). */
-export function handleDiscardCard(state: GameState, cmd: DiscardCard): Event[] {
-  return discardEncounterCard(state, requireCard(state.cards, cmd.cardId).id);
+export function handleDiscardCard(ctx: EngineContext, state: GameState, cmd: DiscardCard): Event[] {
+  return discardEncounterCard(ctx, state, requireCard(state.cards, cmd.cardId).id);
 }
 
 /**

@@ -37,7 +37,6 @@ import {
 } from './state';
 import { attacksStillDue } from './phases';
 import { enemyPhaseAttackDecisionId } from './forced_attacks';
-import { gameContext } from './player_cards';
 import { undoLastGroup } from './undo';
 import type { GameBuilder } from './game_builder';
 
@@ -139,13 +138,7 @@ export class PlayTable {
   /** The group id of the step being played; set only while `atomically` runs one. */
   private stepId: string | undefined;
 
-  /** `given` is the context the table was made in, without the game's player cards. */
-  private constructor(private readonly given: EngineContext) {}
-
-  /** The context the table reads its state with: `given` with the game's player cards (`gameContext`). */
-  get ctx(): EngineContext {
-    return gameContext(this.given, this.current);
-  }
+  private constructor(readonly ctx: EngineContext) {}
 
   /**
    * A table started from the game `game` describes, in the context that knows

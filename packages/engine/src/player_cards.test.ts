@@ -2,12 +2,14 @@ import { describe, expect, it } from 'vitest';
 import {
   atLocation,
   attachedTo,
+  blankAsset,
   blankEnemy,
+  blankEvent,
   blankLocation,
   blankTreachery,
-  cardName,
-  engagedWith,
   boardView,
+  cardCode,
+  engagedWith,
   instanceId,
   investigatorId,
   isInPlay,
@@ -15,10 +17,10 @@ import {
   PlayTable,
   takeHorror,
   trait,
+  zoneKey,
   zoneOf,
   type Command,
   type GameState,
-  type HostRestriction,
   type InstanceId,
 } from './index';
 import { investigatorOf, rejectionFrom, stateAfter } from '../test/utils';
@@ -39,67 +41,70 @@ const eliteHunter = blankEnemy('elite_hunter', {
 const plainGhoul = blankEnemy('plain_ghoul');
 const eliteGhoul = blankEnemy('elite_ghoul', { traits: [trait('Elite')] });
 
-/** Barricade's "Non-Elite enemies cannot move into attached location". */
-const barricade: readonly HostRestriction[] = [
-  { cannot: 'enemiesMoveInto', of: 'host', exceptTraits: [trait('Elite')] },
-];
-const barricadeOnHall: Command = {
-  type: 'AttachPlayerCard',
-  hostId: hall,
-  name: cardName('Barricade'),
-  typeCode: 'event',
-  restrictions: barricade,
-};
+/** Barricade: "Non-Elite enemies cannot move into attached location". */
+const barricade = blankEvent('barricade', {
+  restrictions: [{ cannot: 'enemiesMoveInto', of: 'host', exceptTraits: [trait('Elite')] }],
+});
+const barricadeOnHall: Command = { type: 'AttachPlayerCard', hostId: hall, code: barricade.code };
 
-/** The ID the engine gave the only player card attached in `state`. */
-function onlyPlayerCardId(state: GameState): InstanceId {
-  const [only] = Object.keys(state.playerCards);
-  if (only === undefined) throw new Error('a player card is attached');
-  return instanceId(only);
+/** The only card attached to `hostId` in `state`. */
+function onlyAttachmentOf(state: GameState, hostId: InstanceId): InstanceId {
+  const [only, ...more] = state.order[zoneKey(attachedTo(hostId))] ?? [];
+  if (only === undefined || more.length > 0) throw new Error(`one card is attached to ${hostId}`);
+  return only;
 }
 
 describe('AttachPlayerCard', () => {
-  it('attaches the named player card to the location, with its restrictions as card data', () => {
-    const { context, state } = newGame().withLocation(hall, location).start();
+  it('attaches the player card to the location', () => {
+    const { context, state } = newGame()
+      .withLocation(hall, location)
+      .withCardData(barricade)
+      .start();
 
     const after = stateAfter(context, state, barricadeOnHall);
 
-    const id = onlyPlayerCardId(after);
-    expect(zoneOf(after, id)).toEqual(attachedTo(hall));
-    expect(after.playerCards[after.cards[id]!.code]).toEqual({
-      code: id,
-      name: 'Barricade',
-      typeCode: 'event',
-      traits: [],
-      restrictions: barricade,
+    expect(after.cards[onlyAttachmentOf(after, hall)]).toMatchObject({
+      code: 'barricade',
+      faceUp: true,
     });
   });
 
   it('attaches a second card to the same location, each with its own restrictions', () => {
-    const { context, state } = newGame().withLocation(hall, location).start();
-    const lockedOff: Command = {
+    const lockedOff = blankAsset('locked_off', {
+      restrictions: [{ cannot: 'investigate', of: 'host' }],
+    });
+    const { context, state } = newGame()
+      .withLocation(hall, location)
+      .withCardData(barricade)
+      .withCardData(lockedOff)
+      .start();
+
+    const after = stateAfter(context, state, barricadeOnHall, {
       type: 'AttachPlayerCard',
       hostId: hall,
-      name: cardName('Ward'),
-      typeCode: 'asset',
-      restrictions: [{ cannot: 'investigate', of: 'host' }],
-    };
-
-    const after = stateAfter(context, state, barricadeOnHall, lockedOff);
+      code: lockedOff.code,
+    });
 
     expect(boardView(context, after).location(hall)).toMatchObject({
-      attachments: ['Barricade', 'Ward'],
+      attachments: ['barricade', 'locked_off'],
       forbidden: ['investigate'],
     });
   });
 
   it.each([
-    { name: 'a host out of play', hostId: ghoul, attached: 'Handcuffs' },
-    { name: 'a host that is no enemy or location', hostId: instanceId('curse'), attached: 'Ward' },
-  ])('refuses $name', ({ hostId, attached }) => {
+    { name: 'a host out of play', hostId: ghoul, card: 'barricade', code: 'invalidAttachmentHost' },
+    {
+      name: 'a host that is no enemy or location',
+      hostId: instanceId('curse'),
+      card: 'barricade',
+      code: 'invalidAttachmentHost',
+    },
+    { name: 'a card that is no player card', hostId: hall, card: 'curse', code: 'notAPlayerCard' },
+  ])('refuses $name', ({ hostId, card, code }) => {
     const { context, state } = newGame()
       .withLocation(hall, location)
       .withInvestigator(alice, { locationId: hall })
+      .withCardData(barricade)
       .withCard(ghoul, plainGhoul, { kind: 'setAside' })
       .withCard(instanceId('curse'), blankTreachery('curse'), {
         kind: 'threatArea',
@@ -110,60 +115,40 @@ describe('AttachPlayerCard', () => {
     const rejection = rejectionFrom(context, state, {
       type: 'AttachPlayerCard',
       hostId,
-      name: cardName(attached),
-      typeCode: 'asset',
-      restrictions: [],
+      code: cardCode(card),
     });
 
-    expect(rejection.code).toBe('invalidAttachmentHost');
-  });
-
-  it('refuses a blank name', () => {
-    const { context, state } = newGame().withLocation(hall, location).start();
-
-    const rejection = rejectionFrom(context, state, {
-      type: 'AttachPlayerCard',
-      hostId: hall,
-      name: cardName(' '),
-      typeCode: 'event',
-      restrictions: [],
-    });
-
-    expect(rejection.code).toBe('unnamedAttachment');
+    expect(rejection.code).toBe(code);
   });
 
   it('leaves play with its host', () => {
     const { context, state } = newGame()
       .withLocation(hall, location)
       .withCard(ghoul, plainGhoul, atLocation(hall))
+      .withCardData(barricade)
       .start();
 
     const after = stateAfter(
       context,
       state,
-      {
-        type: 'AttachPlayerCard',
-        hostId: ghoul,
-        name: cardName('Handcuffs'),
-        typeCode: 'asset',
-        restrictions: [],
-      },
+      { type: 'AttachPlayerCard', hostId: ghoul, code: barricade.code },
       { type: 'DefeatEnemy', enemyId: ghoul },
     );
 
-    expect(isInPlay(after, after.cards[onlyPlayerCardId(after)]!)).toBe(false);
+    expect(isInPlay(after, after.cards[onlyAttachmentOf(after, ghoul)]!)).toBe(false);
   });
 
   it('goes back to its owner, out of the game, once discarded', () => {
-    const { context, state } = newGame().withLocation(hall, location).start();
+    const { context, state } = newGame()
+      .withLocation(hall, location)
+      .withCardData(barricade)
+      .start();
     const attached = stateAfter(context, state, barricadeOnHall);
+    const id = onlyAttachmentOf(attached, hall);
 
-    const after = stateAfter(context, attached, {
-      type: 'DiscardCard',
-      cardId: onlyPlayerCardId(attached),
-    });
+    const after = stateAfter(context, attached, { type: 'DiscardCard', cardId: id });
 
-    expect(zoneOf(after, onlyPlayerCardId(after))).toEqual({ kind: 'outOfGame' });
+    expect(zoneOf(after, id)).toEqual({ kind: 'outOfGame' });
   });
 });
 
@@ -175,7 +160,8 @@ describe('a location closed to enemies (Barricade)', () => {
     .withLocation(attic, location)
     .withConnection(study, hall)
     .withConnection(hall, attic)
-    .withInvestigator(alice, { locationId: attic });
+    .withInvestigator(alice, { locationId: attic })
+    .withCardData(barricade);
 
   it.each([
     { name: 'keeps a hunter out, so it stays', enemy: hunterGhoul, zone: atLocation(study) },
@@ -209,7 +195,7 @@ describe('a location closed to enemies (Barricade)', () => {
     const after = stateAfter(
       context,
       barricaded,
-      { type: 'DiscardCard', cardId: onlyPlayerCardId(barricaded) },
+      { type: 'DiscardCard', cardId: onlyAttachmentOf(barricaded, hall) },
       { type: 'MoveHunters' },
     );
 
@@ -236,7 +222,8 @@ describe('a location closed to enemies (Barricade)', () => {
       .withLocation(study, location)
       .withLocation(hall, location)
       .withConnection(study, hall)
-      .withInvestigator(alice, { locationId: study });
+      .withInvestigator(alice, { locationId: study })
+      .withCardData(barricade);
     const aliceIntoHall: Command = { type: 'MoveInvestigator', investigatorId: alice, to: hall };
 
     it.each([
@@ -266,12 +253,12 @@ describe('a location closed to enemies (Barricade)', () => {
 describe('BoardView of an attached player card', () => {
   it('lists it with the attachments of the location, none on another', () => {
     const table = PlayTable.start(
-      newGame().withLocation(hall, location).withLocation(study, location),
+      newGame().withLocation(hall, location).withLocation(study, location).withCardData(barricade),
     );
 
     table.play(barricadeOnHall);
 
-    expect(table.board.location(hall).attachments).toEqual(['Barricade']);
+    expect(table.board.location(hall).attachments).toEqual(['barricade']);
     expect(table.board.location(study).attachments).toBeUndefined();
   });
 
@@ -282,7 +269,8 @@ describe('BoardView of an attached player card', () => {
           revealed: true,
         })
         .withInvestigator(alice, { locationId: hall })
-        .withTurnOf(alice),
+        .withTurnOf(alice)
+        .withCardData(barricade),
     );
     table.play(barricadeOnHall);
 

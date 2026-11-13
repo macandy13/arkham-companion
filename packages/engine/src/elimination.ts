@@ -58,8 +58,8 @@ export function investigatorLeavesEvents(
   const events: Event[] = [
     left,
     ...clueEvents(investigator),
-    ...engagedEnemyEvents(state, investigator),
-    ...threatAreaEvents(state, investigator),
+    ...engagedEnemyEvents(ctx, state, investigator),
+    ...threatAreaEvents(ctx, state, investigator),
     ...sealedTokenEvents(state, investigator),
     ...controlledCardEvents(state, investigator),
   ];
@@ -136,18 +136,26 @@ function clueEvents(investigator: Investigator): Event[] {
  * placed, or removed by a card effect) leaves their enemies nowhere to stay,
  * and an unengaged enemy must be at a location, so they are discarded.
  */
-function engagedEnemyEvents(state: GameState, investigator: Investigator): Event[] {
+function engagedEnemyEvents(
+  ctx: EngineContext,
+  state: GameState,
+  investigator: Investigator,
+): Event[] {
   const { locationId } = investigator;
   const engaged = cardsInZone(state, { kind: 'engaged', investigatorId: investigator.id });
   if (locationId === undefined)
-    return engaged.flatMap((enemyId) => discardEncounterCard(state, enemyId));
+    return engaged.flatMap((enemyId) => discardEncounterCard(ctx, state, enemyId));
   return engaged.map((enemyId) => ({ type: 'EnemyDisengaged', enemyId, locationId }));
 }
 
 /** Threat-area cards are encounter cards (player cards are not modelled), so they go to the encounter discard. */
-function threatAreaEvents(state: GameState, investigator: Investigator): Event[] {
+function threatAreaEvents(
+  ctx: EngineContext,
+  state: GameState,
+  investigator: Investigator,
+): Event[] {
   return cardsInZone(state, { kind: 'threatArea', investigatorId: investigator.id }).flatMap(
-    (cardId) => discardEncounterCard(state, cardId),
+    (cardId) => discardEncounterCard(ctx, state, cardId),
   );
 }
 

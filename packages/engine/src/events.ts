@@ -1,7 +1,6 @@
 import type { BasicAction } from './action_costs';
 import type { CampaignLog, TraumaKind } from './campaign/campaign_log';
 import type { AbilityCommand, TestedAction } from './abilities';
-import type { CardStats } from './cards';
 import type { PlayerCardCommand } from './commands';
 import type {
   CardCode,
@@ -136,14 +135,14 @@ export interface ChaosBagChanged {
 }
 
 /**
- * A player card came into play as the card `cardId`, attached to `hostId`, with its own card data
- * (`stats`, kept in `GameState.playerCards`). Produced by `AttachPlayerCard`.
+ * The player card `code` came into play as the card `cardId`, attached to `hostId`. Produced by
+ * `AttachPlayerCard`.
  */
 export interface PlayerCardAttached {
   type: 'PlayerCardAttached';
   cardId: InstanceId;
+  code: CardCode;
   hostId: InstanceId;
-  stats: CardStats;
 }
 
 /** One copy of `token` left the chaos bag, sealed on `investigatorId`. Produced by `SealChaosToken`. */

@@ -1,6 +1,5 @@
 import {
   CommandRejected,
-  gameContext,
   type AbilityEffectSkipped,
   type CardCode,
   type BoardView,
@@ -73,9 +72,8 @@ export function skippedEffects(
   state: GameState,
   events: readonly Event[],
 ): SkippedEffect[] {
-  const cards = gameContext(ctx, state).cards;
   // A code the cards don't know (a typo in the scenario data) has no name; the code is all there is.
-  const nameOf = (code: CardCode) => cards.get(code)?.name ?? code;
+  const nameOf = (code: CardCode) => ctx.cards.get(code)?.name ?? code;
   return events.flatMap((event): SkippedEffect[] => {
     switch (event.type) {
       case 'AbilityEffectSkipped': {

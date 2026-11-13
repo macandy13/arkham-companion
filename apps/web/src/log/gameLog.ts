@@ -16,13 +16,7 @@ import type {
   SkillTestResolved,
   TokenKind,
 } from '@arkham/engine';
-import {
-  DEFAULT_RELIANCE,
-  gameContext,
-  noticeKindOf,
-  PHASE_OF_STEP,
-  showsNotice,
-} from '@arkham/engine';
+import { DEFAULT_RELIANCE, noticeKindOf, PHASE_OF_STEP, showsNotice } from '@arkham/engine';
 import { assertNever, runsBy } from '@arkham/util';
 import type { GameLogSource } from '../state/appStore';
 
@@ -245,8 +239,7 @@ function actorOf(names: Names, event: Event): string | undefined {
 }
 
 /** The printed names of the cards and investigators of `state`. */
-function namesIn(given: EngineContext, state: GameState): Names {
-  const ctx = gameContext(given, state);
+function namesIn(ctx: EngineContext, state: GameState): Names {
   return {
     card: (id) => {
       const code = state.cards[id]?.code;
@@ -297,7 +290,7 @@ function eventLine(t: TFunction, names: Names, state: GameState, event: Event): 
       });
     case 'PlayerCardAttached':
       return t('log.playerCardAttached', {
-        card: event.stats.name,
+        card: names.card(event.cardId),
         host: names.card(event.hostId),
       });
     case 'ChaosTokenReleased':

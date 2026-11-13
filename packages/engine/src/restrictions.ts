@@ -114,12 +114,6 @@ export type CardRestriction =
   LocationCardRestriction | EnemyLocationRestriction | InvestigatorCardRestriction;
 
 /**
- * A "cannot" the players give a player card they attach (`AttachPlayerCard.restrictions`): one
- * about the card it is attached to.
- */
-export type HostRestriction = (LocationCardRestriction | EnemyLocationRestriction) & { of: 'host' };
-
-/**
  * Whether a card in play forbids `cannot` at `location` (Rules Reference, "Cannot": a "cannot"
  * outranks any effect that would allow it, so card effects that move an investigator are refused
  * as well as the move action).

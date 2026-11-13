@@ -202,7 +202,7 @@ const COMMAND_SPECS: CommandSpecs = {
     allowedAfterEnd: true,
   },
   MoveCard: { handle: (ctx, state, command) => handleMoveCard(ctx, state, command) },
-  DiscardCard: { handle: (_ctx, state, command) => handleDiscardCard(state, command) },
+  DiscardCard: { handle: handleDiscardCard },
   AddMap: { handle: handleAddMap },
   PutLocationIntoPlay: { handle: handlePutLocationIntoPlay },
   AddConnection: { handle: handleAddConnection },

@@ -282,7 +282,7 @@ function applyPlayerCardAttached(state: GameState, e: PlayerCardAttached): GameS
   const zone: Zone = { kind: 'attachedTo', hostId: e.hostId };
   const card: CardInstance = {
     id: e.cardId,
-    code: e.stats.code,
+    code: e.code,
     zone,
     faceUp: true,
     exhausted: false,
@@ -294,7 +294,6 @@ function applyPlayerCardAttached(state: GameState, e: PlayerCardAttached): GameS
     ...state,
     cards: { ...state.cards, [card.id]: card },
     order: withZoneOrder(state.order, key, [...(state.order[key] ?? []), card.id]),
-    playerCards: { ...state.playerCards, [e.stats.code]: e.stats },
   };
 }
 

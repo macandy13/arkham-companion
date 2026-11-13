@@ -99,7 +99,7 @@ const REFUSAL_KINDS: Readonly<Record<RejectionCode, RefusalKind>> = {
   enemyAlreadyInPlay: 'never',
   enemyNotInPlay: 'never',
   invalidAttachmentHost: 'never',
-  unnamedAttachment: 'never',
+  notAPlayerCard: 'never',
   noSpawnLocation: 'never',
   notResolving: 'never',
   notAHunter: 'never',

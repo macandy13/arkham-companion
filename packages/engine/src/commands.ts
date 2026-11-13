@@ -5,7 +5,6 @@ import type { CampaignLog, TraumaKind } from './campaign/campaign_log';
 import type { CardType, ScaledValue, TokenAmount, Trait } from './cards';
 import type {
   CardCode,
-  CardName,
   DecisionId,
   InstanceId,
   InvestigatorId,
@@ -14,7 +13,6 @@ import type {
   ScenarioId,
 } from './ids';
 import type { GridCell, MapPlacement, MapSpec } from './map';
-import type { HostRestriction, PlayedCardType } from './restrictions';
 import type {
   Decision,
   ChaosBagChangeKind,
@@ -512,20 +510,17 @@ export interface ChangeChaosBag {
 }
 
 /**
- * The players attach a player card to an enemy or a location (`hostId`, a card in play), named
- * as the players name it (`name`), of `typeCode`, with the "cannot" abilities it gives its host
- * (`restrictions`, each `of: 'host'`; Barricade's `enemiesMoveInto` but for Elite enemies). The
- * card data has no player cards, so the command brings the card's own (`GameState.playerCards`).
- * Produces `PlayerCardAttached`, a new card attached to the host; rejects a host that is no enemy
- * or location in play (`invalidAttachmentHost`) and a blank name (`unnamedAttachment`). It leaves
+ * The players attach the player card `code` to an enemy or a location (`hostId`, a card in
+ * play): Barricade, Handcuffs. Its card data names what it does to its host, such as Barricade's
+ * restriction (`enemiesMoveInto` but for Elite enemies). Produces `PlayerCardAttached`, a new card
+ * attached to the host; rejects a host that is no enemy or location in play
+ * (`invalidAttachmentHost`) and a card that is no player asset or event (`notAPlayerCard`). It leaves
  * play with its host, and `DiscardCard` discards it.
  */
 export interface AttachPlayerCard {
   type: 'AttachPlayerCard';
   hostId: InstanceId;
-  name: CardName;
-  typeCode: PlayedCardType;
-  restrictions: readonly HostRestriction[];
+  code: CardCode;
 }
 
 /**

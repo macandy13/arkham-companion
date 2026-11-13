@@ -1,7 +1,6 @@
 import type { TakenAction } from './action_costs';
 import type { AbilityEffect, OpenedWindow } from './abilities';
 import type { CampaignLog } from './campaign/campaign_log';
-import type { CardStats } from './cards';
 import type { ChangeCause } from './change_cause';
 import type {
   AdvanceAct,
@@ -704,14 +703,6 @@ export interface GameState {
   chaosBagChanges: ChaosBagChange[];
   /** Tokens out of `chaosBag` because a card sealed them, in the order sealed (`SealChaosToken`). */
   sealedTokens: SealedToken[];
-  /**
-   * The card data of the player cards on the table, by their code (`AttachPlayerCard`). The card
-   * data the engine is given (`EngineContext.cards`) holds the scenario's cards only, so a player
-   * card brings its own: the name the players gave it and the abilities it gives its host.
-   * `gameContext` reads them next to the given card data, so a player card is a `CardInstance`
-   * like any other.
-   */
-  playerCards: Record<CardCode, CardStats>;
   agenda: { current?: InstanceId };
   act: { current?: InstanceId };
   /** Typed per scenario (zod schema in the scenario package). */
@@ -740,7 +731,6 @@ export function emptyState(): GameState {
     chaosBag: [],
     chaosBagChanges: [],
     sealedTokens: [],
-    playerCards: {},
     agenda: {},
     act: {},
     scenario: undefined,

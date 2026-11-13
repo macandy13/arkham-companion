@@ -29,7 +29,6 @@ interface GameState {
   chaosBag: ChaosToken[];
   chaosBagChanges: ChaosBagChange[];   // in-game bag changes that last for the campaign
   sealedTokens: SealedToken[];         // out of the bag on a card, until released
-  playerCards: Record<CardCode, CardStats>; // card data of attached player cards (gameContext)
   agenda: { current?: InstanceId }; act: { current?: InstanceId };
   scenario: unknown;                     // per-scenario state
   pending: Decision[];                   // open questions for the players

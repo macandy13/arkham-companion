@@ -17,7 +17,6 @@ import {
 import { completeAdvance } from './handle_scenario';
 import { newLeadInvestigatorEvents } from './elimination';
 import { exhaustAfterAttack, nextStepPlan } from './phases';
-import { gameContext } from './player_cards';
 import { apply } from './reducer';
 import { CommandRejected, type Rejection } from './rejection';
 import type { GameState, HeldAction, QueuedStep } from './state';
@@ -80,10 +79,9 @@ export function handleWithCauses(
 ): CausedEvents {
   const spec = commandSpec(command);
   assertAccepted(state, command, spec);
-  const inGame = gameContext(ctx, state);
-  const provoking = spec.provokes?.(command, inGame, state);
+  const provoking = spec.provokes?.(command, ctx, state);
   const action = provoking && isOwnTurnAction(state, provoking) ? provoking : undefined;
-  const attacks = action ? attackOfOpportunityDecisions(inGame, state, action) : [];
+  const attacks = action ? attackOfOpportunityDecisions(ctx, state, action) : [];
   if (action && attacks.length > 0) {
     // An illegal action must be rejected before it provokes anything; this
     // dry run gets a resolution of its own that is dropped, the action
@@ -111,10 +109,7 @@ export function handleWithCauses(
  * created by `handle` and never escapes it, so `handle` stays pure.
  */
 interface Resolution {
-  /** The context as `handle` was given it. */
-  readonly given: EngineContext;
-  /** `given` with the player cards of `state` (`gameContext`), renewed when one is attached. */
-  ctx: EngineContext;
+  readonly ctx: EngineContext;
   state: GameState;
   readonly events: Event[];
   /** Why each of `events` happened, at the same index. */
@@ -124,22 +119,13 @@ interface Resolution {
 }
 
 function newResolution(ctx: EngineContext, state: GameState): Resolution {
-  return {
-    given: ctx,
-    ctx: gameContext(ctx, state),
-    state,
-    events: [],
-    causes: [],
-    cause: PLAYER_CAUSE,
-  };
+  return { ctx, state, events: [], causes: [], cause: PLAYER_CAUSE };
 }
 
 /** Appends `events` to the chain and applies them to its state. */
 function emit(resolution: Resolution, events: readonly Event[]): void {
   for (const event of events) {
     resolution.state = apply(resolution.state, event);
-    if (event.type === 'PlayerCardAttached')
-      resolution.ctx = gameContext(resolution.given, resolution.state);
     resolution.events.push(event);
     resolution.causes.push(resolution.cause);
   }
@@ -596,7 +582,7 @@ function changesState(resolution: Resolution, steps: readonly Step[]): boolean {
  * `CommandRejected` when they would be rejected.
  */
 function dryRun(resolution: Resolution, steps: readonly Step[]): readonly Event[] {
-  const dry = newResolution(resolution.given, resolution.state);
+  const dry = newResolution(resolution.ctx, resolution.state);
   run(dry, steps, newBudget(), { resumesStored: false });
   return dry.events;
 }
@@ -608,8 +594,7 @@ function dryRun(resolution: Resolution, steps: readonly Step[]): readonly Event[
  * command is allowed at all is for `handle` to say when it is taken.
  */
 export function changesGameState(ctx: EngineContext, state: GameState, command: Command): boolean {
-  const steps =
-    commandSpec(command).mustChangeState?.(command, gameContext(ctx, state), state) ?? [];
+  const steps = commandSpec(command).mustChangeState?.(command, ctx, state) ?? [];
   if (steps.length === 0) return true;
   try {
     return dryRun(newResolution(ctx, state), steps).length > 0;

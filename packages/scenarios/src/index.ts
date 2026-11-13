@@ -1,5 +1,7 @@
 export const PACKAGE_NAME = '@arkham/scenarios';
 
+export { barricade, playerCardDefs } from './player_cards';
+
 export { theGathering } from './the_gathering/scenario';
 export {
   BURN_THE_HOUSE_DECISION,

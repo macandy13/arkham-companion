@@ -377,4 +377,3 @@ export {
   type CampaignRejection,
   type CampaignRejectionCode,
 } from './campaign/campaign_rejection';
-export { gameContext, isPlayerCard } from './player_cards';

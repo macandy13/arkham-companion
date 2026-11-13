@@ -17,7 +17,6 @@ import {
   type TraumaKind,
 } from './campaign_log';
 import { CampaignCommandRejected } from './campaign_rejection';
-import { gameContext } from '../player_cards';
 import {
   executeCommands,
   type CampaignContext,
@@ -193,8 +192,7 @@ export function proposeResolution(
   if (game.meta.ended !== true) return undefined;
   const steps = outcome.kind === 'noResolution' ? resolutions.none : resolutions.byId[outcome.id];
   if (steps === undefined) return undefined;
-  const inGame = gameContext(ctx, game);
-  const changes = steps.flatMap((step) => proposeStep(inGame, game, step));
+  const changes = steps.flatMap((step) => proposeStep(ctx, game, step));
   return withoutChangesForEliminated(game.campaign, [
     ...changes,
     ...(game.campaign ? chaosBagCommands(game.campaign.chaosBag, game.chaosBagChanges) : []),

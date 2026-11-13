@@ -60,6 +60,11 @@ export function blankAsset(code: string, stats: BlankCardStats = {}): CardStats 
   return blankCard('asset', code, {}, stats);
 }
 
+/** A player event with no stats, such as one the players attach to a location (Barricade). */
+export function blankEvent(code: string, stats: BlankCardStats = {}): CardStats {
+  return blankCard('event', code, {}, stats);
+}
+
 /**
  * An agenda at stage 1. It takes its doom threshold explicitly: no value is
  * neutral, since a low one advances the agenda at the first doom check and a
