@@ -229,10 +229,12 @@ export function playSpreadingFlames(start: CampaignLog): CampaignLog {
   expect(table.nextPhase()).toEqual({ round: 4, phase: 'enemy' });
   expect(table.nextPhase()).toEqual({ round: 4, phase: 'upkeep' });
 
-  // Round 5 – mythos: Roland's Forbidden Secrets is the players' to resolve. Daisy draws Cosmic
-  // Evils and places its doom on the agenda.
+  // Round 5 – mythos: Roland holds clues, so his Forbidden Secrets tests intellect (3); he
+  // passes. Daisy draws Cosmic Evils and places its doom on the agenda.
   expect(table.nextPhase()).toEqual({ round: 5, phase: 'mythos', step: 'drawEncounterCard' });
   table.resolveRevelation(byName('Forbidden Secrets'));
+  expect(table.board.decisions).toMatchObject([{ test: { skill: 'intellect', difficulty: 3 } }]);
+  table.answerOnly('pass');
   expect(table.nextPhase()).toEqual({ round: 5, phase: 'mythos', step: 'drawEncounterCard' });
   table.resolveRevelation(byName('Cosmic Evils'));
   table.play(answer(COSMIC_EVILS_DECISION, 'doom'));
@@ -328,10 +330,15 @@ export function playSpreadingFlames(start: CampaignLog): CampaignLog {
   expect(table.nextPhase()).toEqual({ round: 6, phase: 'upkeep' });
 
   // Round 7 – mythos: the fifth doom makes Lit Up advance to Wild Flames; its reverse side's
-  // agility tests are the players' to resolve. A Mutated Experiment engages Daisy.
+  // agility tests are the players' to resolve. Roland passes Wild Compulsion's willpower (3)
+  // test. A Mutated Experiment engages Daisy.
   expect(table.nextPhase()).toEqual({ round: 7, phase: 'mythos', step: 'checkDoomThreshold' });
   table.answerOnly('yes');
   expect(table.board.agenda).toMatchObject({ name: 'Wild Flames', doom: 0 });
+  expect(table.nextPhase()).toEqual({ round: 7, phase: 'mythos', step: 'drawEncounterCard' });
+  table.resolveRevelation(byName('Wild Compulsion'));
+  expect(table.board.decisions).toMatchObject([{ test: { skill: 'willpower', difficulty: 3 } }]);
+  table.answerOnly('pass');
   expect(table.nextPhase()).toEqual({ round: 7, phase: 'mythos' });
   expect(table.board.enemy(byName('Mutated Experiment')).engagedWith).toBe(daisy);
 

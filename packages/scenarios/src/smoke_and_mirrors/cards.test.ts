@@ -19,7 +19,12 @@ import {
   type LocationSymbol,
 } from '@arkham/engine';
 import { answer, cardIn, resolveRevelation, runFrom, stateAfter } from '@arkham/engine/test/utils';
-import { ARCANE_LOCK_DECISION, smokeAndMirrorsCardDefs, smokeAndMirrorsCards } from './cards';
+import {
+  ARCANE_LOCK_DECISION,
+  DOWNPOUR_DECISION,
+  smokeAndMirrorsCardDefs,
+  smokeAndMirrorsCards,
+} from './cards';
 
 /** The card with `code` in the scenario's card data. */
 const cardOf = (code: string): CardStats => cardIn(smokeAndMirrorsCards, code);
@@ -557,6 +562,43 @@ describe('Smoke and Mirrors card abilities', () => {
 
         expect(drawn.pending).toMatchObject([{ skillTest: { skill: 'willpower', difficulty } }]);
         expect(requireInvestigator(state, alice).sanity.horror).toBe(2);
+      },
+    );
+  });
+
+  describe('Downpour', () => {
+    it.each([
+      { answers: ['action', 'action'], actions: 1, clues: 2, northsideClues: 2 },
+      { answers: ['action', 'clue'], actions: 2, clues: 1, northsideClues: 3 },
+    ])(
+      'tests agility (3); failing by 2 asks twice: $answers',
+      ({ answers, actions, clues, northsideClues }) => {
+        const { context, state: started } = newGame()
+          .withLocation(northside, cardOf('12149'), { revealed: true })
+          .withInvestigator(alice, { locationId: northside, clues: 2 })
+          .withCard(instanceId('downpour'), cardOf('12158'), { kind: 'encounterDeck' })
+          .start();
+        const drawn = stateAfter(
+          context,
+          started,
+          aliceDraws('Downpour'),
+          resolveRevelation('downpour'),
+        );
+
+        const state = stateAfter(
+          context,
+          drawn,
+          { ...answer('test:downpour', 'fail'), margin: 2 },
+          ...answers.map((option) => answer(DOWNPOUR_DECISION, option)),
+        );
+
+        expect(drawn.pending).toMatchObject([{ skillTest: { skill: 'agility', difficulty: 3 } }]);
+        expect(started.cards[northside]?.tokens.clue).toBe(2);
+        expect(requireInvestigator(state, alice)).toMatchObject({
+          actionsRemaining: actions,
+          clues,
+        });
+        expect(state.cards[northside]?.tokens.clue).toBe(northsideClues);
       },
     );
   });
