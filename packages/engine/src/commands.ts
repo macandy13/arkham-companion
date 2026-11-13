@@ -10,12 +10,11 @@ import type {
   InstanceId,
   InvestigatorId,
   MapId,
-  PlayerAttachmentId,
   ResolutionId,
   ScenarioId,
 } from './ids';
 import type { GridCell, MapPlacement, MapSpec } from './map';
-import type { HostRestriction } from './restrictions';
+import type { HostRestriction, PlayedCardType } from './restrictions';
 import type {
   Decision,
   ChaosBagChangeKind,
@@ -62,7 +61,6 @@ export type Command =
   | ChangeChaosBag
   | SealChaosToken
   | AttachPlayerCard
-  | DiscardPlayerAttachment
   | ReleaseChaosToken
   | AdvanceAgenda
   | BecomeActAndAgenda
@@ -177,7 +175,8 @@ export interface MoveCard {
 /**
  * A card effect discards an encounter card ("discard it"): onto the top of
  * the encounter discard, where "topmost" effects look for it, losing its
- * tokens and taking its attachments along (`discardEncounterCard`). Produces
+ * tokens and taking its attachments along (`discardEncounterCard`). A player
+ * card goes out of the game instead, back to its owner. Produces
  * `CardMoved`, after `TokensChanged` for any tokens and the attachments'
  * own events.
  */
@@ -514,28 +513,19 @@ export interface ChangeChaosBag {
 
 /**
  * The players attach a player card to an enemy or a location (`hostId`, a card in play), named
- * as the catalog or the players name it (`name`, with its `code` when from the catalog), with the
- * "cannot" abilities it gives its host (`restrictions`, each `of: 'host'`; Barricade's
- * `enemiesMoveInto` but for Elite enemies). Produces `PlayerCardAttached` with a new
- * `PlayerAttachment`; rejects a host that is no enemy or location in play
- * (`invalidAttachmentHost`) and a blank name
- * (`unnamedAttachment`).
+ * as the players name it (`name`), of `typeCode`, with the "cannot" abilities it gives its host
+ * (`restrictions`, each `of: 'host'`; Barricade's `enemiesMoveInto` but for Elite enemies). The
+ * card data has no player cards, so the command brings the card's own (`GameState.playerCards`).
+ * Produces `PlayerCardAttached`, a new card attached to the host; rejects a host that is no enemy
+ * or location in play (`invalidAttachmentHost`) and a blank name (`unnamedAttachment`). It leaves
+ * play with its host, and `DiscardCard` discards it.
  */
 export interface AttachPlayerCard {
   type: 'AttachPlayerCard';
   hostId: InstanceId;
   name: CardName;
-  code?: CardCode;
+  typeCode: PlayedCardType;
   restrictions: readonly HostRestriction[];
-}
-
-/**
- * The players discard a player card attached to an enemy or a location (Barricade once an
- * investigator leaves). Produces `PlayerAttachmentDiscarded`; nothing for one no longer there.
- */
-export interface DiscardPlayerAttachment {
-  type: 'DiscardPlayerAttachment';
-  attachmentId: PlayerAttachmentId;
 }
 
 /**

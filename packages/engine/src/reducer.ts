@@ -1,5 +1,5 @@
 import { ENEMY_PHASE_ATTACK_PROMPT } from './forced_attacks';
-import { filterValues, withoutFirst, withoutKey } from '@arkham/util';
+import { withoutFirst, withoutKey } from '@arkham/util';
 import { sameEdge } from './board';
 import type {
   CardFlipped,
@@ -18,6 +18,7 @@ import type {
   Event,
   LayoutCellSet,
   MapAdded,
+  PlayerCardAttached,
   ScenarioEnded,
   ScenarioStarted,
   TokensChanged,
@@ -25,7 +26,6 @@ import type {
 import type { InstanceId } from './ids';
 import type { GameMap } from './map';
 import { seedRng } from './rng';
-import { isInPlay } from './doom';
 import { withStatDelta } from './investigators';
 import {
   emptyState,
@@ -101,15 +101,7 @@ export function apply(state: GameState, event: Event): GameState {
     case 'ChaosTokenSealed':
       return applyChaosTokenSealed(state, event);
     case 'PlayerCardAttached':
-      return {
-        ...state,
-        playerAttachments: { ...state.playerAttachments, [event.attachment.id]: event.attachment },
-      };
-    case 'PlayerAttachmentDiscarded':
-      return {
-        ...state,
-        playerAttachments: withoutKey(state.playerAttachments, event.attachment.id),
-      };
+      return applyPlayerCardAttached(state, event);
     case 'ChaosTokenReleased':
       return applyChaosTokenReleased(state, event);
     case 'CardFlipped':
@@ -283,13 +275,27 @@ function moveCard(state: GameState, cardId: InstanceId, to: Zone, index?: number
   order = withZoneOrder(order, toKey, insertedAt(order[toKey] ?? [], cardId, index));
   // A gained surge belongs to one draw of the card, wherever its revelation puts it; drawing it again starts afresh.
   const kept = to.kind === 'resolving' ? withoutKey(card, 'gainedSurge') : card;
-  const moved = { ...kept, zone: to };
-  const cards = { ...state.cards, [cardId]: moved };
-  // RR "Attach To": an attachment leaves play with the card it is attached to.
-  const playerAttachments = isInPlay(state, moved)
-    ? state.playerAttachments
-    : filterValues(state.playerAttachments, (attachment) => attachment.hostId !== cardId);
-  return { ...state, cards, order, playerAttachments };
+  return { ...state, cards: { ...state.cards, [cardId]: { ...kept, zone: to } }, order };
+}
+
+function applyPlayerCardAttached(state: GameState, e: PlayerCardAttached): GameState {
+  const zone: Zone = { kind: 'attachedTo', hostId: e.hostId };
+  const card: CardInstance = {
+    id: e.cardId,
+    code: e.stats.code,
+    zone,
+    faceUp: true,
+    exhausted: false,
+    tokens: {},
+    flags: {},
+  };
+  const key = zoneKey(zone);
+  return {
+    ...state,
+    cards: { ...state.cards, [card.id]: card },
+    order: withZoneOrder(state.order, key, [...(state.order[key] ?? []), card.id]),
+    playerCards: { ...state.playerCards, [e.stats.code]: e.stats },
+  };
 }
 
 /** Engagement changes: the enemy moves and any open question about it is answered. */

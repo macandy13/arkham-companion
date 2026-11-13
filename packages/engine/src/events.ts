@@ -1,6 +1,7 @@
 import type { BasicAction } from './action_costs';
 import type { CampaignLog, TraumaKind } from './campaign/campaign_log';
 import type { AbilityCommand, TestedAction } from './abilities';
+import type { CardStats } from './cards';
 import type { PlayerCardCommand } from './commands';
 import type {
   CardCode,
@@ -27,7 +28,6 @@ import type {
   InvestigatorStat,
   Phase,
   PhaseStep,
-  PlayerAttachment,
   SkillName,
   SkillTest,
   SkillTestOutcome,
@@ -47,7 +47,6 @@ export type Event =
   | ChaosBagChanged
   | ChaosTokenSealed
   | PlayerCardAttached
-  | PlayerAttachmentDiscarded
   | ChaosTokenReleased
   | CardFlipped
   | ConnectionChanged
@@ -136,16 +135,15 @@ export interface ChaosBagChanged {
   lasts: ChaosBagChangeLasts;
 }
 
-/** A player card was attached to an enemy or a location. Produced by `AttachPlayerCard`. */
+/**
+ * A player card came into play as the card `cardId`, attached to `hostId`, with its own card data
+ * (`stats`, kept in `GameState.playerCards`). Produced by `AttachPlayerCard`.
+ */
 export interface PlayerCardAttached {
   type: 'PlayerCardAttached';
-  attachment: PlayerAttachment;
-}
-
-/** A player card attached to an enemy or a location left play. Produced by `DiscardPlayerAttachment`. */
-export interface PlayerAttachmentDiscarded {
-  type: 'PlayerAttachmentDiscarded';
-  attachment: PlayerAttachment;
+  cardId: InstanceId;
+  hostId: InstanceId;
+  stats: CardStats;
 }
 
 /** One copy of `token` left the chaos bag, sealed on `investigatorId`. Produced by `SealChaosToken`. */

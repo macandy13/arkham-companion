@@ -98,11 +98,11 @@ import {
 } from './skill_modifiers';
 import { skillTestOdds, type SkillTestOdds } from './skill_test_odds';
 import { victoryPoints } from './victory';
+import { gameContext } from './player_cards';
 import type {
   AmountRange,
   CardInstance,
   ChaosToken,
-  PlayerAttachment,
   SealedToken,
   Decision,
   DecisionOption,
@@ -616,10 +616,14 @@ export interface DueAttackView {
  * date). Build a new one with `boardView` after each command.
  */
 export class BoardView {
+  private readonly ctx: EngineContext;
+
   constructor(
-    private readonly ctx: EngineContext,
+    ctx: EngineContext,
     private readonly state: GameState,
-  ) {}
+  ) {
+    this.ctx = gameContext(ctx, state);
+  }
 
   get round(): number {
     return this.state.meta.round;
@@ -965,16 +969,6 @@ export class BoardView {
    */
   tokenModifier(token: ChaosToken): number | undefined {
     return tokenModifier(this.ctx, this.state, token);
-  }
-
-  /**
-   * The player cards attached to the card `hostId` (`AttachPlayerCard`), in the order attached:
-   * Barricade on a location, Handcuffs on an enemy. None for a card out of play.
-   */
-  playerAttachmentsOn(hostId: InstanceId): readonly PlayerAttachment[] {
-    return Object.values(this.state.playerAttachments).filter(
-      (attachment) => attachment.hostId === hostId,
-    );
   }
 
   /** The tokens out of the bag because a card sealed them, each with the investigator holding it. */

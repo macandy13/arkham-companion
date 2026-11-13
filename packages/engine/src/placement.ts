@@ -3,6 +3,7 @@ import { cardStats, type CopyLimit, type EngineContext } from './cards';
 import type { DiscardCard, MoveCard } from './commands';
 import type { CardMoved, Event, TokensChanged } from './events';
 import { requireCard } from './lookup';
+import { isPlayerCard } from './player_cards';
 import { CommandRejected } from './rejection';
 import type { InstanceId } from './ids';
 import { TOKEN_KINDS, type CardInstance, type GameState, type TokenKind } from './state';
@@ -118,8 +119,8 @@ export function clearTokensEvents(
 
 /**
  * `cardId` and everything attached to it, attachments first, to the top of
- * the encounter discard. Attachments go with their host because a card in the
- * discard cannot host anything. Tokens are removed with each card: doom on a
+ * the encounter discard, or a player card out of the game. Attachments go with
+ * their host because a card in the discard cannot host anything. Tokens are removed with each card: doom on a
  * discarded treachery must not come back if the discard is reshuffled into
  * the deck.
  */
@@ -129,11 +130,9 @@ export function discardEncounterCard(state: GameState, cardId: InstanceId): Even
   const attachments = (state.order[zoneKey({ kind: 'attachedTo', hostId: cardId })] ?? []).flatMap(
     (attachedId) => discardEncounterCard(state, attachedId),
   );
-  return [
-    ...attachments,
-    ...clearTokensEvents(card),
-    moveCardEvent(card, { kind: 'encounterDiscard' }, 0),
-  ];
+  // A player card goes back to its owner, out of the scenario's game.
+  const to: Zone = isPlayerCard(state, card) ? { kind: 'outOfGame' } : { kind: 'encounterDiscard' };
+  return [...attachments, ...clearTokensEvents(card), moveCardEvent(card, to, 0)];
 }
 
 /** `DiscardCard`: discards the card the way a resolved encounter card is (`discardEncounterCard`). */

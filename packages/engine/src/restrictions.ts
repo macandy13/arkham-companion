@@ -1,6 +1,6 @@
 import { withoutEmptyLists } from '@arkham/util';
 import { cardStats, type EngineContext, type Trait } from './cards';
-import { cardsInPlay, isInPlay } from './doom';
+import { cardsInPlay } from './doom';
 import type { InvestigatorId } from './ids';
 import { binds, namesCard, type CardScope, type InvestigatorScope } from './scopes';
 import type { CardInstance, GameState } from './state';
@@ -107,15 +107,15 @@ export type InvestigatorCardRestriction =
  * A constant "cannot" ability (`CardStats.restrictions`), as card data. Like a `Modifier` it
  * holds while its card is in play, and a location's restriction only once it is revealed,
  * unless it is printed on the unrevealed side (`unrevealed`, the Parlor's barrier), which holds
- * until then. `isRestricted`, `isRestrictedFor` and `isClosedToEnemy` are the only places that read them, so the
- * handlers and the views agree.
+ * until then. `isRestricted`, `isRestrictedFor` and `isClosedToEnemy` are the only places that
+ * read them, so the handlers and the views agree.
  */
 export type CardRestriction =
   LocationCardRestriction | EnemyLocationRestriction | InvestigatorCardRestriction;
 
 /**
- * A "cannot" a player card attached to a location gives it (`PlayerAttachment.restrictions`):
- * one about the location it is attached to, the only kind its restriction checks read.
+ * A "cannot" the players give a player card they attach (`AttachPlayerCard.restrictions`): one
+ * about the card it is attached to.
  */
 export type HostRestriction = (LocationCardRestriction | EnemyLocationRestriction) & { of: 'host' };
 
@@ -130,10 +130,12 @@ export function isRestricted(
   location: CardInstance,
   cannot: LocationRestriction,
 ): boolean {
-  return restrictionSources(ctx, state).some(({ restrictions, names }) =>
-    restrictions.some(
+  return cardsInPlay(state).some((source) =>
+    activeRestrictions(ctx, source).some(
       (restriction) =>
-        'of' in restriction && restriction.cannot === cannot && names(restriction.of, location),
+        'of' in restriction &&
+        restriction.cannot === cannot &&
+        namesCard(ctx, state, source, restriction.of, location),
     ),
   );
 }
@@ -149,12 +151,12 @@ export function isClosedToEnemy(
   location: CardInstance,
 ): boolean {
   const traits = cardStats(ctx.cards, enemy.code).traits;
-  return restrictionSources(ctx, state).some(({ restrictions, names }) =>
-    restrictions.some(
+  return cardsInPlay(state).some((source) =>
+    activeRestrictions(ctx, source).some(
       (restriction) =>
         restriction.cannot === 'enemiesMoveInto' &&
         !(restriction.exceptTraits ?? []).some((trait) => traits.includes(trait)) &&
-        names(restriction.of, location),
+        namesCard(ctx, state, source, restriction.of, location),
     ),
   );
 }
@@ -198,36 +200,6 @@ export function forbiddenFor(
     cards: verbs('cards'),
   };
   return withoutEmptyLists(byNoun);
-}
-
-/**
- * The restrictions in play, each with how its `of` names a location: a card's printed ones
- * (`namesCard` from the card), and those of the player cards attached to a card in play
- * (`PlayerAttachment`), whose host is the card they are attached to.
- */
-function restrictionSources(
-  ctx: EngineContext,
-  state: GameState,
-): {
-  restrictions: readonly CardRestriction[];
-  names: (of: RestrictedLocation, location: CardInstance) => boolean;
-}[] {
-  const printed = cardsInPlay(state).map((source) => ({
-    restrictions: activeRestrictions(ctx, source),
-    names: (of: RestrictedLocation, location: CardInstance) =>
-      namesCard(ctx, state, source, of, location),
-  }));
-  const attached = Object.values(state.playerAttachments)
-    .filter((attachment) => {
-      const host = state.cards[attachment.hostId];
-      return host !== undefined && isInPlay(state, host);
-    })
-    .map((attachment) => ({
-      restrictions: attachment.restrictions,
-      names: (of: RestrictedLocation, location: CardInstance) =>
-        of === 'host' && attachment.hostId === location.id,
-    }));
-  return [...printed, ...attached];
 }
 
 function activeRestrictions(ctx: EngineContext, source: CardInstance): readonly CardRestriction[] {

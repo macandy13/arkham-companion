@@ -8,7 +8,6 @@ import {
   withoutEmptyLists,
   withoutKey,
   withoutValue,
-  filterValues,
 } from './index';
 
 describe('withoutKey', () => {
@@ -132,15 +131,6 @@ describe('withoutValue', () => {
     expect(withoutValue({ skipped: 'step_one' }, 'step_two')).toStrictEqual({
       skipped: 'step_one',
     });
-  });
-});
-
-describe('filterValues', () => {
-  it('keeps the entries whose value passes and leaves the original as it was', () => {
-    const rooms = { hall: 'barricaded', study: 'open', attic: 'barricaded' };
-
-    expect(filterValues(rooms, (state) => state === 'open')).toStrictEqual({ study: 'open' });
-    expect(rooms).toStrictEqual({ hall: 'barricaded', study: 'open', attic: 'barricaded' });
   });
 });
 
