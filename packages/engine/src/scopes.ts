@@ -1,6 +1,6 @@
 import { assertNever } from '@arkham/util';
-import { cardStats, type EngineContext } from './cards';
-import { enemiesAt, isEnemyOnTable } from './enemies';
+import type { EngineContext } from './cards';
+import { enemiesAt, isEnemyCardOnTable } from './enemies';
 import type { InvestigatorId } from './ids';
 import type { CardInstance, GameState } from './state';
 
@@ -41,7 +41,7 @@ export function namesCard(
     case 'enemiesHere':
       return enemiesAt(ctx, state, source.id).some((enemy) => enemy.id === card.id);
     case 'eachEnemy':
-      return isEnemyOnTable(card) && cardStats(ctx.cards, card.code).typeCode === 'enemy';
+      return isEnemyCardOnTable(ctx, card);
     default:
       return assertNever(scope);
   }

@@ -124,6 +124,16 @@ describe('effectiveValue with a modifier of each enemy', () => {
 
     expect(effectiveValue(context, state, requireCard(state.cards, ghoul), 'fight')).toBe(fight);
   });
+
+  it('gives nothing while the agenda waits under the current one: the ghoul keeps fight 3', () => {
+    const { context, state } = aliceInStudy
+      .withAgenda(instanceId('first_agenda'), blankAgenda('first_agenda', null))
+      .withAgenda(ritual, ritualCard)
+      .withCard(ghoul, ghoulCard, atLocation(hall))
+      .start();
+
+    expect(effectiveValue(context, state, requireCard(state.cards, ghoul), 'fight')).toBe(3);
+  });
 });
 
 describe('effectiveValue with a modifier of the card itself', () => {

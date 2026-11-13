@@ -19,8 +19,7 @@
  * What the engine leaves to the players is done by hand, as at the table:
  * agenda 1's reverse side (the Monster spawning at the Main Path with 1 doom),
  * act 2's reverse side (the enemy spawning at the Ritual Site),
- * Frozen in Fear's extra action, agenda 2's +1 fight and evade, Ancient
- * Evils' doom, the cards Umôrdhoth's Wrath discards, Twisting Paths' test to
+ * Frozen in Fear's extra action, Ancient Evils' doom, the cards Umôrdhoth's Wrath discards, Twisting Paths' test to
  * leave it (Daisy passes) and the 2 random cards "it is past midnight" discards from each
  * opening hand. The players count actions themselves.
  */
@@ -44,6 +43,7 @@ import {
 import { answer } from '@arkham/engine/test/utils';
 import {
   DEVOURER_BELOW_CODES as codes,
+  GATHERING_CODES,
   DISRUPTING_THE_RITUAL_DECISION,
   MIDNIGHT_MASKS_RESOLUTIONS,
   OFFER_OF_POWER_DECISION,
@@ -79,6 +79,8 @@ const yithian = 'Yithian Observer';
 /** The Agents of Yog-Sothoth's Yithian Observer: agenda 1's reverse side spawns it by hand, by ID. */
 const yithianObserver = instanceId('01177#1');
 const priest = 'Ghoul Priest';
+/** The Ghoul Priest, still alive from The Gathering, by ID for its stats. */
+const ghoulPriest = instanceId(`${GATHERING_CODES.ghoulPriest}#1`);
 const hunter = 'The Masked Hunter';
 const gotAway = ['Peter Warren', 'Victoria Devereux', 'Ruth Turner', hunter];
 
@@ -274,11 +276,13 @@ describe('The Devourer Below end to end: Roland and Daisy, seed 9', () => {
     table.answer(byName('Grasping Hands'), 'fail');
     expect(table.board.investigator(daisy)).toMatchObject({ damage: 1 });
 
-    // Round 3 – Roland slips away from the Priest and takes Unhallowed Ground's
-    // last clue; Daisy takes the Thicket's two. With 8 clues the group spends
-    // 6 on act 1: the Ritual Site joins the Woods above the Main Path, and the
-    // Cultists who got away in The Midnight Masks spawn there.
+    // Round 3 – Roland slips away from the Priest, whose fight and evade 4 The
+    // Ritual Begins raises to 5, and takes Unhallowed Ground's last clue; Daisy
+    // takes the Thicket's two. With 8 clues the group spends 6 on act 1: the
+    // Ritual Site joins the Woods above the Main Path, and the Cultists who got
+    // away in The Midnight Masks spawn there.
     expect(table.nextPhase()).toEqual({ round: 3, phase: 'investigation' });
+    expect(table.board.enemyStats(ghoulPriest)).toMatchObject({ fight: 5, evade: 5 });
     table.startTurn(roland);
     table.evade(roland, byName(priest));
     table.investigate(roland);
