@@ -29,8 +29,10 @@ import {
 } from '@arkham/engine/test/utils';
 import {
   COSMIC_EVILS_DECISION,
+  FORBIDDEN_SECRETS_DECISION,
   MUTATED_DECISION,
   NOXIOUS_SMOKE_DECISION,
+  WILD_COMPULSION_DECISION,
   spreadingFlamesCardDefs,
   spreadingFlamesCards,
 } from './cards';
@@ -450,6 +452,77 @@ describe('Spreading Flames card abilities', () => {
       );
       expect(noxiousAsks).toBe(surges);
     });
+
+    it.each([
+      { answers: ['clue', 'clue'], clues: 0, horror: 0, quadClues: 2 },
+      { answers: ['clue', 'horror'], clues: 1, horror: 1, quadClues: 1 },
+    ])(
+      'tests intellect (3) when alice holds 2 clues; failing by 2 asks twice: $answers',
+      ({ answers, clues, horror, quadClues }) => {
+        const { context, state: started } = newGame()
+          .withLocation(quad, cardOf('12116'), { revealed: true })
+          .withInvestigator(alice, { locationId: quad, clues: 2 })
+          .withCard(forbiddenSecrets, cardOf('12126'), { kind: 'encounterDeck' })
+          .start();
+        const drawn = stateAfter(
+          context,
+          started,
+          aliceDraws('Forbidden Secrets'),
+          resolveRevelation('forbidden_secrets'),
+        );
+        const failedByTwo = { ...answer('test:forbidden_secrets', 'fail'), margin: 2 };
+
+        const state = stateAfter(
+          context,
+          drawn,
+          failedByTwo,
+          ...answers.map((option) => answer(FORBIDDEN_SECRETS_DECISION, option)),
+        );
+
+        expect(drawn.pending).toMatchObject([{ skillTest: { skill: 'intellect', difficulty: 3 } }]);
+        expect(requireInvestigator(state, alice)).toMatchObject({ clues, sanity: { horror } });
+        expect(started.cards[quad]?.tokens.clue ?? 0).toBe(0);
+        expect(state.cards[quad]?.tokens.clue ?? 0).toBe(quadClues);
+      },
+    );
+  });
+
+  describe('Wild Compulsion', () => {
+    it.each([
+      { answers: ['resource', 'resource'], resources: 3, discards: 0 },
+      { answers: ['discard', 'resource'], resources: 4, discards: 1 },
+    ])(
+      'tests willpower (3); failing by 2 asks twice: $answers',
+      ({ answers, resources, discards }) => {
+        const { context, state: started } = newGame()
+          .withLocation(quad, cardOf('12116'), { revealed: true })
+          .withInvestigator(alice, { locationId: quad, resources: 5 })
+          .withCard(instanceId('wild_compulsion'), cardOf('12128'), { kind: 'encounterDeck' })
+          .start();
+        const drawn = stateAfter(
+          context,
+          started,
+          aliceDraws('Wild Compulsion'),
+          resolveRevelation('wild_compulsion'),
+        );
+
+        const { state, events } = runFrom(context, drawn, [
+          { ...answer('test:wild_compulsion', 'fail'), margin: 2 },
+          ...answers.map((option) => answer(WILD_COMPULSION_DECISION, option)),
+        ]);
+
+        const randomDiscards = events.filter(
+          (event) =>
+            event.type === 'CommandDeferred' &&
+            event.command.type === 'DiscardFromHand' &&
+            event.command.atRandom === true,
+        );
+        expect(drawn.pending).toMatchObject([{ skillTest: { skill: 'willpower', difficulty: 3 } }]);
+        expect(requireInvestigator(state, alice).resources).toBe(resources);
+        expect(randomDiscards).toHaveLength(discards);
+        expect(state.pending).toEqual([]);
+      },
+    );
   });
 
   describe('Unspeakable Truths', () => {

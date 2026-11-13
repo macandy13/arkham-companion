@@ -45,6 +45,7 @@ export {
   CAMPUS,
   CAMPUS_CELLS,
   COSMIC_EVILS_DECISION,
+  FORBIDDEN_SECRETS_DECISION,
   MUTATED_DECISION,
   NOXIOUS_SMOKE_DECISION,
   SEARCHING_FOR_ARMITAGE_DECISION,
@@ -55,6 +56,7 @@ export {
   spreadingFlamesCardDefs,
   spreadingFlamesCards,
   WHERE_THERES_SMOKE_DECISION,
+  WILD_COMPULSION_DECISION,
 } from './spreading_flames/cards';
 export { spreadingFlames } from './spreading_flames/scenario';
 export { spreadingFlamesResolutions } from './spreading_flames/resolutions';
@@ -62,6 +64,7 @@ export { brethrenOfAsh } from './brethren_of_ash/campaign';
 export { ASH_STORY } from './brethren_of_ash/story';
 export {
   ARCANE_LOCK_DECISION,
+  DOWNPOUR_DECISION,
   SMOKE_AND_MIRRORS_CODES,
   SMOKE_AND_MIRRORS_RESOLUTIONS,
   SMOKE_AND_MIRRORS_SETS,

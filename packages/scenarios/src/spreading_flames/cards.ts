@@ -17,6 +17,9 @@ import {
   discardAsset,
   discardEachEnemy,
   discardFromHand,
+  placeYourClues,
+  loseResources,
+  discardAtRandom,
   discardSelf,
   drawFromEncounterDiscard,
   duringPhase,
@@ -117,6 +120,18 @@ export const MUTATED_DECISION = decisionId('spreadingFlames.mutated');
 /** Id of Noxious Smoke's question to its drawer: test willpower or agility. */
 export const NOXIOUS_SMOKE_DECISION = decisionId('spreadingFlames.noxiousSmoke');
 
+/**
+ * Id of the question a failed Forbidden Secrets asks its drawer for each point failed: place 1 of
+ * their clues on their location, or take 1 horror.
+ */
+export const FORBIDDEN_SECRETS_DECISION = decisionId('spreadingFlames.forbiddenSecrets');
+
+/**
+ * Id of the question a failed Wild Compulsion asks its drawer for each point failed: discard 1
+ * card at random from their hand, or lose 1 resource.
+ */
+export const WILD_COMPULSION_DECISION = decisionId('spreadingFlames.wildCompulsion');
+
 /** Id of "Where There's Smoke…"'s question as the round ends: spend the clues to advance? */
 export const WHERE_THERES_SMOKE_DECISION = decisionId('spreadingFlames.whereTheresSmoke');
 
@@ -162,6 +177,8 @@ const sets = SPREADING_FLAMES_SETS;
 const own = sets.spreadingFlames;
 const cosmicEvils = 'scenario.spreadingFlames.cosmicEvils';
 const mutated = 'scenario.spreadingFlames.mutated';
+const forbiddenSecrets = 'scenario.spreadingFlames.forbiddenSecrets';
+const wildCompulsion = 'scenario.spreadingFlames.wildCompulsion';
 const stayOrGo = 'scenario.spreadingFlames.stayOrGo';
 /** ArkhamDB has the Core Set (2026)'s pictures as JPEGs. */
 const jpg = 'jpg';
@@ -191,8 +208,6 @@ const jpg = 'jpg';
  * - Bystander's Doomed (MC2.6)
  * - Unspeakable Truths' limit of 1 per investigator, its horror after its holder discovers clues
  *   and its two-action discard
- * - Forbidden Secrets' intellect (3) test (when its drawer has clues) and Wild Compulsion's
- *   willpower (3) test, each with a choice per point failed
  * - Extraplanar Visions' test of X difficulty, X the cards in its drawer's hand (MC2.5)
  */
 export const spreadingFlamesCardDefs: readonly CardStats[] = [
@@ -492,7 +507,25 @@ export const spreadingFlamesCardDefs: readonly CardStats[] = [
     pictures: jpg,
     traits: ['Pact'],
     quantity: 2,
-    abilities: [ifYouHave('clues', { max: 0 }, whenRevealed(gainSurge()))],
+    abilities: [
+      ifYouHave('clues', { max: 0 }, whenRevealed(gainSurge())),
+      ifYouHave(
+        'clues',
+        { min: 1 },
+        whenRevealed(
+          skillTest('intellect', 3, {
+            onFail: [
+              forEachPoint(
+                youMustEither(FORBIDDEN_SECRETS_DECISION, `${forbiddenSecrets}.prompt`, [
+                  { id: 'clue', label: `${forbiddenSecrets}.clue`, effects: [placeYourClues(1)] },
+                  { id: 'horror', label: `${forbiddenSecrets}.horror`, effects: [takeHorror(1)] },
+                ]),
+              ),
+            ],
+          }),
+        ),
+      ),
+    ],
   }),
   treachery({
     code: '12127',
@@ -509,6 +542,28 @@ export const spreadingFlamesCardDefs: readonly CardStats[] = [
     pictures: jpg,
     traits: ['Madness', 'Bane'],
     quantity: 2,
+    abilities: [
+      whenRevealed(
+        skillTest('willpower', 3, {
+          onFail: [
+            forEachPoint(
+              youMustEither(WILD_COMPULSION_DECISION, `${wildCompulsion}.prompt`, [
+                {
+                  id: 'discard',
+                  label: `${wildCompulsion}.discard`,
+                  effects: [discardAtRandom(1)],
+                },
+                {
+                  id: 'resource',
+                  label: `${wildCompulsion}.resource`,
+                  effects: [loseResources(1)],
+                },
+              ]),
+            ),
+          ],
+        }),
+      ),
+    ],
   }),
   treachery({
     code: codes.fire,
