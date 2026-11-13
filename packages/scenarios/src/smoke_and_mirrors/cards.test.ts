@@ -491,4 +491,73 @@ describe('Smoke and Mirrors card abilities', () => {
       },
     );
   });
+
+  describe('Red Herring', () => {
+    it.each([
+      { clues: 1, difficulty: 2 },
+      { clues: 2, difficulty: 4 },
+    ])('tests intellect ($difficulty) when alice holds $clues clues', ({ clues, difficulty }) => {
+      const { context, state: started } = newGame()
+        .withLocation(northside, cardOf('12149'), { revealed: true })
+        .withInvestigator(alice, { locationId: northside, clues })
+        .withCard(instanceId('red_herring'), cardOf('12161'), { kind: 'encounterDeck' })
+        .start();
+
+      const drawn = stateAfter(
+        context,
+        started,
+        aliceDraws('Red Herring'),
+        resolveRevelation('red_herring'),
+      );
+
+      expect(drawn.pending).toMatchObject([{ skillTest: { skill: 'intellect', difficulty } }]);
+    });
+
+    it('gives alice 1 horror and places 1 of her clues on Northside (2 clues) on a fail', () => {
+      const { context, state: started } = newGame()
+        .withLocation(northside, cardOf('12149'), { revealed: true })
+        .withInvestigator(alice, { locationId: northside, clues: 2 })
+        .withCard(instanceId('red_herring'), cardOf('12161'), { kind: 'encounterDeck' })
+        .start();
+
+      const state = stateAfter(
+        context,
+        started,
+        aliceDraws('Red Herring'),
+        resolveRevelation('red_herring'),
+        answer('test:red_herring', 'fail'),
+      );
+
+      expect(requireInvestigator(state, alice)).toMatchObject({ clues: 1, sanity: { horror: 1 } });
+      expect(started.cards[northside]?.tokens.clue).toBe(2);
+      expect(state.cards[northside]?.tokens.clue).toBe(3);
+    });
+  });
+
+  describe('Eager for Death', () => {
+    it.each([
+      { damage: 0, difficulty: 2 },
+      { damage: 3, difficulty: 5 },
+    ])(
+      'tests willpower ($difficulty) when alice has $damage damage, 2 horror on a fail',
+      ({ damage, difficulty }) => {
+        const { context, state: started } = newGame()
+          .withLocation(northside, cardOf('12149'), { revealed: true })
+          .withInvestigator(alice, { locationId: northside, health: { max: 8, damage } })
+          .withCard(instanceId('eager_for_death'), cardOf('12167'), { kind: 'encounterDeck' })
+          .start();
+        const drawn = stateAfter(
+          context,
+          started,
+          aliceDraws('Eager for Death'),
+          resolveRevelation('eager_for_death'),
+        );
+
+        const state = stateAfter(context, drawn, answer('test:eager_for_death', 'fail'));
+
+        expect(drawn.pending).toMatchObject([{ skillTest: { skill: 'willpower', difficulty } }]);
+        expect(requireInvestigator(state, alice).sanity.horror).toBe(2);
+      },
+    );
+  });
 });

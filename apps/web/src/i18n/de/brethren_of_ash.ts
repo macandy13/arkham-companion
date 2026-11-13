@@ -9,6 +9,11 @@ export const brethrenOfAshTexts = {
         doom: '1 Verderben auf die aktuelle Agenda legen',
         wounds: '1 direkten Schaden und 1 direkten Horror erleiden; die Karte erhält Nachrücken',
       },
+      mutated: {
+        prompt: '{{card}}: Du musst entweder',
+        damage: '2 Schaden erleiden',
+        horror: 'Jeder Ermittler an deinem Ort erleidet 1 Horror',
+      },
       stayOrGo: {
         prompt: 'Auflösung 1: Lest sie vor, dann muss der Ermittlungsleiter entscheiden',
         stay: 'Bleibt und bekämpft das Feuer!',

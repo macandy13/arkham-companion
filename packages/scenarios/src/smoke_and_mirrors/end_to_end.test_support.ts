@@ -139,11 +139,21 @@ export function playSmokeAndMirrors(start: CampaignLog): CampaignLog {
     'Bat Horror',
   ]);
 
-  // Round 2 ends without enemies. Round 3 – mythos: both draw Eager for Death, whose revelation
-  // is the players' to resolve.
+  // Round 2 ends without enemies. Round 3 – mythos: both draw Eager for Death, whose willpower
+  // (2) test is 1 harder for each damage on its drawer. Roland (2 damage) passes it at 4; Daisy
+  // (1 damage) fails it at 3 and takes 2 horror.
   expect(table.nextPhase()).toEqual({ round: 2, phase: 'enemy' });
   expect(table.nextPhase()).toEqual({ round: 2, phase: 'upkeep' });
-  expect(table.nextPhase()).toEqual({ round: 3, phase: 'mythos' });
+  expect(table.nextPhase()).toEqual({ round: 3, phase: 'mythos', step: 'drawEncounterCard' });
+  table.resolveRevelation(byName('Eager for Death'));
+  expect(table.board.decisions).toMatchObject([{ test: { skill: 'willpower', difficulty: 4 } }]);
+  table.answerOnly('pass');
+  expect(table.nextPhase()).toEqual({ round: 3, phase: 'mythos', step: 'drawEncounterCard' });
+  table.resolveRevelation(byName('Eager for Death'));
+  expect(table.board.decisions).toMatchObject([{ test: { skill: 'willpower', difficulty: 3 } }]);
+  table.answerOnly('fail');
+  expect(table.board.investigator(daisy)).toMatchObject({ damage: 1, horror: 2 });
+  expect(table.nextPhase()).toEqual({ round: 3, phase: 'investigation' });
   expect(table.board.agenda).toMatchObject({ name: 'Arkham Alive', doom: 5 });
   expect(table.board.namesIn({ kind: 'encounterDiscard' }).slice(0, 2)).toEqual([
     'Eager for Death',
@@ -152,7 +162,6 @@ export function playSmokeAndMirrors(start: CampaignLog): CampaignLog {
 
   // Round 3 – investigation: with the doom piling up, both resign with Arkham Alive's action.
   // With no investigator left the game ends without a resolution.
-  expect(table.nextPhase()).toEqual({ round: 3, phase: 'investigation' });
   for (const investigator of [roland, daisy]) {
     table.startTurn(investigator);
     table.useCardAction(investigator, byName('Arkham Alive'));

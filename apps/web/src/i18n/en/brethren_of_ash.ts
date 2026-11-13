@@ -9,6 +9,11 @@ export const brethrenOfAshTexts = {
         doom: 'Place 1 doom on the current agenda',
         wounds: 'Take 1 direct damage and 1 direct horror; Cosmic Evils gains surge',
       },
+      mutated: {
+        prompt: '{{card}}: you must either',
+        damage: 'Take 2 damage',
+        horror: 'Each investigator at your location takes 1 horror',
+      },
       stayOrGo: {
         prompt: 'Resolution 1: read it aloud, then the lead investigator must decide',
         stay: 'Stay and fight the fire!',

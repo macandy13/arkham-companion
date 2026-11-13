@@ -1,5 +1,11 @@
 import type { BasicAction } from './action_costs';
-import type { AbilityEffect, OpenedWindow, TestedAction, TimingWindow } from './abilities';
+import type {
+  AbilityEffect,
+  DifficultyChange,
+  OpenedWindow,
+  TestedAction,
+  TimingWindow,
+} from './abilities';
 import type { KeywordAttackKind } from './forced_attacks';
 import type { CampaignLog, TraumaKind } from './campaign/campaign_log';
 import type { CardType, ScaledValue, TokenAmount, Trait } from './cards';
@@ -1043,6 +1049,13 @@ export interface TestSkill {
   /** The card that asks for the test, which the decision is about. */
   cardId: InstanceId;
   test: SkillTest;
+  /**
+   * Card data only: what the table adds to `test.difficulty` ("increase this skill test's
+   * difficulty by 1 for each damage on you", "+2 difficulty if there is an enemy at your
+   * location"). `resolveEffect` reads the table as the ability resolves, folds the changes into
+   * `test.difficulty` and drops them, so a command never carries them.
+   */
+  difficultyChanges?: readonly DifficultyChange[];
   /** What a pass does; a `ForEachPoint` or `ByMargin` among them depends on how much it passed by. */
   onPass: readonly Command[];
   /** What a fail does; a `ForEachPoint` or `ByMargin` among them depends on how much it failed by. */

@@ -28,16 +28,22 @@ import {
   nearestEnemy,
   perInvestigator,
   placeDoomOn,
+  placeYourClues,
+  plusDifficultyIf,
+  plusDifficultyPer,
   putIntoThreatArea,
   resignAction,
   resolutionId,
   skillTest,
   skillTestOfEither,
+  statOf,
   takeDamage,
+  takeHorror,
   trait,
   whenAdvanced,
   whenRevealed,
   whenVictoryDisplayHolds,
+  you,
   yourLocation,
 } from '@arkham/engine';
 import { act, agenda, enemy, location, prey, treachery } from '../card_builders';
@@ -132,9 +138,7 @@ const jpg = 'jpg';
  *   additional action to investigate (MC2.4), and the damage Miskatonic University (In Flames)
  *   deals to allies
  * - Arcane Lock's additional action to enter or leave its location (MC2.4)
- * - the whole revelations of Downpour (a choice per point failed), Red Herring (+2 difficulty with
- *   2 or more clues, a clue placed on the location) and Eager for Death (difficulty per damage,
- *   MC2.5)
+ * - the whole revelation of Downpour (a choice per point failed)
  * - Whippoorwill's -1 to each skill of each investigator at its location
  */
 export const smokeAndMirrorsCardDefs: readonly CardStats[] = [
@@ -503,6 +507,16 @@ export const smokeAndMirrorsCardDefs: readonly CardStats[] = [
     pictures: jpg,
     traits: ['Scheme'],
     quantity: 2,
+    abilities: [
+      whenRevealed(
+        skillTest('intellect', 2, {
+          difficultyChanges: [
+            plusDifficultyIf({ kind: 'valueOf', value: statOf(you(), 'clues'), min: 2 }, 2),
+          ],
+          onFail: [takeHorror(1), placeYourClues(1)],
+        }),
+      ),
+    ],
   }),
   enemy({
     code: '12162',
@@ -593,6 +607,14 @@ export const smokeAndMirrorsCardDefs: readonly CardStats[] = [
     pictures: jpg,
     traits: ['Omen'],
     quantity: 2,
+    abilities: [
+      whenRevealed(
+        skillTest('willpower', 2, {
+          difficultyChanges: [plusDifficultyPer(statOf(you(), 'damage'))],
+          onFail: [takeHorror(2)],
+        }),
+      ),
+    ],
   }),
 ];
 

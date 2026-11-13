@@ -78,7 +78,7 @@ These are done by hand at the table; the app does not do them.
 - Your Friend's Room's Engage action, Miskatonic Quad's free move, Warren Observatory's draw and Orne Library's two-action draw.
 - Which asset Hellhound's enemy phase attack discards (the app leaves the pick to the player), and Bystander's Doomed keyword.
 - Unspeakable Truths' limit of 1 per investigator, its horror after its holder discovers clues and its two-action discard.
-- The tests of Forbidden Secrets, Wild Compulsion, Extraplanar Visions and Mutated!.
+- The tests of Forbidden Secrets, Wild Compulsion and Extraplanar Visions.
 - The tablet's "reveal another token" and damage, and the elder thing's Fire! draw.
 - The resolutions' deck changes and upgrades.
 

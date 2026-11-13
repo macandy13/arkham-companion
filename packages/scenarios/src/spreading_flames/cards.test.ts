@@ -29,6 +29,7 @@ import {
 } from '@arkham/engine/test/utils';
 import {
   COSMIC_EVILS_DECISION,
+  MUTATED_DECISION,
   NOXIOUS_SMOKE_DECISION,
   spreadingFlamesCardDefs,
   spreadingFlamesCards,
@@ -350,6 +351,77 @@ describe('Spreading Flames card abilities', () => {
 
       expect(chosen.pending).toMatchObject([{ skillTest: { skill: 'agility', difficulty: 3 } }]);
       expect(requireInvestigator(state, alice).health.damage).toBe(2);
+    });
+  });
+
+  describe('Mutated!', () => {
+    const bob = investigatorId('bob');
+    const mutated = instanceId('mutated');
+    /** Alice and bob at Miskatonic Quad, Mutated! on top of the encounter deck. */
+    const aliceAndBobAtTheQuad = newGame()
+      .withLocation(quad, cardOf('12116'), { revealed: true })
+      .withLocation(instanceId('science_hall'), cardOf('12118'), { revealed: true })
+      .withInvestigator(alice, { locationId: quad })
+      .withInvestigator(bob, { locationId: quad })
+      .withCard(mutated, cardOf('12131'), { kind: 'encounterDeck' });
+
+    const experiment = instanceId('mutated_experiment');
+    it.each([
+      { case: 'no enemy', experimentIn: undefined, difficulty: 2 },
+      {
+        case: 'a Mutated Experiment engaged with alice',
+        experimentIn: engagedWith(alice),
+        difficulty: 4,
+      },
+      {
+        case: 'a Mutated Experiment engaged with bob',
+        experimentIn: engagedWith(bob),
+        difficulty: 4,
+      },
+      {
+        case: 'a Mutated Experiment only at Science Hall',
+        experimentIn: atLocation(instanceId('science_hall')),
+        difficulty: 2,
+      },
+    ])('tests willpower ($difficulty) with $case', ({ experimentIn, difficulty }) => {
+      const { context, state: started } = (
+        experimentIn === undefined
+          ? aliceAndBobAtTheQuad
+          : aliceAndBobAtTheQuad.withCard(experiment, cardOf('12132'), experimentIn)
+      ).start();
+
+      const drawn = stateAfter(
+        context,
+        started,
+        aliceDraws('Mutated!'),
+        resolveRevelation('mutated'),
+      );
+
+      expect(drawn.pending).toMatchObject([
+        { id: 'test:mutated', skillTest: { skill: 'willpower', difficulty } },
+      ]);
+    });
+
+    it.each([
+      { pick: 'damage', alice: { damage: 2, horror: 0 }, bobsHorror: 0 },
+      { pick: 'horror', alice: { damage: 0, horror: 1 }, bobsHorror: 1 },
+    ])('lets alice pick on a fail: $pick', ({ pick, alice: { damage, horror }, bobsHorror }) => {
+      const { context, state: started } = aliceAndBobAtTheQuad.start();
+      const failed = stateAfter(
+        context,
+        started,
+        aliceDraws('Mutated!'),
+        resolveRevelation('mutated'),
+        answer('test:mutated', 'fail'),
+      );
+
+      const state = stateAfter(context, failed, answer(MUTATED_DECISION, pick));
+
+      expect(requireInvestigator(state, alice)).toMatchObject({
+        health: { damage },
+        sanity: { horror },
+      });
+      expect(requireInvestigator(state, bob).sanity.horror).toBe(bobsHorror);
     });
   });
 
