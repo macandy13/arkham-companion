@@ -594,6 +594,7 @@ describe('Smoke and Mirrors card abilities', () => {
 
         expect(drawn.pending).toMatchObject([{ skillTest: { skill: 'agility', difficulty: 3 } }]);
         expect(started.cards[northside]?.tokens.clue).toBe(2);
+        expect(requireInvestigator(started, alice).actionsRemaining).toBe(3);
         expect(requireInvestigator(state, alice)).toMatchObject({
           actionsRemaining: actions,
           clues,

@@ -488,54 +488,41 @@ describe('Spreading Flames card abilities', () => {
   });
 
   describe('Wild Compulsion', () => {
-    it('tests willpower (3); each point failed by costs 1 resource when alice picks it', () => {
-      const { context, state: started } = newGame()
-        .withLocation(quad, cardOf('12116'), { revealed: true })
-        .withInvestigator(alice, { locationId: quad, resources: 5 })
-        .withCard(instanceId('wild_compulsion'), cardOf('12128'), { kind: 'encounterDeck' })
-        .start();
-      const drawn = stateAfter(
-        context,
-        started,
-        aliceDraws('Wild Compulsion'),
-        resolveRevelation('wild_compulsion'),
-      );
+    it.each([
+      { answers: ['resource', 'resource'], resources: 3, discards: 0 },
+      { answers: ['discard', 'resource'], resources: 4, discards: 1 },
+    ])(
+      'tests willpower (3); failing by 2 asks twice: $answers',
+      ({ answers, resources, discards }) => {
+        const { context, state: started } = newGame()
+          .withLocation(quad, cardOf('12116'), { revealed: true })
+          .withInvestigator(alice, { locationId: quad, resources: 5 })
+          .withCard(instanceId('wild_compulsion'), cardOf('12128'), { kind: 'encounterDeck' })
+          .start();
+        const drawn = stateAfter(
+          context,
+          started,
+          aliceDraws('Wild Compulsion'),
+          resolveRevelation('wild_compulsion'),
+        );
 
-      const state = stateAfter(
-        context,
-        drawn,
-        { ...answer('test:wild_compulsion', 'fail'), margin: 2 },
-        answer(WILD_COMPULSION_DECISION, 'resource'),
-        answer(WILD_COMPULSION_DECISION, 'resource'),
-      );
+        const { state, events } = runFrom(context, drawn, [
+          { ...answer('test:wild_compulsion', 'fail'), margin: 2 },
+          ...answers.map((option) => answer(WILD_COMPULSION_DECISION, option)),
+        ]);
 
-      expect(drawn.pending).toMatchObject([{ skillTest: { skill: 'willpower', difficulty: 3 } }]);
-      expect(requireInvestigator(state, alice).resources).toBe(3);
-      expect(state.pending).toEqual([]);
-    });
-
-    it('offers to discard 1 card at random from her hand for a point', () => {
-      const { context, state: started } = newGame()
-        .withLocation(quad, cardOf('12116'), { revealed: true })
-        .withInvestigator(alice, { locationId: quad, resources: 5 })
-        .withCard(instanceId('wild_compulsion'), cardOf('12128'), { kind: 'encounterDeck' })
-        .start();
-
-      const failed = stateAfter(
-        context,
-        started,
-        aliceDraws('Wild Compulsion'),
-        resolveRevelation('wild_compulsion'),
-        answer('test:wild_compulsion', 'fail'),
-      );
-
-      expect(failed.pending).toMatchObject([
-        {
-          id: WILD_COMPULSION_DECISION,
-          options: [{ id: 'discard' }, { id: 'resource' }],
-        },
-      ]);
-    });
+        const randomDiscards = events.filter(
+          (event) =>
+            event.type === 'CommandDeferred' &&
+            event.command.type === 'DiscardFromHand' &&
+            event.command.atRandom === true,
+        );
+        expect(drawn.pending).toMatchObject([{ skillTest: { skill: 'willpower', difficulty: 3 } }]);
+        expect(requireInvestigator(state, alice).resources).toBe(resources);
+        expect(randomDiscards).toHaveLength(discards);
+        expect(state.pending).toEqual([]);
+      },
+    );
   });
 
   describe('Unspeakable Truths', () => {
