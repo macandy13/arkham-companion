@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   atLocation,
+  blankEnemy,
   decisionId,
   encounterSetCode,
   engagedWith,
@@ -143,6 +144,26 @@ describe('The Devourer Below card abilities', () => {
     type: 'DrawEncounter',
     investigatorId: alice,
     match: { name: card },
+  });
+
+  describe('The Ritual Begins', () => {
+    const ritualBegins = instanceId('the_ritual_begins');
+    const ghoul = instanceId('ghoul');
+
+    it.each([
+      { name: 'unengaged at the Main Path', zone: atLocation(mainPath) },
+      { name: 'engaged with alice', zone: engagedWith(alice) },
+    ])('gives each enemy +1 fight and +1 evade, one $name: fight 3 and evade 2', ({ zone }) => {
+      const table = PlayTable.start(
+        newGame()
+          .withLocation(mainPath, cardOf('01149'), { revealed: true })
+          .withInvestigator(alice, { locationId: mainPath })
+          .withAgenda(ritualBegins, cardOf('01144'))
+          .withCard(ghoul, blankEnemy('ghoul', { fight: 2, evade: 1 }), zone),
+      );
+
+      expect(table.board.enemyStats(ghoul)).toMatchObject({ fight: 3, evade: 2 });
+    });
   });
 
   describe('Arkham Woods (Unhallowed Ground)', () => {
