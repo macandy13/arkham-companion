@@ -82,6 +82,9 @@ export {
   SEWERS,
   SEWERS_CELLS,
   SLUICE_CONTROL_DECISION,
+  UNNATURAL_DECAY_DECISION,
+  DISSONANCE_DECISION,
+  TORMENT_DECISION,
   queenOfAshCardDefs,
   queenOfAshCards,
 } from './queen_of_ash/cards';
