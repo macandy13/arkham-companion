@@ -59,6 +59,20 @@ function beganMythos(before: BoardView, after: BoardView): boolean {
 }
 
 /**
+ * Whether more enemies are engaged with `investigator` in `after` than in `before`. Counted, not
+ * matched, as `EnemyView` has no id: two copies of an enemy share a name.
+ */
+function newlyEngaged(
+  before: BoardView,
+  after: BoardView,
+  investigator: BoardView['investigators'][number]['id'],
+): boolean {
+  const engaged = (board: BoardView) =>
+    board.enemies.filter(({ engagedWith }) => engagedWith === investigator).length;
+  return engaged(after) > engaged(before);
+}
+
+/**
  * Every rule oracle, in the order `brokenRule` asks them: the first one a step breaks is its
  * finding, so the round structure comes before the rules that rely on it.
  */
@@ -94,7 +108,13 @@ export const ORACLES: readonly Oracle[] = [
         if (investigator.status !== 'active' || was?.status !== 'active') continue;
         if (ran('resetActions') && investigator.actions !== ACTIONS_PER_ROUND)
           return `${investigator.name} has ${investigator.actions} actions after the upkeep`;
-        if (ran('drawAndGain') && investigator.resources !== was.resources + 1)
+        // An enemy that readies and engages them first may take resources as it engages (Rogue
+        // Gangster), so the gain is only checked for an investigator no enemy newly engaged.
+        if (
+          ran('drawAndGain') &&
+          !newlyEngaged(before, after, investigator.id) &&
+          investigator.resources !== was.resources + 1
+        )
           return `${investigator.name} went from ${was.resources} to ${investigator.resources} resources in the upkeep`;
       }
       const exhausted = after.enemies.find(({ exhausted }) => exhausted);
