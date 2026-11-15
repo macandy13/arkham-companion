@@ -211,6 +211,8 @@ export interface EnemyView {
   /** The doom on it (Cult of Umôrdhoth cultists gain doom), left out while there is none. */
   doom?: number;
   exhausted?: true;
+  /** The printed names of the cards attached to it (Handcuffs), in play order; left out when none. */
+  attachments?: CardName[];
 }
 
 /**
@@ -1318,6 +1320,7 @@ function enemyView(ctx: EngineContext, state: GameState, enemy: CardInstance): E
     ...(enemy.tokens.damage ? { damage: enemy.tokens.damage } : {}),
     ...(enemy.tokens.doom ? { doom: enemy.tokens.doom } : {}),
     ...(enemy.exhausted ? { exhausted: true as const } : {}),
+    ...listIfAny('attachments', namesIn(ctx, state, { kind: 'attachedTo', hostId: enemy.id })),
   };
 }
 

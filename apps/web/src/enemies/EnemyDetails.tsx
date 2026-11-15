@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import type { BoardView, EnemyAction, MapEnemyView } from '@arkham/engine';
 import { ActionButton, ActionGroup, CardActions, cardActionsOn } from '../screens/ActionRow';
+import { AttachedCards } from '../screens/AttachedCards';
 import { DetailsDialog, useDecisionHost } from '../screens/DetailsDialog';
 import type { GameActions } from '../state/gameActions';
 import { useBackCloses } from '../screens/useBackCloses';
@@ -12,7 +13,8 @@ import './enemies.css';
  * One enemy in full, opened by a tap on its card or its map token, on the card shell
  * (`DetailsDialog`): the enemy drawn as its card beside the page (`EnemyCard`, from
  * `BoardView.enemyStats`), whom it is engaged with in the kicker, its fight, health left of its
- * health for the player count and evade on the page, and under them one row of what the players
+ * health for the player count and evade on the page, the cards attached to it with Discard and
+ * Attach a card (`AttachedCards`), and under them one row of what the players
  * can do to it. On an investigator's turn, in one Actions group, the basic actions the rules
  * allow them against it (`BoardView.enemyActions`): fight, evade and engage as actions, which
  * count off what they cost (`BoardView.actionCost`), then fight and evade without an action, as some cards allow; at any time, in a
@@ -90,6 +92,7 @@ export function EnemyDetails({
           <dd>{stats.evade}</dd>
         </div>
       </dl>
+      <AttachedCards board={board} host={enemy.id} type="enemy" actions={actions} busy={busy} />
       <footer>
         {allowed.length > 0 && (
           <ActionGroup title={t('enemy.actions')}>

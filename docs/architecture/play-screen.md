@@ -73,7 +73,7 @@ A tap on a strip expands the header on the agenda or the investigator bar on tha
 
 On a phone a tap on a location, in the compact map or the whole-screen map, shows that location on the whole screen in place of the map (`{ row: 'map', location }`, [`LocationFocus`](../../apps/web/src/map/LocationFocus.tsx)) instead of the details dialog the tablet opens. The strips stay above and below it.
 
-- Its content ([`LocationContent`](../../apps/web/src/map/LocationDetails.tsx)) is the card, the shroud and clues as a line, and the parts the details dialog's page shows too (`LocationPage`): who is there, the attached cards, and the action row or the corrections. The stylesheets share those rules (`:is(dialog[data-dialog='location'] > article, [data-mode='location'])`).
+- Its content ([`LocationContent`](../../apps/web/src/map/LocationDetails.tsx)) is the card, the shroud and clues as a line, and the parts the details dialog's page shows too (`LocationPage`): who is there, the attached cards, and the action row or the corrections. The stylesheets share those rules (`:is(dialog[data-dialog='location'] > article, [data-mode='location'])`; its sections take the details' rules in `card_dialog.css`).
 - Its connected locations sit around the card, each on the side where its tile lies on the map (`neighboursOf` in [`mapLayout.ts`](../../apps/web/src/map/mapLayout.ts): above or below where the centres lie further apart down than across, otherwise left or right).
   - Each neighbour is a small tile with its connection symbol, its name and the initials of who is there.
   - A barricaded neighbour (a card forbids moving in) has a dashed red frame, and a one-way connection into the shown location a dotted one; the tile's name says both.

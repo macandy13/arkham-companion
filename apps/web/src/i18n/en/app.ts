@@ -379,7 +379,6 @@ export const appTexts = {
     card: 'The card of {{name}}',
     here: 'Here',
     nobody: 'No one is here.',
-    attached: 'Attached',
     engagedWith: '{{enemy}}, engaged with {{investigator}}',
     actions: 'Actions',
     investigateAction_one: 'Investigate · {{count}} action',
@@ -567,6 +566,13 @@ export const appTexts = {
     lower: 'Lower to reach the board',
     raise: 'Raise the dialog',
     waiting: 'Waiting next',
+  },
+  attached: {
+    title: 'Attached',
+    discard: 'Discard',
+    discardCard: 'Discard {{card}}',
+    attach: 'Attach a card',
+    attachTo: 'Attach a card to {{host}}',
   },
   cardZoom: {
     open: 'Read {{name}}',

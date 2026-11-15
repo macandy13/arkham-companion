@@ -222,6 +222,56 @@
   font-size: var(--font-size-title);
 }
 
+/*
+ * The parts of a card's page under its values (who is at a location, the cards attached to a
+ * location or an enemy), on the details and the phone's location mode (map.css): each a column
+ * under its small title. An attached card's name and its Discard stand in one row, and Attach a
+ * card under them keeps its own width.
+ */
+#board dialog[data-shell] > article > section,
+#map [data-mode='location'] > section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+#board dialog[data-shell] > article > section > h3,
+#map [data-mode='location'] > section > h3 {
+  margin: 0;
+  font-size: var(--font-size-caption);
+  font-weight: normal;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+}
+
+#board dialog[data-shell] > article > section > ul,
+#map [data-mode='location'] > section > ul {
+  margin: 0;
+  padding-left: var(--space-3);
+}
+
+#board dialog[data-shell] > article > section > button,
+#map [data-mode='location'] > section > button {
+  align-self: flex-start;
+}
+
+#board dialog[data-shell] > article > section > ul > li,
+#map [data-mode='location'] > section > ul > li {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* The player cards to attach, one under the other. */
+#board dialog[data-dialog='attach-card'] > ul {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-3);
+  padding: 0;
+  list-style: none;
+}
+
 /* The investigator who acts, round over the page or small before the kicker's words. */
 #board dialog[data-shell] picture {
   position: relative;

@@ -8,7 +8,7 @@ A tap on a tile (or its "i" button, for the keyboard) opens the location's [deta
 - its card beside the page (the tile's drawing with its pieces, as the shell's `drawn` card),
 - its shroud and its clues left of its clue value for the player count (`LocationView.clueValue`, "1 / 2") as the page's values, or "Unrevealed",
 - who is there,
-- the cards attached to it (each opening the card zoom),
+- the cards attached to it, each opening the card zoom with Discard beside it (`GameActions.discardCard`), and Attach a card ([`AttachedCards`](../../apps/web/src/screens/AttachedCards.tsx), shared with the enemy details): a small dialog lists the player cards that attach to a location (`attachableCards`, `CardStats.attachesTo`: Barricade, Hiding Spot), and the one picked is attached (`GameActions.attachPlayerCard`, `AttachPlayerCard`),
 - and an action row (the enemy details' [`ActionRow`](../../apps/web/src/screens/ActionRow.tsx)) with one Actions group, those that count off an action first, built from a list of what the investigator whose turn it is can do there:
   - investigate as an action or take a clue without a test at their own location,
   - move as an action or free to a connected one (`BoardView.connectedTo`), each marked with an action arrow per action it costs (`BoardView.actionCost`: Frozen in Fear raises the round's first move, a free one too),

@@ -15,6 +15,7 @@ export const barricade: CardStats = {
   name: 'Barricade',
   typeCode: 'event',
   traits: [trait('Insight'), trait('Tactic')],
+  attachesTo: 'location',
   restrictions: [{ cannot: 'enemiesMoveInto', of: 'host', exceptTraits: [trait('Elite')] }],
 };
 
@@ -27,6 +28,7 @@ export const handcuffs: CardStats = {
   name: 'Handcuffs',
   typeCode: 'asset',
   traits: [trait('Item'), trait('Police')],
+  attachesTo: 'enemy',
   restrictions: [
     { cannot: 'ready', of: 'host', exceptTraits: [trait('Elite')] },
     { cannot: 'placeDoom', of: 'host', exceptTraits: [trait('Elite')] },
@@ -42,6 +44,7 @@ export const hidingSpot: CardStats = {
   name: 'Hiding Spot',
   typeCode: 'event',
   traits: [trait('Tactic'), trait('Trick')],
+  attachesTo: 'location',
   keywordGrants: [{ gains: 'aloof', of: 'enemiesAtHost', exceptTraits: [trait('Elite')] }],
 };
 

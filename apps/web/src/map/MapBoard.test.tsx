@@ -963,7 +963,7 @@ describe('MapBoard', () => {
     const offered = () =>
       within(enemyDetails())
         .queryAllByRole('button')
-        .map((button) => button.getAttribute('aria-label'));
+        .map((button) => button.getAttribute('aria-label') ?? button.textContent);
 
     /**
      * Presses the piece named `name` on the tile of `location` and lets go where it went down,
@@ -1031,6 +1031,7 @@ describe('MapBoard', () => {
       expect(offered()).toEqual([
         'Read rats',
         'Close',
+        'Attach a card',
         'Engage · 1 action',
         'Deal 1 damage',
         'Exhaust',
@@ -1086,7 +1087,14 @@ describe('MapBoard', () => {
 
       await tapPiece('study', 'rats');
 
-      expect(offered()).toEqual(['Read rats', 'Close', 'Deal 1 damage', 'Exhaust', 'Defeat']);
+      expect(offered()).toEqual([
+        'Read rats',
+        'Close',
+        'Attach a card',
+        'Deal 1 damage',
+        'Exhaust',
+        'Defeat',
+      ]);
     });
   });
 
@@ -1216,7 +1224,12 @@ describe('MapBoard', () => {
 
       expect(within(details('study')).getByRole('img', { name: 'The card of study' })).toBeTruthy();
       const attached = within(details('study')).getByRole('region', { name: 'Attached' });
-      expect(within(attached).getByRole('listitem').textContent).toBe('obscuring_fog');
+      const item = within(attached).getByRole('listitem');
+      expect(
+        within(item)
+          .getAllByRole('button')
+          .map((button) => button.getAttribute('aria-label')),
+      ).toEqual(['Read obscuring_fog', 'Discard obscuring_fog']);
     });
 
     it('opens an attached card to read, and Escape there leaves the study open', () => {
@@ -1240,13 +1253,19 @@ describe('MapBoard', () => {
     it.each([
       {
         location: 'study',
-        buttons: ['Close', 'Investigate · 1 action', 'Take a clue, no test'],
+        buttons: ['Close', 'Attach a card', 'Investigate · 1 action', 'Take a clue, no test'],
       },
       {
         location: 'hallway',
-        buttons: ['Close', 'Move here · 1 action', 'Move here, no action', 'Reveal'],
+        buttons: [
+          'Close',
+          'Attach a card',
+          'Move here · 1 action',
+          'Move here, no action',
+          'Reveal',
+        ],
       },
-      { location: 'attic', buttons: ['Close', 'Reveal'] },
+      { location: 'attic', buttons: ['Close', 'Attach a card', 'Reveal'] },
     ])('offers alder in the study at the $location: $buttons', ({ location, buttons }) => {
       const table = aldersTurn();
       render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
@@ -1366,7 +1385,7 @@ describe('MapBoard', () => {
       tap('Close');
       tapOnce(tile('hallway'));
       // Only the correction for the unrevealed hallway, no move past the barrier.
-      expect(offered('hallway')).toEqual(['Close', 'Reveal']);
+      expect(offered('hallway')).toEqual(['Close', 'Attach a card', 'Reveal']);
     });
 
     describe("the parlor's Resign", () => {

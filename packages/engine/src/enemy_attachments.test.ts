@@ -89,6 +89,14 @@ describe('Handcuffs on an exhausted enemy at the hall', () => {
 
     expect(after.cards[ghoul]?.tokens.doom).toBeUndefined();
   });
+
+  it('shows among the enemy attachments', () => {
+    const { context, state } = hallWithAlice.withCard(ghoul, plainGhoul, atLocation(hall)).start();
+
+    const after = stateAfter(context, state, handcuffsOnGhoul);
+
+    expect(boardView(context, after).enemy(ghoul)).toMatchObject({ attachments: ['handcuffs'] });
+  });
 });
 
 describe('Hiding Spot at the hall, where Alice is', () => {

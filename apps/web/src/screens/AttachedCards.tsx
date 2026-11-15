@@ -1,0 +1,147 @@
+import { useEffect, useId, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import type {
+  AttachmentHost,
+  BoardView,
+  CardFaceView,
+  CardStats,
+  InstanceId,
+} from '@arkham/engine';
+import { attachableCards } from '../catalog/attachableCards';
+import type { GameActions } from '../state/gameActions';
+import { CardZoom } from './CardZoom';
+
+/**
+ * The cards attached to a location or an enemy (`host`, of type `type`) on its details' page: each
+ * opening large to read (`CardZoom`) with Discard beside it, as a Forced ability or a card says
+ * (`GameActions.discardCard`), and under them Attach a card, for a player card the players attached
+ * at the table (`AttachCardDialog`). Nothing is tapped while a step is queued (`busy`).
+ */
+export function AttachedCards({
+  board,
+  host,
+  type,
+  actions,
+  busy,
+}: {
+  board: BoardView;
+  host: InstanceId;
+  type: AttachmentHost;
+  actions: GameActions;
+  busy: boolean;
+}) {
+  const { t } = useTranslation();
+  const titleId = useId();
+  const [zoomed, setZoomed] = useState<CardFaceView>();
+  const [attaching, setAttaching] = useState(false);
+  const cards = board.cardsIn({ kind: 'attachedTo', hostId: host });
+  const attachable = attachableCards(type);
+  if (cards.length === 0 && attachable.length === 0) return null;
+  return (
+    <section aria-labelledby={titleId}>
+      <h3 id={titleId}>{t('attached.title')}</h3>
+      {cards.length > 0 && (
+        <ul>
+          {cards.map((card) => (
+            <li key={card.id}>
+              <button
+                type="button"
+                aria-haspopup="dialog"
+                aria-label={t('cardZoom.open', { name: card.name })}
+                onClick={() => setZoomed(card)}
+              >
+                {card.name}
+              </button>
+              <button
+                type="button"
+                aria-label={t('attached.discardCard', { card: card.name })}
+                disabled={busy}
+                onClick={() => void actions.discardCard(card.id)}
+              >
+                {t('attached.discard')}
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+      {attachable.length > 0 && (
+        <button
+          type="button"
+          aria-haspopup="dialog"
+          disabled={busy}
+          onClick={() => setAttaching(true)}
+        >
+          {t('attached.attach')}
+        </button>
+      )}
+      {zoomed && <CardZoom card={zoomed} onClose={() => setZoomed(undefined)} />}
+      {attaching && (
+        <AttachCardDialog
+          host={board.cardFace(host).name}
+          cards={attachable}
+          onAttach={(card) => void actions.attachPlayerCard(host, card.code)}
+          onClose={() => setAttaching(false)}
+        />
+      )}
+    </section>
+  );
+}
+
+/**
+ * The player cards that attach to `host`, by name, to pick the one the players attached at the
+ * table, and Cancel. A native modal `<dialog>` over the details brings focus trapping and Escape,
+ * which closes only it. It leaves the phone's back gesture to the details (`useBackCloses`),
+ * since each card entry's back step closes every card that listens, and this one is small.
+ */
+function AttachCardDialog({
+  host,
+  cards,
+  onAttach,
+  onClose,
+}: {
+  host: string;
+  cards: readonly CardStats[];
+  onAttach: (card: CardStats) => void;
+  onClose: () => void;
+}) {
+  const { t } = useTranslation();
+  const titleId = useId();
+  const dialog = useRef<HTMLDialogElement>(null);
+  useEffect(() => {
+    dialog.current?.showModal();
+  }, []);
+  return (
+    <dialog
+      ref={dialog}
+      aria-labelledby={titleId}
+      data-dialog="attach-card"
+      onCancel={(event) => {
+        // React passes `cancel` on to the details around it, and Escape here closes only this one.
+        event.stopPropagation();
+        onClose();
+      }}
+    >
+      <h2 id={titleId}>{t('attached.attachTo', { host })}</h2>
+      <ul>
+        {cards.map((card) => (
+          <li key={card.code}>
+            <button
+              type="button"
+              onClick={() => {
+                onClose();
+                onAttach(card);
+              }}
+            >
+              {card.name}
+            </button>
+          </li>
+        ))}
+      </ul>
+      <footer>
+        <button type="button" onClick={onClose}>
+          {t('games.cancel')}
+        </button>
+      </footer>
+    </dialog>
+  );
+}
