@@ -143,7 +143,8 @@ export function discardEncounterCard(
 /**
  * The command that discards an encounter card onto the top of the encounter
  * discard, where "topmost" effects look for it: a resolved revelation, or an
- * investigated location's attachment. Card abilities use `discard`.
+ * investigated location's attachment. Card abilities use `discard`, the same move for a card
+ * reference instead of an ID.
  */
 export function discardToTop(cardId: InstanceId): MoveCard {
   return { type: 'MoveCard', cardId, to: { kind: 'encounterDiscard' }, index: 0 };

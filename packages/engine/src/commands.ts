@@ -163,7 +163,8 @@ export interface ManualAdjust {
  * A card effect or reverse side moves a card to another zone ("remove the
  * Study from the game", "discard each enemy there"). Validated like a
  * `ManualAdjust` move, but it is a game event, so forced effects fire.
- * Produces `CardMoved`.
+ * Produces `CardMoved`; a card leaving play first loses its attachments and tokens and is readied
+ * (`handleMoveCard`), and a player card sent to the encounter discard goes out of the game.
  */
 export interface MoveCard {
   type: 'MoveCard';

@@ -26,9 +26,11 @@ function assertNotCurrentStage(state: GameState, cardId: InstanceId): void {
 }
 
 /**
- * `MoveCard`: the same move a `ManualAdjust` makes, as a game event. A card it takes from play to
- * the set-aside area, out of the game or beneath another card leaves its tokens and attachments behind first and is
- * readied (Rules Reference, "Leaves Play"; "Escape the Dorms" removes Your Friend's Room with its Fire! and sets
+ * `MoveCard`: the same move a `ManualAdjust` makes, as a game event. A card it takes out of play (to
+ * a deck or pile, the victory display, set aside, out of the game or beneath a card) leaves its
+ * tokens and attachments behind first, is readied, and a keyword it granted enemies goes with it
+ * (`engagementsOnceGrantsLeave`); a player card sent to the encounter discard goes out of the game
+ * (Rules Reference, "Leaves Play"; "Escape the Dorms" removes Your Friend's Room with its Fire! and sets
  * the Servant of Flame aside healed); a correction moves the card alone. A card whose limit is
  * reached there (`limitReached`) does not move: the limit keeps it out, so a revelation leaves it
  * in `resolving`, to be discarded.
