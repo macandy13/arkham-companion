@@ -49,7 +49,7 @@ The scripted golden game is [`end_to_end.test.ts`](../../packages/scenarios/src/
 - [ ] Sluice Control's action tests agility or combat (5); on a pass the scenario ends with resolution 3 and each enemy is defeated.
 - [ ] An investigator who enters the revealed Sewer Tunnels with the square (Overgrown Tunnels) loses 1 action.
 - [ ] Entering Infested Pipes (spade) discards from the encounter deck until an enemy, which the entering investigator draws.
-- [ ] Ending a turn in Flooded Crypt (star) gives 1 horror, in Toxic Waste Pit (double slash) asks for a card discarded from hand, and in Smuggler's Cache (clover) offers 1 resource, which the investigator may decline.
+- [ ] Ending a turn in Flooded Crypt (star) gives 1 horror, in Toxic Waste Pit (double slash) asks for a card discarded from hand, and in Smuggler's Cache (clover) offers its reaction to gain 1 resource, which the investigator may use or pass.
 - [ ] Sewer Culvert's resign action works.
 - [ ] Discovering the last clue at Underground Cistern places 2 per investigator there again; as the investigation phase ends, each ready non-Elite Cultist there is discarded with 1 doom on the agenda for each.
 - [ ] Elokoss's fast ability costs the investigator at her location 1 clue per investigator, from their own clues, and places 1 clue on her; her fifth clue ends the scenario with resolution 2.

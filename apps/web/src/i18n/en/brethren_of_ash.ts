@@ -67,11 +67,6 @@ export const brethrenOfAshTexts = {
         event: 'Event',
         skill: 'Skill',
       },
-      smugglersCache: {
-        prompt: '{{card}}: you may gain 1 resource',
-        gain: 'Gain 1 resource',
-        decline: "Don't",
-      },
       resolution: {
         collector: 'You earned the Collector reward: add both copies to your player card pool.',
       },

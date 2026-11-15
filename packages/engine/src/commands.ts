@@ -64,6 +64,7 @@ export type Command =
   | ChangeChaosBag
   | SealChaosToken
   | AttachPlayerCard
+  | DrawWeakness
   | ReleaseChaosToken
   | AdvanceAgenda
   | BecomeActAndAgenda
@@ -81,6 +82,7 @@ export type Command =
   | DamageEnemy
   | HealEnemy
   | GainSurge
+  | UseReaction
   | ResolveRevelation
   | DefeatEnemy
   | ExhaustEnemy
@@ -515,6 +517,21 @@ export interface AttachPlayerCard {
 }
 
 /**
+ * `investigatorId` draws the weakness `code` (an enemy or a treachery in the card DB) from their
+ * deck: Mob Enforcer, The Thing That Follows. Rules Reference, "Weakness": it resolves as if it
+ * were an encounter card, so it is drawn the way `DrawEncounter` draws one (revelation, peril,
+ * surge; an enemy spawns engaged with them unless it has a spawn instruction). Produces
+ * `WeaknessDrawn`, a new card they own (`CardInstance.owner`), then `DrawEncounter`'s events.
+ * Rejects a card of another type (`notAWeaknessToDraw`): an asset or event weakness stays in the
+ * players' hands, which the app doesn't track.
+ */
+export interface DrawWeakness {
+  type: 'DrawWeakness';
+  investigatorId: InvestigatorId;
+  code: CardCode;
+}
+
+/**
  * Seals one copy of `token` from the chaos bag on a card `investigatorId` controls, or on them
  * (`GameState.sealedTokens`). Produces `ChaosTokenSealed`; a token the bag does not hold seals
  * nothing, like `ChangeChaosBag`'s remove. `ReleaseChaosToken` puts it back.
@@ -856,6 +873,19 @@ export interface ResolveRevelation {
 export interface GainSurge {
   type: 'GainSurge';
   cardId: InstanceId;
+}
+
+/**
+ * The investigator triggers reaction number `ability` of the card `cardId` (`Ability.reaction`):
+ * the "use" option of the question the reaction asks as its window opens puts this in front of
+ * the reaction's effects. Produces `ReactionUsed`, which counts towards the reaction's limit; the
+ * limit is checked when the question is asked.
+ */
+export interface UseReaction {
+  type: 'UseReaction';
+  cardId: InstanceId;
+  investigatorId: InvestigatorId;
+  ability: number;
 }
 
 /**

@@ -9,7 +9,7 @@ import { cardsInZone, requireCard } from './lookup';
 import { cardMoved, clearTokensEvents, discardEncounterCard, limitReached } from './placement';
 import { apply, replay } from './reducer';
 import { readyEnemyEngagements } from './engagement';
-import { isPlayerCard } from './player_cards';
+import { discardPileOf } from './player_cards';
 import { CommandRejected } from './rejection';
 import type { CardInstance, GameState } from './state';
 import { attachedTo, type Zone } from './zone';
@@ -38,8 +38,7 @@ function assertNotCurrentStage(state: GameState, cardId: InstanceId): void {
 export function handleMoveCard(ctx: EngineContext, state: GameState, cmd: MoveCard): Event[] {
   const card = requireCard(state.cards, cmd.cardId);
   // A player card discarded from the table goes back to its owner, out of the scenario's game.
-  const to: Zone =
-    cmd.to.kind === 'encounterDiscard' && isPlayerCard(ctx, card) ? { kind: 'outOfGame' } : cmd.to;
+  const to: Zone = cmd.to.kind === 'encounterDiscard' ? discardPileOf(ctx, card) : cmd.to;
   if (limitReached(ctx, state, card.id, to)) return [];
   const moved = cardMoved(state, card, to, cmd.index);
   if (!leavesPlay(state, card, to)) return [moved];

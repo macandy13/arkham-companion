@@ -18,6 +18,7 @@ import {
   discardAsset,
   discardEachEnemy,
   discardFromHand,
+  drawCards,
   placeYourClues,
   loseResources,
   discardAtRandom,
@@ -49,6 +50,7 @@ import {
   plusDifficultyIf,
   putIntoThreatArea,
   putLocationIntoPlay,
+  reaction,
   removeFromGame,
   resignAction,
   resolutionId,
@@ -201,8 +203,8 @@ const jpg = 'jpg';
  * - the agendas' Parley (test intellect (2) to discard a Bystander at your location): it can be
  *   taken only with a Bystander there, a condition actions can't state yet
  * - Blaze of Glory's group clue spend to deal damage to an enemy
- * - Your Friend's Room's Engage action, Miskatonic Quad's free move, Warren Observatory's draw
- *   (MC2.3) and Orne Library's two-action draw (MC1.12)
+ * - Your Friend's Room's Engage action, Miskatonic Quad's free move (MC2.3) and Orne Library's
+ *   two-action draw (MC1.12)
  * - Dr. Henry Armitage's skill bonus and free first action: his controller's to apply, like a
  *   player card's
  * - Hellhound's asset discard after its enemy phase attacks: the players pick the asset, as for
@@ -425,6 +427,7 @@ export const spreadingFlamesCardDefs: readonly CardStats[] = [
     traits: ['Miskatonic'],
     shroud: 3,
     cluesPerInvestigator: 1,
+    abilities: [reaction(afterDiscoveringClues(drawCards(1)), { per: 'round' })],
   }),
   location({
     code: codes.orneLibrary,

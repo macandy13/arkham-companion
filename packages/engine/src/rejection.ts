@@ -146,6 +146,8 @@ export type Rejection =
   | { code: 'invalidAttachmentHost'; cardId: InstanceId }
   /** `AttachPlayerCard` of a card that is no player asset or event (`isPlayerCard`). */
   | { code: 'notAPlayerCard'; cardCode: CardCode }
+  /** `DrawWeakness` of a card that is no enemy or treachery. */
+  | { code: 'notAWeaknessToDraw'; cardCode: CardCode }
   /** An enemy command (engage, damage, exhaust, …) for an enemy that is not in play. */
   | { code: 'enemyNotInPlay'; cardId: InstanceId }
   /** `MoveEnemy` for an engaged enemy, which moves only with its investigator, unless `forced`. */
@@ -206,6 +208,13 @@ export type Rejection =
       code: 'cardActionLimitReached';
       cardId: InstanceId;
       action: number;
+      investigatorId: InvestigatorId;
+    }
+  /** `UseReaction` on a reaction its limit allows no more of now ("(Limit once per round.)"). */
+  | {
+      code: 'reactionLimitReached';
+      cardId: InstanceId;
+      ability: number;
       investigatorId: InvestigatorId;
     }
   /** `UseCardAction` on an action whose cost the investigator can't pay ("Spend 5 resources:"). */
@@ -421,6 +430,8 @@ function describe(r: Rejection): string {
       return `a player card attaches only to an enemy or a location in play, not ${r.cardId}`;
     case 'notAPlayerCard':
       return `${r.cardCode} is no player card to attach`;
+    case 'notAWeaknessToDraw':
+      return `${r.cardCode} is no enemy or treachery weakness to draw`;
     case 'enemyNotInPlay':
       return `${r.cardId} is not in play`;
     case 'noSpawnLocation':
@@ -469,6 +480,8 @@ function describe(r: Rejection): string {
       return `${r.investigatorId} cannot take the actions of ${r.cardId} now`;
     case 'cardActionLimitReached':
       return `${r.investigatorId} has used action ${r.action} of ${r.cardId} as often as its limit allows`;
+    case 'reactionLimitReached':
+      return `${r.investigatorId} has used reaction ${r.ability} of ${r.cardId} as often as its limit allows`;
     case 'cardActionCostUnpaid':
       return `${r.investigatorId} cannot pay the cost of action ${r.action} of ${r.cardId}`;
     case 'cardActionConditionUnmet':

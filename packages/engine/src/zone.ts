@@ -93,6 +93,9 @@ export const encounterDiscard: Zone = { kind: 'encounterDiscard' };
 /** Cards the scenario set aside, out of play until a card or setup brings them in. */
 export const setAside: Zone = { kind: 'setAside' };
 
+/** Cards out of the scenario: removed from the game, or back with the player who owns them. */
+export const outOfGame: Zone = { kind: 'outOfGame' };
+
 /** A drawn encounter card while its revelation resolves. */
 export const resolvingZone: Zone = { kind: 'resolving' };
 

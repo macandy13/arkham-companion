@@ -41,6 +41,8 @@ const REFUSAL_KINDS: Readonly<Record<RejectionCode, RefusalKind>> = {
   cardActionLimitReached: 'expected',
   cardActionCostUnpaid: 'expected',
   cardActionConditionUnmet: 'expected',
+  // A second offer of a limited reaction queued before the first was used; the players pass it.
+  reactionLimitReached: 'expected',
   // Steps out of the round's order.
   decisionPending: 'expected',
   wrongPhase: 'expected',
@@ -100,6 +102,7 @@ const REFUSAL_KINDS: Readonly<Record<RejectionCode, RefusalKind>> = {
   enemyNotInPlay: 'never',
   invalidAttachmentHost: 'never',
   notAPlayerCard: 'never',
+  notAWeaknessToDraw: 'never',
   noSpawnLocation: 'never',
   notResolving: 'never',
   notAHunter: 'never',

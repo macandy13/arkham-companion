@@ -3,6 +3,7 @@
 [Mythos step 1.4](https://arkhamdb.com/rules#Mythos_Phase), [encounter deck](https://arkhamdb.com/rules#Encounter_Deck).
 Card rulings: [Searching, drawing and attaching encounter cards](cards/encounter-searches.md).
 A player card or effect that makes an investigator draw outside the mythos phase follows the same steps.
+A [weakness](https://arkhamdb.com/rules#Weakness) enemy or treachery drawn from a player deck (Mob Enforcer, Haunted) resolves as if it were an encounter card, so it follows the same steps from step 2, peril and surge included; a surge draws from the encounter deck. It is not an encounter card: when it is discarded or defeated it goes to its owner's discard pile, not the encounter discard, which the app shows as the card leaving the scenario.
 
 For each draw:
 

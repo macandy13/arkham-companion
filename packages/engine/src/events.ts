@@ -46,6 +46,7 @@ export type Event =
   | ChaosBagChanged
   | ChaosTokenSealed
   | PlayerCardAttached
+  | WeaknessDrawn
   | ChaosTokenReleased
   | CardFlipped
   | ConnectionChanged
@@ -67,6 +68,7 @@ export type Event =
   | SurgeGained
   | RevelationResolved
   | CardActionUsed
+  | ReactionUsed
   | CommandDeferred
   | AbilityEffectSkipped
   | CluesDiscovered
@@ -143,6 +145,18 @@ export interface PlayerCardAttached {
   cardId: InstanceId;
   code: CardCode;
   hostId: InstanceId;
+}
+
+/**
+ * `investigatorId` drew the weakness `code` from their deck: the new card `cardId`, owned by them
+ * (`CardInstance.owner`) and still facedown out of the scenario, until the `EncounterCardDrawn`
+ * that follows reveals it. Produced by `DrawWeakness`.
+ */
+export interface WeaknessDrawn {
+  type: 'WeaknessDrawn';
+  cardId: InstanceId;
+  code: CardCode;
+  investigatorId: InvestigatorId;
 }
 
 /** One copy of `token` left the chaos bag, sealed on `investigatorId`. Produced by `SealChaosToken`. */
@@ -377,7 +391,8 @@ export type EventType = Event['type'];
  * resolved (`placeDrawnCard`); the reducer ignores this event. `peril` is carried here
  * because the app cannot hide information; the UI uses it to warn the players
  * not to discuss the card. `surge` tells that another draw follows. Produced
- * by `DrawEncounter`.
+ * by `DrawEncounter`, and by `DrawWeakness` for a weakness from a player deck, which resolves as
+ * if it were an encounter card.
  */
 export interface EncounterCardDrawn {
   type: 'EncounterCardDrawn';
@@ -423,6 +438,18 @@ export interface CardActionUsed {
   type: 'CardActionUsed';
   cardId: InstanceId;
   action: number;
+  investigatorId: InvestigatorId;
+}
+
+/**
+ * The investigator triggered reaction number `ability` (its index among the card's abilities) of
+ * the card `cardId`; the reducer records the use (`CardInstance.reactionUses`) for the reaction's
+ * limit. Produced by `UseReaction`.
+ */
+export interface ReactionUsed {
+  type: 'ReactionUsed';
+  cardId: InstanceId;
+  ability: number;
   investigatorId: InvestigatorId;
 }
 

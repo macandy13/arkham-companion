@@ -11,6 +11,7 @@ import type { Event } from './events';
 import {
   canDrawEncounter,
   encounterCardCount,
+  surgeChainCards,
   placeDrawnCard,
   surgeDraw,
 } from './handle_encounter';
@@ -388,7 +389,7 @@ function resolveCommand(
   const mustChange = spec.mustChangeState?.(command, resolution.ctx, before) ?? [];
   if (mustChange.length > 0 && dryRun(resolution, mustChange).length === 0)
     throw new CommandRejected({ code: 'changesNothing', command: command.type });
-  if (surgeDraw(own)) budget.encounterCards ??= encounterCardCount(before);
+  if (surgeDraw(own)) budget.encounterCards ??= surgeChainCards(before, own);
   const continuation = withOrigin(
     withinSurgeLimit(spec.continueWith?.(command, own, resolution.ctx, before) ?? [], budget),
     origin,
@@ -429,7 +430,7 @@ function resolveAtOnce(
     const spec = commandSpec(command);
     const handledIn = resolution.state;
     const own = spec.handle(resolution.ctx, handledIn, command);
-    if (surgeDraw(own)) budget.encounterCards ??= encounterCardCount(handledIn);
+    if (surgeDraw(own)) budget.encounterCards ??= surgeChainCards(handledIn, own);
     emit(resolution, own);
     events.push(...own);
     continuations.push(

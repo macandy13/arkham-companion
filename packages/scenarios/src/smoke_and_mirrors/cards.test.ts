@@ -23,6 +23,7 @@ import { answer, cardIn, resolveRevelation, runFrom, stateAfter } from '@arkham/
 import {
   ARCANE_LOCK_DECISION,
   DOWNPOUR_DECISION,
+  SMOKE_AND_MIRRORS_CODES,
   smokeAndMirrorsCardDefs,
   smokeAndMirrorsCards,
 } from './cards';
@@ -231,6 +232,29 @@ describe('Smoke and Mirrors card abilities', () => {
         );
       },
     );
+  });
+
+  describe('Downtown (First Bank of Arkham)', () => {
+    it('gives alice 1 resource when she uses its reaction after discovering a clue there', () => {
+      const bank = instanceId('first_bank');
+      const { context, state: started } = newGame()
+        .withLocation(bank, cardOf(SMOKE_AND_MIRRORS_CODES.downtownFirstBank), {
+          revealed: true,
+          clues: 2,
+        })
+        .withInvestigator(alice, { locationId: bank, resources: 0 })
+        .withTurnOf(alice)
+        .start();
+
+      const state = stateAfter(
+        context,
+        started,
+        { type: 'DiscoverClues', investigatorId: alice, locationId: bank, amount: 1 },
+        answer('reaction:first_bank:0', 'use'),
+      );
+
+      expect(requireInvestigator(state, alice).resources).toBe(1);
+    });
   });
 
   describe('Miskatonic University (In Flames)', () => {

@@ -1,4 +1,5 @@
 import type { EngineContext } from './cards';
+import { handleUseReaction } from './reactions';
 import type {
   ActionCommand,
   AdvanceAct,
@@ -6,6 +7,7 @@ import type {
   Command,
   CommandType,
   DrawEncounter,
+  DrawWeakness,
 } from './commands';
 import { handleDealEnemyAttack, handleEnemyAttacks } from './attacks_of_opportunity';
 import { handleMarginEntry, handleRequestDecision, handleResolveDecision } from './decisions';
@@ -22,6 +24,7 @@ import {
 } from './handle_board';
 import {
   handleDrawEncounter,
+  handleDrawWeakness,
   handleDrawBeneath,
   handleDrawFromScenarioDeck,
   handleGainSurge,
@@ -169,10 +172,13 @@ function finishAdvance(command: AdvanceAgenda | AdvanceAct, own: readonly Event[
 }
 
 /**
- * `DrawEncounter`, continued: the drawn card is placed once its revelation
+ * `DrawEncounter` and `DrawWeakness`, continued: the drawn card is placed once its revelation
  * has resolved, then a surge draws the next card.
  */
-function placeDrawnCard(_command: DrawEncounter, own: readonly Event[]): Continuation[] {
+function placeDrawnCard(
+  _command: DrawEncounter | DrawWeakness,
+  own: readonly Event[],
+): Continuation[] {
   const drawn = own.find((event) => event.type === 'EncounterCardDrawn');
   const surge = surgeDraw(own);
   return [
@@ -234,6 +240,11 @@ const COMMAND_SPECS: CommandSpecs = {
   ChangeChaosBag: { handle: (_ctx, state, command) => handleChangeChaosBag(state, command) },
   SealChaosToken: { handle: (_ctx, state, command) => handleSealChaosToken(state, command) },
   AttachPlayerCard: { handle: handleAttachPlayerCard },
+  DrawWeakness: {
+    handle: handleDrawWeakness,
+    // As for an encounter draw, the revelation resolves before the card is placed.
+    continueWith: placeDrawnCard,
+  },
   ReleaseChaosToken: {
     handle: (_ctx, state, command) => handleReleaseChaosToken(state, command),
   },
@@ -255,6 +266,7 @@ const COMMAND_SPECS: CommandSpecs = {
     continueWith: placeDrawnCard,
   },
   GainSurge: { handle: (_ctx, state, command) => handleGainSurge(state, command) },
+  UseReaction: { handle: handleUseReaction },
   ResolveRevelation: { handle: (_ctx, state, command) => handleResolveRevelation(state, command) },
   ShuffleEncounterDiscard: { handle: (_ctx, state) => handleShuffleEncounterDiscard(state) },
   ShuffleEncounterDeck: { handle: (_ctx, state) => handleShuffleEncounterDeck(state) },

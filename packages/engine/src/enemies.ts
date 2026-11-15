@@ -7,7 +7,7 @@ import { cardsInZone, requireCard } from './lookup';
 import { playerOrder, findInvestigator } from './investigators';
 import { cardHasKeyword } from './card_keywords';
 import { CommandRejected } from './rejection';
-import { encounterDiscard, victoryDisplay } from './zone';
+import { encounterDiscard, outOfGame, victoryDisplay } from './zone';
 import type { CardInstance, GameState, Investigator, TokenKind } from './state';
 
 /** One enemy attack of the enemy phase: who attacks whom, and for how much. */
@@ -257,17 +257,25 @@ export function defeatedByDamage(
   return [enemyDefeatedEvent(state, enemy, stats)];
 }
 
-/** The `EnemyDefeated` of `enemy`: to the victory display if it has victory, else to the encounter discard. */
+/**
+ * The `EnemyDefeated` of `enemy`: to the victory display if it has victory, else to the encounter
+ * discard, or back to its owner for a weakness (`CardInstance.owner`), out of the scenario. Victory
+ * wins for a weakness too: it replaces "the discard pile", whichever pile that is (Rules
+ * Reference, "Victory Display"; FAQ v2.5 §1.12: an encounter-type weakness in play counts as an
+ * encounter card).
+ */
 export function enemyDefeatedEvent(
   state: GameState,
   enemy: CardInstance,
   stats: CardStats,
 ): EnemyDefeated {
   const hasVictory = (stats.victory ?? 0) > 0;
+  const discard = enemy.owner !== undefined ? outOfGame : encounterDiscard;
+  const to = hasVictory ? victoryDisplay : discard;
   return {
     type: 'EnemyDefeated',
     enemyId: enemy.id,
-    to: hasVictory ? victoryDisplay : encounterDiscard,
+    to,
     locationId: locationOf(state, enemy),
   };
 }
