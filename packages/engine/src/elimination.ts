@@ -1,7 +1,7 @@
 import type { EngineContext } from './cards';
 import { arrivalEngagements } from './engagement';
 import { decisionId, type InstanceId } from './ids';
-import { isInPlay } from './doom';
+import { cardsInPlay } from './doom';
 import { requestDecision } from './decisions';
 import type {
   ChaosTokenReleased,
@@ -173,8 +173,8 @@ function threatAreaEvents(
  * them; a "when the game ends" ability on one is left to the players.
  */
 function ownedWeaknessesInPlay(state: GameState, investigator: Investigator): InstanceId[] {
-  return Object.values(state.cards)
-    .filter((card) => card.owner === investigator.id && isInPlay(state, card))
+  return cardsInPlay(state)
+    .filter((card) => card.owner === investigator.id)
     .map((card) => card.id);
 }
 

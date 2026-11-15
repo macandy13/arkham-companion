@@ -65,8 +65,8 @@ import {
 import { daisyWalker, rolandBanks, wendyAdams, zealotInvestigatorCards } from '../investigators';
 
 /**
- * Amnesia, a basic weakness in Wendy's deck: "Revelation – Choose 1 card in your hand. Discard
- * each other card from your hand." Stats entered by hand; the players resolve its revelation.
+ * Amnesia, a basic weakness treachery in Wendy's deck. Stats entered by hand; it has no ability
+ * the app resolves, so the players resolve its revelation, a discard from her hand, at the table.
  */
 const amnesia = blankTreachery('01096', { name: cardName('Amnesia'), traits: [trait('Madness')] });
 
@@ -188,13 +188,14 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     expect(table.board.perInvestigator('resources')).toEqual({ roland: 6, daisy: 6, wendy: 4 });
 
     // Wendy's card for 4.4 is Amnesia, a weakness: it resolves as if drawn from the encounter
-    // deck, and she discards her hand down to one card at the table. Then it goes back to her
+    // deck, and she resolves its revelation from her hand at the table. Then it goes back to her
     // discard pile, not to the encounter discard.
     const discardBefore = table.board.encounter.discard;
     table.play({ type: 'DrawWeakness', investigatorId: wendy, code: amnesia.code });
 
     expect(table.board.encounter.discard).toEqual(discardBefore);
-    expect(table.state.cards[instanceId('wendy:weakness:1')]).toMatchObject({
+    const wendysAmnesia = instanceId('wendy:weakness:1');
+    expect(table.state.cards[wendysAmnesia]).toMatchObject({
       zone: { kind: 'outOfGame' },
       owner: wendy,
     });
