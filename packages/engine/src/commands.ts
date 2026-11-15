@@ -41,7 +41,6 @@ export type Command =
   | StartScenario
   | ManualAdjust
   | MoveCard
-  | DiscardCard
   | AddMap
   | PutLocationIntoPlay
   | AddConnection
@@ -172,19 +171,6 @@ export interface MoveCard {
   to: Zone;
   /** Position in the destination, 0 = top (e.g. the top of the encounter discard); default the bottom. */
   index?: number;
-}
-
-/**
- * A card effect discards an encounter card ("discard it"): onto the top of
- * the encounter discard, where "topmost" effects look for it, losing its
- * tokens and taking its attachments along (`discardEncounterCard`). A player
- * card goes out of the game instead, back to its owner. Produces
- * `CardMoved`, after `TokensChanged` for any tokens and the attachments'
- * own events.
- */
-export interface DiscardCard {
-  type: 'DiscardCard';
-  cardId: InstanceId;
 }
 
 /**
@@ -519,7 +505,7 @@ export interface ChangeChaosBag {
  * restriction (`enemiesMoveInto` but for Elite enemies). Produces `PlayerCardAttached`, a new card
  * attached to the host; rejects a host that is no enemy or location in play, or not the one the
  * card attaches to (`CardStats.attachesTo`, `invalidAttachmentHost`), and a card that is no player asset or event (`notAPlayerCard`). It leaves
- * play with its host, and `DiscardCard` discards it out of the game (`isPlayerCard`).
+ * play with its host, and `discard` sends it out of the game (`isPlayerCard`).
  */
 export interface AttachPlayerCard {
   type: 'AttachPlayerCard';

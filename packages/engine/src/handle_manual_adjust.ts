@@ -1,5 +1,5 @@
 import { assertNever, withoutKey } from '@arkham/util';
-import type { EngineContext } from './cards';
+import { cardStats, type EngineContext } from './cards';
 import type { Adjustment, ManualAdjust, MoveCard } from './commands';
 import { agendaThresholdDecision, isInPlay } from './doom';
 import type { ActionsAdjusted, CardMoved, Event, SkillBoostChanged, TokensChanged } from './events';
@@ -7,7 +7,9 @@ import type { InstanceId } from './ids';
 import { activeInvestigator } from './investigators';
 import { cardsInZone, requireCard } from './lookup';
 import { cardMoved, clearTokensEvents, discardEncounterCard, limitReached } from './placement';
-import { apply } from './reducer';
+import { apply, replay } from './reducer';
+import { readyEnemyEngagements } from './engagement';
+import { isPlayerCard } from './player_cards';
 import { CommandRejected } from './rejection';
 import type { CardInstance, GameState } from './state';
 import { attachedTo, type Zone } from './zone';
@@ -33,9 +35,12 @@ function assertNotCurrentStage(state: GameState, cardId: InstanceId): void {
  */
 export function handleMoveCard(ctx: EngineContext, state: GameState, cmd: MoveCard): Event[] {
   const card = requireCard(state.cards, cmd.cardId);
-  if (limitReached(ctx, state, card.id, cmd.to)) return [];
-  const moved = cardMoved(state, card, cmd.to, cmd.index);
-  if (!leavesPlay(state, card, cmd.to)) return [moved];
+  // A player card discarded from the table goes back to its owner, out of the scenario's game.
+  const to: Zone =
+    cmd.to.kind === 'encounterDiscard' && isPlayerCard(ctx, card) ? { kind: 'outOfGame' } : cmd.to;
+  if (limitReached(ctx, state, card.id, to)) return [];
+  const moved = cardMoved(state, card, to, cmd.index);
+  if (!leavesPlay(state, card, to)) return [moved];
   const attachments = cardsInZone(state, attachedTo(card.id)).flatMap((attachedId) =>
     discardEncounterCard(ctx, state, attachedId),
   );
@@ -43,15 +48,26 @@ export function handleMoveCard(ctx: EngineContext, state: GameState, cmd: MoveCa
   const readied: Event[] = card.exhausted
     ? [{ type: 'ExhaustChanged', cardId: card.id, exhausted: false }]
     : [];
-  return [...attachments, ...clearTokensEvents(card), ...readied, moved];
+  const left = [...attachments, ...clearTokensEvents(card), ...readied, moved];
+  return [...left, ...engagementsOnceGrantsLeave(ctx, state, left)];
 }
 
-/** Whether moving `card` to `to` takes it from play to the set-aside area, out of the game or beneath a card. */
+/** Whether moving `card` to `to` takes it out of play: to a deck or pile, set aside, out of the game or beneath a card. */
 function leavesPlay(state: GameState, card: CardInstance, to: Zone): boolean {
-  return (
-    (to.kind === 'setAside' || to.kind === 'outOfGame' || to.kind === 'beneath') &&
-    isInPlay(state, card)
+  return isInPlay(state, card) && !isInPlay(state, { ...card, zone: to });
+}
+
+/**
+ * A card that gave enemies a keyword (Hiding Spot's aloof) takes it along as it leaves play, so a
+ * ready enemy left unengaged next to an investigator engages them (RR "Enemy Engagement").
+ */
+function engagementsOnceGrantsLeave(ctx: EngineContext, state: GameState, left: Event[]): Event[] {
+  const grantsLeft = left.some(
+    (event) =>
+      event.type === 'CardMoved' &&
+      cardStats(ctx.cards, requireCard(state.cards, event.cardId).code).keywordGrants !== undefined,
   );
+  return grantsLeft ? readyEnemyEngagements(ctx, replay(left, state)) : [];
 }
 
 /**

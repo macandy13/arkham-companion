@@ -71,7 +71,6 @@ import { handleStartScenario } from './handle_start_scenario';
 import { handleMoveTokens } from './handle_tokens';
 import { handleMoveHunter, handleMoveHunters } from './hunters';
 import { attacksStillDue, handleNextPhase, handleResolveEnemyAttack } from './phases';
-import { handleDiscardCard } from './placement';
 import {
   handleEndSkillTest,
   handleEvade,
@@ -200,7 +199,6 @@ const COMMAND_SPECS: CommandSpecs = {
     allowedAfterEnd: true,
   },
   MoveCard: { handle: (ctx, state, command) => handleMoveCard(ctx, state, command) },
-  DiscardCard: { handle: handleDiscardCard },
   AddMap: { handle: handleAddMap },
   PutLocationIntoPlay: { handle: handlePutLocationIntoPlay },
   AddConnection: { handle: handleAddConnection },

@@ -287,7 +287,6 @@ export const appTexts = {
       SpawnEnemy: 'spawning the enemy',
       AddMap: 'putting the new area into play',
       MoveInvestigator: 'moving the investigators',
-      DiscardCard: 'discarding the card',
       MoveCard: 'moving the card',
     },
   },

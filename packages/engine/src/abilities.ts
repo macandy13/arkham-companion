@@ -397,7 +397,6 @@ export type AbilityCommand =
           | 'SpendCluesAsGroup'
           | 'ChangeChaosBag'
           | 'MoveCard'
-          | 'DiscardCard'
           | 'RevealLocation'
           | 'SpawnEnemy'
           | 'HealEnemy'
@@ -1873,9 +1872,18 @@ export function attachToLocation(): AbilityEffect {
   return moveSelf({ kind: 'attachedTo', hostId: { ref: 'windowLocation' } });
 }
 
-/** "Discard it": the card with the ability, onto the top of the encounter discard (`DiscardCard`). */
+/** "Discard it": the card with the ability, onto the top of the encounter discard (`discard`). */
 export function discardSelf(): AbilityEffect {
-  return { type: 'DiscardCard', cardId: { ref: 'self' } };
+  return discard({ ref: 'self' });
+}
+
+/**
+ * "Discard [card]": a `MoveCard` onto the top of the encounter discard, where "topmost" effects
+ * look for it. A card leaving play leaves its tokens and attachments behind, and a player card
+ * goes back to its owner instead (`handleMoveCard`).
+ */
+export function discard(card: RelativeCard): AbilityEffect {
+  return { type: 'MoveCard', cardId: card, to: { kind: 'encounterDiscard' }, index: 0 };
 }
 
 /**
@@ -2599,17 +2607,17 @@ export function moveEachInvestigatorTo(location: RelativeCard): AbilityEffect {
   };
 }
 
-/** "Discard each enemy in the Study", engaged ones included (`DiscardCard` each). */
+/** "Discard each enemy in the Study", engaged ones included (`discard` each). */
 export function discardEachEnemyAt(location: RelativeCard): AbilityEffect {
   return discardEachEnemy({ at: location });
 }
 
 /**
- * "Discard each enemy in play", engaged ones included (`DiscardCard` each), or each one `filter`
+ * "Discard each enemy in play", engaged ones included (`discard` each), or each one `filter`
  * matches: `discardEachEnemy({ ready: true, trait: trait('Cultist'), at: thisLocation() })`.
  */
 export function discardEachEnemy(filter: EachEnemyFilter = {}): AbilityEffect {
-  return { type: 'DiscardCard', cardId: eachEnemy(filter) };
+  return discard(eachEnemy(filter));
 }
 
 /**
@@ -2667,12 +2675,12 @@ export function nextAgendaBecomesActAndAgenda(): AbilityEffect {
 
 /**
  * "Discard the top `count` cards of the encounter deck" (Out of This World): each is discarded
- * like any encounter card (`DiscardCard`), fewer when the deck holds fewer. The deck is not
+ * like any encounter card (`discard`), fewer when the deck holds fewer. The deck is not
  * refilled while the effect resolves (Smite the Wicked ruling): once its card is placed
  * (`placeDrawnCard`), or at the next draw, the empty deck takes the discard back.
  */
 export function discardEncounterTop(count: number): AbilityEffect {
-  return { type: 'DiscardCard', cardId: eachInZone({ kind: 'encounterDeck' }, { top: count }) };
+  return discard(eachInZone({ kind: 'encounterDeck' }, { top: count }));
 }
 
 /** "Shuffle the encounter discard pile into the encounter deck". */

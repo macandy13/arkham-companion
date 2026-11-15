@@ -288,7 +288,6 @@ export const appTexts = {
       SpawnEnemy: 'Das Erscheinen des Gegners',
       AddMap: 'Das Ins-Spiel-Bringen des neuen Bereichs',
       MoveInvestigator: 'Das Bewegen der Ermittler',
-      DiscardCard: 'Das Ablegen der Karte',
       MoveCard: 'Das Bewegen der Karte',
     },
   },
