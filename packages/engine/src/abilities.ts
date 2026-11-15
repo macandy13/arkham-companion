@@ -2431,6 +2431,20 @@ export function eachInZone(
   return { ref: 'eachInZone', zone, ...filter };
 }
 
+/**
+ * "Place N doom on an asset you control" (Unnatural Decay): the game holds no player cards, so the
+ * doom goes on the investigator the window names as doom on their player cards
+ * (`doomOnPlayerCards`), which counts toward the doom threshold; which asset holds it is theirs.
+ */
+export function placeDoomOnYourAsset(amount: number): AbilityEffect {
+  return {
+    type: 'AdjustInvestigator',
+    investigatorId: { ref: 'windowInvestigator' },
+    stat: 'doomOnPlayerCards',
+    delta: amount,
+  };
+}
+
 /** "Place N doom on it": doom on the card with the ability. */
 export function placeDoomOnSelf(amount: number): AbilityEffect {
   return placeDoomOn({ ref: 'self' }, amount);

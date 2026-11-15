@@ -24,7 +24,14 @@ import {
   runFrom,
   stateAfter,
 } from '@arkham/engine/test/utils';
-import { QUEEN_OF_ASH_CODES, queenOfAshCardDefs, queenOfAshCards } from './cards';
+import {
+  DISSONANCE_DECISION,
+  QUEEN_OF_ASH_CODES,
+  queenOfAshCardDefs,
+  queenOfAshCards,
+  TORMENT_DECISION,
+  UNNATURAL_DECAY_DECISION,
+} from './cards';
 
 /** The card with `code` in the scenario's card data. */
 const cardOf = (code: string): CardStats => cardIn(queenOfAshCards, code);
@@ -427,6 +434,106 @@ describe('Queen of Ash card abilities', () => {
 
       expect(drawn.pending).toMatchObject([{ skillTest: { skill: 'agility', difficulty: 3 } }]);
       expect(requireInvestigator(state, alice).sanity.horror).toBe(horror);
+    });
+  });
+
+  describe('Unnatural Decay', () => {
+    it.each([
+      { pick: 'doom', doomOnAssets: 1, damage: 0 },
+      { pick: 'damage', doomOnAssets: 0, damage: 2 },
+    ])('tests willpower (4); on a fail alice picks $pick', ({ pick, doomOnAssets, damage }) => {
+      const { context, state: started } = newGame()
+        .withLocation(culvert, cardOf('12182'), { revealed: true })
+        .withInvestigator(alice, { locationId: culvert })
+        .withCard(instanceId('unnatural_decay'), cardOf('12191'), { kind: 'encounterDeck' })
+        .start();
+      const drawn = stateAfter(
+        context,
+        started,
+        aliceDraws('Unnatural Decay'),
+        resolveRevelation('unnatural_decay'),
+      );
+
+      const state = stateAfter(
+        context,
+        drawn,
+        answer('test:unnatural_decay', 'fail'),
+        answer(UNNATURAL_DECAY_DECISION, pick),
+      );
+
+      expect(drawn.pending).toMatchObject([{ skillTest: { skill: 'willpower', difficulty: 4 } }]);
+      expect(requireInvestigator(state, alice)).toMatchObject({
+        doomOnPlayerCards: doomOnAssets,
+        health: { damage },
+      });
+    });
+  });
+
+  describe('Dissonance', () => {
+    it('tests willpower (3); a fail costs alice 1 action and asks her for a card type', () => {
+      const { context, state: started } = newGame()
+        .withLocation(culvert, cardOf('12182'), { revealed: true })
+        .withInvestigator(alice, { locationId: culvert })
+        .withCard(instanceId('dissonance'), cardOf('12194'), { kind: 'encounterDeck' })
+        .start();
+      const drawn = stateAfter(
+        context,
+        started,
+        aliceDraws('Dissonance'),
+        resolveRevelation('dissonance'),
+      );
+
+      const failed = stateAfter(context, drawn, answer('test:dissonance', 'fail'));
+      const answered = stateAfter(context, failed, answer(DISSONANCE_DECISION, 'event'));
+
+      expect(drawn.pending).toMatchObject([{ skillTest: { skill: 'willpower', difficulty: 3 } }]);
+      expect(requireInvestigator(started, alice).actionsRemaining).toBe(3);
+      expect(requireInvestigator(failed, alice).actionsRemaining).toBe(2);
+      expect(failed.pending).toMatchObject([
+        { id: DISSONANCE_DECISION, options: [{ id: 'asset' }, { id: 'event' }, { id: 'skill' }] },
+      ]);
+      expect(answered.pending).toEqual([]);
+    });
+  });
+
+  describe('Torment', () => {
+    it('tests willpower (3); a fail asks alice to name a card type', () => {
+      const { context, state: started } = newGame()
+        .withLocation(culvert, cardOf('12182'), { revealed: true })
+        .withInvestigator(alice, { locationId: culvert })
+        .withCard(instanceId('torment'), cardOf('12195'), { kind: 'encounterDeck' })
+        .start();
+      const drawn = stateAfter(
+        context,
+        started,
+        aliceDraws('Torment'),
+        resolveRevelation('torment'),
+      );
+
+      const failed = stateAfter(context, drawn, answer('test:torment', 'fail'));
+
+      expect(drawn.pending).toMatchObject([{ skillTest: { skill: 'willpower', difficulty: 3 } }]);
+      expect(failed.pending).toMatchObject([
+        { id: TORMENT_DECISION, options: [{ id: 'asset' }, { id: 'event' }, { id: 'skill' }] },
+      ]);
+    });
+
+    it('asks nothing more on a pass', () => {
+      const { context, state: started } = newGame()
+        .withLocation(culvert, cardOf('12182'), { revealed: true })
+        .withInvestigator(alice, { locationId: culvert })
+        .withCard(instanceId('torment'), cardOf('12195'), { kind: 'encounterDeck' })
+        .start();
+
+      const passed = stateAfter(
+        context,
+        started,
+        aliceDraws('Torment'),
+        resolveRevelation('torment'),
+        answer('test:torment', 'pass'),
+      );
+
+      expect(passed.pending).toEqual([]);
     });
   });
 

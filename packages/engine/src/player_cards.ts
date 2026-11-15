@@ -29,8 +29,11 @@ export function handleAttachPlayerCard(
   const hostType = cardStats(ctx.cards, host.code).typeCode;
   if (!isInPlay(state, host) || (hostType !== 'enemy' && hostType !== 'location'))
     throw new CommandRejected({ code: 'invalidAttachmentHost', cardId: host.id });
-  if (!isPlayerCardStats(cardStats(ctx.cards, cmd.code)))
+  const card = cardStats(ctx.cards, cmd.code);
+  if (!isPlayerCardStats(card))
     throw new CommandRejected({ code: 'notAPlayerCard', cardCode: cmd.code });
+  if (card.attachesTo !== undefined && card.attachesTo !== hostType)
+    throw new CommandRejected({ code: 'invalidAttachmentHost', cardId: host.id });
   return [
     {
       type: 'PlayerCardAttached',

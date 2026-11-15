@@ -300,7 +300,7 @@ describe('EnemyDetails', () => {
     renderGhoulDetails(PlayTable.start(ghoulOnAlder));
 
     const groups = screen.getAllByRole('heading', { level: 3 }).map((title) => title.textContent);
-    expect(groups).toEqual(['Card effect']);
+    expect(groups).toEqual(['Attached', 'Card effect']);
   });
 
   it("offers brook, at the same location on their turn, fight and engage but no evade of alder's ghoul, the free fight last", () => {

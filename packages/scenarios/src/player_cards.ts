@@ -1,9 +1,11 @@
-import { cardCode, trait, type CardStats } from '@arkham/engine';
+import { cardCode, trait, type AttachmentHost, type CardStats } from '@arkham/engine';
+import { picturesOf } from './card_builders';
 
 /*
  * The player cards the players can attach to an enemy or a location in the app
  * (`AttachPlayerCard`), entered by hand like the scenarios' cards: the stats
- * the engine reads and what the card does to its host, no card text.
+ * the engine reads, what the card does to its host and where its picture is, which the card zoom
+ * shows the players to read what it does; no card text.
  */
 
 /**
@@ -12,9 +14,11 @@ import { cardCode, trait, type CardStats } from '@arkham/engine';
  */
 export const barricade: CardStats = {
   code: cardCode('01038'),
+  ...picturesOf('01038', 'front'),
   name: 'Barricade',
   typeCode: 'event',
   traits: [trait('Insight'), trait('Tactic')],
+  attachesTo: 'location',
   restrictions: [{ cannot: 'enemiesMoveInto', of: 'host', exceptTraits: [trait('Elite')] }],
 };
 
@@ -24,9 +28,11 @@ export const barricade: CardStats = {
  */
 export const handcuffs: CardStats = {
   code: cardCode('04265'),
+  ...picturesOf('04265', 'front'),
   name: 'Handcuffs',
   typeCode: 'asset',
   traits: [trait('Item'), trait('Police')],
+  attachesTo: 'enemy',
   restrictions: [
     { cannot: 'ready', of: 'host', exceptTraits: [trait('Elite')] },
     { cannot: 'placeDoom', of: 'host', exceptTraits: [trait('Elite')] },
@@ -39,9 +45,11 @@ export const handcuffs: CardStats = {
  */
 export const hidingSpot: CardStats = {
   code: cardCode('03038'),
+  ...picturesOf('03038', 'front'),
   name: 'Hiding Spot',
   typeCode: 'event',
   traits: [trait('Tactic'), trait('Trick')],
+  attachesTo: 'location',
   keywordGrants: [{ gains: 'aloof', of: 'enemiesAtHost', exceptTraits: [trait('Elite')] }],
 };
 
@@ -54,3 +62,11 @@ export const playerCardDefs: readonly CardStats[] = [
   handcuffs,
   hidingSpot,
 ];
+
+/**
+ * The player cards the players can attach to a card of type `host` from its details: those above
+ * that attach to it (`CardStats.attachesTo`), in their listed order.
+ */
+export function attachableCards(host: AttachmentHost): readonly CardStats[] {
+  return playerCardDefs.filter(({ attachesTo }) => attachesTo === host);
+}

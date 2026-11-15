@@ -589,26 +589,6 @@
   filter: var(--piece-shadow);
 }
 
-/* Who is there and the attached cards: each a column under its small title. */
-#map :is(dialog[data-dialog='location'] > article, [data-mode='location']) > section {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-}
-
-#map :is(dialog[data-dialog='location'] > article, [data-mode='location']) > section > h3 {
-  margin: 0;
-  font-size: var(--font-size-caption);
-  font-weight: normal;
-  color: var(--color-text-muted);
-  text-transform: uppercase;
-}
-
-#map :is(dialog[data-dialog='location'] > article, [data-mode='location']) > section > ul {
-  margin: 0;
-  padding-left: var(--space-3);
-}
-
 /* A tap on a tile opens its details. */
 #map svg g[data-card='location'] {
   cursor: pointer;

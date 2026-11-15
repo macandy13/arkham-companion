@@ -31,6 +31,9 @@ export const CARD_TYPES = [
   'key',
 ] as const;
 
+/** The card types a player card can attach to in the app (`CardStats.attachesTo`). */
+export type AttachmentHost = Extract<CardType, 'enemy' | 'location'>;
+
 /** A card's ArkhamDB type (`CardStats.typeCode`); see `CARD_TYPES`. */
 export type CardType = (typeof CARD_TYPES)[number];
 
@@ -145,6 +148,12 @@ export interface CardStats {
   keywordGrants?: readonly KeywordGrant[];
   /** "Limit 1 per location / investigator" (`CopyLimit`), entered with the card data. */
   limit?: CopyLimit;
+  /**
+   * What a player card attaches to, as its text says ("Attach to an enemy"): the players attach it
+   * from that card's details (`AttachPlayerCard`), and `AttachPlayerCard` refuses another host.
+   * Absent for a card that attaches to nothing the app tracks.
+   */
+  attachesTo?: AttachmentHost;
   /**
    * Its constant abilities that change a number while it is in play: a card's value ("Attached
    * location gets +2 shroud") or what an action costs ("The first move … costs 1 additional

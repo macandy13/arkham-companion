@@ -101,12 +101,19 @@ describe('AttachPlayerCard', () => {
     },
     { name: 'a card that is no player card', hostId: hall, card: 'curse', code: 'notAPlayerCard' },
     { name: 'a story asset', hostId: hall, card: 'story_asset', code: 'notAPlayerCard' },
+    {
+      name: 'a location for a card that attaches to an enemy',
+      hostId: hall,
+      card: 'cuffs',
+      code: 'invalidAttachmentHost',
+    },
   ])('refuses $name', ({ hostId, card, code }) => {
     const { context, state } = newGame()
       .withLocation(hall, location)
       .withInvestigator(alice, { locationId: hall })
       .withCardData(barricade)
       .withCardData(blankAsset('story_asset'))
+      .withCardData(blankPlayerAsset('cuffs', { attachesTo: 'enemy' }))
       .withCard(ghoul, plainGhoul, { kind: 'setAside' })
       .withCard(instanceId('curse'), blankTreachery('curse'), {
         kind: 'threatArea',

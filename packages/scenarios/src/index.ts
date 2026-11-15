@@ -1,6 +1,6 @@
 export const PACKAGE_NAME = '@arkham/scenarios';
 
-export { barricade, handcuffs, hidingSpot, playerCardDefs } from './player_cards';
+export { attachableCards, barricade, handcuffs, hidingSpot, playerCardDefs } from './player_cards';
 
 export { theGathering } from './the_gathering/scenario';
 export {
@@ -82,6 +82,9 @@ export {
   SEWERS,
   SEWERS_CELLS,
   SLUICE_CONTROL_DECISION,
+  UNNATURAL_DECAY_DECISION,
+  DISSONANCE_DECISION,
+  TORMENT_DECISION,
   queenOfAshCardDefs,
   queenOfAshCards,
 } from './queen_of_ash/cards';

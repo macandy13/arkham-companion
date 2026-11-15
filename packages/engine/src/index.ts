@@ -211,6 +211,7 @@ export {
   removeChaosToken,
   placeDoomOn,
   placeDoomOnSelf,
+  placeDoomOnYourAsset,
   moveTokens,
   takeCluesFrom,
   removeDoomFrom,
