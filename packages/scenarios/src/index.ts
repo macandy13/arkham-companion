@@ -1,6 +1,6 @@
 export const PACKAGE_NAME = '@arkham/scenarios';
 
-export { barricade, handcuffs, hidingSpot, playerCardDefs } from './player_cards';
+export { attachableCards, barricade, handcuffs, hidingSpot, playerCardDefs } from './player_cards';
 
 export { theGathering } from './the_gathering/scenario';
 export {

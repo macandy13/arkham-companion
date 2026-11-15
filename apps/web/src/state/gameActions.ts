@@ -13,6 +13,7 @@ import {
   type InvestigatorStat,
   type PlayTable,
   type BasicAction,
+  type CardCode,
   type ChaosToken,
   type PoolToken,
   type ResolveDecision,
@@ -221,6 +222,14 @@ export interface GameActions {
   /** Turns `location` face up, as a card effect says or the players catch up with the table. */
   revealLocation(location: InstanceId): Promise<void>;
   /**
+   * The players attach the player card `card` to `host`, an enemy or a location, as they did at the
+   * table (`AttachPlayerCard`, Handcuffs on an evaded enemy); the engine then keeps to what it does
+   * to its host.
+   */
+  attachPlayerCard(host: InstanceId, card: CardCode): Promise<void>;
+  /** Discards the card `card` in play, as its own Forced ability or another card says (`DiscardCard`). */
+  discardCard(card: InstanceId): Promise<void>;
+  /**
    * `delta` more (or, negative, fewer) of `token` on `card` in play (a location, an enemy): one tap
    * on a location's stepper, or a token dragged from or to the token pool. Doom added is placed by
    * rule (`MoveTokens` from the pool), so effects that count placed doom see it; the rest are
@@ -417,6 +426,9 @@ export function gameActions(
     removeDoom: (amount) => play((table) => table.removeDoom(amount)),
     revealLocation: (location) =>
       play((table) => table.play({ type: 'RevealLocation', locationId: location })),
+    attachPlayerCard: (host, card) =>
+      play((table) => table.play({ type: 'AttachPlayerCard', hostId: host, code: card })),
+    discardCard: (card) => play((table) => table.play({ type: 'DiscardCard', cardId: card })),
     adjustTokens: (card, token, delta) =>
       play((table) =>
         table.play(

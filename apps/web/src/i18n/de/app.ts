@@ -383,7 +383,6 @@ export const appTexts = {
     card: 'Die Karte von {{name}}',
     here: 'Hier',
     nobody: 'Niemand ist hier.',
-    attached: 'Angehängt',
     engagedWith: '{{enemy}}, im Kampf mit {{investigator}}',
     actions: 'Aktionen',
     investigateAction_one: 'Ermitteln · {{count}} Aktion',
@@ -577,6 +576,12 @@ export const appTexts = {
     lower: 'Absenken, um ans Spielfeld zu kommen',
     raise: 'Dialog wieder anheben',
     waiting: 'Als Nächstes',
+  },
+  attached: {
+    title: 'Angehängt',
+    discardCard: '{{card}} ablegen',
+    attach: 'Karte anhängen',
+    attachTo: 'Karte an {{host}} anhängen',
   },
   cardZoom: {
     open: '{{name}} lesen',

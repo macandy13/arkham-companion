@@ -1,9 +1,9 @@
-import { useId, useState, type ReactNode } from 'react';
+import { useId, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { assertNever } from '@arkham/util';
-import type { BoardView, CardFaceView, InvestigatorId, LocationView } from '@arkham/engine';
+import type { BoardView, InvestigatorId, LocationView } from '@arkham/engine';
 import { DetailsDialog, useDecisionHost } from '../screens/DetailsDialog';
-import { CardZoom } from '../screens/CardZoom';
+import { AttachedCards } from '../screens/AttachedCards';
 import {
   ActionButton,
   ActionGroup,
@@ -134,7 +134,8 @@ export function LocationContent({
 
 /**
  * The parts of a location both the details and the location mode show: who is there
- * (investigators and enemies), the cards attached to it, and under them one row of what the
+ * (investigators and enemies), the cards attached to it, with Discard and Attach a card
+ * (`AttachedCards`), and under them one row of what the
  * investigator whose turn it is can do there (`locationActions`) and the actions the location's
  * card offers them (`CardActions`, such as the Parlor's Resign), and Reveal for an unrevealed one,
  * as a card can tell the players to (its clues and doom change in its tile's − / + bubble,
@@ -192,9 +193,7 @@ function LocationPage({
   return (
     <>
       <Here board={board} location={location} />
-      {location.attachments && (
-        <Attached cards={board.cardsIn({ kind: 'attachedTo', hostId: location.id })} />
-      )}
+      <AttachedCards board={board} host={location.id} actions={actions} busy={busy} />
       {offered.length + printed.length > 0 || revealable ? (
         <footer>
           {offered.length > 0 && (
@@ -324,33 +323,6 @@ function LocationCard({ board, location }: { board: BoardView; location: Locatio
         y={0}
       />
     </svg>
-  );
-}
-
-/** The cards attached to the location, such as a treachery put into play there, each opening large to read (`CardZoom`). */
-function Attached({ cards }: { cards: readonly CardFaceView[] }) {
-  const { t } = useTranslation();
-  const titleId = useId();
-  const [zoomed, setZoomed] = useState<CardFaceView>();
-  return (
-    <section aria-labelledby={titleId}>
-      <h3 id={titleId}>{t('location.attached')}</h3>
-      <ul>
-        {cards.map((card, i) => (
-          <li key={`${card.name}-${i}`}>
-            <button
-              type="button"
-              aria-haspopup="dialog"
-              aria-label={t('cardZoom.open', { name: card.name })}
-              onClick={() => setZoomed(card)}
-            >
-              {card.name}
-            </button>
-          </li>
-        ))}
-      </ul>
-      {zoomed && <CardZoom card={zoomed} onClose={() => setZoomed(undefined)} />}
-    </section>
   );
 }
 
