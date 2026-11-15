@@ -28,7 +28,7 @@ import {
   decisionId,
   drawCards,
   youMustEither,
-  type ActionLimit,
+  type UsageLimit,
   type Command,
   type CardAction,
   type CardCode,
@@ -346,7 +346,7 @@ describe('UseCardAction', () => {
 
 describe('action limits', () => {
   /** Alice and bob in the hall, whose one action scares its taker, limited by `limit`; round 1's investigation phase. */
-  const bothInHallWith = (limit: ActionLimit) => {
+  const bothInHallWith = (limit: UsageLimit) => {
     const table = PlayTable.start(
       newGame()
         .withLocation(hall, blankLocation('hall', { actions: [{ ...scareAction, limit }] }), {
@@ -422,6 +422,92 @@ describe('action limits', () => {
       expect(table.board.cardActions(bob)).toHaveLength(bobsActions);
     },
   );
+});
+
+describe('limits of a free action', () => {
+  /** Alice and bob in the hall, whose free action scares its taker, limited by `limit`; alice's turn in round 1. */
+  const freeScareInHall = (limit: UsageLimit) => {
+    const table = PlayTable.start(
+      newGame()
+        .withLocation(
+          hall,
+          blankLocation('hall', { actions: [{ ...scareAction, free: true, limit }] }),
+          { revealed: true },
+        )
+        .withInvestigator(alice, { locationId: hall })
+        .withInvestigator(bob, { locationId: hall }),
+    );
+    table.nextPhase();
+    table.startTurn(alice);
+    return table;
+  };
+  const limitReached = expect.objectContaining({
+    rejection: expect.objectContaining({ code: 'cardActionLimitReached' }),
+  });
+
+  it('lets alice take it once per turn again in bob`s turn', () => {
+    const table = freeScareInHall({ per: 'turn' });
+    table.useCardAction(alice, hall);
+    table.endTurn(alice);
+    table.startTurn(bob);
+
+    table.useCardAction(alice, hall);
+
+    expect(table.board.investigator(alice).horror).toBe(2);
+  });
+
+  it('rejects it once per round in bob`s turn', () => {
+    const table = freeScareInHall({ per: 'round' });
+    table.useCardAction(alice, hall);
+    table.endTurn(alice);
+    table.startTurn(bob);
+
+    expect(() => table.useCardAction(alice, hall)).toThrow(limitReached);
+  });
+
+  /** Ends both turns of round 1 and moves on to its enemy phase. */
+  const toEnemyPhase = (table: PlayTable) => {
+    table.endTurn(alice);
+    table.startTurn(bob);
+    table.endTurn(bob);
+    table.nextPhase();
+    expect(table.board.phase).toBe('enemy');
+  };
+
+  it('lets alice take it once per phase again in the enemy phase', () => {
+    const table = freeScareInHall({ per: 'phase' });
+    table.useCardAction(alice, hall);
+    toEnemyPhase(table);
+
+    table.useCardAction(alice, hall);
+
+    expect(table.board.investigator(alice).horror).toBe(2);
+  });
+
+  it('rejects it once per round in the enemy phase after a use in her turn', () => {
+    const table = freeScareInHall({ per: 'round' });
+    table.useCardAction(alice, hall);
+    toEnemyPhase(table);
+
+    expect(() => table.useCardAction(alice, hall)).toThrow(limitReached);
+  });
+
+  it('counts the uses outside every turn in one phase as one turn: once per turn in the enemy phase', () => {
+    const table = freeScareInHall({ per: 'turn' });
+    toEnemyPhase(table);
+    table.useCardAction(alice, hall);
+
+    expect(() => table.useCardAction(alice, hall)).toThrow(limitReached);
+  });
+
+  it('allows two uses in a turn, not three, when limited twice per round', () => {
+    const table = freeScareInHall({ per: 'round', times: 2 });
+    table.useCardAction(alice, hall);
+    table.useCardAction(alice, hall);
+
+    expect(() => table.useCardAction(alice, hall)).toThrow(limitReached);
+    expect(table.board.investigator(alice).horror).toBe(2);
+  });
 });
 
 describe('actions that would change nothing', () => {

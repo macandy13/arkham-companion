@@ -416,7 +416,7 @@ export interface SurgeGained {
 
 /**
  * The investigator took action number `action` of the card `cardId`; the reducer records the use
- * in the current round (`CardInstance.actionUses`) for the action's limit. Produced by
+ * with its round, phase and turn (`currentUse`, `CardInstance.actionUses`) for the action's limit. Produced by
  * `UseCardAction`.
  */
 export interface CardActionUsed {
