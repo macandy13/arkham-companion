@@ -497,30 +497,44 @@ describe('Queen of Ash card abilities', () => {
   });
 
   describe('Torment', () => {
-    it.each([
-      { result: 'pass', asks: false },
-      { result: 'fail', asks: true },
-    ])(
-      'tests willpower (3); a $result asks alice to name a card type: $asks',
-      ({ result, asks }) => {
-        const { context, state: started } = newGame()
-          .withLocation(culvert, cardOf('12182'), { revealed: true })
-          .withInvestigator(alice, { locationId: culvert })
-          .withCard(instanceId('torment'), cardOf('12195'), { kind: 'encounterDeck' })
-          .start();
-        const drawn = stateAfter(
-          context,
-          started,
-          aliceDraws('Torment'),
-          resolveRevelation('torment'),
-        );
+    it('tests willpower (3); a fail asks alice to name a card type', () => {
+      const { context, state: started } = newGame()
+        .withLocation(culvert, cardOf('12182'), { revealed: true })
+        .withInvestigator(alice, { locationId: culvert })
+        .withCard(instanceId('torment'), cardOf('12195'), { kind: 'encounterDeck' })
+        .start();
+      const drawn = stateAfter(
+        context,
+        started,
+        aliceDraws('Torment'),
+        resolveRevelation('torment'),
+      );
 
-        const state = stateAfter(context, drawn, answer('test:torment', result));
+      const failed = stateAfter(context, drawn, answer('test:torment', 'fail'));
 
-        expect(drawn.pending).toMatchObject([{ skillTest: { skill: 'willpower', difficulty: 3 } }]);
-        expect(state.pending.some(({ id }) => id === TORMENT_DECISION)).toBe(asks);
-      },
-    );
+      expect(drawn.pending).toMatchObject([{ skillTest: { skill: 'willpower', difficulty: 3 } }]);
+      expect(failed.pending).toMatchObject([
+        { id: TORMENT_DECISION, options: [{ id: 'asset' }, { id: 'event' }, { id: 'skill' }] },
+      ]);
+    });
+
+    it('asks nothing more on a pass', () => {
+      const { context, state: started } = newGame()
+        .withLocation(culvert, cardOf('12182'), { revealed: true })
+        .withInvestigator(alice, { locationId: culvert })
+        .withCard(instanceId('torment'), cardOf('12195'), { kind: 'encounterDeck' })
+        .start();
+
+      const passed = stateAfter(
+        context,
+        started,
+        aliceDraws('Torment'),
+        resolveRevelation('torment'),
+        answer('test:torment', 'pass'),
+      );
+
+      expect(passed.pending).toEqual([]);
+    });
   });
 
   describe('Languor', () => {
