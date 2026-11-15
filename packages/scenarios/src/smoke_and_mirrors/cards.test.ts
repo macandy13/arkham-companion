@@ -13,6 +13,7 @@ import {
   requireInvestigator,
   resignAction,
   resolveValue,
+  skillValues,
   threatAreaOf,
   type CardStats,
   type Command,
@@ -249,6 +250,28 @@ describe('Smoke and Mirrors card abilities', () => {
 
       expect(requireInvestigator(state, alice).health.damage).toBe(1);
       expect(requireInvestigator(state, bob).health.damage).toBe(0);
+    });
+  });
+
+  describe('Whippoorwill', () => {
+    it('gives alice at its location -1 to each skill, and not bob at Easttown', () => {
+      const easttown = instanceId('easttown');
+      const skills = { willpower: 3, intellect: 3, combat: 3, agility: 3 };
+      const { context, state } = newGame()
+        .withLocation(northside, cardOf('12149'), { revealed: true })
+        .withLocation(easttown, cardOf('12150'), { revealed: true })
+        .withInvestigator(alice, { locationId: northside, skills })
+        .withInvestigator(bob, { locationId: easttown, skills })
+        .withCard(instanceId('whippoorwill'), cardOf('12166'), atLocation(northside))
+        .start();
+
+      expect(skillValues(context, state, requireInvestigator(state, alice))).toEqual({
+        willpower: 2,
+        intellect: 2,
+        combat: 2,
+        agility: 2,
+      });
+      expect(skillValues(context, state, requireInvestigator(state, bob))).toEqual(skills);
     });
   });
 

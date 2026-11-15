@@ -230,3 +230,33 @@ describe('skillValues', () => {
     expect(skillValues(context, state, requireInvestigator(state, alice)).intellect).toBe(0);
   });
 });
+
+describe('skillValues with a modifier of each investigator at its location', () => {
+  const whisperer = instanceId('whisperer');
+  /** An enemy that gives each investigator at its location -1 willpower. */
+  const whispererCard = blankEnemy('whisperer', {
+    modifiers: [{ value: 'willpower', of: 'investigatorsHere', by: -1 }],
+  });
+  /** Alice (willpower 3) in the study, next to the hall. */
+  const aliceWithWillpower3 = newGame()
+    .withLocation(study, blankLocation('study'), { revealed: true })
+    .withLocation(hall, blankLocation('hall'), { revealed: true })
+    .withConnection(study, hall)
+    .withInvestigator(alice, {
+      locationId: study,
+      skills: { willpower: 3, intellect: 2, combat: 1, agility: 4 },
+    });
+
+  it.each([
+    { name: 'at her location', zone: atLocation(study), willpower: 2 },
+    { name: 'engaged with her', zone: engagedWith(alice), willpower: 2 },
+    { name: 'at the hall', zone: atLocation(hall), willpower: 3 },
+    { name: 'set aside', zone: setAside, willpower: 3 },
+  ])('gives alice willpower $willpower with the enemy $name', ({ zone, willpower }) => {
+    const { context, state } = aliceWithWillpower3.withCard(whisperer, whispererCard, zone).start();
+
+    expect(skillValues(context, state, requireInvestigator(state, alice)).willpower).toBe(
+      willpower,
+    );
+  });
+});
