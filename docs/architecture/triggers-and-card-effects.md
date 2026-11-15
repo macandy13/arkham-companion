@@ -65,7 +65,7 @@ Effects are **templated commands**: a command card data may use (`AbilityCommand
 - `onlyCopy(code)`,
 - `eachInvestigator({ at })`,
 - `eachEnemy({ trait, withoutTrait, unengaged, ready, withoutToken, at, engagedWith })`, where `at` is one location reference or a list of them, so "each enemy at your location" is a filter of `eachEnemy`, not a reference of its own, and `ready: true` keeps only ready enemies ("each ready non-Elite [[Cultist]] enemy at this location", Underground Cistern),
-- `eachInZone(zone, { trait, code, typeCode, unique })`, the cards in a zone or a list of zones: the victory display, the set-aside cards (`eachInZone({ kind: 'setAside' }, { trait, typeCode: 'enemy' })` for "each set-aside [[Cultist]] enemy"), the cards beneath a card,
+- `eachInZone(zone, { trait, code, typeCode, unique })`, the cards in a zone or a list of zones: the victory display, the set-aside cards (`eachInZone({ kind: 'setAside' }, { trait, typeCode: 'enemy' })` for "each set-aside [[Cultist]] enemy"), the cards beneath a card; with `first`, only that many in zone order (`first: perInvestigator(1)` for "1 [per_investigator] copies", `searchAndDrawCopies`),
 - `eachInPlay({ trait, code, typeCode, unique, at })`, the cards in play, only those at one of the `at` locations when given,
 - `nearestEnemy({ trait, withoutTrait, unengaged, withoutToken })`, `withoutToken: 'doom'` for "the nearest enemy with no doom on it",
 - `locationWith({ trait })`,

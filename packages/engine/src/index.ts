@@ -232,6 +232,7 @@ export {
   forEachEnemy,
   forEachInvestigator,
   searchAndDraw,
+  searchAndDrawCopies,
   shuffleEncounterDeck,
   disengageFromEachEnemy,
   engageReadyEnemies,

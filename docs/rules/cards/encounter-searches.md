@@ -20,6 +20,13 @@ The cards below search or dig through a deck, draw from a deck of their own, or 
 - The shuffle is its own sentence, so it happens even while a Cultist is in play (our reading of the card text; no ruling found).
 - "Cultist enemies in play" counts the enemies at locations and engaged with investigators.
 
+"The lead investigator must search the encounter deck and discard pile for 1 [per_investigator] copies of Fire! and draw them. (Shuffle the encounter deck if it was searched.)" (Searching for Dr. Armitage, act 3b):
+
+- It is one search: the lead finds up to that many copies, then draws them one after another, each resolving like any draw ([Draw](https://arkhamdb.com/rules#Draw); [Search](https://arkhamdb.com/rules#Search)). Fewer copies left means fewer draws.
+- A copy whose revelation was cancelled goes to the discard but was found already, so it isn't drawn a second time.
+- The encounter deck is shuffled once all of them are drawn ([Search](https://arkhamdb.com/rules#Search): "If an effect searches an entire deck, the deck must be shuffled upon completion of the search").
+- The lead picks the copies, and with them how many Fire! stay in the deck. The engine takes the first copies, deck first, without asking: the same shortcut as Mysterious Chanting (#346).
+
 ## A deck of its own
 
 The Midnight Masks' Cultist deck is a deck of its own, out of play:
