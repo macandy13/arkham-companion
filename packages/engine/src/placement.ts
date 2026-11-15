@@ -5,7 +5,7 @@ import type { CardMoved, Event, TokensChanged } from './events';
 import { readyEnemyEngagements } from './engagement';
 import { requireCard } from './lookup';
 import { replay } from './reducer';
-import { isPlayerCard } from './player_cards';
+import { discardPileOf } from './player_cards';
 import { CommandRejected } from './rejection';
 import type { InstanceId } from './ids';
 import { TOKEN_KINDS, type CardInstance, type GameState, type TokenKind } from './state';
@@ -137,9 +137,11 @@ export function discardEncounterCard(
   const attachments = (state.order[zoneKey({ kind: 'attachedTo', hostId: cardId })] ?? []).flatMap(
     (attachedId) => discardEncounterCard(ctx, state, attachedId),
   );
-  // A player card goes back to its owner, out of the scenario's game.
-  const to: Zone = isPlayerCard(ctx, card) ? { kind: 'outOfGame' } : { kind: 'encounterDiscard' };
-  return [...attachments, ...clearTokensEvents(card), moveCardEvent(card, to, 0)];
+  return [
+    ...attachments,
+    ...clearTokensEvents(card),
+    moveCardEvent(card, discardPileOf(ctx, card), 0),
+  ];
 }
 
 /**

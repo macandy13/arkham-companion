@@ -7,7 +7,7 @@ import { cardsInZone, requireCard } from './lookup';
 import { playerOrder, findInvestigator } from './investigators';
 import { cardHasKeyword } from './card_keywords';
 import { CommandRejected } from './rejection';
-import { encounterDiscard, victoryDisplay } from './zone';
+import { encounterDiscard, outOfGame, victoryDisplay } from './zone';
 import type { CardInstance, GameState, Investigator, TokenKind } from './state';
 
 /** One enemy attack of the enemy phase: who attacks whom, and for how much. */
@@ -257,17 +257,22 @@ export function defeatedByDamage(
   return [enemyDefeatedEvent(state, enemy, stats)];
 }
 
-/** The `EnemyDefeated` of `enemy`: to the victory display if it has victory, else to the encounter discard. */
+/**
+ * The `EnemyDefeated` of `enemy`: to the victory display if it has victory, else to the encounter
+ * discard. A weakness enemy goes back to its owner instead (`CardInstance.owner`; Rules
+ * Reference, "Weakness"), out of the scenario.
+ */
 export function enemyDefeatedEvent(
   state: GameState,
   enemy: CardInstance,
   stats: CardStats,
 ): EnemyDefeated {
   const hasVictory = (stats.victory ?? 0) > 0;
+  const to = enemy.owner !== undefined ? outOfGame : hasVictory ? victoryDisplay : encounterDiscard;
   return {
     type: 'EnemyDefeated',
     enemyId: enemy.id,
-    to: hasVictory ? victoryDisplay : encounterDiscard,
+    to,
     locationId: locationOf(state, enemy),
   };
 }

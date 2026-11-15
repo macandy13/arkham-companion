@@ -6,6 +6,7 @@ The whole table is one serialisable value, [`GameState`](../../packages/engine/s
 - The state stores codes, not card data; rules look stats up in the `CardDb`.
 - Investigators are not card instances but seats with their own record.
 - A card beneath a location or the act is in the `beneath` zone of its host: out of play, face down until something flips it. `DrawBeneath` flips the facedown card beneath the investigator's location and spawns it like a drawn enemy (Smoke and Mirrors' suspects); the board view counts those under `facedownBeneath` and lists the cards beneath the act under `encounter.beneathAct`.
+- A weakness drawn from a player deck ([`DrawWeakness`](../../packages/engine/src/handle_encounter.ts), ME.26a) is a new `CardInstance` that remembers its owner (`CardInstance.owner`), then is drawn like an encounter card (`revealDrawn`: revelation, peril, surge, spawn). The app doesn't track player decks or discard piles, so whenever an owned card is discarded or defeated it goes to `outOfGame`, back to its owner (`isPlayerCard`, `discardPileOf`), never to the encounter discard.
 
 Location connections come from the symbols the cards print, plus a graph on each [`GameMap`](../../packages/engine/src/map.ts) for those no card prints.
 

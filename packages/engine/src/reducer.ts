@@ -20,6 +20,7 @@ import type {
   LayoutCellSet,
   MapAdded,
   PlayerCardAttached,
+  WeaknessDrawn,
   ScenarioEnded,
   ScenarioStarted,
   TokensChanged,
@@ -99,6 +100,8 @@ export function apply(state: GameState, event: Event): GameState {
       return applyChaosTokenSealed(state, event);
     case 'PlayerCardAttached':
       return applyPlayerCardAttached(state, event);
+    case 'WeaknessDrawn':
+      return applyWeaknessDrawn(state, event);
     case 'ChaosTokenReleased':
       return applyChaosTokenReleased(state, event);
     case 'CardFlipped':
@@ -285,6 +288,26 @@ function applyPlayerCardAttached(state: GameState, e: PlayerCardAttached): GameS
     exhausted: false,
     tokens: {},
     flags: {},
+  };
+  const key = zoneKey(zone);
+  return {
+    ...state,
+    cards: { ...state.cards, [card.id]: card },
+    order: withZoneOrder(state.order, key, [...(state.order[key] ?? []), card.id]),
+  };
+}
+
+function applyWeaknessDrawn(state: GameState, e: WeaknessDrawn): GameState {
+  const zone: Zone = { kind: 'outOfGame' };
+  const card: CardInstance = {
+    id: e.cardId,
+    code: e.code,
+    zone,
+    faceUp: false,
+    exhausted: false,
+    tokens: {},
+    flags: {},
+    owner: e.investigatorId,
   };
   const key = zoneKey(zone);
   return {

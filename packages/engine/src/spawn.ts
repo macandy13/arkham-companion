@@ -15,13 +15,12 @@ import { activeInvestigator, activeInvestigators, findInvestigator } from './inv
 import type { InstanceId, InvestigatorId } from './ids';
 import { matchesCard } from './lookup';
 import { cardMoved } from './placement';
+import { discardPileOf } from './player_cards';
 import { preferredByPrey, preyPrompt } from './prey';
 import { replay } from './reducer';
 import { CommandRejected } from './rejection';
 import type { CardInstance, GameState, Investigator } from './state';
 import type { Zone } from './zone';
-
-const ENCOUNTER_DISCARD: Zone = { kind: 'encounterDiscard' };
 
 /**
  * The zone an enemy enters when it spawns at the location `locationId`.
@@ -98,7 +97,7 @@ export function spawnEvents(
         : { kind: 'investigator', investigatorId: target.investigatorId },
     );
   // Index 0 is the top, and the discard's top is what "topmost" effects look for.
-  if (plan.kind === 'discard') return [cardMoved(state, enemy, ENCOUNTER_DISCARD, 0)];
+  if (plan.kind === 'discard') return [cardMoved(state, enemy, discardPileOf(ctx, enemy), 0)];
   const placed = cardMoved(state, enemy, spawnZone(plan.locationId));
   return [
     placed,

@@ -3,6 +3,7 @@ import type {
   DrawBeneath,
   DrawEncounter,
   DrawFromScenarioDeck,
+  DrawWeakness,
   EncounterMatch,
   EncounterSource,
   FromSetAside,
@@ -19,12 +20,14 @@ import type {
   Event,
   RevelationResolved,
   SurgeGained,
+  WeaknessDrawn,
 } from './events';
-import { decisionId, type CardCode, type InstanceId, type InvestigatorId } from './ids';
+import { decisionId, instanceId, type CardCode, type InstanceId, type InvestigatorId } from './ids';
 import { activeInvestigator, isActiveInvestigator, findInvestigator } from './investigators';
 import { hasKeyword } from './keywords';
 import { cardsInZone, requireCard } from './lookup';
 import { cardMoved } from './placement';
+import { discardPileOf } from './player_cards';
 import { spawnEvents } from './spawn';
 import { replay } from './reducer';
 import { CommandRejected } from './rejection';
@@ -294,6 +297,16 @@ export function handleShuffleEncounterDiscard(state: GameState): Event[] {
   return shuffleInto(state, cardsInZone(state, encounterDiscard), encounterDeck);
 }
 
+/**
+ * The cards a surge chain that starts with the draw in `events` can draw (`TriggerBudget`): those
+ * in the encounter deck and its discard (`encounterCardCount`), plus a weakness drawn from a
+ * player deck (`WeaknessDrawn`), which is none of them but is the chain's first draw.
+ */
+export function surgeChainCards(state: GameState, events: readonly Event[]): number {
+  const weakness = events.some((event) => event.type === 'WeaknessDrawn') ? 1 : 0;
+  return encounterCardCount(state) + weakness;
+}
+
 /** Cards in the encounter deck and its discard, i.e. how many cards could still be drawn. */
 export function encounterCardCount(state: GameState): number {
   return cardsInZone(state, encounterDeck).length + cardsInZone(state, encounterDiscard).length;
@@ -315,7 +328,48 @@ function drawOne(
   const refill = refillIfEmpty(state);
   const cardId = target ?? cardsInZone(replay(refill, state), encounterDeck)[0];
   if (cardId === undefined) return undefined;
+  return [...refill, ...revealDrawn(ctx, replay(refill, state), investigator, cardId)];
+}
 
+/**
+ * `DrawWeakness`: the weakness comes into the game as a new card the drawer owns, and is then
+ * drawn like an encounter card (`revealDrawn`), so its revelation, peril, surge and placement are
+ * the encounter draw's. Its ID counts up per investigator, so it stays the same on replay.
+ */
+export function handleDrawWeakness(
+  ctx: EngineContext,
+  state: GameState,
+  cmd: DrawWeakness,
+): Event[] {
+  const investigator = activeInvestigator(state, cmd.investigatorId);
+  const { typeCode } = cardStats(ctx.cards, cmd.code);
+  if (typeCode !== 'enemy' && typeCode !== 'treachery')
+    throw new CommandRejected({ code: 'notAWeaknessToDraw', cardCode: cmd.code });
+  const drawn: WeaknessDrawn = {
+    type: 'WeaknessDrawn',
+    cardId: nextWeaknessId(state, investigator.id),
+    code: cmd.code,
+    investigatorId: investigator.id,
+  };
+  return [drawn, ...revealDrawn(ctx, replay([drawn], state), investigator, drawn.cardId)];
+}
+
+function nextWeaknessId(state: GameState, investigatorId: InvestigatorId): InstanceId {
+  let index = 1;
+  while (state.cards[instanceId(`${investigatorId}:weakness:${index}`)] !== undefined) index++;
+  return instanceId(`${investigatorId}:weakness:${index}`);
+}
+
+/**
+ * Moves `cardId` into the `resolving` zone and reveals it as drawn by `investigator`; a treachery
+ * whose revelation the app resolves asks the players first (`revelationDecision`).
+ */
+function revealDrawn(
+  ctx: EngineContext,
+  state: GameState,
+  investigator: Investigator,
+  cardId: InstanceId,
+): Event[] {
   const stats = cardStats(ctx.cards, requireCard(state.cards, cardId).code);
   // Only a revelation the app resolves asks; one it has no abilities for the players do by hand.
   const asksRevelation =
@@ -329,16 +383,12 @@ function drawOne(
     surge: hasKeyword(stats, 'surge'),
     ...(asksRevelation && { asksRevelation: true }),
   };
-  const resolving = cardMoved(
-    replay(refill, state),
-    requireCard(state.cards, cardId),
-    resolvingZone,
-  );
+  const resolving = cardMoved(state, requireCard(state.cards, cardId), resolvingZone);
   const revealed: CardFlipped = { type: 'CardFlipped', cardId, faceUp: true };
   const asked: DecisionRequested[] = asksRevelation
     ? [{ type: 'DecisionRequested', decision: revelationDecision(cardId, investigator.id) }]
     : [];
-  return [...refill, drawn, resolving, revealed, ...asked];
+  return [drawn, resolving, revealed, ...asked];
 }
 
 /**
@@ -396,7 +446,7 @@ function placement(
     return spawnEvents(ctx, state, cardId, { investigatorId: investigator.id });
   const card = requireCard(state.cards, cardId);
   // Index 0 is the top, and the discard's top is what "topmost" effects look for.
-  return [cardMoved(state, card, encounterDiscard, 0)];
+  return [cardMoved(state, card, discardPileOf(ctx, card), 0)];
 }
 
 /**
@@ -417,7 +467,7 @@ function withoutDrawer(
 ): Event[] {
   const instructed = stats.keywords?.some((keyword) => keyword.name === 'spawn') ?? false;
   if (stats.typeCode === 'enemy' && instructed) return spawnEvents(ctx, state, card.id, {});
-  return [cardMoved(state, card, encounterDiscard, 0)];
+  return [cardMoved(state, card, discardPileOf(ctx, card), 0)];
 }
 
 /**

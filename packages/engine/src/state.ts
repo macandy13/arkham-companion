@@ -69,6 +69,12 @@ export interface CardInstance {
    * (`CardAction.limit`), oldest first. Recorded by `CardActionUsed`.
    */
   actionUses?: readonly CardActionUse[];
+  /**
+   * The investigator whose deck the card came from, for a weakness drawn from a player deck
+   * (`DrawWeakness`). It resolves like an encounter card but is none: whenever it leaves play it
+   * goes back to its owner, out of the scenario (`isPlayerCard`), never to the encounter discard.
+   */
+  owner?: InvestigatorId;
 }
 
 /** One use of action number `action` of a card (`CardInstance.actionUses`), for its limit. */

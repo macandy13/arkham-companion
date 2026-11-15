@@ -6,14 +6,24 @@ import { instanceId, type InstanceId } from './ids';
 import { requireCard } from './lookup';
 import { CommandRejected } from './rejection';
 import type { CardInstance, GameState } from './state';
+import { encounterDiscard, outOfGame, type Zone } from './zone';
 
 /**
- * Whether `card` is a player card (an asset or an event the players put on the table, such as
- * one they attached), which goes back to its owner rather than to the encounter discard. A story
- * asset is an asset too, but of an encounter set.
+ * Whether `card` is a player card, which goes back to its owner rather than to the encounter
+ * discard: an asset or an event the players put on the table (one they attached), or a weakness
+ * drawn from a player deck (`CardInstance.owner`). A story asset is an asset too, but of an
+ * encounter set.
  */
 export function isPlayerCard(ctx: EngineContext, card: CardInstance): boolean {
-  return isPlayerCardStats(cardStats(ctx.cards, card.code));
+  return card.owner !== undefined || isPlayerCardStats(cardStats(ctx.cards, card.code));
+}
+
+/**
+ * Where `card` goes when it is discarded: the encounter discard, or out of the scenario for a
+ * player card (`isPlayerCard`), since the app doesn't track the players' discard piles.
+ */
+export function discardPileOf(ctx: EngineContext, card: CardInstance): Zone {
+  return isPlayerCard(ctx, card) ? outOfGame : encounterDiscard;
 }
 
 /**
