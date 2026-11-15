@@ -5,8 +5,9 @@ import type { GameState, Phase } from './state';
 /**
  * "(Limit once per turn.)", "(Limit once per round.)", "(Group limit once per game.)": how often an
  * ability may be used (Rules Reference, "Limits and Maximums"). A limit counts each investigator's
- * uses apart; a group limit counts everyone's together. One type for every printed limit, so card
- * actions and, with MC2.3, triggered abilities count them alike (`withinLimit`).
+ * uses apart; a group limit counts everyone's together. One type for the limits of one card, so card
+ * actions and, with MC2.3, triggered abilities count them alike (`withinLimit`); a "Max" across all
+ * copies of a card isn't one, and no scenario card has one yet.
  */
 export interface UsageLimit {
   readonly per: UsagePeriod;
@@ -65,8 +66,8 @@ export function withinLimit(
 
 /**
  * Whether two uses fall in the same `period`. A turn is one investigator's turn in a round (each
- * has one per round); uses outside every turn share the phase they are in, as no turn is in
- * progress to tell them apart.
+ * has one per round). Uses outside every turn share the phase they are in, as no turn is in
+ * progress to tell them apart: an engine convention, as no ruling covers it.
  */
 function samePeriod(period: UsagePeriod, use: AbilityUse, now: AbilityUse): boolean {
   switch (period) {

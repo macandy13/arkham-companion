@@ -22,7 +22,9 @@
   - An unrevealed location offers none, as it has only its unrevealed side's text.
 - [Limits](https://arkhamdb.com/rules#Limits_and_Maximums): "(Limit once per turn/round/phase/game.)" counts each investigator's uses apart, "(Group limit once per game.)" everyone's together; "twice per round" allows two.
   - A turn is one investigator's turn: a free action taken in alice's turn and again in bob's is used once in each turn.
-  - Outside every turn (a free action in the mythos or enemy phase) the uses of one phase count as one turn, since no turn is in progress to tell them apart.
+  - Engine convention (no official ruling found): outside every turn (a free action in the mythos or enemy phase) the uses of one phase count as one turn, since no turn is in progress to tell them apart.
+  - A card that leaves play and comes back is a new instance with fresh uses.
+  - "Max X per period" counts the uses of all copies of a card (by title) for all players; no scenario card has one yet, so the engine has no maximum.
   - An action whose effect can't change the game state can't be taken ([Triggered Abilities](https://arkhamdb.com/rules#Triggered_Abilities)), so its limit isn't used up either: St. Mary's Hospital ("Heal 3 damage") with no damage isn't offered.
   - An action whose effect is done at the table (no effect the engine runs) is always offered.
 - [Costs](https://arkhamdb.com/rules#Costs): the text before the colon ("Spend 5 resources:") is paid in full before the effect; an action whose cost can't be paid can't be taken.
