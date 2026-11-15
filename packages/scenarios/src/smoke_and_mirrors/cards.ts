@@ -41,6 +41,7 @@ import {
   resignAction,
   resolutionId,
   SKILL_NAMES,
+  self,
   skillTest,
   skillTestOfEither,
   statOf,
@@ -49,6 +50,7 @@ import {
   trait,
   whenAdvanced,
   whenRevealed,
+  victoryDisplay,
   whenVictoryDisplayHolds,
   you,
   yourLocation,
@@ -199,7 +201,7 @@ export const smokeAndMirrorsCardDefs: readonly CardStats[] = [
     ],
     abilities: [
       whenVictoryDisplayHolds(
-        eachInZone([{ kind: 'victoryDisplay' }, { kind: 'beneath', hostId: { ref: 'self' } }], {
+        eachInZone([victoryDisplay, { kind: 'beneath', hostId: self() }], {
           trait: trait('Elite'),
         }),
         6,

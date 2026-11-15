@@ -3101,7 +3101,7 @@ export function spawnEnemyAt(enemy: RelativeCard, location: RelativeCard): Abili
  * `move(self(), victoryDisplay)`, "Put the set-aside Lita Chantler into play at the Parlor"
  * `move(setAsideCopy(codes.litaChantler), atLocation(onlyCopy(codes.parlor)))`, "on top of the
  * encounter deck" `move(self(), encounterDeck, 'top')`. Only moves a rule gives a meaning of its
- * own keep a factory (`discard`, `putIntoThreatArea`, `attachTo`, `fromSetAside`).
+ * own keep a factory (`discard`, `putIntoThreatArea`, `attachTo`, `takeControl`, `fromSetAside`).
  */
 export function move(
   card: RelativeCard,

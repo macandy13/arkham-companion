@@ -6,6 +6,7 @@ import {
   afterTokensPlaced,
   atEndOfPhase,
   attachTo,
+  attachedTo,
   cardCode,
   type CardCode,
   type CardDb,
@@ -263,10 +264,7 @@ export const spreadingFlamesCardDefs: readonly CardStats[] = [
         ...putLocationIntoPlay(codes.dormitories, CAMPUS, { at: CAMPUS_CELLS.dormitories }),
         ...putLocationIntoPlay(codes.miskatonicQuad, CAMPUS, { at: CAMPUS_CELLS.miskatonicQuad }),
         spawnEnemyAt(onlyCopy(codes.servantOfFlame), onlyCopy(codes.dormitories)),
-        ...fromSetAside([codes.fire], {
-          kind: 'attachedTo',
-          hostId: onlyCopy(codes.yourFriendsRoom),
-        }),
+        ...fromSetAside([codes.fire], attachedTo(onlyCopy(codes.yourFriendsRoom))),
         // However many are left: Lit Up's reverse side may have placed four of them already.
         move(eachInZone(setAside, { code: codes.fire }), encounterDiscard),
       ),
