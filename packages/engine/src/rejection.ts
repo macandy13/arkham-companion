@@ -210,6 +210,13 @@ export type Rejection =
       action: number;
       investigatorId: InvestigatorId;
     }
+  /** `UseReaction` on a reaction its limit allows no more of now ("(Limit once per round.)"). */
+  | {
+      code: 'reactionLimitReached';
+      cardId: InstanceId;
+      ability: number;
+      investigatorId: InvestigatorId;
+    }
   /** `UseCardAction` on an action whose cost the investigator can't pay ("Spend 5 resources:"). */
   | {
       code: 'cardActionCostUnpaid';
@@ -473,6 +480,8 @@ function describe(r: Rejection): string {
       return `${r.investigatorId} cannot take the actions of ${r.cardId} now`;
     case 'cardActionLimitReached':
       return `${r.investigatorId} has used action ${r.action} of ${r.cardId} as often as its limit allows`;
+    case 'reactionLimitReached':
+      return `${r.investigatorId} has used reaction ${r.ability} of ${r.cardId} as often as its limit allows`;
     case 'cardActionCostUnpaid':
       return `${r.investigatorId} cannot pay the cost of action ${r.action} of ${r.cardId}`;
     case 'cardActionConditionUnmet':

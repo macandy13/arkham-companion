@@ -1,5 +1,6 @@
 import {
   advanceAct,
+  afterDiscoveringClues,
   afterEngaging,
   atEndOfPhase,
   atEndOfRound,
@@ -22,6 +23,7 @@ import {
   loseActions,
   forEachPoint,
   fromSetAside,
+  gainResources,
   gainSurge,
   ifNoCandidate,
   ifYouHave,
@@ -35,6 +37,7 @@ import {
   plusDifficultyIf,
   plusDifficultyPer,
   putIntoThreatArea,
+  reaction,
   resignAction,
   resolutionId,
   SKILL_NAMES,
@@ -144,9 +147,9 @@ const jpg = 'jpg';
  * - the Mark of Elokoss each investigator draws as Arkham Alive advances goes into their deck
  * - Mark of Elokoss' damage as its holder's turn ends (assigned to an asset if able) and its
  *   two-action discard
- * - the Arkham locations' reactions and actions (resources, healing, two deck searches, a clue
- *   for 5 resources, a free move, cards drawn, a charge or secret, a Tome or Spell played from the
- *   discard pile: MC2.3, MC2.4), Waterfront District's
+ * - the Arkham locations' reactions and actions other than First Bank of Arkham's resource
+ *   (healing, two deck searches, a clue for 5 resources, a free move, cards drawn, a charge or
+ *   secret, a Tome or Spell played from the discard pile: MC2.3, MC2.4), Waterfront District's
  *   additional action to investigate (MC2.4), and the damage Miskatonic University (In Flames)
  *   deals to allies
  * - Arcane Lock's additional action to enter or leave its location (MC2.4)
@@ -165,7 +168,7 @@ export const smokeAndMirrorsCardDefs: readonly CardStats[] = [
     // their deck for the rest of the campaign is done by hand.
     abilities: [
       whenAdvanced(
-        fromSetAside([codes.markOfElokoss], {
+        ...fromSetAside([codes.markOfElokoss], {
           kind: 'threatArea',
           investigatorId: { ref: 'eachInvestigator' },
         }),
@@ -329,6 +332,7 @@ export const smokeAndMirrorsCardDefs: readonly CardStats[] = [
     shroud: 4,
     cluesPerInvestigator: 2,
     victory: 1,
+    abilities: [reaction(afterDiscoveringClues(gainResources(1)))],
   }),
   location({
     code: codes.downtownSanatorium,

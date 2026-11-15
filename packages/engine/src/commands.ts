@@ -72,8 +72,6 @@ export type Command =
   | AdvanceAct
   | EndScenario
   | DrawEncounter
-  | FromSetAside
-  | ShuffleInto
   | ShuffleEncounterDiscard
   | ShuffleEncounterDeck
   | EngageReadyEnemies
@@ -85,6 +83,7 @@ export type Command =
   | DamageEnemy
   | HealEnemy
   | GainSurge
+  | UseReaction
   | ResolveRevelation
   | DefeatEnemy
   | ExhaustEnemy
@@ -374,7 +373,7 @@ export interface CommandSource {
 /**
  * A command a card can ask for: one on the players' own cards (`PlayerCardCommand`), or one also
  * sent without a card (by the players or a rule step) that refuses when it has nothing to do (`AdjustActions`, `EndTurn`,
- * `DiscoverClues`, `RemoveConnection`, `ShuffleInto`, `EngageEnemy`). The ability step that resolves it stamps its `source` (`withSource`), as does
+ * `DiscoverClues`, `RemoveConnection`, `EngageEnemy`). The ability step that resolves it stamps its `source` (`withSource`), as does
  * an action's hand card cost. Without one it is the players' own or a rule step's (the upkeep
  * draw); the play screen relies on that to leave it out of the "Do this by hand" notice
  * (`skippedEffects`). With one, a command that the players' version refuses for having nothing
@@ -752,30 +751,6 @@ export interface EncounterMatch {
 }
 
 /**
- * Takes one set-aside copy of each code (a code listed twice takes two copies)
- * and moves it to `to`. Asked by a card (`source`), it takes the copies that are still set aside
- * ("place 4 set-aside copies of Fire!" with fewer left) instead of refusing. Produces `CardMoved`
- * per card.
- */
-export interface FromSetAside extends AskedByCard {
-  type: 'FromSetAside';
-  codes: readonly CardCode[];
-  to: Zone;
-}
-
-/**
- * Takes one set-aside copy of each code, adds it to `zone` and shuffles the
- * whole zone (usually the encounter deck). Asked by a card (`source`), it takes the copies that
- * are set aside and nothing at all when none is. Produces `CardMoved` per card, then
- * `DeckShuffled`.
- */
-export interface ShuffleInto extends AskedByCard {
-  type: 'ShuffleInto';
-  codes: readonly CardCode[];
-  zone: Zone;
-}
-
-/**
  * Shuffles the encounter discard pile into the encounter deck (a reverse
  * side such as Rise of the Ghouls, or a card effect). Produces `CardMoved` per
  * discarded card, then `DeckShuffled`; nothing at all when the discard is
@@ -911,6 +886,19 @@ export interface ResolveRevelation {
 export interface GainSurge {
   type: 'GainSurge';
   cardId: InstanceId;
+}
+
+/**
+ * The investigator triggers reaction number `ability` of the card `cardId` (`Ability.reaction`):
+ * the "use" option of the question the reaction asks as its window opens puts this in front of
+ * the reaction's effects. Produces `ReactionUsed`, which counts towards the reaction's limit; the
+ * limit is checked when the question is asked.
+ */
+export interface UseReaction {
+  type: 'UseReaction';
+  cardId: InstanceId;
+  investigatorId: InvestigatorId;
+  ability: number;
 }
 
 /**

@@ -30,6 +30,15 @@ export function cardsInZone(state: GameState, zone: Zone): readonly InstanceId[]
   return state.order[zoneKey(zone)] ?? [];
 }
 
+/** The `n`-th set-aside copy of `code`, counted from 0 in zone order; none when fewer are left. */
+export function setAsideCopyOf(
+  state: GameState,
+  code: CardCode,
+  n: number,
+): InstanceId | undefined {
+  return cardsInZone(state, { kind: 'setAside' }).filter((id) => state.cards[id]?.code === code)[n];
+}
+
 /** Every card of the state whose printed type is `typeCode`, wherever it is, in card order. */
 export function cardsOfType(
   ctx: EngineContext,

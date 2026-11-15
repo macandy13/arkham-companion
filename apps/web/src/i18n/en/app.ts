@@ -99,6 +99,7 @@ export const appTexts = {
     playerCardAttached: '{{card}} attached to {{host}}',
     revelationCancelled: '{{investigator}} cancels the revelation of {{card}}',
     cardAction: '{{investigator}} uses {{card}}',
+    reaction: '{{investigator}} uses the reaction of {{card}}',
     playerCards: {
       draw_one: '{{investigator}} draws {{count}} card',
       draw_other: '{{investigator}} draws {{count}} cards',
@@ -284,7 +285,6 @@ export const appTexts = {
     },
     effects: {
       RevealLocation: 'revealing the location',
-      FromSetAside: 'putting the set-aside card into play',
       SpawnEnemy: 'spawning the enemy',
       AddMap: 'putting the new area into play',
       MoveInvestigator: 'moving the investigators',
@@ -787,6 +787,9 @@ export const appTexts = {
     revelation: 'Revelation of {{card}}',
     resolveRevelation: 'Resolve',
     cancelRevelation: 'Cancel revelation',
+    reaction: 'Use the reaction of {{card}}?',
+    useReaction: 'Use it',
+    passReaction: 'Pass',
     count: {
       failedBy: 'Margin of failure',
       passedBy: 'Margin of success',

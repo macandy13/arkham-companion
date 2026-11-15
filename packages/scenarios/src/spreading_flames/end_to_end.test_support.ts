@@ -168,7 +168,8 @@ export function playSpreadingFlames(start: CampaignLog): CampaignLog {
   ]);
 
   // Round 3 – investigation: Roland defeats the Cantor with two attacks and heads for Science
-  // Hall; Daisy takes both clues in Warren Observatory.
+  // Hall; Daisy takes both clues in Warren Observatory. Its reaction lets her draw 1 card after
+  // the first, the players' to do; its limit of once per round doesn't offer it after the second.
   expect(table.nextPhase()).toEqual({ round: 3, phase: 'investigation' });
   table.startTurn(roland);
   table.fight(roland, byName(cantor));
@@ -178,6 +179,7 @@ export function playSpreadingFlames(start: CampaignLog): CampaignLog {
   table.startTurn(daisy);
   table.moveTo(daisy, byName('Warren Observatory'));
   table.investigate(daisy);
+  table.answer(byName('Warren Observatory'), 'use reaction');
   table.takeHorror(daisy, 1);
   table.investigate(daisy);
   table.takeHorror(daisy, 1);

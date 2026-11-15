@@ -27,7 +27,6 @@ import {
   trait,
   whenRevealed,
   zoneKey,
-  type CardStats,
   type Command,
   type Event,
   type GameState,
@@ -607,54 +606,6 @@ describe('DrawEncounter of one named card', () => {
   });
 });
 
-describe('FromSetAside', () => {
-  it('moves one copy per listed code, taking two copies for a code listed twice', () => {
-    const { context, state } = aliceInHall
-      .withCard(instanceId('first_foe'), foeCard, setAside)
-      .withCard(instanceId('set_aside_treachery'), plainTreachery, setAside)
-      .withCard(instanceId('second_foe'), foeCard, setAside)
-      .start();
-
-    const after = stateAfter(context, state, {
-      type: 'FromSetAside',
-      codes: [foeCard.code, foeCard.code],
-      to: { kind: 'victoryDisplay' },
-    });
-
-    expect(idsIn(after, { kind: 'victoryDisplay' })).toEqual(['first_foe', 'second_foe']);
-    expect(idsIn(after, setAside)).toEqual(['set_aside_treachery']);
-  });
-
-  it('rejects a code with no set-aside copy left', () => {
-    const { context, state } = aliceInHall
-      .withCard(instanceId('only_foe'), foeCard, setAside)
-      .start();
-
-    expect(
-      rejectionFrom(context, state, {
-        type: 'FromSetAside',
-        codes: [foeCard.code, foeCard.code],
-        to: { kind: 'outOfGame' },
-      }),
-    ).toEqual({ code: 'cardNotInZone', zone: 'setAside', match: 'foe' });
-  });
-
-  it('takes the copies still set aside when a card asks for more than are left', () => {
-    const { context, state } = aliceInHall
-      .withCard(instanceId('only_foe'), foeCard, setAside)
-      .start();
-
-    const after = stateAfter(context, state, {
-      type: 'FromSetAside',
-      codes: [foeCard.code, foeCard.code],
-      to: { kind: 'outOfGame' },
-      source: { cardId: instanceId('asking_agenda'), window: 'advanced' },
-    });
-
-    expect(idsIn(after, { kind: 'outOfGame' })).toEqual(['only_foe']);
-  });
-});
-
 describe('DrawFromScenarioDeck', () => {
   const cultistDeck: Zone = { kind: 'scenarioDeck', deck: 'cultist' };
   const drawCultist: Command = {
@@ -766,48 +717,6 @@ describe('DrawBeneath', () => {
   });
 });
 
-describe('ShuffleInto', () => {
-  it('adds the set-aside cards to the deck and shuffles all of it', () => {
-    const { context, state } = aliceInHall
-      .withCard(instanceId('deck_card_a'), plainTreachery, encounterDeck)
-      .withCard(instanceId('deck_card_b'), plainTreachery, encounterDeck)
-      .withCard(instanceId('deck_card_c'), plainTreachery, encounterDeck)
-      .withCard(instanceId('set_aside_foe'), foeCard, setAside)
-      .withCard(instanceId('set_aside_relic'), relicCard, setAside)
-      .start();
-
-    const { state: after, events } = execute(context, state, {
-      type: 'ShuffleInto',
-      codes: [foeCard.code, relicCard.code],
-      zone: encounterDeck,
-    });
-
-    expect(events.at(-1)?.type).toBe('DeckShuffled');
-    expect([...idsIn(after, encounterDeck)].sort()).toEqual([
-      'deck_card_a',
-      'deck_card_b',
-      'deck_card_c',
-      'set_aside_foe',
-      'set_aside_relic',
-    ]);
-    expect(idsIn(after, setAside)).toEqual([]);
-  });
-
-  it('rejects a code that is not set aside', () => {
-    const { context, state } = aliceInHall
-      .withCard(instanceId('deck_foe'), foeCard, encounterDeck)
-      .start();
-
-    expect(
-      rejectionFrom(context, state, {
-        type: 'ShuffleInto',
-        codes: [foeCard.code],
-        zone: encounterDeck,
-      }).code,
-    ).toBe('cardNotInZone');
-  });
-});
-
 describe('ShuffleEncounterDiscard', () => {
   const shuffleDiscard: Command = { type: 'ShuffleEncounterDiscard' };
 
@@ -868,11 +777,11 @@ describe('ShuffleEncounterDeck', () => {
 });
 
 describe('encounter deck invariants', () => {
-  const shuffleIn = (shuffled: CardStats): Command => ({
-    type: 'ShuffleInto',
-    codes: [shuffled.code],
-    zone: encounterDeck,
-  });
+  /** Moves the set-aside card `cardId` into the encounter deck and shuffles the deck. */
+  const shuffleIn = (cardId: string): Command[] => [
+    { type: 'MoveCard', cardId: instanceId(cardId), to: encounterDeck },
+    { type: 'ShuffleEncounterDeck' },
+  ];
 
   it.each([
     {
@@ -915,7 +824,14 @@ describe('encounter deck invariants', () => {
         .withCard(instanceId('plain_card'), plainTreachery, encounterDeck)
         .withCard(instanceId('set_aside_foe'), foeCard, setAside)
         .withCard(instanceId('set_aside_lingering'), lingeringTreachery, setAside),
-      steps: [draw, shuffleIn(foeCard), draw, shuffleIn(lingeringTreachery), draw, draw],
+      steps: [
+        draw,
+        ...shuffleIn('set_aside_foe'),
+        draw,
+        ...shuffleIn('set_aside_lingering'),
+        draw,
+        draw,
+      ],
     },
     { name: 'a draw from nothing', table: aliceInHall, steps: [draw] },
   ])(

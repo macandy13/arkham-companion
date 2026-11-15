@@ -70,11 +70,21 @@ export interface CardInstance {
    */
   actionUses?: readonly CardActionUse[];
   /**
+   * The uses of the card's reactions (`Ability.reaction`) that count towards their limits, oldest
+   * first. Recorded by `ReactionUsed`.
+   */
+  reactionUses?: readonly ReactionUse[];
+  /**
    * The investigator whose deck the card came from, for a weakness drawn from a player deck
    * (`DrawWeakness`). It resolves like an encounter card but is none: whenever it leaves play it
    * goes back to its owner, out of the scenario (`isPlayerCard`), never to the encounter discard.
    */
   owner?: InvestigatorId;
+}
+
+/** One use of the reaction that is ability number `ability` of a card (`CardInstance.reactionUses`). */
+export interface ReactionUse extends AbilityUse {
+  ability: number;
 }
 
 /** One use of action number `action` of a card (`CardInstance.actionUses`), for its limit. */

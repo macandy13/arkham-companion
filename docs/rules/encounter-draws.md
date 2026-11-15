@@ -28,4 +28,4 @@ Discarding cards from the top of the encounter deck ("Discard the top 3 cards of
 Our reading (no explicit ruling): the cards are discarded one at a time off the top, so the first one ends lowest of them on the discard, rather than "at the same time" in an order the lead investigator picks ([discard piles](https://arkhamdb.com/rules#Discard_Piles)).
 
 An ability that shuffles an empty discard pile into a deck does not shuffle the deck ([discard piles](https://arkhamdb.com/rules#Discard_Piles)).
-Likewise, our reading: "shuffle the set-aside [card] into the encounter deck" with no such card set aside changes nothing and does not shuffle the deck.
+Our reading (no explicit ruling): "shuffle the set-aside [card] into the encounter deck" is done as far as it can be ([effects](https://arkhamdb.com/rules#Effects)): the copies still set aside go in, and the deck is shuffled even when none was left. The rule above covers only an empty discard pile.

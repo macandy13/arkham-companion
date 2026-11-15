@@ -11,6 +11,8 @@ import {
   ifYouHave,
   searchAndDraw,
   searchAndDrawCopies,
+  reaction,
+  gainResources,
   lead,
   drawFromEncounterDiscard,
   shuffleEncounterDeck,
@@ -2791,6 +2793,150 @@ describe('an effect repeated for each investigator', () => {
     const advanced = stateAfter(context, bobLeads, { type: 'AdvanceAgenda' });
 
     expect(advanced.pending).toMatchObject([{ decider: { investigatorId: bob } }]);
+  });
+});
+
+describe('a reaction the investigator may use or pass', () => {
+  const bob = investigatorId('bob');
+  /** "[reaction] After you discover 1 or more clues at this location: Gain 1 resource. (Limit once per round.)" */
+  const bankCard = blankLocation('bank', {
+    clues: fixed(3),
+    abilities: [reaction(afterDiscoveringClues(gainResources(1)), { per: 'round' })],
+  });
+  const bank = instanceId('bank');
+  const aliceDiscovers: Command = {
+    type: 'DiscoverClues',
+    investigatorId: alice,
+    locationId: bank,
+    amount: 1,
+  };
+  const bankTable = () =>
+    newGame()
+      .withLocation(bank, bankCard, { revealed: true })
+      .withInvestigator(alice, { locationId: bank, resources: 0 })
+      .withInvestigator(bob, { locationId: bank })
+      .withTurnOf(alice)
+      .start();
+
+  it("asks alice, who discovered the clue, to use the bank's reaction or pass", () => {
+    const { context, state } = bankTable();
+
+    const asked = stateAfter(context, state, aliceDiscovers);
+
+    expect(asked.pending).toMatchObject([
+      {
+        id: 'reaction:bank:0',
+        prompt: 'decision.reaction',
+        subject: bank,
+        decider: { kind: 'investigator', investigatorId: alice },
+        options: [{ id: 'use' }, { id: 'pass' }],
+      },
+    ]);
+  });
+
+  it.each([
+    { answered: 'use', resources: 1 },
+    { answered: 'pass', resources: 0 },
+  ])('gives alice $resources resources when she answers $answered', ({ answered, resources }) => {
+    const { context, state } = bankTable();
+    const asked = stateAfter(context, state, aliceDiscovers);
+
+    const after = stateAfter(context, asked, answer('reaction:bank:0', answered));
+
+    expect(requireInvestigator(after, alice).resources).toBe(resources);
+    expect(after.pending).toEqual([]);
+  });
+
+  it.each([
+    { who: 'alice again, this round', discoverer: alice, endsRound: false, asked: [] },
+    { who: 'bob, this round', discoverer: bob, endsRound: false, asked: ['reaction:bank:0'] },
+    { who: 'alice, next round', discoverer: alice, endsRound: true, asked: ['reaction:bank:0'] },
+  ])('offers it to $who after alice used it once: $asked', ({ discoverer, endsRound, asked }) => {
+    const { context, state } = bankTable();
+    const used = stateAfter(context, state, aliceDiscovers, answer('reaction:bank:0', 'use'));
+    const later = endsRound
+      ? { ...used, meta: { ...used.meta, round: used.meta.round + 1 } }
+      : used;
+
+    const after = stateAfter(context, later, {
+      type: 'DiscoverClues',
+      investigatorId: discoverer,
+      locationId: bank,
+      amount: 1,
+    });
+
+    expect(after.pending.map((decision) => decision.id)).toEqual(asked);
+  });
+
+  it('offers it to alice again after she passed', () => {
+    const { context, state } = bankTable();
+    const passed = stateAfter(context, state, aliceDiscovers, answer('reaction:bank:0', 'pass'));
+
+    const after = stateAfter(context, passed, aliceDiscovers);
+
+    expect(after.pending.map((decision) => decision.id)).toEqual(['reaction:bank:0']);
+  });
+
+  it('resolves a forced ability on the same discovery before it asks about the reaction', () => {
+    /** "[reaction] After you discover clues here: Gain 1 resource." and "Forced – After you discover clues here: Take 1 horror." */
+    const cursedBankCard = blankLocation('cursed_bank', {
+      clues: fixed(3),
+      abilities: [
+        reaction(afterDiscoveringClues(gainResources(1))),
+        afterDiscoveringClues(takeHorror(1)),
+      ],
+    });
+    const { context, state } = newGame()
+      .withLocation(bank, cursedBankCard, { revealed: true })
+      .withInvestigator(alice, { locationId: bank })
+      .withTurnOf(alice)
+      .start();
+
+    const asked = stateAfter(context, state, aliceDiscovers);
+
+    expect(requireInvestigator(asked, alice).sanity.horror).toBe(1);
+    expect(asked.pending.map((decision) => decision.id)).toEqual(['reaction:bank:0']);
+  });
+
+  it.each([
+    { where: 'at the vault', locationId: instanceId('vault'), asked: ['reaction:vault:0'] },
+    { where: 'in the hall', locationId: hall, asked: [] },
+  ])(
+    'offers the vault reaction at the end of her turn to alice $where: $asked',
+    ({ locationId, asked }) => {
+      /** "[reaction] At the end of your turn: Gain 1 resource." */
+      const vaultCard = blankLocation('vault', {
+        abilities: [reaction(atEndOfTurn(gainResources(1)))],
+      });
+      const { context, state } = newGame()
+        .withLocation(instanceId('vault'), vaultCard, { revealed: true })
+        .withLocation(hall, blankLocation('hall'), { revealed: true })
+        .withInvestigator(alice, { locationId })
+        .withTurnOf(alice)
+        .start();
+
+      const after = stateAfter(context, state, { type: 'EndTurn', investigatorId: alice });
+
+      expect(after.pending.map((decision) => decision.id)).toEqual(asked);
+    },
+  );
+
+  it('rejects a second use by alice in the same round', () => {
+    const { context, state } = bankTable();
+    const useBank: Command = {
+      type: 'UseReaction',
+      cardId: bank,
+      investigatorId: alice,
+      ability: 0,
+    };
+    const used = stateAfter(context, state, useBank);
+
+    expect(rejectionFrom(context, used, useBank)).toEqual({
+      code: 'reactionLimitReached',
+      cardId: bank,
+      ability: 0,
+      investigatorId: alice,
+    });
   });
 });
 
