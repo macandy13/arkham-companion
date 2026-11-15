@@ -606,6 +606,21 @@ describe('FromSetAside', () => {
       }),
     ).toEqual({ code: 'cardNotInZone', zone: 'setAside', match: 'foe' });
   });
+
+  it('takes the copies still set aside when a card asks for more than are left', () => {
+    const { context, state } = aliceInHall
+      .withCard(instanceId('only_foe'), foeCard, setAside)
+      .start();
+
+    const after = stateAfter(context, state, {
+      type: 'FromSetAside',
+      codes: [foeCard.code, foeCard.code],
+      to: { kind: 'outOfGame' },
+      source: { cardId: instanceId('asking_agenda'), window: 'advanced' },
+    });
+
+    expect(idsIn(after, { kind: 'outOfGame' })).toEqual(['only_foe']);
+  });
 });
 
 describe('DrawFromScenarioDeck', () => {
