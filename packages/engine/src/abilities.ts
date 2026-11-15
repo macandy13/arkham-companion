@@ -1227,7 +1227,10 @@ interface ResolvedRefs {
   /** Where the card with the ability is (`selfLocation`). */
   selfLocation: InstanceId | undefined;
   onlyCopy: (code: CardCode) => InstanceId | undefined;
-  /** The set-aside copy of `code` this repetition takes (`setAsideCopy`), the first one when the effect repeats for nobody else. */
+  /**
+   * The set-aside copy of `code` this repetition takes (`setAsideCopy`), the first one when the
+   * effect repeats for nobody else.
+   */
   setAsideCopy: (code: CardCode) => InstanceId | undefined;
   /** The investigator or enemy of this repetition of an effect on each of them. */
   each?: InstanceId | InvestigatorId;
@@ -2789,8 +2792,9 @@ export function searchAndDraw(match: EncounterMatch): AbilityEffect {
 }
 
 /**
- * "Shuffle the set-aside [card] into the encounter deck": one set-aside copy of
- * each code, a code listed twice taking two.
+ * "Shuffle the set-aside [card] into the encounter deck": one set-aside copy of each code, a code
+ * listed twice taking two, then the deck is shuffled once. The shuffle is a step of its own, so the
+ * deck is shuffled even when no copy was left to add (`docs/rules/encounter-draws.md`).
  */
 export function shuffleSetAsideIntoEncounterDeck(codes: readonly CardCode[]): AbilityEffect[] {
   return [...fromSetAside(codes, { kind: 'encounterDeck' }), shuffleEncounterDeck()];

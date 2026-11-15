@@ -28,6 +28,7 @@ import {
   shuffleSetAsideIntoEncounterDeck,
   takeCluesFrom,
   trait,
+  threatAreaOf,
   whenRevealed,
   zoneKey,
   type Command,
@@ -240,6 +241,47 @@ describe('card effects that take set-aside copies', () => {
     const after = drawOmen(newGame().withCard(instanceId('only_lurker'), lurkerCard, setAside));
 
     expect(after.order[zoneKey({ kind: 'victoryDisplay' })]).toEqual(['only_lurker']);
+  });
+});
+
+describe('a set-aside copy for each investigator', () => {
+  /** "Revelation – Each investigator puts a set-aside copy of Mark into their threat area." */
+  const omenCard = blankTreachery('omen', {
+    abilities: [
+      whenRevealed(
+        ...fromSetAside([cardCode('mark')], {
+          kind: 'threatArea',
+          investigatorId: { ref: 'eachInvestigator' },
+        }),
+      ),
+    ],
+  });
+  const markCard = blankTreachery('mark');
+  const bob = investigatorId('bob');
+
+  it.each([
+    { name: 'two copies', copies: ['first_mark', 'second_mark'], bobs: ['second_mark'] },
+    { name: 'one copy', copies: ['only_mark'], bobs: [] },
+  ])('gives alice the first and bob the next with $name set aside', ({ copies, bobs }) => {
+    const table = copies.reduce(
+      (game, copy) => game.withCard(instanceId(copy), markCard, setAside),
+      newGame()
+        .withLocation(hall, blankLocation('hall'), { revealed: true })
+        .withInvestigator(alice, { locationId: hall })
+        .withInvestigator(bob, { locationId: hall })
+        .withCard(instanceId('omen'), omenCard, encounterDeck),
+    );
+    const { context, state } = table.start();
+
+    const after = stateAfter(
+      context,
+      state,
+      { type: 'DrawEncounter', investigatorId: alice },
+      resolveRevelation('omen'),
+    );
+
+    expect(after.order[zoneKey(threatAreaOf(alice))]).toEqual([copies[0]]);
+    expect(after.order[zoneKey(threatAreaOf(bob))] ?? []).toEqual(bobs);
   });
 });
 
