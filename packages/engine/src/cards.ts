@@ -4,7 +4,7 @@ import type { CardAction } from './card_actions';
 import type { Modifier } from './modifiers';
 import type { CardRestriction } from './restrictions';
 import type { Brand, CardCode, CardImagePath, EncounterSetCode } from './ids';
-import type { Keyword } from './keywords';
+import type { Keyword, KeywordGrant } from './keywords';
 import type { ScenarioDefinition } from './scenario';
 import type { SkillValues } from './state';
 import { CommandRejected } from './rejection';
@@ -141,6 +141,8 @@ export interface CardStats {
   quantity?: number;
   /** Keywords parsed from the card text at load time; none when absent. */
   keywords?: readonly Keyword[];
+  /** Keywords this card gives other cards while it is in play (Hiding Spot); see `cardHasKeyword`. */
+  keywordGrants?: readonly KeywordGrant[];
   /** "Limit 1 per location / investigator" (`CopyLimit`), entered with the card data. */
   limit?: CopyLimit;
   /**

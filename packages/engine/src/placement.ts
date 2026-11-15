@@ -2,7 +2,9 @@ import { assertNever } from '@arkham/util';
 import { cardStats, type CopyLimit, type EngineContext } from './cards';
 import type { DiscardCard, MoveCard } from './commands';
 import type { CardMoved, Event, TokensChanged } from './events';
+import { readyEnemyEngagements } from './engagement';
 import { requireCard } from './lookup';
+import { replay } from './reducer';
 import { isPlayerCard } from './player_cards';
 import { CommandRejected } from './rejection';
 import type { InstanceId } from './ids';
@@ -140,9 +142,20 @@ export function discardEncounterCard(
   return [...attachments, ...clearTokensEvents(card), moveCardEvent(card, to, 0)];
 }
 
-/** `DiscardCard`: discards the card the way a resolved encounter card is (`discardEncounterCard`). */
+/**
+ * `DiscardCard`: discards the card the way a resolved encounter card is (`discardEncounterCard`).
+ * A card that gave enemies a keyword (Hiding Spot's aloof) takes it along, so a ready enemy left
+ * unengaged next to an investigator engages them (RR "Enemy Engagement").
+ */
 export function handleDiscardCard(ctx: EngineContext, state: GameState, cmd: DiscardCard): Event[] {
-  return discardEncounterCard(ctx, state, requireCard(state.cards, cmd.cardId).id);
+  const discarded = discardEncounterCard(ctx, state, requireCard(state.cards, cmd.cardId).id);
+  const grantedKeywords = discarded.some(
+    (event) =>
+      event.type === 'CardMoved' &&
+      cardStats(ctx.cards, requireCard(state.cards, event.cardId).code).keywordGrants !== undefined,
+  );
+  if (!grantedKeywords) return discarded;
+  return [...discarded, ...readyEnemyEngagements(ctx, replay(discarded, state))];
 }
 
 /**

@@ -1,4 +1,4 @@
-import { withoutEmptyLists } from '@arkham/util';
+import { includesAny, withoutEmptyLists } from '@arkham/util';
 import { cardStats, type EngineContext, type Trait } from './cards';
 import { cardsInPlay } from './doom';
 import type { InvestigatorId } from './ids';
@@ -68,6 +68,27 @@ export interface EnemyLocationRestriction {
   exceptTraits?: readonly Trait[];
 }
 
+/**
+ * What a constant "cannot" ability forbids an enemy (`EnemyCardRestriction.cannot`):
+ * - `ready`: it stays exhausted ("it cannot ready", Handcuffs).
+ * - `placeDoom`: no doom is placed on it ("doom cannot be placed on it", Handcuffs).
+ */
+export type EnemyRestriction = (typeof ENEMY_RESTRICTIONS)[number];
+
+/** Every `EnemyRestriction`. */
+export const ENEMY_RESTRICTIONS = ['ready', 'placeDoom'] as const;
+
+/**
+ * A "cannot" about an enemy: `{ cannot: 'ready', of: 'host', exceptTraits: [trait('Elite')] }` is
+ * Handcuffs ("If the attached enemy is non-Elite, it cannot ready"). An enemy with one of
+ * `exceptTraits` is not held. Read by `isEnemyRestricted`.
+ */
+export interface EnemyCardRestriction {
+  cannot: EnemyRestriction;
+  of: Extract<CardScope, 'self' | 'host'>;
+  exceptTraits?: readonly Trait[];
+}
+
 /** A "cannot" about a location: `{ cannot: 'investigate', of: 'host' }` is Locked Door. */
 export interface LocationCardRestriction {
   cannot: LocationRestriction;
@@ -107,11 +128,14 @@ export type InvestigatorCardRestriction =
  * A constant "cannot" ability (`CardStats.restrictions`), as card data. Like a `Modifier` it
  * holds while its card is in play, and a location's restriction only once it is revealed,
  * unless it is printed on the unrevealed side (`unrevealed`, the Parlor's barrier), which holds
- * until then. `isRestricted`, `isRestrictedFor` and `isClosedToEnemy` are the only places that
- * read them, so the handlers and the views agree.
+ * until then. `isRestricted`, `isRestrictedFor`, `isClosedToEnemy` and `isEnemyRestricted` are
+ * the only places that read them, so the handlers and the views agree.
  */
 export type CardRestriction =
-  LocationCardRestriction | EnemyLocationRestriction | InvestigatorCardRestriction;
+  | LocationCardRestriction
+  | EnemyLocationRestriction
+  | EnemyCardRestriction
+  | InvestigatorCardRestriction;
 
 /**
  * Whether a card in play forbids `cannot` at `location` (Rules Reference, "Cannot": a "cannot"
@@ -149,9 +173,32 @@ export function isClosedToEnemy(
     activeRestrictions(ctx, source).some(
       (restriction) =>
         restriction.cannot === 'enemiesMoveInto' &&
-        !(restriction.exceptTraits ?? []).some((trait) => traits.includes(trait)) &&
+        !includesAny(traits, restriction.exceptTraits) &&
         namesCard(ctx, state, source, restriction.of, location),
     ),
+  );
+}
+
+/**
+ * Whether a card in play forbids `enemy` to do `cannot` (`EnemyCardRestriction`): a handcuffed
+ * enemy does not ready in the upkeep phase or by a card effect, and no doom is placed on it.
+ */
+export function isEnemyRestricted(
+  ctx: EngineContext,
+  state: GameState,
+  enemy: CardInstance,
+  cannot: EnemyRestriction,
+): boolean {
+  const { traits } = cardStats(ctx.cards, enemy.code);
+  return cardsInPlay(state).some((source) =>
+    activeRestrictions(ctx, source)
+      .filter(isEnemyCardRestriction)
+      .some(
+        (restriction) =>
+          restriction.cannot === cannot &&
+          !includesAny(traits, restriction.exceptTraits) &&
+          namesCard(ctx, state, source, restriction.of, enemy),
+      ),
   );
 }
 
@@ -214,3 +261,7 @@ function namesEveryPlayedCard(cards: PlayedCardFilter | undefined): boolean {
 }
 
 const PLAYED_CARD_TYPES: readonly PlayedCardType[] = ['asset', 'event'];
+
+function isEnemyCardRestriction(restriction: CardRestriction): restriction is EnemyCardRestriction {
+  return ENEMY_RESTRICTIONS.some((cannot) => cannot === restriction.cannot);
+}

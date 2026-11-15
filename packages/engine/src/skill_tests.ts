@@ -1,7 +1,7 @@
 import { assertNever } from '@arkham/util';
 import { takeDamage } from './abilities';
 import { effectiveValue, modifiedValue, type CardValue } from './modifiers';
-import type { CardStats, EngineContext } from './cards';
+import type { EngineContext } from './cards';
 import type { Command, EndSkillTest, Evade, Fight, Investigate, TestSkill } from './commands';
 import {
   answerOutcome,
@@ -14,7 +14,7 @@ import type { DecisionRequested, SkillTestEnded } from './events';
 import { enemyOf, isEngagedWith, isEnemyOnTable, locationOf } from './enemies';
 import { activeInvestigator, findInvestigator } from './investigators';
 import { decisionId, type InstanceId } from './ids';
-import { hasKeyword } from './keywords';
+import { cardHasKeyword } from './card_keywords';
 import { requireCard } from './lookup';
 import { CommandRejected } from './rejection';
 import { isRestricted, isRestrictedFor } from './restrictions';
@@ -92,7 +92,7 @@ export function handleInvestigate(
  */
 export function handleFight(ctx: EngineContext, state: GameState, cmd: Fight): DecisionRequested[] {
   const investigator = activeInvestigator(state, cmd.investigatorId);
-  const { enemy, stats } = enemyOf(ctx, state, cmd.enemyId);
+  const { enemy } = enemyOf(ctx, state, cmd.enemyId);
   if (!isEnemyOnTable(enemy))
     throw new CommandRejected({ code: 'enemyNotInPlay', cardId: enemy.id });
   const enemyLocation = locationOf(state, enemy);
@@ -102,7 +102,7 @@ export function handleFight(ctx: EngineContext, state: GameState, cmd: Fight): D
       investigatorId: investigator.id,
       locationId: enemyLocation,
     });
-  if (isUnengagedAloof(enemy, stats))
+  if (isUnengagedAloof(ctx, state, enemy))
     throw new CommandRejected({ code: 'aloofNotEngaged', cardId: enemy.id });
   const damage = cmd.damage ?? 1;
   if (!Number.isInteger(damage) || damage <= 0)
@@ -125,9 +125,11 @@ export function handleFight(ctx: EngineContext, state: GameState, cmd: Fight): D
  * once it is. A massive enemy counts as engaged with everyone at its location,
  * so it is never unengaged even though it is not in the `engaged` zone.
  */
-function isUnengagedAloof(enemy: CardInstance, stats: CardStats): boolean {
+function isUnengagedAloof(ctx: EngineContext, state: GameState, enemy: CardInstance): boolean {
   return (
-    hasKeyword(stats, 'aloof') && enemy.zone.kind !== 'engaged' && !hasKeyword(stats, 'massive')
+    cardHasKeyword(ctx, state, enemy, 'aloof') &&
+    enemy.zone.kind !== 'engaged' &&
+    !cardHasKeyword(ctx, state, enemy, 'massive')
   );
 }
 
@@ -159,11 +161,11 @@ function failedFightCommands(
  */
 export function handleEvade(ctx: EngineContext, state: GameState, cmd: Evade): DecisionRequested[] {
   const investigator = activeInvestigator(state, cmd.investigatorId);
-  const { enemy, stats } = enemyOf(ctx, state, cmd.enemyId);
+  const { enemy } = enemyOf(ctx, state, cmd.enemyId);
   const massiveHere =
     enemy.zone.kind === 'atLocation' &&
     enemy.zone.locationId === investigator.locationId &&
-    hasKeyword(stats, 'massive');
+    cardHasKeyword(ctx, state, enemy, 'massive');
   if (!isEngagedWith(enemy, investigator) && !massiveHere)
     throw new CommandRejected({ code: 'notEngaged', cardId: enemy.id });
   return skillTest(ctx, state, {

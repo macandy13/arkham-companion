@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   drawWithoutReplacement,
   duplicates,
+  includesAny,
   firstDifference,
   matchingFirst,
   range,
@@ -202,4 +203,15 @@ describe('drawWithoutReplacement', () => {
       expect(drawWithoutReplacement(['a', 'b', 'c', 'd'], count, picker)).toEqual({ drawn, left });
     },
   );
+});
+
+describe('includesAny', () => {
+  it.each([
+    { name: 'one shared item', wanted: ['Elite', 'Ghoul'], holds: true },
+    { name: 'no shared item', wanted: ['Cultist'], holds: false },
+    { name: 'nothing wanted', wanted: [], holds: false },
+    { name: 'wanted absent', wanted: undefined, holds: false },
+  ])('finds $name', ({ wanted, holds }) => {
+    expect(includesAny(['Elite', 'Monster'], wanted)).toBe(holds);
+  });
 });

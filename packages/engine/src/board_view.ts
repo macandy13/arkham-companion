@@ -97,6 +97,7 @@ import {
 } from './skill_modifiers';
 import { skillTestOdds, type SkillTestOdds } from './skill_test_odds';
 import { victoryPoints } from './victory';
+import { cardKeywords } from './card_keywords';
 import type {
   AmountRange,
   CardInstance,
@@ -1024,7 +1025,7 @@ export class BoardView {
   /**
    * What the card of the enemy with id `enemy` prints, for its details: fight and evade as they
    * are now (constant abilities included, `effectiveValue`), the damage and horror of its attack,
-   * its traits, keywords and victory points, and its picture. Kept apart from `EnemyView`, which every board read lists, since only the details
+   * its traits, keywords (gained ones included, `cardKeywords`) and victory points, and its picture. Kept apart from `EnemyView`, which every board read lists, since only the details
    * window needs them.
    */
   enemyStats(enemy: InstanceId): EnemyStatsView {
@@ -1038,7 +1039,7 @@ export class BoardView {
       evade: effectiveValue(this.ctx, this.state, card, 'evade'),
       attack: { damage, horror },
       traits: stats.traits,
-      keywords: stats.keywords ?? [],
+      keywords: cardKeywords(this.ctx, this.state, card),
       ...(victory === undefined ? {} : { victory }),
     };
   }

@@ -59,7 +59,8 @@ import {
   theOnlyCopy,
   type CardFilter,
 } from './lookup';
-import { hasKeyword } from './keywords';
+import { cardHasKeyword } from './card_keywords';
+import type { KeywordName } from './keywords';
 import type { KeywordAttackKind } from './forced_attacks';
 import type { AddMapStep } from './setup';
 import type {
@@ -776,7 +777,7 @@ export function abilitySteps(
   const card = state.cards[opened.cardId];
   if (!card) return [];
   const stats = cardStats(ctx.cards, card.code);
-  return [...(stats.abilities ?? []), ...keywordAbilities(stats)]
+  return [...(stats.abilities ?? []), ...keywordAbilities(ctx, state, card)]
     .filter((ability) => shallowEqual<TimingWindow>(ability.window, opened.window))
     .filter(
       (ability) =>
@@ -814,16 +815,15 @@ function openedFor(state: GameState, ability: Ability, opened: OpenedWindow): Op
  * attack (`attacked`); its own retreat then finds it exhausted and does nothing, unless the players
  * cancelled the attack.
  */
-function keywordAbilities(stats: CardStats): Ability[] {
+function keywordAbilities(ctx: EngineContext, state: GameState, card: CardInstance): Ability[] {
+  const has = (name: KeywordName) => cardHasKeyword(ctx, state, card, name);
   const retreat = retreatEnemy(self());
   return [
-    ...(hasKeyword(stats, 'retaliate')
+    ...(has('retaliate')
       ? [afterTestEnds('fight', 'fail', enemyAttacks(self(), you(), 'retaliate'))]
       : []),
-    ...(hasKeyword(stats, 'alert')
-      ? [afterTestEnds('evade', 'fail', enemyAttacks(self(), you(), 'alert'))]
-      : []),
-    ...(hasKeyword(stats, 'elusive')
+    ...(has('alert') ? [afterTestEnds('evade', 'fail', enemyAttacks(self(), you(), 'alert'))] : []),
+    ...(has('elusive')
       ? [
           afterAttacking(retreat),
           afterTestEnds('fight', 'pass', retreat),
