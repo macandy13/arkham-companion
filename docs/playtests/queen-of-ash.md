@@ -77,7 +77,7 @@ These are done by hand at the table; the app does not do them.
 - The additional clue costs to enter Underground Cistern and Sluice Control.
 - Queen's Knight's damage to Elokoss, Herald of Flame's healing after it attacks, and the Servant of Flame's codex entry as it is defeated.
 - The Zealot's doom as it enters play (setup places it) and the Dark Magician's as the round ends.
-- The revelations of Ashen Rebirth, Blasphemous Invocation, Unnatural Decay, Dissonance and Torment, and Putrid Vapors' asset discard.
+- The revelations of Ashen Rebirth and Blasphemous Invocation, the discards of the card type Dissonance's and Torment's drawer chooses, and Putrid Vapors' asset discard.
 - Languor's limit of 1 per investigator, its discard as its holder's turn begins and its two-action discard.
 - The cultist's "reveal another token" against a Cultist enemy, the tablet's automatic failure at a Ritual Site on Hard and Expert, and the elder thing's Fire! draw.
 - Adding both Collectors to the player card pool.

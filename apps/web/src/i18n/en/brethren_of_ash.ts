@@ -48,6 +48,25 @@ export const brethrenOfAshTexts = {
       },
     },
     queenOfAsh: {
+      unnaturalDecay: {
+        prompt: '{{card}}: you must either',
+        doom: 'Place 1 doom on an asset you control',
+        damage: 'Take 2 damage',
+      },
+      dissonance: {
+        prompt:
+          '{{card}}: choose a card type, then discard all non-weakness cards of it from your hand',
+        asset: 'Assets',
+        event: 'Events',
+        skill: 'Skills',
+      },
+      torment: {
+        prompt:
+          '{{card}}: name a card type; each investigator discards 1 card of it from their hand',
+        asset: 'Asset',
+        event: 'Event',
+        skill: 'Skill',
+      },
       smugglersCache: {
         prompt: '{{card}}: you may gain 1 resource',
         gain: 'Gain 1 resource',
