@@ -1,4 +1,5 @@
 import type { EngineContext } from './cards';
+import { handleUseReaction } from './reactions';
 import type {
   ActionCommand,
   AdvanceAct,
@@ -257,6 +258,7 @@ const COMMAND_SPECS: CommandSpecs = {
     continueWith: placeDrawnCard,
   },
   GainSurge: { handle: (_ctx, state, command) => handleGainSurge(state, command) },
+  UseReaction: { handle: handleUseReaction },
   ResolveRevelation: { handle: (_ctx, state, command) => handleResolveRevelation(state, command) },
   ShuffleEncounterDiscard: { handle: (_ctx, state) => handleShuffleEncounterDiscard(state) },
   ShuffleEncounterDeck: { handle: (_ctx, state) => handleShuffleEncounterDeck(state) },

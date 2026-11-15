@@ -234,6 +234,8 @@ export {
   forEachInvestigator,
   searchAndDraw,
   searchAndDrawCopies,
+  reaction,
+  REACTION_ID_PREFIX,
   shuffleEncounterDeck,
   disengageFromEachEnemy,
   engageReadyEnemies,

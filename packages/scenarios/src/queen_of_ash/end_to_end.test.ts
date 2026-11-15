@@ -198,7 +198,7 @@ describe('Queen of Ash end to end: Roland and Daisy, seed 1, after Spreading Fla
     table.moveTo(daisy, smugglersCache);
     const resources = table.board.investigator(daisy).resources;
     table.endTurn(daisy);
-    table.answerOnly('scenario.queenOfAsh.smugglersCache.gain');
+    table.answerOnly('use reaction');
     expect(table.board.investigator(daisy).resources).toBe(resources + 1);
     table.startTurn(roland);
     table.play({ type: 'AdjustInvestigator', investigatorId: roland, stat: 'clues', delta: -1 });

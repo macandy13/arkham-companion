@@ -91,6 +91,13 @@ export function apply(state: GameState, event: Event): GameState {
         actionUses: [...(card.actionUses ?? []), use],
       }));
     }
+    case 'ReactionUsed': {
+      const use = { ability: event.ability, ...currentUse(state, event.investigatorId) };
+      return updateCard(state, event.cardId, (card) => ({
+        ...card,
+        reactionUses: [...(card.reactionUses ?? []), use],
+      }));
+    }
     case 'TokensChanged':
       return applyTokensChanged(state, event);
     case 'ChaosBagChanged':

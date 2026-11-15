@@ -41,6 +41,7 @@ import {
   placeDoomOnYourAsset,
   putIntoThreatArea,
   putLocationIntoPlay,
+  reaction,
   resignAction,
   resolutionId,
   revealLocation,
@@ -59,8 +60,8 @@ import {
   whenEnemyDefeated,
   whenRevealed,
   whenTokensOnSelf,
-  youMustEither,
   yourLocation,
+  youMustEither,
 } from '@arkham/engine';
 import { act, agenda, enemy, location, picturesOf, treachery } from '../card_builders';
 import {
@@ -138,10 +139,6 @@ export const SEWERS_CELLS = {
 
 /** Id of Sluice Control's question to the investigator who opens the valve: agility or combat? */
 export const SLUICE_CONTROL_DECISION = decisionId('queenOfAsh.sluiceControl');
-
-/** Id of Smuggler's Cache's question as a turn ends there: gain 1 resource, or decline the reaction? */
-export const SMUGGLERS_CACHE_DECISION = decisionId('queenOfAsh.smugglersCache');
-const smugglersCache = 'scenario.queenOfAsh.smugglersCache';
 
 /**
  * Id of the question a failed Unnatural Decay asks its drawer: place 1 doom on an asset they
@@ -516,16 +513,7 @@ export const queenOfAshCardDefs: readonly CardStats[] = [
     connectsTo: ['hourglass', 'circle'],
     shroud: 3,
     cluesPerInvestigator: 0,
-    // A reaction, which its investigator may decline. It rides the forced turn-end window, so it is
-    // not held back until forced turn-end effects resolve; no card in this scenario meets it there.
-    abilities: [
-      atEndOfTurn(
-        youMustEither(SMUGGLERS_CACHE_DECISION, `${smugglersCache}.prompt`, [
-          { id: 'gain', label: `${smugglersCache}.gain`, effects: [gainResources(1)] },
-          { id: 'decline', label: `${smugglersCache}.decline`, effects: [] },
-        ]),
-      ),
-    ],
+    abilities: [reaction(atEndOfTurn(gainResources(1)))],
   }),
   location({
     ...sewerTunnels,

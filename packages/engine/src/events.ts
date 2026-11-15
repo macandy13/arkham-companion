@@ -67,6 +67,7 @@ export type Event =
   | SurgeGained
   | RevelationResolved
   | CardActionUsed
+  | ReactionUsed
   | CommandDeferred
   | AbilityEffectSkipped
   | CluesDiscovered
@@ -423,6 +424,18 @@ export interface CardActionUsed {
   type: 'CardActionUsed';
   cardId: InstanceId;
   action: number;
+  investigatorId: InvestigatorId;
+}
+
+/**
+ * The investigator triggered reaction number `ability` (its index among the card's abilities) of
+ * the card `cardId`; the reducer records the use (`CardInstance.reactionUses`) for the reaction's
+ * limit. Produced by `UseReaction`.
+ */
+export interface ReactionUsed {
+  type: 'ReactionUsed';
+  cardId: InstanceId;
+  ability: number;
   investigatorId: InvestigatorId;
 }
 
