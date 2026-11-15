@@ -3,6 +3,8 @@ import { createRoot } from 'react-dom/client';
 import { App } from './App';
 import { loadCatalog } from './catalog/loadCatalog';
 import { sharedCatalog } from './catalog/useCatalog';
+import { catalogWeaknessCards } from './catalog/weaknessCards';
+import { findCampaign, findScenario } from './scenarios/scenarioCatalog';
 import { initI18n } from './i18n';
 import { applySettings } from './settings/applySettings';
 import { loadSettings } from './settings/settings';
@@ -14,13 +16,20 @@ const root = document.getElementById('root');
 if (!root) throw new Error('Missing #root element');
 
 const database = new IndexedDbStore();
-const store = createAppStore(database);
 
 const settings = loadSettings();
 
 /** Read on every use: the card language can change in Settings while the app runs. */
 const cardLanguage = () => loadSettings().cardLanguage;
 const catalog = sharedCatalog((language) => loadCatalog(database, language), cardLanguage);
+/**
+ * The card data a game adds from the catalog, the cached copy first, as at start-up below, so
+ * opening a game never waits for the network.
+ */
+const cachedCatalog = async () => (await database.getCatalog(cardLanguage())) ?? catalog();
+const store = createAppStore(database, findScenario, findCampaign, async () =>
+  catalogWeaknessCards(await cachedCatalog()),
+);
 
 /**
  * The start-up waits for the saved games and for card data to be at hand: the cached catalog
@@ -30,7 +39,7 @@ const catalog = sharedCatalog((language) => loadCatalog(database, language), car
  */
 const startup: StartupTasks = {
   games: () => store.getState().refresh(),
-  cards: async () => (await database.getCatalog(cardLanguage())) ?? catalog(),
+  cards: cachedCatalog,
 };
 
 void initI18n(settings.uiLanguage).then(() => {

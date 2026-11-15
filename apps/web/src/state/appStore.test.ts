@@ -2,6 +2,7 @@ import 'fake-indexeddb/auto';
 import { describe, expect, it } from 'vitest';
 import {
   CampaignCommandRejected,
+  blankEnemy,
   campaignId,
   cardCode,
   cardStats,
@@ -175,6 +176,33 @@ describe('appStore', () => {
         expect(chosen).toBe('assist');
         expect(store.getState().current?.reliance).toBe('display');
         expect((await db.loadCampaign(campaignId))?.summary.reliance).toBe('display');
+      });
+    });
+
+    describe('with weaknesses from the catalog', () => {
+      /** A weakness enemy as the catalog adds it to every game's card data. */
+      const stalker = blankEnemy('stalker_weakness');
+
+      it('draws a weakness the scenario does not hold, and opens the game again with it', async () => {
+        const db = 'appstore-weakness-test';
+        const store = createAppStore(new IndexedDbStore(db), undefined, undefined, async () => [
+          stalker,
+        ]);
+        const id = await store.getState().startScenario(start);
+
+        await store.getState().actions.drawWeakness(investigatorId('alder'), stalker.code);
+        const reopened = createAppStore(new IndexedDbStore(db), undefined, undefined, async () => [
+          stalker,
+        ]);
+        await reopened.getState().openGame(id);
+
+        expect(
+          store.getState().current?.board?.enemy(instanceId('alder:weakness:1')),
+        ).toMatchObject({ name: 'stalker_weakness', engagedWith: 'alder' });
+        expect(reopened.getState().current).toMatchObject({
+          playable: true,
+          state: store.getState().current?.state,
+        });
       });
     });
 

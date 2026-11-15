@@ -230,6 +230,11 @@ export interface GameActions {
   /** Discards the card `card` in play, as its own Forced ability or another card says (`DiscardCard`). */
   discardCard(card: InstanceId): Promise<void>;
   /**
+   * `investigator` draws the weakness `card` from their deck (`DrawWeakness`), one of the
+   * catalog's that the game added to its card data; it resolves like an encounter card.
+   */
+  drawWeakness(investigator: InvestigatorId, card: CardCode): Promise<void>;
+  /**
    * `delta` more (or, negative, fewer) of `token` on `card` in play (a location, an enemy): one tap
    * on a location's stepper, or a token dragged from or to the token pool. Doom added is placed by
    * rule (`MoveTokens` from the pool), so effects that count placed doom see it; the rest are
@@ -429,6 +434,10 @@ export function gameActions(
     attachPlayerCard: (host, card) =>
       play((table) => table.play({ type: 'AttachPlayerCard', hostId: host, code: card })),
     discardCard: (card) => play((table) => table.play({ type: 'DiscardCard', cardId: card })),
+    drawWeakness: (investigator, card) =>
+      play((table) =>
+        table.play({ type: 'DrawWeakness', investigatorId: investigator, code: card }),
+      ),
     adjustTokens: (card, token, delta) =>
       play((table) =>
         table.play(
