@@ -1,9 +1,11 @@
 import { cardCode, trait, type AttachmentHost, type CardStats } from '@arkham/engine';
+import { picturesOf } from './card_builders';
 
 /*
  * The player cards the players can attach to an enemy or a location in the app
  * (`AttachPlayerCard`), entered by hand like the scenarios' cards: the stats
- * the engine reads and what the card does to its host, no card text.
+ * the engine reads, what the card does to its host and where its picture is, which the card zoom
+ * shows the players to read what it does; no card text.
  */
 
 /**
@@ -12,6 +14,7 @@ import { cardCode, trait, type AttachmentHost, type CardStats } from '@arkham/en
  */
 export const barricade: CardStats = {
   code: cardCode('01038'),
+  ...picturesOf('01038', 'front'),
   name: 'Barricade',
   typeCode: 'event',
   traits: [trait('Insight'), trait('Tactic')],
@@ -25,6 +28,7 @@ export const barricade: CardStats = {
  */
 export const handcuffs: CardStats = {
   code: cardCode('04265'),
+  ...picturesOf('04265', 'front'),
   name: 'Handcuffs',
   typeCode: 'asset',
   traits: [trait('Item'), trait('Police')],
@@ -41,6 +45,7 @@ export const handcuffs: CardStats = {
  */
 export const hidingSpot: CardStats = {
   code: cardCode('03038'),
+  ...picturesOf('03038', 'front'),
   name: 'Hiding Spot',
   typeCode: 'event',
   traits: [trait('Tactic'), trait('Trick')],

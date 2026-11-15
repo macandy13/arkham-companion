@@ -1204,7 +1204,7 @@ describe('MapBoard', () => {
       // The blank study prints no clue value; its 2 clues were put on it by hand.
       expect(texts('definition')).toEqual(['2', '2 / 0']);
       expect(
-        within(details('study'))
+        within(within(details('study')).getByRole('region', { name: 'Here' }))
           .getAllByRole('listitem')
           .map((item) => item.textContent),
       ).toEqual(['alder', 'ghoul, engaged with alder']);
@@ -1224,12 +1224,11 @@ describe('MapBoard', () => {
 
       expect(within(details('study')).getByRole('img', { name: 'The card of study' })).toBeTruthy();
       const attached = within(details('study')).getByRole('region', { name: 'Attached' });
-      const item = within(attached).getByRole('listitem');
       expect(
-        within(item)
+        within(attached)
           .getAllByRole('button')
           .map((button) => button.getAttribute('aria-label')),
-      ).toEqual(['Read obscuring_fog', 'Discard obscuring_fog']);
+      ).toEqual(['Read obscuring_fog', 'Discard obscuring_fog', 'Attach a card']);
     });
 
     it('opens an attached card to read, and Escape there leaves the study open', () => {

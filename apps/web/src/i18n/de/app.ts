@@ -579,7 +579,6 @@ export const appTexts = {
   },
   attached: {
     title: 'Angehängt',
-    discard: 'Ablegen',
     discardCard: '{{card}} ablegen',
     attach: 'Karte anhängen',
     attachTo: 'Karte an {{host}} anhängen',

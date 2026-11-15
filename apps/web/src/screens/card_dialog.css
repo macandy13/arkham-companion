@@ -225,9 +225,7 @@
 /*
  * The parts of a card's page under its values (who is at a location, the cards attached to a
  * location or an enemy), on those details and the phone's location mode (map.css), not on the
- * other card dialogs' pages (a skill test's rows): each a column
- * under its small title. An attached card's name and its Discard stand in one row, and Attach a
- * card under them keeps its own width.
+ * other card dialogs' pages (a skill test's rows): each a column under its small title.
  */
 #board :is(dialog[data-dialog='location'], dialog[data-dialog='enemy']) > article > section,
 #map [data-mode='location'] > section {
@@ -251,25 +249,77 @@
   padding-left: var(--space-3);
 }
 
-#board
-  :is(dialog[data-dialog='location'], dialog[data-dialog='enemy'])
-  > article
-  > section
-  > button,
-#map [data-mode='location'] > section > button {
-  align-self: flex-start;
-}
-
-#board
-  :is(dialog[data-dialog='location'], dialog[data-dialog='enemy'])
-  > article
-  > section
-  > ul
-  > li,
-#map [data-mode='location'] > section > ul > li {
+/*
+ * The attached cards in one row, each its name as a pill with a round × beside it, and a round +
+ * at the end that attaches another.
+ */
+:is(
+    #board :is(dialog[data-dialog='location'], dialog[data-dialog='enemy']) > article,
+    #map [data-mode='location']
+  )
+  > section[data-part='attached']
+  > ul {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: var(--space-2);
+  padding: 0;
+  list-style: none;
+}
+
+:is(
+    #board :is(dialog[data-dialog='location'], dialog[data-dialog='enemy']) > article,
+    #map [data-mode='location']
+  )
+  > section[data-part='attached']
+  > ul
+  > li {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 0;
+  border: 0;
+  background: none;
+}
+
+:is(
+    #board :is(dialog[data-dialog='location'], dialog[data-dialog='enemy']) > article,
+    #map [data-mode='location']
+  )
+  > section[data-part='attached']
+  button:not([data-icon]) {
+  padding-inline: var(--space-4);
+  border-radius: var(--radius-pill);
+}
+
+:is(
+    #board :is(dialog[data-dialog='location'], dialog[data-dialog='enemy']) > article,
+    #map [data-mode='location']
+  )
+  > section[data-part='attached']
+  button[data-icon] {
+  min-width: var(--button-compact);
+  min-height: var(--button-compact);
+  padding: 0;
+  border-radius: var(--radius-round);
+}
+
+:is(
+    #board :is(dialog[data-dialog='location'], dialog[data-dialog='enemy']) > article,
+    #map [data-mode='location']
+  )
+  > section[data-part='attached']
+  button[data-icon='close']::before {
+  mask-image: url('../investigators/icons/close.svg');
+}
+
+:is(
+    #board :is(dialog[data-dialog='location'], dialog[data-dialog='enemy']) > article,
+    #map [data-mode='location']
+  )
+  > section[data-part='attached']
+  button[data-icon='add']::before {
+  mask-image: url('./icons/add.svg');
 }
 
 /* The player cards to attach, one under the other. */

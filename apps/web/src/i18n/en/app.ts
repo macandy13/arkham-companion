@@ -569,7 +569,6 @@ export const appTexts = {
   },
   attached: {
     title: 'Attached',
-    discard: 'Discard',
     discardCard: 'Discard {{card}}',
     attach: 'Attach a card',
     attachTo: 'Attach a card to {{host}}',

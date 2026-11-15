@@ -6,11 +6,11 @@ import type { GameActions } from '../state/gameActions';
 import { CardZoom } from './CardZoom';
 
 /**
- * The cards attached to a location or an enemy (`host`) on its details' page: each
- * opening large to read (`CardZoom`) with Discard beside it, as a Forced ability or a card says
- * (`GameActions.discardCard`), and under them Attach a card, for a player card the players attached
- * at the table (`AttachCardDialog`), one of those that attach to a card of the host's type
- * (`attachableCards`). Nothing is tapped while a step is queued (`busy`).
+ * The cards attached to a location or an enemy (`host`) on its details' page, in one row: each
+ * card's name opens it large to read, its picture saying what it does (`CardZoom`), with a × that
+ * discards it, as a Forced ability or a card says (`GameActions.discardCard`), and a + at the end
+ * for a player card the players attached at the table (`AttachCardDialog`), one of those that
+ * attach to a card of the host's type (`attachableCards`). Nothing is tapped while a step is queued (`busy`).
  */
 export function AttachedCards({
   board,
@@ -32,42 +32,41 @@ export function AttachedCards({
   const attachable = type === 'enemy' || type === 'location' ? attachableCards(type) : [];
   if (cards.length === 0 && attachable.length === 0) return null;
   return (
-    <section aria-labelledby={titleId}>
+    <section aria-labelledby={titleId} data-part="attached">
       <h3 id={titleId}>{t('attached.title')}</h3>
-      {cards.length > 0 && (
-        <ul>
-          {cards.map((card) => (
-            <li key={card.id}>
-              <button
-                type="button"
-                aria-haspopup="dialog"
-                aria-label={t('cardZoom.open', { name: card.name })}
-                onClick={() => setZoomed(card)}
-              >
-                {card.name}
-              </button>
-              <button
-                type="button"
-                aria-label={t('attached.discardCard', { card: card.name })}
-                disabled={busy}
-                onClick={() => void actions.discardCard(card.id)}
-              >
-                {t('attached.discard')}
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
-      {attachable.length > 0 && (
-        <button
-          type="button"
-          aria-haspopup="dialog"
-          disabled={busy}
-          onClick={() => setAttaching(true)}
-        >
-          {t('attached.attach')}
-        </button>
-      )}
+      <ul>
+        {cards.map((card) => (
+          <li key={card.id}>
+            <button
+              type="button"
+              aria-haspopup="dialog"
+              aria-label={t('cardZoom.open', { name: card.name })}
+              onClick={() => setZoomed(card)}
+            >
+              {card.name}
+            </button>
+            <button
+              type="button"
+              data-icon="close"
+              aria-label={t('attached.discardCard', { card: card.name })}
+              disabled={busy}
+              onClick={() => void actions.discardCard(card.id)}
+            />
+          </li>
+        ))}
+        {attachable.length > 0 && (
+          <li>
+            <button
+              type="button"
+              data-icon="add"
+              aria-haspopup="dialog"
+              aria-label={t('attached.attach')}
+              disabled={busy}
+              onClick={() => setAttaching(true)}
+            />
+          </li>
+        )}
+      </ul>
       {zoomed && <CardZoom card={zoomed} onClose={() => setZoomed(undefined)} />}
       {attaching && (
         <AttachCardDialog
