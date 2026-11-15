@@ -16,16 +16,19 @@ import {
   execute,
   instanceId,
   investigatorId,
-  moveSelf,
+  move,
   newGame,
+  outOfGame,
   putIntoThreatArea,
   replay,
+  self,
   setAside,
   skillTest,
   takeDamage,
   threatAreaOf,
   trait,
   whenRevealed,
+  you,
   zoneKey,
   type Command,
   type Event,
@@ -1092,7 +1095,7 @@ describe('revelation before the drawn card is placed', () => {
     abilities: [whenRevealed(takeDamage(8))],
   });
   const vanishingTreachery = blankTreachery('vanishing_treachery', {
-    abilities: [whenRevealed(moveSelf({ kind: 'outOfGame' }))],
+    abilities: [whenRevealed(move(self(), outOfGame))],
   });
 
   /** What happened, in order: draws, damage, and where the drawn card went. */
@@ -1207,11 +1210,7 @@ describe('revelation before the drawn card is placed', () => {
 
   it('resolves a reference nested in a zone: the revelation puts the card in the drawer`s threat area', () => {
     const clingingTreachery = blankTreachery('clinging_treachery', {
-      abilities: [
-        whenRevealed(
-          moveSelf({ kind: 'threatArea', investigatorId: { ref: 'windowInvestigator' } }),
-        ),
-      ],
+      abilities: [whenRevealed(move(self(), threatAreaOf(you())))],
     });
     const { context, state } = aliceInHall
       .withCard(instanceId('clinging_card'), clingingTreachery, encounterDeck)

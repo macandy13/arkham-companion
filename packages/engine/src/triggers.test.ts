@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import {
   eachInZone,
+  encounterDeck,
   ifThereAre,
+  move,
+  outOfGame,
   resolutionId,
   atEndOfPhase,
   atEndOfEachTurn,
@@ -15,10 +18,11 @@ import {
   gainResources,
   lead,
   drawFromEncounterDiscard,
+  self,
+  setAsideCopy,
   shuffleEncounterDeck,
   readySelf,
   atEndOfTurn,
-  addToVictoryDisplay,
   advanceAct,
   afterAttacking,
   afterDiscoveringClues,
@@ -65,7 +69,6 @@ import {
   MAX_TRIGGERED_COMMANDS,
   moveEachInvestigatorTo,
   moveEnemyTowards,
-  moveSelf,
   newGame,
   setAside,
   shuffleEncounterDiscard,
@@ -80,8 +83,6 @@ import {
   placeDoomOnSelf,
   putLocationIntoPlay,
   putMapIntoPlay,
-  putSetAsideIntoPlay,
-  removeFromGame,
   revealLocation,
   skillTest,
   forEachPoint,
@@ -108,6 +109,7 @@ import {
   whenTokensOnSelf,
   whenRevealed,
   whenTurnBegins,
+  you,
   youMustEither,
   zoneKey,
   type AbilityEffect,
@@ -287,11 +289,7 @@ describe('trigger bus', () => {
 
     it('drops an effect whose nested reference names nobody', () => {
       const clingingCellar = blankLocation('clinging_cellar', {
-        abilities: [
-          whenRevealed(
-            moveSelf({ kind: 'threatArea', investigatorId: { ref: 'windowInvestigator' } }),
-          ),
-        ],
+        abilities: [whenRevealed(move(self(), threatAreaOf(you())))],
       });
       const { context, state: started } = newGame()
         .withLocation(cellar, clingingCellar)
@@ -916,7 +914,7 @@ describe('trigger bus', () => {
       const mortician = instanceId('mortician');
       /** "After this enemy is evaded: add it to the victory display" (Ruth Turner). */
       const morticianCard = blankEnemy('mortician', {
-        abilities: [afterEvaded(addToVictoryDisplay({ ref: 'self' }))],
+        abilities: [afterEvaded(move(self(), victoryDisplay))],
       });
       const { context, state } = newGame()
         .withLocation(hall, blankLocation('hall'), { revealed: true })
@@ -1010,7 +1008,7 @@ describe('trigger bus', () => {
       ({ end, deck }) => {
         /** "Revelation – Place Returning on the top / bottom of the encounter deck." */
         const returningCard = blankTreachery('returning', {
-          abilities: [whenRevealed(moveSelf({ kind: 'encounterDeck' }, end))],
+          abilities: [whenRevealed(move(self(), encounterDeck, end))],
         });
         const { context, state } = newGame()
           .withLocation(hall, blankLocation('hall'), { revealed: true })
@@ -1534,7 +1532,9 @@ describe('trigger bus', () => {
     it('puts a set-aside card into play at a location', () => {
       const lanternAct = blankAct('lantern_act', {
         abilities: [
-          whenAdvanced(putSetAsideIntoPlay(cardCode('lantern'), onlyCopy(cardCode('hall')))),
+          whenAdvanced(
+            move(setAsideCopy(cardCode('lantern')), atLocation(onlyCopy(cardCode('hall')))),
+          ),
         ],
       });
       const { context, state: started } = newGame()
@@ -1619,7 +1619,7 @@ describe('trigger bus', () => {
           ...putMapIntoPlay(atticStep),
           discardEachEnemyAt(onlyCopy(cardCode('hall'))),
           moveEachInvestigatorTo(onlyCopy(cardCode('attic'))),
-          removeFromGame(onlyCopy(cardCode('hall'))),
+          move(onlyCopy(cardCode('hall')), outOfGame),
         ),
       ],
     });

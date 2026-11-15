@@ -83,7 +83,16 @@ import type {
   TokenKind,
   WoundKind,
 } from './state';
-import type { ScenarioDeck, Zone } from './zone';
+import {
+  attachedTo,
+  encounterDeck,
+  encounterDiscard,
+  playAreaOf,
+  setAside,
+  threatAreaOf,
+  type ScenarioDeck,
+  type Zone,
+} from './zone';
 
 /**
  * The moment a card ability fires (architecture "Triggers and card
@@ -1633,7 +1642,7 @@ export function afterAttacking(...effects: AbilityEffect[]): Ability {
   return { window: { kind: 'attacked' }, effects };
 }
 
-/** A forced ability "after [this enemy] is evaded", written `afterEvaded(addToVictoryDisplay({ ref: 'self' }))`. */
+/** A forced ability "after [this enemy] is evaded", written `afterEvaded(move(self(), victoryDisplay))`. */
 export function afterEvaded(...effects: AbilityEffect[]): Ability {
   return { window: { kind: 'evaded' }, effects };
 }
@@ -1670,7 +1679,7 @@ export function whenAnInvestigatorEnters(location: CardCode, ...effects: Ability
  * An objective of an agenda or act on the victory display: `effects` resolve once a card entering
  * it (or beneath the act) brings the cards `cards` names to `atLeast`. "If there are 6 unique
  * [[Cultist]] enemies in the victory display, advance" is
- * `whenVictoryDisplayHolds(eachInZone({ kind: 'victoryDisplay' }, { trait: trait('Cultist'), unique: true }), 6, advanceAct())`.
+ * `whenVictoryDisplayHolds(eachInZone(victoryDisplay, { trait: trait('Cultist'), unique: true }), 6, advanceAct())`.
  */
 export function whenVictoryDisplayHolds(
   cards: Extract<RelativeCard, { ref: 'eachInZone' }>,
@@ -1888,7 +1897,7 @@ export function skillTestOfEither(
  * the threat area of the investigator the window names (the drawer).
  */
 export function putIntoThreatArea(): AbilityEffect {
-  return moveSelf({ kind: 'threatArea', investigatorId: { ref: 'windowInvestigator' } });
+  return move(self(), threatAreaOf(you()));
 }
 
 /**
@@ -1897,7 +1906,7 @@ export function putIntoThreatArea(): AbilityEffect {
  * actions (`offersActionsTo`). Player cards aren't modelled, so this is for story assets.
  */
 export function takeControl(): AbilityEffect {
-  return moveSelf({ kind: 'playArea', investigatorId: { ref: 'windowInvestigator' } });
+  return move(self(), playAreaOf(you()));
 }
 
 /**
@@ -1905,7 +1914,7 @@ export function takeControl(): AbilityEffect {
  * `location`, written `attachTo(locationWithMost('clue'))` (Locked Door).
  */
 export function attachTo(location: RelativeCard): AbilityEffect {
-  return moveSelf({ kind: 'attachedTo', hostId: location });
+  return move(self(), attachedTo(location));
 }
 
 /**
@@ -1949,7 +1958,7 @@ export function ifNoCandidate(ref: PickedRef, ability: Ability): Ability {
  * location (`{ ref: 'windowLocation' }`).
  */
 export function attachToLocation(): AbilityEffect {
-  return moveSelf({ kind: 'attachedTo', hostId: { ref: 'windowLocation' } });
+  return move(self(), attachedTo(yourLocation()));
 }
 
 /** "Discard it": the card with the ability, onto the top of the encounter discard (`discard`). */
@@ -1963,7 +1972,7 @@ export function discardSelf(): AbilityEffect {
  * goes back to its owner instead (`handleMoveCard`).
  */
 export function discard(card: RelativeCard): AbilityEffect {
-  return { type: 'MoveCard', cardId: card, to: { kind: 'encounterDiscard' }, index: 0 };
+  return move(card, encounterDiscard, 'top');
 }
 
 /**
@@ -2442,7 +2451,7 @@ export function nearestEnemy(
 
 /**
  * Each card in `zone` (or in each of a list of zones) that `filter` matches (`eachInZone`), which
- * repeats the effect for each: `eachInZone({ kind: 'setAside' }, { trait, typeCode: 'enemy' })` for
+ * repeats the effect for each: `eachInZone(setAside, { trait, typeCode: 'enemy' })` for
  * "each set-aside [[trait]] enemy", `eachInZone(encounterDeck, { top: 3 })` for "the top 3 cards
  * of the encounter deck".
  */
@@ -2700,24 +2709,6 @@ export function discardEachEnemy(filter: EachEnemyFilter = {}): AbilityEffect {
   return discard(eachEnemy(filter));
 }
 
-/**
- * "Set the Servant of Flame aside, out of play": it leaves play without its tokens and
- * attachments (`MoveCard`), so it comes back healed.
- */
-export function setAsideCard(card: RelativeCard): AbilityEffect {
-  return { type: 'MoveCard', cardId: card, to: { kind: 'setAside' } };
-}
-
-/** "Remove the Study from the game". */
-export function removeFromGame(card: RelativeCard): AbilityEffect {
-  return { type: 'MoveCard', cardId: card, to: { kind: 'outOfGame' } };
-}
-
-/** "Add Peter Warren to the victory display". */
-export function addToVictoryDisplay(card: RelativeCard): AbilityEffect {
-  return { type: 'MoveCard', cardId: card, to: { kind: 'victoryDisplay' } };
-}
-
 /** "Advance": the current act advances without spending clues, as an objective does. */
 export function advanceAct(): AbilityEffect {
   return { type: 'AdvanceAct' };
@@ -2760,7 +2751,7 @@ export function nextAgendaBecomesActAndAgenda(): AbilityEffect {
  * (`placeDrawnCard`), or at the next draw, the empty deck takes the discard back.
  */
 export function discardEncounterTop(count: number): AbilityEffect {
-  return discard(eachInZone({ kind: 'encounterDeck' }, { top: count }));
+  return discard(eachInZone(encounterDeck, { top: count }));
 }
 
 /** "Shuffle the encounter discard pile into the encounter deck". */
@@ -2901,7 +2892,7 @@ export function searchAndDrawCopies(
   return {
     type: 'DrawEncounter',
     investigatorId: who,
-    cardId: eachInZone([{ kind: 'encounterDeck' }, { kind: 'encounterDiscard' }], {
+    cardId: eachInZone([encounterDeck, encounterDiscard], {
       code,
       first: copies,
     }),
@@ -2929,7 +2920,7 @@ export function searchAndDraw(match: EncounterMatch): AbilityEffect {
  * deck is shuffled even when no copy was left to add (`docs/rules/encounter-draws.md`).
  */
 export function shuffleSetAsideIntoEncounterDeck(codes: readonly CardCode[]): AbilityEffect[] {
-  return [...fromSetAside(codes, { kind: 'encounterDeck' }), shuffleEncounterDeck()];
+  return [...fromSetAside(codes, encounterDeck), shuffleEncounterDeck()];
 }
 
 /**
@@ -2937,7 +2928,7 @@ export function shuffleSetAsideIntoEncounterDeck(codes: readonly CardCode[]): Ab
  * then shuffled. A drawn card moved there while it resolves is not placed afterwards.
  */
 export function shuffleSelfIntoEncounterDeck(): AbilityEffect[] {
-  return [moveSelf({ kind: 'encounterDeck' }), shuffleEncounterDeck()];
+  return [move(self(), encounterDeck), shuffleEncounterDeck()];
 }
 
 /** "Shuffle the encounter deck." */
@@ -3074,7 +3065,7 @@ export function putLocationIntoPlay(
 export function spawnEachSetAsideAt(trait: Trait, location: RelativeCard): AbilityEffect {
   return {
     type: 'SpawnEnemy',
-    enemyId: eachInZone({ kind: 'setAside' }, { trait, typeCode: 'enemy' }),
+    enemyId: eachInZone(setAside, { trait, typeCode: 'enemy' }),
     at: location,
   };
 }
@@ -3082,7 +3073,7 @@ export function spawnEachSetAsideAt(trait: Trait, location: RelativeCard): Abili
 /**
  * "Attach 1 set-aside copy of Fire! to Your Friend's Room": one set-aside copy of each of `codes`
  * (a code listed twice takes two) moves to `to`, written
- * `...fromSetAside([codes.fire], { kind: 'attachedTo', hostId: onlyCopy(codes.yourFriendsRoom) })`.
+ * `...fromSetAside([codes.fire], attachedTo(onlyCopy(codes.yourFriendsRoom)))`.
  * One `MoveCard` per code, each resolving after the one before, so each takes a copy still set
  * aside; a code with none left moves nothing.
  */
@@ -3096,23 +3087,6 @@ export function setAsideCopy(code: CardCode): Extract<RelativeCard, { ref: 'setA
 }
 
 /**
- * "Place each other set-aside copy of Fire! in the encounter discard pile": every copy of `code`
- * still set aside moves to `to`, none when no copy is left.
- */
-export function eachSetAsideCopyTo(code: CardCode, to: Templated<Zone>): AbilityEffect {
-  return { type: 'MoveCard', cardId: eachInZone({ kind: 'setAside' }, { code }), to };
-}
-
-/** "Put the set-aside Lita Chantler into play at the Parlor". */
-export function putSetAsideIntoPlay(code: CardCode, location: RelativeCard): AbilityEffect {
-  return {
-    type: 'MoveCard',
-    cardId: setAsideCopy(code),
-    to: { kind: 'atLocation', locationId: location },
-  };
-}
-
-/**
  * "Spawn the Ghoul Priest in the Hallway": the enemy spawns at the location
  * named, engaging like any spawn (`SpawnEnemy`).
  */
@@ -3121,11 +3095,18 @@ export function spawnEnemyAt(enemy: RelativeCard, location: RelativeCard): Abili
 }
 
 /**
- * Moves the card with the ability ("Remove it from the game", "Put it into play in your threat
- * area"), to the bottom of `to` or, with `'top'`, onto its top: "Place it on the bottom of the
- * Tekeli-li deck" is `moveSelf({ kind: 'scenarioDeck', deck }, 'bottom')`, "on top of the encounter deck"
- * `moveSelf({ kind: 'encounterDeck' }, 'top')`.
+ * Moves `card` (`MoveCard`) to the bottom of `to` or, with `'top'`, onto its top. Card data names
+ * the zone with the zone helpers: "Remove the Study from the game" is
+ * `move(onlyCopy(codes.study), outOfGame)`, "Add it to the victory display"
+ * `move(self(), victoryDisplay)`, "Put the set-aside Lita Chantler into play at the Parlor"
+ * `move(setAsideCopy(codes.litaChantler), atLocation(onlyCopy(codes.parlor)))`, "on top of the
+ * encounter deck" `move(self(), encounterDeck, 'top')`. Only moves a rule gives a meaning of its
+ * own keep a factory (`discard`, `putIntoThreatArea`, `attachTo`, `fromSetAside`).
  */
-export function moveSelf(to: Templated<Zone>, end: 'top' | 'bottom' = 'bottom'): AbilityEffect {
-  return { type: 'MoveCard', cardId: { ref: 'self' }, to, ...(end === 'top' && { index: 0 }) };
+export function move(
+  card: RelativeCard,
+  to: Templated<Zone>,
+  end: 'top' | 'bottom' = 'bottom',
+): AbilityEffect {
+  return { type: 'MoveCard', cardId: card, to, ...(end === 'top' && { index: 0 }) };
 }
