@@ -1,4 +1,5 @@
-import type { CardStats } from './cards';
+import type { CardStats, Trait } from './cards';
+import type { CardScope } from './scopes';
 
 /**
  * The keywords the rules react to. Mirrors `KEYWORD_NAMES` in
@@ -29,4 +30,16 @@ export interface Keyword {
 /** Whether the card has the keyword. */
 export function hasKeyword(stats: CardStats, name: KeywordName): boolean {
   return stats.keywords?.some((keyword) => keyword.name === name) ?? false;
+}
+
+/**
+ * A keyword a card in play gives other cards (`CardStats.keywordGrants`): `{ gains: 'aloof', of:
+ * 'enemiesAtHost', exceptTraits: [trait('Elite')] }` is Hiding Spot ("Each non-Elite enemy at
+ * attached location gains aloof"). A card with one of `exceptTraits` does not gain it. Read with
+ * the printed keywords by `cardHasKeyword`.
+ */
+export interface KeywordGrant {
+  gains: KeywordName;
+  of: CardScope;
+  exceptTraits?: readonly Trait[];
 }

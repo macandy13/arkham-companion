@@ -18,5 +18,39 @@ export const barricade: CardStats = {
   restrictions: [{ cannot: 'enemiesMoveInto', of: 'host', exceptTraits: [trait('Elite')] }],
 };
 
+/**
+ * Handcuffs (04265, The Depths of Yoth): "If the attached enemy is non-Elite, it cannot ready and
+ * doom cannot be placed on it". The evasion that attaches it is left to the players.
+ */
+export const handcuffs: CardStats = {
+  code: cardCode('04265'),
+  name: 'Handcuffs',
+  typeCode: 'asset',
+  traits: [trait('Item'), trait('Police')],
+  restrictions: [
+    { cannot: 'ready', of: 'host', exceptTraits: [trait('Elite')] },
+    { cannot: 'placeDoom', of: 'host', exceptTraits: [trait('Elite')] },
+  ],
+};
+
+/**
+ * Hiding Spot (03038, The Path to Carcosa): "Each non-Elite enemy at attached location gains
+ * aloof". Its Forced discard at the end of the enemy phase is left to the players.
+ */
+export const hidingSpot: CardStats = {
+  code: cardCode('03038'),
+  name: 'Hiding Spot',
+  typeCode: 'event',
+  traits: [trait('Tactic'), trait('Trick')],
+  keywordGrants: [{ gains: 'aloof', of: 'enemiesAtHost', exceptTraits: [trait('Elite')] }],
+};
+
+/** The player cards above from the Core Set, which the ArkhamDB check holds to its data. */
+export const coreSetPlayerCardDefs: readonly CardStats[] = [barricade];
+
 /** Every player card above, for the `CardDb` of each scenario the app plays. */
-export const playerCardDefs: readonly CardStats[] = [barricade];
+export const playerCardDefs: readonly CardStats[] = [
+  ...coreSetPlayerCardDefs,
+  handcuffs,
+  hidingSpot,
+];

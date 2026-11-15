@@ -1,4 +1,4 @@
-import { cardStats, resolveAmount, type CardStats, type EngineContext } from './cards';
+import { cardStats, resolveAmount, type EngineContext } from './cards';
 import type { MoveTokens, TokenHolder } from './commands';
 import { isInPlay } from './doom';
 import { defeatedByDamage } from './enemies';
@@ -7,6 +7,7 @@ import type { InvestigatorId } from './ids';
 import { isActiveInvestigator, requireInvestigator } from './investigators';
 import { requireCard } from './lookup';
 import { CommandRejected } from './rejection';
+import { isEnemyRestricted } from './restrictions';
 import type { CardInstance, GameState, TokenKind } from './state';
 
 /** A `TokenHolder` looked up in the state: the pool, a card or an investigator, or nothing. */
@@ -34,7 +35,7 @@ export function handleMoveTokens(ctx: EngineContext, state: GameState, cmd: Move
   const held = heldBy(state, from, cmd.token);
   const moved = wanted === 'all' ? held : Math.min(wanted, held);
   if (moved === 0 || to.kind === 'absent' || sameHolder(from, to)) return [];
-  if (to.kind === 'card' && !canHold(cardStats(ctx.cards, to.card.code), cmd.token)) return [];
+  if (to.kind === 'card' && !canHold(ctx, state, to.card, cmd.token)) return [];
   return [
     ...changed(from, cmd.token, -moved),
     ...changed(to, cmd.token, moved),
@@ -123,9 +124,18 @@ function changed(holder: ResolvedHolder, token: TokenKind, delta: number): Event
  * Whether moved `token`s may land on a card with `stats`: damage only on a card with health and
  * horror only on one with sanity (FAQ, October 2024: no damage moves onto a card without health).
  */
-function canHold(stats: CardStats, token: TokenKind): boolean {
+/** Whether `token` may be placed on `card`: no doom on a handcuffed enemy (`isEnemyRestricted`). */
+function canHold(
+  ctx: EngineContext,
+  state: GameState,
+  card: CardInstance,
+  token: TokenKind,
+): boolean {
+  const stats = cardStats(ctx.cards, card.code);
   if (token === 'damage') return stats.health !== undefined;
   if (token === 'horror') return stats.sanity !== undefined;
+  if (token === 'doom' && stats.typeCode === 'enemy')
+    return !isEnemyRestricted(ctx, state, card, 'placeDoom');
   return true;
 }
 

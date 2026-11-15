@@ -12,8 +12,10 @@ import type { CardInstance, GameState } from './state';
  * - `enemiesHere`: for a location, each enemy at it, engaged ones included ("Each enemy at
  *   Dining Hall gets +1 fight"; Rules Reference, "Engaged": an engaged enemy is at its
  *   investigator's location).
+ * - `enemiesAtHost`: for a card attached to a location, each enemy at that location, engaged
+ *   ones included ("Each non-Elite enemy at attached location gains aloof", Hiding Spot).
  */
-export type CardScope = 'self' | 'host' | 'enemiesHere';
+export type CardScope = 'self' | 'host' | 'enemiesHere' | 'enemiesAtHost';
 
 /**
  * The investigators a constant ability binds, relative to the card that has it, shared by
@@ -38,6 +40,11 @@ export function namesCard(
       return source.zone.kind === 'attachedTo' && source.zone.hostId === card.id;
     case 'enemiesHere':
       return enemiesAt(ctx, state, source.id).some((enemy) => enemy.id === card.id);
+    case 'enemiesAtHost':
+      return (
+        source.zone.kind === 'attachedTo' &&
+        enemiesAt(ctx, state, source.zone.hostId).some((enemy) => enemy.id === card.id)
+      );
     default:
       return assertNever(scope);
   }

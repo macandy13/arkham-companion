@@ -20,3 +20,5 @@ Each ruling below says what the card refuses, whom it binds and what still happe
   - An enemy may still spawn there: spawning is not moving in (FAQ).
   - An investigator who moves in leaves an engaged non-Elite enemy behind, disengaged at the location they left, after its attack of opportunity (FAQ).
   - It is discarded when any investigator leaves the location (its Forced text), and with the location if it leaves play (RR "Attach To").
+- Handcuffs ("If the attached enemy is non-Elite, it cannot ready and doom cannot be placed on it") keeps a non-Elite enemy exhausted through the upkeep phase and any card effect that readies it, and no doom goes on it; an Elite enemy is not held ([Handcuffs FAQ](https://arkhamdb.com/card/04265): flipping doom is not placing it).
+- Hiding Spot ("Each non-Elite enemy at attached location gains aloof") makes each non-Elite enemy at its location aloof, so it does not engage when it readies, spawns or an investigator enters (RR "Aloof"). Its Forced discard at the end of the enemy phase is left to the players.

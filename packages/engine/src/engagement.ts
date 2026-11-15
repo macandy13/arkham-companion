@@ -4,7 +4,7 @@ import type { DecisionRequested, EnemyEngaged, Event } from './events';
 import { decisionId, type InstanceId, type InvestigatorId } from './ids';
 import { activeInvestigators } from './investigators';
 import { cardOptionLabels, requestDecision } from './decisions';
-import { hasKeyword } from './keywords';
+import { cardHasKeyword } from './card_keywords';
 import { cardsAtLocation, cardsOfType } from './lookup';
 import { preferredByPrey, preyAllows, preyPrompt } from './prey';
 import { replay } from './reducer';
@@ -35,8 +35,8 @@ export function engageEvents(
 ): Event[] {
   const enemy = state.cards[enemyId];
   if (enemy?.zone.kind !== 'atLocation' || enemy.exhausted) return [];
-  const stats = cardStats(ctx.cards, enemy.code);
-  if (hasKeyword(stats, 'aloof') || hasKeyword(stats, 'massive')) return [];
+  if (cardHasKeyword(ctx, state, enemy, 'aloof') || cardHasKeyword(ctx, state, enemy, 'massive'))
+    return [];
   // Rules Reference, "Prey": with "only" the enemy engages nobody else, not even the drawer.
   const present = investigatorsAt(state, enemy.zone.locationId);
   const drawer = (whateverPrey ? present : preyAllows(ctx, state, enemy, present)).find(
@@ -56,7 +56,7 @@ export function engageEvents(
     state,
     enemyId,
     `engage:${enemyId}`,
-    preyPrompt(state, stats, 'decision.chooseEngagement'),
+    preyPrompt(state, cardStats(ctx.cards, enemy.code), 'decision.chooseEngagement'),
     preferred,
     (chosen) => ({ type: 'EngageEnemy', enemyId, investigatorId: chosen.id }),
   );
