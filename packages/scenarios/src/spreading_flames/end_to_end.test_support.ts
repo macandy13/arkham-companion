@@ -258,92 +258,87 @@ export function playSpreadingFlames(start: CampaignLog): CampaignLog {
 
   // Round 5 – upkeep: they spend the 6 clues as the round ends. Searching for Dr. Armitage's
   // reverse side brings the Servant of Flame back to the Quad, healed, and places 6 clues there.
-  // Dr. Armitage joining an investigator is the players' to do, and so is Roland's search for two
-  // Fire!, which they play as two draws from the discard pile: the first attaches to Orne Library,
-  // where he is, and the second to the nearest location without one, the Quad.
+  // Dr. Armitage joining an investigator is the players' to do. Roland, the lead, searches for one
+  // Fire! per investigator, two in the discard pile, and draws them: the first attaches to Orne
+  // Library, where he is, and the second to the nearest location without one, the Quad. Then the
+  // encounter deck is shuffled.
   expect(table.nextPhase()).toEqual({ round: 5, phase: 'enemy' });
   expect(table.nextPhase()).toEqual({ round: 5, phase: 'upkeep', step: 'endRound' });
   table.play(answer(SEARCHING_FOR_ARMITAGE_DECISION, 'spend'));
+  table.resolveRevelation(byName('Fire!'));
+  table.resolveRevelation(byName('Fire!'));
 
   expect(table.board.act?.name).toBe('Blaze of Glory');
   expect(table.board.enemies).toEqual([{ name: servant, at: 'Miskatonic Quad', health: 10 }]);
   expect(table.board.location(byName('Miskatonic Quad')).clues).toBe(6);
   expect(table.board.investigator(roland).clues).toBe(0);
   expect(table.board.investigator(daisy).clues).toBe(0);
-  const rolandFindsAFire = () => {
-    table.play({
-      type: 'DrawEncounter',
-      investigatorId: roland,
-      from: 'deckOrDiscard',
-      match: { name: 'Fire!' },
-    });
-    table.resolveRevelation(byName('Fire!'));
-  };
-  rolandFindsAFire();
-  rolandFindsAFire();
   expect(table.board.location(byName('Orne Library')).attachments).toEqual(['Fire!']);
   expect(table.board.location(byName('Miskatonic Quad')).attachments).toEqual(['Fire!']);
 
-  // Round 6 – mythos: Roland draws the other Mutated! and passes its willpower (2) test. Daisy
-  // draws Cosmic Evils again; this time she takes 1 damage and 1 horror and draws again:
-  // Forbidden Secrets, which surges as she has no clues, into a Cantor of Flame that engages her.
-  expect(table.nextPhase()).toEqual({ round: 6, phase: 'mythos', step: 'drawEncounterCard' });
-  table.resolveRevelation(byName('Mutated!'));
-  table.answerOnly('pass');
-  expect(table.nextPhase()).toEqual({ round: 6, phase: 'mythos', step: 'drawEncounterCard' });
-  table.resolveRevelation(byName('Cosmic Evils'));
-  table.play(answer(COSMIC_EVILS_DECISION, 'wounds'));
-  table.resolveRevelation(byName('Forbidden Secrets'));
-  expect(table.nextPhase()).toEqual({ round: 6, phase: 'investigation' });
-  expect(table.board.investigator(daisy)).toMatchObject({ damage: 1, horror: 4 });
-  expect(table.board.enemy(byName(cantor))).toMatchObject({
-    at: 'Orne Library',
-    engagedWith: daisy,
-  });
-
-  // Round 6 – investigation: Roland goes to the Quad, where the Servant engages him, and hits it
-  // twice with his .45 Automatic: the players confirm 2 damage each. Daisy defeats the Cantor and
-  // follows him. (Blaze of Glory's group clue spend to damage the Servant is theirs to resolve.)
-  // As the phase ends, the Fire! on the Quad deals each of them 1 direct damage; the Servant is
-  // Elite and takes none.
-  table.startTurn(roland);
-  table.moveTo(roland, byName('Miskatonic Quad'));
-  table.fight(roland, byName(servant), { damage: 2 });
-  table.fight(roland, byName(servant), { damage: 2 });
-  table.endTurn(roland);
-  table.startTurn(daisy);
-  table.fight(daisy, byName(cantor));
-  table.fight(daisy, byName(cantor));
-  table.moveTo(daisy, byName('Miskatonic Quad'));
-  table.endTurn(daisy);
+  // Round 6 – mythos: in the shuffled deck Roland draws a Mutated Experiment and Daisy a
+  // Bystander; each engages its drawer at Orne Library.
+  expect(table.nextPhase()).toEqual({ round: 6, phase: 'mythos' });
   expect(table.board.enemies).toEqual([
-    { name: servant, at: 'Miskatonic Quad', health: 10, damage: 4, engagedWith: roland },
+    { name: servant, at: 'Miskatonic Quad', health: 10 },
+    { name: 'Bystander', at: 'Orne Library', engagedWith: daisy, health: 1 },
+    { name: 'Mutated Experiment', at: 'Orne Library', engagedWith: roland, health: 3 },
   ]);
 
-  // Round 6 – enemy phase: the Servant attacks Roland for 2 damage and 2 horror.
+  // Round 6 – investigation: Roland shoots the Mutated Experiment with his .45 Automatic (the
+  // players confirm 2 damage), finishes it with a punch and goes to the Quad, where the Servant
+  // engages him. Daisy defeats the Bystander, follows him and hits the Servant once. (Blaze of
+  // Glory's group clue spend to damage the Servant is theirs to resolve.) As the phase ends, the
+  // Fire! on the Quad deals each of them 1 direct damage; the Servant is Elite and takes none.
+  expect(table.nextPhase()).toEqual({ round: 6, phase: 'investigation' });
+  table.startTurn(roland);
+  table.fight(roland, byName('Mutated Experiment'), { damage: 2 });
+  table.fight(roland, byName('Mutated Experiment'));
+  table.moveTo(roland, byName('Miskatonic Quad'));
+  table.endTurn(roland);
+  table.startTurn(daisy);
+  table.fight(daisy, byName('Bystander'));
+  table.moveTo(daisy, byName('Miskatonic Quad'));
+  table.fight(daisy, byName(servant));
+  table.endTurn(daisy);
+  expect(table.board.enemies).toEqual([
+    { name: servant, at: 'Miskatonic Quad', health: 10, damage: 1, engagedWith: roland },
+  ]);
+
+  // Round 6 – enemy phase: the Servant attacks Roland.
   expect(table.nextPhase()).toEqual({ round: 6, phase: 'enemy', step: 'enemiesAttack' });
   table.resolveEnemyAttacks();
-  expect(table.board.investigator(roland)).toMatchObject({ damage: 3, horror: 2 });
-
   expect(table.nextPhase()).toEqual({ round: 6, phase: 'upkeep' });
 
   // Round 7 – mythos: the fifth doom makes Lit Up advance to Wild Flames. Its reverse side places
   // no Fire!, as act 1 put the set-aside copies out already, and its agility tests are the
-  // players' to resolve. A Mutated Experiment engages Daisy.
+  // players' to resolve. A Cantor of Flame engages Roland, and Daisy's second Unspeakable Truths
+  // goes to her threat area beside the first (its limit of 1 per investigator is the players' to
+  // apply).
   expect(table.nextPhase()).toEqual({ round: 7, phase: 'mythos', step: 'checkDoomThreshold' });
   table.answerOnly('yes');
   expect(table.board.agenda).toMatchObject({ name: 'Wild Flames', doom: 0 });
-  expect(table.nextPhase()).toEqual({ round: 7, phase: 'mythos' });
-  expect(table.board.enemy(byName('Mutated Experiment')).engagedWith).toBe(daisy);
-
-  // Round 7 – investigation: Roland spends the last two ammo, then attacks without the .45 and
-  // commits Vicious Blow: 2 damage again, the Servant's tenth. Blaze of Glory advances by
-  // itself, and Resolution 1 asks the lead investigator to stay and fight the fire or go.
+  expect(table.nextPhase()).toEqual({ round: 7, phase: 'mythos', step: 'drawEncounterCard' });
+  table.resolveRevelation(byName('Unspeakable Truths'));
   expect(table.nextPhase()).toEqual({ round: 7, phase: 'investigation' });
+  expect(table.board.enemy(byName(cantor)).engagedWith).toBe(roland);
+  expect(table.board.investigator(daisy).threatArea).toEqual([
+    'Unspeakable Truths',
+    'Unspeakable Truths',
+  ]);
+
+  // Round 7 – investigation: Roland spends three more ammo on the Servant, 2 damage each, and
+  // Daisy hits it three times: its tenth damage. Blaze of Glory advances by itself, and
+  // Resolution 1 asks the lead investigator to stay and fight the fire or go.
   table.startTurn(roland);
   table.fight(roland, byName(servant), { damage: 2 });
   table.fight(roland, byName(servant), { damage: 2 });
   table.fight(roland, byName(servant), { damage: 2 });
+  table.endTurn(roland);
+  table.startTurn(daisy);
+  table.fight(daisy, byName(servant));
+  table.fight(daisy, byName(servant));
+  table.fight(daisy, byName(servant));
 
   expect(table.board.namesIn({ kind: 'victoryDisplay' })).toEqual([servant]);
   expect(table.board.decisions).toEqual([

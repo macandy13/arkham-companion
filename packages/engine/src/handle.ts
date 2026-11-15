@@ -199,9 +199,10 @@ function run(
   { resumesStored }: { resumesStored: boolean },
 ): void {
   const queue = [...steps];
-  const pendingBefore = new Set(resolution.state.pending.map((decision) => decision.id));
+  // By identity, not id: a card drawn again in the same chain asks under its old decision's id.
+  const pendingBefore = new Set(resolution.state.pending);
   for (;;) {
-    if (resolution.state.pending.some((decision) => !pendingBefore.has(decision.id))) {
+    if (resolution.state.pending.some((decision) => !pendingBefore.has(decision))) {
       suspend(resolution, queue);
       return;
     }

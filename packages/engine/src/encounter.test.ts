@@ -575,6 +575,38 @@ describe('DrawEncounter with a match', () => {
   });
 });
 
+describe('DrawEncounter of one named card', () => {
+  const drawFoundFoe: Command = {
+    type: 'DrawEncounter',
+    investigatorId: alice,
+    cardId: instanceId('found_foe'),
+  };
+
+  it('draws that card out of the discard pile, not the top of the deck', () => {
+    const { context, state } = aliceInHall
+      .withCard(instanceId('top_card'), plainTreachery, encounterDeck)
+      .withCard(instanceId('found_foe'), foeCard, encounterDiscard)
+      .start();
+
+    const after = stateAfter(context, state, drawFoundFoe);
+
+    expect(after.cards[instanceId('found_foe')]?.zone).toEqual(engagedWith(alice));
+    expect(idsIn(after, encounterDeck)).toEqual(['top_card']);
+  });
+
+  it('draws nothing once the card has left the encounter deck and discard pile', () => {
+    const { context, state } = aliceInHall
+      .withCard(instanceId('top_card'), plainTreachery, encounterDeck)
+      .withCard(instanceId('found_foe'), foeCard, { kind: 'victoryDisplay' })
+      .start();
+
+    const after = stateAfter(context, state, drawFoundFoe);
+
+    expect(after.cards[instanceId('found_foe')]?.zone).toEqual({ kind: 'victoryDisplay' });
+    expect(idsIn(after, encounterDeck)).toEqual(['top_card']);
+  });
+});
+
 describe('FromSetAside', () => {
   it('moves one copy per listed code, taking two copies for a code listed twice', () => {
     const { context, state } = aliceInHall

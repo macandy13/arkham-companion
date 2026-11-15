@@ -55,6 +55,11 @@ export function handleDrawEncounter(
   cmd: DrawEncounter,
 ): Event[] {
   const investigator = activeInvestigator(state, cmd.investigatorId);
+  if (cmd.cardId !== undefined) {
+    const { kind } = requireCard(state.cards, cmd.cardId).zone;
+    if (kind !== 'encounterDeck' && kind !== 'encounterDiscard') return [];
+    return drawOne(ctx, state, investigator, cmd.cardId) ?? rejectEmptyDeck();
+  }
   if (!cmd.match) return drawOne(ctx, state, investigator) ?? rejectEmptyDeck();
   const from = cmd.from ?? 'deck';
   const target = findMatch(ctx, state, from, cmd.match);

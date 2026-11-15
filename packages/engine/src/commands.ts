@@ -714,6 +714,12 @@ export interface DrawEncounter {
    * matching card is taken out of the deck and the rest stays where it is.
    */
   discardSkipped?: boolean;
+  /**
+   * Draws this card instead of the top card or a `match`: one copy a search found
+   * (`searchAndDrawCopies`), drawn from the encounter deck or discard pile; nothing when it has
+   * left both since.
+   */
+  cardId?: InstanceId;
 }
 
 /** The part of the encounter cards a `DrawEncounter` with `match` looks through. */

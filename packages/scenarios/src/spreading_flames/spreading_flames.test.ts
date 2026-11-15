@@ -18,8 +18,10 @@ import {
 } from '@arkham/engine';
 import {
   answer,
+  cancelRevelation,
   codesIn,
   standardInvestigatorCards,
+  runFrom,
   startScenario,
   stateAfter,
 } from '@arkham/engine/test/utils';
@@ -399,6 +401,37 @@ describe('Spreading Flames act 3, Searching for Dr. Armitage', () => {
     });
     expect(state.cards[miskatonicQuad]?.tokens.clue).toBe(6);
   });
+
+  describe('the search for 1 Fire! per investigator, 2 investigators', () => {
+    const firstFire = '12129#1';
+    const secondFire = '12129#2';
+    const atSearching = () =>
+      stateAfter(ctx, startScenario(ctx, { playerCount: 2 }), ...advanceToSearching);
+
+    it('has the lead draw both copies one search found, not a cancelled one again', () => {
+      const advanced = stateAfter(ctx, atSearching(), ...advanceSearching);
+      const firstCancelled = stateAfter(ctx, advanced, cancelRevelation(firstFire));
+
+      const state = stateAfter(ctx, firstCancelled, cancelRevelation(secondFire));
+
+      expect(advanced.pending).toMatchObject([
+        { id: `revelation:${firstFire}`, decider: { investigatorId: tank } },
+      ]);
+      expect(firstCancelled.pending).toMatchObject([{ id: `revelation:${secondFire}` }]);
+      expect(state.pending).toEqual([]);
+    });
+
+    it('shuffles the encounter deck once both copies are drawn', () => {
+      const advanced = stateAfter(ctx, atSearching(), ...advanceSearching);
+
+      const first = runFrom(ctx, advanced, [cancelRevelation(firstFire)]);
+      const second = runFrom(ctx, first.state, [cancelRevelation(secondFire)]);
+
+      const shuffled = { type: 'DeckShuffled', zone: { kind: 'encounterDeck' } };
+      expect(first.events).not.toContainEqual(expect.objectContaining(shuffled));
+      expect(second.events).toContainEqual(expect.objectContaining(shuffled));
+    });
+  });
 });
 
 describe('Spreading Flames agenda 2, Lit Up', () => {
@@ -424,7 +457,10 @@ describe('Spreading Flames agenda 2, Lit Up', () => {
 });
 
 describe('Spreading Flames act 4, Blaze of Glory, and the resolutions', () => {
-  /** Acts 1 to 3 advance without paying; act 3 puts the Servant of Flame at Miskatonic Quad. */
+  /**
+   * Acts 1 to 3 advance without paying; act 3 puts the Servant of Flame at Miskatonic Quad, and
+   * the players cancel the two Fire! its search has the lead draw.
+   */
   function atBlazeOfGlory(): GameState {
     return stateAfter(
       ctx,
@@ -432,6 +468,8 @@ describe('Spreading Flames act 4, Blaze of Glory, and the resolutions', () => {
       { type: 'AdvanceAct' },
       { type: 'AdvanceAct' },
       { type: 'AdvanceAct' },
+      cancelRevelation('12129#1'),
+      cancelRevelation('12129#2'),
     );
   }
 
