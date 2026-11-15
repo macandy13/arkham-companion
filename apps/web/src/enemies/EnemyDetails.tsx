@@ -92,7 +92,7 @@ export function EnemyDetails({
           <dd>{stats.evade}</dd>
         </div>
       </dl>
-      <AttachedCards board={board} host={enemy.id} type="enemy" actions={actions} busy={busy} />
+      <AttachedCards board={board} host={enemy.id} actions={actions} busy={busy} />
       <footer>
         {allowed.length > 0 && (
           <ActionGroup title={t('enemy.actions')}>

@@ -8,7 +8,6 @@ import {
   instanceId,
   newGame,
   PlayTable,
-  type AttachmentHost,
   type InstanceId,
 } from '@arkham/engine';
 import { barricade, handcuffs, hidingSpot } from '@arkham/scenarios';
@@ -20,16 +19,8 @@ const study = instanceId('study');
 const ghoul = instanceId('ghoul');
 
 /** The attached cards of `host` on `table`, as its details show them. */
-const renderAttachedCards = (table: PlayTable, host: InstanceId, type: AttachmentHost) =>
-  render(
-    <AttachedCards
-      board={table.board}
-      host={host}
-      type={type}
-      actions={actionsOn(table)}
-      busy={false}
-    />,
-  );
+const renderAttachedCards = (table: PlayTable, host: InstanceId) =>
+  render(<AttachedCards board={table.board} host={host} actions={actionsOn(table)} busy={false} />);
 
 const tap = (name: string) => fireEvent.click(screen.getByRole('button', { name }));
 
@@ -39,7 +30,11 @@ describe('AttachedCards', () => {
   });
   afterEach(cleanup);
 
-  /** A ghoul in the study, with the player cards the app attaches in the card data. */
+  /**
+   * A ghoul in the study, with the card data of the player cards the app attaches. The dialog
+   * offers them from the app's own list (`attachableCards` over `playerCardDefs`): Handcuffs for an
+   * enemy, Barricade and Hiding Spot for a location.
+   */
   const ghoulInStudy = () =>
     PlayTable.start(
       newGame()
@@ -51,10 +46,10 @@ describe('AttachedCards', () => {
     );
 
   it.each([
-    { host: ghoul, type: 'enemy' as const, cards: ['Handcuffs'] },
-    { host: study, type: 'location' as const, cards: ['Barricade', 'Hiding Spot'] },
-  ])('offers the cards that attach to an $type', ({ host, type, cards }) => {
-    renderAttachedCards(ghoulInStudy(), host, type);
+    { name: 'an enemy', host: ghoul, cards: ['Handcuffs'] },
+    { name: 'a location', host: study, cards: ['Barricade', 'Hiding Spot'] },
+  ])('offers the cards that attach to $name', ({ host, cards }) => {
+    renderAttachedCards(ghoulInStudy(), host);
 
     tap('Attach a card');
 
@@ -68,7 +63,7 @@ describe('AttachedCards', () => {
 
   it('attaches the picked card to the ghoul and closes', async () => {
     const table = ghoulInStudy();
-    renderAttachedCards(table, ghoul, 'enemy');
+    renderAttachedCards(table, ghoul);
 
     tap('Attach a card');
     fireEvent.click(screen.getByRole('button', { hidden: true, name: 'Handcuffs' }));
@@ -80,7 +75,7 @@ describe('AttachedCards', () => {
 
   it('attaches nothing on Cancel', () => {
     const table = ghoulInStudy();
-    renderAttachedCards(table, ghoul, 'enemy');
+    renderAttachedCards(table, ghoul);
 
     tap('Attach a card');
     fireEvent.click(screen.getByRole('button', { hidden: true, name: 'Cancel' }));
@@ -92,7 +87,7 @@ describe('AttachedCards', () => {
   it('discards an attached card', async () => {
     const table = ghoulInStudy();
     table.play({ type: 'AttachPlayerCard', hostId: study, code: barricade.code });
-    renderAttachedCards(table, study, 'location');
+    renderAttachedCards(table, study);
 
     tap('Discard Barricade');
     await act(async () => {});

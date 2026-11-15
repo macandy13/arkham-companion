@@ -1,4 +1,4 @@
-import { cardCode, trait, type CardStats } from '@arkham/engine';
+import { cardCode, trait, type AttachmentHost, type CardStats } from '@arkham/engine';
 
 /*
  * The player cards the players can attach to an enemy or a location in the app
@@ -57,3 +57,11 @@ export const playerCardDefs: readonly CardStats[] = [
   handcuffs,
   hidingSpot,
 ];
+
+/**
+ * The player cards the players can attach to a card of type `host` from its details: those above
+ * that attach to it (`CardStats.attachesTo`), in their listed order.
+ */
+export function attachableCards(host: AttachmentHost): readonly CardStats[] {
+  return playerCardDefs.filter(({ attachesTo }) => attachesTo === host);
+}

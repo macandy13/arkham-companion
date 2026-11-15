@@ -1,32 +1,25 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type {
-  AttachmentHost,
-  BoardView,
-  CardFaceView,
-  CardStats,
-  InstanceId,
-} from '@arkham/engine';
-import { attachableCards } from '../catalog/attachableCards';
+import type { BoardView, CardFaceView, CardName, CardStats, InstanceId } from '@arkham/engine';
+import { attachableCards } from '@arkham/scenarios';
 import type { GameActions } from '../state/gameActions';
 import { CardZoom } from './CardZoom';
 
 /**
- * The cards attached to a location or an enemy (`host`, of type `type`) on its details' page: each
+ * The cards attached to a location or an enemy (`host`) on its details' page: each
  * opening large to read (`CardZoom`) with Discard beside it, as a Forced ability or a card says
  * (`GameActions.discardCard`), and under them Attach a card, for a player card the players attached
- * at the table (`AttachCardDialog`). Nothing is tapped while a step is queued (`busy`).
+ * at the table (`AttachCardDialog`), one of those that attach to a card of the host's type
+ * (`attachableCards`). Nothing is tapped while a step is queued (`busy`).
  */
 export function AttachedCards({
   board,
   host,
-  type,
   actions,
   busy,
 }: {
   board: BoardView;
   host: InstanceId;
-  type: AttachmentHost;
   actions: GameActions;
   busy: boolean;
 }) {
@@ -35,7 +28,8 @@ export function AttachedCards({
   const [zoomed, setZoomed] = useState<CardFaceView>();
   const [attaching, setAttaching] = useState(false);
   const cards = board.cardsIn({ kind: 'attachedTo', hostId: host });
-  const attachable = attachableCards(type);
+  const { name, type } = board.cardFace(host);
+  const attachable = type === 'enemy' || type === 'location' ? attachableCards(type) : [];
   if (cards.length === 0 && attachable.length === 0) return null;
   return (
     <section aria-labelledby={titleId}>
@@ -77,7 +71,7 @@ export function AttachedCards({
       {zoomed && <CardZoom card={zoomed} onClose={() => setZoomed(undefined)} />}
       {attaching && (
         <AttachCardDialog
-          host={board.cardFace(host).name}
+          host={name}
           cards={attachable}
           onAttach={(card) => void actions.attachPlayerCard(host, card.code)}
           onClose={() => setAttaching(false)}
@@ -99,7 +93,7 @@ function AttachCardDialog({
   onAttach,
   onClose,
 }: {
-  host: string;
+  host: CardName;
   cards: readonly CardStats[];
   onAttach: (card: CardStats) => void;
   onClose: () => void;

@@ -193,13 +193,7 @@ function LocationPage({
   return (
     <>
       <Here board={board} location={location} />
-      <AttachedCards
-        board={board}
-        host={location.id}
-        type="location"
-        actions={actions}
-        busy={busy}
-      />
+      <AttachedCards board={board} host={location.id} actions={actions} busy={busy} />
       {offered.length + printed.length > 0 || revealable ? (
         <footer>
           {offered.length > 0 && (
