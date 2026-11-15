@@ -441,10 +441,31 @@ describe('MoveCard out of play', () => {
     expect(state.cards[ghoul]?.tokens).toEqual({});
   });
 
-  it('keeps the damage of a ghoul set aside from the victory display, which is out of play', () => {
+  it.each([
+    { name: 'the victory display', to: { kind: 'victoryDisplay' } },
+    { name: 'the encounter discard', to: { kind: 'encounterDiscard' } },
+    { name: 'the encounter deck', to: { kind: 'encounterDeck' } },
+  ] as const)('moves the ghoul to $name without its damage', ({ to }) => {
+    const { state } = run(context, [table.startCommand(), { type: 'MoveCard', cardId: ghoul, to }]);
+
+    expect(state.cards[ghoul]?.tokens).toEqual({});
+  });
+
+  it('keeps the damage of the ghoul as it moves from the hall to the study, staying in play', () => {
     const { state } = run(context, [
       table.startCommand(),
-      { type: 'MoveCard', cardId: ghoul, to: { kind: 'victoryDisplay' } },
+      { type: 'MoveCard', cardId: ghoul, to: atLocation(study) },
+    ]);
+
+    expect(state.cards[ghoul]?.tokens).toEqual({ damage: 3 });
+  });
+
+  it('keeps the damage of a ghoul in the victory display as it is set aside, as neither is in play', () => {
+    const outOfPlay = aliceInStudy
+      .withLocation(hall, blankLocation('hall'), { revealed: true })
+      .withCard(ghoul, ghoulCard, { kind: 'victoryDisplay' }, { tokens: { damage: 3 } });
+    const { state } = run(outOfPlay.context(), [
+      outOfPlay.startCommand(),
       { type: 'MoveCard', cardId: ghoul, to: setAside },
     ]);
 

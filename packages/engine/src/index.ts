@@ -197,6 +197,7 @@ export {
   discardEachEnemyAt,
   eachEnemy,
   moveEnemyTowards,
+  discard,
   discardSelf,
   duringAct,
   duringAgenda,

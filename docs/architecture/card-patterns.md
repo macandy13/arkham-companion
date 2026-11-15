@@ -60,7 +60,7 @@ An objective is an ability of its act or agenda, with a window that opens only w
 
 A cost is `CardAction.cost`, paid before the effects.
 
-- Stop the Rite's "[fast] The investigators spend 1 [per_investigator] clues, as a group: discard the Fire! at your location": `{ free: true, cost: { spend: 'groupClues', amount: perInvestigator(1) }, effects: [{ type: 'DiscardCard', cardId: eachInPlay({ code: fire, at: yourLocation() }) }] }`. Without a Fire! there the discard would change nothing, so the action is neither offered nor taken (`changesNothing`).
+- Stop the Rite's "[fast] The investigators spend 1 [per_investigator] clues, as a group: discard the Fire! at your location": `{ free: true, cost: { spend: 'groupClues', amount: perInvestigator(1) }, effects: [discard(eachInPlay({ code: fire, at: yourLocation() }))] }`. Without a Fire! there the discard would change nothing, so the action is neither offered nor taken (`changesNothing`).
 
 - "The investigators spend 2 clues per investigator, as a group" (Uncovering the Conspiracy):
   `cost: { spend: 'groupClues', amount: perInvestigator(2) }`.
@@ -89,7 +89,7 @@ A cost is `CardAction.cost`, paid before the effects.
 - The Midnight Masks' Cultist deck: a `scenarioDeck` setup step, drawn by the act's action with `drawFromScenarioDeck('cultist')`.
 - Rise of the Ghouls: `whenAdvanced(shuffleEncounterDiscard(), leadDrawsDiscardingUntil({ trait: trait('Ghoul'), typeCode: 'enemy' }))`.
 - "Place it on the bottom of the Tekeli-li deck", "on top of the encounter deck": `moveSelf(deck, 'bottom' | 'top')`, a `MoveCard` to the end of the deck; the revealed card then isn't discarded, as it left `resolving`.
-- "Discard the top 3 cards of the encounter deck" (Out of This World): `discardEncounterTop(3)`, a `DiscardCard` for each of `eachInZone(encounterDeck, { top: 3 })`; one per point failed by (The Witching Hour's skull token): `forEachPoint(discardEncounterTop(1))`.
+- "Discard the top 3 cards of the encounter deck" (Out of This World): `discardEncounterTop(3)`, a `discard` for each of `eachInZone(encounterDeck, { top: 3 })`; one per point failed by (The Witching Hour's skull token): `forEachPoint(discardEncounterTop(1))`.
 - False Lead's surge when its drawer has no clues: `ifYouHave('clues', { max: 0 }, whenRevealed(gainSurge()))`.
 
 ## Resolution order
