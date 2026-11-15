@@ -155,7 +155,11 @@ describe('AttachPlayerCard', () => {
     const attached = stateAfter(context, state, barricadeOnHall);
     const id = onlyAttachmentOf(attached, hall);
 
-    const after = stateAfter(context, attached, { type: 'DiscardCard', cardId: id });
+    const after = stateAfter(context, attached, {
+      type: 'MoveCard',
+      cardId: id,
+      to: { kind: 'encounterDiscard' },
+    });
 
     expect(zoneOf(after, id)).toEqual({ kind: 'outOfGame' });
   });
@@ -167,7 +171,11 @@ describe('AttachPlayerCard', () => {
       .withCard(lantern, blankAsset('lantern'), attachedTo(hall))
       .start();
 
-    const after = stateAfter(context, state, { type: 'DiscardCard', cardId: lantern });
+    const after = stateAfter(context, state, {
+      type: 'MoveCard',
+      cardId: lantern,
+      to: { kind: 'encounterDiscard' },
+    });
 
     expect(zoneOf(after, lantern)).toEqual({ kind: 'encounterDiscard' });
   });
@@ -216,7 +224,11 @@ describe('a location closed to enemies (Barricade)', () => {
     const after = stateAfter(
       context,
       barricaded,
-      { type: 'DiscardCard', cardId: onlyAttachmentOf(barricaded, hall) },
+      {
+        type: 'MoveCard',
+        cardId: onlyAttachmentOf(barricaded, hall),
+        to: { kind: 'encounterDiscard' },
+      },
       { type: 'MoveHunters' },
     );
 

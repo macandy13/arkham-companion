@@ -942,6 +942,8 @@ describe('trigger bus', () => {
         'ExhaustChanged',
         'EnemyDisengaged',
         'EnemyEvaded',
+        // Leaving play readies it again (RR "Leaves Play").
+        'ExhaustChanged',
         'CardMoved',
         'SkillTestEnded',
       ]);
@@ -1743,7 +1745,7 @@ describe('trigger bus', () => {
       expect(events.filter((event) => event.type === 'AbilityEffectSkipped')).toContainEqual({
         type: 'AbilityEffectSkipped',
         cardId: act1,
-        effect: 'DiscardCard',
+        effect: 'MoveCard',
         missing: [cardCode('hall')],
       });
     });

@@ -41,7 +41,6 @@ export type Command =
   | StartScenario
   | ManualAdjust
   | MoveCard
-  | DiscardCard
   | AddMap
   | PutLocationIntoPlay
   | AddConnection
@@ -166,7 +165,8 @@ export interface ManualAdjust {
  * A card effect or reverse side moves a card to another zone ("remove the
  * Study from the game", "discard each enemy there"). Validated like a
  * `ManualAdjust` move, but it is a game event, so forced effects fire.
- * Produces `CardMoved`.
+ * Produces `CardMoved`; a card leaving play first loses its attachments and tokens and is readied
+ * (`handleMoveCard`), and a player card sent to the encounter discard goes out of the game.
  */
 export interface MoveCard {
   type: 'MoveCard';
@@ -174,19 +174,6 @@ export interface MoveCard {
   to: Zone;
   /** Position in the destination, 0 = top (e.g. the top of the encounter discard); default the bottom. */
   index?: number;
-}
-
-/**
- * A card effect discards an encounter card ("discard it"): onto the top of
- * the encounter discard, where "topmost" effects look for it, losing its
- * tokens and taking its attachments along (`discardEncounterCard`). A player
- * card goes out of the game instead, back to its owner. Produces
- * `CardMoved`, after `TokensChanged` for any tokens and the attachments'
- * own events.
- */
-export interface DiscardCard {
-  type: 'DiscardCard';
-  cardId: InstanceId;
 }
 
 /**
@@ -521,7 +508,7 @@ export interface ChangeChaosBag {
  * restriction (`enemiesMoveInto` but for Elite enemies). Produces `PlayerCardAttached`, a new card
  * attached to the host; rejects a host that is no enemy or location in play, or not the one the
  * card attaches to (`CardStats.attachesTo`, `invalidAttachmentHost`), and a card that is no player asset or event (`notAPlayerCard`). It leaves
- * play with its host, and `DiscardCard` discards it out of the game (`isPlayerCard`).
+ * play with its host, and `discard` sends it out of the game (`isPlayerCard`).
  */
 export interface AttachPlayerCard {
   type: 'AttachPlayerCard';

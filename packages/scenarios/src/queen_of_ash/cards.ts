@@ -1,5 +1,6 @@
 import {
   advanceAct,
+  discard,
   afterDiscoveringClues,
   afterEntering,
   atEndOfPhase,
@@ -313,7 +314,7 @@ export const queenOfAshCardDefs: readonly CardStats[] = [
         free: true,
         cost: { spend: 'groupClues', amount: perInvestigator(1) },
         // A location holds at most one Fire! (its limit), so each one there is "a copy".
-        effects: [{ type: 'DiscardCard', cardId: eachInPlay({ code: fire, at: yourLocation() }) }],
+        effects: [discard(eachInPlay({ code: fire, at: yourLocation() }))],
       },
     ],
     abilities: [

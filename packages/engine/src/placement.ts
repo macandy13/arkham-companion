@@ -1,10 +1,8 @@
 import { assertNever } from '@arkham/util';
 import { cardStats, type CopyLimit, type EngineContext } from './cards';
-import type { DiscardCard, MoveCard } from './commands';
+import type { MoveCard } from './commands';
 import type { CardMoved, Event, TokensChanged } from './events';
-import { readyEnemyEngagements } from './engagement';
 import { requireCard } from './lookup';
-import { replay } from './reducer';
 import { discardPileOf } from './player_cards';
 import { CommandRejected } from './rejection';
 import type { InstanceId } from './ids';
@@ -145,25 +143,10 @@ export function discardEncounterCard(
 }
 
 /**
- * `DiscardCard`: discards the card the way a resolved encounter card is (`discardEncounterCard`).
- * A card that gave enemies a keyword (Hiding Spot's aloof) takes it along, so a ready enemy left
- * unengaged next to an investigator engages them (RR "Enemy Engagement").
- */
-export function handleDiscardCard(ctx: EngineContext, state: GameState, cmd: DiscardCard): Event[] {
-  const discarded = discardEncounterCard(ctx, state, requireCard(state.cards, cmd.cardId).id);
-  const grantedKeywords = discarded.some(
-    (event) =>
-      event.type === 'CardMoved' &&
-      cardStats(ctx.cards, requireCard(state.cards, event.cardId).code).keywordGrants !== undefined,
-  );
-  if (!grantedKeywords) return discarded;
-  return [...discarded, ...readyEnemyEngagements(ctx, replay(discarded, state))];
-}
-
-/**
  * The command that discards an encounter card onto the top of the encounter
  * discard, where "topmost" effects look for it: a resolved revelation, or an
- * investigated location's attachment. Card abilities use `DiscardCard`.
+ * investigated location's attachment. Card abilities use `discard`, the same move for a card
+ * reference instead of an ID.
  */
 export function discardToTop(cardId: InstanceId): MoveCard {
   return { type: 'MoveCard', cardId, to: { kind: 'encounterDiscard' }, index: 0 };

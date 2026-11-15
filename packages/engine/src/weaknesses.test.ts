@@ -144,7 +144,7 @@ describe('DrawWeakness', () => {
       state,
       aliceDraws(lingeringWeakness),
       resolveRevelation(alicesWeakness),
-      { type: 'DiscardCard', cardId: alicesWeakness },
+      { type: 'MoveCard', cardId: alicesWeakness, to: { kind: 'encounterDiscard' } },
     );
 
     expect(after.cards[alicesWeakness]?.zone).toEqual(outOfGame);

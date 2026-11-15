@@ -153,8 +153,9 @@ describe('Hiding Spot at the hall, where Alice is', () => {
     });
 
     const after = stateAfter(context, hidden, {
-      type: 'DiscardCard',
+      type: 'MoveCard',
       cardId: onlyAttachmentOf(hidden, hall),
+      to: { kind: 'encounterDiscard' },
     });
 
     expect(zoneOf(after, ghoul)).toEqual(engagedWith(alice));

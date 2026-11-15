@@ -227,7 +227,7 @@ export interface GameActions {
    * to its host.
    */
   attachPlayerCard(host: InstanceId, card: CardCode): Promise<void>;
-  /** Discards the card `card` in play, as its own Forced ability or another card says (`DiscardCard`). */
+  /** Discards the card `card` in play, as its own Forced ability or another card says: a `MoveCard` onto the top of the encounter discard, which cleans it up as it leaves play. */
   discardCard(card: InstanceId): Promise<void>;
   /**
    * `investigator` draws the weakness `card` from their deck (`DrawWeakness`), one of the
@@ -433,7 +433,10 @@ export function gameActions(
       play((table) => table.play({ type: 'RevealLocation', locationId: location })),
     attachPlayerCard: (host, card) =>
       play((table) => table.play({ type: 'AttachPlayerCard', hostId: host, code: card })),
-    discardCard: (card) => play((table) => table.play({ type: 'DiscardCard', cardId: card })),
+    discardCard: (card) =>
+      play((table) =>
+        table.play({ type: 'MoveCard', cardId: card, to: { kind: 'encounterDiscard' }, index: 0 }),
+      ),
     drawWeakness: (investigator, card) =>
       play((table) =>
         table.play({ type: 'DrawWeakness', investigatorId: investigator, code: card }),
