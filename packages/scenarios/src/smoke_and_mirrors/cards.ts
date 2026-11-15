@@ -34,6 +34,7 @@ import {
   putIntoThreatArea,
   resignAction,
   resolutionId,
+  SKILL_NAMES,
   skillTest,
   skillTestOfEither,
   statOf,
@@ -139,7 +140,6 @@ const jpg = 'jpg';
  *   deals to allies
  * - Arcane Lock's additional action to enter or leave its location (MC2.4)
  * - the whole revelation of Downpour (a choice per point failed)
- * - Whippoorwill's -1 to each skill of each investigator at its location
  */
 export const smokeAndMirrorsCardDefs: readonly CardStats[] = [
   agenda({
@@ -599,6 +599,7 @@ export const smokeAndMirrorsCardDefs: readonly CardStats[] = [
     horror: 1,
     quantity: 3,
     keywords: [{ name: 'aloof' }, { name: 'hunter' }],
+    modifiers: SKILL_NAMES.map((skill) => ({ value: skill, of: 'investigatorsHere', by: -1 })),
   }),
   treachery({
     code: '12167',

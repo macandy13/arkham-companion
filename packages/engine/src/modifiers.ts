@@ -181,7 +181,9 @@ function names(
     case 'combat':
     case 'agility':
     case 'actionCost':
-      return subject.kind === 'investigator' && binds(source, modifier.of, subject.investigatorId);
+      return (
+        subject.kind === 'investigator' && binds(state, source, modifier.of, subject.investigatorId)
+      );
     default:
       return assertNever(modifier);
   }
