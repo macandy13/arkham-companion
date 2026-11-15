@@ -39,6 +39,8 @@ export interface AgendaOptions {
   abilities?: readonly Ability[];
   /** Its action abilities, such as `resignAction()`. */
   actions?: readonly CardAction[];
+  /** Its constant modifiers while it is the current agenda ("Each enemy gets +1 fight"). */
+  modifiers?: readonly Modifier[];
 }
 
 /** Card stats for a hand-entered agenda of `set`, with both printed sides. */
@@ -50,6 +52,7 @@ export function agenda({
   doom,
   abilities,
   actions,
+  modifiers,
   pictures,
 }: AgendaOptions): CardStats {
   return {
@@ -59,6 +62,7 @@ export function agenda({
     ...(doom === undefined ? {} : { doom: fixed(doom) }),
     ...(abilities ? { abilities } : {}),
     ...(actions ? { actions } : {}),
+    ...(modifiers ? { modifiers } : {}),
   };
 }
 
@@ -203,6 +207,8 @@ export interface EnemyOptions {
   actions?: readonly CardAction[];
   /** Its "cannot" abilities (The Masked Hunter: who is engaged with it can't discover or spend clues). */
   restrictions?: readonly CardRestriction[];
+  /** Its constant modifiers (Whippoorwill's -1 to each skill of each investigator at its location). */
+  modifiers?: readonly Modifier[];
 }
 
 /** Card stats for a hand-entered enemy, with its front picture (its back is the encounter back). */

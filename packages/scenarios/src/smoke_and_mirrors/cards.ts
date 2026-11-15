@@ -37,6 +37,7 @@ import {
   putIntoThreatArea,
   resignAction,
   resolutionId,
+  SKILL_NAMES,
   skillTest,
   skillTestOfEither,
   statOf,
@@ -149,7 +150,6 @@ const jpg = 'jpg';
  *   additional action to investigate (MC2.4), and the damage Miskatonic University (In Flames)
  *   deals to allies
  * - Arcane Lock's additional action to enter or leave its location (MC2.4)
- * - Whippoorwill's -1 to each skill of each investigator at its location
  */
 export const smokeAndMirrorsCardDefs: readonly CardStats[] = [
   agenda({
@@ -623,6 +623,7 @@ export const smokeAndMirrorsCardDefs: readonly CardStats[] = [
     horror: 1,
     quantity: 3,
     keywords: [{ name: 'aloof' }, { name: 'hunter' }],
+    modifiers: SKILL_NAMES.map((skill) => ({ value: skill, of: 'investigatorsHere', by: -1 })),
   }),
   treachery({
     code: '12167',

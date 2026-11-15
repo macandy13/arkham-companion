@@ -50,7 +50,7 @@ export interface ActionCostModifier {
  * (`hasActiveAbilities`). `modifiersOn` is the one place that collects them.
  */
 export type Modifier =
-  | { value: LocationValue; of: Exclude<CardScope, 'enemiesHere'>; by: number }
+  | { value: LocationValue; of: Exclude<CardScope, 'enemiesHere' | 'eachEnemy'>; by: number }
   | { value: EnemyValue; of: CardScope; by: number }
   | { value: SkillName; of: InvestigatorScope; by: number }
   | ActionCostModifier;
@@ -177,7 +177,9 @@ function names(
     case 'combat':
     case 'agility':
     case 'actionCost':
-      return subject.kind === 'investigator' && binds(source, modifier.of, subject.investigatorId);
+      return (
+        subject.kind === 'investigator' && binds(state, source, modifier.of, subject.investigatorId)
+      );
     default:
       return assertNever(modifier);
   }

@@ -25,6 +25,7 @@ A buff or nerf of a number is a `CardStats.modifiers` entry, named by the value 
 
 - Obscuring Fog, "Attached location gets +2 shroud": `modifiers: [{ value: 'shroud', of: 'host', by: 2 }]`.
 - "Each enemy at this location gets +1 fight": `modifiers: [{ value: 'fight', of: 'enemiesHere', by: 1 }]`.
+- Whippoorwill, "Each investigator at Whippoorwill's location gets -1 to each skill": `modifiers: SKILL_NAMES.map((skill) => ({ value: skill, of: 'investigatorsHere', by: -1 }))`.
 - Frozen in Fear, "The first move, fight, or evade action you perform each round costs 1 additional action":
   `modifiers: [{ value: 'actionCost', of: 'threatArea', actions: ['move', 'fight', 'evade'], first: 'eachRound', by: 1 }]`.
 

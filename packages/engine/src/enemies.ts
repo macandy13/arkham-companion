@@ -230,14 +230,16 @@ export function enemiesOnTable(
   state: GameState,
   trait?: Trait,
 ): CardInstance[] {
-  return Object.values(state.cards).filter((card) => {
-    const stats = cardStats(ctx.cards, card.code);
-    return (
-      isEnemyOnTable(card) &&
-      stats.typeCode === 'enemy' &&
-      (trait === undefined || stats.traits.includes(trait))
-    );
-  });
+  return Object.values(state.cards).filter(
+    (card) =>
+      isEnemyCardOnTable(ctx, card) &&
+      (trait === undefined || cardStats(ctx.cards, card.code).traits.includes(trait)),
+  );
+}
+
+/** Whether `card` is an enemy on the table (`isEnemyOnTable`), not another card at a location. */
+export function isEnemyCardOnTable(ctx: EngineContext, card: CardInstance): boolean {
+  return isEnemyOnTable(card) && cardStats(ctx.cards, card.code).typeCode === 'enemy';
 }
 
 /**

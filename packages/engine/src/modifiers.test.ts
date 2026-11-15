@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   atLocation,
   attachedTo,
+  blankAgenda,
   blankEnemy,
   blankLocation,
   blankTreachery,
@@ -104,6 +105,37 @@ describe('effectiveValue', () => {
   });
 });
 
+describe('effectiveValue with a modifier of each enemy', () => {
+  const ritual = instanceId('ritual');
+  /** An agenda without a doom threshold whose enemies all get +1 fight while it is the current agenda. */
+  const ritualCard = blankAgenda('ritual', null, {
+    modifiers: [{ value: 'fight', of: 'eachEnemy', by: 1 }],
+  });
+
+  it.each([
+    { name: 'at the hall', zone: atLocation(hall), fight: 4 },
+    { name: 'engaged with alice', zone: engagedWith(alice), fight: 4 },
+    { name: 'set aside', zone: setAside, fight: 3 },
+  ])('gives the ghoul (fight 3) $name the fight of the current agenda', ({ zone, fight }) => {
+    const { context, state } = aliceInStudy
+      .withAgenda(ritual, ritualCard)
+      .withCard(ghoul, ghoulCard, zone)
+      .start();
+
+    expect(effectiveValue(context, state, requireCard(state.cards, ghoul), 'fight')).toBe(fight);
+  });
+
+  it('gives nothing while the agenda waits under the current one: the ghoul keeps fight 3', () => {
+    const { context, state } = aliceInStudy
+      .withAgenda(instanceId('first_agenda'), blankAgenda('first_agenda', null))
+      .withAgenda(ritual, ritualCard)
+      .withCard(ghoul, ghoulCard, atLocation(hall))
+      .start();
+
+    expect(effectiveValue(context, state, requireCard(state.cards, ghoul), 'fight')).toBe(3);
+  });
+});
+
 describe('effectiveValue with a modifier of the card itself', () => {
   it('adds the shroud a revealed location gives itself: 2 + 1', () => {
     const gloomyCard = blankLocation('gloomy', {
@@ -196,5 +228,35 @@ describe('skillValues', () => {
       .start();
 
     expect(skillValues(context, state, requireInvestigator(state, alice)).intellect).toBe(0);
+  });
+});
+
+describe('skillValues with a modifier of each investigator at its location', () => {
+  const whisperer = instanceId('whisperer');
+  /** An enemy that gives each investigator at its location -1 willpower. */
+  const whispererCard = blankEnemy('whisperer', {
+    modifiers: [{ value: 'willpower', of: 'investigatorsHere', by: -1 }],
+  });
+  /** Alice (willpower 3) in the study, next to the hall. */
+  const aliceWithWillpower3 = newGame()
+    .withLocation(study, blankLocation('study'), { revealed: true })
+    .withLocation(hall, blankLocation('hall'), { revealed: true })
+    .withConnection(study, hall)
+    .withInvestigator(alice, {
+      locationId: study,
+      skills: { willpower: 3, intellect: 2, combat: 1, agility: 4 },
+    });
+
+  it.each([
+    { name: 'at her location', zone: atLocation(study), willpower: 2 },
+    { name: 'engaged with her', zone: engagedWith(alice), willpower: 2 },
+    { name: 'at the hall', zone: atLocation(hall), willpower: 3 },
+    { name: 'set aside', zone: setAside, willpower: 3 },
+  ])('gives alice willpower $willpower with the enemy $name', ({ zone, willpower }) => {
+    const { context, state } = aliceWithWillpower3.withCard(whisperer, whispererCard, zone).start();
+
+    expect(skillValues(context, state, requireInvestigator(state, alice)).willpower).toBe(
+      willpower,
+    );
   });
 });

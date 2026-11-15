@@ -97,6 +97,7 @@ export const appTexts = {
     actAdvanced: 'Der Akt {{card}} rückt vor',
     drawn: '{{investigator}} zieht {{card}}',
     surge: '{{card}} erhält Nachrücken',
+    playerCardAttached: '{{card}} an {{host}} angehängt',
     revelationCancelled: '{{investigator}} verhindert die Enthüllung von {{card}}',
     cardAction: '{{investigator}} nutzt {{card}}',
     playerCards: {

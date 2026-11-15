@@ -1,4 +1,5 @@
-import { firstSteps, neighbours, shortestPaths } from './board';
+import { firstSteps, neighbours, requireLocationInPlay, shortestPaths } from './board';
+import { isClosedToEnemy } from './restrictions';
 import type { MoveHunter, MoveHunters } from './commands';
 import { CommandRejected } from './rejection';
 import { cardStats, type EngineContext } from './cards';
@@ -211,7 +212,17 @@ function nearestRoutes(
   if (active.some((investigator) => investigator.locationId === from)) return [];
   const routes = active.flatMap((investigator) => routeTo(ctx, state, from, investigator));
   const shortest = Math.min(...routes.map((route) => route.distance));
-  return routes.filter((route) => route.distance === shortest);
+  // RR "Hunter": distance counts through a location closed to it (Barricade), but it does not
+  // step into one; with no other step on its shortest routes, it stays.
+  return routes
+    .filter((route) => route.distance === shortest)
+    .map((route) => ({
+      ...route,
+      steps: route.steps.filter(
+        (step) => !isClosedToEnemy(ctx, state, hunter, requireLocationInPlay(state, step)),
+      ),
+    }))
+    .filter((route) => route.steps.length > 0);
 }
 
 function routeTo(

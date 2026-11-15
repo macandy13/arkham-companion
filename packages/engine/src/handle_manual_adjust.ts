@@ -37,7 +37,7 @@ export function handleMoveCard(ctx: EngineContext, state: GameState, cmd: MoveCa
   const moved = cardMoved(state, card, cmd.to, cmd.index);
   if (!leavesPlay(state, card, cmd.to)) return [moved];
   const attachments = cardsInZone(state, attachedTo(card.id)).flatMap((attachedId) =>
-    discardEncounterCard(state, attachedId),
+    discardEncounterCard(ctx, state, attachedId),
   );
   // Cards enter play ready (RR "Ready"), so an evaded enemy set aside comes back able to engage.
   const readied: Event[] = card.exhausted

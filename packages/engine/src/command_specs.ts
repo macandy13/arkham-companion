@@ -12,6 +12,7 @@ import { handleMarginEntry, handleRequestDecision, handleResolveDecision } from 
 import { agendaThresholdDecision } from './doom';
 import { readyEnemyEngagements } from './engagement';
 import type { Event } from './events';
+import { handleAttachPlayerCard } from './player_cards';
 import {
   handleAddConnection,
   handleAddMap,
@@ -201,7 +202,7 @@ const COMMAND_SPECS: CommandSpecs = {
     allowedAfterEnd: true,
   },
   MoveCard: { handle: (ctx, state, command) => handleMoveCard(ctx, state, command) },
-  DiscardCard: { handle: (_ctx, state, command) => handleDiscardCard(state, command) },
+  DiscardCard: { handle: handleDiscardCard },
   AddMap: { handle: handleAddMap },
   PutLocationIntoPlay: { handle: handlePutLocationIntoPlay },
   AddConnection: { handle: handleAddConnection },
@@ -236,6 +237,7 @@ const COMMAND_SPECS: CommandSpecs = {
   DiscoverClues: { handle: handleDiscoverClues },
   ChangeChaosBag: { handle: (_ctx, state, command) => handleChangeChaosBag(state, command) },
   SealChaosToken: { handle: (_ctx, state, command) => handleSealChaosToken(state, command) },
+  AttachPlayerCard: { handle: handleAttachPlayerCard },
   ReleaseChaosToken: {
     handle: (_ctx, state, command) => handleReleaseChaosToken(state, command),
   },
