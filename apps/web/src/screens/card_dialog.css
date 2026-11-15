@@ -224,18 +224,19 @@
 
 /*
  * The parts of a card's page under its values (who is at a location, the cards attached to a
- * location or an enemy), on the details and the phone's location mode (map.css): each a column
+ * location or an enemy), on those details and the phone's location mode (map.css), not on the
+ * other card dialogs' pages (a skill test's rows): each a column
  * under its small title. An attached card's name and its Discard stand in one row, and Attach a
  * card under them keeps its own width.
  */
-#board dialog[data-shell] > article > section,
+#board :is(dialog[data-dialog='location'], dialog[data-dialog='enemy']) > article > section,
 #map [data-mode='location'] > section {
   display: flex;
   flex-direction: column;
   gap: var(--space-1);
 }
 
-#board dialog[data-shell] > article > section > h3,
+#board :is(dialog[data-dialog='location'], dialog[data-dialog='enemy']) > article > section > h3,
 #map [data-mode='location'] > section > h3 {
   margin: 0;
   font-size: var(--font-size-caption);
@@ -244,18 +245,27 @@
   text-transform: uppercase;
 }
 
-#board dialog[data-shell] > article > section > ul,
+#board :is(dialog[data-dialog='location'], dialog[data-dialog='enemy']) > article > section > ul,
 #map [data-mode='location'] > section > ul {
   margin: 0;
   padding-left: var(--space-3);
 }
 
-#board dialog[data-shell] > article > section > button,
+#board
+  :is(dialog[data-dialog='location'], dialog[data-dialog='enemy'])
+  > article
+  > section
+  > button,
 #map [data-mode='location'] > section > button {
   align-self: flex-start;
 }
 
-#board dialog[data-shell] > article > section > ul > li,
+#board
+  :is(dialog[data-dialog='location'], dialog[data-dialog='enemy'])
+  > article
+  > section
+  > ul
+  > li,
 #map [data-mode='location'] > section > ul > li {
   display: flex;
   align-items: center;
