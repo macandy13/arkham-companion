@@ -56,6 +56,7 @@ export type Command =
   | SearchDeck
   | DiscardFromHand
   | DiscardAsset
+  | HealAsset
   | PlayCard
   | SpendCluesAsGroup
   | TakeDamageAndHorror
@@ -396,13 +397,15 @@ export interface DrawCards extends ActionCommand, AskedByCard {
 
 /**
  * "Search (the top `top` cards of) your deck for a card with one of `traits`, add it to your hand
- * and shuffle your deck." Left to the players like `DrawCards`.
+ * and shuffle your deck", or "… and play it (paying its cost)" with `play` (Easttown). Left to
+ * the players like `DrawCards`.
  */
 export interface SearchDeck extends AskedByCard {
   type: 'SearchDeck';
   investigatorId: InvestigatorId;
   traits: readonly Trait[];
   top?: number;
+  play?: true;
 }
 
 /**
@@ -440,8 +443,22 @@ export interface DiscardAsset extends AskedByCard {
   investigatorId: InvestigatorId;
 }
 
+/**
+ * "Heal N horror from an [[Ally]] asset at this location" (Arkham Sanatorium): the investigator
+ * heals `amount` of `stat` from an asset with `trait` at their location. Assets are player cards,
+ * so it is left to the players like `DrawCards`.
+ */
+export interface HealAsset extends AskedByCard {
+  type: 'HealAsset';
+  investigatorId: InvestigatorId;
+  stat: WoundKind;
+  amount: number;
+  trait: Trait;
+}
+
 /** The commands on player cards, which the engine defers to the players (`CommandDeferred`). */
-export type PlayerCardCommand = DrawCards | SearchDeck | PlayCard | DiscardFromHand | DiscardAsset;
+export type PlayerCardCommand =
+  DrawCards | SearchDeck | PlayCard | DiscardFromHand | DiscardAsset | HealAsset;
 
 /**
  * Whether the players took `command` as an action at the table (the draw or play action), rather
@@ -455,6 +472,7 @@ export function takenAsAction(command: PlayerCardCommand): boolean {
     case 'SearchDeck':
     case 'DiscardFromHand':
     case 'DiscardAsset':
+    case 'HealAsset':
       return false;
   }
 }

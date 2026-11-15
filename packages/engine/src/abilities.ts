@@ -335,7 +335,12 @@ export type RelativeInvestigator =
   | { ref: 'windowInvestigator' }
   | { ref: 'lead' }
   /** Each investigator still in the scenario, in player order; only those at `at` when given. */
-  | { ref: 'eachInvestigator'; at?: RelativeCard };
+  | { ref: 'eachInvestigator'; at?: RelativeCard }
+  /**
+   * One investigator still in the scenario, at `at` when given, picked by the investigator the
+   * window names when there are several ("heal 1 horror from an investigator at this location").
+   */
+  | { ref: 'anInvestigator'; at?: RelativeCard };
 
 /** Which locations in play a `locationWith` reference may stand for: those with `trait`. */
 export interface LocationFilter {
@@ -393,6 +398,7 @@ export type AbilityCommand =
           | 'SearchDeck'
           | 'DiscardFromHand'
           | 'DiscardAsset'
+          | 'HealAsset'
           | 'TakeDamageAndHorror'
           | 'CheckDoomThreshold'
           | 'MoveTokens'
@@ -979,7 +985,7 @@ function countOf(
     refs.windowInvestigator === undefined
       ? undefined
       : requireInvestigator(state, refs.windowInvestigator).locationId;
-  return candidatesFor(ctx, state, of, opened.cardId, from).length;
+  return candidatesFor(ctx, state, of, opened.cardId, from, refs).length;
 }
 
 /** The values `quantity` reads as `opened` opens, one per investigator or card it names. */
@@ -1041,7 +1047,7 @@ export function resolveEffect(
   const deferred = withDeferredOutcomes(withDifficultyChanges(ctx, state, effect, opened), opened);
   const each = repeatedRef(deferred);
   const ids = each === undefined ? [undefined] : eachId(ctx, state, each, refs);
-  const commandsFor = (picked?: InstanceId): AbilityCommand[] =>
+  const commandsFor = (picked?: InstanceId | InvestigatorId): AbilityCommand[] =>
     ids.flatMap((id, repetition) => {
       const setAsideCopy = (code: CardCode) => setAsideCopyOf(state, code, repetition);
       const resolved = resolveRefs(deferred, { ...refs, each: id, picked, setAsideCopy });
@@ -1060,10 +1066,17 @@ export function resolveEffect(
   if (picked === undefined) return commandsFor();
   if (refs.windowInvestigator === undefined) return [];
   const investigator = requireInvestigator(state, refs.windowInvestigator);
-  const candidates = candidatesFor(ctx, state, picked, opened.cardId, investigator.locationId);
+  const candidates = candidatesFor(
+    ctx,
+    state,
+    picked,
+    opened.cardId,
+    investigator.locationId,
+    refs,
+  );
   const [first, ...others] = candidates;
   if (first === undefined) return [];
-  if (others.length === 0) return commandsFor(first.id);
+  if (others.length === 0) return commandsFor(first);
   return [
     pickDecision(ctx, state, opened.cardId, picked, investigator.id, candidates, commandsFor),
   ];
@@ -1141,7 +1154,9 @@ function withDeferredOutcomes(effect: AbilityEffect, opened: OpenedWindow): unkn
     const options = effect.decision.options.map((option) => ({
       ...option,
       commands: option.commands.map((inner) =>
-        repeatedRef(inner) === undefined ? inner : defer([inner])[0],
+        repeatedRef(inner) === undefined && pickedRef(inner) === undefined
+          ? inner
+          : defer([inner])[0],
       ),
     }));
     return { ...effect, decision: { ...effect.decision, options } };
@@ -1188,41 +1203,70 @@ function pickQuestion(
         prompt: 'decision.chooseLocationToAttach',
         decider: { kind: 'lead' },
       };
+    case 'anInvestigator':
+      return {
+        key: 'investigator',
+        kind: 'chooseInvestigator',
+        prompt: 'decision.chooseInvestigatorFor',
+        decider: { kind: 'investigator', investigatorId },
+      };
     default:
       return assertNever(picked);
   }
 }
 
 /** A reference that stands for one of several candidates, which someone may have to pick. */
-export type PickedRef = Extract<
-  RelativeCard,
-  { ref: 'nearestEnemy' | 'locationWith' | 'locationWithMost' | 'nearestLocation' }
->;
+export type PickedRef =
+  | Extract<
+      RelativeCard,
+      { ref: 'nearestEnemy' | 'locationWith' | 'locationWithMost' | 'nearestLocation' }
+    >
+  | Extract<RelativeInvestigator, { ref: 'anInvestigator' }>;
 
 /**
  * The first reference in `effect` with candidates (`nearestEnemy`, `locationWith`,
- * `locationWithMost`, `nearestLocation`), if it holds one.
+ * `locationWithMost`, `nearestLocation`, `anInvestigator`), if it holds one.
  */
 function pickedRef(effect: unknown): PickedRef | undefined {
   return findRef(effect, (ref) =>
     ref.ref === 'nearestEnemy' ||
     ref.ref === 'locationWith' ||
     ref.ref === 'locationWithMost' ||
-    ref.ref === 'nearestLocation'
+    ref.ref === 'nearestLocation' ||
+    ref.ref === 'anInvestigator'
       ? ref
       : undefined,
   );
 }
 
 /**
- * The cards `picked` may stand for when `cardId`'s ability resolves, counted from `from`, the
- * location of the investigator the window names: no nearest enemy without it, while the
- * location with the most tokens doesn't depend on it.
+ * The cards or investigators `picked` may stand for when `cardId`'s ability resolves, counted
+ * from `from`, the location of the investigator the window names: no nearest enemy without it,
+ * while the location with the most tokens doesn't depend on it.
  */
 function candidatesFor(
   ctx: EngineContext,
   state: GameState,
   picked: PickedRef,
+  cardId: InstanceId,
+  from: InstanceId | undefined,
+  refs: ResolvedRefs,
+): (InstanceId | InvestigatorId)[] {
+  if (picked.ref === 'anInvestigator') {
+    const at = picked.at === undefined ? undefined : resolveRefs(picked.at, refs);
+    if (picked.at !== undefined && at === undefined) return [];
+    return playerOrder(state)
+      .filter((inv) => at === undefined || inv.locationId === at)
+      .map((inv) => inv.id);
+  }
+  return candidateCards(ctx, state, picked, cardId, from).map((card) => card.id);
+}
+
+/** The cards a card reference with candidates may stand for (`candidatesFor`). */
+function candidateCards(
+  ctx: EngineContext,
+  state: GameState,
+  picked: Exclude<PickedRef, { ref: 'anInvestigator' }>,
   cardId: InstanceId,
   from: InstanceId | undefined,
 ): CardInstance[] {
@@ -1266,8 +1310,9 @@ function candidatesFor(
 
 /**
  * Several candidates for `picked`: equally near enemies are the lead
- * investigator's pick (Rules Reference, "Choices"), a location to move to is
- * the moving investigator's own. Each option runs the effect for its card.
+ * investigator's pick (Rules Reference, "Choices"), a location to move to or an
+ * investigator to heal is the window investigator's own. Each option runs the effect for its
+ * card or investigator.
  */
 function pickDecision(
   ctx: EngineContext,
@@ -1275,26 +1320,25 @@ function pickDecision(
   cardId: InstanceId,
   picked: PickedRef,
   investigatorId: InvestigatorId,
-  candidates: readonly CardInstance[],
-  commandsFor: (pickedId: InstanceId) => AbilityCommand[],
+  candidates: readonly (InstanceId | InvestigatorId)[],
+  commandsFor: (pickedId: InstanceId | InvestigatorId) => AbilityCommand[],
 ): Command {
   const { key, ...asked } = pickQuestion(picked, investigatorId);
-  const labels = cardOptionLabels(
-    ctx,
-    state,
-    candidates.map((card) => card.id),
-  );
+  const labels =
+    picked.ref === 'anInvestigator'
+      ? candidates.map((id) => requireInvestigator(state, id as InvestigatorId).name)
+      : cardOptionLabels(ctx, state, candidates as InstanceId[]);
   return {
     type: 'RequestDecision',
     decision: {
       ...asked,
       id: decisionId(`${key}:${cardId}`),
       subject: cardId,
-      options: candidates.map((card, i) => ({
-        id: card.id,
-        label: labels[i] ?? card.id,
-        target: card.id,
-        commands: commandsFor(card.id),
+      options: candidates.map((id, i) => ({
+        id,
+        label: labels[i] ?? id,
+        target: id,
+        commands: commandsFor(id),
       })),
     },
   };
@@ -1317,10 +1361,10 @@ interface ResolvedRefs {
   /** The investigator or enemy of this repetition of an effect on each of them. */
   each?: InstanceId | InvestigatorId;
   /**
-   * The card a reference with candidates stands for (`pickedRef`): the only
+   * The card or investigator a reference with candidates stands for (`pickedRef`): the only
    * candidate, or the one picked among them.
    */
-  picked?: InstanceId;
+  picked?: InstanceId | InvestigatorId;
 }
 
 /** A reference that repeats the command, as `eachInvestigator` does. */
@@ -1511,6 +1555,7 @@ function resolveRefs(value: unknown, refs: ResolvedRefs): unknown {
       case 'locationWith':
       case 'locationWithMost':
       case 'nearestLocation':
+      case 'anInvestigator':
         return refs.picked;
       default:
         return assertNever(value);
@@ -1997,6 +2042,7 @@ function withSource<C extends { readonly type: string }>(command: C, source: Com
     case 'PlayCard':
     case 'DiscardFromHand':
     case 'DiscardAsset':
+    case 'HealAsset':
     case 'AdjustActions':
     case 'EndTurn':
     case 'DiscoverClues':
@@ -2121,7 +2167,7 @@ export function discardAsset(
  */
 export function searchDeck(
   traits: readonly Trait[],
-  { top }: { top?: number } = {},
+  { top, play }: { top?: number; play?: true } = {},
   who: RelativeInvestigator = { ref: 'windowInvestigator' },
 ): AbilityEffect {
   return {
@@ -2129,7 +2175,21 @@ export function searchDeck(
     investigatorId: who,
     traits,
     ...(top === undefined ? {} : { top }),
+    ...(play === undefined ? {} : { play }),
   };
+}
+
+/**
+ * "Heal N horror from an [[Ally]] asset at this location" (`HealAsset`), left to the players:
+ * `healAsset('horror', 1, trait('Ally'))`.
+ */
+export function healAsset(
+  stat: WoundKind,
+  amount: number,
+  assetTrait: Trait,
+  who: RelativeInvestigator = { ref: 'windowInvestigator' },
+): AbilityEffect {
+  return { type: 'HealAsset', investigatorId: who, stat, amount, trait: assetTrait };
 }
 
 /** "Gain N clues from the token pool" (Northside): a `MoveTokens` from the pool. */
@@ -2304,6 +2364,16 @@ export function eachInvestigator(
   filter: { at?: RelativeCard } = {},
 ): Extract<RelativeInvestigator, { ref: 'eachInvestigator' }> {
   return { ref: 'eachInvestigator', ...filter };
+}
+
+/**
+ * "An investigator [at a location]" (`anInvestigator`), picked by the investigator the window
+ * names when several stand there: `heal('horror', 1, anInvestigator({ at: thisLocation() }))`.
+ */
+export function anInvestigator(
+  filter: { at?: RelativeCard } = {},
+): Extract<RelativeInvestigator, { ref: 'anInvestigator' }> {
+  return { ref: 'anInvestigator', ...filter };
 }
 
 /** "Its location": the location the window names (`windowLocation`), such as where a defeated enemy was. */

@@ -1,4 +1,5 @@
 import {
+  anInvestigator,
   advanceAct,
   afterDiscoveringClues,
   afterEngaging,
@@ -25,7 +26,10 @@ import {
   fromSetAside,
   gainResources,
   gainSurge,
+  heal,
+  healAsset,
   ifNoCandidate,
+  ifValue,
   ifYouHave,
   itsLocation,
   loseResources,
@@ -40,12 +44,16 @@ import {
   reaction,
   resignAction,
   resolutionId,
+  searchDeck,
+  self,
   SKILL_NAMES,
   skillTest,
   skillTestOfEither,
   statOf,
   takeDamage,
   takeHorror,
+  thisLocation,
+  tokensOn,
   trait,
   whenAdvanced,
   whenRevealed,
@@ -116,7 +124,14 @@ export const DOWNPOUR_DECISION = decisionId('smokeAndMirrors.downpour');
 /** Id of Arcane Lock's question to the investigator who tests to discard it: willpower or intellect? */
 export const ARCANE_LOCK_DECISION = decisionId('smokeAndMirrors.arcaneLock');
 
+/**
+ * Id of Arkham Sanatorium's question to the investigator who uses its reaction: heal 1 horror
+ * from an investigator at the Sanatorium, or from an [[Ally]] asset there?
+ */
+export const SANATORIUM_DECISION = decisionId('smokeAndMirrors.sanatorium');
+
 const downpour = 'scenario.smokeAndMirrors.downpour';
+const sanatorium = 'scenario.smokeAndMirrors.sanatorium';
 
 const codes = SMOKE_AND_MIRRORS_CODES;
 const sets = SMOKE_AND_MIRRORS_SETS;
@@ -147,9 +162,10 @@ const jpg = 'jpg';
  * - the Mark of Elokoss each investigator draws as Arkham Alive advances goes into their deck
  * - Mark of Elokoss' damage as its holder's turn ends (assigned to an asset if able) and its
  *   two-action discard
- * - the Arkham locations' reactions and actions other than First Bank of Arkham's resource
- *   (healing, two deck searches, a clue for 5 resources, a free move, cards drawn, a charge or
- *   secret, a Tome or Spell played from the discard pile: MC2.3, MC2.4), Waterfront District's
+ * - the Arkham locations' reactions and actions other than First Bank of Arkham's resource,
+ *   Arkham Sanatorium's healing and Easttown's ally search (St. Mary's healing, a deck search, a
+ *   clue for 5 resources, a free move, cards drawn, a charge or secret, a Tome or Spell played
+ *   from the discard pile: MC2.3, MC2.4), Waterfront District's
  *   additional action to investigate (MC2.4), and the damage Miskatonic University (In Flames)
  *   deals to allies
  * - Arcane Lock's additional action to enter or leave its location (MC2.4)
@@ -345,6 +361,24 @@ export const smokeAndMirrorsCardDefs: readonly CardStats[] = [
     shroud: 4,
     cluesPerInvestigator: 2,
     victory: 1,
+    abilities: [
+      reaction(
+        afterDiscoveringClues(
+          youMustEither(SANATORIUM_DECISION, `${sanatorium}.prompt`, [
+            {
+              id: 'investigator',
+              label: `${sanatorium}.investigator`,
+              effects: [heal('horror', 1, anInvestigator({ at: thisLocation() }))],
+            },
+            {
+              id: 'ally',
+              label: `${sanatorium}.ally`,
+              effects: [healAsset('horror', 1, trait('Ally'))],
+            },
+          ]),
+        ),
+      ),
+    ],
   }),
   location({
     code: codes.uptownHospital,
@@ -389,6 +423,16 @@ export const smokeAndMirrorsCardDefs: readonly CardStats[] = [
     traits: ['Arkham'],
     shroud: 2,
     cluesPerInvestigator: 1,
+    abilities: [
+      reaction(
+        ifValue(
+          tokensOn(self(), 'clue'),
+          { max: 0 },
+          afterDiscoveringClues(searchDeck([trait('Ally')], { play: true })),
+        ),
+        { per: 'game' },
+      ),
+    ],
   }),
   location({
     code: codes.merchantDistrict,

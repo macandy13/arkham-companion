@@ -48,9 +48,20 @@ export function SkippedEffectsNotice({
         );
       case 'DiscardAsset':
         return t('skipped.deferred.discardAsset');
+      case 'HealAsset':
+        return t(
+          command.stat === 'damage'
+            ? 'skipped.deferred.healAssetDamage'
+            : 'skipped.deferred.healAssetHorror',
+          { amount: command.amount, trait: command.trait },
+        );
       case 'SearchDeck':
         return t(
-          command.top === undefined ? 'skipped.deferred.search' : 'skipped.deferred.searchTop',
+          command.play === true
+            ? 'skipped.deferred.searchAndPlay'
+            : command.top === undefined
+              ? 'skipped.deferred.search'
+              : 'skipped.deferred.searchTop',
           { traits: command.traits.join(t('skipped.deferred.or')), top: command.top },
         );
       case 'PlayCard':

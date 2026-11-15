@@ -435,6 +435,8 @@ function playerCardLine(t: TFunction, names: Names, command: PlayerCardCommand):
       return t('log.playerCards.play', { investigator });
     case 'SearchDeck':
       return t('log.playerCards.search', { investigator });
+    case 'HealAsset':
+      return t('log.playerCards.healAsset', { investigator });
     default:
       return assertNever(command);
   }

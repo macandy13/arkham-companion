@@ -13,6 +13,9 @@ import {
   searchAndDrawCopies,
   reaction,
   gainResources,
+  anInvestigator,
+  heal,
+  thisLocation,
   lead,
   drawFromEncounterDiscard,
   shuffleEncounterDeck,
@@ -2937,6 +2940,86 @@ describe('a reaction the investigator may use or pass', () => {
       ability: 0,
       investigatorId: alice,
     });
+  });
+});
+
+describe('an effect on an investigator the window investigator picks', () => {
+  const bob = investigatorId('bob');
+  const carol = investigatorId('carol');
+  /** "Forced – After you discover clues here: Heal 1 horror from an investigator at this location." */
+  const chapelCard = blankLocation('chapel', {
+    clues: fixed(3),
+    abilities: [afterDiscoveringClues(heal('horror', 1, anInvestigator({ at: thisLocation() })))],
+  });
+  const chapel = instanceId('chapel');
+  const aliceDiscovers: Command = {
+    type: 'DiscoverClues',
+    investigatorId: alice,
+    locationId: chapel,
+    amount: 1,
+  };
+
+  it('asks alice to pick between herself and bob, who both have horror, leaving carol away out', () => {
+    const { context, state } = newGame()
+      .withLocation(chapel, chapelCard, { revealed: true })
+      .withLocation(hall, blankLocation('hall'), { revealed: true })
+      .withInvestigator(alice, { locationId: chapel, sanity: { max: 6, horror: 1 } })
+      .withInvestigator(bob, { locationId: chapel, sanity: { max: 6, horror: 1 } })
+      .withInvestigator(carol, { locationId: hall, sanity: { max: 6, horror: 1 } })
+      .withTurnOf(alice)
+      .start();
+
+    const asked = stateAfter(context, state, aliceDiscovers);
+
+    expect(asked.pending).toMatchObject([
+      {
+        id: 'investigator:chapel',
+        kind: 'chooseInvestigator',
+        decider: { kind: 'investigator', investigatorId: alice },
+      },
+    ]);
+    expect(asked.pending[0]?.options.map((option) => option.id)).toEqual(['alice', 'bob']);
+  });
+
+  it('heals alice without asking when bob there has no horror to heal', () => {
+    const { context, state } = newGame()
+      .withLocation(chapel, chapelCard, { revealed: true })
+      .withInvestigator(alice, { locationId: chapel, sanity: { max: 6, horror: 1 } })
+      .withInvestigator(bob, { locationId: chapel, sanity: { max: 6, horror: 0 } })
+      .withTurnOf(alice)
+      .start();
+
+    const after = stateAfter(context, state, aliceDiscovers);
+
+    expect(requireInvestigator(after, alice).sanity.horror).toBe(0);
+    expect(after.pending).toEqual([]);
+  });
+
+  it('heals bob when alice picks him', () => {
+    const { context, state } = newGame()
+      .withLocation(chapel, chapelCard, { revealed: true })
+      .withInvestigator(alice, { locationId: chapel, sanity: { max: 6, horror: 1 } })
+      .withInvestigator(bob, { locationId: chapel, sanity: { max: 6, horror: 1 } })
+      .withTurnOf(alice)
+      .start();
+
+    const after = stateAfter(context, state, aliceDiscovers, answer('investigator:chapel', 'bob'));
+
+    expect(requireInvestigator(after, alice).sanity.horror).toBe(1);
+    expect(requireInvestigator(after, bob).sanity.horror).toBe(0);
+  });
+
+  it('heals alice without asking when she is the only one there', () => {
+    const { context, state } = newGame()
+      .withLocation(chapel, chapelCard, { revealed: true })
+      .withInvestigator(alice, { locationId: chapel, sanity: { max: 6, horror: 1 } })
+      .withTurnOf(alice)
+      .start();
+
+    const after = stateAfter(context, state, aliceDiscovers);
+
+    expect(requireInvestigator(after, alice).sanity.horror).toBe(0);
+    expect(after.pending).toEqual([]);
   });
 });
 

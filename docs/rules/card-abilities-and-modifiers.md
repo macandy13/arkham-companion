@@ -31,9 +31,11 @@
   - "Max X per period" counts the uses of all copies of a card (by title) for all players; no scenario card has one yet, so the engine has no maximum.
   - An action whose effect can't change the game state can't be taken ([Triggered Abilities](https://arkhamdb.com/rules#Triggered_Abilities)), so its limit isn't used up either: St. Mary's Hospital ("Heal 3 damage") with no damage isn't offered.
   - An action whose effect is done at the table (no effect the engine runs) is always offered.
+  - The rule holds for every triggered ability, reactions included; Arkham Sanatorium's reaction stays offered with no horror to heal, since its [[Ally]] half is done at the table.
 - [Costs](https://arkhamdb.com/rules#Costs): the text before the colon ("Spend 5 resources:") is paid in full before the effect; an action whose cost can't be paid can't be taken.
   - Attacks of opportunity come after the costs are paid; the engine pays a card action's cost after them for now.
   - Card rulings: [Costs of card actions and basic actions](cards/action-costs.md).
+- An effect's target must be one it would change ([Target](https://arkhamdb.com/rules#Target)): "heal 1 horror from an investigator at this location" offers only those with horror, and heals the only one without asking.
 - "You must either A or B" (and "the lead investigator must decide") offers only the options that can change the game state ([Must](https://arkhamdb.com/rules#Must)):
   - with no clues, "spend 1 clue or take 2 damage" leaves only the damage,
   - and with no damage the Quiet Glade's "heal 1 damage or 1 horror" leaves only the horror.

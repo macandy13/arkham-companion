@@ -224,6 +224,7 @@ const COMMAND_SPECS: CommandSpecs = {
   SearchDeck: { handle: deferToPlayers },
   DiscardFromHand: { handle: deferToPlayers },
   DiscardAsset: { handle: deferToPlayers },
+  HealAsset: { handle: deferToPlayers },
   SpendCluesAsGroup: { handle: handleSpendCluesAsGroup },
   PlayCard: { handle: handlePlayCard, provokes: asAction },
   AdjustInvestigator: {

@@ -111,6 +111,7 @@ export const appTexts = {
       discardAsset: '{{investigator}} wirft eine Vorteilskarte ab',
       play: '{{investigator}} spielt eine Karte',
       search: '{{investigator}} durchsucht das eigene Deck',
+      healAsset: '{{investigator}} heilt eine Vorteilskarte',
     },
     discovered: '{{investigator}} entdeckt {{amount}} in {{location}}',
     test: {
@@ -281,6 +282,12 @@ export const appTexts = {
         'Durchsuche dein Deck nach einer Karte mit dem Merkmal {{traits}}, nimm sie auf die Hand und mische dein Deck',
       searchTop:
         'Durchsuche die obersten {{top}} Karten deines Decks nach einer Karte mit dem Merkmal {{traits}}, nimm sie auf die Hand und mische dein Deck',
+      searchAndPlay:
+        'Durchsuche dein Deck nach einer Karte mit dem Merkmal {{traits}}, spiele sie (und bezahle ihre Kosten) und mische dein Deck',
+      healAssetDamage:
+        'Heile {{amount}} Schaden von einer Vorteilskarte mit dem Merkmal {{trait}} an deinem Ort',
+      healAssetHorror:
+        'Heile {{amount}} Horror von einer Vorteilskarte mit dem Merkmal {{trait}} an deinem Ort',
       play: 'Spiele eine Karte',
       or: ' oder ',
     },
@@ -764,6 +771,7 @@ export const appTexts = {
     chooseNearestEnemy: 'Welcher der nächsten Gegner?',
     chooseLocationToMove: 'Wohin bewegst du dich für {{card}}?',
     chooseLocationToAttach: 'Wo wird {{card}} angehängt?',
+    chooseInvestigatorFor: 'Welchen Ermittler betrifft {{card}}?',
     chooseSpawnLocation: 'Wo erscheint {{card}}?',
     investigate: 'Ermitteln: {{card}}',
     fight: 'Kämpfen gegen {{card}}',
