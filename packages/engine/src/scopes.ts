@@ -1,6 +1,6 @@
 import { assertNever } from '@arkham/util';
 import type { EngineContext } from './cards';
-import { enemiesAt } from './enemies';
+import { enemiesAt, isEnemyCardOnTable } from './enemies';
 import type { InvestigatorId } from './ids';
 import type { CardInstance, GameState } from './state';
 
@@ -14,8 +14,10 @@ import type { CardInstance, GameState } from './state';
  *   investigator's location).
  * - `enemiesAtHost`: for a card attached to a location, each enemy at that location, engaged
  *   ones included ("Each non-Elite enemy at attached location gains aloof", Hiding Spot).
+ * - `eachEnemy`: every enemy on the table, wherever it is ("Each enemy gets +1 fight and +1 evade",
+ *   The Ritual Begins).
  */
-export type CardScope = 'self' | 'host' | 'enemiesHere' | 'enemiesAtHost';
+export type CardScope = 'self' | 'host' | 'enemiesHere' | 'enemiesAtHost' | 'eachEnemy';
 
 /**
  * The investigators a constant ability binds, relative to the card that has it, shared by
@@ -45,6 +47,8 @@ export function namesCard(
         source.zone.kind === 'attachedTo' &&
         enemiesAt(ctx, state, source.zone.hostId).some((enemy) => enemy.id === card.id)
       );
+    case 'eachEnemy':
+      return isEnemyCardOnTable(ctx, card);
     default:
       return assertNever(scope);
   }

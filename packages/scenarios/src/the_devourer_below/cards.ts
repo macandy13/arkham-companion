@@ -150,8 +150,7 @@ const woods = ['Woods'];
  * them from the card:
  *
  * - agenda 1's and 2's reverse sides (agenda 1's Monster spawn, agenda 2's
- *   willpower (6) tests and madness) and agenda 2's +1 fight and evade for
- *   each enemy
+ *   willpower (6) tests and madness)
  * - act 2's reverse side (the enemies at the Ritual Site)
  * - the Arkham Woods' moving-out test and skill swaps (setup connects the
  *   Main Path to each Woods location)
@@ -161,7 +160,18 @@ const woods = ['Woods'];
  */
 export const theDevourerBelowCardDefs: readonly CardStats[] = [
   agenda({ code: '01143', name: 'The Arkham Woods', set: own, stage: 1, doom: 4 }),
-  agenda({ code: '01144', name: 'The Ritual Begins', set: own, stage: 2, doom: 5 }),
+  agenda({
+    code: '01144',
+    name: 'The Ritual Begins',
+    set: own,
+    stage: 2,
+    doom: 5,
+    // "Each enemy gets +1 fight and +1 evade."
+    modifiers: [
+      { value: 'fight', of: 'eachEnemy', by: 1 },
+      { value: 'evade', of: 'eachEnemy', by: 1 },
+    ],
+  }),
   agenda({
     code: '01145',
     name: 'Vengeance Awaits',

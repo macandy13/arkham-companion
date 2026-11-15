@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   atLocation,
   attachedTo,
+  blankAgenda,
   blankEnemy,
   blankLocation,
   blankTreachery,
@@ -101,6 +102,37 @@ describe('effectiveValue', () => {
       .start();
 
     expect(effectiveValue(context, state, requireCard(state.cards, ghoul), 'fight')).toBe(fight);
+  });
+});
+
+describe('effectiveValue with a modifier of each enemy', () => {
+  const ritual = instanceId('ritual');
+  /** An agenda without a doom threshold whose enemies all get +1 fight while it is the current agenda. */
+  const ritualCard = blankAgenda('ritual', null, {
+    modifiers: [{ value: 'fight', of: 'eachEnemy', by: 1 }],
+  });
+
+  it.each([
+    { name: 'at the hall', zone: atLocation(hall), fight: 4 },
+    { name: 'engaged with alice', zone: engagedWith(alice), fight: 4 },
+    { name: 'set aside', zone: setAside, fight: 3 },
+  ])('gives the ghoul (fight 3) $name the fight of the current agenda', ({ zone, fight }) => {
+    const { context, state } = aliceInStudy
+      .withAgenda(ritual, ritualCard)
+      .withCard(ghoul, ghoulCard, zone)
+      .start();
+
+    expect(effectiveValue(context, state, requireCard(state.cards, ghoul), 'fight')).toBe(fight);
+  });
+
+  it('gives nothing while the agenda waits under the current one: the ghoul keeps fight 3', () => {
+    const { context, state } = aliceInStudy
+      .withAgenda(instanceId('first_agenda'), blankAgenda('first_agenda', null))
+      .withAgenda(ritual, ritualCard)
+      .withCard(ghoul, ghoulCard, atLocation(hall))
+      .start();
+
+    expect(effectiveValue(context, state, requireCard(state.cards, ghoul), 'fight')).toBe(3);
   });
 });
 
