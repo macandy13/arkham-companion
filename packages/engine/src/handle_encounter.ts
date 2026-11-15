@@ -259,8 +259,8 @@ export function handleDrawBeneath(ctx: EngineContext, state: GameState, cmd: Dra
 
 /** `FromSetAside`: moves one set-aside copy of each code to `to`. */
 export function handleFromSetAside(state: GameState, cmd: FromSetAside): CardMoved[] {
-  return takeFromSetAside(state, cmd.codes).map((cardId) =>
-    cardMoved(state, requireCard(state.cards, cardId), cmd.to),
+  return takeFromSetAside(state, cmd.codes, { asManyAsThereAre: cmd.source !== undefined }).map(
+    (cardId) => cardMoved(state, requireCard(state.cards, cardId), cmd.to),
   );
 }
 

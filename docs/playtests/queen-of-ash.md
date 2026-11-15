@@ -42,6 +42,7 @@ The scripted golden game is [`end_to_end.test.ts`](../../packages/scenarios/src/
 
 - [ ] As the round ends, each Cultist enemy moves one step toward Underground Cistern, engaged ones too (they disengage).
 - [ ] Defeating Elokoss advances the act to resolution 1.
+- [ ] At a location with a Fire!, the act's fast ability spends 1 clue per investigator as a group and discards that Fire!; without one there, it isn't offered.
 
 **Locations and enemies**
 
@@ -71,7 +72,7 @@ The scripted golden game is [`end_to_end.test.ts`](../../packages/scenarios/src/
 
 These are done by hand at the table; the app does not do them.
 
-- The agendas' rule that enemies at a location with Fire! attached cannot be damaged (heal the damage Fire! itself deals them as the investigation phase ends), agenda 3a's damage instead of doom, and act 2a's clue spend to discard a Fire!.
+- The agendas' rule that enemies at a location with Fire! attached cannot be damaged (heal the damage Fire! itself deals them as the investigation phase ends), and agenda 3a's damage instead of doom.
 - Elokoss: that she cannot move or make attacks of opportunity, and her Mother of Flame side.
 - The additional clue costs to enter Underground Cistern and Sluice Control.
 - Queen's Knight's damage to Elokoss, Herald of Flame's healing after it attacks, and the Servant of Flame's codex entry as it is defeated.
