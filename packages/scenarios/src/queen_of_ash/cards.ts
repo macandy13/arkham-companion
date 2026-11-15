@@ -38,6 +38,7 @@ import {
   placeCluesOnSelf,
   placeCluesOnSelfUpTo,
   placeDoomOnAgenda,
+  placeDoomOnYourAsset,
   putIntoThreatArea,
   putLocationIntoPlay,
   resignAction,
@@ -48,6 +49,7 @@ import {
   skillTest,
   skillTestOfEither,
   spawnEnemyAt,
+  takeDamage,
   takeHorror,
   thisLocation,
   tokensOn,
@@ -141,6 +143,31 @@ export const SLUICE_CONTROL_DECISION = decisionId('queenOfAsh.sluiceControl');
 export const SMUGGLERS_CACHE_DECISION = decisionId('queenOfAsh.smugglersCache');
 const smugglersCache = 'scenario.queenOfAsh.smugglersCache';
 
+/**
+ * Id of the question a failed Unnatural Decay asks its drawer: place 1 doom on an asset they
+ * control, or take 2 damage.
+ */
+export const UNNATURAL_DECAY_DECISION = decisionId('queenOfAsh.unnaturalDecay');
+const unnaturalDecay = 'scenario.queenOfAsh.unnaturalDecay';
+
+/**
+ * Id of the card type a failed Dissonance or Torment has its drawer choose. The discards are
+ * the players', as the game holds no hands: the answer names what to discard.
+ */
+export const DISSONANCE_DECISION = decisionId('queenOfAsh.dissonance');
+export const TORMENT_DECISION = decisionId('queenOfAsh.torment');
+const dissonance = 'scenario.queenOfAsh.dissonance';
+const torment = 'scenario.queenOfAsh.torment';
+
+/** The card types "choose a cardtype" offers, each an option of the choice whose labels start with `key`. */
+function cardTypeOptions(key: string) {
+  return (['asset', 'event', 'skill'] as const).map((cardType) => ({
+    id: cardType,
+    label: `${key}.${cardType}`,
+    effects: [],
+  }));
+}
+
 const codes = QUEEN_OF_ASH_CODES;
 const sets = QUEEN_OF_ASH_SETS;
 const own = sets.queenOfAsh;
@@ -204,9 +231,9 @@ const willpowerOrHorror = skillTest('willpower', 4, { onFail: [takeHorror(1)] })
  * - Zealot's doom as it enters play (setup places it on the Zealots it spawns) and Dark
  *   Magician's as the round ends
  * - the whole revelations of Ashen Rebirth (2 direct damage or horror, whichever its drawer has
- *   more of), Blasphemous Invocation (doom per point failed, else a Cultist drawn), Unnatural Decay
- *   (doom on an asset or 2 damage), Dissonance and Torment (cards of a named type discarded), and
- *   Putrid Vapors' asset discard
+ *   more of) and Blasphemous Invocation (doom per point failed, else a Cultist drawn), the
+ *   discards of the card type Dissonance's and Torment's drawer chooses, and Putrid Vapors' asset
+ *   discard
  * - Languor's limit of 1 per investigator, its discard as its holder's turn begins and its
  *   two-action discard
  * - Collector's deckbuilding: the players add it to their decks
@@ -553,6 +580,18 @@ export const queenOfAshCardDefs: readonly CardStats[] = [
     pictures: jpg,
     traits: ['Curse'],
     quantity: 2,
+    abilities: [
+      whenRevealed(
+        skillTest('willpower', 4, {
+          onFail: [
+            youMustEither(UNNATURAL_DECAY_DECISION, `${unnaturalDecay}.prompt`, [
+              { id: 'doom', label: `${unnaturalDecay}.doom`, effects: [placeDoomOnYourAsset(1)] },
+              { id: 'damage', label: `${unnaturalDecay}.damage`, effects: [takeDamage(2)] },
+            ]),
+          ],
+        }),
+      ),
+    ],
   }),
   treachery({
     code: '12192',
@@ -580,6 +619,16 @@ export const queenOfAshCardDefs: readonly CardStats[] = [
     pictures: jpg,
     traits: ['Curse', 'Bane'],
     quantity: 2,
+    abilities: [
+      whenRevealed(
+        skillTest('willpower', 3, {
+          onFail: [
+            loseActions(1),
+            youMustEither(DISSONANCE_DECISION, `${dissonance}.prompt`, cardTypeOptions(dissonance)),
+          ],
+        }),
+      ),
+    ],
   }),
   treachery({
     code: '12195',
@@ -589,6 +638,13 @@ export const queenOfAshCardDefs: readonly CardStats[] = [
     traits: ['Power', 'Bane'],
     quantity: 2,
     keywords: [{ name: 'peril' }],
+    abilities: [
+      whenRevealed(
+        skillTest('willpower', 3, {
+          onFail: [youMustEither(TORMENT_DECISION, `${torment}.prompt`, cardTypeOptions(torment))],
+        }),
+      ),
+    ],
   }),
 ];
 

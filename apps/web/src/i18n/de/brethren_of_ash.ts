@@ -48,6 +48,25 @@ export const brethrenOfAshTexts = {
       },
     },
     queenOfAsh: {
+      unnaturalDecay: {
+        prompt: '{{card}}: Du musst entweder',
+        doom: '1 Verderben auf eine Vorteilskarte legen, die du kontrollierst',
+        damage: '2 Schaden erleiden',
+      },
+      dissonance: {
+        prompt:
+          '{{card}}: Wähle einen Kartentyp und lege alle Karten dieses Typs außer Schwächen aus deiner Hand ab',
+        asset: 'Vorteile',
+        event: 'Ereignisse',
+        skill: 'Fertigkeiten',
+      },
+      torment: {
+        prompt:
+          '{{card}}: Nenne einen Kartentyp; jeder Ermittler legt 1 Karte dieses Typs aus seiner Hand ab',
+        asset: 'Vorteil',
+        event: 'Ereignis',
+        skill: 'Fertigkeit',
+      },
       smugglersCache: {
         prompt: '{{card}}: Du darfst 1 Ressource erhalten',
         gain: '1 Ressource erhalten',

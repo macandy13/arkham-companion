@@ -273,6 +273,8 @@ export type RelativeCard =
       ref: 'eachInZone';
       zone: Templated<Zone> | readonly Templated<Zone>[];
       top?: number;
+      /** At most this many in all, the first ones in zone order ("1 [per_investigator] copies"). */
+      first?: ScaledValue;
     } & CardFilter)
   /**
    * Each card in play (`isInPlay`) its filter matches (`CardFilter`), in card order: "if the
@@ -1319,7 +1321,10 @@ function eachId(
         const resolved = resolveRefs(zone, refs) as Zone | undefined;
         return resolved === undefined ? [] : [resolved];
       });
-      return cardsInZones(ctx, state, zones, each, each.top).map((card) => card.id);
+      const found = cardsInZones(ctx, state, zones, each, each.top).map((card) => card.id);
+      return each.first === undefined
+        ? found
+        : found.slice(0, resolveAmount(each.first, state.meta.playerCount));
     }
     case 'eachInPlay': {
       const there =
@@ -2355,9 +2360,23 @@ export function nearestEnemy(
  */
 export function eachInZone(
   zone: Templated<Zone> | readonly Templated<Zone>[],
-  filter: CardFilter & { top?: number } = {},
+  filter: CardFilter & { top?: number; first?: ScaledValue } = {},
 ): Extract<RelativeCard, { ref: 'eachInZone' }> {
   return { ref: 'eachInZone', zone, ...filter };
+}
+
+/**
+ * "Place N doom on an asset you control" (Unnatural Decay): the game holds no player cards, so the
+ * doom goes on the investigator the window names as doom on their player cards
+ * (`doomOnPlayerCards`), which counts toward the doom threshold; which asset holds it is theirs.
+ */
+export function placeDoomOnYourAsset(amount: number): AbilityEffect {
+  return {
+    type: 'AdjustInvestigator',
+    investigatorId: { ref: 'windowInvestigator' },
+    stat: 'doomOnPlayerCards',
+    delta: amount,
+  };
 }
 
 /** "Place N doom on it": doom on the card with the ability. */
@@ -2774,6 +2793,31 @@ export function drawFromEncounterDiscard(
   who: RelativeInvestigator = { ref: 'windowInvestigator' },
 ): AbilityEffect {
   return { type: 'DrawEncounter', investigatorId: who, from: 'discard', match };
+}
+
+/**
+ * "The lead investigator must search the encounter deck and discard pile for 1 [per_investigator]
+ * copies of Fire! and draw them" (Searching for Dr. Armitage): one search finds up to `copies`
+ * cards with `code`, deck first, and `who` draws each of them in turn (`DrawEncounter` with
+ * `cardId`), so a copy found once is drawn once even if its revelation sends it back to the
+ * discard. "Shuffle the encounter deck" afterwards is a `shuffleEncounterDeck()` of its own,
+ * which runs after the draws: the same as the rules' shuffle "upon completion of the search" while
+ * the drawn cards draw nothing more from the deck (no surge). The lead would pick the copies; the
+ * engine takes the first ones, deck first (#346).
+ */
+export function searchAndDrawCopies(
+  code: CardCode,
+  copies: ScaledValue,
+  who: RelativeInvestigator = { ref: 'windowInvestigator' },
+): AbilityEffect {
+  return {
+    type: 'DrawEncounter',
+    investigatorId: who,
+    cardId: eachInZone([{ kind: 'encounterDeck' }, { kind: 'encounterDiscard' }], {
+      code,
+      first: copies,
+    }),
+  };
 }
 
 /**

@@ -34,6 +34,7 @@
   - with no clues, "spend 1 clue or take 2 damage" leaves only the damage,
   - and with no damage the Quiet Glade's "heal 1 damage or 1 horror" leaves only the horror.
   - With an empty hand, Umôrdhoth's Wrath's "discard a card" can't be chosen, so each point costs 1 damage and 1 horror; the engine doesn't track hands, so the players keep to this at the table.
+  - Without an asset, Unnatural Decay's "place 1 doom on an asset you control" can't be chosen, so its drawer takes the 2 damage; the engine doesn't track assets, so the players keep to this at the table.
   - An option done at the table (no effect the engine runs) always stays.
   - With neither possible, nothing happens ([Effects](https://arkhamdb.com/rules#Effects): resolve as much as you are able).
   - An option that resolves only in part is still allowed by the rule; the engine drops it for now (no Night of the Zealot card has one).

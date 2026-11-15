@@ -31,7 +31,7 @@ The scripted golden game is [`end_to_end.test_support.ts`](../../packages/scenar
 **Act 3, Searching for Dr. Armitage**
 
 - [ ] When the round ends with 3 clues per investigator held by those at Orne Library, the lead is asked whether to spend them.
-- [ ] Its reverse side spawns the Servant of Flame at Miskatonic Quad (it engages an investigator there) and places 3 clues per investigator on the Quad.
+- [ ] Its reverse side spawns the Servant of Flame at Miskatonic Quad (it engages an investigator there) and places 3 clues per investigator on the Quad; then the lead draws one Fire! per investigator from the encounter deck or discard pile, one after the other, and the encounter deck is shuffled.
 
 **Act 4, Blaze of Glory**
 
@@ -74,7 +74,7 @@ These are done by hand at the table; the app does not do them.
 - Wild Flames' Fire! draw for doom added with a correction by hand: corrections open no forced abilities, so draw the topmost Fire! of the discard yourself.
 - The reverse sides' tests of Past Curfew and Lit Up (each investigator tests), and the agendas' Parley to discard a Bystander.
 - Escape the Dorms' objective: the act advances when each undefeated investigator is at Miskatonic Quad. The players advance it with "Advance by hand" on the act's full card.
-- Searching for Dr. Armitage's reverse side: Dr. Henry Armitage under an investigator's control and the lead's search for Fire!. His skill bonus and free first action are his controller's to apply.
+- Searching for Dr. Armitage's reverse side: Dr. Henry Armitage under an investigator's control. His skill bonus and free first action are his controller's to apply.
 - Blaze of Glory's group clue spend to deal damage to an enemy.
 - Your Friend's Room's Engage action, Miskatonic Quad's free move, Warren Observatory's draw and Orne Library's two-action draw.
 - Which asset Hellhound's enemy phase attack discards (the app leaves the pick to the player), and Bystander's Doomed keyword.

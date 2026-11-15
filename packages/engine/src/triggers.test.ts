@@ -10,6 +10,9 @@ import {
   gainSurge,
   ifYouHave,
   searchAndDraw,
+  searchAndDrawCopies,
+  lead,
+  drawFromEncounterDiscard,
   shuffleEncounterDeck,
   readySelf,
   atEndOfTurn,
@@ -115,7 +118,14 @@ import {
 } from './index';
 import { agendaThresholdDecision } from './doom';
 import { requireInvestigator } from './investigators';
-import { answer, rejectionFrom, resolveRevelation, runFrom, stateAfter } from '../test/utils';
+import {
+  answer,
+  cancelRevelation,
+  rejectionFrom,
+  resolveRevelation,
+  runFrom,
+  stateAfter,
+} from '../test/utils';
 import { cardsInZone } from './lookup';
 
 const hall = instanceId('hall');
@@ -2781,6 +2791,88 @@ describe('an effect repeated for each investigator', () => {
     const advanced = stateAfter(context, bobLeads, { type: 'AdvanceAgenda' });
 
     expect(advanced.pending).toMatchObject([{ decider: { investigatorId: bob } }]);
+  });
+});
+
+describe('a search for 1 copy per investigator', () => {
+  const bob = investigatorId('bob');
+  /** "Revelation – Take 1 horror." */
+  const omenCard = blankTreachery('omen', {
+    name: 'Omen',
+    abilities: [whenRevealed(takeHorror(1))],
+  });
+  /** "The lead investigator searches the encounter deck and discard pile for 1 [per_investigator] copies of Omen and draws them." */
+  const searchingAgenda = blankAgenda('searching_agenda', fixed(3), {
+    abilities: [whenAdvanced(searchAndDrawCopies(omenCard.code, perInvestigator(1), lead()))],
+  });
+  const searchTable = newGame()
+    .withAgenda(agenda1, searchingAgenda)
+    .withAgenda(agenda2, secondAgendaCard)
+    .withLocation(hall, blankLocation('hall'), { revealed: true })
+    .withInvestigator(alice, { locationId: hall })
+    .withCard(instanceId('deck_omen'), omenCard, { kind: 'encounterDeck' })
+    .withCard(instanceId('discard_omen'), omenCard, { kind: 'encounterDiscard' })
+    .withCard(instanceId('last_omen'), omenCard, { kind: 'encounterDiscard' });
+
+  it('has alice, the lead, draw the copy in the deck first, then the first one in the discard', () => {
+    const { context, state: started } = searchTable
+      .withInvestigator(bob, { locationId: hall })
+      .start();
+
+    const advanced = stateAfter(context, started, { type: 'AdvanceAgenda' });
+    const firstResolved = stateAfter(context, advanced, resolveRevelation('deck_omen'));
+    const state = stateAfter(context, firstResolved, resolveRevelation('discard_omen'));
+
+    expect(advanced.pending).toMatchObject([
+      { id: 'revelation:deck_omen', decider: { investigatorId: alice } },
+    ]);
+    expect(firstResolved.pending).toMatchObject([{ id: 'revelation:discard_omen' }]);
+    expect(state.pending).toEqual([]);
+  });
+
+  it('draws one copy for alice alone', () => {
+    const { context, state: started } = searchTable.start();
+
+    const advanced = stateAfter(context, started, { type: 'AdvanceAgenda' });
+    const state = stateAfter(context, advanced, resolveRevelation('deck_omen'));
+
+    expect(state.pending).toEqual([]);
+    expect(requireInvestigator(state, alice).sanity.horror).toBe(1);
+  });
+});
+
+describe('a card drawn again in the same chain', () => {
+  /** "Revelation – Take 1 horror." */
+  const omenCard = blankTreachery('omen', {
+    name: 'Omen',
+    abilities: [whenRevealed(takeHorror(1))],
+  });
+  /** An agenda whose reverse side draws an Omen from the discard pile twice. */
+  const twiceDrawingAgenda = blankAgenda('twice_drawing_agenda', fixed(3), {
+    abilities: [
+      whenAdvanced(
+        drawFromEncounterDiscard({ name: 'Omen' }, lead()),
+        drawFromEncounterDiscard({ name: 'Omen' }, lead()),
+      ),
+    ],
+  });
+
+  it('asks again for the cancelled Omen the second draw takes back out of the discard', () => {
+    const { context, state: started } = newGame()
+      .withAgenda(agenda1, twiceDrawingAgenda)
+      .withAgenda(agenda2, secondAgendaCard)
+      .withLocation(hall, blankLocation('hall'), { revealed: true })
+      .withInvestigator(alice, { locationId: hall })
+      // A card in the deck, so the deck isn't refilled from the discard as the game starts.
+      .withCard(instanceId('deck_card'), blankTreachery('deck_card'), { kind: 'encounterDeck' })
+      .withCard(instanceId('only_omen'), omenCard, { kind: 'encounterDiscard' })
+      .start();
+    const advanced = stateAfter(context, started, { type: 'AdvanceAgenda' });
+
+    const state = stateAfter(context, advanced, cancelRevelation('only_omen'));
+
+    expect(state.pending).toMatchObject([{ id: 'revelation:only_omen' }]);
+    expect(state.cards[instanceId('only_omen')]?.zone).toEqual({ kind: 'resolving' });
   });
 });
 
