@@ -33,7 +33,7 @@ export interface AbilityUse {
 }
 
 /** When `investigatorId` uses an ability now: the use a reducer records. */
-export function useNow(state: GameState, investigatorId: InvestigatorId): AbilityUse {
+export function currentUse(state: GameState, investigatorId: InvestigatorId): AbilityUse {
   const turnOf = state.meta.turn?.investigatorId;
   return {
     investigatorId,
@@ -55,7 +55,7 @@ export function withinLimit(
   investigatorId: InvestigatorId,
 ): boolean {
   if (limit === undefined) return true;
-  const now = useNow(state, investigatorId);
+  const now = currentUse(state, investigatorId);
   const counted = uses.filter(
     (use) =>
       (limit.group === true || use.investigatorId === investigatorId) &&
