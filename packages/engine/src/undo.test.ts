@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 import {
   blankLocation,
   blankTreachery,
-  cardCode,
   decisionId,
   emptyState,
   execute,
@@ -39,12 +38,12 @@ const cellar = instanceId('cellar');
 const chill = instanceId('chill');
 const firstPlain = instanceId('first_plain');
 const encounterDeck: Zone = { kind: 'encounterDeck' };
-const setAside: Zone = { kind: 'setAside' };
+const encounterDiscard: Zone = { kind: 'encounterDiscard' };
 
 /**
  * Alice in the unrevealed hall next to the unrevealed cellar; the encounter
  * deck holds the chilling treachery above two plain treacheries, and two more
- * plain ones are set aside for `shuffleInto`.
+ * plain ones are in the encounter discard for `shuffleDiscard`.
  */
 const table = newGame()
   .withSeed(7)
@@ -55,18 +54,14 @@ const table = newGame()
   .withCard(chill, chillingTreacheryCard, encounterDeck)
   .withCard(firstPlain, plainTreacheryCard, encounterDeck)
   .withCard(instanceId('second_plain'), plainTreacheryCard, encounterDeck)
-  .withCard(instanceId('spare_one'), plainTreacheryCard, setAside)
-  .withCard(instanceId('spare_two'), plainTreacheryCard, setAside);
+  .withCard(instanceId('spare_one'), plainTreacheryCard, encounterDiscard)
+  .withCard(instanceId('spare_two'), plainTreacheryCard, encounterDiscard);
 const context = table.context();
 /** Played from the empty state, so undo can walk back past the start too. */
 const start = table.startCommand();
 
 const draw: Command = { type: 'DrawEncounter', investigatorId: alice };
-const shuffleInto: Command = {
-  type: 'ShuffleInto',
-  codes: [cardCode('plain_treachery'), cardCode('plain_treachery')],
-  zone: encounterDeck,
-};
+const shuffleDiscard: Command = { type: 'ShuffleEncounterDiscard' };
 const addClue: Command = {
   type: 'ManualAdjust',
   adjustment: { kind: 'tokens', cardId: hall, token: 'clue', delta: 1 },
@@ -154,10 +149,10 @@ describe('undoLastGroup', () => {
 
 describe('undo with the seeded RNG', () => {
   it('redoing an undone shuffle yields the same events and state', () => {
-    const { log, states } = play([shuffleInto]);
+    const { log, states } = play([shuffleDiscard]);
     const { kept, removed } = undoLastGroup(log);
 
-    const redo = execute(context, stateOf(kept), shuffleInto);
+    const redo = execute(context, stateOf(kept), shuffleDiscard);
 
     expect(stateOf(kept)).toEqual(states[0]);
     expect(redo.state).toEqual(states[1]);
@@ -165,7 +160,7 @@ describe('undo with the seeded RNG', () => {
   });
 
   it('removes all events of a multi-event command as one group', () => {
-    const { log } = play([shuffleInto]);
+    const { log } = play([shuffleDiscard]);
 
     const { removed } = undoLastGroup(log);
 
@@ -178,7 +173,7 @@ describe('undoing group by group', () => {
   it.each<[string, Command[]]>([
     ['draws and a revelation test', [draw, resolveChill, passChillTest, draw, draw]],
     ['token and move adjustments', [addClue, moveFirstPlainToDiscard, addClue]],
-    ['a shuffle between draws', [draw, resolveChill, passChillTest, shuffleInto, draw]],
+    ['a shuffle between draws', [draw, resolveChill, passChillTest, shuffleDiscard, draw]],
     ['phase changes with their steps', [...intoInvestigation, startTurn, endTurn, nextPhase]],
     [
       'a turn with a move and the players counting it',
@@ -193,7 +188,7 @@ describe('undoing group by group', () => {
         draw,
         resolveChill,
         passChillTest,
-        shuffleInto,
+        shuffleDiscard,
         ...intoInvestigation,
         startTurn,
         moveToCellar,

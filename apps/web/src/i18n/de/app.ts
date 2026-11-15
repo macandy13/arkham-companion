@@ -285,7 +285,6 @@ export const appTexts = {
     },
     effects: {
       RevealLocation: 'Das Aufdecken des Ortes',
-      FromSetAside: 'Das Ins-Spiel-Bringen der beiseitegelegten Karte',
       SpawnEnemy: 'Das Erscheinen des Gegners',
       AddMap: 'Das Ins-Spiel-Bringen des neuen Bereichs',
       MoveInvestigator: 'Das Bewegen der Ermittler',

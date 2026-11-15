@@ -268,8 +268,8 @@ export const queenOfAshCardDefs: readonly CardStats[] = [
       whenAnInvestigatorEnters(codes.undergroundCistern, advanceAct()),
       whenAdvanced(
         spawnEnemyAt(onlyCopy(codes.elokoss), onlyCopy(codes.undergroundCistern)),
-        fromSetAside([fire], { kind: 'attachedTo', hostId: onlyCopy(codes.undergroundCistern) }),
-        shuffleSetAsideIntoEncounterDeck([
+        ...fromSetAside([fire], { kind: 'attachedTo', hostId: onlyCopy(codes.undergroundCistern) }),
+        ...shuffleSetAsideIntoEncounterDeck([
           ...Array<CardCode>(4).fill(fire),
           codes.queensKnight,
           codes.heraldOfFlame,

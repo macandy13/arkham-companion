@@ -23,11 +23,13 @@ import {
   removeDoomFrom,
   removeDoomFromAgenda,
   setAside,
+  fromSetAside,
   shuffleSelfIntoEncounterDeck,
   shuffleSetAsideIntoEncounterDeck,
   takeCluesFrom,
   trait,
   whenRevealed,
+  zoneKey,
   type Command,
   placeDoomOnAgenda,
   gainResources,
@@ -147,7 +149,7 @@ describe('card effects that shuffle cards into the encounter deck', () => {
     const lurker = instanceId('lurker');
     /** "Revelation – Shuffle the set-aside Lurker into the encounter deck." */
     const omenCard = blankTreachery('omen', {
-      abilities: [whenRevealed(shuffleSetAsideIntoEncounterDeck([cardCode('lurker')]))],
+      abilities: [whenRevealed(...shuffleSetAsideIntoEncounterDeck([cardCode('lurker')]))],
     });
     const { context, state } = newGame()
       .withLocation(hall, blankLocation('hall'), { revealed: true })
@@ -167,10 +169,10 @@ describe('card effects that shuffle cards into the encounter deck', () => {
     expect(after.cards[omen]?.zone).toEqual(encounterDiscard);
   });
 
-  it('shuffles nothing in when the card is not set aside', () => {
+  it('adds nothing but still shuffles the deck when the card is not set aside', () => {
     /** "Revelation – Shuffle the set-aside Lurker into the encounter deck." */
     const omenCard = blankTreachery('omen', {
-      abilities: [whenRevealed(shuffleSetAsideIntoEncounterDeck([cardCode('lurker')]))],
+      abilities: [whenRevealed(...shuffleSetAsideIntoEncounterDeck([cardCode('lurker')]))],
     });
     const { context, state } = newGame()
       .withLocation(hall, blankLocation('hall'), { revealed: true })
@@ -189,7 +191,55 @@ describe('card effects that shuffle cards into the encounter deck', () => {
 
     expect(after.cards[omen]?.zone).toEqual(encounterDiscard);
     expect(after.cards[filler]?.zone).toEqual(encounterDeck);
-    expect(events.map((event) => event.type)).not.toContain('DeckShuffled');
+    expect(events.map((event) => event.type)).toContain('DeckShuffled');
+  });
+});
+
+describe('card effects that take set-aside copies', () => {
+  const omen = instanceId('omen');
+  /** "Revelation – Put 2 set-aside copies of Lurker into the victory display." */
+  const omenCard = blankTreachery('omen', {
+    abilities: [
+      whenRevealed(
+        ...fromSetAside([cardCode('lurker'), cardCode('lurker')], { kind: 'victoryDisplay' }),
+      ),
+    ],
+  });
+  const lurkerCard = blankTreachery('lurker');
+  /** Alice in the hall draws the omen. */
+  const drawOmen = (table: ReturnType<typeof newGame>) => {
+    const { context, state } = table
+      .withLocation(hall, blankLocation('hall'), { revealed: true })
+      .withInvestigator(alice, { locationId: hall })
+      .withCard(omen, omenCard, encounterDeck)
+      .start();
+    return stateAfter(
+      context,
+      state,
+      { type: 'DrawEncounter', investigatorId: alice },
+      resolveRevelation('omen'),
+    );
+  };
+
+  it('takes two copies for a code listed twice, and leaves another set-aside card', () => {
+    const after = drawOmen(
+      newGame()
+        .withCard(instanceId('first_lurker'), lurkerCard, setAside)
+        .withCard(instanceId('set_aside_relic'), blankTreachery('relic'), setAside)
+        .withCard(instanceId('second_lurker'), lurkerCard, setAside),
+    );
+
+    expect(after.order[zoneKey({ kind: 'victoryDisplay' })]).toEqual([
+      'first_lurker',
+      'second_lurker',
+    ]);
+    expect(after.cards[instanceId('set_aside_relic')]?.zone).toEqual(setAside);
+  });
+
+  it('takes the one copy left when it asks for two', () => {
+    const after = drawOmen(newGame().withCard(instanceId('only_lurker'), lurkerCard, setAside));
+
+    expect(after.order[zoneKey({ kind: 'victoryDisplay' })]).toEqual(['only_lurker']);
   });
 });
 

@@ -165,7 +165,7 @@ export const smokeAndMirrorsCardDefs: readonly CardStats[] = [
     // their deck for the rest of the campaign is done by hand.
     abilities: [
       whenAdvanced(
-        fromSetAside([codes.markOfElokoss], {
+        ...fromSetAside([codes.markOfElokoss], {
           kind: 'threatArea',
           investigatorId: { ref: 'eachInvestigator' },
         }),

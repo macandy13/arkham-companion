@@ -228,7 +228,9 @@ export const spreadingFlamesCardDefs: readonly CardStats[] = [
     doom: 5,
     // Where There's Smoke… may have taken the copies already; then none is placed.
     abilities: [
-      whenAdvanced(fromSetAside(Array<CardCode>(4).fill(codes.fire), { kind: 'encounterDiscard' })),
+      whenAdvanced(
+        ...fromSetAside(Array<CardCode>(4).fill(codes.fire), { kind: 'encounterDiscard' }),
+      ),
     ],
   }),
   agenda({
@@ -257,7 +259,10 @@ export const spreadingFlamesCardDefs: readonly CardStats[] = [
         ...putLocationIntoPlay(codes.dormitories, CAMPUS, { at: CAMPUS_CELLS.dormitories }),
         ...putLocationIntoPlay(codes.miskatonicQuad, CAMPUS, { at: CAMPUS_CELLS.miskatonicQuad }),
         spawnEnemyAt(onlyCopy(codes.servantOfFlame), onlyCopy(codes.dormitories)),
-        fromSetAside([codes.fire], { kind: 'attachedTo', hostId: onlyCopy(codes.yourFriendsRoom) }),
+        ...fromSetAside([codes.fire], {
+          kind: 'attachedTo',
+          hostId: onlyCopy(codes.yourFriendsRoom),
+        }),
         // However many are left: Lit Up's reverse side may have placed four of them already.
         eachSetAsideCopyTo(codes.fire, { kind: 'encounterDiscard' }),
       ),
