@@ -1,3 +1,4 @@
+import { useNow } from './usage_limits';
 import { ENEMY_PHASE_ATTACK_PROMPT } from './forced_attacks';
 import { withoutFirst, withoutKey } from '@arkham/util';
 import { sameEdge } from './board';
@@ -84,11 +85,7 @@ export function apply(state: GameState, event: Event): GameState {
     case 'SurgeGained':
       return updateCard(state, event.cardId, (card) => ({ ...card, gainedSurge: true }));
     case 'CardActionUsed': {
-      const use = {
-        action: event.action,
-        investigatorId: event.investigatorId,
-        round: state.meta.round,
-      };
+      const use = { action: event.action, ...useNow(state, event.investigatorId) };
       return updateCard(state, event.cardId, (card) => ({
         ...card,
         actionUses: [...(card.actionUses ?? []), use],

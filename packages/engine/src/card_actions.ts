@@ -28,6 +28,7 @@ import { currentCard, requireCard } from './lookup';
 import { CommandRejected } from './rejection';
 import { isRestrictedFor } from './restrictions';
 import type { CardInstance, GameState, Investigator } from './state';
+import { withinLimit, type UsageLimit } from './usage_limits';
 import { requireTurnOf } from './turns';
 import { playAreaOf, sameZone } from './zone';
 
@@ -51,22 +52,12 @@ export interface CardAction {
    */
   readonly free?: true;
   /** "(Limit once per …)", when the card prints one. */
-  readonly limit?: ActionLimit;
+  readonly limit?: UsageLimit;
   /** "Spend N resources:" or "Spend N clues:", paid before the effects. */
   readonly cost?: ActionCost;
   /** "If you control Lita Chantler:", which the investigator taking it must meet (`actionConditionHolds`). */
   readonly condition?: ActionCondition;
   readonly effects: readonly AbilityEffect[];
-}
-
-/**
- * "(Limit once per turn.)", "(Limit once per game.)" or "(Group limit once per game.)": how often
- * the action may be taken (Rules Reference, "Limits and Maximums"). A limit counts each
- * investigator's uses apart; a group limit counts everyone's together.
- */
-export interface ActionLimit {
-  readonly per: 'turn' | 'game';
-  readonly group?: true;
 }
 
 /**
@@ -369,7 +360,7 @@ export function cardActionsOfferedTo(
     const actions = cardStats(ctx.cards, card.code).actions ?? [];
     if (actions.length === 0 || !offersActionsTo(state, card, investigator)) return [];
     return actions.flatMap(({ designator, free, limit, cost, condition }, action) =>
-      withinLimit(state, card, action, limit, investigator.id) &&
+      actionWithinLimit(state, card, action, limit, investigator.id) &&
       canPay(ctx, state, investigator, cost) &&
       actionConditionHolds(state, investigator, condition)
         ? [
@@ -422,25 +413,16 @@ function numberOfKind(actions: readonly CardAction[], action: number): { number?
   return sameKind.length > 1 ? { number: sameKind.indexOf(action) + 1 } : {};
 }
 
-/**
- * Whether the limit of action number `action` of `card` lets `investigatorId` take it now. "Once
- * per turn" counts the uses of the current round: card actions are taken only in the
- * investigator's own turn, and each investigator has one turn per round.
- */
-export function withinLimit(
+/** Whether the limit of action number `action` of `card` lets `investigatorId` take it now. */
+function actionWithinLimit(
   state: GameState,
   card: CardInstance,
   action: number,
-  limit: ActionLimit | undefined,
+  limit: UsageLimit | undefined,
   investigatorId: InvestigatorId,
 ): boolean {
-  if (limit === undefined) return true;
-  return !(card.actionUses ?? []).some(
-    (use) =>
-      use.action === action &&
-      (limit.group === true || use.investigatorId === investigatorId) &&
-      (limit.per === 'game' || use.round === state.meta.round),
-  );
+  const uses = (card.actionUses ?? []).filter((use) => use.action === action);
+  return withinLimit(state, uses, limit, investigatorId);
 }
 
 /** The action `cmd` takes; rejects an index the card doesn't print (`unknownCardAction`). */
@@ -477,7 +459,7 @@ export function handleUseCardAction(
       cardId: cmd.cardId,
       investigatorId: investigator.id,
     });
-  if (!withinLimit(state, card, cmd.action, limit, investigator.id))
+  if (!actionWithinLimit(state, card, cmd.action, limit, investigator.id))
     throw new CommandRejected({
       code: 'cardActionLimitReached',
       cardId: cmd.cardId,

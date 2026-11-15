@@ -20,8 +20,9 @@
   - a card's attached to a location (Locked Door, Arcane Lock) by investigators at that location ([Triggered Abilities](https://arkhamdb.com/rules#Triggered_Abilities): "a scenario card that is in play and at the same location as the investigator"),
   - and the current agenda's and act's by any investigator.
   - An unrevealed location offers none, as it has only its unrevealed side's text.
-- [Limits](https://arkhamdb.com/rules#Limits_and_Maximums): "(Limit once per turn/game.)" counts each investigator's uses apart, "(Group limit once per game.)" everyone's together.
-  - The engine counts "once per turn" by round, since card actions are taken only in the investigator's own turn and each investigator has one turn per round.
+- [Limits](https://arkhamdb.com/rules#Limits_and_Maximums): "(Limit once per turn/round/phase/game.)" counts each investigator's uses apart, "(Group limit once per game.)" everyone's together; "twice per round" allows two.
+  - A turn is one investigator's turn: a free action taken in alice's turn and again in bob's is used once in each turn.
+  - Outside every turn (a free action in the mythos or enemy phase) the uses of one phase count as one turn, since no turn is in progress to tell them apart.
   - An action whose effect can't change the game state can't be taken ([Triggered Abilities](https://arkhamdb.com/rules#Triggered_Abilities)), so its limit isn't used up either: St. Mary's Hospital ("Heal 3 damage") with no damage isn't offered.
   - An action whose effect is done at the table (no effect the engine runs) is always offered.
 - [Costs](https://arkhamdb.com/rules#Costs): the text before the colon ("Spend 5 resources:") is paid in full before the effect; an action whose cost can't be paid can't be taken.

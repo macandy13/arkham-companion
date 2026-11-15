@@ -1,3 +1,4 @@
+import type { AbilityUse } from './usage_limits';
 import type { TakenAction } from './action_costs';
 import type { AbilityEffect, OpenedWindow } from './abilities';
 import type { CampaignLog } from './campaign/campaign_log';
@@ -70,16 +71,9 @@ export interface CardInstance {
   actionUses?: readonly CardActionUse[];
 }
 
-/**
- * One use of a card action (`CardInstance.actionUses`): which action of the card, who took it and
- * in which round, which is all the limits ask ("once per turn", "once per game", "group limit").
- * Uses are kept on the card instance, so they would reset if the card left play and came back;
- * no limited card does that yet.
- */
-export interface CardActionUse {
+/** One use of action number `action` of a card (`CardInstance.actionUses`), for its limit. */
+export interface CardActionUse extends AbilityUse {
   action: number;
-  investigatorId: InvestigatorId;
-  round: number;
 }
 
 /**

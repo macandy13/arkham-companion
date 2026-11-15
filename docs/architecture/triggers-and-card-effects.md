@@ -126,7 +126,7 @@ An action ability provokes attacks of opportunity unless it is a Resign or Parle
 
 ### Limits, costs and conditions
 
-- A `CardAction.limit` ("once per turn", "once per game", group limit) is checked against the uses `CardActionUsed` records on the card (`CardInstance.actionUses`, with who took it and in which round; `withinLimit`), so `cardActionsOfferedTo` leaves out an action used up.
+- A `CardAction.limit` (a [`UsageLimit`](../../packages/engine/src/usage_limits.ts): once or `times` per turn, round, phase or game, group or not) is checked against the uses `CardActionUsed` records on the card (`CardInstance.actionUses`, with who took it and in which round, phase and turn; `withinLimit`), so `cardActionsOfferedTo` leaves out an action used up. Triggered abilities will count their limits the same way (MC2.3).
 - A `CardAction.cost` ("Spend 5 resources:", `ActionCost`) is paid by `UseCardAction` before the effects; an action that can't be paid for (`canPay`) is neither offered nor accepted (`cardActionCostUnpaid`).
   - A group cost (`groupClues`, "2 clues per investigator, as a group") is paid by any active investigators: `UseCardAction.spend` names who pays how many (`groupCluePayments`), and without it the taker pays what they can and the others the rest (`defaultCluePayments`).
   The view gives the screen what it needs to let the players split it: the cost on the offered action (`CardActionView.groupClues`) and who may pay with the clues they hold and the default split (`BoardView.cluePayers`).
