@@ -1,4 +1,4 @@
-import { withoutEmptyLists } from '@arkham/util';
+import { includesAny, withoutEmptyLists } from '@arkham/util';
 import { cardStats, type EngineContext, type Trait } from './cards';
 import { cardsInPlay } from './doom';
 import type { InvestigatorId } from './ids';
@@ -73,7 +73,10 @@ export interface EnemyLocationRestriction {
  * - `ready`: it stays exhausted ("it cannot ready", Handcuffs).
  * - `placeDoom`: no doom is placed on it ("doom cannot be placed on it", Handcuffs).
  */
-export type EnemyRestriction = 'ready' | 'placeDoom';
+export type EnemyRestriction = (typeof ENEMY_RESTRICTIONS)[number];
+
+/** Every `EnemyRestriction`. */
+export const ENEMY_RESTRICTIONS = ['ready', 'placeDoom'] as const;
 
 /**
  * A "cannot" about an enemy: `{ cannot: 'ready', of: 'host', exceptTraits: [trait('Elite')] }` is
@@ -170,7 +173,7 @@ export function isClosedToEnemy(
     activeRestrictions(ctx, source).some(
       (restriction) =>
         restriction.cannot === 'enemiesMoveInto' &&
-        !hasAnyOf(traits, restriction.exceptTraits) &&
+        !includesAny(traits, restriction.exceptTraits) &&
         namesCard(ctx, state, source, restriction.of, location),
     ),
   );
@@ -188,13 +191,14 @@ export function isEnemyRestricted(
 ): boolean {
   const { traits } = cardStats(ctx.cards, enemy.code);
   return cardsInPlay(state).some((source) =>
-    activeRestrictions(ctx, source).some(
-      (restriction) =>
-        restriction.cannot === cannot &&
-        'of' in restriction &&
-        !('exceptTraits' in restriction && hasAnyOf(traits, restriction.exceptTraits)) &&
-        namesCard(ctx, state, source, restriction.of, enemy),
-    ),
+    activeRestrictions(ctx, source)
+      .filter(isEnemyCardRestriction)
+      .some(
+        (restriction) =>
+          restriction.cannot === cannot &&
+          !includesAny(traits, restriction.exceptTraits) &&
+          namesCard(ctx, state, source, restriction.of, enemy),
+      ),
   );
 }
 
@@ -258,7 +262,6 @@ function namesEveryPlayedCard(cards: PlayedCardFilter | undefined): boolean {
 
 const PLAYED_CARD_TYPES: readonly PlayedCardType[] = ['asset', 'event'];
 
-/** Whether `traits` holds one of `wanted`; none when `wanted` is absent. */
-function hasAnyOf(traits: readonly Trait[], wanted: readonly Trait[] | undefined): boolean {
-  return (wanted ?? []).some((trait) => traits.includes(trait));
+function isEnemyCardRestriction(restriction: CardRestriction): restriction is EnemyCardRestriction {
+  return ENEMY_RESTRICTIONS.some((cannot) => cannot === restriction.cannot);
 }

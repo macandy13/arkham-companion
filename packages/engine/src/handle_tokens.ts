@@ -121,10 +121,10 @@ function changed(holder: ResolvedHolder, token: TokenKind, delta: number): Event
 }
 
 /**
- * Whether moved `token`s may land on a card with `stats`: damage only on a card with health and
- * horror only on one with sanity (FAQ, October 2024: no damage moves onto a card without health).
+ * Whether moved `token`s may land on `card`: damage only on a card with health and horror only on
+ * one with sanity (FAQ, October 2024: no damage moves onto a card without health), and no doom on
+ * an enemy a card keeps it off (`isEnemyRestricted`, Handcuffs).
  */
-/** Whether `token` may be placed on `card`: no doom on a handcuffed enemy (`isEnemyRestricted`). */
 function canHold(
   ctx: EngineContext,
   state: GameState,

@@ -1,19 +1,24 @@
 import { describe, expect, it } from 'vitest';
 import {
   atLocation,
+  attachedTo,
   blankEnemy,
   blankEvent,
   blankLocation,
   blankPlayerAsset,
+  boardView,
   engagedWith,
   instanceId,
   investigatorId,
   newGame,
   trait,
+  zoneKey,
   zoneOf,
   type Command,
+  type GameState,
+  type InstanceId,
 } from './index';
-import { stateAfter } from '../test/utils';
+import { rejectionFrom, stateAfter } from '../test/utils';
 
 const alice = investigatorId('alice');
 const hall = instanceId('hall');
@@ -42,6 +47,13 @@ const hidingSpotInHall: Command = {
   hostId: hall,
   code: hidingSpot.code,
 };
+
+/** The only card attached to `hostId` in `state`. */
+function onlyAttachmentOf(state: GameState, hostId: InstanceId): InstanceId {
+  const [only, ...more] = state.order[zoneKey(attachedTo(hostId))] ?? [];
+  if (only === undefined || more.length > 0) throw new Error(`one card is attached to ${hostId}`);
+  return only;
+}
 
 describe('Handcuffs on an exhausted enemy at the hall', () => {
   /** The hall with Alice in it; each test adds the ghoul, which Alice evades first. */
@@ -104,19 +116,38 @@ describe('Hiding Spot at the hall, where Alice is', () => {
     expect(zoneOf(after, ghoul)).toEqual(zone);
   });
 
-  it('gives the enemy back its engaging once Hiding Spot is discarded', () => {
+  it('keeps Alice from fighting the evaded, unengaged enemy', () => {
     const { context, state } = hallWithAlice.withCard(ghoul, plainGhoul, atLocation(hall)).start();
     const hidden = stateAfter(context, state, aliceEvadesGhoul, hidingSpotInHall);
-    const [hidingSpotCard] = Object.values(hidden.cards).filter(
-      (card) => card.code === hidingSpot.code,
-    );
 
-    const after = stateAfter(
-      context,
-      hidden,
-      { type: 'DiscardCard', cardId: hidingSpotCard!.id },
-      { type: 'ReadyEnemy', enemyId: ghoul },
-    );
+    const rejection = rejectionFrom(context, hidden, {
+      type: 'Fight',
+      investigatorId: alice,
+      enemyId: ghoul,
+    });
+
+    expect(rejection.code).toBe('aloofNotEngaged');
+  });
+
+  it('shows the gained aloof among the enemy keywords', () => {
+    const { context, state } = hallWithAlice.withCard(ghoul, plainGhoul, atLocation(hall)).start();
+
+    const after = stateAfter(context, state, aliceEvadesGhoul, hidingSpotInHall);
+
+    expect(boardView(context, after).enemyStats(ghoul).keywords).toEqual([{ name: 'aloof' }]);
+  });
+
+  it('has a ready enemy engage Alice once Hiding Spot is discarded', () => {
+    const { context, state } = hallWithAlice.withCard(ghoul, plainGhoul, atLocation(hall)).start();
+    const hidden = stateAfter(context, state, aliceEvadesGhoul, hidingSpotInHall, {
+      type: 'ReadyEnemy',
+      enemyId: ghoul,
+    });
+
+    const after = stateAfter(context, hidden, {
+      type: 'DiscardCard',
+      cardId: onlyAttachmentOf(hidden, hall),
+    });
 
     expect(zoneOf(after, ghoul)).toEqual(engagedWith(alice));
   });
