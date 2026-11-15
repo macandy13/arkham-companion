@@ -13,21 +13,21 @@ import {
   outOfGame,
   putIntoThreatArea,
   threatAreaOf,
+  victoryDisplay,
   whenRevealed,
-  zoneKey,
   type CardStats,
   type Command,
-  type GameState,
-  type Zone,
 } from './index';
+import { cardsInZone } from './lookup';
 import { rejectionFrom, resolveRevelation, stateAfter } from '../test/utils';
 
 const alice = investigatorId('alice');
 const bob = investigatorId('bob');
 const hall = instanceId('hall');
 const attic = instanceId('attic');
-/** The ID `DrawWeakness` gives alice's first weakness. */
+/** The IDs `DrawWeakness` gives alice's first and second weakness. */
 const alicesWeakness = instanceId('alice:weakness:1');
+const alicesSecondWeakness = instanceId('alice:weakness:2');
 
 /** Weaknesses with no other property than the one in their name. */
 const weaknessFoe = blankEnemy('weakness_foe');
@@ -58,8 +58,6 @@ const aliceDraws = (weakness: CardStats): Command => ({
   code: weakness.code,
 });
 
-const idsIn = (state: GameState, zone: Zone) => state.order[zoneKey(zone)] ?? [];
-
 describe('DrawWeakness', () => {
   it('spawns a weakness enemy engaged with its drawer, who owns it', () => {
     const { context, state } = aliceInHallBobInAttic(weaknessFoe);
@@ -87,7 +85,7 @@ describe('DrawWeakness', () => {
 
     const after = stateAfter(context, state, aliceDraws(weaknessFoe), aliceDraws(weaknessFoe));
 
-    expect(idsIn(after, engagedWith(alice))).toEqual([alicesWeakness, 'alice:weakness:2']);
+    expect(cardsInZone(after, engagedWith(alice))).toEqual([alicesWeakness, alicesSecondWeakness]);
   });
 
   it('puts a treachery into the threat area its revelation names', () => {
@@ -97,10 +95,10 @@ describe('DrawWeakness', () => {
       context,
       state,
       aliceDraws(lingeringWeakness),
-      resolveRevelation('alice:weakness:1'),
+      resolveRevelation(alicesWeakness),
     );
 
-    expect(idsIn(after, threatAreaOf(alice))).toEqual([alicesWeakness]);
+    expect(cardsInZone(after, threatAreaOf(alice))).toEqual([alicesWeakness]);
   });
 
   it('gives a resolved treachery back to its owner, not to the encounter discard', () => {
@@ -109,7 +107,7 @@ describe('DrawWeakness', () => {
     const after = stateAfter(context, state, aliceDraws(plainWeakness));
 
     expect(after.cards[alicesWeakness]?.zone).toEqual(outOfGame);
-    expect(idsIn(after, encounterDiscard)).toEqual([]);
+    expect(cardsInZone(after, encounterDiscard)).toEqual([]);
   });
 
   it('draws an encounter card for surge, as an encounter card does', () => {
@@ -117,13 +115,17 @@ describe('DrawWeakness', () => {
 
     const after = stateAfter(context, state, aliceDraws(surgeWeakness));
 
-    expect(idsIn(after, engagedWith(alice))).toEqual(['encounter_foe']);
+    expect(cardsInZone(after, engagedWith(alice))).toEqual(['encounter_foe']);
   });
 
   it.each([
-    { name: 'without victory', weakness: weaknessFoe },
-    { name: 'with victory', weakness: weaknessFoeWithVictory },
-  ])('gives a defeated weakness enemy $name back to its owner', ({ weakness }) => {
+    { name: 'goes back to its owner', weakness: weaknessFoe, to: outOfGame },
+    {
+      name: 'with victory goes to the victory display',
+      weakness: weaknessFoeWithVictory,
+      to: victoryDisplay,
+    },
+  ])('a defeated weakness enemy $name', ({ weakness, to }) => {
     const { context, state } = aliceInHallBobInAttic(weakness);
 
     const after = stateAfter(context, state, aliceDraws(weakness), {
@@ -131,7 +133,7 @@ describe('DrawWeakness', () => {
       enemyId: alicesWeakness,
     });
 
-    expect(after.cards[alicesWeakness]?.zone).toEqual(outOfGame);
+    expect(after.cards[alicesWeakness]?.zone).toEqual(to);
   });
 
   it('gives a discarded weakness in the threat area back to its owner', () => {
@@ -141,28 +143,34 @@ describe('DrawWeakness', () => {
       context,
       state,
       aliceDraws(lingeringWeakness),
-      resolveRevelation('alice:weakness:1'),
+      resolveRevelation(alicesWeakness),
       { type: 'DiscardCard', cardId: alicesWeakness },
     );
 
     expect(after.cards[alicesWeakness]?.zone).toEqual(outOfGame);
   });
 
-  it('leaves a weakness enemy at the location when its owner is defeated, until it leaves play', () => {
-    const { context, state } = aliceInHallBobInAttic(weaknessFoe);
+  it.each([
+    { name: 'engaged with her', weakness: weaknessFoe, answers: [] },
+    { name: 'engaged with bob', weakness: atticWeaknessFoe, answers: [] },
+    {
+      name: 'in her threat area',
+      weakness: lingeringWeakness,
+      answers: [resolveRevelation(alicesWeakness)],
+    },
+  ])(
+    'removes a weakness of alice $name from the game when she is defeated',
+    ({ weakness, answers }) => {
+      const { context, state } = aliceInHallBobInAttic(weakness);
 
-    const defeated = stateAfter(context, state, aliceDraws(weaknessFoe), {
-      type: 'DefeatInvestigator',
-      investigatorId: alice,
-    });
-    const discarded = stateAfter(context, defeated, {
-      type: 'DiscardCard',
-      cardId: alicesWeakness,
-    });
+      const after = stateAfter(context, state, aliceDraws(weakness), ...answers, {
+        type: 'DefeatInvestigator',
+        investigatorId: alice,
+      });
 
-    expect(defeated.cards[alicesWeakness]?.zone).toEqual({ kind: 'atLocation', locationId: hall });
-    expect(discarded.cards[alicesWeakness]?.zone).toEqual(outOfGame);
-  });
+      expect(after.cards[alicesWeakness]?.zone).toEqual(outOfGame);
+    },
+  );
 
   it('refuses an asset or event weakness, which stays in its owner`s hand', () => {
     const { context, state } = aliceInHallBobInAttic(blankEvent('event_weakness'));

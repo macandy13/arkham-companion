@@ -25,7 +25,7 @@ import type {
   ScenarioStarted,
   TokensChanged,
 } from './events';
-import type { InstanceId } from './ids';
+import type { CardCode, InstanceId } from './ids';
 import type { GameMap } from './map';
 import { seedRng } from './rng';
 import { withStatDelta } from './investigators';
@@ -279,37 +279,27 @@ function moveCard(state: GameState, cardId: InstanceId, to: Zone, index?: number
 }
 
 function applyPlayerCardAttached(state: GameState, e: PlayerCardAttached): GameState {
-  const zone: Zone = { kind: 'attachedTo', hostId: e.hostId };
-  const card: CardInstance = {
-    id: e.cardId,
-    code: e.code,
-    zone,
+  return withNewCard(state, {
+    ...newCard(e.cardId, e.code, { kind: 'attachedTo', hostId: e.hostId }),
     faceUp: true,
-    exhausted: false,
-    tokens: {},
-    flags: {},
-  };
-  const key = zoneKey(zone);
-  return {
-    ...state,
-    cards: { ...state.cards, [card.id]: card },
-    order: withZoneOrder(state.order, key, [...(state.order[key] ?? []), card.id]),
-  };
+  });
 }
 
 function applyWeaknessDrawn(state: GameState, e: WeaknessDrawn): GameState {
-  const zone: Zone = { kind: 'outOfGame' };
-  const card: CardInstance = {
-    id: e.cardId,
-    code: e.code,
-    zone,
-    faceUp: false,
-    exhausted: false,
-    tokens: {},
-    flags: {},
+  return withNewCard(state, {
+    ...newCard(e.cardId, e.code, { kind: 'outOfGame' }),
     owner: e.investigatorId,
-  };
-  const key = zoneKey(zone);
+  });
+}
+
+/** A card that comes into the game: facedown, ready and with no tokens, as one fresh from a deck. */
+function newCard(id: InstanceId, code: CardCode, zone: Zone): CardInstance {
+  return { id, code, zone, faceUp: false, exhausted: false, tokens: {}, flags: {} };
+}
+
+/** `state` with `card` added at the end of its zone. */
+function withNewCard(state: GameState, card: CardInstance): GameState {
+  const key = zoneKey(card.zone);
   return {
     ...state,
     cards: { ...state.cards, [card.id]: card },

@@ -5,7 +5,7 @@
  * scenario (setup, the phase assistant, turns and actions, skill tests,
  * clues, undoing a mis-tapped move, act 1's reverse side, doom and the agenda, encounter draws and revelation
  * tests, spawn instructions, engagement, hunters, attacks, attacks of opportunity, upkeep, undoing a whole mythos phase,
- * defeat, the reverse sides of agenda 2 and acts 2 and 3, a Parley taking control of a story asset, and
+ * a weakness drawn from a player deck, defeat, the reverse sides of agenda 2 and acts 2 and 3, a Parley taking control of a story asset, and
  * the end of the scenario) as one
  * session report: game-language steps on a `PlayTable`, phase by phase and
  * turn by turn, with the facts a player would check at the table asserted
@@ -32,8 +32,10 @@ import { describe, expect, it } from 'vitest';
 import {
   byName,
   campaign,
+  blankTreachery,
   campaignId,
   cardDbWith,
+  cardName,
   enemyMatching,
   instanceId,
   investigatorId,
@@ -42,6 +44,7 @@ import {
   replay,
   scenario,
   suggestSkillTest,
+  trait,
   type ScenarioContext,
 } from '@arkham/engine';
 import { answer } from '@arkham/engine/test/utils';
@@ -61,8 +64,14 @@ import {
 } from '../index';
 import { daisyWalker, rolandBanks, wendyAdams, zealotInvestigatorCards } from '../investigators';
 
+/**
+ * Amnesia, a basic weakness in Wendy's deck: "Revelation – Choose 1 card in your hand. Discard
+ * each other card from your hand." Stats entered by hand; the players resolve its revelation.
+ */
+const amnesia = blankTreachery('01096', { name: cardName('Amnesia'), traits: [trait('Madness')] });
+
 const ctx: ScenarioContext = {
-  cards: cardDbWith(theGatheringCards, zealotInvestigatorCards),
+  cards: cardDbWith(theGatheringCards, [...zealotInvestigatorCards, amnesia]),
   scenario: theGathering,
 };
 const roland = investigatorId('roland');
@@ -177,6 +186,18 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
 
     expect(table.board.perInvestigator('actions')).toEqual({ roland: 3, daisy: 3, wendy: 3 });
     expect(table.board.perInvestigator('resources')).toEqual({ roland: 6, daisy: 6, wendy: 4 });
+
+    // Wendy's card for 4.4 is Amnesia, a weakness: it resolves as if drawn from the encounter
+    // deck, and she discards her hand down to one card at the table. Then it goes back to her
+    // discard pile, not to the encounter discard.
+    const discardBefore = table.board.encounter.discard;
+    table.play({ type: 'DrawWeakness', investigatorId: wendy, code: amnesia.code });
+
+    expect(table.board.encounter.discard).toEqual(discardBefore);
+    expect(table.state.cards[instanceId('wendy:weakness:1')]).toMatchObject({
+      zone: { kind: 'outOfGame' },
+      owner: wendy,
+    });
 
     // Round 2 – mythos: 1.2 doom, 1.3 below the threshold, 1.4 Roland draws the
     // Icy Ghoul, which spawns in the Cellar, and Daisy draws Crypt Chill: its

@@ -2,8 +2,7 @@ import { cardStats, type CardStats, type EngineContext } from './cards';
 import type { AttachPlayerCard } from './commands';
 import { isInPlay } from './doom';
 import type { PlayerCardAttached } from './events';
-import { instanceId, type InstanceId } from './ids';
-import { requireCard } from './lookup';
+import { newCardId, requireCard } from './lookup';
 import { CommandRejected } from './rejection';
 import type { CardInstance, GameState } from './state';
 import { encounterDiscard, outOfGame, type Zone } from './zone';
@@ -47,7 +46,7 @@ export function handleAttachPlayerCard(
   return [
     {
       type: 'PlayerCardAttached',
-      cardId: nextPlayerCardId(state, host.id),
+      cardId: newCardId(state, `${host.id}:player_card`),
       code: cmd.code,
       hostId: host.id,
     },
@@ -56,10 +55,4 @@ export function handleAttachPlayerCard(
 
 function isPlayerCardStats({ typeCode, encounterCode }: CardStats): boolean {
   return (typeCode === 'asset' || typeCode === 'event') && encounterCode === undefined;
-}
-
-function nextPlayerCardId(state: GameState, hostId: InstanceId): InstanceId {
-  let index = 1;
-  while (state.cards[instanceId(`${hostId}:player_card:${index}`)] !== undefined) index++;
-  return instanceId(`${hostId}:player_card:${index}`);
 }

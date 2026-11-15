@@ -259,8 +259,10 @@ export function defeatedByDamage(
 
 /**
  * The `EnemyDefeated` of `enemy`: to the victory display if it has victory, else to the encounter
- * discard. A weakness enemy goes back to its owner instead (`CardInstance.owner`; Rules
- * Reference, "Weakness"), out of the scenario.
+ * discard, or back to its owner for a weakness (`CardInstance.owner`), out of the scenario. Victory
+ * wins for a weakness too: it replaces "the discard pile", whichever pile that is (Rules
+ * Reference, "Victory Display"; FAQ v2.5 §1.12: an encounter-type weakness in play counts as an
+ * encounter card).
  */
 export function enemyDefeatedEvent(
   state: GameState,
@@ -268,7 +270,8 @@ export function enemyDefeatedEvent(
   stats: CardStats,
 ): EnemyDefeated {
   const hasVictory = (stats.victory ?? 0) > 0;
-  const to = enemy.owner !== undefined ? outOfGame : hasVictory ? victoryDisplay : encounterDiscard;
+  const discard = enemy.owner !== undefined ? outOfGame : encounterDiscard;
+  const to = hasVictory ? victoryDisplay : discard;
   return {
     type: 'EnemyDefeated',
     enemyId: enemy.id,

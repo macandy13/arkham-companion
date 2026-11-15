@@ -22,10 +22,10 @@ import type {
   SurgeGained,
   WeaknessDrawn,
 } from './events';
-import { decisionId, instanceId, type CardCode, type InstanceId, type InvestigatorId } from './ids';
+import { decisionId, type CardCode, type InstanceId, type InvestigatorId } from './ids';
 import { activeInvestigator, isActiveInvestigator, findInvestigator } from './investigators';
 import { hasKeyword } from './keywords';
-import { cardsInZone, requireCard } from './lookup';
+import { cardsInZone, newCardId, requireCard } from './lookup';
 import { cardMoved } from './placement';
 import { discardPileOf } from './player_cards';
 import { spawnEvents } from './spawn';
@@ -334,7 +334,7 @@ function drawOne(
 /**
  * `DrawWeakness`: the weakness comes into the game as a new card the drawer owns, and is then
  * drawn like an encounter card (`revealDrawn`), so its revelation, peril, surge and placement are
- * the encounter draw's. Its ID counts up per investigator, so it stays the same on replay.
+ * the encounter draw's.
  */
 export function handleDrawWeakness(
   ctx: EngineContext,
@@ -347,17 +347,11 @@ export function handleDrawWeakness(
     throw new CommandRejected({ code: 'notAWeaknessToDraw', cardCode: cmd.code });
   const drawn: WeaknessDrawn = {
     type: 'WeaknessDrawn',
-    cardId: nextWeaknessId(state, investigator.id),
+    cardId: newCardId(state, `${investigator.id}:weakness`),
     code: cmd.code,
     investigatorId: investigator.id,
   };
   return [drawn, ...revealDrawn(ctx, replay([drawn], state), investigator, drawn.cardId)];
-}
-
-function nextWeaknessId(state: GameState, investigatorId: InvestigatorId): InstanceId {
-  let index = 1;
-  while (state.cards[instanceId(`${investigatorId}:weakness:${index}`)] !== undefined) index++;
-  return instanceId(`${investigatorId}:weakness:${index}`);
 }
 
 /**
