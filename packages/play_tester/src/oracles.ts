@@ -1,5 +1,11 @@
 import { sum } from '@arkham/util';
-import { ROUND_PHASES, type BoardView, type InstanceId, type PhaseStepId } from '@arkham/engine';
+import {
+  ROUND_PHASES,
+  type BoardView,
+  type InstanceId,
+  type InvestigatorId,
+  type PhaseStepId,
+} from '@arkham/engine';
 import type { Step } from './steps';
 
 /** The rule oracles (product.md "Continuous play tester", check 4), one per rule they check. */
@@ -58,18 +64,10 @@ function beganMythos(before: BoardView, after: BoardView): boolean {
   return before.round >= 1 && after.round === before.round + 1;
 }
 
-/**
- * Whether more enemies are engaged with `investigator` in `after` than in `before`. Counted, not
- * matched, as `EnemyView` has no id: two copies of an enemy share a name.
- */
-function newlyEngaged(
-  before: BoardView,
-  after: BoardView,
-  investigator: BoardView['investigators'][number]['id'],
-): boolean {
-  const engaged = (board: BoardView) =>
-    board.enemies.filter(({ engagedWith }) => engagedWith === investigator).length;
-  return engaged(after) > engaged(before);
+/** Whether an enemy engaged with `investigator` in `after` was not engaged with them in `before`. */
+function newlyEngaged(before: BoardView, after: BoardView, investigator: InvestigatorId): boolean {
+  const engagedBefore = new Set(before.enemiesEngagedWith(investigator).map(({ id }) => id));
+  return after.enemiesEngagedWith(investigator).some(({ id }) => !engagedBefore.has(id));
 }
 
 /**
@@ -109,12 +107,10 @@ export const ORACLES: readonly Oracle[] = [
         if (ran('resetActions') && investigator.actions !== ACTIONS_PER_ROUND)
           return `${investigator.name} has ${investigator.actions} actions after the upkeep`;
         // An enemy that readies and engages them first may take resources as it engages (Rogue
-        // Gangster), so the gain is only checked for an investigator no enemy newly engaged.
-        if (
-          ran('drawAndGain') &&
-          !newlyEngaged(before, after, investigator.id) &&
-          investigator.resources !== was.resources + 1
-        )
+        // Gangster), so for an investigator an enemy newly engaged only a gain above 1 is wrong.
+        const gained = investigator.resources - was.resources;
+        const engagedNow = newlyEngaged(before, after, investigator.id);
+        if (ran('drawAndGain') && (engagedNow ? gained > 1 : gained !== 1))
           return `${investigator.name} went from ${was.resources} to ${investigator.resources} resources in the upkeep`;
       }
       const exhausted = after.enemies.find(({ exhausted }) => exhausted);
