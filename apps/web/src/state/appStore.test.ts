@@ -206,6 +206,25 @@ describe('appStore', () => {
       });
     });
 
+    describe('with a catalog card of a code the scenario defines', () => {
+      it("keeps the scenario's own card", async () => {
+        const catalogMinion = blankEnemy(GATHERING_CODES.ghoulMinion, { name: 'catalog_minion' });
+        const store = createAppStore(
+          new IndexedDbStore('appstore-catalog-precedence-test'),
+          undefined,
+          undefined,
+          async () => [catalogMinion],
+        );
+        await store.getState().startScenario(start);
+
+        await store.getState().actions.drawWeakness(investigatorId('alder'), catalogMinion.code);
+
+        expect(store.getState().current?.board?.enemy(instanceId('alder:weakness:1')).name).toBe(
+          cardStats(theGatheringCards, GATHERING_CODES.ghoulMinion).name,
+        );
+      });
+    });
+
     describe('startScenario', () => {
       it('stores the setup events as a new game and opens it', async () => {
         const db = new IndexedDbStore('appstore-start-test');

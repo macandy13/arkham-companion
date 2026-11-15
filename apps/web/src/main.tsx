@@ -24,7 +24,7 @@ const cardLanguage = () => loadSettings().cardLanguage;
 const catalog = sharedCatalog((language) => loadCatalog(database, language), cardLanguage);
 /**
  * The card data a game adds from the catalog, the cached copy first, as at start-up below, so
- * opening a game never waits for the network.
+ * opening a game waits for the network only while nothing is cached.
  */
 const cachedCatalog = async () => (await database.getCatalog(cardLanguage())) ?? catalog();
 const store = createAppStore(database, findScenario, findCampaign, async () =>

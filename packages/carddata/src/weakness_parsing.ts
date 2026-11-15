@@ -11,12 +11,15 @@ const RawWeaknessSchema = z.object({
   subtype_code: z.enum(['weakness', 'basicweakness']),
   type_code: z.enum(['enemy', 'treachery']),
   duplicate_of_code: z.null().optional(),
+  // An encounter-set weakness (Mark of Elokoss) comes with its scenario, which defines it.
+  encounter_code: z.null().optional(),
   restrictions: z.object({ investigator: z.record(z.string(), z.string()).optional() }).nullish(),
 });
 
 /**
  * The player weakness enemies and treacheries of `rawCards` (ArkhamDB's cards list), sorted by
- * code. A reprint (`duplicate_of_code`) is left out, as it plays like its original.
+ * code. A reprint (`duplicate_of_code`) is left out, as it plays like its original, and so is a
+ * weakness of an encounter set, which its scenario defines.
  */
 export function buildWeaknesses(rawCards: unknown): WeaknessDef[] {
   if (!Array.isArray(rawCards)) throw new Error('Expected an array of cards');

@@ -379,10 +379,16 @@ export type CatalogCards = () => Promise<readonly CardStats[]>;
  */
 function contextFor(entry: ScenarioEntry, catalogCards: readonly CardStats[]): ScenarioContext {
   // Investigator cards are not needed: after setup the engine reads investigators from the state.
-  return { cards: cardDbWith(entry.cards, catalogCards), scenario: entry.definition };
+  // A scenario's own card wins over the catalog's of the same code: it carries the encounter set,
+  // quantity and abilities the scenario was written with.
+  const added = catalogCards.filter((card) => entry.cards.get(card.code) === undefined);
+  return { cards: cardDbWith(entry.cards, added), scenario: entry.definition };
 }
 
-/** `catalogCards()`, or none when the catalog can't be loaded, so a game still opens without them. */
+/**
+ * `catalogCards()`, or none when the catalog can't be loaded: a game in which nobody has drawn a
+ * weakness still opens, one that has can't replay its draw and opens unplayable.
+ */
 async function loadCatalogCards(catalogCards: CatalogCards): Promise<readonly CardStats[]> {
   try {
     return await catalogCards();

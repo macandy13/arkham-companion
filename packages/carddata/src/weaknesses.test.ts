@@ -69,6 +69,10 @@ describe('buildWeaknesses', () => {
     },
     { name: 'an encounter enemy', card: rawCard({ code: '9103', type_code: 'enemy' }) },
     {
+      name: 'a weakness of an encounter set',
+      card: { ...fakeStalker, code: '9202', encounter_code: 'fake_set' },
+    },
+    {
       name: 'a reprint',
       card: { ...fakeStalker, code: '9201', duplicate_of_code: '9101' },
     },
