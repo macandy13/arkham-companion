@@ -7,7 +7,7 @@ Card rulings: [Story assets and earned cards](cards/story-assets.md).
 - Resign is an action ability a card offers ("[action] Resign."): the Parlor, the Main Path and The Midnight Masks' agendas. Like Parley it provokes no attacks of opportunity.
   - The only other way is a card effect that makes investigators resign ("Each investigator immediately resigns", Emergent Evils in Smoke and Mirrors), which takes no action, so provokes no attacks of opportunity, and happens in whatever phase the effect resolves ([The Arkham Grimoire v1.1](https://images-cdn.fantasyflightgames.com/filer_public/4e/da/4eda7782-c983-47cc-8d9f-ae372a44d87b/arkham_grimoire_v11.pdf), "Resign": only abilities with the Resign designator are actions).
 - On elimination:
-  - "when the game ends" effects on their weaknesses in play trigger, then those weaknesses are removed.
+  - "when the game ends" effects on their weaknesses in play trigger, then those weaknesses are removed, wherever they are: an enemy engaged with another investigator or at a location too ([FAQ v2.5](https://images-cdn.fantasyflightgames.com/filer_public/c1/d0/c1d0fab6-7fa6-4ce2-af6a-16416381a19b/ahc_faq_v25_february_2026-web.pdf), errata to "Elimination", step 0). The app leaves a "when the game ends" ability to the players.
   - Cards they control and all their out-of-play cards are removed from the game.
   - Cards they own but don't control stay until they leave play, and are then removed.
   - Their clues go to their location, and their resources return to the pool.

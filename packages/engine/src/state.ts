@@ -74,6 +74,12 @@ export interface CardInstance {
    * first. Recorded by `ReactionUsed`.
    */
   reactionUses?: readonly ReactionUse[];
+  /**
+   * The investigator whose deck the card came from, for a weakness drawn from a player deck
+   * (`DrawWeakness`). It resolves like an encounter card but is none: whenever it leaves play it
+   * goes back to its owner, out of the scenario (`isPlayerCard`), never to the encounter discard.
+   */
+  owner?: InvestigatorId;
 }
 
 /** One use of the reaction that is ability number `ability` of a card (`CardInstance.reactionUses`). */

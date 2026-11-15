@@ -65,6 +65,7 @@ export type Command =
   | ChangeChaosBag
   | SealChaosToken
   | AttachPlayerCard
+  | DrawWeakness
   | ReleaseChaosToken
   | AdvanceAgenda
   | BecomeActAndAgenda
@@ -525,6 +526,21 @@ export interface ChangeChaosBag {
 export interface AttachPlayerCard {
   type: 'AttachPlayerCard';
   hostId: InstanceId;
+  code: CardCode;
+}
+
+/**
+ * `investigatorId` draws the weakness `code` (an enemy or a treachery in the card DB) from their
+ * deck: Mob Enforcer, The Thing That Follows. Rules Reference, "Weakness": it resolves as if it
+ * were an encounter card, so it is drawn the way `DrawEncounter` draws one (revelation, peril,
+ * surge; an enemy spawns engaged with them unless it has a spawn instruction). Produces
+ * `WeaknessDrawn`, a new card they own (`CardInstance.owner`), then `DrawEncounter`'s events.
+ * Rejects a card of another type (`notAWeaknessToDraw`): an asset or event weakness stays in the
+ * players' hands, which the app doesn't track.
+ */
+export interface DrawWeakness {
+  type: 'DrawWeakness';
+  investigatorId: InvestigatorId;
   code: CardCode;
 }
 

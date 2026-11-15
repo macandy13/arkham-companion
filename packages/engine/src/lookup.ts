@@ -1,7 +1,7 @@
 import { findInvestigator } from './investigators';
 import { assertNever } from '@arkham/util';
 import { comparableName, type CardType, type EngineContext, type Trait } from './cards';
-import type { CardCode, InstanceId } from './ids';
+import { instanceId, type CardCode, type InstanceId } from './ids';
 import { CommandRejected } from './rejection';
 import type { CardInstance, GameState } from './state';
 import { zoneKey, type Zone } from './zone';
@@ -182,4 +182,15 @@ export function locationOfCard(state: GameState, card: CardInstance): InstanceId
     default:
       return assertNever(zone);
   }
+}
+
+/**
+ * An ID for a card that comes into the game (an attached player card, a drawn weakness) that
+ * `state` doesn't hold yet: `prefix:1`, `prefix:2`, … The count, not a random ID, keeps it the
+ * same on replay.
+ */
+export function newCardId(state: GameState, prefix: string): InstanceId {
+  let index = 1;
+  while (state.cards[instanceId(`${prefix}:${index}`)] !== undefined) index++;
+  return instanceId(`${prefix}:${index}`);
 }

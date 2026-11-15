@@ -398,6 +398,7 @@ function eventLine(t: TFunction, names: Names, state: GameState, event: Event): 
     case 'StepsQueued':
     case 'StepResumed':
     case 'ActionDropped':
+    case 'WeaknessDrawn': // the `EncounterCardDrawn` that follows says who drew it
       return undefined;
     default:
       return assertNever(event);

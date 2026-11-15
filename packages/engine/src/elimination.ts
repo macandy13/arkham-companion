@@ -1,6 +1,7 @@
 import type { EngineContext } from './cards';
 import { arrivalEngagements } from './engagement';
-import { decisionId } from './ids';
+import { decisionId, type InstanceId } from './ids';
+import { cardsInPlay } from './doom';
 import { requestDecision } from './decisions';
 import type {
   ChaosTokenReleased,
@@ -29,7 +30,9 @@ const NEW_LEAD_DECISION = decisionId('newLeadInvestigator');
  * Everything that follows an investigator leaving the scenario, in the order
  * the Rules Reference gives it ("Investigator Elimination"):
  *
- * 1. `left` itself (`InvestigatorDefeated` or `InvestigatorResigned`).
+ * 1. `left` itself (`InvestigatorDefeated` or `InvestigatorResigned`), then the weaknesses they own
+ *    that are in play are removed from the game, wherever they are (FAQ v2.5, errata to
+ *    "Elimination", step 0: "the game has ended for the eliminated investigator").
  * 2. Their clues are placed on their location, enemies engaged with them stay
  *    at that location unengaged (keeping damage and exhaustion), cards in
  *    their threat area are discarded, cards they control are removed from
@@ -55,11 +58,13 @@ export function investigatorLeavesEvents(
   investigator: Investigator,
   left: InvestigatorDefeated | InvestigatorResigned,
 ): Event[] {
+  const owned = ownedWeaknessesInPlay(state, investigator);
   const events: Event[] = [
     left,
+    ...owned.flatMap((cardId) => discardEncounterCard(ctx, state, cardId)),
     ...clueEvents(investigator),
-    ...engagedEnemyEvents(ctx, state, investigator),
-    ...threatAreaEvents(ctx, state, investigator),
+    ...engagedEnemyEvents(ctx, state, investigator, owned),
+    ...threatAreaEvents(ctx, state, investigator, owned),
     ...sealedTokenEvents(state, investigator),
     ...controlledCardEvents(state, investigator),
   ];
@@ -140,9 +145,12 @@ function engagedEnemyEvents(
   ctx: EngineContext,
   state: GameState,
   investigator: Investigator,
+  removed: readonly InstanceId[],
 ): Event[] {
   const { locationId } = investigator;
-  const engaged = cardsInZone(state, { kind: 'engaged', investigatorId: investigator.id });
+  const engaged = cardsInZone(state, { kind: 'engaged', investigatorId: investigator.id }).filter(
+    (enemyId) => !removed.includes(enemyId),
+  );
   if (locationId === undefined)
     return engaged.flatMap((enemyId) => discardEncounterCard(ctx, state, enemyId));
   return engaged.map((enemyId) => ({ type: 'EnemyDisengaged', enemyId, locationId }));
@@ -153,10 +161,21 @@ function threatAreaEvents(
   ctx: EngineContext,
   state: GameState,
   investigator: Investigator,
+  removed: readonly InstanceId[],
 ): Event[] {
-  return cardsInZone(state, { kind: 'threatArea', investigatorId: investigator.id }).flatMap(
-    (cardId) => discardEncounterCard(ctx, state, cardId),
-  );
+  return cardsInZone(state, { kind: 'threatArea', investigatorId: investigator.id })
+    .filter((cardId) => !removed.includes(cardId))
+    .flatMap((cardId) => discardEncounterCard(ctx, state, cardId));
+}
+
+/**
+ * The weaknesses `investigator` owns that are in play (`CardInstance.owner`), which leave with
+ * them; a "when the game ends" ability on one is left to the players.
+ */
+function ownedWeaknessesInPlay(state: GameState, investigator: Investigator): InstanceId[] {
+  return cardsInPlay(state)
+    .filter((card) => card.owner === investigator.id)
+    .map((card) => card.id);
 }
 
 /**
