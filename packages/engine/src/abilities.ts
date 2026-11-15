@@ -2772,7 +2772,10 @@ export function drawFromEncounterDiscard(
  * copies of Fire! and draw them" (Searching for Dr. Armitage): one search finds up to `copies`
  * cards with `code`, deck first, and `who` draws each of them in turn (`DrawEncounter` with
  * `cardId`), so a copy found once is drawn once even if its revelation sends it back to the
- * discard. "Shuffle the encounter deck" afterwards is a `shuffleEncounterDeck()` of its own.
+ * discard. "Shuffle the encounter deck" afterwards is a `shuffleEncounterDeck()` of its own,
+ * which runs after the draws: the same as the rules' shuffle "upon completion of the search" while
+ * the drawn cards draw nothing more from the deck (no surge). The lead would pick the copies; the
+ * engine takes the first ones, deck first (#346).
  */
 export function searchAndDrawCopies(
   code: CardCode,

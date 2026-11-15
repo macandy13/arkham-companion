@@ -50,6 +50,9 @@ const scienceHall = instanceId('12118#1');
 const warrenObservatory = instanceId('12119#1');
 const orneLibrary = instanceId('12120#1');
 const tank = investigatorId('tank');
+/** The two Fire! copies act 3's search finds for 2 investigators, deck first. */
+const firstFire = '12129#1';
+const secondFire = '12129#2';
 
 /** Card names in `zone`, top first. */
 function namesIn(state: GameState, zone: Zone): string[] {
@@ -403,8 +406,6 @@ describe('Spreading Flames act 3, Searching for Dr. Armitage', () => {
   });
 
   describe('the search for 1 Fire! per investigator, 2 investigators', () => {
-    const firstFire = '12129#1';
-    const secondFire = '12129#2';
     const atSearching = () =>
       stateAfter(ctx, startScenario(ctx, { playerCount: 2 }), ...advanceToSearching);
 
@@ -468,8 +469,8 @@ describe('Spreading Flames act 4, Blaze of Glory, and the resolutions', () => {
       { type: 'AdvanceAct' },
       { type: 'AdvanceAct' },
       { type: 'AdvanceAct' },
-      cancelRevelation('12129#1'),
-      cancelRevelation('12129#2'),
+      cancelRevelation(firstFire),
+      cancelRevelation(secondFire),
     );
   }
 
