@@ -5,14 +5,11 @@ import type {
   DrawFromScenarioDeck,
   EncounterMatch,
   EncounterSource,
-  FromSetAside,
   GainSurge,
   ResolveRevelation,
-  ShuffleInto,
 } from './commands';
 import type {
   CardFlipped,
-  CardMoved,
   DeckShuffled,
   EncounterCardDrawn,
   DecisionRequested,
@@ -20,7 +17,7 @@ import type {
   RevelationResolved,
   SurgeGained,
 } from './events';
-import { decisionId, type CardCode, type InstanceId, type InvestigatorId } from './ids';
+import { decisionId, type InstanceId, type InvestigatorId } from './ids';
 import { activeInvestigator, isActiveInvestigator, findInvestigator } from './investigators';
 import { hasKeyword } from './keywords';
 import { cardsInZone, requireCard } from './lookup';
@@ -30,14 +27,7 @@ import { replay } from './reducer';
 import { CommandRejected } from './rejection';
 import { shuffle } from './rng';
 import type { CardInstance, Decision, GameState, Investigator } from './state';
-import {
-  encounterDeck,
-  encounterDiscard,
-  resolvingZone,
-  scenarioDeck,
-  setAside,
-  type Zone,
-} from './zone';
+import { encounterDeck, encounterDiscard, resolvingZone, scenarioDeck, type Zone } from './zone';
 
 /**
  * `DrawEncounter`: draws one card into the `resolving` zone and turns it face
@@ -262,21 +252,6 @@ export function handleDrawBeneath(ctx: EngineContext, state: GameState, cmd: Dra
   ];
 }
 
-/** `FromSetAside`: moves one set-aside copy of each code to `to`. */
-export function handleFromSetAside(state: GameState, cmd: FromSetAside): CardMoved[] {
-  return takeFromSetAside(state, cmd.codes, { asManyAsThereAre: cmd.source !== undefined }).map(
-    (cardId) => cardMoved(state, requireCard(state.cards, cardId), cmd.to),
-  );
-}
-
-/** `ShuffleInto`: adds one set-aside copy of each code to the zone and shuffles it. */
-export function handleShuffleInto(state: GameState, cmd: ShuffleInto): Event[] {
-  const cardIds = takeFromSetAside(state, cmd.codes, {
-    asManyAsThereAre: cmd.source !== undefined,
-  });
-  return shuffleInto(state, cardIds, cmd.zone);
-}
-
 /** `ShuffleEncounterDeck`: the deck in a new order; an empty deck stays as it is. */
 export function handleShuffleEncounterDeck(state: GameState): DeckShuffled[] {
   const deck = cardsInZone(state, encounterDeck);
@@ -432,29 +407,4 @@ function shuffleInto(state: GameState, cardIds: readonly InstanceId[], zone: Zon
   const [order, rngState] = shuffle([...remaining, ...cardIds], state.meta.rngState);
   const shuffled: DeckShuffled = { type: 'DeckShuffled', zone, order, rngState };
   return [...moves, shuffled];
-}
-
-/**
- * One set-aside copy of each code, in the order of `codes`; rejects a code with no copy left,
- * unless `asManyAsThereAre`, which skips it.
- */
-function takeFromSetAside(
-  state: GameState,
-  codes: readonly CardCode[],
-  { asManyAsThereAre = false }: { asManyAsThereAre?: boolean } = {},
-): InstanceId[] {
-  const { taken } = codes.reduce(
-    (acc, code) => {
-      const cardId = acc.available.find((id) => requireCard(state.cards, id).code === code);
-      if (cardId === undefined && asManyAsThereAre) return acc;
-      if (cardId === undefined)
-        throw new CommandRejected({ code: 'cardNotInZone', zone: 'setAside', match: code });
-      return {
-        taken: [...acc.taken, cardId],
-        available: acc.available.filter((id) => id !== cardId),
-      };
-    },
-    { taken: [] as InstanceId[], available: cardsInZone(state, setAside) },
-  );
-  return taken;
 }

@@ -56,6 +56,7 @@ import {
   locationOfCard,
   matchesCard,
   requireCard,
+  setAsideCopyOf,
   theOnlyCopy,
   type CardFilter,
 } from './lookup';
@@ -283,6 +284,14 @@ export type RelativeCard =
    */
   | ({ ref: 'eachInPlay'; at?: RelativeCard | readonly RelativeCard[] } & CardFilter)
   /**
+   * A set-aside copy of `code` (`setAsideCopy`): "the set-aside Lita Chantler", "1 set-aside copy
+   * of Fire!". In an effect repeated for each investigator or card, each repetition takes the next
+   * copy ("each investigator draws 1 set-aside copy of Mark of Elokoss"), as the repetitions
+   * resolve together. None when no copy is left, so the command is left out: the card does as
+   * much as it can.
+   */
+  | { ref: 'setAsideCopy'; code: CardCode }
+  /**
    * The enemy its filter matches (`EnemyFilter`) nearest to the location of the investigator the
    * window names ("the nearest [[Cultist]] enemy", `nearestEnemies`); none when there is no such
    * enemy. When several are equally near, the lead investigator picks one (Rules Reference,
@@ -390,7 +399,6 @@ export type AbilityCommand =
           | 'MoveCard'
           | 'DiscardCard'
           | 'RevealLocation'
-          | 'FromSetAside'
           | 'SpawnEnemy'
           | 'HealEnemy'
           | 'DamageEnemy'
@@ -414,7 +422,6 @@ export type AbilityCommand =
           | 'BecomeActAndAgenda'
           | 'ShuffleEncounterDiscard'
           | 'ShuffleEncounterDeck'
-          | 'ShuffleInto'
           | 'DrawEncounter'
           | 'DrawFromScenarioDeck'
           | 'DrawBeneath'
@@ -955,8 +962,9 @@ export function resolveEffect(
   const each = repeatedRef(deferred);
   const ids = each === undefined ? [undefined] : eachId(ctx, state, each, refs);
   const commandsFor = (picked?: InstanceId): AbilityCommand[] =>
-    ids.flatMap((id) => {
-      const resolved = resolveRefs(deferred, { ...refs, each: id, picked });
+    ids.flatMap((id, repetition) => {
+      const setAsideCopy = (code: CardCode) => setAsideCopyOf(state, code, repetition);
+      const resolved = resolveRefs(deferred, { ...refs, each: id, picked, setAsideCopy });
       // The walk keeps every field but the references, which become the IDs the
       // command type expects, so the result is an `AbilityCommand`.
       return resolved === undefined
@@ -1221,6 +1229,11 @@ interface ResolvedRefs {
   /** Where the card with the ability is (`selfLocation`). */
   selfLocation: InstanceId | undefined;
   onlyCopy: (code: CardCode) => InstanceId | undefined;
+  /**
+   * The set-aside copy of `code` this repetition takes (`setAsideCopy`), the first one when the
+   * effect repeats for nobody else.
+   */
+  setAsideCopy: (code: CardCode) => InstanceId | undefined;
   /** The investigator or enemy of this repetition of an effect on each of them. */
   each?: InstanceId | InvestigatorId;
   /**
@@ -1349,6 +1362,7 @@ function windowRefs(ctx: EngineContext, state: GameState, opened: OpenedWindow):
       (investigator && attachableLocation(ctx, state, opened.cardId, investigator)),
     selfLocation: locationOfCard(state, requireCard(state.cards, opened.cardId)),
     onlyCopy: (code) => theOnlyCopy(state, code),
+    setAsideCopy: (code) => setAsideCopyOf(state, code, 0),
   };
 }
 
@@ -1411,6 +1425,8 @@ function resolveRefs(value: unknown, refs: ResolvedRefs): unknown {
       case 'eachInZone':
       case 'eachInPlay':
         return refs.each;
+      case 'setAsideCopy':
+        return refs.setAsideCopy(value.code);
       case 'nearestEnemy':
       case 'locationWith':
       case 'locationWithMost':
@@ -1905,8 +1921,6 @@ function withSource<C extends { readonly type: string }>(command: C, source: Com
     case 'EndTurn':
     case 'DiscoverClues':
     case 'RemoveConnection':
-    case 'ShuffleInto':
-    case 'FromSetAside':
     case 'EngageEnemy':
       return { ...command, source };
     case 'RequestDecision': {
@@ -2822,11 +2836,12 @@ export function searchAndDraw(match: EncounterMatch): AbilityEffect {
 }
 
 /**
- * "Shuffle the set-aside [card] into the encounter deck" (`ShuffleInto`): one set-aside copy of
- * each code, a code listed twice taking two.
+ * "Shuffle the set-aside [card] into the encounter deck": one set-aside copy of each code, a code
+ * listed twice taking two, then the deck is shuffled once. The shuffle is a step of its own, so the
+ * deck is shuffled even when no copy was left to add (`docs/rules/encounter-draws.md`).
  */
-export function shuffleSetAsideIntoEncounterDeck(codes: readonly CardCode[]): AbilityEffect {
-  return { type: 'ShuffleInto', codes, zone: { kind: 'encounterDeck' } };
+export function shuffleSetAsideIntoEncounterDeck(codes: readonly CardCode[]): AbilityEffect[] {
+  return [...fromSetAside(codes, { kind: 'encounterDeck' }), shuffleEncounterDeck()];
 }
 
 /**
@@ -2979,10 +2994,17 @@ export function spawnEachSetAsideAt(trait: Trait, location: RelativeCard): Abili
 /**
  * "Attach 1 set-aside copy of Fire! to Your Friend's Room": one set-aside copy of each of `codes`
  * (a code listed twice takes two) moves to `to`, written
- * `fromSetAside([codes.fire], { kind: 'attachedTo', hostId: onlyCopy(codes.yourFriendsRoom) })`.
+ * `...fromSetAside([codes.fire], { kind: 'attachedTo', hostId: onlyCopy(codes.yourFriendsRoom) })`.
+ * One `MoveCard` per code, each resolving after the one before, so each takes a copy still set
+ * aside; a code with none left moves nothing.
  */
-export function fromSetAside(codes: readonly CardCode[], to: Templated<Zone>): AbilityEffect {
-  return { type: 'FromSetAside', codes, to };
+export function fromSetAside(codes: readonly CardCode[], to: Templated<Zone>): AbilityEffect[] {
+  return codes.map((code) => ({ type: 'MoveCard', cardId: setAsideCopy(code), to }));
+}
+
+/** A set-aside copy of `code` (`RelativeCard` `setAsideCopy`). */
+export function setAsideCopy(code: CardCode): Extract<RelativeCard, { ref: 'setAsideCopy' }> {
+  return { ref: 'setAsideCopy', code };
 }
 
 /**
@@ -2995,7 +3017,11 @@ export function eachSetAsideCopyTo(code: CardCode, to: Templated<Zone>): Ability
 
 /** "Put the set-aside Lita Chantler into play at the Parlor". */
 export function putSetAsideIntoPlay(code: CardCode, location: RelativeCard): AbilityEffect {
-  return { type: 'FromSetAside', codes: [code], to: { kind: 'atLocation', locationId: location } };
+  return {
+    type: 'MoveCard',
+    cardId: setAsideCopy(code),
+    to: { kind: 'atLocation', locationId: location },
+  };
 }
 
 /**

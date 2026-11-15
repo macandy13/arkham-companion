@@ -256,6 +256,7 @@ export {
   putSetAsideIntoPlay,
   setAsideCard,
   fromSetAside,
+  setAsideCopy,
   eachInZone,
   eachInPlay,
   eachSetAsideCopyTo,

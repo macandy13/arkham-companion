@@ -284,7 +284,6 @@ export const appTexts = {
     },
     effects: {
       RevealLocation: 'revealing the location',
-      FromSetAside: 'putting the set-aside card into play',
       SpawnEnemy: 'spawning the enemy',
       AddMap: 'putting the new area into play',
       MoveInvestigator: 'moving the investigators',
