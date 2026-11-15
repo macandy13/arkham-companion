@@ -2,6 +2,7 @@ import type { CardCode } from './card_code';
 import type { InvestigatorDef } from './investigators';
 import type { PackDef } from './packs';
 import type { ReferencePictures, ReferenceTexts } from './references';
+import type { WeaknessDef } from './weaknesses';
 
 /**
  * Everything the investigator picker needs and the scenario card's texts, fetched together and
@@ -25,6 +26,12 @@ export interface CardCatalog {
    * absent in a catalog cached before the app read them, until its next refresh.
    */
   referencePictures?: Record<CardCode, ReferencePictures>;
+  /**
+   * The player weakness enemies and treacheries (`buildWeaknesses`), which a game adds to its
+   * card data so an investigator can draw one (`DrawWeakness`); absent in a catalog cached before
+   * the app read them, until its next refresh.
+   */
+  weaknesses?: WeaknessDef[];
   /** `Last-Modified` of the cards response; sent back as `If-Modified-Since` on refresh. */
   lastModified?: string;
 }
@@ -51,10 +58,10 @@ export function printedInvestigatorOf(
 /**
  * The catalog's current shape. Raise it whenever the catalog gains data an older cached copy
  * lacks (2: the investigators' traits, ability and flavour texts), or an older copy may hold the
- * wrong data (3: languages without a host of their own cached English cards), so the app fetches
- * it in full once instead of revalidating the old copy.
+ * wrong data (3: languages without a host of their own cached English cards; 4: the weaknesses), so
+ * the app fetches it in full once instead of revalidating the old copy.
  */
-export const CATALOG_FORMAT = 3;
+export const CATALOG_FORMAT = 4;
 
 /** Result of a refresh: `notModified` means the cached catalog is still current. */
 export type CatalogFetchResult = { status: 'notModified' } | { status: 'ok'; catalog: CardCatalog };

@@ -176,6 +176,16 @@ describe('entersThreatArea', () => {
     expect(entersThreatArea('Revelation - Put Fake into play in your threat area.')).toBe(true);
   });
 
+  it('is true when the text adds the card to the threat area', () => {
+    expect(entersThreatArea('Revelation - Add Fake to your threat area.')).toBe(true);
+  });
+
+  it('is false when the text adds something to a card in the threat area', () => {
+    expect(entersThreatArea('Revelation - Add 1 doom to each Fake in your threat area.')).toBe(
+      false,
+    );
+  });
+
   it('is false for text that only mentions the threat area', () => {
     expect(entersThreatArea('Revelation - Discard each Fake in your threat area.')).toBe(false);
   });
