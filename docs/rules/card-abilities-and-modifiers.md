@@ -20,6 +20,10 @@
   - a card's attached to a location (Locked Door, Arcane Lock) by investigators at that location ([Triggered Abilities](https://arkhamdb.com/rules#Triggered_Abilities): "a scenario card that is in play and at the same location as the investigator"),
   - and the current agenda's and act's by any investigator.
   - An unrevealed location offers none, as it has only its unrevealed side's text.
+- A [reaction ability](https://arkhamdb.com/rules#Triggered_Abilities) ("[reaction] After you discover clues here: …") is optional: the investigator it names ("you", the one who met its condition) may use it or pass.
+  - It may be used once each time its condition is met, within its limit.
+  - A location's reaction, like its actions above, is open only to investigators at that location.
+  - [Forced abilities](timing-of-forced-effects.md) on the same timing point resolve before reactions to it.
 - [Limits](https://arkhamdb.com/rules#Limits_and_Maximums): "(Limit once per turn/round/phase/game.)" counts each investigator's uses apart, "(Group limit once per game.)" everyone's together; "twice per round" allows two.
   - A turn is one investigator's turn: a free action taken in alice's turn and again in bob's is used once in each turn.
   - Engine convention (no official ruling found): outside every turn (a free action in the mythos or enemy phase) the uses of one phase count as one turn, since no turn is in progress to tell them apart.

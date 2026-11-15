@@ -24,12 +24,7 @@ import {
   runFrom,
   stateAfter,
 } from '@arkham/engine/test/utils';
-import {
-  QUEEN_OF_ASH_CODES,
-  queenOfAshCardDefs,
-  queenOfAshCards,
-  SMUGGLERS_CACHE_DECISION,
-} from './cards';
+import { QUEEN_OF_ASH_CODES, queenOfAshCardDefs, queenOfAshCards } from './cards';
 
 /** The card with `code` in the scenario's card data. */
 const cardOf = (code: string): CardStats => cardIn(queenOfAshCards, code);
@@ -268,18 +263,19 @@ describe('Queen of Ash card abilities', () => {
     });
 
     it.each([
-      { answered: 'gain', resources: 2 },
-      { answered: 'decline', resources: 1 },
+      { answered: 'use', resources: 2 },
+      { answered: 'pass', resources: 1 },
     ])(
-      "lets alice gain 1 resource in Smuggler's Cache; answering $answered leaves her $resources",
+      "offers alice Smuggler's Cache's reaction to gain 1 resource; answering $answered leaves her $resources",
       ({ answered, resources }) => {
         const { context, state: asked } = aliceEndsHerTurnIn(QUEEN_OF_ASH_CODES.smugglersCache);
 
-        const state = stateAfter(context, asked, answer(SMUGGLERS_CACHE_DECISION, answered));
+        const state = stateAfter(context, asked, answer('reaction:sewer_tunnel:0', answered));
 
         expect(asked.pending).toMatchObject([
           {
-            id: SMUGGLERS_CACHE_DECISION,
+            id: 'reaction:sewer_tunnel:0',
+            prompt: 'decision.reaction',
             decider: { kind: 'investigator', investigatorId: alice },
           },
         ]);

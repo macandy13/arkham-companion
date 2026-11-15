@@ -84,6 +84,7 @@ export type Command =
   | DamageEnemy
   | HealEnemy
   | GainSurge
+  | UseReaction
   | ResolveRevelation
   | DefeatEnemy
   | ExhaustEnemy
@@ -895,6 +896,19 @@ export interface ResolveRevelation {
 export interface GainSurge {
   type: 'GainSurge';
   cardId: InstanceId;
+}
+
+/**
+ * The investigator triggers reaction number `ability` of the card `cardId` (`Ability.reaction`):
+ * the "use" option of the question the reaction asks as its window opens puts this in front of
+ * the reaction's effects. Produces `ReactionUsed`, which counts towards the reaction's limit; the
+ * limit is checked when the question is asked.
+ */
+export interface UseReaction {
+  type: 'UseReaction';
+  cardId: InstanceId;
+  investigatorId: InvestigatorId;
+  ability: number;
 }
 
 /**

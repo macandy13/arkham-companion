@@ -39,6 +39,8 @@ import {
 import type { GridCell } from './map';
 import { extremeLocations, locationsInPlay } from './board';
 import { limitReached } from './placement';
+import { reactionWithinLimit } from './reactions';
+import type { UsageLimit } from './usage_limits';
 import { enemiesAt, enemiesMatching, nearestEnemies, type EnemyFilter } from './enemies';
 import {
   cluesHeldAt,
@@ -404,6 +406,7 @@ export type AbilityCommand =
           | 'ExhaustEnemy'
           | 'RetreatEnemy'
           | 'GainSurge'
+          | 'UseReaction'
           | 'MoveInvestigator'
           | 'AddMap'
           | 'PutLocationIntoPlay'
@@ -462,7 +465,7 @@ export type AbilityByMargin = Omit<ByMargin, 'tiers'> & {
  */
 export interface AbilityChoice {
   type: 'RequestDecision';
-  decision: Pick<Decision, 'id' | 'prompt' | 'decider'> & {
+  decision: Pick<Decision, 'id' | 'prompt' | 'decider' | 'subject'> & {
     kind: 'chooseOption';
     options: AbilityOption[];
   };
@@ -568,6 +571,12 @@ export interface Ability {
    * (`windowInvestigator`), so `skillTest` and `you()` refer to them.
    */
   perInvestigator?: true;
+  /**
+   * "[reaction] After you discover 1 or more clues at this location: Gain 1 resource." The players
+   * choose to trigger it (`reaction`): as its window opens, the investigator it names is asked to
+   * use it or pass, within its `limit` ("(Limit once per round.)"). Absent, the ability is forced.
+   */
+  reaction?: { limit?: UsageLimit };
   effects: readonly AbilityEffect[];
 }
 
@@ -780,17 +789,20 @@ export function abilitySteps(
   if (!card) return [];
   const stats = cardStats(ctx.cards, card.code);
   return [...(stats.abilities ?? []), ...keywordAbilities(ctx, state, card)]
-    .filter((ability) => shallowEqual<TimingWindow>(ability.window, opened.window))
+    .map((ability, index) => ({ ability, index }))
+    .filter(({ ability }) => shallowEqual<TimingWindow>(ability.window, opened.window))
     .filter(
-      (ability) =>
+      ({ ability }) =>
         ability.condition === undefined || conditionHolds(ctx, state, ability.condition, opened),
     )
-    .flatMap((ability) =>
-      openedFor(state, ability, opened).flatMap((each) =>
-        range(timesFor(ctx, state, ability, each)).flatMap(() =>
-          ability.effects.map((effect) => ({ effect, opened: each })),
-        ),
-      ),
+    .flatMap(({ ability, index }) =>
+      ability.reaction
+        ? reactionOffer(state, card, ability, index, opened)
+        : openedFor(state, ability, opened).flatMap((each) =>
+            range(timesFor(ctx, state, ability, each)).flatMap(() =>
+              ability.effects.map((effect) => ({ effect, opened: each })),
+            ),
+          ),
     )
     .map(({ effect, opened: each }) => ({
       kind: 'ability',
@@ -798,6 +810,74 @@ export function abilitySteps(
       opened: each,
       origin: effect.type,
     }));
+}
+
+/**
+ * A reaction's question as its window opens (`Ability.reaction`): the investigator the window
+ * names uses it, which records the use (`UseReaction`) and resolves its effects, or passes. None
+ * when the window names no active investigator, one away from the card's location, or one whose
+ * limit for the reaction is used up.
+ */
+function reactionOffer(
+  state: GameState,
+  card: CardInstance,
+  ability: Ability,
+  index: number,
+  opened: OpenedWindow,
+): { effect: AbilityEffect; opened: OpenedWindow }[] {
+  const { investigatorId } = opened;
+  if (investigatorId === undefined || !isActiveInvestigator(state, investigatorId)) return [];
+  // Rules Reference, "Triggered Abilities": a scenario card's ability is theirs only at its location.
+  const at = locationOfCard(state, card);
+  if (at !== undefined && requireInvestigator(state, investigatorId).locationId !== at) return [];
+  if (!reactionWithinLimit(state, card, index, ability.reaction?.limit, investigatorId)) return [];
+  const use: AbilityEffect = {
+    type: 'UseReaction',
+    cardId: { ref: 'self' },
+    investigatorId: { ref: 'windowInvestigator' },
+    ability: index,
+  };
+  const question: AbilityEffect = {
+    type: 'RequestDecision',
+    decision: {
+      id: decisionId(`${REACTION_ID_PREFIX}${card.id}:${index}`),
+      kind: 'chooseOption',
+      prompt: REACTION_PROMPT,
+      subject: { ref: 'self' },
+      decider: { kind: 'investigator', investigatorId: { ref: 'windowInvestigator' } },
+      options: [
+        { id: 'use', label: 'decision.useReaction', commands: [use, ...ability.effects] },
+        { id: 'pass', label: 'decision.passReaction', commands: [] },
+      ],
+    },
+  };
+  return [{ effect: question, opened }];
+}
+
+/** What the id of every reaction's question (`reactionOffer`) starts with. */
+export const REACTION_ID_PREFIX = 'reaction:';
+
+/** The prompt of every reaction's question (`reactionOffer`), which also tells it from others. */
+const REACTION_PROMPT = 'decision.reaction';
+
+/** Whether `step` is a reaction's question (`reactionOffer`), which waits for the forced steps. */
+export function isReactionOffer(step: { kind: string; effect?: AbilityEffect }): boolean {
+  const { effect } = step;
+  return (
+    step.kind === 'ability' &&
+    effect?.type === 'RequestDecision' &&
+    effect.decision.prompt === REACTION_PROMPT
+  );
+}
+
+/**
+ * "[reaction] After you discover 1 or more clues at this location: Draw 1 card. (Limit once per
+ * round.)": `ability`, whose window names the investigator it offers itself to, as a reaction
+ * they may use or pass (`Ability.reaction`), written
+ * `reaction(afterDiscoveringClues(drawCards(1)), { per: 'round' })`.
+ */
+export function reaction(ability: Ability, limit?: UsageLimit): Ability {
+  return { ...ability, reaction: limit === undefined ? {} : { limit } };
 }
 
 /**

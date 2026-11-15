@@ -1,4 +1,4 @@
-import { abilitySteps, windowsOpenedBy, type AbilityStep } from './abilities';
+import { abilitySteps, isReactionOffer, windowsOpenedBy, type AbilityStep } from './abilities';
 import type { EngineContext } from './cards';
 import type { Command } from './commands';
 import type { Event } from './events';
@@ -33,6 +33,9 @@ type PendingTrigger = (state: GameState) => readonly TriggeredStep[];
  * command's complete outcome. Order: by event. The lead leaving queues a
  * `newLeadInvestigator` step like a forced effect of the departure, so a
  * forced effect of an earlier event of the same command still sees no lead.
+ * Reactions come last (`isReactionOffer`): Rules Reference, "Forced abilities on a timing point
+ * resolve before reactions to it"; the engine holds them back behind the forced effects of the
+ * command's whole outcome, as its events share one timing point for the players.
  * Once the scenario has ended nothing triggers any more: the rest of a chain still resolves (Sluice
  * Control's "(→R3)" then defeats each enemy), but an objective such as "if Elokoss is defeated,
  * (→R1)" cannot end it a second time.
@@ -55,7 +58,11 @@ export function triggeredSteps(
     );
     state = next;
   }
-  return pending.flatMap((trigger) => trigger(state));
+  const steps = pending.flatMap((trigger) => trigger(state));
+  return [
+    ...steps.filter((step) => !isReactionOffer(step)),
+    ...steps.filter((step) => isReactionOffer(step)),
+  ];
 }
 
 function leadLeft(before: GameState, event: Event): boolean {

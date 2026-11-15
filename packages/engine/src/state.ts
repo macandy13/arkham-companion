@@ -69,6 +69,16 @@ export interface CardInstance {
    * (`CardAction.limit`), oldest first. Recorded by `CardActionUsed`.
    */
   actionUses?: readonly CardActionUse[];
+  /**
+   * The uses of the card's reactions (`Ability.reaction`) that count towards their limits, oldest
+   * first. Recorded by `ReactionUsed`.
+   */
+  reactionUses?: readonly ReactionUse[];
+}
+
+/** One use of the reaction that is ability number `ability` of a card (`CardInstance.reactionUses`). */
+export interface ReactionUse extends AbilityUse {
+  ability: number;
 }
 
 /** One use of action number `action` of a card (`CardInstance.actionUses`), for its limit. */

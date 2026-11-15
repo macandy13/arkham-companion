@@ -6,7 +6,7 @@
   - A forced "When…" starts before the condition takes effect; a forced "After…" starts once its effect has fully resolved.
   - "At …" and "If …" abilities (also "at the end of the turn/round") resolve between the two.
 - Every part of an effect resolves before the "after" triggers it causes. So an engine command that is one effect may run its "after" abilities once all its events are done.
-- Forced abilities on a timing point resolve before reactions to it.
+- Forced abilities on a timing point resolve before reactions to it. The engine asks a reaction only after the forced effects of the whole command that triggered it, which the players see as one timing point.
 - A forced ability that causes a new trigger opens a nested sequence. It finishes, choices included, before the sequence it interrupted goes on (last in, first out).
 - Once an ability starts, as much of it as possible resolves, in order, before the next one starts ([Triggered Abilities](https://arkhamdb.com/rules#Triggered_Abilities)).
   - A choice that is part of an effect is part of that effect, so it comes before "after" triggers on it.

@@ -100,6 +100,7 @@ export const appTexts = {
     playerCardAttached: '{{card}} an {{host}} angehängt',
     revelationCancelled: '{{investigator}} verhindert die Enthüllung von {{card}}',
     cardAction: '{{investigator}} nutzt {{card}}',
+    reaction: '{{investigator}} nutzt die Reaktion von {{card}}',
     playerCards: {
       draw_one: '{{investigator}} zieht {{count}} Karte',
       draw_other: '{{investigator}} zieht {{count}} Karten',
@@ -792,6 +793,9 @@ export const appTexts = {
     revelation: 'Enthüllung von {{card}}',
     resolveRevelation: 'Abhandeln',
     cancelRevelation: 'Enthüllung verhindern',
+    reaction: 'Reaktion von {{card}} nutzen?',
+    useReaction: 'Nutzen',
+    passReaction: 'Passen',
     count: {
       failedBy: 'Misslungen um',
       passedBy: 'Gelungen um',

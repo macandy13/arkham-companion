@@ -337,6 +337,11 @@ function eventLine(t: TFunction, names: Names, state: GameState, event: Event): 
         investigator: names.investigator(event.investigatorId),
         card: names.card(event.cardId),
       });
+    case 'ReactionUsed':
+      return t('log.reaction', {
+        investigator: names.investigator(event.investigatorId),
+        card: names.card(event.cardId),
+      });
     case 'CommandDeferred':
       return playerCardLine(t, names, event.command);
     case 'CluesDiscovered':

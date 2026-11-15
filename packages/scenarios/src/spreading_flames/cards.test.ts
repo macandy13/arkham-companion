@@ -240,6 +240,32 @@ describe('Spreading Flames card abilities', () => {
     });
   });
 
+  describe('Warren Observatory', () => {
+    it('leaves the card alice draws with its reaction to the players', () => {
+      const observatory = instanceId('warren_observatory');
+      const { context, state: started } = newGame()
+        .withLocation(observatory, cardOf('12119'), { revealed: true, clues: 2 })
+        .withInvestigator(alice, { locationId: observatory })
+        .withTurnOf(alice)
+        .start();
+      const asked = stateAfter(context, started, {
+        type: 'DiscoverClues',
+        investigatorId: alice,
+        locationId: observatory,
+        amount: 1,
+      });
+
+      const { events } = execute(context, asked, answer('reaction:warren_observatory:0', 'use'));
+
+      expect(events).toContainEqual(
+        expect.objectContaining({
+          type: 'CommandDeferred',
+          command: expect.objectContaining({ type: 'DrawCards', investigatorId: alice, amount: 1 }),
+        }),
+      );
+    });
+  });
+
   describe('Science Hall', () => {
     const scienceHall = instanceId('science_hall');
 
