@@ -2,6 +2,52 @@
 
 The sections dated up to 2026-10-22 were released as 1.0.0 to 1.8.0 by mistake: Release Please starts at 1.0.0 by default. Versioning restarted at 0.1.0 (see "Versions" in docs/product.md).
 
+## [0.1.43](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v0.1.42...arkham-companion-v0.1.43) (2026-11-15)
+
+
+### Features
+
+* **engine:** each enemy in play gets +N fight / evade (ME.7e1) ([59b97c9](https://github.com/macandy13/arkham-companion/commit/59b97c96ce789bb091b449dabc2a8d2158fb9edc))
+* **engine:** each enemy in play gets +N fight / evade (ME.7e1) ([b8297f1](https://github.com/macandy13/arkham-companion/commit/b8297f1bbbb8d33c84d87db83ff5e397f2a7e010))
+* **engine:** enemy restrictions and gained keywords from attached cards (ME.25b) ([4a66763](https://github.com/macandy13/arkham-companion/commit/4a667632821ede462b02524833528265185179a5))
+* **engine:** enemy restrictions and gained keywords from attached cards (ME.25b) ([861ed17](https://github.com/macandy13/arkham-companion/commit/861ed17a1678abcbb02b2e166c4206e6c514b664))
+* **engine:** give each investigator at a card's location a skill modifier (ME.7e2) ([3eb7fed](https://github.com/macandy13/arkham-companion/commit/3eb7fed4e8c1c3636a67df3508c8f72026ff6223))
+* **engine:** give each investigator at a card's location a skill modifier (ME.7e2) ([e876dd1](https://github.com/macandy13/arkham-companion/commit/e876dd1afff0a6f91fb15c9a32f0ca2ea7e51e8a))
+* **engine:** one usage limit for card actions per turn, round, phase or game (ME.8a) ([afb8bc3](https://github.com/macandy13/arkham-companion/commit/afb8bc38cf43c2d00a519648e7366c7eb87f66aa))
+* **engine:** one usage limit for card actions per turn, round, phase or game (ME.8a) ([e905cd2](https://github.com/macandy13/arkham-companion/commit/e905cd28fdd51f3f68ef2004687496a635865b97))
+* **engine:** player cards attached to enemies and locations, Barricade (ME.25a) ([b342f84](https://github.com/macandy13/arkham-companion/commit/b342f8449fd5875b8ae851d20868172b602376ac))
+* **engine:** test difficulty from the table (MC2.5a) ([e816235](https://github.com/macandy13/arkham-companion/commit/e8162358283aeaf4b5b9f3b4c85c25113b14056e))
+* **scenarios:** Fire! copies for Lit Up and Stop the Rite (MC2.2a) ([743964f](https://github.com/macandy13/arkham-companion/commit/743964f3bf9835351376229dc13956066ffe60a2))
+* **scenarios:** Fire! copies for Lit Up and Stop the Rite (MC2.2a) ([e575b3c](https://github.com/macandy13/arkham-companion/commit/e575b3c1870dab933ce2cd9fad78dfc14b903bfa))
+* **scenarios:** one search for 1 Fire! per investigator in Searching for Dr. Armitage (MC2.2b) ([f153b9d](https://github.com/macandy13/arkham-companion/commit/f153b9d137c20310cb20c9a00abb15bb1a12c08e))
+* **scenarios:** one search for 1 Fire! per investigator in Searching for Dr. Armitage (MC2.2b) ([42b6613](https://github.com/macandy13/arkham-companion/commit/42b661316d24e1403afa5f1965796c94b86a886b))
+* **scenarios:** script the per-point choice revelations (M1V.5c) ([7147052](https://github.com/macandy13/arkham-companion/commit/7147052a41136b1a45ae8b1e583653cfb63205c3))
+* **scenarios:** script the per-point choice revelations (M1V.5c) ([e2cd136](https://github.com/macandy13/arkham-companion/commit/e2cd1365c6d7ccc4298215a7a6d1498683743cfc))
+* **scenarios:** script the Queen of Ash tests (M1V.5e) ([925aacf](https://github.com/macandy13/arkham-companion/commit/925aacfa8b54453d94ff5d96e32efc9aec18bc7b))
+* **scenarios:** script the Queen of Ash tests (M1V.5e) ([55e4a81](https://github.com/macandy13/arkham-companion/commit/55e4a81b9c75b315b4f457ad816960d37d9d0686))
+
+
+### Bug fixes
+
+* **engine:** gained keywords count for fights, evasion and the board (ME.25b) ([7172b71](https://github.com/macandy13/arkham-companion/commit/7172b716669b2aa73ad22604305822fbd4d57740))
+* **engine:** read the table and campaign resolution with the game's player cards (ME.25a) ([0d86e29](https://github.com/macandy13/arkham-companion/commit/0d86e2948726059be78e230c6da73e3d69975aeb))
+* **play_tester:** let an enemy that engages in the upkeep take resources (M1V.5d) ([ec33fd8](https://github.com/macandy13/arkham-companion/commit/ec33fd892cb6b7f1afb8d80e416bb5b3c0d242fa))
+* **play_tester:** let an enemy that engages in the upkeep take resources (M1V.5d) ([53fc4df](https://github.com/macandy13/arkham-companion/commit/53fc4df617ddccef2fb6def66c8eef9c12e34b83))
+
+
+### Refactoring
+
+* **engine:** attached player cards come from the card DB (ME.25a) ([c42ca10](https://github.com/macandy13/arkham-companion/commit/c42ca10ea62c7f8b58d043cd811687134d58ae31))
+* **engine:** name the use record currentUse ([0d9abc7](https://github.com/macandy13/arkham-companion/commit/0d9abc771b611f1b0dcc667a008fed503f033200))
+* **play_tester:** match newly engaged enemies by id and still cap the upkeep gain ([6dc4461](https://github.com/macandy13/arkham-companion/commit/6dc4461a9a961683919f5a629901659bfae2f987))
+
+
+### Documentation
+
+* **engine:** mark the out-of-turn limit as a convention ([fd7c04a](https://github.com/macandy13/arkham-companion/commit/fd7c04a1b5bd93731d7ca0261578bad0d8b12193))
+* note the pick and shuffle timing of the multi-copy search (MC2.2b) ([4d2b30b](https://github.com/macandy13/arkham-companion/commit/4d2b30b0e70ee2bcb80af2236aba17eb126cca9b))
+* **rules:** Unnatural Decay's doom needs an asset; split the Torment test ([68c45e3](https://github.com/macandy13/arkham-companion/commit/68c45e3e6aaa53dac2f8cb7ef29e69b1fafbc904))
+
 ## [0.1.42](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v0.1.41...arkham-companion-v0.1.42) (2026-11-12)
 
 
