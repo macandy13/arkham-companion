@@ -207,6 +207,8 @@ export interface EnemyOptions {
   actions?: readonly CardAction[];
   /** Its "cannot" abilities (The Masked Hunter: who is engaged with it can't discover or spend clues). */
   restrictions?: readonly CardRestriction[];
+  /** Its constant modifiers (Whippoorwill's -1 to each skill of each investigator at its location). */
+  modifiers?: readonly Modifier[];
 }
 
 /** Card stats for a hand-entered enemy, with its front picture (its back is the encounter back). */

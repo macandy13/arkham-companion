@@ -175,7 +175,7 @@ export function isRestrictedFor<N extends RestrictedNoun>(
         restriction.what === what &&
         restriction.cannot.some((verb) => verb === cannot) &&
         (restriction.what !== 'cards' || namesEveryPlayedCard(restriction.cards)) &&
-        binds(source, restriction.who, investigator),
+        binds(state, source, restriction.who, investigator),
     ),
   );
 }
