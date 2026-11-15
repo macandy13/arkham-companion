@@ -99,6 +99,8 @@ interface GameSpec {
   readonly maps: Readonly<Record<MapId, MapOptions>>;
   readonly investigators: readonly StartingInvestigator[];
   readonly cards: readonly CardEntry[];
+  /** Card data for cards not on the table yet, such as the player cards the players may attach. */
+  readonly cardData: readonly CardStats[];
   readonly difficulty: Difficulty;
   readonly seed: number;
   readonly shuffleEncounterDeck: boolean;
@@ -126,6 +128,7 @@ const EMPTY_SPEC: GameSpec = {
   maps: {},
   investigators: [],
   cards: [],
+  cardData: [],
   difficulty: 'standard',
   seed: 1,
   shuffleEncounterDeck: false,
@@ -224,6 +227,14 @@ export class GameBuilder {
    */
   withCard(id: InstanceId, card: CardStats, zone: Zone, options: CardOptions = {}): GameBuilder {
     return this.with({ cards: [...this.spec.cards, { id, card, zone, options }] });
+  }
+
+  /**
+   * The context with the data of `card`, which is not on the table at the start: a player card the
+   * players attach later (`AttachPlayerCard`).
+   */
+  withCardData(card: CardStats): GameBuilder {
+    return this.with({ cardData: [...this.spec.cardData, card] });
   }
 
   /** The table with an agenda, face up, below the agendas added before it. */
@@ -326,7 +337,8 @@ export class GameBuilder {
   /** Each card definition once; two different definitions for one code are a mistake in the table. */
   private definitions(): CardStats[] {
     const byCode = new Map<CardCode, CardStats>();
-    for (const { card } of [...this.spec.locations, ...this.spec.cards]) {
+    const placed = [...this.spec.locations, ...this.spec.cards].map(({ card }) => card);
+    for (const card of [...placed, ...this.spec.cardData]) {
       const known = byCode.get(card.code);
       if (known && known !== card)
         throw new RangeError(`two different definitions for card code ${card.code}`);

@@ -288,6 +288,11 @@ function eventLine(t: TFunction, names: Names, state: GameState, event: Event): 
         token: t(`chaosToken.${event.token}`),
         investigator: names.investigator(event.investigatorId),
       });
+    case 'PlayerCardAttached':
+      return t('log.playerCardAttached', {
+        card: names.card(event.cardId),
+        host: names.card(event.hostId),
+      });
     case 'ChaosTokenReleased':
       return t('log.chaosBag.released', {
         token: t(`chaosToken.${event.token}`),

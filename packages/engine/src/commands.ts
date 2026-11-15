@@ -64,6 +64,7 @@ export type Command =
   | MoveTokens
   | ChangeChaosBag
   | SealChaosToken
+  | AttachPlayerCard
   | ReleaseChaosToken
   | AdvanceAgenda
   | BecomeActAndAgenda
@@ -178,7 +179,8 @@ export interface MoveCard {
 /**
  * A card effect discards an encounter card ("discard it"): onto the top of
  * the encounter discard, where "topmost" effects look for it, losing its
- * tokens and taking its attachments along (`discardEncounterCard`). Produces
+ * tokens and taking its attachments along (`discardEncounterCard`). A player
+ * card goes out of the game instead, back to its owner. Produces
  * `CardMoved`, after `TokensChanged` for any tokens and the attachments'
  * own events.
  */
@@ -511,6 +513,20 @@ export interface ChangeChaosBag {
   token: ChaosToken;
   change: ChaosBagChangeKind;
   lasts: ChaosBagChangeLasts;
+}
+
+/**
+ * The players attach the player card `code` to an enemy or a location (`hostId`, a card in
+ * play): Barricade, Handcuffs. Its card data names what it does to its host, such as Barricade's
+ * restriction (`enemiesMoveInto` but for Elite enemies). Produces `PlayerCardAttached`, a new card
+ * attached to the host; rejects a host that is no enemy or location in play
+ * (`invalidAttachmentHost`) and a card that is no player asset or event (`notAPlayerCard`). It leaves
+ * play with its host, and `DiscardCard` discards it out of the game (`isPlayerCard`).
+ */
+export interface AttachPlayerCard {
+  type: 'AttachPlayerCard';
+  hostId: InstanceId;
+  code: CardCode;
 }
 
 /**

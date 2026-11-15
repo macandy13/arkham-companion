@@ -18,6 +18,7 @@ import type {
   Event,
   LayoutCellSet,
   MapAdded,
+  PlayerCardAttached,
   ScenarioEnded,
   ScenarioStarted,
   TokensChanged,
@@ -99,6 +100,8 @@ export function apply(state: GameState, event: Event): GameState {
       return applyChaosBagChanged(state, event);
     case 'ChaosTokenSealed':
       return applyChaosTokenSealed(state, event);
+    case 'PlayerCardAttached':
+      return applyPlayerCardAttached(state, event);
     case 'ChaosTokenReleased':
       return applyChaosTokenReleased(state, event);
     case 'CardFlipped':
@@ -273,6 +276,25 @@ function moveCard(state: GameState, cardId: InstanceId, to: Zone, index?: number
   // A gained surge belongs to one draw of the card, wherever its revelation puts it; drawing it again starts afresh.
   const kept = to.kind === 'resolving' ? withoutKey(card, 'gainedSurge') : card;
   return { ...state, cards: { ...state.cards, [cardId]: { ...kept, zone: to } }, order };
+}
+
+function applyPlayerCardAttached(state: GameState, e: PlayerCardAttached): GameState {
+  const zone: Zone = { kind: 'attachedTo', hostId: e.hostId };
+  const card: CardInstance = {
+    id: e.cardId,
+    code: e.code,
+    zone,
+    faceUp: true,
+    exhausted: false,
+    tokens: {},
+    flags: {},
+  };
+  const key = zoneKey(zone);
+  return {
+    ...state,
+    cards: { ...state.cards, [card.id]: card },
+    order: withZoneOrder(state.order, key, [...(state.order[key] ?? []), card.id]),
+  };
 }
 
 /** Engagement changes: the enemy moves and any open question about it is answered. */

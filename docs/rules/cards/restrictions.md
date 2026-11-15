@@ -14,3 +14,9 @@ Each ruling below says what the card refuses, whom it binds and what still happe
   - Placing their clues by an effect (False Lead's "place 1 of your clues on your location") is not spending, so it still happens (our reading: the Rules Reference spends clues only to pay costs).
 - Dissonant Voices ("You cannot play assets or events") stops its investigator from playing any card, since only assets and events are played, fast ones and asset or event weaknesses included (skills are committed to tests, RR "Play", "Weakness").
   - Committing skills is still allowed, and so is a card an effect puts into play, which isn't played.
+- Barricade ("Non-Elite enemies cannot move into attached location") keeps every non-Elite enemy out of its location ([Barricade FAQ](https://arkhamdb.com/card/01038)):
+  - A hunter whose step on its shortest route would go there stays; distance still counts through the location, and with another equally short step open it takes that one (RR "Hunter"; the other step is our reading).
+  - A card effect that moves an enemy there, or one location towards somewhere through it, leaves it where it is (our reading, by analogy with RR "Hunter").
+  - An enemy may still spawn there: spawning is not moving in (FAQ).
+  - An investigator who moves in leaves an engaged non-Elite enemy behind, disengaged at the location they left, after its attack of opportunity (FAQ).
+  - It is discarded when any investigator leaves the location (its Forced text), and with the location if it leaves play (RR "Attach To").
