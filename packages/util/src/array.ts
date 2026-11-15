@@ -8,6 +8,14 @@ export function duplicates<T>(items: readonly T[]): T[] {
 }
 
 /**
+ * Whether `items` holds at least one of `wanted` (compared with `includes`). Total: an empty or
+ * absent `wanted` holds none.
+ */
+export function includesAny<T>(items: readonly T[], wanted: readonly T[] | undefined): boolean {
+  return (wanted ?? []).some((item) => items.includes(item));
+}
+
+/**
  * Each item of `items` once, in the order of its first occurrence, like the
  * distinct tokens of a bag. Compares like a `Set` (`SameValueZero`).
  */

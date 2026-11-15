@@ -229,10 +229,12 @@ export function playSpreadingFlames(start: CampaignLog): CampaignLog {
   expect(table.nextPhase()).toEqual({ round: 4, phase: 'enemy' });
   expect(table.nextPhase()).toEqual({ round: 4, phase: 'upkeep' });
 
-  // Round 5 – mythos: Roland's Forbidden Secrets is the players' to resolve. Daisy draws Cosmic
-  // Evils and places its doom on the agenda.
+  // Round 5 – mythos: Roland holds clues, so his Forbidden Secrets tests intellect (3); he
+  // passes. Daisy draws Cosmic Evils and places its doom on the agenda.
   expect(table.nextPhase()).toEqual({ round: 5, phase: 'mythos', step: 'drawEncounterCard' });
   table.resolveRevelation(byName('Forbidden Secrets'));
+  expect(table.board.decisions).toMatchObject([{ test: { skill: 'intellect', difficulty: 3 } }]);
+  table.answerOnly('pass');
   expect(table.nextPhase()).toEqual({ round: 5, phase: 'mythos', step: 'drawEncounterCard' });
   table.resolveRevelation(byName('Cosmic Evils'));
   table.play(answer(COSMIC_EVILS_DECISION, 'doom'));

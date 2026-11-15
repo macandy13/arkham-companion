@@ -9,6 +9,16 @@ export const brethrenOfAshTexts = {
         doom: 'Place 1 doom on the current agenda',
         wounds: 'Take 1 direct damage and 1 direct horror; Cosmic Evils gains surge',
       },
+      forbiddenSecrets: {
+        prompt: '{{card}}: for this point you must either',
+        clue: 'Place 1 of your clues on your location',
+        horror: 'Take 1 horror',
+      },
+      wildCompulsion: {
+        prompt: '{{card}}: for this point you must either',
+        discard: 'Discard 1 card at random from your hand',
+        resource: 'Lose 1 resource',
+      },
       mutated: {
         prompt: '{{card}}: you must either',
         damage: 'Take 2 damage',
@@ -26,6 +36,11 @@ export const brethrenOfAshTexts = {
       },
     },
     smokeAndMirrors: {
+      downpour: {
+        prompt: '{{card}}: for this point you must either',
+        action: 'Lose 1 action',
+        clue: 'Place 1 of your clues on your location',
+      },
       resolution: {
         drawForTheHarbinger:
           "Gather each Elite enemy in play and/or beneath a location when the scenario ended, shuffle them facedown with the harbinger of Elokoss and draw one at random: if it is the harbinger, the investigators discovered the cult's whereabouts.",

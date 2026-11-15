@@ -9,6 +9,16 @@ export const brethrenOfAshTexts = {
         doom: '1 Verderben auf die aktuelle Agenda legen',
         wounds: '1 direkten Schaden und 1 direkten Horror erleiden; die Karte erhält Nachrücken',
       },
+      forbiddenSecrets: {
+        prompt: '{{card}}: Für diesen Punkt musst du entweder',
+        clue: '1 deiner Hinweise an deinem Ort platzieren',
+        horror: '1 Horror erleiden',
+      },
+      wildCompulsion: {
+        prompt: '{{card}}: Für diesen Punkt musst du entweder',
+        discard: '1 zufällige Karte aus deiner Hand ablegen',
+        resource: '1 Ressource verlieren',
+      },
       mutated: {
         prompt: '{{card}}: Du musst entweder',
         damage: '2 Schaden erleiden',
@@ -26,6 +36,11 @@ export const brethrenOfAshTexts = {
       },
     },
     smokeAndMirrors: {
+      downpour: {
+        prompt: '{{card}}: Für diesen Punkt musst du entweder',
+        action: '1 Aktion verlieren',
+        clue: '1 deiner Hinweise an deinem Ort platzieren',
+      },
       resolution: {
         drawForTheHarbinger:
           'Sammelt jeden Elite-Gegner, der bei Szenarioende im Spiel und/oder unter einem Ort war, mischt sie verdeckt mit dem Vorboten von Elokoss und zieht einen zufällig: Ist es der Vorbote, haben die Ermittler den Aufenthaltsort des Kults entdeckt.',

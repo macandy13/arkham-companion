@@ -1,4 +1,4 @@
-import { isClosedToEnemy } from './restrictions';
+import { isClosedToEnemy, isEnemyRestricted } from './restrictions';
 import {
   firstSteps,
   isLocationInPlay,
@@ -33,7 +33,7 @@ import {
 } from './enemies';
 import { activeInvestigator, requireInvestigator } from './investigators';
 import type { InstanceId } from './ids';
-import { hasKeyword } from './keywords';
+import { cardHasKeyword } from './card_keywords';
 import { moveCardEvent } from './placement';
 import { replay } from './reducer';
 import { CommandRejected } from './rejection';
@@ -51,8 +51,8 @@ export function handleEngageEnemy(
   cmd: EngageEnemy,
 ): EnemyEngaged[] {
   if (cmd.source !== undefined) return cardEngagement(ctx, state, cmd);
-  const { enemy, stats } = onTableEnemyOf(ctx, state, cmd.enemyId);
-  if (hasKeyword(stats, 'massive'))
+  const { enemy } = onTableEnemyOf(ctx, state, cmd.enemyId);
+  if (cardHasKeyword(ctx, state, enemy, 'massive'))
     throw new CommandRejected({ code: 'massiveNotEngageable', cardId: enemy.id });
   const investigator = activeInvestigator(state, cmd.investigatorId);
   if (isEngagedWith(enemy, investigator))
@@ -80,12 +80,12 @@ export function handleEngageEnemy(
  * nothing to do, so all of them change nothing.
  */
 function cardEngagement(ctx: EngineContext, state: GameState, cmd: EngageEnemy): EnemyEngaged[] {
-  const { enemy, stats } = enemyOf(ctx, state, cmd.enemyId);
+  const { enemy } = enemyOf(ctx, state, cmd.enemyId);
   const investigator = requireInvestigator(state, cmd.investigatorId);
   if (
     !isEnemyOnTable(enemy) ||
     investigator.status !== 'active' ||
-    hasKeyword(stats, 'massive') ||
+    cardHasKeyword(ctx, state, enemy, 'massive') ||
     isEngagedWith(enemy, investigator)
   )
     return [];
@@ -278,11 +278,11 @@ export function handleExhaustEnemy(
 /**
  * `ReadyEnemy`: readies the enemy; one that is unengaged then engages an
  * investigator at its location (Rules Reference, "Engaged"). A ready enemy
- * stays as it is.
+ * stays as it is, and so does one a card keeps from readying (`isEnemyRestricted`, Handcuffs).
  */
 export function handleReadyEnemy(ctx: EngineContext, state: GameState, cmd: ReadyEnemy): Event[] {
   const { enemy } = onTableEnemyOf(ctx, state, cmd.enemyId);
-  if (!enemy.exhausted) return [];
+  if (!enemy.exhausted || isEnemyRestricted(ctx, state, enemy, 'ready')) return [];
   const change = exhaustChange(enemy.id, false);
   return [change, ...engageEvents(ctx, replay([change], state), cmd.enemyId)];
 }

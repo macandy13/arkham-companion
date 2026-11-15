@@ -5,7 +5,7 @@ import type { EnemyAttacked, EnemyDefeated, Event } from './events';
 import type { InstanceId, InvestigatorId } from './ids';
 import { cardsInZone, requireCard } from './lookup';
 import { playerOrder, findInvestigator } from './investigators';
-import { hasKeyword } from './keywords';
+import { cardHasKeyword } from './card_keywords';
 import { CommandRejected } from './rejection';
 import { encounterDiscard, victoryDisplay } from './zone';
 import type { CardInstance, GameState, Investigator, TokenKind } from './state';
@@ -60,9 +60,9 @@ export function readyEngagedEnemies(
   const unengaged =
     locationId === undefined ? [] : cardsInZone(state, { kind: 'atLocation', locationId });
   const massive = unengaged.filter((id) => {
-    const code = state.cards[id]?.code;
-    const stats = code === undefined ? undefined : ctx.cards.get(code);
-    return stats?.typeCode === 'enemy' && hasKeyword(stats, 'massive');
+    const card = state.cards[id];
+    if (card === undefined || ctx.cards.get(card.code)?.typeCode !== 'enemy') return false;
+    return cardHasKeyword(ctx, state, card, 'massive');
   });
   return [...engaged, ...massive].filter((id) => state.cards[id]?.exhausted === false);
 }

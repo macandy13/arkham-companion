@@ -329,10 +329,10 @@ export {
   resignAction,
   type ActionCondition,
   type ActionCost,
-  type ActionLimit,
   type CardAction,
 } from './card_actions';
 export * from './store';
+export { withinLimit, type AbilityUse, type UsageLimit, type UsagePeriod } from './usage_limits';
 export { undoLastGroup } from './undo';
 // Campaign functions are reached as `campaign.handleCommand` and so on, so
 // their names don't repeat "campaign" (Andy on #64); the types stay flat.

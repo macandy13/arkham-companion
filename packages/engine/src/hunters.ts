@@ -10,7 +10,7 @@ import type { Event } from './events';
 import { moveCardEvent } from './placement';
 import { decisionId, type InstanceId } from './ids';
 import { activeInvestigators, requireInvestigator } from './investigators';
-import { hasKeyword } from './keywords';
+import { cardHasKeyword } from './card_keywords';
 import { cardsOfType, requireCard } from './lookup';
 import { replay } from './reducer';
 import type { CardInstance, GameState, Investigator } from './state';
@@ -133,7 +133,7 @@ function hunters(
       (only === undefined || only.includes(card.id)) &&
       card.zone.kind === 'atLocation' &&
       !card.exhausted &&
-      hasKeyword(cardStats(ctx.cards, card.code), 'hunter'),
+      cardHasKeyword(ctx, state, card, 'hunter'),
   );
 }
 

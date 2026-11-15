@@ -5,7 +5,7 @@ import type { CardDef } from '@arkham/carddata';
 import { CACHE_DIR } from '@arkham/carddata/src/fetch';
 import type { CardStats, ScaledValue } from '@arkham/engine';
 import { describe, expect, it } from 'vitest';
-import { playerCardDefs } from './player_cards';
+import { coreSetPlayerCardDefs } from './player_cards';
 import { queenOfAshCardDefs } from './queen_of_ash/cards';
 import { smokeAndMirrorsCardDefs } from './smoke_and_mirrors/cards';
 import { spreadingFlamesCardDefs } from './spreading_flames/cards';
@@ -134,7 +134,7 @@ describe.each<{ campaign: string; pack: CheckedPack; cards: readonly CardStats[]
       ...theGatheringCardDefs,
       ...theMidnightMasksCardDefs,
       ...theDevourerBelowCardDefs,
-      ...playerCardDefs,
+      ...coreSetPlayerCardDefs,
     ],
   },
   {

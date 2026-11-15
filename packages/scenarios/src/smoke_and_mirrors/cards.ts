@@ -18,6 +18,9 @@ import {
   endScenario,
   enemyAttacks,
   fixed,
+  youMustEither,
+  loseActions,
+  forEachPoint,
   fromSetAside,
   gainSurge,
   ifNoCandidate,
@@ -101,8 +104,16 @@ export const SMOKE_AND_MIRRORS_RESOLUTIONS = {
   culpritFound: resolutionId('R1'),
 } as const;
 
+/**
+ * Id of the question a failed Downpour asks its drawer for each point failed: lose 1 action, or
+ * place 1 of their clues on their location.
+ */
+export const DOWNPOUR_DECISION = decisionId('smokeAndMirrors.downpour');
+
 /** Id of Arcane Lock's question to the investigator who tests to discard it: willpower or intellect? */
 export const ARCANE_LOCK_DECISION = decisionId('smokeAndMirrors.arcaneLock');
+
+const downpour = 'scenario.smokeAndMirrors.downpour';
 
 const codes = SMOKE_AND_MIRRORS_CODES;
 const sets = SMOKE_AND_MIRRORS_SETS;
@@ -139,7 +150,6 @@ const jpg = 'jpg';
  *   additional action to investigate (MC2.4), and the damage Miskatonic University (In Flames)
  *   deals to allies
  * - Arcane Lock's additional action to enter or leave its location (MC2.4)
- * - the whole revelation of Downpour (a choice per point failed)
  */
 export const smokeAndMirrorsCardDefs: readonly CardStats[] = [
   agenda({
@@ -476,6 +486,20 @@ export const smokeAndMirrorsCardDefs: readonly CardStats[] = [
     pictures: jpg,
     traits: ['Hazard'],
     quantity: 2,
+    abilities: [
+      whenRevealed(
+        skillTest('agility', 3, {
+          onFail: [
+            forEachPoint(
+              youMustEither(DOWNPOUR_DECISION, `${downpour}.prompt`, [
+                { id: 'action', label: `${downpour}.action`, effects: [loseActions(1)] },
+                { id: 'clue', label: `${downpour}.clue`, effects: [placeYourClues(1)] },
+              ]),
+            ),
+          ],
+        }),
+      ),
+    ],
   }),
   treachery({
     code: '12159',

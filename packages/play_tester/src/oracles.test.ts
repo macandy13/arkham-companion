@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   advanceBySpendingClues,
+  afterEngaging,
   atEndOfPhase,
   blankAct,
   blankAgenda,
@@ -11,6 +12,7 @@ import {
   fixed,
   instanceId,
   investigatorId,
+  loseResources,
   newGame,
   PlayTable,
   takeDamage,
@@ -81,6 +83,23 @@ describe('the round structure', () => {
       oracle: { id: 'upkeep' },
       message: 'alice went from 5 to 7 resources in the upkeep',
     });
+  });
+
+  it('lets an enemy that readies and engages in the upkeep take the resource alice gains', () => {
+    const gangster = instanceId('gangster');
+    const gangsterCard = blankEnemy('gangster', { abilities: [afterEngaging(loseResources(1))] });
+    const table = PlayTable.start(game.withCard(gangster, gangsterCard, engagedWith(alice)));
+    table.nextPhase();
+    table.startTurn(alice);
+    // Evading exhausts the gangster and leaves it unengaged at the study until the upkeep.
+    table.evade(alice, gangster, { result: 'pass' });
+    table.endTurn(alice);
+    table.nextPhase();
+    const enemyPhase = table.board;
+    table.nextPhase();
+
+    expect(table.board.investigator(alice).resources).toBe(5);
+    expect(brokenRule(enemyPhase, table.board, next)).toBeUndefined();
   });
 
   it('catches a mythos phase that places no doom on the agenda', () => {
