@@ -685,6 +685,22 @@ describe('DrawCard', () => {
     expect(after.cards[instanceId('discarded_foe')]?.zone).toEqual(engagedWith(alice));
   });
 
+  it('draws the first match from the Cultist deck, leaving the cards above it', () => {
+    const otherCultist = blankEnemy('other_cultist');
+    const { context, state } = aliceInHall
+      .withCard(instanceId('top_cultist'), otherCultist, cultistDeck)
+      .withCard(instanceId('wanted_cultist'), foeCard, cultistDeck)
+      .start();
+
+    const after = stateAfter(context, state, {
+      ...drawCultist,
+      pick: { match: { name: foeCard.name } },
+    });
+
+    expect(after.cards[instanceId('wanted_cultist')]?.zone).toEqual(engagedWith(alice));
+    expect(idsIn(after, cultistDeck)).toEqual(['top_cultist']);
+  });
+
   it('rejects a draw from an empty deck', () => {
     const { context, state } = aliceInHall.start();
 

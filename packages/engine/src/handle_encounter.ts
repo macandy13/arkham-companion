@@ -51,7 +51,8 @@ export function handleDrawCard(ctx: EngineContext, state: GameState, cmd: DrawCa
       : [];
   }
   const target = findMatch(ctx, state, zones, pick.match);
-  const fromDeck = zones.length === 1 && sameZone(zones[0] ?? encounterDiscard, encounterDeck);
+  const [only, ...others] = zones;
+  const fromDeck = only !== undefined && others.length === 0 && sameZone(only, encounterDeck);
   if (target === undefined)
     return pick.discardSkipped && fromDeck
       ? discardDeckForDiscardMatch(ctx, state, cmd, pick.match)
