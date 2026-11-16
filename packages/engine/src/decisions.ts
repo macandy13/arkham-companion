@@ -298,21 +298,27 @@ function optionCommands(state: GameState, command: ResolveDecision): Command[] {
 
 /**
  * `cmd` with each `AnsweredAmount` replaced by the answer's count of that
- * name, or the option's default for it.
+ * name, or the option's default for it: its own fields and those of the
+ * skill test it asks for (`TestSkill.test`).
  */
 function withAnsweredAmounts(
   cmd: AnswerableCommand,
   option: DecisionOption,
   command: ResolveDecision,
 ): Command {
-  const filled = Object.fromEntries(
-    Object.entries(cmd).map(([field, value]) => [
-      field,
-      isAnsweredAmount(value) ? answeredAmount(value.answer, option, command) : value,
-    ]),
-  );
+  const fill = (fields: object): object =>
+    Object.fromEntries(
+      Object.entries(fields).map(([field, value]) => [
+        field,
+        isAnsweredAmount(value)
+          ? answeredAmount(value.answer, option, command)
+          : isFieldGroup(value)
+            ? fill(value)
+            : value,
+      ]),
+    );
   // Only `AnsweredAmount` values were replaced, each by a number, so `filled` is the command without them.
-  return filled as Command;
+  return fill(cmd) as Command;
 }
 
 /**
@@ -320,9 +326,21 @@ function withAnsweredAmounts(
  * (an ability's choice); undefined when one holds an `AnsweredAmount`.
  */
 export function plainOptionCommands(option: DecisionOption): Command[] | undefined {
-  const answered = option.commands.some((cmd) => Object.values(cmd).some(isAnsweredAmount));
+  const holdsAnswer = (fields: object): boolean =>
+    Object.values(fields).some(
+      (value) => isAnsweredAmount(value) || (isFieldGroup(value) && holdsAnswer(value)),
+    );
   // Without an `AnsweredAmount` field, each command is a plain `Command`.
-  return answered ? undefined : (option.commands as Command[]);
+  return option.commands.some(holdsAnswer) ? undefined : (option.commands as Command[]);
+}
+
+/**
+ * A field that groups further fields of a command, such as `TestSkill.test`, where a count may
+ * wait for the answer too. Lists are left alone: they hold the commands of later steps (a test's
+ * outcomes), whose counts are not this answer's.
+ */
+function isFieldGroup(value: unknown): value is object {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
 function isAnsweredAmount(value: unknown): value is AnsweredAmount {

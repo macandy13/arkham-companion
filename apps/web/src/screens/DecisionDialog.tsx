@@ -2,6 +2,7 @@ import { useState, type ComponentProps } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
 import {
+  NAMED_AMOUNTS,
   revealedTokens,
   type BoardView,
   type ChoiceView,
@@ -320,7 +321,7 @@ function optionKey(option: string, index: number): string {
 }
 
 /** The counts an option can carry, in the order the dialog shows their steppers. */
-const COUNT_NAMES = ['amount', 'damage', 'horror'] as const;
+const COUNT_NAMES = ['amount', ...NAMED_AMOUNTS] as const;
 
 /** One of `COUNT_NAMES`. */
 type CountName = (typeof COUNT_NAMES)[number];
@@ -342,13 +343,15 @@ function defaultCounts(ranges: Record<string, DecisionCounts> = {}): Counts {
   );
 }
 
-/** An option's counts as the answer carries them: `amount`, and damage and horror as `amounts`. */
+/** An option's counts as the answer carries them: `amount`, and the named ones as `amounts`. */
 function countsOf(counts: Counts[string] = {}): DecisionAmounts {
-  const { amount, damage, horror } = counts;
-  const named = {
-    ...(damage === undefined ? {} : { damage }),
-    ...(horror === undefined ? {} : { horror }),
-  };
+  const { amount } = counts;
+  const named = Object.fromEntries(
+    NAMED_AMOUNTS.flatMap((name) => {
+      const value = counts[name];
+      return value === undefined ? [] : [[name, value]];
+    }),
+  );
   return {
     ...(amount === undefined ? {} : { amount }),
     ...(Object.keys(named).length > 0 ? { amounts: named } : {}),
