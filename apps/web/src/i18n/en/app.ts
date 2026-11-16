@@ -110,6 +110,7 @@ export const appTexts = {
       discardAsset: '{{investigator}} discards an asset',
       play: '{{investigator}} plays a card',
       search: '{{investigator}} searches their deck',
+      healAsset: '{{investigator}} heals an asset',
     },
     discovered: '{{investigator}} discovers {{amount}} at {{location}}',
     test: {
@@ -280,6 +281,12 @@ export const appTexts = {
         'search your deck for a card with the trait {{traits}}, add it to your hand and shuffle your deck',
       searchTop:
         'search the top {{top}} cards of your deck for a card with the trait {{traits}}, add it to your hand and shuffle your deck',
+      searchAndPlay:
+        'search your deck for a card with the trait {{traits}}, play it (paying its cost) and shuffle your deck',
+      healAssetDamage:
+        'heal {{amount}} damage from an asset with the trait {{trait}} at your location',
+      healAssetHorror:
+        'heal {{amount}} horror from an asset with the trait {{trait}} at your location',
       play: 'play a card',
       or: ' or ',
     },
@@ -566,6 +573,17 @@ export const appTexts = {
     raise: 'Raise the dialog',
     waiting: 'Waiting next',
   },
+  weakness: {
+    draw: 'Draw a weakness',
+    drawFor: '{{investigator}} draws a weakness',
+    search: 'Search weaknesses',
+    none: 'No weakness has that name.',
+    group: {
+      theirs: 'Their own',
+      basic: 'Basic weaknesses',
+      others: "Other investigators'",
+    },
+  },
   attached: {
     title: 'Attached',
     discardCard: 'Discard {{card}}',
@@ -753,6 +771,7 @@ export const appTexts = {
     chooseNearestEnemy: 'Which of the nearest enemies?',
     chooseLocationToMove: 'Where do you move for {{card}}?',
     chooseLocationToAttach: 'Where does {{card}} attach?',
+    chooseInvestigatorFor: 'Which investigator does {{card}} affect?',
     chooseSpawnLocation: 'Where does {{card}} spawn?',
     investigate: 'Investigate {{card}}',
     fight: 'Fight {{card}}',

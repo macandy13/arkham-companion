@@ -552,12 +552,16 @@ function resumeHeldAction(resolution: Resolution, held: HeldAction, budget: Trig
  * they trigger, get a dry run on the state before the ability's other commands
  * run; one rejection or no event at all drops the option, although the rule
  * would still allow an option that resolves in part (no Night of the Zealot
- * card has one). A choice with no option left is
+ * card has one). The same holds for the investigator an effect picks (`anInvestigator`): "heal 1
+ * horror from an investigator" offers only those with horror. A choice with no option left is
  * dropped. A choice inside a test's outcome is raised by the answer, not here,
  * so it keeps all its options.
  */
 function withResolvableOptions(resolution: Resolution, command: Command): Command[] {
-  if (command.type !== 'RequestDecision' || command.decision.kind !== 'chooseOption')
+  if (
+    command.type !== 'RequestDecision' ||
+    (command.decision.kind !== 'chooseOption' && command.decision.kind !== 'chooseInvestigator')
+  )
     return [command];
   const options = command.decision.options.filter((option) => {
     const commands = plainOptionCommands(option);
@@ -566,6 +570,10 @@ function withResolvableOptions(resolution: Resolution, command: Command): Comman
     return changesState(resolution, commands.map(followUpStep));
   });
   if (options.length === 0) return [];
+  // An investigator to pick asks nothing once one is left, as an unfiltered single candidate doesn't.
+  const [only, ...others] = options;
+  if (command.decision.kind === 'chooseInvestigator' && only && others.length === 0)
+    return plainOptionCommands(only) ?? [];
   return [{ ...command, decision: { ...command.decision, options } }];
 }
 

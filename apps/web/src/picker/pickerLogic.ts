@@ -1,4 +1,5 @@
 import type { CardCode, Chapter, InvestigatorDef, PackDef } from '@arkham/carddata';
+import { containsIgnoringCase } from '@arkham/util';
 
 /** Filter state of the investigator picker; an empty/absent field means "no restriction". */
 export interface PickerFilters {
@@ -22,11 +23,10 @@ export function applyPickerFilters(
   filters: PickerFilters,
   ownedPacks?: ReadonlySet<string>,
 ): InvestigatorDef[] {
-  const search = filters.search.trim().toLowerCase();
   return investigators
     .filter(
       (i) =>
-        i.name.toLowerCase().includes(search) &&
+        containsIgnoringCase(i.name, filters.search) &&
         (filters.factions.length === 0 || filters.factions.includes(i.factionCode)) &&
         (filters.cyclePosition === undefined || i.cyclePosition === filters.cyclePosition) &&
         (filters.packCode === undefined || i.packCode === filters.packCode) &&

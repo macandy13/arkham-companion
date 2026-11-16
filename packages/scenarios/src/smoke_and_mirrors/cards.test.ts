@@ -7,6 +7,7 @@ import {
   encounterDiscard,
   engagedWith,
   encounterSetCode,
+  execute,
   instanceId,
   investigatorId,
   newGame,
@@ -23,6 +24,7 @@ import { answer, cardIn, resolveRevelation, runFrom, stateAfter } from '@arkham/
 import {
   ARCANE_LOCK_DECISION,
   DOWNPOUR_DECISION,
+  SANATORIUM_DECISION,
   SMOKE_AND_MIRRORS_CODES,
   smokeAndMirrorsCardDefs,
   smokeAndMirrorsCards,
@@ -255,6 +257,193 @@ describe('Smoke and Mirrors card abilities', () => {
       );
 
       expect(requireInvestigator(state, alice).resources).toBe(1);
+    });
+  });
+
+  describe('Downtown (Arkham Sanatorium)', () => {
+    const sanatorium = instanceId('sanatorium');
+    const bob = investigatorId('bob');
+    const aliceDiscovers: Command = {
+      type: 'DiscoverClues',
+      investigatorId: alice,
+      locationId: sanatorium,
+      amount: 1,
+    };
+    /** Alice and bob at the Sanatorium on alice's turn, with the horror each is given. */
+    const bothThere = (horror: { alice: number; bob: number }) =>
+      newGame()
+        .withLocation(sanatorium, cardOf(SMOKE_AND_MIRRORS_CODES.downtownSanatorium), {
+          revealed: true,
+          clues: 2,
+        })
+        .withInvestigator(alice, {
+          locationId: sanatorium,
+          sanity: { max: 6, horror: horror.alice },
+        })
+        .withInvestigator(bob, { locationId: sanatorium, sanity: { max: 6, horror: horror.bob } })
+        .withTurnOf(alice)
+        .start();
+
+    it('lets alice heal 1 horror from bob, whom she picks among the investigators there', () => {
+      const { context, state: started } = bothThere({ alice: 2, bob: 1 });
+
+      const state = stateAfter(
+        context,
+        started,
+        aliceDiscovers,
+        answer('reaction:sanatorium:0', 'use'),
+        answer(SANATORIUM_DECISION, 'investigator'),
+        answer('investigator:sanatorium', 'bob'),
+      );
+
+      expect(requireInvestigator(state, alice).sanity.horror).toBe(2);
+      expect(requireInvestigator(state, bob).sanity.horror).toBe(0);
+    });
+
+    it.each([
+      { horror: { alice: 0, bob: 1 }, options: ['investigator', 'ally'] },
+      { horror: { alice: 0, bob: 0 }, options: ['ally'] },
+    ])(
+      'offers to heal $options with alice at $horror.alice horror and bob at $horror.bob',
+      ({ horror, options }) => {
+        const { context, state: started } = bothThere(horror);
+
+        const state = stateAfter(
+          context,
+          started,
+          aliceDiscovers,
+          answer('reaction:sanatorium:0', 'use'),
+        );
+
+        expect(state.pending[0]?.options.map((option) => option.id)).toEqual(options);
+      },
+    );
+
+    it('leaves healing an Ally asset there to alice', () => {
+      const { context, state: started } = bothThere({ alice: 0, bob: 0 });
+      const asked = stateAfter(
+        context,
+        started,
+        aliceDiscovers,
+        answer('reaction:sanatorium:0', 'use'),
+      );
+
+      const { events } = execute(context, asked, answer(SANATORIUM_DECISION, 'ally'));
+
+      expect(events).toContainEqual(
+        expect.objectContaining({
+          type: 'CommandDeferred',
+          command: expect.objectContaining({
+            type: 'HealAsset',
+            investigatorId: alice,
+            stat: 'horror',
+            amount: 1,
+            trait: 'Ally',
+          }),
+        }),
+      );
+    });
+  });
+
+  describe('Easttown', () => {
+    const easttown = instanceId('easttown');
+
+    it.each([
+      { clues: 1, asked: ['reaction:easttown:0'] },
+      { clues: 2, asked: [] },
+    ])(
+      'offers its ally search when alice discovers the last clue: with $clues clues there, $asked',
+      ({ clues, asked }) => {
+        const { context, state: started } = newGame()
+          .withLocation(easttown, cardOf(SMOKE_AND_MIRRORS_CODES.easttown), {
+            revealed: true,
+            clues,
+          })
+          .withInvestigator(alice, { locationId: easttown })
+          .withTurnOf(alice)
+          .start();
+
+        const state = stateAfter(context, started, {
+          type: 'DiscoverClues',
+          investigatorId: alice,
+          locationId: easttown,
+          amount: 1,
+        });
+
+        expect(state.pending.map((decision) => decision.id)).toEqual(asked);
+      },
+    );
+
+    it.each([
+      { who: 'alice again', discoverer: alice, asked: [] },
+      { who: 'bob', discoverer: investigatorId('bob'), asked: ['reaction:easttown:0'] },
+    ])(
+      'offers it to $who after alice used it once in the game and a clue came back: $asked',
+      ({ discoverer, asked }) => {
+        const { context, state: started } = newGame()
+          .withLocation(easttown, cardOf(SMOKE_AND_MIRRORS_CODES.easttown), {
+            revealed: true,
+            clues: 1,
+          })
+          .withInvestigator(alice, { locationId: easttown })
+          .withInvestigator(investigatorId('bob'), { locationId: easttown })
+          .withTurnOf(alice)
+          .start();
+        const used = stateAfter(
+          context,
+          started,
+          { type: 'DiscoverClues', investigatorId: alice, locationId: easttown, amount: 1 },
+          answer('reaction:easttown:0', 'use'),
+        );
+        const nextRound = { ...used, meta: { ...used.meta, round: used.meta.round + 1 } };
+        const refilled = stateAfter(context, nextRound, {
+          type: 'MoveTokens',
+          token: 'clue',
+          amount: 1,
+          from: 'pool',
+          to: { card: easttown },
+        });
+
+        const state = stateAfter(context, refilled, {
+          type: 'DiscoverClues',
+          investigatorId: discoverer,
+          locationId: easttown,
+          amount: 1,
+        });
+
+        expect(state.pending.map((decision) => decision.id)).toEqual(asked);
+      },
+    );
+
+    it('leaves the search for an Ally asset to play to alice', () => {
+      const { context, state: started } = newGame()
+        .withLocation(easttown, cardOf(SMOKE_AND_MIRRORS_CODES.easttown), {
+          revealed: true,
+          clues: 1,
+        })
+        .withInvestigator(alice, { locationId: easttown })
+        .withTurnOf(alice)
+        .start();
+      const asked = stateAfter(context, started, {
+        type: 'DiscoverClues',
+        investigatorId: alice,
+        locationId: easttown,
+        amount: 1,
+      });
+
+      const { events } = execute(context, asked, answer('reaction:easttown:0', 'use'));
+
+      expect(events).toContainEqual(
+        expect.objectContaining({
+          type: 'CommandDeferred',
+          command: expect.objectContaining({
+            type: 'SearchDeck',
+            investigatorId: alice,
+            traits: ['Ally'],
+            play: true,
+          }),
+        }),
+      );
     });
   });
 

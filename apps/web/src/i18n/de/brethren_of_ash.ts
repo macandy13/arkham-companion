@@ -36,6 +36,11 @@ export const brethrenOfAshTexts = {
       },
     },
     smokeAndMirrors: {
+      sanatorium: {
+        prompt: '{{card}}: Heile 1 Horror von',
+        investigator: 'Einem Ermittler an diesem Ort',
+        ally: 'Einer Verbündeten-Vorteilskarte an diesem Ort',
+      },
       downpour: {
         prompt: '{{card}}: Für diesen Punkt musst du entweder',
         action: '1 Aktion verlieren',

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   camelCaseToWords,
   commonWordPrefix,
+  containsIgnoringCase,
   escapeRegExp,
   fileStem,
   numberedDuplicates,
@@ -148,5 +149,16 @@ describe('fileStem', () => {
     { name: 'gives the fallback when no letter or digit is left', text: '?!', expected: 'game' },
   ])('$name', ({ text, expected }) => {
     expect(fileStem(text, 'game')).toBe(expected);
+  });
+});
+
+describe('containsIgnoringCase', () => {
+  it.each([
+    { text: 'Roland Banks', search: 'banks', contains: true },
+    { text: 'Roland Banks', search: '  ROLAND ', contains: true },
+    { text: 'Roland Banks', search: '', contains: true },
+    { text: 'Roland Banks', search: 'daisy', contains: false },
+  ])('$text contains "$search": $contains', ({ text, search, contains }) => {
+    expect(containsIgnoringCase(text, search)).toBe(contains);
   });
 });

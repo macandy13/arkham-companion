@@ -74,3 +74,11 @@ export function fileStem(text: string, fallback: string): string {
       .join('-') || fallback
   );
 }
+
+/**
+ * Whether `text` contains `search`, ignoring case and the spaces around `search`, as the app's
+ * search boxes match a name (an empty search matches everything).
+ */
+export function containsIgnoringCase(text: string, search: string): boolean {
+  return text.toLowerCase().includes(search.trim().toLowerCase());
+}

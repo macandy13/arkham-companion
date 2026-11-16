@@ -21,12 +21,15 @@ export function InvestigatorCard({
   printed,
   picture,
   onClose,
+  footer,
   children,
 }: {
   investigator: InvestigatorView;
   printed: PrintedInvestigator | undefined;
   picture: CardPicture | undefined;
   onClose: () => void;
+  /** What the players can do with the investigator from here, under the card (`DrawWeakness`). */
+  footer?: ReactNode;
   children: ReactNode;
 }) {
   const { t } = useTranslation();
@@ -51,6 +54,7 @@ export function InvestigatorCard({
       <WholeCard investigator={investigator} printed={printed} picture={picture} nameId={nameId}>
         {children}
       </WholeCard>
+      {footer}
     </dialog>
   );
 }

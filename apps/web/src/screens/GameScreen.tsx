@@ -226,6 +226,7 @@ export function GameScreen({
                 ? (code) => printedInvestigatorOf(cards.catalog, code)
                 : undefined
             }
+            weaknesses={cards.status === 'ready' ? cards.catalog.weaknesses : undefined}
           />
         </section>
         {detailTarget && (

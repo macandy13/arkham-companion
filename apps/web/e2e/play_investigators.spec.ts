@@ -184,3 +184,33 @@ test('take damage, horror and resources from the token pool and heal it back', a
     await expect(priest).toHaveAccessibleName('Ghoul Priest');
   });
 });
+
+// Journey: an investigator draws a weakness enemy from their deck: the players pick it from the
+// whole card's "Draw a weakness", and it spawns engaged with them, in their threat area.
+test('draw a weakness enemy from the deck', async ({ page }) => {
+  const seeker = page.getByRole('region', { name: 'Fake Seeker' });
+
+  await test.step('Start a quick game', async () => {
+    await page.goto('/#/new');
+    await startQuickGame(page);
+  });
+
+  await test.step('Open Fake Seeker’s whole card and pick Fake Stalker', async () => {
+    await seeker.getByRole('button', { name: "Show Fake Seeker's card" }).click();
+    await page.getByRole('button', { name: 'Draw a weakness' }).click();
+    const picker = page.getByRole('dialog', { name: 'Fake Seeker draws a weakness' });
+    await picker.getByRole('searchbox', { name: 'Search weaknesses' }).fill('stalker');
+    await picker.getByRole('button', { name: 'Fake Stalker' }).click();
+    await expect(picker).toBeHidden();
+    await page
+      .getByRole('dialog', { name: 'Fake Seeker' })
+      .getByRole('button', { name: 'Close' })
+      .click();
+  });
+
+  await test.step('Fake Stalker is engaged with Fake Seeker', async () => {
+    await expect(
+      seeker.getByRole('list', { name: 'Threat area' }).getByText('Fake Stalker'),
+    ).toBeVisible();
+  });
+});
