@@ -576,6 +576,17 @@ export const appTexts = {
     raise: 'Dialog wieder anheben',
     waiting: 'Als Nächstes',
   },
+  weakness: {
+    draw: 'Schwäche ziehen',
+    drawFor: '{{investigator}} zieht eine Schwäche',
+    search: 'Schwächen suchen',
+    none: 'Keine Schwäche mit diesem Namen.',
+    group: {
+      theirs: 'Eigene',
+      basic: 'Einfache Schwächen',
+      others: 'Anderer Ermittler',
+    },
+  },
   attached: {
     title: 'Angehängt',
     discardCard: '{{card}} ablegen',

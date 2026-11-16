@@ -566,6 +566,17 @@ export const appTexts = {
     raise: 'Raise the dialog',
     waiting: 'Waiting next',
   },
+  weakness: {
+    draw: 'Draw a weakness',
+    drawFor: '{{investigator}} draws a weakness',
+    search: 'Search weaknesses',
+    none: 'No weakness has that name.',
+    group: {
+      theirs: 'Their own',
+      basic: 'Basic weaknesses',
+      others: "Other investigators'",
+    },
+  },
   attached: {
     title: 'Attached',
     discardCard: 'Discard {{card}}',

@@ -1,5 +1,6 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
+import { CATALOG_FORMAT } from '@arkham/carddata';
 import { App } from './App';
 import { loadCatalog } from './catalog/loadCatalog';
 import { sharedCatalog } from './catalog/useCatalog';
@@ -23,10 +24,14 @@ const settings = loadSettings();
 const cardLanguage = () => loadSettings().cardLanguage;
 const catalog = sharedCatalog((language) => loadCatalog(database, language), cardLanguage);
 /**
- * The card data a game adds from the catalog, the cached copy first, as at start-up below, so
- * opening a game waits for the network only while nothing is cached.
+ * The catalog for the start-up below and the card data a game adds from it: the cached copy
+ * first, so either waits for the network only while nothing is cached, or the cached copy is of an
+ * older shape (`CATALOG_FORMAT`), which lacks what the screens then offer (the weaknesses).
  */
-const cachedCatalog = async () => (await database.getCatalog(cardLanguage())) ?? catalog();
+const cachedCatalog = async () => {
+  const cached = await database.getCatalog(cardLanguage());
+  return cached?.format === CATALOG_FORMAT ? cached : catalog();
+};
 const store = createAppStore(database, findScenario, findCampaign, async () =>
   catalogWeaknessCards(await cachedCatalog()),
 );
