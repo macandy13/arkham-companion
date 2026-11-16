@@ -12,12 +12,7 @@ import { enemiesOnTable } from './enemies';
 import { locationOfCard, matchesCard } from './lookup';
 import { skillValues } from './modifiers';
 import { activeInvestigators, remainingHealth, remainingSanity } from './investigators';
-import {
-  SKILL_NAMES,
-  type CardInstance,
-  type GameState,
-  type Investigator,
-} from './state';
+import { SKILL_NAMES, type CardInstance, type GameState, type Investigator } from './state';
 import type { InvestigatorId } from './ids';
 
 /**

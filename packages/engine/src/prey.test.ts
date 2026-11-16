@@ -248,8 +248,6 @@ describe('preyPrompt', () => {
     const card = blankEnemy('hunter', { keywords: [...keywords] });
     const { state } = newGame().withCard(hunter, card, setAside).start();
 
-    expect(preyPrompt(state, state.cards[hunter]!, card, 'decision.chooseEngagement')).toBe(
-      prompt,
-    );
+    expect(preyPrompt(state, state.cards[hunter]!, card, 'decision.chooseEngagement')).toBe(prompt);
   });
 });
