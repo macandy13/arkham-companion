@@ -56,7 +56,7 @@ export function engageEvents(
     state,
     enemyId,
     `engage:${enemyId}`,
-    preyPrompt(state, cardStats(ctx.cards, enemy.code), 'decision.chooseEngagement'),
+    preyPrompt(state, enemy, cardStats(ctx.cards, enemy.code), 'decision.chooseEngagement'),
     preferred,
     (chosen) => ({ type: 'EngageEnemy', enemyId, investigatorId: chosen.id }),
   );

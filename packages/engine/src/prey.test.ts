@@ -193,6 +193,34 @@ describe('preferredByPrey with "only" and naming texts', () => {
   });
 });
 
+describe('preferredByPrey "Bearer only"', () => {
+  /** Alice and Bob in the hall. */
+  const aliceAndBobInHall = newGame()
+    .withLocation(hall, blankLocation('hall'))
+    .withInvestigator(alice, { locationId: hall })
+    .withInvestigator(bob, { locationId: hall });
+
+  it.each([
+    { prey: 'Bearer only', owner: bob, among: ['alice', 'bob'], expected: ['bob'] },
+    { prey: 'Bearer only', owner: bob, among: ['alice'], expected: [] },
+    { prey: 'You', owner: bob, among: ['alice', 'bob'], expected: ['bob'] },
+    { prey: 'Bearer only', owner: undefined, among: ['alice', 'bob'], expected: ['alice', 'bob'] },
+  ])(
+    '"$prey" of a weakness owned by $owner picks $expected among $among',
+    ({ prey, owner, among, expected }) => {
+      const { context, state } = aliceAndBobInHall
+        .withCard(hunter, preyCard(prey), atLocation(hall))
+        .start();
+      const weakness = { ...state.cards[hunter]!, owner };
+      const candidates = state.investigators.filter((inv) => among.includes(inv.id));
+
+      expect(preferredByPrey(context, state, weakness, candidates).map((inv) => inv.id)).toEqual(
+        expected,
+      );
+    },
+  );
+});
+
 describe('preyPrompt', () => {
   it.each([
     {
@@ -203,6 +231,11 @@ describe('preyPrompt', () => {
     { name: 'no prey', keywords: [], prompt: 'decision.chooseEngagement' },
     {
       name: 'a name no investigator has',
+      keywords: [{ name: 'prey', detail: 'Carol only' }],
+      prompt: 'decision.choosePrey',
+    },
+    {
+      name: '"Bearer only" on a card nobody owns',
       keywords: [{ name: 'prey', detail: 'Bearer only' }],
       prompt: 'decision.choosePrey',
     },
@@ -213,7 +246,10 @@ describe('preyPrompt', () => {
     },
   ] as const)('asks with $prompt for $name', ({ keywords, prompt }) => {
     const card = blankEnemy('hunter', { keywords: [...keywords] });
+    const { state } = newGame().withCard(hunter, card, setAside).start();
 
-    expect(preyPrompt(newGame().start().state, card, 'decision.chooseEngagement')).toBe(prompt);
+    expect(preyPrompt(state, state.cards[hunter]!, card, 'decision.chooseEngagement')).toBe(
+      prompt,
+    );
   });
 });

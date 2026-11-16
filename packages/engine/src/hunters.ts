@@ -170,7 +170,7 @@ function hunterEvents(ctx: EngineContext, state: GameState, hunter: CardInstance
       state,
       hunter.id,
       `hunter:${hunter.id}:investigator`,
-      preyPrompt(state, stats, 'decision.chooseHunterTarget'),
+      preyPrompt(state, hunter, stats, 'decision.chooseHunterTarget'),
       preferred.map((route) => route.investigator),
       (chosen) => ({ type: 'MoveHunter', enemyId: hunter.id, towards: chosen.id }),
     );
