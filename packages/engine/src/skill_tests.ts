@@ -69,6 +69,12 @@ export function handleInvestigate(
     cmd.locationId === undefined
       ? investigatorLocation(state, investigator)
       : requireLocationInPlay(state, cmd.locationId);
+  if (
+    cmd.locationId !== undefined &&
+    cmd.locationId !== investigator.locationId &&
+    !location.faceUp
+  )
+    throw new CommandRejected({ code: 'locationUnrevealed', cardId: location.id });
   if (isRestricted(ctx, state, location, 'investigate'))
     throw new CommandRejected({
       code: 'restricted',
@@ -106,7 +112,7 @@ export function handleFight(ctx: EngineContext, state: GameState, cmd: Fight): D
       investigatorId: investigator.id,
       locationId: enemyLocation,
     });
-  if (isUnengagedAloof(ctx, state, enemy))
+  if (!cmd.ignoreAloof && isUnengagedAloof(ctx, state, enemy))
     throw new CommandRejected({ code: 'aloofNotEngaged', cardId: enemy.id });
   const damage = cmd.damage ?? 1;
   if (!Number.isInteger(damage) || damage <= 0)

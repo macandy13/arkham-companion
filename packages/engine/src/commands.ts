@@ -1366,7 +1366,7 @@ export interface EndSkillTest {
 
 /**
  * Investigate action: the investigator investigates their location, or `locationId` when a card
- * investigates another one (In the Know, Sixth Sense). The
+ * investigates another one (In the Know). The
  * players resolve the intellect test against its shroud at the table; the
  * engine raises a `skillTestResult` decision whose pass discovers clues: 1
  * by default, or the count the players confirm in `ResolveDecision.amount`
@@ -1378,7 +1378,12 @@ export interface EndSkillTest {
 export interface Investigate extends ActionCommand {
   type: 'Investigate';
   investigatorId: InvestigatorId;
-  /** A location in play to investigate instead of their own; its shroud and clues count. */
+  /**
+   * A revealed location in play to investigate instead of their own, as if they were there (In
+   * the Know); its shroud, its "cannot investigate" and its clues count. It names
+   * its target, as an investigation has none besides the investigator's location, while `Fight`
+   * and `Evade` already name their enemy and only lift a check (`atAnyLocation`).
+   */
   locationId?: InstanceId;
 }
 
@@ -1395,8 +1400,10 @@ export interface Fight {
   enemyId: InstanceId;
   /** Damage of the attack, the pass option's default; 1 (the basic attack) unless a weapon deals more. */
   damage?: number;
-  /** The enemy may be at another location, as a card allows. Aloof still applies. */
+  /** The enemy may be at another location, as a card allows (Marksmanship). Aloof still applies. */
   atAnyLocation?: true;
+  /** The attack ignores aloof, as Marksmanship and Telescopic Sight say. */
+  ignoreAloof?: true;
 }
 
 /**
