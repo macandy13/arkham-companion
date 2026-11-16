@@ -13,13 +13,14 @@ import { Brain, Heart } from '../catalog/cardFace';
 import { range } from '@arkham/util';
 import { useCardPicture } from '../catalog/cardImages';
 import type { GameActions, SteppedStat } from '../state/gameActions';
-import { classOf, type PrintedInvestigator } from '@arkham/carddata';
+import { classOf, type PrintedInvestigator, type WeaknessDef } from '@arkham/carddata';
 import { InvestigatorFace, type InvestigatorFaceShape } from './InvestigatorFace';
 import { SkillTestDialog } from './SkillTestDialog';
 import { signed } from '../tokens/tokenValue';
 import { PlayArea } from './PlayArea';
 import { ThreatArea } from './ThreatArea';
 import { TurnControls } from './TurnControls';
+import { DrawWeakness } from './DrawWeakness';
 import { InvestigatorCard, WholeCard } from './InvestigatorCard';
 import { deltaText, useCountChange } from '../screens/countChange';
 import type { TokenDragHandlers } from '../screens/useTokenDrag';
@@ -54,6 +55,7 @@ export function InvestigatorBar({
   onOpen,
   whole = false,
   printed,
+  weaknesses,
 }: {
   board: BoardView;
   actions: GameActions;
@@ -63,6 +65,8 @@ export function InvestigatorBar({
   whole?: boolean;
   /** Looks up what each investigator's card prints (`printedInvestigatorOf`), once the catalog has loaded. */
   printed?: ((code: InvestigatorCode) => PrintedInvestigator | undefined) | undefined;
+  /** The catalog's weaknesses an investigator can draw (`DrawWeakness`), once it has loaded. */
+  weaknesses?: readonly WeaknessDef[] | undefined;
 }) {
   // The players pick who goes next in the investigation phase, once no turn is in progress.
   const picking = board.phase === 'investigation' && board.turn === undefined;
@@ -80,6 +84,7 @@ export function InvestigatorBar({
           board={board}
           investigator={investigator}
           printed={printed?.(investigator.code)}
+          weaknesses={weaknesses}
           focused={focus === investigator.id}
           onShown={onOpen ? () => setFocus(investigator.id) : undefined}
           onOpen={focus === investigator.id ? onOpen : undefined}
@@ -177,6 +182,7 @@ function InvestigatorPanel({
   board,
   investigator,
   printed,
+  weaknesses,
   seat,
   focused,
   onShown,
@@ -195,6 +201,8 @@ function InvestigatorPanel({
   investigator: InvestigatorView;
   /** What their card prints besides its stats: the subname and class, once the catalog has them. */
   printed: PrintedInvestigator | undefined;
+  /** The weaknesses the whole card offers to draw (`DrawWeakness`). */
+  weaknesses: readonly WeaknessDef[] | undefined;
   /**
    * Where the panel sits on the phone's row of panels, which its dots show, so the players see
    * there is more to swipe to; nothing elsewhere, or in a solo game.
@@ -231,6 +239,14 @@ function InvestigatorPanel({
       <Counters board={board} investigator={investigator} busy={busy} actions={actions} />
     </>
   );
+  const drawWeakness = (
+    <DrawWeakness
+      investigator={investigator}
+      weaknesses={weaknesses}
+      actions={actions}
+      busy={busy}
+    />
+  );
   return (
     <section
       ref={section}
@@ -256,9 +272,17 @@ function InvestigatorPanel({
         busy={busy}
       />
       {whole ? (
-        <WholeCard investigator={investigator} printed={printed} picture={picture} nameId={nameId}>
-          {stats}
-        </WholeCard>
+        <>
+          <WholeCard
+            investigator={investigator}
+            printed={printed}
+            picture={picture}
+            nameId={nameId}
+          >
+            {stats}
+          </WholeCard>
+          {drawWeakness}
+        </>
       ) : (
         <article
           data-card="investigator"
@@ -297,6 +321,7 @@ function InvestigatorPanel({
           printed={printed}
           picture={picture}
           onClose={() => setZoomed(false)}
+          footer={drawWeakness}
         >
           <Skills board={board} investigator={investigator} busy={busy} actions={actions} />
           <Counters board={board} investigator={investigator} busy={busy} actions={actions} />

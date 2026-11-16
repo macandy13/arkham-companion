@@ -1,0 +1,44 @@
+/*
+ * "Draw a weakness" (DrawWeakness) under the whole investigator card, apart from it. In the phone's
+ * expanded bar it is one more row of the panel, which the panel's own gap spaces.
+ */
+#investigators dialog[data-dialog='investigator-card'] > button:not([data-icon]) {
+  margin-block-start: var(--space-3);
+}
+
+/*
+ * The weakness picker: the search box over the groups, a field on the paper like the investigator
+ * picker's, and each group a column of names to tap.
+ */
+#investigators dialog[data-dialog='draw-weakness'] > input[type='search'] {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: var(--button-compact);
+  margin-block: var(--space-3);
+  padding-inline: var(--space-2);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: inherit;
+}
+
+#investigators dialog[data-dialog='draw-weakness'] > section > h3 {
+  margin-block: var(--space-2);
+}
+
+#investigators dialog[data-dialog='draw-weakness'] > section > ul {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-3);
+  padding: 0;
+  list-style: none;
+}
+
+/* One id plus the dialog's attribute, so it outranks the home screen's framed `#app > main ul > li`. */
+#investigators dialog[data-dialog='draw-weakness'] > section > ul > li {
+  padding: 0;
+  border: none;
+  background: none;
+}
