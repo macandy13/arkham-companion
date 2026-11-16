@@ -766,12 +766,14 @@ export interface ShuffleEncounterDeck {
 }
 
 /**
- * `investigatorId` draws the top card of `from`, a zone other than the encounter deck: "Draw the
+ * `investigatorId` draws the top card of `from`, a deck or a pile of cards out of play: "Draw the
  * top card of the Cultist deck" (`scenarioDeck('cultist')`), "draw the facedown card beneath your
  * location" (`beneath(yourLocation())`, Augurs of Flame). The card resolves as an encounter draw
  * does (`DrawEncounter`): revealed, its revelation and surge resolved, an enemy spawning with the
- * drawer as the fallback location. Rejected when `from` holds no card (`nothingToDraw`), so an
- * action that would draw nothing can't be taken. Produces `DrawEncounter`'s events.
+ * drawer as the fallback location. From the encounter deck it is `DrawEncounter`'s plain draw, the
+ * discard shuffled back in first when the deck is empty. Rejected when `from` holds no card
+ * (`nothingToDraw`), so an action that would draw nothing can't be taken. Produces
+ * `DrawEncounter`'s events.
  */
 export interface DrawCard {
   type: 'DrawCard';

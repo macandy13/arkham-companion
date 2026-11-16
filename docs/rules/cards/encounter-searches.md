@@ -32,14 +32,14 @@ The cards below search or dig through a deck, draw from a deck of their own, or 
 The Midnight Masks' Cultist deck is a deck of its own, out of play:
 
 - At setup the five unique Cultists of the Cult of Umôrdhoth are shuffled into it, while The Masked Hunter is set aside (act 01123: "not all 6 are in the Cultist deck").
-- "Draw the top card of the Cultist deck" puts that enemy into play like a drawn enemy: it [spawns](../spawn-and-engagement.md) by its spawn instruction, else engaged with the drawer.
+- "Draw the top card of the Cultist deck" draws an encounter card (RR "Encounter Deck": encounter cards are any non-player cards of the scenario), so it resolves like any encounter draw: revelation and forced "when drawn" effects, peril, and an enemy [spawns](../spawn-and-engagement.md) by its spawn instruction, else engaged with the drawer, while any other card is discarded. A surge draws from the encounter deck ([surge](https://arkhamdb.com/rules#Surge)), and emptying the Cultist deck shuffles nothing back.
 - With the deck empty the act's action can't change the game state, so it can't be taken and its clues aren't spent (an ability can be initiated only if its effect could change the game state, [Abilities](https://arkhamdb.com/rules#Abilities)); the engine refuses the action as a whole, so nobody pays, though it still offers the action.
 
 ## The card beneath your location
 
 "Draw the facedown card beneath your location" (Augurs of Flame, Smoke and Mirrors act 1):
 
-- The card is turned face up and [spawns](../spawn-and-engagement.md) like a drawn enemy: by its spawn instruction, else engaged with the drawer; an aloof one stays unengaged at the location.
+- The card is turned face up and resolves like any encounter draw, as a card from the Cultist deck does: an enemy [spawns](../spawn-and-engagement.md) by its spawn instruction, else engaged with the drawer, and an aloof one stays unengaged at the location. Smoke and Mirrors deals only facedown cards beneath its locations, so the engine draws the top card there.
 - With no facedown card there the action can't change the game state, so it isn't taken and its clues aren't spent, as with an empty Cultist deck above.
 
 ## Discarding until a card turns up

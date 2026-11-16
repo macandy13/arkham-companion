@@ -639,6 +639,32 @@ describe('DrawCard', () => {
     expect(idsIn(after, encounterDiscard)).toEqual(['cultist_trap']);
   });
 
+  it('draws the top encounter card for a surging card from the Cultist deck', () => {
+    const surgingCultist = blankTreachery('surging_cultist', { keywords: [{ name: 'surge' }] });
+    const { context, state } = aliceInHall
+      .withCard(instanceId('encounter_foe'), foeCard, encounterDeck)
+      .withCard(instanceId('surging_cultist'), surgingCultist, cultistDeck)
+      .start();
+
+    const after = stateAfter(context, state, drawCultist);
+
+    expect(after.cards[instanceId('encounter_foe')]?.zone).toEqual(engagedWith(alice));
+  });
+
+  it('draws from the encounter deck as a plain encounter draw, refilled from the discard', () => {
+    const { context, state } = aliceInHall
+      .withCard(instanceId('discarded_foe'), foeCard, encounterDiscard)
+      .start();
+
+    const after = stateAfter(context, state, {
+      type: 'DrawCard',
+      investigatorId: alice,
+      from: encounterDeck,
+    });
+
+    expect(after.cards[instanceId('discarded_foe')]?.zone).toEqual(engagedWith(alice));
+  });
+
   it('rejects a draw from an empty deck', () => {
     const { context, state } = aliceInHall.start();
 
