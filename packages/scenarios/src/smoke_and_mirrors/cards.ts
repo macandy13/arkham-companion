@@ -48,7 +48,6 @@ import {
   searchDeck,
   self,
   SKILL_NAMES,
-  self,
   skillTest,
   skillTestOfEither,
   statOf,
