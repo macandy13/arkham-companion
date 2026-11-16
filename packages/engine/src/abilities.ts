@@ -85,9 +85,11 @@ import type {
 } from './state';
 import {
   attachedTo,
+  beneath,
   encounterDeck,
   encounterDiscard,
   playAreaOf,
+  scenarioDeck,
   setAside,
   threatAreaOf,
   type ScenarioDeck,
@@ -434,8 +436,7 @@ export type AbilityCommand =
           | 'ShuffleEncounterDiscard'
           | 'ShuffleEncounterDeck'
           | 'DrawEncounter'
-          | 'DrawFromScenarioDeck'
-          | 'DrawBeneath'
+          | 'DrawCard'
           | 'DefeatInvestigator'
           | 'Resign'
           | 'EndScenario';
@@ -2084,14 +2085,17 @@ export function drawFromScenarioDeck(
   deck: ScenarioDeck,
   who: RelativeInvestigator = { ref: 'windowInvestigator' },
 ): AbilityEffect {
-  return { type: 'DrawFromScenarioDeck', investigatorId: who, deck };
+  return { type: 'DrawCard', investigatorId: who, from: scenarioDeck(deck) };
 }
 
-/** "Draw the facedown card beneath your location" (Augurs of Flame): `DrawBeneath`. */
+/**
+ * "Draw the facedown card beneath your location" (Augurs of Flame): Smoke and Mirrors deals only
+ * facedown cards beneath its locations, so the top one is the facedown card.
+ */
 export function drawBeneathYourLocation(
   who: RelativeInvestigator = { ref: 'windowInvestigator' },
 ): AbilityEffect {
-  return { type: 'DrawBeneath', investigatorId: who };
+  return { type: 'DrawCard', investigatorId: who, from: beneath(yourLocation()) };
 }
 
 /** "Draw N cards" (Your House, Southside's Historical Society). */

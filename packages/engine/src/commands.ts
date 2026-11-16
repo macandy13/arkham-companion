@@ -34,7 +34,7 @@ import type {
   TokenKind,
   WoundKind,
 } from './state';
-import type { ScenarioDeck, Zone } from './zone';
+import type { Zone } from './zone';
 
 /** Commands are intents from the UI; `handle` validates them and produces events. */
 export type Command =
@@ -75,8 +75,7 @@ export type Command =
   | ShuffleEncounterDeck
   | EngageReadyEnemies
   | SpawnEnemy
-  | DrawFromScenarioDeck
-  | DrawBeneath
+  | DrawCard
   | EngageEnemy
   | DisengageEnemy
   | DamageEnemy
@@ -767,27 +766,19 @@ export interface ShuffleEncounterDeck {
 }
 
 /**
- * "Draw the top card of the Cultist deck": `investigatorId` draws the top card of a scenario deck
- * (`ScenarioDeckStep`), an enemy, which spawns like `SpawnEnemy` with them as the drawing
- * investigator. Rejected when the deck is empty (`scenarioDeckEmpty`). Produces `SpawnEnemy`'s
- * events.
+ * `investigatorId` draws the top card of `from`, a deck or a pile of cards out of play: "Draw the
+ * top card of the Cultist deck" (`scenarioDeck('cultist')`), "draw the facedown card beneath your
+ * location" (`beneath(yourLocation())`, Augurs of Flame). The card resolves as an encounter draw
+ * does (`DrawEncounter`): revealed, its revelation and surge resolved, an enemy spawning with the
+ * drawer as the fallback location. From the encounter deck it is `DrawEncounter`'s plain draw, the
+ * discard shuffled back in first when the deck is empty. Rejected when `from` holds no card
+ * (`nothingToDraw`), so an action that would draw nothing can't be taken. Produces
+ * `DrawEncounter`'s events.
  */
-export interface DrawFromScenarioDeck {
-  type: 'DrawFromScenarioDeck';
+export interface DrawCard {
+  type: 'DrawCard';
   investigatorId: InvestigatorId;
-  deck: ScenarioDeck;
-}
-
-/**
- * "Draw the facedown card beneath your location" (Augurs of Flame): `investigatorId` draws the
- * facedown card beneath the location they are at, turns it face up, and it spawns like
- * `SpawnEnemy` with them as the drawing investigator (Smoke and Mirrors deals only enemies there).
- * Rejected when no facedown card is beneath it (`nothingBeneath`). Produces `CardFlipped`, then
- * `SpawnEnemy`'s events.
- */
-export interface DrawBeneath {
-  type: 'DrawBeneath';
-  investigatorId: InvestigatorId;
+  from: Zone;
 }
 
 /**

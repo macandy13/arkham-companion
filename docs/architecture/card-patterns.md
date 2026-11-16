@@ -38,7 +38,7 @@ An objective is an ability of its act or agenda, with a window that opens only w
 - "If there are 6 unique Cultist enemies in the victory display, advance":
   `whenVictoryDisplayHolds({ trait: trait('Cultist'), unique: true }, 6, advanceAct())`.
 - "If there are 6 Elite enemies beneath this act and/or in the victory display, advance" (Augurs of Flame):
-  `whenVictoryDisplayHolds(eachInZone([{ kind: 'victoryDisplay' }, { kind: 'beneath', hostId: { ref: 'self' } }], { trait: trait('Elite') }), 6, advanceAct())`; its action that "draws" the facedown card beneath your location is `drawBeneathYourLocation()`.
+  `whenVictoryDisplayHolds(eachInZone([victoryDisplay, beneath(self())], { trait: trait('Elite') }), 6, advanceAct())`; its action that draws the facedown card beneath your location is `drawBeneathYourLocation()`, a `DrawCard` from `beneath(yourLocation())`.
 - An act that advances on the clues on it (Disrupting the Ritual): `whenTokensOnSelf('clue', perInvestigator(2), advanceAct())`, and its action places them with `placeCluesOnSelf(1)`.
 - A location topping up its clues at round end (Ritual Site): `atEndOfRound(placeCluesOnSelfUpTo(perInvestigator(2)))`.
 - Doom per enemy (They're Getting Out!): `forEachEnemy({ trait: trait('Ghoul'), at: [onlyCopy(codes.hallway), onlyCopy(codes.parlor)] }, atEndOfRound(placeDoomOnSelf(1)))`.
@@ -86,7 +86,7 @@ A cost is `CardAction.cost`, paid before the effects.
   - `atEndOfPhase('investigation', takeDamage(1, eachInvestigator({ at: thisLocation() })), dealDamageTo(eachEnemy({ at: thisLocation(), withoutTrait: trait('Elite') }), 1))`; the direct damage stays on each investigator, and the players place each ally's own 1 damage by hand.
 - Mysterious Chanting's search: `ifThereAre(eachEnemy({ trait: trait('Cultist') }), { max: 0 }, whenRevealed(searchAndDraw({ trait: trait('Cultist'), typeCode: 'enemy' })))`, then `whenRevealed(shuffleEncounterDeck())` as its own ability.
 - A search for several copies (Searching for Dr. Armitage, "the lead investigator must search … for 1 [per_investigator] copies of Fire! and draw them"): `whenAdvanced(searchAndDrawCopies(codes.fire, perInvestigator(1), lead()), shuffleEncounterDeck())`. The copies are found at once (`eachInZone(…, { code, first })`) and each is drawn by its ID (`DrawEncounter.cardId`), so one whose revelation is cancelled isn't found again.
-- The Midnight Masks' Cultist deck: a `scenarioDeck` setup step, drawn by the act's action with `drawFromScenarioDeck('cultist')`.
+- The Midnight Masks' Cultist deck: a `scenarioDeck` setup step, drawn by the act's action with `drawFromScenarioDeck('cultist')`, a `DrawCard` that resolves the card as an encounter draw.
 - Rise of the Ghouls: `whenAdvanced(shuffleEncounterDiscard(), leadDrawsDiscardingUntil({ trait: trait('Ghoul'), typeCode: 'enemy' }))`.
 - "Place it on the bottom of the Tekeli-li deck", "on top of the encounter deck": `move(self(), deck, 'bottom' | 'top')`, a `MoveCard` to the end of the deck; the revealed card then isn't discarded, as it left `resolving`.
 - "Discard the top 3 cards of the encounter deck" (Out of This World): `discardEncounterTop(3)`, a `discard` for each of `eachInZone(encounterDeck, { top: 3 })`; one per point failed by (The Witching Hour's skull token): `forEachPoint(discardEncounterTop(1))`.

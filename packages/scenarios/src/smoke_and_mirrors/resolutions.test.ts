@@ -67,7 +67,7 @@ function beneathTheAct(state: GameState, cards: readonly InstanceId[]): Command[
         to: zone.hostId,
         ignoreConnections: true,
       },
-      { type: 'DrawBeneath', investigatorId: tankSeat },
+      { type: 'DrawCard', investigatorId: tankSeat, from: zone },
       { type: 'MoveCard', cardId, to: { kind: 'beneath', hostId: actOf(state) } },
     ];
   });

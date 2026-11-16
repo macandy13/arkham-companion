@@ -43,13 +43,13 @@ export type Zone =
    * from "beneath a location". It holds the facedown suspects
    * Smoke and Mirrors deals beneath its locations, the interviewed ones placed beneath the act.
    * `CardInstance.faceUp` says whether the players may look at it; the act's action draws a
-   * facedown one (`DrawBeneath`).
+   * facedown one (`DrawCard` from `beneath(location)`).
    */
   | { kind: 'beneath'; hostId: InstanceId };
 
 /**
  * The scenario decks a setup can build (`ScenarioDeckStep`), one name per deck a scenario
- * prints. Cards are drawn from the top with `DrawFromScenarioDeck`.
+ * prints. Cards are drawn from the top with `DrawCard`.
  */
 export type ScenarioDeck = 'cultist';
 
@@ -140,6 +140,13 @@ export function playAreaOf<I extends InvestigatorId | RelativeInvestigator>(
   investigatorId: I,
 ): { kind: 'playArea'; investigatorId: I } {
   return { kind: 'playArea', investigatorId };
+}
+
+/** The zone of a card beneath another card, out of play (`beneath(yourLocation())` in card data). */
+export function beneath<H extends InstanceId | RelativeCard>(
+  hostId: H,
+): { kind: 'beneath'; hostId: H } {
+  return { kind: 'beneath', hostId };
 }
 
 /** The zone of a card attached to another card (a location, an enemy, an agenda, …). */
