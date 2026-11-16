@@ -214,3 +214,44 @@ test('draw a weakness enemy from the deck', async ({ page }) => {
     ).toBeVisible();
   });
 });
+
+// Journey: a card effect moves Roland Banks (Elusive, Shortcut) – from his whole card the players
+// pick the destination on the map, to a connected room and then to one that isn't, with no action
+// spent.
+test('move an investigator by a card effect to any location', async ({ page }) => {
+  const roland = page.getByRole('region', { name: 'Roland Banks' });
+  const house = page.getByRole('figure', { name: 'House' });
+
+  /** Opens Roland's whole card and starts a move by card effect. */
+  const moveRolandByCard = async () => {
+    await roland.getByRole('button', { name: "Show Roland Banks's card" }).click();
+    await page.getByRole('button', { name: 'Move by card effect' }).click();
+    await expect(page.getByRole('status', { name: 'Choose where to move' })).toHaveText(
+      /Tap the location Roland Banks moves to/,
+    );
+  };
+
+  await test.step('Resume a game with the house open, Roland in the Hallway', async () => {
+    await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
+    await expect(
+      house.getByRole('group', { name: 'Hallway' }).getByRole('img', { name: 'Roland Banks' }),
+    ).toBeVisible();
+  });
+
+  await test.step('Move him by card effect to the Attic', async () => {
+    await moveRolandByCard();
+    await house.getByRole('group', { name: 'Attic' }).click();
+    await expect(
+      house.getByRole('group', { name: 'Attic' }).getByRole('img', { name: 'Roland Banks' }),
+    ).toBeVisible();
+  });
+
+  await test.step('Move him on to the Cellar, which the Attic does not connect to', async () => {
+    await moveRolandByCard();
+    await house.getByRole('group', { name: 'Cellar' }).click();
+    await expect(
+      house.getByRole('group', { name: 'Cellar' }).getByRole('img', { name: 'Roland Banks' }),
+    ).toBeVisible();
+    await expect(page.getByRole('status', { name: 'Choose where to move' })).toHaveCount(0);
+  });
+});

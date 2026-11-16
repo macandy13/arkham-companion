@@ -235,6 +235,12 @@ export interface GameActions {
    */
   drawWeakness(investigator: InvestigatorId, card: CardCode): Promise<void>;
   /**
+   * A card effect moves `investigator`, whoever's turn it is, to `location`, connected or not
+   * (Elusive, Shortcut): `MoveInvestigator` with `ignoreConnections`, taking no action and
+   * provoking no attacks of opportunity; ready enemies there engage as on any move.
+   */
+  moveByCard(investigator: InvestigatorId, location: InstanceId): Promise<void>;
+  /**
    * `delta` more (or, negative, fewer) of `token` on `card` in play (a location, an enemy): one tap
    * on a location's stepper, or a token dragged from or to the token pool. Doom added is placed by
    * rule (`MoveTokens` from the pool), so effects that count placed doom see it; the rest are
@@ -440,6 +446,15 @@ export function gameActions(
     drawWeakness: (investigator, card) =>
       play((table) =>
         table.play({ type: 'DrawWeakness', investigatorId: investigator, code: card }),
+      ),
+    moveByCard: (investigator, location) =>
+      play((table) =>
+        table.play({
+          type: 'MoveInvestigator',
+          investigatorId: investigator,
+          to: location,
+          ignoreConnections: true,
+        }),
       ),
     adjustTokens: (card, token, delta) =>
       play((table) =>

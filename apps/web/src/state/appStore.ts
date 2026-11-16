@@ -17,6 +17,7 @@ import type {
   GameStore,
   GameSummary,
   InterludeDefinition,
+  InvestigatorId,
   InvestigatorSeat,
   LoggedEvent,
   ProposedChange,
@@ -199,6 +200,11 @@ export interface OpenGame {
    */
   spawning?: EncounterCardView;
   /**
+   * The investigator a card effect moves, whose destination the players are choosing on the map
+   * (`AppState.startMoveByCard`), until they tap one or cancel.
+   */
+  movingByCard?: InvestigatorId;
+  /**
    * The resolution the ended game proposes, until it is written into the campaign log. Absent
    * while the game goes on, once its campaign has moved past its scenario, and for a scenario
    * without resolutions.
@@ -324,6 +330,10 @@ export interface AppState {
   startSpawn(enemy: EncounterCardView): void;
   /** Ends choosing a spawn location, after a tap on the map or a cancel. */
   cancelSpawn(): void;
+  /** Lets the players choose on the map where a card effect moves `investigator` (`current.movingByCard`). */
+  startMoveByCard(investigator: InvestigatorId): void;
+  /** Ends choosing where a card effect moves an investigator, after a tap on the map or a cancel. */
+  cancelMoveByCard(): void;
   /** Renames a saved game and reloads the list. */
   renameGame(gameId: GameId, title: string): Promise<void>;
   /**
@@ -779,6 +789,14 @@ export function createAppStore(
       cancelSpawn() {
         const open = get().current;
         if (open?.spawning) set({ current: { ...open, spawning: undefined } });
+      },
+      startMoveByCard(investigator) {
+        const open = get().current;
+        if (open) set({ current: { ...open, movingByCard: investigator } });
+      },
+      cancelMoveByCard() {
+        const open = get().current;
+        if (open?.movingByCard) set({ current: { ...open, movingByCard: undefined } });
       },
       async setReliance(reliance) {
         const current = get().current;

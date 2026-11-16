@@ -245,7 +245,6 @@ export const appTexts = {
     laterCards: 'Spätere Karten',
     spawnLabel: 'Erscheinungsort wählen',
     spawnPrompt: 'Tippe auf den Ort, an dem {{card}} erscheint',
-    cancelSpawn: 'Abbrechen',
     victory_one: '{{count}} Siegpunkt',
     victory_other: '{{count}} Siegpunkte',
   },
@@ -582,6 +581,11 @@ export const appTexts = {
     lower: 'Absenken, um ans Spielfeld zu kommen',
     raise: 'Dialog wieder anheben',
     waiting: 'Als Nächstes',
+  },
+  moveByCard: {
+    start: 'Durch Karteneffekt bewegen',
+    label: 'Ziel der Bewegung wählen',
+    prompt: 'Tippe auf den Ort, zu dem {{investigator}} sich bewegt',
   },
   weakness: {
     draw: 'Schwäche ziehen',
