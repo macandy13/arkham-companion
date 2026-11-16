@@ -60,7 +60,7 @@ const context = table.context();
 /** Played from the empty state, so undo can walk back past the start too. */
 const start = table.startCommand();
 
-const draw: Command = { type: 'DrawEncounter', investigatorId: alice };
+const draw: Command = { type: 'DrawCard', investigatorId: alice, from: encounterDeck };
 const shuffleDiscard: Command = { type: 'ShuffleEncounterDiscard' };
 const addClue: Command = {
   type: 'ManualAdjust',

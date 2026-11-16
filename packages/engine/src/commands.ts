@@ -70,7 +70,6 @@ export type Command =
   | BecomeActAndAgenda
   | AdvanceAct
   | EndScenario
-  | DrawEncounter
   | ShuffleEncounterDiscard
   | ShuffleEncounterDeck
   | EngageReadyEnemies
@@ -518,9 +517,9 @@ export interface AttachPlayerCard {
 /**
  * `investigatorId` draws the weakness `code` (an enemy or a treachery in the card DB) from their
  * deck: Mob Enforcer, The Thing That Follows. Rules Reference, "Weakness": it resolves as if it
- * were an encounter card, so it is drawn the way `DrawEncounter` draws one (revelation, peril,
+ * were an encounter card, so it is drawn the way `DrawCard` draws one (revelation, peril,
  * surge; an enemy spawns engaged with them unless it has a spawn instruction). Produces
- * `WeaknessDrawn`, a new card they own (`CardInstance.owner`), then `DrawEncounter`'s events.
+ * `WeaknessDrawn`, a new card they own (`CardInstance.owner`), then `DrawCard`'s events.
  * Rejects a card of another type (`notAWeaknessToDraw`): an asset or event weakness stays in the
  * players' hands, which the app doesn't track.
  */
@@ -677,56 +676,7 @@ export interface EndScenario {
   resolution: ResolutionId;
 }
 
-/**
- * An investigator draws the top card of the encounter deck (mythos phase or a
- * card effect), or with `match` the first card that matches (see below). The
- * card is revealed and then: an enemy is placed unengaged at
- * the investigator's location (engagement, aloof and spawn instructions are
- * `SpawnEnemy`, M1.8); any other card goes to the discard unless its
- * revelation put it somewhere else (`putIntoThreatArea`). As soon as the deck is empty
- * the discard is shuffled back into it; a card with surge makes the
- * investigator draw again. Produces, per card drawn, `EncounterCardDrawn`,
- * `CardFlipped` and `CardMoved`, followed by `CardMoved`s and a `DeckShuffled`
- * when that card emptied the deck and the discard was shuffled back.
- */
-export interface DrawEncounter {
-  type: 'DrawEncounter';
-  investigatorId: InvestigatorId;
-  /**
-   * Where a `match` is looked for (default `'deck'`); without `match` the
-   * draw always takes the top of the deck and `from` is ignored.
-   */
-  from?: EncounterSource;
-  /**
-   * Draws the first card that matches instead of the top card: deck top-down,
-   * then discard top-down (the discard's top is its first entry). Every given
-   * field has to match; the card is then revealed and placed exactly like a
-   * top-of-deck draw, so surge and the empty-deck reshuffle apply as well.
-   * Draws and discards nothing when no card matches: the effect resolves as
-   * far as it can. With `discardSkipped` and a match only in the discard, the
-   * whole deck is discarded and the discard shuffled back in before the
-   * search goes on, as when the deck runs out mid-discard (Infested Pipes).
-   */
-  match?: EncounterMatch;
-  /**
-   * With `match` in the deck: first discards every card above the match
-   * ("discard cards from the top of the encounter deck until a Ghoul enemy is
-   * discarded. The lead investigator draws that enemy"). Without it the
-   * matching card is taken out of the deck and the rest stays where it is.
-   */
-  discardSkipped?: boolean;
-  /**
-   * Draws this card instead of the top card or a `match`: one copy a search found
-   * (`searchAndDrawCopies`), drawn from the encounter deck or discard pile; nothing when it has
-   * left both since.
-   */
-  cardId?: InstanceId;
-}
-
-/** The part of the encounter cards a `DrawEncounter` with `match` looks through. */
-export type EncounterSource = 'deck' | 'discard' | 'deckOrDiscard';
-
-/** What a card has to be to be drawn by a matched `DrawEncounter`; at least one field. */
+/** What a card has to be to be drawn by a `DrawCard` with `match`; at least one field. */
 export interface EncounterMatch {
   /** Card name as in the `CardDb`, compared exactly. */
   name?: string;
@@ -766,20 +716,41 @@ export interface ShuffleEncounterDeck {
 }
 
 /**
- * `investigatorId` draws the top card of `from`, a deck or a pile of cards out of play: "Draw the
- * top card of the Cultist deck" (`scenarioDeck('cultist')`), "draw the facedown card beneath your
- * location" (`beneath(yourLocation())`, Augurs of Flame). The card resolves as an encounter draw
- * does (`DrawEncounter`): revealed, its revelation and surge resolved, an enemy spawning with the
- * drawer as the fallback location. From the encounter deck it is `DrawEncounter`'s plain draw, the
- * discard shuffled back in first when the deck is empty. Rejected when `from` holds no card
- * (`nothingToDraw`), so an action that would draw nothing can't be taken. Produces
- * `DrawEncounter`'s events.
+ * `investigatorId` draws a card: the top card of the encounter deck (the mythos draw, surge, "draw
+ * the top card of the encounter deck"), of another deck ("the top card of the Cultist deck",
+ * `scenarioDeck('cultist')`) or of a pile out of play ("the facedown card beneath your location",
+ * `beneath(yourLocation())`), or with `pick` a card found in `from`'s zones. The card is revealed
+ * into the `resolving` zone and resolves as an encounter card: its revelation first, then an enemy
+ * spawns (engagement, aloof and spawn instructions are `SpawnEnemy`) and any other card goes to
+ * the discard unless its revelation put it somewhere else (`putIntoThreatArea`); a card with surge
+ * makes the investigator draw again from the encounter deck. As soon as the encounter deck is
+ * empty its discard is shuffled back in. Rejected when there is no top card to draw
+ * (`encounterDeckEmpty`, `nothingToDraw`), so an action that would draw nothing can't be taken; a
+ * `pick` that finds nothing draws nothing, as far as the effect can go. Produces, per card drawn,
+ * `EncounterCardDrawn`, `CardFlipped` and `CardMoved`, followed by `CardMoved`s and a
+ * `DeckShuffled` when that card emptied the encounter deck and the discard was shuffled back.
  */
 export interface DrawCard {
   type: 'DrawCard';
   investigatorId: InvestigatorId;
-  from: Zone;
+  /** The zone drawn from, or the zones a `pick` looks through in order (deck before discard). */
+  from: Zone | readonly Zone[];
+  /** A card other than the top card of the (first) zone; see `DrawPick`. */
+  pick?: DrawPick;
 }
+
+/**
+ * Which card a `DrawCard` draws instead of the top one:
+ * - `match`: the first card that fits, each zone top-down. With `discardSkipped`, a match in the
+ *   encounter deck first discards every card above it ("discard cards from the top of the
+ *   encounter deck until a Ghoul enemy is discarded. The lead investigator draws that enemy");
+ *   with a match only in the discard, the whole deck is discarded and the discard shuffled back in
+ *   before the search goes on, as when the deck runs out mid-discard (Infested Pipes). Without
+ *   it the matching card is taken out and the rest stays where it is.
+ * - `card`: this card, one copy a search found (`searchAndDrawCopies`); nothing when it has left
+ *   `from`'s zones since.
+ */
+export type DrawPick = { match: EncounterMatch; discardSkipped?: true } | { card: InstanceId };
 
 /**
  * Puts an enemy that is not in play (encounter deck, set aside, …) into play.
@@ -788,7 +759,7 @@ export interface DrawCard {
  * `chooseLocation`, enemy stays put; no such location in play: discarded);
  * the location of `investigatorId` (the investigator who drew it), whom it
  * engages whatever its prey. Elsewhere it engages per `engageEvents`. Produces
- * `CardMoved`, then `EnemyEngaged` or `DecisionRequested` (prey tie). `DrawEncounter` resolves
+ * `CardMoved`, then `EnemyEngaged` or `DecisionRequested` (prey tie). `DrawCard` resolves
  * a drawn enemy the same way.
  */
 export interface SpawnEnemy {
@@ -1188,7 +1159,7 @@ export interface CheckDoomThreshold {
  * while a turn is in progress or an active investigator has not taken their
  * turn (the group ends every turn first, even one without actions). Produces
  * `PhaseChanged`, then per step `PhaseStepsChanged` and the events of the
- * step (`MoveTokens`, `CheckDoomThreshold`, `DrawEncounter`, `MoveHunters`,
+ * step (`MoveTokens`, `CheckDoomThreshold`, `DrawCard`, `MoveHunters`,
  * `ActionsReset`, `ReadyEnemy`, `AdjustInvestigator`, `RoundEnded`).
  */
 export interface NextPhase {

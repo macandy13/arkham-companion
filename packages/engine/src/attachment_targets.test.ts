@@ -43,7 +43,7 @@ const lockingDoor = blankTreachery('locking_door', {
 });
 const plainTreachery = blankTreachery('plain_treachery');
 
-const aliceDraws: Command = { type: 'DrawEncounter', investigatorId: alice };
+const aliceDraws: Command = { type: 'DrawCard', investigatorId: alice, from: encounterDeck };
 
 /**
  * Alice (the lead) and bob in the hall with `hallClues`, the study with `studyClues` (revealed

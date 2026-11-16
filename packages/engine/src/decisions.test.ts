@@ -6,6 +6,7 @@ import {
   blankLocation,
   checkInvariants,
   decisionId,
+  encounterDeck,
   engagedWith,
   execute,
   gainClues,
@@ -580,7 +581,7 @@ describe('pending decision invariants', () => {
   const blocked: Command[] = [
     placeDoomOn(hall, 1),
     { type: 'MoveHunters' },
-    { type: 'DrawEncounter', investigatorId: alice },
+    { type: 'DrawCard', investigatorId: alice, from: encounterDeck },
     gainResource,
     { type: 'RevealLocation', locationId: hall },
     { type: 'AdvanceAgenda' },

@@ -202,9 +202,10 @@ describe('Smoke and Mirrors card abilities', () => {
   const northside = instanceId('northside');
   /** Alice draws the encounter card named `card`. */
   const aliceDraws = (card: string): Command => ({
-    type: 'DrawEncounter',
+    type: 'DrawCard',
     investigatorId: alice,
-    match: { name: card },
+    from: encounterDeck,
+    pick: { match: { name: card } },
   });
 
   describe('Rogue Gangster', () => {

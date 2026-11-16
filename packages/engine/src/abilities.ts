@@ -435,7 +435,6 @@ export type AbilityCommand =
           | 'BecomeActAndAgenda'
           | 'ShuffleEncounterDiscard'
           | 'ShuffleEncounterDeck'
-          | 'DrawEncounter'
           | 'DrawCard'
           | 'DefeatInvestigator'
           | 'Resign'
@@ -2783,7 +2782,12 @@ export function drawDiscardingUntil(
   match: EncounterMatch,
   who: RelativeInvestigator = { ref: 'windowInvestigator' },
 ): AbilityEffect {
-  return { type: 'DrawEncounter', investigatorId: who, match, discardSkipped: true };
+  return {
+    type: 'DrawCard',
+    investigatorId: who,
+    from: encounterDeck,
+    pick: { match, discardSkipped: true },
+  };
 }
 
 /**
@@ -2869,20 +2873,20 @@ export function forEachInvestigator(ability: Ability): Ability {
 
 /**
  * "Draws the topmost copy of Fire! in the encounter discard pile": `who` draws the first card of
- * the discard, top down, that fits `match` (`DrawEncounter` from `discard`); nothing when none does.
+ * the discard, top down, that fits `match` (`DrawCard` from the discard); nothing when none does.
  */
 export function drawFromEncounterDiscard(
   match: EncounterMatch,
   who: RelativeInvestigator = { ref: 'windowInvestigator' },
 ): AbilityEffect {
-  return { type: 'DrawEncounter', investigatorId: who, from: 'discard', match };
+  return { type: 'DrawCard', investigatorId: who, from: encounterDiscard, pick: { match } };
 }
 
 /**
  * "The lead investigator must search the encounter deck and discard pile for 1 [per_investigator]
  * copies of Fire! and draw them" (Searching for Dr. Armitage): one search finds up to `copies`
- * cards with `code`, deck first, and `who` draws each of them in turn (`DrawEncounter` with
- * `cardId`), so a copy found once is drawn once even if its revelation sends it back to the
+ * cards with `code`, deck first, and `who` draws each of them in turn (`DrawCard` with a `card`
+ * pick), so a copy found once is drawn once even if its revelation sends it back to the
  * discard. "Shuffle the encounter deck" afterwards is a `shuffleEncounterDeck()` of its own,
  * which runs after the draws: the same as the rules' shuffle "upon completion of the search" while
  * the drawn cards draw nothing more from the deck (no surge). The lead would pick the copies; the
@@ -2894,27 +2898,25 @@ export function searchAndDrawCopies(
   who: RelativeInvestigator = { ref: 'windowInvestigator' },
 ): AbilityEffect {
   return {
-    type: 'DrawEncounter',
+    type: 'DrawCard',
     investigatorId: who,
-    cardId: eachInZone([encounterDeck, encounterDiscard], {
-      code,
-      first: copies,
-    }),
+    from: [encounterDeck, encounterDiscard],
+    pick: { card: eachInZone([encounterDeck, encounterDiscard], { code, first: copies }) },
   };
 }
 
 /**
  * "Search the encounter deck and discard pile for a [[Cultist]] enemy and
  * draw it": the investigator the window names draws the first card that
- * matches, deck first (`DrawEncounter` with `match`); nothing when none does.
+ * matches, deck first (`DrawCard` with `match`); nothing when none does.
  * The players would pick among the matches; the engine does not ask yet (#346).
  */
 export function searchAndDraw(match: EncounterMatch): AbilityEffect {
   return {
-    type: 'DrawEncounter',
-    investigatorId: { ref: 'windowInvestigator' },
-    from: 'deckOrDiscard',
-    match,
+    type: 'DrawCard',
+    investigatorId: you(),
+    from: [encounterDeck, encounterDiscard],
+    pick: { match },
   };
 }
 

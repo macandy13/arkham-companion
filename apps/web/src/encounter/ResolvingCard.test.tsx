@@ -4,6 +4,7 @@ import { afterEach, beforeAll, describe, expect, it } from 'vitest';
 import {
   blankLocation,
   blankTreachery,
+  encounterDeck,
   instanceId,
   investigatorId,
   newGame,
@@ -40,7 +41,7 @@ describe('ResolvingCard', () => {
           kind: 'encounterDeck',
         }),
     );
-    table.play({ type: 'DrawEncounter', investigatorId: alder });
+    table.play({ type: 'DrawCard', investigatorId: alder, from: encounterDeck });
     const resolving = table.board.resolving;
     if (!resolving) throw new Error('Crypt Chill is resolving');
 

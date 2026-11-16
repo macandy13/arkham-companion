@@ -138,7 +138,7 @@ describe('card effects that shuffle cards into the encounter deck', () => {
     const after = stateAfter(
       context,
       state,
-      { type: 'DrawEncounter', investigatorId: alice },
+      { type: 'DrawCard', investigatorId: alice, from: encounterDeck },
       resolveRevelation('omen'),
     );
 
@@ -162,7 +162,7 @@ describe('card effects that shuffle cards into the encounter deck', () => {
     const after = stateAfter(
       context,
       state,
-      { type: 'DrawEncounter', investigatorId: alice },
+      { type: 'DrawCard', investigatorId: alice, from: encounterDeck },
       resolveRevelation('omen'),
     );
 
@@ -184,8 +184,9 @@ describe('card effects that shuffle cards into the encounter deck', () => {
 
     const { state: after, events } = runFrom(context, state, [
       {
-        type: 'DrawEncounter',
+        type: 'DrawCard',
         investigatorId: alice,
+        from: encounterDeck,
       },
       resolveRevelation('omen'),
     ]);
@@ -217,7 +218,7 @@ describe('card effects that take set-aside copies', () => {
     return stateAfter(
       context,
       state,
-      { type: 'DrawEncounter', investigatorId: alice },
+      { type: 'DrawCard', investigatorId: alice, from: encounterDeck },
       resolveRevelation('omen'),
     );
   };
@@ -276,7 +277,7 @@ describe('a set-aside copy for each investigator', () => {
     const after = stateAfter(
       context,
       state,
-      { type: 'DrawEncounter', investigatorId: alice },
+      { type: 'DrawCard', investigatorId: alice, from: encounterDeck },
       resolveRevelation('omen'),
     );
 

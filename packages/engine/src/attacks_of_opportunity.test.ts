@@ -5,6 +5,7 @@ import {
   blankEnemy,
   blankLocation,
   decisionId,
+  encounterDeck,
   engagedWith,
   execute,
   instanceId,
@@ -488,7 +489,7 @@ describe('several steps waiting in the queue', () => {
   };
   const surgeFromEmptyDeck: QueuedStep = {
     kind: 'surge',
-    draw: { type: 'DrawEncounter', investigatorId: alice },
+    draw: { type: 'DrawCard', investigatorId: alice, from: encounterDeck },
   };
 
   const { context, state: started } = ghoulOnAlice.withTurnOf(alice).start();

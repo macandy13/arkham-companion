@@ -391,7 +391,7 @@ export type EventType = Event['type'];
  * resolved (`placeDrawnCard`); the reducer ignores this event. `peril` is carried here
  * because the app cannot hide information; the UI uses it to warn the players
  * not to discuss the card. `surge` tells that another draw follows. Produced
- * by `DrawEncounter`, and by `DrawWeakness` for a weakness from a player deck, which resolves as
+ * by `DrawCard`, and by `DrawWeakness` for a weakness from a player deck, which resolves as
  * if it were an encounter card.
  */
 export interface EncounterCardDrawn {
@@ -538,7 +538,7 @@ export interface SkillTestEnded {
  * Enemy `enemyId` is now engaged with the investigator (zone `engaged`),
  * from an unengaged position or another investigator. Drops decisions about
  * the enemy (the pending engagement question is answered). Produced by
- * `SpawnEnemy`, `DrawEncounter`, `EngageEnemy`, `ReadyEnemy`, `MoveHunters`
+ * `SpawnEnemy`, `DrawCard`, `EngageEnemy`, `ReadyEnemy`, `MoveHunters`
  * and `StartScenario` (enemies starting at a location with investigators).
  */
 export interface EnemyEngaged {

@@ -3,6 +3,7 @@ import {
   atLocation,
   blankEnemy,
   decisionId,
+  encounterDeck,
   encounterSetCode,
   engagedWith,
   execute,
@@ -141,9 +142,10 @@ describe('The Devourer Below card abilities', () => {
   const mainPath = instanceId('main_path');
   const nextPhase: Command = { type: 'NextPhase' };
   const aliceDraws = (card: string): Command => ({
-    type: 'DrawEncounter',
+    type: 'DrawCard',
     investigatorId: alice,
-    match: { name: card },
+    from: encounterDeck,
+    pick: { match: { name: card } },
   });
 
   describe('The Ritual Begins', () => {

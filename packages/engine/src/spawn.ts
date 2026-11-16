@@ -51,7 +51,7 @@ export function handleSpawnEnemy(ctx: EngineContext, state: GameState, cmd: Spaw
 
 /**
  * Puts the enemy into play at its spawn location and lets it engage. Shared by
- * `SpawnEnemy` and `DrawEncounter`, so a drawn enemy follows exactly the same
+ * `SpawnEnemy` and `DrawCard`, so a drawn enemy follows exactly the same
  * rules as one spawned by a card effect. See `spawnPlan` for where it appears.
  *
  * Rules Reference, "Spawn": with several qualifying locations the investigator

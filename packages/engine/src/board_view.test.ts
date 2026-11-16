@@ -3,6 +3,7 @@ import {
   advanceBySpendingClues,
   advanceAct,
   eachInZone,
+  encounterDeck,
   whenVictoryDisplayHolds,
   whenTokensOnSelf,
   resolutionId,
@@ -1318,7 +1319,7 @@ describe('the encounter card being resolved', () => {
   it('shows the drawn card, whom it was drawn for and its keywords while its revelation test waits', () => {
     const table = aliceDraws();
 
-    table.play({ type: 'DrawEncounter', investigatorId: alice });
+    table.play({ type: 'DrawCard', investigatorId: alice, from: encounterDeck });
 
     expect(table.board.resolving).toEqual({
       id: 'crypt_chill',
@@ -1333,7 +1334,7 @@ describe('the encounter card being resolved', () => {
   it('shows the drawn card beside the test its revelation asks', () => {
     const table = aliceDraws();
 
-    table.play({ type: 'DrawEncounter', investigatorId: alice });
+    table.play({ type: 'DrawCard', investigatorId: alice, from: encounterDeck });
     table.resolveRevelation(byName('crypt_chill'));
 
     expect(table.board.decisions).toEqual([
@@ -1360,7 +1361,7 @@ describe('the encounter card being resolved', () => {
         }),
     );
 
-    table.play({ type: 'DrawEncounter', investigatorId: alice });
+    table.play({ type: 'DrawCard', investigatorId: alice, from: encounterDeck });
     table.resolveRevelation(byName('false_lead'));
 
     expect(table.board.resolving?.keywords).toEqual([{ name: 'surge' }]);
@@ -1368,7 +1369,7 @@ describe('the encounter card being resolved', () => {
 
   it('shows nothing once the card has resolved', () => {
     const table = aliceDraws();
-    table.play({ type: 'DrawEncounter', investigatorId: alice });
+    table.play({ type: 'DrawCard', investigatorId: alice, from: encounterDeck });
     table.resolveRevelation(byName('crypt_chill'));
 
     table.answer(byName('crypt_chill'), 'pass');

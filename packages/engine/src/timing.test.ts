@@ -84,7 +84,7 @@ describe('a surge after its card`s revelation', () => {
     game
       .withCard(instanceId('next_card'), blankTreachery('next_card'), encounterDeck)
       .withCard(instanceId('bottom_card'), blankTreachery('bottom_card'), encounterDeck);
-  const draw: Command = { type: 'DrawEncounter', investigatorId: alice };
+  const draw: Command = { type: 'DrawCard', investigatorId: alice, from: encounterDeck };
 
   it('draws the surge card only once the revelation test is resolved', () => {
     const testingSurge = blankTreachery('testing_surge', {
@@ -381,7 +381,7 @@ describe('a surge with an empty encounter deck', () => {
   it('shuffles the discard pile back in and draws the surge card from it', () => {
     const table = PlayTable.start(game);
 
-    table.play({ type: 'DrawEncounter', investigatorId: alice });
+    table.play({ type: 'DrawCard', investigatorId: alice, from: encounterDeck });
     table.resolveRevelation(byName('clinging_treachery'));
 
     expect(table.board.enemy(byName('surging_rat')).engagedWith).toBe(alice);

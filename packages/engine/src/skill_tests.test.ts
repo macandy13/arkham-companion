@@ -9,6 +9,7 @@ import {
   eachEnemy,
   discardSelf,
   decisionId,
+  encounterDeck,
   engagedWith,
   fixed,
   handle,
@@ -634,7 +635,7 @@ describe('Fight and Evade against values a location changes', () => {
 
 describe('revelation test', () => {
   const chill = instanceId('chill');
-  const draw: Command = { type: 'DrawEncounter', investigatorId: alice };
+  const draw: Command = { type: 'DrawCard', investigatorId: alice, from: encounterDeck };
   /** The chilling treachery (willpower 4) on top of the encounter deck, a plain one below it. */
   const chillOnTop = aliceInStudy
     .withCard(chill, chillingTreachery, { kind: 'encounterDeck' })
@@ -739,7 +740,7 @@ describe('test of either of two skills', () => {
       ),
     ],
   });
-  const draw: Command = { type: 'DrawEncounter', investigatorId: alice };
+  const draw: Command = { type: 'DrawCard', investigatorId: alice, from: encounterDeck };
 
   it('lets the drawer pick the skill', () => {
     const { context, state } = aliceInStudy
@@ -789,7 +790,7 @@ describe('test of either of two skills', () => {
 
 describe('test difficulty from the table', () => {
   const drawnTreachery = instanceId('drawn_treachery');
-  const draw: Command = { type: 'DrawEncounter', investigatorId: alice };
+  const draw: Command = { type: 'DrawCard', investigatorId: alice, from: encounterDeck };
   /** Treacheries testing willpower (2) with +1 for each damage on the drawer, or -1 for each. */
   const perDamageTreachery = blankTreachery('per_damage_treachery', {
     abilities: [

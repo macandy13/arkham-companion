@@ -43,7 +43,7 @@ const omen = instanceId('omen');
 const ghoul = instanceId('ghoul');
 const alice = investigatorId('alice');
 const bob = investigatorId('bob');
-const aliceDraws: Command = { type: 'DrawEncounter', investigatorId: alice };
+const aliceDraws: Command = { type: 'DrawCard', investigatorId: alice, from: encounterDeck };
 
 describe('a condition on the enemies at your location', () => {
   /** "Revelation – If there is an enemy at your location, take 1 horror." */
@@ -333,7 +333,7 @@ describe('a condition on a stat of the lead investigator', () => {
       const after = stateAfter(
         context,
         state,
-        { type: 'DrawEncounter', investigatorId: bob },
+        { type: 'DrawCard', investigatorId: bob, from: encounterDeck },
         resolveRevelation('omen'),
       );
 

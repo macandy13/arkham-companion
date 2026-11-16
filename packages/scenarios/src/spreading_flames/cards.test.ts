@@ -156,9 +156,10 @@ describe('Spreading Flames card abilities', () => {
   const quad = instanceId('miskatonic_quad');
   /** Alice draws the encounter card named `card`. */
   const aliceDraws = (card: string): Command => ({
-    type: 'DrawEncounter',
+    type: 'DrawCard',
     investigatorId: alice,
-    match: { name: card },
+    from: encounterDeck,
+    pick: { match: { name: card } },
   });
 
   describe('Hellhound', () => {

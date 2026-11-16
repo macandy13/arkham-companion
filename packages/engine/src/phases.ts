@@ -14,7 +14,7 @@ import type {
 } from './events';
 import { isEnemyOnTable } from './enemies';
 import { activeInvestigator, playerOrder } from './investigators';
-import { canDrawEncounter } from './handle_encounter';
+import { canDrawEncounter, encounterDraw } from './handle_encounter';
 import { cardsOfType } from './lookup';
 import { replay } from './reducer';
 import { CommandRejected } from './rejection';
@@ -281,7 +281,7 @@ function stepCommands(
       return [{ type: 'CheckDoomThreshold' }];
     case 'drawEncounterCard':
       return canDrawEncounter(state, step.investigatorId)
-        ? [{ type: 'DrawEncounter', investigatorId: step.investigatorId }]
+        ? [encounterDraw(step.investigatorId)]
         : [];
     case 'huntersMove':
       return [{ type: 'MoveHunters' }];

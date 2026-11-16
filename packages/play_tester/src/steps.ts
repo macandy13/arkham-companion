@@ -2,6 +2,7 @@ import { assertNever } from '@arkham/util';
 import {
   byId,
   byName,
+  encounterDraw,
   type CardName,
   type ChaosToken,
   type Command,
@@ -312,7 +313,7 @@ function cardEffectCommand(table: PlayTable, investigator: CardName, effect: Car
         adjustment: { kind: 'actions', investigatorId, delta: effect.delta },
       };
     case 'drawEncounterCard':
-      return { type: 'DrawEncounter', investigatorId };
+      return encounterDraw(investigatorId);
     case 'moveTo':
       return {
         type: 'MoveInvestigator',

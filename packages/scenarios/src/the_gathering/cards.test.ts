@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   atLocation,
   cardCode,
+  encounterDeck,
   instanceId,
   investigatorId,
   newGame,
@@ -218,7 +219,7 @@ describe('The Gathering treacheries', () => {
   const alice = investigatorId('alice');
   const study = instanceId('study');
   const agenda1 = instanceId('whats_going_on');
-  const aliceDraws: Command = { type: 'DrawEncounter', investigatorId: alice };
+  const aliceDraws: Command = { type: 'DrawCard', investigatorId: alice, from: encounterDeck };
   /** Alice in the revealed Study, with agenda 1 (doom threshold 3) in play. */
   const aliceInTheStudy = newGame()
     .withLocation(study, cardOf('01111'), { revealed: true })

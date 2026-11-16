@@ -998,7 +998,7 @@ describe('trigger bus', () => {
   });
 
   describe('putting a revealed card back on a deck', () => {
-    const aliceDraws: Command = { type: 'DrawEncounter', investigatorId: alice };
+    const aliceDraws: Command = { type: 'DrawCard', investigatorId: alice, from: encounterDeck };
 
     it.each([
       { end: 'bottom', deck: [instanceId('other_card'), instanceId('returning')] },
@@ -1030,7 +1030,7 @@ describe('trigger bus', () => {
     const outOfThisWorldCard = blankTreachery('out_of_this_world', {
       abilities: [whenRevealed(discardEncounterTop(3))],
     });
-    const aliceDraws: Command = { type: 'DrawEncounter', investigatorId: alice };
+    const aliceDraws: Command = { type: 'DrawCard', investigatorId: alice, from: encounterDeck };
 
     /** Alice in the hall with Out of This World on top of the encounter deck, `others` below it. */
     const outOfThisWorldOn = (others: readonly string[]) =>
@@ -1100,7 +1100,7 @@ describe('trigger bus', () => {
       .withInvestigator(alice, { locationId: hall })
       .withCard(graspingHands, graspingHandsCard, { kind: 'encounterDeck' })
       .withCard(rottingRemains, rottingRemainsCard, { kind: 'encounterDeck' });
-    const aliceDraws: Command = { type: 'DrawEncounter', investigatorId: alice };
+    const aliceDraws: Command = { type: 'DrawCard', investigatorId: alice, from: encounterDeck };
 
     it.each([
       { case: 'a fail with no margin, the default 1,', answered: undefined, damage: 1 },
@@ -2316,7 +2316,7 @@ describe('a choice for the investigator who drew the card', () => {
     .withInvestigator(alice, { locationId: hall })
     .withInvestigator(bob, { locationId: hall })
     .withCard(offer, offerCard, { kind: 'encounterDeck' });
-  const bobDraws: Command = { type: 'DrawEncounter', investigatorId: bob };
+  const bobDraws: Command = { type: 'DrawCard', investigatorId: bob, from: encounterDeck };
 
   it('asks the drawer, not the lead', () => {
     const { context, state: started } = offerTable.start();
@@ -2374,7 +2374,7 @@ describe('a choice without the options that cannot be resolved', () => {
         .start();
 
       const { state } = runFrom(context, started, [
-        { type: 'DrawEncounter', investigatorId: alice },
+        { type: 'DrawCard', investigatorId: alice, from: encounterDeck },
         resolveRevelation('shadow'),
       ]);
 
@@ -2415,7 +2415,7 @@ describe('a choice without the options that cannot be resolved', () => {
     const state = stateAfter(
       context,
       started,
-      { type: 'DrawEncounter', investigatorId: alice },
+      { type: 'DrawCard', investigatorId: alice, from: encounterDeck },
       resolveRevelation('drained'),
     );
 
@@ -2432,7 +2432,7 @@ describe('a choice without the options that cannot be resolved', () => {
     const asked = stateAfter(
       context,
       started,
-      { type: 'DrawEncounter', investigatorId: alice },
+      { type: 'DrawCard', investigatorId: alice, from: encounterDeck },
       resolveRevelation('shadow'),
     );
 
@@ -2517,7 +2517,7 @@ describe('doom on the nearest Cultist enemy, or a search for one', () => {
     .withConnection(cellar, attic)
     .withInvestigator(alice, { locationId: hall })
     .withCard(chanting, chantingCard, { kind: 'encounterDeck' });
-  const aliceDraws: Command = { type: 'DrawEncounter', investigatorId: alice };
+  const aliceDraws: Command = { type: 'DrawCard', investigatorId: alice, from: encounterDeck };
 
   it('places 2 doom on the cultist in the cellar, not on the one in the attic or the nearer monster', () => {
     const { context, state } = houseTable
@@ -2700,7 +2700,7 @@ describe('each unengaged Ghoul enemy moving towards a location', () => {
     const after = stateAfter(
       context,
       state,
-      { type: 'DrawEncounter', investigatorId: alice },
+      { type: 'DrawCard', investigatorId: alice, from: encounterDeck },
       resolveRevelation('call'),
     );
 
@@ -2736,7 +2736,7 @@ describe('an effect repeated for each Ghoul enemy in the Hall or Parlor', () => 
     .withConnection(hall, parlor)
     .withInvestigator(alice, { locationId: hall })
     .withCard(omen, omenCard, { kind: 'encounterDeck' });
-  const aliceDraws: Command = { type: 'DrawEncounter', investigatorId: alice };
+  const aliceDraws: Command = { type: 'DrawCard', investigatorId: alice, from: encounterDeck };
 
   it('places 2 doom for the ghoul engaged with alice in the hall and the one in the parlor', () => {
     const { context, state } = house
@@ -3080,7 +3080,7 @@ describe("a card test's outcomes, resolved after the answer", () => {
     .withLocation(hall, blankLocation('hall'), { revealed: true })
     .withInvestigator(alice, { locationId: hall })
     .withInvestigator(bob, { locationId: hall });
-  const aliceDraws: Command = { type: 'DrawEncounter', investigatorId: alice };
+  const aliceDraws: Command = { type: 'DrawCard', investigatorId: alice, from: encounterDeck };
 
   it('accepts the fail when its first horror defeats alice, and still gives bob 1 horror', () => {
     const { context, state } = newGame()
@@ -3139,7 +3139,7 @@ describe("disengaging and moving after a card's test", () => {
   const centralCard = (code: string) => blankLocation(code, { traits: [trait('Central')] });
   const monsterCard = blankEnemy('monster', { traits: [trait('Monster')] });
   const nightgauntCard = blankEnemy('nightgaunt', { traits: [trait('Nightgaunt')] });
-  const aliceDraws: Command = { type: 'DrawEncounter', investigatorId: alice };
+  const aliceDraws: Command = { type: 'DrawCard', investigatorId: alice, from: encounterDeck };
 
   it('leaves the monster in the hall after the answer, and the nightgaunt moves with alice', () => {
     const { context, state } = newGame()
@@ -3284,7 +3284,7 @@ describe("disengaging and moving after a card's test", () => {
 describe('a card that gains surge without clues', () => {
   const falseTrail = instanceId('false_trail');
   const nextCard = instanceId('next_card');
-  const aliceDraws: Command = { type: 'DrawEncounter', investigatorId: alice };
+  const aliceDraws: Command = { type: 'DrawCard', investigatorId: alice, from: encounterDeck };
   /** "It gains surge", and nothing else. */
   const gainerAbilities = { abilities: [whenRevealed(gainSurge())] };
   /** "If you have no clues, it gains surge. If you have 1 or more clues, test intellect (4)." */
