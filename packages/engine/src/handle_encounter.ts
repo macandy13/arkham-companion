@@ -1,8 +1,7 @@
 import { cardStats, type CardStats, type EngineContext } from './cards';
 import type {
-  DrawBeneath,
+  DrawCard,
   DrawEncounter,
-  DrawFromScenarioDeck,
   DrawWeakness,
   EncounterMatch,
   EncounterSource,
@@ -30,7 +29,7 @@ import { replay } from './reducer';
 import { CommandRejected } from './rejection';
 import { shuffle } from './rng';
 import type { CardInstance, Decision, GameState, Investigator } from './state';
-import { encounterDeck, encounterDiscard, resolvingZone, scenarioDeck, type Zone } from './zone';
+import { encounterDeck, encounterDiscard, resolvingZone, type Zone } from './zone';
 
 /**
  * `DrawEncounter`: draws one card into the `resolving` zone and turns it face
@@ -223,36 +222,15 @@ function cardsAbove(state: GameState, cardId: InstanceId): readonly InstanceId[]
   return index < 0 ? [] : deck.slice(0, index);
 }
 
-/** `DrawFromScenarioDeck`: the deck's top card spawns, with the drawer as the fallback location. */
-export function handleDrawFromScenarioDeck(
-  ctx: EngineContext,
-  state: GameState,
-  cmd: DrawFromScenarioDeck,
-): Event[] {
+/**
+ * `DrawCard`: the top card of the zone is drawn like an encounter card (`revealDrawn`), so it is
+ * placed, and draws again for surge, as `DrawEncounter`'s card is.
+ */
+export function handleDrawCard(ctx: EngineContext, state: GameState, cmd: DrawCard): Event[] {
   const investigator = activeInvestigator(state, cmd.investigatorId);
-  const [top] = cardsInZone(state, scenarioDeck(cmd.deck));
-  if (top === undefined) throw new CommandRejected({ code: 'scenarioDeckEmpty', deck: cmd.deck });
-  return spawnEvents(ctx, state, top, { investigatorId: investigator.id });
-}
-
-/** `DrawBeneath`: the facedown card beneath the investigator's location, turned up and spawned. */
-export function handleDrawBeneath(ctx: EngineContext, state: GameState, cmd: DrawBeneath): Event[] {
-  const investigator = activeInvestigator(state, cmd.investigatorId);
-  const { locationId } = investigator;
-  if (locationId === undefined)
-    throw new CommandRejected({
-      code: 'investigatorHasNoLocation',
-      investigatorId: investigator.id,
-    });
-  const facedown = cardsInZone(state, { kind: 'beneath', hostId: locationId }).find(
-    (id) => !requireCard(state.cards, id).faceUp,
-  );
-  if (facedown === undefined) throw new CommandRejected({ code: 'nothingBeneath', locationId });
-  const flipped: CardFlipped = { type: 'CardFlipped', cardId: facedown, faceUp: true };
-  return [
-    flipped,
-    ...spawnEvents(ctx, replay([flipped], state), facedown, { investigatorId: investigator.id }),
-  ];
+  const [top] = cardsInZone(state, cmd.from);
+  if (top === undefined) throw new CommandRejected({ code: 'nothingToDraw', zone: cmd.from });
+  return revealDrawn(ctx, state, investigator, top);
 }
 
 /** `ShuffleEncounterDeck`: the deck in a new order; an empty deck stays as it is. */

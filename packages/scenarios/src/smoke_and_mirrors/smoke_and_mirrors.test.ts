@@ -243,7 +243,7 @@ describe('Smoke and Mirrors skull and elder thing tokens', () => {
     const [suspect] = idsBeneath(state, northside);
     return [
       { type: 'MoveInvestigator', investigatorId: tank, to: northside, ignoreConnections: true },
-      { type: 'DrawBeneath', investigatorId: tank },
+      { type: 'DrawCard', investigatorId: tank, from: { kind: 'beneath', hostId: northside } },
       { type: 'MoveCard', cardId: suspect!, to: { kind: 'beneath', hostId: augursOfFlame } },
     ];
   }

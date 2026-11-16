@@ -13,7 +13,7 @@ import type {
 } from './ids';
 import type { ForbiddenStep, LocationRestriction } from './restrictions';
 import type { Decider, InvestigatorStat, NamedAmount, Phase, TokenKind } from './state';
-import type { ScenarioDeck } from './zone';
+import { zoneKey, type Zone } from './zone';
 
 /**
  * Structured reason why `handle` refused a command. The UI can switch on
@@ -130,10 +130,8 @@ export type Rejection =
   | { code: 'encounterDeckEmpty' }
   /** `UseCardAction.spend` for an action whose cost is not paid as a group. */
   | { code: 'noGroupCost' }
-  /** `DrawFromScenarioDeck` on a deck with no cards left. */
-  | { code: 'scenarioDeckEmpty'; deck: ScenarioDeck }
-  /** `DrawBeneath` where no facedown card lies beneath the investigator's location. */
-  | { code: 'nothingBeneath'; locationId: InstanceId }
+  /** `DrawCard` from a zone with no card in it (an empty Cultist deck, nothing beneath). */
+  | { code: 'nothingToDraw'; zone: Zone }
   /** `DrawEncounter` brought an enemy for an investigator who is not at a location. */
   | { code: 'investigatorHasNoLocation'; investigatorId: InvestigatorId }
   /** No card with code `match` is set aside. */
@@ -414,10 +412,8 @@ function describe(r: Rejection): string {
       return 'the encounter deck and its discard are empty';
     case 'noGroupCost':
       return 'only a cost paid as a group names its payers';
-    case 'scenarioDeckEmpty':
-      return `the ${r.deck} deck is empty`;
-    case 'nothingBeneath':
-      return `no facedown card lies beneath ${r.locationId}`;
+    case 'nothingToDraw':
+      return `there is no card to draw in ${zoneKey(r.zone)}`;
     case 'investigatorHasNoLocation':
       return `investigator ${r.investigatorId} is not at a location`;
     case 'cardNotInZone':

@@ -18,13 +18,16 @@ describe('how a refused step is judged', () => {
 });
 
 describe("why a card action's effect was refused", () => {
-  const nothingBeneath: Rejection = { code: 'nothingBeneath', locationId: instanceId('uptown') };
+  const nothingBeneath: Rejection = {
+    code: 'nothingToDraw',
+    zone: { kind: 'beneath', hostId: instanceId('uptown') },
+  };
 
   it('is the reason its effect was refused for, however deep it is wrapped', () => {
     const wrapped: Rejection = {
       code: 'triggeredCommandRejected',
       command: 'UseCardAction',
-      reason: { code: 'triggeredCommandRejected', command: 'DrawBeneath', reason: nothingBeneath },
+      reason: { code: 'triggeredCommandRejected', command: 'DrawCard', reason: nothingBeneath },
     };
 
     expect(cardActionRefusal(wrapped)).toEqual(nothingBeneath);

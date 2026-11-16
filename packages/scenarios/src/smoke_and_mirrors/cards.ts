@@ -4,6 +4,7 @@ import {
   afterEngaging,
   atEndOfPhase,
   atEndOfRound,
+  beneath,
   attachToLocation,
   cardCode,
   type CardDb,
@@ -201,7 +202,7 @@ export const smokeAndMirrorsCardDefs: readonly CardStats[] = [
     ],
     abilities: [
       whenVictoryDisplayHolds(
-        eachInZone([victoryDisplay, { kind: 'beneath', hostId: self() }], {
+        eachInZone([victoryDisplay, beneath(self())], {
           trait: trait('Elite'),
         }),
         6,

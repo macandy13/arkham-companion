@@ -6,6 +6,7 @@ import type {
   AdvanceAgenda,
   Command,
   CommandType,
+  DrawCard,
   DrawEncounter,
   DrawWeakness,
 } from './commands';
@@ -25,8 +26,7 @@ import {
 import {
   handleDrawEncounter,
   handleDrawWeakness,
-  handleDrawBeneath,
-  handleDrawFromScenarioDeck,
+  handleDrawCard,
   handleGainSurge,
   handleResolveRevelation,
   handleShuffleEncounterDeck,
@@ -172,11 +172,11 @@ function finishAdvance(command: AdvanceAgenda | AdvanceAct, own: readonly Event[
 }
 
 /**
- * `DrawEncounter` and `DrawWeakness`, continued: the drawn card is placed once its revelation
- * has resolved, then a surge draws the next card.
+ * `DrawEncounter`, `DrawCard` and `DrawWeakness`, continued: the drawn card is placed once its
+ * revelation has resolved, then a surge draws the next card.
  */
 function placeDrawnCard(
-  _command: DrawEncounter | DrawWeakness,
+  _command: DrawEncounter | DrawCard | DrawWeakness,
   own: readonly Event[],
 ): Continuation[] {
   const drawn = own.find((event) => event.type === 'EncounterCardDrawn');
@@ -274,8 +274,7 @@ const COMMAND_SPECS: CommandSpecs = {
   // `handle` turns it into an `ability` step before any handler would see it.
   ResolveEffect: { handle: () => [] },
   SpawnEnemy: { handle: handleSpawnEnemy },
-  DrawFromScenarioDeck: { handle: handleDrawFromScenarioDeck },
-  DrawBeneath: { handle: handleDrawBeneath },
+  DrawCard: { handle: handleDrawCard, continueWith: placeDrawnCard },
   EngageEnemy: {
     handle: handleEngageEnemy,
     // The other engaged enemies attack: the one being engaged is not engaged yet, and a massive
