@@ -35,6 +35,7 @@ import {
   type PhaseStep,
   type PhaseStepId,
 } from './state';
+import { encounterDraw } from './handle_encounter';
 import { attacksStillDue } from './phases';
 import { enemyPhaseAttackDecisionId } from './forced_attacks';
 import { undoLastGroup } from './undo';
@@ -669,7 +670,7 @@ export class PlayTable {
    * outside the mythos phase; it resolves like a mythos draw (revelation, decisions, surge).
    */
   drawEncounterCard(investigator: InvestigatorRef): void {
-    this.play({ type: 'DrawEncounter', investigatorId: this.seat(investigator) });
+    this.play(encounterDraw(this.seat(investigator)));
   }
 
   /** Doom from a card effect (e.g. Ancient Evils) on the current agenda. */

@@ -29,3 +29,4 @@ Our reading (no explicit ruling): the cards are discarded one at a time off the 
 
 An ability that shuffles an empty discard pile into a deck does not shuffle the deck ([discard piles](https://arkhamdb.com/rules#Discard_Piles)).
 Our reading (no explicit ruling): "shuffle the set-aside [card] into the encounter deck" is done as far as it can be ([effects](https://arkhamdb.com/rules#Effects)): the copies still set aside go in, and the deck is shuffled even when none was left. The rule above covers only an empty discard pile.
+Not modelled yet: "A single card cannot be shuffled into an empty player deck or encounter deck via card effect" ([discard piles](https://arkhamdb.com/rules#Discard_Piles)). No card in our scenarios can shuffle a single card into an empty encounter deck; the rule waits for the first that can (#1344).

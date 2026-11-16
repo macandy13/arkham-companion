@@ -126,13 +126,13 @@ export type Rejection =
    * The forced effects a command triggered kept triggering each other beyond
    * `MAX_TRIGGERED_COMMANDS` follow-up commands; usually card abilities that re-trigger each other.
    */
-  /** `DrawEncounter` with the encounter deck and its discard both empty. */
+  /** `DrawCard` with the encounter deck and its discard both empty. */
   | { code: 'encounterDeckEmpty' }
   /** `UseCardAction.spend` for an action whose cost is not paid as a group. */
   | { code: 'noGroupCost' }
   /** `DrawCard` from a zone with no card in it (an empty Cultist deck, nothing beneath). */
   | { code: 'nothingToDraw'; zone: Zone }
-  /** `DrawEncounter` brought an enemy for an investigator who is not at a location. */
+  /** `DrawCard` brought an enemy for an investigator who is not at a location. */
   | { code: 'investigatorHasNoLocation'; investigatorId: InvestigatorId }
   /** No card with code `match` is set aside. */
   | { code: 'cardNotInZone'; zone: 'setAside'; match: string }

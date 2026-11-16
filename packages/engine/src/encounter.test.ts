@@ -78,14 +78,14 @@ const aliceInHall = newGame()
 /** The hall, with alice at no location. */
 const aliceNowhere = newGame().withLocation(hall, hallCard).withInvestigator(alice);
 
-const draw: Command = { type: 'DrawEncounter', investigatorId: alice };
+const draw: Command = { type: 'DrawCard', investigatorId: alice, from: encounterDeck };
 
 /** Instance IDs in a zone, top first. */
 function idsIn(state: GameState, zone: Zone): string[] {
   return state.order[zoneKey(zone)] ?? [];
 }
 
-describe('DrawEncounter', () => {
+describe('DrawCard', () => {
   it('reveals the top card and discards a plain treachery on top of the discard', () => {
     const { context, state } = aliceInHall
       .withCard(instanceId('top_card'), plainTreachery, encounterDeck)
@@ -387,13 +387,17 @@ describe('DrawEncounter', () => {
     const { context, state } = aliceInHall
       .withCard(instanceId('top_card'), plainTreachery, encounterDeck)
       .start();
-    const command: Command = { type: 'DrawEncounter', investigatorId: investigatorId('nobody') };
+    const command: Command = {
+      type: 'DrawCard',
+      investigatorId: investigatorId('nobody'),
+      from: encounterDeck,
+    };
 
     expect(rejectionFrom(context, state, command).code).toBe('unknownInvestigator');
   });
 });
 
-describe('DrawEncounter with a match', () => {
+describe('DrawCard with a match', () => {
   const ghoulFoe = blankEnemy('ghoul_foe', { name: 'Ghoul Minion', traits: [trait('Ghoul')] });
   const otherFoe = blankEnemy('other_foe', { name: 'Other Foe', traits: [trait('Monster')] });
   const ghoulTreachery = blankTreachery('ghoul_treachery', { traits: [trait('Ghoul')] });
@@ -401,10 +405,12 @@ describe('DrawEncounter with a match', () => {
     traits: [trait('Ghoul')],
     keywords: [{ name: 'surge' }],
   });
+  const ghoulEnemy = { trait: trait('Ghoul'), typeCode: 'enemy' } as const;
   const drawGhoulEnemy: Command = {
-    type: 'DrawEncounter',
+    type: 'DrawCard',
     investigatorId: alice,
-    match: { trait: trait('Ghoul'), typeCode: 'enemy' },
+    from: encounterDeck,
+    pick: { match: ghoulEnemy },
   };
 
   it('takes the first matching card of the deck and leaves the cards above it', () => {
@@ -432,7 +438,10 @@ describe('DrawEncounter with a match', () => {
       .withCard(instanceId('old_discard'), plainTreachery, encounterDiscard)
       .start();
 
-    const after = stateAfter(context, state, { ...drawGhoulEnemy, discardSkipped: true });
+    const after = stateAfter(context, state, {
+      ...drawGhoulEnemy,
+      pick: { match: ghoulEnemy, discardSkipped: true },
+    });
 
     expect(idsIn(after, encounterDiscard)).toEqual([
       'skipped_foe',
@@ -452,7 +461,7 @@ describe('DrawEncounter with a match', () => {
       .withCard(instanceId('lower_discarded_ghoul'), ghoulFoe, encounterDiscard)
       .start();
 
-    const after = stateAfter(context, state, { ...drawGhoulEnemy, from: 'discard' });
+    const after = stateAfter(context, state, { ...drawGhoulEnemy, from: encounterDiscard });
 
     expect(after.cards[instanceId('upper_discarded_ghoul')]?.zone).toEqual(engagedWith(alice));
     expect(idsIn(after, encounterDiscard)).toEqual([
@@ -469,7 +478,10 @@ describe('DrawEncounter with a match', () => {
       .withCard(instanceId('ghoul_in_discard'), ghoulFoe, encounterDiscard)
       .start();
 
-    const after = stateAfter(context, state, { ...drawGhoulEnemy, from: 'deckOrDiscard' });
+    const after = stateAfter(context, state, {
+      ...drawGhoulEnemy,
+      from: [encounterDeck, encounterDiscard],
+    });
 
     expect(after.cards[instanceId('ghoul_in_deck')]?.zone).toEqual(engagedWith(alice));
     expect(after.cards[instanceId('ghoul_in_discard')]?.zone).toEqual(encounterDiscard);
@@ -482,7 +494,10 @@ describe('DrawEncounter with a match', () => {
       .withCard(instanceId('ghoul_in_discard'), ghoulFoe, encounterDiscard)
       .start();
 
-    const after = stateAfter(context, state, { ...drawGhoulEnemy, from: 'deckOrDiscard' });
+    const after = stateAfter(context, state, {
+      ...drawGhoulEnemy,
+      from: [encounterDeck, encounterDiscard],
+    });
 
     expect(after.cards[instanceId('ghoul_in_discard')]?.zone).toEqual(engagedWith(alice));
   });
@@ -494,9 +509,10 @@ describe('DrawEncounter with a match', () => {
       .start();
 
     const after = stateAfter(context, state, {
-      type: 'DrawEncounter',
+      type: 'DrawCard',
       investigatorId: alice,
-      match: { name: 'Other Foe' },
+      from: encounterDeck,
+      pick: { match: { name: 'Other Foe' } },
     });
 
     expect(after.cards[instanceId('other_foe_card')]?.zone).toEqual(engagedWith(alice));
@@ -528,7 +544,10 @@ describe('DrawEncounter with a match', () => {
       .withCard(instanceId('top_card'), plainTreachery, encounterDeck)
       .start();
 
-    const after = stateAfter(context, state, { ...drawGhoulEnemy, discardSkipped: true });
+    const after = stateAfter(context, state, {
+      ...drawGhoulEnemy,
+      pick: { match: ghoulEnemy, discardSkipped: true },
+    });
 
     expect(idsIn(after, encounterDeck)).toEqual(['top_card']);
   });
@@ -541,7 +560,7 @@ describe('DrawEncounter with a match', () => {
 
     const { state: after, events } = execute(context, state, {
       ...drawGhoulEnemy,
-      discardSkipped: true,
+      pick: { match: ghoulEnemy, discardSkipped: true },
     });
 
     expect(events).toContainEqual(
@@ -580,11 +599,12 @@ describe('DrawEncounter with a match', () => {
   });
 });
 
-describe('DrawEncounter of one named card', () => {
+describe('DrawCard of one named card', () => {
   const drawFoundFoe: Command = {
-    type: 'DrawEncounter',
+    type: 'DrawCard',
     investigatorId: alice,
-    cardId: instanceId('found_foe'),
+    from: [encounterDeck, encounterDiscard],
+    pick: { card: instanceId('found_foe') },
   };
 
   it('draws that card out of the discard pile, not the top of the deck', () => {
@@ -663,6 +683,22 @@ describe('DrawCard', () => {
     });
 
     expect(after.cards[instanceId('discarded_foe')]?.zone).toEqual(engagedWith(alice));
+  });
+
+  it('draws the first match from the Cultist deck, leaving the cards above it', () => {
+    const otherCultist = blankEnemy('other_cultist');
+    const { context, state } = aliceInHall
+      .withCard(instanceId('top_cultist'), otherCultist, cultistDeck)
+      .withCard(instanceId('wanted_cultist'), foeCard, cultistDeck)
+      .start();
+
+    const after = stateAfter(context, state, {
+      ...drawCultist,
+      pick: { match: { name: foeCard.name } },
+    });
+
+    expect(after.cards[instanceId('wanted_cultist')]?.zone).toEqual(engagedWith(alice));
+    expect(idsIn(after, cultistDeck)).toEqual(['top_cultist']);
   });
 
   it('rejects a draw from an empty deck', () => {
@@ -936,7 +972,7 @@ describe('encounter deck invariants', () => {
 });
 
 describe('surge after the drawn card has resolved', () => {
-  const aliceDrawsAgain: Command = { type: 'DrawEncounter', investigatorId: alice };
+  const aliceDrawsAgain: Command = { type: 'DrawCard', investigatorId: alice, from: encounterDeck };
 
   /**
    * The plain treachery above plus four surge cards: `burning_surge`, whose

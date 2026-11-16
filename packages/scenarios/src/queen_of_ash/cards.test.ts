@@ -176,9 +176,10 @@ describe('Queen of Ash card abilities', () => {
   const culvert = instanceId('sewer_culvert');
   /** Alice draws the encounter card named `card`. */
   const aliceDraws = (card: string): Command => ({
-    type: 'DrawEncounter',
+    type: 'DrawCard',
     investigatorId: alice,
-    match: { name: card },
+    from: encounterDeck,
+    pick: { match: { name: card } },
   });
 
   describe('Sewer Tunnels (Overgrown Tunnels)', () => {
