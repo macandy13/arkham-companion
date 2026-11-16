@@ -2,7 +2,7 @@ import { firstSteps, neighbours, requireLocationInPlay, shortestPaths } from './
 import { isClosedToEnemy } from './restrictions';
 import type { MoveHunter, MoveHunters } from './commands';
 import { CommandRejected } from './rejection';
-import { cardStats, type EngineContext } from './cards';
+import type { EngineContext } from './cards';
 import { chooseInvestigator, chooseLocation, engageEvents } from './engagement';
 import { preferredByPrey, preyAllows, preyPrompt } from './prey';
 import { cardOptionLabels, requestDecision } from './decisions';
@@ -147,7 +147,6 @@ function hunters(
 function hunterEvents(ctx: EngineContext, state: GameState, hunter: CardInstance): Event[] {
   if (hunter.zone.kind !== 'atLocation') return [];
   const from = hunter.zone.locationId;
-  const stats = cardStats(ctx.cards, hunter.code);
   const nearest = nearestRoutes(ctx, state, hunter, from);
   if (nearest.length === 0 || state.pending.some((decision) => decision.subject === hunter.id))
     return [];
@@ -170,7 +169,7 @@ function hunterEvents(ctx: EngineContext, state: GameState, hunter: CardInstance
       state,
       hunter.id,
       `hunter:${hunter.id}:investigator`,
-      preyPrompt(state, stats, 'decision.chooseHunterTarget'),
+      preyPrompt(ctx, state, hunter, 'decision.chooseHunterTarget'),
       preferred.map((route) => route.investigator),
       (chosen) => ({ type: 'MoveHunter', enemyId: hunter.id, towards: chosen.id }),
     );

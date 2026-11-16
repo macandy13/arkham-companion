@@ -13,6 +13,7 @@ import { locationOfCard, matchesCard } from './lookup';
 import { skillValues } from './modifiers';
 import { activeInvestigators, remainingHealth, remainingSanity } from './investigators';
 import { SKILL_NAMES, type CardInstance, type GameState, type Investigator } from './state';
+import type { InvestigatorId } from './ids';
 
 /**
  * What a prey text compares for one investigator ("remaining health", "[combat]", "nearest to
@@ -65,6 +66,7 @@ interface Prey {
 const NEAREST_TO_ANOTHER = /^nearest to another (.+) enemy$/i;
 const AT_TRAIT_LOCATION = /^investigator at an? (.+) location$/i;
 const ONLY = /\s+only$/i;
+const BEARER = /^bearer$/i;
 
 /**
  * The investigators among `candidates` that the prey keyword of `enemy` picks (Rules Reference,
@@ -81,7 +83,7 @@ export function preferredByPrey(
   candidates: readonly Investigator[],
 ): Investigator[] {
   const active = candidates.filter((inv) => inv.status === 'active');
-  const prey = readPrey(state, cardStats(ctx.cards, enemy.code));
+  const prey = readPrey(state, cardStats(ctx.cards, enemy.code), enemy.owner);
   if (prey === undefined || active.length === 0) return active;
   if (prey.only) {
     const allowed = new Set(
@@ -110,19 +112,25 @@ export function preyAllows(
   enemy: CardInstance,
   investigators: readonly Investigator[],
 ): Investigator[] {
-  const prey = readPrey(state, cardStats(ctx.cards, enemy.code));
+  const prey = readPrey(state, cardStats(ctx.cards, enemy.code), enemy.owner);
   return prey?.only === true
     ? preferredByPrey(ctx, state, enemy, investigators)
     : [...investigators];
 }
 
 /**
- * The prompt for a choice between the investigators `preferredByPrey` left: `prompt` when the
- * prey was read and only a tie is left, `decision.choosePrey` when the players have to judge
- * the prey themselves.
+ * The prompt for a choice between the investigators `preferredByPrey` left for `enemy`: `prompt`
+ * when the prey was read and only a tie is left, `decision.choosePrey` when the players have to
+ * judge the prey themselves.
  */
-export function preyPrompt(state: GameState, stats: CardStats, prompt: string): string {
-  return preyText(stats) !== undefined && readPrey(state, stats) === undefined
+export function preyPrompt(
+  ctx: EngineContext,
+  state: GameState,
+  enemy: CardInstance,
+  prompt: string,
+): string {
+  const stats = cardStats(ctx.cards, enemy.code);
+  return preyText(stats) !== undefined && readPrey(state, stats, enemy.owner) === undefined
     ? 'decision.choosePrey'
     : prompt;
 }
@@ -131,21 +139,36 @@ function preyText(stats: CardStats): string | undefined {
   return stats.keywords?.find((keyword) => keyword.name === 'prey')?.detail;
 }
 
-/** The prey of a card, e.g. "Highest [combat]" or "Daisy Walker only", or undefined for one the engine can't read. */
-function readPrey(state: GameState, stats: CardStats): Prey | undefined {
+/**
+ * The prey of a card, e.g. "Highest [combat]" or "Daisy Walker only", or undefined for one the
+ * engine can't read; `bearer` is the investigator whose weakness the card is (`CardInstance.owner`).
+ */
+function readPrey(
+  state: GameState,
+  stats: CardStats,
+  bearer: InvestigatorId | undefined,
+): Prey | undefined {
   const text = preyText(stats);
   if (text === undefined) return undefined;
   const plain = stripTrailingDot(text.trim());
   const only = ONLY.test(plain);
-  const pick = preyPick(state, plain.replace(ONLY, ''));
+  const pick = preyPick(state, plain.replace(ONLY, ''), bearer);
   return pick === undefined ? undefined : { pick, only };
 }
 
 /**
- * How a prey text without its "only" picks: by a measure, by the trait of their location, or
- * by an investigator's name in this game ("Daisy Walker"); undefined for any other text.
+ * How a prey text without its "only" picks: by a measure, by the trait of their location, by an
+ * investigator's name in this game ("Daisy Walker"), or the `bearer` of a weakness ("Bearer"); undefined for any other text, and for "Bearer" on a card nobody owns.
  */
-function preyPick(state: GameState, text: string): Prey['pick'] | undefined {
+function preyPick(
+  state: GameState,
+  text: string,
+  bearer: InvestigatorId | undefined,
+): Prey['pick'] | undefined {
+  if (BEARER.test(text))
+    return bearer === undefined
+      ? undefined
+      : (_ctx, _state, _enemy, investigators) => investigators.filter((inv) => inv.id === bearer);
   const nearest = NEAREST_TO_ANOTHER.exec(text);
   if (nearest !== null) return tiedBest(distanceToEnemyWith(trait(nearest[1] ?? '')), 'lowest');
   const atTrait = AT_TRAIT_LOCATION.exec(text);
@@ -159,6 +182,7 @@ function preyPick(state: GameState, text: string): Prey['pick'] | undefined {
   return (_ctx, _state, _enemy, investigators) =>
     investigators.filter((inv) => comparableName(inv.name) === lower);
 }
+
 /** Picks the investigators tied for the `extreme` of `measure`. */
 function tiedBest(measure: PreyMeasure, extreme: PreyExtreme): Prey['pick'] {
   return (ctx, state, enemy, investigators) => {
