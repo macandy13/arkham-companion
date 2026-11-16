@@ -312,12 +312,12 @@ function withAnsweredAmounts(
         field,
         isAnsweredAmount(value)
           ? answeredAmount(value.answer, option, command)
-          : isFieldGroup(value)
+          : isTestField(field, value)
             ? fill(value)
             : value,
       ]),
     );
-  // Only `AnsweredAmount` values were replaced, each by a number, so `filled` is the command without them.
+  // Only `AnsweredAmount` values were replaced, each by a number, so the result is the command without them.
   return fill(cmd) as Command;
 }
 
@@ -327,20 +327,20 @@ function withAnsweredAmounts(
  */
 export function plainOptionCommands(option: DecisionOption): Command[] | undefined {
   const holdsAnswer = (fields: object): boolean =>
-    Object.values(fields).some(
-      (value) => isAnsweredAmount(value) || (isFieldGroup(value) && holdsAnswer(value)),
+    Object.entries(fields).some(
+      ([field, value]) =>
+        isAnsweredAmount(value) || (isTestField(field, value) && holdsAnswer(value)),
     );
   // Without an `AnsweredAmount` field, each command is a plain `Command`.
   return option.commands.some(holdsAnswer) ? undefined : (option.commands as Command[]);
 }
 
 /**
- * A field that groups further fields of a command, such as `TestSkill.test`, where a count may
- * wait for the answer too. Lists are left alone: they hold the commands of later steps (a test's
- * outcomes), whose counts are not this answer's.
+ * `TestSkill.test`, the one group of fields where a count may wait for the answer too
+ * (`AnswerableField`). A test's outcomes are left alone: their counts are not this answer's.
  */
-function isFieldGroup(value: unknown): value is object {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
+function isTestField(field: string, value: unknown): value is object {
+  return field === 'test' && typeof value === 'object' && value !== null;
 }
 
 function isAnsweredAmount(value: unknown): value is AnsweredAmount {

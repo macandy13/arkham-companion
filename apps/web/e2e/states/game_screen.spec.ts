@@ -5,6 +5,7 @@ import {
   fogInvestigationExport,
   ghoulPriestInCellarExport,
   graspingHandsDrawnExport,
+  extraplanarVisionsExport,
   graveyardTestExport,
   tangledThicketRevealedExport,
   rolandSurroundedExport,
@@ -422,6 +423,21 @@ test('Grasping Hands failed by 2 with no token drawn in the app, its margin of f
   await expect(
     decision.getByRole('region', { name: 'Margin of failure' }).locator('data'),
   ).toHaveText('2');
+});
+
+test('Extraplanar Visions asking Roland Banks for a skill and the cards in his hand after committing', async ({
+  page,
+}) => {
+  await resumeImportedGame(page, 'Visions', extraplanarVisionsExport('Visions'));
+  const decision = page.getByRole('dialog').filter({ hasText: 'Intellect' });
+
+  await decision.getByRole('button', { name: 'Intellect' }).click();
+  await decision
+    .getByRole('button', { name: 'Lower the Cards in hand after committing' })
+    .last()
+    .click();
+
+  await expect(decision.getByRole('button', { name: 'Done' })).toBeVisible();
 });
 
 test('the Graveyard’s failed willpower test, its choice under the Failed row', async ({ page }) => {

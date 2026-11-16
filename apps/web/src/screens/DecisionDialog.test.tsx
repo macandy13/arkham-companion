@@ -508,7 +508,7 @@ describe('DecisionDialog', () => {
       expect(table.board.enemy(ghoul)).toMatchObject({ damage: 2 });
     });
 
-    it('tests the picked skill against the cards in hand the drawer sets', () => {
+    it('tests the picked skill against the cards in hand the drawer lowers from 5 to 4', () => {
       const visions = instanceId('visions');
       const table = PlayTable.start(
         newGame()
@@ -540,7 +540,7 @@ describe('DecisionDialog', () => {
       const intellectRow = intellect.closest('li');
       if (!intellectRow) throw new Error('the Intellect option is a list item');
       fireEvent.click(
-        within(intellectRow).getByRole('button', { name: 'Lower the Cards in your hand' }),
+        within(intellectRow).getByRole('button', { name: 'Lower the Cards in hand after committing' }),
       );
       fireEvent.click(screen.getByRole('button', { name: 'Done' }));
 

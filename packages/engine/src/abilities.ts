@@ -491,8 +491,9 @@ export interface AskedCount {
 
 /**
  * "X, where X is the number of cards in your hand": the players' hands are not modelled, so the
- * drawer says how many cards they hold. Five is the opening hand, a default the stepper starts
- * from.
+ * drawer says how many cards they hold, after committing to the test: committed cards leave the
+ * hand before the difficulty is checked (ST.6). Five is the opening hand, a default the stepper
+ * starts from.
  */
 export const cardsInYourHand: AskedCount = { ask: 'cardsInHand', range: { default: 5, min: 0 } };
 
@@ -1157,7 +1158,7 @@ function withDifficultyChanges(
     if ('type' in value && value.type === 'TestSkill') {
       // Read as the command type: `Templated` would map the card codes inside the changes too.
       const { difficultyChanges = [], ...test } = value as unknown as TestSkill;
-      // A difficulty the decider enters (`AskedCount`) is theirs: no card changes it yet.
+      // A difficulty the decider enters (`AskedCount`) takes no changes (`skillTestOfEither`).
       if (difficultyChanges.length === 0) return test;
       const added = sum(difficultyChanges.map(change));
       return {
@@ -1974,6 +1975,19 @@ export function byMargin(tiers: Readonly<Record<number, AbilityEffect[]>>): Abil
  * A difficulty the app cannot read ("X, where X is the number of cards in your hand",
  * `cardsInYourHand`) is an `AskedCount`: the investigator enters it as they pick the skill.
  */
+export function skillTestOfEither(
+  id: DecisionId,
+  skills: readonly [SkillName, SkillName],
+  difficulty: number,
+  outcomes?: TestOutcomes,
+): AbilityEffect;
+/** No card changes a count the decider enters, so such a test lists no `difficultyChanges`. */
+export function skillTestOfEither(
+  id: DecisionId,
+  skills: readonly [SkillName, SkillName],
+  difficulty: AskedCount,
+  outcomes?: Omit<TestOutcomes, 'difficultyChanges'>,
+): AbilityEffect;
 export function skillTestOfEither(
   id: DecisionId,
   skills: readonly [SkillName, SkillName],
