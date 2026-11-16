@@ -35,6 +35,12 @@ const weaknessFoeWithVictory = blankEnemy('weakness_foe_with_victory', { victory
 const atticWeaknessFoe = blankEnemy('attic_weakness_foe', {
   keywords: [{ name: 'spawn', detail: 'attic' }],
 });
+const atticWeaknessFoeHuntingItsBearer = blankEnemy('attic_weakness_foe_hunting_its_bearer', {
+  keywords: [
+    { name: 'spawn', detail: 'attic' },
+    { name: 'prey', detail: 'Bearer only' },
+  ],
+});
 const plainWeakness = blankTreachery('plain_weakness');
 const surgeWeakness = blankTreachery('surge_weakness', { keywords: [{ name: 'surge' }] });
 const lingeringWeakness = blankTreachery('lingering_weakness', {
@@ -78,6 +84,14 @@ describe('DrawWeakness', () => {
     const after = stateAfter(context, state, aliceDraws(atticWeaknessFoe));
 
     expect(after.cards[alicesWeakness]?.zone).toEqual(engagedWith(bob));
+  });
+
+  it('spawns a weakness enemy with prey "Bearer only" unengaged at another investigator\'s location', () => {
+    const { context, state } = aliceInHallBobInAttic(atticWeaknessFoeHuntingItsBearer);
+
+    const after = stateAfter(context, state, aliceDraws(atticWeaknessFoeHuntingItsBearer));
+
+    expect(after.cards[alicesWeakness]?.zone).toEqual({ kind: 'atLocation', locationId: attic });
   });
 
   it('gives a second weakness a card of its own', () => {

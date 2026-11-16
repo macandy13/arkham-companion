@@ -21,7 +21,7 @@ Each card does one or more of these, including what it costs the investigator (D
 | evade an enemy                          | 3     | `EvadeEnemy`                                                            | yes    |
 | move or disengage                       | 2     | `MoveInvestigator`, `DisengageEnemy`                                    | yes    |
 | an extra action                         | 1     | `ManualAdjust` `actions`                                                | yes    |
-| draw an encounter card                  | 1     | `DrawEncounter`                                                         | yes    |
+| draw an encounter card                  | 1     | `DrawCard`                                                              | yes    |
 | doom on a player card                   | 1     | `AdjustInvestigator` `doomOnPlayerCards`                                | yes    |
 | an asset takes damage or horror         | 9     | `HealInvestigator` right after, up to what the asset can take           | approx |
 | cancel an attack or a revelation        | 2     | the attack decision's cancel option, `ResolveRevelation` `cancelled`    | yes    |

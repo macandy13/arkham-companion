@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   apply,
   emptyState,
+  encounterDeck,
   instanceId,
   investigatorId,
   replay,
@@ -17,7 +18,7 @@ describe('stored queue (GameMeta.queue)', () => {
   };
   const surgeDraw: QueuedStep = {
     kind: 'surge',
-    draw: { type: 'DrawEncounter', investigatorId: alice },
+    draw: { type: 'DrawCard', investigatorId: alice, from: encounterDeck },
   };
   const moveQueued: Event = { type: 'StepsQueued', steps: [moveToCellar] };
   const surgeQueued: Event = { type: 'StepsQueued', steps: [surgeDraw] };

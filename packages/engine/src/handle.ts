@@ -2,7 +2,7 @@ import { findInvestigator } from './investigators';
 import { missingCopies, resolveEffect } from './abilities';
 import type { EngineContext } from './cards';
 import { commandSpec, type CommandSpec, type Continuation, type Step } from './command_specs';
-import type { Command, DrawEncounter } from './commands';
+import type { Command, DrawCard } from './commands';
 import { attackOfOpportunityDecisions, isOwnTurnAction } from './attacks_of_opportunity';
 import { answerCommands, plainOptionCommands } from './decisions';
 import { testedActionCommands } from './skill_tests';
@@ -10,6 +10,7 @@ import { PLAYER_CAUSE, type ChangeCause } from './change_cause';
 import type { Event } from './events';
 import {
   canDrawEncounter,
+  encounterDraw,
   encounterCardCount,
   surgeChainCards,
   placeDrawnCard,
@@ -330,7 +331,7 @@ function resolveQueuedStep(
       budget.encounterCards ??= encounterCardCount(state) + 1;
       const surge: Continuation = {
         kind: 'surge',
-        draw: { type: 'DrawEncounter', investigatorId: drawn.investigatorId },
+        draw: encounterDraw(drawn.investigatorId),
       };
       return [...placed, ...withOrigin(withinSurgeLimit([surge], budget), step.origin)];
     }
@@ -508,7 +509,7 @@ function withinSurgeLimit(steps: readonly Continuation[], budget: TriggerBudget)
  * in state until the answer. Nothing when the drawer has left the scenario
  * or no card is left.
  */
-function resolveSurge(resolution: Resolution, surge: DrawEncounter): Step[] {
+function resolveSurge(resolution: Resolution, surge: DrawCard): Step[] {
   return canDrawEncounter(resolution.state, surge.investigatorId) ? [followUpStep(surge)] : [];
 }
 

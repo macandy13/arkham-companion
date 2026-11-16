@@ -29,6 +29,7 @@ import {
   campaign,
   campaignId,
   cardDbWith,
+  encounterDeck,
   instanceId,
   investigatorId,
   PlayTable,
@@ -360,10 +361,10 @@ describe('The Devourer Below end to end: Roland and Daisy, seed 9', () => {
     table.step(() => {
       table.play({ type: 'ShuffleEncounterDiscard' });
       table.play({
-        type: 'DrawEncounter',
+        type: 'DrawCard',
         investigatorId: daisy,
-        match: { typeCode: 'enemy' },
-        discardSkipped: true,
+        from: encounterDeck,
+        pick: { match: { typeCode: 'enemy' }, discardSkipped: true },
       });
     });
     table.endTurn(daisy);

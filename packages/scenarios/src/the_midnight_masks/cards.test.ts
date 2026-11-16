@@ -3,6 +3,7 @@ import {
   atLocation,
   attachedTo,
   byName,
+  encounterDeck,
   encounterSetCode,
   engagedWith,
   boardView,
@@ -133,7 +134,7 @@ describe('The Midnight Masks card abilities', () => {
   const rivertown = instanceId('rivertown');
   const graveyard = instanceId('graveyard');
   const nextPhase: Command = { type: 'NextPhase' };
-  const aliceDraws: Command = { type: 'DrawEncounter', investigatorId: alice };
+  const aliceDraws: Command = { type: 'DrawCard', investigatorId: alice, from: encounterDeck };
 
   describe('Graveyard', () => {
     /** Alice in Rivertown, next to the revealed Graveyard. */

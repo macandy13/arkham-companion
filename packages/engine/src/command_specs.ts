@@ -7,7 +7,6 @@ import type {
   Command,
   CommandType,
   DrawCard,
-  DrawEncounter,
   DrawWeakness,
 } from './commands';
 import { handleDealEnemyAttack, handleEnemyAttacks } from './attacks_of_opportunity';
@@ -24,7 +23,6 @@ import {
   handleRevealLocation,
 } from './handle_board';
 import {
-  handleDrawEncounter,
   handleDrawWeakness,
   handleDrawCard,
   handleGainSurge,
@@ -172,13 +170,10 @@ function finishAdvance(command: AdvanceAgenda | AdvanceAct, own: readonly Event[
 }
 
 /**
- * `DrawEncounter`, `DrawCard` and `DrawWeakness`, continued: the drawn card is placed once its
- * revelation has resolved, then a surge draws the next card.
+ * `DrawCard` and `DrawWeakness`, continued: the drawn card is placed once its revelation has
+ * resolved, then a surge draws the next card.
  */
-function placeDrawnCard(
-  _command: DrawEncounter | DrawCard | DrawWeakness,
-  own: readonly Event[],
-): Continuation[] {
+function placeDrawnCard(_command: DrawCard | DrawWeakness, own: readonly Event[]): Continuation[] {
   const drawn = own.find((event) => event.type === 'EncounterCardDrawn');
   const surge = surgeDraw(own);
   return [
@@ -261,11 +256,6 @@ const COMMAND_SPECS: CommandSpecs = {
     continueWith: finishAdvance,
   },
   EndScenario: { handle: (_ctx, _state, command) => handleEndScenario(command) },
-  DrawEncounter: {
-    handle: handleDrawEncounter,
-    // The card's revelation resolves before the card is placed.
-    continueWith: placeDrawnCard,
-  },
   GainSurge: { handle: (_ctx, state, command) => handleGainSurge(state, command) },
   UseReaction: { handle: handleUseReaction },
   ResolveRevelation: { handle: (_ctx, state, command) => handleResolveRevelation(state, command) },
@@ -275,6 +265,7 @@ const COMMAND_SPECS: CommandSpecs = {
   // `handle` turns it into an `ability` step before any handler would see it.
   ResolveEffect: { handle: () => [] },
   SpawnEnemy: { handle: handleSpawnEnemy },
+  // The card's revelation resolves before the card is placed.
   DrawCard: { handle: handleDrawCard, continueWith: placeDrawnCard },
   EngageEnemy: {
     handle: handleEngageEnemy,

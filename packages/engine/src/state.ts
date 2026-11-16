@@ -9,7 +9,7 @@ import type {
   Command,
   CommandType,
   DrawCards,
-  DrawEncounter,
+  DrawCard,
   EngageEnemy,
   GainResources,
   Investigate,
@@ -684,7 +684,7 @@ type QueuedStepKind =
   /** The drawn card is placed once its revelation has resolved (`placeDrawnCard`). */
   | { kind: 'placeDrawnCard'; drawn: EncounterCardDrawn; origin?: CommandType }
   /** The surge draw, once the surging card has been placed (`resolveSurge`). */
-  | { kind: 'surge'; draw: DrawEncounter; origin?: CommandType }
+  | { kind: 'surge'; draw: DrawCard; origin?: CommandType }
   /**
    * One effect of a card ability, resolved into its command when its turn
    * comes (`resolveEffect`), so it sees what the effects before it did.

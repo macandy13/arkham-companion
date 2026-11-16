@@ -148,3 +148,13 @@ export function drawWithoutReplacement<T>(
   );
   return { drawn, left };
 }
+
+/** `value` as a list: itself when it is one, else a list of just it ("a zone or several zones"). */
+export function asArray<T>(value: T | readonly T[]): readonly T[] {
+  return isList(value) ? value : [value];
+}
+
+/** Narrows `T | readonly T[]`, which `Array.isArray` alone doesn't for a readonly list. */
+function isList<T>(value: T | readonly T[]): value is readonly T[] {
+  return Array.isArray(value);
+}

@@ -3,6 +3,7 @@ import {
   blankEnemy,
   blankLocation,
   cardName,
+  encounterDeck,
   engagedWith,
   instanceId,
   investigatorId,
@@ -61,7 +62,7 @@ describe('the steps the goal bot wants', () => {
           kind: 'encounterDeck',
         }),
     );
-    table.play({ type: 'DrawEncounter', investigatorId: alice });
+    table.play({ type: 'DrawCard', investigatorId: alice, from: encounterDeck });
 
     const offered = offeredSteps(table);
     const weights = goalWeights(table, offered);

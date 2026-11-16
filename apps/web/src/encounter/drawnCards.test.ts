@@ -3,6 +3,7 @@ import {
   blankEnemy,
   blankLocation,
   blankTreachery,
+  encounterDeck,
   instanceId,
   investigatorId,
   newGame,
@@ -45,7 +46,7 @@ describe('drawnCards', () => {
     const table = aldersDraw(topCard);
 
     const { before, events, after } = stepOn(table, () =>
-      table.play({ type: 'DrawEncounter', investigatorId: alder }),
+      table.play({ type: 'DrawCard', investigatorId: alder, from: encounterDeck }),
     );
 
     expect(drawnCards(before, after, events)).toEqual([
@@ -59,7 +60,7 @@ describe('drawnCards', () => {
     );
 
     const drawing = stepOn(table, () =>
-      table.play({ type: 'DrawEncounter', investigatorId: alder }),
+      table.play({ type: 'DrawCard', investigatorId: alder, from: encounterDeck }),
     );
     expect(drawnCards(drawing.before, drawing.after, drawing.events)).toEqual([]);
     const resolving = stepOn(table, () => table.resolveRevelation(byName('top_card')));

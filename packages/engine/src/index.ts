@@ -154,6 +154,7 @@ export {
 export { enemiesAt, type EnemyFilter, enemiesOnTable } from './enemies';
 export {
   CANCEL_REVELATION_OPTION,
+  encounterDraw,
   isRevelationDecision,
   matchesEncounter,
 } from './handle_encounter';

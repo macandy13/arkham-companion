@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  asArray,
   drawWithoutReplacement,
   duplicates,
   includesAny,
@@ -213,5 +214,15 @@ describe('includesAny', () => {
     { name: 'wanted absent', wanted: undefined, holds: false },
   ])('finds $name', ({ wanted, holds }) => {
     expect(includesAny(['Elite', 'Monster'], wanted)).toBe(holds);
+  });
+});
+
+describe('asArray', () => {
+  it.each([
+    { name: 'wraps a single item', value: 'roland', list: ['roland'] },
+    { name: 'keeps a list as it is', value: ['roland', 'daisy'], list: ['roland', 'daisy'] },
+    { name: 'keeps an empty list empty', value: [], list: [] },
+  ])('$name', ({ value, list }) => {
+    expect(asArray<string>(value)).toEqual(list);
   });
 });
