@@ -2,6 +2,33 @@
 
 The sections dated up to 2026-10-22 were released as 1.0.0 to 1.8.0 by mistake: Release Please starts at 1.0.0 by default. Versioning restarted at 0.1.0 (see "Versions" in docs/product.md).
 
+## [0.1.44](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v0.1.43...arkham-companion-v0.1.44) (2026-11-15)
+
+
+### Features
+
+* **engine:** draw a weakness enemy or treachery from a player deck (ME.26a) ([d753f65](https://github.com/macandy13/arkham-companion/commit/d753f6555fa0614e68699a6c251386cb5c06731a))
+* **engine:** draw a weakness enemy or treachery from a player deck (ME.26a) ([f178ec7](https://github.com/macandy13/arkham-companion/commit/f178ec7043b1b91d6b65bac4b8e1ca16b067efba))
+* **engine:** reactions the players use or pass, with their limits (MC2.3a) ([89657c9](https://github.com/macandy13/arkham-companion/commit/89657c967a222d4121b138a3bfb933211aee5710))
+
+
+### Bug fixes
+
+* **engine:** weakness victory, elimination and review follow-ups (ME.26a) ([59e03b6](https://github.com/macandy13/arkham-companion/commit/59e03b6625f37507c1728147667b5ee63f76e234))
+
+
+### Refactoring
+
+* **engine:** MoveCard cleans up a card leaving play; DiscardCard goes (ME.10b) ([f188c90](https://github.com/macandy13/arkham-companion/commit/f188c9047076512ed4d50550391a1a83a6b5c895))
+* **engine:** MoveCard cleans up a card leaving play; DiscardCard goes (ME.10b) ([034cedf](https://github.com/macandy13/arkham-companion/commit/034cedf1b996562eff944a3f1ec1fa87b3bbc80d))
+* **engine:** second review round (ME.26a) ([26a4233](https://github.com/macandy13/arkham-companion/commit/26a423311a2793809286fecf0bae0f14f97ee671))
+* **engine:** set-aside copies as a reference; FromSetAside and ShuffleInto become MoveCard (ME.10a) ([067a051](https://github.com/macandy13/arkham-companion/commit/067a051684cbc91650a28b7730a49cb8b0823888))
+
+
+### Documentation
+
+* **engine:** leaves-play clean-up for every MoveCard out of play ([cde1303](https://github.com/macandy13/arkham-companion/commit/cde1303412ca2dc3a05518276a87fb6cef96b53e))
+
 ## [0.1.43](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v0.1.42...arkham-companion-v0.1.43) (2026-11-15)
 
 
