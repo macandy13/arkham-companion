@@ -1,142 +1,137 @@
 import { cardStats, type EngineContext } from './cards';
 import { decisionId, type DecisionId, type InstanceId, type InvestigatorId } from './ids';
 import { requireCard } from './lookup';
-import type { Decision, DueAttack, GameState } from './state';
+import type { Decision, GameState } from './state';
 
 /**
- * The enemy attacks the rules force outside the enemy phase, each asked as a
- * `confirm` decision (`<kind>:<enemy>`) for the attacked investigator:
+ * Every enemy attack the engine asks the attacked investigator about, each a `confirm` decision
+ * (`attackDecision`) whose `attack` option deals the damage and horror and whose `skip` is the way
+ * out for what the engine cannot read:
+ * - `enemyPhase`: one attack of enemy step 3.3 (`DueAttack`); the enemy exhausts after its last
+ *   due attack, cancelled or not (`ResolveEnemyAttack`, Dodge FAQ).
  * - `attackOfOpportunity`: an action taken while engaged with the ready enemy
- *   (`attackOfOpportunityDecisions`).
+ *   (`attackOfOpportunityDecisions`); `skip` is a card that "does not provoke".
  * - `retaliate`: a failed attack against the ready retaliate enemy (`KeywordAttackKind`).
  * - `alert`: a failed evade against the ready alert enemy (`KeywordAttackKind`).
- * - `cardAttack`: a card that says the enemy attacks (`EnemyAttacks`), asked
- *   `cardAttack:<enemy>:<investigator>`, since one card may attack each investigator at a location.
+ * - `cardAttack`: a card that says the enemy attacks (`EnemyAttacks`).
  *
- * None of them exhausts the enemy (`DealEnemyAttack`).
+ * None but `enemyPhase` exhausts the enemy (`DealEnemyAttack`).
  */
-export type ForcedAttackKind = 'attackOfOpportunity' | 'retaliate' | 'alert' | 'cardAttack';
+export type AttackKind =
+  'enemyPhase' | 'attackOfOpportunity' | 'retaliate' | 'alert' | 'cardAttack';
 
-/**
- * The way out of each kind, for what the engine cannot read: a card that
- * "does not provoke attacks of opportunity", or one that cancels the attack.
- */
-const SKIP_LABELS: Readonly<Record<ForcedAttackKind, string>> = {
-  attackOfOpportunity: 'decision.doesNotProvoke',
-  retaliate: 'decision.attackCancelled',
-  alert: 'decision.attackCancelled',
-  cardAttack: 'decision.attackCancelled',
+/** The attacks the rules force outside the enemy phase. */
+export type ForcedAttackKind = Exclude<AttackKind, 'enemyPhase'>;
+
+/** How each kind of attack is asked: its prompt and the label of its way out. */
+const ASKED: Readonly<Record<AttackKind, { prompt: string; skip: string }>> = {
+  enemyPhase: { prompt: 'decision.enemyAttack', skip: 'decision.attackCancelled' },
+  attackOfOpportunity: {
+    prompt: 'decision.attackOfOpportunity',
+    skip: 'decision.doesNotProvoke',
+  },
+  retaliate: { prompt: 'decision.retaliate', skip: 'decision.attackCancelled' },
+  alert: { prompt: 'decision.alert', skip: 'decision.attackCancelled' },
+  cardAttack: { prompt: 'decision.cardAttack', skip: 'decision.attackCancelled' },
 };
 
 /**
- * The decision for one forced attack of the enemy on the investigator. Its
- * `attack` option deals the enemy's printed damage and horror, which the
- * players may lower (assets soak part of it) through
- * `ResolveDecision.amounts`; `skip` deals nothing.
+ * The decision for one attack of `kind` of the enemy on the investigator. Its `attack` option
+ * deals the enemy's printed damage and horror, which the players may lower (assets soak part of
+ * it) through `ResolveDecision.amounts`. `skip` deals nothing; an enemy phase attack is still
+ * resolved by it, cancelled, so that the enemy exhausts.
  */
-export function forcedAttackDecision(
+export function attackDecision(
   ctx: EngineContext,
   state: GameState,
-  kind: ForcedAttackKind,
+  kind: AttackKind,
   enemyId: InstanceId,
   investigatorId: InvestigatorId,
 ): Decision {
+  const asked = ASKED[kind];
   return {
-    id: decisionId(
-      kind === 'cardAttack' ? `${kind}:${enemyId}:${investigatorId}` : `${kind}:${enemyId}`,
-    ),
+    id: attackDecisionId(kind, enemyId, investigatorId),
     kind: 'confirm',
     subject: enemyId,
-    prompt: forcedAttackPrompt(kind),
+    prompt: asked.prompt,
     decider: { kind: 'investigator', investigatorId },
     options: [
       {
         id: 'attack',
         label: 'decision.attack',
         commands: [
-          {
-            type: 'DealEnemyAttack',
-            enemyId,
-            investigatorId,
-            damage: { answer: 'damage' },
-            horror: { answer: 'horror' },
-          },
-        ],
-        amounts: printedAttack(ctx, state, enemyId),
-      },
-      { id: 'skip', label: SKIP_LABELS[kind], commands: [] },
-    ],
-  };
-}
-
-/**
- * The decision for one attack of enemy step 3.3 (`enemyAttack:<enemy>:<investigator>`, as a
- * massive enemy attacks each engaged investigator), raised for every listed attack when the step
- * is reached. Its `attack` option resolves it at the printed damage and horror, which the players
- * may lower (assets soak part of it); `skip` is for a card that cancels it, after which the enemy
- * still exhausts (Dodge FAQ), so both resolve it (`ResolveEnemyAttack`), the second `cancelled`.
- */
-export function enemyPhaseAttackDecision(
-  ctx: EngineContext,
-  state: GameState,
-  { enemyId, investigatorId }: DueAttack,
-): Decision {
-  return {
-    id: enemyPhaseAttackDecisionId({ enemyId, investigatorId }),
-    kind: 'confirm',
-    subject: enemyId,
-    prompt: ENEMY_PHASE_ATTACK_PROMPT,
-    decider: { kind: 'investigator', investigatorId },
-    options: [
-      {
-        id: 'attack',
-        label: 'decision.attack',
-        commands: [
-          {
-            type: 'ResolveEnemyAttack',
-            enemyId,
-            investigatorId,
-            damage: { answer: 'damage' },
-            horror: { answer: 'horror' },
-          },
+          kind === 'enemyPhase'
+            ? {
+                type: 'ResolveEnemyAttack',
+                enemyId,
+                investigatorId,
+                damage: { answer: 'damage' },
+                horror: { answer: 'horror' },
+              }
+            : {
+                type: 'DealEnemyAttack',
+                enemyId,
+                investigatorId,
+                damage: { answer: 'damage' },
+                horror: { answer: 'horror' },
+              },
         ],
         amounts: printedAttack(ctx, state, enemyId),
       },
       {
         id: 'skip',
-        label: 'decision.attackCancelled',
-        commands: [{ type: 'ResolveEnemyAttack', enemyId, investigatorId, cancelled: true }],
+        label: asked.skip,
+        commands:
+          kind === 'enemyPhase'
+            ? [{ type: 'ResolveEnemyAttack', enemyId, investigatorId, cancelled: true }]
+            : [],
       },
     ],
   };
 }
 
 /**
- * Whether `decision` is an enemy attack on an investigator (`forcedAttackDecision`,
- * `enemyPhaseAttackDecision`), whose `skip` option is the attack cancelled (Dodge).
+ * The id of the `attackDecision` of `kind` about the enemy and the investigator. An enemy phase
+ * or card attack names both, since a massive enemy or "attacks each investigator at its location"
+ * asks several investigators about one enemy; the others name the enemy only, as one enemy makes
+ * at most one such attack at a time.
  */
-export function isEnemyAttackDecision(decision: Pick<Decision, 'id'>): boolean {
-  const kind = decision.id.split(':')[0];
-  return kind === 'enemyAttack' || (kind !== undefined && kind in SKIP_LABELS);
+export function attackDecisionId(
+  kind: AttackKind,
+  enemyId: InstanceId,
+  investigatorId: InvestigatorId,
+): DecisionId {
+  switch (kind) {
+    case 'enemyPhase':
+      return decisionId(`enemyAttack:${enemyId}:${investigatorId}`);
+    case 'cardAttack':
+      return decisionId(`cardAttack:${enemyId}:${investigatorId}`);
+    default:
+      return decisionId(`${kind}:${enemyId}`);
+  }
 }
 
-/** The id of the `enemyPhaseAttackDecision` about `attack`. */
-export function enemyPhaseAttackDecisionId({ enemyId, investigatorId }: DueAttack): DecisionId {
-  return decisionId(`enemyAttack:${enemyId}:${investigatorId}`);
+/**
+ * Whether `decision` is an enemy attack on an investigator (`attackDecision`), whose `skip`
+ * option is the attack cancelled (Dodge): its `attack` option deals the attack.
+ */
+export function isEnemyAttackDecision(decision: Pick<Decision, 'options'>): boolean {
+  return decision.options.some((option) =>
+    option.commands.some(
+      (command) => command.type === 'DealEnemyAttack' || command.type === 'ResolveEnemyAttack',
+    ),
+  );
 }
 
-/** The prompt of an `enemyPhaseAttackDecision`. */
-export const ENEMY_PHASE_ATTACK_PROMPT = 'decision.enemyAttack';
+/** The prompt of an `attackDecision` of `kind`, so views can tell which attack asks. */
+export function attackPrompt(kind: AttackKind): string {
+  return ASKED[kind].prompt;
+}
 
 /** The enemy's printed damage and horror, as the amounts an attack option starts from. */
 function printedAttack(ctx: EngineContext, state: GameState, enemyId: InstanceId) {
   const { damage = 0, horror = 0 } = cardStats(ctx.cards, requireCard(state.cards, enemyId).code);
   return { damage: { default: damage, min: 0 }, horror: { default: horror, min: 0 } };
-}
-
-/** The prompt of a `forcedAttackDecision` of `kind`, so views can tell which forced attack asks. */
-export function forcedAttackPrompt(kind: ForcedAttackKind): string {
-  return `decision.${kind}`;
 }
 
 /**

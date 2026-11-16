@@ -37,7 +37,7 @@ import {
 } from './state';
 import { encounterDraw } from './handle_encounter';
 import { attacksStillDue } from './phases';
-import { enemyPhaseAttackDecisionId } from './forced_attacks';
+import { attackDecisionId } from './forced_attacks';
 import { undoLastGroup } from './undo';
 import type { GameBuilder } from './game_builder';
 
@@ -477,7 +477,7 @@ export class PlayTable {
 
   /**
    * Enemy step 3.3: the players take each attack the step asks about
-   * (`enemyPhaseAttackDecision`), in its order, with the printed damage and
+   * (`attackDecision`), in its order, with the printed damage and
    * horror; each enemy exhausts after its attack. An attack that defeats an
    * investigator drops their remaining ones.
    */
@@ -489,7 +489,7 @@ export class PlayTable {
       while (next) {
         this.play({
           type: 'ResolveDecision',
-          decisionId: enemyPhaseAttackDecisionId(next),
+          decisionId: attackDecisionId('enemyPhase', next.enemyId, next.investigatorId),
           optionId: 'attack',
         });
         [next] = attacksStillDue(this.ctx, this.current);

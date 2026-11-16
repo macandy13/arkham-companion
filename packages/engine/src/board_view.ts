@@ -39,7 +39,7 @@ import { agendaThreshold, doomInPlay, isInPlay } from './doom';
 import { changesGameState, handle } from './handle';
 import { enemyHealth, isEngagedWith } from './enemies';
 import type { Keyword } from './keywords';
-import { forcedAttackPrompt } from './forced_attacks';
+import { attackPrompt } from './forced_attacks';
 import { formatBoard } from './format_board';
 import {
   cardMatcher,
@@ -1486,7 +1486,7 @@ function decisionView(ctx: EngineContext, state: GameState, decision: Decision):
     }),
   );
   const provokedBy =
-    decision.prompt === forcedAttackPrompt('attackOfOpportunity')
+    decision.prompt === attackPrompt('attackOfOpportunity')
       ? provokingAction(ctx, state)
       : undefined;
   return {
