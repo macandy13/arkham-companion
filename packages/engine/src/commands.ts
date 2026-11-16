@@ -502,6 +502,8 @@ export interface DiscoverClues extends AskedByCard {
   investigatorId: InvestigatorId;
   locationId: InstanceId;
   amount: number;
+  /** At a location other than their own: the pass of an investigation there (`Investigate.locationId`). */
+  atAnyLocation?: true;
 }
 
 /**
@@ -1363,7 +1365,8 @@ export interface EndSkillTest {
 }
 
 /**
- * Investigate action: the investigator investigates their location. The
+ * Investigate action: the investigator investigates their location, or `locationId` when a card
+ * investigates another one (In the Know, Sixth Sense). The
  * players resolve the intellect test against its shroud at the table; the
  * engine raises a `skillTestResult` decision whose pass discovers clues: 1
  * by default, or the count the players confirm in `ResolveDecision.amount`
@@ -1375,11 +1378,13 @@ export interface EndSkillTest {
 export interface Investigate extends ActionCommand {
   type: 'Investigate';
   investigatorId: InvestigatorId;
+  /** A location in play to investigate instead of their own; its shroud and clues count. */
+  locationId?: InstanceId;
 }
 
 /**
- * Fight action: the investigator attacks an enemy at their location
- * (combat test against its fight value). A pass deals `damage` via
+ * Fight action: the investigator attacks an enemy at their location, or with `atAnyLocation`
+ * one elsewhere (Marksmanship), as a card allows (combat test against its fight value). A pass deals `damage` via
  * `DamageEnemy`, or the damage the players confirm in
  * `ResolveDecision.amount` (effects that add damage on a good result).
  * Produces `DecisionRequested`.
@@ -1390,11 +1395,13 @@ export interface Fight {
   enemyId: InstanceId;
   /** Damage of the attack, the pass option's default; 1 (the basic attack) unless a weapon deals more. */
   damage?: number;
+  /** The enemy may be at another location, as a card allows. Aloof still applies. */
+  atAnyLocation?: true;
 }
 
 /**
- * Evade action: the investigator evades an enemy engaged with them (agility
- * test against its evade value). A pass exhausts the enemy (if ready) and
+ * Evade action: the investigator evades an enemy engaged with them, or with `atAnyLocation` any
+ * enemy on the table, as a card allows (agility test against its evade value). A pass exhausts the enemy (if ready) and
  * disengages it (a massive enemy is not in the `engaged` zone and stays).
  * Produces `DecisionRequested`.
  */
@@ -1402,6 +1409,8 @@ export interface Evade {
   type: 'Evade';
   investigatorId: InvestigatorId;
   enemyId: InstanceId;
+  /** The enemy need not be engaged with them: any enemy on the table, as a card allows. */
+  atAnyLocation?: true;
 }
 
 /** String literal of every command type. */

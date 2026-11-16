@@ -10,9 +10,11 @@
 - [Fight](https://arkhamdb.com/rules#Fight_Action): combat test against the enemy's fight value, which can target any enemy at the location.
   - Success deals 1 damage by default.
   - On failure against an enemy engaged with exactly one _other_ investigator, the damage goes to that investigator instead.
+  - A card may let the investigator fight an enemy at another location (Marksmanship: a connecting location); the engine takes any location then (`Fight.atAnyLocation`), and the card's own limit is the players'. Aloof still applies.
 - [Evade](https://arkhamdb.com/rules#Evade_Action): only against an enemy engaged with you; agility test against its evade value.
   - Success (or any "evade" effect) exhausts the enemy if it is ready and moves it unengaged to your location.
   - "Automatically evade" makes no test and isn't a successful evasion.
+  - A card that lets the investigator evade an enemy not engaged with them, at their location or elsewhere, tests it the same way (`Evade.atAnyLocation`); a pass exhausts it where it is.
   - Either way the enemy is evaded, so "after [this enemy] is evaded" (Ruth Turner) follows once it is exhausted and disengaged; a failed evasion opens nothing. The evasion happens in ST.7 (apply results), so this comes after the ST.6 "after you succeed" triggers.
 - [Engage](https://arkhamdb.com/rules#Engage_Action): take an enemy at your location into your threat area, even if it's exhausted, aloof or engaged with someone else (it disengages from them). Engaging and being engaged are the same event.
 - [Move](https://arkhamdb.com/rules#Move): to a connecting location unless the effect says otherwise.

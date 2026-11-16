@@ -5,6 +5,7 @@ Card rulings: [Objectives and special acts and agendas](cards/objectives.md).
 
 - When an investigator first enters an unrevealed location, it is revealed and gets clues equal to its clue value, which is usually per investigator. An enemy moving into an unrevealed location does **not** reveal it.
 - A successful investigate discovers 1 clue: it moves from the location to the investigator.
+- A card that investigates another location (In the Know, Sixth Sense) tests against that location's shroud and discovers its clues there; the investigator doesn't move (`Investigate.locationId`).
 - A card's "discover N clues" at a location with fewer discovers as many as it has ([Effects](https://arkhamdb.com/rules#Effects)), and may name a location other than the investigator's ("discover 1 clue at another location"); the investigator doesn't move ([Clues](https://arkhamdb.com/rules#Clues): discovered by investigating or by a card ability).
 - "Take control of 1 of the clues on Constance Dumaine" moves the clue from that card onto the investigator; it is not discovering, which only takes clues from a location ([Clues](https://arkhamdb.com/rules#Clues)), so "cannot discover clues" does not stop it. Clues moved onto a card count for its "if there are N clues on it" like placed ones.
 - An "Objective –" is active only while its agenda or act is current: the cards below it in the deck are not in play.
