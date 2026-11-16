@@ -814,7 +814,7 @@ describe('test of either of two skills that defeats its tester', () => {
     const picked = stateAfter(
       context,
       state,
-      { type: 'DrawEncounter', investigatorId: alice },
+      { type: 'DrawCard', investigatorId: alice, from: encounterDeck },
       resolveRevelation('ruin'),
       answer(ruinChoice, 'agility'),
     );
@@ -841,7 +841,7 @@ describe('test of either skill against a count the drawer enters', () => {
       ),
     ],
   });
-  const draw: Command = { type: 'DrawEncounter', investigatorId: alice };
+  const draw: Command = { type: 'DrawCard', investigatorId: alice, from: encounterDeck };
 
   it('asks for the cards in hand with each skill, from 0 and starting at 5', () => {
     const { context, state } = aliceInStudy

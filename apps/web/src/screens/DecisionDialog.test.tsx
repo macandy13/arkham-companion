@@ -531,7 +531,7 @@ describe('DecisionDialog', () => {
             { kind: 'encounterDeck' },
           ),
       );
-      table.play({ type: 'DrawEncounter', investigatorId: alder });
+      table.drawEncounterCard(alder);
       table.resolveRevelation(visions);
       renderFirstDecision(table);
 
@@ -540,13 +540,16 @@ describe('DecisionDialog', () => {
       const intellectRow = intellect.closest('li');
       if (!intellectRow) throw new Error('the Intellect option is a list item');
       fireEvent.click(
-        within(intellectRow).getByRole('button', { name: 'Lower the Cards in hand after committing' }),
+        within(intellectRow).getByRole('button', {
+          name: 'Lower the Cards in hand after committing',
+        }),
       );
       fireEvent.click(screen.getByRole('button', { name: 'Done' }));
 
       expect(table.board.decisions).toMatchObject([
         { test: { skill: 'intellect', difficulty: 4 } },
       ]);
+      expect(screen.queryByText('from the game')).toBeNull();
     });
 
     it("takes an attack of opportunity's damage and horror as the players lower them", () => {

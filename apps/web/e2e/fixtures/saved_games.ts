@@ -3,6 +3,7 @@ import {
   byName,
   cardCode,
   cardDbWith,
+  encounterDeck,
   gameId,
   investigatorCardStats,
   investigatorCode,
@@ -613,9 +614,10 @@ export function extraplanarVisionsExport(title: string): Buffer {
   table.nextPhase();
   table.startTurn(rolandId);
   table.play({
-    type: 'DrawEncounter',
+    type: 'DrawCard',
     investigatorId: rolandId,
-    match: { name: 'Extraplanar Visions' },
+    from: encounterDeck,
+    pick: { match: { name: 'Extraplanar Visions' } },
   });
   table.resolveRevelation(byName('Extraplanar Visions'));
   return exportOf(title, table, 'extraplanar_visions');
