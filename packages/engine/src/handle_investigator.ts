@@ -159,7 +159,7 @@ export function handleSpendResources(state: GameState, cmd: SpendResources): Inv
 }
 
 /**
- * `DrawCards`, `SearchDeck`, `PlayCard`, `DiscardFromHand` and `DiscardAsset`: the engine holds no
+ * `DrawCards`, `SearchDeck`, `PlayCard`, `DiscardFromHand`, `DiscardAsset` and `HealAsset`: the engine holds no
  * player cards, so it hands the command to the players (`CommandDeferred`), for an active
  * investigator. Support for player cards would handle them here instead.
  */
