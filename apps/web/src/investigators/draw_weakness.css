@@ -1,4 +1,7 @@
-/* "Draw a weakness" (DrawWeakness) under the whole investigator card, apart from it. */
+/*
+ * "Draw a weakness" (DrawWeakness) under the whole investigator card, apart from it. In the phone's
+ * expanded bar it is one more row of the panel, which the panel's own gap spaces.
+ */
 #investigators dialog[data-dialog='investigator-card'] > button:not([data-icon]) {
   margin-block-start: var(--space-3);
 }

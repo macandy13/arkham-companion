@@ -4,7 +4,7 @@ import { weaknessGroups } from './weakness_groups';
 
 const roland = toCardCode('roland');
 
-/** A treachery weakness named `name`: basic unless it is someone's signature weakness. */
+/** A treachery weakness named `name`, neither basic nor anyone's signature unless `fields` say so. */
 const weakness = (name: string, fields: Partial<WeaknessDef> = {}): WeaknessDef => ({
   code: toCardCode(name),
   name,

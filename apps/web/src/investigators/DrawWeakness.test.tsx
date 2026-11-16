@@ -39,11 +39,11 @@ const aliceInStudy = () =>
       .withCardData(blankEnemy('stalker')),
   );
 
-const renderDrawWeakness = (table: PlayTable) =>
+const renderDrawWeakness = (table: PlayTable, weaknesses: readonly WeaknessDef[]) =>
   render(
     <DrawWeakness
       investigator={table.board.investigator(alice)}
-      weaknesses={[stalker, dread]}
+      weaknesses={weaknesses}
       actions={actionsOn(table)}
       busy={false}
     />,
@@ -56,7 +56,7 @@ describe('DrawWeakness', () => {
   afterEach(cleanup);
 
   it('narrows the weaknesses by the search', () => {
-    renderDrawWeakness(aliceInStudy());
+    renderDrawWeakness(aliceInStudy(), [stalker, dread]);
 
     fireEvent.click(screen.getByRole('button', { name: 'Draw a weakness' }));
     fireEvent.change(screen.getByRole('searchbox', { hidden: true }), {
@@ -73,7 +73,7 @@ describe('DrawWeakness', () => {
 
   it('draws the picked weakness, which spawns engaged with alice, and closes', async () => {
     const table = aliceInStudy();
-    renderDrawWeakness(table);
+    renderDrawWeakness(table, [stalker]);
 
     fireEvent.click(screen.getByRole('button', { name: 'Draw a weakness' }));
     fireEvent.click(screen.getByRole('button', { hidden: true, name: 'Stalker' }));
