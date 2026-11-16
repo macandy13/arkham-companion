@@ -45,6 +45,7 @@ import {
   reaction,
   resignAction,
   resolutionId,
+  moveToConnectingLocation,
   searchDeck,
   self,
   SKILL_NAMES,
@@ -166,7 +167,7 @@ const jpg = 'jpg';
  *   two-action discard
  * - the Arkham locations' reactions and actions other than First Bank of Arkham's resource,
  *   Arkham Sanatorium's healing and Easttown's ally search (St. Mary's healing, a deck search, a
- *   clue for 5 resources, a free move, cards drawn, a charge or secret, a Tome or Spell played
+ *   clue for 5 resources, cards drawn, a charge or secret, a Tome or Spell played
  *   from the discard pile: MC2.3, MC2.4), Waterfront District's
  *   additional action to investigate (MC2.4), and the damage Miskatonic University (In Flames)
  *   deals to allies
@@ -446,6 +447,14 @@ export const smokeAndMirrorsCardDefs: readonly CardStats[] = [
     traits: ['Arkham', 'Central'],
     shroud: 3,
     cluesPerInvestigator: 1,
+    actions: [
+      {
+        free: true,
+        limit: { per: 'round' },
+        condition: [{ kind: 'yourTurn' }, { kind: 'investigatorCount', min: 1, max: 2 }],
+        effects: [moveToConnectingLocation()],
+      },
+    ],
   }),
   location({
     code: codes.waterfrontDistrict,

@@ -13,7 +13,9 @@ import {
   cardDbFrom,
   type CardStats,
   checkDoomThreshold,
+  anEnemy,
   dealDamageTo,
+  moveToConnectingLocation,
   decisionId,
   defeatEachInvestigator,
   discardAsset,
@@ -205,9 +207,7 @@ const jpg = 'jpg';
  *   control (MC2.14)
  * - the agendas' Parley (test intellect (2) to discard a Bystander at your location): it can be
  *   taken only with a Bystander there, a condition actions can't state yet
- * - Blaze of Glory's group clue spend to deal damage to an enemy
- * - Your Friend's Room's Engage action, Miskatonic Quad's free move (MC2.3) and Orne Library's
- *   two-action draw (MC1.12)
+ * - Your Friend's Room's Engage action and Orne Library's two-action draw (MC1.12)
  * - Dr. Henry Armitage's skill bonus and free first action: his controller's to apply, like a
  *   player card's
  * - Hellhound's asset discard after its enemy phase attacks: the players pick the asset, as for
@@ -319,7 +319,14 @@ export const spreadingFlamesCardDefs: readonly CardStats[] = [
     set: own,
     pictures: jpg,
     stage: 4,
-    actions: [resignAction()],
+    actions: [
+      {
+        free: true,
+        cost: { spend: 'groupClues', amount: perInvestigator(1) },
+        effects: [dealDamageTo(anEnemy(yourLocation()), perInvestigator(1))],
+      },
+      resignAction(),
+    ],
     // Objective: the act advances by itself once the Servant of Flame is defeated; its reverse
     // side is Resolution 1, whose last step chooses between Resolutions 2 and 3.
     abilities: [
@@ -389,6 +396,14 @@ export const spreadingFlamesCardDefs: readonly CardStats[] = [
     traits: ['Miskatonic', 'Central'],
     shroud: 1,
     cluesPerInvestigator: 0,
+    actions: [
+      {
+        free: true,
+        limit: { per: 'round', group: true },
+        condition: [{ kind: 'yourTurn' }, { kind: 'investigatorCount', min: 1, max: 2 }],
+        effects: [moveToConnectingLocation()],
+      },
+    ],
   }),
   location({
     code: codes.dormitories,

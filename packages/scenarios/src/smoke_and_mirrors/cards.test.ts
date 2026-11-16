@@ -18,9 +18,17 @@ import {
   threatAreaOf,
   type CardStats,
   type Command,
+  type InvestigatorId,
   type LocationSymbol,
 } from '@arkham/engine';
-import { answer, cardIn, resolveRevelation, runFrom, stateAfter } from '@arkham/engine/test/utils';
+import {
+  answer,
+  cardIn,
+  rejectionFrom,
+  resolveRevelation,
+  runFrom,
+  stateAfter,
+} from '@arkham/engine/test/utils';
 import {
   ARCANE_LOCK_DECISION,
   DOWNPOUR_DECISION,
@@ -342,6 +350,61 @@ describe('Smoke and Mirrors card abilities', () => {
           }),
         }),
       );
+    });
+  });
+
+  describe('Merchant District', () => {
+    const bob = investigatorId('bob');
+    const district = instanceId('merchant_district');
+    const easttown = instanceId('easttown');
+    /** Merchant District with Easttown connecting to it and French Hill not, alice and bob there. */
+    const bothInTheDistrict = newGame()
+      .withLocation(district, cardOf(SMOKE_AND_MIRRORS_CODES.merchantDistrict), { revealed: true })
+      .withLocation(easttown, cardOf(SMOKE_AND_MIRRORS_CODES.easttown), { revealed: true })
+      .withLocation(instanceId('french_hill'), cardOf(SMOKE_AND_MIRRORS_CODES.frenchHill), {
+        revealed: true,
+      })
+      .withInvestigator(alice, { locationId: district })
+      .withInvestigator(bob, { locationId: district });
+    const movesFree = (investigatorId: InvestigatorId): Command => ({
+      type: 'UseCardAction',
+      investigatorId,
+      cardId: district,
+      action: 0,
+    });
+
+    it('moves alice without asking to Easttown, its only connecting location, as a fast ability in her turn', () => {
+      const { context, state: started } = bothInTheDistrict.withTurnOf(alice).start();
+
+      const state = stateAfter(context, started, movesFree(alice));
+
+      expect(requireInvestigator(state, alice)).toMatchObject({
+        locationId: easttown,
+        actionsRemaining: 3,
+      });
+    });
+
+    it("refuses alice's move in bob's turn", () => {
+      const { context, state } = bothInTheDistrict.withTurnOf(bob).start();
+
+      expect(rejectionFrom(context, state, movesFree(alice)).code).toBe('cardActionConditionUnmet');
+    });
+
+    it("refuses alice's second move this round once she is back, and lets bob make his", () => {
+      const { context, state: started } = bothInTheDistrict.withTurnOf(alice).start();
+      const backAgain = stateAfter(context, started, movesFree(alice), {
+        type: 'MoveInvestigator',
+        investigatorId: alice,
+        to: district,
+      });
+      const bobsTurn = { ...backAgain, meta: { ...backAgain.meta, turn: { investigatorId: bob } } };
+
+      const bobMoved = stateAfter(context, bobsTurn, movesFree(bob));
+
+      expect(rejectionFrom(context, backAgain, movesFree(alice)).code).toBe(
+        'cardActionLimitReached',
+      );
+      expect(requireInvestigator(bobMoved, bob).locationId).toBe(easttown);
     });
   });
 

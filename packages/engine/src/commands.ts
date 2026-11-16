@@ -818,14 +818,14 @@ export interface DisengageEnemy {
 }
 
 /**
- * Puts `amount` (positive) damage on an enemy in play. An enemy with damage
- * equal to or above its health (per `resolveValue`) is defeated in the same
- * step. Produces `TokensChanged`, then `EnemyDefeated`.
+ * Puts `amount` (positive, "1 [per_investigator]" read against the player count) damage on an
+ * enemy in play. An enemy with damage equal to or above its health (per `resolveValue`) is
+ * defeated in the same step. Produces `TokensChanged`, then `EnemyDefeated`.
  */
 export interface DamageEnemy {
   type: 'DamageEnemy';
   enemyId: InstanceId;
-  amount: number;
+  amount: TokenAmount;
 }
 
 /**
