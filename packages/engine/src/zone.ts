@@ -1,3 +1,4 @@
+import type { RelativeCard, RelativeInvestigator } from './abilities';
 import type { InstanceId, InvestigatorId, MapId } from './ids';
 
 /** Where a card instance currently is (architecture "Game state"). */
@@ -55,6 +56,9 @@ export type ScenarioDeck = 'cultist';
 /** Discriminator of `Zone`. */
 export type ZoneKind = Zone['kind'];
 
+/** The zone of one kind, so a helper's result fits both a `Zone` and card data's `Templated<Zone>`. */
+export type ZoneOf<K extends ZoneKind> = Extract<Zone, { kind: K }>;
+
 /** Stable string key of a zone, used to index `GameState.order`. */
 export type ZoneKey = string & { readonly __brand: 'ZoneKey' };
 
@@ -85,49 +89,62 @@ export function sameZone(a: Zone, b: Zone): boolean {
 }
 
 /** The encounter deck, shared by all investigators; its order is top first. */
-export const encounterDeck: Zone = { kind: 'encounterDeck' };
+export const encounterDeck: ZoneOf<'encounterDeck'> = { kind: 'encounterDeck' };
 
 /** The encounter discard pile; its order is top first. */
-export const encounterDiscard: Zone = { kind: 'encounterDiscard' };
+export const encounterDiscard: ZoneOf<'encounterDiscard'> = { kind: 'encounterDiscard' };
 
 /** Cards the scenario set aside, out of play until a card or setup brings them in. */
-export const setAside: Zone = { kind: 'setAside' };
+export const setAside: ZoneOf<'setAside'> = { kind: 'setAside' };
 
 /** Cards out of the scenario: removed from the game, or back with the player who owns them. */
-export const outOfGame: Zone = { kind: 'outOfGame' };
+export const outOfGame: ZoneOf<'outOfGame'> = { kind: 'outOfGame' };
 
 /** A drawn encounter card while its revelation resolves. */
-export const resolvingZone: Zone = { kind: 'resolving' };
+export const resolvingZone: ZoneOf<'resolving'> = { kind: 'resolving' };
 
 /** Cards worth victory points the players have earned this scenario, counted at its end. */
-export const victoryDisplay: Zone = { kind: 'victoryDisplay' };
+export const victoryDisplay: ZoneOf<'victoryDisplay'> = { kind: 'victoryDisplay' };
 
 /** A scenario deck of the scenario's own; its order is top first. */
-export function scenarioDeck(deck: ScenarioDeck): Zone {
+export function scenarioDeck(deck: ScenarioDeck): ZoneOf<'scenarioDeck'> {
   return { kind: 'scenarioDeck', deck };
 }
 
-/** The zone of an unengaged card at a location, e.g. an enemy that spawned there. */
-export function atLocation(locationId: InstanceId): Zone {
+/**
+ * The zone of an unengaged card at a location, e.g. an enemy that spawned there. Like the other
+ * zone helpers it takes a reference in card data: `atLocation(onlyCopy(codes.parlor))`.
+ */
+export function atLocation<L extends InstanceId | RelativeCard>(
+  locationId: L,
+): { kind: 'atLocation'; locationId: L } {
   return { kind: 'atLocation', locationId };
 }
 
 /** The zone of an enemy engaged with an investigator. */
-export function engagedWith(investigatorId: InvestigatorId): Zone {
+export function engagedWith<I extends InvestigatorId | RelativeInvestigator>(
+  investigatorId: I,
+): { kind: 'engaged'; investigatorId: I } {
   return { kind: 'engaged', investigatorId };
 }
 
-/** The zone of a non-enemy card in an investigator's threat area. */
-export function threatAreaOf(investigatorId: InvestigatorId): Zone {
+/** The zone of a non-enemy card in an investigator's threat area; `threatAreaOf(you())` in card data. */
+export function threatAreaOf<I extends InvestigatorId | RelativeInvestigator>(
+  investigatorId: I,
+): { kind: 'threatArea'; investigatorId: I } {
   return { kind: 'threatArea', investigatorId };
 }
 
 /** The zone of a card `investigatorId` controls (`takeControl`). */
-export function playAreaOf(investigatorId: InvestigatorId): Zone {
+export function playAreaOf<I extends InvestigatorId | RelativeInvestigator>(
+  investigatorId: I,
+): { kind: 'playArea'; investigatorId: I } {
   return { kind: 'playArea', investigatorId };
 }
 
 /** The zone of a card attached to another card (a location, an enemy, an agenda, …). */
-export function attachedTo(hostId: InstanceId): Zone {
+export function attachedTo<H extends InstanceId | RelativeCard>(
+  hostId: H,
+): { kind: 'attachedTo'; hostId: H } {
   return { kind: 'attachedTo', hostId };
 }

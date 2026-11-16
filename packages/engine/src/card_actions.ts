@@ -269,7 +269,7 @@ export function resignAction(): CardAction {
  * "[action] <cost>: Parley. <effects>": an action with the Parley designator, so it provokes no
  * attack of opportunity; the cost, limit and effects are the card's own, built from the usual
  * blocks (The Midnight Masks' cultists: `{ cost: { spend: 'clues', amount: 2 }, effects:
- * [addToVictoryDisplay({ ref: 'self' })] }`).
+ * [move(self(), victoryDisplay)] }`).
  */
 export function parleyAction(action: Omit<CardAction, 'designator'>): CardAction {
   return { ...action, designator: 'parley' };

@@ -6,6 +6,7 @@ import {
   atEndOfPhase,
   atEndOfRound,
   atEndOfTurn,
+  attachedTo,
   cardCode,
   type CardCode,
   type CardDb,
@@ -47,6 +48,7 @@ import {
   resolutionId,
   revealLocation,
   self,
+  setAside,
   shuffleSetAsideIntoEncounterDeck,
   skillTest,
   skillTestOfEither,
@@ -189,7 +191,7 @@ const fire = SPREADING_FLAMES_CODES.fire;
 
 /** "If the Servant of Flame enemy is set aside, spawn it at Underground Cistern" (agenda 1b). */
 const spawnServantIfSetAside = spawnEnemyAt(
-  eachInZone({ kind: 'setAside' }, { code: codes.servantOfFlame }),
+  eachInZone(setAside, { code: codes.servantOfFlame }),
   onlyCopy(codes.undergroundCistern),
 );
 
@@ -293,7 +295,7 @@ export const queenOfAshCardDefs: readonly CardStats[] = [
       whenAnInvestigatorEnters(codes.undergroundCistern, advanceAct()),
       whenAdvanced(
         spawnEnemyAt(onlyCopy(codes.elokoss), onlyCopy(codes.undergroundCistern)),
-        ...fromSetAside([fire], { kind: 'attachedTo', hostId: onlyCopy(codes.undergroundCistern) }),
+        ...fromSetAside([fire], attachedTo(onlyCopy(codes.undergroundCistern))),
         ...shuffleSetAsideIntoEncounterDeck([
           ...Array<CardCode>(4).fill(fire),
           codes.queensKnight,

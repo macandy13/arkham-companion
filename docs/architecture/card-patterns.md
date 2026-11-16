@@ -65,7 +65,7 @@ A cost is `CardAction.cost`, paid before the effects.
 - "The investigators spend 2 clues per investigator, as a group" (Uncovering the Conspiracy):
   `cost: { spend: 'groupClues', amount: perInvestigator(2) }`.
 - "Choose and discard 4 cards from your hand" (Herman Collins' Parley):
-  `parleyAction({ cost: { spend: 'handCards', amount: 4 }, effects: [addToVictoryDisplay({ ref: 'self' })] })`.
+  `parleyAction({ cost: { spend: 'handCards', amount: 4 }, effects: [move(self(), victoryDisplay)] })`.
 
 ## Story assets and earned cards
 
@@ -88,7 +88,7 @@ A cost is `CardAction.cost`, paid before the effects.
 - A search for several copies (Searching for Dr. Armitage, "the lead investigator must search … for 1 [per_investigator] copies of Fire! and draw them"): `whenAdvanced(searchAndDrawCopies(codes.fire, perInvestigator(1), lead()), shuffleEncounterDeck())`. The copies are found at once (`eachInZone(…, { code, first })`) and each is drawn by its ID (`DrawEncounter.cardId`), so one whose revelation is cancelled isn't found again.
 - The Midnight Masks' Cultist deck: a `scenarioDeck` setup step, drawn by the act's action with `drawFromScenarioDeck('cultist')`.
 - Rise of the Ghouls: `whenAdvanced(shuffleEncounterDiscard(), leadDrawsDiscardingUntil({ trait: trait('Ghoul'), typeCode: 'enemy' }))`.
-- "Place it on the bottom of the Tekeli-li deck", "on top of the encounter deck": `moveSelf(deck, 'bottom' | 'top')`, a `MoveCard` to the end of the deck; the revealed card then isn't discarded, as it left `resolving`.
+- "Place it on the bottom of the Tekeli-li deck", "on top of the encounter deck": `move(self(), deck, 'bottom' | 'top')`, a `MoveCard` to the end of the deck; the revealed card then isn't discarded, as it left `resolving`.
 - "Discard the top 3 cards of the encounter deck" (Out of This World): `discardEncounterTop(3)`, a `discard` for each of `eachInZone(encounterDeck, { top: 3 })`; one per point failed by (The Witching Hour's skull token): `forEachPoint(discardEncounterTop(1))`.
 - False Lead's surge when its drawer has no clues: `ifYouHave('clues', { max: 0 }, whenRevealed(gainSurge()))`.
 
@@ -99,4 +99,4 @@ A cost is `CardAction.cost`, paid before the effects.
 - A difficulty that depends on the table: `skillTest('willpower', 2, { difficultyChanges: [plusDifficultyPer(statOf(you(), 'damage'))] })` (Eager for Death), `plusDifficultyIf({ kind: 'valueOf', value: statOf(you(), 'clues'), min: 2 }, 2)` (Red Herring), `plusDifficultyIf({ kind: 'countOf', of: eachEnemy({ at: yourLocation() }), min: 1 }, 2)` (Mutated!).
 - A choice whose answer the players carry out ("choose a cardtype … discard", Dissonance, Torment): options with no effects, each label naming what to do, so the decision records the pick; "place 1 doom on an asset you control" is `placeDoomOnYourAsset(1)` (doom on player cards, counted toward the threshold).
 - An outcome that changes with the margin: `skillTest(…, { onFail: [byMargin({ 0: [takeDamage(1)], 2: [takeDamage(2)] })] })` (Blood and Rust), the same in `onPass` for "if you succeed by N or more". The highest tier reached runs alone, so a card that adds to the base effects lists them in the higher tier too; effects next to the `byMargin` entry always run.
-- An ability after the enemy is evaded (Ruth Turner): `afterEvaded(addToVictoryDisplay({ ref: 'self' }))`.
+- An ability after the enemy is evaded (Ruth Turner): `afterEvaded(move(self(), victoryDisplay))`.

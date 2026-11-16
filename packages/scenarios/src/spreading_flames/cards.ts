@@ -6,6 +6,7 @@ import {
   afterTokensPlaced,
   atEndOfPhase,
   attachTo,
+  attachedTo,
   cardCode,
   type CardCode,
   type CardDb,
@@ -19,6 +20,10 @@ import {
   discardEachEnemy,
   discardFromHand,
   drawCards,
+  eachInZone,
+  encounterDiscard,
+  move,
+  outOfGame,
   placeYourClues,
   loseResources,
   discardAtRandom,
@@ -27,7 +32,6 @@ import {
   duringPhase,
   eachEnemy,
   eachInvestigator,
-  eachSetAsideCopyTo,
   encounterSetCode,
   endScenario,
   fixed,
@@ -51,11 +55,10 @@ import {
   putIntoThreatArea,
   putLocationIntoPlay,
   reaction,
-  removeFromGame,
   resignAction,
   resolutionId,
   searchAndDrawCopies,
-  setAsideCard,
+  setAside,
   shuffleEncounterDeck,
   skillTest,
   skillTestOfEither,
@@ -232,9 +235,7 @@ export const spreadingFlamesCardDefs: readonly CardStats[] = [
     doom: 5,
     // Where There's Smoke… may have taken the copies already; then none is placed.
     abilities: [
-      whenAdvanced(
-        ...fromSetAside(Array<CardCode>(4).fill(codes.fire), { kind: 'encounterDiscard' }),
-      ),
+      whenAdvanced(...fromSetAside(Array<CardCode>(4).fill(codes.fire), encounterDiscard)),
     ],
   }),
   agenda({
@@ -263,12 +264,9 @@ export const spreadingFlamesCardDefs: readonly CardStats[] = [
         ...putLocationIntoPlay(codes.dormitories, CAMPUS, { at: CAMPUS_CELLS.dormitories }),
         ...putLocationIntoPlay(codes.miskatonicQuad, CAMPUS, { at: CAMPUS_CELLS.miskatonicQuad }),
         spawnEnemyAt(onlyCopy(codes.servantOfFlame), onlyCopy(codes.dormitories)),
-        ...fromSetAside([codes.fire], {
-          kind: 'attachedTo',
-          hostId: onlyCopy(codes.yourFriendsRoom),
-        }),
+        ...fromSetAside([codes.fire], attachedTo(onlyCopy(codes.yourFriendsRoom))),
         // However many are left: Lit Up's reverse side may have placed four of them already.
-        eachSetAsideCopyTo(codes.fire, { kind: 'encounterDiscard' }),
+        move(eachInZone(setAside, { code: codes.fire }), encounterDiscard),
       ),
     ],
   }),
@@ -281,9 +279,9 @@ export const spreadingFlamesCardDefs: readonly CardStats[] = [
     // Setting it aside heals the Servant of Flame, wherever it is, even from the victory display.
     abilities: [
       whenAdvanced(
-        setAsideCard(onlyCopy(codes.servantOfFlame)),
+        move(onlyCopy(codes.servantOfFlame), setAside),
         discardEachEnemy(),
-        removeFromGame(onlyCopy(codes.yourFriendsRoom)),
+        move(onlyCopy(codes.yourFriendsRoom), outOfGame),
         ...putLocationIntoPlay(codes.orneLibrary, CAMPUS, { at: CAMPUS_CELLS.orneLibrary }),
         ...putLocationIntoPlay(codes.scienceHall, CAMPUS, { at: CAMPUS_CELLS.scienceHall }),
         ...putLocationIntoPlay(codes.warrenObservatory, CAMPUS, {

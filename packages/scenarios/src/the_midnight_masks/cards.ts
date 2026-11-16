@@ -13,6 +13,7 @@ import {
   disengageFromEachEnemy,
   drawCards,
   drawFromScenarioDeck,
+  move,
   perInvestigator,
   engageReadyEnemies,
   decisionId,
@@ -38,6 +39,7 @@ import {
   resolutionId,
   searchAndDraw,
   searchDeck,
+  self,
   shuffleEncounterDeck,
   skillTest,
   forEachPoint,
@@ -48,6 +50,7 @@ import {
   takeDamageAndHorror,
   takeHorror,
   trait,
+  victoryDisplay,
   whenAdvanced,
   whenVictoryDisplayHolds,
   whenRevealed,
@@ -56,7 +59,6 @@ import {
   type CardStats,
   resignAction,
   parleyAction,
-  addToVictoryDisplay,
 } from '@arkham/engine';
 import { act, agenda, enemy, location, prey, spawn, treachery } from '../card_builders';
 import { theGatheringCards } from '../the_gathering/cards';
@@ -174,7 +176,7 @@ export const theMidnightMasksCardDefs: readonly CardStats[] = [
     stage: 1,
     abilities: [
       whenVictoryDisplayHolds(
-        eachInZone({ kind: 'victoryDisplay' }, { trait: trait('Cultist'), unique: true }),
+        eachInZone(victoryDisplay, { trait: trait('Cultist'), unique: true }),
         6,
         advanceAct(),
       ),
@@ -415,7 +417,7 @@ export const theMidnightMasksCardDefs: readonly CardStats[] = [
     actions: [
       parleyAction({
         cost: { spend: 'handCards', amount: 4 },
-        effects: [addToVictoryDisplay({ ref: 'self' })],
+        effects: [move(self(), victoryDisplay)],
       }),
     ],
   }),
@@ -435,7 +437,7 @@ export const theMidnightMasksCardDefs: readonly CardStats[] = [
     actions: [
       parleyAction({
         cost: { spend: 'clues', amount: 2 },
-        effects: [addToVictoryDisplay({ ref: 'self' })],
+        effects: [move(self(), victoryDisplay)],
       }),
     ],
   }),
@@ -455,7 +457,7 @@ export const theMidnightMasksCardDefs: readonly CardStats[] = [
     actions: [
       parleyAction({
         cost: { spend: 'resources', amount: 5 },
-        effects: [addToVictoryDisplay({ ref: 'self' })],
+        effects: [move(self(), victoryDisplay)],
       }),
     ],
   }),
@@ -472,7 +474,7 @@ export const theMidnightMasksCardDefs: readonly CardStats[] = [
     victory: 1,
     unique: true,
     keywords: [spawn("St. Mary's Hospital")],
-    abilities: [afterEvaded(addToVictoryDisplay({ ref: 'self' }))],
+    abilities: [afterEvaded(move(self(), victoryDisplay))],
   }),
   enemy({
     code: '01169',
