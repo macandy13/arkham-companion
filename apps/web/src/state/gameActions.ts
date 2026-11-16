@@ -235,9 +235,11 @@ export interface GameActions {
    */
   drawWeakness(investigator: InvestigatorId, card: CardCode): Promise<void>;
   /**
-   * A card effect moves `investigator`, whoever's turn it is, to `location`, connected or not
-   * (Elusive, Shortcut): `MoveInvestigator` with `ignoreConnections`, taking no action and
-   * provoking no attacks of opportunity; ready enemies there engage as on any move.
+   * A card effect moves `investigator`, whoever's turn it is (Shortcut moves another
+   * investigator), to `location`, connected or not (Astral Travel, Esoteric Atlas):
+   * `MoveInvestigator` with `ignoreConnections`, taking no action and provoking no attacks of
+   * opportunity. As on any move, enemies engaged with them come along (a card that disengages
+   * first, Elusive, is a `disengageEnemy` before it) and ready enemies there engage.
    */
   moveByCard(investigator: InvestigatorId, location: InstanceId): Promise<void>;
   /**

@@ -784,7 +784,8 @@ export function createAppStore(
       },
       startSpawn(enemy) {
         const open = get().current;
-        if (open) set({ current: { ...open, spawning: enemy } });
+        // One pick on the map at a time, so a tap never answers a pick the map doesn't show.
+        if (open) set({ current: { ...open, spawning: enemy, movingByCard: undefined } });
       },
       cancelSpawn() {
         const open = get().current;
@@ -792,7 +793,7 @@ export function createAppStore(
       },
       startMoveByCard(investigator) {
         const open = get().current;
-        if (open) set({ current: { ...open, movingByCard: investigator } });
+        if (open) set({ current: { ...open, movingByCard: investigator, spawning: undefined } });
       },
       cancelMoveByCard() {
         const open = get().current;

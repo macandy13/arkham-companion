@@ -107,7 +107,7 @@ describe('gameActions', () => {
           .withTurnOf(alder),
       );
 
-    it("moves brook to the unconnected attic on alder's turn, with no action and no attack", async () => {
+    it("moves brook to the unconnected attic on alder's turn, with no action and no attack, her lurker along", async () => {
       const table = brookBesideTheLoneAttic();
 
       await actionsOn(table).moveByCard(brook, attic);
@@ -115,6 +115,7 @@ describe('gameActions', () => {
       expect(table.board.locationOf(brook)).toBe(attic);
       expect(table.board.investigator(alder)).toMatchObject({ actions: 3 });
       expect(table.board.decisions).toEqual([]);
+      expect(table.board.enemiesEngagedWith(brook).map(({ id }) => id)).toEqual([lurker]);
     });
   });
 

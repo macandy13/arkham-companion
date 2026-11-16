@@ -215,7 +215,7 @@ test('draw a weakness enemy from the deck', async ({ page }) => {
   });
 });
 
-// Journey: a card effect moves Roland Banks (Elusive, Shortcut) – from his whole card the players
+// Journey: a card effect moves Roland Banks (Astral Travel, Shortcut) – from his whole card the players
 // pick the destination on the map, to a connected room and then to one that isn't, with no action
 // spent.
 test('move an investigator by a card effect to any location', async ({ page }) => {

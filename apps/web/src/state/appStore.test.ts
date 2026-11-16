@@ -935,6 +935,22 @@ describe('appStore', () => {
           expect(store.getState().current?.movingByCard).toBeUndefined();
         });
 
+        it('ends choosing a spawn location once the players start a move by card effect, and back', async () => {
+          const store = await aldersTurn('actions-one-map-pick-test');
+          const ghoulPriest = store
+            .getState()
+            .current?.board?.encounter.setAside.find(({ name }) => name === 'Ghoul Priest');
+          if (!ghoulPriest) throw new Error('the Ghoul Priest is set aside at setup');
+
+          store.getState().startSpawn(ghoulPriest);
+          store.getState().startMoveByCard(investigatorId('alder'));
+          const afterMove = store.getState().current?.spawning;
+          store.getState().startSpawn(ghoulPriest);
+
+          expect(afterMove).toBeUndefined();
+          expect(store.getState().current?.movingByCard).toBeUndefined();
+        });
+
         it('takes doom off the current agenda', async () => {
           const store = await aldersTurn('actions-remove-doom-test');
           await store.getState().actions.placeDoom(2);
