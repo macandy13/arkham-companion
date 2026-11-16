@@ -2,6 +2,7 @@ import { CATALOG_FORMAT, type CatalogFetchResult, type FetchFn } from './catalog
 import { buildInvestigatorCatalog } from './investigator_parsing';
 import { normalisePacks } from './pack_parsing';
 import { buildReferencePictures, buildReferences } from './references';
+import { buildWeaknesses } from './weakness_parsing';
 
 /**
  * Fetches packs and all cards from `host` (an ArkhamDB base URL) and builds the catalog.
@@ -27,6 +28,7 @@ export async function fetchCatalog(
   const investigators = buildInvestigatorCatalog(rawCards, packs);
   const references = buildReferences(rawCards);
   const referencePictures = buildReferencePictures(rawCards);
+  const weaknesses = buildWeaknesses(rawCards);
   const lastModified = cardsResponse.headers.get('Last-Modified') ?? undefined;
   return {
     status: 'ok',
@@ -36,6 +38,7 @@ export async function fetchCatalog(
       packs,
       references,
       referencePictures,
+      weaknesses,
       lastModified,
     },
   };

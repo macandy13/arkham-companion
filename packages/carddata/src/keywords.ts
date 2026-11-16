@@ -43,9 +43,11 @@ const OTHERWISE = /^otherwise,/i;
 const DETAIL_KEYWORD_NAME = /^(patrol|prey|spawn)/i;
 const DASHES = '-–—';
 const PUT_WORD = /\b(?:put|place)s?\b/i;
+const ADD_WORD = /\badds?\b/i;
 // Global so that `lastIndex` makes the search start after the put/place word
 // while `\b` still sees the characters before it.
 const THREAT_AREA_PHRASE = /\bin your threat area\b/gi;
+const TO_THREAT_AREA_PHRASE = /\bto your threat area\b/gi;
 
 /**
  * The keywords of a card, read from the ArkhamDB rules text. ArkhamDB prints
@@ -68,7 +70,7 @@ export function parseKeywords(text: string | undefined, traits: readonly string[
 /**
  * Whether the text puts the card into an investigator's threat area, so that
  * a drawn treachery stays in play instead of being discarded. A heuristic on
- * "put/place … in your threat area"; revelation text is free-form, and a
+ * "put/place … in your threat area" and "add … to your threat area" (Haunted, a weakness); revelation text is free-form, and a
  * wrong guess is fixed by moving the card by hand.
  */
 export function entersThreatArea(text: string | undefined): boolean {
@@ -79,16 +81,24 @@ export function entersThreatArea(text: string | undefined): boolean {
 }
 
 /**
- * Whether one sentence has "in your threat area" after a put/place word.
- * Sentence-wise and by two plain searches instead of one regex with a gap
+ * Whether one sentence has "in your threat area" after a put/place word, or
+ * "to your threat area" after "add". Sentence-wise and by two plain searches instead of one regex with a gap
  * (`put … [^.]* … in your threat area`), which backtracks quadratically on
  * text with many put/place words.
  */
 function putsIntoThreatArea(sentence: string): boolean {
-  const put = PUT_WORD.exec(sentence);
-  if (!put) return false;
-  THREAT_AREA_PHRASE.lastIndex = put.index + put[0].length;
-  return THREAT_AREA_PHRASE.test(sentence);
+  return (
+    followedBy(sentence, PUT_WORD, THREAT_AREA_PHRASE) ||
+    followedBy(sentence, ADD_WORD, TO_THREAT_AREA_PHRASE)
+  );
+}
+
+/** Whether `sentence` has `phrase` (a global regex) somewhere after the first `word`. */
+function followedBy(sentence: string, word: RegExp, phrase: RegExp): boolean {
+  const found = word.exec(sentence);
+  if (!found) return false;
+  phrase.lastIndex = found.index + found[0].length;
+  return phrase.test(sentence);
 }
 
 /**

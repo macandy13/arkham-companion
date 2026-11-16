@@ -26,6 +26,7 @@ import type {
   ScenarioContext,
   ScenarioId,
   StepNotice,
+  CardStats,
 } from '@arkham/engine';
 import {
   DEFAULT_RELIANCE,
@@ -33,6 +34,7 @@ import {
   campaign,
   campaignId as toCampaignId,
   cardDbFrom,
+  cardDbWith,
   emptyState,
 } from '@arkham/engine';
 import { gameActions, type GameActions } from './gameActions';
@@ -365,10 +367,35 @@ async function gamesOf(gameStore: GameStore, campaignId: CampaignId): Promise<Ga
   return (await gameStore.listGames()).filter((game) => game.campaignId === campaignId);
 }
 
-/** The rules a game of the catalog's scenario `entry` runs with: its definition and cards. */
-function contextFor(entry: ScenarioEntry): ScenarioContext {
+/**
+ * The card data a game adds to its scenario's from the downloaded catalog: the player weaknesses
+ * an investigator can draw (`DrawWeakness`, `catalogWeaknessCards`).
+ */
+export type CatalogCards = () => Promise<readonly CardStats[]>;
+
+/**
+ * The rules a game of the catalog's scenario `entry` runs with: its definition, its cards and
+ * the catalog's `catalogCards`.
+ */
+function contextFor(entry: ScenarioEntry, catalogCards: readonly CardStats[]): ScenarioContext {
   // Investigator cards are not needed: after setup the engine reads investigators from the state.
-  return { cards: entry.cards, scenario: entry.definition };
+  // A scenario's own card wins over the catalog's of the same code: it carries the encounter set,
+  // quantity and abilities the scenario was written with.
+  const added = catalogCards.filter((card) => entry.cards.get(card.code) === undefined);
+  return { cards: cardDbWith(entry.cards, added), scenario: entry.definition };
+}
+
+/**
+ * `catalogCards()`, or none when the catalog can't be loaded: a game in which nobody has drawn a
+ * weakness still opens, one that has can't replay its draw and opens unplayable.
+ */
+async function loadCatalogCards(catalogCards: CatalogCards): Promise<readonly CardStats[]> {
+  try {
+    return await catalogCards();
+  } catch (error) {
+    console.warn('Could not load the catalog cards; games open without weaknesses.', error);
+    return [];
+  }
 }
 
 /**
@@ -428,6 +455,7 @@ export function createAppStore(
   gameStore: GameStore,
   scenarios: ScenarioLookup = findScenario,
   campaigns: CampaignLookup = findCampaign,
+  catalogCards: CatalogCards = async () => [],
 ): StoreApi<AppState> {
   return createStore<AppState>((set, get) => {
     // Each step must see the state its predecessor left, so they run strictly one at a time.
@@ -446,7 +474,7 @@ export function createAppStore(
       const loaded = await gameStore.loadGame(gameId);
       const state = loaded?.state ?? emptyState();
       const entry = loaded && scenarios(state.meta.scenarioId);
-      const ctx = entry && contextFor(entry);
+      const ctx = entry && contextFor(entry, await loadCatalogCards(catalogCards));
       session = ctx && (await GameSession.open(gameStore, gameId, ctx));
       const campaignId = loaded?.summary.campaignId;
       currentCampaignId = campaignId;
