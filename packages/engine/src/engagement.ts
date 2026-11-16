@@ -1,4 +1,4 @@
-import { cardStats, type EngineContext } from './cards';
+import type { EngineContext } from './cards';
 import type { Command } from './commands';
 import type { DecisionRequested, EnemyEngaged, Event } from './events';
 import { decisionId, type InstanceId, type InvestigatorId } from './ids';
@@ -56,7 +56,7 @@ export function engageEvents(
     state,
     enemyId,
     `engage:${enemyId}`,
-    preyPrompt(state, enemy, cardStats(ctx.cards, enemy.code), 'decision.chooseEngagement'),
+    preyPrompt(ctx, state, enemy, 'decision.chooseEngagement'),
     preferred,
     (chosen) => ({ type: 'EngageEnemy', enemyId, investigatorId: chosen.id }),
   );

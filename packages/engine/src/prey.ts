@@ -66,7 +66,7 @@ interface Prey {
 const NEAREST_TO_ANOTHER = /^nearest to another (.+) enemy$/i;
 const AT_TRAIT_LOCATION = /^investigator at an? (.+) location$/i;
 const ONLY = /\s+only$/i;
-const BEARER = /^(bearer|you)$/i;
+const BEARER = /^bearer$/i;
 
 /**
  * The investigators among `candidates` that the prey keyword of `enemy` picks (Rules Reference,
@@ -119,16 +119,17 @@ export function preyAllows(
 }
 
 /**
- * The prompt for a choice between the investigators `preferredByPrey` left for `enemy` (its
- * `stats`): `prompt` when the prey was read and only a tie is left, `decision.choosePrey` when
- * the players have to judge the prey themselves.
+ * The prompt for a choice between the investigators `preferredByPrey` left for `enemy`: `prompt`
+ * when the prey was read and only a tie is left, `decision.choosePrey` when the players have to
+ * judge the prey themselves.
  */
 export function preyPrompt(
+  ctx: EngineContext,
   state: GameState,
   enemy: CardInstance,
-  stats: CardStats,
   prompt: string,
 ): string {
+  const stats = cardStats(ctx.cards, enemy.code);
   return preyText(stats) !== undefined && readPrey(state, stats, enemy.owner) === undefined
     ? 'decision.choosePrey'
     : prompt;
@@ -157,8 +158,7 @@ function readPrey(
 
 /**
  * How a prey text without its "only" picks: by a measure, by the trait of their location, by an
- * investigator's name in this game ("Daisy Walker"), or the `bearer` of a weakness ("Bearer",
- * "You"); undefined for any other text, and for "Bearer" on a card nobody owns.
+ * investigator's name in this game ("Daisy Walker"), or the `bearer` of a weakness ("Bearer"); undefined for any other text, and for "Bearer" on a card nobody owns.
  */
 function preyPick(
   state: GameState,

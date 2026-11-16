@@ -86,7 +86,7 @@ describe('DrawWeakness', () => {
     expect(after.cards[alicesWeakness]?.zone).toEqual(engagedWith(bob));
   });
 
-  it('spawns a weakness enemy with prey "Bearer only" apart from anyone but its drawer', () => {
+  it('spawns a weakness enemy with prey "Bearer only" unengaged at another investigator\'s location', () => {
     const { context, state } = aliceInHallBobInAttic(atticWeaknessFoeHuntingItsBearer);
 
     const after = stateAfter(context, state, aliceDraws(atticWeaknessFoeHuntingItsBearer));

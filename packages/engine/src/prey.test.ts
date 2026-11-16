@@ -203,7 +203,6 @@ describe('preferredByPrey "Bearer only"', () => {
   it.each([
     { prey: 'Bearer only', owner: bob, among: ['alice', 'bob'], expected: ['bob'] },
     { prey: 'Bearer only', owner: bob, among: ['alice'], expected: [] },
-    { prey: 'You', owner: bob, among: ['alice', 'bob'], expected: ['bob'] },
     { prey: 'Bearer only', owner: undefined, among: ['alice', 'bob'], expected: ['alice', 'bob'] },
   ])(
     '"$prey" of a weakness owned by $owner picks $expected among $among',
@@ -246,8 +245,10 @@ describe('preyPrompt', () => {
     },
   ] as const)('asks with $prompt for $name', ({ keywords, prompt }) => {
     const card = blankEnemy('hunter', { keywords: [...keywords] });
-    const { state } = newGame().withCard(hunter, card, setAside).start();
+    const { context, state } = newGame().withCard(hunter, card, setAside).start();
 
-    expect(preyPrompt(state, state.cards[hunter]!, card, 'decision.chooseEngagement')).toBe(prompt);
+    expect(preyPrompt(context, state, state.cards[hunter]!, 'decision.chooseEngagement')).toBe(
+      prompt,
+    );
   });
 });
