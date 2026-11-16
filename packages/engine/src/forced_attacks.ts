@@ -1,3 +1,4 @@
+import { assertNever } from '@arkham/util';
 import { cardStats, type EngineContext } from './cards';
 import { decisionId, type DecisionId, type InstanceId, type InvestigatorId } from './ids';
 import { requireCard } from './lookup';
@@ -106,8 +107,12 @@ export function attackDecisionId(
       return decisionId(`enemyAttack:${enemyId}:${investigatorId}`);
     case 'cardAttack':
       return decisionId(`cardAttack:${enemyId}:${investigatorId}`);
-    default:
+    case 'attackOfOpportunity':
+    case 'retaliate':
+    case 'alert':
       return decisionId(`${kind}:${enemyId}`);
+    default:
+      return assertNever(kind);
   }
 }
 
