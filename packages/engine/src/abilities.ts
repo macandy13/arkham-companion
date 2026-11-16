@@ -1092,16 +1092,17 @@ export function resolveEffect(
   const deferred = withDeferredOutcomes(withDifficultyChanges(ctx, state, effect, opened), opened);
   const each = repeatedRef(deferred);
   const ids = each === undefined ? [undefined] : eachId(ctx, state, each, refs);
-  const commandsFor = (picked?: InstanceId | InvestigatorId): AbilityCommand[] =>
+  const commandsFor = (picked?: InstanceId | InvestigatorId): Command[] =>
     ids.flatMap((id, repetition) => {
       const setAsideCopy = (code: CardCode) => setAsideCopyOf(state, code, repetition);
       const resolved = resolveRefs(deferred, { ...refs, each: id, picked, setAsideCopy });
-      // The walk keeps every field but the references, which become the IDs the
-      // command type expects, so the result is an `AbilityCommand`.
+      // The walk keeps every field but the references, which become the IDs the command type
+      // expects, so the result is a command. A difficulty the decider enters (`AskedCount`) sits
+      // only in a choice's option, which holds `AnswerableCommand`s: the answer fills it in.
       return resolved === undefined
         ? []
         : [
-            withSource(resolved as AbilityCommand, {
+            withSource(resolved as Command, {
               cardId: opened.cardId,
               window: opened.window.kind,
             }),
@@ -1370,7 +1371,7 @@ function pickDecision(
   picked: PickedRef,
   investigatorId: InvestigatorId,
   candidates: readonly (InstanceId | InvestigatorId)[],
-  commandsFor: (pickedId: InstanceId | InvestigatorId) => AbilityCommand[],
+  commandsFor: (pickedId: InstanceId | InvestigatorId) => Command[],
 ): Command {
   const { key, ...asked } = pickQuestion(picked, investigatorId);
   const labels =
