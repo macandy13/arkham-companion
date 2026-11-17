@@ -114,7 +114,11 @@ describe('renderPage', () => {
   });
 
   it.each([
-    ['colours TypeScript', 'src/rules.ts', '<span class="k">const</span> on = true;'],
+    [
+      'colours TypeScript',
+      'src/rules.ts',
+      '<span class="k">const</span> on = <span class="k">true</span>;',
+    ],
     ['leaves YAML plain', '.github/workflows/ci.yml', 'const on = true;'],
   ])('%s', (_case, file, text) => {
     const tour: Tour = {
