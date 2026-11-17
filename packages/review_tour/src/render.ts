@@ -153,21 +153,25 @@ function segments(
 
 function renderCode(code: StopCode): string {
   const badge = code.newFile ? 'new file' : `+${code.added} −${code.removed}`;
-  const lines = code.lines.map((line) => renderLine(line, code.newFile)).join('');
+  const colour = SCRIPT_FILE.test(code.file) ? highlightLine : escapeHtml;
+  const lines = code.lines.map((line) => renderLine(line, code.newFile, colour)).join('');
   return `<div class="code"><header><span class="file">${escapeHtml(code.file)}</span><span>${badge}</span><a href="${escapeHtml(code.diffUrl)}">Open in diff</a></header><pre><code>${lines}</code></pre></div>`;
 }
+
+/** The files `highlightLine` knows; YAML, Markdown and CSS stay plain rather than coloured wrong. */
+const SCRIPT_FILE = /\.[cm]?[jt]sx?$/;
 
 const MARKS = { context: ' ', added: '+', removed: '−', gap: '⋯' } as const;
 
 /** In a new file every line is added, so only highlighted lines stand out there. */
-function renderLine(line: TourLine, newFile: boolean): string {
+function renderLine(line: TourLine, newFile: boolean, colour: (text: string) => string): string {
   if (line.kind === 'gap') return lineHtml('gap', '', MARKS.gap, escapeHtml(line.text));
   const shown = newFile && line.kind === 'added' ? 'context' : line.kind;
   return lineHtml(
     line.highlighted ? 'highlighted' : shown,
     String(line.number),
     MARKS[shown],
-    highlightLine(line.text),
+    colour(line.text),
   );
 }
 

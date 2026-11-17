@@ -114,6 +114,30 @@ describe('renderPage', () => {
   });
 
   it.each([
+    ['colours TypeScript', 'src/rules.ts', '<span class="k">const</span> on = true;'],
+    ['leaves YAML plain', '.github/workflows/ci.yml', 'const on = true;'],
+  ])('%s', (_case, file, text) => {
+    const tour: Tour = {
+      concept: 'C.',
+      questions: [],
+      stops: [{ title: 'Code', text: 'T.', code: [] }],
+      rest: [],
+    };
+    const code = {
+      file,
+      newFile: false,
+      added: 0,
+      removed: 0,
+      diffUrl: 'https://github.com/o/r/pull/1367/files',
+      lines: [{ kind: 'context', number: 1, text: 'const on = true;', highlighted: false }],
+    } as const;
+
+    expect(page(tour, [{ code: [code], pictures: [] }])).toContain(
+      `<span class="text">${text}</span>`,
+    );
+  });
+
+  it.each([
     ['offers before and after for a changed golden', true, true],
     ['shows only the picture for an unchanged one', false, false],
   ])('%s', (_case, changed, toggles) => {
