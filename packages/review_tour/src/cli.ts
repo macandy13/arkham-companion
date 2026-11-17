@@ -2,7 +2,8 @@
  * Command-line entry for the review tour, run with plain `node` (type stripping) by
  * `.github/workflows/review-tour.yml` in a checkout that has both commits. Reads the tour block
  * from the PR body and writes the page to `<out>/index.html`; writes nothing when the body has
- * no block, and fails with the reason when the block is malformed or points at nothing.
+ * no block, and fails with the reason when the block is malformed or points at nothing. Prints the
+ * page's summary ("4 stops · 1 question · …") as its last line.
  *
  *   node cli.ts --body <file> --title <PR title> --pr <number> --repo <owner/name>
  *     --base <sha> --head <sha> --out <dir>
@@ -14,7 +15,7 @@ import { join } from 'node:path';
 import { parseArgs } from 'node:util';
 import { cutStopLines, parseDiff, type FileDiff } from './diff_lines.ts';
 import { GOLDEN_DIR, pictureVariants } from './pictures.ts';
-import { renderPage, type StopCode, type StopContent } from './render.ts';
+import { renderPage, tourSummary, type StopCode, type StopContent } from './render.ts';
 import { parseTour, type CodeRef, type TourStop } from './tour.ts';
 
 const required = { type: 'string', default: '' } as const;
@@ -109,16 +110,13 @@ const onTour = stops
   .flatMap((stop) => stop.code.flatMap((code) => code.lines))
   .filter((line) => line.kind === 'added' || line.kind === 'removed').length;
 
+const page = {
+  pr: { number: Number(values.pr), title: values.title, url: prUrl, headSha: head },
+  tour,
+  stops,
+  changedLines: { all: allChanged, onTour },
+};
 mkdirSync(values.out, { recursive: true });
-writeFileSync(
-  join(values.out, 'index.html'),
-  renderPage({
-    pr: { number: Number(values.pr), title: values.title, url: prUrl, headSha: head },
-    tour,
-    stops,
-    changedLines: { all: allChanged, onTour },
-  }),
-);
-console.log(
-  `Wrote ${join(values.out, 'index.html')}: ${tour.stops.length} stops, ${tour.questions.length} questions.`,
-);
+writeFileSync(join(values.out, 'index.html'), renderPage(page));
+// The last line is the summary review-tour.yml puts in the PR comment that links the page.
+console.log(tourSummary(page).join(' · '));

@@ -88,14 +88,22 @@ function renderNav(number: number, tour: Tour): string {
   return `<nav aria-label="Tour"><span class="number">#${number}</span><ol>${question}${stops.join('')}</ol></nav>`;
 }
 
-function renderMeta({ tour, changedLines }: PageInput): string {
+function renderMeta(input: PageInput): string {
+  return tourSummary(input)
+    .map((item) => `<span>${item}</span>`)
+    .join('');
+}
+
+/** The page's size line, also the PR comment that links the page: "4 stops", "1 question", "50 of 482 …". */
+export function tourSummary({
+  tour,
+  changedLines,
+}: Pick<PageInput, 'tour' | 'changedLines'>): string[] {
   return [
     plural(tour.stops.length, 'stop'),
     plural(tour.questions.length, 'question'),
     `${changedLines.onTour} of ${changedLines.all} changed lines on the tour`,
-  ]
-    .map((item) => `<span>${item}</span>`)
-    .join('');
+  ];
 }
 
 function renderQuestions(questions: readonly TourQuestion[], prUrl: string): string {
