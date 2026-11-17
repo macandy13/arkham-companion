@@ -10,8 +10,10 @@ import {
   isEnemyAttackDecision,
   newGame,
   type Command,
+  type Decision,
   type GameState,
 } from './index';
+import { attackDecision } from './forced_attacks';
 import { answer, investigatorOf, stateAfter } from '../test/utils';
 
 const alice = investigatorId('alice');
@@ -206,13 +208,32 @@ describe('alert', () => {
 });
 
 describe('an enemy attack decision', () => {
-  it.each([
-    { id: 'attackOfOpportunity:ghoul', attack: true },
-    { id: 'retaliate:ghoul', attack: true },
-    { id: 'alert:ghoul', attack: true },
-    { id: 'enemyAttack:ghoul:alice', attack: true },
-    { id: 'investigate:alice', attack: false },
-  ])('is told by its id: $id', ({ id, attack }) => {
-    expect(isEnemyAttackDecision({ id: decisionId(id) })).toBe(attack);
+  const { context, state } = aliceAndBobInStudy
+    .withCard(enemy, plainGhoul, engagedWith(alice))
+    .start();
+
+  it.each(['enemyPhase', 'attackOfOpportunity', 'retaliate', 'alert', 'cardAttack'] as const)(
+    'is told by the attack it deals: %s',
+    (kind) => {
+      expect(isEnemyAttackDecision(attackDecision(context, state, kind, enemy, alice))).toBe(true);
+    },
+  );
+
+  it('is not a decision whose options deal no attack', () => {
+    const investigate: Decision = {
+      id: decisionId('investigate:alice'),
+      kind: 'confirm',
+      prompt: 'decision.investigate',
+      decider: { kind: 'investigator', investigatorId: alice },
+      options: [
+        {
+          id: 'pass',
+          label: 'decision.pass',
+          commands: [{ type: 'EndTurn', investigatorId: alice }],
+        },
+      ],
+    };
+
+    expect(isEnemyAttackDecision(investigate)).toBe(false);
   });
 });
