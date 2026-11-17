@@ -37,6 +37,9 @@ export type SteppedStat = Extract<InvestigatorStat, 'resources' | 'damage' | 'ho
 /** Whether a step on the turn spends one of the investigator's actions or is free (a card allows it). */
 export type ActionCost = 'action' | 'free';
 
+/** The tests a card lets an investigator make outside their turn or away from their location. */
+export type TestByCard = 'investigate' | 'fight' | 'evade';
+
 /** Counts the players confirm when they answer a decision (clues found, damage soaked). */
 export interface DecisionAmounts {
   /** For an option with one `amount` range. */
@@ -242,6 +245,13 @@ export interface GameActions {
    * first, Elusive, is a `disengageEnemy` before it) and ready enemies there engage.
    */
   moveByCard(investigator: InvestigatorId, location: InstanceId): Promise<void>;
+  /**
+   * A card has `investigator`, whoever's turn it is, investigate the location `target` (In the
+   * Know) or fight or evade the enemy `target` (Quick Thinking, Marksmanship), at their
+   * location or another: `Investigate.locationId`, `Fight` and `Evade` with `atAnyLocation`, taking
+   * none of the turn's actions. The test stays open as a decision.
+   */
+  testByCard(kind: TestByCard, investigator: InvestigatorId, target: InstanceId): Promise<void>;
   /**
    * `delta` more (or, negative, fewer) of `token` on `card` in play (a location, an enemy): one tap
    * on a location's stepper, or a token dragged from or to the token pool. Doom added is placed by
@@ -449,6 +459,33 @@ export function gameActions(
       play((table) =>
         table.play({ type: 'DrawWeakness', investigatorId: investigator, code: card }),
       ),
+    testByCard: (kind, investigator, target) =>
+      play((table) => {
+        switch (kind) {
+          case 'investigate':
+            return table.play({
+              type: 'Investigate',
+              investigatorId: investigator,
+              locationId: target,
+            });
+          case 'fight':
+            return table.play({
+              type: 'Fight',
+              investigatorId: investigator,
+              enemyId: target,
+              atAnyLocation: true,
+            });
+          case 'evade':
+            return table.play({
+              type: 'Evade',
+              investigatorId: investigator,
+              enemyId: target,
+              atAnyLocation: true,
+            });
+          default:
+            return assertNever(kind);
+        }
+      }),
     moveByCard: (investigator, location) =>
       play((table) =>
         table.play({

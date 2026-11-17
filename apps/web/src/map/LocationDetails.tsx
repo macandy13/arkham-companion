@@ -11,6 +11,7 @@ import {
   cardActionsOn,
   type ActionIcon,
 } from '../screens/ActionRow';
+import { TestsByCard } from '../screens/TestsByCard';
 import type { GameActions } from '../state/gameActions';
 import { CardPatterns, LocationTile } from './LocationTile';
 import { TILE } from './mapLayout';
@@ -194,7 +195,7 @@ function LocationPage({
     <>
       <Here board={board} location={location} />
       <AttachedCards board={board} host={location.id} actions={actions} busy={busy} />
-      {offered.length + printed.length > 0 || revealable ? (
+      {offered.length + printed.length > 0 || revealable || location.revealed ? (
         <footer>
           {offered.length > 0 && (
             <ActionGroup title={t('location.actions')}>{offered.map(button)}</ActionGroup>
@@ -206,6 +207,17 @@ function LocationPage({
               actions={actions}
               busy={busy}
               onUse={onLeave}
+            />
+          )}
+          {location.revealed && (
+            <TestsByCard
+              board={board}
+              tests={['investigate']}
+              busy={busy}
+              onTest={(kind, investigator) => {
+                (onTest ?? onLeave)?.();
+                void actions.testByCard(kind, investigator, location.id);
+              }}
             />
           )}
           {revealable && (

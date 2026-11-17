@@ -255,3 +255,33 @@ test('move an investigator by a card effect to any location', async ({ page }) =
     await expect(page.getByRole('status', { name: 'Choose where to move' })).toHaveCount(0);
   });
 });
+
+// Journey: a card effect has Roland Banks investigate a location he isn't at (In the Know): moved to
+// the Attic, the players start the test from the Hallway's details, and its decision asks for the
+// Hallway's shroud.
+test('investigate another location by a card effect', async ({ page }) => {
+  const house = page.getByRole('figure', { name: 'House' });
+  const room = (name: string) => house.getByRole('group', { name });
+
+  await test.step('Resume a game with the house open and move Roland to the Attic', async () => {
+    await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
+    await page
+      .getByRole('region', { name: 'Roland Banks' })
+      .getByRole('button', { name: "Show Roland Banks's card" })
+      .click();
+    await page.getByRole('button', { name: 'Move by card effect' }).click();
+    await room('Attic').click();
+    await expect(room('Attic').getByRole('img', { name: 'Roland Banks' })).toBeVisible();
+  });
+
+  await test.step('Investigate the Hallway by card effect from its details', async () => {
+    await room('Hallway').getByRole('button', { name: 'Details of Hallway' }).click();
+    await page
+      .getByRole('dialog', { name: 'Hallway' })
+      .getByRole('button', { name: 'Investigate by card effect' })
+      .click();
+    await expect(
+      page.getByRole('dialog', { name: 'Investigate Hallway' }).getByText('Intellect test (1)'),
+    ).toBeVisible();
+  });
+});
