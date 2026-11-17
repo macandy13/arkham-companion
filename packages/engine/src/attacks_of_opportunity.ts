@@ -1,3 +1,4 @@
+import { assertNever } from '@arkham/util';
 import { findInvestigator, requireInvestigator } from './investigators';
 import type { EngineContext } from './cards';
 import type { DealEnemyAttack, EnemyAttacks } from './commands';
@@ -63,7 +64,21 @@ export function handleDealEnemyAttack(
   state: GameState,
   cmd: DealEnemyAttack,
 ): Event[] {
-  if (cmd.kind === 'enemyPhase') return handleEnemyPhaseAttack(ctx, state, cmd);
+  switch (cmd.kind) {
+    case 'enemyPhase':
+      return handleEnemyPhaseAttack(ctx, state, cmd);
+    case 'attackOfOpportunity':
+    case 'retaliate':
+    case 'alert':
+    case 'cardAttack':
+      return forcedAttackEvents(ctx, state, cmd);
+    default:
+      return assertNever(cmd.kind);
+  }
+}
+
+/** A forced attack (`ForcedAttackKind`): dealt at once, leaving the enemy as it is. */
+function forcedAttackEvents(ctx: EngineContext, state: GameState, cmd: DealEnemyAttack): Event[] {
   const { enemy, stats } = enemyOf(ctx, state, cmd.enemyId);
   const investigator = requireInvestigator(state, cmd.investigatorId);
   if (cmd.cancelled || investigator.status !== 'active' || !isEnemyOnTable(enemy)) return [];
