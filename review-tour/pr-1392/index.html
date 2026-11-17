@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>#1392 review tour</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400..700&amp;family=JetBrains+Mono:wght@400;600&amp;display=swap">
+<style>
+:root {
+  --bg: #fbfbf9; --fg: #1d1f21; --muted: #6b6f73; --line: #e6e5e0; --soft: #f2f1ec;
+  --accent: #2f5d8a; --accent-fg: #ffffff; --ask: #fdf4dc; --ask-fg: #3d3115; --code-bg: #ffffff;
+  --add-bg: #e9f5ec; --add-mark: #2e7d47; --del-bg: #fbecea; --del-mark: #b0413a; --hl: #fff3c4;
+  --tok-key: #8a3ffc; --tok-str: #2e7d47; --tok-com: #8c9196; --tok-type: #2f5d8a; --ok: #2e7d47;
+  --font-body: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-code: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  --radius: 8px;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #17191b; --fg: #e8e8e6; --muted: #9a9ea3; --line: #2b2e31; --soft: #202326;
+    --accent: #8ab4e0; --accent-fg: #10161c; --ask: #2b2617; --ask-fg: #f0e3bd; --code-bg: #1c1f22;
+    --add-bg: #1d2e23; --add-mark: #7cc596; --del-bg: #33201f; --del-mark: #e48a83; --hl: #3a3420;
+    --tok-key: #c4a1ff; --tok-str: #8fd0a4; --tok-com: #7c8288; --tok-type: #8ab4e0; --ok: #7cc596;
+    color-scheme: dark;
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.6 var(--font-body); -webkit-font-smoothing: antialiased; }
+main {
+  max-width: 720px; margin: 0 auto; display: grid; gap: 40px;
+  padding: 0 max(16px, env(safe-area-inset-right)) 56px max(16px, env(safe-area-inset-left));
+}
+a { color: var(--accent); text-underline-offset: 2px; }
+a:focus-visible, button:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+code { font-family: var(--font-code); font-size: .88em; background: var(--soft); padding: 1px 5px; border-radius: 4px; }
+nav {
+  position: sticky; top: 0; z-index: 5; display: flex; align-items: center; gap: 12px;
+  margin: 0 calc(-1 * max(16px, env(safe-area-inset-left))); padding: 10px max(16px, env(safe-area-inset-left));
+  background: color-mix(in srgb, var(--bg) 92%, transparent); backdrop-filter: blur(8px); border-bottom: 1px solid var(--line);
+}
+nav .number { font-size: 14px; font-weight: 600; color: var(--muted); }
+nav ol { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 0 auto; padding: 0; list-style: none; }
+nav ol a {
+  width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center;
+  color: var(--muted); background: var(--soft); font-size: 13px; font-weight: 600; text-decoration: none;
+}
+nav ol a.question { background: var(--ask); color: var(--ask-fg); }
+nav ol a.on { background: var(--accent); color: var(--accent-fg); }
+header { display: grid; gap: 12px; padding-top: 28px; }
+.kicker { font-size: 13px; color: var(--muted); }
+h1 { font-size: 28px; line-height: 1.2; font-weight: 650; letter-spacing: -0.015em; margin: 0; text-wrap: balance; }
+.concept { font-size: 18px; margin: 0; max-width: 60ch; }
+.meta { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 13px; color: var(--muted); margin: 0; }
+.questions { background: var(--ask); color: var(--ask-fg); border-radius: var(--radius); padding: 18px 20px; display: grid; gap: 14px; }
+.questions h2 { font-size: 12px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; margin: 0; opacity: .75; }
+.questions ol { margin: 0; padding-left: 20px; display: grid; gap: 12px; }
+.questions p { margin: 0; font-size: 17px; }
+.questions .about { font-size: 13px; opacity: .75; }
+.questions a { color: inherit; font-size: 14px; font-weight: 500; }
+.stop { display: grid; gap: 14px; scroll-margin-top: 64px; }
+.stop > header { display: grid; grid-template-columns: auto 1fr; gap: 2px 12px; align-items: center; padding: 0; }
+.stop-number {
+  grid-row: span 2; align-self: start; margin-top: 2px; width: 28px; height: 28px; border-radius: 50%;
+  display: grid; place-items: center; background: var(--accent); color: var(--accent-fg); font-size: 13px; font-weight: 600;
+}
+.stop h2 { font-size: 20px; line-height: 1.3; font-weight: 600; letter-spacing: -0.01em; margin: 0; text-wrap: balance; }
+.tag { font-size: 12px; color: var(--muted); letter-spacing: .04em; text-transform: uppercase; }
+.stop > p { margin: 0; max-width: 62ch; }
+figure { display: grid; gap: 8px; margin: 0; }
+.toggle { display: flex; flex-wrap: wrap; gap: 4px; }
+.segments { display: inline-flex; background: var(--soft); border-radius: 999px; padding: 3px; }
+.toggle button { font: 500 13px var(--font-body); color: var(--muted); background: transparent; border: 0; border-radius: 999px; padding: 4px 12px; cursor: pointer; }
+.toggle button[aria-pressed="true"] { background: var(--bg); color: var(--fg); box-shadow: 0 1px 2px rgb(0 0 0 / 12%); }
+.frame { border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; background: var(--soft); }
+.frame img { display: block; width: 100%; height: auto; }
+.frame.phone { max-width: 280px; margin-inline: auto; }
+.frame .missing { padding: 24px; text-align: center; color: var(--muted); font-size: 14px; }
+.code { border: 1px solid var(--line); border-radius: var(--radius); background: var(--code-bg); overflow: hidden; }
+.code > header {
+  display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; padding: 8px 12px;
+  border-bottom: 1px solid var(--line); background: var(--soft); font-size: 13px; color: var(--muted);
+}
+.code .file { color: var(--fg); font-family: var(--font-code); font-size: 12.5px; overflow-wrap: anywhere; }
+.code > header a { margin-left: auto; }
+.code pre code { display: block; padding: 0; background: none; font-size: inherit; }
+.code pre { margin: 0; padding: 6px 0; font: 12.5px/1.6 var(--font-code); font-variant-ligatures: none; }
+.line { display: grid; grid-template-columns: 3.2em 1.4em minmax(0, 1fr); }
+.line .number { color: var(--muted); text-align: right; padding-right: .6em; user-select: none; opacity: .6; }
+.line .mark { color: var(--muted); user-select: none; }
+.line .text { padding: 0 12px 0 2ch; text-indent: -2ch; white-space: pre-wrap; overflow-wrap: anywhere; }
+.line.added { background: var(--add-bg); } .line.added .mark { color: var(--add-mark); }
+.line.removed { background: var(--del-bg); } .line.removed .mark { color: var(--del-mark); }
+.line.highlighted { background: var(--hl); }
+.line.gap .text { color: var(--muted); font-family: var(--font-body); font-size: 12px; }
+.k { color: var(--tok-key); } .s { color: var(--tok-str); } .c { color: var(--tok-com); font-style: italic; } .t { color: var(--tok-type); }
+.done { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; }
+.done p { margin: 0; color: var(--muted); }
+.done a { background: var(--accent); color: var(--accent-fg); border-radius: 999px; padding: 9px 20px; text-decoration: none; font-weight: 600; font-size: 15px; }
+details { border-top: 1px solid var(--line); padding-top: 16px; }
+summary { cursor: pointer; font-size: 15px; font-weight: 600; }
+details ul { padding-left: 20px; margin: 12px 0 0; display: grid; gap: 6px; font-size: 15px; }
+@media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+</style>
+</head>
+<body>
+<main>
+<nav aria-label="Tour"><span class="number">#1392</span><ol><li><a class="question" href="#questions" aria-label="Questions">?</a></li><li><a href="#stop-1" data-stop="stop-1">1</a></li><li><a href="#stop-2" data-stop="stop-2">2</a></li><li><a href="#stop-3" data-stop="stop-3">3</a></li></ol></nav>
+<header>
+<p class="kicker">ci · RT.b · as of 806f0a1</p>
+<h1>Publish the review tour page and link it on the PR</h1>
+<p class="concept">Every PR with a tour block gets a review page on gh-pages, linked from a sticky comment and rebuilt on each push or description edit.</p>
+<p class="meta"><span>3 stops</span><span>1 question</span><span>60 of 162 changed lines on the tour</span></p>
+</header>
+<section class="questions" id="questions"><h2>Question for you</h2><ol><li><p>Link the page from a sticky comment rather than the top of the description, so it can't race the preview workflow's description edit?</p><span class="about">Concerns <a href="#stop-2">stop 2</a>. Picked: sticky comment.</span></li></ol><a href="https://github.com/macandy13/arkham-companion/pull/1392">Answer on GitHub →</a></section>
+<section class="stop" id="stop-1">
+<header><span class="stop-number">1</span><span class="tag">CI</span><h2>Build and publish</h2></header>
+<p>Reads the description fresh, renders the page, and pushes it to gh-pages, retrying onto the latest since previews and deploys push there too.</p>
+
+<div class="code"><header><span class="file">.github/workflows/review-tour.yml</span><span>new file</span><a href="https://github.com/macandy13/arkham-companion/pull/1392/files#diff-4b0e335d01d478e88f6a779a8ecb031dd2be1da3f1ed1725d18a88962e40206fR46-R81">Open in diff</a></header><pre><code><span class="line context"><span class="number">46</span><span class="mark"> </span><span class="text">      # <span class="t">The</span> description is read fresh: the event<span class="s">'s copy may predate a later edit.</span></span></span><span class="line context"><span class="number">47</span><span class="mark"> </span><span class="text">      - id: build</span></span><span class="line context"><span class="number">48</span><span class="mark"> </span><span class="text">        <span class="k">if</span>: github.event.action != <span class="s">'closed'</span></span></span><span class="line context"><span class="number">49</span><span class="mark"> </span><span class="text">        env:</span></span><span class="line context"><span class="number">50</span><span class="mark"> </span><span class="text">          <span class="t">GH_TOKEN</span>: ${{ github.token }}</span></span><span class="line context"><span class="number">51</span><span class="mark"> </span><span class="text">          <span class="t">TITLE</span>: ${{ github.event.pull_request.title }}</span></span><span class="line context"><span class="number">52</span><span class="mark"> </span><span class="text">          <span class="t">BASE</span>: ${{ github.event.pull_request.base.sha }}</span></span><span class="line context"><span class="number">53</span><span class="mark"> </span><span class="text">          <span class="t">HEAD</span>: ${{ github.event.pull_request.head.sha }}</span></span><span class="line context"><span class="number">54</span><span class="mark"> </span><span class="text">        run: |</span></span><span class="line highlighted"><span class="number">55</span><span class="mark"> </span><span class="text">          gh api <span class="s">&quot;repos/$GITHUB_REPOSITORY/pulls/$PR&quot;</span> --jq <span class="s">'.body // &quot;&quot;'</span> &gt; <span class="s">&quot;$RUNNER_TEMP/body.md&quot;</span></span></span><span class="line context"><span class="number">56</span><span class="mark"> </span><span class="text">          git fetch --no-tags origin <span class="s">&quot;$BASE&quot;</span></span></span><span class="line context"><span class="number">57</span><span class="mark"> </span><span class="text">          node packages/review_tour/src/cli.ts --body <span class="s">&quot;$RUNNER_TEMP/body.md&quot;</span> --title <span class="s">&quot;$TITLE&quot;</span> \</span></span><span class="line context"><span class="number">58</span><span class="mark"> </span><span class="text">            --pr <span class="s">&quot;$PR&quot;</span> --repo <span class="s">&quot;$GITHUB_REPOSITORY&quot;</span> --base <span class="s">&quot;$BASE&quot;</span> --head <span class="s">&quot;$HEAD&quot;</span> --out <span class="s">&quot;$RUNNER_TEMP/page&quot;</span> | tee <span class="s">&quot;$RUNNER_TEMP/out.txt&quot;</span></span></span><span class="line context"><span class="number">59</span><span class="mark"> </span><span class="text">          <span class="k">if</span> [ -f <span class="s">&quot;$RUNNER_TEMP/page/index.html&quot;</span> ]; then</span></span><span class="line context"><span class="number">60</span><span class="mark"> </span><span class="text">            echo <span class="s">&quot;summary=$(tail -n 1 &quot;</span>$<span class="t">RUNNER_TEMP</span>/out.txt<span class="s">&quot;)&quot;</span> &gt;&gt; <span class="s">&quot;$GITHUB_OUTPUT&quot;</span></span></span><span class="line context"><span class="number">61</span><span class="mark"> </span><span class="text">          fi</span></span><span class="line context"><span class="number">62</span><span class="mark"> </span><span class="text">      # <span class="t">Pushes</span> are retried onto the latest gh-pages, since previews and main<span class="s">'s deploy push there too.</span></span></span><span class="line context"><span class="number">63</span><span class="mark"> </span><span class="text">      - name: <span class="t">Publish</span> to gh-pages</span></span><span class="line context"><span class="number">64</span><span class="mark"> </span><span class="text">        run: |</span></span><span class="line context"><span class="number">65</span><span class="mark"> </span><span class="text">          git fetch --depth=1 origin gh-pages</span></span><span class="line context"><span class="number">66</span><span class="mark"> </span><span class="text">          git worktree add --detach <span class="s">&quot;$RUNNER_TEMP/pages&quot;</span> <span class="t">FETCH_HEAD</span></span></span><span class="line context"><span class="number">67</span><span class="mark"> </span><span class="text">          cd <span class="s">&quot;$RUNNER_TEMP/pages&quot;</span></span></span><span class="line context"><span class="number">68</span><span class="mark"> </span><span class="text">          git config user.name <span class="s">&quot;github-actions[bot]&quot;</span></span></span><span class="line context"><span class="number">69</span><span class="mark"> </span><span class="text">          git config user.email <span class="s">&quot;41898282+github-actions[bot]@users.noreply.github.com&quot;</span></span></span><span class="line context"><span class="number">70</span><span class="mark"> </span><span class="text">          rm -rf <span class="s">&quot;$DIR&quot;</span></span></span><span class="line context"><span class="number">71</span><span class="mark"> </span><span class="text">          <span class="k">if</span> [ -f <span class="s">&quot;$RUNNER_TEMP/page/index.html&quot;</span> ]; then mkdir -p <span class="s">&quot;$DIR&quot;</span> &amp;&amp; cp <span class="s">&quot;$RUNNER_TEMP/page/index.html&quot;</span> <span class="s">&quot;$DIR/&quot;</span>; fi</span></span><span class="line context"><span class="number">72</span><span class="mark"> </span><span class="text">          git add -<span class="t">A</span></span></span><span class="line context"><span class="number">73</span><span class="mark"> </span><span class="text">          <span class="k">if</span> git diff --cached --quiet; then exit 0; fi</span></span><span class="line context"><span class="number">74</span><span class="mark"> </span><span class="text">          git commit -q -m <span class="s">&quot;Review tour for #$PR&quot;</span></span></span><span class="line context"><span class="number">75</span><span class="mark"> </span><span class="text">          <span class="k">for</span> attempt in 1 2 3 4 5; do</span></span><span class="line highlighted"><span class="number">76</span><span class="mark"> </span><span class="text">            git push origin <span class="t">HEAD</span>:gh-pages &amp;&amp; exit 0</span></span><span class="line context"><span class="number">77</span><span class="mark"> </span><span class="text">            sleep $((attempt * 3))</span></span><span class="line context"><span class="number">78</span><span class="mark"> </span><span class="text">            git fetch --depth=1 origin gh-pages</span></span><span class="line context"><span class="number">79</span><span class="mark"> </span><span class="text">            git rebase --onto <span class="t">FETCH_HEAD</span> <span class="t">HEAD</span>~1</span></span><span class="line context"><span class="number">80</span><span class="mark"> </span><span class="text">          done</span></span><span class="line context"><span class="number">81</span><span class="mark"> </span><span class="text">          exit 1</span></span></code></pre></div>
+</section>
+<section class="stop" id="stop-2">
+<header><span class="stop-number">2</span><span class="tag">CI</span><h2>The comment</h2></header>
+<p>Links the page with its size. Without a tour block it is deleted; with a broken one it says so and links the log.</p>
+
+<div class="code"><header><span class="file">.github/workflows/review-tour.yml</span><span>new file</span><a href="https://github.com/macandy13/arkham-companion/pull/1392/files#diff-4b0e335d01d478e88f6a779a8ecb031dd2be1da3f1ed1725d18a88962e40206fR82-R101">Open in diff</a></header><pre><code><span class="line context"><span class="number">82</span><span class="mark"> </span><span class="text">      - <span class="k">if</span>: steps.build.outputs.summary != <span class="s">''</span></span></span><span class="line context"><span class="number">83</span><span class="mark"> </span><span class="text">        uses: marocchino/sticky-pull-request-comment@v3</span></span><span class="line context"><span class="number">84</span><span class="mark"> </span><span class="text">        with:</span></span><span class="line context"><span class="number">85</span><span class="mark"> </span><span class="text">          header: review-tour</span></span><span class="line context"><span class="number">86</span><span class="mark"> </span><span class="text">          message: |</span></span><span class="line context"><span class="number">87</span><span class="mark"> </span><span class="text"><span class="c">            **[Review tour →](https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/${{ env.DIR }}/)** · ${{ steps.build.outputs.summary }}</span></span></span><span class="line context"><span class="number">88</span><span class="mark"> </span><span class="text"></span></span><span class="line context"><span class="number">89</span><span class="mark"> </span><span class="text">            &lt;sub&gt;<span class="t">Built</span> <span class="k">from</span> the description<span class="s">'s review-tour block at ${{ github.event.pull_request.head.sha }}. The link works once Pages has deployed, a minute or two after a push.&lt;/sub&gt;</span></span></span><span class="line context"><span class="number">90</span><span class="mark"> </span><span class="text">      - <span class="k">if</span>: steps.build.outputs.summary == <span class="s">''</span></span></span><span class="line context"><span class="number">91</span><span class="mark"> </span><span class="text">        uses: marocchino/sticky-pull-request-comment@v3</span></span><span class="line context"><span class="number">92</span><span class="mark"> </span><span class="text">        with:</span></span><span class="line context"><span class="number">93</span><span class="mark"> </span><span class="text">          header: review-tour</span></span><span class="line context"><span class="number">94</span><span class="mark"> </span><span class="text">          delete: <span class="k">true</span></span></span><span class="line context"><span class="number">95</span><span class="mark"> </span><span class="text">      # <span class="t">The</span> old page stays up, so the comment says it is out of date and where the reason is.</span></span><span class="line context"><span class="number">96</span><span class="mark"> </span><span class="text">      - <span class="k">if</span>: failure() &amp;&amp; steps.build.outcome == <span class="s">'failure'</span></span></span><span class="line context"><span class="number">97</span><span class="mark"> </span><span class="text">        uses: marocchino/sticky-pull-request-comment@v3</span></span><span class="line context"><span class="number">98</span><span class="mark"> </span><span class="text">        with:</span></span><span class="line context"><span class="number">99</span><span class="mark"> </span><span class="text">          header: review-tour</span></span><span class="line context"><span class="number">100</span><span class="mark"> </span><span class="text">          message: |</span></span><span class="line context"><span class="number">101</span><span class="mark"> </span><span class="text"><span class="c">            **Review tour not updated:** the description's review-tour block is invalid. The reason is in the [check's log](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}).</span></span></span></code></pre></div>
+</section>
+<section class="stop" id="stop-3">
+<header><span class="stop-number">3</span><span class="tag">CI</span><h2>Main's deploy keeps the pages</h2></header>
+<p>The root deploy cleans gh-pages except the excluded directories; the preview action replaces pr-preview/pr-n on each push, so the page lives beside it.</p>
+
+<div class="code"><header><span class="file">.github/workflows/deploy.yml</span><span>+5 −2</span><a href="https://github.com/macandy13/arkham-companion/pull/1392/files#diff-28802fbf11c83a2eee09623fb192785e7ca92a3f40602a517c011b947a1822d3R44-R50">Open in diff</a></header><pre><code><span class="line context"><span class="number">44</span><span class="mark"> </span><span class="text">        with:</span></span><span class="line context"><span class="number">45</span><span class="mark"> </span><span class="text">          branch: gh-pages</span></span><span class="line context"><span class="number">46</span><span class="mark"> </span><span class="text">          folder: apps/web/dist</span></span><span class="line removed"><span class="number">46</span><span class="mark">−</span><span class="text">          clean-exclude: pr-preview/</span></span><span class="line added"><span class="number">47</span><span class="mark">+</span><span class="text">          clean-exclude: |</span></span><span class="line added"><span class="number">48</span><span class="mark">+</span><span class="text">            pr-preview/</span></span><span class="line highlighted"><span class="number">49</span><span class="mark">+</span><span class="text">            review-tour/</span></span><span class="line context"><span class="number">50</span><span class="mark"> </span><span class="text">          force: <span class="k">false</span></span></span></code></pre></div>
+</section>
+<section class="done"><p>That's the whole change.</p><a href="https://github.com/macandy13/arkham-companion/pull/1392/files">Review on GitHub</a></section>
+<details><summary>Not on the tour</summary><ul><li>docs/automation.md: table row and a Review tour section; architecture.md pointer</li><li>cli.ts prints the summary line (<code>tourSummary</code> in render.ts)</li><li>pr-reviewer findings fixed: pipefail (bash shell) and a git identity for the push retry</li></ul></details>
+</main>
+<script>
+document.querySelectorAll('figure[data-variants]').forEach((figure) => {
+  const variants = JSON.parse(figure.dataset.variants);
+  const state = { when: 'after', device: variants[0].device };
+  const frame = figure.querySelector('.frame');
+  const show = () => {
+    const variant = variants.find((v) => v.device === state.device);
+    const src = variant[state.when];
+    frame.classList.toggle('phone', state.device === 'phone');
+    frame.innerHTML = src
+      ? '<img alt="' + state.device + ', ' + state.when + '" src="' + src + '">'
+      : '<p class="missing">' + (state.when === 'before' ? 'New in this PR' : 'Removed in this PR') + '</p>';
+    figure.querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(b.value === state.when || b.value === state.device)));
+  };
+  figure.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => {
+    state[b.name] = b.value;
+    show();
+  }));
+  show();
+});
+const dots = [...document.querySelectorAll('nav a[data-stop]')];
+const seen = new IntersectionObserver((entries) => entries.forEach((entry) => {
+  if (entry.isIntersecting) dots.forEach((d) => d.classList.toggle('on', d.dataset.stop === entry.target.id));
+}), { rootMargin: '-40% 0px -55% 0px' });
+document.querySelectorAll('.stop').forEach((stop) => seen.observe(stop));
+</script>
+</body>
+</html>
