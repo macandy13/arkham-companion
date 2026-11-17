@@ -9,7 +9,7 @@ export interface Tour {
   readonly concept: string;
   readonly questions: readonly TourQuestion[];
   readonly stops: readonly TourStop[];
-  /** Short lines for the folded "Not on the tour" box: tests, plumbing, docs. */
+  /** Short lines for the page's folded "Not on the tour" box: the plumbing the stops leave out. */
   readonly rest: readonly string[];
 }
 
