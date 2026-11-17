@@ -181,6 +181,7 @@ describe('Spreading Flames card abilities', () => {
         commands: [
           {
             type: 'DealEnemyAttack',
+            kind: 'cardAttack',
             enemyId: hellhound,
             investigatorId: alice,
             damage: 1,

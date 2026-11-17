@@ -6,7 +6,7 @@ import type {
   TestedAction,
   TimingWindow,
 } from './abilities';
-import type { KeywordAttackKind } from './forced_attacks';
+import type { AttackKind, KeywordAttackKind } from './forced_attacks';
 import type { CampaignLog, TraumaKind } from './campaign/campaign_log';
 import type { CardType, ScaledValue, TokenAmount, Trait } from './cards';
 import type {
@@ -106,7 +106,6 @@ export type Command =
   | UseCardAction
   | SetLeadInvestigator
   | AdjustActions
-  | ResolveEnemyAttack
   | DealEnemyAttack
   | EnemyAttacks
   | Investigate
@@ -1289,45 +1288,31 @@ export interface AdjustActions extends AskedByCard {
 }
 
 /**
- * The players resolved one enemy attack of the enemy phase, as the answer of
- * its `attackDecision`. `damage`/`horror` default to the enemy's
- * printed values; the players pass less when assets soak part of it.
- * `cancelled` (a card cancelled it) deals nothing and fires no "after it
- * attacks" abilities, but the enemy still exhausts. The enemy exhausts after
- * its last due attack (a massive enemy attacks everyone at its location
- * first). An attack the step listed that is no longer due (its enemy left or
- * disengaged) only leaves the list, without exhausting anyone.
- * Produces `PhaseStepsChanged`, `EnemyAttacked`, `InvestigatorChanged` (damage, horror; with
- * `InvestigatorDefeated` as usual, horror is skipped for an investigator the
- * damage defeated) and `ExhaustChanged`.
+ * The players resolved one enemy attack, as the answer of its `attackDecision`: an attack of enemy
+ * step 3.3 (`kind: 'enemyPhase'`), an attack of opportunity, a retaliate or alert attack, or a card
+ * that says the enemy attacks. Deals `damage` and `horror` at once with one defeat check (horror is
+ * skipped for an investigator the damage defeated). They default to the enemy's printed values (a
+ * due attack's, in the enemy phase); the players pass less when assets soak part of it.
+ * `cancelled` (a card cancelled it) deals nothing and fires no "after it attacks" abilities.
+ *
+ * Only an enemy phase attack exhausts the enemy, after its last due attack (a massive enemy
+ * attacks everyone at its location first), cancelled or not; it also leaves step 3.3's list. An
+ * attack the step listed that is no longer due (its enemy left or disengaged) only leaves the
+ * list, without exhausting anyone; one that was never listed is rejected (`attackNotDue`). Any
+ * other kind leaves the enemy as it is (Rules Reference, "Attack of Opportunity") and does nothing
+ * once its enemy has left the table or its investigator is no longer active, so a second attack of
+ * opportunity on an investigator the first one defeated can still be answered.
+ * Produces `PhaseStepsChanged` (enemy phase), `EnemyAttacked`, `InvestigatorChanged`, as usual
+ * `InvestigatorDefeated`, and `ExhaustChanged` (enemy phase).
  */
-export interface ResolveEnemyAttack {
-  type: 'ResolveEnemyAttack';
+export interface DealEnemyAttack {
+  type: 'DealEnemyAttack';
+  kind: AttackKind;
   enemyId: InstanceId;
   investigatorId: InvestigatorId;
   damage?: number;
   horror?: number;
   cancelled?: true;
-}
-
-/**
- * An enemy attack outside enemy step 3.3: an attack of opportunity (raised by
- * `attackOfOpportunityDecisions`, whose `attack` option runs this) or a card
- * that says the enemy attacks. Deals `damage` and `horror` at once with one
- * defeat check, like `ResolveEnemyAttack`, but the enemy does not exhaust
- * (Rules Reference, "Attack of Opportunity"). The amounts are the ones the
- * players confirmed (printed values, less what assets soak). An attack whose
- * enemy has left play or whose investigator is no longer active does nothing,
- * so a second attack of opportunity on an investigator the first one defeated
- * can still be answered. Produces `EnemyAttacked`, `InvestigatorChanged` and, as usual,
- * `InvestigatorDefeated`.
- */
-export interface DealEnemyAttack {
-  type: 'DealEnemyAttack';
-  enemyId: InstanceId;
-  investigatorId: InvestigatorId;
-  damage: number;
-  horror: number;
 }
 
 /**
@@ -1344,9 +1329,10 @@ export interface EnemyAttacks {
   investigatorId: InvestigatorId;
   /**
    * The keyword that makes the attack (retaliate, alert; `keywordAbilities`): asked as
-   * `<keyword>:<enemy>`, and only by a ready enemy, which both keywords require.
+   * `<keyword>:<enemy>`, and only by a ready enemy, which both keywords require. Without it, a
+   * card makes the attack (`cardAttack`).
    */
-  keyword?: KeywordAttackKind;
+  kind?: KeywordAttackKind;
 }
 
 /**

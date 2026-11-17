@@ -2722,9 +2722,9 @@ export function engagesYou(
 export function enemyAttacks(
   enemy: RelativeCard = { ref: 'self' },
   who: RelativeInvestigator = { ref: 'windowInvestigator' },
-  keyword?: KeywordAttackKind,
+  kind?: KeywordAttackKind,
 ): AbilityEffect {
-  return { type: 'EnemyAttacks', enemyId: enemy, investigatorId: who, ...(keyword && { keyword }) };
+  return { type: 'EnemyAttacks', enemyId: enemy, investigatorId: who, ...(kind && { kind }) };
 }
 
 /** The one copy of `code` in the game, for a scenario's unique cards (`{ ref: 'onlyCopy' }`). */
