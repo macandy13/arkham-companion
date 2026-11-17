@@ -3,7 +3,8 @@ name: Review tour
 # Turns the review tour in a PR's description (a `<!-- review-tour {…} -->` block, written by the
 # session that opens the PR; docs/coding-guidelines.md §7) into a one-minute review page at
 # https://macandy13.github.io/arkham-companion/review-tour/pr-<number>/ and links it in a sticky
-# comment. Runs on every push and description edit (the workflow's own edits don't retrigger it);
+# comment. Runs on every push and on description edits by people and the bot that opens PRs;
+# preview.yml's edit of the screencast section uses GITHUB_TOKEN, whose events start no workflow;
 # a description without a block removes page and comment, a malformed block fails the check with
 # the reason. The page is removed when the PR closes. Code in packages/review_tour; see
 # docs/automation.md, "Review tour". PRs from forks are skipped (no write token).
@@ -15,6 +16,11 @@ on:
 permissions:
   contents: write
   pull-requests: write
+
+# bash -eo pipefail, so a failing CLI isn't hidden behind tee.
+defaults:
+  run:
+    shell: bash
 
 concurrency:
   group: review-tour-${{ github.event.number }}
@@ -32,8 +38,9 @@ jobs:
       - uses: actions/checkout@v7
         with:
           ref: ${{ github.event.pull_request.head.sha }}
-          fetch-depth: 0
-      - uses: actions/setup-node@v7
+          fetch-depth: ${{ github.event.action == 'closed' && 1 || 0 }}
+      - if: github.event.action != 'closed'
+        uses: actions/setup-node@v7
         with:
           node-version: 22
       # The description is read fresh: the event's copy may predate a later edit.
@@ -58,12 +65,13 @@ jobs:
           git fetch --depth=1 origin gh-pages
           git worktree add --detach "$RUNNER_TEMP/pages" FETCH_HEAD
           cd "$RUNNER_TEMP/pages"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           rm -rf "$DIR"
           if [ -f "$RUNNER_TEMP/page/index.html" ]; then mkdir -p "$DIR" && cp "$RUNNER_TEMP/page/index.html" "$DIR/"; fi
           git add -A
           if git diff --cached --quiet; then exit 0; fi
-          git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
-            commit -q -m "Review tour for #$PR"
+          git commit -q -m "Review tour for #$PR"
           for attempt in 1 2 3 4 5; do
             git push origin HEAD:gh-pages && exit 0
             sleep $((attempt * 3))
@@ -84,3 +92,10 @@ jobs:
         with:
           header: review-tour
           delete: true
+      # The old page stays up, so the comment says it is out of date and where the reason is.
+      - if: failure() && steps.build.outcome == 'failure'
+        uses: marocchino/sticky-pull-request-comment@v3
+        with:
+          header: review-tour
+          message: |
+            **Review tour not updated:** the description's review-tour block is invalid. The reason is in the [check's log](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}).
