@@ -45,7 +45,7 @@ jobs:
           node-version: 22
       # The description is read fresh: the event's copy may predate a later edit. The CLI runs
       # from the base commit, so a branch made before the review tour existed still gets a page
-      # without merging main in.
+      # without merging main in; a PR that changes the CLI shows its own renderer once merged.
       - id: build
         if: github.event.action != 'closed'
         env:
