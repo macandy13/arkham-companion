@@ -6,7 +6,7 @@ import { ActionButton, ActionGroup } from './ActionRow';
 
 /**
  * The tests a card lets an investigator make on this location or enemy outside their turn or
- * from another location (`GameActions.testByCard`: In the Know, Quick Thinking, Marksmanship), a
+ * from another location (`GameActions.testByCard`: In the Know, Counterpunch, Marksmanship), a
  * group of the details' action row. With one active investigator a tap starts the test; with
  * more the group asks who tests (its title and buttons turn to their names, and Cancel), since
  * a button per test and investigator would crowd the row.

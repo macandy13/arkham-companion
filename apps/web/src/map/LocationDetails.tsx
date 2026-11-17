@@ -195,44 +195,42 @@ function LocationPage({
     <>
       <Here board={board} location={location} />
       <AttachedCards board={board} host={location.id} actions={actions} busy={busy} />
-      {offered.length + printed.length > 0 || revealable || location.revealed ? (
-        <footer>
-          {offered.length > 0 && (
-            <ActionGroup title={t('location.actions')}>{offered.map(button)}</ActionGroup>
-          )}
-          {printed.length > 0 && (
-            <CardActions
-              board={board}
-              offered={printed}
-              actions={actions}
-              busy={busy}
-              onUse={onLeave}
-            />
-          )}
-          {location.revealed && (
-            <TestsByCard
-              board={board}
-              tests={['investigate']}
-              busy={busy}
-              onTest={(kind, investigator) => {
-                (onTest ?? onLeave)?.();
-                void actions.testByCard(kind, investigator, location.id);
-              }}
-            />
-          )}
-          {revealable && (
-            <ActionGroup title={t('location.corrections')}>
-              <button
-                type="button"
-                disabled={busy}
-                onClick={() => void actions.revealLocation(location.id)}
-              >
-                {t('location.reveal')}
-              </button>
-            </ActionGroup>
-          )}
-        </footer>
-      ) : null}
+      <footer>
+        {offered.length > 0 && (
+          <ActionGroup title={t('location.actions')}>{offered.map(button)}</ActionGroup>
+        )}
+        {printed.length > 0 && (
+          <CardActions
+            board={board}
+            offered={printed}
+            actions={actions}
+            busy={busy}
+            onUse={onLeave}
+          />
+        )}
+        {location.revealed && (
+          <TestsByCard
+            board={board}
+            tests={['investigate']}
+            busy={busy}
+            onTest={(kind, investigator) => {
+              (onTest ?? onLeave)?.();
+              void actions.testByCard(kind, investigator, location.id);
+            }}
+          />
+        )}
+        {revealable && (
+          <ActionGroup title={t('location.corrections')}>
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => void actions.revealLocation(location.id)}
+            >
+              {t('location.reveal')}
+            </button>
+          </ActionGroup>
+        )}
+      </footer>
     </>
   );
 }

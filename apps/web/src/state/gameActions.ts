@@ -247,7 +247,7 @@ export interface GameActions {
   moveByCard(investigator: InvestigatorId, location: InstanceId): Promise<void>;
   /**
    * A card has `investigator`, whoever's turn it is, investigate the location `target` (In the
-   * Know) or fight or evade the enemy `target` (Quick Thinking, Marksmanship), at their
+   * Know) or fight or evade the enemy `target` (Counterpunch after an attack, Marksmanship at a connecting location), at their
    * location or another: `Investigate.locationId`, `Fight` and `Evade` with `atAnyLocation`, taking
    * none of the turn's actions. The test stays open as a decision.
    */
