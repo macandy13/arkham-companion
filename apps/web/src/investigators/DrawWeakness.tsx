@@ -4,7 +4,6 @@ import type { WeaknessDef } from '@arkham/carddata';
 import type { InvestigatorView } from '@arkham/engine';
 import type { GameActions } from '../state/gameActions';
 import { weaknessGroups } from './weakness_groups';
-import './draw_weakness.css';
 
 /**
  * "Draw a weakness" on an investigator's whole card: the players drew a weakness enemy or

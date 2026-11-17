@@ -244,7 +244,6 @@ export const appTexts = {
     laterCards: 'Later cards',
     spawnLabel: 'Choose a spawn location',
     spawnPrompt: 'Tap the location where {{card}} spawns',
-    cancelSpawn: 'Cancel',
     victory_one: '{{count}} victory point',
     victory_other: '{{count}} victory points',
   },
@@ -572,6 +571,11 @@ export const appTexts = {
     lower: 'Lower to reach the board',
     raise: 'Raise the dialog',
     waiting: 'Waiting next',
+  },
+  moveByCard: {
+    start: 'Move by card effect',
+    label: 'Choose where to move',
+    prompt: 'Tap the location {{investigator}} moves to',
   },
   weakness: {
     draw: 'Draw a weakness',

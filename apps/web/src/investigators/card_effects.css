@@ -1,8 +1,16 @@
 /*
- * "Draw a weakness" (DrawWeakness) under the whole investigator card, apart from it. In the phone's
- * expanded bar it is one more row of the panel, which the panel's own gap spaces.
+ * The card effects under the whole investigator card ("Draw a weakness", "Move by card effect"):
+ * one row of buttons, apart from the card. In the phone's expanded bar it is one more row of the
+ * panel, which the panel's own gap spaces.
  */
-#investigators dialog[data-dialog='investigator-card'] > button:not([data-icon]) {
+#investigators footer[data-part='card-effects'] {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-2);
+}
+
+#investigators dialog[data-dialog='investigator-card'] > footer[data-part='card-effects'] {
   margin-block-start: var(--space-3);
 }
 

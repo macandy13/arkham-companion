@@ -93,6 +93,32 @@ describe('gameActions', () => {
     expect(table.board.decisions.map(({ about }) => about)).toEqual(attacks);
   });
 
+  describe('moveByCard', () => {
+    const attic = instanceId('attic');
+    /** Alder's turn in the Study, Brook there with a lurker engaged; the Attic connects to nothing. */
+    const brookBesideTheLoneAttic = () =>
+      PlayTable.start(
+        newGame()
+          .withLocation(study, blankLocation('study'), { revealed: true })
+          .withLocation(attic, blankLocation('attic'), { revealed: true })
+          .withInvestigator(alder, { locationId: study })
+          .withInvestigator(brook, { locationId: study })
+          .withCard(lurker, blankEnemy('lurker'), engagedWith(brook))
+          .withTurnOf(alder),
+      );
+
+    it("moves brook to the unconnected attic on alder's turn, with no action and no attack, her lurker along", async () => {
+      const table = brookBesideTheLoneAttic();
+
+      await actionsOn(table).moveByCard(brook, attic);
+
+      expect(table.board.locationOf(brook)).toBe(attic);
+      expect(table.board.investigator(alder)).toMatchObject({ actions: 3 });
+      expect(table.board.decisions).toEqual([]);
+      expect(table.board.enemiesEngagedWith(brook).map(({ id }) => id)).toEqual([lurker]);
+    });
+  });
+
   describe("with a treachery like Frozen in Fear in alder's threat area", () => {
     /** Alder's turn in the Study next to the Hall, frozen: the first move, fight or evade costs 1 more. */
     const aldersFrozenTurn = () =>
