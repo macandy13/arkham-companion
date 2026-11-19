@@ -230,7 +230,7 @@ export type PhaseStepId =
   /** 4.6 Upkeep: the upkeep phase and the round end (`RoundEnded`, `roundEnds`). */
   | 'endRound';
 
-/** One enemy attack that step 3.3 still has to resolve (`ResolveEnemyAttack`). */
+/** One enemy attack that step 3.3 still has to resolve (`DealEnemyAttack` of kind `enemyPhase`). */
 export interface DueAttack {
   enemyId: InstanceId;
   investigatorId: InvestigatorId;
@@ -571,7 +571,7 @@ export type AnswerableCommand = Answerable<Command>;
 
 /**
  * Distributes over the command union, so each command type keeps its own fields. An optional count
- * (`ResolveEnemyAttack.damage`) can be answered too, and so can a test's difficulty
+ * (`DealEnemyAttack.damage`) can be answered too, and so can a test's difficulty
  * (`TestSkill.test`).
  */
 type Answerable<C> = C extends Command ? { [K in keyof C]: AnswerableField<C[K]> } : never;

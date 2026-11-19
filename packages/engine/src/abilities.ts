@@ -960,7 +960,7 @@ function openedFor(state: GameState, ability: Ability, opened: OpenedWindow): Op
 /**
  * The forced abilities a keyword gives a card on top of its printed ones (Rules Reference):
  * a retaliate enemy attacks whoever failed to fight it, an alert one whoever failed to evade it
- * (only when ready, `EnemyAttacks.keyword`), and an elusive enemy retreats after it attacks or is
+ * (only when ready, `EnemyAttacks.kind`), and an elusive enemy retreats after it attacks or is
  * attacked, hit or miss. Retaliate comes before elusive, so the enemy retreats after its retaliate
  * attack (`attacked`); its own retreat then finds it exhausted and does nothing, unless the players
  * cancelled the attack.
@@ -2834,9 +2834,9 @@ export function engagesYou(
 export function enemyAttacks(
   enemy: RelativeCard = { ref: 'self' },
   who: RelativeInvestigator = { ref: 'windowInvestigator' },
-  keyword?: KeywordAttackKind,
+  kind?: KeywordAttackKind,
 ): AbilityEffect {
-  return { type: 'EnemyAttacks', enemyId: enemy, investigatorId: who, ...(keyword && { keyword }) };
+  return { type: 'EnemyAttacks', enemyId: enemy, investigatorId: who, ...(kind && { kind }) };
 }
 
 /** The one copy of `code` in the game, for a scenario's unique cards (`{ ref: 'onlyCopy' }`). */
