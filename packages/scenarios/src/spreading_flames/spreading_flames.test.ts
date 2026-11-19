@@ -211,7 +211,10 @@ describe('Spreading Flames skull token', () => {
   ] as const)(
     'is $value on $difficulty after $advanced acts advanced',
     ({ difficulty, advanced, value }) => {
-      const advances: Command[] = Array.from({ length: advanced }, () => ({ type: 'AdvanceAct' }));
+      const advances: Command[] = Array.from({ length: advanced }, () => ({
+        type: 'Advance',
+        deck: 'act',
+      }));
       const state = stateAfter(
         ctx,
         startScenario(ctx, { playerCount: 2, difficulty }),
@@ -224,7 +227,7 @@ describe('Spreading Flames skull token', () => {
 });
 
 describe("Spreading Flames act 1, Where There's Smoke...", () => {
-  const advanceSmoke: Command[] = [{ type: 'AdvanceAct' }];
+  const advanceSmoke: Command[] = [{ type: 'Advance', deck: 'act' }];
 
   it('puts the Dormitories and Miskatonic Quad into play, connected to the room and each other', () => {
     const state = stateAfter(ctx, startScenario(ctx, { playerCount: 2 }), ...advanceSmoke);
@@ -318,8 +321,8 @@ describe("Spreading Flames act 1, Where There's Smoke...", () => {
 });
 
 describe('Spreading Flames act 2, Escape the Dorms', () => {
-  const advanceToEscape: Command[] = [{ type: 'AdvanceAct' }];
-  const advanceEscape: Command[] = [{ type: 'AdvanceAct' }];
+  const advanceToEscape: Command[] = [{ type: 'Advance', deck: 'act' }];
+  const advanceEscape: Command[] = [{ type: 'Advance', deck: 'act' }];
 
   it("removes Your Friend's Room with its Fire! and puts the other three locations into play", () => {
     const atEscape = stateAfter(ctx, startScenario(ctx, { playerCount: 2 }), ...advanceToEscape);
@@ -357,8 +360,11 @@ describe('Spreading Flames act 2, Escape the Dorms', () => {
 });
 
 describe('Spreading Flames act 3, Searching for Dr. Armitage', () => {
-  const advanceToSearching: Command[] = [{ type: 'AdvanceAct' }, { type: 'AdvanceAct' }];
-  const advanceSearching: Command[] = [{ type: 'AdvanceAct' }];
+  const advanceToSearching: Command[] = [
+    { type: 'Advance', deck: 'act' },
+    { type: 'Advance', deck: 'act' },
+  ];
+  const advanceSearching: Command[] = [{ type: 'Advance', deck: 'act' }];
 
   it.each([
     { at: 'Orne Library', location: orneLibrary, asked: [SEARCHING_FOR_ARMITAGE_DECISION] },
@@ -436,7 +442,10 @@ describe('Spreading Flames act 3, Searching for Dr. Armitage', () => {
 });
 
 describe('Spreading Flames agenda 2, Lit Up', () => {
-  const advanceLitUp: Command[] = [{ type: 'AdvanceAgenda' }, { type: 'AdvanceAgenda' }];
+  const advanceLitUp: Command[] = [
+    { type: 'Advance', deck: 'agenda' },
+    { type: 'Advance', deck: 'agenda' },
+  ];
 
   it('puts 4 of the set-aside Fire! in the encounter discard', () => {
     const state = stateAfter(ctx, startScenario(ctx, { playerCount: 2 }), ...advanceLitUp);
@@ -447,7 +456,8 @@ describe('Spreading Flames agenda 2, Lit Up', () => {
 
   it("puts no Fire! in the encounter discard once Where There's Smoke... took every copy", () => {
     const smokeAdvanced = stateAfter(ctx, startScenario(ctx, { playerCount: 2 }), {
-      type: 'AdvanceAct',
+      type: 'Advance',
+      deck: 'act',
     });
 
     const state = stateAfter(ctx, smokeAdvanced, ...advanceLitUp);
@@ -466,9 +476,9 @@ describe('Spreading Flames act 4, Blaze of Glory, and the resolutions', () => {
     return stateAfter(
       ctx,
       startScenario(ctx, { playerCount: 2 }),
-      { type: 'AdvanceAct' },
-      { type: 'AdvanceAct' },
-      { type: 'AdvanceAct' },
+      { type: 'Advance', deck: 'act' },
+      { type: 'Advance', deck: 'act' },
+      { type: 'Advance', deck: 'act' },
       cancelRevelation(firstFire),
       cancelRevelation(secondFire),
     );
@@ -541,9 +551,9 @@ describe('Spreading Flames without a resolution', () => {
     const ended = stateAfter(
       ctx,
       startScenario(ctx, { playerCount: 2 }),
-      { type: 'AdvanceAgenda' },
-      { type: 'AdvanceAgenda' },
-      { type: 'AdvanceAgenda' },
+      { type: 'Advance', deck: 'agenda' },
+      { type: 'Advance', deck: 'agenda' },
+      { type: 'Advance', deck: 'agenda' },
     );
 
     const proposal = campaign.proposeResolution(ctx, ended, spreadingFlamesResolutions) ?? [];

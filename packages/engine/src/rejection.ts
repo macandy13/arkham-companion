@@ -104,7 +104,7 @@ export type Rejection =
   | { code: 'tokenNotOnInvestigators'; token: TokenKind }
   /** `MoveTokens` from the pool to the pool, or `'all'` from the pool, which holds no count. */
   | { code: 'invalidTokenMove' }
-  /** `AdvanceAgenda`/`AdvanceAct` while that deck has no current card. */
+  /** `Advance` while that deck has no current card. */
   | { code: 'noCurrentCard'; deck: 'agenda' | 'act' }
   /** `BecomeActAndAgenda` with `next` while no agenda follows the current one. */
   | { code: 'noNextAgenda' }
@@ -118,7 +118,7 @@ export type Rejection =
    * no damage.
    */
   | { code: 'changesNothing'; command: CommandType }
-  /** `AdvanceAgenda`/`AdvanceAct` names a fallback resolution although further cards follow. */
+  /** `Advance` names a fallback resolution although further cards follow. */
   | { code: 'unexpectedResolution'; deck: 'agenda' | 'act' }
   /** The clues paid as a group (a `groupClues` cost, `UseCardAction.spend`) do not add up to it. */
   | { code: 'wrongClueTotal'; required: number; spent: number }

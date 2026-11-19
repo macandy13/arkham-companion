@@ -266,7 +266,10 @@ export function advanceBySpendingClues(clues: ScaledValue): CardAction {
 
 /** Whether `action` is an act's `advanceBySpendingClues`: a group clue cost to advance the act. */
 function advancesBySpendingClues({ cost, effects }: CardAction): boolean {
-  return cost?.spend === 'groupClues' && effects.some((effect) => effect.type === 'AdvanceAct');
+  return (
+    cost?.spend === 'groupClues' &&
+    effects.some((effect) => effect.type === 'Advance' && effect.deck === 'act')
+  );
 }
 
 /**

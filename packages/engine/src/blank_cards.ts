@@ -88,7 +88,7 @@ export function blankAgenda(
 }
 
 /**
- * An act at stage 1 with no way to advance of its own: `AdvanceAct` advances it, and
+ * An act at stage 1 with no way to advance of its own: `advanceAct()` advances it, and
  * `actions: [advanceBySpendingClues(…)]` in `stats` gives it a clue cost.
  */
 export function blankAct(code: string, stats: BlankCardStats = {}): CardStats {

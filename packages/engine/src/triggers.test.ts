@@ -178,7 +178,7 @@ describe('trigger bus', () => {
       .withInvestigator(alice, { locationId: hall })
       .start();
 
-    const { events, state } = execute(ctx, started, { type: 'AdvanceAgenda' });
+    const { events, state } = execute(ctx, started, { type: 'Advance', deck: 'agenda' });
 
     expect(events.map((event) => event.type)).toEqual([
       'CardFlipped',
@@ -204,9 +204,9 @@ describe('trigger bus', () => {
 
     it('ends the scenario with its resolution', () => {
       const { context: ctx, state: started } = lastAgendaTable.start();
-      const lastAgenda = stateAfter(ctx, started, { type: 'AdvanceAgenda' });
+      const lastAgenda = stateAfter(ctx, started, { type: 'Advance', deck: 'agenda' });
 
-      const { events, state } = execute(ctx, lastAgenda, { type: 'AdvanceAgenda' });
+      const { events, state } = execute(ctx, lastAgenda, { type: 'Advance', deck: 'agenda' });
 
       expect(events.map((event) => event.type).slice(-3)).toEqual([
         'ScenarioEnded',
@@ -219,10 +219,11 @@ describe('trigger bus', () => {
 
     it('wins over the fallback resolution', () => {
       const { context: ctx, state: started } = lastAgendaTable.start();
-      const lastAgenda = stateAfter(ctx, started, { type: 'AdvanceAgenda' });
+      const lastAgenda = stateAfter(ctx, started, { type: 'Advance', deck: 'agenda' });
 
       const { events, state } = execute(ctx, lastAgenda, {
-        type: 'AdvanceAgenda',
+        type: 'Advance',
+        deck: 'agenda',
         resolution: resolutionId('R1'),
       });
 
@@ -307,7 +308,7 @@ describe('trigger bus', () => {
     it('does not run them when a card is turned face down', () => {
       const { context, state: started } = revealTable.start();
 
-      const { events } = execute(context, started, { type: 'AdvanceAgenda' });
+      const { events } = execute(context, started, { type: 'Advance', deck: 'agenda' });
 
       // The flipped agenda leaves the game afterwards, so only the events show whether it placed doom.
       expect(events.filter((e) => e.type === 'TokensChanged' && e.delta > 0)).toEqual([]);
@@ -339,7 +340,7 @@ describe('trigger bus', () => {
     it('replaces the act and stays as both, face down, without ending the scenario', () => {
       const { context, state: started } = devourerTable.start();
 
-      const state = stateAfter(context, started, { type: 'AdvanceAgenda' });
+      const state = stateAfter(context, started, { type: 'Advance', deck: 'agenda' });
 
       expect(state.agenda.current).toBe(devourer);
       expect(state.act.current).toBe(devourer);
@@ -351,7 +352,7 @@ describe('trigger bus', () => {
 
     it('fulfils its objective once, as one card', () => {
       const { context, state: started } = devourerTable.start();
-      const merged = stateAfter(context, started, { type: 'AdvanceAgenda' });
+      const merged = stateAfter(context, started, { type: 'Advance', deck: 'agenda' });
 
       const { state, events } = execute(context, merged, { type: 'DefeatEnemy', enemyId: elder });
 
@@ -363,7 +364,7 @@ describe('trigger bus', () => {
 
     it('asks for no advance by doom, as its reverse side prints no threshold', () => {
       const { context, state: started } = devourerTable.start();
-      const merged = stateAfter(context, started, { type: 'AdvanceAgenda' });
+      const merged = stateAfter(context, started, { type: 'Advance', deck: 'agenda' });
 
       const state = stateAfter(context, merged, placeDoomOnAgenda(3));
 
@@ -388,7 +389,7 @@ describe('trigger bus', () => {
     it('puts the ritual and the acts out of the game and makes the brethren act and agenda', () => {
       const { context, state: started } = ritualTable.start();
 
-      const state = stateAfter(context, started, { type: 'AdvanceAgenda' });
+      const state = stateAfter(context, started, { type: 'Advance', deck: 'agenda' });
 
       expect(state.agenda.current).toBe(brethren);
       expect(state.act.current).toBe(brethren);
@@ -1446,7 +1447,7 @@ describe('trigger bus', () => {
         .withAgenda(agenda2, secondAgendaCard)
         .start();
 
-      const { state } = execute(context, started, { type: 'AdvanceAgenda' });
+      const { state } = execute(context, started, { type: 'Advance', deck: 'agenda' });
 
       // The advanced agenda has left the game since, keeping the doom it got while current.
       expect(state.cards[agenda1]?.tokens.doom).toBe(1);
@@ -1464,7 +1465,7 @@ describe('trigger bus', () => {
         .withInvestigator(alice, { locationId: hall })
         .start();
 
-      const { state } = execute(context, started, { type: 'AdvanceAct' });
+      const { state } = execute(context, started, { type: 'Advance', deck: 'act' });
 
       expect(state.cards[cellar]?.faceUp).toBe(true);
       expect(state.cards[priest]?.zone).toEqual(atLocation(cellar));
@@ -1502,7 +1503,7 @@ describe('trigger bus', () => {
         .withInvestigator(alice, { locationId: hall })
         .start();
 
-      const { state } = execute(context, started, { type: 'AdvanceAct' });
+      const { state } = execute(context, started, { type: 'Advance', deck: 'act' });
 
       expect(state.cards[shrine]).toMatchObject({
         zone: { kind: 'location', mapId: main },
@@ -1533,7 +1534,7 @@ describe('trigger bus', () => {
         })
         .start();
 
-      const { state } = execute(context, started, { type: 'AdvanceAct' });
+      const { state } = execute(context, started, { type: 'Advance', deck: 'act' });
 
       expect(state.act.current).toBe(act2);
       expect(state.cards[instanceId('shrine')]?.zone).toEqual({ kind: 'setAside' });
@@ -1555,7 +1556,7 @@ describe('trigger bus', () => {
         .withCard(lantern, blankAsset('lantern'), { kind: 'setAside' })
         .start();
 
-      const { state } = execute(context, started, { type: 'AdvanceAct' });
+      const { state } = execute(context, started, { type: 'Advance', deck: 'act' });
 
       expect(state.cards[lantern]?.zone).toEqual(atLocation(hall));
     });
@@ -1576,7 +1577,7 @@ describe('trigger bus', () => {
         .withLocation(cellar, blankLocation('cellar'))
         .start();
 
-      const { events, state } = execute(context, started, { type: 'AdvanceAct' });
+      const { events, state } = execute(context, started, { type: 'Advance', deck: 'act' });
 
       expect(state.cards[cellar]?.faceUp).toBe(true);
       expect(events.filter((event) => event.type === 'AbilityEffectSkipped')).toEqual([
@@ -1595,7 +1596,7 @@ describe('trigger bus', () => {
         .withCard(instanceId('second_priest'), priestCard, { kind: 'setAside' })
         .start();
 
-      const { events, state } = execute(context, started, { type: 'AdvanceAct' });
+      const { events, state } = execute(context, started, { type: 'Advance', deck: 'act' });
 
       expect(state.cards[priest]?.zone).toEqual({ kind: 'setAside' });
       expect(events.filter((event) => event.type === 'AbilityEffectSkipped')).toEqual([
@@ -1655,7 +1656,7 @@ describe('trigger bus', () => {
     it('puts the set-aside area into play as a map of its own', () => {
       const { context, state: started } = movingTable.start();
 
-      const { state } = execute(context, started, { type: 'AdvanceAct' });
+      const { state } = execute(context, started, { type: 'Advance', deck: 'act' });
 
       expect(state.board.maps[mapId('upstairs')]?.name).toBe('Upstairs');
       expect(state.cards[attic]?.zone).toEqual({ kind: 'location', mapId: mapId('upstairs') });
@@ -1701,7 +1702,7 @@ describe('trigger bus', () => {
     it('discards each enemy in the hall, the engaged one too, but no other card there', () => {
       const { context, state: started } = movingTable.start();
 
-      const { state } = execute(context, started, { type: 'AdvanceAct' });
+      const { state } = execute(context, started, { type: 'Advance', deck: 'act' });
 
       expect(state.cards[aloofGhoul]?.zone).toEqual({ kind: 'encounterDiscard' });
       expect(state.cards[instanceId('bobs_ghoul')]?.zone).toEqual({ kind: 'encounterDiscard' });
@@ -1712,7 +1713,7 @@ describe('trigger bus', () => {
     it('moves each investigator to the attic and removes the hall from the game', () => {
       const { context, state: started } = movingTable.start();
 
-      const { state } = execute(context, started, { type: 'AdvanceAct' });
+      const { state } = execute(context, started, { type: 'Advance', deck: 'act' });
 
       expect(state.investigators.map((inv) => [inv.id, inv.locationId])).toEqual([
         [alice, attic],
@@ -1725,7 +1726,7 @@ describe('trigger bus', () => {
       const { context, state: started } = movingTable.start();
       const bobLeads = { ...started, meta: { ...started.meta, leadInvestigator: bob } };
 
-      const { events } = execute(context, bobLeads, { type: 'AdvanceAct' });
+      const { events } = execute(context, bobLeads, { type: 'Advance', deck: 'act' });
 
       expect(
         events.flatMap((event) =>
@@ -1740,7 +1741,7 @@ describe('trigger bus', () => {
         .withInvestigator(carol, { locationId: hall, status: 'defeated' })
         .start();
 
-      const { state } = execute(context, started, { type: 'AdvanceAct' });
+      const { state } = execute(context, started, { type: 'Advance', deck: 'act' });
 
       expect(state.investigators.find((inv) => inv.id === carol)?.locationId).toBe(hall);
     });
@@ -1750,7 +1751,7 @@ describe('trigger bus', () => {
         .withCard(instanceId('second_hall'), hallCard, { kind: 'setAside' })
         .start();
 
-      const { events, state } = execute(context, started, { type: 'AdvanceAct' });
+      const { events, state } = execute(context, started, { type: 'Advance', deck: 'act' });
 
       expect(state.cards[aloofGhoul]?.zone).toEqual(atLocation(hall));
       expect(events.filter((event) => event.type === 'AbilityEffectSkipped')).toContainEqual({
@@ -1766,7 +1767,7 @@ describe('trigger bus', () => {
         .withCard(instanceId('second_attic'), atticCard, { kind: 'setAside' })
         .start();
 
-      const { events, state } = execute(context, started, { type: 'AdvanceAct' });
+      const { events, state } = execute(context, started, { type: 'Advance', deck: 'act' });
 
       expect(state.board.maps[mapId('upstairs')]).toBeUndefined();
       expect(events.filter((event) => event.type === 'AbilityEffectSkipped')).toContainEqual({
@@ -1808,7 +1809,7 @@ describe('trigger bus', () => {
         .start();
       const bobLeads = { ...started, meta: { ...started.meta, leadInvestigator: bob } };
 
-      const { state } = execute(context, bobLeads, { type: 'AdvanceAct' });
+      const { state } = execute(context, bobLeads, { type: 'Advance', deck: 'act' });
 
       expect(state.cards[hiddenGhoul]?.zone).toEqual({ kind: 'engaged', investigatorId: bob });
       expect(state.cards[topTreachery]?.zone).toEqual({ kind: 'encounterDiscard' });
@@ -1820,7 +1821,7 @@ describe('trigger bus', () => {
         .start();
       const bobLeads = { ...started, meta: { ...started.meta, leadInvestigator: bob } };
 
-      const { state } = execute(context, bobLeads, { type: 'AdvanceAct' });
+      const { state } = execute(context, bobLeads, { type: 'Advance', deck: 'act' });
 
       expect(state.cards[hiddenGhoul]?.zone).toEqual({ kind: 'engaged', investigatorId: bob });
     });
@@ -1838,7 +1839,7 @@ describe('trigger bus', () => {
         meta: { ...started.meta, leadInvestigator: investigatorId('carol') },
       };
 
-      const { state } = execute(context, carolLeftAsLead, { type: 'AdvanceAct' });
+      const { state } = execute(context, carolLeftAsLead, { type: 'Advance', deck: 'act' });
 
       expect(state.cards[hiddenGhoul]?.zone).toEqual({ kind: 'encounterDeck' });
     });
@@ -1848,7 +1849,7 @@ describe('trigger bus', () => {
         .withCard(topTreachery, blankTreachery('top_treachery'), { kind: 'encounterDeck' })
         .start();
 
-      const { state } = execute(context, started, { type: 'AdvanceAct' });
+      const { state } = execute(context, started, { type: 'Advance', deck: 'act' });
 
       expect(state.cards[topTreachery]?.zone).toEqual({ kind: 'encounterDeck' });
       expect(state.act.current).toBe(act2);
@@ -1873,7 +1874,7 @@ describe('trigger bus', () => {
       .withInvestigator(alice, { locationId: hall })
       .start();
 
-    const { state } = execute(context, started, { type: 'AdvanceAct' });
+    const { state } = execute(context, started, { type: 'Advance', deck: 'act' });
 
     expect(state.cards[cellar]?.faceUp).toBe(true);
     expect(state.cards[agenda1]?.tokens.doom).toBe(1);
@@ -2233,7 +2234,7 @@ describe('abilities with a condition on the current act', () => {
   it('fires while its act is current', () => {
     const { context, state: started } = trappedTable.withAct(act1, trappedAct).start();
 
-    const { state } = execute(context, started, { type: 'AdvanceAgenda' });
+    const { state } = execute(context, started, { type: 'Advance', deck: 'agenda' });
 
     expect(state.meta).toMatchObject({ ended: true, resolution: resolutionId('R3') });
   });
@@ -2241,7 +2242,7 @@ describe('abilities with a condition on the current act', () => {
   it('does not fire while another act is current', () => {
     const { context, state: started } = trappedTable.withAct(act1, finalAct).start();
 
-    const { state } = execute(context, started, { type: 'AdvanceAgenda' });
+    const { state } = execute(context, started, { type: 'Advance', deck: 'agenda' });
 
     expect(state.meta.ended).toBeUndefined();
     expect(state.agenda.current).toBe(agenda2);
@@ -2276,7 +2277,7 @@ describe('a choice for the lead investigator', () => {
   it('asks the lead once the card has advanced', () => {
     const { context, state: started } = finalTable.start();
 
-    const { state } = execute(context, started, { type: 'AdvanceAct' });
+    const { state } = execute(context, started, { type: 'Advance', deck: 'act' });
 
     expect(state.pending).toMatchObject([
       {
@@ -2293,7 +2294,7 @@ describe('a choice for the lead investigator', () => {
     { optionId: 'spare', ended: undefined, aliceHorror: 1 },
   ])('runs the effects of the answer $optionId', ({ optionId, ended, aliceHorror }) => {
     const { context, state: started } = finalTable.start();
-    const asked = stateAfter(context, started, { type: 'AdvanceAct' });
+    const asked = stateAfter(context, started, { type: 'Advance', deck: 'act' });
 
     const state = stateAfter(context, asked, answer('burn_or_spare', optionId));
 
@@ -2790,7 +2791,7 @@ describe('an effect repeated for each investigator', () => {
     .start();
 
   it('asks alice, then bob, to test as the agenda advances; only bob, who fails, takes horror', () => {
-    const advanced = stateAfter(context, started, { type: 'AdvanceAgenda' });
+    const advanced = stateAfter(context, started, { type: 'Advance', deck: 'agenda' });
     const aliceTested = stateAfter(context, advanced, answer('test:agenda1', 'pass'));
 
     const state = stateAfter(context, aliceTested, answer('test:agenda1', 'fail'));
@@ -2803,7 +2804,7 @@ describe('an effect repeated for each investigator', () => {
   it('asks bob first while he is the lead investigator, as player order begins with the lead', () => {
     const bobLeads = { ...started, meta: { ...started.meta, leadInvestigator: bob } };
 
-    const advanced = stateAfter(context, bobLeads, { type: 'AdvanceAgenda' });
+    const advanced = stateAfter(context, bobLeads, { type: 'Advance', deck: 'agenda' });
 
     expect(advanced.pending).toMatchObject([{ decider: { investigatorId: bob } }]);
   });
@@ -3058,7 +3059,7 @@ describe('a search for 1 copy per investigator', () => {
       .withInvestigator(bob, { locationId: hall })
       .start();
 
-    const advanced = stateAfter(context, started, { type: 'AdvanceAgenda' });
+    const advanced = stateAfter(context, started, { type: 'Advance', deck: 'agenda' });
     const firstResolved = stateAfter(context, advanced, resolveRevelation('deck_omen'));
     const state = stateAfter(context, firstResolved, resolveRevelation('discard_omen'));
 
@@ -3072,7 +3073,7 @@ describe('a search for 1 copy per investigator', () => {
   it('draws one copy for alice alone', () => {
     const { context, state: started } = searchTable.start();
 
-    const advanced = stateAfter(context, started, { type: 'AdvanceAgenda' });
+    const advanced = stateAfter(context, started, { type: 'Advance', deck: 'agenda' });
     const state = stateAfter(context, advanced, resolveRevelation('deck_omen'));
 
     expect(state.pending).toEqual([]);
@@ -3106,7 +3107,7 @@ describe('a card drawn again in the same chain', () => {
       .withCard(instanceId('deck_card'), blankTreachery('deck_card'), { kind: 'encounterDeck' })
       .withCard(instanceId('only_omen'), omenCard, { kind: 'encounterDiscard' })
       .start();
-    const advanced = stateAfter(context, started, { type: 'AdvanceAgenda' });
+    const advanced = stateAfter(context, started, { type: 'Advance', deck: 'agenda' });
 
     const state = stateAfter(context, advanced, cancelRevelation('only_omen'));
 
@@ -3136,7 +3137,7 @@ describe('a chain after the scenario ended', () => {
       .withCard(elder, blankEnemy('elder', { keywords: [{ name: 'aloof' }] }), atLocation(hall))
       .start();
 
-    const { state, events } = execute(context, started, { type: 'AdvanceAgenda' });
+    const { state, events } = execute(context, started, { type: 'Advance', deck: 'agenda' });
 
     expect(events.filter((event) => event.type === 'ScenarioEnded')).toEqual([
       { type: 'ScenarioEnded', resolution: resolutionId('R1') },
@@ -3723,7 +3724,7 @@ describe('effects on each investigator', () => {
       .withInvestigator(carol, { locationId: hall })
       .start();
 
-    const { state, events } = execute(context, started, { type: 'AdvanceAgenda' });
+    const { state, events } = execute(context, started, { type: 'Advance', deck: 'agenda' });
 
     expect(state.investigators.map((inv) => inv.status)).toEqual([
       'defeated',
@@ -3745,7 +3746,7 @@ describe('effects on each investigator', () => {
       .withInvestigator(carol, { locationId: hall, sanity: sturdy })
       .start();
 
-    const { state } = execute(context, started, { type: 'AdvanceAgenda' });
+    const { state } = execute(context, started, { type: 'Advance', deck: 'agenda' });
 
     expect(state.investigators.map((inv) => inv.sanity.horror)).toEqual([1, 1, 1]);
     expect(state.pending.map((decision) => decision.options.map((option) => option.id))).toEqual([
@@ -3774,7 +3775,7 @@ describe('effects on each investigator', () => {
       .withInvestigator(bob, { locationId: hall })
       .start();
 
-    const aliceAsked = stateAfter(context, started, { type: 'AdvanceAgenda' });
+    const aliceAsked = stateAfter(context, started, { type: 'Advance', deck: 'agenda' });
     const bobAsked = stateAfter(context, aliceAsked, answer('test:agenda1', 'pass'));
     const done = stateAfter(context, bobAsked, answer('test:agenda1', 'pass'));
 
@@ -3796,7 +3797,7 @@ describe('effects on each investigator', () => {
       .withInvestigator(carol, { locationId: hall, sanity: sturdy })
       .start();
 
-    const { state } = execute(context, started, { type: 'AdvanceAgenda' });
+    const { state } = execute(context, started, { type: 'Advance', deck: 'agenda' });
 
     expect(state.meta.leadInvestigator).toBe(carol);
     expect(state.pending).toEqual([]);
@@ -3821,7 +3822,7 @@ describe('trigger bus failures', () => {
   it('rejects an act whose reverse side keeps advancing it', () => {
     const { context, state } = failingTable(advanceAct()).start();
 
-    const rejection = rejectionFrom(context, state, { type: 'AdvanceAct' });
+    const rejection = rejectionFrom(context, state, { type: 'Advance', deck: 'act' });
 
     expect(rejection).toEqual({ code: 'triggerLoop', limit: MAX_TRIGGERED_COMMANDS });
   });
@@ -3829,7 +3830,7 @@ describe('trigger bus failures', () => {
   it('rejects the originating command when a forced effect is invalid, naming its reason', () => {
     const { context, state } = failingTable(revealLocation(onlyCopy(cardCode('hall')))).start();
 
-    const rejection = rejectionFrom(context, state, { type: 'AdvanceAct' });
+    const rejection = rejectionFrom(context, state, { type: 'Advance', deck: 'act' });
 
     expect(rejection).toEqual({
       code: 'triggeredCommandRejected',
@@ -3841,7 +3842,7 @@ describe('trigger bus failures', () => {
   it('reports the innermost rejected forced effect of a nested chain', () => {
     const { context, state } = failingTable(revealLocation(onlyCopy(cardCode('cellar')))).start();
 
-    const rejection = rejectionFrom(context, state, { type: 'AdvanceAct' });
+    const rejection = rejectionFrom(context, state, { type: 'Advance', deck: 'act' });
 
     expect(rejection).toEqual({
       code: 'triggeredCommandRejected',
@@ -3895,7 +3896,7 @@ describe('trigger bus loop guard', () => {
   ])('finishes $name within the guard', ({ actDoom, cellarDoom, doom }) => {
     const { context, state: started } = chainTable(actDoom, cellarDoom).start();
 
-    const { state } = execute(context, started, { type: 'AdvanceAct' });
+    const { state } = execute(context, started, { type: 'Advance', deck: 'act' });
 
     expect(state.cards[agenda1]?.tokens.doom).toBe(doom);
     expect(checkInvariants(state)).toEqual([]);
@@ -3905,7 +3906,7 @@ describe('trigger bus loop guard', () => {
     const { context, state } = chainTable(MAX_TRIGGERED_COMMANDS - 5, 5).start();
     const snapshot = structuredClone(state);
 
-    const rejection = rejectionFrom(context, state, { type: 'AdvanceAct' });
+    const rejection = rejectionFrom(context, state, { type: 'Advance', deck: 'act' });
 
     expect(rejection).toEqual({ code: 'triggerLoop', limit: MAX_TRIGGERED_COMMANDS });
     expect(state).toEqual(snapshot);

@@ -446,8 +446,7 @@ export type AbilityCommand =
           | 'PutLocationIntoPlay'
           | 'AddConnection'
           | 'RemoveConnection'
-          | 'AdvanceAct'
-          | 'AdvanceAgenda'
+          | 'Advance'
           | 'BecomeActAndAgenda'
           | 'ShuffleEncounterDiscard'
           | 'ShuffleEncounterDeck'
@@ -2825,15 +2824,15 @@ export function discardEachEnemy(filter: EachEnemyFilter = {}): AbilityEffect {
 
 /** "Advance": the current act advances without spending clues, as an objective does. */
 export function advanceAct(): AbilityEffect {
-  return { type: 'AdvanceAct' };
+  return { type: 'Advance', deck: 'act' };
 }
 
 /**
- * "Advance the current agenda" (`AdvanceAgenda`), as its doom threshold would: its doom and all
+ * "Advance the current agenda" (`Advance`), as its doom threshold would: its doom and all
  * other doom in play are removed and its reverse side resolves.
  */
 export function advanceAgenda(): AbilityEffect {
-  return { type: 'AdvanceAgenda' };
+  return { type: 'Advance', deck: 'agenda' };
 }
 
 /**

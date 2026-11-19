@@ -340,7 +340,7 @@ export interface DecisionWithdrawn {
  * The current agenda `cardId` advanced and its reverse side resolves now: it
  * opens the `advanced` window while the agenda is still current. Follows
  * the `CardFlipped` that turns it over; drops decisions about the agenda.
- * Produced by `AdvanceAgenda`, which follows it with `CurrentCardChanged` once
+ * Produced by `Advance` of the agenda, which follows it with `CurrentCardChanged` once
  * the reverse side has resolved.
  */
 export interface AgendaAdvanced {
@@ -348,7 +348,7 @@ export interface AgendaAdvanced {
   cardId: InstanceId;
 }
 
-/** Like `AgendaAdvanced`, for the act deck. Produced by `AdvanceAct`. */
+/** Like `AgendaAdvanced`, for the act deck. Produced by `Advance` of the act. */
 export interface ActAdvanced {
   type: 'ActAdvanced';
   cardId: InstanceId;
@@ -356,7 +356,7 @@ export interface ActAdvanced {
 
 /**
  * `cardId` is now the current card of `deck` (absent once the deck is used
- * up). Produced by `AdvanceAgenda`/`AdvanceAct` after the reverse side of the
+ * up). Produced by `Advance` after the reverse side of the
  * old card has resolved and a `CardMoved` has taken it out of the game.
  */
 export interface CurrentCardChanged {
@@ -368,7 +368,7 @@ export interface CurrentCardChanged {
 /**
  * The scenario is over with the given resolution (`GameMeta.resolution`), which
  * the campaign records. Produced by `EndScenario` (typically a reverse side's
- * `endScenario`) and by `AdvanceAgenda`/`AdvanceAct` when the last card of
+ * `endScenario`) and by `Advance` when the last card of
  * a deck advances without its reverse side ending the scenario.
  *
  * Without a `resolution` no resolution was reached because every investigator

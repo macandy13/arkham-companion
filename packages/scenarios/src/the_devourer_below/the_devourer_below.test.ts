@@ -274,7 +274,7 @@ describe('The Devourer Below setup in the campaign', () => {
       }),
     ).state;
 
-    const state = stateAfter(ctx, started, { type: 'AdvanceAct' });
+    const state = stateAfter(ctx, started, { type: 'Advance', deck: 'act' });
 
     const ritualSite = instanceId(`${codes.ritualSite}#1`);
     expect(state.cards[ritualSite]).toMatchObject({
@@ -297,7 +297,7 @@ describe('The Devourer Below setup in the campaign', () => {
       scenario.compileSetup(ctx, { seed: 1, investigators: [rolandSeat], campaign: logWith({}) }),
     ).state;
 
-    const state = stateAfter(ctx, started, { type: 'AdvanceAct' });
+    const state = stateAfter(ctx, started, { type: 'Advance', deck: 'act' });
 
     expect(state.cards[instanceId(`${codes.ritualSite}#1`)]?.zone).toEqual({
       kind: 'location',
@@ -311,7 +311,7 @@ describe('The Devourer Below setup in the campaign', () => {
     const ritualSite = instanceId(`${codes.ritualSite}#1`);
     const devourer = instanceId(`${codes.vengeanceAwaits}#1`);
     const atRitualSite: Zone = { kind: 'atLocation', locationId: ritualSite };
-    const advanceAgenda: Command = { type: 'AdvanceAgenda' };
+    const advanceAgenda: Command = { type: 'Advance', deck: 'agenda' };
     /** Roland's game, with Peter Warren and The Masked Hunter set aside as the Cultists who got away. */
     const started = () =>
       execute(
@@ -342,7 +342,7 @@ describe('The Devourer Below setup in the campaign', () => {
     ])(
       'at $act discards the enemies at the Ritual Site before Umôrdhoth spawns there',
       ({ advances }) => {
-        const advanceAct: Command = { type: 'AdvanceAct' };
+        const advanceAct: Command = { type: 'Advance', deck: 'act' };
         const atAct = stateAfter(ctx, started(), ...Array<Command>(advances).fill(advanceAct));
         // Peter Warren is engaged with Roland at the Main Path since act 1 advanced.
         const peterAtTheRitualSite: Command = {

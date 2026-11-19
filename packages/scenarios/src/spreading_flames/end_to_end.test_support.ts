@@ -137,7 +137,7 @@ export function playSpreadingFlames(start: CampaignLog): CampaignLog {
   // arrives. The players check it and advance the act by hand. Its reverse side sets the Servant
   // aside, removes Your Friend's Room from the game, its Fire! going to the discard pile as it
   // leaves play, and puts Orne Library, Science Hall and Warren Observatory into play.
-  table.play({ type: 'AdvanceAct' });
+  table.play({ type: 'Advance', deck: 'act' });
   table.endTurn(daisy);
 
   expect(table.board.act?.name).toBe('Searching for Dr. Armitage');

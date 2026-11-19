@@ -1,11 +1,11 @@
 import type {
-  AdvanceAct,
-  AdvanceAgenda,
+  Advance,
   BecomeActAndAgenda,
   ChangeChaosBag,
   EndScenario,
   ReleaseChaosToken,
   SealChaosToken,
+  StageDeck,
 } from './commands';
 import { isPoolToken, poolTokensLeft } from './chaos_bag';
 import { cardsWithDoom } from './doom';
@@ -30,8 +30,6 @@ import { clearTokensEvents, moveCardEvent } from './placement';
 import { CommandRejected } from './rejection';
 import type { CardInstance, GameState } from './state';
 import { zoneKey } from './zone';
-
-type Deck = 'agenda' | 'act';
 
 /**
  * `ChangeChaosBag`: a token into the chaos bag, or one copy of it out of the bag. Removing a token
@@ -73,29 +71,17 @@ export function handleReleaseChaosToken(
 }
 
 /**
- * `AdvanceAgenda`, first step: doom is cleared (the rules remove all doom in
- * play when an agenda advances) and the agenda turns to its reverse side,
- * staying current while that resolves; `completeAdvance` replaces it.
+ * `Advance`, first step: the card's tokens are cleared, all doom in play for an agenda, and it
+ * turns to its reverse side, staying current while that resolves; `completeAdvance` replaces it.
  */
-export function handleAdvanceAgenda(state: GameState, cmd: AdvanceAgenda): Event[] {
-  const flip = reverseSide(state, 'agenda', cmd.resolution);
-  return [...doomRemoval(state), ...flip];
+export function handleAdvance(state: GameState, cmd: Advance): Event[] {
+  const cleared =
+    cmd.deck === 'agenda' ? doomRemoval(state) : clearTokensEvents(currentCard(state, 'act'));
+  return [...cleared, ...reverseSide(state, cmd.deck, cmd.resolution)];
 }
 
 /**
- * `AdvanceAct`, first step: the act turns to its reverse side, and `completeAdvance` replaces it.
- * It pays nothing: an act's clues are the cost of its own `advanceBySpendingClues` action, whose
- * effect this is; an objective met or another card's effect advances it for free.
- */
-export function handleAdvanceAct(state: GameState, cmd: AdvanceAct): Event[] {
-  const act = currentCard(state, 'act');
-  const flip = reverseSide(state, 'act', cmd.resolution);
-  // Advancing removes the act's tokens (RR "Act Deck and Agenda Deck"), the clues on it included.
-  return [...clearTokensEvents(act), ...flip];
-}
-
-/**
- * `AdvanceAgenda`/`AdvanceAct`, second step, which `handle` runs after the
+ * `Advance`, second step, which `handle` runs after the
  * forced effects of the first step: the advanced card leaves the game and the
  * next card becomes current. When that was the last card, the scenario ends
  * with the command's `resolution` unless the reverse side already ended it or
@@ -115,7 +101,7 @@ export function handleAdvanceAct(state: GameState, cmd: AdvanceAct): Event[] {
  */
 export function completeAdvance(
   state: GameState,
-  deck: Deck,
+  deck: StageDeck,
   cardId: InstanceId,
   resolution: ResolutionId | undefined,
   asked: boolean,
@@ -136,7 +122,7 @@ export function completeAdvance(
 }
 
 /** The event that makes `cardId` the current card of `deck`, or leaves the deck without one. */
-function currentCardChanged(deck: Deck, cardId: InstanceId | undefined): CurrentCardChanged {
+function currentCardChanged(deck: StageDeck, cardId: InstanceId | undefined): CurrentCardChanged {
   return { type: 'CurrentCardChanged', deck, ...(cardId === undefined ? {} : { cardId }) };
 }
 
@@ -171,7 +157,7 @@ export function handleEndScenario(cmd: EndScenario): ScenarioEnded[] {
  */
 function reverseSide(
   state: GameState,
-  deck: Deck,
+  deck: StageDeck,
   resolution: ResolutionId | undefined,
 ): (CardFlipped | AgendaAdvanced | ActAdvanced)[] {
   const card = currentCard(state, deck);
@@ -184,7 +170,7 @@ function reverseSide(
 }
 
 /** The card that follows `cardId` in a deck, if any. */
-function nextCardId(state: GameState, deck: Deck, cardId: InstanceId): InstanceId | undefined {
+function nextCardId(state: GameState, deck: StageDeck, cardId: InstanceId): InstanceId | undefined {
   const zone = deck === 'agenda' ? 'agendaDeck' : 'actDeck';
   return (state.order[zoneKey({ kind: zone })] ?? []).find((id) => id !== cardId);
 }
@@ -204,7 +190,7 @@ function doomRemoval(state: GameState): (TokensChanged | InvestigatorChanged)[] 
 }
 
 /** The current agenda or act; rejects if the deck is exhausted. */
-function currentCard(state: GameState, deck: Deck): CardInstance {
+function currentCard(state: GameState, deck: StageDeck): CardInstance {
   const id = state[deck].current;
   if (id === undefined) throw new CommandRejected({ code: 'noCurrentCard', deck });
   return requireCard(state.cards, id);

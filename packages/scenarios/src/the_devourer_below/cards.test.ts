@@ -485,7 +485,7 @@ describe('The Devourer Below card abilities', () => {
     it('ends the scenario with R1 (the ritual is broken) when it advances', () => {
       const { context, state: started } = aliceWithAClue.start();
 
-      const { state } = execute(context, started, { type: 'AdvanceAct' });
+      const { state } = execute(context, started, { type: 'Advance', deck: 'act' });
 
       expect(state.meta.resolution).toBe(DEVOURER_BELOW_RESOLUTIONS.ritualBroken);
     });

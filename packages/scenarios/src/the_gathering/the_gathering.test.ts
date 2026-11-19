@@ -235,7 +235,7 @@ describe('The Gathering act 1 reverse side', () => {
   const seeker = investigatorId('seeker');
 
   /** Act 1 advances (its clue cost is the end-to-end test's). */
-  const advanceTrapped: Command[] = [{ type: 'AdvanceAct' }];
+  const advanceTrapped: Command[] = [{ type: 'Advance', deck: 'act' }];
 
   function startTwoPlayer(): GameState {
     return startScenario(ctx, { playerCount: 2 });
@@ -310,7 +310,7 @@ describe('The Gathering enemies', () => {
   const attic = instanceId('01113#1');
   const hallway = instanceId('01112#1');
   const tank = investigatorId('tank');
-  const advanceTrapped: Command[] = [{ type: 'AdvanceAct' }];
+  const advanceTrapped: Command[] = [{ type: 'Advance', deck: 'act' }];
   const start = () => startScenario(ctx, { playerCount: 2 });
 
   it('discards the Flesh-Eater while the Attic is not in play', () => {
@@ -363,8 +363,8 @@ describe('The Gathering acts 2 and 3', () => {
     return stateAfter(
       ctx,
       startScenario(ctx, { playerCount: 2 }),
-      { type: 'AdvanceAct' },
-      { type: 'AdvanceAct' },
+      { type: 'Advance', deck: 'act' },
+      { type: 'Advance', deck: 'act' },
     );
   }
 
@@ -466,7 +466,8 @@ describe('The Gathering agenda 1', () => {
 
   it('asks the lead, tank, to choose once agenda 1 advances', () => {
     const asked = stateAfter(ctx, startScenario(ctx, { playerCount: 2 }), {
-      type: 'AdvanceAgenda',
+      type: 'Advance',
+      deck: 'agenda',
     });
 
     expect(asked.pending).toMatchObject([
@@ -484,7 +485,8 @@ describe('The Gathering agenda 1', () => {
     { optionId: 'horror', tankHorror: 2 },
   ])('gives tank $tankHorror horror and seeker none for $optionId', ({ optionId, tankHorror }) => {
     const asked = stateAfter(ctx, startScenario(ctx, { playerCount: 2 }), {
-      type: 'AdvanceAgenda',
+      type: 'Advance',
+      deck: 'agenda',
     });
 
     const state = stateAfter(ctx, asked, answer(WHATS_GOING_ON_DECISION, optionId));
@@ -518,16 +520,16 @@ describe('The Gathering agendas 2 and 3', () => {
     return stateAfter(
       ctx,
       startScenario(ctx, { playerCount: 2 }),
-      { type: 'AdvanceAct' },
+      { type: 'Advance', deck: 'act' },
       toDiscard(fleshEater),
       toDiscard(ratSwarm),
-      { type: 'AdvanceAgenda' },
+      { type: 'Advance', deck: 'agenda' },
       answer(WHATS_GOING_ON_DECISION, 'discard'),
     );
   }
 
   it('shuffles the discard back and makes the lead draw the first Ghoul enemy', () => {
-    const { state, events } = runFrom(ctx, atAgenda2(), [{ type: 'AdvanceAgenda' }]);
+    const { state, events } = runFrom(ctx, atAgenda2(), [{ type: 'Advance', deck: 'agenda' }]);
 
     const drawn = events.find((event) => event.type === 'EncounterCardDrawn');
     expect(drawn).toMatchObject({ investigatorId: tank, cardId: secondGhoulMinion });
@@ -557,23 +559,23 @@ describe('The Gathering agendas 2 and 3', () => {
       })),
     );
 
-    const { events } = runFrom(ctx, noGhouls, [{ type: 'AdvanceAgenda' }]);
+    const { events } = runFrom(ctx, noGhouls, [{ type: 'Advance', deck: 'agenda' }]);
 
     expect(events.map((event) => event.type)).toContain('DeckShuffled');
     expect(events.map((event) => event.type)).not.toContain('EncounterCardDrawn');
   });
 
   it('traps the investigators (R3) when agenda 3 advances before act 3', () => {
-    const atAgenda3 = stateAfter(ctx, atAgenda2(), { type: 'AdvanceAgenda' });
+    const atAgenda3 = stateAfter(ctx, atAgenda2(), { type: 'Advance', deck: 'agenda' });
 
-    const ended = stateAfter(ctx, atAgenda3, { type: 'AdvanceAgenda' });
+    const ended = stateAfter(ctx, atAgenda3, { type: 'Advance', deck: 'agenda' });
 
     expect(ended.meta).toMatchObject({ ended: true, resolution: 'R3' });
   });
 
   it('leaves Lita for the players to give when R3 kills everyone, as nobody resigned', () => {
-    const atAgenda3 = stateAfter(ctx, atAgenda2(), { type: 'AdvanceAgenda' });
-    const ended = stateAfter(ctx, atAgenda3, { type: 'AdvanceAgenda' });
+    const atAgenda3 = stateAfter(ctx, atAgenda2(), { type: 'Advance', deck: 'agenda' });
+    const ended = stateAfter(ctx, atAgenda3, { type: 'Advance', deck: 'agenda' });
 
     const proposal = campaign.proposeResolution(ctx, ended, theGatheringResolutions) ?? [];
 
@@ -585,14 +587,14 @@ describe('The Gathering agendas 2 and 3', () => {
   });
 
   it('lets the players give Lita only to seeker, who resigned, when R3 kills the rest', () => {
-    const atAgenda3 = stateAfter(ctx, atAgenda2(), { type: 'AdvanceAgenda' });
+    const atAgenda3 = stateAfter(ctx, atAgenda2(), { type: 'Advance', deck: 'agenda' });
     const ended = stateAfter(
       ctx,
       atAgenda3,
       { type: 'NextPhase' },
       { type: 'StartTurn', investigatorId: seeker },
       { type: 'Resign', investigatorId: seeker },
-      { type: 'AdvanceAgenda' },
+      { type: 'Advance', deck: 'agenda' },
     );
 
     const proposal = campaign.proposeResolution(ctx, ended, theGatheringResolutions) ?? [];
@@ -604,11 +606,16 @@ describe('The Gathering agendas 2 and 3', () => {
   });
 
   it('defeats every investigator who has not resigned when agenda 3 advances at act 3', () => {
-    const atAct3 = stateAfter(ctx, atAgenda2(), { type: 'AdvanceAgenda' }, { type: 'AdvanceAct' });
+    const atAct3 = stateAfter(
+      ctx,
+      atAgenda2(),
+      { type: 'Advance', deck: 'agenda' },
+      { type: 'Advance', deck: 'act' },
+    );
     const preyQuestion = atAct3.pending.find((decision) => decision.subject === priest);
     const priestOnTank = stateAfter(ctx, atAct3, answer(preyQuestion!.id, tank));
 
-    const { state, events } = runFrom(ctx, priestOnTank, [{ type: 'AdvanceAgenda' }]);
+    const { state, events } = runFrom(ctx, priestOnTank, [{ type: 'Advance', deck: 'agenda' }]);
 
     // All at once, in player order (the lead first): nobody is left to become lead.
     expect(events.filter((event) => event.type === 'InvestigatorDefeated')).toEqual([
@@ -634,11 +641,16 @@ describe('The Gathering agendas 2 and 3', () => {
     const yes = { kind: 'flag', value: true } as const;
     const tankCode = investigatorCode('tank');
     const seekerCode = investigatorCode('seeker');
-    const atAct3 = stateAfter(ctx, atAgenda2(), { type: 'AdvanceAgenda' }, { type: 'AdvanceAct' });
+    const atAct3 = stateAfter(
+      ctx,
+      atAgenda2(),
+      { type: 'Advance', deck: 'agenda' },
+      { type: 'Advance', deck: 'act' },
+    );
     const preyQuestion = atAct3.pending.find((decision) => decision.subject === priest);
     const priestOnTank = stateAfter(ctx, atAct3, answer(preyQuestion!.id, tank));
 
-    const everyoneDefeated = stateAfter(ctx, priestOnTank, { type: 'AdvanceAgenda' });
+    const everyoneDefeated = stateAfter(ctx, priestOnTank, { type: 'Advance', deck: 'agenda' });
 
     // No victory points, so each earns the 2 bonus experience; the trauma comes last.
     expect(campaign.proposeResolution(ctx, everyoneDefeated, theGatheringResolutions)).toEqual([

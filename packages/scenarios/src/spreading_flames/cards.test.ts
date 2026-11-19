@@ -875,7 +875,7 @@ describe('Spreading Flames card abilities', () => {
         .withAgenda(wildFlames, cardOf('12108'))
         .start();
 
-      const { state } = execute(context, started, { type: 'AdvanceAgenda' });
+      const { state } = execute(context, started, { type: 'Advance', deck: 'agenda' });
 
       expect(requireInvestigator(state, alice)).toMatchObject({
         status: 'defeated',
