@@ -2,6 +2,35 @@
 
 The sections dated up to 2026-10-22 were released as 1.0.0 to 1.8.0 by mistake: Release Please starts at 1.0.0 by default. Versioning restarted at 0.1.0 (see "Versions" in docs/product.md).
 
+## [0.1.45](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v0.1.44...arkham-companion-v0.1.45) (2026-11-16)
+
+
+### Features
+
+* **engine:** heal an investigator the player picks, and Arkham's ally reactions (MC2.3b) ([a2668bd](https://github.com/macandy13/arkham-companion/commit/a2668bd00ebc3110172aad734ea3f1642a05b227))
+* **engine:** prey "Bearer only" hunts a weakness's owner (ME.26d) ([5a546e6](https://github.com/macandy13/arkham-companion/commit/5a546e690b476c67aa6af5e269b6561cc93e3bd7))
+* **engine:** prey "Bearer only" hunts a weakness's owner (ME.26d) ([7417018](https://github.com/macandy13/arkham-companion/commit/74170188631ee0c778cd402fba02033aafc7b79a))
+* **web:** draw a weakness from an investigator's card (ME.26c) ([9348cd5](https://github.com/macandy13/arkham-companion/commit/9348cd532f678fa815e187c0f5f35a18330a32f2))
+* **web:** draw a weakness from an investigator's card (ME.26c) ([0d966df](https://github.com/macandy13/arkham-companion/commit/0d966df3233152104ce68fcab576c40ff901ba4d))
+
+
+### Bug fixes
+
+* **engine:** a surge after a DrawCard counts its card; rules page for draws from other zones (ME.11a review) ([60494c4](https://github.com/macandy13/arkham-companion/commit/60494c480cb053b55c83a4e1a3314f7ef6e80f18))
+* **scenarios:** drop a duplicate import left by a merge ([d433517](https://github.com/macandy13/arkham-companion/commit/d4335174a48d6e8f4decc30b50f7ff9e5e8717fb))
+* **scenarios:** drop the duplicate self import in Smoke and Mirrors ([7faa97c](https://github.com/macandy13/arkham-companion/commit/7faa97cf0af1f53a052d6bf193c53b8a0e8a26ed))
+* **scenarios:** drop the duplicate self import in Smoke and Mirrors ([80808da](https://github.com/macandy13/arkham-companion/commit/80808dad319aacbb52cb01a837408965742e273f))
+
+
+### Refactoring
+
+* **engine:** DrawEncounter folds into DrawCard (ME.11b) ([a8783cd](https://github.com/macandy13/arkham-companion/commit/a8783cdcc85b2b936637771daccd7246d6aecca9))
+* **engine:** DrawEncounter folds into DrawCard (ME.11b) ([cda9d2f](https://github.com/macandy13/arkham-companion/commit/cda9d2fac7f32646f43af9c8cb90c208eacb9e8f))
+* **engine:** one DrawCard draws from a scenario deck or beneath a card (ME.11a) ([cf5eb35](https://github.com/macandy13/arkham-companion/commit/cf5eb357fded2b952f5a8a1f47fbfea95ee34eb1))
+* **engine:** one DrawCard draws from a scenario deck or beneath a card as an encounter draw (ME.11a) ([afd3af8](https://github.com/macandy13/arkham-companion/commit/afd3af876b97fe4be35fe1d375b6fa447d570b2d))
+* **engine:** preyPrompt looks up the stats; read only "Bearer" ([ce9c078](https://github.com/macandy13/arkham-companion/commit/ce9c078608680ff5deb0ae28e4334a8685e66821))
+* **web:** share the search match, name the test's weaknesses ([0d8f397](https://github.com/macandy13/arkham-companion/commit/0d8f397cfe1af14bee969cda86d3f0ba0ba09a6a))
+
 ## [0.1.44](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v0.1.43...arkham-companion-v0.1.44) (2026-11-15)
 
 

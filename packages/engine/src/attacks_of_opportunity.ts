@@ -4,7 +4,7 @@ import type { DealEnemyAttack, EnemyAttacks } from './commands';
 import { requestDecision } from './decisions';
 import { enemyAttackEvents, readyEngagedEnemies } from './enemies';
 import type { DecisionRequested, Event } from './events';
-import { forcedAttackDecision } from './forced_attacks';
+import { attackDecision } from './forced_attacks';
 import { enemyOf, isEnemyOnTable } from './enemies';
 import type { GameState, HeldAction } from './state';
 
@@ -14,7 +14,7 @@ import type { GameState, HeldAction } from './state';
  * resign is attacked by each of them "after all costs of initiating the
  * action have been paid, but before the application of that action's
  * effect". For every such enemy (a ready massive enemy at the location
- * included) this raises a `forcedAttackDecision` (`attackOfOpportunity:<enemy>`)
+ * included) this raises an `attackDecision` (`attackOfOpportunity:<enemy>`)
  * for that investigator; its `skip` is the way out for a card that "does not
  * provoke attacks of opportunity", which the engine cannot read. Nothing for
  * any other command.
@@ -36,7 +36,7 @@ export function attackOfOpportunityDecisions(
   return readyEngagedEnemies(ctx, state, investigator).flatMap((enemyId) =>
     requestDecision(
       state,
-      forcedAttackDecision(ctx, state, 'attackOfOpportunity', enemyId, investigator.id),
+      attackDecision(ctx, state, 'attackOfOpportunity', enemyId, investigator.id),
     ),
   );
 }
@@ -83,6 +83,6 @@ export function handleEnemyAttacks(
   if (cmd.keyword !== undefined && enemy.exhausted) return [];
   return requestDecision(
     state,
-    forcedAttackDecision(ctx, state, cmd.keyword ?? 'cardAttack', enemy.id, investigator.id),
+    attackDecision(ctx, state, cmd.keyword ?? 'cardAttack', enemy.id, investigator.id),
   );
 }

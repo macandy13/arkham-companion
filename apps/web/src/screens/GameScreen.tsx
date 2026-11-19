@@ -16,11 +16,12 @@ import { DecisionHostContext } from './DetailsDialog';
 import { DetailControls } from './DetailControls';
 import { GameHeader, printedReferenceOf } from './GameHeader';
 import { GameStatus } from './GameStatus';
+import { moveByCardTargets } from '../map/moveByCard';
+import { MapPickPrompt } from './MapPickPrompt';
 import { MapStrip } from './MapStrip';
 import { RejectionToast } from './RejectionToast';
 import { DrawnCardsNotice } from '../encounter/DrawnCardsNotice';
 import { ResolutionPrompt } from '../campaign/ResolutionPrompt';
-import { SpawnPrompt } from '../encounter/SpawnPrompt';
 import { useJustDrawn } from '../encounter/justDrawn';
 import { SkippedEffectsNotice } from './SkippedEffectsNotice';
 import { ChangesNotice } from '../log/ChangesNotice';
@@ -118,10 +119,15 @@ export function GameScreen({
   const { board } = open;
   const [decision] = board.decisions;
   const decisionId = open.state.pending[0]?.id;
-  const { spawning } = open;
+  const { spawning, movingByCard } = open;
+  const mover = movingByCard === undefined ? undefined : board.investigator(movingByCard);
   const picking =
     decision?.locations !== undefined && decisionId !== undefined && pickingFor === decisionId;
-  const pickable = picking ? Object.values(decision?.locations ?? {}) : undefined;
+  const pickable = mover
+    ? moveByCardTargets(board, mover.id)
+    : picking
+      ? Object.values(decision?.locations ?? {})
+      : undefined;
   const pickAnswer = (location: InstanceId) => {
     setPickingFor(undefined);
     // A location option carries no counts or follow-up choice (`chooseLocation`), so its name alone answers it.
@@ -131,7 +137,7 @@ export function GameScreen({
   const focusId = detailTarget?.row === 'map' ? detailTarget.location : undefined;
   // A location that left play, or a location to pick on the map, brings the whole map back.
   const focused =
-    spawning || picking ? undefined : board.locations.find(({ id }) => id === focusId);
+    spawning || picking || mover ? undefined : board.locations.find(({ id }) => id === focusId);
   const showLocation =
     showDetail && ((location: InstanceId) => showDetail({ row: 'map', location }));
 
@@ -197,9 +203,14 @@ export function GameScreen({
                       store.getState().cancelSpawn();
                       void store.getState().actions.spawnEnemy(spawning.id, location);
                     }
-                  : picking
-                    ? pickAnswer
-                    : undefined
+                  : mover
+                    ? (location) => {
+                        store.getState().cancelMoveByCard();
+                        void store.getState().actions.moveByCard(mover.id, location);
+                      }
+                    : picking
+                      ? pickAnswer
+                      : undefined
               }
               pickable={pickable}
               onOpenLocation={showLocation}
@@ -227,6 +238,11 @@ export function GameScreen({
                 : undefined
             }
             weaknesses={cards.status === 'ready' ? cards.catalog.weaknesses : undefined}
+            onMoveByCard={(investigator) => {
+              store.getState().startMoveByCard(investigator);
+              // The expanded bar covers most of the map, which the players pick the location on.
+              if (detailTarget?.row === 'investigators') detail.close();
+            }}
           />
         </section>
         {detailTarget && (
@@ -255,7 +271,18 @@ export function GameScreen({
             />
           )}
           {open.spawning && (
-            <SpawnPrompt enemy={open.spawning} onCancel={() => store.getState().cancelSpawn()} />
+            <MapPickPrompt
+              label={t('encounter.spawnLabel')}
+              prompt={t('encounter.spawnPrompt', { card: open.spawning.name })}
+              onCancel={() => store.getState().cancelSpawn()}
+            />
+          )}
+          {mover && (
+            <MapPickPrompt
+              label={t('moveByCard.label')}
+              prompt={t('moveByCard.prompt', { investigator: mover.name })}
+              onCancel={() => store.getState().cancelMoveByCard()}
+            />
           )}
           {open.drawnCards && (
             <DrawnCardsNotice

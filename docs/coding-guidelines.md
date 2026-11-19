@@ -63,7 +63,7 @@ How code in this repo should look, so every task lands in the same style.
 - **Web test helpers** sit next to the module they stand in for, in a `*.test_support.ts` file that coverage ignores: `actionsOn(table)` in `apps/web/src/state/gameActions.test_support.ts` gives a component `GameActions` that play on a table the test built.
 - **One behaviour per test**, named as a sentence about behaviour: `it('rejects moving a card into its own zone')`.
 - **Exception: end-to-end scenario tests** (`packages/scenarios/src/*/*end_to_end.test.ts`; a scenario may have one per path to a resolution) may be one long narrative test that plays the scenario in order, with short phase/turn comment headers (`// Round 2 – investigation: Roland's turn`) and assertions in place. When a later scenario's game plays on from its log, the narrative is a function in the scenario's `end_to_end.test_support.ts` (log in, log out), which its `end_to_end.test.ts` and the later scenarios' tests call. The campaign's start for those games (`newAshCampaign`) sits in the campaign's `campaign.test_support.ts`.
-- **A new or changed rule shows up at the table.** Every PR that adds or changes a game rule extends an end-to-end scenario test with a step where the rule happens in play, and links that step in the PR's review map. Rule gaps are easiest to spot in a playthrough, not in unit tests of the rule alone.
+- **A new or changed rule shows up at the table.** Every PR that adds or changes a game rule extends an end-to-end scenario test with a step where the rule happens in play, and links that step next to the rules claims in the PR description's folded "Everything else" box. Rule gaps are easiest to spot in a playthrough, not in unit tests of the rule alone.
 - **Flow tests play a `PlayTable` and read it back through `BoardView`** (`packages/engine/src/play_table.ts`, `board_view.ts`): every test that plays a scenario through phases and turns sets up and drives the game with the same table instead of its own command lists, so all flow tests read alike. Unit tests of single rules stay fine-grained in the engine.
 - **Arrange – act – assert**, separated by blank lines; no logic (loops, conditionals) in assertions.
 - **Test through the public API** of the module (commands in, events/state out for the engine), not internals.
@@ -137,14 +137,19 @@ A PR is reviewed on a phone, in one sitting. Its size and shape decide whether t
 
 ### Writing the description
 
-The description is read on a phone before the diff. It points the reviewer at the change; the code and docs explain it. Use `.github/pull_request_template.md`.
+The reviewer reads the PR's review page, not the diff or a long description: questions first, then a short tour of only the code that carries the change, each stop with its lines and, for UI, its goldens before and after ([automation.md, "Review tour"](automation.md#review-tour)). Most PRs should take a minute. Use `.github/pull_request_template.md`.
 
-- **Show, don't describe.** Put the 1–3 most important API or code changes in as short snippets (≤ ~10 lines each): a new command or event type, a changed signature, the core of a rule. Show the new shape; show before/after only when the change itself is the point. Cut bodies and imports down to what the reviewer needs.
-- **Link instead of explaining.** Every snippet, claim and "read first" item links to its code, test or doc section. Use permalinks to the head commit (`https://github.com/macandy13/arkham-companion/blob/<sha>/path#L10-L20`), so links survive the branch; refresh them after a push that moves the lines. Don't restate what a linked doc section already says.
-- **Short and plain.** Short sentences, everyday words, no filler ("This PR …", "In order to …"). One line per bullet. If a section has nothing to say, drop it.
-- **Why first, without names.** Open with why the PR exists. Give the reason itself; never attribute it to a person ("Andy asked/chose/wanted …"). The required attribution block stays above everything.
-- **Draw it when a picture is faster.** A flow, a state machine, a dependency or an order of steps reads faster as a Mermaid diagram than as prose, in a PR description or a doc. Start every block with its diagram type (`flowchart LR`, `sequenceDiagram`, `stateDiagram-v2`); without it GitHub shows an error instead of the diagram.
-- **Weight by what the owner reviews.** Rules, API and architecture, tests and coverage get a line each; plumbing gets one "Skim or skip" line in total.
+- **The body is short.** One or two sentences on what changes conceptually and why, `Closes #n`, the tour block, and one folded "Everything else" box. The required attribution block stays above everything. Never attribute a reason to a person ("Andy asked/chose/wanted …"); give the reason itself.
+- **The tour carries the walkthrough.** A `<!-- review-tour {…} -->` JSON block at the start of a line (format: `Tour` in [`tour.ts`](../packages/review_tour/src/tour.ts)):
+  - `concept`: the page's lead, the same idea as the body's first sentence.
+  - `questions`: 0–3 decisions for the reviewer, each answerable in a word, with `picked` for what the PR went with and `stop` for where it shows. A smaller design, a disagreement with a review comment or an open rules reading goes here.
+  - `stops`: 1–4 in reading order, one idea each: a title that says what changes, a `tag` for its kind ("Rule", "API", "UI · the dialog"), one or two sentences, and `code` ranges of about 15 lines or fewer, with `highlight` on the line that carries it. A UI stop names its golden in `picture` (path below the project directory, `shots/game_screen.spec.ts/<test>.png`). A rule change is a stop that names its `docs/rules/` page. A refactor that changes no behaviour is one stop that says so.
+  - `rest`: one short line each for the plumbing the tour leaves out (wiring, helper moves, i18n strings); the page folds it as "Not on the tour".
+- **Never a stop:** tests, imports, wiring, i18n strings, helper moves, lockfiles. Tests are covered by CI and the coverage floors; the one test a reviewer may want, a rule's end-to-end step, is linked in "Everything else".
+- **Line numbers are at the head commit.** After a push that moves the lines a stop shows, update its ranges; the check fails when a range points past the end of a file or at a golden that doesn't exist, but a shifted range only shows the wrong lines.
+- **Everything else, folded:** the rules claims table when a rule changes (claim · verdict · `docs/rules/` page) with a link to its end-to-end step, and the `docs/architecture/` page the PR updates. Leave out what has nothing.
+- **Short and plain.** Short sentences, everyday words, no filler ("This PR …", "In order to …").
+- **Draw it when a picture is faster.** A flow, a state machine or an order of steps reads faster as a Mermaid diagram, in a doc or the folded box. Start every block with its diagram type (`flowchart LR`, `sequenceDiagram`, `stateDiagram-v2`); without it GitHub shows an error instead of the diagram.
 
 ## 8. Docs
 

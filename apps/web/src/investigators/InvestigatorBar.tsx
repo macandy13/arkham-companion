@@ -31,6 +31,7 @@ import { useClueDrag } from './useClueDrag';
 import { CounterBubble, type BubbleSide } from '../screens/CounterBubble';
 import { useDoubleTap, useDoubleTapOn } from '../screens/useDoubleTap';
 import './investigators.css';
+import './card_effects.css';
 
 /**
  * The bar of investigator panels along the foot of the play screen, one per investigator in seat
@@ -56,6 +57,7 @@ export function InvestigatorBar({
   whole = false,
   printed,
   weaknesses,
+  onMoveByCard,
 }: {
   board: BoardView;
   actions: GameActions;
@@ -67,6 +69,11 @@ export function InvestigatorBar({
   printed?: ((code: InvestigatorCode) => PrintedInvestigator | undefined) | undefined;
   /** The catalog's weaknesses an investigator can draw (`DrawWeakness`), once it has loaded. */
   weaknesses?: readonly WeaknessDef[] | undefined;
+  /**
+   * Starts picking on the map where a card effect moves an investigator, connected or not
+   * (`AppState.startMoveByCard`); the whole card offers it when given.
+   */
+  onMoveByCard?: ((investigator: InvestigatorId) => void) | undefined;
 }) {
   // The players pick who goes next in the investigation phase, once no turn is in progress.
   const picking = board.phase === 'investigation' && board.turn === undefined;
@@ -85,6 +92,7 @@ export function InvestigatorBar({
           investigator={investigator}
           printed={printed?.(investigator.code)}
           weaknesses={weaknesses}
+          onMoveByCard={onMoveByCard}
           focused={focus === investigator.id}
           onShown={onOpen ? () => setFocus(investigator.id) : undefined}
           onOpen={focus === investigator.id ? onOpen : undefined}
@@ -183,6 +191,7 @@ function InvestigatorPanel({
   investigator,
   printed,
   weaknesses,
+  onMoveByCard,
   seat,
   focused,
   onShown,
@@ -203,6 +212,8 @@ function InvestigatorPanel({
   printed: PrintedInvestigator | undefined;
   /** The weaknesses the whole card offers to draw (`DrawWeakness`). */
   weaknesses: readonly WeaknessDef[] | undefined;
+  /** Starts picking where a card effect moves them (`InvestigatorBar`'s `onMoveByCard`). */
+  onMoveByCard: ((investigator: InvestigatorId) => void) | undefined;
   /**
    * Where the panel sits on the phone's row of panels, which its dots show, so the players see
    * there is more to swipe to; nothing elsewhere, or in a solo game.
@@ -239,13 +250,29 @@ function InvestigatorPanel({
       <Counters board={board} investigator={investigator} busy={busy} actions={actions} />
     </>
   );
-  const drawWeakness = (
-    <DrawWeakness
-      investigator={investigator}
-      weaknesses={weaknesses}
-      actions={actions}
-      busy={busy}
-    />
+  // What a player card can do to the investigator that the panel has no control for.
+  const canMoveByCard = onMoveByCard !== undefined && investigator.status === 'active';
+  const cardEffects = ((weaknesses?.length ?? 0) > 0 || canMoveByCard) && (
+    <footer data-part="card-effects">
+      <DrawWeakness
+        investigator={investigator}
+        weaknesses={weaknesses}
+        actions={actions}
+        busy={busy}
+      />
+      {canMoveByCard && (
+        <button
+          type="button"
+          disabled={busy}
+          onClick={() => {
+            setZoomed(false);
+            onMoveByCard(investigator.id);
+          }}
+        >
+          {t('moveByCard.start')}
+        </button>
+      )}
+    </footer>
   );
   return (
     <section
@@ -281,7 +308,7 @@ function InvestigatorPanel({
           >
             {stats}
           </WholeCard>
-          {drawWeakness}
+          {cardEffects}
         </>
       ) : (
         <article
@@ -321,7 +348,7 @@ function InvestigatorPanel({
           printed={printed}
           picture={picture}
           onClose={() => setZoomed(false)}
-          footer={drawWeakness}
+          footer={cardEffects}
         >
           <Skills board={board} investigator={investigator} busy={busy} actions={actions} />
           <Counters board={board} investigator={investigator} busy={busy} actions={actions} />

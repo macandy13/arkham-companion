@@ -23,6 +23,7 @@ import {
   groupCluePayments,
   statValue,
   findInvestigator,
+  playerOrder,
 } from './investigators';
 import { currentCard, requireCard } from './lookup';
 import { CommandRejected } from './rejection';
@@ -55,8 +56,12 @@ export interface CardAction {
   readonly limit?: UsageLimit;
   /** "Spend N resources:" or "Spend N clues:", paid before the effects. */
   readonly cost?: ActionCost;
-  /** "If you control Lita Chantler:", which the investigator taking it must meet (`actionConditionHolds`). */
-  readonly condition?: ActionCondition;
+  /**
+   * "If you control Lita Chantler:", which the investigator taking it must meet
+   * (`actionConditionHolds`); a list when the card prints several ("during your turn, if there are
+   * exactly 1 or 2 investigators in the game"), each of which must hold.
+   */
+  readonly condition?: ActionCondition | readonly ActionCondition[];
   readonly effects: readonly AbilityEffect[];
 }
 
@@ -68,7 +73,15 @@ export interface CardAction {
  * `AbilityCondition`, so the next condition joins as another member.
  */
 export type ActionCondition =
-  { readonly kind: 'controls'; readonly card: CardCode } | { readonly kind: 'investigatorTurn' };
+  | { readonly kind: 'controls'; readonly card: CardCode }
+  | { readonly kind: 'investigatorTurn' }
+  /** "During your turn": the taker's own turn is in progress. */
+  | { readonly kind: 'yourTurn' }
+  /**
+   * "If there are exactly 1 or 2 investigators in the game" (Miskatonic Quad): the investigators
+   * still in it, defeated and resigned ones left out, are within the range.
+   */
+  | { readonly kind: 'investigatorCount'; readonly min: number; readonly max: number };
 
 /**
  * Whether `condition` holds for `investigator`. "During any investigator's turn" holds while
@@ -79,17 +92,27 @@ export type ActionCondition =
  * card cost, as long as the campaign log says they earned the card
  * (`CampaignInvestigator.earnedCards`). A standalone game has no log: its players pick the
  * earlier resolutions themselves (Rules Reference, "Standalone Mode"), so it trusts the taker
- * too. No condition always holds.
+ * too. "During your turn" holds in the taker's own turn only, and "if there are exactly 1 or 2
+ * investigators in the game" counts the investigators still in it. Each of a list must hold; no
+ * condition always holds.
  */
 export function actionConditionHolds(
   state: GameState,
   investigator: Investigator,
-  condition: ActionCondition | undefined,
+  condition: ActionCondition | readonly ActionCondition[] | undefined,
 ): boolean {
   if (condition === undefined) return true;
+  if (isConditionList(condition))
+    return condition.every((each) => actionConditionHolds(state, investigator, each));
   switch (condition.kind) {
     case 'investigatorTurn':
       return state.meta.turn !== undefined;
+    case 'yourTurn':
+      return state.meta.turn?.investigatorId === investigator.id;
+    case 'investigatorCount': {
+      const count = playerOrder(state).length;
+      return count >= condition.min && count <= condition.max;
+    }
     case 'controls': {
       const copies = Object.values(state.cards).filter((card) => card.code === condition.card);
       if (copies.length === 0) {
@@ -102,6 +125,12 @@ export function actionConditionHolds(
     default:
       return assertNever(condition);
   }
+}
+
+function isConditionList(
+  condition: ActionCondition | readonly ActionCondition[],
+): condition is readonly ActionCondition[] {
+  return Array.isArray(condition);
 }
 
 /**

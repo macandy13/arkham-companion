@@ -3,7 +3,7 @@ import type { EngineContext } from './cards';
 import type { InstanceId } from './ids';
 import type { Command, ResolveEnemyAttack } from './commands';
 import { enemyAttackEvents, enemyAttackList } from './enemies';
-import { enemyPhaseAttackDecision } from './forced_attacks';
+import { attackDecision } from './forced_attacks';
 import { requestDecision } from './decisions';
 import type {
   DecisionRequested,
@@ -126,7 +126,7 @@ export function nextStepPlan(ctx: EngineContext, state: GameState): StepPlan | u
 /**
  * Step 3.3 when reached: lists the due attacks (in player order, see
  * `enemyAttackList`) and asks the players about each one
- * (`enemyPhaseAttackDecision`); once none of them is due any more (resolved,
+ * (`attackDecision` of kind `enemyPhase`); once none of them is due any more (resolved,
  * or the enemy was defeated, evaded or exhausted meanwhile) the step is done.
  * The decisions may be answered in any order: the rules have each
  * investigator, in player order, resolve all their attacks in the order they
@@ -166,7 +166,10 @@ function attackDecisions(
   attacks: readonly DueAttack[],
 ): DecisionRequested[] {
   return attacks.flatMap((attack) =>
-    requestDecision(state, enemyPhaseAttackDecision(ctx, state, attack)),
+    requestDecision(
+      state,
+      attackDecision(ctx, state, 'enemyPhase', attack.enemyId, attack.investigatorId),
+    ),
   );
 }
 

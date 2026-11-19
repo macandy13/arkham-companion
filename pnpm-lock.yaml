@@ -195,6 +195,12 @@ importers:
         specifier: ^26.6.6
         version: 26.6.6
 
+  packages/review_tour:
+    devDependencies:
+      '@types/node':
+        specifier: ^26.6.6
+        version: 26.6.6
+
   packages/scenarios:
     dependencies:
       '@arkham/engine':

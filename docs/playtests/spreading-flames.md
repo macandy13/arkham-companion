@@ -37,6 +37,8 @@ The scripted golden game is [`end_to_end.test_support.ts`](../../packages/scenar
 
 - [ ] Defeating the Servant of Flame advances the act, and the lead chooses: stay and fight the fire (resolution 2) or go with Dr. Armitage (resolution 3).
 - [ ] Resigning from the act works.
+- [ ] Its fast ability spends 1 clue per investigator as a group and deals 1 damage per investigator to an enemy at your location (you pick when several are there).
+- [ ] With 1 or 2 investigators, Miskatonic Quad offers a free move to a connecting location in your turn, once per round for the whole group.
 
 **Agendas**
 
@@ -77,8 +79,7 @@ These are done by hand at the table; the app does not do them.
 - The reverse sides' tests of Past Curfew and Lit Up (each investigator tests), and the agendas' Parley to discard a Bystander.
 - Escape the Dorms' objective: the act advances when each undefeated investigator is at Miskatonic Quad. The players advance it with "Advance by hand" on the act's full card.
 - Searching for Dr. Armitage's reverse side: Dr. Henry Armitage under an investigator's control. His skill bonus and free first action are his controller's to apply.
-- Blaze of Glory's group clue spend to deal damage to an enemy.
-- Your Friend's Room's Engage action, Miskatonic Quad's free move and Orne Library's two-action draw.
+- Your Friend's Room's Engage action and Orne Library's two-action draw.
 - Which asset Hellhound's enemy phase attack discards (the app leaves the pick to the player), and Bystander's Doomed keyword.
 - Unspeakable Truths' limit of 1 per investigator, its horror after its holder discovers clues and its two-action discard.
 - The tablet's "reveal another token" and damage, and the elder thing's Fire! draw.

@@ -1,5 +1,5 @@
 import { currentUse } from './usage_limits';
-import { ENEMY_PHASE_ATTACK_PROMPT } from './forced_attacks';
+import { attackPrompt } from './forced_attacks';
 import { withoutFirst, withoutKey } from '@arkham/util';
 import { sameEdge } from './board';
 import type {
@@ -54,7 +54,7 @@ function applyInvestigatorLeft(
     ...applied,
     pending: applied.pending.filter(
       (d) =>
-        d.prompt !== ENEMY_PHASE_ATTACK_PROMPT ||
+        d.prompt !== attackPrompt('enemyPhase') ||
         d.decider.kind !== 'investigator' ||
         d.decider.investigatorId !== investigatorId,
     ),

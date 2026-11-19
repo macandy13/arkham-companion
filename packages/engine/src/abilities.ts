@@ -37,7 +37,7 @@ import {
   type ResolutionId,
 } from './ids';
 import type { GridCell } from './map';
-import { extremeLocations, locationsInPlay } from './board';
+import { extremeLocations, locationsInPlay, neighbours } from './board';
 import { limitReached } from './placement';
 import { reactionWithinLimit } from './reactions';
 import type { UsageLimit } from './usage_limits';
@@ -323,6 +323,11 @@ export type RelativeCard =
    */
   | ({ ref: 'locationWith' } & LocationFilter)
   /**
+   * One enemy at `at` ("deal 1 damage to an enemy at your location"), picked by the investigator
+   * the window names when there are several; none when there is none.
+   */
+  | { ref: 'anEnemy'; at: RelativeCard }
+  /**
    * The location in play with the most `token`s that the card with the ability
    * may attach to ("attach to the location with the most clues and without a
    * copy of Locked Door attached": its `CardStats.limit`
@@ -357,9 +362,14 @@ export type RelativeInvestigator =
    */
   | { ref: 'anInvestigator'; at?: RelativeCard };
 
-/** Which locations in play a `locationWith` reference may stand for: those with `trait`. */
+/**
+ * Which locations in play a `locationWith` reference may stand for: those with `trait`, and with
+ * `connected` only those connecting to the location of the investigator the window names ("move to
+ * a connecting location").
+ */
 export interface LocationFilter {
   trait?: Trait;
+  connected?: true;
 }
 
 /**
@@ -1253,6 +1263,13 @@ function pickQuestion(
         prompt: 'decision.chooseLocationToAttach',
         decider: { kind: 'lead' },
       };
+    case 'anEnemy':
+      return {
+        key: 'enemy',
+        kind: 'chooseCard',
+        prompt: 'decision.chooseEnemyFor',
+        decider: { kind: 'investigator', investigatorId },
+      };
     case 'anInvestigator':
       return {
         key: 'investigator',
@@ -1269,17 +1286,18 @@ function pickQuestion(
 export type PickedRef =
   | Extract<
       RelativeCard,
-      { ref: 'nearestEnemy' | 'locationWith' | 'locationWithMost' | 'nearestLocation' }
+      { ref: 'nearestEnemy' | 'anEnemy' | 'locationWith' | 'locationWithMost' | 'nearestLocation' }
     >
   | Extract<RelativeInvestigator, { ref: 'anInvestigator' }>;
 
 /**
- * The first reference in `effect` with candidates (`nearestEnemy`, `locationWith`,
+ * The first reference in `effect` with candidates (`nearestEnemy`, `anEnemy`, `locationWith`,
  * `locationWithMost`, `nearestLocation`, `anInvestigator`), if it holds one.
  */
 function pickedRef(effect: unknown): PickedRef | undefined {
   return findRef(effect, (ref) =>
     ref.ref === 'nearestEnemy' ||
+    ref.ref === 'anEnemy' ||
     ref.ref === 'locationWith' ||
     ref.ref === 'locationWithMost' ||
     ref.ref === 'nearestLocation' ||
@@ -1309,6 +1327,10 @@ function candidatesFor(
       .filter((inv) => at === undefined || inv.locationId === at)
       .map((inv) => inv.id);
   }
+  if (picked.ref === 'anEnemy') {
+    const at = resolveRefs(picked.at, refs) as InstanceId | undefined;
+    return at === undefined ? [] : enemiesAt(ctx, state, at).map((card) => card.id);
+  }
   return candidateCards(ctx, state, picked, cardId, from).map((card) => card.id);
 }
 
@@ -1316,7 +1338,7 @@ function candidatesFor(
 function candidateCards(
   ctx: EngineContext,
   state: GameState,
-  picked: Exclude<PickedRef, { ref: 'anInvestigator' }>,
+  picked: Exclude<PickedRef, { ref: 'anInvestigator' | 'anEnemy' }>,
   cardId: InstanceId,
   from: InstanceId | undefined,
 ): CardInstance[] {
@@ -1328,7 +1350,9 @@ function candidateCards(
         (location) =>
           location.id !== from &&
           (picked.trait === undefined ||
-            cardStats(ctx.cards, location.code).traits.includes(picked.trait)),
+            cardStats(ctx.cards, location.code).traits.includes(picked.trait)) &&
+          (picked.connected === undefined ||
+            (from !== undefined && neighbours(ctx, state, from).includes(location.id))),
       );
     case 'locationWithMost': {
       const open = locationsInPlay(ctx, state).filter((location) =>
@@ -1606,6 +1630,7 @@ function resolveRefs(value: unknown, refs: ResolvedRefs): unknown {
       case 'locationWithMost':
       case 'nearestLocation':
       case 'anInvestigator':
+      case 'anEnemy':
         return refs.picked;
       default:
         return assertNever(value);
@@ -2419,6 +2444,22 @@ export function locationWith(filter: LocationFilter = {}): RelativeCard {
 }
 
 /**
+ * "Move to a connecting location": the investigator the window names moves to a location
+ * connecting to theirs, picking one when there are several (`locationWith({ connected: true })`).
+ */
+export function moveToConnectingLocation(): AbilityEffect {
+  return moveTo(locationWith({ connected: true }));
+}
+
+/**
+ * "An enemy at your location" (`anEnemy`), picked by the investigator the window names when
+ * several are there: `dealDamageTo(anEnemy(yourLocation()), perInvestigator(1))` (Blaze of Glory).
+ */
+export function anEnemy(at: RelativeCard): RelativeCard {
+  return { ref: 'anEnemy', at };
+}
+
+/**
  * "[Enemy] moves 1 location towards [location]" (`MoveEnemyTowards`), written
  * `moveEnemyTowards(eachEnemy({ trait: trait('Ghoul'), unengaged: true }), onlyCopy(codes.parlor))`.
  * With `forced`, an engaged enemy disengages and moves too ("Forced – When the round ends: each
@@ -2746,7 +2787,7 @@ export function readySelf(): AbilityEffect {
  * the damage brings to its health is defeated in the same step, so its
  * `defeated` abilities fire. Written `dealDamageTo(eachEnemy({ trait: trait('Monster') }), 1)`.
  */
-export function dealDamageTo(enemy: RelativeCard, amount: number): AbilityEffect {
+export function dealDamageTo(enemy: RelativeCard, amount: TokenAmount): AbilityEffect {
   return { type: 'DamageEnemy', enemyId: enemy, amount };
 }
 
