@@ -38,6 +38,7 @@ The scripted golden game is [`end_to_end.test_support.ts`](../../packages/scenar
 - [ ] Miskatonic University (In Flames) deals 1 damage to each investigator there as the investigation phase ends.
 - [ ] Discovering clues at Downtown (First Bank of Arkham) offers its reaction to gain 1 resource.
 - [ ] Discovering clues at Downtown (Arkham Sanatorium) offers its reaction: heal 1 horror from an investigator there (only those with horror), or an Ally asset there by hand.
+- [ ] With 1 or 2 investigators, Merchant District offers a free move to a connecting location in your turn, once per round for each investigator.
 - [ ] Discovering the last clue at Easttown offers its reaction once per game: search for an Ally asset and play it, by hand.
 - [ ] The Servant of Flame hunts and retaliates; the Rogue Gangster hunts the investigator with the most resources, and as it engages takes 1 of their resources, or attacks them if they have none.
 - [ ] Each suspect has its keyword: David Renfield, Abigail Foreman and Margaret Liu are aloof, Cornelia Akely is alert, Naomi O'Bannion retaliates.

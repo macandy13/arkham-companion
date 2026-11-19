@@ -6,7 +6,7 @@ import {
   requireLocationInPlay,
   shortestPaths,
 } from './board';
-import type { EngineContext } from './cards';
+import { resolveAmount, type EngineContext } from './cards';
 import type {
   DamageEnemy,
   HealEnemy,
@@ -217,15 +217,16 @@ export function handleMoveEnemyTowards(
 /** `DamageEnemy`: adds damage and defeats the enemy in the same step once it has as much as its health. */
 export function handleDamageEnemy(ctx: EngineContext, state: GameState, cmd: DamageEnemy): Event[] {
   const { enemy, stats } = onTableEnemyOf(ctx, state, cmd.enemyId);
-  if (!Number.isInteger(cmd.amount) || cmd.amount <= 0)
-    throw new CommandRejected({ code: 'invalidTokenDelta', delta: cmd.amount });
+  const amount = resolveAmount(cmd.amount, state.meta.playerCount);
+  if (!Number.isInteger(amount) || amount <= 0)
+    throw new CommandRejected({ code: 'invalidTokenDelta', delta: amount });
   const damaged: Event = {
     type: 'TokensChanged',
     cardId: enemy.id,
     token: 'damage',
-    delta: cmd.amount,
+    delta: amount,
   };
-  return [damaged, ...defeatedByDamage(state, enemy, stats, cmd.amount)];
+  return [damaged, ...defeatedByDamage(state, enemy, stats, amount)];
 }
 
 /** `HealEnemy`: removes as much of the damage as the enemy has, up to the amount. */
