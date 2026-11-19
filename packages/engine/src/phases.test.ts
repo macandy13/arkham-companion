@@ -441,7 +441,8 @@ describe('enemy phase', () => {
 
     expect(
       rejectionFrom(context, investigation, {
-        type: 'ResolveEnemyAttack',
+        type: 'DealEnemyAttack',
+        kind: 'enemyPhase',
         enemyId: instanceId('ghoul'),
         investigatorId: alice,
       }),

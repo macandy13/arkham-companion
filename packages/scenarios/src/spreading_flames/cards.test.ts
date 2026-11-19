@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 import {
   atLocation,
   attachedTo,
+  blankEnemy,
+  fixed,
   encounterDeck,
   encounterDiscard,
   encounterSetCode,
@@ -32,6 +34,7 @@ import {
   FORBIDDEN_SECRETS_DECISION,
   MUTATED_DECISION,
   NOXIOUS_SMOKE_DECISION,
+  SPREADING_FLAMES_CODES,
   WILD_COMPULSION_DECISION,
   spreadingFlamesCardDefs,
   spreadingFlamesCards,
@@ -135,7 +138,7 @@ describe('Spreading Flames card data', () => {
   });
 
   it('lets the investigators resign at Blaze of Glory, act 4', () => {
-    expect(cardOf('12112').actions).toEqual([resignAction()]);
+    expect(cardOf('12112').actions).toContainEqual(resignAction());
   });
 
   it.each([
@@ -162,6 +165,141 @@ describe('Spreading Flames card abilities', () => {
     pick: { match: { name: card } },
   });
 
+  describe('Blaze of Glory', () => {
+    const bob = investigatorId('bob');
+    const blaze = instanceId('blaze_of_glory');
+    const servant = instanceId('servant');
+    const hound = instanceId('hound');
+    /** "Health 9" */
+    const sturdyEnemy = (code: string) => blankEnemy(code, { health: fixed(9) });
+    /** Alice and bob, 1 clue each, at Miskatonic Quad with the enemies `enemies` names engaged with alice. */
+    const atTheQuadWith = (enemies: readonly ('servant' | 'hound')[]) => {
+      let builder = newGame()
+        .withAct(blaze, cardOf(SPREADING_FLAMES_CODES.blazeOfGlory))
+        .withLocation(quad, cardOf(SPREADING_FLAMES_CODES.miskatonicQuad), { revealed: true })
+        .withInvestigator(alice, { locationId: quad, clues: 1 })
+        .withInvestigator(bob, { locationId: quad, clues: 1 })
+        .withTurnOf(alice);
+      if (enemies.includes('servant'))
+        builder = builder.withCard(servant, sturdyEnemy('servant'), engagedWith(alice));
+      if (enemies.includes('hound'))
+        builder = builder.withCard(hound, sturdyEnemy('hound'), engagedWith(alice));
+      return builder.start();
+    };
+    const aliceUsesBlaze: Command = {
+      type: 'UseCardAction',
+      investigatorId: alice,
+      cardId: blaze,
+      action: 0,
+    };
+
+    it('deals 1 damage per investigator to the only enemy there, as a fast ability for 1 clue per investigator', () => {
+      const { context, state: started } = atTheQuadWith(['servant']);
+
+      const { state } = execute(context, started, aliceUsesBlaze);
+
+      expect(state.cards[servant]?.tokens.damage).toBe(2);
+      expect(requireInvestigator(state, alice)).toMatchObject({ clues: 0, actionsRemaining: 3 });
+      expect(requireInvestigator(state, bob).clues).toBe(0);
+    });
+
+    it("lets alice damage the enemy engaged with bob there, outside anyone's turn", () => {
+      const { context, state: started } = newGame()
+        .withAct(blaze, cardOf(SPREADING_FLAMES_CODES.blazeOfGlory))
+        .withLocation(quad, cardOf(SPREADING_FLAMES_CODES.miskatonicQuad), { revealed: true })
+        .withInvestigator(alice, { locationId: quad, clues: 1 })
+        .withInvestigator(bob, { locationId: quad, clues: 1 })
+        .withCard(servant, sturdyEnemy('servant'), engagedWith(bob))
+        .start();
+
+      const { state } = execute(context, started, aliceUsesBlaze);
+
+      expect(state.cards[servant]?.tokens.damage).toBe(2);
+    });
+
+    it('lets alice pick the enemy when two are there', () => {
+      const { context, state: started } = atTheQuadWith(['servant', 'hound']);
+
+      const state = stateAfter(
+        context,
+        started,
+        aliceUsesBlaze,
+        answer('enemy:blaze_of_glory', 'hound'),
+      );
+
+      expect(state.cards[hound]?.tokens.damage).toBe(2);
+      expect(state.cards[servant]?.tokens.damage ?? 0).toBe(0);
+    });
+  });
+
+  describe('Miskatonic Quad', () => {
+    const bob = investigatorId('bob');
+    const carol = investigatorId('carol');
+    const dormitories = instanceId('dormitories');
+    const scienceHall = instanceId('science_hall');
+    const aliceMovesFree: Command = {
+      type: 'UseCardAction',
+      investigatorId: alice,
+      cardId: quad,
+      action: 0,
+    };
+    /** The Quad with Dormitories and Science Hall connecting to it, alice there on her turn, with `others` in the game too. */
+    const aliceAtTheQuad = (others: readonly ('bob' | 'carol')[]) => {
+      let builder = newGame()
+        .withLocation(quad, cardOf(SPREADING_FLAMES_CODES.miskatonicQuad), { revealed: true })
+        .withLocation(dormitories, cardOf(SPREADING_FLAMES_CODES.dormitories), { revealed: true })
+        .withLocation(scienceHall, cardOf(SPREADING_FLAMES_CODES.scienceHall), { revealed: true })
+        .withInvestigator(alice, { locationId: quad });
+      if (others.includes('bob')) builder = builder.withInvestigator(bob, { locationId: quad });
+      if (others.includes('carol')) builder = builder.withInvestigator(carol, { locationId: quad });
+      return builder.withTurnOf(alice).start();
+    };
+
+    it('moves alice as a fast ability to the connecting location she picks', () => {
+      const { context, state: started } = aliceAtTheQuad(['bob']);
+
+      const asked = stateAfter(context, started, aliceMovesFree);
+      const state = stateAfter(context, asked, answer('location:miskatonic_quad', 'science_hall'));
+
+      expect(asked.pending[0]?.options.map((option) => option.id).sort()).toEqual([
+        'dormitories',
+        'science_hall',
+      ]);
+      expect(requireInvestigator(state, alice)).toMatchObject({
+        locationId: scienceHall,
+        actionsRemaining: 3,
+      });
+    });
+
+    it('refuses the move with 3 investigators in the game', () => {
+      const { context, state } = aliceAtTheQuad(['bob', 'carol']);
+
+      expect(rejectionFrom(context, state, aliceMovesFree).code).toBe('cardActionConditionUnmet');
+    });
+
+    it("refuses bob's move once alice made it this round: a group limit", () => {
+      const { context, state: started } = aliceAtTheQuad(['bob']);
+      const moved = stateAfter(
+        context,
+        started,
+        aliceMovesFree,
+        answer('location:miskatonic_quad', 'science_hall'),
+        { type: 'EndTurn', investigatorId: alice },
+      );
+
+      expect(
+        rejectionFrom(
+          context,
+          { ...moved, meta: { ...moved.meta, turn: { investigatorId: bob } } },
+          {
+            ...aliceMovesFree,
+            investigatorId: bob,
+          },
+        ).code,
+      ).toBe('cardActionLimitReached');
+    });
+  });
+
   describe('Hellhound', () => {
     const hellhound = instanceId('hellhound');
     const discardAnAsset: Command = { type: 'DiscardAsset', investigatorId: alice };
@@ -181,6 +319,7 @@ describe('Spreading Flames card abilities', () => {
         commands: [
           {
             type: 'DealEnemyAttack',
+            kind: 'cardAttack',
             enemyId: hellhound,
             investigatorId: alice,
             damage: 1,

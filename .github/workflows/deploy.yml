@@ -1,7 +1,8 @@
 name: Deploy
 
 # Publishes main to the root of the gh-pages branch. PR previews live under
-# gh-pages/pr-preview/ (see preview.yml) and are left untouched here.
+# gh-pages/pr-preview/ (see preview.yml) and review pages under gh-pages/review-tour/
+# (review-tour.yml); both are left untouched here.
 # Repo setting: Pages → Source: "Deploy from a branch" → gh-pages / (root).
 
 on:
@@ -43,5 +44,7 @@ jobs:
         with:
           branch: gh-pages
           folder: apps/web/dist
-          clean-exclude: pr-preview/
+          clean-exclude: |
+            pr-preview/
+            review-tour/
           force: false

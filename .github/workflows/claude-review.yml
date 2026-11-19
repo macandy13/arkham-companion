@@ -46,8 +46,10 @@ jobs:
             to leave alone. The rules it refers to are in CLAUDE.md and
             docs/coding-guidelines.md; game rules are summarised in docs/rules/ (index: docs/rules.md).
 
-            Check the "Rules claims" in the PR description's review map against
-            the pages in docs/rules/, and flag rule changes in the diff that the map does not claim.
+            Check the rules claims table in the PR description's folded "Everything else" box
+            against the pages in docs/rules/, and flag rule changes in the diff it does not claim.
+            Check that the description's review-tour block walks through the code that carries
+            the change (not tests or plumbing) and that its ranges match the head commit.
 
             Use `gh pr diff` and `gh pr view` to read the PR. Post one top-level summary
             with `gh pr comment`, in the format REVIEW.md asks for, short enough to read on

@@ -1,0 +1,104 @@
+name: Review tour
+
+# Turns the review tour in a PR's description (a `<!-- review-tour {…} -->` block, written by the
+# session that opens the PR; docs/coding-guidelines.md §7) into a one-minute review page at
+# https://macandy13.github.io/arkham-companion/review-tour/pr-<number>/ and links it in a sticky
+# comment. Runs on every push and on description edits by people and the bot that opens PRs;
+# preview.yml's edit of the screencast section uses GITHUB_TOKEN, whose events start no workflow;
+# a description without a block removes page and comment, a malformed block fails the check with
+# the reason. The page is removed when the PR closes. Code in packages/review_tour; see
+# docs/automation.md, "Review tour". PRs from forks are skipped (no write token).
+
+on:
+  pull_request:
+    types: [opened, reopened, edited, synchronize, closed]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+# bash -eo pipefail, so a failing CLI isn't hidden behind tee.
+defaults:
+  run:
+    shell: bash
+
+concurrency:
+  group: review-tour-${{ github.event.number }}
+  cancel-in-progress: true
+
+jobs:
+  page:
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    env:
+      PR: ${{ github.event.number }}
+      DIR: review-tour/pr-${{ github.event.number }}
+    steps:
+      # Full history: the page diffs the head against its merge base with the base branch.
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: ${{ github.event.action == 'closed' && 1 || 0 }}
+      - if: github.event.action != 'closed'
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      # The description is read fresh: the event's copy may predate a later edit. The CLI runs
+      # from the base commit, so a branch made before the review tour existed still gets a page
+      # without merging main in; a PR that changes the CLI shows its own renderer once merged.
+      - id: build
+        if: github.event.action != 'closed'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TITLE: ${{ github.event.pull_request.title }}
+          BASE: ${{ github.event.pull_request.base.sha }}
+          HEAD: ${{ github.event.pull_request.head.sha }}
+        run: |
+          gh api "repos/$GITHUB_REPOSITORY/pulls/$PR" --jq '.body // ""' > "$RUNNER_TEMP/body.md"
+          git fetch --no-tags origin "$BASE"
+          git worktree add --detach "$RUNNER_TEMP/tool" "$BASE"
+          node "$RUNNER_TEMP/tool/packages/review_tour/src/cli.ts" --body "$RUNNER_TEMP/body.md" --title "$TITLE" \
+            --pr "$PR" --repo "$GITHUB_REPOSITORY" --base "$BASE" --head "$HEAD" --out "$RUNNER_TEMP/page" | tee "$RUNNER_TEMP/out.txt"
+          if [ -f "$RUNNER_TEMP/page/index.html" ]; then
+            echo "summary=$(tail -n 1 "$RUNNER_TEMP/out.txt")" >> "$GITHUB_OUTPUT"
+          fi
+      # Pushes are retried onto the latest gh-pages, since previews and main's deploy push there too.
+      - name: Publish to gh-pages
+        run: |
+          git fetch --depth=1 origin gh-pages
+          git worktree add --detach "$RUNNER_TEMP/pages" FETCH_HEAD
+          cd "$RUNNER_TEMP/pages"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          rm -rf "$DIR"
+          if [ -f "$RUNNER_TEMP/page/index.html" ]; then mkdir -p "$DIR" && cp "$RUNNER_TEMP/page/index.html" "$DIR/"; fi
+          git add -A
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -q -m "Review tour for #$PR"
+          for attempt in 1 2 3 4 5; do
+            git push origin HEAD:gh-pages && exit 0
+            sleep $((attempt * 3))
+            git fetch --depth=1 origin gh-pages
+            git rebase --onto FETCH_HEAD HEAD~1
+          done
+          exit 1
+      - if: steps.build.outputs.summary != ''
+        uses: marocchino/sticky-pull-request-comment@v3
+        with:
+          header: review-tour
+          message: |
+            **[Review tour →](https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/${{ env.DIR }}/)** · ${{ steps.build.outputs.summary }}
+
+            <sub>Built from the description's review-tour block at ${{ github.event.pull_request.head.sha }}. The link works once Pages has deployed, a minute or two after a push.</sub>
+      - if: steps.build.outputs.summary == ''
+        uses: marocchino/sticky-pull-request-comment@v3
+        with:
+          header: review-tour
+          delete: true
+      # The old page stays up, so the comment says it is out of date and where the reason is.
+      - if: failure() && steps.build.outcome == 'failure'
+        uses: marocchino/sticky-pull-request-comment@v3
+        with:
+          header: review-tour
+          message: |
+            **Review tour not updated:** the description's review-tour block is invalid. The reason is in the [check's log](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}).

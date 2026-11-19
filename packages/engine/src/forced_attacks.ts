@@ -9,14 +9,14 @@ import type { Decision, GameState } from './state';
  * (`attackDecision`) whose `attack` option deals the damage and horror and whose `skip` is the way
  * out for what the engine cannot read:
  * - `enemyPhase`: one attack of enemy step 3.3 (`DueAttack`); the enemy exhausts after its last
- *   due attack, cancelled or not (`ResolveEnemyAttack`, Dodge FAQ).
+ *   due attack, cancelled or not (Dodge FAQ).
  * - `attackOfOpportunity`: an action taken while engaged with the ready enemy
  *   (`attackOfOpportunityDecisions`); `skip` is a card that "does not provoke".
  * - `retaliate`: a failed attack against the ready retaliate enemy (`KeywordAttackKind`).
  * - `alert`: a failed evade against the ready alert enemy (`KeywordAttackKind`).
  * - `cardAttack`: a card that says the enemy attacks (`EnemyAttacks`).
  *
- * None but `enemyPhase` exhausts the enemy (`DealEnemyAttack`).
+ * Each is answered by one `DealEnemyAttack` of its kind; none but `enemyPhase` exhausts the enemy.
  */
 export type AttackKind =
   'enemyPhase' | 'attackOfOpportunity' | 'retaliate' | 'alert' | 'cardAttack';
@@ -61,21 +61,14 @@ export function attackDecision(
         id: 'attack',
         label: 'decision.attack',
         commands: [
-          kind === 'enemyPhase'
-            ? {
-                type: 'ResolveEnemyAttack',
-                enemyId,
-                investigatorId,
-                damage: { answer: 'damage' },
-                horror: { answer: 'horror' },
-              }
-            : {
-                type: 'DealEnemyAttack',
-                enemyId,
-                investigatorId,
-                damage: { answer: 'damage' },
-                horror: { answer: 'horror' },
-              },
+          {
+            type: 'DealEnemyAttack',
+            kind,
+            enemyId,
+            investigatorId,
+            damage: { answer: 'damage' },
+            horror: { answer: 'horror' },
+          },
         ],
         amounts: printedAttack(ctx, state, enemyId),
       },
@@ -84,7 +77,7 @@ export function attackDecision(
         label: asked.skip,
         commands:
           kind === 'enemyPhase'
-            ? [{ type: 'ResolveEnemyAttack', enemyId, investigatorId, cancelled: true }]
+            ? [{ type: 'DealEnemyAttack', kind, enemyId, investigatorId, cancelled: true }]
             : [],
       },
     ],
@@ -122,9 +115,7 @@ export function attackDecisionId(
  */
 export function isEnemyAttackDecision(decision: Pick<Decision, 'options'>): boolean {
   return decision.options.some((option) =>
-    option.commands.some(
-      (command) => command.type === 'DealEnemyAttack' || command.type === 'ResolveEnemyAttack',
-    ),
+    option.commands.some((command) => command.type === 'DealEnemyAttack'),
   );
 }
 

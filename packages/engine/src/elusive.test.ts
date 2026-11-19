@@ -194,6 +194,7 @@ describe('an elusive enemy after it attacks or is attacked', () => {
 
     const after = stateAfter(context, state, {
       type: 'DealEnemyAttack',
+      kind: 'cardAttack',
       enemyId: bat,
       investigatorId: alice,
       damage: 1,

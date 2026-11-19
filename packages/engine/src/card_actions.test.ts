@@ -655,6 +655,51 @@ describe('action conditions', () => {
   });
 });
 
+describe('a fast action during your turn with 1 or 2 investigators in the game', () => {
+  const carol = investigatorId('carol');
+  /** "[fast] During your turn, if there are exactly 1 or 2 investigators in the game: take 1 horror." */
+  const hallCard = blankLocation('hall', {
+    actions: [
+      {
+        ...scareAction,
+        free: true,
+        condition: [{ kind: 'yourTurn' }, { kind: 'investigatorCount', min: 1, max: 2 }],
+      },
+    ],
+  });
+
+  it.each([
+    { game: 'alice alone, in her turn', others: [], turn: alice, offered: true },
+    { game: 'alice and bob, in her turn', others: [bob], turn: alice, offered: true },
+    { game: 'alice and bob, in bob`s turn', others: [bob], turn: bob, offered: false },
+    {
+      game: 'alice, bob and carol, in her turn',
+      others: [bob, carol],
+      turn: alice,
+      offered: false,
+    },
+    {
+      game: 'alice, bob and the defeated carol, in her turn',
+      others: [bob, carol],
+      defeated: carol,
+      turn: alice,
+      offered: true,
+    },
+  ])('offers alice the action with $game: $offered', ({ others, defeated, turn, offered }) => {
+    let builder = newGame()
+      .withLocation(hall, hallCard, { revealed: true })
+      .withInvestigator(alice, { locationId: hall });
+    for (const other of others)
+      builder = builder.withInvestigator(other, {
+        locationId: hall,
+        ...(other === defeated ? { status: 'defeated' as const } : {}),
+      });
+    const table = PlayTable.start(builder.withTurnOf(turn));
+
+    expect(table.board.cardActions(alice).length > 0).toBe(offered);
+  });
+});
+
 describe('action conditions on a player card earned in the campaign', () => {
   const lita = cardCode('lita');
   /** The hall's one action scares its taker "if you control Lita"; alice is in the hall, on her turn, with no Lita in the game. */

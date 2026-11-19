@@ -1,7 +1,7 @@
 import { placeDoomOnAgenda } from './abilities';
 import type { EngineContext } from './cards';
 import type { InstanceId } from './ids';
-import type { Command, ResolveEnemyAttack } from './commands';
+import type { Command, DealEnemyAttack } from './commands';
 import { enemyAttackEvents, enemyAttackList } from './enemies';
 import { attackDecision } from './forced_attacks';
 import { requestDecision } from './decisions';
@@ -174,17 +174,17 @@ function attackDecisions(
 }
 
 /**
- * `ResolveEnemyAttack`: removes the attack from step 3.3 and deals its damage
+ * `DealEnemyAttack` of the enemy phase: removes the attack from step 3.3 and deals its damage
  * and horror at once (one defeat check, as the rules deal them
  * simultaneously). The enemy exhausts afterwards (`exhaustAfterAttack`). The
  * step ends with its last due attack. An attack the step listed that is no
  * longer due (its enemy was defeated or evaded, or its investigator is out,
  * before its decision was answered) only leaves the list.
  */
-export function handleResolveEnemyAttack(
+export function handleEnemyPhaseAttack(
   ctx: EngineContext,
   state: GameState,
-  cmd: ResolveEnemyAttack,
+  cmd: DealEnemyAttack,
 ): Event[] {
   const [step, ...rest] = state.meta.steps;
   const isThisAttack = (attack: DueAttack) =>
@@ -225,7 +225,7 @@ export function handleResolveEnemyAttack(
 /**
  * The attacking enemy exhausts "upon completion of dealing the attack (and
  * all abilities triggered by the attack)" (framework step 3.3), so this runs
- * as `ResolveEnemyAttack`'s continuation, after its "after attacks you"
+ * as the continuation of an enemy phase `DealEnemyAttack`, after its "after attacks you"
  * abilities. Nothing while the enemy has another due attack (a massive one
  * attacks everyone first), or once it has left the table or is exhausted.
  */

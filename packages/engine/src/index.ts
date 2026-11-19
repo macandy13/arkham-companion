@@ -292,6 +292,8 @@ export {
   moveTo,
   eachInvestigator,
   anInvestigator,
+  anEnemy,
+  moveToConnectingLocation,
   itsLocation,
   you,
   yourLocation,
