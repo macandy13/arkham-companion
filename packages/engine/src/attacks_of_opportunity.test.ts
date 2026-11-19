@@ -76,6 +76,7 @@ describe('attacks of opportunity', () => {
             commands: [
               {
                 type: 'DealEnemyAttack',
+                kind: 'attackOfOpportunity',
                 enemyId: ghoul,
                 investigatorId: alice,
                 damage: { answer: 'damage' },
@@ -535,6 +536,7 @@ describe('DealEnemyAttack', () => {
 
     const after = stateAfter(context, state, {
       type: 'DealEnemyAttack',
+      kind: 'attackOfOpportunity',
       enemyId: ghoul,
       investigatorId: alice,
       damage: 2,
@@ -545,6 +547,35 @@ describe('DealEnemyAttack', () => {
     expect(after.cards[ghoul]?.exhausted).toBe(false);
   });
 
+  it.each([
+    {
+      name: 'deals the printed damage and horror',
+      cancelled: undefined,
+      wounds: { damage: 1, horror: 2 },
+    },
+    {
+      name: 'deals nothing when cancelled',
+      cancelled: true as const,
+      wounds: { damage: 0, horror: 0 },
+    },
+  ])('$name without amounts', ({ cancelled, wounds: dealt }) => {
+    const { context, state } = aliceInHall
+      .withCard(ghoul, blankEnemy('ghoul', { damage: 1, horror: 2 }), engagedWith(alice))
+      .withTurnOf(alice)
+      .start();
+
+    const after = stateAfter(context, state, {
+      type: 'DealEnemyAttack',
+      kind: 'cardAttack',
+      enemyId: ghoul,
+      investigatorId: alice,
+      ...(cancelled && { cancelled }),
+    });
+
+    expect(wounds(after)).toEqual(dealt);
+    expect(after.cards[ghoul]?.exhausted).toBe(false);
+  });
+
   it('rejects an unknown investigator', () => {
     const { context, state } = ghoulOnAlice.withTurnOf(alice).start();
     const nobody = investigatorId('nobody');
@@ -552,6 +583,7 @@ describe('DealEnemyAttack', () => {
     expect(
       rejectionFrom(context, state, {
         type: 'DealEnemyAttack',
+        kind: 'attackOfOpportunity',
         enemyId: ghoul,
         investigatorId: nobody,
         damage: 1,
@@ -568,6 +600,7 @@ describe('DealEnemyAttack', () => {
 
     const { events } = execute(context, state, {
       type: 'DealEnemyAttack',
+      kind: 'attackOfOpportunity',
       enemyId: ghoul,
       investigatorId: alice,
       damage: 1,

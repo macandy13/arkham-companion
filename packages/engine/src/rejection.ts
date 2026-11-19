@@ -191,9 +191,9 @@ export type Rejection =
   | { code: 'notTheDecider'; decisionId: DecisionId; answeredBy: InvestigatorId; decider: Decider }
   /** A skill test modifier that is not a whole number. */
   | { code: 'invalidModifierAmount'; amount: number }
-  /** `ResolveEnemyAttack` for an attack that is not an outstanding, due step. */
+  /** An enemy phase `DealEnemyAttack` for an attack that is not an outstanding, due step. */
   | { code: 'attackNotDue'; enemyId: InstanceId; investigatorId: InvestigatorId }
-  /** `ResolveEnemyAttack` with damage or horror that is not a non-negative integer. */
+  /** `DealEnemyAttack` with damage or horror that is not a non-negative integer. */
   | { code: 'invalidAttackAmount'; amount: number }
   /** `TakeDamageAndHorror` with an amount that is not a non-negative integer, or nothing to take. */
   | { code: 'invalidWounds'; damage: number; horror: number }

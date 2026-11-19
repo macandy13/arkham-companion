@@ -71,7 +71,7 @@ import {
 import { handleStartScenario } from './handle_start_scenario';
 import { handleMoveTokens } from './handle_tokens';
 import { handleMoveHunter, handleMoveHunters } from './hunters';
-import { attacksStillDue, handleNextPhase, handleResolveEnemyAttack } from './phases';
+import { attacksStillDue, handleNextPhase } from './phases';
 import {
   handleEndSkillTest,
   handleEvade,
@@ -315,18 +315,18 @@ const COMMAND_SPECS: CommandSpecs = {
     handle: (_ctx, state, command) => handleSetLeadInvestigator(state, command),
   },
   AdjustActions: { handle: (_ctx, state, command) => handleAdjustActions(state, command) },
-  ResolveEnemyAttack: {
-    handle: handleResolveEnemyAttack,
-    // The enemy exhausts once the abilities its attack triggered have resolved; an attack that was
-    // no longer due when answered was never made, so nothing exhausts.
+  DealEnemyAttack: {
+    handle: handleDealEnemyAttack,
+    // An enemy phase attack exhausts its enemy once the abilities the attack triggered have
+    // resolved; one that was no longer due when answered was never made, so nothing exhausts.
     continueWith: (command, _own, ctx, handledIn) =>
+      command.kind === 'enemyPhase' &&
       attacksStillDue(ctx, handledIn).some(
         (due) => due.enemyId === command.enemyId && due.investigatorId === command.investigatorId,
       )
         ? [{ kind: 'exhaustAfterAttack', enemyId: command.enemyId }]
         : [],
   },
-  DealEnemyAttack: { handle: handleDealEnemyAttack },
   EnemyAttacks: { handle: handleEnemyAttacks },
   Investigate: { handle: handleInvestigate, provokes: asAction },
   Fight: { handle: handleFight },

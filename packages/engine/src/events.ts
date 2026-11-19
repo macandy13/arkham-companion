@@ -256,7 +256,7 @@ export interface InvestigatorChanged {
  * An investigator ran out of health (`damage`) or sanity (`horror`), or a
  * card effect defeated them (`cardEffect`, `DefeatInvestigator`); their status
  * becomes `defeated`, and a turn in progress ends with them. Produced by
- * `AdjustInvestigator` and `ResolveEnemyAttack` right after the
+ * `AdjustInvestigator` and `DealEnemyAttack` right after the
  * `InvestigatorChanged` that caused it, and by `DefeatInvestigator`, followed
  * by the clean-up events (`investigatorLeavesEvents`). The defeat matters to
  * the campaign: a defeat by damage or horror earns trauma by itself, one by a
@@ -551,7 +551,7 @@ export interface EnemyEngaged {
  * Enemy `enemyId` attacked the investigator; follows the attack's damage and
  * horror (`InvestigatorChanged`). Changes no state: it marks the attack for
  * `windowsOpenedBy` (`attacked`), since the damage alone names no enemy.
- * Produced by `ResolveEnemyAttack` and `DealEnemyAttack` (`enemyAttackEvents`).
+ * Produced by `DealEnemyAttack` (`enemyAttackEvents`).
  */
 export interface EnemyAttacked {
   type: 'EnemyAttacked';
@@ -619,7 +619,7 @@ export interface PhaseChanged {
 /**
  * The outstanding steps of the current phase are now `steps`. Produced by
  * `NextPhase` before it runs a step (so a decision raised by the step resumes
- * after it) or expands the enemy attacks, and by `ResolveEnemyAttack`.
+ * after it) or expands the enemy attacks, and by an enemy phase `DealEnemyAttack`.
  */
 export interface PhaseStepsChanged {
   type: 'PhaseStepsChanged';

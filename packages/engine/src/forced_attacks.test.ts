@@ -71,6 +71,7 @@ function attackOnAlice(kind: 'retaliate' | 'alert', skipLabel: string) {
         commands: [
           {
             type: 'DealEnemyAttack',
+            kind,
             enemyId: enemy,
             investigatorId: alice,
             damage: { answer: 'damage' },

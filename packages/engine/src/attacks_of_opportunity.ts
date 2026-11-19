@@ -1,3 +1,4 @@
+import { assertNever } from '@arkham/util';
 import { findInvestigator, requireInvestigator } from './investigators';
 import type { EngineContext } from './cards';
 import type { DealEnemyAttack, EnemyAttacks } from './commands';
@@ -6,6 +7,7 @@ import { enemyAttackEvents, readyEngagedEnemies } from './enemies';
 import type { DecisionRequested, Event } from './events';
 import { attackDecision } from './forced_attacks';
 import { enemyOf, isEnemyOnTable } from './enemies';
+import { handleEnemyPhaseAttack } from './phases';
 import type { GameState, HeldAction } from './state';
 
 /**
@@ -52,19 +54,43 @@ export function isOwnTurnAction(state: GameState, action: HeldAction): boolean {
 }
 
 /**
- * `DealEnemyAttack`: the attack's damage and horror with one defeat check;
- * the enemy stays ready. Nothing when the investigator is no longer active
- * or the enemy has left play meanwhile (see the command).
+ * `DealEnemyAttack`: an enemy phase attack goes through step 3.3 (`handleEnemyPhaseAttack`); any
+ * other deals its damage and horror with one defeat check and leaves the enemy as it is. Nothing
+ * when it was cancelled, the investigator is no longer active or the enemy has left play meanwhile
+ * (see the command).
  */
 export function handleDealEnemyAttack(
   ctx: EngineContext,
   state: GameState,
   cmd: DealEnemyAttack,
 ): Event[] {
-  const { enemy } = enemyOf(ctx, state, cmd.enemyId);
+  switch (cmd.kind) {
+    case 'enemyPhase':
+      return handleEnemyPhaseAttack(ctx, state, cmd);
+    case 'attackOfOpportunity':
+    case 'retaliate':
+    case 'alert':
+    case 'cardAttack':
+      return forcedAttackEvents(ctx, state, cmd);
+    default:
+      return assertNever(cmd.kind);
+  }
+}
+
+/** A forced attack (`ForcedAttackKind`): dealt at once, leaving the enemy as it is. */
+function forcedAttackEvents(ctx: EngineContext, state: GameState, cmd: DealEnemyAttack): Event[] {
+  const { enemy, stats } = enemyOf(ctx, state, cmd.enemyId);
   const investigator = requireInvestigator(state, cmd.investigatorId);
-  const dealt = enemyAttackEvents(ctx, state, cmd.enemyId, investigator, cmd.damage, cmd.horror);
-  return investigator.status === 'active' && isEnemyOnTable(enemy) ? dealt : [];
+  if (cmd.cancelled || investigator.status !== 'active' || !isEnemyOnTable(enemy)) return [];
+  const { damage = 0, horror = 0 } = stats;
+  return enemyAttackEvents(
+    ctx,
+    state,
+    cmd.enemyId,
+    investigator,
+    cmd.damage ?? damage,
+    cmd.horror ?? horror,
+  );
 }
 
 /**
@@ -80,9 +106,9 @@ export function handleEnemyAttacks(
   const { enemy } = enemyOf(ctx, state, cmd.enemyId);
   const investigator = requireInvestigator(state, cmd.investigatorId);
   if (investigator.status !== 'active' || !isEnemyOnTable(enemy)) return [];
-  if (cmd.keyword !== undefined && enemy.exhausted) return [];
+  if (cmd.kind !== undefined && enemy.exhausted) return [];
   return requestDecision(
     state,
-    attackDecision(ctx, state, cmd.keyword ?? 'cardAttack', enemy.id, investigator.id),
+    attackDecision(ctx, state, cmd.kind ?? 'cardAttack', enemy.id, investigator.id),
   );
 }

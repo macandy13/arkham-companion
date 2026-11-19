@@ -809,7 +809,14 @@ describe('trigger bus', () => {
       {
         name: 'outside it (an attack of opportunity)',
         commands: [
-          { type: 'DealEnemyAttack', enemyId: ghast, investigatorId: alice, damage: 1, horror: 0 },
+          {
+            type: 'DealEnemyAttack',
+            kind: 'attackOfOpportunity',
+            enemyId: ghast,
+            investigatorId: alice,
+            damage: 1,
+            horror: 0,
+          },
         ],
       },
     ])('deals alice 1 horror after the ghast attacks her $name', ({ commands }) => {
@@ -862,6 +869,7 @@ describe('trigger bus', () => {
 
       const after = stateAfter(context, state, {
         type: 'DealEnemyAttack',
+        kind: 'cardAttack',
         enemyId: ghast,
         investigatorId: alice,
         damage: 1,
@@ -3645,6 +3653,7 @@ describe('enemies that heal or ready themselves', () => {
 
     const after = stateAfter(context, state, {
       type: 'DealEnemyAttack',
+      kind: 'cardAttack',
       enemyId: howling,
       investigatorId: alice,
       damage: 1,

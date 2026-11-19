@@ -27,7 +27,7 @@ export interface EnemyAttack {
  * its location at once, which one zone cannot express), which is why it is
  * added here. Exhausted enemies and defeated or resigned investigators produce
  * no attacks. Within one investigator the order is only a suggestion: the
- * attacked player chooses the order of their attacks, so `ResolveEnemyAttack`
+ * attacked player chooses the order of their attacks, so `DealEnemyAttack`
  * accepts any due attack, not just the first of the list.
  */
 export function enemyAttackList(ctx: EngineContext, state: GameState): EnemyAttack[] {
@@ -71,9 +71,9 @@ export function readyEngagedEnemies(
  * One attack of `enemyId`: its damage and horror, then `EnemyAttacked`
  * (so the log reads in rule order), then a single defeat check over both, as
  * the rules deal them simultaneously, and on a defeat the clean-up
- * (`investigatorLeavesEvents`). Shared by the enemy phase
- * (`ResolveEnemyAttack`) and attacks outside it (`DealEnemyAttack`), so an
- * attack of opportunity that defeats leaves the same board.
+ * (`investigatorLeavesEvents`). Shared by every kind of `DealEnemyAttack`,
+ * so an attack of opportunity that defeats leaves the same board as one of
+ * the enemy phase.
  * Rejects an amount that is not a non-negative integer.
  */
 export function enemyAttackEvents(
