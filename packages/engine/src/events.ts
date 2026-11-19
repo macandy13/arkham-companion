@@ -1,7 +1,7 @@
 import type { BasicAction } from './action_costs';
 import type { CampaignLog, TraumaKind } from './campaign/campaign_log';
 import type { AbilityCommand, TestedAction } from './abilities';
-import type { PlayerCardCommand } from './commands';
+import type { PlayerCardCommand, StageDeck } from './commands';
 import type {
   CardCode,
   DecisionId,
@@ -361,7 +361,7 @@ export interface ActAdvanced {
  */
 export interface CurrentCardChanged {
   type: 'CurrentCardChanged';
-  deck: 'agenda' | 'act';
+  deck: StageDeck;
   cardId?: InstanceId;
 }
 

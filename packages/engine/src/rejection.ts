@@ -1,6 +1,6 @@
 import { assertNever } from '@arkham/util';
 import type { InvestigatorFate, StoryCondition } from './campaign/campaign_log';
-import type { CommandType } from './commands';
+import type { CommandType, StageDeck } from './commands';
 import type {
   CardCode,
   DecisionId,
@@ -105,11 +105,11 @@ export type Rejection =
   /** `MoveTokens` from the pool to the pool, or `'all'` from the pool, which holds no count. */
   | { code: 'invalidTokenMove' }
   /** `Advance` while that deck has no current card. */
-  | { code: 'noCurrentCard'; deck: 'agenda' | 'act' }
+  | { code: 'noCurrentCard'; deck: StageDeck }
   /** `BecomeActAndAgenda` with `next` while no agenda follows the current one. */
   | { code: 'noNextAgenda' }
   /** The last card of a deck advances, but neither its reverse side nor the command names a resolution. */
-  | { code: 'resolutionRequired'; deck: 'agenda' | 'act' }
+  | { code: 'resolutionRequired'; deck: StageDeck }
   /** A command after the scenario ended (`GameMeta.ended`); only `ManualAdjust` is still accepted. */
   | { code: 'scenarioEnded'; command: CommandType }
   /**
@@ -119,7 +119,7 @@ export type Rejection =
    */
   | { code: 'changesNothing'; command: CommandType }
   /** `Advance` names a fallback resolution although further cards follow. */
-  | { code: 'unexpectedResolution'; deck: 'agenda' | 'act' }
+  | { code: 'unexpectedResolution'; deck: StageDeck }
   /** The clues paid as a group (a `groupClues` cost, `UseCardAction.spend`) do not add up to it. */
   | { code: 'wrongClueTotal'; required: number; spent: number }
   /**
@@ -292,7 +292,7 @@ export type Rejection =
    * A `ManualAdjust` would move the current agenda or act out of its place
    * (the top of its deck); only advancing changes it.
    */
-  | { code: 'currentStageCard'; cardId: InstanceId; deck: 'agenda' | 'act' };
+  | { code: 'currentStageCard'; cardId: InstanceId; deck: StageDeck };
 
 export type RejectionCode = Rejection['code'];
 

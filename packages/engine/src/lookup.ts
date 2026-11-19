@@ -1,4 +1,5 @@
 import { findInvestigator } from './investigators';
+import type { StageDeck } from './commands';
 import { assertNever } from '@arkham/util';
 import { comparableName, type CardType, type EngineContext, type Trait } from './cards';
 import { instanceId, type CardCode, type InstanceId } from './ids';
@@ -87,7 +88,7 @@ export function cardsNamed(
 }
 
 /** The current card of the agenda or act deck; none before setup or once the deck is used up. */
-export function currentCard(state: GameState, deck: 'agenda' | 'act'): CardInstance | undefined {
+export function currentCard(state: GameState, deck: StageDeck): CardInstance | undefined {
   const id = state[deck].current;
   return id === undefined ? undefined : state.cards[id];
 }
