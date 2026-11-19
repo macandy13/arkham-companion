@@ -173,6 +173,7 @@ export {
   afterDiscoveringClues,
   afterAttacking,
   afterEvaded,
+  afterEvadingSuccessfully,
   afterSucceedingHere,
   becomeActAndAgenda,
   nextAgendaBecomesActAndAgenda,

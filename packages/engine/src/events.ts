@@ -570,6 +570,8 @@ export interface EnemyEvaded {
   type: 'EnemyEvaded';
   enemyId: InstanceId;
   investigatorId: InvestigatorId;
+  /** From a passed evasion test (`EvadeEnemy.successful`), not an automatic evade. */
+  successful?: true;
 }
 
 /** The enemy is no longer engaged and stays at `locationId`. Produced by `DisengageEnemy`. */

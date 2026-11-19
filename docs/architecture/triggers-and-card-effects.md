@@ -20,7 +20,7 @@ An [`Ability`](../../packages/engine/src/abilities.ts) is:
   - `testEnded` once that test has ended (`EndSkillTest`, queued after its results, ST.8), for "after applying all results" keywords,
   - `engaged` either way round,
   - `attacked` (attacks of opportunity included),
-  - `evaded` for the enemy, naming the evader, once `EvadeEnemy` (a passed evasion or an effect) has exhausted and disengaged it, so later than `tested` (`afterEvaded`, Ruth Turner),
+  - `evaded` for the enemy, naming the evader, once `EvadeEnemy` (a passed evasion or an effect) has exhausted and disengaged it, so later than `tested` (`afterEvaded`, Ruth Turner), and once more with `successful` after a passed evasion test only, not an automatic evade (`afterEvadingSuccessfully`, Cornelia Akely),
   - `cluesDiscovered`,
   - `defeated` for the enemy itself, naming where it was,
   - `tokensPlaced` for tokens placed on the card (`afterTokensPlaced`, Wild Flames' "after doom is placed on the agenda"; `whenTokensOnSelf` for an objective on a count);
@@ -36,7 +36,7 @@ An [`Ability`](../../packages/engine/src/abilities.ts) is:
     - the tokens on a card (`tokensOn(card, token)`): `ifValue(tokensOn(self(), 'clue'), { max: 0 }, …)` for "if there are no clues on it", `whenTokensOnSelf('clue', perInvestigator(2), advanceAct())` for an objective on the act's own clues, whose count the act's view shows as its threshold;
     - the clues a group holds (`groupClues`, see The Barrier below);
   - `phase`, the phase the game is in: `duringPhase('enemy', afterAttacking(discardAsset()))` for Hellhound's "after it attacks you during the enemy phase";
-  - `margin`, how much the test the window follows succeeded by: `afterSucceedingHere({ by: 2 }, …)` for Margaret Liu's "after you succeed at a skill test by 2 or more at [her] location". A pass answered without its margin counts, so the players judge it;
+  - `margin`, how much the test the window follows succeeded by: `afterSucceedingHere({ by: 2 }, …)` for Margaret Liu's "after you succeed at a skill test by 2 or more at [her] location". It counts only with a confirmed margin, so a test whose location holds such an ability asks for its pass margin (`passMarginMatters`, `DecisionView.asksMargin`);
 - an optional repeat once per active investigator (`forEachInvestigator(…)`, `perInvestigator`), each copy of the window naming its investigator, so an effect that asks something (a skill test) asks each of them in turn;
 - an optional repeat once per enemy an `eachEnemy` filter names (`forEachEnemy({ trait, at: [onlyCopy(codes.hallway), onlyCopy(codes.parlor)] }, …)`, counted with the condition as the window opens);
 - an optional reaction mark (`reaction(ability, limit)`, `Ability.reaction`): a "[reaction]" the players trigger. As its window opens and its condition holds, the investigator the window names is asked to use it or pass (`reactionOffer`, a `chooseOption` with id `reaction:<card>:<ability index>`, prompt `decision.reaction`); using it records the use (`UseReaction`, `ReactionUsed`, `CardInstance.reactionUses`) and resolves its effects. Its `UsageLimit` ("(Limit once per round.)", `reactionWithinLimit`) is checked as the window opens, so a used-up reaction asks nothing, and a location's reaction is offered only to an investigator there. Warren Observatory: `reaction(afterDiscoveringClues(drawCards(1)), { per: 'round' })`. The questions wait behind the forced effects a command triggers (`triggeredSteps`, `isReactionOffer`), as forced abilities on a timing point resolve before reactions to it;

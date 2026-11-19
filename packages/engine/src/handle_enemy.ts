@@ -259,7 +259,12 @@ export function handleEvadeEnemy(ctx: EngineContext, state: GameState, cmd: Evad
   return [
     ...(enemy.exhausted ? [] : [exhaustChange(enemy.id, true)]),
     ...(isEngagedWith(enemy, investigator) ? [disengaged(state, enemy)] : []),
-    { type: 'EnemyEvaded', enemyId: enemy.id, investigatorId: investigator.id },
+    {
+      type: 'EnemyEvaded',
+      enemyId: enemy.id,
+      investigatorId: investigator.id,
+      ...(cmd.successful && { successful: true }),
+    },
   ];
 }
 

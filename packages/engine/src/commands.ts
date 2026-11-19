@@ -916,6 +916,11 @@ export interface EvadeEnemy {
   type: 'EvadeEnemy';
   enemyId: InstanceId;
   investigatorId: InvestigatorId;
+  /**
+   * A passed evasion test caused it, so it is a "successful" evasion. An automatic evade is
+   * not (Rules Reference, "Automatic Failure/Success": no skill test is made).
+   */
+  successful?: true;
 }
 
 /**

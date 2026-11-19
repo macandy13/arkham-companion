@@ -185,6 +185,15 @@ export function locationOfCard(state: GameState, card: CardInstance): InstanceId
 }
 
 /**
+ * The cards whose location (`locationOfCard`) is `locationId`: unlike `cardsAtLocation`, also the
+ * location itself, the enemies engaged with and the cards in play of investigators there, and the
+ * attachments, for "at [its] location" abilities.
+ */
+export function cardsWhoseLocationIs(state: GameState, locationId: InstanceId): CardInstance[] {
+  return Object.values(state.cards).filter((card) => locationOfCard(state, card) === locationId);
+}
+
+/**
  * An ID for a card that comes into the game (an attached player card, a drawn weakness) that
  * `state` doesn't hold yet: `prefix:1`, `prefix:2`, … The count, not a random ID, keeps it the
  * same on replay.

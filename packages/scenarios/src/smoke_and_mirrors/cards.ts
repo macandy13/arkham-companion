@@ -3,7 +3,7 @@ import {
   advanceAct,
   afterDiscoveringClues,
   afterEngaging,
-  afterEvaded,
+  afterEvadingSuccessfully,
   afterSucceedingHere,
   atEndOfPhase,
   atEndOfRound,
@@ -286,7 +286,7 @@ export const smokeAndMirrorsCardDefs: readonly CardStats[] = [
     victory: 1,
     unique: true,
     keywords: [{ name: 'alert' }],
-    abilities: [reaction(afterEvaded(readySelf(), codex(2)))],
+    abilities: [reaction(afterEvadingSuccessfully(readySelf(), codex(2)))],
   }),
   enemy({
     code: codes.naomiOBannion,

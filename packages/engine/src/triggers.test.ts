@@ -39,6 +39,7 @@ import {
   atLocation,
   attachedTo,
   blankAct,
+  boardView,
   blankAgenda,
   blankAsset,
   blankEnemy,
@@ -826,11 +827,11 @@ describe('trigger bus', () => {
         horror: 1,
       },
       {
-        case: 'a success by 2 there, after one with no margin, which the players judge',
+        case: 'a success by 2 there, after one with no margin, as a threshold counts only when confirmed',
         watcher: 'byTwo',
         at: study,
         commands: investigates('pass'),
-        horror: 1,
+        horror: 0,
       },
     ] as const)(
       'a watcher for $case deals alice $horror horror',
@@ -840,6 +841,20 @@ describe('trigger bus', () => {
         const after = stateAfter(context, state, ...commands);
 
         expect(requireInvestigator(after, alice).sanity.horror).toBe(horror);
+      },
+    );
+    it.each([
+      { watcher: 'byTwo', at: study, asks: ['pass'] },
+      { watcher: 'byTwo', at: cellar, asks: undefined },
+      { watcher: 'any', at: study, asks: undefined },
+    ] as const)(
+      "asks alice's investigation for its margin $asks with the $watcher watcher there or in the cellar ($at)",
+      ({ watcher: kind, at, asks }) => {
+        const { context, state } = watched(watcherCards[kind], at);
+
+        const asked = stateAfter(context, state, { type: 'Investigate', investigatorId: alice });
+
+        expect(boardView(context, asked).decisions[0]?.asksMargin).toEqual(asks);
       },
     );
   });

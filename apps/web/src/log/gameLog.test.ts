@@ -5,6 +5,7 @@ import {
   blankLocation,
   blankTreachery,
   byName,
+  codexEntry,
   engagedWith,
   fixed,
   instanceId,
@@ -169,6 +170,11 @@ describe('gameLog', () => {
     {
       step: (table: PlayTable) => table.play({ type: 'DiscardAsset', investigatorId: roland }),
       line: 'Roland Banks discards an asset',
+    },
+    {
+      step: (table: PlayTable) =>
+        table.play({ type: 'ReadCodexEntry', investigatorId: roland, entry: codexEntry(6) }),
+      line: 'Roland Banks reads codex entry 6',
     },
     {
       step: (table: PlayTable) =>

@@ -514,8 +514,8 @@ describe('Smoke and Mirrors card abilities', () => {
 
   describe("the suspects' reactions", () => {
     const suspect = instanceId('suspect');
-    /** Alice at Northside on her turn, with the suspect `code` in `zone` (at Northside unless named). */
-    const withSuspect = (code: string, zone: Zone = atLocation(northside)) =>
+    /** Alice at Northside on her turn, with the suspect `code` in `zone`. */
+    const withSuspect = (code: string, zone: Zone) =>
       newGame()
         .withLocation(northside, cardOf(SMOKE_AND_MIRRORS_CODES.northside), { revealed: true })
         .withInvestigator(alice, { locationId: northside })
@@ -540,7 +540,10 @@ describe('Smoke and Mirrors card abilities', () => {
     ])(
       "offers Margaret Liu's reaction after alice succeeds by $margin at her location: $asked",
       ({ margin, asked }) => {
-        const { context, state: started } = withSuspect(SMOKE_AND_MIRRORS_CODES.margaretLiu);
+        const { context, state: started } = withSuspect(
+          SMOKE_AND_MIRRORS_CODES.margaretLiu,
+          atLocation(northside),
+        );
 
         const state = stateAfter(context, started, ...investigates(margin));
 
@@ -554,7 +557,7 @@ describe('Smoke and Mirrors card abilities', () => {
     ])(
       "has alice read codex entry $entry with $name's reaction after she investigates his or her location",
       ({ code, entry }) => {
-        const { context, state: started } = withSuspect(code);
+        const { context, state: started } = withSuspect(code, atLocation(northside));
         const asked = stateAfter(context, started, ...investigates(2));
 
         const { events } = execute(context, asked, answer('reaction:suspect:0', 'use'));
@@ -562,6 +565,31 @@ describe('Smoke and Mirrors card abilities', () => {
         expect(codexReadBy(events)).toEqual([{ investigatorId: alice, entry }]);
       },
     );
+
+    it.each<{ how: string; commands: Command[]; asked: string[] }>([
+      {
+        how: 'a passed evasion test',
+        commands: [
+          { type: 'Evade', investigatorId: alice, enemyId: suspect },
+          answer('evade:alice:suspect', 'pass'),
+        ],
+        asked: ['reaction:suspect:0'],
+      },
+      {
+        how: 'an automatic evade, which is no successful evasion',
+        commands: [{ type: 'EvadeEnemy', enemyId: suspect, investigatorId: alice }],
+        asked: [],
+      },
+    ])("offers Cornelia Akely's reaction after $how: $asked", ({ commands, asked }) => {
+      const { context, state: started } = withSuspect(
+        SMOKE_AND_MIRRORS_CODES.corneliaAkely,
+        engagedWith(alice),
+      );
+
+      const state = stateAfter(context, started, ...commands);
+
+      expect(state.pending.map((decision) => decision.id)).toEqual(asked);
+    });
 
     it('readies Cornelia Akely, who engages alice again, and has her read codex entry 2 with the reaction after evading Cornelia', () => {
       const { context, state: started } = withSuspect(

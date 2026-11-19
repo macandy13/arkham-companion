@@ -55,6 +55,7 @@ import {
 import {
   cardsInZone,
   cardsInZones,
+  cardsWhoseLocationIs,
   currentCard,
   locationOfCard,
   matchesCard,
@@ -174,6 +175,11 @@ export type TimingWindow =
    * once it is exhausted and disengaged; unlike `tested` for an evasion, which opens before.
    */
   | { kind: 'evaded' }
+  /**
+   * "After you successfully evade [this enemy]" (Cornelia Akely): like `evaded`, but opened only
+   * after a passed evasion test (`EnemyEvaded.successful`), never after an automatic evade.
+   */
+  | { kind: 'evaded'; successful: true }
   /**
    * "After you discover clues at [this location]": opened by
    * `CluesDiscovered` for the location, naming the investigator.
@@ -549,7 +555,8 @@ export type AbilityCondition =
   | { kind: 'phase'; phase: Phase }
   /**
    * The test that opened the window (`succeededHere`) succeeded by at least `min` ("by 2 or
-   * more"). A pass answered without its margin counts, so the players judge it.
+   * more"). It counts only with a margin the players confirm, which the test then asks for
+   * (`passMarginMatters`).
    */
   | { kind: 'margin'; min: number };
 
@@ -737,12 +744,9 @@ export function windowsOpenedBy(
       ];
     case 'EnemyEvaded':
       return [
-        {
-          window: { kind: 'evaded' },
-          cardId: event.enemyId,
-          investigatorId: event.investigatorId,
-        },
-      ];
+        { kind: 'evaded' as const },
+        ...(event.successful ? [{ kind: 'evaded' as const, successful: true as const }] : []),
+      ].map((window) => ({ window, cardId: event.enemyId, investigatorId: event.investigatorId }));
     case 'CluesDiscovered':
       return [
         {
@@ -813,25 +817,57 @@ export function windowsOpenedBy(
 function succeededHereWindows(state: GameState, event: SkillTestResolved): OpenedWindow[] {
   const { action, subject, investigatorId, margin } = event;
   if (investigatorId === undefined) return [];
-  const about = subject === undefined ? undefined : state.cards[subject];
-  const where =
-    (about === undefined ? undefined : locationOfCard(state, about)) ??
-    findInvestigator(state, investigatorId)?.locationId;
+  const where = testLocation(state, subject, investigatorId);
   if (where === undefined) return [];
   const windows: TimingWindow[] = [
     { kind: 'succeededHere' },
     ...(action === undefined ? [] : [{ kind: 'succeededHere' as const, action }]),
   ];
-  return Object.values(state.cards)
-    .filter((card) => locationOfCard(state, card) === where)
-    .flatMap((card) =>
-      windows.map((window) => ({
-        window,
-        cardId: card.id,
-        investigatorId,
-        ...(margin === undefined ? {} : { margin }),
-      })),
-    );
+  return cardsWhoseLocationIs(state, where).flatMap((card) =>
+    windows.map((window) => ({
+      window,
+      cardId: card.id,
+      investigatorId,
+      ...(margin === undefined ? {} : { margin }),
+    })),
+  );
+}
+
+/**
+ * Where a test about `subject` by `investigatorId` takes place, for "at [its] location": the
+ * subject's location, or the tester's own for a subject at no location (a revelation).
+ */
+function testLocation(
+  state: GameState,
+  subject: InstanceId | undefined,
+  investigatorId: InvestigatorId,
+): InstanceId | undefined {
+  const about = subject === undefined ? undefined : state.cards[subject];
+  return (
+    (about === undefined ? undefined : locationOfCard(state, about)) ??
+    findInvestigator(state, investigatorId)?.locationId
+  );
+}
+
+/**
+ * Whether how much the skill test `decision` passes by matters to a card at its location: one
+ * there has a `succeededHere` ability with a `margin` condition (Margaret Liu's "by 2 or more"),
+ * so the answer says the margin (`DecisionView.asksMargin`), as a threshold counts only with a
+ * margin the players confirm.
+ */
+export function passMarginMatters(
+  ctx: EngineContext,
+  state: GameState,
+  decision: Decision,
+): boolean {
+  if (decision.decider.kind !== 'investigator') return false;
+  const where = testLocation(state, decision.subject, decision.decider.investigatorId);
+  if (where === undefined) return false;
+  return cardsWhoseLocationIs(state, where).some((card) =>
+    (cardStats(ctx.cards, card.code).abilities ?? []).some(
+      (ability) => ability.window.kind === 'succeededHere' && ability.condition?.kind === 'margin',
+    ),
+  );
 }
 
 /**
@@ -1036,7 +1072,7 @@ function conditionHolds(
     case 'phase':
       return state.meta.phase === condition.phase;
     case 'margin':
-      return opened.margin === undefined || opened.margin >= condition.min;
+      return opened.margin !== undefined && opened.margin >= condition.min;
     default:
       return assertNever(condition);
   }
@@ -1784,6 +1820,15 @@ export function afterAttacking(...effects: AbilityEffect[]): Ability {
 /** A forced ability "after [this enemy] is evaded", written `afterEvaded(move(self(), victoryDisplay))`. */
 export function afterEvaded(...effects: AbilityEffect[]): Ability {
   return { window: { kind: 'evaded' }, effects };
+}
+
+/**
+ * "After you successfully evade [this enemy]", written
+ * `reaction(afterEvadingSuccessfully(readySelf(), codex(2)))` (Cornelia Akely): only after a passed
+ * evasion test, not an automatic evade.
+ */
+export function afterEvadingSuccessfully(...effects: AbilityEffect[]): Ability {
+  return { window: { kind: 'evaded', successful: true }, effects };
 }
 
 /** A forced ability "after you discover clues at [this location]", written `afterDiscoveringClues(placeDoomOnSelf(1))`. */

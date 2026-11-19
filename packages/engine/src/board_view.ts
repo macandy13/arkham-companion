@@ -8,6 +8,7 @@ import {
   roundEndClueObjective,
   tokenObjective,
   countsCardsBeneathSelf,
+  passMarginMatters,
 } from './abilities';
 import {
   advanceActionOf,
@@ -1497,7 +1498,7 @@ function decisionView(ctx: EngineContext, state: GameState, decision: Decision):
     ...(decision.decider.kind === 'investigator' ? { for: decision.decider.investigatorId } : {}),
     ...(decision.skillTest ? { test: decision.skillTest } : {}),
     ...(decision.testKind ? { action: decision.testKind.kind } : {}),
-    ...withAsksMargin(decision),
+    ...withAsksMargin(ctx, state, decision),
     ...choiceView(decision),
     ...(Object.keys(followUps).length > 0 ? { followUps } : {}),
     ...recordIfAny('locations', locations),
@@ -1648,11 +1649,23 @@ function dueAttacks(ctx: EngineContext, state: GameState): DueAttackView[] {
   }));
 }
 
-/** `DecisionView.asksMargin` of `decision`, left out when no outcome depends on the margin. */
-function withAsksMargin(decision: Decision): { asksMargin?: readonly SkillTestOutcome[] } {
+/**
+ * `DecisionView.asksMargin` of `decision`, left out when no outcome depends on the margin: an
+ * outcome's own effect (`dependsOnMargin`), or for a pass, an ability at the test's location
+ * (`passMarginMatters`).
+ */
+function withAsksMargin(
+  ctx: EngineContext,
+  state: GameState,
+  decision: Decision,
+): { asksMargin?: readonly SkillTestOutcome[] } {
   if (decision.kind !== 'skillTestResult') return {};
+  const passMatters = passMarginMatters(ctx, state, decision);
   const asked = SKILL_TEST_OUTCOMES.filter((outcome) =>
-    decision.options.some((option) => option.id === outcome && dependsOnMargin(option)),
+    decision.options.some(
+      (option) =>
+        option.id === outcome && (dependsOnMargin(option) || (outcome === 'pass' && passMatters)),
+    ),
   );
   return asked.length > 0 ? { asksMargin: asked } : {};
 }
