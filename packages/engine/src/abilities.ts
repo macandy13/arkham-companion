@@ -25,9 +25,10 @@ import type {
 } from './commands';
 import { cardsInPlay, cardsWithActiveAbilities } from './doom';
 import { cardOptionLabels } from './decisions';
-import type { Event } from './events';
+import type { Event, SkillTestResolved } from './events';
 import type { TraumaKind } from './campaign/campaign_log';
 import {
+  codexEntry,
   decisionId,
   type CardCode,
   type DecisionId,
@@ -146,6 +147,14 @@ export type TimingWindow =
    * its results applied. Opened for the location or enemy tested, naming the tester.
    */
   | { kind: 'testEnded'; action: TestedAction; outcome: SkillTestOutcome }
+  /**
+   * "After you succeed at a skill test at [this card]'s location" (Margaret Liu), or "after you
+   * successfully investigate [its] location" with `action` (David Renfield): an investigator passed
+   * a test (`SkillTestResolved`) at the location of what it was about, or at their own for a test
+   * about nothing on the table. Opened at ST.6, like `tested`, for each card at that location,
+   * naming the tester and carrying the margin when the answer gave one (`OpenedWindow.margin`).
+   */
+  | { kind: 'succeededHere'; action?: TestedAction }
   /**
    * "After [this enemy] engages you": the enemy became engaged with an
    * investigator (`EnemyEngaged`), whether it engaged them or they engaged
@@ -420,6 +429,7 @@ export type AbilityCommand =
           | 'DiscardFromHand'
           | 'DiscardAsset'
           | 'HealAsset'
+          | 'ReadCodexEntry'
           | 'TakeDamageAndHorror'
           | 'CheckDoomThreshold'
           | 'MoveTokens'
@@ -536,7 +546,12 @@ export type AbilityCondition =
   /** `value` is within the range ("if you have no clues", "2 clues per investigator on this act"). */
   | ({ kind: 'valueOf'; value: Quantity } & StatRange)
   /** The game is in `phase` ("after Hellhound attacks you during the enemy phase"). */
-  | { kind: 'phase'; phase: Phase };
+  | { kind: 'phase'; phase: Phase }
+  /**
+   * The test that opened the window (`succeededHere`) succeeded by at least `min` ("by 2 or
+   * more"). A pass answered without its margin counts, so the players judge it.
+   */
+  | { kind: 'margin'; min: number };
 
 /**
  * A number on the table a `valueOf` condition reads:
@@ -621,6 +636,8 @@ export interface OpenedWindow {
   investigatorId?: InvestigatorId;
   /** The location it names itself, if any (where a defeated enemy was); see `windowLocation`. */
   locationId?: InstanceId;
+  /** How much the test that opened it succeeded by, when the answer said (`succeededHere`). */
+  margin?: number;
 }
 
 /** The `revealed` window of the card turned face up, naming who drew it when it was drawn. */
@@ -736,11 +753,15 @@ export function windowsOpenedBy(
       ];
     case 'SkillTestResolved': {
       const { action, subject, outcome, investigatorId } = event;
-      if (action === undefined || subject === undefined) return [];
+      const here = outcome === 'pass' ? succeededHereWindows(state, event) : [];
+      if (action === undefined || subject === undefined) return here;
       const window: TimingWindow = { kind: 'tested', action, outcome };
-      return [subject, ...cardsInZone(state, { kind: 'attachedTo', hostId: subject })].map(
-        (cardId) => ({ window, cardId, ...(investigatorId && { investigatorId }) }),
-      );
+      return [
+        ...[subject, ...cardsInZone(state, { kind: 'attachedTo', hostId: subject })].map(
+          (cardId) => ({ window, cardId, ...(investigatorId && { investigatorId }) }),
+        ),
+        ...here,
+      ];
     }
     case 'SkillTestEnded': {
       const { action, outcome, subject, investigatorId } = event;
@@ -782,6 +803,35 @@ export function windowsOpenedBy(
     default:
       return [];
   }
+}
+
+/**
+ * The `succeededHere` windows of a passed test: for each card at the location of what the test was
+ * about (the tester's own location for a test about a card at no location, such as a revelation),
+ * one for any test and one more for the basic action it belongs to.
+ */
+function succeededHereWindows(state: GameState, event: SkillTestResolved): OpenedWindow[] {
+  const { action, subject, investigatorId, margin } = event;
+  if (investigatorId === undefined) return [];
+  const about = subject === undefined ? undefined : state.cards[subject];
+  const where =
+    (about === undefined ? undefined : locationOfCard(state, about)) ??
+    findInvestigator(state, investigatorId)?.locationId;
+  if (where === undefined) return [];
+  const windows: TimingWindow[] = [
+    { kind: 'succeededHere' },
+    ...(action === undefined ? [] : [{ kind: 'succeededHere' as const, action }]),
+  ];
+  return Object.values(state.cards)
+    .filter((card) => locationOfCard(state, card) === where)
+    .flatMap((card) =>
+      windows.map((window) => ({
+        window,
+        cardId: card.id,
+        investigatorId,
+        ...(margin === undefined ? {} : { margin }),
+      })),
+    );
 }
 
 /**
@@ -985,6 +1035,8 @@ function conditionHolds(
     }
     case 'phase':
       return state.meta.phase === condition.phase;
+    case 'margin':
+      return opened.margin === undefined || opened.margin >= condition.min;
     default:
       return assertNever(condition);
   }
@@ -1697,6 +1749,23 @@ export function afterTest(
   return { window: { kind: 'tested', action, outcome }, effects };
 }
 
+/**
+ * "After you succeed at a skill test [by N or more] at [this card]'s location" (Margaret Liu,
+ * `afterSucceedingHere({ by: 2 }, …)`), or "after you successfully investigate [its] location"
+ * (David Renfield, `afterSucceedingHere({ action: 'investigate' }, …)`): the `succeededHere`
+ * window, with a `margin` condition for `by`.
+ */
+export function afterSucceedingHere(
+  { action, by }: { action?: TestedAction; by?: number },
+  ...effects: AbilityEffect[]
+): Ability {
+  return {
+    window: action === undefined ? { kind: 'succeededHere' } : { kind: 'succeededHere', action },
+    effects,
+    ...(by === undefined ? {} : { condition: { kind: 'margin', min: by } }),
+  };
+}
+
 /** A forced ability "after [this enemy] engages you", written `afterEngaging(takeHorror(1))`. */
 export function afterEngaging(...effects: AbilityEffect[]): Ability {
   return { window: { kind: 'engaged' }, effects };
@@ -2085,6 +2154,7 @@ function withSource<C extends { readonly type: string }>(command: C, source: Com
     case 'DiscardFromHand':
     case 'DiscardAsset':
     case 'HealAsset':
+    case 'ReadCodexEntry':
     case 'AdjustActions':
     case 'EndTurn':
     case 'DiscoverClues':
@@ -2222,6 +2292,17 @@ export function searchDeck(
     ...(top === undefined ? {} : { top }),
     ...(play === undefined ? {} : { play }),
   };
+}
+
+/**
+ * "([codex] N)": the investigator the window names reads entry `entry` of the scenario's codex in
+ * the campaign guide (`ReadCodexEntry`), left to the players.
+ */
+export function codex(
+  entry: number,
+  who: RelativeInvestigator = { ref: 'windowInvestigator' },
+): AbilityEffect {
+  return { type: 'ReadCodexEntry', investigatorId: who, entry: codexEntry(entry) };
 }
 
 /**

@@ -18,8 +18,10 @@ import {
   threatAreaOf,
   type CardStats,
   type Command,
+  type Event,
   type InvestigatorId,
   type LocationSymbol,
+  type Zone,
 } from '@arkham/engine';
 import {
   answer,
@@ -507,6 +509,76 @@ describe('Smoke and Mirrors card abilities', () => {
           }),
         }),
       );
+    });
+  });
+
+  describe("the suspects' reactions", () => {
+    const suspect = instanceId('suspect');
+    /** Alice at Northside on her turn, with the suspect `code` in `zone` (at Northside unless named). */
+    const withSuspect = (code: string, zone: Zone = atLocation(northside)) =>
+      newGame()
+        .withLocation(northside, cardOf(SMOKE_AND_MIRRORS_CODES.northside), { revealed: true })
+        .withInvestigator(alice, { locationId: northside })
+        .withCard(suspect, cardOf(code), zone)
+        .withTurnOf(alice)
+        .start();
+    const investigates = (margin?: number): Command[] => [
+      { type: 'Investigate', investigatorId: alice },
+      { ...answer('investigate:alice', 'pass'), ...(margin === undefined ? {} : { margin }) },
+    ];
+    /** The codex entry a `CommandDeferred` among `events` hands to alice. */
+    const codexReadBy = (events: readonly Event[]) =>
+      events.flatMap((event) =>
+        event.type === 'CommandDeferred' && event.command.type === 'ReadCodexEntry'
+          ? [{ investigatorId: event.command.investigatorId, entry: event.command.entry }]
+          : [],
+      );
+
+    it.each([
+      { margin: 1, asked: [] },
+      { margin: 2, asked: ['reaction:suspect:0'] },
+    ])(
+      "offers Margaret Liu's reaction after alice succeeds by $margin at her location: $asked",
+      ({ margin, asked }) => {
+        const { context, state: started } = withSuspect(SMOKE_AND_MIRRORS_CODES.margaretLiu);
+
+        const state = stateAfter(context, started, ...investigates(margin));
+
+        expect(state.pending.map((decision) => decision.id)).toEqual(asked);
+      },
+    );
+
+    it.each([
+      { name: 'David Renfield', code: SMOKE_AND_MIRRORS_CODES.davidRenfield, entry: 1 },
+      { name: 'Margaret Liu', code: SMOKE_AND_MIRRORS_CODES.margaretLiu, entry: 6 },
+    ])(
+      "has alice read codex entry $entry with $name's reaction after she investigates his or her location",
+      ({ code, entry }) => {
+        const { context, state: started } = withSuspect(code);
+        const asked = stateAfter(context, started, ...investigates(2));
+
+        const { events } = execute(context, asked, answer('reaction:suspect:0', 'use'));
+
+        expect(codexReadBy(events)).toEqual([{ investigatorId: alice, entry }]);
+      },
+    );
+
+    it('readies Cornelia Akely, who engages alice again, and has her read codex entry 2 with the reaction after evading Cornelia', () => {
+      const { context, state: started } = withSuspect(
+        SMOKE_AND_MIRRORS_CODES.corneliaAkely,
+        engagedWith(alice),
+      );
+      const asked = stateAfter(
+        context,
+        started,
+        { type: 'Evade', investigatorId: alice, enemyId: suspect },
+        answer('evade:alice:suspect', 'pass'),
+      );
+
+      const { state, events } = execute(context, asked, answer('reaction:suspect:0', 'use'));
+
+      expect(state.cards[suspect]).toMatchObject({ zone: engagedWith(alice), exhausted: false });
+      expect(codexReadBy(events)).toEqual([{ investigatorId: alice, entry: 2 }]);
     });
   });
 

@@ -3,6 +3,8 @@ import {
   advanceAct,
   afterDiscoveringClues,
   afterEngaging,
+  afterEvaded,
+  afterSucceedingHere,
   atEndOfPhase,
   atEndOfRound,
   beneath,
@@ -11,6 +13,7 @@ import {
   type CardDb,
   cardDbFrom,
   type CardStats,
+  codex,
   decisionId,
   discardSelf,
   drawBeneathYourLocation,
@@ -43,6 +46,7 @@ import {
   plusDifficultyPer,
   putIntoThreatArea,
   reaction,
+  readySelf,
   resignAction,
   resolutionId,
   moveToConnectingLocation,
@@ -159,8 +163,9 @@ const jpg = 'jpg';
  * Effects the engine has no rule for yet are left out, so the players resolve them from the card
  * and the campaign guide:
  *
- * - the codex entries (each suspect's and the Servant of Flame's), read from the campaign guide,
- *   with the suspects' Parley actions and reactions that trigger them
+ * - the codex entries (each suspect's and the Servant of Flame's), read from the campaign guide:
+ *   the suspects' reactions show theirs as a by-hand notice, their Parley actions stay with the
+ *   players
  * - the Elusive keyword (Servant of Flame, Sgt. Earl Monroe, Bat Horror; MC2.15)
  * - the Mark of Elokoss each investigator draws as Arkham Alive advances goes into their deck
  * - Mark of Elokoss' damage as its holder's turn ends (assigned to an asset if able) and its
@@ -265,6 +270,7 @@ export const smokeAndMirrorsCardDefs: readonly CardStats[] = [
     victory: 1,
     unique: true,
     keywords: [{ name: 'aloof' }],
+    abilities: [reaction(afterSucceedingHere({ action: 'investigate' }, codex(1)))],
   }),
   enemy({
     code: codes.corneliaAkely,
@@ -280,6 +286,7 @@ export const smokeAndMirrorsCardDefs: readonly CardStats[] = [
     victory: 1,
     unique: true,
     keywords: [{ name: 'alert' }],
+    abilities: [reaction(afterEvaded(readySelf(), codex(2)))],
   }),
   enemy({
     code: codes.naomiOBannion,
@@ -339,6 +346,7 @@ export const smokeAndMirrorsCardDefs: readonly CardStats[] = [
     victory: 1,
     unique: true,
     keywords: [{ name: 'aloof' }],
+    abilities: [reaction(afterSucceedingHere({ by: 2 }, codex(6)))],
   }),
   location({
     code: codes.downtownFirstBank,

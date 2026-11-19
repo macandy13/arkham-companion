@@ -112,6 +112,7 @@ export const appTexts = {
       play: '{{investigator}} spielt eine Karte',
       search: '{{investigator}} durchsucht das eigene Deck',
       healAsset: '{{investigator}} heilt eine Vorteilskarte',
+      codex: '{{investigator}} liest Codex-Eintrag {{entry}}',
     },
     discovered: '{{investigator}} entdeckt {{amount}} in {{location}}',
     test: {
@@ -287,6 +288,7 @@ export const appTexts = {
         'Heile {{amount}} Schaden von einer Vorteilskarte mit dem Merkmal {{trait}} an deinem Ort',
       healAssetHorror:
         'Heile {{amount}} Horror von einer Vorteilskarte mit dem Merkmal {{trait}} an deinem Ort',
+      codex: 'Lies Codex-Eintrag {{entry}} im Kampagnenbuch',
       play: 'Spiele eine Karte',
       or: ' oder ',
     },

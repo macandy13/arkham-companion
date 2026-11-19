@@ -111,6 +111,7 @@ export const appTexts = {
       play: '{{investigator}} plays a card',
       search: '{{investigator}} searches their deck',
       healAsset: '{{investigator}} heals an asset',
+      codex: '{{investigator}} reads codex entry {{entry}}',
     },
     discovered: '{{investigator}} discovers {{amount}} at {{location}}',
     test: {
@@ -286,6 +287,7 @@ export const appTexts = {
         'heal {{amount}} damage from an asset with the trait {{trait}} at your location',
       healAssetHorror:
         'heal {{amount}} horror from an asset with the trait {{trait}} at your location',
+      codex: 'read codex entry {{entry}} in the campaign guide',
       play: 'play a card',
       or: ' or ',
     },

@@ -223,6 +223,7 @@ const COMMAND_SPECS: CommandSpecs = {
   DiscardFromHand: { handle: deferToPlayers },
   DiscardAsset: { handle: deferToPlayers },
   HealAsset: { handle: deferToPlayers },
+  ReadCodexEntry: { handle: deferToPlayers },
   SpendCluesAsGroup: { handle: handleSpendCluesAsGroup },
   PlayCard: { handle: handlePlayCard, provokes: asAction },
   AdjustInvestigator: {
