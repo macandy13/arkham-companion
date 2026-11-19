@@ -42,6 +42,9 @@ The scripted golden game is [`end_to_end.test_support.ts`](../../packages/scenar
 - [ ] Discovering the last clue at Easttown offers its reaction once per game: search for an Ally asset and play it, by hand.
 - [ ] The Servant of Flame hunts and retaliates; the Rogue Gangster hunts the investigator with the most resources, and as it engages takes 1 of their resources, or attacks them if they have none.
 - [ ] Each suspect has its keyword: David Renfield, Abigail Foreman and Margaret Liu are aloof, Cornelia Akely is alert, Naomi O'Bannion retaliates.
+- [ ] Investigating David Renfield's location successfully offers his reaction, which asks you to read codex entry 1 by hand.
+- [ ] Succeeding at a test by 2 or more at Margaret Liu's location offers her reaction (codex entry 6); by 1 it doesn't.
+- [ ] Evading Cornelia Akely offers her reaction: she readies (and engages you again), and you read codex entry 2 by hand.
 
 **Encounter cards**
 
@@ -65,7 +68,7 @@ The scripted golden game is [`end_to_end.test_support.ts`](../../packages/scenar
 
 These are done by hand at the table; the app does not do them.
 
-- The codex entries of the suspects and the Servant of Flame, read from the campaign guide, with the suspects' Parley actions and reactions that trigger them.
+- The codex entries of the suspects and the Servant of Flame, read from the campaign guide (the suspects' reactions show theirs as a by-hand notice), and the suspects' Parley actions.
 - The Elusive keyword of the Servant of Flame, Sgt. Earl Monroe and Bat Horror.
 - Adding the Mark of Elokoss to each deck, its damage as its holder's turn ends and its two-action discard.
 - The Arkham locations' other reactions and actions, Waterfront District's additional action to investigate, Arcane Lock's additional action to enter or leave, and the damage Miskatonic University (In Flames) deals to allies.

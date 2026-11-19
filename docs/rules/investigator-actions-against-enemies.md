@@ -14,6 +14,7 @@
   - Success (or any "evade" effect) exhausts the enemy if it is ready and moves it unengaged to your location.
   - "Automatically evade" makes no test and isn't a successful evasion.
   - Either way the enemy is evaded, so "after [this enemy] is evaded" (Ruth Turner) follows once it is exhausted and disengaged; a failed evasion opens nothing. The evasion happens in ST.7 (apply results), so this comes after the ST.6 "after you succeed" triggers.
+  - "After you successfully evade [this enemy]" (Cornelia Akely) comes at the same point, but only after a passed evasion test, never after an automatic evade ([Automatic Failure/Success](https://arkhamdb.com/rules#Automatic_Failure_Success)).
 - [Engage](https://arkhamdb.com/rules#Engage_Action): take an enemy at your location into your threat area, even if it's exhausted, aloof or engaged with someone else (it disengages from them). Engaging and being engaged are the same event.
 - [Move](https://arkhamdb.com/rules#Move): to a connecting location unless the effect says otherwise.
   - The connections are read from the card of the location you leave, on its side that is up: a location connects to each one whose symbol it prints at its foot. So a connection only one of the two cards prints goes one way; the 2026 rulebook ("Move") notes that revealing a location can change its connections, into a one-way route among others.

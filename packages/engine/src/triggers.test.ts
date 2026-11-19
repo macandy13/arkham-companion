@@ -35,9 +35,11 @@ import {
   becomeActAndAgenda,
   nextAgendaBecomesActAndAgenda,
   afterTest,
+  afterSucceedingHere,
   atLocation,
   attachedTo,
   blankAct,
+  boardView,
   blankAgenda,
   blankAsset,
   blankEnemy,
@@ -119,6 +121,7 @@ import {
   type AddMapStep,
   type CardStats,
   type Command,
+  type InstanceId,
   type Zone,
   placeCluesOn,
   moveTokens,
@@ -717,6 +720,143 @@ describe('trigger bus', () => {
       const discovered = events.findIndex((e) => e.type === 'CluesDiscovered');
       expect(discarded).toBeLessThan(discovered);
     });
+  });
+
+  describe('abilities after a success at their location', () => {
+    const watcher = instanceId('watcher');
+    const study = instanceId('study');
+    const cellar = instanceId('cellar');
+    /**
+     * Aloof watchers (so they stay unengaged at the location): the first deals 1 horror after any
+     * success there, the second only after a successful investigation, the third after a success
+     * by 2 or more.
+     */
+    const watcherCards = {
+      any: blankEnemy('any_success_watcher', {
+        keywords: [{ name: 'aloof' }],
+        abilities: [afterSucceedingHere({}, takeHorror(1))],
+      }),
+      investigate: blankEnemy('investigation_watcher', {
+        keywords: [{ name: 'aloof' }],
+        abilities: [afterSucceedingHere({ action: 'investigate' }, takeHorror(1))],
+      }),
+      byTwo: blankEnemy('wide_margin_watcher', {
+        keywords: [{ name: 'aloof' }],
+        abilities: [afterSucceedingHere({ by: 2 }, takeHorror(1))],
+      }),
+    };
+    /** "Revelation – Test willpower (3)", with nothing on either result. */
+    const omenCard = blankTreachery('omen', {
+      abilities: [whenRevealed(skillTest('willpower', 3, {}))],
+    });
+    /** Alice in the study (1 clue) on her turn, the watcher in the study or the cellar, the omen on top of the encounter deck. */
+    const watched = (watcherCard: CardStats, watcherAt: InstanceId) =>
+      newGame()
+        .withLocation(study, blankLocation('study', { clues: fixed(1) }), { revealed: true })
+        .withLocation(cellar, blankLocation('cellar'), { revealed: true })
+        .withInvestigator(alice, { locationId: study })
+        .withCard(watcher, watcherCard, atLocation(watcherAt))
+        .withCard(instanceId('omen'), omenCard, encounterDeck)
+        .withTurnOf(alice)
+        .start();
+    const investigates = (result: string, margin?: number): Command[] => [
+      { type: 'Investigate', investigatorId: alice },
+      { ...answer('investigate:alice', result), ...(margin === undefined ? {} : { margin }) },
+    ];
+    const omen = (result: string): Command[] => [
+      { type: 'DrawCard', investigatorId: alice, from: encounterDeck },
+      resolveRevelation('omen'),
+      answer('test:omen', result),
+    ];
+
+    it.each([
+      {
+        case: 'any success there, after a successful investigation',
+        watcher: 'any',
+        at: study,
+        commands: investigates('pass'),
+        horror: 1,
+      },
+      {
+        case: 'any success there, after a failed investigation',
+        watcher: 'any',
+        at: study,
+        commands: investigates('fail'),
+        horror: 0,
+      },
+      {
+        case: 'any success there, after a passed revelation test',
+        watcher: 'any',
+        at: study,
+        commands: omen('pass'),
+        horror: 1,
+      },
+      {
+        case: 'any success in the cellar, after alice succeeds in the study',
+        watcher: 'any',
+        at: cellar,
+        commands: investigates('pass'),
+        horror: 0,
+      },
+      {
+        case: 'a successful investigation there, after one',
+        watcher: 'investigate',
+        at: study,
+        commands: investigates('pass'),
+        horror: 1,
+      },
+      {
+        case: 'a successful investigation there, after a passed revelation test',
+        watcher: 'investigate',
+        at: study,
+        commands: omen('pass'),
+        horror: 0,
+      },
+      {
+        case: 'a success by 2 there, after one by 1',
+        watcher: 'byTwo',
+        at: study,
+        commands: investigates('pass', 1),
+        horror: 0,
+      },
+      {
+        case: 'a success by 2 there, after one by 2',
+        watcher: 'byTwo',
+        at: study,
+        commands: investigates('pass', 2),
+        horror: 1,
+      },
+      {
+        case: 'a success by 2 there, after one with no margin, as a threshold counts only when confirmed',
+        watcher: 'byTwo',
+        at: study,
+        commands: investigates('pass'),
+        horror: 0,
+      },
+    ] as const)(
+      'a watcher for $case deals alice $horror horror',
+      ({ watcher: kind, at, commands, horror }) => {
+        const { context, state } = watched(watcherCards[kind], at);
+
+        const after = stateAfter(context, state, ...commands);
+
+        expect(requireInvestigator(after, alice).sanity.horror).toBe(horror);
+      },
+    );
+    it.each([
+      { watcher: 'byTwo', at: study, asks: ['pass'] },
+      { watcher: 'byTwo', at: cellar, asks: undefined },
+      { watcher: 'any', at: study, asks: undefined },
+    ] as const)(
+      "asks alice's investigation for its margin $asks with the $watcher watcher there or in the cellar ($at)",
+      ({ watcher: kind, at, asks }) => {
+        const { context, state } = watched(watcherCards[kind], at);
+
+        const asked = stateAfter(context, state, { type: 'Investigate', investigatorId: alice });
+
+        expect(boardView(context, asked).decisions[0]?.asksMargin).toEqual(asks);
+      },
+    );
   });
 
   describe('abilities after an engagement or a clue discovery', () => {

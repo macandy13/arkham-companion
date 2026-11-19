@@ -226,7 +226,14 @@ function resultCommands(
       return fightCommands(ctx, state, investigator, kind, answer);
     case 'evade':
       return answer.outcome === 'pass'
-        ? [{ type: 'EvadeEnemy', enemyId: kind.enemyId, investigatorId: investigator.id }]
+        ? [
+            {
+              type: 'EvadeEnemy',
+              enemyId: kind.enemyId,
+              investigatorId: investigator.id,
+              successful: true,
+            },
+          ]
         : [];
     default:
       return assertNever(kind);
