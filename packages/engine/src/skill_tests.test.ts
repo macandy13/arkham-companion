@@ -247,6 +247,59 @@ describe('Investigate', () => {
   });
 });
 
+describe('Investigate another location', () => {
+  const attic = instanceId('attic');
+  /** Alice in the study; the revealed attic (shroud 1, 1 clue) connects to nothing. */
+  const aliceBesideTheAttic = aliceInStudy.withLocation(
+    attic,
+    blankLocation('attic', { shroud: 1, clues: fixed(1) }),
+    { revealed: true },
+  );
+  const investigateAttic: Command = {
+    type: 'Investigate',
+    investigatorId: alice,
+    locationId: attic,
+  };
+
+  it("tests against the attic's shroud 1 and discovers its clue for alice in the study", () => {
+    const { context, state } = aliceBesideTheAttic.start();
+
+    const asked = stateAfter(context, state, investigateAttic);
+    const passed = stateAfter(context, asked, answer('investigate:alice', 'pass'));
+
+    expect(asked.pending[0]).toMatchObject({
+      subject: attic,
+      skillTest: { skill: 'intellect', difficulty: 1 },
+      testKind: { kind: 'investigate', locationId: attic },
+    });
+    expect(requireInvestigator(passed, alice)).toMatchObject({ clues: 1, locationId: study });
+    expect(passed.cards[attic]!.tokens.clue ?? 0).toBe(0);
+  });
+
+  it('rejects the unrevealed hallway, as a card investigates only a revealed location', () => {
+    const { context, state } = aliceInStudy.start();
+
+    expect(
+      rejectionFrom(context, state, {
+        type: 'Investigate',
+        investigatorId: alice,
+        locationId: hallway,
+      }),
+    ).toEqual({ code: 'locationUnrevealed', cardId: hallway });
+  });
+
+  it('rejects an attic set aside, which is not on the map', () => {
+    const { context, state } = aliceInStudy
+      .withCard(attic, blankLocation('attic'), { kind: 'setAside' })
+      .start();
+
+    expect(rejectionFrom(context, state, investigateAttic)).toEqual({
+      code: 'notALocation',
+      cardId: attic,
+    });
+  });
+});
+
 describe('Investigate at a location with attachments', () => {
   const investigate: Command = { type: 'Investigate', investigatorId: alice };
   const fog = instanceId('fog_card');
@@ -409,6 +462,36 @@ describe('Fight', () => {
       investigatorId: alice,
       locationId: hallway,
     });
+  });
+
+  it('rejects an aloof ghoul in the hallway nobody is engaged with, even at any location', () => {
+    const { context, state } = aliceInStudy
+      .withCard(ghoul, aloofGhoul, atLocation(hallway))
+      .start();
+
+    expect(rejectionFrom(context, state, { ...fight, atAnyLocation: true })).toEqual({
+      code: 'aloofNotEngaged',
+      cardId: ghoul,
+    });
+  });
+
+  it('attacks an aloof ghoul in the hallway nobody is engaged with when the attack ignores aloof', () => {
+    const { context, state } = aliceInStudy
+      .withCard(ghoul, aloofGhoul, atLocation(hallway))
+      .start();
+
+    const asked = stateAfter(context, state, { ...fight, atAnyLocation: true, ignoreAloof: true });
+
+    expect(asked.pending[0]).toMatchObject({ id: 'fight:alice:ghoul', subject: ghoul });
+  });
+
+  it('attacks the ghoul in the hallway when a card lets alice fight at any location', () => {
+    const { context, state } = aliceInStudy.withCard(ghoul, ghoulCard, atLocation(hallway)).start();
+
+    const asked = stateAfter(context, state, { ...fight, atAnyLocation: true });
+    const passed = stateAfter(context, asked, answer('fight:alice:ghoul', 'pass'));
+
+    expect(passed.cards[ghoul]).toMatchObject({ zone: atLocation(hallway), tokens: { damage: 1 } });
   });
 
   it('rejects an enemy that is not in play', () => {
@@ -582,6 +665,24 @@ describe('Evade', () => {
     const { context, state } = aliceInStudy.withCard(ghoul, ghoulCard, atLocation(hallway)).start();
 
     expect(rejectionFrom(context, state, evade)).toEqual({ code: 'notEngaged', cardId: ghoul });
+  });
+
+  it('rejects a ghoul still in the encounter deck, even when alice may evade at any location', () => {
+    const { context, state } = aliceInStudy.withCard(ghoul, ghoulCard, encounterDeck).start();
+
+    expect(rejectionFrom(context, state, { ...evade, atAnyLocation: true })).toEqual({
+      code: 'enemyNotInPlay',
+      cardId: ghoul,
+    });
+  });
+
+  it('exhausts the unengaged ghoul in the hallway when a card lets alice evade at any location', () => {
+    const { context, state } = aliceInStudy.withCard(ghoul, ghoulCard, atLocation(hallway)).start();
+
+    const asked = stateAfter(context, state, { ...evade, atAnyLocation: true });
+    const passed = stateAfter(context, asked, answer('evade:alice:ghoul', 'pass'));
+
+    expect(passed.cards[ghoul]).toMatchObject({ exhausted: true, zone: atLocation(hallway) });
   });
 
   it('rejects an aloof enemy at the location that nobody is engaged with', () => {

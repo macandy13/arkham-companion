@@ -301,7 +301,8 @@ export function handleSetLeadInvestigator(
 }
 
 /**
- * `DiscoverClues`: moves `amount` clues from the investigator's own location to them. Rejected for
+ * `DiscoverClues`: moves `amount` clues from the investigator's own location (any with
+ * `atAnyLocation`) to them. Rejected for
  * an investigator a card forbids to discover clues (`isRestrictedFor`, The Masked Hunter). A card's
  * discovery (`source`) is `cardDiscovery` instead.
  */
@@ -322,7 +323,7 @@ export function handleDiscoverClues(
   if (!Number.isInteger(cmd.amount) || cmd.amount <= 0)
     throw new CommandRejected({ code: 'invalidTokenDelta', delta: cmd.amount });
   const location = requireCard(state.cards, cmd.locationId);
-  if (investigator.locationId !== cmd.locationId)
+  if (!cmd.atAnyLocation && investigator.locationId !== cmd.locationId)
     throw new CommandRejected({
       code: 'investigatorNotAtLocation',
       investigatorId: investigator.id,

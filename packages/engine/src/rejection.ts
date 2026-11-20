@@ -164,6 +164,11 @@ export type Rejection =
    */
   | { code: 'aloofNotEngaged'; cardId: InstanceId }
   /**
+   * `Investigate` of another location that is still unrevealed: a card investigates only a
+   * revealed one (In the Know).
+   */
+  | { code: 'locationUnrevealed'; cardId: InstanceId }
+  /**
    * `EngageEnemy` for a massive enemy: it is never placed in a threat area but
    * counts as engaged with every investigator at its location (Rules
    * Reference, "Massive"), so there is nothing to engage.
@@ -440,6 +445,8 @@ function describe(r: Rejection): string {
       return `${r.cardId} is not a drawn card resolving`;
     case 'aloofNotEngaged':
       return `${r.cardId} is aloof and must be engaged before it can be attacked`;
+    case 'locationUnrevealed':
+      return `${r.cardId} is not revealed`;
     case 'massiveNotEngageable':
       return `${r.cardId} is massive and already engaged with everyone at its location`;
     case 'notAHunter':
