@@ -322,7 +322,7 @@ describe('Smoke and Mirrors act, Augurs of Flame', () => {
   );
 
   it('ends the scenario in Resolution 1 once it advances', () => {
-    const state = stateAfter(ctx, startScenario(ctx), { type: 'AdvanceAct' });
+    const state = stateAfter(ctx, startScenario(ctx), { type: 'Advance', deck: 'act' });
 
     expect(state.meta).toMatchObject({ ended: true, resolution: 'R1' });
   });
@@ -331,7 +331,8 @@ describe('Smoke and Mirrors act, Augurs of Flame', () => {
 describe('Smoke and Mirrors agendas', () => {
   it('puts a Mark of Elokoss into each threat area as Arkham Alive advances', () => {
     const state = stateAfter(ctx, startScenario(ctx, { playerCount: 2 }), {
-      type: 'AdvanceAgenda',
+      type: 'Advance',
+      deck: 'agenda',
     });
 
     expect(namesIn(state, { kind: 'threatArea', investigatorId: tank })).toEqual([
@@ -346,8 +347,8 @@ describe('Smoke and Mirrors agendas', () => {
     const state = stateAfter(
       ctx,
       startScenario(ctx, { playerCount: 2 }),
-      { type: 'AdvanceAgenda' },
-      { type: 'AdvanceAgenda' },
+      { type: 'Advance', deck: 'agenda' },
+      { type: 'Advance', deck: 'agenda' },
     );
 
     expect(state.investigators.map((inv) => inv.status)).toEqual(['resigned', 'resigned']);

@@ -222,8 +222,8 @@ describe('the last act whose reverse side asks something', () => {
   it('keeps the last act in play until the lead investigator picks the resolution', () => {
     const table = PlayTable.start(game);
 
-    table.play({ type: 'AdvanceAct' });
-    table.play({ type: 'AdvanceAct' });
+    table.play({ type: 'Advance', deck: 'act' });
+    table.play({ type: 'Advance', deck: 'act' });
 
     expect(table.board).toMatchObject({
       act: { name: 'last_act' },
@@ -274,7 +274,7 @@ describe('a forced effect that asks two questions', () => {
   it('asks the second question only once the first is answered', () => {
     const table = PlayTable.start(game);
 
-    table.play({ type: 'AdvanceAct' });
+    table.play({ type: 'Advance', deck: 'act' });
 
     expect(table.board.decisions).toMatchObject([{ prompt: 'decision.firstOffer' }]);
 

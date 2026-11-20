@@ -4,8 +4,7 @@ import type { AbilityEffect, OpenedWindow } from './abilities';
 import type { CampaignLog } from './campaign/campaign_log';
 import type { ChangeCause } from './change_cause';
 import type {
-  AdvanceAct,
-  AdvanceAgenda,
+  Advance,
   Command,
   CommandType,
   DrawCards,
@@ -658,14 +657,14 @@ type QueuedStepKind =
    */
   | { kind: 'action'; command: HeldAction }
   /**
-   * The rest of `AdvanceAgenda`/`AdvanceAct` once the reverse side of
+   * The rest of `Advance` once the reverse side of
    * `cardId` has resolved (`completeAdvance`). `asked` is set when it had to
    * wait for a decision raised meanwhile: on the last card that decision is
    * what ends the scenario.
    */
   | {
       kind: 'finishAdvance';
-      command: AdvanceAgenda | AdvanceAct;
+      command: Advance;
       cardId: InstanceId;
       asked?: true;
       origin?: CommandType;

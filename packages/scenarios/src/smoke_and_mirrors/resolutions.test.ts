@@ -79,7 +79,7 @@ function proposalAfter(state: GameState, ...commands: Command[]): ProposedChange
   return campaign.proposeResolution(ctx, ended, smokeAndMirrorsResolutions) ?? [];
 }
 
-const endInR1: Command = { type: 'AdvanceAct' };
+const endInR1: Command = { type: 'Advance', deck: 'act' };
 
 describe('Smoke and Mirrors Resolution 1', () => {
   it('reveals the set-aside suspect as the harbinger and records the cult found', () => {
@@ -197,7 +197,10 @@ describe('Smoke and Mirrors Resolution 1', () => {
 
 describe('Smoke and Mirrors without a resolution', () => {
   /** Arkham Alive gives everyone a Mark of Elokoss, then Emergent Evils makes them all resign. */
-  const bothAgendas: Command[] = [{ type: 'AdvanceAgenda' }, { type: 'AdvanceAgenda' }];
+  const bothAgendas: Command[] = [
+    { type: 'Advance', deck: 'agenda' },
+    { type: 'Advance', deck: 'agenda' },
+  ];
 
   it('asks whether the drawn card was the harbinger, failed in their search until they pick', () => {
     const proposal = proposalAfter(startScenario(ctx), ...bothAgendas);

@@ -180,9 +180,9 @@ describe('GameSession on The Gathering', () => {
     await store.appendEvents(gameId, execute(twoPriestsCtx, emptyState(), twoPriestsSetup).events);
     const session = await GameSession.open(store, gameId, twoPriestsCtx);
     // Act 1 (Trapped) advances first, without its clues, so that The Barrier is current.
-    await session.play((table) => table.play({ type: 'AdvanceAct' }));
+    await session.play((table) => table.play({ type: 'Advance', deck: 'act' }));
 
-    await session.play((table) => table.play({ type: 'AdvanceAct' }));
+    await session.play((table) => table.play({ type: 'Advance', deck: 'act' }));
     const afterTheBarrier = session.skippedEffects;
     const reopened = await GameSession.open(store, gameId, twoPriestsCtx);
     await session.play((table) => table.nextPhase());

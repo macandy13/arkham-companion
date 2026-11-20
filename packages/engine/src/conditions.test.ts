@@ -180,7 +180,7 @@ describe('a condition on the current agenda', () => {
 
   it('gives alice 1 horror once the second agenda is current', () => {
     const { context, state } = twoAgendas.start();
-    const advanced = stateAfter(context, state, { type: 'AdvanceAgenda' });
+    const advanced = stateAfter(context, state, { type: 'Advance', deck: 'agenda' });
 
     const after = stateAfter(context, advanced, aliceDraws, resolveRevelation('omen'));
 

@@ -344,7 +344,7 @@ describe('Queen of Ash agendas and acts', () => {
   const servantOfFlame = instanceId('12180#1');
   const sluiceControl = instanceId('12175#1');
   const atCistern = { kind: 'atLocation', locationId: undergroundCistern } as const;
-  const advanceAgenda: Command = { type: 'AdvanceAgenda' };
+  const advanceAgenda: Command = { type: 'Advance', deck: 'agenda' };
   const tankEntersCistern: Command = {
     type: 'MoveInvestigator',
     investigatorId: tank,

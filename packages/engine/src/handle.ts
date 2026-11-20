@@ -316,8 +316,7 @@ function resolveQueuedStep(
       }
       return resolveCommand(resolution, step.command, step.origin, budget);
     case 'finishAdvance': {
-      const deck = step.command.type === 'AdvanceAgenda' ? 'agenda' : 'act';
-      const resolutionName = step.command.resolution;
+      const { deck, resolution: resolutionName } = step.command;
       const events = completeAdvance(state, deck, step.cardId, resolutionName, step.asked === true);
       return emitWithEffects(resolution, events);
     }

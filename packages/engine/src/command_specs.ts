@@ -2,8 +2,7 @@ import type { EngineContext } from './cards';
 import { handleUseReaction } from './reactions';
 import type {
   ActionCommand,
-  AdvanceAct,
-  AdvanceAgenda,
+  Advance,
   Command,
   CommandType,
   DrawCard,
@@ -60,8 +59,7 @@ import {
 } from './handle_investigator';
 import { handleManualAdjust, handleMoveCard } from './handle_manual_adjust';
 import {
-  handleAdvanceAct,
-  handleAdvanceAgenda,
+  handleAdvance,
   handleBecomeActAndAgenda,
   handleEndScenario,
   handleChangeChaosBag,
@@ -159,10 +157,10 @@ export type Step = QueuedStep | { kind: 'phaseStep'; origin?: CommandType };
 export type Continuation = Exclude<Step, { kind: 'command' | 'action' }>;
 
 /**
- * `AdvanceAgenda`/`AdvanceAct`, continued: the advanced card is replaced
+ * `Advance`, continued: the advanced card is replaced
  * once its reverse side has resolved (`completeAdvance`).
  */
-function finishAdvance(command: AdvanceAgenda | AdvanceAct, own: readonly Event[]): Continuation[] {
+function finishAdvance(command: Advance, own: readonly Event[]): Continuation[] {
   const advanced = own.find(
     (event) => event.type === 'AgendaAdvanced' || event.type === 'ActAdvanced',
   );
@@ -245,16 +243,12 @@ const COMMAND_SPECS: CommandSpecs = {
     handle: (_ctx, state, command) => handleReleaseChaosToken(state, command),
   },
   MoveTokens: { handle: handleMoveTokens },
-  AdvanceAgenda: {
-    handle: (_ctx, state, command) => handleAdvanceAgenda(state, command),
-    // The reverse side resolves before the next agenda becomes current.
+  Advance: {
+    handle: (_ctx, state, command) => handleAdvance(state, command),
+    // The reverse side resolves before the next card becomes current.
     continueWith: finishAdvance,
   },
   BecomeActAndAgenda: { handle: (_ctx, state, cmd) => handleBecomeActAndAgenda(state, cmd) },
-  AdvanceAct: {
-    handle: (_ctx, state, command) => handleAdvanceAct(state, command),
-    continueWith: finishAdvance,
-  },
   EndScenario: { handle: (_ctx, _state, command) => handleEndScenario(command) },
   GainSurge: { handle: (_ctx, state, command) => handleGainSurge(state, command) },
   UseReaction: { handle: handleUseReaction },

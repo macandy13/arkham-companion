@@ -67,9 +67,8 @@ export type Command =
   | AttachPlayerCard
   | DrawWeakness
   | ReleaseChaosToken
-  | AdvanceAgenda
+  | Advance
   | BecomeActAndAgenda
-  | AdvanceAct
   | EndScenario
   | ShuffleEncounterDiscard
   | ShuffleEncounterDeck
@@ -612,21 +611,27 @@ export interface MoveTokens {
   from: TokenHolder;
   to: TokenHolder;
 }
+/** The two decks of stage cards a scenario advances through (`Advance`). */
+export type StageDeck = 'agenda' | 'act';
+
 /**
- * Advances the current agenda: all doom in play is removed, the agenda is
- * flipped and its reverse side (its `advanced` abilities) resolves while it is
- * still current; then it leaves the game and the next agenda becomes current.
- * Run by the "yes" answer to the threshold question (see
- * `ResolveDecision`) and by card effects that advance the agenda.
- * Produces `TokensChanged`/`InvestigatorChanged` (doom removal), `CardFlipped`,
- * `AgendaAdvanced`, the reverse side's events, `CardMoved`, `CurrentCardChanged`
- * and, for the last agenda, `ScenarioEnded` unless the reverse side ended the scenario.
+ * Advances the current card of `deck`, paying nothing. Its first step clears the card's tokens:
+ * an agenda removes all doom in play, an act the tokens on it, clues included (RR "Act Deck and
+ * Agenda Deck"); an act's clues are the cost of its own `advanceBySpendingClues` action, whose
+ * effect this is, and an objective met or another card advances it for free. The card then turns
+ * to its reverse side (its `advanced` abilities), which resolves while it is still current; then
+ * it leaves the game and the next card becomes current. The agenda advances by the "yes" answer
+ * to its threshold question (see `ResolveDecision`) and by card effects.
+ * Produces `TokensChanged`/`InvestigatorChanged` (the tokens), `CardFlipped`, `AgendaAdvanced`
+ * or `ActAdvanced`, the reverse side's events, `CardMoved`, `CurrentCardChanged` and, for the
+ * last card, `ScenarioEnded` unless the reverse side ended the scenario.
  */
-export interface AdvanceAgenda {
-  type: 'AdvanceAgenda';
+export interface Advance {
+  type: 'Advance';
+  deck: StageDeck;
   /**
-   * Fallback resolution for the last agenda when its reverse side does not end
-   * the scenario itself; rejected while further agendas follow.
+   * Fallback resolution for the last card when its reverse side does not end the scenario
+   * itself; rejected while further cards follow.
    */
   resolution?: ResolutionId;
 }
@@ -665,24 +670,6 @@ export interface SpendCluesAsGroup {
   amount: ScaledValue;
   locationId?: InstanceId;
   spend?: ClueSpend[];
-}
-
-/**
- * Advances the current act, paying nothing: it is the effect of the act's
- * `advanceBySpendingClues` action, whose cost the investigators paid, of an
- * objective met, or of a card or the players' call. Like `AdvanceAgenda`, the
- * reverse side (its `advanced` abilities) resolves before the next act becomes
- * current. Produces `TokensChanged` for the tokens on the act, `CardFlipped`, `ActAdvanced`,
- * the reverse side's events, `CardMoved`, `CurrentCardChanged` and, for the
- * last act, `ScenarioEnded` unless the reverse side ended the scenario.
- */
-export interface AdvanceAct {
-  type: 'AdvanceAct';
-  /**
-   * Fallback resolution for the last act when its reverse side does not end
-   * the scenario itself; rejected while further acts follow.
-   */
-  resolution?: ResolutionId;
 }
 
 /**

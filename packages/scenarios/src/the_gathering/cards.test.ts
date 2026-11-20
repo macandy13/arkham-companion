@@ -201,7 +201,7 @@ describe("What's Going On?!", () => {
       .withInvestigator(bob)
       .withAgenda(agenda1, cardOf('01105'))
       .start();
-    const asked = stateAfter(context, started, { type: 'AdvanceAgenda' });
+    const asked = stateAfter(context, started, { type: 'Advance', deck: 'agenda' });
 
     const { events } = runFrom(context, asked, [answer(WHATS_GOING_ON_DECISION, 'discard')]);
     const deferred = events.filter((event) => event.type === 'CommandDeferred');
