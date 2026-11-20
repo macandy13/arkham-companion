@@ -122,8 +122,9 @@ export type WindowEvent =
    */
   | { on: 'turnEnds' }
   /**
-   * "When your turn begins" for a card in an investigator's threat area: the
-   * start of that investigator's turn (`StartTurn`), naming them.
+   * "When your turn begins" for a card in an investigator's threat area, and "when your turn
+   * begins at this location" for their location (`yours`, as for `turnEnds`): the start of that
+   * investigator's turn (`StartTurn`), naming them.
    */
   | { on: 'turnBegins' }
   /**
@@ -214,7 +215,7 @@ export type WindowEvent =
    * naming the location it was at and no investigator. It resolves once the
    * enemy has left play, a stand-in for "when" (before the defeat) that
    * changes nothing while the effect only needs "its location", which the
-   * event records. Then the current agenda and act hear it, for an objective on the enemy
+   * event records, for every card that hears it. Then the current agenda and act hear it, for an objective on the enemy
    * (`currentActOrAgenda`, "if the Ghoul Priest is defeated, advance"); only the current ones,
    * so a used-up act or agenda never fires again.
    */

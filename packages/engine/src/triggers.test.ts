@@ -618,6 +618,24 @@ describe('trigger bus', () => {
       expect(requireInvestigator(after, alice).sanity.horror).toBe(horror);
     });
 
+    it('deals 1 horror when alice starts her turn at a location with the ability', () => {
+      /** "When your turn begins at this location, take 1 horror." */
+      const dreadfulHall = blankLocation('dreadful_hall', {
+        abilities: [whenTurnBegins(takeHorror(1))],
+      });
+      const { context, state } = newGame()
+        .withLocation(hall, dreadfulHall, { revealed: true })
+        .withInvestigator(alice, { locationId: hall })
+        .start();
+
+      const after = stateAfter(context, state, nextPhase, {
+        type: 'StartTurn',
+        investigatorId: alice,
+      });
+
+      expect(requireInvestigator(after, alice).sanity.horror).toBe(1);
+    });
+
     it.each(['investigation', 'enemy', 'mythos'] as const)(
       'places doom on the card when the $0 phase ends',
       (phase) => {

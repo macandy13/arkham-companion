@@ -17,7 +17,7 @@ const phaseSteps = Object.keys(PHASE_STEP_TITLES) as [PhaseStepId, ...PhaseStepI
 
 /**
  * An event's `ChangeCause`, checked in full: replay never reads it, so nothing later would catch
- * one the log cannot word. The window of a card cause is only checked for its event (`on`), as only its
+ * one the log cannot word. The window of a card cause is only checked for its event (`on`, `kind` in older exports), as only its
  * card is shown.
  */
 const causeSchema = z.discriminatedUnion('kind', [
@@ -25,7 +25,8 @@ const causeSchema = z.discriminatedUnion('kind', [
   z.object({
     kind: z.literal('card'),
     cardId: z.string(),
-    window: z.looseObject({ on: z.string() }),
+    // Exports from before windows were `{ on, of?, filter? }` name the event `kind`.
+    window: z.union([z.looseObject({ on: z.string() }), z.looseObject({ kind: z.string() })]),
   }),
   z.object({ kind: z.literal('rule'), step: z.enum(phaseSteps) }),
 ]);
