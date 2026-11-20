@@ -67,6 +67,8 @@ import type { KeywordName } from './keywords';
 import type { KeywordAttackKind } from './forced_attacks';
 import type { AddMapStep } from './setup';
 import type {
+  AmountRange,
+  AnsweredAmount,
   CardInstance,
   Decision,
   ChaosBagChangeLasts,
@@ -75,7 +77,9 @@ import type {
   GameState,
   Investigator,
   InvestigatorStat,
+  NamedAmount,
   Phase,
+  SkillTest,
   SkillTestKind,
   SkillTestOutcome,
   QueuedStep,
@@ -468,10 +472,38 @@ export type AbilityCommand =
  * it sees what the effects before it did, an `each…` reference in one
  * repeats only that effect, and one that names nobody is dropped alone.
  */
-export type AbilityTest = Omit<TestSkill, 'onPass' | 'onFail'> & {
+export type AbilityTest = Omit<TestSkill, 'test' | 'onPass' | 'onFail'> & {
+  test: AbilitySkillTest;
   onPass: readonly AbilityCommand[];
   onFail: readonly AbilityCommand[];
 };
+
+/**
+ * `SkillTest` as card data writes it: its difficulty may be a count the decider enters as they
+ * pick the test in a choice (`skillTestOfEither` with an `AskedCount`), which their answer fills
+ * in (`AnsweredAmount`) before the test is asked.
+ */
+export type AbilitySkillTest = Omit<SkillTest, 'difficulty'> & {
+  difficulty: number | AnsweredAmount;
+};
+
+/**
+ * A count the app does not track, entered by the decider of a choice as they pick an option
+ * (`DecisionOption.amounts`), within `range`: "X is the number of cards in your hand"
+ * (`cardsInYourHand`).
+ */
+export interface AskedCount {
+  ask: NamedAmount;
+  range: AmountRange;
+}
+
+/**
+ * "X, where X is the number of cards in your hand": the players' hands are not modelled, so the
+ * drawer says how many cards they hold, after committing to the test: committed cards leave the
+ * hand before the difficulty is checked (ST.6). Five is the opening hand, a default the stepper
+ * starts from.
+ */
+export const cardsInYourHand: AskedCount = { ask: 'cardsInHand', range: { default: 5, min: 0 } };
 
 /** `ForEachPoint` as card data writes it (`forEachPoint`), its commands ability commands too. */
 export type AbilityForEachPoint = Omit<ForEachPoint, 'commands'> & {
@@ -501,8 +533,13 @@ export interface AbilityChoice {
   };
 }
 
-/** One answer of an `AbilityChoice`: an option whose commands are ability commands. */
-export type AbilityOption = Pick<DecisionOption, 'id' | 'label'> & { commands: AbilityCommand[] };
+/**
+ * One answer of an `AbilityChoice`: an option whose commands are ability commands, with the counts
+ * the decider enters as they pick it (`AskedCount`).
+ */
+export type AbilityOption = Pick<DecisionOption, 'id' | 'label' | 'amounts'> & {
+  commands: AbilityCommand[];
+};
 
 /**
  * One step of what an ability does: an allowed command written with
@@ -1064,16 +1101,17 @@ export function resolveEffect(
   const deferred = withDeferredOutcomes(withDifficultyChanges(ctx, state, effect, opened), opened);
   const each = repeatedRef(deferred);
   const ids = each === undefined ? [undefined] : eachId(ctx, state, each, refs);
-  const commandsFor = (picked?: InstanceId | InvestigatorId): AbilityCommand[] =>
+  const commandsFor = (picked?: InstanceId | InvestigatorId): Command[] =>
     ids.flatMap((id, repetition) => {
       const setAsideCopy = (code: CardCode) => setAsideCopyOf(state, code, repetition);
       const resolved = resolveRefs(deferred, { ...refs, each: id, picked, setAsideCopy });
-      // The walk keeps every field but the references, which become the IDs the
-      // command type expects, so the result is an `AbilityCommand`.
+      // The walk keeps every field but the references, which become the IDs the command type
+      // expects, so the result is a command. A difficulty the decider enters (`AskedCount`) sits
+      // only in a choice's option, which holds `AnswerableCommand`s: the answer fills it in.
       return resolved === undefined
         ? []
         : [
-            withSource(resolved as AbilityCommand, {
+            withSource(resolved as Command, {
               cardId: opened.cardId,
               window: opened.window.kind,
             }),
@@ -1129,6 +1167,8 @@ function withDifficultyChanges(
     if ('type' in value && value.type === 'TestSkill') {
       // Read as the command type: `Templated` would map the card codes inside the changes too.
       const { difficultyChanges = [], ...test } = value as unknown as TestSkill;
+      // A difficulty the decider enters (`AskedCount`) takes no changes (`skillTestOfEither`).
+      if (difficultyChanges.length === 0) return test;
       const added = sum(difficultyChanges.map(change));
       return {
         ...test,
@@ -1170,11 +1210,13 @@ function withDeferredOutcomes(effect: AbilityEffect, opened: OpenedWindow): unkn
   if (effect.type === 'RequestDecision') {
     const options = effect.decision.options.map((option) => ({
       ...option,
-      commands: option.commands.map((inner) =>
-        repeatedRef(inner) === undefined && pickedRef(inner) === undefined
+      commands: option.commands.map((inner) => {
+        // A test the option asks for ("test [willpower] or [intellect]") defers its own outcomes.
+        if (inner.type === 'TestSkill') return withDeferredOutcomes(inner, opened);
+        return repeatedRef(inner) === undefined && pickedRef(inner) === undefined
           ? inner
-          : defer([inner])[0],
-      ),
+          : defer([inner])[0];
+      }),
     }));
     return { ...effect, decision: { ...effect.decision, options } };
   }
@@ -1352,7 +1394,7 @@ function pickDecision(
   picked: PickedRef,
   investigatorId: InvestigatorId,
   candidates: readonly (InstanceId | InvestigatorId)[],
-  commandsFor: (pickedId: InstanceId | InvestigatorId) => AbilityCommand[],
+  commandsFor: (pickedId: InstanceId | InvestigatorId) => Command[],
 ): Command {
   const { key, ...asked } = pickQuestion(picked, investigatorId);
   const labels =
@@ -1879,11 +1921,22 @@ export function whenAdvanced(...effects: AbilityEffect[]): Ability {
 export function skillTest(
   skill: SkillName,
   difficulty: number,
-  outcomes: {
-    onPass?: AbilityEffect[];
-    onFail?: AbilityEffect[];
-    difficultyChanges?: DifficultyChange[];
-  } = {},
+  outcomes: TestOutcomes = {},
+): AbilityEffect {
+  return testOf(skill, difficulty, outcomes);
+}
+
+/** What a `skillTest` does once answered, and what the table adds to its difficulty. */
+export interface TestOutcomes {
+  onPass?: AbilityEffect[];
+  onFail?: AbilityEffect[];
+  difficultyChanges?: DifficultyChange[];
+}
+
+function testOf(
+  skill: SkillName,
+  difficulty: number | AnsweredAmount,
+  outcomes: TestOutcomes,
 ): AbilityEffect {
   return {
     type: 'TestSkill',
@@ -1943,20 +1996,38 @@ export function byMargin(tiers: Readonly<Record<number, AbilityEffect[]>>): Abil
 /**
  * "Test [willpower] (3) or [agility] (3)": the investigator the window names picks one of
  * `skills` (decision `id`), then tests it like `skillTest`, with the same outcomes either way.
+ * A difficulty the app cannot read ("X, where X is the number of cards in your hand",
+ * `cardsInYourHand`) is an `AskedCount`: the investigator enters it as they pick the skill.
  */
 export function skillTestOfEither(
   id: DecisionId,
   skills: readonly [SkillName, SkillName],
   difficulty: number,
-  outcomes: Parameters<typeof skillTest>[2] = {},
+  outcomes?: TestOutcomes,
+): AbilityEffect;
+/** No card changes a count the decider enters, so such a test lists no `difficultyChanges`. */
+export function skillTestOfEither(
+  id: DecisionId,
+  skills: readonly [SkillName, SkillName],
+  difficulty: AskedCount,
+  outcomes?: Omit<TestOutcomes, 'difficultyChanges'>,
+): AbilityEffect;
+export function skillTestOfEither(
+  id: DecisionId,
+  skills: readonly [SkillName, SkillName],
+  difficulty: number | AskedCount,
+  outcomes: TestOutcomes = {},
 ): AbilityEffect {
+  const asked = typeof difficulty === 'number' ? undefined : difficulty;
+  const tested = typeof difficulty === 'number' ? difficulty : { answer: difficulty.ask };
   return youMustEither(
     id,
     'decision.chooseSkill',
     skills.map((skill) => ({
       id: skill,
       label: `skill.${skill}`,
-      effects: [skillTest(skill, difficulty, outcomes)],
+      ...(asked ? { amounts: { [asked.ask]: asked.range } } : {}),
+      effects: [testOf(skill, tested, outcomes)],
     })),
   );
 }
@@ -3086,6 +3157,8 @@ export interface ChoiceOption {
   id: string;
   /** i18n key. A part the engine does not track (player cards) is in the label only, for the players. */
   label: string;
+  /** The counts the decider enters as they pick it, which its effects read (`AskedCount`). */
+  amounts?: DecisionOption['amounts'];
   effects: AbilityEffect[];
 }
 
@@ -3138,6 +3211,7 @@ function choice(
       options: options.map((option) => ({
         id: option.id,
         label: option.label,
+        ...(option.amounts ? { amounts: option.amounts } : {}),
         commands: option.effects,
       })),
     },

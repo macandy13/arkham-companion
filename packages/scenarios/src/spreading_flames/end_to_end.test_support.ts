@@ -30,6 +30,7 @@ import {
   ASH_STORY,
   CAMPUS,
   COSMIC_EVILS_DECISION,
+  EXTRAPLANAR_VISIONS_DECISION,
   SEARCHING_FOR_ARMITAGE_DECISION,
   SPREADING_FLAMES_CODES,
   STAY_OR_GO_DECISION,
@@ -160,9 +161,18 @@ export function playSpreadingFlames(start: CampaignLog): CampaignLog {
   expect(table.nextPhase()).toEqual({ round: 2, phase: 'enemy' });
   expect(table.nextPhase()).toEqual({ round: 2, phase: 'upkeep' });
 
-  // Round 3 – mythos: a Cantor of Flame engages Roland. Daisy's Extraplanar Visions tests a
-  // difficulty the engine can't count yet, so the players resolve it from the card.
-  expect(table.nextPhase()).toEqual({ round: 3, phase: 'mythos' });
+  // Round 3 – mythos: a Cantor of Flame engages Roland. Daisy's Extraplanar Visions tests
+  // intellect against the 4 cards she holds, and she passes.
+  expect(table.nextPhase()).toEqual({ round: 3, phase: 'mythos', step: 'drawEncounterCard' });
+  table.resolveRevelation(byName('Extraplanar Visions'));
+  table.play({
+    type: 'ResolveDecision',
+    decisionId: EXTRAPLANAR_VISIONS_DECISION,
+    optionId: 'intellect',
+    amounts: { cardsInHand: 4 },
+  });
+  expect(table.board.decisions).toMatchObject([{ test: { skill: 'intellect', difficulty: 4 } }]);
+  table.answerOnly('pass');
   expect(table.board.enemies).toEqual([
     { name: cantor, at: 'Miskatonic Quad', health: 2, engagedWith: roland },
   ]);

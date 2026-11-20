@@ -3,6 +3,7 @@ import {
   byName,
   cardCode,
   cardDbWith,
+  encounterDeck,
   gameId,
   investigatorCardStats,
   investigatorCode,
@@ -24,6 +25,8 @@ import {
   SMOKE_AND_MIRRORS_CODES,
   smokeAndMirrors,
   smokeAndMirrorsCards,
+  spreadingFlames,
+  spreadingFlamesCards,
   theDevourerBelow,
   theDevourerBelowCards,
   theGathering,
@@ -593,4 +596,29 @@ export async function resumeImportedGame(page: Page, title: string, file: Buffer
     .getByRole('link', { name: 'Continue' })
     .click();
   await waitUntilSettled(page);
+}
+
+/**
+ * An export file of a solo game of Spreading Flames titled `title`, started from the catalog's
+ * card data: on Roland Banks' first turn he draws Extraplanar Visions, whose question waits: test
+ * willpower or intellect, against the cards in his hand after committing.
+ */
+export function extraplanarVisionsExport(title: string): Buffer {
+  const table = PlayTable.setUp(
+    {
+      cards: cardDbWith(spreadingFlamesCards, [investigatorCardStats(roland)]),
+      scenario: spreadingFlames,
+    },
+    { investigators: [{ id: rolandId, code: roland.code }], seed: 3 },
+  );
+  table.nextPhase();
+  table.startTurn(rolandId);
+  table.play({
+    type: 'DrawCard',
+    investigatorId: rolandId,
+    from: encounterDeck,
+    pick: { match: { name: 'Extraplanar Visions' } },
+  });
+  table.resolveRevelation(byName('Extraplanar Visions'));
+  return exportOf(title, table, 'extraplanar_visions');
 }
