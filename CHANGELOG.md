@@ -2,6 +2,43 @@
 
 The sections dated up to 2026-10-22 were released as 1.0.0 to 1.8.0 by mistake: Release Please starts at 1.0.0 by default. Versioning restarted at 0.1.0 (see "Versions" in docs/product.md).
 
+## [0.1.46](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v0.1.45...arkham-companion-v0.1.46) (2026-11-20)
+
+
+### Features
+
+* **engine:** fast abilities for Blaze of Glory, Miskatonic Quad and Merchant District (MC2.3c) ([7be9396](https://github.com/macandy13/arkham-companion/commit/7be939616bd22f7fa6a6f8379b368a5da210ee66))
+* **engine:** investigate, fight and evade at another location (ME.28a) ([f5dd64a](https://github.com/macandy13/arkham-companion/commit/f5dd64ad2b4286254c30bcf091aeebfe6d873b45))
+* **engine:** investigate, fight and evade at another location (ME.28a) ([d329b06](https://github.com/macandy13/arkham-companion/commit/d329b0647a50be40b68efb46a1c8dbe6ebd93938))
+* **review_tour:** read a PR's review tour and cut its stops from the diff (RT.a1) ([6a7bdc8](https://github.com/macandy13/arkham-companion/commit/6a7bdc88f1a761fb6cb8fe818e058b303de1326e))
+* **review_tour:** read a PR's review tour and cut its stops from the diff (RT.a1) ([4ac9305](https://github.com/macandy13/arkham-companion/commit/4ac93059153793f3b20a0eaf75312d00a12570da))
+* **review_tour:** render the review page and its CLI (RT.a2) ([8bc5d26](https://github.com/macandy13/arkham-companion/commit/8bc5d265423567095a1a2de645f690e979b4a2e8))
+* **review_tour:** render the review page and its CLI (RT.a2) ([35e9447](https://github.com/macandy13/arkham-companion/commit/35e94471ab674691c2c6a96312e5266097ddc004))
+* **web:** move an investigator by a card effect to any location (ME.27) ([45b0c1b](https://github.com/macandy13/arkham-companion/commit/45b0c1b98b29d5d773ac3cca3a93f1dfba0de5e4))
+
+
+### Bug fixes
+
+* **engine:** only a revealed location, ignore aloof by card, tests (ME.28a review) ([817347c](https://github.com/macandy13/arkham-companion/commit/817347c80ff55557562b267e4b3a13df999c5d9a))
+* **review_tour:** colour only script files on the page ([f0288db](https://github.com/macandy13/arkham-companion/commit/f0288db9a6bb9428459b6bc06cdd752a582bf750))
+
+
+### Refactoring
+
+* **engine:** one Advance command for act and agenda (ME.14) ([858e7ad](https://github.com/macandy13/arkham-companion/commit/858e7ad8427e3a7bfef98bc639aec21bec71844a))
+* **engine:** one Advance command for act and agenda (ME.14) ([1ae788d](https://github.com/macandy13/arkham-companion/commit/1ae788dd42561716628bf3920b32d7079acb65e3))
+* **engine:** one DealEnemyAttack for every attack (ME.12b) ([e537a3a](https://github.com/macandy13/arkham-companion/commit/e537a3a8fa64c807545ee89c00a95b67fd1e0c1f))
+* **engine:** one DealEnemyAttack for every attack (ME.12b) ([1cc003e](https://github.com/macandy13/arkham-companion/commit/1cc003ef5b2e2ec84c83e5c4cd268d5819168365))
+* **engine:** one StageDeck type for every deck field (ME.14) ([d9772c7](https://github.com/macandy13/arkham-companion/commit/d9772c78296cdda276b8bd332a8a303e26a66d04))
+* **engine:** switch over every attack kind (ME.12b) ([bff8fca](https://github.com/macandy13/arkham-companion/commit/bff8fca7433bb5a6654e755647eccf6640ed001a))
+
+
+### Documentation
+
+* point the rule's end-to-end step and the CI reviewer at the new description ([4fa9f29](https://github.com/macandy13/arkham-companion/commit/4fa9f290426da2b50ffe0dc7075bd390a909917a))
+* PR descriptions become a concept line plus the review tour (RT.c) ([a624644](https://github.com/macandy13/arkham-companion/commit/a6246446644422f61e3fae3b2602e5e42e4a3069))
+* PR descriptions become a concept line plus the review tour (RT.c) ([2c378d6](https://github.com/macandy13/arkham-companion/commit/2c378d6ecbd0a477a189b31892a9bb561e07b1dd))
+
 ## [0.1.45](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v0.1.44...arkham-companion-v0.1.45) (2026-11-16)
 
 
