@@ -44,19 +44,23 @@ jobs:
         with:
           node-version: 22
       # The description is read fresh: the event's copy may predate a later edit. The CLI runs
-      # from the base commit, so a branch made before the review tour existed still gets a page
-      # without merging main in; a PR that changes the CLI shows its own renderer once merged.
+      # from the base branch's tip, so a branch made before the review tour existed still gets a
+      # page without merging main in; the event's base commit is no good for that, as it is the
+      # base when the head was last pushed. A PR that changes the CLI shows its own renderer once
+      # merged.
       - id: build
         if: github.event.action != 'closed'
         env:
           GH_TOKEN: ${{ github.token }}
           TITLE: ${{ github.event.pull_request.title }}
           BASE: ${{ github.event.pull_request.base.sha }}
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
           HEAD: ${{ github.event.pull_request.head.sha }}
         run: |
           gh api "repos/$GITHUB_REPOSITORY/pulls/$PR" --jq '.body // ""' > "$RUNNER_TEMP/body.md"
+          git fetch --no-tags origin "$BASE_REF"
+          git worktree add --detach "$RUNNER_TEMP/tool" FETCH_HEAD
           git fetch --no-tags origin "$BASE"
-          git worktree add --detach "$RUNNER_TEMP/tool" "$BASE"
           node "$RUNNER_TEMP/tool/packages/review_tour/src/cli.ts" --body "$RUNNER_TEMP/body.md" --title "$TITLE" \
             --pr "$PR" --repo "$GITHUB_REPOSITORY" --base "$BASE" --head "$HEAD" --out "$RUNNER_TEMP/page" | tee "$RUNNER_TEMP/out.txt"
           if [ -f "$RUNNER_TEMP/page/index.html" ]; then
