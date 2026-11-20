@@ -1,6 +1,6 @@
 import { hasActiveAbilities } from './doom';
 import { assertNever } from '@arkham/util';
-import { advanceAct, type AbilityEffect, type AbilityStep } from './abilities';
+import { advanceAct, type AbilityEffect, type AbilityStep, type OpenedWindow } from './abilities';
 import { findInvestigator as findCampaignInvestigator } from './campaign/campaign_log';
 import { isLocationInPlay } from './board';
 import {
@@ -527,8 +527,9 @@ export function cardActionSteps(
   state: GameState,
   cmd: UseCardAction,
 ): AbilityStep[] {
-  const opened = {
-    window: { kind: 'action' } as const,
+  const opened: OpenedWindow = {
+    window: { on: 'action' },
+    scope: 'self',
     cardId: cmd.cardId,
     investigatorId: cmd.investigatorId,
   };
