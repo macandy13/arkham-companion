@@ -323,6 +323,8 @@ export type {
   RelativeInvestigator,
   Templated,
   TimingWindow,
+  WindowEvent,
+  ListenerScope,
   EndingPhase,
   TestedAction,
 } from './abilities';

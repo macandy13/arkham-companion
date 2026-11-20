@@ -341,7 +341,7 @@ function revealDrawn(
   // Only a revelation the app resolves asks; one it has no abilities for the players do by hand.
   const asksRevelation =
     stats.typeCode === 'treachery' &&
-    (stats.abilities ?? []).some((ability) => ability.window.kind === 'revealed');
+    (stats.abilities ?? []).some((ability) => ability.window.on === 'revealed');
   const drawn: EncounterCardDrawn = {
     type: 'EncounterCardDrawn',
     investigatorId: investigator.id,

@@ -5,24 +5,32 @@ A scenario's own rules are abilities of its agendas and acts.
 
 An [`Ability`](../../packages/engine/src/abilities.ts) is:
 
-- a timing window (setup opens none):
-  - `revealed`,
-  - `entered`,
-  - `turnBegins`,
-  - `turnEnds` (the ending investigator's threat area and the location they end it at),
-  - `eachTurnEnds` (any investigator's turn, for a card in play),
-  - `phaseEnds`,
-  - `roundEnds`,
-  - `advanced`,
-  - `enemyDefeated`, `investigatorEntered` and `addedToVictoryDisplay`, objectives opened for the current agenda and act (`whenEnemyDefeated`, `whenAnInvestigatorEnters`, `whenVictoryDisplayHolds`); `addedToVictoryDisplay` also opens for a card placed beneath the current act, which counts when the reference names that zone too (Augurs of Flame),
-  - `tested` after a basic action's test, at ST.6 before its results,
-  - `testEnded` once that test has ended (`EndSkillTest`, queued after its results, ST.8), for "after applying all results" keywords,
-  - `engaged` either way round,
-  - `attacked` (attacks of opportunity included),
-  - `evaded` for the enemy, naming the evader, once `EvadeEnemy` (a passed evasion or an effect) has exhausted and disengaged it, so later than `tested` (`afterEvaded`, Ruth Turner),
-  - `cluesDiscovered`,
-  - `defeated` for the enemy itself, naming where it was,
-  - `tokensPlaced` for tokens placed on the card (`afterTokensPlaced`, Wild Flames' "after doom is placed on the agenda"; `whenTokensOnSelf` for an objective on a count);
+- a timing window (`TimingWindow`; setup opens none): the event it waits for (`on`), whose cards hear it (`of`, a `ListenerScope`) and, optionally, which card the event must be about (`filter`, a `CardFilter`). A new window on a known event is a scope or a filter, not a new kind.
+  - The scopes (`windowsOpenedBy` opens each event for its scopes in a fixed order, `openFor`):
+    - `self`, the card the event is about (for a test, also the cards attached to it);
+    - `yours`, the named investigator's threat area, then their location;
+    - `inPlay`, every card in play with active abilities;
+    - `currentActOrAgenda`, the current agenda, then act, for objectives.
+  - A window without `of` takes the event's usual listeners (`defaultScope`): `yours` for `turnBegins` and `turnEnds`, `inPlay` for `phaseEnds` and `roundEnds`, `currentActOrAgenda` for `addedToVictoryDisplay`, otherwise `self`.
+  - One matcher (`hears`) fires an ability when the event matches (with its phase, action, outcome or token), the scope matches, and the filter matches the event's card (`OpenedWindow.subjectId`).
+  - The objectives are scoped windows: `whenEnemyDefeated(code)` is `{ on: 'defeated', of: 'currentActOrAgenda', filter: { code } }`, `whenAnInvestigatorEnters(code)` the same on `entered`, and `atEndOfEachTurn` is `{ on: 'turnEnds', of: 'inPlay' }` (Umôrdhoth).
+  - The events:
+    - `revealed`,
+    - `entered`,
+    - `turnBegins`,
+    - `turnEnds`,
+    - `phaseEnds`,
+    - `roundEnds`,
+    - `advanced`,
+    - `addedToVictoryDisplay` (`whenVictoryDisplayHolds`), which also opens for a card placed beneath the current act, which counts when the reference names that zone too (Augurs of Flame),
+    - `tested` after a basic action's test, at ST.6 before its results,
+    - `testEnded` once that test has ended (`EndSkillTest`, queued after its results, ST.8), for "after applying all results" keywords,
+    - `engaged` either way round,
+    - `attacked` (attacks of opportunity included),
+    - `evaded` for the enemy, naming the evader, once `EvadeEnemy` (a passed evasion or an effect) has exhausted and disengaged it, so later than `tested` (`afterEvaded`, Ruth Turner),
+    - `cluesDiscovered`,
+    - `defeated` for the enemy itself, naming where it was,
+    - `tokensPlaced` for tokens placed on the card (`afterTokensPlaced`, Wild Flames' "after doom is placed on the agenda"; `whenTokensOnSelf` for an objective on a count);
 - an optional condition (`AbilityCondition`), mostly over the references effects use:
   - `currentCard`, the current act or agenda: `duringAct([codes.trapped], …)`, `duringAgenda([codes.theyreGettingOut], …)`;
   - `countOf`, how many things a reference names as the window opens:
@@ -111,7 +119,7 @@ whenAdvanced(revealLocation(onlyCopy(codes.parlor)), …)
 - What a card's test does can depend on how much it passed or failed by: an entry of `onPass` or `onFail` is then a `ForEachPoint` (`forEachPoint(…)`) or a `ByMargin` (`byMargin({ 0: […], 2: […] })`), next to the outcome's plain effects and in their order. `answerCommands` expands them with the answer's `margin` (`withMargin`): a `ForEachPoint`'s amount (`takeDamage(1)`, `placeYourClues(1)`, doom) is multiplied by the margin into one effect, as the Rules Reference's "For each" asks, and anything else (a `youMustEither`) resolves once for each point; a `ByMargin` runs the highest tier the margin reaches. Their effects are deferred like the outcome's others (`withDeferredOutcomes`). An answer without a margin counts as the least its outcome means, a fail by 1 or a pass by 0. On their own, outside a test's outcome, both are rejected (`marginOutsideTest`).
 - A test whose difficulty depends on the table lists `difficultyChanges` on its `TestSkill`: `plusDifficultyPer(statOf(you(), 'damage'))` adds 1 for each damage on the tester (Eager for Death), `plusDifficultyIf(condition, 2)` adds 2 while an `AbilityCondition` holds (Red Herring's 2 or more clues, Mutated!'s enemy at your location). `resolveEffect` reads them first (`withDifficultyChanges`), folds them into `test.difficulty` (never below 0) and drops them, so the command and its decision carry a plain number, and a reference inside a change (`eachEnemy`) is never taken for one the effect repeats over. A test among a test's outcomes reads the table when that outcome resolves.
 - "Test [willpower] (3) or [agility] (3)" is `skillTestOfEither(id, ['willpower', 'agility'], 3, outcomes)`: a choice for the tester with one `skillTest` per skill, the same outcomes either way.
-- Windows for every card in play (`eachTurnEnds`, `phaseEnds`, `roundEnds`) skip unrevealed locations, whose abilities are on their revealed side (`hasActiveAbilities`, also read by modifiers and card actions).
+- Windows heard by every card in play (scope `inPlay`: `atEndOfEachTurn`, `phaseEnds`, `roundEnds`) skip unrevealed locations, whose abilities are on their revealed side (`hasActiveAbilities`, also read by modifiers and card actions).
 
 ## Card actions
 

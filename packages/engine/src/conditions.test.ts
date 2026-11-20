@@ -194,7 +194,7 @@ describe('a condition on a value every named investigator has', () => {
   const omenCard = blankTreachery('omen', {
     abilities: [
       {
-        window: { kind: 'revealed' },
+        window: { on: 'revealed' },
         condition: {
           kind: 'valueOf',
           value: { kind: 'stat', stat: 'clues', who: eachInvestigator() },

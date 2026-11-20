@@ -97,37 +97,42 @@ import {
 } from './zone';
 
 /**
- * The moment a card ability fires (architecture "Triggers and card
- * effects"). `windowsOpenedBy` is the one place that turns events into
- * windows; a new window is a new case here and there.
+ * The moment a card ability fires (architecture "Triggers and card effects"): the event it waits
+ * for (`on`, `WindowEvent`), whose cards hear it (`of`, by default the event's usual listeners,
+ * `defaultScope`) and, with `filter`, which card the event must be about ("if the Ghoul Priest is
+ * defeated" is `{ on: 'defeated', of: 'currentActOrAgenda', filter: { code } }`). A new window
+ * on a known event is a scope or a filter; a new event is a case of `WindowEvent` and of
+ * `windowsOpenedBy`, the one place that turns events into windows.
  */
-export type TimingWindow =
+export type TimingWindow = WindowEvent & { of?: ListenerScope; filter?: CardFilter };
+
+/**
+ * The events an ability can wait for, with what else the event must match (the phase that ended,
+ * the test's action and outcome, the token placed). Who hears each is `ListenerScope`.
+ */
+export type WindowEvent =
   /** The card is turned face up: a location revealed, or a drawn encounter card (its revelation). */
-  | { kind: 'revealed' }
+  | { on: 'revealed' }
   /**
-   * "At the end of your turn" for a card in an investigator's threat area, and "when you end your
-   * turn at this location" for the location they end it at: the end of that investigator's turn
-   * (`EndTurn`), naming them. A turn cut short by resignation or defeat opens nothing, as the
-   * investigator has left with the card's reason to fire.
+   * The end of an investigator's turn (`EndTurn`), naming them: "at the end of your turn" for a
+   * card in their threat area and "when you end your turn at this location" for their location
+   * (`yours`), "at the end of each investigator's turn" for a card in play (`inPlay`, Umôrdhoth).
+   * A turn cut short by resignation or defeat opens nothing, as the investigator has left with
+   * the card's reason to fire.
    */
-  | { kind: 'turnEnds' }
+  | { on: 'turnEnds' }
   /**
-   * "At the end of each investigator's turn" for a card in play (Umôrdhoth):
-   * the end of any investigator's turn (`EndTurn`), naming them. Like
-   * `turnEnds`, a turn cut short by resignation or defeat opens nothing.
+   * "When your turn begins" for a card in an investigator's threat area, and "when your turn
+   * begins at this location" for their location (`yours`, as for `turnEnds`): the start of that
+   * investigator's turn (`StartTurn`), naming them.
    */
-  | { kind: 'eachTurnEnds' }
-  /**
-   * "When your turn begins" for a card in an investigator's threat area: the
-   * start of that investigator's turn (`StartTurn`), naming them.
-   */
-  | { kind: 'turnBegins' }
+  | { on: 'turnBegins' }
   /**
    * "At the end of the [mythos / investigation / enemy] phase", for every card
    * in play, naming no investigator: opened by the `PhaseChanged` that leaves
    * the phase. The upkeep phase ends with the round, so its end is `roundEnds`.
    */
-  | { kind: 'phaseEnds'; phase: EndingPhase }
+  | { on: 'phaseEnds'; phase: EndingPhase }
   /**
    * "After [this location / attached location] is successfully
    * investigated", "after you fail to evade [this enemy]": the investigator
@@ -139,67 +144,56 @@ export type TimingWindow =
    * evasion (a revelation's) opens none; a player card's "Investigate." is
    * an `Investigate` command, so it opens it like the basic action.
    */
-  | { kind: 'tested'; action: TestedAction; outcome: SkillTestOutcome }
+  | { on: 'tested'; action: TestedAction; outcome: SkillTestOutcome }
   /**
    * "After applying all results of that skill test" (retaliate, alert) and "after it is attacked"
    * (elusive): the skill test of a basic action against the card ended (`SkillTestEnded`, ST.8),
    * its results applied. Opened for the location or enemy tested, naming the tester.
    */
-  | { kind: 'testEnded'; action: TestedAction; outcome: SkillTestOutcome }
+  | { on: 'testEnded'; action: TestedAction; outcome: SkillTestOutcome }
   /**
    * "After [this enemy] engages you": the enemy became engaged with an
    * investigator (`EnemyEngaged`), whether it engaged them or they engaged
    * it, as the rules treat both alike. Opened for the enemy, naming the
    * investigator.
    */
-  | { kind: 'engaged' }
+  | { on: 'engaged' }
   /**
    * "After [this enemy] attacks you": opened by `EnemyAttacked` for the enemy,
    * naming the investigator, after the attack's damage and horror. An attack
    * of opportunity opens it too, being an attack; an investigator the attack
    * defeated is nobody by then.
    */
-  | { kind: 'attacked' }
+  | { on: 'attacked' }
   /**
    * "After [this enemy] is evaded": opened by `EnemyEvaded` for the enemy, naming the evader,
    * once it is exhausted and disengaged; unlike `tested` for an evasion, which opens before.
    */
-  | { kind: 'evaded' }
+  | { on: 'evaded' }
   /**
    * "After you discover clues at [this location]": opened by
    * `CluesDiscovered` for the location, naming the investigator.
    */
-  | { kind: 'cluesDiscovered' }
+  | { on: 'cluesDiscovered' }
   /**
    * "After you enter [this location]": an investigator moved into the
    * location (`InvestigatorMoved`), naming them. When the move turned it
    * face up, it fires before the reveal's abilities: a fixed stand-in, as
    * the rules let the lead order simultaneous forced effects (M1V). Being
    * placed there, at setup or on the map by an investigator without a
-   * location, is no move, so it opens nothing.
+   * location, is no move, so it opens nothing. Then the current agenda and act hear it, for an
+   * objective on the location (`currentActOrAgenda`, "If an investigator enters the Ritual
+   * Site, advance").
    */
-  | { kind: 'entered' }
+  | { on: 'entered' }
   /** "At the end of the round", upkeep step 4.6, for every card in play; names no investigator. */
-  | { kind: 'roundEnds' }
+  | { on: 'roundEnds' }
   /**
    * The agenda or act advanced: its reverse side, opened by `AgendaAdvanced`
    * or `ActAdvanced` for that card while it is still current (`completeAdvance`
    * replaces it afterwards); names no investigator.
    */
-  | { kind: 'advanced' }
-  /**
-   * An enemy of code `enemy` was defeated (`EnemyDefeated`): an objective
-   * of the current agenda or act ("if the Ghoul Priest is defeated,
-   * advance"), opened for both, naming no investigator. Only the current
-   * ones, so a used-up act or agenda never fires again.
-   */
-  | { kind: 'enemyDefeated'; enemy: CardCode }
-  /**
-   * An investigator moved into a location of code `location` (`InvestigatorMoved` from another
-   * location, as for `entered`, and after that location's own `entered` abilities): an objective of the current agenda or act ("If an investigator enters the Ritual
-   * Site, advance"), opened for both, naming the investigator.
-   */
-  | { kind: 'investigatorEntered'; location: CardCode }
+  | { on: 'advanced' }
   /**
    * A card entered the victory display (`CardMoved`, or `EnemyDefeated` for an enemy with
    * victory) or was placed beneath the current act: an objective of the current agenda or act
@@ -207,7 +201,7 @@ export type TimingWindow =
    * advance"), opened for both, naming no investigator; a `countOf` condition over an `eachInZone`
    * reference counts, the cards beneath the act too when it names that zone.
    */
-  | { kind: 'addedToVictoryDisplay' }
+  | { on: 'addedToVictoryDisplay' }
   /**
    * Tokens of `token` were placed on the card (`TokensChanged` with a positive delta): for an
    * objective on the card's own tokens ("If there are 2 clues per investigator on this Act,
@@ -215,21 +209,53 @@ export type TimingWindow =
    * no investigator. Corrections (`ManualAdjust`) fire no triggers, so tokens put on by hand
    * open nothing.
    */
-  | { kind: 'tokensPlaced'; token: TokenKind }
+  | { on: 'tokensPlaced'; token: TokenKind }
   /**
    * "When [this enemy] is defeated": opened by `EnemyDefeated` for the enemy,
    * naming the location it was at and no investigator. It resolves once the
    * enemy has left play, a stand-in for "when" (before the defeat) that
    * changes nothing while the effect only needs "its location", which the
-   * event records.
+   * event records, for every card that hears it. Then the current agenda and act hear it, for an objective on the enemy
+   * (`currentActOrAgenda`, "if the Ghoul Priest is defeated, advance"); only the current ones,
+   * so a used-up act or agenda never fires again.
    */
-  | { kind: 'defeated' }
+  | { on: 'defeated' }
   /**
    * An action ability of the card (`CardStats.actions`), taken with `UseCardAction`, naming the
    * investigator who took it and, as every window, the card. No event opens it: the command
    * queues the action's effects itself, so an `Ability` listing this window never fires.
    */
-  | { kind: 'action' };
+  | { on: 'action' };
+
+/**
+ * Whose abilities hear an opened window, relative to what it names (`windowsOpenedBy` opens each
+ * event for the scopes its listeners can have, in a fixed order, as the rules let the lead order
+ * simultaneous forced effects, M1V):
+ * - `self`: the card the event is about, such as the revealed card, the attacking enemy or the
+ *   location entered; for a test, cards attached to the tested card too ("after attached location
+ *   is successfully investigated").
+ * - `yours`: the cards of the investigator the window names, their threat area and then their
+ *   location ("at the end of your turn", "when you end your turn at this location").
+ * - `inPlay`: every card in play with active abilities ("at the end of the round").
+ * - `currentActOrAgenda`: the current agenda, then the current act, for their objectives.
+ */
+export type ListenerScope = 'self' | 'yours' | 'inPlay' | 'currentActOrAgenda';
+
+/** Who hears a window that names no scope (`TimingWindow.of`): what each event's cards usually mean. */
+export function defaultScope(on: WindowEvent['on']): ListenerScope {
+  switch (on) {
+    case 'turnEnds':
+    case 'turnBegins':
+      return 'yours';
+    case 'phaseEnds':
+    case 'roundEnds':
+      return 'inPlay';
+    case 'addedToVictoryDisplay':
+      return 'currentActOrAgenda';
+    default:
+      return 'self';
+  }
+}
 
 /** The basic actions whose test opens `tested`: investigate, fight and evade. */
 export type TestedAction = SkillTestKind['kind'];
@@ -611,20 +637,74 @@ export interface Ability {
 }
 
 /**
- * A window an event opened for one card: the card whose abilities it fires,
- * and the investigator it names, if any (the drawer of an encounter card).
+ * A window an event opened for one card: the event (`window`), how the card hears it (`scope`,
+ * matched against its abilities' `TimingWindow.of`), the card the event is about (`subjectId`,
+ * which a window's `filter` checks) and the investigator it names, if any (the drawer of an
+ * encounter card).
  */
 export interface OpenedWindow {
-  window: TimingWindow;
+  window: WindowEvent;
+  scope: ListenerScope;
   cardId: InstanceId;
+  subjectId?: InstanceId;
   investigatorId?: InvestigatorId;
   /** The location it names itself, if any (where a defeated enemy was); see `windowLocation`. */
   locationId?: InstanceId;
 }
 
+/** One event as the windows see it, before it is opened for each listening card (`openFor`). */
+interface Occurrence {
+  window: WindowEvent;
+  subjectId?: InstanceId;
+  investigatorId?: InvestigatorId;
+  locationId?: InstanceId;
+  /** The `self` listeners when more than the subject: a tested card and its attachments. */
+  self?: readonly InstanceId[];
+}
+
+/** `occurrence` opened for every card each of `scopes` names, scope by scope in that order. */
+function openFor(
+  state: GameState,
+  occurrence: Occurrence,
+  ...scopes: ListenerScope[]
+): OpenedWindow[] {
+  const { window, subjectId, investigatorId, locationId } = occurrence;
+  const named = {
+    ...(subjectId && { subjectId }),
+    ...(investigatorId && { investigatorId }),
+    ...(locationId && { locationId }),
+  };
+  return scopes.flatMap((scope) =>
+    listeners(state, occurrence, scope).map((cardId) => ({ window, scope, cardId, ...named })),
+  );
+}
+
+/** The cards that hear `occurrence` in `scope` (`ListenerScope`). */
+function listeners(state: GameState, occurrence: Occurrence, scope: ListenerScope): InstanceId[] {
+  const { subjectId, investigatorId } = occurrence;
+  switch (scope) {
+    case 'self':
+      return [...(occurrence.self ?? (subjectId === undefined ? [] : [subjectId]))];
+    case 'yours': {
+      if (investigatorId === undefined) return [];
+      const here = findInvestigator(state, investigatorId)?.locationId;
+      return [
+        ...cardsInZone(state, { kind: 'threatArea', investigatorId }),
+        ...(here === undefined ? [] : [here]),
+      ];
+    }
+    case 'inPlay':
+      return cardsWithActiveAbilities(state).map((card) => card.id);
+    case 'currentActOrAgenda':
+      return objectiveCards(state);
+    default:
+      return assertNever(scope);
+  }
+}
+
 /** The `revealed` window of the card turned face up, naming who drew it when it was drawn. */
-function revealedWindow(cardId: InstanceId, investigatorId?: InvestigatorId): OpenedWindow {
-  return { window: { kind: 'revealed' }, cardId, ...(investigatorId && { investigatorId }) };
+function revealed(state: GameState, cardId: InstanceId, investigatorId?: InvestigatorId) {
+  return openFor(state, { window: { on: 'revealed' }, subjectId: cardId, investigatorId }, 'self');
 }
 
 /**
@@ -644,144 +724,103 @@ export function windowsOpenedBy(
       const drawn = events.find(
         (e) => e.type === 'EncounterCardDrawn' && e.cardId === event.cardId,
       );
-      if (drawn?.type !== 'EncounterCardDrawn') return [revealedWindow(event.cardId)];
+      if (drawn?.type !== 'EncounterCardDrawn') return revealed(state, event.cardId);
       // A treachery's revelation waits for the players' answer (`RevelationResolved`).
       if (drawn.asksRevelation) return [];
-      return [revealedWindow(event.cardId, drawn.investigatorId)];
+      return revealed(state, event.cardId, drawn.investigatorId);
     }
     case 'RevelationResolved':
       // A cancelled revelation (Ward of Protection) resolves none of the card's revealed abilities.
       if (event.cancelled) return [];
-      return [revealedWindow(event.cardId, event.investigatorId)];
+      return revealed(state, event.cardId, event.investigatorId);
     case 'InvestigatorMoved': {
       if (event.from === undefined) return [];
       const { investigatorId } = event;
-      const location = requireCard(state.cards, event.to).code;
-      return [
-        { window: { kind: 'entered' }, cardId: event.to, investigatorId },
-        ...objectiveCards(state).map((cardId) => ({
-          window: { kind: 'investigatorEntered' as const, location },
-          cardId,
-          investigatorId,
-        })),
-      ];
+      const entered = { window: { on: 'entered' }, subjectId: event.to, investigatorId } as const;
+      return openFor(state, entered, 'self', 'currentActOrAgenda');
     }
     case 'TurnEnded': {
       const { investigatorId } = event;
-      const here = findInvestigator(state, investigatorId)?.locationId;
-      return [
-        ...[
-          ...cardsInZone(state, { kind: 'threatArea', investigatorId }),
-          ...(here === undefined ? [] : [here]),
-        ].map((cardId) => ({
-          window: { kind: 'turnEnds' } as const,
-          cardId,
-          investigatorId,
-        })),
-        ...cardsWithActiveAbilities(state).map((card) => ({
-          window: { kind: 'eachTurnEnds' } as const,
-          cardId: card.id,
-          investigatorId,
-        })),
-      ];
+      return openFor(state, { window: { on: 'turnEnds' }, investigatorId }, 'yours', 'inPlay');
     }
-    case 'TurnStarted': {
-      const { investigatorId } = event;
-      return cardsInZone(state, { kind: 'threatArea', investigatorId }).map((cardId) => ({
-        window: { kind: 'turnBegins' },
-        cardId,
-        investigatorId,
-      }));
-    }
+    case 'TurnStarted':
+      return openFor(
+        state,
+        { window: { on: 'turnBegins' }, investigatorId: event.investigatorId },
+        'yours',
+      );
     case 'PhaseChanged': {
       const phase = event.ended;
       if (!isEndingPhase(phase)) return [];
-      return cardsWithActiveAbilities(state).map((card) => ({
-        window: { kind: 'phaseEnds', phase },
-        cardId: card.id,
-      }));
+      return openFor(state, { window: { on: 'phaseEnds', phase } }, 'inPlay');
     }
     case 'EnemyEngaged':
-      return [
-        {
-          window: { kind: 'engaged' },
-          cardId: event.enemyId,
-          investigatorId: event.investigatorId,
-        },
-      ];
     case 'EnemyAttacked':
-      return [
-        {
-          window: { kind: 'attacked' },
-          cardId: event.enemyId,
-          investigatorId: event.investigatorId,
-        },
-      ];
-    case 'EnemyEvaded':
-      return [
-        {
-          window: { kind: 'evaded' },
-          cardId: event.enemyId,
-          investigatorId: event.investigatorId,
-        },
-      ];
-    case 'CluesDiscovered':
-      return [
-        {
-          window: { kind: 'cluesDiscovered' },
-          cardId: event.locationId,
-          investigatorId: event.investigatorId,
-        },
-      ];
+    case 'EnemyEvaded': {
+      const on = ENEMY_WINDOWS[event.type];
+      const { enemyId, investigatorId } = event;
+      return openFor(state, { window: { on }, subjectId: enemyId, investigatorId }, 'self');
+    }
+    case 'CluesDiscovered': {
+      const { locationId, investigatorId } = event;
+      const discovered = {
+        window: { on: 'cluesDiscovered' },
+        subjectId: locationId,
+        investigatorId,
+      } as const;
+      return openFor(state, discovered, 'self');
+    }
     case 'SkillTestResolved': {
       const { action, subject, outcome, investigatorId } = event;
       if (action === undefined || subject === undefined) return [];
-      const window: TimingWindow = { kind: 'tested', action, outcome };
-      return [subject, ...cardsInZone(state, { kind: 'attachedTo', hostId: subject })].map(
-        (cardId) => ({ window, cardId, ...(investigatorId && { investigatorId }) }),
-      );
+      const self = [subject, ...cardsInZone(state, { kind: 'attachedTo', hostId: subject })];
+      const window = { on: 'tested', action, outcome } as const;
+      return openFor(state, { window, subjectId: subject, investigatorId, self }, 'self');
     }
     case 'SkillTestEnded': {
       const { action, outcome, subject, investigatorId } = event;
-      return [{ window: { kind: 'testEnded', action, outcome }, cardId: subject, investigatorId }];
+      const window = { on: 'testEnded', action, outcome } as const;
+      return openFor(state, { window, subjectId: subject, investigatorId }, 'self');
     }
     case 'RoundEnded':
-      return cardsWithActiveAbilities(state).map((card) => ({
-        window: { kind: 'roundEnds' },
-        cardId: card.id,
-      }));
+      return openFor(state, { window: { on: 'roundEnds' } }, 'inPlay');
     case 'AgendaAdvanced':
     case 'ActAdvanced':
-      return [{ window: { kind: 'advanced' }, cardId: event.cardId }];
+      return openFor(state, { window: { on: 'advanced' }, subjectId: event.cardId }, 'self');
     case 'CardMoved':
       return event.to.kind === 'victoryDisplay' || isBeneathAct(state, event.to)
-        ? addedToVictoryDisplay(state)
+        ? addedToVictoryDisplay(state, event.cardId)
         : [];
-    case 'TokensChanged':
+    case 'TokensChanged': {
       if (event.delta <= 0) return [];
-      return [{ window: { kind: 'tokensPlaced', token: event.token }, cardId: event.cardId }];
+      const window = { on: 'tokensPlaced', token: event.token } as const;
+      return openFor(state, { window, subjectId: event.cardId }, 'self');
+    }
     case 'EnemyDefeated': {
-      const enemy = requireCard(state.cards, event.enemyId).code;
-      const self: OpenedWindow = {
-        window: { kind: 'defeated' },
-        cardId: event.enemyId,
-        locationId: event.locationId,
-      };
+      const { enemyId, locationId } = event;
       // The enemy's own ability before the objectives: a fixed stand-in, as the rules let the
       // lead order simultaneous forced effects (M1V).
       return [
-        self,
-        ...objectiveCards(state).map((cardId) => ({
-          window: { kind: 'enemyDefeated' as const, enemy },
-          cardId,
-        })),
-        ...(event.to.kind === 'victoryDisplay' ? addedToVictoryDisplay(state) : []),
+        ...openFor(
+          state,
+          { window: { on: 'defeated' }, subjectId: enemyId, locationId },
+          'self',
+          'currentActOrAgenda',
+        ),
+        ...(event.to.kind === 'victoryDisplay' ? addedToVictoryDisplay(state, enemyId) : []),
       ];
     }
     default:
       return [];
   }
 }
+
+/** The window each enemy event opens for the enemy. */
+const ENEMY_WINDOWS = {
+  EnemyEngaged: 'engaged',
+  EnemyAttacked: 'attacked',
+  EnemyEvaded: 'evaded',
+} as const;
 
 /**
  * The cards whose objectives an event can fulfil: the current agenda, then the current act, a
@@ -798,11 +837,9 @@ function isBeneathAct(state: GameState, zone: Zone): boolean {
   return zone.kind === 'beneath' && zone.hostId === state.act.current;
 }
 
-function addedToVictoryDisplay(state: GameState): OpenedWindow[] {
-  return objectiveCards(state).map((cardId) => ({
-    window: { kind: 'addedToVictoryDisplay' },
-    cardId,
-  }));
+function addedToVictoryDisplay(state: GameState, cardId: InstanceId): OpenedWindow[] {
+  const added = { window: { on: 'addedToVictoryDisplay' }, subjectId: cardId } as const;
+  return openFor(state, added, 'currentActOrAgenda');
 }
 
 /**
@@ -820,7 +857,7 @@ export function abilitySteps(
   const stats = cardStats(ctx.cards, card.code);
   return [...(stats.abilities ?? []), ...keywordAbilities(ctx, state, card)]
     .map((ability, index) => ({ ability, index }))
-    .filter(({ ability }) => shallowEqual<TimingWindow>(ability.window, opened.window))
+    .filter(({ ability }) => hears(ctx, state, ability.window, opened))
     .filter(
       ({ ability }) =>
         ability.condition === undefined || conditionHolds(ctx, state, ability.condition, opened),
@@ -840,6 +877,24 @@ export function abilitySteps(
       opened: each,
       origin: effect.type,
     }));
+}
+
+/**
+ * Whether an ability waiting for `window` fires in `opened`: the same event, heard in the
+ * ability's scope (`TimingWindow.of`, else `defaultScope`), about a card its `filter` matches.
+ */
+function hears(
+  ctx: EngineContext,
+  state: GameState,
+  window: TimingWindow,
+  opened: OpenedWindow,
+): boolean {
+  const { of, filter, ...event } = window;
+  if (!shallowEqual<WindowEvent>(event as WindowEvent, opened.window)) return false;
+  if ((of ?? defaultScope(window.on)) !== opened.scope) return false;
+  if (filter === undefined) return true;
+  const subject = opened.subjectId === undefined ? undefined : state.cards[opened.subjectId];
+  return subject !== undefined && matchesCard(ctx, subject, filter);
 }
 
 /**
@@ -951,7 +1006,7 @@ function afterTestEnds(
   outcome: SkillTestOutcome,
   ...effects: AbilityEffect[]
 ): Ability {
-  return { window: { kind: 'testEnded', action, outcome }, effects };
+  return { window: { on: 'testEnded', action, outcome }, effects };
 }
 
 /** How often `ability`'s effects resolve: once, or once per enemy its `perEnemy` names. */
@@ -1075,7 +1130,7 @@ export function resolveEffect(
         : [
             withSource(resolved as AbilityCommand, {
               cardId: opened.cardId,
-              window: opened.window.kind,
+              window: opened.window.on,
             }),
           ];
     });
@@ -1641,7 +1696,7 @@ function isDeferred(value: object): value is ResolveEffect {
  * an encounter card. The most common ability, written `whenRevealed(takeHorror(1))`.
  */
 export function whenRevealed(...effects: AbilityEffect[]): Ability {
-  return { window: { kind: 'revealed' }, effects };
+  return { window: { on: 'revealed' }, effects };
 }
 
 /**
@@ -1651,7 +1706,7 @@ export function whenRevealed(...effects: AbilityEffect[]): Ability {
  * `atEndOfTurn(takeHorror(1))` (Flooded Crypt).
  */
 export function atEndOfTurn(...effects: AbilityEffect[]): Ability {
-  return { window: { kind: 'turnEnds' }, effects };
+  return { window: { on: 'turnEnds' }, effects };
 }
 
 /**
@@ -1659,7 +1714,7 @@ export function atEndOfTurn(...effects: AbilityEffect[]): Ability {
  * entered, written `afterEntering(takeHorror(1))` (the Attic).
  */
 export function afterEntering(...effects: AbilityEffect[]): Ability {
-  return { window: { kind: 'entered' }, effects };
+  return { window: { on: 'entered' }, effects };
 }
 
 /**
@@ -1667,12 +1722,12 @@ export function afterEntering(...effects: AbilityEffect[]): Ability {
  * written `atEndOfEachTurn(readySelf())` (Umôrdhoth).
  */
 export function atEndOfEachTurn(...effects: AbilityEffect[]): Ability {
-  return { window: { kind: 'eachTurnEnds' }, effects };
+  return { window: { on: 'turnEnds', of: 'inPlay' }, effects };
 }
 
 /** A forced ability "when your turn begins" of a card in a threat area. */
 export function whenTurnBegins(...effects: AbilityEffect[]): Ability {
-  return { window: { kind: 'turnBegins' }, effects };
+  return { window: { on: 'turnBegins' }, effects };
 }
 
 /**
@@ -1680,7 +1735,7 @@ export function whenTurnBegins(...effects: AbilityEffect[]): Ability {
  * enemy phase), written `atEndOfPhase('mythos', placeDoomOnSelf(1))` (Wizard of the Order).
  */
 export function atEndOfPhase(phase: EndingPhase, ...effects: AbilityEffect[]): Ability {
-  return { window: { kind: 'phaseEnds', phase }, effects };
+  return { window: { on: 'phaseEnds', phase }, effects };
 }
 
 /**
@@ -1693,37 +1748,37 @@ export function afterTest(
   outcome: SkillTestOutcome,
   ...effects: AbilityEffect[]
 ): Ability {
-  return { window: { kind: 'tested', action, outcome }, effects };
+  return { window: { on: 'tested', action, outcome }, effects };
 }
 
 /** A forced ability "after [this enemy] engages you", written `afterEngaging(takeHorror(1))`. */
 export function afterEngaging(...effects: AbilityEffect[]): Ability {
-  return { window: { kind: 'engaged' }, effects };
+  return { window: { on: 'engaged' }, effects };
 }
 
 /** A forced ability "when [this enemy] is defeated", written `whenDefeated(takeHorror(1, eachInvestigator({ at: itsLocation() })))`. */
 export function whenDefeated(...effects: AbilityEffect[]): Ability {
-  return { window: { kind: 'defeated' }, effects };
+  return { window: { on: 'defeated' }, effects };
 }
 
 /** A forced ability "after [this enemy] attacks you", written `afterAttacking(takeHorror(1))`. */
 export function afterAttacking(...effects: AbilityEffect[]): Ability {
-  return { window: { kind: 'attacked' }, effects };
+  return { window: { on: 'attacked' }, effects };
 }
 
 /** A forced ability "after [this enemy] is evaded", written `afterEvaded(move(self(), victoryDisplay))`. */
 export function afterEvaded(...effects: AbilityEffect[]): Ability {
-  return { window: { kind: 'evaded' }, effects };
+  return { window: { on: 'evaded' }, effects };
 }
 
 /** A forced ability "after you discover clues at [this location]", written `afterDiscoveringClues(placeDoomOnSelf(1))`. */
 export function afterDiscoveringClues(...effects: AbilityEffect[]): Ability {
-  return { window: { kind: 'cluesDiscovered' }, effects };
+  return { window: { on: 'cluesDiscovered' }, effects };
 }
 
 /** A forced ability "at the end of the round", written `atEndOfRound(discardSelf())`. */
 export function atEndOfRound(...effects: AbilityEffect[]): Ability {
-  return { window: { kind: 'roundEnds' }, effects };
+  return { window: { on: 'roundEnds' }, effects };
 }
 
 /**
@@ -1732,7 +1787,7 @@ export function atEndOfRound(...effects: AbilityEffect[]): Ability {
  * advance", written `whenEnemyDefeated(codes.ghoulPriest, advanceAct())`.
  */
 export function whenEnemyDefeated(enemy: CardCode, ...effects: AbilityEffect[]): Ability {
-  return { window: { kind: 'enemyDefeated', enemy }, effects };
+  return { window: { on: 'defeated', of: 'currentActOrAgenda', filter: { code: enemy } }, effects };
 }
 
 /**
@@ -1741,7 +1796,10 @@ export function whenEnemyDefeated(enemy: CardCode, ...effects: AbilityEffect[]):
  * `whenAnInvestigatorEnters(codes.ritualSite, advanceAct())`.
  */
 export function whenAnInvestigatorEnters(location: CardCode, ...effects: AbilityEffect[]): Ability {
-  return { window: { kind: 'investigatorEntered', location }, effects };
+  return {
+    window: { on: 'entered', of: 'currentActOrAgenda', filter: { code: location } },
+    effects,
+  };
 }
 
 /**
@@ -1756,7 +1814,7 @@ export function whenVictoryDisplayHolds(
   ...effects: AbilityEffect[]
 ): Ability {
   return {
-    window: { kind: 'addedToVictoryDisplay' },
+    window: { on: 'addedToVictoryDisplay' },
     condition: { kind: 'countOf', of: cards, min: atLeast },
     effects,
   };
@@ -1769,7 +1827,7 @@ export function whenVictoryDisplayHolds(
  * corrections made by hand.
  */
 export function afterTokensPlaced(token: TokenKind, ...effects: AbilityEffect[]): Ability {
-  return { window: { kind: 'tokensPlaced', token }, effects };
+  return { window: { on: 'tokensPlaced', token }, effects };
 }
 
 /**
@@ -1785,7 +1843,7 @@ export function whenTokensOnSelf(
   ...effects: AbilityEffect[]
 ): Ability {
   return {
-    window: { kind: 'tokensPlaced', token },
+    window: { on: 'tokensPlaced', token },
     condition: {
       kind: 'valueOf',
       value: { kind: 'tokens', token, on: { ref: 'self' } },
@@ -1836,7 +1894,7 @@ export function roundEndClueObjective(
 ): { clues: ScaledValue; location?: CardCode } | undefined {
   for (const { window, condition } of stats.abilities ?? []) {
     if (
-      window.kind === 'roundEnds' &&
+      window.on === 'roundEnds' &&
       condition?.kind === 'valueOf' &&
       condition.value.kind === 'groupClues' &&
       condition.min !== undefined
@@ -1866,7 +1924,7 @@ export function cluesHeldForObjective(
  * `whenAdvanced(revealLocation(onlyCopy(codes.parlor)))`.
  */
 export function whenAdvanced(...effects: AbilityEffect[]): Ability {
-  return { window: { kind: 'advanced' }, effects };
+  return { window: { on: 'advanced' }, effects };
 }
 
 /**
@@ -2496,7 +2554,7 @@ export function advanceBySpendingCluesAtRoundEnd(
   location?: CardCode,
 ): Ability {
   return {
-    window: { kind: 'roundEnds' },
+    window: { on: 'roundEnds' },
     condition: { kind: 'valueOf', value: { kind: 'groupClues', location }, min: clues },
     effects: [
       leadDecides(decision, 'decision.spendCluesAtRoundEnd', [

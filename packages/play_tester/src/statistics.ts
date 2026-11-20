@@ -57,7 +57,7 @@ export function gameStatistics(
   const drawn: string[] = [];
   const byHand: string[] = [];
   for (const { event, cause } of log) {
-    if (cause?.kind === 'card') fired.add(`${nameOf(cause.cardId)}: ${cause.window.kind}`);
+    if (cause?.kind === 'card') fired.add(`${nameOf(cause.cardId)}: ${cause.window.on}`);
     if (event.type === 'CardActionUsed')
       fired.add(`${nameOf(event.cardId)}: action ${event.action + 1}`);
     if (event.type === 'EncounterCardDrawn') {
@@ -125,7 +125,7 @@ function abilitiesOf(setUp: readonly CardInstance[], cards: CardDb): string[] {
   for (const { code } of setUp) {
     const card = cards.get(code);
     if (!card) continue;
-    for (const { window } of card.abilities ?? []) abilities.add(`${card.name}: ${window.kind}`);
+    for (const { window } of card.abilities ?? []) abilities.add(`${card.name}: ${window.on}`);
     card.actions?.forEach((_, index) => abilities.add(`${card.name}: action ${index + 1}`));
   }
   return [...abilities];

@@ -351,7 +351,7 @@ export interface SpendResources {
  */
 export interface CommandSource {
   readonly cardId: InstanceId;
-  readonly window: TimingWindow['kind'];
+  readonly window: TimingWindow['on'];
 }
 
 /**
