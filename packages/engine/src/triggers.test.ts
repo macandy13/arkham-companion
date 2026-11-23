@@ -2484,6 +2484,33 @@ describe('a choice whose options are offered only while their condition holds', 
       { id: decisionId('rebirth'), options: [{ id: 'damage' }, { id: 'horror' }] },
     ]);
   });
+  it('does nothing when no option holds', () => {
+    /** One option, for an investigator with at least as many clues as resources. */
+    const clueCard = blankTreachery('clue_check', {
+      abilities: [
+        whenRevealed(
+          youMustEither(decisionId('clue_check'), 'Take horror?', [
+            {
+              id: 'horror',
+              label: 'Take 2 horror',
+              when: atLeast(statOf(you(), 'clues'), statOf(you(), 'resources')),
+              effects: [takeHorror(2)],
+            },
+          ]),
+        ),
+      ],
+    });
+    const { context, state: started } = newGame()
+      .withLocation(hall, blankLocation('hall'), { revealed: true })
+      .withInvestigator(alice, { locationId: hall, clues: 0, resources: 3 })
+      .withCard(instanceId('clue_check'), clueCard, { kind: 'encounterDeck' })
+      .start();
+
+    const state = stateAfter(context, started, aliceDraws, resolveRevelation('clue_check'));
+
+    expect(state.pending).toEqual([]);
+    expect(requireInvestigator(state, alice).sanity.horror).toBe(0);
+  });
 });
 
 describe('a choice without the options that cannot be resolved', () => {
