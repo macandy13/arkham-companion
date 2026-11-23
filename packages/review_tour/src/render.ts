@@ -108,10 +108,8 @@ export function tourSummary({
 
 /** The problem first, when the tour states it, then how the PR solves it. */
 function renderLead(tour: Tour): string {
-  const sections: [heading: string, text: string][] = [
-    ...(tour.problem === undefined ? [] : [['The problem', tour.problem] as [string, string]]),
-    ['What changes', tour.concept],
-  ];
+  const sections: [heading: string, text: string][] = [['What changes', tour.concept]];
+  if (tour.problem !== undefined) sections.unshift(['The problem', tour.problem]);
   return sections
     .map(
       ([heading, text]) =>
