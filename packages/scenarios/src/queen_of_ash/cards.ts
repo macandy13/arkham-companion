@@ -241,8 +241,9 @@ const willpowerOrHorror = skillTest('willpower', 4, { onFail: [takeHorror(1)] })
  * - the whole revelation of Ashen Rebirth (2 direct damage or horror, whichever its drawer has
  *   more of), the discards of the card type Dissonance's and Torment's drawer chooses, and Putrid
  *   Vapors' asset discard
- * - Blasphemous Invocation's Cultist drawn after a fail by 0 against a Cultist without doom: no
- *   doom was placed, but the app only draws when there is no such Cultist
+ * - Blasphemous Invocation's Cultist drawn after a fail by 0 (only once a player card lowered the
+ *   difficulty to 0) against a Cultist without doom: no doom was placed, but the app only draws
+ *   when there is no such Cultist
  * - Languor's limit of 1 per investigator, its discard as its holder's turn begins and its
  *   two-action discard
  * - Collector's deckbuilding: the players add it to their decks

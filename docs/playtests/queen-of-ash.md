@@ -79,7 +79,7 @@ These are done by hand at the table; the app does not do them.
 - Queen's Knight's damage to Elokoss, Herald of Flame's healing after it attacks, and the Servant of Flame's codex entry as it is defeated.
 - The Zealot's doom as it enters play (setup places it) and the Dark Magician's as the round ends.
 - Unnatural Decay's doom on an asset, offered even to an investigator without one, who must take the 2 damage instead.
-- The revelation of Ashen Rebirth, Blasphemous Invocation's Cultist drawn after a fail by 0 while a Cultist without doom is in play, the discards of the card type Dissonance's and Torment's drawer chooses, and Putrid Vapors' asset discard.
+- The revelation of Ashen Rebirth, Blasphemous Invocation's Cultist drawn after a fail by 0 (only possible once a player card lowered its difficulty to 0) while a Cultist without doom is in play, the discards of the card type Dissonance's and Torment's drawer chooses, and Putrid Vapors' asset discard.
 - Languor's limit of 1 per investigator, its discard as its holder's turn begins and its two-action discard.
 - The cultist's "reveal another token" against a Cultist enemy, the tablet's automatic failure at a Ritual Site on Hard and Expert, and the elder thing's Fire! draw.
 - Adding both Collectors to the player card pool.
