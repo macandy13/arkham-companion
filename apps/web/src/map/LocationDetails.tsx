@@ -11,7 +11,7 @@ import {
   cardActionsOn,
   type ActionIcon,
 } from '../screens/ActionRow';
-import { TestsByCard } from '../screens/TestsByCard';
+import { cardTesters, SplitAction } from '../screens/SplitAction';
 import type { GameActions } from '../state/gameActions';
 import { CardPatterns, LocationTile } from './LocationTile';
 import { TILE } from './mapLayout';
@@ -165,40 +165,97 @@ function LocationPage({
   const offered = locationActions(board, location, actions);
   const printed = cardActionsOn(board, location.id);
   const revealable = !location.revealed;
-  const button = ({ key, icon, cost, play, then }: LocationAction) => (
+  const leaveFor = (then: LocationAction['then']) => {
+    switch (then) {
+      case 'test':
+        (onTest ?? onLeave)?.();
+        break;
+      case 'leave':
+        onLeave?.();
+        break;
+      case 'stay':
+        break;
+      default:
+        assertNever(then);
+    }
+  };
+  const wayOf = ({ key, cost, play, then }: LocationAction & { play: () => Promise<void> }) => ({
+    key,
+    actions: cost,
+    name: t(`location.${key}`, { count: cost }),
+    onPick: () => {
+      leaveFor(then);
+      void play();
+    },
+  });
+  const button = (action: LocationAction) => (
     <ActionButton
-      key={key}
-      icon={icon}
-      actions={cost}
-      caption={t(`location.caption.${icon}`)}
-      name={t(`location.${key}`, { count: cost })}
-      disabled={busy || play === undefined}
+      key={action.key}
+      icon={action.icon}
+      actions={action.cost}
+      caption={t(`location.caption.${action.icon}`)}
+      name={t(`location.${action.key}`, { count: action.cost })}
+      disabled={busy || action.play === undefined}
       onClick={() => {
-        switch (then) {
-          case 'test':
-            (onTest ?? onLeave)?.();
-            break;
-          case 'leave':
-            onLeave?.();
-            break;
-          case 'stay':
-            break;
-          default:
-            assertNever(then);
-        }
-        void play?.();
+        leaveFor(action.then);
+        void action.play?.();
       }}
     />
   );
+  const investigateHere = offered.find(({ key }) => key === 'investigateAction');
+  const byCard = location.revealed && !location.forbidden?.includes('investigate');
+  const investigateWays = byCard
+    ? cardTesters(board).map(({ id, name }) => ({
+        key: id,
+        name: t('byCard.testBy', { test: t('byCard.investigate'), name }),
+        onPick: () => {
+          leaveFor('test');
+          void actions.testByCard('investigate', id, location.id);
+        },
+      }))
+    : [];
+  const investigate =
+    investigateHere?.play === undefined && investigateHere !== undefined ? (
+      button(investigateHere)
+    ) : (
+      <SplitAction
+        key="investigate"
+        icon="investigate"
+        caption={t('location.caption.investigate')}
+        waysName={t('ways.investigate')}
+        {...(investigateHere?.play === undefined
+          ? {}
+          : { primary: wayOf({ ...investigateHere, play: investigateHere.play }) })}
+        ways={investigateWays}
+        disabled={busy}
+      />
+    );
+  const moveAction = offered.find(({ key }) => key === 'moveAction');
+  const moveFree = offered.find(({ key }) => key === 'moveFree');
+  const pills = [
+    ...(investigateHere !== undefined || investigateWays.length > 0 ? [investigate] : []),
+    ...offered.filter(({ key }) => key === 'takeClue').map(button),
+    ...(moveAction?.play === undefined
+      ? []
+      : [
+          <SplitAction
+            key="move"
+            icon="move"
+            caption={t('location.caption.move')}
+            waysName={t('ways.move')}
+            primary={wayOf({ ...moveAction, play: moveAction.play })}
+            ways={moveFree?.play === undefined ? [] : [wayOf({ ...moveFree, play: moveFree.play })]}
+            disabled={busy}
+          />,
+        ]),
+  ];
 
   return (
     <>
       <Here board={board} location={location} />
       <AttachedCards board={board} host={location.id} actions={actions} busy={busy} />
       <footer>
-        {offered.length > 0 && (
-          <ActionGroup title={t('location.actions')}>{offered.map(button)}</ActionGroup>
-        )}
+        {pills.length > 0 && <ActionGroup title={t('location.actions')}>{pills}</ActionGroup>}
         {printed.length > 0 && (
           <CardActions
             board={board}
@@ -206,17 +263,6 @@ function LocationPage({
             actions={actions}
             busy={busy}
             onUse={onLeave}
-          />
-        )}
-        {location.revealed && (
-          <TestsByCard
-            board={board}
-            tests={['investigate']}
-            busy={busy}
-            onTest={(kind, investigator) => {
-              (onTest ?? onLeave)?.();
-              void actions.testByCard(kind, investigator, location.id);
-            }}
           />
         )}
         {revealable && (

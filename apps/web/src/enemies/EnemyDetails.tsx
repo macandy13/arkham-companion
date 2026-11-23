@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import type { BoardView, EnemyAction, MapEnemyView } from '@arkham/engine';
 import { ActionButton, ActionGroup, CardActions, cardActionsOn } from '../screens/ActionRow';
-import { TestsByCard } from '../screens/TestsByCard';
+import { cardTesters, SplitAction } from '../screens/SplitAction';
 import { AttachedCards } from '../screens/AttachedCards';
 import { DetailsDialog, useDecisionHost } from '../screens/DetailsDialog';
 import type { GameActions } from '../state/gameActions';
@@ -63,6 +63,12 @@ export function EnemyDetails({
   const stats = board.enemyStats(enemy.id);
   const left = healthLeft(enemy);
   const effects = board.enemyCardEffects(enemy.id);
+  const testers = cardTesters(board);
+  const tested = (['fight', 'evade'] as const).filter(
+    (kind) => allowed.includes(kind) || testers.length > 0,
+  );
+  const testAs = (kind: 'fight' | 'evade', cost?: 'free') =>
+    kind === 'fight' ? actions.fight(enemy.id, cost) : actions.evade(enemy.id, cost);
 
   return (
     <DetailsDialog
@@ -95,28 +101,44 @@ export function EnemyDetails({
       </dl>
       <AttachedCards board={board} host={enemy.id} actions={actions} busy={busy} />
       <footer>
-        {allowed.length > 0 && (
+        {(tested.length > 0 || allowed.includes('engage')) && (
           <ActionGroup title={t('enemy.actions')}>
-            {allowed.includes('fight') && (
-              <ActionButton
-                icon="fight"
-                actions={costOf('fight')}
-                caption={t('enemy.caption.fight')}
-                name={t('enemy.fightAction', { count: costOf('fight') })}
+            {tested.map((kind) => (
+              <SplitAction
+                key={kind}
+                icon={kind}
+                caption={t(`enemy.caption.${kind}`)}
+                waysName={t(`ways.${kind}`)}
+                {...(allowed.includes(kind)
+                  ? {
+                      primary: {
+                        key: 'action',
+                        actions: costOf(kind),
+                        name: t(`enemy.${kind}Action`, { count: costOf(kind) }),
+                        onPick: step(() => testAs(kind), 'host'),
+                      },
+                    }
+                  : {})}
+                ways={[
+                  ...(tests.includes(kind)
+                    ? [
+                        {
+                          key: 'free',
+                          actions: costOf(kind, { free: true }),
+                          name: t(`enemy.${kind}Free`, { count: costOf(kind, { free: true }) }),
+                          onPick: step(() => testAs(kind, 'free'), 'host'),
+                        },
+                      ]
+                    : []),
+                  ...testers.map(({ id, name }) => ({
+                    key: id,
+                    name: t('byCard.testBy', { test: t(`byCard.${kind}`), name }),
+                    onPick: step(() => actions.testByCard(kind, id, enemy.id), 'host'),
+                  })),
+                ]}
                 disabled={busy}
-                onClick={step(() => actions.fight(enemy.id), 'host')}
               />
-            )}
-            {allowed.includes('evade') && (
-              <ActionButton
-                icon="evade"
-                actions={costOf('evade')}
-                caption={t('enemy.caption.evade')}
-                name={t('enemy.evadeAction', { count: costOf('evade') })}
-                disabled={busy}
-                onClick={step(() => actions.evade(enemy.id), 'host')}
-              />
-            )}
+            ))}
             {allowed.includes('engage') && (
               <ActionButton
                 icon="engage"
@@ -125,26 +147,6 @@ export function EnemyDetails({
                 name={t('enemy.engageAction', { count: costOf('engage') })}
                 disabled={busy}
                 onClick={step(() => actions.engage(enemy.id), 'host')}
-              />
-            )}
-            {tests.includes('fight') && (
-              <ActionButton
-                icon="fight"
-                actions={costOf('fight', { free: true })}
-                caption={t('enemy.caption.fight')}
-                name={t('enemy.fightFree', { count: costOf('fight', { free: true }) })}
-                disabled={busy}
-                onClick={step(() => actions.fight(enemy.id, 'free'), 'host')}
-              />
-            )}
-            {tests.includes('evade') && (
-              <ActionButton
-                icon="evade"
-                actions={costOf('evade', { free: true })}
-                caption={t('enemy.caption.evade')}
-                name={t('enemy.evadeFree', { count: costOf('evade', { free: true }) })}
-                disabled={busy}
-                onClick={step(() => actions.evade(enemy.id, 'free'), 'host')}
               />
             )}
           </ActionGroup>
@@ -158,14 +160,6 @@ export function EnemyDetails({
             onUse={close}
           />
         )}
-        <TestsByCard
-          board={board}
-          tests={['fight', 'evade']}
-          busy={busy}
-          onTest={(kind, investigator) =>
-            step(() => actions.testByCard(kind, investigator, enemy.id), 'host')()
-          }
-        />
         <ActionGroup title={t('enemy.cardEffects')}>
           <ActionButton
             icon="damage"

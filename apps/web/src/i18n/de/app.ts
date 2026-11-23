@@ -583,18 +583,18 @@ export const appTexts = {
     waiting: 'Als Nächstes',
   },
   byCard: {
-    title: 'Durch Karteneffekt',
     investigate: 'Ermitteln',
     fight: 'Kämpfen',
     evade: 'Entkommen',
-    test: '{{test}} durch Karteneffekt',
     testBy: '{{test}} durch Karteneffekt · {{name}}',
-    who: {
-      investigate: 'Wer ermittelt?',
-      fight: 'Wer kämpft?',
-      evade: 'Wer entkommt?',
-    },
   },
+  ways: {
+    fight: 'Arten zu kämpfen',
+    evade: 'Arten zu entkommen',
+    investigate: 'Arten zu ermitteln',
+    move: 'Arten, hierher zu gehen',
+  },
+
   moveByCard: {
     start: 'Durch Karteneffekt bewegen',
     label: 'Ziel der Bewegung wählen',
