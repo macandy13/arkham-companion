@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>#1405 review tour</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400..700&amp;family=JetBrains+Mono:wght@400;600&amp;display=swap">
+<style>
+:root {
+  --bg: #fbfbf9; --fg: #1d1f21; --muted: #6b6f73; --line: #e6e5e0; --soft: #f2f1ec;
+  --accent: #2f5d8a; --accent-fg: #ffffff; --ask: #fdf4dc; --ask-fg: #3d3115; --code-bg: #ffffff;
+  --add-bg: #e9f5ec; --add-mark: #2e7d47; --del-bg: #fbecea; --del-mark: #b0413a; --hl: #fff3c4;
+  --tok-key: #8a3ffc; --tok-str: #2e7d47; --tok-com: #8c9196; --tok-type: #2f5d8a; --ok: #2e7d47;
+  --font-body: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-code: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  --radius: 8px;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #17191b; --fg: #e8e8e6; --muted: #9a9ea3; --line: #2b2e31; --soft: #202326;
+    --accent: #8ab4e0; --accent-fg: #10161c; --ask: #2b2617; --ask-fg: #f0e3bd; --code-bg: #1c1f22;
+    --add-bg: #1d2e23; --add-mark: #7cc596; --del-bg: #33201f; --del-mark: #e48a83; --hl: #3a3420;
+    --tok-key: #c4a1ff; --tok-str: #8fd0a4; --tok-com: #7c8288; --tok-type: #8ab4e0; --ok: #7cc596;
+    color-scheme: dark;
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.6 var(--font-body); -webkit-font-smoothing: antialiased; }
+main {
+  max-width: 720px; margin: 0 auto; display: grid; gap: 40px;
+  padding: 0 max(16px, env(safe-area-inset-right)) 56px max(16px, env(safe-area-inset-left));
+}
+a { color: var(--accent); text-underline-offset: 2px; }
+a:focus-visible, button:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+code { font-family: var(--font-code); font-size: .88em; background: var(--soft); padding: 1px 5px; border-radius: 4px; }
+nav {
+  position: sticky; top: 0; z-index: 5; display: flex; align-items: center; gap: 12px;
+  margin: 0 calc(-1 * max(16px, env(safe-area-inset-left))); padding: 10px max(16px, env(safe-area-inset-left));
+  background: color-mix(in srgb, var(--bg) 92%, transparent); backdrop-filter: blur(8px); border-bottom: 1px solid var(--line);
+}
+nav .number { font-size: 14px; font-weight: 600; color: var(--muted); }
+nav ol { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 0 auto; padding: 0; list-style: none; }
+nav ol a {
+  width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center;
+  color: var(--muted); background: var(--soft); font-size: 13px; font-weight: 600; text-decoration: none;
+}
+nav ol a.question { background: var(--ask); color: var(--ask-fg); }
+nav ol a.on { background: var(--accent); color: var(--accent-fg); }
+header { display: grid; gap: 12px; padding-top: 28px; }
+.kicker { font-size: 13px; color: var(--muted); }
+h1 { font-size: 28px; line-height: 1.2; font-weight: 650; letter-spacing: -0.015em; margin: 0; text-wrap: balance; }
+.concept { font-size: 18px; margin: 0; max-width: 60ch; }
+.meta { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 13px; color: var(--muted); margin: 0; }
+.questions { background: var(--ask); color: var(--ask-fg); border-radius: var(--radius); padding: 18px 20px; display: grid; gap: 14px; }
+.questions h2 { font-size: 12px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; margin: 0; opacity: .75; }
+.questions ol { margin: 0; padding-left: 20px; display: grid; gap: 12px; }
+.questions p { margin: 0; font-size: 17px; }
+.questions .about { font-size: 13px; opacity: .75; }
+.questions a { color: inherit; font-size: 14px; font-weight: 500; }
+.stop { display: grid; gap: 14px; scroll-margin-top: 64px; }
+.stop > header { display: grid; grid-template-columns: auto 1fr; gap: 2px 12px; align-items: center; padding: 0; }
+.stop-number {
+  grid-row: span 2; align-self: start; margin-top: 2px; width: 28px; height: 28px; border-radius: 50%;
+  display: grid; place-items: center; background: var(--accent); color: var(--accent-fg); font-size: 13px; font-weight: 600;
+}
+.stop h2 { font-size: 20px; line-height: 1.3; font-weight: 600; letter-spacing: -0.01em; margin: 0; text-wrap: balance; }
+.tag { font-size: 12px; color: var(--muted); letter-spacing: .04em; text-transform: uppercase; }
+.stop > p { margin: 0; max-width: 62ch; }
+figure { display: grid; gap: 8px; margin: 0; }
+.toggle { display: flex; flex-wrap: wrap; gap: 4px; }
+.segments { display: inline-flex; background: var(--soft); border-radius: 999px; padding: 3px; }
+.toggle button { font: 500 13px var(--font-body); color: var(--muted); background: transparent; border: 0; border-radius: 999px; padding: 4px 12px; cursor: pointer; }
+.toggle button[aria-pressed="true"] { background: var(--bg); color: var(--fg); box-shadow: 0 1px 2px rgb(0 0 0 / 12%); }
+.frame { border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; background: var(--soft); }
+.frame img { display: block; width: 100%; height: auto; }
+.frame.phone { max-width: 280px; margin-inline: auto; }
+.frame .missing { padding: 24px; text-align: center; color: var(--muted); font-size: 14px; }
+.code { border: 1px solid var(--line); border-radius: var(--radius); background: var(--code-bg); overflow: hidden; }
+.code > header {
+  display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; padding: 8px 12px;
+  border-bottom: 1px solid var(--line); background: var(--soft); font-size: 13px; color: var(--muted);
+}
+.code .file { color: var(--fg); font-family: var(--font-code); font-size: 12.5px; overflow-wrap: anywhere; }
+.code > header a { margin-left: auto; }
+.code pre code { display: block; padding: 0; background: none; font-size: inherit; }
+.code pre { margin: 0; padding: 6px 0; font: 12.5px/1.6 var(--font-code); font-variant-ligatures: none; }
+.line { display: grid; grid-template-columns: 3.2em 1.4em minmax(0, 1fr); }
+.line .number { color: var(--muted); text-align: right; padding-right: .6em; user-select: none; opacity: .6; }
+.line .mark { color: var(--muted); user-select: none; }
+.line .text { padding: 0 12px 0 2ch; text-indent: -2ch; white-space: pre-wrap; overflow-wrap: anywhere; }
+.line.added { background: var(--add-bg); } .line.added .mark { color: var(--add-mark); }
+.line.removed { background: var(--del-bg); } .line.removed .mark { color: var(--del-mark); }
+.line.highlighted { background: var(--hl); }
+.line.gap .text { color: var(--muted); font-family: var(--font-body); font-size: 12px; }
+.k { color: var(--tok-key); } .s { color: var(--tok-str); } .c { color: var(--tok-com); font-style: italic; } .t { color: var(--tok-type); }
+.done { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; }
+.done p { margin: 0; color: var(--muted); }
+.done a { background: var(--accent); color: var(--accent-fg); border-radius: 999px; padding: 9px 20px; text-decoration: none; font-weight: 600; font-size: 15px; }
+details { border-top: 1px solid var(--line); padding-top: 16px; }
+summary { cursor: pointer; font-size: 15px; font-weight: 600; }
+details ul { padding-left: 20px; margin: 12px 0 0; display: grid; gap: 6px; font-size: 15px; }
+@media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+</style>
+</head>
+<body>
+<main>
+<nav aria-label="Tour"><span class="number">#1405</span><ol><li><a href="#stop-1" data-stop="stop-1">1</a></li><li><a href="#stop-2" data-stop="stop-2">2</a></li><li><a href="#stop-3" data-stop="stop-3">3</a></li></ol></nav>
+<header>
+<p class="kicker">feat(scenarios) · M1V.5g · as of 3e042e8</p>
+<h1>Script Blasphemous Invocation; an enemy picked by filter, per point</h1>
+<p class="concept">An effect that picks an enemy by filter can repeat per point of failure: each point asks for its own enemy, instead of multiplying one amount.</p>
+<p class="meta"><span>3 stops</span><span>0 questions</span><span>35 of 206 changed lines on the tour</span></p>
+</header>
+
+<section class="stop" id="stop-1">
+<header><span class="stop-number">1</span><span class="tag">engine</span><h2>anEnemy takes a filter</h2></header>
+<p>The candidates for <code>anEnemy</code> are the enemies matching its filter, narrowed to one location when <code>at</code> is given (Blaze of Glory uses <code>at: yourLocation()</code>).</p>
+
+<div class="code"><header><span class="file">packages/engine/src/abilities.ts</span><span>+22 −9</span><a href="https://github.com/macandy13/arkham-companion/pull/1405/files#diff-766b5ee5b45af4cf1f7ccb795d11205d2c38034dbe2159a2c874c30ff5a316b0R1335-R1342">Open in diff</a></header><pre><code><span class="line context"><span class="number">1335</span><span class="mark"> </span><span class="text">  <span class="k">if</span> (picked.ref === <span class="s">'anEnemy'</span>) {</span></span><span class="line added"><span class="number">1336</span><span class="mark">+</span><span class="text">    <span class="k">const</span> matching = enemiesMatching(ctx, state, picked);</span></span><span class="line added"><span class="number">1337</span><span class="mark">+</span><span class="text">    <span class="k">if</span> (picked.at === <span class="k">undefined</span>) <span class="k">return</span> matching.map((card) =&gt; card.id);</span></span><span class="line context"><span class="number">1338</span><span class="mark"> </span><span class="text">    <span class="k">const</span> at = resolveRefs(picked.at, refs) <span class="k">as</span> <span class="t">InstanceId</span> | <span class="k">undefined</span>;</span></span><span class="line removed"><span class="number">1331</span><span class="mark">−</span><span class="text">    <span class="k">return</span> at === <span class="k">undefined</span> ? [] : enemiesAt(ctx, state, at).map((card) =&gt; card.id);</span></span><span class="line added"><span class="number">1339</span><span class="mark">+</span><span class="text">    <span class="k">if</span> (at === <span class="k">undefined</span>) <span class="k">return</span> [];</span></span><span class="line added"><span class="number">1340</span><span class="mark">+</span><span class="text">    <span class="k">const</span> there = <span class="k">new</span> <span class="t">Set</span>(enemiesAt(ctx, state, at).map((card) =&gt; card.id));</span></span><span class="line added"><span class="number">1341</span><span class="mark">+</span><span class="text">    <span class="k">return</span> matching.filter((card) =&gt; there.has(card.id)).map((card) =&gt; card.id);</span></span><span class="line context"><span class="number">1342</span><span class="mark"> </span><span class="text">  }</span></span></code></pre></div>
+</section>
+<section class="stop" id="stop-2">
+<header><span class="stop-number">2</span><span class="tag">engine</span><h2>A picking effect repeats per point</h2></header>
+<p>A deferred effect that picks a card is marked <code>picks</code>, and <code>timesMargin</code> refuses to scale it, so <code>forEachPoint</code> repeats it once per point and each repeat asks for its own enemy.</p>
+
+<div class="code"><header><span class="file">packages/engine/src/abilities.ts</span><span>+22 −9</span><a href="https://github.com/macandy13/arkham-companion/pull/1405/files#diff-766b5ee5b45af4cf1f7ccb795d11205d2c38034dbe2159a2c874c30ff5a316b0R1194-R1201">Open in diff</a></header><pre><code><span class="line context"><span class="number">1194</span><span class="mark"> </span><span class="text"><span class="k">function</span> withDeferredOutcomes(effect: <span class="t">AbilityEffect</span>, opened: <span class="t">OpenedWindow</span>): unknown {</span></span><span class="line context"><span class="number">1195</span><span class="mark"> </span><span class="text">  <span class="k">const</span> defer = (effects: <span class="k">readonly</span> <span class="t">AbilityEffect</span>[]): <span class="t">ResolveEffect</span>[] =&gt;</span></span><span class="line removed"><span class="number">1195</span><span class="mark">−</span><span class="text">    effects.map((outcome) =&gt; ({ <span class="k">type</span>: <span class="s">'ResolveEffect'</span>, effect: outcome, opened }));</span></span><span class="line added"><span class="number">1196</span><span class="mark">+</span><span class="text">    effects.map((outcome) =&gt; ({</span></span><span class="line added"><span class="number">1197</span><span class="mark">+</span><span class="text">      <span class="k">type</span>: <span class="s">'ResolveEffect'</span>,</span></span><span class="line added"><span class="number">1198</span><span class="mark">+</span><span class="text">      effect: outcome,</span></span><span class="line added"><span class="number">1199</span><span class="mark">+</span><span class="text">      opened,</span></span><span class="line highlighted"><span class="number">1200</span><span class="mark">+</span><span class="text">      ...(pickedRef(outcome) === <span class="k">undefined</span> ? {} : { picks: <span class="k">true</span> }),</span></span><span class="line added"><span class="number">1201</span><span class="mark">+</span><span class="text">    }));</span></span></code></pre></div>
+<div class="code"><header><span class="file">packages/engine/src/decisions.ts</span><span>+1 −0</span><a href="https://github.com/macandy13/arkham-companion/pull/1405/files#diff-9c17fbb2c2477d8089c1f4f06803b22464ca0b491bed6bb08ce3f4d70c65c017R256-R262">Open in diff</a></header><pre><code><span class="line context"><span class="number">256</span><span class="mark"> </span><span class="text"><span class="k">function</span> timesMargin(command: <span class="t">Command</span>, margin: number): <span class="t">Command</span> | <span class="k">undefined</span> {</span></span><span class="line context"><span class="number">257</span><span class="mark"> </span><span class="text">  <span class="k">if</span> (command.<span class="k">type</span> === <span class="s">'ResolveEffect'</span>) {</span></span><span class="line highlighted"><span class="number">258</span><span class="mark">+</span><span class="text">    <span class="k">if</span> (command.picks) <span class="k">return</span> <span class="k">undefined</span>;</span></span><span class="line context"><span class="number">259</span><span class="mark"> </span><span class="text">    <span class="k">const</span> effect = timesMargin(command.effect <span class="k">as</span> <span class="t">Command</span>, margin);</span></span><span class="line context"><span class="number">260</span><span class="mark"> </span><span class="text">    <span class="c">// A scaled effect keeps its templated references: only the number changed.</span></span></span><span class="line context"><span class="number">261</span><span class="mark"> </span><span class="text">    <span class="k">return</span> effect &amp;&amp; { ...command, effect: effect <span class="k">as</span> typeof command.effect };</span></span><span class="line context"><span class="number">262</span><span class="mark"> </span><span class="text">  }</span></span></code></pre></div>
+</section>
+<section class="stop" id="stop-3">
+<header><span class="stop-number">3</span><span class="tag">scenario</span><h2>Blasphemous Invocation</h2></header>
+<p>Whether a Cultist without doom is in play decides between the two fails, so the card has two abilities guarded by <code>ifThereAre</code>.</p>
+
+<div class="code"><header><span class="file">packages/scenarios/src/queen_of_ash/cards.ts</span><span>+36 −4</span><a href="https://github.com/macandy13/arkham-companion/pull/1405/files#diff-dddd69908c0beb4396ab39f009d805d87c1729e980c6fe9b175e8282d9a0d0a2R574-R596">Open in diff</a></header><pre><code><span class="line context"><span class="number">574</span><span class="mark"> </span><span class="text">    traits: [<span class="s">'Hex'</span>],</span></span><span class="line context"><span class="number">575</span><span class="mark"> </span><span class="text">    quantity: 2,</span></span><span class="line added"><span class="number">576</span><span class="mark">+</span><span class="text">    <span class="c">// &quot;If you fail and no doom was placed&quot;: doom is placed whenever a Cultist without doom is</span></span></span><span class="line added"><span class="number">577</span><span class="mark">+</span><span class="text">    <span class="c">// in play, so whether there is one decides between the two fails.</span></span></span><span class="line added"><span class="number">578</span><span class="mark">+</span><span class="text">    abilities: [</span></span><span class="line added"><span class="number">579</span><span class="mark">+</span><span class="text">      ifThereAre(</span></span><span class="line added"><span class="number">580</span><span class="mark">+</span><span class="text">        eachEnemy(doomlessCultist),</span></span><span class="line added"><span class="number">581</span><span class="mark">+</span><span class="text">        { min: 1 },</span></span><span class="line added"><span class="number">582</span><span class="mark">+</span><span class="text">        whenRevealed(</span></span><span class="line added"><span class="number">583</span><span class="mark">+</span><span class="text">          skillTest(<span class="s">'willpower'</span>, 3, {</span></span><span class="line added"><span class="number">584</span><span class="mark">+</span><span class="text">            onFail: [forEachPoint(placeDoomOn(anEnemy(doomlessCultist), 1))],</span></span><span class="line added"><span class="number">585</span><span class="mark">+</span><span class="text">          }),</span></span><span class="line added"><span class="number">586</span><span class="mark">+</span><span class="text">        ),</span></span><span class="line added"><span class="number">587</span><span class="mark">+</span><span class="text">      ),</span></span><span class="line added"><span class="number">588</span><span class="mark">+</span><span class="text">      ifThereAre(</span></span><span class="line added"><span class="number">589</span><span class="mark">+</span><span class="text">        eachEnemy(doomlessCultist),</span></span><span class="line added"><span class="number">590</span><span class="mark">+</span><span class="text">        { max: 0 },</span></span><span class="line added"><span class="number">591</span><span class="mark">+</span><span class="text">        whenRevealed(</span></span><span class="line added"><span class="number">592</span><span class="mark">+</span><span class="text">          skillTest(<span class="s">'willpower'</span>, 3, {</span></span><span class="line added"><span class="number">593</span><span class="mark">+</span><span class="text">            onFail: [searchAndDraw({ trait: trait(<span class="s">'Cultist'</span>), typeCode: <span class="s">'enemy'</span> })],</span></span><span class="line added"><span class="number">594</span><span class="mark">+</span><span class="text">          }),</span></span><span class="line added"><span class="number">595</span><span class="mark">+</span><span class="text">        ),</span></span><span class="line added"><span class="number">596</span><span class="mark">+</span><span class="text">      ),</span></span></code></pre></div>
+</section>
+<section class="done"><p>That's the whole change.</p><a href="https://github.com/macandy13/arkham-companion/pull/1405/files">Review on GitHub</a></section>
+<details><summary>Not on the tour</summary><ul><li>Tests: per-point picking with two Cultists, both Blasphemous Invocation branches, and the Queen of Ash end-to-end game now resolving the card.</li><li>Missing <code>decision.chooseEnemyFor</code> translation added in English and German.</li><li>Docs: triggers-and-card-effects.md, card-patterns.md, playtests/queen-of-ash.md.</li></ul></details>
+</main>
+<script>
+document.querySelectorAll('figure[data-variants]').forEach((figure) => {
+  const variants = JSON.parse(figure.dataset.variants);
+  const state = { when: 'after', device: variants[0].device };
+  const frame = figure.querySelector('.frame');
+  const show = () => {
+    const variant = variants.find((v) => v.device === state.device);
+    const src = variant[state.when];
+    frame.classList.toggle('phone', state.device === 'phone');
+    frame.innerHTML = src
+      ? '<img alt="' + state.device + ', ' + state.when + '" src="' + src + '">'
+      : '<p class="missing">' + (state.when === 'before' ? 'New in this PR' : 'Removed in this PR') + '</p>';
+    figure.querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(b.value === state.when || b.value === state.device)));
+  };
+  figure.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => {
+    state[b.name] = b.value;
+    show();
+  }));
+  show();
+});
+const dots = [...document.querySelectorAll('nav a[data-stop]')];
+const seen = new IntersectionObserver((entries) => entries.forEach((entry) => {
+  if (entry.isIntersecting) dots.forEach((d) => d.classList.toggle('on', d.dataset.stop === entry.target.id));
+}), { rootMargin: '-40% 0px -55% 0px' });
+document.querySelectorAll('.stop').forEach((stop) => seen.observe(stop));
+</script>
+</body>
+</html>
