@@ -59,6 +59,7 @@ export {
   spreadingFlamesCards,
   WHERE_THERES_SMOKE_DECISION,
   WILD_COMPULSION_DECISION,
+  EXTRAPLANAR_VISIONS_DECISION,
 } from './spreading_flames/cards';
 export { spreadingFlames } from './spreading_flames/scenario';
 export { spreadingFlamesResolutions } from './spreading_flames/resolutions';

@@ -64,6 +64,7 @@ import {
   shuffleEncounterDeck,
   skillTest,
   skillTestOfEither,
+  cardsInYourHand,
   spawnEnemyAt,
   takeDamage,
   takeDamageAndHorror,
@@ -142,6 +143,12 @@ export const FORBIDDEN_SECRETS_DECISION = decisionId('spreadingFlames.forbiddenS
  */
 export const WILD_COMPULSION_DECISION = decisionId('spreadingFlames.wildCompulsion');
 
+/**
+ * Id of Extraplanar Visions' question to its drawer: test willpower or intellect, against how many
+ * cards in hand?
+ */
+export const EXTRAPLANAR_VISIONS_DECISION = decisionId('spreadingFlames.extraplanarVisions');
+
 /** Id of "Where There's Smoke…"'s question as the round ends: spend the clues to advance? */
 export const WHERE_THERES_SMOKE_DECISION = decisionId('spreadingFlames.whereTheresSmoke');
 
@@ -215,7 +222,6 @@ const jpg = 'jpg';
  * - Bystander's Doomed (MC2.6)
  * - Unspeakable Truths' limit of 1 per investigator, its horror after its holder discovers clues
  *   and its two-action discard
- * - Extraplanar Visions' test of X difficulty, X the cards in its drawer's hand (MC2.5)
  */
 export const spreadingFlamesCardDefs: readonly CardStats[] = [
   agenda({
@@ -565,6 +571,16 @@ export const spreadingFlamesCardDefs: readonly CardStats[] = [
     pictures: jpg,
     traits: ['Power'],
     quantity: 2,
+    abilities: [
+      whenRevealed(
+        skillTestOfEither(
+          EXTRAPLANAR_VISIONS_DECISION,
+          ['willpower', 'intellect'],
+          cardsInYourHand,
+          { onFail: [takeDamage(1), discardAtRandom(1)] },
+        ),
+      ),
+    ],
   }),
   treachery({
     code: '12128',

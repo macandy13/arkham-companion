@@ -2,6 +2,7 @@ import { useState, type ComponentProps } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
 import {
+  NAMED_AMOUNTS,
   revealedTokens,
   type BoardView,
   type ChoiceView,
@@ -198,11 +199,13 @@ export function DecisionPage({
           {/* Two options can share a name (two enemies of one card), so the position is the key. */}
           {decision.options.map((option, index) => {
             const followUp = decision.followUps?.[option];
-            const fromTheGame = decision.counts?.[option] !== undefined || followUp !== undefined;
+            const fromTheGame =
+              countsFromTheGame(decision.counts?.[option]) || followUp !== undefined;
             // The margin is part of the outcome's answer, so its row is picked, then Done, like a
             // row with counts; no max, since the dialog doesn't know the test's modified difficulty.
             const marginHere = asksMarginOf(option);
-            const withCounts = fromTheGame || marginHere;
+            const withCounts =
+              decision.counts?.[option] !== undefined || followUp !== undefined || marginHere;
             return (
               <li key={index}>
                 <button
@@ -320,7 +323,15 @@ function optionKey(option: string, index: number): string {
 }
 
 /** The counts an option can carry, in the order the dialog shows their steppers. */
-const COUNT_NAMES = ['amount', 'damage', 'horror'] as const;
+const COUNT_NAMES = ['amount', ...NAMED_AMOUNTS] as const;
+
+/**
+ * Whether an option's counts include one the game worked out (clues discovered, an attack's
+ * damage), which the row marks "from the game"; the cards in hand are the players' own count.
+ */
+function countsFromTheGame(ranges: DecisionCounts | undefined): boolean {
+  return ranges !== undefined && Object.keys(ranges).some((name) => name !== 'cardsInHand');
+}
 
 /** One of `COUNT_NAMES`. */
 type CountName = (typeof COUNT_NAMES)[number];
@@ -342,13 +353,15 @@ function defaultCounts(ranges: Record<string, DecisionCounts> = {}): Counts {
   );
 }
 
-/** An option's counts as the answer carries them: `amount`, and damage and horror as `amounts`. */
+/** An option's counts as the answer carries them: `amount`, and the named ones as `amounts`. */
 function countsOf(counts: Counts[string] = {}): DecisionAmounts {
-  const { amount, damage, horror } = counts;
-  const named = {
-    ...(damage === undefined ? {} : { damage }),
-    ...(horror === undefined ? {} : { horror }),
-  };
+  const { amount } = counts;
+  const named = Object.fromEntries(
+    NAMED_AMOUNTS.flatMap((name) => {
+      const value = counts[name];
+      return value === undefined ? [] : [[name, value]];
+    }),
+  );
   return {
     ...(amount === undefined ? {} : { amount }),
     ...(Object.keys(named).length > 0 ? { amounts: named } : {}),
