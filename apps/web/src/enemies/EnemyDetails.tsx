@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import type { BoardView, EnemyAction, MapEnemyView } from '@arkham/engine';
 import { ActionButton, ActionGroup, CardActions, cardActionsOn } from '../screens/ActionRow';
+import { TestsByCard } from '../screens/TestsByCard';
 import { AttachedCards } from '../screens/AttachedCards';
 import { DetailsDialog, useDecisionHost } from '../screens/DetailsDialog';
 import type { GameActions } from '../state/gameActions';
@@ -157,6 +158,14 @@ export function EnemyDetails({
             onUse={close}
           />
         )}
+        <TestsByCard
+          board={board}
+          tests={['fight', 'evade']}
+          busy={busy}
+          onTest={(kind, investigator) =>
+            step(() => actions.testByCard(kind, investigator, enemy.id), 'host')()
+          }
+        />
         <ActionGroup title={t('enemy.cardEffects')}>
           <ActionButton
             icon="damage"

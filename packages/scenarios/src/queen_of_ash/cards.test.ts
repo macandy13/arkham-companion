@@ -470,6 +470,59 @@ describe('Queen of Ash card abilities', () => {
     });
   });
 
+  describe('Blasphemous Invocation', () => {
+    const zealot = instanceId('zealot');
+    const invocation = instanceId('blasphemous_invocation');
+
+    it.each([{ failedBy: 1 }, { failedBy: 3 }])(
+      'places 1 doom on the one Zealot without doom when alice fails by $failedBy',
+      ({ failedBy }) => {
+        const { context, state: started } = newGame()
+          .withLocation(culvert, cardOf('12182'), { revealed: true })
+          .withInvestigator(alice, { locationId: culvert })
+          .withCard(zealot, cardOf('12188'), atLocation(culvert))
+          .withCard(invocation, cardOf('12190'), { kind: 'encounterDeck' })
+          .start();
+        const drawn = stateAfter(
+          context,
+          started,
+          aliceDraws('Blasphemous Invocation'),
+          resolveRevelation('blasphemous_invocation'),
+        );
+
+        const state = stateAfter(context, drawn, {
+          ...answer('test:blasphemous_invocation', 'fail'),
+          margin: failedBy,
+        });
+
+        expect(drawn.pending).toMatchObject([{ skillTest: { skill: 'willpower', difficulty: 3 } }]);
+        expect(state.cards[zealot]?.tokens.doom).toBe(1);
+      },
+    );
+
+    it('draws a Cultist from the encounter deck when every Cultist in play has doom', () => {
+      const deckZealot = instanceId('deck_zealot');
+      const { context, state: started } = newGame()
+        .withLocation(culvert, cardOf('12182'), { revealed: true })
+        .withInvestigator(alice, { locationId: culvert })
+        .withCard(zealot, cardOf('12188'), atLocation(culvert), { tokens: { doom: 1 } })
+        .withCard(invocation, cardOf('12190'), { kind: 'encounterDeck' })
+        .withCard(deckZealot, cardOf('12188'), { kind: 'encounterDeck' })
+        .start();
+      const drawn = stateAfter(
+        context,
+        started,
+        aliceDraws('Blasphemous Invocation'),
+        resolveRevelation('blasphemous_invocation'),
+      );
+
+      const state = stateAfter(context, drawn, answer('test:blasphemous_invocation', 'fail'));
+
+      expect(state.cards[zealot]?.tokens.doom).toBe(1);
+      expect(state.cards[deckZealot]?.zone).toEqual({ kind: 'atLocation', locationId: culvert });
+    });
+  });
+
   describe('Dissonance', () => {
     it('tests willpower (3); a fail costs alice 1 action and asks her for a card type', () => {
       const { context, state: started } = newGame()

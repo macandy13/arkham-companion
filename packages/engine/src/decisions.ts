@@ -255,6 +255,7 @@ function withMargin(entry: Command, margin: number): Command[] {
  */
 function timesMargin(command: Command, margin: number): Command | undefined {
   if (command.type === 'ResolveEffect') {
+    if (command.picks) return undefined;
     const effect = timesMargin(command.effect as Command, margin);
     // A scaled effect keeps its templated references: only the number changed.
     return effect && { ...command, effect: effect as typeof command.effect };

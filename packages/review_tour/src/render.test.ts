@@ -59,6 +59,30 @@ describe('renderPage', () => {
     expect(html).toContain('<span>50 of 482 changed lines on the tour</span>');
   });
 
+  it('states the problem before what changes', () => {
+    const html = page(
+      {
+        problem: 'Players had to find the weakness by hand.',
+        concept: 'The card draws it for them.',
+        questions: [],
+        stops: [],
+        rest: [],
+      },
+      [],
+    );
+
+    expect(html).toMatch(
+      /<h2>The problem<\/h2><p>Players had to find the weakness by hand.<\/p>[\s\S]*<h2>What changes<\/h2><p>The card draws it for them.<\/p>/,
+    );
+  });
+
+  it('leaves out the problem when the tour has none', () => {
+    const html = page({ concept: 'A rename.', questions: [], stops: [], rest: [] }, []);
+
+    expect(html).not.toContain('The problem');
+    expect(html).toContain('<h2>What changes</h2><p>A rename.</p>');
+  });
+
   it('leaves out the questions and the rest when the tour has none', () => {
     const html = page({ concept: 'A rename.', questions: [], stops: [], rest: [] }, []);
 

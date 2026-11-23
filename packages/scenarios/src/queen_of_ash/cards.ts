@@ -1,5 +1,6 @@
 import {
   advanceAct,
+  anEnemy,
   discard,
   afterDiscoveringClues,
   afterEntering,
@@ -26,9 +27,11 @@ import {
   endScenario,
   fixed,
   forEachEnemy,
+  forEachPoint,
   forEachInvestigator,
   fromSetAside,
   gainResources,
+  ifThereAre,
   GRID_CELLS_PER_CARD,
   ifValue,
   loseActions,
@@ -39,6 +42,7 @@ import {
   perInvestigator,
   placeCluesOnSelf,
   placeCluesOnSelfUpTo,
+  placeDoomOn,
   placeDoomOnAgenda,
   placeDoomOnYourAsset,
   putIntoThreatArea,
@@ -47,6 +51,7 @@ import {
   resignAction,
   resolutionId,
   revealLocation,
+  searchAndDraw,
   self,
   setAside,
   shuffleSetAsideIntoEncounterDeck,
@@ -174,6 +179,9 @@ const own = sets.queenOfAsh;
 /** ArkhamDB has the Core Set (2026)'s pictures as JPEGs. */
 const jpg = 'jpg';
 
+/** "A [[Cultist]] enemy with no doom on it" (Blasphemous Invocation). */
+const doomlessCultist = { trait: trait('Cultist'), withoutToken: 'doom' } as const;
+
 /**
  * Each Sewer Tunnels prints the triangle on its unrevealed side, connecting to Sewer Culvert's
  * hourglass and Underground Cistern's circle; revealed, each prints a symbol of its own.
@@ -230,10 +238,12 @@ const willpowerOrHorror = skillTest('willpower', 4, { onFail: [takeHorror(1)] })
  *   Servant of Flame's codex entry as it is defeated
  * - Zealot's doom as it enters play (setup places it on the Zealots it spawns) and Dark
  *   Magician's as the round ends
- * - the whole revelations of Ashen Rebirth (2 direct damage or horror, whichever its drawer has
- *   more of) and Blasphemous Invocation (doom per point failed, else a Cultist drawn), the
- *   discards of the card type Dissonance's and Torment's drawer chooses, and Putrid Vapors' asset
- *   discard
+ * - the whole revelation of Ashen Rebirth (2 direct damage or horror, whichever its drawer has
+ *   more of), the discards of the card type Dissonance's and Torment's drawer chooses, and Putrid
+ *   Vapors' asset discard
+ * - Blasphemous Invocation's Cultist drawn after a fail by 0 (only once a player card lowered the
+ *   difficulty to 0) against a Cultist without doom: no doom was placed, but the app only draws
+ *   when there is no such Cultist
  * - Languor's limit of 1 per investigator, its discard as its holder's turn begins and its
  *   two-action discard
  * - Collector's deckbuilding: the players add it to their decks
@@ -563,6 +573,28 @@ export const queenOfAshCardDefs: readonly CardStats[] = [
     pictures: jpg,
     traits: ['Hex'],
     quantity: 2,
+    // "If you fail and no doom was placed": doom is placed whenever a Cultist without doom is
+    // in play, so whether there is one decides between the two fails.
+    abilities: [
+      ifThereAre(
+        eachEnemy(doomlessCultist),
+        { min: 1 },
+        whenRevealed(
+          skillTest('willpower', 3, {
+            onFail: [forEachPoint(placeDoomOn(anEnemy(doomlessCultist), 1))],
+          }),
+        ),
+      ),
+      ifThereAre(
+        eachEnemy(doomlessCultist),
+        { max: 0 },
+        whenRevealed(
+          skillTest('willpower', 3, {
+            onFail: [searchAndDraw({ trait: trait('Cultist'), typeCode: 'enemy' })],
+          }),
+        ),
+      ),
+    ],
   }),
   treachery({
     code: '12191',

@@ -584,6 +584,19 @@ export const appTexts = {
     raise: 'Dialog wieder anheben',
     waiting: 'Als Nächstes',
   },
+  byCard: {
+    title: 'Durch Karteneffekt',
+    investigate: 'Ermitteln',
+    fight: 'Kämpfen',
+    evade: 'Entkommen',
+    test: '{{test}} durch Karteneffekt',
+    testBy: '{{test}} durch Karteneffekt · {{name}}',
+    who: {
+      investigate: 'Wer ermittelt?',
+      fight: 'Wer kämpft?',
+      evade: 'Wer entkommt?',
+    },
+  },
   moveByCard: {
     start: 'Durch Karteneffekt bewegen',
     label: 'Ziel der Bewegung wählen',
@@ -788,6 +801,7 @@ export const appTexts = {
     chooseLocationToMove: 'Wohin bewegst du dich für {{card}}?',
     chooseLocationToAttach: 'Wo wird {{card}} angehängt?',
     chooseInvestigatorFor: 'Welchen Ermittler betrifft {{card}}?',
+    chooseEnemyFor: 'Welchen Gegner betrifft {{card}}?',
     chooseSpawnLocation: 'Wo erscheint {{card}}?',
     investigate: 'Ermitteln: {{card}}',
     fight: 'Kämpfen gegen {{card}}',

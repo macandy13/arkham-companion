@@ -1111,6 +1111,12 @@ export interface ResolveEffect {
   type: 'ResolveEffect';
   effect: AbilityEffect;
   opened: OpenedWindow;
+  /**
+   * Set when the effect picks a card or investigator as it resolves (`PickedRef`: "a [[Cultist]]
+   * enemy with no doom on it"), so "for each point you fail by" repeats it, each point picking
+   * anew, instead of scaling one pick's amount (`timesMargin`).
+   */
+  picks?: true;
 }
 
 /**

@@ -574,6 +574,19 @@ export const appTexts = {
     raise: 'Raise the dialog',
     waiting: 'Waiting next',
   },
+  byCard: {
+    title: 'By card effect',
+    investigate: 'Investigate',
+    fight: 'Fight',
+    evade: 'Evade',
+    test: '{{test}} by card effect',
+    testBy: '{{test}} by card effect · {{name}}',
+    who: {
+      investigate: 'Who investigates?',
+      fight: 'Who fights?',
+      evade: 'Who evades?',
+    },
+  },
   moveByCard: {
     start: 'Move by card effect',
     label: 'Choose where to move',
@@ -778,6 +791,7 @@ export const appTexts = {
     chooseLocationToMove: 'Where do you move for {{card}}?',
     chooseLocationToAttach: 'Where does {{card}} attach?',
     chooseInvestigatorFor: 'Which investigator does {{card}} affect?',
+    chooseEnemyFor: 'Which enemy does {{card}} affect?',
     chooseSpawnLocation: 'Where does {{card}} spawn?',
     investigate: 'Investigate {{card}}',
     fight: 'Fight {{card}}',
