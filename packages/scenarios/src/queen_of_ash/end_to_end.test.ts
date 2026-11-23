@@ -92,10 +92,13 @@ describe('Queen of Ash end to end: Roland and Daisy, seed 1, after Spreading Fla
     expect(table.board.investigator(daisy)).toMatchObject({ clues: 2, horror: 1 });
 
     // Round 2 – mythos: a Zealot spawns at Roland's tunnel (aloof, so it stays unengaged; its doom
-    // as it enters play is the players'), and Daisy's Ashen Rebirth is hers to resolve.
+    // as it enters play is the players'), and Daisy passes the willpower test (4) of Ashen Rebirth.
     expect(table.nextPhase()).toEqual({ round: 1, phase: 'enemy' });
     expect(table.nextPhase()).toEqual({ round: 1, phase: 'upkeep' });
-    expect(table.nextPhase()).toEqual({ round: 2, phase: 'mythos' });
+    expect(table.nextPhase()).toEqual({ round: 2, phase: 'mythos', step: 'drawEncounterCard' });
+    table.resolveRevelation(byName('Ashen Rebirth'));
+    expect(table.board.decisions).toMatchObject([{ test: { skill: 'willpower', difficulty: 4 } }]);
+    table.answerOnly('pass');
     expect(table.nextPhase()).toEqual({ round: 2, phase: 'investigation' });
     expect(table.board.agenda).toMatchObject({ name: 'A Gathering', doom: 2 });
     expect(table.board.enemy(byName('Zealot'))).toMatchObject({ at: 'Sewer Tunnels' });

@@ -228,6 +228,7 @@ export {
   gainSurge,
   ifYouHave,
   ifValue,
+  atLeast,
   statOf,
   tokensOn,
   ifThereAre,

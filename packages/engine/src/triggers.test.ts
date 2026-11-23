@@ -114,6 +114,8 @@ import {
   whenTurnBegins,
   you,
   youMustEither,
+  atLeast,
+  statOf,
   zoneKey,
   type AbilityEffect,
   type AddMapStep,
@@ -2411,6 +2413,76 @@ describe('a choice for the investigator who drew the card', () => {
     expect(state.cards[agenda1]?.tokens.doom).toBe(agendaDoom);
     expect(requireInvestigator(state, bob).sanity.horror).toBe(bobHorror);
     expect(requireInvestigator(state, alice).sanity.horror).toBe(0);
+  });
+});
+
+describe('a choice whose options are offered only while their condition holds', () => {
+  const rebirth = instanceId('rebirth');
+  /** The drawer takes 2 damage or 2 horror, whichever they have more of (like Ashen Rebirth). */
+  const rebirthCard = blankTreachery('rebirth', {
+    abilities: [
+      whenRevealed(
+        youMustEither(decisionId('rebirth'), 'Damage or horror?', [
+          {
+            id: 'damage',
+            label: 'Take 2 damage',
+            when: atLeast(statOf(you(), 'damage'), statOf(you(), 'horror')),
+            effects: [takeDamage(2)],
+          },
+          {
+            id: 'horror',
+            label: 'Take 2 horror',
+            when: atLeast(statOf(you(), 'horror'), statOf(you(), 'damage')),
+            effects: [takeHorror(2)],
+          },
+        ]),
+      ),
+    ],
+  });
+  const aliceDraws: Command = { type: 'DrawCard', investigatorId: alice, from: encounterDeck };
+
+  it.each([
+    { damage: 2, horror: 1, damageAfter: 4, horrorAfter: 1 },
+    { damage: 0, horror: 1, damageAfter: 0, horrorAfter: 3 },
+  ])(
+    'with $damage damage and $horror horror alice takes the one she has more of, unasked',
+    ({ damage, horror, damageAfter, horrorAfter }) => {
+      const { context, state: started } = newGame()
+        .withLocation(hall, blankLocation('hall'), { revealed: true })
+        .withInvestigator(alice, {
+          locationId: hall,
+          health: { max: 9, damage },
+          sanity: { max: 9, horror },
+        })
+        .withCard(rebirth, rebirthCard, { kind: 'encounterDeck' })
+        .start();
+
+      const state = stateAfter(context, started, aliceDraws, resolveRevelation('rebirth'));
+
+      expect(state.pending).toEqual([]);
+      expect(requireInvestigator(state, alice)).toMatchObject({
+        health: { damage: damageAfter },
+        sanity: { horror: horrorAfter },
+      });
+    },
+  );
+
+  it('asks alice with as much damage as horror which she takes', () => {
+    const { context, state: started } = newGame()
+      .withLocation(hall, blankLocation('hall'), { revealed: true })
+      .withInvestigator(alice, {
+        locationId: hall,
+        health: { max: 9, damage: 1 },
+        sanity: { max: 9, horror: 1 },
+      })
+      .withCard(rebirth, rebirthCard, { kind: 'encounterDeck' })
+      .start();
+
+    const state = stateAfter(context, started, aliceDraws, resolveRevelation('rebirth'));
+
+    expect(state.pending).toMatchObject([
+      { id: decisionId('rebirth'), options: [{ id: 'damage' }, { id: 'horror' }] },
+    ]);
   });
 });
 

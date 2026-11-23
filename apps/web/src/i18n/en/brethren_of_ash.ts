@@ -53,6 +53,11 @@ export const brethrenOfAshTexts = {
       },
     },
     queenOfAsh: {
+      ashenRebirth: {
+        prompt: '{{card}}: you must either',
+        damage: 'Take 2 direct damage',
+        horror: 'Take 2 direct horror',
+      },
       unnaturalDecay: {
         prompt: '{{card}}: you must either',
         doom: 'Place 1 doom on an asset you control',
