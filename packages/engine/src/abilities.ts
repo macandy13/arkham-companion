@@ -1014,11 +1014,19 @@ function repetitionsOf(
   const each = ability.forEach;
   if (each === undefined) return [opened];
   const ids = eachId(ctx, state, each, windowRefs(ctx, state, opened));
-  return ids.map((id) =>
-    each.ref === 'eachInvestigator'
-      ? { ...opened, investigatorId: id as InvestigatorId }
-      : { ...opened, thatCardId: id as InstanceId },
-  );
+  // `eachId` returns investigator ids for an investigator reference and card ids otherwise.
+  return ids.map((id): OpenedWindow => {
+    switch (each.ref) {
+      case 'eachInvestigator':
+        return { ...opened, investigatorId: id as InvestigatorId };
+      case 'eachEnemy':
+      case 'eachInZone':
+      case 'eachInPlay':
+        return { ...opened, thatCardId: id as InstanceId };
+      default:
+        return assertNever(each);
+    }
+  });
 }
 
 /**
