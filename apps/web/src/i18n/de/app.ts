@@ -799,6 +799,7 @@ export const appTexts = {
     chooseLocationToMove: 'Wohin bewegst du dich für {{card}}?',
     chooseLocationToAttach: 'Wo wird {{card}} angehängt?',
     chooseInvestigatorFor: 'Welchen Ermittler betrifft {{card}}?',
+    chooseEnemyFor: 'Welchen Gegner betrifft {{card}}?',
     chooseSpawnLocation: 'Wo erscheint {{card}}?',
     investigate: 'Ermitteln: {{card}}',
     fight: 'Kämpfen gegen {{card}}',

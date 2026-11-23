@@ -178,10 +178,13 @@ describe('Queen of Ash end to end: Roland and Daisy, seed 1, after Spreading Fla
     );
 
     // Round 4 – mythos: the agenda's doom reaches 4; Roland's Langour goes to his threat area and
-    // Daisy's Blasphemous Invocation is hers to resolve.
+    // Daisy passes the willpower test (3) of Blasphemous Invocation.
     expect(table.nextPhase()).toEqual({ round: 4, phase: 'mythos', step: 'drawEncounterCard' });
     table.resolveRevelation(byName('Langour'));
-    expect(table.nextPhase()).toEqual({ round: 4, phase: 'mythos' });
+    expect(table.nextPhase()).toEqual({ round: 4, phase: 'mythos', step: 'drawEncounterCard' });
+    table.resolveRevelation(byName('Blasphemous Invocation'));
+    expect(table.board.decisions).toMatchObject([{ test: { skill: 'willpower', difficulty: 3 } }]);
+    table.answerOnly('pass');
     expect(table.nextPhase()).toEqual({ round: 4, phase: 'investigation' });
     expect(table.board.agenda).toMatchObject({ name: 'A Gathering', doom: 4 });
     expect(table.board.investigator(roland).threatArea).toEqual(['Langour']);

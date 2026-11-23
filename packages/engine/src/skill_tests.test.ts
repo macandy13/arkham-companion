@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   atLocation,
   attachedTo,
+  anEnemy,
   blankEnemy,
   blankLocation,
   afterTest,
@@ -13,10 +14,12 @@ import {
   encounterDeck,
   engagedWith,
   fixed,
+  forEachPoint,
   handle,
   instanceId,
   investigatorId,
   newGame,
+  placeDoomOn,
   plusDifficultyIf,
   plusDifficultyPer,
   putIntoThreatArea,
@@ -25,6 +28,7 @@ import {
   skillTestOfEither,
   statOf,
   takeDamage,
+  trait,
   takeHorror,
   whenRevealed,
   you,
@@ -889,6 +893,55 @@ describe('test of either of two skills', () => {
       expect(requireInvestigator(resolved, alice).sanity.horror).toBe(horror);
     },
   );
+});
+
+describe('a per-point effect that picks an enemy', () => {
+  const hex = instanceId('hex');
+  const leftCultist = instanceId('left_cultist');
+  const rightCultist = instanceId('right_cultist');
+  const cultistCard = blankEnemy('cultist', { traits: [trait('Cultist')] });
+  /** A treachery testing willpower (3); each point failed places 1 doom on a Cultist without doom. */
+  const hexTreachery = blankTreachery('hex_treachery', {
+    abilities: [
+      whenRevealed(
+        skillTest('willpower', 3, {
+          onFail: [
+            forEachPoint(
+              placeDoomOn(anEnemy({ trait: trait('Cultist'), withoutToken: 'doom' }), 1),
+            ),
+          ],
+        }),
+      ),
+    ],
+  });
+  /** Alice in the Study with two Cultists without doom in the Hallway. */
+  const twoCultists = newGame()
+    .withLocation(study, studyCard, { revealed: true })
+    .withLocation(hallway, hallwayCard)
+    .withConnection(study, hallway)
+    .withInvestigator(alice, { locationId: study })
+    .withCard(leftCultist, cultistCard, atLocation(hallway))
+    .withCard(rightCultist, cultistCard, atLocation(hallway))
+    .withCard(hex, hexTreachery, { kind: 'encounterDeck' });
+
+  it('asks which Cultist gets the first point, then places the second on the other', () => {
+    const { context, state } = twoCultists.start();
+    const failed = stateAfter(
+      context,
+      state,
+      { type: 'DrawCard', investigatorId: alice, from: encounterDeck },
+      resolveRevelation('hex'),
+      { ...answer('test:hex', 'fail'), margin: 2 },
+    );
+
+    const placed = stateAfter(context, failed, answer('enemy:hex', 'right_cultist'));
+
+    expect(failed.pending).toMatchObject([
+      { kind: 'chooseCard', options: [{ id: leftCultist }, { id: rightCultist }] },
+    ]);
+    expect(placed.cards[rightCultist]?.tokens.doom).toBe(1);
+    expect(placed.cards[leftCultist]?.tokens.doom).toBe(1);
+  });
 });
 
 describe('test of either of two skills that defeats its tester', () => {

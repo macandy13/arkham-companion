@@ -789,6 +789,7 @@ export const appTexts = {
     chooseLocationToMove: 'Where do you move for {{card}}?',
     chooseLocationToAttach: 'Where does {{card}} attach?',
     chooseInvestigatorFor: 'Which investigator does {{card}} affect?',
+    chooseEnemyFor: 'Which enemy does {{card}} affect?',
     chooseSpawnLocation: 'Where does {{card}} spawn?',
     investigate: 'Investigate {{card}}',
     fight: 'Fight {{card}}',

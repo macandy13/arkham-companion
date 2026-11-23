@@ -349,10 +349,11 @@ export type RelativeCard =
    */
   | ({ ref: 'locationWith' } & LocationFilter)
   /**
-   * One enemy at `at` ("deal 1 damage to an enemy at your location"), picked by the investigator
-   * the window names when there are several; none when there is none.
+   * One enemy its filter matches (`EnemyFilter`), at `at` when given ("deal 1 damage to an enemy
+   * at your location", "place 1 doom on a [[Cultist]] enemy with no doom on it"), picked by the
+   * investigator the window names when there are several; none when there is none.
    */
-  | { ref: 'anEnemy'; at: RelativeCard }
+  | ({ ref: 'anEnemy'; at?: RelativeCard } & EnemyFilter)
   /**
    * The location in play with the most `token`s that the card with the ability
    * may attach to ("attach to the location with the most clues and without a
@@ -1247,7 +1248,12 @@ function withDifficultyChanges(
  */
 function withDeferredOutcomes(effect: AbilityEffect, opened: OpenedWindow): unknown {
   const defer = (effects: readonly AbilityEffect[]): ResolveEffect[] =>
-    effects.map((outcome) => ({ type: 'ResolveEffect', effect: outcome, opened }));
+    effects.map((outcome) => ({
+      type: 'ResolveEffect',
+      effect: outcome,
+      opened,
+      ...(pickedRef(outcome) === undefined ? {} : { picks: true }),
+    }));
   // A margin entry stays itself for `answerCommands` to expand: what it holds is deferred.
   const deferOutcomes = (effects: readonly AbilityEffect[]): unknown[] =>
     effects.map((outcome) => {
@@ -1382,8 +1388,12 @@ function candidatesFor(
       .map((inv) => inv.id);
   }
   if (picked.ref === 'anEnemy') {
+    const matching = enemiesMatching(ctx, state, picked);
+    if (picked.at === undefined) return matching.map((card) => card.id);
     const at = resolveRefs(picked.at, refs) as InstanceId | undefined;
-    return at === undefined ? [] : enemiesAt(ctx, state, at).map((card) => card.id);
+    if (at === undefined) return [];
+    const there = new Set(enemiesAt(ctx, state, at).map((card) => card.id));
+    return matching.filter((card) => there.has(card.id)).map((card) => card.id);
   }
   return candidateCards(ctx, state, picked, cardId, from).map((card) => card.id);
 }
@@ -2509,11 +2519,14 @@ export function moveToConnectingLocation(): AbilityEffect {
 }
 
 /**
- * "An enemy at your location" (`anEnemy`), picked by the investigator the window names when
- * several are there: `dealDamageTo(anEnemy(yourLocation()), perInvestigator(1))` (Blaze of Glory).
+ * "An enemy at your location", "a [[Cultist]] enemy with no doom on it" (`anEnemy`), picked by
+ * the investigator the window names when several match:
+ * `dealDamageTo(anEnemy({ at: yourLocation() }), perInvestigator(1))` (Blaze of Glory),
+ * `placeDoomOn(anEnemy({ trait: trait('Cultist'), withoutToken: 'doom' }), 1)` (Blasphemous
+ * Invocation).
  */
-export function anEnemy(at: RelativeCard): RelativeCard {
-  return { ref: 'anEnemy', at };
+export function anEnemy(filter: { at?: RelativeCard } & EnemyFilter = {}): RelativeCard {
+  return { ref: 'anEnemy', ...filter };
 }
 
 /**
