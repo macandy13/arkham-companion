@@ -144,6 +144,7 @@ describe('renderPage', () => {
     const tour: Tour = {
       concept: 'C.',
       questions: [],
+      evidence: [],
       stops: [{ title: 'Code', text: 'T.', code: [] }],
       rest: [],
     };
@@ -198,6 +199,7 @@ describe('renderPage', () => {
     const tour: Tour = {
       concept: 'C.',
       questions: [],
+      evidence: [],
       stops: [{ title: 'Code', text: 'T.', code: [] }],
       rest: [],
     };
@@ -222,6 +224,7 @@ describe('renderPage', () => {
     const tour: Tour = {
       concept: 'C.',
       questions: [],
+      evidence: [],
       stops: [{ title: 'Card', text: 'T.', code: [] }],
       rest: [],
     };
