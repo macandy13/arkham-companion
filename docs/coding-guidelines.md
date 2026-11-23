@@ -137,18 +137,26 @@ A PR is reviewed on a phone, in one sitting. Its size and shape decide whether t
 
 ### Writing the description
 
-The reviewer reads the PR's review page, not the diff or a long description: questions first, then a short tour of only the code that carries the change, each stop with its lines and, for UI, its goldens before and after ([automation.md, "Review tour"](automation.md#review-tour)). Most PRs should take a minute. Use `.github/pull_request_template.md`.
+The reviewer reads the PR's review page, not the diff or a long description: the problem first, then what changes, the questions, and a short tour of only the code that carries the change, each stop with its lines and, for UI, its goldens before and after ([automation.md, "Review tour"](automation.md#review-tour)). Most PRs should take a minute. Use `.github/pull_request_template.md`.
 
-- **The body is short.** One or two sentences on what changes conceptually and why, `Closes #n`, the tour block, and one folded "Everything else" box. The required attribution block stays above everything. Never attribute a reason to a person ("Andy asked/chose/wanted …"); give the reason itself.
+- **The body is short.** Two or three sentences: the problem, then how the PR solves it, `Closes #n`, the tour block, and one folded "Everything else" box. The required attribution block stays above everything. Never attribute a reason to a person ("Andy asked/chose/wanted …"); give the reason itself.
 - **The tour carries the walkthrough.** A `<!-- review-tour {…} -->` JSON block at the start of a line (format: `Tour` in [`tour.ts`](../packages/review_tour/src/tour.ts)):
-  - `concept`: the page's lead, the same idea as the body's first sentence.
-  - `questions`: 0–3 decisions for the reviewer, each answerable in a word, with `picked` for what the PR went with and `stop` for where it shows. A smaller design, a disagreement with a review comment or an open rules reading goes here.
-  - `stops`: 1–4 in reading order, one idea each: a title that says what changes, a `tag` for its kind ("Rule", "API", "UI · the dialog"), one or two sentences, and `code` ranges of about 15 lines or fewer, with `highlight` on the line that carries it. A UI stop names its golden in `picture` (path below the project directory, `shots/game_screen.spec.ts/<test>.png`). A rule change is a stop that names its `docs/rules/` page. A refactor that changes no behaviour is one stop that says so.
+  - `problem`: what is wrong or missing today and why it matters, in two to four sentences, for a reader who hasn't seen the issue. Say what a player or developer runs into, not which function is involved.
+  - `concept`: how the PR solves it, in two to four sentences: the idea first, then the main parts.
+  - `questions`: 0–3 decisions for the reviewer. Each says what the choice is, what the PR went with (`picked`) and what the other option would mean, so it can be answered in a word; `stop` links where it shows. A smaller design, a disagreement with a review comment or an open rules reading goes here.
+  - `stops`: 1–4 in reading order, one idea each: a title that says what changes, a `tag` for its kind ("Rule", "API", "UI · the dialog"), two or three sentences (what changes here, why, and what to look at in the lines), and `code` ranges of about 15 lines or fewer, with `highlight` on the line that carries it. A UI stop names its golden in `picture` (path below the project directory, `shots/game_screen.spec.ts/<test>.png`). A rule change is a stop that names its `docs/rules/` page. A refactor that changes no behaviour is one stop that says so.
   - `rest`: one short line each for the plumbing the tour leaves out (wiring, helper moves, i18n strings); the page folds it as "Not on the tour".
 - **Never a stop:** tests, imports, wiring, i18n strings, helper moves, lockfiles. Tests are covered by CI and the coverage floors; the one test a reviewer may want, a rule's end-to-end step, is linked in "Everything else".
 - **Line numbers are at the head commit.** After a push that moves the lines a stop shows, update its ranges; the check fails when a range points past the end of a file or at a golden that doesn't exist, but a shifted range only shows the wrong lines.
 - **Everything else, folded:** the rules claims table when a rule changes (claim · verdict · `docs/rules/` page) with a link to its end-to-end step, and the `docs/architecture/` page the PR updates. Leave out what has nothing.
-- **Short and plain.** Short sentences, everyday words, no filler ("This PR …", "In order to …").
+- **Concise, but easy to read.** Write whole sentences a reader understands on the first pass, as if explaining the change to someone who knows the game but not this code:
+  - Say what happens in the game or the app before naming code. "An attack of opportunity leaves the enemy ready" before `DealEnemyAttack`.
+  - Explain a code name the first time it appears ("`anEnemy`, a reference the player picks from"), and use as few as the point needs.
+  - One idea per sentence, with its verb. No fragments, no lists of identifiers, no arrows or semicolon chains.
+  - Leave out filler ("This PR …", "In order to …") and detail the code already shows.
+  - Too terse: "`kind: 'enemyPhase'` keeps step 3.3; forced kinds deal at once; `cancelled` deals nothing."
+  - Clear: "Enemy phase attacks still exhaust the enemy afterwards. Every other attack, such as an attack of opportunity, is dealt at once and leaves the enemy ready. A cancelled attack deals nothing."
+
 - **Draw it when a picture is faster.** A flow, a state machine or an order of steps reads faster as a Mermaid diagram, in a doc or the folded box. Start every block with its diagram type (`flowchart LR`, `sequenceDiagram`, `stateDiagram-v2`); without it GitHub shows an error instead of the diagram.
 
 ## 8. Docs

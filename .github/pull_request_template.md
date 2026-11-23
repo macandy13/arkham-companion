@@ -1,8 +1,9 @@
-<!-- One or two sentences: what changes conceptually, and why. `Closes #n`; for a slice of a stack, which one and what comes next. Plain words, no attribution to a person. -->
+<!-- Two or three plain sentences: the problem, then how this PR solves it. `Closes #n`; for a slice of a stack, which one and what comes next. Plain words, no attribution to a person. -->
 
 <!-- The review tour: the reviewer reads the page review-tour.yml builds from this block, so it carries the walkthrough. Rules: docs/coding-guidelines.md §7 "Writing the description"; format: `Tour` in packages/review_tour/src/tour.ts. Line numbers are at the head commit: update them after a push that moves them. -->
 <!-- review-tour
 {
+  "problem": "…",
   "concept": "…",
   "questions": [],
   "stops": [

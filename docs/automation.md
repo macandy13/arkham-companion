@@ -27,7 +27,7 @@ UI changes are easier to review as a recording than as a diff, and the preview w
 
 ### Review tour
 
-A PR is reviewed on a phone in about a minute from its review page: the open questions first, then a numbered tour of only the code that carries the change, each stop with its lines from the diff and, for UI, its goldens before and after.
+A PR is reviewed on a phone in about a minute from its review page: the problem and what changes first, then the open questions, then a numbered tour of only the code that carries the change, each stop with its lines from the diff and, for UI, its goldens before and after.
 
 - The session that opens the PR writes the tour as JSON into the description, in a `<!-- review-tour {…} -->` block at the start of a line (format: `Tour` in [`tour.ts`](../packages/review_tour/src/tour.ts); how to pick stops: `docs/coding-guidelines.md` §7).
 - `review-tour.yml` runs on every push and description edit. `packages/review_tour/src/cli.ts`, taken from the tip of the base branch so older branches get a page too, reads the description fresh, diffs the head against its merge base with full context, cuts each stop's line ranges (removed lines where the diff puts them, gaps between ranges) and finds each named golden for every device at both commits.
@@ -36,7 +36,7 @@ A PR is reviewed on a phone in about a minute from its review page: the open que
 
 ### Review aids
 
-- **Review tour**: the PR description is a short concept line plus a `<!-- review-tour {…} -->` block of questions and stops, which `review-tour.yml` turns into the review page; everything else sits in one folded box (coding guidelines §7). Claude fills it in when it opens a PR.
+- **Review tour**: the PR description is a few sentences on the problem and the solution plus a `<!-- review-tour {…} -->` block of the problem, what changes, questions and stops, which `review-tour.yml` turns into the review page; everything else sits in one folded box (coding guidelines §7). Claude fills it in when it opens a PR.
 - **`REVIEW.md`**: what a reviewer flags as blocking, flags as optional, or ignores. The `pr-reviewer` subagent (`.claude/agents/pr-reviewer.md`) applies it in the session that opens the PR, in a fresh context, and the session posts its summary and inline comments on the PR. It runs on the session's subscription, so it costs nothing per review; the `claude-review` label runs the same check in CI when wanted.
 - **`.gitattributes`**: the lockfile, changelog, release manifest and `docs/tasks/done/` are marked `linguist-generated`, so GitHub collapses them in the diff.
 
