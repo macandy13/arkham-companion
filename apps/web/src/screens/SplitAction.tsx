@@ -1,5 +1,4 @@
 import { useEffect, useId, useRef, useState } from 'react';
-import type { BoardView, InvestigatorView } from '@arkham/engine';
 import { ActionButton, type ActionIcon } from './ActionRow';
 
 /** One way to take an action: a line of a `SplitAction`'s menu, or the tap of its pill. */
@@ -15,7 +14,7 @@ export interface ActionWay {
 
 /**
  * One action of a details window's action row as a single pill (ME.31): a tap takes it the
- * usual way, the turn investigator's `primary` with its cost arrows, and a ▾ beside it opens a
+ * usual way, the turn investigator's `primary` with its cost arrows, and a ⋮ beside it opens a
  * menu of every way, `primary` first, then the other `ways` (without an action, by card effect
  * for each investigator). Without a `primary`, as outside an investigator's turn, the pill
  * itself opens the menu. One pill per action instead of a button per way keeps the row short:
@@ -127,17 +126,5 @@ export function SplitAction({
         </ul>
       )}
     </div>
-  );
-}
-
-/**
- * The investigators a card can have make a test outside their turn or away from their location
- * (`GameActions.testByCard`): every active one on the map, the turn investigator too, as In the
- * Know or Marksmanship works on their own turn as well.
- */
-export function cardTesters(board: BoardView): readonly InvestigatorView[] {
-  return board.investigators.filter(
-    (investigator) =>
-      investigator.status === 'active' && board.locationOf(investigator.id) !== undefined,
   );
 }

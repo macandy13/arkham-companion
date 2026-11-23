@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import type { BoardView, EnemyAction, MapEnemyView } from '@arkham/engine';
 import { ActionButton, ActionGroup, CardActions, cardActionsOn } from '../screens/ActionRow';
-import { cardTesters, SplitAction } from '../screens/SplitAction';
+import { SplitAction } from '../screens/SplitAction';
 import { AttachedCards } from '../screens/AttachedCards';
 import { DetailsDialog, useDecisionHost } from '../screens/DetailsDialog';
 import type { GameActions } from '../state/gameActions';
@@ -63,7 +63,7 @@ export function EnemyDetails({
   const stats = board.enemyStats(enemy.id);
   const left = healthLeft(enemy);
   const effects = board.enemyCardEffects(enemy.id);
-  const testers = cardTesters(board);
+  const testers = board.investigatorsInPlay;
   const tested = (['fight', 'evade'] as const).filter(
     (kind) => allowed.includes(kind) || testers.length > 0,
   );

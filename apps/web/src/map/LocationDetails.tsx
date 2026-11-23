@@ -11,7 +11,7 @@ import {
   cardActionsOn,
   type ActionIcon,
 } from '../screens/ActionRow';
-import { cardTesters, SplitAction } from '../screens/SplitAction';
+import { SplitAction } from '../screens/SplitAction';
 import type { GameActions } from '../state/gameActions';
 import { CardPatterns, LocationTile } from './LocationTile';
 import { TILE } from './mapLayout';
@@ -179,7 +179,7 @@ function LocationPage({
         assertNever(then);
     }
   };
-  const wayOf = ({ key, cost, play, then }: LocationAction & { play: () => Promise<void> }) => ({
+  const wayOf = ({ key, cost, then }: LocationAction, play: () => Promise<void>) => ({
     key,
     actions: cost,
     name: t(`location.${key}`, { count: cost }),
@@ -205,7 +205,7 @@ function LocationPage({
   const investigateHere = offered.find(({ key }) => key === 'investigateAction');
   const byCard = location.revealed && !location.forbidden?.includes('investigate');
   const investigateWays = byCard
-    ? cardTesters(board).map(({ id, name }) => ({
+    ? board.investigatorsInPlay.map(({ id, name }) => ({
         key: id,
         name: t('byCard.testBy', { test: t('byCard.investigate'), name }),
         onPick: () => {
@@ -225,7 +225,7 @@ function LocationPage({
         waysName={t('ways.investigate')}
         {...(investigateHere?.play === undefined
           ? {}
-          : { primary: wayOf({ ...investigateHere, play: investigateHere.play }) })}
+          : { primary: wayOf(investigateHere, investigateHere.play) })}
         ways={investigateWays}
         disabled={busy}
       />
@@ -243,8 +243,8 @@ function LocationPage({
             icon="move"
             caption={t('location.caption.move')}
             waysName={t('ways.move')}
-            primary={wayOf({ ...moveAction, play: moveAction.play })}
-            ways={moveFree?.play === undefined ? [] : [wayOf({ ...moveFree, play: moveFree.play })]}
+            primary={wayOf(moveAction, moveAction.play)}
+            ways={moveFree?.play === undefined ? [] : [wayOf(moveFree, moveFree.play)]}
             disabled={busy}
           />,
         ]),

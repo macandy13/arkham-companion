@@ -14,14 +14,14 @@ describe('SplitAction', () => {
   afterEach(cleanup);
 
   /** A fight as an action, with a free fight and one by card effect for daisy as its ways. */
-  const renderFight = (withPrimary: boolean) => {
+  const renderFight = ({ withAction }: { withAction: boolean }) => {
     const picked = vi.fn<(way: string) => void>();
     render(
       <SplitAction
         icon="fight"
         caption="Fight"
         waysName="Ways to fight"
-        {...(withPrimary
+        {...(withAction
           ? {
               primary: {
                 key: 'action',
@@ -42,7 +42,7 @@ describe('SplitAction', () => {
   };
 
   it('fights as an action on a tap of the pill, without opening its ways', () => {
-    const picked = renderFight(true);
+    const picked = renderFight({ withAction: true });
 
     tap('Fight · 1 action');
 
@@ -51,7 +51,7 @@ describe('SplitAction', () => {
   });
 
   it('lists the action first, then the other ways, and closes once one is picked', () => {
-    const picked = renderFight(true);
+    const picked = renderFight({ withAction: true });
 
     tap('Ways to fight');
     const lines = menuLines();
@@ -63,7 +63,7 @@ describe('SplitAction', () => {
   });
 
   it('opens the ways from the pill itself when there is no action to take', () => {
-    renderFight(false);
+    renderFight({ withAction: false });
 
     tap('Ways to fight');
 
@@ -74,7 +74,7 @@ describe('SplitAction', () => {
     { close: 'Escape', act: () => fireEvent.keyDown(screen.getByRole('list'), { key: 'Escape' }) },
     { close: 'a press elsewhere', act: () => fireEvent.pointerDown(document.body) },
   ])('closes its ways on $close without picking one', ({ act }) => {
-    const picked = renderFight(true);
+    const picked = renderFight({ withAction: true });
 
     tap('Ways to fight');
     act();

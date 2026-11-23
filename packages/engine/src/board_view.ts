@@ -1096,6 +1096,17 @@ export class BoardView {
     return neighbours(this.ctx, this.state, location);
   }
 
+  /**
+   * The investigators still in the game on the map, in seat order: active and at a location. A
+   * card can have any of them act outside their turn or away from their location (In the Know,
+   * Marksmanship), so the details windows offer those ways for each of them.
+   */
+  get investigatorsInPlay(): readonly InvestigatorView[] {
+    return this.state.investigators
+      .filter((inv) => inv.status === 'active' && inv.locationId !== undefined)
+      .map((inv) => investigatorView(this.ctx, this.state, inv));
+  }
+
   /** The investigators at `location`, in seat order, as its `LocationView.investigators` lists them. */
   investigatorsAt(location: InstanceId): readonly InvestigatorView[] {
     return this.state.investigators
