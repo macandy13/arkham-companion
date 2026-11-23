@@ -618,6 +618,24 @@ describe('trigger bus', () => {
       expect(requireInvestigator(after, alice).sanity.horror).toBe(horror);
     });
 
+    it('deals 1 horror when alice starts her turn at a location with the ability', () => {
+      /** "When your turn begins at this location, take 1 horror." */
+      const dreadfulHall = blankLocation('dreadful_hall', {
+        abilities: [whenTurnBegins(takeHorror(1))],
+      });
+      const { context, state } = newGame()
+        .withLocation(hall, dreadfulHall, { revealed: true })
+        .withInvestigator(alice, { locationId: hall })
+        .start();
+
+      const after = stateAfter(context, state, nextPhase, {
+        type: 'StartTurn',
+        investigatorId: alice,
+      });
+
+      expect(requireInvestigator(after, alice).sanity.horror).toBe(1);
+    });
+
     it.each(['investigation', 'enemy', 'mythos'] as const)(
       'places doom on the card when the $0 phase ends',
       (phase) => {
@@ -1946,6 +1964,43 @@ describe('objectives on the current agenda and act', () => {
     const { state } = execute(context, started, { type: 'DefeatEnemy', enemyId: priest });
 
     expect(state.act.current).toBe(act1);
+  });
+});
+
+describe('a window scoped and filtered on its event', () => {
+  const ghoul = instanceId('ghoul');
+  const rat = instanceId('rat');
+  /** "After a [[Ghoul]] enemy is defeated, place 1 doom on the agenda." */
+  const ghoulWatchAgenda = blankAgenda('ghoul_watch_agenda', fixed(3), {
+    abilities: [
+      {
+        window: { on: 'defeated', of: 'currentActOrAgenda', filter: { trait: trait('Ghoul') } },
+        effects: [placeDoomOnAgenda(1)],
+      },
+    ],
+  });
+  /** The agenda watches for Ghouls; a ghoul and a rat are in the hall with alice. */
+  const watchedHall = newGame()
+    .withAgenda(agenda1, ghoulWatchAgenda)
+    .withAct(act1, firstActCard)
+    .withLocation(hall, blankLocation('hall'), { revealed: true })
+    .withCard(ghoul, blankEnemy('ghoul', { traits: [trait('Ghoul')] }), atLocation(hall), {
+      faceUp: true,
+    })
+    .withCard(rat, blankEnemy('rat', { traits: [trait('Creature')] }), atLocation(hall), {
+      faceUp: true,
+    })
+    .withInvestigator(alice, { locationId: hall });
+
+  it.each([
+    { defeated: ghoul, doom: 1 },
+    { defeated: rat, doom: 0 },
+  ])('places $doom doom when $defeated is defeated', ({ defeated, doom }) => {
+    const { context, state: started } = watchedHall.start();
+
+    const { state } = execute(context, started, { type: 'DefeatEnemy', enemyId: defeated });
+
+    expect(state.cards[agenda1]?.tokens.doom ?? 0).toBe(doom);
   });
 });
 

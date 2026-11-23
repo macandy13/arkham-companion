@@ -261,7 +261,7 @@ function resolveCausedStep(resolution: Resolution, step: Step, budget: TriggerBu
 function withCause(step: Step, inherited: ChangeCause): Step {
   if (step.kind === 'phaseStep' || step.cause !== undefined) return step;
   // A card's action is the player's doing; only a forced ability is the card's.
-  if (step.kind === 'ability' && step.opened.window.kind !== 'action') {
+  if (step.kind === 'ability' && step.opened.window.on !== 'action') {
     const { cardId, window } = step.opened;
     return { ...step, cause: { kind: 'card', cardId, window } };
   }

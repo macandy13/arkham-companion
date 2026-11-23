@@ -85,7 +85,7 @@ describe('changeNotices', () => {
     expect(noticesOf(result)).toEqual([
       {
         kind: 'chaosBag',
-        cause: { kind: 'card', cardId: cellar, window: { kind: 'revealed' } },
+        cause: { kind: 'card', cardId: cellar, window: { on: 'revealed' } },
         events: ['ChaosBagChanged'],
       },
     ]);
@@ -110,7 +110,7 @@ describe('changeNotices', () => {
     expect(noticesOf(result)).toEqual([
       {
         kind: 'tokens',
-        cause: { kind: 'card', cardId: cellar, window: { kind: 'revealed' } },
+        cause: { kind: 'card', cardId: cellar, window: { on: 'revealed' } },
         events: ['TokensChanged'],
       },
     ]);
@@ -138,7 +138,7 @@ describe('changeNotices', () => {
     expect(noticesOf(result)).toEqual([
       {
         kind: 'investigator',
-        cause: { kind: 'card', cardId: rottingTreachery, window: { kind: 'revealed' } },
+        cause: { kind: 'card', cardId: rottingTreachery, window: { on: 'revealed' } },
         events: ['InvestigatorChanged'],
       },
       // The treachery goes to the discard pile, which is shuffled back into the empty deck.
@@ -165,7 +165,7 @@ describe('changeNotices', () => {
     expect(noticesOf(result)).toEqual([
       {
         kind: 'tokens',
-        cause: { kind: 'card', cardId: agenda, window: { kind: 'advanced' } },
+        cause: { kind: 'card', cardId: agenda, window: { on: 'advanced' } },
         events: ['TokensChanged'],
       },
     ]);
@@ -219,7 +219,7 @@ describe('changeNotices', () => {
     expect(noticesOf(result)).toEqual([
       {
         kind: 'tokens',
-        cause: { kind: 'card', cardId: cellar, window: { kind: 'revealed' } },
+        cause: { kind: 'card', cardId: cellar, window: { on: 'revealed' } },
         events: ['TokensChanged', 'TokensChanged'],
       },
     ]);
