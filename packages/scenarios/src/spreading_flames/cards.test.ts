@@ -34,6 +34,7 @@ import {
   FORBIDDEN_SECRETS_DECISION,
   MUTATED_DECISION,
   NOXIOUS_SMOKE_DECISION,
+  EXTRAPLANAR_VISIONS_DECISION,
   SPREADING_FLAMES_CODES,
   WILD_COMPULSION_DECISION,
   spreadingFlamesCardDefs,
@@ -649,6 +650,50 @@ describe('Spreading Flames card abilities', () => {
         expect(requireInvestigator(state, alice)).toMatchObject({ clues, sanity: { horror } });
         expect(started.cards[quad]?.tokens.clue ?? 0).toBe(0);
         expect(state.cards[quad]?.tokens.clue ?? 0).toBe(quadClues);
+      },
+    );
+  });
+
+  describe('Extraplanar Visions', () => {
+    it.each([
+      { result: 'pass', damage: 0, discards: 0 },
+      { result: 'fail', damage: 1, discards: 1 },
+    ])(
+      'tests intellect against the 3 cards in hand; a $result deals $damage damage and asks for $discards random discards',
+      ({ result, damage, discards }) => {
+        const { context, state: started } = newGame()
+          .withLocation(quad, cardOf('12116'), { revealed: true })
+          .withInvestigator(alice, { locationId: quad })
+          .withCard(instanceId('extraplanar_visions'), cardOf('12127'), { kind: 'encounterDeck' })
+          .start();
+        const picked = stateAfter(
+          context,
+          started,
+          aliceDraws('Extraplanar Visions'),
+          resolveRevelation('extraplanar_visions'),
+          {
+            type: 'ResolveDecision',
+            decisionId: EXTRAPLANAR_VISIONS_DECISION,
+            optionId: 'intellect',
+            amounts: { cardsInHand: 3 },
+          },
+        );
+
+        const { state, events } = runFrom(context, picked, [
+          answer('test:extraplanar_visions', result),
+        ]);
+
+        const randomDiscards = events.filter(
+          (event) =>
+            event.type === 'CommandDeferred' &&
+            event.command.type === 'DiscardFromHand' &&
+            event.command.atRandom === true,
+        );
+        expect(picked.pending).toMatchObject([
+          { skillTest: { skill: 'intellect', difficulty: 3 } },
+        ]);
+        expect(requireInvestigator(state, alice).health.damage).toBe(damage);
+        expect(randomDiscards).toHaveLength(discards);
       },
     );
   });

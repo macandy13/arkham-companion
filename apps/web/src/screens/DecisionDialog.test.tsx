@@ -20,6 +20,8 @@ import {
   forEachPoint,
   gainClues,
   skillTest,
+  skillTestOfEither,
+  cardsInYourHand,
   whenRevealed,
   zoneOf,
   takeDamage,
@@ -504,6 +506,50 @@ describe('DecisionDialog', () => {
       fireEvent.click(screen.getByRole('button', { name: 'Done' }));
 
       expect(table.board.enemy(ghoul)).toMatchObject({ damage: 2 });
+    });
+
+    it('tests the picked skill against the cards in hand the drawer lowers from 5 to 4', () => {
+      const visions = instanceId('visions');
+      const table = PlayTable.start(
+        newGame()
+          .withLocation(study, blankLocation('study'), { revealed: true })
+          .withInvestigator(alder, { locationId: study })
+          .withCard(
+            visions,
+            blankTreachery('visions', {
+              name: 'Visions',
+              abilities: [
+                whenRevealed(
+                  skillTestOfEither(
+                    decisionId('visions_skill'),
+                    ['willpower', 'intellect'],
+                    cardsInYourHand,
+                  ),
+                ),
+              ],
+            }),
+            { kind: 'encounterDeck' },
+          ),
+      );
+      table.drawEncounterCard(alder);
+      table.resolveRevelation(visions);
+      renderFirstDecision(table);
+
+      const intellect = screen.getByRole('button', { name: 'Intellect' });
+      fireEvent.click(intellect);
+      const intellectRow = intellect.closest('li');
+      if (!intellectRow) throw new Error('the Intellect option is a list item');
+      fireEvent.click(
+        within(intellectRow).getByRole('button', {
+          name: 'Lower the Cards in hand after committing',
+        }),
+      );
+      fireEvent.click(screen.getByRole('button', { name: 'Done' }));
+
+      expect(table.board.decisions).toMatchObject([
+        { test: { skill: 'intellect', difficulty: 4 } },
+      ]);
+      expect(screen.queryByText('from the game')).toBeNull();
     });
 
     it("takes an attack of opportunity's damage and horror as the players lower them", () => {

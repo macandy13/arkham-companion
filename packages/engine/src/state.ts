@@ -542,8 +542,12 @@ export interface DecisionOption {
   amounts?: Readonly<Partial<Record<NamedAmount, AmountRange>>>;
 }
 
-/** The counts an option may name (`DecisionOption.amounts`, `ResolveDecision.amounts`). */
-export const NAMED_AMOUNTS = ['damage', 'horror'] as const;
+/**
+ * The counts an option may name (`DecisionOption.amounts`, `ResolveDecision.amounts`): a forced
+ * attack's damage and horror, and the cards in the decider's hand, which the app does not track
+ * (Extraplanar Visions' difficulty).
+ */
+export const NAMED_AMOUNTS = ['damage', 'horror', 'cardsInHand'] as const;
 
 /** One of `NAMED_AMOUNTS`. */
 export type NamedAmount = (typeof NAMED_AMOUNTS)[number];
@@ -566,11 +570,18 @@ export type AnswerableCommand = Answerable<Command>;
 
 /**
  * Distributes over the command union, so each command type keeps its own fields. An optional count
- * (`DealEnemyAttack.damage`) can be answered too.
+ * (`DealEnemyAttack.damage`) can be answered too, and so can a test's difficulty
+ * (`TestSkill.test`).
  */
-type Answerable<C> = C extends Command
-  ? { [K in keyof C]: Exclude<C[K], undefined> extends number ? C[K] | AnsweredAmount : C[K] }
-  : never;
+type Answerable<C> = C extends Command ? { [K in keyof C]: AnswerableField<C[K]> } : never;
+
+/** A command's field with its counts answerable, also those of the skill test it asks for. */
+type AnswerableField<V> =
+  Exclude<V, undefined> extends number
+    ? V | AnsweredAmount
+    : V extends SkillTest
+      ? { [K in keyof V]: AnswerableField<V[K]> }
+      : V;
 
 /** The counts an option with an adjustable amount accepts; no `max` means no upper bound. */
 export interface AmountRange {

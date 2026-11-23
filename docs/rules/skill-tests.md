@@ -60,4 +60,5 @@ Defeated by both at once, the investigator chooses which trauma to suffer ([Trau
 If auto-success or auto-failure is known before step 3, skip steps 3 and 4.
 [Variable difficulty](https://arkhamdb.com/rules#Variable_Difficulty_Skill_Tests) is fixed once step 6 checks it.
 The app reads a card's variable difficulty (Eager for Death's +1 per damage) as it asks for the test, since the players answer the test whole; a change before step 6 is theirs to count in the answer: a committed card that heals, or a chaos token's effect in step 4 that deals damage, spawns an enemy or moves clues.
+A difficulty that counts the cards in the tester's hand (Extraplanar Visions) counts them after committing, since committed cards leave the hand before step 6; the app asks for that count as the tester picks the skill, so they enter the hand they will keep.
 A difficulty never goes below 0 ([Modifiers](https://arkhamdb.com/rules#Modifiers): a value modified below 0 counts as 0).

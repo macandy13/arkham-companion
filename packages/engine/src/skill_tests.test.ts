@@ -6,6 +6,7 @@ import {
   blankLocation,
   afterTest,
   blankTreachery,
+  cardsInYourHand,
   eachEnemy,
   discardSelf,
   decisionId,
@@ -23,6 +24,7 @@ import {
   skillTestDecision,
   skillTestOfEither,
   statOf,
+  takeDamage,
   takeHorror,
   whenRevealed,
   you,
@@ -887,6 +889,116 @@ describe('test of either of two skills', () => {
       expect(requireInvestigator(resolved, alice).sanity.horror).toBe(horror);
     },
   );
+});
+
+describe('test of either of two skills that defeats its tester', () => {
+  const ruin = instanceId('ruin');
+  const ruinChoice = decisionId('ruin.skill');
+  /** A treachery testing willpower or agility (3); a fail deals 1 damage, then 1 horror. */
+  const ruinousTreachery = blankTreachery('ruinous_treachery', {
+    abilities: [
+      whenRevealed(
+        skillTestOfEither(ruinChoice, ['willpower', 'agility'], 3, {
+          onFail: [takeDamage(1), takeHorror(1)],
+        }),
+      ),
+    ],
+  });
+
+  it("drops the fail's horror once its damage defeated the tester", () => {
+    const { context, state } = newGame()
+      .withLocation(study, studyCard, { revealed: true })
+      .withInvestigator(alice, { locationId: study, health: { max: 5, damage: 4 } })
+      .withInvestigator(bob, { locationId: study })
+      .withCard(ruin, ruinousTreachery, { kind: 'encounterDeck' })
+      .start();
+    const picked = stateAfter(
+      context,
+      state,
+      { type: 'DrawCard', investigatorId: alice, from: encounterDeck },
+      resolveRevelation('ruin'),
+      answer(ruinChoice, 'agility'),
+    );
+
+    const failed = stateAfter(context, picked, answer('test:ruin', 'fail'));
+
+    expect(requireInvestigator(failed, alice)).toMatchObject({
+      status: 'defeated',
+      sanity: { horror: 0 },
+    });
+  });
+});
+
+describe('test of either skill against a count the drawer enters', () => {
+  const visions = instanceId('visions');
+  const visionsChoice = decisionId('visions.skill');
+  /** A treachery testing willpower or intellect (X), X the cards in the drawer's hand. */
+  const handSizeTreachery = blankTreachery('hand_size_treachery', {
+    abilities: [
+      whenRevealed(
+        skillTestOfEither(visionsChoice, ['willpower', 'intellect'], cardsInYourHand, {
+          onFail: [takeHorror(1)],
+        }),
+      ),
+    ],
+  });
+  const draw: Command = { type: 'DrawCard', investigatorId: alice, from: encounterDeck };
+
+  it('asks for the cards in hand with each skill, from 0 and starting at 5', () => {
+    const { context, state } = aliceInStudy
+      .withCard(visions, handSizeTreachery, { kind: 'encounterDeck' })
+      .start();
+
+    const drawn = stateAfter(context, state, draw, resolveRevelation('visions'));
+
+    expect(drawn.pending).toMatchObject([
+      {
+        id: visionsChoice,
+        options: [
+          { id: 'willpower', amounts: { cardsInHand: { default: 5, min: 0 } } },
+          { id: 'intellect', amounts: { cardsInHand: { default: 5, min: 0 } } },
+        ],
+      },
+    ]);
+  });
+
+  it.each([
+    { cardsInHand: 2, difficulty: 2 },
+    { cardsInHand: 0, difficulty: 0 },
+    { cardsInHand: undefined, difficulty: 5 },
+  ])(
+    'tests intellect against $difficulty when the drawer holds $cardsInHand cards',
+    ({ cardsInHand, difficulty }) => {
+      const { context, state } = aliceInStudy
+        .withCard(visions, handSizeTreachery, { kind: 'encounterDeck' })
+        .start();
+
+      const picked = stateAfter(context, state, draw, resolveRevelation('visions'), {
+        type: 'ResolveDecision',
+        decisionId: visionsChoice,
+        optionId: 'intellect',
+        ...(cardsInHand === undefined ? {} : { amounts: { cardsInHand } }),
+      });
+
+      expect(picked.pending).toMatchObject([{ skillTest: { skill: 'intellect', difficulty } }]);
+    },
+  );
+
+  it('refuses fewer than 0 cards in hand', () => {
+    const { context, state } = aliceInStudy
+      .withCard(visions, handSizeTreachery, { kind: 'encounterDeck' })
+      .start();
+    const drawn = stateAfter(context, state, draw, resolveRevelation('visions'));
+
+    const rejection = rejectionFrom(context, drawn, {
+      type: 'ResolveDecision',
+      decisionId: visionsChoice,
+      optionId: 'willpower',
+      amounts: { cardsInHand: -1 },
+    });
+
+    expect(rejection).toMatchObject({ code: 'amountOutOfRange', name: 'cardsInHand', min: 0 });
+  });
 });
 
 describe('test difficulty from the table', () => {
