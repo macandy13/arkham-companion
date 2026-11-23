@@ -313,7 +313,7 @@ describe('EnemyDetails', () => {
     renderGhoulDetails(PlayTable.start(ghoulOnAlder));
 
     const groups = screen.getAllByRole('heading', { level: 3 }).map((title) => title.textContent);
-    expect(groups).toEqual(['Attached', 'Actions', 'Card effect']);
+    expect(groups).toEqual(['Actions', 'Card effect', 'Attached']);
     expect(
       within(group('Actions'))
         .getAllByRole('button')

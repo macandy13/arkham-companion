@@ -250,76 +250,163 @@
 }
 
 /*
- * The attached cards in one row, each its name as a pill with a round × beside it, and a round +
- * at the end that attaches another.
+ * The cards attached to a location or an enemy (AttachedCards, ME.31b): small cards fanned, each
+ * turned a little the other way from its neighbour and overlapping it, with a dashed paper card
+ * at the end that attaches another. Each shows its picture once loaded, its name on the card's
+ * pattern before.
  */
-:is(
-    #board :is(dialog[data-dialog='location'], dialog[data-dialog='enemy']) > article,
-    #map [data-mode='location']
-  )
+:is(#board dialog[data-shell] > [data-part='tucked'], #map [data-mode='location'])
   > section[data-part='attached']
   > ul {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-2);
+  align-items: flex-end;
+  margin: 0;
   padding: 0;
   list-style: none;
 }
 
-:is(
-    #board :is(dialog[data-dialog='location'], dialog[data-dialog='enemy']) > article,
-    #map [data-mode='location']
-  )
+:is(#board dialog[data-shell] > [data-part='tucked'], #map [data-mode='location'])
   > section[data-part='attached']
   > ul
   > li {
-  display: flex;
-  align-items: center;
-  gap: var(--space-1);
   padding: 0;
   border: 0;
   background: none;
+  rotate: calc(-1 * var(--attached-card-turn));
 }
 
-:is(
-    #board :is(dialog[data-dialog='location'], dialog[data-dialog='enemy']) > article,
-    #map [data-mode='location']
-  )
+:is(#board dialog[data-shell] > [data-part='tucked'], #map [data-mode='location'])
   > section[data-part='attached']
-  button:not([data-icon]) {
-  padding-inline: var(--space-4);
-  border-radius: var(--radius-pill);
+  > ul
+  > li:nth-child(even) {
+  rotate: var(--attached-card-turn);
 }
 
-:is(
-    #board :is(dialog[data-dialog='location'], dialog[data-dialog='enemy']) > article,
-    #map [data-mode='location']
-  )
+:is(#board dialog[data-shell] > [data-part='tucked'], #map [data-mode='location'])
   > section[data-part='attached']
-  button[data-icon] {
-  min-width: var(--button-compact);
-  min-height: var(--button-compact);
+  > ul
+  > li
+  + li {
+  margin-inline-start: calc(-1 * var(--attached-card-overlap));
+}
+
+:is(#board dialog[data-shell] > [data-part='tucked'], #map [data-mode='location'])
+  > section[data-part='attached']
+  > ul
+  > li
+  > button {
+  display: grid;
+  width: var(--attached-card-width);
+  min-height: 0;
+  aspect-ratio: 5 / 7;
   padding: 0;
-  border-radius: var(--radius-round);
+  overflow: hidden;
+  border: none;
+  border-radius: var(--radius);
+  background: var(--card-art-pattern), var(--color-card-face);
+  box-shadow: var(--header-token-shadow);
+  color: var(--color-card-text);
+  font-family: var(--font-family-label);
+  font-size: var(--font-size-caption);
 }
 
-:is(
-    #board :is(dialog[data-dialog='location'], dialog[data-dialog='enemy']) > article,
-    #map [data-mode='location']
-  )
+:is(#board dialog[data-shell] > [data-part='tucked'], #map [data-mode='location'])
   > section[data-part='attached']
-  button[data-icon='close']::before {
-  mask-image: url('../investigators/icons/close.svg');
+  > ul
+  > li
+  > button
+  > * {
+  grid-area: 1 / 1;
+  align-self: center;
 }
 
-:is(
-    #board :is(dialog[data-dialog='location'], dialog[data-dialog='enemy']) > article,
-    #map [data-mode='location']
-  )
+:is(#board dialog[data-shell] > [data-part='tucked'], #map [data-mode='location'])
+  > section[data-part='attached']
+  > ul
+  > li
+  > button
+  > img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+:is(#board dialog[data-shell] > [data-part='tucked'], #map [data-mode='location'])
+  > section[data-part='attached']
+  > ul
+  > li
+  > button:not([data-picture])
+  > img,
+:is(#board dialog[data-shell] > [data-part='tucked'], #map [data-mode='location'])
+  > section[data-part='attached']
+  > ul
+  > li
+  > button[data-picture]
+  > span {
+  visibility: hidden;
+}
+
+:is(#board dialog[data-shell] > [data-part='tucked'], #map [data-mode='location'])
+  > section[data-part='attached']
+  > ul
+  > li
+  > button[data-icon='add'] {
+  border: var(--border-width) dashed var(--color-paper-rim);
+  background: var(--color-paper);
+  color: var(--color-ink-muted);
+}
+
+:is(#board dialog[data-shell] > [data-part='tucked'], #map [data-mode='location'])
   > section[data-part='attached']
   button[data-icon='add']::before {
   mask-image: url('./icons/add.svg');
+}
+
+/*
+ * In a card dialog the fan lies over the page's bottom edge, centred, half outside it (anchored
+ * to the page, since the card beside it may reach further down), and the page keeps room above
+ * the edge for the half that lies on it. Its title is for assistive technology only: the cards
+ * say what they are. Lowered, a dialog is a strip, and the fan stays away.
+ */
+#board dialog[data-shell] > [data-part='tucked'] {
+  position: absolute;
+  z-index: 2;
+  bottom: 0;
+  right: calc(var(--dialog-width) / 2);
+  translate: 50% 50%;
+}
+
+@supports (anchor-name: --card-dialog-page) {
+  #board dialog[data-shell] > article {
+    anchor-name: --card-dialog-page;
+  }
+
+  #board dialog[data-shell] > [data-part='tucked'] {
+    position-anchor: --card-dialog-page;
+    top: anchor(bottom);
+    bottom: auto;
+    left: anchor(center);
+    right: auto;
+    translate: -50% -50%;
+  }
+}
+
+#board dialog[data-shell] > [data-part='tucked']:empty,
+#board dialog[data-shell][data-lowered] > [data-part='tucked'] {
+  display: none;
+}
+
+#board dialog[data-shell]:not([data-lowered]):has(> [data-part='tucked'] > *) > article {
+  padding-block-end: calc(var(--attached-card-width) * 7 / 10 + var(--space-3));
+}
+
+#board dialog[data-shell] > [data-part='tucked'] > section[data-part='attached'] > h3 {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
 /* The player cards to attach, one under the other. */
@@ -474,6 +561,22 @@
 
   #board dialog[data-shell] footer > button {
     flex: 1;
+  }
+
+  /*
+   * The sheet's bottom is the screen's, so on a phone the fan lies over the sheet's top edge
+   * instead, at the right, clear of the × and of the card peeking out at the left, and the sheet
+   * keeps room under its top edge for the half that lies on it.
+   */
+  #board dialog[data-shell] > [data-part='tucked'] {
+    position-anchor: none;
+    inset: 0 calc(var(--touch-target) + var(--space-4)) auto auto;
+    translate: 0 -50%;
+  }
+
+  #board dialog[data-shell]:not([data-lowered]):has(> [data-part='tucked'] > *) > article {
+    padding-block: calc(var(--attached-card-width) * 7 / 10 + var(--space-3))
+      calc(var(--space-3) + var(--safe-bottom));
   }
 }
 

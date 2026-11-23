@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { sentences } from '@arkham/util';
 import type { ShownCard } from '../catalog/cardFace';
@@ -12,12 +12,22 @@ import './card_zoom.css';
  * as its card (`TreacheryCard`); any other card or side as its picture once it has loaded, and
  * under the picture, for a card without one or until it loads, what the card data says of it in
  * our own frame: its name, type and traits. A card with a back turns over with a button. It
- * opens from the card shell's card (`CardDialog`) and from a location's attached cards; reading
- * it changes nothing in the game, so it offers no actions (the shell's page does). A native modal
+ * opens from the card shell's card (`CardDialog`) and from the cards attached to a location or an
+ * enemy; reading it changes nothing in the game, so the only actions it offers are the caller's
+ * (`children`: an attached card's Discard). A native modal
  * `<dialog>` brings focus trapping and Escape. On a phone it fills the screen and the back
  * gesture closes it too (`useBackCloses`).
  */
-export function CardZoom({ card, onClose }: { card: ShownCard; onClose: () => void }) {
+export function CardZoom({
+  card,
+  onClose,
+  children,
+}: {
+  card: ShownCard;
+  onClose: () => void;
+  /** What the players can do with the card, under it (Discard for an attached card). */
+  children?: ReactNode;
+}) {
   const { t } = useTranslation();
   const titleId = useId();
   const dialog = useRef<HTMLDialogElement>(null);
@@ -62,6 +72,7 @@ export function CardZoom({ card, onClose }: { card: ShownCard; onClose: () => vo
           {t(side === 'front' ? 'cardZoom.showBack' : 'cardZoom.showFront')}
         </button>
       )}
+      {children}
     </dialog>
   );
 }

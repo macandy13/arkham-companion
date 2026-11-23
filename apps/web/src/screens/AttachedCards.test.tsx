@@ -14,6 +14,7 @@ import { barricade, handcuffs, hidingSpot } from '@arkham/scenarios';
 import { initI18n } from '../i18n';
 import { actionsOn } from '../state/gameActions.test_support';
 import { AttachedCards } from './AttachedCards';
+import { TuckedCardsContext } from './CardDialog';
 
 const study = instanceId('study');
 const ghoul = instanceId('ghoul');
@@ -84,14 +85,35 @@ describe('AttachedCards', () => {
     expect(screen.queryByRole('dialog', { hidden: true })).toBeNull();
   });
 
-  it('discards an attached card', async () => {
+  it('discards an attached card from its large view, which then closes', async () => {
     const table = ghoulInStudy();
     table.play({ type: 'AttachPlayerCard', hostId: study, code: barricade.code });
     renderAttachedCards(table, study);
 
+    tap('Read Barricade');
     tap('Discard Barricade');
     await act(async () => {});
 
     expect(table.board.location(study).attachments).toBeUndefined();
+    expect(screen.queryByRole('dialog', { name: 'Barricade' })).toBeNull();
+  });
+
+  it('fans the cards into the slot of the card dialog around it', () => {
+    const table = ghoulInStudy();
+    table.play({ type: 'AttachPlayerCard', hostId: ghoul, code: handcuffs.code });
+    const slot = document.createElement('div');
+    document.body.append(slot);
+    render(
+      <TuckedCardsContext.Provider value={slot}>
+        <AttachedCards board={table.board} host={ghoul} actions={actionsOn(table)} busy={false} />
+      </TuckedCardsContext.Provider>,
+    );
+
+    expect(
+      within(slot)
+        .getAllByRole('button')
+        .map((button) => button.getAttribute('aria-label')),
+    ).toEqual(['Read Handcuffs', 'Attach a card']);
+    slot.remove();
   });
 });
