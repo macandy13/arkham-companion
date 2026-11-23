@@ -329,7 +329,7 @@ export const spreadingFlamesCardDefs: readonly CardStats[] = [
       {
         free: true,
         cost: { spend: 'groupClues', amount: perInvestigator(1) },
-        effects: [dealDamageTo(anEnemy(yourLocation()), perInvestigator(1))],
+        effects: [dealDamageTo(anEnemy({ at: yourLocation() }), perInvestigator(1))],
       },
       resignAction(),
     ],
