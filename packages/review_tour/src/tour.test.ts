@@ -27,6 +27,12 @@ describe('parseTour', () => {
             picture: 'shots/board.spec.ts/board.png',
           },
         ],
+        evidence: [
+          {
+            claim: 'An attack of opportunity leaves the enemy ready.',
+            test: 'attacks.test.ts › ready',
+          },
+        ],
         rest: ['Tests gain a `kind`.'],
       }),
     );
@@ -48,6 +54,12 @@ describe('parseTour', () => {
             },
           ],
           picture: 'shots/board.spec.ts/board.png',
+        },
+      ],
+      evidence: [
+        {
+          claim: 'An attack of opportunity leaves the enemy ready.',
+          test: 'attacks.test.ts › ready',
         },
       ],
       rest: ['Tests gain a `kind`.'],
@@ -78,6 +90,7 @@ describe('parseTour', () => {
       concept: 'A rename.',
       questions: [],
       stops: [{ title: 'The rename', text: 'Nothing else changes.', code: [] }],
+      evidence: [],
       rest: [],
     });
   });
@@ -85,6 +98,11 @@ describe('parseTour', () => {
   it.each([
     ['not JSON', '<!-- review-tour { concept: 1 } -->', 'not valid JSON'],
     ['no concept', body({ stops: [] }), 'concept must be a non-empty string'],
+    [
+      'evidence without a proof',
+      body({ concept: 'A.', evidence: [{ claim: 'It works.' }] }),
+      'evidence[0] must show its claim by a test, an example or a picture',
+    ],
     [
       'an empty problem',
       body({ problem: ' ', concept: 'A.' }),

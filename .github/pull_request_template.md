@@ -9,6 +9,7 @@
   "stops": [
     { "title": "…", "text": "…", "code": [{ "file": "…", "ranges": [{ "from": 1, "to": 1 }], "highlight": [] }] }
   ],
+  "evidence": [{ "claim": "…", "test": "…" }],
   "rest": []
 }
 -->

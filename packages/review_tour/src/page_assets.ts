@@ -58,6 +58,15 @@ h1 { font-size: 28px; line-height: 1.2; font-weight: 650; letter-spacing: -0.015
 .questions p { margin: 0; font-size: 17px; }
 .questions .about { font-size: 13px; opacity: .75; }
 .questions a { color: inherit; font-size: 14px; font-weight: 500; }
+.evidence { display: grid; gap: 14px; scroll-margin-top: 64px; }
+.evidence h2 { font-size: 20px; line-height: 1.3; font-weight: 600; letter-spacing: -0.01em; margin: 0; }
+.evidence ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 18px; }
+.evidence li { display: grid; gap: 8px; padding-left: 28px; position: relative; }
+.evidence li::before { content: "✓"; position: absolute; left: 4px; color: var(--accent); font-weight: 600; }
+.evidence li > p { margin: 0; max-width: 62ch; }
+.evidence .test { font-size: 14px; color: var(--muted); }
+.example { margin: 0; padding: 12px 14px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--soft); overflow-x: auto; font: 13px/1.5 var(--font-code); font-variant-ligatures: none; }
+.example code { background: none; padding: 0; font-size: inherit; }
 .stop { display: grid; gap: 14px; scroll-margin-top: 64px; }
 .stop > header { display: grid; grid-template-columns: auto 1fr; gap: 2px 12px; align-items: center; padding: 0; }
 .stop-number {
