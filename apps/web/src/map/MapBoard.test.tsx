@@ -1033,6 +1033,8 @@ describe('MapBoard', () => {
         'Close',
         'Attach a card',
         'Engage · 1 action',
+        'Fight by card effect',
+        'Evade by card effect',
         'Deal 1 damage',
         'Exhaust',
         'Evaded by alder',
@@ -1091,6 +1093,8 @@ describe('MapBoard', () => {
         'Read rats',
         'Close',
         'Attach a card',
+        'Fight by card effect',
+        'Evade by card effect',
         'Deal 1 damage',
         'Exhaust',
         'Defeat',
@@ -1252,7 +1256,13 @@ describe('MapBoard', () => {
     it.each([
       {
         location: 'study',
-        buttons: ['Close', 'Attach a card', 'Investigate · 1 action', 'Take a clue, no test'],
+        buttons: [
+          'Close',
+          'Attach a card',
+          'Investigate · 1 action',
+          'Take a clue, no test',
+          'Investigate by card effect',
+        ],
       },
       {
         location: 'hallway',

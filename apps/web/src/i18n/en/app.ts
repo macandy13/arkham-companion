@@ -572,6 +572,19 @@ export const appTexts = {
     raise: 'Raise the dialog',
     waiting: 'Waiting next',
   },
+  byCard: {
+    title: 'By card effect',
+    investigate: 'Investigate',
+    fight: 'Fight',
+    evade: 'Evade',
+    test: '{{test}} by card effect',
+    testBy: '{{test}} by card effect · {{name}}',
+    who: {
+      investigate: 'Who investigates?',
+      fight: 'Who fights?',
+      evade: 'Who evades?',
+    },
+  },
   moveByCard: {
     start: 'Move by card effect',
     label: 'Choose where to move',

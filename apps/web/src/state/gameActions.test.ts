@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  atLocation,
   blankAct,
   blankEnemy,
   blankLocation,
@@ -117,6 +118,39 @@ describe('gameActions', () => {
       expect(table.board.decisions).toEqual([]);
       expect(table.board.enemiesEngagedWith(brook).map(({ id }) => id)).toEqual([lurker]);
     });
+  });
+
+  describe('testByCard', () => {
+    /** Alder's turn in the Study; Brook in the Hall, a ghoul there engaged with nobody. */
+    const brookInTheHallOnAldersTurn = () =>
+      PlayTable.start(
+        newGame()
+          .withLocation(study, blankLocation('study'), { revealed: true })
+          .withLocation(hall, blankLocation('hall'), { revealed: true })
+          .withConnection(study, hall)
+          .withInvestigator(alder, { locationId: study })
+          .withInvestigator(brook, { locationId: hall })
+          .withCard(ghoul, blankEnemy('ghoul'), atLocation(hall))
+          .withTurnOf(alder),
+      );
+
+    it.each([
+      { kind: 'investigate', tester: alder, target: hall, test: 'intellect', about: 'hall' },
+      { kind: 'fight', tester: alder, target: ghoul, test: 'combat', about: 'ghoul' },
+      { kind: 'evade', tester: brook, target: ghoul, test: 'agility', about: 'ghoul' },
+    ] as const)(
+      '$kind by $tester at the $about asks a $test test and leaves alder 3 actions',
+      async ({ kind, tester, target, test, about }) => {
+        const table = brookInTheHallOnAldersTurn();
+
+        await actionsOn(table).testByCard(kind, tester, target);
+
+        expect(table.board.decisions).toMatchObject([
+          { for: tester, action: kind, about: cardName(about), test: { skill: test } },
+        ]);
+        expect(table.board.investigator(alder)).toMatchObject({ actions: 3 });
+      },
+    );
   });
 
   describe("with a treachery like Frozen in Fear in alder's threat area", () => {
