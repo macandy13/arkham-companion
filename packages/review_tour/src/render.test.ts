@@ -120,7 +120,7 @@ describe('renderPage', () => {
     expect(html).toContain(
       '<p>An attack of opportunity leaves the enemy ready.</p><p class="test">Checked by <code>attacks.test.ts › leaves the enemy ready</code></p>',
     );
-    expect(html).toContain('<pre class="example"><code>');
+    expect(html).toMatch(/<pre class="example"><code>.*deal.*cancelled.*<\/code><\/pre>/);
     expect(html).toContain('https://raw/after.png');
     expect(html).toContain('href="#evidence"');
   });
