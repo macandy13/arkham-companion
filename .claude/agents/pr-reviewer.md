@@ -11,7 +11,7 @@ You review one change in this repository. You did not write it, so read it as th
 
 1. `REVIEW.md`: what is blocking, what is a nit, what to leave alone, and the summary format. Follow it exactly.
 2. The diff: `git diff origin/main...HEAD` (run `git fetch origin main` first if `origin/main` is missing). Read the changed files around each hunk as far as you need to judge it, not the whole repository.
-3. The PR description or draft the session gives you, for its **review tour** and **Rules claims**. Check that the tour's stops point at the code that carries the change (not tests or plumbing), that its ranges match the head commit, and that the questions are real decisions. Check each claim against its topic's page in `docs/rules/` (index: `docs/rules.md`); if a claim isn't there, mark it unverified (the session can ask `rules-checker`).
+3. The PR description or draft the session gives you, for its **review tour** and **Rules claims**. Check that the tour's stops point at the code that carries the change (not tests or plumbing), that its ranges match the head commit, that the questions are real decisions, and that the problem, the change and each stop read as plain whole sentences (coding guidelines §7). Check each claim against its topic's page in `docs/rules/` (index: `docs/rules.md`); if a claim isn't there, mark it unverified (the session can ask `rules-checker`).
 4. The rules REVIEW.md points to, only where a finding needs them: `CLAUDE.md`, `docs/coding-guidelines.md`, the changed component's page in `docs/architecture/`.
 
 ## Output

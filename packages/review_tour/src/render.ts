@@ -63,9 +63,9 @@ ${renderNav(pr.number, tour)}
 <header>
 <p class="kicker">${[...title.labels, `as of ${pr.headSha.slice(0, 7)}`].map(escapeHtml).join(' · ')}</p>
 <h1>${escapeHtml(title.headline)}</h1>
-<p class="concept">${inline(tour.concept)}</p>
 <p class="meta">${renderMeta(input)}</p>
 </header>
+${renderLead(tour)}
 ${renderQuestions(tour.questions, pr.url)}
 ${tour.stops.map((stop, index) => renderStop(stop, index + 1, input.stops[index])).join('\n')}
 <section class="done"><p>That's the whole change.</p><a href="${escapeHtml(pr.url)}/files">Review on GitHub</a></section>
@@ -104,6 +104,20 @@ export function tourSummary({
     plural(tour.questions.length, 'question'),
     `${changedLines.onTour} of ${changedLines.all} changed lines on the tour`,
   ];
+}
+
+/** The problem first, when the tour states it, then how the PR solves it. */
+function renderLead(tour: Tour): string {
+  const sections: [heading: string, text: string][] = [
+    ...(tour.problem === undefined ? [] : [['The problem', tour.problem] as [string, string]]),
+    ['What changes', tour.concept],
+  ];
+  return sections
+    .map(
+      ([heading, text]) =>
+        `<section class="lead"><h2>${heading}</h2><p>${inline(text)}</p></section>`,
+    )
+    .join('\n');
 }
 
 function renderQuestions(questions: readonly TourQuestion[], prUrl: string): string {

@@ -48,7 +48,9 @@ nav ol a.on { background: var(--accent); color: var(--accent-fg); }
 header { display: grid; gap: 12px; padding-top: 28px; }
 .kicker { font-size: 13px; color: var(--muted); }
 h1 { font-size: 28px; line-height: 1.2; font-weight: 650; letter-spacing: -0.015em; margin: 0; text-wrap: balance; }
-.concept { font-size: 18px; margin: 0; max-width: 60ch; }
+.lead { display: grid; gap: 6px; }
+.lead h2 { font-size: 12px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 0; }
+.lead p { font-size: 18px; margin: 0; max-width: 60ch; }
 .meta { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 13px; color: var(--muted); margin: 0; }
 .questions { background: var(--ask); color: var(--ask-fg); border-radius: var(--radius); padding: 18px 20px; display: grid; gap: 14px; }
 .questions h2 { font-size: 12px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; margin: 0; opacity: .75; }

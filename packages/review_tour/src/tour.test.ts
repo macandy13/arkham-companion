@@ -9,6 +9,7 @@ describe('parseTour', () => {
   it('reads the block from anywhere in the body', () => {
     const tour = parseTour(
       body({
+        problem: 'Two commands dealt the same attack.',
         concept: 'One command for every attack.',
         questions: [{ text: 'Keep the old name?', stop: 1, picked: 'no' }],
         stops: [
@@ -31,6 +32,7 @@ describe('parseTour', () => {
     );
 
     expect(tour).toEqual({
+      problem: 'Two commands dealt the same attack.',
       concept: 'One command for every attack.',
       questions: [{ text: 'Keep the old name?', stop: 1, picked: 'no' }],
       stops: [
@@ -83,6 +85,11 @@ describe('parseTour', () => {
   it.each([
     ['not JSON', '<!-- review-tour { concept: 1 } -->', 'not valid JSON'],
     ['no concept', body({ stops: [] }), 'concept must be a non-empty string'],
+    [
+      'an empty problem',
+      body({ problem: ' ', concept: 'A.' }),
+      'problem must be a non-empty string',
+    ],
     ['stops not a list', body({ concept: 'A.', stops: {} }), 'stops must be a list'],
     [
       'a stop without text',

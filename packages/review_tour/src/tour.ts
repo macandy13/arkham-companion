@@ -5,7 +5,13 @@
  * the code it points at (`cutStopLines`) and the goldens it names (`pictureVariants`).
  */
 export interface Tour {
-  /** One or two sentences on what changes conceptually, the page's lead. */
+  /**
+   * What is wrong or missing before this PR and why it matters, the page's first section, so the
+   * reviewer knows the problem before reading the answer. Optional only so that tours written
+   * before it existed still build; `docs/coding-guidelines.md` §7 asks for it.
+   */
+  readonly problem?: string;
+  /** How the PR solves the problem, in a few plain sentences: the page's "What changes". */
   readonly concept: string;
   readonly questions: readonly TourQuestion[];
   readonly stops: readonly TourStop[];
@@ -88,6 +94,7 @@ function readTour(json: unknown): Tour {
     }
   });
   return {
+    ...optional('problem', tour.problem, (value) => text(value, 'problem')),
     concept: text(tour.concept, 'concept'),
     questions,
     stops,
