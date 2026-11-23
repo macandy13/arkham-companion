@@ -1,7 +1,7 @@
 import type { BasicAction } from './action_costs';
 import type { CampaignLog, TraumaKind } from './campaign/campaign_log';
 import type { AbilityCommand, TestedAction } from './abilities';
-import type { PlayerCardCommand } from './commands';
+import type { PlayerCardCommand, StageDeck } from './commands';
 import type {
   CardCode,
   DecisionId,
@@ -256,7 +256,7 @@ export interface InvestigatorChanged {
  * An investigator ran out of health (`damage`) or sanity (`horror`), or a
  * card effect defeated them (`cardEffect`, `DefeatInvestigator`); their status
  * becomes `defeated`, and a turn in progress ends with them. Produced by
- * `AdjustInvestigator` and `ResolveEnemyAttack` right after the
+ * `AdjustInvestigator` and `DealEnemyAttack` right after the
  * `InvestigatorChanged` that caused it, and by `DefeatInvestigator`, followed
  * by the clean-up events (`investigatorLeavesEvents`). The defeat matters to
  * the campaign: a defeat by damage or horror earns trauma by itself, one by a
@@ -340,7 +340,7 @@ export interface DecisionWithdrawn {
  * The current agenda `cardId` advanced and its reverse side resolves now: it
  * opens the `advanced` window while the agenda is still current. Follows
  * the `CardFlipped` that turns it over; drops decisions about the agenda.
- * Produced by `AdvanceAgenda`, which follows it with `CurrentCardChanged` once
+ * Produced by `Advance` of the agenda, which follows it with `CurrentCardChanged` once
  * the reverse side has resolved.
  */
 export interface AgendaAdvanced {
@@ -348,7 +348,7 @@ export interface AgendaAdvanced {
   cardId: InstanceId;
 }
 
-/** Like `AgendaAdvanced`, for the act deck. Produced by `AdvanceAct`. */
+/** Like `AgendaAdvanced`, for the act deck. Produced by `Advance` of the act. */
 export interface ActAdvanced {
   type: 'ActAdvanced';
   cardId: InstanceId;
@@ -356,19 +356,19 @@ export interface ActAdvanced {
 
 /**
  * `cardId` is now the current card of `deck` (absent once the deck is used
- * up). Produced by `AdvanceAgenda`/`AdvanceAct` after the reverse side of the
+ * up). Produced by `Advance` after the reverse side of the
  * old card has resolved and a `CardMoved` has taken it out of the game.
  */
 export interface CurrentCardChanged {
   type: 'CurrentCardChanged';
-  deck: 'agenda' | 'act';
+  deck: StageDeck;
   cardId?: InstanceId;
 }
 
 /**
  * The scenario is over with the given resolution (`GameMeta.resolution`), which
  * the campaign records. Produced by `EndScenario` (typically a reverse side's
- * `endScenario`) and by `AdvanceAgenda`/`AdvanceAct` when the last card of
+ * `endScenario`) and by `Advance` when the last card of
  * a deck advances without its reverse side ending the scenario.
  *
  * Without a `resolution` no resolution was reached because every investigator
@@ -551,7 +551,7 @@ export interface EnemyEngaged {
  * Enemy `enemyId` attacked the investigator; follows the attack's damage and
  * horror (`InvestigatorChanged`). Changes no state: it marks the attack for
  * `windowsOpenedBy` (`attacked`), since the damage alone names no enemy.
- * Produced by `ResolveEnemyAttack` and `DealEnemyAttack` (`enemyAttackEvents`).
+ * Produced by `DealEnemyAttack` (`enemyAttackEvents`).
  */
 export interface EnemyAttacked {
   type: 'EnemyAttacked';
@@ -621,7 +621,7 @@ export interface PhaseChanged {
 /**
  * The outstanding steps of the current phase are now `steps`. Produced by
  * `NextPhase` before it runs a step (so a decision raised by the step resumes
- * after it) or expands the enemy attacks, and by `ResolveEnemyAttack`.
+ * after it) or expands the enemy attacks, and by an enemy phase `DealEnemyAttack`.
  */
 export interface PhaseStepsChanged {
   type: 'PhaseStepsChanged';

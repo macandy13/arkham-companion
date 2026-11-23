@@ -5,25 +5,34 @@ A scenario's own rules are abilities of its agendas and acts.
 
 An [`Ability`](../../packages/engine/src/abilities.ts) is:
 
-- a timing window (setup opens none):
-  - `revealed`,
-  - `entered`,
-  - `turnBegins`,
-  - `turnEnds` (the ending investigator's threat area and the location they end it at),
-  - `eachTurnEnds` (any investigator's turn, for a card in play),
-  - `phaseEnds`,
-  - `roundEnds`,
-  - `advanced`,
-  - `enemyDefeated`, `investigatorEntered` and `addedToVictoryDisplay`, objectives opened for the current agenda and act (`whenEnemyDefeated`, `whenAnInvestigatorEnters`, `whenVictoryDisplayHolds`); `addedToVictoryDisplay` also opens for a card placed beneath the current act, which counts when the reference names that zone too (Augurs of Flame),
-  - `tested` after a basic action's test, at ST.6 before its results,
-  - `succeededHere` after any passed test, for each card at the location of what the test was about (the tester's own location for a card at no location, such as a revelation), once more with the basic action it belongs to (`afterSucceedingHere({ action: 'investigate' }, …)`, David Renfield's "after you successfully investigate [his] location"), naming the tester and the margin when the answer gave one,
-  - `testEnded` once that test has ended (`EndSkillTest`, queued after its results, ST.8), for "after applying all results" keywords,
-  - `engaged` either way round,
-  - `attacked` (attacks of opportunity included),
-  - `evaded` for the enemy, naming the evader, once `EvadeEnemy` (a passed evasion or an effect) has exhausted and disengaged it, so later than `tested` (`afterEvaded`, Ruth Turner), and once more with `successful` after a passed evasion test only, not an automatic evade (`afterEvadingSuccessfully`, Cornelia Akely),
-  - `cluesDiscovered`,
-  - `defeated` for the enemy itself, naming where it was,
-  - `tokensPlaced` for tokens placed on the card (`afterTokensPlaced`, Wild Flames' "after doom is placed on the agenda"; `whenTokensOnSelf` for an objective on a count);
+- a timing window (`TimingWindow`; setup opens none): the event it waits for (`on`), whose cards hear it (`of`, a `ListenerScope`) and, optionally, which card the event must be about (`filter`, a `CardFilter`). A new window on a known event is a scope or a filter, not a new kind.
+  - The scopes (`windowsOpenedBy` opens each event for its scopes in a fixed order, `openFor`):
+    - `self`, the card the event is about (for a test, also the cards attached to it);
+    - `yours`, the named investigator's threat area, then their location;
+    - `inPlay`, every card in play with active abilities;
+    - `currentActOrAgenda`, the current agenda, then act, for objectives;
+    - `here`, every card at the location the window names (`cardsWhoseLocationIs`), for "at [this card]'s location".
+  - A window without `of` takes the event's usual listeners (`defaultScope`): `yours` for `turnBegins` and `turnEnds`, `inPlay` for `phaseEnds` and `roundEnds`, `currentActOrAgenda` for `addedToVictoryDisplay`, `here` for `succeeded`, otherwise `self`.
+  - One matcher (`hears`) fires an ability when the event matches (with its phase, action, outcome or token), the scope matches, and the filter matches the event's card (`OpenedWindow.subjectId`).
+  - The objectives are scoped windows: `whenEnemyDefeated(code)` is `{ on: 'defeated', of: 'currentActOrAgenda', filter: { code } }`, `whenAnInvestigatorEnters(code)` the same on `entered`, and `atEndOfEachTurn` is `{ on: 'turnEnds', of: 'inPlay' }` (Umôrdhoth).
+  - The events:
+    - `revealed`,
+    - `entered`,
+    - `turnBegins`,
+    - `turnEnds`,
+    - `phaseEnds`,
+    - `roundEnds`,
+    - `advanced`,
+    - `addedToVictoryDisplay` (`whenVictoryDisplayHolds`), which also opens for a card placed beneath the current act, which counts when the reference names that zone too (Augurs of Flame),
+    - `tested` after a basic action's test, at ST.6 before its results,
+    - `succeeded` after any passed test, at ST.6, heard `here` at the location of what the test was about (the tester's own location for a card at no location, such as a revelation), once more with the basic action it belongs to (`afterSucceedingHere({ action: 'investigate' }, …)`, David Renfield's "after you successfully investigate [his] location"), naming the tester and the margin when the answer gave one,
+    - `testEnded` once that test has ended (`EndSkillTest`, queued after its results, ST.8), for "after applying all results" keywords,
+    - `engaged` either way round,
+    - `attacked` (attacks of opportunity included),
+    - `evaded` for the enemy, naming the evader, once `EvadeEnemy` (a passed evasion or an effect) has exhausted and disengaged it, so later than `tested` (`afterEvaded`, Ruth Turner), and once more with `successful` after a passed evasion test only, not an automatic evade (`afterEvadingSuccessfully`, Cornelia Akely),
+    - `cluesDiscovered`,
+    - `defeated` for the enemy itself, naming where it was,
+    - `tokensPlaced` for tokens placed on the card (`afterTokensPlaced`, Wild Flames' "after doom is placed on the agenda"; `whenTokensOnSelf` for an objective on a count);
 - an optional condition (`AbilityCondition`), mostly over the references effects use:
   - `currentCard`, the current act or agenda: `duringAct([codes.trapped], …)`, `duringAgenda([codes.theyreGettingOut], …)`;
   - `countOf`, how many things a reference names as the window opens:
@@ -50,7 +59,7 @@ Some effects in detail:
 - An effect that leaves an enemy unengaged next to an investigator ends with `engageReadyEnemies()` (`EngageReadyEnemies`), which runs the engagement rule for every enemy at a location, as setup does.
 - Effects on an enemy take a reference to it: `dealDamageTo(enemy, amount)` (`DamageEnemy`, which defeats the enemy once the damage reaches its health), `exhaustEnemy` and `defeatEnemy` ("it is automatically defeated"), next to `healSelf` and `readySelf`. Exhausting an exhausted enemy, like readying a ready one, does nothing, so an `each…` reference resolves whatever state its enemies are in.
 - Tokens changing holder are one command, `MoveTokens { token, amount, from, to }`, between `TokenHolder`s: `'pool'`, `'currentAgenda'`, `{ card }`, `{ investigator }` (their clues and resources) or `{ locationOf }` (the location an investigator is at). Placing is a move from the pool, removing a move back to it. It moves as many as `from` holds (`amount` a number, a per-investigator value, `'all'`, or `{ upTo }` to top `to` up), and nothing from or to a card out of play, nor damage onto a card without health or horror onto one without sanity. A card counting its own tokens (`whenTokensOnSelf`) sees moved ones like placed ones, and an enemy that ends up with as much damage as its health is defeated (`defeatedByDamage`, shared with `DamageEnemy`). The factories keep the card's words: `placeDoomOnAgenda`, `placeDoomOn`, `placeDoomOnSelf`, `removeDoomFromAgenda`, `removeDoomFrom(eachEnemy({ trait: trait('Cultist') }), 1)` (passes over a cultist without doom), `placeCluesOn`, `placeCluesOnSelf`, `placeCluesOnSelfUpTo(perInvestigator(2))` (Ritual Site), `moveTokens(token, amount, from, to?)` (to the current agenda by default) and `takeCluesFrom(card, amount, investigator?)` ("take control of 1 of the clues on Constance Dumaine"), `gainClues`, `gainResources` (the basic resource action stays `GainResources`, which provokes) and `placeYourClues` ("place 1 of your clues on your location", False Lead). Paying and discovering keep their own commands (`SpendResources`, `SpendCluesAsGroup`, `DiscoverClues`), as a cost is paid in full and discovering has its own restrictions and windows. Each factory takes instances too and then builds a plain command (overloads: `placeDoomOn(hall, 1)` is a `MoveTokens`, `placeDoomOn({ ref: 'self' }, 1)` an `AbilityEffect`), so the UI and tests write moves the way card data does. The players' own corrections stay a `ManualAdjust`.
-- `enemyAttacks(enemy, who)` ("it attacks you", `EnemyAttacks`) asks the attacked investigator the same confirm decision as a retaliate or alert attack (`attackDecision`, kind `cardAttack`, id `cardAttack:<enemy>:<investigator>`; with a `keyword` it is that keyword's attack): printed damage and horror, lowered for soak, or skipped for a cancel. `engagesYou(enemy, who)` is `EngageEnemy` asked by a card: it takes the enemy from any location and does nothing for a massive enemy or one already engaged with the investigator, while the engage action keeps refusing those.
+- `enemyAttacks(enemy, who)` ("it attacks you", `EnemyAttacks`) asks the attacked investigator the same confirm decision as a retaliate or alert attack (`attackDecision`, kind `cardAttack`, id `cardAttack:<enemy>:<investigator>`; with a keyword `kind` it is that keyword's attack): printed damage and horror, lowered for soak, or skipped for a cancel. `engagesYou(enemy, who)` is `EngageEnemy` asked by a card: it takes the enemy from any location and does nothing for a massive enemy or one already engaged with the investigator, while the engage action keeps refusing those.
 - `advanceAgenda()` advances the current agenda as its doom threshold would, and `removeConnection(from, to)` removes a declared connection or cuts a printed one, and does nothing when it is already gone (`source`, below).
 - "Shuffle it into the encounter deck" is `shuffleSelfIntoEncounterDeck()` (`MoveCard`, then `ShuffleEncounterDeck`): a drawn card moved there while it resolves is not placed afterwards. `shuffleSetAsideIntoEncounterDeck(codes)` is `fromSetAside(codes, encounterDeck)` and then `ShuffleEncounterDeck`: the copies there are go in, and the deck is shuffled once, even when no copy was left.
 - "This card gains surge" (`GainSurge`) marks the resolving card (`CardInstance.gainedSurge`), and placing it queues the surge draw a printed surge would have queued.
@@ -112,8 +121,8 @@ whenAdvanced(revealLocation(onlyCopy(codes.parlor)), …)
 
 - What a card's test does can depend on how much it passed or failed by: an entry of `onPass` or `onFail` is then a `ForEachPoint` (`forEachPoint(…)`) or a `ByMargin` (`byMargin({ 0: […], 2: […] })`), next to the outcome's plain effects and in their order. `answerCommands` expands them with the answer's `margin` (`withMargin`): a `ForEachPoint`'s amount (`takeDamage(1)`, `placeYourClues(1)`, doom) is multiplied by the margin into one effect, as the Rules Reference's "For each" asks, and anything else (a `youMustEither`) resolves once for each point; a `ByMargin` runs the highest tier the margin reaches. Their effects are deferred like the outcome's others (`withDeferredOutcomes`). An answer without a margin counts as the least its outcome means, a fail by 1 or a pass by 0. On their own, outside a test's outcome, both are rejected (`marginOutsideTest`).
 - A test whose difficulty depends on the table lists `difficultyChanges` on its `TestSkill`: `plusDifficultyPer(statOf(you(), 'damage'))` adds 1 for each damage on the tester (Eager for Death), `plusDifficultyIf(condition, 2)` adds 2 while an `AbilityCondition` holds (Red Herring's 2 or more clues, Mutated!'s enemy at your location). `resolveEffect` reads them first (`withDifficultyChanges`), folds them into `test.difficulty` (never below 0) and drops them, so the command and its decision carry a plain number, and a reference inside a change (`eachEnemy`) is never taken for one the effect repeats over. A test among a test's outcomes reads the table when that outcome resolves.
-- "Test [willpower] (3) or [agility] (3)" is `skillTestOfEither(id, ['willpower', 'agility'], 3, outcomes)`: a choice for the tester with one `skillTest` per skill, the same outcomes either way.
-- Windows for every card in play (`eachTurnEnds`, `phaseEnds`, `roundEnds`) skip unrevealed locations, whose abilities are on their revealed side (`hasActiveAbilities`, also read by modifiers and card actions).
+- "Test [willpower] (3) or [agility] (3)" is `skillTestOfEither(id, ['willpower', 'agility'], 3, outcomes)`: a choice for the tester with one `skillTest` per skill, the same outcomes either way. A difficulty the app can't read is an `AskedCount` in place of the number: `cardsInYourHand` ("X, where X is the number of cards in your hand", Extraplanar Visions) gives each skill's option a `cardsInHand` count, and the test's difficulty is `{ answer: 'cardsInHand' }`, which the answer fills in (`AnsweredAmount`, also inside `TestSkill.test`) before the test is asked.
+- Windows heard by every card in play (scope `inPlay`: `atEndOfEachTurn`, `phaseEnds`, `roundEnds`) skip unrevealed locations, whose abilities are on their revealed side (`hasActiveAbilities`, also read by modifiers and card actions).
 
 ## Card actions
 
@@ -148,9 +157,9 @@ An action ability provokes attacks of opportunity unless it is a Resign or Parle
 
 The `investigatorTurn` condition ("during any investigator's turn") holds while anyone's turn is in progress.
 
-- `advanceBySpendingClues(clues)` is the act's group clue spend as a free action with that condition, a `groupClues` cost and `AdvanceAct`, which the act builders give every act with a clue threshold (after its printed actions, so their indices stay).
+- `advanceBySpendingClues(clues)` is the act's group clue spend as a free action with that condition, a `groupClues` cost and `advanceAct()`, which the act builders give every act with a clue threshold (after its printed actions, so their indices stay).
 - An act whose objective sets its own time and place (The Barrier: "When the round ends, investigators in the Hallway may, as a group, spend the requisite number of clues to advance") has no such action but `advanceBySpendingCluesAtRoundEnd(decision, clues, location)`: a `roundEnds` ability that, once those at the location hold the clues (a `groupClues` value), lets the lead decide; its spend option pays with `SpendCluesAsGroup` (only investigators at the location, the lead first by default) and advances the act. Without a location (Spreading Flames' "Where There's Smoke…": "At the end of the round, investigators may spend the requisite number of clues, as a group") every investigator who may spend clues counts and pays (`cluesHeldForObjective`).
-- `AdvanceAct` itself pays nothing: it is that action's effect, an objective's or another card's.
+- `Advance { deck: 'act' }` itself pays nothing: it is that action's effect, an objective's or another card's. Act and agenda share the one command (`deck`); only its first step differs, an agenda removing all doom in play.
 - `BoardView.act.advance` says how clues advance the act (`ActAdvance`): `spendClues`, the clues the investigators hold against that cost (`cluesToAdvance`), `spendCluesAtRoundEnd`, the clues of those at the objective's location (`roundEndClueObjective`), shown without an Advance button, or `cluesOnAct`, an objective counting the clues on it (`tokenObjective`).
 - `PlayTable.spendCluesToAdvanceAct` takes the action for the investigator whose turn it is.
 

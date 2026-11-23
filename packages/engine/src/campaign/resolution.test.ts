@@ -865,7 +865,7 @@ describe('proposeResolution with steps that read the cards beneath the act', () 
 
   it('still finds them beneath the act once it advanced out of the game', () => {
     const { context, state } = suspectsTable.start();
-    const advanced = stateAfter(context, state, { type: 'AdvanceAct' });
+    const advanced = stateAfter(context, state, { type: 'Advance', deck: 'act' });
 
     const proposal = campaign.proposeResolution(context, advanced, {
       byId: {

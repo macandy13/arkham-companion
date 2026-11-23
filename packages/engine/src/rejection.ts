@@ -1,6 +1,6 @@
 import { assertNever } from '@arkham/util';
 import type { InvestigatorFate, StoryCondition } from './campaign/campaign_log';
-import type { CommandType } from './commands';
+import type { CommandType, StageDeck } from './commands';
 import type {
   CardCode,
   DecisionId,
@@ -104,12 +104,12 @@ export type Rejection =
   | { code: 'tokenNotOnInvestigators'; token: TokenKind }
   /** `MoveTokens` from the pool to the pool, or `'all'` from the pool, which holds no count. */
   | { code: 'invalidTokenMove' }
-  /** `AdvanceAgenda`/`AdvanceAct` while that deck has no current card. */
-  | { code: 'noCurrentCard'; deck: 'agenda' | 'act' }
+  /** `Advance` while that deck has no current card. */
+  | { code: 'noCurrentCard'; deck: StageDeck }
   /** `BecomeActAndAgenda` with `next` while no agenda follows the current one. */
   | { code: 'noNextAgenda' }
   /** The last card of a deck advances, but neither its reverse side nor the command names a resolution. */
-  | { code: 'resolutionRequired'; deck: 'agenda' | 'act' }
+  | { code: 'resolutionRequired'; deck: StageDeck }
   /** A command after the scenario ended (`GameMeta.ended`); only `ManualAdjust` is still accepted. */
   | { code: 'scenarioEnded'; command: CommandType }
   /**
@@ -118,8 +118,8 @@ export type Rejection =
    * no damage.
    */
   | { code: 'changesNothing'; command: CommandType }
-  /** `AdvanceAgenda`/`AdvanceAct` names a fallback resolution although further cards follow. */
-  | { code: 'unexpectedResolution'; deck: 'agenda' | 'act' }
+  /** `Advance` names a fallback resolution although further cards follow. */
+  | { code: 'unexpectedResolution'; deck: StageDeck }
   /** The clues paid as a group (a `groupClues` cost, `UseCardAction.spend`) do not add up to it. */
   | { code: 'wrongClueTotal'; required: number; spent: number }
   /**
@@ -164,6 +164,11 @@ export type Rejection =
    */
   | { code: 'aloofNotEngaged'; cardId: InstanceId }
   /**
+   * `Investigate` of another location that is still unrevealed: a card investigates only a
+   * revealed one (In the Know).
+   */
+  | { code: 'locationUnrevealed'; cardId: InstanceId }
+  /**
    * `EngageEnemy` for a massive enemy: it is never placed in a threat area but
    * counts as engaged with every investigator at its location (Rules
    * Reference, "Massive"), so there is nothing to engage.
@@ -191,9 +196,9 @@ export type Rejection =
   | { code: 'notTheDecider'; decisionId: DecisionId; answeredBy: InvestigatorId; decider: Decider }
   /** A skill test modifier that is not a whole number. */
   | { code: 'invalidModifierAmount'; amount: number }
-  /** `ResolveEnemyAttack` for an attack that is not an outstanding, due step. */
+  /** An enemy phase `DealEnemyAttack` for an attack that is not an outstanding, due step. */
   | { code: 'attackNotDue'; enemyId: InstanceId; investigatorId: InvestigatorId }
-  /** `ResolveEnemyAttack` with damage or horror that is not a non-negative integer. */
+  /** `DealEnemyAttack` with damage or horror that is not a non-negative integer. */
   | { code: 'invalidAttackAmount'; amount: number }
   /** `TakeDamageAndHorror` with an amount that is not a non-negative integer, or nothing to take. */
   | { code: 'invalidWounds'; damage: number; horror: number }
@@ -292,7 +297,7 @@ export type Rejection =
    * A `ManualAdjust` would move the current agenda or act out of its place
    * (the top of its deck); only advancing changes it.
    */
-  | { code: 'currentStageCard'; cardId: InstanceId; deck: 'agenda' | 'act' };
+  | { code: 'currentStageCard'; cardId: InstanceId; deck: StageDeck };
 
 export type RejectionCode = Rejection['code'];
 
@@ -440,6 +445,8 @@ function describe(r: Rejection): string {
       return `${r.cardId} is not a drawn card resolving`;
     case 'aloofNotEngaged':
       return `${r.cardId} is aloof and must be engaged before it can be attacked`;
+    case 'locationUnrevealed':
+      return `${r.cardId} is not revealed`;
     case 'massiveNotEngageable':
       return `${r.cardId} is massive and already engaged with everyone at its location`;
     case 'notAHunter':

@@ -16,6 +16,7 @@ import { activeInvestigator, findInvestigator } from './investigators';
 import { decisionId, type InstanceId } from './ids';
 import { cardHasKeyword } from './card_keywords';
 import { requireCard } from './lookup';
+import { requireLocationInPlay } from './board';
 import { CommandRejected } from './rejection';
 import { isRestricted, isRestrictedFor } from './restrictions';
 import { withSuggestion } from './skill_modifiers';
@@ -52,7 +53,7 @@ function testAgainst(
 
 /**
  * `Investigate`: an intellect test against the shroud of the investigator's
- * location (`testAgainst`, constant abilities included). Its consequences follow
+ * location, or of `locationId` in play when a card investigates another one (`testAgainst`, constant abilities included). Its consequences follow
  * the answer (`investigateCommands`); a pass discovers 1 clue unless the
  * players confirm another count, up to the clues on the location when the
  * test starts. A location without clues makes the count not adjustable. Rejected at a location
@@ -64,7 +65,16 @@ export function handleInvestigate(
   cmd: Investigate,
 ): DecisionRequested[] {
   const investigator = activeInvestigator(state, cmd.investigatorId);
-  const location = investigatorLocation(state, investigator);
+  const location =
+    cmd.locationId === undefined
+      ? investigatorLocation(state, investigator)
+      : requireLocationInPlay(state, cmd.locationId);
+  if (
+    cmd.locationId !== undefined &&
+    cmd.locationId !== investigator.locationId &&
+    !location.faceUp
+  )
+    throw new CommandRejected({ code: 'locationUnrevealed', cardId: location.id });
   if (isRestricted(ctx, state, location, 'investigate'))
     throw new CommandRejected({
       code: 'restricted',
@@ -86,7 +96,7 @@ export function handleInvestigate(
 
 /**
  * `Fight`: a combat test against the fight value of an enemy at the
- * investigator's location. Its consequences follow the answer
+ * investigator's location (anywhere with `atAnyLocation`). Its consequences follow the answer
  * (`fightCommands`); a pass deals `damage` (1 for the basic attack) unless
  * the players confirm another amount.
  */
@@ -96,13 +106,13 @@ export function handleFight(ctx: EngineContext, state: GameState, cmd: Fight): D
   if (!isEnemyOnTable(enemy))
     throw new CommandRejected({ code: 'enemyNotInPlay', cardId: enemy.id });
   const enemyLocation = locationOf(state, enemy);
-  if (enemyLocation !== investigator.locationId)
+  if (!cmd.atAnyLocation && enemyLocation !== investigator.locationId)
     throw new CommandRejected({
       code: 'investigatorNotAtLocation',
       investigatorId: investigator.id,
       locationId: enemyLocation,
     });
-  if (isUnengagedAloof(ctx, state, enemy))
+  if (!cmd.ignoreAloof && isUnengagedAloof(ctx, state, enemy))
     throw new CommandRejected({ code: 'aloofNotEngaged', cardId: enemy.id });
   const damage = cmd.damage ?? 1;
   if (!Number.isInteger(damage) || damage <= 0)
@@ -157,7 +167,7 @@ function failedFightCommands(
 /**
  * `Evade`: an agility test against the evade value of an enemy engaged with
  * the investigator (a massive enemy at their location counts, see
- * `enemyAttackList`). Its consequences follow the answer (`resultCommands`).
+ * `enemyAttackList`), or of any enemy on the table with `atAnyLocation`. Its consequences follow the answer (`resultCommands`).
  */
 export function handleEvade(ctx: EngineContext, state: GameState, cmd: Evade): DecisionRequested[] {
   const investigator = activeInvestigator(state, cmd.investigatorId);
@@ -166,7 +176,10 @@ export function handleEvade(ctx: EngineContext, state: GameState, cmd: Evade): D
     enemy.zone.kind === 'atLocation' &&
     enemy.zone.locationId === investigator.locationId &&
     cardHasKeyword(ctx, state, enemy, 'massive');
-  if (!isEngagedWith(enemy, investigator) && !massiveHere)
+  if (cmd.atAnyLocation) {
+    if (!isEnemyOnTable(enemy))
+      throw new CommandRejected({ code: 'enemyNotInPlay', cardId: enemy.id });
+  } else if (!isEngagedWith(enemy, investigator) && !massiveHere)
     throw new CommandRejected({ code: 'notEngaged', cardId: enemy.id });
   return skillTest(ctx, state, {
     investigator,
@@ -276,9 +289,17 @@ function investigateCommands(
   if (isRestrictedFor(ctx, state, investigator.id, 'discover', 'clues')) return [];
   const location = requireCard(state.cards, locationId);
   const clues = Math.min(amount, location.tokens.clue ?? 0);
-  return clues > 0
-    ? [{ type: 'DiscoverClues', investigatorId: investigator.id, locationId, amount: clues }]
-    : [];
+  if (clues === 0) return [];
+  const discovery: Command = {
+    type: 'DiscoverClues',
+    investigatorId: investigator.id,
+    locationId,
+    amount: clues,
+  };
+  // An investigation elsewhere (In the Know) discovers its clues at the location investigated.
+  return [
+    locationId === investigator.locationId ? discovery : { ...discovery, atAnyLocation: true },
+  ];
 }
 
 /**

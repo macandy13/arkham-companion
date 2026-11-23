@@ -1,6 +1,6 @@
 import { hasActiveAbilities } from './doom';
 import { assertNever } from '@arkham/util';
-import { advanceAct, type AbilityEffect, type AbilityStep } from './abilities';
+import { advanceAct, type AbilityEffect, type AbilityStep, type OpenedWindow } from './abilities';
 import { findInvestigator as findCampaignInvestigator } from './campaign/campaign_log';
 import { isLocationInPlay } from './board';
 import {
@@ -266,7 +266,10 @@ export function advanceBySpendingClues(clues: ScaledValue): CardAction {
 
 /** Whether `action` is an act's `advanceBySpendingClues`: a group clue cost to advance the act. */
 function advancesBySpendingClues({ cost, effects }: CardAction): boolean {
-  return cost?.spend === 'groupClues' && effects.some((effect) => effect.type === 'AdvanceAct');
+  return (
+    cost?.spend === 'groupClues' &&
+    effects.some((effect) => effect.type === 'Advance' && effect.deck === 'act')
+  );
 }
 
 /**
@@ -524,8 +527,9 @@ export function cardActionSteps(
   state: GameState,
   cmd: UseCardAction,
 ): AbilityStep[] {
-  const opened = {
-    window: { kind: 'action' } as const,
+  const opened: OpenedWindow = {
+    window: { on: 'action' },
+    scope: 'self',
     cardId: cmd.cardId,
     investigatorId: cmd.investigatorId,
   };

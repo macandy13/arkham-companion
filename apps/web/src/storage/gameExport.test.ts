@@ -82,6 +82,20 @@ describe('game export format', () => {
     expect(parsed.events.map((e) => e.cause)).toEqual([undefined, mythosDoom]);
   });
 
+  it('keeps the card cause of an older export, whose window names its event `kind`', () => {
+    const [scenarioStart] = stored([started]);
+    const text = serialiseGameExport('Night', 5, [scenarioStart!]).replace(
+      '"event":',
+      '"cause":{"kind":"card","cardId":"c1","window":{"kind":"revealed"}},"event":',
+    );
+
+    expect(parseGameExport(text).events[0]?.cause).toEqual({
+      kind: 'card',
+      cardId: 'c1',
+      window: { kind: 'revealed' },
+    });
+  });
+
   it('rejects a cause the log could not word', () => {
     const [scenarioStart] = stored([started]);
     const text = serialiseGameExport('Night', 5, [scenarioStart!]).replace(

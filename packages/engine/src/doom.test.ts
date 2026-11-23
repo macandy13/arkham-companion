@@ -137,8 +137,8 @@ describe('placing doom (MoveTokens from the pool)', () => {
     const ended = stateAfter(
       context,
       state,
-      { type: 'AdvanceAgenda' },
-      { type: 'AdvanceAgenda', resolution: resolutionId('R1') },
+      { type: 'Advance', deck: 'agenda' },
+      { type: 'Advance', deck: 'agenda', resolution: resolutionId('R1') },
     );
 
     expect(rejectionFrom(context, ended, placeDoomOnAgenda(1))).toEqual({
@@ -272,7 +272,7 @@ describe('doom total invariant', () => {
         placeDoom(undefined, 1),
         placeDoom(hall, 2),
         playerCardDoom(bob, 2),
-        { type: 'AdvanceAgenda' },
+        { type: 'Advance', deck: 'agenda' },
         placeDoom(undefined, 1),
       ],
       total: 1,
@@ -364,7 +364,7 @@ describe('threshold check', () => {
             id: 'yes',
             label: 'decision.yes',
             target: agenda1,
-            commands: [{ type: 'AdvanceAgenda' }],
+            commands: [{ type: 'Advance', deck: 'agenda' }],
           },
           { id: 'no', label: 'decision.no', commands: [] },
         ],
@@ -459,7 +459,7 @@ describe('threshold check', () => {
   });
 });
 
-describe('AdvanceAgenda', () => {
+describe('Advance the agenda', () => {
   const { context, state: started } = aliceAlone.start();
   const state = stateAfter(context, started, placeDoomOnAgenda(2), placeDoomOn(ghoul, 1), {
     type: 'AdjustInvestigator',
@@ -469,7 +469,7 @@ describe('AdvanceAgenda', () => {
   });
 
   it('flips the agenda, removes it from the game and makes the next one current', () => {
-    const next = stateAfter(context, state, { type: 'AdvanceAgenda' });
+    const next = stateAfter(context, state, { type: 'Advance', deck: 'agenda' });
 
     expect(next.agenda.current).toBe(agenda2);
     expect(next.cards[agenda1]!.faceUp).toBe(false);
@@ -478,7 +478,7 @@ describe('AdvanceAgenda', () => {
   });
 
   it('removes all doom in play', () => {
-    const next = stateAfter(context, state, { type: 'AdvanceAgenda' });
+    const next = stateAfter(context, state, { type: 'Advance', deck: 'agenda' });
 
     expect(doomInPlay(next)).toBe(0);
     expect(next.cards[ghoul]!.tokens.doom).toBeUndefined();
@@ -495,16 +495,17 @@ describe('AdvanceAgenda', () => {
   });
 
   it('does not end the scenario while another agenda follows', () => {
-    const events = eventsOf(context, state, { type: 'AdvanceAgenda' });
+    const events = eventsOf(context, state, { type: 'Advance', deck: 'agenda' });
 
     expect(events.map((e) => e.type)).not.toContain('ScenarioEnded');
   });
 
   it('ends the scenario with the resolution when the last agenda advances', () => {
-    const lastAgenda = stateAfter(context, state, { type: 'AdvanceAgenda' });
+    const lastAgenda = stateAfter(context, state, { type: 'Advance', deck: 'agenda' });
 
     const ended = execute(context, lastAgenda, {
-      type: 'AdvanceAgenda',
+      type: 'Advance',
+      deck: 'agenda',
       resolution: resolutionId('R1'),
     });
 
@@ -514,9 +515,9 @@ describe('AdvanceAgenda', () => {
   });
 
   it('rejects advancing the last agenda without a resolution', () => {
-    const lastAgenda = stateAfter(context, state, { type: 'AdvanceAgenda' });
+    const lastAgenda = stateAfter(context, state, { type: 'Advance', deck: 'agenda' });
 
-    expect(rejectionFrom(context, lastAgenda, { type: 'AdvanceAgenda' })).toEqual({
+    expect(rejectionFrom(context, lastAgenda, { type: 'Advance', deck: 'agenda' })).toEqual({
       code: 'resolutionRequired',
       deck: 'agenda',
     });
@@ -524,7 +525,11 @@ describe('AdvanceAgenda', () => {
 
   it('rejects a resolution while another agenda follows', () => {
     expect(
-      rejectionFrom(context, state, { type: 'AdvanceAgenda', resolution: resolutionId('R1') }),
+      rejectionFrom(context, state, {
+        type: 'Advance',
+        deck: 'agenda',
+        resolution: resolutionId('R1'),
+      }),
     ).toEqual({
       code: 'unexpectedResolution',
       deck: 'agenda',
@@ -532,7 +537,7 @@ describe('AdvanceAgenda', () => {
   });
 });
 
-describe('AdvanceAct', () => {
+describe('Advance the act', () => {
   const { context, state } = doomTable
     .withInvestigator(alice, { locationId: hall, clues: 3 })
     .withInvestigator(bob, { locationId: hall, clues: 2 })
@@ -567,7 +572,7 @@ describe('AdvanceAct', () => {
   it('keeps doom in play when an act advances', () => {
     const withDoom = stateAfter(context, state, placeDoomOnAgenda(1));
 
-    const next = stateAfter(context, withDoom, { type: 'AdvanceAct' });
+    const next = stateAfter(context, withDoom, { type: 'Advance', deck: 'act' });
 
     expect(doomInPlay(next)).toBe(1);
   });
@@ -582,7 +587,7 @@ describe('AdvanceAct', () => {
       rejectionFrom(context, oneOnTheAct, spendOnFirstAct([{ investigatorId: alice, amount: 3 }])),
     ).toEqual({ code: 'wrongClueTotal', required: 4, spent: 3 });
     expect(
-      stateAfter(context, oneOnTheAct, { type: 'AdvanceAct' }).cards[act1]!.tokens.clue,
+      stateAfter(context, oneOnTheAct, { type: 'Advance', deck: 'act' }).cards[act1]!.tokens.clue,
     ).toBeUndefined();
   });
 
@@ -634,18 +639,22 @@ describe('AdvanceAct', () => {
   });
 
   it('ends the scenario with the resolution when the last act advances', () => {
-    const lastAct = stateAfter(context, state, { type: 'AdvanceAct' });
+    const lastAct = stateAfter(context, state, { type: 'Advance', deck: 'act' });
 
-    const ended = execute(context, lastAct, { type: 'AdvanceAct', resolution: resolutionId('R2') });
+    const ended = execute(context, lastAct, {
+      type: 'Advance',
+      deck: 'act',
+      resolution: resolutionId('R2'),
+    });
 
     expect(ended.events.at(-1)).toEqual({ type: 'ScenarioEnded', resolution: resolutionId('R2') });
     expect(ended.state.act.current).toBeUndefined();
   });
 
   it('rejects advancing the last act without a resolution', () => {
-    const lastAct = stateAfter(context, state, { type: 'AdvanceAct' });
+    const lastAct = stateAfter(context, state, { type: 'Advance', deck: 'act' });
 
-    expect(rejectionFrom(context, lastAct, { type: 'AdvanceAct' })).toEqual({
+    expect(rejectionFrom(context, lastAct, { type: 'Advance', deck: 'act' })).toEqual({
       code: 'resolutionRequired',
       deck: 'act',
     });
@@ -653,7 +662,11 @@ describe('AdvanceAct', () => {
 
   it('rejects a resolution while another act follows', () => {
     expect(
-      rejectionFrom(context, state, { type: 'AdvanceAct', resolution: resolutionId('R2') }),
+      rejectionFrom(context, state, {
+        type: 'Advance',
+        deck: 'act',
+        resolution: resolutionId('R2'),
+      }),
     ).toEqual({ code: 'unexpectedResolution', deck: 'act' });
   });
 
@@ -661,13 +674,13 @@ describe('AdvanceAct', () => {
     const ended = stateAfter(
       context,
       state,
-      { type: 'AdvanceAct' },
-      { type: 'AdvanceAct', resolution: resolutionId('R2') },
+      { type: 'Advance', deck: 'act' },
+      { type: 'Advance', deck: 'act', resolution: resolutionId('R2') },
     );
 
-    expect(rejectionFrom(context, ended, { type: 'AdvanceAct' })).toEqual({
+    expect(rejectionFrom(context, ended, { type: 'Advance', deck: 'act' })).toEqual({
       code: 'scenarioEnded',
-      command: 'AdvanceAct',
+      command: 'Advance',
     });
   });
 });
@@ -695,11 +708,12 @@ describe('a last act whose reverse side lets the lead investigator choose the re
     .start();
   const lastAct = () =>
     stateAfter(choosingContext, state, {
-      type: 'AdvanceAct',
+      type: 'Advance',
+      deck: 'act',
     });
 
   it('keeps the last act in play while the question is open instead of asking for a resolution', () => {
-    const asked = stateAfter(choosingContext, lastAct(), { type: 'AdvanceAct' });
+    const asked = stateAfter(choosingContext, lastAct(), { type: 'Advance', deck: 'act' });
 
     expect(asked.act.current).toBe(act2);
     expect(asked.meta.ended).toBeUndefined();
@@ -707,7 +721,7 @@ describe('a last act whose reverse side lets the lead investigator choose the re
   });
 
   it('ends the scenario with the resolution the lead investigator picks', () => {
-    const asked = stateAfter(choosingContext, lastAct(), { type: 'AdvanceAct' });
+    const asked = stateAfter(choosingContext, lastAct(), { type: 'Advance', deck: 'act' });
 
     const ended = stateAfter(choosingContext, asked, answer(chooseResolution, 'spare'));
 
@@ -717,7 +731,8 @@ describe('a last act whose reverse side lets the lead investigator choose the re
 
   it('ignores a fallback resolution while the question is open', () => {
     const { events } = execute(choosingContext, lastAct(), {
-      type: 'AdvanceAct',
+      type: 'Advance',
+      deck: 'act',
       resolution: resolutionId('R3'),
     });
 
@@ -745,9 +760,10 @@ describe('a last act whose reverse side asks something that names no resolution'
     .start();
 
   it('ends the scenario with the fallback resolution once the question is answered', () => {
-    const lastAct = stateAfter(askingContext, state, { type: 'AdvanceAct' });
+    const lastAct = stateAfter(askingContext, state, { type: 'Advance', deck: 'act' });
     const asked = stateAfter(askingContext, lastAct, {
-      type: 'AdvanceAct',
+      type: 'Advance',
+      deck: 'act',
       resolution: resolutionId('R3'),
     });
 
@@ -764,7 +780,7 @@ describe('advancing an act without paying clues', () => {
       .withInvestigator(alice, { locationId: hall, clues: 3 })
       .start();
 
-    const next = stateAfter(context, state, { type: 'AdvanceAct' });
+    const next = stateAfter(context, state, { type: 'Advance', deck: 'act' });
 
     expect(next.act.current).toBe(act2);
     expect(requireInvestigator(next, alice).clues).toBe(3);
@@ -775,12 +791,9 @@ describe('advancing an act without paying clues', () => {
       .withInvestigator(alice, { locationId: hall, clues: 3 })
       .start();
 
-    expect(eventsOf(context, state, { type: 'AdvanceAct' }).map((event) => event.type)).toEqual([
-      'CardFlipped',
-      'ActAdvanced',
-      'CardMoved',
-      'CurrentCardChanged',
-    ]);
+    expect(
+      eventsOf(context, state, { type: 'Advance', deck: 'act' }).map((event) => event.type),
+    ).toEqual(['CardFlipped', 'ActAdvanced', 'CardMoved', 'CurrentCardChanged']);
   });
 });
 
@@ -808,7 +821,7 @@ describe('cards without a threshold', () => {
   });
 
   it('advances an act without a clue threshold when no clues are paid', () => {
-    const next = stateAfter(context, state, { type: 'AdvanceAct' });
+    const next = stateAfter(context, state, { type: 'Advance', deck: 'act' });
 
     expect(next.act.current).toBe(nextAct);
   });

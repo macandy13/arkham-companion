@@ -1,6 +1,7 @@
 import { expect, test } from '../fixtures/test';
 import {
   cluesToShareExport,
+  extraplanarVisionsExport,
   ghoulPriestInCellarExport,
   midnightMasksStartedExport,
   rolandHurtExport,
@@ -447,4 +448,19 @@ test('the chaos bag in the cardboard token set', async ({ page, isMobile }) => {
     .getByRole('region', { name: 'Chaos bag' });
   await bag.scrollIntoViewIfNeeded();
   await expect(page.locator('html')).toHaveAttribute('data-token-set', 'cardboard');
+});
+
+test('Extraplanar Visions asking Roland Banks for a skill and the cards in his hand after committing', async ({
+  page,
+}) => {
+  await resumeImportedGame(page, 'Visions', extraplanarVisionsExport('Visions'));
+  const decision = page.getByRole('dialog').filter({ hasText: 'Intellect' });
+
+  await decision.getByRole('button', { name: 'Intellect' }).click();
+  await decision
+    .getByRole('button', { name: 'Lower the Cards in hand after committing' })
+    .last()
+    .click();
+
+  await expect(decision.getByRole('button', { name: 'Done' })).toBeVisible();
 });

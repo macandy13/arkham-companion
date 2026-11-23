@@ -166,7 +166,7 @@ export interface GameActions {
    */
   advanceAct(spend?: readonly ClueSpend[]): Promise<void>;
   /**
-   * The act advances by hand (`AdvanceAct`), whatever its objective, once the players have met one
+   * The act advances by hand (`Advance` of the act), whatever its objective, once the players have met one
    * the engine leaves to them; it costs nothing and needs no turn.
    */
   advanceActByHand(): Promise<void>;
@@ -382,7 +382,7 @@ export function gameActions(
           spend?.map(({ investigator, clues }) => [investigator, clues]),
         ),
       ),
-    advanceActByHand: () => play((table) => table.play({ type: 'AdvanceAct' })),
+    advanceActByHand: () => play((table) => table.play({ type: 'Advance', deck: 'act' })),
     endScenario: (resolution) => play((table) => table.play({ type: 'EndScenario', resolution })),
     adjustActClues: (delta) =>
       play((table) =>

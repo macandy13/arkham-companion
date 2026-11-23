@@ -1181,7 +1181,10 @@ describe('agenda and act', () => {
       .withAct(instanceId('first_act'), blankAct('first_act'))
       .start();
 
-    const board = boardView(context, stateAfter(context, state, { type: 'AdvanceAgenda' }));
+    const board = boardView(
+      context,
+      stateAfter(context, state, { type: 'Advance', deck: 'agenda' }),
+    );
 
     expect(board.agenda).toEqual({ id: devourer, name: 'devourer', doom: 0 });
     expect(board.act).toEqual({ id: devourer, name: 'devourer', clues: 0 });

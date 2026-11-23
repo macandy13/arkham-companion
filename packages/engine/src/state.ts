@@ -4,8 +4,7 @@ import type { AbilityEffect, OpenedWindow } from './abilities';
 import type { CampaignLog } from './campaign/campaign_log';
 import type { ChangeCause } from './change_cause';
 import type {
-  AdvanceAct,
-  AdvanceAgenda,
+  Advance,
   Command,
   CommandType,
   DrawCards,
@@ -230,7 +229,7 @@ export type PhaseStepId =
   /** 4.6 Upkeep: the upkeep phase and the round end (`RoundEnded`, `roundEnds`). */
   | 'endRound';
 
-/** One enemy attack that step 3.3 still has to resolve (`ResolveEnemyAttack`). */
+/** One enemy attack that step 3.3 still has to resolve (`DealEnemyAttack` of kind `enemyPhase`). */
 export interface DueAttack {
   enemyId: InstanceId;
   investigatorId: InvestigatorId;
@@ -543,8 +542,12 @@ export interface DecisionOption {
   amounts?: Readonly<Partial<Record<NamedAmount, AmountRange>>>;
 }
 
-/** The counts an option may name (`DecisionOption.amounts`, `ResolveDecision.amounts`). */
-export const NAMED_AMOUNTS = ['damage', 'horror'] as const;
+/**
+ * The counts an option may name (`DecisionOption.amounts`, `ResolveDecision.amounts`): a forced
+ * attack's damage and horror, and the cards in the decider's hand, which the app does not track
+ * (Extraplanar Visions' difficulty).
+ */
+export const NAMED_AMOUNTS = ['damage', 'horror', 'cardsInHand'] as const;
 
 /** One of `NAMED_AMOUNTS`. */
 export type NamedAmount = (typeof NAMED_AMOUNTS)[number];
@@ -567,11 +570,18 @@ export type AnswerableCommand = Answerable<Command>;
 
 /**
  * Distributes over the command union, so each command type keeps its own fields. An optional count
- * (`ResolveEnemyAttack.damage`) can be answered too.
+ * (`DealEnemyAttack.damage`) can be answered too, and so can a test's difficulty
+ * (`TestSkill.test`).
  */
-type Answerable<C> = C extends Command
-  ? { [K in keyof C]: Exclude<C[K], undefined> extends number ? C[K] | AnsweredAmount : C[K] }
-  : never;
+type Answerable<C> = C extends Command ? { [K in keyof C]: AnswerableField<C[K]> } : never;
+
+/** A command's field with its counts answerable, also those of the skill test it asks for. */
+type AnswerableField<V> =
+  Exclude<V, undefined> extends number
+    ? V | AnsweredAmount
+    : V extends SkillTest
+      ? { [K in keyof V]: AnswerableField<V[K]> }
+      : V;
 
 /** The counts an option with an adjustable amount accepts; no `max` means no upper bound. */
 export interface AmountRange {
@@ -658,14 +668,14 @@ type QueuedStepKind =
    */
   | { kind: 'action'; command: HeldAction }
   /**
-   * The rest of `AdvanceAgenda`/`AdvanceAct` once the reverse side of
+   * The rest of `Advance` once the reverse side of
    * `cardId` has resolved (`completeAdvance`). `asked` is set when it had to
    * wait for a decision raised meanwhile: on the last card that decision is
    * what ends the scenario.
    */
   | {
       kind: 'finishAdvance';
-      command: AdvanceAgenda | AdvanceAct;
+      command: Advance;
       cardId: InstanceId;
       asked?: true;
       origin?: CommandType;

@@ -822,6 +822,7 @@ export const appTexts = {
       amount: 'Count',
       damage: 'Damage',
       horror: 'Horror',
+      cardsInHand: 'Cards in hand after committing',
     },
   },
   campaignLog: {

@@ -61,6 +61,7 @@ The scripted golden game is [`end_to_end.test_support.ts`](../../packages/scenar
 - [ ] Forbidden Secrets surges when its drawer has no clues.
 - [ ] Unspeakable Truths goes to the drawer's threat area.
 - [ ] Noxious Smoke: the drawer chooses willpower or agility (3), then 1 damage per point failed.
+- [ ] Extraplanar Visions: the drawer chooses willpower or intellect and enters the cards in their hand, which is the difficulty; a fail deals 1 damage and asks them to discard 1 card at random.
 - [ ] A drawn Fire! attaches to the nearest location without one, the drawer's own first; the lead picks between equally near ones.
 - [ ] As the investigation phase ends, each Fire! deals 1 damage to each investigator and non-Elite enemy at its location (each ally there takes 1 damage of its own, placed by hand).
 - [ ] Fire!'s action tests agility (3) and discards it on a pass.
@@ -81,7 +82,6 @@ These are done by hand at the table; the app does not do them.
 - Your Friend's Room's Engage action and Orne Library's two-action draw.
 - Which asset Hellhound's enemy phase attack discards (the app leaves the pick to the player), and Bystander's Doomed keyword.
 - Unspeakable Truths' limit of 1 per investigator, its horror after its holder discovers clues and its two-action discard.
-- The test of Extraplanar Visions.
 - The tablet's "reveal another token" and damage, and the elder thing's Fire! draw.
 - The resolutions' deck changes and upgrades.
 

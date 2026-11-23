@@ -59,7 +59,7 @@ The scripted golden game is [`end_to_end.test.ts`](../../packages/scenarios/src/
 
 - [ ] Putrid Vapors: 1 horror on a failed agility (3) test.
 - [ ] Languor (spelled "Langour" in the app, as on ArkhamDB) goes to the drawer's threat area.
-- [ ] Cosmic Evils, Noxious Smoke and Fire! work as in _Spreading Flames_.
+- [ ] Cosmic Evils, Noxious Smoke, Extraplanar Visions and Fire! work as in _Spreading Flames_.
 
 **Resolution and campaign end**
 

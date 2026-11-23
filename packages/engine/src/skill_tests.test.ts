@@ -6,6 +6,7 @@ import {
   blankLocation,
   afterTest,
   blankTreachery,
+  cardsInYourHand,
   eachEnemy,
   discardSelf,
   decisionId,
@@ -23,6 +24,7 @@ import {
   skillTestDecision,
   skillTestOfEither,
   statOf,
+  takeDamage,
   takeHorror,
   whenRevealed,
   you,
@@ -247,6 +249,59 @@ describe('Investigate', () => {
   });
 });
 
+describe('Investigate another location', () => {
+  const attic = instanceId('attic');
+  /** Alice in the study; the revealed attic (shroud 1, 1 clue) connects to nothing. */
+  const aliceBesideTheAttic = aliceInStudy.withLocation(
+    attic,
+    blankLocation('attic', { shroud: 1, clues: fixed(1) }),
+    { revealed: true },
+  );
+  const investigateAttic: Command = {
+    type: 'Investigate',
+    investigatorId: alice,
+    locationId: attic,
+  };
+
+  it("tests against the attic's shroud 1 and discovers its clue for alice in the study", () => {
+    const { context, state } = aliceBesideTheAttic.start();
+
+    const asked = stateAfter(context, state, investigateAttic);
+    const passed = stateAfter(context, asked, answer('investigate:alice', 'pass'));
+
+    expect(asked.pending[0]).toMatchObject({
+      subject: attic,
+      skillTest: { skill: 'intellect', difficulty: 1 },
+      testKind: { kind: 'investigate', locationId: attic },
+    });
+    expect(requireInvestigator(passed, alice)).toMatchObject({ clues: 1, locationId: study });
+    expect(passed.cards[attic]!.tokens.clue ?? 0).toBe(0);
+  });
+
+  it('rejects the unrevealed hallway, as a card investigates only a revealed location', () => {
+    const { context, state } = aliceInStudy.start();
+
+    expect(
+      rejectionFrom(context, state, {
+        type: 'Investigate',
+        investigatorId: alice,
+        locationId: hallway,
+      }),
+    ).toEqual({ code: 'locationUnrevealed', cardId: hallway });
+  });
+
+  it('rejects an attic set aside, which is not on the map', () => {
+    const { context, state } = aliceInStudy
+      .withCard(attic, blankLocation('attic'), { kind: 'setAside' })
+      .start();
+
+    expect(rejectionFrom(context, state, investigateAttic)).toEqual({
+      code: 'notALocation',
+      cardId: attic,
+    });
+  });
+});
+
 describe('Investigate at a location with attachments', () => {
   const investigate: Command = { type: 'Investigate', investigatorId: alice };
   const fog = instanceId('fog_card');
@@ -409,6 +464,36 @@ describe('Fight', () => {
       investigatorId: alice,
       locationId: hallway,
     });
+  });
+
+  it('rejects an aloof ghoul in the hallway nobody is engaged with, even at any location', () => {
+    const { context, state } = aliceInStudy
+      .withCard(ghoul, aloofGhoul, atLocation(hallway))
+      .start();
+
+    expect(rejectionFrom(context, state, { ...fight, atAnyLocation: true })).toEqual({
+      code: 'aloofNotEngaged',
+      cardId: ghoul,
+    });
+  });
+
+  it('attacks an aloof ghoul in the hallway nobody is engaged with when the attack ignores aloof', () => {
+    const { context, state } = aliceInStudy
+      .withCard(ghoul, aloofGhoul, atLocation(hallway))
+      .start();
+
+    const asked = stateAfter(context, state, { ...fight, atAnyLocation: true, ignoreAloof: true });
+
+    expect(asked.pending[0]).toMatchObject({ id: 'fight:alice:ghoul', subject: ghoul });
+  });
+
+  it('attacks the ghoul in the hallway when a card lets alice fight at any location', () => {
+    const { context, state } = aliceInStudy.withCard(ghoul, ghoulCard, atLocation(hallway)).start();
+
+    const asked = stateAfter(context, state, { ...fight, atAnyLocation: true });
+    const passed = stateAfter(context, asked, answer('fight:alice:ghoul', 'pass'));
+
+    expect(passed.cards[ghoul]).toMatchObject({ zone: atLocation(hallway), tokens: { damage: 1 } });
   });
 
   it('rejects an enemy that is not in play', () => {
@@ -582,6 +667,24 @@ describe('Evade', () => {
     const { context, state } = aliceInStudy.withCard(ghoul, ghoulCard, atLocation(hallway)).start();
 
     expect(rejectionFrom(context, state, evade)).toEqual({ code: 'notEngaged', cardId: ghoul });
+  });
+
+  it('rejects a ghoul still in the encounter deck, even when alice may evade at any location', () => {
+    const { context, state } = aliceInStudy.withCard(ghoul, ghoulCard, encounterDeck).start();
+
+    expect(rejectionFrom(context, state, { ...evade, atAnyLocation: true })).toEqual({
+      code: 'enemyNotInPlay',
+      cardId: ghoul,
+    });
+  });
+
+  it('exhausts the unengaged ghoul in the hallway when a card lets alice evade at any location', () => {
+    const { context, state } = aliceInStudy.withCard(ghoul, ghoulCard, atLocation(hallway)).start();
+
+    const asked = stateAfter(context, state, { ...evade, atAnyLocation: true });
+    const passed = stateAfter(context, asked, answer('evade:alice:ghoul', 'pass'));
+
+    expect(passed.cards[ghoul]).toMatchObject({ exhausted: true, zone: atLocation(hallway) });
   });
 
   it('rejects an aloof enemy at the location that nobody is engaged with', () => {
@@ -786,6 +889,116 @@ describe('test of either of two skills', () => {
       expect(requireInvestigator(resolved, alice).sanity.horror).toBe(horror);
     },
   );
+});
+
+describe('test of either of two skills that defeats its tester', () => {
+  const ruin = instanceId('ruin');
+  const ruinChoice = decisionId('ruin.skill');
+  /** A treachery testing willpower or agility (3); a fail deals 1 damage, then 1 horror. */
+  const ruinousTreachery = blankTreachery('ruinous_treachery', {
+    abilities: [
+      whenRevealed(
+        skillTestOfEither(ruinChoice, ['willpower', 'agility'], 3, {
+          onFail: [takeDamage(1), takeHorror(1)],
+        }),
+      ),
+    ],
+  });
+
+  it("drops the fail's horror once its damage defeated the tester", () => {
+    const { context, state } = newGame()
+      .withLocation(study, studyCard, { revealed: true })
+      .withInvestigator(alice, { locationId: study, health: { max: 5, damage: 4 } })
+      .withInvestigator(bob, { locationId: study })
+      .withCard(ruin, ruinousTreachery, { kind: 'encounterDeck' })
+      .start();
+    const picked = stateAfter(
+      context,
+      state,
+      { type: 'DrawCard', investigatorId: alice, from: encounterDeck },
+      resolveRevelation('ruin'),
+      answer(ruinChoice, 'agility'),
+    );
+
+    const failed = stateAfter(context, picked, answer('test:ruin', 'fail'));
+
+    expect(requireInvestigator(failed, alice)).toMatchObject({
+      status: 'defeated',
+      sanity: { horror: 0 },
+    });
+  });
+});
+
+describe('test of either skill against a count the drawer enters', () => {
+  const visions = instanceId('visions');
+  const visionsChoice = decisionId('visions.skill');
+  /** A treachery testing willpower or intellect (X), X the cards in the drawer's hand. */
+  const handSizeTreachery = blankTreachery('hand_size_treachery', {
+    abilities: [
+      whenRevealed(
+        skillTestOfEither(visionsChoice, ['willpower', 'intellect'], cardsInYourHand, {
+          onFail: [takeHorror(1)],
+        }),
+      ),
+    ],
+  });
+  const draw: Command = { type: 'DrawCard', investigatorId: alice, from: encounterDeck };
+
+  it('asks for the cards in hand with each skill, from 0 and starting at 5', () => {
+    const { context, state } = aliceInStudy
+      .withCard(visions, handSizeTreachery, { kind: 'encounterDeck' })
+      .start();
+
+    const drawn = stateAfter(context, state, draw, resolveRevelation('visions'));
+
+    expect(drawn.pending).toMatchObject([
+      {
+        id: visionsChoice,
+        options: [
+          { id: 'willpower', amounts: { cardsInHand: { default: 5, min: 0 } } },
+          { id: 'intellect', amounts: { cardsInHand: { default: 5, min: 0 } } },
+        ],
+      },
+    ]);
+  });
+
+  it.each([
+    { cardsInHand: 2, difficulty: 2 },
+    { cardsInHand: 0, difficulty: 0 },
+    { cardsInHand: undefined, difficulty: 5 },
+  ])(
+    'tests intellect against $difficulty when the drawer holds $cardsInHand cards',
+    ({ cardsInHand, difficulty }) => {
+      const { context, state } = aliceInStudy
+        .withCard(visions, handSizeTreachery, { kind: 'encounterDeck' })
+        .start();
+
+      const picked = stateAfter(context, state, draw, resolveRevelation('visions'), {
+        type: 'ResolveDecision',
+        decisionId: visionsChoice,
+        optionId: 'intellect',
+        ...(cardsInHand === undefined ? {} : { amounts: { cardsInHand } }),
+      });
+
+      expect(picked.pending).toMatchObject([{ skillTest: { skill: 'intellect', difficulty } }]);
+    },
+  );
+
+  it('refuses fewer than 0 cards in hand', () => {
+    const { context, state } = aliceInStudy
+      .withCard(visions, handSizeTreachery, { kind: 'encounterDeck' })
+      .start();
+    const drawn = stateAfter(context, state, draw, resolveRevelation('visions'));
+
+    const rejection = rejectionFrom(context, drawn, {
+      type: 'ResolveDecision',
+      decisionId: visionsChoice,
+      optionId: 'willpower',
+      amounts: { cardsInHand: -1 },
+    });
+
+    expect(rejection).toMatchObject({ code: 'amountOutOfRange', name: 'cardsInHand', min: 0 });
+  });
 });
 
 describe('test difficulty from the table', () => {

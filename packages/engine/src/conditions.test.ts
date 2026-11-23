@@ -180,7 +180,7 @@ describe('a condition on the current agenda', () => {
 
   it('gives alice 1 horror once the second agenda is current', () => {
     const { context, state } = twoAgendas.start();
-    const advanced = stateAfter(context, state, { type: 'AdvanceAgenda' });
+    const advanced = stateAfter(context, state, { type: 'Advance', deck: 'agenda' });
 
     const after = stateAfter(context, advanced, aliceDraws, resolveRevelation('omen'));
 
@@ -194,7 +194,7 @@ describe('a condition on a value every named investigator has', () => {
   const omenCard = blankTreachery('omen', {
     abilities: [
       {
-        window: { kind: 'revealed' },
+        window: { on: 'revealed' },
         condition: {
           kind: 'valueOf',
           value: { kind: 'stat', stat: 'clues', who: eachInvestigator() },

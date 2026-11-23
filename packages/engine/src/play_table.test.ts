@@ -217,7 +217,7 @@ describe('rejected and broken steps', () => {
 
     const error: unknown = (() => {
       try {
-        table.play({ type: 'AdvanceAgenda' });
+        table.play({ type: 'Advance', deck: 'agenda' });
       } catch (thrown) {
         return thrown;
       }

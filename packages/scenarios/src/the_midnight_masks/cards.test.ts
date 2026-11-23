@@ -615,6 +615,7 @@ describe('The Midnight Masks card abilities', () => {
 
     const state = stateAfter(context, started, {
       type: 'DealEnemyAttack',
+      kind: 'cardAttack',
       enemyId: drew,
       investigatorId: alice,
       damage: 2,

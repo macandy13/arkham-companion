@@ -6,7 +6,7 @@ import type {
   TestedAction,
   TimingWindow,
 } from './abilities';
-import type { KeywordAttackKind } from './forced_attacks';
+import type { AttackKind, KeywordAttackKind } from './forced_attacks';
 import type { CampaignLog, TraumaKind } from './campaign/campaign_log';
 import type { CardType, ScaledValue, TokenAmount, Trait } from './cards';
 import type {
@@ -69,9 +69,8 @@ export type Command =
   | AttachPlayerCard
   | DrawWeakness
   | ReleaseChaosToken
-  | AdvanceAgenda
+  | Advance
   | BecomeActAndAgenda
-  | AdvanceAct
   | EndScenario
   | ShuffleEncounterDiscard
   | ShuffleEncounterDeck
@@ -108,7 +107,6 @@ export type Command =
   | UseCardAction
   | SetLeadInvestigator
   | AdjustActions
-  | ResolveEnemyAttack
   | DealEnemyAttack
   | EnemyAttacks
   | Investigate
@@ -355,7 +353,7 @@ export interface SpendResources {
  */
 export interface CommandSource {
   readonly cardId: InstanceId;
-  readonly window: TimingWindow['kind'];
+  readonly window: TimingWindow['on'];
 }
 
 /**
@@ -519,6 +517,8 @@ export interface DiscoverClues extends AskedByCard {
   investigatorId: InvestigatorId;
   locationId: InstanceId;
   amount: number;
+  /** At a location other than their own: the pass of an investigation there (`Investigate.locationId`). */
+  atAnyLocation?: true;
 }
 
 /**
@@ -628,21 +628,27 @@ export interface MoveTokens {
   from: TokenHolder;
   to: TokenHolder;
 }
+/** The two decks of stage cards a scenario advances through (`Advance`). */
+export type StageDeck = 'agenda' | 'act';
+
 /**
- * Advances the current agenda: all doom in play is removed, the agenda is
- * flipped and its reverse side (its `advanced` abilities) resolves while it is
- * still current; then it leaves the game and the next agenda becomes current.
- * Run by the "yes" answer to the threshold question (see
- * `ResolveDecision`) and by card effects that advance the agenda.
- * Produces `TokensChanged`/`InvestigatorChanged` (doom removal), `CardFlipped`,
- * `AgendaAdvanced`, the reverse side's events, `CardMoved`, `CurrentCardChanged`
- * and, for the last agenda, `ScenarioEnded` unless the reverse side ended the scenario.
+ * Advances the current card of `deck`, paying nothing. Its first step clears the card's tokens:
+ * an agenda removes all doom in play, an act the tokens on it, clues included (RR "Act Deck and
+ * Agenda Deck"); an act's clues are the cost of its own `advanceBySpendingClues` action, whose
+ * effect this is, and an objective met or another card advances it for free. The card then turns
+ * to its reverse side (its `advanced` abilities), which resolves while it is still current; then
+ * it leaves the game and the next card becomes current. The agenda advances by the "yes" answer
+ * to its threshold question (see `ResolveDecision`) and by card effects.
+ * Produces `TokensChanged`/`InvestigatorChanged` (the tokens), `CardFlipped`, `AgendaAdvanced`
+ * or `ActAdvanced`, the reverse side's events, `CardMoved`, `CurrentCardChanged` and, for the
+ * last card, `ScenarioEnded` unless the reverse side ended the scenario.
  */
-export interface AdvanceAgenda {
-  type: 'AdvanceAgenda';
+export interface Advance {
+  type: 'Advance';
+  deck: StageDeck;
   /**
-   * Fallback resolution for the last agenda when its reverse side does not end
-   * the scenario itself; rejected while further agendas follow.
+   * Fallback resolution for the last card when its reverse side does not end the scenario
+   * itself; rejected while further cards follow.
    */
   resolution?: ResolutionId;
 }
@@ -681,24 +687,6 @@ export interface SpendCluesAsGroup {
   amount: ScaledValue;
   locationId?: InstanceId;
   spend?: ClueSpend[];
-}
-
-/**
- * Advances the current act, paying nothing: it is the effect of the act's
- * `advanceBySpendingClues` action, whose cost the investigators paid, of an
- * objective met, or of a card or the players' call. Like `AdvanceAgenda`, the
- * reverse side (its `advanced` abilities) resolves before the next act becomes
- * current. Produces `TokensChanged` for the tokens on the act, `CardFlipped`, `ActAdvanced`,
- * the reverse side's events, `CardMoved`, `CurrentCardChanged` and, for the
- * last act, `ScenarioEnded` unless the reverse side ended the scenario.
- */
-export interface AdvanceAct {
-  type: 'AdvanceAct';
-  /**
-   * Fallback resolution for the last act when its reverse side does not end
-   * the scenario itself; rejected while further acts follow.
-   */
-  resolution?: ResolutionId;
 }
 
 /**
@@ -1311,45 +1299,31 @@ export interface AdjustActions extends AskedByCard {
 }
 
 /**
- * The players resolved one enemy attack of the enemy phase, as the answer of
- * its `attackDecision`. `damage`/`horror` default to the enemy's
- * printed values; the players pass less when assets soak part of it.
- * `cancelled` (a card cancelled it) deals nothing and fires no "after it
- * attacks" abilities, but the enemy still exhausts. The enemy exhausts after
- * its last due attack (a massive enemy attacks everyone at its location
- * first). An attack the step listed that is no longer due (its enemy left or
- * disengaged) only leaves the list, without exhausting anyone.
- * Produces `PhaseStepsChanged`, `EnemyAttacked`, `InvestigatorChanged` (damage, horror; with
- * `InvestigatorDefeated` as usual, horror is skipped for an investigator the
- * damage defeated) and `ExhaustChanged`.
+ * The players resolved one enemy attack, as the answer of its `attackDecision`: an attack of enemy
+ * step 3.3 (`kind: 'enemyPhase'`), an attack of opportunity, a retaliate or alert attack, or a card
+ * that says the enemy attacks. Deals `damage` and `horror` at once with one defeat check (horror is
+ * skipped for an investigator the damage defeated). They default to the enemy's printed values (a
+ * due attack's, in the enemy phase); the players pass less when assets soak part of it.
+ * `cancelled` (a card cancelled it) deals nothing and fires no "after it attacks" abilities.
+ *
+ * Only an enemy phase attack exhausts the enemy, after its last due attack (a massive enemy
+ * attacks everyone at its location first), cancelled or not; it also leaves step 3.3's list. An
+ * attack the step listed that is no longer due (its enemy left or disengaged) only leaves the
+ * list, without exhausting anyone; one that was never listed is rejected (`attackNotDue`). Any
+ * other kind leaves the enemy as it is (Rules Reference, "Attack of Opportunity") and does nothing
+ * once its enemy has left the table or its investigator is no longer active, so a second attack of
+ * opportunity on an investigator the first one defeated can still be answered.
+ * Produces `PhaseStepsChanged` (enemy phase), `EnemyAttacked`, `InvestigatorChanged`, as usual
+ * `InvestigatorDefeated`, and `ExhaustChanged` (enemy phase).
  */
-export interface ResolveEnemyAttack {
-  type: 'ResolveEnemyAttack';
+export interface DealEnemyAttack {
+  type: 'DealEnemyAttack';
+  kind: AttackKind;
   enemyId: InstanceId;
   investigatorId: InvestigatorId;
   damage?: number;
   horror?: number;
   cancelled?: true;
-}
-
-/**
- * An enemy attack outside enemy step 3.3: an attack of opportunity (raised by
- * `attackOfOpportunityDecisions`, whose `attack` option runs this) or a card
- * that says the enemy attacks. Deals `damage` and `horror` at once with one
- * defeat check, like `ResolveEnemyAttack`, but the enemy does not exhaust
- * (Rules Reference, "Attack of Opportunity"). The amounts are the ones the
- * players confirmed (printed values, less what assets soak). An attack whose
- * enemy has left play or whose investigator is no longer active does nothing,
- * so a second attack of opportunity on an investigator the first one defeated
- * can still be answered. Produces `EnemyAttacked`, `InvestigatorChanged` and, as usual,
- * `InvestigatorDefeated`.
- */
-export interface DealEnemyAttack {
-  type: 'DealEnemyAttack';
-  enemyId: InstanceId;
-  investigatorId: InvestigatorId;
-  damage: number;
-  horror: number;
 }
 
 /**
@@ -1366,9 +1340,10 @@ export interface EnemyAttacks {
   investigatorId: InvestigatorId;
   /**
    * The keyword that makes the attack (retaliate, alert; `keywordAbilities`): asked as
-   * `<keyword>:<enemy>`, and only by a ready enemy, which both keywords require.
+   * `<keyword>:<enemy>`, and only by a ready enemy, which both keywords require. Without it, a
+   * card makes the attack (`cardAttack`).
    */
-  keyword?: KeywordAttackKind;
+  kind?: KeywordAttackKind;
 }
 
 /**
@@ -1385,7 +1360,8 @@ export interface EndSkillTest {
 }
 
 /**
- * Investigate action: the investigator investigates their location. The
+ * Investigate action: the investigator investigates their location, or `locationId` when a card
+ * investigates another one (In the Know). The
  * players resolve the intellect test against its shroud at the table; the
  * engine raises a `skillTestResult` decision whose pass discovers clues: 1
  * by default, or the count the players confirm in `ResolveDecision.amount`
@@ -1397,11 +1373,18 @@ export interface EndSkillTest {
 export interface Investigate extends ActionCommand {
   type: 'Investigate';
   investigatorId: InvestigatorId;
+  /**
+   * A revealed location in play to investigate instead of their own, as if they were there (In
+   * the Know); its shroud, its "cannot investigate" and its clues count. It names
+   * its target, as an investigation has none besides the investigator's location, while `Fight`
+   * and `Evade` already name their enemy and only lift a check (`atAnyLocation`).
+   */
+  locationId?: InstanceId;
 }
 
 /**
- * Fight action: the investigator attacks an enemy at their location
- * (combat test against its fight value). A pass deals `damage` via
+ * Fight action: the investigator attacks an enemy at their location, or with `atAnyLocation`
+ * one elsewhere (Marksmanship), as a card allows (combat test against its fight value). A pass deals `damage` via
  * `DamageEnemy`, or the damage the players confirm in
  * `ResolveDecision.amount` (effects that add damage on a good result).
  * Produces `DecisionRequested`.
@@ -1412,11 +1395,15 @@ export interface Fight {
   enemyId: InstanceId;
   /** Damage of the attack, the pass option's default; 1 (the basic attack) unless a weapon deals more. */
   damage?: number;
+  /** The enemy may be at another location, as a card allows (Marksmanship). Aloof still applies. */
+  atAnyLocation?: true;
+  /** The attack ignores aloof, as Marksmanship and Telescopic Sight say. */
+  ignoreAloof?: true;
 }
 
 /**
- * Evade action: the investigator evades an enemy engaged with them (agility
- * test against its evade value). A pass exhausts the enemy (if ready) and
+ * Evade action: the investigator evades an enemy engaged with them, or with `atAnyLocation` any
+ * enemy on the table, as a card allows (agility test against its evade value). A pass exhausts the enemy (if ready) and
  * disengages it (a massive enemy is not in the `engaged` zone and stays).
  * Produces `DecisionRequested`.
  */
@@ -1424,6 +1411,8 @@ export interface Evade {
   type: 'Evade';
   investigatorId: InvestigatorId;
   enemyId: InstanceId;
+  /** The enemy need not be engaged with them: any enemy on the table, as a card allows. */
+  atAnyLocation?: true;
 }
 
 /** String literal of every command type. */

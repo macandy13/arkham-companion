@@ -515,14 +515,14 @@ describe('decisions raised by card abilities', () => {
   it('lets a card ability ask the players', () => {
     const { context, state } = offeringTable(offerResource).start();
 
-    const asked = stateAfter(context, state, { type: 'AdvanceAct' });
+    const asked = stateAfter(context, state, { type: 'Advance', deck: 'act' });
 
     expect(asked.pending.map((decision) => decision.id)).toEqual(['offer_resource']);
   });
 
   it('asks the second question of an ability only once the first is answered', () => {
     const { context, state } = offeringTable(offerResource, offerAgain).start();
-    const asked = stateAfter(context, state, { type: 'AdvanceAct' });
+    const asked = stateAfter(context, state, { type: 'Advance', deck: 'act' });
 
     const answered = stateAfter(context, asked, answer('offer_resource', 'no'));
 
@@ -538,7 +538,7 @@ describe('decisions raised by card abilities', () => {
       .withAct(firstAct, blankAct('offering_act', { abilities: [whenAdvanced(offerEach)] }))
       .withAct(instanceId('second_act'), blankAct('second_act'))
       .start();
-    const asked = stateAfter(context, state, { type: 'AdvanceAct' });
+    const asked = stateAfter(context, state, { type: 'Advance', deck: 'act' });
 
     const answered = stateAfter(context, asked, answer('offer_each', 'yes'));
 
@@ -562,7 +562,7 @@ describe('decisions raised by card abilities', () => {
       kind: 'confirm',
       prompt: 'decision.applyForcedEffect',
       decider: { kind: 'lead' },
-      options: [{ id: 'yes', label: 'decision.yes', commands: [{ type: 'AdvanceAct' }] }],
+      options: [{ id: 'yes', label: 'decision.yes', commands: [{ type: 'Advance', deck: 'act' }] }],
     };
     const bothAsked = withPendingDecisions(state, offerResourceDecision, advanceFirst);
 
@@ -584,7 +584,7 @@ describe('pending decision invariants', () => {
     { type: 'DrawCard', investigatorId: alice, from: encounterDeck },
     gainResource,
     { type: 'RevealLocation', locationId: hall },
-    { type: 'AdvanceAgenda' },
+    { type: 'Advance', deck: 'agenda' },
   ];
   const decisions: { name: string; decision: Decision }[] = [
     {

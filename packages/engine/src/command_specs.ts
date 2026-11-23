@@ -2,8 +2,7 @@ import type { EngineContext } from './cards';
 import { handleUseReaction } from './reactions';
 import type {
   ActionCommand,
-  AdvanceAct,
-  AdvanceAgenda,
+  Advance,
   Command,
   CommandType,
   DrawCard,
@@ -60,8 +59,7 @@ import {
 } from './handle_investigator';
 import { handleManualAdjust, handleMoveCard } from './handle_manual_adjust';
 import {
-  handleAdvanceAct,
-  handleAdvanceAgenda,
+  handleAdvance,
   handleBecomeActAndAgenda,
   handleEndScenario,
   handleChangeChaosBag,
@@ -71,7 +69,7 @@ import {
 import { handleStartScenario } from './handle_start_scenario';
 import { handleMoveTokens } from './handle_tokens';
 import { handleMoveHunter, handleMoveHunters } from './hunters';
-import { attacksStillDue, handleNextPhase, handleResolveEnemyAttack } from './phases';
+import { attacksStillDue, handleNextPhase } from './phases';
 import {
   handleEndSkillTest,
   handleEvade,
@@ -159,10 +157,10 @@ export type Step = QueuedStep | { kind: 'phaseStep'; origin?: CommandType };
 export type Continuation = Exclude<Step, { kind: 'command' | 'action' }>;
 
 /**
- * `AdvanceAgenda`/`AdvanceAct`, continued: the advanced card is replaced
+ * `Advance`, continued: the advanced card is replaced
  * once its reverse side has resolved (`completeAdvance`).
  */
-function finishAdvance(command: AdvanceAgenda | AdvanceAct, own: readonly Event[]): Continuation[] {
+function finishAdvance(command: Advance, own: readonly Event[]): Continuation[] {
   const advanced = own.find(
     (event) => event.type === 'AgendaAdvanced' || event.type === 'ActAdvanced',
   );
@@ -246,16 +244,12 @@ const COMMAND_SPECS: CommandSpecs = {
     handle: (_ctx, state, command) => handleReleaseChaosToken(state, command),
   },
   MoveTokens: { handle: handleMoveTokens },
-  AdvanceAgenda: {
-    handle: (_ctx, state, command) => handleAdvanceAgenda(state, command),
-    // The reverse side resolves before the next agenda becomes current.
+  Advance: {
+    handle: (_ctx, state, command) => handleAdvance(state, command),
+    // The reverse side resolves before the next card becomes current.
     continueWith: finishAdvance,
   },
   BecomeActAndAgenda: { handle: (_ctx, state, cmd) => handleBecomeActAndAgenda(state, cmd) },
-  AdvanceAct: {
-    handle: (_ctx, state, command) => handleAdvanceAct(state, command),
-    continueWith: finishAdvance,
-  },
   EndScenario: { handle: (_ctx, _state, command) => handleEndScenario(command) },
   GainSurge: { handle: (_ctx, state, command) => handleGainSurge(state, command) },
   UseReaction: { handle: handleUseReaction },
@@ -316,18 +310,18 @@ const COMMAND_SPECS: CommandSpecs = {
     handle: (_ctx, state, command) => handleSetLeadInvestigator(state, command),
   },
   AdjustActions: { handle: (_ctx, state, command) => handleAdjustActions(state, command) },
-  ResolveEnemyAttack: {
-    handle: handleResolveEnemyAttack,
-    // The enemy exhausts once the abilities its attack triggered have resolved; an attack that was
-    // no longer due when answered was never made, so nothing exhausts.
+  DealEnemyAttack: {
+    handle: handleDealEnemyAttack,
+    // An enemy phase attack exhausts its enemy once the abilities the attack triggered have
+    // resolved; one that was no longer due when answered was never made, so nothing exhausts.
     continueWith: (command, _own, ctx, handledIn) =>
+      command.kind === 'enemyPhase' &&
       attacksStillDue(ctx, handledIn).some(
         (due) => due.enemyId === command.enemyId && due.investigatorId === command.investigatorId,
       )
         ? [{ kind: 'exhaustAfterAttack', enemyId: command.enemyId }]
         : [],
   },
-  DealEnemyAttack: { handle: handleDealEnemyAttack },
   EnemyAttacks: { handle: handleEnemyAttacks },
   Investigate: { handle: handleInvestigate, provokes: asAction },
   Fight: { handle: handleFight },

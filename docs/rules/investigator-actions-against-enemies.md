@@ -10,9 +10,11 @@
 - [Fight](https://arkhamdb.com/rules#Fight_Action): combat test against the enemy's fight value, which can target any enemy at the location.
   - Success deals 1 damage by default.
   - On failure against an enemy engaged with exactly one _other_ investigator, the damage goes to that investigator instead.
+  - A card may let the investigator fight an enemy at another location (Marksmanship: a connecting location); the engine takes any location then (`Fight.atAnyLocation`), and the card's own limit is the players'. Aloof still blocks an attack on an unengaged aloof enemy there ([Aloof](https://arkhamdb.com/rules#Aloof)), unless the card ignores it as Marksmanship and Telescopic Sight do (`Fight.ignoreAloof`).
 - [Evade](https://arkhamdb.com/rules#Evade_Action): only against an enemy engaged with you; agility test against its evade value.
   - Success (or any "evade" effect) exhausts the enemy if it is ready and moves it unengaged to your location.
   - "Automatically evade" makes no test and isn't a successful evasion.
+  - A card ability may evade an enemy the investigator isn't engaged with (Stray Cat, Cunning Distraction FAQ), at their location or elsewhere; the engine tests it the same way (`Evade.atAnyLocation`), and a pass exhausts it where it is (our reading: there is no threat area to move it out of).
   - Either way the enemy is evaded, so "after [this enemy] is evaded" (Ruth Turner) follows once it is exhausted and disengaged; a failed evasion opens nothing. The evasion happens in ST.7 (apply results), so this comes after the ST.6 "after you succeed" triggers.
   - "After you successfully evade [this enemy]" (Cornelia Akely) comes at the same point, but only after a passed evasion test, never after an automatic evade ([Automatic Failure/Success](https://arkhamdb.com/rules#Automatic_Failure_Success)).
 - [Engage](https://arkhamdb.com/rules#Engage_Action): take an enemy at your location into your threat area, even if it's exhausted, aloof or engaged with someone else (it disengages from them). Engaging and being engaged are the same event.

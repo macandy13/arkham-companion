@@ -34,6 +34,7 @@ const REFUSAL_KINDS: Readonly<Record<RejectionCode, RefusalKind>> = {
   alreadyEngaged: 'expected',
   notEngaged: 'expected',
   aloofNotEngaged: 'expected',
+  locationUnrevealed: 'expected',
   massiveNotEngageable: 'expected',
   attackNotDue: 'expected',
   // Card actions whose limit, cost or condition the board does not meet.

@@ -109,6 +109,6 @@ export function agendaThresholdDecision(ctx: EngineContext, state: GameState): D
     subject: agenda.id,
     prompt: 'decision.advanceAgenda',
     decider: { kind: 'group' },
-    options: confirmOptions([{ type: 'AdvanceAgenda' }], agenda.id),
+    options: confirmOptions([{ type: 'Advance', deck: 'agenda' }], agenda.id),
   });
 }
