@@ -118,9 +118,9 @@ details ul { padding-left: 20px; margin: 12px 0 0; display: grid; gap: 6px; font
 <main>
 <nav aria-label="Tour"><span class="number">#1442</span><ol><li><a href="#stop-1" data-stop="stop-1">1</a></li><li><a href="#stop-2" data-stop="stop-2">2</a></li><li><a class="evidence" href="#evidence" aria-label="How we know it works">✓</a></li></ol></nav>
 <header>
-<p class="kicker">refactor · MS.2 · as of 1b04627</p>
+<p class="kicker">refactor · MS.2 · as of 6c60593</p>
 <h1>Remove dead exports, check them with knip, share card lookups</h1>
-<p class="meta"><span>2 stops</span><span>0 questions</span><span>47 of 972 changed lines on the tour</span></p>
+<p class="meta"><span>2 stops</span><span>0 questions</span><span>47 of 8439 changed lines on the tour</span></p>
 </header>
 <section class="lead"><h2>The problem</h2><p>Many engine and app modules exported functions and constants that nothing outside their file uses, and nothing stopped new ones from piling up. Card names, the cards in a zone and the current agenda or act were each looked up by private copies in the board view, the board printer and the scenario handler.</p></section>
 <section class="lead"><h2>What changes</h2><p>knip now runs as part of pnpm lint and fails on unused files, exports and dependencies. The ~60 exports it reported lose their export keyword (one dead function, discardToTop, is deleted), and the duplicated lookups become four shared helpers in lookup.ts next to the other card lookups. No behaviour change, except that a lookup of a card id with no card now rejects as unknownCard instead of throwing a RangeError.</p></section>
