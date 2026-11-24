@@ -54,6 +54,7 @@ describe('playing a step', () => {
   it.each([
     { printed: 'a resign', action: resignAction(), actions: 2 },
     { printed: 'a free resign', action: { ...resignAction(), free: true as const }, actions: 3 },
+    { printed: 'a two-action resign', action: { ...resignAction(), actions: 2 }, actions: 1 },
   ])('counts off what $printed on a card costs: $actions left', ({ action, actions }) => {
     const table = PlayTable.start(
       newGame()

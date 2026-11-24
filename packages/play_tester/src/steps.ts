@@ -149,14 +149,15 @@ const BASIC_ACTION_OF: Record<Step['verb'], BasicAction | undefined> = {
 
 /**
  * The actions `step` costs the investigator who takes it: what the board says its basic action
- * costs now (`BoardView.actionCost`, a card can raise it), one for a card action unless it is
- * free, none for a step that is no action.
+ * costs now (`BoardView.actionCost`, a card can raise it), what a card action costs unless it is
+ * free (one, or two for "[action][action]:"), none for a step that is no action.
  */
 export function actionCostOf(table: PlayTable, step: Step): number {
   const { board } = table;
   if (step.verb === 'useCardAction') {
     const { id } = board.investigator(byName(step.investigator));
-    return board.cardAction(id, step.card, step.action)?.free ? 0 : 1;
+    const offered = board.cardAction(id, step.card, step.action);
+    return offered?.free ? 0 : (offered?.actions ?? 1);
   }
   const action = BASIC_ACTION_OF[step.verb];
   if (action === undefined || !('investigator' in step)) return 0;
@@ -181,7 +182,8 @@ export function playStep(table: PlayTable, step: Step): void {
 /** Counts off the action `step` takes, as the app does (`spendActionFor`, `spendAction`). */
 function countOffAction(table: PlayTable, step: Step): void {
   if (step.verb === 'useCardAction') {
-    if (actionCostOf(table, step) > 0) table.spendAction(byName(step.investigator));
+    const cost = actionCostOf(table, step);
+    if (cost > 0) table.spendAction(byName(step.investigator), cost);
     return;
   }
   const action = BASIC_ACTION_OF[step.verb];
