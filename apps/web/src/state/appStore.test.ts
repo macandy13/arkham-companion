@@ -930,14 +930,18 @@ describe('appStore', () => {
           const store = await aldersTurn('actions-drawn-cards-test');
           await store.getState().actions.perform(encounterDraw(investigatorId('alder')));
           await store.getState().actions.answer('resolve');
-          const shown = store.getState().current?.drawnCards;
+          const shown = store.getState().current?.notices;
 
           store.getState().dismissNotice('drawnCards');
 
-          expect(shown?.map(({ card, place }) => [card.name, place.kind])).toEqual([
-            ['Dissonant Voices', 'threatArea'],
-          ]);
-          expect(store.getState().current?.drawnCards).toBeUndefined();
+          expect(
+            shown?.flatMap((notice) =>
+              notice.kind === 'drawnCards'
+                ? notice.cards.map(({ card, place }) => [card.name, place.kind])
+                : [],
+            ),
+          ).toEqual([['Dissonant Voices', 'threatArea']]);
+          expect(store.getState().current?.notices).toEqual([]);
         });
 
         it('remembers the enemy whose spawn location the players choose until they cancel', async () => {
@@ -947,40 +951,40 @@ describe('appStore', () => {
             .current?.board?.encounter.setAside.find(({ name }) => name === 'Ghoul Priest');
           if (!ghoulPriest) throw new Error('the Ghoul Priest is set aside at setup');
 
-          store.getState().startSpawn(ghoulPriest);
-          const chosen = store.getState().current?.spawning?.name;
-          store.getState().cancelSpawn();
+          store.getState().startPick({ kind: 'spawn', enemy: ghoulPriest });
+          const chosen = store.getState().current?.picking;
+          store.getState().cancelPick();
 
-          expect(chosen).toBe('Ghoul Priest');
-          expect(store.getState().current?.spawning).toBeUndefined();
+          expect(chosen).toEqual({ kind: 'spawn', enemy: ghoulPriest });
+          expect(store.getState().current?.picking).toBeUndefined();
         });
 
         it('remembers the investigator a card effect moves until the players cancel', async () => {
           const store = await aldersTurn('actions-move-by-card-test');
           const alder = investigatorId('alder');
 
-          store.getState().startMoveByCard(alder);
-          const moving = store.getState().current?.movingByCard;
-          store.getState().cancelMoveByCard();
+          store.getState().startPick({ kind: 'moveByCard', investigator: alder });
+          const moving = store.getState().current?.picking;
+          store.getState().cancelPick();
 
-          expect(moving).toBe(alder);
-          expect(store.getState().current?.movingByCard).toBeUndefined();
+          expect(moving).toEqual({ kind: 'moveByCard', investigator: alder });
+          expect(store.getState().current?.picking).toBeUndefined();
         });
 
-        it('ends choosing a spawn location once the players start a move by card effect, and back', async () => {
+        it('keeps one pick on the map: a new pick replaces the last', async () => {
           const store = await aldersTurn('actions-one-map-pick-test');
           const ghoulPriest = store
             .getState()
             .current?.board?.encounter.setAside.find(({ name }) => name === 'Ghoul Priest');
           if (!ghoulPriest) throw new Error('the Ghoul Priest is set aside at setup');
 
-          store.getState().startSpawn(ghoulPriest);
-          store.getState().startMoveByCard(investigatorId('alder'));
-          const afterMove = store.getState().current?.spawning;
-          store.getState().startSpawn(ghoulPriest);
+          store.getState().startPick({ kind: 'spawn', enemy: ghoulPriest });
+          store.getState().startPick({ kind: 'moveByCard', investigator: investigatorId('alder') });
+          const afterMove = store.getState().current?.picking;
+          store.getState().startPick({ kind: 'spawn', enemy: ghoulPriest });
 
-          expect(afterMove).toBeUndefined();
-          expect(store.getState().current?.movingByCard).toBeUndefined();
+          expect(afterMove).toEqual({ kind: 'moveByCard', investigator: investigatorId('alder') });
+          expect(store.getState().current?.picking).toEqual({ kind: 'spawn', enemy: ghoulPriest });
         });
       });
 
@@ -1016,26 +1020,31 @@ describe('appStore', () => {
 
         it('shows the skipped effect until the players dismiss it', async () => {
           const store = await advancedTrapped('actions-skipped-dismiss-test');
-          const shown = store.getState().current?.skippedEffects;
+          const shown = store.getState().current?.notices;
 
           store.getState().dismissNotice('skippedEffects');
 
           expect(shown).toEqual([
             {
-              kind: 'missingCard',
-              card: 'Trapped',
-              effect: 'RevealLocation',
-              missing: ['secret_room'],
+              kind: 'skippedEffects',
+              effects: [
+                {
+                  kind: 'missingCard',
+                  card: 'Trapped',
+                  effect: 'RevealLocation',
+                  missing: ['secret_room'],
+                },
+              ],
             },
           ]);
-          expect(store.getState().current?.skippedEffects).toBeUndefined();
+          expect(store.getState().current?.notices).toEqual([]);
         });
 
         it('keeps the skipped effect through a refused tap, and the next step clears it', async () => {
           const store = await advancedTrapped('actions-skipped-next-step-test');
 
           await store.getState().actions.answer('pass');
-          const afterRefusal = store.getState().current?.skippedEffects;
+          const afterRefusal = store.getState().current?.notices;
           await store.getState().actions.correct({
             kind: 'actions',
             investigatorId: investigatorId('alder'),
@@ -1043,7 +1052,7 @@ describe('appStore', () => {
           });
 
           expect(afterRefusal).toHaveLength(1);
-          expect(store.getState().current?.skippedEffects).toBeUndefined();
+          expect(store.getState().current?.notices).toEqual([]);
         });
       });
 

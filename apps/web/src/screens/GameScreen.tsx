@@ -6,7 +6,7 @@ import { useStore } from 'zustand';
 import type { StoreApi } from 'zustand/vanilla';
 import { keyOf } from '@arkham/util';
 import { gameId as toGameId, type DecisionId, type InstanceId } from '@arkham/engine';
-import type { AppState } from '../state/appStore';
+import type { AppState, OpenGame, OpenNotice } from '../state/appStore';
 import { useCatalog, type CatalogSource } from '../catalog/useCatalog';
 import { InvestigatorBar } from '../investigators/InvestigatorBar';
 import { LocationFocus } from '../map/LocationFocus';
@@ -118,11 +118,11 @@ export function GameScreen({
   }
   const { board } = open;
   const [decision] = board.decisions;
-  const decisionId = open.state.pending[0]?.id;
-  const { spawning, movingByCard } = open;
-  const mover = movingByCard === undefined ? undefined : board.investigator(movingByCard);
+  const spawning = open.picking?.kind === 'spawn' ? open.picking.enemy : undefined;
+  const mover =
+    open.picking?.kind === 'moveByCard' ? board.investigator(open.picking.investigator) : undefined;
   const picking =
-    decision?.locations !== undefined && decisionId !== undefined && pickingFor === decisionId;
+    decision?.locations !== undefined && pending !== undefined && pickingFor === pending;
   const pickable = mover
     ? moveByCardTargets(board, mover.id)
     : picking
@@ -134,6 +134,8 @@ export function GameScreen({
     const option = keyOf(decision?.locations ?? {}, location);
     if (option !== undefined) void store.getState().actions.answer(option);
   };
+  const drawn = noticeOf(open, 'drawnCards');
+  const skipped = noticeOf(open, 'skippedEffects');
   const focusId = detailTarget?.row === 'map' ? detailTarget.location : undefined;
   // A location that left play, or a location to pick on the map, brings the whole map back.
   const focused =
@@ -142,7 +144,7 @@ export function GameScreen({
     showDetail && ((location: InstanceId) => showDetail({ row: 'map', location }));
 
   const host = {
-    decision: decision && decisionId !== undefined ? { view: decision, id: decisionId } : undefined,
+    decision: decision && pending !== undefined ? { view: decision, id: pending } : undefined,
     setHosted,
   };
 
@@ -152,7 +154,7 @@ export function GameScreen({
         id="board"
         ref={boardElement}
         data-view={detailTarget?.row}
-        data-spawning={open.spawning ? true : undefined}
+        data-spawning={spawning ? true : undefined}
       >
         <GameHeader
           store={store}
@@ -200,7 +202,7 @@ export function GameScreen({
               onPick={
                 spawning
                   ? (location) => {
-                      store.getState().cancelSpawn();
+                      store.getState().cancelPick();
                       void store.getState().actions.perform({
                         type: 'SpawnEnemy',
                         enemyId: spawning.id,
@@ -209,7 +211,7 @@ export function GameScreen({
                     }
                   : mover
                     ? (location) => {
-                        store.getState().cancelMoveByCard();
+                        store.getState().cancelPick();
                         void store.getState().actions.move(location, { byCard: mover.id });
                       }
                     : picking
@@ -243,7 +245,7 @@ export function GameScreen({
             }
             weaknesses={cards.status === 'ready' ? cards.catalog.weaknesses : undefined}
             onMoveByCard={(investigator) => {
-              store.getState().startMoveByCard(investigator);
+              store.getState().startPick({ kind: 'moveByCard', investigator });
               // The expanded bar covers most of the map, which the players pick the location on.
               if (detailTarget?.row === 'investigators') detail.close();
             }}
@@ -254,53 +256,46 @@ export function GameScreen({
         )}
         {decision && !hosted && (
           <DecisionDialog
-            key={open.state.pending[0]?.id}
+            key={pending}
             board={board}
             decision={decision}
             actions={store.getState().actions}
             busy={open.busy}
             justDrawn={justDrawn && decision.card?.id === board.resolving?.id}
             picking={picking}
-            onPicking={(to) => setPickingFor(to ? decisionId : undefined)}
+            onPicking={(to) => setPickingFor(to ? pending : undefined)}
           />
         )}
         <ResolutionPrompt key={open.gameId} store={store} open={open} />
         <div id="notices">
-          {open.log && (
-            <ChangesNotice
-              key={open.gameId}
-              log={open.log}
-              state={open.state}
-              reliance={open.reliance}
-            />
-          )}
-          {open.spawning && (
+          {open.log && <ChangesNotice key={open.gameId} log={open.log} reliance={open.reliance} />}
+          {spawning && (
             <MapPickPrompt
               label={t('encounter.spawnLabel')}
-              prompt={t('encounter.spawnPrompt', { card: open.spawning.name })}
-              onCancel={() => store.getState().cancelSpawn()}
+              prompt={t('encounter.spawnPrompt', { card: spawning.name })}
+              onCancel={() => store.getState().cancelPick()}
             />
           )}
           {mover && (
             <MapPickPrompt
               label={t('moveByCard.label')}
               prompt={t('moveByCard.prompt', { investigator: mover.name })}
-              onCancel={() => store.getState().cancelMoveByCard()}
+              onCancel={() => store.getState().cancelPick()}
             />
           )}
-          {open.drawnCards && (
+          {drawn && (
             <DrawnCardsNotice
               board={board}
-              drawn={open.drawnCards}
+              drawn={drawn.cards}
               actions={store.getState().actions}
               busy={open.busy}
-              onSpawn={(enemy) => store.getState().startSpawn(enemy)}
+              onSpawn={(enemy) => store.getState().startPick({ kind: 'spawn', enemy })}
               onDismiss={() => store.getState().dismissNotice('drawnCards')}
             />
           )}
-          {open.skippedEffects && (
+          {skipped && (
             <SkippedEffectsNotice
-              skipped={open.skippedEffects}
+              skipped={skipped.effects}
               onDismiss={() => store.getState().dismissNotice('skippedEffects')}
             />
           )}
@@ -313,5 +308,15 @@ export function GameScreen({
         </div>
       </div>
     </DecisionHostContext.Provider>
+  );
+}
+
+/** The open game's notice of kind `kind`, if its last step left one. */
+function noticeOf<K extends OpenNotice['kind']>(
+  open: OpenGame,
+  kind: K,
+): Extract<OpenNotice, { kind: K }> | undefined {
+  return open.notices.find(
+    (notice): notice is Extract<OpenNotice, { kind: K }> => notice.kind === kind,
   );
 }

@@ -73,7 +73,7 @@ export function InvestigatorBar({
   weaknesses?: readonly WeaknessDef[] | undefined;
   /**
    * Starts picking on the map where a card effect moves an investigator, connected or not
-   * (`AppState.startMoveByCard`); the whole card offers it when given.
+   * (`AppState.startPick`); the whole card offers it when given.
    */
   onMoveByCard?: ((investigator: InvestigatorId) => void) | undefined;
 }) {

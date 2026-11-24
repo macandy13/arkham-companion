@@ -64,6 +64,7 @@ The open game (`OpenGame`) is the play screen's single source of truth:
   - A correction by hand is a step like any other, played from the − / + bubble on the count it changes, so one undo takes back one tap; there is no mode that collects corrections.
 - **`BoardView`** (`OpenGame.board`) is what the screen reads: names, thresholds and derived values, never raw state.
   The encounter piles come from `BoardView.encounter` (the deck's count, the discard pile top first, the set-aside cards and the victory display, each card with its id, code, name, type, picture and victory points), so the screen never reads zones.
+- Besides the board, the open game holds only what the screen shows on top of it: `notices` (what the last step left to read, the effects it skipped and the encounter cards it drew, as `OpenNotice`s that `dismissNotice` takes away by kind), `picking` (the one `MapPick` the players make on the map, where an enemy spawns or where a card moves an investigator, set by `startPick`), and the log and resolution as the dialogs read them (`GameLogSource`, `PendingResolution`), so a dialog takes one prop rather than the game's raw state.
 
 The play screen is described in [Play screen](play-screen.md) and its pages.
 

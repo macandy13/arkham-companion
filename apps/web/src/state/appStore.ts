@@ -144,6 +144,10 @@ export interface PendingResolution {
   options: readonly ResolutionOption[];
   /** The campaign the resolution writes into; absent for a standalone game. */
   campaignId?: CampaignId;
+  /** The ended game's scenario, which names the dialog. */
+  scenarioId: ScenarioId;
+  /** The campaign record the game played with (`GameState.campaign`), which words the changes. */
+  campaign: GameState['campaign'];
 }
 
 /** The game on the play screen, as `AppState.openGame` loaded it and `AppState.actions` keep it. */
@@ -185,25 +189,13 @@ export interface OpenGame {
   /** Why the last action was refused, until the next action or `dismissRejection`. */
   rejection?: Rejection;
   /**
-   * What the last action skipped for the players to do by hand (a card it names is missing), until
-   * the next action or `dismissNotice`.
+   * What the last action left for the players to read, until the next action or `dismissNotice`:
+   * the effects it skipped for them to do by hand, and the encounter cards it drew or placed.
+   * Empty when it left nothing.
    */
-  skippedEffects?: readonly SkippedEffect[];
-  /**
-   * The encounter cards the last action drew or placed and where they went, until the next action or
-   * `dismissNotice`.
-   */
-  drawnCards?: readonly DrawnCard[];
-  /**
-   * The enemy whose spawn location the players are choosing on the map (`AppState.startSpawn`),
-   * until they tap one or cancel.
-   */
-  spawning?: EncounterCardView;
-  /**
-   * The investigator a card effect moves, whose destination the players are choosing on the map
-   * (`AppState.startMoveByCard`), until they tap one or cancel.
-   */
-  movingByCard?: InvestigatorId;
+  notices: readonly OpenNotice[];
+  /** What the players are choosing on the map (`AppState.startPick`), until they tap or cancel. */
+  picking?: MapPick;
   /**
    * The resolution the ended game proposes, until it is written into the campaign log. Absent
    * while the game goes on, once its campaign has moved past its scenario, and for a scenario
@@ -212,19 +204,40 @@ export interface OpenGame {
   resolution?: PendingResolution;
 }
 
+/** A notice of the last step (`OpenGame.notices`), by the `StepNotice` it is stored as. */
+export type OpenNotice =
+  | { kind: 'skippedEffects'; effects: readonly SkippedEffect[] }
+  | { kind: 'drawnCards'; cards: readonly DrawnCard[] };
+
 /**
- * A game's log (`GameSession.entries`) with when its steps were stored (`GameSession.stepTimes`)
- * and the rules it is played with (`GameSession.ctx`).
+ * A choice the players make by a tap on the map (`OpenGame.picking`): where the enemy `enemy`
+ * spawns, or where a card effect moves the investigator `investigator`. One at a time, so a tap
+ * never answers a pick the map doesn't show.
+ */
+type MapPick =
+  | { kind: 'spawn'; enemy: EncounterCardView }
+  | { kind: 'moveByCard'; investigator: InvestigatorId };
+
+/**
+ * A game's log (`GameSession.entries`) with when its steps were stored (`GameSession.stepTimes`),
+ * the rules it is played with (`GameSession.ctx`) and the state it led to.
  */
 export interface GameLogSource {
   readonly ctx: EngineContext;
+  /** The game's state now, which names the log's cards and investigators. */
+  readonly state: GameState;
   readonly entries: readonly LoggedEvent[];
   readonly stepTimes: ReadonlyMap<string, number>;
 }
 
 /** The open game's log as `played` holds it now. */
 function logSourceOf(played: GameSession): GameLogSource {
-  return { ctx: played.ctx, entries: played.entries, stepTimes: played.stepTimes };
+  return {
+    ctx: played.ctx,
+    state: played.state,
+    entries: played.entries,
+    stepTimes: played.stepTimes,
+  };
 }
 
 /** Looks a scenario up by id; `findScenario` in the app, a stub in tests. */
@@ -322,18 +335,14 @@ export interface AppState {
   /** Clears `current.rejection` once the screen has shown it. */
   dismissRejection(): void;
   /**
-   * Clears `current.skippedEffects` or `current.drawnCards` once the players have read them, and
-   * stores that, so the game opened again doesn't show them (`GameSession.dismissNotice`).
+   * Clears the notice of kind `notice` from `current.notices` once the players have read it, and
+   * stores that, so the game opened again doesn't show it (`GameSession.dismissNotice`).
    */
   dismissNotice(notice: StepNotice): void;
-  /** Lets the players choose on the map where `enemy` spawns (`current.spawning`). */
-  startSpawn(enemy: EncounterCardView): void;
-  /** Ends choosing a spawn location, after a tap on the map or a cancel. */
-  cancelSpawn(): void;
-  /** Lets the players choose on the map where a card effect moves `investigator` (`current.movingByCard`). */
-  startMoveByCard(investigator: InvestigatorId): void;
-  /** Ends choosing where a card effect moves an investigator, after a tap on the map or a cancel. */
-  cancelMoveByCard(): void;
+  /** Lets the players make `pick` on the map (`current.picking`), ending any other pick. */
+  startPick(pick: MapPick): void;
+  /** Ends the pick on the map, after a tap or a cancel. */
+  cancelPick(): void;
   /** Renames a saved game and reloads the list. */
   renameGame(gameId: GameId, title: string): Promise<void>;
   /**
@@ -452,7 +461,13 @@ function pendingResolution(
   });
   // Only a game that ended with a resolution its scenario defines has anything to propose.
   if (!options.some((option) => campaign.sameOutcome(option.outcome, reached))) return undefined;
-  return { reached, options, campaignId: log?.campaignId };
+  return {
+    reached,
+    options,
+    campaignId: log?.campaignId,
+    scenarioId: state.meta.scenarioId,
+    campaign: state.campaign,
+  };
 }
 
 /**
@@ -510,13 +525,12 @@ export function createAppStore(
     }
 
     /** The notices of `played`'s last step, each left out when it has nothing to say. */
-    function lastNotices(
-      played: GameSession | undefined,
-    ): Pick<OpenGame, 'skippedEffects' | 'drawnCards'> {
-      return {
-        skippedEffects: played?.skippedEffects.length ? played.skippedEffects : undefined,
-        drawnCards: played?.drawnCards.length ? played.drawnCards : undefined,
-      };
+    function lastNotices(played: GameSession | undefined): Pick<OpenGame, 'notices'> {
+      const notices: OpenNotice[] = [];
+      if (played?.skippedEffects.length)
+        notices.push({ kind: 'skippedEffects', effects: played.skippedEffects });
+      if (played?.drawnCards.length) notices.push({ kind: 'drawnCards', cards: played.drawnCards });
+      return { notices };
     }
 
     /** Loads a campaign's log and its games into `campaign`, or `null` if there is no such campaign. */
@@ -776,28 +790,19 @@ export function createAppStore(
       },
       dismissNotice(notice) {
         const open = get().current;
-        if (!open?.[notice]) return;
-        set({ current: { ...open, [notice]: undefined } });
+        if (!open?.notices.some(({ kind }) => kind === notice)) return;
+        set({ current: { ...open, notices: open.notices.filter(({ kind }) => kind !== notice) } });
         session?.dismissNotice(notice).catch((error: unknown) => {
           console.warn(`Could not store that a notice of game ${open.gameId} was read.`, error);
         });
       },
-      startSpawn(enemy) {
+      startPick(pick) {
         const open = get().current;
-        // One pick on the map at a time, so a tap never answers a pick the map doesn't show.
-        if (open) set({ current: { ...open, spawning: enemy, movingByCard: undefined } });
+        if (open) set({ current: { ...open, picking: pick } });
       },
-      cancelSpawn() {
+      cancelPick() {
         const open = get().current;
-        if (open?.spawning) set({ current: { ...open, spawning: undefined } });
-      },
-      startMoveByCard(investigator) {
-        const open = get().current;
-        if (open) set({ current: { ...open, movingByCard: investigator, spawning: undefined } });
-      },
-      cancelMoveByCard() {
-        const open = get().current;
-        if (open?.movingByCard) set({ current: { ...open, movingByCard: undefined } });
+        if (open?.picking) set({ current: { ...open, picking: undefined } });
       },
       async setReliance(reliance) {
         const current = get().current;

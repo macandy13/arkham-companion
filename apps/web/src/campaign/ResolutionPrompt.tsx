@@ -24,7 +24,6 @@ export function ResolutionPrompt({
   if (later || resolution === undefined) return null;
   return (
     <ResolutionDialog
-      game={open.state}
       resolution={resolution}
       busy={open.busy}
       failed={failed}

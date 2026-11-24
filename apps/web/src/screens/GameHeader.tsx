@@ -70,7 +70,7 @@ export function GameHeader({
     board,
     actions: store.getState().actions,
     busy: blocked,
-    onSpawn: (enemy) => store.getState().startSpawn(enemy),
+    onSpawn: (enemy) => store.getState().startPick({ kind: 'spawn', enemy }),
   };
 
   return (
