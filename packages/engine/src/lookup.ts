@@ -147,27 +147,26 @@ export function cardsInZones(
     .filter((card) => matchesCard(ctx, card, filter));
 }
 
-/** Whether `card` has what `filter` asks to be printed on it. */
+/**
+ * Whether `card` has what `filter` asks to be printed on it. A card the `CardDb` lacks shows no
+ * print, so it matches only a filter that asks for nothing but its code.
+ */
 export function matchesCard(ctx: EngineContext, card: CardInstance, filter: CardFilter): boolean {
-  return matchesStats(card.code, ctx.cards.get(card.code), filter);
+  const stats = ctx.cards.get(card.code);
+  if (stats !== undefined) return matchesStats(stats, filter);
+  const { code, ...printed } = filter;
+  return (code === undefined || code === card.code) && Object.keys(printed).length === 0;
 }
 
-/**
- * Whether the card `code`, printed as `stats`, has what `filter` asks for; a card the `CardDb`
- * lacks matches only on its code.
- */
-export function matchesStats(
-  code: CardCode,
-  stats: CardStats | undefined,
-  filter: CardFilter,
-): boolean {
+/** Whether the card printed as `stats` has what `filter` asks for. */
+export function matchesStats(stats: CardStats, filter: CardFilter): boolean {
   return (
-    (filter.code === undefined || code === filter.code) &&
-    (filter.name === undefined || stats?.name === filter.name) &&
-    (filter.trait === undefined || stats?.traits.includes(filter.trait) === true) &&
-    (filter.withoutTrait === undefined || stats?.traits.includes(filter.withoutTrait) !== true) &&
-    (filter.typeCode === undefined || stats?.typeCode === filter.typeCode) &&
-    (filter.unique === undefined || stats?.unique === true)
+    (filter.code === undefined || stats.code === filter.code) &&
+    (filter.name === undefined || stats.name === filter.name) &&
+    (filter.trait === undefined || stats.traits.includes(filter.trait)) &&
+    (filter.withoutTrait === undefined || !stats.traits.includes(filter.withoutTrait)) &&
+    (filter.typeCode === undefined || stats.typeCode === filter.typeCode) &&
+    (filter.unique === undefined || stats.unique === true)
   );
 }
 

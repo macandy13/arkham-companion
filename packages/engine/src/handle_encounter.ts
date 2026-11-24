@@ -14,7 +14,7 @@ import type {
 import { decisionId, type InstanceId, type InvestigatorId } from './ids';
 import { activeInvestigator, isActiveInvestigator, findInvestigator } from './investigators';
 import { hasKeyword } from './keywords';
-import { cardsInZone, matchesCard, newCardId, requireCard, type CardFilter } from './lookup';
+import { cardsInZone, matchesStats, newCardId, requireCard, type CardFilter } from './lookup';
 import { cardMoved } from './placement';
 import { discardPileOf } from './player_cards';
 import { spawnEvents } from './spawn';
@@ -221,7 +221,7 @@ function findMatch(
 ): InstanceId | undefined {
   return zones
     .flatMap((zone) => cardsInZone(state, zone))
-    .find((id) => matchesCard(ctx, requireCard(state.cards, id), match));
+    .find((id) => matchesStats(cardStats(ctx.cards, requireCard(state.cards, id).code), match));
 }
 
 /** The deck cards above `cardId`, top first; none when it is not in the deck. */
