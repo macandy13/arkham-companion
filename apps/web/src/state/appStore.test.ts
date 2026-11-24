@@ -33,7 +33,7 @@ import {
 } from '@arkham/scenarios';
 import { GameImportError } from '../storage/importError';
 import { IndexedDbStore, SeqConflictError } from '../storage/IndexedDbStore';
-import { createAppStore, type ImportedFile } from './appStore';
+import { createAppStore, noticeOf, type ImportedFile } from './appStore';
 import type { GameActions } from './gameActions';
 
 const started: Event = {
@@ -930,17 +930,14 @@ describe('appStore', () => {
           const store = await aldersTurn('actions-drawn-cards-test');
           await store.getState().actions.perform(encounterDraw(investigatorId('alder')));
           await store.getState().actions.answer('resolve');
-          const shown = store.getState().current?.notices;
+          const open = store.getState().current;
+          const shown = open && noticeOf(open, 'drawnCards');
 
           store.getState().dismissNotice('drawnCards');
 
-          expect(
-            shown?.flatMap((notice) =>
-              notice.kind === 'drawnCards'
-                ? notice.cards.map(({ card, place }) => [card.name, place.kind])
-                : [],
-            ),
-          ).toEqual([['Dissonant Voices', 'threatArea']]);
+          expect(shown?.cards.map(({ card, place }) => [card.name, place.kind])).toEqual([
+            ['Dissonant Voices', 'threatArea'],
+          ]);
           expect(store.getState().current?.notices).toEqual([]);
         });
 

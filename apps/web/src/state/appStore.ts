@@ -209,6 +209,16 @@ export type OpenNotice =
   | { kind: 'skippedEffects'; effects: readonly SkippedEffect[] }
   | { kind: 'drawnCards'; cards: readonly DrawnCard[] };
 
+/** The open game's notice of kind `kind`, if its last step left one. */
+export function noticeOf<K extends OpenNotice['kind']>(
+  open: OpenGame,
+  kind: K,
+): Extract<OpenNotice, { kind: K }> | undefined {
+  return open.notices.find(
+    (notice): notice is Extract<OpenNotice, { kind: K }> => notice.kind === kind,
+  );
+}
+
 /**
  * A choice the players make by a tap on the map (`OpenGame.picking`): where the enemy `enemy`
  * spawns, or where a card effect moves the investigator `investigator`. One at a time, so a tap
@@ -790,7 +800,7 @@ export function createAppStore(
       },
       dismissNotice(notice) {
         const open = get().current;
-        if (!open?.notices.some(({ kind }) => kind === notice)) return;
+        if (!open || !noticeOf(open, notice)) return;
         set({ current: { ...open, notices: open.notices.filter(({ kind }) => kind !== notice) } });
         session?.dismissNotice(notice).catch((error: unknown) => {
           console.warn(`Could not store that a notice of game ${open.gameId} was read.`, error);

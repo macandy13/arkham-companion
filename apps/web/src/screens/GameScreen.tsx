@@ -6,7 +6,7 @@ import { useStore } from 'zustand';
 import type { StoreApi } from 'zustand/vanilla';
 import { keyOf } from '@arkham/util';
 import { gameId as toGameId, type DecisionId, type InstanceId } from '@arkham/engine';
-import type { AppState, OpenGame, OpenNotice } from '../state/appStore';
+import { noticeOf, type AppState } from '../state/appStore';
 import { useCatalog, type CatalogSource } from '../catalog/useCatalog';
 import { InvestigatorBar } from '../investigators/InvestigatorBar';
 import { LocationFocus } from '../map/LocationFocus';
@@ -308,15 +308,5 @@ export function GameScreen({
         </div>
       </div>
     </DecisionHostContext.Provider>
-  );
-}
-
-/** The open game's notice of kind `kind`, if its last step left one. */
-function noticeOf<K extends OpenNotice['kind']>(
-  open: OpenGame,
-  kind: K,
-): Extract<OpenNotice, { kind: K }> | undefined {
-  return open.notices.find(
-    (notice): notice is Extract<OpenNotice, { kind: K }> => notice.kind === kind,
   );
 }
