@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
   advanceBySpendingClues,
+  eachInvestigator,
+  you,
   advanceBySpendingCluesAtRoundEnd,
   atLocation,
   attachedTo,
@@ -617,7 +619,9 @@ describe('action conditions', () => {
     .withLocation(
       hall,
       blankLocation('hall', {
-        actions: [{ ...scareAction, condition: { kind: 'controls', card: cardCode('lita') } }],
+        actions: [
+          { ...scareAction, condition: { kind: 'controls', who: you(), code: cardCode('lita') } },
+        ],
       }),
       { revealed: true },
     )
@@ -663,7 +667,13 @@ describe('a fast action during your turn with 1 or 2 investigators in the game',
       {
         ...scareAction,
         free: true,
-        condition: [{ kind: 'yourTurn' }, { kind: 'investigatorCount', min: 1, max: 2 }],
+        condition: {
+          kind: 'allOf',
+          conditions: [
+            { kind: 'turn', of: you() },
+            { kind: 'countOf', of: eachInvestigator(), min: 1, max: 2 },
+          ],
+        },
       },
     ],
   });
@@ -707,7 +717,7 @@ describe('action conditions on a player card earned in the campaign', () => {
     .withLocation(
       hall,
       blankLocation('hall', {
-        actions: [{ ...scareAction, condition: { kind: 'controls', card: lita } }],
+        actions: [{ ...scareAction, condition: { kind: 'controls', who: you(), code: lita } }],
       }),
       { revealed: true },
     )

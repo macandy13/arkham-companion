@@ -451,7 +451,13 @@ export const smokeAndMirrorsCardDefs: readonly CardStats[] = [
       {
         free: true,
         limit: { per: 'round' },
-        condition: [{ kind: 'yourTurn' }, { kind: 'investigatorCount', min: 1, max: 2 }],
+        condition: {
+          kind: 'allOf',
+          conditions: [
+            { kind: 'turn', of: you() },
+            { kind: 'countOf', of: eachInvestigator(), min: 1, max: 2 },
+          ],
+        },
         effects: [moveToConnectingLocation()],
       },
     ],
