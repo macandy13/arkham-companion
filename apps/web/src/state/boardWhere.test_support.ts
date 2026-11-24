@@ -31,7 +31,7 @@ export function locationWhere(
   change: Partial<LocationView>,
 ): BoardView {
   const patch = (view: LocationView): LocationView =>
-    view.id === id ? { ...view, ...change } : view;
+    view.id === id ? Object.assign({}, view, change) : view;
   return boardWhere(board, {
     location: (ref) => patch(board.location(ref)),
     get locations() {
@@ -55,7 +55,7 @@ export function investigatorWhere(
   change: Partial<InvestigatorView>,
 ): BoardView {
   const patch = (view: InvestigatorView): InvestigatorView =>
-    view.id === id ? { ...view, ...change } : view;
+    view.id === id ? Object.assign({}, view, change) : view;
   return boardWhere(board, {
     investigator: (ref) => patch(board.investigator(ref)),
     get investigators() {
