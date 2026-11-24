@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>#1424 review tour</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400..700&amp;family=JetBrains+Mono:wght@400;600&amp;display=swap">
+<style>
+:root {
+  --bg: #fbfbf9; --fg: #1d1f21; --muted: #6b6f73; --line: #e6e5e0; --soft: #f2f1ec;
+  --accent: #2f5d8a; --accent-fg: #ffffff; --ask: #fdf4dc; --ask-fg: #3d3115; --code-bg: #ffffff;
+  --add-bg: #e9f5ec; --add-mark: #2e7d47; --del-bg: #fbecea; --del-mark: #b0413a; --hl: #fff3c4;
+  --tok-key: #8a3ffc; --tok-str: #2e7d47; --tok-com: #8c9196; --tok-type: #2f5d8a; --ok: #2e7d47;
+  --font-body: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-code: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  --radius: 8px;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #17191b; --fg: #e8e8e6; --muted: #9a9ea3; --line: #2b2e31; --soft: #202326;
+    --accent: #8ab4e0; --accent-fg: #10161c; --ask: #2b2617; --ask-fg: #f0e3bd; --code-bg: #1c1f22;
+    --add-bg: #1d2e23; --add-mark: #7cc596; --del-bg: #33201f; --del-mark: #e48a83; --hl: #3a3420;
+    --tok-key: #c4a1ff; --tok-str: #8fd0a4; --tok-com: #7c8288; --tok-type: #8ab4e0; --ok: #7cc596;
+    color-scheme: dark;
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.6 var(--font-body); -webkit-font-smoothing: antialiased; }
+main {
+  max-width: 720px; margin: 0 auto; display: grid; gap: 40px;
+  padding: 0 max(16px, env(safe-area-inset-right)) 56px max(16px, env(safe-area-inset-left));
+}
+a { color: var(--accent); text-underline-offset: 2px; }
+a:focus-visible, button:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+code { font-family: var(--font-code); font-size: .88em; background: var(--soft); padding: 1px 5px; border-radius: 4px; }
+nav {
+  position: sticky; top: 0; z-index: 5; display: flex; align-items: center; gap: 12px;
+  margin: 0 calc(-1 * max(16px, env(safe-area-inset-left))); padding: 10px max(16px, env(safe-area-inset-left));
+  background: color-mix(in srgb, var(--bg) 92%, transparent); backdrop-filter: blur(8px); border-bottom: 1px solid var(--line);
+}
+nav .number { font-size: 14px; font-weight: 600; color: var(--muted); }
+nav ol { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 0 auto; padding: 0; list-style: none; }
+nav ol a {
+  width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center;
+  color: var(--muted); background: var(--soft); font-size: 13px; font-weight: 600; text-decoration: none;
+}
+nav ol a.question { background: var(--ask); color: var(--ask-fg); }
+nav ol a.on { background: var(--accent); color: var(--accent-fg); }
+header { display: grid; gap: 12px; padding-top: 28px; }
+.kicker { font-size: 13px; color: var(--muted); }
+h1 { font-size: 28px; line-height: 1.2; font-weight: 650; letter-spacing: -0.015em; margin: 0; text-wrap: balance; }
+.lead { display: grid; gap: 6px; }
+.lead h2 { font-size: 12px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 0; }
+.lead p { font-size: 18px; margin: 0; max-width: 60ch; }
+.meta { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 13px; color: var(--muted); margin: 0; }
+.questions { background: var(--ask); color: var(--ask-fg); border-radius: var(--radius); padding: 18px 20px; display: grid; gap: 14px; }
+.questions h2 { font-size: 12px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; margin: 0; opacity: .75; }
+.questions ol { margin: 0; padding-left: 20px; display: grid; gap: 12px; }
+.questions p { margin: 0; font-size: 17px; }
+.questions .about { font-size: 13px; opacity: .75; }
+.questions a { color: inherit; font-size: 14px; font-weight: 500; }
+section.evidence { display: grid; gap: 14px; scroll-margin-top: 64px; }
+.evidence h2 { font-size: 20px; line-height: 1.3; font-weight: 600; letter-spacing: -0.01em; margin: 0; }
+.evidence ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 18px; }
+.evidence li { display: grid; gap: 8px; padding-left: 28px; position: relative; }
+.evidence li::before { content: "✓"; position: absolute; left: 4px; color: var(--accent); font-weight: 600; }
+.evidence li > p { margin: 0; max-width: 62ch; }
+.evidence .test { font-size: 14px; color: var(--muted); }
+.example { margin: 0; padding: 12px 14px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--soft); overflow-x: auto; font: 13px/1.5 var(--font-code); font-variant-ligatures: none; }
+.example code { background: none; padding: 0; font-size: inherit; }
+.stop { display: grid; gap: 14px; scroll-margin-top: 64px; }
+.stop > header { display: grid; grid-template-columns: auto 1fr; gap: 2px 12px; align-items: center; padding: 0; }
+.stop-number {
+  grid-row: span 2; align-self: start; margin-top: 2px; width: 28px; height: 28px; border-radius: 50%;
+  display: grid; place-items: center; background: var(--accent); color: var(--accent-fg); font-size: 13px; font-weight: 600;
+}
+.stop h2 { font-size: 20px; line-height: 1.3; font-weight: 600; letter-spacing: -0.01em; margin: 0; text-wrap: balance; }
+.tag { font-size: 12px; color: var(--muted); letter-spacing: .04em; text-transform: uppercase; }
+.stop > p { margin: 0; max-width: 62ch; }
+figure { display: grid; gap: 8px; margin: 0; }
+.toggle { display: flex; flex-wrap: wrap; gap: 4px; }
+.segments { display: inline-flex; background: var(--soft); border-radius: 999px; padding: 3px; }
+.toggle button { font: 500 13px var(--font-body); color: var(--muted); background: transparent; border: 0; border-radius: 999px; padding: 4px 12px; cursor: pointer; }
+.toggle button[aria-pressed="true"] { background: var(--bg); color: var(--fg); box-shadow: 0 1px 2px rgb(0 0 0 / 12%); }
+.frame { border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; background: var(--soft); }
+.frame img { display: block; width: 100%; height: auto; }
+.frame.phone { max-width: 280px; margin-inline: auto; }
+.frame .missing { padding: 24px; text-align: center; color: var(--muted); font-size: 14px; }
+.code { border: 1px solid var(--line); border-radius: var(--radius); background: var(--code-bg); overflow: hidden; }
+.code > header {
+  display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; padding: 8px 12px;
+  border-bottom: 1px solid var(--line); background: var(--soft); font-size: 13px; color: var(--muted);
+}
+.code .file { color: var(--fg); font-family: var(--font-code); font-size: 12.5px; overflow-wrap: anywhere; }
+.code > header a { margin-left: auto; }
+.code pre code { display: block; padding: 0; background: none; font-size: inherit; }
+.code pre { margin: 0; padding: 6px 0; font: 12.5px/1.6 var(--font-code); font-variant-ligatures: none; }
+.line { display: grid; grid-template-columns: 3.2em 1.4em minmax(0, 1fr); }
+.line .number { color: var(--muted); text-align: right; padding-right: .6em; user-select: none; opacity: .6; }
+.line .mark { color: var(--muted); user-select: none; }
+.line .text { padding: 0 12px 0 2ch; text-indent: -2ch; white-space: pre-wrap; overflow-wrap: anywhere; }
+.line.added { background: var(--add-bg); } .line.added .mark { color: var(--add-mark); }
+.line.removed { background: var(--del-bg); } .line.removed .mark { color: var(--del-mark); }
+.line.highlighted { background: var(--hl); }
+.line.gap .text { color: var(--muted); font-family: var(--font-body); font-size: 12px; }
+.k { color: var(--tok-key); } .s { color: var(--tok-str); } .c { color: var(--tok-com); font-style: italic; } .t { color: var(--tok-type); }
+.done { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; }
+.done p { margin: 0; color: var(--muted); }
+.done a { background: var(--accent); color: var(--accent-fg); border-radius: 999px; padding: 9px 20px; text-decoration: none; font-weight: 600; font-size: 15px; }
+details { border-top: 1px solid var(--line); padding-top: 16px; }
+summary { cursor: pointer; font-size: 15px; font-weight: 600; }
+details ul { padding-left: 20px; margin: 12px 0 0; display: grid; gap: 6px; font-size: 15px; }
+@media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+</style>
+</head>
+<body>
+<main>
+<nav aria-label="Tour"><span class="number">#1424</span><ol><li><a href="#stop-1" data-stop="stop-1">1</a></li><li><a href="#stop-2" data-stop="stop-2">2</a></li><li><a href="#stop-3" data-stop="stop-3">3</a></li><li><a class="evidence" href="#evidence" aria-label="How we know it works">✓</a></li></ol></nav>
+<header>
+<p class="kicker">refactor(engine) · ME.17b · as of 595bd6a</p>
+<h1>Resolutions read the ability condition</h1>
+<p class="meta"><span>3 stops</span><span>0 questions</span><span>83 of 404 changed lines on the tour</span></p>
+</header>
+<section class="lead"><h2>The problem</h2><p>A scenario's resolutions asked about the ended game in a third condition language (<code>GameCondition</code>: a card in some places, N cards of a trait, the current agenda), next to the one abilities and card actions read. It repeated <code>currentCard</code> and <code>countOf</code> under other names, and a resolution couldn't ask anything else an ability can.</p></section>
+<section class="lead"><h2>What changes</h2><p>Resolution steps now take an <code>AbilityCondition</code>, read on the ended game's table outside any timing window: there a reference to the window's card or investigator names nothing, and only what the table answers by itself (the lead, the only copy of a card) stands for something. Where a card lies is the references abilities already use (<code>eachInZone</code>, <code>eachInPlay</code>), so <code>GameCondition</code> and its place list go, and &quot;beneath the act&quot; names the act by its only copy, which still finds it once it advanced out of the game.</p></section>
+
+<section class="stop" id="stop-1">
+<header><span class="stop-number">1</span><span class="tag">engine</span><h2>Resolutions ask the shared condition</h2></header>
+<p>A <code>when</code> step and each name of a <code>recordNames</code> step read an <code>AbilityCondition</code>, and <code>gameHolds</code> asks it without a window instead of matching places of its own.</p>
+
+<div class="code"><header><span class="file">packages/engine/src/campaign/resolution.ts</span><span>+20 −89</span><a href="https://github.com/macandy13/arkham-companion/pull/1424/files#diff-0ccbfea80d6747a4a46e314e442ceaa638e051dfd2c0a1b93562fb2de88e4582R102-R346">Open in diff</a></header><pre><code><span class="line removed"><span class="number">98</span><span class="mark">−</span><span class="text">  <span class="c">/** `then` when the ended game answers `condition` with yes, else `otherwise`. */</span></span></span><span class="line added"><span class="number">102</span><span class="mark">+</span><span class="text">  /**</span></span><span class="line added"><span class="number">103</span><span class="mark">+</span><span class="text"><span class="c">   * `then` when `condition` holds on the ended game's table, else `otherwise`; read outside any</span></span></span><span class="line added"><span class="number">104</span><span class="mark">+</span><span class="text"><span class="c">   * timing window, so it names cards by where they are (`eachInZone`, `eachInPlay`, `onlyCopy`).</span></span></span><span class="line added"><span class="number">105</span><span class="mark">+</span><span class="text"><span class="c">   */</span></span></span><span class="line context"><span class="number">106</span><span class="mark"> </span><span class="text">  | {</span></span><span class="line context"><span class="number">107</span><span class="mark"> </span><span class="text">      <span class="k">readonly</span> kind: <span class="s">'when'</span>;</span></span><span class="line removed"><span class="number">101</span><span class="mark">−</span><span class="text">      <span class="k">readonly</span> condition: <span class="t">GameCondition</span>;</span></span><span class="line highlighted"><span class="number">108</span><span class="mark">+</span><span class="text">      <span class="k">readonly</span> condition: <span class="t">AbilityCondition</span>;</span></span><span class="line context"><span class="number">109</span><span class="mark"> </span><span class="text">      <span class="k">readonly</span> then: <span class="k">readonly</span> <span class="t">ResolutionStep</span>[];</span></span><span class="line context"><span class="number">110</span><span class="mark"> </span><span class="text">      <span class="k">readonly</span> otherwise?: <span class="k">readonly</span> <span class="t">ResolutionStep</span>[];</span></span><span class="line context"><span class="number">111</span><span class="mark"> </span><span class="text">    }</span></span><span class="line gap"><span class="number"></span><span class="mark">⋯</span><span class="text"></span></span><span class="line removed"><span class="number">363</span><span class="mark">−</span><span class="text"><span class="c">/** Whether the ended `game` answers `condition` with yes. */</span></span></span><span class="line removed"><span class="number">364</span><span class="mark">−</span><span class="text"><span class="k">function</span> gameHolds(ctx: <span class="t">EngineContext</span>, game: <span class="t">GameState</span>, condition: <span class="t">GameCondition</span>): boolean {</span></span><span class="line removed"><span class="number">365</span><span class="mark">−</span><span class="text">  <span class="k">switch</span> (condition.kind) {</span></span><span class="line removed"><span class="number">366</span><span class="mark">−</span><span class="text">    <span class="k">case</span> <span class="s">'cardIn'</span>:</span></span><span class="line removed"><span class="number">367</span><span class="mark">−</span><span class="text">      <span class="k">return</span> cardsAt(ctx, game, condition.places).some((card) =&gt; card.code === condition.code);</span></span><span class="line removed"><span class="number">368</span><span class="mark">−</span><span class="text">    <span class="k">case</span> <span class="s">'currentAgenda'</span>: {</span></span><span class="line removed"><span class="number">369</span><span class="mark">−</span><span class="text">      <span class="k">const</span> agenda = currentCard(game, <span class="s">'agenda'</span>);</span></span><span class="line removed"><span class="number">370</span><span class="mark">−</span><span class="text">      <span class="k">return</span> agenda !== <span class="k">undefined</span> &amp;&amp; condition.agendas.includes(agenda.code);</span></span><span class="line removed"><span class="number">371</span><span class="mark">−</span><span class="text">    }</span></span><span class="line removed"><span class="number">372</span><span class="mark">−</span><span class="text">    <span class="k">case</span> <span class="s">'anyOf'</span>:</span></span><span class="line removed"><span class="number">373</span><span class="mark">−</span><span class="text">      <span class="k">return</span> condition.conditions.some((inner) =&gt; gameHolds(ctx, game, inner));</span></span><span class="line removed"><span class="number">374</span><span class="mark">−</span><span class="text">    <span class="k">case</span> <span class="s">'cardsIn'</span>:</span></span><span class="line removed"><span class="number">375</span><span class="mark">−</span><span class="text">      <span class="k">return</span> (</span></span><span class="line removed"><span class="number">376</span><span class="mark">−</span><span class="text">        cardsAt(ctx, game, condition.places).filter((card) =&gt;</span></span><span class="line removed"><span class="number">377</span><span class="mark">−</span><span class="text">          cardStats(ctx.cards, card.code).traits.includes(condition.trait),</span></span><span class="line removed"><span class="number">378</span><span class="mark">−</span><span class="text">        ).length &gt;= condition.atLeast</span></span><span class="line removed"><span class="number">379</span><span class="mark">−</span><span class="text">      );</span></span><span class="line removed"><span class="number">380</span><span class="mark">−</span><span class="text">    <span class="k">default</span>:</span></span><span class="line removed"><span class="number">381</span><span class="mark">−</span><span class="text">      <span class="k">return</span> assertNever(condition);</span></span><span class="line removed"><span class="number">382</span><span class="mark">−</span><span class="text">  }</span></span><span class="line removed"><span class="number">383</span><span class="mark">−</span><span class="text">}</span></span><span class="line removed"><span class="number">384</span><span class="mark">−</span><span class="text"></span></span><span class="line removed"><span class="number">385</span><span class="mark">−</span><span class="text"><span class="c">/** The ended game's cards in any of `places`. */</span></span></span><span class="line removed"><span class="number">386</span><span class="mark">−</span><span class="text"><span class="k">function</span> cardsAt(</span></span><span class="line removed"><span class="number">387</span><span class="mark">−</span><span class="text">  ctx: <span class="t">EngineContext</span>,</span></span><span class="line removed"><span class="number">388</span><span class="mark">−</span><span class="text">  game: <span class="t">GameState</span>,</span></span><span class="line removed"><span class="number">389</span><span class="mark">−</span><span class="text">  places: <span class="k">readonly</span> <span class="t">CardPlace</span>[],</span></span><span class="line removed"><span class="number">390</span><span class="mark">−</span><span class="text">): <span class="t">CardInstance</span>[] {</span></span><span class="line removed"><span class="number">391</span><span class="mark">−</span><span class="text">  <span class="k">return</span> <span class="t">Object</span>.values(game.cards).filter((card) =&gt;</span></span><span class="line removed"><span class="number">392</span><span class="mark">−</span><span class="text">    places.some((place) =&gt; isAt(ctx, game, card, place)),</span></span><span class="line removed"><span class="number">393</span><span class="mark">−</span><span class="text">  );</span></span><span class="line removed"><span class="number">394</span><span class="mark">−</span><span class="text">}</span></span><span class="line removed"><span class="number">395</span><span class="mark">−</span><span class="text"></span></span><span class="line removed"><span class="number">396</span><span class="mark">−</span><span class="text"><span class="k">function</span> isAt(ctx: <span class="t">EngineContext</span>, game: <span class="t">GameState</span>, card: <span class="t">CardInstance</span>, place: <span class="t">CardPlace</span>): boolean {</span></span><span class="line removed"><span class="number">397</span><span class="mark">−</span><span class="text">  <span class="k">switch</span> (place) {</span></span><span class="line removed"><span class="number">398</span><span class="mark">−</span><span class="text">    <span class="k">case</span> <span class="s">'inPlay'</span>:</span></span><span class="line removed"><span class="number">399</span><span class="mark">−</span><span class="text">      <span class="k">return</span> isInPlay(game, card);</span></span><span class="line removed"><span class="number">400</span><span class="mark">−</span><span class="text">    <span class="k">case</span> <span class="s">'setAside'</span>:</span></span><span class="line removed"><span class="number">401</span><span class="mark">−</span><span class="text">    <span class="k">case</span> <span class="s">'scenarioDeck'</span>:</span></span><span class="line removed"><span class="number">402</span><span class="mark">−</span><span class="text">    <span class="k">case</span> <span class="s">'victoryDisplay'</span>:</span></span><span class="line removed"><span class="number">403</span><span class="mark">−</span><span class="text">    <span class="k">case</span> <span class="s">'outOfGame'</span>:</span></span><span class="line removed"><span class="number">404</span><span class="mark">−</span><span class="text">      <span class="k">return</span> card.zone.kind === place;</span></span><span class="line removed"><span class="number">405</span><span class="mark">−</span><span class="text">    <span class="k">case</span> <span class="s">'beneathAct'</span>: {</span></span><span class="line removed"><span class="number">406</span><span class="mark">−</span><span class="text">      <span class="c">// The act a resolution follows has left the game by then, so any act host counts; a</span></span></span><span class="line removed"><span class="number">407</span><span class="mark">−</span><span class="text">      <span class="c">// facedown card there is left out, as the act's own count leaves it out (`inVictoryDisplay`).</span></span></span><span class="line removed"><span class="number">408</span><span class="mark">−</span><span class="text">      <span class="k">if</span> (card.zone.kind !== <span class="s">'beneath'</span> || !card.faceUp) <span class="k">return</span> <span class="k">false</span>;</span></span><span class="line removed"><span class="number">409</span><span class="mark">−</span><span class="text">      <span class="k">const</span> host = game.cards[card.zone.hostId];</span></span><span class="line removed"><span class="number">410</span><span class="mark">−</span><span class="text">      <span class="k">return</span> host !== <span class="k">undefined</span> &amp;&amp; cardStats(ctx.cards, host.code).typeCode === <span class="s">'act'</span>;</span></span><span class="line removed"><span class="number">411</span><span class="mark">−</span><span class="text">    }</span></span><span class="line removed"><span class="number">412</span><span class="mark">−</span><span class="text">    <span class="k">default</span>:</span></span><span class="line removed"><span class="number">413</span><span class="mark">−</span><span class="text">      <span class="k">return</span> assertNever(place);</span></span><span class="line removed"><span class="number">414</span><span class="mark">−</span><span class="text">  }</span></span><span class="line added"><span class="number">343</span><span class="mark">+</span><span class="text"><span class="c">/** Whether `condition` holds on the ended `game`'s table, outside any timing window. */</span></span></span><span class="line added"><span class="number">344</span><span class="mark">+</span><span class="text"><span class="k">function</span> gameHolds(ctx: <span class="t">EngineContext</span>, game: <span class="t">GameState</span>, condition: <span class="t">AbilityCondition</span>): boolean {</span></span><span class="line highlighted"><span class="number">345</span><span class="mark">+</span><span class="text">  <span class="k">return</span> conditionHolds(ctx, game, condition, <span class="k">undefined</span>);</span></span><span class="line context"><span class="number">346</span><span class="mark"> </span><span class="text">}</span></span></code></pre></div>
+</section>
+<section class="stop" id="stop-2">
+<header><span class="stop-number">2</span><span class="tag">engine</span><h2>What references mean outside a window</h2></header>
+<p>Without a window nothing is the window's card, investigator or location; the lead, the only copy of a card and a set-aside copy still resolve, since the table answers them by itself.</p>
+
+<div class="code"><header><span class="file">packages/engine/src/abilities.ts</span><span>+58 −16</span><a href="https://github.com/macandy13/arkham-companion/pull/1424/files#diff-766b5ee5b45af4cf1f7ccb795d11205d2c38034dbe2159a2c874c30ff5a316b0R1815-R1826">Open in diff</a></header><pre><code><span class="line added"><span class="number">1815</span><span class="mark">+</span><span class="text">  <span class="k">if</span> (opened === <span class="k">undefined</span>) {</span></span><span class="line highlighted"><span class="number">1816</span><span class="mark">+</span><span class="text">    <span class="k">return</span> {</span></span><span class="line added"><span class="number">1817</span><span class="mark">+</span><span class="text">      self: <span class="k">undefined</span>,</span></span><span class="line highlighted"><span class="number">1818</span><span class="mark">+</span><span class="text">      windowInvestigator: <span class="k">undefined</span>,</span></span><span class="line added"><span class="number">1819</span><span class="mark">+</span><span class="text">      lead: activeLead(state),</span></span><span class="line added"><span class="number">1820</span><span class="mark">+</span><span class="text">      windowLocation: <span class="k">undefined</span>,</span></span><span class="line added"><span class="number">1821</span><span class="mark">+</span><span class="text">      selfLocation: <span class="k">undefined</span>,</span></span><span class="line highlighted"><span class="number">1822</span><span class="mark">+</span><span class="text">      thatCard: <span class="k">undefined</span>,</span></span><span class="line highlighted"><span class="number">1823</span><span class="mark">+</span><span class="text">      onlyCopy: (code) =&gt; theOnlyCopy(state, code),</span></span><span class="line added"><span class="number">1824</span><span class="mark">+</span><span class="text">      setAsideCopy: (code) =&gt; setAsideCopyOf(state, code, 0),</span></span><span class="line added"><span class="number">1825</span><span class="mark">+</span><span class="text">    };</span></span><span class="line added"><span class="number">1826</span><span class="mark">+</span><span class="text">  }</span></span></code></pre></div>
+</section>
+<section class="stop" id="stop-3">
+<header><span class="stop-number">3</span><span class="tag">scenarios</span><h2>Smoke and Mirrors reads beneath its act</h2></header>
+<p>The questioned suspects lie beneath Augurs of Flame, which has left the game when the resolution reads them, so the zone names it by its only copy; &quot;6 Elite enemies&quot; is a count of at least 6.</p>
+
+<div class="code"><header><span class="file">packages/scenarios/src/smoke_and_mirrors/resolutions.ts</span><span>+19 −7</span><a href="https://github.com/macandy13/arkham-companion/pull/1424/files#diff-9d3d6a4a2dd79b308ed30b052180cba931c03c57d517de4fe15cd4b53e8469feR21-R125">Open in diff</a></header><pre><code><span class="line added"><span class="number">21</span><span class="mark">+</span><span class="text">/**</span></span><span class="line added"><span class="number">22</span><span class="mark">+</span><span class="text"><span class="c"> * Beneath the scenario's one act, where the questioned suspects lie face up. It has advanced out</span></span></span><span class="line added"><span class="number">23</span><span class="mark">+</span><span class="text"><span class="c"> * of the game by the time a resolution reads it, so it is named by its only copy.</span></span></span><span class="line added"><span class="number">24</span><span class="mark">+</span><span class="text"><span class="c"> */</span></span></span><span class="line highlighted"><span class="number">25</span><span class="mark">+</span><span class="text"><span class="k">const</span> beneathTheAct = beneath(onlyCopy(codes.augursOfFlame));</span></span><span class="line gap"><span class="number"></span><span class="mark">⋯</span><span class="text"></span></span><span class="line context"><span class="number">116</span><span class="mark"> </span><span class="text">      killedTheServant,</span></span><span class="line context"><span class="number">117</span><span class="mark"> </span><span class="text">      {</span></span><span class="line context"><span class="number">118</span><span class="mark"> </span><span class="text">        kind: <span class="s">'when'</span>,</span></span><span class="line removed"><span class="number">107</span><span class="mark">−</span><span class="text">        condition: { kind: <span class="s">'cardsIn'</span>, trait: elite, places: [<span class="s">'beneathAct'</span>], atLeast: 6 },</span></span><span class="line highlighted"><span class="number">119</span><span class="mark">+</span><span class="text">        condition: thereAre(eachInZone(beneathTheAct, { trait: elite }), { min: 6 }),</span></span><span class="line context"><span class="number">120</span><span class="mark"> </span><span class="text">        then: [{ kind: <span class="s">'record'</span>, key: <span class="t">ASH_STORY</span>.scouredArkhamForAnswers, value: yes }],</span></span><span class="line context"><span class="number">121</span><span class="mark"> </span><span class="text">      },</span></span><span class="line context"><span class="number">122</span><span class="mark"> </span><span class="text">      {</span></span><span class="line context"><span class="number">123</span><span class="mark"> </span><span class="text">        kind: <span class="s">'when'</span>,</span></span><span class="line removed"><span class="number">112</span><span class="mark">−</span><span class="text">        condition: { kind: <span class="s">'cardsIn'</span>, trait: elite, places: [<span class="s">'victoryDisplay'</span>], atLeast: 6 },</span></span><span class="line highlighted"><span class="number">124</span><span class="mark">+</span><span class="text">        condition: thereAre(eachInZone(victoryDisplay, { trait: elite }), { min: 6 }),</span></span><span class="line context"><span class="number">125</span><span class="mark"> </span><span class="text">        then: [{ kind: <span class="s">'record'</span>, key: <span class="t">ASH_STORY</span>.stirredUpTrouble, value: yes }],</span></span></code></pre></div>
+</section>
+<section class="evidence" id="evidence"><h2>How we know it works</h2><ul><li><p>The suspects beneath the act are still counted, for experience and a condition, once the act advanced out of the game, and facedown ones are left out.</p><p class="test">Checked by <code>packages/engine/src/campaign/resolution.test.ts › still finds them beneath the act once it advanced out of the game</code></p></li><li><p>The Midnight Masks still records who was interrogated and who got away, The Masked Hunter at agenda 1 included.</p><p class="test">Checked by <code>packages/scenarios/src/the_midnight_masks/the_midnight_masks.test.ts › records R1 at agenda 1: the interrogated cultists, the rest and The Masked Hunter got away</code></p></li><li><p>Smoke and Mirrors still follows with Resolution 2 when the Servant of Flame is beneath the act.</p><p class="test">Checked by <code>packages/scenarios/src/smoke_and_mirrors/resolutions.test.ts › follows with Resolution 2 when the Servant of Flame is beneath the act</code></p></li></ul></section>
+<section class="done"><p>That's the whole change.</p><a href="https://github.com/macandy13/arkham-companion/pull/1424/files">Review on GitHub</a></section>
+<details><summary>Not on the tour</summary><ul><li><code>thereAre(of, range)</code> writes the condition, and <code>ifThereAre</code> uses it</li><li><code>awardXp.perCardIn</code> is a reference, counted by <code>countOnTable</code></li><li><code>GameCondition</code> and <code>CardPlace</code> leave the engine's exports</li><li>The Midnight Masks' conditions move to the shared shapes</li><li>Resolution tests convert, plus one for a picked reference outside a window</li><li>Architecture pages on campaigns, scenarios and conditions</li></ul></details>
+</main>
+<script>
+document.querySelectorAll('figure[data-variants]').forEach((figure) => {
+  const variants = JSON.parse(figure.dataset.variants);
+  const state = { when: 'after', device: variants[0].device };
+  const frame = figure.querySelector('.frame');
+  const show = () => {
+    const variant = variants.find((v) => v.device === state.device);
+    const src = variant[state.when];
+    frame.classList.toggle('phone', state.device === 'phone');
+    frame.innerHTML = src
+      ? '<img alt="' + state.device + ', ' + state.when + '" src="' + src + '">'
+      : '<p class="missing">' + (state.when === 'before' ? 'New in this PR' : 'Removed in this PR') + '</p>';
+    figure.querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(b.value === state.when || b.value === state.device)));
+  };
+  figure.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => {
+    state[b.name] = b.value;
+    show();
+  }));
+  show();
+});
+const dots = [...document.querySelectorAll('nav a[data-stop]')];
+const seen = new IntersectionObserver((entries) => entries.forEach((entry) => {
+  if (entry.isIntersecting) dots.forEach((d) => d.classList.toggle('on', d.dataset.stop === entry.target.id));
+}), { rootMargin: '-40% 0px -55% 0px' });
+document.querySelectorAll('.stop').forEach((stop) => seen.observe(stop));
+</script>
+</body>
+</html>
