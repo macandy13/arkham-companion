@@ -600,14 +600,15 @@ export type AbilityOption = Pick<DecisionOption, 'id' | 'label' | 'amounts'> & {
 export type AbilityEffect = Templated<AbilityCommand>;
 
 /**
- * What must hold when the window opens for an ability to fire ("If it is act 3, …"), or for a card
- * action to be offered and taken ("During your turn:", `CardAction.condition`, read in
- * the action's window), or for a resolution step to apply (`ResolutionStep` `when`, read on the
- * ended game outside any window: "if the Ghoul Priest is in the victory display"). Checked once, as the window opens; the effects then resolve whatever they
- * change. Three shapes cover most conditions cards print, each over the references effects use:
- * which card is current, how many things a reference names, and a value on the table; then the
- * phase or turn the game is in, and `allOf`/`anyOf`/`not` to
- * combine them. A new condition is usually a new reference or `Quantity`, not a new kind.
+ * What must hold when the window opens for an ability to fire ("If it is act 3, …"), for a card
+ * action to be offered and taken ("During your turn:", `CardAction.condition`, read in the
+ * action's window), or for a resolution step to apply (`ResolutionStep` `when`, read on the
+ * ended game outside any window: "if the Ghoul Priest is in the victory display"). An ability
+ * checks it once, as its window opens; the effects then resolve whatever they change. Three
+ * shapes cover most conditions cards print, each over the references effects use: which card is
+ * current, how many things a reference names, and a value on the table; then the phase or turn
+ * the game is in, and `allOf`/`anyOf`/`not` to combine them. A new condition is usually a new
+ * reference or `Quantity`, not a new kind.
  */
 export type AbilityCondition =
   /** The current act or agenda (`deck`) is one of `codes` ("If it is act 3", "if it is agenda 2"). */
@@ -3376,9 +3377,10 @@ export function ifThereAre(of: RepeatedRef, range: StatRange, ability: Ability):
 }
 
 /**
- * The condition that the number of things `of` names is within `range`, for a resolution's
- * question about the ended game: `thereAre(eachInZone(victoryDisplay, { code }), { min: 1 })`
- * for "if Herman Collins is in the victory display".
+ * "There are N of these": the number of things `of` names is within `range` (`countOf`), as
+ * `ifThereAre` puts it on an ability, or on its own for a resolution's question about the ended
+ * game: `thereAre(eachInZone(victoryDisplay, { code }), { min: 1 })` for "if Herman Collins is in
+ * the victory display".
  */
 export function thereAre(of: RepeatedRef, range: StatRange): AbilityCondition {
   return { kind: 'countOf', of, ...range };
