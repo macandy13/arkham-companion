@@ -125,8 +125,8 @@ interface TestOptions {
  * narrative. A step that fails (a refused command, a broken invariant, a wrong
  * name) leaves state and log as they were, even when it runs several commands
  * (an action and its test, the attacks of a step) and a later one fails.
- * Action methods do not spend actions (the engine leaves that to the players);
- * `spendAction` is explicit. Investigators are given by
+ * The engine counts off what each action method costs (`actionPayment`);
+ * `spendAction` and `adjustActions` are for corrections by hand. Investigators are given by
  * an `InvestigatorRef` (`byName('Roland Banks')` or the bare `InvestigatorId`),
  * cards by a `CardRef` and enemies by an `EnemyRef` (a matcher or the bare
  * `InstanceId`), all resolved through `board`.

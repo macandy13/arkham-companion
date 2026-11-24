@@ -23,8 +23,7 @@
  * attack holds it at). The board is read back as structured data (enemies,
  * decisions, attacks due), with full-board snapshots only at setup and at the
  * end of round 7. Each investigation turn is started and ended explicitly, in the order the group
- * chooses; the players count actions off each investigator's counter
- * themselves, where the script shows it. Skill tests are resolved at the table: the engine asks for the
+ * chooses; the engine counts off each action from the investigator's counter. Skill tests are resolved at the table: the engine asks for the
  * result (`skillTestResult`), and the comments say why it is a pass or fail.
  * What a failed revelation costs is card text, so the script applies it by hand.
  */

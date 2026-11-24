@@ -19,9 +19,9 @@
  * What the engine leaves to the players is done by hand, as at the table:
  * agenda 1's reverse side (the Monster spawning at the Main Path with 1 doom),
  * act 2's reverse side (the enemy spawning at the Ritual Site),
- * Frozen in Fear's extra action, Ancient Evils' doom, the cards Umôrdhoth's Wrath discards, Twisting Paths' test to
+ * Ancient Evils' doom, the cards Umôrdhoth's Wrath discards, Twisting Paths' test to
  * leave it (Daisy passes) and the 2 random cards "it is past midnight" discards from each
- * opening hand. The players count actions themselves.
+ * opening hand. The engine counts off each action, Frozen in Fear's extra one too.
  */
 import { describe, expect, it } from 'vitest';
 import {
