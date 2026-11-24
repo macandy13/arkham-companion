@@ -15,7 +15,13 @@ import { join } from 'node:path';
 import { parseArgs } from 'node:util';
 import { cutStopLines, parseDiff, type FileDiff } from './diff_lines.ts';
 import { GOLDEN_DIR, pictureVariants } from './pictures.ts';
-import { renderPage, tourSummary, type StopCode, type StopContent } from './render.ts';
+import {
+  renderPage,
+  tourSummary,
+  type StopCode,
+  type StopContent,
+  type StopPicture,
+} from './render.ts';
 import { parseTour, type CodeRef, type TourStop } from './tour.ts';
 
 const required = { type: 'string', default: '' } as const;
@@ -86,18 +92,19 @@ function stopCode(ref: CodeRef): StopCode {
   };
 }
 
+/** A golden a stop or a piece of evidence names, for every device that has it. */
+function pictureContent(golden: string | undefined): StopPicture[] {
+  if (golden === undefined) return [];
+  return pictureVariants(golden, baseGoldens, headGoldens).map((picture) => ({
+    device: picture.device,
+    changed: changedGoldens.has(picture.after ?? picture.before ?? ''),
+    ...(picture.before !== undefined && { before: rawUrl(base, picture.before) }),
+    ...(picture.after !== undefined && { after: rawUrl(head, picture.after) }),
+  }));
+}
+
 function stopContent(stop: TourStop): StopContent {
-  const pictures =
-    stop.picture === undefined ? [] : pictureVariants(stop.picture, baseGoldens, headGoldens);
-  return {
-    code: stop.code.map(stopCode),
-    pictures: pictures.map((picture) => ({
-      device: picture.device,
-      changed: changedGoldens.has(picture.after ?? picture.before ?? ''),
-      ...(picture.before !== undefined && { before: rawUrl(base, picture.before) }),
-      ...(picture.after !== undefined && { after: rawUrl(head, picture.after) }),
-    })),
-  };
+  return { code: stop.code.map(stopCode), pictures: pictureContent(stop.picture) };
 }
 
 const stops = tour.stops.map(stopContent);
@@ -114,6 +121,7 @@ const page = {
   pr: { number: Number(values.pr), title: values.title, url: prUrl, headSha: head },
   tour,
   stops,
+  evidence: tour.evidence.map((item) => pictureContent(item.picture)),
   changedLines: { all: allChanged, onTour },
 };
 mkdirSync(values.out, { recursive: true });

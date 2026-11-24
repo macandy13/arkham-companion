@@ -27,7 +27,7 @@ UI changes are easier to review as a recording than as a diff, and the preview w
 
 ### Review tour
 
-A PR is reviewed on a phone in about a minute from its review page: the problem and what changes first, then the open questions, then a numbered tour of only the code that carries the change, each stop with its lines from the diff and, for UI, its goldens before and after.
+A PR is reviewed on a phone in about a minute from its review page: the problem and what changes first, then the open questions, then a numbered tour of only the code that carries the change, each stop with its lines from the diff and, for UI, its goldens before and after, and last "How we know it works": each claim with the test, API example or golden that shows it.
 
 - The session that opens the PR writes the tour as JSON into the description, in a `<!-- review-tour {…} -->` block at the start of a line (format: `Tour` in [`tour.ts`](../packages/review_tour/src/tour.ts); how to pick stops: `docs/coding-guidelines.md` §7).
 - `review-tour.yml` runs on every push and description edit. `packages/review_tour/src/cli.ts`, taken from the tip of the base branch so older branches get a page too, reads the description fresh, diffs the head against its merge base with full context, cuts each stop's line ranges (removed lines where the diff puts them, gaps between ranges) and finds each named golden for every device at both commits.
