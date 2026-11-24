@@ -47,7 +47,8 @@ import { usePlay } from './PlayContext';
  * as large as the screen allows, so their action rows sit under them and a tap opens no second,
  * full-card dialog; the upright scenario card is too narrow there for its rows, so it still opens
  * its own. `printedReference` is what the card catalog prints on the scenario card's
- * side in play; until it has loaded the card shows its rows without texts.
+ * side in play; until it has loaded the card shows its rows without texts. A pile's Spawn hands
+ * the enemy to `onSpawn`, so the players pick where it spawns on the map.
  */
 export function GameHeader({
   open,

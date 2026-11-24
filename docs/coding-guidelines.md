@@ -26,7 +26,7 @@ How code in this repo should look, so every task lands in the same style.
   }
   ```
 
-- **Components take explicit props.** A web component takes what it shows as named props (the whole `BoardView` as `board`), never a spread props bag or the store. The one exception is the play screen's `PlayProvider` (`usePlay`): the open game's `GameActions` and `busy`, which nearly every control on the board needs and none decides anything by.
+- **Components take explicit props.** A web component takes what it shows as named props (the whole `BoardView` as `board`) rather than the store; only a screen, and the parts that change what lives outside the game's steps (the export, the reliance setting, the resolution), reach the store. The one exception to props is the play screen's `PlayProvider` (`usePlay`): the open game's `GameActions` and `busy`, which nearly every control on the board needs and none decides anything by.
 - **No dead code, no speculative abstractions.** Delete unused code; generalise once the second caller appears (see "Generic before specific").
 
 ## 2. Comments
