@@ -8,7 +8,8 @@ import type {
 } from './abilities';
 import type { AttackKind, KeywordAttackKind } from './forced_attacks';
 import type { CampaignLog, TraumaKind } from './campaign/campaign_log';
-import type { CardType, ScaledValue, TokenAmount, Trait } from './cards';
+import type { ScaledValue, TokenAmount, Trait } from './cards';
+import type { CardFilter } from './lookup';
 import type {
   CardCode,
   CodexEntry,
@@ -699,16 +700,6 @@ export interface EndScenario {
   resolution: ResolutionId;
 }
 
-/** What a card has to be to be drawn by a `DrawCard` with `match`; at least one field. */
-export interface EncounterMatch {
-  /** Card name as in the `CardDb`, compared exactly. */
-  name?: string;
-  /** A trait the card has, e.g. the `Ghoul` of "draw a Ghoul enemy". */
-  trait?: Trait;
-  /** Card type, e.g. `enemy` for "a Ghoul enemy". */
-  typeCode?: CardType;
-}
-
 /**
  * Shuffles the encounter discard pile into the encounter deck (a reverse
  * side such as Rise of the Ghouls, or a card effect). Produces `CardMoved` per
@@ -773,7 +764,7 @@ export interface DrawCard {
  * - `card`: this card, one copy a search found (`searchAndDrawCopies`); nothing when it has left
  *   `from`'s zones since.
  */
-export type DrawPick = { match: EncounterMatch; discardSkipped?: true } | { card: InstanceId };
+export type DrawPick = { match: CardFilter; discardSkipped?: true } | { card: InstanceId };
 
 /**
  * Puts an enemy that is not in play (encounter deck, set aside, …) into play.

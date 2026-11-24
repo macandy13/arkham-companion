@@ -37,6 +37,7 @@ export {
   currentCard,
   locationOfCard,
   zoneOf,
+  matchesStats,
   type CardFilter,
 } from './lookup';
 export {
@@ -152,12 +153,7 @@ export {
   type TokenValue,
 } from './skill_modifiers';
 export { enemiesAt, type EnemyFilter, enemiesOnTable } from './enemies';
-export {
-  CANCEL_REVELATION_OPTION,
-  encounterDraw,
-  isRevelationDecision,
-  matchesEncounter,
-} from './handle_encounter';
+export { CANCEL_REVELATION_OPTION, encounterDraw, isRevelationDecision } from './handle_encounter';
 export { doomInPlay, isInPlay } from './doom';
 export { checkInvariants } from './invariants';
 export { PHASE_OF_STEP, PHASE_STEP_TITLES } from './phases';

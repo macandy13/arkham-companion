@@ -208,6 +208,8 @@ describe('cardsInZones', () => {
     { filter: 'no filter', by: {}, count: 2 },
     { filter: 'the ghoul code', by: { code: cardCode('ghoul') }, count: 1 },
     { filter: 'type location', by: { typeCode: 'location' as const }, count: 0 },
+    { filter: 'the name ghoul', by: { name: 'ghoul' }, count: 1 },
+    { filter: 'no Elite trait', by: { withoutTrait: elite }, count: 1 },
   ])('finds $count cards in the victory display with $filter', ({ by, count }) => {
     const { context, state } = table.start();
 

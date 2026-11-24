@@ -11,7 +11,6 @@ import {
 import type {
   Command,
   CommandSource,
-  EncounterMatch,
   RequestDecision,
   ResolveEffect,
   TestSkill,
@@ -409,12 +408,11 @@ export type RelativeInvestigator =
   | { ref: 'anInvestigator'; at?: RelativeCard };
 
 /**
- * Which locations in play a `locationWith` reference may stand for: those with `trait`, and with
- * `connected` only those connecting to the location of the investigator the window names ("move to
- * a connecting location").
+ * Which locations in play a `locationWith` reference may stand for: those its print matches
+ * (`CardFilter`, "a [[Central]] location"), and with `connected` only those connecting to the
+ * location of the investigator the window names ("move to a connecting location").
  */
-export interface LocationFilter {
-  trait?: Trait;
+export interface LocationFilter extends CardFilter {
   connected?: true;
 }
 
@@ -1605,8 +1603,7 @@ function candidateCards(
       return locationsInPlay(ctx, state).filter(
         (location) =>
           location.id !== from &&
-          (picked.trait === undefined ||
-            cardStats(ctx.cards, location.code).traits.includes(picked.trait)) &&
+          matchesCard(ctx, location, picked) &&
           (picked.connected === undefined ||
             (from !== undefined && neighbours(ctx, state, from).includes(location.id))),
       );
@@ -3284,7 +3281,7 @@ export function shuffleEncounterDiscard(): AbilityEffect {
  * what the table ends with when the discard was just shuffled into the deck,
  * as every such card does first.
  */
-export function leadDrawsDiscardingUntil(match: EncounterMatch): AbilityEffect {
+export function leadDrawsDiscardingUntil(match: CardFilter): AbilityEffect {
   return drawDiscardingUntil(match, { ref: 'lead' });
 }
 
@@ -3294,7 +3291,7 @@ export function leadDrawsDiscardingUntil(match: EncounterMatch): AbilityEffect {
  * Pipes: the investigator who entered).
  */
 export function drawDiscardingUntil(
-  match: EncounterMatch,
+  match: CardFilter,
   who: RelativeInvestigator = { ref: 'windowInvestigator' },
 ): AbilityEffect {
   return {
@@ -3415,7 +3412,7 @@ export function forEachInvestigator(ability: Ability): Ability {
  * the discard, top down, that fits `match` (`DrawCard` from the discard); nothing when none does.
  */
 export function drawFromEncounterDiscard(
-  match: EncounterMatch,
+  match: CardFilter,
   who: RelativeInvestigator = { ref: 'windowInvestigator' },
 ): AbilityEffect {
   return { type: 'DrawCard', investigatorId: who, from: encounterDiscard, pick: { match } };
@@ -3450,7 +3447,7 @@ export function searchAndDrawCopies(
  * matches, deck first (`DrawCard` with `match`); nothing when none does.
  * The players would pick among the matches; the engine does not ask yet (#346).
  */
-export function searchAndDraw(match: EncounterMatch): AbilityEffect {
+export function searchAndDraw(match: CardFilter): AbilityEffect {
   return {
     type: 'DrawCard',
     investigatorId: you(),

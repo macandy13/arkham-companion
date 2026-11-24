@@ -3,7 +3,7 @@ import { cardStats, resolveValue, type CardStats, type EngineContext, type Trait
 import { woundEvents } from './elimination';
 import type { EnemyAttacked, EnemyDefeated, Event } from './events';
 import type { InstanceId, InvestigatorId } from './ids';
-import { cardsInZone, requireCard } from './lookup';
+import { cardsInZone, matchesCard, requireCard, type CardFilter } from './lookup';
 import { playerOrder, findInvestigator } from './investigators';
 import { cardHasKeyword } from './card_keywords';
 import { CommandRejected } from './rejection';
@@ -190,16 +190,13 @@ export function nearestEnemies(
 }
 
 /**
- * Which enemies on the table a card means: those with `trait` (any enemy
- * without one) and without `withoutTrait` ("each non-Nightgaunt enemy"), only
- * the unengaged ones with `unengaged`, only the ready ones with `ready` ("each ready
- * non-Elite [[Cultist]] enemy"), and only those without any `withoutToken`
- * ("the nearest enemy with no doom on it"). Card data adds where they are and whom they
- * are engaged with (`EachEnemyFilter`).
+ * Which enemies on the table a card means: those whose print matches (`CardFilter`: "each
+ * non-Nightgaunt enemy", "each [[Cultist]] enemy"), only the unengaged ones with `unengaged`, only
+ * the ready ones with `ready` ("each ready non-Elite [[Cultist]] enemy"), and only those without
+ * any `withoutToken` ("the nearest enemy with no doom on it"). Card data adds where they are and
+ * whom they are engaged with (`EachEnemyFilter`).
  */
-export interface EnemyFilter {
-  trait?: Trait;
-  withoutTrait?: Trait;
+export interface EnemyFilter extends CardFilter {
   unengaged?: true;
   ready?: true;
   withoutToken?: TokenKind;
@@ -211,10 +208,9 @@ export function enemiesMatching(
   state: GameState,
   filter: EnemyFilter,
 ): CardInstance[] {
-  return enemiesOnTable(ctx, state, filter.trait).filter(
+  return enemiesOnTable(ctx, state).filter(
     (card) =>
-      (filter.withoutTrait === undefined ||
-        !cardStats(ctx.cards, card.code).traits.includes(filter.withoutTrait)) &&
+      matchesCard(ctx, card, filter) &&
       (filter.unengaged === undefined || card.zone.kind === 'atLocation') &&
       (filter.ready === undefined || !card.exhausted) &&
       (filter.withoutToken === undefined || (card.tokens[filter.withoutToken] ?? 0) === 0),
