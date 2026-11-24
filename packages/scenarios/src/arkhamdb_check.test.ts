@@ -36,7 +36,16 @@ interface PrintedStats {
   horror?: number;
   victory?: number;
   doom?: string;
+  /** Keywords by name, each with its detail ("Spawn - Attic"), as `Keyword` has them. */
+  keywords: string[];
+  /** The pictures' paths on arkhamdb.com, which the app fetches at runtime (`CardStats.imageSrc`). */
+  imageSrc?: string;
+  backImageSrc?: string;
 }
+
+/** A keyword as one line, so the list sorts and diffs plainly: "spawn: Attic". */
+const keywordLine = ({ name, detail }: { name: string; detail?: string }): string =>
+  detail === undefined ? name : `${name}: ${detail}`;
 
 /**
  * "2" or "2 per investigator", as the card prints it. A value with both parts prints its fixed
@@ -65,6 +74,9 @@ function enteredStats(stats: CardStats): PrintedStats {
     horror: stats.horror,
     victory: stats.victory,
     doom: stats.doom && printedValue(stats.doom),
+    keywords: (stats.keywords ?? []).map(keywordLine).sort(),
+    imageSrc: stats.imageSrc,
+    backImageSrc: stats.backImageSrc,
   };
 }
 
@@ -96,6 +108,9 @@ function arkhamDbStats(def: CardDef): PrintedStats {
     horror: def.horror ?? (enemy ? 0 : undefined),
     victory: def.victory,
     doom: scaled(def.doom, false),
+    keywords: def.keywords.map(keywordLine).sort(),
+    imageSrc: def.imageSrc,
+    backImageSrc: def.backImageSrc,
   };
 }
 

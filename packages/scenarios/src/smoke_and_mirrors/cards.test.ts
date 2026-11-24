@@ -6,7 +6,6 @@ import {
   encounterDeck,
   encounterDiscard,
   engagedWith,
-  encounterSetCode,
   execute,
   instanceId,
   investigatorId,
@@ -44,28 +43,6 @@ import {
 const cardOf = (code: string): CardStats => cardIn(smokeAndMirrorsCards, code);
 
 describe('Smoke and Mirrors card data', () => {
-  it.each([
-    {
-      code: '12134',
-      name: 'Arkham Alive',
-      front: '/bundles/cards/12134.jpg',
-      back: '/bundles/cards/12134b.jpg',
-    },
-    {
-      code: '12136',
-      name: 'Augurs of Flame',
-      front: '/bundles/cards/12136.jpg',
-      back: '/bundles/cards/12136b.jpg',
-    },
-    { code: '12139', name: 'David Renfield', front: '/bundles/cards/12139.jpg', back: undefined },
-    { code: '12157', name: 'Arcane Lock', front: '/bundles/cards/12157.jpg', back: undefined },
-  ])('names the ArkhamDB pictures of $name, which are JPEGs', ({ code, front, back }) => {
-    const card = cardOf(code);
-
-    expect(card.imageSrc).toBe(front);
-    expect(card.backImageSrc).toBe(back);
-  });
-
   it.each([
     { code: '12145', name: 'Downtown (First Bank)', symbol: 'triangle', connectsTo: ['moon', 't'] },
     { code: '12146', name: 'Downtown (Sanatorium)', symbol: 'triangle', connectsTo: ['moon', 't'] },
@@ -132,27 +109,6 @@ describe('Smoke and Mirrors card data', () => {
     expect(oneWay).toEqual([]);
   });
 
-  it.each([
-    { set: 'smoke_and_mirrors', copies: 5, cards: '4 Mark of Elokoss, Servant of Flame' },
-    { set: 'people_of_arkham', copies: 6, cards: 'the six suspects' },
-    { set: 'arcane_lock', copies: 2, cards: '2 Arcane Lock' },
-    { set: 'bad_weather', copies: 4, cards: '2 Downpour, 2 Flash Flood' },
-    { set: 'dead_ends', copies: 4, cards: '2 Raising Suspicions, 2 Red Herring' },
-    { set: 'flying_terrors', copies: 4, cards: '2 Bat Horror, 2 Aerial Pursuit' },
-    { set: 'gangs_of_arkham', copies: 4, cards: '2 Rogue Gangster, 2 Crossfire' },
-    { set: 'whippoorwills_ch2', copies: 5, cards: '3 Whippoorwill, 2 Eager for Death' },
-  ])('has $copies enemy and treachery copies in set $set: $cards', ({ set, copies }) => {
-    const encounterCards = smokeAndMirrorsCardDefs.filter(
-      (card) =>
-        card.encounterCode === encounterSetCode(set) &&
-        (card.typeCode === 'enemy' || card.typeCode === 'treachery'),
-    );
-
-    const total = encounterCards.reduce((sum, card) => sum + (card.quantity ?? 1), 0);
-
-    expect(total).toBe(copies);
-  });
-
   it('has the twelve Arkham locations, two versions each of Downtown, Uptown and Miskatonic University', () => {
     const locations = smokeAndMirrorsCardDefs.filter((card) => card.typeCode === 'location');
 
@@ -170,22 +126,6 @@ describe('Smoke and Mirrors card data', () => {
       'Miskatonic University',
       'Miskatonic University',
     ]);
-  });
-
-  it.each([
-    { code: '12138', name: 'Servant of Flame', keywords: ['hunter', 'retaliate'] },
-    { code: '12139', name: 'David Renfield', keywords: ['aloof'] },
-    { code: '12140', name: 'Cornelia Akely', keywords: ['alert'] },
-    { code: '12141', name: "Naomi O'Bannion", keywords: ['retaliate'] },
-    { code: '12142', name: 'Sgt. Earl Monroe', keywords: undefined },
-    { code: '12143', name: 'Abigail Foreman', keywords: ['aloof'] },
-    { code: '12144', name: 'Margaret Liu', keywords: ['aloof'] },
-    { code: '12162', name: 'Bat Horror', keywords: ['hunter'] },
-    { code: '12163', name: 'Aerial Pursuit', keywords: ['surge'] },
-    { code: '12164', name: 'Rogue Gangster', keywords: ['hunter', 'prey', 'retaliate'] },
-    { code: '12166', name: 'Whippoorwill', keywords: ['aloof', 'hunter'] },
-  ])('lists the keywords of $name', ({ code, keywords }) => {
-    expect(cardOf(code).keywords?.map((keyword) => keyword.name)).toEqual(keywords);
   });
 
   it.each([

@@ -4,7 +4,6 @@ import {
   attachedTo,
   byName,
   encounterDeck,
-  encounterSetCode,
   engagedWith,
   boardView,
   execute,
@@ -30,7 +29,6 @@ import {
   GRAVEYARD_DECISION,
   HUNTING_SHADOW_DECISION,
   LOCKED_DOOR_DECISION,
-  theMidnightMasksCardDefs,
   theMidnightMasksCards,
 } from './cards';
 
@@ -52,68 +50,6 @@ describe('The Midnight Masks card data', () => {
     { code: '01134', name: 'Northside', symbol: 't' },
   ])('gives $name its printed connection symbol, the $symbol', ({ code, symbol }) => {
     expect(cardOf(code).symbol).toBe(symbol);
-  });
-
-  it.each([
-    {
-      code: '01121a',
-      name: 'Predator or Prey?',
-      front: '/bundles/cards/01121a.png',
-      back: '/bundles/cards/01121b.png',
-    },
-    {
-      code: '01125',
-      name: 'Rivertown',
-      front: '/bundles/cards/01125.png',
-      back: '/bundles/cards/01125b.png',
-    },
-    {
-      code: '01121b',
-      name: 'The Masked Hunter',
-      front: '/bundles/cards/01121b.png',
-      back: undefined,
-    },
-    { code: '01137', name: '"Wolf-Man" Drew', front: '/bundles/cards/01137.png', back: undefined },
-  ])('names the ArkhamDB pictures of $name', ({ code, front, back }) => {
-    const card = cardOf(code);
-
-    expect(card.imageSrc).toBe(front);
-    expect(card.backImageSrc).toBe(back);
-  });
-
-  it.each([
-    { set: 'arkham', copies: 6, cards: '3 Hunting Shadow, 2 False Lead, The Masked Hunter' },
-    { set: 'cultists', copies: 5, cards: 'the five unique cultists' },
-    { set: 'pentagram', copies: 6, cards: '3 Acolyte, Wizard of the Order, 2 Mysterious Chanting' },
-    { set: 'nightgaunts', copies: 4, cards: '2 Hunting Nightgaunt, 2 On Wings of Darkness' },
-    { set: 'locked_doors', copies: 2, cards: '2 Locked Door' },
-  ])('has $copies enemy and treachery copies in set $set: $cards', ({ set, copies }) => {
-    const encounterCards = theMidnightMasksCardDefs.filter(
-      (card) =>
-        card.encounterCode === encounterSetCode(set) &&
-        (card.typeCode === 'enemy' || card.typeCode === 'treachery'),
-    );
-
-    expect(encounterCards.reduce((sum, card) => sum + (card.quantity ?? 1), 0)).toBe(copies);
-  });
-
-  it.each([
-    { code: '01121b', name: 'The Masked Hunter', keywords: ['spawn', 'prey', 'hunter'] },
-    { code: '01135', name: 'Hunting Shadow', keywords: ['peril'] },
-    { code: '01170', name: 'Wizard of the Order', keywords: ['spawn', 'retaliate'] },
-    { code: '01172', name: 'Hunting Nightgaunt', keywords: ['hunter'] },
-  ])('lists the keywords of $name', ({ code, keywords }) => {
-    expect(cardOf(code).keywords?.map((keyword) => keyword.name)).toEqual(keywords);
-  });
-
-  it.each([
-    { code: '01137', name: '"Wolf-Man" Drew', detail: 'Downtown' },
-    { code: '01138', name: 'Herman Collins', detail: 'Graveyard' },
-    { code: '01139', name: 'Peter Warren', detail: 'Miskatonic University' },
-    { code: '01140', name: 'Victoria Devereux', detail: 'Northside' },
-    { code: '01141', name: 'Ruth Turner', detail: "St. Mary's Hospital" },
-  ])('names the spawn location of $name', ({ code, detail }) => {
-    expect(cardOf(code).keywords?.find((keyword) => keyword.name === 'spawn')?.detail).toBe(detail);
   });
 
   it.each([

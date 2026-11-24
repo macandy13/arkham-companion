@@ -6,7 +6,6 @@ import {
   fixed,
   encounterDeck,
   encounterDiscard,
-  encounterSetCode,
   engagedWith,
   execute,
   instanceId,
@@ -46,34 +45,6 @@ const cardOf = (code: string): CardStats => cardIn(spreadingFlamesCards, code);
 
 describe('Spreading Flames card data', () => {
   it.each([
-    {
-      code: '12106',
-      name: 'Past Curfew',
-      front: '/bundles/cards/12106.jpg',
-      back: '/bundles/cards/12106b.jpg',
-    },
-    {
-      code: '12116',
-      name: 'Miskatonic Quad',
-      front: '/bundles/cards/12116.jpg',
-      back: '/bundles/cards/12116b.jpg',
-    },
-    { code: '12114', name: 'Servant of Flame', front: '/bundles/cards/12114.jpg', back: undefined },
-    {
-      code: '12115',
-      name: 'Dr. Henry Armitage',
-      front: '/bundles/cards/12115.jpg',
-      back: undefined,
-    },
-    { code: '12129', name: 'Fire!', front: '/bundles/cards/12129.jpg', back: undefined },
-  ])('names the ArkhamDB pictures of $name, which are JPEGs', ({ code, front, back }) => {
-    const card = cardOf(code);
-
-    expect(card.imageSrc).toBe(front);
-    expect(card.backImageSrc).toBe(back);
-  });
-
-  it.each([
     { code: '12113', name: "Your Friend's Room", symbol: 'spade', connectsTo: ['triangle'] },
     {
       code: '12116',
@@ -97,25 +68,6 @@ describe('Spreading Flames card data', () => {
     },
   );
 
-  it.each([
-    { set: 'spreading_flames', copies: 1, cards: 'Servant of Flame' },
-    { set: 'ashen_pilgrims', copies: 4, cards: '2 Cantor of Flame, 2 Hellhound' },
-    { set: 'bystanders', copies: 3, cards: '3 Bystander' },
-    { set: 'cosmic_evils', copies: 3, cards: '3 Cosmic Evils' },
-    { set: 'eldritch_lore', copies: 4, cards: '2 Unspeakable Truths, 2 Forbidden Secrets' },
-    { set: 'hallucinations', copies: 4, cards: '2 Extraplanar Visions, 2 Wild Compulsion' },
-    { set: 'fire_ch2', copies: 7, cards: '5 Fire!, 2 Noxious Smoke' },
-    { set: 'mad_science', copies: 4, cards: '2 Mutated!, 2 Mutated Experiment' },
-  ])('has $copies enemy and treachery copies in set $set: $cards', ({ set, copies }) => {
-    const encounterCards = spreadingFlamesCardDefs.filter(
-      (card) =>
-        card.encounterCode === encounterSetCode(set) &&
-        (card.typeCode === 'enemy' || card.typeCode === 'treachery'),
-    );
-
-    expect(encounterCards.reduce((sum, card) => sum + (card.quantity ?? 1), 0)).toBe(copies);
-  });
-
   it("has Your Friend's Room and the five Miskatonic University locations", () => {
     const locations = spreadingFlamesCardDefs.filter((card) => card.typeCode === 'location');
 
@@ -127,15 +79,6 @@ describe('Spreading Flames card data', () => {
       'Warren Observatory',
       'Orne Library',
     ]);
-  });
-
-  it.each([
-    { code: '12114', name: 'Servant of Flame', keywords: ['hunter', 'prey', 'retaliate'] },
-    { code: '12121', name: 'Cantor of Flame', keywords: ['retaliate'] },
-    { code: '12122', name: 'Hellhound', keywords: ['hunter'] },
-    { code: '12124', name: 'Cosmic Evils', keywords: ['peril'] },
-  ])('lists the keywords of $name', ({ code, keywords }) => {
-    expect(cardOf(code).keywords?.map((keyword) => keyword.name)).toEqual(keywords);
   });
 
   it('lets the investigators resign at Blaze of Glory, act 4', () => {

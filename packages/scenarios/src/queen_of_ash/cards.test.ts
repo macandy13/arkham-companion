@@ -3,7 +3,6 @@ import {
   atLocation,
   encounterDeck,
   encounterDiscard,
-  encounterSetCode,
   engagedWith,
   execute,
   instanceId,
@@ -27,7 +26,6 @@ import {
 import {
   DISSONANCE_DECISION,
   QUEEN_OF_ASH_CODES,
-  queenOfAshCardDefs,
   queenOfAshCards,
   TORMENT_DECISION,
   ASHEN_REBIRTH_DECISION,
@@ -38,28 +36,6 @@ import {
 const cardOf = (code: string): CardStats => cardIn(queenOfAshCards, code);
 
 describe('Queen of Ash card data', () => {
-  it.each([
-    {
-      code: '12172',
-      name: 'Search the Sewers',
-      front: '/bundles/cards/12172.jpg',
-      back: '/bundles/cards/12172b.jpg',
-    },
-    {
-      code: '12171',
-      name: 'Brethren of Ash',
-      front: '/bundles/cards/12171.jpg',
-      back: '/bundles/cards/12171b.jpg',
-    },
-    { code: '12179', name: 'Elokoss', front: '/bundles/cards/12179.jpg', back: undefined },
-    { code: '12181', name: 'Collector', front: '/bundles/cards/12181.jpg', back: undefined },
-  ])('names the ArkhamDB pictures of $name, which are JPEGs', ({ code, front, back }) => {
-    const card = cardOf(code);
-
-    expect(card.imageSrc).toBe(front);
-    expect(card.backImageSrc).toBe(back);
-  });
-
   it.each([
     {
       code: '12174',
@@ -111,44 +87,12 @@ describe('Queen of Ash card data', () => {
   );
 
   it.each([
-    {
-      set: 'queen_of_ash',
-      copies: 6,
-    },
-    { set: 'cultists_ch2', copies: 6 },
-    { set: 'reeking_decay', copies: 4 },
-    { set: 'torment', copies: 6 },
-  ])('has $copies enemy and treachery copies in set $set', ({ set, copies }) => {
-    const encounterCards = queenOfAshCardDefs.filter(
-      (card) =>
-        card.encounterCode === encounterSetCode(set) &&
-        (card.typeCode === 'enemy' || card.typeCode === 'treachery'),
-    );
-
-    const total = encounterCards.reduce((sum, card) => sum + (card.quantity ?? 1), 0);
-
-    expect(total).toBe(copies);
-  });
-
-  it.each([
     { code: '12121', name: 'Cantor of Flame', set: 'ashen_pilgrims' },
     { code: '12124', name: 'Cosmic Evils', set: 'cosmic_evils' },
     { code: '12127', name: 'Extraplanar Visions', set: 'hallucinations' },
     { code: '12129', name: 'Fire!', set: 'fire_ch2' },
   ])("reuses Spreading Flames' $name from the shared set $set", ({ code, name, set }) => {
     expect(cardOf(code)).toMatchObject({ name, encounterCode: set });
-  });
-
-  it.each([
-    { code: '12177', name: "Queen's Knight", keywords: ['hunter'] },
-    { code: '12178', name: 'Herald of Flame', keywords: ['hunter'] },
-    { code: '12179', name: 'Elokoss', keywords: ['massive', 'retaliate'] },
-    { code: '12180', name: 'Servant of Flame', keywords: ['hunter', 'retaliate'] },
-    { code: '12188', name: 'Zealot', keywords: ['aloof'] },
-    { code: '12189', name: 'Dark Magician', keywords: ['hunter', 'retaliate'] },
-    { code: '12195', name: 'Torment', keywords: ['peril'] },
-  ])('lists the keywords of $name', ({ code, keywords }) => {
-    expect(cardOf(code).keywords?.map((keyword) => keyword.name)).toEqual(keywords);
   });
 
   it.each([
