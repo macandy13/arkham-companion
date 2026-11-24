@@ -10,8 +10,8 @@ import type {
  * `board` with some of its answers replaced, for a test of the wiring between a view value and a
  * control (coding guidelines §3, "Web tests own the wiring"). It puts the board in a state that
  * only a card's rule reaches otherwise, an action forbidden or a move costing more, so the web
- * test checks the control and the rule stays with the engine tests. Every member `answers` leaves
- * out answers as `board` does, and the steps a test plays still go to the table behind it.
+ * test checks the control and the rule stays with the engine tests. Members not in `answers` come
+ * from `board`; the steps a test plays still go to the real table, so its rules decide them.
  */
 export function boardWhere(board: BoardView, answers: Partial<BoardView>): BoardView {
   return new Proxy(board, {

@@ -84,7 +84,7 @@ describe('MapBoard', () => {
   });
   afterEach(cleanup);
 
-  it('draws a tile per location with its shroud and clues once revealed, its doom and attachments', () => {
+  it("draws a tile per location with the board's shroud and its clues once revealed, its doom and attachments", () => {
     const table = PlayTable.start(
       house.withCard(
         instanceId('obscuring_fog'),
@@ -92,10 +92,11 @@ describe('MapBoard', () => {
         attachedTo(study),
       ),
     );
+    const board = locationWhere(table.board, study, { shroud: 4 });
 
     render(
       <PlayingOn table={table}>
-        <MapBoard board={table.board} />
+        <MapBoard board={board} />
       </PlayingOn>,
     );
 
@@ -105,7 +106,7 @@ describe('MapBoard', () => {
         .queryAllByRole('img')
         .map((token) => [token.getAttribute('aria-label'), token.textContent]);
     expect(tokensOf('study')).toEqual([
-      ['Shroud 2', '2'],
+      ['Shroud 4', '4'],
       ['Clue value 0', '0'],
       ['Clues 2', '2'],
       ['Doom 1', '1'],

@@ -401,10 +401,22 @@ describe('EnemyDetails', () => {
   });
 
   it.each([
-    { evade: [alder], engage: [], evades: true, engages: false },
-    { evade: [], engage: [alder], evades: false, engages: true },
+    {
+      who: 'alder may evade it but not engage it',
+      evade: [alder],
+      engage: [],
+      evades: true,
+      engages: false,
+    },
+    {
+      who: 'alder may engage it but not evade it',
+      evade: [],
+      engage: [alder],
+      evades: false,
+      engages: true,
+    },
   ])(
-    'offers card effects on the ghoul as the board names them: evade $evade, engage $engage',
+    'offers the card effects on the ghoul the board names: $who',
     ({ evade, engage, evades, engages }) => {
       const table = PlayTable.start(
         newGame()
