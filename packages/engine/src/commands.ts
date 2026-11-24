@@ -11,6 +11,7 @@ import type { CampaignLog, TraumaKind } from './campaign/campaign_log';
 import type { CardType, ScaledValue, TokenAmount, Trait } from './cards';
 import type {
   CardCode,
+  CodexEntry,
   DecisionId,
   InstanceId,
   InvestigatorId,
@@ -56,6 +57,7 @@ export type Command =
   | DiscardFromHand
   | DiscardAsset
   | HealAsset
+  | ReadCodexEntry
   | PlayCard
   | SpendCluesAsGroup
   | TakeDamageAndHorror
@@ -440,9 +442,23 @@ export interface HealAsset extends AskedByCard {
   trait: Trait;
 }
 
-/** The commands on player cards, which the engine defers to the players (`CommandDeferred`). */
+/**
+ * "([codex] N)" (the Smoke and Mirrors suspects): the investigator reads entry `entry` of the
+ * scenario's codex in the campaign guide. The guide's text is not in the app, so it is left to the
+ * players like `DrawCards`.
+ */
+export interface ReadCodexEntry extends AskedByCard {
+  type: 'ReadCodexEntry';
+  investigatorId: InvestigatorId;
+  entry: CodexEntry;
+}
+
+/**
+ * The commands the engine defers to the players (`CommandDeferred`): those on player cards, and
+ * reading a codex entry in the campaign guide.
+ */
 export type PlayerCardCommand =
-  DrawCards | SearchDeck | PlayCard | DiscardFromHand | DiscardAsset | HealAsset;
+  DrawCards | SearchDeck | PlayCard | DiscardFromHand | DiscardAsset | HealAsset | ReadCodexEntry;
 
 /**
  * Whether the players took `command` as an action at the table (the draw or play action), rather
@@ -457,6 +473,7 @@ export function takenAsAction(command: PlayerCardCommand): boolean {
     case 'DiscardFromHand':
     case 'DiscardAsset':
     case 'HealAsset':
+    case 'ReadCodexEntry':
       return false;
   }
 }
@@ -887,6 +904,11 @@ export interface EvadeEnemy {
   type: 'EvadeEnemy';
   enemyId: InstanceId;
   investigatorId: InvestigatorId;
+  /**
+   * A passed evasion test caused it, so it is a "successful" evasion. An automatic evade is
+   * not (Rules Reference, "Automatic Failure/Success": no skill test is made).
+   */
+  successful?: true;
 }
 
 /**

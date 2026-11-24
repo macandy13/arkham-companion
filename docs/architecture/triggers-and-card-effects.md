@@ -10,8 +10,9 @@ An [`Ability`](../../packages/engine/src/abilities.ts) is:
     - `self`, the card the event is about (for a test, also the cards attached to it);
     - `yours`, the named investigator's threat area, then their location;
     - `inPlay`, every card in play with active abilities;
-    - `currentActOrAgenda`, the current agenda, then act, for objectives.
-  - A window without `of` takes the event's usual listeners (`defaultScope`): `yours` for `turnBegins` and `turnEnds`, `inPlay` for `phaseEnds` and `roundEnds`, `currentActOrAgenda` for `addedToVictoryDisplay`, otherwise `self`.
+    - `currentActOrAgenda`, the current agenda, then act, for objectives;
+    - `here`, every card at the location the window names (`cardsWhoseLocationIs`), for "at [this card]'s location".
+  - A window without `of` takes the event's usual listeners (`defaultScope`): `yours` for `turnBegins` and `turnEnds`, `inPlay` for `phaseEnds` and `roundEnds`, `currentActOrAgenda` for `addedToVictoryDisplay`, `here` for `succeeded`, otherwise `self`.
   - One matcher (`hears`) fires an ability when the event matches (with its phase, action, outcome or token), the scope matches, and the filter matches the event's card (`OpenedWindow.subjectId`).
   - The objectives are scoped windows: `whenEnemyDefeated(code)` is `{ on: 'defeated', of: 'currentActOrAgenda', filter: { code } }`, `whenAnInvestigatorEnters(code)` the same on `entered`, and `atEndOfEachTurn` is `{ on: 'turnEnds', of: 'inPlay' }` (Umôrdhoth).
   - The events:
@@ -24,10 +25,11 @@ An [`Ability`](../../packages/engine/src/abilities.ts) is:
     - `advanced`,
     - `addedToVictoryDisplay` (`whenVictoryDisplayHolds`), which also opens for a card placed beneath the current act, which counts when the reference names that zone too (Augurs of Flame),
     - `tested` after a basic action's test, at ST.6 before its results,
+    - `succeeded` after any passed test, at ST.6, heard `here` at the location of what the test was about (the tester's own location for a card at no location, such as a revelation), once more with the basic action it belongs to (`afterSucceedingHere({ action: 'investigate' }, …)`, David Renfield's "after you successfully investigate [his] location"), naming the tester and the margin when the answer gave one,
     - `testEnded` once that test has ended (`EndSkillTest`, queued after its results, ST.8), for "after applying all results" keywords,
     - `engaged` either way round,
     - `attacked` (attacks of opportunity included),
-    - `evaded` for the enemy, naming the evader, once `EvadeEnemy` (a passed evasion or an effect) has exhausted and disengaged it, so later than `tested` (`afterEvaded`, Ruth Turner),
+    - `evaded` for the enemy, naming the evader, once `EvadeEnemy` (a passed evasion or an effect) has exhausted and disengaged it, so later than `tested` (`afterEvaded`, Ruth Turner), and once more with `successful` after a passed evasion test only, not an automatic evade (`afterEvadingSuccessfully`, Cornelia Akely),
     - `cluesDiscovered`,
     - `defeated` for the enemy itself, naming where it was,
     - `tokensPlaced` for tokens placed on the card (`afterTokensPlaced`, Wild Flames' "after doom is placed on the agenda"; `whenTokensOnSelf` for an objective on a count);
@@ -43,6 +45,7 @@ An [`Ability`](../../packages/engine/src/abilities.ts) is:
     - the tokens on a card (`tokensOn(card, token)`): `ifValue(tokensOn(self(), 'clue'), { max: 0 }, …)` for "if there are no clues on it", `whenTokensOnSelf('clue', perInvestigator(2), advanceAct())` for an objective on the act's own clues, whose count the act's view shows as its threshold;
     - the clues a group holds (`groupClues`, see The Barrier below);
   - `phase`, the phase the game is in: `duringPhase('enemy', afterAttacking(discardAsset()))` for Hellhound's "after it attacks you during the enemy phase";
+  - `margin`, how much the test the window follows succeeded by: `afterSucceedingHere({ by: 2 }, …)` for Margaret Liu's "after you succeed at a skill test by 2 or more at [her] location". It counts only with a confirmed margin, so a test whose location holds such an ability asks for its pass margin (`passMarginMatters`, `DecisionView.asksMargin`);
 - an optional repeat (`Ability.forEach`, any `each…` reference, `repetitionsOf`): the effects resolve once for each investigator or card it names as the window opens, counted with the condition, and each copy of the window binds what it is for:
   - an investigator becomes the window's, so an effect that asks something (a skill test) asks each of them in turn (`forEachInvestigator(…)`, over `eachInvestigator()`);
   - a card becomes `thatCard()` (`OpenedWindow.thatCardId`): `forEachEnemy({ trait, at: [onlyCopy(codes.hallway), onlyCopy(codes.parlor)] }, …)`, and `forEachEnemy({}, atEndOfRound(placeDoomOn(thatCard(), 1)))` for "for each enemy, place 1 doom on it";
@@ -95,7 +98,7 @@ When its turn comes, `resolveEffect` fills in the IDs from the current state, so
 - A test's outcomes stay templated until the answer: each runs as a `ResolveEffect` command, which `handle` turns into an `ability` step, so it resolves in its own turn like any effect (a choice's options, by contrast, resolve when it is raised, so they can be dry-run; only an option effect with an `each…` reference or a reference with candidates is deferred the same way, so it repeats itself, or asks for its candidate, after the answer rather than before the choice: What's Going On?!'s "each investigator discards 1 card at random", Arkham Sanatorium's investigator to heal).
 - A reference that names nobody drops the command; a missing `onlyCopy` card records `AbilityEffectSkipped` and the players do it by hand.
 
-Commands on player cards (`DrawCards`, `SearchDeck`, `PlayCard`, `DiscardFromHand`, `DiscardAsset`, `HealAsset`; factories `drawCards`, `searchDeck` (with `play` for "search … and play it", Easttown), `discardAtRandom`, `discardFromHand`, `discardAsset`, `healAsset`; a `handCards` cost emits `DiscardFromHand` too) are written as if the engine could carry them out.
+Commands on player cards (`DrawCards`, `SearchDeck`, `PlayCard`, `DiscardFromHand`, `DiscardAsset`, `HealAsset`; factories `drawCards`, `searchDeck` (with `play` for "search … and play it", Easttown), `discardAtRandom`, `discardFromHand`, `discardAsset`, `healAsset`; a `handCards` cost emits `DiscardFromHand` too) are written as if the engine could carry them out. So is reading a codex entry in the campaign guide (`ReadCodexEntry`, `codex(6)` for "([codex] 6)"), whose text the app doesn't have.
 
 - Their handler decides it can't, since the game holds no player cards, and records `CommandDeferred` (`PlayCard` is first rejected while a card forbids its investigator to play assets or events, below, and spends the `cost` the players name from the investigator's resources in the same step, rejected above what they hold), which the play screen lists with the skipped effects for the players to do, unless the players took it as an action themselves (`asAction`) or no card asked for it (no `source`: the upkeep draw of step 4.4, which the changes notice tells).
 - Such a command a card asked for carries its `source` (`CommandSource`: the card and the timing window), stamped by `resolveEffect` (`withSource`, a choice's options included) or by the action's hand card cost, so the notice names the card ("Your House asks Roland Banks to draw 1 card"); a command without one is the players' own.

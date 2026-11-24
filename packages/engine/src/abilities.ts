@@ -25,9 +25,10 @@ import type {
 } from './commands';
 import { cardsInPlay, cardsWithActiveAbilities } from './doom';
 import { cardOptionLabels } from './decisions';
-import type { Event } from './events';
+import type { Event, SkillTestResolved } from './events';
 import type { TraumaKind } from './campaign/campaign_log';
 import {
+  codexEntry,
   decisionId,
   type CardCode,
   type DecisionId,
@@ -54,6 +55,7 @@ import {
 import {
   cardsInZone,
   cardsInZones,
+  cardsWhoseLocationIs,
   currentCard,
   locationOfCard,
   matchesCard,
@@ -156,6 +158,14 @@ export type WindowEvent =
    */
   | { on: 'testEnded'; action: TestedAction; outcome: SkillTestOutcome }
   /**
+   * "After you succeed at a skill test at [this card]'s location" (Margaret Liu), or "after you
+   * successfully investigate [its] location" with `action` (David Renfield): an investigator
+   * passed a test (`SkillTestResolved`), any test, or with `action` the basic action's. Opened at
+   * ST.6, like `tested`, for the cards at the test's location (`here`), naming the tester and
+   * carrying the margin when the answer gave one (`OpenedWindow.margin`).
+   */
+  | { on: 'succeeded'; action?: TestedAction }
+  /**
    * "After [this enemy] engages you": the enemy became engaged with an
    * investigator (`EnemyEngaged`), whether it engaged them or they engaged
    * it, as the rules treat both alike. Opened for the enemy, naming the
@@ -172,8 +182,11 @@ export type WindowEvent =
   /**
    * "After [this enemy] is evaded": opened by `EnemyEvaded` for the enemy, naming the evader,
    * once it is exhausted and disengaged; unlike `tested` for an evasion, which opens before.
+   * With `successful`, "after you successfully evade [this enemy]" (Cornelia Akely): opened once
+   * more only after a passed evasion test (`EnemyEvaded.successful`), never after an automatic
+   * evade.
    */
-  | { on: 'evaded' }
+  | { on: 'evaded'; successful?: true }
   /**
    * "After you discover clues at [this location]": opened by
    * `CluesDiscovered` for the location, naming the investigator.
@@ -242,8 +255,10 @@ export type WindowEvent =
  *   location ("at the end of your turn", "when you end your turn at this location").
  * - `inPlay`: every card in play with active abilities ("at the end of the round").
  * - `currentActOrAgenda`: the current agenda, then the current act, for their objectives.
+ * - `here`: every card at the location the window names (`locationOfCard`), engaged enemies and
+ *   attachments too ("after you succeed at a skill test at Margaret Liu's location").
  */
-export type ListenerScope = 'self' | 'yours' | 'inPlay' | 'currentActOrAgenda';
+export type ListenerScope = 'self' | 'yours' | 'inPlay' | 'currentActOrAgenda' | 'here';
 
 /** Who hears a window that names no scope (`TimingWindow.of`): what each event's cards usually mean. */
 export function defaultScope(on: WindowEvent['on']): ListenerScope {
@@ -256,6 +271,8 @@ export function defaultScope(on: WindowEvent['on']): ListenerScope {
       return 'inPlay';
     case 'addedToVictoryDisplay':
       return 'currentActOrAgenda';
+    case 'succeeded':
+      return 'here';
     default:
       return 'self';
   }
@@ -453,6 +470,7 @@ export type AbilityCommand =
           | 'DiscardFromHand'
           | 'DiscardAsset'
           | 'HealAsset'
+          | 'ReadCodexEntry'
           | 'TakeDamageAndHorror'
           | 'CheckDoomThreshold'
           | 'MoveTokens'
@@ -601,7 +619,13 @@ export type AbilityCondition =
   /** `value` is within the range ("if you have no clues", "2 clues per investigator on this act"). */
   | ({ kind: 'valueOf'; value: Quantity } & StatRange)
   /** The game is in `phase` ("after Hellhound attacks you during the enemy phase"). */
-  | { kind: 'phase'; phase: Phase };
+  | { kind: 'phase'; phase: Phase }
+  /**
+   * The test that opened the window (`succeeded`) succeeded by at least `min` ("by 2 or more").
+   * It counts only with a margin the players confirm, which the test then asks for
+   * (`passMarginMatters`).
+   */
+  | { kind: 'margin'; min: number };
 
 /**
  * A number on the table a `valueOf` condition reads:
@@ -687,6 +711,8 @@ export interface OpenedWindow {
   investigatorId?: InvestigatorId;
   /** The location it names itself, if any (where a defeated enemy was); see `windowLocation`. */
   locationId?: InstanceId;
+  /** How much the test that opened it succeeded by, when the answer said (`succeeded`). */
+  margin?: number;
   /** The card a repetition of a `forEach` ability is for (`thatCard`). */
   thatCardId?: InstanceId;
 }
@@ -697,6 +723,7 @@ interface Occurrence {
   subjectId?: InstanceId;
   investigatorId?: InvestigatorId;
   locationId?: InstanceId;
+  margin?: number;
   /** The `self` listeners when more than the subject: a tested card and its attachments. */
   self?: readonly InstanceId[];
 }
@@ -707,11 +734,12 @@ function openFor(
   occurrence: Occurrence,
   ...scopes: ListenerScope[]
 ): OpenedWindow[] {
-  const { window, subjectId, investigatorId, locationId } = occurrence;
+  const { window, subjectId, investigatorId, locationId, margin } = occurrence;
   const named = {
     ...(subjectId && { subjectId }),
     ...(investigatorId && { investigatorId }),
     ...(locationId && { locationId }),
+    ...(margin === undefined ? {} : { margin }),
   };
   return scopes.flatMap((scope) =>
     listeners(state, occurrence, scope).map((cardId) => ({ window, scope, cardId, ...named })),
@@ -736,6 +764,11 @@ function listeners(state: GameState, occurrence: Occurrence, scope: ListenerScop
       return cardsWithActiveAbilities(state).map((card) => card.id);
     case 'currentActOrAgenda':
       return objectiveCards(state);
+    case 'here': {
+      const { locationId } = occurrence;
+      if (locationId === undefined) return [];
+      return cardsWhoseLocationIs(state, locationId).map((card) => card.id);
+    }
     default:
       return assertNever(scope);
   }
@@ -798,7 +831,13 @@ export function windowsOpenedBy(
     case 'EnemyEvaded': {
       const on = ENEMY_WINDOWS[event.type];
       const { enemyId, investigatorId } = event;
-      return openFor(state, { window: { on }, subjectId: enemyId, investigatorId }, 'self');
+      const opened = openFor(state, { window: { on }, subjectId: enemyId, investigatorId }, 'self');
+      if (event.type !== 'EnemyEvaded' || !event.successful) return opened;
+      const successful = { on: 'evaded', successful: true } as const;
+      return [
+        ...opened,
+        ...openFor(state, { window: successful, subjectId: enemyId, investigatorId }, 'self'),
+      ];
     }
     case 'CluesDiscovered': {
       const { locationId, investigatorId } = event;
@@ -811,10 +850,14 @@ export function windowsOpenedBy(
     }
     case 'SkillTestResolved': {
       const { action, subject, outcome, investigatorId } = event;
-      if (action === undefined || subject === undefined) return [];
+      const succeeded = outcome === 'pass' ? succeededWindows(state, event) : [];
+      if (action === undefined || subject === undefined) return succeeded;
       const self = [subject, ...cardsInZone(state, { kind: 'attachedTo', hostId: subject })];
       const window = { on: 'tested', action, outcome } as const;
-      return openFor(state, { window, subjectId: subject, investigatorId, self }, 'self');
+      return [
+        ...openFor(state, { window, subjectId: subject, investigatorId, self }, 'self'),
+        ...succeeded,
+      ];
     }
     case 'SkillTestEnded': {
       const { action, outcome, subject, investigatorId } = event;
@@ -852,6 +895,71 @@ export function windowsOpenedBy(
     default:
       return [];
   }
+}
+
+/**
+ * The `succeeded` windows of a passed test, for the cards at its location (`testLocation`): one
+ * for any test and one more for the basic action it belongs to.
+ */
+function succeededWindows(state: GameState, event: SkillTestResolved): OpenedWindow[] {
+  const { action, subject, investigatorId, margin } = event;
+  if (investigatorId === undefined) return [];
+  const locationId = testLocation(state, subject, investigatorId);
+  if (locationId === undefined) return [];
+  const windows: WindowEvent[] = [
+    { on: 'succeeded' },
+    ...(action === undefined ? [] : [{ on: 'succeeded' as const, action }]),
+  ];
+  return windows.flatMap((window) =>
+    openFor(
+      state,
+      {
+        window,
+        investigatorId,
+        locationId,
+        ...(subject && { subjectId: subject }),
+        ...(margin === undefined ? {} : { margin }),
+      },
+      'here',
+    ),
+  );
+}
+
+/**
+ * Where a test about `subject` by `investigatorId` takes place, for "at [its] location": the
+ * subject's location, or the tester's own for a subject at no location (a revelation).
+ */
+function testLocation(
+  state: GameState,
+  subject: InstanceId | undefined,
+  investigatorId: InvestigatorId,
+): InstanceId | undefined {
+  const about = subject === undefined ? undefined : state.cards[subject];
+  return (
+    (about === undefined ? undefined : locationOfCard(state, about)) ??
+    findInvestigator(state, investigatorId)?.locationId
+  );
+}
+
+/**
+ * Whether how much the skill test `decision` passes by matters to a card at its location: one
+ * there has a `succeeded` ability with a `margin` condition (Margaret Liu's "by 2 or more"), so
+ * the answer says the margin (`DecisionView.asksMargin`), as a threshold counts only with a
+ * margin the players confirm.
+ */
+export function passMarginMatters(
+  ctx: EngineContext,
+  state: GameState,
+  decision: Decision,
+): boolean {
+  if (decision.decider.kind !== 'investigator') return false;
+  const where = testLocation(state, decision.subject, decision.decider.investigatorId);
+  if (where === undefined) return false;
+  return cardsWhoseLocationIs(state, where).some((card) =>
+    (cardStats(ctx.cards, card.code).abilities ?? []).some(
+      (ability) => ability.window.on === 'succeeded' && ability.condition?.kind === 'margin',
+    ),
+  );
 }
 
 /** The window each enemy event opens for the enemy. */
@@ -1085,6 +1193,8 @@ function conditionHolds(
     }
     case 'phase':
       return state.meta.phase === condition.phase;
+    case 'margin':
+      return opened.margin !== undefined && opened.margin >= condition.min;
     default:
       return assertNever(condition);
   }
@@ -1836,6 +1946,32 @@ export function afterEvaded(...effects: AbilityEffect[]): Ability {
   return { window: { on: 'evaded' }, effects };
 }
 
+/**
+ * "After you successfully evade [this enemy]", written
+ * `reaction(afterEvadingSuccessfully(readySelf(), codex(2)))` (Cornelia Akely): only after a passed
+ * evasion test, not an automatic evade.
+ */
+export function afterEvadingSuccessfully(...effects: AbilityEffect[]): Ability {
+  return { window: { on: 'evaded', successful: true }, effects };
+}
+
+/**
+ * "After you succeed at a skill test [by N or more] at [this card]'s location" (Margaret Liu,
+ * `afterSucceedingHere({ by: 2 }, …)`), or "after you successfully investigate [its] location"
+ * (David Renfield, `afterSucceedingHere({ action: 'investigate' }, …)`): the `succeeded` window,
+ * with a `margin` condition for `by`.
+ */
+export function afterSucceedingHere(
+  { action, by }: { action?: TestedAction; by?: number },
+  ...effects: AbilityEffect[]
+): Ability {
+  return {
+    window: action === undefined ? { on: 'succeeded' } : { on: 'succeeded', action },
+    effects,
+    ...(by === undefined ? {} : { condition: { kind: 'margin', min: by } }),
+  };
+}
+
 /** A forced ability "after you discover clues at [this location]", written `afterDiscoveringClues(placeDoomOnSelf(1))`. */
 export function afterDiscoveringClues(...effects: AbilityEffect[]): Ability {
   return { window: { on: 'cluesDiscovered' }, effects };
@@ -2236,6 +2372,7 @@ function withSource<C extends { readonly type: string }>(command: C, source: Com
     case 'DiscardFromHand':
     case 'DiscardAsset':
     case 'HealAsset':
+    case 'ReadCodexEntry':
     case 'AdjustActions':
     case 'EndTurn':
     case 'DiscoverClues':
@@ -2373,6 +2510,17 @@ export function searchDeck(
     ...(top === undefined ? {} : { top }),
     ...(play === undefined ? {} : { play }),
   };
+}
+
+/**
+ * "([codex] N)": the investigator the window names reads entry `entry` of the scenario's codex in
+ * the campaign guide (`ReadCodexEntry`), left to the players.
+ */
+export function codex(
+  entry: number,
+  who: RelativeInvestigator = { ref: 'windowInvestigator' },
+): AbilityEffect {
+  return { type: 'ReadCodexEntry', investigatorId: who, entry: codexEntry(entry) };
 }
 
 /**
