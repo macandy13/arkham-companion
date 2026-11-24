@@ -261,7 +261,7 @@ export type WindowEvent =
 export type ListenerScope = 'self' | 'yours' | 'inPlay' | 'currentActOrAgenda' | 'here';
 
 /** Who hears a window that names no scope (`TimingWindow.of`): what each event's cards usually mean. */
-export function defaultScope(on: WindowEvent['on']): ListenerScope {
+function defaultScope(on: WindowEvent['on']): ListenerScope {
   switch (on) {
     case 'turnEnds':
     case 'turnBegins':
@@ -3101,7 +3101,7 @@ export function dealDamageTo(enemy: RelativeCard, amount: TokenAmount): AbilityE
  * The elusive retreat (`RetreatEnemy`): disengage, move to a connecting location (one without
  * investigators if able) and exhaust.
  */
-export function retreatEnemy(enemy: RelativeCard): AbilityEffect {
+function retreatEnemy(enemy: RelativeCard): AbilityEffect {
   return { type: 'RetreatEnemy', enemyId: enemy };
 }
 

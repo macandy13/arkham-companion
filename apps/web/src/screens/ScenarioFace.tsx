@@ -20,7 +20,7 @@ import './scenario_face.css';
  * two rules under it. The title, the difficulty and the rows below are HTML laid over the drawing
  * (game.css), since they wrap and the title is the screen's heading.
  */
-export const SCENARIO_FACE = {
+const SCENARIO_FACE = {
   frame: 12,
   rule: { inset: 9, corner: 6 },
   band: 34,

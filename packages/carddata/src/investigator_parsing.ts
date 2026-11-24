@@ -29,7 +29,7 @@ const RawInvestigatorSchema = z.object({
 });
 
 /** Keep only investigator entries of a full `/api/public/cards/` response. */
-export function filterInvestigators(rawCards: unknown): unknown[] {
+function filterInvestigators(rawCards: unknown): unknown[] {
   if (!Array.isArray(rawCards)) throw new Error('Expected an array of cards');
   return rawCards.filter(
     (card: unknown) =>
@@ -44,10 +44,7 @@ export function filterInvestigators(rawCards: unknown): unknown[] {
  * Convert one raw investigator card. Chapter and cycle come from the pack list; a pack it
  * leaves out falls back to the chapter its code implies.
  */
-export function normaliseInvestigator(
-  raw: unknown,
-  packs: readonly PackDef[] = [],
-): InvestigatorDef {
+function normaliseInvestigator(raw: unknown, packs: readonly PackDef[] = []): InvestigatorDef {
   const r = RawInvestigatorSchema.parse(raw);
   const pack = packs.find((p) => p.code === r.pack_code);
   return {

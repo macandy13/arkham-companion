@@ -26,7 +26,7 @@ import { signed, signedOrUnknown } from '../tokens/tokenValue';
 import './test_calculation.css';
 
 /** The skills a test adds up: the tested one first, then the one a card adds to it. */
-export type TestedSkills = readonly [SkillName, SkillName?];
+type TestedSkills = readonly [SkillName, SkillName?];
 
 /**
  * A skill test as the players run it at the table (MD.2b): the skills tested, their modifier and
@@ -131,7 +131,7 @@ function replaceOptions(bag: readonly ChaosToken[], draw: TestDraw, index: numbe
  * replaces the second); tapping a chosen one drops it, unless it is the only one, since a test
  * always has a skill.
  */
-export function pickSkill(skills: TestedSkills, skill: SkillName): TestedSkills {
+function pickSkill(skills: TestedSkills, skill: SkillName): TestedSkills {
   const [tested, added] = skills;
   if (skill === tested) return added === undefined ? skills : [added];
   if (skill === added) return [tested];
@@ -193,7 +193,7 @@ export function SkillTestBlock({
  * The investigator's four skills as toggles, each its glyph from the investigator card and its
  * value, the `chosen` ones pressed; `onPick` gets the one tapped.
  */
-export function SkillToggles({
+function SkillToggles({
   investigator,
   chosen,
   onPick,
@@ -240,7 +240,7 @@ export function SkillToggles({
  * again, but a card can reveal another. A token whose effect the app does not know shows a "?"
  * and a reminder under the strip to add it by hand.
  */
-export function ResultStrip({
+function ResultStrip({
   board,
   result,
   run,

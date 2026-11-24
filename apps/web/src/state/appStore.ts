@@ -50,7 +50,7 @@ import {
 import { seatsFor } from '../wizard/seating';
 
 /** Everything the new game wizard has decided; input to `AppState.startScenario`. */
-export interface ScenarioStart {
+interface ScenarioStart {
   /** Name shown in the game list. */
   title: string;
   /**
@@ -76,7 +76,7 @@ export interface ScenarioStart {
  * `ScenarioStart` part is the first game: `ctx` is the first scenario's, and its `CardDb` also
  * gives `StartCampaign` the team's printed stats.
  */
-export interface CampaignStart extends ScenarioStart {
+interface CampaignStart extends ScenarioStart {
   /** The campaign to start; its first scenario must be `ctx.scenario`. */
   definition: CampaignDefinition;
   /** Name shown in the campaign list. */
@@ -106,7 +106,7 @@ export interface NextScenarioStart {
 }
 
 /** The campaign on the campaign screen, as `AppState.openCampaign` loaded it. */
-export interface OpenCampaign {
+interface OpenCampaign {
   campaignId: CampaignId;
   title: string;
   /** Always the result of replaying the campaign's stored event log. */

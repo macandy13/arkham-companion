@@ -35,7 +35,7 @@ export function allConnections(state: GameState): { mapId: MapId; edge: Edge }[]
  * What the location `card` prints on the side that is up: its symbol and the symbols it
  * connects to change when it is revealed.
  */
-export function shownSymbols(ctx: EngineContext, card: CardInstance): PrintedSymbols {
+function shownSymbols(ctx: EngineContext, card: CardInstance): PrintedSymbols {
   return printedSymbols(cardStats(ctx.cards, card.code), card.faceUp ? 'revealed' : 'unrevealed');
 }
 
@@ -151,7 +151,7 @@ function neighboursOver(edges: readonly Edge[], locationId: InstanceId): Instanc
  * True while a declared edge connects its locations: both are on a map. A scenario may declare
  * edges to locations still set aside; they wake up once both are in play.
  */
-export function isConnectionOpen(state: GameState, edge: Edge): boolean {
+function isConnectionOpen(state: GameState, edge: Edge): boolean {
   return isLocationInPlay(state, edge.from) && isLocationInPlay(state, edge.to);
 }
 

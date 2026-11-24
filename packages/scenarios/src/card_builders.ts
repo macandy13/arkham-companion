@@ -293,7 +293,7 @@ export function treachery({
 }
 
 /** A single-copy, trait-less card of a scenario's own encounter set, with both printed sides. */
-export function scenarioCard(
+function scenarioCard(
   code: string,
   name: string,
   set: EncounterSetCode,

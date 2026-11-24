@@ -6,7 +6,7 @@ import { cluesToAdvance } from './card_actions';
 import { describeDecision } from './describe_decision';
 import { agendaThreshold, doomInPlay } from './doom';
 import type { InstanceId, InvestigatorId, MapId } from './ids';
-import { cardsInZone } from './lookup';
+import { cardsIn, cardsInZone, currentCard } from './lookup';
 import { mapLocations } from './map';
 import { PHASE_STEP_TITLES } from './phases';
 import type { CardInstance, Decision, GameState, Investigator, PhaseStep } from './state';
@@ -80,7 +80,7 @@ function turnLines(state: GameState): string[] {
 }
 
 function agendaLine(ctx: EngineContext, state: GameState): string {
-  const agenda = currentCard(state, state.agenda.current);
+  const agenda = currentCard(state, 'agenda');
   if (!agenda) return 'Agenda: none';
   const threshold = agendaThreshold(ctx, state, agenda);
   const of = threshold === undefined ? '' : `/${threshold}`;
@@ -88,7 +88,7 @@ function agendaLine(ctx: EngineContext, state: GameState): string {
 }
 
 function actLine(ctx: EngineContext, state: GameState): string {
-  const act = currentCard(state, state.act.current);
+  const act = currentCard(state, 'act');
   if (!act) return 'Act: none';
   const stats = ctx.cards.get(act.code);
   const atRoundEnd = stats && roundEndClueObjective(stats);
@@ -253,10 +253,6 @@ function suggestionLines({ suggestion }: Decision): string[] {
   ];
 }
 
-function currentCard(state: GameState, id: InstanceId | undefined): CardInstance | undefined {
-  return id === undefined ? undefined : state.cards[id];
-}
-
 // A card without a definition is shown by its code, so a broken card db still prints.
 function nameOf(ctx: EngineContext, card: CardInstance): string {
   return ctx.cards.get(card.code)?.name ?? card.code;
@@ -273,10 +269,6 @@ function nameOfId(ctx: EngineContext, state: GameState, id: InstanceId): string 
 
 function investigatorName(state: GameState, id: InvestigatorId): string {
   return findInvestigator(state, id)?.name ?? id;
-}
-
-function cardsIn(state: GameState, zone: Zone): CardInstance[] {
-  return cardsInZone(state, zone).flatMap((id) => state.cards[id] ?? []);
 }
 
 function namesIn(ctx: EngineContext, state: GameState, zone: Zone): string[] {

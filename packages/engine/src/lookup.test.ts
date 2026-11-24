@@ -20,13 +20,16 @@ import {
 } from './index';
 import { locationsInPlay, locationsNamed } from './board';
 import {
+  cardNamesIn,
   cardsAtLocation,
+  cardsIn,
   cardsInZones,
   cardsNamed,
   cardsOfType,
   currentCard,
   locationOfCard,
   requireCard,
+  requireCurrentCard,
   zoneOf,
 } from './lookup';
 import type { CardInstance } from './state';
@@ -173,6 +176,32 @@ describe('currentCard', () => {
     const { state } = newGame().start();
 
     expect(currentCard(state, 'act')).toBeUndefined();
+  });
+
+  it('is required by requireCurrentCard, which rejects a used-up deck', () => {
+    const { state } = newGame().start();
+
+    expect(rejectionOf(() => requireCurrentCard(state, 'act'))).toEqual({
+      code: 'noCurrentCard',
+      deck: 'act',
+    });
+  });
+});
+
+describe('cardsIn and cardNamesIn', () => {
+  const study = instanceId('study');
+  const ghoul = instanceId('ghoul');
+  const rat = instanceId('rat');
+
+  it('return the cards at a location and their printed names, in zone order', () => {
+    const { context, state } = newGame()
+      .withLocation(study, blankLocation('study'))
+      .withCard(ghoul, blankEnemy('ghoul'), atLocation(study))
+      .withCard(rat, blankEnemy('rat'), atLocation(study))
+      .start();
+
+    expect(cardsIn(state, atLocation(study)).map((card) => card.id)).toEqual([ghoul, rat]);
+    expect(cardNamesIn(context, state, atLocation(study))).toEqual(['ghoul', 'rat']);
   });
 });
 

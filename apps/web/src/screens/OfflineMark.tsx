@@ -17,7 +17,7 @@ export function OfflineMark() {
  * Whether the browser says it has a network (`navigator.onLine`), following its `online` and
  * `offline` events. True while rendering on a server, where nothing is known.
  */
-export function useOnline(): boolean {
+function useOnline(): boolean {
   return useSyncExternalStore(
     subscribe,
     () => navigator.onLine,

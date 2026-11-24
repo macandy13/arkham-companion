@@ -15,7 +15,7 @@ import { nightOfTheZealotTexts as nightOfTheZealotEn } from './en/night_of_the_z
 export const CAMPAIGN_SECTIONS = ['campaigns', 'scenarios', 'scenario', 'story'] as const;
 
 /** A section a campaign's strings add to. */
-export type CampaignSection = (typeof CAMPAIGN_SECTIONS)[number];
+type CampaignSection = (typeof CAMPAIGN_SECTIONS)[number];
 
 /**
  * One campaign's strings in one language, e.g. `en/night_of_the_zealot.ts`. Its files end in
