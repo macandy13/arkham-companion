@@ -22,6 +22,7 @@ import {
   lead,
   drawFromEncounterDiscard,
   self,
+  thatCard,
   setAsideCopy,
   shuffleEncounterDeck,
   readySelf,
@@ -2776,6 +2777,47 @@ describe('each unengaged Ghoul enemy moving towards a location', () => {
     expect(after.cards[cellarGhoul]?.zone).toEqual(engagedWith(alice));
     expect(after.cards[engagedGhoul]?.zone).toEqual(engagedWith(alice));
     expect(after.cards[cellarRat]?.zone).toEqual(atLocation(cellar));
+  });
+});
+
+describe('an effect on each enemy it repeats for', () => {
+  /** "For each Ghoul enemy, place 1 doom on that enemy", here as a revelation. */
+  const markedCard = blankTreachery('marked', {
+    abilities: [forEachEnemy({ trait: trait('Ghoul') }, whenRevealed(placeDoomOn(thatCard(), 1)))],
+  });
+
+  it('places 1 doom on each ghoul and none on the rat', () => {
+    const { context, state } = newGame()
+      .withLocation(hall, blankLocation('hall'), { revealed: true })
+      .withInvestigator(alice, { locationId: hall })
+      .withCard(instanceId('marked'), markedCard, { kind: 'encounterDeck' })
+      .withCard(
+        instanceId('hall_ghoul'),
+        blankEnemy('hall_ghoul', { traits: [trait('Ghoul')] }),
+        atLocation(hall),
+      )
+      .withCard(
+        instanceId('engaged_ghoul'),
+        blankEnemy('engaged_ghoul', { traits: [trait('Ghoul')] }),
+        engagedWith(alice),
+      )
+      .withCard(
+        instanceId('rat'),
+        blankEnemy('rat', { traits: [trait('Creature')] }),
+        atLocation(hall),
+      )
+      .start();
+
+    const after = stateAfter(
+      context,
+      state,
+      { type: 'DrawCard', investigatorId: alice, from: encounterDeck },
+      resolveRevelation('marked'),
+    );
+
+    expect(after.cards[instanceId('hall_ghoul')]?.tokens.doom).toBe(1);
+    expect(after.cards[instanceId('engaged_ghoul')]?.tokens.doom).toBe(1);
+    expect(after.cards[instanceId('rat')]?.tokens.doom).toBeUndefined();
   });
 });
 
