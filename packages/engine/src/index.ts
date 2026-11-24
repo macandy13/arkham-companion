@@ -234,6 +234,7 @@ export {
   statOf,
   tokensOn,
   ifThereAre,
+  thereAre,
   ifNoCandidate,
   forEachEnemy,
   forEachInvestigator,
@@ -388,8 +389,6 @@ export type {
   CausedCampaignEvents,
 } from './campaign/campaign_notices';
 export type {
-  CardPlace,
-  GameCondition,
   ProposedChange,
   ResolutionStep,
   ResolutionTarget,

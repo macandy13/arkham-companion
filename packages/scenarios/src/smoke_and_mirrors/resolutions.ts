@@ -1,5 +1,12 @@
 import {
+  beneath,
+  eachInZone,
+  onlyCopy,
+  outOfGame,
+  setAside,
+  thereAre,
   trait,
+  victoryDisplay,
   type ResolutionStep,
   type ScenarioResolutions,
   type StoryValue,
@@ -11,6 +18,11 @@ const codes = SMOKE_AND_MIRRORS_CODES;
 const yes: StoryValue = { kind: 'flag', value: true };
 const no: StoryValue = { kind: 'flag', value: false };
 const elite = trait('Elite');
+/**
+ * Beneath the scenario's one act, where the questioned suspects lie face up. It has advanced out
+ * of the game by the time a resolution reads it, so it is named by its only copy.
+ */
+const beneathTheAct = beneath(onlyCopy(codes.augursOfFlame));
 
 /** Translation key prefix for the steps the players do by hand. */
 const byHandKeyPrefix = 'scenario.smokeAndMirrors.resolution';
@@ -32,12 +44,12 @@ const revealTheHarbinger: ResolutionStep = {
     codes.sgtEarlMonroe,
     codes.abigailForeman,
     codes.margaretLiu,
-  ].map((code) => ({ code, when: { kind: 'cardIn', code, places: ['setAside'] } })),
+  ].map((code) => ({ code, when: thereAre(eachInZone(setAside, { code }), { min: 1 }) })),
 };
 
 const killedTheServant: ResolutionStep = {
   kind: 'when',
-  condition: { kind: 'cardIn', code: codes.servantOfFlame, places: ['victoryDisplay'] },
+  condition: thereAre(eachInZone(victoryDisplay, { code: codes.servantOfFlame }), { min: 1 }),
   then: [{ kind: 'record', key: ASH_STORY.killedTheServantOfFlame, value: yes }],
 };
 
@@ -47,7 +59,7 @@ const experience: ResolutionStep = {
   to: 'each',
   bonus: 0,
   victoryDisplay: true,
-  perCardIn: ['beneathAct'],
+  perCardIn: eachInZone(beneathTheAct),
 };
 
 /**
@@ -58,7 +70,7 @@ const experience: ResolutionStep = {
  */
 const bearMarkOfElokoss: ResolutionStep = {
   kind: 'when',
-  condition: { kind: 'cardIn', code: codes.arkhamAlive, places: ['outOfGame'] },
+  condition: thereAre(eachInZone(outOfGame, { code: codes.arkhamAlive }), { min: 1 }),
   then: [{ kind: 'earnCard', to: 'each', card: codes.markOfElokoss }],
 };
 
@@ -70,7 +82,7 @@ const upgradeDecks: ResolutionStep = { kind: 'byHand', textKey: `${byHandKeyPref
  */
 const servantBeneathTheAct: ResolutionStep = {
   kind: 'when',
-  condition: { kind: 'cardIn', code: codes.servantOfFlame, places: ['beneathAct'] },
+  condition: thereAre(eachInZone(beneathTheAct, { code: codes.servantOfFlame }), { min: 1 }),
   then: [
     { kind: 'record', key: ASH_STORY.theServantOfFlameEscaped, value: yes },
     { kind: 'awardXp', to: 'each', bonus: 1, victoryDisplay: false },
@@ -104,12 +116,12 @@ export const smokeAndMirrorsResolutions: ScenarioResolutions = {
       killedTheServant,
       {
         kind: 'when',
-        condition: { kind: 'cardsIn', trait: elite, places: ['beneathAct'], atLeast: 6 },
+        condition: thereAre(eachInZone(beneathTheAct, { trait: elite }), { min: 6 }),
         then: [{ kind: 'record', key: ASH_STORY.scouredArkhamForAnswers, value: yes }],
       },
       {
         kind: 'when',
-        condition: { kind: 'cardsIn', trait: elite, places: ['victoryDisplay'], atLeast: 6 },
+        condition: thereAre(eachInZone(victoryDisplay, { trait: elite }), { min: 6 }),
         then: [{ kind: 'record', key: ASH_STORY.stirredUpTrouble, value: yes }],
       },
       experience,

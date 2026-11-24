@@ -1,9 +1,14 @@
-import type {
-  CardCode,
-  GameCondition,
-  ResolutionStep,
-  ScenarioResolutions,
-  StoryValue,
+import {
+  eachInPlay,
+  eachInZone,
+  scenarioDeck,
+  thereAre,
+  victoryDisplay,
+  type AbilityCondition,
+  type CardCode,
+  type ResolutionStep,
+  type ScenarioResolutions,
+  type StoryValue,
 } from '@arkham/engine';
 import { ZEALOT_STORY } from '../night_of_the_zealot/story';
 import { GATHERING_CODES } from '../the_gathering/cards';
@@ -28,7 +33,7 @@ const cultistsWeInterrogated: ResolutionStep = {
   key: ZEALOT_STORY.cultistsWeInterrogated,
   names: [...cultistDeck, codes.theMaskedHunter].map((code) => ({
     code,
-    when: { kind: 'cardIn', code, places: ['victoryDisplay'] },
+    when: thereAre(eachInZone(victoryDisplay, { code }), { min: 1 }),
   })),
 };
 
@@ -39,18 +44,20 @@ const cultistsWeInterrogated: ResolutionStep = {
  * 1 is current (R1: "If it is Agenda 1, record The Masked Hunter as well").
  */
 function cultistsWhoGotAway({ hunterAtAgenda1 }: { hunterAtAgenda1: boolean }): ResolutionStep {
-  const hunterInPlay: GameCondition = {
-    kind: 'cardIn',
-    code: codes.theMaskedHunter,
-    places: ['inPlay'],
-  };
+  const hunterInPlay = thereAre(eachInPlay({ code: codes.theMaskedHunter }), { min: 1 });
   return {
     kind: 'recordNames',
     key: ZEALOT_STORY.cultistsWhoGotAway,
     names: [
       ...cultistDeck.map((code) => ({
         code,
-        when: { kind: 'cardIn', code, places: ['inPlay', 'scenarioDeck'] } as const,
+        when: {
+          kind: 'anyOf',
+          conditions: [
+            thereAre(eachInPlay({ code }), { min: 1 }),
+            thereAre(eachInZone(scenarioDeck('cultist'), { code }), { min: 1 }),
+          ],
+        } satisfies AbilityCondition,
       })),
       {
         code: codes.theMaskedHunter,
@@ -59,7 +66,7 @@ function cultistsWhoGotAway({ hunterAtAgenda1 }: { hunterAtAgenda1: boolean }): 
               kind: 'anyOf',
               conditions: [
                 hunterInPlay,
-                { kind: 'currentAgenda', agendas: [codes.predatorOrPrey] },
+                { kind: 'currentCard', deck: 'agenda', codes: [codes.predatorOrPrey] },
               ],
             }
           : hunterInPlay,
@@ -71,7 +78,9 @@ function cultistsWhoGotAway({ hunterAtAgenda1 }: { hunterAtAgenda1: boolean }): 
 /** "If the Ghoul Priest is in the victory display, cross out 'the Ghoul Priest is still alive'." */
 const ghoulPriestDefeated: ResolutionStep = {
   kind: 'when',
-  condition: { kind: 'cardIn', code: GATHERING_CODES.ghoulPriest, places: ['victoryDisplay'] },
+  condition: thereAre(eachInZone(victoryDisplay, { code: GATHERING_CODES.ghoulPriest }), {
+    min: 1,
+  }),
   then: [{ kind: 'record', key: ZEALOT_STORY.ghoulPriestStillAlive, value: no }],
 };
 
