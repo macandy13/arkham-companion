@@ -1,15 +1,20 @@
 import { useId, useRef, useState, type KeyboardEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { TransformComponent, TransformWrapper, useControls } from 'react-zoom-pan-pinch';
-import type {
-  BoardView,
-  Edge,
-  GridCell,
-  InstanceId,
-  InvestigatorId,
-  MapId,
-  MapEnemyView,
-  MapView,
+import {
+  type BoardView,
+  correctTokens,
+  type Edge,
+  type GridCell,
+  healEnemy,
+  type InstanceId,
+  type InvestigatorId,
+  type MapEnemyView,
+  type MapId,
+  type MapView,
+  moveAlong,
+  moveEnemyTo,
+  takeOneClue,
 } from '@arkham/engine';
 import { cycledIndex } from '@arkham/util';
 import { EnemyDetails } from '../enemies/EnemyDetails';
@@ -36,7 +41,6 @@ import { overHeaderCard, overTokenPool } from '../screens/headerDropTarget';
 import { TokenGhost } from '../screens/TokenGhost';
 import type { GameTokenKind } from '../tokens/GameToken';
 import './map.css';
-import { takeOneClue } from '../state/gameActions';
 
 /**
  * The visible maps of the open game, each drawn as an SVG of its location tiles at their book
@@ -240,8 +244,7 @@ function MapDrawing({
         return;
       }
       if ('enemyDamage' in piece) {
-        if (overTokenPool(client))
-          void actions.perform({ type: 'HealEnemy', enemyId: piece.enemyDamage.id, amount: 1 });
+        if (overTokenPool(client)) void actions.perform(healEnemy(piece.enemyDamage.id, 1));
         return;
       }
       if ('doom' in piece || 'enemyDoom' in piece) {
@@ -252,10 +255,7 @@ function MapDrawing({
         if (overTokenPool(client)) void actions.adjustTokens(from, 'doom', -1);
         else if (to !== undefined && to !== from)
           // The doom in play stays the same, so moving it is a correction, not doom placed.
-          void actions.correct(
-            { kind: 'tokens', cardId: from, token: 'doom', delta: -1 },
-            { kind: 'tokens', cardId: to, token: 'doom', delta: 1 },
-          );
+          void actions.correct(correctTokens(from, 'doom', -1), correctTokens(to, 'doom', 1));
         return;
       }
       if ('enemy' in piece && moverCentre && onPawn(moverCentre, point)) {
@@ -271,12 +271,8 @@ function MapDrawing({
         to,
       });
       void ('enemy' in piece
-        ? actions.perform({ type: 'MoveEnemy', enemyId: piece.enemy.id, to, forced: true })
-        : actions.perform({
-            type: 'MoveInvestigator',
-            investigatorId: piece.investigator.id,
-            to,
-          }));
+        ? actions.perform(moveEnemyTo(piece.enemy.id, to))
+        : actions.perform(moveAlong(piece.investigator.id, to)));
     },
     (piece, event) => {
       const enemy = enemyOf(piece);

@@ -1,5 +1,17 @@
 import { useTranslation } from 'react-i18next';
-import type { BoardView, EnemyAction, MapEnemyView } from '@arkham/engine';
+import {
+  beneath,
+  type BoardView,
+  dealDamageTo,
+  defeatEnemy,
+  disengageEnemy,
+  type EnemyAction,
+  evadeEnemy,
+  exhaustEnemy,
+  type MapEnemyView,
+  move,
+  readyEnemy,
+} from '@arkham/engine';
 import { ActionButton, ActionGroup, CardActions, cardActionsOn } from '../screens/ActionRow';
 import { SplitAction } from '../screens/SplitAction';
 import { AttachedCards } from '../screens/AttachedCards';
@@ -168,10 +180,7 @@ export function EnemyDetails({
             caption={t('enemy.caption.damage')}
             name={t('enemy.damage')}
             disabled={busy}
-            onClick={step(
-              () => actions.perform({ type: 'DamageEnemy', enemyId: enemy.id, amount: 1 }),
-              'stay',
-            )}
+            onClick={step(() => actions.perform(dealDamageTo(enemy.id, 1)), 'stay')}
           />
           {enemy.engagedWith !== undefined && (
             <ActionButton
@@ -179,10 +188,7 @@ export function EnemyDetails({
               caption={t('enemy.caption.disengage')}
               name={t('enemy.disengage')}
               disabled={busy}
-              onClick={step(
-                () => actions.perform({ type: 'DisengageEnemy', enemyId: enemy.id }),
-                'close',
-              )}
+              onClick={step(() => actions.perform(disengageEnemy(enemy.id)), 'close')}
             />
           )}
           {enemy.exhausted ? (
@@ -191,10 +197,7 @@ export function EnemyDetails({
               caption={t('enemy.caption.ready')}
               name={t('enemy.ready')}
               disabled={busy}
-              onClick={step(
-                () => actions.perform({ type: 'ReadyEnemy', enemyId: enemy.id }),
-                'stay',
-              )}
+              onClick={step(() => actions.perform(readyEnemy(enemy.id)), 'stay')}
             />
           ) : (
             <ActionButton
@@ -202,10 +205,7 @@ export function EnemyDetails({
               caption={t('enemy.caption.exhaust')}
               name={t('enemy.exhaust')}
               disabled={busy}
-              onClick={step(
-                () => actions.perform({ type: 'ExhaustEnemy', enemyId: enemy.id }),
-                'stay',
-              )}
+              onClick={step(() => actions.perform(exhaustEnemy(enemy.id)), 'stay')}
             />
           )}
           {effects.evade.map((investigator) => (
@@ -215,15 +215,7 @@ export function EnemyDetails({
               caption={t('enemy.caption.evaded')}
               name={t('enemy.evadedBy', { name: board.investigator(investigator).name })}
               disabled={busy}
-              onClick={step(
-                () =>
-                  actions.perform({
-                    type: 'EvadeEnemy',
-                    enemyId: enemy.id,
-                    investigatorId: investigator,
-                  }),
-                'close',
-              )}
+              onClick={step(() => actions.perform(evadeEnemy(enemy.id, investigator)), 'close')}
             />
           ))}
           {effects.engage.map((investigator) => (
@@ -241,10 +233,7 @@ export function EnemyDetails({
             caption={t('enemy.caption.defeat')}
             name={t('enemy.defeat')}
             disabled={busy}
-            onClick={step(
-              () => actions.perform({ type: 'DefeatEnemy', enemyId: enemy.id }),
-              'close',
-            )}
+            onClick={step(() => actions.perform(defeatEnemy(enemy.id)), 'close')}
           />
           {act?.takesCardsBeneath && (
             <ActionButton
@@ -252,15 +241,7 @@ export function EnemyDetails({
               caption={t('enemy.caption.beneathAct')}
               name={t('enemy.beneathAct')}
               disabled={busy}
-              onClick={step(
-                () =>
-                  actions.perform({
-                    type: 'MoveCard',
-                    cardId: enemy.id,
-                    to: { kind: 'beneath', hostId: act.id },
-                  }),
-                'close',
-              )}
+              onClick={step(() => actions.perform(move(enemy.id, beneath(act.id))), 'close')}
             />
           )}
         </ActionGroup>

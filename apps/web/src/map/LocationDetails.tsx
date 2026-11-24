@@ -1,7 +1,13 @@
 import { useId, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { assertNever } from '@arkham/util';
-import type { BoardView, InvestigatorId, LocationView } from '@arkham/engine';
+import {
+  type BoardView,
+  type InvestigatorId,
+  type LocationView,
+  revealLocation,
+  takeOneClue,
+} from '@arkham/engine';
 import { DetailsDialog, useDecisionHost } from '../screens/DetailsDialog';
 import { AttachedCards } from '../screens/AttachedCards';
 import {
@@ -15,7 +21,6 @@ import { SplitAction } from '../screens/SplitAction';
 import type { GameActions } from '../state/gameActions';
 import { CardPatterns, LocationTile } from './LocationTile';
 import { TILE } from './mapLayout';
-import { takeOneClue } from '../state/gameActions';
 
 /**
  * One location in full, opened by a tap on its tile or its details button on a tablet or wider,
@@ -271,9 +276,7 @@ function LocationPage({
             <button
               type="button"
               disabled={busy}
-              onClick={() =>
-                void actions.perform({ type: 'RevealLocation', locationId: location.id })
-              }
+              onClick={() => void actions.perform(revealLocation(location.id))}
             >
               {t('location.reveal')}
             </button>

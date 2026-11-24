@@ -5,6 +5,7 @@ import {
   blankLocation,
   blankTreachery,
   cardName,
+  type CardPlaceView,
   engagedWith,
   fixed,
   instanceId,
@@ -12,11 +13,11 @@ import {
   newGame,
   PlayTable,
   takeHorror,
+  takeOneClue,
   threatAreaOf,
-  type CardPlaceView,
 } from '@arkham/engine';
 import { pileAdjustment, type PileMove } from '../encounter/cardMoves';
-import { takeOneClue, type GameActions, type How } from './gameActions';
+import { type GameActions, type How } from './gameActions';
 import { actionsOn } from './gameActions.test_support';
 
 const study = instanceId('study');
