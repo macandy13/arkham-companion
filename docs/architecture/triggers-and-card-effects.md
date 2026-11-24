@@ -3,7 +3,17 @@
 Forced effects are **abilities**: data on a card's `CardStats`, so card data holds no code and the same card behaves the same in every scenario.
 A scenario's own rules are abilities of its agendas and acts.
 
-An [`Ability`](../../packages/engine/src/abilities.ts) is:
+The code lives in [`abilities/`](../../packages/engine/src/abilities/), one file per part:
+
+- `types.ts`: `Ability`, `TimingWindow`, `AbilityEffect` and the references (`RelativeCard`, `RelativeInvestigator`);
+- `dsl.ts`: the factories card data is written with (`whenRevealed`, `takeHorror`, `self()`), the only part scenarios use;
+- `windows.ts`: which cards an event opens a window for (`windowsOpenedBy`);
+- `resolve.ts`: turning an ability into steps and resolving its effects (`abilitySteps`, `resolveEffect`, `conditionHolds`);
+- `objectives.ts`: the objective thresholds the board shows.
+
+The engine's modules import from `abilities/index.ts`; the package index lists what scenarios see.
+
+An `Ability` is:
 
 - a timing window (`TimingWindow`; setup opens none): the event it waits for (`on`), whose cards hear it (`of`, a `ListenerScope`) and, optionally, which card the event must be about (`filter`, a `CardFilter`). A new window on a known event is a scope or a filter, not a new kind.
   - The scopes (`windowsOpenedBy` opens each event for its scopes in a fixed order, `openFor`):
@@ -220,4 +230,4 @@ A card can also make basic actions cost more (an `actionCost` modifier, [`Action
 
 - **A card's ability, action or modifier:** list it in the card's data; no code. [Card patterns](card-patterns.md) shows how card text maps to it.
 - **A new window or condition:** a case in `TimingWindow` / `windowsOpenedBy`; a condition is usually a new reference to count or a new `Quantity` to read, rarely a new `AbilityCondition` kind.
-- **A new kind of effect:** add its command to `AbilityCommand` (and a factory); a new reference is a case in `resolveRefs`.
+- **A new kind of effect:** add its command to `AbilityCommand` (and a factory in `dsl.ts`, exported from the package index); a new reference is a case in `resolveRefs`.

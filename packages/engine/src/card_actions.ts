@@ -277,7 +277,7 @@ export function parleyAction(action: Omit<CardAction, 'designator'>): CardAction
  * use by hand, like a player card's, and the one story asset that comes there, Lita Chantler,
  * has an action only while nobody controls her.
  */
-export function offersActionsTo(
+function offersActionsTo(
   state: GameState,
   card: CardInstance,
   investigator: Investigator,
