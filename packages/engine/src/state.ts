@@ -263,7 +263,7 @@ export type PhaseStep =
  * The investigator turn in progress (Rules Reference 2.2: "next
  * investigator's turn begins"), between `StartTurn` and `EndTurn`. It tells
  * the UI whose turn it is and gates the end of the investigation phase; the
- * players count that investigator's actions (`Investigator.actionsRemaining`).
+ * engine counts off that investigator's actions (`Investigator.actionsRemaining`, `actionPayment`).
  */
 export interface Turn {
   investigatorId: InvestigatorId;

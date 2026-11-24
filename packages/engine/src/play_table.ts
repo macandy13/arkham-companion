@@ -1,5 +1,4 @@
 import { isPositiveInteger } from '@arkham/util';
-import type { BasicAction } from './action_costs';
 import { BoardView, boardView, TableError } from './board_view';
 import {
   cardMatcher,
@@ -126,8 +125,8 @@ interface TestOptions {
  * narrative. A step that fails (a refused command, a broken invariant, a wrong
  * name) leaves state and log as they were, even when it runs several commands
  * (an action and its test, the attacks of a step) and a later one fails.
- * Action methods do not spend actions (the engine leaves that to the players);
- * `spendAction` is explicit. Investigators are given by
+ * The engine counts off what each action method costs (`actionPayment`);
+ * `spendAction` and `adjustActions` are for corrections by hand. Investigators are given by
  * an `InvestigatorRef` (`byName('Roland Banks')` or the bare `InvestigatorId`),
  * cards by a `CardRef` and enemies by an `EnemyRef` (a matcher or the bare
  * `InstanceId`), all resolved through `board`.
@@ -348,31 +347,15 @@ export class PlayTable {
   }
 
   /**
-   * The investigator counts off the basic `action` they take, at what it costs them now
-   * (`BoardView.actionCost`, `free` for one a card lets them take without spending an action),
-   * naming it so a cost raised for the first one each round is paid once.
+   * A move action along a connection to the location `location` names; the engine counts it off
+   * (`actionPayment`). With `free`, one a card lets them take without spending an action.
    */
-  spendActionFor(
-    investigator: InvestigatorRef,
-    action: BasicAction,
-    cost?: { free?: boolean },
-  ): void {
-    const seat = this.seat(investigator);
-    this.play({
-      type: 'AdjustActions',
-      investigatorId: seat,
-      delta: -this.board.actionCost(seat, action, cost),
-      for: action,
-    });
-  }
-
-  /** A move action along a connection to the location `location` names. */
-  moveTo(investigator: InvestigatorRef, location: CardRef): void {
+  moveTo(investigator: InvestigatorRef, location: CardRef, { free = false } = {}): void {
     this.play({
       type: 'MoveInvestigator',
       investigatorId: this.seat(investigator),
       to: this.board.location(location).id,
-      asAction: true,
+      asAction: free ? 'free' : true,
     });
   }
 
@@ -398,17 +381,27 @@ export class PlayTable {
    * A fight action against the `enemy`. Its combat test is passed by default,
    * dealing the basic attack's 1 damage or the `damage` the players confirm (a
    * weapon, a skill card); a failed one deals none, and a ready retaliate
-   * enemy then asks to attack the fighter.
+   * enemy then asks to attack the fighter. The engine counts the action off; `free` for one a
+   * card lets them take without spending an action.
    */
   fight(
     investigator: InvestigatorRef,
     enemy: EnemyRef,
-    { result = 'pass', damage }: TestOptions & { damage?: number } = {},
+    {
+      result = 'pass',
+      damage,
+      free = false,
+    }: TestOptions & { damage?: number; free?: boolean } = {},
   ): void {
     const { id: seat, name } = this.board.investigator(investigator);
     const id = this.board.enemyId(enemy);
     this.atomically(() => {
-      this.play({ type: 'Fight', investigatorId: seat, enemyId: id });
+      this.play({
+        type: 'Fight',
+        investigatorId: seat,
+        enemyId: id,
+        asAction: free ? 'free' : true,
+      });
       this.finishTest(`fight:${seat}:${id}`, `${name}'s fight`, result, damage);
     });
   }
@@ -416,17 +409,23 @@ export class PlayTable {
   /**
    * An evade action against the `enemy`, engaged with the investigator. Its
    * agility test is passed by default: the enemy is disengaged and exhausted
-   * and stays where it is.
+   * and stays where it is. The engine counts the action off; `free` for one a card lets them
+   * take without spending an action.
    */
   evade(
     investigator: InvestigatorRef,
     enemy: EnemyRef,
-    { result = 'pass' }: TestOptions = {},
+    { result = 'pass', free = false }: TestOptions & { free?: boolean } = {},
   ): void {
     const { id: seat, name } = this.board.investigator(investigator);
     const id = this.board.enemyId(enemy);
     this.atomically(() => {
-      this.play({ type: 'Evade', investigatorId: seat, enemyId: id });
+      this.play({
+        type: 'Evade',
+        investigatorId: seat,
+        enemyId: id,
+        asAction: free ? 'free' : true,
+      });
       this.finishTest(`evade:${seat}:${id}`, `${name}'s evasion`, result);
     });
   }

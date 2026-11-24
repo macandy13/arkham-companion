@@ -365,7 +365,7 @@ describe('turns, actions and tokens', () => {
     expect(table.board.turn).toBeUndefined();
   });
 
-  it('takes the resource, draw and play actions, of which only the resource changes the board', () => {
+  it('takes the resource, draw and play actions, counting each off; only the resource changes the board', () => {
     const table = PlayTable.start(
       newGame()
         .withLocation(study, blankLocation('study'), { revealed: true })
@@ -376,9 +376,11 @@ describe('turns, actions and tokens', () => {
     table.drawCard(alice);
     table.playCard(alice);
 
-    expect(table.board.investigator(alice).resources).toBe(3);
-    expect(table.events.slice(-2).map((event) => event.type)).toEqual([
+    expect(table.board.investigator(alice)).toMatchObject({ resources: 3, actions: 0 });
+    expect(table.events.slice(-4).map((event) => event.type)).toEqual([
+      'ActionsAdjusted',
       'CommandDeferred',
+      'ActionsAdjusted',
       'CommandDeferred',
     ]);
   });

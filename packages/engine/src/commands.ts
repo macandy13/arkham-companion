@@ -264,15 +264,18 @@ export interface RevealLocation {
 }
 
 /**
- * A command that can be taken as an action. Only spending an action provokes
- * attacks of opportunity, so `asAction` is set when an action is spent on it:
- * a basic action, or a card ability that costs an action. The same command
- * from an effect that spends none (a treachery moving someone, a scenario
- * step, a fast ability) leaves it out. `CommandSpec.provokes` reads it.
+ * A command that can be taken as a basic action. With `asAction` the engine counts the action off
+ * before the command resolves (`actionPayment`: what it costs now, `actionCost`, named so a cost
+ * raised for the first one each round is paid once), and the action provokes attacks of
+ * opportunity. The same command from an effect that spends none (a treachery moving someone, a
+ * scenario step, a fast ability) leaves it out. `CommandSpec.provokes` reads it.
  */
 export interface ActionCommand {
-  /** Taken as the investigator's action. Default: a card effect. */
-  asAction?: true;
+  /**
+   * Taken as the investigator's action; `'free'` when a card lets them take it without spending
+   * one, which still pays what cards add to its cost and provokes nothing. Default: a card effect.
+   */
+  asAction?: true | 'free';
 }
 
 /**
@@ -468,7 +471,7 @@ export function takenAsAction(command: PlayerCardCommand): boolean {
   switch (command.type) {
     case 'DrawCards':
     case 'PlayCard':
-      return command.asAction === true;
+      return command.asAction !== undefined;
     case 'SearchDeck':
     case 'DiscardFromHand':
     case 'DiscardAsset':
@@ -1283,10 +1286,10 @@ export interface SetLeadInvestigator {
 /**
  * Changes an active investigator's remaining actions
  * (`Investigator.actionsRemaining`) by `delta`, a non-zero integer; they may
- * not drop below zero. The players count actions themselves, since player
- * cards are not modelled: they pass -1 for each action they take, and an
- * encounter card or player card that takes or grants an action passes its
- * delta, in any phase. Upkeep step 4.2 resets the count to 3; an
+ * not drop below zero. `handle` plays one for each action command taken as
+ * an action (`actionPayment`); the players pass one for an action the engine
+ * doesn't see, and an encounter card or player card that takes or grants an
+ * action passes its delta, in any phase. Upkeep step 4.2 resets the count to 3; an
  * investigator whose cards grant an additional action each turn gets it by
  * the players passing +1 after that reset. `allRemaining` takes all that remain ("lose all
  * remaining actions"); asked by a card (`source`), any loss takes no more than remain. Produces
@@ -1297,7 +1300,7 @@ export interface AdjustActions extends AskedByCard {
   investigatorId: InvestigatorId;
   delta: number | 'allRemaining';
   /**
-   * The basic action the players count off, when it is one (`delta` is then minus what it costs,
+   * The basic action this counts off, when it is one (`delta` is then minus what it costs,
    * `actionCost`, and may be 0 for a free one, which is performed all the same): recorded for the round (`GameMeta.actionsTaken`), so a card that raises the
    * first such action each round (Frozen in Fear) raises only that one.
    */
@@ -1395,7 +1398,7 @@ export interface Investigate extends ActionCommand {
  * `ResolveDecision.amount` (effects that add damage on a good result).
  * Produces `DecisionRequested`.
  */
-export interface Fight {
+export interface Fight extends ActionCommand {
   type: 'Fight';
   investigatorId: InvestigatorId;
   enemyId: InstanceId;
@@ -1413,7 +1416,7 @@ export interface Fight {
  * disengages it (a massive enemy is not in the `engaged` zone and stays).
  * Produces `DecisionRequested`.
  */
-export interface Evade {
+export interface Evade extends ActionCommand {
   type: 'Evade';
   investigatorId: InvestigatorId;
   enemyId: InstanceId;

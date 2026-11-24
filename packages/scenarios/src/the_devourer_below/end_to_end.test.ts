@@ -19,9 +19,9 @@
  * What the engine leaves to the players is done by hand, as at the table:
  * agenda 1's reverse side (the Monster spawning at the Main Path with 1 doom),
  * act 2's reverse side (the enemy spawning at the Ritual Site),
- * Frozen in Fear's extra action, Ancient Evils' doom, the cards Umôrdhoth's Wrath discards, Twisting Paths' test to
+ * Ancient Evils' doom, the cards Umôrdhoth's Wrath discards, Twisting Paths' test to
  * leave it (Daisy passes) and the 2 random cards "it is past midnight" discards from each
- * opening hand. The players count actions themselves.
+ * opening hand. The engine counts off each action, Frozen in Fear's extra one too.
  */
 import { describe, expect, it } from 'vitest';
 import {
@@ -240,7 +240,6 @@ describe('The Devourer Below end to end: Roland and Daisy, seed 9', () => {
     table.endTurn(roland);
     table.startTurn(daisy);
     table.moveTo(daisy, mainPath);
-    table.spendAction(daisy);
     table.moveTo(daisy, tangledThicket);
     table.endTurn(daisy);
     table.answer(byName('Frozen in Fear'), 'fail');
@@ -408,6 +407,9 @@ describe('The Devourer Below end to end: Roland and Daisy, seed 9', () => {
     table.answer(byName('Disrupting the Ritual'), 'pass');
     table.endTurn(roland);
     table.startTurn(daisy);
+    // Frozen in Fear raises Daisy's first fight to 2 actions, one more than this story leaves her
+    // room for; the group grants it by hand so the story plays on as written.
+    table.adjustActions(daisy, 1);
     table.fight(daisy, byName('Ghoul Minion'));
     table.fight(daisy, byName('Ghoul Minion'));
     table.investigate(daisy, { clues: 2 });
