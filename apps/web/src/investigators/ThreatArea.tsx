@@ -12,7 +12,7 @@ import { useDoubleTap } from '../screens/useDoubleTap';
 import { EnemyBubble } from '../enemies/EnemyBubble';
 import { EnemyDetails } from '../enemies/EnemyDetails';
 import { healthLeft } from '../enemies/enemyHealth';
-import { enemyConditions } from '../map/LocationTile';
+import { enemyConditions } from '../map/EnemyToken';
 import { CardStrip } from '../screens/CardStrip';
 import { deltaText, useCountChange } from '../screens/countChange';
 import { CardDetails, type HeldIn } from './CardDetails';
