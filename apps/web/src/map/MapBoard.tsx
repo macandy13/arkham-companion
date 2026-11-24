@@ -155,9 +155,9 @@ type DraggedPiece = TilePiece & { from: InstanceId };
  * drag, zoom with the wheel or a pinch, and fit back with "Fit map". The drawing starts fitted to
  * the map area, and zooming out never goes below that, so the whole map is always one tap away.
  * Pieces are dragged to play what the players do on the table:
- * - The pawn of the investigator whose turn it is, dropped on another location, moves them there
- *   by card (`GameActions.move`): no action, since the drag catches the screen up with a move made
- *   at the table; the other pawns stay put, as only that investigator acts.
+ * - The pawn of the investigator whose turn it is, dropped on a connected location, moves them
+ *   there (a performed `MoveInvestigator`): no action, since the drag catches the screen up with a
+ *   move made at the table; the other pawns stay put, as only that investigator acts.
  * - An enemy dropped on that pawn is an engage action (`GameActions.engage`).
  * - An enemy dropped on another location moves there as a card instruction says
  *   (`MoveEnemy` with `forced`, performed); the players drag it only when a card tells them to, so the map
@@ -272,7 +272,11 @@ function MapDrawing({
       });
       void ('enemy' in piece
         ? actions.perform({ type: 'MoveEnemy', enemyId: piece.enemy.id, to, forced: true })
-        : actions.move(to, { byCard: piece.investigator.id }));
+        : actions.perform({
+            type: 'MoveInvestigator',
+            investigatorId: piece.investigator.id,
+            to,
+          }));
     },
     (piece, event) => {
       const enemy = enemyOf(piece);

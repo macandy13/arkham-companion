@@ -56,7 +56,12 @@ describe('gameActions', () => {
     { verb: 'a free evade', act: (actions) => actions.evade(ghoul, 'free'), left: 3 },
     { verb: 'a move', act: (actions) => actions.move(hall), left: 2 },
     { verb: 'a free move', act: (actions) => actions.move(hall, 'free'), left: 3 },
-    { verb: 'the pawn drag', act: (actions) => actions.move(hall, { byCard: alder }), left: 3 },
+    {
+      verb: 'the pawn drag',
+      act: (actions) =>
+        actions.perform({ type: 'MoveInvestigator', investigatorId: alder, to: hall }),
+      left: 3,
+    },
     {
       verb: 'engaging by card (with brook)',
       act: (actions) => actions.engage(ghoul, { byCard: brook }),
@@ -192,7 +197,12 @@ describe('gameActions', () => {
       { verb: 'a first free evade', act: (actions) => actions.evade(ghoul, 'free'), left: 2 },
       { verb: 'a first free move', act: (actions) => actions.move(hall, 'free'), left: 2 },
       { verb: 'investigate', act: (actions) => actions.investigate(), left: 2 },
-      { verb: 'the pawn drag', act: (actions) => actions.move(hall, { byCard: alder }), left: 3 },
+      {
+        verb: 'the pawn drag',
+        act: (actions) =>
+          actions.perform({ type: 'MoveInvestigator', investigatorId: alder, to: hall }),
+        left: 3,
+      },
     ])('$verb leaves alder $left of three actions', async ({ act, left }) => {
       const table = aldersFrozenTurn();
 

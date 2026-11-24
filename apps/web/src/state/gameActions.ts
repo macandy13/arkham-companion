@@ -65,6 +65,7 @@ export type PlayerEffect = Extract<
       | 'HealEnemy'
       | 'MoveCard'
       | 'MoveEnemy'
+      | 'MoveInvestigator'
       | 'MoveTokens'
       | 'ReadyEnemy'
       | 'ReleaseChaosToken'
@@ -134,8 +135,8 @@ export interface GameActions {
   /**
    * A move to `location`. As an action or a free one, along a connection; by a card, connected or
    * not (Astral Travel, Shortcut): as on any move, enemies engaged with them come along and ready
-   * enemies there engage. The pawn's drag moves its investigator by card, since it catches the
-   * screen up with a move made at the table.
+   * enemies there engage. The pawn's drag is no action either but a performed `MoveInvestigator`
+   * along a connection, as it catches the screen up with a move made at the table.
    */
   move(location: InstanceId, how?: How): Promise<void>;
   /**
