@@ -126,8 +126,6 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     table.startTurn(roland);
     table.investigate(roland);
     table.investigate(roland);
-    // The players count both actions off Roland's counter.
-    table.adjustActions(roland, -2);
 
     expect(table.board.turn).toBe(roland);
     expect(table.board.perInvestigator('actions')).toEqual({ roland: 1, daisy: 3, wendy: 3 });
@@ -386,8 +384,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     table.evade(roland, byName(swarmOfRats));
     table.moveTo(roland, byName('Hallway'));
     table.moveTo(roland, byName('Cellar'));
-    expect(table.board.investigator(roland)).toMatchObject({ damage: 1, horror: 1 });
-    table.adjustActions(roland, -3);
+    expect(table.board.investigator(roland)).toMatchObject({ damage: 1, horror: 1, actions: 0 });
 
     // The counter tells the players that a fourth action is beyond Roland's three.
     expect(() => table.adjustActions(roland, -1)).toThrow(
@@ -485,12 +482,13 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
 
     // Round 4 – investigation: Daisy's turn. Her ability grants an additional
     // action for Tome abilities: she reads her Old Book of Lore with it, then
-    // fights twice. The players count those three actions off her four.
+    // fights twice. The players count the extra action on and the book's off; the engine counts
+    // the fights.
     table.startTurn(daisy);
     table.adjustActions(daisy, 1);
+    table.adjustActions(daisy, -1);
     table.fight(daisy, byName(ghoulMinion));
     table.fight(daisy, byName(ghoulMinion));
-    table.adjustActions(daisy, -3);
 
     expect(table.board.investigator(daisy).actions).toBe(1);
 
@@ -671,7 +669,6 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     table.startTurn(wendy);
     // Frozen in Fear in Wendy's threat area makes her first fight of the round cost 2.
     expect(table.board.actionCost(wendy, 'fight')).toBe(2);
-    table.spendActionFor(wendy, 'fight');
     table.fight(wendy, enemyMatching(byName(swarmOfRats), { engagedWith: wendy }));
     expect(table.board.investigator(wendy).actions).toBe(1);
     table.endTurn(wendy);

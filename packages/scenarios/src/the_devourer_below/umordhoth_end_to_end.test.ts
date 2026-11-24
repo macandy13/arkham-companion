@@ -16,8 +16,8 @@
  * agenda 1's reverse side (shuffle the discard into the deck, the first
  * Monster spawns at the Main Path with 1 doom), agenda 2's reverse side (each
  * investigator's willpower test; both pass), Ancient Evils' doom, the cards
- * Umôrdhoth's Wrath discards (each drawer fails by 2 and discards 2), Dissonant Voices and Frozen in Fear's
- * extra action. The players count actions themselves.
+ * Umôrdhoth's Wrath discards (each drawer fails by 2 and discards 2) and Dissonant Voices. The
+ * engine counts off each action, Frozen in Fear's extra one too.
  */
 import { describe, expect, it } from 'vitest';
 import {
@@ -335,7 +335,6 @@ describe('The Devourer Below end to end: Roland and Daisy, seed 7', () => {
     table.fight(roland, byName(umordhoth), { damage: 3 });
     table.endTurn(roland);
     table.startTurn(daisy);
-    table.spendAction(daisy);
     table.fight(daisy, byName(umordhoth));
     expect(table.board.ended).toBe(false);
     table.fight(daisy, byName(umordhoth));

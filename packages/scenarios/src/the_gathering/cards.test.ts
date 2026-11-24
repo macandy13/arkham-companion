@@ -131,12 +131,22 @@ describe('Frozen in Fear', () => {
     expect(aliceFrozenInTheParlor().board.actionCost(alice, action)).toBe(cost);
   });
 
-  it('makes a move after the first fight of the round cost the usual 1', () => {
-    const table = aliceFrozenInTheParlor();
+  it('makes a fight after the first move of the round cost the usual 1', () => {
+    const hallway = instanceId('hallway');
+    const table = PlayTable.start(
+      newGame()
+        .withLocation(parlor, cardOf('01115'), { revealed: true })
+        .withLocation(hallway, cardOf('01112'), { revealed: true })
+        .withConnection(parlor, hallway)
+        .withInvestigator(alice, { locationId: parlor })
+        .withCard(instanceId('frozen_in_fear'), cardOf('01164'), threatAreaOf(alice))
+        .withTurnOf(alice),
+    );
 
-    table.spendActionFor(alice, 'fight');
+    table.moveTo(alice, hallway);
 
-    expect(table.board.actionCost(alice, 'move')).toBe(1);
+    expect(table.board.investigator(alice).actions).toBe(1);
+    expect(table.board.actionCost(alice, 'fight')).toBe(1);
   });
 });
 
