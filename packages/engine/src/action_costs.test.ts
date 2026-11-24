@@ -158,6 +158,29 @@ describe('actionCost', () => {
     expect(table.board.actionCost(alice, 'move')).toBe(3);
   });
 
+  it('logs a free move with no cost raised as spending 0 actions, and records it as taken', () => {
+    const study = instanceId('study');
+    const table = PlayTable.start(
+      newGame()
+        .withLocation(hall, blankLocation('hall'), { revealed: true })
+        .withLocation(study, blankLocation('study'), { revealed: true })
+        .withConnection(hall, study)
+        .withInvestigator(alice, { locationId: hall })
+        .withTurnOf(alice),
+    );
+
+    table.moveTo(alice, study, { free: true });
+
+    expect(table.board.investigator(alice).actions).toBe(3);
+    expect(table.events).toContainEqual({
+      type: 'ActionsSpent',
+      investigatorId: alice,
+      amount: 0,
+      for: { kind: 'basic', action: 'move' },
+    });
+    expect(table.state.meta.actionsTaken).toEqual([{ investigatorId: alice, action: 'move' }]);
+  });
+
   it('raises every investigate action, not only the first, without `first`', () => {
     const table = PlayTable.start(
       newGame()

@@ -334,14 +334,17 @@ export class PlayTable {
   }
 
   /**
-   * The players change the investigator's remaining actions by `delta`: -1 per
-   * action they count off in the turn, or what a card grants or takes away.
+   * The players correct the investigator's remaining actions by hand by `delta`, or apply what a
+   * card grants or takes away. An action the engine charges is a `SpendActions`, never this.
    */
   adjustActions(investigator: InvestigatorRef, delta: number): void {
     this.play({ type: 'AdjustActions', investigatorId: this.seat(investigator), delta });
   }
 
-  /** The investigator counts off `count` actions (default 1) they took. */
+  /**
+   * The players take `count` actions (default 1) off the investigator by hand, as a correction
+   * (`AdjustActions`), e.g. to set up a turn with fewer actions left.
+   */
   spendAction(investigator: InvestigatorRef, count = 1): void {
     this.adjustActions(investigator, -count);
   }
