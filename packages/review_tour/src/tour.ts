@@ -15,6 +15,8 @@ export interface Tour {
   readonly concept: string;
   readonly questions: readonly TourQuestion[];
   readonly stops: readonly TourStop[];
+  /** What shows that the change works, after the stops: "How we know it works". */
+  readonly evidence: readonly TourEvidence[];
   /** Short lines for the page's folded "Not on the tour" box: the plumbing the stops leave out. */
   readonly rest: readonly string[];
 }
@@ -41,6 +43,22 @@ export interface TourStop {
    * (`shots/game_screen.spec.ts/<test>.png`); the page shows it for every device that has it,
    * before and after.
    */
+  readonly picture?: string;
+}
+
+/**
+ * One thing the change now does, and what shows it: a test that checks it, an example of the API
+ * in use with its result, or a golden of the screen. The reviewer reads the claim and its proof
+ * instead of the tests themselves.
+ */
+export interface TourEvidence {
+  /** What now works, as a plain sentence ("An attack of opportunity leaves the enemy ready."). */
+  readonly claim: string;
+  /** The test that checks it, as its file and name (`skill_tests.test.ts › investigates another location`). */
+  readonly test?: string;
+  /** A few lines of code that use the change and show the result, rendered as code. */
+  readonly example?: string;
+  /** A golden that shows it, as `TourStop.picture` names one. */
   readonly picture?: string;
 }
 
@@ -98,6 +116,9 @@ function readTour(json: unknown): Tour {
     concept: text(tour.concept, 'concept'),
     questions,
     stops,
+    evidence: list(tour.evidence, 'evidence').map((item, i) =>
+      readEvidence(item, `evidence[${i}]`),
+    ),
     rest: list(tour.rest, 'rest').map((line, i) => text(line, `rest[${i}]`)),
   };
 }
@@ -120,6 +141,20 @@ function readStop(json: unknown, path: string): TourStop {
     code: list(stop.code, `${path}.code`).map((ref, i) => readCodeRef(ref, `${path}.code[${i}]`)),
     ...optional('picture', stop.picture, (value) => text(value, `${path}.picture`)),
   };
+}
+
+function readEvidence(json: unknown, path: string): TourEvidence {
+  const item = record(json, path);
+  const evidence = {
+    claim: text(item.claim, `${path}.claim`),
+    ...optional('test', item.test, (value) => text(value, `${path}.test`)),
+    ...optional('example', item.example, (value) => text(value, `${path}.example`)),
+    ...optional('picture', item.picture, (value) => text(value, `${path}.picture`)),
+  };
+  if (!evidence.test && !evidence.example && !evidence.picture) {
+    throw new Error(`${path} must show its claim by a test, an example or a picture`);
+  }
+  return evidence;
 }
 
 function readCodeRef(json: unknown, path: string): CodeRef {

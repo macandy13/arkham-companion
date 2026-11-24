@@ -230,6 +230,7 @@ export {
   gainSurge,
   ifYouHave,
   ifValue,
+  atLeast,
   statOf,
   tokensOn,
   ifThereAre,
@@ -342,7 +343,6 @@ export {
   advanceBySpendingClues,
   parleyAction,
   resignAction,
-  type ActionCondition,
   type ActionCost,
   type CardAction,
 } from './card_actions';

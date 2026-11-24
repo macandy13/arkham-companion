@@ -1055,15 +1055,15 @@ describe('MapBoard', () => {
       expect(offered()).toEqual([
         'Read rats',
         'Close',
-        'Attach a card',
+        'Ways to fight',
+        'Ways to evade',
         'Engage · 1 action',
-        'Fight by card effect',
-        'Evade by card effect',
         'Deal 1 damage',
         'Exhaust',
         'Evaded by alder',
         'Engages alder',
         'Defeat',
+        'Attach a card',
       ]);
     });
 
@@ -1116,12 +1116,12 @@ describe('MapBoard', () => {
       expect(offered()).toEqual([
         'Read rats',
         'Close',
-        'Attach a card',
-        'Fight by card effect',
-        'Evade by card effect',
+        'Ways to fight',
+        'Ways to evade',
         'Deal 1 damage',
         'Exhaust',
         'Defeat',
+        'Attach a card',
       ]);
     });
   });
@@ -1256,7 +1256,7 @@ describe('MapBoard', () => {
         within(attached)
           .getAllByRole('button')
           .map((button) => button.getAttribute('aria-label')),
-      ).toEqual(['Read obscuring_fog', 'Discard obscuring_fog', 'Attach a card']);
+      ).toEqual(['Read obscuring_fog', 'Attach a card']);
     });
 
     it('opens an attached card to read, and Escape there leaves the study open', () => {
@@ -1282,23 +1282,17 @@ describe('MapBoard', () => {
         location: 'study',
         buttons: [
           'Close',
-          'Attach a card',
           'Investigate · 1 action',
+          'Ways to investigate',
           'Take a clue, no test',
-          'Investigate by card effect',
+          'Attach a card',
         ],
       },
       {
         location: 'hallway',
-        buttons: [
-          'Close',
-          'Attach a card',
-          'Move here · 1 action',
-          'Move here, no action',
-          'Reveal',
-        ],
+        buttons: ['Close', 'Move here · 1 action', 'Ways to move here', 'Reveal', 'Attach a card'],
       },
-      { location: 'attic', buttons: ['Close', 'Attach a card', 'Reveal'] },
+      { location: 'attic', buttons: ['Close', 'Reveal', 'Attach a card'] },
     ])('offers alder in the study at the $location: $buttons', ({ location, buttons }) => {
       const table = aldersTurn();
       render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
@@ -1318,24 +1312,25 @@ describe('MapBoard', () => {
       await expect.poll(() => table.board.location(hallway).revealed).toBe(true);
     });
 
-    it("lists the hallway's moves in one Actions group, the one that costs an action first", () => {
+    it("offers the hallway's move as an action, and lists it first in its ways, then the free move", () => {
       const table = aldersTurn();
       render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
 
       tapOnce(tile('hallway'));
-
       const moves = within(details('hallway')).getByRole('region', { name: 'Actions' });
+      const move = within(moves).getByRole('button', { name: 'Move here · 1 action' });
+      fireEvent.click(within(moves).getByRole('button', { name: 'Ways to move here' }));
+      const ways = within(moves).getByRole('list', { name: 'Ways to move here' });
+
+      expect(move.dataset['cost']).toBe('action');
       expect(
-        within(moves)
+        within(ways)
           .getAllByRole('button')
-          .map((button) => [button.getAttribute('aria-label'), button.dataset['cost']]),
-      ).toEqual([
-        ['Move here · 1 action', 'action'],
-        ['Move here, no action', 'free'],
-      ]);
+          .map((button) => button.textContent),
+      ).toEqual(['Move here · 1 action', 'Move here, no action']);
     });
 
-    it("marks the hallway's moves with what Frozen in Fear adds: two arrows, one for the free move", () => {
+    it("marks the hallway's move with the two arrows Frozen in Fear adds, and its ways name the extra action of the free move", () => {
       const frozen = blankTreachery('frozen', {
         modifiers: [
           {
@@ -1358,14 +1353,16 @@ describe('MapBoard', () => {
       tapOnce(tile('hallway'));
 
       const moves = within(details('hallway')).getByRole('region', { name: 'Actions' });
+      const move = within(moves).getByRole('button', { name: 'Move here · 2 actions' });
+      fireEvent.click(within(moves).getByRole('button', { name: 'Ways to move here' }));
+      const ways = within(moves).getByRole('list', { name: 'Ways to move here' });
+
+      expect(move.dataset['actions']).toBe('2');
       expect(
-        within(moves)
+        within(ways)
           .getAllByRole('button')
-          .map((button) => [button.getAttribute('aria-label'), button.dataset['actions']]),
-      ).toEqual([
-        ['Move here · 2 actions', '2'],
-        ['Move here without an action · 1 extra action', undefined],
-      ]);
+          .map((button) => button.textContent),
+      ).toEqual(['Move here · 2 actions', 'Move here without an action · 1 extra action']);
     });
 
     it('turns taking a clue off while an enemy engaged with alder forbids discovering clues', () => {
@@ -1418,7 +1415,7 @@ describe('MapBoard', () => {
       tap('Close');
       tapOnce(tile('hallway'));
       // Only the correction for the unrevealed hallway, no move past the barrier.
-      expect(offered('hallway')).toEqual(['Close', 'Attach a card', 'Reveal']);
+      expect(offered('hallway')).toEqual(['Close', 'Reveal', 'Attach a card']);
     });
 
     describe("the parlor's Resign", () => {

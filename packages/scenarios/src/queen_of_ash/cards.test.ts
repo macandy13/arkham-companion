@@ -30,6 +30,7 @@ import {
   queenOfAshCardDefs,
   queenOfAshCards,
   TORMENT_DECISION,
+  ASHEN_REBIRTH_DECISION,
   UNNATURAL_DECAY_DECISION,
 } from './cards';
 
@@ -436,6 +437,75 @@ describe('Queen of Ash card abilities', () => {
       expect(drawn.pending).toMatchObject([{ skillTest: { skill: 'agility', difficulty: 3 } }]);
       expect(requireInvestigator(state, alice).sanity.horror).toBe(horror);
     });
+  });
+
+  describe('Ashen Rebirth', () => {
+    const ashenRebirth = instanceId('ashen_rebirth');
+
+    it.each([
+      { damage: 1, horror: 0, damageAfter: 3, horrorAfter: 0 },
+      { damage: 0, horror: 2, damageAfter: 0, horrorAfter: 4 },
+    ])(
+      'tests willpower (4); on a fail alice with $damage damage and $horror horror takes 2 more of the one she has more of',
+      ({ damage, horror, damageAfter, horrorAfter }) => {
+        const { context, state: started } = newGame()
+          .withLocation(culvert, cardOf('12182'), { revealed: true })
+          .withInvestigator(alice, {
+            locationId: culvert,
+            health: { max: 9, damage },
+            sanity: { max: 9, horror },
+          })
+          .withCard(ashenRebirth, cardOf('12176'), { kind: 'encounterDeck' })
+          .start();
+        const drawn = stateAfter(
+          context,
+          started,
+          aliceDraws('Ashen Rebirth'),
+          resolveRevelation('ashen_rebirth'),
+        );
+
+        const state = stateAfter(context, drawn, answer('test:ashen_rebirth', 'fail'));
+
+        expect(drawn.pending).toMatchObject([{ skillTest: { skill: 'willpower', difficulty: 4 } }]);
+        expect(state.pending).toEqual([]);
+        expect(requireInvestigator(state, alice)).toMatchObject({
+          health: { damage: damageAfter },
+          sanity: { horror: horrorAfter },
+        });
+      },
+    );
+
+    it.each([
+      { pick: 'damage', damageAfter: 3, horrorAfter: 1 },
+      { pick: 'horror', damageAfter: 1, horrorAfter: 3 },
+    ])(
+      'lets alice with as much damage as horror pick $pick on a fail',
+      ({ pick, damageAfter, horrorAfter }) => {
+        const { context, state: started } = newGame()
+          .withLocation(culvert, cardOf('12182'), { revealed: true })
+          .withInvestigator(alice, {
+            locationId: culvert,
+            health: { max: 9, damage: 1 },
+            sanity: { max: 9, horror: 1 },
+          })
+          .withCard(ashenRebirth, cardOf('12176'), { kind: 'encounterDeck' })
+          .start();
+
+        const state = stateAfter(
+          context,
+          started,
+          aliceDraws('Ashen Rebirth'),
+          resolveRevelation('ashen_rebirth'),
+          answer('test:ashen_rebirth', 'fail'),
+          answer(ASHEN_REBIRTH_DECISION, pick),
+        );
+
+        expect(requireInvestigator(state, alice)).toMatchObject({
+          health: { damage: damageAfter },
+          sanity: { horror: horrorAfter },
+        });
+      },
+    );
   });
 
   describe('Unnatural Decay', () => {

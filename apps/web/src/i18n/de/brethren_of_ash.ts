@@ -53,6 +53,11 @@ export const brethrenOfAshTexts = {
       },
     },
     queenOfAsh: {
+      ashenRebirth: {
+        prompt: '{{card}}: Du musst entweder',
+        damage: '2 direkten Schaden erleiden',
+        horror: '2 direkten Horror erleiden',
+      },
       unnaturalDecay: {
         prompt: '{{card}}: Du musst entweder',
         doom: '1 Verderben auf eine Vorteilskarte legen, die du kontrollierst',

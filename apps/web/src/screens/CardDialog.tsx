@@ -1,4 +1,12 @@
-import { useEffect, useId, useRef, useState, type ReactNode, type SyntheticEvent } from 'react';
+import {
+  createContext,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  type ReactNode,
+  type SyntheticEvent,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import type { CardFaceView, CardType, InvestigatorView } from '@arkham/engine';
 import type { ShownCard } from '../catalog/cardFace';
@@ -6,6 +14,14 @@ import { useCardPicture } from '../catalog/cardImages';
 import { InvestigatorArt } from '../investigators/InvestigatorArt';
 import { CardZoom } from './CardZoom';
 import './card_dialog.css';
+
+/**
+ * Where a part of the page can put cards tucked under the page's edge, half outside it
+ * (`data-part='tucked'`, after the `<article>`): the attached-card fan (`AttachedCards`, ME.31b).
+ * Inside the article they would be cut off by its scrolling, so they go to this sibling through
+ * a portal; null outside a card dialog (the phone's location mode), where they stay in place.
+ */
+export const TuckedCardsContext = createContext<HTMLElement | null>(null);
 
 /** The cards printed sideways, which stand over the page rather than beside it. */
 const LANDSCAPE: ReadonlySet<CardType> = new Set<CardType>(['agenda', 'act']);
@@ -81,6 +97,7 @@ export function CardDialog({
     else element.showModal();
   }, [lowered]);
   const [zoomed, setZoomed] = useState(false);
+  const [tucked, setTucked] = useState<HTMLElement | null>(null);
   const layout = card === undefined ? (actor ? 'portrait' : 'page') : orientationOf(card);
 
   return (
@@ -137,8 +154,9 @@ export function CardDialog({
           )}
           <h2 id={titleId}>{title}</h2>
         </hgroup>
-        {children}
+        <TuckedCardsContext.Provider value={tucked}>{children}</TuckedCardsContext.Provider>
       </article>
+      <div data-part="tucked" ref={setTucked} />
       {zoomed && card && <CardZoom card={card} onClose={() => setZoomed(false)} />}
     </dialog>
   );

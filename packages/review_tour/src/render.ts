@@ -2,7 +2,7 @@ import type { TourLine } from './diff_lines.ts';
 import { escapeHtml, highlightLine } from './highlight.ts';
 import { PAGE_CSS, PAGE_SCRIPT } from './page_assets.ts';
 import type { Device } from './pictures.ts';
-import type { Tour, TourQuestion, TourStop } from './tour.ts';
+import type { Tour, TourEvidence, TourQuestion, TourStop } from './tour.ts';
 
 /** Everything `renderPage` needs, resolved by the CLI from the tour, the diff and the goldens. */
 export interface PageInput {
@@ -15,6 +15,8 @@ export interface PageInput {
   readonly tour: Tour;
   /** One per `tour.stops`, in the same order. */
   readonly stops: readonly StopContent[];
+  /** The goldens of each of `tour.evidence`, in the same order; empty for one without a picture. */
+  readonly evidence: readonly (readonly StopPicture[])[];
   /** Added plus removed lines of the whole PR and of the code the stops show, for the "70 of 482" line. */
   readonly changedLines: { readonly all: number; readonly onTour: number };
 }
@@ -68,6 +70,7 @@ ${renderNav(pr.number, tour)}
 ${renderLead(tour)}
 ${renderQuestions(tour.questions, pr.url)}
 ${tour.stops.map((stop, index) => renderStop(stop, index + 1, input.stops[index])).join('\n')}
+${renderEvidence(tour.evidence, input.evidence)}
 <section class="done"><p>That's the whole change.</p><a href="${escapeHtml(pr.url)}/files">Review on GitHub</a></section>
 ${renderRest(tour.rest)}
 </main>
@@ -85,7 +88,11 @@ function renderNav(number: number, tour: Tour): string {
   const stops = tour.stops.map(
     (_, i) => `<li><a href="#stop-${i + 1}" data-stop="stop-${i + 1}">${i + 1}</a></li>`,
   );
-  return `<nav aria-label="Tour"><span class="number">#${number}</span><ol>${question}${stops.join('')}</ol></nav>`;
+  const evidence =
+    tour.evidence.length > 0
+      ? '<li><a class="evidence" href="#evidence" aria-label="How we know it works">✓</a></li>'
+      : '';
+  return `<nav aria-label="Tour"><span class="number">#${number}</span><ol>${question}${stops.join('')}${evidence}</ol></nav>`;
 }
 
 function renderMeta(input: PageInput): string {
@@ -140,6 +147,24 @@ function renderStop(stop: TourStop, number: number, content: StopContent | undef
 ${content ? renderPictures(content.pictures) : ''}
 ${content?.code.map(renderCode).join('\n') ?? ''}
 </section>`;
+}
+
+/** Each claim with what shows it: the test that checks it, an example in code, a golden. */
+function renderEvidence(
+  evidence: readonly TourEvidence[],
+  pictures: readonly (readonly StopPicture[])[],
+): string {
+  if (evidence.length === 0) return '';
+  const items = evidence.map((item, index) => {
+    const test = item.test
+      ? `<p class="test">Checked by <code>${escapeHtml(item.test)}</code></p>`
+      : '';
+    const example = item.example
+      ? `<pre class="example"><code>${item.example.split('\n').map(highlightLine).join('\n')}</code></pre>`
+      : '';
+    return `<li><p>${inline(item.claim)}</p>${test}${example}${renderPictures(pictures[index] ?? [])}</li>`;
+  });
+  return `<section class="evidence" id="evidence"><h2>How we know it works</h2><ul>${items.join('')}</ul></section>`;
 }
 
 function renderPictures(pictures: readonly StopPicture[]): string {

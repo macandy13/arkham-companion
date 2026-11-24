@@ -28,7 +28,7 @@ For the `pr-reviewer` subagent, which Claude sessions run on their branch before
 - A new dispatch over a closed union (discriminant or literal union) that is not an exhaustive `switch` with an `assertNever` default (coding guidelines §1).
 - A comment that narrates what the code does instead of why.
 - Dashes in file names, German identifiers, presentational markup, raw CSS values.
-- A PR description without a review tour, or whose tour has no `problem`, is written in fragments or code names a reader has to decode, leaves out the code that carries the change, walks through tests or plumbing, has ranges that don't match the head commit, asks questions that aren't real decisions, or explains in prose what a stop would show (coding guidelines §7 "Writing the description").
+- A PR description without a review tour, or whose tour has no `problem` or no `evidence`, is written in fragments or code names a reader has to decode, leaves out the code that carries the change, walks through tests or plumbing, has ranges that don't match the head commit, asks questions that aren't real decisions, or explains in prose what a stop would show (coding guidelines §7 "Writing the description").
 
 ## Don't comment on
 

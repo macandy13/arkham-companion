@@ -264,7 +264,29 @@ test("the Ghoul Priest's details opened from its card on Roland Banks' turn, bot
   await expect(details.getByRole('button', { name: 'Evaded by Roland Banks' })).toBeVisible();
 });
 
-test("the Ghoul Priest's details with Handcuffs attached, Discard beside it", async ({ page }) => {
+test("the Ghoul Priest's ways to fight opened from its details: as an action, without one, or by card effect", async ({
+  page,
+}) => {
+  await resumeImportedGame(
+    page,
+    'Roland Banks threatened',
+    rolandThreatenedExport('Roland Banks threatened'),
+  );
+  const roland = page.getByRole('region', { name: 'Roland Banks' });
+  await roland.getByRole('button', { name: 'Later cards in the threat area' }).click();
+  await roland.getByRole('button', { name: 'Details of Ghoul Priest' }).click();
+  const details = page.getByRole('dialog', { name: 'Ghoul Priest' });
+
+  await details.getByRole('button', { name: 'Ways to fight' }).click();
+
+  await expect(
+    details.getByRole('button', { name: 'Fight by card effect · Roland Banks' }),
+  ).toBeVisible();
+});
+
+test("the Ghoul Priest's details with Handcuffs attached, fanned over the page's bottom edge", async ({
+  page,
+}) => {
   await resumeImportedGame(
     page,
     'Roland Banks threatened',
@@ -282,7 +304,7 @@ test("the Ghoul Priest's details with Handcuffs attached, Discard beside it", as
     .click();
 
   const attached = details.getByRole('region', { name: 'Attached' });
-  await expect(attached.getByRole('button', { name: 'Discard Handcuffs' })).toBeVisible();
+  await expect(attached.getByRole('button', { name: 'Read Handcuffs' })).toBeVisible();
 });
 
 test('the header with its piles fanned: seven cards discarded, the set-aside cards on the scenario card, the Ghoul Priest in the victory display, the token pool beside it', async ({

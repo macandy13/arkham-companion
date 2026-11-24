@@ -50,8 +50,8 @@ export interface CampaignInvestigator {
   readonly xpSpent: number;
   readonly fate: InvestigatorFate;
   /**
-   * The story cards they earned (`EarnCard`), such as Lita Chantler in The Gathering: they may
-   * include each in their deck, so a game trusts them to hold it ("If you control Lita").
+   * The story cards they earned (`EarnCard`), such as Lita Chantler in The Gathering, which they
+   * may include in their deck.
    */
   readonly earnedCards: readonly CardCode[];
 }

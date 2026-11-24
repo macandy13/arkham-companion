@@ -257,7 +257,7 @@ test('move an investigator by a card effect to any location', async ({ page }) =
 });
 
 // Journey: a card effect has Roland Banks investigate a location he isn't at (In the Know): moved to
-// the Attic, the players start the test from the Hallway's details, and its decision asks for the
+// the Attic, the players start the test from the ways to investigate in the Hallway's details, and its decision asks for the
 // Hallway's shroud.
 test('investigate another location by a card effect', async ({ page }) => {
   const house = page.getByRole('figure', { name: 'House' });
@@ -276,9 +276,10 @@ test('investigate another location by a card effect', async ({ page }) => {
 
   await test.step('Investigate the Hallway by card effect from its details', async () => {
     await room('Hallway').getByRole('button', { name: 'Details of Hallway' }).click();
-    await page
-      .getByRole('dialog', { name: 'Hallway' })
-      .getByRole('button', { name: 'Investigate by card effect' })
+    const hallway = page.getByRole('dialog', { name: 'Hallway' });
+    await hallway.getByRole('button', { name: 'Ways to investigate' }).click();
+    await hallway
+      .getByRole('button', { name: 'Investigate by card effect · Roland Banks' })
       .click();
     await expect(
       page.getByRole('dialog', { name: 'Investigate Hallway' }).getByText('Intellect test (1)'),

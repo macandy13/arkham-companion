@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { renderPage, splitTitle, type PageInput, type StopContent } from './render.ts';
+import {
+  renderPage,
+  splitTitle,
+  type PageInput,
+  type StopContent,
+  type StopPicture,
+} from './render.ts';
 import type { Tour } from './tour.ts';
 
 describe('splitTitle', () => {
@@ -22,7 +28,12 @@ describe('splitTitle', () => {
 describe('renderPage', () => {
   const noContent: StopContent = { code: [], pictures: [] };
 
-  function page(tour: Tour, stops: readonly StopContent[]): string {
+  /** A tour without evidence may leave the list out. */
+  function page(
+    tour: Omit<Tour, 'evidence'> & Partial<Pick<Tour, 'evidence'>>,
+    stops: readonly StopContent[],
+    evidence: readonly (readonly StopPicture[])[] = [],
+  ): string {
     const input: PageInput = {
       pr: {
         number: 1367,
@@ -30,8 +41,9 @@ describe('renderPage', () => {
         url: 'https://github.com/o/r/pull/1367',
         headSha: '071f14c4205',
       },
-      tour,
+      tour: { evidence: [], ...tour },
       stops,
+      evidence,
       changedLines: { all: 482, onTour: 50 },
     };
     return renderPage(input);
@@ -76,6 +88,43 @@ describe('renderPage', () => {
     );
   });
 
+  it('shows each claim with its test, its example and its golden', () => {
+    const golden: StopPicture = {
+      device: 'desktop',
+      changed: true,
+      after: 'https://raw/after.png',
+    };
+    const html = page(
+      {
+        concept: 'Attacks share one command.',
+        questions: [],
+        stops: [],
+        evidence: [
+          {
+            claim: 'An attack of opportunity leaves the enemy ready.',
+            test: 'attacks.test.ts › leaves the enemy ready',
+          },
+          {
+            claim: 'A cancelled attack deals nothing.',
+            example: 'deal({ cancelled: true }) // → []',
+          },
+          { claim: 'The dialog shows the attack.', picture: 'shots/attack.png' },
+        ],
+        rest: [],
+      },
+      [],
+      [[], [], [golden]],
+    );
+
+    expect(html).toContain('<h2>How we know it works</h2>');
+    expect(html).toContain(
+      '<p>An attack of opportunity leaves the enemy ready.</p><p class="test">Checked by <code>attacks.test.ts › leaves the enemy ready</code></p>',
+    );
+    expect(html).toMatch(/<pre class="example"><code>.*deal.*cancelled.*<\/code><\/pre>/);
+    expect(html).toContain('https://raw/after.png');
+    expect(html).toContain('href="#evidence"');
+  });
+
   it('leaves out the problem when the tour has none', () => {
     const html = page({ concept: 'A rename.', questions: [], stops: [], rest: [] }, []);
 
@@ -88,12 +137,14 @@ describe('renderPage', () => {
 
     expect(html).not.toContain('id="questions"');
     expect(html).not.toContain('Not on the tour');
+    expect(html).not.toContain('How we know it works');
   });
 
   it('marks added and removed lines, but not every line of a new file', () => {
     const tour: Tour = {
       concept: 'C.',
       questions: [],
+      evidence: [],
       stops: [{ title: 'Code', text: 'T.', code: [] }],
       rest: [],
     };
@@ -148,6 +199,7 @@ describe('renderPage', () => {
     const tour: Tour = {
       concept: 'C.',
       questions: [],
+      evidence: [],
       stops: [{ title: 'Code', text: 'T.', code: [] }],
       rest: [],
     };
@@ -172,6 +224,7 @@ describe('renderPage', () => {
     const tour: Tour = {
       concept: 'C.',
       questions: [],
+      evidence: [],
       stops: [{ title: 'Card', text: 'T.', code: [] }],
       rest: [],
     };

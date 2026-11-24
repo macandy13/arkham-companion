@@ -34,6 +34,7 @@ import {
   you,
   yourLocation,
   type Command,
+  type AbilityCondition,
 } from './index';
 import { investigatorOf, resolveRevelation, stateAfter } from '../test/utils';
 
@@ -70,6 +71,68 @@ describe('a condition on the enemies at your location', () => {
 
     expect(investigatorOf(after, alice).sanity.horror).toBe(horror);
   });
+});
+
+describe('conditions combined with anyOf and not', () => {
+  const enemyHere: AbilityCondition = {
+    kind: 'countOf',
+    of: eachEnemy({ at: yourLocation() }),
+    min: 1,
+  };
+  const noClues: AbilityCondition = {
+    kind: 'valueOf',
+    value: statOf(you(), 'clues'),
+    max: 0,
+  };
+
+  it.each([
+    {
+      card: '"If there is no enemy at your location"',
+      condition: { kind: 'not', condition: enemyHere } as const,
+      ghoulInHall: false,
+      clues: 1,
+      horror: 1,
+    },
+    {
+      card: '"If there is no enemy at your location"',
+      condition: { kind: 'not', condition: enemyHere } as const,
+      ghoulInHall: true,
+      clues: 1,
+      horror: 0,
+    },
+    {
+      card: '"If there is an enemy at your location or you have no clues"',
+      condition: { kind: 'anyOf', conditions: [enemyHere, noClues] } as const,
+      ghoulInHall: false,
+      clues: 0,
+      horror: 1,
+    },
+    {
+      card: '"If there is an enemy at your location or you have no clues"',
+      condition: { kind: 'anyOf', conditions: [enemyHere, noClues] } as const,
+      ghoulInHall: false,
+      clues: 1,
+      horror: 0,
+    },
+  ])(
+    '$card gives alice $horror horror (ghoul in the hall: $ghoulInHall, clues: $clues)',
+    ({ condition, ghoulInHall, clues, horror }) => {
+      const omenCard = blankTreachery('omen', {
+        abilities: [{ ...whenRevealed(takeHorror(1)), condition }],
+      });
+      const { context, state } = newGame()
+        .withLocation(hall, blankLocation('hall'), { revealed: true })
+        .withLocation(study, blankLocation('study'), { revealed: true })
+        .withInvestigator(alice, { locationId: hall, clues })
+        .withCard(ghoul, blankEnemy('ghoul'), atLocation(ghoulInHall ? hall : study))
+        .withCard(omen, omenCard, encounterDeck)
+        .start();
+
+      const after = stateAfter(context, state, aliceDraws, resolveRevelation('omen'));
+
+      expect(investigatorOf(after, alice).sanity.horror).toBe(horror);
+    },
+  );
 });
 
 describe('a condition on the enemies at one of several locations', () => {

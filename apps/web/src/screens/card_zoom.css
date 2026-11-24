@@ -1,6 +1,7 @@
 /*
  * The card zoom (CardZoom): the × in the corner, the card as big as a zoomed card in the printed
- * cards' parchment, and the button that turns it over. It lies in the top layer but inherits from
+ * cards' parchment, the button that turns it over, and the caller's actions under it (an attached
+ * card's Discard). It lies in the top layer but inherits from
  * the small card it opens from, so it resets the text.
  */
 #board dialog[data-dialog='card-zoom'] {

@@ -342,6 +342,11 @@
   --card-dialog-card-width: 20.625rem;
   --card-dialog-landscape-width: 26.25rem;
   --card-dialog-overlap: 2.5rem;
+  /* The attached-card fan under a details page (AttachedCards): each card's width, the part of it
+     the next one covers, and how far each is turned. */
+  --attached-card-width: 3.5rem;
+  --attached-card-overlap: var(--space-2);
+  --attached-card-turn: 4deg;
   --card-dialog-card-turn: -1.5deg;
   --card-dialog-portrait-size: 6rem;
   --card-dialog-kicker-portrait-size: 1.875rem;

@@ -1,4 +1,4 @@
-import { assertNever, shallowEqual, sum, unique } from '@arkham/util';
+import { assertNever, shallowEqual, sum, unique, withoutKey } from '@arkham/util';
 import {
   cardStats,
   resolveAmount,
@@ -586,6 +586,8 @@ export interface AbilityChoice {
  */
 export type AbilityOption = Pick<DecisionOption, 'id' | 'label' | 'amounts'> & {
   commands: AbilityCommand[];
+  /** The option is offered only while this holds as the choice is raised (`ChoiceOption.when`). */
+  when?: AbilityCondition;
 };
 
 /**
@@ -598,11 +600,13 @@ export type AbilityOption = Pick<DecisionOption, 'id' | 'label' | 'amounts'> & {
 export type AbilityEffect = Templated<AbilityCommand>;
 
 /**
- * What must hold when the window opens for an ability to fire ("If it is act 3, …"). Checked
- * once, as the window opens; the effects then resolve whatever they change. Three shapes cover
- * most conditions cards print, each over the references effects use: which card is current, how
- * many things a reference names, and a value on the table; the fourth is the phase the game is
- * in. A new condition is usually a new reference or `Quantity`, not a new kind.
+ * What must hold when the window opens for an ability to fire ("If it is act 3, …"), or for a card
+ * action to be offered and taken ("During your turn:", `CardAction.condition`, read in
+ * the action's window). Checked once, as the window opens; the effects then resolve whatever they
+ * change. Three shapes cover most conditions cards print, each over the references effects use:
+ * which card is current, how many things a reference names, and a value on the table; then the
+ * phase or turn the game is in, and `allOf`/`anyOf`/`not` to
+ * combine them. A new condition is usually a new reference or `Quantity`, not a new kind.
  */
 export type AbilityCondition =
   /** The current act or agenda (`deck`) is one of `codes` ("If it is act 3", "if it is agenda 2"). */
@@ -618,6 +622,11 @@ export type AbilityCondition =
   | ({ kind: 'countOf'; of: RepeatedRef | PickedRef } & StatRange)
   /** `value` is within the range ("if you have no clues", "2 clues per investigator on this act"). */
   | ({ kind: 'valueOf'; value: Quantity } & StatRange)
+  /**
+   * `value` is at least `than`, each summed over what it names ("whichever you have more of",
+   * Ashen Rebirth); fails when either names nothing.
+   */
+  | { kind: 'atLeast'; value: Quantity; than: Quantity }
   /** The game is in `phase` ("after Hellhound attacks you during the enemy phase"). */
   | { kind: 'phase'; phase: Phase }
   /**
@@ -625,7 +634,18 @@ export type AbilityCondition =
    * It counts only with a margin the players confirm, which the test then asks for
    * (`passMarginMatters`).
    */
-  | { kind: 'margin'; min: number };
+  | { kind: 'margin'; min: number }
+  /**
+   * An investigator's turn is in progress: anyone's ("during any investigator's turn", the act's
+   * group clue spend), or with `of` that of the investigator it names ("during your turn").
+   */
+  | { kind: 'turn'; of?: RelativeInvestigator }
+  /** Each of `conditions` holds ("during your turn, if there are exactly 1 or 2 investigators"). */
+  | { kind: 'allOf'; conditions: readonly AbilityCondition[] }
+  /** At least one of `conditions` holds. */
+  | { kind: 'anyOf'; conditions: readonly AbilityCondition[] }
+  /** `condition` does not hold. */
+  | { kind: 'not'; condition: AbilityCondition };
 
 /**
  * A number on the table a `valueOf` condition reads:
@@ -1173,7 +1193,8 @@ function afterTestEnds(
   return { window: { on: 'testEnded', action, outcome }, effects };
 }
 
-function conditionHolds(
+/** Whether `condition` holds in the window `opened` (see `AbilityCondition`). */
+export function conditionHolds(
   ctx: EngineContext,
   state: GameState,
   condition: AbilityCondition,
@@ -1191,10 +1212,28 @@ function conditionHolds(
       const values = quantities(ctx, state, condition.value, opened);
       return values.length > 0 && values.every((value) => inRange(value, condition, playerCount));
     }
+    case 'atLeast': {
+      const value = quantities(ctx, state, condition.value, opened);
+      const than = quantities(ctx, state, condition.than, opened);
+      return value.length > 0 && than.length > 0 && sum(value) >= sum(than);
+    }
     case 'phase':
       return state.meta.phase === condition.phase;
     case 'margin':
       return opened.margin !== undefined && opened.margin >= condition.min;
+    case 'turn': {
+      const turn = state.meta.turn;
+      if (turn === undefined) return false;
+      if (condition.of === undefined) return true;
+      const refs = windowRefs(ctx, state, opened);
+      return namedIds(ctx, state, condition.of, refs).includes(turn.investigatorId);
+    }
+    case 'allOf':
+      return condition.conditions.every((each) => conditionHolds(ctx, state, each, opened));
+    case 'anyOf':
+      return condition.conditions.some((each) => conditionHolds(ctx, state, each, opened));
+    case 'not':
+      return !conditionHolds(ctx, state, condition.condition, opened);
     default:
       return assertNever(condition);
   }
@@ -1271,8 +1310,11 @@ export function resolveEffect(
   effect: AbilityEffect,
   opened: OpenedWindow,
 ): Command[] {
+  const offered = withOfferedOptions(ctx, state, effect, opened);
+  if (Array.isArray(offered))
+    return offered.flatMap((inner) => resolveEffect(ctx, state, inner, opened));
   const refs = windowRefs(ctx, state, opened);
-  const deferred = withDeferredOutcomes(withDifficultyChanges(ctx, state, effect, opened), opened);
+  const deferred = withDeferredOutcomes(withDifficultyChanges(ctx, state, offered, opened), opened);
   const each = repeatedRef(deferred);
   const ids = each === undefined ? [undefined] : eachId(ctx, state, each, refs);
   const commandsFor = (picked?: InstanceId | InvestigatorId): Command[] =>
@@ -1309,6 +1351,31 @@ export function resolveEffect(
   return [
     pickDecision(ctx, state, opened.cardId, picked, investigator.id, candidates, commandsFor),
   ];
+}
+
+/**
+ * A choice with only the options whose `when` holds as `opened` resolves, before its references
+ * become IDs (they would turn the condition's `you()` into an ID too); the effects of the one
+ * option left, as there is nothing to ask; none when no option is left. Any other effect as it is.
+ */
+function withOfferedOptions(
+  ctx: EngineContext,
+  state: GameState,
+  effect: AbilityEffect,
+  opened: OpenedWindow,
+): AbilityEffect | AbilityEffect[] {
+  if (effect.type !== 'RequestDecision') return effect;
+  // Read as card data writes it: `Templated` would map the references inside the conditions too.
+  const choice = effect as unknown as AbilityChoice;
+  if (choice.decision.options.every((option) => option.when === undefined)) return effect;
+  const options = choice.decision.options
+    .filter(({ when }) => when === undefined || conditionHolds(ctx, state, when, opened))
+    .map((option) => withoutKey(option, 'when'));
+  const [only, ...others] = options;
+  if (only === undefined) return [];
+  if (others.length === 0 && only.amounts === undefined)
+    return only.commands as unknown as AbilityEffect[];
+  return { ...choice, decision: { ...choice.decision, options } } as unknown as AbilityEffect;
 }
 
 /**
@@ -3253,6 +3320,15 @@ export function ifValue(value: Quantity, range: StatRange, ability: Ability): Ab
   return { ...ability, condition: { kind: 'valueOf', value, ...range } };
 }
 
+/**
+ * "Whichever you have more of": `value` is at least `than`, written
+ * `atLeast(statOf(you(), 'damage'), statOf(you(), 'horror'))` for a choice option's `when`
+ * (Ashen Rebirth), so a tie offers both.
+ */
+export function atLeast(value: Quantity, than: Quantity): AbilityCondition {
+  return { kind: 'atLeast', value, than };
+}
+
 /** A stat of the investigator or investigators `who` names, for `ifValue`. */
 export function statOf(who: RelativeInvestigator, stat: InvestigatorStat): Quantity {
   return { kind: 'stat', stat, who };
@@ -3399,6 +3475,11 @@ export interface ChoiceOption {
   label: string;
   /** The counts the decider enters as they pick it, which its effects read (`AskedCount`). */
   amounts?: DecisionOption['amounts'];
+  /**
+   * "Whichever you have more of": the option is offered only while this holds, read as the choice
+   * is raised (after the test it follows). An option left alone applies without asking.
+   */
+  when?: AbilityCondition;
   effects: AbilityEffect[];
 }
 
@@ -3452,6 +3533,7 @@ function choice(
         id: option.id,
         label: option.label,
         ...(option.amounts ? { amounts: option.amounts } : {}),
+        ...(option.when ? { when: option.when } : {}),
         commands: option.effects,
       })),
     },

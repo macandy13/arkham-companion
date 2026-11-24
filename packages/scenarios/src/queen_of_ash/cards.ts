@@ -6,6 +6,7 @@ import {
   afterDiscoveringClues,
   afterEntering,
   atEndOfPhase,
+  atLeast,
   atEndOfRound,
   atEndOfTurn,
   attachedTo,
@@ -58,6 +59,7 @@ import {
   shuffleSetAsideIntoEncounterDeck,
   skillTest,
   skillTestOfEither,
+  statOf,
   spawnEnemyAt,
   takeDamage,
   takeHorror,
@@ -69,6 +71,7 @@ import {
   whenEnemyDefeated,
   whenRevealed,
   whenTokensOnSelf,
+  you,
   yourLocation,
   youMustEither,
 } from '@arkham/engine';
@@ -148,6 +151,15 @@ export const SEWERS_CELLS = {
 
 /** Id of Sluice Control's question to the investigator who opens the valve: agility or combat? */
 export const SLUICE_CONTROL_DECISION = decisionId('queenOfAsh.sluiceControl');
+
+/**
+ * Id of the question a failed Ashen Rebirth asks its drawer when they have as much damage as
+ * horror: take 2 direct damage or 2 direct horror. With more of one, that one applies unasked.
+ */
+export const ASHEN_REBIRTH_DECISION = decisionId('queenOfAsh.ashenRebirth');
+const ashenRebirth = 'scenario.queenOfAsh.ashenRebirth';
+const yourDamage = statOf(you(), 'damage');
+const yourHorror = statOf(you(), 'horror');
 
 /**
  * Id of the question a failed Unnatural Decay asks its drawer: place 1 doom on an asset they
@@ -239,9 +251,8 @@ const willpowerOrHorror = skillTest('willpower', 4, { onFail: [takeHorror(1)] })
  *   Servant of Flame's codex entry as it is defeated
  * - Zealot's doom as it enters play (setup places it on the Zealots it spawns) and Dark
  *   Magician's as the round ends
- * - the whole revelation of Ashen Rebirth (2 direct damage or horror, whichever its drawer has
- *   more of), the discards of the card type Dissonance's and Torment's drawer chooses, and Putrid
- *   Vapors' asset discard
+ * - the discards of the card type Dissonance's and Torment's drawer chooses, and Putrid Vapors'
+ *   asset discard
  * - Blasphemous Invocation's Cultist drawn after a fail by 0 (only once a player card lowered the
  *   difficulty to 0) against a Cultist without doom: no doom was placed, but the app only draws
  *   when there is no such Cultist
@@ -397,6 +408,28 @@ export const queenOfAshCardDefs: readonly CardStats[] = [
     pictures: jpg,
     traits: ['Power'],
     quantity: 2,
+    abilities: [
+      whenRevealed(
+        skillTest('willpower', 4, {
+          onFail: [
+            youMustEither(ASHEN_REBIRTH_DECISION, `${ashenRebirth}.prompt`, [
+              {
+                id: 'damage',
+                label: `${ashenRebirth}.damage`,
+                when: atLeast(yourDamage, yourHorror),
+                effects: [takeDamage(2)],
+              },
+              {
+                id: 'horror',
+                label: `${ashenRebirth}.horror`,
+                when: atLeast(yourHorror, yourDamage),
+                effects: [takeHorror(2)],
+              },
+            ]),
+          ],
+        }),
+      ),
+    ],
   }),
   enemy({
     code: codes.queensKnight,

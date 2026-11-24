@@ -689,6 +689,18 @@ describe('locations', () => {
     expect(boardView(context, state).connectedTo(instanceId(from))).toEqual(to.map(instanceId));
   });
 
+  it('counts alice in the study in play, but not bob, who resigned, nor carol, who is off the map', () => {
+    const carol = investigatorId('carol');
+    const { context, state } = newGame()
+      .withLocation(study, blankLocation('study'))
+      .withInvestigator(alice, { locationId: study })
+      .withInvestigator(bob, { locationId: study, status: 'resigned' })
+      .withInvestigator(carol)
+      .start();
+
+    expect(boardView(context, state).investigatorsInPlay.map(({ id }) => id)).toEqual([alice]);
+  });
+
   it('finds alice and bob in the study and nobody in the hallway', () => {
     const { context, state } = newGame()
       .withLocation(study, blankLocation('study'))
