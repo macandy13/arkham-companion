@@ -44,7 +44,7 @@ export function revealTokens(
   count: number,
   random: () => number,
 ): ChaosToken[] {
-  return drawWithoutReplacement(bag, count, (left) => Math.floor(random() * left)).drawn;
+  return drawWithoutReplacement(bag, count, pickIndex(random)).drawn;
 }
 
 /**
@@ -221,8 +221,11 @@ function takeOne(
   left: readonly ChaosToken[],
   random: () => number,
 ): [ChaosToken | undefined, ChaosToken[]] {
-  const { drawn, left: rest } = drawWithoutReplacement(left, 1, (count) =>
-    Math.floor(random() * count),
-  );
+  const { drawn, left: rest } = drawWithoutReplacement(left, 1, pickIndex(random));
   return [drawn[0], rest];
+}
+
+/** A picker for `drawWithoutReplacement`: an index below `count` from `random`, shared by every draw. */
+function pickIndex(random: () => number): (count: number) => number {
+  return (count) => Math.floor(random() * count);
 }

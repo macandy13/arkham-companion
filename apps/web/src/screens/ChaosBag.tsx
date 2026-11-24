@@ -46,6 +46,8 @@ export function ChaosBag({
   const [revealed, setRevealed] = useState<readonly ChaosToken[]>([]);
   const counts = tokenCounts(board.chaosBag);
   const sealers = board.investigators.filter((investigator) => investigator.status === 'active');
+  // Sealing can leave fewer tokens than the count set before it.
+  const revealing = Math.max(1, Math.min(toReveal, board.chaosBag.length));
   const chosen = counts.some(({ token }) => token === picked) ? picked : undefined;
   return (
     <section aria-labelledby={titleId} data-part="chaos-bag">
@@ -123,26 +125,26 @@ export function ChaosBag({
         <button
           type="button"
           aria-label={t('chaosBag.revealFewer')}
-          disabled={toReveal === 1}
-          onClick={() => setToReveal(toReveal - 1)}
+          disabled={revealing === 1}
+          onClick={() => setToReveal(revealing - 1)}
         >
           −
         </button>
-        <data value={toReveal}>{toReveal}</data>
+        <data value={revealing}>{revealing}</data>
         <button
           type="button"
           aria-label={t('chaosBag.revealMore')}
-          disabled={toReveal >= board.chaosBag.length}
-          onClick={() => setToReveal(toReveal + 1)}
+          disabled={revealing >= board.chaosBag.length}
+          onClick={() => setToReveal(revealing + 1)}
         >
           +
         </button>
         <button
           type="button"
           disabled={board.chaosBag.length === 0}
-          onClick={() => setRevealed(revealTokens(board.chaosBag, toReveal, Math.random))}
+          onClick={() => setRevealed(revealTokens(board.chaosBag, revealing, Math.random))}
         >
-          {t('chaosBag.revealCount', { count: toReveal })}
+          {t('chaosBag.revealCount', { count: revealing })}
         </button>
       </div>
       {revealed.length > 0 && (
