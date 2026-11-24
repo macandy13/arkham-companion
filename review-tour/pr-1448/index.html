@@ -118,9 +118,9 @@ details ul { padding-left: 20px; margin: 12px 0 0; display: grid; gap: 6px; font
 <main>
 <nav aria-label="Tour"><span class="number">#1448</span><ol><li><a href="#stop-1" data-stop="stop-1">1</a></li><li><a href="#stop-2" data-stop="stop-2">2</a></li><li><a class="evidence" href="#evidence" aria-label="How we know it works">✓</a></li></ol></nav>
 <header>
-<p class="kicker">refactor(web) · MS.7 · as of e5b09c6</p>
+<p class="kicker">refactor(web) · MS.7 · as of e556ff3</p>
 <h1>The play screen hands actions and busy down through one context</h1>
-<p class="meta"><span>2 stops</span><span>0 questions</span><span>132 of 2145 changed lines on the tour</span></p>
+<p class="meta"><span>2 stops</span><span>0 questions</span><span>132 of 2143 changed lines on the tour</span></p>
 </header>
 <section class="lead"><h2>The problem</h2><p>Nearly every part of the play screen took the open game's actions and whether a step was busy as two props, only to pass them further down: 24 components took actions, 25 busy, and the header built a props bag with both for its piles. Agenda and act took the whole store just to reach the actions.</p></section>
 <section class="lead"><h2>What changes</h2><p>The play screen puts the open game's actions and busy into one context, PlayProvider, and each part that plays a step reads them with usePlay. Everything else, the board included, stays an explicit prop, and the header takes onSpawn instead of the store. Tests wrap a part drawn alone in one provider, PlayingOn, which plays on the table the test built.</p></section>
