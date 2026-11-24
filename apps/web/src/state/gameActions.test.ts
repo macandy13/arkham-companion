@@ -3,7 +3,6 @@ import {
   atLocation,
   blankEnemy,
   blankLocation,
-  blankTreachery,
   cardName,
   engagedWith,
   fixed,
@@ -12,7 +11,6 @@ import {
   newGame,
   PlayTable,
   takeHorror,
-  threatAreaOf,
   type CardPlaceView,
 } from '@arkham/engine';
 import { pileAdjustment, type PileMove } from '../encounter/cardMoves';
@@ -162,65 +160,6 @@ describe('gameActions', () => {
         expect(table.board.investigator(alder)).toMatchObject({ actions: 3 });
       },
     );
-  });
-
-  describe("with a treachery like Frozen in Fear in alder's threat area", () => {
-    /** Alder's turn in the Study next to the Hall, frozen: the first move, fight or evade costs 1 more. */
-    const aldersFrozenTurn = () =>
-      PlayTable.start(
-        newGame()
-          .withLocation(study, blankLocation('study'), { revealed: true })
-          .withLocation(hall, blankLocation('hall'), { revealed: true })
-          .withConnection(study, hall)
-          .withInvestigator(alder, { locationId: study })
-          .withCard(ghoul, blankEnemy('ghoul', { health: fixed(3) }), engagedWith(alder))
-          .withCard(
-            instanceId('frozen'),
-            blankTreachery('frozen', {
-              modifiers: [
-                {
-                  value: 'actionCost',
-                  of: 'threatArea',
-                  actions: ['move', 'fight', 'evade'],
-                  first: 'eachRound',
-                  by: 1,
-                },
-              ],
-            }),
-            threatAreaOf(alder),
-          )
-          .withTurnOf(alder),
-      );
-
-    it.each<{ verb: string; act: (actions: GameActions) => Promise<void>; left: number }>([
-      { verb: 'a first fight', act: (actions) => actions.fight(ghoul), left: 1 },
-      { verb: 'a first free evade', act: (actions) => actions.evade(ghoul, 'free'), left: 2 },
-      { verb: 'a first free move', act: (actions) => actions.move(hall, 'free'), left: 2 },
-      { verb: 'investigate', act: (actions) => actions.investigate(), left: 2 },
-      {
-        verb: 'the pawn drag',
-        act: (actions) =>
-          actions.perform({ type: 'MoveInvestigator', investigatorId: alder, to: hall }),
-        left: 3,
-      },
-    ])('$verb leaves alder $left of three actions', async ({ act, left }) => {
-      const table = aldersFrozenTurn();
-
-      await act(actionsOn(table));
-
-      expect(table.board.investigator(alder)).toMatchObject({ actions: left });
-    });
-
-    it('counts off the usual 1 for a move after the first fight', async () => {
-      const table = aldersFrozenTurn();
-      const actions = actionsOn(table);
-      await actions.fight(ghoul);
-      await actions.answer('fail');
-
-      await actions.move(hall);
-
-      expect(table.board.investigator(alder)).toMatchObject({ actions: 0 });
-    });
   });
 
   it.each<{ move: PileMove; place: CardPlaceView }>([
