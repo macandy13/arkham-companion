@@ -271,7 +271,6 @@ export {
   drawFromScenarioDeck,
   searchDeck,
   spendClues,
-  adjustStat,
   moveTo,
   eachInvestigator,
   anInvestigator,

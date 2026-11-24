@@ -1,4 +1,5 @@
 import type {
+  AdjustInvestigator,
   Adjustment,
   AttachPlayerCard,
   DiscoverClues,
@@ -10,7 +11,7 @@ import type {
   SealChaosToken,
 } from './commands';
 import type { CardCode, InstanceId, InvestigatorId } from './ids';
-import type { ChaosToken, SkillName, TokenKind } from './state';
+import type { ChaosToken, InvestigatorStat, SkillName, TokenKind } from './state';
 
 /*
  * What the players carry out by hand on the play screen that card data never writes, as plain
@@ -18,6 +19,19 @@ import type { ChaosToken, SkillName, TokenKind } from './state';
  * both cards and players do is built with the card factories (`dealDamageTo(enemy, 1)`), whose
  * overloads take instance IDs too.
  */
+
+/**
+ * `delta` more (or, negative, fewer) of the investigator's `stat` (`AdjustInvestigator`), as a
+ * counter's stepper or a token dragged onto their card changes it: damage and horror can defeat
+ * them, as the rules say.
+ */
+export function adjustStat(
+  stat: InvestigatorStat,
+  delta: number,
+  investigator: InvestigatorId,
+): AdjustInvestigator {
+  return { type: 'AdjustInvestigator', investigatorId: investigator, stat, delta };
+}
 
 /** "[Investigator] evaded it": the enemy is evaded by them as a card effect evades it (`EvadeEnemy`). */
 export function evadeEnemy(enemy: InstanceId, by: InvestigatorId): EvadeEnemy {

@@ -1,6 +1,5 @@
 import type { ScaledValue, TokenAmount, Trait } from '../cards';
 import type {
-  AdjustInvestigator,
   Advance,
   ChangeChaosBag,
   CommandSource,
@@ -913,34 +912,6 @@ export function itsLocation(): RelativeCard {
   return { ref: 'windowLocation' };
 }
 
-/**
- * `delta` more (or, negative, fewer) of the investigator's `stat` (`AdjustInvestigator`), as a
- * counter's stepper on the play screen changes it: damage and horror can defeat them, as the rules
- * say. Card text that names a stat has its own factory (`spendClues`, `placeDoomOnYourAsset`).
- */
-export function adjustStat(
-  stat: InvestigatorStat,
-  delta: number,
-  who: InvestigatorId,
-): AdjustInvestigator;
-export function adjustStat(
-  stat: InvestigatorStat,
-  delta: number,
-  who?: RelativeInvestigator,
-): AbilityEffect;
-export function adjustStat(
-  stat: InvestigatorStat,
-  delta: number,
-  who: InvestigatorId | RelativeInvestigator = { ref: 'windowInvestigator' },
-): AdjustInvestigator & AbilityEffect {
-  return either<AdjustInvestigator>({
-    type: 'AdjustInvestigator',
-    investigatorId: who,
-    stat,
-    delta,
-  });
-}
-
 /** "Spend N clues": the investigator the window names returns `amount` clues to the token bank. */
 export function spendClues(amount: number): AbilityEffect {
   return {
@@ -1217,15 +1188,6 @@ export function readySelf(): AbilityEffect {
 }
 
 /**
- * A command that card data names by reference and the players by instance, built from one literal
- * as in `tokenMove`; the overloads of the factory that calls it give each caller its precise type
- * (`dealDamageTo(enemy.id, 1)` on the play screen is a `DamageEnemy`).
- */
-function either<C>(command: object): C & AbilityEffect {
-  return command as C & AbilityEffect;
-}
-
-/**
  * "Deal 1 damage to it / to each [[Monster]] enemy" (`DamageEnemy`): an enemy
  * the damage brings to its health is defeated in the same step, so its
  * `defeated` abilities fire. Written `dealDamageTo(eachEnemy({ trait: trait('Monster') }), 1)`.
@@ -1236,7 +1198,7 @@ export function dealDamageTo(
   enemy: InstanceId | RelativeCard,
   amount: TokenAmount,
 ): DamageEnemy & AbilityEffect {
-  return either<DamageEnemy>({ type: 'DamageEnemy', enemyId: enemy, amount });
+  return { type: 'DamageEnemy', enemyId: enemy, amount } as DamageEnemy & AbilityEffect;
 }
 
 /** "Heal N damage from it" (`HealEnemy`): as much as it has. */
@@ -1246,21 +1208,21 @@ export function healEnemy(
   enemy: InstanceId | RelativeCard,
   amount: number,
 ): HealEnemy & AbilityEffect {
-  return either<HealEnemy>({ type: 'HealEnemy', enemyId: enemy, amount });
+  return { type: 'HealEnemy', enemyId: enemy, amount } as HealEnemy & AbilityEffect;
 }
 
 /** "Ready it" (`ReadyEnemy`); an enemy that is ready already stays as it is. */
 export function readyEnemy(enemy: InstanceId): ReadyEnemy;
 export function readyEnemy(enemy: RelativeCard): AbilityEffect;
 export function readyEnemy(enemy: InstanceId | RelativeCard): ReadyEnemy & AbilityEffect {
-  return either<ReadyEnemy>({ type: 'ReadyEnemy', enemyId: enemy });
+  return { type: 'ReadyEnemy', enemyId: enemy } as ReadyEnemy & AbilityEffect;
 }
 
 /** "Disengage it" (`DisengageEnemy`): it stays where it is, unengaged. */
 export function disengageEnemy(enemy: InstanceId): DisengageEnemy;
 export function disengageEnemy(enemy: RelativeCard): AbilityEffect;
 export function disengageEnemy(enemy: InstanceId | RelativeCard): DisengageEnemy & AbilityEffect {
-  return either<DisengageEnemy>({ type: 'DisengageEnemy', enemyId: enemy });
+  return { type: 'DisengageEnemy', enemyId: enemy } as DisengageEnemy & AbilityEffect;
 }
 
 /**
@@ -1278,7 +1240,7 @@ export function retreatEnemy(enemy: RelativeCard): AbilityEffect {
 export function exhaustEnemy(enemy: InstanceId): ExhaustEnemy;
 export function exhaustEnemy(enemy: RelativeCard): AbilityEffect;
 export function exhaustEnemy(enemy: InstanceId | RelativeCard): ExhaustEnemy & AbilityEffect {
-  return either<ExhaustEnemy>({ type: 'ExhaustEnemy', enemyId: enemy });
+  return { type: 'ExhaustEnemy', enemyId: enemy } as ExhaustEnemy & AbilityEffect;
 }
 
 /**
@@ -1288,7 +1250,7 @@ export function exhaustEnemy(enemy: InstanceId | RelativeCard): ExhaustEnemy & A
 export function defeatEnemy(enemy: InstanceId): DefeatEnemy;
 export function defeatEnemy(enemy: RelativeCard): AbilityEffect;
 export function defeatEnemy(enemy: InstanceId | RelativeCard): DefeatEnemy & AbilityEffect {
-  return either<DefeatEnemy>({ type: 'DefeatEnemy', enemyId: enemy });
+  return { type: 'DefeatEnemy', enemyId: enemy } as DefeatEnemy & AbilityEffect;
 }
 
 /**
@@ -1716,7 +1678,7 @@ export function revealLocation(location: RelativeCard): AbilityEffect;
 export function revealLocation(
   location: InstanceId | RelativeCard,
 ): RevealLocation & AbilityEffect {
-  return either<RevealLocation>({ type: 'RevealLocation', locationId: location });
+  return { type: 'RevealLocation', locationId: location } as RevealLocation & AbilityEffect;
 }
 
 /**
@@ -1782,7 +1744,7 @@ export function spawnEnemyAt(
   enemy: InstanceId | RelativeCard,
   location: InstanceId | RelativeCard,
 ): SpawnEnemy & AbilityEffect {
-  return either<SpawnEnemy>({ type: 'SpawnEnemy', enemyId: enemy, at: location });
+  return { type: 'SpawnEnemy', enemyId: enemy, at: location } as SpawnEnemy & AbilityEffect;
 }
 
 /**
@@ -1805,10 +1767,10 @@ export function move(
   to: Zone | Templated<Zone>,
   end: 'top' | 'bottom' = 'bottom',
 ): MoveCard & AbilityEffect {
-  return either<MoveCard>({
+  return {
     type: 'MoveCard',
     cardId: card,
     to,
     ...(end === 'top' && { index: 0 }),
-  });
+  } as MoveCard & AbilityEffect;
 }
