@@ -43,6 +43,7 @@ An [`Ability`](../../packages/engine/src/abilities.ts) is:
     - the tokens on a card (`tokensOn(card, token)`): `ifValue(tokensOn(self(), 'clue'), { max: 0 }, …)` for "if there are no clues on it", `whenTokensOnSelf('clue', perInvestigator(2), advanceAct())` for an objective on the act's own clues, whose count the act's view shows as its threshold;
     - the clues a group holds (`groupClues`, see The Barrier below);
   - `phase`, the phase the game is in: `duringPhase('enemy', afterAttacking(discardAsset()))` for Hellhound's "after it attacks you during the enemy phase";
+  - `turn`, `controls`, `allOf`, `anyOf` and `not`, whose turn it is, which card an investigator controls, and combinations of conditions, which card actions use most (see the card action section below);
 - an optional repeat (`Ability.forEach`, any `each…` reference, `repetitionsOf`): the effects resolve once for each investigator or card it names as the window opens, counted with the condition, and each copy of the window binds what it is for:
   - an investigator becomes the window's, so an effect that asks something (a skill test) asks each of them in turn (`forEachInvestigator(…)`, over `eachInvestigator()`);
   - a card becomes `thatCard()` (`OpenedWindow.thatCardId`): `forEachEnemy({ trait, at: [onlyCopy(codes.hallway), onlyCopy(codes.parlor)] }, …)`, and `forEachEnemy({}, atEndOfRound(placeDoomOn(thatCard(), 1)))` for "for each enemy, place 1 doom on it";

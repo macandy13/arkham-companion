@@ -1115,7 +1115,8 @@ export function conditionHolds(
       return state.meta.phase === condition.phase;
     case 'turn': {
       const turn = state.meta.turn;
-      if (turn === undefined || condition.of === undefined) return turn !== undefined;
+      if (turn === undefined) return false;
+      if (condition.of === undefined) return true;
       const refs = windowRefs(ctx, state, opened);
       return namedIds(ctx, state, condition.of, refs).includes(turn.investigatorId);
     }
