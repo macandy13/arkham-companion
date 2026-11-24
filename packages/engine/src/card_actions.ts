@@ -400,7 +400,7 @@ export function cardActionsOfferedTo(
     const actions = cardStats(ctx.cards, card.code).actions ?? [];
     if (actions.length === 0 || !offersActionsTo(state, card, investigator)) return [];
     return actions.flatMap(
-      ({ designator, free, actions: count, limit, cost, condition }, action) =>
+      ({ designator, free, actions: actionCost, limit, cost, condition }, action) =>
         actionWithinLimit(state, card, action, limit, investigator.id) &&
         canPay(ctx, state, investigator, cost) &&
         actionConditionHolds(state, investigator, condition)
@@ -410,7 +410,7 @@ export function cardActionsOfferedTo(
                 action,
                 ...(designator === undefined ? {} : { designator }),
                 ...(free === undefined ? {} : { free }),
-                ...(count === undefined ? {} : { actions: count }),
+                ...(actionCost === undefined ? {} : { actions: actionCost }),
                 ...(cost?.spend === 'groupClues'
                   ? { groupClues: groupClueAmount(state, cost.amount) }
                   : {}),
@@ -438,10 +438,10 @@ export type PrintedActionView = Pick<
  * `cardActionsOfferedTo` numbers them.
  */
 export function printedActions(actions: readonly CardAction[]): PrintedActionView[] {
-  return actions.map(({ designator, free, actions: count }, action) => ({
+  return actions.map(({ designator, free, actions: actionCost }, action) => ({
     ...(designator === undefined ? {} : { designator }),
     ...(free === undefined ? {} : { free }),
-    ...(count === undefined ? {} : { actions: count }),
+    ...(actionCost === undefined ? {} : { actions: actionCost }),
     ...numberOfKind(actions, action),
   }));
 }
