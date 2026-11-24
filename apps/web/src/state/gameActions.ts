@@ -1,28 +1,19 @@
 import {
   CommandRejected,
-  encounterDiscard,
-  setAside,
-  threatAreaOf,
   optionNamed,
   placeDoomOn,
-  placeYourClues,
+  type Adjustment,
+  type Command,
   type Decision,
   type GameState,
   type InstanceId,
   type InvestigatorId,
   type InvestigatorStat,
   type PlayTable,
-  type CardCode,
   type ChaosToken,
-  type PoolToken,
   type ResolveDecision,
-  type ResolutionId,
-  type SkillName,
   type TokenKind,
-  type Zone,
 } from '@arkham/engine';
-import type { PileMove } from '../encounter/cardMoves';
-import { assertNever } from '@arkham/util';
 
 /**
  * The tokens the players place, move and take back by hand (`adjustTokens`): the clues and doom a
@@ -33,11 +24,64 @@ type LooseToken = Extract<TokenKind, 'clue' | 'doom'>;
 /** The investigator counters the screen's − / + bubbles change. */
 export type SteppedStat = Extract<InvestigatorStat, 'resources' | 'damage' | 'horror'>;
 
-/** Whether a step on the turn spends one of the investigator's actions or is free (a card allows it). */
-export type ActionCost = 'action' | 'free';
+/**
+ * How an investigator moves, investigates, fights, evades or engages: as one of the turn
+ * investigator's actions (`action`, counted off by the engine, provoking attacks of opportunity),
+ * as a free one a card lets them take (`free`: it costs only what a card adds, Frozen in Fear,
+ * and provokes nothing), or as a card effect has `byCard` investigator do it, whoever's turn it
+ * is: no action, no attacks of opportunity, and away from their location (Shortcut, In the Know,
+ * Marksmanship, Heroic Rescue).
+ */
+export type How = 'action' | 'free' | { byCard: InvestigatorId };
 
-/** The tests a card lets an investigator make outside their turn or away from their location. */
-type TestByCard = 'investigate' | 'fight' | 'evade';
+/** The commands a `How` takes as an action or by card. */
+type TurnActionCommand = Extract<
+  Command,
+  { type: 'MoveInvestigator' | 'Investigate' | 'Fight' | 'Evade' | 'EngageEnemy' }
+>;
+
+/**
+ * An effect the players carry out by hand from card text, as the engine command that does it
+ * (damage, defeat or move an enemy, place doom, draw an encounter card: `encounterDraw`): the engine resolves it
+ * by the rules, so forced effects fire. A mistake is undone with `correct` instead.
+ */
+export type PlayerEffect = Extract<
+  Command,
+  {
+    type:
+      | 'AdjustInvestigator'
+      | 'Advance'
+      | 'AttachPlayerCard'
+      | 'ChangeChaosBag'
+      | 'DamageEnemy'
+      | 'DefeatEnemy'
+      | 'DiscoverClues'
+      | 'DisengageEnemy'
+      | 'DrawCard'
+      | 'DrawWeakness'
+      | 'EndScenario'
+      | 'EngageEnemy'
+      | 'EvadeEnemy'
+      | 'ExhaustEnemy'
+      | 'HealEnemy'
+      | 'MoveCard'
+      | 'MoveEnemy'
+      | 'MoveTokens'
+      | 'ReadyEnemy'
+      | 'ReleaseChaosToken'
+      | 'RevealLocation'
+      | 'SealChaosToken'
+      | 'SpawnEnemy';
+  }
+>;
+
+/**
+ * `investigator` takes one clue from `location`, their own, without a test, as a card grants it
+ * (`DiscoverClues`), or as a clue dragged onto their pawn says.
+ */
+export function takeOneClue(location: InstanceId, investigator: InvestigatorId): PlayerEffect {
+  return { type: 'DiscoverClues', investigatorId: investigator, locationId: location, amount: 1 };
+}
 
 /** Counts the players confirm when they answer a decision (clues found, damage soaked). */
 export interface DecisionAmounts {
@@ -60,14 +104,17 @@ interface FollowUpAnswer {
 /**
  * What the play screen can do to the open game, in the players' words. It mirrors `PlayTable`'s
  * verbs, but with the screen's defaults:
- * - An action is taken by the investigator whose turn it is, since the rules allow actions only
- *   during one's own turn; without a turn it is refused with `noTurnInProgress`. Investigate,
- *   engage, take a resource, draw, play, and move, fight and evade unless free, count off one of their actions, which the engine
- *   leaves to the players; with none left they are refused, and `adjustActions` grants more.
+ * - An action (`How`) is taken by the investigator whose turn it is, since the rules allow actions
+ *   only during one's own turn; without a turn it is refused with `noTurnInProgress`. The engine
+ *   counts off what it costs and refuses it when too few actions are left.
  * - The decision dialog shows the first open decision, so an answer picks an option of that one;
  *   without one it is refused with `noPendingDecision`.
  * - A skill test is never assumed passed (the chaos bag is on the table): an action leaves it
  *   open, and the players report it like any decision, by answering `pass` or `fail`.
+ * - Anything else the players change is one of two kinds. An effect they carry out from card text
+ *   is `perform`ed: a real command, so forced effects fire as the rules say. A mistake they fix is
+ *   `correct`ed: a `ManualAdjust`, which fires nothing. The one mix is `adjustTokens`, a token
+ *   stepper, which places doom added by rule.
  *
  * Each call is one step: stored before it shows, one undo group, and a refusal ends up in
  * `OpenGame.rejection`.
@@ -80,23 +127,23 @@ export interface GameActions {
   endTurn(): Promise<void>;
   /**
    * The turn investigator takes action number `action` of the card `card` offers them
-   * (`BoardView.cardActions`), such as the Parlor's Resign, counting off the action it costs
-   * unless it is free. For a group clue cost (`CardActionView.groupClues`), `spend` lists who pays
-   * how many (omitted, the taker pays what they can and the others the rest).
+   * (`BoardView.cardActions`), such as the Parlor's Resign; the engine counts off the action it
+   * costs unless it is free. For a group clue cost (`CardActionView.groupClues`), `spend` lists who
+   * pays how many (omitted, the taker pays what they can and the others the rest).
    */
   useCardAction(card: InstanceId, action: number, spend?: readonly ClueSpend[]): Promise<void>;
-  /** Changes the actions left this turn. */
-  adjustActions(delta: number): Promise<void>;
   /**
-   * A move to a connected location. As an action it counts off what it costs
-   * (`BoardView.actionCost`) and provokes attacks of opportunity; `free`, as a card allows it, it
-   * provokes none and counts off only what a card adds to it (Frozen in Fear). Without a cost, as
-   * the pawn's drag plays it, it counts nothing, since the drag catches the screen up with a move
-   * made at the table.
+   * A move to `location`. As an action or a free one, along a connection; by a card, connected or
+   * not (Astral Travel, Shortcut): as on any move, enemies engaged with them come along and ready
+   * enemies there engage. The pawn's drag moves its investigator by card, since it catches the
+   * screen up with a move made at the table.
    */
-  moveTo(location: InstanceId, cost?: ActionCost): Promise<void>;
-  /** An investigate action; its test stays open as a decision. */
-  investigate(): Promise<void>;
+  move(location: InstanceId, how?: How): Promise<void>;
+  /**
+   * An investigation of the investigator's own location, or of `location` when a card names
+   * another (In the Know). Its test stays open as a decision.
+   */
+  investigate(location?: InstanceId, how?: How): Promise<void>;
   /** The resource action: one action for one resource. */
   takeResource(): Promise<void>;
   /** The draw action; the card is drawn at the table. */
@@ -107,54 +154,14 @@ export interface GameActions {
    */
   playCard(cost?: number): Promise<void>;
   /**
-   * One clue from `location`, the investigator's own, without a test, as a card grants it: for the
-   * investigator whose turn it is, or for `investigator`, as a clue dragged onto their pawn says.
+   * A fight against `enemy`, at the fighter's location, or anywhere by a card (Marksmanship); its
+   * test stays open as a decision.
    */
-  takeClue(location: InstanceId, investigator?: InvestigatorId): Promise<void>;
-  /**
-   * `investigator` places one of their clues on their location, as a card or a failed test tells
-   * them to ("place 1 of your clues on your location"), and as a clue dragged off their card onto
-   * it says (`placeYourClues`).
-   */
-  placeClue(investigator: InvestigatorId): Promise<void>;
-  /**
-   * A fight; its test stays open as a decision. It is an action, counting off what it costs
-   * (`BoardView.actionCost`), unless `cost` says `free`, as a card can let an investigator fight
-   * without spending one; then it counts off only what a card adds to it.
-   */
-  fight(enemy: InstanceId, cost?: ActionCost): Promise<void>;
-  /** An evade; its test stays open as a decision. An action unless `cost` says `free`, like `fight`. */
-  evade(enemy: InstanceId, cost?: ActionCost): Promise<void>;
-  /** An engage action. */
-  engage(enemy: InstanceId): Promise<void>;
-  /**
-   * Moves `enemy` to `location` as a card instruction says, connected or not. The players follow
-   * the instruction whatever the engagement, so an engaged enemy disengages and moves too.
-   */
-  moveEnemy(enemy: InstanceId, location: InstanceId): Promise<void>;
-  /** `amount` damage on `enemy`, as a card effect deals it; enough of it defeats the enemy. */
-  damageEnemy(enemy: InstanceId, amount: number): Promise<void>;
-  /** `amount` damage healed from `enemy`, as a card effect heals it (`HealEnemy`). */
-  healEnemy(enemy: InstanceId, amount: number): Promise<void>;
-  /** A card effect disengages `enemy`; it stays where it is. */
-  disengageEnemy(enemy: InstanceId): Promise<void>;
-  /** A card effect defeats `enemy` outright. */
-  defeatEnemy(enemy: InstanceId): Promise<void>;
-  /** A card effect exhausts `enemy`; an engaged one stays engaged (Stall for Time). */
-  exhaustEnemy(enemy: InstanceId): Promise<void>;
-  /** A card effect readies `enemy`; an unengaged one then engages by the rules. */
-  readyEnemy(enemy: InstanceId): Promise<void>;
-  /**
-   * `investigator` evades `enemy` as a card effect says ("automatically evade", Stray Cat): it
-   * exhausts and disengages as after a passed evasion, without a test, an action or attacks of
-   * opportunity, unlike `evade`.
-   */
-  evadeEnemy(enemy: InstanceId, investigator: InvestigatorId): Promise<void>;
-  /**
-   * `enemy` engages `investigator`, at its location, as a card effect says (Heroic Rescue), without
-   * the action `engage` spends.
-   */
-  engageEnemy(enemy: InstanceId, investigator: InvestigatorId): Promise<void>;
+  fight(enemy: InstanceId, how?: How): Promise<void>;
+  /** An evasion of `enemy`, like `fight`; its test stays open as a decision. */
+  evade(enemy: InstanceId, how?: How): Promise<void>;
+  /** An engagement of `enemy` at the investigator's location; by a card it takes no action (Heroic Rescue). */
+  engage(enemy: InstanceId, how?: How): Promise<void>;
   /**
    * Picks `option` of the first open decision by its readable name (`DecisionView.options`), as the
    * decision dialog lists them, and with `then` the choice that option asks next
@@ -168,103 +175,16 @@ export interface GameActions {
    */
   advanceAct(spend?: readonly ClueSpend[]): Promise<void>;
   /**
-   * The act advances by hand (`Advance` of the act), whatever its objective, once the players have met one
-   * the engine leaves to them; it costs nothing and needs no turn.
-   */
-  advanceActByHand(): Promise<void>;
-  /** The scenario ends with `resolution` by hand (`EndScenario`), one the players reached at the table. */
-  endScenario(resolution: ResolutionId): Promise<void>;
-  /**
-   * The act's − / + bubble: `delta` more (or, negative, fewer) clues on the current act, a
-   * correction by hand that leaves the investigators' clues alone.
-   */
-  adjustActClues(delta: number): Promise<void>;
-  /** One tap on an investigator's stepper: `delta` more (or, negative, fewer) of `stat`. */
-  adjust(investigator: InvestigatorId, stat: SteppedStat, delta: number): Promise<void>;
-  /**
-   * One tap on a skill's stepper: the lasting boost of `skill` (`Investigator.skillBoosts`, what
-   * player cards in play add) changed by `delta`, a correction by hand (`ManualAdjust`).
-   */
-  boostSkill(investigator: InvestigatorId, skill: SkillName, delta: number): Promise<void>;
-  /**
-   * `investigator` draws the top card of the encounter deck, at any time, as player cards and
-   * effects say; it resolves like a mythos draw. Not tied to the turn, since any active
-   * investigator may be told to draw.
-   */
-  drawEncounter(investigator: InvestigatorId): Promise<void>;
-  /**
-   * Puts the encounter card `card` where `move` says, a correction by hand (`ManualAdjust`) for a
-   * revelation the engine left to the players: onto the discard pile, set aside or into a threat
-   * area. Enemies spawn with `spawnEnemy` instead, so the engine engages them by the rules.
-   */
-  moveEncounterCard(card: InstanceId, move: PileMove): Promise<void>;
-  /**
-   * Puts `enemy` beneath the current act (`MoveCard`), as a codex entry tells the players (Smoke
-   * and Mirrors' interrogated suspect). A game move, not a correction, so an objective that counts
-   * the cards beneath the act sees it.
-   */
-  putBeneathAct(enemy: InstanceId): Promise<void>;
-  /**
-   * Spawns `enemy` from a pile at `location`, which the players chose on the map: the engine
-   * engages it there by the rules (prey, Aloof), as if a card effect spawned it there.
-   */
-  spawnEnemy(enemy: InstanceId, location: InstanceId): Promise<void>;
-  /** Seals one `token` from the chaos bag on a card `investigator` controls, as the card says. */
-  sealToken(investigator: InvestigatorId, token: ChaosToken): Promise<void>;
-  /** Releases one `token` sealed on `investigator` back into the chaos bag. */
-  releaseToken(investigator: InvestigatorId, token: ChaosToken): Promise<void>;
-  /** Adds one bless or curse `token` from its pool to the chaos bag, as a card says; none while the pool is empty. */
-  addPoolToken(token: PoolToken): Promise<void>;
-  /** Takes one bless or curse `token` out of the chaos bag back to its pool, as a card says. */
-  removePoolToken(token: PoolToken): Promise<void>;
-  /** Doom on the current agenda. */
-  placeDoom(amount: number): Promise<void>;
-  /** Doom taken off the current agenda by hand (a card effect, a miscount). */
-  removeDoom(amount: number): Promise<void>;
-  /** Turns `location` face up, as a card effect says or the players catch up with the table. */
-  revealLocation(location: InstanceId): Promise<void>;
-  /**
-   * The players attach the player card `card` to `host`, an enemy or a location, as they did at the
-   * table (`AttachPlayerCard`, Handcuffs on an evaded enemy); the engine then keeps to what it does
-   * to its host.
-   */
-  attachPlayerCard(host: InstanceId, card: CardCode): Promise<void>;
-  /** Discards the card `card` in play, as its own Forced ability or another card says: a `MoveCard` onto the top of the encounter discard, which cleans it up as it leaves play. */
-  discardCard(card: InstanceId): Promise<void>;
-  /**
-   * `investigator` draws the weakness `card` from their deck (`DrawWeakness`), one of the
-   * catalog's that the game added to its card data; it resolves like an encounter card.
-   */
-  drawWeakness(investigator: InvestigatorId, card: CardCode): Promise<void>;
-  /**
-   * A card effect moves `investigator`, whoever's turn it is (Shortcut moves another
-   * investigator), to `location`, connected or not (Astral Travel, Esoteric Atlas):
-   * `MoveInvestigator` with `ignoreConnections`, taking no action and provoking no attacks of
-   * opportunity. As on any move, enemies engaged with them come along (a card that disengages
-   * first, Elusive, is a `disengageEnemy` before it) and ready enemies there engage.
-   */
-  moveByCard(investigator: InvestigatorId, location: InstanceId): Promise<void>;
-  /**
-   * A card has `investigator`, whoever's turn it is, investigate the location `target` (In the
-   * Know) or fight or evade the enemy `target` (Counterpunch after an attack, Marksmanship at a connecting location), at their
-   * location or another: `Investigate.locationId`, `Fight` and `Evade` with `atAnyLocation`, taking
-   * none of the turn's actions. The test stays open as a decision.
-   */
-  testByCard(kind: TestByCard, investigator: InvestigatorId, target: InstanceId): Promise<void>;
-  /**
    * `delta` more (or, negative, fewer) of `token` on `card` in play (a location, an enemy): one tap
    * on a location's stepper, or a token dragged from or to the token pool. Doom added is placed by
    * rule (`MoveTokens` from the pool), so effects that count placed doom see it; the rest are
-   * corrections by hand (`ManualAdjust`), like the header's `removeDoom`.
+   * corrections.
    */
   adjustTokens(card: InstanceId, token: LooseToken, delta: number): Promise<void>;
-  /**
-   * One doom moved from the card `from` to the card `to` (a location, an enemy, the agenda), as one
-   * step.
-   * The doom in play stays the same, so it is a correction by hand on both (`ManualAdjust`), not
-   * doom placed.
-   */
-  moveDoom(from: InstanceId, to: InstanceId): Promise<void>;
+  /** The players carry out `effects` from card text, in order, as one step. */
+  perform(...effects: readonly PlayerEffect[]): Promise<void>;
+  /** The players fix a mistake with `adjustments`, in order, as one step (`ManualAdjust`). */
+  correct(...adjustments: readonly Adjustment[]): Promise<void>;
   /** Takes back the last step; never the scenario start. */
   undo(): Promise<void>;
   /**
@@ -276,8 +196,8 @@ export interface GameActions {
 
 /**
  * The play screen's actions over a `PlayTable` that `play` runs one step at a time and stores, and
- * the `undo` that takes a step back, or every step after the step it names. The table stays behind this facade, so its test defaults and
- * its matchers never reach a component.
+ * the `undo` that takes a step back, or every step after the step it names. The table stays behind
+ * this facade, so its test defaults and its matchers never reach a component.
  */
 export function gameActions(
   play: (step: (table: PlayTable) => void) => Promise<void>,
@@ -285,6 +205,13 @@ export function gameActions(
 ): GameActions {
   const onTurn = (action: (table: PlayTable, investigator: InvestigatorId) => void) =>
     play((table) => action(table, turnInvestigator(table.state)));
+  /** Plays `command` for the investigator `how` names, as an action of theirs unless by card. */
+  const taking = (how: How, command: (investigator: InvestigatorId) => TurnActionCommand) =>
+    typeof how === 'object'
+      ? play((table) => table.play(command(how.byCard)))
+      : onTurn((table, investigator) =>
+          table.play({ ...command(investigator), asAction: how === 'free' ? 'free' : true }),
+        );
   return {
     nextPhase: () => play((table) => void table.nextPhase()),
     startTurn: (investigator) => play((table) => table.startTurn(investigator)),
@@ -298,66 +225,42 @@ export function gameActions(
           spend?.map(({ investigator: payer, clues }) => [payer, clues]),
         );
       }),
-    adjustActions: (delta) =>
-      onTurn((table, investigator) => table.adjustActions(investigator, delta)),
-    moveTo: (location, cost) => {
-      const move = (table: PlayTable, investigator: InvestigatorId) =>
-        table.play({ type: 'MoveInvestigator', investigatorId: investigator, to: location });
-      switch (cost) {
-        case 'action':
-        case 'free':
-          return onTurn((table, investigator) =>
-            table.moveTo(investigator, location, { free: cost === 'free' }),
-          );
-        case undefined:
-          return onTurn(move);
-        default:
-          return assertNever(cost);
-      }
-    },
-    investigate: () =>
-      onTurn((table, investigator) => table.investigate(investigator, { result: 'open' })),
+    move: (location, how = 'action') =>
+      taking(how, (investigator) => ({
+        type: 'MoveInvestigator',
+        investigatorId: investigator,
+        to: location,
+        ...(typeof how === 'object' && { ignoreConnections: true }),
+      })),
+    investigate: (location, how = 'action') =>
+      taking(how, (investigator) => ({
+        type: 'Investigate',
+        investigatorId: investigator,
+        ...(location !== undefined && { locationId: location }),
+      })),
     takeResource: () => onTurn((table, investigator) => table.takeResource(investigator)),
     drawCard: () => onTurn((table, investigator) => table.drawCard(investigator)),
     playCard: (cost) => onTurn((table, investigator) => table.playCard(investigator, cost)),
-    takeClue: (location, investigator) =>
-      play((table) =>
-        table.play({
-          type: 'DiscoverClues',
-          investigatorId: investigator ?? turnInvestigator(table.state),
-          locationId: location,
-          amount: 1,
-        }),
-      ),
-    placeClue: (investigator) => play((table) => table.play(placeYourClues(1, investigator))),
-    fight: (enemy, cost = 'action') =>
-      onTurn((table, investigator) =>
-        table.fight(investigator, enemy, { result: 'open', free: cost === 'free' }),
-      ),
-    evade: (enemy, cost = 'action') =>
-      onTurn((table, investigator) =>
-        table.evade(investigator, enemy, { result: 'open', free: cost === 'free' }),
-      ),
-    engage: (enemy) => onTurn((table, investigator) => table.engage(investigator, enemy)),
-    moveEnemy: (enemy, location) =>
-      play((table) => table.moveEnemy(enemy, location, { forced: true })),
-    damageEnemy: (enemy, amount) =>
-      play((table) => table.play({ type: 'DamageEnemy', enemyId: enemy, amount })),
-    healEnemy: (enemy, amount) =>
-      play((table) => table.play({ type: 'HealEnemy', enemyId: enemy, amount })),
-    disengageEnemy: (enemy) =>
-      play((table) => table.play({ type: 'DisengageEnemy', enemyId: enemy })),
-    defeatEnemy: (enemy) => play((table) => table.play({ type: 'DefeatEnemy', enemyId: enemy })),
-    exhaustEnemy: (enemy) => play((table) => table.play({ type: 'ExhaustEnemy', enemyId: enemy })),
-    readyEnemy: (enemy) => play((table) => table.play({ type: 'ReadyEnemy', enemyId: enemy })),
-    evadeEnemy: (enemy, investigator) =>
-      play((table) =>
-        table.play({ type: 'EvadeEnemy', enemyId: enemy, investigatorId: investigator }),
-      ),
-    engageEnemy: (enemy, investigator) =>
-      play((table) =>
-        table.play({ type: 'EngageEnemy', enemyId: enemy, investigatorId: investigator }),
-      ),
+    fight: (enemy, how = 'action') =>
+      taking(how, (investigator) => ({
+        type: 'Fight',
+        investigatorId: investigator,
+        enemyId: enemy,
+        ...(typeof how === 'object' && { atAnyLocation: true }),
+      })),
+    evade: (enemy, how = 'action') =>
+      taking(how, (investigator) => ({
+        type: 'Evade',
+        investigatorId: investigator,
+        enemyId: enemy,
+        ...(typeof how === 'object' && { atAnyLocation: true }),
+      })),
+    engage: (enemy, how = 'action') =>
+      taking(how, (investigator) => ({
+        type: 'EngageEnemy',
+        investigatorId: investigator,
+        enemyId: enemy,
+      })),
     answer: (option, counts = {}, then) =>
       play((table) => {
         const decision = firstDecision(table.state);
@@ -375,109 +278,6 @@ export function gameActions(
           spend?.map(({ investigator, clues }) => [investigator, clues]),
         ),
       ),
-    advanceActByHand: () => play((table) => table.play({ type: 'Advance', deck: 'act' })),
-    endScenario: (resolution) => play((table) => table.play({ type: 'EndScenario', resolution })),
-    adjustActClues: (delta) =>
-      play((table) =>
-        table.play({
-          type: 'ManualAdjust',
-          adjustment: { kind: 'tokens', cardId: currentAct(table.state), token: 'clue', delta },
-        }),
-      ),
-    adjust: (investigator, stat, delta) =>
-      play((table) =>
-        // A stepper is the players' correction, so it may also take a counter down.
-        table.play({ type: 'AdjustInvestigator', investigatorId: investigator, stat, delta }),
-      ),
-    boostSkill: (investigator, skill, delta) =>
-      play((table) =>
-        table.play({
-          type: 'ManualAdjust',
-          adjustment: { kind: 'skillBoost', investigatorId: investigator, skill, delta },
-        }),
-      ),
-    drawEncounter: (investigator) => play((table) => table.drawEncounterCard(investigator)),
-    moveEncounterCard: (card, move) =>
-      play((table) =>
-        table.play({
-          type: 'ManualAdjust',
-          adjustment: { kind: 'moveCard', cardId: card, ...placeOf(move) },
-        }),
-      ),
-    putBeneathAct: (enemy) =>
-      play((table) =>
-        table.play({
-          type: 'MoveCard',
-          cardId: enemy,
-          to: { kind: 'beneath', hostId: currentAct(table.state) },
-        }),
-      ),
-    spawnEnemy: (enemy, location) =>
-      play((table) => table.play({ type: 'SpawnEnemy', enemyId: enemy, at: location })),
-    sealToken: (investigator, token) =>
-      play((table) => table.play({ type: 'SealChaosToken', token, investigatorId: investigator })),
-    releaseToken: (investigator, token) =>
-      play((table) =>
-        table.play({ type: 'ReleaseChaosToken', token, investigatorId: investigator }),
-      ),
-    addPoolToken: (token) =>
-      play((table) =>
-        table.play({ type: 'ChangeChaosBag', token, change: 'add', lasts: 'scenario' }),
-      ),
-    removePoolToken: (token) =>
-      play((table) =>
-        table.play({ type: 'ChangeChaosBag', token, change: 'remove', lasts: 'scenario' }),
-      ),
-    placeDoom: (amount) => play((table) => table.placeDoom(amount)),
-    removeDoom: (amount) => play((table) => table.removeDoom(amount)),
-    revealLocation: (location) =>
-      play((table) => table.play({ type: 'RevealLocation', locationId: location })),
-    attachPlayerCard: (host, card) =>
-      play((table) => table.play({ type: 'AttachPlayerCard', hostId: host, code: card })),
-    discardCard: (card) =>
-      play((table) =>
-        table.play({ type: 'MoveCard', cardId: card, to: { kind: 'encounterDiscard' }, index: 0 }),
-      ),
-    drawWeakness: (investigator, card) =>
-      play((table) =>
-        table.play({ type: 'DrawWeakness', investigatorId: investigator, code: card }),
-      ),
-    testByCard: (kind, investigator, target) =>
-      play((table) => {
-        switch (kind) {
-          case 'investigate':
-            return table.play({
-              type: 'Investigate',
-              investigatorId: investigator,
-              locationId: target,
-            });
-          case 'fight':
-            return table.play({
-              type: 'Fight',
-              investigatorId: investigator,
-              enemyId: target,
-              atAnyLocation: true,
-            });
-          case 'evade':
-            return table.play({
-              type: 'Evade',
-              investigatorId: investigator,
-              enemyId: target,
-              atAnyLocation: true,
-            });
-          default:
-            return assertNever(kind);
-        }
-      }),
-    moveByCard: (investigator, location) =>
-      play((table) =>
-        table.play({
-          type: 'MoveInvestigator',
-          investigatorId: investigator,
-          to: location,
-          ignoreConnections: true,
-        }),
-      ),
     adjustTokens: (card, token, delta) =>
       play((table) =>
         table.play(
@@ -489,34 +289,17 @@ export function gameActions(
               },
         ),
       ),
-    moveDoom: (from, to) =>
+    perform: (...effects) =>
       play((table) => {
-        table.play({
-          type: 'ManualAdjust',
-          adjustment: { kind: 'tokens', cardId: from, token: 'doom', delta: -1 },
-        });
-        table.play({
-          type: 'ManualAdjust',
-          adjustment: { kind: 'tokens', cardId: to, token: 'doom', delta: 1 },
-        });
+        for (const effect of effects) table.play(effect);
+      }),
+    correct: (...adjustments) =>
+      play((table) => {
+        for (const adjustment of adjustments) table.play({ type: 'ManualAdjust', adjustment });
       }),
     undo: () => undo(),
     undoTo: (stepId) => undo(stepId),
   };
-}
-
-/** The zone (and, for the discard pile, the top) a `PileMove` puts a card in. */
-function placeOf(move: PileMove): { to: Zone; index?: number } {
-  switch (move.to) {
-    case 'discard':
-      return { to: encounterDiscard, index: 0 };
-    case 'setAside':
-      return { to: setAside };
-    case 'threatArea':
-      return { to: threatAreaOf(move.investigator) };
-    default:
-      return assertNever(move);
-  }
 }
 
 /** Whose turn it is; refused like an engine command when no one's is. */
@@ -524,13 +307,6 @@ function turnInvestigator(state: GameState): InvestigatorId {
   const investigator = state.meta.turn?.investigatorId;
   if (investigator === undefined) throw new CommandRejected({ code: 'noTurnInProgress' });
   return investigator;
-}
-
-/** The act the act card shows; refused like an engine command when the act deck is done. */
-function currentAct(state: GameState): InstanceId {
-  const act = state.act.current;
-  if (act === undefined) throw new CommandRejected({ code: 'noCurrentCard', deck: 'act' });
-  return act;
 }
 
 /** Answers `decision` with the option named `option` and its counts. */

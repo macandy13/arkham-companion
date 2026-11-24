@@ -384,7 +384,7 @@ function AgendaStatus({
         value: String(agenda.doom),
         lower: { label: t('header.removeDoom'), disabled: blocked || agenda.doom === 0 },
         raise: { label: t('header.addDoom'), disabled: blocked },
-        onStep: (delta: -1 | 1) => void (delta < 0 ? actions.removeDoom(1) : actions.placeDoom(1)),
+        onStep: (delta: -1 | 1) => void actions.adjustTokens(agenda.id, 'doom', delta),
       },
     ],
   };
@@ -485,7 +485,8 @@ function ActStatus({
               value: String(act.clues),
               lower: { label: t('header.removeClue'), disabled: blocked || act.clues === 0 },
               raise: { label: t('header.addClue'), disabled: blocked },
-              onStep: (delta: -1 | 1) => void actions.adjustActClues(delta),
+              onStep: (delta: -1 | 1) =>
+                void actions.correct({ kind: 'tokens', cardId: act.id, token: 'clue', delta }),
             },
           ],
         }
@@ -580,7 +581,7 @@ function ActStatus({
           confirmLabel={t('header.advanceActByHand')}
           onConfirm={() => {
             setConfirming(false);
-            void actions.advanceActByHand();
+            void actions.perform({ type: 'Advance', deck: 'act' });
           }}
           onCancel={() => setConfirming(false)}
         >

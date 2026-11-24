@@ -8,6 +8,7 @@ import {
   type InvestigatorView,
   type MapEnemyView,
   type SkillName,
+  placeYourClues,
 } from '@arkham/engine';
 import { Brain, Heart } from '../catalog/cardFace';
 import { range } from '@arkham/util';
@@ -32,6 +33,7 @@ import { CounterBubble, type BubbleSide } from '../screens/CounterBubble';
 import { useDoubleTap, useDoubleTapOn } from '../screens/useDoubleTap';
 import './investigators.css';
 import './card_effects.css';
+import { takeOneClue } from '../state/gameActions';
 
 /**
  * The bar of investigator panels along the foot of the play screen, one per investigator in seat
@@ -460,7 +462,13 @@ function Skills({
                 label: t('investigators.raiseBoost', { skill: t(`skill.${boosting.skill}`) }),
                 disabled: off,
               },
-              onStep: (delta) => void actions.boostSkill(investigator.id, boosting.skill, delta),
+              onStep: (delta) =>
+                void actions.correct({
+                  kind: 'skillBoost',
+                  investigatorId: investigator.id,
+                  skill: boosting.skill,
+                  delta,
+                }),
             },
           ]}
           onClose={() => setBoosting(undefined)}
@@ -501,7 +509,9 @@ function Counters({
 }) {
   const { t } = useTranslation();
   const { id, health, damage, sanity, horror } = investigator;
-  const adjust = (stat: SteppedStat, delta: number) => void actions.adjust(id, stat, delta);
+  // A stepper's damage or horror defeats by the rules, so it is performed, not corrected.
+  const adjust = (stat: SteppedStat, delta: number) =>
+    void actions.perform({ type: 'AdjustInvestigator', investigatorId: id, stat, delta });
   // A defeated or resigned investigator has left the game, so their counters no longer change.
   const off = busy || investigator.status !== 'active';
   const clueDrag = useClueDrag(board, id, actions);
@@ -536,7 +546,10 @@ function Counters({
         disabled: off || at === undefined || investigator.clues === 0,
       },
       raise: { label: t('investigators.takeClue'), disabled: off || cluesAt === 0 },
-      onStep: (delta) => void (delta < 0 ? actions.placeClue(id) : at && actions.takeClue(at, id)),
+      onStep: (delta) =>
+        void (delta < 0
+          ? actions.perform(placeYourClues(1, id))
+          : at && actions.perform(takeOneClue(at, id))),
     },
     resources: {
       label: t('investigators.resources'),

@@ -5,8 +5,8 @@ import type { GameActions } from '../state/gameActions';
 
 /**
  * The − / + bubble a double tap on an enemy opens (M6.10), on the map or in a threat area, titled
- * with its name: its damage, dealt by rule (`GameActions.damageEnemy`, which defeats it at its
- * health) and healed (`healEnemy`), and its doom (`adjustTokens`). Its buttons are off while a
+ * with its name: its damage, dealt by rule (`DamageEnemy`, performed, which defeats it at its
+ * health) and healed (`HealEnemy`), and its doom (`adjustTokens`). Its buttons are off while a
  * step is queued (`busy`).
  */
 export function EnemyBubble({
@@ -32,7 +32,11 @@ export function EnemyBubble({
       lower: { label: t('enemy.heal'), disabled: busy || damage === 0 },
       raise: { label: t('enemy.damage'), disabled: busy },
       onStep: (delta) =>
-        void (delta < 0 ? actions.healEnemy(enemy.id, 1) : actions.damageEnemy(enemy.id, 1)),
+        void actions.perform({
+          type: delta < 0 ? 'HealEnemy' : 'DamageEnemy',
+          enemyId: enemy.id,
+          amount: 1,
+        }),
     },
     {
       label: t('enemy.doomCount'),

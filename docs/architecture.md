@@ -61,7 +61,7 @@ sequenceDiagram
   participant PT as PlayTable
   participant E as execute
   participant DB as GameStore
-  UI->>AS: actions.moveTo(hallway, 'action')
+  UI->>AS: actions.move(hallway)
   AS->>GS: play(step), strictly in order
   GS->>PT: table.step: moveTo
   PT->>E: MoveInvestigator (asAction)
@@ -73,7 +73,7 @@ sequenceDiagram
   AS-->>UI: publish OpenGame (new BoardView), or a toast
 ```
 
-1. A component calls an action on the app store's [`GameActions`](../apps/web/src/state/gameActions.ts) (`actions.moveTo(hallway)`).
+1. A component calls an action on the app store's [`GameActions`](../apps/web/src/state/gameActions.ts) (`actions.move(hallway)`).
 2. The [`GameSession`](../apps/web/src/state/gameSession.ts) plays it as one step on its `PlayTable`, which sends `Command`s through [`execute`](../packages/engine/src/execute.ts).
 3. [`handle`](../packages/engine/src/handle.ts) checks each command and returns every `Event` it causes, forced effects included, or throws `CommandRejected`.
 4. [`replay`](../packages/engine/src/reducer.ts) folds the events into the new `GameState`.

@@ -36,6 +36,7 @@ import { overHeaderCard, overTokenPool } from '../screens/headerDropTarget';
 import { TokenGhost } from '../screens/TokenGhost';
 import type { GameTokenKind } from '../tokens/GameToken';
 import './map.css';
+import { takeOneClue } from '../state/gameActions';
 
 /**
  * The visible maps of the open game, each drawn as an SVG of its location tiles at their book
@@ -154,18 +155,19 @@ type DraggedPiece = TilePiece & { from: InstanceId };
  * drag, zoom with the wheel or a pinch, and fit back with "Fit map". The drawing starts fitted to
  * the map area, and zooming out never goes below that, so the whole map is always one tap away.
  * Pieces are dragged to play what the players do on the table:
- * - The pawn of the investigator whose turn it is, dropped on another location, is a move action
- *   (`GameActions.moveTo`); the other pawns stay put, as only that investigator acts.
+ * - The pawn of the investigator whose turn it is, dropped on another location, moves them there
+ *   by card (`GameActions.move`): no action, since the drag catches the screen up with a move made
+ *   at the table; the other pawns stay put, as only that investigator acts.
  * - An enemy dropped on that pawn is an engage action (`GameActions.engage`).
  * - An enemy dropped on another location moves there as a card instruction says
- *   (`GameActions.moveEnemy`); the players drag it only when a card tells them to, so the map
+ *   (`MoveEnemy` with `forced`, performed); the players drag it only when a card tells them to, so the map
  *   does not ask which card.
  * - A clue dragged off a location onto the pawn of an investigator there, or onto their panel
  *   beside the map (`investigatorAt`), is theirs, discovered as a card grants it
- *   (`GameActions.takeClue`), whoever's turn it is. It follows the pointer over the whole page as
+ *   (`takeOneClue`, performed), whoever's turn it is. It follows the pointer over the whole page as
  *   a clue token (`TokenGhost`).
  * - Doom dragged off a location or an enemy onto another location, an enemy (`enemyAt`) or the
- *   agenda in the header (`overHeaderCard`) moves there (`GameActions.moveDoom`); it follows the
+ *   agenda in the header (`overHeaderCard`) moves there, a correction (`GameActions.correct`), as the doom in play stays the same; it follows the
  *   pointer as a doom token. A tap on an enemy's doom opens the enemy, like a tap on the enemy.
  * - A clue or doom dropped on the header's token pool (`overTokenPool`, `TokenPool`) goes back to
  *   it (`GameActions.adjustTokens`), and so does damage dragged off an enemy's damage badge,
@@ -234,11 +236,12 @@ function MapDrawing({
         const taker =
           investigatorAt(client) ??
           board.investigatorsAt(piece.from).find(({ id }) => onPawnOf(id, point))?.id;
-        if (taker) void actions.takeClue(piece.from, taker);
+        if (taker) void actions.perform(takeOneClue(piece.from, taker));
         return;
       }
       if ('enemyDamage' in piece) {
-        if (overTokenPool(client)) void actions.healEnemy(piece.enemyDamage.id, 1);
+        if (overTokenPool(client))
+          void actions.perform({ type: 'HealEnemy', enemyId: piece.enemyDamage.id, amount: 1 });
         return;
       }
       if ('doom' in piece || 'enemyDoom' in piece) {
@@ -247,7 +250,12 @@ function MapDrawing({
           ? board.agenda?.id
           : (enemyAt(client) ?? tileAt(cells, point));
         if (overTokenPool(client)) void actions.adjustTokens(from, 'doom', -1);
-        else if (to !== undefined && to !== from) void actions.moveDoom(from, to);
+        else if (to !== undefined && to !== from)
+          // The doom in play stays the same, so moving it is a correction, not doom placed.
+          void actions.correct(
+            { kind: 'tokens', cardId: from, token: 'doom', delta: -1 },
+            { kind: 'tokens', cardId: to, token: 'doom', delta: 1 },
+          );
         return;
       }
       if ('enemy' in piece && moverCentre && onPawn(moverCentre, point)) {
@@ -262,7 +270,9 @@ function MapDrawing({
         at: point,
         to,
       });
-      void ('enemy' in piece ? actions.moveEnemy(piece.enemy.id, to) : actions.moveTo(to));
+      void ('enemy' in piece
+        ? actions.perform({ type: 'MoveEnemy', enemyId: piece.enemy.id, to, forced: true })
+        : actions.move(to, { byCard: piece.investigator.id }));
     },
     (piece, event) => {
       const enemy = enemyOf(piece);

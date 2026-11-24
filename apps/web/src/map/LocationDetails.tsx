@@ -15,6 +15,7 @@ import { SplitAction } from '../screens/SplitAction';
 import type { GameActions } from '../state/gameActions';
 import { CardPatterns, LocationTile } from './LocationTile';
 import { TILE } from './mapLayout';
+import { takeOneClue } from '../state/gameActions';
 
 /**
  * One location in full, opened by a tap on its tile or its details button on a tablet or wider,
@@ -210,7 +211,7 @@ function LocationPage({
         name: t('byCard.testBy', { test: t('byCard.investigate'), name }),
         onPick: () => {
           leaveFor('test');
-          void actions.testByCard('investigate', id, location.id);
+          void actions.investigate(location.id, { byCard: id });
         },
       }))
     : [];
@@ -270,7 +271,9 @@ function LocationPage({
             <button
               type="button"
               disabled={busy}
-              onClick={() => void actions.revealLocation(location.id)}
+              onClick={() =>
+                void actions.perform({ type: 'RevealLocation', locationId: location.id })
+              }
             >
               {t('location.reveal')}
             </button>
@@ -328,7 +331,9 @@ function locationActions(
         icon: 'clue',
         cost: 0,
         play:
-          location.clues > 0 && !cannotDiscover ? () => actions.takeClue(location.id) : undefined,
+          location.clues > 0 && !cannotDiscover
+            ? () => actions.perform(takeOneClue(location.id, turn))
+            : undefined,
         then: 'stay',
       },
     ];
@@ -340,14 +345,14 @@ function locationActions(
       key: 'moveAction',
       icon: 'move',
       cost: board.actionCost(turn, 'move'),
-      play: () => actions.moveTo(location.id, 'action'),
+      play: () => actions.move(location.id),
       then: 'leave',
     },
     {
       key: 'moveFree',
       icon: 'move',
       cost: board.actionCost(turn, 'move', { free: true }),
-      play: () => actions.moveTo(location.id, 'free'),
+      play: () => actions.move(location.id, 'free'),
       then: 'leave',
     },
   ];

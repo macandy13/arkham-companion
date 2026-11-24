@@ -8,7 +8,7 @@ import { weaknessGroups } from './weakness_groups';
 /**
  * "Draw a weakness" on an investigator's whole card: the players drew a weakness enemy or
  * treachery from their deck (Mob Enforcer, Haunted), so the app puts it into play
- * (`GameActions.drawWeakness`) and it resolves like an encounter card. The button opens a dialog
+ * (a performed `DrawWeakness`) and it resolves like an encounter card. The button opens a dialog
  * to pick it from the catalog's `weaknesses` (`DrawWeaknessDialog`). Nothing until the catalog has
  * them.
  */
@@ -35,7 +35,13 @@ export function DrawWeakness({
         <DrawWeaknessDialog
           investigator={investigator}
           weaknesses={weaknesses}
-          onDraw={(card) => void actions.drawWeakness(investigator.id, card.code)}
+          onDraw={(card) =>
+            void actions.perform({
+              type: 'DrawWeakness',
+              investigatorId: investigator.id,
+              code: card.code,
+            })
+          }
           onClose={() => setPicking(false)}
         />
       )}

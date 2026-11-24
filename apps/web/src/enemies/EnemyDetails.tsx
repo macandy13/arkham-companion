@@ -9,6 +9,7 @@ import { useBackCloses } from '../screens/useBackCloses';
 import { EnemyCard } from './EnemyCard';
 import { healthLeft } from './enemyHealth';
 import './enemies.css';
+import { type How } from '../state/gameActions';
 
 /**
  * One enemy in full, opened by a tap on its card or its map token, on the card shell
@@ -64,11 +65,12 @@ export function EnemyDetails({
   const left = healthLeft(enemy);
   const effects = board.enemyCardEffects(enemy.id);
   const testers = board.investigatorsInPlay;
+  const { act } = board;
   const tested = (['fight', 'evade'] as const).filter(
     (kind) => allowed.includes(kind) || testers.length > 0,
   );
-  const testAs = (kind: 'fight' | 'evade', cost?: 'free') =>
-    kind === 'fight' ? actions.fight(enemy.id, cost) : actions.evade(enemy.id, cost);
+  const testAs = (kind: 'fight' | 'evade', how?: How) =>
+    kind === 'fight' ? actions.fight(enemy.id, how) : actions.evade(enemy.id, how);
 
   return (
     <DetailsDialog
@@ -133,7 +135,7 @@ export function EnemyDetails({
                   ...testers.map(({ id, name }) => ({
                     key: id,
                     name: t('byCard.testBy', { test: t(`byCard.${kind}`), name }),
-                    onPick: step(() => actions.testByCard(kind, id, enemy.id), 'host'),
+                    onPick: step(() => testAs(kind, { byCard: id }), 'host'),
                   })),
                 ]}
                 disabled={busy}
@@ -166,7 +168,10 @@ export function EnemyDetails({
             caption={t('enemy.caption.damage')}
             name={t('enemy.damage')}
             disabled={busy}
-            onClick={step(() => actions.damageEnemy(enemy.id, 1), 'stay')}
+            onClick={step(
+              () => actions.perform({ type: 'DamageEnemy', enemyId: enemy.id, amount: 1 }),
+              'stay',
+            )}
           />
           {enemy.engagedWith !== undefined && (
             <ActionButton
@@ -174,7 +179,10 @@ export function EnemyDetails({
               caption={t('enemy.caption.disengage')}
               name={t('enemy.disengage')}
               disabled={busy}
-              onClick={step(() => actions.disengageEnemy(enemy.id), 'close')}
+              onClick={step(
+                () => actions.perform({ type: 'DisengageEnemy', enemyId: enemy.id }),
+                'close',
+              )}
             />
           )}
           {enemy.exhausted ? (
@@ -183,7 +191,10 @@ export function EnemyDetails({
               caption={t('enemy.caption.ready')}
               name={t('enemy.ready')}
               disabled={busy}
-              onClick={step(() => actions.readyEnemy(enemy.id), 'stay')}
+              onClick={step(
+                () => actions.perform({ type: 'ReadyEnemy', enemyId: enemy.id }),
+                'stay',
+              )}
             />
           ) : (
             <ActionButton
@@ -191,7 +202,10 @@ export function EnemyDetails({
               caption={t('enemy.caption.exhaust')}
               name={t('enemy.exhaust')}
               disabled={busy}
-              onClick={step(() => actions.exhaustEnemy(enemy.id), 'stay')}
+              onClick={step(
+                () => actions.perform({ type: 'ExhaustEnemy', enemyId: enemy.id }),
+                'stay',
+              )}
             />
           )}
           {effects.evade.map((investigator) => (
@@ -201,7 +215,15 @@ export function EnemyDetails({
               caption={t('enemy.caption.evaded')}
               name={t('enemy.evadedBy', { name: board.investigator(investigator).name })}
               disabled={busy}
-              onClick={step(() => actions.evadeEnemy(enemy.id, investigator), 'close')}
+              onClick={step(
+                () =>
+                  actions.perform({
+                    type: 'EvadeEnemy',
+                    enemyId: enemy.id,
+                    investigatorId: investigator,
+                  }),
+                'close',
+              )}
             />
           ))}
           {effects.engage.map((investigator) => (
@@ -211,7 +233,7 @@ export function EnemyDetails({
               caption={t('enemy.caption.engage')}
               name={t('enemy.engages', { name: board.investigator(investigator).name })}
               disabled={busy}
-              onClick={step(() => actions.engageEnemy(enemy.id, investigator), 'stay')}
+              onClick={step(() => actions.engage(enemy.id, { byCard: investigator }), 'stay')}
             />
           ))}
           <ActionButton
@@ -219,15 +241,26 @@ export function EnemyDetails({
             caption={t('enemy.caption.defeat')}
             name={t('enemy.defeat')}
             disabled={busy}
-            onClick={step(() => actions.defeatEnemy(enemy.id), 'close')}
+            onClick={step(
+              () => actions.perform({ type: 'DefeatEnemy', enemyId: enemy.id }),
+              'close',
+            )}
           />
-          {board.act?.takesCardsBeneath && (
+          {act?.takesCardsBeneath && (
             <ActionButton
               icon="beneathAct"
               caption={t('enemy.caption.beneathAct')}
               name={t('enemy.beneathAct')}
               disabled={busy}
-              onClick={step(() => actions.putBeneathAct(enemy.id), 'close')}
+              onClick={step(
+                () =>
+                  actions.perform({
+                    type: 'MoveCard',
+                    cardId: enemy.id,
+                    to: { kind: 'beneath', hostId: act.id },
+                  }),
+                'close',
+              )}
             />
           )}
         </ActionGroup>

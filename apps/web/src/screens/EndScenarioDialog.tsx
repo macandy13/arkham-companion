@@ -7,7 +7,7 @@ import { ConfirmDialog } from './ConfirmDialog';
 /**
  * Ends the scenario by hand (MC2.19), from the play screen's menu: the scenario's `resolutions`
  * (`BoardView.resolutions`) as radios, the first one picked, for an ending the engine leaves to
- * the players. `onEnd` plays the picked one (`GameActions.endScenario`); the resolution dialog
+ * the players. `onEnd` plays the picked one (a performed `EndScenario`); the resolution dialog
  * then opens over the ended game as after any other ending, where the players can still pick
  * "No resolution".
  */

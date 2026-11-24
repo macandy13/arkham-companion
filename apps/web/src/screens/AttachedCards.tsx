@@ -7,6 +7,7 @@ import type { GameActions } from '../state/gameActions';
 import { useCardPicture } from '../catalog/cardImages';
 import { TuckedCardsContext } from './CardDialog';
 import { CardZoom } from './CardZoom';
+import { encounterDiscard } from '@arkham/engine';
 
 /**
  * The cards attached to a location or an enemy (`host`), fanned as small cards across the bottom
@@ -14,7 +15,7 @@ import { CardZoom } from './CardZoom';
  * dialog they go to its `TuckedCardsContext` slot, since the scrolling page would cut them off;
  * in the phone's location mode they stay in place. A card opens large to read, its picture saying
  * what it does (`CardZoom`), with Discard under it, as a Forced ability or a card says
- * (`GameActions.discardCard`). A dashed card at the end attaches a player card the players
+ * (a performed `MoveCard` onto the encounter discard). A dashed card at the end attaches a player card the players
  * attached at the table (`AttachCardDialog`), one of those that attach to a card of the host's
  * type (`attachableCards`). Nothing is tapped while a step is queued (`busy`).
  */
@@ -67,7 +68,12 @@ export function AttachedCards({
             disabled={busy}
             onClick={() => {
               setZoomed(undefined);
-              void actions.discardCard(zoomed.id);
+              void actions.perform({
+                type: 'MoveCard',
+                cardId: zoomed.id,
+                to: encounterDiscard,
+                index: 0,
+              });
             }}
           >
             {t('attached.discardCard', { card: zoomed.name })}
@@ -78,7 +84,9 @@ export function AttachedCards({
         <AttachCardDialog
           host={name}
           cards={attachable}
-          onAttach={(card) => void actions.attachPlayerCard(host, card.code)}
+          onAttach={(card) =>
+            void actions.perform({ type: 'AttachPlayerCard', hostId: host, code: card.code })
+          }
           onClose={() => setAttaching(false)}
         />
       )}

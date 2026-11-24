@@ -201,12 +201,16 @@ export function GameScreen({
                 spawning
                   ? (location) => {
                       store.getState().cancelSpawn();
-                      void store.getState().actions.spawnEnemy(spawning.id, location);
+                      void store.getState().actions.perform({
+                        type: 'SpawnEnemy',
+                        enemyId: spawning.id,
+                        at: location,
+                      });
                     }
                   : mover
                     ? (location) => {
                         store.getState().cancelMoveByCard();
-                        void store.getState().actions.moveByCard(mover.id, location);
+                        void store.getState().actions.move(location, { byCard: mover.id });
                       }
                     : picking
                       ? pickAnswer

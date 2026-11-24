@@ -126,7 +126,7 @@ export function GameStatus({
           resolutions={board.resolutions}
           onEnd={(resolution) => {
             setEnding(false);
-            void actions.endScenario(resolution);
+            void actions.perform({ type: 'EndScenario', resolution });
           }}
           onCancel={() => setEnding(false)}
         />
