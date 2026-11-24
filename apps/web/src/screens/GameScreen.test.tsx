@@ -7,13 +7,14 @@ import {
   cardCode,
   cardDbWith,
   cardImagePath,
+  type CardStats,
+  instanceId,
+  type InvestigatorCard,
   investigatorCardStats,
   investigatorCode,
   investigatorId,
-  instanceId,
-  type CardStats,
-  type InvestigatorCard,
   placeDoomOnAgenda,
+  takeOneClue,
 } from '@arkham/engine';
 import { theGathering, theGatheringCards } from '@arkham/scenarios';
 import { initI18n } from '../i18n';
@@ -23,7 +24,6 @@ import { createAppStore } from '../state/appStore';
 import { IndexedDbStore } from '../storage/IndexedDbStore';
 import type { CatalogSource } from '../catalog/useCatalog';
 import { GameScreen } from './GameScreen';
-import { takeOneClue } from '../state/gameActions';
 
 const alder: InvestigatorCard = {
   code: investigatorCode('alder'),

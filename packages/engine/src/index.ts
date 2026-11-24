@@ -17,6 +17,7 @@ export * from './game_builder';
 export * from './investigator_cards';
 export * from './keywords';
 export * from './commands';
+export * from './player_effects';
 export * from './events';
 export { apply, replay } from './reducer';
 export { handle, type CausedEvents } from './handle';
@@ -221,6 +222,9 @@ export {
   locationWith,
   locationWithMost,
   readySelf,
+  readyEnemy,
+  healEnemy,
+  disengageEnemy,
   dealDamageTo,
   discoverClues,
   loseActions,

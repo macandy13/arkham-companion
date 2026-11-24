@@ -1,4 +1,4 @@
-import type { MapEnemyView } from '@arkham/engine';
+import { dealDamageTo, healEnemy, type MapEnemyView } from '@arkham/engine';
 import { useTranslation } from 'react-i18next';
 import { CounterBubble, type BubbleCount } from '../screens/CounterBubble';
 import { usePlay } from '../screens/PlayContext';
@@ -29,11 +29,7 @@ export function EnemyBubble({
       lower: { label: t('enemy.heal'), disabled: busy || damage === 0 },
       raise: { label: t('enemy.damage'), disabled: busy },
       onStep: (delta) =>
-        void actions.perform({
-          type: delta < 0 ? 'HealEnemy' : 'DamageEnemy',
-          enemyId: enemy.id,
-          amount: 1,
-        }),
+        void actions.perform(delta < 0 ? healEnemy(enemy.id, 1) : dealDamageTo(enemy.id, 1)),
     },
     {
       label: t('enemy.doomCount'),

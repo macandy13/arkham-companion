@@ -1,14 +1,16 @@
 import { useId, useState, type MouseEvent, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
-  cardImagePath,
-  cardName,
   type ActAdvance,
   type ActView,
+  advanceAct,
   type BoardView,
   type CardFaceView,
+  cardImagePath,
   type CardImagePath,
+  cardName,
   type CardName,
+  correctTokens,
   type EncounterCardView,
   type EncounterSetCode,
   type ReferenceView,
@@ -449,8 +451,7 @@ function ActStatus({
               value: String(act.clues),
               lower: { label: t('header.removeClue'), disabled: busy || act.clues === 0 },
               raise: { label: t('header.addClue'), disabled: busy },
-              onStep: (delta: -1 | 1) =>
-                void actions.correct({ kind: 'tokens', cardId: act.id, token: 'clue', delta }),
+              onStep: (delta: -1 | 1) => void actions.correct(correctTokens(act.id, 'clue', delta)),
             },
           ],
         }
@@ -543,7 +544,7 @@ function ActStatus({
           confirmLabel={t('header.advanceActByHand')}
           onConfirm={() => {
             setConfirming(false);
-            void actions.perform({ type: 'Advance', deck: 'act' });
+            void actions.perform(advanceAct());
           }}
           onCancel={() => setConfirming(false)}
         >

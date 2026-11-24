@@ -1,6 +1,15 @@
 import { useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { tokenCounts, type BoardView, type ChaosToken, type PoolToken } from '@arkham/engine';
+import {
+  addChaosToken,
+  type BoardView,
+  type ChaosToken,
+  type PoolToken,
+  releaseChaosToken,
+  removeChaosToken,
+  sealChaosToken,
+  tokenCounts,
+} from '@arkham/engine';
 import { ChaosTokenFace } from '../tokens/ChaosTokenFace';
 import './chaos_bag.css';
 import { usePlay } from './PlayContext';
@@ -58,11 +67,7 @@ export function ChaosBag({ board }: { board: BoardView }) {
               disabled={busy}
               onClick={() => {
                 setPicked(undefined);
-                void actions.perform({
-                  type: 'SealChaosToken',
-                  token: chosen,
-                  investigatorId: investigator.id,
-                });
+                void actions.perform(sealChaosToken(chosen, investigator.id));
               }}
             >
               {t('chaosBag.sealOn', {
@@ -85,14 +90,7 @@ export function ChaosBag({ board }: { board: BoardView }) {
                 type="button"
                 aria-label={t('chaosBag.returnToPool', { token: name })}
                 disabled={busy || inBag === 0}
-                onClick={() =>
-                  void actions.perform({
-                    type: 'ChangeChaosBag',
-                    token,
-                    change: 'remove',
-                    lasts: 'scenario',
-                  })
-                }
+                onClick={() => void actions.perform(removeChaosToken(token, 'scenario'))}
               >
                 −
               </button>
@@ -103,14 +101,7 @@ export function ChaosBag({ board }: { board: BoardView }) {
                 type="button"
                 aria-label={t('chaosBag.addFromPool', { token: name })}
                 disabled={busy || left === 0}
-                onClick={() =>
-                  void actions.perform({
-                    type: 'ChangeChaosBag',
-                    token,
-                    change: 'add',
-                    lasts: 'scenario',
-                  })
-                }
+                onClick={() => void actions.perform(addChaosToken(token, 'scenario'))}
               >
                 +
               </button>
@@ -133,9 +124,7 @@ export function ChaosBag({ board }: { board: BoardView }) {
                     investigator: board.investigator(investigatorId).name,
                   })}
                   disabled={busy}
-                  onClick={() =>
-                    void actions.perform({ type: 'ReleaseChaosToken', token, investigatorId })
-                  }
+                  onClick={() => void actions.perform(releaseChaosToken(token, investigatorId))}
                 >
                   {t('chaosBag.release')}
                 </button>
