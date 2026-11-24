@@ -397,6 +397,28 @@ test(
   },
 );
 
+test(
+  'three chaos tokens revealed from the bag outside a skill test, still in the bag',
+  { tag: '@shot' },
+  async ({ page, isMobile }) => {
+    await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
+    const scenario = page.getByRole('region', { name: 'Scenario' });
+    if (isMobile) await scenario.locator('[data-card]').click();
+    await scenario.getByRole('button', { name: 'The Gathering' }).click();
+    const bag = page
+      .getByRole('dialog', { name: 'The Gathering' })
+      .getByRole('region', { name: 'Chaos bag' });
+
+    await bag.getByRole('button', { name: 'Reveal one token more' }).click();
+    await bag.getByRole('button', { name: 'Reveal one token more' }).click();
+    await bag.getByRole('button', { name: 'Reveal 3 tokens' }).click();
+
+    const revealed = bag.getByRole('group', { name: 'Revealed tokens' });
+    await expect(revealed.getByRole('listitem')).toHaveCount(3);
+    await revealed.scrollIntoViewIfNeeded();
+  },
+);
+
 test('the attack of opportunity Roland Banks provokes by taking a resource', async ({ page }) => {
   await resumeImportedGame(
     page,

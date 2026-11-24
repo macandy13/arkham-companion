@@ -1,6 +1,12 @@
 import { useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { tokenCounts, type BoardView, type ChaosToken, type PoolToken } from '@arkham/engine';
+import {
+  revealTokens,
+  tokenCounts,
+  type BoardView,
+  type ChaosToken,
+  type PoolToken,
+} from '@arkham/engine';
 import type { GameActions } from '../state/gameActions';
 import { ChaosTokenFace } from '../tokens/ChaosTokenFace';
 import './chaos_bag.css';
@@ -16,8 +22,10 @@ const POOL_TOKENS: readonly PoolToken[] = ['bless', 'curse'];
  * them: they tap it in the bag, then the investigator whose card seals it; a sealed token has a
  * Release button. The bless and curse tokens follow on one line, each its count in the bag
  * between − (back to the pool) and + (from the pool, off while `BoardView.poolTokensLeft` is 0),
- * as a card says.
- * Each is a step of its own (`GameActions.sealToken`, `releaseToken`, `addPoolToken`,
+ * as a card says. Reveal draws as many tokens as the players set, as a card reveals them outside a
+ * skill test (`revealTokens`), and shows them until Put back: they never leave the bag, so this
+ * is no step and Undo has nothing to take back.
+ * Each other control is a step of its own (`GameActions.sealToken`, `releaseToken`, `addPoolToken`,
  * `removePoolToken`), so Undo takes it back, and they wait while a step is queued (`busy`).
  */
 export function ChaosBag({
@@ -32,7 +40,10 @@ export function ChaosBag({
   const { t } = useTranslation();
   const titleId = useId();
   const sealedId = useId();
+  const revealId = useId();
   const [picked, setPicked] = useState<ChaosToken>();
+  const [toReveal, setToReveal] = useState(1);
+  const [revealed, setRevealed] = useState<readonly ChaosToken[]>([]);
   const counts = tokenCounts(board.chaosBag);
   const sealers = board.investigators.filter((investigator) => investigator.status === 'active');
   const chosen = counts.some(({ token }) => token === picked) ? picked : undefined;
@@ -107,6 +118,47 @@ export function ChaosBag({
           );
         })}
       </ul>
+      <h4 id={revealId}>{t('chaosBag.reveal')}</h4>
+      <div role="group" aria-labelledby={revealId}>
+        <button
+          type="button"
+          aria-label={t('chaosBag.revealFewer')}
+          disabled={toReveal === 1}
+          onClick={() => setToReveal(toReveal - 1)}
+        >
+          −
+        </button>
+        <data value={toReveal}>{toReveal}</data>
+        <button
+          type="button"
+          aria-label={t('chaosBag.revealMore')}
+          disabled={toReveal >= board.chaosBag.length}
+          onClick={() => setToReveal(toReveal + 1)}
+        >
+          +
+        </button>
+        <button
+          type="button"
+          disabled={board.chaosBag.length === 0}
+          onClick={() => setRevealed(revealTokens(board.chaosBag, toReveal, Math.random))}
+        >
+          {t('chaosBag.revealCount', { count: toReveal })}
+        </button>
+      </div>
+      {revealed.length > 0 && (
+        <div role="group" aria-label={t('chaosBag.revealed')}>
+          <ul>
+            {revealed.map((token, index) => (
+              <li key={index}>
+                <ChaosTokenFace token={token} />
+              </li>
+            ))}
+          </ul>
+          <button type="button" onClick={() => setRevealed([])}>
+            {t('chaosBag.putBack')}
+          </button>
+        </div>
+      )}
       {board.sealedTokens.length > 0 && (
         <>
           <h4 id={sealedId}>{t('chaosBag.sealed')}</h4>

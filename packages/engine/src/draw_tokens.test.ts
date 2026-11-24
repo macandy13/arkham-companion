@@ -11,6 +11,7 @@ import {
   resolvedTokens,
   revealAnother,
   revealedTokens,
+  revealTokens,
   testFinished,
   treatTokenAs,
   withTokenState,
@@ -252,5 +253,17 @@ describe('a test draw', () => {
 
     expect(drawnTokens(replacedDraw)).toEqual(after);
     expect(withoutEach(bag, drawnTokens(replacedDraw))).toEqual(left);
+  });
+});
+
+describe('revealTokens', () => {
+  it.each<{ bag: ChaosToken[]; count: number; revealed: ChaosToken[] }>([
+    { bag: ['-1', 'skull', 'elderSign'], count: 2, revealed: ['-1', 'skull'] },
+    // Outside a test a bless makes the players reveal no other token.
+    { bag: ['bless', '-2', 'curse'], count: 1, revealed: ['bless'] },
+    { bag: ['-1'], count: 3, revealed: ['-1'] },
+    { bag: [], count: 1, revealed: [] },
+  ])('reveals $count of $bag: $revealed', ({ bag, count, revealed }) => {
+    expect(revealTokens(bag, count, firstLeft)).toEqual(revealed);
   });
 });

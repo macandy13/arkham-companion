@@ -144,6 +144,13 @@ export const appTexts = {
     poolLeft: '{{count}} left in the pool',
     addFromPool: 'Add a {{token}} token to the bag',
     returnToPool: 'Return a {{token}} token to the pool',
+    reveal: 'Reveal tokens',
+    revealFewer: 'Reveal one token fewer',
+    revealMore: 'Reveal one token more',
+    revealCount_one: 'Reveal {{count}} token',
+    revealCount_other: 'Reveal {{count}} tokens',
+    revealed: 'Revealed tokens',
+    putBack: 'Put back',
   },
   header: {
     round: 'Round {{round}}',

@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
-import { afterEach, beforeAll, describe, expect, it } from 'vitest';
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { blankLocation, instanceId, investigatorId, newGame, PlayTable } from '@arkham/engine';
 import { initI18n } from '../i18n';
 import { actionsOn } from '../state/gameActions.test_support';
@@ -14,7 +14,10 @@ describe('ChaosBag', () => {
   beforeAll(async () => {
     await initI18n('en');
   });
-  afterEach(cleanup);
+  afterEach(() => {
+    cleanup();
+    vi.restoreAllMocks();
+  });
 
   /** Roland and Daisy in the study, with two −1s, a skull and an elder sign in the bag. */
   const game = newGame()
@@ -105,5 +108,33 @@ describe('ChaosBag', () => {
     render(<ChaosBag board={table.board} actions={actionsOn(table)} busy={false} />);
 
     expect(screen.getByRole('button', { name: button })).toHaveProperty('disabled', true);
+  });
+
+  it('reveals two tokens outside a test and leaves them in the bag', () => {
+    const table = PlayTable.start(game);
+    // Each draw takes the first token left: the −1, then the skull.
+    vi.spyOn(Math, 'random').mockReturnValue(0);
+    render(<ChaosBag board={table.board} actions={actionsOn(table)} busy={false} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Reveal one token more' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Reveal 2 tokens' }));
+
+    const revealed = screen.getByRole('group', { name: 'Revealed tokens' });
+    expect(
+      within(revealed)
+        .getAllByRole('listitem')
+        .map((item) => item.textContent),
+    ).toEqual(['−1', 'Skull']);
+    expect(table.board.chaosBag).toEqual(['-1', 'skull', '-1', 'elderSign']);
+  });
+
+  it('puts the revealed tokens back out of sight', () => {
+    const table = PlayTable.start(game);
+    render(<ChaosBag board={table.board} actions={actionsOn(table)} busy={false} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Reveal 1 token' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Put back' }));
+
+    expect(screen.queryByRole('group', { name: 'Revealed tokens' })).toBeNull();
   });
 });

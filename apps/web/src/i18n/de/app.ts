@@ -145,6 +145,13 @@ export const appTexts = {
     poolLeft: 'Noch {{count}} im Vorrat',
     addFromPool: '{{token}}-Marker in den Beutel legen',
     returnToPool: '{{token}}-Marker in den Vorrat zurücklegen',
+    reveal: 'Marker enthüllen',
+    revealFewer: 'Einen Marker weniger enthüllen',
+    revealMore: 'Einen Marker mehr enthüllen',
+    revealCount_one: '{{count}} Marker enthüllen',
+    revealCount_other: '{{count}} Marker enthüllen',
+    revealed: 'Enthüllte Marker',
+    putBack: 'Zurücklegen',
   },
   header: {
     round: 'Runde {{round}}',

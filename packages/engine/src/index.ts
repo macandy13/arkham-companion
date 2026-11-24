@@ -119,6 +119,7 @@ export {
   drawFinished,
   drawnTokens,
   drawTokens,
+  revealTokens,
   redrawToken,
   replaceToken,
   resolvedTokens,
