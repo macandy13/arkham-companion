@@ -602,7 +602,8 @@ export type AbilityEffect = Templated<AbilityCommand>;
 /**
  * What must hold when the window opens for an ability to fire ("If it is act 3, …"), or for a card
  * action to be offered and taken ("During your turn:", `CardAction.condition`, read in
- * the action's window). Checked once, as the window opens; the effects then resolve whatever they
+ * the action's window), or for a resolution step to apply (`ResolutionStep` `when`, read on the
+ * ended game outside any window: "if the Ghoul Priest is in the victory display"). Checked once, as the window opens; the effects then resolve whatever they
  * change. Three shapes cover most conditions cards print, each over the references effects use:
  * which card is current, how many things a reference names, and a value on the table; then the
  * phase or turn the game is in, and `allOf`/`anyOf`/`not` to
@@ -1193,12 +1194,16 @@ function afterTestEnds(
   return { window: { on: 'testEnded', action, outcome }, effects };
 }
 
-/** Whether `condition` holds in the window `opened` (see `AbilityCondition`). */
+/**
+ * Whether `condition` holds in the window `opened` (see `AbilityCondition`). Without a window (a
+ * resolution's question about the ended game, `gameHolds`) a reference to the window's card,
+ * investigator or location names nothing, and a picked reference has no candidates.
+ */
 export function conditionHolds(
   ctx: EngineContext,
   state: GameState,
   condition: AbilityCondition,
-  opened: OpenedWindow,
+  opened: OpenedWindow | undefined,
 ): boolean {
   const { playerCount } = state.meta;
   switch (condition.kind) {
@@ -1220,7 +1225,7 @@ export function conditionHolds(
     case 'phase':
       return state.meta.phase === condition.phase;
     case 'margin':
-      return opened.margin !== undefined && opened.margin >= condition.min;
+      return opened?.margin !== undefined && opened.margin >= condition.min;
     case 'turn': {
       const turn = state.meta.turn;
       if (turn === undefined) return false;
@@ -1244,10 +1249,11 @@ function countOf(
   ctx: EngineContext,
   state: GameState,
   of: RepeatedRef | PickedRef,
-  opened: OpenedWindow,
+  opened: OpenedWindow | undefined,
 ): number {
   const refs = windowRefs(ctx, state, opened);
   if (isRepeatedRef(of)) return eachId(ctx, state, of, refs).length;
+  if (opened === undefined) return 0;
   const from =
     refs.windowInvestigator === undefined
       ? undefined
@@ -1260,7 +1266,7 @@ function quantities(
   ctx: EngineContext,
   state: GameState,
   quantity: Quantity,
-  opened: OpenedWindow,
+  opened: OpenedWindow | undefined,
 ): number[] {
   const refs = windowRefs(ctx, state, opened);
   switch (quantity.kind) {
@@ -1669,7 +1675,8 @@ function pickDecision(
 
 /** What each relative reference stands for when an effect resolves; absent when it names nobody. */
 interface ResolvedRefs {
-  self: InstanceId;
+  /** The card with the ability; none outside a window. */
+  self: InstanceId | undefined;
   windowInvestigator: InvestigatorId | undefined;
   lead: InvestigatorId | undefined;
   windowLocation: InstanceId | undefined;
@@ -1795,8 +1802,27 @@ function eachId(
   }
 }
 
-/** What the references of an ability whose window `opened` stand for, before any repetition. */
-function windowRefs(ctx: EngineContext, state: GameState, opened: OpenedWindow): ResolvedRefs {
+/**
+ * What the references of an ability whose window `opened` stand for, before any repetition;
+ * without a window only those the table answers by itself (the lead, the only copy of a card).
+ */
+function windowRefs(
+  ctx: EngineContext,
+  state: GameState,
+  opened: OpenedWindow | undefined,
+): ResolvedRefs {
+  if (opened === undefined) {
+    return {
+      self: undefined,
+      windowInvestigator: undefined,
+      lead: activeLead(state),
+      windowLocation: undefined,
+      selfLocation: undefined,
+      thatCard: undefined,
+      onlyCopy: (code) => theOnlyCopy(state, code),
+      setAsideCopy: (code) => setAsideCopyOf(state, code, 0),
+    };
+  }
   const { investigatorId } = opened;
   const investigator =
     investigatorId !== undefined && isActiveInvestigator(state, investigatorId)
@@ -3346,7 +3372,21 @@ export function tokensOn(on: RelativeCard, token: TokenKind): Quantity {
  * `ifThereAre(eachEnemy({ engagedWith: you() }), { max: 0 }, …)`.
  */
 export function ifThereAre(of: RepeatedRef, range: StatRange, ability: Ability): Ability {
-  return { ...ability, condition: { kind: 'countOf', of, ...range } };
+  return { ...ability, condition: thereAre(of, range) };
+}
+
+/**
+ * The condition that the number of things `of` names is within `range`, for a resolution's
+ * question about the ended game: `thereAre(eachInZone(victoryDisplay, { code }), { min: 1 })`
+ * for "if Herman Collins is in the victory display".
+ */
+export function thereAre(of: RepeatedRef, range: StatRange): AbilityCondition {
+  return { kind: 'countOf', of, ...range };
+}
+
+/** How many things `of` names outside any window ("for each enemy beneath the act"). */
+export function countOnTable(ctx: EngineContext, state: GameState, of: RepeatedRef): number {
+  return countOf(ctx, state, of, undefined);
 }
 
 /**
