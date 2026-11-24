@@ -3,21 +3,18 @@ import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
 import type { BoardView, EncounterCardView } from '@arkham/engine';
 import { Token } from '../screens/Token';
-import type { GameActions } from '../state/gameActions';
 import { EncounterBack } from './EncounterBack';
 import { EncounterDialog, type HeaderPileKind } from './EncounterDialog';
 import { PileFan } from './PileFan';
 import './encounter.css';
 
 /**
- * What the header's piles share: the board they show, the `actions` their dialog plays, whether a
- * step is queued (`busy`), and `onSpawn`, which lets
- * the players choose on the map where an enemy from a pile spawns.
+ * What the header's piles share: the board they show and `onSpawn`, which lets the players choose
+ * on the map where an enemy from a pile spawns. Their dialog plays the open game's actions
+ * (`usePlay`).
  */
 export interface PileProps {
   board: BoardView;
-  actions: GameActions;
-  busy: boolean;
   onSpawn: (card: EncounterCardView) => void;
 }
 
@@ -25,7 +22,7 @@ export interface PileProps {
  * The encounter deck in the header (`BoardView.encounter`): an upright card back (`EncounterBack`)
  * with the cards left on a round token on its medallion, like the agenda's doom, and its discard
  * pile fanned at its lower right corner (`HeaderPile`). The deck opens the encounter dialog (`EncounterDialog`) on its draw
- * buttons, which draw with `actions` unless a step is queued.
+ * buttons, which draw with the open game's actions unless a step is queued.
  */
 export function EncounterPiles(props: PileProps) {
   const { t } = useTranslation();

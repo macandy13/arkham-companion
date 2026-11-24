@@ -2,7 +2,6 @@ import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { BoardView, CardPlaceView, EncounterCardView, InvestigatorId } from '@arkham/engine';
 import { assertNever } from '@arkham/util';
-import type { GameActions } from '../state/gameActions';
 import { CardMoves } from './CardMoves';
 import type { DrawnCard } from './drawnCards';
 
@@ -16,15 +15,11 @@ import type { DrawnCard } from './drawnCards';
 export function DrawnCardsNotice({
   board,
   drawn,
-  actions,
-  busy,
   onSpawn,
   onDismiss,
 }: {
   board: BoardView;
   drawn: readonly DrawnCard[];
-  actions: GameActions;
-  busy: boolean;
   onSpawn: (card: EncounterCardView) => void;
   onDismiss: () => void;
 }) {
@@ -58,14 +53,7 @@ export function DrawnCardsNotice({
     <aside role="status" aria-label={t('encounter.drawnLabel')}>
       <ul>
         {drawn.map(({ card, drawnFor, place }) => (
-          <DrawnLine
-            key={card.id}
-            board={board}
-            card={card}
-            actions={actions}
-            busy={busy}
-            onSpawn={onSpawn}
-          >
+          <DrawnLine key={card.id} board={board} card={card} onSpawn={onSpawn}>
             {drawnFor === undefined
               ? t('encounter.went', { card: card.name, place: describePlace(place) })
               : t('encounter.wentFor', {
@@ -87,15 +75,11 @@ export function DrawnCardsNotice({
 function DrawnLine({
   board,
   card,
-  actions,
-  busy,
   onSpawn,
   children,
 }: {
   board: BoardView;
   card: EncounterCardView;
-  actions: GameActions;
-  busy: boolean;
   onSpawn: (card: EncounterCardView) => void;
   children: ReactNode;
 }) {
@@ -104,9 +88,7 @@ function DrawnLine({
     <li>
       <details onToggle={(event) => setOpen(event.currentTarget.open)}>
         <summary>{children}</summary>
-        {open && (
-          <CardMoves board={board} card={card} actions={actions} busy={busy} onSpawn={onSpawn} />
-        )}
+        {open && <CardMoves board={board} card={card} onSpawn={onSpawn} />}
       </details>
     </li>
   );

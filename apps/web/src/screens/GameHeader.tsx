@@ -1,6 +1,5 @@
 import { useId, useState, type MouseEvent, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { StoreApi } from 'zustand/vanilla';
 import {
   cardImagePath,
   cardName,
@@ -10,6 +9,7 @@ import {
   type CardFaceView,
   type CardImagePath,
   type CardName,
+  type EncounterCardView,
   type EncounterSetCode,
   type ReferenceView,
 } from '@arkham/engine';
@@ -18,8 +18,7 @@ import type { ShownCard } from '../catalog/cardFace';
 import { useCardPicture } from '../catalog/cardImages';
 import { cardText } from '../catalog/cardText';
 import { EncounterPiles, HeaderPile, type PileProps } from '../encounter/EncounterPiles';
-import type { AppState, OpenGame } from '../state/appStore';
-import type { GameActions } from '../state/gameActions';
+import type { OpenGame } from '../state/appStore';
 import { CardActions, cardActionsOn } from './ActionRow';
 import { CardDialog } from './CardDialog';
 import { ChaosBag } from './ChaosBag';
@@ -33,6 +32,7 @@ import { Token } from './Token';
 import { TokenPool } from './TokenPool';
 import type { HeaderCardKind } from './useDetailView';
 import { useDoubleTap } from './useDoubleTap';
+import { usePlay } from './PlayContext';
 
 /**
  * The play screen's header, laid out like the scenario's cards on the table, centred and each under
@@ -50,52 +50,33 @@ import { useDoubleTap } from './useDoubleTap';
  * side in play; until it has loaded the card shows its rows without texts.
  */
 export function GameHeader({
-  store,
   open,
   board,
   printedReference,
   onOpenCard,
   full = false,
+  onSpawn,
 }: {
-  store: StoreApi<AppState>;
   open: OpenGame;
   board: BoardView;
   printedReference: PrintedReference | undefined;
   onOpenCard?: ((card: HeaderCardKind) => void) | undefined;
   full?: boolean;
+  onSpawn: (enemy: EncounterCardView) => void;
 }) {
   const { t } = useTranslation();
-  const blocked = open.busy;
-  const piles: PileProps = {
-    board,
-    actions: store.getState().actions,
-    busy: blocked,
-    onSpawn: (enemy) => store.getState().startPick({ kind: 'spawn', enemy }),
-  };
+  const piles: PileProps = { board, onSpawn };
 
   return (
     <header>
-      <TokenPool actions={piles.actions} busy={blocked} />
+      <TokenPool />
       <HeaderSlot label={t('header.encounterDeck')} card="encounter" onOpen={onOpenCard}>
         <EncounterPiles {...piles} />
       </HeaderSlot>
-      <AgendaStatus store={store} board={board} blocked={blocked} full={full} onOpen={onOpenCard} />
-      <ActStatus
-        store={store}
-        board={board}
-        blocked={blocked}
-        full={full}
-        piles={piles}
-        onOpen={onOpenCard}
-      />
+      <AgendaStatus board={board} full={full} onOpen={onOpenCard} />
+      <ActStatus board={board} full={full} piles={piles} onOpen={onOpenCard} />
       <HeaderSlot label={t('header.scenario')} card="scenario" onOpen={onOpenCard}>
-        <ScenarioStatus
-          open={open}
-          board={board}
-          actions={piles.actions}
-          printed={printedReference}
-          opens={!onOpenCard}
-        />
+        <ScenarioStatus open={open} board={board} printed={printedReference} opens={!onOpenCard} />
         <HeaderPile pile="setAside" {...piles} />
       </HeaderSlot>
       <HeaderSlot label={t('header.victory')}>
@@ -137,13 +118,11 @@ export function printedReferenceOf(
 function ScenarioStatus({
   open,
   board,
-  actions,
   printed,
   opens,
 }: {
   open: OpenGame;
   board: BoardView;
-  actions: GameActions;
   printed: PrintedReference | undefined;
   opens: boolean;
 }) {
@@ -171,8 +150,6 @@ function ScenarioStatus({
       {zoomed && (
         <ScenarioDetails
           board={board}
-          actions={actions}
-          busy={open.busy}
           name={name}
           printed={printed}
           onClose={() => setZoomed(false)}
@@ -196,15 +173,11 @@ function ScenarioStatus({
  */
 function ScenarioDetails({
   board,
-  actions,
-  busy,
   name,
   printed,
   onClose,
 }: {
   board: BoardView;
-  actions: GameActions;
-  busy: boolean;
   name: string;
   printed: PrintedReference | undefined;
   onClose: () => void;
@@ -248,7 +221,7 @@ function ScenarioDetails({
         </div>
       </dl>
       {reference && <ReferenceRows reference={reference} printed={printed} />}
-      <ChaosBag board={board} actions={actions} busy={busy} />
+      <ChaosBag board={board} />
     </CardDialog>
   );
 }
@@ -341,27 +314,23 @@ function ScenarioCard({
  * It takes doom dropped on it: from the token pool (`TokenPool`), or moved off a location.
  */
 function AgendaStatus({
-  store,
   board,
-  blocked,
   full,
   onOpen,
 }: {
-  store: StoreApi<AppState>;
   board: BoardView;
-  blocked: boolean;
   full: boolean;
   onOpen: ((card: HeaderCardKind) => void) | undefined;
 }) {
+  const { actions, busy } = usePlay();
   const { t } = useTranslation();
   const [zoomed, setZoomed] = useState(false);
   const { agenda } = board;
   if (!agenda) return null;
-  const { actions } = store.getState();
   const close = () => setZoomed(false);
   const offered = cardActionsOn(board, agenda.id);
   const actionRow = offered.length > 0 && (
-    <CardActions board={board} offered={offered} actions={actions} busy={blocked} onUse={close} />
+    <CardActions board={board} offered={offered} onUse={close} />
   );
   const doomToken = (
     <Token
@@ -382,8 +351,8 @@ function AgendaStatus({
       {
         label: counter,
         value: String(agenda.doom),
-        lower: { label: t('header.removeDoom'), disabled: blocked || agenda.doom === 0 },
-        raise: { label: t('header.addDoom'), disabled: blocked },
+        lower: { label: t('header.removeDoom'), disabled: busy || agenda.doom === 0 },
+        raise: { label: t('header.addDoom'), disabled: busy },
         onStep: (delta: -1 | 1) => void actions.adjustTokens(agenda.id, 'doom', delta),
       },
     ],
@@ -407,8 +376,6 @@ function AgendaStatus({
         <BookDetails
           kind="agenda"
           board={board}
-          actions={actions}
-          busy={blocked}
           card={board.cardFace(agenda.id)}
           threshold={agenda.threshold}
           token={doomToken}
@@ -436,20 +403,17 @@ function AgendaStatus({
  * confirmation, for an objective the engine leaves to the players.
  */
 function ActStatus({
-  store,
   board,
-  blocked,
   full,
   piles,
   onOpen,
 }: {
-  store: StoreApi<AppState>;
   board: BoardView;
-  blocked: boolean;
   full: boolean;
   piles: PileProps;
   onOpen: ((card: HeaderCardKind) => void) | undefined;
 }) {
+  const { actions, busy } = usePlay();
   const { t } = useTranslation();
   const [zoomed, setZoomed] = useState(false);
   const [confirming, setConfirming] = useState(false);
@@ -458,10 +422,9 @@ function ActStatus({
   if (!act) return null;
   // Advancing can raise a decision (act 3's question), and that dialog must be the only one open.
   const close = () => setZoomed(false);
-  const { actions } = store.getState();
   const offered = cardActionsOn(board, act.id);
   const actionRow = offered.length > 0 && (
-    <CardActions board={board} offered={offered} actions={actions} busy={blocked} onUse={close} />
+    <CardActions board={board} offered={offered} onUse={close} />
   );
   const { advance } = act;
   const clues = advance && actClues(act, advance);
@@ -483,8 +446,8 @@ function ActStatus({
             {
               label: counter,
               value: String(act.clues),
-              lower: { label: t('header.removeClue'), disabled: blocked || act.clues === 0 },
-              raise: { label: t('header.addClue'), disabled: blocked },
+              lower: { label: t('header.removeClue'), disabled: busy || act.clues === 0 },
+              raise: { label: t('header.addClue'), disabled: busy },
               onStep: (delta: -1 | 1) =>
                 void actions.correct({ kind: 'tokens', cardId: act.id, token: 'clue', delta }),
             },
@@ -497,7 +460,7 @@ function ActStatus({
       <button
         type="button"
         data-primary={primary || undefined}
-        disabled={blocked || board.turn === undefined || advance.held < advance.threshold}
+        disabled={busy || board.turn === undefined || advance.held < advance.threshold}
         onClick={() =>
           pay(advance.threshold, act.id, (spend) => {
             onAdvance?.();
@@ -512,7 +475,7 @@ function ActStatus({
   const byHandButton = (
     <button
       type="button"
-      disabled={blocked}
+      disabled={busy}
       onClick={() => {
         close();
         setConfirming(true);
@@ -552,8 +515,6 @@ function ActStatus({
         <BookDetails
           kind="act"
           board={board}
-          actions={actions}
-          busy={blocked}
           card={board.cardFace(act.id)}
           threshold={advance?.threshold}
           token={clueToken}
@@ -713,8 +674,6 @@ function HeaderCard({
 function BookDetails({
   kind,
   board,
-  actions,
-  busy,
   card,
   threshold,
   token,
@@ -724,8 +683,6 @@ function BookDetails({
 }: {
   kind: 'agenda' | 'act';
   board: BoardView;
-  actions: GameActions;
-  busy: boolean;
   card: CardFaceView;
   threshold: number | undefined;
   token: ReactNode;
@@ -739,8 +696,6 @@ function BookDetails({
   return (
     <DetailsDialog
       board={board}
-      actions={actions}
-      busy={busy}
       hosted={hosted}
       name="book"
       card={card}
@@ -770,13 +725,7 @@ function BookDetails({
       {(offered.length > 0 || advances) && (
         <footer>
           {offered.length > 0 && (
-            <CardActions
-              board={board}
-              offered={offered}
-              actions={actions}
-              busy={busy}
-              onUse={hosted.host}
-            />
+            <CardActions board={board} offered={offered} onUse={hosted.host} />
           )}
           {advances}
         </footer>

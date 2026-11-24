@@ -3,11 +3,11 @@ import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import type { BoardView, CardFaceView, CardName, CardStats, InstanceId } from '@arkham/engine';
 import { attachableCards } from '@arkham/scenarios';
-import type { GameActions } from '../state/gameActions';
 import { useCardPicture } from '../catalog/cardImages';
 import { TuckedCardsContext } from './CardDialog';
 import { CardZoom } from './CardZoom';
 import { encounterDiscard } from '@arkham/engine';
+import { usePlay } from './PlayContext';
 
 /**
  * The cards attached to a location or an enemy (`host`), fanned as small cards across the bottom
@@ -17,19 +17,10 @@ import { encounterDiscard } from '@arkham/engine';
  * what it does (`CardZoom`), with Discard under it, as a Forced ability or a card says
  * (a performed `MoveCard` onto the encounter discard). A dashed card at the end attaches a player card the players
  * attached at the table (`AttachCardDialog`), one of those that attach to a card of the host's
- * type (`attachableCards`). Nothing is tapped while a step is queued (`busy`).
+ * type (`attachableCards`). Nothing is tapped while a step is queued (`usePlay().busy`).
  */
-export function AttachedCards({
-  board,
-  host,
-  actions,
-  busy,
-}: {
-  board: BoardView;
-  host: InstanceId;
-  actions: GameActions;
-  busy: boolean;
-}) {
+export function AttachedCards({ board, host }: { board: BoardView; host: InstanceId }) {
+  const { actions, busy } = usePlay();
   const { t } = useTranslation();
   const titleId = useId();
   const tucked = useContext(TuckedCardsContext);

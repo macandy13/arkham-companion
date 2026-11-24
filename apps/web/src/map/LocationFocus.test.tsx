@@ -11,7 +11,7 @@ import {
 } from '@arkham/engine';
 import { initI18n } from '../i18n';
 import { LocationFocus } from './LocationFocus';
-import { actionsOn } from '../state/gameActions.test_support';
+import { PlayingOn } from '../state/gameActions.test_support';
 
 const hallway = instanceId('hallway');
 const study = instanceId('study');
@@ -56,14 +56,14 @@ describe('LocationFocus', () => {
   );
   const renderHallway = (onGo = vi.fn()) =>
     render(
-      <LocationFocus
-        board={table.board}
-        location={table.board.location(hallway)}
-        actions={actionsOn(table)}
-        busy={false}
-        onGo={onGo}
-        onMap={() => {}}
-      />,
+      <PlayingOn table={table}>
+        <LocationFocus
+          board={table.board}
+          location={table.board.location(hallway)}
+          onGo={onGo}
+          onMap={() => {}}
+        />
+      </PlayingOn>,
     );
 
   it.each([

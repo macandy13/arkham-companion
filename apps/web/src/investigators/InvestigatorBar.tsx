@@ -13,7 +13,7 @@ import {
 import { Brain, Heart } from '../catalog/cardFace';
 import { range } from '@arkham/util';
 import { useCardPicture } from '../catalog/cardImages';
-import type { GameActions, SteppedStat } from '../state/gameActions';
+import type { SteppedStat } from '../state/gameActions';
 import { classOf, type PrintedInvestigator, type WeaknessDef } from '@arkham/carddata';
 import { InvestigatorFace, type InvestigatorFaceShape } from './InvestigatorFace';
 import { SkillTestDialog } from './SkillTestDialog';
@@ -34,13 +34,14 @@ import { useDoubleTap, useDoubleTapOn } from '../screens/useDoubleTap';
 import './investigators.css';
 import './card_effects.css';
 import { takeOneClue } from '../state/gameActions';
+import { usePlay } from '../screens/PlayContext';
 
 /**
  * The bar of investigator panels along the foot of the play screen, one per investigator in seat
  * order (`BoardView.investigators`), so everyone's status is in view at once. It replaces the
  * health and sanity dials and the clue and resource piles on the table: a counter changes in its
- * − / + bubble (`CounterBubble`), which plays `actions`; nothing is tapped while a step is queued
- * (`busy`).
+ * − / + bubble (`CounterBubble`), which plays the open game's actions (`usePlay`); nothing is tapped while a step is queued
+ * (`usePlay().busy`).
  *
  * A phone has room for one panel only, so in its compact view (`onOpen`) the stylesheet lays the
  * panels in a row a screen wide each, and the players swipe sideways between them; the one in
@@ -53,8 +54,6 @@ import { takeOneClue } from '../state/gameActions';
  */
 export function InvestigatorBar({
   board,
-  actions,
-  busy,
   onOpen,
   whole = false,
   printed,
@@ -62,8 +61,6 @@ export function InvestigatorBar({
   onMoveByCard,
 }: {
   board: BoardView;
-  actions: GameActions;
-  busy: boolean;
   onOpen?: ((investigator: InvestigatorId) => void) | undefined;
   /** The phone's expanded bar: every panel shows the whole card, its text included. */
   whole?: boolean;
@@ -106,8 +103,6 @@ export function InvestigatorBar({
           canStart={
             picking && investigator.status === 'active' && investigator.turnTaken === undefined
           }
-          actions={actions}
-          busy={busy}
         />
       ))}
     </>
@@ -204,8 +199,6 @@ function InvestigatorPanel({
   lead,
   engaged,
   canStart,
-  actions,
-  busy,
 }: {
   /** The board the skill tests (`SkillTestDialog`) and the card actions (`TurnControls`) read. */
   board: BoardView;
@@ -238,9 +231,8 @@ function InvestigatorPanel({
   engaged: readonly MapEnemyView[];
   /** The players may start this investigator's turn now (`TurnControls`). */
   canStart: boolean;
-  actions: GameActions;
-  busy: boolean;
 }) {
+  const { busy } = usePlay();
   const { t } = useTranslation();
   const nameId = useId();
   const picture = useCardPicture(investigator.image, 'landscape');
@@ -248,20 +240,15 @@ function InvestigatorPanel({
   const section = useSwipedTo(focused, onShown);
   const stats = (
     <>
-      <Skills board={board} investigator={investigator} busy={busy} actions={actions} />
-      <Counters board={board} investigator={investigator} busy={busy} actions={actions} />
+      <Skills board={board} investigator={investigator} />
+      <Counters board={board} investigator={investigator} />
     </>
   );
   // What a player card can do to the investigator that the panel has no control for.
   const canMoveByCard = onMoveByCard !== undefined && investigator.status === 'active';
   const cardEffects = ((weaknesses?.length ?? 0) > 0 || canMoveByCard) && (
     <footer data-part="card-effects">
-      <DrawWeakness
-        investigator={investigator}
-        weaknesses={weaknesses}
-        actions={actions}
-        busy={busy}
-      />
+      <DrawWeakness investigator={investigator} weaknesses={weaknesses} />
       {canMoveByCard && (
         <button
           type="button"
@@ -297,8 +284,6 @@ function InvestigatorPanel({
         investigator={investigator}
         treacheries={board.cardsIn({ kind: 'threatArea', investigatorId: investigator.id })}
         enemies={engaged}
-        actions={actions}
-        busy={busy}
       />
       {whole ? (
         <>
@@ -352,8 +337,8 @@ function InvestigatorPanel({
           onClose={() => setZoomed(false)}
           footer={cardEffects}
         >
-          <Skills board={board} investigator={investigator} busy={busy} actions={actions} />
-          <Counters board={board} investigator={investigator} busy={busy} actions={actions} />
+          <Skills board={board} investigator={investigator} />
+          <Counters board={board} investigator={investigator} />
         </InvestigatorCard>
       )}
       <p data-whereabouts="">
@@ -364,17 +349,8 @@ function InvestigatorPanel({
         board={board}
         investigator={investigator}
         cards={board.cardsIn({ kind: 'playArea', investigatorId: investigator.id })}
-        actions={actions}
-        busy={busy}
       />
-      <TurnControls
-        board={board}
-        investigator={investigator}
-        onTurn={onTurn}
-        canStart={canStart}
-        actions={actions}
-        busy={busy}
-      />
+      <TurnControls board={board} investigator={investigator} onTurn={onTurn} canStart={canStart} />
     </section>
   );
 }
@@ -386,19 +362,10 @@ function InvestigatorPanel({
  * which skill it is, so each one is named for screen readers. Tapping one opens a skill test
  * against it (`SkillTestDialog`), a calculator that changes nothing; a double tap opens the − / +
  * bubble of its boost instead (`CounterBubble`, M6.10), so a single tap opens the test only once no
- * second one came (`useDoubleTapOn`, keyed by skill); a step waits while one is queued (`busy`).
+ * second one came (`useDoubleTapOn`, keyed by skill); a step waits while one is queued (`usePlay().busy`).
  */
-function Skills({
-  board,
-  investigator,
-  busy,
-  actions,
-}: {
-  board: BoardView;
-  investigator: InvestigatorView;
-  busy: boolean;
-  actions: GameActions;
-}) {
+function Skills({ board, investigator }: { board: BoardView; investigator: InvestigatorView }) {
+  const { actions, busy } = usePlay();
   const { t } = useTranslation();
   const [testing, setTesting] = useState<SkillName>();
   const [boosting, setBoosting] = useState<{ skill: SkillName; anchor: Element }>();
@@ -488,7 +455,7 @@ function Skills({
 
 /**
  * The counters on the card's notebook page, each a token like the ones on the table; a step plays
- * `actions` unless one is queued (`busy`). A clue can be dragged off the clue count onto their location or the act
+ * the open game's actions unless one is queued (`usePlay().busy`). A clue can be dragged off the clue count onto their location or the act
  * (`useClueDrag`), and damage, horror or a resource back onto the header's token pool, which heals
  * or spends it (`useReturnToPool`). A double tap on a counter opens its − / + bubble
  * (`CounterBubble`, M6.9), whose steps go by rule, so damage can defeat; a
@@ -498,15 +465,12 @@ function Skills({
 function Counters({
   board,
   investigator,
-  busy,
-  actions,
 }: {
   /** The board a clue dragged off the card lands on (`useClueDrag`). */
   board: BoardView;
   investigator: InvestigatorView;
-  busy: boolean;
-  actions: GameActions;
 }) {
+  const { actions, busy } = usePlay();
   const { t } = useTranslation();
   const { id, health, damage, sanity, horror } = investigator;
   // A stepper's damage or horror defeats by the rules, so it is performed, not corrected.
@@ -514,7 +478,7 @@ function Counters({
     void actions.perform({ type: 'AdjustInvestigator', investigatorId: id, stat, delta });
   // A defeated or resigned investigator has left the game, so their counters no longer change.
   const off = busy || investigator.status !== 'active';
-  const clueDrag = useClueDrag(board, id, actions);
+  const clueDrag = useClueDrag(board, id);
   const damageBack = useReturnToPool('damage', () => adjust('damage', -1));
   const horrorBack = useReturnToPool('horror', () => adjust('horror', -1));
   const resourceBack = useReturnToPool('resource', () => adjust('resources', -1));
@@ -565,7 +529,7 @@ function Counters({
   // Not while a step is queued, nor once they left the game.
   const bubbleFor = (kind: SteppedKind) =>
     off ? {} : { onDoubleTap: (anchor: Element) => setOpen({ kind, anchor }) };
-  // Kept open while its own step is queued (`busy`), its buttons off, so it doesn't flicker.
+  // Kept open while its own step is queued (`usePlay().busy`), its buttons off, so it doesn't flicker.
   const shown = open && investigator.status === 'active' ? bubbles[open.kind] : undefined;
   return (
     <>

@@ -24,7 +24,7 @@ import {
 import { initI18n } from '../i18n';
 import { DecisionHostContext, type OpenDecision } from '../screens/DetailsDialog';
 import { EnemyDetails } from './EnemyDetails';
-import { actionsOn } from '../state/gameActions.test_support';
+import { actionsOn, PlayingOn } from '../state/gameActions.test_support';
 
 const study = instanceId('study');
 const ghoul = instanceId('ghoul');
@@ -36,13 +36,9 @@ const renderGhoulDetails = (table: PlayTable, onClose = vi.fn()) => {
   const enemy = table.board.enemiesEngagedWith(alder).find(({ id }) => id === ghoul);
   if (!enemy) throw new Error('the ghoul is engaged with alder');
   render(
-    <EnemyDetails
-      board={table.board}
-      enemy={enemy}
-      actions={actionsOn(table)}
-      busy={false}
-      onClose={onClose}
-    />,
+    <PlayingOn table={table}>
+      <EnemyDetails board={table.board} enemy={enemy} onClose={onClose} />
+    </PlayingOn>,
   );
   return onClose;
 };
@@ -203,13 +199,9 @@ describe('EnemyDetails', () => {
       if (!enemy) throw new Error('the ghoul is engaged with alder');
       return (
         <DecisionHostContext.Provider value={{ decision, setHosted }}>
-          <EnemyDetails
-            board={table.board}
-            enemy={enemy}
-            actions={actionsOn(table)}
-            busy={false}
-            onClose={() => {}}
-          />
+          <PlayingOn table={table}>
+            <EnemyDetails board={table.board} enemy={enemy} onClose={() => {}} />
+          </PlayingOn>
         </DecisionHostContext.Provider>
       );
     };
@@ -291,13 +283,9 @@ describe('EnemyDetails', () => {
     const enemy = table.board.enemiesEngagedWith(alder)[0];
     if (!enemy) throw new Error('the cultist is engaged with alder');
     render(
-      <EnemyDetails
-        board={table.board}
-        enemy={enemy}
-        actions={actionsOn(table)}
-        busy={false}
-        onClose={onClose}
-      />,
+      <PlayingOn table={table}>
+        <EnemyDetails board={table.board} enemy={enemy} onClose={onClose} />
+      </PlayingOn>,
     );
 
     fireEvent.click(
@@ -432,13 +420,9 @@ describe('EnemyDetails', () => {
     const enemy = table.board.enemiesAt(study).find(({ id }) => id === ghoul);
     if (!enemy) throw new Error('the ghoul is in the study');
     render(
-      <EnemyDetails
-        board={table.board}
-        enemy={enemy}
-        actions={actionsOn(table)}
-        busy={false}
-        onClose={vi.fn()}
-      />,
+      <PlayingOn table={table}>
+        <EnemyDetails board={table.board} enemy={enemy} onClose={vi.fn()} />
+      </PlayingOn>,
     );
 
     expect(screen.getByRole('button', { name: 'Evaded by alder' })).toBeDefined();

@@ -11,7 +11,7 @@ import {
   PlayTable,
 } from '@arkham/engine';
 import { initI18n } from '../i18n';
-import { actionsOn } from '../state/gameActions.test_support';
+import { PlayingOn } from '../state/gameActions.test_support';
 import { DrawWeakness } from './DrawWeakness';
 
 const alice = investigatorId('alice');
@@ -41,12 +41,9 @@ const aliceInStudy = () =>
 
 const renderDrawWeakness = (table: PlayTable, weaknesses: readonly WeaknessDef[]) =>
   render(
-    <DrawWeakness
-      investigator={table.board.investigator(alice)}
-      weaknesses={weaknesses}
-      actions={actionsOn(table)}
-      busy={false}
-    />,
+    <PlayingOn table={table}>
+      <DrawWeakness investigator={table.board.investigator(alice)} weaknesses={weaknesses} />
+    </PlayingOn>,
   );
 
 describe('DrawWeakness', () => {
@@ -86,12 +83,9 @@ describe('DrawWeakness', () => {
   it('offers nothing before the catalog has weaknesses', () => {
     const table = aliceInStudy();
     render(
-      <DrawWeakness
-        investigator={table.board.investigator(alice)}
-        weaknesses={undefined}
-        actions={actionsOn(table)}
-        busy={false}
-      />,
+      <PlayingOn table={table}>
+        <DrawWeakness investigator={table.board.investigator(alice)} weaknesses={undefined} />
+      </PlayingOn>,
     );
 
     expect(screen.queryByRole('button', { name: 'Draw a weakness' })).toBeNull();

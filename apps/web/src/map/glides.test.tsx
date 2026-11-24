@@ -12,7 +12,7 @@ import {
   PlayTable,
 } from '@arkham/engine';
 import { initI18n } from '../i18n';
-import { actionsOn } from '../state/gameActions.test_support';
+import { PlayingOn } from '../state/gameActions.test_support';
 import { glides, piecePlaces, type PiecePlace } from './glides';
 import { MapBoard } from './MapBoard';
 import { piecesOnTile, tileCells, tileOrigin, type Point } from './mapLayout';
@@ -135,7 +135,9 @@ describe('useGlides in the map', () => {
         .withInvestigator(alder, { name: 'Alder', locationId: at }),
     );
   const mapOf = (table: ReturnType<typeof alderAt>) => (
-    <MapBoard board={table.board} actions={actionsOn(table)} busy={false} />
+    <PlayingOn table={table}>
+      <MapBoard board={table.board} />
+    </PlayingOn>
   );
   const motion = (reduce: boolean) =>
     vi.stubGlobal('matchMedia', () => ({ matches: reduce }) as MediaQueryList);
