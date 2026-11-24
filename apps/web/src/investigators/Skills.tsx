@@ -1,6 +1,12 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { SKILL_NAMES, type BoardView, type InvestigatorView, type SkillName } from '@arkham/engine';
+import {
+  type BoardView,
+  correctSkillBoost,
+  type InvestigatorView,
+  SKILL_NAMES,
+  type SkillName,
+} from '@arkham/engine';
 import { SkillTestDialog } from './SkillTestDialog';
 import { signed } from '../tokens/tokenValue';
 import { CounterBubble } from '../screens/CounterBubble';
@@ -88,12 +94,7 @@ export function Skills({
                 disabled: off,
               },
               onStep: (delta) =>
-                void actions.correct({
-                  kind: 'skillBoost',
-                  investigatorId: investigator.id,
-                  skill: boosting.skill,
-                  delta,
-                }),
+                void actions.correct(correctSkillBoost(investigator.id, boosting.skill, delta)),
             },
           ]}
           onClose={() => setBoosting(undefined)}

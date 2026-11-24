@@ -1,7 +1,13 @@
 import { useId, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { assertNever } from '@arkham/util';
-import type { BoardView, InvestigatorId, LocationView } from '@arkham/engine';
+import {
+  type BoardView,
+  type InvestigatorId,
+  type LocationView,
+  revealLocation,
+  takeOneClue,
+} from '@arkham/engine';
 import { DetailsDialog, useDecisionHost } from '../screens/DetailsDialog';
 import { AttachedCards } from '../screens/AttachedCards';
 import {
@@ -16,7 +22,6 @@ import type { GameActions } from '../state/gameActions';
 import { CardPatterns } from './CardPatterns';
 import { LocationTile } from './LocationTile';
 import { TILE } from './mapLayout';
-import { takeOneClue } from '../state/gameActions';
 import { usePlay } from '../screens/PlayContext';
 
 /**
@@ -239,9 +244,7 @@ function LocationPage({
             <button
               type="button"
               disabled={busy}
-              onClick={() =>
-                void actions.perform({ type: 'RevealLocation', locationId: location.id })
-              }
+              onClick={() => void actions.perform(revealLocation(location.id))}
             >
               {t('location.reveal')}
             </button>

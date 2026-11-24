@@ -1,7 +1,15 @@
 import { useContext, useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
-import type { BoardView, CardFaceView, CardName, CardStats, InstanceId } from '@arkham/engine';
+import {
+  attachPlayerCard,
+  type BoardView,
+  type CardFaceView,
+  type CardName,
+  type CardStats,
+  type InstanceId,
+  move,
+} from '@arkham/engine';
 import { attachableCards } from '@arkham/scenarios';
 import { useCardPicture } from '../catalog/cardImages';
 import { TuckedCardsContext } from './CardDialog';
@@ -59,12 +67,7 @@ export function AttachedCards({ board, host }: { board: BoardView; host: Instanc
             disabled={busy}
             onClick={() => {
               setZoomed(undefined);
-              void actions.perform({
-                type: 'MoveCard',
-                cardId: zoomed.id,
-                to: encounterDiscard,
-                index: 0,
-              });
+              void actions.perform(move(zoomed.id, encounterDiscard, 'top'));
             }}
           >
             {t('attached.discardCard', { card: zoomed.name })}
@@ -75,9 +78,7 @@ export function AttachedCards({ board, host }: { board: BoardView; host: Instanc
         <AttachCardDialog
           host={name}
           cards={attachable}
-          onAttach={(card) =>
-            void actions.perform({ type: 'AttachPlayerCard', hostId: host, code: card.code })
-          }
+          onAttach={(card) => void actions.perform(attachPlayerCard(host, card.code))}
           onClose={() => setAttaching(false)}
         />
       )}
