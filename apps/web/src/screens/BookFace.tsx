@@ -147,7 +147,7 @@ const BOOK_PATHS: Readonly<Record<BookKind, ReturnType<typeof bookPaths>>> = {
  * drawing of the printed layout (`BOOK_FACE`, no FFG art), the art cut from the card's `picture`
  * once it has loaded (a hatch until then, and for good offline), the open book beside it with its
  * page edges, the title's scrolls and its encounter set's icon (`set`; a plain ring without one), and the threshold disc printing `threshold`. The
- * header card lays its name, its count and its buttons over it in HTML (GameHeader `CardFace`), so
+ * header card lays its name, its count and its buttons over it in HTML (HeaderSlot `CardFace`), so
  * this is decoration only (`aria-hidden`): the count's token names the threshold for assistive
  * technology.
  */

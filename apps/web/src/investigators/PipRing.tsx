@@ -8,7 +8,7 @@ const MAX_GAP = 12;
 
 /**
  * Health or sanity as a ring of pips around the printed heart or brain (`Stat` in
- * `InvestigatorBar`): one arc per point of the `max`, clockwise from the top, the last `taken` of
+ * `Counters`): one arc per point of the `max`, clockwise from the top, the last `taken` of
  * them marked `data-taken` (the damage or horror taken), so the stylesheet greys them and the ring
  * shows at a glance how much is left. Drawn in the symbol's SVG on a circle of `radius` round its
  * centre; decoration only, as the symbol's image says what is left. Both counts are whole points
