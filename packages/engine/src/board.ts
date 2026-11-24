@@ -46,7 +46,7 @@ function shownSymbols(ctx: EngineContext, card: CardInstance): PrintedSymbols {
  * derived on each call instead of stored, so revealing a location or one entering or leaving play
  * changes them with nothing to recompute. Maps don't matter: the symbols connect across them.
  */
-export function printedConnections(ctx: EngineContext, state: GameState): Edge[] {
+function printedConnections(ctx: EngineContext, state: GameState): Edge[] {
   const shown = locationsInPlay(ctx, state).map((card) => ({
     id: card.id,
     symbols: shownSymbols(ctx, card),
