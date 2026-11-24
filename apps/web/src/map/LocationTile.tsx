@@ -6,6 +6,7 @@ import {
   type ReactNode,
 } from 'react';
 import { useTranslation } from 'react-i18next';
+import { range } from '@arkham/util';
 import type {
   BoardView,
   EnemyView,
@@ -469,7 +470,8 @@ const PER_INVESTIGATOR_SIZE = 12;
 
 /**
  * The action abilities the location prints (`LocationView.printedActions`), a line each in the
- * text box as on the printed card: the action or free symbol, then its name ("Resign."). They show
+ * text box as on the printed card: the action symbol for each action it costs, or the free symbol,
+ * then its name ("Resign."). They show
  * whoever may take them; taking one is the location details' or the turn row's. HTML in a
  * `foreignObject`, like the enemy card's text, so a long line wraps.
  */
@@ -480,9 +482,17 @@ function PrintedActions({ actions }: { actions: readonly PrintedActionView[] }) 
       <div data-part="text">
         {actions.map((action, index) => {
           const symbol = action.free ? 'free' : 'action';
+          const count = action.free ? 1 : (action.actions ?? 1);
           return (
             <p key={index}>
-              <span role="img" aria-label={t(`symbol.${symbol}`)} data-symbol={symbol} />{' '}
+              {range(count).map((each) => (
+                <span
+                  key={each}
+                  role="img"
+                  aria-label={t(`symbol.${symbol}`)}
+                  data-symbol={symbol}
+                />
+              ))}{' '}
               {t('map.printedAction', { action: cardActionCaption(t, action) })}
             </p>
           );

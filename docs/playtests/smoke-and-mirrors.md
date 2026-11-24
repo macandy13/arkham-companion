@@ -51,7 +51,7 @@ The scripted golden game is [`end_to_end.test_support.ts`](../../packages/scenar
 - [ ] Arcane Lock attaches to the drawer's location (one per location); its action tests willpower or intellect (4) and discards it on a pass.
 - [ ] Flash Flood attaches to the drawer's location for +4 shroud and is discarded as the round ends.
 - [ ] Crossfire: on a failed agility (3) test each investigator at the location takes 1 damage.
-- [ ] Mark of Elokoss goes to the drawer's threat area.
+- [ ] Mark of Elokoss goes to the drawer's threat area; its two-action discard counts off two actions.
 - [ ] Raising Suspicions puts 1 doom on the nearest enemy without doom, and surges when every enemy has some; the lead picks between equally near ones.
 - [ ] Aerial Pursuit moves the nearest non-Elite enemy once toward the drawer, engaged or not; if it engages someone there, it attacks them at once. It also surges.
 
@@ -70,7 +70,7 @@ These are done by hand at the table; the app does not do them.
 
 - The codex entries of the suspects and the Servant of Flame, read from the campaign guide (the suspects' reactions show theirs as a by-hand notice), and the suspects' Parley actions.
 - The Elusive keyword of the Servant of Flame, Sgt. Earl Monroe and Bat Horror.
-- Adding the Mark of Elokoss to each deck, its damage as its holder's turn ends and its two-action discard.
+- Adding the Mark of Elokoss to each deck and its damage as its holder's turn ends.
 - The Arkham locations' other reactions and actions, Waterfront District's additional action to investigate, Arcane Lock's additional action to enter or leave, and the damage Miskatonic University (In Flames) deals to allies.
 - Two Rogue Gangsters engaging the same investigator at once with 1 resource left: the second should attack instead of taking a resource.
 - Whippoorwill's -1 to each skill at its location.

@@ -138,13 +138,13 @@ export function CardActions({
   return (
     <ActionGroup title={t('cardActions.title')}>
       {offered.map((offer) => {
-        const { cardId, action, designator, free, groupClues } = offer;
+        const { cardId, action, designator, free, actions: cost = 1, groupClues } = offer;
         const { caption, name } = cardActionLabel(t, offer);
         return (
           <ActionButton
             key={action}
             icon={designator ?? 'cardAction'}
-            actions={free ? 0 : 1}
+            actions={free ? 0 : cost}
             caption={caption}
             name={name}
             disabled={busy}

@@ -673,6 +673,25 @@ describe('Smoke and Mirrors card abilities', () => {
 
       expect(state.cards[mark]?.zone).toEqual(threatAreaOf(alice));
     });
+
+    it('lets alice discard it with its two-action ability', () => {
+      const mark = instanceId('mark_of_elokoss');
+      const { context, state: started } = newGame()
+        .withLocation(northside, cardOf('12149'), { revealed: true })
+        .withInvestigator(alice, { locationId: northside })
+        .withCard(mark, cardOf('12137'), threatAreaOf(alice))
+        .withTurnOf(alice)
+        .start();
+
+      const state = stateAfter(context, started, {
+        type: 'UseCardAction',
+        investigatorId: alice,
+        cardId: mark,
+        action: 0,
+      });
+
+      expect(state.cards[mark]?.zone).toEqual(encounterDiscard);
+    });
   });
 
   describe('Arcane Lock', () => {

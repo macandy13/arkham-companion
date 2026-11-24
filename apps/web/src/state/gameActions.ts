@@ -303,7 +303,7 @@ export function gameActions(
     useCardAction: (card, action, spend) =>
       onTurn((table, investigator) => {
         const offered = table.board.cardAction(investigator, card, action);
-        if (!offered?.free) table.spendAction(investigator);
+        if (!offered?.free) table.spendAction(investigator, offered?.actions ?? 1);
         table.useCardAction(
           investigator,
           card,

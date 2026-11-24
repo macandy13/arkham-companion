@@ -608,6 +608,25 @@ describe('Queen of Ash card abilities', () => {
 
       expect(state.cards[languor]?.zone).toEqual(threatAreaOf(alice));
     });
+
+    it('lets alice discard it with its two-action ability', () => {
+      const languor = instanceId('languor');
+      const { context, state: started } = newGame()
+        .withLocation(culvert, cardOf('12182'), { revealed: true })
+        .withInvestigator(alice, { locationId: culvert })
+        .withCard(languor, cardOf('12193'), threatAreaOf(alice))
+        .withTurnOf(alice)
+        .start();
+
+      const state = stateAfter(context, started, {
+        type: 'UseCardAction',
+        investigatorId: alice,
+        cardId: languor,
+        action: 0,
+      });
+
+      expect(state.cards[languor]?.zone).toEqual(encounterDiscard);
+    });
   });
 
   describe('Stop the Rite', () => {

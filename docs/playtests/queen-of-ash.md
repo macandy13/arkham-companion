@@ -58,7 +58,7 @@ The scripted golden game is [`end_to_end.test.ts`](../../packages/scenarios/src/
 **Encounter cards**
 
 - [ ] Putrid Vapors: 1 horror on a failed agility (3) test.
-- [ ] Languor (spelled "Langour" in the app, as on ArkhamDB) goes to the drawer's threat area.
+- [ ] Languor (spelled "Langour" in the app, as on ArkhamDB) goes to the drawer's threat area; its two-action discard counts off two actions.
 - [ ] Blasphemous Invocation: willpower (3); each point failed places 1 doom on a Cultist enemy without doom, the drawer picking among several; with no such Cultist in play, a fail draws a Cultist enemy from the encounter deck or discard pile.
 - [ ] Cosmic Evils, Noxious Smoke, Extraplanar Visions and Fire! work as in _Spreading Flames_.
 
@@ -80,7 +80,7 @@ These are done by hand at the table; the app does not do them.
 - The Zealot's doom as it enters play (setup places it) and the Dark Magician's as the round ends.
 - Unnatural Decay's doom on an asset, offered even to an investigator without one, who must take the 2 damage instead.
 - The revelation of Ashen Rebirth, Blasphemous Invocation's Cultist drawn after a fail by 0 (only possible once a player card lowered its difficulty to 0) while a Cultist without doom is in play, the discards of the card type Dissonance's and Torment's drawer chooses, and Putrid Vapors' asset discard.
-- Languor's limit of 1 per investigator, its discard as its holder's turn begins and its two-action discard.
+- Languor's limit of 1 per investigator and its discard as its holder's turn begins.
 - The cultist's "reveal another token" against a Cultist enemy, the tablet's automatic failure at a Ritual Site on Hard and Expert, and the elder thing's Fire! draw.
 - Adding both Collectors to the player card pool.
 
