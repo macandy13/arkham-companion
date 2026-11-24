@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>#1419 review tour</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400..700&amp;family=JetBrains+Mono:wght@400;600&amp;display=swap">
+<style>
+:root {
+  --bg: #fbfbf9; --fg: #1d1f21; --muted: #6b6f73; --line: #e6e5e0; --soft: #f2f1ec;
+  --accent: #2f5d8a; --accent-fg: #ffffff; --ask: #fdf4dc; --ask-fg: #3d3115; --code-bg: #ffffff;
+  --add-bg: #e9f5ec; --add-mark: #2e7d47; --del-bg: #fbecea; --del-mark: #b0413a; --hl: #fff3c4;
+  --tok-key: #8a3ffc; --tok-str: #2e7d47; --tok-com: #8c9196; --tok-type: #2f5d8a; --ok: #2e7d47;
+  --font-body: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-code: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  --radius: 8px;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #17191b; --fg: #e8e8e6; --muted: #9a9ea3; --line: #2b2e31; --soft: #202326;
+    --accent: #8ab4e0; --accent-fg: #10161c; --ask: #2b2617; --ask-fg: #f0e3bd; --code-bg: #1c1f22;
+    --add-bg: #1d2e23; --add-mark: #7cc596; --del-bg: #33201f; --del-mark: #e48a83; --hl: #3a3420;
+    --tok-key: #c4a1ff; --tok-str: #8fd0a4; --tok-com: #7c8288; --tok-type: #8ab4e0; --ok: #7cc596;
+    color-scheme: dark;
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.6 var(--font-body); -webkit-font-smoothing: antialiased; }
+main {
+  max-width: 720px; margin: 0 auto; display: grid; gap: 40px;
+  padding: 0 max(16px, env(safe-area-inset-right)) 56px max(16px, env(safe-area-inset-left));
+}
+a { color: var(--accent); text-underline-offset: 2px; }
+a:focus-visible, button:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+code { font-family: var(--font-code); font-size: .88em; background: var(--soft); padding: 1px 5px; border-radius: 4px; }
+nav {
+  position: sticky; top: 0; z-index: 5; display: flex; align-items: center; gap: 12px;
+  margin: 0 calc(-1 * max(16px, env(safe-area-inset-left))); padding: 10px max(16px, env(safe-area-inset-left));
+  background: color-mix(in srgb, var(--bg) 92%, transparent); backdrop-filter: blur(8px); border-bottom: 1px solid var(--line);
+}
+nav .number { font-size: 14px; font-weight: 600; color: var(--muted); }
+nav ol { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 0 auto; padding: 0; list-style: none; }
+nav ol a {
+  width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center;
+  color: var(--muted); background: var(--soft); font-size: 13px; font-weight: 600; text-decoration: none;
+}
+nav ol a.question { background: var(--ask); color: var(--ask-fg); }
+nav ol a.on { background: var(--accent); color: var(--accent-fg); }
+header { display: grid; gap: 12px; padding-top: 28px; }
+.kicker { font-size: 13px; color: var(--muted); }
+h1 { font-size: 28px; line-height: 1.2; font-weight: 650; letter-spacing: -0.015em; margin: 0; text-wrap: balance; }
+.lead { display: grid; gap: 6px; }
+.lead h2 { font-size: 12px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 0; }
+.lead p { font-size: 18px; margin: 0; max-width: 60ch; }
+.meta { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 13px; color: var(--muted); margin: 0; }
+.questions { background: var(--ask); color: var(--ask-fg); border-radius: var(--radius); padding: 18px 20px; display: grid; gap: 14px; }
+.questions h2 { font-size: 12px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; margin: 0; opacity: .75; }
+.questions ol { margin: 0; padding-left: 20px; display: grid; gap: 12px; }
+.questions p { margin: 0; font-size: 17px; }
+.questions .about { font-size: 13px; opacity: .75; }
+.questions a { color: inherit; font-size: 14px; font-weight: 500; }
+section.evidence { display: grid; gap: 14px; scroll-margin-top: 64px; }
+.evidence h2 { font-size: 20px; line-height: 1.3; font-weight: 600; letter-spacing: -0.01em; margin: 0; }
+.evidence ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 18px; }
+.evidence li { display: grid; gap: 8px; padding-left: 28px; position: relative; }
+.evidence li::before { content: "✓"; position: absolute; left: 4px; color: var(--accent); font-weight: 600; }
+.evidence li > p { margin: 0; max-width: 62ch; }
+.evidence .test { font-size: 14px; color: var(--muted); }
+.example { margin: 0; padding: 12px 14px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--soft); overflow-x: auto; font: 13px/1.5 var(--font-code); font-variant-ligatures: none; }
+.example code { background: none; padding: 0; font-size: inherit; }
+.stop { display: grid; gap: 14px; scroll-margin-top: 64px; }
+.stop > header { display: grid; grid-template-columns: auto 1fr; gap: 2px 12px; align-items: center; padding: 0; }
+.stop-number {
+  grid-row: span 2; align-self: start; margin-top: 2px; width: 28px; height: 28px; border-radius: 50%;
+  display: grid; place-items: center; background: var(--accent); color: var(--accent-fg); font-size: 13px; font-weight: 600;
+}
+.stop h2 { font-size: 20px; line-height: 1.3; font-weight: 600; letter-spacing: -0.01em; margin: 0; text-wrap: balance; }
+.tag { font-size: 12px; color: var(--muted); letter-spacing: .04em; text-transform: uppercase; }
+.stop > p { margin: 0; max-width: 62ch; }
+figure { display: grid; gap: 8px; margin: 0; }
+.toggle { display: flex; flex-wrap: wrap; gap: 4px; }
+.segments { display: inline-flex; background: var(--soft); border-radius: 999px; padding: 3px; }
+.toggle button { font: 500 13px var(--font-body); color: var(--muted); background: transparent; border: 0; border-radius: 999px; padding: 4px 12px; cursor: pointer; }
+.toggle button[aria-pressed="true"] { background: var(--bg); color: var(--fg); box-shadow: 0 1px 2px rgb(0 0 0 / 12%); }
+.frame { border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; background: var(--soft); }
+.frame img { display: block; width: 100%; height: auto; }
+.frame.phone { max-width: 280px; margin-inline: auto; }
+.frame .missing { padding: 24px; text-align: center; color: var(--muted); font-size: 14px; }
+.code { border: 1px solid var(--line); border-radius: var(--radius); background: var(--code-bg); overflow: hidden; }
+.code > header {
+  display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; padding: 8px 12px;
+  border-bottom: 1px solid var(--line); background: var(--soft); font-size: 13px; color: var(--muted);
+}
+.code .file { color: var(--fg); font-family: var(--font-code); font-size: 12.5px; overflow-wrap: anywhere; }
+.code > header a { margin-left: auto; }
+.code pre code { display: block; padding: 0; background: none; font-size: inherit; }
+.code pre { margin: 0; padding: 6px 0; font: 12.5px/1.6 var(--font-code); font-variant-ligatures: none; }
+.line { display: grid; grid-template-columns: 3.2em 1.4em minmax(0, 1fr); }
+.line .number { color: var(--muted); text-align: right; padding-right: .6em; user-select: none; opacity: .6; }
+.line .mark { color: var(--muted); user-select: none; }
+.line .text { padding: 0 12px 0 2ch; text-indent: -2ch; white-space: pre-wrap; overflow-wrap: anywhere; }
+.line.added { background: var(--add-bg); } .line.added .mark { color: var(--add-mark); }
+.line.removed { background: var(--del-bg); } .line.removed .mark { color: var(--del-mark); }
+.line.highlighted { background: var(--hl); }
+.line.gap .text { color: var(--muted); font-family: var(--font-body); font-size: 12px; }
+.k { color: var(--tok-key); } .s { color: var(--tok-str); } .c { color: var(--tok-com); font-style: italic; } .t { color: var(--tok-type); }
+.done { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; }
+.done p { margin: 0; color: var(--muted); }
+.done a { background: var(--accent); color: var(--accent-fg); border-radius: 999px; padding: 9px 20px; text-decoration: none; font-weight: 600; font-size: 15px; }
+details { border-top: 1px solid var(--line); padding-top: 16px; }
+summary { cursor: pointer; font-size: 15px; font-weight: 600; }
+details ul { padding-left: 20px; margin: 12px 0 0; display: grid; gap: 6px; font-size: 15px; }
+@media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+</style>
+</head>
+<body>
+<main>
+<nav aria-label="Tour"><span class="number">#1419</span><ol><li><a class="question" href="#questions" aria-label="Questions">?</a></li><li><a href="#stop-1" data-stop="stop-1">1</a></li><li><a href="#stop-2" data-stop="stop-2">2</a></li><li><a href="#stop-3" data-stop="stop-3">3</a></li></ol></nav>
+<header>
+<p class="kicker">feat(engine) · MC2.4a · as of b10a7a0</p>
+<h1>Card actions that cost two actions</h1>
+<p class="meta"><span>3 stops</span><span>1 question</span><span>16 of 274 changed lines on the tour</span></p>
+</header>
+<section class="lead"><h2>What changes</h2><p>A two-action card ability used to count off one action. A card action now says how many actions it costs, and the offer passes that number on to the play screen, which counts that many off and draws that many arrows.</p></section>
+<section class="questions" id="questions"><h2>Question for you</h2><ol><li><p>Southside's two-action 'draw a combined total of 3 cards, divided as they choose' stays by hand, because one deferred draw for the taker would misstate it. Is that fine?</p><span class="about">Concerns <a href="#stop-3">stop 3</a>.</span></li></ol><a href="https://github.com/macandy13/arkham-companion/pull/1419">Answer on GitHub →</a></section>
+<section class="stop" id="stop-1">
+<header><span class="stop-number">1</span><span></span><h2>A card action's action cost</h2></header>
+<p>CardAction.actions is set only when the cost is above one. The offer and the printed view carry it.</p>
+
+<div class="code"><header><span class="file">packages/engine/src/card_actions.ts</span><span>+35 −21</span><a href="https://github.com/macandy13/arkham-companion/pull/1419/files#diff-acf6640a6bbb75cb87b9851d11a8a2416157b5dd7ca08e0ba81c3f2cd81006d3R55-R418">Open in diff</a></header><pre><code><span class="line context"><span class="number">55</span><span class="mark"> </span><span class="text"><span class="c">   * action, so it never provokes attacks of opportunity. Abilities limited to a narrower timing (an act's group clue</span></span></span><span class="line context"><span class="number">56</span><span class="mark"> </span><span class="text"><span class="c">   * spend, &quot;during any investigator's turn&quot;) need their own check. Absent for an action ability.</span></span></span><span class="line context"><span class="number">57</span><span class="mark"> </span><span class="text"><span class="c">   */</span></span></span><span class="line context"><span class="number">58</span><span class="mark"> </span><span class="text">  <span class="k">readonly</span> free?: <span class="k">true</span>;</span></span><span class="line added"><span class="number">59</span><span class="mark">+</span><span class="text">  /**</span></span><span class="line added"><span class="number">60</span><span class="mark">+</span><span class="text"><span class="c">   * How many actions it costs when more than one (&quot;[action][action]:&quot;, Orne Library): the players</span></span></span><span class="line gap"><span class="number"></span><span class="mark">⋯</span><span class="text"></span></span><span class="line context"><span class="number">403</span><span class="mark"> </span><span class="text">    ...(free === <span class="k">undefined</span> ? {} : { free }),</span></span><span class="line added"><span class="number">404</span><span class="mark">+</span><span class="text">    ...(actionCost === <span class="k">undefined</span> ? {} : { actions: actionCost }),</span></span><span class="line context"><span class="number">405</span><span class="mark"> </span><span class="text">    ...numberOfKind(actions, action),</span></span><span class="line context"><span class="number">406</span><span class="mark"> </span><span class="text">  }));</span></span><span class="line context"><span class="number">407</span><span class="mark"> </span><span class="text">}</span></span><span class="line context"><span class="number">408</span><span class="mark"> </span><span class="text"></span></span><span class="line context"><span class="number">409</span><span class="mark"> </span><span class="text">/**</span></span><span class="line context"><span class="number">410</span><span class="mark"> </span><span class="text"><span class="c"> * `OfferedCardAction.number` of the printed action at index `action` among `actions`: its place</span></span></span><span class="line context"><span class="number">411</span><span class="mark"> </span><span class="text"><span class="c"> * among the actions with its designator, when there is more than one of them. An act's</span></span></span><span class="line context"><span class="number">412</span><span class="mark"> </span><span class="text"><span class="c"> * spend-clues advance doesn't count: the board shows it apart (`BoardView.act`).</span></span></span><span class="line context"><span class="number">413</span><span class="mark"> </span><span class="text"><span class="c"> */</span></span></span><span class="line context"><span class="number">414</span><span class="mark"> </span><span class="text"><span class="k">function</span> numberOfKind(actions: <span class="k">readonly</span> <span class="t">CardAction</span>[], action: number): { number?: number } {</span></span><span class="line context"><span class="number">415</span><span class="mark"> </span><span class="text">  <span class="k">const</span> designator = actions[action]?.designator;</span></span><span class="line context"><span class="number">416</span><span class="mark"> </span><span class="text">  <span class="k">const</span> sameKind = actions.flatMap((printed, index) =&gt;</span></span><span class="line context"><span class="number">417</span><span class="mark"> </span><span class="text">    printed.designator === designator &amp;&amp; !advancesBySpendingClues(printed) ? [index] : [],</span></span><span class="line context"><span class="number">418</span><span class="mark"> </span><span class="text">  );</span></span></code></pre></div>
+</section>
+<section class="stop" id="stop-2">
+<header><span class="stop-number">2</span><span></span><h2>The play screen counts it off and marks it</h2></header>
+<p>Using the action counts off its cost, and the button and the printed line show one arrow per action.</p>
+
+<div class="code"><header><span class="file">apps/web/src/state/gameActions.ts</span><span>+1 −1</span><a href="https://github.com/macandy13/arkham-companion/pull/1419/files#diff-d154d229454d0eb67e7a817678f0801e20a40fc661f894f79f1b61c4a71697e2R303-R313">Open in diff</a></header><pre><code><span class="line context"><span class="number">303</span><span class="mark"> </span><span class="text">    useCardAction: (card, action, spend) =&gt;</span></span><span class="line context"><span class="number">304</span><span class="mark"> </span><span class="text">      onTurn((table, investigator) =&gt; {</span></span><span class="line context"><span class="number">305</span><span class="mark"> </span><span class="text">        <span class="k">const</span> offered = table.board.cardAction(investigator, card, action);</span></span><span class="line removed"><span class="number">306</span><span class="mark">−</span><span class="text">        <span class="k">if</span> (!offered?.free) table.spendAction(investigator);</span></span><span class="line added"><span class="number">306</span><span class="mark">+</span><span class="text">        <span class="k">if</span> (!offered?.free) table.spendAction(investigator, offered?.actions ?? 1);</span></span><span class="line context"><span class="number">307</span><span class="mark"> </span><span class="text">        table.useCardAction(</span></span><span class="line context"><span class="number">308</span><span class="mark"> </span><span class="text">          investigator,</span></span><span class="line context"><span class="number">309</span><span class="mark"> </span><span class="text">          card,</span></span><span class="line context"><span class="number">310</span><span class="mark"> </span><span class="text">          action,</span></span><span class="line context"><span class="number">311</span><span class="mark"> </span><span class="text">          spend?.map(({ investigator: payer, clues }) =&gt; [payer, clues]),</span></span><span class="line context"><span class="number">312</span><span class="mark"> </span><span class="text">        );</span></span><span class="line context"><span class="number">313</span><span class="mark"> </span><span class="text">      }),</span></span></code></pre></div>
+<div class="code"><header><span class="file">apps/web/src/map/LocationTile.tsx</span><span>+12 −2</span><a href="https://github.com/macandy13/arkham-companion/pull/1419/files#diff-e85a8bf3a2d97ff958f6ff1c497dc1df58c8d6591525f378a413dd8eaae2892dR483-R500">Open in diff</a></header><pre><code><span class="line context"><span class="number">483</span><span class="mark"> </span><span class="text">        {actions.map((action, index) =&gt; {</span></span><span class="line context"><span class="number">484</span><span class="mark"> </span><span class="text">          <span class="k">const</span> symbol = action.free ? <span class="s">'free'</span> : <span class="s">'action'</span>;</span></span><span class="line added"><span class="number">485</span><span class="mark">+</span><span class="text">          <span class="k">const</span> count = action.free ? 1 : (action.actions ?? 1);</span></span><span class="line context"><span class="number">486</span><span class="mark"> </span><span class="text">          <span class="k">return</span> (</span></span><span class="line context"><span class="number">487</span><span class="mark"> </span><span class="text">            &lt;p key={index}&gt;</span></span><span class="line removed"><span class="number">485</span><span class="mark">−</span><span class="text">              &lt;span role=<span class="s">&quot;img&quot;</span> aria-label={t(<span class="s">`symbol.${symbol}`</span>)} data-symbol={symbol} /&gt;{<span class="s">' '</span>}</span></span><span class="line added"><span class="number">488</span><span class="mark">+</span><span class="text">              {range(count).map((each) =&gt; (</span></span><span class="line added"><span class="number">489</span><span class="mark">+</span><span class="text">                &lt;span</span></span><span class="line added"><span class="number">490</span><span class="mark">+</span><span class="text">                  key={each}</span></span><span class="line added"><span class="number">491</span><span class="mark">+</span><span class="text">                  role=<span class="s">&quot;img&quot;</span></span></span><span class="line added"><span class="number">492</span><span class="mark">+</span><span class="text">                  aria-label={t(<span class="s">`symbol.${symbol}`</span>)}</span></span><span class="line added"><span class="number">493</span><span class="mark">+</span><span class="text">                  data-symbol={symbol}</span></span><span class="line added"><span class="number">494</span><span class="mark">+</span><span class="text">                /&gt;</span></span><span class="line added"><span class="number">495</span><span class="mark">+</span><span class="text">              ))}{<span class="s">' '</span>}</span></span><span class="line context"><span class="number">496</span><span class="mark"> </span><span class="text">              {t(<span class="s">'map.printedAction'</span>, { action: cardActionCaption(t, action) })}</span></span><span class="line context"><span class="number">497</span><span class="mark"> </span><span class="text">            &lt;/p&gt;</span></span><span class="line context"><span class="number">498</span><span class="mark"> </span><span class="text">          );</span></span><span class="line context"><span class="number">499</span><span class="mark"> </span><span class="text">        })}</span></span><span class="line context"><span class="number">500</span><span class="mark"> </span><span class="text">      &lt;/div&gt;</span></span></code></pre></div>
+</section>
+<section class="stop" id="stop-3">
+<header><span class="stop-number">3</span><span></span><h2>The cards</h2></header>
+<p>Orne Library draws 3 (left to the players), once per game; three threat-area treacheries discard themselves.</p>
+
+<div class="code"><header><span class="file">packages/scenarios/src/spreading_flames/cards.ts</span><span>+6 −3</span><a href="https://github.com/macandy13/arkham-companion/pull/1419/files#diff-4e3c093853acaa8bbd8a17f456ed535169083eca628ffeb317700974acd22083R463-R541">Open in diff</a></header><pre><code><span class="line context"><span class="number">463</span><span class="mark"> </span><span class="text">    pictures: jpg,</span></span><span class="line gap"><span class="number"></span><span class="mark">⋯</span><span class="text"></span></span><span class="line context"><span class="number">541</span><span class="mark"> </span><span class="text">    code: <span class="s">'12125'</span>,</span></span></code></pre></div>
+<div class="code"><header><span class="file">packages/scenarios/src/smoke_and_mirrors/cards.ts</span><span>+2 −2</span><a href="https://github.com/macandy13/arkham-companion/pull/1419/files#diff-9b2c770453274ff424b33a8f4c304b10c9d349adfdf8092770b82db7388a4d21R242-R242">Open in diff</a></header><pre><code><span class="line added"><span class="number">242</span><span class="mark">+</span><span class="text">    actions: [{ actions: 2, effects: [discardSelf()] }],</span></span></code></pre></div>
+<div class="code"><header><span class="file">packages/scenarios/src/queen_of_ash/cards.ts</span><span>+3 −2</span><a href="https://github.com/macandy13/arkham-companion/pull/1419/files#diff-dddd69908c0beb4396ab39f009d805d87c1729e980c6fe9b175e8282d9a0d0a2R637-R637">Open in diff</a></header><pre><code><span class="line context"><span class="number">637</span><span class="mark"> </span><span class="text">    traits: [<span class="s">'Curse'</span>],</span></span></code></pre></div>
+</section>
+
+<section class="done"><p>That's the whole change.</p><a href="https://github.com/macandy13/arkham-companion/pull/1419/files">Review on GitHub</a></section>
+
+</main>
+<script>
+document.querySelectorAll('figure[data-variants]').forEach((figure) => {
+  const variants = JSON.parse(figure.dataset.variants);
+  const state = { when: 'after', device: variants[0].device };
+  const frame = figure.querySelector('.frame');
+  const show = () => {
+    const variant = variants.find((v) => v.device === state.device);
+    const src = variant[state.when];
+    frame.classList.toggle('phone', state.device === 'phone');
+    frame.innerHTML = src
+      ? '<img alt="' + state.device + ', ' + state.when + '" src="' + src + '">'
+      : '<p class="missing">' + (state.when === 'before' ? 'New in this PR' : 'Removed in this PR') + '</p>';
+    figure.querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(b.value === state.when || b.value === state.device)));
+  };
+  figure.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => {
+    state[b.name] = b.value;
+    show();
+  }));
+  show();
+});
+const dots = [...document.querySelectorAll('nav a[data-stop]')];
+const seen = new IntersectionObserver((entries) => entries.forEach((entry) => {
+  if (entry.isIntersecting) dots.forEach((d) => d.classList.toggle('on', d.dataset.stop === entry.target.id));
+}), { rootMargin: '-40% 0px -55% 0px' });
+document.querySelectorAll('.stop').forEach((stop) => seen.observe(stop));
+</script>
+</body>
+</html>
