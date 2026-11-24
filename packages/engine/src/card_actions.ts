@@ -61,12 +61,13 @@ export interface CardAction {
   /** "Spend N resources:" or "Spend N clues:", paid before the effects. */
   readonly cost?: ActionCost;
   /**
-   * "If you control Lita Chantler:" (`controls`), or a timing narrower than a free action's any
-   * player window, "during any investigator's turn" (`turn`, the act's group clue spend), which
-   * the investigator taking it must meet (`actionConditionHolds`), read in the action's window
-   * (`you()` is the taker); `allOf` when the card prints several ("during your turn, if there are
-   * exactly 1 or 2 investigators in the game"). An action whose condition doesn't hold is neither
-   * offered nor accepted.
+   * What the table must show, or a timing narrower than a free action's any player window,
+   * "during any investigator's turn" (`turn`, the act's group clue spend), which the investigator
+   * taking it must meet (`actionConditionHolds`), read in the action's window (`you()` is the
+   * taker); `allOf` when the card prints several ("during your turn, if there are exactly 1 or 2
+   * investigators in the game"). An action whose condition doesn't hold is neither offered nor
+   * accepted. A condition on player cards, which the game doesn't track ("If you control Lita
+   * Chantler:"), is no condition here: the action's effects ask its taker (`youMustEither`).
    */
   readonly condition?: AbilityCondition;
   readonly effects: readonly AbilityEffect[];

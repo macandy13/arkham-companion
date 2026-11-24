@@ -26,10 +26,7 @@ import type {
 import { cardsInPlay, cardsWithActiveAbilities } from './doom';
 import { cardOptionLabels } from './decisions';
 import type { Event, SkillTestResolved } from './events';
-import {
-  findInvestigator as findCampaignInvestigator,
-  type TraumaKind,
-} from './campaign/campaign_log';
+import type { TraumaKind } from './campaign/campaign_log';
 import {
   codexEntry,
   decisionId,
@@ -98,7 +95,6 @@ import {
   encounterDeck,
   encounterDiscard,
   playAreaOf,
-  sameZone,
   scenarioDeck,
   setAside,
   threatAreaOf,
@@ -603,11 +599,11 @@ export type AbilityEffect = Templated<AbilityCommand>;
 
 /**
  * What must hold when the window opens for an ability to fire ("If it is act 3, …"), or for a card
- * action to be offered and taken ("If you control Lita Chantler:", `CardAction.condition`, read in
+ * action to be offered and taken ("During your turn:", `CardAction.condition`, read in
  * the action's window). Checked once, as the window opens; the effects then resolve whatever they
  * change. Three shapes cover most conditions cards print, each over the references effects use:
  * which card is current, how many things a reference names, and a value on the table; then the
- * phase or turn the game is in, what an investigator controls, and `allOf`/`anyOf`/`not` to
+ * phase or turn the game is in, and `allOf`/`anyOf`/`not` to
  * combine them. A new condition is usually a new reference or `Quantity`, not a new kind.
  */
 export type AbilityCondition =
@@ -637,16 +633,6 @@ export type AbilityCondition =
    * group clue spend), or with `of` that of the investigator it names ("during your turn").
    */
   | { kind: 'turn'; of?: RelativeInvestigator }
-  /**
-   * "If you control Lita Chantler": a copy of `code` is in the play area of the investigator `who`
-   * names. When the game has no copy at all, the card is a player card the players hold (Lita
-   * Chantler, earned in The Gathering, is in an investigator's deck by The Devourer Below), which
-   * the game doesn't track, so it trusts the investigator, as it trusts a hand card cost, as long
-   * as the campaign log says they earned the card (`CampaignInvestigator.earnedCards`). A
-   * standalone game has no log: its players pick the earlier resolutions themselves (Rules
-   * Reference, "Standalone Mode"), so it trusts them too.
-   */
-  | { kind: 'controls'; who: RelativeInvestigator; code: CardCode }
   /** Each of `conditions` holds ("during your turn, if there are exactly 1 or 2 investigators"). */
   | { kind: 'allOf'; conditions: readonly AbilityCondition[] }
   /** At least one of `conditions` holds. */
@@ -1230,8 +1216,6 @@ export function conditionHolds(
       const refs = windowRefs(ctx, state, opened);
       return namedIds(ctx, state, condition.of, refs).includes(turn.investigatorId);
     }
-    case 'controls':
-      return controls(ctx, state, condition, opened);
     case 'allOf':
       return condition.conditions.every((each) => conditionHolds(ctx, state, each, opened));
     case 'anyOf':
@@ -1241,26 +1225,6 @@ export function conditionHolds(
     default:
       return assertNever(condition);
   }
-}
-
-/** Whether each investigator `who` names controls a copy of `code`, or is trusted to (see `AbilityCondition.controls`). */
-function controls(
-  ctx: EngineContext,
-  state: GameState,
-  { who, code }: Extract<AbilityCondition, { kind: 'controls' }>,
-  opened: OpenedWindow,
-): boolean {
-  const ids = namedIds(ctx, state, who, windowRefs(ctx, state, opened)) as InvestigatorId[];
-  const copies = Object.values(state.cards).filter((card) => card.code === code);
-  return (
-    ids.length > 0 &&
-    ids.every((id) => {
-      if (copies.length > 0) return copies.some((card) => sameZone(card.zone, playAreaOf(id)));
-      if (state.campaign === undefined) return true;
-      const member = findCampaignInvestigator(state.campaign, requireInvestigator(state, id).code);
-      return member?.earnedCards.includes(code) === true;
-    })
-  );
 }
 
 /** How many things `of` names as `opened` opens (see `AbilityCondition.countOf`). */

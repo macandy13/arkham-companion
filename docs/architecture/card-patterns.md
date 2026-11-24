@@ -73,10 +73,7 @@ A cost is `CardAction.cost`, paid before the effects.
 ## Story assets and earned cards
 
 - Lita Chantler's Parley: `parleyAction({ effects: [skillTest('intellect', 4, { onPass: [takeControl()] })] })`.
-- "If you control Lita Chantler:" (Umôrdhoth): `condition: { kind: 'controls', who: you(), code: codes.litaChantler }`.
-  - `controls` checks the taker's play area. When the game has no copy of the card at all, it is a player card the game doesn't track, so the taker is trusted, as with a hand card cost.
-  - That trust needs the campaign log to say the taker earned Lita (`CampaignInvestigator.earnedCards`, written by The Gathering's resolutions with `earnCard`), so Umôrdhoth's action is hidden from an investigator who didn't.
-  - A standalone game has no log and trusts the taker.
+- "If you control Lita Chantler:" (Umôrdhoth): Lita is a player card by The Devourer Below, which the game doesn't track, so the action has no condition and asks its taker instead: `youMustEither(LITA_SACRIFICE_DECISION, prompt, [{ id: 'sacrifice', …, effects: [endScenario(…litaSacrificed)] }, { id: 'noLita', …, effects: [] }])`.
 
 ## Searching, drawing and attaching encounter cards
 

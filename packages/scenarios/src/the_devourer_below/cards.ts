@@ -1,5 +1,4 @@
 import {
-  you,
   whenEnemyDefeated,
   spawnEnemyAt,
   duringAct,
@@ -126,6 +125,13 @@ export const OFFER_OF_POWER_DECISION = decisionId('theDevourerBelow.offerOfPower
 /** Id of Umôrdhoth's Wrath's question for each point its test fails by: discard a card or take 1 damage and 1 horror. */
 export const UMORDHOTHS_WRATH_DECISION = decisionId('theDevourerBelow.umordhothsWrath');
 
+/**
+ * Id of the question to whoever takes Umôrdhoth's action: do they control Lita Chantler? She is a
+ * player card by now (earned in The Gathering), which the game doesn't track, so only the taker
+ * can say.
+ */
+export const LITA_SACRIFICE_DECISION = decisionId('theDevourerBelow.litaSacrifice');
+
 /** Id of the Quiet Glade action's question to its taker: heal 1 damage or 1 horror. */
 export const QUIET_GLADE_DECISION = decisionId('theDevourerBelow.quietGlade');
 
@@ -138,6 +144,7 @@ const own = sets.theDevourerBelow;
 const offerOfPower = 'scenario.theDevourerBelow.offerOfPower';
 const quietGlade = 'scenario.theDevourerBelow.quietGlade';
 const umordhothsWrath = 'scenario.theDevourerBelow.umordhothsWrath';
+const litaSacrifice = 'scenario.theDevourerBelow.litaSacrifice';
 const woods = ['Woods'];
 
 /**
@@ -374,8 +381,16 @@ export const theDevourerBelowCardDefs: readonly CardStats[] = [
     // "[action] If you control Lita Chantler: You throw Lita to Umôrdhoth … (→R3)".
     actions: [
       {
-        condition: { kind: 'controls', who: you(), code: codes.litaChantler },
-        effects: [endScenario(DEVOURER_BELOW_RESOLUTIONS.litaSacrificed)],
+        effects: [
+          youMustEither(LITA_SACRIFICE_DECISION, `${litaSacrifice}.prompt`, [
+            {
+              id: 'sacrifice',
+              label: `${litaSacrifice}.sacrifice`,
+              effects: [endScenario(DEVOURER_BELOW_RESOLUTIONS.litaSacrificed)],
+            },
+            { id: 'noLita', label: `${litaSacrifice}.noLita`, effects: [] },
+          ]),
+        ],
       },
     ],
   }),

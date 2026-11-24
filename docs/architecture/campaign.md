@@ -4,7 +4,7 @@ A campaign is its own event-sourced aggregate in [`campaign/`](../../packages/en
 
 [`CampaignLog`](../../packages/engine/src/campaign/campaign_log.ts) holds:
 
-- the team (keyed by `InvestigatorCode`) with trauma, XP, fate and the story cards each earned (`earnedCards`, `EarnCard`: Lita Chantler, which a later game trusts that investigator to hold),
+- the team (keyed by `InvestigatorCode`) with trauma, XP, fate and the story cards each earned (`earnedCards`, `EarnCard`: Lita Chantler),
 - story records,
 - chaos bag,
 - and scenario order.
