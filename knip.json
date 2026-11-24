@@ -1,0 +1,18 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "ignoreBinaries": ["ffmpeg"],
+  "workspaces": {
+    ".": {
+      "entry": [".claude/hooks/*.ts"]
+    },
+    "packages/engine": {
+      "entry": ["test/utils/index.ts"]
+    },
+    "packages/review_tour": {
+      "entry": ["src/cli.ts"]
+    },
+    "apps/web": {
+      "entry": ["scripts/**/cli.ts", "scripts/app_icon.ts"]
+    }
+  }
+}

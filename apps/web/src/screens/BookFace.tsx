@@ -14,7 +14,7 @@ import './book_face.css';
  * the art and the footer strip. An act prints the same layout mirrored (`facing`), with a
  * magnifier's handle on its disc.
  */
-export const BOOK_FACE = {
+const BOOK_FACE = {
   art: { left: 0, right: 174 },
   cover: { left: 158, bottom: 286 },
   page: { left: 180, right: 412, top: 7, bottom: 280, corner: 10 },

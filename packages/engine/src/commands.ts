@@ -1095,7 +1095,7 @@ export interface MarginTier {
  * against the state then: a card test's outcome, run after the answer. So an
  * effect on a drawer whom the outcome's own damage defeated names nobody and
  * is dropped, rather than rejecting the answer (Rules Reference: resolve as
- * much as possible). Produced by the engine (`abilities.ts`), never by the
+ * much as possible). Produced by the engine (`abilities/resolve.ts`), never by the
  * players; it becomes an `ability` step instead of reaching a handler.
  */
 export interface ResolveEffect {

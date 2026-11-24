@@ -72,7 +72,7 @@ export interface CodeRef {
 }
 
 /** Head line numbers `from` to `to`, inclusive. */
-export interface LineRange {
+interface LineRange {
   readonly from: number;
   readonly to: number;
   /** Says what the skipped lines before this range hold. */

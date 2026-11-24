@@ -20,7 +20,7 @@ export const SCREENCAST_STEP_MS = 250;
  * flashes by too fast to read. The GIF holds each frame this many times longer, and the
  * player page (`player.html`) starts at `1 / SCREENCAST_SLOWDOWN` speed.
  */
-export const SCREENCAST_SLOWDOWN = 4;
+const SCREENCAST_SLOWDOWN = 4;
 
 /**
  * Most flows recorded per push. A change to something every screen shows (the app bar, a token)
@@ -30,10 +30,10 @@ export const SCREENCAST_SLOWDOWN = 4;
 export const SCREENCAST_LIMIT = 5;
 
 /** Width the GIFs are scaled to; enough to read the UI inline in a PR description. */
-export const GIF_WIDTH = 800;
+const GIF_WIDTH = 800;
 
 /** How long the last frame is held before the GIF loops, so the end state is readable. */
-export const GIF_END_HOLD_SECONDS = 2;
+const GIF_END_HOLD_SECONDS = 2;
 
 /** Markers that delimit the section owned by the preview workflow in the PR description. */
 export const SECTION_START = '<!-- screencasts:start -->';
@@ -87,7 +87,7 @@ export interface ChangedFlow {
  * A golden before and after the PR, as paths in the repository: `before` is missing for a golden
  * the PR adds, `after` for one it deletes.
  */
-export interface GoldenPair {
+interface GoldenPair {
   readonly before?: string;
   readonly after?: string;
 }
@@ -124,7 +124,7 @@ export type ShotDevice = 'desktop' | 'phone';
  * at. The widths give both pictures about the same height (tablet 1180×820, phone 390×844),
  * and side by side they still fit the PR description's column.
  */
-export const SHOT_DEVICES: Readonly<
+const SHOT_DEVICES: Readonly<
   Record<ShotDevice, { project: string; label: string; width: number }>
 > = {
   desktop: { project: RECORDING_PROJECTS.shots, label: 'Desktop', width: 560 },

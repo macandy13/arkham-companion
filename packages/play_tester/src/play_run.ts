@@ -55,7 +55,7 @@ export interface Finding {
 }
 
 /** How a game ended: at a resolution, with every investigator out, or cut off at the step cap. */
-export type GameEnd = 'resolution' | 'eliminated' | 'stepCap';
+type GameEnd = 'resolution' | 'eliminated' | 'stepCap';
 
 /**
  * One played run: the steps the table accepted, in order (they replay the game on a fresh table),
@@ -82,13 +82,13 @@ export function attempts({
 }
 
 /** How many steps a game may take before it is cut off, a bound on the tester's own time. */
-export const STEP_CAP = 5000;
+const STEP_CAP = 5000;
 
 /**
  * The round a game must have ended by. The Gathering's agendas run out after about 15 rounds of
  * doom; a game still going at twice that is stuck, so it is a `liveness` finding.
  */
-export const ROUND_CAP = 30;
+const ROUND_CAP = 30;
 
 /**
  * Plays `run` with its bot until the game ends, a check fails (round `roundCap` passing

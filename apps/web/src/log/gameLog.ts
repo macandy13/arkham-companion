@@ -129,7 +129,7 @@ export function logSections(steps: readonly LogStep[]): LogSection[] {
  * asked, map layout, exhaustion) has no line, and neither have the counters a clue discovery
  * moves, since its own line says it all.
  */
-export function eventLines(
+function eventLines(
   t: TFunction,
   ctx: EngineContext,
   state: GameState,

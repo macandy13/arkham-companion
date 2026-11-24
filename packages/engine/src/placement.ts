@@ -1,6 +1,5 @@
 import { assertNever } from '@arkham/util';
 import { cardStats, type CopyLimit, type EngineContext } from './cards';
-import type { MoveCard } from './commands';
 import type { CardMoved, Event, TokensChanged } from './events';
 import { requireCard } from './lookup';
 import { discardPileOf } from './player_cards';
@@ -62,7 +61,7 @@ function hostOf(zone: Zone): InstanceId | undefined {
 }
 
 /** The references a zone may name in `state`. */
-export function stateZoneRefs(state: GameState): ZoneRefs {
+function stateZoneRefs(state: GameState): ZoneRefs {
   return {
     cards: state.cards,
     investigators: new Set(state.investigators.map((i) => i.id)),
@@ -140,16 +139,6 @@ export function discardEncounterCard(
     ...clearTokensEvents(card),
     moveCardEvent(card, discardPileOf(ctx, card), 0),
   ];
-}
-
-/**
- * The command that discards an encounter card onto the top of the encounter
- * discard, where "topmost" effects look for it: a resolved revelation, or an
- * investigated location's attachment. Card abilities use `discard`, the same move for a card
- * reference instead of an ID.
- */
-export function discardToTop(cardId: InstanceId): MoveCard {
-  return { type: 'MoveCard', cardId, to: { kind: 'encounterDiscard' }, index: 0 };
 }
 
 /**

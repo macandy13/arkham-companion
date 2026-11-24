@@ -3,7 +3,7 @@ import type { BoardView, GridCell, InstanceId, InvestigatorId, MapView } from '@
 import { piecesOnTile, tileOrigin, type Point } from './mapLayout';
 
 /** A pawn or an enemy token on the map, by whom or what it stands for. */
-export type MapPiece = { investigator: InvestigatorId } | { enemy: InstanceId };
+type MapPiece = { investigator: InvestigatorId } | { enemy: InstanceId };
 
 /** Where a piece stands on a map: its location and its centre in the drawing's coordinates. */
 export interface PiecePlace {

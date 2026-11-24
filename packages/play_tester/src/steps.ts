@@ -34,7 +34,7 @@ export const INVESTIGATOR_VERBS = [
 export type InvestigatorVerb = (typeof INVESTIGATOR_VERBS)[number];
 
 /** The `PlayTable` verbs a bot uses against an enemy. */
-export type EnemyVerb = 'fight' | 'evade' | 'engage';
+type EnemyVerb = 'fight' | 'evade' | 'engage';
 
 /**
  * One step a bot plays: a `PlayTable` call with its arguments, investigators and locations by

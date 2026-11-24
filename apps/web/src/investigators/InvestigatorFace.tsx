@@ -20,7 +20,7 @@ import './investigator_face.css';
  * full length for its text. The panel's HTML (InvestigatorBar) lies over these places, which tokens.css gives
  * again for the stylesheet (`--investigator-*`, in the same scan units): change both together.
  */
-export const INVESTIGATOR_FACE = {
+const INVESTIGATOR_FACE = {
   card: { height: 130 },
   /** The scan's art, lifted so the portrait's face shows; the frame's header and column cover the rest. */
   art: { lift: 20, header: 46, column: 222 },
@@ -50,7 +50,7 @@ export const INVESTIGATOR_FACE = {
  * banner's drawing moved to (`x`, `y`) and shrunk by `scale`, so both shapes share one drawing.
  * tokens.css gives the places again for the strip (`[data-shape='strip']`): change both together.
  */
-export const INVESTIGATOR_STRIP = {
+const INVESTIGATOR_STRIP = {
   card: { height: 88 },
   /** The disc's centre and radius, and the scan's point it centres on at the scan's `scale`. */
   portrait: { x: 42, y: 44, radius: 36, scale: 0.5, focusX: 113, focusY: 112 },

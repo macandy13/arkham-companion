@@ -6,7 +6,7 @@ import type { Step } from './steps';
  * How many shorter games `shrink` may try for one finding, a bound on the tester's own time: each
  * try plays its game again from the start, every step judged.
  */
-export const SHRINK_TRIES = 400;
+const SHRINK_TRIES = 400;
 
 /**
  * `result` cut down to a shorter game that still fails alike, the same check at the same kind of step

@@ -176,7 +176,7 @@ export const CANCEL_REVELATION_OPTION = 'cancel';
  * which the players hold in their hands, out of the app's sight. So every treachery asks, and
  * the players offer the cancel only where their card fits.
  */
-export function revelationDecision(cardId: InstanceId, investigatorId: InvestigatorId): Decision {
+function revelationDecision(cardId: InstanceId, investigatorId: InvestigatorId): Decision {
   const answer = (cancelled: boolean): ResolveRevelation => ({
     type: 'ResolveRevelation',
     cardId,

@@ -13,7 +13,7 @@ import { encounterDiscard, outOfGame, type Zone } from './zone';
  * drawn from a player deck (`CardInstance.owner`). A story asset is an asset too, but of an
  * encounter set.
  */
-export function isPlayerCard(ctx: EngineContext, card: CardInstance): boolean {
+function isPlayerCard(ctx: EngineContext, card: CardInstance): boolean {
   return card.owner !== undefined || isPlayerCardStats(cardStats(ctx.cards, card.code));
 }
 
