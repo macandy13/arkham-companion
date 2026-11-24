@@ -5,7 +5,7 @@ import { MARK_TICK_COUNT } from '../brand/appMark';
 import './startup.css';
 
 /** What the app loads before its first screen, in the order the loading screen lists it. */
-export const STARTUP_STEPS = ['games', 'cards'] as const;
+const STARTUP_STEPS = ['games', 'cards'] as const;
 
 /** One step of the start-up: the saved games, or the card data. */
 export type StartupStep = (typeof STARTUP_STEPS)[number];

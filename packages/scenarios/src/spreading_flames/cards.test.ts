@@ -439,7 +439,12 @@ describe('Spreading Flames card abilities', () => {
     it('lets alice use it only once in the game', () => {
       const { context, state: started } = aliceInTheLibrary();
       const used = stateAfter(context, started, drawThree);
-      const nextRound = { ...used, meta: { ...used.meta, round: used.meta.round + 1 } };
+      // A new round, with alice's three actions back.
+      const nextRound = {
+        ...used,
+        meta: { ...used.meta, round: used.meta.round + 1 },
+        investigators: used.investigators.map((each) => ({ ...each, actionsRemaining: 3 })),
+      };
 
       expect(rejectionFrom(context, nextRound, drawThree).code).toBe('cardActionLimitReached');
     });

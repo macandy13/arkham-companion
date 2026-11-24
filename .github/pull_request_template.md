@@ -17,7 +17,7 @@
 <details>
 <summary>Everything else</summary>
 
-<!-- One line each, with links; leave out what has nothing: the rules claims table (claim · verdict · docs/rules/ page) and a link to the rule's end-to-end step when a rule changes, the docs/architecture/ page this PR updates. Plumbing goes in the tour's "rest"; no other tests. -->
+<!-- One line each, with links; leave out what has nothing: the rules claims table (claim · verdict · docs/rules/ page) and a link to the rule's end-to-end step when it got one (coding guidelines §3), the docs/architecture/ page this PR updates. Plumbing goes in the tour's "rest"; no other tests. -->
 
 </details>
 

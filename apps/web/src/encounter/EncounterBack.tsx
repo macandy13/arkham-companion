@@ -11,7 +11,7 @@ import './encounter_back.css';
  * down the card, a dark body standing in them with tentacles curling up on both sides, and the
  * ground across the foot. The deck's count sits on the body (the header's round token).
  */
-export const ENCOUNTER_BACK = {
+const ENCOUNTER_BACK = {
   sky: { x: 150, y: -25, radius: 155 },
   eye: { x: 150, y: 114, glow: 22, rays: 21, rayFrom: 24, rayTo: 98, triangle: 17, pupil: 6 },
   beams: { count: 13, spread: 130 },

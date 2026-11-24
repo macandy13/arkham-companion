@@ -22,7 +22,7 @@ export type AttackKind =
   'enemyPhase' | 'attackOfOpportunity' | 'retaliate' | 'alert' | 'cardAttack';
 
 /** The attacks the rules force outside the enemy phase. */
-export type ForcedAttackKind = Exclude<AttackKind, 'enemyPhase'>;
+type ForcedAttackKind = Exclude<AttackKind, 'enemyPhase'>;
 
 /** How each kind of attack is asked: its prompt and the label of its way out. */
 const ASKED: Readonly<Record<AttackKind, { prompt: string; skip: string }>> = {

@@ -114,12 +114,11 @@ export interface CommandSpec<C extends Command> {
   /**
    * The command as an action that provokes attacks of opportunity, if it is
    * one (`ActionCommand.asAction`); `handle` asks only for a player command
-   * in that investigator's own turn (`isOwnTurnAction`). The engine does not
-   * count actions (the players do, see `Investigator.actionsRemaining`), so
-   * it recognises only the action commands it sees. `Fight` and `Evade` never provoke: the
-   * rules exempt them. `AdjustActions` does not either, even with a negative
-   * delta: the players count off the actions the engine saw as well, so
-   * treating every -1 as an action would ask twice for the same action. The
+   * in that investigator's own turn (`isOwnTurnAction`). `Fight` and `Evade`
+   * never provoke: the rules exempt them, and neither does a free action (`asAction: 'free'`).
+   * `AdjustActions` does not either, even with a negative delta: the engine plays one to pay
+   * each action command (`actionPayment`), so treating every -1 as an action would ask twice
+   * for the same action. The
    * actions on player cards are commands of their own taken `asAction`
    * (`GainResources`, `DrawCards`, `PlayCard`), so they provoke once.
    */
@@ -182,7 +181,7 @@ function placeDrawnCard(_command: DrawCard | DrawWeakness, own: readonly Event[]
 
 /** `provokes` of the action commands: the command when the players took it as an action. */
 function asAction<C extends HeldAction & ActionCommand>(command: C): C | undefined {
-  return command.asAction ? command : undefined;
+  return command.asAction === true ? command : undefined;
 }
 
 /** One spec per command type; the mapped type makes a missing or mistyped entry a type error. */

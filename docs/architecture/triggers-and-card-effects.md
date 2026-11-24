@@ -3,7 +3,17 @@
 Forced effects are **abilities**: data on a card's `CardStats`, so card data holds no code and the same card behaves the same in every scenario.
 A scenario's own rules are abilities of its agendas and acts.
 
-An [`Ability`](../../packages/engine/src/abilities.ts) is:
+The code lives in [`abilities/`](../../packages/engine/src/abilities/), one file per part:
+
+- `types.ts`: `Ability`, `TimingWindow`, `AbilityEffect` and the references (`RelativeCard`, `RelativeInvestigator`);
+- `dsl.ts`: the factories card data is written with (`whenRevealed`, `takeHorror`, `self()`), most of what scenarios use besides the types;
+- `windows.ts`: which cards an event opens a window for (`windowsOpenedBy`);
+- `resolve.ts`: turning an ability into steps and resolving its effects (`abilitySteps`, `resolveEffect`, `conditionHolds`);
+- `objectives.ts`: the objective thresholds the board shows.
+
+The engine's modules import from `abilities/index.ts`; the package index lists what scenarios see.
+
+An `Ability` is:
 
 - a timing window (`TimingWindow`; setup opens none): the event it waits for (`on`), whose cards hear it (`of`, a `ListenerScope`) and, optionally, which card the event must be about (`filter`, a `CardFilter`). A new window on a known event is a scope or a filter, not a new kind.
   - The scopes (`windowsOpenedBy` opens each event for its scopes in a fixed order, `openFor`):
@@ -150,10 +160,11 @@ An action ability provokes attacks of opportunity unless it is a Resign or Parle
   - A group cost (`groupClues`, "2 clues per investigator, as a group") is paid by any active investigators: `UseCardAction.spend` names who pays how many (`groupCluePayments`), and without it the taker pays what they can and the others the rest (`defaultCluePayments`).
   The view gives the screen what it needs to let the players split it: the cost on the offered action (`CardActionView.groupClues`) and who may pay with the clues they hold and the default split (`BoardView.cluePayers`).
   - A cost the game can't pay itself (`handCards`, "choose and discard 4 cards from your hand") is always payable to the engine and paid by a deferred `DiscardFromHand`.
-- A free action (`CardAction.free`, a "[free]" ability) costs no action: `UseCardAction` takes it in any player window, outside the taker's turn too, and it never provokes (`UseCardAction` has no `asAction`: the printed ability decides); `GameActions.useCardAction` counts off an action only for the others.
-- An action that costs more than one ("[action][action]:", `CardAction.actions`) is offered with its count (`OfferedCardAction.actions`, also on `PrintedActionView`); like any action, the engine leaves counting it to the players, so `GameActions.useCardAction` counts off that many and the screen marks one action arrow for each (Orne Library's draw, the threat-area discards of Unspeakable Truths, Mark of Elokoss and Languor).
+- A free action (`CardAction.free`, a "[free]" ability) costs no action: `UseCardAction` takes it in any player window, outside the taker's turn too, and it never provokes (`UseCardAction` has no `asAction`: the printed ability decides); the engine counts off an action only for the others (`actionPayment`).
+- An action that costs more than one ("[action][action]:", `CardAction.actions`) is offered with its count (`OfferedCardAction.actions`, also on `PrintedActionView`); the engine counts off that many (`actionPayment`) and the screen marks one action arrow for each (Orne Library's draw, the threat-area discards of Unspeakable Truths, Mark of Elokoss and Languor).
 - An action whose effects would change nothing can't be taken (RR "Triggered Abilities"): `UseCardAction`'s spec names its effects as `CommandSpec.mustChangeState`, which `handle` dry-runs after the handler's own checks and rejects (`changesNothing`) when they would emit no event, so the limit isn't used up; `BoardView.cardActions` leaves such an action out (`changesGameState`). An action with no effects the engine runs is done at the table and always offered.
 - A `CardAction.condition` ("During your turn:") is an `AbilityCondition`, read in the action's window, where `you()` is the taker (`actionConditionHolds`). It must hold, else the action is neither offered nor accepted (`cardActionConditionUnmet`).
+- A resolution step reads an `AbilityCondition` too, on the ended game and outside any window (`conditionHolds` without one, [Campaign](campaign.md)): a reference to the window's card, investigator or location names nothing there, only `lead`, `onlyCopy` and `setAsideCopy` stand for something, and a picked reference has no candidates, so it counts 0. `thereAre(of, range)` writes the usual question, "there are N of these": `thereAre(eachInZone(victoryDisplay, { code }), { min: 1 })`.
   - A condition on player cards, which the game doesn't track ("If you control Lita Chantler:"), is no condition: the action's effects ask its taker, and the players answer (example in [Card patterns](card-patterns.md)).
   - `{ kind: 'turn', of: you() }` ("during your turn") holds in the taker's own turn, a `countOf` over `eachInvestigator()` ("if there are exactly 1 or 2 investigators in the game") counts the investigators still in it, and `allOf` combines them (Miskatonic Quad's free move, `moveToConnectingLocation()`); `anyOf` and `not` combine conditions too.
 - A rejected effect rejects the whole action, cost included.
@@ -213,12 +224,12 @@ A restriction can also bind an investigator (`InvestigatorCardRestriction`), whi
 
 A card can also make basic actions cost more (an `actionCost` modifier, [`ActionCostModifier`](../../packages/engine/src/modifiers.ts)): the actions it raises by their card text words (`BasicAction`), by how much, whom it binds (`of: 'threatArea'`, the `InvestigatorScope` a restriction's `who` takes), and with `first: 'eachRound'` only the first of them each round (Frozen in Fear).
 
-- The engine still leaves counting actions to the players, so [`actionCost`](../../packages/engine/src/action_costs.ts) (`BoardView.actionCost`) is what they count off: 1 (none for a free one) plus what the binding cards add, each copy its own.
-- They name the action they count off (`AdjustActions.for`, `PlayTable.spendActionFor`). The engine records it for the round (`GameMeta.actionsTaken`, cleared by `RoundEnded`), so a cost of the first one is paid once, even when the action came before the card. A free action is recorded with a delta of 0.
+- The engine counts off what an action command taken `asAction` costs before it handles it ([`actionPayment`](../../packages/engine/src/action_costs.ts), one `AdjustActions`): [`actionCost`](../../packages/engine/src/action_costs.ts) (`BoardView.actionCost`, also shown on the action's button), 1 (none for `asAction: 'free'`, a card's free action) plus what the binding cards add, each copy its own. Only the player's own command pays: an action held for attacks of opportunity and resumed (`StepsQueued`) doesn't pay again.
+- The payment names the basic action (`AdjustActions.for`). The engine records it for the round (`GameMeta.actionsTaken`, cleared by `RoundEnded`), so a cost of the first one is paid once, even when the action came before the card. A free action is recorded with a delta of 0.
 - A cost the investigator can't pay is refused like any count below zero (`invalidActionAdjustment`).
 
 ## Extension points
 
 - **A card's ability, action or modifier:** list it in the card's data; no code. [Card patterns](card-patterns.md) shows how card text maps to it.
 - **A new window or condition:** a case in `TimingWindow` / `windowsOpenedBy`; a condition is usually a new reference to count or a new `Quantity` to read, rarely a new `AbilityCondition` kind.
-- **A new kind of effect:** add its command to `AbilityCommand` (and a factory); a new reference is a case in `resolveRefs`.
+- **A new kind of effect:** add its command to `AbilityCommand` (and a factory in `dsl.ts`, exported from the package index); a new reference is a case in `resolveRefs`.

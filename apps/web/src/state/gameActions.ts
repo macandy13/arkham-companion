@@ -12,7 +12,6 @@ import {
   type InvestigatorId,
   type InvestigatorStat,
   type PlayTable,
-  type BasicAction,
   type CardCode,
   type ChaosToken,
   type PoolToken,
@@ -29,7 +28,7 @@ import { assertNever } from '@arkham/util';
  * The tokens the players place, move and take back by hand (`adjustTokens`): the clues and doom a
  * location's − / + bubble changes, and those dragged to and from the token pool.
  */
-export type LooseToken = Extract<TokenKind, 'clue' | 'doom'>;
+type LooseToken = Extract<TokenKind, 'clue' | 'doom'>;
 
 /** The investigator counters the screen's − / + bubbles change. */
 export type SteppedStat = Extract<InvestigatorStat, 'resources' | 'damage' | 'horror'>;
@@ -38,7 +37,7 @@ export type SteppedStat = Extract<InvestigatorStat, 'resources' | 'damage' | 'ho
 export type ActionCost = 'action' | 'free';
 
 /** The tests a card lets an investigator make outside their turn or away from their location. */
-export type TestByCard = 'investigate' | 'fight' | 'evade';
+type TestByCard = 'investigate' | 'fight' | 'evade';
 
 /** Counts the players confirm when they answer a decision (clues found, damage soaked). */
 export interface DecisionAmounts {
@@ -53,7 +52,7 @@ export interface DecisionAmounts {
 }
 
 /** The answer to the choice an option asks next (`DecisionView.followUps`): its option and counts. */
-export interface FollowUpAnswer {
+interface FollowUpAnswer {
   option: string;
   counts?: DecisionAmounts;
 }
@@ -286,24 +285,12 @@ export function gameActions(
 ): GameActions {
   const onTurn = (action: (table: PlayTable, investigator: InvestigatorId) => void) =>
     play((table) => action(table, turnInvestigator(table.state)));
-  // The engine leaves counting actions to the players, so the screen counts off what the action
-  // costs (a card can raise it, Frozen in Fear) and names it, so a raise of the round's first is
-  // paid once; a free one costs only such a raise and is still performed.
-  const taking =
-    (kind: BasicAction, cost: ActionCost = 'action') =>
-    (action: (table: PlayTable, investigator: InvestigatorId) => void) =>
-      onTurn((table, investigator) => {
-        table.spendActionFor(investigator, kind, { free: cost === 'free' });
-        action(table, investigator);
-      });
   return {
     nextPhase: () => play((table) => void table.nextPhase()),
     startTurn: (investigator) => play((table) => table.startTurn(investigator)),
     endTurn: () => onTurn((table, investigator) => table.endTurn(investigator)),
     useCardAction: (card, action, spend) =>
       onTurn((table, investigator) => {
-        const offered = table.board.cardAction(investigator, card, action);
-        if (!offered?.free) table.spendAction(investigator, offered?.actions ?? 1);
         table.useCardAction(
           investigator,
           card,
@@ -318,9 +305,10 @@ export function gameActions(
         table.play({ type: 'MoveInvestigator', investigatorId: investigator, to: location });
       switch (cost) {
         case 'action':
-          return taking('move')((table, investigator) => table.moveTo(investigator, location));
         case 'free':
-          return taking('move', 'free')(move);
+          return onTurn((table, investigator) =>
+            table.moveTo(investigator, location, { free: cost === 'free' }),
+          );
         case undefined:
           return onTurn(move);
         default:
@@ -328,13 +316,10 @@ export function gameActions(
       }
     },
     investigate: () =>
-      taking('investigate')((table, investigator) =>
-        table.investigate(investigator, { result: 'open' }),
-      ),
-    takeResource: () =>
-      taking('resource')((table, investigator) => table.takeResource(investigator)),
-    drawCard: () => taking('draw')((table, investigator) => table.drawCard(investigator)),
-    playCard: (cost) => taking('play')((table, investigator) => table.playCard(investigator, cost)),
+      onTurn((table, investigator) => table.investigate(investigator, { result: 'open' })),
+    takeResource: () => onTurn((table, investigator) => table.takeResource(investigator)),
+    drawCard: () => onTurn((table, investigator) => table.drawCard(investigator)),
+    playCard: (cost) => onTurn((table, investigator) => table.playCard(investigator, cost)),
     takeClue: (location, investigator) =>
       play((table) =>
         table.play({
@@ -346,16 +331,14 @@ export function gameActions(
       ),
     placeClue: (investigator) => play((table) => table.play(placeYourClues(1, investigator))),
     fight: (enemy, cost = 'action') =>
-      taking(
-        'fight',
-        cost,
-      )((table, investigator) => table.fight(investigator, enemy, { result: 'open' })),
+      onTurn((table, investigator) =>
+        table.fight(investigator, enemy, { result: 'open', free: cost === 'free' }),
+      ),
     evade: (enemy, cost = 'action') =>
-      taking(
-        'evade',
-        cost,
-      )((table, investigator) => table.evade(investigator, enemy, { result: 'open' })),
-    engage: (enemy) => taking('engage')((table, investigator) => table.engage(investigator, enemy)),
+      onTurn((table, investigator) =>
+        table.evade(investigator, enemy, { result: 'open', free: cost === 'free' }),
+      ),
+    engage: (enemy) => onTurn((table, investigator) => table.engage(investigator, enemy)),
     moveEnemy: (enemy, location) =>
       play((table) => table.moveEnemy(enemy, location, { forced: true })),
     damageEnemy: (enemy, amount) =>

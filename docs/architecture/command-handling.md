@@ -9,7 +9,7 @@ function apply(state: GameState, event: Event): GameState;
 interface EngineContext { cards: CardDb; scenario?: ScenarioDefinition; }  // code and lookup data, never saved
 ```
 
-Inside one call a command resolves as a queue of steps, depth first:
+A player's action command first pays what it costs (`actionPayment`, an `AdjustActions` with the action's cost, [Triggers and card effects](triggers-and-card-effects.md)); one it can't pay is refused. Inside one call a command then resolves as a queue of steps, depth first:
 
 1. the command's own events,
 2. then the forced effects its events trigger (see [Triggers and card effects](triggers-and-card-effects.md)); once an event has ended the scenario nothing triggers any more, though the rest of the chain still resolves (`triggeredSteps`),
@@ -19,7 +19,7 @@ Inside one call a command resolves as a queue of steps, depth first:
    - surge.
 
 A step that raises a decision stops the queue and stores the rest in `GameMeta.queue`; the answer resumes it.
-An action that provokes attacks of opportunity is held until those are answered.
+An action that provokes attacks of opportunity is held until those are answered; it has paid already, so it doesn't pay again when it resumes.
 A refused follow-up refuses the whole command, and so does a trigger loop, so bad card data cannot hang the app or leave half an effect behind.
 
 Every command type has one entry in [`COMMAND_SPECS`](../../packages/engine/src/command_specs.ts): its handler (in a `handle_<area>.ts` file or a rule module) plus its policies:
@@ -45,6 +45,6 @@ function changeNotices(caused: CausedEvents): ChangeNotice[];  // { kind, cause,
 
 ## Extension points
 
-- **A new command:** add it to the `Command` union in [`commands.ts`](../../packages/engine/src/commands.ts), its handler in a `handle_<area>.ts` and its `COMMAND_SPECS` entry. An action command extends `ActionCommand`, and its spec uses `provokes: asAction`; `UseCardAction` is the exception, as the printed ability decides whether it is an action (`CardAction.free`).
+- **A new command:** add it to the `Command` union in [`commands.ts`](../../packages/engine/src/commands.ts), its handler in a `handle_<area>.ts` and its `COMMAND_SPECS` entry. An action command extends `ActionCommand`, gets a case in `basicActionOf` ([`action_costs.ts`](../../packages/engine/src/action_costs.ts)), without which it is never charged, and its spec uses `provokes: asAction`; `UseCardAction` is the exception, as the printed ability decides whether it is an action (`CardAction.free`).
 - **A new event:** reuse one if you can; otherwise add it in [`events.ts`](../../packages/engine/src/events.ts) with a non-validating case in `apply`.
 - **A new refusal:** add a `RejectionCode` in [`rejection.ts`](../../packages/engine/src/rejection.ts).

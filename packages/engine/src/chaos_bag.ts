@@ -26,7 +26,7 @@ export function tokenCounts(bag: readonly ChaosToken[]): TokenCount[] {
 export type PoolToken = Extract<ChaosToken, 'bless' | 'curse'>;
 
 /** How many of each `PoolToken` the game holds: no card adds one while all are in play. */
-export const POOL_TOKEN_COUNT = 10;
+const POOL_TOKEN_COUNT = 10;
 
 /** Whether `token` is a bless or curse token (`PoolToken`). */
 export function isPoolToken(token: ChaosToken): token is PoolToken {

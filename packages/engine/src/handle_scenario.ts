@@ -25,10 +25,10 @@ import type {
   TokensChanged,
 } from './events';
 import type { InstanceId, ResolutionId } from './ids';
-import { cardsInZone, requireCard } from './lookup';
+import { cardsInZone, requireCard, requireCurrentCard } from './lookup';
 import { clearTokensEvents, moveCardEvent } from './placement';
 import { CommandRejected } from './rejection';
-import type { CardInstance, GameState } from './state';
+import type { GameState } from './state';
 import { zoneKey } from './zone';
 
 /**
@@ -76,7 +76,9 @@ export function handleReleaseChaosToken(
  */
 export function handleAdvance(state: GameState, cmd: Advance): Event[] {
   const cleared =
-    cmd.deck === 'agenda' ? doomRemoval(state) : clearTokensEvents(currentCard(state, 'act'));
+    cmd.deck === 'agenda'
+      ? doomRemoval(state)
+      : clearTokensEvents(requireCurrentCard(state, 'act'));
   return [...cleared, ...reverseSide(state, cmd.deck, cmd.resolution)];
 }
 
@@ -134,7 +136,7 @@ export function handleBecomeActAndAgenda(
   state: GameState,
   cmd: BecomeActAndAgenda,
 ): (CardMoved | CurrentCardChanged)[] {
-  const current = currentCard(state, 'agenda');
+  const current = requireCurrentCard(state, 'agenda');
   const actAndAgenda = cmd.next === true ? nextCardId(state, 'agenda', current.id) : current.id;
   if (actAndAgenda === undefined) throw new CommandRejected({ code: 'noNextAgenda' });
   return [
@@ -160,7 +162,7 @@ function reverseSide(
   deck: StageDeck,
   resolution: ResolutionId | undefined,
 ): (CardFlipped | AgendaAdvanced | ActAdvanced)[] {
-  const card = currentCard(state, deck);
+  const card = requireCurrentCard(state, deck);
   if (resolution !== undefined && nextCardId(state, deck, card.id) !== undefined)
     throw new CommandRejected({ code: 'unexpectedResolution', deck });
   return [
@@ -187,11 +189,4 @@ function doomRemoval(state: GameState): (TokensChanged | InvestigatorChanged)[] 
       delta: -inv.doomOnPlayerCards,
     }));
   return [...fromCards, ...fromPlayerCards];
-}
-
-/** The current agenda or act; rejects if the deck is exhausted. */
-function currentCard(state: GameState, deck: StageDeck): CardInstance {
-  const id = state[deck].current;
-  if (id === undefined) throw new CommandRejected({ code: 'noCurrentCard', deck });
-  return requireCard(state.cards, id);
 }
