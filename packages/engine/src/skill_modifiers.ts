@@ -161,10 +161,7 @@ export function tokenModifier(
  * see it; `undefined` for any other decision and for a test decided by the
  * lead or the group, since then nobody's skill is known.
  */
-export function skillTestContext(
-  state: GameState,
-  decision: Decision,
-): SkillTestContext | undefined {
+function skillTestContext(state: GameState, decision: Decision): SkillTestContext | undefined {
   const test = decision.skillTest;
   if (decision.kind !== 'skillTestResult' || !test || decision.decider.kind !== 'investigator')
     return undefined;

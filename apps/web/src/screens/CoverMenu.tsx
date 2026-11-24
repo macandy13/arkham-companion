@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 /** The line icons a cover's menu entries take (base.css draws each). */
-export type CoverActionIcon = 'campaign-log' | 'rename' | 'duplicate' | 'export' | 'delete';
+type CoverActionIcon = 'campaign-log' | 'rename' | 'duplicate' | 'export' | 'delete';
 
 /** One entry of a cover's ⋮ menu. */
 export interface CoverAction {

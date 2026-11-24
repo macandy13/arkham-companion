@@ -2,7 +2,7 @@ import { cardCode, cardName, type CardCode, type CardName, type SkillName } from
 import type { SeededRandom } from './run';
 
 /** A player card class. A signature card has none: it goes only to its investigator (`only`). */
-export type PlayerClass = 'guardian' | 'seeker' | 'rogue' | 'mystic' | 'survivor' | 'neutral';
+type PlayerClass = 'guardian' | 'seeker' | 'rogue' | 'mystic' | 'survivor' | 'neutral';
 
 /**
  * How the deck bot plays a card (player-card-analysis.md, "Effects in table terms"): the bot reads
@@ -84,7 +84,7 @@ export interface PlayerCard {
  * The Core Set level 0 cards the tester's investigators can take, with their signature assets
  * (player-card-analysis.md, "Cards"). Weaknesses are left out.
  */
-export const PLAYER_CARDS: readonly PlayerCard[] = [
+const PLAYER_CARDS: readonly PlayerCard[] = [
   {
     code: cardCode('01006'),
     name: cardName("Roland's .38 Special"),

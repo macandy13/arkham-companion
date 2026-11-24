@@ -22,7 +22,7 @@ import { CardDetails, type HeldIn } from './CardDetails';
  * How many threat area cards show side by side; more scroll, a whole card at a time. The
  * stylesheet sizes the strip to the same count (`--threat-cards-shown`).
  */
-export const THREAT_CARDS_SHOWN = 4;
+const THREAT_CARDS_SHOWN = 4;
 
 /**
  * An investigator's threat area, laid as a row of small cards along the top edge of their card:

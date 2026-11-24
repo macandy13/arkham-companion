@@ -29,7 +29,7 @@ import { assertNever } from '@arkham/util';
  * The tokens the players place, move and take back by hand (`adjustTokens`): the clues and doom a
  * location's − / + bubble changes, and those dragged to and from the token pool.
  */
-export type LooseToken = Extract<TokenKind, 'clue' | 'doom'>;
+type LooseToken = Extract<TokenKind, 'clue' | 'doom'>;
 
 /** The investigator counters the screen's − / + bubbles change. */
 export type SteppedStat = Extract<InvestigatorStat, 'resources' | 'damage' | 'horror'>;
@@ -38,7 +38,7 @@ export type SteppedStat = Extract<InvestigatorStat, 'resources' | 'damage' | 'ho
 export type ActionCost = 'action' | 'free';
 
 /** The tests a card lets an investigator make outside their turn or away from their location. */
-export type TestByCard = 'investigate' | 'fight' | 'evade';
+type TestByCard = 'investigate' | 'fight' | 'evade';
 
 /** Counts the players confirm when they answer a decision (clues found, damage soaked). */
 export interface DecisionAmounts {
@@ -53,7 +53,7 @@ export interface DecisionAmounts {
 }
 
 /** The answer to the choice an option asks next (`DecisionView.followUps`): its option and counts. */
-export interface FollowUpAnswer {
+interface FollowUpAnswer {
   option: string;
   counts?: DecisionAmounts;
 }

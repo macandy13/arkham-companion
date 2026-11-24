@@ -9,7 +9,7 @@ import {
 import type { Step } from './steps';
 
 /** The rule oracles (product.md "Continuous play tester", check 4), one per rule they check. */
-export type OracleId =
+type OracleId =
   | 'phaseOrder'
   | 'upkeep'
   | 'mythosDoom'
@@ -19,8 +19,7 @@ export type OracleId =
   | 'hunterMove';
 
 /** The `docs/rules/` pages the oracles are written from. */
-export type RulesPage =
-  'round-structure.md' | 'agenda-and-doom.md' | 'act-and-clues.md' | 'hunter.md';
+type RulesPage = 'round-structure.md' | 'agenda-and-doom.md' | 'act-and-clues.md' | 'hunter.md';
 
 /**
  * One rule a step must keep, judged from the board before and after it: what the step broke, or
@@ -28,7 +27,7 @@ export type RulesPage =
  * bug there does not pass its own check; it trusts the values the board shows (a threshold, doom in
  * play, an act's clue requirement). It is written from its `docs/rules/` page.
  */
-export interface Oracle {
+interface Oracle {
   readonly id: OracleId;
   readonly rules: RulesPage;
   readonly judge: (before: BoardView, after: BoardView, step: Step) => string | undefined;
@@ -74,7 +73,7 @@ function newlyEngaged(before: BoardView, after: BoardView, investigator: Investi
  * Every rule oracle, in the order `brokenRule` asks them: the first one a step breaks is its
  * finding, so the round structure comes before the rules that rely on it.
  */
-export const ORACLES: readonly Oracle[] = [
+const ORACLES: readonly Oracle[] = [
   {
     id: 'phaseOrder',
     rules: 'round-structure.md',

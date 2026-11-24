@@ -77,7 +77,7 @@ export interface CardAction {
  * Whether `investigator` meets the condition of the action on `cardId` (`CardAction.condition`),
  * read in the action's window, which names them as `you()`. No condition always holds.
  */
-export function actionConditionHolds(
+function actionConditionHolds(
   ctx: EngineContext,
   state: GameState,
   investigator: Investigator,
@@ -113,7 +113,7 @@ export type ActionCost =
  * for a group cost the active investigators hold the clues together, counting only clues no card
  * forbids to spend (`isRestrictedFor`). No cost is always paid.
  */
-export function canPay(
+function canPay(
   ctx: EngineContext,
   state: GameState,
   investigator: Investigator,
@@ -277,7 +277,7 @@ export function parleyAction(action: Omit<CardAction, 'designator'>): CardAction
  * use by hand, like a player card's, and the one story asset that comes there, Lita Chantler,
  * has an action only while nobody controls her.
  */
-export function offersActionsTo(
+function offersActionsTo(
   state: GameState,
   card: CardInstance,
   investigator: Investigator,

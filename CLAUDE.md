@@ -31,7 +31,7 @@ Code style and conventions (functions, comments, tests, markup, CSS, helpers) ar
 - `pnpm install`
 - `pnpm test` – all unit tests; `pnpm test:coverage` – with the coverage floors CI enforces (`vitest.config.ts`)
 - `pnpm typecheck`
-- `pnpm lint` (`pnpm format` fixes formatting)
+- `pnpm lint` – ESLint, Prettier and knip (unused files, exports and dependencies; `knip.json`); `pnpm format` fixes formatting
 - `pnpm e2e` – Playwright against the production build (`apps/web/e2e/`)
 - `pnpm dev` – web app (apps/web); `pnpm build` – production build
 - `pnpm carddata:fetch` – fetch and normalise ArkhamDB packs into the local cache
