@@ -1,7 +1,7 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { WeaknessDef } from '@arkham/carddata';
-import type { InvestigatorView } from '@arkham/engine';
+import { drawWeakness, type InvestigatorView } from '@arkham/engine';
 import type { GameActions } from '../state/gameActions';
 import { weaknessGroups } from './weakness_groups';
 
@@ -35,13 +35,7 @@ export function DrawWeakness({
         <DrawWeaknessDialog
           investigator={investigator}
           weaknesses={weaknesses}
-          onDraw={(card) =>
-            void actions.perform({
-              type: 'DrawWeakness',
-              investigatorId: investigator.id,
-              code: card.code,
-            })
-          }
+          onDraw={(card) => void actions.perform(drawWeakness(investigator.id, card.code))}
           onClose={() => setPicking(false)}
         />
       )}

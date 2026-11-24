@@ -1,14 +1,17 @@
 import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
-  SKILL_NAMES,
+  adjustStat,
   type BoardView,
+  correctSkillBoost,
   type InvestigatorCode,
   type InvestigatorId,
   type InvestigatorView,
   type MapEnemyView,
-  type SkillName,
   placeYourClues,
+  SKILL_NAMES,
+  type SkillName,
+  takeOneClue,
 } from '@arkham/engine';
 import { Brain, Heart } from '../catalog/cardFace';
 import { range } from '@arkham/util';
@@ -33,7 +36,6 @@ import { CounterBubble, type BubbleSide } from '../screens/CounterBubble';
 import { useDoubleTap, useDoubleTapOn } from '../screens/useDoubleTap';
 import './investigators.css';
 import './card_effects.css';
-import { takeOneClue } from '../state/gameActions';
 
 /**
  * The bar of investigator panels along the foot of the play screen, one per investigator in seat
@@ -463,12 +465,7 @@ function Skills({
                 disabled: off,
               },
               onStep: (delta) =>
-                void actions.correct({
-                  kind: 'skillBoost',
-                  investigatorId: investigator.id,
-                  skill: boosting.skill,
-                  delta,
-                }),
+                void actions.correct(correctSkillBoost(investigator.id, boosting.skill, delta)),
             },
           ]}
           onClose={() => setBoosting(undefined)}
@@ -511,7 +508,7 @@ function Counters({
   const { id, health, damage, sanity, horror } = investigator;
   // A stepper's damage or horror defeats by the rules, so it is performed, not corrected.
   const adjust = (stat: SteppedStat, delta: number) =>
-    void actions.perform({ type: 'AdjustInvestigator', investigatorId: id, stat, delta });
+    void actions.perform(adjustStat(stat, delta, id));
   // A defeated or resigned investigator has left the game, so their counters no longer change.
   const off = busy || investigator.status !== 'active';
   const clueDrag = useClueDrag(board, id, actions);
