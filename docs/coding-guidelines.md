@@ -40,6 +40,15 @@ How code in this repo should look, so every task lands in the same style.
 
 ## 3. Tests
 
+**Test each claim once, in the layer that owns it.** A rule that the engine tests with blank cards is not tested again with the real card, in a component and in E2E. Each layer checks what only it can break:
+
+- **Engine unit tests own the rules:** every rule and each of its variants, as `it.each` tables with blank cards.
+- **Scenario tests own what the card adds:** its numbers, its targets, an unusual combination of rules. A card that only composes tested rules gets a row in the scenario's table, not a `describe` of its own. Printed data (pictures, symbols, connections, copy counts) is held to ArkhamDB by `arkhamdb_check.test.ts`, so tests don't restate it; a test checks printed data only where setup or a rule depends on it.
+- **Web tests own the wiring:** a value of the view sets a control's state, a tap calls the right action. Build the board in the state the control reads (an action the view reports as forbidden), never from the rule that produces it (no treacheries with restrictions in a component test). One table per kind of control.
+- **E2E flows own journeys across screens, goldens own looks:** a component test doesn't check what a screenshot shows (sizes, order, layout).
+- **The play tester owns integration:** its bots play the real scenarios every night, so the end-to-end narratives are not extended feature by feature.
+- **Drive games with `PlayTable` verbs** (`table.moveTo(alice, hallway)`); raw command literals belong in the test file of that command's handler.
+
 - **Keep it local and readable.** A reader must understand each test from its body plus the `describe` setup right above it, without scrolling or decoding. Every card, ID, zone and value an assertion checks is written there with a readable name. No generated or positional IDs (`d0`, `L1`), no cryptic codes (`'SUR'`), no shared fixtures whose contents matter but sit far away, no hidden defaults that affect the result. Helpers may build state, but their call site names what they build:
 
   ```ts
@@ -63,7 +72,7 @@ How code in this repo should look, so every task lands in the same style.
 - **Web test helpers** sit next to the module they stand in for, in a `*.test_support.ts` file that coverage ignores: `actionsOn(table)` in `apps/web/src/state/gameActions.test_support.ts` gives a component `GameActions` that play on a table the test built.
 - **One behaviour per test**, named as a sentence about behaviour: `it('rejects moving a card into its own zone')`.
 - **Exception: end-to-end scenario tests** (`packages/scenarios/src/*/*end_to_end.test.ts`; a scenario may have one per path to a resolution) may be one long narrative test that plays the scenario in order, with short phase/turn comment headers (`// Round 2 – investigation: Roland's turn`) and assertions in place. When a later scenario's game plays on from its log, the narrative is a function in the scenario's `end_to_end.test_support.ts` (log in, log out), which its `end_to_end.test.ts` and the later scenarios' tests call. The campaign's start for those games (`newAshCampaign`) sits in the campaign's `campaign.test_support.ts`.
-- **A new or changed rule shows up at the table.** Every PR that adds or changes a game rule extends an end-to-end scenario test with a step where the rule happens in play, and links that step next to the rules claims in the PR description's folded "Everything else" box. Rule gaps are easiest to spot in a playthrough, not in unit tests of the rule alone.
+- **A rule that changes how a whole game plays shows up at the table.** A new phase step, a new way to reach a resolution or a new kind of turn gets a step in an end-to-end scenario test, linked next to the rules claims in the PR description's folded "Everything else" box. Every other rule is covered by its unit tests and the play tester.
 - **Flow tests play a `PlayTable` and read it back through `BoardView`** (`packages/engine/src/play_table.ts`, `board_view.ts`): every test that plays a scenario through phases and turns sets up and drives the game with the same table instead of its own command lists, so all flow tests read alike. Unit tests of single rules stay fine-grained in the engine.
 - **Arrange – act – assert**, separated by blank lines; no logic (loops, conditionals) in assertions.
 - **Test through the public API** of the module (commands in, events/state out for the engine), not internals.
@@ -124,12 +133,12 @@ Common, generic operations go into small, tested helpers instead of being re-imp
 A PR is reviewed on a phone, in one sitting. Its size and shape decide whether the review catches the rules and design questions or drowns in plumbing.
 
 - **One reviewable idea per PR:** one rule, one API change (commands, events, state shape), one screen or one refactor. A task that needs several of these becomes several PRs.
-- **Size budget.** Aim for at most ~400 changed lines of production code and ~1000 changed lines in total (tests included; lockfile, generated files and `docs/tasks/` excluded). Past that, split, unless the extra lines are one mechanical change (a rename, a moved file) that reads at a glance.
+- **Size budget.** Aim for at most ~400 changed lines of production code and ~1000 changed lines in total (tests included; lockfile, generated files and `docs/tasks/` excluded). Past that, split, unless the extra lines are one mechanical change (a rename, a moved file) that reads at a glance. Refactoring milestones (MS) are the exception: one PR per task, whatever its size, since a refactor split in half leaves two ways of doing the same thing on `main`.
 - **Plan the slices before coding.** When a task will exceed the budget, open its PRs as sub-issues of the task issue first (`M1.13a – modifier types and events`, `M1.13b – …`), so each session knows its slice and the reviewer knows what comes next.
 - **Split in reading order:**
   1. preparatory `refactor:` PRs that change no behaviour: helper moves, test-util changes, renames. The description says "no behaviour change", so they can be approved by skimming;
   2. types and API: new commands, events and state, with the reducer cases and invariants;
-  3. the rule or logic itself, with its unit tests and its step in the end-to-end scenario test;
+  3. the rule or logic itself, with its unit tests;
   4. wiring and UI.
 - **Stacked PRs** each target the previous PR's branch, are green on their own, and carry their position in the title (`feat(engine): add skill modifiers (M1.13, 2/3)`). Merge them in order.
 - **Review fixes stay in the reviewed PR.** Answer every review thread in the PR it was raised on; never merge with open threads, and don't push the fix into a later PR of the stack. If a point is out of scope, the reply names the task it was moved to.

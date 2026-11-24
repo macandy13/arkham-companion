@@ -11,7 +11,8 @@ For the `pr-reviewer` subagent, which Claude sessions run on their branch before
   - generated or positional IDs (`d0`, `L1`), cryptic codes, or far-away fixtures whose contents matter;
   - property-based tests;
   - assertions on formatted text where structured data exists.
-- **Test coverage.** New engine or scenario behaviour without a unit test, and a new rule without a step in the end-to-end scenario test.
+- **Test coverage.** New engine or scenario behaviour without a unit test; a rule that changes how a whole game plays without a step in an end-to-end scenario test.
+- **Test in the wrong layer** (coding guidelines §3, "Test each claim once"): a rule tested again with the real card, in a component or in E2E; a component test that sets up the rule instead of the view's state; a test that restates printed card data; raw command literals where a `PlayTable` verb exists.
 - **Helpers in the wrong place.**
   - A test helper a second test file needs that is not in `packages/engine/test/utils/` or `PlayTable` / `BoardView` (`packages/engine/src`).
   - A lookup or query re-implemented inline when it exists, or should exist, next to its entity (`board.ts`, `lookup.ts`).
