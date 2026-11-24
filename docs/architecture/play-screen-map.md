@@ -10,12 +10,12 @@ A tap on a tile (or its "i" button, for the keyboard) opens the location's [deta
 - who is there,
 - the cards attached to it, each opening the card zoom with Discard beside it (`GameActions.discardCard`), and Attach a card ([`AttachedCards`](../../apps/web/src/screens/AttachedCards.tsx), shared with the enemy details): a small dialog lists the player cards that attach to a location ([`attachableCards`](../../packages/scenarios/src/player_cards.ts), `CardStats.attachesTo`: Barricade, Hiding Spot), and the one picked is attached (`GameActions.attachPlayerCard`, `AttachPlayerCard`),
 - and an action row (the enemy details' [`ActionRow`](../../apps/web/src/screens/ActionRow.tsx)) with one Actions group, those that count off an action first, built from a list of what the investigator whose turn it is can do there:
-  - investigate as an action or take a clue without a test at their own location,
-  - move as an action or free to a connected one (`BoardView.connectedTo`), each marked with an action arrow per action it costs (`BoardView.actionCost`: Frozen in Fear raises the round's first move, a free one too),
+  - at their own location investigate as one pill ([`SplitAction`](../../apps/web/src/screens/SplitAction.tsx), shared with the enemy details): a tap investigates as an action, its ⋮ also lists it by card effect for each investigator in play; and take a clue without a test,
+  - move to a connected one (`BoardView.connectedTo`) as one pill: a tap moves as an action, its ⋮ lists that and the free move, each marked with an action arrow per action it costs (`BoardView.actionCost`: Frozen in Fear raises the round's first move, a free one too),
   - where a card forbids it (`LocationView.forbidden`) investigate off and no move (Locked Door, the unrevealed Parlor's barrier), and taking a clue off while a card forbids the investigator to discover clues (`InvestigatorView.forbidden`, The Masked Hunter),
   - plus the location's own card actions (`CardActions`, the Parlor's Resign),
 
-  A revealed location also offers, at any time, "Investigate by card effect" under "By card effect" ([`TestsByCard`](../../apps/web/src/screens/TestsByCard.tsx), shared with the enemy details): a card such as In the Know lets an investigator investigate it whoever's turn it is and wherever they stand (`GameActions.testByCard`, `Investigate.locationId`; the action In the Know costs is counted off on the actions stepper). With more than one active investigator the group first asks who tests, in its own place, rather than offer a button per test and investigator.
+  A revealed location also offers its investigate pill at any time, outside a turn or at another location, with only the ways by card effect: a card such as In the Know lets an investigator investigate it whoever's turn it is and wherever they stand (`GameActions.testByCard`, `Investigate.locationId`; the action In the Know costs is counted off on the actions stepper).
 
   An unrevealed location offers Reveal under "Correct the board" (`revealLocation`), as a card can tell the players to reveal one (M6.10).
 

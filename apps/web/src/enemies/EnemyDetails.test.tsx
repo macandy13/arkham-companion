@@ -151,33 +151,46 @@ describe('EnemyDetails', () => {
   });
 
   it.each([
-    { group: 'Actions', button: 'Fight · 1 action', prompt: 'decision.fight', left: 2 },
-    { group: 'Actions', button: 'Evade · 1 action', prompt: 'decision.evade', left: 2 },
-    {
-      group: 'Actions',
-      button: 'Fight, no action',
-      prompt: 'decision.fight',
-      left: 3,
-    },
-    {
-      group: 'Actions',
-      button: 'Evade, no action',
-      prompt: 'decision.evade',
-      left: 3,
-    },
+    { ways: [], button: 'Fight · 1 action', prompt: 'decision.fight', left: 2 },
+    { ways: [], button: 'Evade · 1 action', prompt: 'decision.evade', left: 2 },
+    { ways: ['Ways to fight'], button: 'Fight, no action', prompt: 'decision.fight', left: 3 },
+    { ways: ['Ways to evade'], button: 'Evade, no action', prompt: 'decision.evade', left: 3 },
   ])(
-    '"$button" on alder\'s turn stays open, leaves the test open and leaves $left actions',
-    ({ group: name, button, prompt, left }) => {
+    '"$button" (after $ways) on alder\'s turn stays open, leaves the test open and leaves $left actions',
+    ({ ways, button, prompt, left }) => {
       const table = PlayTable.start(ghoulOnAlder.withTurnOf(alder));
       const onClose = renderGhoulDetails(table);
 
-      fireEvent.click(within(group(name)).getByRole('button', { name: button }));
+      for (const menu of ways)
+        fireEvent.click(within(group('Actions')).getByRole('button', { name: menu }));
+      fireEvent.click(within(group('Actions')).getByRole('button', { name: button }));
 
       expect(onClose).not.toHaveBeenCalled();
       expect(table.board.decisions).toMatchObject([{ prompt, about: 'ghoul', for: alder }]);
       expect(table.board.investigator(alder)).toMatchObject({ actions: left });
     },
   );
+
+  it("fights the ghoul for brook by card effect from the fight's ways, on alder's turn and without an action", () => {
+    const table = PlayTable.start(ghoulOnAlder.withTurnOf(alder));
+    renderGhoulDetails(table);
+
+    fireEvent.click(within(group('Actions')).getByRole('button', { name: 'Ways to fight' }));
+    const ways = within(group('Actions')).getByRole('list', { name: 'Ways to fight' });
+    const offered = within(ways)
+      .getAllByRole('button')
+      .map((button) => button.textContent);
+    fireEvent.click(within(ways).getByRole('button', { name: 'Fight by card effect · brook' }));
+
+    expect(offered).toEqual([
+      'Fight · 1 action',
+      'Fight, no action',
+      'Fight by card effect · alder',
+      'Fight by card effect · brook',
+    ]);
+    expect(table.board.decisions).toMatchObject([{ prompt: 'decision.fight', for: brook }]);
+    expect(table.board.investigator(alder)).toMatchObject({ actions: 3 });
+  });
 
   describe('on the game screen, which shares the open decision', () => {
     /** The ghoul's details under a game screen whose open decision is `decision`. */
@@ -232,7 +245,7 @@ describe('EnemyDetails', () => {
     });
   });
 
-  it('marks the fight and evade that Frozen in Fear raises with two action arrows, the free ones with one', () => {
+  it('marks the fight and evade that Frozen in Fear raises with two action arrows, beside the ways that list the free ones', () => {
     const frozen = blankTreachery('frozen', {
       modifiers: [
         {
@@ -255,9 +268,9 @@ describe('EnemyDetails', () => {
       offered.map((button) => [button.getAttribute('aria-label'), button.dataset['actions']]),
     ).toEqual([
       ['Fight · 2 actions', '2'],
+      ['Ways to fight', undefined],
       ['Evade · 2 actions', '2'],
-      ['Fight without an action · 1 extra action', undefined],
-      ['Evade without an action · 1 extra action', undefined],
+      ['Ways to evade', undefined],
     ]);
   });
 
@@ -296,14 +309,19 @@ describe('EnemyDetails', () => {
     expect(table.board.investigator(alder)).toMatchObject({ actions: 2 });
   });
 
-  it('offers only the card effects outside an investigator turn', () => {
+  it('offers fight and evade only by their ways, and the card effects, outside an investigator turn', () => {
     renderGhoulDetails(PlayTable.start(ghoulOnAlder));
 
     const groups = screen.getAllByRole('heading', { level: 3 }).map((title) => title.textContent);
-    expect(groups).toEqual(['Attached', 'By card effect', 'Card effect']);
+    expect(groups).toEqual(['Attached', 'Actions', 'Card effect']);
+    expect(
+      within(group('Actions'))
+        .getAllByRole('button')
+        .map((button) => button.textContent),
+    ).toEqual(['Fight', 'Evade']);
   });
 
-  it("offers brook, at the same location on their turn, fight and engage but no evade of alder's ghoul, the free fight last", () => {
+  it("offers brook, at the same location on their turn, fight and engage as actions, but evade of alder's ghoul only by its ways", () => {
     renderGhoulDetails(PlayTable.start(ghoulOnAlder.withTurnOf(brook)));
 
     const offered = within(group('Actions')).getAllByRole('button');
@@ -311,8 +329,9 @@ describe('EnemyDetails', () => {
       offered.map((button) => [button.getAttribute('aria-label'), button.dataset['cost']]),
     ).toEqual([
       ['Fight · 1 action', 'action'],
+      ['Ways to fight', undefined],
+      ['Ways to evade', undefined],
       ['Engage · 1 action', 'action'],
-      ['Fight, no action', 'free'],
     ]);
   });
 

@@ -235,3 +235,89 @@
   button:is([data-cost='action'], [data-cost='free']) {
   padding-inline-end: calc(var(--action-mark-size) + var(--space-1));
 }
+
+/*
+ * One action's pill with its other ways (SplitAction, ME.31): the action's button and the ⋮ that
+ * opens its menu side by side in the group's button row. The menu takes the app's menu look
+ * (base.css) but opens upwards, since the row sits at the foot of the window and a menu below it
+ * would be cut off.
+ */
+#board
+  :is(dialog, dialog > article, [data-mode='location'], header > section)
+  > footer:has(> section > h3)
+  > section
+  > [data-split] {
+  grid-row: 2;
+  position: relative;
+  display: flex;
+  align-items: stretch;
+}
+
+#board
+  :is(dialog, dialog > article, [data-mode='location'], header > section)
+  > footer:has(> section > h3)
+  [data-split]
+  > button[data-icon]:not([data-icon='more']) {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  align-items: center;
+  min-width: 0;
+  min-height: var(--touch-target);
+  padding: var(--space-1);
+  border-radius: var(--radius);
+  font-size: var(--font-size-caption);
+  white-space: nowrap;
+}
+
+#board
+  :is(dialog, dialog > article, [data-mode='location'], header > section)
+  > footer:has(> section > h3)
+  [data-split]
+  > button[data-icon]:not([data-icon='more']):is([data-cost='action'], [data-cost='free']) {
+  padding-inline-end: calc(var(--action-mark-size) + var(--space-1));
+}
+
+#board
+  :is(dialog, dialog > article, [data-mode='location'], header > section)
+  > footer:has(> section > h3)
+  [data-split]
+  > button[data-icon]:not([data-icon='more'])
+  + button[data-icon='more'] {
+  margin-inline-start: calc(-1 * var(--border-width));
+  border-start-start-radius: 0;
+  border-end-start-radius: 0;
+}
+
+#board
+  :is(dialog, dialog > article, [data-mode='location'], header > section)
+  > footer:has(> section > h3)
+  [data-split]
+  > button[data-icon]:not([data-icon='more']):has(+ button[data-icon='more']) {
+  border-start-end-radius: 0;
+  border-end-end-radius: 0;
+}
+
+#board
+  :is(dialog, dialog > article, [data-mode='location'], header > section)
+  > footer:has(> section > h3)
+  [data-split]
+  > button[data-icon='more'] {
+  min-width: var(--button-compact);
+  border-radius: var(--radius);
+}
+
+#board
+  :is(dialog, dialog > article, [data-mode='location'], header > section)
+  > footer:has(> section > h3)
+  button[data-icon='more']::before {
+  mask-image: url('./icons/more.svg');
+}
+
+#app #board [data-split] > button[aria-expanded] + ul {
+  top: auto;
+  bottom: 100%;
+  inset-inline: 0 auto;
+  margin: 0 0 var(--space-1);
+}
