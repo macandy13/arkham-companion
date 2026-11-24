@@ -600,11 +600,13 @@ export type AbilityOption = Pick<DecisionOption, 'id' | 'label' | 'amounts'> & {
 export type AbilityEffect = Templated<AbilityCommand>;
 
 /**
- * What must hold when the window opens for an ability to fire ("If it is act 3, …"). Checked
- * once, as the window opens; the effects then resolve whatever they change. Three shapes cover
- * most conditions cards print, each over the references effects use: which card is current, how
- * many things a reference names, and a value on the table; the fourth is the phase the game is
- * in. A new condition is usually a new reference or `Quantity`, not a new kind.
+ * What must hold when the window opens for an ability to fire ("If it is act 3, …"), or for a card
+ * action to be offered and taken ("During your turn:", `CardAction.condition`, read in
+ * the action's window). Checked once, as the window opens; the effects then resolve whatever they
+ * change. Three shapes cover most conditions cards print, each over the references effects use:
+ * which card is current, how many things a reference names, and a value on the table; then the
+ * phase or turn the game is in, and `allOf`/`anyOf`/`not` to
+ * combine them. A new condition is usually a new reference or `Quantity`, not a new kind.
  */
 export type AbilityCondition =
   /** The current act or agenda (`deck`) is one of `codes` ("If it is act 3", "if it is agenda 2"). */
@@ -632,7 +634,18 @@ export type AbilityCondition =
    * It counts only with a margin the players confirm, which the test then asks for
    * (`passMarginMatters`).
    */
-  | { kind: 'margin'; min: number };
+  | { kind: 'margin'; min: number }
+  /**
+   * An investigator's turn is in progress: anyone's ("during any investigator's turn", the act's
+   * group clue spend), or with `of` that of the investigator it names ("during your turn").
+   */
+  | { kind: 'turn'; of?: RelativeInvestigator }
+  /** Each of `conditions` holds ("during your turn, if there are exactly 1 or 2 investigators"). */
+  | { kind: 'allOf'; conditions: readonly AbilityCondition[] }
+  /** At least one of `conditions` holds. */
+  | { kind: 'anyOf'; conditions: readonly AbilityCondition[] }
+  /** `condition` does not hold. */
+  | { kind: 'not'; condition: AbilityCondition };
 
 /**
  * A number on the table a `valueOf` condition reads:
@@ -1180,7 +1193,8 @@ function afterTestEnds(
   return { window: { on: 'testEnded', action, outcome }, effects };
 }
 
-function conditionHolds(
+/** Whether `condition` holds in the window `opened` (see `AbilityCondition`). */
+export function conditionHolds(
   ctx: EngineContext,
   state: GameState,
   condition: AbilityCondition,
@@ -1207,6 +1221,19 @@ function conditionHolds(
       return state.meta.phase === condition.phase;
     case 'margin':
       return opened.margin !== undefined && opened.margin >= condition.min;
+    case 'turn': {
+      const turn = state.meta.turn;
+      if (turn === undefined) return false;
+      if (condition.of === undefined) return true;
+      const refs = windowRefs(ctx, state, opened);
+      return namedIds(ctx, state, condition.of, refs).includes(turn.investigatorId);
+    }
+    case 'allOf':
+      return condition.conditions.every((each) => conditionHolds(ctx, state, each, opened));
+    case 'anyOf':
+      return condition.conditions.some((each) => conditionHolds(ctx, state, each, opened));
+    case 'not':
+      return !conditionHolds(ctx, state, condition.condition, opened);
     default:
       return assertNever(condition);
   }

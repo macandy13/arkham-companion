@@ -1,4 +1,5 @@
 import {
+  you,
   advanceAct,
   advanceBySpendingCluesAtRoundEnd,
   afterAttacking,
@@ -406,7 +407,13 @@ export const spreadingFlamesCardDefs: readonly CardStats[] = [
       {
         free: true,
         limit: { per: 'round', group: true },
-        condition: [{ kind: 'yourTurn' }, { kind: 'investigatorCount', min: 1, max: 2 }],
+        condition: {
+          kind: 'allOf',
+          conditions: [
+            { kind: 'turn', of: you() },
+            { kind: 'countOf', of: eachInvestigator(), min: 1, max: 2 },
+          ],
+        },
         effects: [moveToConnectingLocation()],
       },
     ],

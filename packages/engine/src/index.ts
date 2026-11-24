@@ -343,7 +343,6 @@ export {
   advanceBySpendingClues,
   parleyAction,
   resignAction,
-  type ActionCondition,
   type ActionCost,
   type CardAction,
 } from './card_actions';

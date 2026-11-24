@@ -1,7 +1,13 @@
 import { hasActiveAbilities } from './doom';
 import { assertNever } from '@arkham/util';
-import { advanceAct, type AbilityEffect, type AbilityStep, type OpenedWindow } from './abilities';
-import { findInvestigator as findCampaignInvestigator } from './campaign/campaign_log';
+import {
+  advanceAct,
+  conditionHolds,
+  type AbilityCondition,
+  type AbilityEffect,
+  type AbilityStep,
+  type OpenedWindow,
+} from './abilities';
 import { isLocationInPlay } from './board';
 import {
   cardStats,
@@ -15,7 +21,7 @@ import {
 import type { ClueSpend, UseCardAction } from './commands';
 import { locationOf } from './enemies';
 import type { CardActionUsed, CommandDeferred, InvestigatorChanged } from './events';
-import type { CardCode, InstanceId, InvestigatorId } from './ids';
+import type { InstanceId, InvestigatorId } from './ids';
 import {
   activeInvestigator,
   cluesHeldByGroup,
@@ -23,7 +29,6 @@ import {
   groupCluePayments,
   statValue,
   findInvestigator,
-  playerOrder,
 } from './investigators';
 import { currentCard, requireCard } from './lookup';
 import { CommandRejected } from './rejection';
@@ -31,7 +36,6 @@ import { isRestrictedFor } from './restrictions';
 import type { CardInstance, GameState, Investigator } from './state';
 import { withinLimit, type UsageLimit } from './usage_limits';
 import { requireTurnOf } from './turns';
-import { playAreaOf, sameZone } from './zone';
 
 /**
  * An action ability printed on a card ("[action]: …", `CardStats.actions`), taken with
@@ -57,80 +61,36 @@ export interface CardAction {
   /** "Spend N resources:" or "Spend N clues:", paid before the effects. */
   readonly cost?: ActionCost;
   /**
-   * "If you control Lita Chantler:", which the investigator taking it must meet
-   * (`actionConditionHolds`); a list when the card prints several ("during your turn, if there are
-   * exactly 1 or 2 investigators in the game"), each of which must hold.
+   * What the table must show, or a timing narrower than a free action's any player window,
+   * "during any investigator's turn" (`turn`, the act's group clue spend), which the investigator
+   * taking it must meet (`actionConditionHolds`), read in the action's window (`you()` is the
+   * taker); `allOf` when the card prints several ("during your turn, if there are exactly 1 or 2
+   * investigators in the game"). An action whose condition doesn't hold is neither offered nor
+   * accepted. A condition on player cards, which the game doesn't track ("If you control Lita
+   * Chantler:"), is no condition here: the action's effects ask its taker (`youMustEither`).
    */
-  readonly condition?: ActionCondition | readonly ActionCondition[];
+  readonly condition?: AbilityCondition;
   readonly effects: readonly AbilityEffect[];
 }
 
 /**
- * A condition on taking an action, printed before its colon: "If you control Lita Chantler:"
- * (`controls`, Umôrdhoth), or a timing narrower than a free action's any player window, "during
- * any investigator's turn" (`investigatorTurn`, the act's group clue spend). An action whose
- * condition doesn't hold is neither offered nor accepted. Tagged by `kind`, like
- * `AbilityCondition`, so the next condition joins as another member.
- */
-export type ActionCondition =
-  | { readonly kind: 'controls'; readonly card: CardCode }
-  | { readonly kind: 'investigatorTurn' }
-  /** "During your turn": the taker's own turn is in progress. */
-  | { readonly kind: 'yourTurn' }
-  /**
-   * "If there are exactly 1 or 2 investigators in the game" (Miskatonic Quad): the investigators
-   * still in it, defeated and resigned ones left out, are within the range.
-   */
-  | { readonly kind: 'investigatorCount'; readonly min: number; readonly max: number };
-
-/**
- * Whether `condition` holds for `investigator`. "During any investigator's turn" holds while
- * anyone's turn is in progress, not only the taker's. "If you control X" holds when a card X is in
- * their play area. When the game has no card X at all, X is a player card the players hold (Lita
- * Chantler, earned in The Gathering, is in an investigator's deck by The Devourer Below), which
- * the game doesn't track, so it trusts the investigator taking the action, as it trusts a hand
- * card cost, as long as the campaign log says they earned the card
- * (`CampaignInvestigator.earnedCards`). A standalone game has no log: its players pick the
- * earlier resolutions themselves (Rules Reference, "Standalone Mode"), so it trusts the taker
- * too. "During your turn" holds in the taker's own turn only, and "if there are exactly 1 or 2
- * investigators in the game" counts the investigators still in it. Each of a list must hold; no
- * condition always holds.
+ * Whether `investigator` meets the condition of the action on `cardId` (`CardAction.condition`),
+ * read in the action's window, which names them as `you()`. No condition always holds.
  */
 export function actionConditionHolds(
+  ctx: EngineContext,
   state: GameState,
   investigator: Investigator,
-  condition: ActionCondition | readonly ActionCondition[] | undefined,
+  cardId: InstanceId,
+  condition: AbilityCondition | undefined,
 ): boolean {
   if (condition === undefined) return true;
-  if (isConditionList(condition))
-    return condition.every((each) => actionConditionHolds(state, investigator, each));
-  switch (condition.kind) {
-    case 'investigatorTurn':
-      return state.meta.turn !== undefined;
-    case 'yourTurn':
-      return state.meta.turn?.investigatorId === investigator.id;
-    case 'investigatorCount': {
-      const count = playerOrder(state).length;
-      return count >= condition.min && count <= condition.max;
-    }
-    case 'controls': {
-      const copies = Object.values(state.cards).filter((card) => card.code === condition.card);
-      if (copies.length === 0) {
-        if (state.campaign === undefined) return true;
-        const member = findCampaignInvestigator(state.campaign, investigator.code);
-        return member?.earnedCards.includes(condition.card) === true;
-      }
-      return copies.some((card) => sameZone(card.zone, playAreaOf(investigator.id)));
-    }
-    default:
-      return assertNever(condition);
-  }
+  return conditionHolds(ctx, state, condition, actionWindow(cardId, investigator.id));
 }
 
-function isConditionList(
-  condition: ActionCondition | readonly ActionCondition[],
-): condition is readonly ActionCondition[] {
-  return Array.isArray(condition);
+/** The window an action of `cardId` taken by `investigatorId` resolves in (`action`). */
+function actionWindow(cardId: InstanceId, investigatorId: InvestigatorId): OpenedWindow {
+  return { window: { on: 'action' }, scope: 'self', cardId, investigatorId };
 }
 
 /**
@@ -258,7 +218,7 @@ function costPayment(
 export function advanceBySpendingClues(clues: ScaledValue): CardAction {
   return {
     free: true,
-    condition: { kind: 'investigatorTurn' },
+    condition: { kind: 'turn' },
     cost: { spend: 'groupClues', amount: clues },
     effects: [advanceAct()],
   };
@@ -394,7 +354,7 @@ export function cardActionsOfferedTo(
     return actions.flatMap(({ designator, free, limit, cost, condition }, action) =>
       actionWithinLimit(state, card, action, limit, investigator.id) &&
       canPay(ctx, state, investigator, cost) &&
-      actionConditionHolds(state, investigator, condition)
+      actionConditionHolds(ctx, state, investigator, card.id, condition)
         ? [
             {
               cardId: card.id,
@@ -498,7 +458,7 @@ export function handleUseCardAction(
       action: cmd.action,
       investigatorId: investigator.id,
     });
-  if (!actionConditionHolds(state, investigator, condition))
+  if (!actionConditionHolds(ctx, state, investigator, cmd.cardId, condition))
     throw new CommandRejected({
       code: 'cardActionConditionUnmet',
       cardId: cmd.cardId,
@@ -527,12 +487,7 @@ export function cardActionSteps(
   state: GameState,
   cmd: UseCardAction,
 ): AbilityStep[] {
-  const opened: OpenedWindow = {
-    window: { on: 'action' },
-    scope: 'self',
-    cardId: cmd.cardId,
-    investigatorId: cmd.investigatorId,
-  };
+  const opened = actionWindow(cmd.cardId, cmd.investigatorId);
   return cardActionOf(ctx, state, cmd).effects.map((effect) => ({
     kind: 'ability',
     effect,
