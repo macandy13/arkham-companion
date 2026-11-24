@@ -301,6 +301,7 @@ export {
   yourLocation,
   lead,
   self,
+  thatCard,
   whenAdvanced,
   whenDefeated,
   whenEnemyDefeated,

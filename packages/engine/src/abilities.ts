@@ -1,4 +1,4 @@
-import { assertNever, range, shallowEqual, sum, unique, withoutKey } from '@arkham/util';
+import { assertNever, shallowEqual, sum, unique, withoutKey } from '@arkham/util';
 import {
   cardStats,
   resolveAmount,
@@ -291,6 +291,8 @@ export type RelativeCard =
    * while the card is nowhere on the map.
    */
   | { ref: 'selfLocation' }
+  /** The card this repetition of a `forEach` ability is for (`thatCard()`); none outside one. */
+  | { ref: 'thatCard' }
   /**
    * The one copy of `code` in the game, in whatever zone: for a scenario's
    * unique cards ("the Parlor", "the Ghoul Priest"); none while the game holds
@@ -661,17 +663,14 @@ export interface Ability {
   window: TimingWindow;
   condition?: AbilityCondition;
   /**
-   * "For each [[Ghoul]] enemy in the Hallway or Parlor": the effects resolve
-   * once per enemy `perEnemy` matches, counted as the window opens like the
-   * condition; not at all when none does.
+   * The effects resolve once for each investigator or card the reference names as the window
+   * opens, like the condition, and not at all when it names none (`repetitionsOf`). Each
+   * repetition binds what it is for: an investigator becomes the window's (`windowInvestigator`),
+   * so `skillTest` and `you()` refer to them ("Each investigator must test [willpower] (4)",
+   * `forEachInvestigator`); a card becomes `thatCard()` ("For each [[Ghoul]] enemy in the Hallway or
+   * Parlor", `forEachEnemy`; "for each enemy, place 1 doom on it").
    */
-  perEnemy?: Extract<RelativeCard, { ref: 'eachEnemy' }>;
-  /**
-   * "Each investigator must test [willpower] (4)": the effects resolve once for each active
-   * investigator, in player order (the lead first), each time naming that investigator as the window's
-   * (`windowInvestigator`), so `skillTest` and `you()` refer to them.
-   */
-  perInvestigator?: true;
+  forEach?: RepeatedRef;
   /**
    * "[reaction] After you discover 1 or more clues at this location: Gain 1 resource." The players
    * choose to trigger it (`reaction`): as its window opens, the investigator it names is asked to
@@ -695,6 +694,8 @@ export interface OpenedWindow {
   investigatorId?: InvestigatorId;
   /** The location it names itself, if any (where a defeated enemy was); see `windowLocation`. */
   locationId?: InstanceId;
+  /** The card a repetition of a `forEach` ability is for (`thatCard`). */
+  thatCardId?: InstanceId;
 }
 
 /** One event as the windows see it, before it is opened for each listening card (`openFor`). */
@@ -910,10 +911,8 @@ export function abilitySteps(
     .flatMap(({ ability, index }) =>
       ability.reaction
         ? reactionOffer(state, card, ability, index, opened)
-        : openedFor(state, ability, opened).flatMap((each) =>
-            range(timesFor(ctx, state, ability, each)).flatMap(() =>
-              ability.effects.map((effect) => ({ effect, opened: each })),
-            ),
+        : repetitionsOf(ctx, state, ability, opened).flatMap((each) =>
+            ability.effects.map((effect) => ({ effect, opened: each })),
           ),
     )
     .map(({ effect, opened: each }) => ({
@@ -1011,12 +1010,31 @@ export function reaction(ability: Ability, limit?: UsageLimit): Ability {
 }
 
 /**
- * The windows `ability` resolves in: `opened` itself, or with `perInvestigator` one copy naming
- * each active investigator.
+ * The windows `ability` resolves in: `opened` itself, or with `forEach` one copy for each
+ * investigator or card it names, naming that investigator or binding that card as `thatCard`.
  */
-function openedFor(state: GameState, ability: Ability, opened: OpenedWindow): OpenedWindow[] {
-  if (!ability.perInvestigator) return [opened];
-  return playerOrder(state).map(({ id }) => ({ ...opened, investigatorId: id }));
+function repetitionsOf(
+  ctx: EngineContext,
+  state: GameState,
+  ability: Ability,
+  opened: OpenedWindow,
+): OpenedWindow[] {
+  const each = ability.forEach;
+  if (each === undefined) return [opened];
+  const ids = eachId(ctx, state, each, windowRefs(ctx, state, opened));
+  // `eachId` returns investigator ids for an investigator reference and card ids otherwise.
+  return ids.map((id): OpenedWindow => {
+    switch (each.ref) {
+      case 'eachInvestigator':
+        return { ...opened, investigatorId: id as InvestigatorId };
+      case 'eachEnemy':
+      case 'eachInZone':
+      case 'eachInPlay':
+        return { ...opened, thatCardId: id as InstanceId };
+      default:
+        return assertNever(each);
+    }
+  });
 }
 
 /**
@@ -1052,16 +1070,6 @@ function afterTestEnds(
   ...effects: AbilityEffect[]
 ): Ability {
   return { window: { on: 'testEnded', action, outcome }, effects };
-}
-
-/** How often `ability`'s effects resolve: once, or once per enemy its `perEnemy` names. */
-function timesFor(
-  ctx: EngineContext,
-  state: GameState,
-  ability: Ability,
-  opened: OpenedWindow,
-): number {
-  return ability.perEnemy === undefined ? 1 : countOf(ctx, state, ability.perEnemy, opened);
 }
 
 function conditionHolds(
@@ -1530,6 +1538,8 @@ interface ResolvedRefs {
   windowLocation: InstanceId | undefined;
   /** Where the card with the ability is (`selfLocation`). */
   selfLocation: InstanceId | undefined;
+  /** The card of this repetition of a `forEach` ability (`thatCard`). */
+  thatCard: InstanceId | undefined;
   onlyCopy: (code: CardCode) => InstanceId | undefined;
   /**
    * The set-aside copy of `code` this repetition takes (`setAsideCopy`), the first one when the
@@ -1663,6 +1673,7 @@ function windowRefs(ctx: EngineContext, state: GameState, opened: OpenedWindow):
       opened.locationId ??
       (investigator && attachableLocation(ctx, state, opened.cardId, investigator)),
     selfLocation: locationOfCard(state, requireCard(state.cards, opened.cardId)),
+    thatCard: opened.thatCardId,
     onlyCopy: (code) => theOnlyCopy(state, code),
     setAsideCopy: (code) => setAsideCopyOf(state, code, 0),
   };
@@ -1720,6 +1731,8 @@ function resolveRefs(value: unknown, refs: ResolvedRefs): unknown {
         return refs.windowLocation;
       case 'selfLocation':
         return refs.selfLocation;
+      case 'thatCard':
+        return refs.thatCard;
       case 'onlyCopy':
         return refs.onlyCopy(value.code);
       case 'eachInvestigator':
@@ -2506,6 +2519,14 @@ export function self(): RelativeCard {
 }
 
 /**
+ * "It", "that enemy": the card this repetition of a `forEach` ability is for (`thatCard`), written
+ * `forEachEnemy({}, atEndOfRound(placeDoomOn(thatCard(), 1)))` for "for each enemy, place 1 doom on it".
+ */
+export function thatCard(): RelativeCard {
+  return { ref: 'thatCard' };
+}
+
+/**
  * Each card in play `filter` matches (`eachInPlay`), only those at the locations `at` names when
  * given: `eachInPlay({ code: codes.litaChantler, at: yourLocation() })`.
  */
@@ -3160,7 +3181,7 @@ export function ifThereAre(of: RepeatedRef, range: StatRange, ability: Ability):
  * (They're Getting Out!).
  */
 export function forEachEnemy(filter: EachEnemyFilter, ability: Ability): Ability {
-  return { ...ability, perEnemy: eachEnemy(filter) };
+  return { ...ability, forEach: eachEnemy(filter) };
 }
 
 /**
@@ -3169,7 +3190,7 @@ export function forEachEnemy(filter: EachEnemyFilter, ability: Ability): Ability
  * `forEachInvestigator(whenAdvanced(skillTest('willpower', 4, { onFail: [takeHorror(1)] })))`.
  */
 export function forEachInvestigator(ability: Ability): Ability {
-  return { ...ability, perInvestigator: true };
+  return { ...ability, forEach: eachInvestigator() };
 }
 
 /**
