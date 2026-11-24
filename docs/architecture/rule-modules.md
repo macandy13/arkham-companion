@@ -14,4 +14,4 @@ The rules are summarised in [rules.md](../rules.md).
 
 ## Extension points
 
-- **A new rule:** put it in its subject's module, call it from its command's handler, and show it in the end-to-end test.
+- **A new rule:** put it in its subject's module, and call it from its command's handler; it gets an end-to-end step only when it changes how a whole game plays ([coding guidelines](../coding-guidelines.md) §3).
