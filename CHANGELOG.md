@@ -2,6 +2,91 @@
 
 The sections dated up to 2026-10-22 were released as 1.0.0 to 1.8.0 by mistake: Release Please starts at 1.0.0 by default. Versioning restarted at 0.1.0 (see "Versions" in docs/product.md).
 
+## [0.1.46](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v0.1.45...arkham-companion-v0.1.46) (2026-11-24)
+
+
+### Features
+
+* **engine:** Extraplanar Visions' difficulty from the cards in hand (M1V.5f) ([984f821](https://github.com/macandy13/arkham-companion/commit/984f821ebce290199c803607bd18752ad62b8431))
+* **engine:** fast abilities for Blaze of Glory, Miskatonic Quad and Merchant District (MC2.3c) ([7be9396](https://github.com/macandy13/arkham-companion/commit/7be939616bd22f7fa6a6f8379b368a5da210ee66))
+* **engine:** investigate, fight and evade at another location (ME.28a) ([f5dd64a](https://github.com/macandy13/arkham-companion/commit/f5dd64ad2b4286254c30bcf091aeebfe6d873b45))
+* **engine:** investigate, fight and evade at another location (ME.28a) ([d329b06](https://github.com/macandy13/arkham-companion/commit/d329b0647a50be40b68efb46a1c8dbe6ebd93938))
+* **review_tour:** read a PR's review tour and cut its stops from the diff (RT.a1) ([6a7bdc8](https://github.com/macandy13/arkham-companion/commit/6a7bdc88f1a761fb6cb8fe818e058b303de1326e))
+* **review_tour:** read a PR's review tour and cut its stops from the diff (RT.a1) ([4ac9305](https://github.com/macandy13/arkham-companion/commit/4ac93059153793f3b20a0eaf75312d00a12570da))
+* **review_tour:** render the review page and its CLI (RT.a2) ([8bc5d26](https://github.com/macandy13/arkham-companion/commit/8bc5d265423567095a1a2de645f690e979b4a2e8))
+* **review_tour:** render the review page and its CLI (RT.a2) ([35e9447](https://github.com/macandy13/arkham-companion/commit/35e94471ab674691c2c6a96312e5266097ddc004))
+* **review_tour:** show how we know the change works ([51bd11e](https://github.com/macandy13/arkham-companion/commit/51bd11e3041cc213803b84236b657b252bc3a968))
+* **review_tour:** show how we know the change works ([63c976b](https://github.com/macandy13/arkham-companion/commit/63c976b83f178e2619cd397a1daf13c86ea581ae))
+* **review_tour:** state the problem first and write the tour in plain sentences ([3679ed1](https://github.com/macandy13/arkham-companion/commit/3679ed1f6b2fbb4145d30e8052b4da4a020af824))
+* **review_tour:** state the problem first and write the tour in plain sentences ([1c6d8ec](https://github.com/macandy13/arkham-companion/commit/1c6d8ecd33812e56af20d0f515112dc006123686))
+* **scenarios:** script Ashen Rebirth; choice options offered while a condition holds (M1V.5h) ([8f96037](https://github.com/macandy13/arkham-companion/commit/8f96037f1563c71a32eb0c07267fbe1cd4033d3b))
+* **scenarios:** script Ashen Rebirth; choice options offered while a condition holds (M1V.5h) ([97f8273](https://github.com/macandy13/arkham-companion/commit/97f8273bc080262330ee9bcabfc50e9893900cde))
+* **scenarios:** script Blasphemous Invocation; an enemy picked by filter, per point (M1V.5g) ([d93b9e3](https://github.com/macandy13/arkham-companion/commit/d93b9e32f09ab188d10dae7cf4295f8013566ec0))
+* **scenarios:** script Blasphemous Invocation; an enemy picked by filter, per point (M1V.5g) ([0c71821](https://github.com/macandy13/arkham-companion/commit/0c718210d5ed4c25ab351562910725c712331fea))
+* **scenarios:** the Smoke and Mirrors suspects' reactions (MC2.3d) ([370dc63](https://github.com/macandy13/arkham-companion/commit/370dc63001ac1eda62bcc54e3f911b04a2b58f85))
+* **scenarios:** the Smoke and Mirrors suspects' reactions (MC2.3d) ([3256c0b](https://github.com/macandy13/arkham-companion/commit/3256c0bae52611592060f3521baf6ee7eec28853))
+* **web:** fan attached cards over the details page's bottom edge (ME.31b) ([687e5ce](https://github.com/macandy13/arkham-companion/commit/687e5ce84781d9b489688ee06b96e3f6e6ae525c))
+* **web:** fan attached cards over the details page's bottom edge (ME.31b) ([abe4f35](https://github.com/macandy13/arkham-companion/commit/abe4f359804e4f658b3fa0adbd4688708debc8f4))
+* **web:** fight, evade and investigate by a card effect (ME.28b) ([cc97bea](https://github.com/macandy13/arkham-companion/commit/cc97bea56d58d63cfab8e0f359bc577372e44137))
+* **web:** fight, evade and investigate by a card effect (ME.28b) ([7af9d76](https://github.com/macandy13/arkham-companion/commit/7af9d760f8f403a6bddb8ba8349d345dfe8d063b))
+* **web:** move an investigator by a card effect to any location (ME.27) ([45b0c1b](https://github.com/macandy13/arkham-companion/commit/45b0c1b98b29d5d773ac3cca3a93f1dfba0de5e4))
+* **web:** one pill per action with its other ways in a menu (ME.31a) ([483b51e](https://github.com/macandy13/arkham-companion/commit/483b51e152db38c1159350c12ebd0da720619799))
+* **web:** one pill per action with its other ways in a menu (ME.31a) ([1188583](https://github.com/macandy13/arkham-companion/commit/118858302081a8b2f2bd1d2563c4f16caf20411b))
+
+
+### Bug fixes
+
+* **engine:** confirmed margins and successful evades for the suspects (MC2.3d) ([3ee53ac](https://github.com/macandy13/arkham-companion/commit/3ee53ac75d3fda1581f1bc90dee3e2b6c82191a7))
+* **engine:** keep old exports importable, bump the state version (ME.15) ([18d8179](https://github.com/macandy13/arkham-companion/commit/18d81792937767784f670a5db6d90df4a09d6600))
+* **engine:** only a revealed location, ignore aloof by card, tests (ME.28a review) ([817347c](https://github.com/macandy13/arkham-companion/commit/817347c80ff55557562b267e4b3a13df999c5d9a))
+* **review_tour:** colour only script files on the page ([f0288db](https://github.com/macandy13/arkham-companion/commit/f0288db9a6bb9428459b6bc06cdd752a582bf750))
+* **web:** card examples, always render the location's action footer (ME.28b review) ([4ff465b](https://github.com/macandy13/arkham-companion/commit/4ff465bc54f9d44827ae43a57d3021f18f7c1a8b))
+* **web:** investigatorsInPlay on the board, named test helper, docs (ME.31a review) ([281128c](https://github.com/macandy13/arkham-companion/commit/281128cfbe16b03a8ed5348385cf85fefa1c644e))
+
+
+### Refactoring
+
+* **engine:** card actions read the ability condition (ME.17a) ([b6e686b](https://github.com/macandy13/arkham-companion/commit/b6e686b24d154839ee4a6c18b7512ddeed4e0cca))
+* **engine:** card actions read the ability condition (ME.17a) ([9fcd6eb](https://github.com/macandy13/arkham-companion/commit/9fcd6eb5a0ed48beb4f6413e147720f9a8db54dc))
+* **engine:** docs and tests for the engine paying actions (MS.4) ([dc020ef](https://github.com/macandy13/arkham-companion/commit/dc020efefebc3b048da469b4fcc4452af2e16d5c))
+* **engine:** one Advance command for act and agenda (ME.14) ([858e7ad](https://github.com/macandy13/arkham-companion/commit/858e7ad8427e3a7bfef98bc639aec21bec71844a))
+* **engine:** one Advance command for act and agenda (ME.14) ([1ae788d](https://github.com/macandy13/arkham-companion/commit/1ae788dd42561716628bf3920b32d7079acb65e3))
+* **engine:** one DealEnemyAttack for every attack (ME.12b) ([e537a3a](https://github.com/macandy13/arkham-companion/commit/e537a3a8fa64c807545ee89c00a95b67fd1e0c1f))
+* **engine:** one DealEnemyAttack for every attack (ME.12b) ([1cc003e](https://github.com/macandy13/arkham-companion/commit/1cc003ef5b2e2ec84c83e5c4cd268d5819168365))
+* **engine:** one forEach repeat on abilities (ME.16) ([c3b6570](https://github.com/macandy13/arkham-companion/commit/c3b6570539855f41eb96269ab96c821ccf7d2ee7))
+* **engine:** one forEach repeat on abilities (ME.16) ([937e61c](https://github.com/macandy13/arkham-companion/commit/937e61c7c3dcf06ec57794584ba7535cc1c7bdda))
+* **engine:** one StageDeck type for every deck field (ME.14) ([d9772c7](https://github.com/macandy13/arkham-companion/commit/d9772c78296cdda276b8bd332a8a303e26a66d04))
+* **engine:** resolutions read the ability condition (ME.17b) ([37effee](https://github.com/macandy13/arkham-companion/commit/37effee2b800523494b24d68b1f868c4b1138fd4))
+* **engine:** resolutions read the ability condition (ME.17b) ([a404620](https://github.com/macandy13/arkham-companion/commit/a40462066e30043d4bc4ec0407389b1bc176eb26))
+* **engine:** split abilities.ts by part, trim unused public exports (MS.3) ([14dcec0](https://github.com/macandy13/arkham-companion/commit/14dcec061ef2b209fb5e22db8d4898a6e89011d1))
+* **engine:** split abilities.ts by part, trim unused public exports (MS.3) ([05e4a26](https://github.com/macandy13/arkham-companion/commit/05e4a26e3a86c4be29fbba890ab750edfe86a557))
+* **engine:** split the turn check, list the new conditions ([3ff70f0](https://github.com/macandy13/arkham-companion/commit/3ff70f0d05e6bde7878b3dc919eebb53851aabe0))
+* **engine:** strict card names and current card lookups (MS.2 review) ([1b04627](https://github.com/macandy13/arkham-companion/commit/1b046279362f3d179d19f703657c2c10fde6540c))
+* **engine:** switch over every attack kind (ME.12b) ([bff8fca](https://github.com/macandy13/arkham-companion/commit/bff8fca7433bb5a6654e755647eccf6640ed001a))
+* **engine:** switch over every repeated reference (ME.16) ([70c7b03](https://github.com/macandy13/arkham-companion/commit/70c7b03bb3c90abe555eff353b67dfb5a049c183))
+* **engine:** the engine pays action costs (MS.4) ([fef35ab](https://github.com/macandy13/arkham-companion/commit/fef35aba042a84f4237758922705b03c56408a9d))
+* **engine:** the engine pays action costs (MS.4) ([b474f57](https://github.com/macandy13/arkham-companion/commit/b474f57c027977c364c6aa75c85c157c908bdbb8))
+* **engine:** timing windows as event plus listener scope (ME.15) ([43a7f1f](https://github.com/macandy13/arkham-companion/commit/43a7f1f556d4fea6f0543940b3b17807e82ff679))
+* **engine:** timing windows as event plus listener scope (ME.15) ([9ec9587](https://github.com/macandy13/arkham-companion/commit/9ec958762476dbf21b24eb63a610bd5465642b48))
+* remove dead exports, check them with knip, share card lookups (MS.2) ([ee96a45](https://github.com/macandy13/arkham-companion/commit/ee96a45b31df27655f17ceceff59dc9e12f92889))
+* remove dead exports, check them with knip, share card lookups (MS.2) ([db67124](https://github.com/macandy13/arkham-companion/commit/db6712434b7230374c1a8a5a5f4ac6a9866b273f))
+* **review_tour:** build the lead sections without a cast ([a3c4e53](https://github.com/macandy13/arkham-companion/commit/a3c4e53aa0e3ae41da1ccc596adc5e275e669ecb))
+* **scenarios:** Umôrdhoth asks whether you control Lita (ME.17a) ([672466a](https://github.com/macandy13/arkham-companion/commit/672466a44291e3ef53a1f5729814668ab3f641c1))
+
+
+### Documentation
+
+* align architecture pages, PR template and review guide with the test owners (MS.1) ([81f980d](https://github.com/macandy13/arkham-companion/commit/81f980dda57b5e2581d4b135f5bf4597437228f9))
+* card zoom actions and fan order (ME.31b review) ([fd1ba8d](https://github.com/macandy13/arkham-companion/commit/fd1ba8dd388757fbb5653dba4c86aaebebafaafa))
+* **engine:** conditions outside a window ([595bd6a](https://github.com/macandy13/arkham-companion/commit/595bd6a633448b5d189635e5286342673536ab95))
+* **engine:** doc comments on the abilities helpers now shared between files (MS.3 review) ([6e47f03](https://github.com/macandy13/arkham-companion/commit/6e47f0399f52681f946feabcdc4d2e894da8e4fd))
+* point the rule's end-to-end step and the CI reviewer at the new description ([4fa9f29](https://github.com/macandy13/arkham-companion/commit/4fa9f290426da2b50ffe0dc7075bd390a909917a))
+* PR descriptions become a concept line plus the review tour (RT.c) ([a624644](https://github.com/macandy13/arkham-companion/commit/a6246446644422f61e3fae3b2602e5e42e4a3069))
+* PR descriptions become a concept line plus the review tour (RT.c) ([2c378d6](https://github.com/macandy13/arkham-companion/commit/2c378d6ecbd0a477a189b31892a9bb561e07b1dd))
+* **scenarios:** note when Blasphemous Invocation fails by 0 ([3e042e8](https://github.com/macandy13/arkham-companion/commit/3e042e87cc0632bad86f1826f43a7d051e8ee804))
+* test each claim once, in the layer that owns it (MS.1) ([426efda](https://github.com/macandy13/arkham-companion/commit/426efdacc5712aa02d15715e924113cff2c0c5e5))
+* test each claim once, in the layer that owns it (MS.1) ([a96d9a4](https://github.com/macandy13/arkham-companion/commit/a96d9a45e9e6fbb9618ce6a12c5279d2bc4e24a2))
+
 ## [0.1.45](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v0.1.44...arkham-companion-v0.1.45) (2026-11-16)
 
 
