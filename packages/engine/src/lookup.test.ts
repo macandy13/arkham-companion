@@ -178,7 +178,7 @@ describe('currentCard', () => {
     expect(currentCard(state, 'act')).toBeUndefined();
   });
 
-  it('is required by requireCurrentCard, which rejects a used-up deck', () => {
+  it('is required by requireCurrentCard, which rejects a game with no current act', () => {
     const { state } = newGame().start();
 
     expect(rejectionOf(() => requireCurrentCard(state, 'act'))).toEqual({
