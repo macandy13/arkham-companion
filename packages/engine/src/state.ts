@@ -624,7 +624,7 @@ export interface GameMeta {
    */
   turnsTaken: InvestigatorId[];
   /**
-   * The basic actions the investigators counted off this round, oldest first (`AdjustActions.for`),
+   * The basic actions the investigators paid for this round, oldest first (`ActionsSpent.for`),
    * so a cost modifier of the first action each round knows it was paid (`actionCost`); cleared
    * when the round ends. None when absent.
    */

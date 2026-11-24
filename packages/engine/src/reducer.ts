@@ -182,16 +182,21 @@ export function apply(state: GameState, event: Event): GameState {
           turn: { investigatorId: event.investigatorId },
         },
       };
-    case 'ActionsAdjusted': {
-      const adjusted = applyInvestigator(state, event, (inv) => ({
+    case 'ActionsAdjusted':
+      return applyInvestigator(state, event, (inv) => ({
         ...inv,
         actionsRemaining: inv.actionsRemaining + event.delta,
       }));
-      if (event.for === undefined) return adjusted;
-      const taken = { investigatorId: event.investigatorId, action: event.for };
+    case 'ActionsSpent': {
+      const spent = applyInvestigator(state, event, (inv) => ({
+        ...inv,
+        actionsRemaining: inv.actionsRemaining - event.amount,
+      }));
+      if (event.for.kind !== 'basic') return spent;
+      const taken = { investigatorId: event.investigatorId, action: event.for.action };
       return {
-        ...adjusted,
-        meta: { ...adjusted.meta, actionsTaken: [...(adjusted.meta.actionsTaken ?? []), taken] },
+        ...spent,
+        meta: { ...spent.meta, actionsTaken: [...(spent.meta.actionsTaken ?? []), taken] },
       };
     }
     case 'SkillBoostChanged':

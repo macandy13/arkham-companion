@@ -107,6 +107,7 @@ export type Command =
   | UseCardAction
   | SetLeadInvestigator
   | AdjustActions
+  | SpendActions
   | DealEnemyAttack
   | EnemyAttacks
   | Investigate
@@ -1286,10 +1287,9 @@ export interface SetLeadInvestigator {
 /**
  * Changes an active investigator's remaining actions
  * (`Investigator.actionsRemaining`) by `delta`, a non-zero integer; they may
- * not drop below zero. `handle` plays one for each action command taken as
- * an action (`actionPayment`); the players pass one for an action the engine
- * doesn't see, and an encounter card or player card that takes or grants an
- * action passes its delta, in any phase. Upkeep step 4.2 resets the count to 3; an
+ * not drop below zero. A correction or a card's grant, never the payment of an action, which is
+ * `SpendActions`: the players pass one to correct the count, and an encounter card or player card
+ * that takes or grants an action passes its delta, in any phase. Upkeep step 4.2 resets the count to 3; an
  * investigator whose cards grant an additional action each turn gets it by
  * the players passing +1 after that reset. `allRemaining` takes all that remain ("lose all
  * remaining actions"); asked by a card (`source`), any loss takes no more than remain. Produces
@@ -1299,12 +1299,31 @@ export interface AdjustActions extends AskedByCard {
   type: 'AdjustActions';
   investigatorId: InvestigatorId;
   delta: number | 'allRemaining';
-  /**
-   * The basic action this counts off, when it is one (`delta` is then minus what it costs,
-   * `actionCost`, and may be 0 for a free one, which is performed all the same): recorded for the round (`GameMeta.actionsTaken`), so a card that raises the
-   * first such action each round (Frozen in Fear) raises only that one.
-   */
-  for?: BasicAction;
+}
+
+/**
+ * What a spent action paid for (`SpendActions.for`): a basic action by the word that names it, or
+ * the action ability number `action` printed on the card `cardId` (`UseCardAction`).
+ */
+export type ActionPaidFor =
+  { kind: 'basic'; action: BasicAction } | { kind: 'card'; cardId: InstanceId; action: number };
+
+/**
+ * The investigator spends `amount` actions to take the action `for` names (Rules Reference,
+ * "Action"): what `handle` plays before a command taken as an action resolves (`actionPayment`),
+ * and before the attacks of opportunity it provokes. Its own command rather than an
+ * `AdjustActions`, so the log tells an action taken apart from a correction or a card's grant,
+ * and a card that reacts to spending an action can read what it paid for. `amount` is what the
+ * action costs now (`actionCost`); 0 for a basic action a card lets them take for free, which is
+ * performed all the same. A basic action is recorded for the round (`GameMeta.actionsTaken`), so a
+ * card that raises the first such action each round (Frozen in Fear) raises only that one.
+ * Produces `ActionsSpent`.
+ */
+export interface SpendActions {
+  type: 'SpendActions';
+  investigatorId: InvestigatorId;
+  amount: number;
+  for: ActionPaidFor;
 }
 
 /**
