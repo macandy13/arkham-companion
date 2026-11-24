@@ -1427,7 +1427,17 @@ export function tokensOn(on: RelativeCard, token: TokenKind): Quantity {
  * `ifThereAre(eachEnemy({ engagedWith: you() }), { max: 0 }, …)`.
  */
 export function ifThereAre(of: RepeatedRef, range: StatRange, ability: Ability): Ability {
-  return { ...ability, condition: { kind: 'countOf', of, ...range } };
+  return { ...ability, condition: thereAre(of, range) };
+}
+
+/**
+ * "There are N of these": the number of things `of` names is within `range` (`countOf`), as
+ * `ifThereAre` puts it on an ability, or on its own for a resolution's question about the ended
+ * game: `thereAre(eachInZone(victoryDisplay, { code }), { min: 1 })` for "if Herman Collins is in
+ * the victory display".
+ */
+export function thereAre(of: RepeatedRef, range: StatRange): AbilityCondition {
+  return { kind: 'countOf', of, ...range };
 }
 
 /**

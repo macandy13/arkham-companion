@@ -229,12 +229,16 @@ function afterTestEnds(
   return { window: { on: 'testEnded', action, outcome }, effects };
 }
 
-/** Whether `condition` holds in the window `opened` (see `AbilityCondition`). */
+/**
+ * Whether `condition` holds in the window `opened` (see `AbilityCondition`). Without a window (a
+ * resolution's question about the ended game, `gameHolds`) a reference to the window's card,
+ * investigator or location names nothing, and a picked reference has no candidates.
+ */
 export function conditionHolds(
   ctx: EngineContext,
   state: GameState,
   condition: AbilityCondition,
-  opened: OpenedWindow,
+  opened: OpenedWindow | undefined,
 ): boolean {
   const { playerCount } = state.meta;
   switch (condition.kind) {
@@ -256,7 +260,7 @@ export function conditionHolds(
     case 'phase':
       return state.meta.phase === condition.phase;
     case 'margin':
-      return opened.margin !== undefined && opened.margin >= condition.min;
+      return opened?.margin !== undefined && opened.margin >= condition.min;
     case 'turn': {
       const turn = state.meta.turn;
       if (turn === undefined) return false;
@@ -275,15 +279,21 @@ export function conditionHolds(
   }
 }
 
+/** How many things `of` names outside any window ("for each enemy beneath the act"). */
+export function countOnTable(ctx: EngineContext, state: GameState, of: RepeatedRef): number {
+  return countOf(ctx, state, of, undefined);
+}
+
 /** How many things `of` names as `opened` opens (see `AbilityCondition.countOf`). */
 function countOf(
   ctx: EngineContext,
   state: GameState,
   of: RepeatedRef | PickedRef,
-  opened: OpenedWindow,
+  opened: OpenedWindow | undefined,
 ): number {
   const refs = windowRefs(ctx, state, opened);
   if (isRepeatedRef(of)) return eachId(ctx, state, of, refs).length;
+  if (opened === undefined) return 0;
   const from =
     refs.windowInvestigator === undefined
       ? undefined
@@ -296,7 +306,7 @@ function quantities(
   ctx: EngineContext,
   state: GameState,
   quantity: Quantity,
-  opened: OpenedWindow,
+  opened: OpenedWindow | undefined,
 ): number[] {
   const refs = windowRefs(ctx, state, opened);
   switch (quantity.kind) {
@@ -697,7 +707,8 @@ function pickDecision(
 
 /** What each relative reference stands for when an effect resolves; absent when it names nobody. */
 interface ResolvedRefs {
-  self: InstanceId;
+  /** The card with the ability; none outside a window. */
+  self: InstanceId | undefined;
   windowInvestigator: InvestigatorId | undefined;
   lead: InvestigatorId | undefined;
   windowLocation: InstanceId | undefined;
@@ -820,8 +831,27 @@ function eachId(
   }
 }
 
-/** What the references of an ability whose window `opened` stand for, before any repetition. */
-function windowRefs(ctx: EngineContext, state: GameState, opened: OpenedWindow): ResolvedRefs {
+/**
+ * What the references of an ability whose window `opened` stand for, before any repetition;
+ * without a window only those the table answers by itself (the lead, the only copy of a card).
+ */
+function windowRefs(
+  ctx: EngineContext,
+  state: GameState,
+  opened: OpenedWindow | undefined,
+): ResolvedRefs {
+  if (opened === undefined) {
+    return {
+      self: undefined,
+      windowInvestigator: undefined,
+      lead: activeLead(state),
+      windowLocation: undefined,
+      selfLocation: undefined,
+      thatCard: undefined,
+      onlyCopy: (code) => theOnlyCopy(state, code),
+      setAsideCopy: (code) => setAsideCopyOf(state, code, 0),
+    };
+  }
   const { investigatorId } = opened;
   const investigator =
     investigatorId !== undefined && isActiveInvestigator(state, investigatorId)

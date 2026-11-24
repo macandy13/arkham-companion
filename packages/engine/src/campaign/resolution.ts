@@ -1,9 +1,13 @@
 import { assertNever, withoutFirst } from '@arkham/util';
-import { cardStats, type EngineContext, type Trait } from '../cards';
-import { isInPlay } from '../doom';
-import { currentCard } from '../lookup';
+import {
+  conditionHolds,
+  countOnTable,
+  type AbilityCondition,
+  type RepeatedRef,
+} from '../abilities';
+import { cardStats, type EngineContext } from '../cards';
 import type { CardCode, InvestigatorCode, ResolutionId } from '../ids';
-import type { CardInstance, ChaosBagChange, ChaosToken, GameState, Investigator } from '../state';
+import type { ChaosBagChange, ChaosToken, GameState, Investigator } from '../state';
 import { victoryPoints } from '../victory';
 import type { CampaignCommand } from './campaign_commands';
 import {
@@ -58,14 +62,14 @@ export type ResolutionStep =
    * Experience: `bonus` plus, with `victoryDisplay`, the scenario's victory
    * points (`victoryPoints`), as in "each investigator earns experience equal
    * to the Victory X value of each card in the victory display", plus 1 for
-   * each card in the `perCardIn` places ("1 bonus experience for each enemy beneath the act").
+   * each card `perCardIn` names ("1 bonus experience for each enemy beneath the act").
    */
   | {
       readonly kind: 'awardXp';
       readonly to: ResolutionTarget;
       readonly bonus: number;
       readonly victoryDisplay: boolean;
-      readonly perCardIn?: readonly CardPlace[];
+      readonly perCardIn?: RepeatedRef;
     }
   | {
       readonly kind: 'addTrauma';
@@ -95,10 +99,13 @@ export type ResolutionStep =
    * `textKey` is the translation key of what to do.
    */
   | { readonly kind: 'byHand'; readonly textKey: string }
-  /** `then` when the ended game answers `condition` with yes, else `otherwise`. */
+  /**
+   * `then` when `condition` holds on the ended game's table, else `otherwise`; read outside any
+   * timing window, so it names cards by where they are (`eachInZone`, `eachInPlay`, `onlyCopy`).
+   */
   | {
       readonly kind: 'when';
-      readonly condition: GameCondition;
+      readonly condition: AbilityCondition;
       readonly then: readonly ResolutionStep[];
       readonly otherwise?: readonly ResolutionStep[];
     }
@@ -111,34 +118,7 @@ export type ResolutionStep =
   | {
       readonly kind: 'recordNames';
       readonly key: string;
-      readonly names: readonly { readonly code: CardCode; readonly when: GameCondition }[];
-    };
-
-/**
- * Where a card is when the game ends, as resolutions ask about it: `scenarioDeck` is any deck
- * of the scenario's own (The Midnight Masks' Cultist deck), `outOfGame` also holds the agendas
- * and acts that advanced, and `beneathAct` is face up beneath any act, one that advanced out of
- * the game included (Smoke and Mirrors' questioned suspects).
- */
-export type CardPlace =
-  'inPlay' | 'setAside' | 'scenarioDeck' | 'victoryDisplay' | 'outOfGame' | 'beneathAct';
-
-/** A question about the ended game that a `when` or `recordNames` step asks. */
-export type GameCondition =
-  /** Some copy of `code` is in one of `places`; false when the game has none. */
-  | { readonly kind: 'cardIn'; readonly code: CardCode; readonly places: readonly CardPlace[] }
-  /** The current agenda is one of `agendas`, as in "if it is Agenda 1" (like `AbilityCondition.currentCard` for the agenda). */
-  | { readonly kind: 'currentAgenda'; readonly agendas: readonly CardCode[] }
-  | { readonly kind: 'anyOf'; readonly conditions: readonly GameCondition[] }
-  /**
-   * At least `atLeast` cards of `trait` are in `places` together ("if there are 6 Elite enemies
-   * under the act").
-   */
-  | {
-      readonly kind: 'cardsIn';
-      readonly trait: Trait;
-      readonly places: readonly CardPlace[];
-      readonly atLeast: number;
+      readonly names: readonly { readonly code: CardCode; readonly when: AbilityCondition }[];
     };
 
 /** A scenario's resolutions, on `ScenarioDefinition.resolutions`. */
@@ -316,7 +296,7 @@ function proposeStep(ctx: EngineContext, game: GameState, step: ResolutionStep):
       const amount =
         step.bonus +
         (step.victoryDisplay ? victoryPoints(ctx, game) : 0) +
-        (step.perCardIn === undefined ? 0 : cardsAt(ctx, game, step.perCardIn).length);
+        (step.perCardIn === undefined ? 0 : countOnTable(ctx, game, step.perCardIn));
       // `AwardXp` takes only positive amounts; earning nothing is no change to confirm.
       if (amount <= 0) return [];
       return targetCodes(game, step.to).map((code) => command({ type: 'AwardXp', code, amount }));
@@ -360,58 +340,9 @@ function proposeStep(ctx: EngineContext, game: GameState, step: ResolutionStep):
   }
 }
 
-/** Whether the ended `game` answers `condition` with yes. */
-function gameHolds(ctx: EngineContext, game: GameState, condition: GameCondition): boolean {
-  switch (condition.kind) {
-    case 'cardIn':
-      return cardsAt(ctx, game, condition.places).some((card) => card.code === condition.code);
-    case 'currentAgenda': {
-      const agenda = currentCard(game, 'agenda');
-      return agenda !== undefined && condition.agendas.includes(agenda.code);
-    }
-    case 'anyOf':
-      return condition.conditions.some((inner) => gameHolds(ctx, game, inner));
-    case 'cardsIn':
-      return (
-        cardsAt(ctx, game, condition.places).filter((card) =>
-          cardStats(ctx.cards, card.code).traits.includes(condition.trait),
-        ).length >= condition.atLeast
-      );
-    default:
-      return assertNever(condition);
-  }
-}
-
-/** The ended game's cards in any of `places`. */
-function cardsAt(
-  ctx: EngineContext,
-  game: GameState,
-  places: readonly CardPlace[],
-): CardInstance[] {
-  return Object.values(game.cards).filter((card) =>
-    places.some((place) => isAt(ctx, game, card, place)),
-  );
-}
-
-function isAt(ctx: EngineContext, game: GameState, card: CardInstance, place: CardPlace): boolean {
-  switch (place) {
-    case 'inPlay':
-      return isInPlay(game, card);
-    case 'setAside':
-    case 'scenarioDeck':
-    case 'victoryDisplay':
-    case 'outOfGame':
-      return card.zone.kind === place;
-    case 'beneathAct': {
-      // The act a resolution follows has left the game by then, so any act host counts; a
-      // facedown card there is left out, as the act's own count leaves it out (`inVictoryDisplay`).
-      if (card.zone.kind !== 'beneath' || !card.faceUp) return false;
-      const host = game.cards[card.zone.hostId];
-      return host !== undefined && cardStats(ctx.cards, host.code).typeCode === 'act';
-    }
-    default:
-      return assertNever(place);
-  }
+/** Whether `condition` holds on the ended `game`'s table, outside any timing window. */
+function gameHolds(ctx: EngineContext, game: GameState, condition: AbilityCondition): boolean {
+  return conditionHolds(ctx, game, condition, undefined);
 }
 
 function targetCodes(game: GameState, target: ResolutionTarget): InvestigatorCode[] {

@@ -11,9 +11,9 @@
  * turn by turn, with the facts a player would check at the table asserted
  * where they happen.
  *
- * Each later engine PR extends this story with its feature (see M1.E in
- * docs/tasks/done/M1-engine.md). Rules rest in the unit tests; this test keeps
- * them honest together.
+ * New rules are covered by their unit tests and the play tester; this story
+ * grows only for a rule that changes how a whole game plays (coding
+ * guidelines §3).
  *
  * The phase assistant (`nextPhase`) runs the steps of each phase, numbered as
  * in the Rules Reference (1.2 doom, 1.3 threshold check, 1.4 encounter draws,

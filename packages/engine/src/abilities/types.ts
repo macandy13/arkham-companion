@@ -518,13 +518,15 @@ export type AbilityOption = Pick<DecisionOption, 'id' | 'label' | 'amounts'> & {
 export type AbilityEffect = Templated<AbilityCommand>;
 
 /**
- * What must hold when the window opens for an ability to fire ("If it is act 3, …"), or for a card
- * action to be offered and taken ("During your turn:", `CardAction.condition`, read in
- * the action's window). Checked once, as the window opens; the effects then resolve whatever they
- * change. Three shapes cover most conditions cards print, each over the references effects use:
- * which card is current, how many things a reference names, and a value on the table; then the
- * phase or turn the game is in, and `allOf`/`anyOf`/`not` to
- * combine them. A new condition is usually a new reference or `Quantity`, not a new kind.
+ * What must hold when the window opens for an ability to fire ("If it is act 3, …"), for a card
+ * action to be offered and taken ("During your turn:", `CardAction.condition`, read in the
+ * action's window), or for a resolution step to apply (`ResolutionStep` `when`, read on the
+ * ended game outside any window: "if the Ghoul Priest is in the victory display"). An ability
+ * checks it once, as its window opens; the effects then resolve whatever they change. Three
+ * shapes cover most conditions cards print, each over the references effects use: which card is
+ * current, how many things a reference names, and a value on the table; then the phase or turn
+ * the game is in, and `allOf`/`anyOf`/`not` to combine them. A new condition is usually a new
+ * reference or `Quantity`, not a new kind.
  */
 export type AbilityCondition =
   /** The current act or agenda (`deck`) is one of `codes` ("If it is act 3", "if it is agenda 2"). */
