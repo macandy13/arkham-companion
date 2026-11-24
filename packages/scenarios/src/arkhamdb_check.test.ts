@@ -36,7 +36,7 @@ interface PrintedStats {
   horror?: number;
   victory?: number;
   doom?: string;
-  /** Keywords by name, each with its detail ("Spawn - Attic"), as `Keyword` has them. */
+  /** Keywords by name, each with its detail, one line each (`keywordLine`: "spawn: Attic"). */
   keywords: string[];
   /** The pictures' paths on arkhamdb.com, which the app fetches at runtime (`CardStats.imageSrc`). */
   imageSrc?: string;
@@ -108,7 +108,12 @@ function arkhamDbStats(def: CardDef): PrintedStats {
     horror: def.horror ?? (enemy ? 0 : undefined),
     victory: def.victory,
     doom: scaled(def.doom, false),
-    keywords: def.keywords.map(keywordLine).sort(),
+    // Elite is a trait on ArkhamDB, which `parseKeywords` also lists as a keyword; the traits
+    // compare it already, and the hand-entered cards keep it a trait only.
+    keywords: def.keywords
+      .filter(({ name }) => name !== 'elite')
+      .map(keywordLine)
+      .sort(),
     imageSrc: def.imageSrc,
     backImageSrc: def.backImageSrc,
   };

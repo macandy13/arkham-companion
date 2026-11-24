@@ -6,6 +6,7 @@ import {
   fixed,
   encounterDeck,
   encounterDiscard,
+  encounterSetCode,
   engagedWith,
   execute,
   instanceId,
@@ -67,6 +68,25 @@ describe('Spreading Flames card data', () => {
       expect(card.unrevealedConnectsTo).toBeUndefined();
     },
   );
+
+  it.each([
+    { set: 'spreading_flames', copies: 1, cards: 'Servant of Flame' },
+    { set: 'ashen_pilgrims', copies: 4, cards: '2 Cantor of Flame, 2 Hellhound' },
+    { set: 'bystanders', copies: 3, cards: '3 Bystander' },
+    { set: 'cosmic_evils', copies: 3, cards: '3 Cosmic Evils' },
+    { set: 'eldritch_lore', copies: 4, cards: '2 Unspeakable Truths, 2 Forbidden Secrets' },
+    { set: 'hallucinations', copies: 4, cards: '2 Extraplanar Visions, 2 Wild Compulsion' },
+    { set: 'fire_ch2', copies: 7, cards: '5 Fire!, 2 Noxious Smoke' },
+    { set: 'mad_science', copies: 4, cards: '2 Mutated!, 2 Mutated Experiment' },
+  ])('has $copies enemy and treachery copies in set $set: $cards', ({ set, copies }) => {
+    const encounterCards = spreadingFlamesCardDefs.filter(
+      (card) =>
+        card.encounterCode === encounterSetCode(set) &&
+        (card.typeCode === 'enemy' || card.typeCode === 'treachery'),
+    );
+
+    expect(encounterCards.reduce((sum, card) => sum + (card.quantity ?? 1), 0)).toBe(copies);
+  });
 
   it("has Your Friend's Room and the five Miskatonic University locations", () => {
     const locations = spreadingFlamesCardDefs.filter((card) => card.typeCode === 'location');

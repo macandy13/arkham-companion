@@ -6,6 +6,7 @@ import {
   encounterDeck,
   encounterDiscard,
   engagedWith,
+  encounterSetCode,
   execute,
   instanceId,
   investigatorId,
@@ -107,6 +108,27 @@ describe('Smoke and Mirrors card data', () => {
     );
 
     expect(oneWay).toEqual([]);
+  });
+
+  it.each([
+    { set: 'smoke_and_mirrors', copies: 5, cards: '4 Mark of Elokoss, Servant of Flame' },
+    { set: 'people_of_arkham', copies: 6, cards: 'the six suspects' },
+    { set: 'arcane_lock', copies: 2, cards: '2 Arcane Lock' },
+    { set: 'bad_weather', copies: 4, cards: '2 Downpour, 2 Flash Flood' },
+    { set: 'dead_ends', copies: 4, cards: '2 Raising Suspicions, 2 Red Herring' },
+    { set: 'flying_terrors', copies: 4, cards: '2 Bat Horror, 2 Aerial Pursuit' },
+    { set: 'gangs_of_arkham', copies: 4, cards: '2 Rogue Gangster, 2 Crossfire' },
+    { set: 'whippoorwills_ch2', copies: 5, cards: '3 Whippoorwill, 2 Eager for Death' },
+  ])('has $copies enemy and treachery copies in set $set: $cards', ({ set, copies }) => {
+    const encounterCards = smokeAndMirrorsCardDefs.filter(
+      (card) =>
+        card.encounterCode === encounterSetCode(set) &&
+        (card.typeCode === 'enemy' || card.typeCode === 'treachery'),
+    );
+
+    const total = encounterCards.reduce((sum, card) => sum + (card.quantity ?? 1), 0);
+
+    expect(total).toBe(copies);
   });
 
   it('has the twelve Arkham locations, two versions each of Downtown, Uptown and Miskatonic University', () => {

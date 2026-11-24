@@ -3,6 +3,7 @@ import {
   atLocation,
   encounterDeck,
   encounterDiscard,
+  encounterSetCode,
   engagedWith,
   execute,
   instanceId,
@@ -26,6 +27,7 @@ import {
 import {
   DISSONANCE_DECISION,
   QUEEN_OF_ASH_CODES,
+  queenOfAshCardDefs,
   queenOfAshCards,
   TORMENT_DECISION,
   ASHEN_REBIRTH_DECISION,
@@ -85,6 +87,26 @@ describe('Queen of Ash card data', () => {
       expect(card.connectsTo).toEqual(connectsTo);
     },
   );
+
+  it.each([
+    {
+      set: 'queen_of_ash',
+      copies: 6,
+    },
+    { set: 'cultists_ch2', copies: 6 },
+    { set: 'reeking_decay', copies: 4 },
+    { set: 'torment', copies: 6 },
+  ])('has $copies enemy and treachery copies in set $set', ({ set, copies }) => {
+    const encounterCards = queenOfAshCardDefs.filter(
+      (card) =>
+        card.encounterCode === encounterSetCode(set) &&
+        (card.typeCode === 'enemy' || card.typeCode === 'treachery'),
+    );
+
+    const total = encounterCards.reduce((sum, card) => sum + (card.quantity ?? 1), 0);
+
+    expect(total).toBe(copies);
+  });
 
   it.each([
     { code: '12121', name: 'Cantor of Flame', set: 'ashen_pilgrims' },

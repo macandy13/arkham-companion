@@ -4,6 +4,7 @@ import {
   blankEnemy,
   decisionId,
   encounterDeck,
+  encounterSetCode,
   engagedWith,
   execute,
   instanceId,
@@ -65,6 +66,22 @@ describe('The Devourer Below card data', () => {
       expect(cardOf(code).unrevealedSymbol).toBe(unrevealed);
     },
   );
+
+  it.each([
+    { set: 'tentacles', copies: 3, cards: "Umôrdhoth, 2 Umôrdhoth's Wrath" },
+    { set: 'agents_of_yog', copies: 4, cards: '2 Yithian Observer, 2 Offer of Power' },
+    { set: 'agents_of_shub', copies: 4, cards: 'Relentless Dark Young, 3 Goat Spawn' },
+    { set: 'agents_of_cthulhu', copies: 4, cards: "2 Young Deep One, 2 Dreams of R'lyeh" },
+    { set: 'agents_of_hastur', copies: 4, cards: '2 Screeching Byakhee, 2 The Yellow Sign' },
+  ])('has $copies enemy and treachery copies in set $set: $cards', ({ set, copies }) => {
+    const encounterCards = theDevourerBelowCardDefs.filter(
+      (card) =>
+        card.encounterCode === encounterSetCode(set) &&
+        (card.typeCode === 'enemy' || card.typeCode === 'treachery'),
+    );
+
+    expect(encounterCards.reduce((sum, card) => sum + (card.quantity ?? 1), 0)).toBe(copies);
+  });
 
   it('has the Main Path, six Arkham Woods and the Ritual Site', () => {
     const locations = theDevourerBelowCardDefs.filter((card) => card.typeCode === 'location');
