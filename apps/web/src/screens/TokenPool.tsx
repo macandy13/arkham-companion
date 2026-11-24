@@ -6,7 +6,7 @@ import { overHeaderCard } from './headerDropTarget';
 import { GameToken, type GameTokenKind } from '../tokens/GameToken';
 import { TokenGhost } from './TokenGhost';
 import { useTokenDrag, type TokenDragHandlers } from './useTokenDrag';
-import { placeDoomOnAgenda } from '@arkham/engine';
+import { adjustStat, dealDamageTo, placeDoomOnAgenda } from '@arkham/engine';
 import { usePlay } from './PlayContext';
 
 /**
@@ -44,37 +44,19 @@ export function TokenPool() {
   const damage = useTokenDrag((client) => {
     const enemy = enemyAt(client);
     if (enemy) {
-      void actions.perform({ type: 'DamageEnemy', enemyId: enemy, amount: 1 });
+      void actions.perform(dealDamageTo(enemy, 1));
       return;
     }
     const investigator = investigatorAt(client);
-    if (investigator)
-      void actions.perform({
-        type: 'AdjustInvestigator',
-        investigatorId: investigator,
-        stat: 'damage',
-        delta: 1,
-      });
+    if (investigator) void actions.perform(adjustStat('damage', 1, investigator));
   });
   const horror = useTokenDrag((client) => {
     const investigator = investigatorAt(client);
-    if (investigator)
-      void actions.perform({
-        type: 'AdjustInvestigator',
-        investigatorId: investigator,
-        stat: 'horror',
-        delta: 1,
-      });
+    if (investigator) void actions.perform(adjustStat('horror', 1, investigator));
   });
   const resource = useTokenDrag((client) => {
     const investigator = investigatorAt(client);
-    if (investigator)
-      void actions.perform({
-        type: 'AdjustInvestigator',
-        investigatorId: investigator,
-        stat: 'resources',
-        delta: 1,
-      });
+    if (investigator) void actions.perform(adjustStat('resources', 1, investigator));
   });
   const tokens = [
     { kind: 'doom', label: t('header.poolDoom'), drag: doom },

@@ -1,6 +1,12 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { type BoardView, type InvestigatorView, placeYourClues } from '@arkham/engine';
+import {
+  adjustStat,
+  type BoardView,
+  type InvestigatorView,
+  placeYourClues,
+  takeOneClue,
+} from '@arkham/engine';
 import { Brain, Heart } from '../catalog/cardFace';
 import type { SteppedStat } from '../state/gameActions';
 import { deltaText, useCountChange } from '../screens/countChange';
@@ -11,7 +17,6 @@ import { PipRing } from './PipRing';
 import { useClueDrag } from './useClueDrag';
 import { CounterBubble, type BubbleSide } from '../screens/CounterBubble';
 import { useDoubleTap } from '../screens/useDoubleTap';
-import { takeOneClue } from '../state/gameActions';
 import { usePlay } from '../screens/PlayContext';
 
 /**
@@ -36,7 +41,7 @@ export function Counters({
   const { id, health, damage, sanity, horror } = investigator;
   // A stepper's damage or horror defeats by the rules, so it is performed, not corrected.
   const adjust = (stat: SteppedStat, delta: number) =>
-    void actions.perform({ type: 'AdjustInvestigator', investigatorId: id, stat, delta });
+    void actions.perform(adjustStat(stat, delta, id));
   // A defeated or resigned investigator has left the game, so their counters no longer change.
   const off = busy || investigator.status !== 'active';
   const clueDrag = useClueDrag(board, id);

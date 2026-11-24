@@ -45,7 +45,7 @@ type TurnActionCommand = Extract<
  * (damage, defeat or move an enemy, place doom, draw an encounter card: `encounterDraw`): the engine resolves it
  * by the rules, so forced effects fire. A mistake is undone with `correct` instead.
  */
-export type PlayerEffect = Extract<
+type PlayerEffect = Extract<
   Command,
   {
     type:
@@ -74,14 +74,6 @@ export type PlayerEffect = Extract<
       | 'SpawnEnemy';
   }
 >;
-
-/**
- * `investigator` takes one clue from `location`, their own, without a test, as a card grants it
- * (`DiscoverClues`), or as a clue dragged onto their pawn says.
- */
-export function takeOneClue(location: InstanceId, investigator: InvestigatorId): PlayerEffect {
-  return { type: 'DiscoverClues', investigatorId: investigator, locationId: location, amount: 1 };
-}
 
 /** Counts the players confirm when they answer a decision (clues found, damage soaked). */
 export interface DecisionAmounts {
