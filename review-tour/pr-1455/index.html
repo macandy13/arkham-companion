@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>#1455 review tour</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400..700&amp;family=JetBrains+Mono:wght@400;600&amp;display=swap">
+<style>
+:root {
+  --bg: #fbfbf9; --fg: #1d1f21; --muted: #6b6f73; --line: #e6e5e0; --soft: #f2f1ec;
+  --accent: #2f5d8a; --accent-fg: #ffffff; --ask: #fdf4dc; --ask-fg: #3d3115; --code-bg: #ffffff;
+  --add-bg: #e9f5ec; --add-mark: #2e7d47; --del-bg: #fbecea; --del-mark: #b0413a; --hl: #fff3c4;
+  --tok-key: #8a3ffc; --tok-str: #2e7d47; --tok-com: #8c9196; --tok-type: #2f5d8a; --ok: #2e7d47;
+  --font-body: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-code: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  --radius: 8px;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #17191b; --fg: #e8e8e6; --muted: #9a9ea3; --line: #2b2e31; --soft: #202326;
+    --accent: #8ab4e0; --accent-fg: #10161c; --ask: #2b2617; --ask-fg: #f0e3bd; --code-bg: #1c1f22;
+    --add-bg: #1d2e23; --add-mark: #7cc596; --del-bg: #33201f; --del-mark: #e48a83; --hl: #3a3420;
+    --tok-key: #c4a1ff; --tok-str: #8fd0a4; --tok-com: #7c8288; --tok-type: #8ab4e0; --ok: #7cc596;
+    color-scheme: dark;
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.6 var(--font-body); -webkit-font-smoothing: antialiased; }
+main {
+  max-width: 720px; margin: 0 auto; display: grid; gap: 40px;
+  padding: 0 max(16px, env(safe-area-inset-right)) 56px max(16px, env(safe-area-inset-left));
+}
+a { color: var(--accent); text-underline-offset: 2px; }
+a:focus-visible, button:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+code { font-family: var(--font-code); font-size: .88em; background: var(--soft); padding: 1px 5px; border-radius: 4px; }
+nav {
+  position: sticky; top: 0; z-index: 5; display: flex; align-items: center; gap: 12px;
+  margin: 0 calc(-1 * max(16px, env(safe-area-inset-left))); padding: 10px max(16px, env(safe-area-inset-left));
+  background: color-mix(in srgb, var(--bg) 92%, transparent); backdrop-filter: blur(8px); border-bottom: 1px solid var(--line);
+}
+nav .number { font-size: 14px; font-weight: 600; color: var(--muted); }
+nav ol { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 0 auto; padding: 0; list-style: none; }
+nav ol a {
+  width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center;
+  color: var(--muted); background: var(--soft); font-size: 13px; font-weight: 600; text-decoration: none;
+}
+nav ol a.question { background: var(--ask); color: var(--ask-fg); }
+nav ol a.on { background: var(--accent); color: var(--accent-fg); }
+header { display: grid; gap: 12px; padding-top: 28px; }
+.kicker { font-size: 13px; color: var(--muted); }
+h1 { font-size: 28px; line-height: 1.2; font-weight: 650; letter-spacing: -0.015em; margin: 0; text-wrap: balance; }
+.lead { display: grid; gap: 6px; }
+.lead h2 { font-size: 12px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 0; }
+.lead p { font-size: 18px; margin: 0; max-width: 60ch; }
+.meta { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 13px; color: var(--muted); margin: 0; }
+.questions { background: var(--ask); color: var(--ask-fg); border-radius: var(--radius); padding: 18px 20px; display: grid; gap: 14px; }
+.questions h2 { font-size: 12px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; margin: 0; opacity: .75; }
+.questions ol { margin: 0; padding-left: 20px; display: grid; gap: 12px; }
+.questions p { margin: 0; font-size: 17px; }
+.questions .about { font-size: 13px; opacity: .75; }
+.questions a { color: inherit; font-size: 14px; font-weight: 500; }
+section.evidence { display: grid; gap: 14px; scroll-margin-top: 64px; }
+.evidence h2 { font-size: 20px; line-height: 1.3; font-weight: 600; letter-spacing: -0.01em; margin: 0; }
+.evidence ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 18px; }
+.evidence li { display: grid; gap: 8px; padding-left: 28px; position: relative; }
+.evidence li::before { content: "✓"; position: absolute; left: 4px; color: var(--accent); font-weight: 600; }
+.evidence li > p { margin: 0; max-width: 62ch; }
+.evidence .test { font-size: 14px; color: var(--muted); }
+.example { margin: 0; padding: 12px 14px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--soft); overflow-x: auto; font: 13px/1.5 var(--font-code); font-variant-ligatures: none; }
+.example code { background: none; padding: 0; font-size: inherit; }
+.stop { display: grid; gap: 14px; scroll-margin-top: 64px; }
+.stop > header { display: grid; grid-template-columns: auto 1fr; gap: 2px 12px; align-items: center; padding: 0; }
+.stop-number {
+  grid-row: span 2; align-self: start; margin-top: 2px; width: 28px; height: 28px; border-radius: 50%;
+  display: grid; place-items: center; background: var(--accent); color: var(--accent-fg); font-size: 13px; font-weight: 600;
+}
+.stop h2 { font-size: 20px; line-height: 1.3; font-weight: 600; letter-spacing: -0.01em; margin: 0; text-wrap: balance; }
+.tag { font-size: 12px; color: var(--muted); letter-spacing: .04em; text-transform: uppercase; }
+.stop > p { margin: 0; max-width: 62ch; }
+figure { display: grid; gap: 8px; margin: 0; }
+.toggle { display: flex; flex-wrap: wrap; gap: 4px; }
+.segments { display: inline-flex; background: var(--soft); border-radius: 999px; padding: 3px; }
+.toggle button { font: 500 13px var(--font-body); color: var(--muted); background: transparent; border: 0; border-radius: 999px; padding: 4px 12px; cursor: pointer; }
+.toggle button[aria-pressed="true"] { background: var(--bg); color: var(--fg); box-shadow: 0 1px 2px rgb(0 0 0 / 12%); }
+.frame { border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; background: var(--soft); }
+.frame img { display: block; width: 100%; height: auto; }
+.frame.phone { max-width: 280px; margin-inline: auto; }
+.frame .missing { padding: 24px; text-align: center; color: var(--muted); font-size: 14px; }
+.code { border: 1px solid var(--line); border-radius: var(--radius); background: var(--code-bg); overflow: hidden; }
+.code > header {
+  display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; padding: 8px 12px;
+  border-bottom: 1px solid var(--line); background: var(--soft); font-size: 13px; color: var(--muted);
+}
+.code .file { color: var(--fg); font-family: var(--font-code); font-size: 12.5px; overflow-wrap: anywhere; }
+.code > header a { margin-left: auto; }
+.code pre code { display: block; padding: 0; background: none; font-size: inherit; }
+.code pre { margin: 0; padding: 6px 0; font: 12.5px/1.6 var(--font-code); font-variant-ligatures: none; }
+.line { display: grid; grid-template-columns: 3.2em 1.4em minmax(0, 1fr); }
+.line .number { color: var(--muted); text-align: right; padding-right: .6em; user-select: none; opacity: .6; }
+.line .mark { color: var(--muted); user-select: none; }
+.line .text { padding: 0 12px 0 2ch; text-indent: -2ch; white-space: pre-wrap; overflow-wrap: anywhere; }
+.line.added { background: var(--add-bg); } .line.added .mark { color: var(--add-mark); }
+.line.removed { background: var(--del-bg); } .line.removed .mark { color: var(--del-mark); }
+.line.highlighted { background: var(--hl); }
+.line.gap .text { color: var(--muted); font-family: var(--font-body); font-size: 12px; }
+.k { color: var(--tok-key); } .s { color: var(--tok-str); } .c { color: var(--tok-com); font-style: italic; } .t { color: var(--tok-type); }
+.done { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; }
+.done p { margin: 0; color: var(--muted); }
+.done a { background: var(--accent); color: var(--accent-fg); border-radius: 999px; padding: 9px 20px; text-decoration: none; font-weight: 600; font-size: 15px; }
+details { border-top: 1px solid var(--line); padding-top: 16px; }
+summary { cursor: pointer; font-size: 15px; font-weight: 600; }
+details ul { padding-left: 20px; margin: 12px 0 0; display: grid; gap: 6px; font-size: 15px; }
+@media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+</style>
+</head>
+<body>
+<main>
+<nav aria-label="Tour"><span class="number">#1455</span><ol><li><a class="question" href="#questions" aria-label="Questions">?</a></li><li><a href="#stop-1" data-stop="stop-1">1</a></li><li><a href="#stop-2" data-stop="stop-2">2</a></li><li><a href="#stop-3" data-stop="stop-3">3</a></li><li><a href="#stop-4" data-stop="stop-4">4</a></li><li><a class="evidence" href="#evidence" aria-label="How we know it works">✓</a></li></ol></nav>
+<header>
+<p class="kicker">refactor(engine) · MS.12 · as of 1f6854a</p>
+<h1>Spending an action is its own command and event</h1>
+<p class="meta"><span>4 stops</span><span>1 question</span><span>61 of 258 changed lines on the tour</span></p>
+</header>
+<section class="lead"><h2>The problem</h2><p>Spending an action looked exactly like a correction of the action count, so nothing could react to an action being spent or tell the two apart in the log.</p></section>
+<section class="lead"><h2>What changes</h2><p>The engine pays for an action with SpendActions, whose ActionsSpent event names what was paid for; AdjustActions is only for corrections and card grants.</p></section>
+<section class="questions" id="questions"><h2>Question for you</h2><ol><li><p>Logs saved before this change hold payments as ActionsAdjusted with a <code>for</code> the reducer now ignores, so a game reloaded mid-round would charge Frozen in Fear's first move again. Is that acceptable while saved games need no backward compatibility?</p><span class="about">Concerns <a href="#stop-4">stop 4</a>. Picked: Accepted; no legacy reading of <code>for</code>..</span></li></ol><a href="https://github.com/macandy13/arkham-companion/pull/1455">Answer on GitHub →</a></section>
+<section class="stop" id="stop-1">
+<header><span class="stop-number">1</span><span></span><h2>The new command</h2></header>
+<p>SpendActions carries the amount and what it paid for: a basic action by its word, or the card and the number of its action ability.</p>
+
+<div class="code"><header><span class="file">packages/engine/src/commands.ts</span><span>+29 −10</span><a href="https://github.com/macandy13/arkham-companion/pull/1455/files#diff-458daa61f30e0f6e191559262e0a24708acb18353cee19edf9ca7a3654b8bd93R1304-R1327">Open in diff</a></header><pre><code><span class="line added"><span class="number">1304</span><span class="mark">+</span><span class="text">/**</span></span><span class="line added"><span class="number">1305</span><span class="mark">+</span><span class="text"><span class="c"> * What a spent action paid for (`SpendActions.for`): a basic action by the word that names it, or</span></span></span><span class="line added"><span class="number">1306</span><span class="mark">+</span><span class="text"><span class="c"> * the action ability number `action` printed on the card `cardId` (`UseCardAction`).</span></span></span><span class="line added"><span class="number">1307</span><span class="mark">+</span><span class="text"><span class="c"> */</span></span></span><span class="line added"><span class="number">1308</span><span class="mark">+</span><span class="text"><span class="k">export</span> <span class="k">type</span> <span class="t">ActionPaidFor</span> =</span></span><span class="line added"><span class="number">1309</span><span class="mark">+</span><span class="text">  { kind: <span class="s">'basic'</span>; action: <span class="t">BasicAction</span> } | { kind: <span class="s">'card'</span>; cardId: <span class="t">InstanceId</span>; action: number };</span></span><span class="line added"><span class="number">1310</span><span class="mark">+</span><span class="text"></span></span><span class="line added"><span class="number">1311</span><span class="mark">+</span><span class="text">/**</span></span><span class="line added"><span class="number">1312</span><span class="mark">+</span><span class="text"><span class="c"> * The investigator spends `amount` actions to take the action `for` names (Rules Reference,</span></span></span><span class="line added"><span class="number">1313</span><span class="mark">+</span><span class="text"><span class="c"> * &quot;Action&quot;): what `handle` plays before a command taken as an action resolves (`actionPayment`),</span></span></span><span class="line added"><span class="number">1314</span><span class="mark">+</span><span class="text"><span class="c"> * and before the attacks of opportunity it provokes. Its own command rather than an</span></span></span><span class="line added"><span class="number">1315</span><span class="mark">+</span><span class="text"><span class="c"> * `AdjustActions`, so the log tells an action taken apart from a correction or a card's grant,</span></span></span><span class="line added"><span class="number">1316</span><span class="mark">+</span><span class="text"><span class="c"> * and a card that reacts to spending an action can read what it paid for. `amount` is what the</span></span></span><span class="line added"><span class="number">1317</span><span class="mark">+</span><span class="text"><span class="c"> * action costs now (`actionCost`); 0 for a basic action a card lets them take for free, which is</span></span></span><span class="line added"><span class="number">1318</span><span class="mark">+</span><span class="text"><span class="c"> * performed all the same. A basic action is recorded for the round (`GameMeta.actionsTaken`), so a</span></span></span><span class="line added"><span class="number">1319</span><span class="mark">+</span><span class="text"><span class="c"> * card that raises the first such action each round (Frozen in Fear) raises only that one.</span></span></span><span class="line added"><span class="number">1320</span><span class="mark">+</span><span class="text"><span class="c"> * Produces `ActionsSpent`.</span></span></span><span class="line added"><span class="number">1321</span><span class="mark">+</span><span class="text"><span class="c"> */</span></span></span><span class="line added"><span class="number">1322</span><span class="mark">+</span><span class="text"><span class="k">export</span> <span class="k">interface</span> <span class="t">SpendActions</span> {</span></span><span class="line added"><span class="number">1323</span><span class="mark">+</span><span class="text">  <span class="k">type</span>: <span class="s">'SpendActions'</span>;</span></span><span class="line added"><span class="number">1324</span><span class="mark">+</span><span class="text">  investigatorId: <span class="t">InvestigatorId</span>;</span></span><span class="line added"><span class="number">1325</span><span class="mark">+</span><span class="text">  amount: number;</span></span><span class="line added"><span class="number">1326</span><span class="mark">+</span><span class="text">  <span class="k">for</span>: <span class="t">ActionPaidFor</span>;</span></span><span class="line context"><span class="number">1327</span><span class="mark"> </span><span class="text">}</span></span></code></pre></div>
+</section>
+<section class="stop" id="stop-2">
+<header><span class="stop-number">2</span><span></span><h2>What an action command pays</h2></header>
+<p>actionPayment now returns a SpendActions: a card action costs 1, a basic action what actionCost says (0 for a free one).</p>
+
+<div class="code"><header><span class="file">packages/engine/src/action_costs.ts</span><span>+14 −11</span><a href="https://github.com/macandy13/arkham-companion/pull/1455/files#diff-5d14ed33427617492fdf9d6ee73fad911586feadaff1d4aa2b71ec1357851e34R119-R139">Open in diff</a></header><pre><code><span class="line context"><span class="number">119</span><span class="mark"> </span><span class="text"><span class="k">export</span> <span class="k">function</span> actionPayment(</span></span><span class="line context"><span class="number">120</span><span class="mark"> </span><span class="text">  ctx: <span class="t">EngineContext</span>,</span></span><span class="line context"><span class="number">121</span><span class="mark"> </span><span class="text">  state: <span class="t">GameState</span>,</span></span><span class="line context"><span class="number">122</span><span class="mark"> </span><span class="text">  command: <span class="t">Command</span>,</span></span><span class="line removed"><span class="number">122</span><span class="mark">−</span><span class="text">): <span class="t">AdjustActions</span> | <span class="k">undefined</span> {</span></span><span class="line removed"><span class="number">123</span><span class="mark">−</span><span class="text">  <span class="k">if</span> (command.<span class="k">type</span> === <span class="s">'UseCardAction'</span>)</span></span><span class="line added"><span class="number">123</span><span class="mark">+</span><span class="text">): <span class="t">SpendActions</span> | <span class="k">undefined</span> {</span></span><span class="line added"><span class="number">124</span><span class="mark">+</span><span class="text">  <span class="k">if</span> (command.<span class="k">type</span> === <span class="s">'UseCardAction'</span>) {</span></span><span class="line added"><span class="number">125</span><span class="mark">+</span><span class="text">    <span class="k">const</span> { investigatorId, cardId, action } = command;</span></span><span class="line context"><span class="number">126</span><span class="mark"> </span><span class="text">    <span class="k">return</span> cardActionOf(ctx, state, command).free</span></span><span class="line context"><span class="number">127</span><span class="mark"> </span><span class="text">      ? <span class="k">undefined</span></span></span><span class="line removed"><span class="number">126</span><span class="mark">−</span><span class="text">      : { <span class="k">type</span>: <span class="s">'AdjustActions'</span>, investigatorId: command.investigatorId, delta: -1 };</span></span><span class="line added"><span class="number">128</span><span class="mark">+</span><span class="text">      : { <span class="k">type</span>: <span class="s">'SpendActions'</span>, investigatorId, amount: 1, <span class="k">for</span>: { kind: <span class="s">'card'</span>, cardId, action } };</span></span><span class="line added"><span class="number">129</span><span class="mark">+</span><span class="text">  }</span></span><span class="line context"><span class="number">130</span><span class="mark"> </span><span class="text">  <span class="k">const</span> taken = basicActionOf(command);</span></span><span class="line context"><span class="number">131</span><span class="mark"> </span><span class="text">  <span class="k">if</span> (!taken) <span class="k">return</span> <span class="k">undefined</span>;</span></span><span class="line context"><span class="number">132</span><span class="mark"> </span><span class="text">  <span class="k">const</span> { action, investigatorId, free } = taken;</span></span><span class="line context"><span class="number">133</span><span class="mark"> </span><span class="text">  <span class="k">return</span> {</span></span><span class="line removed"><span class="number">131</span><span class="mark">−</span><span class="text">    <span class="k">type</span>: <span class="s">'AdjustActions'</span>,</span></span><span class="line added"><span class="number">134</span><span class="mark">+</span><span class="text">    <span class="k">type</span>: <span class="s">'SpendActions'</span>,</span></span><span class="line context"><span class="number">135</span><span class="mark"> </span><span class="text">    investigatorId,</span></span><span class="line removed"><span class="number">133</span><span class="mark">−</span><span class="text">    delta: -actionCost(ctx, state, investigatorId, action, { free }),</span></span><span class="line removed"><span class="number">134</span><span class="mark">−</span><span class="text">    <span class="k">for</span>: action,</span></span><span class="line added"><span class="number">136</span><span class="mark">+</span><span class="text">    amount: actionCost(ctx, state, investigatorId, action, { free }),</span></span><span class="line added"><span class="number">137</span><span class="mark">+</span><span class="text">    <span class="k">for</span>: { kind: <span class="s">'basic'</span>, action },</span></span><span class="line context"><span class="number">138</span><span class="mark"> </span><span class="text">  };</span></span><span class="line context"><span class="number">139</span><span class="mark"> </span><span class="text">}</span></span></code></pre></div>
+</section>
+<section class="stop" id="stop-3">
+<header><span class="stop-number">3</span><span></span><h2>Refusing what can't be paid</h2></header>
+<p>The same rejection as before when the investigator has fewer actions left than the cost.</p>
+
+<div class="code"><header><span class="file">packages/engine/src/turns.ts</span><span>+24 −20</span><a href="https://github.com/macandy13/arkham-companion/pull/1455/files#diff-c8fefa63c9ae386ddc30d0109644c235df21c2318a8266d470e90b9c64ff086aR100-R110">Open in diff</a></header><pre><code><span class="line added"><span class="number">100</span><span class="mark">+</span><span class="text"><span class="k">export</span> <span class="k">function</span> handleSpendActions(state: <span class="t">GameState</span>, cmd: <span class="t">SpendActions</span>): <span class="t">ActionsSpent</span>[] {</span></span><span class="line added"><span class="number">101</span><span class="mark">+</span><span class="text">  <span class="k">const</span> { id, actionsRemaining } = activeInvestigator(state, cmd.investigatorId);</span></span><span class="line added"><span class="number">102</span><span class="mark">+</span><span class="text">  <span class="k">if</span> (!<span class="t">Number</span>.isInteger(cmd.amount) || cmd.amount &lt; 0 || cmd.amount &gt; actionsRemaining)</span></span><span class="line context"><span class="number">103</span><span class="mark"> </span><span class="text">    <span class="k">throw</span> <span class="k">new</span> <span class="t">CommandRejected</span>({</span></span><span class="line context"><span class="number">104</span><span class="mark"> </span><span class="text">      code: <span class="s">'invalidActionAdjustment'</span>,</span></span><span class="line removed"><span class="number">101</span><span class="mark">−</span><span class="text">      investigatorId: cmd.investigatorId,</span></span><span class="line removed"><span class="number">102</span><span class="mark">−</span><span class="text">      delta,</span></span><span class="line removed"><span class="number">103</span><span class="mark">−</span><span class="text">      actionsRemaining: activeInvestigator(state, cmd.investigatorId).actionsRemaining,</span></span><span class="line added"><span class="number">105</span><span class="mark">+</span><span class="text">      investigatorId: id,</span></span><span class="line added"><span class="number">106</span><span class="mark">+</span><span class="text">      delta: -cmd.amount,</span></span><span class="line added"><span class="number">107</span><span class="mark">+</span><span class="text">      actionsRemaining,</span></span><span class="line context"><span class="number">108</span><span class="mark"> </span><span class="text">    });</span></span><span class="line removed"><span class="number">105</span><span class="mark">−</span><span class="text">  <span class="k">return</span> [{ ...adjusted, <span class="k">for</span>: cmd.<span class="k">for</span> }];</span></span><span class="line added"><span class="number">109</span><span class="mark">+</span><span class="text">  <span class="k">return</span> [{ <span class="k">type</span>: <span class="s">'ActionsSpent'</span>, investigatorId: id, amount: cmd.amount, <span class="k">for</span>: cmd.<span class="k">for</span> }];</span></span><span class="line context"><span class="number">110</span><span class="mark"> </span><span class="text">}</span></span></code></pre></div>
+</section>
+<section class="stop" id="stop-4">
+<header><span class="stop-number">4</span><span></span><h2>Recording the round's first action</h2></header>
+<p>Only a spent basic action joins the round's taken actions, so a correction by hand no longer uses up Frozen in Fear's raised first move.</p>
+
+<div class="code"><header><span class="file">packages/engine/src/reducer.ts</span><span>+11 −6</span><a href="https://github.com/macandy13/arkham-companion/pull/1455/files#diff-f16fc85215cef22805c1c52b8c4376b9a35bec2cbbe2d8f055128f6cb39f95c7R190-R201">Open in diff</a></header><pre><code><span class="line removed"><span class="number">190</span><span class="mark">−</span><span class="text">      <span class="k">if</span> (event.<span class="k">for</span> === <span class="k">undefined</span>) <span class="k">return</span> adjusted;</span></span><span class="line removed"><span class="number">191</span><span class="mark">−</span><span class="text">      <span class="k">const</span> taken = { investigatorId: event.investigatorId, action: event.<span class="k">for</span> };</span></span><span class="line added"><span class="number">190</span><span class="mark">+</span><span class="text">    <span class="k">case</span> <span class="s">'ActionsSpent'</span>: {</span></span><span class="line added"><span class="number">191</span><span class="mark">+</span><span class="text">      <span class="k">const</span> spent = applyInvestigator(state, event, (inv) =&gt; ({</span></span><span class="line added"><span class="number">192</span><span class="mark">+</span><span class="text">        ...inv,</span></span><span class="line added"><span class="number">193</span><span class="mark">+</span><span class="text">        actionsRemaining: inv.actionsRemaining - event.amount,</span></span><span class="line added"><span class="number">194</span><span class="mark">+</span><span class="text">      }));</span></span><span class="line added"><span class="number">195</span><span class="mark">+</span><span class="text">      <span class="k">if</span> (event.<span class="k">for</span>.kind !== <span class="s">'basic'</span>) <span class="k">return</span> spent;</span></span><span class="line added"><span class="number">196</span><span class="mark">+</span><span class="text">      <span class="k">const</span> taken = { investigatorId: event.investigatorId, action: event.<span class="k">for</span>.action };</span></span><span class="line context"><span class="number">197</span><span class="mark"> </span><span class="text">      <span class="k">return</span> {</span></span><span class="line removed"><span class="number">193</span><span class="mark">−</span><span class="text">        ...adjusted,</span></span><span class="line removed"><span class="number">194</span><span class="mark">−</span><span class="text">        meta: { ...adjusted.meta, actionsTaken: [...(adjusted.meta.actionsTaken ?? []), taken] },</span></span><span class="line added"><span class="number">198</span><span class="mark">+</span><span class="text">        ...spent,</span></span><span class="line added"><span class="number">199</span><span class="mark">+</span><span class="text">        meta: { ...spent.meta, actionsTaken: [...(spent.meta.actionsTaken ?? []), taken] },</span></span><span class="line context"><span class="number">200</span><span class="mark"> </span><span class="text">      };</span></span><span class="line context"><span class="number">201</span><span class="mark"> </span><span class="text">    }</span></span></code></pre></div>
+</section>
+<section class="evidence" id="evidence"><h2>How we know it works</h2><ul><li><p>A move under Frozen in Fear logs ActionsSpent for 2 actions and records the move.</p><p class="test">Checked by <code>packages/engine/src/action_costs.test.ts:78</code></p></li><li><p>A free move with no raise spends 0 and still counts as the round's move.</p><p class="test">Checked by <code>packages/engine/src/action_costs.test.ts:161</code></p></li><li><p>A correction of the count leaves the first move raised.</p><p class="test">Checked by <code>packages/engine/src/action_costs.test.ts:199</code></p></li><li><p>A card's action is logged as spent on that card.</p><p class="test">Checked by <code>packages/engine/src/card_actions.test.ts:105</code></p></li><li><p>A cost of 2 with 1 action left is refused.</p><p class="test">Checked by <code>packages/engine/src/action_costs.test.ts:121</code></p></li></ul></section>
+<section class="done"><p>That's the whole change.</p><a href="https://github.com/macandy13/arkham-companion/pull/1455/files">Review on GitHub</a></section>
+<details><summary>Not on the tour</summary><ul><li>handle.ts and command_specs.ts register the command; change_notices.ts and the web game log treat ActionsSpent like ActionsAdjusted.</li><li>PlayTable's adjustActions and spendAction are documented as corrections by hand.</li><li>docs/architecture/command-handling.md and triggers-and-card-effects.md describe the payment as SpendActions.</li></ul></details>
+</main>
+<script>
+document.querySelectorAll('figure[data-variants]').forEach((figure) => {
+  const variants = JSON.parse(figure.dataset.variants);
+  const state = { when: 'after', device: variants[0].device };
+  const frame = figure.querySelector('.frame');
+  const show = () => {
+    const variant = variants.find((v) => v.device === state.device);
+    const src = variant[state.when];
+    frame.classList.toggle('phone', state.device === 'phone');
+    frame.innerHTML = src
+      ? '<img alt="' + state.device + ', ' + state.when + '" src="' + src + '">'
+      : '<p class="missing">' + (state.when === 'before' ? 'New in this PR' : 'Removed in this PR') + '</p>';
+    figure.querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(b.value === state.when || b.value === state.device)));
+  };
+  figure.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => {
+    state[b.name] = b.value;
+    show();
+  }));
+  show();
+});
+const dots = [...document.querySelectorAll('nav a[data-stop]')];
+const seen = new IntersectionObserver((entries) => entries.forEach((entry) => {
+  if (entry.isIntersecting) dots.forEach((d) => d.classList.toggle('on', d.dataset.stop === entry.target.id));
+}), { rootMargin: '-40% 0px -55% 0px' });
+document.querySelectorAll('.stop').forEach((stop) => seen.observe(stop));
+</script>
+</body>
+</html>
