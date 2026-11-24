@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
-import { investigatorId, trait } from '@arkham/engine';
+import { codexEntry, investigatorId, trait } from '@arkham/engine';
 import { initI18n } from '../i18n';
 import { SkippedEffectsNotice } from './SkippedEffectsNotice';
 
@@ -68,6 +68,10 @@ describe('SkippedEffectsNotice', () => {
     {
       command: { type: 'DiscardAsset', investigatorId: roland },
       text: 'Roland Banks: choose and discard 1 asset you control. Please do it by hand.',
+    },
+    {
+      command: { type: 'ReadCodexEntry', investigatorId: roland, entry: codexEntry(6) },
+      text: 'Roland Banks: read codex entry 6 in the campaign guide. Please do it by hand.',
     },
   ] as const)('asks the players to do what the game left to them: $text', ({ command, text }) => {
     render(

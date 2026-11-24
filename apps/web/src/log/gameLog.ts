@@ -438,6 +438,8 @@ function playerCardLine(t: TFunction, names: Names, command: PlayerCardCommand):
       return t('log.playerCards.search', { investigator });
     case 'HealAsset':
       return t('log.playerCards.healAsset', { investigator });
+    case 'ReadCodexEntry':
+      return t('log.playerCards.codex', { investigator, entry: command.entry });
     default:
       return assertNever(command);
   }

@@ -64,6 +64,11 @@ export type CampaignId = Brand<string, 'CampaignId'>;
 export type MapId = Brand<string, 'MapId'>;
 /** ID of a pending `Decision`. */
 export type DecisionId = Brand<string, 'DecisionId'>;
+/**
+ * Number of an entry in a scenario's codex in the campaign guide ("([codex] 6)"), read by
+ * `ReadCodexEntry`. A number, not a string, because the cards print it as one.
+ */
+export type CodexEntry = Brand<number, 'CodexEntry'>;
 
 /** Constructors that tag a plain string with the matching ID brand. */
 export const instanceId = (id: string) => id as InstanceId;
@@ -81,3 +86,4 @@ export const gameId = (id: string) => id as GameId;
 export const campaignId = (id: string) => id as CampaignId;
 export const mapId = (id: string) => id as MapId;
 export const decisionId = (id: string) => id as DecisionId;
+export const codexEntry = (entry: number) => entry as CodexEntry;

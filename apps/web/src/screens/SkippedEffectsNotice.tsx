@@ -55,6 +55,8 @@ export function SkippedEffectsNotice({
             : 'skipped.deferred.healAssetHorror',
           { amount: command.amount, trait: command.trait },
         );
+      case 'ReadCodexEntry':
+        return t('skipped.deferred.codex', { entry: command.entry });
       case 'SearchDeck':
         return t(
           command.play === true

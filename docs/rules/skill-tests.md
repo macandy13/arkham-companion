@@ -17,6 +17,7 @@ Card rulings: [Resolution order](cards/resolution-order.md), [Children of Blood]
 7. Apply results in an order the tester chooses (clue discovered, damage dealt, card effects), including "if this test succeeds/fails" effects.
    - "After you succeed/fail" abilities are not results: they trigger in step 6, before these (Rules Reference, "Skill Test Results and Advanced Timing").
    - That includes "after you successfully investigate" and "after attached location is successfully investigated" (Obscuring Fog is discarded before the clue is discovered).
+   - "After you succeed at a skill test … at [X]'s location" (Margaret Liu) means a test about a card at X's location (the investigated location, the enemy fought), or the tester's own location for a test about a card at no location, such as a revelation. No rule says where a test takes place; this is our reading.
 8. Discard committed cards and return the tokens to the bag.
 
 Bless (+2), curse (-2), frost (-1) and the blood token (-1) each make the tester reveal another token, whose modifier also applies. A second frost token in the same test ends the reveals at once (no further token, though frost says to reveal another) and the test fails automatically, whatever was revealed before it ([RR "Frost Tokens"](https://arkhamdb.com/rules#Frost_Tokens)); frost tokens go back into the bag after the test, unlike bless and curse, which go to the token pool (card rulings: [Bless and curse tokens](cards/bless-and-curse.md)). When the bag has no token left to reveal, the app reveals none and resolves the test with the tokens already revealed: no rule says so, it is our reading of resolving as much as possible ("Golden Rules").
@@ -40,6 +41,8 @@ Player cards change revealed tokens (the app's `TestDraw`, ME.24):
 ## Margin of success and failure
 
 A test [succeeds by](https://arkhamdb.com/rules#Skill_Test_Timing) the modified skill minus the difficulty ("succeed by 2 or more") and fails by the difficulty minus the modified skill; after an [auto-fail](https://arkhamdb.com/rules#Automatic_Failure_Success), whose skill is 0, that is the whole difficulty. The Rules Reference doesn't define the margin; this is our reading of ST.6, so a skill equal to the difficulty succeeds by 0.
+
+"After you succeed … by 2 or more" (Margaret Liu) is a threshold too: it counts only with a margin the players confirm, so a pass at her location asks for its margin.
 
 - "For each point you fail by" scales with it (Grasping Hands: 1 damage per point), so a fail by 0 (an auto-fail against difficulty 0) deals nothing. An effect that can be worked out at once is one effect ([For each](https://arkhamdb.com/rules#For_Each)): Grasping Hands failed by 3 is one "take 3 damage", not three wounds of 1.
 - False Lead's "place 1 of your clues on your location" for each point places as many as the investigator has when they have fewer ([golden rules](https://arkhamdb.com/rules#Golden_Rules): resolve as much as possible).
