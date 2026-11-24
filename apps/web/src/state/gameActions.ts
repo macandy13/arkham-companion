@@ -27,7 +27,7 @@ export type SteppedStat = Extract<InvestigatorStat, 'resources' | 'damage' | 'ho
 /**
  * How an investigator moves, investigates, fights, evades or engages: as one of the turn
  * investigator's actions (`action`, counted off by the engine, provoking attacks of opportunity),
- * as a free one a card lets them take (`free`: it costs only what a card adds, Frozen in Fear,
+ * as a free one a card lets them take (`free`: it costs only what a card adds (Frozen in Fear)
  * and provokes nothing), or as a card effect has `byCard` investigator do it, whoever's turn it
  * is: no action, no attacks of opportunity, and away from their location (Shortcut, In the Know,
  * Marksmanship, Heroic Rescue).
@@ -60,7 +60,6 @@ export type PlayerEffect = Extract<
       | 'DrawCard'
       | 'DrawWeakness'
       | 'EndScenario'
-      | 'EngageEnemy'
       | 'EvadeEnemy'
       | 'ExhaustEnemy'
       | 'HealEnemy'
@@ -102,8 +101,8 @@ interface FollowUpAnswer {
 }
 
 /**
- * What the play screen can do to the open game, in the players' words. It mirrors `PlayTable`'s
- * verbs, but with the screen's defaults:
+ * What the play screen can do to the open game, in the players' words: a few turn verbs over
+ * `PlayTable`, and the commands the players `perform` or `correct`, with the screen's defaults:
  * - An action (`How`) is taken by the investigator whose turn it is, since the rules allow actions
  *   only during one's own turn; without a turn it is refused with `noTurnInProgress`. The engine
  *   counts off what it costs and refuses it when too few actions are left.
@@ -175,7 +174,7 @@ export interface GameActions {
    */
   advanceAct(spend?: readonly ClueSpend[]): Promise<void>;
   /**
-   * `delta` more (or, negative, fewer) of `token` on `card` in play (a location, an enemy): one tap
+   * `delta` more (or, negative, fewer) of `token` on `card` in play (a location, an enemy, the agenda): one tap
    * on a location's stepper, or a token dragged from or to the token pool. Doom added is placed by
    * rule (`MoveTokens` from the pool), so effects that count placed doom see it; the rest are
    * corrections.

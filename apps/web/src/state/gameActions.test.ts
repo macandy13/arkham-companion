@@ -271,7 +271,7 @@ describe('gameActions', () => {
     expect(table.board.investigator(alder)).toMatchObject({ clues: 0, actions: 3 });
   });
 
-  it('performs card effects in order as one step: damage, then defeat, of the ghoul', async () => {
+  it('performs card effects in order: damage, then defeat, of the ghoul', async () => {
     const table = aldersTurn();
 
     await actionsOn(table).perform(
@@ -283,7 +283,7 @@ describe('gameActions', () => {
     expect(table.board.investigator(alder)).toMatchObject({ actions: 3 });
   });
 
-  it('corrects the clues on the study and the hall in one step, discovering nothing', async () => {
+  it('corrects the clues on the study and the hall, discovering nothing', async () => {
     const table = PlayTable.start(
       newGame()
         .withLocation(study, blankLocation('study'), { revealed: true, clues: 2 })

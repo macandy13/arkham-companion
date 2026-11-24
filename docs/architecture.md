@@ -63,7 +63,7 @@ sequenceDiagram
   participant DB as GameStore
   UI->>AS: actions.move(hallway)
   AS->>GS: play(step), strictly in order
-  GS->>PT: table.step: moveTo
+  GS->>PT: table.step: play MoveInvestigator
   PT->>E: MoveInvestigator (asAction)
   E->>E: handle: pay the action, then the move → Event[], replay → GameState
   E-->>PT: state + events, or CommandRejected

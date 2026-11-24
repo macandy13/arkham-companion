@@ -21,6 +21,7 @@ import {
   type InvestigatorCard,
   placeDoomOnAgenda,
   encounterDraw,
+  type InvestigatorId,
 } from '@arkham/engine';
 import {
   GATHERING_CODES,
@@ -146,6 +147,14 @@ describe('appStore', () => {
       seed: 3,
       investigators: [{ id: investigatorId('alder'), code: alder.code }],
     };
+    /** Alder takes horror up to his sanity (8), as a card deals it, so he is driven insane. */
+    const driveInsane = (store: ReturnType<typeof createAppStore>, investigator: InvestigatorId) =>
+      store.getState().actions.perform({
+        type: 'AdjustInvestigator',
+        investigatorId: investigator,
+        stat: 'horror',
+        delta: alder.sanity,
+      });
     const campaignStart = {
       ...start,
       definition: nightOfTheZealot,
@@ -361,12 +370,7 @@ describe('appStore', () => {
         const store = createAppStore(db);
         await store.getState().startCampaign({ ...campaignStart, difficulty: 'easy' });
         const campaignId = store.getState().campaigns[0]!.campaignId;
-        await store.getState().actions.perform({
-          type: 'AdjustInvestigator',
-          investigatorId: investigatorId('alder'),
-          stat: 'horror',
-          delta: alder.sanity,
-        });
+        await driveInsane(store, investigatorId('alder'));
         await store.getState().writeResolution({ kind: 'noResolution' }, []);
         return { store, campaignId };
       }
@@ -415,12 +419,7 @@ describe('appStore', () => {
         const store = createAppStore(db);
         await store.getState().startCampaign({ ...campaignStart, difficulty: 'easy' });
         const campaignId = store.getState().campaigns[0]!.campaignId;
-        await store.getState().actions.perform({
-          type: 'AdjustInvestigator',
-          investigatorId: investigatorId('alder'),
-          stat: 'horror',
-          delta: alder.sanity,
-        });
+        await driveInsane(store, investigatorId('alder'));
         await store
           .getState()
           .writeResolution({ kind: 'noResolution' }, [{ type: 'MarkKilled', code: alder.code }]);
@@ -507,12 +506,7 @@ describe('appStore', () => {
         await store.getState().startCampaign(campaignStart);
         const campaignId = store.getState().campaigns[0]!.campaignId;
 
-        await store.getState().actions.perform({
-          type: 'AdjustInvestigator',
-          investigatorId: alderId,
-          stat: 'horror',
-          delta: alder.sanity,
-        });
+        await driveInsane(store, alderId);
 
         const resolution = store.getState().current?.resolution;
         expect(resolution?.campaignId).toBe(campaignId);
@@ -535,12 +529,7 @@ describe('appStore', () => {
         const store = createAppStore(db);
         const gameId = await store.getState().startCampaign(campaignStart);
         const campaignId = store.getState().campaigns[0]!.campaignId;
-        await store.getState().actions.perform({
-          type: 'AdjustInvestigator',
-          investigatorId: alderId,
-          stat: 'horror',
-          delta: alder.sanity,
-        });
+        await driveInsane(store, alderId);
         const trauma = { type: 'AddTrauma', code: alder.code, kind: 'mental', amount: 1 } as const;
 
         await store.getState().writeResolution(noResolution, [trauma]);
@@ -558,12 +547,7 @@ describe('appStore', () => {
       it('proposes the resolution again when the ended game is reopened before it is written', async () => {
         const store = createAppStore(new IndexedDbStore('appstore-resolution-reopen-test'));
         const gameId = await store.getState().startCampaign(campaignStart);
-        await store.getState().actions.perform({
-          type: 'AdjustInvestigator',
-          investigatorId: alderId,
-          stat: 'horror',
-          delta: alder.sanity,
-        });
+        await driveInsane(store, alderId);
         const proposed = store.getState().current?.resolution;
 
         await store.getState().openGame(gameId);
@@ -575,12 +559,7 @@ describe('appStore', () => {
         const store = createAppStore(new IndexedDbStore('appstore-resolution-options-test'));
         await store.getState().startCampaign(campaignStart);
 
-        await store.getState().actions.perform({
-          type: 'AdjustInvestigator',
-          investigatorId: alderId,
-          stat: 'horror',
-          delta: alder.sanity,
-        });
+        await driveInsane(store, alderId);
 
         expect(
           store.getState().current?.resolution?.options.map((option) => option.outcome),
@@ -597,12 +576,7 @@ describe('appStore', () => {
         const store = createAppStore(db);
         await store.getState().startCampaign(campaignStart);
         const campaignId = store.getState().campaigns[0]!.campaignId;
-        await store.getState().actions.perform({
-          type: 'AdjustInvestigator',
-          investigatorId: alderId,
-          stat: 'horror',
-          delta: alder.sanity,
-        });
+        await driveInsane(store, alderId);
 
         await store.getState().writeResolution({ kind: 'resolution', id: resolutionId('R2') }, []);
 
@@ -616,12 +590,7 @@ describe('appStore', () => {
         const store = createAppStore(db);
         await store.getState().startCampaign(campaignStart);
         const campaignId = store.getState().campaigns[0]!.campaignId;
-        await store.getState().actions.perform({
-          type: 'AdjustInvestigator',
-          investigatorId: alderId,
-          stat: 'horror',
-          delta: alder.sanity,
-        });
+        await driveInsane(store, alderId);
         const r9 = { kind: 'resolution', id: resolutionId('R9') } as const;
 
         await expect(store.getState().writeResolution(r9, [])).rejects.toThrow(
@@ -635,12 +604,7 @@ describe('appStore', () => {
         const store = createAppStore(db);
         await store.getState().startCampaign(campaignStart);
         const campaignId = store.getState().campaigns[0]!.campaignId;
-        await store.getState().actions.perform({
-          type: 'AdjustInvestigator',
-          investigatorId: alderId,
-          stat: 'horror',
-          delta: alder.sanity,
-        });
+        await driveInsane(store, alderId);
         const stranger = investigatorCode('stranger');
 
         await expect(
@@ -659,12 +623,7 @@ describe('appStore', () => {
           const store = createAppStore(db);
           await store.getState().startCampaign(campaignStart);
           const campaignId = store.getState().campaigns[0]!.campaignId;
-          await store.getState().actions.perform({
-            type: 'AdjustInvestigator',
-            investigatorId: alderId,
-            stat: 'horror',
-            delta: alder.sanity,
-          });
+          await driveInsane(store, alderId);
           await store.getState().writeResolution(noResolution, []);
           await store.getState().openCampaign(campaignId);
 
@@ -681,12 +640,7 @@ describe('appStore', () => {
           const store = createAppStore(db);
           await store.getState().startCampaign(campaignStart);
           const campaignId = store.getState().campaigns[0]!.campaignId;
-          await store.getState().actions.perform({
-            type: 'AdjustInvestigator',
-            investigatorId: alderId,
-            stat: 'horror',
-            delta: alder.sanity,
-          });
+          await driveInsane(store, alderId);
           await store.getState().writeResolution(noResolution, []);
           await db.appendCampaignEvents(campaignId, [
             { type: 'XpChanged', code: alder.code, account: 'earned', delta: 1 },
@@ -704,12 +658,7 @@ describe('appStore', () => {
           const store = createAppStore(new IndexedDbStore('appstore-resolution-dismiss-test'));
           await store.getState().startCampaign(campaignStart);
           const campaignId = store.getState().campaigns[0]!.campaignId;
-          await store.getState().actions.perform({
-            type: 'AdjustInvestigator',
-            investigatorId: alderId,
-            stat: 'horror',
-            delta: alder.sanity,
-          });
+          await driveInsane(store, alderId);
           await store.getState().writeResolution(noResolution, []);
           expect(store.getState().writtenResolution?.campaignId).toBe(campaignId);
 
@@ -726,12 +675,7 @@ describe('appStore', () => {
         const store = createAppStore(new IndexedDbStore('appstore-resolution-standalone-test'));
         await store.getState().startScenario(start);
 
-        await store.getState().actions.perform({
-          type: 'AdjustInvestigator',
-          investigatorId: alderId,
-          stat: 'horror',
-          delta: alder.sanity,
-        });
+        await driveInsane(store, alderId);
 
         const resolution = store.getState().current?.resolution;
         expect(resolution?.campaignId).toBeUndefined();
