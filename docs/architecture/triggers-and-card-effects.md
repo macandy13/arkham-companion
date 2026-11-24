@@ -6,7 +6,7 @@ A scenario's own rules are abilities of its agendas and acts.
 The code lives in [`abilities/`](../../packages/engine/src/abilities/), one file per part:
 
 - `types.ts`: `Ability`, `TimingWindow`, `AbilityEffect` and the references (`RelativeCard`, `RelativeInvestigator`);
-- `dsl.ts`: the factories card data is written with (`whenRevealed`, `takeHorror`, `self()`), the only part scenarios use;
+- `dsl.ts`: the factories card data is written with (`whenRevealed`, `takeHorror`, `self()`), most of what scenarios use besides the types;
 - `windows.ts`: which cards an event opens a window for (`windowsOpenedBy`);
 - `resolve.ts`: turning an ability into steps and resolving its effects (`abilitySteps`, `resolveEffect`, `conditionHolds`);
 - `objectives.ts`: the objective thresholds the board shows.

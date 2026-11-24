@@ -201,6 +201,7 @@ export type TestedAction = SkillTestKind['kind'];
 /** The phases whose end opens `phaseEnds`: all but setup and upkeep. */
 export type EndingPhase = Exclude<Phase, 'setup' | 'upkeep'>;
 
+/** Whether the end of `phase` opens a `phaseEnds` window (`EndingPhase`). */
 export function isEndingPhase(phase: Phase): phase is EndingPhase {
   return phase !== 'setup' && phase !== 'upkeep';
 }
@@ -600,6 +601,7 @@ export function asScaled(amount: TokenAmount): ScaledValue {
   return typeof amount === 'number' ? { fixed: amount, perInvestigator: 0 } : amount;
 }
 
+/** Whether `value` lies within `range`, its bounds scaled for `playerCount` investigators. */
 export function inRange(value: number, range: StatRange, playerCount: number): boolean {
   const min = range.min === undefined ? 0 : resolveAmount(range.min, playerCount);
   const max = range.max === undefined ? Infinity : resolveAmount(range.max, playerCount);
