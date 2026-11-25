@@ -2,6 +2,7 @@ import type { EngineContext } from './cards';
 import type { Command } from './commands';
 import type { DecisionRequested, EnemyEngaged, Event } from './events';
 import { decisionId, type InstanceId, type InvestigatorId } from './ids';
+import { enemiesAt } from './enemies';
 import { activeInvestigators } from './investigators';
 import { cardOptionLabels, requestDecision } from './decisions';
 import { cardHasKeyword } from './card_keywords';
@@ -13,6 +14,21 @@ import type { CardInstance, Decider, GameState, Investigator } from './state';
 /** Active investigators standing at `locationId`, in seat order of `state.investigators`. */
 export function investigatorsAt(state: GameState, locationId: InstanceId): Investigator[] {
   return activeInvestigators(state).filter((inv) => inv.locationId === locationId);
+}
+
+/**
+ * Whether no investigator and no enemy is at `locationId` (Rules Reference, "Empty Location").
+ * Other cards there, such as a story asset, don't count.
+ */
+export function isEmptyLocation(
+  ctx: EngineContext,
+  state: GameState,
+  locationId: InstanceId,
+): boolean {
+  return (
+    investigatorsAt(state, locationId).length === 0 &&
+    enemiesAt(ctx, state, locationId).length === 0
+  );
 }
 
 /**

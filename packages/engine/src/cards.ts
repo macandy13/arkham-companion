@@ -8,6 +8,7 @@ import type { Keyword, KeywordGrant } from './keywords';
 import type { ScenarioDefinition } from './scenario';
 import type { SkillValues } from './state';
 import { CommandRejected } from './rejection';
+import { parseSpawn, type SpawnInstruction } from './spawn_instruction';
 
 /**
  * ArkhamDB `type_code` values, covering encounter and player cards.
@@ -144,6 +145,11 @@ export interface CardStats {
   quantity?: number;
   /** Keywords parsed from the card text at load time; none when absent. */
   keywords?: readonly Keyword[];
+  /**
+   * Where the enemy spawns, read from its spawn keyword's text when the card data loads
+   * (`cardDbFrom`, `parseSpawn`); absent without one, so a drawn enemy spawns at the drawer.
+   */
+  spawnAt?: SpawnInstruction;
   /** Keywords this card gives other cards while it is in play (Hiding Spot); see `cardHasKeyword`. */
   keywordGrants?: readonly KeywordGrant[];
   /** "Limit 1 per location / investigator" (`CopyLimit`), entered with the card data. */
@@ -274,12 +280,19 @@ export type ScenarioContext = EngineContext & { readonly scenario: ScenarioDefin
 /** Builds a `CardDb` from a list of definitions; a later duplicate code replaces an earlier one. */
 export function cardDbFrom(defs: Iterable<CardStats>): CardDb {
   const byCode = new Map<CardCode, CardStats>();
-  for (const def of defs) byCode.set(def.code, def);
+  for (const def of defs) byCode.set(def.code, withSpawnInstruction(def));
   return {
     get: (code) => byCode.get(code),
     encounterSet: (encounterCode) =>
       [...byCode.values()].filter((def) => def.encounterCode === encounterCode),
   };
+}
+
+/** `def` with its spawn keyword's text read into `spawnAt`, unless it has one already. */
+function withSpawnInstruction(def: CardStats): CardStats {
+  const detail = def.keywords?.find((keyword) => keyword.name === 'spawn')?.detail;
+  if (detail === undefined || def.spawnAt !== undefined) return def;
+  return { ...def, spawnAt: parseSpawn(detail) };
 }
 
 /**

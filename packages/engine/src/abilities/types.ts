@@ -281,12 +281,14 @@ type EachInZoneRef = {
  * (`locationOfCard`: the location itself, a card placed there, and what an investigator there
  * is engaged with, controls or has in their threat area): "if Lita Chantler is at your location".
  * With `connectedTo`, only those at a location connecting to the one it names (`neighbours`):
- * "a connecting location"; none while it names none.
+ * "a connecting location"; none while it names none. With `empty`, only those at a location with
+ * no investigators and no enemies (`isEmptyLocation`): "any empty location".
  */
 export type EachInPlayRef = {
   ref: 'eachInPlay';
   at?: RelativeCard | readonly RelativeCard[];
   connectedTo?: RelativeCard;
+  empty?: true;
 } & CardFilter;
 
 /** Each investigator still in the scenario, in player order; only those at `at` when given. */
@@ -327,8 +329,8 @@ interface Selector<Among> {
 /**
  * What a `Selector` ranks its candidates by: the `token`s on each, or the connections from the
  * location of the investigator the window names to its location (`distance`: the drawer's own
- * location at 0, one with no path there an infinite number away). No candidate measures a
- * distance while that investigator has no location.
+ * location at 0, one with no path there an infinite number away). Without that location every
+ * candidate is as near as any other, so the players choose among them all.
  */
 export type PickMeasure = { kind: 'tokens'; token: TokenKind } | { kind: 'distance' };
 
