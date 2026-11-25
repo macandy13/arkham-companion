@@ -631,7 +631,7 @@ describe('GameScreen header', () => {
     await waitFor(() => expect(store.getState().current?.state.meta.resolution).toBe('R2'));
   });
 
-  it('lays the token pool, the encounter deck with its discard pile, agenda, act, scenario with the set-aside cards and victory display out under their labels', async () => {
+  it('lays the encounter deck with its discard pile, agenda, act, scenario with the set-aside cards, the chaos bag over the victory display and the token pool out under their labels', async () => {
     await renderTheGathering('game-screen-encounter-test');
 
     // The investigator cards have headers too, so the board's header is the one holding the deck.
@@ -644,18 +644,28 @@ describe('GameScreen header', () => {
     const deck = within(deckPlace);
 
     expect(labels).toEqual([
-      'Token pool',
       'Encounter deck',
       'Agenda',
       'Act',
       'Scenario',
       'Victory',
+      'Token pool',
     ]);
     expect(deck.getByRole('button', { name: 'Encounter discard pile' })).toBeTruthy();
     const scenario = within(within(boardHeader).getByRole('region', { name: 'Scenario' }));
     expect(scenario.getByRole('button', { name: /^Set aside, \d+ cards?$/ })).toBeTruthy();
     const victory = within(within(boardHeader).getByRole('region', { name: 'Victory' }));
     expect(victory.getByRole('button', { name: 'Victory display, 0 victory points' })).toBeTruthy();
+    expect(victory.getByRole('button', { name: /^Chaos bag, \d+ tokens$/ })).toBeTruthy();
+  });
+
+  it('opens the chaos bag in a dialog of its own from the bag over the victory display', async () => {
+    await renderTheGathering('game-screen-chaos-bag-test');
+
+    fireEvent.click(screen.getByRole('button', { name: /^Chaos bag, \d+ tokens$/ }));
+
+    const dialog = screen.getByRole('dialog', { name: 'Chaos bag' });
+    expect(within(dialog).getByRole('list', { name: 'Tokens in the bag' })).toBeTruthy();
   });
 
   it('warns instead of showing a board for a game it cannot play', async () => {

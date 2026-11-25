@@ -19,9 +19,9 @@ import { usePlay } from './PlayContext';
 const POOL_TOKENS: readonly PoolToken[] = ['bless', 'curse'];
 
 /**
- * The chaos bag on the scenario card's page (M6.1b): what is in it, one row per kind of token in
- * `CHAOS_TOKENS` order with its count (a symbol's value is in the reference card's text above,
- * so the list leaves it out to stay small), and the tokens player cards sealed, each with the
+ * The chaos bag in its own dialog (M6.1b, `ChaosBagButton`): what is in it, one row per kind of token in
+ * `CHAOS_TOKENS` order with its count (a symbol's value is on the reference card, so the list
+ * leaves it out to stay small), and the tokens player cards sealed, each with the
  * investigator holding it (`BoardView.sealedTokens`). The players seal a token as a card tells
  * them: they tap it in the bag, then the investigator whose card seals it; a sealed token has a
  * Release button. The bless and curse tokens follow on one line, each its count in the bag
@@ -35,7 +35,6 @@ const POOL_TOKENS: readonly PoolToken[] = ['bless', 'curse'];
 export function ChaosBag({ board }: { board: BoardView }) {
   const { actions, busy } = usePlay();
   const { t } = useTranslation();
-  const titleId = useId();
   const sealedId = useId();
   const revealId = useId();
   const [picked, setPicked] = useState<ChaosToken>();
@@ -47,8 +46,7 @@ export function ChaosBag({ board }: { board: BoardView }) {
   const revealing = Math.max(1, Math.min(toReveal, board.chaosBag.length));
   const chosen = counts.some(({ token }) => token === picked) ? picked : undefined;
   return (
-    <section aria-labelledby={titleId} data-part="chaos-bag">
-      <h3 id={titleId}>{t('chaosBag.title')}</h3>
+    <section aria-label={t('chaosBag.title')} data-part="chaos-bag">
       <ul aria-label={t('chaosBag.contents')}>
         {counts.map(({ token, count }) => (
           <li key={token}>

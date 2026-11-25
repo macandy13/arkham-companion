@@ -13,7 +13,6 @@ import { useCardPicture } from '../catalog/cardImages';
 import { cardText } from '../catalog/cardText';
 import type { OpenGame } from '../state/appStore';
 import { CardDialog } from './CardDialog';
-import { ChaosBag } from './ChaosBag';
 import { ScenarioFace } from './ScenarioFace';
 
 /**
@@ -96,8 +95,8 @@ export function ScenarioStatus({
  * - "Scenario" and the side the game's difficulty plays with as the kicker, its name as the title;
  * - on the page the cards set aside and the victory points so far (`BoardView.victoryPoints`);
  * - one row per symbol token at the page's print size, the token beside its printed text, since
- *   on the card they stay too small to read on a tablet;
- * - the chaos bag, where the players seal and release tokens (`ChaosBag`).
+ *   on the card they stay too small to read on a tablet.
+ * The chaos bag has a dialog of its own (`ChaosBagButton`).
  * The card is no instance in play (`BoardView.reference`), so the shell shows it as a `ShownCard`
  * built from its name and picture. Escape and its × close it.
  */
@@ -151,7 +150,6 @@ function ScenarioDetails({
         </div>
       </dl>
       {reference && <ReferenceRows reference={reference} printed={printed} />}
-      <ChaosBag board={board} />
     </CardDialog>
   );
 }

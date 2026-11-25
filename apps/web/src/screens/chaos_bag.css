@@ -1,5 +1,5 @@
 /*
- * The chaos bag on the scenario card's page (ChaosBag): the tokens in the bag as a wrapping row of
+ * The chaos bag in its own dialog (ChaosBag): the tokens in the bag as a wrapping row of
  * pills, each the token beside its count, the one picked to seal pressed; under it a button per
  * investigator to seal it on, then bless and curse on one line, each − count +, then the sealed
  * tokens, one per line with their Release button; Reveal tokens sits between those two, its count
@@ -116,4 +116,44 @@
     color: var(--color-text-muted);
     text-transform: uppercase;
   }
+}
+
+/*
+ * The chaos bag in the header (ChaosBagButton): our drawing of a cloth bag, brass-lined like the
+ * header's frames, with the number of tokens in it on the cloth. No pill: the drawing is the
+ * button, as a card in the header is.
+ */
+#board > header [data-part='chaos-bag-button'] {
+  display: grid;
+  place-items: center;
+  justify-self: center;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--color-text);
+}
+
+#board > header [data-part='chaos-bag-button'] > * {
+  grid-area: 1 / 1;
+}
+
+#board > header [data-part='chaos-bag-button'] > svg {
+  height: var(--header-bag-height);
+  fill: var(--color-bag-cloth);
+  stroke: var(--color-accent);
+  stroke-width: var(--bag-cord-width);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+#board > header [data-part='chaos-bag-button'] > svg > [data-part='cord'] {
+  fill: none;
+}
+
+/* The count sits on the bag's belly, below its neck. */
+#board > header [data-part='chaos-bag-button'] > data {
+  margin-block-start: calc(var(--header-bag-height) / 4);
+  font-family: var(--font-family-display);
+  font-size: var(--font-size-subtitle);
+  font-variant-numeric: tabular-nums;
 }

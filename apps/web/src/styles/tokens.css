@@ -522,6 +522,10 @@
   );
   /* The cards in the header (encounter deck, agenda, act, scenario) are this tall. */
   --layout-header-card-height: 8rem;
+  /* The chaos bag over the victory display (ChaosBagButton) is this tall: our drawing of a cloth bag. */
+  --header-bag-height: 4rem;
+  --color-bag-cloth: #3b2a1d;
+  --bag-cord-width: 3.5;
   /* The big doom and clue tokens on the agenda and act, with a light rim like the printed tokens. */
   --header-token-size: 4.5rem;
   --header-token-border-width: 3px;

@@ -133,6 +133,8 @@ export const appTexts = {
   },
   chaosBag: {
     title: 'Chaos bag',
+    open_one: 'Chaos bag, {{count}} token',
+    open_other: 'Chaos bag, {{count}} tokens',
     contents: 'Tokens in the bag',
     sealOn: 'Seal {{token}} on {{investigator}}',
     sealed: 'Sealed',
