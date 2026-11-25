@@ -1,84 +1,63 @@
 /*
- * The chaos bag in its own dialog (ChaosBag): the tokens in the bag as a wrapping row of
- * pills, each the token beside its count, the one picked to seal pressed; under it a button per
- * investigator to seal it on, then bless and curse on one line, each − count +, then the sealed
- * tokens, one per line with their Release button; Reveal tokens sits between those two, its count
- * stepped like bless and curse, the revealed tokens in a row under it. On a phone the pills sit four to a row with
- * smaller tokens, and the headings shrink to captions, so the page fits the sheet.
+ * The chaos bag's dialog (ChaosBag), a token tray: three tabs on one rule, the selected one
+ * underlined in brass like the status row's phase; under them its view. In the bag, every token
+ * lies on a felt tray as if tipped out on the table, the one picked to seal ringed in brass, then
+ * the buttons to seal it on and the bless and curse steppers, each − count +. Sealed lists the
+ * sealed tokens, one per line with their Release button. Reveal steps its count like bless and
+ * curse, lays the revealed tokens on the tray, and ends on Put back and Reveal, Reveal the view's
+ * one brass primary. On a phone the tray's tokens are smaller, so the sheet keeps them in view.
  */
-#board dialog[data-shell] section[data-part='chaos-bag'] {
-  display: grid;
-  gap: var(--space-2);
+/*
+ * The page keeps one height whichever view is open and whatever the bag holds, so switching tabs,
+ * picking a token or revealing some doesn't make the dialog jump; a view taller than it scrolls.
+ */
+#board dialog[data-dialog='chaos-bag'] > article {
+  height: var(--chaos-bag-dialog-height);
 }
 
-#board dialog[data-shell] section[data-part='chaos-bag'] > h3 {
-  margin: 0;
-}
-
-#board dialog[data-shell] section[data-part='chaos-bag'] > ul {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-/* The app's list rows are cards of their own; here a row is just its pill. */
-#board dialog[data-shell] section[data-part='chaos-bag'] > ul > li {
-  display: flex;
-  gap: var(--space-2);
-  align-items: center;
-  padding: 0;
-  border: none;
-  background: none;
-}
-
-#board dialog[data-shell] section[data-part='chaos-bag'] > ul > li > button {
-  display: flex;
-  gap: var(--space-2);
-  align-items: center;
-}
-
-#board dialog[data-shell] section[data-part='chaos-bag'] > ul > li > data {
-  font-variant-numeric: tabular-nums;
-  text-align: center;
-}
-
-/* Bless and curse: one line, a gap between the two steppers wider than within one. */
-#board dialog[data-shell] section[data-part='chaos-bag'] > ul:has(> li > button + data) {
-  column-gap: var(--space-5);
-}
-
-/* The tokens (`ChaosTokenFace`), large enough for a number in its star frame, kept from shrinking in the row. */
 #board dialog[data-shell] section[data-part='chaos-bag'] {
   --chaos-token-size: var(--chaos-bag-token-size);
+  display: grid;
+  gap: var(--space-3);
 }
 
 #board dialog[data-shell] section[data-part='chaos-bag'] [data-chaos-face] {
   flex: none;
 }
 
-#board dialog[data-shell] section[data-part='chaos-bag'] > h3 + ul {
-  flex-direction: column;
-  align-items: flex-start;
-}
-
-#board dialog[data-shell] section[data-part='chaos-bag'] > [role='group'] {
+#board dialog[data-shell] section[data-part='chaos-bag'] > [role='tablist'] {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-2);
-  align-items: center;
+  gap: var(--space-5);
+  border-block-end: var(--border-width) solid var(--color-card-line);
 }
 
-/* Reveal tokens: its count between − and +, like bless and curse, and the revealed tokens in a row. */
-#board dialog[data-shell] section[data-part='chaos-bag'] > [role='group'] > data {
-  min-width: var(--space-5);
-  font-variant-numeric: tabular-nums;
-  text-align: center;
+#board dialog[data-shell] section[data-part='chaos-bag'] [role='tab'] {
+  min-height: var(--touch-target);
+  padding: 0;
+  border: none;
+  border-block-end: var(--focus-ring-width) solid transparent;
+  border-radius: 0;
+  background: none;
+  color: var(--color-ink-muted);
 }
 
-#board dialog[data-shell] section[data-part='chaos-bag'] > [role='group'] > ul {
+#board dialog[data-shell] section[data-part='chaos-bag'] [role='tab'][aria-selected='true'] {
+  border-block-end-color: var(--color-accent-deep);
+  color: var(--color-ink);
+  font-weight: bold;
+}
+
+#board dialog[data-shell] section[data-part='chaos-bag'] > [role='tabpanel'] {
+  display: grid;
+  gap: var(--space-3);
+}
+
+#board dialog[data-shell] section[data-part='chaos-bag'] [role='tabpanel'] > p {
+  margin: 0;
+}
+
+#board dialog[data-shell] section[data-part='chaos-bag'] [role='tabpanel'] > ul {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-2);
@@ -87,10 +66,75 @@
   list-style: none;
 }
 
-#board dialog[data-shell] section[data-part='chaos-bag'] > [role='group'] > ul > li {
+/* The app's list rows are cards of their own; here a row is just what it holds. */
+#board dialog[data-shell] section[data-part='chaos-bag'] [role='tabpanel'] > ul > li {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
   padding: 0;
   border: none;
   background: none;
+}
+
+/* The felt tray, sunk into the page, holding the bag's or the revealed tokens. */
+#board
+  dialog[data-shell]
+  section[data-part='chaos-bag']
+  :is([data-part='tray'], [data-part='revealed']) {
+  --chaos-token-size: var(--chaos-tray-token-size);
+  padding: var(--space-3);
+  border-radius: var(--radius);
+  background: var(--color-tray-felt);
+  box-shadow: var(--tray-shadow);
+}
+
+/* A token on the tray is the button itself, no pill around it. */
+#board dialog[data-shell] section[data-part='chaos-bag'] [data-part='tray'] button {
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-round);
+  background: none;
+}
+
+#board
+  dialog[data-shell]
+  section[data-part='chaos-bag']
+  [data-part='tray']
+  button[aria-pressed='true'] {
+  box-shadow: var(--tray-picked-ring);
+}
+
+#board
+  dialog[data-shell]
+  section[data-part='chaos-bag']
+  [role='tabpanel']
+  > :is([role='group'], footer) {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+#board dialog[data-shell] section[data-part='chaos-bag'] [role='tabpanel'] > footer {
+  justify-content: end;
+}
+
+/* Bless and curse: one line, a gap between the two steppers wider than within one. */
+#board dialog[data-shell] section[data-part='chaos-bag'] [data-part='pool'] {
+  column-gap: var(--space-5);
+}
+
+#board dialog[data-shell] section[data-part='chaos-bag'] [data-part='sealed'] {
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+#board dialog[data-shell] section[data-part='chaos-bag'] data {
+  min-width: var(--space-5);
+  font-variant-numeric: tabular-nums;
+  text-align: center;
 }
 
 @media (orientation: portrait) and (max-width: 40rem) {
@@ -98,23 +142,15 @@
     --chaos-token-size: var(--chaos-bag-token-size-phone);
   }
 
-  #board dialog[data-shell] section[data-part='chaos-bag'] > ul:first-of-type {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+  #board
+    dialog[data-shell]
+    section[data-part='chaos-bag']
+    :is([data-part='tray'], [data-part='revealed']) {
+    --chaos-token-size: var(--chaos-tray-token-size-phone);
   }
 
-  #board dialog[data-shell] section[data-part='chaos-bag'] > ul:first-of-type > li > button {
-    gap: var(--space-1);
-    justify-content: center;
-    width: 100%;
-    padding-inline: var(--space-1);
-  }
-
-  #board dialog[data-shell] section[data-part='chaos-bag'] > h3 {
-    font-size: var(--font-size-caption);
-    font-weight: normal;
-    color: var(--color-text-muted);
-    text-transform: uppercase;
+  #board dialog[data-shell] section[data-part='chaos-bag'] > [role='tablist'] {
+    gap: var(--space-4);
   }
 }
 

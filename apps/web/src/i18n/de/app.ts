@@ -154,6 +154,15 @@ export const appTexts = {
     revealCount_other: '{{count}} Marker enthüllen',
     revealed: 'Enthüllte Marker',
     putBack: 'Zurücklegen',
+    views: 'Ansichten des Chaosbeutels',
+    inBag_one: 'Im Beutel · {{count}}',
+    inBag_other: 'Im Beutel · {{count}}',
+    sealedCount_one: 'Versiegelt · {{count}}',
+    sealedCount_other: 'Versiegelt · {{count}}',
+    noneSealed: 'Kein Marker ist versiegelt.',
+    revealHint:
+      'Für eine Karte, die außerhalb einer Fertigkeitsprobe Marker enthüllt. Sie bleiben im Beutel.',
+    revealHowMany: 'Wie viele Marker enthüllt werden',
   },
   header: {
     round: 'Runde {{round}}',

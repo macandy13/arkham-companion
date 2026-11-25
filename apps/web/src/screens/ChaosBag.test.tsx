@@ -26,7 +26,7 @@ describe('ChaosBag', () => {
     .withInvestigator(daisy, { name: 'Daisy Walker', locationId: study })
     .withChaosBag(['-1', 'skull', '-1', 'elderSign']);
 
-  it('lists the tokens in the bag with their counts', () => {
+  it('lays every token in the bag out one by one, in token order', () => {
     const table = PlayTable.start(game);
 
     render(
@@ -35,12 +35,15 @@ describe('ChaosBag', () => {
       </PlayingOn>,
     );
 
+    expect(screen.getByRole('tab', { name: 'In the bag · 4' }).getAttribute('aria-selected')).toBe(
+      'true',
+    );
     const contents = screen.getByRole('list', { name: 'Tokens in the bag' });
     expect(
       within(contents)
         .getAllByRole('button')
         .map((button) => button.textContent),
-    ).toEqual(['−1 ×2', 'Skull ×1', 'Elder Sign ×1']);
+    ).toEqual(['−1', '−1', 'Skull', 'Elder Sign']);
   });
 
   it('seals the token tapped on the investigator picked', async () => {
@@ -51,7 +54,7 @@ describe('ChaosBag', () => {
       </PlayingOn>,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'Elder Sign ×1' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Elder Sign' }));
     fireEvent.click(screen.getByRole('button', { name: 'Seal Elder Sign on Daisy Walker' }));
 
     await waitFor(() =>
@@ -68,6 +71,7 @@ describe('ChaosBag', () => {
       </PlayingOn>,
     );
 
+    fireEvent.click(screen.getByRole('tab', { name: 'Sealed · 1' }));
     const sealed = screen.getByRole('list', { name: 'Sealed' });
     expect(within(sealed).getByRole('listitem').textContent).toBe('Skull on Roland Banks Release');
     fireEvent.click(
@@ -76,6 +80,34 @@ describe('ChaosBag', () => {
 
     await waitFor(() => expect(table.board.sealedTokens).toEqual([]));
     expect(table.board.chaosBag).toEqual(['-1', '-1', 'elderSign', 'skull']);
+  });
+
+  it('moves to the next view with the right arrow key and back to the first with Home', () => {
+    const table = PlayTable.start(game);
+    render(
+      <PlayingOn table={table}>
+        <ChaosBag board={table.board} />
+      </PlayingOn>,
+    );
+
+    fireEvent.keyDown(screen.getByRole('tab', { name: 'In the bag · 4' }), { key: 'ArrowRight' });
+    expect(screen.getByRole('tab', { selected: true }).textContent).toBe('Sealed · 0');
+    fireEvent.keyDown(screen.getByRole('tab', { name: 'Sealed · 0' }), { key: 'Home' });
+
+    expect(screen.getByRole('tab', { selected: true }).textContent).toBe('In the bag · 4');
+  });
+
+  it('says so when no token is sealed', () => {
+    const table = PlayTable.start(game);
+    render(
+      <PlayingOn table={table}>
+        <ChaosBag board={table.board} />
+      </PlayingOn>,
+    );
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Sealed · 0' }));
+
+    expect(screen.getByRole('tabpanel').textContent).toBe('No token is sealed.');
   });
 
   it('lists the bless and curse tokens in the bag, each between its − and + buttons', () => {
@@ -144,10 +176,11 @@ describe('ChaosBag', () => {
       </PlayingOn>,
     );
 
+    fireEvent.click(screen.getByRole('tab', { name: 'Reveal tokens' }));
     fireEvent.click(screen.getByRole('button', { name: 'Reveal one token more' }));
     fireEvent.click(screen.getByRole('button', { name: 'Reveal 2 tokens' }));
 
-    const revealed = screen.getByRole('group', { name: 'Revealed tokens' });
+    const revealed = screen.getByRole('list', { name: 'Revealed tokens' });
     expect(
       within(revealed)
         .getAllByRole('listitem')
@@ -164,9 +197,10 @@ describe('ChaosBag', () => {
       </PlayingOn>,
     );
 
+    fireEvent.click(screen.getByRole('tab', { name: 'Reveal tokens' }));
     fireEvent.click(screen.getByRole('button', { name: 'Reveal 1 token' }));
     fireEvent.click(screen.getByRole('button', { name: 'Put back' }));
 
-    expect(screen.queryByRole('group', { name: 'Revealed tokens' })).toBeNull();
+    expect(screen.queryByRole('list', { name: 'Revealed tokens' })).toBeNull();
   });
 });
