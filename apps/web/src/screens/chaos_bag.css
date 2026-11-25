@@ -2,7 +2,8 @@
  * The chaos bag on the scenario card's page (ChaosBag): the tokens in the bag as a wrapping row of
  * pills, each the token beside its count, the one picked to seal pressed; under it a button per
  * investigator to seal it on, then bless and curse on one line, each − count +, then the sealed
- * tokens, one per line with their Release button. On a phone the pills sit four to a row with
+ * tokens, one per line with their Release button; Reveal tokens sits between those two, its count
+ * stepped like bless and curse, the revealed tokens in a row under it. On a phone the pills sit four to a row with
  * smaller tokens, and the headings shrink to captions, so the page fits the sheet.
  */
 #board dialog[data-shell] section[data-part='chaos-bag'] {
@@ -67,6 +68,29 @@
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-2);
+  align-items: center;
+}
+
+/* Reveal tokens: its count between − and +, like bless and curse, and the revealed tokens in a row. */
+#board dialog[data-shell] section[data-part='chaos-bag'] > [role='group'] > data {
+  min-width: var(--space-5);
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+#board dialog[data-shell] section[data-part='chaos-bag'] > [role='group'] > ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+#board dialog[data-shell] section[data-part='chaos-bag'] > [role='group'] > ul > li {
+  padding: 0;
+  border: none;
+  background: none;
 }
 
 @media (orientation: portrait) and (max-width: 40rem) {

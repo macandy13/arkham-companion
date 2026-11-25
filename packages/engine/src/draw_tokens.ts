@@ -33,6 +33,21 @@ export function drawTokens(
 }
 
 /**
+ * Reveals `count` tokens from `bag` outside a skill test, as a card says (Hypnotic Gaze,
+ * Premonition): fewer when the bag holds fewer. No token makes the players reveal another here,
+ * and all of them go back into the bag afterwards, bless and curse too (rules: "Bless and curse
+ * tokens"), so like a test's draw this is no game state: the bag is unchanged. `random` as for
+ * `drawTokens`.
+ */
+export function revealTokens(
+  bag: readonly ChaosToken[],
+  count: number,
+  random: () => number,
+): ChaosToken[] {
+  return drawWithoutReplacement(bag, count, pickIndex(random)).drawn;
+}
+
+/**
  * What a player card made of a drawn token (ME.24): it resolves as drawn, or a card cancelled it
  * (Counterspell) or had the players ignore it (Olive McBride's token not chosen, Lucky Dice). A
  * cancelled or ignored token counts as never revealed (Counterspell FAQ): no modifier, no effect,
@@ -206,8 +221,11 @@ function takeOne(
   left: readonly ChaosToken[],
   random: () => number,
 ): [ChaosToken | undefined, ChaosToken[]] {
-  const { drawn, left: rest } = drawWithoutReplacement(left, 1, (count) =>
-    Math.floor(random() * count),
-  );
+  const { drawn, left: rest } = drawWithoutReplacement(left, 1, pickIndex(random));
   return [drawn[0], rest];
+}
+
+/** A picker for `drawWithoutReplacement`: an index below `count` from `random`, shared by every draw. */
+function pickIndex(random: () => number): (count: number) => number {
+  return (count) => Math.floor(random() * count);
 }

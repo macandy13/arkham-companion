@@ -105,6 +105,7 @@ export {
   continueDraw,
   drawFinished,
   drawTokens,
+  revealTokens,
   redrawToken,
   replaceToken,
   resolvedTokens,
