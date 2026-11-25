@@ -2854,6 +2854,21 @@ describe('doom on the nearest Cultist enemy, or a search for one', () => {
     expect(after.cards[instanceId('near_cultist')]?.tokens.doom).toBeUndefined();
   });
 
+  it('counts a one-way connection from alice: the cultist she can reach in 1 gets the doom', () => {
+    const garden = instanceId('garden');
+    const { context, state } = houseTable
+      .withLocation(garden, blankLocation('garden'), { revealed: true })
+      .withConnection(hall, garden, { oneWay: true })
+      .withCard(instanceId('garden_cultist'), cultistCard, atLocation(garden))
+      .withCard(instanceId('attic_cultist'), cultistCard, atLocation(attic))
+      .start();
+
+    const after = stateAfter(context, state, aliceDraws, resolveRevelation('chanting'));
+
+    expect(after.cards[instanceId('garden_cultist')]?.tokens.doom).toBe(2);
+    expect(after.cards[instanceId('attic_cultist')]?.tokens.doom).toBeUndefined();
+  });
+
   it('lets the lead investigator pick between two cultists equally near', () => {
     const { context, state } = houseTable
       .withLocation(instanceId('garden'), blankLocation('garden'), { revealed: true })
@@ -3554,14 +3569,16 @@ describe('a picked card the effect neither moves to nor attaches', () => {
     {
       among: eachInPlay({ typeCode: 'location' }),
       kind: 'chooseLocation',
-      question: 'Which location does omen affect? hall / shrine [chooseLocation]',
+      prompt: 'decision.chooseLocationFor',
+      options: [{ id: hall }, { id: shrine }],
     },
     {
       among: eachInPlay({ typeCode: 'asset' }),
       kind: 'chooseCard',
-      question: 'Which card does omen affect? lantern / relic [chooseCard]',
+      prompt: 'decision.chooseCardFor',
+      options: [{ id: lantern }, { id: relic }],
     },
-  ])('asks "$question" for doom on one of them', ({ among, kind, question }) => {
+  ])('asks $prompt for doom on one of them', ({ among, kind, prompt, options }) => {
     const omen = blankTreachery('omen', {
       abilities: [whenRevealed(placeDoomOn({ ref: 'pick', among, chooser: 'you' }, 1))],
     });
@@ -3576,10 +3593,7 @@ describe('a picked card the effect neither moves to nor attaches', () => {
 
     const asked = stateAfter(context, state, aliceDraws, resolveRevelation('omen'));
 
-    expect(asked.pending).toMatchObject([{ id: decisionId('pick:omen'), kind }]);
-    expect(asked.pending.map((decision) => describeDecision(context, asked, decision))).toEqual([
-      question,
-    ]);
+    expect(asked.pending).toMatchObject([{ id: decisionId('pick:omen'), kind, prompt, options }]);
   });
 });
 

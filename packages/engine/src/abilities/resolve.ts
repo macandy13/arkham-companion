@@ -609,22 +609,26 @@ function pickDecision(
 
 /**
  * How a decision for `picked` asks: by what `among` names, and for a location by what `effect`
- * does there, moving the investigator or the card.
+ * does there: the investigator moves there, or the card attaches to it.
  */
 function pickQuestion(picked: PickedRef, effect: AbilityEffect): Pick<Decision, 'kind' | 'prompt'> {
   const { among } = picked;
-  if (among.ref === 'eachInvestigator')
-    return { kind: 'chooseInvestigator', prompt: 'decision.chooseInvestigatorFor' };
-  if (among.ref === 'eachEnemy') return { kind: 'chooseCard', prompt: 'decision.chooseEnemyFor' };
-  if (among.typeCode !== 'location')
-    return { kind: 'chooseCard', prompt: 'decision.chooseCardFor' };
-  switch (effect.type) {
-    case 'MoveInvestigator':
-      return { kind: 'chooseLocation', prompt: 'decision.chooseLocationToMove' };
-    case 'MoveCard':
-      return { kind: 'chooseLocation', prompt: 'decision.chooseLocationToAttach' };
-    default:
+  switch (among.ref) {
+    case 'eachInvestigator':
+      return { kind: 'chooseInvestigator', prompt: 'decision.chooseInvestigatorFor' };
+    case 'eachEnemy':
+      return { kind: 'chooseCard', prompt: 'decision.chooseEnemyFor' };
+    case 'eachInZone':
+    case 'eachInPlay':
+      if (among.typeCode !== 'location')
+        return { kind: 'chooseCard', prompt: 'decision.chooseCardFor' };
+      if (effect.type === 'MoveInvestigator')
+        return { kind: 'chooseLocation', prompt: 'decision.chooseLocationToMove' };
+      if (effect.type === 'MoveCard' && effect.to.kind === 'attachedTo')
+        return { kind: 'chooseLocation', prompt: 'decision.chooseLocationToAttach' };
       return { kind: 'chooseLocation', prompt: 'decision.chooseLocationFor' };
+    default:
+      return assertNever(among);
   }
 }
 
