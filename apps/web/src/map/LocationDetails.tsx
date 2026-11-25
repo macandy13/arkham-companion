@@ -315,14 +315,14 @@ function locationActions(
     {
       key: 'moveAction',
       icon: 'move',
-      cost: board.actionCost(turn, 'move'),
+      cost: board.actionCost(turn, 'move', { to: location.id }),
       play: () => actions.move(location.id),
       then: 'leave',
     },
     {
       key: 'moveFree',
       icon: 'move',
-      cost: board.actionCost(turn, 'move', { free: true }),
+      cost: board.actionCost(turn, 'move', { free: true, to: location.id }),
       play: () => actions.move(location.id, 'free'),
       then: 'leave',
     },

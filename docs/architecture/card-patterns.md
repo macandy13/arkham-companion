@@ -28,6 +28,8 @@ A buff or nerf of a number is a `CardStats.modifiers` entry, named by the value 
 - Whippoorwill, "Each investigator at Whippoorwill's location gets -1 to each skill": `modifiers: SKILL_NAMES.map((skill) => ({ value: skill, of: 'investigatorsHere', by: -1 }))`.
 - Frozen in Fear, "The first move, fight, or evade action you perform each round costs 1 additional action":
   `modifiers: [{ value: 'actionCost', of: 'threatArea', actions: ['move', 'fight', 'evade'], first: 'eachRound', by: 1 }]`.
+- Waterfront District, "As an additional cost to investigate Waterfront District, you must spend 1 action": `modifiers: [{ value: 'actionCost', of: 'self', actions: ['investigate'], by: 1 }]`;
+  Arcane Lock, "As an additional cost to enter or leave attached location, you must spend 1 action": `{ value: 'actionCost', of: 'host', actions: ['enter', 'leave'], by: 1 }`.
 
 ## Objectives and special acts and agendas
 

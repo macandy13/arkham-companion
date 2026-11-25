@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  actionCost,
   atLocation,
   blankTreachery,
   effectiveValue,
@@ -597,6 +598,24 @@ describe('Smoke and Mirrors card abilities', () => {
     });
   });
 
+  describe('Waterfront District', () => {
+    const waterfront = instanceId('waterfront_district');
+
+    it.each([
+      { action: 'investigate', at: 'waterfront_district', to: undefined, cost: 2 },
+      { action: 'move', at: 'waterfront_district', to: northside, cost: 1 },
+    ] as const)('costs alice $cost to $action from $at', ({ action, at, to, cost }) => {
+      const { context, state } = newGame()
+        .withLocation(waterfront, cardOf('12152'), { revealed: true })
+        .withLocation(northside, cardOf('12149'), { revealed: true })
+        .withInvestigator(alice, { locationId: instanceId(at) })
+        .withTurnOf(alice)
+        .start();
+
+      expect(actionCost(context, state, alice, action, { to })).toBe(cost);
+    });
+  });
+
   describe('Whippoorwill', () => {
     it('gives alice at its location -1 to each skill, and not bob at Easttown', () => {
       const easttown = instanceId('easttown');
@@ -701,6 +720,35 @@ describe('Smoke and Mirrors card abilities', () => {
         expect(state.cards[lock]?.zone).toEqual(zone);
       },
     );
+
+    it.each([
+      { move: 'into Northside', from: 'easttown', to: 'northside', cost: 2 },
+      { move: 'out of Northside', from: 'northside', to: 'easttown', cost: 2 },
+    ])(
+      'costs alice $cost actions to move $move while it is attached there',
+      ({ from, to, cost }) => {
+        const { context, state } = newGame()
+          .withLocation(northside, cardOf('12149'), { revealed: true })
+          .withLocation(instanceId('easttown'), cardOf('12150'), { revealed: true })
+          .withInvestigator(alice, { locationId: instanceId(from) })
+          .withCard(lock, cardOf('12157'), { kind: 'attachedTo', hostId: northside })
+          .withTurnOf(alice)
+          .start();
+
+        expect(actionCost(context, state, alice, 'move', { to: instanceId(to) })).toBe(cost);
+      },
+    );
+
+    it('costs alice the usual action to investigate where it is attached', () => {
+      const { context, state } = newGame()
+        .withLocation(northside, cardOf('12149'), { revealed: true })
+        .withInvestigator(alice, { locationId: northside })
+        .withCard(lock, cardOf('12157'), { kind: 'attachedTo', hostId: northside })
+        .withTurnOf(alice)
+        .start();
+
+      expect(actionCost(context, state, alice, 'investigate')).toBe(1);
+    });
 
     it('discards a second Arcane Lock drawn where one is already attached', () => {
       const first = instanceId('first_lock');

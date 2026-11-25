@@ -20,3 +20,11 @@ A card can also raise what a basic action costs, paid in actions when it is take
   - A free move, fight or evade it has raised to 1 action still provokes no attacks of opportunity: the Rules Reference exempts [free] abilities, and the engine treats a move a card grants the same way (our reading; no ruling found).
   - A move, fight or evade a card lets them perform without spending an action (a granted or free one, Shortcut's move) still costs the additional action, and it is the first one (the card's FAQ on ArkhamDB).
   - It also raises a card ability with a Move, Fight or Evade designator ("[action] Fight."): such an ability is that action too (RR "Action Designators"). The players count those off at the table, since the app has no player cards.
+
+A location can make what investigators do with it cost more: Waterfront District ("As an additional cost to investigate Waterfront District, you must spend 1 action"), and Arcane Lock attached to a location ("As an additional cost to enter or leave attached location, you must spend 1 action").
+
+- The cost is paid whenever the investigation, entering or leaving happens: a basic action, a free or granted move, a move by a card effect, or an "[action]: Investigate" ability ([Additional Costs](https://arkhamdb.com/rules#Additional_Costs): "If an effect that requires an additional cost would resolve, the additional cost must be paid at that time"; its example is Duke investigating the Orne Library).
+  - If it can't be paid, that part of the effect fails to resolve (same entry).
+- A move from one locked location to another pays both: 1 for the move, 1 for leaving and 1 for entering.
+- Like any constant ability of a location, Waterfront District's applies only once it is revealed ([Card abilities and modifiers](../card-abilities-and-modifiers.md)). An investigator investigates only where they are, and entering a location reveals it, so this never comes up.
+- The app prices basic moves (with the destination) and basic investigations. A card ability's move or investigation doesn't add the location's cost to its button yet (Merchant District's free move into a locked location, an "[action]: Investigate" ability at Waterfront District); the players count it off at the table.

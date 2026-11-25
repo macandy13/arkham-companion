@@ -1584,6 +1584,23 @@ describe('MapBoard', () => {
       ).toEqual(['Move here · 2 actions', 'Move here without an action · 1 extra action']);
     });
 
+    it('prices the move by its destination, so a card that taxes entering the hallway marks it', () => {
+      const table = aldersTurn();
+      const board = boardWhere(table.board, {
+        actionCost: (_investigator, _action, cost) => (cost?.to === hallway ? 2 : 1),
+      });
+      render(
+        <PlayingOn table={table}>
+          <MapBoard board={board} />
+        </PlayingOn>,
+      );
+
+      tapOnce(tile('hallway'));
+
+      const moves = within(details('hallway')).getByRole('region', { name: 'Actions' });
+      expect(within(moves).getByRole('button', { name: 'Move here · 2 actions' })).toBeTruthy();
+    });
+
     it.each([
       {
         button: 'Take a clue, no test',

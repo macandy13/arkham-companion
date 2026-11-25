@@ -1,8 +1,10 @@
+import { assertNever } from '@arkham/util';
 import { cardActionOf } from './card_actions';
 import type { EngineContext } from './cards';
 import type { ActionCommand, Command, SpendActions } from './commands';
-import type { InvestigatorId } from './ids';
-import { modifiersOn } from './modifiers';
+import type { InstanceId, InvestigatorId } from './ids';
+import { findInvestigator } from './investigators';
+import { isLocationCost, modifiersOn, type LocationAction } from './modifiers';
 import type { GameState } from './state';
 
 /**
@@ -37,25 +39,40 @@ export interface TakenAction {
 }
 
 /**
+ * How an investigator takes the basic action `actionCost` prices: `free` when a card lets them
+ * perform it without spending an action, and for a move the location they move `to`, since a
+ * card can make entering it, or leaving where they are, cost more (Arcane Lock).
+ */
+export interface ActionCostQuery {
+  free?: boolean;
+  to?: InstanceId;
+}
+
+/**
  * The actions `investigator`'s next `action` costs: one, or none when a card lets them perform it
- * without spending an action (`free`), plus what the cost modifiers of the cards in play that bind
- * them add (`ActionCostModifier`). A free action still pays those (the Frozen in Fear FAQ: a
- * granted or free move costs its additional action) and is the round's first all the same. This
- * is what the engine counts off (`actionPayment`) and what the screen shows on the action's
- * button; two copies of Frozen in Fear each add their one.
+ * without spending an action (`free`), plus what the cost modifiers of the cards in play add:
+ * those that bind the investigator (`ActionCostModifier`) and those of the locations the action
+ * leaves, enters or investigates (`LocationActionCostModifier`, with a move's destination `to`).
+ * A free action still pays those and is the round's first all the same: the Frozen in Fear FAQ
+ * for the investigator's own (a granted or free move costs its additional action), and for a
+ * location's the Rules Reference ("Additional Costs": an additional cost is paid whenever its
+ * effect resolves). This is what the engine counts off (`actionPayment`) and what the screen
+ * shows on the action's button; two copies of Frozen in Fear each add their one.
  */
 export function actionCost(
   ctx: EngineContext,
   state: GameState,
   investigator: InvestigatorId,
   action: BasicAction,
-  { free = false }: { free?: boolean } = {},
+  { free = false, to }: ActionCostQuery = {},
 ): number {
   const taken = (state.meta.actionsTaken ?? []).filter(
     (each) => each.investigatorId === investigator,
   );
-  return modifiersOn(ctx, state, { kind: 'investigator', investigatorId: investigator })
-    .flatMap(({ modifier }) => (modifier.value === 'actionCost' ? [modifier] : []))
+  const ownCost = modifiersOn(ctx, state, { kind: 'investigator', investigatorId: investigator })
+    .flatMap(({ modifier }) =>
+      modifier.value === 'actionCost' && !isLocationCost(modifier) ? [modifier] : [],
+    )
     .filter(
       (modifier) =>
         modifier.actions.includes(action) &&
@@ -65,6 +82,55 @@ export function actionCost(
         ),
     )
     .reduce((cost, modifier) => cost + modifier.by, free ? 0 : 1);
+  const here = findInvestigator(state, investigator)?.locationId;
+  return aimsOf(action, here, to).reduce(
+    (cost, [locationId, aim]) =>
+      locationId === undefined ? cost : cost + locationCost(ctx, state, locationId, aim),
+    ownCost,
+  );
+}
+
+/** The locations `action` is aimed at, each with what the investigator does there. */
+function aimsOf(
+  action: BasicAction,
+  here: InstanceId | undefined,
+  to: InstanceId | undefined,
+): [InstanceId | undefined, LocationAction][] {
+  switch (action) {
+    case 'move':
+      return [
+        [here, 'leave'],
+        [to, 'enter'],
+      ];
+    case 'investigate':
+      return [[here, 'investigate']];
+    case 'draw':
+    case 'resource':
+    case 'play':
+    case 'engage':
+    case 'fight':
+    case 'evade':
+      return [];
+    default:
+      return assertNever(action);
+  }
+}
+
+/** What the cost modifiers naming the location `locationId` add to `action` there. */
+function locationCost(
+  ctx: EngineContext,
+  state: GameState,
+  locationId: InstanceId,
+  action: LocationAction,
+): number {
+  const location = state.cards[locationId];
+  if (location === undefined) return 0;
+  return modifiersOn(ctx, state, { kind: 'card', card: location })
+    .flatMap(({ modifier }) =>
+      modifier.value === 'actionCost' && isLocationCost(modifier) ? [modifier] : [],
+    )
+    .filter((modifier) => modifier.actions.includes(action))
+    .reduce((cost, modifier) => cost + modifier.by, 0);
 }
 
 /**
@@ -74,7 +140,7 @@ export function actionCost(
 function basicActionOf(command: Command): ActionTaken | undefined {
   switch (command.type) {
     case 'MoveInvestigator':
-      return taken('move', command);
+      return taken('move', command, command.to);
     case 'Investigate':
       return taken('investigate', command);
     case 'Fight':
@@ -94,18 +160,21 @@ function basicActionOf(command: Command): ActionTaken | undefined {
   }
 }
 
-/** A basic action a player command takes, and who takes it. */
+/** A basic action a player command takes, who takes it, and for a move where to. */
 interface ActionTaken {
   action: BasicAction;
   investigatorId: InvestigatorId;
   free: boolean;
+  to?: InstanceId;
 }
 
 function taken(
   action: BasicAction,
   { asAction, investigatorId }: ActionCommand & { investigatorId: InvestigatorId },
+  to?: InstanceId,
 ): ActionTaken | undefined {
-  return asAction === undefined ? undefined : { action, investigatorId, free: asAction === 'free' };
+  if (asAction === undefined) return undefined;
+  return { action, investigatorId, free: asAction === 'free', ...(to === undefined ? {} : { to }) };
 }
 
 /**
@@ -136,11 +205,11 @@ export function actionPayment(
   }
   const taken = basicActionOf(command);
   if (!taken) return undefined;
-  const { action, investigatorId, free } = taken;
+  const { action, investigatorId, free, to } = taken;
   return {
     type: 'SpendActions',
     investigatorId,
-    amount: actionCost(ctx, state, investigatorId, action, { free }),
+    amount: actionCost(ctx, state, investigatorId, action, { free, to }),
     for: { kind: 'basic', action },
   };
 }
