@@ -168,8 +168,7 @@ const jpg = 'jpg';
  *   players
  * - the Elusive keyword (Servant of Flame, Sgt. Earl Monroe, Bat Horror; MC2.15)
  * - the Mark of Elokoss each investigator draws as Arkham Alive advances goes into their deck
- * - Mark of Elokoss' damage as its holder's turn ends (assigned to an asset if able) and its
- *   two-action discard
+ * - Mark of Elokoss' damage as its holder's turn ends (assigned to an asset if able)
  * - the Arkham locations' reactions and actions other than First Bank of Arkham's resource,
  *   Arkham Sanatorium's healing and Easttown's ally search (St. Mary's healing, a deck search, a
  *   clue for 5 resources, cards drawn, a charge or secret, a Tome or Spell played
@@ -240,6 +239,7 @@ export const smokeAndMirrorsCardDefs: readonly CardStats[] = [
     traits: ['Curse'],
     quantity: 4,
     abilities: [whenRevealed(putIntoThreatArea())],
+    actions: [{ actions: 2, effects: [discardSelf()] }],
   }),
   enemy({
     code: codes.servantOfFlame,

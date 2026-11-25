@@ -75,10 +75,11 @@ describe('gameActions', () => {
   });
 
   it.each([
-    { kind: 'a card action', free: undefined, left: 2 },
-    { kind: 'a free card action', free: true as const, left: 3 },
-  ])('$kind leaves alder $left of three actions', async ({ free, left }) => {
-    const scare = { effects: [takeHorror(1)], ...(free ? { free } : {}) };
+    { kind: 'a card action', cost: {}, left: 2 },
+    { kind: 'a free card action', cost: { free: true as const }, left: 3 },
+    { kind: 'a card action costing two actions', cost: { actions: 2 }, left: 1 },
+  ])('$kind leaves alder $left of three actions', async ({ cost, left }) => {
+    const scare = { effects: [takeHorror(1)], ...cost };
     const table = PlayTable.start(
       newGame()
         .withLocation(study, blankLocation('study', { actions: [scare] }), { revealed: true })

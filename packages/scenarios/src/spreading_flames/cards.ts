@@ -215,14 +215,15 @@ const jpg = 'jpg';
  *   control (MC2.14)
  * - the agendas' Parley (test intellect (2) to discard a Bystander at your location): it can be
  *   taken only with a Bystander there, a condition actions can't state yet
- * - Your Friend's Room's Engage action and Orne Library's two-action draw (MC1.12)
+ * - Your Friend's Room's Engage action (MC1.12); Orne Library's draw of 3 cards, a deferred
+ *   command
  * - Dr. Henry Armitage's skill bonus and free first action: his controller's to apply, like a
  *   player card's
  * - Hellhound's asset discard after its enemy phase attacks: the players pick the asset, as for
  *   any player card
  * - Bystander's Doomed (MC2.6)
- * - Unspeakable Truths' limit of 1 per investigator, its horror after its holder discovers clues
- *   and its two-action discard
+ * - Unspeakable Truths' limit of 1 per investigator and its horror after its holder discovers
+ *   clues
  */
 export const spreadingFlamesCardDefs: readonly CardStats[] = [
   agenda({
@@ -466,6 +467,7 @@ export const spreadingFlamesCardDefs: readonly CardStats[] = [
     shroud: 4,
     cluesPerInvestigator: 1,
     victory: 1,
+    actions: [{ actions: 2, limit: { per: 'game' }, effects: [drawCards(3)] }],
   }),
   enemy({
     code: '12121',
@@ -543,6 +545,7 @@ export const spreadingFlamesCardDefs: readonly CardStats[] = [
     traits: ['Terror'],
     quantity: 2,
     abilities: [whenRevealed(putIntoThreatArea())],
+    actions: [{ actions: 2, effects: [discardSelf()] }],
   }),
   treachery({
     code: '12126',

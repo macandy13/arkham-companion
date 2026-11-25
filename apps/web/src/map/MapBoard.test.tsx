@@ -198,6 +198,34 @@ describe('MapBoard', () => {
     ]);
   });
 
+  it("prints one action symbol for each of the library's two actions its ability costs", () => {
+    const library = instanceId('library');
+    const table = PlayTable.start(
+      newGame()
+        .withLocation(
+          library,
+          blankLocation('library', { actions: [{ actions: 2, effects: [] }] }),
+          {
+            revealed: true,
+          },
+        )
+        .withInvestigator(alder),
+    );
+
+    render(
+      <PlayingOn table={table}>
+        <MapBoard board={table.board} />
+      </PlayingOn>,
+    );
+
+    const line = within(tile('library')).getByRole('paragraph');
+    expect(
+      within(line)
+        .getAllByRole('img')
+        .map((symbol) => symbol.getAttribute('aria-label')),
+    ).toEqual(['Action', 'Action']);
+  });
+
   describe('a location with a picture of its side', () => {
     // jsdom loads no images, so each test fires the picture's load or error itself.
     const withCellar = house.withLocation(

@@ -370,6 +370,49 @@ describe('Spreading Flames card abilities', () => {
     });
   });
 
+  describe('Orne Library', () => {
+    const library = instanceId('orne_library');
+    const drawThree: Command = {
+      type: 'UseCardAction',
+      investigatorId: alice,
+      cardId: library,
+      action: 0,
+    };
+    /** Alice in Orne Library on her turn. */
+    const aliceInTheLibrary = () =>
+      newGame()
+        .withLocation(library, cardOf(SPREADING_FLAMES_CODES.orneLibrary), { revealed: true })
+        .withInvestigator(alice, { locationId: library })
+        .withTurnOf(alice)
+        .start();
+
+    it('leaves the 3 cards its two-action ability draws to alice', () => {
+      const { context, state } = aliceInTheLibrary();
+
+      const { events } = execute(context, state, drawThree);
+
+      expect(events).toContainEqual(
+        expect.objectContaining({
+          type: 'CommandDeferred',
+          command: expect.objectContaining({ type: 'DrawCards', investigatorId: alice, amount: 3 }),
+        }),
+      );
+    });
+
+    it('lets alice use it only once in the game', () => {
+      const { context, state: started } = aliceInTheLibrary();
+      const used = stateAfter(context, started, drawThree);
+      // A new round, with alice's three actions back.
+      const nextRound = {
+        ...used,
+        meta: { ...used.meta, round: used.meta.round + 1 },
+        investigators: used.investigators.map((each) => ({ ...each, actionsRemaining: 3 })),
+      };
+
+      expect(rejectionFrom(context, nextRound, drawThree).code).toBe('cardActionLimitReached');
+    });
+  });
+
   describe('Science Hall', () => {
     const scienceHall = instanceId('science_hall');
 
@@ -714,6 +757,27 @@ describe('Spreading Flames card abilities', () => {
       ]);
 
       expect(state.cards[truths]?.zone).toEqual(threatAreaOf(alice));
+    });
+
+    it("lets bob, beside alice, discard it from alice's threat area with its two-action ability", () => {
+      const truths = instanceId('unspeakable_truths');
+      const bob = investigatorId('bob');
+      const { context, state: started } = newGame()
+        .withLocation(quad, cardOf('12116'), { revealed: true })
+        .withInvestigator(alice, { locationId: quad })
+        .withInvestigator(bob, { locationId: quad })
+        .withCard(truths, cardOf('12125'), threatAreaOf(alice))
+        .withTurnOf(bob)
+        .start();
+
+      const state = stateAfter(context, started, {
+        type: 'UseCardAction',
+        investigatorId: bob,
+        cardId: truths,
+        action: 0,
+      });
+
+      expect(state.cards[truths]?.zone).toEqual(encounterDiscard);
     });
   });
 

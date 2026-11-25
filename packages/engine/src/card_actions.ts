@@ -56,6 +56,12 @@ export interface CardAction {
    * spend, "during any investigator's turn") need their own check. Absent for an action ability.
    */
   readonly free?: true;
+  /**
+   * How many actions it costs when more than one ("[action][action]:", Orne Library): the players
+   * count them all off (`OfferedCardAction.actions`), as they count one for a plain action.
+   * Absent for a one-action or free ability.
+   */
+  readonly actions?: number;
   /** "(Limit once per …)", when the card prints one. */
   readonly limit?: UsageLimit;
   /** "Spend N resources:" or "Spend N clues:", paid before the effects. */
@@ -316,6 +322,8 @@ export interface OfferedCardAction {
   readonly designator?: CardAction['designator'];
   /** The action costs no action (`CardAction.free`). */
   readonly free?: true;
+  /** The actions it costs when more than one (`CardAction.actions`). */
+  readonly actions?: number;
   /**
    * The clues its cost asks of the investigators as a group (`spend: 'groupClues'`, resolved for
    * the player count), which they split as they like (`UseCardAction.spend`); absent for any other
@@ -351,24 +359,26 @@ export function cardActionsOfferedTo(
   return Object.values(state.cards).flatMap((card) => {
     const actions = cardStats(ctx.cards, card.code).actions ?? [];
     if (actions.length === 0 || !offersActionsTo(state, card, investigator)) return [];
-    return actions.flatMap(({ designator, free, limit, cost, condition }, action) =>
-      actionWithinLimit(state, card, action, limit, investigator.id) &&
-      canPay(ctx, state, investigator, cost) &&
-      actionConditionHolds(ctx, state, investigator, card.id, condition)
-        ? [
-            {
-              cardId: card.id,
-              action,
-              ...(designator === undefined ? {} : { designator }),
-              ...(free === undefined ? {} : { free }),
-              ...(cost?.spend === 'groupClues'
-                ? { groupClues: groupClueAmount(state, cost.amount) }
-                : {}),
-              ...(cost?.spend === 'clues' ? { clues: ownClueAmount(state, cost.amount) } : {}),
-              ...numberOfKind(actions, action),
-            },
-          ]
-        : [],
+    return actions.flatMap(
+      ({ designator, free, actions: actionCost, limit, cost, condition }, action) =>
+        actionWithinLimit(state, card, action, limit, investigator.id) &&
+        canPay(ctx, state, investigator, cost) &&
+        actionConditionHolds(ctx, state, investigator, card.id, condition)
+          ? [
+              {
+                cardId: card.id,
+                action,
+                ...(designator === undefined ? {} : { designator }),
+                ...(free === undefined ? {} : { free }),
+                ...(actionCost === undefined ? {} : { actions: actionCost }),
+                ...(cost?.spend === 'groupClues'
+                  ? { groupClues: groupClueAmount(state, cost.amount) }
+                  : {}),
+                ...(cost?.spend === 'clues' ? { clues: ownClueAmount(state, cost.amount) } : {}),
+                ...numberOfKind(actions, action),
+              },
+            ]
+          : [],
     );
   });
 }
@@ -377,17 +387,21 @@ export function cardActionsOfferedTo(
  * One action ability as its card prints it (`LocationView.printedActions`): its designator, whether
  * it is free, and its `number` among the card's actions of the same kind (`OfferedCardAction`).
  */
-export type PrintedActionView = Pick<OfferedCardAction, 'designator' | 'free' | 'number'>;
+export type PrintedActionView = Pick<
+  OfferedCardAction,
+  'designator' | 'free' | 'actions' | 'number'
+>;
 
 /**
  * How a card prints its `actions`, whoever may take them (`LocationView.printedActions`): each
- * one's designator, whether it is free, and its number among the actions of its kind, as
+ * one's designator, whether it is free, the actions it costs, and its number among the actions of its kind, as
  * `cardActionsOfferedTo` numbers them.
  */
 export function printedActions(actions: readonly CardAction[]): PrintedActionView[] {
-  return actions.map(({ designator, free }, action) => ({
+  return actions.map(({ designator, free, actions: actionCost }, action) => ({
     ...(designator === undefined ? {} : { designator }),
     ...(free === undefined ? {} : { free }),
+    ...(actionCost === undefined ? {} : { actions: actionCost }),
     ...numberOfKind(actions, action),
   }));
 }

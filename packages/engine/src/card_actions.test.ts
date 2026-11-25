@@ -638,6 +638,28 @@ describe('free actions', () => {
   });
 });
 
+describe('actions that cost two actions', () => {
+  /** "[action][action]: Take 1 horror": the hall's one action, costing two. */
+  const slowScare: CardAction = { ...scareAction, actions: 2 };
+  /** Alice in the hall on her turn. */
+  const aliceInSlowHall = newGame()
+    .withLocation(hall, blankLocation('hall', { actions: [slowScare] }), { revealed: true })
+    .withInvestigator(alice, { locationId: hall })
+    .withTurnOf(alice);
+
+  it('offers it with its cost of two actions', () => {
+    const table = PlayTable.start(aliceInSlowHall);
+
+    expect(table.board.cardActions(alice)).toMatchObject([{ cardId: hall, action: 0, actions: 2 }]);
+  });
+
+  it('prints its cost of two actions on the location', () => {
+    const table = PlayTable.start(aliceInSlowHall);
+
+    expect(table.board.location(hall)).toMatchObject({ printedActions: [{ actions: 2 }] });
+  });
+});
+
 describe('action conditions', () => {
   const lita = instanceId('lita');
   /** The hall's one action scares its taker "if Lita is at your location"; alice is in the hall, on her turn. */

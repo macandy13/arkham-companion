@@ -2,6 +2,7 @@ import {
   advanceAct,
   anEnemy,
   discard,
+  discardSelf,
   afterDiscoveringClues,
   afterEntering,
   atEndOfPhase,
@@ -255,8 +256,7 @@ const willpowerOrHorror = skillTest('willpower', 4, { onFail: [takeHorror(1)] })
  * - Blasphemous Invocation's Cultist drawn after a fail by 0 (only once a player card lowered the
  *   difficulty to 0) against a Cultist without doom: no doom was placed, but the app only draws
  *   when there is no such Cultist
- * - Languor's limit of 1 per investigator, its discard as its holder's turn begins and its
- *   two-action discard
+ * - Languor's limit of 1 per investigator and its discard as its holder's turn begins
  * - Collector's deckbuilding: the players add it to their decks
  */
 export const queenOfAshCardDefs: readonly CardStats[] = [
@@ -667,6 +667,7 @@ export const queenOfAshCardDefs: readonly CardStats[] = [
     traits: ['Hex', 'Bane'],
     quantity: 2,
     abilities: [whenRevealed(putIntoThreatArea())],
+    actions: [{ actions: 2, effects: [discardSelf()] }],
   }),
   treachery({
     code: '12194',

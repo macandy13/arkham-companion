@@ -112,9 +112,10 @@ function taken(
  * The `SpendActions` that pays what the player command `command` costs as an action, which
  * `handle` resolves before the command itself (and before the attacks of opportunity it provokes):
  * a basic action at its current `actionCost`, named so a raise of the round's first is paid once;
- * a card ability with the action symbol one action, a "[free]" one none. None for a command that
- * is no action. The players still correct the count by hand (`AdjustActions`, `ManualAdjust`),
- * which the log keeps apart from a payment.
+ * a card ability with the action symbol one action, or two for "[action][action]:"
+ * (`CardAction.actions`), a "[free]" one none. None for a command that is no action. The
+ * players still correct the count by hand (`AdjustActions`, `ManualAdjust`), which the log keeps
+ * apart from a payment.
  */
 export function actionPayment(
   ctx: EngineContext,
@@ -123,9 +124,15 @@ export function actionPayment(
 ): SpendActions | undefined {
   if (command.type === 'UseCardAction') {
     const { investigatorId, cardId, action } = command;
-    return cardActionOf(ctx, state, command).free
+    const { free, actions = 1 } = cardActionOf(ctx, state, command);
+    return free
       ? undefined
-      : { type: 'SpendActions', investigatorId, amount: 1, for: { kind: 'card', cardId, action } };
+      : {
+          type: 'SpendActions',
+          investigatorId,
+          amount: actions,
+          for: { kind: 'card', cardId, action },
+        };
   }
   const taken = basicActionOf(command);
   if (!taken) return undefined;

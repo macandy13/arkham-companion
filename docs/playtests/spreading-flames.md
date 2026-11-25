@@ -31,6 +31,7 @@ The scripted golden game is [`end_to_end.test_support.ts`](../../packages/scenar
 **Act 3, Searching for Dr. Armitage**
 
 - [ ] When the round ends with 3 clues per investigator held by those at Orne Library, the lead is asked whether to spend them.
+- [ ] Orne Library offers its draw once per game for two actions; drawing the 3 cards is by hand.
 - [ ] Its reverse side spawns the Servant of Flame at Miskatonic Quad (it engages an investigator there) and places 3 clues per investigator on the Quad; then the lead draws one Fire! per investigator from the encounter deck or discard pile, one after the other, and the encounter deck is shuffled.
 
 **Act 4, Blaze of Glory**
@@ -59,7 +60,7 @@ The scripted golden game is [`end_to_end.test_support.ts`](../../packages/scenar
 
 - [ ] Cosmic Evils: the drawer chooses 1 doom on the agenda (the app asks to advance it at the threshold) or 1 damage and 1 horror and a surge.
 - [ ] Forbidden Secrets surges when its drawer has no clues.
-- [ ] Unspeakable Truths goes to the drawer's threat area.
+- [ ] Unspeakable Truths goes to the drawer's threat area; its two-action discard counts off two actions.
 - [ ] Noxious Smoke: the drawer chooses willpower or agility (3), then 1 damage per point failed.
 - [ ] Extraplanar Visions: the drawer chooses willpower or intellect and enters the cards in their hand, which is the difficulty; a fail deals 1 damage and asks them to discard 1 card at random.
 - [ ] A drawn Fire! attaches to the nearest location without one, the drawer's own first; the lead picks between equally near ones.
@@ -79,9 +80,9 @@ These are done by hand at the table; the app does not do them.
 - The reverse sides' tests of Past Curfew and Lit Up (each investigator tests), and the agendas' Parley to discard a Bystander.
 - Escape the Dorms' objective: the act advances when each undefeated investigator is at Miskatonic Quad. The players advance it with "Advance by hand" on the act's full card.
 - Searching for Dr. Armitage's reverse side: Dr. Henry Armitage under an investigator's control. His skill bonus and free first action are his controller's to apply.
-- Your Friend's Room's Engage action and Orne Library's two-action draw.
+- Your Friend's Room's Engage action, and the 3 cards Orne Library's two-action ability draws (a by-hand notice).
 - Which asset Hellhound's enemy phase attack discards (the app leaves the pick to the player), and Bystander's Doomed keyword.
-- Unspeakable Truths' limit of 1 per investigator, its horror after its holder discovers clues and its two-action discard.
+- Unspeakable Truths' limit of 1 per investigator and its horror after its holder discovers clues.
 - The tablet's "reveal another token" and damage, and the elder thing's Fire! draw.
 - The resolutions' deck changes and upgrades.
 
