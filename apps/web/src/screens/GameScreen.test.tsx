@@ -631,7 +631,7 @@ describe('GameScreen header', () => {
     await waitFor(() => expect(store.getState().current?.state.meta.resolution).toBe('R2'));
   });
 
-  it('lays the encounter deck with its discard pile, agenda, act, scenario with the set-aside cards, the chaos bag over the victory display and the token pool out under their labels', async () => {
+  it('lays the chaos bag, the encounter deck with its discard pile, agenda, act, scenario with the set-aside cards, the victory display and the token pool out under their labels', async () => {
     await renderTheGathering('game-screen-encounter-test');
 
     // The investigator cards have headers too, so the board's header is the one holding the deck.
