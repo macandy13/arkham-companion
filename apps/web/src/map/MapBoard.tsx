@@ -22,7 +22,10 @@ import { EnemyBubble } from '../enemies/EnemyBubble';
 import { useDoubleTapOn } from '../screens/useDoubleTap';
 import { LocationBubble } from './LocationBubble';
 import { LocationDetails } from './LocationDetails';
-import { CardPatterns, EnemyToken, LocationTile, Pawn, type TilePiece } from './LocationTile';
+import { CardPatterns } from './CardPatterns';
+import { EnemyToken } from './EnemyToken';
+import { LocationTile, type TilePiece } from './LocationTile';
+import { Pawn } from './Pawn';
 import {
   connectionEnds,
   drawingSize,

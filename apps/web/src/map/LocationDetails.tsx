@@ -19,7 +19,8 @@ import {
 } from '../screens/ActionRow';
 import { SplitAction } from '../screens/SplitAction';
 import type { GameActions } from '../state/gameActions';
-import { CardPatterns, LocationTile } from './LocationTile';
+import { CardPatterns } from './CardPatterns';
+import { LocationTile } from './LocationTile';
 import { TILE } from './mapLayout';
 import { usePlay } from '../screens/PlayContext';
 
