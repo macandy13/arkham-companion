@@ -387,6 +387,7 @@ test(
     await bag.getByRole('button', { name: /^Elder Sign/ }).click();
     await bag.getByRole('button', { name: 'Seal Elder Sign on Roland Banks' }).click();
 
+    await bag.getByRole('tab', { name: 'Sealed · 1' }).click();
     const sealed = bag.getByRole('list', { name: 'Sealed' });
     await expect(sealed).toHaveText(/Elder Sign on Roland Banks/);
     await sealed.scrollIntoViewIfNeeded();
@@ -400,11 +401,12 @@ test(
     await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
     const bag = await openChaosBag(page, isMobile);
 
+    await bag.getByRole('tab', { name: 'Reveal tokens' }).click();
     await bag.getByRole('button', { name: 'Reveal one token more' }).click();
     await bag.getByRole('button', { name: 'Reveal one token more' }).click();
     await bag.getByRole('button', { name: 'Reveal 3 tokens' }).click();
 
-    const revealed = bag.getByRole('group', { name: 'Revealed tokens' });
+    const revealed = bag.getByRole('list', { name: 'Revealed tokens' });
     await expect(revealed.getByRole('listitem')).toHaveCount(3);
     await revealed.scrollIntoViewIfNeeded();
   },
