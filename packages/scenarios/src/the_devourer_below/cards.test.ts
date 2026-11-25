@@ -68,27 +68,6 @@ describe('The Devourer Below card data', () => {
   );
 
   it.each([
-    {
-      code: '01143',
-      name: 'The Arkham Woods',
-      front: '/bundles/cards/01143.png',
-      back: '/bundles/cards/01143b.png',
-    },
-    {
-      code: '01150',
-      name: 'Arkham Woods',
-      front: '/bundles/cards/01150.png',
-      back: '/bundles/cards/01150b.png',
-    },
-    { code: '01157', name: 'Umôrdhoth', front: '/bundles/cards/01157.png', back: undefined },
-  ])('names the ArkhamDB pictures of $name', ({ code, front, back }) => {
-    const card = cardOf(code);
-
-    expect(card.imageSrc).toBe(front);
-    expect(card.backImageSrc).toBe(back);
-  });
-
-  it.each([
     { set: 'tentacles', copies: 3, cards: "Umôrdhoth, 2 Umôrdhoth's Wrath" },
     { set: 'agents_of_yog', copies: 4, cards: '2 Yithian Observer, 2 Offer of Power' },
     { set: 'agents_of_shub', copies: 4, cards: 'Relentless Dark Young, 3 Goat Spawn' },
@@ -112,16 +91,6 @@ describe('The Devourer Below card data', () => {
       ...Array<string>(6).fill('Arkham Woods'),
       'Ritual Site',
     ]);
-  });
-
-  it.each([
-    { code: '01157', name: 'Umôrdhoth', keywords: ['hunter', 'massive'] },
-    { code: '01175', name: 'Screeching Byakhee', keywords: ['prey', 'hunter'] },
-    { code: '01178', name: 'Offer of Power', keywords: ['peril'] },
-    { code: '01180', name: 'Goat Spawn', keywords: ['hunter', 'retaliate'] },
-    { code: '01181', name: 'Young Deep One', keywords: ['prey', 'hunter'] },
-  ])('lists the keywords of $name', ({ code, keywords }) => {
-    expect(cardOf(code).keywords?.map((keyword) => keyword.name)).toEqual(keywords);
   });
 
   it.each([

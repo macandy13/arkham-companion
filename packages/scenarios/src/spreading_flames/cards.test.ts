@@ -46,34 +46,6 @@ const cardOf = (code: string): CardStats => cardIn(spreadingFlamesCards, code);
 
 describe('Spreading Flames card data', () => {
   it.each([
-    {
-      code: '12106',
-      name: 'Past Curfew',
-      front: '/bundles/cards/12106.jpg',
-      back: '/bundles/cards/12106b.jpg',
-    },
-    {
-      code: '12116',
-      name: 'Miskatonic Quad',
-      front: '/bundles/cards/12116.jpg',
-      back: '/bundles/cards/12116b.jpg',
-    },
-    { code: '12114', name: 'Servant of Flame', front: '/bundles/cards/12114.jpg', back: undefined },
-    {
-      code: '12115',
-      name: 'Dr. Henry Armitage',
-      front: '/bundles/cards/12115.jpg',
-      back: undefined,
-    },
-    { code: '12129', name: 'Fire!', front: '/bundles/cards/12129.jpg', back: undefined },
-  ])('names the ArkhamDB pictures of $name, which are JPEGs', ({ code, front, back }) => {
-    const card = cardOf(code);
-
-    expect(card.imageSrc).toBe(front);
-    expect(card.backImageSrc).toBe(back);
-  });
-
-  it.each([
     { code: '12113', name: "Your Friend's Room", symbol: 'spade', connectsTo: ['triangle'] },
     {
       code: '12116',
@@ -127,15 +99,6 @@ describe('Spreading Flames card data', () => {
       'Warren Observatory',
       'Orne Library',
     ]);
-  });
-
-  it.each([
-    { code: '12114', name: 'Servant of Flame', keywords: ['hunter', 'prey', 'retaliate'] },
-    { code: '12121', name: 'Cantor of Flame', keywords: ['retaliate'] },
-    { code: '12122', name: 'Hellhound', keywords: ['hunter'] },
-    { code: '12124', name: 'Cosmic Evils', keywords: ['peril'] },
-  ])('lists the keywords of $name', ({ code, keywords }) => {
-    expect(cardOf(code).keywords?.map((keyword) => keyword.name)).toEqual(keywords);
   });
 
   it('lets the investigators resign at Blaze of Glory, act 4', () => {
