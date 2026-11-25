@@ -146,6 +146,27 @@ describe('describeDecision', () => {
     );
   });
 
+  it.each([
+    { prompt: 'decision.chooseEnemyFor', question: 'Which enemy does Swarm of Rats affect?' },
+    { prompt: 'decision.chooseCardFor', question: 'Which card does Swarm of Rats affect?' },
+    {
+      prompt: 'decision.chooseInvestigatorFor',
+      question: 'Which investigator does Swarm of Rats affect?',
+    },
+  ])('asks whom a pick affects for $prompt', ({ prompt, question }) => {
+    const pick: Decision = {
+      ...engage,
+      kind: 'chooseCard',
+      prompt,
+      options: [
+        { id: 'left', label: 'Left', commands: [] },
+        { id: 'right', label: 'Right', commands: [] },
+      ],
+    };
+
+    expect(describeDecision(context, state, pick)).toEqual(`${question} Left / Right [chooseCard]`);
+  });
+
   it('shows the key of a prompt without a sentence', () => {
     const custom: Decision = { ...engage, subject: undefined, prompt: 'decision.chooseCellar' };
 
