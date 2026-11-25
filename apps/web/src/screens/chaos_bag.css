@@ -2,7 +2,9 @@
  * The chaos bag's dialog (ChaosBag), a token tray: three tabs on one rule, the selected one
  * underlined in brass like the status row's phase; under them its view. In the bag, every token
  * lies on a felt tray as if tipped out on the table, the one picked to seal ringed in brass, then
- * the buttons to seal it on and the bless and curse steppers, each − count +. Sealed lists the
+ * the buttons to seal it on or remove it, the bless and curse steppers, each − count +, and Change
+ * the bag: how long a change lasts (in a campaign) and Add a token, which opens a row of the
+ * tokens to add. Sealed lists the
  * sealed tokens, one per line with their Release button. Reveal steps its count like bless and
  * curse, lays the revealed tokens on the tray, and ends on Put back and Reveal, Reveal the view's
  * one brass primary. On a phone the tray's tokens are smaller, so the sheet keeps them in view.
@@ -89,7 +91,11 @@
 }
 
 /* A token on the tray is the button itself, no pill around it. */
-#board dialog[data-shell] section[data-part='chaos-bag'] [data-part='tray'] button {
+#board
+  dialog[data-shell]
+  section[data-part='chaos-bag']
+  :is([data-part='tray'], [data-part='addable'])
+  button {
   min-width: 0;
   min-height: 0;
   padding: 0;
@@ -115,6 +121,13 @@
   flex-wrap: wrap;
   gap: var(--space-2);
   align-items: center;
+}
+
+/* Change the bag: its heading on a line of its own over its pills. */
+#board dialog[data-shell] section[data-part='chaos-bag'] [role='tabpanel'] > [role='group'] > h3 {
+  flex-basis: 100%;
+  margin: 0;
+  font-size: var(--font-size-body);
 }
 
 #board dialog[data-shell] section[data-part='chaos-bag'] [role='tabpanel'] > footer {

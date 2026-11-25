@@ -161,6 +161,15 @@ export const appTexts = {
     noneSealed: 'No token is sealed.',
     revealHint: 'For a card that reveals tokens outside a skill test. They stay in the bag.',
     revealHowMany: 'How many tokens to reveal',
+    change: 'Change the bag',
+    lasts: {
+      scenario: 'For this scenario',
+      campaign: 'For the campaign',
+    },
+    add: 'Add a token',
+    addWhich: 'Tokens to add',
+    addToken: 'Add a {{token}} token',
+    remove: 'Remove a {{token}} token',
   },
   header: {
     round: 'Round {{round}}',

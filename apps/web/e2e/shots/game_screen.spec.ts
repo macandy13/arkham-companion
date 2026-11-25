@@ -412,6 +412,24 @@ test(
   },
 );
 
+test(
+  'a Cultist token added to the chaos bag as a card says, the Skull tapped to seal or remove it',
+  { tag: '@shot' },
+  async ({ page, isMobile }) => {
+    await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
+    const bag = await openChaosBag(page, isMobile);
+
+    await bag.getByRole('button', { name: 'Add a token' }).click();
+    await bag.getByRole('button', { name: 'Add a Cultist token' }).click();
+    await expect(bag.getByRole('tab', { name: 'In the bag · 17' })).toBeVisible();
+    await bag.getByRole('button', { name: 'Skull' }).first().click();
+
+    const remove = bag.getByRole('button', { name: 'Remove a Skull token' });
+    await expect(remove).toBeVisible();
+    await remove.scrollIntoViewIfNeeded();
+  },
+);
+
 test('the attack of opportunity Roland Banks provokes by taking a resource', async ({ page }) => {
   await resumeImportedGame(
     page,

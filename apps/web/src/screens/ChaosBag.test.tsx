@@ -1,7 +1,14 @@
 // @vitest-environment jsdom
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
-import { blankLocation, instanceId, investigatorId, newGame, PlayTable } from '@arkham/engine';
+import {
+  blankLocation,
+  campaign,
+  instanceId,
+  investigatorId,
+  newGame,
+  PlayTable,
+} from '@arkham/engine';
 import { initI18n } from '../i18n';
 import { PlayingOn } from '../state/gameActions.test_support';
 import { ChaosBag } from './ChaosBag';
@@ -202,5 +209,39 @@ describe('ChaosBag', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Put back' }));
 
     expect(screen.queryByRole('list', { name: 'Revealed tokens' })).toBeNull();
+  });
+
+  it('removes the tapped skull for the scenario, offering no campaign in a standalone game', async () => {
+    const table = PlayTable.start(game);
+    render(
+      <PlayingOn table={table}>
+        <ChaosBag board={table.board} />
+      </PlayingOn>,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Skull' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Remove a Skull token' }));
+
+    await waitFor(() => expect(table.board.chaosBag).toEqual(['-1', '-1', 'elderSign']));
+    expect(table.state.chaosBagChanges).toEqual([]);
+    expect(screen.queryByRole('button', { name: 'For the campaign' })).toBeNull();
+  });
+
+  it('adds a cultist token for the rest of the campaign in a campaign game', async () => {
+    const table = PlayTable.start(game.withCampaign(campaign.createEmptyLog()));
+    render(
+      <PlayingOn table={table}>
+        <ChaosBag board={table.board} />
+      </PlayingOn>,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'For the campaign' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Add a token' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Add a Cultist token' }));
+
+    await waitFor(() =>
+      expect(table.board.chaosBag).toEqual(['-1', 'skull', '-1', 'elderSign', 'cultist']),
+    );
+    expect(table.state.chaosBagChanges).toEqual([{ token: 'cultist', change: 'add' }]);
   });
 });

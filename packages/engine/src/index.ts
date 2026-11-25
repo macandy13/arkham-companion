@@ -117,7 +117,13 @@ export {
   type DrawnTokenState,
   type TestDraw,
 } from './draw_tokens';
-export { poolTokensLeft, tokenCounts, type PoolToken, type TokenCount } from './chaos_bag';
+export {
+  isPoolToken,
+  poolTokensLeft,
+  tokenCounts,
+  type PoolToken,
+  type TokenCount,
+} from './chaos_bag';
 export { skillTestOdds, type SkillTestOdds } from './skill_test_odds';
 export {
   revealsAnotherToken,
