@@ -34,7 +34,7 @@ The board stretches to the foot of the screen, so the map always takes the room 
 A phone held upright (`(orientation: portrait) and (max-width: 40rem)`) gets the compact mode (M3.14, designed in the phone prototype of #432, removed once the app showed the same).
 The same query opens a block in [`tokens.css`](../../apps/web/src/styles/tokens.css) (smaller header cards, tokens, skills and counters), `game.css` and [`investigators.css`](../../apps/web/src/investigators/investigators.css), written out in each, since a custom property cannot stand in a media query. On a phone:
 
-- the header shows only its four cards in one row:
+- the header shows its four cards in one row, a little smaller, with the chaos bag and the token pool small at either end (ME.32c; a tap on the bag opens its dialog, a tap on the pool expands the header on it):
   - the slot labels are hidden for the eye only,
   - and the piles, the victory display and the card plates are hidden.
   - A tap on a card expands the header in place on it (below);
@@ -43,10 +43,10 @@ The same query opens a block in [`tokens.css`](../../apps/web/src/styles/tokens.
 
 ### Detail view
 
-On a phone a tap on a header card, the map's expand button or the investigator's name opens the **detail view** on it instead (`usePhone` and `useDetailView` in [`screens/`](../../apps/web/src/screens/), `#board[data-view]` naming the row shown: `cards`, `map` or `investigators`).
+On a phone a tap on a header card or the token pool, the map's expand button or the investigator's name opens the **detail view** on it instead (`usePhone` and `useDetailView` in [`screens/`](../../apps/web/src/screens/), `#board[data-view]` naming the row shown: `cards`, `map` or `investigators`).
 It rearranges the same parts and adds no second copy of them:
 
-- The header expands in place (`cards`, M3.15a): its five places (its four cards and the victory display) snap sideways at a larger card size, with their labels, piles and plates back. The status row, the map and the compact investigator stay, and the map shrinks to the room left.
+- The header expands in place (`cards`, M3.15a): its seven places (the chaos bag, its four cards, the victory display and the token pool, which it can open on: `HeaderCardKind` `'pool'`, also by a swipe down on it) snap sideways at a larger card size, with their labels, piles and plates back. The status row, the map and the compact investigator stay, and the map shrinks to the room left.
 - The investigator bar expands in place the same way (`investigators`, M3.15b): every panel snaps sideways, the whole card (`WholeCard` in [`InvestigatorCard.tsx`](../../apps/web/src/investigators/InvestigatorCard.tsx), the card the art opens elsewhere, with its notebook page) in place of the strip, under the compact header and the shrunk map.
 - The map (`map`) takes the whole screen, the other parts stepping aside.
 - A vertical swipe does the same as the taps (M3.15c, [`useVerticalSwipe`](../../apps/web/src/screens/useVerticalSwipe.ts) on the board, [`swipeAction`](../../apps/web/src/screens/detailSwipe.ts)): down on the compact header expands it on the card under the finger, up on the compact investigators expands their bar on the panel under it, and the opposite swipe folds the expanded part. A swipe must travel twice as far up or down as across, so the sideways scrolling stays; a touch on a token to drag (`[data-drag]`) and the whole-screen map's panning never swipe.
