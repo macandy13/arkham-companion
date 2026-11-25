@@ -46,7 +46,7 @@ test('play the phases from the header', async ({ page }) => {
   });
 
   await test.step('Dismiss the reason', async () => {
-    await page.getByRole('button', { name: 'OK' }).click();
+    await page.getByRole('button', { name: 'OK', exact: true }).click();
     await expect(page.getByRole('alert')).toBeHidden();
   });
 
