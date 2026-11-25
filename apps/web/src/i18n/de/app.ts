@@ -134,6 +134,8 @@ export const appTexts = {
   },
   chaosBag: {
     title: 'Chaosbeutel',
+    open_one: 'Chaosbeutel, {{count}} Marker',
+    open_other: 'Chaosbeutel, {{count}} Marker',
     contents: 'Marker im Beutel',
     sealOn: '{{token}} bei {{investigator}} versiegeln',
     sealed: 'Versiegelt',

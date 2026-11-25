@@ -3,6 +3,7 @@ import { type BoardView, type EncounterCardView } from '@arkham/engine';
 import { EncounterPiles, HeaderPile, type PileProps } from '../encounter/EncounterPiles';
 import type { OpenGame } from '../state/appStore';
 import { TokenPool } from './TokenPool';
+import { ChaosBagButton } from './ChaosBagButton';
 import type { HeaderCardKind } from './useDetailView';
 import { HeaderSlot } from './HeaderSlot';
 import { type PrintedReference, ScenarioStatus } from './ScenarioStatus';
@@ -12,7 +13,8 @@ import { ActStatus } from './ActStatus';
 /**
  * The play screen's header, laid out like the scenario's cards on the table, centred and each under
  * its label like the playmat's: the encounter deck and its discard pile, the agenda, the act and
- * the scenario card. The scenario's name is the screen's heading. The cards' buttons wait while a
+ * the scenario card, the chaos bag over the victory display (`ChaosBagButton`), and the token pool
+ * at the right end (`TokenPool`). The scenario's name is the screen's heading. The cards' buttons wait while a
  * step is queued (`OpenGame.busy`), since a second tap would act on whatever the first one leaves
  * open; the agenda's doom and the act's clues change in place through their − / + bubbles. The round, the phase and the buttons that run the game sit in the status
  * row below (`GameStatus`). A tap on the agenda or act opens it on the card shell (`BookDetails`).
@@ -45,7 +47,6 @@ export function GameHeader({
 
   return (
     <header>
-      <TokenPool />
       <HeaderSlot label={t('header.encounterDeck')} card="encounter" onOpen={onOpenCard}>
         <EncounterPiles {...piles} />
       </HeaderSlot>
@@ -56,8 +57,10 @@ export function GameHeader({
         <HeaderPile pile="setAside" {...piles} />
       </HeaderSlot>
       <HeaderSlot label={t('header.victory')}>
+        <ChaosBagButton board={board} />
         <HeaderPile pile="victoryDisplay" {...piles} />
       </HeaderSlot>
+      <TokenPool />
     </header>
   );
 }

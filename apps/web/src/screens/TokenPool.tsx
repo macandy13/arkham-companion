@@ -10,7 +10,7 @@ import { adjustStat, dealDamageTo, placeDoomOnAgenda } from '@arkham/engine';
 import { usePlay } from './PlayContext';
 
 /**
- * The token pool in the header's top left corner (M3.11c): a doom, a clue, a damage, a horror and
+ * The token pool in the header's top right corner (M3.11c): a doom, a clue, a damage, a horror and
  * a resource token, the supply on the table that card effects take tokens from and that tokens
  * taken off go back to. A token dragged off it is placed where it is dropped, as a card effect
  * places it, one step a drop:
