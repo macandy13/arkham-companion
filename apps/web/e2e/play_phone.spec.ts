@@ -35,17 +35,17 @@ test('expand the header in place and swipe through its cards on a phone', async 
     await expect(page.getByRole('region', { name: 'Act' })).toBeInViewport({ ratio: 1 });
     await expect(page.getByRole('figure', { name: 'House' })).toBeInViewport();
     await expect(page.getByRole('region', { name: 'Roland Banks' })).toBeInViewport();
-    // The header's places: encounter deck, agenda, act, scenario and victory display.
-    await expect(cardDots).toHaveCount(5);
-    await expect(cardDots.nth(2)).toHaveAttribute('data-current');
+    // The header's places: chaos bag, encounter deck, agenda, act, scenario, victory display and token pool.
+    await expect(cardDots).toHaveCount(7);
+    await expect(cardDots.nth(3)).toHaveAttribute('data-current');
   });
 
   await test.step('Swipe back to the agenda', async () => {
     await page
       .locator('#board > header')
-      .evaluate((header) => header.scrollTo({ left: header.clientWidth }));
+      .evaluate((header) => header.scrollTo({ left: 2 * header.clientWidth }));
     await expect(page.getByRole('region', { name: 'Agenda' })).toBeInViewport({ ratio: 1 });
-    await expect(cardDots.nth(1)).toHaveAttribute('data-current');
+    await expect(cardDots.nth(2)).toHaveAttribute('data-current');
   });
 
   await test.step('Open the map on the whole screen', async () => {
