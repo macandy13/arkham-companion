@@ -257,7 +257,7 @@ export type RelativeCard =
  * once per enemy, in card order. Unlike hunters, nobody picks the order: one enemy's step
  * towards a fixed location changes no other enemy's path.
  */
-export type EachEnemyRef = { ref: 'eachEnemy' } & EachEnemyFilter;
+type EachEnemyRef = { ref: 'eachEnemy' } & EachEnemyFilter;
 
 /**
  * Each card in the zone `zone` names, or in each of a list of zones, that its filter matches
@@ -267,7 +267,7 @@ export type EachEnemyRef = { ref: 'eachEnemy' } & EachEnemyFilter;
  * when no card matches. With `top`, only the top `top` cards of each zone count: "the top 3
  * cards of the encounter deck", fewer when the zone holds fewer.
  */
-export type EachInZoneRef = {
+type EachInZoneRef = {
   ref: 'eachInZone';
   zone: Templated<Zone> | readonly Templated<Zone>[];
   top?: number;
@@ -290,7 +290,7 @@ export type EachInPlayRef = {
 } & CardFilter;
 
 /** Each investigator still in the scenario, in player order; only those at `at` when given. */
-export type EachInvestigatorRef = { ref: 'eachInvestigator'; at?: RelativeCard };
+type EachInvestigatorRef = { ref: 'eachInvestigator'; at?: RelativeCard };
 
 /**
  * An investigator an ability names relative to its window: the one the
@@ -315,7 +315,7 @@ export type RelativeInvestigator =
  * gives them. The effect then becomes a decision with an option per candidate; none when there is
  * no candidate.
  */
-export interface Selector<Among> {
+interface Selector<Among> {
   ref: 'pick';
   among: Among;
   except?: RelativeCard;
