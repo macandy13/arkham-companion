@@ -17,8 +17,9 @@ import {
   cardActionsOn,
   type ActionIcon,
 } from '../screens/ActionRow';
+import { useCluePayment } from '../screens/CluePaymentDialog';
 import { SplitAction } from '../screens/SplitAction';
-import type { GameActions } from '../state/gameActions';
+import type { ClueSpend, GameActions } from '../state/gameActions';
 import { CardPatterns } from './CardPatterns';
 import { LocationTile } from './LocationTile';
 import { TILE } from './mapLayout';
@@ -147,6 +148,7 @@ function LocationPage({
   const offered = locationActions(board, location, actions);
   const printed = cardActionsOn(board, location.id);
   const revealable = !location.revealed;
+  const { dialog, pay } = useCluePayment(board);
   const leaveFor = (then: LocationAction['then']) => {
     switch (then) {
       case 'test':
@@ -161,14 +163,16 @@ function LocationPage({
         assertNever(then);
     }
   };
-  const wayOf = ({ key, cost, then }: LocationAction, play: () => Promise<void>) => ({
-    key,
-    actions: cost,
-    name: t(`location.${key}`, { count: cost }),
-    onPick: () => {
+  const take = ({ groupClues, play, then }: LocationAction) =>
+    pay(groupClues, location.id, (spend) => {
       leaveFor(then);
-      void play();
-    },
+      void play?.(spend);
+    });
+  const wayOf = (action: LocationAction) => ({
+    key: action.key,
+    actions: action.cost,
+    name: t(`location.${action.key}`, { count: action.cost }),
+    onPick: () => take(action),
   });
   const button = (action: LocationAction) => (
     <ActionButton
@@ -178,10 +182,7 @@ function LocationPage({
       caption={t(`location.caption.${action.icon}`)}
       name={t(`location.${action.key}`, { count: action.cost })}
       disabled={busy || action.play === undefined}
-      onClick={() => {
-        leaveFor(action.then);
-        void action.play?.();
-      }}
+      onClick={() => take(action)}
     />
   );
   const investigateHere = offered.find(({ key }) => key === 'investigateAction');
@@ -205,9 +206,7 @@ function LocationPage({
         icon="investigate"
         caption={t('location.caption.investigate')}
         waysName={t('ways.investigate')}
-        {...(investigateHere?.play === undefined
-          ? {}
-          : { primary: wayOf(investigateHere, investigateHere.play) })}
+        {...(investigateHere?.play === undefined ? {} : { primary: wayOf(investigateHere) })}
         ways={investigateWays}
         disabled={busy}
       />
@@ -217,7 +216,7 @@ function LocationPage({
   const pills = [
     ...(investigateHere !== undefined || investigateWays.length > 0 ? [investigate] : []),
     ...offered.filter(({ key }) => key === 'takeClue').map(button),
-    ...(moveAction?.play === undefined
+    ...(moveAction === undefined
       ? []
       : [
           <SplitAction
@@ -225,9 +224,9 @@ function LocationPage({
             icon="move"
             caption={t('location.caption.move')}
             waysName={t('ways.move')}
-            primary={wayOf(moveAction, moveAction.play)}
-            ways={moveFree?.play === undefined ? [] : [wayOf(moveFree, moveFree.play)]}
-            disabled={busy}
+            primary={wayOf(moveAction)}
+            ways={moveFree?.play === undefined ? [] : [wayOf(moveFree)]}
+            disabled={busy || moveAction.play === undefined}
           />,
         ]),
   ];
@@ -238,6 +237,7 @@ function LocationPage({
       <AttachedCards board={board} host={location.id} />
       <footer>
         {pills.length > 0 && <ActionGroup title={t('location.actions')}>{pills}</ActionGroup>}
+        {dialog}
         {printed.length > 0 && <CardActions board={board} offered={printed} onUse={onLeave} />}
         {revealable && (
           <ActionGroup title={t('location.corrections')}>
@@ -261,13 +261,17 @@ function LocationPage({
  * plural forms says, as a raised cost can make it more), and the step it plays; without
  * `play` it shows but is off, as a clue at a location that has none. `then` says what the view
  * does first: step aside (`leave`), as after a move the location is no longer where the players
- * look, show the test the step starts (`test`), or nothing (`stay`).
+ * look, show the test the step starts (`test`), or nothing (`stay`). A step with a group clue cost
+ * (`groupClues`, a location's cost to enter) asks who pays first (`useCluePayment`) and gets the
+ * split.
  */
 interface LocationAction {
   key: 'investigateAction' | 'takeClue' | 'moveAction' | 'moveFree';
   icon: Extract<ActionIcon, 'investigate' | 'clue' | 'move'>;
   cost: number;
-  play?: () => Promise<void>;
+  /** The clues the investigators spend as a group for it (a move into Underground Cistern). */
+  groupClues?: number;
+  play?: (spend?: readonly ClueSpend[]) => Promise<void>;
   then: 'leave' | 'test' | 'stay';
 }
 
@@ -311,19 +315,24 @@ function locationActions(
   const from = board.locationOf(turn);
   if (from === undefined || !board.connectedTo(from).includes(location.id)) return [];
   if (location.forbidden?.includes('moveInto')) return [];
+  const groupClues = board.enterCost(location.id);
+  const enterable = board.canEnter(location.id);
+  const costs = groupClues === undefined ? {} : { groupClues };
   return [
     {
       key: 'moveAction',
       icon: 'move',
       cost: board.actionCost(turn, 'move', { to: location.id }),
-      play: () => actions.move(location.id),
+      ...costs,
+      play: enterable ? (spend) => actions.move(location.id, 'action', spend) : undefined,
       then: 'leave',
     },
     {
       key: 'moveFree',
       icon: 'move',
       cost: board.actionCost(turn, 'move', { free: true, to: location.id }),
-      play: () => actions.move(location.id, 'free'),
+      ...costs,
+      play: enterable ? (spend) => actions.move(location.id, 'free', spend) : undefined,
       then: 'leave',
     },
   ];

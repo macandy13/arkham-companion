@@ -45,10 +45,11 @@ export function moveEnemyTo(enemy: InstanceId, to: InstanceId): MoveEnemy {
 
 /**
  * The investigator moves to `to` along a connection without spending an action
- * (`MoveInvestigator`), as a pawn dragged there catches the screen up with a move made at the table.
+ * (`MoveInvestigator`), as a pawn dragged there catches the screen up with a move made at the table;
+ * so the players paid its cost to enter there too (`paidAtTable`).
  */
 export function moveAlong(investigator: InvestigatorId, to: InstanceId): MoveInvestigator {
-  return { type: 'MoveInvestigator', investigatorId: investigator, to };
+  return { type: 'MoveInvestigator', investigatorId: investigator, to, paidAtTable: true };
 }
 
 /** The investigator takes one clue from `location`, their own, without a test (`DiscoverClues`). */

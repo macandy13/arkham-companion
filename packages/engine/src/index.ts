@@ -12,6 +12,7 @@ export * from './modifiers';
 export * from './scopes';
 export * from './restrictions';
 export * from './action_costs';
+export * from './enter_costs';
 export * from './blank_cards';
 export * from './game_builder';
 export * from './investigator_cards';
@@ -316,6 +317,7 @@ export {
   parleyAction,
   resignAction,
   type ActionCost,
+  type GroupClueCost,
   type CardAction,
 } from './card_actions';
 export * from './store';

@@ -1,6 +1,6 @@
 import { stripTrailingDot } from '@arkham/util';
 import type { Ability } from './abilities';
-import type { CardAction } from './card_actions';
+import type { CardAction, GroupClueCost } from './card_actions';
 import type { Modifier } from './modifiers';
 import type { CardRestriction } from './restrictions';
 import type { Brand, CardCode, CardImagePath, EncounterSetCode } from './ids';
@@ -121,6 +121,13 @@ export interface CardStats {
   /** Only on agendas and acts. */
   stage?: CardStage;
   shroud?: number;
+  /**
+   * What the investigators pay to enter an unrevealed location, on top of the move, printed on
+   * that side: "As an additional cost to enter Underground Cistern, investigators must spend 3
+   * [per_investigator] clues, as a group" (`enterCostPayment`). No card prints one on its
+   * revealed side yet, so it holds only until the location is revealed.
+   */
+  enterCost?: GroupClueCost;
   /** Clues placed on a revealed location (an act's clue cost is its `advanceBySpendingClues`). */
   clues?: ScaledValue;
   fight?: number;

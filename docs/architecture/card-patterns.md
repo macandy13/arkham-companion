@@ -30,6 +30,7 @@ A buff or nerf of a number is a `CardStats.modifiers` entry, named by the value 
   `modifiers: [{ value: 'actionCost', of: 'threatArea', actions: ['move', 'fight', 'evade'], first: 'eachRound', by: 1 }]`.
 - Waterfront District, "As an additional cost to investigate Waterfront District, you must spend 1 action": `modifiers: [{ value: 'actionCost', of: 'self', actions: ['investigate'], by: 1 }]`;
   Arcane Lock, "As an additional cost to enter or leave attached location, you must spend 1 action": `{ value: 'actionCost', of: 'host', actions: ['enter', 'leave'], by: 1 }`.
+- Underground Cistern, "As an additional cost to enter Underground Cistern, investigators must spend 3 [per_investigator] clues, as a group" (its unrevealed side): `enterCost: { spend: 'groupClues', amount: perInvestigator(3) }`.
 
 ## Objectives and special acts and agendas
 

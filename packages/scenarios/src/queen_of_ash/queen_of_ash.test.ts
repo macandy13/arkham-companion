@@ -57,6 +57,14 @@ function namesIn(state: GameState, zone: Zone): string[] {
   );
 }
 
+/** The tank takes `clues` clues, to pay a location's cost to enter (Underground Cistern). */
+const tankTakesClues = (clues: number): Command => ({
+  type: 'AdjustInvestigator',
+  investigatorId: tank,
+  stat: 'clues',
+  delta: clues,
+});
+
 /** Whether the card with `id` is face up. */
 const revealed = (state: GameState, id: InstanceId) => state.cards[id]?.faceUp;
 
@@ -322,7 +330,7 @@ describe('Queen of Ash skull and tablet tokens', () => {
   ] as const)(
     'makes the tablet $value on $difficulty at $at',
     ({ difficulty, location, value }) => {
-      const state = stateAfter(ctx, startScenario(ctx, { difficulty }), {
+      const state = stateAfter(ctx, startScenario(ctx, { difficulty }), tankTakesClues(3), {
         type: 'MoveInvestigator',
         investigatorId: tank,
         to: location,
@@ -345,12 +353,16 @@ describe('Queen of Ash agendas and acts', () => {
   const sluiceControl = instanceId('12175#1');
   const atCistern = { kind: 'atLocation', locationId: undergroundCistern } as const;
   const advanceAgenda: Command = { type: 'Advance', deck: 'agenda' };
-  const tankEntersCistern: Command = {
-    type: 'MoveInvestigator',
-    investigatorId: tank,
-    to: undergroundCistern,
-    ignoreConnections: true,
-  };
+  /** The tank enters the unrevealed Underground Cistern, holding the 6 clues it costs two. */
+  const tankEntersCistern: Command[] = [
+    tankTakesClues(6),
+    {
+      type: 'MoveInvestigator',
+      investigatorId: tank,
+      to: undergroundCistern,
+      ignoreConnections: true,
+    },
+  ];
   /** The tank and the seeker after A Gathering advanced and both passed its willpower test. */
   const afterAGathering = () =>
     stateAfter(
@@ -398,7 +410,7 @@ describe('Queen of Ash agendas and acts', () => {
   });
 
   it('makes Brethren of Ash act and agenda without a second Elokoss as A Ritual advances during act 2', () => {
-    const state = stateAfter(ctx, afterAGathering(), tankEntersCistern, advanceAgenda);
+    const state = stateAfter(ctx, afterAGathering(), ...tankEntersCistern, advanceAgenda);
 
     expect(Object.values(state.cards).filter((card) => card.code === codes.elokoss)).toHaveLength(
       1,
@@ -408,7 +420,7 @@ describe('Queen of Ash agendas and acts', () => {
 
   it.each([
     { act: 'Brethren of Ash', before: [advanceAgenda] },
-    { act: 'Stop the Rite', before: [tankEntersCistern] },
+    { act: 'Stop the Rite', before: tankEntersCistern },
   ])('ends in Resolution 1 when Elokoss is defeated during $act', ({ before }) => {
     const state = stateAfter(ctx, afterAGathering(), ...before, {
       type: 'DefeatEnemy',
@@ -419,7 +431,7 @@ describe('Queen of Ash agendas and acts', () => {
   });
 
   it('advances Search the Sewers when the tank enters Underground Cistern: Elokoss, a Fire! there, Sluice Control into play and the rest shuffled in', () => {
-    const state = stateAfter(ctx, startScenario(ctx), tankEntersCistern);
+    const state = stateAfter(ctx, startScenario(ctx), ...tankEntersCistern);
 
     expect(state.act.current).toBe(stopTheRite);
     expect(state.cards[elokoss]?.zone).toEqual(atCistern);
@@ -452,12 +464,18 @@ describe('Queen of Ash agendas and acts', () => {
   ] as const)(
     'ends $ends, each enemy defeated on a pass, when the tank resolves a Sluice Control $skill test (5): $result',
     ({ skill, result, resolution }) => {
-      const atSluice = stateAfter(ctx, startScenario(ctx), tankEntersCistern, {
-        type: 'MoveInvestigator',
-        investigatorId: tank,
-        to: sluiceControl,
-        ignoreConnections: true,
-      });
+      const atSluice = stateAfter(
+        ctx,
+        startScenario(ctx),
+        ...tankEntersCistern,
+        tankTakesClues(1),
+        {
+          type: 'MoveInvestigator',
+          investigatorId: tank,
+          to: sluiceControl,
+          ignoreConnections: true,
+        },
+      );
       const chosen = stateAfter(
         ctx,
         atSluice,

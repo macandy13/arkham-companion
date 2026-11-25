@@ -298,6 +298,16 @@ export interface MoveInvestigator extends ActionCommand {
    * them again, e.g. readying, or the engage action). Default false.
    */
   avoidEngagement?: boolean;
+  /**
+   * Who pays the destination's cost to enter (`CardStats.enterCost`), and how many; omitted, the
+   * mover pays what they can and the others the rest (`defaultCluePayments`).
+   */
+  spend?: ClueSpend[];
+  /**
+   * The players already paid the cost to enter at the table, so the engine charges nothing: the
+   * pawn dragged on the map catches the screen up with a move made there.
+   */
+  paidAtTable?: true;
 }
 
 /**

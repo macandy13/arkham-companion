@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { blankLocation, instanceId, investigatorId, newGame, PlayTable } from '@arkham/engine';
+import {
+  blankLocation,
+  fixed,
+  instanceId,
+  investigatorId,
+  newGame,
+  PlayTable,
+} from '@arkham/engine';
 import { moveByCardTargets } from './moveByCard';
 
 const study = instanceId('study');
@@ -27,5 +34,21 @@ describe('moveByCardTargets', () => {
     );
 
     expect(moveByCardTargets(table.board, alder)).toEqual([hall, attic]);
+  });
+
+  it('leaves out the unrevealed cistern while alder holds fewer than its 3 clues to enter', () => {
+    const cistern = instanceId('cistern');
+    const table = PlayTable.start(
+      newGame()
+        .withLocation(study, blankLocation('study'), { revealed: true })
+        .withLocation(hall, blankLocation('hall'), { revealed: true })
+        .withLocation(
+          cistern,
+          blankLocation('cistern', { enterCost: { spend: 'groupClues', amount: fixed(3) } }),
+        )
+        .withInvestigator(alder, { locationId: study, clues: 2 }),
+    );
+
+    expect(moveByCardTargets(table.board, alder)).toEqual([hall]);
   });
 });

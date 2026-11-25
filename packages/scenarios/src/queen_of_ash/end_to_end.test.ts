@@ -142,8 +142,8 @@ describe('Queen of Ash end to end: Roland and Daisy, seed 1, after Spreading Fla
     expect(table.board.enemies.filter(({ name }) => name === 'Zealot')).toHaveLength(3);
 
     // Round 3 – investigation: Daisy evades the Hellhound so that it makes no attack of
-    // opportunity as she leaves, and walks to Overgrown Tunnels. Entering Underground Cistern costs
-    // 3 clues per investigator, spent by the group by hand: all 6. Roland enters and act 1
+    // opportunity as she leaves, and walks to Overgrown Tunnels. Entering the unrevealed Underground
+    // Cistern costs 3 clues per investigator as a group: all 6, 3 each. Roland enters and act 1
     // advances: Elokoss spawns at the cistern, the Fire! he draws attaches to it, and Sluice
     // Control comes into play beside it. Elokoss cannot make attacks of opportunity, so the players
     // skip the one the engine offers as Roland takes a clue of the cistern's.
@@ -153,9 +153,14 @@ describe('Queen of Ash end to end: Roland and Daisy, seed 1, after Spreading Fla
     table.moveTo(daisy, overgrownTunnels);
     table.endTurn(daisy);
     table.startTurn(roland);
-    table.play({ type: 'AdjustInvestigator', investigatorId: roland, stat: 'clues', delta: -3 });
-    table.play({ type: 'AdjustInvestigator', investigatorId: daisy, stat: 'clues', delta: -3 });
-    table.moveTo(roland, byName('Underground Cistern'));
+    table.moveTo(roland, byName('Underground Cistern'), {
+      spend: [
+        [roland, 3],
+        [daisy, 3],
+      ],
+    });
+    expect(table.board.investigator(roland).clues).toBe(0);
+    expect(table.board.investigator(daisy).clues).toBe(0);
     expect(table.board.act?.name).toBe('Stop the Rite');
     expect(table.board.location(byName('Underground Cistern'))).toMatchObject({
       attachments: ['Fire!'],
@@ -194,7 +199,7 @@ describe('Queen of Ash end to end: Roland and Daisy, seed 1, after Spreading Fla
 
     // Round 4 – investigation: Daisy takes a clue at Overgrown Tunnels and walks through the
     // culvert to Smuggler's Cache, where ending her turn lets her gain 1 resource.
-    // Entering Sluice Control costs 1 clue per investigator, spent by hand: Roland's and Daisy's.
+    // Entering the unrevealed Sluice Control costs 1 clue per investigator as a group: Roland's and Daisy's.
     // Roland enters, skipping Elokoss's attack of opportunity again, and opens the sluice valve:
     // a combat test (5) he passes. Each enemy is defeated, Elokoss into the victory display, and the
     // scenario ends in Resolution 3.
@@ -207,9 +212,12 @@ describe('Queen of Ash end to end: Roland and Daisy, seed 1, after Spreading Fla
     table.answerOnly('use reaction');
     expect(table.board.investigator(daisy).resources).toBe(resources + 1);
     table.startTurn(roland);
-    table.play({ type: 'AdjustInvestigator', investigatorId: roland, stat: 'clues', delta: -1 });
-    table.play({ type: 'AdjustInvestigator', investigatorId: daisy, stat: 'clues', delta: -1 });
-    table.moveTo(roland, byName('Sluice Control'));
+    table.moveTo(roland, byName('Sluice Control'), {
+      spend: [
+        [roland, 1],
+        [daisy, 1],
+      ],
+    });
     table.answer(byName('Elokoss'), 'does not provoke');
     table.useCardAction(roland, byName('Sluice Control'));
     table.answerOnly('skill.combat');

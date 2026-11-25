@@ -42,6 +42,7 @@ const REFUSAL_KINDS: Readonly<Record<RejectionCode, RefusalKind>> = {
   cardActionLimitReached: 'expected',
   cardActionCostUnpaid: 'expected',
   cardActionConditionUnmet: 'expected',
+  enterCostUnpaid: 'expected',
   // A second offer of a limited reaction queued before the first was used; the players pass it.
   reactionLimitReached: 'expected',
   // Steps out of the round's order.

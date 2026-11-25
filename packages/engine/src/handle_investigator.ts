@@ -34,6 +34,7 @@ import {
   statValue,
   withStatDelta,
 } from './investigators';
+import { enterCostPayment } from './enter_costs';
 import { cardsInZone, requireCard } from './lookup';
 import { replay } from './reducer';
 import { CommandRejected } from './rejection';
@@ -47,7 +48,8 @@ import type { GameState } from './state';
  * unengaged enemies at the destination then engage (`arrivalEngagements`),
  * whether the move is an action or a card effect, unless the effect avoids
  * engagement (`avoidEngagement`). Rejected into a location a card forbids moving into
- * (`isRestricted`, the Parlor's barrier), whatever the move.
+ * (`isRestricted`, the Parlor's barrier), whatever the move. An unrevealed destination's cost to
+ * enter (`enterCostPayment`, Underground Cistern's clues as a group) is paid first, by any move.
  */
 export function handleMoveInvestigator(
   ctx: EngineContext,
@@ -72,6 +74,9 @@ export function handleMoveInvestigator(
   if (isRestricted(ctx, state, destination, 'moveInto'))
     throw new CommandRejected({ code: 'restricted', cannot: 'moveInto', locationId: cmd.to });
 
+  const paid = cmd.paidAtTable
+    ? []
+    : enterCostPayment(ctx, state, investigator, destination, cmd.spend);
   const from = investigator.locationId;
   // Barricade FAQ: an engaged enemy that cannot move into the destination disengages and stays.
   const leftBehind: Event[] =
@@ -88,7 +93,7 @@ export function handleMoveInvestigator(
     to: cmd.to,
   };
   const reveal = destination.faceUp ? [] : revealEvents(ctx, state, cmd.to);
-  const arrived = [...leftBehind, moved, ...reveal];
+  const arrived = [...paid, ...leftBehind, moved, ...reveal];
   const afterMove = replay(arrived, state);
   // Left behind ready and unengaged, it engages whoever is still there (RR "Enemy Engagement").
   const staying = leftBehind.flatMap((event) =>

@@ -244,7 +244,6 @@ const willpowerOrHorror = skillTest('willpower', 4, { onFail: [takeHorror(1)] })
  * - the agendas' rule that enemies at a location with Fire! attached cannot be damaged (MC2.12):
  *   until then the players heal what Fire!'s own damage deals them as the investigation phase ends
  * - Elokoss's Mother of Flame side (agenda 2b) and agenda 3a's damage instead of doom
- * - the additional clue costs to enter Underground Cistern and Sluice Control (MC2.4)
  * - Elokoss: her extra health and her clue spend toward Resolution 2 are entered, but not that
  *   she cannot move or make attacks of opportunity, or her Mother of Flame side
  * - Queen's Knight's damage to Elokoss, Herald of Flame's healing after it attacks, and the
@@ -363,6 +362,7 @@ export const queenOfAshCardDefs: readonly CardStats[] = [
     traits: ['Ritual Site'],
     shroud: 4,
     cluesPerInvestigator: 2,
+    enterCost: { spend: 'groupClues', amount: perInvestigator(3) },
     // Discovering clues is the only way this scenario's cards take its clues, so the check waits
     // for that; a player card that removes them otherwise is resolved by hand.
     abilities: [
@@ -385,6 +385,7 @@ export const queenOfAshCardDefs: readonly CardStats[] = [
     traits: ['Sewer'],
     shroud: 4,
     cluesPerInvestigator: 2,
+    enterCost: { spend: 'groupClues', amount: perInvestigator(1) },
     // Each enemy defeated and each investigator who stayed killed: the scenario ends, and
     // Resolution 3 kills them.
     actions: [
