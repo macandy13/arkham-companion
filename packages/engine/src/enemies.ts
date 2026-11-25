@@ -1,4 +1,3 @@
-import { shortestPaths } from './board';
 import { cardStats, resolveValue, type CardStats, type EngineContext, type Trait } from './cards';
 import { woundEvents } from './elimination';
 import type { EnemyAttacked, EnemyDefeated, Event } from './events';
@@ -165,28 +164,6 @@ export function enemiesAt(
     const engaged = findInvestigator(state, zone.investigatorId);
     return engaged?.locationId === locationId;
   });
-}
-
-/**
- * The enemies on the table `filter` matches nearest to `from`, counted in connections along each enemy's path there, engaged ones
- * where their investigator is ("the nearest [[Cultist]] enemy"). Several when
- * they are equally near, in card order; none when there is no such enemy. An
- * enemy with no path counts as farther than every enemy with one (FAQ:
- * "Even if it has no valid path to an investigator, an enemy can still
- * qualify as the 'nearest' enemy").
- */
-export function nearestEnemies(
-  ctx: EngineContext,
-  state: GameState,
-  from: InstanceId,
-  filter: EnemyFilter = {},
-): CardInstance[] {
-  const candidates = enemiesMatching(ctx, state, filter).map((card) => {
-    const [path] = shortestPaths(ctx, state, locationOf(state, card), from);
-    return { card, distance: path ? path.length - 1 : Infinity };
-  });
-  const nearest = Math.min(...candidates.map(({ distance }) => distance));
-  return candidates.filter(({ distance }) => distance === nearest).map(({ card }) => card);
 }
 
 /**

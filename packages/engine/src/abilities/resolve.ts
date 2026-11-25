@@ -4,10 +4,10 @@ import type { Command, ResolveEffect, TestSkill } from '../commands';
 import { cardsInPlay } from '../doom';
 import { cardOptionLabels } from '../decisions';
 import { decisionId, type CardCode, type InstanceId, type InvestigatorId } from '../ids';
-import { extremeLocations, locationsInPlay, neighbours } from '../board';
+import { distance, neighbours } from '../board';
 import { limitReached } from '../placement';
 import { reactionWithinLimit } from '../reactions';
-import { enemiesAt, enemiesMatching, nearestEnemies } from '../enemies';
+import { enemiesAt, enemiesMatching } from '../enemies';
 import {
   isActiveInvestigator,
   playerOrder,
@@ -41,6 +41,7 @@ import {
   type AbilityEffect,
   type DifficultyChange,
   type PickedRef,
+  type PickMeasure,
   type Quantity,
   type RelativeCard,
   type RelativeInvestigator,
@@ -294,11 +295,7 @@ function countOf(
   const refs = windowRefs(ctx, state, opened);
   if (isRepeatedRef(of)) return eachId(ctx, state, of, refs).length;
   if (opened === undefined) return 0;
-  const from =
-    refs.windowInvestigator === undefined
-      ? undefined
-      : requireInvestigator(state, refs.windowInvestigator).locationId;
-  return candidatesFor(ctx, state, of, opened.cardId, from, refs).length;
+  return candidatesFor(ctx, state, of, opened.cardId, refs).length;
 }
 
 /** The values `quantity` reads as `opened` opens, one per investigator or card it names. */
@@ -381,22 +378,13 @@ export function resolveEffect(
     });
   const picked = pickedRef(deferred);
   if (picked === undefined) return commandsFor();
-  if (refs.windowInvestigator === undefined) return [];
-  const investigator = requireInvestigator(state, refs.windowInvestigator);
-  const candidates = candidatesFor(
-    ctx,
-    state,
-    picked,
-    opened.cardId,
-    investigator.locationId,
-    refs,
-  );
+  const you = refs.windowInvestigator;
+  if (you === undefined) return [];
+  const candidates = candidatesFor(ctx, state, picked, opened.cardId, refs);
   const [first, ...others] = candidates;
   if (first === undefined) return [];
   if (others.length === 0) return commandsFor(first);
-  return [
-    pickDecision(ctx, state, opened.cardId, picked, investigator.id, candidates, commandsFor),
-  ];
+  return [pickDecision(ctx, state, opened.cardId, offered, picked, you, candidates, commandsFor)];
 }
 
 /**
@@ -520,180 +508,95 @@ function withDeferredOutcomes(effect: AbilityEffect, opened: OpenedWindow): unkn
   };
 }
 
-/** Who picks a candidate for `picked`, and how the decision asks. */
-function pickQuestion(
-  picked: PickedRef,
-  investigatorId: InvestigatorId,
-): Pick<Decision, 'kind' | 'prompt' | 'decider'> & { key: string } {
-  switch (picked.ref) {
-    case 'nearestEnemy':
-      return {
-        key: 'nearest',
-        kind: 'chooseCard',
-        prompt: 'decision.chooseNearestEnemy',
-        decider: { kind: 'lead' },
-      };
-    case 'locationWith':
-      return {
-        key: 'location',
-        kind: 'chooseLocation',
-        prompt: 'decision.chooseLocationToMove',
-        decider: { kind: 'investigator', investigatorId },
-      };
-    case 'locationWithMost':
-      return {
-        key: 'most',
-        kind: 'chooseLocation',
-        prompt: 'decision.chooseLocationToAttach',
-        decider: { kind: 'lead' },
-      };
-    case 'nearestLocation':
-      return {
-        key: 'nearestLocation',
-        kind: 'chooseLocation',
-        prompt: 'decision.chooseLocationToAttach',
-        decider: { kind: 'lead' },
-      };
-    case 'anEnemy':
-      return {
-        key: 'enemy',
-        kind: 'chooseCard',
-        prompt: 'decision.chooseEnemyFor',
-        decider: { kind: 'investigator', investigatorId },
-      };
-    case 'anInvestigator':
-      return {
-        key: 'investigator',
-        kind: 'chooseInvestigator',
-        prompt: 'decision.chooseInvestigatorFor',
-        decider: { kind: 'investigator', investigatorId },
-      };
-    default:
-      return assertNever(picked);
-  }
-}
-
-/**
- * The first reference in `effect` with candidates (`nearestEnemy`, `anEnemy`, `locationWith`,
- * `locationWithMost`, `nearestLocation`, `anInvestigator`), if it holds one.
- */
+/** The first reference in `effect` with candidates (`Selector`), if it holds one. */
 function pickedRef(effect: unknown): PickedRef | undefined {
-  return findRef(effect, (ref) =>
-    ref.ref === 'nearestEnemy' ||
-    ref.ref === 'anEnemy' ||
-    ref.ref === 'locationWith' ||
-    ref.ref === 'locationWithMost' ||
-    ref.ref === 'nearestLocation' ||
-    ref.ref === 'anInvestigator'
-      ? ref
-      : undefined,
-  );
+  return findRef(effect, (ref) => (ref.ref === 'pick' ? ref : undefined));
 }
 
 /**
- * The cards or investigators `picked` may stand for when `cardId`'s ability resolves, counted
- * from `from`, the location of the investigator the window names: no nearest enemy without it,
- * while the location with the most tokens doesn't depend on it.
+ * The cards or investigators `picked` may stand for when `cardId`'s ability resolves: those its
+ * `among` names, left out what `except` names and, with `attachable`, the locations `cardId` may
+ * not attach to; with `best`, only those that measure the most or fewest (`measureOf`).
  */
 function candidatesFor(
   ctx: EngineContext,
   state: GameState,
   picked: PickedRef,
   cardId: InstanceId,
-  from: InstanceId | undefined,
   refs: ResolvedRefs,
 ): (InstanceId | InvestigatorId)[] {
-  if (picked.ref === 'anInvestigator') {
-    const at = picked.at === undefined ? undefined : resolveRefs(picked.at, refs);
-    if (picked.at !== undefined && at === undefined) return [];
-    return playerOrder(state)
-      .filter((inv) => at === undefined || inv.locationId === at)
-      .map((inv) => inv.id);
-  }
-  if (picked.ref === 'anEnemy') {
-    const matching = enemiesMatching(ctx, state, picked);
-    if (picked.at === undefined) return matching.map((card) => card.id);
-    const at = resolveRefs(picked.at, refs) as InstanceId | undefined;
-    if (at === undefined) return [];
-    const there = new Set(enemiesAt(ctx, state, at).map((card) => card.id));
-    return matching.filter((card) => there.has(card.id)).map((card) => card.id);
-  }
-  return candidateCards(ctx, state, picked, cardId, from).map((card) => card.id);
+  const except = picked.except === undefined ? undefined : resolveRefs(picked.except, refs);
+  const open = eachId(ctx, state, picked.among, refs).filter(
+    (id) =>
+      id !== except &&
+      (picked.attachable === undefined ||
+        mayAttach(ctx, state, cardId, requireCard(state.cards, id as InstanceId))),
+  );
+  const { best } = picked;
+  if (best === undefined) return open;
+  const measured = open.flatMap((id) => {
+    const value = measureOf(ctx, state, best.measure, id, refs);
+    return value === undefined ? [] : [{ id, value }];
+  });
+  const values = measured.map(({ value }) => value);
+  const extreme = best.extreme === 'most' ? Math.max(...values) : Math.min(...values);
+  return measured.filter(({ value }) => value === extreme).map(({ id }) => id);
 }
 
-/** The cards a card reference with candidates may stand for (`candidatesFor`). */
-function candidateCards(
+/** What `id` measures for a `Selector`'s `best` (`PickMeasure`); none for a distance from nowhere. */
+function measureOf(
   ctx: EngineContext,
   state: GameState,
-  picked: Exclude<PickedRef, { ref: 'anInvestigator' | 'anEnemy' }>,
-  cardId: InstanceId,
-  from: InstanceId | undefined,
-): CardInstance[] {
-  switch (picked.ref) {
-    case 'nearestEnemy':
-      return from === undefined ? [] : nearestEnemies(ctx, state, from, picked);
-    case 'locationWith':
-      return locationsInPlay(ctx, state).filter(
-        (location) =>
-          location.id !== from &&
-          matchesCard(ctx, location, picked) &&
-          (picked.connected === undefined ||
-            (from !== undefined && neighbours(ctx, state, from).includes(location.id))),
-      );
-    case 'locationWithMost': {
-      const open = locationsInPlay(ctx, state).filter((location) =>
-        mayAttach(ctx, state, cardId, location),
-      );
-      const held = (location: CardInstance) => location.tokens[picked.token] ?? 0;
-      const most = Math.max(...open.map(held));
-      return open.filter((location) => held(location) === most);
-    }
-    case 'nearestLocation': {
-      if (from === undefined) return [];
-      const open = locationsInPlay(ctx, state).filter((location) =>
-        mayAttach(ctx, state, cardId, location),
-      );
-      if (open.length === 0) return [];
-      const nearest = extremeLocations(
-        ctx,
-        state,
-        from,
-        open.map((location) => location.id),
-        'nearest',
-      );
-      return open.filter((location) => nearest.includes(location.id));
+  measure: PickMeasure,
+  id: InstanceId | InvestigatorId,
+  refs: ResolvedRefs,
+): number | undefined {
+  const card = state.cards[id as InstanceId];
+  switch (measure.kind) {
+    case 'tokens':
+      return card?.tokens[measure.token] ?? 0;
+    case 'distance': {
+      const from =
+        refs.windowInvestigator === undefined
+          ? undefined
+          : requireInvestigator(state, refs.windowInvestigator).locationId;
+      if (from === undefined) return undefined;
+      const to = card === undefined ? undefined : locationOfCard(state, card);
+      return to === undefined ? Infinity : distance(ctx, state, from, to);
     }
     default:
-      return assertNever(picked);
+      return assertNever(measure);
   }
 }
 
 /**
- * Several candidates for `picked`: equally near enemies are the lead
- * investigator's pick (Rules Reference, "Choices"), a location to move to or an
- * investigator to heal is the window investigator's own. Each option runs the effect for its
- * card or investigator.
+ * Several candidates for `picked`: its `chooser` picks one, the lead investigator or `you`, the
+ * investigator the window names. The decision asks for an investigator, an enemy or a location by
+ * what `among` names, and for a location by what `effect` does with it. Each option runs the
+ * effect for its card or investigator.
  */
 function pickDecision(
   ctx: EngineContext,
   state: GameState,
   cardId: InstanceId,
+  effect: AbilityEffect,
   picked: PickedRef,
   investigatorId: InvestigatorId,
   candidates: readonly (InstanceId | InvestigatorId)[],
   commandsFor: (pickedId: InstanceId | InvestigatorId) => Command[],
 ): Command {
-  const { key, ...asked } = pickQuestion(picked, investigatorId);
-  const labels =
-    picked.ref === 'anInvestigator'
-      ? candidates.map((id) => requireInvestigator(state, id as InvestigatorId).name)
-      : cardOptionLabels(ctx, state, candidates as InstanceId[]);
+  const investigators = picked.among.ref === 'eachInvestigator';
+  const labels = investigators
+    ? candidates.map((id) => requireInvestigator(state, id as InvestigatorId).name)
+    : cardOptionLabels(ctx, state, candidates as InstanceId[]);
   return {
     type: 'RequestDecision',
     decision: {
-      ...asked,
-      id: decisionId(`${key}:${cardId}`),
+      ...pickQuestion(picked, effect),
+      id: decisionId(`pick:${cardId}`),
       subject: cardId,
+      decider:
+        picked.chooser === 'lead' ? { kind: 'lead' } : { kind: 'investigator', investigatorId },
       options: candidates.map((id, i) => ({
         id,
         label: labels[i] ?? id,
@@ -702,6 +605,31 @@ function pickDecision(
       })),
     },
   };
+}
+
+/**
+ * How a decision for `picked` asks: by what `among` names, and for a location by what `effect`
+ * does there: the investigator moves there, or the card attaches to it.
+ */
+function pickQuestion(picked: PickedRef, effect: AbilityEffect): Pick<Decision, 'kind' | 'prompt'> {
+  const { among } = picked;
+  switch (among.ref) {
+    case 'eachInvestigator':
+      return { kind: 'chooseInvestigator', prompt: 'decision.chooseInvestigatorFor' };
+    case 'eachEnemy':
+      return { kind: 'chooseCard', prompt: 'decision.chooseEnemyFor' };
+    case 'eachInZone':
+    case 'eachInPlay':
+      if (among.typeCode !== 'location')
+        return { kind: 'chooseCard', prompt: 'decision.chooseCardFor' };
+      if (effect.type === 'MoveInvestigator')
+        return { kind: 'chooseLocation', prompt: 'decision.chooseLocationToMove' };
+      if (effect.type === 'MoveCard' && effect.to.kind === 'attachedTo')
+        return { kind: 'chooseLocation', prompt: 'decision.chooseLocationToAttach' };
+      return { kind: 'chooseLocation', prompt: 'decision.chooseLocationFor' };
+    default:
+      return assertNever(among);
+  }
 }
 
 /** What each relative reference stands for when an effect resolves; absent when it names nobody. */
@@ -749,10 +677,8 @@ function findRef<R>(
   pick: (ref: RelativeCard | RelativeInvestigator) => R | undefined,
 ): R | undefined {
   if (typeof effect !== 'object' || effect === null || isDeferred(effect)) return undefined;
-  if (isRelative(effect)) {
-    const picked = pick(effect);
-    if (picked !== undefined) return picked;
-  }
+  // A reference's own fields (a `Selector`'s `among`) belong to it, not to the effect.
+  if (isRelative(effect)) return pick(effect);
   for (const field of Object.values(effect)) {
     const found = findRef(field, pick);
     if (found !== undefined) return found;
@@ -817,17 +743,33 @@ function eachId(
           : [each.at]
               .flat()
               .map((location) => resolveRefs(location, refs) as InstanceId | undefined);
+      const connecting =
+        each.connectedTo === undefined
+          ? undefined
+          : connectingTo(ctx, state, resolveRefs(each.connectedTo, refs) as InstanceId | undefined);
       return cardsInPlay(state)
         .filter((card) => matchesCard(ctx, card, each))
         .filter((card) => {
           const location = locationOfCard(state, card);
-          return there === undefined || (location !== undefined && there.includes(location));
+          return (
+            (there === undefined || (location !== undefined && there.includes(location))) &&
+            (connecting === undefined || (location !== undefined && connecting.includes(location)))
+          );
         })
         .map((card) => card.id);
     }
     default:
       return assertNever(each);
   }
+}
+
+/** The locations connecting to `location` (`neighbours`); none while it names none. */
+function connectingTo(
+  ctx: EngineContext,
+  state: GameState,
+  location: InstanceId | undefined,
+): InstanceId[] {
+  return location === undefined ? [] : neighbours(ctx, state, location);
 }
 
 /**
@@ -933,12 +875,7 @@ function resolveRefs(value: unknown, refs: ResolvedRefs): unknown {
         return refs.each;
       case 'setAsideCopy':
         return refs.setAsideCopy(value.code);
-      case 'nearestEnemy':
-      case 'locationWith':
-      case 'locationWithMost':
-      case 'nearestLocation':
-      case 'anInvestigator':
-      case 'anEnemy':
+      case 'pick':
         return refs.picked;
       default:
         return assertNever(value);

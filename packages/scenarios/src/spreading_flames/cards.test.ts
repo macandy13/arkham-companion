@@ -188,7 +188,7 @@ describe('Spreading Flames card abilities', () => {
         context,
         started,
         aliceUsesBlaze,
-        answer('enemy:blaze_of_glory', 'hound'),
+        answer('pick:blaze_of_glory', 'hound'),
       );
 
       expect(state.cards[hound]?.tokens.damage).toBe(2);
@@ -223,7 +223,7 @@ describe('Spreading Flames card abilities', () => {
       const { context, state: started } = aliceAtTheQuad(['bob']);
 
       const asked = stateAfter(context, started, aliceMovesFree);
-      const state = stateAfter(context, asked, answer('location:miskatonic_quad', 'science_hall'));
+      const state = stateAfter(context, asked, answer('pick:miskatonic_quad', 'science_hall'));
 
       expect(asked.pending[0]?.options.map((option) => option.id).sort()).toEqual([
         'dormitories',
@@ -247,7 +247,7 @@ describe('Spreading Flames card abilities', () => {
         context,
         started,
         aliceMovesFree,
-        answer('location:miskatonic_quad', 'science_hall'),
+        answer('pick:miskatonic_quad', 'science_hall'),
         { type: 'EndTurn', investigatorId: alice },
       );
 

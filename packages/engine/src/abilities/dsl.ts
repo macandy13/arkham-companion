@@ -67,6 +67,7 @@ import type {
   AskedCount,
   DifficultyChange,
   EachEnemyFilter,
+  EachInPlayRef,
   EndingPhase,
   LocationFilter,
   PickedRef,
@@ -430,22 +431,38 @@ export function attachTo(location: RelativeCard): AbilityEffect {
   return move(self(), attachedTo(location));
 }
 
+/** A card a `Selector` picks, as card effects name one. */
+type PickedCard = Extract<RelativeCard, { ref: 'pick' }>;
+
+/** The candidates nearest to the investigator the window names (`PickMeasure`). */
+const NEAREST = { measure: { kind: 'distance' }, extreme: 'fewest' } as const;
+
 /**
- * "The location with the most clues and without a copy of [this card] attached"
- * (`locationWithMost`), picked by the lead investigator when several have as many.
+ * "The location with the most clues and without a copy of [this card] attached": the lead
+ * investigator picks among those with as many (`Selector`).
  */
-export function locationWithMost(
-  token: TokenKind,
-): Extract<PickedRef, { ref: 'locationWithMost' }> {
-  return { ref: 'locationWithMost', token };
+export function locationWithMost(token: TokenKind): PickedCard {
+  return {
+    ref: 'pick',
+    among: eachInPlay({ typeCode: 'location' }),
+    attachable: true,
+    best: { measure: { kind: 'tokens', token }, extreme: 'most' },
+    chooser: 'lead',
+  };
 }
 
 /**
- * "The nearest location without a copy of [this card] attached" (`nearestLocation`), picked by the
- * lead investigator when several are equally near, written `attachTo(nearestLocation())` (Fire!).
+ * "The nearest location without a copy of [this card] attached": the lead investigator picks
+ * among those equally near (`Selector`), written `attachTo(nearestLocation())` (Fire!).
  */
-export function nearestLocation(): Extract<PickedRef, { ref: 'nearestLocation' }> {
-  return { ref: 'nearestLocation' };
+export function nearestLocation(): PickedCard {
+  return {
+    ref: 'pick',
+    among: eachInPlay({ typeCode: 'location' }),
+    attachable: true,
+    best: NEAREST,
+    chooser: 'lead',
+  };
 }
 
 /**
@@ -797,9 +814,7 @@ export function thatCard(): RelativeCard {
  * Each card in play `filter` matches (`eachInPlay`), only those at the locations `at` names when
  * given: `eachInPlay({ code: codes.litaChantler, at: yourLocation() })`.
  */
-export function eachInPlay(
-  filter: CardFilter & { at?: RelativeCard | readonly RelativeCard[] } = {},
-): Extract<RelativeCard, { ref: 'eachInPlay' }> {
+export function eachInPlay(filter: Omit<EachInPlayRef, 'ref'> = {}): EachInPlayRef {
   return { ref: 'eachInPlay', ...filter };
 }
 
@@ -833,9 +848,19 @@ export function engageReadyEnemies(): AbilityEffect {
   return { type: 'EngageReadyEnemies' };
 }
 
-/** "A [[Central]] location" (`locationWith`), picked by the investigator the window names: `moveTo(locationWith({ trait: trait('Central') }))`. */
-export function locationWith(filter: LocationFilter = {}): RelativeCard {
-  return { ref: 'locationWith', ...filter };
+/**
+ * "A [[Central]] location" other than your location, as moving there would be no move: the
+ * investigator the window names picks one (`Selector`), written
+ * `moveTo(locationWith({ trait: trait('Central') }))`.
+ */
+export function locationWith({ connected, ...filter }: LocationFilter = {}): PickedCard {
+  const connecting = connected === undefined ? {} : { connectedTo: yourLocation() };
+  return {
+    ref: 'pick',
+    among: eachInPlay({ ...filter, typeCode: 'location', ...connecting }),
+    except: yourLocation(),
+    chooser: 'you',
+  };
 }
 
 /**
@@ -853,8 +878,8 @@ export function moveToConnectingLocation(): AbilityEffect {
  * `placeDoomOn(anEnemy({ trait: trait('Cultist'), withoutToken: 'doom' }), 1)` (Blasphemous
  * Invocation).
  */
-export function anEnemy(filter: { at?: RelativeCard } & EnemyFilter = {}): RelativeCard {
-  return { ref: 'anEnemy', ...filter };
+export function anEnemy(filter: { at?: RelativeCard } & EnemyFilter = {}): PickedCard {
+  return { ref: 'pick', among: eachEnemy(filter), chooser: 'you' };
 }
 
 /**
@@ -902,8 +927,8 @@ export function eachInvestigator(
  */
 export function anInvestigator(
   filter: { at?: RelativeCard } = {},
-): Extract<RelativeInvestigator, { ref: 'anInvestigator' }> {
-  return { ref: 'anInvestigator', ...filter };
+): Extract<RelativeInvestigator, { ref: 'pick' }> {
+  return { ref: 'pick', among: eachInvestigator(filter), chooser: 'you' };
 }
 
 /** "Its location": the location the window names (`windowLocation`), such as where a defeated enemy was. */
@@ -1031,11 +1056,12 @@ export function placeDoomOn(card: InstanceId | RelativeCard, amount: number): To
   return tokenMove('doom', amount, 'pool', { card });
 }
 
-/** "The nearest [[trait]] enemy" (`nearestEnemy`), written `nearestEnemy({ trait: trait('Cultist') })`. */
-export function nearestEnemy(
-  filter: EnemyFilter = {},
-): Extract<PickedRef, { ref: 'nearestEnemy' }> {
-  return { ref: 'nearestEnemy', ...filter };
+/**
+ * "The nearest [[trait]] enemy": the lead investigator picks among those equally near
+ * (`Selector`), written `nearestEnemy({ trait: trait('Cultist') })`.
+ */
+export function nearestEnemy(filter: EnemyFilter = {}): PickedCard {
+  return { ref: 'pick', among: eachEnemy(filter), best: NEAREST, chooser: 'lead' };
 }
 
 /**

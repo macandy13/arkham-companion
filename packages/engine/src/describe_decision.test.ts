@@ -126,6 +126,10 @@ describe('describeDecision', () => {
     { prompt: 'decision.chooseEnemyDestination', question: 'Where does Swarm of Rats move?' },
     { prompt: 'decision.chooseLocationToMove', question: 'Where do you move for Swarm of Rats?' },
     { prompt: 'decision.chooseLocationToAttach', question: 'Where does Swarm of Rats attach?' },
+    {
+      prompt: 'decision.chooseLocationFor',
+      question: 'Which location does Swarm of Rats affect?',
+    },
   ])('asks for a location for $prompt', ({ prompt, question }) => {
     const destination: Decision = {
       ...engage,
@@ -140,6 +144,27 @@ describe('describeDecision', () => {
     expect(describeDecision(context, state, destination)).toEqual(
       `${question} Cellar / Attic [chooseLocation]`,
     );
+  });
+
+  it.each([
+    { prompt: 'decision.chooseEnemyFor', question: 'Which enemy does Swarm of Rats affect?' },
+    { prompt: 'decision.chooseCardFor', question: 'Which card does Swarm of Rats affect?' },
+    {
+      prompt: 'decision.chooseInvestigatorFor',
+      question: 'Which investigator does Swarm of Rats affect?',
+    },
+  ])('asks whom a pick affects for $prompt', ({ prompt, question }) => {
+    const pick: Decision = {
+      ...engage,
+      kind: 'chooseCard',
+      prompt,
+      options: [
+        { id: 'left', label: 'Left', commands: [] },
+        { id: 'right', label: 'Right', commands: [] },
+      ],
+    };
+
+    expect(describeDecision(context, state, pick)).toEqual(`${question} Left / Right [chooseCard]`);
   });
 
   it('shows the key of a prompt without a sentence', () => {

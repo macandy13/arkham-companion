@@ -102,14 +102,14 @@ describe('a treachery that attaches to the location with the most clues (Locked 
 
       expect(asked.pending).toMatchObject([
         {
-          id: 'most:door',
+          id: 'pick:door',
           kind: 'chooseLocation',
           prompt: 'decision.chooseLocationToAttach',
           decider: { kind: 'lead' },
           options: [{ id: hall }, { id: study }],
         },
       ]);
-      const after = stateAfter(context, asked, answer('most:door', study));
+      const after = stateAfter(context, asked, answer('pick:door', study));
       expect(after.cards[door]?.zone).toEqual(attachedTo(study));
     },
   );
@@ -159,14 +159,14 @@ describe('a treachery that attaches to the nearest location without a copy (Fire
 
     expect(asked.pending).toMatchObject([
       {
-        id: 'nearestLocation:fire',
+        id: 'pick:fire',
         kind: 'chooseLocation',
         prompt: 'decision.chooseLocationToAttach',
         decider: { kind: 'lead' },
         options: [{ id: study }, { id: cellar }],
       },
     ]);
-    const after = stateAfter(context, asked, answer('nearestLocation:fire', cellar));
+    const after = stateAfter(context, asked, answer('pick:fire', cellar));
     expect(after.cards[fire]?.zone).toEqual(attachedTo(cellar));
   });
 
