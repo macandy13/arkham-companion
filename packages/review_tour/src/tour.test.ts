@@ -99,6 +99,11 @@ describe('parseTour', () => {
     ['not JSON', '<!-- review-tour { concept: 1 } -->', 'not valid JSON'],
     ['no concept', body({ stops: [] }), 'concept must be a non-empty string'],
     [
+      'a before without an example',
+      body({ concept: 'A.', evidence: [{ claim: 'It works.', test: 't › it', before: 'old()' }] }),
+      'evidence[0].before needs an example of the new usage next to it',
+    ],
+    [
       'evidence without a proof',
       body({ concept: 'A.', evidence: [{ claim: 'It works.' }] }),
       'evidence[0] must show its claim by a test, an example or a picture',

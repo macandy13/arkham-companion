@@ -176,7 +176,7 @@ describe('undoing group by group', () => {
     ['a shuffle between draws', [draw, resolveChill, passChillTest, shuffleDiscard, draw]],
     ['phase changes with their steps', [...intoInvestigation, startTurn, endTurn, nextPhase]],
     [
-      'a turn with a move and the players counting it',
+      'a turn with a move and an action adjusted by hand',
       [...intoInvestigation, startTurn, moveToCellar, spendAction, endTurn],
     ],
     ['a revelation test answered', [draw, resolveChill, passChillTest, draw]],

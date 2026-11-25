@@ -164,29 +164,13 @@ export function actionCostOf(table: PlayTable, step: Step): number {
 }
 
 /**
- * Plays `step` on `table`; a refusal or misuse throws as the `PlayTable` call does. An action
- * first counts off what it costs, as the app's action buttons do, since the engine leaves counting
- * actions to the players; both are one step, so a refused action leaves the actions as they were.
+ * Plays `step` on `table`; a refusal or misuse throws as the `PlayTable` call does. The engine
+ * counts off what an action costs (`actionPayment`), so a refused action leaves the actions as
+ * they were.
  */
 export function playStep(table: PlayTable, step: Step): void {
   if (step.verb === 'playerCard') table.step(() => playVerb(table, step));
-  else if (step.verb === 'useCardAction' || BASIC_ACTION_OF[step.verb] !== undefined)
-    table.step(() => {
-      countOffAction(table, step);
-      playVerb(table, step);
-    });
   else playVerb(table, step);
-}
-
-/** Counts off the action `step` takes, as the app does (`spendActionFor`, `spendAction`). */
-function countOffAction(table: PlayTable, step: Step): void {
-  if (step.verb === 'useCardAction') {
-    if (actionCostOf(table, step) > 0) table.spendAction(byName(step.investigator));
-    return;
-  }
-  const action = BASIC_ACTION_OF[step.verb];
-  if (action !== undefined && 'investigator' in step)
-    table.spendActionFor(byName(step.investigator), action);
 }
 
 /** Plays the `PlayTable` call `step` names. */

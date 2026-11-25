@@ -72,6 +72,9 @@ function houseOpened(scenario: ScenarioDefinition, replaced: readonly CardStats[
   table.investigate(rolandId);
   table.investigate(rolandId);
   table.spendCluesToAdvanceAct([[rolandId, 2]]);
+  // The investigations only set the scene: the scenes built on it open on Roland Banks' full
+  // turn, as their goldens show, so the two actions they cost are given back by hand.
+  table.adjustActions(rolandId, 2);
   return table;
 }
 
@@ -170,6 +173,8 @@ export function studyCluesTakenExport(title: string): Buffer {
   table.startTurn(rolandId);
   table.investigate(rolandId);
   table.investigate(rolandId);
+  // As in `houseOpened`, the scene opens on Roland Banks' full turn.
+  table.adjustActions(rolandId, 2);
   return exportOf(title, table, 'study_clues_taken');
 }
 

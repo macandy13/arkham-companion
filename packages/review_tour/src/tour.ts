@@ -58,6 +58,11 @@ export interface TourEvidence {
   readonly test?: string;
   /** A few lines of code that use the change and show the result, rendered as code. */
   readonly example?: string;
+  /**
+   * The same use as `example` before the PR, so a refactor or an API change shows its old and new
+   * usage side by side ("Before" and "Now"). Only with an `example`.
+   */
+  readonly before?: string;
   /** A golden that shows it, as `TourStop.picture` names one. */
   readonly picture?: string;
 }
@@ -149,8 +154,12 @@ function readEvidence(json: unknown, path: string): TourEvidence {
     claim: text(item.claim, `${path}.claim`),
     ...optional('test', item.test, (value) => text(value, `${path}.test`)),
     ...optional('example', item.example, (value) => text(value, `${path}.example`)),
+    ...optional('before', item.before, (value) => text(value, `${path}.before`)),
     ...optional('picture', item.picture, (value) => text(value, `${path}.picture`)),
   };
+  if (evidence.before && !evidence.example) {
+    throw new Error(`${path}.before needs an example of the new usage next to it`);
+  }
   if (!evidence.test && !evidence.example && !evidence.picture) {
     throw new Error(`${path} must show its claim by a test, an example or a picture`);
   }

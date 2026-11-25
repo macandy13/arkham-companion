@@ -2,14 +2,16 @@ import { useId, useState, type MouseEvent, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { StoreApi } from 'zustand/vanilla';
 import {
-  cardImagePath,
-  cardName,
   type ActAdvance,
   type ActView,
+  advanceAct,
   type BoardView,
   type CardFaceView,
+  cardImagePath,
   type CardImagePath,
+  cardName,
   type CardName,
+  correctTokens,
   type EncounterSetCode,
   type ReferenceView,
 } from '@arkham/engine';
@@ -384,7 +386,7 @@ function AgendaStatus({
         value: String(agenda.doom),
         lower: { label: t('header.removeDoom'), disabled: blocked || agenda.doom === 0 },
         raise: { label: t('header.addDoom'), disabled: blocked },
-        onStep: (delta: -1 | 1) => void (delta < 0 ? actions.removeDoom(1) : actions.placeDoom(1)),
+        onStep: (delta: -1 | 1) => void actions.adjustTokens(agenda.id, 'doom', delta),
       },
     ],
   };
@@ -485,7 +487,7 @@ function ActStatus({
               value: String(act.clues),
               lower: { label: t('header.removeClue'), disabled: blocked || act.clues === 0 },
               raise: { label: t('header.addClue'), disabled: blocked },
-              onStep: (delta: -1 | 1) => void actions.adjustActClues(delta),
+              onStep: (delta: -1 | 1) => void actions.correct(correctTokens(act.id, 'clue', delta)),
             },
           ],
         }
@@ -580,7 +582,7 @@ function ActStatus({
           confirmLabel={t('header.advanceActByHand')}
           onConfirm={() => {
             setConfirming(false);
-            void actions.advanceActByHand();
+            void actions.perform(advanceAct());
           }}
           onCancel={() => setConfirming(false)}
         >
