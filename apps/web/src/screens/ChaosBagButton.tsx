@@ -7,8 +7,8 @@ import './chaos_bag.css';
 
 /**
  * The chaos bag in the header (ME.32a): our drawing of a cloth bag with the number of tokens in
- * it (`BoardView.chaosBag`), small above the Victory display, since the players reach for it
- * rarely between tests. A tap opens the bag in a dialog of its own on the page shell
+ * it (`BoardView.chaosBag`), at the header's left end (ME.32c), the token pool's counterpart at
+ * its right, where the players find it apart from the cards. A tap opens the bag in a dialog of its own on the page shell
  * (`CardDialog` without a card), where the players seal, release, add and reveal tokens
  * (`ChaosBag`). The scenario card's page used to hold it under its rows, where it was hard to find.
  */

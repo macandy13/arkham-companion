@@ -644,6 +644,7 @@ describe('GameScreen header', () => {
     const deck = within(deckPlace);
 
     expect(labels).toEqual([
+      'Chaos bag',
       'Encounter deck',
       'Agenda',
       'Act',
@@ -656,10 +657,11 @@ describe('GameScreen header', () => {
     expect(scenario.getByRole('button', { name: /^Set aside, \d+ cards?$/ })).toBeTruthy();
     const victory = within(within(boardHeader).getByRole('region', { name: 'Victory' }));
     expect(victory.getByRole('button', { name: 'Victory display, 0 victory points' })).toBeTruthy();
-    expect(victory.getByRole('button', { name: 'Chaos bag, 16 tokens' })).toBeTruthy();
+    const bag = within(within(boardHeader).getByRole('region', { name: 'Chaos bag' }));
+    expect(bag.getByRole('button', { name: 'Chaos bag, 16 tokens' })).toBeTruthy();
   });
 
-  it('opens the chaos bag in a dialog of its own from the bag over the victory display', async () => {
+  it("opens the chaos bag in a dialog of its own from the bag at the header's left end", async () => {
     await renderTheGathering('game-screen-chaos-bag-test');
 
     fireEvent.click(screen.getByRole('button', { name: 'Chaos bag, 16 tokens' }));
@@ -771,6 +773,25 @@ describe('GameScreen on a phone held upright', () => {
     expect(board()?.getAttribute('data-view')).toBe('cards');
     expect(scrolledTo).toEqual([screen.getByRole('region', { name: 'Act' })]);
     expect(screen.queryByRole('dialog', { name: 'Trapped' })).toBeNull();
+  });
+
+  it('expands the header on the token pool from a tap on one of its tokens, instead of dragging it', async () => {
+    await renderTheGathering('phone-pool-test');
+    forgetOpeningScrolls();
+
+    fireEvent.click(screen.getByRole('img', { name: 'Doom from the pool' }));
+
+    expect(board()?.getAttribute('data-view')).toBe('cards');
+    expect(scrolledTo).toEqual([screen.getByRole('region', { name: 'Token pool' })]);
+  });
+
+  it('opens the chaos bag from the compact header, which stays compact', async () => {
+    await renderTheGathering('phone-chaos-bag-test');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Chaos bag, 16 tokens' }));
+
+    expect(screen.getByRole('dialog', { name: 'Chaos bag' })).toBeTruthy();
+    expect(board()?.hasAttribute('data-view')).toBe(false);
   });
 
   it('shows the act in full in the expanded header, where a tap on it opens no second card', async () => {

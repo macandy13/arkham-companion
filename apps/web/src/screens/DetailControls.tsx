@@ -18,8 +18,8 @@ const ROWS = {
 
 /**
  * The detail view's controls over the board (`board`, the `#board` element), whose stylesheet
- * shows the `target`'s row: the header in place, its places (its four cards and the victory
- * display) snapped sideways over the shrunk map, or the map or the investigator panels on the
+ * shows the `target`'s row: the header in place, its places (the chaos bag, its four cards, the
+ * victory display and the token pool) snapped sideways over the shrunk map, or the map or the investigator panels on the
  * whole screen. The controls are the button that closes it (`onClose`) and a dot per card or panel
  * of the row, the current one filled. As it opens it scrolls the row to the target's card or panel.
  * The dots only show where the players are, so screen readers skip them.
@@ -100,7 +100,7 @@ function itemOf(target: DetailTarget): string | undefined {
 
 /** The card or panel of a row the players see now, by how far the row is scrolled. */
 function positionOf(row: HTMLElement): RowPosition {
-  const items = row.querySelectorAll(':scope > section:not([data-pool])').length;
+  const items = row.querySelectorAll(':scope > section').length;
   const item = row.clientWidth > 0 ? Math.round(row.scrollLeft / row.clientWidth) : 0;
   return { item, items };
 }

@@ -12,12 +12,13 @@ describe('swipeAction', () => {
       .withInvestigator(investigatorId('brook'), { locationId: study }),
   ).board;
 
-  // The phone board's parts a swipe can start on: the act and the header's label, Alder's panel
+  // The phone board's parts a swipe can start on: the act, the token pool and the header's label, Alder's panel
   // and the investigator bar's empty end, where Brook's panel is the one the phone shows.
   document.body.innerHTML = `
     <main id="board">
       <header>
         <section data-slot="act"><h2 id="act">Act</h2></section>
+        <section data-slot="pool"><p id="pool">Token pool</p></section>
         <h2 id="header_label">Scenario</h2>
       </header>
       <section id="investigators">
@@ -37,6 +38,14 @@ describe('swipeAction', () => {
       shown: undefined,
       scrolled: false,
       action: { row: 'cards', card: 'act' },
+    },
+    {
+      swipe: 'down on the token pool',
+      on: 'pool',
+      direction: 'down',
+      shown: undefined,
+      scrolled: false,
+      action: { row: 'cards', card: 'pool' },
     },
     {
       swipe: "down on the header's label",

@@ -378,9 +378,9 @@ test('The Gathering’s reference card opened to read', async ({ page, isMobile 
 test(
   'the chaos bag in its own dialog, the elder sign sealed on Roland Banks',
   { tag: '@shot' },
-  async ({ page, isMobile }) => {
+  async ({ page }) => {
     await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
-    const bag = await openChaosBag(page, isMobile);
+    const bag = await openChaosBag(page);
 
     await bag.getByRole('button', { name: 'Add a Bless token to the bag' }).click();
     await expect(bag.getByRole('list', { name: 'Bless and curse' })).toHaveText(/Bless−×1\+/);
@@ -397,9 +397,9 @@ test(
 test(
   'three chaos tokens revealed from the bag outside a skill test, still in the bag',
   { tag: '@shot' },
-  async ({ page, isMobile }) => {
+  async ({ page }) => {
     await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
-    const bag = await openChaosBag(page, isMobile);
+    const bag = await openChaosBag(page);
 
     await bag.getByRole('tab', { name: 'Reveal tokens' }).click();
     await bag.getByRole('button', { name: 'Reveal one token more' }).click();
@@ -472,11 +472,11 @@ test('Arkham in The Midnight Masks, Easttown, the Graveyard and Northside with t
   }
 });
 
-test('the chaos bag in the cardboard token set', async ({ page, isMobile }) => {
+test('the chaos bag in the cardboard token set', async ({ page }) => {
   await page.goto('/#/settings');
   await page.getByRole('radio', { name: 'Cardboard' }).click();
   await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
-  const bag = await openChaosBag(page, isMobile);
+  const bag = await openChaosBag(page);
   await bag.scrollIntoViewIfNeeded();
   await expect(page.locator('html')).toHaveAttribute('data-token-set', 'cardboard');
 });
@@ -496,12 +496,22 @@ test('Extraplanar Visions asking Roland Banks for a skill and the cards in his h
   await expect(decision.getByRole('button', { name: 'Done' })).toBeVisible();
 });
 
-/**
- * Opens the chaos bag from the bag over the victory display and returns its region. A phone's
- * compact header hides the victory display; its detail view, opened on the scenario card, shows it.
- */
-async function openChaosBag(page: Page, isMobile: boolean): Promise<Locator> {
-  if (isMobile) await page.getByRole('region', { name: 'Scenario' }).locator('[data-card]').click();
+test('the chaos bag at the header’s left end, the token pool at its right, on a phone tapped open', async ({
+  page,
+  isMobile,
+}) => {
+  await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
+  const pool = page.getByRole('region', { name: 'Token pool' });
+
+  // The phone's compact header shows the pool small; a tap expands the header on it.
+  if (isMobile) await pool.click();
+
+  await expect(page.getByRole('button', { name: 'Chaos bag, 16 tokens' })).toBeVisible();
+  await expect(pool.getByRole('img', { name: 'Doom from the pool' })).toBeInViewport();
+});
+
+/** Opens the chaos bag from the bag at the header's left end and returns its region. */
+async function openChaosBag(page: Page): Promise<Locator> {
   await page.getByRole('button', { name: /^Chaos bag, \d+ tokens?$/ }).click();
   return page.getByRole('dialog', { name: 'Chaos bag' }).getByRole('region', { name: 'Chaos bag' });
 }
