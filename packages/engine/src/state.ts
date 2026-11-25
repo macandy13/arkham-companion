@@ -567,7 +567,10 @@ export type AnswerableCommand = Answerable<Command>;
  */
 type Answerable<C> = C extends Command ? { [K in keyof C]: AnswerableField<C[K]> } : never;
 
-/** A command's field with its counts answerable, also those of the skill test it asks for. */
+/**
+ * A command's field with its counts answerable, also those of the skill test it asks for. A field
+ * that may be a number among other shapes counts too (`DamageEnemy.amount`, a `TokenAmount`).
+ */
 type AnswerableField<V> =
   number extends Exclude<V, undefined>
     ? V | AnsweredAmount
