@@ -803,7 +803,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
         about: 'Attic',
         card: expect.objectContaining({ name: 'Attic' }),
         for: roland,
-        test: { skill: 'intellect', difficulty: 1 },
+        test: { skill: 'intellect', difficulty: 1, action: 'investigate' },
         action: 'investigate',
         options: ['pass', 'fail'],
         labels: { pass: 'decision.pass', fail: 'decision.fail' },

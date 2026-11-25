@@ -124,7 +124,7 @@ import type {
   PhaseStepId,
   QueuedStep,
   SkillTest,
-  SkillTestKind,
+  TestedAction,
   SkillTestOutcome,
   SkillTestSuggestion,
   SkillValues,
@@ -470,8 +470,8 @@ export interface DecisionView extends ChoiceView {
   waiting?: readonly CardFaceView[];
   for?: InvestigatorId;
   test?: SkillTest;
-  /** The basic action a skill test belongs to (`Decision.testKind`), which says what its pass `amount` counts. */
-  action?: SkillTestKind['kind'];
+  /** The basic action a skill test belongs to (`SkillTest.action`), which says what its pass `amount` counts. */
+  action?: TestedAction;
   /**
    * The outcomes whose margin changes what they do (`dependsOnMargin`: a `ForEachPoint` or a
    * `ByMargin`), so the dialog asks how much the test passed or failed by when
@@ -1511,7 +1511,7 @@ function decisionView(ctx: EngineContext, state: GameState, decision: Decision):
     ...listIfAny('waiting', waiting),
     ...(decision.decider.kind === 'investigator' ? { for: decision.decider.investigatorId } : {}),
     ...(decision.skillTest ? { test: decision.skillTest } : {}),
-    ...(decision.testKind ? { action: decision.testKind.kind } : {}),
+    ...(decision.skillTest?.action === undefined ? {} : { action: decision.skillTest.action }),
     ...withAsksMargin(ctx, state, decision),
     ...choiceView(decision),
     ...(Object.keys(followUps).length > 0 ? { followUps } : {}),

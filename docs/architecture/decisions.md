@@ -2,8 +2,8 @@
 
 Where the players must choose, or the engine needs an answer it cannot know (a skill test result, a spawn location, "advance the agenda?"), it puts a [`Decision`](../../packages/engine/src/state.ts) into `pending`.
 
-- Each option carries the commands it triggers, so outcomes are data; counts the players may adjust are written as `{ answer: 'damage' }` placeholders.
-- Basic action tests name the action (`testKind`) and compute their consequences on the answer, so corrections made meanwhile count.
+- Each option carries the commands it triggers, so outcomes are data; counts the players may adjust are written as `{ answer: 'damage' }` placeholders, and an option's one count (`DecisionOption.amount`) as `{ answer: 'amount' }`.
+- Basic action tests are tests like a card's, their results in the options: investigate discovers `{ answer: 'amount' }` clues (`DiscoverClues` with `investigation`), fight deals that much damage (`DamageEnemy`) or, failed, its damage to the other investigator engaged with the enemy (`FailedAttack`), evade evades (`EvadeEnemy`), and each outcome ends with `EndSkillTest`. The test names its action (`SkillTest.action`). The results are read as the answer arrives, so corrections made meanwhile count: a discovery takes what the location still has, a failed attack goes to whoever the enemy is engaged with then.
 - Options are answered by readable name (`optionNamed`), so options that pick a card are labelled with [`cardOptionLabels`](../../packages/engine/src/decisions.ts): the printed name, with the location added for copies of one card ("Ghoul Minion (Cellar)") and a number where that still leaves two alike.
 - `ResolveDecision` runs the chosen option; for a skill test it records `SkillTestResolved` and, when the answer lists the tokens the app drew (`revealed`), a `ChaosBagChanged` removal for each bless and curse among them, which go back to their pool; while a decision is pending, only answers, `ManualAdjust` and `SpendResources` (paying for a fast player card played in the decision's window, Dodge or Lucky!) are allowed.
 - Each decision names its `decider`: the lead investigator for a choice the rules leave to the group (Rules Reference, "Choices"), or the investigator a rule names, such as the one who drew an enemy for its spawn location ([`chooseLocation`](../../packages/engine/src/engagement.ts)'s `decider`).
@@ -39,5 +39,5 @@ The answer stays the players' pass or fail.
 
 - **Ask the players something:** return a `RequestDecision`; helpers for common shapes are in [`decisions.ts`](../../packages/engine/src/decisions.ts).
 - **A new kind of question:** a `DecisionKind`, plus its debug sentence in [`describe_decision.ts`](../../packages/engine/src/describe_decision.ts). A new adjustable count is a name in `NAMED_AMOUNTS`.
-- **A new skill-tested action:** a `SkillTestKind` and its resolver in `testedActionCommands`.
+- **A new skill-tested action:** a `TestedAction`, and its handler raising the test with its results as the options' commands (`skillTest` in [`skill_tests.ts`](../../packages/engine/src/skill_tests.ts)).
 - **A board-dependent token value ("-X"):** a `tokenValues` entry in the scenario's `modifiers`.

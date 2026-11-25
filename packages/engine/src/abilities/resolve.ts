@@ -36,6 +36,7 @@ import type {
   Investigator,
   SkillTestOutcome,
   QueuedStep,
+  TestedAction,
 } from '../state';
 import type { Zone } from '../zone';
 import {
@@ -50,7 +51,6 @@ import {
   type RelativeCard,
   type RelativeInvestigator,
   type RepeatedRef,
-  type TestedAction,
   type TimingWindow,
   type WindowEvent,
   defaultScope,

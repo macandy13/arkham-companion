@@ -253,8 +253,7 @@ export class DeckBot {
     const investigator = table.board.investigator(decision.decider.investigatorId);
     const seat = this.seats.get(investigator.name);
     if (!seat) return undefined;
-    const { skill } = decision.skillTest;
-    const kind = decision.testKind?.kind;
+    const { skill, action: kind } = decision.skillTest;
     const used: CardName[] = [];
     const before: Step[] = [];
     let modifier = 0;

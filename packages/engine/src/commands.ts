@@ -1,11 +1,5 @@
 import type { BasicAction } from './action_costs';
-import type {
-  AbilityEffect,
-  DifficultyChange,
-  OpenedWindow,
-  TestedAction,
-  TimingWindow,
-} from './abilities';
+import type { AbilityEffect, DifficultyChange, OpenedWindow, TimingWindow } from './abilities';
 import type { AttackKind, KeywordAttackKind } from './forced_attacks';
 import type { CampaignLog, TraumaKind } from './campaign/campaign_log';
 import type { ScaledValue, TokenAmount, Trait } from './cards';
@@ -35,6 +29,7 @@ import type {
   SkillTestOutcome,
   TokenKind,
   WoundKind,
+  TestedAction,
 } from './state';
 import type { Zone } from './zone';
 
@@ -114,6 +109,7 @@ export type Command =
   | Investigate
   | Fight
   | Evade
+  | FailedAttack
   | EndSkillTest;
 
 /** A card instance to create when the scenario starts. */
@@ -512,18 +508,23 @@ export interface DefeatInvestigator {
 
 /**
  * An active investigator takes `amount` clues from the location they are at.
- * Asked by a card (`source`, "discover 1 clue at a location"), the location may be any, as many
- * clues as it has are taken, and an investigator who may not discover clues (The Masked Hunter)
- * takes none. Produces `TokensChanged` (clues leave the location) and `InvestigatorChanged`
- * (clues arrive).
+ * Asked by a card (`source`, "discover 1 clue at a location") or as the pass of an investigation
+ * (`investigation`), the location may be any, as many clues as it has are taken, and an
+ * investigator who may not discover clues (The Masked Hunter) takes none. Produces
+ * `TokensChanged` (clues leave the location) and `InvestigatorChanged` (clues arrive).
  */
 export interface DiscoverClues extends AskedByCard {
   type: 'DiscoverClues';
   investigatorId: InvestigatorId;
   locationId: InstanceId;
   amount: number;
-  /** At a location other than their own: the pass of an investigation there (`Investigate.locationId`). */
-  atAnyLocation?: true;
+  /**
+   * The pass of an investigation (`Investigate`), of the investigator's location or another one
+   * (In the Know): it finds what the location holds as the answer arrives, a correction having
+   * perhaps taken clues off since the test began, and nothing for an investigator who may not
+   * discover clues, as the investigation still succeeds.
+   */
+  investigation?: true;
 }
 
 /**
@@ -1127,8 +1128,8 @@ export interface ResolveDecision {
   optionId: string;
   /**
    * The count the players confirmed for an option with an `amount` range
-   * (clues discovered, damage dealt), which the decision's resolver reads
-   * (`testedActionCommands`). Omit to accept the option's default. Rejected for an option
+   * (clues discovered, damage dealt), which fills in the option's `{ answer: 'amount' }`
+   * (`AnsweredAmount`). Omit to accept the option's default. Rejected for an option
    * without a range or outside it.
    */
   amount?: number;
@@ -1366,8 +1367,21 @@ export interface EnemyAttacks {
 }
 
 /**
- * The skill test of a basic action ends (ST.8): queued after the test's results
- * (`testedActionCommands`) so that "after applying all results" abilities see them. Produces
+ * The result of a failed fight (Rules Reference, "Engaged with other investigators"): the attack's
+ * `damage` goes to the other investigator the enemy is engaged with, if any, as the enemy is
+ * engaged when the answer arrives (the players may have moved it since the test began). Produces
+ * the `TakeDamageAndHorror` events, or none.
+ */
+export interface FailedAttack {
+  type: 'FailedAttack';
+  investigatorId: InvestigatorId;
+  enemyId: InstanceId;
+  damage: number;
+}
+
+/**
+ * The skill test of a basic action ends (ST.8): the last command of each of its outcomes, after
+ * the test's results, so that "after applying all results" abilities see them. Produces
  * `SkillTestEnded`.
  */
 export interface EndSkillTest {

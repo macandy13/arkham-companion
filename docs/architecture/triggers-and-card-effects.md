@@ -36,7 +36,7 @@ An `Ability` is:
     - `addedToVictoryDisplay` (`whenVictoryDisplayHolds`), which also opens for a card placed beneath the current act, which counts when the reference names that zone too (Augurs of Flame),
     - `tested` after a basic action's test, at ST.6 before its results,
     - `succeeded` after any passed test, at ST.6, heard `here` at the location of what the test was about (the tester's own location for a card at no location, such as a revelation), once more with the basic action it belongs to (`afterSucceedingHere({ action: 'investigate' }, …)`, David Renfield's "after you successfully investigate [his] location"), naming the tester and the margin when the answer gave one,
-    - `testEnded` once that test has ended (`EndSkillTest`, queued after its results, ST.8), for "after applying all results" keywords,
+    - `testEnded` once that test has ended (`EndSkillTest`, the last command of each outcome, after its results, ST.8), for "after applying all results" keywords,
     - `engaged` either way round,
     - `attacked` (attacks of opportunity included),
     - `evaded` for the enemy, naming the evader, once `EvadeEnemy` (a passed evasion or an effect) has exhausted and disengaged it, so later than `tested` (`afterEvaded`, Ruth Turner), and once more with `successful` after a passed evasion test only, not an automatic evade (`afterEvadingSuccessfully`, Cornelia Akely),

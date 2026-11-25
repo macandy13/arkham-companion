@@ -309,7 +309,6 @@ export type {
   WindowEvent,
   ListenerScope,
   EndingPhase,
-  TestedAction,
 } from './abilities';
 export { MAX_TRIGGERED_COMMANDS } from './triggers';
 export {

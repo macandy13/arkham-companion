@@ -6,7 +6,6 @@ import { commandSpec, type CommandSpec, type Continuation, type Step } from './c
 import type { Command, DrawCard } from './commands';
 import { attackOfOpportunityDecisions, isOwnTurnAction } from './attacks_of_opportunity';
 import { answerCommands, plainOptionCommands } from './decisions';
-import { testedActionCommands } from './skill_tests';
 import { PLAYER_CAUSE, type ChangeCause } from './change_cause';
 import type { Event } from './events';
 import {
@@ -408,11 +407,7 @@ function resolveCommand(
     return continuation;
   }
   const triggered = emitWithEffects(resolution, own);
-  const answered = [
-    ...answerCommands(before, command),
-    ...testedActionCommands(resolution.ctx, before, command),
-  ];
-  return [...triggered, ...answered.map(followUpStep), ...continuation];
+  return [...triggered, ...answerCommands(before, command).map(followUpStep), ...continuation];
 }
 
 /**
