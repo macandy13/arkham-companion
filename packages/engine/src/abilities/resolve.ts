@@ -8,6 +8,7 @@ import { distance, neighbours } from '../board';
 import { limitReached } from '../placement';
 import { reactionWithinLimit } from '../reactions';
 import { enemiesAt, enemiesMatching } from '../enemies';
+import { isEmptyLocation } from '../engagement';
 import {
   isActiveInvestigator,
   playerOrder,
@@ -534,23 +535,23 @@ function candidatesFor(
   );
   const { best } = picked;
   if (best === undefined) return open;
-  const measured = open.flatMap((id) => {
-    const value = measureOf(ctx, state, best.measure, id, refs);
-    return value === undefined ? [] : [{ id, value }];
-  });
+  const measured = open.map((id) => ({
+    id,
+    value: measureOf(ctx, state, best.measure, id, refs),
+  }));
   const values = measured.map(({ value }) => value);
   const extreme = best.extreme === 'most' ? Math.max(...values) : Math.min(...values);
   return measured.filter(({ value }) => value === extreme).map(({ id }) => id);
 }
 
-/** What `id` measures for a `Selector`'s `best` (`PickMeasure`); none for a distance from nowhere. */
+/** What `id` measures for a `Selector`'s `best` (`PickMeasure`). */
 function measureOf(
   ctx: EngineContext,
   state: GameState,
   measure: PickMeasure,
   id: InstanceId | InvestigatorId,
   refs: ResolvedRefs,
-): number | undefined {
+): number {
   const card = state.cards[id as InstanceId];
   switch (measure.kind) {
     case 'tokens':
@@ -560,7 +561,7 @@ function measureOf(
         refs.windowInvestigator === undefined
           ? undefined
           : requireInvestigator(state, refs.windowInvestigator).locationId;
-      if (from === undefined) return undefined;
+      if (from === undefined) return 0;
       const to = card === undefined ? undefined : locationOfCard(state, card);
       return to === undefined ? Infinity : distance(ctx, state, from, to);
     }
@@ -753,7 +754,10 @@ function eachId(
           const location = locationOfCard(state, card);
           return (
             (there === undefined || (location !== undefined && there.includes(location))) &&
-            (connecting === undefined || (location !== undefined && connecting.includes(location)))
+            (connecting === undefined ||
+              (location !== undefined && connecting.includes(location))) &&
+            (each.empty === undefined ||
+              (location !== undefined && isEmptyLocation(ctx, state, location)))
           );
         })
         .map((card) => card.id);
@@ -773,13 +777,34 @@ function connectingTo(
 }
 
 /**
+ * The cards or investigators `picked` stands for when `cardId` uses it outside an ability, on
+ * behalf of `investigatorId` ("you"): where an enemy's spawn instruction lets it spawn
+ * (`SpawnInstruction`), counted from the investigator who drew it.
+ */
+export function candidatesOf(
+  ctx: EngineContext,
+  state: GameState,
+  picked: PickedRef,
+  cardId: InstanceId,
+  investigatorId: InvestigatorId | undefined,
+): (InstanceId | InvestigatorId)[] {
+  const refs = windowRefs(ctx, state, {
+    cardId,
+    ...(investigatorId === undefined ? {} : { investigatorId }),
+  });
+  return candidatesFor(ctx, state, picked, cardId, refs);
+}
+
+/**
  * What the references of an ability whose window `opened` stand for, before any repetition;
  * without a window only those the table answers by itself (the lead, the only copy of a card).
+ * Only the card and what the window names count, so a use outside a window names them alone
+ * (`candidatesOf`).
  */
 function windowRefs(
   ctx: EngineContext,
   state: GameState,
-  opened: OpenedWindow | undefined,
+  opened: Pick<OpenedWindow, 'cardId' | 'investigatorId' | 'locationId' | 'thatCardId'> | undefined,
 ): ResolvedRefs {
   if (opened === undefined) {
     return {

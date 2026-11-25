@@ -1362,6 +1362,21 @@ describe('SpawnEnemy with a filtered spawn instruction', () => {
     expect(zoneOf(after, spawner)).toEqual(encounterDiscard);
   });
 
+  it('lets the players choose among all locations when nobody spawns a "connected to yours" enemy', () => {
+    const { context, state } = hallToWoodsAttic
+      .withCard(spawner, spawnerCard('Any location connected to yours'), setAside)
+      .start();
+
+    const after = stateAfter(context, state, { type: 'SpawnEnemy', enemyId: spawner });
+
+    expect(after.pending).toMatchObject([
+      {
+        kind: 'chooseLocation',
+        options: [{ target: hall }, { target: cellar }, { target: attic }],
+      },
+    ]);
+  });
+
   it('lets the players choose among the empty locations when nobody spawns a "Farthest" enemy', () => {
     const { context, state } = hallToWoodsAttic
       .withCard(spawner, spawnerCard('Farthest empty location'), setAside)

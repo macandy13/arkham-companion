@@ -139,7 +139,8 @@ export function theOnlyCopy(state: GameState, code: CardCode): InstanceId | unde
 
 /**
  * Which cards a card's text means by what is printed on them: the copies of `code`, those named
- * `name` (as in the `CardDb`, compared exactly), those with `trait` and without `withoutTrait`
+ * `name`, or any of a list of names ("Hallway or Parlor"; compared ignoring case and a trailing full
+ * stop, as card text writes names), those with `trait` and without `withoutTrait`
  * ("each non-Elite enemy"), those of type `typeCode`, and with `unique` only unique ones. A field
  * left out matches every card. The one description of a card's print: references filter with it
  * (`eachInZone`, `eachInPlay`, and with what the table adds `eachEnemy` and `locationWith`), and so
@@ -147,7 +148,7 @@ export function theOnlyCopy(state: GameState, code: CardCode): InstanceId | unde
  */
 export interface CardFilter {
   code?: CardCode;
-  name?: string;
+  name?: string | readonly string[];
   trait?: Trait;
   withoutTrait?: Trait;
   typeCode?: CardType;
@@ -191,7 +192,8 @@ export function matchesCard(ctx: EngineContext, card: CardInstance, filter: Card
 export function matchesStats(stats: CardStats, filter: CardFilter): boolean {
   return (
     (filter.code === undefined || stats.code === filter.code) &&
-    (filter.name === undefined || stats.name === filter.name) &&
+    (filter.name === undefined ||
+      [filter.name].flat().some((name) => comparableName(name) === comparableName(stats.name))) &&
     (filter.trait === undefined || stats.traits.includes(filter.trait)) &&
     (filter.withoutTrait === undefined || !stats.traits.includes(filter.withoutTrait)) &&
     (filter.typeCode === undefined || stats.typeCode === filter.typeCode) &&
