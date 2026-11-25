@@ -9,7 +9,7 @@ import type {
 import { unique } from '@arkham/util';
 
 /**
- * An encounter card one step drew or placed, for the notice of where it went (`OpenGame.drawnCards`):
+ * An encounter card one step drew or placed, for the notice of where it went (a `drawnCards` notice in `OpenGame.notices`):
  * the card, the investigator it was drawn for when the step drew it, and where it is now.
  */
 export interface DrawnCard {

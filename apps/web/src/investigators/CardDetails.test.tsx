@@ -14,7 +14,7 @@ import {
 } from '@arkham/engine';
 import { initI18n } from '../i18n';
 import { DecisionHostContext, type OpenDecision } from '../screens/DetailsDialog';
-import { actionsOn } from '../state/gameActions.test_support';
+import { PlayingOn } from '../state/gameActions.test_support';
 import { CardDetails } from './CardDetails';
 
 const study = instanceId('study');
@@ -53,15 +53,15 @@ describe('CardDetails', () => {
     const card = table.board.cardFace(fear);
     return (
       <DecisionHostContext.Provider value={{ decision, setHosted }}>
-        <CardDetails
-          board={table.board}
-          card={card}
-          owner={table.board.investigator(alder)}
-          heldIn="threatArea"
-          actions={actionsOn(table)}
-          busy={false}
-          onClose={() => {}}
-        />
+        <PlayingOn table={table}>
+          <CardDetails
+            board={table.board}
+            card={card}
+            owner={table.board.investigator(alder)}
+            heldIn="threatArea"
+            onClose={() => {}}
+          />
+        </PlayingOn>
       </DecisionHostContext.Provider>
     );
   };

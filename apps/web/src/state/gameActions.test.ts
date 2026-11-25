@@ -1,24 +1,21 @@
 import { describe, expect, it } from 'vitest';
 import {
   atLocation,
-  blankAct,
   blankEnemy,
   blankLocation,
-  blankTreachery,
   cardName,
+  type CardPlaceView,
   engagedWith,
   fixed,
   instanceId,
   investigatorId,
   newGame,
   PlayTable,
-  resolutionId,
   takeHorror,
-  threatAreaOf,
-  type CardPlaceView,
+  takeOneClue,
 } from '@arkham/engine';
-import type { PileMove } from '../encounter/cardMoves';
-import { type ActionCost, type GameActions } from './gameActions';
+import { pileAdjustment, type PileMove } from '../encounter/cardMoves';
+import { type GameActions, type How } from './gameActions';
 import { actionsOn } from './gameActions.test_support';
 
 const study = instanceId('study');
@@ -56,8 +53,19 @@ describe('gameActions', () => {
     { verb: 'engage', act: (actions) => actions.engage(lurker), left: 2 },
     { verb: 'a free fight', act: (actions) => actions.fight(ghoul, 'free'), left: 3 },
     { verb: 'a free evade', act: (actions) => actions.evade(ghoul, 'free'), left: 3 },
-    { verb: 'a move', act: (actions) => actions.moveTo(hall, 'action'), left: 2 },
-    { verb: 'a free move (the pawn drag)', act: (actions) => actions.moveTo(hall), left: 3 },
+    { verb: 'a move', act: (actions) => actions.move(hall), left: 2 },
+    { verb: 'a free move', act: (actions) => actions.move(hall, 'free'), left: 3 },
+    {
+      verb: 'the pawn drag',
+      act: (actions) =>
+        actions.perform({ type: 'MoveInvestigator', investigatorId: alder, to: hall }),
+      left: 3,
+    },
+    {
+      verb: 'engaging by card (with brook)',
+      act: (actions) => actions.engage(ghoul, { byCard: brook }),
+      left: 3,
+    },
   ])('$verb leaves alder $left of three actions', async ({ act, left }) => {
     const table = aldersTurn();
 
@@ -84,18 +92,19 @@ describe('gameActions', () => {
     expect(table.board.investigator(alder)).toMatchObject({ horror: 1, actions: left });
   });
 
-  it.each<{ cost: ActionCost; attacks: string[] }>([
-    { cost: 'action', attacks: ['ghoul'] },
-    { cost: 'free', attacks: [] },
-  ])('a move as $cost provokes attacks of opportunity from $attacks', async ({ cost, attacks }) => {
+  it.each<{ how: How; attacks: string[] }>([
+    { how: 'action', attacks: ['ghoul'] },
+    { how: 'free', attacks: [] },
+    { how: { byCard: alder }, attacks: [] },
+  ])('a move as $how provokes attacks of opportunity from $attacks', async ({ how, attacks }) => {
     const table = aldersTurn();
 
-    await actionsOn(table).moveTo(hall, cost);
+    await actionsOn(table).move(hall, how);
 
     expect(table.board.decisions.map(({ about }) => about)).toEqual(attacks);
   });
 
-  describe('moveByCard', () => {
+  describe('a move by card', () => {
     const attic = instanceId('attic');
     /** Alder's turn in the Study, Brook there with a lurker engaged; the Attic connects to nothing. */
     const brookBesideTheLoneAttic = () =>
@@ -112,7 +121,7 @@ describe('gameActions', () => {
     it("moves brook to the unconnected attic on alder's turn, with no action and no attack, her lurker along", async () => {
       const table = brookBesideTheLoneAttic();
 
-      await actionsOn(table).moveByCard(brook, attic);
+      await actionsOn(table).move(attic, { byCard: brook });
 
       expect(table.board.locationOf(brook)).toBe(attic);
       expect(table.board.investigator(alder)).toMatchObject({ actions: 3 });
@@ -121,7 +130,7 @@ describe('gameActions', () => {
     });
   });
 
-  describe('testByCard', () => {
+  describe('a test by card', () => {
     /** Alder's turn in the Study; Brook in the Hall, a ghoul there engaged with nobody. */
     const brookInTheHallOnAldersTurn = () =>
       PlayTable.start(
@@ -143,8 +152,9 @@ describe('gameActions', () => {
       '$kind by $tester at the $about asks a $test test and leaves alder 3 actions',
       async ({ kind, tester, target, test, about }) => {
         const table = brookInTheHallOnAldersTurn();
+        const actions = actionsOn(table);
 
-        await actionsOn(table).testByCard(kind, tester, target);
+        await actions[kind](target, { byCard: tester });
 
         expect(table.board.decisions).toMatchObject([
           { for: tester, action: kind, about: cardName(about), test: { skill: test } },
@@ -152,77 +162,6 @@ describe('gameActions', () => {
         expect(table.board.investigator(alder)).toMatchObject({ actions: 3 });
       },
     );
-  });
-
-  describe("with a treachery like Frozen in Fear in alder's threat area", () => {
-    /** Alder's turn in the Study next to the Hall, frozen: the first move, fight or evade costs 1 more. */
-    const aldersFrozenTurn = () =>
-      PlayTable.start(
-        newGame()
-          .withLocation(study, blankLocation('study'), { revealed: true })
-          .withLocation(hall, blankLocation('hall'), { revealed: true })
-          .withConnection(study, hall)
-          .withInvestigator(alder, { locationId: study })
-          .withCard(ghoul, blankEnemy('ghoul', { health: fixed(3) }), engagedWith(alder))
-          .withCard(
-            instanceId('frozen'),
-            blankTreachery('frozen', {
-              modifiers: [
-                {
-                  value: 'actionCost',
-                  of: 'threatArea',
-                  actions: ['move', 'fight', 'evade'],
-                  first: 'eachRound',
-                  by: 1,
-                },
-              ],
-            }),
-            threatAreaOf(alder),
-          )
-          .withTurnOf(alder),
-      );
-
-    it.each<{ verb: string; act: (actions: GameActions) => Promise<void>; left: number }>([
-      { verb: 'a first fight', act: (actions) => actions.fight(ghoul), left: 1 },
-      { verb: 'a first free evade', act: (actions) => actions.evade(ghoul, 'free'), left: 2 },
-      { verb: 'a first free move', act: (actions) => actions.moveTo(hall, 'free'), left: 2 },
-      { verb: 'investigate', act: (actions) => actions.investigate(), left: 2 },
-      { verb: 'the pawn drag', act: (actions) => actions.moveTo(hall), left: 3 },
-    ])('$verb leaves alder $left of three actions', async ({ act, left }) => {
-      const table = aldersFrozenTurn();
-
-      await act(actionsOn(table));
-
-      expect(table.board.investigator(alder)).toMatchObject({ actions: left });
-    });
-
-    it('counts off the usual 1 for a move after the first fight', async () => {
-      const table = aldersFrozenTurn();
-      const actions = actionsOn(table);
-      await actions.fight(ghoul);
-      await actions.answer('fail');
-
-      await actions.moveTo(hall, 'action');
-
-      expect(table.board.investigator(alder)).toMatchObject({ actions: 0 });
-    });
-  });
-
-  it('draws the top encounter card for an investigator outside the mythos phase', async () => {
-    const table = PlayTable.start(
-      newGame()
-        .withLocation(study, blankLocation('study'), { revealed: true })
-        .withInvestigator(alder, { locationId: study })
-        .withInvestigator(brook, { locationId: study })
-        .withCard(instanceId('top_card'), blankTreachery('top_card'), { kind: 'encounterDeck' })
-        .withCard(instanceId('next_card'), blankTreachery('next_card'), { kind: 'encounterDeck' })
-        .withTurnOf(alder),
-    );
-
-    await actionsOn(table).drawEncounter(brook);
-
-    expect(table.board.encounter.discard.map(({ name }) => name)).toEqual(['top_card']);
-    expect(table.board.encounter.deckCount).toBe(1);
   });
 
   it.each<{ move: PileMove; place: CardPlaceView }>([
@@ -243,35 +182,9 @@ describe('gameActions', () => {
         .withCard(card, blankEnemy('drawn'), { kind: 'encounterDeck' }),
     );
 
-    await actionsOn(table).moveEncounterCard(card, move);
+    await actionsOn(table).correct(pileAdjustment(card, move));
 
     expect(table.board.placeOf(card)).toEqual(place);
-  });
-
-  it.each<{ where: string; location: typeof study; place: CardPlaceView }>([
-    {
-      where: 'unengaged in the empty Hall',
-      location: hall,
-      place: { kind: 'atLocation', location: cardName('hall') },
-    },
-    {
-      where: 'engaged with Alder, alone in the Study, as the rules say',
-      location: study,
-      place: { kind: 'engaged', investigator: alder },
-    },
-  ])('spawns an enemy from the discard pile $where', async ({ location, place }) => {
-    const ghoulFromDiscard = instanceId('ghoul_from_discard');
-    const table = PlayTable.start(
-      newGame()
-        .withLocation(study, blankLocation('study'), { revealed: true })
-        .withLocation(hall, blankLocation('hall'), { revealed: true })
-        .withInvestigator(alder, { locationId: study })
-        .withCard(ghoulFromDiscard, blankEnemy('ghoul'), { kind: 'encounterDiscard' }),
-    );
-
-    await actionsOn(table).spawnEnemy(ghoulFromDiscard, location);
-
-    expect(table.board.placeOf(ghoulFromDiscard)).toEqual(place);
   });
 
   it('gives alder, at 2 resources, the resource of the resource action once the ghoul has attacked', async () => {
@@ -294,20 +207,6 @@ describe('gameActions', () => {
     expect(table.board.investigator(alder)).toMatchObject({ resources: 3, actions: 2 });
   });
 
-  it('takes a clue from the study without a test', async () => {
-    const table = PlayTable.start(
-      newGame()
-        .withLocation(study, blankLocation('study'), { revealed: true, clues: 2 })
-        .withInvestigator(alder, { locationId: study })
-        .withTurnOf(alder),
-    );
-
-    await actionsOn(table).takeClue(study);
-
-    expect(table.board.investigator(alder)).toMatchObject({ clues: 1, actions: 3 });
-    expect(table.board.location(study).clues).toBe(1);
-  });
-
   it("gives brook a clue from the study on alder's turn, as a clue dragged onto their pawn", async () => {
     const table = PlayTable.start(
       newGame()
@@ -317,102 +216,39 @@ describe('gameActions', () => {
         .withTurnOf(alder),
     );
 
-    await actionsOn(table).takeClue(study, brook);
+    await actionsOn(table).perform(takeOneClue(study, brook));
 
     expect(table.board.investigator(brook).clues).toBe(1);
     expect(table.board.investigator(alder)).toMatchObject({ clues: 0, actions: 3 });
   });
 
-  it.each<{ effect: string; act: (actions: GameActions) => Promise<void>; ghoul: object }>([
-    {
-      effect: 'damage',
-      act: (actions) => actions.damageEnemy(ghoul, 1),
-      ghoul: { at: 'study', engagedWith: alder, damage: 1 },
-    },
-    {
-      effect: 'disengage',
-      act: (actions) => actions.disengageEnemy(ghoul),
-      ghoul: { at: 'study' },
-    },
-    {
-      effect: 'exhaust',
-      act: (actions) => actions.exhaustEnemy(ghoul),
-      ghoul: { at: 'study', engagedWith: alder, exhausted: true },
-    },
-    {
-      effect: 'evade (for alder)',
-      act: (actions) => actions.evadeEnemy(ghoul, alder),
-      ghoul: { at: 'study', exhausted: true },
-    },
-    {
-      effect: 'engage (with brook)',
-      act: (actions) => actions.engageEnemy(ghoul, brook),
-      ghoul: { at: 'study', engagedWith: brook },
-    },
-  ])(
-    'a card effect can $effect the ghoul, spending no action',
-    async ({ act, ghoul: expected }) => {
-      const table = aldersTurn();
-
-      await act(actionsOn(table));
-
-      expect(table.board.enemies.find(({ name }) => name === 'ghoul')).toEqual({
-        name: 'ghoul',
-        health: 3,
-        ...expected,
-      });
-      expect(table.board.investigator(alder)).toMatchObject({ actions: 3 });
-    },
-  );
-
-  it('a card effect can ready the exhausted ghoul, which then engages alder there again', async () => {
-    const table = PlayTable.start(
-      newGame()
-        .withLocation(study, blankLocation('study'), { revealed: true })
-        .withInvestigator(alder, { locationId: study })
-        .withCard(ghoul, blankEnemy('ghoul', { health: fixed(3) }), engagedWith(alder))
-        .withTurnOf(alder),
-    );
-    await actionsOn(table).evadeEnemy(ghoul, alder);
-
-    await actionsOn(table).readyEnemy(ghoul);
-
-    expect(table.board.enemies).toEqual([
-      { name: 'ghoul', at: 'study', engagedWith: alder, health: 3 },
-    ]);
-  });
-
-  it('a card effect can defeat the ghoul', async () => {
+  it('performs card effects in order: damage, then defeat, of the ghoul', async () => {
     const table = aldersTurn();
 
-    await actionsOn(table).defeatEnemy(ghoul);
-
-    expect(table.board.enemies.map(({ name }) => name)).toEqual(['lurker']);
-  });
-
-  it('advances an act by hand to the next one, whatever its objective', async () => {
-    const table = PlayTable.start(
-      newGame()
-        .withLocation(study, blankLocation('study'), { revealed: true })
-        .withInvestigator(alder, { locationId: study })
-        .withAct(instanceId('escape_the_dorms'), blankAct('escape_the_dorms'))
-        .withAct(instanceId('searching_for_armitage'), blankAct('searching_for_armitage')),
+    await actionsOn(table).perform(
+      { type: 'DamageEnemy', enemyId: ghoul, amount: 1 },
+      { type: 'DefeatEnemy', enemyId: ghoul },
     );
 
-    await actionsOn(table).advanceActByHand();
-
-    expect(table.board.act?.name).toBe('searching_for_armitage');
+    expect(table.board.enemies.map(({ name }) => name)).toEqual(['lurker']);
+    expect(table.board.investigator(alder)).toMatchObject({ actions: 3 });
   });
 
-  it('ends the scenario with the resolution the players pick', async () => {
+  it('corrects the clues on the study and the hall, discovering nothing', async () => {
     const table = PlayTable.start(
       newGame()
-        .withLocation(study, blankLocation('study'), { revealed: true })
+        .withLocation(study, blankLocation('study'), { revealed: true, clues: 2 })
+        .withLocation(hall, blankLocation('hall'), { revealed: true })
         .withInvestigator(alder, { locationId: study }),
     );
 
-    await actionsOn(table).endScenario(resolutionId('R2'));
+    await actionsOn(table).correct(
+      { kind: 'tokens', cardId: study, token: 'clue', delta: -1 },
+      { kind: 'tokens', cardId: hall, token: 'clue', delta: 1 },
+    );
 
-    expect(table.board).toMatchObject({ ended: true, resolution: resolutionId('R2') });
+    expect(table.board.location(study).clues).toBe(1);
+    expect(table.board.location(hall).clues).toBe(1);
+    expect(table.board.investigator(alder).clues).toBe(0);
   });
 });

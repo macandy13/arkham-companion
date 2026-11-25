@@ -98,7 +98,7 @@ const SET_ICON_IN_MEDALLION = 0.75;
  * The frame of a scenario reference card in the Exact card theme, in portrait scan units: our own
  * drawing of the printed one (`SCENARIO_FACE`, no FFG art) on its paper, the scenario's encounter
  * set icon (`set`) on its medallion. The card lays its title,
- * difficulty and rows over it in HTML (GameHeader `ScenarioCard`), so this is decoration only
+ * difficulty and rows over it in HTML (ScenarioStatus `ScenarioCard`), so this is decoration only
  * (`aria-hidden`).
  */
 export function ScenarioFace({ set }: { set: EncounterSetCode | undefined }) {

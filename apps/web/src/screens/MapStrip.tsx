@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { SKILL_NAMES, type BoardView, type InvestigatorView, type SkillName } from '@arkham/engine';
-import { actClues } from './GameHeader';
+import { actClues } from './ActStatus';
 import type { DetailTarget } from './useDetailView';
 
 /** One value on a strip: what the stylesheet draws its icon by, and the value as the strip shows it. */

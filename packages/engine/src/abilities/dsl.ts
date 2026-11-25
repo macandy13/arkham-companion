@@ -1,7 +1,18 @@
 import type { ScaledValue, TokenAmount, Trait } from '../cards';
 import type {
+  Advance,
+  ChangeChaosBag,
   CommandSource,
-  EncounterMatch,
+  DamageEnemy,
+  DefeatEnemy,
+  DisengageEnemy,
+  EndScenario,
+  ExhaustEnemy,
+  HealEnemy,
+  MoveCard,
+  ReadyEnemy,
+  RevealLocation,
+  SpawnEnemy,
   RequestDecision,
   MoveTokens,
   TokenHolder,
@@ -924,12 +935,18 @@ export function moveTo(location: RelativeCard): AbilityEffect {
  * "Add 1 [token] token to the chaos bag": until the end of the scenario, or for the rest of the
  * campaign ("permanently", `lasts: 'campaign'`).
  */
-export function addChaosToken(token: ChaosToken, lasts: ChaosBagChangeLasts): AbilityEffect {
+export function addChaosToken(
+  token: ChaosToken,
+  lasts: ChaosBagChangeLasts,
+): ChangeChaosBag & AbilityEffect {
   return { type: 'ChangeChaosBag', token, change: 'add', lasts };
 }
 
 /** "Remove 1 [token] token from the chaos bag", for the scenario or for the rest of the campaign. */
-export function removeChaosToken(token: ChaosToken, lasts: ChaosBagChangeLasts): AbilityEffect {
+export function removeChaosToken(
+  token: ChaosToken,
+  lasts: ChaosBagChangeLasts,
+): ChangeChaosBag & AbilityEffect {
   return { type: 'ChangeChaosBag', token, change: 'remove', lasts };
 }
 
@@ -1166,7 +1183,7 @@ export function healSelf(amount: number): AbilityEffect {
 
 /** Readies the enemy that has the ability ("ready Umôrdhoth"). */
 export function readySelf(): AbilityEffect {
-  return { type: 'ReadyEnemy', enemyId: { ref: 'self' } };
+  return readyEnemy({ ref: 'self' });
 }
 
 /**
@@ -1174,8 +1191,37 @@ export function readySelf(): AbilityEffect {
  * the damage brings to its health is defeated in the same step, so its
  * `defeated` abilities fire. Written `dealDamageTo(eachEnemy({ trait: trait('Monster') }), 1)`.
  */
-export function dealDamageTo(enemy: RelativeCard, amount: TokenAmount): AbilityEffect {
-  return { type: 'DamageEnemy', enemyId: enemy, amount };
+export function dealDamageTo(enemy: InstanceId, amount: TokenAmount): DamageEnemy;
+export function dealDamageTo(enemy: RelativeCard, amount: TokenAmount): AbilityEffect;
+export function dealDamageTo(
+  enemy: InstanceId | RelativeCard,
+  amount: TokenAmount,
+): DamageEnemy & AbilityEffect {
+  return { type: 'DamageEnemy', enemyId: enemy, amount } as DamageEnemy & AbilityEffect;
+}
+
+/** "Heal N damage from it" (`HealEnemy`): as much as it has. */
+export function healEnemy(enemy: InstanceId, amount: number): HealEnemy;
+export function healEnemy(enemy: RelativeCard, amount: number): AbilityEffect;
+export function healEnemy(
+  enemy: InstanceId | RelativeCard,
+  amount: number,
+): HealEnemy & AbilityEffect {
+  return { type: 'HealEnemy', enemyId: enemy, amount } as HealEnemy & AbilityEffect;
+}
+
+/** "Ready it" (`ReadyEnemy`); an enemy that is ready already stays as it is. */
+export function readyEnemy(enemy: InstanceId): ReadyEnemy;
+export function readyEnemy(enemy: RelativeCard): AbilityEffect;
+export function readyEnemy(enemy: InstanceId | RelativeCard): ReadyEnemy & AbilityEffect {
+  return { type: 'ReadyEnemy', enemyId: enemy } as ReadyEnemy & AbilityEffect;
+}
+
+/** "Disengage it" (`DisengageEnemy`): it stays where it is, unengaged. */
+export function disengageEnemy(enemy: InstanceId): DisengageEnemy;
+export function disengageEnemy(enemy: RelativeCard): AbilityEffect;
+export function disengageEnemy(enemy: InstanceId | RelativeCard): DisengageEnemy & AbilityEffect {
+  return { type: 'DisengageEnemy', enemyId: enemy } as DisengageEnemy & AbilityEffect;
 }
 
 /**
@@ -1190,16 +1236,20 @@ export function retreatEnemy(enemy: RelativeCard): AbilityEffect {
  * "Exhaust it / each enemy at your location" (`ExhaustEnemy`); an enemy that
  * is exhausted already stays as it is.
  */
-export function exhaustEnemy(enemy: RelativeCard): AbilityEffect {
-  return { type: 'ExhaustEnemy', enemyId: enemy };
+export function exhaustEnemy(enemy: InstanceId): ExhaustEnemy;
+export function exhaustEnemy(enemy: RelativeCard): AbilityEffect;
+export function exhaustEnemy(enemy: InstanceId | RelativeCard): ExhaustEnemy & AbilityEffect {
+  return { type: 'ExhaustEnemy', enemyId: enemy } as ExhaustEnemy & AbilityEffect;
 }
 
 /**
  * "Defeat it" or "it is automatically defeated" (`DefeatEnemy`): defeated
  * without damage, to the victory display or the encounter discard as usual.
  */
-export function defeatEnemy(enemy: RelativeCard): AbilityEffect {
-  return { type: 'DefeatEnemy', enemyId: enemy };
+export function defeatEnemy(enemy: InstanceId): DefeatEnemy;
+export function defeatEnemy(enemy: RelativeCard): AbilityEffect;
+export function defeatEnemy(enemy: InstanceId | RelativeCard): DefeatEnemy & AbilityEffect {
+  return { type: 'DefeatEnemy', enemyId: enemy } as DefeatEnemy & AbilityEffect;
 }
 
 /**
@@ -1282,7 +1332,7 @@ export function discardEachEnemy(filter: EachEnemyFilter = {}): AbilityEffect {
 }
 
 /** "Advance": the current act advances without spending clues, as an objective does. */
-export function advanceAct(): AbilityEffect {
+export function advanceAct(): Advance & AbilityEffect {
   return { type: 'Advance', deck: 'act' };
 }
 
@@ -1338,7 +1388,7 @@ export function shuffleEncounterDiscard(): AbilityEffect {
  * what the table ends with when the discard was just shuffled into the deck,
  * as every such card does first.
  */
-export function leadDrawsDiscardingUntil(match: EncounterMatch): AbilityEffect {
+export function leadDrawsDiscardingUntil(match: CardFilter): AbilityEffect {
   return drawDiscardingUntil(match, { ref: 'lead' });
 }
 
@@ -1348,7 +1398,7 @@ export function leadDrawsDiscardingUntil(match: EncounterMatch): AbilityEffect {
  * Pipes: the investigator who entered).
  */
 export function drawDiscardingUntil(
-  match: EncounterMatch,
+  match: CardFilter,
   who: RelativeInvestigator = { ref: 'windowInvestigator' },
 ): AbilityEffect {
   return {
@@ -1464,7 +1514,7 @@ export function forEachInvestigator(ability: Ability): Ability {
  * the discard, top down, that fits `match` (`DrawCard` from the discard); nothing when none does.
  */
 export function drawFromEncounterDiscard(
-  match: EncounterMatch,
+  match: CardFilter,
   who: RelativeInvestigator = { ref: 'windowInvestigator' },
 ): AbilityEffect {
   return { type: 'DrawCard', investigatorId: who, from: encounterDiscard, pick: { match } };
@@ -1499,7 +1549,7 @@ export function searchAndDrawCopies(
  * matches, deck first (`DrawCard` with `match`); nothing when none does.
  * The players would pick among the matches; the engine does not ask yet (#346).
  */
-export function searchAndDraw(match: EncounterMatch): AbilityEffect {
+export function searchAndDraw(match: CardFilter): AbilityEffect {
   return {
     type: 'DrawCard',
     investigatorId: you(),
@@ -1536,7 +1586,7 @@ export function gainSurge(): AbilityEffect {
 }
 
 /** "(→R3)": the scenario ends with that resolution. */
-export function endScenario(resolution: ResolutionId): AbilityEffect {
+export function endScenario(resolution: ResolutionId): EndScenario & AbilityEffect {
   return { type: 'EndScenario', resolution };
 }
 
@@ -1632,8 +1682,12 @@ function choice(
 }
 
 /** "Reveal the Parlor". */
-export function revealLocation(location: RelativeCard): AbilityEffect {
-  return { type: 'RevealLocation', locationId: location };
+export function revealLocation(location: InstanceId): RevealLocation;
+export function revealLocation(location: RelativeCard): AbilityEffect;
+export function revealLocation(
+  location: InstanceId | RelativeCard,
+): RevealLocation & AbilityEffect {
+  return { type: 'RevealLocation', locationId: location } as RevealLocation & AbilityEffect;
 }
 
 /**
@@ -1693,8 +1747,13 @@ export function setAsideCopy(code: CardCode): Extract<RelativeCard, { ref: 'setA
  * "Spawn the Ghoul Priest in the Hallway": the enemy spawns at the location
  * named, engaging like any spawn (`SpawnEnemy`).
  */
-export function spawnEnemyAt(enemy: RelativeCard, location: RelativeCard): AbilityEffect {
-  return { type: 'SpawnEnemy', enemyId: enemy, at: location };
+export function spawnEnemyAt(enemy: InstanceId, location: InstanceId): SpawnEnemy;
+export function spawnEnemyAt(enemy: RelativeCard, location: RelativeCard): AbilityEffect;
+export function spawnEnemyAt(
+  enemy: InstanceId | RelativeCard,
+  location: InstanceId | RelativeCard,
+): SpawnEnemy & AbilityEffect {
+  return { type: 'SpawnEnemy', enemyId: enemy, at: location } as SpawnEnemy & AbilityEffect;
 }
 
 /**
@@ -1706,10 +1765,21 @@ export function spawnEnemyAt(enemy: RelativeCard, location: RelativeCard): Abili
  * encounter deck" `move(self(), encounterDeck, 'top')`. Only moves a rule gives a meaning of its
  * own keep a factory (`discard`, `putIntoThreatArea`, `attachTo`, `takeControl`, `fromSetAside`).
  */
+export function move(card: InstanceId, to: Zone, end?: 'top' | 'bottom'): MoveCard;
 export function move(
   card: RelativeCard,
   to: Templated<Zone>,
+  end?: 'top' | 'bottom',
+): AbilityEffect;
+export function move(
+  card: InstanceId | RelativeCard,
+  to: Zone | Templated<Zone>,
   end: 'top' | 'bottom' = 'bottom',
-): AbilityEffect {
-  return { type: 'MoveCard', cardId: card, to, ...(end === 'top' && { index: 0 }) };
+): MoveCard & AbilityEffect {
+  return {
+    type: 'MoveCard',
+    cardId: card,
+    to,
+    ...(end === 'top' && { index: 0 }),
+  } as MoveCard & AbilityEffect;
 }

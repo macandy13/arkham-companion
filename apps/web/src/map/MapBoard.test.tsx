@@ -18,13 +18,13 @@ import {
   perInvestigator,
   PlayTable,
   resignAction,
-  threatAreaOf,
 } from '@arkham/engine';
 import { initI18n } from '../i18n';
 import { MapBoard } from './MapBoard';
 import { DOUBLE_TAP_MS } from '../screens/useDoubleTap';
 import type { Point } from './mapLayout';
-import { actionsOn } from '../state/gameActions.test_support';
+import { PlayingOn } from '../state/gameActions.test_support';
+import { boardWhere, investigatorWhere, locationWhere } from '../state/boardWhere.test_support';
 
 const study = instanceId('study');
 const hallway = instanceId('hallway');
@@ -84,16 +84,21 @@ describe('MapBoard', () => {
   });
   afterEach(cleanup);
 
-  it('draws a tile per location with its shroud and clues once revealed, its doom and attachments', () => {
+  it("draws a tile per location with the board's shroud and its clues once revealed, its doom and attachments", () => {
     const table = PlayTable.start(
       house.withCard(
         instanceId('obscuring_fog'),
-        blankTreachery('obscuring_fog', { modifiers: [{ value: 'shroud', of: 'host', by: 2 }] }),
+        blankTreachery('obscuring_fog'),
         attachedTo(study),
       ),
     );
+    const board = locationWhere(table.board, study, { shroud: 4 });
 
-    render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
+    render(
+      <PlayingOn table={table}>
+        <MapBoard board={board} />
+      </PlayingOn>,
+    );
 
     expect(screen.getByRole('figure', { name: 'House' })).toBeTruthy();
     const tokensOf = (name: string) =>
@@ -133,7 +138,11 @@ describe('MapBoard', () => {
         newGame().withLocation(parlor, blankLocation('parlor', { clues }), { revealed: true }),
       );
 
-      render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
+      render(
+        <PlayingOn table={table}>
+          <MapBoard board={table.board} />
+        </PlayingOn>,
+      );
 
       const value = within(tile('parlor')).getByRole('img', { name: label });
       expect(value.querySelector('[data-symbol="per_investigator"]') !== null).toBe(
@@ -151,7 +160,11 @@ describe('MapBoard', () => {
       newGame().withLocation(parlor, blankLocation('parlor', { symbol: 'diamond' }), { revealed }),
     );
 
-    render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
+    render(
+      <PlayingOn table={table}>
+        <MapBoard board={table.board} />
+      </PlayingOn>,
+    );
 
     expect(
       within(tile('parlor')).getByRole('img', { name: 'Connection symbol: diamond' }),
@@ -170,7 +183,11 @@ describe('MapBoard', () => {
         .withInvestigator(alder),
     );
 
-    render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
+    render(
+      <PlayingOn table={table}>
+        <MapBoard board={table.board} />
+      </PlayingOn>,
+    );
 
     const printed = within(tile('parlor'))
       .getAllByRole('paragraph')
@@ -195,7 +212,11 @@ describe('MapBoard', () => {
         .withInvestigator(alder),
     );
 
-    render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
+    render(
+      <PlayingOn table={table}>
+        <MapBoard board={table.board} />
+      </PlayingOn>,
+    );
 
     const line = within(tile('library')).getByRole('paragraph');
     expect(
@@ -224,7 +245,11 @@ describe('MapBoard', () => {
 
     it('fetches the picture from ArkhamDB and keeps the pattern face until it has loaded', () => {
       const table = PlayTable.start(withCellar);
-      render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
+      render(
+        <PlayingOn table={table}>
+          <MapBoard board={table.board} />
+        </PlayingOn>,
+      );
 
       expect(pictureOf('cellar')?.getAttribute('href')).toBe(
         'https://arkhamdb.com/bundles/cards/cellar_back.png',
@@ -235,7 +260,11 @@ describe('MapBoard', () => {
 
     it('shows the picture once it has loaded', () => {
       const table = PlayTable.start(withCellar);
-      render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
+      render(
+        <PlayingOn table={table}>
+          <MapBoard board={table.board} />
+        </PlayingOn>,
+      );
 
       fireEvent.load(requiredPictureOf('cellar'));
 
@@ -244,7 +273,11 @@ describe('MapBoard', () => {
 
     it('cuts the art out of the picture into the art window of the tile', () => {
       const table = PlayTable.start(withCellar);
-      render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
+      render(
+        <PlayingOn table={table}>
+          <MapBoard board={table.board} />
+        </PlayingOn>,
+      );
 
       // The art window is the tile's nested svg: the scan's art area, its whole width from 5.7 % to
       // 56.3 % of its height.
@@ -257,7 +290,11 @@ describe('MapBoard', () => {
 
     it('keeps the pattern face when the picture fails to load', () => {
       const table = PlayTable.start(withCellar);
-      render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
+      render(
+        <PlayingOn table={table}>
+          <MapBoard board={table.board} />
+        </PlayingOn>,
+      );
 
       fireEvent.error(requiredPictureOf('cellar'));
 
@@ -267,7 +304,11 @@ describe('MapBoard', () => {
 
   it('names each connection after its locations and marks one-way ones', () => {
     const table = PlayTable.start(house);
-    render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
+    render(
+      <PlayingOn table={table}>
+        <MapBoard board={table.board} />
+      </PlayingOn>,
+    );
 
     const lines = screen
       .getAllByRole('img')
@@ -284,7 +325,11 @@ describe('MapBoard', () => {
         .withMap(mapId('empty_study'), { name: 'Empty study' }),
     );
 
-    render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
+    render(
+      <PlayingOn table={table}>
+        <MapBoard board={table.board} />
+      </PlayingOn>,
+    );
 
     expect(screen.getByRole('figure', { name: 'House' })).toBeTruthy();
     expect(screen.queryByRole('figure', { name: 'Cellar' })).toBeNull();
@@ -293,7 +338,11 @@ describe('MapBoard', () => {
 
   it('offers zoom icons named for screen readers', () => {
     const table = PlayTable.start(house);
-    render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
+    render(
+      <PlayingOn table={table}>
+        <MapBoard board={table.board} />
+      </PlayingOn>,
+    );
 
     const zoom = within(screen.getByRole('toolbar', { name: 'Zoom' }));
     expect(zoom.getAllByRole('button').map((button) => button.getAttribute('aria-label'))).toEqual([
@@ -305,7 +354,11 @@ describe('MapBoard', () => {
 
   it('shows one map without tabs', () => {
     const table = PlayTable.start(house);
-    render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
+    render(
+      <PlayingOn table={table}>
+        <MapBoard board={table.board} />
+      </PlayingOn>,
+    );
 
     expect(screen.queryByRole('tablist')).toBeNull();
   });
@@ -316,7 +369,11 @@ describe('MapBoard', () => {
         .withMap(mapId('cellar'), { name: 'Cellar' })
         .withLocation(instanceId('cellar'), blankLocation('cellar'), { map: mapId('cellar') }),
     );
-    render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
+    render(
+      <PlayingOn table={table}>
+        <MapBoard board={table.board} />
+      </PlayingOn>,
+    );
     const tab = (name: string) => screen.getByRole('tab', { name });
 
     expect(tab('House').getAttribute('aria-selected')).toBe('true');
@@ -347,7 +404,11 @@ describe('MapBoard', () => {
           .withMap(mapId('garden'), { name: 'Garden' })
           .withLocation(instanceId('garden'), blankLocation('garden'), { map: mapId('garden') }),
       );
-      render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
+      render(
+        <PlayingOn table={table}>
+          <MapBoard board={table.board} />
+        </PlayingOn>,
+      );
       const tab = (name: string) => screen.getByRole('tab', { name });
       fireEvent.click(tab(from));
 
@@ -367,13 +428,17 @@ describe('MapBoard', () => {
         .withLocation(instanceId('cellar'), blankLocation('cellar'), { map: cellar }),
     );
     const { rerender } = render(
-      <MapBoard board={withCellar.board} actions={actionsOn(withCellar)} busy={false} />,
+      <PlayingOn table={withCellar}>
+        <MapBoard board={withCellar.board} />
+      </PlayingOn>,
     );
     fireEvent.click(screen.getByRole('tab', { name: 'Cellar' }));
 
     const cellarEmptied = PlayTable.start(house.withMap(cellar, { name: 'Cellar' }));
     rerender(
-      <MapBoard board={cellarEmptied.board} actions={actionsOn(cellarEmptied)} busy={false} />,
+      <PlayingOn table={cellarEmptied}>
+        <MapBoard board={cellarEmptied.board} />
+      </PlayingOn>,
     );
 
     expect(screen.getByRole('figure', { name: 'House' })).toBeTruthy();
@@ -391,7 +456,11 @@ describe('MapBoard', () => {
     );
     table.play({ type: 'ExhaustEnemy', enemyId: ghoul });
 
-    render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
+    render(
+      <PlayingOn table={table}>
+        <MapBoard board={table.board} />
+      </PlayingOn>,
+    );
 
     expect(
       within(tile('study')).getByRole('img', { name: 'alder, lead investigator' }),
@@ -406,7 +475,11 @@ describe('MapBoard', () => {
 
   it('lets the clue taken from a location rise from its count, and marks no count first shown', () => {
     const table = PlayTable.start(house.withInvestigator(alder, { locationId: study }));
-    const board = () => <MapBoard board={table.board} actions={actionsOn(table)} busy={false} />;
+    const board = () => (
+      <PlayingOn table={table}>
+        <MapBoard board={table.board} />
+      </PlayingOn>
+    );
     const { rerender } = render(board());
     expect(tile('study').querySelector('[data-changed]')).toBeNull();
 
@@ -428,7 +501,11 @@ describe('MapBoard', () => {
         .withInvestigator(alder, { locationId: study })
         .withCard(ghoul, blankEnemy('ghoul', { health: fixed(3) }), atLocation(study)),
     );
-    const board = () => <MapBoard board={table.board} actions={actionsOn(table)} busy={false} />;
+    const board = () => (
+      <PlayingOn table={table}>
+        <MapBoard board={table.board} />
+      </PlayingOn>
+    );
     const { rerender } = render(board());
 
     table.play({ type: 'DamageEnemy', enemyId: ghoul, amount: 2 });
@@ -451,7 +528,11 @@ describe('MapBoard', () => {
     );
     table.play({ type: 'ExhaustEnemy', enemyId: ghoul });
 
-    render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
+    render(
+      <PlayingOn table={table}>
+        <MapBoard board={table.board} />
+      </PlayingOn>,
+    );
 
     const ghoulToken = within(tile('study')).getByRole('img', { name: /^ghoul,/ });
     expect(ghoulToken.dataset.engaged).toBe('true');
@@ -476,7 +557,11 @@ describe('MapBoard', () => {
         .withTurnOf(alder),
     );
 
-    render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
+    render(
+      <PlayingOn table={table}>
+        <MapBoard board={table.board} />
+      </PlayingOn>,
+    );
 
     expect(within(tile('study')).getByRole('img', { name: 'bea, lead investigator' })).toBeTruthy();
     expect(within(tile('study')).getByRole('img', { name: 'alder, their turn' })).toBeTruthy();
@@ -511,7 +596,11 @@ describe('MapBoard', () => {
       const table = PlayTable.start(
         house.withInvestigator(alder, { locationId: study }).withTurnOf(alder),
       );
-      render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
+      render(
+        <PlayingOn table={table}>
+          <MapBoard board={table.board} />
+        </PlayingOn>,
+      );
 
       await drag('study', 'alder, lead investigator, their turn', firstPawn, 255, 105);
 
@@ -525,7 +614,11 @@ describe('MapBoard', () => {
       const table = PlayTable.start(
         house.withInvestigator(alder, { locationId: study }).withTurnOf(alder),
       );
-      render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
+      render(
+        <PlayingOn table={table}>
+          <MapBoard board={table.board} />
+        </PlayingOn>,
+      );
 
       await drag('study', 'alder, lead investigator, their turn', firstPawn, x, y);
 
@@ -536,7 +629,11 @@ describe('MapBoard', () => {
       const table = PlayTable.start(
         house.withInvestigator(alder, { locationId: study }).withTurnOf(alder),
       );
-      render(<MapBoard board={table.board} actions={actionsOn(table)} busy />);
+      render(
+        <PlayingOn table={table} busy>
+          <MapBoard board={table.board} />
+        </PlayingOn>,
+      );
 
       await drag('study', 'alder, lead investigator, their turn', firstPawn, 255, 105);
 
@@ -550,7 +647,11 @@ describe('MapBoard', () => {
           .withInvestigator(alder, { locationId: study })
           .withTurnOf(alder),
       );
-      render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
+      render(
+        <PlayingOn table={table}>
+          <MapBoard board={table.board} />
+        </PlayingOn>,
+      );
 
       await drag('study', 'bea, lead investigator', firstPawn, 255, 105);
 
@@ -576,7 +677,11 @@ describe('MapBoard', () => {
             .withInvestigator(alder, { locationId: study })
             .withTurnOf(alder),
         );
-        render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
+        render(
+          <PlayingOn table={table}>
+            <MapBoard board={table.board} />
+          </PlayingOn>,
+        );
 
         // bea came first, so the first pawn is bea's, not that of alder, whose turn it is.
         await drag('study', 'Clues 2', clueCount, firstPawn.x, firstPawn.y);
@@ -589,7 +694,11 @@ describe('MapBoard', () => {
         const table = PlayTable.start(
           house.withInvestigator(alder, { locationId: study }).withTurnOf(alder),
         );
-        render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
+        render(
+          <PlayingOn table={table}>
+            <MapBoard board={table.board} />
+          </PlayingOn>,
+        );
 
         await drag('study', 'Clues 2', clueCount, clueCount.x, clueCount.y);
         tapOnce(within(tile('study')).getByRole('img', { name: 'Clues 2' }), {
@@ -608,7 +717,11 @@ describe('MapBoard', () => {
         const table = PlayTable.start(
           house.withInvestigator(alder, { locationId: study }).withTurnOf(alder),
         );
-        render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
+        render(
+          <PlayingOn table={table}>
+            <MapBoard board={table.board} />
+          </PlayingOn>,
+        );
 
         await drag('study', 'Clues 2', clueCount, x, y);
 
@@ -625,7 +738,9 @@ describe('MapBoard', () => {
         );
         render(
           <>
-            <MapBoard board={table.board} actions={actionsOn(table)} busy={false} />
+            <PlayingOn table={table}>
+              <MapBoard board={table.board} />
+            </PlayingOn>
             <section data-investigator="bea">
               <h3>bea</h3>
             </section>
@@ -647,7 +762,9 @@ describe('MapBoard', () => {
         );
         render(
           <>
-            <MapBoard board={table.board} actions={actionsOn(table)} busy={false} />
+            <PlayingOn table={table}>
+              <MapBoard board={table.board} />
+            </PlayingOn>
             <section data-investigator="alder">
               <h3>alder</h3>
             </section>
@@ -665,7 +782,11 @@ describe('MapBoard', () => {
         const table = PlayTable.start(
           house.withInvestigator(alder, { locationId: study }).withTurnOf(alder),
         );
-        render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
+        render(
+          <PlayingOn table={table}>
+            <MapBoard board={table.board} />
+          </PlayingOn>,
+        );
         const clues = within(tile('study')).getByRole('img', { name: 'Clues 2' });
 
         fireEvent.pointerDown(clues, { pointerId: 1, clientX: clueCount.x, clientY: clueCount.y });
@@ -695,7 +816,11 @@ describe('MapBoard', () => {
 
       it('moves a doom dragged off the study to the hallway it is dropped on', async () => {
         const table = PlayTable.start(house.withInvestigator(alder, { locationId: study }));
-        render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
+        render(
+          <PlayingOn table={table}>
+            <MapBoard board={table.board} />
+          </PlayingOn>,
+        );
 
         await drag('study', 'Doom 1', doomToken, 255, 105);
 
@@ -713,7 +838,9 @@ describe('MapBoard', () => {
         );
         render(
           <>
-            <MapBoard board={table.board} actions={actionsOn(table)} busy={false} />
+            <PlayingOn table={table}>
+              <MapBoard board={table.board} />
+            </PlayingOn>
             <section data-slot="agenda">
               <h3>agenda</h3>
             </section>
@@ -736,7 +863,9 @@ describe('MapBoard', () => {
           const table = PlayTable.start(house.withInvestigator(alder, { locationId: study }));
           render(
             <>
-              <MapBoard board={table.board} actions={actionsOn(table)} busy={false} />
+              <PlayingOn table={table}>
+                <MapBoard board={table.board} />
+              </PlayingOn>
               <section data-pool>
                 <h3>pool</h3>
               </section>
@@ -753,7 +882,11 @@ describe('MapBoard', () => {
 
       it('leaves the doom on the study when dropped on the study itself', async () => {
         const table = PlayTable.start(house.withInvestigator(alder, { locationId: study }));
-        render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
+        render(
+          <PlayingOn table={table}>
+            <MapBoard board={table.board} />
+          </PlayingOn>,
+        );
 
         await drag('study', 'Doom 1', doomToken, 75, 105);
 
@@ -791,7 +924,11 @@ describe('MapBoard', () => {
 
         it('shows the doom as a badge on the ghoul that can be dragged off', () => {
           const table = PlayTable.start(cultistInStudy);
-          render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
+          render(
+            <PlayingOn table={table}>
+              <MapBoard board={table.board} />
+            </PlayingOn>,
+          );
 
           const badge = tile('study').querySelector<SVGElement>('[data-marker="doom"]');
           expect(badge?.textContent).toBe('1');
@@ -801,7 +938,11 @@ describe('MapBoard', () => {
 
         it("opens the ghoul's details, not the study's, on a tap on its doom badge", async () => {
           const table = PlayTable.start(cultistInStudy);
-          render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
+          render(
+            <PlayingOn table={table}>
+              <MapBoard board={table.board} />
+            </PlayingOn>,
+          );
           const badge = tile('study').querySelector<SVGElement>('[data-marker="doom"]');
           if (!badge) throw new Error('The ghoul shows no doom badge');
 
@@ -828,7 +969,11 @@ describe('MapBoard', () => {
 
         it('moves the doom dragged off the ghoul to the hallway it is dropped on', async () => {
           const table = PlayTable.start(cultistInStudy);
-          render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
+          render(
+            <PlayingOn table={table}>
+              <MapBoard board={table.board} />
+            </PlayingOn>,
+          );
 
           await dragGhoulDoom(255, 105);
 
@@ -838,7 +983,11 @@ describe('MapBoard', () => {
 
         it('moves a doom dragged off the study onto the ghoul under the pointer', async () => {
           const table = PlayTable.start(cultistInStudy);
-          render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
+          render(
+            <PlayingOn table={table}>
+              <MapBoard board={table.board} />
+            </PlayingOn>,
+          );
           underPointer = ghoulToken();
 
           await drag('study', 'Doom 1', doomToken, ghoulDoomBadge.x, ghoulDoomBadge.y);
@@ -851,7 +1000,9 @@ describe('MapBoard', () => {
           const table = PlayTable.start(cultistInStudy);
           render(
             <>
-              <MapBoard board={table.board} actions={actionsOn(table)} busy={false} />
+              <PlayingOn table={table}>
+                <MapBoard board={table.board} />
+              </PlayingOn>
               <section data-pool>
                 <h3>pool</h3>
               </section>
@@ -878,7 +1029,9 @@ describe('MapBoard', () => {
         );
         render(
           <>
-            <MapBoard board={table.board} actions={actionsOn(table)} busy={false} />
+            <PlayingOn table={table}>
+              <MapBoard board={table.board} />
+            </PlayingOn>
             <section data-pool>
               <h3>pool</h3>
             </section>
@@ -898,7 +1051,11 @@ describe('MapBoard', () => {
 
       it('shows a doom token over the page while it is dragged', () => {
         const table = PlayTable.start(house.withInvestigator(alder, { locationId: study }));
-        render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
+        render(
+          <PlayingOn table={table}>
+            <MapBoard board={table.board} />
+          </PlayingOn>,
+        );
         const doom = within(tile('study')).getByRole('img', { name: 'Doom 1' });
 
         fireEvent.pointerDown(doom, { pointerId: 1, clientX: doomToken.x, clientY: doomToken.y });
@@ -912,7 +1069,11 @@ describe('MapBoard', () => {
       const table = PlayTable.start(
         house.withCard(rats, blankEnemy('rats', { health: fixed(1) }), atLocation(study)),
       );
-      render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
+      render(
+        <PlayingOn table={table}>
+          <MapBoard board={table.board} />
+        </PlayingOn>,
+      );
 
       await drag('study', 'rats', enemyAlone, 255, 105);
 
@@ -925,7 +1086,11 @@ describe('MapBoard', () => {
           .withInvestigator(alder, { locationId: study })
           .withCard(rats, blankEnemy('rats', { health: fixed(1) }), engagedWith(alder)),
       );
-      render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
+      render(
+        <PlayingOn table={table}>
+          <MapBoard board={table.board} />
+        </PlayingOn>,
+      );
 
       await drag('study', 'rats, engaged with alder', enemyEngagedWithAlder, 255, 105);
 
@@ -943,7 +1108,11 @@ describe('MapBoard', () => {
           .withCard(rats, aloofRats, atLocation(study))
           .withTurnOf(alder),
       );
-      render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
+      render(
+        <PlayingOn table={table}>
+          <MapBoard board={table.board} />
+        </PlayingOn>,
+      );
 
       await drag('study', 'aloof_rats', enemyPastAlder, 24, 186);
 
@@ -962,7 +1131,11 @@ describe('MapBoard', () => {
       const table = PlayTable.start(
         house.withCard(rats, blankEnemy('rats', { health: fixed(1) }), atLocation(study)),
       );
-      render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
+      render(
+        <PlayingOn table={table}>
+          <MapBoard board={table.board} />
+        </PlayingOn>,
+      );
 
       await drag('study', 'rats', enemyAlone, x, y);
 
@@ -973,7 +1146,11 @@ describe('MapBoard', () => {
       const table = PlayTable.start(
         house.withCard(rats, blankEnemy('rats', { health: fixed(1) }), atLocation(study)),
       );
-      render(<MapBoard board={table.board} actions={actionsOn(table)} busy />);
+      render(
+        <PlayingOn table={table} busy>
+          <MapBoard board={table.board} />
+        </PlayingOn>,
+      );
 
       await drag('study', 'rats', enemyAlone, 255, 105);
 
@@ -1030,7 +1207,11 @@ describe('MapBoard', () => {
       'opens the damage and doom bubble of the rats on a double tap, where "$button" leaves $damage damage and $doom doom',
       async ({ button, damage, doom }) => {
         const table = aldersTurnWithRats();
-        render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
+        render(
+          <PlayingOn table={table}>
+            <MapBoard board={table.board} />
+          </PlayingOn>,
+        );
 
         await tapPiece('study', 'rats', 2);
         fireEvent.click(
@@ -1047,7 +1228,11 @@ describe('MapBoard', () => {
 
     it("opens the enemy's details, not the tile's, with engage for an aloof enemy at the investigator's location", async () => {
       const table = aldersTurnWithRats();
-      render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
+      render(
+        <PlayingOn table={table}>
+          <MapBoard board={table.board} />
+        </PlayingOn>,
+      );
 
       await tapPiece('study', 'rats');
 
@@ -1070,13 +1255,19 @@ describe('MapBoard', () => {
     it('engages the enemy as an action and keeps its details open', async () => {
       const table = aldersTurnWithRats();
       const { rerender } = render(
-        <MapBoard board={table.board} actions={actionsOn(table)} busy={false} />,
+        <PlayingOn table={table}>
+          <MapBoard board={table.board} />
+        </PlayingOn>,
       );
       await tapPiece('study', 'rats');
 
       fireEvent.click(screen.getByRole('button', { name: 'Engage · 1 action' }));
       await act(async () => {});
-      rerender(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
+      rerender(
+        <PlayingOn table={table}>
+          <MapBoard board={table.board} />
+        </PlayingOn>,
+      );
 
       expect(table.board.enemy(rats)).toMatchObject({ engagedWith: alder });
       expect(table.board.investigator(alder).actions).toBe(2);
@@ -1093,7 +1284,11 @@ describe('MapBoard', () => {
           .withCard(rats, blankEnemy('rats', { health: fixed(2) }), engagedWith(bea))
           .withTurnOf(alder),
       );
-      render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
+      render(
+        <PlayingOn table={table}>
+          <MapBoard board={table.board} />
+        </PlayingOn>,
+      );
       await tapPiece('study', 'rats, engaged with bea');
 
       fireEvent.click(screen.getByRole('button', { name: 'Fight · 1 action' }));
@@ -1109,7 +1304,11 @@ describe('MapBoard', () => {
           .withCard(rats, blankEnemy('rats', { health: fixed(2) }), atLocation(study))
           .withTurnOf(alder),
       );
-      render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
+      render(
+        <PlayingOn table={table}>
+          <MapBoard board={table.board} />
+        </PlayingOn>,
+      );
 
       await tapPiece('study', 'rats');
 
@@ -1149,7 +1348,11 @@ describe('MapBoard', () => {
 
     it('opens from a tap on the tile and closes again', () => {
       const table = PlayTable.start(house);
-      render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
+      render(
+        <PlayingOn table={table}>
+          <MapBoard board={table.board} />
+        </PlayingOn>,
+      );
 
       tapOnce(tile('hallway'));
       expect(details('hallway')).toBeTruthy();
@@ -1162,12 +1365,9 @@ describe('MapBoard', () => {
       const table = PlayTable.start(house);
       const picked: string[] = [];
       render(
-        <MapBoard
-          board={table.board}
-          actions={actionsOn(table)}
-          busy={false}
-          onPick={(location) => picked.push(location)}
-        />,
+        <PlayingOn table={table}>
+          <MapBoard board={table.board} onPick={(location) => picked.push(location)} />
+        </PlayingOn>,
       );
 
       tapOnce(tile('hallway'));
@@ -1182,13 +1382,9 @@ describe('MapBoard', () => {
     ])('lights $lit while picking among $pickable', ({ pickable, lit }) => {
       const table = PlayTable.start(house);
       render(
-        <MapBoard
-          board={table.board}
-          actions={actionsOn(table)}
-          busy={false}
-          onPick={() => {}}
-          pickable={pickable}
-        />,
+        <PlayingOn table={table}>
+          <MapBoard board={table.board} onPick={() => {}} pickable={pickable} />
+        </PlayingOn>,
       );
 
       expect(
@@ -1198,7 +1394,11 @@ describe('MapBoard', () => {
 
     it('opens nothing when the press moves on, as a pan of the map does', () => {
       const table = PlayTable.start(house);
-      render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
+      render(
+        <PlayingOn table={table}>
+          <MapBoard board={table.board} />
+        </PlayingOn>,
+      );
 
       fireEvent.pointerDown(tile('hallway'), { clientX: 200, clientY: 100 });
       fireEvent.click(tile('hallway'), { clientX: 240, clientY: 100 });
@@ -1208,7 +1408,11 @@ describe('MapBoard', () => {
 
     it.each(['Enter', ' '])('opens from the details button by the %j key', (key) => {
       const table = PlayTable.start(house);
-      render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
+      render(
+        <PlayingOn table={table}>
+          <MapBoard board={table.board} />
+        </PlayingOn>,
+      );
 
       fireEvent.keyDown(
         within(tile('hallway')).getByRole('button', { name: 'Details of hallway' }),
@@ -1220,7 +1424,11 @@ describe('MapBoard', () => {
 
     it('shows the shroud, the clues and who is there', () => {
       const table = aldersTurn();
-      render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
+      render(
+        <PlayingOn table={table}>
+          <MapBoard board={table.board} />
+        </PlayingOn>,
+      );
 
       tapOnce(tile('study'));
 
@@ -1246,7 +1454,11 @@ describe('MapBoard', () => {
           attachedTo(study),
         ),
       );
-      render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
+      render(
+        <PlayingOn table={table}>
+          <MapBoard board={table.board} />
+        </PlayingOn>,
+      );
 
       tapOnce(tile('study'));
 
@@ -1267,7 +1479,11 @@ describe('MapBoard', () => {
           attachedTo(study),
         ),
       );
-      render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
+      render(
+        <PlayingOn table={table}>
+          <MapBoard board={table.board} />
+        </PlayingOn>,
+      );
       tapOnce(tile('study'));
 
       fireEvent.click(within(details('study')).getByRole('button', { name: 'Read obscuring_fog' }));
@@ -1295,7 +1511,11 @@ describe('MapBoard', () => {
       { location: 'attic', buttons: ['Close', 'Reveal', 'Attach a card'] },
     ])('offers alder in the study at the $location: $buttons', ({ location, buttons }) => {
       const table = aldersTurn();
-      render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
+      render(
+        <PlayingOn table={table}>
+          <MapBoard board={table.board} />
+        </PlayingOn>,
+      );
 
       tapOnce(tile(location));
 
@@ -1304,7 +1524,11 @@ describe('MapBoard', () => {
 
     it('reveals the unrevealed hallway from its details', async () => {
       const table = PlayTable.start(house);
-      render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
+      render(
+        <PlayingOn table={table}>
+          <MapBoard board={table.board} />
+        </PlayingOn>,
+      );
 
       tapOnce(tile('hallway'));
       tap('Reveal');
@@ -1314,7 +1538,11 @@ describe('MapBoard', () => {
 
     it("offers the hallway's move as an action, and lists it first in its ways, then the free move", () => {
       const table = aldersTurn();
-      render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
+      render(
+        <PlayingOn table={table}>
+          <MapBoard board={table.board} />
+        </PlayingOn>,
+      );
 
       tapOnce(tile('hallway'));
       const moves = within(details('hallway')).getByRole('region', { name: 'Actions' });
@@ -1330,25 +1558,16 @@ describe('MapBoard', () => {
       ).toEqual(['Move here · 1 action', 'Move here, no action']);
     });
 
-    it("marks the hallway's move with the two arrows Frozen in Fear adds, and its ways name the extra action of the free move", () => {
-      const frozen = blankTreachery('frozen', {
-        modifiers: [
-          {
-            value: 'actionCost',
-            of: 'threatArea',
-            actions: ['move', 'fight', 'evade'],
-            first: 'eachRound',
-            by: 1,
-          },
-        ],
+    it("marks the hallway's move with two arrows while a move costs alder two, and its ways name the extra action of the free move", () => {
+      const table = aldersTurn();
+      const board = boardWhere(table.board, {
+        actionCost: (_investigator, _action, cost) => (cost?.free ? 1 : 2),
       });
-      const table = PlayTable.start(
-        house
-          .withInvestigator(alder, { locationId: study })
-          .withCard(instanceId('frozen'), frozen, threatAreaOf(alder))
-          .withTurnOf(alder),
+      render(
+        <PlayingOn table={table}>
+          <MapBoard board={board} />
+        </PlayingOn>,
       );
-      render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
 
       tapOnce(tile('hallway'));
 
@@ -1365,56 +1584,45 @@ describe('MapBoard', () => {
       ).toEqual(['Move here · 2 actions', 'Move here without an action · 1 extra action']);
     });
 
-    it('turns taking a clue off while an enemy engaged with alder forbids discovering clues', () => {
-      const hunter = blankEnemy('hunter', {
-        restrictions: [{ cannot: ['discover'], what: 'clues', who: 'threatArea' }],
-      });
-      const table = PlayTable.start(
-        house
-          .withInvestigator(alder, { locationId: study })
-          .withCard(instanceId('hunter'), hunter, engagedWith(alder))
-          .withTurnOf(alder),
+    it.each([
+      {
+        button: 'Take a clue, no test',
+        state: 'alder may not discover clues',
+        board: (table: PlayTable) =>
+          investigatorWhere(table.board, alder, { forbidden: { clues: ['discover'] } }),
+      },
+      {
+        button: 'Investigate · 1 action',
+        state: 'the study forbids investigating it',
+        board: (table: PlayTable) =>
+          locationWhere(table.board, study, { forbidden: ['investigate'] }),
+      },
+    ])('turns "$button" in the study off while $state', ({ button, board }) => {
+      const table = aldersTurn();
+      render(
+        <PlayingOn table={table}>
+          <MapBoard board={board(table)} />
+        </PlayingOn>,
       );
-      render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
 
       tapOnce(tile('study'));
 
-      expect(
-        within(details('study')).getByRole('button', { name: 'Take a clue, no test' }),
-      ).toHaveProperty('disabled', true);
+      expect(within(details('study')).getByRole('button', { name: button })).toHaveProperty(
+        'disabled',
+        true,
+      );
     });
 
-    it('turns investigate off under a locked door and offers no move past a barrier', () => {
-      const table = PlayTable.start(
-        newGame()
-          .withLocation(study, blankLocation('study'), { revealed: true })
-          .withLocation(
-            hallway,
-            blankLocation('hallway', {
-              restrictions: [{ cannot: 'moveInto', of: 'self', unrevealed: true }],
-            }),
-          )
-          .withConnection(study, hallway)
-          .withCard(
-            instanceId('locked_door'),
-            blankTreachery('locked_door', {
-              restrictions: [{ cannot: 'investigate', of: 'host' }],
-            }),
-            attachedTo(study),
-          )
-          .withInvestigator(alder, { locationId: study })
-          .withTurnOf(alder),
+    it('offers no move into the hallway while it bars moving in', () => {
+      const table = aldersTurn();
+      render(
+        <PlayingOn table={table}>
+          <MapBoard board={locationWhere(table.board, hallway, { forbidden: ['moveInto'] })} />
+        </PlayingOn>,
       );
-      render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
 
-      tapOnce(tile('study'));
-      const investigate = within(details('study')).getByRole('button', {
-        name: 'Investigate · 1 action',
-      });
-      expect(investigate).toHaveProperty('disabled', true);
-      tap('Close');
       tapOnce(tile('hallway'));
-      // Only the correction for the unrevealed hallway, no move past the barrier.
+
       expect(offered('hallway')).toEqual(['Close', 'Reveal', 'Attach a card']);
     });
 
@@ -1432,7 +1640,11 @@ describe('MapBoard', () => {
 
       it('offers it among the card actions, resigns alder and closes', async () => {
         const table = aldersTurnInTheParlor();
-        render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
+        render(
+          <PlayingOn table={table}>
+            <MapBoard board={table.board} />
+          </PlayingOn>,
+        );
         tapOnce(tile('parlor'));
         const cardActions = within(details('parlor')).getByRole('region', { name: 'Card actions' });
 
@@ -1448,7 +1660,11 @@ describe('MapBoard', () => {
       const table = PlayTable.start(
         house.withInvestigator(alder, { locationId: study }).withTurnOf(alder),
       );
-      render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
+      render(
+        <PlayingOn table={table}>
+          <MapBoard board={table.board} />
+        </PlayingOn>,
+      );
       tapOnce(tile('hallway'));
 
       tap('Move here · 1 action');
@@ -1460,7 +1676,11 @@ describe('MapBoard', () => {
 
     it('gives alder a clue from the study and stays open for the next', async () => {
       const table = aldersTurn();
-      render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
+      render(
+        <PlayingOn table={table}>
+          <MapBoard board={table.board} />
+        </PlayingOn>,
+      );
       tapOnce(tile('study'));
 
       tap('Take a clue, no test');
@@ -1487,7 +1707,11 @@ describe('MapBoard', () => {
       'on the study with 2 clues and 1 doom, "$button" leaves $clues clues and $doom doom',
       async ({ button, clues, doom }) => {
         const table = PlayTable.start(house);
-        render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
+        render(
+          <PlayingOn table={table}>
+            <MapBoard board={table.board} />
+          </PlayingOn>,
+        );
 
         doubleTap(tile('study'));
         fireEvent.click(within(bubble('study')).getByRole('button', { name: button }));
@@ -1499,7 +1723,11 @@ describe('MapBoard', () => {
 
     it('names the counts it steps, clues and doom, and opens no details', () => {
       const table = PlayTable.start(house);
-      render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
+      render(
+        <PlayingOn table={table}>
+          <MapBoard board={table.board} />
+        </PlayingOn>,
+      );
 
       vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
       doubleTap(tile('study'));
@@ -1516,7 +1744,11 @@ describe('MapBoard', () => {
 
     it('offers only doom on the unrevealed hallway, which holds no clues yet', () => {
       const table = PlayTable.start(house);
-      render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
+      render(
+        <PlayingOn table={table}>
+          <MapBoard board={table.board} />
+        </PlayingOn>,
+      );
 
       doubleTap(tile('hallway'));
 
@@ -1529,7 +1761,11 @@ describe('MapBoard', () => {
 
     it('turns off removing doom at the hallway, which has none', () => {
       const table = PlayTable.start(house);
-      render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
+      render(
+        <PlayingOn table={table}>
+          <MapBoard board={table.board} />
+        </PlayingOn>,
+      );
 
       doubleTap(tile('hallway'));
 
@@ -1546,7 +1782,9 @@ describe('MapBoard', () => {
     ])('stays shut while $why', ({ busy, onPick }) => {
       const table = PlayTable.start(house);
       render(
-        <MapBoard board={table.board} actions={actionsOn(table)} busy={busy} onPick={onPick} />,
+        <PlayingOn table={table} busy={busy}>
+          <MapBoard board={table.board} onPick={onPick} />
+        </PlayingOn>,
       );
 
       doubleTap(tile('study'));

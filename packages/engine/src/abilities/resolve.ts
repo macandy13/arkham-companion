@@ -636,8 +636,7 @@ function candidateCards(
       return locationsInPlay(ctx, state).filter(
         (location) =>
           location.id !== from &&
-          (picked.trait === undefined ||
-            cardStats(ctx.cards, location.code).traits.includes(picked.trait)) &&
+          matchesCard(ctx, location, picked) &&
           (picked.connected === undefined ||
             (from !== undefined && neighbours(ctx, state, from).includes(location.id))),
       );

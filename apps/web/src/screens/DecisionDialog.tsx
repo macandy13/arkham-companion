@@ -18,8 +18,9 @@ import {
   Stepper,
   useSkillTest,
 } from '../investigators/TestCalculation';
-import type { DecisionAmounts, GameActions } from '../state/gameActions';
+import type { DecisionAmounts } from '../state/gameActions';
 import { CardDialog } from './CardDialog';
+import { usePlay } from './PlayContext';
 
 /**
  * The first open decision (`BoardView.decisions[0]`) as a card dialog over the board
@@ -45,16 +46,12 @@ import { CardDialog } from './CardDialog';
 export function DecisionDialog({
   board,
   decision,
-  actions,
-  busy,
   justDrawn = false,
   picking = false,
   onPicking,
 }: {
   board: BoardView;
   decision: DecisionView;
-  actions: GameActions;
-  busy: boolean;
   /** Whether its card is the encounter card just drawn, which deals in (`useJustDrawn`). */
   justDrawn?: boolean;
   /** Whether the players are picking one of the decision's locations on the map. */
@@ -78,13 +75,7 @@ export function DecisionDialog({
       lowered={lowered || picking}
       onLower={lower}
     >
-      <DecisionPage
-        board={board}
-        decision={decision}
-        actions={actions}
-        busy={busy}
-        {...(onPicking ? { onPicking } : {})}
-      />
+      <DecisionPage board={board} decision={decision} {...(onPicking ? { onPicking } : {})} />
     </CardDialog>
   );
 }
@@ -116,16 +107,13 @@ export function decisionHeading(
 export function DecisionPage({
   board,
   decision,
-  actions,
-  busy,
   onPicking,
 }: {
   board: BoardView;
   decision: DecisionView;
-  actions: GameActions;
-  busy: boolean;
   onPicking?: (picking: boolean) => void;
 }) {
+  const { actions, busy } = usePlay();
   const { t } = useTranslation();
   const { test } = decision;
   const tested = decision.kind === 'skillTestResult' ? decision.for : undefined;

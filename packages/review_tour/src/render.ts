@@ -159,12 +159,18 @@ function renderEvidence(
     const test = item.test
       ? `<p class="test">Checked by <code>${escapeHtml(item.test)}</code></p>`
       : '';
-    const example = item.example
-      ? `<pre class="example"><code>${item.example.split('\n').map(highlightLine).join('\n')}</code></pre>`
-      : '';
+    const example = item.example ? renderExample(item.example, item.before) : '';
     return `<li><p>${inline(item.claim)}</p>${test}${example}${renderPictures(pictures[index] ?? [])}</li>`;
   });
   return `<section class="evidence" id="evidence"><h2>How we know it works</h2><ul>${items.join('')}</ul></section>`;
+}
+
+/** An example in code; with `before`, the old usage above the new one, each labelled. */
+function renderExample(example: string, before: string | undefined): string {
+  const code = (text: string) =>
+    `<pre class="example"><code>${text.split('\n').map(highlightLine).join('\n')}</code></pre>`;
+  if (before === undefined) return code(example);
+  return `<div class="usage"><p class="when">Before</p>${code(before)}<p class="when">Now</p>${code(example)}</div>`;
 }
 
 function renderPictures(pictures: readonly StopPicture[]): string {

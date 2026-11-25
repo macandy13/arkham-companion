@@ -8,7 +8,6 @@ import {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { BoardView, CardFaceView, DecisionId, DecisionView } from '@arkham/engine';
-import type { GameActions } from '../state/gameActions';
 import { CardDialog } from './CardDialog';
 import { DecisionPage, decisionHeading } from './DecisionDialog';
 
@@ -78,8 +77,6 @@ export function useDecisionHost(): HostedDecision {
  */
 export function DetailsDialog({
   board,
-  actions,
-  busy,
   hosted,
   name,
   card,
@@ -91,8 +88,6 @@ export function DetailsDialog({
   children,
 }: {
   board: BoardView;
-  actions: GameActions;
-  busy: boolean;
   hosted: HostedDecision;
   /** The card in play the details are about, whose decisions keep it beside the page. */
   card?: CardFaceView;
@@ -132,7 +127,7 @@ export function DetailsDialog({
       lowered={loweredFor === id}
       onLower={(to) => setLoweredFor(to ? id : undefined)}
     >
-      <DecisionPage key={id} board={board} decision={view} actions={actions} busy={busy} />
+      <DecisionPage key={id} board={board} decision={view} />
     </CardDialog>
   );
 }

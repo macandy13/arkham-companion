@@ -3,7 +3,6 @@ import type { BoardView, CardFaceView, InvestigatorView } from '@arkham/engine';
 import { CardActions, cardActionsOn } from '../screens/ActionRow';
 import { DetailsDialog, useDecisionHost } from '../screens/DetailsDialog';
 import { useBackCloses } from '../screens/useBackCloses';
-import type { GameActions } from '../state/gameActions';
 import { TreacheryCard } from '../treacheries/TreacheryCard';
 
 /** Where a card an investigator holds lies: in their threat area or their play area. */
@@ -26,16 +25,12 @@ export function CardDetails({
   card,
   owner,
   heldIn,
-  actions,
-  busy,
   onClose,
 }: {
   board: BoardView;
   card: CardFaceView;
   owner: InvestigatorView;
   heldIn: HeldIn;
-  actions: GameActions;
-  busy: boolean;
   onClose: () => void;
 }) {
   const { t } = useTranslation();
@@ -45,8 +40,6 @@ export function CardDetails({
   return (
     <DetailsDialog
       board={board}
-      actions={actions}
-      busy={busy}
       hosted={hosted}
       name="held-card"
       card={card}
@@ -59,13 +52,7 @@ export function CardDetails({
       <p>{t('cardDetails.tapToRead')}</p>
       {offered.length > 0 && (
         <footer>
-          <CardActions
-            board={board}
-            offered={offered}
-            actions={actions}
-            busy={busy}
-            onUse={hosted.host}
-          />
+          <CardActions board={board} offered={offered} onUse={hosted.host} />
         </footer>
       )}
     </DetailsDialog>

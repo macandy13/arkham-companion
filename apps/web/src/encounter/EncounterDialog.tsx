@@ -3,10 +3,11 @@ import { useTranslation } from 'react-i18next';
 import type { BoardView, EncounterCardView } from '@arkham/engine';
 import { matchingFirst } from '@arkham/util';
 import { useCardPicture } from '../catalog/cardImages';
-import type { GameActions } from '../state/gameActions';
 import { CardDialog } from '../screens/CardDialog';
 import { CardStrip } from '../screens/CardStrip';
 import { CardMoves } from './CardMoves';
+import { encounterDraw } from '@arkham/engine';
+import { usePlay } from '../screens/PlayContext';
 
 /** Where the encounter dialog opens (`EncounterDialog.start`): on the deck or on one of its piles. */
 export type EncounterPile = 'deck' | HeaderPileKind;
@@ -19,7 +20,7 @@ export type HeaderPileKind = 'discard' | 'setAside' | 'victoryDisplay' | 'beneat
  * cards are left with a "Draw for …" button per active investigator (the one whose turn it is
  * first), as player cards and effects make an investigator draw outside the mythos phase. A draw
  * closes the dialog, so the card resolves in front of the players (its decisions in the decision
- * dialog); nothing is drawn while a step is queued (`busy`) or when deck and discard pile are
+ * dialog); nothing is drawn while a step is queued (`usePlay().busy`) or when deck and discard pile are
  * both empty. Opened on a pile, it shows the pile's cards in a row (`PileStrip`) with the places the
  * players can put the chosen one (`CardMoves`), for a revelation the engine left to them; its
  * Spawn closes the dialog and hands the enemy to `onSpawn`, so the players pick the location on
@@ -29,18 +30,15 @@ export type HeaderPileKind = 'discard' | 'setAside' | 'victoryDisplay' | 'beneat
 export function EncounterDialog({
   board,
   start,
-  actions,
-  busy,
   onSpawn,
   onClose,
 }: {
   board: BoardView;
   start: EncounterPile;
-  actions: GameActions;
-  busy: boolean;
   onSpawn: (card: EncounterCardView) => void;
   onClose: () => void;
 }) {
+  const { actions, busy } = usePlay();
   const { t } = useTranslation();
   const { deckCount, discard, setAside, victoryDisplay, beneathAct } = board.encounter;
   const drawers = matchingFirst(
@@ -52,8 +50,6 @@ export function EncounterDialog({
     <CardMoves
       board={board}
       card={card}
-      actions={actions}
-      busy={busy}
       onSpawn={(enemy) => {
         onClose();
         onSpawn(enemy);
@@ -85,7 +81,7 @@ export function EncounterDialog({
               disabled={busy || empty}
               onClick={() => {
                 onClose();
-                void actions.drawEncounter(investigator.id);
+                void actions.perform(encounterDraw(investigator.id));
               }}
             >
               {t('encounter.drawFor', { name: investigator.name })}

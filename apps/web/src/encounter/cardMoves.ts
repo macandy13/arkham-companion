@@ -1,8 +1,18 @@
-import type { BoardView, CardPlaceView, EncounterCardView, InvestigatorId } from '@arkham/engine';
-import { matchingFirst } from '@arkham/util';
+import {
+  encounterDiscard,
+  setAside,
+  threatAreaOf,
+  type Adjustment,
+  type BoardView,
+  type CardPlaceView,
+  type EncounterCardView,
+  type InstanceId,
+  type InvestigatorId,
+} from '@arkham/engine';
+import { assertNever, matchingFirst } from '@arkham/util';
 
 /**
- * Where the players put an encounter card by hand (`GameActions.moveEncounterCard`), when the
+ * Where the players put an encounter card by hand (`pileAdjustment`, a correction), when the
  * engine left part of a revelation to them: the top of the discard pile, set aside or an
  * investigator's threat area.
  */
@@ -11,7 +21,7 @@ export type PileMove =
 
 /**
  * What the players can do with an encounter card (`cardMoves`): a `PileMove`, or spawn an enemy
- * that is not on the map yet at a location they then tap (`GameActions.spawnEnemy`), so the engine
+ * that is not on the map yet at a location they then tap (`SpawnEnemy`, performed), so the engine
  * engages it by the rules.
  */
 export type CardMove = PileMove | { to: 'spawn' };
@@ -42,4 +52,23 @@ export function cardMoves(board: BoardView, card: EncounterCardView): CardMove[]
     ...(place.kind === 'encounterDiscard' ? [] : [{ to: 'discard' } as const]),
     ...(place.kind === 'setAside' ? [] : [{ to: 'setAside' } as const]),
   ];
+}
+
+/**
+ * The correction that puts the encounter card `card` where `move` says (`GameActions.correct`),
+ * for a revelation the engine left to the players: onto the top of the discard pile, set aside or
+ * into a threat area. Enemies spawn with `SpawnEnemy` instead, so the engine engages them by the
+ * rules.
+ */
+export function pileAdjustment(card: InstanceId, move: PileMove): Adjustment {
+  switch (move.to) {
+    case 'discard':
+      return { kind: 'moveCard', cardId: card, to: encounterDiscard, index: 0 };
+    case 'setAside':
+      return { kind: 'moveCard', cardId: card, to: setAside };
+    case 'threatArea':
+      return { kind: 'moveCard', cardId: card, to: threatAreaOf(move.investigator) };
+    default:
+      return assertNever(move);
+  }
 }

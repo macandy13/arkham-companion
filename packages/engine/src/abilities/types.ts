@@ -1,4 +1,4 @@
-import { resolveAmount, type ScaledValue, type TokenAmount, type Trait } from '../cards';
+import { resolveAmount, type ScaledValue, type TokenAmount } from '../cards';
 import type { Command, TestSkill, ForEachPoint, ByMargin, MarginTier } from '../commands';
 import type { CardCode, InstanceId, InvestigatorId } from '../ids';
 import type { UsageLimit } from '../usage_limits';
@@ -327,12 +327,11 @@ export type RelativeInvestigator =
   | { ref: 'anInvestigator'; at?: RelativeCard };
 
 /**
- * Which locations in play a `locationWith` reference may stand for: those with `trait`, and with
- * `connected` only those connecting to the location of the investigator the window names ("move to
- * a connecting location").
+ * Which locations in play a `locationWith` reference may stand for: those its print matches
+ * (`CardFilter`, "a [[Central]] location"), and with `connected` only those connecting to the
+ * location of the investigator the window names ("move to a connecting location").
  */
-export interface LocationFilter {
-  trait?: Trait;
+export interface LocationFilter extends CardFilter {
   connected?: true;
 }
 

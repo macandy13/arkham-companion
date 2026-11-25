@@ -8,26 +8,15 @@ import {
 import { useTranslation } from 'react-i18next';
 import { range } from '@arkham/util';
 import type {
-  BoardView,
-  EnemyView,
   InvestigatorView,
   LocationSymbol,
   LocationView,
   MapEnemyView,
   PrintedActionView,
   ScaledValue,
-  InstanceId,
 } from '@arkham/engine';
+import { LOCATION_ART, PORTRAIT_SCAN, artViewBox } from '../catalog/cardArt';
 import {
-  ENEMY_AVATAR,
-  INVESTIGATOR_AVATAR,
-  LANDSCAPE_SCAN,
-  LOCATION_ART,
-  PORTRAIT_SCAN,
-  artViewBox,
-} from '../catalog/cardArt';
-import {
-  CardFaceCorners,
   CountCircle,
   RisingDelta,
   SCAN_TO_TILE,
@@ -36,31 +25,25 @@ import {
 } from '../catalog/cardFace';
 import { useCardPicture } from '../catalog/cardImages';
 import { cardActionCaption } from '../screens/ActionRow';
-import { type CountChange, useCountChange } from '../screens/countChange';
+import { useCountChange } from '../screens/countChange';
 import { useDoubleTap } from '../screens/useDoubleTap';
-import { SvgGameToken } from '../tokens/SvgGameToken';
 import { LOCATION_FACE, LocationOrnament } from './cardOrnament';
 import { connectionGlyph } from './connectionSymbol';
 import {
   ART_WINDOW,
   ATTACHMENT,
   attachmentOrigin,
-  BADGE_COUNT_RADIUS,
-  BADGE_GRIP_RADIUS,
-  BADGE_RADIUS,
   CONTENT,
-  damageBadgeCentre,
-  doomBadgeCentre,
   isTap,
-  leadMarkerPoints,
   piecesOnTile,
   TEXT_BOX,
   TILE,
   type Point,
 } from './mapLayout';
 import type { DragHandlers } from './usePieceDrag';
-import { TokenPicture } from './TokenPicture';
 import { shrinkAround, useShrinkToFit } from './useShrinkToFit';
+import { EnemyToken } from './EnemyToken';
+import { type TurnOrder, Pawn } from './Pawn';
 
 /**
  * What the players may drag off a tile: a piece standing on it (an investigator's pawn or an
@@ -252,69 +235,6 @@ export function LocationTile({
         />
       )}
     </g>
-  );
-}
-
-/**
- * The fills of a tile drawn in the printed cards' style: a hatch for the art area while it has no
- * card image, one per side of a location card, so a revealed tile reads apart from an unrevealed
- * one at a glance; the shading of the name plate (`card-plate`, darker towards its foot) and of
- * the page (`card-page`, lightest in the middle, like the printed paper); and the paper's grain
- * (`card-paper`, a pattern the size of a scan filled by the `card-paper-grain` noise filter:
- * large faint foxing and a fine grain), which the frame lays over its plate and page. They are
- * drawn once per map drawing, in its `defs`; the stylesheet fills each tile's parts by these ids
- * and colours the gradients' stops. The ids are fixed rather than `useId`, since the
- * stylesheet must name them; two drawings mounted at once would repeat them, which is harmless
- * because the patterns are the same.
- */
-export function CardPatterns() {
-  const size = 2 * CONTENT.inset;
-  return (
-    <>
-      <pattern id="card-art-revealed" width={size} height={size} patternUnits="userSpaceOnUse">
-        <rect width={size} height={size} />
-        <path d={`M 0 ${size} L ${size} 0`} />
-      </pattern>
-      <pattern id="card-art-unrevealed" width={size} height={size} patternUnits="userSpaceOnUse">
-        <rect width={size} height={size} />
-        <path d={`M 0 ${size} L ${size} 0 M 0 0 L ${size} ${size}`} />
-      </pattern>
-      {/* The grain's sepia sits in the colour matrices, since filter matrices take no CSS colours. */}
-      <filter id="card-paper-grain">
-        <feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="3" seed="7" />
-        <feColorMatrix
-          type="matrix"
-          values="0 0 0 0 0.36  0 0 0 0 0.25  0 0 0 0 0.12  0 0 0 -1.2 0.6"
-          result="foxing"
-        />
-        <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="1" seed="3" />
-        <feColorMatrix
-          type="matrix"
-          values="0 0 0 0 0.3  0 0 0 0 0.2  0 0 0 0 0.1  0 0 0 0.5 -0.15"
-        />
-        <feMerge>
-          <feMergeNode in="foxing" />
-          <feMergeNode />
-        </feMerge>
-      </filter>
-      <pattern
-        id="card-paper"
-        width={PORTRAIT_SCAN.width}
-        height={PORTRAIT_SCAN.height}
-        patternUnits="userSpaceOnUse"
-      >
-        <rect width={PORTRAIT_SCAN.width} height={PORTRAIT_SCAN.height} />
-      </pattern>
-      <linearGradient id="card-plate" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0" />
-        <stop offset="1" />
-      </linearGradient>
-      <radialGradient id="card-page" cx="0.5" cy="0.45" r="0.7">
-        <stop offset="0" />
-        <stop offset="1" />
-      </radialGradient>
-      <CardFaceCorners />
-    </>
   );
 }
 
@@ -596,246 +516,4 @@ function DetailsButton({ location, onOpen }: { location: LocationView; onOpen: (
       </text>
     </g>
   );
-}
-
-/**
- * The attributes a piece takes for dragging. A draggable piece is marked `data-drag`, which keeps
- * the map from panning when a drag starts on it. A `ghost` (`data-ghost`) is the copy that follows
- * the pointer during a drag; it is hidden from assistive technology, since the piece itself stays
- * in place until the move is played.
- */
-function dragAttributes({
-  name,
-  kind,
-  drag,
-  ghost,
-}: {
-  name: string;
-  kind: 'pawn' | 'enemy';
-  drag?: DragHandlers;
-  ghost: boolean;
-}) {
-  return {
-    ...(ghost ? { 'aria-hidden': true, 'data-ghost': true } : { role: 'img', 'aria-label': name }),
-    ...(drag && { 'data-drag': kind, ...drag }),
-  };
-}
-
-/** Who leads and whose turn it is, which the pawns show (`BoardView.lead`, `BoardView.turn`). */
-export type TurnOrder = Pick<BoardView, 'lead' | 'turn'>;
-
-/**
- * An investigator's pawn (`data-pawn`, their id): a circle with their initial, centred on `centre`, and
- * over it their face from their card's picture once loaded (`TokenPicture`). The
- * `lead` investigator's pawn carries a pentagon like the game's lead investigator token, and the
- * pawn of the investigator whose turn it is (`onTurn`, `data-turn`) a bolder ring; both are also
- * in its name. With `drag` it can be dragged (`usePieceDrag`); a `ghost` is the copy that follows
- * the pointer.
- */
-export function Pawn({
-  investigator,
-  centre,
-  lead = false,
-  onTurn = false,
-  drag,
-  ghost = false,
-}: {
-  investigator: InvestigatorView;
-  centre: Point;
-  lead?: boolean;
-  onTurn?: boolean;
-  drag?: DragHandlers;
-  ghost?: boolean;
-}) {
-  const { t } = useTranslation();
-  const { x, y } = centre;
-  const name = [
-    investigator.name,
-    ...(lead ? [t('map.lead')] : []),
-    ...(onTurn ? [t('map.onTurn')] : []),
-  ].join(', ');
-  return (
-    <g
-      data-pawn={investigator.id}
-      data-turn={onTurn || undefined}
-      {...dragAttributes({ name, kind: 'pawn', drag, ghost })}
-    >
-      <circle cx={x} cy={y} r={CONTENT.pawnRadius} />
-      <text x={x} y={y}>
-        {investigator.name.charAt(0)}
-      </text>
-      <TokenPicture
-        image={investigator.image}
-        area={INVESTIGATOR_AVATAR}
-        scan={LANDSCAPE_SCAN}
-        centre={centre}
-        radius={CONTENT.pawnRadius}
-      />
-      {lead && (
-        <polygon
-          data-marker="lead"
-          points={leadMarkerPoints(centre)
-            .map((corner) => `${corner.x},${corner.y}`)
-            .join(' ')}
-        />
-      )}
-    </g>
-  );
-}
-
-/**
- * An enemy as a round token with its initial, its figure from its card's picture over it once
- * loaded (`TokenPicture`), centred on `centre`, like an investigator's pawn but
- * ringed in the doom colour (`data-enemy`). An `engaged` enemy stands faded right after the pawn
- * of the investigator it is engaged with (`data-engaged`), since the threat area shows it in full.
- * A red badge on its rim shows its damage and one across from it its doom, each pulsing with the
- * change (`RisingDelta`), and an exhausted enemy's initial lies on its side, like
- * the exhausted card turned sideways (`data-exhausted`). Its accessible name says the same, with
- * whom of `investigators` it is engaged with. With `drag` it can be dragged; a `ghost` is the copy
- * that follows the pointer. With `doomDrag` a doom can be dragged off its doom badge instead, and
- * with `damageDrag` a damage off its damage badge. Its id
- * (`data-enemy`) lets a token dropped on it from elsewhere find it (`enemyAt`).
- */
-export function EnemyToken({
-  enemy,
-  investigators,
-  centre,
-  engaged = false,
-  drag,
-  doomDrag,
-  damageDrag,
-  ghost = false,
-}: {
-  enemy: MapEnemyView;
-  investigators: readonly InvestigatorView[];
-  centre: Point;
-  engaged?: boolean;
-  drag?: DragHandlers;
-  doomDrag?: DragHandlers | undefined;
-  damageDrag?: DragHandlers | undefined;
-  ghost?: boolean;
-}) {
-  const { t } = useTranslation();
-  const engagedWith = investigators.find(({ id }) => id === enemy.engagedWith)?.name;
-  const states = [
-    ...(engagedWith ? [t('map.engagedWith', { investigator: engagedWith })] : []),
-    ...enemyConditions(enemy, t),
-  ];
-  const damageChange = useCountChange(enemy.damage ?? 0);
-  const doomChange = useCountChange(enemy.doom ?? 0);
-  return (
-    <>
-      <g
-        data-enemy={enemy.id}
-        data-engaged={engaged || undefined}
-        data-exhausted={enemy.exhausted || undefined}
-        {...dragAttributes({
-          name: [enemy.name, ...states].join(', '),
-          kind: 'enemy',
-          drag,
-          ghost,
-        })}
-      >
-        <circle cx={centre.x} cy={centre.y} r={CONTENT.pawnRadius} />
-        <text x={centre.x} y={centre.y}>
-          {enemy.name.charAt(0)}
-        </text>
-        <TokenPicture
-          image={enemy.image}
-          area={ENEMY_AVATAR}
-          scan={PORTRAIT_SCAN}
-          centre={centre}
-          radius={CONTENT.pawnRadius}
-        />
-      </g>
-      {/*
-        The badges lie beside the token rather than in it, so a press on one reaches the tile under
-        it as any other piece's does (the tile tells a tap from a drag by it) without moving the
-        enemy too.
-      */}
-      {enemy.damage ? (
-        <Badge
-          kind="damage"
-          value={enemy.damage}
-          change={damageChange}
-          centre={damageBadgeCentre(centre)}
-          drag={damageDrag}
-          beside={{ enemy: enemy.id, engaged, ghost }}
-        />
-      ) : null}
-      {enemy.doom ? (
-        <Badge
-          kind="doom"
-          value={enemy.doom}
-          change={doomChange}
-          centre={doomBadgeCentre(centre)}
-          drag={doomDrag}
-          beside={{ enemy: enemy.id, engaged, ghost }}
-        />
-      ) : null}
-    </>
-  );
-}
-
-/**
- * A count on a piece's rim (`data-marker` with its `kind`) centred on `centre`, pulsing with its
- * `change`. With `drag` a token can be dragged off it (`data-drag`), around a grip a finger
- * catches. Hidden from assistive technology: the piece's accessible name says the count. A badge
- * drawn `beside` an enemy's token rather than in it carries the enemy's id (`data-badge-of`, for
- * `enemyAt`) and fades with the token (`data-engaged`, `data-ghost`).
- */
-function Badge({
-  kind,
-  value,
-  change,
-  centre: { x, y },
-  drag,
-  beside,
-}: {
-  kind: 'damage' | 'doom';
-  value: number;
-  change: CountChange | undefined;
-  centre: Point;
-  drag?: DragHandlers | undefined;
-  beside?: { enemy: InstanceId; engaged: boolean; ghost: boolean };
-}) {
-  return (
-    <g
-      key={change?.key}
-      aria-hidden="true"
-      data-marker={kind}
-      data-changed={change && ''}
-      {...(drag && { 'data-drag': kind, ...drag })}
-      {...(beside && {
-        'data-badge-of': beside.enemy,
-        'data-engaged': beside.engaged || undefined,
-        'data-ghost': beside.ghost || undefined,
-      })}
-    >
-      {drag && <circle data-part="grip" cx={x} cy={y} r={BADGE_GRIP_RADIUS} />}
-      <SvgGameToken
-        kind={kind}
-        centre={{ x, y }}
-        radius={BADGE_RADIUS}
-        count={value}
-        countRadius={BADGE_COUNT_RADIUS}
-      />
-      <RisingDelta change={change} x={x} y={y - BADGE_RADIUS} />
-    </g>
-  );
-}
-
-/**
- * What an enemy token's accessible name says about the enemy besides where it is: its damage, its
- * doom and whether it is exhausted. Shared by the map's tokens and the threat area's, so both read alike.
- */
-export function enemyConditions(
-  enemy: EnemyView,
-  t: ReturnType<typeof useTranslation>['t'],
-): string[] {
-  return [
-    ...(enemy.damage ? [t('map.damage', { count: enemy.damage })] : []),
-    ...(enemy.doom ? [t('map.doom', { count: enemy.doom })] : []),
-    ...(enemy.exhausted ? [t('map.exhausted')] : []),
-  ];
 }

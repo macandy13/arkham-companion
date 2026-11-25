@@ -5,8 +5,8 @@ import { useParams } from 'react-router';
 import { useStore } from 'zustand';
 import type { StoreApi } from 'zustand/vanilla';
 import { keyOf } from '@arkham/util';
-import { gameId as toGameId, type DecisionId, type InstanceId } from '@arkham/engine';
-import type { AppState } from '../state/appStore';
+import { type DecisionId, gameId as toGameId, type InstanceId, spawnEnemyAt } from '@arkham/engine';
+import { noticeOf, type AppState } from '../state/appStore';
 import { useCatalog, type CatalogSource } from '../catalog/useCatalog';
 import { InvestigatorBar } from '../investigators/InvestigatorBar';
 import { LocationFocus } from '../map/LocationFocus';
@@ -14,7 +14,8 @@ import { MapBoard } from '../map/MapBoard';
 import { DecisionDialog } from './DecisionDialog';
 import { DecisionHostContext } from './DetailsDialog';
 import { DetailControls } from './DetailControls';
-import { GameHeader, printedReferenceOf } from './GameHeader';
+import { GameHeader } from './GameHeader';
+import { printedReferenceOf } from './ScenarioStatus';
 import { GameStatus } from './GameStatus';
 import { moveByCardTargets } from '../map/moveByCard';
 import { MapPickPrompt } from './MapPickPrompt';
@@ -30,6 +31,7 @@ import { usePhone } from './usePhone';
 import { useVerticalSwipe } from './useVerticalSwipe';
 import { swipeAction } from './detailSwipe';
 import './game.css';
+import { PlayProvider } from './PlayContext';
 
 /**
  * Route `/game/:id`: loads the game named in the URL (so deep links and reloads work)
@@ -118,11 +120,11 @@ export function GameScreen({
   }
   const { board } = open;
   const [decision] = board.decisions;
-  const decisionId = open.state.pending[0]?.id;
-  const { spawning, movingByCard } = open;
-  const mover = movingByCard === undefined ? undefined : board.investigator(movingByCard);
+  const spawning = open.picking?.kind === 'spawn' ? open.picking.enemy : undefined;
+  const mover =
+    open.picking?.kind === 'moveByCard' ? board.investigator(open.picking.investigator) : undefined;
   const picking =
-    decision?.locations !== undefined && decisionId !== undefined && pickingFor === decisionId;
+    decision?.locations !== undefined && pending !== undefined && pickingFor === pending;
   const pickable = mover
     ? moveByCardTargets(board, mover.id)
     : picking
@@ -134,6 +136,8 @@ export function GameScreen({
     const option = keyOf(decision?.locations ?? {}, location);
     if (option !== undefined) void store.getState().actions.answer(option);
   };
+  const drawn = noticeOf(open, 'drawnCards');
+  const skipped = noticeOf(open, 'skippedEffects');
   const focusId = detailTarget?.row === 'map' ? detailTarget.location : undefined;
   // A location that left play, or a location to pick on the map, brings the whole map back.
   const focused =
@@ -142,172 +146,159 @@ export function GameScreen({
     showDetail && ((location: InstanceId) => showDetail({ row: 'map', location }));
 
   const host = {
-    decision: decision && decisionId !== undefined ? { view: decision, id: decisionId } : undefined,
+    decision: decision && pending !== undefined ? { view: decision, id: pending } : undefined,
     setHosted,
   };
 
   return (
-    <DecisionHostContext.Provider value={host}>
-      <div
-        id="board"
-        ref={boardElement}
-        data-view={detailTarget?.row}
-        data-spawning={open.spawning ? true : undefined}
-      >
-        <GameHeader
-          store={store}
-          open={open}
-          board={board}
-          printedReference={
-            board.reference && cards.status === 'ready'
-              ? printedReferenceOf(cards.catalog, board.reference)
-              : undefined
-          }
-          onOpenCard={
-            showDetail && detailTarget?.row !== 'cards'
-              ? (card) => showDetail({ row: 'cards', card })
-              : undefined
-          }
-          full={detailTarget?.row === 'cards'}
-        />
-        <GameStatus store={store} open={open} board={board} />
-        <section id="map" aria-labelledby="map-title">
-          <h2 id="map-title">{t('map.title')}</h2>
-          {showDetail && detailTarget?.row !== 'map' && (
-            <button
-              type="button"
-              data-icon="expand"
-              data-detail="expand"
-              aria-label={t('detail.openMap')}
-              onClick={() => showDetail({ row: 'map' })}
-            />
-          )}
-          {detailTarget?.row === 'map' && <MapStrip board={board} to="cards" onGo={detail.go} />}
-          {focused ? (
-            <LocationFocus
-              board={board}
-              location={focused}
-              actions={store.getState().actions}
-              busy={open.busy}
-              onGo={(location) => detail.go({ row: 'map', location })}
-              onMap={() => detail.go({ row: 'map' })}
-            />
-          ) : (
-            <MapBoard
-              board={board}
-              actions={store.getState().actions}
-              busy={open.busy}
-              onPick={
-                spawning
-                  ? (location) => {
-                      store.getState().cancelSpawn();
-                      void store.getState().actions.spawnEnemy(spawning.id, location);
-                    }
-                  : mover
+    <PlayProvider actions={store.getState().actions} busy={open.busy}>
+      <DecisionHostContext.Provider value={host}>
+        <div
+          id="board"
+          ref={boardElement}
+          data-view={detailTarget?.row}
+          data-spawning={spawning ? true : undefined}
+        >
+          <GameHeader
+            open={open}
+            board={board}
+            printedReference={
+              board.reference && cards.status === 'ready'
+                ? printedReferenceOf(cards.catalog, board.reference)
+                : undefined
+            }
+            onOpenCard={
+              showDetail && detailTarget?.row !== 'cards'
+                ? (card) => showDetail({ row: 'cards', card })
+                : undefined
+            }
+            full={detailTarget?.row === 'cards'}
+            onSpawn={(enemy) => store.getState().startPick({ kind: 'spawn', enemy })}
+          />
+          <GameStatus store={store} open={open} board={board} />
+          <section id="map" aria-labelledby="map-title">
+            <h2 id="map-title">{t('map.title')}</h2>
+            {showDetail && detailTarget?.row !== 'map' && (
+              <button
+                type="button"
+                data-icon="expand"
+                data-detail="expand"
+                aria-label={t('detail.openMap')}
+                onClick={() => showDetail({ row: 'map' })}
+              />
+            )}
+            {detailTarget?.row === 'map' && <MapStrip board={board} to="cards" onGo={detail.go} />}
+            {focused ? (
+              <LocationFocus
+                board={board}
+                location={focused}
+                onGo={(location) => detail.go({ row: 'map', location })}
+                onMap={() => detail.go({ row: 'map' })}
+              />
+            ) : (
+              <MapBoard
+                board={board}
+                onPick={
+                  spawning
                     ? (location) => {
-                        store.getState().cancelMoveByCard();
-                        void store.getState().actions.moveByCard(mover.id, location);
+                        store.getState().cancelPick();
+                        void store.getState().actions.perform(spawnEnemyAt(spawning.id, location));
                       }
-                    : picking
-                      ? pickAnswer
-                      : undefined
-              }
-              pickable={pickable}
-              onOpenLocation={showLocation}
-            />
-          )}
-          {detailTarget?.row === 'map' && (
-            <MapStrip board={board} to="investigators" onGo={detail.go} />
-          )}
-        </section>
-        <section id="investigators" aria-labelledby="investigators-title">
-          <h2 id="investigators-title">{t('investigators.title')}</h2>
-          <InvestigatorBar
-            board={board}
-            actions={store.getState().actions}
-            busy={open.busy}
-            onOpen={
-              showDetail && detailTarget?.row !== 'investigators'
-                ? (investigator) => showDetail({ row: 'investigators', investigator })
-                : undefined
-            }
-            whole={detailTarget?.row === 'investigators'}
-            printed={
-              cards.status === 'ready'
-                ? (code) => printedInvestigatorOf(cards.catalog, code)
-                : undefined
-            }
-            weaknesses={cards.status === 'ready' ? cards.catalog.weaknesses : undefined}
-            onMoveByCard={(investigator) => {
-              store.getState().startMoveByCard(investigator);
-              // The expanded bar covers most of the map, which the players pick the location on.
-              if (detailTarget?.row === 'investigators') detail.close();
-            }}
-          />
-        </section>
-        {detailTarget && (
-          <DetailControls board={boardElement} target={detailTarget} onClose={detail.close} />
-        )}
-        {decision && !hosted && (
-          <DecisionDialog
-            key={open.state.pending[0]?.id}
-            board={board}
-            decision={decision}
-            actions={store.getState().actions}
-            busy={open.busy}
-            justDrawn={justDrawn && decision.card?.id === board.resolving?.id}
-            picking={picking}
-            onPicking={(to) => setPickingFor(to ? decisionId : undefined)}
-          />
-        )}
-        <ResolutionPrompt key={open.gameId} store={store} open={open} />
-        <div id="notices">
-          {open.log && (
-            <ChangesNotice
-              key={open.gameId}
-              log={open.log}
-              state={open.state}
-              reliance={open.reliance}
-            />
-          )}
-          {open.spawning && (
-            <MapPickPrompt
-              label={t('encounter.spawnLabel')}
-              prompt={t('encounter.spawnPrompt', { card: open.spawning.name })}
-              onCancel={() => store.getState().cancelSpawn()}
-            />
-          )}
-          {mover && (
-            <MapPickPrompt
-              label={t('moveByCard.label')}
-              prompt={t('moveByCard.prompt', { investigator: mover.name })}
-              onCancel={() => store.getState().cancelMoveByCard()}
-            />
-          )}
-          {open.drawnCards && (
-            <DrawnCardsNotice
+                    : mover
+                      ? (location) => {
+                          store.getState().cancelPick();
+                          void store.getState().actions.move(location, { byCard: mover.id });
+                        }
+                      : picking
+                        ? pickAnswer
+                        : undefined
+                }
+                pickable={pickable}
+                onOpenLocation={showLocation}
+              />
+            )}
+            {detailTarget?.row === 'map' && (
+              <MapStrip board={board} to="investigators" onGo={detail.go} />
+            )}
+          </section>
+          <section id="investigators" aria-labelledby="investigators-title">
+            <h2 id="investigators-title">{t('investigators.title')}</h2>
+            <InvestigatorBar
               board={board}
-              drawn={open.drawnCards}
-              actions={store.getState().actions}
-              busy={open.busy}
-              onSpawn={(enemy) => store.getState().startSpawn(enemy)}
-              onDismiss={() => store.getState().dismissNotice('drawnCards')}
+              onOpen={
+                showDetail && detailTarget?.row !== 'investigators'
+                  ? (investigator) => showDetail({ row: 'investigators', investigator })
+                  : undefined
+              }
+              whole={detailTarget?.row === 'investigators'}
+              printed={
+                cards.status === 'ready'
+                  ? (code) => printedInvestigatorOf(cards.catalog, code)
+                  : undefined
+              }
+              weaknesses={cards.status === 'ready' ? cards.catalog.weaknesses : undefined}
+              onMoveByCard={(investigator) => {
+                store.getState().startPick({ kind: 'moveByCard', investigator });
+                // The expanded bar covers most of the map, which the players pick the location on.
+                if (detailTarget?.row === 'investigators') detail.close();
+              }}
+            />
+          </section>
+          {detailTarget && (
+            <DetailControls board={boardElement} target={detailTarget} onClose={detail.close} />
+          )}
+          {decision && !hosted && (
+            <DecisionDialog
+              key={pending}
+              board={board}
+              decision={decision}
+              justDrawn={justDrawn && decision.card?.id === board.resolving?.id}
+              picking={picking}
+              onPicking={(to) => setPickingFor(to ? pending : undefined)}
             />
           )}
-          {open.skippedEffects && (
-            <SkippedEffectsNotice
-              skipped={open.skippedEffects}
-              onDismiss={() => store.getState().dismissNotice('skippedEffects')}
-            />
-          )}
-          {open.rejection && (
-            <RejectionToast
-              rejection={open.rejection}
-              onDismiss={() => store.getState().dismissRejection()}
-            />
-          )}
+          <ResolutionPrompt key={open.gameId} store={store} open={open} />
+          <div id="notices">
+            {open.log && (
+              <ChangesNotice key={open.gameId} log={open.log} reliance={open.reliance} />
+            )}
+            {spawning && (
+              <MapPickPrompt
+                label={t('encounter.spawnLabel')}
+                prompt={t('encounter.spawnPrompt', { card: spawning.name })}
+                onCancel={() => store.getState().cancelPick()}
+              />
+            )}
+            {mover && (
+              <MapPickPrompt
+                label={t('moveByCard.label')}
+                prompt={t('moveByCard.prompt', { investigator: mover.name })}
+                onCancel={() => store.getState().cancelPick()}
+              />
+            )}
+            {drawn && (
+              <DrawnCardsNotice
+                board={board}
+                drawn={drawn.cards}
+                onSpawn={(enemy) => store.getState().startPick({ kind: 'spawn', enemy })}
+                onDismiss={() => store.getState().dismissNotice('drawnCards')}
+              />
+            )}
+            {skipped && (
+              <SkippedEffectsNotice
+                skipped={skipped.effects}
+                onDismiss={() => store.getState().dismissNotice('skippedEffects')}
+              />
+            )}
+            {open.rejection && (
+              <RejectionToast
+                rejection={open.rejection}
+                onDismiss={() => store.getState().dismissRejection()}
+              />
+            )}
+          </div>
         </div>
-      </div>
-    </DecisionHostContext.Provider>
+      </DecisionHostContext.Provider>
+    </PlayProvider>
   );
 }

@@ -2,7 +2,7 @@ import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { NavLink } from 'react-router';
 import type { StoreApi } from 'zustand/vanilla';
-import { ROUND_PHASES, type BoardView } from '@arkham/engine';
+import { type BoardView, endScenario, ROUND_PHASES } from '@arkham/engine';
 import type { AppState, OpenGame } from '../state/appStore';
 import { GameLogDialog } from '../log/GameLogDialog';
 import { EndScenarioDialog } from './EndScenarioDialog';
@@ -11,6 +11,7 @@ import { OfflineMark } from './OfflineMark';
 import { SavePicturesButton } from './SavePicturesButton';
 import { isLightSkin, TABLE_SKINS } from '../settings/settings';
 import { useSettings } from '../settings/useSettings';
+import { usePlay } from './PlayContext';
 
 /**
  * The play screen's status row under the header, as in the prototype: the round as its heading,
@@ -35,8 +36,7 @@ export function GameStatus({
   board: BoardView;
 }) {
   const { t } = useTranslation();
-  const { actions } = store.getState();
-  const blocked = open.busy;
+  const { actions, busy } = usePlay();
   const { log } = open;
   const [logOpen, setLogOpen] = useState(false);
   const [ending, setEnding] = useState(false);
@@ -54,30 +54,24 @@ export function GameStatus({
           </li>
         ))}
       </ol>
-      <button
-        type="button"
-        data-primary
-        disabled={blocked}
-        onClick={() => void actions.nextPhase()}
-      >
+      <button type="button" data-primary disabled={busy} onClick={() => void actions.nextPhase()}>
         {t('header.next')}
       </button>
       <button
         type="button"
         data-icon="undo"
         aria-label={t('header.undo')}
-        disabled={blocked || !open.canUndo}
+        disabled={busy || !open.canUndo}
         onClick={() => void actions.undo()}
       />
       {log && <LogButton onOpen={() => setLogOpen(true)} />}
       {log && logOpen && (
         <GameLogDialog
           log={log}
-          state={open.state}
           scenario={open.scenarioNameKey ? t(open.scenarioNameKey) : undefined}
           reliance={open.reliance}
           onRelianceChange={(reliance) => void store.getState().setReliance(reliance)}
-          onGoBack={blocked ? undefined : (step) => void actions.undoTo(step)}
+          onGoBack={busy ? undefined : (step) => void actions.undoTo(step)}
           onClose={() => setLogOpen(false)}
         />
       )}
@@ -108,7 +102,7 @@ export function GameStatus({
                   type="button"
                   data-icon="campaign-log"
                   aria-haspopup="dialog"
-                  disabled={blocked || board.ended}
+                  disabled={busy || board.ended}
                   onClick={() => {
                     close();
                     setEnding(true);
@@ -126,7 +120,7 @@ export function GameStatus({
           resolutions={board.resolutions}
           onEnd={(resolution) => {
             setEnding(false);
-            void actions.endScenario(resolution);
+            void actions.perform(endScenario(resolution));
           }}
           onCancel={() => setEnding(false)}
         />

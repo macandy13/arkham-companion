@@ -3,7 +3,7 @@ import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-li
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { blankLocation, instanceId, investigatorId, newGame, PlayTable } from '@arkham/engine';
 import { initI18n } from '../i18n';
-import { actionsOn } from '../state/gameActions.test_support';
+import { PlayingOn } from '../state/gameActions.test_support';
 import { ChaosBag } from './ChaosBag';
 
 const study = instanceId('study');
@@ -26,7 +26,11 @@ describe('ChaosBag', () => {
   it('lists the tokens in the bag with their counts', () => {
     const table = PlayTable.start(game);
 
-    render(<ChaosBag board={table.board} actions={actionsOn(table)} busy={false} />);
+    render(
+      <PlayingOn table={table}>
+        <ChaosBag board={table.board} />
+      </PlayingOn>,
+    );
 
     const contents = screen.getByRole('list', { name: 'Tokens in the bag' });
     expect(
@@ -38,7 +42,11 @@ describe('ChaosBag', () => {
 
   it('seals the token tapped on the investigator picked', async () => {
     const table = PlayTable.start(game);
-    render(<ChaosBag board={table.board} actions={actionsOn(table)} busy={false} />);
+    render(
+      <PlayingOn table={table}>
+        <ChaosBag board={table.board} />
+      </PlayingOn>,
+    );
 
     fireEvent.click(screen.getByRole('button', { name: 'Elder Sign ×1' }));
     fireEvent.click(screen.getByRole('button', { name: 'Seal Elder Sign on Daisy Walker' }));
@@ -51,7 +59,11 @@ describe('ChaosBag', () => {
   it('releases a sealed token back into the bag', async () => {
     const table = PlayTable.start(game);
     table.play({ type: 'SealChaosToken', token: 'skull', investigatorId: roland });
-    render(<ChaosBag board={table.board} actions={actionsOn(table)} busy={false} />);
+    render(
+      <PlayingOn table={table}>
+        <ChaosBag board={table.board} />
+      </PlayingOn>,
+    );
 
     const sealed = screen.getByRole('list', { name: 'Sealed' });
     expect(within(sealed).getByRole('listitem').textContent).toBe('Skull on Roland Banks Release');
@@ -66,7 +78,11 @@ describe('ChaosBag', () => {
   it('lists the bless and curse tokens in the bag, each between its − and + buttons', () => {
     const table = PlayTable.start(game.withChaosBag(['bless', 'bless', 'curse']));
 
-    render(<ChaosBag board={table.board} actions={actionsOn(table)} busy={false} />);
+    render(
+      <PlayingOn table={table}>
+        <ChaosBag board={table.board} />
+      </PlayingOn>,
+    );
 
     const pool = screen.getByRole('list', { name: 'Bless and curse' });
     expect(
@@ -79,7 +95,11 @@ describe('ChaosBag', () => {
 
   it('adds a bless token from the pool and returns a curse token to it', async () => {
     const table = PlayTable.start(game.withChaosBag(['curse', '-1']));
-    render(<ChaosBag board={table.board} actions={actionsOn(table)} busy={false} />);
+    render(
+      <PlayingOn table={table}>
+        <ChaosBag board={table.board} />
+      </PlayingOn>,
+    );
 
     fireEvent.click(screen.getByRole('button', { name: 'Add a Bless token to the bag' }));
     await waitFor(() => expect(table.board.chaosBag).toEqual(['curse', '-1', 'bless']));
@@ -102,7 +122,11 @@ describe('ChaosBag', () => {
   ])('offers no $what', ({ bag, button }) => {
     const table = PlayTable.start(game.withChaosBag(bag));
 
-    render(<ChaosBag board={table.board} actions={actionsOn(table)} busy={false} />);
+    render(
+      <PlayingOn table={table}>
+        <ChaosBag board={table.board} />
+      </PlayingOn>,
+    );
 
     expect(screen.getByRole('button', { name: button })).toHaveProperty('disabled', true);
   });

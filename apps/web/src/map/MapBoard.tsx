@@ -1,24 +1,31 @@
 import { useId, useRef, useState, type KeyboardEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { TransformComponent, TransformWrapper, useControls } from 'react-zoom-pan-pinch';
-import type {
-  BoardView,
-  Edge,
-  GridCell,
-  InstanceId,
-  InvestigatorId,
-  MapId,
-  MapEnemyView,
-  MapView,
+import {
+  type BoardView,
+  correctTokens,
+  type Edge,
+  type GridCell,
+  healEnemy,
+  type InstanceId,
+  type InvestigatorId,
+  type MapEnemyView,
+  type MapId,
+  type MapView,
+  moveAlong,
+  moveEnemyTo,
+  takeOneClue,
 } from '@arkham/engine';
 import { cycledIndex } from '@arkham/util';
 import { EnemyDetails } from '../enemies/EnemyDetails';
-import type { GameActions } from '../state/gameActions';
 import { EnemyBubble } from '../enemies/EnemyBubble';
 import { useDoubleTapOn } from '../screens/useDoubleTap';
 import { LocationBubble } from './LocationBubble';
 import { LocationDetails } from './LocationDetails';
-import { CardPatterns, EnemyToken, LocationTile, Pawn, type TilePiece } from './LocationTile';
+import { CardPatterns } from './CardPatterns';
+import { EnemyToken } from './EnemyToken';
+import { LocationTile, type TilePiece } from './LocationTile';
+import { Pawn } from './Pawn';
 import {
   connectionEnds,
   drawingSize,
@@ -36,6 +43,7 @@ import { overHeaderCard, overTokenPool } from '../screens/headerDropTarget';
 import { TokenGhost } from '../screens/TokenGhost';
 import type { GameTokenKind } from '../tokens/GameToken';
 import './map.css';
+import { usePlay } from '../screens/PlayContext';
 
 /**
  * The visible maps of the open game, each drawn as an SVG of its location tiles at their book
@@ -45,20 +53,16 @@ import './map.css';
  * and show one at a time, since each map is drawn to fill the map area. It takes the whole
  * `board`, since the pieces on the tiles come from all over it (investigators now, more pieces
  * later). The players pan, zoom and pinch each map, and move pieces by dragging them
- * (`MapDrawing`), which plays `actions`; no piece moves while a step is still queued (`busy`,
+ * (`MapDrawing`), which plays the open game's actions (`usePlay`); no piece moves while a step is still queued (`usePlay().busy`,
  * `OpenGame.busy`), since the turn it was dragged in may have ended by the time the move plays.
  */
 export function MapBoard({
   board,
-  actions,
-  busy,
   onPick,
   pickable,
   onOpenLocation,
 }: {
   board: BoardView;
-  actions: GameActions;
-  busy: boolean;
   /**
    * While the players choose a location (an enemy's spawn, a decision's answer), a tap on a tile
    * picks it, the tiles they may pick lit (`pickable`).
@@ -81,8 +85,6 @@ export function MapBoard({
       <MapDrawing
         map={current}
         board={board}
-        actions={actions}
-        busy={busy}
         onPick={onPick}
         pickable={pickable}
         onOpenLocation={onOpenLocation}
@@ -132,8 +134,6 @@ export function MapBoard({
           key={current.id}
           map={current}
           board={board}
-          actions={actions}
-          busy={busy}
           onPick={onPick}
           pickable={pickable}
           onOpenLocation={onOpenLocation}
@@ -154,18 +154,19 @@ type DraggedPiece = TilePiece & { from: InstanceId };
  * drag, zoom with the wheel or a pinch, and fit back with "Fit map". The drawing starts fitted to
  * the map area, and zooming out never goes below that, so the whole map is always one tap away.
  * Pieces are dragged to play what the players do on the table:
- * - The pawn of the investigator whose turn it is, dropped on another location, is a move action
- *   (`GameActions.moveTo`); the other pawns stay put, as only that investigator acts.
+ * - The pawn of the investigator whose turn it is, dropped on a connected location, moves them
+ *   there (a performed `MoveInvestigator`): no action, since the drag catches the screen up with a
+ *   move made at the table; the other pawns stay put, as only that investigator acts.
  * - An enemy dropped on that pawn is an engage action (`GameActions.engage`).
  * - An enemy dropped on another location moves there as a card instruction says
- *   (`GameActions.moveEnemy`); the players drag it only when a card tells them to, so the map
+ *   (`MoveEnemy` with `forced`, performed); the players drag it only when a card tells them to, so the map
  *   does not ask which card.
  * - A clue dragged off a location onto the pawn of an investigator there, or onto their panel
  *   beside the map (`investigatorAt`), is theirs, discovered as a card grants it
- *   (`GameActions.takeClue`), whoever's turn it is. It follows the pointer over the whole page as
+ *   (`takeOneClue`, performed), whoever's turn it is. It follows the pointer over the whole page as
  *   a clue token (`TokenGhost`).
  * - Doom dragged off a location or an enemy onto another location, an enemy (`enemyAt`) or the
- *   agenda in the header (`overHeaderCard`) moves there (`GameActions.moveDoom`); it follows the
+ *   agenda in the header (`overHeaderCard`) moves there, a correction (`GameActions.correct`), as the doom in play stays the same; it follows the
  *   pointer as a doom token. A tap on an enemy's doom opens the enemy, like a tap on the enemy.
  * - A clue or doom dropped on the header's token pool (`overTokenPool`, `TokenPool`) goes back to
  *   it (`GameActions.adjustTokens`), and so does damage dragged off an enemy's damage badge,
@@ -185,20 +186,17 @@ type DraggedPiece = TilePiece & { from: InstanceId };
 function MapDrawing({
   map,
   board,
-  actions,
-  busy,
   onPick,
   pickable,
   onOpenLocation,
 }: {
   map: MapView;
   board: BoardView;
-  actions: GameActions;
-  busy: boolean;
   onPick?: (location: InstanceId) => void;
   pickable?: readonly InstanceId[] | undefined;
   onOpenLocation?: (location: InstanceId) => void;
 }) {
+  const { actions, busy } = usePlay();
   const investigators = board.investigators;
   const captionId = useId();
   const arrowId = useId();
@@ -234,11 +232,11 @@ function MapDrawing({
         const taker =
           investigatorAt(client) ??
           board.investigatorsAt(piece.from).find(({ id }) => onPawnOf(id, point))?.id;
-        if (taker) void actions.takeClue(piece.from, taker);
+        if (taker) void actions.perform(takeOneClue(piece.from, taker));
         return;
       }
       if ('enemyDamage' in piece) {
-        if (overTokenPool(client)) void actions.healEnemy(piece.enemyDamage.id, 1);
+        if (overTokenPool(client)) void actions.perform(healEnemy(piece.enemyDamage.id, 1));
         return;
       }
       if ('doom' in piece || 'enemyDoom' in piece) {
@@ -247,7 +245,9 @@ function MapDrawing({
           ? board.agenda?.id
           : (enemyAt(client) ?? tileAt(cells, point));
         if (overTokenPool(client)) void actions.adjustTokens(from, 'doom', -1);
-        else if (to !== undefined && to !== from) void actions.moveDoom(from, to);
+        else if (to !== undefined && to !== from)
+          // The doom in play stays the same, so moving it is a correction, not doom placed.
+          void actions.correct(correctTokens(from, 'doom', -1), correctTokens(to, 'doom', 1));
         return;
       }
       if ('enemy' in piece && moverCentre && onPawn(moverCentre, point)) {
@@ -262,7 +262,9 @@ function MapDrawing({
         at: point,
         to,
       });
-      void ('enemy' in piece ? actions.moveEnemy(piece.enemy.id, to) : actions.moveTo(to));
+      void ('enemy' in piece
+        ? actions.perform(moveEnemyTo(piece.enemy.id, to))
+        : actions.perform(moveAlong(piece.investigator.id, to)));
     },
     (piece, event) => {
       const enemy = enemyOf(piece);
@@ -363,8 +365,6 @@ function MapDrawing({
         <LocationDetails
           board={board}
           location={detailsLocation}
-          actions={actions}
-          busy={busy}
           onClose={() => setDetailsFor(undefined)}
         />
       )}
@@ -372,8 +372,6 @@ function MapDrawing({
         <LocationBubble
           location={bubbleLocation}
           anchor={bubble.anchor}
-          actions={actions}
-          busy={busy}
           onClose={() => setBubble(undefined)}
         />
       )}
@@ -381,19 +379,11 @@ function MapDrawing({
         <EnemyBubble
           enemy={bubbleEnemy}
           anchor={enemyBubble.anchor}
-          actions={actions}
-          busy={busy}
           onClose={() => setEnemyBubble(undefined)}
         />
       )}
       {tappedEnemy && (
-        <EnemyDetails
-          board={board}
-          enemy={tappedEnemy}
-          actions={actions}
-          busy={busy}
-          onClose={() => setEnemyFor(undefined)}
-        />
+        <EnemyDetails board={board} enemy={tappedEnemy} onClose={() => setEnemyFor(undefined)} />
       )}
     </figure>
   );

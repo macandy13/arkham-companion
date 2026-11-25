@@ -29,7 +29,7 @@ import {
 } from '@arkham/engine';
 import { initI18n } from '../i18n';
 import { DecisionDialog } from './DecisionDialog';
-import { actionsOn } from '../state/gameActions.test_support';
+import { actionsOn, PlayingOn } from '../state/gameActions.test_support';
 
 const study = instanceId('study');
 const ghoul = instanceId('ghoul');
@@ -39,7 +39,11 @@ const alder = investigatorId('alder');
 const renderFirstDecision = (table: PlayTable, actions = actionsOn(table)) => {
   const [decision] = table.board.decisions;
   if (!decision) throw new Error('a decision is open');
-  render(<DecisionDialog board={table.board} decision={decision} actions={actions} busy={false} />);
+  render(
+    <PlayingOn table={table} actions={actions}>
+      <DecisionDialog board={table.board} decision={decision} />
+    </PlayingOn>,
+  );
 };
 
 /** The answers' buttons, leaving out the skill toggles, whose list sits in a section. */
@@ -261,14 +265,14 @@ describe('DecisionDialog', () => {
       if (!decision) throw new Error('the spawn is asked');
       const onPicking = vi.fn();
       render(
-        <DecisionDialog
-          board={table.board}
-          decision={decision}
-          actions={actionsOn(table)}
-          busy={false}
-          picking={false}
-          onPicking={onPicking}
-        />,
+        <PlayingOn table={table}>
+          <DecisionDialog
+            board={table.board}
+            decision={decision}
+            picking={false}
+            onPicking={onPicking}
+          />
+        </PlayingOn>,
       );
 
       fireEvent.click(screen.getByRole('button', { name: 'Pick on the map' }));
@@ -282,14 +286,14 @@ describe('DecisionDialog', () => {
       if (!decision) throw new Error('the spawn is asked');
       const onPicking = vi.fn();
       render(
-        <DecisionDialog
-          board={table.board}
-          decision={decision}
-          actions={actionsOn(table)}
-          busy={false}
-          picking={true}
-          onPicking={onPicking}
-        />,
+        <PlayingOn table={table}>
+          <DecisionDialog
+            board={table.board}
+            decision={decision}
+            picking={true}
+            onPicking={onPicking}
+          />
+        </PlayingOn>,
       );
       expect(screen.getByRole('dialog').dataset['lowered']).toBe('true');
 
@@ -305,14 +309,14 @@ describe('DecisionDialog', () => {
     const [decision] = table.board.decisions;
     if (!decision) throw new Error('the test is asked');
     render(
-      <DecisionDialog
-        board={table.board}
-        decision={decision}
-        actions={actionsOn(table)}
-        busy={false}
-        picking={false}
-        onPicking={() => {}}
-      />,
+      <PlayingOn table={table}>
+        <DecisionDialog
+          board={table.board}
+          decision={decision}
+          picking={false}
+          onPicking={() => {}}
+        />
+      </PlayingOn>,
     );
 
     expect(screen.queryByRole('button', { name: 'Pick on the map' })).toBeNull();

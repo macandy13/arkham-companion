@@ -24,8 +24,7 @@ const roland = investigatorId('roland');
  */
 const noticeFor = (table: PlayTable, reliance: Reliance = 'display') => (
   <ChangesNotice
-    log={{ ctx: table.ctx, entries: [...table.entries], stepTimes: new Map() }}
-    state={table.state}
+    log={{ ctx: table.ctx, state: table.state, entries: [...table.entries], stepTimes: new Map() }}
     reliance={reliance}
   />
 );

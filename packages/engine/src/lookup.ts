@@ -1,7 +1,14 @@
 import { findInvestigator } from './investigators';
 import type { StageDeck } from './commands';
 import { assertNever } from '@arkham/util';
-import { cardStats, comparableName, type CardType, type EngineContext, type Trait } from './cards';
+import {
+  cardStats,
+  comparableName,
+  type CardStats,
+  type CardType,
+  type EngineContext,
+  type Trait,
+} from './cards';
 import { cardName, instanceId, type CardCode, type CardName, type InstanceId } from './ids';
 import { CommandRejected } from './rejection';
 import type { CardInstance, GameState } from './state';
@@ -131,13 +138,18 @@ export function theOnlyCopy(state: GameState, code: CardCode): InstanceId | unde
 }
 
 /**
- * Which cards a card's text means by what is printed on them: those with `trait`, the copies of
- * `code`, those of type `typeCode`, and with `unique` only unique ones. A field left out matches
- * every card. The `eachInZone` reference filters with it.
+ * Which cards a card's text means by what is printed on them: the copies of `code`, those named
+ * `name` (as in the `CardDb`, compared exactly), those with `trait` and without `withoutTrait`
+ * ("each non-Elite enemy"), those of type `typeCode`, and with `unique` only unique ones. A field
+ * left out matches every card. The one description of a card's print: references filter with it
+ * (`eachInZone`, `eachInPlay`, and with what the table adds `eachEnemy` and `locationWith`), and so
+ * does a matched encounter draw (`DrawPick`).
  */
 export interface CardFilter {
-  trait?: Trait;
   code?: CardCode;
+  name?: string;
+  trait?: Trait;
+  withoutTrait?: Trait;
   typeCode?: CardType;
   unique?: true;
 }
@@ -164,14 +176,26 @@ export function cardsInZones(
     .filter((card) => matchesCard(ctx, card, filter));
 }
 
-/** Whether `card` has what `filter` asks to be printed on it. */
+/**
+ * Whether `card` has what `filter` asks to be printed on it. A card the `CardDb` lacks shows no
+ * print, so it matches only a filter that asks for nothing but its code.
+ */
 export function matchesCard(ctx: EngineContext, card: CardInstance, filter: CardFilter): boolean {
   const stats = ctx.cards.get(card.code);
+  if (stats !== undefined) return matchesStats(stats, filter);
+  const { code, ...printed } = filter;
+  return (code === undefined || code === card.code) && Object.keys(printed).length === 0;
+}
+
+/** Whether the card printed as `stats` has what `filter` asks for. */
+export function matchesStats(stats: CardStats, filter: CardFilter): boolean {
   return (
-    (filter.code === undefined || card.code === filter.code) &&
-    (filter.trait === undefined || stats?.traits.includes(filter.trait) === true) &&
-    (filter.typeCode === undefined || stats?.typeCode === filter.typeCode) &&
-    (filter.unique === undefined || stats?.unique === true)
+    (filter.code === undefined || stats.code === filter.code) &&
+    (filter.name === undefined || stats.name === filter.name) &&
+    (filter.trait === undefined || stats.traits.includes(filter.trait)) &&
+    (filter.withoutTrait === undefined || !stats.traits.includes(filter.withoutTrait)) &&
+    (filter.typeCode === undefined || stats.typeCode === filter.typeCode) &&
+    (filter.unique === undefined || stats.unique === true)
   );
 }
 

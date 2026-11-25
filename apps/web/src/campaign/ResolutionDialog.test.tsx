@@ -67,11 +67,12 @@ function renderDialog(
   const onLater = vi.fn();
   render(
     <ResolutionDialog
-      game={game}
       resolution={{
         reached: campaign.gameOutcome(game),
         options,
         campaignId: inCampaign ? campaignId('zealot') : undefined,
+        scenarioId: game.meta.scenarioId,
+        campaign: game.campaign,
       }}
       busy={false}
       failed={failed}

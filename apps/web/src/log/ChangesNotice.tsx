@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { GameState, Reliance } from '@arkham/engine';
+import type { Reliance } from '@arkham/engine';
 import type { GameLogSource } from '../state/appStore';
 import { automaticChanges, type LogLine } from './gameLog';
 import { LineText } from './LineText';
@@ -14,18 +14,16 @@ import { LineText } from './LineText';
  */
 export function ChangesNotice({
   log,
-  state,
   reliance,
 }: {
   log: GameLogSource;
-  state: GameState;
   /** How much the players rely on the helpers, which decides the changes told (`showsNotice`). */
   reliance: Reliance;
 }) {
   const { t } = useTranslation();
   const changes = useMemo(
-    () => automaticChanges(t, log.ctx, state, log.entries, reliance),
-    [t, log.ctx, log.entries, state, reliance],
+    () => automaticChanges(t, log.ctx, log.state, log.entries, reliance),
+    [t, log.ctx, log.entries, log.state, reliance],
   );
   const [previous, setPrevious] = useState({ length: log.entries.length, step: changes?.step });
   const [shown, setShown] = useState<string>();

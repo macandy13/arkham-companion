@@ -12,10 +12,9 @@ import { useDoubleTap } from '../screens/useDoubleTap';
 import { EnemyBubble } from '../enemies/EnemyBubble';
 import { EnemyDetails } from '../enemies/EnemyDetails';
 import { healthLeft } from '../enemies/enemyHealth';
-import { enemyConditions } from '../map/LocationTile';
+import { enemyConditions } from '../map/EnemyToken';
 import { CardStrip } from '../screens/CardStrip';
 import { deltaText, useCountChange } from '../screens/countChange';
-import type { GameActions } from '../state/gameActions';
 import { CardDetails, type HeldIn } from './CardDetails';
 
 /**
@@ -38,8 +37,6 @@ export function ThreatArea({
   investigator,
   treacheries,
   enemies,
-  actions,
-  busy,
 }: {
   /** The board the enemy details read their numbers from (`BoardView.enemyStats`). */
   board: BoardView;
@@ -47,8 +44,6 @@ export function ThreatArea({
   investigator: InvestigatorView;
   treacheries: readonly CardFaceView[];
   enemies: readonly MapEnemyView[];
-  actions: GameActions;
-  busy: boolean;
 }) {
   const { t } = useTranslation();
   const count = treacheries.length + enemies.length;
@@ -67,12 +62,10 @@ export function ThreatArea({
           owner={investigator}
           board={board}
           card={card}
-          actions={actions}
-          busy={busy}
         />
       ))}
       {enemies.map((enemy) => (
-        <EnemyCard key={enemy.id} board={board} enemy={enemy} actions={actions} busy={busy} />
+        <EnemyCard key={enemy.id} board={board} enemy={enemy} />
       ))}
     </CardStrip>
   );
@@ -89,15 +82,11 @@ export function SmallCard({
   owner,
   board,
   card,
-  actions,
-  busy,
 }: {
   heldIn: HeldIn;
   owner: InvestigatorView;
   board: BoardView;
   card: CardFaceView;
-  actions: GameActions;
-  busy: boolean;
 }) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
@@ -117,8 +106,6 @@ export function SmallCard({
           card={card}
           owner={owner}
           heldIn={heldIn}
-          actions={actions}
-          busy={busy}
           onClose={() => setOpen(false)}
         />
       )}
@@ -135,17 +122,7 @@ export function SmallCard({
  * double tap opens the − / + bubble of its damage and doom instead (`EnemyBubble`, M6.10), so a
  * single tap opens the details only once no second one came (`useDoubleTap`).
  */
-function EnemyCard({
-  board,
-  enemy,
-  actions,
-  busy,
-}: {
-  board: BoardView;
-  enemy: MapEnemyView;
-  actions: GameActions;
-  busy: boolean;
-}) {
+function EnemyCard({ board, enemy }: { board: BoardView; enemy: MapEnemyView }) {
   const { t } = useTranslation();
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [bubbleAnchor, setBubbleAnchor] = useState<Element>();
@@ -180,19 +157,11 @@ function EnemyCard({
         <EnemyBubble
           enemy={enemy}
           anchor={bubbleAnchor}
-          actions={actions}
-          busy={busy}
           onClose={() => setBubbleAnchor(undefined)}
         />
       )}
       {detailsOpen && (
-        <EnemyDetails
-          board={board}
-          enemy={enemy}
-          actions={actions}
-          busy={busy}
-          onClose={() => setDetailsOpen(false)}
-        />
+        <EnemyDetails board={board} enemy={enemy} onClose={() => setDetailsOpen(false)} />
       )}
     </li>
   );

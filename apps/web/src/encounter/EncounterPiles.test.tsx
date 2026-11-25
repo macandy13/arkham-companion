@@ -13,7 +13,7 @@ import {
 } from '@arkham/engine';
 import { initI18n } from '../i18n';
 import { EncounterPiles, HeaderPile } from './EncounterPiles';
-import { actionsOn } from '../state/gameActions.test_support';
+import { PlayingOn } from '../state/gameActions.test_support';
 
 const study = instanceId('study');
 const alder = investigatorId('alder');
@@ -41,12 +41,9 @@ describe('EncounterPiles', () => {
     );
 
     render(
-      <EncounterPiles
-        board={table.board}
-        actions={actionsOn(table)}
-        busy={false}
-        onSpawn={() => {}}
-      />,
+      <PlayingOn table={table}>
+        <EncounterPiles board={table.board} onSpawn={() => {}} />
+      </PlayingOn>,
     );
 
     expect(
@@ -63,12 +60,9 @@ describe('EncounterPiles', () => {
     const table = PlayTable.start(newGame().withLocation(study, blankLocation('study')));
 
     render(
-      <EncounterPiles
-        board={table.board}
-        actions={actionsOn(table)}
-        busy={false}
-        onSpawn={() => {}}
-      />,
+      <PlayingOn table={table}>
+        <EncounterPiles board={table.board} onSpawn={() => {}} />
+      </PlayingOn>,
     );
 
     expect(screen.getByRole('button', { name: '0 cards left in the encounter deck' })).toBeTruthy();
@@ -87,12 +81,9 @@ describe('EncounterPiles', () => {
         }),
     );
     render(
-      <EncounterPiles
-        board={table.board}
-        actions={actionsOn(table)}
-        busy={false}
-        onSpawn={() => {}}
-      />,
+      <PlayingOn table={table}>
+        <EncounterPiles board={table.board} onSpawn={() => {}} />
+      </PlayingOn>,
     );
 
     fireEvent.click(
@@ -124,12 +115,9 @@ describe('EncounterPiles', () => {
         }),
     );
     render(
-      <EncounterPiles
-        board={table.board}
-        actions={actionsOn(table)}
-        busy={false}
-        onSpawn={() => {}}
-      />,
+      <PlayingOn table={table}>
+        <EncounterPiles board={table.board} onSpawn={() => {}} />
+      </PlayingOn>,
     );
 
     fireEvent.click(screen.getByRole('button', { name: '1 card left in the encounter deck' }));
@@ -157,12 +145,9 @@ describe('EncounterPiles', () => {
           .withTurnOf(brook),
       );
       const { rerender } = render(
-        <EncounterPiles
-          board={table.board}
-          actions={actionsOn(table)}
-          busy={false}
-          onSpawn={() => {}}
-        />,
+        <PlayingOn table={table}>
+          <EncounterPiles board={table.board} onSpawn={() => {}} />
+        </PlayingOn>,
       );
       fireEvent.click(screen.getByRole('button', { name: '2 cards left in the encounter deck' }));
       const dialog = within(screen.getByRole('dialog', { name: 'Encounter deck' }));
@@ -173,12 +158,9 @@ describe('EncounterPiles', () => {
       fireEvent.click(dialog.getByRole('button', { name: 'Draw for Alder' }));
       await waitFor(() => expect(table.board.encounter.deckCount).toBe(1));
       rerender(
-        <EncounterPiles
-          board={table.board}
-          actions={actionsOn(table)}
-          busy={false}
-          onSpawn={() => {}}
-        />,
+        <PlayingOn table={table}>
+          <EncounterPiles board={table.board} onSpawn={() => {}} />
+        </PlayingOn>,
       );
 
       expect(screen.queryByRole('dialog')).toBeNull();
@@ -200,12 +182,9 @@ describe('EncounterPiles', () => {
         : brooksTurn;
       const table = PlayTable.start(game.withTurnOf(brook));
       render(
-        <EncounterPiles
-          board={table.board}
-          actions={actionsOn(table)}
-          busy={busy}
-          onSpawn={() => {}}
-        />,
+        <PlayingOn table={table} busy={busy}>
+          <EncounterPiles board={table.board} onSpawn={() => {}} />
+        </PlayingOn>,
       );
 
       fireEvent.click(screen.getByRole('button', { name: /left in the encounter deck$/ }));
@@ -228,12 +207,9 @@ describe('EncounterPiles', () => {
         .withCard(instanceId('discarded'), card, { kind: 'encounterDiscard' }),
     );
     render(
-      <EncounterPiles
-        board={table.board}
-        actions={actionsOn(table)}
-        busy={false}
-        onSpawn={() => {}}
-      />,
+      <PlayingOn table={table}>
+        <EncounterPiles board={table.board} onSpawn={() => {}} />
+      </PlayingOn>,
     );
 
     fireEvent.click(screen.getByRole('button', { name: /^Encounter discard pile, 1 card/ }));
@@ -249,12 +225,9 @@ describe('EncounterPiles', () => {
     );
     const spawning: string[] = [];
     render(
-      <EncounterPiles
-        board={table.board}
-        actions={actionsOn(table)}
-        busy={false}
-        onSpawn={(enemy) => spawning.push(enemy.name)}
-      />,
+      <PlayingOn table={table}>
+        <EncounterPiles board={table.board} onSpawn={(enemy) => spawning.push(enemy.name)} />
+      </PlayingOn>,
     );
     fireEvent.click(
       screen.getByRole('button', { name: 'Encounter discard pile, 1 card, Swarm of Rats on top' }),
@@ -276,12 +249,9 @@ describe('EncounterPiles', () => {
         }),
     );
     render(
-      <EncounterPiles
-        board={table.board}
-        actions={actionsOn(table)}
-        busy={false}
-        onSpawn={() => {}}
-      />,
+      <PlayingOn table={table}>
+        <EncounterPiles board={table.board} onSpawn={() => {}} />
+      </PlayingOn>,
     );
     fireEvent.click(
       screen.getByRole('button', { name: 'Encounter discard pile, 1 card, Frozen in Fear on top' }),
@@ -313,13 +283,9 @@ describe('HeaderPile', () => {
     );
 
     render(
-      <HeaderPile
-        pile="setAside"
-        board={table.board}
-        actions={actionsOn(table)}
-        busy={false}
-        onSpawn={() => {}}
-      />,
+      <PlayingOn table={table}>
+        <HeaderPile pile="setAside" board={table.board} onSpawn={() => {}} />
+      </PlayingOn>,
     );
 
     const pile = screen.getByRole('button', { name: 'Set aside, 4 cards' });
@@ -341,13 +307,9 @@ describe('HeaderPile', () => {
     );
 
     render(
-      <HeaderPile
-        pile="victoryDisplay"
-        board={table.board}
-        actions={actionsOn(table)}
-        busy={false}
-        onSpawn={() => {}}
-      />,
+      <PlayingOn table={table}>
+        <HeaderPile pile="victoryDisplay" board={table.board} onSpawn={() => {}} />
+      </PlayingOn>,
     );
 
     const pile = screen.getByRole('button', { name: 'Victory display, 3 victory points' });
@@ -361,13 +323,9 @@ describe('HeaderPile', () => {
         .withCard(instanceId('lita'), blankAsset('Lita Chantler'), { kind: 'setAside' }),
     );
     render(
-      <HeaderPile
-        pile="setAside"
-        board={table.board}
-        actions={actionsOn(table)}
-        busy={false}
-        onSpawn={() => {}}
-      />,
+      <PlayingOn table={table}>
+        <HeaderPile pile="setAside" board={table.board} onSpawn={() => {}} />
+      </PlayingOn>,
     );
 
     fireEvent.click(screen.getByRole('button', { name: 'Set aside, 1 card' }));
@@ -388,13 +346,9 @@ describe('HeaderPile', () => {
         }),
     );
     render(
-      <HeaderPile
-        pile="setAside"
-        board={table.board}
-        actions={actionsOn(table)}
-        busy={false}
-        onSpawn={() => {}}
-      />,
+      <PlayingOn table={table}>
+        <HeaderPile pile="setAside" board={table.board} onSpawn={() => {}} />
+      </PlayingOn>,
     );
     fireEvent.click(screen.getByRole('button', { name: 'Set aside, 2 cards' }));
     const dialog = within(screen.getByRole('dialog', { name: 'Set aside (2)' }));
@@ -420,13 +374,9 @@ describe('HeaderPile', () => {
       );
     const table = PlayTable.start(game);
     render(
-      <HeaderPile
-        pile="setAside"
-        board={table.board}
-        actions={actionsOn(table)}
-        busy={false}
-        onSpawn={() => {}}
-      />,
+      <PlayingOn table={table}>
+        <HeaderPile pile="setAside" board={table.board} onSpawn={() => {}} />
+      </PlayingOn>,
     );
 
     fireEvent.click(screen.getByRole('button', { name: `Set aside, ${count} cards` }));

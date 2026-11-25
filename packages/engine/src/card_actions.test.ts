@@ -102,6 +102,23 @@ describe('UseCardAction', () => {
     expect(investigatorOf(after, alice).actionsRemaining).toBe(left);
   });
 
+  it("logs the hall's action as spent on that card, not as a correction of alice's count", () => {
+    const { context, state } = newGame()
+      .withLocation(hall, blankLocation('hall', { actions: [scareAction] }), { revealed: true })
+      .withInvestigator(alice, { locationId: hall })
+      .withTurnOf(alice)
+      .start();
+
+    const { events } = execute(context, state, useCardAction(alice, hall));
+
+    expect(events[0]).toEqual({
+      type: 'ActionsSpent',
+      investigatorId: alice,
+      amount: 1,
+      for: { kind: 'card', cardId: hall, action: 0 },
+    });
+  });
+
   it('resigns the investigator who takes a Resign action', () => {
     const { context, state } = newGame()
       .withLocation(hall, blankLocation('parlor', { actions: [resignAction()] }), {
