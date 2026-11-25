@@ -1,5 +1,5 @@
 import type { CampaignLog, TraumaKind } from './campaign/campaign_log';
-import type { AbilityCommand, TestedAction } from './abilities';
+import type { AbilityCommand } from './abilities';
 import type { ActionPaidFor, PlayerCardCommand, StageDeck } from './commands';
 import type {
   CardCode,
@@ -30,6 +30,7 @@ import type {
   SkillTest,
   SkillTestOutcome,
   TokenKind,
+  TestedAction,
 } from './state';
 import type { Zone } from './zone';
 
@@ -509,7 +510,7 @@ export interface SkillTestResolved {
   /** The decision's subject: the location, enemy or card the test is about. */
   subject?: InstanceId;
   skillTest: SkillTest;
-  /** The basic action the test belongs to (`Decision.testKind`); absent for a card's test. */
+  /** The basic action the test belongs to (`SkillTest.action`); absent for a card's test. */
   action?: TestedAction;
   outcome: SkillTestOutcome;
   /**

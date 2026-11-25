@@ -117,8 +117,7 @@ describe('Investigate', () => {
         prompt: 'decision.investigate',
         subject: study,
         decider: { kind: 'investigator', investigatorId: alice },
-        skillTest: { skill: 'intellect', difficulty: 3 },
-        testKind: { kind: 'investigate', locationId: study },
+        skillTest: { skill: 'intellect', difficulty: 3, action: 'investigate' },
         // The whole suggestion is covered in skill_modifiers.test.ts.
         suggestion: expect.objectContaining({ skill: 4, difficulty: 3, outcome: 'pass' }),
         options: [
@@ -126,9 +125,36 @@ describe('Investigate', () => {
             id: 'pass',
             label: 'decision.pass',
             amount: { default: 1, min: 1, max: 2 },
-            commands: [],
+            commands: [
+              {
+                type: 'DiscoverClues',
+                investigatorId: alice,
+                locationId: study,
+                amount: { answer: 'amount' },
+                investigation: true,
+              },
+              {
+                type: 'EndSkillTest',
+                investigatorId: alice,
+                subject: study,
+                action: 'investigate',
+                outcome: 'pass',
+              },
+            ],
           },
-          { id: 'fail', label: 'decision.fail', commands: [] },
+          {
+            id: 'fail',
+            label: 'decision.fail',
+            commands: [
+              {
+                type: 'EndSkillTest',
+                investigatorId: alice,
+                subject: study,
+                action: 'investigate',
+                outcome: 'fail',
+              },
+            ],
+          },
         ],
       },
     ]);
@@ -275,8 +301,7 @@ describe('Investigate another location', () => {
 
     expect(asked.pending[0]).toMatchObject({
       subject: attic,
-      skillTest: { skill: 'intellect', difficulty: 1 },
-      testKind: { kind: 'investigate', locationId: attic },
+      skillTest: { skill: 'intellect', difficulty: 1, action: 'investigate' },
     });
     expect(requireInvestigator(passed, alice)).toMatchObject({ clues: 1, locationId: study });
     expect(passed.cards[attic]!.tokens.clue ?? 0).toBe(0);
@@ -329,6 +354,7 @@ describe('Investigate at a location with attachments', () => {
           { cardId: lastingFog, by: 1 },
         ],
       },
+      action: 'investigate',
     });
   });
 
@@ -378,11 +404,23 @@ describe('Fight', () => {
       id: 'fight:alice:ghoul',
       prompt: 'decision.fight',
       subject: ghoul,
-      skillTest: { skill: 'combat', difficulty: 4 },
-      testKind: { kind: 'fight', enemyId: ghoul, damage: 1 },
+      skillTest: { skill: 'combat', difficulty: 4, action: 'fight' },
       options: [
-        { id: 'pass', amount: { default: 1, min: 1 }, commands: [] },
-        { id: 'fail', commands: [] },
+        {
+          id: 'pass',
+          amount: { default: 1, min: 1 },
+          commands: [
+            { type: 'DamageEnemy', enemyId: ghoul, amount: { answer: 'amount' } },
+            { type: 'EndSkillTest', subject: ghoul, action: 'fight', outcome: 'pass' },
+          ],
+        },
+        {
+          id: 'fail',
+          commands: [
+            { type: 'FailedAttack', investigatorId: alice, enemyId: ghoul, damage: 1 },
+            { type: 'EndSkillTest', subject: ghoul, action: 'fight', outcome: 'fail' },
+          ],
+        },
       ],
     });
   });
@@ -721,6 +759,7 @@ describe('Fight and Evade against values a location changes', () => {
         skill: 'combat',
         difficulty: 5,
         modifiedFrom: { printed: 4, changes: [{ cardId: hallway, by: 1 }] },
+        action: 'fight',
       },
     },
     {
@@ -729,6 +768,7 @@ describe('Fight and Evade against values a location changes', () => {
         skill: 'agility',
         difficulty: 4,
         modifiedFrom: { printed: 2, changes: [{ cardId: hallway, by: 2 }] },
+        action: 'evade',
       },
     },
   ])('raises $action.type against the changed value', ({ action, skillTest }) => {

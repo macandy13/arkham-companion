@@ -72,6 +72,7 @@ import { handleMoveHunter, handleMoveHunters } from './hunters';
 import { attacksStillDue, handleNextPhase } from './phases';
 import {
   handleEndSkillTest,
+  handleFailedAttack,
   handleEvade,
   handleFight,
   handleInvestigate,
@@ -331,6 +332,7 @@ const COMMAND_SPECS: CommandSpecs = {
   Investigate: { handle: handleInvestigate, provokes: asAction },
   Fight: { handle: handleFight },
   Evade: { handle: handleEvade },
+  FailedAttack: { handle: handleFailedAttack },
   EndSkillTest: { handle: handleEndSkillTest },
 };
 

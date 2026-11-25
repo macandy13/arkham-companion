@@ -46,6 +46,7 @@ import type {
   SkillName,
   TokenKind,
   WoundKind,
+  TestedAction,
 } from '../state';
 import {
   attachedTo,
@@ -77,7 +78,6 @@ import type {
   RepeatedRef,
   StatRange,
   Templated,
-  TestedAction,
 } from './types';
 
 /**

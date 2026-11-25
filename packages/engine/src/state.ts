@@ -381,6 +381,11 @@ export interface SkillTest {
    * Absent when none changes it.
    */
   modifiedFrom?: { printed: number; changes: readonly CardChange[] };
+  /**
+   * The basic action the test belongs to, investigate, fight or evade, which opens `tested` and
+   * `testEnded` for its subject and says what its pass `amount` counts. Absent for a card's test.
+   */
+  action?: TestedAction;
 }
 
 /** What one card in play changes a number by (`SkillTest.modifiedFrom`, `modifiedValue`). */
@@ -389,16 +394,8 @@ export interface CardChange {
   by: number;
 }
 
-/**
- * The basic action a skill test belongs to (`Decision.testKind`), with what
- * its resolver needs to compute the consequences of the answer
- * (`testedActionCommands`): the location investigated, or the enemy attacked
- * with the attack's damage, or the enemy evaded. The tester is the decider.
- */
-export type SkillTestKind =
-  | { kind: 'investigate'; locationId: InstanceId }
-  | { kind: 'fight'; enemyId: InstanceId; damage: number }
-  | { kind: 'evade'; enemyId: InstanceId };
+/** The basic actions made with a skill test (`SkillTest.action`): investigate, fight and evade. */
+export type TestedAction = 'investigate' | 'fight' | 'evade';
 
 /** The two outcomes of a skill test, in the order the dialogs list them. */
 export const SKILL_TEST_OUTCOMES = ['pass', 'fail'] as const;
@@ -491,12 +488,6 @@ export interface Decision {
   /** Only for `skillTestResult`: what the players are testing. */
   skillTest?: SkillTest;
   /**
-   * Only for the `skillTestResult` of a basic action: which action the test
-   * belongs to. Its consequences are not in the options but computed from
-   * the state when the answer arrives (`testedActionCommands`).
-   */
-  testKind?: SkillTestKind;
-  /**
    * Only for `skillTestResult` decided by one investigator: the modified
    * values before the players enter their modifier or reveal a token,
    * computed when the decision is raised. The UI recomputes it with the
@@ -506,7 +497,7 @@ export interface Decision {
   /**
    * The answers. Each carries the commands it triggers, so the mapping from
    * answer to consequence is data and any module (or scenario) can raise a
-   * decision. A basic action's test carries none: its `testKind` decides.
+   * decision.
    */
   options: DecisionOption[];
 }
@@ -529,8 +520,8 @@ export interface DecisionOption {
   /**
    * Set when the option's consequence is a count the players confirm or
    * adjust (clues discovered, damage dealt by an action's test): a
-   * `ResolveDecision.amount` must lie in the range, and the decision's
-   * resolver reads it (`Decision.testKind`), `default` when it is left out.
+   * `ResolveDecision.amount` must lie in the range, and fills in the option's
+   * `AnsweredAmount` named `amount`, `default` when it is left out.
    */
   amount?: AmountRange;
   /**
@@ -558,7 +549,8 @@ export type NamedAmount = (typeof NAMED_AMOUNTS)[number];
  * option's range default when the answer leaves it out.
  */
 export interface AnsweredAmount {
-  answer: NamedAmount;
+  /** A named count (`amounts`), or `amount`, an option's one count (`DecisionOption.amount`). */
+  answer: NamedAmount | 'amount';
 }
 
 /**
@@ -575,9 +567,12 @@ export type AnswerableCommand = Answerable<Command>;
  */
 type Answerable<C> = C extends Command ? { [K in keyof C]: AnswerableField<C[K]> } : never;
 
-/** A command's field with its counts answerable, also those of the skill test it asks for. */
+/**
+ * A command's field with its counts answerable, also those of the skill test it asks for. A field
+ * that may be a number among other shapes counts too (`DamageEnemy.amount`, a `TokenAmount`).
+ */
 type AnswerableField<V> =
-  Exclude<V, undefined> extends number
+  number extends Exclude<V, undefined>
     ? V | AnsweredAmount
     : V extends SkillTest
       ? { [K in keyof V]: AnswerableField<V[K]> }

@@ -13,7 +13,7 @@ import type {
   NamedAmount,
   Phase,
   SkillTest,
-  SkillTestKind,
+  TestedAction,
   SkillName,
   SkillTestOutcome,
   TokenKind,
@@ -195,9 +195,6 @@ export function defaultScope(on: WindowEvent['on']): ListenerScope {
       return 'self';
   }
 }
-
-/** The basic actions whose test opens `tested`: investigate, fight and evade. */
-export type TestedAction = SkillTestKind['kind'];
 
 /** The phases whose end opens `phaseEnds`: all but setup and upkeep. */
 export type EndingPhase = Exclude<Phase, 'setup' | 'upkeep'>;

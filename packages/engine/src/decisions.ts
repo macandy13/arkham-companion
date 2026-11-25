@@ -152,7 +152,7 @@ function skillTestResolved(
       : {}),
     ...(decision.subject ? { subject: decision.subject } : {}),
     skillTest,
-    ...(decision.testKind ? { action: decision.testKind.kind } : {}),
+    ...(skillTest.action === undefined ? {} : { action: skillTest.action }),
     outcome: answerOutcome(command),
     ...(margin === undefined ? {} : { margin }),
   };
@@ -177,7 +177,7 @@ function checkMargin(state: GameState, command: ResolveDecision): void {
 }
 
 /** The outcome an answer to a `skillTestResult` decision reports: anything but `pass` is a fail. */
-export function answerOutcome(command: ResolveDecision): SkillTestOutcome {
+function answerOutcome(command: ResolveDecision): SkillTestOutcome {
   return command.optionId === 'pass' ? 'pass' : 'fail';
 }
 
@@ -284,8 +284,7 @@ export function handleMarginEntry(): never {
 
 /**
  * The chosen option's commands, with the counts the answer confirms filled
- * in (`AnsweredAmount`). The plain `amount` is only checked here: the
- * decision's resolver reads it (`testedActionCommands`).
+ * in (`AnsweredAmount`).
  */
 function optionCommands(state: GameState, command: ResolveDecision): Command[] {
   const option = chosenOption(state, command);
@@ -349,22 +348,25 @@ function isAnsweredAmount(value: unknown): value is AnsweredAmount {
 }
 
 /**
- * The count `name` the answer confirms, or the option's default for it. An
- * option that names a count without a range for it cannot be answered
+ * The count `name` the answer confirms, or the option's default for it: its one count for
+ * `amount`. An option that names a count without a range for it cannot be answered
  * (`amountNotAdjustable`).
  */
 function answeredAmount(
-  name: NamedAmount,
+  name: AnsweredAmount['answer'],
   option: DecisionOption,
   command: ResolveDecision,
 ): number {
-  const amount = command.amounts?.[name] ?? option.amounts?.[name]?.default;
+  const amount =
+    name === 'amount'
+      ? (command.amount ?? option.amount?.default)
+      : (command.amounts?.[name] ?? option.amounts?.[name]?.default);
   if (amount === undefined)
     throw new CommandRejected({
       code: 'amountNotAdjustable',
       decisionId: command.decisionId,
       optionId: option.id,
-      name,
+      ...(name === 'amount' ? {} : { name }),
     });
   return amount;
 }
@@ -460,10 +462,10 @@ export function confirmOptions(onYes: Command[], target?: InstanceId): DecisionO
   ];
 }
 
-/** What follows each outcome of a skill test. */
+/** What follows each outcome of a skill test; a count may wait for the answer (`AnsweredAmount`). */
 export interface SkillTestOutcomes {
-  onPass: Command[];
-  onFail: Command[];
+  onPass: AnswerableCommand[];
+  onFail: AnswerableCommand[];
 }
 
 /**
