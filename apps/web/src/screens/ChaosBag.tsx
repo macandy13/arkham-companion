@@ -1,4 +1,4 @@
-import { useId, useState } from 'react';
+import { useId, useState, type KeyboardEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   addChaosToken,
@@ -11,6 +11,7 @@ import {
   sealChaosToken,
   tokenCounts,
 } from '@arkham/engine';
+import { cycledIndex } from '@arkham/util';
 import { ChaosTokenFace } from '../tokens/ChaosTokenFace';
 import './chaos_bag.css';
 import { usePlay } from './PlayContext';
@@ -65,24 +66,44 @@ export function ChaosBag({ board }: { board: BoardView }) {
     sealed: t('chaosBag.sealedCount', { count: board.sealedTokens.length }),
     reveal: t('chaosBag.reveal'),
   };
+  const tabId = (each: BagView) => `${tabsId}-${each}`;
+  const panelId = `${tabsId}-panel`;
+  // The tabs pattern (WAI-ARIA), as the map's tabs: the row is one stop for Tab, the arrow keys
+  // choose the view and move the focus with it, Home and End go to the first and last.
+  const onTabKey = (event: KeyboardEvent<HTMLDivElement>) => {
+    const at = VIEWS.indexOf(view);
+    const next: Record<string, number> = {
+      ArrowRight: cycledIndex(at, 1, VIEWS.length),
+      ArrowLeft: cycledIndex(at, -1, VIEWS.length),
+      Home: 0,
+      End: VIEWS.length - 1,
+    };
+    const index = next[event.key];
+    const chosenView = index === undefined ? undefined : VIEWS[index];
+    if (!chosenView) return;
+    event.preventDefault();
+    setView(chosenView);
+    document.getElementById(tabId(chosenView))?.focus();
+  };
   return (
     <section aria-label={t('chaosBag.title')} data-part="chaos-bag">
-      <div role="tablist" aria-label={t('chaosBag.views')}>
+      <div role="tablist" aria-label={t('chaosBag.views')} onKeyDown={onTabKey}>
         {VIEWS.map((each) => (
           <button
             key={each}
             type="button"
             role="tab"
-            id={`${tabsId}-${each}`}
+            id={tabId(each)}
             aria-selected={each === view}
-            aria-controls={`${tabsId}-${each}-panel`}
+            aria-controls={panelId}
+            tabIndex={each === view ? 0 : -1}
             onClick={() => setView(each)}
           >
             {tabLabel[each]}
           </button>
         ))}
       </div>
-      <div role="tabpanel" id={`${tabsId}-${view}-panel`} aria-labelledby={`${tabsId}-${view}`}>
+      <div role="tabpanel" id={panelId} aria-labelledby={tabId(view)}>
         {view === 'bag' && (
           <>
             <ul aria-label={t('chaosBag.contents')} data-part="tray">

@@ -82,6 +82,21 @@ describe('ChaosBag', () => {
     expect(table.board.chaosBag).toEqual(['-1', '-1', 'elderSign', 'skull']);
   });
 
+  it('moves to the next view with the right arrow key and back to the first with Home', () => {
+    const table = PlayTable.start(game);
+    render(
+      <PlayingOn table={table}>
+        <ChaosBag board={table.board} />
+      </PlayingOn>,
+    );
+
+    fireEvent.keyDown(screen.getByRole('tab', { name: 'In the bag · 4' }), { key: 'ArrowRight' });
+    expect(screen.getByRole('tab', { selected: true }).textContent).toBe('Sealed · 0');
+    fireEvent.keyDown(screen.getByRole('tab', { name: 'Sealed · 0' }), { key: 'Home' });
+
+    expect(screen.getByRole('tab', { selected: true }).textContent).toBe('In the bag · 4');
+  });
+
   it('says so when no token is sealed', () => {
     const table = PlayTable.start(game);
     render(

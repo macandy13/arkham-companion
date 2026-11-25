@@ -28,7 +28,7 @@
   min-height: var(--touch-target);
   padding: 0;
   border: none;
-  border-block-end: var(--tab-underline-width) solid transparent;
+  border-block-end: var(--focus-ring-width) solid transparent;
   border-radius: 0;
   background: none;
   color: var(--color-ink-muted);
