@@ -177,7 +177,7 @@ function checkMargin(state: GameState, command: ResolveDecision): void {
 }
 
 /** The outcome an answer to a `skillTestResult` decision reports: anything but `pass` is a fail. */
-export function answerOutcome(command: ResolveDecision): SkillTestOutcome {
+function answerOutcome(command: ResolveDecision): SkillTestOutcome {
   return command.optionId === 'pass' ? 'pass' : 'fail';
 }
 
