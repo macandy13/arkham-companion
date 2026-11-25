@@ -98,8 +98,8 @@ import { cardActionOf, cardActionSteps, handleUseCardAction } from './card_actio
 export interface CommandSpec<C extends Command> {
   /**
    * The command's own events, without the forced effects they trigger. Throws `CommandRejected`.
-   * `strict` unless a card asked for it (`AskedByCard.source`): a handler that refuses a
-   * command with nothing to do lets a card's do what it can instead.
+   * `strict` is false when a card asked for the command (`AskedByCard.source`): a handler that
+   * refuses the players' command with nothing to do then does what it can instead.
    */
   handle(ctx: EngineContext, state: GameState, command: C, strict: boolean): Event[];
   /**

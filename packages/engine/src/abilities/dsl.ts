@@ -533,9 +533,9 @@ export function placeYourClues(
 }
 
 /**
- * `command` with `source`, and so each command in the options of a choice it asks, so the notice
- * of a deferred one names the card that asked and one the players also send does what it can
- * instead of refusing (`AskedByCard`).
+ * Stamps `source` on `command` and, for a choice, on each command of its options, so the notice of
+ * a deferred command names the card that asked, and a command the players also send does what it
+ * can instead of refusing (`AskedByCard`).
  */
 export function withSource<C extends { readonly type: string }>(
   command: C,
