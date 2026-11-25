@@ -211,9 +211,10 @@ describe('preferredByPrey "Bearer only"', () => {
         .withCard(hunter, preyCard(prey), atLocation(hall))
         .start();
       const weakness = { ...state.cards[hunter]!, owner };
+      const owned = { ...state, cards: { ...state.cards, [hunter]: weakness } };
       const candidates = state.investigators.filter((inv) => among.includes(inv.id));
 
-      expect(preferredByPrey(context, state, weakness, candidates).map((inv) => inv.id)).toEqual(
+      expect(preferredByPrey(context, owned, weakness, candidates).map((inv) => inv.id)).toEqual(
         expected,
       );
     },

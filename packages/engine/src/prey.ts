@@ -1,72 +1,8 @@
-import { stripTrailingDot } from '@arkham/util';
-import { distance } from './board';
-import {
-  cardStats,
-  comparableName,
-  trait,
-  type CardStats,
-  type EngineContext,
-  type Trait,
-} from './cards';
-import { enemiesOnTable } from './enemies';
-import { locationOfCard, matchesCard } from './lookup';
-import { skillValues } from './modifiers';
-import { activeInvestigators, remainingHealth, remainingSanity } from './investigators';
-import { SKILL_NAMES, type CardInstance, type GameState, type Investigator } from './state';
-import type { InvestigatorId } from './ids';
-
-/**
- * What a prey text compares for one investigator ("remaining health", "[combat]", "nearest to
- * another [[Cultist]] enemy"); `enemy` is the enemy whose prey it is.
- */
-type PreyMeasure = (
-  ctx: EngineContext,
-  state: GameState,
-  enemy: CardInstance,
-  investigator: Investigator,
-) => number;
-
-/** The first word of a prey text: "Most clues", "Fewest …", "Least remaining sanity". */
-/** Whether the lowest or the highest value wins. */
-type PreyExtreme = 'lowest' | 'highest';
-
-const EXTREME_WORDS: Readonly<Record<string, PreyExtreme | undefined>> = {
-  highest: 'highest',
-  most: 'highest',
-  lowest: 'lowest',
-  fewest: 'lowest',
-  least: 'lowest',
-};
-
-/** The counters a prey text can compare after its extreme word. */
-const COUNTER_MEASURES: Readonly<Record<string, PreyMeasure | undefined>> = {
-  'remaining health': (_ctx, _state, _enemy, inv) => remainingHealth(inv),
-  'remaining sanity': (_ctx, _state, _enemy, inv) => remainingSanity(inv),
-  clues: (_ctx, _state, _enemy, inv) => inv.clues,
-  resources: (_ctx, _state, _enemy, inv) => inv.resources,
-  damage: (_ctx, _state, _enemy, inv) => inv.health.damage,
-  horror: (_ctx, _state, _enemy, inv) => inv.sanity.horror,
-};
-
-/**
- * A prey text read: which of the given investigators it picks, and whether it says "only".
- * Comparing texts pick the tied best ("Most clues"); naming texts pick those they name ("Daisy
- * Walker", "Investigator at a [[Woods]] location") and may pick nobody.
- */
-interface Prey {
-  pick: (
-    ctx: EngineContext,
-    state: GameState,
-    enemy: CardInstance,
-    investigators: readonly Investigator[],
-  ) => Investigator[];
-  only: boolean;
-}
-
-const NEAREST_TO_ANOTHER = /^nearest to another (.+) enemy$/i;
-const AT_TRAIT_LOCATION = /^investigator at an? (.+) location$/i;
-const ONLY = /\s+only$/i;
-const BEARER = /^bearer$/i;
+import { candidatesOf } from './abilities/resolve';
+import { cardStats, comparableName, type CardStats, type EngineContext } from './cards';
+import { activeInvestigators } from './investigators';
+import type { PreyInstruction } from './prey_instruction';
+import type { CardInstance, GameState, Investigator } from './state';
 
 /**
  * The investigators among `candidates` that the prey keyword of `enemy` picks (Rules Reference,
@@ -83,23 +19,23 @@ export function preferredByPrey(
   candidates: readonly Investigator[],
 ): Investigator[] {
   const active = candidates.filter((inv) => inv.status === 'active');
-  const prey = readPrey(state, cardStats(ctx.cards, enemy.code), enemy.owner);
+  const prey = readPrey(ctx, state, enemy);
   if (prey === undefined || active.length === 0) return active;
-  if (prey.only) {
-    const allowed = new Set(
-      prey
-        .pick(
-          ctx,
-          state,
-          enemy,
-          activeInvestigators(state).filter((inv) => inv.locationId !== undefined),
-        )
-        .map((inv) => inv.id),
-    );
-    return active.filter((inv) => allowed.has(inv.id));
-  }
-  const picked = prey.pick(ctx, state, enemy, active);
-  return picked.length > 0 ? picked : active;
+  const within = prey.only
+    ? activeInvestigators(state).filter((inv) => inv.locationId !== undefined)
+    : active;
+  const picked = new Set(
+    candidatesOf(
+      ctx,
+      state,
+      prey.select,
+      enemy.id,
+      undefined,
+      within.map((inv) => inv.id),
+    ),
+  );
+  const preferred = active.filter((inv) => picked.has(inv.id));
+  return preferred.length > 0 || prey.only ? preferred : active;
 }
 
 /**
@@ -112,8 +48,7 @@ export function preyAllows(
   enemy: CardInstance,
   investigators: readonly Investigator[],
 ): Investigator[] {
-  const prey = readPrey(state, cardStats(ctx.cards, enemy.code), enemy.owner);
-  return prey?.only === true
+  return readPrey(ctx, state, enemy)?.only === true
     ? preferredByPrey(ctx, state, enemy, investigators)
     : [...investigators];
 }
@@ -130,7 +65,7 @@ export function preyPrompt(
   prompt: string,
 ): string {
   const stats = cardStats(ctx.cards, enemy.code);
-  return preyText(stats) !== undefined && readPrey(state, stats, enemy.owner) === undefined
+  return preyText(stats) !== undefined && readPrey(ctx, state, enemy) === undefined
     ? 'decision.choosePrey'
     : prompt;
 }
@@ -140,88 +75,23 @@ function preyText(stats: CardStats): string | undefined {
 }
 
 /**
- * The prey of a card, e.g. "Highest [combat]" or "Daisy Walker only", or undefined for one the
- * engine can't read; `bearer` is the investigator whose weakness the card is (`CardInstance.owner`).
+ * The prey of `enemy` (`CardStats.preyOn`), or undefined for one the engine can't read from the
+ * board: an investigator's name nobody in this game has (Yithian Observer's "Fewest cards in
+ * hand" reads as one), or "Bearer" on a card nobody owns.
  */
 function readPrey(
+  ctx: EngineContext,
   state: GameState,
-  stats: CardStats,
-  bearer: InvestigatorId | undefined,
-): Prey | undefined {
-  const text = preyText(stats);
-  if (text === undefined) return undefined;
-  const plain = stripTrailingDot(text.trim());
-  const only = ONLY.test(plain);
-  const pick = preyPick(state, plain.replace(ONLY, ''), bearer);
-  return pick === undefined ? undefined : { pick, only };
-}
-
-/**
- * How a prey text without its "only" picks: by a measure, by the trait of their location, by an
- * investigator's name in this game ("Daisy Walker"), or the `bearer` of a weakness ("Bearer"); undefined for any other text, and for "Bearer" on a card nobody owns.
- */
-function preyPick(
-  state: GameState,
-  text: string,
-  bearer: InvestigatorId | undefined,
-): Prey['pick'] | undefined {
-  if (BEARER.test(text))
-    return bearer === undefined
-      ? undefined
-      : (_ctx, _state, _enemy, investigators) => investigators.filter((inv) => inv.id === bearer);
-  const nearest = NEAREST_TO_ANOTHER.exec(text);
-  if (nearest !== null) return tiedBest(distanceToEnemyWith(trait(nearest[1] ?? '')), 'lowest');
-  const atTrait = AT_TRAIT_LOCATION.exec(text);
-  if (atTrait !== null) return atLocationWith(trait(atTrait[1] ?? ''));
-  const lower = text.toLowerCase();
-  const space = lower.indexOf(' ');
-  const extreme = EXTREME_WORDS[lower.slice(0, space)];
-  const measure = measureNamed(lower.slice(space + 1));
-  if (extreme !== undefined && measure !== undefined) return tiedBest(measure, extreme);
-  if (!state.investigators.some((inv) => comparableName(inv.name) === lower)) return undefined;
-  return (_ctx, _state, _enemy, investigators) =>
-    investigators.filter((inv) => comparableName(inv.name) === lower);
-}
-
-/** Picks the investigators tied for the `extreme` of `measure`. */
-function tiedBest(measure: PreyMeasure, extreme: PreyExtreme): Prey['pick'] {
-  return (ctx, state, enemy, investigators) => {
-    const values = investigators.map((inv) => measure(ctx, state, enemy, inv));
-    const best = extreme === 'lowest' ? Math.min(...values) : Math.max(...values);
-    return investigators.filter((_inv, i) => values[i] === best);
-  };
-}
-
-/** "Investigator at a [[Woods]] location": those whose location has the trait. */
-function atLocationWith(wanted: Trait): Prey['pick'] {
-  return (ctx, state, _enemy, investigators) =>
-    investigators.filter((inv) => {
-      const location = inv.locationId === undefined ? undefined : state.cards[inv.locationId];
-      return location !== undefined && matchesCard(ctx, location, { trait: wanted });
-    });
-}
-
-function measureNamed(name: string): PreyMeasure | undefined {
-  const skill = SKILL_NAMES.find((skillName) => name === `[${skillName}]`);
-  if (skill !== undefined) return (ctx, state, _enemy, inv) => skillValues(ctx, state, inv)[skill];
-  return COUNTER_MEASURES[name];
-}
-
-/**
- * "Nearest to another [[Cultist]] enemy": connections from the investigator to the nearest other
- * enemy on the table with the trait (an engaged one is where its investigator is); infinite with
- * none or no path, so then every investigator ties.
- */
-function distanceToEnemyWith(wanted: Trait): PreyMeasure {
-  return (ctx, state, enemy, investigator) => {
-    const from = investigator.locationId;
-    if (from === undefined) return Infinity;
-    const distances = enemiesOnTable(ctx, state, wanted)
-      .filter((card) => card.id !== enemy.id)
-      .map((card) => {
-        const at = locationOfCard(state, card);
-        return at === undefined ? Infinity : distance(ctx, state, from, at);
-      });
-    return Math.min(...distances);
-  };
+  enemy: CardInstance,
+): PreyInstruction | undefined {
+  const prey = cardStats(ctx.cards, enemy.code).preyOn;
+  if (prey === undefined) return undefined;
+  const { name, bearerOf } = prey.select.among;
+  if (
+    name !== undefined &&
+    !state.investigators.some((inv) => comparableName(inv.name) === comparableName(name))
+  )
+    return undefined;
+  if (bearerOf !== undefined && enemy.owner === undefined) return undefined;
+  return prey;
 }
