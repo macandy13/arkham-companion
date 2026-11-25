@@ -35,4 +35,5 @@ A location can cost clues to enter: Underground Cistern ("As an additional cost 
 - It is paid whenever an investigator enters, by an action, a free move or a card effect ([Additional Costs](https://arkhamdb.com/rules#Additional_Costs)); with too few clues between them the move can't be made.
 - The cost is printed on the unrevealed side, so it holds only while the location is unrevealed: entering reveals it, and after that entering costs nothing. If A Ritual reveals the Cistern first, entering it is free.
 - For a card effect that moves the investigator there, only the move fails when the cost can't be paid; the app refuses the whole effect then (no Queen of Ash card does this).
-- The app also charges it for a move a mandatory instruction makes (Campaign Guide, act or agenda back), which the rules exempt; no such move enters either location.
+- A move by a card effect picked on the map (Shortcut) pays with the engine's split, the mover first, without asking who pays; the map lights only locations the group can pay to enter (#1423).
+- The app also charges it for a move a mandatory instruction makes (Campaign Guide, act or agenda back); no such move enters either location.
