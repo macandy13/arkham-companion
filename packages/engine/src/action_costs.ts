@@ -1,6 +1,6 @@
 import { cardActionOf } from './card_actions';
 import type { EngineContext } from './cards';
-import type { ActionCommand, AdjustActions, Command } from './commands';
+import type { ActionCommand, Command, SpendActions } from './commands';
 import type { InvestigatorId } from './ids';
 import { modifiersOn } from './modifiers';
 import type { GameState } from './state';
@@ -8,7 +8,7 @@ import type { GameState } from './state';
 /**
  * The basic actions an investigator takes in their turn (Rules Reference, "Actions"), by the
  * word card text uses for them: what a cost modifier raises (`ActionCostModifier.actions`) and what
- * the players name when they count one off (`AdjustActions.for`). A card ability that is one of
+ * the engine names when it pays for one (`SpendActions.for`). A card ability that is one of
  * them ("[action]: Fight") is that action too (Rules Reference, "Actions"), so it is counted off
  * by its word as well.
  */
@@ -27,7 +27,7 @@ export const BASIC_ACTIONS = [
 ] as const;
 
 /**
- * A basic action an investigator counted off this round (`AdjustActions.for`), recorded in
+ * A basic action an investigator paid for this round (`SpendActions.for`), recorded in
  * `GameMeta.actionsTaken` until the round ends, so a cost of the first one each round knows it
  * has been paid.
  */
@@ -109,28 +109,31 @@ function taken(
 }
 
 /**
- * The `AdjustActions` that counts off what the player command `command` costs as an action, which
+ * The `SpendActions` that pays what the player command `command` costs as an action, which
  * `handle` resolves before the command itself (and before the attacks of opportunity it provokes):
  * a basic action at its current `actionCost`, named so a raise of the round's first is paid once;
  * a card ability with the action symbol one action, a "[free]" one none. None for a command that
- * is no action. The players still correct the count by hand (`AdjustActions`, `ManualAdjust`).
+ * is no action. The players still correct the count by hand (`AdjustActions`, `ManualAdjust`),
+ * which the log keeps apart from a payment.
  */
 export function actionPayment(
   ctx: EngineContext,
   state: GameState,
   command: Command,
-): AdjustActions | undefined {
-  if (command.type === 'UseCardAction')
+): SpendActions | undefined {
+  if (command.type === 'UseCardAction') {
+    const { investigatorId, cardId, action } = command;
     return cardActionOf(ctx, state, command).free
       ? undefined
-      : { type: 'AdjustActions', investigatorId: command.investigatorId, delta: -1 };
+      : { type: 'SpendActions', investigatorId, amount: 1, for: { kind: 'card', cardId, action } };
+  }
   const taken = basicActionOf(command);
   if (!taken) return undefined;
   const { action, investigatorId, free } = taken;
   return {
-    type: 'AdjustActions',
+    type: 'SpendActions',
     investigatorId,
-    delta: -actionCost(ctx, state, investigatorId, action, { free }),
-    for: action,
+    amount: actionCost(ctx, state, investigatorId, action, { free }),
+    for: { kind: 'basic', action },
   };
 }

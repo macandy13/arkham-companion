@@ -82,6 +82,12 @@ describe('actionCost', () => {
 
       expect(table.board.investigator(alice).actions).toBe(1);
       expect(table.state.meta.actionsTaken).toEqual([{ investigatorId: alice, action: 'move' }]);
+      expect(table.events).toContainEqual({
+        type: 'ActionsSpent',
+        investigatorId: alice,
+        amount: 2,
+        for: { kind: 'basic', action: 'move' },
+      });
     });
 
     it('makes a fight after the first move cost alice the usual 1', () => {
@@ -152,6 +158,29 @@ describe('actionCost', () => {
     expect(table.board.actionCost(alice, 'move')).toBe(3);
   });
 
+  it('logs a free move with no cost raised as spending 0 actions, and records it as taken', () => {
+    const study = instanceId('study');
+    const table = PlayTable.start(
+      newGame()
+        .withLocation(hall, blankLocation('hall'), { revealed: true })
+        .withLocation(study, blankLocation('study'), { revealed: true })
+        .withConnection(hall, study)
+        .withInvestigator(alice, { locationId: hall })
+        .withTurnOf(alice),
+    );
+
+    table.moveTo(alice, study, { free: true });
+
+    expect(table.board.investigator(alice).actions).toBe(3);
+    expect(table.events).toContainEqual({
+      type: 'ActionsSpent',
+      investigatorId: alice,
+      amount: 0,
+      for: { kind: 'basic', action: 'move' },
+    });
+    expect(table.state.meta.actionsTaken).toEqual([{ investigatorId: alice, action: 'move' }]);
+  });
+
   it('raises every investigate action, not only the first, without `first`', () => {
     const table = PlayTable.start(
       newGame()
@@ -167,13 +196,30 @@ describe('actionCost', () => {
     expect(table.board.actionCost(alice, 'investigate')).toBe(2);
   });
 
-  it('refuses an action named on a count upwards, which would use up the first', () => {
+  it("leaves alice's first move of the round raised after a correction of her count", () => {
+    const table = aliceFrozen();
+
+    table.adjustActions(alice, -1);
+
+    expect(table.state.meta.actionsTaken).toBeUndefined();
+    expect(table.board.actionCost(alice, 'move')).toBe(2);
+  });
+
+  it.each([
+    { amount: -1, case: 'a negative amount' },
+    { amount: 4, case: 'more than her 3 actions' },
+  ])('refuses spending $case', ({ amount }) => {
     const table = aliceFrozen();
 
     expect(
       rejectionOf(() =>
-        table.play({ type: 'AdjustActions', investigatorId: alice, delta: 1, for: 'move' }),
+        table.play({
+          type: 'SpendActions',
+          investigatorId: alice,
+          amount,
+          for: { kind: 'basic', action: 'move' },
+        }),
       ),
-    ).toMatchObject({ code: 'invalidActionAdjustment', delta: 1 });
+    ).toMatchObject({ code: 'invalidActionAdjustment', actionsRemaining: 3 });
   });
 });

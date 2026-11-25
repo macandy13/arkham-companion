@@ -1,7 +1,6 @@
-import type { BasicAction } from './action_costs';
 import type { CampaignLog, TraumaKind } from './campaign/campaign_log';
 import type { AbilityCommand, TestedAction } from './abilities';
-import type { PlayerCardCommand, StageDeck } from './commands';
+import type { ActionPaidFor, PlayerCardCommand, StageDeck } from './commands';
 import type {
   CardCode,
   DecisionId,
@@ -85,6 +84,7 @@ export type Event =
   | RoundEnded
   | TurnStarted
   | ActionsAdjusted
+  | ActionsSpent
   | SkillBoostChanged
   | ActionsReset
   | TurnEnded
@@ -646,15 +646,25 @@ export interface TurnStarted {
 
 /**
  * An investigator's remaining actions (`Investigator.actionsRemaining`)
- * changed by `delta`. Produced by `AdjustActions` and by a `ManualAdjust` of
- * kind `actions`.
+ * changed by `delta`: a correction or a card's grant or loss. Produced by `AdjustActions` and by
+ * a `ManualAdjust` of kind `actions`; an action's payment is `ActionsSpent`.
  */
 export interface ActionsAdjusted {
   type: 'ActionsAdjusted';
   investigatorId: InvestigatorId;
   delta: number;
-  /** The basic action counted off (`AdjustActions.for`), added to `GameMeta.actionsTaken`. */
-  for?: BasicAction;
+}
+
+/**
+ * The investigator spent `amount` actions (`Investigator.actionsRemaining`) on the action `for`
+ * names; a basic action joins `GameMeta.actionsTaken`, even a free one (`amount` 0). Produced by
+ * `SpendActions`, which `handle` plays as the payment of a command taken as an action.
+ */
+export interface ActionsSpent {
+  type: 'ActionsSpent';
+  investigatorId: InvestigatorId;
+  amount: number;
+  for: ActionPaidFor;
 }
 
 /**

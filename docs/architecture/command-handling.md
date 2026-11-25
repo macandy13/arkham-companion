@@ -9,7 +9,7 @@ function apply(state: GameState, event: Event): GameState;
 interface EngineContext { cards: CardDb; scenario?: ScenarioDefinition; }  // code and lookup data, never saved
 ```
 
-A player's action command first pays what it costs (`actionPayment`, an `AdjustActions` with the action's cost, [Triggers and card effects](triggers-and-card-effects.md)); one it can't pay is refused. Inside one call a command then resolves as a queue of steps, depth first:
+A player's action command first pays what it costs (`actionPayment`, a `SpendActions` with the action's cost and what it pays for, [Triggers and card effects](triggers-and-card-effects.md)); one it can't pay is refused. Inside one call a command then resolves as a queue of steps, depth first:
 
 1. the command's own events,
 2. then the forced effects its events trigger (see [Triggers and card effects](triggers-and-card-effects.md)); once an event has ended the scenario nothing triggers any more, though the rest of the chain still resolves (`triggeredSteps`),
