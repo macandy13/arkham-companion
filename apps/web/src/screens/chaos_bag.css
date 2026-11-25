@@ -7,6 +7,14 @@
  * curse, lays the revealed tokens on the tray, and ends on Put back and Reveal, Reveal the view's
  * one brass primary. On a phone the tray's tokens are smaller, so the sheet keeps them in view.
  */
+/*
+ * The page keeps one height whichever view is open and whatever the bag holds, so switching tabs,
+ * picking a token or revealing some doesn't make the dialog jump; a view taller than it scrolls.
+ */
+#board dialog[data-dialog='chaos-bag'] > article {
+  height: var(--chaos-bag-dialog-height);
+}
+
 #board dialog[data-shell] section[data-part='chaos-bag'] {
   --chaos-token-size: var(--chaos-bag-token-size);
   display: grid;

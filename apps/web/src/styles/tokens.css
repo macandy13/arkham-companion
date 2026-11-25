@@ -397,6 +397,8 @@
   --chaos-token-size: 2rem;
   --chaos-bag-token-size: 2.5rem;
   --chaos-bag-token-size-phone: 1.75rem;
+  /* The chaos bag's dialog keeps this height in every view (ChaosBag), its tallest view with room to spare. */
+  --chaos-bag-dialog-height: 30rem;
   /* The chaos bag's felt tray (ChaosBag), sunk into the page, its tokens larger to tap one by one. */
   --chaos-tray-token-size: 3rem;
   --chaos-tray-token-size-phone: 2.25rem;
