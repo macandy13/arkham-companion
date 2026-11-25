@@ -14,6 +14,7 @@ import type {
   Phase,
   SkillTest,
   SkillTestKind,
+  SkillName,
   SkillTestOutcome,
   TokenKind,
 } from '../state';
@@ -291,8 +292,19 @@ export type EachInPlayRef = {
   empty?: true;
 } & CardFilter;
 
-/** Each investigator still in the scenario, in player order; only those at `at` when given. */
-type EachInvestigatorRef = { ref: 'eachInvestigator'; at?: RelativeCard };
+/**
+ * Each investigator still in the scenario, in player order; only those at `at` when given, at a
+ * location `atLocationWith` matches ("Investigator at a [[Woods]] location"), named `name`
+ * ("Daisy Walker", compared ignoring case with `Investigator.name`, a plain string too), or the bearer of the weakness `bearerOf` names (its
+ * `CardInstance.owner`; nobody for a card nobody owns).
+ */
+export type EachInvestigatorRef = {
+  ref: 'eachInvestigator';
+  at?: RelativeCard;
+  atLocationWith?: CardFilter;
+  name?: string;
+  bearerOf?: RelativeCard;
+};
 
 /**
  * An investigator an ability names relative to its window: the one the
@@ -327,12 +339,28 @@ interface Selector<Among> {
 }
 
 /**
- * What a `Selector` ranks its candidates by: the `token`s on each, or the connections from the
- * location of the investigator the window names to its location (`distance`: the drawer's own
- * location at 0, one with no path there an infinite number away). Without that location every
- * candidate is as near as any other, so the players choose among them all.
+ * What a `Selector` ranks its candidates by:
+ *
+ * - `tokens`: the `token`s on each card.
+ * - `distance`: the connections from the location of the investigator the window names to the
+ *   candidate's location, the drawer's own location at 0, one with no path there an infinite
+ *   number away. Without that location every candidate is as near as any other, so the players
+ *   choose among them all.
+ * - `stat`: an investigator's counter, remaining health or sanity, or skill with its lasting
+ *   boosts (`InvestigatorMeasure`): "Highest [combat]", "Most clues".
+ * - `distanceToOther`: the connections from an investigator's location to the nearest enemy `of`
+ *   names other than the card with the ability, infinite with none or no path: "Nearest to
+ *   another [[Cultist]] enemy".
  */
-export type PickMeasure = { kind: 'tokens'; token: TokenKind } | { kind: 'distance' };
+export type PickMeasure =
+  | { kind: 'tokens'; token: TokenKind }
+  | { kind: 'distance' }
+  | { kind: 'stat'; stat: InvestigatorMeasure }
+  | { kind: 'distanceToOther'; of: EachEnemyRef };
+
+/** What a `stat` measure reads from an investigator. */
+export type InvestigatorMeasure =
+  InvestigatorStat | 'remainingHealth' | 'remainingSanity' | SkillName;
 
 /**
  * Which locations in play `locationWith` picks among: those its print matches (`CardFilter`, "a

@@ -1,5 +1,5 @@
 import { assertNever, shallowEqual, sum, withoutKey } from '@arkham/util';
-import { cardStats, resolveAmount, type EngineContext } from '../cards';
+import { cardStats, comparableName, resolveAmount, type EngineContext } from '../cards';
 import type { Command, ResolveEffect, TestSkill } from '../commands';
 import { cardsInPlay } from '../doom';
 import { cardOptionLabels } from '../decisions';
@@ -9,7 +9,9 @@ import { limitReached } from '../placement';
 import { reactionWithinLimit } from '../reactions';
 import { enemiesAt, enemiesMatching } from '../enemies';
 import { isEmptyLocation } from '../engagement';
+import { investigatorMeasure } from '../modifiers';
 import {
+  findInvestigator,
   isActiveInvestigator,
   playerOrder,
   requireInvestigator,
@@ -18,6 +20,7 @@ import {
 import {
   cardsInZones,
   currentCard,
+  type CardFilter,
   locationOfCard,
   matchesCard,
   requireCard,
@@ -517,7 +520,8 @@ function pickedRef(effect: unknown): PickedRef | undefined {
 /**
  * The cards or investigators `picked` may stand for when `cardId`'s ability resolves: those its
  * `among` names, left out what `except` names and, with `attachable`, the locations `cardId` may
- * not attach to; with `best`, only those that measure the most or fewest (`measureOf`).
+ * not attach to, and with `within` those it leaves out; with `best`, only those that measure the
+ * most or fewest among the rest (`measureOf`).
  */
 function candidatesFor(
   ctx: EngineContext,
@@ -525,11 +529,13 @@ function candidatesFor(
   picked: PickedRef,
   cardId: InstanceId,
   refs: ResolvedRefs,
+  within?: readonly (InstanceId | InvestigatorId)[],
 ): (InstanceId | InvestigatorId)[] {
   const except = picked.except === undefined ? undefined : resolveRefs(picked.except, refs);
   const open = eachId(ctx, state, picked.among, refs).filter(
     (id) =>
       id !== except &&
+      (within === undefined || within.includes(id)) &&
       (picked.attachable === undefined ||
         mayAttach(ctx, state, cardId, requireCard(state.cards, id as InstanceId))),
   );
@@ -564,6 +570,24 @@ function measureOf(
       if (from === undefined) return 0;
       const to = card === undefined ? undefined : locationOfCard(state, card);
       return to === undefined ? Infinity : distance(ctx, state, from, to);
+    }
+    case 'stat':
+      return investigatorMeasure(
+        ctx,
+        state,
+        requireInvestigator(state, id as InvestigatorId),
+        measure.stat,
+      );
+    case 'distanceToOther': {
+      const from = findInvestigator(state, id as InvestigatorId)?.locationId;
+      if (from === undefined) return Infinity;
+      const distances = eachId(ctx, state, measure.of, refs)
+        .filter((enemyId) => enemyId !== refs.self)
+        .map((enemyId) => {
+          const at = locationOfCard(state, requireCard(state.cards, enemyId as InstanceId));
+          return at === undefined ? Infinity : distance(ctx, state, from, at);
+        });
+      return Math.min(...distances);
     }
     default:
       return assertNever(measure);
@@ -698,8 +722,20 @@ function eachId(
     case 'eachInvestigator': {
       const at = each.at === undefined ? undefined : resolveRefs(each.at, refs);
       if (each.at !== undefined && at === undefined) return [];
+      const bearer =
+        each.bearerOf === undefined
+          ? undefined
+          : state.cards[resolveRefs(each.bearerOf, refs) as InstanceId]?.owner;
+      if (each.bearerOf !== undefined && bearer === undefined) return [];
       return playerOrder(state)
-        .filter((inv) => at === undefined || inv.locationId === at)
+        .filter(
+          (inv) =>
+            (at === undefined || inv.locationId === at) &&
+            (bearer === undefined || inv.id === bearer) &&
+            (each.name === undefined || comparableName(inv.name) === comparableName(each.name)) &&
+            (each.atLocationWith === undefined ||
+              isAtLocationWith(ctx, state, inv, each.atLocationWith)),
+        )
         .map((inv) => inv.id);
     }
     case 'eachEnemy': {
@@ -767,6 +803,18 @@ function eachId(
   }
 }
 
+/** Whether `investigator` is at a location `filter` matches. */
+function isAtLocationWith(
+  ctx: EngineContext,
+  state: GameState,
+  investigator: Investigator,
+  filter: CardFilter,
+): boolean {
+  const location =
+    investigator.locationId === undefined ? undefined : state.cards[investigator.locationId];
+  return location !== undefined && matchesCard(ctx, location, filter);
+}
+
 /** The locations connecting to `location` (`neighbours`); none while it names none. */
 function connectingTo(
   ctx: EngineContext,
@@ -778,8 +826,9 @@ function connectingTo(
 
 /**
  * The cards or investigators `picked` stands for when `cardId` uses it outside an ability, on
- * behalf of `investigatorId` ("you"): where an enemy's spawn instruction lets it spawn
- * (`SpawnInstruction`), counted from the investigator who drew it.
+ * behalf of `investigatorId` ("you"), only among `within` when given: where an enemy's spawn
+ * instruction lets it spawn (`SpawnInstruction`), counted from the investigator who drew it, and
+ * whom its prey picks among the investigators it could engage or hunt (`PreyInstruction`).
  */
 export function candidatesOf(
   ctx: EngineContext,
@@ -787,12 +836,13 @@ export function candidatesOf(
   picked: PickedRef,
   cardId: InstanceId,
   investigatorId: InvestigatorId | undefined,
+  within?: readonly (InstanceId | InvestigatorId)[],
 ): (InstanceId | InvestigatorId)[] {
   const refs = windowRefs(ctx, state, {
     cardId,
     ...(investigatorId === undefined ? {} : { investigatorId }),
   });
-  return candidatesFor(ctx, state, picked, cardId, refs);
+  return candidatesFor(ctx, state, picked, cardId, refs, within);
 }
 
 /**

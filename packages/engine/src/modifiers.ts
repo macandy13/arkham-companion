@@ -4,7 +4,8 @@ import { cardStats, type EngineContext } from './cards';
 import { cardsInPlay, hasActiveAbilities } from './doom';
 import type { InvestigatorId } from './ids';
 import { binds, namesCard, type CardScope, type InvestigatorScope } from './scopes';
-import { boostedSkills } from './investigators';
+import type { InvestigatorMeasure } from './abilities/types';
+import { boostedSkills, remainingHealth, remainingSanity, statValue } from './investigators';
 import type {
   CardChange,
   CardInstance,
@@ -186,6 +187,31 @@ export function skillValues(
     combat: value('combat'),
     agility: value('agility'),
   };
+}
+
+/**
+ * What `measure` reads from `investigator` (`InvestigatorMeasure`): a counter, remaining health or
+ * sanity, or a skill with its boosts and the changes in play (`skillValues`).
+ */
+export function investigatorMeasure(
+  ctx: EngineContext,
+  state: GameState,
+  investigator: Investigator,
+  measure: InvestigatorMeasure,
+): number {
+  switch (measure) {
+    case 'remainingHealth':
+      return remainingHealth(investigator);
+    case 'remainingSanity':
+      return remainingSanity(investigator);
+    case 'willpower':
+    case 'intellect':
+    case 'combat':
+    case 'agility':
+      return skillValues(ctx, state, investigator)[measure];
+    default:
+      return statValue(investigator, measure);
+  }
 }
 
 function names(

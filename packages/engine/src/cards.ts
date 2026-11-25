@@ -8,6 +8,7 @@ import type { Keyword, KeywordGrant } from './keywords';
 import type { ScenarioDefinition } from './scenario';
 import type { SkillValues } from './state';
 import { CommandRejected } from './rejection';
+import { parsePrey, type PreyInstruction } from './prey_instruction';
 import { parseSpawn, type SpawnInstruction } from './spawn_instruction';
 
 /**
@@ -150,6 +151,8 @@ export interface CardStats {
    * (`cardDbFrom`, `parseSpawn`); absent without one, so a drawn enemy spawns at the drawer.
    */
   spawnAt?: SpawnInstruction;
+  /** Whom the enemy's prey picks, read from its prey keyword's text the same way (`parsePrey`). */
+  preyOn?: PreyInstruction;
   /** Keywords this card gives other cards while it is in play (Hiding Spot); see `cardHasKeyword`. */
   keywordGrants?: readonly KeywordGrant[];
   /** "Limit 1 per location / investigator" (`CopyLimit`), entered with the card data. */
@@ -280,7 +283,7 @@ export type ScenarioContext = EngineContext & { readonly scenario: ScenarioDefin
 /** Builds a `CardDb` from a list of definitions; a later duplicate code replaces an earlier one. */
 export function cardDbFrom(defs: Iterable<CardStats>): CardDb {
   const byCode = new Map<CardCode, CardStats>();
-  for (const def of defs) byCode.set(def.code, withSpawnInstruction(def));
+  for (const def of defs) byCode.set(def.code, withInstructions(def));
   return {
     get: (code) => byCode.get(code),
     encounterSet: (encounterCode) =>
@@ -288,11 +291,21 @@ export function cardDbFrom(defs: Iterable<CardStats>): CardDb {
   };
 }
 
-/** `def` with its spawn keyword's text read into `spawnAt`, unless it has one already. */
-function withSpawnInstruction(def: CardStats): CardStats {
-  const detail = def.keywords?.find((keyword) => keyword.name === 'spawn')?.detail;
-  if (detail === undefined || def.spawnAt !== undefined) return def;
-  return { ...def, spawnAt: parseSpawn(detail) };
+/**
+ * `def` with its spawn and prey keywords' text read into `spawnAt` and `preyOn`, unless it has them
+ * already.
+ */
+function withInstructions(def: CardStats): CardStats {
+  const detail = (name: 'spawn' | 'prey') =>
+    def.keywords?.find((keyword) => keyword.name === name)?.detail;
+  const spawn = def.spawnAt === undefined ? detail('spawn') : undefined;
+  const prey = def.preyOn === undefined ? detail('prey') : undefined;
+  if (spawn === undefined && prey === undefined) return def;
+  return {
+    ...def,
+    ...(spawn === undefined ? {} : { spawnAt: parseSpawn(spawn) }),
+    ...(prey === undefined ? {} : { preyOn: parsePrey(prey) }),
+  };
 }
 
 /**
