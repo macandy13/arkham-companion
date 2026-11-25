@@ -44,7 +44,6 @@ const COUNTERS: Readonly<Record<string, InvestigatorMeasure | undefined>> = {
 
 const NEAREST_TO_ANOTHER = /^nearest to another (.+) enemy$/i;
 const AT_TRAIT_LOCATION = /^investigator at an? (.+) location$/i;
-const ONLY = /\s+only$/i;
 const BEARER = /^bearer$/i;
 
 /**
@@ -63,8 +62,11 @@ const BEARER = /^bearer$/i;
  */
 export function parsePrey(detail: string): PreyInstruction {
   const plain = stripTrailingDot(detail.trim());
-  const text = plain.replace(ONLY, '');
-  return { select: preySelector(text), only: ONLY.test(plain) };
+  // A suffix check rather than a regular expression: `\s+only$` backtracks on long runs of spaces.
+  const words = plain.split(' ');
+  const only = words.length > 1 && words.at(-1)?.toLowerCase() === 'only';
+  const text = only ? words.slice(0, -1).join(' ').trimEnd() : plain;
+  return { select: preySelector(text), only };
 }
 
 function preySelector(text: string): PreySelector {
