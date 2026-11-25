@@ -138,7 +138,11 @@ describe('ChaosBag', () => {
     const table = PlayTable.start(game);
     // Each draw takes the first token left: the −1, then the skull.
     vi.spyOn(Math, 'random').mockReturnValue(0);
-    render(<ChaosBag board={table.board} actions={actionsOn(table)} busy={false} />);
+    render(
+      <PlayingOn table={table}>
+        <ChaosBag board={table.board} />
+      </PlayingOn>,
+    );
 
     fireEvent.click(screen.getByRole('button', { name: 'Reveal one token more' }));
     fireEvent.click(screen.getByRole('button', { name: 'Reveal 2 tokens' }));
@@ -154,7 +158,11 @@ describe('ChaosBag', () => {
 
   it('puts the revealed tokens back out of sight', () => {
     const table = PlayTable.start(game);
-    render(<ChaosBag board={table.board} actions={actionsOn(table)} busy={false} />);
+    render(
+      <PlayingOn table={table}>
+        <ChaosBag board={table.board} />
+      </PlayingOn>,
+    );
 
     fireEvent.click(screen.getByRole('button', { name: 'Reveal 1 token' }));
     fireEvent.click(screen.getByRole('button', { name: 'Put back' }));
