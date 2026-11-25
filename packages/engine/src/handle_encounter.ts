@@ -414,8 +414,8 @@ function withoutDrawer(
   stats: CardStats,
   card: CardInstance,
 ): Event[] {
-  const instructed = stats.keywords?.some((keyword) => keyword.name === 'spawn') ?? false;
-  if (stats.typeCode === 'enemy' && instructed) return spawnEvents(ctx, state, card.id, {});
+  if (stats.typeCode === 'enemy' && stats.spawnAt !== undefined)
+    return spawnEvents(ctx, state, card.id, {});
   return [cardMoved(state, card, discardPileOf(ctx, card), 0)];
 }
 
