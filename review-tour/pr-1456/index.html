@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>#1456 review tour</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400..700&amp;family=JetBrains+Mono:wght@400;600&amp;display=swap">
+<style>
+:root {
+  --bg: #fbfbf9; --fg: #1d1f21; --muted: #6b6f73; --line: #e6e5e0; --soft: #f2f1ec;
+  --accent: #2f5d8a; --accent-fg: #ffffff; --ask: #fdf4dc; --ask-fg: #3d3115; --code-bg: #ffffff;
+  --add-bg: #e9f5ec; --add-mark: #2e7d47; --del-bg: #fbecea; --del-mark: #b0413a; --hl: #fff3c4;
+  --tok-key: #8a3ffc; --tok-str: #2e7d47; --tok-com: #8c9196; --tok-type: #2f5d8a; --ok: #2e7d47;
+  --font-body: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-code: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  --radius: 8px;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #17191b; --fg: #e8e8e6; --muted: #9a9ea3; --line: #2b2e31; --soft: #202326;
+    --accent: #8ab4e0; --accent-fg: #10161c; --ask: #2b2617; --ask-fg: #f0e3bd; --code-bg: #1c1f22;
+    --add-bg: #1d2e23; --add-mark: #7cc596; --del-bg: #33201f; --del-mark: #e48a83; --hl: #3a3420;
+    --tok-key: #c4a1ff; --tok-str: #8fd0a4; --tok-com: #7c8288; --tok-type: #8ab4e0; --ok: #7cc596;
+    color-scheme: dark;
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.6 var(--font-body); -webkit-font-smoothing: antialiased; }
+main {
+  max-width: 720px; margin: 0 auto; display: grid; gap: 40px;
+  padding: 0 max(16px, env(safe-area-inset-right)) 56px max(16px, env(safe-area-inset-left));
+}
+a { color: var(--accent); text-underline-offset: 2px; }
+a:focus-visible, button:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+code { font-family: var(--font-code); font-size: .88em; background: var(--soft); padding: 1px 5px; border-radius: 4px; }
+nav {
+  position: sticky; top: 0; z-index: 5; display: flex; align-items: center; gap: 12px;
+  margin: 0 calc(-1 * max(16px, env(safe-area-inset-left))); padding: 10px max(16px, env(safe-area-inset-left));
+  background: color-mix(in srgb, var(--bg) 92%, transparent); backdrop-filter: blur(8px); border-bottom: 1px solid var(--line);
+}
+nav .number { font-size: 14px; font-weight: 600; color: var(--muted); }
+nav ol { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 0 auto; padding: 0; list-style: none; }
+nav ol a {
+  width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center;
+  color: var(--muted); background: var(--soft); font-size: 13px; font-weight: 600; text-decoration: none;
+}
+nav ol a.question { background: var(--ask); color: var(--ask-fg); }
+nav ol a.on { background: var(--accent); color: var(--accent-fg); }
+header { display: grid; gap: 12px; padding-top: 28px; }
+.kicker { font-size: 13px; color: var(--muted); }
+h1 { font-size: 28px; line-height: 1.2; font-weight: 650; letter-spacing: -0.015em; margin: 0; text-wrap: balance; }
+.lead { display: grid; gap: 6px; }
+.lead h2 { font-size: 12px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 0; }
+.lead p { font-size: 18px; margin: 0; max-width: 60ch; }
+.meta { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 13px; color: var(--muted); margin: 0; }
+.questions { background: var(--ask); color: var(--ask-fg); border-radius: var(--radius); padding: 18px 20px; display: grid; gap: 14px; }
+.questions h2 { font-size: 12px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; margin: 0; opacity: .75; }
+.questions ol { margin: 0; padding-left: 20px; display: grid; gap: 12px; }
+.questions p { margin: 0; font-size: 17px; }
+.questions .about { font-size: 13px; opacity: .75; }
+.questions a { color: inherit; font-size: 14px; font-weight: 500; }
+section.evidence { display: grid; gap: 14px; scroll-margin-top: 64px; }
+.evidence h2 { font-size: 20px; line-height: 1.3; font-weight: 600; letter-spacing: -0.01em; margin: 0; }
+.evidence ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 18px; }
+.evidence li { display: grid; gap: 8px; padding-left: 28px; position: relative; }
+.evidence li::before { content: "✓"; position: absolute; left: 4px; color: var(--accent); font-weight: 600; }
+.evidence li > p { margin: 0; max-width: 62ch; }
+.evidence .test { font-size: 14px; color: var(--muted); }
+.example { margin: 0; padding: 12px 14px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--soft); overflow-x: auto; font: 13px/1.5 var(--font-code); font-variant-ligatures: none; }
+.usage { display: grid; gap: 4px; }
+.usage .when { margin: 4px 0 0; font-size: 12px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.example code { background: none; padding: 0; font-size: inherit; }
+.stop { display: grid; gap: 14px; scroll-margin-top: 64px; }
+.stop > header { display: grid; grid-template-columns: auto 1fr; gap: 2px 12px; align-items: center; padding: 0; }
+.stop-number {
+  grid-row: span 2; align-self: start; margin-top: 2px; width: 28px; height: 28px; border-radius: 50%;
+  display: grid; place-items: center; background: var(--accent); color: var(--accent-fg); font-size: 13px; font-weight: 600;
+}
+.stop h2 { font-size: 20px; line-height: 1.3; font-weight: 600; letter-spacing: -0.01em; margin: 0; text-wrap: balance; }
+.tag { font-size: 12px; color: var(--muted); letter-spacing: .04em; text-transform: uppercase; }
+.stop > p { margin: 0; max-width: 62ch; }
+figure { display: grid; gap: 8px; margin: 0; }
+.toggle { display: flex; flex-wrap: wrap; gap: 4px; }
+.segments { display: inline-flex; background: var(--soft); border-radius: 999px; padding: 3px; }
+.toggle button { font: 500 13px var(--font-body); color: var(--muted); background: transparent; border: 0; border-radius: 999px; padding: 4px 12px; cursor: pointer; }
+.toggle button[aria-pressed="true"] { background: var(--bg); color: var(--fg); box-shadow: 0 1px 2px rgb(0 0 0 / 12%); }
+.frame { border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; background: var(--soft); }
+.frame img { display: block; width: 100%; height: auto; }
+.frame.phone { max-width: 280px; margin-inline: auto; }
+.frame .missing { padding: 24px; text-align: center; color: var(--muted); font-size: 14px; }
+.code { border: 1px solid var(--line); border-radius: var(--radius); background: var(--code-bg); overflow: hidden; }
+.code > header {
+  display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; padding: 8px 12px;
+  border-bottom: 1px solid var(--line); background: var(--soft); font-size: 13px; color: var(--muted);
+}
+.code .file { color: var(--fg); font-family: var(--font-code); font-size: 12.5px; overflow-wrap: anywhere; }
+.code > header a { margin-left: auto; }
+.code pre code { display: block; padding: 0; background: none; font-size: inherit; }
+.code pre { margin: 0; padding: 6px 0; font: 12.5px/1.6 var(--font-code); font-variant-ligatures: none; }
+.line { display: grid; grid-template-columns: 3.2em 1.4em minmax(0, 1fr); }
+.line .number { color: var(--muted); text-align: right; padding-right: .6em; user-select: none; opacity: .6; }
+.line .mark { color: var(--muted); user-select: none; }
+.line .text { padding: 0 12px 0 2ch; text-indent: -2ch; white-space: pre-wrap; overflow-wrap: anywhere; }
+.line.added { background: var(--add-bg); } .line.added .mark { color: var(--add-mark); }
+.line.removed { background: var(--del-bg); } .line.removed .mark { color: var(--del-mark); }
+.line.highlighted { background: var(--hl); }
+.line.gap .text { color: var(--muted); font-family: var(--font-body); font-size: 12px; }
+.k { color: var(--tok-key); } .s { color: var(--tok-str); } .c { color: var(--tok-com); font-style: italic; } .t { color: var(--tok-type); }
+.done { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; }
+.done p { margin: 0; color: var(--muted); }
+.done a { background: var(--accent); color: var(--accent-fg); border-radius: 999px; padding: 9px 20px; text-decoration: none; font-weight: 600; font-size: 15px; }
+details { border-top: 1px solid var(--line); padding-top: 16px; }
+summary { cursor: pointer; font-size: 15px; font-weight: 600; }
+details ul { padding-left: 20px; margin: 12px 0 0; display: grid; gap: 6px; font-size: 15px; }
+@media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+</style>
+</head>
+<body>
+<main>
+<nav aria-label="Tour"><span class="number">#1456</span><ol><li><a class="question" href="#questions" aria-label="Questions">?</a></li><li><a href="#stop-1" data-stop="stop-1">1</a></li><li><a href="#stop-2" data-stop="stop-2">2</a></li><li><a href="#stop-3" data-stop="stop-3">3</a></li><li><a href="#stop-4" data-stop="stop-4">4</a></li><li><a class="evidence" href="#evidence" aria-label="How we know it works">✓</a></li></ol></nav>
+<header>
+<p class="kicker">refactor(engine) · ME.18b · as of ee0da83</p>
+<h1>One Selector for picked references</h1>
+<p class="meta"><span>4 stops</span><span>2 questions</span><span>72 of 648 changed lines on the tour</span></p>
+</header>
+<section class="lead"><h2>The problem</h2><p>Six references stood for &quot;one of several, picked when there are more&quot;: the nearest enemy, an enemy, a location to move to, the location with the most tokens, the nearest location and an investigator. Each was its own kind of reference with its own candidate code, its own decision id and prompt, so a new card like &quot;the location with the fewest clues&quot; needed a seventh.</p></section>
+<section class="lead"><h2>What changes</h2><p>One picked reference, a <code>Selector</code>: the candidates of an <code>each…</code> reference (<code>among</code>), minus what <code>except</code> names, with <code>best</code> only those that measure the most or fewest (tokens, or connections from you), picked by the lead or by you. The six factories now build one, so card data is unchanged; one resolver lists the candidates and one helper asks the decision.</p></section>
+<section class="questions" id="questions"><h2>Questions for you</h2><ol><li><p>The decisions now share the id <code>pick:&lt;card&gt;</code>, and &quot;Which of the nearest enemies?&quot; became &quot;Which enemy does [card] affect?&quot;. Fine, or keep the old prompt for nearest enemies?</p><span class="about">Picked: One id and the enemy prompt: the options only show the nearest ones anyway..</span></li><li><p>&quot;The nearest enemy&quot; now counts connections from you to the enemy, as the nearest location already did; before, it counted along the enemy's way to you. This differs only over one-way connections (The Devourer Below).</p><span class="about">Picked: From you: the rules define nearest as what can be reached in the fewest connections, and the rules check agrees..</span></li></ol><a href="https://github.com/macandy13/arkham-companion/pull/1456">Answer on GitHub →</a></section>
+<section class="stop" id="stop-1">
+<header><span class="stop-number">1</span><span class="tag">engine</span><h2>One reference with candidates</h2></header>
+<p>A <code>Selector</code> names its candidates by an <code>each…</code> reference and narrows them: <code>except</code> (your location, as moving there is no move), <code>attachable</code> (the card's limit per location) and <code>best</code>, the most or fewest of a measure.</p>
+
+<div class="code"><header><span class="file">packages/engine/src/abilities/types.ts</span><span>+82 −81</span><a href="https://github.com/macandy13/arkham-companion/pull/1456/files#diff-a30b09b83caa8e12f5ef917828849e541a98d9794fdb280fe2b693bd0409c19cR318-R333">Open in diff</a></header><pre><code><span class="line added"><span class="number">318</span><span class="mark">+</span><span class="text"><span class="k">interface</span> <span class="t">Selector</span>&lt;<span class="t">Among</span>&gt; {</span></span><span class="line added"><span class="number">319</span><span class="mark">+</span><span class="text">  ref: <span class="s">'pick'</span>;</span></span><span class="line highlighted"><span class="number">320</span><span class="mark">+</span><span class="text">  among: <span class="t">Among</span>;</span></span><span class="line highlighted"><span class="number">321</span><span class="mark">+</span><span class="text">  except?: <span class="t">RelativeCard</span>;</span></span><span class="line added"><span class="number">322</span><span class="mark">+</span><span class="text">  attachable?: <span class="k">true</span>;</span></span><span class="line highlighted"><span class="number">323</span><span class="mark">+</span><span class="text">  best?: { measure: <span class="t">PickMeasure</span>; extreme: <span class="s">'most'</span> | <span class="s">'fewest'</span> };</span></span><span class="line added"><span class="number">324</span><span class="mark">+</span><span class="text">  chooser: <span class="s">'lead'</span> | <span class="s">'you'</span>;</span></span><span class="line added"><span class="number">325</span><span class="mark">+</span><span class="text">}</span></span><span class="line added"><span class="number">326</span><span class="mark">+</span><span class="text"></span></span><span class="line added"><span class="number">327</span><span class="mark">+</span><span class="text">/**</span></span><span class="line added"><span class="number">328</span><span class="mark">+</span><span class="text"><span class="c"> * What a `Selector` ranks its candidates by: the `token`s on each, or the connections from the</span></span></span><span class="line added"><span class="number">329</span><span class="mark">+</span><span class="text"><span class="c"> * location of the investigator the window names to its location (`distance`: the drawer's own</span></span></span><span class="line added"><span class="number">330</span><span class="mark">+</span><span class="text"><span class="c"> * location at 0, one with no path there an infinite number away). No candidate measures a</span></span></span><span class="line added"><span class="number">331</span><span class="mark">+</span><span class="text"><span class="c"> * distance while that investigator has no location.</span></span></span><span class="line added"><span class="number">332</span><span class="mark">+</span><span class="text"><span class="c"> */</span></span></span><span class="line added"><span class="number">333</span><span class="mark">+</span><span class="text"><span class="k">export</span> <span class="k">type</span> <span class="t">PickMeasure</span> = { kind: <span class="s">'tokens'</span>; token: <span class="t">TokenKind</span> } | { kind: <span class="s">'distance'</span> };</span></span></code></pre></div>
+</section>
+<section class="stop" id="stop-2">
+<header><span class="stop-number">2</span><span class="tag">engine</span><h2>The factories build it</h2></header>
+<p>&quot;The nearest Cultist enemy&quot; is each Cultist enemy with the fewest connections, the lead's pick; &quot;a Central location&quot; is each Central location but yours, your pick.</p>
+
+<div class="code"><header><span class="file">packages/engine/src/abilities/dsl.ts</span><span>+51 −25</span><a href="https://github.com/macandy13/arkham-companion/pull/1456/files#diff-acfb387ab8c5534faa0166f41168d018318e41a171071e3ff51dd0cd751e14c5R856-R1065">Open in diff</a></header><pre><code><span class="line added"><span class="number">856</span><span class="mark">+</span><span class="text"><span class="k">export</span> <span class="k">function</span> locationWith({ connected, ...filter }: <span class="t">LocationFilter</span> = {}): <span class="t">PickedCard</span> {</span></span><span class="line added"><span class="number">857</span><span class="mark">+</span><span class="text">  <span class="k">const</span> connecting = connected === <span class="k">undefined</span> ? {} : { connectedTo: yourLocation() };</span></span><span class="line added"><span class="number">858</span><span class="mark">+</span><span class="text">  <span class="k">return</span> {</span></span><span class="line added"><span class="number">859</span><span class="mark">+</span><span class="text">    ref: <span class="s">'pick'</span>,</span></span><span class="line highlighted"><span class="number">860</span><span class="mark">+</span><span class="text">    among: eachInPlay({ ...filter, typeCode: <span class="s">'location'</span>, ...connecting }),</span></span><span class="line highlighted"><span class="number">861</span><span class="mark">+</span><span class="text">    except: yourLocation(),</span></span><span class="line added"><span class="number">862</span><span class="mark">+</span><span class="text">    chooser: <span class="s">'you'</span>,</span></span><span class="line added"><span class="number">863</span><span class="mark">+</span><span class="text">  };</span></span><span class="line context"><span class="number">864</span><span class="mark"> </span><span class="text">}</span></span><span class="line gap"><span class="number"></span><span class="mark">⋯</span><span class="text"></span></span><span class="line added"><span class="number">1063</span><span class="mark">+</span><span class="text"><span class="k">export</span> <span class="k">function</span> nearestEnemy(filter: <span class="t">EnemyFilter</span> = {}): <span class="t">PickedCard</span> {</span></span><span class="line highlighted"><span class="number">1064</span><span class="mark">+</span><span class="text">  <span class="k">return</span> { ref: <span class="s">'pick'</span>, among: eachEnemy(filter), best: <span class="t">NEAREST</span>, chooser: <span class="s">'lead'</span> };</span></span><span class="line context"><span class="number">1065</span><span class="mark"> </span><span class="text">}</span></span></code></pre></div>
+</section>
+<section class="stop" id="stop-3">
+<header><span class="stop-number">3</span><span class="tag">engine</span><h2>One resolver for the candidates</h2></header>
+<p><code>candidatesFor</code> lists what <code>among</code> names, drops the exception and the locations the card may not attach to, then keeps the extreme of the measure; a tie stays for the decision.</p>
+
+<div class="code"><header><span class="file">packages/engine/src/abilities/resolve.ts</span><span>+106 −169</span><a href="https://github.com/macandy13/arkham-companion/pull/1456/files#diff-b82a189634cdc1a1dc8e1431fc345b11103177481d12192c9f61e24a92eabb53R528-R542">Open in diff</a></header><pre><code><span class="line removed"><span class="number">606</span><span class="mark">−</span><span class="text">  <span class="k">if</span> (picked.ref === <span class="s">'anInvestigator'</span>) {</span></span><span class="line removed"><span class="number">607</span><span class="mark">−</span><span class="text">    <span class="k">const</span> at = picked.at === <span class="k">undefined</span> ? <span class="k">undefined</span> : resolveRefs(picked.at, refs);</span></span><span class="line removed"><span class="number">608</span><span class="mark">−</span><span class="text">    <span class="k">if</span> (picked.at !== <span class="k">undefined</span> &amp;&amp; at === <span class="k">undefined</span>) <span class="k">return</span> [];</span></span><span class="line removed"><span class="number">609</span><span class="mark">−</span><span class="text">    <span class="k">return</span> playerOrder(state)</span></span><span class="line removed"><span class="number">610</span><span class="mark">−</span><span class="text">      .filter((inv) =&gt; at === <span class="k">undefined</span> || inv.locationId === at)</span></span><span class="line removed"><span class="number">611</span><span class="mark">−</span><span class="text">      .map((inv) =&gt; inv.id);</span></span><span class="line removed"><span class="number">612</span><span class="mark">−</span><span class="text">  }</span></span><span class="line removed"><span class="number">613</span><span class="mark">−</span><span class="text">  <span class="k">if</span> (picked.ref === <span class="s">'anEnemy'</span>) {</span></span><span class="line removed"><span class="number">614</span><span class="mark">−</span><span class="text">    <span class="k">const</span> matching = enemiesMatching(ctx, state, picked);</span></span><span class="line removed"><span class="number">615</span><span class="mark">−</span><span class="text">    <span class="k">if</span> (picked.at === <span class="k">undefined</span>) <span class="k">return</span> matching.map((card) =&gt; card.id);</span></span><span class="line removed"><span class="number">616</span><span class="mark">−</span><span class="text">    <span class="k">const</span> at = resolveRefs(picked.at, refs) <span class="k">as</span> <span class="t">InstanceId</span> | <span class="k">undefined</span>;</span></span><span class="line removed"><span class="number">617</span><span class="mark">−</span><span class="text">    <span class="k">if</span> (at === <span class="k">undefined</span>) <span class="k">return</span> [];</span></span><span class="line removed"><span class="number">618</span><span class="mark">−</span><span class="text">    <span class="k">const</span> there = <span class="k">new</span> <span class="t">Set</span>(enemiesAt(ctx, state, at).map((card) =&gt; card.id));</span></span><span class="line removed"><span class="number">619</span><span class="mark">−</span><span class="text">    <span class="k">return</span> matching.filter((card) =&gt; there.has(card.id)).map((card) =&gt; card.id);</span></span><span class="line removed"><span class="number">620</span><span class="mark">−</span><span class="text">  }</span></span><span class="line removed"><span class="number">621</span><span class="mark">−</span><span class="text">  <span class="k">return</span> candidateCards(ctx, state, picked, cardId, <span class="k">from</span>).map((card) =&gt; card.id);</span></span><span class="line added"><span class="number">528</span><span class="mark">+</span><span class="text">  <span class="k">const</span> except = picked.except === <span class="k">undefined</span> ? <span class="k">undefined</span> : resolveRefs(picked.except, refs);</span></span><span class="line highlighted"><span class="number">529</span><span class="mark">+</span><span class="text">  <span class="k">const</span> open = eachId(ctx, state, picked.among, refs).filter(</span></span><span class="line added"><span class="number">530</span><span class="mark">+</span><span class="text">    (id) =&gt;</span></span><span class="line added"><span class="number">531</span><span class="mark">+</span><span class="text">      id !== except &amp;&amp;</span></span><span class="line added"><span class="number">532</span><span class="mark">+</span><span class="text">      (picked.attachable === <span class="k">undefined</span> ||</span></span><span class="line added"><span class="number">533</span><span class="mark">+</span><span class="text">        mayAttach(ctx, state, cardId, requireCard(state.cards, id <span class="k">as</span> <span class="t">InstanceId</span>))),</span></span><span class="line added"><span class="number">534</span><span class="mark">+</span><span class="text">  );</span></span><span class="line added"><span class="number">535</span><span class="mark">+</span><span class="text">  <span class="k">const</span> { best } = picked;</span></span><span class="line added"><span class="number">536</span><span class="mark">+</span><span class="text">  <span class="k">if</span> (best === <span class="k">undefined</span>) <span class="k">return</span> open;</span></span><span class="line added"><span class="number">537</span><span class="mark">+</span><span class="text">  <span class="k">const</span> measured = open.flatMap((id) =&gt; {</span></span><span class="line added"><span class="number">538</span><span class="mark">+</span><span class="text">    <span class="k">const</span> value = measureOf(ctx, state, best.measure, id, refs);</span></span><span class="line added"><span class="number">539</span><span class="mark">+</span><span class="text">    <span class="k">return</span> value === <span class="k">undefined</span> ? [] : [{ id, value }];</span></span><span class="line added"><span class="number">540</span><span class="mark">+</span><span class="text">  });</span></span><span class="line added"><span class="number">541</span><span class="mark">+</span><span class="text">  <span class="k">const</span> values = measured.map(({ value }) =&gt; value);</span></span><span class="line highlighted"><span class="number">542</span><span class="mark">+</span><span class="text">  <span class="k">const</span> extreme = best.extreme === <span class="s">'most'</span> ? <span class="t">Math</span>.max(...values) : <span class="t">Math</span>.min(...values);</span></span></code></pre></div>
+</section>
+<section class="stop" id="stop-4">
+<header><span class="stop-number">4</span><span class="tag">engine</span><h2>One decision for every pick</h2></header>
+<p>The decision asks for an investigator, an enemy, a card or a location by what <code>among</code> names, and for a location by whether you move there or the card attaches there.</p>
+
+<div class="code"><header><span class="file">packages/engine/src/abilities/resolve.ts</span><span>+106 −169</span><a href="https://github.com/macandy13/arkham-companion/pull/1456/files#diff-b82a189634cdc1a1dc8e1431fc345b11103177481d12192c9f61e24a92eabb53R615-R629">Open in diff</a></header><pre><code><span class="line added"><span class="number">615</span><span class="mark">+</span><span class="text">  <span class="k">const</span> { among } = picked;</span></span><span class="line added"><span class="number">616</span><span class="mark">+</span><span class="text">  <span class="k">switch</span> (among.ref) {</span></span><span class="line added"><span class="number">617</span><span class="mark">+</span><span class="text">    <span class="k">case</span> <span class="s">'eachInvestigator'</span>:</span></span><span class="line added"><span class="number">618</span><span class="mark">+</span><span class="text">      <span class="k">return</span> { kind: <span class="s">'chooseInvestigator'</span>, prompt: <span class="s">'decision.chooseInvestigatorFor'</span> };</span></span><span class="line added"><span class="number">619</span><span class="mark">+</span><span class="text">    <span class="k">case</span> <span class="s">'eachEnemy'</span>:</span></span><span class="line added"><span class="number">620</span><span class="mark">+</span><span class="text">      <span class="k">return</span> { kind: <span class="s">'chooseCard'</span>, prompt: <span class="s">'decision.chooseEnemyFor'</span> };</span></span><span class="line added"><span class="number">621</span><span class="mark">+</span><span class="text">    <span class="k">case</span> <span class="s">'eachInZone'</span>:</span></span><span class="line added"><span class="number">622</span><span class="mark">+</span><span class="text">    <span class="k">case</span> <span class="s">'eachInPlay'</span>:</span></span><span class="line added"><span class="number">623</span><span class="mark">+</span><span class="text">      <span class="k">if</span> (among.typeCode !== <span class="s">'location'</span>)</span></span><span class="line added"><span class="number">624</span><span class="mark">+</span><span class="text">        <span class="k">return</span> { kind: <span class="s">'chooseCard'</span>, prompt: <span class="s">'decision.chooseCardFor'</span> };</span></span><span class="line highlighted"><span class="number">625</span><span class="mark">+</span><span class="text">      <span class="k">if</span> (effect.<span class="k">type</span> === <span class="s">'MoveInvestigator'</span>)</span></span><span class="line added"><span class="number">626</span><span class="mark">+</span><span class="text">        <span class="k">return</span> { kind: <span class="s">'chooseLocation'</span>, prompt: <span class="s">'decision.chooseLocationToMove'</span> };</span></span><span class="line highlighted"><span class="number">627</span><span class="mark">+</span><span class="text">      <span class="k">if</span> (effect.<span class="k">type</span> === <span class="s">'MoveCard'</span> &amp;&amp; effect.to.kind === <span class="s">'attachedTo'</span>)</span></span><span class="line added"><span class="number">628</span><span class="mark">+</span><span class="text">        <span class="k">return</span> { kind: <span class="s">'chooseLocation'</span>, prompt: <span class="s">'decision.chooseLocationToAttach'</span> };</span></span><span class="line highlighted"><span class="number">629</span><span class="mark">+</span><span class="text">      <span class="k">return</span> { kind: <span class="s">'chooseLocation'</span>, prompt: <span class="s">'decision.chooseLocationFor'</span> };</span></span></code></pre></div>
+</section>
+<section class="evidence" id="evidence"><h2>How we know it works</h2><ul><li><p>Card data stays as it was.</p><div class="usage"><p class="when">Before</p><pre class="example"><code>nearestEnemy({ trait: trait(<span class="s">'Cultist'</span>) })
+<span class="c">// built</span>
+{ ref: <span class="s">'nearestEnemy'</span>, trait: trait(<span class="s">'Cultist'</span>) }</code></pre><p class="when">Now</p><pre class="example"><code>nearestEnemy({ trait: trait(<span class="s">'Cultist'</span>) })
+<span class="c">// builds</span>
+{ ref: <span class="s">'pick'</span>, among: eachEnemy({ trait: trait(<span class="s">'Cultist'</span>) }),
+  best: { measure: { kind: <span class="s">'distance'</span> }, extreme: <span class="s">'fewest'</span> }, chooser: <span class="s">'lead'</span> }</code></pre></div></li><li><p>Equally near cultists still go to the lead, and a one-way connection counts from you.</p><p class="test">Checked by <code>packages/engine/src/triggers.test.ts › doom on the nearest Cultist enemy, or a search for one › counts a one-way connection from alice: the cultist she can reach in 1 gets the doom</code></p></li><li><p>Locked Door still attaches to the location with the most clues and no copy.</p><p class="test">Checked by <code>packages/engine/src/attachment_targets.test.ts › a treachery that attaches to the location with the most clues (Locked Door) › attaches to the hall when the study already has a copy</code></p></li></ul></section>
+<section class="done"><p>That's the whole change.</p><a href="https://github.com/macandy13/arkham-companion/pull/1456/files">Review on GitHub</a></section>
+<details><summary>Not on the tour</summary><ul><li><code>eachInPlay</code> gains <code>connectedTo</code> (&quot;a connecting location&quot;), which <code>locationWith({ connected })</code> uses</li><li><code>nearestEnemies</code> leaves enemies.ts; <code>distance</code> measures both enemies and locations</li><li>Prompt <code>decision.chooseNearestEnemy</code> removed; <code>chooseLocationFor</code> and <code>chooseCardFor</code> added for picks no move or attach explains</li><li>Tests answer <code>pick:&lt;card&gt;</code> decisions; the rules page on hunters notes the direction over one-way connections</li></ul></details>
+</main>
+<script>
+document.querySelectorAll('figure[data-variants]').forEach((figure) => {
+  const variants = JSON.parse(figure.dataset.variants);
+  const state = { when: 'after', device: variants[0].device };
+  const frame = figure.querySelector('.frame');
+  const show = () => {
+    const variant = variants.find((v) => v.device === state.device);
+    const src = variant[state.when];
+    frame.classList.toggle('phone', state.device === 'phone');
+    frame.innerHTML = src
+      ? '<img alt="' + state.device + ', ' + state.when + '" src="' + src + '">'
+      : '<p class="missing">' + (state.when === 'before' ? 'New in this PR' : 'Removed in this PR') + '</p>';
+    figure.querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(b.value === state.when || b.value === state.device)));
+  };
+  figure.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => {
+    state[b.name] = b.value;
+    show();
+  }));
+  show();
+});
+const dots = [...document.querySelectorAll('nav a[data-stop]')];
+const seen = new IntersectionObserver((entries) => entries.forEach((entry) => {
+  if (entry.isIntersecting) dots.forEach((d) => d.classList.toggle('on', d.dataset.stop === entry.target.id));
+}), { rootMargin: '-40% 0px -55% 0px' });
+document.querySelectorAll('.stop').forEach((stop) => seen.observe(stop));
+</script>
+</body>
+</html>
