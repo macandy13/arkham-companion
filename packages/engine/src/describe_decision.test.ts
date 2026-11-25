@@ -126,6 +126,10 @@ describe('describeDecision', () => {
     { prompt: 'decision.chooseEnemyDestination', question: 'Where does Swarm of Rats move?' },
     { prompt: 'decision.chooseLocationToMove', question: 'Where do you move for Swarm of Rats?' },
     { prompt: 'decision.chooseLocationToAttach', question: 'Where does Swarm of Rats attach?' },
+    {
+      prompt: 'decision.chooseLocationFor',
+      question: 'Which location does Swarm of Rats affect?',
+    },
   ])('asks for a location for $prompt', ({ prompt, question }) => {
     const destination: Decision = {
       ...engage,

@@ -56,6 +56,8 @@ import {
   disengageFromEachEnemy,
   engageReadyEnemies,
   eachEnemy,
+  eachInPlay,
+  playAreaOf,
   forEachEnemy,
   forEachInvestigator,
   eachInvestigator,
@@ -2861,7 +2863,7 @@ describe('doom on the nearest Cultist enemy, or a search for one', () => {
       .start();
     const asked = stateAfter(context, state, aliceDraws, resolveRevelation('chanting'));
 
-    const after = stateAfter(context, asked, answer('nearest:chanting', 'garden_cultist'));
+    const after = stateAfter(context, asked, answer('pick:chanting', 'garden_cultist'));
 
     expect(asked.pending).toMatchObject([
       {
@@ -2871,7 +2873,7 @@ describe('doom on the nearest Cultist enemy, or a search for one', () => {
       },
     ]);
     expect(asked.pending.map((decision) => describeDecision(context, asked, decision))).toEqual([
-      'Which of the nearest enemies? Cultist (cellar) / Cultist (garden) [chooseCard]',
+      'Which enemy does chanting affect? Cultist (cellar) / Cultist (garden) [chooseCard]',
     ]);
     expect(after.cards[instanceId('garden_cultist')]?.tokens.doom).toBe(2);
     expect(after.cards[instanceId('cellar_cultist')]?.tokens.doom).toBeUndefined();
@@ -3320,7 +3322,7 @@ describe('an effect on an investigator the window investigator picks', () => {
 
     expect(asked.pending).toMatchObject([
       {
-        id: 'investigator:chapel',
+        id: 'pick:chapel',
         kind: 'chooseInvestigator',
         decider: { kind: 'investigator', investigatorId: alice },
       },
@@ -3350,7 +3352,7 @@ describe('an effect on an investigator the window investigator picks', () => {
       .withTurnOf(alice)
       .start();
 
-    const after = stateAfter(context, state, aliceDiscovers, answer('investigator:chapel', 'bob'));
+    const after = stateAfter(context, state, aliceDiscovers, answer('pick:chapel', 'bob'));
 
     expect(requireInvestigator(after, alice).sanity.horror).toBe(1);
     expect(requireInvestigator(after, bob).sanity.horror).toBe(0);
@@ -3542,6 +3544,45 @@ describe("a card test's outcomes, resolved after the answer", () => {
   });
 });
 
+describe('a picked card the effect neither moves to nor attaches', () => {
+  const shrine = instanceId('shrine');
+  const lantern = instanceId('lantern');
+  const relic = instanceId('relic');
+  const aliceDraws: Command = { type: 'DrawCard', investigatorId: alice, from: encounterDeck };
+
+  it.each([
+    {
+      among: eachInPlay({ typeCode: 'location' }),
+      kind: 'chooseLocation',
+      question: 'Which location does omen affect? hall / shrine [chooseLocation]',
+    },
+    {
+      among: eachInPlay({ typeCode: 'asset' }),
+      kind: 'chooseCard',
+      question: 'Which card does omen affect? lantern / relic [chooseCard]',
+    },
+  ])('asks "$question" for doom on one of them', ({ among, kind, question }) => {
+    const omen = blankTreachery('omen', {
+      abilities: [whenRevealed(placeDoomOn({ ref: 'pick', among, chooser: 'you' }, 1))],
+    });
+    const { context, state } = newGame()
+      .withLocation(hall, blankLocation('hall'), { revealed: true })
+      .withLocation(shrine, blankLocation('shrine'), { revealed: true })
+      .withInvestigator(alice, { locationId: hall })
+      .withCard(lantern, blankAsset('lantern'), playAreaOf(alice))
+      .withCard(relic, blankAsset('relic'), playAreaOf(alice))
+      .withCard(instanceId('omen'), omen, { kind: 'encounterDeck' })
+      .start();
+
+    const asked = stateAfter(context, state, aliceDraws, resolveRevelation('omen'));
+
+    expect(asked.pending).toMatchObject([{ id: decisionId('pick:omen'), kind }]);
+    expect(asked.pending.map((decision) => describeDecision(context, asked, decision))).toEqual([
+      question,
+    ]);
+  });
+});
+
 describe("disengaging and moving after a card's test", () => {
   const wings = instanceId('wings');
   const square = instanceId('square');
@@ -3655,14 +3696,14 @@ describe("disengaging and moving after a card's test", () => {
     );
     expect(asked.pending).toMatchObject([
       {
-        id: decisionId('location:wings'),
+        id: decisionId('pick:wings'),
         kind: 'chooseLocation',
         decider: { kind: 'investigator', investigatorId: alice },
         options: [{ id: square }, { id: market }],
       },
     ]);
 
-    const after = stateAfter(context, asked, answer('location:wings', market));
+    const after = stateAfter(context, asked, answer('pick:wings', market));
 
     expect(requireInvestigator(after, alice).locationId).toBe(market);
   });

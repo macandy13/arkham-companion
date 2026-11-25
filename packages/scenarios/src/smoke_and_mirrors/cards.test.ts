@@ -265,7 +265,7 @@ describe('Smoke and Mirrors card abilities', () => {
         aliceDiscovers,
         answer('reaction:sanatorium:0', 'use'),
         answer(SANATORIUM_DECISION, 'investigator'),
-        answer('investigator:sanatorium', 'bob'),
+        answer('pick:sanatorium', 'bob'),
       );
 
       expect(requireInvestigator(state, alice).sanity.horror).toBe(2);

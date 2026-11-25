@@ -234,35 +234,9 @@ export type RelativeCard =
    * no copy or several, and the effect is skipped with `AbilityEffectSkipped`.
    */
   | { ref: 'onlyCopy'; code: CardCode }
-  /**
-   * Each enemy on the table its filter matches (`EachEnemyFilter`: "each unengaged [[Ghoul]]
-   * enemy", "each enemy at your location", "each enemy engaged with you"): the command repeats
-   * once per enemy, in card order. Unlike hunters, nobody picks the order: one enemy's step
-   * towards a fixed location changes no other enemy's path.
-   */
-  | ({ ref: 'eachEnemy' } & EachEnemyFilter)
-  /**
-   * Each card in the zone `zone` names, or in each of a list of zones, that its filter matches
-   * (`CardFilter`): "each set-aside [[Cultist]] enemy", "6 unique [[Cultist]] enemies in the
-   * victory display", "[[Elite]] enemies in the victory display and beneath this act"
-   * (`cardsInZones`). The command repeats once per card, zone by zone in zone order, and none
-   * when no card matches. With `top`, only the top `top` cards of each zone count: "the top 3
-   * cards of the encounter deck", fewer when the zone holds fewer.
-   */
-  | ({
-      ref: 'eachInZone';
-      zone: Templated<Zone> | readonly Templated<Zone>[];
-      top?: number;
-      /** At most this many in all, the first ones in zone order ("1 [per_investigator] copies"). */
-      first?: ScaledValue;
-    } & CardFilter)
-  /**
-   * Each card in play (`isInPlay`) its filter matches (`CardFilter`), in card order: "if the
-   * Masked Hunter is in play". With `at`, only those at one of the locations it names
-   * (`locationOfCard`: the location itself, a card placed there, and what an investigator there
-   * is engaged with, controls or has in their threat area): "if Lita Chantler is at your location".
-   */
-  | ({ ref: 'eachInPlay'; at?: RelativeCard | readonly RelativeCard[] } & CardFilter)
+  | EachEnemyRef
+  | EachInZoneRef
+  | EachInPlayRef
   /**
    * A set-aside copy of `code` (`setAsideCopy`): "the set-aside Lita Chantler", "1 set-aside copy
    * of Fire!". In an effect repeated for each investigator or card, each repetition takes the next
@@ -272,42 +246,51 @@ export type RelativeCard =
    */
   | { ref: 'setAsideCopy'; code: CardCode }
   /**
-   * The enemy its filter matches (`EnemyFilter`) nearest to the location of the investigator the
-   * window names ("the nearest [[Cultist]] enemy", `nearestEnemies`); none when there is no such
-   * enemy. When several are equally near, the lead investigator picks one (Rules Reference,
-   * "Choices"): the effect becomes a decision with an option per enemy.
+   * One of the enemies or cards `among` names, which someone may have to pick (`Selector`): "the
+   * nearest [[Cultist]] enemy", "a [[Central]] location", "the location with the most clues".
    */
-  | ({ ref: 'nearestEnemy' } & EnemyFilter)
-  /**
-   * A location in play its filter matches (`LocationFilter`: "move to a [[Central]] location"),
-   * other than the one the investigator the window names is at, since moving there would be no
-   * move; none when there is no other. When there are several, that investigator picks one: the
-   * effect becomes a decision with an option per location.
-   */
-  | ({ ref: 'locationWith' } & LocationFilter)
-  /**
-   * One enemy its filter matches (`EnemyFilter`), at `at` when given ("deal 1 damage to an enemy
-   * at your location", "place 1 doom on a [[Cultist]] enemy with no doom on it"), picked by the
-   * investigator the window names when there are several; none when there is none.
-   */
-  | ({ ref: 'anEnemy'; at?: RelativeCard } & EnemyFilter)
-  /**
-   * The location in play with the most `token`s that the card with the ability
-   * may attach to ("attach to the location with the most clues and without a
-   * copy of Locked Door attached": its `CardStats.limit`
-   * limit); none when it may attach nowhere. Equally many go to the lead
-   * investigator (Rules Reference, "Choices"): the effect becomes a decision
-   * with an option per location.
-   */
-  | { ref: 'locationWithMost'; token: TokenKind }
-  /**
-   * The location in play nearest to the location of the investigator the window names, counted in
-   * connections (`extremeLocations`, the drawer's own location at 0), that the card with the
-   * ability may attach to ("attach to the nearest location without Fire! attached": its
-   * `CardStats.limit`); none when it may attach nowhere. Equally near ones go to the lead
-   * investigator (Rules Reference, "Choices"), as for `locationWithMost`.
-   */
-  | { ref: 'nearestLocation' };
+  | Selector<EachEnemyRef | EachInZoneRef | EachInPlayRef>;
+
+/**
+ * Each enemy on the table its filter matches (`EachEnemyFilter`: "each unengaged [[Ghoul]]
+ * enemy", "each enemy at your location", "each enemy engaged with you"): the command repeats
+ * once per enemy, in card order. Unlike hunters, nobody picks the order: one enemy's step
+ * towards a fixed location changes no other enemy's path.
+ */
+export type EachEnemyRef = { ref: 'eachEnemy' } & EachEnemyFilter;
+
+/**
+ * Each card in the zone `zone` names, or in each of a list of zones, that its filter matches
+ * (`CardFilter`): "each set-aside [[Cultist]] enemy", "6 unique [[Cultist]] enemies in the
+ * victory display", "[[Elite]] enemies in the victory display and beneath this act"
+ * (`cardsInZones`). The command repeats once per card, zone by zone in zone order, and none
+ * when no card matches. With `top`, only the top `top` cards of each zone count: "the top 3
+ * cards of the encounter deck", fewer when the zone holds fewer.
+ */
+export type EachInZoneRef = {
+  ref: 'eachInZone';
+  zone: Templated<Zone> | readonly Templated<Zone>[];
+  top?: number;
+  /** At most this many in all, the first ones in zone order ("1 [per_investigator] copies"). */
+  first?: ScaledValue;
+} & CardFilter;
+
+/**
+ * Each card in play (`isInPlay`) its filter matches (`CardFilter`), in card order: "if the
+ * Masked Hunter is in play". With `at`, only those at one of the locations it names
+ * (`locationOfCard`: the location itself, a card placed there, and what an investigator there
+ * is engaged with, controls or has in their threat area): "if Lita Chantler is at your location".
+ * With `connectedTo`, only those at a location connecting to the one it names (`neighbours`):
+ * "a connecting location"; none while it names none.
+ */
+export type EachInPlayRef = {
+  ref: 'eachInPlay';
+  at?: RelativeCard | readonly RelativeCard[];
+  connectedTo?: RelativeCard;
+} & CardFilter;
+
+/** Each investigator still in the scenario, in player order; only those at `at` when given. */
+export type EachInvestigatorRef = { ref: 'eachInvestigator'; at?: RelativeCard };
 
 /**
  * An investigator an ability names relative to its window: the one the
@@ -318,18 +301,41 @@ export type RelativeCard =
 export type RelativeInvestigator =
   | { ref: 'windowInvestigator' }
   | { ref: 'lead' }
-  /** Each investigator still in the scenario, in player order; only those at `at` when given. */
-  | { ref: 'eachInvestigator'; at?: RelativeCard }
-  /**
-   * One investigator still in the scenario, at `at` when given, picked by the investigator the
-   * window names when there are several ("heal 1 horror from an investigator at this location").
-   */
-  | { ref: 'anInvestigator'; at?: RelativeCard };
+  | EachInvestigatorRef
+  /** One of the investigators `among` names (`Selector`): "an investigator at this location". */
+  | Selector<EachInvestigatorRef>;
 
 /**
- * Which locations in play a `locationWith` reference may stand for: those its print matches
- * (`CardFilter`, "a [[Central]] location"), and with `connected` only those connecting to the
- * location of the investigator the window names ("move to a connecting location").
+ * A reference that stands for one of several candidates: those `among` names, without the one
+ * `except` names ("other than your location") and, with `attachable`, only the locations the card
+ * with the ability may attach to (its `CardStats.limit`: "without a copy of Locked Door attached").
+ * With `best`, only those that measure the most or the fewest (`PickMeasure`). The only candidate
+ * is taken; of several, `chooser` picks one: the lead investigator for a tie the card leaves open
+ * (Rules Reference, "Choices"), the investigator the window names (`you`) for a choice the card
+ * gives them. The effect then becomes a decision with an option per candidate; none when there is
+ * no candidate.
+ */
+export interface Selector<Among> {
+  ref: 'pick';
+  among: Among;
+  except?: RelativeCard;
+  attachable?: true;
+  best?: { measure: PickMeasure; extreme: 'most' | 'fewest' };
+  chooser: 'lead' | 'you';
+}
+
+/**
+ * What a `Selector` ranks its candidates by: the `token`s on each, or the connections from the
+ * location of the investigator the window names to its location (`distance`: the drawer's own
+ * location at 0, one with no path there an infinite number away). No candidate measures a
+ * distance while that investigator has no location.
+ */
+export type PickMeasure = { kind: 'tokens'; token: TokenKind } | { kind: 'distance' };
+
+/**
+ * Which locations in play `locationWith` picks among: those its print matches (`CardFilter`, "a
+ * [[Central]] location"), and with `connected` only those connecting to your location ("move to a
+ * connecting location").
  */
 export interface LocationFilter extends CardFilter {
   connected?: true;
@@ -637,13 +643,8 @@ export interface Ability {
   effects: readonly AbilityEffect[];
 }
 
-/** A reference that stands for one of several candidates, which someone may have to pick. */
-export type PickedRef =
-  | Extract<
-      RelativeCard,
-      { ref: 'nearestEnemy' | 'anEnemy' | 'locationWith' | 'locationWithMost' | 'nearestLocation' }
-    >
-  | Extract<RelativeInvestigator, { ref: 'anInvestigator' }>;
+/** A reference that stands for one of several candidates, which someone may have to pick (`Selector`). */
+export type PickedRef = Extract<RelativeCard | RelativeInvestigator, { ref: 'pick' }>;
 
 /** A reference that repeats the command, as `eachInvestigator` does. */
 export type RepeatedRef = Extract<RelativeCard | RelativeInvestigator, { ref: `each${string}` }>;

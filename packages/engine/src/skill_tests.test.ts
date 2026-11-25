@@ -934,7 +934,7 @@ describe('a per-point effect that picks an enemy', () => {
       { ...answer('test:hex', 'fail'), margin: 2 },
     );
 
-    const placed = stateAfter(context, failed, answer('enemy:hex', 'right_cultist'));
+    const placed = stateAfter(context, failed, answer('pick:hex', 'right_cultist'));
 
     expect(failed.pending).toMatchObject([
       { kind: 'chooseCard', options: [{ id: leftCultist }, { id: rightCultist }] },
