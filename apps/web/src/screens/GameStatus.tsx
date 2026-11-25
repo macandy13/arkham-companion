@@ -2,7 +2,7 @@ import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { NavLink } from 'react-router';
 import type { StoreApi } from 'zustand/vanilla';
-import { ROUND_PHASES, type BoardView } from '@arkham/engine';
+import { type BoardView, endScenario, ROUND_PHASES } from '@arkham/engine';
 import type { AppState, OpenGame } from '../state/appStore';
 import { GameLogDialog } from '../log/GameLogDialog';
 import { EndScenarioDialog } from './EndScenarioDialog';
@@ -126,7 +126,7 @@ export function GameStatus({
           resolutions={board.resolutions}
           onEnd={(resolution) => {
             setEnding(false);
-            void actions.endScenario(resolution);
+            void actions.perform(endScenario(resolution));
           }}
           onCancel={() => setEnding(false)}
         />

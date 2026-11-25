@@ -7,12 +7,14 @@ import {
   cardCode,
   cardDbWith,
   cardImagePath,
+  type CardStats,
+  instanceId,
+  type InvestigatorCard,
   investigatorCardStats,
   investigatorCode,
   investigatorId,
-  instanceId,
-  type CardStats,
-  type InvestigatorCard,
+  placeDoomOnAgenda,
+  takeOneClue,
 } from '@arkham/engine';
 import { theGathering, theGatheringCards } from '@arkham/scenarios';
 import { initI18n } from '../i18n';
@@ -222,7 +224,7 @@ describe('GameScreen header', () => {
     await actions.nextPhase();
     await actions.startTurn(investigatorId('alder'));
 
-    await actions.takeClue(study);
+    await actions.perform(takeOneClue(study, investigatorId('alder')));
 
     expect(await screen.findByRole('img', { name: 'Clues 1 / 2' })).toBeTruthy();
   });
@@ -233,9 +235,9 @@ describe('GameScreen header', () => {
     const { actions } = store.getState();
     await actions.nextPhase();
     await actions.startTurn(investigatorId('alder'));
-    await actions.takeClue(study);
+    await actions.perform(takeOneClue(study, investigatorId('alder')));
     const advanceAtOneClue = button('Advance').disabled;
-    await actions.takeClue(study);
+    await actions.perform(takeOneClue(study, investigatorId('alder')));
     await screen.findByRole('img', { name: 'Clues 2 / 2' });
 
     fireEvent.click(button('Advance'));
@@ -251,8 +253,8 @@ describe('GameScreen header', () => {
     const { actions } = store.getState();
     await actions.nextPhase();
     await actions.startTurn(investigatorId('alder'));
-    await actions.takeClue(study);
-    await actions.takeClue(study);
+    await actions.perform(takeOneClue(study, investigatorId('alder')));
+    await actions.perform(takeOneClue(study, investigatorId('alder')));
     await screen.findByRole('img', { name: 'Clues 2 / 2' });
 
     fireEvent.click(button('Advance'));
@@ -276,7 +278,7 @@ describe('GameScreen header', () => {
 
   it("shows the agenda's doom in play on its page", async () => {
     const store = await renderTheGathering('game-screen-agenda-page-test');
-    await store.getState().actions.placeDoom(1);
+    await store.getState().actions.perform(placeDoomOnAgenda(1));
     fireEvent.click(button("What's Going On?!"));
     const card = await screen.findByRole('dialog', { name: "What's Going On?!" });
 
@@ -290,7 +292,7 @@ describe('GameScreen header', () => {
     const { actions } = store.getState();
     await actions.nextPhase();
     await actions.startTurn(investigatorId('alder'));
-    await actions.takeClue(study);
+    await actions.perform(takeOneClue(study, investigatorId('alder')));
 
     fireEvent.click(button('Trapped'));
     const card = await screen.findByRole('dialog', { name: 'Trapped' });
@@ -307,8 +309,8 @@ describe('GameScreen header', () => {
     const { actions } = store.getState();
     await actions.nextPhase();
     await actions.startTurn(investigatorId('alder'));
-    await actions.takeClue(study);
-    await actions.takeClue(study);
+    await actions.perform(takeOneClue(study, investigatorId('alder')));
+    await actions.perform(takeOneClue(study, investigatorId('alder')));
     const act = screen.getByRole('region', { name: 'Act' });
     const face = act.querySelector('[data-card]');
     if (!face) throw new Error('the act has no card');
@@ -328,8 +330,8 @@ describe('GameScreen header', () => {
     const { actions } = store.getState();
     await actions.nextPhase();
     await actions.startTurn(investigatorId('alder'));
-    await actions.takeClue(study);
-    await actions.takeClue(study);
+    await actions.perform(takeOneClue(study, investigatorId('alder')));
+    await actions.perform(takeOneClue(study, investigatorId('alder')));
     fireEvent.click(button('Trapped'));
     const card = await screen.findByRole('dialog', { name: 'Trapped' });
 
@@ -343,7 +345,13 @@ describe('GameScreen header', () => {
     const store = await renderTheGathering('game-screen-act-beneath-test');
     // The set-aside Ghoul Priest, as a codex entry would put an interrogated suspect there.
     const ghoulPriest = instanceId('01116#1');
-    await store.getState().actions.putBeneathAct(ghoulPriest);
+    const trapped = store.getState().current?.board?.act?.id;
+    if (!trapped) throw new Error('The Gathering starts on Trapped');
+    await store.getState().actions.perform({
+      type: 'MoveCard',
+      cardId: ghoulPriest,
+      to: { kind: 'beneath', hostId: trapped },
+    });
     const act = screen.getByRole('region', { name: 'Act' });
 
     fireEvent.click(await within(act).findByRole('button', { name: 'Beneath the act, 1 card' }));

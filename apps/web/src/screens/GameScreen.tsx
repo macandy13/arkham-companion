@@ -5,7 +5,7 @@ import { useParams } from 'react-router';
 import { useStore } from 'zustand';
 import type { StoreApi } from 'zustand/vanilla';
 import { keyOf } from '@arkham/util';
-import { gameId as toGameId, type DecisionId, type InstanceId } from '@arkham/engine';
+import { type DecisionId, gameId as toGameId, type InstanceId, spawnEnemyAt } from '@arkham/engine';
 import type { AppState } from '../state/appStore';
 import { useCatalog, type CatalogSource } from '../catalog/useCatalog';
 import { InvestigatorBar } from '../investigators/InvestigatorBar';
@@ -201,12 +201,12 @@ export function GameScreen({
                 spawning
                   ? (location) => {
                       store.getState().cancelSpawn();
-                      void store.getState().actions.spawnEnemy(spawning.id, location);
+                      void store.getState().actions.perform(spawnEnemyAt(spawning.id, location));
                     }
                   : mover
                     ? (location) => {
                         store.getState().cancelMoveByCard();
-                        void store.getState().actions.moveByCard(mover.id, location);
+                        void store.getState().actions.move(location, { byCard: mover.id });
                       }
                     : picking
                       ? pickAnswer

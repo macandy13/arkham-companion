@@ -7,12 +7,13 @@ import { overHeaderCard } from '../screens/headerDropTarget';
 import { TokenGhost } from '../screens/TokenGhost';
 import { useTokenDrag, type TokenDragHandlers } from '../screens/useTokenDrag';
 import type { GameActions } from '../state/gameActions';
+import { placeYourClues } from '@arkham/engine';
 
 /**
  * Dragging a clue off `investigator`'s clue count (M3.11c): `handlers` for the count, and
  * `shown`, what the drag puts on the page (the clue token under the finger, `TokenGhost`, and the
  * choice of who pays an advance, `useCluePayment`). A drop
- * - on the investigator's own location places the clue there (`GameActions.placeClue`), as a card
+ * - on the investigator's own location places the clue there (`placeYourClues`, performed), as a card
  *   or a failed test tells them to; another location takes nothing;
  * - on the act does what its own button does: an act the investigators advance by spending clues
  *   advances once they hold enough, after the players choose who pays (`advanceAct`); on an act
@@ -48,7 +49,7 @@ export function useClueDrag(
     }
     const location = locationAt(client);
     if (location && board.investigatorsAt(location).some(({ id }) => id === investigator))
-      void actions.placeClue(investigator);
+      void actions.perform(placeYourClues(1, investigator));
   });
   return {
     handlers: drag.handlers,
