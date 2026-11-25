@@ -2,6 +2,26 @@
 
 The sections dated up to 2026-10-22 were released as 1.0.0 to 1.8.0 by mistake: Release Please starts at 1.0.0 by default. Versioning restarted at 0.1.0 (see "Versions" in docs/product.md).
 
+## [0.1.47](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v0.1.46...arkham-companion-v0.1.47) (2026-11-25)
+
+
+### Features
+
+* **engine:** card actions that cost two actions (MC2.4a) ([e09431b](https://github.com/macandy13/arkham-companion/commit/e09431bf6186aabf9429b68c73b9cc17fa323fe9))
+* **web:** reveal chaos tokens outside a skill test (ME.29a) ([177106e](https://github.com/macandy13/arkham-companion/commit/177106e47db6631bbf245ab3871447040bdd7057))
+
+
+### Refactoring
+
+* **engine:** exhaustive pick question, one-way nearest test ([0ef98e0](https://github.com/macandy13/arkham-companion/commit/0ef98e04a1c9ef6b0975c749cf5fc3e9ca6deb44))
+* **engine:** one Selector for picked references (ME.18b) ([61ba348](https://github.com/macandy13/arkham-companion/commit/61ba34832d926629dab913a6b4fa3ff6c3a5b15a))
+* **engine:** one Selector for picked references (ME.18b) ([6eefa76](https://github.com/macandy13/arkham-companion/commit/6eefa76e0254bbf84cfe3a274f4e440a277db4e8))
+
+
+### Documentation
+
+* **rules:** note the direction of nearest over one-way connections ([006b664](https://github.com/macandy13/arkham-companion/commit/006b664b030a11dc32afa83a0536a2e501b2e60e))
+
 ## [0.1.46](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v0.1.45...arkham-companion-v0.1.46) (2026-11-24)
 
 
