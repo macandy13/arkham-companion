@@ -48,7 +48,8 @@ The scripted golden game is [`end_to_end.test_support.ts`](../../packages/scenar
 
 **Encounter cards**
 
-- [ ] Arcane Lock attaches to the drawer's location (one per location); its action tests willpower or intellect (4) and discards it on a pass.
+- [ ] Arcane Lock attaches to the drawer's location (one per location); its action tests willpower or intellect (4) and discards it on a pass. While it is attached, a move into or out of that location costs 1 more action on its button.
+- [ ] Investigating Waterfront District costs 2 actions on its button.
 - [ ] Flash Flood attaches to the drawer's location for +4 shroud and is discarded as the round ends.
 - [ ] Crossfire: on a failed agility (3) test each investigator at the location takes 1 damage.
 - [ ] Mark of Elokoss goes to the drawer's threat area; its two-action discard counts off two actions.
@@ -71,7 +72,7 @@ These are done by hand at the table; the app does not do them.
 - The codex entries of the suspects and the Servant of Flame, read from the campaign guide (the suspects' reactions show theirs as a by-hand notice), and the suspects' Parley actions.
 - The Elusive keyword of the Servant of Flame, Sgt. Earl Monroe and Bat Horror.
 - Adding the Mark of Elokoss to each deck and its damage as its holder's turn ends.
-- The Arkham locations' other reactions and actions, Waterfront District's additional action to investigate, Arcane Lock's additional action to enter or leave, and the damage Miskatonic University (In Flames) deals to allies.
+- The Arkham locations' other reactions and actions, and the damage Miskatonic University (In Flames) deals to allies.
 - Two Rogue Gangsters engaging the same investigator at once with 1 resource left: the second should attack instead of taking a resource.
 - Whippoorwill's -1 to each skill at its location.
 - The cultist's "reveal another token" against an Elite enemy, the tablet's clue placed on a failure, and Dr. Henry Armitage in play under his bearer's control.

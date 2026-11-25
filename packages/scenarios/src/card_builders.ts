@@ -146,6 +146,8 @@ export interface LocationOptions {
   unrevealedConnectsTo?: readonly LocationSymbol[];
   /** Its "cannot" abilities (the Parlor's barrier on its unrevealed side). */
   restrictions?: readonly CardRestriction[];
+  /** Its constant modifiers once revealed (Waterfront District's additional action to investigate it). */
+  modifiers?: readonly Modifier[];
 }
 
 /** Card stats for a hand-entered location of `set`, with both printed sides. */
@@ -164,6 +166,7 @@ export function location({
   connectsTo,
   unrevealedConnectsTo,
   restrictions,
+  modifiers,
   pictures,
 }: LocationOptions): CardStats {
   return {
@@ -180,6 +183,7 @@ export function location({
     ...(connectsTo === undefined ? {} : { connectsTo }),
     ...(unrevealedConnectsTo === undefined ? {} : { unrevealedConnectsTo }),
     ...(restrictions === undefined ? {} : { restrictions }),
+    ...(modifiers === undefined ? {} : { modifiers }),
   };
 }
 

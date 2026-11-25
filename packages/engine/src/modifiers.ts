@@ -26,7 +26,8 @@ export type CardValue = LocationValue | EnemyValue;
 /**
  * Raises the cost of basic actions: Frozen in Fear's "The first move, fight, or evade action you
  * perform each round costs 1 additional action" is `{ value: 'actionCost', of: 'threatArea',
- * actions: ['move', 'fight', 'evade'], first: 'eachRound', by: 1 }`; `actionCost` reads it.
+ * actions: ['move', 'fight', 'evade'], first: 'eachRound', by: 1 }`; `actionCost` reads it. A
+ * card that raises the actions aimed at a location instead is a `LocationActionCostModifier`.
  */
 export interface ActionCostModifier {
   value: 'actionCost';
@@ -37,6 +38,28 @@ export interface ActionCostModifier {
    * counted one off this round (`GameMeta.actionsTaken`), the rest cost the usual one.
    */
   first?: 'eachRound';
+  /** The additional actions it costs. */
+  by: number;
+}
+
+/**
+ * What an investigator does with a location that a card can make cost more: move into it, move
+ * out of it, or investigate it (`LocationActionCostModifier.actions`).
+ */
+export type LocationAction = 'enter' | 'leave' | 'investigate';
+
+/**
+ * Raises the cost of the actions aimed at one location, whoever takes them: Waterfront District's
+ * "As an additional cost to investigate Waterfront District, you must spend 1 action" is `{
+ * value: 'actionCost', of: 'self', actions: ['investigate'], by: 1 }`, Arcane Lock's "to enter or
+ * leave attached location" `{ of: 'host', actions: ['enter', 'leave'] }`. It names the location
+ * as a `CardScope` does, so the investigator's own cost modifiers (`ActionCostModifier`) stay
+ * apart; `actionCost` adds both.
+ */
+export interface LocationActionCostModifier {
+  value: 'actionCost';
+  of: 'self' | 'host';
+  actions: readonly LocationAction[];
   /** The additional actions it costs. */
   by: number;
 }
@@ -57,7 +80,8 @@ export type Modifier =
     }
   | { value: EnemyValue; of: CardScope; by: number }
   | { value: SkillName; of: InvestigatorScope; by: number }
-  | ActionCostModifier;
+  | ActionCostModifier
+  | LocationActionCostModifier;
 
 /** What a modifier is applied to: a card in play or an investigator. */
 export type ModifiedSubject =
@@ -180,11 +204,23 @@ function names(
     case 'intellect':
     case 'combat':
     case 'agility':
+      return (
+        subject.kind === 'investigator' && binds(state, source, modifier.of, subject.investigatorId)
+      );
     case 'actionCost':
+      if (isLocationCost(modifier))
+        return subject.kind === 'card' && namesCard(ctx, state, source, modifier.of, subject.card);
       return (
         subject.kind === 'investigator' && binds(state, source, modifier.of, subject.investigatorId)
       );
     default:
       return assertNever(modifier);
   }
+}
+
+/** Whether a cost modifier names a location (`LocationActionCostModifier`), not investigators. */
+export function isLocationCost(
+  modifier: ActionCostModifier | LocationActionCostModifier,
+): modifier is LocationActionCostModifier {
+  return modifier.of === 'self' || modifier.of === 'host';
 }

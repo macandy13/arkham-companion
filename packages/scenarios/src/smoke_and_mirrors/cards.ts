@@ -172,10 +172,8 @@ const jpg = 'jpg';
  * - the Arkham locations' reactions and actions other than First Bank of Arkham's resource,
  *   Arkham Sanatorium's healing and Easttown's ally search (St. Mary's healing, a deck search, a
  *   clue for 5 resources, cards drawn, a charge or secret, a Tome or Spell played
- *   from the discard pile: MC2.3, MC2.4), Waterfront District's
- *   additional action to investigate (MC2.4), and the damage Miskatonic University (In Flames)
- *   deals to allies
- * - Arcane Lock's additional action to enter or leave its location (MC2.4)
+ *   from the discard pile: MC2.3, MC2.4), and the damage Miskatonic
+ *   University (In Flames) deals to allies
  */
 export const smokeAndMirrorsCardDefs: readonly CardStats[] = [
   agenda({
@@ -481,6 +479,7 @@ export const smokeAndMirrorsCardDefs: readonly CardStats[] = [
     shroud: 1,
     cluesPerInvestigator: 1,
     victory: 1,
+    modifiers: [{ value: 'actionCost', of: 'self', actions: ['investigate'], by: 1 }],
   }),
   location({
     code: codes.southside,
@@ -542,6 +541,7 @@ export const smokeAndMirrorsCardDefs: readonly CardStats[] = [
     quantity: 2,
     limit: 'onePerLocation',
     abilities: [whenRevealed(attachToLocation())],
+    modifiers: [{ value: 'actionCost', of: 'host', actions: ['enter', 'leave'], by: 1 }],
     actions: [
       {
         effects: [

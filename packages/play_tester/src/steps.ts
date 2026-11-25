@@ -161,7 +161,8 @@ export function actionCostOf(table: PlayTable, step: Step): number {
   }
   const action = BASIC_ACTION_OF[step.verb];
   if (action === undefined || !('investigator' in step)) return 0;
-  return board.actionCost(board.investigator(byName(step.investigator)).id, action);
+  const to = step.verb === 'moveTo' ? { to: step.location } : {};
+  return board.actionCost(board.investigator(byName(step.investigator)).id, action, to);
 }
 
 /**

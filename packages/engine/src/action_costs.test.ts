@@ -223,3 +223,115 @@ describe('actionCost', () => {
     ).toMatchObject({ code: 'invalidActionAdjustment', actionsRemaining: 3 });
   });
 });
+
+describe('actionCost of an action aimed at a location', () => {
+  const cellar = instanceId('cellar');
+  /** A location like Waterfront District: investigating it costs 1 more. */
+  const slowToSearch = blankLocation('slow_to_search', {
+    modifiers: [{ value: 'actionCost', of: 'self', actions: ['investigate'], by: 1 }],
+  });
+  /** A treachery like Arcane Lock: entering or leaving the location it is attached to costs 1 more. */
+  const lockCard = blankTreachery('lock', {
+    modifiers: [{ value: 'actionCost', of: 'host', actions: ['enter', 'leave'], by: 1 }],
+  });
+
+  it('costs alice and bob in the search-resistant hall 2 to investigate it', () => {
+    const table = PlayTable.start(
+      newGame()
+        .withLocation(hall, slowToSearch, { revealed: true })
+        .withInvestigator(alice, { locationId: hall })
+        .withInvestigator(bob, { locationId: hall })
+        .withTurnOf(alice),
+    );
+
+    expect(table.board.actionCost(alice, 'investigate')).toBe(2);
+    expect(table.board.actionCost(bob, 'investigate')).toBe(2);
+  });
+
+  it('costs the usual action to investigate the hall while it is unrevealed', () => {
+    const table = PlayTable.start(
+      newGame()
+        .withLocation(hall, slowToSearch, { revealed: false })
+        .withInvestigator(alice, { locationId: hall })
+        .withTurnOf(alice),
+    );
+
+    expect(table.board.actionCost(alice, 'investigate')).toBe(1);
+  });
+
+  describe('alice in the hall, a lock attached to the cellar', () => {
+    const study = instanceId('study');
+    const lockedCellar = () =>
+      PlayTable.start(
+        newGame()
+          .withLocation(hall, blankLocation('hall'), { revealed: true })
+          .withLocation(cellar, blankLocation('cellar'), { revealed: true })
+          .withLocation(study, blankLocation('study'), { revealed: true })
+          .withConnection(hall, cellar)
+          .withInvestigator(alice, { locationId: hall })
+          .withCard(instanceId('lock'), lockCard, { kind: 'attachedTo', hostId: cellar })
+          .withTurnOf(alice),
+      );
+
+    it.each([
+      { to: 'cellar', free: false, cost: 2 },
+      { to: 'cellar', free: true, cost: 1 },
+      { to: 'study', free: false, cost: 1 },
+    ])('costs $cost to move to the $to (free: $free)', ({ to, free, cost }) => {
+      expect(lockedCellar().board.actionCost(alice, 'move', { free, to: instanceId(to) })).toBe(
+        cost,
+      );
+    });
+
+    it('costs the usual action for a move whose destination is not named', () => {
+      expect(lockedCellar().board.actionCost(alice, 'move')).toBe(1);
+    });
+
+    it('pays 2 actions for the move action into the cellar', () => {
+      const table = lockedCellar();
+
+      table.moveTo(alice, cellar);
+
+      expect(table.board.investigator(alice)).toMatchObject({ at: 'cellar', actions: 1 });
+    });
+  });
+
+  it('costs alice 2 to move out of the locked cellar', () => {
+    const table = PlayTable.start(
+      newGame()
+        .withLocation(hall, blankLocation('hall'), { revealed: true })
+        .withLocation(cellar, blankLocation('cellar'), { revealed: true })
+        .withInvestigator(alice, { locationId: cellar })
+        .withCard(instanceId('lock'), lockCard, { kind: 'attachedTo', hostId: cellar })
+        .withTurnOf(alice),
+    );
+
+    expect(table.board.actionCost(alice, 'move', { to: hall })).toBe(2);
+  });
+
+  it('costs alice the usual action to investigate the locked cellar', () => {
+    const table = PlayTable.start(
+      newGame()
+        .withLocation(cellar, blankLocation('cellar'), { revealed: true })
+        .withInvestigator(alice, { locationId: cellar })
+        .withCard(instanceId('lock'), lockCard, { kind: 'attachedTo', hostId: cellar })
+        .withTurnOf(alice),
+    );
+
+    expect(table.board.actionCost(alice, 'investigate')).toBe(1);
+  });
+
+  it('costs alice 3 to move from the locked cellar into the locked hall', () => {
+    const table = PlayTable.start(
+      newGame()
+        .withLocation(hall, blankLocation('hall'), { revealed: true })
+        .withLocation(cellar, blankLocation('cellar'), { revealed: true })
+        .withInvestigator(alice, { locationId: cellar })
+        .withCard(instanceId('cellar_lock'), lockCard, { kind: 'attachedTo', hostId: cellar })
+        .withCard(instanceId('hall_lock'), lockCard, { kind: 'attachedTo', hostId: hall })
+        .withTurnOf(alice),
+    );
+
+    expect(table.board.actionCost(alice, 'move', { to: hall })).toBe(3);
+  });
+});
