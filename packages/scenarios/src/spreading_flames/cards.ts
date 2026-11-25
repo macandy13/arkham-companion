@@ -221,7 +221,6 @@ const jpg = 'jpg';
  *   player card's
  * - Hellhound's asset discard after its enemy phase attacks: the players pick the asset, as for
  *   any player card
- * - Bystander's Doomed (MC2.6)
  * - Unspeakable Truths' limit of 1 per investigator and its horror after its holder discovers
  *   clues
  */
@@ -510,6 +509,7 @@ export const spreadingFlamesCardDefs: readonly CardStats[] = [
     damage: 1,
     horror: 0,
     quantity: 3,
+    keywords: [{ name: 'doomed' }],
   }),
   treachery({
     code: '12124',

@@ -16,4 +16,4 @@ Card rulings: [Resolution order](cards/resolution-order.md).
   - An enemy a card effect defeats ("it is automatically defeated") goes the same way ([Victory display](https://arkhamdb.com/rules#Victory_Display_Victory_Points); FAQ v2.5, Persistent Construct). An effect that discards an enemy is no defeat: it goes to the discard even with Victory X.
 - A defeated asset goes to its owner's discard.
 - A "when [this enemy] is defeated" forced ability ([When](https://arkhamdb.com/rules#Ability): before the defeat's impact) resolves after the enemy has gone, and "this location" is where it was (Goat Spawn: "each investigator at this location takes 1 horror").
-  - Our stand-in for "when" changes nothing while such an ability only acts on its location; Doomed must not use it, as its doom can advance the agenda while the enemy is still in play.
+  - Our stand-in for "when" changes nothing while such an ability only acts on its location. Doomed uses it too, so a Bystander's doom advances the agenda after the Bystander has gone; this differs only for an agenda whose reverse side acts on enemies in play, and no Spreading Flames agenda does.

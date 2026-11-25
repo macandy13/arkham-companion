@@ -230,9 +230,9 @@ export function playSpreadingFlames(start: CampaignLog): CampaignLog {
   table.moveTo(roland, byName('Miskatonic Quad'));
   table.endTurn(roland);
   table.startTurn(daisy);
+  // The Bystander is Doomed: defeating it places 1 doom on Lit Up.
   table.fight(daisy, byName('Bystander'));
-  // The Bystander is Doomed: defeating it places 1 doom on the agenda, by hand.
-  table.placeDoom(1);
+  expect(table.board.agenda).toMatchObject({ name: 'Lit Up', doom: 1 });
   table.moveTo(daisy, byName('Miskatonic Quad'));
   table.moveTo(daisy, byName('Orne Library'));
   table.endTurn(daisy);
@@ -301,8 +301,11 @@ export function playSpreadingFlames(start: CampaignLog): CampaignLog {
 
   // Round 6 – investigation: Roland shoots the Mutated Experiment with his .45 Automatic (the
   // players confirm 2 damage), finishes it with a punch and goes to the Quad, where the Servant
-  // engages him. Daisy defeats the Bystander, follows him and hits the Servant once. (Blaze of
-  // Glory's group clue spend to damage the Servant is theirs to resolve.) As the phase ends, the
+  // engages him. Daisy defeats the Bystander, whose Doomed places the fifth doom: Lit Up advances
+  // to Wild Flames. Its reverse side places no Fire!, as act 1 put the set-aside copies out
+  // already, and its agility tests are the players' to resolve. Daisy follows Roland and hits the
+  // Servant once. (Blaze of Glory's group clue spend to damage the Servant is theirs to resolve.)
+  // As the phase ends, the
   // Fire! on the Quad deals each of them 1 direct damage; the Servant is Elite and takes none.
   expect(table.nextPhase()).toEqual({ round: 6, phase: 'investigation' });
   table.startTurn(roland);
@@ -312,6 +315,8 @@ export function playSpreadingFlames(start: CampaignLog): CampaignLog {
   table.endTurn(roland);
   table.startTurn(daisy);
   table.fight(daisy, byName('Bystander'));
+  table.answerOnly('yes');
+  expect(table.board.agenda).toMatchObject({ name: 'Wild Flames', doom: 0 });
   table.moveTo(daisy, byName('Miskatonic Quad'));
   table.fight(daisy, byName(servant));
   table.endTurn(daisy);
@@ -324,14 +329,14 @@ export function playSpreadingFlames(start: CampaignLog): CampaignLog {
   table.resolveEnemyAttacks();
   expect(table.nextPhase()).toEqual({ round: 6, phase: 'upkeep' });
 
-  // Round 7 – mythos: the fifth doom makes Lit Up advance to Wild Flames. Its reverse side places
-  // no Fire!, as act 1 put the set-aside copies out already, and its agility tests are the
-  // players' to resolve. A Cantor of Flame engages Roland, and Daisy's second Unspeakable Truths
+  // Round 7 – mythos: the doom placed on Wild Flames draws a Fire! from the discard pile for Roland,
+  // which the lead attaches to the Dormitories, one of three nearest locations without one. A
+  // Cantor of Flame engages Roland, and Daisy's second Unspeakable Truths
   // goes to her threat area beside the first (its limit of 1 per investigator is the players' to
   // apply).
-  expect(table.nextPhase()).toEqual({ round: 7, phase: 'mythos', step: 'checkDoomThreshold' });
-  table.answerOnly('yes');
-  expect(table.board.agenda).toMatchObject({ name: 'Wild Flames', doom: 0 });
+  expect(table.nextPhase()).toEqual({ round: 7, phase: 'mythos', step: 'placeDoom' });
+  table.resolveRevelation(byName('Fire!'));
+  table.answerOnly('Dormitories');
   expect(table.nextPhase()).toEqual({ round: 7, phase: 'mythos', step: 'drawEncounterCard' });
   table.resolveRevelation(byName('Unspeakable Truths'));
   expect(table.nextPhase()).toEqual({ round: 7, phase: 'investigation' });

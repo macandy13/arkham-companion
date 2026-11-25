@@ -16,6 +16,7 @@ export type KeywordName =
   | 'retaliate'
   | 'alert'
   | 'elusive'
+  | 'doomed'
   | 'patrol'
   | 'prey'
   | 'spawn';
