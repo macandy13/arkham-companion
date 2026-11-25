@@ -50,8 +50,8 @@ export function handleStartTurn(state: GameState, cmd: StartTurn): TurnStarted[]
  * `TurnEnded` opens the `turnEnds` window for the cards in their threat
  * area (Frozen in Fear's test) and for the location they end it at (Flooded Crypt).
  */
-export function handleEndTurn(state: GameState, cmd: EndTurn): TurnEnded[] {
-  if (cmd.source && state.meta.turn?.investigatorId !== cmd.investigatorId) return [];
+export function handleEndTurn(state: GameState, cmd: EndTurn, strict: boolean): TurnEnded[] {
+  if (!strict && state.meta.turn?.investigatorId !== cmd.investigatorId) return [];
   requirePhase(state, 'investigation');
   requireTurnOf(state, cmd.investigatorId);
   return [{ type: 'TurnEnded', investigatorId: cmd.investigatorId }];
@@ -83,9 +83,13 @@ export function requireTurnOf(state: GameState, investigatorId: InvestigatorId):
     });
 }
 
-/** `AdjustActions`: changes the investigator's remaining actions. */
-export function handleAdjustActions(state: GameState, cmd: AdjustActions): ActionsAdjusted[] {
-  if (cmd.source) return cardActionsAdjusted(state, cmd.investigatorId, cmd.delta);
+/** `AdjustActions`: changes the investigator's remaining actions; as a card asks, no more than remain. */
+export function handleAdjustActions(
+  state: GameState,
+  cmd: AdjustActions,
+  strict: boolean,
+): ActionsAdjusted[] {
+  if (!strict) return cardActionsAdjusted(state, cmd.investigatorId, cmd.delta);
   // Not `-remaining`: with none left that is -0, which a rejection would report.
   const delta =
     cmd.delta === 'allRemaining' ? 0 - remainingActions(state, cmd.investigatorId) : cmd.delta;

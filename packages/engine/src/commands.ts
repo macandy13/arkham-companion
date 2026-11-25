@@ -33,84 +33,89 @@ import type {
 } from './state';
 import type { Zone } from './zone';
 
-/** Commands are intents from the UI; `handle` validates them and produces events. */
-export type Command =
-  | StartScenario
-  | ManualAdjust
-  | MoveCard
-  | AddMap
-  | PutLocationIntoPlay
-  | AddConnection
-  | RemoveConnection
-  | RevealLocation
-  | MoveInvestigator
-  | AdjustInvestigator
-  | HealInvestigator
-  | GainResources
-  | SpendResources
-  | DrawCards
-  | SearchDeck
-  | DiscardFromHand
-  | DiscardAsset
-  | HealAsset
-  | ReadCodexEntry
-  | PlayCard
-  | SpendCluesAsGroup
-  | TakeDamageAndHorror
-  | DefeatInvestigator
-  | DiscoverClues
-  | MoveTokens
-  | ChangeChaosBag
-  | SealChaosToken
-  | AttachPlayerCard
-  | DrawWeakness
-  | ReleaseChaosToken
-  | Advance
-  | BecomeActAndAgenda
-  | EndScenario
-  | ShuffleEncounterDiscard
-  | ShuffleEncounterDeck
-  | EngageReadyEnemies
-  | SpawnEnemy
-  | DrawCard
-  | EngageEnemy
-  | DisengageEnemy
-  | DamageEnemy
-  | HealEnemy
-  | GainSurge
-  | UseReaction
-  | ResolveRevelation
-  | DefeatEnemy
-  | ExhaustEnemy
-  | RetreatEnemy
-  | EvadeEnemy
-  | ReadyEnemy
-  | MoveEnemy
-  | MoveEnemyTowards
-  | MoveHunters
-  | MoveHunter
-  | RequestDecision
-  | TestSkill
-  | ForEachPoint
-  | ByMargin
-  | ResolveEffect
-  | ResolveDecision
-  | CheckDoomThreshold
-  | NextPhase
-  | StartTurn
-  | EndTurn
-  | Resign
-  | UseCardAction
-  | SetLeadInvestigator
-  | AdjustActions
-  | SpendActions
-  | DealEnemyAttack
-  | EnemyAttacks
-  | Investigate
-  | Fight
-  | Evade
-  | FailedAttack
-  | EndSkillTest;
+/**
+ * Commands are intents from the UI; `handle` validates them and produces events. Any of them may
+ * name the card that asked for it (`AskedByCard`).
+ */
+export type Command = AskedByCard &
+  (
+    | StartScenario
+    | ManualAdjust
+    | MoveCard
+    | AddMap
+    | PutLocationIntoPlay
+    | AddConnection
+    | RemoveConnection
+    | RevealLocation
+    | MoveInvestigator
+    | AdjustInvestigator
+    | HealInvestigator
+    | GainResources
+    | SpendResources
+    | DrawCards
+    | SearchDeck
+    | DiscardFromHand
+    | DiscardAsset
+    | HealAsset
+    | ReadCodexEntry
+    | PlayCard
+    | SpendCluesAsGroup
+    | TakeDamageAndHorror
+    | DefeatInvestigator
+    | DiscoverClues
+    | MoveTokens
+    | ChangeChaosBag
+    | SealChaosToken
+    | AttachPlayerCard
+    | DrawWeakness
+    | ReleaseChaosToken
+    | Advance
+    | BecomeActAndAgenda
+    | EndScenario
+    | ShuffleEncounterDiscard
+    | ShuffleEncounterDeck
+    | EngageReadyEnemies
+    | SpawnEnemy
+    | DrawCard
+    | EngageEnemy
+    | DisengageEnemy
+    | DamageEnemy
+    | HealEnemy
+    | GainSurge
+    | UseReaction
+    | ResolveRevelation
+    | DefeatEnemy
+    | ExhaustEnemy
+    | RetreatEnemy
+    | EvadeEnemy
+    | ReadyEnemy
+    | MoveEnemy
+    | MoveEnemyTowards
+    | MoveHunters
+    | MoveHunter
+    | RequestDecision
+    | TestSkill
+    | ForEachPoint
+    | ByMargin
+    | ResolveEffect
+    | ResolveDecision
+    | CheckDoomThreshold
+    | NextPhase
+    | StartTurn
+    | EndTurn
+    | Resign
+    | UseCardAction
+    | SetLeadInvestigator
+    | AdjustActions
+    | SpendActions
+    | DealEnemyAttack
+    | EnemyAttacks
+    | Investigate
+    | Fight
+    | Evade
+    | FailedAttack
+    | EndSkillTest
+  );
 
 /** A card instance to create when the scenario starts. */
 export interface StartingCard {
@@ -244,7 +249,7 @@ export interface AddConnection {
  * one-way edge must match `from` and `to` exactly. Asked by a card (`source`), a connection
  * that is already gone is no error: nothing changes. Produces `ConnectionChanged`.
  */
-export interface RemoveConnection extends AskedByCard {
+export interface RemoveConnection {
   type: 'RemoveConnection';
   from: InstanceId;
   to: InstanceId;
@@ -358,16 +363,15 @@ export interface CommandSource {
 }
 
 /**
- * A command a card can ask for: one on the players' own cards (`PlayerCardCommand`), or one also
- * sent without a card (by the players or a rule step) that refuses when it has nothing to do (`AdjustActions`, `EndTurn`,
- * `DiscoverClues`, `RemoveConnection`, `EngageEnemy`). The ability step that resolves it stamps its `source` (`withSource`), as does
- * an action's hand card cost. Without one it is the players' own or a rule step's (the upkeep
- * draw); the play screen relies on that to leave it out of the "Do this by hand" notice
- * (`skippedEffects`). With one, a command that the players' version refuses for having nothing
- * to do does as much as it can instead (Rules Reference, "Effects"), so a card's "lose 1 action"
- * with none left doesn't fail the whole revelation; the players' buttons keep refusing it.
+ * The card that asked for a command, if one did. The ability step that resolves an effect stamps
+ * its `source` on every command it produces (`withSource`), as does an action's hand card cost.
+ * Without one it is the players' own or a rule step's (the upkeep draw); the play screen relies on
+ * that to leave it out of the "Do this by hand" notice (`skippedEffects`). With one, a command
+ * that the players' version refuses for having nothing to do does as much as it can instead
+ * (Rules Reference, "Effects"; its handler is not `strict`), so a card's "lose 1 action" with none
+ * left doesn't fail the whole revelation; the players' buttons keep refusing it.
  */
-interface AskedByCard {
+export interface AskedByCard {
   source?: CommandSource;
 }
 
@@ -376,7 +380,7 @@ interface AskedByCard {
  * the basic draw action. The game holds no player cards, so `deferToPlayers` leaves it to the
  * players (`CommandDeferred`).
  */
-export interface DrawCards extends ActionCommand, AskedByCard {
+export interface DrawCards extends ActionCommand {
   type: 'DrawCards';
   investigatorId: InvestigatorId;
   amount: number;
@@ -387,7 +391,7 @@ export interface DrawCards extends ActionCommand, AskedByCard {
  * and shuffle your deck", or "… and play it (paying its cost)" with `play` (Easttown). Left to
  * the players like `DrawCards`.
  */
-export interface SearchDeck extends AskedByCard {
+export interface SearchDeck {
   type: 'SearchDeck';
   investigatorId: InvestigatorId;
   traits: readonly Trait[];
@@ -402,7 +406,7 @@ export interface SearchDeck extends AskedByCard {
  * name it, is spent from the investigator's resources in the same step, so paying and playing
  * stay one undo step.
  */
-export interface PlayCard extends ActionCommand, AskedByCard {
+export interface PlayCard extends ActionCommand {
   type: 'PlayCard';
   investigatorId: InvestigatorId;
   /** The resources paid for the card, a whole number up to what they hold. Unset: paid by hand. */
@@ -414,7 +418,7 @@ export interface PlayCard extends ActionCommand, AskedByCard {
  * discards from their own hand, or `atRandom` ("discards 1 card at random from their hand", What's
  * Going On?!). Left to the players like `DrawCards`.
  */
-export interface DiscardFromHand extends AskedByCard {
+export interface DiscardFromHand {
   type: 'DiscardFromHand';
   investigatorId: InvestigatorId;
   amount: number;
@@ -425,7 +429,7 @@ export interface DiscardFromHand extends AskedByCard {
  * "Choose and discard 1 asset you control" (Crypt Chill): the investigator discards one of their
  * own assets. The game holds no player cards, so it is left to the players like `DrawCards`.
  */
-export interface DiscardAsset extends AskedByCard {
+export interface DiscardAsset {
   type: 'DiscardAsset';
   investigatorId: InvestigatorId;
 }
@@ -435,7 +439,7 @@ export interface DiscardAsset extends AskedByCard {
  * heals `amount` of `stat` from an asset with `trait` at their location. Assets are player cards,
  * so it is left to the players like `DrawCards`.
  */
-export interface HealAsset extends AskedByCard {
+export interface HealAsset {
   type: 'HealAsset';
   investigatorId: InvestigatorId;
   stat: WoundKind;
@@ -448,7 +452,7 @@ export interface HealAsset extends AskedByCard {
  * scenario's codex in the campaign guide. The guide's text is not in the app, so it is left to the
  * players like `DrawCards`.
  */
-export interface ReadCodexEntry extends AskedByCard {
+export interface ReadCodexEntry {
   type: 'ReadCodexEntry';
   investigatorId: InvestigatorId;
   entry: CodexEntry;
@@ -458,8 +462,8 @@ export interface ReadCodexEntry extends AskedByCard {
  * The commands the engine defers to the players (`CommandDeferred`): those on player cards, and
  * reading a codex entry in the campaign guide.
  */
-export type PlayerCardCommand =
-  DrawCards | SearchDeck | PlayCard | DiscardFromHand | DiscardAsset | HealAsset | ReadCodexEntry;
+export type PlayerCardCommand = AskedByCard &
+  (DrawCards | SearchDeck | PlayCard | DiscardFromHand | DiscardAsset | HealAsset | ReadCodexEntry);
 
 /**
  * Whether the players took `command` as an action at the table (the draw or play action), rather
@@ -513,7 +517,7 @@ export interface DefeatInvestigator {
  * investigator who may not discover clues (The Masked Hunter) takes none. Produces
  * `TokensChanged` (clues leave the location) and `InvestigatorChanged` (clues arrive).
  */
-export interface DiscoverClues extends AskedByCard {
+export interface DiscoverClues {
   type: 'DiscoverClues';
   investigatorId: InvestigatorId;
   locationId: InstanceId;
@@ -803,7 +807,7 @@ export interface SpawnEnemy {
  * location and does nothing for a massive enemy or one engaged with the investigator already
  * (`AskedByCard`). Produces `EnemyEngaged`.
  */
-export interface EngageEnemy extends ActionCommand, AskedByCard {
+export interface EngageEnemy extends ActionCommand {
   type: 'EngageEnemy';
   enemyId: InstanceId;
   investigatorId: InvestigatorId;
@@ -1216,7 +1220,7 @@ export interface StartTurn {
  * taken" flag (`GameMeta.turnsTaken`). Asked by a card (`source`, "end your turn") outside
  * that investigator's turn, it does nothing. Produces `TurnEnded`.
  */
-export interface EndTurn extends AskedByCard {
+export interface EndTurn {
   type: 'EndTurn';
   investigatorId: InvestigatorId;
 }
@@ -1287,7 +1291,7 @@ export interface SetLeadInvestigator {
  * remaining actions"); asked by a card (`source`), any loss takes no more than remain. Produces
  * `ActionsAdjusted`, with the actual change.
  */
-export interface AdjustActions extends AskedByCard {
+export interface AdjustActions {
   type: 'AdjustActions';
   investigatorId: InvestigatorId;
   delta: number | 'allRemaining';

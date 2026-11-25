@@ -310,8 +310,9 @@ export function handleDiscoverClues(
   ctx: EngineContext,
   state: GameState,
   cmd: DiscoverClues,
+  strict: boolean,
 ): (TokensChanged | InvestigatorChanged | CluesDiscovered)[] {
-  if (cmd.source || cmd.investigation) return cardDiscovery(ctx, state, cmd);
+  if (!strict || cmd.investigation) return cardDiscovery(ctx, state, cmd);
   const investigator = activeInvestigator(state, cmd.investigatorId);
   if (isRestrictedFor(ctx, state, investigator.id, 'discover', 'clues'))
     throw new CommandRejected({

@@ -49,8 +49,9 @@ export function handleEngageEnemy(
   ctx: EngineContext,
   state: GameState,
   cmd: EngageEnemy,
+  strict: boolean,
 ): EnemyEngaged[] {
-  if (cmd.source !== undefined) return cardEngagement(ctx, state, cmd);
+  if (!strict) return cardEngagement(ctx, state, cmd);
   const { enemy } = onTableEnemyOf(ctx, state, cmd.enemyId);
   if (cardHasKeyword(ctx, state, enemy, 'massive'))
     throw new CommandRejected({ code: 'massiveNotEngageable', cardId: enemy.id });
