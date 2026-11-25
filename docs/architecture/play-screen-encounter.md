@@ -31,7 +31,7 @@ The act's Advance button takes its spend-clues action for the investigator whose
 When the players have a split to choose, it first asks who pays how many in the [clue payment dialog](../../apps/web/src/screens/CluePaymentDialog.tsx) (`useCluePayment` over `BoardView.cluePayers`, on the card shell since MD.6b4: the card the cost is paid for beside the page, an act over it; each payer a row with their round portrait, their name over what they pay, and their clues as tokens to tap, starting at the engine's split; a Split evenly shortcut, `evenClueSplit`, and Pay as the primary); card actions with a group clue cost (`CardActionView.groupClues`) ask the same.
 The act's clue bubble (a double tap on the act) shows only for an act that counts the clues on it.
 Once cards lie beneath the act (an enemy's details put one there where the act's objective counts them, `ActView.takesCardsBeneath`), they are fanned at its corner like the discard pile at the deck's (`HeaderPile` `beneathAct`, from `EncounterPilesView.beneathAct`). A tap opens them in the encounter dialog with their moves.
-Every act's full card (and its footer in the detail view) also has "Advance by hand" (MC2.19): after a confirmation it plays `Advance` of the act (`GameActions.advanceActByHand`), with no turn or cost, for an objective the engine leaves to the players (Escape the Dorms in _Spreading Flames_).
+Every act's full card (and its footer in the detail view) also has "Advance by hand" (MC2.19): after a confirmation it plays `Advance` of the act (`GameActions.perform`), with no turn or cost, for an objective the engine leaves to the players (Escape the Dorms in _Spreading Flames_).
 
 ## Scenario card
 
@@ -44,7 +44,7 @@ The header's small card shows only the name (a container query hides the rest fr
 - "Scenario" and the difficulty's side as the kicker;
 - the cards set aside and the victory points on the page;
 - one row per symbol token at the page's print size, so it reads even when only the card's top shows (the shell's phone sheet; the phone itself opens the header cards in the detail view).
-- the chaos bag ([`ChaosBag`](../../apps/web/src/screens/ChaosBag.tsx)): the tokens in it as pills with their counts (`tokenCounts`, which the campaign log's bag shares; four to a row on a phone, and no symbol values, which the reference card's text above already gives), and the sealed ones (`BoardView.sealedTokens`) with the investigator holding each and a Release button. A tap on a token picks it to seal and shows a "Seal … on …" button per active investigator; seal and release are steps of their own (`GameActions.sealToken`, `releaseToken`). Below them the bless and curse tokens (ME.23) on one line, each its count in the bag between − and + (`GameActions.removePoolToken`, `addPoolToken`, a `ChangeChaosBag` for the scenario); + is off while its pool is empty (`BoardView.poolTokensLeft`, 10 less those in the bag and sealed). Under them Reveal tokens (ME.29a) draws as many tokens as the players set between − and +, as a card reveals them outside a skill test (`revealTokens`, Hypnotic Gaze, Premonition), and shows them until Put back; like the skill test's draw it is no game state, since the tokens never leave the bag (rules: even bless and curse go back). A skill test answered after the app's draw sends the drawn tokens (`ResolveDecision.revealed`), and the engine returns the bless and curse among them to the pool.
+- the chaos bag ([`ChaosBag`](../../apps/web/src/screens/ChaosBag.tsx)): the tokens in it as pills with their counts (`tokenCounts`, which the campaign log's bag shares; four to a row on a phone, and no symbol values, which the reference card's text above already gives), and the sealed ones (`BoardView.sealedTokens`) with the investigator holding each and a Release button. A tap on a token picks it to seal and shows a "Seal … on …" button per active investigator; seal and release are steps of their own (`SealChaosToken`, `ReleaseChaosToken`, performed). Below them the bless and curse tokens (ME.23) on one line, each its count in the bag between − and + (a performed `ChangeChaosBag` for the scenario); + is off while its pool is empty (`BoardView.poolTokensLeft`, 10 less those in the bag and sealed). Under them Reveal tokens (ME.29a) draws as many tokens as the players set between − and +, as a card reveals them outside a skill test (`revealTokens`, Hypnotic Gaze, Premonition), and shows them until Put back; like the skill test's draw it is no game state, since the tokens never leave the bag (rules: even bless and curse go back). A skill test answered after the app's draw sends the drawn tokens (`ResolveDecision.revealed`), and the engine returns the bless and curse among them to the pool.
 
 The reference card is no instance in play, so the shell takes a `ShownCard` (a `CardFaceView` without its `id`, [`cardFace.tsx`](../../apps/web/src/catalog/cardFace.tsx)), as `CardZoom` does.
 
@@ -64,16 +64,16 @@ A tap on the deck or a pile opens the [encounter dialog](../../apps/web/src/enco
 It is a page of the card shell without a card ([`CardDialog`](../../apps/web/src/screens/CardDialog.tsx)), since the piles' cards are its content: the page of a pile with cards takes the wide dialog width (`--dialog-width-wide`), and on a phone held upright it is a sheet.
 It shows:
 
-- on the deck, its count with a "Draw for …" button per active investigator, the one whose turn it is first (`GameActions.drawEncounter`, for player cards and effects that draw outside the mythos phase; the card then resolves as in the mythos phase);
+- on the deck, its count with a "Draw for …" button per active investigator, the one whose turn it is first (a performed `encounterDraw`, for player cards and effects that draw outside the mythos phase; the card then resolves as in the mythos phase);
 - on a pile, its cards as a row of pictures, top card first (`PileStrip` in the shared [`CardStrip`](../../apps/web/src/screens/CardStrip.tsx): five side by side, `--encounter-strip-cards-shown`; more scroll by whole cards with a swipe or the investigator picker's round arrows, as in the threat area), the chosen card (the top one at first) named under the row with its victory points and its moves.
 
-A tap on a line of the drawn-cards notice below opens the places the players can put it ([`CardMoves`](../../apps/web/src/encounter/CardMoves.tsx) over [`cardMoves`](../../apps/web/src/encounter/cardMoves.ts)), each a `ManualAdjust` `moveCard` step (`GameActions.moveEncounterCard`), for revelations the engine leaves to them:
+A tap on a line of the drawn-cards notice below opens the places the players can put it ([`CardMoves`](../../apps/web/src/encounter/CardMoves.tsx) over [`cardMoves`](../../apps/web/src/encounter/cardMoves.ts)), each a `ManualAdjust` `moveCard` step (`GameActions.correct` with `pileAdjustment`), for revelations the engine leaves to them:
 
 - a treachery goes into a threat area,
 - any card onto the discard pile or aside.
 
 An enemy not yet on the map gets one Spawn button instead, which closes the dialog and asks the players to tap a location ([`MapPickPrompt`](../../apps/web/src/screens/MapPickPrompt.tsx) with Cancel, shared with a move by card effect, `OpenGame.spawning`; every tile glows, `data-pickable`, and `MapBoard.onPick` takes the tap).
-The tap plays `SpawnEnemy` (`GameActions.spawnEnemy`), so the engine engages it by the rules (prey, Aloof).
+The tap plays `SpawnEnemy` (performed), so the engine engages it by the rules (prey, Aloof).
 
 ## Drawn-cards notice
 

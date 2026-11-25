@@ -9,7 +9,17 @@ import {
   stateAfter,
 } from '../../test/utils';
 import {
+  beneath,
   blankAct,
+  eachInPlay,
+  eachInZone,
+  onlyCopy,
+  outOfGame,
+  scenarioDeck,
+  setAside,
+  thereAre,
+  victoryDisplay,
+  type AbilityCondition,
   blankAgenda,
   blankEnemy,
   cardCode,
@@ -20,6 +30,7 @@ import {
   instanceId,
   investigatorCode,
   investigatorId,
+  locationWithMost,
   newGame,
   resolutionId,
   scenarioId,
@@ -684,38 +695,40 @@ describe('proposeResolution with steps that read the game', () => {
   it.each([
     [
       'Drew is in the victory display',
-      { kind: 'cardIn', code: drew, places: ['victoryDisplay'] },
+      thereAre(eachInZone(victoryDisplay, { code: drew }), { min: 1 }),
       true,
     ],
     [
       'Herman, in play, is in the victory display',
-      { kind: 'cardIn', code: herman, places: ['victoryDisplay'] },
+      thereAre(eachInZone(victoryDisplay, { code: herman }), { min: 1 }),
       false,
     ],
-    ['Herman is in play', { kind: 'cardIn', code: herman, places: ['inPlay'] }, true],
+    ['Herman is in play', thereAre(eachInPlay({ code: herman }), { min: 1 }), true],
     [
       'the Masked Hunter is set aside',
-      { kind: 'cardIn', code: maskedHunter, places: ['setAside'] },
+      thereAre(eachInZone(setAside, { code: maskedHunter }), { min: 1 }),
       true,
     ],
     [
-      'the Masked Hunter, set aside, is in a scenario deck',
-      { kind: 'cardIn', code: maskedHunter, places: ['scenarioDeck'] },
+      'the Masked Hunter, set aside, is in the Cultist deck',
+      thereAre(eachInZone(scenarioDeck('cultist'), { code: maskedHunter }), { min: 1 }),
       false,
     ],
     [
-      'the Ghoul Priest, not in the game, is anywhere',
-      {
-        kind: 'cardIn',
-        code: cardCode('ghoul_priest'),
-        places: ['victoryDisplay', 'inPlay', 'setAside'],
-      },
+      'the Ghoul Priest, not in the game, is in the victory display or set aside',
+      thereAre(eachInZone([victoryDisplay, setAside], { code: cardCode('ghoul_priest') }), {
+        min: 1,
+      }),
       false,
     ],
-    ['the current agenda is agenda 1', { kind: 'currentAgenda', agendas: [firstAgenda] }, true],
+    [
+      'the current agenda is agenda 1',
+      { kind: 'currentCard', deck: 'agenda', codes: [firstAgenda] },
+      true,
+    ],
     [
       'the current agenda is agenda 2',
-      { kind: 'currentAgenda', agendas: [cardCode('time_grows_short')] },
+      { kind: 'currentCard', deck: 'agenda', codes: [cardCode('time_grows_short')] },
       false,
     ],
     [
@@ -723,38 +736,62 @@ describe('proposeResolution with steps that read the game', () => {
       {
         kind: 'anyOf',
         conditions: [
-          { kind: 'currentAgenda', agendas: [cardCode('time_grows_short')] },
-          { kind: 'cardIn', code: drew, places: ['victoryDisplay'] },
+          { kind: 'currentCard', deck: 'agenda', codes: [cardCode('time_grows_short')] },
+          thereAre(eachInZone(victoryDisplay, { code: drew }), { min: 1 }),
         ],
       },
       true,
     ],
-  ] as const)('takes the "then" steps only when %s', (_, condition, holds) => {
-    const proposal = proposalFor({
-      kind: 'when',
-      condition,
-      then: [flagGhoulPriestDead],
-      otherwise: [{ kind: 'addChaosToken', token: 'cultist' }],
+  ] satisfies [string, AbilityCondition, boolean][])(
+    'takes the "then" steps only when %s',
+    (_, condition, holds) => {
+      const proposal = proposalFor({
+        kind: 'when',
+        condition,
+        then: [flagGhoulPriestDead],
+        otherwise: [{ kind: 'addChaosToken', token: 'cultist' }],
+      });
+
+      expect(proposal).toEqual([
+        holds
+          ? {
+              kind: 'command',
+              command: {
+                type: 'RecordStory',
+                key: 'ghoulPriestStillAlive',
+                value: { kind: 'flag', value: false },
+              },
+            }
+          : { kind: 'command', command: { type: 'AddChaosToken', token: 'cultist' } },
+      ]);
+    },
+  );
+
+  it('finds no candidate for a picked reference, which only a window picks from', () => {
+    const { context, state } = masksTable
+      .withLocation(instanceId('cellar'), blankLocation('cellar'), { revealed: true, clues: 2 })
+      .start();
+
+    const proposal = campaign.proposeResolution(context, stateAfter(context, state, endWith(r1)), {
+      byId: {
+        [r1]: [
+          {
+            kind: 'when',
+            condition: { kind: 'countOf', of: locationWithMost('clue'), min: 1 },
+            then: [flagGhoulPriestDead],
+          },
+        ],
+      },
+      none: [],
     });
 
-    expect(proposal).toEqual([
-      holds
-        ? {
-            kind: 'command',
-            command: {
-              type: 'RecordStory',
-              key: 'ghoulPriestStillAlive',
-              value: { kind: 'flag', value: false },
-            },
-          }
-        : { kind: 'command', command: { type: 'AddChaosToken', token: 'cultist' } },
-    ]);
+    expect(proposal).toEqual([]);
   });
 
   it('proposes nothing for a condition that fails without "otherwise" steps', () => {
     const proposal = proposalFor({
       kind: 'when',
-      condition: { kind: 'cardIn', code: herman, places: ['victoryDisplay'] },
+      condition: thereAre(eachInZone(victoryDisplay, { code: herman }), { min: 1 }),
       then: [flagGhoulPriestDead],
     });
 
@@ -764,7 +801,13 @@ describe('proposeResolution with steps that read the game', () => {
   it('records the names of the cards whose condition holds, in step order', () => {
     const gotAway = [drew, herman, maskedHunter].map((code) => ({
       code,
-      when: { kind: 'cardIn', code, places: ['inPlay', 'setAside'] } as const,
+      when: {
+        kind: 'anyOf',
+        conditions: [
+          thereAre(eachInPlay({ code }), { min: 1 }),
+          thereAre(eachInZone(setAside, { code }), { min: 1 }),
+        ],
+      } satisfies AbilityCondition,
     }));
 
     const proposal = proposalFor({
@@ -789,7 +832,9 @@ describe('proposeResolution with steps that read the game', () => {
     const proposal = proposalFor({
       kind: 'recordNames',
       key: 'cultistsWeInterrogated',
-      names: [{ code: herman, when: { kind: 'cardIn', code: herman, places: ['victoryDisplay'] } }],
+      names: [
+        { code: herman, when: thereAre(eachInZone(victoryDisplay, { code: herman }), { min: 1 }) },
+      ],
     });
 
     expect(proposal).toEqual([]);
@@ -801,6 +846,8 @@ describe('proposeResolution with steps that read the cards beneath the act', () 
   const act = instanceId('act');
   const eliteSuspect = blankEnemy('elite_suspect', { traits: [elite] });
   const plainSuspect = blankEnemy('plain_suspect');
+  /** Beneath the act, by its only copy, which a resolution still finds once the act left the game. */
+  const beneathTheAct = beneath(onlyCopy(cardCode('act')));
   /**
    * The act is current, ending the game in R1 once it advances, with two Elite suspects and a
    * plain one face up beneath it and an Elite one face down, which nothing counts; one more Elite
@@ -849,14 +896,19 @@ describe('proposeResolution with steps that read the cards beneath the act', () 
   const scoured = { kind: 'record', key: 'scoured', value: { kind: 'flag', value: true } } as const;
 
   it.each([
-    { places: ['beneathAct'], atLeast: 2, holds: true },
-    { places: ['beneathAct'], atLeast: 3, holds: false },
-    { places: ['beneathAct', 'victoryDisplay'], atLeast: 3, holds: true },
-    { places: ['victoryDisplay'], atLeast: 2, holds: false },
-  ] as const)('counts $atLeast Elite cards in $places: $holds', ({ places, atLeast, holds }) => {
+    { where: 'beneath the act', zones: [beneathTheAct], atLeast: 2, holds: true },
+    { where: 'beneath the act', zones: [beneathTheAct], atLeast: 3, holds: false },
+    {
+      where: 'beneath the act and in the victory display',
+      zones: [beneathTheAct, victoryDisplay],
+      atLeast: 3,
+      holds: true,
+    },
+    { where: 'in the victory display', zones: [victoryDisplay], atLeast: 2, holds: false },
+  ])('counts $atLeast Elite cards $where: $holds', ({ zones, atLeast, holds }) => {
     const proposal = proposalFor({
       kind: 'when',
-      condition: { kind: 'cardsIn', trait: elite, places, atLeast },
+      condition: thereAre(eachInZone(zones, { trait: elite }), { min: atLeast }),
       then: [scoured],
     });
 
@@ -872,7 +924,7 @@ describe('proposeResolution with steps that read the cards beneath the act', () 
         [r1]: [
           {
             kind: 'when',
-            condition: { kind: 'cardIn', code: cardCode('act'), places: ['outOfGame'] },
+            condition: thereAre(eachInZone(outOfGame, { code: cardCode('act') }), { min: 1 }),
             then: [scoured],
           },
           {
@@ -880,7 +932,7 @@ describe('proposeResolution with steps that read the cards beneath the act', () 
             to: 'each',
             bonus: 0,
             victoryDisplay: false,
-            perCardIn: ['beneathAct'],
+            perCardIn: eachInZone(beneathTheAct),
           },
         ],
       },
@@ -924,7 +976,7 @@ describe('proposeResolution with steps that read the cards beneath the act', () 
       to: 'each',
       bonus: 1,
       victoryDisplay: false,
-      perCardIn: ['beneathAct'],
+      perCardIn: eachInZone(beneathTheAct),
     });
 
     expect(proposal).toEqual([

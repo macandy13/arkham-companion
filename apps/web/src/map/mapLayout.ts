@@ -20,7 +20,7 @@ export interface Point {
  * so card art can fill it. Portrait cards (locations) stand `short` wide; landscape cards (the
  * agenda and act) lie `long` wide.
  */
-export const CARD = { short: 150, long: 210 } as const;
+const CARD = { short: 150, long: 210 } as const;
 
 /**
  * Size of a location tile, a portrait card, and the gap between tiles, in SVG user units. The
@@ -310,7 +310,7 @@ export function tileAt(cells: Record<InstanceId, GridCell>, point: Point): Insta
  * A piece standing on a tile and the centre it stands on, from the tile's top left corner
  * (`piecesOnTile`). An `engaged` enemy stands right after the investigator it is engaged with.
  */
-export type PlacedPiece = UnplacedPiece & { centre: Point };
+type PlacedPiece = UnplacedPiece & { centre: Point };
 
 /** A piece on a tile before it is placed: an investigator's pawn, or an enemy and whether it is engaged. */
 type UnplacedPiece = { investigator: InvestigatorView } | { enemy: MapEnemyView; engaged: boolean };

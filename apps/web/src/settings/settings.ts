@@ -3,7 +3,7 @@ import { DEFAULT_RELIANCE, RELIANCES, type Reliance } from '@arkham/engine';
 
 /** UI languages that have translation strings (`i18n/index.ts`). */
 export const UI_LANGUAGES = ['en', 'de'] as const;
-export type UiLanguage = (typeof UI_LANGUAGES)[number];
+type UiLanguage = (typeof UI_LANGUAGES)[number];
 
 /**
  * The table the app lies on (MD.7, product.md "Design language"): a playmat with its own table
@@ -35,7 +35,7 @@ export type TokenSet = (typeof TOKEN_SETS)[number];
  * turned into tentacles with a glowing outline (`OrnamentLine`).
  */
 export const CARD_THEMES = ['exact', 'nightAndBrass', 'eldritch', 'pictures'] as const;
-export type CardTheme = (typeof CARD_THEMES)[number];
+type CardTheme = (typeof CARD_THEMES)[number];
 
 /**
  * What an enemy's token on the map shows: the figure from its card's picture (`art`, the initial
@@ -43,7 +43,7 @@ export type CardTheme = (typeof CARD_THEMES)[number];
  * apart at a glance.
  */
 export const ENEMY_TOKEN_FACES = ['art', 'initials'] as const;
-export type EnemyTokenFace = (typeof ENEMY_TOKEN_FACES)[number];
+type EnemyTokenFace = (typeof ENEMY_TOKEN_FACES)[number];
 
 /**
  * Who draws the chaos tokens in a skill test: the app (`app`, its "Draw a token" button) or the
@@ -51,7 +51,7 @@ export type EnemyTokenFace = (typeof ENEMY_TOKEN_FACES)[number];
  * enjoy the physical draw, so they can hide the app's.
  */
 export const CHAOS_DRAWS = ['app', 'table'] as const;
-export type ChaosDraw = (typeof CHAOS_DRAWS)[number];
+type ChaosDraw = (typeof CHAOS_DRAWS)[number];
 
 /** What the card theme replaced: the old "Card pictures" setting, read once into the new one. */
 const CARD_LOOK_THEMES: Readonly<Record<string, CardTheme>> = {

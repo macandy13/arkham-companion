@@ -18,8 +18,7 @@
  * agenda 1's reverse side putting
  * The Masked Hunter into play, an Acolyte's doom as it enters play, Locked
  * Door, and the 4 cards Daisy discards from her hand for Herman Collins'
- * parley. The players count actions themselves,
- * so the script keeps each turn to 3 without touching the counter.
+ * parley. The engine counts off each action, so each turn takes at most 3.
  */
 import { describe, expect, it } from 'vitest';
 import {

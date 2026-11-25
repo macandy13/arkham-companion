@@ -377,6 +377,26 @@ describe('the action that provokes attacks of opportunity', () => {
     expect(answered.meta.queue).toBeUndefined();
   });
 
+  it('counts off the move once, before the attack, and not again when it resumes', () => {
+    const { context, state } = ghoulOnAlice.withTurnOf(alice).start();
+
+    const asked = stateAfter(context, state, moveToCellar);
+    const answered = stateAfter(context, asked, answer(ghoulAttack, 'attack'));
+
+    expect(investigatorOf(state, alice).actionsRemaining).toBe(3);
+    expect(investigatorOf(asked, alice).actionsRemaining).toBe(2);
+    expect(investigatorOf(answered, alice).actionsRemaining).toBe(2);
+  });
+
+  it('lets alice make a free move, as a card grants it, without an attack or an action', () => {
+    const { context, state } = ghoulOnAlice.withTurnOf(alice).start();
+
+    const after = stateAfter(context, state, { ...moveToCellar, asAction: 'free' });
+
+    expect(after.pending).toEqual([]);
+    expect(investigatorOf(after, alice)).toMatchObject({ locationId: cellar, actionsRemaining: 3 });
+  });
+
   it('moves after a skipped attack too', () => {
     const { context, state } = ghoulOnAlice.withTurnOf(alice).start();
 

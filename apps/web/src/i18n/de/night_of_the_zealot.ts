@@ -55,6 +55,11 @@ export const nightOfTheZealotTexts = {
         damage: '1 Schaden heilen',
         horror: '1 Horror heilen',
       },
+      litaSacrifice: {
+        prompt: '{{card}}: Kontrollierst du Lita Chantler?',
+        sacrifice: 'Ja: Wirf Lita Umôrdhoth vor',
+        noLita: 'Nein',
+      },
       umordhothsWrath: {
         prompt: '{{card}}: Für diesen Punkt musst du entweder',
         discard: 'Eine Karte aus deiner Hand wählen und ablegen',

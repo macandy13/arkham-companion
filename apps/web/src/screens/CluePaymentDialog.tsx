@@ -57,7 +57,7 @@ export function evenClueSplit(
  * - Split evenly (`evenClueSplit`), and Pay, its one primary, once they are `required`.
  * Escape and its × close it, paying nothing. On a phone it is the shell's sheet.
  */
-export function CluePaymentDialog({
+function CluePaymentDialog({
   card,
   payers,
   required,

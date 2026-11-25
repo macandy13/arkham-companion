@@ -65,7 +65,15 @@ import {
   type MapId,
   type ResolutionId,
 } from './ids';
-import { cardsInZone, cardsOfType, currentCard, locationOfCard } from './lookup';
+import {
+  cardNameOf,
+  cardNamesIn,
+  cardsInZone,
+  cardsOfType,
+  currentCard,
+  locationOfCard,
+  requireCard,
+} from './lookup';
 import { mapLocations, type Edge, type GameMap, type GridCell } from './map';
 import { attacksStillDue } from './phases';
 import {
@@ -734,7 +742,7 @@ export class BoardView {
    * nobody for a massive enemy, which never enters a threat area).
    */
   enemyCardEffects(enemy: InstanceId): EnemyCardEffectsView {
-    const card = requireCard(this.state, enemy);
+    const card = requireCard(this.state.cards, enemy);
     const location = locationOfCard(this.state, card);
     const here = this.state.investigators.filter(
       (inv) => inv.status === 'active' && location !== undefined && inv.locationId === location,
@@ -807,7 +815,7 @@ export class BoardView {
       )
       .map((offered) => ({
         ...offered,
-        card: nameOf(this.ctx, requireCard(this.state, offered.cardId)),
+        card: cardNameOf(this.ctx, requireCard(this.state.cards, offered.cardId)),
       }));
   }
 
@@ -829,7 +837,7 @@ export class BoardView {
   get locations(): readonly LocationView[] {
     return Object.keys(this.state.board.maps).flatMap((id) =>
       mapLocations(this.state, id as MapId).map((locationId) =>
-        locationView(this.ctx, this.state, requireCard(this.state, locationId)),
+        locationView(this.ctx, this.state, requireCard(this.state.cards, locationId)),
       ),
     );
   }
@@ -858,7 +866,7 @@ export class BoardView {
   get encounter(): EncounterPilesView {
     const cardsIn = (zone: Zone) =>
       cardsInZone(this.state, zone).map((id) =>
-        encounterCardView(this.ctx, requireCard(this.state, id)),
+        encounterCardView(this.ctx, requireCard(this.state.cards, id)),
       );
     return {
       deckCount: cardsInZone(this.state, encounterDeck).length,
@@ -884,7 +892,7 @@ export class BoardView {
   get resolving(): ResolvingCardView | undefined {
     const [id] = cardsInZone(this.state, resolvingZone);
     if (id === undefined) return undefined;
-    const card = requireCard(this.state, id);
+    const card = requireCard(this.state.cards, id);
     const printed = cardStats(this.ctx.cards, card.code).keywords ?? [];
     const surged = card.gainedSurge && !printed.some(({ name }) => name === 'surge');
     const placement = queuedPlacementOf(this.state, id);
@@ -897,12 +905,12 @@ export class BoardView {
 
   /** The card `id` as the encounter piles show it, wherever it is now. */
   encounterCard(id: InstanceId): EncounterCardView {
-    return encounterCardView(this.ctx, requireCard(this.state, id));
+    return encounterCardView(this.ctx, requireCard(this.state.cards, id));
   }
 
   /** Where the card `id` is now (`CardPlaceView`), e.g. where a drawn encounter card went. */
   placeOf(id: InstanceId): CardPlaceView {
-    const { zone } = requireCard(this.state, id);
+    const { zone } = requireCard(this.state.cards, id);
     switch (zone.kind) {
       case 'encounterDeck':
       case 'encounterDiscard':
@@ -917,11 +925,14 @@ export class BoardView {
       case 'atLocation':
         return {
           kind: 'atLocation',
-          location: nameOf(this.ctx, requireCard(this.state, zone.locationId)),
+          location: cardNameOf(this.ctx, requireCard(this.state.cards, zone.locationId)),
         };
       case 'attachedTo':
       case 'beneath':
-        return { kind: zone.kind, card: nameOf(this.ctx, requireCard(this.state, zone.hostId)) };
+        return {
+          kind: zone.kind,
+          card: cardNameOf(this.ctx, requireCard(this.state.cards, zone.hostId)),
+        };
       case 'scenarioDeck':
       case 'outOfGame':
       case 'agendaDeck':
@@ -1032,7 +1043,7 @@ export class BoardView {
    * window needs them.
    */
   enemyStats(enemy: InstanceId): EnemyStatsView {
-    const card = requireCard(this.state, enemy);
+    const card = requireCard(this.state.cards, enemy);
     const stats = cardStats(this.ctx.cards, card.code);
     const { damage = 0, horror = 0, imageSrc, encounterCode, victory } = stats;
     return {
@@ -1136,7 +1147,7 @@ export class BoardView {
   /** The one location in play `ref` picks (a bare `InstanceId` is `byId(id)`); fails with the board attached if none or several match. */
   location(ref: CardRef): LocationView {
     const matcher = cardMatcher(ref);
-    const inPlay = this.locations.map((location) => requireCard(this.state, location.id));
+    const inPlay = this.locations.map((location) => requireCard(this.state.cards, location.id));
     const matches = matchingCards(this.ctx, inPlay, matcher);
     const [only, ...others] = matches;
     if (!only) throw this.error(`no location ${describeMatcher(matcher)} in play`);
@@ -1190,7 +1201,7 @@ export class BoardView {
 
   /** The printed names of the cards in `zone`, top first. */
   namesIn(zone: Zone): CardName[] {
-    return namesIn(this.ctx, this.state, zone);
+    return cardNamesIn(this.ctx, this.state, zone);
   }
 
   /**
@@ -1200,13 +1211,13 @@ export class BoardView {
    */
   cardsIn(zone: Zone): readonly CardFaceView[] {
     return cardsInZone(this.state, zone).map((id) =>
-      cardFaceOf(this.ctx, requireCard(this.state, id)),
+      cardFaceOf(this.ctx, requireCard(this.state.cards, id)),
     );
   }
 
   /** The card `id` to read as its face (`CardFaceView`), such as an enemy its details show beside their page. */
   cardFace(id: InstanceId): CardFaceView {
-    return cardFaceOf(this.ctx, requireCard(this.state, id));
+    return cardFaceOf(this.ctx, requireCard(this.state.cards, id));
   }
 
   private error(message: string): TableError {
@@ -1233,16 +1244,6 @@ function ids(cards: readonly CardInstance[]): string {
   return cards.map((card) => card.id).join(', ');
 }
 
-function requireCard(state: GameState, id: InstanceId): CardInstance {
-  const card = state.cards[id];
-  if (!card) throw new RangeError(`the state has no card ${id}`);
-  return card;
-}
-
-function nameOf(ctx: EngineContext, card: CardInstance): CardName {
-  return cardName(cardStats(ctx.cards, card.code).name);
-}
-
 function cardFaceOf(ctx: EngineContext, card: CardInstance): CardFaceView {
   const { typeCode, traits, imageSrc, backImageSrc, encounterCode } = cardStats(
     ctx.cards,
@@ -1250,7 +1251,7 @@ function cardFaceOf(ctx: EngineContext, card: CardInstance): CardFaceView {
   );
   return {
     id: card.id,
-    name: nameOf(ctx, card),
+    name: cardNameOf(ctx, card),
     type: typeCode,
     traits,
     ...(imageSrc === undefined ? {} : { image: imageSrc }),
@@ -1259,16 +1260,12 @@ function cardFaceOf(ctx: EngineContext, card: CardInstance): CardFaceView {
   };
 }
 
-function namesIn(ctx: EngineContext, state: GameState, zone: Zone): CardName[] {
-  return cardsInZone(state, zone).map((id) => nameOf(ctx, requireCard(state, id)));
-}
-
 function nameOfId(
   ctx: EngineContext,
   state: GameState,
   id: InstanceId | undefined,
 ): CardName | undefined {
-  return id === undefined ? undefined : nameOf(ctx, requireCard(state, id));
+  return id === undefined ? undefined : cardNameOf(ctx, requireCard(state.cards, id));
 }
 
 function investigatorView(
@@ -1298,11 +1295,11 @@ function investigatorView(
     ...(state.meta.turnsTaken.includes(investigator.id) ? { turnTaken: true as const } : {}),
     ...listIfAny(
       'threatArea',
-      namesIn(ctx, state, { kind: 'threatArea', investigatorId: investigator.id }),
+      cardNamesIn(ctx, state, { kind: 'threatArea', investigatorId: investigator.id }),
     ),
     ...listIfAny(
       'controls',
-      namesIn(ctx, state, { kind: 'playArea', investigatorId: investigator.id }),
+      cardNamesIn(ctx, state, { kind: 'playArea', investigatorId: investigator.id }),
     ),
     ...recordIfAny('forbidden', forbiddenFor(ctx, state, investigator.id)),
   };
@@ -1325,14 +1322,14 @@ function enemyView(ctx: EngineContext, state: GameState, enemy: CardInstance): E
   const at = nameOfId(ctx, state, locationOfCard(state, enemy));
   const health = enemyHealth(cardStats(ctx.cards, enemy.code), state);
   return {
-    name: nameOf(ctx, enemy),
+    name: cardNameOf(ctx, enemy),
     ...(at === undefined ? {} : { at }),
     ...(enemy.zone.kind === 'engaged' ? { engagedWith: enemy.zone.investigatorId } : {}),
     ...(health === undefined ? {} : { health }),
     ...(enemy.tokens.damage ? { damage: enemy.tokens.damage } : {}),
     ...(enemy.tokens.doom ? { doom: enemy.tokens.doom } : {}),
     ...(enemy.exhausted ? { exhausted: true as const } : {}),
-    ...listIfAny('attachments', namesIn(ctx, state, { kind: 'attachedTo', hostId: enemy.id })),
+    ...listIfAny('attachments', cardNamesIn(ctx, state, { kind: 'attachedTo', hostId: enemy.id })),
   };
 }
 
@@ -1346,11 +1343,11 @@ function locationView(ctx: EngineContext, state: GameState, location: CardInstan
   const image = location.faceUp ? imageSrc : backImageSrc;
   const shownSymbol = printedSymbols(stats, location.faceUp ? 'revealed' : 'unrevealed').symbol;
   const facedown = cardsInZone(state, { kind: 'beneath', hostId: location.id }).filter(
-    (id) => !requireCard(state, id).faceUp,
+    (id) => !requireCard(state.cards, id).faceUp,
   ).length;
   return {
     id: location.id,
-    name: nameOf(ctx, location),
+    name: cardNameOf(ctx, location),
     map: mapOf(location),
     ...(image === undefined ? {} : { image }),
     ...(shownSymbol === undefined ? {} : { symbol: shownSymbol }),
@@ -1370,8 +1367,11 @@ function locationView(ctx: EngineContext, state: GameState, location: CardInstan
       'investigators',
       present.map((inv) => inv.id),
     ),
-    ...listIfAny('cards', namesIn(ctx, state, { kind: 'atLocation', locationId: location.id })),
-    ...listIfAny('attachments', namesIn(ctx, state, { kind: 'attachedTo', hostId: location.id })),
+    ...listIfAny('cards', cardNamesIn(ctx, state, { kind: 'atLocation', locationId: location.id })),
+    ...listIfAny(
+      'attachments',
+      cardNamesIn(ctx, state, { kind: 'attachedTo', hostId: location.id }),
+    ),
     ...(facedown > 0 ? { facedownBeneath: facedown } : {}),
     ...listIfAny(
       'forbidden',
@@ -1388,7 +1388,9 @@ function mapView(ctx: EngineContext, state: GameState, id: MapId, map: GameMap):
     id,
     name,
     visible,
-    locations: onMap.map((location) => locationView(ctx, state, requireCard(state, location))),
+    locations: onMap.map((location) =>
+      locationView(ctx, state, requireCard(state.cards, location)),
+    ),
     cells: Object.fromEntries(
       onMap.flatMap((location) => {
         const cell = layout[location];
@@ -1428,7 +1430,7 @@ function agendaView(ctx: EngineContext, state: GameState): AgendaView | undefine
   const threshold = agendaThreshold(ctx, state, agenda);
   return {
     id: agenda.id,
-    name: nameOf(ctx, agenda),
+    name: cardNameOf(ctx, agenda),
     ...(imageSrc === undefined ? {} : { image: imageSrc }),
     ...(encounterCode === undefined ? {} : { encounterSet: encounterCode }),
     doom: agenda.tokens.doom ?? 0,
@@ -1443,7 +1445,7 @@ function actView(ctx: EngineContext, state: GameState): ActView | undefined {
   const advance = actAdvance(ctx, state, stats);
   return {
     id: act.id,
-    name: nameOf(ctx, act),
+    name: cardNameOf(ctx, act),
     ...(stats.imageSrc === undefined ? {} : { image: stats.imageSrc }),
     ...(stats.encounterCode === undefined ? {} : { encounterSet: stats.encounterCode }),
     clues: act.tokens.clue ?? 0,
@@ -1481,7 +1483,7 @@ function decisionView(ctx: EngineContext, state: GameState, decision: Decision):
   const about = nameOfId(ctx, state, decision.subject);
   const [resolving] = cardsInZone(state, resolvingZone);
   const cardId = decision.subject ?? resolving;
-  const card = cardId === undefined ? undefined : cardFaceOf(ctx, requireCard(state, cardId));
+  const card = cardId === undefined ? undefined : cardFaceOf(ctx, requireCard(state.cards, cardId));
   const waiting = waitingCards(ctx, state, decision);
   const followUps = Object.fromEntries(
     decision.options.flatMap((option) => {
@@ -1598,7 +1600,7 @@ function waitingCards(ctx: EngineContext, state: GameState, decision: Decision):
         : [],
     )
     .slice(0, MAX_WAITING_CARDS)
-    .map((subject) => cardFaceOf(ctx, requireCard(state, subject)));
+    .map((subject) => cardFaceOf(ctx, requireCard(state.cards, subject)));
 }
 
 /** The action held in the queue until the attacks of opportunity it provoked are answered. */
@@ -1655,7 +1657,7 @@ function encounterCardView(ctx: EngineContext, card: CardInstance): EncounterCar
 
 function dueAttacks(ctx: EngineContext, state: GameState): DueAttackView[] {
   return attacksStillDue(ctx, state).map((attack) => ({
-    enemy: nameOf(ctx, requireCard(state, attack.enemyId)),
+    enemy: cardNameOf(ctx, requireCard(state.cards, attack.enemyId)),
     investigator: attack.investigatorId,
   }));
 }

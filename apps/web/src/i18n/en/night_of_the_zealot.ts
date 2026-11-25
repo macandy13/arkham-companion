@@ -55,6 +55,11 @@ export const nightOfTheZealotTexts = {
         damage: 'Heal 1 damage',
         horror: 'Heal 1 horror',
       },
+      litaSacrifice: {
+        prompt: '{{card}}: do you control Lita Chantler?',
+        sacrifice: 'Yes: throw Lita to Umôrdhoth',
+        noLita: 'No',
+      },
       umordhothsWrath: {
         prompt: '{{card}}: for this point you must either',
         discard: 'Choose and discard a card from your hand',

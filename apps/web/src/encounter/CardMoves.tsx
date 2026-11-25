@@ -2,11 +2,11 @@ import { useTranslation } from 'react-i18next';
 import type { BoardView, EncounterCardView, InvestigatorId } from '@arkham/engine';
 import { assertNever } from '@arkham/util';
 import type { GameActions } from '../state/gameActions';
-import { cardMoves, type CardMove } from './cardMoves';
+import { cardMoves, type CardMove, pileAdjustment } from './cardMoves';
 
 /**
  * A button per move that fits `card` (`cardMoves`), for the players to put it where a revelation
- * the engine left to them says: each one step (`GameActions.moveEncounterCard`), so one undo takes
+ * the engine left to them says: each one step (`GameActions.correct`), so one undo takes
  * it back. Spawn hands the enemy to `onSpawn` instead, which lets the players tap the location on
  * the map, where the engine spawns and engages it by the rules. Like the other moves, it carries
  * out a card effect the engine left to the players.
@@ -52,7 +52,9 @@ export function CardMoves({
               type="button"
               disabled={busy}
               onClick={() =>
-                move.to === 'spawn' ? onSpawn(card) : void actions.moveEncounterCard(card.id, move)
+                move.to === 'spawn'
+                  ? onSpawn(card)
+                  : void actions.correct(pileAdjustment(card.id, move))
               }
             >
               {label(move)}

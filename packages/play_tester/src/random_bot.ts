@@ -121,7 +121,7 @@ function decisionAnswers(table: PlayTable): Step[] {
 
 /**
  * The steps of `investigator`'s turn: the basic actions, moves, enemy and card actions, those
- * that cost actions only while they have enough left (`actionCostOf`), as players count them.
+ * that cost actions only while they have enough left (`actionCostOf`), as the engine counts them off.
  */
 function turnSteps(table: PlayTable, investigator: InvestigatorView): Step[] {
   const { board } = table;

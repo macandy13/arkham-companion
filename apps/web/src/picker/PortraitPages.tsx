@@ -7,7 +7,7 @@ import { seatNumber } from './pickerLogic';
  * Portraits on one page of the picker: two rows of five. The stylesheet lays the list out in the
  * same pages (`--picker-columns` and the `10n + …` rows in `picker.css`), so change both together.
  */
-export const PORTRAITS_PER_PAGE = 10;
+const PORTRAITS_PER_PAGE = 10;
 
 interface PortraitPagesProps {
   /** The investigators to show, already filtered and in order (`pickerList`). */

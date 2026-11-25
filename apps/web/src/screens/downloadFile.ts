@@ -7,7 +7,7 @@ import type { AppState } from '../state/appStore';
  * Offers `text` to the user as a file download. Uses a temporary object URL and anchor click
  * because browsers have no direct "save file" API that works on tablets as well.
  */
-export function downloadTextFile(fileName: string, text: string, mimeType = 'application/json') {
+function downloadTextFile(fileName: string, text: string, mimeType = 'application/json') {
   const url = URL.createObjectURL(new Blob([text], { type: mimeType }));
   const link = document.createElement('a');
   link.href = url;

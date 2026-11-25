@@ -9,7 +9,7 @@
  * check at the table asserted where they happen.
  *
  * Skill tests are resolved at the table: actions pass unless the script says otherwise. The
- * players count actions off themselves and resolve by hand what the engine leaves to them
+ * engine counts off each action; the players resolve by hand what the engine leaves to them
  * (`spreadingFlamesCardDefs` lists it): the comments name each such step where it comes up, and the
  * script applies only those that change what it asserts.
  */

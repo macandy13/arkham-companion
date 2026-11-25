@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
+  atLocation,
+  blankEnemy,
   blankLocation,
   blankTreachery,
   instanceId,
@@ -58,43 +60,84 @@ describe('actionCost', () => {
     expect(aliceFrozen().board.actionCost(bob, 'move')).toBe(1);
   });
 
-  it.each<{ first: BasicAction; then: BasicAction; cost: number }>([
-    { first: 'fight', then: 'move', cost: 1 },
-    { first: 'move', then: 'evade', cost: 1 },
-    { first: 'investigate', then: 'fight', cost: 2 },
-  ])(
-    'costs alice $cost for a $then after counting off a $first this round',
-    ({ first, then, cost }) => {
-      const table = aliceFrozen();
+  describe('as alice takes actions, the engine counts them off', () => {
+    const study = instanceId('study');
+    const ghoul = instanceId('ghoul');
+    /** `aliceFrozen` with the study next to the hall. */
+    const nextToStudy = () =>
+      newGame()
+        .withLocation(hall, blankLocation('hall'), { revealed: true })
+        .withLocation(study, blankLocation('study'), { revealed: true })
+        .withConnection(hall, study)
+        .withInvestigator(alice, { locationId: hall })
+        .withInvestigator(bob, { locationId: hall })
+        .withCard(instanceId('frozen'), frozenCard, threatAreaOf(alice))
+        .withTurnOf(alice);
+    const aliceFrozenNextToStudy = () => PlayTable.start(nextToStudy());
 
-      table.spendActionFor(alice, first);
+    it("counts off 2 actions for alice's first move and records it for the round", () => {
+      const table = aliceFrozenNextToStudy();
 
-      expect(table.board.actionCost(alice, then)).toBe(cost);
-    },
-  );
+      table.moveTo(alice, study);
 
-  it("counts off 2 actions for alice's first fight and records it for the round", () => {
-    const table = aliceFrozen();
+      expect(table.board.investigator(alice).actions).toBe(1);
+      expect(table.state.meta.actionsTaken).toEqual([{ investigatorId: alice, action: 'move' }]);
+    });
 
-    table.spendActionFor(alice, 'fight');
+    it('makes a fight after the first move cost alice the usual 1', () => {
+      const table = PlayTable.start(
+        nextToStudy().withCard(ghoul, blankEnemy('ghoul'), atLocation(study)),
+      );
+      table.moveTo(alice, study);
 
-    expect(table.board.investigator(alice).actions).toBe(1);
-    expect(table.state.meta.actionsTaken).toEqual([{ investigatorId: alice, action: 'fight' }]);
-  });
+      table.fight(alice, ghoul);
 
-  it("raises alice's first move again once the round has ended", () => {
-    const table = aliceFrozen();
-    table.spendActionFor(alice, 'move');
-    table.endTurn(alice);
-    table.startTurn(bob);
-    table.endTurn(bob);
+      expect(table.board.investigator(alice).actions).toBe(0);
+    });
 
-    // The enemy phase, then the upkeep phase, whose end ends the round.
-    table.nextPhase();
-    table.nextPhase();
+    it('leaves the first fight raised after an investigation, which Frozen in Fear does not name', () => {
+      const table = aliceFrozenNextToStudy();
 
-    expect(table.state.meta.actionsTaken).toBeUndefined();
-    expect(table.board.actionCost(alice, 'move')).toBe(2);
+      table.investigate(alice);
+
+      expect(table.board.actionCost(alice, 'fight')).toBe(2);
+    });
+
+    it('charges a free first move only its additional action, and counts it as the first', () => {
+      const table = aliceFrozenNextToStudy();
+
+      table.moveTo(alice, study, { free: true });
+
+      expect(table.board.investigator(alice).actions).toBe(2);
+      expect(table.board.actionCost(alice, 'fight')).toBe(1);
+    });
+
+    it('refuses a first move that costs 2 when alice has only 1 action left', () => {
+      const table = aliceFrozenNextToStudy();
+      table.spendAction(alice, 2);
+
+      expect(rejectionOf(() => table.moveTo(alice, study))).toEqual({
+        code: 'invalidActionAdjustment',
+        investigatorId: alice,
+        delta: -2,
+        actionsRemaining: 1,
+      });
+    });
+
+    it("raises alice's first move again once the round has ended", () => {
+      const table = aliceFrozenNextToStudy();
+      table.moveTo(alice, study);
+      table.endTurn(alice);
+      table.startTurn(bob);
+      table.endTurn(bob);
+
+      // The enemy phase, then the upkeep phase, whose end ends the round.
+      table.nextPhase();
+      table.nextPhase();
+
+      expect(table.state.meta.actionsTaken).toBeUndefined();
+      expect(table.board.actionCost(alice, 'move')).toBe(2);
+    });
   });
 
   it("adds the cost of each copy: two frozen cards make alice's first move cost 3", () => {
@@ -118,27 +161,10 @@ describe('actionCost', () => {
         .withTurnOf(alice),
     );
 
-    table.spendActionFor(alice, 'investigate');
+    table.investigate(alice);
 
+    expect(table.board.investigator(alice).actions).toBe(1);
     expect(table.board.actionCost(alice, 'investigate')).toBe(2);
-  });
-
-  it('charges a free first move only its additional action, and counts it as the first', () => {
-    const table = aliceFrozen();
-
-    table.spendActionFor(alice, 'move', { free: true });
-
-    expect(table.board.investigator(alice).actions).toBe(2);
-    expect(table.board.actionCost(alice, 'fight')).toBe(1);
-  });
-
-  it('records a free move of bob, who is not frozen, at no cost', () => {
-    const table = aliceFrozen();
-
-    table.spendActionFor(bob, 'move', { free: true });
-
-    expect(table.board.investigator(bob).actions).toBe(3);
-    expect(table.state.meta.actionsTaken).toEqual([{ investigatorId: bob, action: 'move' }]);
   });
 
   it('refuses an action named on a count upwards, which would use up the first', () => {
@@ -149,17 +175,5 @@ describe('actionCost', () => {
         table.play({ type: 'AdjustActions', investigatorId: alice, delta: 1, for: 'move' }),
       ),
     ).toMatchObject({ code: 'invalidActionAdjustment', delta: 1 });
-  });
-
-  it('refuses a first fight that costs 2 when alice has only 1 action left', () => {
-    const table = aliceFrozen();
-    table.spendAction(alice, 2);
-
-    expect(rejectionOf(() => table.spendActionFor(alice, 'fight'))).toEqual({
-      code: 'invalidActionAdjustment',
-      investigatorId: alice,
-      delta: -2,
-      actionsRemaining: 1,
-    });
   });
 });

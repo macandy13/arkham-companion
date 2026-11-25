@@ -11,7 +11,7 @@ export interface FileDiff {
 }
 
 /** A line of a hunk: context and added lines carry their head line number, removed lines their base one. */
-export type DiffLine =
+type DiffLine =
   | { readonly kind: 'context' | 'added'; readonly head: number; readonly text: string }
   | { readonly kind: 'removed'; readonly base: number; readonly text: string };
 

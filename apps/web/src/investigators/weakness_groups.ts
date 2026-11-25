@@ -6,7 +6,7 @@ import { containsIgnoringCase } from '@arkham/util';
  * weaknesses, the basic weaknesses any deck may hold, and the signature weaknesses of others,
  * which a card can still put into a deck.
  */
-export type WeaknessGroup = 'theirs' | 'basic' | 'others';
+type WeaknessGroup = 'theirs' | 'basic' | 'others';
 
 /** One group of `weaknessGroups`, its cards by name. */
 export interface WeaknessGroupList {

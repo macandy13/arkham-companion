@@ -17,28 +17,15 @@ export * from './game_builder';
 export * from './investigator_cards';
 export * from './keywords';
 export * from './commands';
+export * from './player_effects';
 export * from './events';
 export { apply, replay } from './reducer';
-export { handle, handleWithCauses, type CausedEvents } from './handle';
-export { PLAYER_CAUSE, type ChangeCause } from './change_cause';
+export { handle, type CausedEvents } from './handle';
+export { type ChangeCause } from './change_cause';
 export { DEFAULT_RELIANCE, RELIANCES, showsNotice, type Reliance } from './reliance';
 export { changeNotices, noticeKindOf, type ChangeNotice, type NoticeKind } from './change_notices';
-export {
-  locationsNamed,
-  neighbours,
-  openConnections,
-  printedConnections,
-  sameEdge,
-  shortestPaths,
-} from './board';
-export {
-  cardsInZones,
-  cardsNamed,
-  currentCard,
-  locationOfCard,
-  zoneOf,
-  type CardFilter,
-} from './lookup';
+export { neighbours, openConnections, shortestPaths } from './board';
+export { cardsInZones, currentCard, zoneOf, type CardFilter } from './lookup';
 export {
   byAny,
   byCode,
@@ -117,7 +104,6 @@ export { confirmOptions, skillTestDecision, type SkillTestOutcomes } from './dec
 export {
   continueDraw,
   drawFinished,
-  drawnTokens,
   drawTokens,
   revealTokens,
   redrawToken,
@@ -125,25 +111,15 @@ export {
   resolvedTokens,
   revealAnother,
   revealedTokens,
-  testFinished,
-  treatTokenAs,
   withTokenState,
   type DrawnToken,
   type DrawnTokenState,
   type TestDraw,
 } from './draw_tokens';
-export {
-  isPoolToken,
-  POOL_TOKEN_COUNT,
-  poolTokensLeft,
-  tokenCounts,
-  type PoolToken,
-  type TokenCount,
-} from './chaos_bag';
+export { poolTokensLeft, tokenCounts, type PoolToken, type TokenCount } from './chaos_bag';
 export { skillTestOdds, type SkillTestOdds } from './skill_test_odds';
 export {
   revealsAnotherToken,
-  skillTestContext,
   skillTestSuggestion,
   suggestSkillTest,
   tokenModifier,
@@ -235,19 +211,22 @@ export {
   statOf,
   tokensOn,
   ifThereAre,
+  thereAre,
   ifNoCandidate,
   forEachEnemy,
   forEachInvestigator,
   searchAndDraw,
   searchAndDrawCopies,
   reaction,
-  REACTION_ID_PREFIX,
   shuffleEncounterDeck,
   disengageFromEachEnemy,
   engageReadyEnemies,
   locationWith,
   locationWithMost,
   readySelf,
+  readyEnemy,
+  healEnemy,
+  disengageEnemy,
   dealDamageTo,
   discoverClues,
   loseActions,
@@ -289,7 +268,6 @@ export {
   discardAtRandom,
   discardFromHand,
   advanceBySpendingCluesAtRoundEnd,
-  spendCluesAsGroup,
   drawCards,
   drawBeneathYourLocation,
   drawFromScenarioDeck,
@@ -340,16 +318,14 @@ export type {
 } from './abilities';
 export { MAX_TRIGGERED_COMMANDS } from './triggers';
 export {
-  offersActionsTo,
   advanceBySpendingClues,
   parleyAction,
   resignAction,
-  type ActionCondition,
   type ActionCost,
   type CardAction,
 } from './card_actions';
 export * from './store';
-export { withinLimit, type AbilityUse, type UsageLimit, type UsagePeriod } from './usage_limits';
+export { type AbilityUse, type UsageLimit, type UsagePeriod } from './usage_limits';
 export { undoLastGroup } from './undo';
 // Campaign functions are reached as `campaign.handleCommand` and so on, so
 // their names don't repeat "campaign" (Andy on #64); the types stay flat.
@@ -390,8 +366,6 @@ export type {
   CausedCampaignEvents,
 } from './campaign/campaign_notices';
 export type {
-  CardPlace,
-  GameCondition,
   ProposedChange,
   ResolutionStep,
   ResolutionTarget,

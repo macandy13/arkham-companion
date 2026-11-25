@@ -1,7 +1,13 @@
 import { useId, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { assertNever } from '@arkham/util';
-import type { BoardView, InvestigatorId, LocationView } from '@arkham/engine';
+import {
+  type BoardView,
+  type InvestigatorId,
+  type LocationView,
+  revealLocation,
+  takeOneClue,
+} from '@arkham/engine';
 import { DetailsDialog, useDecisionHost } from '../screens/DetailsDialog';
 import { AttachedCards } from '../screens/AttachedCards';
 import {
@@ -210,7 +216,7 @@ function LocationPage({
         name: t('byCard.testBy', { test: t('byCard.investigate'), name }),
         onPick: () => {
           leaveFor('test');
-          void actions.testByCard('investigate', id, location.id);
+          void actions.investigate(location.id, { byCard: id });
         },
       }))
     : [];
@@ -270,7 +276,7 @@ function LocationPage({
             <button
               type="button"
               disabled={busy}
-              onClick={() => void actions.revealLocation(location.id)}
+              onClick={() => void actions.perform(revealLocation(location.id))}
             >
               {t('location.reveal')}
             </button>
@@ -328,7 +334,9 @@ function locationActions(
         icon: 'clue',
         cost: 0,
         play:
-          location.clues > 0 && !cannotDiscover ? () => actions.takeClue(location.id) : undefined,
+          location.clues > 0 && !cannotDiscover
+            ? () => actions.perform(takeOneClue(location.id, turn))
+            : undefined,
         then: 'stay',
       },
     ];
@@ -340,14 +348,14 @@ function locationActions(
       key: 'moveAction',
       icon: 'move',
       cost: board.actionCost(turn, 'move'),
-      play: () => actions.moveTo(location.id, 'action'),
+      play: () => actions.move(location.id),
       then: 'leave',
     },
     {
       key: 'moveFree',
       icon: 'move',
       cost: board.actionCost(turn, 'move', { free: true }),
-      play: () => actions.moveTo(location.id, 'free'),
+      play: () => actions.move(location.id, 'free'),
       then: 'leave',
     },
   ];

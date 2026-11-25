@@ -1,11 +1,15 @@
 import { useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
-  revealTokens,
-  tokenCounts,
+  addChaosToken,
   type BoardView,
   type ChaosToken,
   type PoolToken,
+  releaseChaosToken,
+  removeChaosToken,
+  revealTokens,
+  sealChaosToken,
+  tokenCounts,
 } from '@arkham/engine';
 import type { GameActions } from '../state/gameActions';
 import { ChaosTokenFace } from '../tokens/ChaosTokenFace';
@@ -25,8 +29,8 @@ const POOL_TOKENS: readonly PoolToken[] = ['bless', 'curse'];
  * as a card says. Reveal draws as many tokens as the players set, as a card reveals them outside a
  * skill test (`revealTokens`), and shows them until Put back: they never leave the bag, so this
  * is no step and Undo has nothing to take back.
- * Each other control is a step of its own (`GameActions.sealToken`, `releaseToken`, `addPoolToken`,
- * `removePoolToken`), so Undo takes it back, and they wait while a step is queued (`busy`).
+ * Each other control is a performed step of its own (`SealChaosToken`, `ReleaseChaosToken`,
+ * `ChangeChaosBag`), so Undo takes it back, and they wait while a step is queued (`busy`).
  */
 export function ChaosBag({
   board,
@@ -78,7 +82,7 @@ export function ChaosBag({
               disabled={busy}
               onClick={() => {
                 setPicked(undefined);
-                void actions.sealToken(investigator.id, chosen);
+                void actions.perform(sealChaosToken(chosen, investigator.id));
               }}
             >
               {t('chaosBag.sealOn', {
@@ -101,7 +105,7 @@ export function ChaosBag({
                 type="button"
                 aria-label={t('chaosBag.returnToPool', { token: name })}
                 disabled={busy || inBag === 0}
-                onClick={() => void actions.removePoolToken(token)}
+                onClick={() => void actions.perform(removeChaosToken(token, 'scenario'))}
               >
                 −
               </button>
@@ -112,7 +116,7 @@ export function ChaosBag({
                 type="button"
                 aria-label={t('chaosBag.addFromPool', { token: name })}
                 disabled={busy || left === 0}
-                onClick={() => void actions.addPoolToken(token)}
+                onClick={() => void actions.perform(addChaosToken(token, 'scenario'))}
               >
                 +
               </button>
@@ -176,7 +180,7 @@ export function ChaosBag({
                     investigator: board.investigator(investigatorId).name,
                   })}
                   disabled={busy}
-                  onClick={() => void actions.releaseToken(investigatorId, token)}
+                  onClick={() => void actions.perform(releaseChaosToken(token, investigatorId))}
                 >
                   {t('chaosBag.release')}
                 </button>

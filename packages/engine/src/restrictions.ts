@@ -23,7 +23,7 @@ export const LOCATION_RESTRICTIONS = ['moveInto', 'investigate'] as const;
  * assets or events" `cards: play`. A new "cannot" (healing horror, gaining resources) adds its
  * verb, or its noun and verbs, here and a check in the handler that does it.
  */
-export const RESTRICTED_VERBS = {
+const RESTRICTED_VERBS = {
   clues: ['discover', 'spend'],
   cards: ['play'],
 } as const;
@@ -76,7 +76,7 @@ export interface EnemyLocationRestriction {
 export type EnemyRestriction = (typeof ENEMY_RESTRICTIONS)[number];
 
 /** Every `EnemyRestriction`. */
-export const ENEMY_RESTRICTIONS = ['ready', 'placeDoom'] as const;
+const ENEMY_RESTRICTIONS = ['ready', 'placeDoom'] as const;
 
 /**
  * A "cannot" about an enemy: `{ cannot: 'ready', of: 'host', exceptTraits: [trait('Elite')] }` is

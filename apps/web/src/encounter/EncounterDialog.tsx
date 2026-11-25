@@ -7,6 +7,7 @@ import type { GameActions } from '../state/gameActions';
 import { CardDialog } from '../screens/CardDialog';
 import { CardStrip } from '../screens/CardStrip';
 import { CardMoves } from './CardMoves';
+import { encounterDraw } from '@arkham/engine';
 
 /** Where the encounter dialog opens (`EncounterDialog.start`): on the deck or on one of its piles. */
 export type EncounterPile = 'deck' | HeaderPileKind;
@@ -85,7 +86,7 @@ export function EncounterDialog({
               disabled={busy || empty}
               onClick={() => {
                 onClose();
-                void actions.drawEncounter(investigator.id);
+                void actions.perform(encounterDraw(investigator.id));
               }}
             >
               {t('encounter.drawFor', { name: investigator.name })}

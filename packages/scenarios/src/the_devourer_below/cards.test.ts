@@ -14,27 +14,24 @@ import {
   requireInvestigator,
   threatAreaOf,
   resolveValue,
-  type CardCode,
   type CardStats,
   type Command,
 } from '@arkham/engine';
 import {
   answer,
-  campaignMember,
   cardIn,
-  makeCampaignLog,
   rejectionFrom,
   resolveRevelation,
   runFrom,
   stateAfter,
 } from '@arkham/engine/test/utils';
 import {
-  DEVOURER_BELOW_CODES,
   DEVOURER_BELOW_RESOLUTIONS,
   DISRUPTING_THE_RITUAL_DECISION,
   OFFER_OF_POWER_DECISION,
   QUIET_GLADE_DECISION,
   UMORDHOTHS_WRATH_DECISION,
+  LITA_SACRIFICE_DECISION,
   theDevourerBelowCardDefs,
   theDevourerBelowCards,
 } from './cards';
@@ -499,50 +496,57 @@ describe('The Devourer Below card abilities', () => {
       cardId: umordhoth,
       action: 0,
     };
-    /** Alice faces Umôrdhoth on the Main Path, on her turn, in a campaign where she earned `earnedCards`. */
-    const aliceFacingUmordhoth = (earnedCards: CardCode[]) =>
-      newGame()
-        .withLocation(mainPath, cardOf('01149'), { revealed: true })
-        .withInvestigator(alice, {
-          locationId: mainPath,
-          health: { max: 8, damage: 0 },
-          sanity: { max: 8, horror: 0 },
-        })
-        .withCard(umordhoth, cardOf('01157'), atLocation(mainPath))
-        .withCampaign(
-          makeCampaignLog({
-            investigators: [{ ...campaignMember('alice', 'alice', 8, 8), earnedCards }],
-          }),
-        )
-        .withTurnOf(alice);
+    /** Alice faces Umôrdhoth on the Main Path, on her turn. */
+    const aliceFacingUmordhoth = newGame()
+      .withLocation(mainPath, cardOf('01149'), { revealed: true })
+      .withInvestigator(alice, {
+        locationId: mainPath,
+        health: { max: 8, damage: 0 },
+        sanity: { max: 8, horror: 0 },
+      })
+      .withCard(umordhoth, cardOf('01157'), atLocation(mainPath))
+      .withTurnOf(alice);
 
-    it('ends the scenario with R3 (Lita sacrificed) after its attack of opportunity on alice, who takes its action', () => {
-      // Lita Chantler is a player card here, earned in The Gathering, so the action trusts alice to control her.
-      const { context, state: started } = aliceFacingUmordhoth([
-        DEVOURER_BELOW_CODES.litaChantler,
-      ]).start();
+    it('asks alice, who takes its action, after its attack of opportunity whether she controls Lita', () => {
+      const { context, state: started } = aliceFacingUmordhoth.start();
       const taken = stateAfter(context, started, takeUmordhothsAction);
 
       // Massive, it is engaged with alice, so the plain action provokes its attack first.
-      const state = stateAfter(context, taken, answer('attackOfOpportunity:umordhoth', 'attack'));
+      const attacked = stateAfter(
+        context,
+        taken,
+        answer('attackOfOpportunity:umordhoth', 'attack'),
+      );
 
       expect(taken.pending).toMatchObject([{ id: 'attackOfOpportunity:umordhoth' }]);
-      expect(requireInvestigator(state, alice)).toMatchObject({
+      expect(requireInvestigator(attacked, alice)).toMatchObject({
         health: { damage: 3 },
         sanity: { horror: 3 },
       });
-      expect(state.meta.resolution).toBe(DEVOURER_BELOW_RESOLUTIONS.litaSacrificed);
+      expect(attacked.pending).toMatchObject([
+        { id: LITA_SACRIFICE_DECISION, decider: { kind: 'investigator', investigatorId: alice } },
+      ]);
     });
 
-    it('neither offers nor accepts its action when alice didn’t earn Lita in The Gathering', () => {
-      const table = PlayTable.start(aliceFacingUmordhoth([]));
+    it.each([
+      { answered: 'sacrifice', resolution: DEVOURER_BELOW_RESOLUTIONS.litaSacrificed },
+      { answered: 'noLita', resolution: undefined },
+    ])(
+      'ends the scenario with $resolution when alice answers $answered',
+      ({ answered, resolution }) => {
+        const { context, state: started } = aliceFacingUmordhoth.start();
+        const attacked = stateAfter(
+          context,
+          stateAfter(context, started, takeUmordhothsAction),
+          answer('attackOfOpportunity:umordhoth', 'attack'),
+        );
 
-      // Only the Main Path's own action is left.
-      expect(table.board.cardActions(alice).map((action) => action.cardId)).toEqual([mainPath]);
-      expect(rejectionFrom(table.ctx, table.state, takeUmordhothsAction)).toMatchObject({
-        code: 'cardActionConditionUnmet',
-      });
-    });
+        const state = stateAfter(context, attacked, answer(LITA_SACRIFICE_DECISION, answered));
+
+        expect(state.meta.resolution).toBe(resolution);
+        expect(state.pending).toEqual([]);
+      },
+    );
   });
 
   describe('Goat Spawn', () => {

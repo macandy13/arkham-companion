@@ -1,8 +1,8 @@
 import { findInvestigator } from './investigators';
 import type { StageDeck } from './commands';
 import { assertNever } from '@arkham/util';
-import { comparableName, type CardType, type EngineContext, type Trait } from './cards';
-import { instanceId, type CardCode, type InstanceId } from './ids';
+import { cardStats, comparableName, type CardType, type EngineContext, type Trait } from './cards';
+import { cardName, instanceId, type CardCode, type CardName, type InstanceId } from './ids';
 import { CommandRejected } from './rejection';
 import type { CardInstance, GameState } from './state';
 import { zoneKey, type Zone } from './zone';
@@ -21,6 +21,11 @@ export function requireCard(
   return card;
 }
 
+/** The printed name of `card`, from its card data. */
+export function cardNameOf(ctx: EngineContext, card: CardInstance): CardName {
+  return cardName(cardStats(ctx.cards, card.code).name);
+}
+
 /** The zone the card `cardId` is in; undefined for a card not in the state. */
 export function zoneOf(state: GameState, cardId: InstanceId): Zone | undefined {
   return state.cards[cardId]?.zone;
@@ -29,6 +34,19 @@ export function zoneOf(state: GameState, cardId: InstanceId): Zone | undefined {
 /** Ids of the cards in `zone`, in zone order (top first for piles). */
 export function cardsInZone(state: GameState, zone: Zone): readonly InstanceId[] {
   return state.order[zoneKey(zone)] ?? [];
+}
+
+/**
+ * The cards in `zone`, in zone order (top first for piles). Skips an id with no card, so the board
+ * printer still shows a broken state; `cardNamesIn` throws on one instead.
+ */
+export function cardsIn(state: GameState, zone: Zone): CardInstance[] {
+  return cardsInZone(state, zone).flatMap((id) => state.cards[id] ?? []);
+}
+
+/** The printed names of the cards in `zone`, in zone order. */
+export function cardNamesIn(ctx: EngineContext, state: GameState, zone: Zone): CardName[] {
+  return cardsInZone(state, zone).map((id) => cardNameOf(ctx, requireCard(state.cards, id)));
 }
 
 /** The `n`-th set-aside copy of `code`, counted from 0 in zone order; none when fewer are left. */
@@ -91,6 +109,16 @@ export function cardsNamed(
 export function currentCard(state: GameState, deck: StageDeck): CardInstance | undefined {
   const id = state[deck].current;
   return id === undefined ? undefined : state.cards[id];
+}
+
+/**
+ * The current card of the agenda or act deck; rejects (`noCurrentCard`) when the deck has none, before
+ * setup or once it is used up.
+ */
+export function requireCurrentCard(state: GameState, deck: StageDeck): CardInstance {
+  const id = state[deck].current;
+  if (id === undefined) throw new CommandRejected({ code: 'noCurrentCard', deck });
+  return requireCard(state.cards, id);
 }
 
 /**

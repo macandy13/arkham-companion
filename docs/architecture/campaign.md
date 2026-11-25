@@ -4,7 +4,7 @@ A campaign is its own event-sourced aggregate in [`campaign/`](../../packages/en
 
 [`CampaignLog`](../../packages/engine/src/campaign/campaign_log.ts) holds:
 
-- the team (keyed by `InvestigatorCode`) with trauma, XP, fate and the story cards each earned (`earnedCards`, `EarnCard`: Lita Chantler, which a later game trusts that investigator to hold),
+- the team (keyed by `InvestigatorCode`) with trauma, XP, fate and the story cards each earned (`earnedCards`, `EarnCard`: Lita Chantler),
 - story records,
 - chaos bag,
 - and scenario order.
@@ -36,7 +36,7 @@ A scenario's resolutions are data on `ScenarioDefinition.resolutions` ([`resolut
 
 - record,
 - chaos tokens,
-- XP from a bonus and the [victory points](../../packages/engine/src/victory.ts), plus 1 per card in the `perCardIn` places ("1 bonus experience for each enemy beneath the act"),
+- XP from a bonus and the [victory points](../../packages/engine/src/victory.ts), plus 1 per card the `perCardIn` reference names (`eachInZone(beneath(onlyCopy(act)))` for "1 bonus experience for each enemy beneath the act", counted by `countOnTable`),
 - trauma,
 - killed/insane,
 - a story card earned (`earnCard`, by each target or, with `choose`, a `choice` of one of them),
@@ -46,7 +46,7 @@ A scenario's resolutions are data on `ScenarioDefinition.resolutions` ([`resolut
 
 Steps that read the ended game:
 
-- `when` picks its steps by a `GameCondition` (a card in play, set aside, in a scenario deck, in the victory display, out of the game (an agenda or act that advanced) or beneath an act, at least N cards of a trait in such places (`cardsIn`), the current agenda, or any of these)
+- `when` picks its steps by an [`AbilityCondition`](triggers-and-card-effects.md), the conditions abilities use, read on the ended game's table outside any timing window (`gameHolds`, `conditionHolds` without a window): `thereAre(eachInZone(victoryDisplay, { code }), { min: 1 })` for a card in the victory display, `eachInPlay` for one in play, `eachInZone` over `setAside`, `scenarioDeck(deck)`, `outOfGame` (an agenda or act that advanced) or `beneath(onlyCopy(act))` (beneath an act that left the game), `{ min: 6 }` with a trait for "6 Elite enemies", `currentCard` for the current agenda, and `anyOf` and the rest to combine them. A reference to the window's card or investigator names nothing there, and a picked reference has no candidates
 - and `recordNames` writes the names of the cards whose condition holds as a list record.
 
 Steps name their target (`each`, `lead`, `notResigned`, `resigned`) instead of investigators, so `campaign.proposeResolution` reads the ended game and turns them into campaign commands. In a campaign game they are followed by an `AddChaosToken` or `RemoveChaosToken` for each chaos bag change a card made "permanently" during the scenario (the game's `ChangeChaosBag` with `lasts: 'campaign'`, kept in `GameState.chaosBagChanges`; a change for the scenario only stays out of the log, and so does every bless and curse change, which `ChangeChaosBag` keeps for the scenario since those tokens never carry over), then by the trauma of each defeat:
@@ -93,4 +93,4 @@ Story keys of a campaign live next to its definition ([`story.ts`](../../package
 - **A new correction:** a `CampaignAdjustment` case in `handle_campaign_adjustment.ts` that produces the regular event.
 - **A new kind of interlude step:** an `InterludeStep` case and its command in `interlude.ts`'s `proposeStep`.
 - **A new kind of resolution step:** a `ResolutionStep` case and its command in `proposeStep`; a new target is a `ResolutionTarget` case.
-- **A new question about the ended game:** a `GameCondition` case in `gameHolds`, or a `CardPlace` case in `isAt`.
+- **A new question about the ended game:** usually a new reference or `Quantity` the condition reads, as for abilities.

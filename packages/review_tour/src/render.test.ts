@@ -125,6 +125,30 @@ describe('renderPage', () => {
     expect(html).toContain('href="#evidence"');
   });
 
+  it('shows the usage before the change above the usage now', () => {
+    const html = page(
+      {
+        concept: 'Attacks share one command.',
+        questions: [],
+        stops: [],
+        evidence: [
+          {
+            claim: 'An attack names its kind.',
+            example: "deal({ kind: 'cardAttack' })",
+            before: 'resolveEnemyAttack()',
+          },
+        ],
+        rest: [],
+      },
+      [],
+      [[]],
+    );
+
+    expect(html).toMatch(
+      /<p class="when">Before<\/p><pre class="example"><code>.*resolveEnemyAttack.*<\/code><\/pre><p class="when">Now<\/p><pre class="example"><code>.*cardAttack/,
+    );
+  });
+
   it('leaves out the problem when the tour has none', () => {
     const html = page({ concept: 'A rename.', questions: [], stops: [], rest: [] }, []);
 
