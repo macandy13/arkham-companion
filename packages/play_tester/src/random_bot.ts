@@ -120,8 +120,10 @@ function decisionAnswers(table: PlayTable): Step[] {
 }
 
 /**
- * The steps of `investigator`'s turn: the basic actions, moves, enemy and card actions, those
- * that cost actions only while they have enough left (`actionCostOf`), as the engine counts them off.
+ * The steps of `investigator`'s turn: the basic actions, moves (into a location only while the
+ * group can pay its cost to enter, `BoardView.canEnter`, as the move buttons), enemy and card
+ * actions, those that cost actions only while they have enough left (`actionCostOf`), as the
+ * engine counts them off.
  */
 function turnSteps(table: PlayTable, investigator: InvestigatorView): Step[] {
   const { board } = table;
@@ -135,11 +137,10 @@ function turnSteps(table: PlayTable, investigator: InvestigatorView): Step[] {
       : []),
     ...(at === undefined
       ? []
-      : board.connectedTo(at).map((location): Step => ({
-          verb: 'moveTo',
-          investigator: name,
-          location,
-        }))),
+      : board
+          .connectedTo(at)
+          .filter((location) => board.canEnter(location))
+          .map((location): Step => ({ verb: 'moveTo', investigator: name, location }))),
     ...(at === undefined ? [] : board.enemiesAt(at)).flatMap((enemy) =>
       board
         .enemyActions(id, enemy.id)

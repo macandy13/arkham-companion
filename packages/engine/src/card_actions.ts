@@ -114,6 +114,9 @@ export type ActionCost =
   | { readonly spend: 'groupClues'; readonly amount: ScaledValue }
   | { readonly spend: 'handCards'; readonly amount: number };
 
+/** A cost the investigators pay together in clues ("2 [per_investigator] clues, as a group"). */
+export type GroupClueCost = Extract<ActionCost, { spend: 'groupClues' }>;
+
 /**
  * Whether `cost` can be paid for `investigator`'s action: they hold the resources or clues, or
  * for a group cost the active investigators hold the clues together, counting only clues no card

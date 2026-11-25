@@ -229,6 +229,12 @@ A card can also make basic actions cost more (an `actionCost` modifier, [`Action
 - It names what it pays for (`ActionPaidFor`): a basic action by its word, or a card's action ability by card and number. The engine records a basic action for the round (`GameMeta.actionsTaken`, cleared by `RoundEnded`), so a cost of the first one is paid once, even when the action came before the card. A free basic action is recorded with an amount of 0.
 - A cost the investigator can't pay is refused like any count below zero (`invalidActionAdjustment`).
 
+A location can also cost clues to enter ("As an additional cost to enter Underground Cistern, investigators must spend 3 [per_investigator] clues, as a group"): `CardStats.enterCost`, a `GroupClueCost` like a card action's.
+
+- [`enterCostPayment`](../../packages/engine/src/enter_costs.ts) pays it in `MoveInvestigator`, before the move, on any move into the location while it is unrevealed, the side that prints it: an action, a free move or a card effect's. Entering reveals it, so only the first entry pays. The payers come from `MoveInvestigator.spend`, or the mover first and the others in seat order. A move with `paidAtTable` (the pawn drag, catching the screen up with a move made at the table) charges nothing.
+- A group with too few clues is refused (`enterCostUnpaid`), payers named for a location without a cost too (`noGroupCost`).
+- `BoardView.enterCost` and `canEnter` tell the screen what to ask and when a move is off.
+
 ## Extension points
 
 - **A card's ability, action or modifier:** list it in the card's data; no code. [Card patterns](card-patterns.md) shows how card text maps to it.

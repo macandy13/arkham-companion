@@ -37,10 +37,10 @@ describe('what the play screen performs, built by name', () => {
       built: moveEnemyTo(ghoul, study),
       expected: { type: 'MoveEnemy', enemyId: ghoul, to: study, forced: true },
     },
-    // A dragged pawn keeps to the connections.
+    // A dragged pawn keeps to the connections, and its cost to enter was paid at the table.
     {
       built: moveAlong(alice, study),
-      expected: { type: 'MoveInvestigator', investigatorId: alice, to: study },
+      expected: { type: 'MoveInvestigator', investigatorId: alice, to: study, paidAtTable: true },
     },
     {
       built: move(ghoul, encounterDiscard, 'top'),

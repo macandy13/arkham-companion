@@ -10,7 +10,7 @@ import {
 } from './card_matchers';
 import { type EngineContext, type ScenarioContext } from './cards';
 import { placeDoomOnAgenda, takeDamage, takeHorror } from './abilities';
-import type { Command } from './commands';
+import type { ClueSpend, Command } from './commands';
 import { pendingDecision } from './decisions';
 import { describeDecision, optionNamed } from './describe_decision';
 import type { ChangeCause } from './change_cause';
@@ -322,14 +322,7 @@ export class PlayTable {
       investigatorId: this.seat(investigator),
       cardId: id,
       action,
-      ...(spend === undefined
-        ? {}
-        : {
-            spend: spend.map(([payer, amount]) => ({
-              investigatorId: this.seat(payer),
-              amount,
-            })),
-          }),
+      ...this.payers(spend),
     });
   }
 
@@ -351,15 +344,34 @@ export class PlayTable {
 
   /**
    * A move action along a connection to the location `location` names; the engine counts it off
-   * (`actionPayment`). With `free`, one a card lets them take without spending an action.
+   * (`actionPayment`). With `free`, one a card lets them take without spending an action; `spend`
+   * lists who pays how many of its cost to enter (`BoardView.enterCost`), the engine's split
+   * without it.
    */
-  moveTo(investigator: InvestigatorRef, location: CardRef, { free = false } = {}): void {
+  moveTo(
+    investigator: InvestigatorRef,
+    location: CardRef,
+    {
+      free = false,
+      spend,
+    }: { free?: boolean; spend?: ReadonlyArray<readonly [InvestigatorRef, number]> } = {},
+  ): void {
     this.play({
       type: 'MoveInvestigator',
       investigatorId: this.seat(investigator),
       to: this.board.location(location).id,
       asAction: free ? 'free' : true,
+      ...this.payers(spend),
     });
+  }
+
+  /** `spend`'s pairs of payer and clues as a command's `spend`, none without it. */
+  private payers(spend: ReadonlyArray<readonly [InvestigatorRef, number]> | undefined): {
+    spend?: ClueSpend[];
+  } {
+    return spend === undefined
+      ? {}
+      : { spend: spend.map(([payer, amount]) => ({ investigatorId: this.seat(payer), amount })) };
   }
 
   /**

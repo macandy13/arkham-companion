@@ -28,3 +28,11 @@ A location can make what investigators do with it cost more: Waterfront District
 - A move from one locked location to another pays both: 1 for the move, 1 for leaving and 1 for entering.
 - Like any constant ability of a location, Waterfront District's applies only once it is revealed ([Card abilities and modifiers](../card-abilities-and-modifiers.md)). An investigator investigates only where they are, and entering a location reveals it, so this never comes up.
 - The app prices basic moves (with the destination) and basic investigations. A card ability's move or investigation doesn't add the location's cost to its button yet (Merchant District's free move into a locked location, an "[action]: Investigate" ability at Waterfront District); the players count it off at the table.
+
+A location can cost clues to enter: Underground Cistern ("As an additional cost to enter Underground Cistern, investigators must spend 3 [per_investigator] clues, as a group") and Sluice Control (1 [per_investigator]).
+
+- The group pays it like any cost "as a group": any investigators, wherever they are, splitting it as they choose (as for Uncovering the Conspiracy above).
+- It is paid whenever an investigator enters, by an action, a free move or a card effect ([Additional Costs](https://arkhamdb.com/rules#Additional_Costs)); with too few clues between them the move can't be made.
+- The cost is printed on the unrevealed side, so it holds only while the location is unrevealed: entering reveals it, and after that entering costs nothing. If A Ritual reveals the Cistern first, entering it is free.
+- For a card effect that moves the investigator there, only the move fails when the cost can't be paid; the app refuses the whole effect then (no Queen of Ash card does this).
+- The app also charges it for a move a mandatory instruction makes (Campaign Guide, act or agenda back), which the rules exempt; no such move enters either location.

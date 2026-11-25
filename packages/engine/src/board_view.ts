@@ -21,6 +21,7 @@ import {
 
 export type { PrintedActionView };
 import { actionCost, type ActionCostQuery, type BasicAction } from './action_costs';
+import { enterCost } from './enter_costs';
 import { effectiveValue, skillValues } from './modifiers';
 import {
   cardStats,
@@ -772,6 +773,24 @@ export class BoardView {
       if (!(error instanceof CommandRejected)) throw error;
       return false;
     }
+  }
+
+  /**
+   * The clues the investigators spend as a group to enter `location` (`enterCost`, Underground
+   * Cistern's) while it is unrevealed; none once revealed or without such a cost. The screen asks who pays it
+   * (`cluePayers`) and sends the split as `MoveInvestigator.spend`.
+   */
+  enterCost(location: InstanceId): number | undefined {
+    return enterCost(this.ctx, this.state, requireCard(this.state.cards, location));
+  }
+
+  /**
+   * Whether the group can pay `location`'s cost to enter (`enterCost`): they hold that many clues
+   * no card forbids them to spend. A move button into it is off otherwise.
+   */
+  canEnter(location: InstanceId): boolean {
+    const cost = this.enterCost(location);
+    return cost === undefined || cluesHeldByGroup(this.ctx, this.state) >= cost;
   }
 
   /**

@@ -1601,6 +1601,63 @@ describe('MapBoard', () => {
       expect(within(moves).getByRole('button', { name: 'Move here · 2 actions' })).toBeTruthy();
     });
 
+    describe('alder and bea in the study, entering the unrevealed hallway costs 4 clues as a group', () => {
+      const bea = investigatorId('bea');
+      const guarded = blankLocation('hallway', {
+        enterCost: { spend: 'groupClues', amount: fixed(4) },
+      });
+      const beforeTheGuardedHallway = (clues: number) =>
+        PlayTable.start(
+          newGame()
+            .withMap(mapId('main'), { name: 'House' })
+            .withLocation(study, blankLocation('study'), {
+              revealed: true,
+              at: { column: 0, row: 0 },
+            })
+            .withLocation(hallway, guarded, { at: { column: 3, row: 0 } })
+            .withConnection(study, hallway)
+            .withInvestigator(alder, { locationId: study, clues })
+            .withInvestigator(bea, { locationId: study, clues })
+            .withTurnOf(alder),
+        );
+
+      it('asks who pays the 4 clues as alder moves there, and moves him once they pay', async () => {
+        const table = beforeTheGuardedHallway(3);
+        render(
+          <PlayingOn table={table}>
+            <MapBoard board={table.board} />
+          </PlayingOn>,
+        );
+        tapOnce(tile('hallway'));
+
+        fireEvent.click(screen.getByRole('button', { name: 'Move here · 1 action' }));
+        const dialog = screen.getByRole('dialog', { name: 'Who pays the clues?' });
+        fireEvent.click(within(dialog).getByRole('button', { name: 'Split evenly' }));
+        fireEvent.click(within(dialog).getByRole('button', { name: 'Pay' }));
+
+        await expect.poll(() => table.board.investigator(alder).at).toBe('hallway');
+        expect(table.board.investigator(alder)).toMatchObject({ clues: 1, actions: 2 });
+        expect(table.board.investigator(bea).clues).toBe(1);
+      });
+
+      it('turns the move off while alder and bea hold only 2 clues between them', () => {
+        const table = beforeTheGuardedHallway(1);
+        render(
+          <PlayingOn table={table}>
+            <MapBoard board={table.board} />
+          </PlayingOn>,
+        );
+
+        tapOnce(tile('hallway'));
+
+        const moves = within(details('hallway')).getByRole('region', { name: 'Actions' });
+        expect(
+          within(moves).getByRole<HTMLButtonElement>('button', { name: 'Move here · 1 action' })
+            .disabled,
+        ).toBe(true);
+      });
+    });
+
     it.each([
       {
         button: 'Take a clue, no test',

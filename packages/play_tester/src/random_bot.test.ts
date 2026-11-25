@@ -3,6 +3,7 @@ import {
   blankEnemy,
   blankLocation,
   engagedWith,
+  fixed,
   instanceId,
   investigatorId,
   newGame,
@@ -70,6 +71,26 @@ describe('the steps the random bot is offered', () => {
     expect(offeredSteps(table)).toContainEqual({
       verb: 'endTurn',
       investigator: cardName('alice'),
+    });
+  });
+
+  it('offers no move into a location whose cost to enter the group cannot pay', () => {
+    const table = PlayTable.start(
+      newGame()
+        .withLocation(study, blankLocation('study'), { revealed: true })
+        .withLocation(
+          hallway,
+          blankLocation('hallway', { enterCost: { spend: 'groupClues', amount: fixed(2) } }),
+        )
+        .withConnection(study, hallway)
+        .withInvestigator(alice, { locationId: study, clues: 1 })
+        .withTurnOf(alice),
+    );
+
+    expect(offeredSteps(table)).not.toContainEqual({
+      verb: 'moveTo',
+      investigator: cardName('alice'),
+      location: instanceId('hallway'),
     });
   });
 

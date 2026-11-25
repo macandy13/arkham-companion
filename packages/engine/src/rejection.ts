@@ -227,6 +227,11 @@ export type Rejection =
       action: number;
       investigatorId: InvestigatorId;
     }
+  /**
+   * `MoveInvestigator` into a location whose cost to enter (`CardStats.enterCost`) the group
+   * can't pay: they hold fewer clues than it asks.
+   */
+  | { code: 'enterCostUnpaid'; locationId: InstanceId; required: number }
   /** `UseCardAction` on an action whose condition doesn't hold for the investigator ("If you control Lita Chantler:"). */
   | {
       code: 'cardActionConditionUnmet';
@@ -487,6 +492,8 @@ function describe(r: Rejection): string {
       return `${r.investigatorId} has used reaction ${r.ability} of ${r.cardId} as often as its limit allows`;
     case 'cardActionCostUnpaid':
       return `${r.investigatorId} cannot pay the cost of action ${r.action} of ${r.cardId}`;
+    case 'enterCostUnpaid':
+      return `entering ${r.locationId} costs ${r.required} clues, more than the group holds`;
     case 'cardActionConditionUnmet':
       return `the condition of action ${r.action} of ${r.cardId} does not hold for ${r.investigatorId}`;
     case 'wrongPhase':

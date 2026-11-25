@@ -322,6 +322,40 @@ describe('Queen of Ash card abilities', () => {
     });
   });
 
+  describe('the clues to enter Underground Cistern and Sluice Control', () => {
+    const bob = investigatorId('bob');
+    const cistern = instanceId('underground_cistern');
+    const sluice = instanceId('sluice_control');
+
+    it.each([
+      { into: 'Sluice Control', from: cistern, to: sluice, cost: 2 },
+      { into: 'Underground Cistern', from: sluice, to: cistern, cost: 6 },
+    ])(
+      'costs alice and bob $cost clues as a group for alice to enter the unrevealed $into',
+      ({ from, to, cost }) => {
+        const { context, state: started } = newGame()
+          .withLocation(cistern, cardOf('12174'), { revealed: from === cistern })
+          .withLocation(sluice, cardOf('12175'), { revealed: from === sluice })
+          .withInvestigator(alice, { locationId: from, clues: 6 })
+          .withInvestigator(bob, { locationId: from })
+          .withTurnOf(alice)
+          .start();
+
+        const state = stateAfter(context, started, {
+          type: 'MoveInvestigator',
+          investigatorId: alice,
+          to,
+          asAction: true,
+        });
+
+        expect(requireInvestigator(state, alice)).toMatchObject({
+          locationId: to,
+          clues: 6 - cost,
+        });
+      },
+    );
+  });
+
   describe('Elokoss', () => {
     const elokoss = instanceId('elokoss');
     const cistern = instanceId('underground_cistern');

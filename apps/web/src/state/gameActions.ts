@@ -128,9 +128,10 @@ export interface GameActions {
    * A move to `location`. As an action or a free one, along a connection; by a card, connected or
    * not (Astral Travel, Shortcut): as on any move, enemies engaged with them come along and ready
    * enemies there engage. The pawn's drag is no action either but a performed `MoveInvestigator`
-   * along a connection, as it catches the screen up with a move made at the table.
+   * along a connection, as it catches the screen up with a move made at the table. `spend` names
+   * who pays the location's cost to enter (`BoardView.enterCost`), the engine's split without it.
    */
-  move(location: InstanceId, how?: How): Promise<void>;
+  move(location: InstanceId, how?: How, spend?: readonly ClueSpend[]): Promise<void>;
   /**
    * An investigation of the investigator's own location, or of `location` when a card names
    * another (In the Know). Its test stays open as a decision.
@@ -217,12 +218,18 @@ export function gameActions(
           spend?.map(({ investigator: payer, clues }) => [payer, clues]),
         );
       }),
-    move: (location, how = 'action') =>
+    move: (location, how = 'action', spend) =>
       taking(how, (investigator) => ({
         type: 'MoveInvestigator',
         investigatorId: investigator,
         to: location,
         ...(typeof how === 'object' && { ignoreConnections: true }),
+        ...(spend && {
+          spend: spend.map(({ investigator: payer, clues }) => ({
+            investigatorId: payer,
+            amount: clues,
+          })),
+        }),
       })),
     investigate: (location, how = 'action') =>
       taking(how, (investigator) => ({

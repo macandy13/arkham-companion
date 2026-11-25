@@ -8,6 +8,7 @@ import {
   type Ability,
   type CardAction,
   type Modifier,
+  type GroupClueCost,
   type CardRestriction,
   type CardStats,
   type EncounterSetCode,
@@ -148,6 +149,8 @@ export interface LocationOptions {
   restrictions?: readonly CardRestriction[];
   /** Its constant modifiers once revealed (Waterfront District's additional action to investigate it). */
   modifiers?: readonly Modifier[];
+  /** The clues the investigators spend as a group to enter it while unrevealed (Underground Cistern). */
+  enterCost?: GroupClueCost;
 }
 
 /** Card stats for a hand-entered location of `set`, with both printed sides. */
@@ -167,6 +170,7 @@ export function location({
   unrevealedConnectsTo,
   restrictions,
   modifiers,
+  enterCost,
   pictures,
 }: LocationOptions): CardStats {
   return {
@@ -184,6 +188,7 @@ export function location({
     ...(unrevealedConnectsTo === undefined ? {} : { unrevealedConnectsTo }),
     ...(restrictions === undefined ? {} : { restrictions }),
     ...(modifiers === undefined ? {} : { modifiers }),
+    ...(enterCost === undefined ? {} : { enterCost }),
   };
 }
 

@@ -46,6 +46,7 @@ The scripted golden game is [`end_to_end.test.ts`](../../packages/scenarios/src/
 
 **Locations and enemies**
 
+- [ ] Moving into the unrevealed Underground Cistern costs 3 clues per investigator as a group, the unrevealed Sluice Control 1 per investigator, and once revealed nothing: with a split to choose the app asks who pays, and with too few clues between them both move buttons are off.
 - [ ] Sluice Control's action tests agility or combat (5); on a pass the scenario ends with resolution 3 and each enemy is defeated.
 - [ ] An investigator who enters the revealed Sewer Tunnels with the square (Overgrown Tunnels) loses 1 action.
 - [ ] Entering Infested Pipes (spade) discards from the encounter deck until an enemy, which the entering investigator draws.
@@ -76,7 +77,6 @@ These are done by hand at the table; the app does not do them.
 
 - The agendas' rule that enemies at a location with Fire! attached cannot be damaged (heal the damage Fire! itself deals them as the investigation phase ends), and agenda 3a's damage instead of doom.
 - Elokoss: that she cannot move or make attacks of opportunity, and her Mother of Flame side.
-- The additional clue costs to enter Underground Cistern and Sluice Control.
 - Queen's Knight's damage to Elokoss, Herald of Flame's healing after it attacks, and the Servant of Flame's codex entry as it is defeated.
 - The Zealot's doom as it enters play (setup places it) and the Dark Magician's as the round ends.
 - Unnatural Decay's doom on an asset, offered even to an investigator without one, who must take the 2 damage instead.
