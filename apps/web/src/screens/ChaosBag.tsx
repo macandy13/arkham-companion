@@ -115,7 +115,7 @@ export function ChaosBag({ board }: { board: BoardView }) {
           );
         })}
       </ul>
-      <h4 id={revealId}>{t('chaosBag.reveal')}</h4>
+      <h3 id={revealId}>{t('chaosBag.reveal')}</h3>
       <div role="group" aria-labelledby={revealId}>
         <button
           type="button"
@@ -158,7 +158,7 @@ export function ChaosBag({ board }: { board: BoardView }) {
       )}
       {board.sealedTokens.length > 0 && (
         <>
-          <h4 id={sealedId}>{t('chaosBag.sealed')}</h4>
+          <h3 id={sealedId}>{t('chaosBag.sealed')}</h3>
           <ul aria-labelledby={sealedId}>
             {board.sealedTokens.map(({ token, investigatorId }, index) => (
               <li key={index}>

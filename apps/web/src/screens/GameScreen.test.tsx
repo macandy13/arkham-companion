@@ -656,13 +656,13 @@ describe('GameScreen header', () => {
     expect(scenario.getByRole('button', { name: /^Set aside, \d+ cards?$/ })).toBeTruthy();
     const victory = within(within(boardHeader).getByRole('region', { name: 'Victory' }));
     expect(victory.getByRole('button', { name: 'Victory display, 0 victory points' })).toBeTruthy();
-    expect(victory.getByRole('button', { name: /^Chaos bag, \d+ tokens$/ })).toBeTruthy();
+    expect(victory.getByRole('button', { name: 'Chaos bag, 16 tokens' })).toBeTruthy();
   });
 
   it('opens the chaos bag in a dialog of its own from the bag over the victory display', async () => {
     await renderTheGathering('game-screen-chaos-bag-test');
 
-    fireEvent.click(screen.getByRole('button', { name: /^Chaos bag, \d+ tokens$/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Chaos bag, 16 tokens' }));
 
     const dialog = screen.getByRole('dialog', { name: 'Chaos bag' });
     expect(within(dialog).getByRole('list', { name: 'Tokens in the bag' })).toBeTruthy();
