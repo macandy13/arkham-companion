@@ -25,7 +25,7 @@ export { type ChangeCause } from './change_cause';
 export { DEFAULT_RELIANCE, RELIANCES, showsNotice, type Reliance } from './reliance';
 export { changeNotices, noticeKindOf, type ChangeNotice, type NoticeKind } from './change_notices';
 export { neighbours, openConnections, shortestPaths } from './board';
-export { cardsInZones, currentCard, zoneOf, type CardFilter } from './lookup';
+export { cardsInZones, currentCard, matchesStats, zoneOf, type CardFilter } from './lookup';
 export {
   byAny,
   byCode,
@@ -128,12 +128,7 @@ export {
   type TokenValue,
 } from './skill_modifiers';
 export { enemiesAt, type EnemyFilter, enemiesOnTable } from './enemies';
-export {
-  CANCEL_REVELATION_OPTION,
-  encounterDraw,
-  isRevelationDecision,
-  matchesEncounter,
-} from './handle_encounter';
+export { CANCEL_REVELATION_OPTION, encounterDraw, isRevelationDecision } from './handle_encounter';
 export { doomInPlay, isInPlay } from './doom';
 export { checkInvariants } from './invariants';
 export { PHASE_OF_STEP, PHASE_STEP_TITLES } from './phases';
