@@ -92,6 +92,6 @@ function readPrey(
     !state.investigators.some((inv) => comparableName(inv.name) === comparableName(name))
   )
     return undefined;
-  if (bearerOf !== undefined && enemy.owner === undefined) return undefined;
+  if (bearerOf !== undefined && state.cards[enemy.id]?.owner === undefined) return undefined;
   return prey;
 }

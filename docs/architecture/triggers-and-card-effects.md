@@ -89,7 +89,7 @@ Effects are **templated commands**: a command card data may use (`AbilityCommand
 - `lead` (`lead()`),
 - `onlyCopy(code)`,
 - `setAsideCopy(code)`, a set-aside copy; in an effect repeated for each investigator, each repetition takes the next copy, and none is left out when the copies run out,
-- `eachInvestigator({ at, atLocationWith, name, bearerOf })`, only those at `at`, at a location the `CardFilter` matches, with a name, or the bearer of a weakness,
+- `eachInvestigator({ at })`; a prey selector also filters it by an investigator's name, the trait of their location or the bearer of a weakness (`EachInvestigatorRef`),
 - `eachEnemy({ trait, withoutTrait, unengaged, ready, withoutToken, at, engagedWith })`, where `at` is one location reference or a list of them, so "each enemy at your location" is a filter of `eachEnemy`, not a reference of its own, and `ready: true` keeps only ready enemies ("each ready non-Elite [[Cultist]] enemy at this location", Underground Cistern),
 - `eachInZone(zone, { trait, code, typeCode, unique })`, the cards in a zone or a list of zones: the victory display, the set-aside cards (`eachInZone({ kind: 'setAside' }, { trait, typeCode: 'enemy' })` for "each set-aside [[Cultist]] enemy"), the cards beneath a card; with `first`, only that many in zone order (`first: perInvestigator(1)` for "1 [per_investigator] copies", `searchAndDrawCopies`),
 - `eachInPlay({ trait, code, name, typeCode, unique, at, connectedTo, empty })`, the cards in play, only those at one of the `at` locations when given, with `connectedTo` only those at a location connecting to the one it names, and with `empty` only those at a location with no investigators and no enemies; `name` may list several ("A or B"),

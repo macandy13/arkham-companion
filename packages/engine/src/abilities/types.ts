@@ -295,7 +295,7 @@ export type EachInPlayRef = {
 /**
  * Each investigator still in the scenario, in player order; only those at `at` when given, at a
  * location `atLocationWith` matches ("Investigator at a [[Woods]] location"), named `name`
- * ("Daisy Walker", compared ignoring case), or the bearer of the weakness `bearerOf` names (its
+ * ("Daisy Walker", compared ignoring case with `Investigator.name`, a plain string too), or the bearer of the weakness `bearerOf` names (its
  * `CardInstance.owner`; nobody for a card nobody owns).
  */
 export type EachInvestigatorRef = {
