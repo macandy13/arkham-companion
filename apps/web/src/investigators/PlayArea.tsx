@@ -1,6 +1,5 @@
 import { useTranslation } from 'react-i18next';
 import type { BoardView, CardFaceView, InvestigatorView } from '@arkham/engine';
-import type { GameActions } from '../state/gameActions';
 import { SmallCard } from './ThreatArea';
 
 /**
@@ -12,30 +11,18 @@ export function PlayArea({
   board,
   investigator,
   cards,
-  actions,
-  busy,
 }: {
   board: BoardView;
   /** Who controls the cards. */
   investigator: InvestigatorView;
   cards: readonly CardFaceView[];
-  actions: GameActions;
-  busy: boolean;
 }) {
   const { t } = useTranslation();
   if (cards.length === 0) return null;
   return (
     <ul aria-label={t('investigators.playArea')}>
       {cards.map((card) => (
-        <SmallCard
-          key={card.id}
-          heldIn="playArea"
-          owner={investigator}
-          board={board}
-          card={card}
-          actions={actions}
-          busy={busy}
-        />
+        <SmallCard key={card.id} heldIn="playArea" owner={investigator} board={board} card={card} />
       ))}
     </ul>
   );

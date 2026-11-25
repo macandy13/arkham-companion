@@ -17,7 +17,7 @@ import './investigator_face.css';
  * scan's art is lifted by `art.lift`, so the portrait's face shows under the plates, and the frame
  * covers what the lifted scan prints round it: a header behind the plates and a column round the
  * page. The whole card (`full`), opened from the banner, keeps the scan's height and the page's
- * full length for its text. The panel's HTML (InvestigatorBar) lies over these places, which tokens.css gives
+ * full length for its text. The panel's HTML (InvestigatorPanel) lies over these places, which tokens.css gives
  * again for the stylesheet (`--investigator-*`, in the same scan units): change both together.
  */
 const INVESTIGATOR_FACE = {
@@ -121,7 +121,7 @@ const FULL_PATHS = facePaths(INVESTIGATOR_FACE.full.pageHeight, INVESTIGATOR_FAC
  * is the whole card, its page long enough for the abilities. The
  * shield takes the colour and icon of the investigator's `investigatorClass`; each skill's plate
  * its icon in the face's ink. The panel lays the name, the skills' values and the counters over
- * it in HTML (InvestigatorBar), so this is decoration only (`aria-hidden`).
+ * it in HTML (InvestigatorPanel), so this is decoration only (`aria-hidden`).
  */
 export function InvestigatorFace({
   picture,

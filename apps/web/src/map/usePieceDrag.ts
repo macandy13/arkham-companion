@@ -83,3 +83,26 @@ export function usePieceDrag<Piece>(
     }),
   };
 }
+
+/**
+ * The attributes a piece takes for dragging. A draggable piece is marked `data-drag`, which keeps
+ * the map from panning when a drag starts on it. A `ghost` (`data-ghost`) is the copy that follows
+ * the pointer during a drag; it is hidden from assistive technology, since the piece itself stays
+ * in place until the move is played.
+ */
+export function dragAttributes({
+  name,
+  kind,
+  drag,
+  ghost,
+}: {
+  name: string;
+  kind: 'pawn' | 'enemy';
+  drag?: DragHandlers;
+  ghost: boolean;
+}) {
+  return {
+    ...(ghost ? { 'aria-hidden': true, 'data-ghost': true } : { role: 'img', 'aria-label': name }),
+    ...(drag && { 'data-drag': kind, ...drag }),
+  };
+}

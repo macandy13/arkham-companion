@@ -12,7 +12,7 @@ import {
 } from '@arkham/engine';
 import { barricade, handcuffs, hidingSpot } from '@arkham/scenarios';
 import { initI18n } from '../i18n';
-import { actionsOn } from '../state/gameActions.test_support';
+import { PlayingOn } from '../state/gameActions.test_support';
 import { AttachedCards } from './AttachedCards';
 import { TuckedCardsContext } from './CardDialog';
 
@@ -21,7 +21,11 @@ const ghoul = instanceId('ghoul');
 
 /** The attached cards of `host` on `table`, as its details show them. */
 const renderAttachedCards = (table: PlayTable, host: InstanceId) =>
-  render(<AttachedCards board={table.board} host={host} actions={actionsOn(table)} busy={false} />);
+  render(
+    <PlayingOn table={table}>
+      <AttachedCards board={table.board} host={host} />
+    </PlayingOn>,
+  );
 
 const tap = (name: string) => fireEvent.click(screen.getByRole('button', { name }));
 
@@ -105,7 +109,9 @@ describe('AttachedCards', () => {
     document.body.append(slot);
     render(
       <TuckedCardsContext.Provider value={slot}>
-        <AttachedCards board={table.board} host={ghoul} actions={actionsOn(table)} busy={false} />
+        <PlayingOn table={table}>
+          <AttachedCards board={table.board} host={ghoul} />
+        </PlayingOn>
       </TuckedCardsContext.Provider>,
     );
 

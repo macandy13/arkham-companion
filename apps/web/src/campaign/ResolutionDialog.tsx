@@ -1,11 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  campaign,
-  type CampaignCommand,
-  type GameState,
-  type ScenarioOutcome,
-} from '@arkham/engine';
+import { campaign, type CampaignCommand, type ScenarioOutcome } from '@arkham/engine';
 import type { PendingResolution } from '../state/appStore';
 import {
   findCampaignOfScenario,
@@ -28,14 +23,12 @@ import './campaign_dialogs.css';
  * `failed` says the last write was refused, so the log is unchanged.
  */
 export function ResolutionDialog({
-  game,
   resolution,
   busy,
   failed,
   onWrite,
   onLater,
 }: {
-  readonly game: GameState;
   readonly resolution: PendingResolution;
   readonly busy: boolean;
   readonly failed: boolean;
@@ -49,8 +42,8 @@ export function ResolutionDialog({
   // The option each choice has picked, by the choice's place in the chosen resolution's changes.
   const [picks, setPicks] = useState<ReadonlyMap<number, number>>(new Map());
   const describe = useDescribeCommand(
-    game.campaign,
-    findCampaignOfScenario(game.meta.scenarioId)?.storyKey,
+    resolution.campaign,
+    findCampaignOfScenario(resolution.scenarioId)?.storyKey,
   );
 
   useEffect(() => {
@@ -61,7 +54,7 @@ export function ResolutionDialog({
     resolution.options.find((option) => campaign.sameOutcome(option.outcome, outcome))?.changes ??
     [];
   const confirmed = confirmedCommands(changes, picks);
-  const scenario = findScenario(game.meta.scenarioId);
+  const scenario = findScenario(resolution.scenarioId);
   const kicker = [
     ...(scenario ? [t(scenario.nameKey)] : []),
     ...(step === 'pick' ? [] : [outcomeName(t, outcome)]),

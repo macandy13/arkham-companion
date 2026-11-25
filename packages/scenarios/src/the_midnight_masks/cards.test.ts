@@ -6,8 +6,6 @@ import {
   encounterDeck,
   encounterSetCode,
   engagedWith,
-  boardView,
-  execute,
   instanceId,
   investigatorId,
   newGame,
@@ -16,16 +14,8 @@ import {
   resolveValue,
   victoryDisplay,
   type CardStats,
-  type Command,
 } from '@arkham/engine';
-import {
-  answer,
-  cardIn,
-  rejectionFrom,
-  resolveRevelation,
-  runFrom,
-  stateAfter,
-} from '@arkham/engine/test/utils';
+import { answer, cardIn, rejectionOf } from '@arkham/engine/test/utils';
 import {
   GRAVEYARD_DECISION,
   HUNTING_SHADOW_DECISION,
@@ -54,31 +44,12 @@ describe('The Midnight Masks card data', () => {
     expect(cardOf(code).symbol).toBe(symbol);
   });
 
-  it.each([
-    {
-      code: '01121a',
-      name: 'Predator or Prey?',
-      front: '/bundles/cards/01121a.png',
-      back: '/bundles/cards/01121b.png',
-    },
-    {
-      code: '01125',
-      name: 'Rivertown',
-      front: '/bundles/cards/01125.png',
-      back: '/bundles/cards/01125b.png',
-    },
-    {
-      code: '01121b',
-      name: 'The Masked Hunter',
-      front: '/bundles/cards/01121b.png',
-      back: undefined,
-    },
-    { code: '01137', name: '"Wolf-Man" Drew', front: '/bundles/cards/01137.png', back: undefined },
-  ])('names the ArkhamDB pictures of $name', ({ code, front, back }) => {
-    const card = cardOf(code);
+  // The ArkhamDB check skips The Masked Hunter: ArkhamDB lists it only as the agenda's linked side.
+  it('names the picture and keywords of The Masked Hunter, the reverse side of the first agenda', () => {
+    const hunter = cardOf('01121b');
 
-    expect(card.imageSrc).toBe(front);
-    expect(card.backImageSrc).toBe(back);
+    expect(hunter.imageSrc).toBe('/bundles/cards/01121b.png');
+    expect(hunter.keywords?.map((keyword) => keyword.name)).toEqual(['spawn', 'prey', 'hunter']);
   });
 
   it.each([
@@ -98,25 +69,6 @@ describe('The Midnight Masks card data', () => {
   });
 
   it.each([
-    { code: '01121b', name: 'The Masked Hunter', keywords: ['spawn', 'prey', 'hunter'] },
-    { code: '01135', name: 'Hunting Shadow', keywords: ['peril'] },
-    { code: '01170', name: 'Wizard of the Order', keywords: ['spawn', 'retaliate'] },
-    { code: '01172', name: 'Hunting Nightgaunt', keywords: ['hunter'] },
-  ])('lists the keywords of $name', ({ code, keywords }) => {
-    expect(cardOf(code).keywords?.map((keyword) => keyword.name)).toEqual(keywords);
-  });
-
-  it.each([
-    { code: '01137', name: '"Wolf-Man" Drew', detail: 'Downtown' },
-    { code: '01138', name: 'Herman Collins', detail: 'Graveyard' },
-    { code: '01139', name: 'Peter Warren', detail: 'Miskatonic University' },
-    { code: '01140', name: 'Victoria Devereux', detail: 'Northside' },
-    { code: '01141', name: 'Ruth Turner', detail: "St. Mary's Hospital" },
-  ])('names the spawn location of $name', ({ code, detail }) => {
-    expect(cardOf(code).keywords?.find((keyword) => keyword.name === 'spawn')?.detail).toBe(detail);
-  });
-
-  it.each([
     { players: 1, health: 6 },
     { players: 4, health: 12 },
   ])(
@@ -133,8 +85,6 @@ describe('The Midnight Masks card abilities', () => {
   const alice = investigatorId('alice');
   const rivertown = instanceId('rivertown');
   const graveyard = instanceId('graveyard');
-  const nextPhase: Command = { type: 'NextPhase' };
-  const aliceDraws: Command = { type: 'DrawCard', investigatorId: alice, from: encounterDeck };
 
   describe('Graveyard', () => {
     /** Alice in Rivertown, next to the revealed Graveyard. */
@@ -143,14 +93,13 @@ describe('The Midnight Masks card abilities', () => {
       .withLocation(graveyard, cardOf('01133'), { revealed: true })
       .withConnection(rivertown, graveyard)
       .withInvestigator(alice, { locationId: rivertown });
-    const aliceEnters: Command = { type: 'MoveInvestigator', investigatorId: alice, to: graveyard };
 
     it('tests willpower (3) once alice enters it', () => {
-      const { context, state: started } = graveyardTable.start();
+      const table = PlayTable.start(graveyardTable);
 
-      const { state } = execute(context, started, aliceEnters);
+      table.moveTo(alice, graveyard);
 
-      expect(state.pending).toMatchObject([
+      expect(table.state.pending).toMatchObject([
         { id: 'test:graveyard', skillTest: { skill: 'willpower', difficulty: 3 } },
       ]);
     });
@@ -159,24 +108,22 @@ describe('The Midnight Masks card abilities', () => {
       { optionId: 'horror', horror: 2, at: graveyard },
       { optionId: 'rivertown', horror: 0, at: rivertown },
     ])('on a fail, $optionId leaves alice with $horror horror', ({ optionId, horror, at }) => {
-      const { context, state: started } = graveyardTable.start();
-      const testing = stateAfter(context, started, aliceEnters);
-      const failed = stateAfter(context, testing, answer('test:graveyard', 'fail'));
+      const table = PlayTable.start(graveyardTable);
+      table.moveTo(alice, graveyard);
+      table.resolveTest('fail');
 
-      const state = stateAfter(context, failed, answer(GRAVEYARD_DECISION, optionId));
+      table.play(answer(GRAVEYARD_DECISION, optionId));
 
-      expect(requireInvestigator(state, alice)).toMatchObject({
-        locationId: at,
-        sanity: { horror },
-      });
+      expect(table.board.locationOf(alice)).toBe(at);
+      expect(table.board.investigator(alice).horror).toBe(horror);
     });
 
     it("offers its choice under the test's fail, so the players answer both at once", () => {
-      const { context, state: started } = graveyardTable.start();
+      const table = PlayTable.start(graveyardTable);
 
-      const { decisions } = boardView(context, stateAfter(context, started, aliceEnters));
+      table.moveTo(alice, graveyard);
 
-      expect(decisions[0]?.followUps).toEqual({
+      expect(table.board.decisions[0]?.followUps).toEqual({
         fail: {
           prompt: 'scenario.theMidnightMasks.graveyard.prompt',
           options: [
@@ -189,9 +136,9 @@ describe('The Midnight Masks card abilities', () => {
   });
 
   describe.each([
-    { code: '01128', name: "St. Mary's Hospital", after: { health: { damage: 1 } } },
+    { code: '01128', name: "St. Mary's Hospital", after: { damage: 1 } },
     { code: '01130', name: 'First Bank of Arkham', after: { resources: 8 } },
-    { code: '01131', name: 'Arkham Asylum', after: { sanity: { horror: 0 } } },
+    { code: '01131', name: 'Arkham Asylum', after: { horror: 0 } },
   ])('$name', ({ code, after }) => {
     const location = instanceId('location');
     /** Alice there on her turn, with 4 damage, 3 horror and 5 resources. */
@@ -204,20 +151,14 @@ describe('The Midnight Masks card abilities', () => {
         resources: 5,
       })
       .withTurnOf(alice);
-    const useIt: Command = {
-      type: 'UseCardAction',
-      investigatorId: alice,
-      cardId: location,
-      action: 0,
-    };
 
     it('does what its action says for alice, once per game', () => {
-      const { context, state: started } = aliceThere.start();
+      const table = PlayTable.start(aliceThere);
 
-      const state = stateAfter(context, started, useIt);
+      table.useCardAction(alice, location);
 
-      expect(requireInvestigator(state, alice)).toMatchObject(after);
-      expect(rejectionFrom(context, state, useIt)).toMatchObject({
+      expect(table.board.investigator(alice)).toMatchObject(after);
+      expect(rejectionOf(() => table.useCardAction(alice, location))).toMatchObject({
         code: 'cardActionLimitReached',
       });
     });
@@ -250,28 +191,22 @@ describe('The Midnight Masks card abilities', () => {
     },
   ])('$name: $deferred.type, $resources resources after', ({ code, deferred, resources }) => {
     const location = instanceId('location');
-    /** Alice there on her turn, with 5 resources. */
-    const aliceThere = newGame()
-      .withLocation(location, cardOf(code), { revealed: true })
-      .withInvestigator(alice, { locationId: location, resources: 5 })
-      .withTurnOf(alice);
-    const useIt: Command = {
-      type: 'UseCardAction',
-      investigatorId: alice,
-      cardId: location,
-      action: 0,
-    };
 
     it('leaves the step on her deck to alice', () => {
-      const { context, state: started } = aliceThere.start();
+      const table = PlayTable.start(
+        newGame()
+          .withLocation(location, cardOf(code), { revealed: true })
+          .withInvestigator(alice, { locationId: location, resources: 5 })
+          .withTurnOf(alice),
+      );
 
-      const { events, state } = execute(context, started, useIt);
+      table.useCardAction(alice, location);
 
-      expect(events).toContainEqual({
+      expect(table.events).toContainEqual({
         type: 'CommandDeferred',
         command: { ...deferred, source: { cardId: location, window: 'action' } },
       });
-      expect(requireInvestigator(state, alice)).toMatchObject({ resources });
+      expect(table.board.investigator(alice)).toMatchObject({ resources });
     });
   });
 
@@ -281,41 +216,31 @@ describe('The Midnight Masks card abilities', () => {
     { code: '01127', name: "Southside (Ma's Boarding House)", limit: 'once per game' },
   ])('$name rejects a second use in the same turn ($limit)', ({ code }) => {
     const location = instanceId('location');
-    const { context, state: started } = newGame()
-      .withLocation(location, cardOf(code), { revealed: true })
-      .withInvestigator(alice, { locationId: location })
-      .withTurnOf(alice)
-      .start();
-    const useIt: Command = {
-      type: 'UseCardAction',
-      investigatorId: alice,
-      cardId: location,
-      action: 0,
-    };
+    const table = PlayTable.start(
+      newGame()
+        .withLocation(location, cardOf(code), { revealed: true })
+        .withInvestigator(alice, { locationId: location })
+        .withTurnOf(alice),
+    );
 
-    const state = stateAfter(context, started, useIt);
+    table.useCardAction(alice, location);
 
-    expect(rejectionFrom(context, state, useIt)).toMatchObject({ code: 'cardActionLimitReached' });
+    expect(rejectionOf(() => table.useCardAction(alice, location))).toMatchObject({
+      code: 'cardActionLimitReached',
+    });
   });
 
   it('lets alice search at Miskatonic University twice in a turn: it has no limit', () => {
     const university = instanceId('miskatonic_university');
-    const { context, state: started } = newGame()
-      .withLocation(university, cardOf('01129'), { revealed: true })
-      .withInvestigator(alice, { locationId: university })
-      .withTurnOf(alice)
-      .start();
-    const searchThere: Command = {
-      type: 'UseCardAction',
-      investigatorId: alice,
-      cardId: university,
-      action: 0,
-    };
-    const searchedOnce = stateAfter(context, started, searchThere);
+    const table = PlayTable.start(
+      newGame()
+        .withLocation(university, cardOf('01129'), { revealed: true })
+        .withInvestigator(alice, { locationId: university })
+        .withTurnOf(alice),
+    );
+    table.useCardAction(alice, university);
 
-    const { events } = execute(context, searchedOnce, searchThere);
-
-    expect(events).toContainEqual(expect.objectContaining({ type: 'CommandDeferred' }));
+    expect(() => table.useCardAction(alice, university)).not.toThrow();
   });
 
   describe('Northside', () => {
@@ -350,16 +275,6 @@ describe('The Midnight Masks card abilities', () => {
     const act = instanceId('uncovering_the_conspiracy');
     const bob = investigatorId('bob');
     const cultistDeck = { kind: 'scenarioDeck', deck: 'cultist' } as const;
-    const drawCultist: Command = {
-      type: 'UseCardAction',
-      investigatorId: alice,
-      cardId: act,
-      action: 0,
-      spend: [
-        { investigatorId: alice, amount: 1 },
-        { investigatorId: bob, amount: 3 },
-      ],
-    };
     /** Alice and bob at Rivertown with 3 clues each on alice's turn, the act current. */
     const atRivertown = () =>
       newGame()
@@ -368,29 +283,35 @@ describe('The Midnight Masks card abilities', () => {
         .withInvestigator(bob, { locationId: rivertown, clues: 3 })
         .withAct(act, cardOf('01123'))
         .withTurnOf(alice);
+    /** Alice draws a cultist with the act's action, paying 1 clue and bob 3. */
+    const drawCultist = (table: PlayTable) =>
+      table.useCardAction(alice, act, 0, [
+        [alice, 1],
+        [bob, 3],
+      ]);
 
     it('spends 4 clues of the group and spawns the top cultist, Herman Collins, in the Graveyard', () => {
-      const { context, state } = atRivertown()
-        .withLocation(graveyard, cardOf('01133'), { revealed: true })
-        .withCard(instanceId('herman'), cardOf('01138'), cultistDeck)
-        .withCard(instanceId('peter'), cardOf('01139'), cultistDeck)
-        .start();
-
-      const after = stateAfter(context, state, drawCultist);
-
-      expect(requireInvestigator(after, alice).clues + requireInvestigator(after, bob).clues).toBe(
-        2,
+      const table = PlayTable.start(
+        atRivertown()
+          .withLocation(graveyard, cardOf('01133'), { revealed: true })
+          .withCard(instanceId('herman'), cardOf('01138'), cultistDeck)
+          .withCard(instanceId('peter'), cardOf('01139'), cultistDeck),
       );
-      expect(after.cards[instanceId('herman')]?.zone).toEqual(atLocation(graveyard));
-      expect(after.cards[instanceId('peter')]?.zone).toEqual(cultistDeck);
+
+      drawCultist(table);
+
+      expect(table.board.perInvestigator('clues')).toEqual({ alice: 2, bob: 0 });
+      expect(table.state.cards[instanceId('herman')]?.zone).toEqual(atLocation(graveyard));
+      expect(table.state.cards[instanceId('peter')]?.zone).toEqual(cultistDeck);
     });
 
     it('is refused with the Cultist deck empty, and nobody pays', () => {
-      const { context, state } = atRivertown().start();
+      const table = PlayTable.start(atRivertown());
 
-      expect(rejectionFrom(context, state, drawCultist)).toMatchObject({
+      expect(rejectionOf(() => drawCultist(table))).toMatchObject({
         code: 'triggeredCommandRejected',
       });
+      expect(table.board.perInvestigator('clues')).toEqual({ alice: 3, bob: 3 });
     });
 
     const maskedHunter = { id: instanceId('masked_hunter'), code: '01121b' };
@@ -419,19 +340,14 @@ describe('The Midnight Masks card abilities', () => {
           (game, { id, code }) => game.withCard(id, cardOf(code), victoryDisplay),
           atRivertown(),
         );
-        const { context, state } = withDisplay
-          .withCard(herman, cardOf('01138'), engagedWith(alice))
-          .start();
+        const table = PlayTable.start(
+          withDisplay.withCard(herman, cardOf('01138'), engagedWith(alice)),
+        );
 
-        const after = stateAfter(context, state, {
-          type: 'UseCardAction',
-          investigatorId: alice,
-          cardId: herman,
-          action: 0,
-        });
+        table.useCardAction(alice, herman);
 
-        expect(after.cards[herman]?.zone).toEqual(victoryDisplay);
-        expect(after.meta.resolution).toBe(resolution);
+        expect(table.state.cards[herman]?.zone).toEqual(victoryDisplay);
+        expect(table.board.resolution).toBe(resolution);
       },
     );
 
@@ -441,19 +357,14 @@ describe('The Midnight Masks card abilities', () => {
         (game, { id, code }) => game.withCard(id, cardOf(code), victoryDisplay),
         atRivertown(),
       );
-      const { context, state } = withDisplay
-        .withCard(ruth.id, cardOf(ruth.code), engagedWith(alice))
-        .start();
-
-      const after = stateAfter(
-        context,
-        state,
-        { type: 'Evade', investigatorId: alice, enemyId: ruth.id },
-        answer('evade:alice:ruth_turner', 'pass'),
+      const table = PlayTable.start(
+        withDisplay.withCard(ruth.id, cardOf(ruth.code), engagedWith(alice)),
       );
 
-      expect(after.cards[ruth.id]?.zone).toEqual(victoryDisplay);
-      expect(after.meta.resolution).toBe('R1');
+      table.evade(alice, ruth.id, { result: 'pass' });
+
+      expect(table.state.cards[ruth.id]?.zone).toEqual(victoryDisplay);
+      expect(table.board.resolution).toBe('R1');
     });
   });
 
@@ -469,48 +380,40 @@ describe('The Midnight Masks card abilities', () => {
         .withInvestigator(alice, { locationId: rivertown, clues: 0, resources: 0, ...holding })
         .withCard(cultist, cardOf(code), engagedWith(alice))
         .withTurnOf(alice);
-    const parley: Command = {
-      type: 'UseCardAction',
-      investigatorId: alice,
-      cardId: cultist,
-      action: 0,
-    };
 
     it(`adds ${name} to the victory display for alice's payment, without an attack`, () => {
-      const { context, state: started } = aliceEngaged(holds).start();
+      const table = PlayTable.start(aliceEngaged(holds));
 
-      const state = stateAfter(context, started, parley);
+      table.useCardAction(alice, cultist);
 
-      expect(state.cards[cultist]?.zone).toEqual({ kind: 'victoryDisplay' });
-      expect(requireInvestigator(state, alice)).toMatchObject({ ...after, health: { damage: 0 } });
+      expect(table.state.cards[cultist]?.zone).toEqual(victoryDisplay);
+      expect(table.board.investigator(alice)).toMatchObject({ ...after, damage: 0 });
     });
 
     it('is refused to alice with nothing to pay', () => {
-      const { context, state } = aliceEngaged({}).start();
+      const table = PlayTable.start(aliceEngaged({}));
 
-      expect(rejectionFrom(context, state, parley)).toMatchObject({ code: 'cardActionCostUnpaid' });
+      expect(rejectionOf(() => table.useCardAction(alice, cultist))).toMatchObject({
+        code: 'cardActionCostUnpaid',
+      });
     });
   });
 
   it('adds Herman Collins to the victory display, leaving alice’s 4 discards to the players', () => {
     const herman = instanceId('herman');
-    const { context, state } = newGame()
-      .withLocation(rivertown, cardOf('01125'), { revealed: true })
-      .withInvestigator(alice, { locationId: rivertown })
-      .withCard(herman, cardOf('01138'), engagedWith(alice))
-      .withTurnOf(alice)
-      .start();
+    const table = PlayTable.start(
+      newGame()
+        .withLocation(rivertown, cardOf('01125'), { revealed: true })
+        .withInvestigator(alice, { locationId: rivertown })
+        .withCard(herman, cardOf('01138'), engagedWith(alice))
+        .withTurnOf(alice),
+    );
 
-    const { state: after, events } = execute(context, state, {
-      type: 'UseCardAction',
-      investigatorId: alice,
-      cardId: herman,
-      action: 0,
-    });
+    table.useCardAction(alice, herman);
 
-    expect(after.cards[herman]?.zone).toEqual({ kind: 'victoryDisplay' });
-    expect(requireInvestigator(after, alice)).toMatchObject({ health: { damage: 0 } });
-    expect(events).toContainEqual({
+    expect(table.state.cards[herman]?.zone).toEqual(victoryDisplay);
+    expect(table.board.investigator(alice)).toMatchObject({ damage: 0 });
+    expect(table.events).toContainEqual({
       type: 'CommandDeferred',
       command: {
         type: 'DiscardFromHand',
@@ -521,99 +424,102 @@ describe('The Midnight Masks card abilities', () => {
     });
   });
 
-  describe('Hunting Shadow', () => {
-    const shadow = instanceId('hunting_shadow');
+  it.each([
+    { optionId: 'clue', clues: 0, damage: 0 },
+    { optionId: 'damage', clues: 1, damage: 2 },
+  ])(
+    'makes alice with 1 clue answer $optionId to Hunting Shadow',
+    ({ optionId, clues, damage }) => {
+      const shadow = instanceId('hunting_shadow');
+      const table = PlayTable.start(
+        newGame()
+          .withLocation(rivertown, cardOf('01125'), { revealed: true })
+          .withInvestigator(alice, { locationId: rivertown, clues: 1 })
+          .withCard(shadow, cardOf('01135'), encounterDeck),
+      );
+      table.drawEncounterCard(alice);
+      table.resolveRevelation(shadow);
 
-    it.each([
-      { optionId: 'clue', clues: 0, damage: 0 },
-      { optionId: 'damage', clues: 1, damage: 2 },
-    ])('makes alice with 1 clue answer $optionId', ({ optionId, clues, damage }) => {
-      const { context, state: started } = newGame()
-        .withLocation(rivertown, cardOf('01125'), { revealed: true })
-        .withInvestigator(alice, { locationId: rivertown, clues: 1 })
-        .withCard(shadow, cardOf('01135'), { kind: 'encounterDeck' })
-        .start();
-      const drawn = stateAfter(context, started, aliceDraws, resolveRevelation('hunting_shadow'));
+      table.play(answer(HUNTING_SHADOW_DECISION, optionId));
 
-      const state = stateAfter(context, drawn, answer(HUNTING_SHADOW_DECISION, optionId));
+      expect(table.board.investigator(alice)).toMatchObject({ clues, damage });
+    },
+  );
 
-      expect(requireInvestigator(state, alice)).toMatchObject({ clues, health: { damage } });
-    });
-  });
-
-  describe('Locked Door', () => {
-    const door = instanceId('locked_door');
-
-    it.each([
-      { skill: 'combat', outcome: 'pass', zone: { kind: 'encounterDiscard' } },
-      { skill: 'agility', outcome: 'fail', zone: attachedTo(rivertown) },
-    ])(
-      'tests $skill (4) for alice in Rivertown and is $zone.kind after a $outcome',
-      ({ skill, outcome, zone }) => {
-        const { context, state: started } = newGame()
+  it.each([
+    { skill: 'combat', outcome: 'pass', zone: { kind: 'encounterDiscard' } },
+    { skill: 'agility', outcome: 'fail', zone: attachedTo(rivertown) },
+  ] as const)(
+    'tests $skill (4) for alice under the Locked Door in Rivertown and is $zone.kind after a $outcome',
+    ({ skill, outcome, zone }) => {
+      const door = instanceId('locked_door');
+      const table = PlayTable.start(
+        newGame()
           .withLocation(rivertown, cardOf('01125'), { revealed: true })
           .withInvestigator(alice, { locationId: rivertown })
           .withCard(door, cardOf('01174'), attachedTo(rivertown))
-          .withTurnOf(alice)
-          .start();
-        const chosen = stateAfter(
-          context,
-          started,
-          { type: 'UseCardAction', investigatorId: alice, cardId: door, action: 0 },
-          answer(LOCKED_DOOR_DECISION, skill),
-        );
+          .withTurnOf(alice),
+      );
+      table.useCardAction(alice, door);
+      table.play(answer(LOCKED_DOOR_DECISION, skill));
+      expect(table.state.pending).toMatchObject([{ skillTest: { skill, difficulty: 4 } }]);
 
-        const state = stateAfter(context, chosen, answer('test:locked_door', outcome));
+      table.resolveTest(outcome);
 
-        expect(chosen.pending).toMatchObject([{ skillTest: { skill, difficulty: 4 } }]);
-        expect(state.cards[door]?.zone).toEqual(zone);
-      },
-    );
-  });
+      expect(table.state.cards[door]?.zone).toEqual(zone);
+    },
+  );
 
   describe('False Lead', () => {
     const falseLead = instanceId('false_lead');
     const shadow = instanceId('hunting_shadow');
 
     it('surges when alice has no clues, so she draws the Hunting Shadow below it', () => {
-      const { context, state: started } = newGame()
-        .withLocation(rivertown, cardOf('01125'), { revealed: true })
-        .withInvestigator(alice, { locationId: rivertown, clues: 0 })
-        .withCard(falseLead, cardOf('01136'), { kind: 'encounterDeck' })
-        .withCard(shadow, cardOf('01135'), { kind: 'encounterDeck' })
-        .start();
+      const table = PlayTable.start(
+        newGame()
+          .withLocation(rivertown, cardOf('01125'), { revealed: true })
+          .withInvestigator(alice, { locationId: rivertown, clues: 0 })
+          .withCard(falseLead, cardOf('01136'), encounterDeck)
+          .withCard(shadow, cardOf('01135'), encounterDeck),
+      );
+      table.drawEncounterCard(alice);
 
-      const { state } = runFrom(context, started, [aliceDraws, resolveRevelation('false_lead')]);
+      table.resolveRevelation(falseLead);
 
-      expect(state.pending).toMatchObject([{ id: 'revelation:hunting_shadow' }]);
+      expect(table.state.pending).toMatchObject([{ id: 'revelation:hunting_shadow' }]);
     });
 
     it('places 2 of her 3 clues on Rivertown for a failed intellect (4) test by 2', () => {
-      const { context, state: started } = newGame()
-        .withLocation(rivertown, cardOf('01125'), { revealed: true, clues: 0 })
-        .withInvestigator(alice, { locationId: rivertown, clues: 3 })
-        .withCard(falseLead, cardOf('01136'), { kind: 'encounterDeck' })
-        .start();
-      const drawn = stateAfter(context, started, aliceDraws, resolveRevelation('false_lead'));
+      const table = PlayTable.start(
+        newGame()
+          .withLocation(rivertown, cardOf('01125'), { revealed: true, clues: 0 })
+          .withInvestigator(alice, { locationId: rivertown, clues: 3 })
+          .withCard(falseLead, cardOf('01136'), encounterDeck),
+      );
+      table.drawEncounterCard(alice);
+      table.resolveRevelation(falseLead);
+      expect(table.state.pending).toMatchObject([
+        { skillTest: { skill: 'intellect', difficulty: 4 } },
+      ]);
 
-      const state = stateAfter(context, drawn, { ...answer('test:false_lead', 'fail'), margin: 2 });
+      table.resolveTest({ failedBy: 2 });
 
-      expect(drawn.pending).toMatchObject([{ skillTest: { skill: 'intellect', difficulty: 4 } }]);
-      expect(requireInvestigator(state, alice).clues).toBe(1);
-      expect(state.cards[rivertown]?.tokens.clue).toBe(2);
+      expect(table.board.investigator(alice).clues).toBe(1);
+      expect(table.board.location(rivertown).clues).toBe(2);
     });
   });
 
   it('heals 1 damage from "Wolf-Man" Drew when he attacks', () => {
     const drew = instanceId('wolf_man_drew');
-    const { context, state: started } = newGame()
-      .withLocation(rivertown, cardOf('01125'), { revealed: true })
-      .withInvestigator(alice, { locationId: rivertown })
-      .withCard(drew, cardOf('01137'), engagedWith(alice), { tokens: { damage: 2 } })
-      .withTurnOf(alice)
-      .start();
+    const table = PlayTable.start(
+      newGame()
+        .withLocation(rivertown, cardOf('01125'), { revealed: true })
+        .withInvestigator(alice, { locationId: rivertown })
+        .withCard(drew, cardOf('01137'), engagedWith(alice), { tokens: { damage: 2 } })
+        .withTurnOf(alice),
+    );
 
-    const state = stateAfter(context, started, {
+    table.play({
       type: 'DealEnemyAttack',
       kind: 'cardAttack',
       enemyId: drew,
@@ -622,140 +528,140 @@ describe('The Midnight Masks card abilities', () => {
       horror: 0,
     });
 
-    expect(state.cards[drew]?.tokens).toEqual({ damage: 1 });
+    expect(table.state.cards[drew]?.tokens).toEqual({ damage: 1 });
   });
 
   it('places 1 doom on Wizard of the Order as the mythos phase ends', () => {
     const wizard = instanceId('wizard_of_the_order');
-    const { context, state: started } = newGame()
-      .withLocation(rivertown, cardOf('01125'), { revealed: true })
-      .withLocation(graveyard, cardOf('01133'), { revealed: true })
-      .withInvestigator(alice, { locationId: rivertown })
-      .withCard(wizard, cardOf('01170'), atLocation(graveyard))
-      .withTurnOf(alice)
-      .start();
-    let mythos = stateAfter(context, started, { type: 'EndTurn', investigatorId: alice });
-    while (mythos.meta.phase !== 'mythos') mythos = stateAfter(context, mythos, nextPhase);
-
-    const state = stateAfter(context, mythos, nextPhase);
-
-    expect(mythos.cards[wizard]?.tokens.doom).toBeUndefined();
-    expect(state.cards[wizard]?.tokens.doom).toBe(1);
-  });
-
-  it('places 2 doom on the nearest Cultist for Mysterious Chanting, not on a Nightgaunt', () => {
-    const wizard = instanceId('wizard_of_the_order');
-    const nightgaunt = instanceId('hunting_nightgaunt');
-    const { context, state: started } = newGame()
-      .withLocation(rivertown, cardOf('01125'), { revealed: true })
-      .withLocation(graveyard, cardOf('01133'), { revealed: true })
-      .withConnection(rivertown, graveyard)
-      .withInvestigator(alice, { locationId: rivertown })
-      .withCard(nightgaunt, cardOf('01172'), atLocation(rivertown))
-      .withCard(wizard, cardOf('01170'), atLocation(graveyard))
-      .withCard(instanceId('mysterious_chanting'), cardOf('01171'), { kind: 'encounterDeck' })
-      .start();
-
-    const { state } = runFrom(context, started, [
-      aliceDraws,
-      resolveRevelation('mysterious_chanting'),
-    ]);
-
-    expect(state.cards[wizard]?.tokens.doom).toBe(2);
-    expect(state.cards[nightgaunt]?.tokens.doom).toBeUndefined();
-  });
-
-  it('draws nothing for Mysterious Chanting with a Cultist in play, and shuffles the encounter deck', () => {
-    const wizard = instanceId('wizard_of_the_order');
-    const acolyte = instanceId('acolyte');
-    const { context, state: started } = newGame()
-      .withLocation(rivertown, cardOf('01125'), { revealed: true })
-      .withLocation(graveyard, cardOf('01133'), { revealed: true })
-      .withConnection(rivertown, graveyard)
-      .withInvestigator(alice, { locationId: rivertown })
-      .withCard(wizard, cardOf('01170'), atLocation(graveyard))
-      .withCard(instanceId('mysterious_chanting'), cardOf('01171'), { kind: 'encounterDeck' })
-      .withCard(acolyte, cardOf('01169'), { kind: 'encounterDeck' })
-      .start();
-
-    const { state, events } = runFrom(context, started, [
-      aliceDraws,
-      resolveRevelation('mysterious_chanting'),
-    ]);
-
-    expect(state.cards[acolyte]?.zone.kind).toBe('encounterDeck');
-    expect(events).toContainEqual(
-      expect.objectContaining({ type: 'DeckShuffled', zone: { kind: 'encounterDeck' } }),
+    const table = PlayTable.start(
+      newGame()
+        .withLocation(rivertown, cardOf('01125'), { revealed: true })
+        .withLocation(graveyard, cardOf('01133'), { revealed: true })
+        .withInvestigator(alice, { locationId: rivertown })
+        .withCard(wizard, cardOf('01170'), atLocation(graveyard))
+        .withTurnOf(alice),
     );
+    table.endTurn(alice);
+    while (table.board.phase !== 'mythos') table.nextPhase();
+    expect(table.state.cards[wizard]?.tokens.doom).toBeUndefined();
+
+    table.nextPhase();
+
+    expect(table.state.cards[wizard]?.tokens.doom).toBe(1);
   });
 
-  it('draws Wizard of the Order for Mysterious Chanting with no Cultist in play', () => {
+  describe('Mysterious Chanting', () => {
+    const chanting = instanceId('mysterious_chanting');
     const wizard = instanceId('wizard_of_the_order');
-    const { context, state: started } = newGame()
+    /** Alice in Rivertown next to the Graveyard, Mysterious Chanting on top of the encounter deck. */
+    const chantingOnTop = newGame()
       .withLocation(rivertown, cardOf('01125'), { revealed: true })
       .withLocation(graveyard, cardOf('01133'), { revealed: true })
       .withConnection(rivertown, graveyard)
       .withInvestigator(alice, { locationId: rivertown })
-      .withCard(instanceId('mysterious_chanting'), cardOf('01171'), { kind: 'encounterDeck' })
-      .withCard(instanceId('hunting_nightgaunt'), cardOf('01172'), { kind: 'encounterDeck' })
-      .withCard(wizard, cardOf('01170'), { kind: 'encounterDeck' })
-      .start();
+      .withCard(chanting, cardOf('01171'), encounterDeck);
 
-    const state = stateAfter(
-      context,
-      started,
-      aliceDraws,
-      resolveRevelation('mysterious_chanting'),
-    );
+    it('places 2 doom on the nearest Cultist, not on a Nightgaunt', () => {
+      const nightgaunt = instanceId('hunting_nightgaunt');
+      const table = PlayTable.start(
+        chantingOnTop
+          .withCard(nightgaunt, cardOf('01172'), atLocation(rivertown))
+          .withCard(wizard, cardOf('01170'), atLocation(graveyard)),
+      );
+      table.drawEncounterCard(alice);
 
-    // "Spawn - Any empty location": alice stands in Rivertown, so only the Graveyard is empty.
-    expect(state.cards[wizard]?.zone).toEqual(atLocation(graveyard));
-    expect(state.pending).toEqual([]);
+      table.resolveRevelation(chanting);
+
+      expect(table.state.cards[wizard]?.tokens.doom).toBe(2);
+      expect(table.state.cards[nightgaunt]?.tokens.doom).toBeUndefined();
+    });
+
+    it('draws nothing with a Cultist in play, and shuffles the encounter deck', () => {
+      const acolyte = instanceId('acolyte');
+      const table = PlayTable.start(
+        chantingOnTop
+          .withCard(wizard, cardOf('01170'), atLocation(graveyard))
+          .withCard(acolyte, cardOf('01169'), encounterDeck),
+      );
+      table.drawEncounterCard(alice);
+
+      table.resolveRevelation(chanting);
+
+      expect(table.state.cards[acolyte]?.zone).toEqual(encounterDeck);
+      expect(table.events).toContainEqual(
+        expect.objectContaining({ type: 'DeckShuffled', zone: encounterDeck }),
+      );
+    });
+
+    it('draws Wizard of the Order with no Cultist in play', () => {
+      const table = PlayTable.start(
+        chantingOnTop
+          .withCard(instanceId('hunting_nightgaunt'), cardOf('01172'), encounterDeck)
+          .withCard(wizard, cardOf('01170'), encounterDeck),
+      );
+      table.drawEncounterCard(alice);
+
+      table.resolveRevelation(chanting);
+
+      // "Spawn - Any empty location": alice stands in Rivertown, so only the Graveyard is empty.
+      expect(table.state.cards[wizard]?.zone).toEqual(atLocation(graveyard));
+      expect(table.state.pending).toEqual([]);
+    });
   });
 
-  it('deals the damage of a failed On Wings of Darkness too when its horror defeats alice', () => {
-    const { context, state: started } = newGame()
-      .withLocation(rivertown, cardOf('01125'), { revealed: true })
-      .withInvestigator(alice, {
+  describe('On Wings of Darkness', () => {
+    const onWings = instanceId('on_wings');
+
+    it('deals the damage of a failed test too when its horror defeats alice', () => {
+      const table = PlayTable.start(
+        newGame()
+          .withLocation(rivertown, cardOf('01125'), { revealed: true })
+          .withInvestigator(alice, {
+            locationId: rivertown,
+            health: { max: 8, damage: 0 },
+            sanity: { max: 6, horror: 5 },
+          })
+          .withCard(onWings, cardOf('01173'), encounterDeck),
+      );
+      table.drawEncounterCard(alice);
+      table.resolveRevelation(onWings);
+
+      table.resolveTest('fail');
+
+      expect(requireInvestigator(table.state, alice)).toMatchObject({
+        status: 'defeated',
+        health: { damage: 1 },
+        sanity: { horror: 6 },
+      });
+    });
+
+    it('deals 1 horror and 1 damage for a failed test, then moves alice to Rivertown without the Wizard but with the Nightgaunt', () => {
+      const wizard = instanceId('wizard_of_the_order');
+      const nightgaunt = instanceId('hunting_nightgaunt');
+      const table = PlayTable.start(
+        newGame()
+          .withLocation(rivertown, cardOf('01125'), { revealed: true })
+          .withLocation(graveyard, cardOf('01133'), { revealed: true })
+          .withInvestigator(alice, { locationId: graveyard })
+          .withCard(wizard, cardOf('01170'), engagedWith(alice))
+          .withCard(nightgaunt, cardOf('01172'), engagedWith(alice))
+          .withCard(onWings, cardOf('01173'), encounterDeck),
+      );
+      table.drawEncounterCard(alice);
+      table.resolveRevelation(onWings);
+      expect(table.state.pending).toMatchObject([
+        { skillTest: { skill: 'agility', difficulty: 4 } },
+      ]);
+
+      table.resolveTest('fail');
+
+      expect(requireInvestigator(table.state, alice)).toMatchObject({
         locationId: rivertown,
-        health: { max: 8, damage: 0 },
-        sanity: { max: 6, horror: 5 },
-      })
-      .withCard(instanceId('on_wings'), cardOf('01173'), { kind: 'encounterDeck' })
-      .start();
-    const drawn = stateAfter(context, started, aliceDraws, resolveRevelation('on_wings'));
-
-    const state = stateAfter(context, drawn, answer('test:on_wings', 'fail'));
-
-    expect(requireInvestigator(state, alice)).toMatchObject({
-      status: 'defeated',
-      health: { damage: 1 },
-      sanity: { horror: 6 },
+        health: { damage: 1 },
+        sanity: { horror: 1 },
+      });
+      expect(table.state.cards[wizard]?.zone).toEqual(atLocation(graveyard));
+      expect(table.state.cards[nightgaunt]?.zone).toEqual(engagedWith(alice));
     });
-  });
-
-  it('deals 1 horror and 1 damage for a failed On Wings of Darkness, then moves alice to Rivertown without the Wizard but with the Nightgaunt', () => {
-    const wizard = instanceId('wizard_of_the_order');
-    const nightgaunt = instanceId('hunting_nightgaunt');
-    const { context, state: started } = newGame()
-      .withLocation(rivertown, cardOf('01125'), { revealed: true })
-      .withLocation(graveyard, cardOf('01133'), { revealed: true })
-      .withInvestigator(alice, { locationId: graveyard })
-      .withCard(wizard, cardOf('01170'), engagedWith(alice))
-      .withCard(nightgaunt, cardOf('01172'), engagedWith(alice))
-      .withCard(instanceId('on_wings'), cardOf('01173'), { kind: 'encounterDeck' })
-      .start();
-    const drawn = stateAfter(context, started, aliceDraws, resolveRevelation('on_wings'));
-    expect(drawn.pending).toMatchObject([{ skillTest: { skill: 'agility', difficulty: 4 } }]);
-
-    const state = stateAfter(context, drawn, answer('test:on_wings', 'fail'));
-
-    expect(requireInvestigator(state, alice)).toMatchObject({
-      locationId: rivertown,
-      health: { damage: 1 },
-      sanity: { horror: 1 },
-    });
-    expect(state.cards[wizard]?.zone).toEqual(atLocation(graveyard));
-    expect(state.cards[nightgaunt]?.zone).toEqual(engagedWith(alice));
   });
 });

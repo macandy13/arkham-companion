@@ -7,7 +7,7 @@ import type { CardStats, ScaledValue } from '@arkham/engine';
 import { describe, expect, it } from 'vitest';
 import { coreSetPlayerCardDefs } from './player_cards';
 import { queenOfAshCardDefs } from './queen_of_ash/cards';
-import { smokeAndMirrorsCardDefs } from './smoke_and_mirrors/cards';
+import { SMOKE_AND_MIRRORS_CODES, smokeAndMirrorsCardDefs } from './smoke_and_mirrors/cards';
 import { spreadingFlamesCardDefs } from './spreading_flames/cards';
 import { theDevourerBelowCardDefs } from './the_devourer_below/cards';
 import { theGatheringCardDefs } from './the_gathering/cards';
@@ -36,6 +36,38 @@ interface PrintedStats {
   horror?: number;
   victory?: number;
   doom?: string;
+  /** Keywords by name, each with its detail, one line each (`keywordLine`: "spawn: Attic"). */
+  keywords: string[];
+  /** The pictures' paths on arkhamdb.com, which the app fetches at runtime (`CardStats.imageSrc`). */
+  imageSrc?: string;
+  backImageSrc?: string;
+}
+
+/**
+ * A keyword as one lower-case line, so the list sorts and diffs plainly: "spawn: attic".
+ * ArkhamDB's parser keeps a detail's case as printed mid-sentence ("Prey - most resources").
+ */
+const keywordLine = ({ name, detail }: { name: string; detail?: string }): string =>
+  (detail === undefined ? name : `${name}: ${detail}`).toLowerCase();
+
+/**
+ * Keywords this check leaves out on both sides, each with the reason it can't hold them to
+ * ArkhamDB: the hand-entered card leaves the keyword to the players on purpose, or ArkhamDB's
+ * parser misses it.
+ */
+const UNCHECKED_KEYWORDS: Readonly<Record<string, readonly string[]>> = {
+  // "Spawn - St. Mary's Hospital.": `parseKeywords` ends the sentence at "St.".
+  [MIDNIGHT_MASKS_CODES.ruthTurner]: ["spawn: st. mary's hospital"],
+  // Elusive is left to the players on these cards until MC2.15 (#1115) enters it.
+  [SMOKE_AND_MIRRORS_CODES.servantOfFlame]: ['elusive'],
+  [SMOKE_AND_MIRRORS_CODES.sgtEarlMonroe]: ['elusive'],
+  '12162': ['elusive'], // Bat Horror
+};
+
+/** `stats` without the keywords the check leaves out for its card (`UNCHECKED_KEYWORDS`). */
+function withoutUnchecked(code: string, stats: PrintedStats): PrintedStats {
+  const unchecked = UNCHECKED_KEYWORDS[code] ?? [];
+  return { ...stats, keywords: stats.keywords.filter((line) => !unchecked.includes(line)) };
 }
 
 /**
@@ -65,6 +97,9 @@ function enteredStats(stats: CardStats): PrintedStats {
     horror: stats.horror,
     victory: stats.victory,
     doom: stats.doom && printedValue(stats.doom),
+    keywords: (stats.keywords ?? []).map(keywordLine).sort(),
+    imageSrc: stats.imageSrc,
+    backImageSrc: stats.backImageSrc,
   };
 }
 
@@ -96,6 +131,14 @@ function arkhamDbStats(def: CardDef): PrintedStats {
     horror: def.horror ?? (enemy ? 0 : undefined),
     victory: def.victory,
     doom: scaled(def.doom, false),
+    // Elite is a trait on ArkhamDB, which `parseKeywords` also lists as a keyword; the traits
+    // compare it already, and the hand-entered cards keep it a trait only.
+    keywords: def.keywords
+      .filter(({ name }) => name !== 'elite')
+      .map(keywordLine)
+      .sort(),
+    imageSrc: def.imageSrc,
+    backImageSrc: def.backImageSrc,
   };
 }
 
@@ -149,8 +192,15 @@ describe.each<{ campaign: string; pack: CheckedPack; cards: readonly CardStats[]
     'print what ArkhamDB has for $label',
     ({ stats }) => {
       const def = fetched.find((card) => card.code === stats.code);
+      const entered = withoutUnchecked(stats.code, enteredStats(stats));
 
-      expect(def && arkhamDbStats(def)).toEqual(enteredStats(stats));
+      expect(def && withoutUnchecked(stats.code, arkhamDbStats(def))).toEqual({
+        ...entered,
+        // ArkhamDB names no back picture for many double-sided cards (Core Set (2026)
+        // locations, an agenda whose back is a linked card); the hand-entered path follows
+        // arkhamdb.com's naming there, so only a back ArkhamDB names is held to it.
+        backImageSrc: def?.backImageSrc && entered.backImageSrc,
+      });
     },
   );
 });

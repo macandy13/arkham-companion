@@ -6,8 +6,8 @@ import { useCluePayment } from '../screens/CluePaymentDialog';
 import { overHeaderCard } from '../screens/headerDropTarget';
 import { TokenGhost } from '../screens/TokenGhost';
 import { useTokenDrag, type TokenDragHandlers } from '../screens/useTokenDrag';
-import type { GameActions } from '../state/gameActions';
 import { placeYourClues } from '@arkham/engine';
+import { usePlay } from '../screens/PlayContext';
 
 /**
  * Dragging a clue off `investigator`'s clue count (M3.11c): `handlers` for the count, and
@@ -23,8 +23,8 @@ import { placeYourClues } from '@arkham/engine';
 export function useClueDrag(
   board: BoardView,
   investigator: InvestigatorId,
-  actions: GameActions,
 ): { handlers: TokenDragHandlers; shown: ReactNode } {
+  const { actions } = usePlay();
   const { dialog, pay } = useCluePayment(board);
   const dropOnAct = () => {
     const { act } = board;

@@ -21,7 +21,7 @@ import { completeAdvance } from './handle_scenario';
 import { newLeadInvestigatorEvents } from './elimination';
 import { exhaustAfterAttack, nextStepPlan } from './phases';
 import { apply } from './reducer';
-import { handleAdjustActions } from './turns';
+import { handleSpendActions } from './turns';
 import { CommandRejected, type Rejection } from './rejection';
 import type { GameState, HeldAction, QueuedStep } from './state';
 import { followUpStep, MAX_TRIGGERED_COMMANDS, triggeredSteps } from './triggers';
@@ -86,7 +86,7 @@ export function handleWithCauses(
   // The action is paid before it provokes anything or resolves; a held action resumes without
   // paying again, since only the players' own command reaches this point.
   const payment = actionPayment(ctx, before, command);
-  const paid = payment ? handleAdjustActions(before, payment) : [];
+  const paid = payment ? handleSpendActions(before, payment) : [];
   const state = paid.reduce(apply, before);
   const provoking = spec.provokes?.(command, ctx, state);
   const action = provoking && isOwnTurnAction(state, provoking) ? provoking : undefined;

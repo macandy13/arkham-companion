@@ -378,9 +378,9 @@ describe('turns, actions and tokens', () => {
 
     expect(table.board.investigator(alice)).toMatchObject({ resources: 3, actions: 0 });
     expect(table.events.slice(-4).map((event) => event.type)).toEqual([
-      'ActionsAdjusted',
+      'ActionsSpent',
       'CommandDeferred',
-      'ActionsAdjusted',
+      'ActionsSpent',
       'CommandDeferred',
     ]);
   });

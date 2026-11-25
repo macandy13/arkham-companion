@@ -79,7 +79,13 @@ import {
 } from './skill_tests';
 import { handleSpawnEnemy } from './spawn';
 import type { GameState, HeldAction, QueuedStep } from './state';
-import { handleAdjustActions, handleEndTurn, handleResign, handleStartTurn } from './turns';
+import {
+  handleAdjustActions,
+  handleEndTurn,
+  handleResign,
+  handleSpendActions,
+  handleStartTurn,
+} from './turns';
 import { cardActionOf, cardActionSteps, handleUseCardAction } from './card_actions';
 
 /**
@@ -116,9 +122,8 @@ export interface CommandSpec<C extends Command> {
    * one (`ActionCommand.asAction`); `handle` asks only for a player command
    * in that investigator's own turn (`isOwnTurnAction`). `Fight` and `Evade`
    * never provoke: the rules exempt them, and neither does a free action (`asAction: 'free'`).
-   * `AdjustActions` does not either, even with a negative delta: the engine plays one to pay
-   * each action command (`actionPayment`), so treating every -1 as an action would ask twice
-   * for the same action. The
+   * `SpendActions` does not either: the engine plays one to pay each action command
+   * (`actionPayment`), so treating it as an action would ask twice for the same action. The
    * actions on player cards are commands of their own taken `asAction`
    * (`GainResources`, `DrawCards`, `PlayCard`), so they provoke once.
    */
@@ -309,6 +314,7 @@ const COMMAND_SPECS: CommandSpecs = {
     handle: (_ctx, state, command) => handleSetLeadInvestigator(state, command),
   },
   AdjustActions: { handle: (_ctx, state, command) => handleAdjustActions(state, command) },
+  SpendActions: { handle: (_ctx, state, command) => handleSpendActions(state, command) },
   DealEnemyAttack: {
     handle: handleDealEnemyAttack,
     // An enemy phase attack exhausts its enemy once the abilities the attack triggered have

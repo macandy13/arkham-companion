@@ -11,9 +11,9 @@ import {
   sealChaosToken,
   tokenCounts,
 } from '@arkham/engine';
-import type { GameActions } from '../state/gameActions';
 import { ChaosTokenFace } from '../tokens/ChaosTokenFace';
 import './chaos_bag.css';
+import { usePlay } from './PlayContext';
 
 /** The tokens a card adds from their pool, in the order the chaos bag lists them. */
 const POOL_TOKENS: readonly PoolToken[] = ['bless', 'curse'];
@@ -30,17 +30,10 @@ const POOL_TOKENS: readonly PoolToken[] = ['bless', 'curse'];
  * skill test (`revealTokens`), and shows them until Put back: they never leave the bag, so this
  * is no step and Undo has nothing to take back.
  * Each other control is a performed step of its own (`SealChaosToken`, `ReleaseChaosToken`,
- * `ChangeChaosBag`), so Undo takes it back, and they wait while a step is queued (`busy`).
+ * `ChangeChaosBag`), so Undo takes it back, and they wait while a step is queued (`usePlay().busy`).
  */
-export function ChaosBag({
-  board,
-  actions,
-  busy,
-}: {
-  board: BoardView;
-  actions: GameActions;
-  busy: boolean;
-}) {
+export function ChaosBag({ board }: { board: BoardView }) {
+  const { actions, busy } = usePlay();
   const { t } = useTranslation();
   const titleId = useId();
   const sealedId = useId();

@@ -2,8 +2,7 @@ import { useTranslation } from 'react-i18next';
 
 /**
  * Asks the players to tap a location on the map (`prompt`, under the notice's `label`): where an
- * enemy spawns (`OpenGame.spawning`) or where a card effect moves an investigator
- * (`OpenGame.movingByCard`), with a button that cancels the pick (`onCancel`).
+ * enemy spawns or where a card effect moves an investigator (`OpenGame.picking`), with a button that cancels the pick (`onCancel`).
  */
 export function MapPickPrompt({
   label,

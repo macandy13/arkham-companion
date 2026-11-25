@@ -19,8 +19,10 @@ import {
 } from '../screens/ActionRow';
 import { SplitAction } from '../screens/SplitAction';
 import type { GameActions } from '../state/gameActions';
-import { CardPatterns, LocationTile } from './LocationTile';
+import { CardPatterns } from './CardPatterns';
+import { LocationTile } from './LocationTile';
 import { TILE } from './mapLayout';
+import { usePlay } from '../screens/PlayContext';
 
 /**
  * One location in full, opened by a tap on its tile or its details button on a tablet or wider,
@@ -34,22 +36,16 @@ import { TILE } from './mapLayout';
 export function LocationDetails({
   board,
   location,
-  actions,
-  busy,
   onClose,
 }: {
   board: BoardView;
   location: LocationView;
-  actions: GameActions;
-  busy: boolean;
   onClose: () => void;
 }) {
   const hosted = useDecisionHost();
   return (
     <DetailsDialog
       board={board}
-      actions={actions}
-      busy={busy}
       hosted={hosted}
       name="location"
       card={board.cardFace(location.id)}
@@ -58,14 +54,7 @@ export function LocationDetails({
       onClose={onClose}
     >
       <LocationValues location={location} />
-      <LocationPage
-        board={board}
-        location={location}
-        actions={actions}
-        busy={busy}
-        onLeave={onClose}
-        onTest={hosted.host}
-      />
+      <LocationPage board={board} location={location} onLeave={onClose} onTest={hosted.host} />
     </DetailsDialog>
   );
 }
@@ -100,16 +89,12 @@ function LocationValues({ location }: { location: LocationView }) {
 export function LocationContent({
   board,
   location,
-  actions,
-  busy,
   titleId,
   around,
   onLeave,
 }: {
   board: BoardView;
   location: LocationView;
-  actions: GameActions;
-  busy: boolean;
   titleId: string;
   around?: (card: ReactNode) => ReactNode;
   onLeave?: () => void;
@@ -128,13 +113,7 @@ export function LocationContent({
           ? t('location.facts', { shroud: location.shroud, clues: location.clues })
           : t('location.unrevealed')}
       </p>
-      <LocationPage
-        board={board}
-        location={location}
-        actions={actions}
-        busy={busy}
-        {...(onLeave ? { onLeave } : {})}
-      />
+      <LocationPage board={board} location={location} {...(onLeave ? { onLeave } : {})} />
     </>
   );
 }
@@ -150,23 +129,20 @@ export function LocationContent({
  * from the board, so its counts follow each step. A move, an investigation or a card action calls
  * `onLeave` first, for a view that should step aside then, except that an investigation calls
  * `onTest` instead when given, for a view that shows the test itself; Reveal and a clue taken
- * do neither, since those often come several at a time. Nothing is tapped while a step is queued (`busy`).
+ * do neither, since those often come several at a time. Nothing is tapped while a step is queued (`usePlay().busy`).
  */
 function LocationPage({
   board,
   location,
-  actions,
-  busy,
   onLeave,
   onTest,
 }: {
   board: BoardView;
   location: LocationView;
-  actions: GameActions;
-  busy: boolean;
   onLeave?: () => void;
   onTest?: () => void;
 }) {
+  const { actions, busy } = usePlay();
   const { t } = useTranslation();
   const offered = locationActions(board, location, actions);
   const printed = cardActionsOn(board, location.id);
@@ -259,18 +235,10 @@ function LocationPage({
   return (
     <>
       <Here board={board} location={location} />
-      <AttachedCards board={board} host={location.id} actions={actions} busy={busy} />
+      <AttachedCards board={board} host={location.id} />
       <footer>
         {pills.length > 0 && <ActionGroup title={t('location.actions')}>{pills}</ActionGroup>}
-        {printed.length > 0 && (
-          <CardActions
-            board={board}
-            offered={printed}
-            actions={actions}
-            busy={busy}
-            onUse={onLeave}
-          />
-        )}
+        {printed.length > 0 && <CardActions board={board} offered={printed} onUse={onLeave} />}
         {revealable && (
           <ActionGroup title={t('location.corrections')}>
             <button

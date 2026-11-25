@@ -2,12 +2,12 @@ import { useId } from 'react';
 import { useTranslation } from 'react-i18next';
 import { investigatorAt } from '../investigators/dropTarget';
 import { enemyAt, locationAt } from '../map/dropTarget';
-import type { GameActions } from '../state/gameActions';
 import { overHeaderCard } from './headerDropTarget';
 import { GameToken, type GameTokenKind } from '../tokens/GameToken';
 import { TokenGhost } from './TokenGhost';
 import { useTokenDrag, type TokenDragHandlers } from './useTokenDrag';
 import { adjustStat, dealDamageTo, placeDoomOnAgenda } from '@arkham/engine';
+import { usePlay } from './PlayContext';
 
 /**
  * The token pool in the header's top left corner (M3.11c): a doom, a clue, a damage, a horror and
@@ -25,7 +25,8 @@ import { adjustStat, dealDamageTo, placeDoomOnAgenda } from '@arkham/engine';
  * (`overTokenPool`). Not drag sources while a step is queued. A
  * phone has no room for it (`game.css`).
  */
-export function TokenPool({ actions, busy }: { actions: GameActions; busy: boolean }) {
+export function TokenPool() {
+  const { actions, busy } = usePlay();
   const { t } = useTranslation();
   const id = useId();
   const doom = useTokenDrag((client) => {

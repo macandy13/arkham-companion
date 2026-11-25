@@ -16,7 +16,7 @@ The header card lays its HTML over that drawing in fractions of the card (`--boo
 In the card pictures theme the whole picture lies over the drawing, and the count stays on the printed threshold.
 
 The header's top left corner holds the token pool ([`TokenPool`](../../apps/web/src/screens/TokenPool.tsx)), a doom and a clue token to drag onto the map, and the agenda takes doom dropped on it ([map](play-screen-map.md)). Its damage, horror and resource tokens, drawn like the cardboard ones, go onto cards ([investigators](play-screen-investigators.md)).
-A tap on the agenda or act (or its name, a button for the keyboard) opens it on the card shell ([`BookDetails`](../../apps/web/src/screens/GameHeader.tsx), `DetailsDialog`, MD.6b2):
+A tap on the agenda or act (or its name, a button for the keyboard) opens it on the card shell ([`BookDetails`](../../apps/web/src/screens/HeaderSlot.tsx), `DetailsDialog`, MD.6b2):
 
 - the same face over the page as a landscape card, with its name and token, tapped to read it whole;
 - "Agenda" or "Act" as the kicker;
@@ -72,9 +72,9 @@ A tap on a line of the drawn-cards notice below opens the places the players can
 - a treachery goes into a threat area,
 - any card onto the discard pile or aside.
 
-An enemy not yet on the map gets one Spawn button instead, which closes the dialog and asks the players to tap a location ([`MapPickPrompt`](../../apps/web/src/screens/MapPickPrompt.tsx) with Cancel, shared with a move by card effect, `OpenGame.spawning`; every tile glows, `data-pickable`, and `MapBoard.onPick` takes the tap).
+An enemy not yet on the map gets one Spawn button instead, which closes the dialog and asks the players to tap a location ([`MapPickPrompt`](../../apps/web/src/screens/MapPickPrompt.tsx) with Cancel, shared with a move by card effect, `OpenGame.picking` set by `startPick`; every tile glows, `data-pickable`, and `MapBoard.onPick` takes the tap).
 The tap plays `SpawnEnemy` (performed), so the engine engages it by the rules (prey, Aloof).
 
 ## Drawn-cards notice
 
-After a step that drew or placed encounter cards, a [notice](../../apps/web/src/encounter/DrawnCardsNotice.tsx) beside the skipped effects' says for whom each was drawn and where it went ("Crypt Chill for Roland Banks: discard pile"; `OpenGame.drawnCards`, worked out by [`drawnCards`](../../apps/web/src/encounter/drawnCards.ts) from the step's events with `BoardView.placeOf`), since most draws resolve within one step and the players never see the card otherwise. A reload keeps it, and the skipped effects' notice too: `GameSession.open` works both out again from the last stored step (`lastStepNotices`, the board before it being the log without that undo group). Dismissing one stores that for its step (`GameSession.dismissNotice`, `GameStore.markNoticeRead`), so a reload shows only what the players haven't read.
+After a step that drew or placed encounter cards, a [notice](../../apps/web/src/encounter/DrawnCardsNotice.tsx) beside the skipped effects' says for whom each was drawn and where it went ("Crypt Chill for Roland Banks: discard pile"; a `drawnCards` entry in `OpenGame.notices`, worked out by [`drawnCards`](../../apps/web/src/encounter/drawnCards.ts) from the step's events with `BoardView.placeOf`), since most draws resolve within one step and the players never see the card otherwise. A reload keeps it, and the skipped effects' notice too: `GameSession.open` works both out again from the last stored step (`lastStepNotices`, the board before it being the log without that undo group). Dismissing one stores that for its step (`GameSession.dismissNotice`, `GameStore.markNoticeRead`), so a reload shows only what the players haven't read.

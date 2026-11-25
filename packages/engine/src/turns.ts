@@ -1,7 +1,14 @@
 import type { EngineContext } from './cards';
-import type { AdjustActions, EndTurn, Resign, StartTurn } from './commands';
+import type { AdjustActions, EndTurn, Resign, SpendActions, StartTurn } from './commands';
 import { investigatorLeavesEvents } from './elimination';
-import type { ActionsAdjusted, ActionsReset, Event, TurnEnded, TurnStarted } from './events';
+import type {
+  ActionsAdjusted,
+  ActionsReset,
+  ActionsSpent,
+  Event,
+  TurnEnded,
+  TurnStarted,
+} from './events';
 import type { InvestigatorId } from './ids';
 import { activeInvestigator, playerOrder } from './investigators';
 import { CommandRejected } from './rejection';
@@ -82,27 +89,24 @@ export function handleAdjustActions(state: GameState, cmd: AdjustActions): Actio
   // Not `-remaining`: with none left that is -0, which a rejection would report.
   const delta =
     cmd.delta === 'allRemaining' ? 0 - remainingActions(state, cmd.investigatorId) : cmd.delta;
-  if (cmd.for === undefined) return [actionsAdjusted(state, cmd.investigatorId, delta)];
-  // A free action costs nothing but is still performed, so it is recorded with no change.
-  if (delta === 0)
-    return [
-      {
-        type: 'ActionsAdjusted',
-        investigatorId: activeInvestigator(state, cmd.investigatorId).id,
-        delta: 0,
-        for: cmd.for,
-      },
-    ];
-  const adjusted = actionsAdjusted(state, cmd.investigatorId, delta);
-  // Only counting an action off takes it; a correction upwards must not use up the first one.
-  if (delta > 0)
+  return [actionsAdjusted(state, cmd.investigatorId, delta)];
+}
+
+/**
+ * `SpendActions`: the investigator pays `amount` of their remaining actions; rejected
+ * (`invalidActionAdjustment`) for a negative or fractional amount or more than remain. A free
+ * action (`amount` 0) still produces its `ActionsSpent`, since it was taken.
+ */
+export function handleSpendActions(state: GameState, cmd: SpendActions): ActionsSpent[] {
+  const { id, actionsRemaining } = activeInvestigator(state, cmd.investigatorId);
+  if (!Number.isInteger(cmd.amount) || cmd.amount < 0 || cmd.amount > actionsRemaining)
     throw new CommandRejected({
       code: 'invalidActionAdjustment',
-      investigatorId: cmd.investigatorId,
-      delta,
-      actionsRemaining: activeInvestigator(state, cmd.investigatorId).actionsRemaining,
+      investigatorId: id,
+      delta: -cmd.amount,
+      actionsRemaining,
     });
-  return [{ ...adjusted, for: cmd.for }];
+  return [{ type: 'ActionsSpent', investigatorId: id, amount: cmd.amount, for: cmd.for }];
 }
 
 /**

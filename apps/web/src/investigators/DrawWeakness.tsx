@@ -2,8 +2,8 @@ import { useEffect, useId, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { WeaknessDef } from '@arkham/carddata';
 import { drawWeakness, type InvestigatorView } from '@arkham/engine';
-import type { GameActions } from '../state/gameActions';
 import { weaknessGroups } from './weakness_groups';
+import { usePlay } from '../screens/PlayContext';
 
 /**
  * "Draw a weakness" on an investigator's whole card: the players drew a weakness enemy or
@@ -15,14 +15,11 @@ import { weaknessGroups } from './weakness_groups';
 export function DrawWeakness({
   investigator,
   weaknesses,
-  actions,
-  busy,
 }: {
   investigator: InvestigatorView;
   weaknesses: readonly WeaknessDef[] | undefined;
-  actions: GameActions;
-  busy: boolean;
 }) {
+  const { actions, busy } = usePlay();
   const { t } = useTranslation();
   const [picking, setPicking] = useState(false);
   if (weaknesses === undefined || weaknesses.length === 0) return null;

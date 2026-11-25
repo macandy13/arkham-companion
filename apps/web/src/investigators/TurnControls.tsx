@@ -4,8 +4,8 @@ import { BASE_ACTIONS_PER_TURN, type BoardView, type InvestigatorView } from '@a
 import { range } from '@arkham/util';
 import { cardActionLabel } from '../screens/ActionRow';
 import { useCluePayment } from '../screens/CluePaymentDialog';
-import type { GameActions } from '../state/gameActions';
 import { PlayCardDialog } from './PlayCardDialog';
+import { usePlay } from '../screens/PlayContext';
 
 /**
  * The basic actions the turn row offers, in its order, each a `GameActions` verb; play opens its
@@ -26,23 +26,20 @@ const BASIC_ACTIONS = ['investigate', 'takeResource', 'drawCard', 'playCard'] as
  * not taken this round), "Start turn", since the players choose the order. "Start turn" and End
  * are the turn's own steps, its primary buttons (`data-primary`, base.css); the rest are
  * outlined pills.
- * Nothing otherwise. The buttons wait while a step is queued (`busy`).
+ * Nothing otherwise. The buttons wait while a step is queued (`usePlay().busy`).
  */
 export function TurnControls({
   board,
   investigator,
   onTurn,
   canStart,
-  actions,
-  busy,
 }: {
   board: BoardView;
   investigator: InvestigatorView;
   onTurn: boolean;
   canStart: boolean;
-  actions: GameActions;
-  busy: boolean;
 }) {
+  const { actions, busy } = usePlay();
   const { t } = useTranslation();
   const { dialog, pay } = useCluePayment(board);
   const [playing, setPlaying] = useState(false);

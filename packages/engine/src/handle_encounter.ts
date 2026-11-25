@@ -1,12 +1,6 @@
 import { asArray } from '@arkham/util';
 import { cardStats, type CardStats, type EngineContext } from './cards';
-import type {
-  DrawCard,
-  DrawWeakness,
-  EncounterMatch,
-  GainSurge,
-  ResolveRevelation,
-} from './commands';
+import type { DrawCard, DrawWeakness, GainSurge, ResolveRevelation } from './commands';
 import type {
   CardFlipped,
   DeckShuffled,
@@ -20,7 +14,7 @@ import type {
 import { decisionId, type InstanceId, type InvestigatorId } from './ids';
 import { activeInvestigator, isActiveInvestigator, findInvestigator } from './investigators';
 import { hasKeyword } from './keywords';
-import { cardsInZone, newCardId, requireCard } from './lookup';
+import { cardsInZone, matchesStats, newCardId, requireCard, type CardFilter } from './lookup';
 import { cardMoved } from './placement';
 import { discardPileOf } from './player_cards';
 import { spawnEvents } from './spawn';
@@ -105,7 +99,7 @@ function discardDeckForDiscardMatch(
   ctx: EngineContext,
   state: GameState,
   cmd: DrawCard,
-  match: EncounterMatch,
+  match: CardFilter,
 ): Event[] {
   if (findMatch(ctx, state, [encounterDiscard], match) === undefined) return [];
   const discarded = cardsInZone(state, encounterDeck).map((id) =>
@@ -223,23 +217,11 @@ function findMatch(
   ctx: EngineContext,
   state: GameState,
   zones: readonly Zone[],
-  match: EncounterMatch,
+  match: CardFilter,
 ): InstanceId | undefined {
   return zones
     .flatMap((zone) => cardsInZone(state, zone))
-    .find((id) => matchesEncounter(cardStats(ctx.cards, requireCard(state.cards, id).code), match));
-}
-
-/**
- * Whether the card fulfils every field `match` sets, as a matched
- * `DrawCard` checks it.
- */
-export function matchesEncounter(stats: CardStats, match: EncounterMatch): boolean {
-  return (
-    (match.name === undefined || stats.name === match.name) &&
-    (match.trait === undefined || stats.traits.includes(match.trait)) &&
-    (match.typeCode === undefined || stats.typeCode === match.typeCode)
-  );
+    .find((id) => matchesStats(cardStats(ctx.cards, requireCard(state.cards, id).code), match));
 }
 
 /** The deck cards above `cardId`, top first; none when it is not in the deck. */
