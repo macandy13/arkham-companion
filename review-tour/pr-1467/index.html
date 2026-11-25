@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>#1467 review tour</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400..700&amp;family=JetBrains+Mono:wght@400;600&amp;display=swap">
+<style>
+:root {
+  --bg: #fbfbf9; --fg: #1d1f21; --muted: #6b6f73; --line: #e6e5e0; --soft: #f2f1ec;
+  --accent: #2f5d8a; --accent-fg: #ffffff; --ask: #fdf4dc; --ask-fg: #3d3115; --code-bg: #ffffff;
+  --add-bg: #e9f5ec; --add-mark: #2e7d47; --del-bg: #fbecea; --del-mark: #b0413a; --hl: #fff3c4;
+  --tok-key: #8a3ffc; --tok-str: #2e7d47; --tok-com: #8c9196; --tok-type: #2f5d8a; --ok: #2e7d47;
+  --font-body: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-code: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  --radius: 8px;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #17191b; --fg: #e8e8e6; --muted: #9a9ea3; --line: #2b2e31; --soft: #202326;
+    --accent: #8ab4e0; --accent-fg: #10161c; --ask: #2b2617; --ask-fg: #f0e3bd; --code-bg: #1c1f22;
+    --add-bg: #1d2e23; --add-mark: #7cc596; --del-bg: #33201f; --del-mark: #e48a83; --hl: #3a3420;
+    --tok-key: #c4a1ff; --tok-str: #8fd0a4; --tok-com: #7c8288; --tok-type: #8ab4e0; --ok: #7cc596;
+    color-scheme: dark;
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.6 var(--font-body); -webkit-font-smoothing: antialiased; }
+main {
+  max-width: 720px; margin: 0 auto; display: grid; gap: 40px;
+  padding: 0 max(16px, env(safe-area-inset-right)) 56px max(16px, env(safe-area-inset-left));
+}
+a { color: var(--accent); text-underline-offset: 2px; }
+a:focus-visible, button:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+code { font-family: var(--font-code); font-size: .88em; background: var(--soft); padding: 1px 5px; border-radius: 4px; }
+nav {
+  position: sticky; top: 0; z-index: 5; display: flex; align-items: center; gap: 12px;
+  margin: 0 calc(-1 * max(16px, env(safe-area-inset-left))); padding: 10px max(16px, env(safe-area-inset-left));
+  background: color-mix(in srgb, var(--bg) 92%, transparent); backdrop-filter: blur(8px); border-bottom: 1px solid var(--line);
+}
+nav .number { font-size: 14px; font-weight: 600; color: var(--muted); }
+nav ol { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 0 auto; padding: 0; list-style: none; }
+nav ol a {
+  width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center;
+  color: var(--muted); background: var(--soft); font-size: 13px; font-weight: 600; text-decoration: none;
+}
+nav ol a.question { background: var(--ask); color: var(--ask-fg); }
+nav ol a.on { background: var(--accent); color: var(--accent-fg); }
+header { display: grid; gap: 12px; padding-top: 28px; }
+.kicker { font-size: 13px; color: var(--muted); }
+h1 { font-size: 28px; line-height: 1.2; font-weight: 650; letter-spacing: -0.015em; margin: 0; text-wrap: balance; }
+.lead { display: grid; gap: 6px; }
+.lead h2 { font-size: 12px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 0; }
+.lead p { font-size: 18px; margin: 0; max-width: 60ch; }
+.meta { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 13px; color: var(--muted); margin: 0; }
+.questions { background: var(--ask); color: var(--ask-fg); border-radius: var(--radius); padding: 18px 20px; display: grid; gap: 14px; }
+.questions h2 { font-size: 12px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; margin: 0; opacity: .75; }
+.questions ol { margin: 0; padding-left: 20px; display: grid; gap: 12px; }
+.questions p { margin: 0; font-size: 17px; }
+.questions .about { font-size: 13px; opacity: .75; }
+.questions a { color: inherit; font-size: 14px; font-weight: 500; }
+section.evidence { display: grid; gap: 14px; scroll-margin-top: 64px; }
+.evidence h2 { font-size: 20px; line-height: 1.3; font-weight: 600; letter-spacing: -0.01em; margin: 0; }
+.evidence ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 18px; }
+.evidence li { display: grid; gap: 8px; padding-left: 28px; position: relative; }
+.evidence li::before { content: "✓"; position: absolute; left: 4px; color: var(--accent); font-weight: 600; }
+.evidence li > p { margin: 0; max-width: 62ch; }
+.evidence .test { font-size: 14px; color: var(--muted); }
+.example { margin: 0; padding: 12px 14px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--soft); overflow-x: auto; font: 13px/1.5 var(--font-code); font-variant-ligatures: none; }
+.usage { display: grid; gap: 4px; }
+.usage .when { margin: 4px 0 0; font-size: 12px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.example code { background: none; padding: 0; font-size: inherit; }
+.stop { display: grid; gap: 14px; scroll-margin-top: 64px; }
+.stop > header { display: grid; grid-template-columns: auto 1fr; gap: 2px 12px; align-items: center; padding: 0; }
+.stop-number {
+  grid-row: span 2; align-self: start; margin-top: 2px; width: 28px; height: 28px; border-radius: 50%;
+  display: grid; place-items: center; background: var(--accent); color: var(--accent-fg); font-size: 13px; font-weight: 600;
+}
+.stop h2 { font-size: 20px; line-height: 1.3; font-weight: 600; letter-spacing: -0.01em; margin: 0; text-wrap: balance; }
+.tag { font-size: 12px; color: var(--muted); letter-spacing: .04em; text-transform: uppercase; }
+.stop > p { margin: 0; max-width: 62ch; }
+figure { display: grid; gap: 8px; margin: 0; }
+.toggle { display: flex; flex-wrap: wrap; gap: 4px; }
+.segments { display: inline-flex; background: var(--soft); border-radius: 999px; padding: 3px; }
+.toggle button { font: 500 13px var(--font-body); color: var(--muted); background: transparent; border: 0; border-radius: 999px; padding: 4px 12px; cursor: pointer; }
+.toggle button[aria-pressed="true"] { background: var(--bg); color: var(--fg); box-shadow: 0 1px 2px rgb(0 0 0 / 12%); }
+.frame { border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; background: var(--soft); }
+.frame img { display: block; width: 100%; height: auto; }
+.frame.phone { max-width: 280px; margin-inline: auto; }
+.frame .missing { padding: 24px; text-align: center; color: var(--muted); font-size: 14px; }
+.code { border: 1px solid var(--line); border-radius: var(--radius); background: var(--code-bg); overflow: hidden; }
+.code > header {
+  display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; padding: 8px 12px;
+  border-bottom: 1px solid var(--line); background: var(--soft); font-size: 13px; color: var(--muted);
+}
+.code .file { color: var(--fg); font-family: var(--font-code); font-size: 12.5px; overflow-wrap: anywhere; }
+.code > header a { margin-left: auto; }
+.code pre code { display: block; padding: 0; background: none; font-size: inherit; }
+.code pre { margin: 0; padding: 6px 0; font: 12.5px/1.6 var(--font-code); font-variant-ligatures: none; }
+.line { display: grid; grid-template-columns: 3.2em 1.4em minmax(0, 1fr); }
+.line .number { color: var(--muted); text-align: right; padding-right: .6em; user-select: none; opacity: .6; }
+.line .mark { color: var(--muted); user-select: none; }
+.line .text { padding: 0 12px 0 2ch; text-indent: -2ch; white-space: pre-wrap; overflow-wrap: anywhere; }
+.line.added { background: var(--add-bg); } .line.added .mark { color: var(--add-mark); }
+.line.removed { background: var(--del-bg); } .line.removed .mark { color: var(--del-mark); }
+.line.highlighted { background: var(--hl); }
+.line.gap .text { color: var(--muted); font-family: var(--font-body); font-size: 12px; }
+.k { color: var(--tok-key); } .s { color: var(--tok-str); } .c { color: var(--tok-com); font-style: italic; } .t { color: var(--tok-type); }
+.done { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; }
+.done p { margin: 0; color: var(--muted); }
+.done a { background: var(--accent); color: var(--accent-fg); border-radius: 999px; padding: 9px 20px; text-decoration: none; font-weight: 600; font-size: 15px; }
+details { border-top: 1px solid var(--line); padding-top: 16px; }
+summary { cursor: pointer; font-size: 15px; font-weight: 600; }
+details ul { padding-left: 20px; margin: 12px 0 0; display: grid; gap: 6px; font-size: 15px; }
+@media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+</style>
+</head>
+<body>
+<main>
+<nav aria-label="Tour"><span class="number">#1467</span><ol><li><a class="question" href="#questions" aria-label="Questions">?</a></li><li><a href="#stop-1" data-stop="stop-1">1</a></li><li><a href="#stop-2" data-stop="stop-2">2</a></li><li><a href="#stop-3" data-stop="stop-3">3</a></li><li><a class="evidence" href="#evidence" aria-label="How we know it works">✓</a></li></ol></nav>
+<header>
+<p class="kicker">feat(engine) · MC2.4c · as of fa80e84</p>
+<h1>A group clue cost to enter a location</h1>
+<p class="meta"><span>3 stops</span><span>1 question</span><span>80 of 621 changed lines on the tour</span></p>
+</header>
+<section class="lead"><h2>What changes</h2><p>Underground Cistern and Sluice Control cost clues per investigator, spent as a group, to enter while unrevealed. A location can now carry a cost to enter, and the move pays it like any group clue cost: the players split it, and the move can't be made while the group holds too few clues.</p></section>
+<section class="questions" id="questions"><h2>Question for you</h2><ol><li><p>A move by a card effect picked on the map (Shortcut) pays with the engine's split, the mover first, without asking who pays. Asking there too would need the map's pick to open the payment dialog; is it fine to leave that to #1423?</p><span class="about">Concerns <a href="#stop-3">stop 3</a>.</span></li></ol><a href="https://github.com/macandy13/arkham-companion/pull/1467">Answer on GitHub →</a></section>
+<section class="stop" id="stop-1">
+<header><span class="stop-number">1</span><span></span><h2>A location's cost to enter</h2></header>
+<p>enterCost is the clues the group spends to enter a location, only while it is unrevealed, since the cost is printed on that side. enterCostPayment turns the players' split (or the engine's) into the clue spends, and refuses a move the group can't pay.</p>
+
+<div class="code"><header><span class="file">packages/engine/src/enter_costs.ts</span><span>new file</span><a href="https://github.com/macandy13/arkham-companion/pull/1467/files#diff-b0b1df633726719f3d3643658ce9b8b9cc3fca70de7e683f9fe72e601bd15d5dR1-R48">Open in diff</a></header><pre><code><span class="line context"><span class="number">1</span><span class="mark"> </span><span class="text"><span class="k">import</span> { cardStats, resolveValue, <span class="k">type</span> <span class="t">EngineContext</span> } <span class="k">from</span> <span class="s">'./cards'</span>;</span></span><span class="line context"><span class="number">2</span><span class="mark"> </span><span class="text"><span class="k">import</span> <span class="k">type</span> { <span class="t">ClueSpend</span> } <span class="k">from</span> <span class="s">'./commands'</span>;</span></span><span class="line context"><span class="number">3</span><span class="mark"> </span><span class="text"><span class="k">import</span> <span class="k">type</span> { <span class="t">InvestigatorChanged</span> } <span class="k">from</span> <span class="s">'./events'</span>;</span></span><span class="line context"><span class="number">4</span><span class="mark"> </span><span class="text"><span class="k">import</span> { cluesHeldByGroup, defaultCluePayments, groupCluePayments } <span class="k">from</span> <span class="s">'./investigators'</span>;</span></span><span class="line context"><span class="number">5</span><span class="mark"> </span><span class="text"><span class="k">import</span> { <span class="t">CommandRejected</span> } <span class="k">from</span> <span class="s">'./rejection'</span>;</span></span><span class="line context"><span class="number">6</span><span class="mark"> </span><span class="text"><span class="k">import</span> <span class="k">type</span> { <span class="t">CardInstance</span>, <span class="t">GameState</span>, <span class="t">Investigator</span> } <span class="k">from</span> <span class="s">'./state'</span>;</span></span><span class="line context"><span class="number">7</span><span class="mark"> </span><span class="text"></span></span><span class="line context"><span class="number">8</span><span class="mark"> </span><span class="text">/**</span></span><span class="line context"><span class="number">9</span><span class="mark"> </span><span class="text"><span class="c"> * The clues the investigators spend as a group to enter `location` (`CardStats.enterCost`), for</span></span></span><span class="line context"><span class="number">10</span><span class="mark"> </span><span class="text"><span class="c"> * the starting player count: only while it is unrevealed, since the cost is printed on that side</span></span></span><span class="line context"><span class="number">11</span><span class="mark"> </span><span class="text"><span class="c"> * (Underground Cistern); entering reveals it, and entering again costs nothing.</span></span></span><span class="line context"><span class="number">12</span><span class="mark"> </span><span class="text"><span class="c"> */</span></span></span><span class="line context"><span class="number">13</span><span class="mark"> </span><span class="text"><span class="k">export</span> <span class="k">function</span> enterCost(</span></span><span class="line context"><span class="number">14</span><span class="mark"> </span><span class="text">  ctx: <span class="t">EngineContext</span>,</span></span><span class="line context"><span class="number">15</span><span class="mark"> </span><span class="text">  state: <span class="t">GameState</span>,</span></span><span class="line context"><span class="number">16</span><span class="mark"> </span><span class="text">  location: <span class="t">CardInstance</span>,</span></span><span class="line context"><span class="number">17</span><span class="mark"> </span><span class="text">): number | <span class="k">undefined</span> {</span></span><span class="line context"><span class="number">18</span><span class="mark"> </span><span class="text">  <span class="k">const</span> cost = location.faceUp ? <span class="k">undefined</span> : cardStats(ctx.cards, location.code).enterCost;</span></span><span class="line context"><span class="number">19</span><span class="mark"> </span><span class="text">  <span class="k">return</span> cost === <span class="k">undefined</span> ? <span class="k">undefined</span> : resolveValue(cost.amount, state.meta.playerCount);</span></span><span class="line context"><span class="number">20</span><span class="mark"> </span><span class="text">}</span></span><span class="line context"><span class="number">21</span><span class="mark"> </span><span class="text"></span></span><span class="line context"><span class="number">22</span><span class="mark"> </span><span class="text">/**</span></span><span class="line context"><span class="number">23</span><span class="mark"> </span><span class="text"><span class="c"> * The payments of `investigator`'s cost to enter `location`, made before they move (Rules</span></span></span><span class="line context"><span class="number">24</span><span class="mark"> </span><span class="text"><span class="c"> * Reference, &quot;Additional Costs&quot;): by `spend`, or the mover first and the others in seat order.</span></span></span><span class="line context"><span class="number">25</span><span class="mark"> </span><span class="text"><span class="c"> * Rejected when the group holds too few clues (`enterCostUnpaid`), or names payers for a</span></span></span><span class="line context"><span class="number">26</span><span class="mark"> </span><span class="text"><span class="c"> * location without a cost (`noGroupCost`).</span></span></span><span class="line context"><span class="number">27</span><span class="mark"> </span><span class="text"><span class="c"> */</span></span></span><span class="line context"><span class="number">28</span><span class="mark"> </span><span class="text"><span class="k">export</span> <span class="k">function</span> enterCostPayment(</span></span><span class="line context"><span class="number">29</span><span class="mark"> </span><span class="text">  ctx: <span class="t">EngineContext</span>,</span></span><span class="line context"><span class="number">30</span><span class="mark"> </span><span class="text">  state: <span class="t">GameState</span>,</span></span><span class="line context"><span class="number">31</span><span class="mark"> </span><span class="text">  investigator: <span class="t">Investigator</span>,</span></span><span class="line context"><span class="number">32</span><span class="mark"> </span><span class="text">  location: <span class="t">CardInstance</span>,</span></span><span class="line context"><span class="number">33</span><span class="mark"> </span><span class="text">  spend: <span class="k">readonly</span> <span class="t">ClueSpend</span>[] | <span class="k">undefined</span>,</span></span><span class="line context"><span class="number">34</span><span class="mark"> </span><span class="text">): <span class="t">InvestigatorChanged</span>[] {</span></span><span class="line context"><span class="number">35</span><span class="mark"> </span><span class="text">  <span class="k">const</span> required = enterCost(ctx, state, location);</span></span><span class="line context"><span class="number">36</span><span class="mark"> </span><span class="text">  <span class="k">if</span> (required === <span class="k">undefined</span>) {</span></span><span class="line context"><span class="number">37</span><span class="mark"> </span><span class="text">    <span class="k">if</span> (spend !== <span class="k">undefined</span>) <span class="k">throw</span> <span class="k">new</span> <span class="t">CommandRejected</span>({ code: <span class="s">'noGroupCost'</span> });</span></span><span class="line context"><span class="number">38</span><span class="mark"> </span><span class="text">    <span class="k">return</span> [];</span></span><span class="line context"><span class="number">39</span><span class="mark"> </span><span class="text">  }</span></span><span class="line context"><span class="number">40</span><span class="mark"> </span><span class="text">  <span class="k">if</span> (cluesHeldByGroup(ctx, state) &lt; required)</span></span><span class="line context"><span class="number">41</span><span class="mark"> </span><span class="text">    <span class="k">throw</span> <span class="k">new</span> <span class="t">CommandRejected</span>({ code: <span class="s">'enterCostUnpaid'</span>, locationId: location.id, required });</span></span><span class="line context"><span class="number">42</span><span class="mark"> </span><span class="text">  <span class="k">return</span> groupCluePayments(</span></span><span class="line context"><span class="number">43</span><span class="mark"> </span><span class="text">    ctx,</span></span><span class="line context"><span class="number">44</span><span class="mark"> </span><span class="text">    state,</span></span><span class="line context"><span class="number">45</span><span class="mark"> </span><span class="text">    spend ?? defaultCluePayments(ctx, state, investigator.id, required),</span></span><span class="line context"><span class="number">46</span><span class="mark"> </span><span class="text">    required,</span></span><span class="line context"><span class="number">47</span><span class="mark"> </span><span class="text">  );</span></span><span class="line context"><span class="number">48</span><span class="mark"> </span><span class="text">}</span></span></code></pre></div>
+</section>
+<section class="stop" id="stop-2">
+<header><span class="stop-number">2</span><span></span><h2>Every move pays it</h2></header>
+<p>MoveInvestigator pays it before the investigator moves, whether by action, free or by a card; only the pawn's drag (paidAtTable) charges nothing, since it catches the screen up with a move paid at the table.</p>
+
+<div class="code"><header><span class="file">packages/engine/src/handle_investigator.ts</span><span>+7 −2</span><a href="https://github.com/macandy13/arkham-companion/pull/1467/files#diff-2755b5c1f4140c874a60768cd60017ef32b265304f47a493b550a62866966b38R76-R80">Open in diff</a></header><pre><code><span class="line context"><span class="number">76</span><span class="mark"> </span><span class="text"></span></span><span class="line added"><span class="number">77</span><span class="mark">+</span><span class="text">  <span class="k">const</span> paid = cmd.paidAtTable</span></span><span class="line added"><span class="number">78</span><span class="mark">+</span><span class="text">    ? []</span></span><span class="line added"><span class="number">79</span><span class="mark">+</span><span class="text">    : enterCostPayment(ctx, state, investigator, destination, cmd.spend);</span></span><span class="line context"><span class="number">80</span><span class="mark"> </span><span class="text">  <span class="k">const</span> <span class="k">from</span> = investigator.locationId;</span></span></code></pre></div>
+<div class="code"><header><span class="file">packages/scenarios/src/queen_of_ash/cards.ts</span><span>+2 −1</span><a href="https://github.com/macandy13/arkham-companion/pull/1467/files#diff-dddd69908c0beb4396ab39f009d805d87c1729e980c6fe9b175e8282d9a0d0a2R365-R388">Open in diff</a></header><pre><code><span class="line added"><span class="number">365</span><span class="mark">+</span><span class="text">    enterCost: { spend: <span class="s">'groupClues'</span>, amount: perInvestigator(3) },</span></span><span class="line gap"><span class="number"></span><span class="mark">⋯</span><span class="text"></span></span><span class="line added"><span class="number">388</span><span class="mark">+</span><span class="text">    enterCost: { spend: <span class="s">'groupClues'</span>, amount: perInvestigator(1) },</span></span></code></pre></div>
+</section>
+<section class="stop" id="stop-3">
+<header><span class="stop-number">3</span><span></span><h2>The move pill asks who pays</h2></header>
+<p>BoardView.enterCost and canEnter tell the screen the cost and whether the group can pay it. The move pill asks who pays first, as a card action's group cost does, and is off while the group can't pay.</p>
+
+<div class="code"><header><span class="file">packages/engine/src/board_view.ts</span><span>+19 −0</span><a href="https://github.com/macandy13/arkham-companion/pull/1467/files#diff-69728c6085330bce46be6f42a0a7a56f5d7c0a8d6d4134613b9f161ab218ad21R776-R795">Open in diff</a></header><pre><code><span class="line context"><span class="number">776</span><span class="mark"> </span><span class="text">  }</span></span><span class="line context"><span class="number">777</span><span class="mark"> </span><span class="text"></span></span><span class="line added"><span class="number">778</span><span class="mark">+</span><span class="text">  /**</span></span><span class="line added"><span class="number">779</span><span class="mark">+</span><span class="text"><span class="c">   * The clues the investigators spend as a group to enter `location` (`enterCost`, Underground</span></span></span><span class="line added"><span class="number">780</span><span class="mark">+</span><span class="text"><span class="c">   * Cistern's) while it is unrevealed; none once revealed or without such a cost. The screen asks who pays it</span></span></span><span class="line added"><span class="number">781</span><span class="mark">+</span><span class="text"><span class="c">   * (`cluePayers`) and sends the split as `MoveInvestigator.spend`.</span></span></span><span class="line added"><span class="number">782</span><span class="mark">+</span><span class="text"><span class="c">   */</span></span></span><span class="line added"><span class="number">783</span><span class="mark">+</span><span class="text">  enterCost(location: <span class="t">InstanceId</span>): number | <span class="k">undefined</span> {</span></span><span class="line added"><span class="number">784</span><span class="mark">+</span><span class="text">    <span class="k">return</span> enterCost(this.ctx, this.state, requireCard(this.state.cards, location));</span></span><span class="line added"><span class="number">785</span><span class="mark">+</span><span class="text">  }</span></span><span class="line added"><span class="number">786</span><span class="mark">+</span><span class="text"></span></span><span class="line added"><span class="number">787</span><span class="mark">+</span><span class="text">  /**</span></span><span class="line added"><span class="number">788</span><span class="mark">+</span><span class="text"><span class="c">   * Whether the group can pay `location`'s cost to enter (`enterCost`): they hold that many clues</span></span></span><span class="line added"><span class="number">789</span><span class="mark">+</span><span class="text"><span class="c">   * no card forbids them to spend. A move button into it is off otherwise.</span></span></span><span class="line added"><span class="number">790</span><span class="mark">+</span><span class="text"><span class="c">   */</span></span></span><span class="line added"><span class="number">791</span><span class="mark">+</span><span class="text">  canEnter(location: <span class="t">InstanceId</span>): boolean {</span></span><span class="line added"><span class="number">792</span><span class="mark">+</span><span class="text">    <span class="k">const</span> cost = this.enterCost(location);</span></span><span class="line added"><span class="number">793</span><span class="mark">+</span><span class="text">    <span class="k">return</span> cost === <span class="k">undefined</span> || cluesHeldByGroup(this.ctx, this.state) &gt;= cost;</span></span><span class="line added"><span class="number">794</span><span class="mark">+</span><span class="text">  }</span></span><span class="line added"><span class="number">795</span><span class="mark">+</span><span class="text"></span></span></code></pre></div>
+<div class="code"><header><span class="file">apps/web/src/map/LocationDetails.tsx</span><span>+32 −23</span><a href="https://github.com/macandy13/arkham-companion/pull/1467/files#diff-ba6da294f052dea2421bf1fffca7795f11279703ed2e45d1a9e24117bf3411ffR314-R340">Open in diff</a></header><pre><code><span class="line context"><span class="number">314</span><span class="mark"> </span><span class="text">    ];</span></span><span class="line context"><span class="number">315</span><span class="mark"> </span><span class="text">  <span class="k">const</span> <span class="k">from</span> = board.locationOf(turn);</span></span><span class="line context"><span class="number">316</span><span class="mark"> </span><span class="text">  <span class="k">if</span> (<span class="k">from</span> === <span class="k">undefined</span> || !board.connectedTo(<span class="k">from</span>).includes(location.id)) <span class="k">return</span> [];</span></span><span class="line context"><span class="number">317</span><span class="mark"> </span><span class="text">  <span class="k">if</span> (location.forbidden?.includes(<span class="s">'moveInto'</span>)) <span class="k">return</span> [];</span></span><span class="line added"><span class="number">318</span><span class="mark">+</span><span class="text">  <span class="k">const</span> groupClues = board.enterCost(location.id);</span></span><span class="line added"><span class="number">319</span><span class="mark">+</span><span class="text">  <span class="k">const</span> enterable = board.canEnter(location.id);</span></span><span class="line added"><span class="number">320</span><span class="mark">+</span><span class="text">  <span class="k">const</span> costs = groupClues === <span class="k">undefined</span> ? {} : { groupClues };</span></span><span class="line context"><span class="number">321</span><span class="mark"> </span><span class="text">  <span class="k">return</span> [</span></span><span class="line context"><span class="number">322</span><span class="mark"> </span><span class="text">    {</span></span><span class="line context"><span class="number">323</span><span class="mark"> </span><span class="text">      key: <span class="s">'moveAction'</span>,</span></span><span class="line context"><span class="number">324</span><span class="mark"> </span><span class="text">      icon: <span class="s">'move'</span>,</span></span><span class="line context"><span class="number">325</span><span class="mark"> </span><span class="text">      cost: board.actionCost(turn, <span class="s">'move'</span>, { to: location.id }),</span></span><span class="line removed"><span class="number">319</span><span class="mark">−</span><span class="text">      play: () =&gt; actions.move(location.id),</span></span><span class="line added"><span class="number">326</span><span class="mark">+</span><span class="text">      ...costs,</span></span><span class="line added"><span class="number">327</span><span class="mark">+</span><span class="text">      play: enterable ? (spend) =&gt; actions.move(location.id, <span class="s">'action'</span>, spend) : <span class="k">undefined</span>,</span></span><span class="line context"><span class="number">328</span><span class="mark"> </span><span class="text">      then: <span class="s">'leave'</span>,</span></span><span class="line context"><span class="number">329</span><span class="mark"> </span><span class="text">    },</span></span><span class="line context"><span class="number">330</span><span class="mark"> </span><span class="text">    {</span></span><span class="line context"><span class="number">331</span><span class="mark"> </span><span class="text">      key: <span class="s">'moveFree'</span>,</span></span><span class="line context"><span class="number">332</span><span class="mark"> </span><span class="text">      icon: <span class="s">'move'</span>,</span></span><span class="line context"><span class="number">333</span><span class="mark"> </span><span class="text">      cost: board.actionCost(turn, <span class="s">'move'</span>, { free: <span class="k">true</span>, to: location.id }),</span></span><span class="line removed"><span class="number">326</span><span class="mark">−</span><span class="text">      play: () =&gt; actions.move(location.id, <span class="s">'free'</span>),</span></span><span class="line added"><span class="number">334</span><span class="mark">+</span><span class="text">      ...costs,</span></span><span class="line added"><span class="number">335</span><span class="mark">+</span><span class="text">      play: enterable ? (spend) =&gt; actions.move(location.id, <span class="s">'free'</span>, spend) : <span class="k">undefined</span>,</span></span><span class="line context"><span class="number">336</span><span class="mark"> </span><span class="text">      then: <span class="s">'leave'</span>,</span></span><span class="line context"><span class="number">337</span><span class="mark"> </span><span class="text">    },</span></span><span class="line context"><span class="number">338</span><span class="mark"> </span><span class="text">  ];</span></span><span class="line context"><span class="number">339</span><span class="mark"> </span><span class="text">}</span></span><span class="line context"><span class="number">340</span><span class="mark"> </span><span class="text"></span></span></code></pre></div>
+</section>
+<section class="evidence" id="evidence"><h2>How we know it works</h2><ul><li><p>The players' split pays the cost, and the move is refused while the group holds too few clues.</p><p class="test">Checked by <code>packages/engine/src/enter_costs.test.ts › refuses the move while the group holds only 3 of the 4 clues</code></p></li><li><p>Once the location is revealed, entering it costs nothing.</p><p class="test">Checked by <code>packages/engine/src/enter_costs.test.ts › reveals the cistern as alice pays and enters, so bob then enters for free</code></p></li><li><p>The move pill asks who pays the 4 clues and moves alder once they pay.</p><p class="test">Checked by <code>apps/web/src/map/MapBoard.test.tsx › asks who pays the 4 clues as alder moves there, and moves him once they pay</code></p></li></ul></section>
+<section class="done"><p>That's the whole change.</p><a href="https://github.com/macandy13/arkham-companion/pull/1467/files">Review on GitHub</a></section>
+
+</main>
+<script>
+document.querySelectorAll('figure[data-variants]').forEach((figure) => {
+  const variants = JSON.parse(figure.dataset.variants);
+  const state = { when: 'after', device: variants[0].device };
+  const frame = figure.querySelector('.frame');
+  const show = () => {
+    const variant = variants.find((v) => v.device === state.device);
+    const src = variant[state.when];
+    frame.classList.toggle('phone', state.device === 'phone');
+    frame.innerHTML = src
+      ? '<img alt="' + state.device + ', ' + state.when + '" src="' + src + '">'
+      : '<p class="missing">' + (state.when === 'before' ? 'New in this PR' : 'Removed in this PR') + '</p>';
+    figure.querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(b.value === state.when || b.value === state.device)));
+  };
+  figure.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => {
+    state[b.name] = b.value;
+    show();
+  }));
+  show();
+});
+const dots = [...document.querySelectorAll('nav a[data-stop]')];
+const seen = new IntersectionObserver((entries) => entries.forEach((entry) => {
+  if (entry.isIntersecting) dots.forEach((d) => d.classList.toggle('on', d.dataset.stop === entry.target.id));
+}), { rootMargin: '-40% 0px -55% 0px' });
+document.querySelectorAll('.stop').forEach((stop) => seen.observe(stop));
+</script>
+</body>
+</html>
