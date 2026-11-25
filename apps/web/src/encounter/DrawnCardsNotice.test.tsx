@@ -13,7 +13,7 @@ import {
 } from '@arkham/engine';
 import { initI18n } from '../i18n';
 import { DrawnCardsNotice } from './DrawnCardsNotice';
-import { actionsOn } from '../state/gameActions.test_support';
+import { PlayingOn } from '../state/gameActions.test_support';
 
 const study = instanceId('study');
 const alder = investigatorId('alder');
@@ -40,24 +40,24 @@ describe('DrawnCardsNotice', () => {
     const { board } = table;
 
     render(
-      <DrawnCardsNotice
-        board={board}
-        drawn={[
-          {
-            card: board.encounterCard(instanceId('crypt_chill')),
-            drawnFor: alder,
-            place: { kind: 'encounterDiscard' },
-          },
-          {
-            card: board.encounterCard(instanceId('ghoul')),
-            place: { kind: 'atLocation', location: cardName('Study') },
-          },
-        ]}
-        actions={actionsOn(table)}
-        busy={false}
-        onSpawn={() => {}}
-        onDismiss={() => {}}
-      />,
+      <PlayingOn table={table}>
+        <DrawnCardsNotice
+          board={board}
+          drawn={[
+            {
+              card: board.encounterCard(instanceId('crypt_chill')),
+              drawnFor: alder,
+              place: { kind: 'encounterDiscard' },
+            },
+            {
+              card: board.encounterCard(instanceId('ghoul')),
+              place: { kind: 'atLocation', location: cardName('Study') },
+            },
+          ]}
+          onSpawn={() => {}}
+          onDismiss={() => {}}
+        />
+      </PlayingOn>,
     );
 
     expect(

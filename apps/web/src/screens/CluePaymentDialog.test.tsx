@@ -13,7 +13,7 @@ import {
 import { initI18n } from '../i18n';
 import { CardActions, cardActionsOn } from './ActionRow';
 import { evenClueSplit, offersClueSplit } from './CluePaymentDialog';
-import { actionsOn } from '../state/gameActions.test_support';
+import { PlayingOn } from '../state/gameActions.test_support';
 
 const study = instanceId('study');
 const alder = investigatorId('alder');
@@ -86,12 +86,9 @@ describe('CardActions with a group clue cost', () => {
   /** Renders the study's card actions and opens the clue payment dialog of its action. */
   const openStudyPayment = (table: PlayTable) => {
     render(
-      <CardActions
-        board={table.board}
-        offered={cardActionsOn(table.board, study)}
-        actions={actionsOn(table)}
-        busy={false}
-      />,
+      <PlayingOn table={table}>
+        <CardActions board={table.board} offered={cardActionsOn(table.board, study)} />
+      </PlayingOn>,
     );
     fireEvent.click(screen.getByRole('button', { name: 'Action · Study' }));
     return screen.getByRole('dialog', { name: 'Who pays the clues?' });
@@ -174,12 +171,9 @@ describe('CardActions with a group clue cost', () => {
     const onDetailsCancel = vi.fn();
     render(
       <dialog open aria-label="Study details" onCancel={onDetailsCancel}>
-        <CardActions
-          board={table.board}
-          offered={cardActionsOn(table.board, study)}
-          actions={actionsOn(table)}
-          busy={false}
-        />
+        <PlayingOn table={table}>
+          <CardActions board={table.board} offered={cardActionsOn(table.board, study)} />
+        </PlayingOn>
       </dialog>,
     );
     fireEvent.click(screen.getByRole('button', { name: 'Action · Study' }));
@@ -196,12 +190,9 @@ describe('CardActions with a group clue cost', () => {
   it('pays at once, with no dialog, when the 4 clues are all alder and bea hold', async () => {
     const table = studyWithGroupCost(3, 1);
     render(
-      <CardActions
-        board={table.board}
-        offered={cardActionsOn(table.board, study)}
-        actions={actionsOn(table)}
-        busy={false}
-      />,
+      <PlayingOn table={table}>
+        <CardActions board={table.board} offered={cardActionsOn(table.board, study)} />
+      </PlayingOn>,
     );
 
     fireEvent.click(screen.getByRole('button', { name: 'Action · Study' }));

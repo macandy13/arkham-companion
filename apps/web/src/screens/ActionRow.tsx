@@ -2,9 +2,9 @@ import { useId, type ReactNode } from 'react';
 import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 import type { BoardView, CardActionView, InstanceId, PrintedActionView } from '@arkham/engine';
-import type { GameActions } from '../state/gameActions';
 import { useCluePayment } from './CluePaymentDialog';
 import './action_row.css';
+import { usePlay } from './PlayContext';
 
 /** The icons an `ActionButton` shows, each a mask in `action_row.css`. */
 export type ActionIcon =
@@ -123,16 +123,13 @@ export function cardActionCaption(t: TFunction, { designator, number }: PrintedA
 export function CardActions({
   board,
   offered,
-  actions,
-  busy,
   onUse,
 }: {
   board: BoardView;
   offered: readonly CardActionView[];
-  actions: GameActions;
-  busy: boolean;
   onUse?: () => void;
 }) {
+  const { actions, busy } = usePlay();
   const { t } = useTranslation();
   const { dialog, pay } = useCluePayment(board);
   return (

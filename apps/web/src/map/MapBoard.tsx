@@ -18,7 +18,6 @@ import {
 } from '@arkham/engine';
 import { cycledIndex } from '@arkham/util';
 import { EnemyDetails } from '../enemies/EnemyDetails';
-import type { GameActions } from '../state/gameActions';
 import { EnemyBubble } from '../enemies/EnemyBubble';
 import { useDoubleTapOn } from '../screens/useDoubleTap';
 import { LocationBubble } from './LocationBubble';
@@ -41,6 +40,7 @@ import { overHeaderCard, overTokenPool } from '../screens/headerDropTarget';
 import { TokenGhost } from '../screens/TokenGhost';
 import type { GameTokenKind } from '../tokens/GameToken';
 import './map.css';
+import { usePlay } from '../screens/PlayContext';
 
 /**
  * The visible maps of the open game, each drawn as an SVG of its location tiles at their book
@@ -50,20 +50,16 @@ import './map.css';
  * and show one at a time, since each map is drawn to fill the map area. It takes the whole
  * `board`, since the pieces on the tiles come from all over it (investigators now, more pieces
  * later). The players pan, zoom and pinch each map, and move pieces by dragging them
- * (`MapDrawing`), which plays `actions`; no piece moves while a step is still queued (`busy`,
+ * (`MapDrawing`), which plays the open game's actions (`usePlay`); no piece moves while a step is still queued (`usePlay().busy`,
  * `OpenGame.busy`), since the turn it was dragged in may have ended by the time the move plays.
  */
 export function MapBoard({
   board,
-  actions,
-  busy,
   onPick,
   pickable,
   onOpenLocation,
 }: {
   board: BoardView;
-  actions: GameActions;
-  busy: boolean;
   /**
    * While the players choose a location (an enemy's spawn, a decision's answer), a tap on a tile
    * picks it, the tiles they may pick lit (`pickable`).
@@ -86,8 +82,6 @@ export function MapBoard({
       <MapDrawing
         map={current}
         board={board}
-        actions={actions}
-        busy={busy}
         onPick={onPick}
         pickable={pickable}
         onOpenLocation={onOpenLocation}
@@ -137,8 +131,6 @@ export function MapBoard({
           key={current.id}
           map={current}
           board={board}
-          actions={actions}
-          busy={busy}
           onPick={onPick}
           pickable={pickable}
           onOpenLocation={onOpenLocation}
@@ -191,20 +183,17 @@ type DraggedPiece = TilePiece & { from: InstanceId };
 function MapDrawing({
   map,
   board,
-  actions,
-  busy,
   onPick,
   pickable,
   onOpenLocation,
 }: {
   map: MapView;
   board: BoardView;
-  actions: GameActions;
-  busy: boolean;
   onPick?: (location: InstanceId) => void;
   pickable?: readonly InstanceId[] | undefined;
   onOpenLocation?: (location: InstanceId) => void;
 }) {
+  const { actions, busy } = usePlay();
   const investigators = board.investigators;
   const captionId = useId();
   const arrowId = useId();
@@ -373,8 +362,6 @@ function MapDrawing({
         <LocationDetails
           board={board}
           location={detailsLocation}
-          actions={actions}
-          busy={busy}
           onClose={() => setDetailsFor(undefined)}
         />
       )}
@@ -382,8 +369,6 @@ function MapDrawing({
         <LocationBubble
           location={bubbleLocation}
           anchor={bubble.anchor}
-          actions={actions}
-          busy={busy}
           onClose={() => setBubble(undefined)}
         />
       )}
@@ -391,19 +376,11 @@ function MapDrawing({
         <EnemyBubble
           enemy={bubbleEnemy}
           anchor={enemyBubble.anchor}
-          actions={actions}
-          busy={busy}
           onClose={() => setEnemyBubble(undefined)}
         />
       )}
       {tappedEnemy && (
-        <EnemyDetails
-          board={board}
-          enemy={tappedEnemy}
-          actions={actions}
-          busy={busy}
-          onClose={() => setEnemyFor(undefined)}
-        />
+        <EnemyDetails board={board} enemy={tappedEnemy} onClose={() => setEnemyFor(undefined)} />
       )}
     </figure>
   );

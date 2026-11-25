@@ -12,7 +12,7 @@ import {
   PlayTable,
 } from '@arkham/engine';
 import { initI18n } from '../i18n';
-import { actionsOn } from '../state/gameActions.test_support';
+import { PlayingOn } from '../state/gameActions.test_support';
 import { TokenPool } from './TokenPool';
 
 const study = instanceId('study');
@@ -67,7 +67,9 @@ describe('TokenPool', () => {
       const resourcesBefore = table.board.investigator(alder).resources;
       render(
         <>
-          <TokenPool actions={actionsOn(table)} busy={false} />
+          <PlayingOn table={table}>
+            <TokenPool />
+          </PlayingOn>
           <section data-investigator="alder">
             <h3>alder</h3>
           </section>
@@ -89,7 +91,9 @@ describe('TokenPool', () => {
     const table = studyWithGhoul();
     render(
       <>
-        <TokenPool actions={actionsOn(table)} busy={false} />
+        <PlayingOn table={table}>
+          <TokenPool />
+        </PlayingOn>
         <section data-investigator="alder">
           <ul>
             <li data-enemy="ghoul">ghoul</li>
@@ -109,7 +113,9 @@ describe('TokenPool', () => {
     const table = studyWithGhoul();
     render(
       <>
-        <TokenPool actions={actionsOn(table)} busy={false} />
+        <PlayingOn table={table}>
+          <TokenPool />
+        </PlayingOn>
         <ul>
           <li data-enemy="ghoul">ghoul</li>
         </ul>
@@ -125,7 +131,11 @@ describe('TokenPool', () => {
 
   it('places nothing when a damage token is dropped on neither an investigator nor an enemy', async () => {
     const table = studyWithGhoul();
-    render(<TokenPool actions={actionsOn(table)} busy={false} />);
+    render(
+      <PlayingOn table={table}>
+        <TokenPool />
+      </PlayingOn>,
+    );
 
     await dragOffPool('Damage from the pool');
 

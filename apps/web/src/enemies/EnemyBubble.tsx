@@ -1,27 +1,24 @@
 import { dealDamageTo, healEnemy, type MapEnemyView } from '@arkham/engine';
 import { useTranslation } from 'react-i18next';
 import { CounterBubble, type BubbleCount } from '../screens/CounterBubble';
-import type { GameActions } from '../state/gameActions';
+import { usePlay } from '../screens/PlayContext';
 
 /**
  * The − / + bubble a double tap on an enemy opens (M6.10), on the map or in a threat area, titled
  * with its name: its damage, dealt by rule (`DamageEnemy`, performed, which defeats it at its
  * health) and healed (`HealEnemy`), and its doom (`adjustTokens`). Its buttons are off while a
- * step is queued (`busy`).
+ * step is queued (`usePlay().busy`).
  */
 export function EnemyBubble({
   enemy,
   anchor,
-  actions,
-  busy,
   onClose,
 }: {
   enemy: MapEnemyView;
   anchor: Element;
-  actions: GameActions;
-  busy: boolean;
   onClose: () => void;
 }) {
+  const { actions, busy } = usePlay();
   const { t } = useTranslation();
   const damage = enemy.damage ?? 0;
   const doom = enemy.doom ?? 0;

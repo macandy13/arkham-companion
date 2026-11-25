@@ -1,28 +1,25 @@
 import type { LocationView } from '@arkham/engine';
 import { useTranslation } from 'react-i18next';
 import { CounterBubble, type BubbleCount } from '../screens/CounterBubble';
-import type { GameActions } from '../state/gameActions';
+import { usePlay } from '../screens/PlayContext';
 
 /**
  * The − / + bubble a double tap on a location's tile opens (M6.10), titled with its name: its
  * clues once revealed, since an unrevealed location holds none yet, and its doom, also at none,
  * which the tile only shows once there is some. Each step is a correction of the tokens on it
  * (`GameActions.adjustTokens`);
- * its buttons are off while a step is queued (`busy`).
+ * its buttons are off while a step is queued (`usePlay().busy`).
  */
 export function LocationBubble({
   location,
   anchor,
-  actions,
-  busy,
   onClose,
 }: {
   location: LocationView;
   anchor: Element;
-  actions: GameActions;
-  busy: boolean;
   onClose: () => void;
 }) {
+  const { actions, busy } = usePlay();
   const { t } = useTranslation();
   const count = (token: 'clue' | 'doom', value: number): BubbleCount => ({
     label: t(`location.${token}.label`),

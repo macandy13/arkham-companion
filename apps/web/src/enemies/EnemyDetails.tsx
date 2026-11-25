@@ -16,12 +16,12 @@ import { ActionButton, ActionGroup, CardActions, cardActionsOn } from '../screen
 import { SplitAction } from '../screens/SplitAction';
 import { AttachedCards } from '../screens/AttachedCards';
 import { DetailsDialog, useDecisionHost } from '../screens/DetailsDialog';
-import type { GameActions } from '../state/gameActions';
 import { useBackCloses } from '../screens/useBackCloses';
 import { EnemyCard } from './EnemyCard';
 import { healthLeft } from './enemyHealth';
 import './enemies.css';
 import { type How } from '../state/gameActions';
+import { usePlay } from '../screens/PlayContext';
 
 /**
  * One enemy in full, opened by a tap on its card or its map token, on the card shell
@@ -41,22 +41,19 @@ import { type How } from '../state/gameActions';
  * (`useDecisionHost`: the test's result, an attack of opportunity), with the enemy still beside
  * it, then its page again for the fight that often follows; damage keeps it open for the next
  * point. It reads the enemy fresh from the board. Escape and its × close it; nothing is tapped
- * while a step is queued (`busy`). On a phone it is the shell's sheet and the back gesture
+ * while a step is queued (`usePlay().busy`). On a phone it is the shell's sheet and the back gesture
  * closes it too (`useBackCloses`).
  */
 export function EnemyDetails({
   board,
   enemy,
-  actions,
-  busy,
   onClose,
 }: {
   board: BoardView;
   enemy: MapEnemyView;
-  actions: GameActions;
-  busy: boolean;
   onClose: () => void;
 }) {
+  const { actions, busy } = usePlay();
   const { t } = useTranslation();
   const close = useBackCloses(onClose);
   const hosted = useDecisionHost();
@@ -87,8 +84,6 @@ export function EnemyDetails({
   return (
     <DetailsDialog
       board={board}
-      actions={actions}
-      busy={busy}
       hosted={hosted}
       name="enemy"
       card={board.cardFace(enemy.id)}
@@ -113,7 +108,7 @@ export function EnemyDetails({
           <dd>{stats.evade}</dd>
         </div>
       </dl>
-      <AttachedCards board={board} host={enemy.id} actions={actions} busy={busy} />
+      <AttachedCards board={board} host={enemy.id} />
       <footer>
         {(tested.length > 0 || allowed.includes('engage')) && (
           <ActionGroup title={t('enemy.actions')}>
@@ -165,15 +160,7 @@ export function EnemyDetails({
             )}
           </ActionGroup>
         )}
-        {offered.length > 0 && (
-          <CardActions
-            board={board}
-            offered={offered}
-            actions={actions}
-            busy={busy}
-            onUse={close}
-          />
-        )}
+        {offered.length > 0 && <CardActions board={board} offered={offered} onUse={close} />}
         <ActionGroup title={t('enemy.cardEffects')}>
           <ActionButton
             icon="damage"

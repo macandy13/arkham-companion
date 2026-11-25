@@ -1,7 +1,6 @@
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { BoardView, InstanceId, LocationView } from '@arkham/engine';
-import type { GameActions } from '../state/gameActions';
 import { LocationContent } from './LocationDetails';
 import { CONNECTION_RADIUS, ConnectionSymbol } from './LocationTile';
 import { neighboursOf, type Neighbour, type Side } from './mapLayout';
@@ -19,15 +18,11 @@ import { neighboursOf, type Neighbour, type Side } from './mapLayout';
 export function LocationFocus({
   board,
   location,
-  actions,
-  busy,
   onGo,
   onMap,
 }: {
   board: BoardView;
   location: LocationView;
-  actions: GameActions;
-  busy: boolean;
   onGo: (location: InstanceId) => void;
   onMap: () => void;
 }) {
@@ -57,8 +52,6 @@ export function LocationFocus({
       <LocationContent
         board={board}
         location={location}
-        actions={actions}
-        busy={busy}
         titleId={titleId}
         around={(card) => (
           <Compass board={board} neighbours={neighbours} onGo={go}>
