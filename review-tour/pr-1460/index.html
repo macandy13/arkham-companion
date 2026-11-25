@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>#1460 review tour</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400..700&amp;family=JetBrains+Mono:wght@400;600&amp;display=swap">
+<style>
+:root {
+  --bg: #fbfbf9; --fg: #1d1f21; --muted: #6b6f73; --line: #e6e5e0; --soft: #f2f1ec;
+  --accent: #2f5d8a; --accent-fg: #ffffff; --ask: #fdf4dc; --ask-fg: #3d3115; --code-bg: #ffffff;
+  --add-bg: #e9f5ec; --add-mark: #2e7d47; --del-bg: #fbecea; --del-mark: #b0413a; --hl: #fff3c4;
+  --tok-key: #8a3ffc; --tok-str: #2e7d47; --tok-com: #8c9196; --tok-type: #2f5d8a; --ok: #2e7d47;
+  --font-body: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-code: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  --radius: 8px;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #17191b; --fg: #e8e8e6; --muted: #9a9ea3; --line: #2b2e31; --soft: #202326;
+    --accent: #8ab4e0; --accent-fg: #10161c; --ask: #2b2617; --ask-fg: #f0e3bd; --code-bg: #1c1f22;
+    --add-bg: #1d2e23; --add-mark: #7cc596; --del-bg: #33201f; --del-mark: #e48a83; --hl: #3a3420;
+    --tok-key: #c4a1ff; --tok-str: #8fd0a4; --tok-com: #7c8288; --tok-type: #8ab4e0; --ok: #7cc596;
+    color-scheme: dark;
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.6 var(--font-body); -webkit-font-smoothing: antialiased; }
+main {
+  max-width: 720px; margin: 0 auto; display: grid; gap: 40px;
+  padding: 0 max(16px, env(safe-area-inset-right)) 56px max(16px, env(safe-area-inset-left));
+}
+a { color: var(--accent); text-underline-offset: 2px; }
+a:focus-visible, button:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+code { font-family: var(--font-code); font-size: .88em; background: var(--soft); padding: 1px 5px; border-radius: 4px; }
+nav {
+  position: sticky; top: 0; z-index: 5; display: flex; align-items: center; gap: 12px;
+  margin: 0 calc(-1 * max(16px, env(safe-area-inset-left))); padding: 10px max(16px, env(safe-area-inset-left));
+  background: color-mix(in srgb, var(--bg) 92%, transparent); backdrop-filter: blur(8px); border-bottom: 1px solid var(--line);
+}
+nav .number { font-size: 14px; font-weight: 600; color: var(--muted); }
+nav ol { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 0 auto; padding: 0; list-style: none; }
+nav ol a {
+  width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center;
+  color: var(--muted); background: var(--soft); font-size: 13px; font-weight: 600; text-decoration: none;
+}
+nav ol a.question { background: var(--ask); color: var(--ask-fg); }
+nav ol a.on { background: var(--accent); color: var(--accent-fg); }
+header { display: grid; gap: 12px; padding-top: 28px; }
+.kicker { font-size: 13px; color: var(--muted); }
+h1 { font-size: 28px; line-height: 1.2; font-weight: 650; letter-spacing: -0.015em; margin: 0; text-wrap: balance; }
+.lead { display: grid; gap: 6px; }
+.lead h2 { font-size: 12px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 0; }
+.lead p { font-size: 18px; margin: 0; max-width: 60ch; }
+.meta { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 13px; color: var(--muted); margin: 0; }
+.questions { background: var(--ask); color: var(--ask-fg); border-radius: var(--radius); padding: 18px 20px; display: grid; gap: 14px; }
+.questions h2 { font-size: 12px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; margin: 0; opacity: .75; }
+.questions ol { margin: 0; padding-left: 20px; display: grid; gap: 12px; }
+.questions p { margin: 0; font-size: 17px; }
+.questions .about { font-size: 13px; opacity: .75; }
+.questions a { color: inherit; font-size: 14px; font-weight: 500; }
+section.evidence { display: grid; gap: 14px; scroll-margin-top: 64px; }
+.evidence h2 { font-size: 20px; line-height: 1.3; font-weight: 600; letter-spacing: -0.01em; margin: 0; }
+.evidence ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 18px; }
+.evidence li { display: grid; gap: 8px; padding-left: 28px; position: relative; }
+.evidence li::before { content: "✓"; position: absolute; left: 4px; color: var(--accent); font-weight: 600; }
+.evidence li > p { margin: 0; max-width: 62ch; }
+.evidence .test { font-size: 14px; color: var(--muted); }
+.example { margin: 0; padding: 12px 14px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--soft); overflow-x: auto; font: 13px/1.5 var(--font-code); font-variant-ligatures: none; }
+.usage { display: grid; gap: 4px; }
+.usage .when { margin: 4px 0 0; font-size: 12px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.example code { background: none; padding: 0; font-size: inherit; }
+.stop { display: grid; gap: 14px; scroll-margin-top: 64px; }
+.stop > header { display: grid; grid-template-columns: auto 1fr; gap: 2px 12px; align-items: center; padding: 0; }
+.stop-number {
+  grid-row: span 2; align-self: start; margin-top: 2px; width: 28px; height: 28px; border-radius: 50%;
+  display: grid; place-items: center; background: var(--accent); color: var(--accent-fg); font-size: 13px; font-weight: 600;
+}
+.stop h2 { font-size: 20px; line-height: 1.3; font-weight: 600; letter-spacing: -0.01em; margin: 0; text-wrap: balance; }
+.tag { font-size: 12px; color: var(--muted); letter-spacing: .04em; text-transform: uppercase; }
+.stop > p { margin: 0; max-width: 62ch; }
+figure { display: grid; gap: 8px; margin: 0; }
+.toggle { display: flex; flex-wrap: wrap; gap: 4px; }
+.segments { display: inline-flex; background: var(--soft); border-radius: 999px; padding: 3px; }
+.toggle button { font: 500 13px var(--font-body); color: var(--muted); background: transparent; border: 0; border-radius: 999px; padding: 4px 12px; cursor: pointer; }
+.toggle button[aria-pressed="true"] { background: var(--bg); color: var(--fg); box-shadow: 0 1px 2px rgb(0 0 0 / 12%); }
+.frame { border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; background: var(--soft); }
+.frame img { display: block; width: 100%; height: auto; }
+.frame.phone { max-width: 280px; margin-inline: auto; }
+.frame .missing { padding: 24px; text-align: center; color: var(--muted); font-size: 14px; }
+.code { border: 1px solid var(--line); border-radius: var(--radius); background: var(--code-bg); overflow: hidden; }
+.code > header {
+  display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; padding: 8px 12px;
+  border-bottom: 1px solid var(--line); background: var(--soft); font-size: 13px; color: var(--muted);
+}
+.code .file { color: var(--fg); font-family: var(--font-code); font-size: 12.5px; overflow-wrap: anywhere; }
+.code > header a { margin-left: auto; }
+.code pre code { display: block; padding: 0; background: none; font-size: inherit; }
+.code pre { margin: 0; padding: 6px 0; font: 12.5px/1.6 var(--font-code); font-variant-ligatures: none; }
+.line { display: grid; grid-template-columns: 3.2em 1.4em minmax(0, 1fr); }
+.line .number { color: var(--muted); text-align: right; padding-right: .6em; user-select: none; opacity: .6; }
+.line .mark { color: var(--muted); user-select: none; }
+.line .text { padding: 0 12px 0 2ch; text-indent: -2ch; white-space: pre-wrap; overflow-wrap: anywhere; }
+.line.added { background: var(--add-bg); } .line.added .mark { color: var(--add-mark); }
+.line.removed { background: var(--del-bg); } .line.removed .mark { color: var(--del-mark); }
+.line.highlighted { background: var(--hl); }
+.line.gap .text { color: var(--muted); font-family: var(--font-body); font-size: 12px; }
+.k { color: var(--tok-key); } .s { color: var(--tok-str); } .c { color: var(--tok-com); font-style: italic; } .t { color: var(--tok-type); }
+.done { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; }
+.done p { margin: 0; color: var(--muted); }
+.done a { background: var(--accent); color: var(--accent-fg); border-radius: 999px; padding: 9px 20px; text-decoration: none; font-weight: 600; font-size: 15px; }
+details { border-top: 1px solid var(--line); padding-top: 16px; }
+summary { cursor: pointer; font-size: 15px; font-weight: 600; }
+details ul { padding-left: 20px; margin: 12px 0 0; display: grid; gap: 6px; font-size: 15px; }
+@media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+</style>
+</head>
+<body>
+<main>
+<nav aria-label="Tour"><span class="number">#1460</span><ol><li><a href="#stop-1" data-stop="stop-1">1</a></li><li><a href="#stop-2" data-stop="stop-2">2</a></li><li><a href="#stop-3" data-stop="stop-3">3</a></li><li><a class="evidence" href="#evidence" aria-label="How we know it works">✓</a></li></ol></nav>
+<header>
+<p class="kicker">refactor(engine) · ME.18c · as of e7842e2</p>
+<h1>Spawn instructions as selectors, read at card load</h1>
+<p class="meta"><span>3 stops</span><span>0 questions</span><span>36 of 495 changed lines on the tour</span></p>
+</header>
+<section class="lead"><h2>The problem</h2><p>Spawn instructions were read from their text each time an enemy spawned, by a reader of its own: string matching for &quot;Nearest empty location&quot;, &quot;Location with the most clues&quot; or &quot;A or B (whichever is nearest to you)&quot;, with its own nearest, farthest and most-clues helpers. Card effects already pick among candidates with the selector from ME.18b, so spawning had a second way of saying the same thing.</p></section>
+<section class="lead"><h2>What changes</h2><p>The text is read once, when the card data loads, into <code>CardStats.spawnAt</code>: alternatives of &quot;Engaged with prey&quot; or a <code>Selector</code> among the locations in play. Spawning tries them in turn with the selector's resolver, so the nearest, the farthest and the most clues are the same measures a card effect uses.</p></section>
+
+<section class="stop" id="stop-1">
+<header><span class="stop-number">1</span><span class="tag">engine</span><h2>Read once, when the card data loads</h2></header>
+<p><code>cardDbFrom</code> turns the spawn keyword's text into <code>spawnAt</code> (unless a card entered one by hand), so a game never parses spawn text.</p>
+
+<div class="code"><header><span class="file">packages/engine/src/cards.ts</span><span>+14 −1</span><a href="https://github.com/macandy13/arkham-companion/pull/1460/files#diff-6cb450b6d03aeee3a23744bbc6d48cb5e9d23de6ae3d49cfc4e199df01c44168R290-R296">Open in diff</a></header><pre><code><span class="line context"><span class="number">290</span><span class="mark"> </span><span class="text"></span></span><span class="line added"><span class="number">291</span><span class="mark">+</span><span class="text"><span class="c">/** `def` with its spawn keyword's text read into `spawnAt`, unless it has one already. */</span></span></span><span class="line added"><span class="number">292</span><span class="mark">+</span><span class="text"><span class="k">function</span> withSpawnInstruction(def: <span class="t">CardStats</span>): <span class="t">CardStats</span> {</span></span><span class="line added"><span class="number">293</span><span class="mark">+</span><span class="text">  <span class="k">const</span> detail = def.keywords?.find((keyword) =&gt; keyword.name === <span class="s">'spawn'</span>)?.detail;</span></span><span class="line added"><span class="number">294</span><span class="mark">+</span><span class="text">  <span class="k">if</span> (detail === <span class="k">undefined</span> || def.spawnAt !== <span class="k">undefined</span>) <span class="k">return</span> def;</span></span><span class="line highlighted"><span class="number">295</span><span class="mark">+</span><span class="text">  <span class="k">return</span> { ...def, spawnAt: parseSpawn(detail) };</span></span><span class="line added"><span class="number">296</span><span class="mark">+</span><span class="text">}</span></span></code></pre></div>
+</section>
+<section class="stop" id="stop-2">
+<header><span class="stop-number">2</span><span class="tag">engine</span><h2>Each instruction is a selector</h2></header>
+<p>The fixed forms map to selectors among the locations in play: <code>empty</code>, a trait, <code>connectedTo</code> your location, the nearest or farthest, the most clues. &quot;(empty, if able)&quot; is two alternatives, the empty locations first, and anything else names a location.</p>
+
+<div class="code"><header><span class="file">packages/engine/src/spawn_instruction.ts</span><span>new file</span><a href="https://github.com/macandy13/arkham-companion/pull/1460/files#diff-ac25c46057d2921617da44aece1e28ded6dfebc430acdaaacb04c9f7a442afd7R46-R58">Open in diff</a></header><pre><code><span class="line context"><span class="number">46</span><span class="mark"> </span><span class="text"><span class="k">const</span> <span class="t">FILTERS</span>: <span class="t">Readonly</span>&lt;<span class="t">Record</span>&lt;string, <span class="k">readonly</span> <span class="t">SpawnAlternative</span>[] | <span class="k">undefined</span>&gt;&gt; = {</span></span><span class="line context"><span class="number">47</span><span class="mark"> </span><span class="text">  <span class="s">'engaged with prey'</span>: [{ kind: <span class="s">'engagedWithPrey'</span> }],</span></span><span class="line highlighted"><span class="number">48</span><span class="mark"> </span><span class="text">  <span class="s">'any empty location'</span>: [locations({ empty: <span class="k">true</span> })],</span></span><span class="line highlighted"><span class="number">49</span><span class="mark"> </span><span class="text">  <span class="s">'any location (empty, if able)'</span>: [locations({ empty: <span class="k">true</span> }), locations({})],</span></span><span class="line context"><span class="number">50</span><span class="mark"> </span><span class="text">  <span class="s">'nearest location'</span>: [locations({}, <span class="t">NEAREST</span>)],</span></span><span class="line context"><span class="number">51</span><span class="mark"> </span><span class="text">  <span class="s">'farthest location'</span>: [locations({}, <span class="t">FARTHEST</span>)],</span></span><span class="line context"><span class="number">52</span><span class="mark"> </span><span class="text">  <span class="s">'nearest empty location'</span>: [locations({ empty: <span class="k">true</span> }, <span class="t">NEAREST</span>)],</span></span><span class="line context"><span class="number">53</span><span class="mark"> </span><span class="text">  <span class="s">'farthest empty location'</span>: [locations({ empty: <span class="k">true</span> }, <span class="t">FARTHEST</span>)],</span></span><span class="line context"><span class="number">54</span><span class="mark"> </span><span class="text">  <span class="s">'location nearest to you'</span>: [locations({}, <span class="t">NEAREST</span>)],</span></span><span class="line context"><span class="number">55</span><span class="mark"> </span><span class="text">  <span class="s">'location farthest from you'</span>: [locations({}, <span class="t">FARTHEST</span>)],</span></span><span class="line context"><span class="number">56</span><span class="mark"> </span><span class="text">  <span class="s">'location with the most clues'</span>: [locations({}, <span class="t">MOST_CLUES</span>)],</span></span><span class="line highlighted"><span class="number">57</span><span class="mark"> </span><span class="text">  <span class="s">'any location connected to yours'</span>: [locations({ connectedTo: { ref: <span class="s">'windowLocation'</span> } })],</span></span><span class="line context"><span class="number">58</span><span class="mark"> </span><span class="text">};</span></span></code></pre></div>
+</section>
+<section class="stop" id="stop-3">
+<header><span class="stop-number">3</span><span class="tag">engine</span><h2>Spawning resolves them like a card effect</h2></header>
+<p><code>candidatesOf</code> lists a selector's locations, counted from whoever drew the enemy. Text naming no location in the game, or &quot;connected to yours&quot; with nobody who drew it, still becomes a choice among all locations, never a guess.</p>
+
+<div class="code"><header><span class="file">packages/engine/src/spawn.ts</span><span>+41 −107</span><a href="https://github.com/macandy13/arkham-companion/pull/1460/files#diff-467751c23e0022a295ed4b73681e9c22732c9806f4caae5980c1cdb77b781bccR181-R190">Open in diff</a></header><pre><code><span class="line removed"><span class="number">192</span><span class="mark">−</span><span class="text">  <span class="k">if</span> (comparableName(text) === <span class="s">'engaged with prey'</span>) <span class="k">return</span> preySpawn(ctx, state, enemy);</span></span><span class="line removed"><span class="number">193</span><span class="mark">−</span><span class="text">  <span class="k">const</span> filtered = spawnFilter(ctx, state, text, <span class="k">from</span>);</span></span><span class="line removed"><span class="number">194</span><span class="mark">−</span><span class="text">  <span class="k">if</span> (filtered !== <span class="k">undefined</span>) <span class="k">return</span> locationAmong(filtered);</span></span><span class="line removed"><span class="number">195</span><span class="mark">−</span><span class="text">  <span class="k">const</span> inPlay = locationsNamed(ctx, state, text, { inPlay: <span class="k">true</span> });</span></span><span class="line removed"><span class="number">196</span><span class="mark">−</span><span class="text">  <span class="k">if</span> (inPlay.length &gt; 0) <span class="k">return</span> locationAmong(inPlay.map((card) =&gt; card.id));</span></span><span class="line removed"><span class="number">197</span><span class="mark">−</span><span class="text">  <span class="k">if</span> (locationsNamed(ctx, state, text).length &gt; 0) <span class="k">return</span> { kind: <span class="s">'discard'</span> };</span></span><span class="line removed"><span class="number">198</span><span class="mark">−</span><span class="text">  <span class="k">return</span> { kind: <span class="s">'choose'</span>, candidates: locationsInPlay(ctx, state).map((card) =&gt; card.id) };</span></span><span class="line added"><span class="number">181</span><span class="mark">+</span><span class="text">  <span class="k">if</span> (alternative.kind === <span class="s">'engagedWithPrey'</span>) <span class="k">return</span> preySpawn(ctx, state, enemy);</span></span><span class="line added"><span class="number">182</span><span class="mark">+</span><span class="text">  <span class="k">const</span> { select } = alternative;</span></span><span class="line highlighted"><span class="number">183</span><span class="mark">+</span><span class="text">  <span class="k">const</span> candidates = candidatesOf(ctx, state, select, enemy.id, drawer) <span class="k">as</span> <span class="t">InstanceId</span>[];</span></span><span class="line added"><span class="number">184</span><span class="mark">+</span><span class="text">  <span class="k">const</span> { name, connectedTo } = select.among;</span></span><span class="line highlighted"><span class="number">185</span><span class="mark">+</span><span class="text">  <span class="k">const</span> unreadable =</span></span><span class="line highlighted"><span class="number">186</span><span class="mark">+</span><span class="text">    (name !== <span class="k">undefined</span> &amp;&amp; !namesALocation(ctx, state, name)) ||</span></span><span class="line highlighted"><span class="number">187</span><span class="mark">+</span><span class="text">    (connectedTo !== <span class="k">undefined</span> &amp;&amp; drawerLocation(state, drawer) === <span class="k">undefined</span>);</span></span><span class="line added"><span class="number">188</span><span class="mark">+</span><span class="text">  <span class="k">if</span> (candidates.length === 0 &amp;&amp; unreadable)</span></span><span class="line added"><span class="number">189</span><span class="mark">+</span><span class="text">    <span class="k">return</span> { kind: <span class="s">'choose'</span>, candidates: locationsInPlay(ctx, state).map((card) =&gt; card.id) };</span></span><span class="line added"><span class="number">190</span><span class="mark">+</span><span class="text">  <span class="k">return</span> locationAmong(candidates);</span></span></code></pre></div>
+</section>
+<section class="evidence" id="evidence"><h2>How we know it works</h2><ul><li><p>Every spawn form spawns where it did.</p><p class="test">Checked by <code>packages/engine/src/enemies.test.ts › SpawnEnemy with a filtered spawn instruction › spawns &quot;$spawn&quot; in the $spawnsIn</code></p></li><li><p>Each form reads into the selector it means.</p><p class="test">Checked by <code>packages/engine/src/spawn_instruction.test.ts › parseSpawn › reads &quot;$text&quot;</code></p></li><li><p>The card data carries the instruction once loaded.</p><p class="test">Checked by <code>packages/engine/src/spawn_instruction.test.ts › parseSpawn › is read into the card data as it loads</code></p></li></ul></section>
+<section class="done"><p>That's the whole change.</p><a href="https://github.com/macandy13/arkham-companion/pull/1460/files">Review on GitHub</a></section>
+<details><summary>Not on the tour</summary><ul><li><code>eachInPlay</code> gains <code>empty</code> (<code>isEmptyLocation</code>, moved from spawn.ts to engagement.ts); <code>CardFilter.name</code> may list names and compares ignoring case and a trailing full stop</li><li>A distance with no reference location ties every candidate, so the players choose, as spawning did</li><li><code>extremeLocations</code> and <code>locationsWithMostClues</code> leave board.ts with their tests; the selector's measures replace them</li><li>A drawn enemy with nobody to engage spawns by its <code>spawnAt</code>, not by the raw keyword</li><li>Architecture: rule modules and triggers and card effects pages updated</li></ul></details>
+</main>
+<script>
+document.querySelectorAll('figure[data-variants]').forEach((figure) => {
+  const variants = JSON.parse(figure.dataset.variants);
+  const state = { when: 'after', device: variants[0].device };
+  const frame = figure.querySelector('.frame');
+  const show = () => {
+    const variant = variants.find((v) => v.device === state.device);
+    const src = variant[state.when];
+    frame.classList.toggle('phone', state.device === 'phone');
+    frame.innerHTML = src
+      ? '<img alt="' + state.device + ', ' + state.when + '" src="' + src + '">'
+      : '<p class="missing">' + (state.when === 'before' ? 'New in this PR' : 'Removed in this PR') + '</p>';
+    figure.querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(b.value === state.when || b.value === state.device)));
+  };
+  figure.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => {
+    state[b.name] = b.value;
+    show();
+  }));
+  show();
+});
+const dots = [...document.querySelectorAll('nav a[data-stop]')];
+const seen = new IntersectionObserver((entries) => entries.forEach((entry) => {
+  if (entry.isIntersecting) dots.forEach((d) => d.classList.toggle('on', d.dataset.stop === entry.target.id));
+}), { rootMargin: '-40% 0px -55% 0px' });
+document.querySelectorAll('.stop').forEach((stop) => seen.observe(stop));
+</script>
+</body>
+</html>
