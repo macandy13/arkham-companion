@@ -4,7 +4,6 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vite
 import {
   advanceAct,
   advanceBySpendingClues,
-  attachedTo,
   blankAct,
   blankAsset,
   blankEnemy,
@@ -30,6 +29,7 @@ import { InvestigatorBar } from './InvestigatorBar';
 import { DOUBLE_TAP_MS } from '../screens/useDoubleTap';
 import { textLength } from './InvestigatorCard';
 import { PlayingOn } from '../state/gameActions.test_support';
+import { investigatorWhere, locationWhere } from '../state/boardWhere.test_support';
 
 const study = instanceId('study');
 const alder = investigatorId('alder');
@@ -1043,25 +1043,6 @@ describe('InvestigatorBar', () => {
         .toMatchObject([{ prompt: 'decision.investigate', for: alder }]);
     });
 
-    it('turns "Play a card" off while dissonant voices in alder’s threat area forbid it', () => {
-      const voices = blankTreachery('voices', {
-        restrictions: [{ cannot: ['play'], what: 'cards', who: 'threatArea' }],
-      });
-      const table = PlayTable.start(
-        twoAtStudy.withCard(instanceId('voices'), voices, threatAreaOf(alder)).withTurnOf(alder),
-      );
-      render(
-        <PlayingOn table={table}>
-          <InvestigatorBar board={table.board} />
-        </PlayingOn>,
-      );
-
-      expect(within(panel('alder')).getByRole('button', { name: 'Play a card' })).toHaveProperty(
-        'disabled',
-        true,
-      );
-    });
-
     describe('"Play a card" with alder holding 5 resources on their turn', () => {
       const aldersTurnWithFive = () =>
         PlayTable.start(
@@ -1109,22 +1090,28 @@ describe('InvestigatorBar', () => {
       });
     });
 
-    it('turns "Investigate" off while a locked door on the study forbids it', () => {
-      const lockedDoor = blankTreachery('locked_door', {
-        restrictions: [{ cannot: 'investigate', of: 'host' }],
-      });
-      const table = PlayTable.start(
-        twoAtStudy
-          .withCard(instanceId('locked_door'), lockedDoor, attachedTo(study))
-          .withTurnOf(alder),
-      );
+    it.each([
+      {
+        button: 'Investigate',
+        state: 'the study forbids investigating it',
+        board: (table: PlayTable) =>
+          locationWhere(table.board, study, { forbidden: ['investigate'] }),
+      },
+      {
+        button: 'Play a card',
+        state: 'alder may not play cards',
+        board: (table: PlayTable) =>
+          investigatorWhere(table.board, alder, { forbidden: { cards: ['play'] } }),
+      },
+    ])('turns "$button" off while $state', ({ button, board }) => {
+      const table = PlayTable.start(twoAtStudy.withTurnOf(alder));
       render(
         <PlayingOn table={table}>
-          <InvestigatorBar board={table.board} />
+          <InvestigatorBar board={board(table)} />
         </PlayingOn>,
       );
 
-      expect(within(panel('alder')).getByRole('button', { name: 'Investigate' })).toHaveProperty(
+      expect(within(panel('alder')).getByRole('button', { name: button })).toHaveProperty(
         'disabled',
         true,
       );

@@ -12,6 +12,7 @@ import {
 import { initI18n } from '../i18n';
 import { LocationFocus } from './LocationFocus';
 import { PlayingOn } from '../state/gameActions.test_support';
+import { locationWhere } from '../state/boardWhere.test_support';
 
 const hallway = instanceId('hallway');
 const study = instanceId('study');
@@ -28,7 +29,7 @@ describe('LocationFocus', () => {
 
   /**
    * The Hallway in the middle of the house, one card step from each neighbour: the Study above
-   * (with Alder in it), the Attic left, the Parlor right (barred while unrevealed) and the Cellar
+   * (with Alder in it), the Attic left, the Parlor right (barred: the board forbids moving in) and the Cellar
    * below, which a one-way connection leads to.
    */
   const table = PlayTable.start(
@@ -40,13 +41,7 @@ describe('LocationFocus', () => {
       })
       .withLocation(study, blankLocation('study'), { at: { column: 3, row: 0 } })
       .withLocation(attic, blankLocation('attic'), { at: { column: 0, row: 3 } })
-      .withLocation(
-        parlor,
-        blankLocation('parlor', {
-          restrictions: [{ cannot: 'moveInto', of: 'self', unrevealed: true }],
-        }),
-        { at: { column: 6, row: 3 } },
-      )
+      .withLocation(parlor, blankLocation('parlor'), { at: { column: 6, row: 3 } })
       .withLocation(cellar, blankLocation('cellar'), { at: { column: 3, row: 6 } })
       .withConnection(hallway, study)
       .withConnection(attic, hallway)
@@ -54,11 +49,12 @@ describe('LocationFocus', () => {
       .withConnection(hallway, cellar, { oneWay: true })
       .withInvestigator(alder, { locationId: study }),
   );
+  const barredParlor = locationWhere(table.board, parlor, { forbidden: ['moveInto'] });
   const renderHallway = (onGo = vi.fn()) =>
     render(
       <PlayingOn table={table}>
         <LocationFocus
-          board={table.board}
+          board={barredParlor}
           location={table.board.location(hallway)}
           onGo={onGo}
           onMap={() => {}}

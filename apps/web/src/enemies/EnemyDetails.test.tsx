@@ -7,7 +7,6 @@ import {
   blankAct,
   blankEnemy,
   eachInZone,
-  blankTreachery,
   decisionId,
   blankLocation,
   cardImagePath,
@@ -17,7 +16,6 @@ import {
   investigatorId,
   newGame,
   PlayTable,
-  threatAreaOf,
   trait,
   whenVictoryDisplayHolds,
 } from '@arkham/engine';
@@ -25,6 +23,7 @@ import { initI18n } from '../i18n';
 import { DecisionHostContext, type OpenDecision } from '../screens/DetailsDialog';
 import { EnemyDetails } from './EnemyDetails';
 import { actionsOn, PlayingOn } from '../state/gameActions.test_support';
+import { boardWhere } from '../state/boardWhere.test_support';
 
 const study = instanceId('study');
 const ghoul = instanceId('ghoul');
@@ -237,22 +236,17 @@ describe('EnemyDetails', () => {
     });
   });
 
-  it('marks the fight and evade that Frozen in Fear raises with two action arrows, beside the ways that list the free ones', () => {
-    const frozen = blankTreachery('frozen', {
-      modifiers: [
-        {
-          value: 'actionCost',
-          of: 'threatArea',
-          actions: ['move', 'fight', 'evade'],
-          first: 'eachRound',
-          by: 1,
-        },
-      ],
+  it('marks the fight and evade with two action arrows while each costs alder two, beside the ways that list the free ones', () => {
+    const table = PlayTable.start(ghoulOnAlder.withTurnOf(alder));
+    const board = boardWhere(table.board, {
+      actionCost: (_investigator, _action, cost) => (cost?.free ? 1 : 2),
     });
-    renderGhoulDetails(
-      PlayTable.start(
-        ghoulOnAlder.withCard(instanceId('frozen'), frozen, threatAreaOf(alder)).withTurnOf(alder),
-      ),
+    const [enemy] = board.enemiesEngagedWith(alder);
+    if (!enemy) throw new Error('the ghoul is engaged with alder');
+    render(
+      <PlayingOn table={table}>
+        <EnemyDetails board={board} enemy={enemy} onClose={vi.fn()} />
+      </PlayingOn>,
     );
 
     const offered = within(group('Actions')).getAllByRole('button');
@@ -406,28 +400,43 @@ describe('EnemyDetails', () => {
     expect(screen.queryByRole('button', { name: 'Exhaust' })).toBeNull();
   });
 
-  it('offers no engage for a massive ghoul in the study', () => {
-    const table = PlayTable.start(
-      newGame()
-        .withLocation(study, blankLocation('study'), { revealed: true })
-        .withInvestigator(alder, { locationId: study })
-        .withCard(
-          ghoul,
-          blankEnemy('ghoul', { keywords: [{ name: 'massive' }] }),
-          atLocation(study),
-        ),
-    );
-    const enemy = table.board.enemiesAt(study).find(({ id }) => id === ghoul);
-    if (!enemy) throw new Error('the ghoul is in the study');
-    render(
-      <PlayingOn table={table}>
-        <EnemyDetails board={table.board} enemy={enemy} onClose={vi.fn()} />
-      </PlayingOn>,
-    );
+  it.each([
+    {
+      who: 'alder may evade it but not engage it',
+      evade: [alder],
+      engage: [],
+      evades: true,
+      engages: false,
+    },
+    {
+      who: 'alder may engage it but not evade it',
+      evade: [],
+      engage: [alder],
+      evades: false,
+      engages: true,
+    },
+  ])(
+    'offers the card effects on the ghoul the board names: $who',
+    ({ evade, engage, evades, engages }) => {
+      const table = PlayTable.start(
+        newGame()
+          .withLocation(study, blankLocation('study'), { revealed: true })
+          .withInvestigator(alder, { locationId: study })
+          .withCard(ghoul, blankEnemy('ghoul'), atLocation(study)),
+      );
+      const board = boardWhere(table.board, { enemyCardEffects: () => ({ evade, engage }) });
+      const enemy = table.board.enemiesAt(study).find(({ id }) => id === ghoul);
+      if (!enemy) throw new Error('the ghoul is in the study');
+      render(
+        <PlayingOn table={table}>
+          <EnemyDetails board={board} enemy={enemy} onClose={vi.fn()} />
+        </PlayingOn>,
+      );
 
-    expect(screen.getByRole('button', { name: 'Evaded by alder' })).toBeDefined();
-    expect(screen.queryByRole('button', { name: 'Engages alder' })).toBeNull();
-  });
+      expect(screen.queryByRole('button', { name: 'Evaded by alder' }) !== null).toBe(evades);
+      expect(screen.queryByRole('button', { name: 'Engages alder' }) !== null).toBe(engages);
+    },
+  );
 
   describe('under an act whose objective counts the Elite enemies beneath it, like Augurs of Flame', () => {
     const augursOfFlame = blankAct('augurs_of_flame', {

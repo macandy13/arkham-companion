@@ -18,13 +18,13 @@ import {
   perInvestigator,
   PlayTable,
   resignAction,
-  threatAreaOf,
 } from '@arkham/engine';
 import { initI18n } from '../i18n';
 import { MapBoard } from './MapBoard';
 import { DOUBLE_TAP_MS } from '../screens/useDoubleTap';
 import type { Point } from './mapLayout';
 import { PlayingOn } from '../state/gameActions.test_support';
+import { boardWhere, investigatorWhere, locationWhere } from '../state/boardWhere.test_support';
 
 const study = instanceId('study');
 const hallway = instanceId('hallway');
@@ -84,18 +84,19 @@ describe('MapBoard', () => {
   });
   afterEach(cleanup);
 
-  it('draws a tile per location with its shroud and clues once revealed, its doom and attachments', () => {
+  it("draws a tile per location with the board's shroud and its clues once revealed, its doom and attachments", () => {
     const table = PlayTable.start(
       house.withCard(
         instanceId('obscuring_fog'),
-        blankTreachery('obscuring_fog', { modifiers: [{ value: 'shroud', of: 'host', by: 2 }] }),
+        blankTreachery('obscuring_fog'),
         attachedTo(study),
       ),
     );
+    const board = locationWhere(table.board, study, { shroud: 4 });
 
     render(
       <PlayingOn table={table}>
-        <MapBoard board={table.board} />
+        <MapBoard board={board} />
       </PlayingOn>,
     );
 
@@ -1529,27 +1530,14 @@ describe('MapBoard', () => {
       ).toEqual(['Move here · 1 action', 'Move here, no action']);
     });
 
-    it("marks the hallway's move with the two arrows Frozen in Fear adds, and its ways name the extra action of the free move", () => {
-      const frozen = blankTreachery('frozen', {
-        modifiers: [
-          {
-            value: 'actionCost',
-            of: 'threatArea',
-            actions: ['move', 'fight', 'evade'],
-            first: 'eachRound',
-            by: 1,
-          },
-        ],
+    it("marks the hallway's move with two arrows while a move costs alder two, and its ways name the extra action of the free move", () => {
+      const table = aldersTurn();
+      const board = boardWhere(table.board, {
+        actionCost: (_investigator, _action, cost) => (cost?.free ? 1 : 2),
       });
-      const table = PlayTable.start(
-        house
-          .withInvestigator(alder, { locationId: study })
-          .withCard(instanceId('frozen'), frozen, threatAreaOf(alder))
-          .withTurnOf(alder),
-      );
       render(
         <PlayingOn table={table}>
-          <MapBoard board={table.board} />
+          <MapBoard board={board} />
         </PlayingOn>,
       );
 
@@ -1568,64 +1556,45 @@ describe('MapBoard', () => {
       ).toEqual(['Move here · 2 actions', 'Move here without an action · 1 extra action']);
     });
 
-    it('turns taking a clue off while an enemy engaged with alder forbids discovering clues', () => {
-      const hunter = blankEnemy('hunter', {
-        restrictions: [{ cannot: ['discover'], what: 'clues', who: 'threatArea' }],
-      });
-      const table = PlayTable.start(
-        house
-          .withInvestigator(alder, { locationId: study })
-          .withCard(instanceId('hunter'), hunter, engagedWith(alder))
-          .withTurnOf(alder),
-      );
+    it.each([
+      {
+        button: 'Take a clue, no test',
+        state: 'alder may not discover clues',
+        board: (table: PlayTable) =>
+          investigatorWhere(table.board, alder, { forbidden: { clues: ['discover'] } }),
+      },
+      {
+        button: 'Investigate · 1 action',
+        state: 'the study forbids investigating it',
+        board: (table: PlayTable) =>
+          locationWhere(table.board, study, { forbidden: ['investigate'] }),
+      },
+    ])('turns "$button" in the study off while $state', ({ button, board }) => {
+      const table = aldersTurn();
       render(
         <PlayingOn table={table}>
-          <MapBoard board={table.board} />
+          <MapBoard board={board(table)} />
         </PlayingOn>,
       );
 
       tapOnce(tile('study'));
 
-      expect(
-        within(details('study')).getByRole('button', { name: 'Take a clue, no test' }),
-      ).toHaveProperty('disabled', true);
+      expect(within(details('study')).getByRole('button', { name: button })).toHaveProperty(
+        'disabled',
+        true,
+      );
     });
 
-    it('turns investigate off under a locked door and offers no move past a barrier', () => {
-      const table = PlayTable.start(
-        newGame()
-          .withLocation(study, blankLocation('study'), { revealed: true })
-          .withLocation(
-            hallway,
-            blankLocation('hallway', {
-              restrictions: [{ cannot: 'moveInto', of: 'self', unrevealed: true }],
-            }),
-          )
-          .withConnection(study, hallway)
-          .withCard(
-            instanceId('locked_door'),
-            blankTreachery('locked_door', {
-              restrictions: [{ cannot: 'investigate', of: 'host' }],
-            }),
-            attachedTo(study),
-          )
-          .withInvestigator(alder, { locationId: study })
-          .withTurnOf(alder),
-      );
+    it('offers no move into the hallway while it bars moving in', () => {
+      const table = aldersTurn();
       render(
         <PlayingOn table={table}>
-          <MapBoard board={table.board} />
+          <MapBoard board={locationWhere(table.board, hallway, { forbidden: ['moveInto'] })} />
         </PlayingOn>,
       );
 
-      tapOnce(tile('study'));
-      const investigate = within(details('study')).getByRole('button', {
-        name: 'Investigate · 1 action',
-      });
-      expect(investigate).toHaveProperty('disabled', true);
-      tap('Close');
       tapOnce(tile('hallway'));
-      // Only the correction for the unrevealed hallway, no move past the barrier.
+
       expect(offered('hallway')).toEqual(['Close', 'Reveal', 'Attach a card']);
     });
 
