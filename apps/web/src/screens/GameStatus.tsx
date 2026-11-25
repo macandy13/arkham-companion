@@ -73,7 +73,6 @@ export function GameStatus({
       {log && logOpen && (
         <GameLogDialog
           log={log}
-          state={open.state}
           scenario={open.scenarioNameKey ? t(open.scenarioNameKey) : undefined}
           reliance={open.reliance}
           onRelianceChange={(reliance) => void store.getState().setReliance(reliance)}

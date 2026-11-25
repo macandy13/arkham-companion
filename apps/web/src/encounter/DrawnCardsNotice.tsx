@@ -8,7 +8,7 @@ import type { DrawnCard } from './drawnCards';
 
 /**
  * Tells the players which encounter cards the last step drew and where each went
- * (`OpenGame.drawnCards`): "Crypt Chill for Roland Banks: discard pile". Most draws resolve within
+ * (a `drawnCards` notice in `OpenGame.notices`): "Crypt Chill for Roland Banks: discard pile". Most draws resolve within
  * one step, so this is the only place the players see them; it stays until dismissed or the next
  * step. A tap on a line opens the places the players can put that card (`CardMoves`), for when
  * the engine left part of its revelation to them.

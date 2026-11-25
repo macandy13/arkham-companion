@@ -31,8 +31,7 @@ describe('GameLogDialog', () => {
 
     render(
       <GameLogDialog
-        log={{ ctx: table.ctx, entries: table.entries, stepTimes: new Map() }}
-        state={table.state}
+        log={{ ctx: table.ctx, state: table.state, entries: table.entries, stepTimes: new Map() }}
         onClose={() => {}}
       />,
     );
@@ -64,8 +63,7 @@ describe('GameLogDialog', () => {
     const onRelianceChange = vi.fn();
     render(
       <GameLogDialog
-        log={{ ctx: table.ctx, entries: table.entries, stepTimes: new Map() }}
-        state={table.state}
+        log={{ ctx: table.ctx, state: table.state, entries: table.entries, stepTimes: new Map() }}
         reliance="assist"
         onRelianceChange={onRelianceChange}
         onClose={() => {}}
@@ -83,8 +81,7 @@ describe('GameLogDialog', () => {
     const table = PlayTable.start(rolandsTurn);
     render(
       <GameLogDialog
-        log={{ ctx: table.ctx, entries: table.entries, stepTimes: new Map() }}
-        state={table.state}
+        log={{ ctx: table.ctx, state: table.state, entries: table.entries, stepTimes: new Map() }}
         scenario="The Gathering"
         onClose={() => {}}
       />,
@@ -99,8 +96,7 @@ describe('GameLogDialog', () => {
     const onClose = vi.fn();
     render(
       <GameLogDialog
-        log={{ ctx: table.ctx, entries: table.entries, stepTimes: new Map() }}
-        state={table.state}
+        log={{ ctx: table.ctx, state: table.state, entries: table.entries, stepTimes: new Map() }}
         onClose={onClose}
       />,
     );
@@ -120,8 +116,7 @@ describe('GameLogDialog', () => {
     const onClose = vi.fn();
     render(
       <GameLogDialog
-        log={{ ctx: table.ctx, entries: table.entries, stepTimes: new Map() }}
-        state={table.state}
+        log={{ ctx: table.ctx, state: table.state, entries: table.entries, stepTimes: new Map() }}
         onGoBack={onGoBack}
         onClose={onClose}
       />,
@@ -142,8 +137,7 @@ describe('GameLogDialog', () => {
     table.takeDamage(byName('Roland Banks'), 2);
     const { rerender } = render(
       <GameLogDialog
-        log={{ ctx: table.ctx, entries: table.entries, stepTimes: new Map() }}
-        state={table.state}
+        log={{ ctx: table.ctx, state: table.state, entries: table.entries, stepTimes: new Map() }}
         onGoBack={() => {}}
         onClose={() => {}}
       />,
@@ -153,8 +147,7 @@ describe('GameLogDialog', () => {
 
     rerender(
       <GameLogDialog
-        log={{ ctx: table.ctx, entries: table.entries, stepTimes: new Map() }}
-        state={table.state}
+        log={{ ctx: table.ctx, state: table.state, entries: table.entries, stepTimes: new Map() }}
         onClose={() => {}}
       />,
     );
