@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>#1478 review tour</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400..700&amp;family=JetBrains+Mono:wght@400;600&amp;display=swap">
+<style>
+:root {
+  --bg: #fbfbf9; --fg: #1d1f21; --muted: #6b6f73; --line: #e6e5e0; --soft: #f2f1ec;
+  --accent: #2f5d8a; --accent-fg: #ffffff; --ask: #fdf4dc; --ask-fg: #3d3115; --code-bg: #ffffff;
+  --add-bg: #e9f5ec; --add-mark: #2e7d47; --del-bg: #fbecea; --del-mark: #b0413a; --hl: #fff3c4;
+  --tok-key: #8a3ffc; --tok-str: #2e7d47; --tok-com: #8c9196; --tok-type: #2f5d8a; --ok: #2e7d47;
+  --font-body: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-code: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  --radius: 8px;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #17191b; --fg: #e8e8e6; --muted: #9a9ea3; --line: #2b2e31; --soft: #202326;
+    --accent: #8ab4e0; --accent-fg: #10161c; --ask: #2b2617; --ask-fg: #f0e3bd; --code-bg: #1c1f22;
+    --add-bg: #1d2e23; --add-mark: #7cc596; --del-bg: #33201f; --del-mark: #e48a83; --hl: #3a3420;
+    --tok-key: #c4a1ff; --tok-str: #8fd0a4; --tok-com: #7c8288; --tok-type: #8ab4e0; --ok: #7cc596;
+    color-scheme: dark;
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.6 var(--font-body); -webkit-font-smoothing: antialiased; }
+main {
+  max-width: 720px; margin: 0 auto; display: grid; gap: 40px;
+  padding: 0 max(16px, env(safe-area-inset-right)) 56px max(16px, env(safe-area-inset-left));
+}
+a { color: var(--accent); text-underline-offset: 2px; }
+a:focus-visible, button:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+code { font-family: var(--font-code); font-size: .88em; background: var(--soft); padding: 1px 5px; border-radius: 4px; }
+nav {
+  position: sticky; top: 0; z-index: 5; display: flex; align-items: center; gap: 12px;
+  margin: 0 calc(-1 * max(16px, env(safe-area-inset-left))); padding: 10px max(16px, env(safe-area-inset-left));
+  background: color-mix(in srgb, var(--bg) 92%, transparent); backdrop-filter: blur(8px); border-bottom: 1px solid var(--line);
+}
+nav .number { font-size: 14px; font-weight: 600; color: var(--muted); }
+nav ol { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 0 auto; padding: 0; list-style: none; }
+nav ol a {
+  width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center;
+  color: var(--muted); background: var(--soft); font-size: 13px; font-weight: 600; text-decoration: none;
+}
+nav ol a.question { background: var(--ask); color: var(--ask-fg); }
+nav ol a.on { background: var(--accent); color: var(--accent-fg); }
+header { display: grid; gap: 12px; padding-top: 28px; }
+.kicker { font-size: 13px; color: var(--muted); }
+h1 { font-size: 28px; line-height: 1.2; font-weight: 650; letter-spacing: -0.015em; margin: 0; text-wrap: balance; }
+.lead { display: grid; gap: 6px; }
+.lead h2 { font-size: 12px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 0; }
+.lead p { font-size: 18px; margin: 0; max-width: 60ch; }
+.meta { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 13px; color: var(--muted); margin: 0; }
+.questions { background: var(--ask); color: var(--ask-fg); border-radius: var(--radius); padding: 18px 20px; display: grid; gap: 14px; }
+.questions h2 { font-size: 12px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; margin: 0; opacity: .75; }
+.questions ol { margin: 0; padding-left: 20px; display: grid; gap: 12px; }
+.questions p { margin: 0; font-size: 17px; }
+.questions .about { font-size: 13px; opacity: .75; }
+.questions a { color: inherit; font-size: 14px; font-weight: 500; }
+section.evidence { display: grid; gap: 14px; scroll-margin-top: 64px; }
+.evidence h2 { font-size: 20px; line-height: 1.3; font-weight: 600; letter-spacing: -0.01em; margin: 0; }
+.evidence ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 18px; }
+.evidence li { display: grid; gap: 8px; padding-left: 28px; position: relative; }
+.evidence li::before { content: "✓"; position: absolute; left: 4px; color: var(--accent); font-weight: 600; }
+.evidence li > p { margin: 0; max-width: 62ch; }
+.evidence .test { font-size: 14px; color: var(--muted); }
+.example { margin: 0; padding: 12px 14px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--soft); overflow-x: auto; font: 13px/1.5 var(--font-code); font-variant-ligatures: none; }
+.usage { display: grid; gap: 4px; }
+.usage .when { margin: 4px 0 0; font-size: 12px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.example code { background: none; padding: 0; font-size: inherit; }
+.stop { display: grid; gap: 14px; scroll-margin-top: 64px; }
+.stop > header { display: grid; grid-template-columns: auto 1fr; gap: 2px 12px; align-items: center; padding: 0; }
+.stop-number {
+  grid-row: span 2; align-self: start; margin-top: 2px; width: 28px; height: 28px; border-radius: 50%;
+  display: grid; place-items: center; background: var(--accent); color: var(--accent-fg); font-size: 13px; font-weight: 600;
+}
+.stop h2 { font-size: 20px; line-height: 1.3; font-weight: 600; letter-spacing: -0.01em; margin: 0; text-wrap: balance; }
+.tag { font-size: 12px; color: var(--muted); letter-spacing: .04em; text-transform: uppercase; }
+.stop > p { margin: 0; max-width: 62ch; }
+figure { display: grid; gap: 8px; margin: 0; }
+.toggle { display: flex; flex-wrap: wrap; gap: 4px; }
+.segments { display: inline-flex; background: var(--soft); border-radius: 999px; padding: 3px; }
+.toggle button { font: 500 13px var(--font-body); color: var(--muted); background: transparent; border: 0; border-radius: 999px; padding: 4px 12px; cursor: pointer; }
+.toggle button[aria-pressed="true"] { background: var(--bg); color: var(--fg); box-shadow: 0 1px 2px rgb(0 0 0 / 12%); }
+.frame { border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; background: var(--soft); }
+.frame img { display: block; width: 100%; height: auto; }
+.frame.phone { max-width: 280px; margin-inline: auto; }
+.frame .missing { padding: 24px; text-align: center; color: var(--muted); font-size: 14px; }
+.code { border: 1px solid var(--line); border-radius: var(--radius); background: var(--code-bg); overflow: hidden; }
+.code > header {
+  display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; padding: 8px 12px;
+  border-bottom: 1px solid var(--line); background: var(--soft); font-size: 13px; color: var(--muted);
+}
+.code .file { color: var(--fg); font-family: var(--font-code); font-size: 12.5px; overflow-wrap: anywhere; }
+.code > header a { margin-left: auto; }
+.code pre code { display: block; padding: 0; background: none; font-size: inherit; }
+.code pre { margin: 0; padding: 6px 0; font: 12.5px/1.6 var(--font-code); font-variant-ligatures: none; }
+.line { display: grid; grid-template-columns: 3.2em 1.4em minmax(0, 1fr); }
+.line .number { color: var(--muted); text-align: right; padding-right: .6em; user-select: none; opacity: .6; }
+.line .mark { color: var(--muted); user-select: none; }
+.line .text { padding: 0 12px 0 2ch; text-indent: -2ch; white-space: pre-wrap; overflow-wrap: anywhere; }
+.line.added { background: var(--add-bg); } .line.added .mark { color: var(--add-mark); }
+.line.removed { background: var(--del-bg); } .line.removed .mark { color: var(--del-mark); }
+.line.highlighted { background: var(--hl); }
+.line.gap .text { color: var(--muted); font-family: var(--font-body); font-size: 12px; }
+.k { color: var(--tok-key); } .s { color: var(--tok-str); } .c { color: var(--tok-com); font-style: italic; } .t { color: var(--tok-type); }
+.done { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; }
+.done p { margin: 0; color: var(--muted); }
+.done a { background: var(--accent); color: var(--accent-fg); border-radius: 999px; padding: 9px 20px; text-decoration: none; font-weight: 600; font-size: 15px; }
+details { border-top: 1px solid var(--line); padding-top: 16px; }
+summary { cursor: pointer; font-size: 15px; font-weight: 600; }
+details ul { padding-left: 20px; margin: 12px 0 0; display: grid; gap: 6px; font-size: 15px; }
+@media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+</style>
+</head>
+<body>
+<main>
+<nav aria-label="Tour"><span class="number">#1478</span><ol><li><a href="#stop-1" data-stop="stop-1">1</a></li><li><a href="#stop-2" data-stop="stop-2">2</a></li><li><a href="#stop-3" data-stop="stop-3">3</a></li><li><a class="evidence" href="#evidence" aria-label="How we know it works">✓</a></li></ol></nav>
+<header>
+<p class="kicker">feat(web) · ME.29b · as of 6cae42b</p>
+<h1>Add any chaos token or remove the one tapped, for the scenario or the campaign</h1>
+<p class="meta"><span>3 stops</span><span>0 questions</span><span>62 of 207 changed lines on the tour</span></p>
+</header>
+<section class="lead"><h2>The problem</h2><p>A card or a resolution says &quot;add a Cultist token to the chaos bag for the rest of the campaign&quot; or &quot;remove a Skull token&quot;, and the chaos bag dialog could only seal tokens and change bless and curse.</p></section>
+<section class="lead"><h2>What changes</h2><p>The token the players tap on the tray gets a Remove button beside its Seal buttons. Below the bless and curse steppers, a Change the bag group opens a row of every other kind of token to add. In a campaign game two pills pick whether a change lasts for this scenario or the rest of the campaign; the resolution then writes a campaign change into the log, as it does for a card's change. A standalone game has only the scenario.</p></section>
+
+<section class="stop" id="stop-1">
+<header><span class="stop-number">1</span><span class="tag">UI · chaos bag</span><h2>Remove the tapped token</h2></header>
+<p>Remove sits with the Seal buttons, in a group named for both, and keeps the duration the pills chose.</p>
+
+<div class="code"><header><span class="file">apps/web/src/screens/ChaosBag.tsx</span><span>+70 −3</span><a href="https://github.com/macandy13/arkham-companion/pull/1478/files#diff-77c78118efcfa7314d519d191de371e0eed5301f76ebb2423f08dd0940cc364bR77-R170">Open in diff</a></header><pre><code><span class="line added"><span class="number">77</span><span class="mark">+</span><span class="text">  <span class="k">const</span> changeLasts = board.inCampaign ? lasts : <span class="s">'scenario'</span>;</span></span><span class="line gap"><span class="number"></span><span class="mark">⋯</span><span class="text"></span></span><span class="line context"><span class="number">159</span><span class="mark"> </span><span class="text">                ))}</span></span><span class="line added"><span class="number">160</span><span class="mark">+</span><span class="text">                &lt;button</span></span><span class="line added"><span class="number">161</span><span class="mark">+</span><span class="text">                  <span class="k">type</span>=<span class="s">&quot;button&quot;</span></span></span><span class="line added"><span class="number">162</span><span class="mark">+</span><span class="text">                  disabled={busy}</span></span><span class="line added"><span class="number">163</span><span class="mark">+</span><span class="text">                  onClick={() =&gt; {</span></span><span class="line added"><span class="number">164</span><span class="mark">+</span><span class="text">                    setPicked(<span class="k">undefined</span>);</span></span><span class="line highlighted"><span class="number">165</span><span class="mark">+</span><span class="text">                    <span class="k">void</span> actions.perform(removeChaosToken(chosen.token, changeLasts));</span></span><span class="line added"><span class="number">166</span><span class="mark">+</span><span class="text">                  }}</span></span><span class="line added"><span class="number">167</span><span class="mark">+</span><span class="text">                &gt;</span></span><span class="line added"><span class="number">168</span><span class="mark">+</span><span class="text">                  {t(<span class="s">'chaosBag.remove'</span>, { token: t(<span class="s">`chaosToken.${chosen.token}`</span>) })}</span></span><span class="line added"><span class="number">169</span><span class="mark">+</span><span class="text">                &lt;/button&gt;</span></span><span class="line context"><span class="number">170</span><span class="mark"> </span><span class="text">              &lt;/div&gt;</span></span></code></pre></div>
+</section>
+<section class="stop" id="stop-2">
+<header><span class="stop-number">2</span><span class="tag">UI · chaos bag</span><h2>Add a token, for the scenario or the campaign</h2></header>
+<p>Every kind but bless and curse, which keep their own steppers since their pool is limited. The pills only show in a campaign game.</p>
+
+<div class="code"><header><span class="file">apps/web/src/screens/ChaosBag.tsx</span><span>+70 −3</span><a href="https://github.com/macandy13/arkham-companion/pull/1478/files#diff-77c78118efcfa7314d519d191de371e0eed5301f76ebb2423f08dd0940cc364bR26-R242">Open in diff</a></header><pre><code><span class="line added"><span class="number">26</span><span class="mark">+</span><span class="text"><span class="k">const</span> <span class="t">ADDABLE_TOKENS</span>: <span class="k">readonly</span> <span class="t">ChaosToken</span>[] = <span class="t">CHAOS_TOKENS</span>.filter((token) =&gt; !isPoolToken(token));</span></span><span class="line added"><span class="number">27</span><span class="mark">+</span><span class="text"></span></span><span class="line added"><span class="number">28</span><span class="mark">+</span><span class="text"><span class="c">/** How long a change to the bag can last, in the order the chaos bag offers them. */</span></span></span><span class="line added"><span class="number">29</span><span class="mark">+</span><span class="text"><span class="k">const</span> <span class="t">LASTS</span>: <span class="k">readonly</span> <span class="t">ChaosBagChangeLasts</span>[] = [<span class="s">'scenario'</span>, <span class="s">'campaign'</span>];</span></span><span class="line gap"><span class="number"></span><span class="mark">⋯</span><span class="text"></span></span><span class="line added"><span class="number">203</span><span class="mark">+</span><span class="text">            &lt;div role=<span class="s">&quot;group&quot;</span> aria-labelledby={changeId}&gt;</span></span><span class="line added"><span class="number">204</span><span class="mark">+</span><span class="text">              &lt;h3 id={changeId}&gt;{t(<span class="s">'chaosBag.change'</span>)}&lt;/h3&gt;</span></span><span class="line highlighted"><span class="number">205</span><span class="mark">+</span><span class="text">              {board.inCampaign &amp;&amp;</span></span><span class="line added"><span class="number">206</span><span class="mark">+</span><span class="text">                <span class="t">LASTS</span>.map((duration) =&gt; (</span></span><span class="line added"><span class="number">207</span><span class="mark">+</span><span class="text">                  &lt;button</span></span><span class="line added"><span class="number">208</span><span class="mark">+</span><span class="text">                    key={duration}</span></span><span class="line added"><span class="number">209</span><span class="mark">+</span><span class="text">                    <span class="k">type</span>=<span class="s">&quot;button&quot;</span></span></span><span class="line added"><span class="number">210</span><span class="mark">+</span><span class="text">                    aria-pressed={duration === changeLasts}</span></span><span class="line added"><span class="number">211</span><span class="mark">+</span><span class="text">                    onClick={() =&gt; setLasts(duration)}</span></span><span class="line added"><span class="number">212</span><span class="mark">+</span><span class="text">                  &gt;</span></span><span class="line added"><span class="number">213</span><span class="mark">+</span><span class="text">                    {t(<span class="s">`chaosBag.lasts.${duration}`</span>)}</span></span><span class="line added"><span class="number">214</span><span class="mark">+</span><span class="text">                  &lt;/button&gt;</span></span><span class="line added"><span class="number">215</span><span class="mark">+</span><span class="text">                ))}</span></span><span class="line added"><span class="number">216</span><span class="mark">+</span><span class="text">              &lt;button</span></span><span class="line added"><span class="number">217</span><span class="mark">+</span><span class="text">                <span class="k">type</span>=<span class="s">&quot;button&quot;</span></span></span><span class="line added"><span class="number">218</span><span class="mark">+</span><span class="text">                aria-expanded={adding}</span></span><span class="line added"><span class="number">219</span><span class="mark">+</span><span class="text">                disabled={busy}</span></span><span class="line added"><span class="number">220</span><span class="mark">+</span><span class="text">                onClick={() =&gt; setAdding(!adding)}</span></span><span class="line added"><span class="number">221</span><span class="mark">+</span><span class="text">              &gt;</span></span><span class="line added"><span class="number">222</span><span class="mark">+</span><span class="text">                {t(<span class="s">'chaosBag.add'</span>)}</span></span><span class="line added"><span class="number">223</span><span class="mark">+</span><span class="text">              &lt;/button&gt;</span></span><span class="line added"><span class="number">224</span><span class="mark">+</span><span class="text">            &lt;/div&gt;</span></span><span class="line added"><span class="number">225</span><span class="mark">+</span><span class="text">            {adding &amp;&amp; (</span></span><span class="line added"><span class="number">226</span><span class="mark">+</span><span class="text">              &lt;ul aria-label={t(<span class="s">'chaosBag.addWhich'</span>)} data-part=<span class="s">&quot;addable&quot;</span>&gt;</span></span><span class="line added"><span class="number">227</span><span class="mark">+</span><span class="text">                {<span class="t">ADDABLE_TOKENS</span>.map((token) =&gt; (</span></span><span class="line added"><span class="number">228</span><span class="mark">+</span><span class="text">                  &lt;li key={token}&gt;</span></span><span class="line added"><span class="number">229</span><span class="mark">+</span><span class="text">                    &lt;button</span></span><span class="line added"><span class="number">230</span><span class="mark">+</span><span class="text">                      <span class="k">type</span>=<span class="s">&quot;button&quot;</span></span></span><span class="line added"><span class="number">231</span><span class="mark">+</span><span class="text">                      aria-label={t(<span class="s">'chaosBag.addToken'</span>, { token: t(<span class="s">`chaosToken.${token}`</span>) })}</span></span><span class="line added"><span class="number">232</span><span class="mark">+</span><span class="text">                      disabled={busy}</span></span><span class="line added"><span class="number">233</span><span class="mark">+</span><span class="text">                      onClick={() =&gt; {</span></span><span class="line added"><span class="number">234</span><span class="mark">+</span><span class="text">                        setAdding(<span class="k">false</span>);</span></span><span class="line highlighted"><span class="number">235</span><span class="mark">+</span><span class="text">                        <span class="k">void</span> actions.perform(addChaosToken(token, changeLasts));</span></span><span class="line added"><span class="number">236</span><span class="mark">+</span><span class="text">                      }}</span></span><span class="line added"><span class="number">237</span><span class="mark">+</span><span class="text">                    &gt;</span></span><span class="line added"><span class="number">238</span><span class="mark">+</span><span class="text">                      &lt;<span class="t">ChaosTokenFace</span> token={token} /&gt;</span></span><span class="line added"><span class="number">239</span><span class="mark">+</span><span class="text">                    &lt;/button&gt;</span></span><span class="line added"><span class="number">240</span><span class="mark">+</span><span class="text">                  &lt;/li&gt;</span></span><span class="line added"><span class="number">241</span><span class="mark">+</span><span class="text">                ))}</span></span><span class="line added"><span class="number">242</span><span class="mark">+</span><span class="text">              &lt;/ul&gt;</span></span></code></pre></div>
+</section>
+<section class="stop" id="stop-3">
+<header><span class="stop-number">3</span><span class="tag">engine · board view</span><h2>Whether the game is in a campaign</h2></header>
+<p>A getter on the board view, so the dialog needs no campaign of its own.</p>
+
+<div class="code"><header><span class="file">packages/engine/src/board_view.ts</span><span>+8 −0</span><a href="https://github.com/macandy13/arkham-companion/pull/1478/files#diff-69728c6085330bce46be6f42a0a7a56f5d7c0a8d6d4134613b9f161ab218ad21R1003-R1009">Open in diff</a></header><pre><code><span class="line added"><span class="number">1003</span><span class="mark">+</span><span class="text">  /**</span></span><span class="line added"><span class="number">1004</span><span class="mark">+</span><span class="text"><span class="c">   * Whether the game is a scenario of a campaign (`GameState.campaign`), so a change to the chaos</span></span></span><span class="line added"><span class="number">1005</span><span class="mark">+</span><span class="text"><span class="c">   * bag can last for the rest of the campaign; a standalone game has no campaign to keep it.</span></span></span><span class="line added"><span class="number">1006</span><span class="mark">+</span><span class="text"><span class="c">   */</span></span></span><span class="line added"><span class="number">1007</span><span class="mark">+</span><span class="text">  get inCampaign(): boolean {</span></span><span class="line highlighted"><span class="number">1008</span><span class="mark">+</span><span class="text">    <span class="k">return</span> this.state.campaign !== <span class="k">undefined</span>;</span></span><span class="line added"><span class="number">1009</span><span class="mark">+</span><span class="text">  }</span></span></code></pre></div>
+</section>
+<section class="evidence" id="evidence"><h2>How we know it works</h2><ul><li><p>In a standalone game the tapped Skull is removed for the scenario, with no campaign choice offered.</p><p class="test">Checked by <code>apps/web/src/screens/ChaosBag.test.tsx › ChaosBag › removes the tapped skull for the scenario, offering no campaign in a standalone game</code></p></li><li><p>In a campaign game a Cultist token can be added for the rest of the campaign.</p><p class="test">Checked by <code>apps/web/src/screens/ChaosBag.test.tsx › ChaosBag › adds a cultist token for the rest of the campaign in a campaign game</code></p></li><li><p>The board view says whether the game is in a campaign.</p><p class="test">Checked by <code>packages/engine/src/board_view.test.ts › a game in a campaign or standalone › says whether $game is in a campaign: $inCampaign</code></p></li></ul></section>
+<section class="done"><p>That's the whole change.</p><a href="https://github.com/macandy13/arkham-companion/pull/1478/files">Review on GitHub</a></section>
+<details><summary>Not on the tour</summary><ul><li><code>isPoolToken</code> exported from the engine</li><li>English and German strings for the new buttons and the group</li><li>Styles for the Change the bag group and the row of tokens to add</li><li>Docs: play-screen-encounter.md</li></ul></details>
+</main>
+<script>
+document.querySelectorAll('figure[data-variants]').forEach((figure) => {
+  const variants = JSON.parse(figure.dataset.variants);
+  const state = { when: 'after', device: variants[0].device };
+  const frame = figure.querySelector('.frame');
+  const show = () => {
+    const variant = variants.find((v) => v.device === state.device);
+    const src = variant[state.when];
+    frame.classList.toggle('phone', state.device === 'phone');
+    frame.innerHTML = src
+      ? '<img alt="' + state.device + ', ' + state.when + '" src="' + src + '">'
+      : '<p class="missing">' + (state.when === 'before' ? 'New in this PR' : 'Removed in this PR') + '</p>';
+    figure.querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(b.value === state.when || b.value === state.device)));
+  };
+  figure.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => {
+    state[b.name] = b.value;
+    show();
+  }));
+  show();
+});
+const dots = [...document.querySelectorAll('nav a[data-stop]')];
+const seen = new IntersectionObserver((entries) => entries.forEach((entry) => {
+  if (entry.isIntersecting) dots.forEach((d) => d.classList.toggle('on', d.dataset.stop === entry.target.id));
+}), { rootMargin: '-40% 0px -55% 0px' });
+document.querySelectorAll('.stop').forEach((stop) => seen.observe(stop));
+</script>
+</body>
+</html>
