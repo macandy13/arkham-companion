@@ -139,7 +139,7 @@ export const appTexts = {
     sealOn: 'Seal {{token}} on {{investigator}}',
     sealed: 'Sealed',
     sealedOn: 'on {{investigator}}',
-    sealWhere: 'Seal {{token}} on',
+    pickedActions: 'Seal or remove the {{token}}',
     releaseFrom: 'Release {{token}} from {{investigator}}',
     release: 'Release',
     pool: 'Bless and curse',

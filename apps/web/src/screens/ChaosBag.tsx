@@ -139,7 +139,7 @@ export function ChaosBag({ board }: { board: BoardView }) {
             {chosen !== undefined && (
               <div
                 role="group"
-                aria-label={t('chaosBag.sealWhere', { token: t(`chaosToken.${chosen.token}`) })}
+                aria-label={t('chaosBag.pickedActions', { token: t(`chaosToken.${chosen.token}`) })}
               >
                 {sealers.map((investigator) => (
                   <button

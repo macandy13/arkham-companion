@@ -140,7 +140,7 @@ export const appTexts = {
     sealOn: '{{token}} bei {{investigator}} versiegeln',
     sealed: 'Versiegelt',
     sealedOn: 'bei {{investigator}}',
-    sealWhere: '{{token}} versiegeln bei',
+    pickedActions: '{{token}} versiegeln oder entfernen',
     releaseFrom: '{{token}} von {{investigator}} freigeben',
     release: 'Freigeben',
     pool: 'Segen und Fluch',

@@ -352,7 +352,9 @@ describe('a skill test outside any decision', () => {
 
     expect(boardView(bagContext, bagState).chaosBag).toEqual(['+1', '-1', 'skull', 'autoFail']);
   });
+});
 
+describe('a game in a campaign or standalone', () => {
   it.each([
     {
       game: 'a scenario of a campaign',
