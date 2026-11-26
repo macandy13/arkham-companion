@@ -2,6 +2,48 @@
 
 The sections dated up to 2026-10-22 were released as 1.0.0 to 1.8.0 by mistake: Release Please starts at 1.0.0 by default. Versioning restarted at 0.1.0 (see "Versions" in docs/product.md).
 
+## [0.1.48](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v0.1.47...arkham-companion-v0.1.48) (2026-11-26)
+
+
+### Features
+
+* **engine:** a group clue cost to enter a location (MC2.4c) ([bca623d](https://github.com/macandy13/arkham-companion/commit/bca623d8aa9511c7b32e3adb563a9d42002c04a9))
+* **engine:** a group clue cost to enter a location (MC2.4c) ([9334df0](https://github.com/macandy13/arkham-companion/commit/9334df0d3d039ae27a3fdaf531e589dd221ed452))
+* **engine:** an extra action to enter, leave or investigate a location (MC2.4b) ([f47fa6b](https://github.com/macandy13/arkham-companion/commit/f47fa6b674b2c52c6b3ac87d6b5d1a91c71a8854))
+* **engine:** the Doomed keyword (MC2.6) ([1be9052](https://github.com/macandy13/arkham-companion/commit/1be9052887e521e7b4206f0636c4855bbbabbe7d))
+* **engine:** the Doomed keyword (MC2.6) ([86a6340](https://github.com/macandy13/arkham-companion/commit/86a6340334eff8b46184ee07a4485178d6d4e9e1))
+* **web:** lay the chaos bag out as a token tray with In the bag, Sealed and Reveal tabs (ME.32b) ([f032616](https://github.com/macandy13/arkham-companion/commit/f032616ddb80923d1b9cb5210ba6454172e98226))
+* **web:** put the chaos bag at the header's left end and the bag and pool in the phone's compact header (ME.32c) ([8bdc86e](https://github.com/macandy13/arkham-companion/commit/8bdc86e08daaa5879bc74802ccf874c604491576))
+* **web:** put the chaos bag at the header's left end, and the bag and token pool in the phone's compact header (ME.32c) ([7bc8b1c](https://github.com/macandy13/arkham-companion/commit/7bc8b1c9f37d75c46529c3b690dcae919b56e4fe))
+
+
+### Bug fixes
+
+* **engine:** read a prey's only without a backtracking expression ([5d6dc8c](https://github.com/macandy13/arkham-companion/commit/5d6dc8c5b5ed5b296aa0a869ff398b34ade6318a))
+* **web:** keep the chaos bag dialog one height in every view (ME.32b) ([c4e69c0](https://github.com/macandy13/arkham-companion/commit/c4e69c0cb9dedf23494af07b201ec3186595f99a))
+* **web:** light only locations the group can pay to enter for a card's move ([fa80e84](https://github.com/macandy13/arkham-companion/commit/fa80e846f0071fa2906691b46de331186a2f3b4e))
+* **web:** the bag's tabs follow the tabs pattern like the map's; tokens for the tray's ring ([3386f4b](https://github.com/macandy13/arkham-companion/commit/3386f4bbbdea06e6c6250e7e0649e80715a06f03))
+
+
+### Refactoring
+
+* **engine:** basic action tests carry their results in the options (ME.19a) ([7c14087](https://github.com/macandy13/arkham-companion/commit/7c14087164a283200d747fd8e48cc6f928d1b699))
+* **engine:** basic action tests carry their results in the options (ME.19a) ([0d82b3a](https://github.com/macandy13/arkham-companion/commit/0d82b3ad7e9ee7aa3754b1096c710065357e4f99))
+* **engine:** every command a card asks for carries its source (ME.20) ([28aeeb1](https://github.com/macandy13/arkham-companion/commit/28aeeb1ec09c2214801750a268a418a77c0bd0b0))
+* **engine:** every command a card asks for carries its source (ME.20) ([c225420](https://github.com/macandy13/arkham-companion/commit/c2254209af9843f220ed7790f2c1e65f4f14b0fb))
+* **engine:** keep answerOutcome private ([71966c3](https://github.com/macandy13/arkham-companion/commit/71966c36722199cb027a3d1ef6bcda818bc2dfcd))
+* **engine:** prey as selectors over the investigators, read at card load (ME.18d) ([1d7ca23](https://github.com/macandy13/arkham-companion/commit/1d7ca239131f033898c53e5876ae254e4d82e51b))
+* **engine:** prey as selectors over the investigators, read at card load (ME.18d) ([98bfb63](https://github.com/macandy13/arkham-companion/commit/98bfb632b30e55c739d9e60d089b15cb42ab8ff4))
+
+
+### Documentation
+
+* **engine:** clearer source and strict comments ([a882917](https://github.com/macandy13/arkham-companion/commit/a882917e96d7bf1b0b127d6d915a458e54d91922))
+* **engine:** prey filters on the investigator reference; one owner read ([5b8560a](https://github.com/macandy13/arkham-companion/commit/5b8560aba80c6d41180a2e2011b4dc9149ac8b41))
+* **engine:** say which fields an answer may fill ([93220ab](https://github.com/macandy13/arkham-companion/commit/93220aba59ebc7376a6108e4c0bdee9e60c885c9))
+* **rules:** an investigation discovers what the location still has ([7e7e1d1](https://github.com/macandy13/arkham-companion/commit/7e7e1d1230ab39bf4fc9dab1f125f82033f56111))
+* the phone's compact and expanded header with the chaos bag and token pool (ME.32c) ([1fa89da](https://github.com/macandy13/arkham-companion/commit/1fa89da661b0ddff6268f88f4f53dec232fce7e6))
+
 ## [0.1.47](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v0.1.46...arkham-companion-v0.1.47) (2026-11-25)
 
 
