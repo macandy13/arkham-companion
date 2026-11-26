@@ -6,10 +6,12 @@ import {
   blankLocation,
   blankTreachery,
   cardCode,
+  engagedWith,
   fixed,
   instanceId,
   investigatorId,
   newGame,
+  type Zone,
 } from './index';
 import { stateAfter } from '../test/utils';
 
@@ -26,22 +28,23 @@ const burningAgenda = blankAgenda('burning_agenda', fixed(6), {
 });
 
 describe('an enemy that cannot be damaged at a location with Fire! attached', () => {
-  /** The burning agenda current, a Fire! attached to the hall, and a 3-health ghoul `at` the hall or the cellar. */
-  const ghoulIn = (at: typeof hall) =>
+  /** The burning agenda current, a Fire! attached to the hall, alice in the hall and a 3-health ghoul in `zone`. */
+  const ghoulIn = (zone: Zone) =>
     newGame()
       .withAgenda(instanceId('agenda'), burningAgenda)
       .withLocation(hall, blankLocation('hall'), { revealed: true })
       .withLocation(cellar, blankLocation('cellar'), { revealed: true })
       .withCard(instanceId('fire'), blankTreachery('fire'), { kind: 'attachedTo', hostId: hall })
-      .withInvestigator(alice, { locationId: cellar })
-      .withCard(ghoul, blankEnemy('ghoul', { health: fixed(3) }), atLocation(at))
+      .withInvestigator(alice, { locationId: hall })
+      .withCard(ghoul, blankEnemy('ghoul', { health: fixed(3) }), zone)
       .start();
 
   it.each([
-    { at: hall, where: 'the burning hall', damage: 0 },
-    { at: cellar, where: 'the cellar, with no Fire!', damage: 1 },
-  ])('deals the ghoul in $where $damage damage', ({ at, damage }) => {
-    const { context, state } = ghoulIn(at);
+    { zone: atLocation(hall), where: 'in the burning hall', damage: 0 },
+    { zone: engagedWith(alice), where: 'engaged with alice in the burning hall', damage: 0 },
+    { zone: atLocation(cellar), where: 'in the cellar, with no Fire!', damage: 1 },
+  ])('deals the ghoul $where $damage damage', ({ zone, damage }) => {
+    const { context, state } = ghoulIn(zone);
 
     const after = stateAfter(context, state, { type: 'DamageEnemy', enemyId: ghoul, amount: 1 });
 
@@ -49,7 +52,7 @@ describe('an enemy that cannot be damaged at a location with Fire! attached', ()
   });
 
   it('damages the ghoul in the hall again once the agenda has left play', () => {
-    const { context, state } = ghoulIn(hall);
+    const { context, state } = ghoulIn(atLocation(hall));
 
     const after = stateAfter(
       context,
