@@ -72,16 +72,24 @@ export function agenda({
  * Printed values of an act: its clue threshold (`cluesPerInvestigator`, spent as a group), or the
  * objective that replaces it (`advance`); `withAdvance` adds what does it.
  */
-export interface ActOptions {
+export type ActOptions = ActPrintedValues &
+  (
+    | { cluesPerInvestigator?: number; advance?: never }
+    | {
+        cluesPerInvestigator?: never;
+        /** An objective that advances it instead of a clue threshold (The Barrier, Disrupting the Ritual). */
+        advance: Exclude<ActAdvanceRule, { kind: 'spendClues' }>;
+      }
+  );
+
+/** What every act prints, whichever way it advances (`ActOptions`). */
+interface ActPrintedValues {
   code: string;
   name: string;
   set: EncounterSetCode;
   /** The file type of its pictures on ArkhamDB; PNG by default. */
   pictures?: PictureFormat;
   stage: number;
-  cluesPerInvestigator?: number;
-  /** An objective that advances it instead of a clue threshold (The Barrier, Disrupting the Ritual). */
-  advance?: Exclude<ActAdvanceRule, { kind: 'spendClues' }>;
   /** Its reverse side (`whenAdvanced`) and its other objectives. */
   abilities?: readonly Ability[];
   /** Its action abilities, such as Uncovering the Conspiracy's draw from the Cultist deck. */
