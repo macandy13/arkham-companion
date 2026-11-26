@@ -120,9 +120,9 @@ details ul { padding-left: 20px; margin: 12px 0 0; display: grid; gap: 6px; font
 <main>
 <nav aria-label="Tour"><span class="number">#1479</span><ol><li><a href="#stop-1" data-stop="stop-1">1</a></li><li><a href="#stop-2" data-stop="stop-2">2</a></li><li><a href="#stop-3" data-stop="stop-3">3</a></li><li><a href="#stop-4" data-stop="stop-4">4</a></li><li><a class="evidence" href="#evidence" aria-label="How we know it works">✓</a></li></ol></nav>
 <header>
-<p class="kicker">refactor(engine) · ME.21 · as of 3789606</p>
+<p class="kicker">refactor(engine) · ME.21 · as of fad2319</p>
 <h1>Acts declare how they advance</h1>
-<p class="meta"><span>4 stops</span><span>0 questions</span><span>68 of 384 changed lines on the tour</span></p>
+<p class="meta"><span>4 stops</span><span>0 questions</span><span>68 of 389 changed lines on the tour</span></p>
 </header>
 <section class="lead"><h2>The problem</h2><p>How an act advances was never stated on the card: the board view and the text board found it by matching the shape of the act's abilities (a <code>valueOf</code> on its own clues, a <code>roundEnds</code> ability with a <code>groupClues</code> condition, a group clue cost with an advance). An act written any other way silently lost its clue counter on the board.</p></section>
 <section class="lead"><h2>What changes</h2><p>An act now declares how it advances (<code>CardStats.advance</code>): a clue threshold spent as a group, a round-end spend at a location, or an objective on its own clues. The act builders compile the declaration into the action or ability that does it (<code>withAdvance</code>), and the board reads the declaration itself.</p></section>
