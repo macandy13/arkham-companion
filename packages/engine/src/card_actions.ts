@@ -2,7 +2,9 @@ import { hasActiveAbilities } from './doom';
 import { assertNever } from '@arkham/util';
 import {
   advanceAct,
+  advanceBySpendingCluesAtRoundEnd,
   conditionHolds,
+  whenTokensOnSelf,
   type AbilityCondition,
   type AbilityEffect,
   type AbilityStep,
@@ -224,7 +226,7 @@ function costPayment(
  * prints it, so the act builders add it for an act with a clue threshold; an act whose objective
  * replaces the requirement leaves it out.
  */
-export function advanceBySpendingClues(clues: ScaledValue): CardAction {
+function advanceBySpendingClues(clues: ScaledValue): CardAction {
   return {
     free: true,
     condition: { kind: 'turn' },
@@ -233,26 +235,42 @@ export function advanceBySpendingClues(clues: ScaledValue): CardAction {
   };
 }
 
-/** Whether `action` is an act's `advanceBySpendingClues`: a group clue cost to advance the act. */
-function advancesBySpendingClues({ cost, effects }: CardAction): boolean {
-  return (
-    cost?.spend === 'groupClues' &&
-    effects.some((effect) => effect.type === 'Advance' && effect.deck === 'act')
-  );
+/**
+ * `stats` with the ability or action its `advance` asks for added after its own, so the printed
+ * actions keep their indices (`UseCardAction.action`): the spend-clues action, the round-end
+ * question (`advanceBySpendingCluesAtRoundEnd`) or the objective on its own clues
+ * (`whenTokensOnSelf`). The act builders call it once per card.
+ */
+export function withAdvance(stats: CardStats): CardStats {
+  const { advance } = stats;
+  if (advance === undefined) return stats;
+  switch (advance.kind) {
+    case 'spendClues':
+      return {
+        ...stats,
+        actions: [...(stats.actions ?? []), advanceBySpendingClues(advance.clues)],
+      };
+    case 'spendCluesAtRoundEnd': {
+      const { decision, clues, location } = advance;
+      const asked = advanceBySpendingCluesAtRoundEnd(decision, clues, location);
+      return { ...stats, abilities: [...(stats.abilities ?? []), asked] };
+    }
+    case 'cluesOnSelf': {
+      const objective = whenTokensOnSelf('clue', advance.clues, advanceAct());
+      return { ...stats, abilities: [...(stats.abilities ?? []), objective] };
+    }
+    default:
+      return assertNever(advance);
+  }
 }
 
 /**
- * The clues the investigators spend as a group to advance an act of `stats` with its
- * `advanceBySpendingClues` ability; none when it has no such ability.
+ * The index (`UseCardAction.action`) of `act`'s spend-clues action, the last of its actions
+ * (`withAdvance`); -1 when it advances otherwise.
  */
-export function cluesToAdvance(stats: CardStats): ScaledValue | undefined {
-  const cost = stats.actions?.find(advancesBySpendingClues)?.cost;
-  return cost?.spend === 'groupClues' ? cost.amount : undefined;
-}
-
-/** The index (`UseCardAction.action`) of `act`'s `advanceBySpendingClues` ability; -1 when none. */
 export function advanceActionOf(ctx: EngineContext, act: CardInstance): number {
-  return (cardStats(ctx.cards, act.code).actions ?? []).findIndex(advancesBySpendingClues);
+  const stats = cardStats(ctx.cards, act.code);
+  return stats.advance?.kind === 'spendClues' ? (stats.actions ?? []).length - 1 : -1;
 }
 
 /**
@@ -362,6 +380,7 @@ export function cardActionsOfferedTo(
   return Object.values(state.cards).flatMap((card) => {
     const actions = cardStats(ctx.cards, card.code).actions ?? [];
     if (actions.length === 0 || !offersActionsTo(state, card, investigator)) return [];
+    const advance = advanceActionOf(ctx, card);
     return actions.flatMap(
       ({ designator, free, actions: actionCost, limit, cost, condition }, action) =>
         actionWithinLimit(state, card, action, limit, investigator.id) &&
@@ -378,7 +397,7 @@ export function cardActionsOfferedTo(
                   ? { groupClues: groupClueAmount(state, cost.amount) }
                   : {}),
                 ...(cost?.spend === 'clues' ? { clues: ownClueAmount(state, cost.amount) } : {}),
-                ...numberOfKind(actions, action),
+                ...numberOfKind(actions, action, advance),
               },
             ]
           : [],
@@ -412,12 +431,17 @@ export function printedActions(actions: readonly CardAction[]): PrintedActionVie
 /**
  * `OfferedCardAction.number` of the printed action at index `action` among `actions`: its place
  * among the actions with its designator, when there is more than one of them. An act's
- * spend-clues advance doesn't count: the board shows it apart (`BoardView.act`).
+ * spend-clues advance, at index `advance`, doesn't count: the board shows it apart
+ * (`BoardView.act`).
  */
-function numberOfKind(actions: readonly CardAction[], action: number): { number?: number } {
+function numberOfKind(
+  actions: readonly CardAction[],
+  action: number,
+  advance = -1,
+): { number?: number } {
   const designator = actions[action]?.designator;
   const sameKind = actions.flatMap((printed, index) =>
-    printed.designator === designator && !advancesBySpendingClues(printed) ? [index] : [],
+    printed.designator === designator && index !== advance ? [index] : [],
   );
   return sameKind.length > 1 ? { number: sameKind.indexOf(action) + 1 } : {};
 }

@@ -1,7 +1,6 @@
 import {
   you,
   advanceAct,
-  advanceBySpendingCluesAtRoundEnd,
   afterAttacking,
   afterDiscoveringClues,
   afterTokensPlaced,
@@ -265,8 +264,12 @@ export const spreadingFlamesCardDefs: readonly CardStats[] = [
     pictures: jpg,
     stage: 1,
     // The Dormitories come into play before the Servant of Flame spawns there.
+    advance: {
+      kind: 'spendCluesAtRoundEnd',
+      decision: WHERE_THERES_SMOKE_DECISION,
+      clues: perInvestigator(2),
+    },
     abilities: [
-      advanceBySpendingCluesAtRoundEnd(WHERE_THERES_SMOKE_DECISION, perInvestigator(2)),
       whenAdvanced(
         discardEachEnemy(),
         ...putLocationIntoPlay(codes.dormitories, CAMPUS, { at: CAMPUS_CELLS.dormitories }),
@@ -304,12 +307,13 @@ export const spreadingFlamesCardDefs: readonly CardStats[] = [
     set: own,
     pictures: jpg,
     stage: 3,
+    advance: {
+      kind: 'spendCluesAtRoundEnd',
+      decision: SEARCHING_FOR_ARMITAGE_DECISION,
+      clues: perInvestigator(3),
+      location: codes.orneLibrary,
+    },
     abilities: [
-      advanceBySpendingCluesAtRoundEnd(
-        SEARCHING_FOR_ARMITAGE_DECISION,
-        perInvestigator(3),
-        codes.orneLibrary,
-      ),
       // "Put into play" engages like a spawn: a ready enemy engages an investigator at its location.
       whenAdvanced(
         spawnEnemyAt(onlyCopy(codes.servantOfFlame), onlyCopy(codes.miskatonicQuad)),

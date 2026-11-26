@@ -403,7 +403,8 @@ describe('GameScreen header', () => {
       const printed = theGatheringCards.get(cardCode(code));
       if (!printed) throw new Error(`The Gathering has ${card}`);
       const store = await renderTheGathering(`game-screen-card-action-test-${code}`, [
-        { ...printed, actions: [{ effects: [] }] },
+        // Before its own, so Trapped's spend-clues advance stays its last action (`withAdvance`).
+        { ...printed, actions: [{ effects: [] }, ...(printed.actions ?? [])] },
       ]);
       fireEvent.click(button('Next'));
       fireEvent.click(await screen.findByRole('button', { name: 'Start turn' }));
@@ -808,7 +809,8 @@ describe('GameScreen on a phone held upright', () => {
       const printed = theGatheringCards.get(cardCode(code));
       if (!printed) throw new Error(`The Gathering has ${card}`);
       const store = await renderTheGathering(`phone-card-action-test-${code}`, [
-        { ...printed, actions: [{ effects: [] }] },
+        // Before its own, so Trapped's spend-clues advance stays its last action (`withAdvance`).
+        { ...printed, actions: [{ effects: [] }, ...(printed.actions ?? [])] },
       ]);
       fireEvent.click(button('Next'));
       fireEvent.click(await screen.findByRole('button', { name: 'Start turn' }));

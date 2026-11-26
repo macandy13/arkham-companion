@@ -3,7 +3,7 @@ import type { Ability } from './abilities';
 import type { CardAction, GroupClueCost } from './card_actions';
 import type { Modifier } from './modifiers';
 import type { CardRestriction } from './restrictions';
-import type { Brand, CardCode, CardImagePath, EncounterSetCode } from './ids';
+import type { Brand, CardCode, CardImagePath, DecisionId, EncounterSetCode } from './ids';
 import type { Keyword, KeywordGrant } from './keywords';
 import type { ScenarioDefinition } from './scenario';
 import type { SkillValues } from './state';
@@ -160,6 +160,11 @@ export interface CardStats {
   spawnAt?: SpawnInstruction;
   /** Whom the enemy's prey picks, read from its prey keyword's text the same way (`parsePrey`). */
   preyOn?: PreyInstruction;
+  /**
+   * How the act advances, as its card states it (`ActAdvanceRule`). The act builders add the
+   * ability or action that does it (`withAdvance`); the board shows it from here.
+   */
+  advance?: ActAdvanceRule;
   /** Keywords this card gives other cards while it is in play (Hiding Spot); see `cardHasKeyword`. */
   keywordGrants?: readonly KeywordGrant[];
   /** "Limit 1 per location / investigator" (`CopyLimit`), entered with the card data. */
@@ -314,6 +319,20 @@ function withInstructions(def: CardStats): CardStats {
     ...(prey === undefined ? {} : { preyOn: parsePrey(prey) }),
   };
 }
+
+/**
+ * How an act advances (Rules Reference, "Act Deck"):
+ *
+ * - `spendClues`: its printed clue threshold, which the investigators spend as a group during any
+ *   turn (`advanceBySpendingClues`).
+ * - `spendCluesAtRoundEnd`: an objective that asks, as the round ends, whether those at `location`
+ *   (everyone without one) spend `clues` as a group, the lead deciding (`decision`; The Barrier).
+ * - `cluesOnSelf`: an objective that advances it once `clues` are on it (Disrupting the Ritual).
+ */
+export type ActAdvanceRule =
+  | { kind: 'spendClues'; clues: ScaledValue }
+  | { kind: 'spendCluesAtRoundEnd'; clues: ScaledValue; location?: CardCode; decision: DecisionId }
+  | { kind: 'cluesOnSelf'; clues: ScaledValue };
 
 /**
  * `base` plus `extra`, e.g. a scenario's cards plus the chosen investigators;

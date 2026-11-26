@@ -263,7 +263,6 @@ export {
   codex,
   discardAtRandom,
   discardFromHand,
-  advanceBySpendingCluesAtRoundEnd,
   drawCards,
   drawBeneathYourLocation,
   drawFromScenarioDeck,
@@ -313,7 +312,7 @@ export type {
 } from './abilities';
 export { MAX_TRIGGERED_COMMANDS } from './triggers';
 export {
-  advanceBySpendingClues,
+  withAdvance,
   parleyAction,
   resignAction,
   type ActionCost,

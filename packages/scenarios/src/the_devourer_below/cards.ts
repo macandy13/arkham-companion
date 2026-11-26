@@ -40,7 +40,6 @@ import {
   trait,
   whenAdvanced,
   whenAnInvestigatorEnters,
-  whenTokensOnSelf,
   whenDefeated,
   whenRevealed,
   youMustEither,
@@ -248,10 +247,8 @@ export const theDevourerBelowCardDefs: readonly CardStats[] = [
         ],
       },
     ],
-    abilities: [
-      whenTokensOnSelf('clue', perInvestigator(2), advanceAct()),
-      whenAdvanced(endScenario(DEVOURER_BELOW_RESOLUTIONS.ritualBroken)),
-    ],
+    advance: { kind: 'cluesOnSelf', clues: perInvestigator(2) },
+    abilities: [whenAdvanced(endScenario(DEVOURER_BELOW_RESOLUTIONS.ritualBroken))],
   }),
   location({
     code: '01149',

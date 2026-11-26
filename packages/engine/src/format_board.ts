@@ -1,8 +1,6 @@
 import { findInvestigator } from './investigators';
 import { neighbours } from './board';
 import { resolveValue, type EngineContext } from './cards';
-import { roundEndClueObjective } from './abilities';
-import { cluesToAdvance } from './card_actions';
 import { describeDecision } from './describe_decision';
 import { agendaThreshold, doomInPlay } from './doom';
 import type { InstanceId, InvestigatorId, MapId } from './ids';
@@ -91,8 +89,9 @@ function actLine(ctx: EngineContext, state: GameState): string {
   const act = currentCard(state, 'act');
   if (!act) return 'Act: none';
   const stats = ctx.cards.get(act.code);
-  const atRoundEnd = stats && roundEndClueObjective(stats);
-  const clues = stats && (cluesToAdvance(stats) ?? atRoundEnd?.clues);
+  const advance = stats?.advance;
+  const atRoundEnd = advance?.kind === 'spendCluesAtRoundEnd' ? advance : undefined;
+  const clues = advance?.kind === 'cluesOnSelf' ? undefined : advance?.clues;
   const at = atRoundEnd?.location;
   const where =
     (at === undefined ? '' : ` at ${ctx.cards.get(at)?.name ?? at}`) +

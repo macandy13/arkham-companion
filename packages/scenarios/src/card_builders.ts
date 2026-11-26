@@ -1,11 +1,12 @@
 import {
-  advanceBySpendingClues,
   cardCode,
   cardImagePath,
   fixed,
   perInvestigator,
   trait,
+  withAdvance,
   type Ability,
+  type ActAdvanceRule,
   type CardAction,
   type Modifier,
   type GroupClueCost,
@@ -68,8 +69,8 @@ export function agenda({
 }
 
 /**
- * Printed values of an act; an act without a clue threshold (one whose objective replaces it)
- * omits `cluesPerInvestigator`, else it gets `advanceBySpendingClues`.
+ * Printed values of an act: its clue threshold (`cluesPerInvestigator`, spent as a group), or the
+ * objective that replaces it (`advance`); `withAdvance` adds what does it.
  */
 export interface ActOptions {
   code: string;
@@ -79,7 +80,9 @@ export interface ActOptions {
   pictures?: PictureFormat;
   stage: number;
   cluesPerInvestigator?: number;
-  /** Its reverse side (`whenAdvanced`) and its objective. */
+  /** An objective that advances it instead of a clue threshold (The Barrier, Disrupting the Ritual). */
+  advance?: Exclude<ActAdvanceRule, { kind: 'spendClues' }>;
+  /** Its reverse side (`whenAdvanced`) and its other objectives. */
   abilities?: readonly Ability[];
   /** Its action abilities, such as Uncovering the Conspiracy's draw from the Cultist deck. */
   actions?: readonly CardAction[];
@@ -92,34 +95,24 @@ export function act({
   set,
   stage,
   cluesPerInvestigator,
+  advance,
   abilities,
   actions,
   pictures,
 }: ActOptions): CardStats {
-  return {
+  const rule: ActAdvanceRule | undefined =
+    advance ??
+    (cluesPerInvestigator === undefined
+      ? undefined
+      : { kind: 'spendClues', clues: perInvestigator(cluesPerInvestigator) });
+  return withAdvance({
     ...scenarioCard(code, name, set, pictures),
     typeCode: 'act',
     stage: { number: stage },
     ...(abilities ? { abilities } : {}),
-    ...actActions(actions, cluesPerInvestigator),
-  };
-}
-
-/**
- * The act's printed actions, then its spend-clues ability for a clue threshold, so the printed
- * ones keep their indices (`UseCardAction.action`).
- */
-function actActions(
-  printed: readonly CardAction[] | undefined,
-  cluesPerInvestigator: number | undefined,
-): Pick<CardStats, 'actions'> {
-  const actions = [
-    ...(printed ?? []),
-    ...(cluesPerInvestigator === undefined
-      ? []
-      : [advanceBySpendingClues(perInvestigator(cluesPerInvestigator))]),
-  ];
-  return actions.length === 0 ? {} : { actions };
+    ...(actions ? { actions } : {}),
+    ...(rule ? { advance: rule } : {}),
+  });
 }
 
 /** Printed values of a location whose clues scale per investigator. */

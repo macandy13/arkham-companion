@@ -3,7 +3,6 @@ import {
   GRID_CELLS_PER_CARD,
   advanceAct,
   checkDoomThreshold,
-  advanceBySpendingCluesAtRoundEnd,
   afterEntering,
   afterTest,
   atEndOfPhase,
@@ -248,8 +247,13 @@ export const theGatheringCardDefs: readonly CardStats[] = [
     stage: 2,
     // Objective: no spend during a turn; the investigators in the Hallway are asked as the round
     // ends. The Parlor has been in play, unrevealed, since act 1 put the house into play.
+    advance: {
+      kind: 'spendCluesAtRoundEnd',
+      decision: THE_BARRIER_DECISION,
+      clues: perInvestigator(3),
+      location: codes.hallway,
+    },
     abilities: [
-      advanceBySpendingCluesAtRoundEnd(THE_BARRIER_DECISION, perInvestigator(3), codes.hallway),
       whenAdvanced(
         revealLocation(onlyCopy(codes.parlor)),
         move(setAsideCopy(codes.litaChantler), atLocation(onlyCopy(codes.parlor))),
