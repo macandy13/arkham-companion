@@ -16,7 +16,7 @@ Card rulings: [Children of Blood](cards/children-of-blood.md) (Predator).
   - It retreats after the attack resolves, whether or not it was engaged with the attacker. "Is attacked" means a fight against it, hit or miss; a hit that defeats it leaves nothing to retreat. On a miss a retaliate enemy attacks first and retreats after that attack, or right away when the players cancel it.
   - The app checks "ready" as the retreat resolves, so an effect that exhausts it in between (none known) stops the retreat.
   - Between equal destinations the lead investigator picks. It arrives exhausted, so it engages nobody there; with no connecting location it only disengages and exhausts.
-- Doomed (Core Set (2026), reminder text on Bystander): when the enemy is defeated, place 1 doom on the current agenda.
-  - This can make the agenda advance.
-  - Discarding the enemy (e.g. Factory Worker's Parley) is not defeating it, so Doomed doesn't trigger (2026 Core rulebook glossary).
+- Doomed (Core Set (2026), reminder text on [Bystander](https://arkhamdb.com/card/12123)): when the enemy is defeated, by an investigator or a scenario effect, place 1 doom on the current agenda.
+  - This can make the agenda advance: the app checks the doom threshold right away and asks to advance.
+  - Discarding the enemy (e.g. Factory Worker's Parley) is not defeating it, so Doomed doesn't trigger (2026 Core rules: "An effect that 'discards' an enemy is not considered to defeat that enemy"; reported from the campaign guide, not checked in the PDF).
 - [Keywords](https://arkhamdb.com/rules#Keywords) in general: having the same keyword twice counts once. Keywords are mandatory unless their text says "may".

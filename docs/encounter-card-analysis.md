@@ -20,7 +20,7 @@ The scripts, the patterns with their statuses and the per-card results live in t
 
 1. **Every gap now has a plan step, ordered by campaign.** 12 of 211 Chapter Two cards (6 %) ran fully on 2026-10-22 by the regex count (the census above has newer numbers). After the Night of the Zealot steps (1–12), 106 run, and after the Chapter Two steps (13–26), all 211 do. The first version of the plan reached 130 and left out six cases (see "Not covered yet").
 2. **Most of the work is generic.** About two dozen generic primitives (below) cover nearly every Chapter Two card. The truly one-off effects are mostly agenda and act reverse sides, which are card abilities already.
-3. **Two new keywords, plus Elusive:** _Doomed_ (Core Set (2026)) and _Predator_ (Children of Blood) are new; _Elusive_ comes from Chapter One and is common in Chapter Two. The engine parses none of them yet.
+3. **Two new keywords, plus Elusive:** _Doomed_ (Core Set (2026)) and _Predator_ (Children of Blood) are new; _Elusive_ comes from Chapter One and is common in Chapter Two. The engine parses Elusive and Doomed; Predator is not parsed yet.
 4. **Skill tests need the margin.** 11 Chapter Two cards (and about 170 Chapter One cards) scale with "for each point you fail by" or "succeed by 2 or more", but a skill test answer is only pass or fail.
 5. **Locations carry state.** Attachments that change a location (Fire!, Arcane Lock, Flash Flood), extra costs to enter or leave, connections defined in text, and location _versions_ chosen by difficulty or time of day.
 6. **Players' cards stay physical, so many effects are reminders.** Many forced effects hit hands, decks or assets the app does not track. A generic "timing window reminder" covers them all without card scripts.

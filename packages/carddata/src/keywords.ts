@@ -12,6 +12,7 @@ export const KEYWORD_NAMES = [
   'retaliate',
   'alert',
   'elusive',
+  'doomed',
   'patrol',
   'prey',
   'spawn',
@@ -37,6 +38,7 @@ const PLAIN_KEYWORDS: ReadonlySet<string> = new Set([
   'retaliate',
   'alert',
   'elusive',
+  'doomed',
 ]);
 const VICTORY_SENTENCE = /^victory\s+\d+$/i;
 const OTHERWISE = /^otherwise,/i;

@@ -58,7 +58,17 @@ import {
 } from './types';
 import type { OpenedWindow } from './windows';
 import { cluesHeldForObjective } from './objectives';
-import { afterAttacking, enemyAttacks, retreatEnemy, self, withSource, you } from './dsl';
+import {
+  afterAttacking,
+  checkDoomThreshold,
+  enemyAttacks,
+  placeDoomOnAgenda,
+  retreatEnemy,
+  self,
+  whenDefeated,
+  withSource,
+  you,
+} from './dsl';
 
 /**
  * The effects of the abilities the card `opened` names has in its window, as
@@ -205,7 +215,8 @@ function repetitionsOf(
  * (only when ready, `EnemyAttacks.kind`), and an elusive enemy retreats after it attacks or is
  * attacked, hit or miss. Retaliate comes before elusive, so the enemy retreats after its retaliate
  * attack (`attacked`); its own retreat then finds it exhausted and does nothing, unless the players
- * cancelled the attack.
+ * cancelled the attack. A doomed enemy places 1 doom on the current agenda when it is defeated,
+ * which can advance the agenda (Core Set (2026) Bystander).
  */
 function keywordAbilities(ctx: EngineContext, state: GameState, card: CardInstance): Ability[] {
   const has = (name: KeywordName) => cardHasKeyword(ctx, state, card, name);
@@ -222,6 +233,7 @@ function keywordAbilities(ctx: EngineContext, state: GameState, card: CardInstan
           afterTestEnds('fight', 'fail', retreat),
         ]
       : []),
+    ...(has('doomed') ? [whenDefeated(placeDoomOnAgenda(1), checkDoomThreshold())] : []),
   ];
 }
 
