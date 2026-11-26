@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   decideGate,
   type CommitSha,
+  type GateOutcome,
   type GatePolicy,
   type GitHubLogin,
   type PullRequestComment,
@@ -33,7 +34,7 @@ function pr(facts: Partial<PullRequestFacts>): PullRequestFacts {
 
 describe('decideGate', () => {
   it('passes a PR the owner approved, whatever it changes', () => {
-    const approved: PullRequestReview = { author: owner, state: 'APPROVED' };
+    const approved: PullRequestReview = { author: owner, state: 'APPROVED', commit: headSha };
 
     const outcome = decideGate(
       pr({ changedFiles: [goldenFile, workflowFile], reviews: [approved] }),
@@ -43,26 +44,39 @@ describe('decideGate', () => {
     expect(outcome).toEqual({ kind: 'pass', reason: 'Approved by the owner.' });
   });
 
-  it.each<{ name: string; reviews: PullRequestReview[]; kind: string }>([
+  it.each<{ name: string; reviews: PullRequestReview[]; kind: GateOutcome['kind'] }>([
     {
       name: 'a later request for changes withdraws an approval',
       reviews: [
-        { author: owner, state: 'APPROVED' },
-        { author: owner, state: 'CHANGES_REQUESTED' },
+        { author: owner, state: 'APPROVED', commit: headSha },
+        { author: owner, state: 'CHANGES_REQUESTED', commit: headSha },
       ],
       kind: 'needs-owner',
     },
     {
       name: 'a later comment-only review keeps the approval',
       reviews: [
-        { author: owner, state: 'APPROVED' },
-        { author: owner, state: 'COMMENTED' },
+        { author: owner, state: 'APPROVED', commit: headSha },
+        { author: owner, state: 'COMMENTED', commit: headSha },
       ],
       kind: 'pass',
     },
     {
+      name: 'an approval of an older commit does not pass a later push',
+      reviews: [{ author: owner, state: 'APPROVED', commit: olderSha }],
+      kind: 'needs-owner',
+    },
+    {
+      name: 'a dismissed approval no longer counts',
+      reviews: [
+        { author: owner, state: 'APPROVED', commit: headSha },
+        { author: owner, state: 'DISMISSED', commit: headSha },
+      ],
+      kind: 'needs-owner',
+    },
+    {
       name: "someone else's approval doesn't count",
-      reviews: [{ author: stranger, state: 'APPROVED' }],
+      reviews: [{ author: stranger, state: 'APPROVED', commit: headSha }],
       kind: 'needs-owner',
     },
   ])('$name', ({ reviews, kind }) => {
@@ -81,6 +95,18 @@ describe('decideGate', () => {
       file: '.claude/agents/pr-reviewer.md' as RepoPath,
       reason: "Needs the owner's review: the PR changes the Claude Code setup.",
     },
+    {
+      file: 'packages/merge_gate/src/gate.ts' as RepoPath,
+      reason: "Needs the owner's review: the PR changes the merge gate.",
+    },
+    {
+      file: 'REVIEW.md' as RepoPath,
+      reason: "Needs the owner's review: the PR changes the review rules.",
+    },
+    {
+      file: 'CLAUDE.md' as RepoPath,
+      reason: "Needs the owner's review: the PR changes the session instructions.",
+    },
   ])('sends $file to the owner even with a passing verdict', ({ file, reason }) => {
     const passing = verdictComment(bot, { sha: headSha, reviewer: 'pass', rules: 'pass' });
 
@@ -89,7 +115,7 @@ describe('decideGate', () => {
     expect(outcome).toEqual({ kind: 'needs-owner', reason });
   });
 
-  it.each<{ name: string; comments: PullRequestComment[]; kind: string }>([
+  it.each<{ name: string; comments: PullRequestComment[]; kind: GateOutcome['kind'] }>([
     { name: 'no verdict yet', comments: [], kind: 'waiting' },
     {
       name: 'a verdict for an older commit',
@@ -130,7 +156,7 @@ describe('decideGate', () => {
     expect(outcome.kind).toBe(kind);
   });
 
-  it.each<{ rules: string; kind: string }>([
+  it.each<{ rules: string; kind: GateOutcome['kind'] }>([
     { rules: 'pass', kind: 'pass' },
     { rules: 'fail', kind: 'blocked' },
     { rules: 'none', kind: 'blocked' },

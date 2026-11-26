@@ -34,6 +34,8 @@ export interface PullRequestFacts {
 /** One submitted review. Only the owner's count; comment-only reviews never change the outcome. */
 export interface PullRequestReview {
   readonly author: GitHubLogin;
+  /** The commit the review was given on; an approval passes only that commit. */
+  readonly commit: CommitSha;
   readonly state: 'APPROVED' | 'CHANGES_REQUESTED' | 'COMMENTED' | 'DISMISSED' | 'PENDING';
 }
 
@@ -63,11 +65,18 @@ export type GateOutcome =
   | { readonly kind: 'waiting'; readonly reason: string }
   | { readonly kind: 'blocked'; readonly reason: string };
 
-/** Changes the owner always sees: screenshot goldens, and the automation that runs this gate. */
+/**
+ * Changes the owner always sees: screenshot goldens, and everything that decides what this gate
+ * lets through (the workflows, the gate's own code, the session setup and the review rules the
+ * verdict stands for), so the gate can't be loosened without them.
+ */
 const OWNER_PATHS: readonly { readonly prefix: string; readonly what: string }[] = [
   { prefix: 'apps/web/e2e/__screenshots__/', what: 'changes a screenshot golden' },
   { prefix: '.github/', what: 'changes the GitHub automation' },
+  { prefix: 'packages/merge_gate/', what: 'changes the merge gate' },
   { prefix: '.claude/', what: 'changes the Claude Code setup' },
+  { prefix: 'CLAUDE.md', what: 'changes the session instructions' },
+  { prefix: 'REVIEW.md', what: 'changes the review rules' },
 ];
 
 /** Code whose game rules the rules checker has to confirm before the PR passes without the owner. */
@@ -78,15 +87,18 @@ const RULES_PATHS: readonly string[] = [
 ];
 
 /**
- * Decides the gate for a PR. The owner's approval always passes it; their latest review asking
- * for changes always sends it back to them. Without the owner, a PR passes only when it changes
+ * Decides the gate for a PR. The owner's approval of the head commit always passes it; their
+ * latest review asking for changes always sends it back to them. An approval of an earlier commit
+ * counts for nothing, so a push after it is judged like any other. Without the owner, a PR passes only when it changes
  * nothing the owner reviews, the newest trusted verdict is for the head commit, the reviewer
  * passed it, and, when rule code changed, the rules checker did too.
  */
 export function decideGate(pr: PullRequestFacts, policy: GatePolicy): GateOutcome {
   const ownerReview = latestOwnerReview(pr.reviews, policy.owner);
-  if (ownerReview === 'APPROVED') return { kind: 'pass', reason: 'Approved by the owner.' };
-  if (ownerReview === 'CHANGES_REQUESTED') {
+  if (ownerReview?.state === 'APPROVED' && ownerReview.commit === pr.headSha) {
+    return { kind: 'pass', reason: 'Approved by the owner.' };
+  }
+  if (ownerReview?.state === 'CHANGES_REQUESTED') {
     return {
       kind: 'needs-owner',
       reason: 'The owner asked for changes; their approval is needed.',
@@ -133,7 +145,7 @@ export function decideGate(pr: PullRequestFacts, policy: GatePolicy): GateOutcom
 function latestOwnerReview(
   reviews: readonly PullRequestReview[],
   owner: GitHubLogin,
-): PullRequestReview['state'] | undefined {
+): PullRequestReview | undefined {
   return reviews
     .filter(
       (review) =>
@@ -142,7 +154,7 @@ function latestOwnerReview(
           review.state === 'CHANGES_REQUESTED' ||
           review.state === 'DISMISSED'),
     )
-    .at(-1)?.state;
+    .at(-1);
 }
 
 function latestVerdict(

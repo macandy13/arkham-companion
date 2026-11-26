@@ -6,18 +6,25 @@ name: Merge gate
 # on the session's `<!-- merge-verdict {…} -->` comment for its head commit, with the rules
 # checker's pass when it changes rule code. The owner's approval always passes it.
 #
-# Runs on `pull_request_target`, so the workflow and the gate's code come from the base branch: a
-# PR can't loosen the gate that judges it. It never checks out or runs the PR's code; it only
-# reads the PR's file list, reviews and comments through the API. Comments and reviews re-run it,
-# since a new verdict or approval changes the outcome without a push.
+# Every trigger runs this file and the gate's code from the default branch, so a PR can't loosen
+# the gate that judges it: `pull_request_target` and `issue_comment` do that themselves; a review
+# reaches it through `workflow_run` of `gate_review.yml`, because `pull_request_review` would run
+# the PR's own copy. It never checks out or runs the PR's code; it only reads the PR's file list,
+# reviews and comments through the API. Comments and reviews re-run it, since a new verdict or
+# approval changes the outcome without a push.
+#
+# The status is posted with the GitHub App's token, from the `merge-gate` environment, so the
+# ruleset can require `gate` from that App: any workflow a PR adds could post a `gate` status
+# with GITHUB_TOKEN, but not as the App, once the environment only lets `main` read the key.
 
 on:
   pull_request_target:
     types: [opened, reopened, synchronize, ready_for_review]
-  pull_request_review:
-    types: [submitted, dismissed]
   issue_comment:
     types: [created, edited]
+  workflow_run:
+    workflows: [Merge gate review]
+    types: [completed]
 
 permissions:
   contents: read
@@ -30,17 +37,20 @@ defaults:
     shell: bash
 
 concurrency:
-  group: gate-${{ github.event.pull_request.number || github.event.issue.number }}
+  group: gate-${{ github.event.pull_request.number || github.event.issue.number || github.event.workflow_run.pull_requests[0].number }}
   cancel-in-progress: true
 
 jobs:
   gate:
-    # A plain issue's comments don't concern any PR.
-    if: github.event_name != 'issue_comment' || github.event.issue.pull_request
+    # A plain issue's comments don't concern any PR; a review on a fork's PR names no PR here.
+    if: >-
+      (github.event_name != 'issue_comment' || github.event.issue.pull_request) &&
+      (github.event_name != 'workflow_run' || github.event.workflow_run.pull_requests[0])
     runs-on: ubuntu-latest
+    environment: merge-gate
     env:
       GH_TOKEN: ${{ github.token }}
-      PR: ${{ github.event.pull_request.number || github.event.issue.number }}
+      PR: ${{ github.event.pull_request.number || github.event.issue.number || github.event.workflow_run.pull_requests[0].number }}
     steps:
       # The default branch's tip, never the PR head: see the header.
       - uses: actions/checkout@v7
@@ -57,7 +67,7 @@ jobs:
           owner=$(jq -r .base.repo.owner.login <<<"$pr_json")
           gh api --paginate "repos/$GITHUB_REPOSITORY/pulls/$PR/files" --jq '.[].filename' > "$RUNNER_TEMP/files.txt"
           gh api --paginate "repos/$GITHUB_REPOSITORY/pulls/$PR/reviews" \
-            --jq '.[] | {author: .user.login, state}' -c > "$RUNNER_TEMP/reviews.ndjson"
+            --jq '.[] | {author: .user.login, state, commit: .commit_id}' -c > "$RUNNER_TEMP/reviews.ndjson"
           gh api --paginate "repos/$GITHUB_REPOSITORY/issues/$PR/comments" \
             --jq '.[] | {author: .user.login, body}' -c > "$RUNNER_TEMP/comments.ndjson"
           outcome=$(node packages/merge_gate/src/cli.ts --head "$head" --owner "$owner" \
@@ -69,10 +79,21 @@ jobs:
             echo "kind=$(jq -r .kind <<<"$outcome")"
             echo "reason=$(jq -r .reason <<<"$outcome")"
           } >> "$GITHUB_OUTPUT"
+      # Until the App may write statuses (MA.3) the status comes from GITHUB_TOKEN, with a warning.
+      - id: app
+        continue-on-error: true
+        uses: actions/create-github-app-token@v3
+        with:
+          app-id: ${{ vars.CLAUDE_BOT_APP_ID || secrets.CLAUDE_BOT_APP_ID }}
+          private-key: ${{ secrets.CLAUDE_BOT_PRIVATE_KEY }}
+          permission-statuses: write
+      - if: steps.app.outcome != 'success'
+        run: echo "::warning::No GitHub App token for statuses; posting the gate status with GITHUB_TOKEN (report-only)."
       # Waiting and needs-owner stay pending, so the PR can't merge yet but shows no red cross;
       # blocked fails, as the session has something to fix. Status descriptions are cut at 140.
       - name: Post the gate status
         env:
+          GH_TOKEN: ${{ steps.app.outputs.token || github.token }}
           HEAD: ${{ steps.decide.outputs.head }}
           KIND: ${{ steps.decide.outputs.kind }}
           REASON: ${{ steps.decide.outputs.reason }}

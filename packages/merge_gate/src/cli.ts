@@ -24,14 +24,15 @@ import {
 /** The GitHub App that opens the sessions' PRs (`open-pr.yml`); it may post verdicts too. */
 const PR_BOT = 'arkham-claude[bot]' as GitHubLogin;
 
-const required = { type: 'string', default: '' } as const;
+// Every option is required; an empty default lets the check below name all missing ones at once.
+const stringOption = { type: 'string', default: '' } as const;
 const { values } = parseArgs({
   options: {
-    head: required,
-    owner: required,
-    files: required,
-    reviews: required,
-    comments: required,
+    head: stringOption,
+    owner: stringOption,
+    files: stringOption,
+    reviews: stringOption,
+    comments: stringOption,
   },
 });
 const missing = Object.entries(values).filter(([, value]) => value === '');

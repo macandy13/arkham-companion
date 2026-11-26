@@ -1,0 +1,17 @@
+name: Merge gate review
+
+# Only wakes `gate.yml` when a review is submitted or dismissed. `pull_request_review` runs a PR's
+# own copy of its workflow, so the gate itself listens for this run finishing (`workflow_run`),
+# which runs the default branch's copy. Nothing here reads or writes anything.
+
+on:
+  pull_request_review:
+    types: [submitted, dismissed]
+
+permissions: {}
+
+jobs:
+  wake:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Review on PR ${{ github.event.pull_request.number }}; gate.yml re-runs."

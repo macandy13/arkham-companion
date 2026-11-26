@@ -13,7 +13,7 @@ export interface MergeVerdict {
   readonly reviewer: ReviewResult;
   /**
    * `pass` when `rules-checker` confirmed every rule claim of the change; `none` when the session
-   * found no rule to check. The gate ignores `none` on a PR that touches rules code.
+   * found no rule to check. On a PR that touches rule code the gate blocks on `none` as on `fail`.
    */
   readonly rules: ReviewResult | 'none';
 }
