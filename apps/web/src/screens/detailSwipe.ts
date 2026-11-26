@@ -2,8 +2,8 @@ import type { BoardView } from '@arkham/engine';
 import type { DetailTarget, HeaderCardKind } from './useDetailView';
 import type { Swipe } from './useVerticalSwipe';
 
-/** The header cards a swipe can expand the header on, by their places' `data-slot`. */
-const HEADER_CARDS: readonly HeaderCardKind[] = ['encounter', 'agenda', 'act', 'scenario'];
+/** The header places a swipe can expand the header on, by their `data-slot`. */
+const HEADER_CARDS: readonly HeaderCardKind[] = ['encounter', 'agenda', 'act', 'scenario', 'pool'];
 
 /**
  * What a vertical swipe on the phone's board does (M3.15c), from where it started (`swipe.on`) and

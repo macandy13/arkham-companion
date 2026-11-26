@@ -8,6 +8,7 @@ import { TokenGhost } from './TokenGhost';
 import { useTokenDrag, type TokenDragHandlers } from './useTokenDrag';
 import { adjustStat, dealDamageTo, placeDoomOnAgenda } from '@arkham/engine';
 import { usePlay } from './PlayContext';
+import type { HeaderCardKind } from './useDetailView';
 
 /**
  * The token pool in the header's top right corner (M3.11c): a doom, a clue, a damage, a horror and
@@ -22,10 +23,12 @@ import { usePlay } from './PlayContext';
  *   its card lies on theirs;
  * - horror on an investigator's card, which they take (`adjust`), and a resource, which they gain.
  * The pool is also a drop target (`data-pool`): the map gives back a token dropped on it
- * (`overTokenPool`). Not drag sources while a step is queued. A
- * phone has no room for it (`game.css`).
+ * (`overTokenPool`). Not drag sources while a step is queued. A phone's compact header shows it
+ * small at its right end, too small to drag from: there a tap anywhere on it calls `onOpen` with
+ * `'pool'` (the detail view opens on it, the tokens finger-sized again), as a tap on a header card
+ * does (`HeaderSlot`).
  */
-export function TokenPool() {
+export function TokenPool({ onOpen }: { onOpen?: ((place: HeaderCardKind) => void) | undefined }) {
   const { actions, busy } = usePlay();
   const { t } = useTranslation();
   const id = useId();
@@ -67,10 +70,26 @@ export function TokenPool() {
   ] as const;
 
   return (
-    <section aria-labelledby={id} data-pool>
+    <section
+      aria-labelledby={id}
+      data-pool
+      data-slot="pool"
+      onClickCapture={
+        onOpen &&
+        ((event) => {
+          event.stopPropagation();
+          onOpen('pool');
+        })
+      }
+    >
       <p id={id}>{t('header.pool')}</p>
       {tokens.map(({ kind, label, drag }) => (
-        <PoolToken key={kind} kind={kind} label={label} drag={busy ? undefined : drag.handlers} />
+        <PoolToken
+          key={kind}
+          kind={kind}
+          label={label}
+          drag={busy || onOpen ? undefined : drag.handlers}
+        />
       ))}
       {tokens.map(
         ({ kind, drag }) => drag.at && <TokenGhost key={kind} kind={kind} at={drag.at} />,

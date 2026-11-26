@@ -1,8 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { InstanceId, InvestigatorId } from '@arkham/engine';
 
-/** One of the header's four cards, which the detail view opens on. */
-export type HeaderCardKind = 'encounter' | 'agenda' | 'act' | 'scenario';
+/**
+ * A place of the header the detail view opens on, by its `data-slot`: one of its four cards, or the
+ * token pool, which only the expanded header has room to drag tokens off.
+ */
+export type HeaderCardKind = 'encounter' | 'agenda' | 'act' | 'scenario' | 'pool';
 
 /**
  * What the phone's detail view shows: a header card in the cards row, the map row (the whole map,

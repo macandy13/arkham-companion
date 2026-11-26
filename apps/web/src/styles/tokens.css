@@ -532,8 +532,11 @@
   );
   /* The cards in the header (encounter deck, agenda, act, scenario) are this tall. */
   --layout-header-card-height: 8rem;
-  /* The chaos bag over the victory display (ChaosBagButton) is this tall: our drawing of a cloth bag. */
+  /* The chaos bag at the header's left end (ChaosBagButton) is this tall: our drawing of a cloth bag. */
   --header-bag-height: 4rem;
+  /* The chaos bag and the token pool's tokens as small placeholders in the phone's compact header (GameHeader). */
+  --compact-bag-height: 2.5rem;
+  --compact-pool-token-size: 1rem;
   --color-bag-cloth: #3b2a1d;
   --bag-cord-width: 3.5;
   /* The big doom and clue tokens on the agenda and act, with a light rim like the printed tokens. */
@@ -1148,6 +1151,11 @@
 
   #board[data-view='cards'] {
     --layout-header-card-height: var(--layout-detail-card-height);
+  }
+
+  /* The compact header's four cards leave room for the chaos bag and the token pool at its ends. */
+  #board:not([data-view='cards']) {
+    --layout-header-card-height: 4.25rem;
   }
 
   /*

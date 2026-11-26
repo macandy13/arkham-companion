@@ -113,33 +113,16 @@
 }
 
 /*
- * The chaos bag over the victory display (ChaosBagButton): the bag, the label, then the pile, in
- * one column, so the bag sits apart from the playmat's labels in the row.
+ * The chaos bag (ChaosBagButton) at the header's left end, the token pool's counterpart at its
+ * right: on a header as wide as a landscape tablet in the top left corner, apart from the cards in
+ * the row; a narrower header starts its row with it.
  */
-#board > header > section[aria-labelledby]:not([data-pool]):has(> [data-part='chaos-bag-button']) {
-  grid-template-columns: auto;
-}
-
-#board > header > section[aria-labelledby]:not([data-pool]) > [data-part='chaos-bag-button'] {
-  grid-row: 1;
-  /* In the phone's detail view, whose places wrap as a flex row, the bag leads on a line of its own. */
-  order: -1;
-  flex-basis: 100%;
-}
-
-#board
-  > header
-  > section[aria-labelledby]:not([data-pool]):has(> [data-part='chaos-bag-button'])
-  > p {
-  grid-row: 2;
-  contain: none;
-}
-
-#board
-  > header
-  > section[aria-labelledby]:not([data-pool]):has(> [data-part='chaos-bag-button'])
-  > [data-pile] {
-  grid-row: 3;
+@media (min-width: 64rem) {
+  #board > header > section:has(> [data-part='chaos-bag-button']) {
+    position: absolute;
+    inset-inline-start: var(--space-2);
+    inset-block-start: var(--space-2);
+  }
 }
 
 /*
@@ -1015,9 +998,10 @@
 }
 
 /*
- * A phone held upright, in the compact view: the four header cards without their piles or plates.
- * A tap on a card opens the detail view on it, where they come back. The token pool has no room in
- * either view. The status row keeps to one line.
+ * A phone held upright, in the compact view: the four header cards without their piles or plates,
+ * the chaos bag and the token pool small at either end.
+ * A tap on a card opens the detail view on it, where they come back. The status row keeps to one
+ * line.
  */
 @media (orientation: portrait) and (max-width: 40rem) {
   /* A swipe down on the header expands it (M3.15c), so it must not pull the page to reload. */
@@ -1027,9 +1011,33 @@
 
   #board:not([data-view='cards']) > header [data-pile],
   #board:not([data-view='cards']) > header > section:has([data-pile='victoryDisplay']),
-  #board > header > section[data-pool],
   #board:not([data-view='cards']) > header > section > [data-card] > footer {
     display: none;
+  }
+
+  /*
+   * The chaos bag and the token pool, small at either end of the row, the pool's tokens in two
+   * columns: placeholders that say where they are. The bag opens its dialog; a tap on the pool
+   * expands the header on it, where its tokens are large enough to drag.
+   */
+  #board:not([data-view='cards']) > header > section[data-pool] {
+    display: grid;
+    grid-template-columns: repeat(2, auto);
+    gap: var(--space-1);
+  }
+
+  #board:not([data-view='cards']) > header [data-pool-token] {
+    width: var(--compact-pool-token-size);
+    height: var(--compact-pool-token-size);
+  }
+
+  #board:not([data-view='cards']) > header [data-part='chaos-bag-button'] > svg {
+    height: var(--compact-bag-height);
+  }
+
+  #board:not([data-view='cards']) > header [data-part='chaos-bag-button'] > data {
+    margin-block-start: calc(var(--compact-bag-height) / 4);
+    font-size: var(--font-size-note);
   }
 
   #board > #status {
@@ -1178,8 +1186,8 @@
     scrollbar-width: none;
   }
 
-  /* Each place fills the row; the token pool, which a phone has no room for, stays hidden. */
-  #board[data-view='cards'] > header > section:not([data-pool]) {
+  /* Each place fills the row, the chaos bag and the token pool among them. */
+  #board[data-view='cards'] > header > section {
     display: flex;
     flex-wrap: wrap;
     flex: none;
