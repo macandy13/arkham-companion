@@ -415,9 +415,9 @@ test(
 test(
   'a Cultist token added to the chaos bag as a card says, the Skull tapped to seal or remove it',
   { tag: '@shot' },
-  async ({ page, isMobile }) => {
+  async ({ page }) => {
     await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
-    const bag = await openChaosBag(page, isMobile);
+    const bag = await openChaosBag(page);
 
     await bag.getByRole('button', { name: 'Add a token' }).click();
     await bag.getByRole('button', { name: 'Add a Cultist token' }).click();
