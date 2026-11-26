@@ -1,0 +1,97 @@
+name: Merge gate
+
+# Decides whether a PR may merge without the owner's review and posts the outcome as the `gate`
+# commit status on the PR's head (packages/merge_gate, docs/automation.md, "Merge gate"). A PR
+# changing a screenshot golden, `.github/` or `.claude/` waits for the owner; any other PR passes
+# on the session's `<!-- merge-verdict {…} -->` comment for its head commit, with the rules
+# checker's pass when it changes rule code. The owner's approval always passes it.
+#
+# Runs on `pull_request_target`, so the workflow and the gate's code come from the base branch: a
+# PR can't loosen the gate that judges it. It never checks out or runs the PR's code; it only
+# reads the PR's file list, reviews and comments through the API. Comments and reviews re-run it,
+# since a new verdict or approval changes the outcome without a push.
+
+on:
+  pull_request_target:
+    types: [opened, reopened, synchronize, ready_for_review]
+  pull_request_review:
+    types: [submitted, dismissed]
+  issue_comment:
+    types: [created, edited]
+
+permissions:
+  contents: read
+  statuses: write
+  pull-requests: write
+  issues: write
+
+defaults:
+  run:
+    shell: bash
+
+concurrency:
+  group: gate-${{ github.event.pull_request.number || github.event.issue.number }}
+  cancel-in-progress: true
+
+jobs:
+  gate:
+    # A plain issue's comments don't concern any PR.
+    if: github.event_name != 'issue_comment' || github.event.issue.pull_request
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      PR: ${{ github.event.pull_request.number || github.event.issue.number }}
+    steps:
+      # The default branch's tip, never the PR head: see the header.
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      # The head is read fresh: a comment event carries no PR, and a review may name an older one.
+      - id: decide
+        run: |
+          pr_json=$(gh api "repos/$GITHUB_REPOSITORY/pulls/$PR")
+          head=$(jq -r .head.sha <<<"$pr_json")
+          owner=$(jq -r .base.repo.owner.login <<<"$pr_json")
+          gh api --paginate "repos/$GITHUB_REPOSITORY/pulls/$PR/files" --jq '.[].filename' > "$RUNNER_TEMP/files.txt"
+          gh api --paginate "repos/$GITHUB_REPOSITORY/pulls/$PR/reviews" \
+            --jq '.[] | {author: .user.login, state}' -c > "$RUNNER_TEMP/reviews.ndjson"
+          gh api --paginate "repos/$GITHUB_REPOSITORY/issues/$PR/comments" \
+            --jq '.[] | {author: .user.login, body}' -c > "$RUNNER_TEMP/comments.ndjson"
+          outcome=$(node packages/merge_gate/src/cli.ts --head "$head" --owner "$owner" \
+            --files "$RUNNER_TEMP/files.txt" --reviews "$RUNNER_TEMP/reviews.ndjson" \
+            --comments "$RUNNER_TEMP/comments.ndjson")
+          echo "$outcome"
+          {
+            echo "head=$head"
+            echo "kind=$(jq -r .kind <<<"$outcome")"
+            echo "reason=$(jq -r .reason <<<"$outcome")"
+          } >> "$GITHUB_OUTPUT"
+      # Waiting and needs-owner stay pending, so the PR can't merge yet but shows no red cross;
+      # blocked fails, as the session has something to fix. Status descriptions are cut at 140.
+      - name: Post the gate status
+        env:
+          HEAD: ${{ steps.decide.outputs.head }}
+          KIND: ${{ steps.decide.outputs.kind }}
+          REASON: ${{ steps.decide.outputs.reason }}
+        run: |
+          case "$KIND" in
+            pass) state=success ;;
+            blocked) state=failure ;;
+            *) state=pending ;;
+          esac
+          gh api "repos/$GITHUB_REPOSITORY/statuses/$HEAD" -f state="$state" -f context=gate \
+            -f description="${REASON:0:140}" \
+            -f target_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" > /dev/null
+      # The label is the owner's queue: PRs that wait for them and nobody else.
+      - name: Label PRs that need the owner
+        env:
+          KIND: ${{ steps.decide.outputs.kind }}
+        run: |
+          if [ "$KIND" = needs-owner ]; then
+            gh api "repos/$GITHUB_REPOSITORY/issues/$PR/labels" -f "labels[]=needs-owner" > /dev/null
+          elif gh api "repos/$GITHUB_REPOSITORY/issues/$PR/labels" --jq '.[].name' | grep -qx needs-owner; then
+            gh api -X DELETE "repos/$GITHUB_REPOSITORY/issues/$PR/labels/needs-owner" > /dev/null
+          fi
