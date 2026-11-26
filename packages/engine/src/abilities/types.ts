@@ -387,14 +387,15 @@ export interface EachEnemyFilter extends EnemyFilter {
  * can name no instance; `resolveEffect` fills the IDs in when the ability
  * fires. Map IDs stay as they are: a scenario's maps are fixed by its setup,
  * so card data may name one. Lists are templated item by item (the
- * outcomes of a `skillTest`).
+ * outcomes of a `skillTest`). A command's `source` stays as it is: `resolveEffect` stamps it with
+ * the card whose ability resolves, so the card data never names it.
  */
 export type Templated<T> = T extends InstanceId
   ? RelativeCard
   : T extends InvestigatorId
     ? RelativeInvestigator
     : T extends object
-      ? { [K in keyof T]: Templated<T[K]> }
+      ? { [K in keyof T]: K extends 'source' ? T[K] : Templated<T[K]> }
       : T;
 
 /**

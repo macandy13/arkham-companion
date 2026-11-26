@@ -390,7 +390,7 @@ function resolveCommand(
 ): Step[] {
   const spec = commandSpec(command);
   const before = resolution.state;
-  const own = spec.handle(resolution.ctx, before, command);
+  const own = spec.handle(resolution.ctx, before, command, command.source === undefined);
   // After the handler, so that its own, more specific rejections (a used-up limit) come first;
   // a rejected step rejects the command as it would in the real run. No steps, nothing to judge:
   // an action with no effects is done at the table.
@@ -433,7 +433,7 @@ function resolveAtOnce(
     spend(budget);
     const spec = commandSpec(command);
     const handledIn = resolution.state;
-    const own = spec.handle(resolution.ctx, handledIn, command);
+    const own = spec.handle(resolution.ctx, handledIn, command, command.source === undefined);
     if (surgeDraw(own)) budget.encounterCards ??= surgeChainCards(handledIn, own);
     emit(resolution, own);
     events.push(...own);

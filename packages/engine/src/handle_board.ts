@@ -108,6 +108,7 @@ export function handleRemoveConnection(
   ctx: EngineContext,
   state: GameState,
   cmd: RemoveConnection,
+  strict: boolean,
 ): ConnectionChanged[] {
   const edge = validatedEdge(ctx, state, cmd);
   const owned = allConnections(state).find(({ edge: existing }) => sameEdge(existing, edge));
@@ -122,7 +123,7 @@ export function handleRemoveConnection(
       { type: 'ConnectionChanged', change: 'removed', mapId: owned.mapId, edge: owned.edge },
       ...cut,
     ];
-  if (allowsEveryMove(printed, edge) || cmd.source !== undefined) return cut;
+  if (allowsEveryMove(printed, edge) || !strict) return cut;
   throw new CommandRejected({ code: 'connectionNotFound', from: edge.from, to: edge.to });
 }
 

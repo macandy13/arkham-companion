@@ -533,40 +533,22 @@ export function placeYourClues(
 }
 
 /**
- * `command` with `source` on each command a card can ask for in it (`AskedByCard`), the options of
- * a choice included, so the notice of a deferred one names the card that asked and one the players
- * also send does what it can instead of refusing.
+ * Stamps `source` on `command` and, for a choice, on each command of its options, so the notice of
+ * a deferred command names the card that asked, and a command the players also send does what it
+ * can instead of refusing (`AskedByCard`).
  */
 export function withSource<C extends { readonly type: string }>(
   command: C,
   source: CommandSource,
 ): C {
-  switch (command.type) {
-    case 'DrawCards':
-    case 'SearchDeck':
-    case 'PlayCard':
-    case 'DiscardFromHand':
-    case 'DiscardAsset':
-    case 'HealAsset':
-    case 'ReadCodexEntry':
-    case 'AdjustActions':
-    case 'EndTurn':
-    case 'DiscoverClues':
-    case 'RemoveConnection':
-    case 'EngageEnemy':
-      return { ...command, source };
-    case 'RequestDecision': {
-      // Narrowing on `type` doesn't reach a generic `C`; the type says it is a `RequestDecision`.
-      const { decision } = command as unknown as RequestDecision;
-      const options = decision.options.map((option) => ({
-        ...option,
-        commands: option.commands.map((inner) => withSource(inner, source)),
-      }));
-      return { ...command, decision: { ...decision, options } };
-    }
-    default:
-      return command;
-  }
+  if (command.type !== 'RequestDecision') return { ...command, source };
+  // Narrowing on `type` doesn't reach a generic `C`; the type says it is a `RequestDecision`.
+  const { decision } = command as unknown as RequestDecision;
+  const options = decision.options.map((option) => ({
+    ...option,
+    commands: option.commands.map((inner) => withSource(inner, source)),
+  }));
+  return { ...command, source, decision: { ...decision, options } };
 }
 
 /**

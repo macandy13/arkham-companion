@@ -96,8 +96,12 @@ import { cardActionOf, cardActionSteps, handleUseCardAction } from './card_actio
  * commands.
  */
 export interface CommandSpec<C extends Command> {
-  /** The command's own events, without the forced effects they trigger. Throws `CommandRejected`. */
-  handle(ctx: EngineContext, state: GameState, command: C): Event[];
+  /**
+   * The command's own events, without the forced effects they trigger. Throws `CommandRejected`.
+   * `strict` is false when a card asked for the command (`AskedByCard.source`): a handler that
+   * refuses the players' command with nothing to do then does what it can instead.
+   */
+  handle(ctx: EngineContext, state: GameState, command: C, strict: boolean): Event[];
   /**
    * Set for corrections and setup, which are not game events: a location
    * set up revealed has no revelation to resolve, and fixing the board must
@@ -300,7 +304,7 @@ const COMMAND_SPECS: CommandSpecs = {
     continueWith: () => [{ kind: 'phaseStep' }],
   },
   StartTurn: { handle: (_ctx, state, command) => handleStartTurn(state, command) },
-  EndTurn: { handle: (_ctx, state, command) => handleEndTurn(state, command) },
+  EndTurn: { handle: (_ctx, state, command, strict) => handleEndTurn(state, command, strict) },
   Resign: { handle: handleResign },
   UseCardAction: {
     handle: handleUseCardAction,
@@ -314,7 +318,9 @@ const COMMAND_SPECS: CommandSpecs = {
   SetLeadInvestigator: {
     handle: (_ctx, state, command) => handleSetLeadInvestigator(state, command),
   },
-  AdjustActions: { handle: (_ctx, state, command) => handleAdjustActions(state, command) },
+  AdjustActions: {
+    handle: (_ctx, state, command, strict) => handleAdjustActions(state, command, strict),
+  },
   SpendActions: { handle: (_ctx, state, command) => handleSpendActions(state, command) },
   DealEnemyAttack: {
     handle: handleDealEnemyAttack,
