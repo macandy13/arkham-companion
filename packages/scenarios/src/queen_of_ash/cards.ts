@@ -14,6 +14,7 @@ import {
   type CardCode,
   type CardDb,
   cardDbFrom,
+  type CardRestriction,
   type CardStats,
   decisionId,
   defeatEnemy,
@@ -210,6 +211,13 @@ const sewerTunnels = {
 
 const fire = SPREADING_FLAMES_CODES.fire;
 
+/** "Each enemy at a location with a copy of Fire! attached cannot be damaged" (agendas 1a and 2a). */
+const noDamageInTheFire: CardRestriction = {
+  cannot: 'damaged',
+  of: 'eachEnemy',
+  atLocationWith: { code: fire },
+};
+
 /** "If the Servant of Flame enemy is set aside, spawn it at Underground Cistern" (agenda 1b). */
 const spawnServantIfSetAside = spawnEnemyAt(
   eachInZone(setAside, { code: codes.servantOfFlame }),
@@ -241,8 +249,6 @@ const willpowerOrHorror = skillTest('willpower', 4, { onFail: [takeHorror(1)] })
  *
  * Effects the engine has no rule for yet are left out, so the players resolve them from the card:
  *
- * - the agendas' rule that enemies at a location with Fire! attached cannot be damaged (MC2.12):
- *   until then the players heal what Fire!'s own damage deals them as the investigation phase ends
  * - Elokoss's Mother of Flame side (agenda 2b) and agenda 3a's damage instead of doom
  * - Elokoss: her extra health and her clue spend toward Resolution 2 are entered, but not that
  *   she cannot move or make attacks of opportunity, or her Mother of Flame side
@@ -266,6 +272,7 @@ export const queenOfAshCardDefs: readonly CardStats[] = [
     pictures: jpg,
     stage: 1,
     doom: 6,
+    restrictions: [noDamageInTheFire],
     abilities: [
       whenAdvanced(spawnServantIfSetAside),
       forEachInvestigator(whenAdvanced(willpowerOrHorror)),
@@ -278,6 +285,7 @@ export const queenOfAshCardDefs: readonly CardStats[] = [
     pictures: jpg,
     stage: 2,
     doom: 10,
+    restrictions: [noDamageInTheFire],
     // "If it is act 1": Elokoss is set aside until act 1b spawns her, so she spawns here instead.
     // Her Mother of Flame side is flipped by hand.
     abilities: [

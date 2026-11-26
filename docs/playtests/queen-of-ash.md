@@ -22,10 +22,12 @@ The scripted golden game is [`end_to_end.test.ts`](../../packages/scenarios/src/
 
 **Agenda 1, A Gathering**
 
+- [ ] While it is the agenda, an enemy at a location with Fire! attached takes no damage: a fight's hit or Fire!'s damage as the investigation phase ends deals it none.
 - [ ] When it advances, a set-aside Servant of Flame spawns at Underground Cistern, then each investigator tests willpower (4), lead first, taking 1 horror on a fail.
 
 **Agenda 2, A Ritual**
 
+- [ ] Enemies at a location with Fire! attached take no damage, as under agenda 1.
 - [ ] If it advances during act 1, Underground Cistern is revealed and Elokoss spawns there.
 - [ ] Its reverse side makes agenda 3 the act and the agenda at once.
 
@@ -75,7 +77,7 @@ The scripted golden game is [`end_to_end.test.ts`](../../packages/scenarios/src/
 
 These are done by hand at the table; the app does not do them.
 
-- The agendas' rule that enemies at a location with Fire! attached cannot be damaged (heal the damage Fire! itself deals them as the investigation phase ends), and agenda 3a's damage instead of doom.
+- Agenda 3a's damage instead of doom.
 - Elokoss: that she cannot move or make attacks of opportunity, and her Mother of Flame side.
 - Queen's Knight's damage to Elokoss, Herald of Flame's healing after it attacks, and the Servant of Flame's codex entry as it is defeated.
 - The Zealot's doom as it enters play (setup places it) and the Dark Magician's as the round ends.

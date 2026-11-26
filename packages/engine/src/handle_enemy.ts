@@ -221,6 +221,8 @@ export function handleDamageEnemy(ctx: EngineContext, state: GameState, cmd: Dam
   const amount = resolveAmount(cmd.amount, state.meta.playerCount);
   if (!Number.isInteger(amount) || amount <= 0)
     throw new CommandRejected({ code: 'invalidTokenDelta', delta: amount });
+  // A fight that hits it or an effect that damages each enemy still resolves; it just deals none.
+  if (isEnemyRestricted(ctx, state, enemy, 'damaged')) return [];
   const damaged: Event = {
     type: 'TokensChanged',
     cardId: enemy.id,

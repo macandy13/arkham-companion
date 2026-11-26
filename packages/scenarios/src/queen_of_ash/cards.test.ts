@@ -149,6 +149,33 @@ describe('Queen of Ash card abilities', () => {
     pick: { match: { name: card } },
   });
 
+  describe('A Gathering and A Ritual', () => {
+    const zealot = instanceId('zealot');
+
+    it.each([
+      { agenda: 'A Gathering', code: '12169' },
+      { agenda: 'A Ritual', code: '12170' },
+    ])(
+      'keep 1 damage off a Zealot at Sewer Culvert with Fire! attached while $agenda is current',
+      ({ code }) => {
+        const { context, state } = newGame()
+          .withAgenda(instanceId('agenda'), cardOf(code))
+          .withLocation(culvert, cardOf('12182'), { revealed: true })
+          .withCard(instanceId('fire'), cardOf('12129'), { kind: 'attachedTo', hostId: culvert })
+          .withCard(zealot, cardOf('12188'), atLocation(culvert))
+          .start();
+
+        const after = stateAfter(context, state, {
+          type: 'DamageEnemy',
+          enemyId: zealot,
+          amount: 1,
+        });
+
+        expect(after.cards[zealot]?.tokens.damage).toBeUndefined();
+      },
+    );
+  });
+
   describe('Sewer Tunnels (Overgrown Tunnels)', () => {
     it('takes 1 of the 3 actions alice has left as she enters its unrevealed triangle', () => {
       const tunnels = instanceId('overgrown_tunnels');
