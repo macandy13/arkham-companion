@@ -1,5 +1,6 @@
 import type { PlayTable } from '@arkham/engine';
 import { goalWeights } from './goal_bot';
+import { lookaheadStep } from './lookahead_bot';
 import { isRare, offeredSteps, randomWeights, rareShareWeights } from './random_bot';
 import type { BotKind, SeededRandom } from './run';
 import type { Step } from './steps';
@@ -18,6 +19,9 @@ const WEIGHTS: Record<BotKind, (table: PlayTable, offered: readonly Step[]) => n
   goal: goalWeights,
   // The deck bot's own steps come from `DeckBot`; the rest it leaves to the goal bot's weights.
   deck: goalWeights,
+  // The lookahead bot ranks the goal bot's steps by trying them (`lookaheadStep`); these weights
+  // are what it starts from.
+  lookahead: goalWeights,
   chaos: (table, offered) =>
     rareShareWeights(offered, isRare, CHAOS_SHARE).map((weight, i) =>
       resigns(table, offered[i]!) ? CHAOS_SHARE : weight,
@@ -27,9 +31,11 @@ const WEIGHTS: Record<BotKind, (table: PlayTable, offered: readonly Step[]) => n
 /**
  * The next step `bot` plays on `table`. An open skill test of one investigator is answered first,
  * by chaos tokens the bot draws (`drawnTestAnswer`), like players who settle a test before
- * anything else; otherwise one of the steps the board offers, picked by the bot's weights.
+ * anything else; otherwise one of the steps the board offers, picked by the bot's weights, or by
+ * trying them ahead for the lookahead bot.
  */
 export function botStep(bot: BotKind, table: PlayTable, random: SeededRandom): Step {
+  if (bot === 'lookahead') return lookaheadStep(table, random);
   const drawn = drawnTestAnswer(table, random);
   if (drawn) return drawn;
   const offered = offeredSteps(table);

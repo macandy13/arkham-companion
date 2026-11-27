@@ -72,6 +72,20 @@ describe('the steps the goal bot wants', () => {
     ]);
   });
 
+  it('lets an attack of opportunity happen and never answers it with the skip a card stands for', () => {
+    const table = PlayTable.start(
+      game.withCard(ghoul, blankEnemy('ghoul', { damage: 1 }), engagedWith(alice)),
+    );
+    table.takeResource(alice);
+
+    const offered = offeredSteps(table);
+    const weights = goalWeights(table, offered);
+
+    expect(offered.filter((_, i) => weights[i]! > 0)).toEqual([
+      { verb: 'answer', about: 'ghoul', option: 'attack' },
+    ]);
+  });
+
   it('investigates where there are clues', () => {
     const table = PlayTable.start(
       map.withInvestigator(alice, { locationId: study }).withTurnOf(alice),

@@ -867,6 +867,37 @@ describe('answering decisions', () => {
   });
 });
 
+describe('forking a table', () => {
+  const game = newGame()
+    .withLocation(study, blankLocation('study'), { revealed: true, clues: 2 })
+    .withInvestigator(alice, { locationId: study });
+
+  it('plays on a copy that leaves the table it came from as it was', () => {
+    const table = PlayTable.start(game);
+    table.takeDamage(alice, 1);
+    const stateBefore = table.state;
+
+    const copy = table.fork();
+    copy.takeHorror(alice, 2);
+
+    expect(table.state).toBe(stateBefore);
+    expect(copy.board.investigator(alice)).toMatchObject({ damage: 1, horror: 2 });
+    expect(replay(copy.events)).toEqual(copy.state);
+  });
+
+  it('undoes on the copy the steps played before it was made', () => {
+    const table = PlayTable.start(game);
+    const stateBefore = table.state;
+    table.takeDamage(alice, 1);
+
+    const copy = table.fork();
+    copy.undo();
+
+    expect(copy.state).toEqual(stateBefore);
+    expect(table.board.investigator(alice).damage).toBe(1);
+  });
+});
+
 describe('undo', () => {
   const game = newGame()
     .withLocation(study, blankLocation('study'), { revealed: true, clues: 2 })

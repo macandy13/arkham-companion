@@ -1,6 +1,7 @@
 import {
   byId,
   byName,
+  ATTACK_SKIP_OPTION,
   CANCEL_REVELATION_OPTION,
   isEnemyAttackDecision,
   isRevelationDecision,
@@ -173,7 +174,7 @@ export class DeckBot {
   private cancelledAttack(table: PlayTable): Step[] | undefined {
     for (const decision of table.state.pending) {
       if (decision.decider.kind !== 'investigator' || !isEnemyAttackDecision(decision)) continue;
-      const skip = decision.options.find(({ id }) => id === 'skip');
+      const skip = decision.options.find(({ id }) => id === ATTACK_SKIP_OPTION);
       const played = skip && this.cancelPlayed(table, decision.decider.investigatorId, 'attack');
       if (!skip || !played) continue;
       return [played.paid, answerStep(table, decision, optionName(skip))];
