@@ -1,0 +1,39 @@
+name: Auto-merge
+
+# Turns on squash auto-merge for every ready PR that open-pr.yml opened for a session, once it
+# targets `main`: when it opens there, leaves draft, or GitHub retargets a stacked PR to `main`
+# after the one below it merged. The PR then merges by itself once the ruleset is satisfied (the
+# owner's approval today, the `gate` status after MA.3), so nobody has to press merge and a stack
+# moves on alone (docs/automation.md, "Merge gate"). Stacked PRs are left alone until then, as a
+# squash into another PR's branch would bury the slice.
+#
+# Uses the PR bot's App token: a merge made with GITHUB_TOKEN starts no workflows on `main`, so
+# deploy, Release Please and PR sync would never see it. It never checks out PR code, so
+# pull_request_target is safe here.
+
+on:
+  pull_request_target:
+    types: [opened, ready_for_review, edited]
+
+permissions: {}
+
+jobs:
+  enable:
+    if: >-
+      github.event.pull_request.user.login == 'arkham-claude[bot]' &&
+      github.event.pull_request.base.ref == 'main' && !github.event.pull_request.draft &&
+      (github.event.action != 'edited' || github.event.changes.base)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/create-github-app-token@v3
+        id: app
+        with:
+          app-id: ${{ vars.CLAUDE_BOT_APP_ID || secrets.CLAUDE_BOT_APP_ID }}
+          private-key: ${{ secrets.CLAUDE_BOT_PRIVATE_KEY }}
+          permission-contents: write
+          permission-pull-requests: write
+      - env:
+          GH_TOKEN: ${{ steps.app.outputs.token }}
+          REPO: ${{ github.repository }}
+          PR: ${{ github.event.pull_request.number }}
+        run: gh pr merge "$PR" --repo "$REPO" --auto --squash
