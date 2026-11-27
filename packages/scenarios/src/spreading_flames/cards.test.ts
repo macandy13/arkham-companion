@@ -890,6 +890,123 @@ describe('Spreading Flames card abilities', () => {
     });
   });
 
+  describe("the agendas' Parley", () => {
+    const agenda = instanceId('agenda');
+    const bystander = instanceId('bystander');
+    const dormitories = instanceId('dormitories');
+    const aliceParleys: Command = {
+      type: 'UseCardAction',
+      investigatorId: alice,
+      cardId: agenda,
+      action: 0,
+    };
+    /** Alice at Miskatonic Quad during her turn, with `agendaCode` current and a Bystander at `bystanderAt`. */
+    const aliceWithABystanderAt = (agendaCode: string, bystanderAt: typeof quad) =>
+      newGame()
+        .withAgenda(agenda, cardOf(agendaCode))
+        .withLocation(quad, cardOf(SPREADING_FLAMES_CODES.miskatonicQuad), { revealed: true })
+        .withLocation(dormitories, cardOf(SPREADING_FLAMES_CODES.dormitories), { revealed: true })
+        .withInvestigator(alice, { locationId: quad })
+        .withCard(bystander, cardOf('12123'), atLocation(bystanderAt))
+        .withTurnOf(alice)
+        .start();
+
+    it.each([
+      {
+        agenda: 'Past Curfew',
+        code: SPREADING_FLAMES_CODES.pastCurfew,
+        result: 'pass',
+        then: 'discards the Bystander at her location',
+        zone: encounterDiscard,
+      },
+      {
+        agenda: 'Lit Up',
+        code: SPREADING_FLAMES_CODES.litUp,
+        result: 'pass',
+        then: 'discards the Bystander at her location',
+        zone: encounterDiscard,
+      },
+      {
+        agenda: 'Wild Flames',
+        code: SPREADING_FLAMES_CODES.wildFlames,
+        result: 'pass',
+        then: 'discards the Bystander at her location',
+        zone: encounterDiscard,
+      },
+      {
+        agenda: 'Past Curfew',
+        code: SPREADING_FLAMES_CODES.pastCurfew,
+        result: 'fail',
+        then: 'leaves the Bystander engaged with her',
+        zone: engagedWith(alice),
+      },
+    ])("tests alice's intellect (2) on $agenda; a $result $then", ({ code, result, zone }) => {
+      const { context, state: started } = aliceWithABystanderAt(code, quad);
+
+      const asked = stateAfter(context, started, aliceParleys);
+      const state = stateAfter(context, asked, answer('test:agenda', result));
+
+      expect(asked.pending).toMatchObject([{ skillTest: { skill: 'intellect', difficulty: 2 } }]);
+      expect(state.cards[bystander]?.zone).toEqual(zone);
+    });
+
+    it('refuses the Parley with the only Bystander at the Dormitories, away from alice', () => {
+      const { context, state } = aliceWithABystanderAt(
+        SPREADING_FLAMES_CODES.pastCurfew,
+        dormitories,
+      );
+
+      expect(rejectionFrom(context, state, aliceParleys).code).toBe('cardActionConditionUnmet');
+    });
+  });
+
+  describe('Past Curfew and Lit Up advancing', () => {
+    const bob = investigatorId('bob');
+    const agenda = instanceId('agenda');
+
+    it.each([
+      {
+        agenda: 'Past Curfew',
+        code: SPREADING_FLAMES_CODES.pastCurfew,
+        skill: 'willpower',
+        wound: 'horror',
+        bobAfter: { health: { damage: 0 }, sanity: { horror: 1 } },
+      },
+      {
+        agenda: 'Lit Up',
+        code: SPREADING_FLAMES_CODES.litUp,
+        skill: 'agility',
+        wound: 'damage',
+        bobAfter: { health: { damage: 1 }, sanity: { horror: 0 } },
+      },
+    ])(
+      'tests alice, then bob, on $skill (3) as $agenda advances; only bob, who fails, takes 1 $wound',
+      ({ code, skill, bobAfter }) => {
+        const { context, state: started } = newGame()
+          .withAgenda(agenda, cardOf(code))
+          .withAgenda(instanceId('next_agenda'), cardOf(SPREADING_FLAMES_CODES.wildFlames))
+          .withLocation(quad, cardOf(SPREADING_FLAMES_CODES.miskatonicQuad), { revealed: true })
+          .withInvestigator(alice, { locationId: quad })
+          .withInvestigator(bob, { locationId: quad })
+          .start();
+
+        const advanced = stateAfter(context, started, { type: 'Advance', deck: 'agenda' });
+        const aliceTested = stateAfter(context, advanced, answer('test:agenda', 'pass'));
+        const state = stateAfter(context, aliceTested, answer('test:agenda', 'fail'));
+
+        expect(advanced.pending).toMatchObject([
+          { decider: { investigatorId: alice }, skillTest: { skill, difficulty: 3 } },
+        ]);
+        expect(aliceTested.pending).toMatchObject([{ decider: { investigatorId: bob } }]);
+        expect(requireInvestigator(state, alice)).toMatchObject({
+          health: { damage: 0 },
+          sanity: { horror: 0 },
+        });
+        expect(requireInvestigator(state, bob)).toMatchObject(bobAfter);
+      },
+    );
+  });
+
   describe('Wild Flames', () => {
     it('has the lead investigator draw the topmost Fire! of the encounter discard after doom is placed on it, not one from the deck', () => {
       const wildFlames = instanceId('wild_flames');

@@ -56,6 +56,8 @@
     Test: [`packages/engine/src/card_actions.test.ts › actions that would change nothing › neither offers nor accepts healing alice with no damage`](../../packages/engine/src/card_actions.test.ts#L556)
     Test: [`packages/engine/src/card_actions.test.ts › actions that would change nothing › offers and heals alice with 1 damage`](../../packages/engine/src/card_actions.test.ts#L566)
   - An action whose effect is done at the table (no effect the engine runs) is always offered.
+  - Engine reading (unverified, no official ruling found): Spreading Flames' agendas' Parley ("Test [intellect] (2). If you succeed, discard a Bystander enemy at your location") is offered only with a Bystander at the taker's location, since the test alone would act on nothing.
+    Test: [`packages/scenarios/src/spreading_flames/cards.test.ts › Spreading Flames card abilities › the agendas' Parley › refuses the Parley with the only Bystander at the Dormitories, away from alice`](../../packages/scenarios/src/spreading_flames/cards.test.ts#L953)
   - The rule holds for every triggered ability, reactions included; Arkham Sanatorium's reaction stays offered with no horror to heal, since its [[Ally]] half is done at the table.
 - [Costs](https://arkhamdb.com/rules#Costs): the text before the colon ("Spend 5 resources:") is paid in full before the effect; an action whose cost can't be paid can't be taken.
   Test: [`packages/engine/src/card_actions.test.ts › action costs › makes alice with 5 resources pay 2 before the action scares her`](../../packages/engine/src/card_actions.test.ts#L589)

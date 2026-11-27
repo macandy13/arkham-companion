@@ -49,6 +49,8 @@ const dormitories = instanceId('12117#1');
 const scienceHall = instanceId('12118#1');
 const warrenObservatory = instanceId('12119#1');
 const orneLibrary = instanceId('12120#1');
+const pastCurfew = instanceId('12106#1');
+const litUp = instanceId('12107#1');
 const tank = investigatorId('tank');
 /** The two Fire! copies act 3's search finds for 2 investigators, deck first. */
 const firstFire = '12129#1';
@@ -441,11 +443,21 @@ describe('Spreading Flames act 3, Searching for Dr. Armitage', () => {
   });
 });
 
+/** Past Curfew advances, and each of the two investigators passes its willpower (3) test. */
+const pastCurfewAdvancesAndBothPass: Command[] = [
+  { type: 'Advance', deck: 'agenda' },
+  answer(`test:${pastCurfew}`, 'pass'),
+  answer(`test:${pastCurfew}`, 'pass'),
+];
+/** Lit Up advances, and each of the two investigators passes its agility (3) test. */
+const litUpAdvancesAndBothPass: Command[] = [
+  { type: 'Advance', deck: 'agenda' },
+  answer(`test:${litUp}`, 'pass'),
+  answer(`test:${litUp}`, 'pass'),
+];
+
 describe('Spreading Flames agenda 2, Lit Up', () => {
-  const advanceLitUp: Command[] = [
-    { type: 'Advance', deck: 'agenda' },
-    { type: 'Advance', deck: 'agenda' },
-  ];
+  const advanceLitUp = [...pastCurfewAdvancesAndBothPass, ...litUpAdvancesAndBothPass];
 
   it('puts 4 of the set-aside Fire! in the encounter discard', () => {
     const state = stateAfter(ctx, startScenario(ctx, { playerCount: 2 }), ...advanceLitUp);
@@ -551,8 +563,8 @@ describe('Spreading Flames without a resolution', () => {
     const ended = stateAfter(
       ctx,
       startScenario(ctx, { playerCount: 2 }),
-      { type: 'Advance', deck: 'agenda' },
-      { type: 'Advance', deck: 'agenda' },
+      ...pastCurfewAdvancesAndBothPass,
+      ...litUpAdvancesAndBothPass,
       { type: 'Advance', deck: 'agenda' },
     );
 

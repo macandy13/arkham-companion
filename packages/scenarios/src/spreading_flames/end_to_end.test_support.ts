@@ -205,12 +205,18 @@ export function playSpreadingFlames(start: CampaignLog): CampaignLog {
   expect(table.nextPhase()).toEqual({ round: 3, phase: 'enemy' });
   expect(table.nextPhase()).toEqual({ round: 3, phase: 'upkeep' });
 
-  // Round 4 – mythos: the third doom makes Past Curfew advance to Lit Up. Its reverse side's
-  // willpower tests are the players' to resolve. Roland draws Mutated! and passes its willpower
+  // Round 4 – mythos: the third doom makes Past Curfew advance to Lit Up. Its reverse side tests
+  // Roland's willpower (3), then Daisy's; both pass. Roland draws Mutated! and passes its willpower
   // (2) test: no enemy is at Science Hall to make it harder. Daisy draws a Bystander, which
   // engages her.
   expect(table.nextPhase()).toEqual({ round: 4, phase: 'mythos', step: 'checkDoomThreshold' });
   table.answerOnly('yes');
+  expect(table.board.decisions).toMatchObject([
+    { for: roland, test: { skill: 'willpower', difficulty: 3 } },
+  ]);
+  table.answerOnly('pass');
+  expect(table.board.decisions).toMatchObject([{ for: daisy }]);
+  table.answerOnly('pass');
   expect(table.board.agenda).toMatchObject({ name: 'Lit Up', doom: 0 });
   expect(table.nextPhase()).toEqual({ round: 4, phase: 'mythos', step: 'drawEncounterCard' });
   table.resolveRevelation(byName('Mutated!'));
@@ -303,7 +309,7 @@ export function playSpreadingFlames(start: CampaignLog): CampaignLog {
   // players confirm 2 damage), finishes it with a punch and goes to the Quad, where the Servant
   // engages him. Daisy defeats the Bystander, whose Doomed places the fifth doom: Lit Up advances
   // to Wild Flames. Its reverse side places no Fire!, as act 1 put the set-aside copies out
-  // already, and its agility tests are the players' to resolve. Daisy follows Roland and hits the
+  // already; its agility (3) tests Roland, then Daisy, and both pass. Daisy follows Roland and hits the
   // Servant once. (Blaze of Glory's group clue spend to damage the Servant is theirs to resolve.)
   // As the phase ends, the
   // Fire! on the Quad deals each of them 1 direct damage; the Servant is Elite and takes none.
@@ -316,6 +322,12 @@ export function playSpreadingFlames(start: CampaignLog): CampaignLog {
   table.startTurn(daisy);
   table.fight(daisy, byName('Bystander'));
   table.answerOnly('yes');
+  expect(table.board.decisions).toMatchObject([
+    { for: roland, test: { skill: 'agility', difficulty: 3 } },
+  ]);
+  table.answerOnly('pass');
+  expect(table.board.decisions).toMatchObject([{ for: daisy }]);
+  table.answerOnly('pass');
   expect(table.board.agenda).toMatchObject({ name: 'Wild Flames', doom: 0 });
   table.moveTo(daisy, byName('Miskatonic Quad'));
   table.fight(daisy, byName(servant));

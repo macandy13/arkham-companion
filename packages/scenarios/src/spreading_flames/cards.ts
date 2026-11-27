@@ -18,6 +18,7 @@ import {
   moveToConnectingLocation,
   decisionId,
   defeatEachInvestigator,
+  discard,
   discardAsset,
   discardEachEnemy,
   discardFromHand,
@@ -37,6 +38,7 @@ import {
   encounterSetCode,
   endScenario,
   fixed,
+  forEachInvestigator,
   forEachPoint,
   fromSetAside,
   gainSurge,
@@ -50,6 +52,7 @@ import {
   mapId,
   nearestLocation,
   onlyCopy,
+  parleyAction,
   perInvestigator,
   placeCluesOn,
   placeDoomOnAgenda,
@@ -69,6 +72,7 @@ import {
   takeDamage,
   takeDamageAndHorror,
   takeHorror,
+  thereAre,
   thisLocation,
   trait,
   whenAdvanced,
@@ -200,6 +204,19 @@ const stayOrGo = 'scenario.spreadingFlames.stayOrGo';
 /** ArkhamDB has the Core Set (2026)'s pictures as JPEGs. */
 const jpg = 'jpg';
 
+/** "A Bystander enemy at your location", picked by the investigator taking the Parley when several are there. */
+const bystanderHere = { name: 'Bystander', at: yourLocation() } as const;
+
+/**
+ * The three agendas' "[action]: Parley. Test [intellect] (2). If you succeed, discard a Bystander
+ * enemy at your location." It is offered only with a Bystander there, as without one it could
+ * change nothing; discarding is no defeat, so a Doomed Bystander places no doom.
+ */
+const parleyWithABystander = parleyAction({
+  condition: thereAre(eachEnemy(bystanderHere), { min: 1 }),
+  effects: [skillTest('intellect', 2, { onPass: [discard(anEnemy(bystanderHere))] })],
+});
+
 /**
  * Hand-entered card data for Spreading Flames, keyed by the real ArkhamDB codes; like The
  * Gathering's, only names, codes, numbers, traits, keywords and abilities (test skills and
@@ -208,12 +225,9 @@ const jpg = 'jpg';
  *
  * Effects the engine has no rule for yet are left out, so the players resolve them from the card:
  *
- * - Past Curfew's and Lit Up's reverse sides' tests for each investigator (MC2.13)
  * - Escape the Dorms' objective (each undefeated investigator at Miskatonic Quad, MC2.14)
  * - Searching for Dr. Armitage's reverse side: Dr. Henry Armitage under any investigator's
  *   control (MC2.14)
- * - the agendas' Parley (test intellect (2) to discard a Bystander at your location): it can be
- *   taken only with a Bystander there, a condition actions can't state yet
  * - Your Friend's Room's Engage action (MC1.12); Orne Library's draw of 3 cards, a deferred
  *   command
  * - Dr. Henry Armitage's skill bonus and free first action: his controller's to apply, like a
@@ -231,6 +245,10 @@ export const spreadingFlamesCardDefs: readonly CardStats[] = [
     pictures: jpg,
     stage: 1,
     doom: 3,
+    actions: [parleyWithABystander],
+    abilities: [
+      forEachInvestigator(whenAdvanced(skillTest('willpower', 3, { onFail: [takeHorror(1)] }))),
+    ],
   }),
   agenda({
     code: codes.litUp,
@@ -239,9 +257,11 @@ export const spreadingFlamesCardDefs: readonly CardStats[] = [
     pictures: jpg,
     stage: 2,
     doom: 5,
+    actions: [parleyWithABystander],
     // Where There's Smoke… may have taken the copies already; then none is placed.
     abilities: [
       whenAdvanced(...fromSetAside(Array<CardCode>(4).fill(codes.fire), encounterDiscard)),
+      forEachInvestigator(whenAdvanced(skillTest('agility', 3, { onFail: [takeDamage(1)] }))),
     ],
   }),
   agenda({
@@ -251,6 +271,7 @@ export const spreadingFlamesCardDefs: readonly CardStats[] = [
     pictures: jpg,
     stage: 3,
     doom: 10,
+    actions: [parleyWithABystander],
     abilities: [
       afterTokensPlaced('doom', drawFromEncounterDiscard({ name: 'Fire!' }, lead())),
       whenAdvanced(defeatEachInvestigator({ trauma: 'physical' })),
