@@ -2,6 +2,19 @@
 
 The sections dated up to 2026-10-22 were released as 1.0.0 to 1.8.0 by mistake: Release Please starts at 1.0.0 by default. Versioning restarted at 0.1.0 (see "Versions" in docs/product.md).
 
+## [0.1.50](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v0.1.49...arkham-companion-v0.1.50) (2026-11-27)
+
+
+### Features
+
+* **scenarios:** Spreading Flames' Parley and agenda tests resolve in the app (MC2.13) ([#1531](https://github.com/macandy13/arkham-companion/issues/1531)) ([e5c136c](https://github.com/macandy13/arkham-companion/commit/e5c136c19147d3213be3945ef5bc31c8e95d1624))
+* **web:** one Adjust group for by-hand changes in the details (ME.30e) ([#1528](https://github.com/macandy13/arkham-companion/issues/1528)) ([33a80d1](https://github.com/macandy13/arkham-companion/commit/33a80d15d25380e8810b89966a39c1f93d5726cc))
+
+
+### Bug fixes
+
+* **ci:** run the PR title check on pull_request so release PRs get it ([95d044e](https://github.com/macandy13/arkham-companion/commit/95d044e76010b5da38c77b2c1fbd72d455e32020))
+
 ## [0.1.49](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v0.1.48...arkham-companion-v0.1.49) (2026-11-27)
 
 

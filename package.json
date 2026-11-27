@@ -1,6 +1,6 @@
 {
   "name": "arkham-companion",
-  "version": "0.1.49",
+  "version": "0.1.50",
   "private": true,
   "type": "module",
   "packageManager": "pnpm@10.28.0",
