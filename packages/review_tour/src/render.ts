@@ -253,7 +253,6 @@ export function splitTitle(title: string): { headline: string; labels: string[] 
 }
 
 /** Escaped text with `backticks` as code, the only markup a tour's text may use. */
-/** Escapes `text` for HTML and turns its `code spans` into `<code>` elements. */
 export function inline(text: string): string {
   return escapeHtml(text).replace(/`([^`]+)`/g, '<code>$1</code>');
 }

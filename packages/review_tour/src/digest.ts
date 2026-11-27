@@ -26,25 +26,28 @@ export interface MergedPr {
 }
 
 /** One review on a PR: who, `APPROVED` / `CHANGES_REQUESTED` / `COMMENTED`, and on which commit. */
-export interface PrReview {
+interface PrReview {
   readonly author: string;
   readonly state: string;
   readonly commit: string;
 }
 
 /**
- * The PRs the owner never approved at their head: those the gate passed on the session's
- * verdict. An approval of an earlier commit doesn't count, as the gate doesn't count it either.
+ * The PRs whose owner's last approving or rejecting review isn't an approval of the head: those
+ * the gate passed on the session's verdict. This is the gate's own reading (`latestOwnerReview`
+ * in `packages/merge_gate/src/gate.ts`): a later comment doesn't withdraw an approval, a request
+ * for changes or a dismissal does, and an approval of an earlier commit doesn't count.
  */
 export function mergedWithoutOwner(prs: readonly MergedPr[], owner: string): MergedPr[] {
-  return prs.filter(
-    (pr) =>
-      !pr.reviews.some(
-        (review) =>
-          review.author === owner && review.state === 'APPROVED' && review.commit === pr.headSha,
-      ),
-  );
+  return prs.filter((pr) => {
+    const latest = pr.reviews
+      .filter((review) => review.author === owner && DECIDING_STATES.includes(review.state))
+      .at(-1);
+    return !(latest?.state === 'APPROVED' && latest.commit === pr.headSha);
+  });
 }
+
+const DECIDING_STATES = ['APPROVED', 'CHANGES_REQUESTED', 'DISMISSED'];
 
 const RULES_PAGE = /^docs\/rules\/.+\.md$/;
 const ADDED_LIST_ITEM = /^\+\s*- (.+)$/;

@@ -31,6 +31,22 @@ describe('mergedWithoutOwner', () => {
       listed: true,
     },
     {
+      name: "the owner's approval of the head, then a request for changes",
+      reviews: [
+        { author: 'macandy13', state: 'APPROVED', commit: 'head_after_fix' },
+        { author: 'macandy13', state: 'CHANGES_REQUESTED', commit: 'head_after_fix' },
+      ],
+      listed: true,
+    },
+    {
+      name: "the owner's approval of the head, then a comment",
+      reviews: [
+        { author: 'macandy13', state: 'APPROVED', commit: 'head_after_fix' },
+        { author: 'macandy13', state: 'COMMENTED', commit: 'head_after_fix' },
+      ],
+      listed: false,
+    },
+    {
       name: "the owner's comment on the head",
       reviews: [{ author: 'macandy13', state: 'COMMENTED', commit: 'head_after_fix' }],
       listed: true,
@@ -78,6 +94,8 @@ describe('renderDigest', () => {
       rest: [],
     };
     const pr = mergedPr({
+      number: 1500,
+      title: 'feat(engine): hunters skip barricades (ME.13b)',
       body: `Intro.\n\n<!-- review-tour\n${JSON.stringify(tour)}\n-->`,
       gate: { state: 'success', description: 'Reviewer and rules checker passed 1a2b3c4.' },
       files: [{ filename: 'docs/rules/hunter.md', patch: '+- A hunter avoids barricades.' }],
@@ -103,9 +121,14 @@ describe('renderDigest', () => {
   });
 
   it("uses the description's first paragraph for a PR without a tour", () => {
-    const page = renderDigest({ repo, date: '2026-11-27', prs: [mergedPr({})] });
+    const pr = mergedPr({
+      body: 'Hunters now go round a barricaded location.\n\nThe second paragraph stays out.',
+    });
+
+    const page = renderDigest({ repo, date: '2026-11-27', prs: [pr] });
 
     expect(page).toContain('<p>Hunters now go round a barricaded location.</p>');
+    expect(page).not.toContain('The second paragraph stays out.');
     expect(page).toContain('<p>The gate posted no status on its head.</p>');
   });
 
