@@ -36,6 +36,7 @@ For each draw:
      Test: `packages/engine/src/encounter.test.ts › DrawCard › a treachery in the threat area, limit 1 per investigator › is discarded while the drawer already has a copy in their threat area`
      Test: `packages/engine/src/encounter.test.ts › DrawCard › a treachery in the threat area, limit 1 per investigator › comes into play beside a card of another title`
    - An attached card's action ("[action]: Test [combat] (4) or [agility] (4). If you succeed, discard Locked Door") can be taken by an investigator at the location it is attached to ([Abilities](https://arkhamdb.com/rules#Abilities): a card's actions are available to investigators at its location).
+     Test: `packages/engine/src/card_actions.test.ts › UseCardAction › lets bob take the action of $name`
    - A treachery or enemy with Victory X goes to the victory display instead when it is overcome (see [Victory display](https://arkhamdb.com/rules#Victory_Display_Victory_Points)).
 6. [Surge](https://arkhamdb.com/rules#Surge): after resolving, draw another encounter card and start over.
    Test: `packages/engine/src/encounter.test.ts › DrawCard › draws again after a surge card`

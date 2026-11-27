@@ -19,6 +19,7 @@ Card rulings: [Resolution order](cards/resolution-order.md), [Children of Blood]
 6. Success if the skill is at or above the difficulty.
    Test: `packages/engine/src/board_view.test.ts › a skill test outside any decision › takes alice's willpower 3 against 3 with $input to $skill, a $outcome by $margin`
    - Auto-fail sets the skill to 0, and auto-success sets the difficulty to 0.
+     Test: `packages/engine/src/skill_modifiers.test.ts › skillTestSuggestion: base values, the players' modifier and tokens › makes the skill 0 and the test a fail on auto-fail, as a step of the trace`
    - Reactions and forced effects on "succeeded/failed" trigger here.
 7. Apply results in an order the tester chooses (clue discovered, damage dealt, card effects), including "if this test succeeds/fails" effects.
    - "After you succeed/fail" abilities are not results: they trigger in step 6, before these (Rules Reference, "Skill Test Results and Advanced Timing").
