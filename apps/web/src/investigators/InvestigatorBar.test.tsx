@@ -2,8 +2,6 @@
 import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
-  advanceAct,
-  advanceBySpendingClues,
   blankAct,
   blankAsset,
   blankEnemy,
@@ -21,7 +19,6 @@ import {
   playAreaOf,
   resignAction,
   threatAreaOf,
-  whenTokensOnSelf,
 } from '@arkham/engine';
 import { range } from '@arkham/util';
 import { initI18n } from '../i18n';
@@ -1222,7 +1219,7 @@ describe('InvestigatorBar', () => {
             .withLocation(study, blankLocation('study'), { revealed: true })
             .withAct(
               firstAct,
-              blankAct('first_act', { actions: [advanceBySpendingClues(perInvestigator(2))] }),
+              blankAct('first_act', { advance: { kind: 'spendClues', clues: perInvestigator(2) } }),
             )
             .withAct(instanceId('second_act'), blankAct('second_act'))
             .withInvestigator(alder, { locationId: study, clues: 1 })
@@ -1243,7 +1240,7 @@ describe('InvestigatorBar', () => {
             .withLocation(study, blankLocation('study'), { revealed: true })
             .withAct(
               firstAct,
-              blankAct('first_act', { actions: [advanceBySpendingClues(perInvestigator(2))] }),
+              blankAct('first_act', { advance: { kind: 'spendClues', clues: perInvestigator(2) } }),
             )
             .withAct(instanceId('second_act'), blankAct('second_act'))
             .withInvestigator(alder, { locationId: study, clues: 2 })
@@ -1261,7 +1258,7 @@ describe('InvestigatorBar', () => {
       /** An act that takes clues on it: its action costs 1 clue and places 1 clue on it. */
       const ritualAct = blankAct('ritual_act', {
         actions: [{ cost: { spend: 'clues', amount: 1 }, effects: [placeCluesOnSelf(1)] }],
-        abilities: [whenTokensOnSelf('clue', fixed(3), advanceAct())],
+        advance: { kind: 'cluesOnSelf', clues: fixed(3) },
       });
 
       it.each([

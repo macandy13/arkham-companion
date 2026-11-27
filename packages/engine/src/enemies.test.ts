@@ -697,16 +697,16 @@ describe('MoveEnemy', () => {
   });
 });
 
-describe('MoveEnemyTowards', () => {
-  const moveGhoulTowards = (towards: InstanceId) =>
-    ({ type: 'MoveEnemyTowards', enemyId: ghoul, towards }) as const;
+describe('MoveEnemy toward a location', () => {
+  const moveGhoulToward = (toward: InstanceId) =>
+    ({ type: 'MoveEnemy', enemyId: ghoul, toward }) as const;
 
   it('moves an enemy in the attic one location towards the hall, into the cellar', () => {
     const { context, state } = hallCellarAttic
       .withCard(ghoul, ghoulCard, atLocation(attic))
       .start();
 
-    const after = stateAfter(context, state, moveGhoulTowards(hall));
+    const after = stateAfter(context, state, moveGhoulToward(hall));
 
     expect(zoneOf(after, ghoul)).toEqual(atLocation(cellar));
   });
@@ -714,7 +714,7 @@ describe('MoveEnemyTowards', () => {
   it('engages alice when the enemy arrives at her location', () => {
     const { context, state } = aliceInHall.withCard(ghoul, ghoulCard, atLocation(cellar)).start();
 
-    const after = stateAfter(context, state, moveGhoulTowards(hall));
+    const after = stateAfter(context, state, moveGhoulToward(hall));
 
     expect(zoneOf(after, ghoul)).toEqual(engagedWith(alice));
   });
@@ -725,23 +725,23 @@ describe('MoveEnemyTowards', () => {
       .start();
     const exhausted = stateAfter(context, state, { type: 'ExhaustEnemy', enemyId: ghoul });
 
-    const after = stateAfter(context, exhausted, moveGhoulTowards(hall));
+    const after = stateAfter(context, exhausted, moveGhoulToward(hall));
 
     expect(zoneOf(after, ghoul)).toEqual(atLocation(cellar));
   });
 
   it.each([
-    { name: 'it is already there', towards: cellar },
-    { name: 'there is no path there', towards: instanceId('shed') },
-    { name: 'the target is set aside, not in play', towards: instanceId('set_aside_parlor') },
-  ])('leaves the enemy in the cellar when $name', ({ towards }) => {
+    { name: 'it is already there', toward: cellar },
+    { name: 'there is no path there', toward: instanceId('shed') },
+    { name: 'the target is set aside, not in play', toward: instanceId('set_aside_parlor') },
+  ])('leaves the enemy in the cellar when $name', ({ toward }) => {
     const { context, state } = hallCellarAttic
       .withLocation(instanceId('shed'), blankLocation('shed'))
       .withCard(instanceId('set_aside_parlor'), blankLocation('parlor'), setAside)
       .withCard(ghoul, ghoulCard, atLocation(cellar))
       .start();
 
-    const after = stateAfter(context, state, moveGhoulTowards(towards));
+    const after = stateAfter(context, state, moveGhoulToward(toward));
 
     expect(zoneOf(after, ghoul)).toEqual(atLocation(cellar));
   });
@@ -754,9 +754,9 @@ describe('MoveEnemyTowards', () => {
       .withConnection(garden, attic)
       .withCard(ghoul, aloofGhoulCard, atLocation(hall))
       .start();
-    const asked = stateAfter(context, state, moveGhoulTowards(attic));
+    const asked = stateAfter(context, state, moveGhoulToward(attic));
 
-    const after = stateAfter(context, asked, answer(`towards:${ghoul}`, garden));
+    const after = stateAfter(context, asked, answer(`move:${ghoul}`, garden));
 
     expect(asked.pending).toMatchObject([
       {
@@ -769,10 +769,22 @@ describe('MoveEnemyTowards', () => {
     expect(zoneOf(after, ghoul)).toEqual(atLocation(garden));
   });
 
+  it('rejects a chosen step that is not the first of its shortest ways', () => {
+    const { context, state } = hallCellarAttic
+      .withCard(ghoul, ghoulCard, atLocation(attic))
+      .start();
+
+    expect(rejectionFrom(context, state, { ...moveGhoulToward(hall), to: hall })).toEqual({
+      code: 'enemyCannotMove',
+      cardId: ghoul,
+      to: hall,
+    });
+  });
+
   it('rejects moving an engaged enemy, which moves only with its investigator', () => {
     const { context, state } = aliceInHall.withCard(ghoul, ghoulCard, engagedWith(alice)).start();
 
-    expect(rejectionFrom(context, state, moveGhoulTowards(attic))).toEqual({
+    expect(rejectionFrom(context, state, moveGhoulToward(attic))).toEqual({
       code: 'enemyEngaged',
       cardId: ghoul,
       investigatorId: alice,
@@ -782,7 +794,7 @@ describe('MoveEnemyTowards', () => {
   it('disengages an enemy engaged with alice in the hall and moves it into the cellar when the move is forced', () => {
     const { context, state } = aliceInHall.withCard(ghoul, ghoulCard, engagedWith(alice)).start();
 
-    const after = stateAfter(context, state, { ...moveGhoulTowards(attic), forced: true });
+    const after = stateAfter(context, state, { ...moveGhoulToward(attic), forced: true });
 
     expect(zoneOf(after, ghoul)).toEqual(atLocation(cellar));
   });
@@ -790,14 +802,14 @@ describe('MoveEnemyTowards', () => {
   it('leaves an enemy engaged with alice as it is when forced towards her own location', () => {
     const { context, state } = aliceInHall.withCard(ghoul, ghoulCard, engagedWith(alice)).start();
 
-    const after = stateAfter(context, state, { ...moveGhoulTowards(hall), forced: true });
+    const after = stateAfter(context, state, { ...moveGhoulToward(hall), forced: true });
 
     expect(zoneOf(after, ghoul)).toEqual(engagedWith(alice));
     expect(after.pending).toEqual([]);
   });
 
   describe('when the enemy attacks if it engages (Aerial Pursuit)', () => {
-    const attackingMove = { ...moveGhoulTowards(hall), attacksIfItEngages: true } as const;
+    const attackingMove = { ...moveGhoulToward(hall), attacksIfItEngages: true } as const;
 
     it('engages alice in the hall and attacks her', () => {
       const { context, state } = aliceInHall.withCard(ghoul, ghoulCard, atLocation(cellar)).start();

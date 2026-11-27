@@ -145,8 +145,8 @@ describe('Queen of Ash end to end: Roland and Daisy, seed 1, after Spreading Fla
     // opportunity as she leaves, and walks to Overgrown Tunnels. Entering the unrevealed Underground
     // Cistern costs 3 clues per investigator as a group: all 6, 3 each. Roland enters and act 1
     // advances: Elokoss spawns at the cistern, the Fire! he draws attaches to it, and Sluice
-    // Control comes into play beside it. Elokoss cannot make attacks of opportunity, so the players
-    // skip the one the engine offers as Roland takes a clue of the cistern's.
+    // Control comes into play beside it. Elokoss cannot make attacks of opportunity, so Roland
+    // takes a clue of the cistern's without one.
     table.startTurn(daisy);
     table.evade(daisy, byName('Hellhound'));
     table.moveTo(daisy, byName('Sewer Culvert'));
@@ -168,7 +168,6 @@ describe('Queen of Ash end to end: Roland and Daisy, seed 1, after Spreading Fla
     expect(table.board.enemy(byName('Elokoss')).at).toBe('Underground Cistern');
     expect(table.board.locationsOn(SEWERS)).toHaveLength(8);
     table.investigate(roland, { result: 'open' });
-    table.answer(byName('Elokoss'), 'does not provoke');
     table.resolveTest('pass');
     table.endTurn(roland);
     expect(table.board.investigator(roland).clues).toBe(1);
@@ -200,7 +199,7 @@ describe('Queen of Ash end to end: Roland and Daisy, seed 1, after Spreading Fla
     // Round 4 – investigation: Daisy takes a clue at Overgrown Tunnels and walks through the
     // culvert to Smuggler's Cache, where ending her turn lets her gain 1 resource.
     // Entering the unrevealed Sluice Control costs 1 clue per investigator as a group: Roland's and Daisy's.
-    // Roland enters, skipping Elokoss's attack of opportunity again, and opens the sluice valve:
+    // Roland enters, again without an attack of opportunity from Elokoss, and opens the sluice valve:
     // a combat test (5) he passes. Each enemy is defeated, Elokoss into the victory display, and the
     // scenario ends in Resolution 3.
     table.startTurn(daisy);
@@ -218,7 +217,6 @@ describe('Queen of Ash end to end: Roland and Daisy, seed 1, after Spreading Fla
         [daisy, 1],
       ],
     });
-    table.answer(byName('Elokoss'), 'does not provoke');
     table.useCardAction(roland, byName('Sluice Control'));
     table.answerOnly('skill.combat');
     table.resolveTest('pass');

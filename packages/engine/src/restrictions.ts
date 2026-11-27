@@ -2,6 +2,7 @@ import { includesAny, withoutEmptyLists } from '@arkham/util';
 import { cardStats, type EngineContext, type Trait } from './cards';
 import { cardsInPlay } from './doom';
 import type { InvestigatorId } from './ids';
+import { cardsInZones, locationOfCard, type CardFilter } from './lookup';
 import { binds, namesCard, type CardScope, type InvestigatorScope } from './scopes';
 import type { CardInstance, GameState } from './state';
 
@@ -72,21 +73,37 @@ export interface EnemyLocationRestriction {
  * What a constant "cannot" ability forbids an enemy (`EnemyCardRestriction.cannot`):
  * - `ready`: it stays exhausted ("it cannot ready", Handcuffs).
  * - `placeDoom`: no doom is placed on it ("doom cannot be placed on it", Handcuffs).
+ * - `damaged`: no damage is dealt to it ("cannot be damaged", A Gathering).
+ * - `move`: it stays where it is ("cannot move", Elokoss): it takes no hunter step, a card effect
+ *   leaves it in place, and an investigator it is engaged with moves away without it
+ *   (`isClosedToEnemy`).
+ * - `attackOfOpportunity`: an action of an investigator engaged with it does not provoke its attack
+ *   ("cannot make attacks of opportunity", Elokoss).
  */
 export type EnemyRestriction = (typeof ENEMY_RESTRICTIONS)[number];
 
 /** Every `EnemyRestriction`. */
-const ENEMY_RESTRICTIONS = ['ready', 'placeDoom'] as const;
+const ENEMY_RESTRICTIONS = [
+  'ready',
+  'placeDoom',
+  'damaged',
+  'move',
+  'attackOfOpportunity',
+] as const;
 
 /**
  * A "cannot" about an enemy: `{ cannot: 'ready', of: 'host', exceptTraits: [trait('Elite')] }` is
  * Handcuffs ("If the attached enemy is non-Elite, it cannot ready"). An enemy with one of
- * `exceptTraits` is not held. Read by `isEnemyRestricted`.
+ * `exceptTraits` is not held, and with `atLocationWith` only an enemy whose location has a card
+ * attached that matches it: `{ cannot: 'damaged', of: 'eachEnemy', atLocationWith: { code: fire }
+ * }` is A Gathering ("Each enemy at a location with a copy of Fire! attached cannot be damaged").
+ * Read by `isEnemyRestricted`.
  */
 export interface EnemyCardRestriction {
   cannot: EnemyRestriction;
-  of: Extract<CardScope, 'self' | 'host'>;
+  of: Extract<CardScope, 'self' | 'host' | 'eachEnemy'>;
   exceptTraits?: readonly Trait[];
+  atLocationWith?: CardFilter;
 }
 
 /** A "cannot" about a location: `{ cannot: 'investigate', of: 'host' }` is Locked Door. */
@@ -159,8 +176,10 @@ export function isRestricted(
 }
 
 /**
- * Whether a card in play keeps `enemy` from moving into `location` (`EnemyLocationRestriction`):
- * a hunter takes another equally short step or stays, and a card effect leaves the enemy where it is.
+ * Whether a card in play keeps `enemy` from moving into `location`: the location is closed to it
+ * (`EnemyLocationRestriction`, Barricade), or the enemy cannot move at all (`move`, Elokoss). A
+ * hunter takes another equally short step or stays, a card effect leaves the enemy where it is,
+ * and an investigator it is engaged with moves away without it.
  */
 export function isClosedToEnemy(
   ctx: EngineContext,
@@ -168,6 +187,7 @@ export function isClosedToEnemy(
   enemy: CardInstance,
   location: CardInstance,
 ): boolean {
+  if (isEnemyRestricted(ctx, state, enemy, 'move')) return true;
   const traits = cardStats(ctx.cards, enemy.code).traits;
   return cardsInPlay(state).some((source) =>
     activeRestrictions(ctx, source).some(
@@ -181,7 +201,8 @@ export function isClosedToEnemy(
 
 /**
  * Whether a card in play forbids `enemy` to do `cannot` (`EnemyCardRestriction`): a handcuffed
- * enemy does not ready in the upkeep phase or by a card effect, and no doom is placed on it.
+ * enemy does not ready in the upkeep phase or by a card effect, and no doom is placed on it; an
+ * enemy at a burning location takes no damage while A Gathering is the agenda.
  */
 export function isEnemyRestricted(
   ctx: EngineContext,
@@ -197,8 +218,24 @@ export function isEnemyRestricted(
         (restriction) =>
           restriction.cannot === cannot &&
           !includesAny(traits, restriction.exceptTraits) &&
-          namesCard(ctx, state, source, restriction.of, enemy),
+          namesCard(ctx, state, source, restriction.of, enemy) &&
+          (restriction.atLocationWith === undefined ||
+            isAtLocationWith(ctx, state, enemy, restriction.atLocationWith)),
       ),
+  );
+}
+
+/** Whether a card matching `attached` is attached to the location `enemy` is at. */
+function isAtLocationWith(
+  ctx: EngineContext,
+  state: GameState,
+  enemy: CardInstance,
+  attached: CardFilter,
+): boolean {
+  const location = locationOfCard(state, enemy);
+  return (
+    location !== undefined &&
+    cardsInZones(ctx, state, [{ kind: 'attachedTo', hostId: location }], attached).length > 0
   );
 }
 

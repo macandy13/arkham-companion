@@ -23,7 +23,7 @@ import {
   type GameState,
   type InstanceId,
 } from './index';
-import { rejectionFrom, stateAfter } from '../test/utils';
+import { answer, rejectionFrom, stateAfter } from '../test/utils';
 
 const alice = investigatorId('alice');
 const bob = investigatorId('bob');
@@ -217,6 +217,28 @@ describe('a location closed to enemies (Barricade)', () => {
     expect(zoneOf(after, ghoul)).toEqual(atLocation(parlor));
   });
 
+  it('keeps a hunter out on its way to the investigator the players chose', () => {
+    // Alice two steps away through the hall or the parlor, Bob two steps away through the shed.
+    const shed = instanceId('shed');
+    const garden = instanceId('garden');
+    const { context, state } = row
+      .withLocation(parlor, location)
+      .withLocation(shed, location)
+      .withLocation(garden, location)
+      .withConnection(study, parlor)
+      .withConnection(parlor, attic)
+      .withConnection(study, shed)
+      .withConnection(shed, garden)
+      .withInvestigator(bob, { locationId: garden })
+      .withCard(ghoul, hunterGhoul, atLocation(study))
+      .start();
+    const asked = stateAfter(context, state, barricadeOnHall, { type: 'MoveHunters' });
+
+    const after = stateAfter(context, asked, answer(`move:${ghoul}:investigator`, alice));
+
+    expect(zoneOf(after, ghoul)).toEqual(atLocation(parlor));
+  });
+
   it('lets the hunter in again once Barricade is discarded', () => {
     const { context, state } = row.withCard(ghoul, hunterGhoul, atLocation(study)).start();
     const barricaded = stateAfter(context, state, barricadeOnHall);
@@ -239,7 +261,7 @@ describe('a location closed to enemies (Barricade)', () => {
     { name: 'moving it there', command: { type: 'MoveEnemy', enemyId: ghoul, to: hall } },
     {
       name: 'moving it towards Alice',
-      command: { type: 'MoveEnemyTowards', enemyId: ghoul, towards: attic },
+      command: { type: 'MoveEnemy', enemyId: ghoul, toward: attic },
     },
   ])('keeps a card effect from $name', ({ command }) => {
     const { context, state } = row.withCard(ghoul, plainGhoul, atLocation(study)).start();

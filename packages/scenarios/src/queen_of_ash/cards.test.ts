@@ -33,6 +33,7 @@ import {
   ASHEN_REBIRTH_DECISION,
   UNNATURAL_DECAY_DECISION,
 } from './cards';
+import { SPREADING_FLAMES_CODES } from '../spreading_flames/cards';
 
 /** The card with `code` in the scenario's card data. */
 const cardOf = (code: string): CardStats => cardIn(queenOfAshCards, code);
@@ -147,6 +148,36 @@ describe('Queen of Ash card abilities', () => {
     investigatorId: alice,
     from: encounterDeck,
     pick: { match: { name: card } },
+  });
+
+  describe('A Gathering and A Ritual', () => {
+    const zealot = instanceId('zealot');
+
+    it.each([
+      { agenda: 'A Gathering', code: QUEEN_OF_ASH_CODES.aGathering },
+      { agenda: 'A Ritual', code: QUEEN_OF_ASH_CODES.aRitual },
+    ])(
+      'keep 1 damage off a Zealot at Sewer Culvert with Fire! attached while $agenda is current',
+      ({ code }) => {
+        const { context, state } = newGame()
+          .withAgenda(instanceId('agenda'), cardOf(code))
+          .withLocation(culvert, cardOf(QUEEN_OF_ASH_CODES.sewerCulvert), { revealed: true })
+          .withCard(instanceId('fire'), cardOf(SPREADING_FLAMES_CODES.fire), {
+            kind: 'attachedTo',
+            hostId: culvert,
+          })
+          .withCard(zealot, cardOf(QUEEN_OF_ASH_CODES.zealot), atLocation(culvert))
+          .start();
+
+        const after = stateAfter(context, state, {
+          type: 'DamageEnemy',
+          enemyId: zealot,
+          amount: 1,
+        });
+
+        expect(after.cards[zealot]?.tokens.damage).toBeUndefined();
+      },
+    );
   });
 
   describe('Sewer Tunnels (Overgrown Tunnels)', () => {

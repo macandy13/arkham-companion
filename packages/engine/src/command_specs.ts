@@ -40,7 +40,6 @@ import {
   handleExhaustEnemy,
   handleRetreatEnemy,
   handleMoveEnemy,
-  handleMoveEnemyTowards,
   handleReadyEnemy,
 } from './handle_enemy';
 import {
@@ -68,7 +67,7 @@ import {
 } from './handle_scenario';
 import { handleStartScenario } from './handle_start_scenario';
 import { handleMoveTokens } from './handle_tokens';
-import { handleMoveHunter, handleMoveHunters } from './hunters';
+import { handleMoveHunters } from './hunters';
 import { attacksStillDue, handleNextPhase } from './phases';
 import {
   handleEndSkillTest,
@@ -287,9 +286,7 @@ const COMMAND_SPECS: CommandSpecs = {
   EvadeEnemy: { handle: handleEvadeEnemy },
   ReadyEnemy: { handle: handleReadyEnemy },
   MoveEnemy: { handle: handleMoveEnemy },
-  MoveEnemyTowards: { handle: handleMoveEnemyTowards },
   MoveHunters: { handle: handleMoveHunters },
-  MoveHunter: { handle: handleMoveHunter },
   RequestDecision: { handle: handleRequestDecision },
   TestSkill: { handle: handleTestSkill },
   ForEachPoint: { handle: handleMarginEntry },

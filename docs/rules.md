@@ -23,6 +23,8 @@ Each topic page links to its section on [ArkhamDB's copy of the Rules Reference]
 - A group page starts with the principle its cards share, then one list item per card: the card text in short, our ruling and its source.
 - A card named in parentheses as an example of a general rule ("Obscuring Fog's +2 shroud") stays on the topic page.
 
+**Each claim names its test.** Under a claim's list item, one line per test that proves it: `` Test: `packages/engine/src/hunters.test.ts › MoveHunters › heads for the nearest investigator` `` (the file, then its `describe` and `it` titles as written, `$name` templates too). With rule changes merging on the rules checker's verdict instead of the owner's review, these lines are the record of what the app enforces and what checks it. `rules_ledger.test.ts` (`packages/merge_gate`) fails when a named test is renamed or deleted, so update the line with the test. A title counts where it is the first argument of a `describe`, `it` or `test` call (with `.skip`, `.each(…)` and the like too), in the order given; a title built with `${…}` can't be named. Claims without a line yet are being filled in (MA.4b).
+
 **Shape of a page.** Keep paragraphs short and put enumerations into Markdown lists, one item per line, so parallel PRs that add to a page don't conflict (`docs/coding-guidelines.md` §8).
 
 ## Topics

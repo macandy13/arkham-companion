@@ -1,11 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
-  advanceBySpendingClues,
   eachInPlay,
   eachInvestigator,
   yourLocation,
   you,
-  advanceBySpendingCluesAtRoundEnd,
   atLocation,
   attachedTo,
   blankAct,
@@ -32,6 +30,7 @@ import {
   cardCode,
   decisionId,
   drawCards,
+  fixed,
   victoryDisplay,
   youMustEither,
   type UsageLimit,
@@ -764,6 +763,27 @@ describe('a fast action during your turn with 1 or 2 investigators in the game',
   });
 });
 
+describe('withAdvance', () => {
+  const printed: CardAction = { effects: [] };
+
+  it.each([
+    {
+      rule: { kind: 'spendClues', clues: fixed(2) },
+      adds: { actions: [printed, { cost: { spend: 'groupClues', amount: fixed(2) } }] },
+    },
+    {
+      rule: { kind: 'spendCluesAtRoundEnd', clues: fixed(2), decision: decisionId('at_round_end') },
+      adds: { actions: [printed], abilities: [{ window: { on: 'roundEnds' } }] },
+    },
+    {
+      rule: { kind: 'cluesOnSelf', clues: fixed(2) },
+      adds: { actions: [printed], abilities: [{ window: { on: 'tokensPlaced', token: 'clue' } }] },
+    },
+  ] as const)('adds what $rule.kind asks for after the act’s own actions', ({ rule, adds }) => {
+    expect(blankAct('act', { actions: [printed], advance: rule })).toMatchObject(adds);
+  });
+});
+
 describe('advancing the act by spending clues', () => {
   const firstAct = instanceId('first_act');
   /**
@@ -774,7 +794,7 @@ describe('advancing the act by spending clues', () => {
     .withLocation(hall, blankLocation('hall'), { revealed: true })
     .withAct(
       firstAct,
-      blankAct('first_act', { actions: [advanceBySpendingClues(perInvestigator(1))] }),
+      blankAct('first_act', { advance: { kind: 'spendClues', clues: perInvestigator(1) } }),
     )
     .withAct(instanceId('second_act'), blankAct('second_act'))
     .withInvestigator(alice, { locationId: hall, clues: 1 })
@@ -830,9 +850,12 @@ describe('advancing the act by spending clues at the end of the round', () => {
       .withAct(
         firstAct,
         blankAct('first_act', {
-          abilities: [
-            advanceBySpendingCluesAtRoundEnd(spendAtRoundEnd, perInvestigator(1), cardCode('hall')),
-          ],
+          advance: {
+            kind: 'spendCluesAtRoundEnd',
+            decision: spendAtRoundEnd,
+            clues: perInvestigator(1),
+            location: cardCode('hall'),
+          },
         }),
       )
       .withAct(instanceId('second_act'), blankAct('second_act'))
@@ -934,7 +957,11 @@ describe('advancing the act by spending clues anywhere at the end of the round',
       .withAct(
         firstAct,
         blankAct('first_act', {
-          abilities: [advanceBySpendingCluesAtRoundEnd(spendAnywhere, perInvestigator(1))],
+          advance: {
+            kind: 'spendCluesAtRoundEnd',
+            decision: spendAnywhere,
+            clues: perInvestigator(1),
+          },
         }),
       )
       .withAct(instanceId('second_act'), blankAct('second_act'))

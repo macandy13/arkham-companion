@@ -1,11 +1,12 @@
 import {
-  advanceBySpendingClues,
   cardCode,
   cardImagePath,
   fixed,
   perInvestigator,
   trait,
+  withAdvance,
   type Ability,
+  type ActAdvanceRule,
   type CardAction,
   type Modifier,
   type GroupClueCost,
@@ -42,6 +43,8 @@ export interface AgendaOptions {
   actions?: readonly CardAction[];
   /** Its constant modifiers while it is the current agenda ("Each enemy gets +1 fight"). */
   modifiers?: readonly Modifier[];
+  /** Its constant "cannot" abilities while it is the current agenda. */
+  restrictions?: readonly CardRestriction[];
 }
 
 /** Card stats for a hand-entered agenda of `set`, with both printed sides. */
@@ -54,6 +57,7 @@ export function agenda({
   abilities,
   actions,
   modifiers,
+  restrictions,
   pictures,
 }: AgendaOptions): CardStats {
   return {
@@ -64,22 +68,33 @@ export function agenda({
     ...(abilities ? { abilities } : {}),
     ...(actions ? { actions } : {}),
     ...(modifiers ? { modifiers } : {}),
+    ...(restrictions ? { restrictions } : {}),
   };
 }
 
 /**
- * Printed values of an act; an act without a clue threshold (one whose objective replaces it)
- * omits `cluesPerInvestigator`, else it gets `advanceBySpendingClues`.
+ * Printed values of an act: its clue threshold (`cluesPerInvestigator`, spent as a group), or the
+ * objective that replaces it (`advance`); `withAdvance` adds what does it.
  */
-export interface ActOptions {
+export type ActOptions = ActPrintedValues &
+  (
+    | { cluesPerInvestigator?: number; advance?: never }
+    | {
+        cluesPerInvestigator?: never;
+        /** An objective that advances it instead of a clue threshold (The Barrier, Disrupting the Ritual). */
+        advance: Exclude<ActAdvanceRule, { kind: 'spendClues' }>;
+      }
+  );
+
+/** What every act prints, whichever way it advances (`ActOptions`). */
+interface ActPrintedValues {
   code: string;
   name: string;
   set: EncounterSetCode;
   /** The file type of its pictures on ArkhamDB; PNG by default. */
   pictures?: PictureFormat;
   stage: number;
-  cluesPerInvestigator?: number;
-  /** Its reverse side (`whenAdvanced`) and its objective. */
+  /** Its reverse side (`whenAdvanced`) and its other objectives. */
   abilities?: readonly Ability[];
   /** Its action abilities, such as Uncovering the Conspiracy's draw from the Cultist deck. */
   actions?: readonly CardAction[];
@@ -92,34 +107,24 @@ export function act({
   set,
   stage,
   cluesPerInvestigator,
+  advance,
   abilities,
   actions,
   pictures,
 }: ActOptions): CardStats {
-  return {
+  const rule: ActAdvanceRule | undefined =
+    advance ??
+    (cluesPerInvestigator === undefined
+      ? undefined
+      : { kind: 'spendClues', clues: perInvestigator(cluesPerInvestigator) });
+  return withAdvance({
     ...scenarioCard(code, name, set, pictures),
     typeCode: 'act',
     stage: { number: stage },
     ...(abilities ? { abilities } : {}),
-    ...actActions(actions, cluesPerInvestigator),
-  };
-}
-
-/**
- * The act's printed actions, then its spend-clues ability for a clue threshold, so the printed
- * ones keep their indices (`UseCardAction.action`).
- */
-function actActions(
-  printed: readonly CardAction[] | undefined,
-  cluesPerInvestigator: number | undefined,
-): Pick<CardStats, 'actions'> {
-  const actions = [
-    ...(printed ?? []),
-    ...(cluesPerInvestigator === undefined
-      ? []
-      : [advanceBySpendingClues(perInvestigator(cluesPerInvestigator))]),
-  ];
-  return actions.length === 0 ? {} : { actions };
+    ...(actions ? { actions } : {}),
+    ...(rule ? { advance: rule } : {}),
+  });
 }
 
 /** Printed values of a location whose clues scale per investigator. */

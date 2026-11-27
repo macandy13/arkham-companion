@@ -1,11 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
-  advanceBySpendingClues,
   advanceAct,
   eachInZone,
   encounterDeck,
   whenVictoryDisplayHolds,
-  whenTokensOnSelf,
   resolutionId,
   cardImagePath,
   atLocation,
@@ -1067,7 +1065,7 @@ describe('agenda and act', () => {
       .withAgenda(instanceId('first_agenda'), blankAgenda('first_agenda', fixed(3)))
       .withAct(
         instanceId('first_act'),
-        blankAct('first_act', { actions: [advanceBySpendingClues(perInvestigator(2))] }),
+        blankAct('first_act', { advance: { kind: 'spendClues', clues: perInvestigator(2) } }),
       )
       .withCard(instanceId('doomed_curse'), blankTreachery('doomed_curse'), threatAreaOf(alice), {
         tokens: { doom: 1 },
@@ -1147,7 +1145,7 @@ describe('agenda and act', () => {
       .withInvestigator(alice, { locationId: study })
       .withAct(
         instanceId('first_act'),
-        blankAct('first_act', { actions: [advanceBySpendingClues(fixed(3))] }),
+        blankAct('first_act', { advance: { kind: 'spendClues', clues: fixed(3) } }),
       )
       .start();
 
@@ -1174,7 +1172,7 @@ describe('agenda and act', () => {
       .withAct(
         instanceId('ritual_act'),
         blankAct('ritual_act', {
-          abilities: [whenTokensOnSelf('clue', perInvestigator(2), advanceAct())],
+          advance: { kind: 'cluesOnSelf', clues: perInvestigator(2) },
         }),
       )
       .start();
@@ -1843,7 +1841,10 @@ describe('card actions', () => {
       .withInvestigator(alice, { locationId: study, clues: 2 })
       .withAct(
         instanceId('first_act'),
-        blankAct('first_act', { actions: [{ effects: [] }, advanceBySpendingClues(fixed(2))] }),
+        blankAct('first_act', {
+          actions: [{ effects: [] }],
+          advance: { kind: 'spendClues', clues: fixed(2) },
+        }),
       )
       .withTurnOf(alice)
       .start();

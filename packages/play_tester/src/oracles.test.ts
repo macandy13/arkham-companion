@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import {
-  advanceBySpendingClues,
   afterEngaging,
   atEndOfPhase,
   blankAct,
@@ -232,7 +231,7 @@ describe('advancing the act', () => {
         .withInvestigator(alice, { locationId: study, clues })
         .withAct(
           instanceId('first_act'),
-          blankAct('first_act', { actions: [advanceBySpendingClues(fixed(2))] }),
+          blankAct('first_act', { advance: { kind: 'spendClues', clues: fixed(2) } }),
         )
         .withAct(instanceId('second_act'), blankAct('second_act', { stage: { number: 2 } }))
         .withTurnOf(alice),
@@ -256,7 +255,7 @@ describe('advancing the act', () => {
         .withInvestigator(alice, { locationId: study, clues: 1 })
         .withAct(
           instanceId('first_act'),
-          blankAct('first_act', { actions: [advanceBySpendingClues(fixed(2))] }),
+          blankAct('first_act', { advance: { kind: 'spendClues', clues: fixed(2) } }),
         )
         .withTurnOf(alice),
     );

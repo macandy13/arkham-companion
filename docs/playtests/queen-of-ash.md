@@ -22,10 +22,12 @@ The scripted golden game is [`end_to_end.test.ts`](../../packages/scenarios/src/
 
 **Agenda 1, A Gathering**
 
+- [ ] While it is the agenda, an enemy at a location with Fire! attached takes no damage: a fight's hit or Fire!'s damage as the investigation phase ends deals it none.
 - [ ] When it advances, a set-aside Servant of Flame spawns at Underground Cistern, then each investigator tests willpower (4), lead first, taking 1 horror on a fail.
 
 **Agenda 2, A Ritual**
 
+- [ ] Enemies at a location with Fire! attached take no damage, as under agenda 1.
 - [ ] If it advances during act 1, Underground Cistern is revealed and Elokoss spawns there.
 - [ ] Its reverse side makes agenda 3 the act and the agenda at once.
 
@@ -55,6 +57,7 @@ The scripted golden game is [`end_to_end.test.ts`](../../packages/scenarios/src/
 - [ ] Discovering the last clue at Underground Cistern places 2 per investigator there again; as the investigation phase ends, each ready non-Elite Cultist there is discarded with 1 doom on the agenda for each.
 - [ ] Elokoss's fast ability costs the investigator at her location 1 clue per investigator, from their own clues, and places 1 clue on her; her fifth clue ends the scenario with resolution 2.
 - [ ] Elokoss is massive and retaliates and has 5 plus 5 per investigator health; the Servant of Flame, Queen's Knight, Herald of Flame and Dark Magician hunt; Zealots are aloof.
+- [ ] Elokoss never moves, not even when a card effect would move her, and an action taken while engaged with her provokes no attack of opportunity from her.
 
 **Encounter cards**
 
@@ -75,8 +78,8 @@ The scripted golden game is [`end_to_end.test.ts`](../../packages/scenarios/src/
 
 These are done by hand at the table; the app does not do them.
 
-- The agendas' rule that enemies at a location with Fire! attached cannot be damaged (heal the damage Fire! itself deals them as the investigation phase ends), and agenda 3a's damage instead of doom.
-- Elokoss: that she cannot move or make attacks of opportunity, and her Mother of Flame side.
+- Agenda 3a's damage instead of doom.
+- Elokoss's Mother of Flame side.
 - Queen's Knight's damage to Elokoss, Herald of Flame's healing after it attacks, and the Servant of Flame's codex entry as it is defeated.
 - The Zealot's doom as it enters play (setup places it) and the Dark Magician's as the round ends.
 - Unnatural Decay's doom on an asset, offered even to an investigator without one, who must take the 2 damage instead.

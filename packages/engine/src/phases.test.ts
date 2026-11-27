@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 import {
   atEndOfRound,
   atLocation,
-  advanceBySpendingClues,
   blankAct,
   blankAgenda,
   blankEnemy,
@@ -45,7 +44,7 @@ const secondAct = instanceId('second_act');
 const agendaOf2 = blankAgenda('agenda_of_2', fixed(2));
 const agendaOf9 = blankAgenda('agenda_of_9', fixed(9), { stage: { number: 2 } });
 /** The first act needs 1 clue to advance. */
-const actOf1 = blankAct('act_of_1', { actions: [advanceBySpendingClues(fixed(1))] });
+const actOf1 = blankAct('act_of_1', { advance: { kind: 'spendClues', clues: fixed(1) } });
 const lastAct = blankAct('last_act', { stage: { number: 2 } });
 /** A ghoul dealing 2 damage and 1 horror. */
 const ghoulCard = blankEnemy('ghoul', { damage: 2, horror: 1 });
@@ -322,10 +321,10 @@ describe('enemy phase', () => {
       .start();
 
     const asked = toEnemyPhase(context, state, alice, bob);
-    const answered = stateAfter(context, asked, answer('hunter:rat:investigator', 'bob'));
+    const answered = stateAfter(context, asked, answer('move:rat:investigator', 'bob'));
     const resumed = stateAfter(context, answered, next);
 
-    expect(asked.pending.map((decision) => decision.id)).toEqual(['hunter:rat:investigator']);
+    expect(asked.pending.map((decision) => decision.id)).toEqual(['move:rat:investigator']);
     expect(asked.meta.steps).toEqual([{ id: 'enemiesAttack' }]);
     expect(resumed.meta.steps).toEqual([
       { id: 'enemiesAttack', attacks: [{ enemyId: instanceId('rat'), investigatorId: bob }] },

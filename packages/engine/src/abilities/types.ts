@@ -433,7 +433,7 @@ export type AbilityCommand =
           | 'HealEnemy'
           | 'DamageEnemy'
           | 'DefeatEnemy'
-          | 'MoveEnemyTowards'
+          | 'MoveEnemy'
           | 'DisengageEnemy'
           | 'EnemyAttacks'
           | 'EngageEnemy'
@@ -630,11 +630,6 @@ export type DifficultyChange =
  */
 export type StatRange =
   { min: TokenAmount; max?: TokenAmount } | { min?: TokenAmount; max: TokenAmount };
-
-/** `amount` as a `ScaledValue`, for views that show an objective's count. */
-export function asScaled(amount: TokenAmount): ScaledValue {
-  return typeof amount === 'number' ? { fixed: amount, perInvestigator: 0 } : amount;
-}
 
 /** Whether `value` lies within `range`, its bounds scaled for `playerCount` investigators. */
 export function inRange(value: number, range: StatRange, playerCount: number): boolean {
