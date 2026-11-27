@@ -19,7 +19,7 @@ Card rulings: [Objectives and special acts and agendas](cards/objectives.md).
   Test: [`packages/engine/src/investigator_effects.test.ts › card effects that discover clues › discovers a clue at another location the card names`](../../packages/engine/src/investigator_effects.test.ts#L171)
 - "Take control of 1 of the clues on Constance Dumaine" moves the clue from that card onto the investigator; it is not discovering, which only takes clues from a location ([Clues](https://arkhamdb.com/rules#Clues)), so "cannot discover clues" does not stop it. Clues moved onto a card count for its "if there are N clues on it" like placed ones.
   Test: [`packages/engine/src/scenario_effects.test.ts › card effects that move tokens between cards › gives the clues on a card to the investigator who takes control of them`](../../packages/engine/src/scenario_effects.test.ts#L443)
-  Test: [`packages/engine/src/triggers.test.ts › objectives on a card's own tokens › advances when a clue is moved onto the act holding 1, as when one is placed`](../../packages/engine/src/triggers.test.ts#L2499)
+  Test: [`packages/engine/src/triggers.test.ts › objectives on a card's own tokens › advances when a clue is moved onto the act holding 1, as when one is placed`](../../packages/engine/src/triggers.test.ts#L2520)
 - An "Objective –" is active only while its agenda or act is current: the cards below it in the deck are not in play.
   Test: [`packages/engine/src/triggers.test.ts › objectives on the current agenda and act › does not fire for an act that is not current yet`](../../packages/engine/src/triggers.test.ts#L2101)
   - Advancing by an objective spends no clues: the objective overrides the clue requirement (RR "Act Deck and Agenda Deck").

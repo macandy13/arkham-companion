@@ -7,7 +7,7 @@
   - "At …" and "If …" abilities (also "at the end of the turn/round") resolve between the two.
 - Every part of an effect resolves before the "after" triggers it causes. So an engine command that is one effect may run its "after" abilities once all its events are done.
 - Forced abilities on a timing point resolve before reactions to it. The engine asks a reaction only after the forced effects of the whole command that triggered it, which the players see as one timing point.
-  Test: [`packages/engine/src/triggers.test.ts › a reaction the investigator may use or pass › resolves a forced ability on the same discovery before it asks about the reaction`](../../packages/engine/src/triggers.test.ts#L3351)
+  Test: [`packages/engine/src/triggers.test.ts › a reaction the investigator may use or pass › resolves a forced ability on the same discovery before it asks about the reaction`](../../packages/engine/src/triggers.test.ts#L3372)
 - A forced ability that causes a new trigger opens a nested sequence. It finishes, choices included, before the sequence it interrupted goes on (last in, first out).
 - Once an ability starts, as much of it as possible resolves, in order, before the next one starts ([Triggered Abilities](https://arkhamdb.com/rules#Triggered_Abilities)).
   Test: [`packages/engine/src/timing.test.ts › a forced effect that asks two questions › asks the second question only once the first is answered`](../../packages/engine/src/timing.test.ts#L273)

@@ -15,20 +15,21 @@ The cards below add when an objective is checked, what counts towards it, and ac
 - "If each undefeated investigator is at Miskatonic Quad, advance" (Escape the Dorms, Spreading Flames act 2) counts only the investigators still in the scenario, so it is met when the last one enters the Quad, or when the last one elsewhere is defeated or resigns.
   Test: [`packages/engine/src/triggers.test.ts › objectives on each investigator being at a location › $name`](../../../packages/engine/src/triggers.test.ts#L2275)
   Test: [`packages/scenarios/src/spreading_flames/spreading_flames.test.ts › Spreading Flames act 2, Escape the Dorms › $then once $name`](../../../packages/scenarios/src/spreading_flames/spreading_flames.test.ts#L360)
-  - If the last one away is the last investigator left, the scenario ends with no resolution and the act does not advance ([Elimination](https://arkhamdb.com/rules#Elimination)).
+  - If the last one away is the last investigator left, or one effect eliminates everyone left (Wild Flames), the scenario ends with no resolution and the act does not advance ([Elimination](https://arkhamdb.com/rules#Elimination)).
     Test: [`packages/engine/src/triggers.test.ts › objectives on each investigator being at a location › stays when alice, alone in the game and in the hall, is defeated: the scenario ends instead`](../../../packages/engine/src/triggers.test.ts#L2283)
+    Test: [`packages/engine/src/triggers.test.ts › objectives on each investigator being at a location › stays when alice and bob, both in the hall, are defeated by one effect: the scenario ends instead`](../../../packages/engine/src/triggers.test.ts#L2301)
 - "If there are 6 unique [[Cultist]] enemies in the victory display, advance" (Uncovering the Conspiracy, The Midnight Masks act 1) counts unique (✷) Cultists only, so an Acolyte there doesn't count.
-  Test: [`packages/engine/src/triggers.test.ts › objectives on the victory display › with $newcomer defeated, the act is $act`](../../../packages/engine/src/triggers.test.ts#L2378)
+  Test: [`packages/engine/src/triggers.test.ts › objectives on the victory display › with $newcomer defeated, the act is $act`](../../../packages/engine/src/triggers.test.ts#L2399)
   - The app checks it whenever a card enters the victory display, by a defeat or by an effect such as a Parley.
-    Test: [`packages/engine/src/triggers.test.ts › objectives on the victory display › advances when a unique Cultist is put into the victory display without a defeat (by an effect such as a Parley)`](../../../packages/engine/src/triggers.test.ts#L2387)
+    Test: [`packages/engine/src/triggers.test.ts › objectives on the victory display › advances when a unique Cultist is put into the victory display without a defeat (by an effect such as a Parley)`](../../../packages/engine/src/triggers.test.ts#L2408)
   - Ruth Turner, who goes there once evaded, triggers it as well.
     Test: [`packages/scenarios/src/the_midnight_masks/cards.test.ts › The Midnight Masks card abilities › Uncovering the Conspiracy › ends in R1 once alice evades Ruth Turner as the sixth unique Cultist`](../../../packages/scenarios/src/the_midnight_masks/cards.test.ts#L354)
   - A card put there by hand, a correction, doesn't.
 - "If there are a total of 6 [[Elite]] enemies in the victory display and/or under the act, advance" (Augurs of Flame, Smoke and Mirrors act 1) counts the face-up cards beneath the current act together with the victory display.
-  Test: [`packages/engine/src/triggers.test.ts › objectives on the victory display and beneath the act › counting $objective, a suspect placed beneath the act leaves act $current current`](../../../packages/engine/src/triggers.test.ts#L2446)
+  Test: [`packages/engine/src/triggers.test.ts › objectives on the victory display and beneath the act › counting $objective, a suspect placed beneath the act leaves act $current current`](../../../packages/engine/src/triggers.test.ts#L2467)
   Test: [`packages/scenarios/src/smoke_and_mirrors/smoke_and_mirrors.test.ts › Smoke and Mirrors act, Augurs of Flame › advances to Resolution 1 with $elite Elite enemies in the victory display: $ended`](../../../packages/scenarios/src/smoke_and_mirrors/smoke_and_mirrors.test.ts#L314)
   - The app checks it whenever a card enters either place; cards beneath a location don't count.
-    Test: [`packages/engine/src/triggers.test.ts › objectives on the victory display and beneath the act › does not count a card beneath a location`](../../../packages/engine/src/triggers.test.ts#L2460)
+    Test: [`packages/engine/src/triggers.test.ts › objectives on the victory display and beneath the act › does not count a card beneath a location`](../../../packages/engine/src/triggers.test.ts#L2481)
 
 - "When the round ends, investigators in the Hallway may, as a group, spend the requisite number of clues to advance" (The Barrier, The Gathering act 2) replaces the usual spend: it can't be spent during a turn, and only clues of investigators in the Hallway count.
   Test: [`packages/engine/src/card_actions.test.ts › advancing the act by spending clues at the end of the round › rejects bob in the cellar paying for the investigators in the hall`](../../../packages/engine/src/card_actions.test.ts#L917)
@@ -50,13 +51,13 @@ The cards below add when an objective is checked, what counts towards it, and ac
     Test: [`packages/scenarios/src/the_devourer_below/cards.test.ts › The Devourer Below card abilities › Disrupting the Ritual › spends alice’s clue on a $skill (3) test; a $result places $actClues clue on the act`](../../../packages/scenarios/src/the_devourer_below/cards.test.ts#L414)
   - Investigators can't spend clues to advance it.
   - The app checks the objective as clues arrive and advances the act itself; clues put on it by hand, a correction, don't trigger it.
-    Test: [`packages/engine/src/triggers.test.ts › objectives on a card's own tokens › $outcome when a clue is placed on the act holding $clues`](../../../packages/engine/src/triggers.test.ts#L2491)
-    Test: [`packages/engine/src/triggers.test.ts › objectives on a card's own tokens › does not fire for a clue put on by hand, a correction`](../../../packages/engine/src/triggers.test.ts#L2510)
+    Test: [`packages/engine/src/triggers.test.ts › objectives on a card's own tokens › $outcome when a clue is placed on the act holding $clues`](../../../packages/engine/src/triggers.test.ts#L2512)
+    Test: [`packages/engine/src/triggers.test.ts › objectives on a card's own tokens › does not fire for a clue put on by hand, a correction`](../../../packages/engine/src/triggers.test.ts#L2531)
 
 ## Doom and clues placed by cards
 
 - Doom "for each [[Ghoul]] enemy in the Hallway or Parlor" (They're Getting Out!, at the end of the round) counts the matching enemies there as the round-end window opens, engaged ones included (an engaged enemy is at its investigator's location).
-  Test: [`packages/engine/src/triggers.test.ts › an effect repeated for each Ghoul enemy in the Hall or Parlor › places 2 doom for the ghoul engaged with alice in the hall and the one in the parlor`](../../../packages/engine/src/triggers.test.ts#L3210)
+  Test: [`packages/engine/src/triggers.test.ts › an effect repeated for each Ghoul enemy in the Hall or Parlor › places 2 doom for the ghoul engaged with alice in the hall and the one in the parlor`](../../../packages/engine/src/triggers.test.ts#L3231)
   - Placed outside the mythos phase, it can only advance the agenda at the next threshold check.
     Test: [`packages/engine/src/doom.test.ts › threshold check › does not ask when doom reaches the threshold outside a check`](../../../packages/engine/src/doom.test.ts#L345)
   - Our reading: counting as the window opens rather than as the effect resolves differs only if another round-end ability moved a Ghoul first, which no Night of the Zealot card does.
@@ -77,4 +78,4 @@ The cards below add when an objective is checked, what counts towards it, and ac
 - A reverse side can make the next agenda both instead (Queen of Ash: A Ritual's "special agenda 3a replaces the current act and agenda"). Its "If it is act 1" is checked before the replacement. Brethren of Ash, agenda 3a, prints no doom threshold; its objective (Elokoss defeated, R1) fires once, and its own forced advance when each investigator is defeated kills each of them.
   Test: [`packages/engine/src/triggers.test.ts › trigger bus › a reverse side that makes the next agenda act and agenda › puts the ritual and the acts out of the game and makes the brethren act and agenda`](../../../packages/engine/src/triggers.test.ts#L399)
 - Sluice Control's success ("each enemy is defeated and each investigator who has not resigned is killed (→R3)") ends the scenario in R3 and then defeats each enemy, so those with victory reach the victory display for R3's experience. Nothing triggers once the scenario has ended, so Elokoss's defeat does not reach her "(→R1)" objectives (our reading: the card names R3).
-  Test: [`packages/engine/src/triggers.test.ts › a chain after the scenario ended › still defeats the elder, but its objective does not end the scenario a second time`](../../../packages/engine/src/triggers.test.ts#L3589)
+  Test: [`packages/engine/src/triggers.test.ts › a chain after the scenario ended › still defeats the elder, but its objective does not end the scenario a second time`](../../../packages/engine/src/triggers.test.ts#L3610)

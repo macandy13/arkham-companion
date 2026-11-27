@@ -238,7 +238,15 @@ export function whenEachInvestigatorIsAt(
   location: CardCode,
   ...effects: AbilityEffect[]
 ): Ability[] {
-  const condition = thereAre(eachInvestigator({ notAt: onlyCopy(location) }), { max: 0 });
+  // With nobody left the scenario ends with no resolution instead, even when one effect
+  // eliminates everyone (Wild Flames), so someone must still be in the scenario.
+  const condition: AbilityCondition = {
+    kind: 'allOf',
+    conditions: [
+      thereAre(eachInvestigator(), { min: 1 }),
+      thereAre(eachInvestigator({ notAt: onlyCopy(location) }), { max: 0 }),
+    ],
+  };
   return [
     { ...whenAnInvestigatorEnters(location, ...effects), condition },
     { window: { on: 'eliminated' }, condition, effects },

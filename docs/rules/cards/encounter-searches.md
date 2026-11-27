@@ -22,18 +22,18 @@ The cards below search or dig through a deck, draw from a deck of their own, or 
 
 - The investigator who drew the card picks one of the matching cards and draws it, resolving it like any draw (an enemy spawns engaged with them); with no match nothing is drawn (Grimoire, Search).
   Test: [`packages/scenarios/src/the_midnight_masks/cards.test.ts › The Midnight Masks card abilities › Mysterious Chanting › draws Wizard of the Order with no Cultist in play`](../../../packages/scenarios/src/the_midnight_masks/cards.test.ts#L596)
-  Test: [`packages/engine/src/triggers.test.ts › doom on the nearest Cultist enemy, or a search for one › draws a cultist from $where when none is in play, then shuffles the deck`](../../../packages/engine/src/triggers.test.ts#L3049)
+  Test: [`packages/engine/src/triggers.test.ts › doom on the nearest Cultist enemy, or a search for one › draws a cultist from $where when none is in play, then shuffles the deck`](../../../packages/engine/src/triggers.test.ts#L3070)
 - The engine takes the first match, deck first, for now (#346).
 - The shuffle is its own sentence, so it happens even while a Cultist is in play (our reading of the card text; no ruling found).
   Test: [`packages/scenarios/src/the_midnight_masks/cards.test.ts › The Midnight Masks card abilities › Mysterious Chanting › draws nothing with a Cultist in play, and shuffles the encounter deck`](../../../packages/scenarios/src/the_midnight_masks/cards.test.ts#L579)
-  Test: [`packages/engine/src/triggers.test.ts › doom on the nearest Cultist enemy, or a search for one › places no doom and finds nothing without a cultist in the game, but shuffles the deck`](../../../packages/engine/src/triggers.test.ts#L3027)
+  Test: [`packages/engine/src/triggers.test.ts › doom on the nearest Cultist enemy, or a search for one › places no doom and finds nothing without a cultist in the game, but shuffles the deck`](../../../packages/engine/src/triggers.test.ts#L3048)
 - "Cultist enemies in play" counts the enemies at locations and engaged with investigators.
 
 "The lead investigator must search the encounter deck and discard pile for 1 [per_investigator] copies of Fire! and draw them. (Shuffle the encounter deck if it was searched.)" (Searching for Dr. Armitage, act 3b):
 
 - It is one search: the lead finds up to that many copies, then draws them one after another, each resolving like any draw ([Draw](https://arkhamdb.com/rules#Draw); [Search](https://arkhamdb.com/rules#Search)). Fewer copies left means fewer draws.
-  Test: [`packages/engine/src/triggers.test.ts › a search for 1 copy per investigator › has alice, the lead, draw the copy in the deck first, then the first one in the discard`](../../../packages/engine/src/triggers.test.ts#L3514)
-  Test: [`packages/engine/src/triggers.test.ts › a search for 1 copy per investigator › draws one copy for alice alone`](../../../packages/engine/src/triggers.test.ts#L3530)
+  Test: [`packages/engine/src/triggers.test.ts › a search for 1 copy per investigator › has alice, the lead, draw the copy in the deck first, then the first one in the discard`](../../../packages/engine/src/triggers.test.ts#L3535)
+  Test: [`packages/engine/src/triggers.test.ts › a search for 1 copy per investigator › draws one copy for alice alone`](../../../packages/engine/src/triggers.test.ts#L3551)
 - A copy whose revelation was cancelled goes to the discard but was found already, so it isn't drawn a second time.
   Test: [`packages/scenarios/src/spreading_flames/spreading_flames.test.ts › Spreading Flames act 3, Searching for Dr. Armitage › the search for 1 Fire! per investigator, 2 investigators › has the lead draw both copies one search found, not a cancelled one again`](../../../packages/scenarios/src/spreading_flames/spreading_flames.test.ts#L488)
 - The encounter deck is shuffled once all of them are drawn ([Search](https://arkhamdb.com/rules#Search): "If an effect searches an entire deck, the deck must be shuffled upon completion of the search").

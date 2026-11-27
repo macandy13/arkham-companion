@@ -159,7 +159,7 @@ export type WindowEvent =
    * An investigator was eliminated (`InvestigatorDefeated` or `InvestigatorResigned`), naming
    * them: the current agenda and act hear it for an objective the investigators still in the
    * scenario may now meet ("If each undefeated investigator is at Miskatonic Quad, advance",
-   * `whenEachInvestigatorIsAt`). The last one's elimination opens nothing, as the scenario then ends.
+   * `whenEachInvestigatorIsAt`).
    */
   | { on: 'eliminated' }
   /**

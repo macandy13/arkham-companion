@@ -2297,6 +2297,27 @@ describe('objectives on each investigator being at a location', () => {
 
     expect(state.act.current).toBe(act1);
   });
+
+  it('stays when alice and bob, both in the hall, are defeated by one effect: the scenario ends instead', () => {
+    /** "When this agenda advances, each investigator is defeated." */
+    const defeatingAgenda = blankAgenda('defeating_agenda', fixed(3), {
+      abilities: [whenAdvanced(defeatEachInvestigator())],
+    });
+    const { context, state: started } = newGame()
+      .withAgenda(agenda1, defeatingAgenda)
+      .withAgenda(agenda2, secondAgendaCard)
+      .withAct(act1, allInTheCellarAct)
+      .withAct(act2, secondActCard)
+      .withLocation(hall, blankLocation('hall'), { revealed: true })
+      .withLocation(cellar, blankLocation('cellar'), { revealed: true })
+      .withInvestigator(alice, { locationId: hall })
+      .withInvestigator(bob, { locationId: hall })
+      .start();
+
+    const { state } = execute(context, started, { type: 'Advance', deck: 'agenda' });
+
+    expect(state.act.current).toBe(act1);
+  });
 });
 
 describe("a pick the lead makes on an act's reverse side", () => {
