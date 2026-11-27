@@ -58,7 +58,7 @@ Each milestone issue (label `milestone`, listed in `docs/tasks/README.md`) lists
 
 ## Subagents
 
-- `rules-checker` – after implementing or changing game rules, ask it to check the change against the official rules. Post its rules claims table as a PR comment, and when it confirms a correction, update its page in `docs/rules/` in the same PR.
+- `rules-checker` – after implementing or changing game rules, ask it to check the change against the official rules. Post its rules claims table as a PR comment, and when it confirms a correction, update its page in `docs/rules/` in the same PR, with the `Test:` lines it lists for each confirmed claim.
 - `pr-reviewer` – reviews the branch against `REVIEW.md` in a fresh context; replaces a paid CI reviewer because it runs in the session.
 - `test-writer` – to add missing unit/property tests, e.g. when coverage drops below the floor.
 
