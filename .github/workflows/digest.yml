@@ -1,0 +1,106 @@
+name: Daily digest
+
+# Every morning, one page of the PRs that merged in the last 24 hours without the owner's
+# approval of their head (MA.6, docs/automation.md "Merge gate"): each with its review tour's
+# problem and "what changes", the gate's reason, the rule claims it added and Revert and
+# Follow-up links. Published at https://macandy13.github.io/arkham-companion/digest/<date>/
+# (and digest/ for the latest) next to the review tours; on a day with such PRs the link is
+# commented on the open issue labelled `digest`, which the owner pins. Code in
+# packages/review_tour (digest.ts, digest_cli.ts).
+
+on:
+  schedule:
+    # 05:00 UTC, so the page is ready for the owner's morning in Berlin.
+    - cron: '0 5 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: read
+  statuses: read
+
+defaults:
+  run:
+    shell: bash
+
+concurrency:
+  group: digest
+
+jobs:
+  digest:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      PRS: ${{ runner.temp }}/prs.ndjson
+      PAGE: ${{ runner.temp }}/page
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      # One MergedPr per line (packages/review_tour/src/digest.ts), from the search API's merged
+      # PRs of the last 24 hours. The gate's status sits on the head commit, where gate.yml posts it.
+      - name: Collect merged PRs
+        run: |
+          echo "DATE=$(date -u +%Y-%m-%d)" >> "$GITHUB_ENV"
+          since=$(date -u -d '24 hours ago' +%Y-%m-%dT%H:%M:%SZ)
+          : > "$PRS"
+          for pr in $(gh api -X GET search/issues --paginate \
+              -f q="repo:$GITHUB_REPOSITORY is:pr is:merged merged:>=$since" --jq '.items[].number'); do
+            pr_json=$(gh api "repos/$GITHUB_REPOSITORY/pulls/$pr")
+            head=$(jq -r .head.sha <<<"$pr_json")
+            reviews=$(gh api --paginate "repos/$GITHUB_REPOSITORY/pulls/$pr/reviews" \
+              --jq '.[] | {author: .user.login, state, commit: .commit_id}' | jq -s .)
+            files=$(gh api --paginate "repos/$GITHUB_REPOSITORY/pulls/$pr/files" \
+              --jq '.[] | {filename, patch}' | jq -s 'map(with_entries(select(.value != null)))')
+            gate=$(gh api "repos/$GITHUB_REPOSITORY/commits/$head/status" \
+              --jq '[.statuses[] | select(.context == "gate")][0] // empty | {state, description}')
+            jq -c --argjson reviews "$reviews" --argjson files "$files" --argjson gate "${gate:-null}" \
+              '{number, title, body: (.body // ""), headSha: .head.sha, merged_at, reviews: $reviews, files: $files}
+               + (if $gate == null then {} else {gate: $gate} end)' <<<"$pr_json" >> "$PRS"
+          done
+          # Oldest merge first, so the page reads in the order the PRs went in.
+          jq -sc 'sort_by(.merged_at)[]' "$PRS" > "$PRS.sorted" && mv "$PRS.sorted" "$PRS"
+      - id: build
+        run: |
+          out=$(node packages/review_tour/src/digest_cli.ts --prs "$PRS" --owner "$GITHUB_REPOSITORY_OWNER" \
+            --repo "$GITHUB_REPOSITORY" --date "$DATE" --out "$PAGE")
+          echo "$out"
+          echo "count=${out%% *}" >> "$GITHUB_OUTPUT"
+      # Pushes are retried onto the latest gh-pages, since previews, tours and main's deploy push there too.
+      - name: Publish to gh-pages
+        run: |
+          git fetch --depth=1 origin gh-pages
+          git worktree add --detach "$RUNNER_TEMP/pages" FETCH_HEAD
+          cd "$RUNNER_TEMP/pages"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          mkdir -p "digest/$DATE"
+          cp "$PAGE/index.html" "digest/$DATE/index.html"
+          cp "$PAGE/index.html" digest/index.html
+          git add -A
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -q -m "Digest for $DATE"
+          for attempt in 1 2 3 4 5; do
+            git push origin HEAD:gh-pages && exit 0
+            sleep $((attempt * 3))
+            git fetch --depth=1 origin gh-pages
+            git rebase --onto FETCH_HEAD HEAD~1
+          done
+          exit 1
+      # One comment a day with PRs, so the owner's phone shows it; quiet days post nothing.
+      - name: Comment on the digest issue
+        if: steps.build.outputs.count != '0'
+        env:
+          COUNT: ${{ steps.build.outputs.count }}
+          URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/digest/${{ env.DATE }}/
+        run: |
+          gh label create digest --description "The daily digest of PRs merged without the owner" --color 2f5d8a --force
+          issue=$(gh issue list --repo "$GITHUB_REPOSITORY" --label digest --state open --json number --jq '.[0].number // empty')
+          if [ -z "$issue" ]; then
+            issue=$(gh issue create --repo "$GITHUB_REPOSITORY" --label digest --title "Daily digest" \
+              --body "Each morning a comment here links the page of PRs that merged without the owner's approval. Pin this issue." | grep -oE '[0-9]+$')
+          fi
+          gh issue comment "$issue" --repo "$GITHUB_REPOSITORY" \
+            --body "**[Digest $DATE →]($URL)** · $COUNT PR$([ "$COUNT" = 1 ] || echo s) merged without you. The link works once Pages has deployed, a minute or two from now."
