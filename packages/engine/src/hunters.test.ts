@@ -175,7 +175,12 @@ describe('MoveHunters', () => {
 
       expect(zoneOf(after, hunter)).toEqual(at('a'));
       expect(after.pending).toMatchObject([
-        { kind: 'chooseLocation', subject: hunter, options: [{ target: 'b' }, { target: 'c' }] },
+        {
+          kind: 'chooseLocation',
+          subject: hunter,
+          decider: { kind: 'lead' },
+          options: [{ target: 'b' }, { target: 'c' }],
+        },
       ]);
     });
 
@@ -220,6 +225,7 @@ describe('MoveHunters', () => {
         {
           kind: 'chooseInvestigator',
           subject: hunter,
+          decider: { kind: 'lead' },
           options: [{ target: alice }, { target: bob }],
         },
       ]);

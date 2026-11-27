@@ -32,7 +32,7 @@ export function parseTestRefs(markdown: string): TestRef[] {
 
 /**
  * The references whose test no longer exists: its file is gone, or its titles are no longer
- * the first argument of a call (`describe(`, `it(`, `it.each([…])(`) in that order in the file.
+ * the first argument of a call (`describe(`, `it(`, `test(`, also with modifiers such as `.skip(` or `it.each([…])(`) in that order in the file.
  * Reading the source, not running the suite, keeps the check fast; a renamed, deleted or moved
  * test still fails it, which is the point. Titles built with `${…}` can't be named.
  */
