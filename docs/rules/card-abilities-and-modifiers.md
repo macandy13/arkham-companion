@@ -35,15 +35,15 @@
   - and the current agenda's and act's by any investigator.
   - An unrevealed location offers none, as it has only its unrevealed side's text.
 - A [reaction ability](https://arkhamdb.com/rules#Triggered_Abilities) ("[reaction] After you discover clues here: …") is optional: the investigator it names ("you", the one who met its condition) may use it or pass.
-  Test: [`packages/engine/src/triggers.test.ts › a reaction the investigator may use or pass › asks alice, who discovered the clue, to use the bank's reaction or pass`](../../packages/engine/src/triggers.test.ts#L3188)
-  Test: [`packages/engine/src/triggers.test.ts › a reaction the investigator may use or pass › gives alice $resources resources when she answers $answered`](../../packages/engine/src/triggers.test.ts#L3207)
+  Test: [`packages/engine/src/triggers.test.ts › a reaction the investigator may use or pass › asks alice, who discovered the clue, to use the bank's reaction or pass`](../../packages/engine/src/triggers.test.ts#L3244)
+  Test: [`packages/engine/src/triggers.test.ts › a reaction the investigator may use or pass › gives alice $resources resources when she answers $answered`](../../packages/engine/src/triggers.test.ts#L3263)
   - It may be used once each time its condition is met, within its limit.
-    Test: [`packages/engine/src/triggers.test.ts › a reaction the investigator may use or pass › offers it to alice again after she passed`](../../packages/engine/src/triggers.test.ts#L3238)
-    Test: [`packages/engine/src/triggers.test.ts › a reaction the investigator may use or pass › rejects a second use by alice in the same round`](../../packages/engine/src/triggers.test.ts#L3291)
+    Test: [`packages/engine/src/triggers.test.ts › a reaction the investigator may use or pass › offers it to alice again after she passed`](../../packages/engine/src/triggers.test.ts#L3294)
+    Test: [`packages/engine/src/triggers.test.ts › a reaction the investigator may use or pass › rejects a second use by alice in the same round`](../../packages/engine/src/triggers.test.ts#L3347)
   - A location's reaction, like its actions above, is open only to investigators at that location.
-    Test: [`packages/engine/src/triggers.test.ts › a reaction the investigator may use or pass › offers the vault reaction at the end of her turn to alice $where: $asked`](../../packages/engine/src/triggers.test.ts#L3272)
+    Test: [`packages/engine/src/triggers.test.ts › a reaction the investigator may use or pass › offers the vault reaction at the end of her turn to alice $where: $asked`](../../packages/engine/src/triggers.test.ts#L3328)
   - [Forced abilities](timing-of-forced-effects.md) on the same timing point resolve before reactions to it.
-    Test: [`packages/engine/src/triggers.test.ts › a reaction the investigator may use or pass › resolves a forced ability on the same discovery before it asks about the reaction`](../../packages/engine/src/triggers.test.ts#L3247)
+    Test: [`packages/engine/src/triggers.test.ts › a reaction the investigator may use or pass › resolves a forced ability on the same discovery before it asks about the reaction`](../../packages/engine/src/triggers.test.ts#L3303)
 - [Limits](https://arkhamdb.com/rules#Limits_and_Maximums): "(Limit once per turn/round/phase/game.)" counts each investigator's uses apart, "(Group limit once per game.)" everyone's together; "twice per round" allows two.
   Test: [`packages/engine/src/card_actions.test.ts › action limits › rejects a second use in the same turn with a limit once per $per`](../../packages/engine/src/card_actions.test.ts#L407)
   Test: [`packages/engine/src/card_actions.test.ts › limits of a free action › allows two uses in a turn, not three, when limited twice per round`](../../packages/engine/src/card_actions.test.ts#L532)
@@ -65,10 +65,10 @@
   - Attacks of opportunity come after the costs are paid; the engine pays the action itself before them, but the card's clue or resource cost after them for now.
   - Card rulings: [Costs of card actions and basic actions](cards/action-costs.md).
 - An effect's target must be one it would change ([Target](https://arkhamdb.com/rules#Target)): "heal 1 horror from an investigator at this location" offers only those with horror, and heals the only one without asking.
-  Test: [`packages/engine/src/triggers.test.ts › an effect on an investigator the window investigator picks › heals alice without asking when bob there has no horror to heal`](../../packages/engine/src/triggers.test.ts#L3348)
-  Test: [`packages/engine/src/triggers.test.ts › an effect on an investigator the window investigator picks › heals alice without asking when she is the only one there`](../../packages/engine/src/triggers.test.ts#L3376)
+  Test: [`packages/engine/src/triggers.test.ts › an effect on an investigator the window investigator picks › heals alice without asking when bob there has no horror to heal`](../../packages/engine/src/triggers.test.ts#L3404)
+  Test: [`packages/engine/src/triggers.test.ts › an effect on an investigator the window investigator picks › heals alice without asking when she is the only one there`](../../packages/engine/src/triggers.test.ts#L3432)
 - "You must either A or B" (and "the lead investigator must decide") offers only the options that can change the game state ([Must](https://arkhamdb.com/rules#Must)):
-  Test: [`packages/engine/src/triggers.test.ts › a choice without the options that cannot be resolved › offers alice with $clues clues only the options that can be resolved`](../../packages/engine/src/triggers.test.ts#L2677)
+  Test: [`packages/engine/src/triggers.test.ts › a choice without the options that cannot be resolved › offers alice with $clues clues only the options that can be resolved`](../../packages/engine/src/triggers.test.ts#L2733)
   Test: [`packages/scenarios/src/the_devourer_below/cards.test.ts › The Devourer Below card abilities › Arkham Woods (Quiet Glade) › lets alice pick only the horror when she has no damage`](../../packages/scenarios/src/the_devourer_below/cards.test.ts#L213)
   - with no clues, "spend 1 clue or take 2 damage" leaves only the damage,
   - and with no damage the Quiet Glade's "heal 1 damage or 1 horror" leaves only the horror.
@@ -76,5 +76,5 @@
   - Without an asset, Unnatural Decay's "place 1 doom on an asset you control" can't be chosen, so its drawer takes the 2 damage; the engine doesn't track assets, so the players keep to this at the table.
   - An option done at the table (no effect the engine runs) always stays.
   - With neither possible, nothing happens ([Effects](https://arkhamdb.com/rules#Effects): resolve as much as you are able).
-    Test: [`packages/engine/src/triggers.test.ts › a choice without the options that cannot be resolved › asks nothing when alice can resolve no option`](../../packages/engine/src/triggers.test.ts#L2694)
+    Test: [`packages/engine/src/triggers.test.ts › a choice without the options that cannot be resolved › asks nothing when alice can resolve no option`](../../packages/engine/src/triggers.test.ts#L2750)
   - An option that resolves only in part is still allowed by the rule; the engine drops it for now (no Night of the Zealot card has one).

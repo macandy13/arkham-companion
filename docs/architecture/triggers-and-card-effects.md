@@ -22,9 +22,9 @@ An `Ability` is:
     - `inPlay`, every card in play with active abilities;
     - `currentActOrAgenda`, the current agenda, then act, for objectives;
     - `here`, every card at the location the window names (`cardsWhoseLocationIs`), for "at [this card]'s location".
-  - A window without `of` takes the event's usual listeners (`defaultScope`): `yours` for `turnBegins` and `turnEnds`, `inPlay` for `phaseEnds` and `roundEnds`, `currentActOrAgenda` for `addedToVictoryDisplay`, `here` for `succeeded`, otherwise `self`.
+  - A window without `of` takes the event's usual listeners (`defaultScope`): `yours` for `turnBegins` and `turnEnds`, `inPlay` for `phaseEnds` and `roundEnds`, `currentActOrAgenda` for `addedToVictoryDisplay` and `eliminated`, `here` for `succeeded`, otherwise `self`.
   - One matcher (`hears`) fires an ability when the event matches (with its phase, action, outcome or token), the scope matches, and the filter matches the event's card (`OpenedWindow.subjectId`).
-  - The objectives are scoped windows: `whenEnemyDefeated(code)` is `{ on: 'defeated', of: 'currentActOrAgenda', filter: { code } }`, `whenAnInvestigatorEnters(code)` the same on `entered`, and `atEndOfEachTurn` is `{ on: 'turnEnds', of: 'inPlay' }` (Umôrdhoth).
+  - The objectives are scoped windows: `whenEnemyDefeated(code)` is `{ on: 'defeated', of: 'currentActOrAgenda', filter: { code } }`, `whenAnInvestigatorEnters(code)` the same on `entered`, `whenEachInvestigatorIsAt(code)` the pair of `entered` there and `eliminated`, both on the condition that no investigator is elsewhere (`eachInvestigator({ notAt })`), and `atEndOfEachTurn` is `{ on: 'turnEnds', of: 'inPlay' }` (Umôrdhoth).
   - The events:
     - `revealed`,
     - `entered`,
@@ -42,6 +42,7 @@ An `Ability` is:
     - `evaded` for the enemy, naming the evader, once `EvadeEnemy` (a passed evasion or an effect) has exhausted and disengaged it, so later than `tested` (`afterEvaded`, Ruth Turner), and once more with `successful` after a passed evasion test only, not an automatic evade (`afterEvadingSuccessfully`, Cornelia Akely),
     - `cluesDiscovered`,
     - `defeated` for the enemy itself, naming where it was,
+    - `eliminated` when an investigator is defeated or resigns (`InvestigatorDefeated`, `InvestigatorResigned`), naming them, for an objective the others may now meet (Escape the Dorms),
     - `tokensPlaced` for tokens placed on the card (`afterTokensPlaced`, Wild Flames' "after doom is placed on the agenda"; `whenTokensOnSelf` for an objective on a count);
 - an optional condition (`AbilityCondition`), mostly over the references effects use:
   - `currentCard`, the current act or agenda: `duringAct([codes.trapped], …)`, `duringAgenda([codes.theyreGettingOut], …)`;

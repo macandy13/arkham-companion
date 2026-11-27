@@ -178,6 +178,11 @@ export function windowsOpenedBy(
     }
     case 'RoundEnded':
       return openFor(state, { window: { on: 'roundEnds' } }, 'inPlay');
+    case 'InvestigatorDefeated':
+    case 'InvestigatorResigned': {
+      const { investigatorId } = event;
+      return openFor(state, { window: { on: 'eliminated' }, investigatorId }, 'currentActOrAgenda');
+    }
     case 'AgendaAdvanced':
     case 'ActAdvanced':
       return openFor(state, { window: { on: 'advanced' }, subjectId: event.cardId }, 'self');

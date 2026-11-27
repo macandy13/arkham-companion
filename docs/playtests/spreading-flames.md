@@ -25,14 +25,14 @@ The scripted golden game is [`end_to_end.test_support.ts`](../../packages/scenar
 
 **Act 2, Escape the Dorms**
 
-- [ ] "Advance by hand" on the act's full card advances it once each undefeated investigator is at Miskatonic Quad.
+- [ ] The act advances on its own once each undefeated investigator is at Miskatonic Quad: as the last one enters it, or as the last one away is defeated or resigns.
 - [ ] Its reverse side sets the Servant of Flame aside (healed), discards each enemy, removes Your Friend's Room with its Fire! and puts Orne Library, Science Hall and Warren Observatory into play.
 
 **Act 3, Searching for Dr. Armitage**
 
 - [ ] When the round ends with 3 clues per investigator held by those at Orne Library, the lead is asked whether to spend them.
 - [ ] Orne Library offers its draw once per game for two actions; drawing the 3 cards is by hand.
-- [ ] Its reverse side spawns the Servant of Flame at Miskatonic Quad (it engages an investigator there) and places 3 clues per investigator on the Quad; then the lead draws one Fire! per investigator from the encounter deck or discard pile, one after the other, and the encounter deck is shuffled.
+- [ ] Its reverse side asks the lead which investigator takes control of Dr. Henry Armitage, then spawns the Servant of Flame at Miskatonic Quad (it engages an investigator there) and places 3 clues per investigator on the Quad; then the lead draws one Fire! per investigator from the encounter deck or discard pile, one after the other, and the encounter deck is shuffled.
 
 **Act 4, Blaze of Glory**
 
@@ -80,8 +80,7 @@ The scripted golden game is [`end_to_end.test_support.ts`](../../packages/scenar
 These are done by hand at the table; the app does not do them.
 
 - Wild Flames' Fire! draw for doom added with a correction by hand: corrections open no forced abilities, so draw the topmost Fire! of the discard yourself.
-- Escape the Dorms' objective: the act advances when each undefeated investigator is at Miskatonic Quad. The players advance it with "Advance by hand" on the act's full card.
-- Searching for Dr. Armitage's reverse side: Dr. Henry Armitage under an investigator's control. His skill bonus and free first action are his controller's to apply.
+- Dr. Henry Armitage's skill bonus and free first action: his controller's to apply.
 - Your Friend's Room's Engage action, and the 3 cards Orne Library's two-action ability draws (a by-hand notice).
 - Which asset Hellhound's enemy phase attack discards (the app leaves the pick to the player).
 - Unspeakable Truths' limit of 1 per investigator and its horror after its holder discovers clues.

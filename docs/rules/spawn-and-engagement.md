@@ -42,7 +42,7 @@
     Test: [`packages/engine/src/enemies.test.ts › MoveEnemy › asks the players whom it engages when two investigators are there`](../../packages/engine/src/enemies.test.ts#L645)
   - There is no limit on enemies engaged with one investigator.
 - Engaging an enemy and being engaged by it are the same ([engage action](https://arkhamdb.com/rules#Engage_Action)), so "after [this enemy] engages you" (Rogue Gangster) fires however the engagement came about: spawning engaged, a move by either side, the engage action or a card's "engages you".
-  Test: [`packages/engine/src/triggers.test.ts › trigger bus › abilities after an engagement or a clue discovery › deals alice 1 horror when the lurker $name`](../../packages/engine/src/triggers.test.ts#L906)
+  Test: [`packages/engine/src/triggers.test.ts › trigger bus › abilities after an engagement or a clue discovery › deals alice 1 horror when the lurker $name`](../../packages/engine/src/triggers.test.ts#L907)
 - An exhausted enemy doesn't engage, but engages the moment it readies if it shares a location with an investigator.
   Test: [`packages/engine/src/phases.test.ts › upkeep phase › readies exhausted enemies (4.3), which engage investigators at their location`](../../packages/engine/src/phases.test.ts#L532)
   Test: [`packages/engine/src/enemies.test.ts › SpawnEnemy › never engages an exhausted enemy`](../../packages/engine/src/enemies.test.ts#L199)

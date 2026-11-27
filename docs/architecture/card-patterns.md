@@ -38,6 +38,8 @@ An objective is an ability of its act or agenda, with a window that opens only w
 
 - "If the Ghoul Priest is defeated, advance": `whenEnemyDefeated(codes.ghoulPriest, advanceAct())`.
 - "If an investigator enters the Ritual Site, advance": `whenAnInvestigatorEnters(codes.ritualSite, advanceAct())`.
+- "If each undefeated investigator is at Miskatonic Quad, advance": `...whenEachInvestigatorIsAt(codes.miskatonicQuad, advanceAct())`, checked as one enters the Quad and as one is eliminated.
+- "Put the set-aside Dr. Henry Armitage story asset into play under any investigator's control": `move(setAsideCopy(codes.drHenryArmitage), playAreaOf(anyInvestigator()))`; the lead picks, as for any choice the group can't agree on.
 - "If there are 6 unique Cultist enemies in the victory display, advance":
   `whenVictoryDisplayHolds({ trait: trait('Cultist'), unique: true }, 6, advanceAct())`.
 - "If there are 6 Elite enemies beneath this act and/or in the victory display, advance" (Augurs of Flame):

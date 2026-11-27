@@ -113,6 +113,7 @@ import {
   whenDefeated,
   whenEnemyDefeated,
   whenAnInvestigatorEnters,
+  whenEachInvestigatorIsAt,
   whenVictoryDisplayHolds,
   whenTokensOnSelf,
   whenRevealed,
@@ -2221,6 +2222,61 @@ describe('objectives on entering a location', () => {
     });
 
     expect(state.cards[agenda1]?.tokens.doom).toBe(1);
+  });
+});
+
+describe('objectives on each investigator being at a location', () => {
+  const bob = investigatorId('bob');
+  const cellarCode = cardCode('cellar');
+  /** "If each undefeated investigator is in the cellar, advance." */
+  const allInTheCellarAct = blankAct('all_in_the_cellar_act', {
+    abilities: whenEachInvestigatorIsAt(cellarCode, advanceAct()),
+  });
+  /** Alice in the cellar, bob in the hall next to it; the act's objective is current. */
+  const aliceInTheCellarBobInTheHall = () =>
+    newGame()
+      .withAgenda(agenda1, firstAgendaCard)
+      .withAct(act1, allInTheCellarAct)
+      .withAct(act2, secondActCard)
+      .withLocation(hall, blankLocation('hall'), { revealed: true })
+      .withLocation(cellar, blankLocation('cellar'), { revealed: true })
+      .withConnection(hall, cellar)
+      .withInvestigator(alice, { locationId: cellar })
+      .withInvestigator(bob, { locationId: hall })
+      .start();
+
+  it.each<{ name: string; command: Command; act: typeof act1 }>([
+    {
+      name: 'advances when bob joins alice in the cellar',
+      command: { type: 'MoveInvestigator', investigatorId: bob, to: cellar },
+      act: act2,
+    },
+    {
+      name: 'stays when alice leaves the cellar to bob in the hall',
+      command: { type: 'MoveInvestigator', investigatorId: alice, to: hall },
+      act: act1,
+    },
+    {
+      name: 'advances when bob, the only one away, resigns',
+      command: { type: 'Resign', investigatorId: bob, immediately: true },
+      act: act2,
+    },
+    {
+      name: 'advances when bob, the only one away, is defeated',
+      command: { type: 'DefeatInvestigator', investigatorId: bob },
+      act: act2,
+    },
+    {
+      name: 'stays when alice, in the cellar, is defeated with bob still away',
+      command: { type: 'DefeatInvestigator', investigatorId: alice },
+      act: act1,
+    },
+  ])('$name', ({ command, act }) => {
+    const { context, state: started } = aliceInTheCellarBobInTheHall();
+
+    const { state } = execute(context, started, command);
+
+    expect(state.act.current).toBe(act);
   });
 });
 
