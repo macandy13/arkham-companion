@@ -32,8 +32,6 @@ jobs:
     runs-on: ubuntu-latest
     env:
       GH_TOKEN: ${{ github.token }}
-      PRS: ${{ runner.temp }}/prs.ndjson
-      PAGE: ${{ runner.temp }}/page
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -45,8 +43,12 @@ jobs:
       # it. Only the rules pages' patches are kept, as only they hold claims, which keeps a huge
       # diff from overflowing jq's arguments.
       - name: Collect merged PRs
+        # The job's env can't read the runner context, so the paths are set here for later steps.
         run: |
           echo "DATE=$(date -u +%Y-%m-%d)" >> "$GITHUB_ENV"
+          PRS="$RUNNER_TEMP/prs.ndjson"
+          echo "PRS=$PRS" >> "$GITHUB_ENV"
+          echo "PAGE=$RUNNER_TEMP/page" >> "$GITHUB_ENV"
           window="$(date -u -d yesterday +%Y-%m-%d)T05:00:00Z..$(date -u +%Y-%m-%d)T05:00:00Z"
           numbers=$(gh api -X GET search/issues --paginate \
             -f q="repo:$GITHUB_REPOSITORY is:pr is:merged merged:$window" --jq '.items[].number')
@@ -100,8 +102,9 @@ jobs:
         if: steps.build.outputs.count != '0'
         env:
           COUNT: ${{ steps.build.outputs.count }}
-          URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/digest/${{ env.DATE }}/
         run: |
+          # A scheduled run's payload has no repository object, so the name comes from GITHUB_REPOSITORY.
+          URL="https://$GITHUB_REPOSITORY_OWNER.github.io/${GITHUB_REPOSITORY#*/}/digest/$DATE/"
           gh label create digest --description "The daily digest of PRs merged without the owner" --color 2f5d8a --force
           issue=$(gh issue list --repo "$GITHUB_REPOSITORY" --label digest --state open --json number --jq '.[0].number // empty')
           if [ -z "$issue" ]; then
