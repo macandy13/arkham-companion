@@ -127,9 +127,9 @@ details ul { padding-left: 20px; margin: 12px 0 0; display: grid; gap: 6px; font
 <main>
 <nav aria-label="Tour"><span class="number">#1532</span><ol><li><a class="question" href="#questions" aria-label="Questions">?</a></li><li><a href="#stop-1" data-stop="stop-1">1</a></li><li><a href="#stop-2" data-stop="stop-2">2</a></li><li><a href="#stop-3" data-stop="stop-3">3</a></li><li><a class="evidence" href="#evidence" aria-label="How we know it works">✓</a></li></ol></nav>
 <header>
-<p class="kicker">feat(engine) · ME.30b · as of 579d725</p>
+<p class="kicker">feat(engine) · ME.30b · as of 80c2475</p>
 <h1>Swap places with an enemy, as Ethereal Slip does</h1>
-<p class="meta"><span>3 stops</span><span>1 question</span><span>50 of 360 changed lines on the tour</span></p>
+<p class="meta"><span>3 stops</span><span>1 question</span><span>50 of 369 changed lines on the tour</span></p>
 </header>
 <section class="lead"><h2>The problem</h2><p>A player who plays Ethereal Slip trades places with an enemy, and the app had no way to do it: dragging the pawn and then the enemy made the enemy engage the investigator, or follow them, on the way.</p></section>
 <section class="lead"><h2>What changes</h2><p>One engine command swaps an investigator and an enemy. The enemy is put at the investigator's location first, not engaging yet; the investigator then moves to the enemy's location as any card effect moves them (paying an enter cost, revealing it, after-you-enter effects), taking the enemies engaged with them along; only then does the swapped enemy engage whoever is left where it now stands. Where a card keeps the enemy out of the investigator's location, as Barricade does, the whole swap is refused. The enemy details offer it as a Swap pill in the Adjust group, whose menu names each investigator at another location, and offer none for an Elite enemy; how far away the enemy may be is the players' call.</p></section>
