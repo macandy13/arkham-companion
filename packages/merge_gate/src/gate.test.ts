@@ -21,6 +21,7 @@ const olderSha = 'b'.repeat(40) as CommitSha;
 
 const testFile = 'apps/web/src/play/header.test.tsx' as RepoPath;
 const engineFile = 'packages/engine/src/doom.ts' as RepoPath;
+const rulesPage = 'docs/rules/enemies.md' as RepoPath;
 const goldenFile = 'apps/web/e2e/__screenshots__/desktop/shots/play.png' as RepoPath;
 const workflowFile = '.github/workflows/ci.yml' as RepoPath;
 
@@ -166,5 +167,13 @@ describe('decideGate', () => {
     const outcome = decideGate(pr({ changedFiles: [engineFile], comments: [verdict] }), policy);
 
     expect(outcome.kind).toBe(kind);
+  });
+
+  it('a PR changing only a rules summary page needs the rules checker too', () => {
+    const verdict = verdictComment(bot, { sha: headSha, reviewer: 'pass', rules: 'none' });
+
+    const outcome = decideGate(pr({ changedFiles: [rulesPage], comments: [verdict] }), policy);
+
+    expect(outcome.kind).toBe('blocked');
   });
 });
