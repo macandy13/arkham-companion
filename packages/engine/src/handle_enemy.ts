@@ -1,11 +1,5 @@
 import { isClosedToEnemy, isEnemyRestricted } from './restrictions';
-import {
-  firstSteps,
-  isLocationInPlay,
-  neighbours,
-  requireLocationInPlay,
-  shortestPaths,
-} from './board';
+import { neighbours, requireLocationInPlay } from './board';
 import { resolveAmount, type EngineContext } from './cards';
 import type {
   DamageEnemy,
@@ -15,13 +9,15 @@ import type {
   EngageEnemy,
   EvadeEnemy,
   ExhaustEnemy,
+  EnemyDestination,
   MoveEnemy,
-  MoveEnemyTowards,
   ReadyEnemy,
   RetreatEnemy,
 } from './commands';
 import { handleEnemyAttacks } from './attacks_of_opportunity';
-import { chooseLocation, engageEvents, investigatorsAt } from './engagement';
+import { chooseInvestigator, chooseLocation, engageEvents, investigatorsAt } from './engagement';
+import { enemyWay } from './enemy_ways';
+import { preyPrompt } from './prey';
 import type { EnemyDefeated, EnemyDisengaged, EnemyEngaged, Event, ExhaustChanged } from './events';
 import {
   defeatedByDamage,
@@ -106,31 +102,88 @@ export function handleDisengageEnemy(
 }
 
 /**
- * `MoveEnemy`: places the enemy unengaged at `to`, then lets it engage there.
- * `to` must be a location; it need not be revealed or connected. An enemy
- * already there stays as it is, engaged or not: the effect has nothing to do,
- * which is not a mistake worth refusing. Nor is a location closed to it
- * (`isClosedToEnemy`, Barricade): it stays where it is.
+ * `MoveEnemy`: places the enemy unengaged at its destination, then lets it engage there. A direct
+ * `to` must be a location; it need not be revealed or connected. An enemy already there stays as
+ * it is, engaged or not: the effect has nothing to do, which is not a mistake worth refusing. Nor
+ * is a location closed to it (`isClosedToEnemy`, Barricade): it stays where it is. With `toward`
+ * it takes one step of its way there (`stepToward`).
  */
 export function handleMoveEnemy(ctx: EngineContext, state: GameState, cmd: MoveEnemy): Event[] {
   const { enemy } = onTableEnemyOf(ctx, state, cmd.enemyId);
-  const destination = requireLocationInPlay(state, cmd.to);
-  if (locationOf(state, enemy) === cmd.to) return [];
-  if (enemy.zone.kind === 'engaged' && !cmd.forced)
+  if (cmd.toward === undefined) {
+    requireLocationInPlay(state, cmd.to);
+    if (locationOf(state, enemy) === cmd.to) return [];
+  }
+  if (enemy.zone.kind === 'engaged' && cmd.forced !== true)
     throw new CommandRejected({
       code: 'enemyEngaged',
       cardId: enemy.id,
       investigatorId: enemy.zone.investigatorId,
     });
+  if (cmd.toward === undefined) return arrive(ctx, state, enemy, cmd.to, cmd);
+  return stepToward(ctx, state, enemy, { ...cmd, toward: cmd.toward });
+}
+
+/**
+ * One step of the way `cmd.toward` leads (`enemyWay`): the only first step, the one the players
+ * chose (`to`), or the lead investigator's choice (Rules Reference, "Choices"), first between
+ * equally near investigators whose ways part, then between equally short steps.
+ */
+function stepToward(
+  ctx: EngineContext,
+  state: GameState,
+  enemy: CardInstance,
+  cmd: MoveEnemy & { toward: EnemyDestination },
+): Event[] {
+  const { steps, investigators } = enemyWay(ctx, state, enemy, cmd.toward);
+  const step = (move: { toward: EnemyDestination; to?: InstanceId }): MoveEnemy => ({
+    type: 'MoveEnemy',
+    enemyId: enemy.id,
+    ...move,
+    ...(cmd.forced === true ? { forced: true } : {}),
+    ...(cmd.attacksIfItEngages === true ? { attacksIfItEngages: true } : {}),
+  });
+  if (cmd.to !== undefined) {
+    if (!steps.includes(cmd.to))
+      throw new CommandRejected({ code: 'enemyCannotMove', cardId: enemy.id, to: cmd.to });
+    return arrive(ctx, state, enemy, cmd.to, cmd);
+  }
+  if (investigators !== undefined)
+    return chooseInvestigator(
+      state,
+      enemy.id,
+      `move:${enemy.id}:investigator`,
+      preyPrompt(ctx, state, enemy, 'decision.chooseHunterTarget'),
+      investigators,
+      (chosen) => step({ toward: chosen.locationId }),
+    );
+  const [only] = steps;
+  if (only === undefined) return [];
+  if (steps.length === 1) return arrive(ctx, state, enemy, only, cmd);
+  return chooseLocation(
+    ctx,
+    state,
+    enemy.id,
+    `move:${enemy.id}`,
+    'decision.chooseEnemyDestination',
+    steps,
+    (to) => step({ toward: cmd.toward, to }),
+  );
+}
+
+function arrive(
+  ctx: EngineContext,
+  state: GameState,
+  enemy: CardInstance,
+  to: InstanceId,
+  { attacksIfItEngages }: MoveEnemy,
+): Event[] {
   // Like a hunter's blocked step (RR "Hunter"), it stays where a card closes the way (Barricade).
-  if (isClosedToEnemy(ctx, state, enemy, destination)) return [];
-  const moved = moveCardEvent(enemy, { kind: 'atLocation', locationId: cmd.to });
+  if (isClosedToEnemy(ctx, state, enemy, requireLocationInPlay(state, to))) return [];
+  const moved = moveCardEvent(enemy, { kind: 'atLocation', locationId: to });
   const arrived = replay([moved], state);
   const engaging = engageEvents(ctx, arrived, enemy.id);
-  return [
-    moved,
-    ...(cmd.attacksIfItEngages ? withAttackOnEngaging(ctx, arrived, engaging) : engaging),
-  ];
+  return [moved, ...(attacksIfItEngages ? withAttackOnEngaging(ctx, arrived, engaging) : engaging)];
 }
 
 /**
@@ -169,50 +222,6 @@ function withAttackOnEngaging(ctx: EngineContext, state: GameState, engaging: Ev
     }));
     return [{ ...event, decision: { ...event.decision, options } }];
   });
-}
-
-/**
- * `MoveEnemyTowards`: one connection along the shortest paths to `towards`.
- * Ties between first steps go to the lead investigator (Rules Reference,
- * "Choices"), whose answer is a plain `MoveEnemy` to a neighbour.
- */
-export function handleMoveEnemyTowards(
-  ctx: EngineContext,
-  state: GameState,
-  cmd: MoveEnemyTowards,
-): Event[] {
-  const { enemy } = onTableEnemyOf(ctx, state, cmd.enemyId);
-  if (enemy.zone.kind === 'engaged' && cmd.forced !== true)
-    throw new CommandRejected({
-      code: 'enemyEngaged',
-      cardId: enemy.id,
-      investigatorId: enemy.zone.investigatorId,
-    });
-  // A target not in play yet (the Parlor while act 1 holds it set aside) has no path to it.
-  if (!isLocationInPlay(state, cmd.towards)) return [];
-  // Like a hunter, it does not move when its step is into a location closed to it (RR "Hunter").
-  const steps = firstSteps(shortestPaths(ctx, state, locationOf(state, enemy), cmd.towards)).filter(
-    (step) => !isClosedToEnemy(ctx, state, enemy, requireLocationInPlay(state, step)),
-  );
-  const [only] = steps;
-  if (only === undefined) return [];
-  const moveTo = (to: InstanceId): MoveEnemy => ({
-    type: 'MoveEnemy',
-    enemyId: enemy.id,
-    to,
-    ...(cmd.forced === true ? { forced: true } : {}),
-    ...(cmd.attacksIfItEngages === true ? { attacksIfItEngages: true } : {}),
-  });
-  if (steps.length === 1) return handleMoveEnemy(ctx, state, moveTo(only));
-  return chooseLocation(
-    ctx,
-    state,
-    enemy.id,
-    `towards:${enemy.id}`,
-    'decision.chooseEnemyDestination',
-    steps,
-    moveTo,
-  );
 }
 
 /** `DamageEnemy`: adds damage and defeats the enemy in the same step once it has as much as its health. */
@@ -306,7 +315,8 @@ function onTableEnemyOf(ctx: EngineContext, state: GameState, enemyId: InstanceI
 /**
  * `RetreatEnemy`: the elusive retreat. The destination is a connecting location without
  * investigators if there is one, else any connecting location; with none the enemy only
- * disengages and exhausts. It exhausts on arrival, so it engages nobody there.
+ * disengages and exhausts. It exhausts on arrival, so it engages nobody there. A location closed
+ * to it (`isClosedToEnemy`: Barricade, or an enemy that cannot move) is no destination.
  */
 export function handleRetreatEnemy(
   ctx: EngineContext,
@@ -318,8 +328,11 @@ export function handleRetreatEnemy(
   const connecting = neighbours(ctx, state, locationOf(state, enemy));
   if (cmd.to !== undefined && !connecting.includes(cmd.to))
     throw new CommandRejected({ code: 'notConnected', from: locationOf(state, enemy), to: cmd.to });
-  const empty = connecting.filter((id) => investigatorsAt(state, id).length === 0);
-  const pool = empty.length > 0 ? empty : connecting;
+  const open = connecting.filter(
+    (id) => !isClosedToEnemy(ctx, state, enemy, requireLocationInPlay(state, id)),
+  );
+  const empty = open.filter((id) => investigatorsAt(state, id).length === 0);
+  const pool = empty.length > 0 ? empty : open;
   if (cmd.to === undefined && pool.length > 1)
     return chooseLocation(
       ctx,
@@ -330,7 +343,9 @@ export function handleRetreatEnemy(
       pool,
       (to) => ({ type: 'RetreatEnemy', enemyId: enemy.id, to }),
     );
-  const to = cmd.to ?? pool[0];
+  // An answer naming a location that closed meanwhile leaves the enemy where it is, as no
+  // destination does: it still disengages and exhausts.
+  const to = cmd.to === undefined ? pool[0] : open.includes(cmd.to) ? cmd.to : undefined;
   const events: Event[] = enemy.zone.kind === 'engaged' ? [disengaged(state, enemy)] : [];
   const unengaged = replay(events, state).cards[enemy.id] ?? enemy;
   if (to !== undefined)

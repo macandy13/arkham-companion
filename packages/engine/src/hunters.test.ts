@@ -11,7 +11,6 @@ import {
   investigatorId,
   newGame,
   zoneOf,
-  type BuiltGame,
   type Command,
   type Decision,
   type GameBuilder,
@@ -195,7 +194,7 @@ describe('MoveHunters', () => {
 
       expect(rejection).toEqual({
         code: 'decisionPending',
-        decisionId: decisionId('hunter:hunter:location'),
+        decisionId: decisionId('move:hunter'),
       });
     });
 
@@ -206,7 +205,7 @@ describe('MoveHunters', () => {
         .start();
       const asked = stateAfter(context, state, moveHunters);
 
-      const after = stateAfter(context, asked, answer('hunter:hunter:location', 'c'));
+      const after = stateAfter(context, asked, answer('move:hunter', 'c'));
 
       expect(zoneOf(after, hunter)).toEqual(at('c'));
       expect(after.pending).toEqual([]);
@@ -239,7 +238,7 @@ describe('MoveHunters', () => {
         .start();
       const asked = stateAfter(context, state, moveHunters);
 
-      const after = stateAfter(context, asked, answer('hunter:hunter:investigator', bob));
+      const after = stateAfter(context, asked, answer('move:hunter:investigator', bob));
 
       expect(zoneOf(after, hunter)).toEqual(engagedWith(bob));
     });
@@ -517,98 +516,27 @@ describe('answering the hunter order', () => {
     const asked = stateAfter(context, state, moveHunters);
     const tieAsked = stateAfter(context, asked, answer('hunterOrder', forked));
 
-    const after = stateAfter(context, tieAsked, answer('hunter:forked_hunter:location', 'c'));
+    const after = stateAfter(context, tieAsked, answer('move:forked_hunter', 'c'));
 
-    expect(tieAsked.pending.map((decision) => decision.id)).toEqual([
-      'hunter:forked_hunter:location',
-    ]);
+    expect(tieAsked.pending.map((decision) => decision.id)).toEqual(['move:forked_hunter']);
     expect(zoneOf(tieAsked, second)).toEqual(at('b'));
     expect(zoneOf(after, forked)).toEqual(at('c'));
     expect(zoneOf(after, second)).toEqual(engagedWith(alice));
   });
 });
 
-describe('MoveHunter', () => {
-  const engaged = instanceId('engaged_hunter');
-  const ghoul = instanceId('plain_ghoul');
-  const layout = (): BuiltGame =>
-    fork
-      .withInvestigator(alice, { locationId: instanceId('d') })
-      .withCard(hunter, hunterGhoul, at('a'))
-      .withCard(engaged, hunterGhoul, engagedWith(alice))
-      .withCard(ghoul, plainGhoul, at('a'))
-      .start();
-
-  it.each([
-    { name: 'an engaged enemy', enemyId: engaged, to: 'b', code: 'notAHunter' },
-    { name: 'an unknown card', enemyId: instanceId('nobody'), to: 'b', code: 'unknownCard' },
-    {
-      name: 'a location that is not connected',
-      enemyId: hunter,
-      to: 'd',
-      code: 'hunterCannotMove',
-    },
-  ])('rejects moving $name', ({ enemyId, to, code }) => {
-    const { context, state } = layout();
-
-    const rejection = rejectionFrom(context, state, {
-      type: 'MoveHunter',
-      enemyId,
-      to: instanceId(to),
-    });
-
-    expect(rejection.code).toBe(code);
-  });
-
-  it('rejects moving towards an unknown investigator', () => {
-    const { context, state } = layout();
-
-    const rejection = rejectionFrom(context, state, {
-      type: 'MoveHunter',
-      enemyId: hunter,
-      towards: investigatorId('nobody'),
-    });
-
-    expect(rejection.code).toBe('unknownInvestigator');
-  });
-
-  it('rejects moving towards an investigator the hunter cannot reach', () => {
-    const { context, state } = places('a', 'b')
-      .withInvestigator(alice, { locationId: instanceId('b') })
-      .withCard(hunter, hunterGhoul, at('a'))
-      .start();
-
-    const rejection = rejectionFrom(context, state, {
-      type: 'MoveHunter',
-      enemyId: hunter,
-      towards: alice,
-    });
-
-    expect(rejection.code).toBe('noRoute');
-  });
-
-  it('takes the only step towards an investigator', () => {
+describe('MoveEnemy toward its prey', () => {
+  it('moves a hunter one step along its own rule', () => {
     const { context, state } = line('a', 'b', 'c')
       .withInvestigator(alice, { locationId: instanceId('c') })
       .withCard(hunter, hunterGhoul, at('a'))
       .start();
 
     const after = stateAfter(context, state, {
-      type: 'MoveHunter',
+      type: 'MoveEnemy',
       enemyId: hunter,
-      towards: alice,
+      toward: 'prey',
     });
-
-    expect(zoneOf(after, hunter)).toEqual(at('b'));
-  });
-
-  it('moves along its own rule when given neither a location nor an investigator', () => {
-    const { context, state } = line('a', 'b', 'c')
-      .withInvestigator(alice, { locationId: instanceId('c') })
-      .withCard(hunter, hunterGhoul, at('a'))
-      .start();
-
-    const after = stateAfter(context, state, { type: 'MoveHunter', enemyId: hunter });
 
     expect(zoneOf(after, hunter)).toEqual(at('b'));
   });
@@ -619,9 +547,29 @@ describe('MoveHunter', () => {
       .withCard(hunter, hunterGhoul, at('a'))
       .start();
 
-    const after = stateAfter(context, state, { type: 'MoveHunter', enemyId: hunter });
+    const after = stateAfter(context, state, {
+      type: 'MoveEnemy',
+      enemyId: hunter,
+      toward: 'prey',
+    });
 
-    expect(after.pending.map((decision) => decision.id)).toEqual(['hunter:hunter:location']);
+    expect(after.pending.map((decision) => decision.id)).toEqual(['move:hunter']);
+  });
+
+  it('rejects a chosen step that does not lead towards its prey', () => {
+    const { context, state } = fork
+      .withInvestigator(alice, { locationId: instanceId('d') })
+      .withCard(hunter, hunterGhoul, at('a'))
+      .start();
+
+    const rejection = rejectionFrom(context, state, {
+      type: 'MoveEnemy',
+      enemyId: hunter,
+      toward: 'prey',
+      to: instanceId('d'),
+    });
+
+    expect(rejection).toEqual({ code: 'enemyCannotMove', cardId: hunter, to: instanceId('d') });
   });
 });
 

@@ -3,20 +3,25 @@
 [Hunter](https://arkhamdb.com/rules#Hunter), [nearest](https://arkhamdb.com/rules#Nearest).
 
 - In enemy step 1, each **ready, unengaged** hunter moves one connection along the shortest path toward the nearest investigator. It doesn't move if an investigator is already at its location; with "Prey – … only" only an investigator its prey picks keeps it there ([prey.md](prey.md)).
-  Test: [`packages/engine/src/hunters.test.ts › MoveHunters › moves a hunter one step along the path to the investigator`](../../packages/engine/src/hunters.test.ts#L71)
-  Test: [`packages/engine/src/hunters.test.ts › MoveHunters › heads for the nearest investigator`](../../packages/engine/src/hunters.test.ts#L139)
-  Test: [`packages/engine/src/hunters.test.ts › MoveHunters › does not move exhausted, engaged or non-hunter enemies`](../../packages/engine/src/hunters.test.ts#L124)
-  Test: [`packages/engine/src/hunters.test.ts › MoveHunters › does not move a hunter that $name`](../../packages/engine/src/hunters.test.ts#L118)
-  Test: [`packages/engine/src/hunters.test.ts › MoveHunters with "Prey – Bob only" › moves towards bob past a nearer alice`](../../packages/engine/src/hunters.test.ts#L299)
-  Test: [`packages/engine/src/hunters.test.ts › MoveHunters with "Prey – Bob only" › leaves alice at its location and moves on towards bob`](../../packages/engine/src/hunters.test.ts#L311)
-- "Nearest" counts connections even through moves a card blocks. If the next step on the path is blocked by a card, the hunter doesn't move.
+  Test: [`packages/engine/src/hunters.test.ts › MoveHunters › moves a hunter one step along the path to the investigator`](../../packages/engine/src/hunters.test.ts#L70)
+  Test: [`packages/engine/src/hunters.test.ts › MoveHunters › heads for the nearest investigator`](../../packages/engine/src/hunters.test.ts#L138)
+  Test: [`packages/engine/src/hunters.test.ts › MoveHunters › does not move exhausted, engaged or non-hunter enemies`](../../packages/engine/src/hunters.test.ts#L123)
+  Test: [`packages/engine/src/hunters.test.ts › MoveHunters › does not move a hunter that $name`](../../packages/engine/src/hunters.test.ts#L117)
+  Test: [`packages/engine/src/hunters.test.ts › MoveHunters with "Prey – Bob only" › moves towards bob past a nearer alice`](../../packages/engine/src/hunters.test.ts#L298)
+  Test: [`packages/engine/src/hunters.test.ts › MoveHunters with "Prey – Bob only" › leaves alice at its location and moves on towards bob`](../../packages/engine/src/hunters.test.ts#L310)
+- "Nearest" counts connections even through moves a card blocks. A hunter never steps into a location a card closes to it (Barricade): it takes another equally short step if there is one, else it doesn't move. That holds after the players picked whom it hunts too.
+  Test: [`packages/engine/src/player_cards.test.ts › a location closed to enemies (Barricade) › $name`](../../packages/engine/src/player_cards.test.ts#L198)
+  Test: [`packages/engine/src/player_cards.test.ts › a location closed to enemies (Barricade) › sends a hunter along the other equally short way, round the hall`](../../packages/engine/src/player_cards.test.ts#L206)
+  Test: [`packages/engine/src/player_cards.test.ts › a location closed to enemies (Barricade) › keeps a hunter out on its way to the investigator the players chose`](../../packages/engine/src/player_cards.test.ts#L220)
 - Equidistant investigators: prey picks the target; if prey doesn't decide it or there is none, the lead investigator does. The lead investigator also picks between several shortest paths.
-  Test: [`packages/engine/src/hunters.test.ts › MoveHunters › ties › lets prey pick between equally near investigators`](../../packages/engine/src/hunters.test.ts#L247)
-  Test: [`packages/engine/src/hunters.test.ts › MoveHunters › ties › asks which investigator to hunt when equally near investigators lead apart`](../../packages/engine/src/hunters.test.ts#L215)
-  Test: [`packages/engine/src/hunters.test.ts › MoveHunters › ties › asks for the destination when two shortest paths differ`](../../packages/engine/src/hunters.test.ts#L168)
+  Test: [`packages/engine/src/hunters.test.ts › MoveHunters › ties › lets prey pick between equally near investigators`](../../packages/engine/src/hunters.test.ts#L246)
+  Test: [`packages/engine/src/hunters.test.ts › MoveHunters › ties › asks which investigator to hunt when equally near investigators lead apart`](../../packages/engine/src/hunters.test.ts#L214)
+  Test: [`packages/engine/src/hunters.test.ts › MoveHunters › ties › asks for the destination when two shortest paths differ`](../../packages/engine/src/hunters.test.ts#L167)
+  Test: [`packages/engine/src/hunters.test.ts › MoveHunters › ties › asks for the destination after prey picked one investigator with two routes`](../../packages/engine/src/hunters.test.ts#L279)
+  Test: [`packages/engine/src/hunters.test.ts › MoveHunters › ties › engages the investigator the players chose when the hunter can reach them`](../../packages/engine/src/hunters.test.ts#L233)
 - Several hunters move one at a time, in an order the lead investigator picks, each with its own choices before the next moves. This is our reading of [Choices](https://arkhamdb.com/rules#Choices_and_the_Grim_Rule); no rule says it explicitly.
-  Test: [`packages/engine/src/hunters.test.ts › MoveHunters order › asks the lead investigator for the order when two hunters would move, and moves none`](../../packages/engine/src/hunters.test.ts#L347)
-  Test: [`packages/engine/src/hunters.test.ts › answering the hunter order › resolves the chosen hunter's own tie decision before the other hunter moves`](../../packages/engine/src/hunters.test.ts#L510)
+  Test: [`packages/engine/src/hunters.test.ts › MoveHunters order › asks the lead investigator for the order when two hunters would move, and moves none`](../../packages/engine/src/hunters.test.ts#L346)
+  Test: [`packages/engine/src/hunters.test.ts › answering the hunter order › resolves the chosen hunter's own tie decision before the other hunter moves`](../../packages/engine/src/hunters.test.ts#L509)
 - A card effect on "the nearest [[Cultist]] enemy" (Mysterious Chanting; Raising Suspicions, Aerial Pursuit) counts connections from the location of the investigator resolving it; an engaged enemy is at its investigator's location.
   Test: [`packages/engine/src/triggers.test.ts › doom on the nearest Cultist enemy, or a search for one › places 2 doom on the cultist in the cellar, not on the one in the attic or the nearer monster`](../../packages/engine/src/triggers.test.ts#L2831)
   Test: [`packages/engine/src/triggers.test.ts › doom on the nearest Cultist enemy, or a search for one › counts a cultist engaged with alice as at her location`](../../packages/engine/src/triggers.test.ts#L2845)

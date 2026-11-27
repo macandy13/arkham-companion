@@ -90,9 +90,7 @@ export type Command = AskedByCard &
     | EvadeEnemy
     | ReadyEnemy
     | MoveEnemy
-    | MoveEnemyTowards
     | MoveHunters
-    | MoveHunter
     | RequestDecision
     | TestSkill
     | ForEachPoint
@@ -959,20 +957,36 @@ export interface ReadyEnemy {
 }
 
 /**
- * A card effect moves an enemy in play to the location `to` ("move it to the
- * Hallway"), or the players carry such an effect out by dragging the enemy
- * on the map. Unlike a hunter's step it needs no connection. An engaged enemy
- * moves only with its investigator, so a plain effect is refused for it
- * (`enemyEngaged`); a forced instruction (`forced`) is followed whatever the
- * engagement, so the enemy disengages and moves. At `to` a ready enemy then
- * engages as when it spawns there (`engageEvents`); an enemy already at `to`
- * stays as it is. An enemy entering an unrevealed location does not reveal it. Produces `CardMoved`, then
- * `EnemyEngaged` or `DecisionRequested`.
+ * The destination rule of a `MoveEnemy` step (`enemyWay` in `enemy_ways.ts`):
+ *
+ * - a location: along a shortest path there ("each unengaged Ghoul enemy moves 1 location
+ *   towards the Parlor"), staying while it is out of play;
+ * - `prey`: the hunter's rule (Rules Reference, "Hunter"), towards the nearest investigator, prey
+ *   breaking ties; equally near investigators whose ways part are first a `chooseInvestigator`
+ *   decision (`move:<enemy>:investigator`), answered by a move toward the chosen one's location.
+ *   It stays while an investigator is at its location.
  */
-export interface MoveEnemy {
+export type EnemyDestination = InstanceId | 'prey';
+
+/**
+ * A card effect or a hunter's step moves an enemy in play, or the players carry such an effect
+ * out by dragging the enemy on the map. With `to` alone it goes straight there ("move it to the
+ * Hallway"), connected or not. With a destination rule (`toward`, `EnemyDestination`) it moves
+ * one connection along its way, exhausted or not: it stays when it is there already or has no
+ * way, and equally short first steps become a `chooseLocation` decision for the lead
+ * investigator (`move:<enemy>`), answered by the same move with `to` naming the chosen step.
+ *
+ * An engaged enemy moves only with its investigator, so a plain effect is refused for it
+ * (`enemyEngaged`); a forced instruction (`forced`, "each Cultist enemy moves once toward
+ * Underground Cistern") is followed whatever the engagement, so the enemy disengages and moves
+ * from its investigator's location. At its destination a ready enemy then engages as when it
+ * spawns there (`engageEvents`); an enemy already at `to` stays as it is. An enemy entering an
+ * unrevealed location does not reveal it. Produces `CardMoved`, then `EnemyEngaged` or
+ * `DecisionRequested`, or only the step's `DecisionRequested`.
+ */
+export type MoveEnemy = {
   type: 'MoveEnemy';
   enemyId: InstanceId;
-  to: InstanceId;
   /** A forced instruction, followed even for an engaged enemy. Default false. */
   forced?: boolean;
   /**
@@ -981,36 +995,21 @@ export interface MoveEnemy {
    * it engages attacks the one it names.
    */
   attacksIfItEngages?: true;
-}
-
-/**
- * A card effect moves an unengaged enemy one connection towards the location
- * `towards` along a shortest path ("each unengaged Ghoul enemy moves 1
- * location towards the Parlor"), exhausted or not. It stays when it is
- * there already or has no path (also while `towards` is out of play); equally short first steps become a
- * `chooseLocation` decision for the lead investigator (`towards:<enemy>`),
- * answered with `MoveEnemy`. An engaged enemy moves only with its
- * investigator, so it is refused (`enemyEngaged`), unless the move is
- * `forced` ("each Cultist enemy moves once toward Underground Cistern",
- * Stop the Rite): then it disengages and moves from its investigator's
- * location. Produces what `MoveEnemy` produces, or the `DecisionRequested`.
- */
-export interface MoveEnemyTowards {
-  type: 'MoveEnemyTowards';
-  enemyId: InstanceId;
-  towards: InstanceId;
-  /** A forced instruction, followed even for an engaged enemy. Default false. */
-  forced?: boolean;
-  /** Passed on to the `MoveEnemy` it makes (`MoveEnemy.attacksIfItEngages`). */
-  attacksIfItEngages?: true;
-}
+} & (
+  | { to: InstanceId; toward?: never }
+  | {
+      /** Where it heads, one connection at a time. */
+      toward: EnemyDestination;
+      /** The first step the players chose between equally short ones; it must be one of them. */
+      to?: InstanceId;
+    }
+);
 
 /**
  * Moves the ready, unengaged hunter enemies one step towards the nearest
- * investigator (enemy phase; the phase assistant of M1.10 issues it). Hunters
- * with an investigator at their location, without a route or with a pending
- * decision stay. Equally near investigators and equally short routes are
- * settled by prey and then handed to the players. When two or more hunters
+ * investigator (enemy phase; the phase assistant of M1.10 issues it), each with
+ * a `MoveEnemy` toward its prey. Hunters with an investigator at their location,
+ * without a route or with a pending decision stay. When two or more hunters
  * would move, the lead investigator chooses the order (`hunterOrder`
  * decision, see `handleMoveHunters`) and nothing moves yet. Produces
  * `CardMoved` per moving hunter, then `EnemyEngaged` or `DecisionRequested`,
@@ -1025,24 +1024,6 @@ export interface MoveHunters {
    */
   hunters?: InstanceId[];
 }
-
-/**
- * Moves one hunter a step, as the players decided a tie in `MoveHunters`: to
- * the neighbouring location `to`, or towards `towards` along that
- * investigator's shortest routes (a remaining tie between routes becomes a
- * `chooseLocation` decision). The hunter must be an unengaged enemy at a location;
- * `to` must be connected to it. With neither `to` nor `towards` the hunter moves
- * along its own rule, as `MoveHunters` would move it alone. Produces `CardMoved`, then `EnemyEngaged` or
- * `DecisionRequested`.
- */
-export type MoveHunter = {
-  type: 'MoveHunter';
-  enemyId: InstanceId;
-} & (
-  | { to: InstanceId; towards?: never }
-  | { towards: InvestigatorId; to?: never }
-  | { to?: never; towards?: never }
-);
 
 /**
  * Raises a decision, for rule modules and card effects ("choose one: …", `leadDecides`).
