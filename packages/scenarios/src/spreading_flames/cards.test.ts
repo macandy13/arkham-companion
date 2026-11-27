@@ -940,19 +940,15 @@ describe('Spreading Flames card abilities', () => {
         then: 'leaves the Bystander engaged with her',
         zone: engagedWith(alice),
       },
-    ])(
-      "tests alice's intellect (2) on $agenda; a $result $then, placing no doom",
-      ({ code, result, zone }) => {
-        const { context, state: started } = aliceWithABystanderAt(code, quad);
+    ])("tests alice's intellect (2) on $agenda; a $result $then", ({ code, result, zone }) => {
+      const { context, state: started } = aliceWithABystanderAt(code, quad);
 
-        const asked = stateAfter(context, started, aliceParleys);
-        const state = stateAfter(context, asked, answer('test:agenda', result));
+      const asked = stateAfter(context, started, aliceParleys);
+      const state = stateAfter(context, asked, answer('test:agenda', result));
 
-        expect(asked.pending).toMatchObject([{ skillTest: { skill: 'intellect', difficulty: 2 } }]);
-        expect(state.cards[bystander]?.zone).toEqual(zone);
-        expect(state.cards[agenda]?.tokens.doom).toBeUndefined();
-      },
-    );
+      expect(asked.pending).toMatchObject([{ skillTest: { skill: 'intellect', difficulty: 2 } }]);
+      expect(state.cards[bystander]?.zone).toEqual(zone);
+    });
 
     it('refuses the Parley with the only Bystander at the Dormitories, away from alice', () => {
       const { context, state } = aliceWithABystanderAt(

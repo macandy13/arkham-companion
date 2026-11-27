@@ -49,6 +49,8 @@ const dormitories = instanceId('12117#1');
 const scienceHall = instanceId('12118#1');
 const warrenObservatory = instanceId('12119#1');
 const orneLibrary = instanceId('12120#1');
+const pastCurfew = instanceId('12106#1');
+const litUp = instanceId('12107#1');
 const tank = investigatorId('tank');
 /** The two Fire! copies act 3's search finds for 2 investigators, deck first. */
 const firstFire = '12129#1';
@@ -444,14 +446,14 @@ describe('Spreading Flames act 3, Searching for Dr. Armitage', () => {
 /** Past Curfew advances, and each of the two investigators passes its willpower (3) test. */
 const pastCurfewAdvancesAndBothPass: Command[] = [
   { type: 'Advance', deck: 'agenda' },
-  answer('test:12106#1', 'pass'),
-  answer('test:12106#1', 'pass'),
+  answer(`test:${pastCurfew}`, 'pass'),
+  answer(`test:${pastCurfew}`, 'pass'),
 ];
 /** Lit Up advances, and each of the two investigators passes its agility (3) test. */
 const litUpAdvancesAndBothPass: Command[] = [
   { type: 'Advance', deck: 'agenda' },
-  answer('test:12107#1', 'pass'),
-  answer('test:12107#1', 'pass'),
+  answer(`test:${litUp}`, 'pass'),
+  answer(`test:${litUp}`, 'pass'),
 ];
 
 describe('Spreading Flames agenda 2, Lit Up', () => {
