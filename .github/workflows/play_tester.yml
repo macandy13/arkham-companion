@@ -1,6 +1,6 @@
 name: Play tester
 
-# Nightly only, no PR job (product.md "Continuous play tester"): bots play fresh games of the real
+# Nightly (product.md "Continuous play tester"; PRs get the 100-game smoke run in ci.yml): bots play fresh games of the real
 # scenarios and replay the committed records of fixed bugs; each new kind of failure becomes one
 # `play-tester` issue, a known one gets the night's count as a comment.
 on:
