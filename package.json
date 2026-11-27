@@ -15,7 +15,8 @@
     "format": "prettier --write .",
     "carddata:fetch": "pnpm --filter @arkham/carddata fetch-cards",
     "carddata:campaign": "pnpm --filter @arkham/carddata campaign-guides",
-    "playtest": "pnpm --filter @arkham/play_tester playtest"
+    "playtest": "pnpm --filter @arkham/play_tester playtest",
+    "rules:links": "node packages/merge_gate/src/rules_ledger_cli.ts"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
