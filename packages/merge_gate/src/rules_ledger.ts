@@ -32,8 +32,8 @@ export function parseTestRefs(markdown: string): TestRef[] {
 
 /**
  * The references whose test no longer exists: its file is gone, or its titles are no longer
- * the first argument of a call (`describe(`, `it(`, `test(`, also with modifiers such as `.skip(` or `it.each([…])(`) in that order in the file.
- * Reading the source, not running the suite, keeps the check fast; a renamed, deleted or moved
+ * the first argument of a call (`describe(`, `it(`, `test(`, also with modifiers such as
+ * `.skip(` or `it.each([…])(`) in that order in the file. Reading the source, not running the suite, keeps the check fast; a renamed, deleted or moved
  * test still fails it, which is the point. Titles built with `${…}` can't be named.
  */
 export function missingTests(
@@ -55,8 +55,9 @@ export function missingTests(
 
 // Where a `describe`, `it` or `test` call (`.skip(` and the like too, and the `])(` after an
 // `.each` table) with this title as its first argument ends, at or after `from`. Only those calls
-// count, so the same words in a command literal (`{ type: 'MoveHunters' }`) or an assertion don't. The order is checked, not the
-// nesting: an `it` moved into a later sibling `describe` still passes.
+// count, so the same words in a command literal (`{ type: 'MoveHunters' }`) or an assertion
+// don't. The order is checked, not the nesting: an `it` moved into a later sibling `describe`
+// still passes.
 function titleCallIndex(source: string, title: string, from: number): number | undefined {
   const quoted = ["'", '"', '`'].map((quote) => `${quote}${escapeRegExp(title)}${quote}`);
   const call = new RegExp(
