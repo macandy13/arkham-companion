@@ -11,6 +11,7 @@ import {
   type MapEnemyView,
   move,
   readyEnemy,
+  swapPlaces,
 } from '@arkham/engine';
 import { ActionButton, ActionGroup, CardActions, cardActionsOn } from '../screens/ActionRow';
 import { SplitAction } from '../screens/SplitAction';
@@ -33,7 +34,8 @@ import { usePlay } from '../screens/PlayContext';
  * allow them against it (`BoardView.enemyActions`): fight, evade and engage as actions, which
  * count off what they cost (`BoardView.actionCost`), then fight and evade without an action, as some cards allow; at any time, in a
  * group of their own, what card effects do to an enemy: deal 1 damage, disengage it, exhaust or
- * ready it, evade or engage it for each investigator `BoardView.enemyCardEffects` names, defeat it,
+ * ready it, evade or engage it for each investigator `BoardView.enemyCardEffects` names, swap places
+ * with it (one pill whose menu names each investigator elsewhere, Ethereal Slip), defeat it,
  * and put it beneath the act where an objective counts the cards there (`ActView.takesCardsBeneath`,
  * Smoke and Mirrors' interrogated suspects).
  * Each button shows a short word and is named in full ("Fight · 1 action"). Fight, evade and
@@ -205,6 +207,17 @@ export function EnemyDetails({
               onClick={step(() => actions.perform(evadeEnemy(enemy.id, investigator)), 'close')}
             />
           ))}
+          <SplitAction
+            icon="swap"
+            caption={t('enemy.caption.swap')}
+            waysName={t('ways.swap')}
+            ways={effects.swap.map((investigator) => ({
+              key: investigator,
+              name: t('enemy.swapWith', { name: board.investigator(investigator).name }),
+              onPick: step(() => actions.perform(swapPlaces(investigator, enemy.id)), 'close'),
+            }))}
+            disabled={busy}
+          />
           {effects.engage.map((investigator) => (
             <ActionButton
               key={investigator}

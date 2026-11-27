@@ -572,6 +572,7 @@ export const appTexts = {
     exhaust: 'Erschöpfen',
     ready: 'Spielbereit machen',
     evadedBy: '{{name}} entkommt',
+    swapWith: 'Plätze tauschen mit {{name}}',
     engages: 'Verwickelt {{name}} in einen Kampf',
     defeat: 'Besiegen',
     beneathAct: 'Unter den Akt legen',
@@ -584,6 +585,7 @@ export const appTexts = {
       exhaust: 'Erschöpfen',
       ready: 'Bereit',
       evaded: 'Abgehängt',
+      swap: 'Tauschen',
       defeat: 'Besiegen',
       beneathAct: 'Unter Akt',
     },
@@ -643,6 +645,7 @@ export const appTexts = {
     evade: 'Arten zu entkommen',
     investigate: 'Arten zu ermitteln',
     move: 'Arten, hierher zu gehen',
+    swap: 'Arten, Plätze zu tauschen',
   },
 
   moveByCard: {

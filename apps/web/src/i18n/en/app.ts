@@ -561,6 +561,7 @@ export const appTexts = {
     exhaust: 'Exhaust',
     ready: 'Ready',
     evadedBy: 'Evaded by {{name}}',
+    swapWith: 'Swap places with {{name}}',
     engages: 'Engages {{name}}',
     defeat: 'Defeat',
     beneathAct: 'Put beneath the act',
@@ -573,6 +574,7 @@ export const appTexts = {
       exhaust: 'Exhaust',
       ready: 'Ready',
       evaded: 'Evaded',
+      swap: 'Swap',
       defeat: 'Defeat',
       beneathAct: 'Beneath act',
     },
@@ -631,6 +633,7 @@ export const appTexts = {
     evade: 'Ways to evade',
     investigate: 'Ways to investigate',
     move: 'Ways to move here',
+    swap: 'Ways to swap places',
   },
 
   moveByCard: {

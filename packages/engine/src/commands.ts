@@ -89,6 +89,7 @@ export type Command = AskedByCard &
     | ExhaustEnemy
     | RetreatEnemy
     | EvadeEnemy
+    | SwapPlaces
     | ReadyEnemy
     | MoveEnemy
     | MoveHunters
@@ -914,6 +915,21 @@ export interface HealEnemy {
  */
 export interface DefeatEnemy {
   type: 'DefeatEnemy';
+  enemyId: InstanceId;
+}
+
+/**
+ * The investigator and the enemy swap places, as a card swaps them (Ethereal Slip): each moves to
+ * the other's location at once, ignoring connections. The enemy leaves any engagement, the
+ * investigator takes the enemies engaged with them along, and only then do ready, unengaged
+ * enemies engage at either location, so the two never engage each other on the way. Produces the
+ * enemy's `CardMoved`, the investigator's move (`MoveInvestigator`'s events), then `EnemyEngaged`
+ * or a `chooseInvestigator` decision for the enemy at its new location. Nothing happens when they
+ * already share a location.
+ */
+export interface SwapPlaces {
+  type: 'SwapPlaces';
+  investigatorId: InvestigatorId;
   enemyId: InstanceId;
 }
 

@@ -1,5 +1,6 @@
 import { expect, test } from './fixtures/test';
 import {
+  ghoulMinionToSpawnExport,
   ghoulPriestInCellarExport,
   houseOpenedExport,
   resumeImportedGame,
@@ -334,5 +335,33 @@ test('correct a location from its details and its bubble', async ({ page }) => {
     await room('Hallway').dblclick();
     await bubble('Hallway').getByRole('button', { name: 'Add a clue' }).click();
     await expect(room('Hallway').getByRole('img', { name: 'Clues 1' })).toBeVisible();
+  });
+});
+
+// Journey: a card swaps an investigator and an enemy (Ethereal Slip), from the enemy's details.
+test('swap Roland Banks with a Ghoul Minion as a card says', async ({ page }) => {
+  const house = page.getByRole('figure', { name: 'House' });
+  const room = (name: string) => house.getByRole('group', { name, exact: true });
+  const minion = (where: string) => room(where).getByRole('img', { name: /^Ghoul Minion/ });
+  const details = page.getByRole('dialog', { name: 'Ghoul Minion' });
+
+  await test.step('Resume a game and spawn its Ghoul Minion in the Attic', async () => {
+    await resumeImportedGame(page, 'Spawning', ghoulMinionToSpawnExport('Spawning'));
+    await page.getByRole('dialog').getByRole('button', { name: 'Attic' }).click();
+    await expect(minion('Attic')).toBeVisible();
+  });
+
+  await test.step('Tap it and open its ways to swap places: Roland Banks, in the Hallway, is one', async () => {
+    await minion('Attic').click();
+    await details.getByRole('button', { name: 'Ways to swap places' }).click();
+    await expect(
+      details.getByRole('button', { name: 'Swap places with Roland Banks' }),
+    ).toBeVisible();
+  });
+
+  await test.step('Swap them: Roland Banks stands in the Attic, the Ghoul Minion in the Hallway', async () => {
+    await details.getByRole('button', { name: 'Swap places with Roland Banks' }).click();
+    await expect(room('Attic').getByRole('img', { name: 'Roland Banks' })).toBeVisible();
+    await expect(minion('Hallway')).toBeVisible();
   });
 });
