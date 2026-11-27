@@ -963,8 +963,11 @@ export interface ReadyEnemy {
  *   breaking ties; equally near investigators whose ways part are first a `chooseInvestigator`
  *   decision (`move:<enemy>:investigator`), answered by a move toward the chosen one's location.
  *   It stays while an investigator is at its location.
+ * - `awayFromInvestigators`: the elusive retreat (Rules Reference, "Elusive"), to a connecting
+ *   location without investigators if there is one, else to any connecting location open to it;
+ *   `RetreatEnemy` disengages and exhausts the enemy first.
  */
-export type EnemyDestination = InstanceId | 'prey';
+export type EnemyDestination = InstanceId | 'prey' | 'awayFromInvestigators';
 
 /**
  * A card effect or a hunter's step moves an enemy in play, or the players carry such an effect

@@ -101,8 +101,10 @@ describe('RetreatEnemy', () => {
 
     expect(after.cards[bat]?.zone).toEqual(engagedWith(alice));
   });
+});
 
-  it('rejects a chosen location that does not connect', () => {
+describe('MoveEnemy away from investigators', () => {
+  it("rejects a chosen location that does not connect to the enemy's", () => {
     const { context, state } = newGame()
       .withLocation(hall, blankLocation('hall'))
       .withLocation(cellar, blankLocation('cellar'))
