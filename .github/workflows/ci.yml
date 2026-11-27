@@ -38,6 +38,46 @@ jobs:
             done
           } >> "$GITHUB_STEP_SUMMARY"
 
+  # The play tester's smoke run (MA.5, docs/automation.md "Merge gate"): bots play 100 games of
+  # the real scenarios with every rule oracle, so a PR that merges on the session's verdict still
+  # proves the rules work together. The seed is fixed: main passes it, so a finding is this PR's.
+  # It runs on every PR, since a required check must report, and plays only when rule code changed.
+  smoke:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      RUNS: ${{ github.workspace }}/play_tester_runs
+    steps:
+      # The PR's merge commit, whose first parent is the base: its diff is what the PR changes.
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 2
+      - id: changed
+        run: |
+          if git diff --name-only HEAD^1 HEAD | grep -qE '^packages/(engine|scenarios|carddata|play_tester)/'; then
+            echo "rules=true" >> "$GITHUB_OUTPUT"
+          fi
+      - if: steps.changed.outputs.rules == 'true'
+        uses: pnpm/action-setup@v6
+      - if: steps.changed.outputs.rules == 'true'
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: pnpm
+      - if: steps.changed.outputs.rules == 'true'
+        run: pnpm install --frozen-lockfile
+      # 100 games take about 50 seconds; any finding, or a committed fixed bug that fails again, fails the job.
+      - if: steps.changed.outputs.rules == 'true'
+        name: Play 100 games
+        run: pnpm playtest --games 100 --seed 1 --out "$RUNS"
+      - if: failure() && steps.changed.outputs.rules == 'true'
+        uses: actions/upload-artifact@v7
+        with:
+          name: play-tester-smoke
+          path: ${{ env.RUNS }}
+          retention-days: 14
+
   e2e:
     # Pinned: the goldens are made on this image (update-screenshots.yml), and a new one may
     # render fonts differently.
