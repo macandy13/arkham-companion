@@ -74,11 +74,22 @@ export interface EnemyLocationRestriction {
  * - `ready`: it stays exhausted ("it cannot ready", Handcuffs).
  * - `placeDoom`: no doom is placed on it ("doom cannot be placed on it", Handcuffs).
  * - `damaged`: no damage is dealt to it ("cannot be damaged", A Gathering).
+ * - `move`: it stays where it is ("cannot move", Elokoss): it takes no hunter step, a card effect
+ *   leaves it in place, and an investigator it is engaged with moves away without it
+ *   (`isClosedToEnemy`).
+ * - `attackOfOpportunity`: an action of an investigator engaged with it does not provoke its attack
+ *   ("cannot make attacks of opportunity", Elokoss).
  */
 export type EnemyRestriction = (typeof ENEMY_RESTRICTIONS)[number];
 
 /** Every `EnemyRestriction`. */
-const ENEMY_RESTRICTIONS = ['ready', 'placeDoom', 'damaged'] as const;
+const ENEMY_RESTRICTIONS = [
+  'ready',
+  'placeDoom',
+  'damaged',
+  'move',
+  'attackOfOpportunity',
+] as const;
 
 /**
  * A "cannot" about an enemy: `{ cannot: 'ready', of: 'host', exceptTraits: [trait('Elite')] }` is
@@ -165,8 +176,10 @@ export function isRestricted(
 }
 
 /**
- * Whether a card in play keeps `enemy` from moving into `location` (`EnemyLocationRestriction`):
- * a hunter takes another equally short step or stays, and a card effect leaves the enemy where it is.
+ * Whether a card in play keeps `enemy` from moving into `location`: the location is closed to it
+ * (`EnemyLocationRestriction`, Barricade), or the enemy cannot move at all (`move`, Elokoss). A
+ * hunter takes another equally short step or stays, a card effect leaves the enemy where it is,
+ * and an investigator it is engaged with moves away without it.
  */
 export function isClosedToEnemy(
   ctx: EngineContext,
@@ -174,6 +187,7 @@ export function isClosedToEnemy(
   enemy: CardInstance,
   location: CardInstance,
 ): boolean {
+  if (isEnemyRestricted(ctx, state, enemy, 'move')) return true;
   const traits = cardStats(ctx.cards, enemy.code).traits;
   return cardsInPlay(state).some((source) =>
     activeRestrictions(ctx, source).some(

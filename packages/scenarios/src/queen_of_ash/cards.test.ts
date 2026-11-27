@@ -180,6 +180,47 @@ describe('Queen of Ash card abilities', () => {
     );
   });
 
+  describe('Elokoss', () => {
+    const cistern = instanceId('underground_cistern');
+    const elokoss = instanceId('elokoss');
+    /** Alice at Underground Cistern in her turn, with Elokoss there; Sewer Culvert next to it. */
+    const elokossAtCistern = () =>
+      newGame()
+        .withLocation(cistern, cardOf(QUEEN_OF_ASH_CODES.undergroundCistern), { revealed: true })
+        .withLocation(culvert, cardOf(QUEEN_OF_ASH_CODES.sewerCulvert), { revealed: true })
+        .withConnection(cistern, culvert)
+        .withInvestigator(alice, { locationId: cistern })
+        .withCard(elokoss, cardOf(QUEEN_OF_ASH_CODES.elokoss), atLocation(cistern))
+        .withTurnOf(alice)
+        .start();
+
+    it('stays at Underground Cistern when a card effect moves her', () => {
+      const { context, state } = elokossAtCistern();
+
+      const after = stateAfter(context, state, {
+        type: 'MoveEnemy',
+        enemyId: elokoss,
+        to: culvert,
+        forced: true,
+      });
+
+      expect(after.cards[elokoss]?.zone).toEqual(atLocation(cistern));
+    });
+
+    it('makes no attack of opportunity when alice takes the resource action at her location', () => {
+      const { context, state } = elokossAtCistern();
+
+      const after = stateAfter(context, state, {
+        type: 'GainResources',
+        investigatorId: alice,
+        amount: 1,
+        asAction: true,
+      });
+
+      expect(after.pending).toEqual([]);
+    });
+  });
+
   describe('Sewer Tunnels (Overgrown Tunnels)', () => {
     it('takes 1 of the 3 actions alice has left as she enters its unrevealed triangle', () => {
       const tunnels = instanceId('overgrown_tunnels');
