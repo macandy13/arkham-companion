@@ -8,6 +8,9 @@
     "packages/engine": {
       "entry": ["test/utils/index.ts"]
     },
+    "packages/merge_gate": {
+      "entry": ["src/verdict_cli.ts"]
+    },
     "packages/review_tour": {
       "entry": ["src/cli.ts"]
     },

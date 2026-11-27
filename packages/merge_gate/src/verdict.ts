@@ -50,3 +50,15 @@ export function parseVerdict(body: string): MergeVerdict | undefined {
     rules: rules as MergeVerdict['rules'],
   };
 }
+
+/**
+ * The comment a session posts for the gate: one readable line for people, then the block
+ * {@link parseVerdict} reads back.
+ */
+export function formatVerdictComment(verdict: MergeVerdict): string {
+  const rules = verdict.rules === 'none' ? 'no rules checked' : `rules checker: ${verdict.rules}`;
+  return [
+    `**Merge verdict** for ${verdict.sha.slice(0, 7)}: reviewer: ${verdict.reviewer} · ${rules}`,
+    `<!-- merge-verdict ${JSON.stringify(verdict)} -->`,
+  ].join('\n\n');
+}

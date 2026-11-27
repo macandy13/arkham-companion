@@ -84,6 +84,7 @@ const RULES_PATHS: readonly string[] = [
   'packages/engine/src/',
   'packages/scenarios/src/',
   'packages/carddata/src/',
+  'docs/rules/',
 ];
 
 /**
