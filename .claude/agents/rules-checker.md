@@ -48,6 +48,8 @@ A short list, most important first. For each finding:
 - **Suggested fix:** one or two sentences
 - **Confidence:** high / medium / unverified
 
+Then **Ledger lines**: for each correct, tested claim, the `docs/rules/` page and the claim's list item it belongs under, and the line to add there, `` Test: `<test file> › <describe> › <it>` `` with the titles exactly as written in the source (`docs/rules.md`, "Each claim names its test"). A claim the page doesn't have yet gets its list item too, in our own words. The session adds them in the same PR.
+
 Then "Checked and correct:" listing the rules you verified that the code gets right. If nothing is wrong, say so plainly.
 
 End with exactly one line, `Rules verdict: pass` or `Rules verdict: fail`. Above it, list the changed files you checked. Pass only when every row is **correct** and names a test, or when the diff changes no rule at all (then say "No rule changed" above the line, with the reason). Any **wrong**, **unverified** or untested row fails. The session posts this for the merge gate, which lets rule changes merge without the owner on a pass (`docs/automation.md`, "Merge gate").

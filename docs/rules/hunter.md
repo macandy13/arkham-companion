@@ -3,9 +3,20 @@
 [Hunter](https://arkhamdb.com/rules#Hunter), [nearest](https://arkhamdb.com/rules#Nearest).
 
 - In enemy step 1, each **ready, unengaged** hunter moves one connection along the shortest path toward the nearest investigator. It doesn't move if an investigator is already at its location; with "Prey – … only" only an investigator its prey picks keeps it there ([prey.md](prey.md)).
+  Test: `packages/engine/src/hunters.test.ts › MoveHunters › moves a hunter one step along the path to the investigator`
+  Test: `packages/engine/src/hunters.test.ts › MoveHunters › heads for the nearest investigator`
+  Test: `packages/engine/src/hunters.test.ts › MoveHunters › does not move exhausted, engaged or non-hunter enemies`
+  Test: `packages/engine/src/hunters.test.ts › MoveHunters › does not move a hunter that $name`
+  Test: `packages/engine/src/hunters.test.ts › MoveHunters with "Prey – Bob only" › moves towards bob past a nearer alice`
+  Test: `packages/engine/src/hunters.test.ts › MoveHunters with "Prey – Bob only" › leaves alice at its location and moves on towards bob`
 - "Nearest" counts connections even through moves a card blocks. If the next step on the path is blocked by a card, the hunter doesn't move.
 - Equidistant investigators: prey picks the target; if prey doesn't decide it or there is none, the lead investigator does. The lead investigator also picks between several shortest paths.
+  Test: `packages/engine/src/hunters.test.ts › MoveHunters › ties › lets prey pick between equally near investigators`
+  Test: `packages/engine/src/hunters.test.ts › MoveHunters › ties › asks which investigator to hunt when equally near investigators lead apart`
+  Test: `packages/engine/src/hunters.test.ts › MoveHunters › ties › asks for the destination when two shortest paths differ`
 - Several hunters move one at a time, in an order the lead investigator picks, each with its own choices before the next moves. This is our reading of [Choices](https://arkhamdb.com/rules#Choices_and_the_Grim_Rule); no rule says it explicitly.
+  Test: `packages/engine/src/hunters.test.ts › MoveHunters order › asks the lead investigator for the order when two hunters would move, and moves none`
+  Test: `packages/engine/src/hunters.test.ts › answering the hunter order › resolves the chosen hunter's own tie decision before the other hunter moves`
 - A card effect on "the nearest [[Cultist]] enemy" (Mysterious Chanting; Raising Suspicions, Aerial Pursuit) counts connections from the location of the investigator resolving it; an engaged enemy is at its investigator's location.
   - Over one-way connections that is the way from the investigator to the enemy, the opposite of how a hunter counts its way to an investigator (our reading of "can be reached in the fewest number of connections", [Nearest](https://arkhamdb.com/rules#Nearest)).
   - An enemy with no path there still counts, as farther than every enemy with one (FAQ: "Even if it has no valid path to an investigator, an enemy can still qualify as the 'nearest' enemy", asked about Mysterious Chanting).
