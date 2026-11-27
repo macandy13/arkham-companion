@@ -9,7 +9,6 @@
  */
 import { describe, expect, it } from 'vitest';
 import {
-  advanceBySpendingClues,
   resolutionId,
   atEndOfTurn,
   atLocation,
@@ -213,7 +212,7 @@ describe('the last act whose reverse side asks something', () => {
   const game = newGame()
     .withAct(
       instanceId('first_act'),
-      blankAct('first_act', { actions: [advanceBySpendingClues(perInvestigator(2))] }),
+      blankAct('first_act', { advance: { kind: 'spendClues', clues: perInvestigator(2) } }),
     )
     .withAct(instanceId('last_act'), lastAct)
     .withLocation(hall, blankLocation('hall'))
@@ -435,7 +434,7 @@ describe('a per-investigator threshold after an investigator is eliminated', () 
   const game = newGame()
     .withAct(
       instanceId('first_act'),
-      blankAct('first_act', { actions: [advanceBySpendingClues(perInvestigator(2))] }),
+      blankAct('first_act', { advance: { kind: 'spendClues', clues: perInvestigator(2) } }),
     )
     .withAct(instanceId('next_act'), blankAct('next_act', { stage: { number: 2 } }))
     .withLocation(hall, blankLocation('hall'))

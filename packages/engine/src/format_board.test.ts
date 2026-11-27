@@ -1,7 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import {
-  advanceBySpendingClues,
-  advanceBySpendingCluesAtRoundEnd,
   cardCode,
   decisionId,
   atLocation,
@@ -38,7 +36,7 @@ const planCard = blankAgenda('plan', fixed(2), { name: 'The Plan' });
 /** Needs 2 clues per investigator, so 4 with Alice and Bob. */
 const searchCard = blankAct('search', {
   name: 'The Search',
-  actions: [advanceBySpendingClues(perInvestigator(2))],
+  advance: { kind: 'spendClues', clues: perInvestigator(2) },
 });
 const hallCard = blankLocation('hall', { name: 'Hall' });
 const atticCard = blankLocation('attic', { name: 'Attic' });
@@ -128,9 +126,12 @@ describe('formatBoard', () => {
       objective: 'in the Hall',
       act: blankAct('smoke', {
         name: 'Smoke',
-        abilities: [
-          advanceBySpendingCluesAtRoundEnd(decisionId('smoke'), fixed(2), cardCode('hall')),
-        ],
+        advance: {
+          kind: 'spendCluesAtRoundEnd',
+          decision: decisionId('smoke'),
+          clues: fixed(2),
+          location: cardCode('hall'),
+        },
       }),
       line: 'Act: Smoke – needs 2 clues at Hall when the round ends',
     },
@@ -138,7 +139,7 @@ describe('formatBoard', () => {
       objective: 'anywhere',
       act: blankAct('smoke', {
         name: 'Smoke',
-        abilities: [advanceBySpendingCluesAtRoundEnd(decisionId('smoke'), fixed(2))],
+        advance: { kind: 'spendCluesAtRoundEnd', decision: decisionId('smoke'), clues: fixed(2) },
       }),
       line: 'Act: Smoke – needs 2 clues when the round ends',
     },

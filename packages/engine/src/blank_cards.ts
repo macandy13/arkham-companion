@@ -1,5 +1,6 @@
 import { cardCode, encounterSetCode, investigatorCode, investigatorId } from './ids';
 import type { CardStats, CardType, ScaledValue } from './cards';
+import { withAdvance } from './card_actions';
 import type { Investigator } from './state';
 
 /** A printed value that does not scale with the player count ("3"). */
@@ -89,10 +90,10 @@ export function blankAgenda(
 
 /**
  * An act at stage 1 with no way to advance of its own: `advanceAct()` advances it, and
- * `actions: [advanceBySpendingClues(…)]` in `stats` gives it a clue cost.
+ * `advance: { kind: 'spendClues', clues }` in `stats` gives it a clue cost (`withAdvance`).
  */
 export function blankAct(code: string, stats: BlankCardStats = {}): CardStats {
-  return blankCard('act', code, { stage: { number: 1 } }, stats);
+  return withAdvance(blankCard('act', code, { stage: { number: 1 } }, stats));
 }
 
 /** Fields `blankInvestigator` sets on top of its plain ones; the ID is its own parameter. */

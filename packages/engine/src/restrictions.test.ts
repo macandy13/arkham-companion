@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import {
-  advanceBySpendingClues,
   attachedTo,
   blankAct,
   blankEnemy,
@@ -136,7 +135,7 @@ describe('an enemy whose engaged investigator cannot discover or spend clues (Th
       .withInvestigator(alice, { locationId: hall, clues: 2 })
       .withInvestigator(bob, { locationId: hall, clues: 2 })
       .withCard(hunter, hunterCard, hunterZone)
-      .withAct(act, blankAct('act', { actions: [advanceBySpendingClues(perInvestigator(1))] }))
+      .withAct(act, blankAct('act', { advance: { kind: 'spendClues', clues: perInvestigator(1) } }))
       .withTurnOf(alice);
 
   it('rejects alice discovering a clue while the hunter is engaged with her', () => {

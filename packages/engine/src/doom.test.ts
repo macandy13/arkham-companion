@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
   resolutionId,
-  advanceBySpendingClues,
   blankAct,
   blankAgenda,
   blankEnemy,
@@ -51,11 +50,11 @@ const firstAgendaCard = blankAgenda('first_agenda', fixed(3));
 const secondAgendaCard = blankAgenda('second_agenda', fixed(5), { stage: { number: 2 } });
 /** The first act advances for 2 clues per investigator, the second (and last) for 3 per investigator. */
 const firstActCard = blankAct('first_act', {
-  actions: [advanceBySpendingClues(perInvestigator(2))],
+  advance: { kind: 'spendClues', clues: perInvestigator(2) },
 });
 const secondActCard = blankAct('second_act', {
   stage: { number: 2 },
-  actions: [advanceBySpendingClues(perInvestigator(3))],
+  advance: { kind: 'spendClues', clues: perInvestigator(3) },
 });
 const hallCard = blankLocation('hall');
 const ghoulCard = blankEnemy('ghoul');

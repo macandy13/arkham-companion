@@ -5,15 +5,12 @@ import { isLocationInPlay, neighbours, openConnections } from './board';
 import {
   cluesHeldForObjective,
   resolveEffect,
-  roundEndClueObjective,
-  tokenObjective,
   countsCardsBeneathSelf,
   passMarginMatters,
 } from './abilities';
 import {
   advanceActionOf,
   cardActionsOfferedTo,
-  cluesToAdvance,
   printedActions,
   type OfferedCardAction,
   type PrintedActionView,
@@ -1487,24 +1484,23 @@ function actAdvance(
   state: GameState,
   stats: CardStats,
 ): ActAdvance | undefined {
-  const onAct = tokenObjective(stats, 'clue');
-  if (onAct !== undefined)
-    return { kind: 'cluesOnAct', threshold: resolveValue(onAct, state.meta.playerCount) };
-  const atRoundEnd = roundEndClueObjective(stats);
-  if (atRoundEnd !== undefined) {
-    return {
-      kind: 'spendCluesAtRoundEnd',
-      held: cluesHeldForObjective(ctx, state, atRoundEnd.location),
-      threshold: resolveValue(atRoundEnd.clues, state.meta.playerCount),
-    };
+  const { advance } = stats;
+  if (advance === undefined) return undefined;
+  const threshold = resolveValue(advance.clues, state.meta.playerCount);
+  switch (advance.kind) {
+    case 'cluesOnSelf':
+      return { kind: 'cluesOnAct', threshold };
+    case 'spendCluesAtRoundEnd':
+      return {
+        kind: 'spendCluesAtRoundEnd',
+        held: cluesHeldForObjective(ctx, state, advance.location),
+        threshold,
+      };
+    case 'spendClues':
+      return { kind: 'spendClues', held: cluesHeldByGroup(ctx, state), threshold };
+    default:
+      return assertNever(advance);
   }
-  const spent = cluesToAdvance(stats);
-  if (spent === undefined) return undefined;
-  return {
-    kind: 'spendClues',
-    held: cluesHeldByGroup(ctx, state),
-    threshold: resolveValue(spent, state.meta.playerCount),
-  };
 }
 
 function decisionView(ctx: EngineContext, state: GameState, decision: Decision): DecisionView {
