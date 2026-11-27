@@ -6,24 +6,20 @@ import {
   isPoolToken,
   type BoardView,
   type ChaosBagChangeLasts,
+  type ChangeChaosBag,
   type ChaosToken,
-  type PoolToken,
   releaseChaosToken,
   removeChaosToken,
   revealTokens,
   sealChaosToken,
+  type SealChaosToken,
   tokenCounts,
 } from '@arkham/engine';
 import { cycledIndex } from '@arkham/util';
 import { ChaosTokenFace } from '../tokens/ChaosTokenFace';
+import { useDismiss } from './useDismiss';
 import './chaos_bag.css';
 import { usePlay } from './PlayContext';
-
-/** The tokens a card adds from their pool, in the order the chaos bag lists them. */
-const POOL_TOKENS: readonly PoolToken[] = ['bless', 'curse'];
-
-/** The tokens a card adds to the bag as they are, every kind but those that come from a pool. */
-const ADDABLE_TOKENS: readonly ChaosToken[] = CHAOS_TOKENS.filter((token) => !isPoolToken(token));
 
 /** How long a change to the bag can last, in the order the chaos bag offers them. */
 const LASTS: readonly ChaosBagChangeLasts[] = ['scenario', 'campaign'];
@@ -42,12 +38,12 @@ interface TrayToken {
  * The chaos bag in its own dialog (`ChaosBagButton`), laid out as a token tray (ME.32b) with three
  * tabs, so each view stays short:
  * - In the bag: every token in it laid out one by one on a felt tray (`BoardView.chaosBag`, in
- *   `CHAOS_TOKENS` order by `tokenCounts`), as the players would tip it out on the table. The players
- *   seal a token as a card tells them (M6.1b): they tap it, then the investigator whose card seals
- *   it, or remove it. Under the tray the bless and curse tokens, each its count in the bag between −
- *   (back to the pool) and + (from the pool, off while `BoardView.poolTokensLeft` is 0), and Add a
- *   token for any other kind (ME.29b), as a card says. In a campaign game the players pick whether
- *   an added or removed token counts for the scenario or for the rest of the campaign (which the
+ *   `CHAOS_TOKENS` order by `tokenCounts`), as the players would tip it out on the table. A token
+ *   is changed where it's shown (ME.30d): a tap opens the app's menu under the tray to seal it on
+ *   an investigator (M6.1b) or remove it, a bless or curse token back to its pool. The tray ends
+ *   on a dashed token whose menu adds any kind (ME.29b), a bless or curse token from its pool
+ *   (off while `BoardView.poolTokensLeft` is 0). In a campaign game the players pick whether an
+ *   added or removed token counts for the scenario or for the rest of the campaign (which the
  *   resolution writes into the campaign log); a standalone game has only the scenario.
  * - Sealed: the tokens player cards sealed, each with the investigator holding it
  *   (`BoardView.sealedTokens`) and a Release button.
@@ -61,7 +57,7 @@ export function ChaosBag({ board }: { board: BoardView }) {
   const { actions, busy } = usePlay();
   const { t } = useTranslation();
   const tabsId = useId();
-  const changeId = useId();
+  const lastsId = useId();
   const [lasts, setLasts] = useState<ChaosBagChangeLasts>('scenario');
   const [adding, setAdding] = useState(false);
   const [view, setView] = useState<BagView>('bag');
@@ -75,6 +71,25 @@ export function ChaosBag({ board }: { board: BoardView }) {
   // Sealing can leave fewer tokens than the count set before it.
   const revealing = Math.max(1, Math.min(toReveal, board.chaosBag.length));
   const changeLasts = board.inCampaign ? lasts : 'scenario';
+  const closeMenus = () => {
+    setPicked(undefined);
+    setAdding(false);
+  };
+  const { ref, onKeyDown } = useDismiss<HTMLUListElement>(
+    picked !== undefined || adding,
+    closeMenus,
+  );
+  const change = (command: ChangeChaosBag | SealChaosToken) => {
+    closeMenus();
+    void actions.perform(command);
+  };
+  // A bless or curse token goes back to its pool for the scenario; the engine keeps it there.
+  const removals = (token: ChaosToken): readonly ChaosBagChangeLasts[] =>
+    isPoolToken(token) || !board.inCampaign ? ['scenario'] : LASTS;
+  const removeLabel = (token: ChaosToken, duration: ChaosBagChangeLasts) => {
+    if (isPoolToken(token)) return 'chaosBag.returnToPool';
+    return board.inCampaign ? `chaosBag.removeFor.${duration}` : 'chaosBag.remove';
+  };
   // A step taken elsewhere (Undo) can take the picked token out of the bag.
   const chosen = tray.find((each) => each.token === picked?.token && each.nth === picked.nth);
   const tabLabel: Record<BagView, string> = {
@@ -121,127 +136,107 @@ export function ChaosBag({ board }: { board: BoardView }) {
       </div>
       <div role="tabpanel" id={panelId} aria-labelledby={tabId(view)}>
         {view === 'bag' && (
-          <>
-            <ul aria-label={t('chaosBag.contents')} data-part="tray">
-              {tray.map((each) => (
+          <ul ref={ref} aria-label={t('chaosBag.contents')} data-part="tray" onKeyDown={onKeyDown}>
+            {tray.map((each) => {
+              const open = each === chosen;
+              const name = t(`chaosToken.${each.token}`);
+              return (
                 <li key={`${each.token}-${each.nth}`}>
                   <button
                     type="button"
-                    aria-pressed={each === chosen}
+                    data-menu
+                    aria-expanded={open}
                     disabled={busy}
-                    onClick={() => setPicked(each === chosen ? undefined : each)}
+                    onClick={() => {
+                      setAdding(false);
+                      setPicked(open ? undefined : each);
+                    }}
                   >
                     <ChaosTokenFace token={each.token} />
                   </button>
+                  {open && (
+                    <ul aria-label={t('chaosBag.pickedActions', { token: name })}>
+                      {sealers.map((investigator) => (
+                        <li key={investigator.id}>
+                          <button
+                            type="button"
+                            disabled={busy}
+                            onClick={() => change(sealChaosToken(each.token, investigator.id))}
+                          >
+                            {t('chaosBag.sealOn', { token: name, investigator: investigator.name })}
+                          </button>
+                        </li>
+                      ))}
+                      {removals(each.token).map((lasts) => (
+                        <li key={lasts}>
+                          <button
+                            type="button"
+                            disabled={busy}
+                            onClick={() => change(removeChaosToken(each.token, lasts))}
+                          >
+                            {t(removeLabel(each.token, lasts), { token: name })}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </li>
-              ))}
-            </ul>
-            {chosen !== undefined && (
-              <div
-                role="group"
-                aria-label={t('chaosBag.pickedActions', { token: t(`chaosToken.${chosen.token}`) })}
-              >
-                {sealers.map((investigator) => (
-                  <button
-                    key={investigator.id}
-                    type="button"
-                    disabled={busy}
-                    onClick={() => {
-                      setPicked(undefined);
-                      void actions.perform(sealChaosToken(chosen.token, investigator.id));
-                    }}
-                  >
-                    {t('chaosBag.sealOn', {
-                      token: t(`chaosToken.${chosen.token}`),
-                      investigator: investigator.name,
-                    })}
-                  </button>
-                ))}
-                <button
-                  type="button"
-                  disabled={busy}
-                  onClick={() => {
-                    setPicked(undefined);
-                    void actions.perform(removeChaosToken(chosen.token, changeLasts));
-                  }}
-                >
-                  {t('chaosBag.remove', { token: t(`chaosToken.${chosen.token}`) })}
-                </button>
-              </div>
-            )}
-            <ul aria-label={t('chaosBag.pool')} data-part="pool">
-              {POOL_TOKENS.map((token) => {
-                const inBag = board.chaosBag.filter((each) => each === token).length;
-                const left = board.poolTokensLeft(token);
-                const name = t(`chaosToken.${token}`);
-                return (
-                  <li key={token}>
-                    <ChaosTokenFace token={token} />
-                    <button
-                      type="button"
-                      aria-label={t('chaosBag.returnToPool', { token: name })}
-                      disabled={busy || inBag === 0}
-                      onClick={() => void actions.perform(removeChaosToken(token, 'scenario'))}
-                    >
-                      −
-                    </button>
-                    <data value={inBag} title={t('chaosBag.poolLeft', { count: left })}>
-                      ×{inBag}
-                    </data>
-                    <button
-                      type="button"
-                      aria-label={t('chaosBag.addFromPool', { token: name })}
-                      disabled={busy || left === 0}
-                      onClick={() => void actions.perform(addChaosToken(token, 'scenario'))}
-                    >
-                      +
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
-            <div role="group" aria-labelledby={changeId}>
-              <h3 id={changeId}>{t('chaosBag.change')}</h3>
-              {board.inCampaign &&
-                LASTS.map((duration) => (
-                  <button
-                    key={duration}
-                    type="button"
-                    aria-pressed={duration === changeLasts}
-                    onClick={() => setLasts(duration)}
-                  >
-                    {t(`chaosBag.lasts.${duration}`)}
-                  </button>
-                ))}
+              );
+            })}
+            <li>
               <button
                 type="button"
+                data-icon="add"
+                aria-label={t('chaosBag.add')}
                 aria-expanded={adding}
                 disabled={busy}
-                onClick={() => setAdding(!adding)}
-              >
-                {t('chaosBag.add')}
-              </button>
-            </div>
-            {adding && (
-              <ul aria-label={t('chaosBag.addWhich')} data-part="addable">
-                {ADDABLE_TOKENS.map((token) => (
-                  <li key={token}>
-                    <button
-                      type="button"
-                      aria-label={t('chaosBag.addToken', { token: t(`chaosToken.${token}`) })}
-                      disabled={busy}
-                      onClick={() => {
-                        setAdding(false);
-                        void actions.perform(addChaosToken(token, changeLasts));
-                      }}
-                    >
-                      <ChaosTokenFace token={token} />
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </>
+                onClick={() => {
+                  setPicked(undefined);
+                  setAdding(!adding);
+                }}
+              />
+              {adding && (
+                <section aria-label={t('chaosBag.add')}>
+                  {board.inCampaign && <h3 id={lastsId}>{t('chaosBag.lasts.title')}</h3>}
+                  {board.inCampaign && (
+                    <ul aria-labelledby={lastsId}>
+                      {LASTS.map((duration) => (
+                        <li key={duration}>
+                          <button
+                            type="button"
+                            aria-pressed={duration === lasts}
+                            onClick={() => setLasts(duration)}
+                          >
+                            {t(`chaosBag.lasts.${duration}`)}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  <ul aria-label={t('chaosBag.addWhich')} data-part="addable">
+                    {CHAOS_TOKENS.map((token) => (
+                      <li key={token}>
+                        <button
+                          type="button"
+                          aria-label={t('chaosBag.addToken', { token: t(`chaosToken.${token}`) })}
+                          disabled={
+                            busy || (isPoolToken(token) && board.poolTokensLeft(token) === 0)
+                          }
+                          onClick={() =>
+                            change(
+                              addChaosToken(token, isPoolToken(token) ? 'scenario' : changeLasts),
+                            )
+                          }
+                        >
+                          <ChaosTokenFace token={token} />
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              )}
+            </li>
+          </ul>
         )}
         {view === 'sealed' &&
           (board.sealedTokens.length === 0 ? (

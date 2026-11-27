@@ -143,9 +143,6 @@ export const appTexts = {
     pickedActions: '{{token}} versiegeln oder entfernen',
     releaseFrom: '{{token}} von {{investigator}} freigeben',
     release: 'Freigeben',
-    pool: 'Segen und Fluch',
-    poolLeft: 'Noch {{count}} im Vorrat',
-    addFromPool: '{{token}}-Marker in den Beutel legen',
     returnToPool: '{{token}}-Marker in den Vorrat zurücklegen',
     reveal: 'Marker enthüllen',
     revealFewer: 'Einen Marker weniger enthüllen',
@@ -163,8 +160,8 @@ export const appTexts = {
     revealHint:
       'Für eine Karte, die außerhalb einer Fertigkeitsprobe Marker enthüllt. Sie bleiben im Beutel.',
     revealHowMany: 'Wie viele Marker enthüllt werden',
-    change: 'Den Beutel ändern',
     lasts: {
+      title: 'Wie lange es gilt',
       scenario: 'Für dieses Szenario',
       campaign: 'Für die Kampagne',
     },
@@ -172,6 +169,10 @@ export const appTexts = {
     addWhich: 'Marker zum Hinzufügen',
     addToken: 'Einen {{token}}-Marker hinzufügen',
     remove: 'Einen {{token}}-Marker entfernen',
+    removeFor: {
+      scenario: 'Für dieses Szenario entfernen',
+      campaign: 'Für die Kampagne entfernen',
+    },
   },
   header: {
     round: 'Runde {{round}}',

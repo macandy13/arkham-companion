@@ -402,8 +402,9 @@ test(
     await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
     const bag = await openChaosBag(page);
 
-    await bag.getByRole('button', { name: 'Add a Bless token to the bag' }).click();
-    await expect(bag.getByRole('list', { name: 'Bless and curse' })).toHaveText(/Bless−×1\+/);
+    await bag.getByRole('button', { name: 'Add a token' }).click();
+    await bag.getByRole('button', { name: 'Add a Bless token' }).click();
+    await expect(bag.getByRole('tab', { name: 'In the bag · 17' })).toBeVisible();
     await bag.getByRole('button', { name: /^Elder Sign/ }).click();
     await bag.getByRole('button', { name: 'Seal Elder Sign on Roland Banks' }).click();
 
@@ -447,6 +448,21 @@ test(
     const remove = bag.getByRole('button', { name: 'Remove a Skull token' });
     await expect(remove).toBeVisible();
     await remove.scrollIntoViewIfNeeded();
+  },
+);
+
+test(
+  'the dashed token at the end of the chaos bag tray opened, the tokens to add in its menu',
+  { tag: '@shot' },
+  async ({ page }) => {
+    await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
+    const bag = await openChaosBag(page);
+
+    await bag.getByRole('button', { name: 'Add a token' }).click();
+
+    const addable = bag.getByRole('list', { name: 'Tokens to add' });
+    await expect(addable.getByRole('button', { name: 'Add a Cultist token' })).toBeVisible();
+    await addable.scrollIntoViewIfNeeded();
   },
 );
 

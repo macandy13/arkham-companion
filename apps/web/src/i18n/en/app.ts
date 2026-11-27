@@ -142,9 +142,6 @@ export const appTexts = {
     pickedActions: 'Seal or remove the {{token}}',
     releaseFrom: 'Release {{token}} from {{investigator}}',
     release: 'Release',
-    pool: 'Bless and curse',
-    poolLeft: '{{count}} left in the pool',
-    addFromPool: 'Add a {{token}} token to the bag',
     returnToPool: 'Return a {{token}} token to the pool',
     reveal: 'Reveal tokens',
     revealFewer: 'Reveal one token fewer',
@@ -161,8 +158,8 @@ export const appTexts = {
     noneSealed: 'No token is sealed.',
     revealHint: 'For a card that reveals tokens outside a skill test. They stay in the bag.',
     revealHowMany: 'How many tokens to reveal',
-    change: 'Change the bag',
     lasts: {
+      title: 'How long it lasts',
       scenario: 'For this scenario',
       campaign: 'For the campaign',
     },
@@ -170,6 +167,10 @@ export const appTexts = {
     addWhich: 'Tokens to add',
     addToken: 'Add a {{token}} token',
     remove: 'Remove a {{token}} token',
+    removeFor: {
+      scenario: 'Remove for this scenario',
+      campaign: 'Remove for the campaign',
+    },
   },
   header: {
     round: 'Round {{round}}',

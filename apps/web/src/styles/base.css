@@ -88,7 +88,9 @@ select {
  * sections are headed in the display face's small caps and parted by rules; each entry is a row
  * with its line icon (`data-icon`), a check mark on the current page or the chosen setting, and a
  * destructive one (`data-danger`) in red. The button's parent is positioned, so the menu lines up
- * with its end. The selectors name `#app`, so they beat the screens' plain list rules.
+ * with its end. A button drawn as something else that opens such a menu (a chaos token on the
+ * tray) says so with `data-menu` instead of an icon. The selectors name `#app`, so they beat the
+ * screens' plain list rules.
  */
 button[data-icon][aria-expanded] {
   min-width: var(--button-compact);
@@ -97,7 +99,7 @@ button[data-icon][aria-expanded] {
   border-radius: var(--radius-round);
 }
 
-#app button[data-icon][aria-expanded] + * {
+#app button:is([data-icon], [data-menu])[aria-expanded] + * {
   --color-background: var(--table-background);
   --color-text: var(--table-text);
   --color-text-muted: var(--table-text-muted);
@@ -128,7 +130,7 @@ button[data-icon][aria-expanded] {
   text-align: start;
 }
 
-#app button[data-icon][aria-expanded] + * :is(ul, section) {
+#app button:is([data-icon], [data-menu])[aria-expanded] + * :is(ul, section) {
   display: grid;
   gap: var(--space-1);
   margin: 0;
@@ -140,13 +142,13 @@ button[data-icon][aria-expanded] {
  * An entry's row is its link or button; the screens' own list rules (home's covers) stay out. It
  * leaves `display` alone, so the play screen still hides its phone-only entries (game.css).
  */
-#app button[data-icon][aria-expanded] + * li {
+#app button:is([data-icon], [data-menu])[aria-expanded] + * li {
   padding: 0;
   border: 0;
   background: none;
 }
 
-#app button[data-icon][aria-expanded] + * h3 {
+#app button:is([data-icon], [data-menu])[aria-expanded] + * h3 {
   margin: 0;
   padding: var(--space-2) var(--space-2) 0;
   color: var(--color-accent);
@@ -155,14 +157,14 @@ button[data-icon][aria-expanded] {
   font-weight: normal;
 }
 
-#app button[data-icon][aria-expanded] + * hr {
+#app button:is([data-icon], [data-menu])[aria-expanded] + * hr {
   width: 100%;
   margin: var(--space-1) 0;
   border: 0;
   border-top: var(--border-width) solid var(--color-border);
 }
 
-#app button[data-icon][aria-expanded] + * li > :is(a, button) {
+#app button:is([data-icon], [data-menu])[aria-expanded] + * li > :is(a, button) {
   display: flex;
   align-items: center;
   justify-content: flex-start;
@@ -180,17 +182,21 @@ button[data-icon][aria-expanded] {
   text-decoration: none;
 }
 
-#app button[data-icon][aria-expanded] + * li > :is(a, button):not(:disabled):hover {
+#app
+  button:is([data-icon], [data-menu])[aria-expanded]
+  + *
+  li
+  > :is(a, button):not(:disabled):hover {
   background: var(--color-menu-hover);
 }
 
-#app button[data-icon][aria-expanded] + * li > :is(a, button)[data-icon]::before {
+#app button:is([data-icon], [data-menu])[aria-expanded] + * li > :is(a, button)[data-icon]::before {
   margin: 0;
   color: var(--color-accent);
 }
 
 #app
-  button[data-icon][aria-expanded]
+  button:is([data-icon], [data-menu])[aria-expanded]
   + *
   li
   > :is(a[aria-current='page'], button[aria-pressed='true'])::after {
@@ -199,11 +205,11 @@ button[data-icon][aria-expanded] {
   color: var(--color-accent);
 }
 
-#app button[data-icon][aria-expanded] + * li > button[data-danger] {
+#app button:is([data-icon], [data-menu])[aria-expanded] + * li > button[data-danger] {
   color: var(--color-menu-danger);
 }
 
-#app button[data-icon][aria-expanded] + * li > button[data-danger]::before {
+#app button:is([data-icon], [data-menu])[aria-expanded] + * li > button[data-danger]::before {
   color: inherit;
 }
 
