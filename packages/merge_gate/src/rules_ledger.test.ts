@@ -1,7 +1,14 @@
-import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { linkTestRefs, missingTests, parseTestRefs } from './rules_ledger.ts';
+import {
+  linkTestRefs,
+  missingTests,
+  parseTestRefs,
+  repoFileReader,
+  rulesPages,
+  unlinkedTestRefs,
+} from './rules_ledger.ts';
 
 describe('parseTestRefs', () => {
   it('reads a test file and its titles from a code span, and ignores other spans', () => {
@@ -52,19 +59,46 @@ describe('linkTestRefs', () => {
       after: `Test: ${linked}`,
     },
     { name: 'an up-to-date link', before: `Test: ${linked}`, after: `Test: ${linked}` },
-    {
-      name: 'a missing test',
-      before: 'Test: `packages/engine/src/hunters.test.ts › MoveHunters › patrols`',
-      after: 'Test: `packages/engine/src/hunters.test.ts › MoveHunters › patrols`',
-    },
-    { name: 'a span that names no test', before: 'see `prey.md`', after: 'see `prey.md`' },
   ])('links $name on docs/rules/hunter.md to the test line', ({ before, after }) => {
     expect(linkTestRefs('docs/rules/hunter.md', before, read)).toBe(after);
+  });
+
+  it.each([
+    {
+      name: 'a missing test',
+      markdown: 'Test: `packages/engine/src/hunters.test.ts › MoveHunters › patrols`',
+    },
+    { name: 'a span that names no test', markdown: 'see `prey.md`' },
+  ])('leaves $name as it is', ({ markdown }) => {
+    expect(linkTestRefs('docs/rules/hunter.md', markdown, read)).toBe(markdown);
   });
 
   it('climbs one more directory for a page in docs/rules/cards/', () => {
     expect(linkTestRefs('docs/rules/cards/objectives.md', `Test: ${span}`, read)).toBe(
       `Test: [${span}](../../../packages/engine/src/hunters.test.ts#L3)`,
+    );
+  });
+});
+
+describe('unlinkedTestRefs', () => {
+  const span =
+    '`packages/engine/src/hunters.test.ts › MoveHunters › heads for the nearest investigator`';
+
+  it.each([
+    {
+      name: 'a link to the test file, at any line',
+      line: `[${span}](../../packages/engine/src/hunters.test.ts#L9)`,
+      unlinked: false,
+    },
+    { name: 'a bare span', line: span, unlinked: true },
+    {
+      name: 'a link to another file',
+      line: `[${span}](../../packages/engine/src/prey.test.ts#L3)`,
+      unlinked: true,
+    },
+  ])('counts $name on docs/rules/hunter.md as unlinked: $unlinked', ({ line, unlinked }) => {
+    expect(unlinkedTestRefs('docs/rules/hunter.md', `Test: ${line}`)).toHaveLength(
+      unlinked ? 1 : 0,
     );
   });
 });
@@ -138,13 +172,8 @@ describe('missingTests', () => {
 
 describe('the rules pages in docs/rules/', () => {
   const root = join(import.meta.dirname, '../../..');
-  const pages = readdirSync(join(root, 'docs/rules'), { recursive: true, encoding: 'utf8' })
-    .filter((path) => path.endsWith('.md'))
-    .map((path) => join('docs/rules', path));
-  const readTestFile = (file: string): string | undefined => {
-    const path = join(root, file);
-    return existsSync(path) ? readFileSync(path, 'utf8') : undefined;
-  };
+  const pages = rulesPages(root);
+  const readTestFile = repoFileReader(root);
 
   it('name only tests that exist', () => {
     const missing = pages.flatMap((page) =>
@@ -156,12 +185,13 @@ describe('the rules pages in docs/rules/', () => {
     expect(missing).toEqual([]);
   });
 
-  it('link each test to its current line (run `pnpm rules:links` to fix)', () => {
-    const outdated = pages.filter((page) => {
-      const markdown = readFileSync(join(root, page), 'utf8');
-      return linkTestRefs(page, markdown, readTestFile) !== markdown;
-    });
+  it('link each test to its file (run `pnpm rules:links` to add the links)', () => {
+    const unlinked = pages.flatMap((page) =>
+      unlinkedTestRefs(page, readFileSync(join(root, page), 'utf8')).map(
+        (span) => `${page}: ${span}`,
+      ),
+    );
 
-    expect(outdated).toEqual([]);
+    expect(unlinked).toEqual([]);
   });
 });

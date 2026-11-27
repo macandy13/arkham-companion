@@ -1,7 +1,8 @@
 // The file, not the package index: merge_gate runs under Node's type stripping (NodeNext), and
 // the index re-exports without file extensions.
 import { escapeRegExp } from '@arkham/util/src/string.ts';
-import { posix } from 'node:path';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { join, posix } from 'node:path';
 
 /**
  * The rules ledger: every claim on a rules summary page (`docs/rules/`) names the test that
@@ -9,8 +10,8 @@ import { posix } from 'node:path';
  * (the file, then its `describe` and `it` titles), linked to the test's line so a reader opens
  * it with one tap. With no owner reviewing rule code, the ledger
  * is how anyone sees what the app enforces and what checks it; `rules-checker` writes the
- * entries it confirms, and `rules_ledger.test.ts` fails when a named test disappears or its
- * link points at the wrong line; `rules_ledger_cli.ts` rewrites the links.
+ * entries it confirms, and `rules_ledger.test.ts` fails when a named test disappears or a line
+ * isn't linked to its file; `rules_ledger_cli.ts` writes and refreshes the links.
  */
 
 /** One test a rules page names: its repo-relative file and its title path. */
@@ -22,15 +23,46 @@ export interface TestRef {
 
 const SEPARATOR = ' › ';
 // A code span, alone or as the text of a Markdown link: `[`…`](target)`.
-const CODE_SPAN = /\[`([^`]+)`\]\([^)\s]*\)|`([^`]+)`/g;
+const CODE_SPAN = /\[`([^`]+)`\]\(([^)\s]*)\)|`([^`]+)`/g;
 const TEST_FILE = /\.test\.tsx?$/;
 
 /** Finds the test references in a rules page: code spans of a test file path and its titles. */
 export function parseTestRefs(markdown: string): TestRef[] {
   return [...markdown.matchAll(CODE_SPAN)].flatMap((match) => {
-    const ref = testRef(match[1] ?? match[2] ?? '');
+    const ref = testRef(match[1] ?? match[3] ?? '');
     return ref === undefined ? [] : [ref];
   });
+}
+
+/**
+ * The test references on a page (`page` is its repo-relative path) that aren't linked to their
+ * test file, as their spans. Only the file is checked, not the `#L` line: a check on the line
+ * would fail every PR that adds a test above a named one, and parallel PRs would then conflict
+ * on the rules pages. `pnpm rules:links` refreshes the lines whenever a page is edited.
+ */
+export function unlinkedTestRefs(page: string, markdown: string): string[] {
+  return [...markdown.matchAll(CODE_SPAN)].flatMap((match) => {
+    const span = match[1] ?? match[3] ?? '';
+    const ref = testRef(span);
+    if (ref === undefined) return [];
+    const file = (match[2] ?? '').split('#')[0];
+    return file === posix.relative(posix.dirname(page), ref.file) ? [] : [span];
+  });
+}
+
+/** The repo-relative paths of the rules pages under `docs/rules/`, from the repo `root`. */
+export function rulesPages(root: string): string[] {
+  return readdirSync(join(root, 'docs/rules'), { recursive: true, encoding: 'utf8' })
+    .filter((path) => path.endsWith('.md'))
+    .map((path) => join('docs/rules', path));
+}
+
+/** Reads a repo-relative file under `root`, or undefined when it doesn't exist. */
+export function repoFileReader(root: string): (file: string) => string | undefined {
+  return (file) => {
+    const path = join(root, file);
+    return existsSync(path) ? readFileSync(path, 'utf8') : undefined;
+  };
 }
 
 function testRef(span: string): TestRef | undefined {
@@ -56,15 +88,14 @@ export function missingTests(
  * Links every test a rules page names to its line, as `[`…`](../../packages/…test.ts#L42)`
  * relative to the page (`page` is its repo-relative path), so GitHub opens the test itself.
  * Spans already linked get their target refreshed; a missing test keeps its span as it is,
- * since `missingTests` reports it. The pages are checked against this, so a test moved by an
- * edit above it fails until the links are rewritten.
+ * since `missingTests` reports it.
  */
 export function linkTestRefs(
   page: string,
   markdown: string,
   readTestFile: (file: string) => string | undefined,
 ): string {
-  return markdown.replace(CODE_SPAN, (whole, linked?: string, bare?: string) => {
+  return markdown.replace(CODE_SPAN, (whole, linked?: string, _target?: string, bare?: string) => {
     const span = linked ?? bare ?? '';
     const ref = testRef(span);
     const line = ref === undefined ? undefined : testLine(ref, readTestFile);
