@@ -713,13 +713,14 @@ describe('Queen of Ash card abilities', () => {
     });
 
     it.each([
-      { answer: 'weakness', thisRound: undefined },
+      { answer: 'weakness', forbids: 'nothing', thisRound: undefined },
       {
         answer: 'skill',
+        forbids: 'skills',
         thisRound: [{ cannot: ['play', 'commit'], what: 'cards', cards: { types: ['skill'] } }],
       },
     ])(
-      'asks alice what she discarded as her turn begins; $answer leaves her',
+      'asks alice what she discarded as her turn begins; a $answer forbids her $forbids this round',
       ({ answer: discarded, thisRound }) => {
         const { context, state: started } = newGame()
           .withLocation(culvert, cardOf(QUEEN_OF_ASH_CODES.sewerCulvert), { revealed: true })

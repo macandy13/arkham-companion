@@ -423,7 +423,9 @@ function cardMovedLine(t: TFunction, names: Names, { cardId, from, to }: CardMov
   });
 }
 
-/** What an investigator does with their own cards, which the players carry out at the table. */
+/** The order the verbs of a restriction take in its log key, whatever order the card lists them. */
+const VERB_ORDER = ['play', 'commit', 'discover', 'spend'] as const;
+
 /**
  * "Alice cannot play or commit skills this round": the verbs name the key, the cards a list of
  * their types, or all cards when the restriction names none.
@@ -431,7 +433,8 @@ function cardMovedLine(t: TFunction, names: Names, { cardId, from, to }: CardMov
 function restrictedLine(t: TFunction, names: Names, event: InvestigatorRestricted): string {
   const investigator = names.investigator(event.investigatorId);
   const { restriction } = event;
-  const key = `log.restricted.${restriction.what}.${restriction.cannot.join('_')}`;
+  const verbs = VERB_ORDER.filter((verb) => restriction.cannot.some((cannot) => cannot === verb));
+  const key = `log.restricted.${restriction.what}.${verbs.join('_')}`;
   if (restriction.what === 'clues') return t(key, { investigator });
   const types = restriction.cards?.types ?? [];
   const cards =
@@ -441,6 +444,7 @@ function restrictedLine(t: TFunction, names: Names, event: InvestigatorRestricte
   return t(key, { investigator, cards });
 }
 
+/** What an investigator does with their own cards, which the players carry out at the table. */
 function playerCardLine(t: TFunction, names: Names, command: PlayerCardCommand): string {
   const investigator = names.investigator(command.investigatorId);
   switch (command.type) {

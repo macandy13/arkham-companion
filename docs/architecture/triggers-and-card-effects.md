@@ -220,7 +220,7 @@ A restriction can also bind an investigator (`InvestigatorCardRestriction`), whi
 
 - It names verbs and the noun they act on (`RESTRICTED_VERBS`): The Masked Hunter is `cannot: ['discover', 'spend'], what: 'clues'`, Dissonant Voices `cannot: ['play'], what: 'cards'`. A new "cannot", such as healing horror or gaining resources, adds its verb and noun there and a check in its handler.
 - It binds the investigator in whose threat area the card is, an engaged enemy included (`who: 'threatArea'`).
-- `play` `cards` names the cards by type and trait (`PlayedCardFilter`). The engine never sees the card played, so it refuses a `PlayCard` only where the filter names every played card, as Dissonant Voices' assets or events do.
+- `play` `cards` names the cards by type and trait (`PlayerCardFilter`). The engine never sees the card played, so it refuses a `PlayCard` only where the filter names every played card, as Dissonant Voices' assets or events do.
 - `DiscoverClues` and `PlayCard` reject it (`restrictedFor`), and a passed investigation discovers nothing.
 - Clue costs leave their clues out (`cluesHeldByGroup`, `defaultCluePayments`); `groupCluePayments` rejects them as payers, and `canPay` an own clue cost.
 - `InvestigatorView.forbidden` lists them for the screen, verbs by noun (`forbiddenFor`: `{ clues: ['discover', 'spend'] }`).

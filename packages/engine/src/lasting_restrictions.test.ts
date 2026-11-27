@@ -5,6 +5,7 @@ import {
   instanceId,
   investigatorId,
   newGame,
+  PlayTable,
   type Command,
   type InvestigatorRestriction,
 } from './index';
@@ -55,22 +56,34 @@ describe('RestrictInvestigator', () => {
   });
 
   it('lifts the restriction as the round ends', () => {
-    const { context, state } = aliceInHall.start();
-    const next: Command = { type: 'NextPhase' };
-    const restricted = stateAfter(context, state, next, restrictAlice(noSkillsThisRound));
+    const table = PlayTable.start(aliceInHall);
+    table.nextPhase();
+    table.play(restrictAlice(noSkillsThisRound));
+    const restricted = table.board.investigator(alice).thisRound;
 
-    const nextRound = stateAfter(
+    table.startTurn(alice);
+    table.endTurn(alice);
+    table.nextPhase();
+    table.nextPhase();
+    table.nextPhase();
+
+    expect(restricted).toEqual([noSkillsThisRound]);
+    expect(table.board).toMatchObject({ round: 2, phase: 'mythos' });
+    expect(table.board.investigator(alice).thisRound).toBeUndefined();
+  });
+
+  it('restricts nothing for alice once she has resigned, while bob plays on', () => {
+    const { context, state } = aliceInHall
+      .withInvestigator(investigatorId('bob'), { locationId: hall })
+      .start();
+
+    const after = stateAfter(
       context,
-      restricted,
-      { type: 'StartTurn', investigatorId: alice },
-      { type: 'EndTurn', investigatorId: alice },
-      next,
-      next,
-      next,
+      state,
+      { type: 'Resign', investigatorId: alice, immediately: true },
+      restrictAlice(noSkillsThisRound),
     );
 
-    expect(restricted.meta.lastingRestrictions).toHaveLength(1);
-    expect(nextRound.meta).toMatchObject({ round: 2, phase: 'mythos' });
-    expect(boardView(context, nextRound).investigator(alice).thisRound).toBeUndefined();
+    expect(after.meta.lastingRestrictions).toBeUndefined();
   });
 });

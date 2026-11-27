@@ -27,9 +27,13 @@ Each ruling below says what the card refuses, whom it binds and what still happe
   - Committing skills is still allowed, and so is a card an effect puts into play, which isn't played.
 - Languor ("After your turn begins: Discard the top card of your deck. If it is a weakness, draw it. Otherwise, you cannot play or commit cards of that type (asset, event, or skill) this round") asks its holder, as each of their turns begins, what they discarded:
   - A weakness they draw, and nothing is forbidden.
+    Test: `packages/scenarios/src/queen_of_ash/cards.test.ts › Queen of Ash card abilities › Languor › asks alice what she discarded as her turn begins; a $answer forbids her $forbids this round`
   - Otherwise, until the round ends (after the upkeep phase, RR "Round"), they cannot play cards of that type or commit them to a skill test: an asset or event is neither played nor committed for its icons, a skill is not committed.
+    Test: `packages/engine/src/lasting_restrictions.test.ts › RestrictInvestigator › shows alice what she cannot do this round: $name`
+    Test: `packages/engine/src/lasting_restrictions.test.ts › RestrictInvestigator › lifts the restriction as the round ends`
   - The app keeps the card type in the game log; it cannot refuse the play or the commit, since it sees no player cards.
-  - Limit 1 per investigator: a second copy drawn by its holder stays where it is and is discarded (RR "Limit").
+  - Limit 1 per investigator: a second copy drawn by its holder stays where it is and is discarded (RR "Limits and Maximums", FAQ v2.5 §2.3).
+    Test: `packages/engine/src/encounter.test.ts › DrawCard › a treachery in the threat area, limit 1 per investigator › is discarded while the drawer already has a copy in their threat area`
 - Barricade ("Non-Elite enemies cannot move into attached location") keeps every non-Elite enemy out of its location ([Barricade FAQ](https://arkhamdb.com/card/01038)):
   Test: [`packages/engine/src/player_cards.test.ts › a location closed to enemies (Barricade) › $name`](../../../packages/engine/src/player_cards.test.ts#L198)
   - A hunter whose step on its shortest route would go there stays; distance still counts through the location, and with another equally short step open it takes that one (RR "Hunter"; the other step is our reading).

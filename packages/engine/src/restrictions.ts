@@ -125,7 +125,7 @@ export type PlayerCardType = PlayedCardType | 'skill';
  * The player cards a `cards` restriction names: those of one of `types` and, when `traits` is
  * set, with one of them; every card when absent.
  */
-export interface PlayedCardFilter {
+export interface PlayerCardFilter {
   types?: readonly PlayerCardType[];
   traits?: readonly Trait[];
 }
@@ -138,7 +138,7 @@ export interface PlayedCardFilter {
  */
 export type InvestigatorRestriction =
   | { cannot: readonly RestrictedVerbs['clues'][]; what: 'clues' }
-  | { cannot: readonly RestrictedVerbs['cards'][]; what: 'cards'; cards?: PlayedCardFilter };
+  | { cannot: readonly RestrictedVerbs['cards'][]; what: 'cards'; cards?: PlayerCardFilter };
 
 /**
  * A "cannot" about an investigator on a card, binding those `who` names: The Masked Hunter's is
@@ -273,7 +273,7 @@ export function isRestrictedFor<N extends RestrictedNoun>(
   const forbids = (restriction: InvestigatorRestriction) =>
     restriction.what === what &&
     restriction.cannot.some((verb) => verb === cannot) &&
-    (restriction.what !== 'cards' || namesEveryCard(restriction.cards));
+    (restriction.what !== 'cards' || namesEveryCard(restriction.cards, cannot));
   return (
     cardsInPlay(state).some((source) =>
       activeRestrictions(ctx, source).some(
@@ -323,15 +323,20 @@ function activeRestrictions(ctx: EngineContext, source: CardInstance): readonly 
   );
 }
 
-// Every played card is an asset or an event, so a filter naming both names every card a play
-// restriction is about.
-function namesEveryCard(cards: PlayedCardFilter | undefined): boolean {
+// Every played card is an asset or an event, and every committed one an asset, event or skill, so
+// a filter naming those types names every card the verb is about.
+function namesEveryCard(
+  cards: PlayerCardFilter | undefined,
+  verb: RestrictedVerbs[RestrictedNoun],
+): boolean {
   if (cards === undefined) return true;
-  const types = cards.types ?? PLAYED_CARD_TYPES;
-  return cards.traits === undefined && PLAYED_CARD_TYPES.every((type) => types.includes(type));
+  const every = verb === 'play' ? PLAYED_CARD_TYPES : PLAYER_CARD_TYPES;
+  const types = cards.types ?? every;
+  return cards.traits === undefined && every.every((type) => types.includes(type));
 }
 
 const PLAYED_CARD_TYPES: readonly PlayedCardType[] = ['asset', 'event'];
+const PLAYER_CARD_TYPES: readonly PlayerCardType[] = [...PLAYED_CARD_TYPES, 'skill'];
 
 function isEnemyCardRestriction(restriction: CardRestriction): restriction is EnemyCardRestriction {
   return ENEMY_RESTRICTIONS.some((cannot) => cannot === restriction.cannot);
