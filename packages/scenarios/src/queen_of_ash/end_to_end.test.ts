@@ -198,6 +198,8 @@ describe('Queen of Ash end to end: Roland and Daisy, seed 1, after Spreading Fla
 
     // Round 4 – investigation: Daisy takes a clue at Overgrown Tunnels and walks through the
     // culvert to Smuggler's Cache, where ending her turn lets her gain 1 resource.
+    // As Roland's turn begins, Langour has him discard the top card of his deck: an event, so he
+    // cannot play or commit events this round.
     // Entering the unrevealed Sluice Control costs 1 clue per investigator as a group: Roland's and Daisy's.
     // Roland enters, again without an attack of opportunity from Elokoss, and opens the sluice valve:
     // a combat test (5) he passes. Each enemy is defeated, Elokoss into the victory display, and the
@@ -211,6 +213,10 @@ describe('Queen of Ash end to end: Roland and Daisy, seed 1, after Spreading Fla
     table.answerOnly('use reaction');
     expect(table.board.investigator(daisy).resources).toBe(resources + 1);
     table.startTurn(roland);
+    table.answerOnly('scenario.queenOfAsh.languor.event');
+    expect(table.board.investigator(roland).thisRound).toEqual([
+      { cannot: ['play', 'commit'], what: 'cards', cards: { types: ['event'] } },
+    ]);
     table.moveTo(roland, byName('Sluice Control'), {
       spend: [
         [roland, 1],

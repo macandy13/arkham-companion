@@ -178,6 +178,26 @@ describe('gameLog', () => {
     },
     {
       step: (table: PlayTable) =>
+        table.play({
+          type: 'RestrictInvestigator',
+          investigatorId: roland,
+          restriction: { cannot: ['play', 'commit'], what: 'cards', cards: { types: ['skill'] } },
+          until: 'round',
+        }),
+      line: 'Roland Banks cannot play or commit skills this round',
+    },
+    {
+      step: (table: PlayTable) =>
+        table.play({
+          type: 'RestrictInvestigator',
+          investigatorId: roland,
+          restriction: { cannot: ['discover'], what: 'clues' },
+          until: 'round',
+        }),
+      line: 'Roland Banks cannot discover clues this round',
+    },
+    {
+      step: (table: PlayTable) =>
         table.play({ type: 'ChangeChaosBag', token: 'cultist', change: 'add', lasts: 'scenario' }),
       line: 'Cultist token added to the chaos bag until the end of the scenario',
     },

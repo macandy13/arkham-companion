@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   atLocation,
+  boardView,
   encounterDeck,
   encounterDiscard,
   encounterSetCode,
@@ -26,6 +27,7 @@ import {
 } from '@arkham/engine/test/utils';
 import {
   DISSONANCE_DECISION,
+  LANGUOR_DECISION,
   QUEEN_OF_ASH_CODES,
   queenOfAshCardDefs,
   queenOfAshCards,
@@ -710,6 +712,35 @@ describe('Queen of Ash card abilities', () => {
       expect(state.cards[languor]?.zone).toEqual(threatAreaOf(alice));
     });
 
+    it.each([
+      { answer: 'weakness', forbids: 'nothing', thisRound: undefined },
+      {
+        answer: 'skill',
+        forbids: 'skills',
+        thisRound: [{ cannot: ['play', 'commit'], what: 'cards', cards: { types: ['skill'] } }],
+      },
+    ])(
+      'asks alice what she discarded as her turn begins; a $answer forbids her $forbids this round',
+      ({ answer: discarded, thisRound }) => {
+        const { context, state: started } = newGame()
+          .withLocation(culvert, cardOf(QUEEN_OF_ASH_CODES.sewerCulvert), { revealed: true })
+          .withInvestigator(alice, { locationId: culvert })
+          .withCard(instanceId('languor'), cardOf('12193'), threatAreaOf(alice))
+          .withTurnOf(alice)
+          .start();
+
+        const answered = stateAfter(context, started, answer(LANGUOR_DECISION, discarded));
+
+        expect(started.pending).toMatchObject([
+          {
+            id: LANGUOR_DECISION,
+            options: [{ id: 'weakness' }, { id: 'asset' }, { id: 'event' }, { id: 'skill' }],
+          },
+        ]);
+        expect(boardView(context, answered).investigator(alice).thisRound).toEqual(thisRound);
+      },
+    );
+
     it('lets alice discard it with its two-action ability', () => {
       const languor = instanceId('languor');
       const { context, state: started } = newGame()
@@ -719,7 +750,7 @@ describe('Queen of Ash card abilities', () => {
         .withTurnOf(alice)
         .start();
 
-      const state = stateAfter(context, started, {
+      const state = stateAfter(context, started, answer(LANGUOR_DECISION, 'weakness'), {
         type: 'UseCardAction',
         investigatorId: alice,
         cardId: languor,

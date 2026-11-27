@@ -70,6 +70,13 @@ export const brethrenOfAshTexts = {
         event: 'Ereignisse',
         skill: 'Fertigkeiten',
       },
+      languor: {
+        prompt: '{{card}}: Lege die oberste Karte deines Decks ab. Was war es?',
+        weakness: 'Eine Schwäche: Ziehe sie',
+        asset: 'Ein Vorteil: In dieser Runde keine Vorteile spielen oder einsetzen',
+        event: 'Ein Ereignis: In dieser Runde keine Ereignisse spielen oder einsetzen',
+        skill: 'Eine Fertigkeit: In dieser Runde keine Fertigkeiten einsetzen',
+      },
       torment: {
         prompt:
           '{{card}}: Nenne einen Kartentyp; jeder Ermittler legt 1 Karte dieses Typs aus seiner Hand ab',

@@ -7,6 +7,7 @@ import type {
   GameState,
   InstanceId,
   InvestigatorId,
+  InvestigatorRestricted,
   InvestigatorStat,
   LoggedEvent,
   EventType,
@@ -378,6 +379,8 @@ function eventLine(t: TFunction, names: Names, state: GameState, event: Event): 
       return t('log.turnStarted', { investigator: names.investigator(event.investigatorId) });
     case 'TurnEnded':
       return t('log.turnEnded', { investigator: names.investigator(event.investigatorId) });
+    case 'InvestigatorRestricted':
+      return restrictedLine(t, names, event);
     // The players see the question in the decision dialog and its answer in the lines that follow;
     // the rest is the engine's own bookkeeping, or a notice the play screen shows by itself.
     case 'MapAdded':
@@ -418,6 +421,27 @@ function cardMovedLine(t: TFunction, names: Names, { cardId, from, to }: CardMov
     enemy: names.card(cardId),
     location: names.card(to.locationId),
   });
+}
+
+/** The order the verbs of a restriction take in its log key, whatever order the card lists them. */
+const VERB_ORDER = ['play', 'commit', 'discover', 'spend'] as const;
+
+/**
+ * "Alice cannot play or commit skills this round": the verbs name the key, the cards a list of
+ * their types, or all cards when the restriction names none.
+ */
+function restrictedLine(t: TFunction, names: Names, event: InvestigatorRestricted): string {
+  const investigator = names.investigator(event.investigatorId);
+  const { restriction } = event;
+  const verbs = VERB_ORDER.filter((verb) => restriction.cannot.some((cannot) => cannot === verb));
+  const key = `log.restricted.${restriction.what}.${verbs.join('_')}`;
+  if (restriction.what === 'clues') return t(key, { investigator });
+  const types = restriction.cards?.types ?? [];
+  const cards =
+    types.length === 0
+      ? t('log.restricted.anyCards')
+      : types.map((type) => t(`log.restricted.cardTypes.${type}`)).join(t('log.restricted.or'));
+  return t(key, { investigator, cards });
 }
 
 /** What an investigator does with their own cards, which the players carry out at the table. */

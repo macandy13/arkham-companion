@@ -70,6 +70,13 @@ export const brethrenOfAshTexts = {
         event: 'Events',
         skill: 'Skills',
       },
+      languor: {
+        prompt: '{{card}}: discard the top card of your deck. What was it?',
+        weakness: 'A weakness: draw it',
+        asset: 'An asset: no playing or committing assets this round',
+        event: 'An event: no playing or committing events this round',
+        skill: 'A skill: no committing skills this round',
+      },
       torment: {
         prompt:
           '{{card}}: name a card type; each investigator discards 1 card of it from their hand',

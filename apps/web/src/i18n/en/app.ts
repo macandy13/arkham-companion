@@ -130,6 +130,21 @@ export const appTexts = {
     roundEnded: 'Round {{round}} ends',
     turnStarted: "{{investigator}}'s turn begins",
     turnEnded: "{{investigator}}'s turn ends",
+    restricted: {
+      cards: {
+        play: '{{investigator}} cannot play {{cards}} this round',
+        commit: '{{investigator}} cannot commit {{cards}} this round',
+        play_commit: '{{investigator}} cannot play or commit {{cards}} this round',
+      },
+      clues: {
+        discover: '{{investigator}} cannot discover clues this round',
+        spend: '{{investigator}} cannot spend clues this round',
+        discover_spend: '{{investigator}} cannot discover or spend clues this round',
+      },
+      cardTypes: { asset: 'assets', event: 'events', skill: 'skills' },
+      anyCards: 'cards',
+      or: ' or ',
+    },
   },
   chaosBag: {
     title: 'Chaos bag',

@@ -33,6 +33,7 @@ import type { GridCell } from '../map';
 import type { UsageLimit } from '../usage_limits';
 import type { EnemyFilter } from '../enemies';
 import type { CardFilter } from '../lookup';
+import type { InvestigatorRestriction } from '../restrictions';
 import type { KeywordAttackKind } from '../forced_attacks';
 import type { AddMapStep } from '../setup';
 import type {
@@ -732,6 +733,20 @@ export function loseActions(amount: number | 'all'): AbilityEffect {
     type: 'AdjustActions',
     investigatorId: { ref: 'windowInvestigator' },
     delta: amount === 'all' ? 'allRemaining' : -amount,
+  };
+}
+
+/**
+ * "You cannot … this round" (`RestrictInvestigator`) for the investigator the window names:
+ * `youCannotThisRound({ cannot: ['play', 'commit'], what: 'cards', cards: { types: ['skill'] } })`
+ * is Languor's once the discarded card was a skill.
+ */
+export function youCannotThisRound(restriction: InvestigatorRestriction): AbilityEffect {
+  return {
+    type: 'RestrictInvestigator',
+    investigatorId: { ref: 'windowInvestigator' },
+    restriction,
+    until: 'round',
   };
 }
 

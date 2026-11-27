@@ -412,6 +412,7 @@ export type AbilityCommand =
         type:
           | 'AdjustInvestigator'
           | 'AdjustActions'
+          | 'RestrictInvestigator'
           | 'EndTurn'
           | 'DiscoverClues'
           | 'HealInvestigator'
