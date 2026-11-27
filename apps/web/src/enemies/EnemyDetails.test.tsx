@@ -295,7 +295,7 @@ describe('EnemyDetails', () => {
     renderGhoulDetails(PlayTable.start(ghoulOnAlder));
 
     const groups = screen.getAllByRole('heading', { level: 3 }).map((title) => title.textContent);
-    expect(groups).toEqual(['Actions', 'Card effect', 'Attached']);
+    expect(groups).toEqual(['Actions', 'Adjust', 'Attached']);
     expect(
       within(group('Actions'))
         .getAllByRole('button')
@@ -352,7 +352,7 @@ describe('EnemyDetails', () => {
   it('offers the card effects for alder, whom the ghoul is engaged with, and brook, who shares the study', () => {
     renderGhoulDetails(PlayTable.start(ghoulOnAlder));
 
-    const offered = within(group('Card effect')).getAllByRole('button');
+    const offered = within(group('Adjust')).getAllByRole('button');
     expect(offered.map((button) => button.getAttribute('aria-label'))).toEqual([
       'Deal 1 damage',
       'Disengage',

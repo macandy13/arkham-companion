@@ -433,7 +433,6 @@ export const appTexts = {
       move: 'Hierher bewegen',
       clue: 'Hinweis',
     },
-    corrections: 'Spielfeld korrigieren',
     connections: {
       title: 'Verbunden mit',
       change: 'Verbindungen ändern',
@@ -547,7 +546,6 @@ export const appTexts = {
     evadeFree_zero: 'Entkommen, ohne Aktion',
     evadeFree_one: 'Entkommen ohne Aktion · {{count}} zusätzliche Aktion',
     evadeFree_other: 'Entkommen ohne Aktion · {{count}} zusätzliche Aktionen',
-    cardEffects: 'Karteneffekt',
     damage: '1 Schaden zufügen',
     damageCount: 'Schaden',
     heal: '1 Schaden heilen',
@@ -606,6 +604,7 @@ export const appTexts = {
   },
   cardActions: {
     title: 'Kartenaktionen',
+    adjust: 'Anpassen',
   },
   cardDetails: {
     threatArea: 'Im Bedrohungsbereich von {{name}}',

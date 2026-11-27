@@ -244,7 +244,7 @@ function LocationPage({
         {dialog}
         {printed.length > 0 && <CardActions board={board} offered={printed} onUse={onLeave} />}
         {revealable && (
-          <ActionGroup title={t('location.corrections')}>
+          <ActionGroup title={t('cardActions.adjust')}>
             <button
               type="button"
               disabled={busy}

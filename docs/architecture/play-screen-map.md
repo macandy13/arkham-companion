@@ -18,7 +18,7 @@ A tap on a tile (or its "i" button, for the keyboard) opens the location's [deta
 
   A revealed location also offers its investigate pill at any time, outside a turn or at another location, with only the ways by card effect: a card such as In the Know lets an investigator investigate it whoever's turn it is and wherever they stand (`GameActions.investigate` by card, `Investigate.locationId`; the action In the Know costs is counted off on the actions stepper).
 
-  An unrevealed location offers Reveal under "Correct the board" (`revealLocation`), as a card can tell the players to reveal one (M6.10).
+  An unrevealed location offers Reveal under "Adjust" (`revealLocation`), as a card can tell the players to reveal one (M6.10).
 
   A move closes the details; an investigation shows its test in their place, the location still beside it ([decisions](play-screen-decisions.md#in-a-details-dialog)).
 

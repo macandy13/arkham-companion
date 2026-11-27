@@ -428,7 +428,6 @@ export const appTexts = {
       move: 'Move here',
       clue: 'Clue',
     },
-    corrections: 'Correct the board',
     connections: {
       title: 'Connected to',
       change: 'Change connections',
@@ -537,7 +536,6 @@ export const appTexts = {
     evadeFree_zero: 'Evade, no action',
     evadeFree_one: 'Evade without an action · {{count}} extra action',
     evadeFree_other: 'Evade without an action · {{count}} extra actions',
-    cardEffects: 'Card effect',
     damage: 'Deal 1 damage',
     damageCount: 'Damage',
     heal: 'Heal 1 damage',
@@ -595,6 +593,7 @@ export const appTexts = {
   },
   cardActions: {
     title: 'Card actions',
+    adjust: 'Adjust',
   },
   cardDetails: {
     threatArea: "In {{name}}'s threat area",
