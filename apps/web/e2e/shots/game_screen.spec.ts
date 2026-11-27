@@ -27,7 +27,7 @@ test('the house map with Roland Banks in the Hallway', async ({ page }) => {
   await expect(hallway.getByRole('img', { name: 'Roland Banks' })).toBeVisible();
 });
 
-test('the Attic’s connections opened, the Parlor connected to it as Shortcut (2) connects them', async ({
+test('the Attic’s connections opened, the Parlor connected to it as a card connects them', async ({
   page,
 }) => {
   await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));

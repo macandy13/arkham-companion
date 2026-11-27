@@ -259,11 +259,13 @@ function LocationPage({
 }
 
 /**
- * The location's connections as a card changes them (Shortcut (2) connects two locations, a
- * scenario card cuts one): "Change connections" opens a toggle for each other location in play,
- * pressed while a move from here can go there (`BoardView.connectedTo`), and a tap connects or
- * disconnects the two (`connectLocations` on this location's map, `disconnectLocations`),
- * performed as the card effect it is. Closed at first, since a card asks for it rarely.
+ * The location's connections as a card changes them (River Docks "is connected to" another
+ * location, another card says one "is no longer connected to" another): "Change connections"
+ * opens a toggle for each other location in play, pressed while a move from here can go there
+ * (`BoardView.connectedTo`), and a tap connects the two on this location's map
+ * (`connectLocations`) or cuts their connection (`disconnectLocations`), only one way when only
+ * this location leads there, since the cards allow no move back to cut. Performed as the card
+ * effect it is, and closed at first, since a card asks for it rarely.
  */
 function LocationConnections({ board, location }: { board: BoardView; location: LocationView }) {
   const { actions, busy } = usePlay();
@@ -290,7 +292,11 @@ function LocationConnections({ board, location }: { board: BoardView; location: 
                   onClick={() =>
                     void actions.perform(
                       linked
-                        ? disconnectLocations(location.id, other.id)
+                        ? disconnectLocations(
+                            location.id,
+                            other.id,
+                            !board.connectedTo(other.id).includes(location.id),
+                          )
                         : connectLocations(location.id, other.id, location.map),
                     )
                   }

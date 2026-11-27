@@ -60,7 +60,7 @@ export function takeOneClue(location: InstanceId, investigator: InvestigatorId):
 }
 
 /**
- * "[Location] is connected to [location]", as a card such as Shortcut (2) connects them
+ * "[Location] is connected to [location]", as a card such as River Docks connects them
  * (`AddConnection`): both ways, stored on `map`, the map of the location the players opened.
  */
 export function connectLocations(from: InstanceId, to: InstanceId, map: MapId): AddConnection {
@@ -69,10 +69,17 @@ export function connectLocations(from: InstanceId, to: InstanceId, map: MapId): 
 
 /**
  * "[Location] is no longer connected to [location]" (`RemoveConnection`): the edge goes, or the
- * cards' printed connection between them is cut.
+ * cards' printed connection between them is cut. `oneWay` when only `from` leads to `to`, since
+ * removing both ways of a move the cards don't allow back is rejected.
  */
-export function disconnectLocations(from: InstanceId, to: InstanceId): RemoveConnection {
-  return { type: 'RemoveConnection', from, to };
+export function disconnectLocations(
+  from: InstanceId,
+  to: InstanceId,
+  oneWay = false,
+): RemoveConnection {
+  return oneWay
+    ? { type: 'RemoveConnection', from, to, oneWay }
+    : { type: 'RemoveConnection', from, to };
 }
 
 /** A player card seals `token` on the investigator (`SealChaosToken`). */

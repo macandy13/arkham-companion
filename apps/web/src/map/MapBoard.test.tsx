@@ -1552,7 +1552,7 @@ describe('MapBoard', () => {
       ]);
     });
 
-    it('connects the study to the attic, as Shortcut (2) does', async () => {
+    it('connects the study to the attic, as a card that connects them does', async () => {
       const table = PlayTable.start(house);
       render(
         <PlayingOn table={table}>
@@ -1580,6 +1580,21 @@ describe('MapBoard', () => {
       tap('hallway');
 
       await expect.poll(() => table.board.connectedTo(study)).toEqual([]);
+    });
+
+    it('disconnects the hallway from the attic, which leads only one way', async () => {
+      const table = PlayTable.start(house);
+      render(
+        <PlayingOn table={table}>
+          <MapBoard board={table.board} />
+        </PlayingOn>,
+      );
+
+      tapOnce(tile('hallway'));
+      tap('Change connections');
+      tap('attic');
+
+      await expect.poll(() => table.board.connectedTo(hallway)).toEqual([study]);
     });
 
     it('reveals the unrevealed hallway from its details', async () => {

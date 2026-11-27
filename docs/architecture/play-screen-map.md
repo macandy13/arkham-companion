@@ -18,7 +18,7 @@ A tap on a tile (or its "i" button, for the keyboard) opens the location's [deta
   A revealed location also offers its investigate pill at any time, outside a turn or at another location, with only the ways by card effect: a card such as In the Know lets an investigator investigate it whoever's turn it is and wherever they stand (`GameActions.investigate` by card, `Investigate.locationId`; the action In the Know costs is counted off on the actions stepper).
 
   An unrevealed location offers Reveal under "Correct the board" (`revealLocation`), as a card can tell the players to reveal one (M6.10).
-  Every location offers "Change connections" under Connections (`LocationConnections`, ME.30a): it opens a toggle per other location in play, pressed in brass while a move from here goes there (`BoardView.connectedTo`), and a tap connects the two on this location's map or cuts their connection (`connectLocations`, `disconnectLocations`, performed `AddConnection` and `RemoveConnection`), as Shortcut (2) or a scenario card does.
+  Every location offers "Change connections" under Connections (`LocationConnections`, ME.30a): it opens a toggle per other location in play, pressed in brass while a move from here goes there (`BoardView.connectedTo`), and a tap connects the two on this location's map or cuts their connection (`connectLocations`, `disconnectLocations`, performed `AddConnection` and `RemoveConnection`), as a card that says one location "is connected to" or "is no longer connected to" another does; a connection that leads only one way is cut only that way.
 
   A move closes the details; an investigation shows its test in their place, the location still beside it ([decisions](play-screen-decisions.md#in-a-details-dialog)).
 
