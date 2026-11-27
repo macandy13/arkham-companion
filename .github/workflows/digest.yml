@@ -1,6 +1,6 @@
 name: Daily digest
 
-# Every morning, one page of the PRs that merged in the last 24 hours without the owner's
+# Every morning, one page of the PRs that merged in the day up to 05:00 UTC without the owner's
 # approval of their head (MA.6, docs/automation.md "Merge gate"): each with its review tour's
 # problem and "what changes", the gate's reason, the rule claims it added and Revert and
 # Follow-up links. Published at https://macandy13.github.io/arkham-companion/digest/<date>/
@@ -39,25 +39,31 @@ jobs:
       - uses: actions/setup-node@v7
         with:
           node-version: 22
-      # One MergedPr per line (packages/review_tour/src/digest.ts), from the search API's merged
-      # PRs of the last 24 hours. The gate's status sits on the head commit, where gate.yml posts it.
+      # One MergedPr per line (packages/review_tour/src/digest.ts) for the PRs merged from 05:00
+      # UTC yesterday to 05:00 today: a fixed window, so the days join up however late the
+      # schedule starts the run. The gate's status sits on the head commit, where gate.yml posts
+      # it. Only the rules pages' patches are kept, as only they hold claims, which keeps a huge
+      # diff from overflowing jq's arguments.
       - name: Collect merged PRs
         run: |
           echo "DATE=$(date -u +%Y-%m-%d)" >> "$GITHUB_ENV"
-          since=$(date -u -d '24 hours ago' +%Y-%m-%dT%H:%M:%SZ)
+          window="$(date -u -d yesterday +%Y-%m-%d)T05:00:00Z..$(date -u +%Y-%m-%d)T05:00:00Z"
+          numbers=$(gh api -X GET search/issues --paginate \
+            -f q="repo:$GITHUB_REPOSITORY is:pr is:merged merged:$window" --jq '.items[].number')
           : > "$PRS"
-          for pr in $(gh api -X GET search/issues --paginate \
-              -f q="repo:$GITHUB_REPOSITORY is:pr is:merged merged:>=$since" --jq '.items[].number'); do
+          for pr in $numbers; do
             pr_json=$(gh api "repos/$GITHUB_REPOSITORY/pulls/$pr")
             head=$(jq -r .head.sha <<<"$pr_json")
-            reviews=$(gh api --paginate "repos/$GITHUB_REPOSITORY/pulls/$pr/reviews" \
-              --jq '.[] | {author: .user.login, state, commit: .commit_id}' | jq -s .)
-            files=$(gh api --paginate "repos/$GITHUB_REPOSITORY/pulls/$pr/files" \
-              --jq '.[] | {filename, patch}' | jq -s 'map(with_entries(select(.value != null)))')
+            gh api --paginate "repos/$GITHUB_REPOSITORY/pulls/$pr/reviews" \
+              --jq '.[] | {author: .user.login, state, commit: .commit_id}' | jq -s . > "$RUNNER_TEMP/reviews.json"
+            gh api --paginate "repos/$GITHUB_REPOSITORY/pulls/$pr/files" \
+              --jq '.[] | select(.filename | test("^docs/rules/.+\\.md$")) | {filename, patch}' |
+              jq -s 'map(with_entries(select(.value != null)))' > "$RUNNER_TEMP/files.json"
             gate=$(gh api "repos/$GITHUB_REPOSITORY/commits/$head/status" \
               --jq '[.statuses[] | select(.context == "gate")][0] // empty | {state, description}')
-            jq -c --argjson reviews "$reviews" --argjson files "$files" --argjson gate "${gate:-null}" \
-              '{number, title, body: (.body // ""), headSha: .head.sha, merged_at, reviews: $reviews, files: $files}
+            jq -c --slurpfile reviews "$RUNNER_TEMP/reviews.json" --slurpfile files "$RUNNER_TEMP/files.json" \
+              --argjson gate "${gate:-null}" \
+              '{number, title, body: (.body // ""), headSha: .head.sha, merged_at, reviews: $reviews[0], files: $files[0]}
                + (if $gate == null then {} else {gate: $gate} end)' <<<"$pr_json" >> "$PRS"
           done
           # Oldest merge first, so the page reads in the order the PRs went in.

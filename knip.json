@@ -12,7 +12,7 @@
       "entry": ["src/verdict_cli.ts"]
     },
     "packages/review_tour": {
-      "entry": ["src/cli.ts", "src/digest_cli.ts"]
+      "entry": ["src/cli.ts"]
     },
     "apps/web": {
       "entry": ["scripts/**/cli.ts", "scripts/app_icon.ts"]
