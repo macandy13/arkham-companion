@@ -178,6 +178,21 @@ describe('ChaosBag', () => {
     );
   });
 
+  it('closes the add menu when a token is tapped', () => {
+    const table = PlayTable.start(game);
+    render(
+      <PlayingOn table={table}>
+        <ChaosBag board={table.board} />
+      </PlayingOn>,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Add a token' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Skull' }));
+
+    expect(screen.queryByRole('list', { name: 'Tokens to add' })).toBeNull();
+    expect(screen.getByRole('list', { name: 'Seal or remove the Skull' })).toBeTruthy();
+  });
+
   it('reveals two tokens outside a test and leaves them in the bag', () => {
     const table = PlayTable.start(game);
     // Each draw takes the first token left: the −1, then the skull.

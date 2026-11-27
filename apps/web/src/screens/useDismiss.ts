@@ -8,14 +8,19 @@ import { useEffect, useRef, type KeyboardEvent } from 'react';
  */
 export function useDismiss<T extends HTMLElement>(open: boolean, close: () => void) {
   const ref = useRef<T>(null);
+  // Callers pass a new `close` each render; held in a ref, it doesn't re-add the listener each time.
+  const closeRef = useRef(close);
+  useEffect(() => {
+    closeRef.current = close;
+  });
   useEffect(() => {
     if (!open) return;
     const away = (event: PointerEvent) => {
-      if (!ref.current?.contains(event.target as Node)) close();
+      if (!ref.current?.contains(event.target as Node)) closeRef.current();
     };
     document.addEventListener('pointerdown', away);
     return () => document.removeEventListener('pointerdown', away);
-  }, [open, close]);
+  }, [open]);
   const onKeyDown = (event: KeyboardEvent) => {
     if (event.key !== 'Escape' || !open) return;
     event.stopPropagation();

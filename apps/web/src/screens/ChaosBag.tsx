@@ -57,6 +57,7 @@ export function ChaosBag({ board }: { board: BoardView }) {
   const { actions, busy } = usePlay();
   const { t } = useTranslation();
   const tabsId = useId();
+  const lastsId = useId();
   const [lasts, setLasts] = useState<ChaosBagChangeLasts>('scenario');
   const [adding, setAdding] = useState(false);
   const [view, setView] = useState<BagView>('bag');
@@ -146,7 +147,10 @@ export function ChaosBag({ board }: { board: BoardView }) {
                     data-menu
                     aria-expanded={open}
                     disabled={busy}
-                    onClick={() => setPicked(open ? undefined : each)}
+                    onClick={() => {
+                      setAdding(false);
+                      setPicked(open ? undefined : each);
+                    }}
                   >
                     <ChaosTokenFace token={each.token} />
                   </button>
@@ -193,8 +197,9 @@ export function ChaosBag({ board }: { board: BoardView }) {
               />
               {adding && (
                 <section aria-label={t('chaosBag.add')}>
+                  {board.inCampaign && <h3 id={lastsId}>{t('chaosBag.lasts.title')}</h3>}
                   {board.inCampaign && (
-                    <ul aria-label={t('chaosBag.lasts.title')}>
+                    <ul aria-labelledby={lastsId}>
                       {LASTS.map((duration) => (
                         <li key={duration}>
                           <button
