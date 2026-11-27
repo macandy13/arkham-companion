@@ -8,6 +8,8 @@ import type { DecisionRequested, Event } from './events';
 import { attackDecision } from './forced_attacks';
 import { enemyOf, isEnemyOnTable } from './enemies';
 import { handleEnemyPhaseAttack } from './phases';
+import { requireCard } from './lookup';
+import { isEnemyRestricted } from './restrictions';
 import type { GameState, HeldAction } from './state';
 
 /**
@@ -19,7 +21,8 @@ import type { GameState, HeldAction } from './state';
  * included) this raises an `attackDecision` (`attackOfOpportunity:<enemy>`)
  * for that investigator; its `skip` is the way out for a card that "does not
  * provoke attacks of opportunity", which the engine cannot read. Nothing for
- * any other command.
+ * any other command. An enemy a card keeps from making attacks of opportunity (`isEnemyRestricted`
+ * `attackOfOpportunity`, Elokoss) raises none.
  *
  * `handle` calls this for player commands only: follow-ups of abilities and of
  * decision answers are rule consequences, not actions, so they never
@@ -35,12 +38,17 @@ export function attackOfOpportunityDecisions(
 ): DecisionRequested[] {
   const investigator = findInvestigator(state, action.investigatorId);
   if (investigator?.status !== 'active') return [];
-  return readyEngagedEnemies(ctx, state, investigator).flatMap((enemyId) =>
-    requestDecision(
-      state,
-      attackDecision(ctx, state, 'attackOfOpportunity', enemyId, investigator.id),
-    ),
-  );
+  return readyEngagedEnemies(ctx, state, investigator)
+    .filter(
+      (enemyId) =>
+        !isEnemyRestricted(ctx, state, requireCard(state.cards, enemyId), 'attackOfOpportunity'),
+    )
+    .flatMap((enemyId) =>
+      requestDecision(
+        state,
+        attackDecision(ctx, state, 'attackOfOpportunity', enemyId, investigator.id),
+      ),
+    );
 }
 
 /**
