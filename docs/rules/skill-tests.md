@@ -4,29 +4,44 @@
 Card rulings: [Resolution order](cards/resolution-order.md), [Children of Blood](cards/children-of-blood.md).
 
 1. Determine the skill (willpower, intellect, combat or agility). Difficulty is the fight value, shroud, evade value, or the number in parentheses on the card, each with its active modifiers (Obscuring Fog's +2 shroud).
+   Test: [`packages/engine/src/skill_modifiers.test.ts › suggestions on skill test decisions › raises Fight with the enemy's fight value as the difficulty`](../../packages/engine/src/skill_modifiers.test.ts#L451)
+   Test: [`packages/engine/src/skill_tests.test.ts › Investigate at a location with attachments › names each attachment in the trace of the difficulty`](../../packages/engine/src/skill_tests.test.ts#L361)
 2. Commit cards: the tester commits any number, and each other investigator at the same location commits up to one. Each matching or wild icon gives +1.
 3. Reveal a chaos token.
+   Test: [`packages/engine/src/draw_tokens.test.ts › revealTokens › reveals $count of $bag: $revealed`](../../packages/engine/src/draw_tokens.test.ts#L266)
 4. Resolve its symbol:
+   Test: [`packages/engine/src/skill_modifiers.test.ts › skillTestSuggestion: scenario reference card › takes a symbol token modifier from the side for the difficulty, with its effect text`](../../packages/engine/src/skill_modifiers.test.ts#L384)
    - skull, cultist, tablet and elder thing use the scenario reference card,
    - elder sign uses the tester's investigator card,
    - and auto-fail fails the test.
 5. Modified skill = base skill plus icons, the token's modifier and active effects.
+   Test: [`packages/engine/src/skill_modifiers.test.ts › skillTestSuggestion: base values, the players' modifier and tokens › starts from the investigator skill and the printed difficulty`](../../packages/engine/src/skill_modifiers.test.ts#L89)
 6. Success if the skill is at or above the difficulty.
+   Test: [`packages/engine/src/board_view.test.ts › a skill test outside any decision › takes alice's willpower 3 against 3 with $input to $skill, a $outcome by $margin`](../../packages/engine/src/board_view.test.ts#L314)
    - Auto-fail sets the skill to 0, and auto-success sets the difficulty to 0.
+     Test: [`packages/engine/src/skill_modifiers.test.ts › skillTestSuggestion: base values, the players' modifier and tokens › makes the skill 0 and the test a fail on auto-fail, as a step of the trace`](../../packages/engine/src/skill_modifiers.test.ts#L166)
    - Reactions and forced effects on "succeeded/failed" trigger here.
 7. Apply results in an order the tester chooses (clue discovered, damage dealt, card effects), including "if this test succeeds/fails" effects.
    - "After you succeed/fail" abilities are not results: they trigger in step 6, before these (Rules Reference, "Skill Test Results and Advanced Timing").
+     Test: [`packages/engine/src/triggers.test.ts › trigger bus › abilities after a basic action's test › fires for the investigated location and its attachment, before the clue`](../../packages/engine/src/triggers.test.ts#L720)
    - That includes "after you successfully investigate" and "after attached location is successfully investigated" (Obscuring Fog is discarded before the clue is discovered).
    - "After you succeed at a skill test … at [X]'s location" (Margaret Liu) means a test about a card at X's location (the investigated location, the enemy fought), or the tester's own location for a test about a card at no location, such as a revelation. No rule says where a test takes place; this is our reading.
+     Test: [`packages/scenarios/src/smoke_and_mirrors/cards.test.ts › Smoke and Mirrors card abilities › the suspects' reactions › offers Margaret Liu's reaction after alice succeeds by $margin at her location: $asked`](../../packages/scenarios/src/smoke_and_mirrors/cards.test.ts#L504)
 8. Discard committed cards and return the tokens to the bag.
 
 Bless (+2), curse (-2), frost (-1) and the blood token (-1) each make the tester reveal another token, whose modifier also applies. A second frost token in the same test ends the reveals at once (no further token, though frost says to reveal another) and the test fails automatically, whatever was revealed before it ([RR "Frost Tokens"](https://arkhamdb.com/rules#Frost_Tokens)); frost tokens go back into the bag after the test, unlike bless and curse, which go to the token pool (card rulings: [Bless and curse tokens](cards/bless-and-curse.md)). When the bag has no token left to reveal, the app reveals none and resolves the test with the tokens already revealed: no rule says so, it is our reading of resolving as much as possible ("Golden Rules").
+Test: [`packages/engine/src/draw_tokens.test.ts › a test draw › revealAnother $name`](../../packages/engine/src/draw_tokens.test.ts#L123)
+Test: [`packages/engine/src/chaos_bag.test.ts › bless and curse tokens › revealed in a skill test › $name`](../../packages/engine/src/chaos_bag.test.ts#L250)
 
 Player cards change revealed tokens (the app's `TestDraw`, ME.24):
 
 - A token cancelled or ignored in its entirety counts as never revealed: no modifier, no effect, no "reveal another", and it does not count as a second frost ([Counterspell FAQ](https://arkhamdb.com/card/04110)). The tokens it made the tester reveal go back too, since they would never have come out. A partial cancel (only the modifier) still counts as revealed.
+  Test: [`packages/engine/src/draw_tokens.test.ts › a test draw › puts back the −1 a cancelled bless made the tester reveal`](../../packages/engine/src/draw_tokens.test.ts#L127)
+  Test: [`packages/engine/src/draw_tokens.test.ts › a test draw › ignores the −1 alone, keeping the bless`](../../packages/engine/src/draw_tokens.test.ts#L143)
 - A token treated as another resolves with the other's modifier and effect, but is still the token it is for other effects ([Jim Culver](https://arkhamdb.com/card/02004): an elder sign as a skull).
+  Test: [`packages/engine/src/draw_tokens.test.ts › a test draw › treats a token as another and back as itself`](../../packages/engine/src/draw_tokens.test.ts#L149)
 - Wendy Adams cancels a token, returns it to the bag and reveals a new one: the returned token can come out again ([card](https://arkhamdb.com/card/01005)). Lucky Dice ignores the token and reveals another, so the ignored one stays out ([card](https://arkhamdb.com/card/02230)).
+  Test: [`packages/engine/src/draw_tokens.test.ts › a test draw › redrawToken $name`](../../packages/engine/src/draw_tokens.test.ts#L198)
 - Olive McBride reveals three tokens and resolves two; the third is ignored ([card](https://arkhamdb.com/card/04197)).
 
 ## Sealed tokens
@@ -34,21 +49,31 @@ Player cards change revealed tokens (the app's `TestDraw`, ME.24):
 [Seal](https://arkhamdb.com/rules#Seal):
 
 - A card that seals a token takes it out of the bag and keeps it on the card, so no test or ability can reveal it.
+  Test: [`packages/engine/src/chaos_bag.test.ts › SealChaosToken and ReleaseChaosToken › %s`](../../packages/engine/src/chaos_bag.test.ts#L137)
 - A token the bag doesn't hold can't be sealed.
 - A sealed token goes back into the bag when an effect releases it or when its card leaves play, such as when the investigator controlling it leaves the scenario.
+  Test: [`packages/engine/src/chaos_bag.test.ts › SealChaosToken and ReleaseChaosToken › releases the tokens sealed on Alice when she leaves the scenario`](../../packages/engine/src/chaos_bag.test.ts#L145)
 - The engine keeps each sealed token with the investigator who controls the sealing card (`GameState.sealedTokens`), since player cards are not modelled.
 
 ## Margin of success and failure
 
 A test [succeeds by](https://arkhamdb.com/rules#Skill_Test_Timing) the modified skill minus the difficulty ("succeed by 2 or more") and fails by the difficulty minus the modified skill; after an [auto-fail](https://arkhamdb.com/rules#Automatic_Failure_Success), whose skill is 0, that is the whole difficulty. The Rules Reference doesn't define the margin; this is our reading of ST.6, so a skill equal to the difficulty succeeds by 0.
+Test: [`packages/engine/src/skill_modifiers.test.ts › skillTestSuggestion: base values, the players' modifier and tokens › suggests the margin of $name`](../../packages/engine/src/skill_modifiers.test.ts#L220)
 
 "After you succeed … by 2 or more" (Margaret Liu) is a threshold too: it counts only with a margin the players confirm, so a pass at her location asks for its margin.
+Test: [`packages/scenarios/src/smoke_and_mirrors/cards.test.ts › Smoke and Mirrors card abilities › the suspects' reactions › offers Margaret Liu's reaction after alice succeeds by $margin at her location: $asked`](../../packages/scenarios/src/smoke_and_mirrors/cards.test.ts#L504)
 
 - "For each point you fail by" scales with it (Grasping Hands: 1 damage per point), so a fail by 0 (an auto-fail against difficulty 0) deals nothing. An effect that can be worked out at once is one effect ([For each](https://arkhamdb.com/rules#For_Each)): Grasping Hands failed by 3 is one "take 3 damage", not three wounds of 1.
+  Test: [`packages/engine/src/triggers.test.ts › trigger bus › tests that cost something for each point failed › deals a fail by 3 as one wound of 3, not three of 1 (Rules Reference, "For each")`](../../packages/engine/src/triggers.test.ts#L1493)
+  Test: [`packages/engine/src/triggers.test.ts › trigger bus › tests that cost something for each point failed › $case deals $damage damage`](../../packages/engine/src/triggers.test.ts#L1284)
 - False Lead's "place 1 of your clues on your location" for each point places as many as the investigator has when they have fewer ([golden rules](https://arkhamdb.com/rules#Golden_Rules): resolve as much as possible).
+  Test: [`packages/engine/src/triggers.test.ts › trigger bus › tests that cost something for each point failed › places $placed of alice's $clues clues on the hall for a fail by $margin`](../../packages/engine/src/triggers.test.ts#L1564)
 - An effect that can't be resolved at once, such as a choice, resolves once for each point ([For each](https://arkhamdb.com/rules#For_Each)), and the choice may differ from point to point (Umôrdhoth's Wrath: discard a card or take 1 damage and 1 horror, for each point).
+  Test: [`packages/scenarios/src/the_devourer_below/cards.test.ts › The Devourer Below card abilities › Umôrdhoth's Wrath › asks alice once for each point she fails by: $name`](../../packages/scenarios/src/the_devourer_below/cards.test.ts#L267)
 - "If you fail by 2 or more, … instead" (Blood and Rust: 2 damage instead of 1) replaces the outcome's effect once the margin reaches it ([Instead](https://arkhamdb.com/rules#Instead): a replacement effect); Feast of Locusts gives 2 horror, or 3 instead when failing by 4 or more. With several thresholds the engine applies the highest one reached (our reading of "instead"). An additive bonus ("succeed by 3 or more, deal +1 damage", Mi-Go Weapon) is written as a tier that repeats the base effect with the bonus folded in. A threshold counts only with a margin the players confirm.
+  Test: [`packages/engine/src/triggers.test.ts › trigger bus › tests that cost something for each point failed › outcomes that change with the margin › with effects next to the margin entry and one per point in its tier › a fail by $margin gives $damage damage and $horror horror`](../../packages/engine/src/triggers.test.ts#L1455)
 - The players confirm the margin with their answer.
+  Test: [`packages/engine/src/decisions.test.ts › skill test outcome record › records the margin the answer gives`](../../packages/engine/src/decisions.test.ts#L418)
 
 ## Results that defeat the tester
 
@@ -56,6 +81,7 @@ When a fail's first part defeats the tester, its later parts that concern them a
 A card's unconditional text after the test ("Then, …") still resolves whether the test passed or failed, but not for a tester the fail defeated ([Resolution order](cards/resolution-order.md)).
 
 Horror and damage from one effect ("take 1 horror and 1 damage") are placed [simultaneously](https://arkhamdb.com/rules#Dealing_Damage_Horror), so both land even when either defeats.
+Test: [`packages/engine/src/attacks_of_opportunity.test.ts › attacks of opportunity › defeats the investigator once with damage and horror counted together`](../../packages/engine/src/attacks_of_opportunity.test.ts#L165)
 Defeated by both at once, the investigator chooses which trauma to suffer ([Trauma](https://arkhamdb.com/rules#Trauma)) (see [Campaign](campaign.md)).
 
 ## Step notes
@@ -63,5 +89,8 @@ Defeated by both at once, the investigator chooses which trauma to suffer ([Trau
 If auto-success or auto-failure is known before step 3, skip steps 3 and 4.
 [Variable difficulty](https://arkhamdb.com/rules#Variable_Difficulty_Skill_Tests) is fixed once step 6 checks it.
 The app reads a card's variable difficulty (Eager for Death's +1 per damage) as it asks for the test, since the players answer the test whole; a change before step 6 is theirs to count in the answer: a committed card that heals, or a chaos token's effect in step 4 that deals damage, spawns an enemy or moves clues.
+Test: [`packages/scenarios/src/smoke_and_mirrors/cards.test.ts › Smoke and Mirrors card abilities › Eager for Death › tests willpower ($difficulty) when alice has $damage damage, 2 horror on a fail`](../../packages/scenarios/src/smoke_and_mirrors/cards.test.ts#L976)
 A difficulty that counts the cards in the tester's hand (Extraplanar Visions) counts them after committing, since committed cards leave the hand before step 6; the app asks for that count as the tester picks the skill, so they enter the hand they will keep.
+Test: [`packages/engine/src/skill_tests.test.ts › test of either skill against a count the drawer enters › tests intellect against $difficulty when the drawer holds $cardsInHand cards`](../../packages/engine/src/skill_tests.test.ts#L1063)
 A difficulty never goes below 0 ([Modifiers](https://arkhamdb.com/rules#Modifiers): a value modified below 0 counts as 0).
+Test: [`packages/engine/src/skill_tests.test.ts › test difficulty from the table › never lowers the difficulty below 0`](../../packages/engine/src/skill_tests.test.ts#L1163)
