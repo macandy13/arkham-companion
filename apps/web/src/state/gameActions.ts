@@ -73,7 +73,8 @@ type PlayerEffect = Extract<
       | 'ReleaseChaosToken'
       | 'RevealLocation'
       | 'SealChaosToken'
-      | 'SpawnEnemy';
+      | 'SpawnEnemy'
+      | 'SwapPlaces';
   }
 >;
 

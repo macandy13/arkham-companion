@@ -1319,6 +1319,7 @@ describe('MapBoard', () => {
         'Ways to evade',
         'Deal 1 damage',
         'Exhaust',
+        'Ways to swap places',
         'Defeat',
         'Attach a card',
       ]);

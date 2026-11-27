@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  afterEntering,
   apply,
   atLocation,
   blankAsset,
@@ -15,6 +16,7 @@ import {
   trait,
   zoneOf,
   perInvestigator,
+  takeHorror,
   zoneKey,
   type GameBuilder,
   type InstanceId,
@@ -846,6 +848,109 @@ describe('MoveEnemy toward a location', () => {
       expect(zoneOf(after, ghoul)).toEqual(atLocation(hall));
       expect(after.pending).toEqual([]);
     });
+  });
+});
+
+// Ethereal Slip: "swap places with that enemy". The hall, cellar and attic lie in a line.
+describe('SwapPlaces', () => {
+  const swapAliceWithGhoul = { type: 'SwapPlaces', investigatorId: alice, enemyId: ghoul } as const;
+
+  it('moves alice to the ghoul in the attic and the ghoul to the hall, neither engaging the other', () => {
+    const { context, state } = aliceInHall.withCard(ghoul, ghoulCard, atLocation(attic)).start();
+
+    const after = stateAfter(context, state, swapAliceWithGhoul);
+
+    expect(requireInvestigator(after, alice).locationId).toBe(attic);
+    expect(zoneOf(after, ghoul)).toEqual(atLocation(hall));
+  });
+
+  it('lets the ghoul engage bob, who stays behind in the hall', () => {
+    const { context, state } = aliceAndBobAt(hall, { alice: 0, bob: 0 })
+      .withCard(ghoul, ghoulCard, atLocation(attic))
+      .start();
+
+    const after = stateAfter(context, state, swapAliceWithGhoul);
+
+    expect(zoneOf(after, ghoul)).toEqual(engagedWith(bob));
+  });
+
+  it('takes the rat engaged with alice along and disengages the ghoul from bob in the cellar', () => {
+    const rat = instanceId('rat');
+    const { context, state } = hallCellarAttic
+      .withInvestigator(alice, { locationId: hall })
+      .withInvestigator(bob, { locationId: cellar })
+      .withCard(rat, blankEnemy('rat'), engagedWith(alice))
+      .withCard(ghoul, ghoulCard, engagedWith(bob))
+      .start();
+
+    const after = stateAfter(context, state, swapAliceWithGhoul);
+
+    expect(requireInvestigator(after, alice).locationId).toBe(cellar);
+    expect(zoneOf(after, rat)).toEqual(engagedWith(alice));
+    expect(zoneOf(after, ghoul)).toEqual(atLocation(hall));
+  });
+
+  it('engages alice with a ready rat waiting where the ghoul was', () => {
+    const rat = instanceId('rat');
+    const { context, state } = aliceInHall
+      .withCard(ghoul, ghoulCard, atLocation(attic))
+      .withCard(rat, blankEnemy('rat'), atLocation(attic))
+      .start();
+
+    const after = stateAfter(context, state, swapAliceWithGhoul);
+
+    expect(zoneOf(after, rat)).toEqual(engagedWith(alice));
+  });
+
+  it('lets alice take 1 horror from the attic, which she enters by the swap', () => {
+    const horrorAttic = blankLocation('horror_attic', {
+      abilities: [afterEntering(takeHorror(1))],
+    });
+    const { context, state } = newGame()
+      .withLocation(hall, hallCard, { revealed: true })
+      .withLocation(attic, horrorAttic, { revealed: true })
+      .withInvestigator(alice, { locationId: hall })
+      .withCard(ghoul, ghoulCard, atLocation(attic))
+      .start();
+
+    const after = stateAfter(context, state, swapAliceWithGhoul);
+
+    expect(requireInvestigator(after, alice).sanity.horror).toBe(1);
+  });
+
+  it('rejects the swap when a card keeps the ghoul out of the hall, as Barricade does', () => {
+    const barricadedHall = blankLocation('barricaded_hall', {
+      restrictions: [{ cannot: 'enemiesMoveInto', of: 'self' }],
+    });
+    const { context, state } = newGame()
+      .withLocation(hall, barricadedHall, { revealed: true })
+      .withLocation(attic, atticCard, { revealed: true })
+      .withInvestigator(alice, { locationId: hall })
+      .withCard(ghoul, ghoulCard, atLocation(attic))
+      .start();
+
+    expect(rejectionFrom(context, state, swapAliceWithGhoul)).toEqual({
+      code: 'enemyCannotMove',
+      cardId: ghoul,
+      to: hall,
+    });
+  });
+
+  it('rejects a swap with a ghoul in the encounter discard pile', () => {
+    const { context, state } = aliceInHall.withCard(ghoul, ghoulCard, encounterDiscard).start();
+
+    expect(rejectionFrom(context, state, swapAliceWithGhoul)).toEqual({
+      code: 'enemyNotInPlay',
+      cardId: ghoul,
+    });
+  });
+
+  it('changes nothing when alice and the ghoul share the hall', () => {
+    const { context, state } = aliceInHall.withCard(ghoul, ghoulCard, engagedWith(alice)).start();
+
+    const after = stateAfter(context, state, swapAliceWithGhoul);
+
+    expect(after).toEqual(state);
   });
 });
 

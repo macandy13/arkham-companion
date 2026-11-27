@@ -13,6 +13,7 @@ import type {
   MoveInvestigator,
   SetLeadInvestigator,
   SpendCluesAsGroup,
+  SwapPlaces,
   TakeDamageAndHorror,
 } from './commands';
 import { investigatorLeavesEvents, woundEvents } from './elimination';
@@ -38,6 +39,8 @@ import {
   withStatDelta,
 } from './investigators';
 import { enterCostPayment } from './enter_costs';
+import { enemyOf, isEnemyOnTable, locationOf } from './enemies';
+import { moveCardEvent } from './placement';
 import { cardsInZone, requireCard } from './lookup';
 import { replay } from './reducer';
 import { CommandRejected } from './rejection';
@@ -105,6 +108,36 @@ export function handleMoveInvestigator(
   const settled = [...arrived, ...staying];
   if (cmd.avoidEngagement) return settled;
   return [...settled, ...arrivalEngagements(ctx, replay(settled, state), cmd.to)];
+}
+
+/**
+ * `SwapPlaces`: the enemy is placed at the investigator's location first, unengaged and without
+ * engaging yet, so the investigator's move (`handleMoveInvestigator`, ignoring connections) neither
+ * takes it along nor finds it at the destination; then it engages whoever is still at its new
+ * location (`engageEvents`). The investigator's half is a card effect's move: it pays an enter cost,
+ * reveals the location and opens "after you enter". Rejected where a card keeps the enemy out of
+ * the investigator's location (`isClosedToEnemy`: Barricade, Handcuffs).
+ */
+export function handleSwapPlaces(ctx: EngineContext, state: GameState, cmd: SwapPlaces): Event[] {
+  const { enemy } = enemyOf(ctx, state, cmd.enemyId);
+  if (!isEnemyOnTable(enemy))
+    throw new CommandRejected({ code: 'enemyNotInPlay', cardId: enemy.id });
+  const investigator = activeInvestigator(state, cmd.investigatorId);
+  const from = investigator.locationId;
+  const to = locationOf(state, enemy);
+  if (from === undefined || to === undefined || from === to) return [];
+  // Both halves are one move: where a card keeps the enemy out (Barricade), the swap can't happen.
+  if (isClosedToEnemy(ctx, state, enemy, requireLocationInPlay(state, from)))
+    throw new CommandRejected({ code: 'enemyCannotMove', cardId: enemy.id, to: from });
+  const placed = moveCardEvent(enemy, { kind: 'atLocation', locationId: from });
+  const moved = handleMoveInvestigator(ctx, replay([placed], state), {
+    type: 'MoveInvestigator',
+    investigatorId: investigator.id,
+    to,
+    ignoreConnections: true,
+  });
+  const swapped = [placed, ...moved];
+  return [...swapped, ...engageEvents(ctx, replay(swapped, state), enemy.id)];
 }
 
 /** `HealInvestigator`: heals what the investigator has of `stat`, up to `amount`. */

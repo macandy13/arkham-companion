@@ -11,6 +11,7 @@ import type {
   ReleaseChaosToken,
   RemoveConnection,
   SealChaosToken,
+  SwapPlaces,
 } from './commands';
 import type { CardCode, InstanceId, InvestigatorId, MapId } from './ids';
 import type { ChaosToken, InvestigatorStat, SkillName, TokenKind } from './state';
@@ -43,6 +44,11 @@ export function evadeEnemy(enemy: InstanceId, by: InvestigatorId): EvadeEnemy {
 /** The enemy moves straight to `to`, engaged or not, as the players drag it there (`MoveEnemy`). */
 export function moveEnemyTo(enemy: InstanceId, to: InstanceId): MoveEnemy {
   return { type: 'MoveEnemy', enemyId: enemy, to, forced: true };
+}
+
+/** "Swap places with that enemy" (Ethereal Slip): each goes to the other's location (`SwapPlaces`). */
+export function swapPlaces(investigator: InvestigatorId, enemy: InstanceId): SwapPlaces {
+  return { type: 'SwapPlaces', investigatorId: investigator, enemyId: enemy };
 }
 
 /**

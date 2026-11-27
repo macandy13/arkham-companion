@@ -29,6 +29,7 @@ import {
   type EngineContext,
   type LocationSymbol,
   type ScaledValue,
+  trait,
   type Trait,
 } from './cards';
 import { dependsOnMargin, sameDecider } from './decisions';
@@ -377,11 +378,18 @@ export interface CluePayerView {
 
 /**
  * The investigators a player card's effect on one enemy can apply to (`BoardView.enemyCardEffects`):
- * who can evade it and whom it can engage, without a test or an action.
+ * who can evade it and whom it can engage, without a test or an action, and who can swap places with
+ * it (`SwapPlaces`).
  */
 export interface EnemyCardEffectsView {
   readonly evade: readonly InvestigatorId[];
   readonly engage: readonly InvestigatorId[];
+  /**
+   * The active investigators at another location, as Ethereal Slip swaps "a non-Elite enemy"
+   * with you; none for an Elite enemy. How far away it may be (up to 2 connections, or any
+   * revealed location) is the players' to judge.
+   */
+  readonly swap: readonly InvestigatorId[];
 }
 
 /**
@@ -754,6 +762,13 @@ export class BoardView {
     const here = this.state.investigators.filter(
       (inv) => inv.status === 'active' && location !== undefined && inv.locationId === location,
     );
+    const elsewhere = this.state.investigators.filter(
+      (inv) =>
+        inv.status === 'active' &&
+        location !== undefined &&
+        inv.locationId !== undefined &&
+        inv.locationId !== location,
+    );
     return {
       evade: here
         .filter(
@@ -765,6 +780,9 @@ export class BoardView {
           this.allows({ type: 'EngageEnemy', enemyId: enemy, investigatorId: inv.id }),
         )
         .map(({ id }) => id),
+      swap: cardStats(this.ctx.cards, card.code).traits.includes(trait('Elite'))
+        ? []
+        : elsewhere.map(({ id }) => id),
     };
   }
 

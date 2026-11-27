@@ -424,7 +424,9 @@ describe('EnemyDetails', () => {
           .withInvestigator(alder, { locationId: study })
           .withCard(ghoul, blankEnemy('ghoul'), atLocation(study)),
       );
-      const board = boardWhere(table.board, { enemyCardEffects: () => ({ evade, engage }) });
+      const board = boardWhere(table.board, {
+        enemyCardEffects: () => ({ evade, engage, swap: [] }),
+      });
       const enemy = table.board.enemiesAt(study).find(({ id }) => id === ghoul);
       if (!enemy) throw new Error('the ghoul is in the study');
       render(
@@ -437,6 +439,35 @@ describe('EnemyDetails', () => {
       expect(screen.queryByRole('button', { name: 'Engages alder' }) !== null).toBe(engages);
     },
   );
+
+  it('swaps brook in the hall with the ghoul in the study, as Ethereal Slip does', async () => {
+    const hall = instanceId('hall');
+    const table = PlayTable.start(
+      newGame()
+        .withLocation(study, blankLocation('study'), { revealed: true })
+        .withLocation(hall, blankLocation('hall'), { revealed: true })
+        .withInvestigator(alder, { locationId: study })
+        .withInvestigator(brook, { locationId: hall })
+        .withCard(ghoul, blankEnemy('ghoul'), engagedWith(alder)),
+    );
+    const onClose = renderGhoulDetails(table);
+
+    fireEvent.click(within(group('Adjust')).getByRole('button', { name: 'Ways to swap places' }));
+    const ways = within(group('Adjust')).getByRole('list', { name: 'Ways to swap places' });
+    expect(
+      within(ways)
+        .getAllByRole('button')
+        .map((way) => way.textContent),
+    ).toEqual(['Swap places with brook']);
+    fireEvent.click(within(ways).getByRole('button', { name: 'Swap places with brook' }));
+    await act(async () => {});
+
+    expect(onClose).toHaveBeenCalled();
+    expect(table.board.investigatorsAt(study).map(({ id }) => id)).toEqual([alder, brook]);
+    expect(table.board.enemiesAt(hall).map(({ id, engagedWith }) => ({ id, engagedWith }))).toEqual(
+      [{ id: ghoul, engagedWith: undefined }],
+    );
+  });
 
   describe('under an act whose objective counts the Elite enemies beneath it, like Augurs of Flame', () => {
     const augursOfFlame = blankAct('augurs_of_flame', {
