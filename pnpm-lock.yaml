@@ -173,6 +173,12 @@ importers:
         specifier: workspace:*
         version: link:../util
 
+  packages/merge_gate:
+    devDependencies:
+      '@types/node':
+        specifier: ^26.6.6
+        version: 26.6.6
+
   packages/play_tester:
     dependencies:
       '@arkham/engine':
