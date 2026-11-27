@@ -396,6 +396,16 @@
   display: none;
 }
 
+/*
+ * The menu of a location's connections opens downwards over the tucked cards, which would cover its
+ * last lines, so they step aside while it is open; the action row's menus open upwards and leave them.
+ */
+#board
+  dialog[data-shell]:has(> article [data-part='connections'] > button[aria-expanded='true'])
+  > [data-part='tucked'] {
+  visibility: hidden;
+}
+
 #board dialog[data-shell]:not([data-lowered]):has(> [data-part='tucked'] > *) > article {
   padding-block-end: calc(var(--attached-card-width) * 7 / 10 + var(--space-3));
 }

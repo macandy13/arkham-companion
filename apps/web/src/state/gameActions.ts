@@ -49,6 +49,7 @@ type PlayerEffect = Extract<
   Command,
   {
     type:
+      | 'AddConnection'
       | 'AdjustInvestigator'
       | 'Advance'
       | 'AttachPlayerCard'
@@ -68,6 +69,7 @@ type PlayerEffect = Extract<
       | 'MoveInvestigator'
       | 'MoveTokens'
       | 'ReadyEnemy'
+      | 'RemoveConnection'
       | 'ReleaseChaosToken'
       | 'RevealLocation'
       | 'SealChaosToken'

@@ -1,8 +1,10 @@
-import { useId, type ReactNode } from 'react';
+import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { assertNever } from '@arkham/util';
 import {
   type BoardView,
+  connectLocations,
+  disconnectLocations,
   type InvestigatorId,
   type LocationView,
   revealLocation,
@@ -234,6 +236,7 @@ function LocationPage({
   return (
     <>
       <Here board={board} location={location} />
+      <Connections board={board} location={location} />
       <AttachedCards board={board} host={location.id} />
       <footer>
         {pills.length > 0 && <ActionGroup title={t('location.actions')}>{pills}</ActionGroup>}
@@ -252,6 +255,91 @@ function LocationPage({
         )}
       </footer>
     </>
+  );
+}
+
+/**
+ * Where a move from the location goes (`BoardView.connectedTo`), read as one line under who is
+ * there, and changed where it is shown, as a card says (River Docks "is connected to" another
+ * location, another card says one "is no longer connected to" another): a tap on the line opens a
+ * menu with a tick per other location in play, and a tap on one connects the two on this
+ * location's map (`connectLocations`) or cuts their connection (`disconnectLocations`), only one
+ * way when only this location leads there, since the cards allow no move back to cut. Performed
+ * as the card effect it is. The menu stays open for the next change and closes on Escape (which
+ * then does not close the window around it) or a press elsewhere.
+ */
+function Connections({ board, location }: { board: BoardView; location: LocationView }) {
+  const { actions, busy } = usePlay();
+  const { t } = useTranslation();
+  const titleId = useId();
+  const menuId = useId();
+  const [open, setOpen] = useState(false);
+  const root = useRef<HTMLElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const away = (event: PointerEvent) => {
+      if (!root.current?.contains(event.target as Node)) setOpen(false);
+    };
+    document.addEventListener('pointerdown', away);
+    return () => document.removeEventListener('pointerdown', away);
+  }, [open]);
+  const others = board.locations.filter(({ id }) => id !== location.id);
+  if (others.length === 0) return null;
+  const connected = board.connectedTo(location.id);
+  const names = others.filter(({ id }) => connected.includes(id)).map(({ name }) => name);
+  return (
+    <section
+      ref={root}
+      aria-labelledby={titleId}
+      data-part="connections"
+      onKeyDown={(event) => {
+        if (event.key !== 'Escape' || !open) return;
+        event.stopPropagation();
+        event.preventDefault();
+        setOpen(false);
+      }}
+    >
+      <h3 id={titleId}>{t('location.connections.title')}</h3>
+      <button
+        type="button"
+        data-icon="rename"
+        aria-expanded={open}
+        aria-controls={menuId}
+        aria-describedby={titleId}
+        onClick={() => setOpen(!open)}
+      >
+        {names.length === 0 ? t('location.connections.none') : names.join(' · ')}
+      </button>
+      {open && (
+        <ul id={menuId} aria-label={t('location.connections.change')}>
+          {others.map((other) => {
+            const linked = connected.includes(other.id);
+            return (
+              <li key={other.id}>
+                <button
+                  type="button"
+                  aria-pressed={linked}
+                  disabled={busy}
+                  onClick={() =>
+                    void actions.perform(
+                      linked
+                        ? disconnectLocations(
+                            location.id,
+                            other.id,
+                            !board.connectedTo(other.id).includes(location.id),
+                          )
+                        : connectLocations(location.id, other.id, location.map),
+                    )
+                  }
+                >
+                  {other.name}
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </section>
   );
 }
 

@@ -1498,6 +1498,7 @@ describe('MapBoard', () => {
         location: 'study',
         buttons: [
           'Close',
+          'hallway',
           'Investigate · 1 action',
           'Ways to investigate',
           'Take a clue, no test',
@@ -1506,9 +1507,16 @@ describe('MapBoard', () => {
       },
       {
         location: 'hallway',
-        buttons: ['Close', 'Move here · 1 action', 'Ways to move here', 'Reveal', 'Attach a card'],
+        buttons: [
+          'Close',
+          'study · attic',
+          'Move here · 1 action',
+          'Ways to move here',
+          'Reveal',
+          'Attach a card',
+        ],
       },
-      { location: 'attic', buttons: ['Close', 'Reveal', 'Attach a card'] },
+      { location: 'attic', buttons: ['Close', 'No location', 'Reveal', 'Attach a card'] },
     ])('offers alder in the study at the $location: $buttons', ({ location, buttons }) => {
       const table = aldersTurn();
       render(
@@ -1520,6 +1528,108 @@ describe('MapBoard', () => {
       tapOnce(tile(location));
 
       expect(offered(location)).toEqual(buttons);
+    });
+
+    /** Opens the menu of `location`'s connections from the line that names them. */
+    const changeConnections = (location: string) =>
+      fireEvent.click(
+        within(within(details(location)).getByRole('region', { name: 'Connected to' })).getByRole(
+          'button',
+          { expanded: false },
+        ),
+      );
+    /** Ticks or unticks `other` in the open menu of connections. */
+    const toggleConnection = (other: string) =>
+      fireEvent.click(
+        within(screen.getByRole('list', { name: 'Change connections' })).getByRole('button', {
+          name: other,
+        }),
+      );
+
+    it('names where a move from the study goes under who is there', () => {
+      const table = PlayTable.start(house);
+      render(
+        <PlayingOn table={table}>
+          <MapBoard board={table.board} />
+        </PlayingOn>,
+      );
+
+      tapOnce(tile('study'));
+
+      expect(
+        within(within(details('study')).getByRole('region', { name: 'Connected to' })).getByRole(
+          'button',
+        ).textContent,
+      ).toBe('hallway');
+    });
+
+    it('ticks the other locations a move from the study goes to in the menu of its connections', () => {
+      const table = PlayTable.start(house);
+      render(
+        <PlayingOn table={table}>
+          <MapBoard board={table.board} />
+        </PlayingOn>,
+      );
+
+      tapOnce(tile('study'));
+      changeConnections('study');
+
+      const connections = within(details('study')).getByRole('list', {
+        name: 'Change connections',
+      });
+      expect(
+        within(connections)
+          .getAllByRole('button')
+          .map((button) => [button.textContent, button.getAttribute('aria-pressed')]),
+      ).toEqual([
+        ['hallway', 'true'],
+        ['attic', 'false'],
+      ]);
+    });
+
+    it('connects the study to the attic, as a card that connects them does', async () => {
+      const table = PlayTable.start(house);
+      render(
+        <PlayingOn table={table}>
+          <MapBoard board={table.board} />
+        </PlayingOn>,
+      );
+
+      tapOnce(tile('study'));
+      changeConnections('study');
+      toggleConnection('attic');
+
+      await expect.poll(() => table.board.connectedTo(study)).toEqual([hallway, attic]);
+    });
+
+    it('disconnects the study from the hallway', async () => {
+      const table = PlayTable.start(house);
+      render(
+        <PlayingOn table={table}>
+          <MapBoard board={table.board} />
+        </PlayingOn>,
+      );
+
+      tapOnce(tile('study'));
+      changeConnections('study');
+      toggleConnection('hallway');
+
+      await expect.poll(() => table.board.connectedTo(study)).toEqual([]);
+    });
+
+    it('disconnects the hallway from the attic, which leads only one way', async () => {
+      const table = PlayTable.start(house);
+      render(
+        <PlayingOn table={table}>
+          <MapBoard board={table.board} />
+        </PlayingOn>,
+      );
+
+      tapOnce(tile('hallway'));
+      changeConnections('hallway');
+      toggleConnection('attic');
+
+      await expect.poll(() => table.board.connectedTo(hallway)).toEqual([study]);
     });
 
     it('reveals the unrevealed hallway from its details', async () => {
@@ -1697,7 +1807,7 @@ describe('MapBoard', () => {
 
       tapOnce(tile('hallway'));
 
-      expect(offered('hallway')).toEqual(['Close', 'Reveal', 'Attach a card']);
+      expect(offered('hallway')).toEqual(['Close', 'study · attic', 'Reveal', 'Attach a card']);
     });
 
     describe("the parlor's Resign", () => {

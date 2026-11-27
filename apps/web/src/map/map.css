@@ -581,6 +581,41 @@
   color: var(--color-text-muted);
 }
 
+/*
+ * Where a move from the location goes (Connections): the names as a line under its title, a tap
+ * target as wide as the page with the pencil at its end, and under it the menu of every other
+ * location with a tick on each connected one (base.css), lying over the page below.
+ */
+#map [data-part='connections'] {
+  position: relative;
+}
+
+#map [data-part='connections'] > button[data-icon][aria-expanded] {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  min-height: var(--touch-target);
+  padding: 0 var(--space-2);
+  border: var(--border-width) dashed var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: inherit;
+  text-align: start;
+}
+
+#map [data-part='connections'] > button[data-icon][aria-expanded]::before {
+  order: 1;
+  margin: 0;
+  color: var(--color-text-muted);
+}
+
+#map [data-part='connections'] > button[aria-expanded] + ul {
+  inset-inline: 0 auto;
+}
+
 /* The location's card, as big as a zoomed card. */
 #map [data-mode='location'] > svg {
   align-self: center;
