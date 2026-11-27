@@ -174,15 +174,8 @@ export type Rejection =
    * Reference, "Massive"), so there is nothing to engage.
    */
   | { code: 'massiveNotEngageable'; cardId: InstanceId }
-  /** A hunter command names an enemy that is not an unengaged hunter at a location. */
-  | { code: 'notAHunter'; cardId: InstanceId }
-  /**
-   * `MoveEnemy` to a `to` that is no first step of its way `toward`, or `MoveHunter` to a location
-   * that is not connected to the hunter's.
-   */
+  /** `MoveEnemy` to a `to` that is no first step of its way `toward`. */
   | { code: 'enemyCannotMove'; cardId: InstanceId; to: InstanceId }
-  /** `MoveHunter` towards an investigator the hunter cannot reach. */
-  | { code: 'noRoute'; cardId: InstanceId; investigatorId: InvestigatorId }
   /** A command other than `ManualAdjust`/`ResolveDecision` while `decisionId` is pending. */
   | { code: 'decisionPending'; decisionId: DecisionId }
   /** `RequestDecision` with an id that is already pending. */
@@ -457,12 +450,8 @@ function describe(r: Rejection): string {
       return `${r.cardId} is not revealed`;
     case 'massiveNotEngageable':
       return `${r.cardId} is massive and already engaged with everyone at its location`;
-    case 'notAHunter':
-      return `${r.cardId} is not an unengaged hunter at a location`;
     case 'enemyCannotMove':
       return `${r.cardId} cannot move to ${r.to}`;
-    case 'noRoute':
-      return `${r.cardId} has no route to ${r.investigatorId}`;
     case 'decisionPending':
       return `decision ${r.decisionId} must be resolved first`;
     case 'duplicateDecision':

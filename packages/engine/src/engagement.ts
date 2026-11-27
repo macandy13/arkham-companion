@@ -128,13 +128,13 @@ function engageEach(
 }
 
 /** A `chooseInvestigator` decision about `subject`, unless one with this id is already open. */
-export function chooseInvestigator(
+export function chooseInvestigator<Chosen extends Investigator>(
   state: GameState,
   subject: InstanceId,
   id: string,
   prompt: string,
-  options: readonly Investigator[],
-  answer: (chosen: Investigator) => Command,
+  options: readonly Chosen[],
+  answer: (chosen: Chosen) => Command,
 ): DecisionRequested[] {
   return requestDecision(state, {
     id: decisionId(id),

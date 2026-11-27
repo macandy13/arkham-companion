@@ -67,7 +67,7 @@ import {
 } from './handle_scenario';
 import { handleStartScenario } from './handle_start_scenario';
 import { handleMoveTokens } from './handle_tokens';
-import { handleMoveHunter, handleMoveHunters } from './hunters';
+import { handleMoveHunters } from './hunters';
 import { attacksStillDue, handleNextPhase } from './phases';
 import {
   handleEndSkillTest,
@@ -287,7 +287,6 @@ const COMMAND_SPECS: CommandSpecs = {
   ReadyEnemy: { handle: handleReadyEnemy },
   MoveEnemy: { handle: handleMoveEnemy },
   MoveHunters: { handle: handleMoveHunters },
-  MoveHunter: { handle: handleMoveHunter },
   RequestDecision: { handle: handleRequestDecision },
   TestSkill: { handle: handleTestSkill },
   ForEachPoint: { handle: handleMarginEntry },
