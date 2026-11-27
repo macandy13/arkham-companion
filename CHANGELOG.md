@@ -2,6 +2,34 @@
 
 The sections dated up to 2026-10-22 were released as 1.0.0 to 1.8.0 by mistake: Release Please starts at 1.0.0 by default. Versioning restarted at 0.1.0 (see "Versions" in docs/product.md).
 
+## [0.1.49](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v0.1.48...arkham-companion-v0.1.49) (2026-11-27)
+
+
+### Features
+
+* **engine:** Elokoss cannot move or make attacks of opportunity (MC2.12b) ([#1502](https://github.com/macandy13/arkham-companion/issues/1502)) ([fa9d691](https://github.com/macandy13/arkham-companion/commit/fa9d6918905dbdab30db64131d2cb1f4d9f179bd))
+* **engine:** enemies at a location with Fire! attached cannot be damaged (MC2.12a) ([08b88de](https://github.com/macandy13/arkham-companion/commit/08b88de759db094b6b4020a2d95d13205e3851e1))
+* **review_tour:** daily digest page (MA.6a) ([#1523](https://github.com/macandy13/arkham-companion/issues/1523)) ([2af24e9](https://github.com/macandy13/arkham-companion/commit/2af24e952954e17b486c27522e0bef46b48831f9))
+* **web:** show and change a location's connections in its details (ME.30a) ([#1501](https://github.com/macandy13/arkham-companion/issues/1501)) ([a4bee4e](https://github.com/macandy13/arkham-companion/commit/a4bee4ea0aaded2c5baf9e7f10b6dcd5248dee3b))
+
+
+### Bug fixes
+
+* **engine:** move the Elokoss test to MoveEnemy's toward rule ([#1505](https://github.com/macandy13/arkham-companion/issues/1505)) ([da5f254](https://github.com/macandy13/arkham-companion/commit/da5f25484cbbfbaa7ec83c8e4b11305390a48e36))
+
+
+### Refactoring
+
+* **engine:** hunters move with the prey destination rule (ME.13b) ([#1504](https://github.com/macandy13/arkham-companion/issues/1504)) ([bad2c98](https://github.com/macandy13/arkham-companion/commit/bad2c9822d058832db0355b73654fc6bfb02fe81))
+* **engine:** MoveEnemy takes a destination rule toward a location (ME.13a) ([#1500](https://github.com/macandy13/arkham-companion/issues/1500)) ([d4a36dd](https://github.com/macandy13/arkham-companion/commit/d4a36dd1c23686ffcd03731c62ee65ee7de7bda4))
+
+
+### Documentation
+
+* every rules claim links its test (MA.4b) ([#1515](https://github.com/macandy13/arkham-companion/issues/1515)) ([6032111](https://github.com/macandy13/arkham-companion/commit/603211167d7d4ae6535f6f2a58b514eeaff49198))
+* name the smoke run's paths in the gate section ([aaa8fde](https://github.com/macandy13/arkham-companion/commit/aaa8fdebf6423c72362588a8726b5060fc8663c9))
+* the play tester row names the PR smoke job ([60fdbe2](https://github.com/macandy13/arkham-companion/commit/60fdbe25152b9a501b1df41cd33ce22c0eb83234))
+
 ## [0.1.48](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v0.1.47...arkham-companion-v0.1.48) (2026-11-26)
 
 
