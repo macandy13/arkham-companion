@@ -1,5 +1,6 @@
 /**
- * The review page's stylesheet and script, inlined by `renderPage` so the page is one file.
+ * The review page's stylesheet and script, inlined by `renderPage` (and the stylesheet by
+ * `renderDigest`) so each page is one file.
  * The look is deliberately its own, plain and quiet, not the app's: the page is read once on a
  * phone, and only the question is tinted so it is what the eye lands on.
  */
@@ -51,6 +52,13 @@ h1 { font-size: 28px; line-height: 1.2; font-weight: 650; letter-spacing: -0.015
 .lead { display: grid; gap: 6px; }
 .lead h2 { font-size: 12px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 0; }
 .lead p { font-size: 18px; margin: 0; max-width: 60ch; }
+.entry { display: grid; gap: 6px; padding-top: 24px; border-top: 1px solid var(--line); }
+.entry h2 { font-size: 22px; line-height: 1.3; font-weight: 600; margin: 0; }
+.entry h2 a { color: var(--fg); text-decoration: none; }
+.entry h3 { font-size: 12px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 10px 0 0; }
+.entry p, .entry ul { margin: 0; max-width: 60ch; }
+.entry ul { padding-left: 20px; }
+.entry .links { display: flex; gap: 18px; margin-top: 10px; font-weight: 600; }
 .meta { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 13px; color: var(--muted); margin: 0; }
 .questions { background: var(--ask); color: var(--ask-fg); border-radius: var(--radius); padding: 18px 20px; display: grid; gap: 14px; }
 .questions h2 { font-size: 12px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; margin: 0; opacity: .75; }

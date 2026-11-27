@@ -173,9 +173,10 @@ Designs for parts that have a milestone but no code yet. The PR that builds one 
 
 **Who runs it and where it writes**
 
-The tester is a Node script in a new package, `packages/play_tester` (CI tooling like `review_digest`; it may use the clock and the file system, the engine stays pure). It never runs on PRs, only in two ways:
+The tester is a Node script in a new package, `packages/play_tester` (CI tooling like `review_digest`; it may use the clock and the file system, the engine stays pure). It runs in three ways:
 
 - **A developer or a Claude session**, on their machine: `pnpm playtest --games 500 --seed 7`. It prints a summary (games, wins, findings per check) and writes failing records to `packages/play_tester/.runs/` (gitignored). `pnpm playtest --replay <record>` replays one and stops at its failing step.
+- **A smoke run on every PR that changes the code games run on** (`ci.yml` → `smoke`, about a minute): 100 games from a fixed seed, which `main` passes, so a finding is the PR's own. It is a required check, so a PR that merges on the session's verdict instead of the owner's review still shows the rules work together (MA.5).
 - **A nightly GitHub Action** (`play_tester.yml`, scheduled, ~15 minutes, about 450 of the 2,000 free minutes a month): fresh seeds from the date, so each night plays new games. It also replays every record in `packages/play_tester/findings/` (the committed shrunk records of fixed bugs, steps and card codes only, never card text), so a fixed bug that comes back is found the next night. It writes:
   - the summary to the job summary page,
   - the failing records as a workflow artifact (kept 90 days),
