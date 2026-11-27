@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>#1532 review tour</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400..700&amp;family=JetBrains+Mono:wght@400;600&amp;display=swap">
+<style>
+:root {
+  --bg: #fbfbf9; --fg: #1d1f21; --muted: #6b6f73; --line: #e6e5e0; --soft: #f2f1ec;
+  --accent: #2f5d8a; --accent-fg: #ffffff; --ask: #fdf4dc; --ask-fg: #3d3115; --code-bg: #ffffff;
+  --add-bg: #e9f5ec; --add-mark: #2e7d47; --del-bg: #fbecea; --del-mark: #b0413a; --hl: #fff3c4;
+  --tok-key: #8a3ffc; --tok-str: #2e7d47; --tok-com: #8c9196; --tok-type: #2f5d8a; --ok: #2e7d47;
+  --font-body: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-code: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  --radius: 8px;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #17191b; --fg: #e8e8e6; --muted: #9a9ea3; --line: #2b2e31; --soft: #202326;
+    --accent: #8ab4e0; --accent-fg: #10161c; --ask: #2b2617; --ask-fg: #f0e3bd; --code-bg: #1c1f22;
+    --add-bg: #1d2e23; --add-mark: #7cc596; --del-bg: #33201f; --del-mark: #e48a83; --hl: #3a3420;
+    --tok-key: #c4a1ff; --tok-str: #8fd0a4; --tok-com: #7c8288; --tok-type: #8ab4e0; --ok: #7cc596;
+    color-scheme: dark;
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.6 var(--font-body); -webkit-font-smoothing: antialiased; }
+main {
+  max-width: 720px; margin: 0 auto; display: grid; gap: 40px;
+  padding: 0 max(16px, env(safe-area-inset-right)) 56px max(16px, env(safe-area-inset-left));
+}
+a { color: var(--accent); text-underline-offset: 2px; }
+a:focus-visible, button:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+code { font-family: var(--font-code); font-size: .88em; background: var(--soft); padding: 1px 5px; border-radius: 4px; }
+nav {
+  position: sticky; top: 0; z-index: 5; display: flex; align-items: center; gap: 12px;
+  margin: 0 calc(-1 * max(16px, env(safe-area-inset-left))); padding: 10px max(16px, env(safe-area-inset-left));
+  background: color-mix(in srgb, var(--bg) 92%, transparent); backdrop-filter: blur(8px); border-bottom: 1px solid var(--line);
+}
+nav .number { font-size: 14px; font-weight: 600; color: var(--muted); }
+nav ol { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 0 auto; padding: 0; list-style: none; }
+nav ol a {
+  width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center;
+  color: var(--muted); background: var(--soft); font-size: 13px; font-weight: 600; text-decoration: none;
+}
+nav ol a.question { background: var(--ask); color: var(--ask-fg); }
+nav ol a.on { background: var(--accent); color: var(--accent-fg); }
+header { display: grid; gap: 12px; padding-top: 28px; }
+.kicker { font-size: 13px; color: var(--muted); }
+h1 { font-size: 28px; line-height: 1.2; font-weight: 650; letter-spacing: -0.015em; margin: 0; text-wrap: balance; }
+.lead { display: grid; gap: 6px; }
+.lead h2 { font-size: 12px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 0; }
+.lead p { font-size: 18px; margin: 0; max-width: 60ch; }
+.entry { display: grid; gap: 6px; padding-top: 24px; border-top: 1px solid var(--line); }
+.entry h2 { font-size: 22px; line-height: 1.3; font-weight: 600; margin: 0; }
+.entry h2 a { color: var(--fg); text-decoration: none; }
+.entry h3 { font-size: 12px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 10px 0 0; }
+.entry p, .entry ul { margin: 0; max-width: 60ch; }
+.entry ul { padding-left: 20px; }
+.entry .links { display: flex; gap: 18px; margin-top: 10px; font-weight: 600; }
+.meta { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 13px; color: var(--muted); margin: 0; }
+.questions { background: var(--ask); color: var(--ask-fg); border-radius: var(--radius); padding: 18px 20px; display: grid; gap: 14px; }
+.questions h2 { font-size: 12px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; margin: 0; opacity: .75; }
+.questions ol { margin: 0; padding-left: 20px; display: grid; gap: 12px; }
+.questions p { margin: 0; font-size: 17px; }
+.questions .about { font-size: 13px; opacity: .75; }
+.questions a { color: inherit; font-size: 14px; font-weight: 500; }
+section.evidence { display: grid; gap: 14px; scroll-margin-top: 64px; }
+.evidence h2 { font-size: 20px; line-height: 1.3; font-weight: 600; letter-spacing: -0.01em; margin: 0; }
+.evidence ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 18px; }
+.evidence li { display: grid; gap: 8px; padding-left: 28px; position: relative; }
+.evidence li::before { content: "✓"; position: absolute; left: 4px; color: var(--accent); font-weight: 600; }
+.evidence li > p { margin: 0; max-width: 62ch; }
+.evidence .test { font-size: 14px; color: var(--muted); }
+.example { margin: 0; padding: 12px 14px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--soft); overflow-x: auto; font: 13px/1.5 var(--font-code); font-variant-ligatures: none; }
+.usage { display: grid; gap: 4px; }
+.usage .when { margin: 4px 0 0; font-size: 12px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.example code { background: none; padding: 0; font-size: inherit; }
+.stop { display: grid; gap: 14px; scroll-margin-top: 64px; }
+.stop > header { display: grid; grid-template-columns: auto 1fr; gap: 2px 12px; align-items: center; padding: 0; }
+.stop-number {
+  grid-row: span 2; align-self: start; margin-top: 2px; width: 28px; height: 28px; border-radius: 50%;
+  display: grid; place-items: center; background: var(--accent); color: var(--accent-fg); font-size: 13px; font-weight: 600;
+}
+.stop h2 { font-size: 20px; line-height: 1.3; font-weight: 600; letter-spacing: -0.01em; margin: 0; text-wrap: balance; }
+.tag { font-size: 12px; color: var(--muted); letter-spacing: .04em; text-transform: uppercase; }
+.stop > p { margin: 0; max-width: 62ch; }
+figure { display: grid; gap: 8px; margin: 0; }
+.toggle { display: flex; flex-wrap: wrap; gap: 4px; }
+.segments { display: inline-flex; background: var(--soft); border-radius: 999px; padding: 3px; }
+.toggle button { font: 500 13px var(--font-body); color: var(--muted); background: transparent; border: 0; border-radius: 999px; padding: 4px 12px; cursor: pointer; }
+.toggle button[aria-pressed="true"] { background: var(--bg); color: var(--fg); box-shadow: 0 1px 2px rgb(0 0 0 / 12%); }
+.frame { border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; background: var(--soft); }
+.frame img { display: block; width: 100%; height: auto; }
+.frame.phone { max-width: 280px; margin-inline: auto; }
+.frame .missing { padding: 24px; text-align: center; color: var(--muted); font-size: 14px; }
+.code { border: 1px solid var(--line); border-radius: var(--radius); background: var(--code-bg); overflow: hidden; }
+.code > header {
+  display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; padding: 8px 12px;
+  border-bottom: 1px solid var(--line); background: var(--soft); font-size: 13px; color: var(--muted);
+}
+.code .file { color: var(--fg); font-family: var(--font-code); font-size: 12.5px; overflow-wrap: anywhere; }
+.code > header a { margin-left: auto; }
+.code pre code { display: block; padding: 0; background: none; font-size: inherit; }
+.code pre { margin: 0; padding: 6px 0; font: 12.5px/1.6 var(--font-code); font-variant-ligatures: none; }
+.line { display: grid; grid-template-columns: 3.2em 1.4em minmax(0, 1fr); }
+.line .number { color: var(--muted); text-align: right; padding-right: .6em; user-select: none; opacity: .6; }
+.line .mark { color: var(--muted); user-select: none; }
+.line .text { padding: 0 12px 0 2ch; text-indent: -2ch; white-space: pre-wrap; overflow-wrap: anywhere; }
+.line.added { background: var(--add-bg); } .line.added .mark { color: var(--add-mark); }
+.line.removed { background: var(--del-bg); } .line.removed .mark { color: var(--del-mark); }
+.line.highlighted { background: var(--hl); }
+.line.gap .text { color: var(--muted); font-family: var(--font-body); font-size: 12px; }
+.k { color: var(--tok-key); } .s { color: var(--tok-str); } .c { color: var(--tok-com); font-style: italic; } .t { color: var(--tok-type); }
+.done { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; }
+.done p { margin: 0; color: var(--muted); }
+.done a { background: var(--accent); color: var(--accent-fg); border-radius: 999px; padding: 9px 20px; text-decoration: none; font-weight: 600; font-size: 15px; }
+details { border-top: 1px solid var(--line); padding-top: 16px; }
+summary { cursor: pointer; font-size: 15px; font-weight: 600; }
+details ul { padding-left: 20px; margin: 12px 0 0; display: grid; gap: 6px; font-size: 15px; }
+@media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+</style>
+</head>
+<body>
+<main>
+<nav aria-label="Tour"><span class="number">#1532</span><ol><li><a class="question" href="#questions" aria-label="Questions">?</a></li><li><a href="#stop-1" data-stop="stop-1">1</a></li><li><a href="#stop-2" data-stop="stop-2">2</a></li><li><a href="#stop-3" data-stop="stop-3">3</a></li><li><a class="evidence" href="#evidence" aria-label="How we know it works">✓</a></li></ol></nav>
+<header>
+<p class="kicker">feat(engine) · ME.30b · as of 579d725</p>
+<h1>Swap places with an enemy, as Ethereal Slip does</h1>
+<p class="meta"><span>3 stops</span><span>1 question</span><span>50 of 360 changed lines on the tour</span></p>
+</header>
+<section class="lead"><h2>The problem</h2><p>A player who plays Ethereal Slip trades places with an enemy, and the app had no way to do it: dragging the pawn and then the enemy made the enemy engage the investigator, or follow them, on the way.</p></section>
+<section class="lead"><h2>What changes</h2><p>One engine command swaps an investigator and an enemy. The enemy is put at the investigator's location first, not engaging yet; the investigator then moves to the enemy's location as any card effect moves them (paying an enter cost, revealing it, after-you-enter effects), taking the enemies engaged with them along; only then does the swapped enemy engage whoever is left where it now stands. Where a card keeps the enemy out of the investigator's location, as Barricade does, the whole swap is refused. The enemy details offer it as a Swap pill in the Adjust group, whose menu names each investigator at another location, and offer none for an Elite enemy; how far away the enemy may be is the players' call.</p></section>
+<section class="questions" id="questions"><h2>Question for you</h2><ol><li><p>Where Barricade keeps the enemy out, should the swap be refused rather than move only the investigator?</p><span class="about">Concerns <a href="#stop-1">stop 1</a>. Picked: Refused: &quot;cannot&quot; is absolute, and nothing in the rules says to do half a swap..</span></li></ol><a href="https://github.com/macandy13/arkham-companion/pull/1532">Answer on GitHub →</a></section>
+<section class="stop" id="stop-1">
+<header><span class="stop-number">1</span><span class="tag">engine · investigator moves</span><h2>The swap</h2></header>
+<p>The enemy is placed first, the investigator's own move follows, and the enemy engages last.</p>
+
+<div class="code"><header><span class="file">packages/engine/src/handle_investigator.ts</span><span>+33 −0</span><a href="https://github.com/macandy13/arkham-companion/pull/1532/files#diff-2755b5c1f4140c874a60768cd60017ef32b265304f47a493b550a62866966b38R113-R141">Open in diff</a></header><pre><code><span class="line added"><span class="number">113</span><span class="mark">+</span><span class="text">/**</span></span><span class="line added"><span class="number">114</span><span class="mark">+</span><span class="text"><span class="c"> * `SwapPlaces`: the enemy is placed at the investigator's location first, unengaged and without</span></span></span><span class="line added"><span class="number">115</span><span class="mark">+</span><span class="text"><span class="c"> * engaging yet, so the investigator's move (`handleMoveInvestigator`, ignoring connections) neither</span></span></span><span class="line added"><span class="number">116</span><span class="mark">+</span><span class="text"><span class="c"> * takes it along nor finds it at the destination; then it engages whoever is still at its new</span></span></span><span class="line added"><span class="number">117</span><span class="mark">+</span><span class="text"><span class="c"> * location (`engageEvents`). The investigator's half is a card effect's move: it pays an enter cost,</span></span></span><span class="line added"><span class="number">118</span><span class="mark">+</span><span class="text"><span class="c"> * reveals the location and opens &quot;after you enter&quot;. Rejected where a card keeps the enemy out of</span></span></span><span class="line added"><span class="number">119</span><span class="mark">+</span><span class="text"><span class="c"> * the investigator's location (`isClosedToEnemy`: Barricade, Handcuffs).</span></span></span><span class="line added"><span class="number">120</span><span class="mark">+</span><span class="text"><span class="c"> */</span></span></span><span class="line added"><span class="number">121</span><span class="mark">+</span><span class="text"><span class="k">export</span> <span class="k">function</span> handleSwapPlaces(ctx: <span class="t">EngineContext</span>, state: <span class="t">GameState</span>, cmd: <span class="t">SwapPlaces</span>): <span class="t">Event</span>[] {</span></span><span class="line added"><span class="number">122</span><span class="mark">+</span><span class="text">  <span class="k">const</span> { enemy } = enemyOf(ctx, state, cmd.enemyId);</span></span><span class="line added"><span class="number">123</span><span class="mark">+</span><span class="text">  <span class="k">if</span> (!isEnemyOnTable(enemy))</span></span><span class="line added"><span class="number">124</span><span class="mark">+</span><span class="text">    <span class="k">throw</span> <span class="k">new</span> <span class="t">CommandRejected</span>({ code: <span class="s">'enemyNotInPlay'</span>, cardId: enemy.id });</span></span><span class="line added"><span class="number">125</span><span class="mark">+</span><span class="text">  <span class="k">const</span> investigator = activeInvestigator(state, cmd.investigatorId);</span></span><span class="line added"><span class="number">126</span><span class="mark">+</span><span class="text">  <span class="k">const</span> <span class="k">from</span> = investigator.locationId;</span></span><span class="line added"><span class="number">127</span><span class="mark">+</span><span class="text">  <span class="k">const</span> to = locationOf(state, enemy);</span></span><span class="line added"><span class="number">128</span><span class="mark">+</span><span class="text">  <span class="k">if</span> (<span class="k">from</span> === <span class="k">undefined</span> || to === <span class="k">undefined</span> || <span class="k">from</span> === to) <span class="k">return</span> [];</span></span><span class="line added"><span class="number">129</span><span class="mark">+</span><span class="text">  <span class="c">// Both halves are one move: where a card keeps the enemy out (Barricade), the swap can't happen.</span></span></span><span class="line highlighted"><span class="number">130</span><span class="mark">+</span><span class="text">  <span class="k">if</span> (isClosedToEnemy(ctx, state, enemy, requireLocationInPlay(state, <span class="k">from</span>)))</span></span><span class="line added"><span class="number">131</span><span class="mark">+</span><span class="text">    <span class="k">throw</span> <span class="k">new</span> <span class="t">CommandRejected</span>({ code: <span class="s">'enemyCannotMove'</span>, cardId: enemy.id, to: <span class="k">from</span> });</span></span><span class="line highlighted"><span class="number">132</span><span class="mark">+</span><span class="text">  <span class="k">const</span> placed = moveCardEvent(enemy, { kind: <span class="s">'atLocation'</span>, locationId: <span class="k">from</span> });</span></span><span class="line added"><span class="number">133</span><span class="mark">+</span><span class="text">  <span class="k">const</span> moved = handleMoveInvestigator(ctx, replay([placed], state), {</span></span><span class="line added"><span class="number">134</span><span class="mark">+</span><span class="text">    <span class="k">type</span>: <span class="s">'MoveInvestigator'</span>,</span></span><span class="line added"><span class="number">135</span><span class="mark">+</span><span class="text">    investigatorId: investigator.id,</span></span><span class="line added"><span class="number">136</span><span class="mark">+</span><span class="text">    to,</span></span><span class="line added"><span class="number">137</span><span class="mark">+</span><span class="text">    ignoreConnections: <span class="k">true</span>,</span></span><span class="line added"><span class="number">138</span><span class="mark">+</span><span class="text">  });</span></span><span class="line added"><span class="number">139</span><span class="mark">+</span><span class="text">  <span class="k">const</span> swapped = [placed, ...moved];</span></span><span class="line highlighted"><span class="number">140</span><span class="mark">+</span><span class="text">  <span class="k">return</span> [...swapped, ...engageEvents(ctx, replay(swapped, state), enemy.id)];</span></span><span class="line added"><span class="number">141</span><span class="mark">+</span><span class="text">}</span></span></code></pre></div>
+</section>
+<section class="stop" id="stop-2">
+<header><span class="stop-number">2</span><span class="tag">engine · board view</span><h2>Who can swap</h2></header>
+<p>The active investigators at another location, none for an Elite enemy.</p>
+
+<div class="code"><header><span class="file">packages/engine/src/board_view.ts</span><span>+19 −1</span><a href="https://github.com/macandy13/arkham-companion/pull/1532/files#diff-69728c6085330bce46be6f42a0a7a56f5d7c0a8d6d4134613b9f161ab218ad21R765-R785">Open in diff</a></header><pre><code><span class="line added"><span class="number">765</span><span class="mark">+</span><span class="text">    <span class="k">const</span> elsewhere = this.state.investigators.filter(</span></span><span class="line added"><span class="number">766</span><span class="mark">+</span><span class="text">      (inv) =&gt;</span></span><span class="line added"><span class="number">767</span><span class="mark">+</span><span class="text">        inv.status === <span class="s">'active'</span> &amp;&amp;</span></span><span class="line added"><span class="number">768</span><span class="mark">+</span><span class="text">        location !== <span class="k">undefined</span> &amp;&amp;</span></span><span class="line added"><span class="number">769</span><span class="mark">+</span><span class="text">        inv.locationId !== <span class="k">undefined</span> &amp;&amp;</span></span><span class="line added"><span class="number">770</span><span class="mark">+</span><span class="text">        inv.locationId !== location,</span></span><span class="line added"><span class="number">771</span><span class="mark">+</span><span class="text">    );</span></span><span class="line gap"><span class="number"></span><span class="mark">⋯</span><span class="text"></span></span><span class="line highlighted"><span class="number">783</span><span class="mark">+</span><span class="text">      swap: cardStats(this.ctx.cards, card.code).traits.includes(trait(<span class="s">'Elite'</span>))</span></span><span class="line added"><span class="number">784</span><span class="mark">+</span><span class="text">        ? []</span></span><span class="line added"><span class="number">785</span><span class="mark">+</span><span class="text">        : elsewhere.map(({ id }) =&gt; id),</span></span></code></pre></div>
+</section>
+<section class="stop" id="stop-3">
+<header><span class="stop-number">3</span><span class="tag">UI · enemy details</span><h2>The Swap pill</h2></header>
+<p>One pill in the Adjust group; its menu names each investigator who can swap.</p>
+
+<div class="code"><header><span class="file">apps/web/src/enemies/EnemyDetails.tsx</span><span>+14 −1</span><a href="https://github.com/macandy13/arkham-companion/pull/1532/files#diff-dce76515dbd80756a1fa1f5672662e556715bb5dbdf3e6d76f7a964273503207R210-R220">Open in diff</a></header><pre><code><span class="line added"><span class="number">210</span><span class="mark">+</span><span class="text">          &lt;<span class="t">SplitAction</span></span></span><span class="line added"><span class="number">211</span><span class="mark">+</span><span class="text">            icon=<span class="s">&quot;swap&quot;</span></span></span><span class="line added"><span class="number">212</span><span class="mark">+</span><span class="text">            caption={t(<span class="s">'enemy.caption.swap'</span>)}</span></span><span class="line added"><span class="number">213</span><span class="mark">+</span><span class="text">            waysName={t(<span class="s">'ways.swap'</span>)}</span></span><span class="line added"><span class="number">214</span><span class="mark">+</span><span class="text">            ways={effects.swap.map((investigator) =&gt; ({</span></span><span class="line added"><span class="number">215</span><span class="mark">+</span><span class="text">              key: investigator,</span></span><span class="line added"><span class="number">216</span><span class="mark">+</span><span class="text">              name: t(<span class="s">'enemy.swapWith'</span>, { name: board.investigator(investigator).name }),</span></span><span class="line highlighted"><span class="number">217</span><span class="mark">+</span><span class="text">              onPick: step(() =&gt; actions.perform(swapPlaces(investigator, enemy.id)), <span class="s">'close'</span>),</span></span><span class="line added"><span class="number">218</span><span class="mark">+</span><span class="text">            }))}</span></span><span class="line added"><span class="number">219</span><span class="mark">+</span><span class="text">            disabled={busy}</span></span><span class="line added"><span class="number">220</span><span class="mark">+</span><span class="text">          /&gt;</span></span></code></pre></div>
+</section>
+<section class="evidence" id="evidence"><h2>How we know it works</h2><ul><li><p>The two swap without engaging each other.</p><p class="test">Checked by <code>packages/engine/src/enemies.test.ts › SwapPlaces › moves alice to the ghoul in the attic and the ghoul to the hall, neither engaging the other</code></p></li><li><p>The investigator's engaged enemies come along, and the swapped enemy leaves its engagement.</p><p class="test">Checked by <code>packages/engine/src/enemies.test.ts › SwapPlaces › takes the rat engaged with alice along and disengages the ghoul from bob in the cellar</code></p></li><li><p>Barricade refuses the swap.</p><p class="test">Checked by <code>packages/engine/src/enemies.test.ts › SwapPlaces › rejects the swap when a card keeps the ghoul out of the hall, as Barricade does</code></p></li><li><p>The details swap brook with the ghoul.</p><p class="test">Checked by <code>apps/web/src/enemies/EnemyDetails.test.tsx › EnemyDetails › swaps brook in the hall with the ghoul in the study, as Ethereal Slip does</code></p></li></ul></section>
+<section class="done"><p>That's the whole change.</p><a href="https://github.com/macandy13/arkham-companion/pull/1532/files">Review on GitHub</a></section>
+<details><summary>Not on the tour</summary><ul><li><code>swapPlaces</code> factory in player_effects.ts and <code>SwapPlaces</code> among the screen's <code>PlayerEffect</code>s</li><li>A swap icon, English and German strings</li><li>Rules: a new bullet on spawn-and-engagement.md, all our reading (no ruling or FAQ on swapping)</li><li>Docs: rule-modules.md, play-screen-investigators.md</li><li>New E2E flow: swap Roland Banks with a Ghoul Minion as a card says</li></ul></details>
+</main>
+<script>
+document.querySelectorAll('figure[data-variants]').forEach((figure) => {
+  const variants = JSON.parse(figure.dataset.variants);
+  const state = { when: 'after', device: variants[0].device };
+  const frame = figure.querySelector('.frame');
+  const show = () => {
+    const variant = variants.find((v) => v.device === state.device);
+    const src = variant[state.when];
+    frame.classList.toggle('phone', state.device === 'phone');
+    frame.innerHTML = src
+      ? '<img alt="' + state.device + ', ' + state.when + '" src="' + src + '">'
+      : '<p class="missing">' + (state.when === 'before' ? 'New in this PR' : 'Removed in this PR') + '</p>';
+    figure.querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(b.value === state.when || b.value === state.device)));
+  };
+  figure.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => {
+    state[b.name] = b.value;
+    show();
+  }));
+  show();
+});
+const dots = [...document.querySelectorAll('nav a[data-stop]')];
+const seen = new IntersectionObserver((entries) => entries.forEach((entry) => {
+  if (entry.isIntersecting) dots.forEach((d) => d.classList.toggle('on', d.dataset.stop === entry.target.id));
+}), { rootMargin: '-40% 0px -55% 0px' });
+document.querySelectorAll('.stop').forEach((stop) => seen.observe(stop));
+</script>
+</body>
+</html>
