@@ -1,5 +1,6 @@
-import { useEffect, useId, useRef, useState } from 'react';
+import { useId, useState } from 'react';
 import { ActionButton, type ActionIcon } from './ActionRow';
+import { useDismiss } from './useDismiss';
 
 /** One way to take an action: a line of a `SplitAction`'s menu, or the tap of its pill. */
 export interface ActionWay {
@@ -39,15 +40,7 @@ export function SplitAction({
 }) {
   const [open, setOpen] = useState(false);
   const menuId = useId();
-  const root = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (!open) return;
-    const away = (event: PointerEvent) => {
-      if (!root.current?.contains(event.target as Node)) setOpen(false);
-    };
-    document.addEventListener('pointerdown', away);
-    return () => document.removeEventListener('pointerdown', away);
-  }, [open]);
+  const { ref, onKeyDown } = useDismiss<HTMLDivElement>(open, () => setOpen(false));
 
   if (primary !== undefined && ways.length === 0)
     return (
@@ -68,16 +61,7 @@ export function SplitAction({
     onClick: () => setOpen(!open),
   };
   return (
-    <div
-      ref={root}
-      data-split
-      onKeyDown={(event) => {
-        if (event.key !== 'Escape' || !open) return;
-        event.stopPropagation();
-        event.preventDefault();
-        setOpen(false);
-      }}
-    >
+    <div ref={ref} data-split onKeyDown={onKeyDown}>
       {primary === undefined ? (
         <button
           type="button"

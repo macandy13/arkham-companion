@@ -1,13 +1,13 @@
 /*
  * The chaos bag's dialog (ChaosBag), a token tray: three tabs on one rule, the selected one
  * underlined in brass like the status row's phase; under them its view. In the bag, every token
- * lies on a felt tray as if tipped out on the table, the one picked to seal ringed in brass, then
- * the buttons to seal it on or remove it, the bless and curse steppers, each − count +, and Change
- * the bag: how long a change lasts (in a campaign) and Add a token, which opens a row of the
- * tokens to add. Sealed lists the
- * sealed tokens, one per line with their Release button. Reveal steps its count like bless and
- * curse, lays the revealed tokens on the tray, and ends on Put back and Reveal, Reveal the view's
- * one brass primary. On a phone the tray's tokens are smaller, so the sheet keeps them in view.
+ * lies on a felt tray as if tipped out on the table, and a tap on one rings it in brass and opens
+ * the app's menu under it (seal it on an investigator, remove it). The tray ends on a dashed token
+ * with a +, like the dashed card that attaches one to a location, whose menu holds how long a
+ * change lasts (in a campaign) and the tokens to add. Sealed lists the sealed tokens, one per line
+ * with their Release button. Reveal steps its count, lays the revealed tokens on the tray, and ends
+ * on Put back and Reveal, Reveal the view's one brass primary. On a phone the tray's tokens are
+ * smaller, so the sheet keeps them in view.
  */
 /*
  * The page keeps one height whichever view is open and whatever the bag holds, so switching tabs,
@@ -95,7 +95,9 @@
   dialog[data-shell]
   section[data-part='chaos-bag']
   :is([data-part='tray'], [data-part='addable'])
-  button {
+  > li
+  > button {
+  width: auto;
   min-width: 0;
   min-height: 0;
   padding: 0;
@@ -108,8 +110,63 @@
   dialog[data-shell]
   section[data-part='chaos-bag']
   [data-part='tray']
-  button[aria-pressed='true'] {
+  > li
+  > button[aria-expanded='true'] {
   box-shadow: var(--tray-picked-ring);
+}
+
+/*
+ * A token's menu opens under the tray, from its start, the token ringed above it: lined up with
+ * the token itself, a menu from a token near either edge of the dialog would run off it.
+ */
+#board dialog[data-shell] section[data-part='chaos-bag'] [data-part='tray'] {
+  position: relative;
+}
+
+#app
+  #board
+  dialog[data-shell]
+  section[data-part='chaos-bag']
+  [data-part='tray']
+  > li
+  > button[aria-expanded]
+  + * {
+  inset-inline: 0 auto;
+  max-width: 100%;
+}
+
+/* The dashed token at the tray's end that adds one, like the dashed card that attaches one. */
+#board
+  dialog[data-shell]
+  section[data-part='chaos-bag']
+  [data-part='tray']
+  button[data-icon='add'] {
+  width: var(--chaos-token-size);
+  height: var(--chaos-token-size);
+  border: var(--border-width) dashed var(--table-border);
+  color: var(--table-text-muted);
+}
+
+#board
+  dialog[data-shell]
+  section[data-part='chaos-bag']
+  [data-part='tray']
+  button[data-icon='add']::before {
+  mask-image: url('./icons/add.svg');
+}
+
+/* The tokens to add, a wrapping row inside the add menu. */
+#app
+  #board
+  dialog[data-shell]
+  section[data-part='chaos-bag']
+  [data-part='tray']
+  ul[data-part='addable'] {
+  --chaos-token-size: var(--chaos-bag-token-size);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  max-width: var(--chaos-add-menu-width);
 }
 
 #board
@@ -123,20 +180,8 @@
   align-items: center;
 }
 
-/* Change the bag: its heading on a line of its own over its pills. */
-#board dialog[data-shell] section[data-part='chaos-bag'] [role='tabpanel'] > [role='group'] > h3 {
-  flex-basis: 100%;
-  margin: 0;
-  font-size: var(--font-size-body);
-}
-
 #board dialog[data-shell] section[data-part='chaos-bag'] [role='tabpanel'] > footer {
   justify-content: end;
-}
-
-/* Bless and curse: one line, a gap between the two steppers wider than within one. */
-#board dialog[data-shell] section[data-part='chaos-bag'] [data-part='pool'] {
-  column-gap: var(--space-5);
 }
 
 #board dialog[data-shell] section[data-part='chaos-bag'] [data-part='sealed'] {

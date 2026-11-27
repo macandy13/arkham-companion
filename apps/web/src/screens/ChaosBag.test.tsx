@@ -33,7 +33,7 @@ describe('ChaosBag', () => {
     .withInvestigator(daisy, { name: 'Daisy Walker', locationId: study })
     .withChaosBag(['-1', 'skull', '-1', 'elderSign']);
 
-  it('lays every token in the bag out one by one, in token order', () => {
+  it('lays every token in the bag out one by one, in token order, then the add token', () => {
     const table = PlayTable.start(game);
 
     render(
@@ -50,7 +50,10 @@ describe('ChaosBag', () => {
       within(contents)
         .getAllByRole('button')
         .map((button) => button.textContent),
-    ).toEqual(['−1', '−1', 'Skull', 'Elder Sign']);
+    ).toEqual(['−1', '−1', 'Skull', 'Elder Sign', '']);
+    expect(within(contents).getAllByRole('button').at(-1)?.getAttribute('aria-label')).toBe(
+      'Add a token',
+    );
   });
 
   it('seals the token tapped on the investigator picked', async () => {
@@ -117,60 +120,62 @@ describe('ChaosBag', () => {
     expect(screen.getByRole('tabpanel').textContent).toBe('No token is sealed.');
   });
 
-  it('lists the bless and curse tokens in the bag, each between its − and + buttons', () => {
-    const table = PlayTable.start(game.withChaosBag(['bless', 'bless', 'curse']));
-
+  it('returns a tapped bless token to the pool and adds a curse token from it', async () => {
+    const table = PlayTable.start(game.withChaosBag(['bless', '-1']));
     render(
       <PlayingOn table={table}>
         <ChaosBag board={table.board} />
       </PlayingOn>,
     );
 
-    const pool = screen.getByRole('list', { name: 'Bless and curse' });
-    expect(
-      within(pool)
-        .getAllByRole('listitem')
-        .map((item) => item.textContent),
-    ).toEqual(['Bless−×2+', 'Curse−×1+']);
-    expect(within(pool).getByText('×2').getAttribute('title')).toBe('8 left in the pool');
+    fireEvent.click(screen.getByRole('button', { name: 'Bless' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Return a Bless token to the pool' }));
+    await waitFor(() => expect(table.board.chaosBag).toEqual(['-1']));
+    fireEvent.click(screen.getByRole('button', { name: 'Add a token' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Add a Curse token' }));
+
+    await waitFor(() => expect(table.board.chaosBag).toEqual(['-1', 'curse']));
   });
 
-  it('adds a bless token from the pool and returns a curse token to it', async () => {
-    const table = PlayTable.start(game.withChaosBag(['curse', '-1']));
+  it('offers no bless token to add while all ten are in the bag', () => {
+    const table = PlayTable.start(
+      game.withChaosBag(Array.from({ length: 10 }, () => 'bless' as const)),
+    );
     render(
       <PlayingOn table={table}>
         <ChaosBag board={table.board} />
       </PlayingOn>,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'Add a Bless token to the bag' }));
-    await waitFor(() => expect(table.board.chaosBag).toEqual(['curse', '-1', 'bless']));
-    fireEvent.click(screen.getByRole('button', { name: 'Return a Curse token to the pool' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Add a token' }));
 
-    await waitFor(() => expect(table.board.chaosBag).toEqual(['-1', 'bless']));
+    expect(screen.getByRole('button', { name: 'Add a Bless token' })).toHaveProperty(
+      'disabled',
+      true,
+    );
+    expect(screen.getByRole('button', { name: 'Add a Curse token' })).toHaveProperty(
+      'disabled',
+      false,
+    );
   });
 
-  it.each([
-    {
-      what: 'add while all ten are in the bag',
-      bag: Array.from({ length: 10 }, () => 'bless' as const),
-      button: 'Add a Bless token to the bag',
-    },
-    {
-      what: 'return while the bag holds none',
-      bag: ['-1' as const],
-      button: 'Return a Bless token to the pool',
-    },
-  ])('offers no $what', ({ bag, button }) => {
-    const table = PlayTable.start(game.withChaosBag(bag));
-
+  it("closes a token's menu on Escape", () => {
+    const table = PlayTable.start(game);
     render(
       <PlayingOn table={table}>
         <ChaosBag board={table.board} />
       </PlayingOn>,
     );
 
-    expect(screen.getByRole('button', { name: button })).toHaveProperty('disabled', true);
+    fireEvent.click(screen.getByRole('button', { name: 'Skull' }));
+    fireEvent.keyDown(screen.getByRole('button', { name: 'Remove a Skull token' }), {
+      key: 'Escape',
+    });
+
+    expect(screen.queryByRole('list', { name: 'Seal or remove the Skull' })).toBeNull();
+    expect(screen.getByRole('button', { name: 'Skull' }).getAttribute('aria-expanded')).toBe(
+      'false',
+    );
   });
 
   it('reveals two tokens outside a test and leaves them in the bag', () => {
@@ -224,7 +229,7 @@ describe('ChaosBag', () => {
 
     await waitFor(() => expect(table.board.chaosBag).toEqual(['-1', '-1', 'elderSign']));
     expect(table.state.chaosBagChanges).toEqual([]);
-    expect(screen.queryByRole('button', { name: 'For the campaign' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Remove for the campaign' })).toBeNull();
   });
 
   it('adds a cultist token for the rest of the campaign in a campaign game', async () => {
@@ -235,13 +240,28 @@ describe('ChaosBag', () => {
       </PlayingOn>,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'For the campaign' }));
     fireEvent.click(screen.getByRole('button', { name: 'Add a token' }));
+    fireEvent.click(screen.getByRole('button', { name: 'For the campaign' }));
     fireEvent.click(screen.getByRole('button', { name: 'Add a Cultist token' }));
 
     await waitFor(() =>
       expect(table.board.chaosBag).toEqual(['-1', 'skull', '-1', 'elderSign', 'cultist']),
     );
     expect(table.state.chaosBagChanges).toEqual([{ token: 'cultist', change: 'add' }]);
+  });
+
+  it('removes the tapped skull for the rest of the campaign in a campaign game', async () => {
+    const table = PlayTable.start(game.withCampaign(campaign.createEmptyLog()));
+    render(
+      <PlayingOn table={table}>
+        <ChaosBag board={table.board} />
+      </PlayingOn>,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Skull' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Remove for the campaign' }));
+
+    await waitFor(() => expect(table.board.chaosBag).toEqual(['-1', '-1', 'elderSign']));
+    expect(table.state.chaosBagChanges).toEqual([{ token: 'skull', change: 'remove' }]);
   });
 });

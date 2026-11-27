@@ -402,6 +402,8 @@
   /* The chaos bag's felt tray (ChaosBag), sunk into the page, its tokens larger to tap one by one. */
   --chaos-tray-token-size: 3rem;
   --chaos-tray-token-size-phone: 2.25rem;
+  /* The add menu at the tray's end (ChaosBag) wraps its tokens to rows of five. */
+  --chaos-add-menu-width: 16rem;
   --color-tray-felt: #1b2a24;
   --tray-shadow: inset 0 2px 8px rgb(0 0 0 / 55%);
   --tray-picked-ring:

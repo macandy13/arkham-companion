@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
+import { useId, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { assertNever } from '@arkham/util';
 import {
@@ -21,6 +21,7 @@ import {
 } from '../screens/ActionRow';
 import { useCluePayment } from '../screens/CluePaymentDialog';
 import { SplitAction } from '../screens/SplitAction';
+import { useDismiss } from '../screens/useDismiss';
 import type { ClueSpend, GameActions } from '../state/gameActions';
 import { CardPatterns } from './CardPatterns';
 import { LocationTile } from './LocationTile';
@@ -274,31 +275,13 @@ function Connections({ board, location }: { board: BoardView; location: Location
   const titleId = useId();
   const menuId = useId();
   const [open, setOpen] = useState(false);
-  const root = useRef<HTMLElement>(null);
-  useEffect(() => {
-    if (!open) return;
-    const away = (event: PointerEvent) => {
-      if (!root.current?.contains(event.target as Node)) setOpen(false);
-    };
-    document.addEventListener('pointerdown', away);
-    return () => document.removeEventListener('pointerdown', away);
-  }, [open]);
+  const { ref, onKeyDown } = useDismiss<HTMLElement>(open, () => setOpen(false));
   const others = board.locations.filter(({ id }) => id !== location.id);
   if (others.length === 0) return null;
   const connected = board.connectedTo(location.id);
   const names = others.filter(({ id }) => connected.includes(id)).map(({ name }) => name);
   return (
-    <section
-      ref={root}
-      aria-labelledby={titleId}
-      data-part="connections"
-      onKeyDown={(event) => {
-        if (event.key !== 'Escape' || !open) return;
-        event.stopPropagation();
-        event.preventDefault();
-        setOpen(false);
-      }}
-    >
+    <section ref={ref} aria-labelledby={titleId} data-part="connections" onKeyDown={onKeyDown}>
       <h3 id={titleId}>{t('location.connections.title')}</h3>
       <button
         type="button"
