@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>#1500 review tour</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400..700&amp;family=JetBrains+Mono:wght@400;600&amp;display=swap">
+<style>
+:root {
+  --bg: #fbfbf9; --fg: #1d1f21; --muted: #6b6f73; --line: #e6e5e0; --soft: #f2f1ec;
+  --accent: #2f5d8a; --accent-fg: #ffffff; --ask: #fdf4dc; --ask-fg: #3d3115; --code-bg: #ffffff;
+  --add-bg: #e9f5ec; --add-mark: #2e7d47; --del-bg: #fbecea; --del-mark: #b0413a; --hl: #fff3c4;
+  --tok-key: #8a3ffc; --tok-str: #2e7d47; --tok-com: #8c9196; --tok-type: #2f5d8a; --ok: #2e7d47;
+  --font-body: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-code: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  --radius: 8px;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #17191b; --fg: #e8e8e6; --muted: #9a9ea3; --line: #2b2e31; --soft: #202326;
+    --accent: #8ab4e0; --accent-fg: #10161c; --ask: #2b2617; --ask-fg: #f0e3bd; --code-bg: #1c1f22;
+    --add-bg: #1d2e23; --add-mark: #7cc596; --del-bg: #33201f; --del-mark: #e48a83; --hl: #3a3420;
+    --tok-key: #c4a1ff; --tok-str: #8fd0a4; --tok-com: #7c8288; --tok-type: #8ab4e0; --ok: #7cc596;
+    color-scheme: dark;
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.6 var(--font-body); -webkit-font-smoothing: antialiased; }
+main {
+  max-width: 720px; margin: 0 auto; display: grid; gap: 40px;
+  padding: 0 max(16px, env(safe-area-inset-right)) 56px max(16px, env(safe-area-inset-left));
+}
+a { color: var(--accent); text-underline-offset: 2px; }
+a:focus-visible, button:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+code { font-family: var(--font-code); font-size: .88em; background: var(--soft); padding: 1px 5px; border-radius: 4px; }
+nav {
+  position: sticky; top: 0; z-index: 5; display: flex; align-items: center; gap: 12px;
+  margin: 0 calc(-1 * max(16px, env(safe-area-inset-left))); padding: 10px max(16px, env(safe-area-inset-left));
+  background: color-mix(in srgb, var(--bg) 92%, transparent); backdrop-filter: blur(8px); border-bottom: 1px solid var(--line);
+}
+nav .number { font-size: 14px; font-weight: 600; color: var(--muted); }
+nav ol { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 0 auto; padding: 0; list-style: none; }
+nav ol a {
+  width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center;
+  color: var(--muted); background: var(--soft); font-size: 13px; font-weight: 600; text-decoration: none;
+}
+nav ol a.question { background: var(--ask); color: var(--ask-fg); }
+nav ol a.on { background: var(--accent); color: var(--accent-fg); }
+header { display: grid; gap: 12px; padding-top: 28px; }
+.kicker { font-size: 13px; color: var(--muted); }
+h1 { font-size: 28px; line-height: 1.2; font-weight: 650; letter-spacing: -0.015em; margin: 0; text-wrap: balance; }
+.lead { display: grid; gap: 6px; }
+.lead h2 { font-size: 12px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 0; }
+.lead p { font-size: 18px; margin: 0; max-width: 60ch; }
+.meta { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 13px; color: var(--muted); margin: 0; }
+.questions { background: var(--ask); color: var(--ask-fg); border-radius: var(--radius); padding: 18px 20px; display: grid; gap: 14px; }
+.questions h2 { font-size: 12px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; margin: 0; opacity: .75; }
+.questions ol { margin: 0; padding-left: 20px; display: grid; gap: 12px; }
+.questions p { margin: 0; font-size: 17px; }
+.questions .about { font-size: 13px; opacity: .75; }
+.questions a { color: inherit; font-size: 14px; font-weight: 500; }
+section.evidence { display: grid; gap: 14px; scroll-margin-top: 64px; }
+.evidence h2 { font-size: 20px; line-height: 1.3; font-weight: 600; letter-spacing: -0.01em; margin: 0; }
+.evidence ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 18px; }
+.evidence li { display: grid; gap: 8px; padding-left: 28px; position: relative; }
+.evidence li::before { content: "✓"; position: absolute; left: 4px; color: var(--accent); font-weight: 600; }
+.evidence li > p { margin: 0; max-width: 62ch; }
+.evidence .test { font-size: 14px; color: var(--muted); }
+.example { margin: 0; padding: 12px 14px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--soft); overflow-x: auto; font: 13px/1.5 var(--font-code); font-variant-ligatures: none; }
+.usage { display: grid; gap: 4px; }
+.usage .when { margin: 4px 0 0; font-size: 12px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.example code { background: none; padding: 0; font-size: inherit; }
+.stop { display: grid; gap: 14px; scroll-margin-top: 64px; }
+.stop > header { display: grid; grid-template-columns: auto 1fr; gap: 2px 12px; align-items: center; padding: 0; }
+.stop-number {
+  grid-row: span 2; align-self: start; margin-top: 2px; width: 28px; height: 28px; border-radius: 50%;
+  display: grid; place-items: center; background: var(--accent); color: var(--accent-fg); font-size: 13px; font-weight: 600;
+}
+.stop h2 { font-size: 20px; line-height: 1.3; font-weight: 600; letter-spacing: -0.01em; margin: 0; text-wrap: balance; }
+.tag { font-size: 12px; color: var(--muted); letter-spacing: .04em; text-transform: uppercase; }
+.stop > p { margin: 0; max-width: 62ch; }
+figure { display: grid; gap: 8px; margin: 0; }
+.toggle { display: flex; flex-wrap: wrap; gap: 4px; }
+.segments { display: inline-flex; background: var(--soft); border-radius: 999px; padding: 3px; }
+.toggle button { font: 500 13px var(--font-body); color: var(--muted); background: transparent; border: 0; border-radius: 999px; padding: 4px 12px; cursor: pointer; }
+.toggle button[aria-pressed="true"] { background: var(--bg); color: var(--fg); box-shadow: 0 1px 2px rgb(0 0 0 / 12%); }
+.frame { border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; background: var(--soft); }
+.frame img { display: block; width: 100%; height: auto; }
+.frame.phone { max-width: 280px; margin-inline: auto; }
+.frame .missing { padding: 24px; text-align: center; color: var(--muted); font-size: 14px; }
+.code { border: 1px solid var(--line); border-radius: var(--radius); background: var(--code-bg); overflow: hidden; }
+.code > header {
+  display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; padding: 8px 12px;
+  border-bottom: 1px solid var(--line); background: var(--soft); font-size: 13px; color: var(--muted);
+}
+.code .file { color: var(--fg); font-family: var(--font-code); font-size: 12.5px; overflow-wrap: anywhere; }
+.code > header a { margin-left: auto; }
+.code pre code { display: block; padding: 0; background: none; font-size: inherit; }
+.code pre { margin: 0; padding: 6px 0; font: 12.5px/1.6 var(--font-code); font-variant-ligatures: none; }
+.line { display: grid; grid-template-columns: 3.2em 1.4em minmax(0, 1fr); }
+.line .number { color: var(--muted); text-align: right; padding-right: .6em; user-select: none; opacity: .6; }
+.line .mark { color: var(--muted); user-select: none; }
+.line .text { padding: 0 12px 0 2ch; text-indent: -2ch; white-space: pre-wrap; overflow-wrap: anywhere; }
+.line.added { background: var(--add-bg); } .line.added .mark { color: var(--add-mark); }
+.line.removed { background: var(--del-bg); } .line.removed .mark { color: var(--del-mark); }
+.line.highlighted { background: var(--hl); }
+.line.gap .text { color: var(--muted); font-family: var(--font-body); font-size: 12px; }
+.k { color: var(--tok-key); } .s { color: var(--tok-str); } .c { color: var(--tok-com); font-style: italic; } .t { color: var(--tok-type); }
+.done { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; }
+.done p { margin: 0; color: var(--muted); }
+.done a { background: var(--accent); color: var(--accent-fg); border-radius: 999px; padding: 9px 20px; text-decoration: none; font-weight: 600; font-size: 15px; }
+details { border-top: 1px solid var(--line); padding-top: 16px; }
+summary { cursor: pointer; font-size: 15px; font-weight: 600; }
+details ul { padding-left: 20px; margin: 12px 0 0; display: grid; gap: 6px; font-size: 15px; }
+@media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+</style>
+</head>
+<body>
+<main>
+<nav aria-label="Tour"><span class="number">#1500</span><ol><li><a href="#stop-1" data-stop="stop-1">1</a></li><li><a href="#stop-2" data-stop="stop-2">2</a></li><li><a href="#stop-3" data-stop="stop-3">3</a></li><li><a class="evidence" href="#evidence" aria-label="How we know it works">✓</a></li></ol></nav>
+<header>
+<p class="kicker">refactor(engine) · ME.13a · as of 2d060d5</p>
+<h1>MoveEnemy takes a destination rule toward a location</h1>
+<p class="meta"><span>3 stops</span><span>0 questions</span><span>62 of 274 changed lines on the tour</span></p>
+</header>
+<section class="lead"><h2>The problem</h2><p>Each kind of enemy movement had its own command: a card's &quot;moves 1 location towards X&quot; (<code>MoveEnemyTowards</code>), a hunter's step, the elusive retreat. Each found its next location and asked about ties in its own way, so the next movement keyword (patrol) would have needed a fourth.</p></section>
+<section class="lead"><h2>What changes</h2><p><code>MoveEnemy</code> takes a destination rule: straight <code>to</code> a location as before, or one step <code>toward</code> a location. One step finder gives the first steps of the shortest ways, and equally short ones become one decision (<code>move:&lt;enemy&gt;</code>), answered by the same move with <code>to</code> naming the step. This slice brings &quot;towards a location&quot;; hunters and the retreat follow (ME.13b, ME.13c).</p></section>
+
+<section class="stop" id="stop-1">
+<header><span class="stop-number">1</span><span class="tag">engine</span><h2>One move, two forms</h2></header>
+<p>With <code>toward</code>, <code>to</code> is the players' pick among equally short first steps, so an answer can't carry the enemy anywhere else.</p>
+
+<div class="code"><header><span class="file">packages/engine/src/commands.ts</span><span>+26 −36</span><a href="https://github.com/macandy13/arkham-companion/pull/1500/files#diff-458daa61f30e0f6e191559262e0a24708acb18353cee19edf9ca7a3654b8bd93R983-R996">Open in diff</a></header><pre><code><span class="line context"><span class="number">983</span><span class="mark"> </span><span class="text"><span class="c">   * `EnemyAttacks` decision follows the engagement, or each option of the players' choice of whom</span></span></span><span class="line context"><span class="number">984</span><span class="mark"> </span><span class="text"><span class="c">   * it engages attacks the one it names.</span></span></span><span class="line context"><span class="number">985</span><span class="mark"> </span><span class="text"><span class="c">   */</span></span></span><span class="line context"><span class="number">986</span><span class="mark"> </span><span class="text">  attacksIfItEngages?: <span class="k">true</span>;</span></span><span class="line removed"><span class="number">983</span><span class="mark">−</span><span class="text">}</span></span><span class="line removed"><span class="number">984</span><span class="mark">−</span><span class="text"></span></span><span class="line removed"><span class="number">985</span><span class="mark">−</span><span class="text">/**</span></span><span class="line removed"><span class="number">986</span><span class="mark">−</span><span class="text"><span class="c"> * A card effect moves an unengaged enemy one connection towards the location</span></span></span><span class="line removed"><span class="number">987</span><span class="mark">−</span><span class="text"><span class="c"> * `towards` along a shortest path (&quot;each unengaged Ghoul enemy moves 1</span></span></span><span class="line removed"><span class="number">988</span><span class="mark">−</span><span class="text"><span class="c"> * location towards the Parlor&quot;), exhausted or not. It stays when it is</span></span></span><span class="line removed"><span class="number">989</span><span class="mark">−</span><span class="text"><span class="c"> * there already or has no path (also while `towards` is out of play); equally short first steps become a</span></span></span><span class="line removed"><span class="number">990</span><span class="mark">−</span><span class="text"><span class="c"> * `chooseLocation` decision for the lead investigator (`towards:&lt;enemy&gt;`),</span></span></span><span class="line removed"><span class="number">991</span><span class="mark">−</span><span class="text"><span class="c"> * answered with `MoveEnemy`. An engaged enemy moves only with its</span></span></span><span class="line removed"><span class="number">992</span><span class="mark">−</span><span class="text"><span class="c"> * investigator, so it is refused (`enemyEngaged`), unless the move is</span></span></span><span class="line removed"><span class="number">993</span><span class="mark">−</span><span class="text"><span class="c"> * `forced` (&quot;each Cultist enemy moves once toward Underground Cistern&quot;,</span></span></span><span class="line removed"><span class="number">994</span><span class="mark">−</span><span class="text"><span class="c"> * Stop the Rite): then it disengages and moves from its investigator's</span></span></span><span class="line removed"><span class="number">995</span><span class="mark">−</span><span class="text"><span class="c"> * location. Produces what `MoveEnemy` produces, or the `DecisionRequested`.</span></span></span><span class="line removed"><span class="number">996</span><span class="mark">−</span><span class="text"><span class="c"> */</span></span></span><span class="line removed"><span class="number">997</span><span class="mark">−</span><span class="text"><span class="k">export</span> <span class="k">interface</span> <span class="t">MoveEnemyTowards</span> {</span></span><span class="line removed"><span class="number">998</span><span class="mark">−</span><span class="text">  <span class="k">type</span>: <span class="s">'MoveEnemyTowards'</span>;</span></span><span class="line removed"><span class="number">999</span><span class="mark">−</span><span class="text">  enemyId: <span class="t">InstanceId</span>;</span></span><span class="line removed"><span class="number">1000</span><span class="mark">−</span><span class="text">  towards: <span class="t">InstanceId</span>;</span></span><span class="line removed"><span class="number">1001</span><span class="mark">−</span><span class="text">  <span class="c">/** A forced instruction, followed even for an engaged enemy. Default false. */</span></span></span><span class="line removed"><span class="number">1002</span><span class="mark">−</span><span class="text">  forced?: boolean;</span></span><span class="line removed"><span class="number">1003</span><span class="mark">−</span><span class="text">  <span class="c">/** Passed on to the `MoveEnemy` it makes (`MoveEnemy.attacksIfItEngages`). */</span></span></span><span class="line removed"><span class="number">1004</span><span class="mark">−</span><span class="text">  attacksIfItEngages?: <span class="k">true</span>;</span></span><span class="line removed"><span class="number">1005</span><span class="mark">−</span><span class="text">}</span></span><span class="line added"><span class="number">987</span><span class="mark">+</span><span class="text">} &amp; (</span></span><span class="line highlighted"><span class="number">988</span><span class="mark">+</span><span class="text">  | { to: <span class="t">InstanceId</span>; toward?: never }</span></span><span class="line added"><span class="number">989</span><span class="mark">+</span><span class="text">  | {</span></span><span class="line added"><span class="number">990</span><span class="mark">+</span><span class="text">      <span class="c">/** The location it heads for, one connection at a time. */</span></span></span><span class="line highlighted"><span class="number">991</span><span class="mark">+</span><span class="text">      toward: <span class="t">InstanceId</span>;</span></span><span class="line added"><span class="number">992</span><span class="mark">+</span><span class="text">      <span class="c">/** The first step the players chose between equally short ones; it must be one of them. */</span></span></span><span class="line highlighted"><span class="number">993</span><span class="mark">+</span><span class="text">      to?: <span class="t">InstanceId</span>;</span></span><span class="line added"><span class="number">994</span><span class="mark">+</span><span class="text">    }</span></span><span class="line added"><span class="number">995</span><span class="mark">+</span><span class="text">);</span></span><span class="line context"><span class="number">996</span><span class="mark"> </span><span class="text"></span></span></code></pre></div>
+</section>
+<section class="stop" id="stop-2">
+<header><span class="stop-number">2</span><span class="tag">engine</span><h2>A step toward a location</h2></header>
+<p>The only step is taken; a chosen one must be among the steps; several become the lead investigator's choice.</p>
+
+<div class="code"><header><span class="file">packages/engine/src/handle_enemy.ts</span><span>+78 −59</span><a href="https://github.com/macandy13/arkham-companion/pull/1500/files#diff-f304e101ba6b56aaeaa974000c9ebcacf58c20d2a308fb21e85fca78ba73aaaaR140-R154">Open in diff</a></header><pre><code><span class="line added"><span class="number">140</span><span class="mark">+</span><span class="text">  <span class="k">const</span> steps = enemySteps(ctx, state, enemy, cmd.toward);</span></span><span class="line added"><span class="number">141</span><span class="mark">+</span><span class="text">  <span class="k">if</span> (cmd.to !== <span class="k">undefined</span>) {</span></span><span class="line highlighted"><span class="number">142</span><span class="mark">+</span><span class="text">    <span class="k">if</span> (!steps.includes(cmd.to))</span></span><span class="line added"><span class="number">143</span><span class="mark">+</span><span class="text">      <span class="k">throw</span> <span class="k">new</span> <span class="t">CommandRejected</span>({ code: <span class="s">'enemyCannotMove'</span>, cardId: enemy.id, to: cmd.to });</span></span><span class="line added"><span class="number">144</span><span class="mark">+</span><span class="text">    <span class="k">return</span> arrive(ctx, state, enemy, cmd.to, cmd);</span></span><span class="line added"><span class="number">145</span><span class="mark">+</span><span class="text">  }</span></span><span class="line added"><span class="number">146</span><span class="mark">+</span><span class="text">  <span class="k">const</span> [only] = steps;</span></span><span class="line added"><span class="number">147</span><span class="mark">+</span><span class="text">  <span class="k">if</span> (only === <span class="k">undefined</span>) <span class="k">return</span> [];</span></span><span class="line highlighted"><span class="number">148</span><span class="mark">+</span><span class="text">  <span class="k">if</span> (steps.length === 1) <span class="k">return</span> arrive(ctx, state, enemy, only, cmd);</span></span><span class="line added"><span class="number">149</span><span class="mark">+</span><span class="text">  <span class="k">return</span> chooseLocation(</span></span><span class="line added"><span class="number">150</span><span class="mark">+</span><span class="text">    ctx,</span></span><span class="line added"><span class="number">151</span><span class="mark">+</span><span class="text">    state,</span></span><span class="line added"><span class="number">152</span><span class="mark">+</span><span class="text">    enemy.id,</span></span><span class="line highlighted"><span class="number">153</span><span class="mark">+</span><span class="text">    <span class="s">`move:${enemy.id}`</span>,</span></span><span class="line added"><span class="number">154</span><span class="mark">+</span><span class="text">    <span class="s">'decision.chooseEnemyDestination'</span>,</span></span></code></pre></div>
+</section>
+<section class="stop" id="stop-3">
+<header><span class="stop-number">3</span><span class="tag">engine</span><h2>The step finder</h2></header>
+<p>The one place that knows what &quot;toward&quot; means; the hunter and retreat rules join it next.</p>
+
+<div class="code"><header><span class="file">packages/engine/src/handle_enemy.ts</span><span>+78 −59</span><a href="https://github.com/macandy13/arkham-companion/pull/1500/files#diff-f304e101ba6b56aaeaa974000c9ebcacf58c20d2a308fb21e85fca78ba73aaaaR168-R182">Open in diff</a></header><pre><code><span class="line added"><span class="number">168</span><span class="mark">+</span><span class="text"><span class="c"> * The first steps of the enemy's shortest paths to `toward`: none while `toward` is out of play</span></span></span><span class="line added"><span class="number">169</span><span class="mark">+</span><span class="text"><span class="c"> * (the Parlor while act 1 holds it set aside) or out of reach. Like a hunter, it does not step</span></span></span><span class="line added"><span class="number">170</span><span class="mark">+</span><span class="text"><span class="c"> * into a location closed to it (RR &quot;Hunter&quot;).</span></span></span><span class="line added"><span class="number">171</span><span class="mark">+</span><span class="text"><span class="c"> */</span></span></span><span class="line added"><span class="number">172</span><span class="mark">+</span><span class="text"><span class="k">function</span> enemySteps(</span></span><span class="line added"><span class="number">173</span><span class="mark">+</span><span class="text">  ctx: <span class="t">EngineContext</span>,</span></span><span class="line added"><span class="number">174</span><span class="mark">+</span><span class="text">  state: <span class="t">GameState</span>,</span></span><span class="line added"><span class="number">175</span><span class="mark">+</span><span class="text">  enemy: <span class="t">CardInstance</span>,</span></span><span class="line added"><span class="number">176</span><span class="mark">+</span><span class="text">  toward: <span class="t">InstanceId</span>,</span></span><span class="line added"><span class="number">177</span><span class="mark">+</span><span class="text">): <span class="t">InstanceId</span>[] {</span></span><span class="line highlighted"><span class="number">178</span><span class="mark">+</span><span class="text">  <span class="k">if</span> (!isLocationInPlay(state, toward)) <span class="k">return</span> [];</span></span><span class="line highlighted"><span class="number">179</span><span class="mark">+</span><span class="text">  <span class="k">return</span> firstSteps(shortestPaths(ctx, state, locationOf(state, enemy), toward)).filter(</span></span><span class="line highlighted"><span class="number">180</span><span class="mark">+</span><span class="text">    (step) =&gt; !isClosedToEnemy(ctx, state, enemy, requireLocationInPlay(state, step)),</span></span><span class="line added"><span class="number">181</span><span class="mark">+</span><span class="text">  );</span></span><span class="line added"><span class="number">182</span><span class="mark">+</span><span class="text">}</span></span></code></pre></div>
+</section>
+<section class="evidence" id="evidence"><h2>How we know it works</h2><ul><li><p>An equally short choice is one <code>move:&lt;enemy&gt;</code> decision whose answer moves it there.</p><p class="test">Checked by <code>packages/engine/src/enemies.test.ts › MoveEnemy toward a location › lets the lead investigator pick between two equally short ways</code></p></li><li><p>An answer naming a location off its shortest ways is refused.</p><p class="test">Checked by <code>packages/engine/src/enemies.test.ts › MoveEnemy toward a location › rejects a chosen step that is not the first of its shortest ways</code></p></li><li><p>Cards that move enemies towards a location play as before (Ghouls towards the Parlor).</p><p class="test">Checked by <code>packages/engine/src/triggers.test.ts › each unengaged Ghoul enemy moving towards a location</code></p></li></ul></section>
+<section class="done"><p>That's the whole change.</p><a href="https://github.com/macandy13/arkham-companion/pull/1500/files">Review on GitHub</a></section>
+<details><summary>Not on the tour</summary><ul><li><code>moveEnemyTowards</code> in the DSL keeps its name and now writes <code>MoveEnemy { toward }</code>; card effects may also write a direct <code>MoveEnemy</code></li><li>Rejection <code>hunterCannotMove</code> is now <code>enemyCannotMove</code>, shared with <code>MoveHunter</code> until ME.13b</li><li>Architecture: a paragraph on enemy movement in the rule modules page</li></ul></details>
+</main>
+<script>
+document.querySelectorAll('figure[data-variants]').forEach((figure) => {
+  const variants = JSON.parse(figure.dataset.variants);
+  const state = { when: 'after', device: variants[0].device };
+  const frame = figure.querySelector('.frame');
+  const show = () => {
+    const variant = variants.find((v) => v.device === state.device);
+    const src = variant[state.when];
+    frame.classList.toggle('phone', state.device === 'phone');
+    frame.innerHTML = src
+      ? '<img alt="' + state.device + ', ' + state.when + '" src="' + src + '">'
+      : '<p class="missing">' + (state.when === 'before' ? 'New in this PR' : 'Removed in this PR') + '</p>';
+    figure.querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(b.value === state.when || b.value === state.device)));
+  };
+  figure.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => {
+    state[b.name] = b.value;
+    show();
+  }));
+  show();
+});
+const dots = [...document.querySelectorAll('nav a[data-stop]')];
+const seen = new IntersectionObserver((entries) => entries.forEach((entry) => {
+  if (entry.isIntersecting) dots.forEach((d) => d.classList.toggle('on', d.dataset.stop === entry.target.id));
+}), { rootMargin: '-40% 0px -55% 0px' });
+document.querySelectorAll('.stop').forEach((stop) => seen.observe(stop));
+</script>
+</body>
+</html>
