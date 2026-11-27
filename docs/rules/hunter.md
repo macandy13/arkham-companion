@@ -37,13 +37,13 @@
   Test: [`packages/scenarios/src/spreading_flames/cards.test.ts › Spreading Flames card abilities › Fire! › attaches to alice's own location, the nearest, when it has no Fire!`](../../packages/scenarios/src/spreading_flames/cards.test.ts#L798)
   Test: [`packages/engine/src/attachment_targets.test.ts › a treachery that attaches to the nearest location without a copy (Fire!) › asks alice, the lead, between the study and the cellar, each 1 away`](../../packages/engine/src/attachment_targets.test.ts#L155)
 - A card effect that moves an enemy "1 location towards" a location (They're Getting Out!) moves it one connection along a shortest path there, exhausted or not.
-  Test: [`packages/engine/src/enemies.test.ts › MoveEnemyTowards › moves an enemy in the attic one location towards the hall, into the cellar`](../../packages/engine/src/enemies.test.ts#L704)
-  Test: [`packages/engine/src/enemies.test.ts › MoveEnemyTowards › moves an exhausted enemy too`](../../packages/engine/src/enemies.test.ts#L722)
+  Test: [`packages/engine/src/enemies.test.ts › MoveEnemy toward a location › moves an enemy in the attic one location towards the hall, into the cellar`](../../packages/engine/src/enemies.test.ts#L704)
+  Test: [`packages/engine/src/enemies.test.ts › MoveEnemy toward a location › moves an exhausted enemy too`](../../packages/engine/src/enemies.test.ts#L722)
   - Equally short ways go to the lead investigator ([Choices](https://arkhamdb.com/rules#Choices_and_the_Grim_Rule)); an enemy with no path, or already there, stays.
-    Test: [`packages/engine/src/enemies.test.ts › MoveEnemyTowards › lets the lead investigator pick between two equally short ways`](../../packages/engine/src/enemies.test.ts#L749)
-    Test: [`packages/engine/src/enemies.test.ts › MoveEnemyTowards › leaves the enemy in the cellar when $name`](../../packages/engine/src/enemies.test.ts#L737)
+    Test: [`packages/engine/src/enemies.test.ts › MoveEnemy toward a location › lets the lead investigator pick between two equally short ways`](../../packages/engine/src/enemies.test.ts#L749)
+    Test: [`packages/engine/src/enemies.test.ts › MoveEnemy toward a location › leaves the enemy in the cellar when $name`](../../packages/engine/src/enemies.test.ts#L737)
   - Arriving ready at an investigator's location, it engages as any moving enemy does.
-    Test: [`packages/engine/src/enemies.test.ts › MoveEnemyTowards › engages alice when the enemy arrives at her location`](../../packages/engine/src/enemies.test.ts#L714)
+    Test: [`packages/engine/src/enemies.test.ts › MoveEnemy toward a location › engages alice when the enemy arrives at her location`](../../packages/engine/src/enemies.test.ts#L714)
 - [Patrol](https://arkhamdb.com/rules#Patrol) works the same way but toward the target its text names (a location, a direction or a scenario card, 2026 Core rulebook p. 17).
   - It doesn't move if it's already there, and the lead investigator picks between equal targets.
   - Chapter One names a location; Chapter Two also names an enemy (Julia Stern: "nearest [[Civilian]] enemy") or a filtered location (Factory Worker: "nearest location with no [[Elite]] enemies").

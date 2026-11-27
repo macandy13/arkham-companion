@@ -29,13 +29,13 @@ Each ruling below says what the card refuses, whom it binds and what still happe
   Test: [`packages/engine/src/player_cards.test.ts › a location closed to enemies (Barricade) › $name`](../../../packages/engine/src/player_cards.test.ts#L198)
   - A hunter whose step on its shortest route would go there stays; distance still counts through the location, and with another equally short step open it takes that one (RR "Hunter"; the other step is our reading).
     Test: [`packages/engine/src/player_cards.test.ts › a location closed to enemies (Barricade) › sends a hunter along the other equally short way, round the hall`](../../../packages/engine/src/player_cards.test.ts#L206)
-    Test: [`packages/engine/src/player_cards.test.ts › a location closed to enemies (Barricade) › lets the hunter in again once Barricade is discarded`](../../../packages/engine/src/player_cards.test.ts#L220)
+    Test: [`packages/engine/src/player_cards.test.ts › a location closed to enemies (Barricade) › lets the hunter in again once Barricade is discarded`](../../../packages/engine/src/player_cards.test.ts#L242)
   - A card effect that moves an enemy there, or one location towards somewhere through it, leaves it where it is (our reading, by analogy with RR "Hunter").
-    Test: [`packages/engine/src/player_cards.test.ts › a location closed to enemies (Barricade) › keeps a card effect from $name`](../../../packages/engine/src/player_cards.test.ts#L244)
+    Test: [`packages/engine/src/player_cards.test.ts › a location closed to enemies (Barricade) › keeps a card effect from $name`](../../../packages/engine/src/player_cards.test.ts#L266)
   - An enemy may still spawn there: spawning is not moving in (FAQ).
   - An investigator who moves in leaves an engaged non-Elite enemy behind, disengaged at the location they left, after its attack of opportunity (FAQ).
-    Test: [`packages/engine/src/player_cards.test.ts › a location closed to enemies (Barricade) › when Alice moves in from the study, engaged with the ghoul › $name`](../../../packages/engine/src/player_cards.test.ts#L265)
-    Test: [`packages/engine/src/player_cards.test.ts › a location closed to enemies (Barricade) › when Alice moves in from the study, engaged with the ghoul › has the ghoul left behind engage Bob, still at the study`](../../../packages/engine/src/player_cards.test.ts#L273)
+    Test: [`packages/engine/src/player_cards.test.ts › a location closed to enemies (Barricade) › when Alice moves in from the study, engaged with the ghoul › $name`](../../../packages/engine/src/player_cards.test.ts#L287)
+    Test: [`packages/engine/src/player_cards.test.ts › a location closed to enemies (Barricade) › when Alice moves in from the study, engaged with the ghoul › has the ghoul left behind engage Bob, still at the study`](../../../packages/engine/src/player_cards.test.ts#L295)
   - It is discarded when any investigator leaves the location (its Forced text), and with the location if it leaves play (RR "Attach To").
     Test: [`packages/engine/src/player_cards.test.ts › AttachPlayerCard › leaves play with its host`](../../../packages/engine/src/player_cards.test.ts#L133)
 - Handcuffs ("If the attached enemy is non-Elite, it cannot ready and doom cannot be placed on it") keeps a non-Elite enemy exhausted through the upkeep phase and any card effect that readies it, and no doom goes on it; an Elite enemy is not held ([Handcuffs FAQ](https://arkhamdb.com/card/04265)):
@@ -52,12 +52,12 @@ Each ruling below says what the card refuses, whom it binds and what still happe
   - Moving damage onto such an enemy is still allowed: no ruling says whether moving is damaging (unverified; no Core Set (2026) card does it).
 - Elokoss ("cannot move, and cannot make attacks of opportunity") stays where she spawned:
   - No card effect moves her, forced or not, and she takes no hunter step or elusive retreat: "cannot" is absolute ([Cannot](https://arkhamdb.com/rules#Cannot)), and a hunter whose move a card ability blocks does not move ([Hunter](https://arkhamdb.com/rules#Hunter)).
-    Test: `packages/engine/src/enemy_move_restrictions.test.ts › an enemy that cannot move › stays in the hall after $name`
+    Test: [`packages/engine/src/enemy_move_restrictions.test.ts › an enemy that cannot move › stays in the hall after $name`](../../../packages/engine/src/enemy_move_restrictions.test.ts#L57)
   - She is massive, so she never moves with an investigator anyway; an ordinary enemy that cannot move and is engaged with a moving investigator stays behind and disengages, as Barricade's FAQ rules for an enemy that cannot enter (unverified for this wording).
   - An action of an investigator at her location provokes no attack of opportunity from her; she still attacks in the enemy phase and retaliates (RR "Massive", "Retaliate").
-    Test: `packages/engine/src/enemy_move_restrictions.test.ts › an enemy that cannot make attacks of opportunity › when alice, engaged with it, takes the resource action, $name`
-    Test: `packages/engine/src/enemy_move_restrictions.test.ts › an enemy that cannot make attacks of opportunity, attacking otherwise › still attacks alice in the enemy phase`
-    Test: `packages/engine/src/enemy_move_restrictions.test.ts › an enemy that cannot make attacks of opportunity, attacking otherwise › still retaliates when alice fails to hit it`
+    Test: [`packages/engine/src/enemy_move_restrictions.test.ts › an enemy that cannot make attacks of opportunity › when alice, engaged with it, takes the resource action, $name`](../../../packages/engine/src/enemy_move_restrictions.test.ts#L89)
+    Test: [`packages/engine/src/enemy_move_restrictions.test.ts › an enemy that cannot make attacks of opportunity, attacking otherwise › still attacks alice in the enemy phase`](../../../packages/engine/src/enemy_move_restrictions.test.ts#L119)
+    Test: [`packages/engine/src/enemy_move_restrictions.test.ts › an enemy that cannot make attacks of opportunity, attacking otherwise › still retaliates when alice fails to hit it`](../../../packages/engine/src/enemy_move_restrictions.test.ts#L127)
 - Hiding Spot ("Each non-Elite enemy at attached location gains aloof") makes each non-Elite enemy at its location aloof ([Hiding Spot FAQ](https://arkhamdb.com/card/03038), RR "Aloof", "Gains"):
   Test: [`packages/engine/src/enemy_attachments.test.ts › Hiding Spot at the hall, where Alice is › $name`](../../../packages/engine/src/enemy_attachments.test.ts#L116)
   - It does not engage when it readies, spawns there or an investigator enters, and while unengaged it cannot be attacked.

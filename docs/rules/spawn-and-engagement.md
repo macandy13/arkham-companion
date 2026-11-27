@@ -10,34 +10,34 @@
   Test: [`packages/engine/src/enemies.test.ts › SpawnEnemy › discards the enemy when the named location is not in play`](../../packages/engine/src/enemies.test.ts#L182)
 - Several valid locations: the investigator spawning it chooses: the one who drew it, or the lead investigator when no investigator spawns it ([Choices](https://arkhamdb.com/rules#Choices_and_the_Grim_Rule)).
   Test: [`packages/engine/src/enemies.test.ts › SpawnEnemy › asks the players when the spawn keyword matches several locations`](../../packages/engine/src/enemies.test.ts#L139)
-  Test: [`packages/engine/src/enemies.test.ts › SpawnEnemy with "Spawn - Any empty location" › leaves the pick to $decider.kind after $spawnedBy`](../../packages/engine/src/enemies.test.ts#L1158)
+  Test: [`packages/engine/src/enemies.test.ts › SpawnEnemy with "Spawn - Any empty location" › leaves the pick to $decider.kind after $spawnedBy`](../../packages/engine/src/enemies.test.ts#L1170)
 - Prey never affects where an enemy spawns, except where the instruction names it: "Spawn – Engaged with prey" (The Masked Hunter) spawns the enemy engaged with the investigator its prey picks among all investigators, wherever they are, not the one who drew it. A tie goes to the lead investigator.
-  Test: [`packages/engine/src/enemies.test.ts › SpawnEnemy with "Spawn - Engaged with prey" and prey "Most clues" › spawns engaged with the investigator its prey picks, wherever they are, not the drawer`](../../packages/engine/src/enemies.test.ts#L1209)
-  Test: [`packages/engine/src/enemies.test.ts › SpawnEnemy with "Spawn - Engaged with prey" and prey "Most clues" › asks the lead investigator on a tie, and the answer spawns it engaged with the chosen one`](../../packages/engine/src/enemies.test.ts#L1224)
+  Test: [`packages/engine/src/enemies.test.ts › SpawnEnemy with "Spawn - Engaged with prey" and prey "Most clues" › spawns engaged with the investigator its prey picks, wherever they are, not the drawer`](../../packages/engine/src/enemies.test.ts#L1221)
+  Test: [`packages/engine/src/enemies.test.ts › SpawnEnemy with "Spawn - Engaged with prey" and prey "Most clues" › asks the lead investigator on a tie, and the answer spawns it engaged with the chosen one`](../../packages/engine/src/enemies.test.ts#L1236)
 - "Spawn – Any empty location" (Acolyte, Wizard of the Order): an [empty location](https://arkhamdb.com/rules#Empty_Location) has no enemies and no investigators at it.
-  Test: [`packages/engine/src/enemies.test.ts › SpawnEnemy with "Spawn - Any empty location" › spawns at the only location without investigators and enemies`](../../packages/engine/src/enemies.test.ts#L1098)
+  Test: [`packages/engine/src/enemies.test.ts › SpawnEnemy with "Spawn - Any empty location" › spawns at the only location without investigators and enemies`](../../packages/engine/src/enemies.test.ts#L1110)
   - Other cards there, such as a story asset, don't count.
-    Test: [`packages/engine/src/enemies.test.ts › SpawnEnemy with "Spawn - Any empty location" › counts a location with only a story asset as empty`](../../packages/engine/src/enemies.test.ts#L1113)
+    Test: [`packages/engine/src/enemies.test.ts › SpawnEnemy with "Spawn - Any empty location" › counts a location with only a story asset as empty`](../../packages/engine/src/enemies.test.ts#L1125)
   - With none, the enemy is discarded.
-    Test: [`packages/engine/src/enemies.test.ts › SpawnEnemy with "Spawn - Any empty location" › discards the enemy when no location is empty`](../../packages/engine/src/enemies.test.ts#L1175)
+    Test: [`packages/engine/src/enemies.test.ts › SpawnEnemy with "Spawn - Any empty location" › discards the enemy when no location is empty`](../../packages/engine/src/enemies.test.ts#L1187)
 - "Spawn – Any location (empty, if able)": an empty location if there is one, else any location.
-  Test: [`packages/engine/src/enemies.test.ts › SpawnEnemy with a filtered spawn instruction › spawns "Any location (empty, if able)" in the only empty location`](../../packages/engine/src/enemies.test.ts#L1325)
-  Test: [`packages/engine/src/enemies.test.ts › SpawnEnemy with a filtered spawn instruction › asks among every location for "Any location (empty, if able)" when none is empty`](../../packages/engine/src/enemies.test.ts#L1336)
+  Test: [`packages/engine/src/enemies.test.ts › SpawnEnemy with a filtered spawn instruction › spawns "Any location (empty, if able)" in the only empty location`](../../packages/engine/src/enemies.test.ts#L1337)
+  Test: [`packages/engine/src/enemies.test.ts › SpawnEnemy with a filtered spawn instruction › asks among every location for "Any location (empty, if able)" when none is empty`](../../packages/engine/src/enemies.test.ts#L1348)
 - "Nearest / Farthest (empty) location", "Location farthest from you", "A or B (whichever is nearest to you)": counted in connections from the location of the investigator spawning the enemy (for the forms that don't say "you", our reading; not the same as [Farthest from all investigators](https://arkhamdb.com/rules#Farthest_from_all_investigators)).
-  Test: [`packages/engine/src/enemies.test.ts › SpawnEnemy with a filtered spawn instruction › spawns "$spawn" in the $spawnsIn`](../../packages/engine/src/enemies.test.ts#L1281)
-  Test: [`packages/engine/src/enemies.test.ts › SpawnEnemy with a filtered spawn instruction › spawns "Location nearest to you" in your location, engaged with you`](../../packages/engine/src/enemies.test.ts#L1291)
+  Test: [`packages/engine/src/enemies.test.ts › SpawnEnemy with a filtered spawn instruction › spawns "$spawn" in the $spawnsIn`](../../packages/engine/src/enemies.test.ts#L1293)
+  Test: [`packages/engine/src/enemies.test.ts › SpawnEnemy with a filtered spawn instruction › spawns "Location nearest to you" in your location, engaged with you`](../../packages/engine/src/enemies.test.ts#L1303)
   - A location with no path there counts as farther than every location with one, so it can still be the nearest when nothing else qualifies ([FAQ on Mysterious Chanting](https://arkhamdb.com/card/03139), see [hunter.md](hunter.md); for "farthest", our reading).
-    Test: [`packages/engine/src/enemies.test.ts › SpawnEnemy with a filtered spawn instruction › counts a location with no path there as the farthest`](../../packages/engine/src/enemies.test.ts#L1301)
+    Test: [`packages/engine/src/enemies.test.ts › SpawnEnemy with a filtered spawn instruction › counts a location with no path there as the farthest`](../../packages/engine/src/enemies.test.ts#L1313)
   - With nobody spawning it, the players choose among the locations that meet the rest of the instruction (for example, the empty ones), our reading.
-    Test: [`packages/engine/src/enemies.test.ts › SpawnEnemy with a filtered spawn instruction › lets the players choose among the empty locations when nobody spawns a "Farthest" enemy`](../../packages/engine/src/enemies.test.ts#L1380)
-    Test: [`packages/engine/src/enemies.test.ts › SpawnEnemy with a filtered spawn instruction › lets the players choose among all locations when nobody spawns a "connected to yours" enemy`](../../packages/engine/src/enemies.test.ts#L1365)
+    Test: [`packages/engine/src/enemies.test.ts › SpawnEnemy with a filtered spawn instruction › lets the players choose among the empty locations when nobody spawns a "Farthest" enemy`](../../packages/engine/src/enemies.test.ts#L1392)
+    Test: [`packages/engine/src/enemies.test.ts › SpawnEnemy with a filtered spawn instruction › lets the players choose among all locations when nobody spawns a "connected to yours" enemy`](../../packages/engine/src/enemies.test.ts#L1377)
 - "Any [[Trait]] location", "Location with the most clues", "Any location connected to yours": the locations in play that match; ties go to the investigator spawning it.
-  Test: [`packages/engine/src/enemies.test.ts › SpawnEnemy with a filtered spawn instruction › asks between the locations tied for the most clues`](../../packages/engine/src/enemies.test.ts#L1312)
+  Test: [`packages/engine/src/enemies.test.ts › SpawnEnemy with a filtered spawn instruction › asks between the locations tied for the most clues`](../../packages/engine/src/enemies.test.ts#L1324)
 - "X. Otherwise, Y." (Jeremiah Pierce): Y only when X gives no location in play.
 - An enemy is either engaged (in an investigator's threat area, which counts as that investigator's location and moves with them) or unengaged at a location.
 - A **ready, unengaged** enemy engages as soon as it shares a location with an investigator: when it spawns there, moves there, or an investigator moves in.
   Test: [`packages/engine/src/enemies.test.ts › SpawnEnemy › produces a move and an engagement`](../../packages/engine/src/enemies.test.ts#L127)
-  Test: [`packages/engine/src/enemies.test.ts › MoveEnemyTowards › engages alice when the enemy arrives at her location`](../../packages/engine/src/enemies.test.ts#L714)
+  Test: [`packages/engine/src/enemies.test.ts › MoveEnemy toward a location › engages alice when the enemy arrives at her location`](../../packages/engine/src/enemies.test.ts#L714)
   - With several investigators present, [prey](prey.md) decides, then the lead investigator.
     Test: [`packages/engine/src/enemies.test.ts › MoveEnemy › asks the players whom it engages when two investigators are there`](../../packages/engine/src/enemies.test.ts#L645)
   - There is no limit on enemies engaged with one investigator.
@@ -50,8 +50,8 @@
   Test: [`packages/engine/src/enemies.test.ts › MoveEnemy › moves an enemy to a location it has no connection to, without revealing it`](../../packages/engine/src/enemies.test.ts#L598)
   - An engaged enemy otherwise moves only with its investigator ([Enemy Engagement](https://arkhamdb.com/rules#Enemy_Engagement)). A card effect that moves an enemy moves it even when engaged, and it disengages, unless its text names unengaged enemies (They're Getting Out!); Elusive disengages, then moves. Our reading: no official ruling found, only player consensus. Stop the Rite's "each Cultist enemy moves once toward Underground Cistern" moves engaged Cultists too (the engine's `forced` move), and so does Aerial Pursuit's "the nearest non-[[Elite]] enemy moves once toward your location".
     Test: [`packages/engine/src/enemies.test.ts › MoveEnemy › disengages an engaged enemy and moves it by a forced instruction`](../../packages/engine/src/enemies.test.ts#L609)
-    Test: [`packages/engine/src/enemies.test.ts › MoveEnemyTowards › disengages an enemy engaged with alice in the hall and moves it into the cellar when the move is forced`](../../packages/engine/src/enemies.test.ts#L782)
-    Test: [`packages/engine/src/enemies.test.ts › MoveEnemyTowards › rejects moving an engaged enemy, which moves only with its investigator`](../../packages/engine/src/enemies.test.ts#L772)
+    Test: [`packages/engine/src/enemies.test.ts › MoveEnemy toward a location › disengages an enemy engaged with alice in the hall and moves it into the cellar when the move is forced`](../../packages/engine/src/enemies.test.ts#L794)
+    Test: [`packages/engine/src/enemies.test.ts › MoveEnemy toward a location › rejects moving an engaged enemy, which moves only with its investigator`](../../packages/engine/src/enemies.test.ts#L784)
   - At the destination it engages by the rule above.
 - A card that says an enemy "engages you" puts it in your threat area even from another location: it ends up at your location without moving, so no connection is needed and nothing that triggers on a move fires (our reading of [Enemy Engagement](https://arkhamdb.com/rules#Enemy_Engagement); a card that means a move says "moves to … and engages you"). It works on exhausted and aloof enemies too.
   Test: [`packages/engine/src/enemy_effects.test.ts › a card effect that makes an enemy engage you › engages alice with the ghoul that starts $ghoulStarts`](../../packages/engine/src/enemy_effects.test.ts#L276)
