@@ -29,13 +29,13 @@ Each ruling below says what the card refuses, whom it binds and what still happe
   Test: [`packages/engine/src/player_cards.test.ts › a location closed to enemies (Barricade) › $name`](../../../packages/engine/src/player_cards.test.ts#L198)
   - A hunter whose step on its shortest route would go there stays; distance still counts through the location, and with another equally short step open it takes that one (RR "Hunter"; the other step is our reading).
     Test: [`packages/engine/src/player_cards.test.ts › a location closed to enemies (Barricade) › sends a hunter along the other equally short way, round the hall`](../../../packages/engine/src/player_cards.test.ts#L206)
-    Test: [`packages/engine/src/player_cards.test.ts › a location closed to enemies (Barricade) › lets the hunter in again once Barricade is discarded`](../../../packages/engine/src/player_cards.test.ts#L242)
+    Test: [`packages/engine/src/player_cards.test.ts › a location closed to enemies (Barricade) › lets the hunter in again once Barricade is discarded`](../../../packages/engine/src/player_cards.test.ts#L266)
   - A card effect that moves an enemy there, or one location towards somewhere through it, leaves it where it is (our reading, by analogy with RR "Hunter").
-    Test: [`packages/engine/src/player_cards.test.ts › a location closed to enemies (Barricade) › keeps a card effect from $name`](../../../packages/engine/src/player_cards.test.ts#L266)
+    Test: [`packages/engine/src/player_cards.test.ts › a location closed to enemies (Barricade) › keeps a card effect from $name`](../../../packages/engine/src/player_cards.test.ts#L290)
   - An enemy may still spawn there: spawning is not moving in (FAQ).
   - An investigator who moves in leaves an engaged non-Elite enemy behind, disengaged at the location they left, after its attack of opportunity (FAQ).
-    Test: [`packages/engine/src/player_cards.test.ts › a location closed to enemies (Barricade) › when Alice moves in from the study, engaged with the ghoul › $name`](../../../packages/engine/src/player_cards.test.ts#L287)
-    Test: [`packages/engine/src/player_cards.test.ts › a location closed to enemies (Barricade) › when Alice moves in from the study, engaged with the ghoul › has the ghoul left behind engage Bob, still at the study`](../../../packages/engine/src/player_cards.test.ts#L295)
+    Test: [`packages/engine/src/player_cards.test.ts › a location closed to enemies (Barricade) › when Alice moves in from the study, engaged with the ghoul › $name`](../../../packages/engine/src/player_cards.test.ts#L311)
+    Test: [`packages/engine/src/player_cards.test.ts › a location closed to enemies (Barricade) › when Alice moves in from the study, engaged with the ghoul › has the ghoul left behind engage Bob, still at the study`](../../../packages/engine/src/player_cards.test.ts#L319)
   - It is discarded when any investigator leaves the location (its Forced text), and with the location if it leaves play (RR "Attach To").
     Test: [`packages/engine/src/player_cards.test.ts › AttachPlayerCard › leaves play with its host`](../../../packages/engine/src/player_cards.test.ts#L133)
 - Handcuffs ("If the attached enemy is non-Elite, it cannot ready and doom cannot be placed on it") keeps a non-Elite enemy exhausted through the upkeep phase and any card effect that readies it, and no doom goes on it; an Elite enemy is not held ([Handcuffs FAQ](https://arkhamdb.com/card/04265)):

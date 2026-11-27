@@ -7,7 +7,7 @@ Card rulings: [Children of Blood](cards/children-of-blood.md) (Predator).
   Test: [`packages/engine/src/enemy_effects.test.ts › a card effect that makes an enemy engage you › leaves a massive ghoul where it is`](../../packages/engine/src/enemy_effects.test.ts#L295)
   Test: [`packages/engine/src/skill_tests.test.ts › Fight › can attack a massive aloof enemy, which counts as engaged with everyone at its location`](../../packages/engine/src/skill_tests.test.ts#L488)
   - In the enemy phase it attacks each of them in an order the lead investigator picks, and exhausts after the last attack.
-    Test: [`packages/engine/src/enemies.test.ts › enemyAttackList › includes a ready massive enemy for every investigator at its location`](../../packages/engine/src/enemies.test.ts#L1068)
+    Test: [`packages/engine/src/enemies.test.ts › enemyAttackList › includes a ready massive enemy for every investigator at its location`](../../packages/engine/src/enemies.test.ts#L1080)
     Test: [`packages/engine/src/phases.test.ts › enemy phase › exhausts a massive enemy only after it attacked everyone at its location`](../../packages/engine/src/phases.test.ts#L465)
   - When exhausted it is engaged with nobody.
   - Its attack of opportunity only hits the investigator who provoked it.
@@ -28,18 +28,22 @@ Card rulings: [Children of Blood](cards/children-of-blood.md) (Predator).
   Test: [`packages/engine/src/forced_attacks.test.ts › retaliate › does not attack after $name`](../../packages/engine/src/forced_attacks.test.ts#L160)
   Test: [`packages/engine/src/forced_attacks.test.ts › retaliate › deals nothing when the players cancel the attack`](../../packages/engine/src/forced_attacks.test.ts#L118)
 - [Elusive](https://arkhamdb.com/rules#Elusive) (also on Core Set (2026) cards, e.g. Bat Horror): after it attacks or is attacked while ready, it disengages, moves to a connecting location (without investigators if possible) and exhausts.
-  Test: [`packages/engine/src/elusive.test.ts › an elusive enemy after it attacks or is attacked › retreats after it attacks`](../../packages/engine/src/elusive.test.ts#L190)
+  Test: [`packages/engine/src/elusive.test.ts › an elusive enemy after it attacks or is attacked › retreats after it attacks`](../../packages/engine/src/elusive.test.ts#L198)
   Test: [`packages/engine/src/elusive.test.ts › RetreatEnemy › moves to the connecting location without investigators, disengaged and exhausted`](../../packages/engine/src/elusive.test.ts#L43)
   - It retreats after the attack resolves, whether or not it was engaged with the attacker. "Is attacked" means a fight against it, hit or miss; a hit that defeats it leaves nothing to retreat. On a miss a retaliate enemy attacks first and retreats after that attack, or right away when the players cancel it.
-    Test: [`packages/engine/src/elusive.test.ts › an elusive enemy after it attacks or is attacked › stays defeated when the hit defeats it`](../../packages/engine/src/elusive.test.ts#L146)
-    Test: [`packages/engine/src/elusive.test.ts › an elusive enemy after it attacks or is attacked › retaliates on a miss first, then retreats after that attack`](../../packages/engine/src/elusive.test.ts#L157)
-    Test: [`packages/engine/src/elusive.test.ts › an elusive enemy after it attacks or is attacked › retreats on a miss when the players cancel the retaliate attack`](../../packages/engine/src/elusive.test.ts#L174)
+    Test: [`packages/engine/src/elusive.test.ts › an elusive enemy after it attacks or is attacked › stays defeated when the hit defeats it`](../../packages/engine/src/elusive.test.ts#L154)
+    Test: [`packages/engine/src/elusive.test.ts › an elusive enemy after it attacks or is attacked › retaliates on a miss first, then retreats after that attack`](../../packages/engine/src/elusive.test.ts#L165)
+    Test: [`packages/engine/src/elusive.test.ts › an elusive enemy after it attacks or is attacked › retreats on a miss when the players cancel the retaliate attack`](../../packages/engine/src/elusive.test.ts#L182)
   - The app checks "ready" as the retreat resolves, so an effect that exhausts it in between (none known) stops the retreat.
     Test: [`packages/engine/src/elusive.test.ts › RetreatEnemy › does nothing for an exhausted enemy`](../../packages/engine/src/elusive.test.ts#L95)
-  - Between equal destinations the lead investigator picks. It arrives exhausted, so it engages nobody there; with no connecting location it only disengages and exhausts.
+  - It goes one connection, to a connecting location with no investigators if there is one, otherwise to any connecting location; never into one closed to it (Barricade).
+    Test: [`packages/engine/src/elusive.test.ts › RetreatEnemy › moves to the connecting location without investigators, disengaged and exhausted`](../../packages/engine/src/elusive.test.ts#L43)
+    Test: [`packages/engine/src/elusive.test.ts › MoveEnemy away from investigators › rejects a chosen location that does not connect to the enemy's`](../../packages/engine/src/elusive.test.ts#L107)
+    Test: [`packages/engine/src/player_cards.test.ts › a location closed to enemies (Barricade) › sends an elusive enemy to the other connecting location, though Bob is there`](../../packages/engine/src/player_cards.test.ts#L242)
+  - Between equal destinations the lead investigator picks; with no connecting location it only disengages and exhausts.
     Test: [`packages/engine/src/elusive.test.ts › RetreatEnemy › asks the lead between connecting locations without investigators, and moves there`](../../packages/engine/src/elusive.test.ts#L54)
-    Test: [`packages/engine/src/elusive.test.ts › RetreatEnemy › moves next to an investigator when every connecting location has one, without engaging`](../../packages/engine/src/elusive.test.ts#L68)
     Test: [`packages/engine/src/elusive.test.ts › RetreatEnemy › only disengages and exhausts without a connecting location`](../../packages/engine/src/elusive.test.ts#L83)
+  - It engages nobody where it arrives, even at an investigator's location (our reading, unverified: the text says it moves, then exhausts, and a ready enemy that moves to an investigator engages; no official ruling found). The engine exhausts it before the move to get there.
 - Doomed (Core Set (2026), reminder text on [Bystander](https://arkhamdb.com/card/12123)): when the enemy is defeated, by an investigator or a scenario effect, place 1 doom on the current agenda.
   Test: [`packages/engine/src/doomed.test.ts › Doomed › places 1 doom on Past Curfew, threshold 3, when 1 damage defeats the bystander`](../../packages/engine/src/doomed.test.ts#L36)
   - This can make the agenda advance: the app checks the doom threshold right away and asks to advance.

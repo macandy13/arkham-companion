@@ -1,5 +1,5 @@
 import { isClosedToEnemy, isEnemyRestricted } from './restrictions';
-import { neighbours, requireLocationInPlay } from './board';
+import { requireLocationInPlay } from './board';
 import { resolveAmount, type EngineContext } from './cards';
 import type {
   DamageEnemy,
@@ -15,7 +15,7 @@ import type {
   RetreatEnemy,
 } from './commands';
 import { handleEnemyAttacks } from './attacks_of_opportunity';
-import { chooseInvestigator, chooseLocation, engageEvents, investigatorsAt } from './engagement';
+import { chooseInvestigator, chooseLocation, engageEvents } from './engagement';
 import { enemyWay } from './enemy_ways';
 import { preyPrompt } from './prey';
 import type { EnemyDefeated, EnemyDisengaged, EnemyEngaged, Event, ExhaustChanged } from './events';
@@ -313,10 +313,9 @@ function onTableEnemyOf(ctx: EngineContext, state: GameState, enemyId: InstanceI
 }
 
 /**
- * `RetreatEnemy`: the elusive retreat. The destination is a connecting location without
- * investigators if there is one, else any connecting location; with none the enemy only
- * disengages and exhausts. It exhausts on arrival, so it engages nobody there. A location closed
- * to it (`isClosedToEnemy`: Barricade, or an enemy that cannot move) is no destination.
+ * `RetreatEnemy`: the elusive retreat. It disengages and exhausts, then steps away from the
+ * investigators (`MoveEnemy`), so it engages nobody where it arrives; with no connecting location
+ * open to it (`isClosedToEnemy`: Barricade, or an enemy that cannot move) it stays.
  */
 export function handleRetreatEnemy(
   ctx: EngineContext,
@@ -325,32 +324,16 @@ export function handleRetreatEnemy(
 ): Event[] {
   const enemy = state.cards[cmd.enemyId];
   if (enemy === undefined || !isEnemyOnTable(enemy) || enemy.exhausted) return [];
-  const connecting = neighbours(ctx, state, locationOf(state, enemy));
-  if (cmd.to !== undefined && !connecting.includes(cmd.to))
-    throw new CommandRejected({ code: 'notConnected', from: locationOf(state, enemy), to: cmd.to });
-  const open = connecting.filter(
-    (id) => !isClosedToEnemy(ctx, state, enemy, requireLocationInPlay(state, id)),
-  );
-  const empty = open.filter((id) => investigatorsAt(state, id).length === 0);
-  const pool = empty.length > 0 ? empty : open;
-  if (cmd.to === undefined && pool.length > 1)
-    return chooseLocation(
-      ctx,
-      state,
-      enemy.id,
-      `retreat:${enemy.id}`,
-      'decision.chooseEnemyDestination',
-      pool,
-      (to) => ({ type: 'RetreatEnemy', enemyId: enemy.id, to }),
-    );
-  // An answer naming a location that closed meanwhile leaves the enemy where it is, as no
-  // destination does: it still disengages and exhausts.
-  const to = cmd.to === undefined ? pool[0] : open.includes(cmd.to) ? cmd.to : undefined;
-  const events: Event[] = enemy.zone.kind === 'engaged' ? [disengaged(state, enemy)] : [];
-  const unengaged = replay(events, state).cards[enemy.id] ?? enemy;
-  if (to !== undefined)
-    events.push(moveCardEvent(unengaged, { kind: 'atLocation', locationId: to }));
-  return [...events, exhaustChange(enemy.id, true)];
+  const settled: Event[] = [
+    ...(enemy.zone.kind === 'engaged' ? [disengaged(state, enemy)] : []),
+    exhaustChange(enemy.id, true),
+  ];
+  const away: MoveEnemy = {
+    type: 'MoveEnemy',
+    enemyId: enemy.id,
+    toward: 'awayFromInvestigators',
+  };
+  return [...settled, ...handleMoveEnemy(ctx, replay(settled, state), away)];
 }
 
 function disengaged(state: GameState, enemy: CardInstance): EnemyDisengaged {

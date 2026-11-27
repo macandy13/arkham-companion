@@ -57,7 +57,7 @@ describe('RetreatEnemy', () => {
       .start();
     const asked = stateAfter(context, state, retreat);
 
-    const after = stateAfter(context, asked, answer('retreat:bat', 'attic'));
+    const after = stateAfter(context, asked, answer('move:bat', 'attic'));
 
     expect(asked.pending).toMatchObject([
       { kind: 'chooseLocation', options: [{ target: cellar }, { target: attic }] },
@@ -101,18 +101,26 @@ describe('RetreatEnemy', () => {
 
     expect(after.cards[bat]?.zone).toEqual(engagedWith(alice));
   });
+});
 
-  it('rejects a destination that does not connect', () => {
+describe('MoveEnemy away from investigators', () => {
+  it("rejects a chosen location that does not connect to the enemy's", () => {
     const { context, state } = newGame()
       .withLocation(hall, blankLocation('hall'))
       .withLocation(cellar, blankLocation('cellar'))
-      .withInvestigator(alice, { locationId: hall })
-      .withCard(bat, elusiveBat, engagedWith(alice))
+      .withInvestigator(alice, { locationId: cellar })
+      .withCard(bat, elusiveBat, atLocation(hall))
       .start();
+    const away: Command = {
+      type: 'MoveEnemy',
+      enemyId: bat,
+      toward: 'awayFromInvestigators',
+      to: cellar,
+    };
 
-    expect(rejectionFrom(context, state, { ...retreat, to: cellar })).toEqual({
-      code: 'notConnected',
-      from: hall,
+    expect(rejectionFrom(context, state, away)).toEqual({
+      code: 'enemyCannotMove',
+      cardId: bat,
       to: cellar,
     });
   });

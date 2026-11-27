@@ -1,7 +1,14 @@
-import { firstSteps, isLocationInPlay, requireLocationInPlay, shortestPaths } from './board';
+import {
+  firstSteps,
+  isLocationInPlay,
+  neighbours,
+  requireLocationInPlay,
+  shortestPaths,
+} from './board';
 import type { EngineContext } from './cards';
 import type { EnemyDestination } from './commands';
 import { locationOf } from './enemies';
+import { investigatorsAt } from './engagement';
 import type { InstanceId } from './ids';
 import { activeInvestigators } from './investigators';
 import { preferredByPrey, preyAllows } from './prey';
@@ -34,7 +41,7 @@ interface Route {
   steps: InstanceId[];
 }
 
-/** The way `toward` leads `enemy`: to a location, or to its prey (the hunter's rule). */
+/** The way `toward` leads `enemy`: to a location, to its prey, or away from investigators. */
 export function enemyWay(
   ctx: EngineContext,
   state: GameState,
@@ -42,6 +49,7 @@ export function enemyWay(
   toward: EnemyDestination,
 ): EnemyWay {
   if (toward === 'prey') return preyWay(ctx, state, enemy);
+  if (toward === 'awayFromInvestigators') return { steps: awaySteps(ctx, state, enemy) };
   return { steps: stepsToward(ctx, state, enemy, toward) };
 }
 
@@ -63,6 +71,13 @@ function stepsToward(
     enemy,
     firstSteps(shortestPaths(ctx, state, locationOf(state, enemy), toward)),
   );
+}
+
+/** Rules Reference, "Elusive": to a connecting location, one without investigators if able. */
+function awaySteps(ctx: EngineContext, state: GameState, enemy: CardInstance): InstanceId[] {
+  const open = openSteps(ctx, state, enemy, neighbours(ctx, state, locationOf(state, enemy)));
+  const empty = open.filter((step) => investigatorsAt(state, step).length === 0);
+  return empty.length > 0 ? empty : open;
 }
 
 /**
