@@ -762,6 +762,13 @@ export class BoardView {
     const here = this.state.investigators.filter(
       (inv) => inv.status === 'active' && location !== undefined && inv.locationId === location,
     );
+    const elsewhere = this.state.investigators.filter(
+      (inv) =>
+        inv.status === 'active' &&
+        location !== undefined &&
+        inv.locationId !== undefined &&
+        inv.locationId !== location,
+    );
     return {
       evade: here
         .filter(
@@ -775,15 +782,7 @@ export class BoardView {
         .map(({ id }) => id),
       swap: cardStats(this.ctx.cards, card.code).traits.includes(trait('Elite'))
         ? []
-        : this.state.investigators
-            .filter(
-              (inv) =>
-                inv.status === 'active' &&
-                inv.locationId !== undefined &&
-                location !== undefined &&
-                inv.locationId !== location,
-            )
-            .map(({ id }) => id),
+        : elsewhere.map(({ id }) => id),
     };
   }
 

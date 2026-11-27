@@ -925,7 +925,8 @@ export interface DefeatEnemy {
  * enemies engage at either location, so the two never engage each other on the way. Produces the
  * enemy's `CardMoved`, the investigator's move (`MoveInvestigator`'s events), then `EnemyEngaged`
  * or a `chooseInvestigator` decision for the enemy at its new location. Nothing happens when they
- * already share a location.
+ * already share a location; rejected where a card keeps the enemy out of the investigator's
+ * location (Barricade).
  */
 export interface SwapPlaces {
   type: 'SwapPlaces';

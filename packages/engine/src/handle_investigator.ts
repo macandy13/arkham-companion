@@ -114,7 +114,9 @@ export function handleMoveInvestigator(
  * `SwapPlaces`: the enemy is placed at the investigator's location first, unengaged and without
  * engaging yet, so the investigator's move (`handleMoveInvestigator`, ignoring connections) neither
  * takes it along nor finds it at the destination; then it engages whoever is still at its new
- * location (`engageEvents`).
+ * location (`engageEvents`). The investigator's half is a card effect's move: it pays an enter cost,
+ * reveals the location and opens "after you enter". Rejected where a card keeps the enemy out of
+ * the investigator's location (`isClosedToEnemy`: Barricade, Handcuffs).
  */
 export function handleSwapPlaces(ctx: EngineContext, state: GameState, cmd: SwapPlaces): Event[] {
   const { enemy } = enemyOf(ctx, state, cmd.enemyId);
@@ -124,6 +126,9 @@ export function handleSwapPlaces(ctx: EngineContext, state: GameState, cmd: Swap
   const from = investigator.locationId;
   const to = locationOf(state, enemy);
   if (from === undefined || to === undefined || from === to) return [];
+  // Both halves are one move: where a card keeps the enemy out (Barricade), the swap can't happen.
+  if (isClosedToEnemy(ctx, state, enemy, requireLocationInPlay(state, from)))
+    throw new CommandRejected({ code: 'enemyCannotMove', cardId: enemy.id, to: from });
   const placed = moveCardEvent(enemy, { kind: 'atLocation', locationId: from });
   const moved = handleMoveInvestigator(ctx, replay([placed], state), {
     type: 'MoveInvestigator',
