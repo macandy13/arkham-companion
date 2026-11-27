@@ -41,7 +41,7 @@ jobs:
   # The play tester's smoke run (MA.5, docs/automation.md "Merge gate"): bots play 100 games of
   # the real scenarios with every rule oracle, so a PR that merges on the session's verdict still
   # proves the rules work together. The seed is fixed: main passes it, so a finding is this PR's.
-  # It runs on every PR, since a required check must report, and plays only when rule code changed.
+  # It runs on every PR, since a required check must report, and plays only when code games run on (or a dependency) changed.
   smoke:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
@@ -55,7 +55,7 @@ jobs:
           fetch-depth: 2
       - id: changed
         run: |
-          if git diff --name-only HEAD^1 HEAD | grep -qE '^packages/(engine|scenarios|carddata|play_tester)/'; then
+          if git diff --name-only HEAD^1 HEAD | grep -qE '^(packages/(engine|scenarios|carddata|play_tester|util)/|pnpm-lock.yaml$|package.json$)'; then
             echo "rules=true" >> "$GITHUB_OUTPUT"
           fi
       - if: steps.changed.outputs.rules == 'true'
