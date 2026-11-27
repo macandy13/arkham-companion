@@ -957,6 +957,18 @@ export interface ReadyEnemy {
 }
 
 /**
+ * The destination rule of a `MoveEnemy` step (`enemyWay` in `enemy_ways.ts`):
+ *
+ * - a location: along a shortest path there ("each unengaged Ghoul enemy moves 1 location
+ *   towards the Parlor"), staying while it is out of play;
+ * - `prey`: the hunter's rule (Rules Reference, "Hunter"), towards the nearest investigator, prey
+ *   breaking ties; equally near investigators whose ways part are first a `chooseInvestigator`
+ *   decision (`move:<enemy>:investigator`), answered by a move toward the chosen one's location.
+ *   It stays while an investigator is at its location.
+ */
+export type EnemyDestination = InstanceId | 'prey';
+
+/**
  * A card effect or a hunter's step moves an enemy in play, or the players carry such an effect
  * out by dragging the enemy on the map. With `to` alone it goes straight there ("move it to the
  * Hallway"), connected or not. With a destination rule (`toward`, `EnemyDestination`) it moves
@@ -972,18 +984,6 @@ export interface ReadyEnemy {
  * unrevealed location does not reveal it. Produces `CardMoved`, then `EnemyEngaged` or
  * `DecisionRequested`, or only the step's `DecisionRequested`.
  */
-/**
- * The destination rule of a `MoveEnemy` step (`enemyWay` in `enemy_ways.ts`):
- *
- * - a location: along a shortest path there ("each unengaged Ghoul enemy moves 1 location
- *   towards the Parlor"), staying while it is out of play;
- * - `prey`: the hunter's rule (Rules Reference, "Hunter"), towards the nearest investigator, prey
- *   breaking ties; equally near investigators whose ways part are first a `chooseInvestigator`
- *   decision (`move:<enemy>:investigator`), answered by a move toward the chosen one's location.
- *   It stays while an investigator is at its location.
- */
-export type EnemyDestination = InstanceId | 'prey';
-
 export type MoveEnemy = {
   type: 'MoveEnemy';
   enemyId: InstanceId;

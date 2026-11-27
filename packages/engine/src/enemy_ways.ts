@@ -11,7 +11,7 @@ import type { CardInstance, GameState, Investigator } from './state';
 /**
  * Where a destination rule (`MoveEnemy.toward`) leads an enemy from where it is: the first steps
  * it may take and, for the hunter's rule, the investigators the players choose between first.
- * `MoveEnemy` moves along it; `MoveHunters` reads whether a hunter would move at all.
+ * `MoveEnemy` moves along it.
  */
 interface EnemyWay {
   /** Neighbours of its location that start a way it may go; empty when it stays. */
