@@ -229,7 +229,7 @@ export function whenAnInvestigatorEnters(location: CardCode, ...effects: Ability
 
 /**
  * "Objective – If each undefeated investigator is at Miskatonic Quad, advance": `effects` resolve
- * once no investigator still in the scenario is elsewhere, checked as one enters the only copy
+ * once someone is still in the scenario and nobody is elsewhere, checked as one enters the only copy
  * of `location` and as one is eliminated (`eliminated`), since the last one away from it may be
  * defeated or resign instead. Written `...whenEachInvestigatorIsAt(codes.miskatonicQuad,
  * advanceAct())`.

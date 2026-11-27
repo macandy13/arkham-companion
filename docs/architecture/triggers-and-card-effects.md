@@ -24,7 +24,7 @@ An `Ability` is:
     - `here`, every card at the location the window names (`cardsWhoseLocationIs`), for "at [this card]'s location".
   - A window without `of` takes the event's usual listeners (`defaultScope`): `yours` for `turnBegins` and `turnEnds`, `inPlay` for `phaseEnds` and `roundEnds`, `currentActOrAgenda` for `addedToVictoryDisplay` and `eliminated`, `here` for `succeeded`, otherwise `self`.
   - One matcher (`hears`) fires an ability when the event matches (with its phase, action, outcome or token), the scope matches, and the filter matches the event's card (`OpenedWindow.subjectId`).
-  - The objectives are scoped windows: `whenEnemyDefeated(code)` is `{ on: 'defeated', of: 'currentActOrAgenda', filter: { code } }`, `whenAnInvestigatorEnters(code)` the same on `entered`, `whenEachInvestigatorIsAt(code)` the pair of `entered` there and `eliminated`, both on the condition that no investigator is elsewhere (`eachInvestigator({ notAt })`), and `atEndOfEachTurn` is `{ on: 'turnEnds', of: 'inPlay' }` (Umôrdhoth).
+  - The objectives are scoped windows: `whenEnemyDefeated(code)` is `{ on: 'defeated', of: 'currentActOrAgenda', filter: { code } }`, `whenAnInvestigatorEnters(code)` the same on `entered`, `whenEachInvestigatorIsAt(code)` the pair of `entered` there and `eliminated`, both on the condition that someone is still in the scenario and nobody is elsewhere (`eachInvestigator({ notAt })`), so an elimination that leaves nobody ends the scenario instead, and `atEndOfEachTurn` is `{ on: 'turnEnds', of: 'inPlay' }` (Umôrdhoth).
   - The events:
     - `revealed`,
     - `entered`,
