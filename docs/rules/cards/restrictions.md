@@ -29,9 +29,13 @@ Each ruling below says what the card refuses, whom it binds and what still happe
   - "After you successfully attack" reactions still trigger, since success is decided before the damage (FAQ v2.5 §1.7); "after damage is dealt" ones don't, as none was dealt ([Dealing Damage/Horror](https://arkhamdb.com/rules#Dealing_Damage_Horror)).
   - Moving damage onto such an enemy is still allowed: no ruling says whether moving is damaging (unverified; no Core Set (2026) card does it).
 - Elokoss ("cannot move, and cannot make attacks of opportunity") stays where she spawned:
-  - No card effect moves her, forced or not, and she takes no hunter step ([Enemy Movement](https://arkhamdb.com/rules#Enemy_Movement)); "cannot" wins over an effect that says she moves (RR "Can't/Cannot").
+  - No card effect moves her, forced or not, and she takes no hunter step or elusive retreat: "cannot" is absolute ([Cannot](https://arkhamdb.com/rules#Cannot)), and a hunter whose move a card ability blocks does not move ([Hunter](https://arkhamdb.com/rules#Hunter)).
+    Test: `packages/engine/src/enemy_move_restrictions.test.ts › an enemy that cannot move › stays in the hall after $name`
   - She is massive, so she never moves with an investigator anyway; an ordinary enemy that cannot move and is engaged with a moving investigator stays behind and disengages, as Barricade's FAQ rules for an enemy that cannot enter (unverified for this wording).
-  - An action of an investigator at her location provokes no attack of opportunity from her; she still attacks in the enemy phase and retaliates.
+  - An action of an investigator at her location provokes no attack of opportunity from her; she still attacks in the enemy phase and retaliates (RR "Massive", "Retaliate").
+    Test: `packages/engine/src/enemy_move_restrictions.test.ts › an enemy that cannot make attacks of opportunity › when alice, engaged with it, takes the resource action, $name`
+    Test: `packages/engine/src/enemy_move_restrictions.test.ts › an enemy that cannot make attacks of opportunity, attacking otherwise › still attacks alice in the enemy phase`
+    Test: `packages/engine/src/enemy_move_restrictions.test.ts › an enemy that cannot make attacks of opportunity, attacking otherwise › still retaliates when alice fails to hit it`
 - Hiding Spot ("Each non-Elite enemy at attached location gains aloof") makes each non-Elite enemy at its location aloof ([Hiding Spot FAQ](https://arkhamdb.com/card/03038), RR "Aloof", "Gains"):
   - It does not engage when it readies, spawns there or an investigator enters, and while unengaged it cannot be attacked.
   - An enemy already engaged stays engaged: aloof only stops engaging.
