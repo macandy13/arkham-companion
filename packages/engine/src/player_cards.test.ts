@@ -239,7 +239,7 @@ describe('a location closed to enemies (Barricade)', () => {
     { name: 'moving it there', command: { type: 'MoveEnemy', enemyId: ghoul, to: hall } },
     {
       name: 'moving it towards Alice',
-      command: { type: 'MoveEnemyTowards', enemyId: ghoul, towards: attic },
+      command: { type: 'MoveEnemy', enemyId: ghoul, toward: attic },
     },
   ])('keeps a card effect from $name', ({ command }) => {
     const { context, state } = row.withCard(ghoul, plainGhoul, atLocation(study)).start();

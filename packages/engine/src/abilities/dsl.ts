@@ -865,7 +865,7 @@ export function anEnemy(filter: { at?: RelativeCard } & EnemyFilter = {}): Picke
 }
 
 /**
- * "[Enemy] moves 1 location towards [location]" (`MoveEnemyTowards`), written
+ * "[Enemy] moves 1 location towards [location]" (`MoveEnemy` with `toward`), written
  * `moveEnemyTowards(eachEnemy({ trait: trait('Ghoul'), unengaged: true }), onlyCopy(codes.parlor))`.
  * With `forced`, an engaged enemy disengages and moves too ("Forced – When the round ends: each
  * [[Cultist]] enemy moves once toward Underground Cistern"); with `attacksIfItEngages`, an enemy
@@ -877,9 +877,9 @@ export function moveEnemyTowards(
   options: { forced?: true; attacksIfItEngages?: true } = {},
 ): AbilityEffect {
   return {
-    type: 'MoveEnemyTowards',
+    type: 'MoveEnemy',
     enemyId: enemy,
-    towards: location,
+    toward: location,
     ...(options.forced === true ? { forced: true } : {}),
     ...(options.attacksIfItEngages === true ? { attacksIfItEngages: true } : {}),
   };

@@ -105,7 +105,7 @@ export function handleMoveHunter(
     return hunterEvents(ctx, state, hunter);
   if (command.to !== undefined) {
     if (!neighbours(ctx, state, hunter.zone.locationId).includes(command.to))
-      throw new CommandRejected({ code: 'hunterCannotMove', cardId: hunter.id, to: command.to });
+      throw new CommandRejected({ code: 'enemyCannotMove', cardId: hunter.id, to: command.to });
     return moveTo(ctx, state, hunter, command.to);
   }
   const investigator = requireInvestigator(state, command.towards);
