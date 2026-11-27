@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>#1533 review tour</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400..700&amp;family=JetBrains+Mono:wght@400;600&amp;display=swap">
+<style>
+:root {
+  --bg: #fbfbf9; --fg: #1d1f21; --muted: #6b6f73; --line: #e6e5e0; --soft: #f2f1ec;
+  --accent: #2f5d8a; --accent-fg: #ffffff; --ask: #fdf4dc; --ask-fg: #3d3115; --code-bg: #ffffff;
+  --add-bg: #e9f5ec; --add-mark: #2e7d47; --del-bg: #fbecea; --del-mark: #b0413a; --hl: #fff3c4;
+  --tok-key: #8a3ffc; --tok-str: #2e7d47; --tok-com: #8c9196; --tok-type: #2f5d8a; --ok: #2e7d47;
+  --font-body: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-code: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  --radius: 8px;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #17191b; --fg: #e8e8e6; --muted: #9a9ea3; --line: #2b2e31; --soft: #202326;
+    --accent: #8ab4e0; --accent-fg: #10161c; --ask: #2b2617; --ask-fg: #f0e3bd; --code-bg: #1c1f22;
+    --add-bg: #1d2e23; --add-mark: #7cc596; --del-bg: #33201f; --del-mark: #e48a83; --hl: #3a3420;
+    --tok-key: #c4a1ff; --tok-str: #8fd0a4; --tok-com: #7c8288; --tok-type: #8ab4e0; --ok: #7cc596;
+    color-scheme: dark;
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.6 var(--font-body); -webkit-font-smoothing: antialiased; }
+main {
+  max-width: 720px; margin: 0 auto; display: grid; gap: 40px;
+  padding: 0 max(16px, env(safe-area-inset-right)) 56px max(16px, env(safe-area-inset-left));
+}
+a { color: var(--accent); text-underline-offset: 2px; }
+a:focus-visible, button:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+code { font-family: var(--font-code); font-size: .88em; background: var(--soft); padding: 1px 5px; border-radius: 4px; }
+nav {
+  position: sticky; top: 0; z-index: 5; display: flex; align-items: center; gap: 12px;
+  margin: 0 calc(-1 * max(16px, env(safe-area-inset-left))); padding: 10px max(16px, env(safe-area-inset-left));
+  background: color-mix(in srgb, var(--bg) 92%, transparent); backdrop-filter: blur(8px); border-bottom: 1px solid var(--line);
+}
+nav .number { font-size: 14px; font-weight: 600; color: var(--muted); }
+nav ol { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 0 auto; padding: 0; list-style: none; }
+nav ol a {
+  width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center;
+  color: var(--muted); background: var(--soft); font-size: 13px; font-weight: 600; text-decoration: none;
+}
+nav ol a.question { background: var(--ask); color: var(--ask-fg); }
+nav ol a.on { background: var(--accent); color: var(--accent-fg); }
+header { display: grid; gap: 12px; padding-top: 28px; }
+.kicker { font-size: 13px; color: var(--muted); }
+h1 { font-size: 28px; line-height: 1.2; font-weight: 650; letter-spacing: -0.015em; margin: 0; text-wrap: balance; }
+.lead { display: grid; gap: 6px; }
+.lead h2 { font-size: 12px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 0; }
+.lead p { font-size: 18px; margin: 0; max-width: 60ch; }
+.entry { display: grid; gap: 6px; padding-top: 24px; border-top: 1px solid var(--line); }
+.entry h2 { font-size: 22px; line-height: 1.3; font-weight: 600; margin: 0; }
+.entry h2 a { color: var(--fg); text-decoration: none; }
+.entry h3 { font-size: 12px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 10px 0 0; }
+.entry p, .entry ul { margin: 0; max-width: 60ch; }
+.entry ul { padding-left: 20px; }
+.entry .links { display: flex; gap: 18px; margin-top: 10px; font-weight: 600; }
+.meta { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 13px; color: var(--muted); margin: 0; }
+.questions { background: var(--ask); color: var(--ask-fg); border-radius: var(--radius); padding: 18px 20px; display: grid; gap: 14px; }
+.questions h2 { font-size: 12px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; margin: 0; opacity: .75; }
+.questions ol { margin: 0; padding-left: 20px; display: grid; gap: 12px; }
+.questions p { margin: 0; font-size: 17px; }
+.questions .about { font-size: 13px; opacity: .75; }
+.questions a { color: inherit; font-size: 14px; font-weight: 500; }
+section.evidence { display: grid; gap: 14px; scroll-margin-top: 64px; }
+.evidence h2 { font-size: 20px; line-height: 1.3; font-weight: 600; letter-spacing: -0.01em; margin: 0; }
+.evidence ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 18px; }
+.evidence li { display: grid; gap: 8px; padding-left: 28px; position: relative; }
+.evidence li::before { content: "✓"; position: absolute; left: 4px; color: var(--accent); font-weight: 600; }
+.evidence li > p { margin: 0; max-width: 62ch; }
+.evidence .test { font-size: 14px; color: var(--muted); }
+.example { margin: 0; padding: 12px 14px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--soft); overflow-x: auto; font: 13px/1.5 var(--font-code); font-variant-ligatures: none; }
+.usage { display: grid; gap: 4px; }
+.usage .when { margin: 4px 0 0; font-size: 12px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.example code { background: none; padding: 0; font-size: inherit; }
+.stop { display: grid; gap: 14px; scroll-margin-top: 64px; }
+.stop > header { display: grid; grid-template-columns: auto 1fr; gap: 2px 12px; align-items: center; padding: 0; }
+.stop-number {
+  grid-row: span 2; align-self: start; margin-top: 2px; width: 28px; height: 28px; border-radius: 50%;
+  display: grid; place-items: center; background: var(--accent); color: var(--accent-fg); font-size: 13px; font-weight: 600;
+}
+.stop h2 { font-size: 20px; line-height: 1.3; font-weight: 600; letter-spacing: -0.01em; margin: 0; text-wrap: balance; }
+.tag { font-size: 12px; color: var(--muted); letter-spacing: .04em; text-transform: uppercase; }
+.stop > p { margin: 0; max-width: 62ch; }
+figure { display: grid; gap: 8px; margin: 0; }
+.toggle { display: flex; flex-wrap: wrap; gap: 4px; }
+.segments { display: inline-flex; background: var(--soft); border-radius: 999px; padding: 3px; }
+.toggle button { font: 500 13px var(--font-body); color: var(--muted); background: transparent; border: 0; border-radius: 999px; padding: 4px 12px; cursor: pointer; }
+.toggle button[aria-pressed="true"] { background: var(--bg); color: var(--fg); box-shadow: 0 1px 2px rgb(0 0 0 / 12%); }
+.frame { border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; background: var(--soft); }
+.frame img { display: block; width: 100%; height: auto; }
+.frame.phone { max-width: 280px; margin-inline: auto; }
+.frame .missing { padding: 24px; text-align: center; color: var(--muted); font-size: 14px; }
+.code { border: 1px solid var(--line); border-radius: var(--radius); background: var(--code-bg); overflow: hidden; }
+.code > header {
+  display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; padding: 8px 12px;
+  border-bottom: 1px solid var(--line); background: var(--soft); font-size: 13px; color: var(--muted);
+}
+.code .file { color: var(--fg); font-family: var(--font-code); font-size: 12.5px; overflow-wrap: anywhere; }
+.code > header a { margin-left: auto; }
+.code pre code { display: block; padding: 0; background: none; font-size: inherit; }
+.code pre { margin: 0; padding: 6px 0; font: 12.5px/1.6 var(--font-code); font-variant-ligatures: none; }
+.line { display: grid; grid-template-columns: 3.2em 1.4em minmax(0, 1fr); }
+.line .number { color: var(--muted); text-align: right; padding-right: .6em; user-select: none; opacity: .6; }
+.line .mark { color: var(--muted); user-select: none; }
+.line .text { padding: 0 12px 0 2ch; text-indent: -2ch; white-space: pre-wrap; overflow-wrap: anywhere; }
+.line.added { background: var(--add-bg); } .line.added .mark { color: var(--add-mark); }
+.line.removed { background: var(--del-bg); } .line.removed .mark { color: var(--del-mark); }
+.line.highlighted { background: var(--hl); }
+.line.gap .text { color: var(--muted); font-family: var(--font-body); font-size: 12px; }
+.k { color: var(--tok-key); } .s { color: var(--tok-str); } .c { color: var(--tok-com); font-style: italic; } .t { color: var(--tok-type); }
+.done { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; }
+.done p { margin: 0; color: var(--muted); }
+.done a { background: var(--accent); color: var(--accent-fg); border-radius: 999px; padding: 9px 20px; text-decoration: none; font-weight: 600; font-size: 15px; }
+details { border-top: 1px solid var(--line); padding-top: 16px; }
+summary { cursor: pointer; font-size: 15px; font-weight: 600; }
+details ul { padding-left: 20px; margin: 12px 0 0; display: grid; gap: 6px; font-size: 15px; }
+@media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+</style>
+</head>
+<body>
+<main>
+<nav aria-label="Tour"><span class="number">#1533</span><ol><li><a href="#stop-1" data-stop="stop-1">1</a></li><li><a href="#stop-2" data-stop="stop-2">2</a></li><li><a href="#stop-3" data-stop="stop-3">3</a></li><li><a class="evidence" href="#evidence" aria-label="How we know it works">✓</a></li></ol></nav>
+<header>
+<p class="kicker">feat(engine) · MC2.14 · as of e3c3f76</p>
+<h1>Escape the Dorms advances on its own, and the lead hands Dr. Armitage to an investigator</h1>
+<p class="meta"><span>3 stops</span><span>0 questions</span><span>44 of 448 changed lines on the tour</span></p>
+</header>
+<section class="lead"><h2>What changes</h2><p>Escape the Dorms advances once each investigator still in the scenario is at Miskatonic Quad, whether the last one walks in or the last one away is defeated or resigns. Searching for Dr. Armitage puts Dr. Henry Armitage under the control of the investigator the lead picks.</p></section>
+
+<section class="stop" id="stop-1">
+<header><span class="stop-number">1</span><span></span><h2>Each investigator at a location</h2></header>
+<p>An objective checked as an investigator enters the location and as one is eliminated, on the condition that someone is still in the scenario and nobody is elsewhere. With nobody left, even after one effect eliminates everyone (Wild Flames), the scenario ends with no resolution instead.</p>
+
+<div class="code"><header><span class="file">packages/engine/src/abilities/dsl.ts</span><span>+38 −2</span><a href="https://github.com/macandy13/arkham-companion/pull/1533/files#diff-acfb387ab8c5534faa0166f41168d018318e41a171071e3ff51dd0cd751e14c5R230-R255">Open in diff</a></header><pre><code><span class="line added"><span class="number">230</span><span class="mark">+</span><span class="text">/**</span></span><span class="line added"><span class="number">231</span><span class="mark">+</span><span class="text"><span class="c"> * &quot;Objective – If each undefeated investigator is at Miskatonic Quad, advance&quot;: `effects` resolve</span></span></span><span class="line added"><span class="number">232</span><span class="mark">+</span><span class="text"><span class="c"> * once someone is still in the scenario and nobody is elsewhere, checked as one enters the only copy</span></span></span><span class="line added"><span class="number">233</span><span class="mark">+</span><span class="text"><span class="c"> * of `location` and as one is eliminated (`eliminated`), since the last one away from it may be</span></span></span><span class="line added"><span class="number">234</span><span class="mark">+</span><span class="text"><span class="c"> * defeated or resign instead. Written `...whenEachInvestigatorIsAt(codes.miskatonicQuad,</span></span></span><span class="line added"><span class="number">235</span><span class="mark">+</span><span class="text"><span class="c"> * advanceAct())`.</span></span></span><span class="line added"><span class="number">236</span><span class="mark">+</span><span class="text"><span class="c"> */</span></span></span><span class="line added"><span class="number">237</span><span class="mark">+</span><span class="text"><span class="k">export</span> <span class="k">function</span> whenEachInvestigatorIsAt(</span></span><span class="line added"><span class="number">238</span><span class="mark">+</span><span class="text">  location: <span class="t">CardCode</span>,</span></span><span class="line added"><span class="number">239</span><span class="mark">+</span><span class="text">  ...effects: <span class="t">AbilityEffect</span>[]</span></span><span class="line added"><span class="number">240</span><span class="mark">+</span><span class="text">): <span class="t">Ability</span>[] {</span></span><span class="line added"><span class="number">241</span><span class="mark">+</span><span class="text">  <span class="c">// With nobody left the scenario ends with no resolution instead, even when one effect</span></span></span><span class="line added"><span class="number">242</span><span class="mark">+</span><span class="text">  <span class="c">// eliminates everyone (Wild Flames), so someone must still be in the scenario.</span></span></span><span class="line added"><span class="number">243</span><span class="mark">+</span><span class="text">  <span class="k">const</span> condition: <span class="t">AbilityCondition</span> = {</span></span><span class="line added"><span class="number">244</span><span class="mark">+</span><span class="text">    kind: <span class="s">'allOf'</span>,</span></span><span class="line added"><span class="number">245</span><span class="mark">+</span><span class="text">    conditions: [</span></span><span class="line added"><span class="number">246</span><span class="mark">+</span><span class="text">      thereAre(eachInvestigator(), { min: 1 }),</span></span><span class="line added"><span class="number">247</span><span class="mark">+</span><span class="text">      thereAre(eachInvestigator({ notAt: onlyCopy(location) }), { max: 0 }),</span></span><span class="line added"><span class="number">248</span><span class="mark">+</span><span class="text">    ],</span></span><span class="line added"><span class="number">249</span><span class="mark">+</span><span class="text">  };</span></span><span class="line added"><span class="number">250</span><span class="mark">+</span><span class="text">  <span class="k">return</span> [</span></span><span class="line added"><span class="number">251</span><span class="mark">+</span><span class="text">    { ...whenAnInvestigatorEnters(location, ...effects), condition },</span></span><span class="line added"><span class="number">252</span><span class="mark">+</span><span class="text">    { window: { on: <span class="s">'eliminated'</span> }, condition, effects },</span></span><span class="line added"><span class="number">253</span><span class="mark">+</span><span class="text">  ];</span></span><span class="line added"><span class="number">254</span><span class="mark">+</span><span class="text">}</span></span><span class="line added"><span class="number">255</span><span class="mark">+</span><span class="text"></span></span></code></pre></div>
+<div class="code"><header><span class="file">packages/engine/src/abilities/windows.ts</span><span>+5 −0</span><a href="https://github.com/macandy13/arkham-companion/pull/1533/files#diff-9ee62120f241a815f4b90755db624055976dab6f720cd9a6345d1b0722e2748cR181-R185">Open in diff</a></header><pre><code><span class="line added"><span class="number">181</span><span class="mark">+</span><span class="text">    <span class="k">case</span> <span class="s">'InvestigatorDefeated'</span>:</span></span><span class="line added"><span class="number">182</span><span class="mark">+</span><span class="text">    <span class="k">case</span> <span class="s">'InvestigatorResigned'</span>: {</span></span><span class="line added"><span class="number">183</span><span class="mark">+</span><span class="text">      <span class="k">const</span> { investigatorId } = event;</span></span><span class="line added"><span class="number">184</span><span class="mark">+</span><span class="text">      <span class="k">return</span> openFor(state, { window: { on: <span class="s">'eliminated'</span> }, investigatorId }, <span class="s">'currentActOrAgenda'</span>);</span></span><span class="line added"><span class="number">185</span><span class="mark">+</span><span class="text">    }</span></span></code></pre></div>
+</section>
+<section class="stop" id="stop-2">
+<header><span class="stop-number">2</span><span></span><h2>A pick the lead makes on an act's reverse side</h2></header>
+<p>Under any investigator's control is the group's choice, which the lead decides. A pick the lead makes no longer needs the window to name an investigator, so it works on an act's reverse side.</p>
+
+<div class="code"><header><span class="file">packages/engine/src/abilities/dsl.ts</span><span>+38 −2</span><a href="https://github.com/macandy13/arkham-companion/pull/1533/files#diff-acfb387ab8c5534faa0166f41168d018318e41a171071e3ff51dd0cd751e14c5R948-R955">Open in diff</a></header><pre><code><span class="line added"><span class="number">948</span><span class="mark">+</span><span class="text">/**</span></span><span class="line added"><span class="number">949</span><span class="mark">+</span><span class="text"><span class="c"> * &quot;Any investigator&quot; in an effect that names nobody to choose (an act's reverse side: &quot;put Dr.</span></span></span><span class="line added"><span class="number">950</span><span class="mark">+</span><span class="text"><span class="c"> * Henry Armitage into play under any investigator's control&quot;): the group picks, and the lead</span></span></span><span class="line added"><span class="number">951</span><span class="mark">+</span><span class="text"><span class="c"> * investigator decides when it can't agree (Rules Reference, &quot;Choices&quot;), so the lead is asked.</span></span></span><span class="line added"><span class="number">952</span><span class="mark">+</span><span class="text"><span class="c"> */</span></span></span><span class="line added"><span class="number">953</span><span class="mark">+</span><span class="text"><span class="k">export</span> <span class="k">function</span> anyInvestigator(): <span class="t">Extract</span>&lt;<span class="t">RelativeInvestigator</span>, { ref: <span class="s">'pick'</span> }&gt; {</span></span><span class="line added"><span class="number">954</span><span class="mark">+</span><span class="text">  <span class="k">return</span> { ref: <span class="s">'pick'</span>, among: eachInvestigator(), chooser: <span class="s">'lead'</span> };</span></span><span class="line added"><span class="number">955</span><span class="mark">+</span><span class="text">}</span></span></code></pre></div>
+<div class="code"><header><span class="file">packages/engine/src/abilities/resolve.ts</span><span>+9 −3</span><a href="https://github.com/macandy13/arkham-companion/pull/1533/files#diff-b82a189634cdc1a1dc8e1431fc345b11103177481d12192c9f61e24a92eabb53R396-R400">Open in diff</a></header><pre><code><span class="line context"><span class="number">396</span><span class="mark"> </span><span class="text">  <span class="k">if</span> (picked === <span class="k">undefined</span>) <span class="k">return</span> commandsFor();</span></span><span class="line context"><span class="number">397</span><span class="mark"> </span><span class="text">  <span class="k">const</span> you = refs.windowInvestigator;</span></span><span class="line removed"><span class="number">398</span><span class="mark">−</span><span class="text">  <span class="k">if</span> (you === <span class="k">undefined</span>) <span class="k">return</span> [];</span></span><span class="line added"><span class="number">398</span><span class="mark">+</span><span class="text">  <span class="c">// The lead picks for a window that names nobody, such as an act's reverse side.</span></span></span><span class="line added"><span class="number">399</span><span class="mark">+</span><span class="text">  <span class="k">if</span> (picked.chooser === <span class="s">'you'</span> &amp;&amp; you === <span class="k">undefined</span>) <span class="k">return</span> [];</span></span><span class="line context"><span class="number">400</span><span class="mark"> </span><span class="text">  <span class="k">const</span> candidates = candidatesFor(ctx, state, picked, opened.cardId, refs);</span></span></code></pre></div>
+</section>
+<section class="stop" id="stop-3">
+<header><span class="stop-number">3</span><span></span><h2>The two acts</h2></header>
+<p>Escape the Dorms carries the objective; Searching for Dr. Armitage moves the set-aside Dr. Henry Armitage to the play area of the investigator the lead picks, before the Servant of Flame returns.</p>
+
+<div class="code"><header><span class="file">packages/scenarios/src/spreading_flames/cards.ts</span><span>+6 −3</span><a href="https://github.com/macandy13/arkham-companion/pull/1533/files#diff-4e3c093853acaa8bbd8a17f456ed535169083eca628ffeb317700974acd22083R310-R343">Open in diff</a></header><pre><code><span class="line context"><span class="number">310</span><span class="mark"> </span><span class="text">    stage: 2,</span></span><span class="line context"><span class="number">311</span><span class="mark"> </span><span class="text">    <span class="c">// Setting it aside heals the Servant of Flame, wherever it is, even from the victory display.</span></span></span><span class="line context"><span class="number">312</span><span class="mark"> </span><span class="text">    abilities: [</span></span><span class="line added"><span class="number">313</span><span class="mark">+</span><span class="text">      ...whenEachInvestigatorIsAt(codes.miskatonicQuad, advanceAct()),</span></span><span class="line context"><span class="number">314</span><span class="mark"> </span><span class="text">      whenAdvanced(</span></span><span class="line gap"><span class="number"></span><span class="mark">⋯</span><span class="text"></span></span><span class="line context"><span class="number">338</span><span class="mark"> </span><span class="text">    abilities: [</span></span><span class="line context"><span class="number">339</span><span class="mark"> </span><span class="text">      <span class="c">// &quot;Put into play&quot; engages like a spawn: a ready enemy engages an investigator at its location.</span></span></span><span class="line context"><span class="number">340</span><span class="mark"> </span><span class="text">      whenAdvanced(</span></span><span class="line added"><span class="number">341</span><span class="mark">+</span><span class="text">        move(setAsideCopy(codes.drHenryArmitage), playAreaOf(anyInvestigator())),</span></span><span class="line context"><span class="number">342</span><span class="mark"> </span><span class="text">        spawnEnemyAt(onlyCopy(codes.servantOfFlame), onlyCopy(codes.miskatonicQuad)),</span></span><span class="line context"><span class="number">343</span><span class="mark"> </span><span class="text">        placeCluesOn(onlyCopy(codes.miskatonicQuad), perInvestigator(3)),</span></span></code></pre></div>
+</section>
+<section class="evidence" id="evidence"><h2>How we know it works</h2><ul><li><p>The act advances when bob joins alice, or when bob, the only one away, resigns or is defeated; it stays when alice leaves or when alice, in the cellar, is defeated with bob away.</p><p class="test">Checked by <code>packages/engine/src/triggers.test.ts › objectives on each investigator being at a location › $name</code></p></li><li><p>When the last investigator left is defeated away from the location, the scenario ends and the act stays.</p><p class="test">Checked by <code>packages/engine/src/triggers.test.ts › objectives on each investigator being at a location › stays when alice, alone in the game and in the hall, is defeated: the scenario ends instead</code></p></li><li><p>One effect defeating everyone ends the scenario too, without advancing the act.</p><p class="test">Checked by <code>packages/engine/src/triggers.test.ts › objectives on each investigator being at a location › stays when alice and bob, both in the hall, are defeated by one effect: the scenario ends instead</code></p></li><li><p>The lead picks whose play area a story asset joins on an act's reverse side.</p><p class="test">Checked by <code>packages/engine/src/triggers.test.ts › a pick the lead makes on an act's reverse side › asks the lead, alice, and puts the asset in the play area of bob, whom she picks</code></p></li><li><p>Escape the Dorms stays current with only the tank at the Quad, and advances once the seeker arrives or resigns.</p><p class="test">Checked by <code>packages/scenarios/src/spreading_flames/spreading_flames.test.ts › Spreading Flames act 2, Escape the Dorms › $then once $name</code></p></li><li><p>The lead decides who controls Dr. Henry Armitage.</p><p class="test">Checked by <code>packages/scenarios/src/spreading_flames/spreading_flames.test.ts › Spreading Flames act 3, Searching for Dr. Armitage › asks the lead whose control Dr. Henry Armitage comes under; picking $name puts him in their play area</code></p></li></ul></section>
+<section class="done"><p>That's the whole change.</p><a href="https://github.com/macandy13/arkham-companion/pull/1533/files">Review on GitHub</a></section>
+
+</main>
+<script>
+document.querySelectorAll('figure[data-variants]').forEach((figure) => {
+  const variants = JSON.parse(figure.dataset.variants);
+  const state = { when: 'after', device: variants[0].device };
+  const frame = figure.querySelector('.frame');
+  const show = () => {
+    const variant = variants.find((v) => v.device === state.device);
+    const src = variant[state.when];
+    frame.classList.toggle('phone', state.device === 'phone');
+    frame.innerHTML = src
+      ? '<img alt="' + state.device + ', ' + state.when + '" src="' + src + '">'
+      : '<p class="missing">' + (state.when === 'before' ? 'New in this PR' : 'Removed in this PR') + '</p>';
+    figure.querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(b.value === state.when || b.value === state.device)));
+  };
+  figure.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => {
+    state[b.name] = b.value;
+    show();
+  }));
+  show();
+});
+const dots = [...document.querySelectorAll('nav a[data-stop]')];
+const seen = new IntersectionObserver((entries) => entries.forEach((entry) => {
+  if (entry.isIntersecting) dots.forEach((d) => d.classList.toggle('on', d.dataset.stop === entry.target.id));
+}), { rootMargin: '-40% 0px -55% 0px' });
+document.querySelectorAll('.stop').forEach((stop) => seen.observe(stop));
+</script>
+</body>
+</html>
