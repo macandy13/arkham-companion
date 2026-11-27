@@ -54,6 +54,7 @@ const pastCurfew = instanceId('12106#1');
 const litUp = instanceId('12107#1');
 const escapeTheDorms = instanceId('12110#1');
 const searchingForArmitage = instanceId('12111#1');
+const drHenryArmitage = instanceId('12115#1');
 const tank = investigatorId('tank');
 /** The two Fire! copies act 3's search finds for 2 investigators, deck first. */
 const firstFire = '12129#1';
@@ -428,7 +429,7 @@ describe('Spreading Flames act 3, Searching for Dr. Armitage', () => {
       expect(asked.pending).toMatchObject([
         { kind: 'chooseInvestigator', decider: { kind: 'lead' } },
       ]);
-      expect(state.cards[instanceId('12115#1')]?.zone).toEqual({
+      expect(state.cards[drHenryArmitage]?.zone).toEqual({
         kind: 'playArea',
         investigatorId: picked,
       });

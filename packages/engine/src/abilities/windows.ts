@@ -3,7 +3,7 @@ import { cardStats, type EngineContext } from '../cards';
 import { cardsWithActiveAbilities } from '../doom';
 import type { Event, SkillTestResolved } from '../events';
 import type { InstanceId, InvestigatorId } from '../ids';
-import { findInvestigator } from '../investigators';
+import { findInvestigator, playerOrder } from '../investigators';
 import { cardsInZone, cardsWhoseLocationIs, locationOfCard } from '../lookup';
 import type { Decision, GameState } from '../state';
 import type { Zone } from '../zone';
@@ -180,6 +180,8 @@ export function windowsOpenedBy(
       return openFor(state, { window: { on: 'roundEnds' } }, 'inPlay');
     case 'InvestigatorDefeated':
     case 'InvestigatorResigned': {
+      // With nobody left the scenario ends ("no resolution"): no objective may still fire.
+      if (playerOrder(state).length === 0) return [];
       const { investigatorId } = event;
       return openFor(state, { window: { on: 'eliminated' }, investigatorId }, 'currentActOrAgenda');
     }

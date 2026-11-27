@@ -17,6 +17,7 @@ import {
   reaction,
   gainResources,
   anInvestigator,
+  anyInvestigator,
   heal,
   thisLocation,
   lead,
@@ -2277,6 +2278,53 @@ describe('objectives on each investigator being at a location', () => {
     const { state } = execute(context, started, command);
 
     expect(state.act.current).toBe(act);
+  });
+
+  it('stays when alice, alone in the game and in the hall, is defeated: the scenario ends instead', () => {
+    const { context, state: started } = newGame()
+      .withAgenda(agenda1, firstAgendaCard)
+      .withAct(act1, allInTheCellarAct)
+      .withAct(act2, secondActCard)
+      .withLocation(hall, blankLocation('hall'), { revealed: true })
+      .withLocation(cellar, blankLocation('cellar'), { revealed: true })
+      .withInvestigator(alice, { locationId: hall })
+      .start();
+
+    const { state } = execute(context, started, {
+      type: 'DefeatInvestigator',
+      investigatorId: alice,
+    });
+
+    expect(state.act.current).toBe(act1);
+  });
+});
+
+describe("a pick the lead makes on an act's reverse side", () => {
+  const bob = investigatorId('bob');
+  const storyAsset = instanceId('story_asset');
+  /** "Put the set-aside story asset into play under any investigator's control." */
+  const handingOverAct = blankAct('handing_over_act', {
+    abilities: [
+      whenAdvanced(move(setAsideCopy(cardCode('story_asset')), playAreaOf(anyInvestigator()))),
+    ],
+  });
+
+  it('asks the lead, alice, and puts the asset in the play area of bob, whom she picks', () => {
+    const { context, state: started } = newGame()
+      .withAgenda(agenda1, firstAgendaCard)
+      .withAct(act1, handingOverAct)
+      .withAct(act2, secondActCard)
+      .withLocation(hall, blankLocation('hall'), { revealed: true })
+      .withInvestigator(alice, { locationId: hall })
+      .withInvestigator(bob, { locationId: hall })
+      .withCard(storyAsset, blankAsset('story_asset'), setAside)
+      .start();
+
+    const asked = stateAfter(context, started, { type: 'Advance', deck: 'act' });
+    const state = stateAfter(context, asked, answer('pick:act1', bob));
+
+    expect(asked.pending).toMatchObject([{ decider: { kind: 'lead' } }]);
+    expect(state.cards[storyAsset]?.zone).toEqual(playAreaOf(bob));
   });
 });
 

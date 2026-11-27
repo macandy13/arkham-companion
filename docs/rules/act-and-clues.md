@@ -19,9 +19,9 @@ Card rulings: [Objectives and special acts and agendas](cards/objectives.md).
   Test: [`packages/engine/src/investigator_effects.test.ts › card effects that discover clues › discovers a clue at another location the card names`](../../packages/engine/src/investigator_effects.test.ts#L171)
 - "Take control of 1 of the clues on Constance Dumaine" moves the clue from that card onto the investigator; it is not discovering, which only takes clues from a location ([Clues](https://arkhamdb.com/rules#Clues)), so "cannot discover clues" does not stop it. Clues moved onto a card count for its "if there are N clues on it" like placed ones.
   Test: [`packages/engine/src/scenario_effects.test.ts › card effects that move tokens between cards › gives the clues on a card to the investigator who takes control of them`](../../packages/engine/src/scenario_effects.test.ts#L443)
-  Test: [`packages/engine/src/triggers.test.ts › objectives on a card's own tokens › advances when a clue is moved onto the act holding 1, as when one is placed`](../../packages/engine/src/triggers.test.ts#L2451)
+  Test: [`packages/engine/src/triggers.test.ts › objectives on a card's own tokens › advances when a clue is moved onto the act holding 1, as when one is placed`](../../packages/engine/src/triggers.test.ts#L2499)
 - An "Objective –" is active only while its agenda or act is current: the cards below it in the deck are not in play.
-  Test: [`packages/engine/src/triggers.test.ts › objectives on the current agenda and act › does not fire for an act that is not current yet`](../../packages/engine/src/triggers.test.ts#L2100)
+  Test: [`packages/engine/src/triggers.test.ts › objectives on the current agenda and act › does not fire for an act that is not current yet`](../../packages/engine/src/triggers.test.ts#L2101)
   - Advancing by an objective spends no clues: the objective overrides the clue requirement (RR "Act Deck and Agenda Deck").
     Test: [`packages/engine/src/doom.test.ts › advancing an act without paying clues › advances an act that has a clue threshold when no clues are paid`](../../packages/engine/src/doom.test.ts#L777)
 - If the act has no "Objective –", the group may spend the required clues from any mix of investigators at any player window during an investigator's turn ([free] ability) to advance it. An "Objective –" replaces or adds to that requirement.
@@ -34,7 +34,7 @@ Card rulings: [Objectives and special acts and agendas](cards/objectives.md).
   Test: [`packages/engine/src/doom.test.ts › Advance the act › does not count clues on the act towards its cost, and removes them as it advances`](../../packages/engine/src/doom.test.ts#L579)
   Test: [`packages/engine/src/doom.test.ts › Advance the act › charges the clues per investigator and makes the next act current`](../../packages/engine/src/doom.test.ts#L554)
 - For agenda and act alike, the back resolves completely first, including any choice it asks. Only then does the next card become current, and at that same moment the advanced card leaves the game (RR "Act Deck and Agenda Deck" step 3: "simultaneously removed").
-  Test: [`packages/engine/src/triggers.test.ts › trigger bus › runs the reverse side of the advancing agenda before the next one becomes current`](../../packages/engine/src/triggers.test.ts#L178)
+  Test: [`packages/engine/src/triggers.test.ts › trigger bus › runs the reverse side of the advancing agenda before the next one becomes current`](../../packages/engine/src/triggers.test.ts#L179)
   Test: [`packages/engine/src/doom.test.ts › a last act whose reverse side lets the lead investigator choose the resolution › keeps the last act in play while the question is open instead of asking for a resolution`](../../packages/engine/src/doom.test.ts#L714)
 - A "(→R#)" on any card ends the scenario with that resolution.
   Test: [`packages/engine/src/doom.test.ts › Advance the act › ends the scenario with the resolution when the last act advances`](../../packages/engine/src/doom.test.ts#L640)
