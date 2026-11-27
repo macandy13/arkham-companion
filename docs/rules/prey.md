@@ -5,11 +5,27 @@ Ties go to the lead investigator.
 "Only" in the prey text makes the enemy ignore everyone else for moving and engaging, though others can still engage it with an action or a card.
 
 - "Highest [combat]" or "Lowest [agility]" compares the investigators' skill values (Ghoul Priest, Young Deep One, Relentless Dark Young). The app reads the skill value now (`skillValues`): the printed skill plus its lasting boost, which the players set for player cards in play (Beat Cop's +1 [combat]), and the modifiers of encounter cards in play ("You get -1 [combat]"), never below 0; a modifier that lasts only one test does not count.
+  Test: `packages/engine/src/prey.test.ts › preferredByPrey on counters and skills › "$prey" picks $expected`
+  Test: `packages/engine/src/prey.test.ts › preferredByPrey on counters and skills › counts a lasting boost: alice, combat 2 boosted by 4, has the highest combat over bob at 5`
+  Test: `packages/engine/src/prey.test.ts › preferredByPrey on counters and skills › counts a card's skill modifier: bob, combat 5 with -3 from a treachery in his threat area, has the lowest combat`
 - "Most / Least remaining health or sanity", "Most damage / horror / clues / resources" compare the investigators' counters ("least" and "fewest" mean the same as "lowest").
+  Test: `packages/engine/src/prey.test.ts › preferredByPrey on counters and skills › "$prey" picks $expected`
 - "Nearest to another [[Cultist]] enemy" (Narôgath): the investigator with the fewest connections ([Nearest](https://arkhamdb.com/rules#Nearest)) to the nearest other enemy with that trait. An engaged enemy counts at its investigator's location, and one no path reaches doesn't count. With none on the table everyone ties (our reading).
+  Test: `packages/engine/src/prey.test.ts › preferredByPrey "Nearest to another [[Cultist]] enemy" › picks the investigator nearest to another Cultist, not to the enemy itself`
+  Test: `packages/engine/src/prey.test.ts › preferredByPrey "Nearest to another [[Cultist]] enemy" › ignores enemies without the trait`
+  Test: `packages/engine/src/prey.test.ts › preferredByPrey "Nearest to another [[Cultist]] enemy" › leaves everyone tied with no other Cultist on the table`
 - Prey the app can't read from the board (Yithian Observer's "Fewest cards in hand", as the app doesn't track hands): the lead investigator picks the investigator who fits it, asked as "Whom does the prey pick?"; a tie among those is the lead's pick too.
+  Test: `packages/engine/src/enemies.test.ts › SpawnEnemy › asks the players when its prey is text the engine cannot read`
+  Test: `packages/engine/src/hunters.test.ts › MoveHunters › ties › asks the players to judge a prey the engine cannot read`
 - "X only" (Lowest remaining sanity only, Daisy Walker only, Investigator at a [[Trait]] location only): the enemy acts "as if it were the only investigator in play" and ignores everyone else while moving and engaging ([Prey](https://arkhamdb.com/rules#Prey)). A hunter moves only towards those its prey picks, isn't stopped by anyone else at its location, and stays with none left.
+  Test: `packages/engine/src/prey.test.ts › preferredByPrey with "only" and naming texts › "$prey" picks $expected among $among`
+  Test: `packages/engine/src/hunters.test.ts › MoveHunters with "Prey – Bob only" › leaves alice at its location and moves on towards bob`
+  Test: `packages/engine/src/hunters.test.ts › MoveHunters with "Prey – Bob only" › stays once bob is defeated`
   - It picks among every investigator on the board, so "Lowest remaining sanity only" means the lowest overall (our reading).
   - It doesn't engage anyone else when it spawns, arrives or readies, not even the investigator who drew it, though [Enemy Cards](https://arkhamdb.com/rules#Enemy_Cards) has an enemy without a spawn instruction spawn engaged with the drawer (our reading: Prey wins). An effect that names whom it spawns engaged with still engages them.
+    Test: `packages/engine/src/enemies.test.ts › SpawnEnemy › with alice (1 clue) and bob (3 clues) at the hall › engages neither the drawer nor anyone else its "only" prey leaves out`
+    Test: `packages/engine/src/enemies.test.ts › SpawnEnemy › with alice (1 clue) and bob (3 clues) at the hall › engages whom an effect names, whatever its "only" prey`
 - A name is read only when an investigator in the game has it.
+  Test: `packages/engine/src/prey.test.ts › preferredByPrey with "only" and naming texts › "$prey" picks $expected among $among`
 - "Bearer only" (Mob Enforcer, Silver Twilight Acolyte, The Thing That Follows) names the weakness's bearer ([Bearer](https://arkhamdb.com/rules#Bearer)), the investigator whose deck it came from (`CardInstance.owner`, set by `DrawWeakness`). The enemy acts as if the bearer were the only investigator, like any "X only" above: it engages nobody but the bearer and hunts only them, so one whose spawn instruction puts it at another investigator's location ("Spawn – Location farthest from you") stays unengaged there. Once the bearer is eliminated their weaknesses in play leave the game (FAQ errata to [Elimination](https://arkhamdb.com/rules#Elimination), step 0), so it is never left hunting nobody. On a card without an owner (our fallback, as every weakness has a bearer) the prey counts as one the app can't read, so the lead investigator is asked only when several investigators are left, and its "only" is not applied.
+  Test: `packages/engine/src/prey.test.ts › preferredByPrey "Bearer only" › "$prey" of a weakness owned by $owner picks $expected among $among`
