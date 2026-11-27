@@ -57,6 +57,7 @@ The scripted golden game is [`end_to_end.test.ts`](../../packages/scenarios/src/
 - [ ] Discovering the last clue at Underground Cistern places 2 per investigator there again; as the investigation phase ends, each ready non-Elite Cultist there is discarded with 1 doom on the agenda for each.
 - [ ] Elokoss's fast ability costs the investigator at her location 1 clue per investigator, from their own clues, and places 1 clue on her; her fifth clue ends the scenario with resolution 2.
 - [ ] Elokoss is massive and retaliates and has 5 plus 5 per investigator health; the Servant of Flame, Queen's Knight, Herald of Flame and Dark Magician hunt; Zealots are aloof.
+- [ ] Elokoss never moves, not even when a card effect would move her, and an action taken while engaged with her provokes no attack of opportunity from her.
 
 **Encounter cards**
 
@@ -78,7 +79,7 @@ The scripted golden game is [`end_to_end.test.ts`](../../packages/scenarios/src/
 These are done by hand at the table; the app does not do them.
 
 - Agenda 3a's damage instead of doom.
-- Elokoss: that she cannot move or make attacks of opportunity, and her Mother of Flame side.
+- Elokoss's Mother of Flame side.
 - Queen's Knight's damage to Elokoss, Herald of Flame's healing after it attacks, and the Servant of Flame's codex entry as it is defeated.
 - The Zealot's doom as it enters play (setup places it) and the Dark Magician's as the round ends.
 - Unnatural Decay's doom on an asset, offered even to an investigator without one, who must take the 2 damage instead.

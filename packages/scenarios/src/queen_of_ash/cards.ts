@@ -250,8 +250,6 @@ const willpowerOrHorror = skillTest('willpower', 4, { onFail: [takeHorror(1)] })
  * Effects the engine has no rule for yet are left out, so the players resolve them from the card:
  *
  * - Elokoss's Mother of Flame side (agenda 2b) and agenda 3a's damage instead of doom
- * - Elokoss: her extra health and her clue spend toward Resolution 2 are entered, but not that
- *   she cannot move or make attacks of opportunity, or her Mother of Flame side
  * - Queen's Knight's damage to Elokoss, Herald of Flame's healing after it attacks, and the
  *   Servant of Flame's codex entry as it is defeated
  * - Zealot's doom as it enters play (setup places it on the Zealots it spawns) and Dark
@@ -485,6 +483,10 @@ export const queenOfAshCardDefs: readonly CardStats[] = [
     victory: 5,
     unique: true,
     keywords: [{ name: 'massive' }, { name: 'retaliate' }],
+    restrictions: [
+      { cannot: 'move', of: 'self' },
+      { cannot: 'attackOfOpportunity', of: 'self' },
+    ],
     actions: [
       {
         free: true,
