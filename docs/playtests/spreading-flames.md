@@ -43,7 +43,9 @@ The scripted golden game is [`end_to_end.test_support.ts`](../../packages/scenar
 
 **Agendas**
 
-- [ ] Lit Up's reverse side places the 4 Fire! still set aside in the encounter discard pile; after act 1 has put them out, none.
+- [ ] Each agenda offers its Parley (test intellect (2)) only to an investigator with a Bystander at their location; a success discards that Bystander (you pick when several are there).
+- [ ] Past Curfew's reverse side asks each investigator, in player order, to test willpower (3); each who fails takes 1 horror.
+- [ ] Lit Up's reverse side places the 4 Fire! still set aside in the encounter discard pile; after act 1 has put them out, none. Then each investigator, in player order, tests agility (3); each who fails takes 1 damage.
 - [ ] Each time doom is placed on Wild Flames, the lead investigator draws the topmost Fire! of the encounter discard pile, if there is one.
 - [ ] Wild Flames advancing defeats each investigator with 1 physical trauma (no resolution).
 
@@ -78,7 +80,6 @@ The scripted golden game is [`end_to_end.test_support.ts`](../../packages/scenar
 These are done by hand at the table; the app does not do them.
 
 - Wild Flames' Fire! draw for doom added with a correction by hand: corrections open no forced abilities, so draw the topmost Fire! of the discard yourself.
-- The reverse sides' tests of Past Curfew and Lit Up (each investigator tests), and the agendas' Parley to discard a Bystander.
 - Escape the Dorms' objective: the act advances when each undefeated investigator is at Miskatonic Quad. The players advance it with "Advance by hand" on the act's full card.
 - Searching for Dr. Armitage's reverse side: Dr. Henry Armitage under an investigator's control. His skill bonus and free first action are his controller's to apply.
 - Your Friend's Room's Engage action, and the 3 cards Orne Library's two-action ability draws (a by-hand notice).
