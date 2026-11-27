@@ -23,6 +23,11 @@ Each ruling below says what the card refuses, whom it binds and what still happe
 - Handcuffs ("If the attached enemy is non-Elite, it cannot ready and doom cannot be placed on it") keeps a non-Elite enemy exhausted through the upkeep phase and any card effect that readies it, and no doom goes on it; an Elite enemy is not held ([Handcuffs FAQ](https://arkhamdb.com/card/04265)):
   - Flipping clues to their doom side is not placing doom.
   - Effects that don't ready the enemy still work on it: Dance of the Yellow King still moves it, engages it and has it attack.
+- A Gathering and A Ritual ("Each enemy at a location with a copy of Fire! attached cannot be damaged") deal no damage to an enemy at a burning location while either is the current agenda:
+  - A fight against it can still be made and still succeeds or fails; a hit deals nothing, and so does Fire!'s own damage as the investigation phase ends, or any effect that damages each enemy.
+  - It counts only where the enemy is when the damage would be dealt: once the Fire! is discarded, or the enemy moves away, it takes damage again.
+  - "After you successfully attack" reactions still trigger, since success is decided before the damage (FAQ v2.5 §1.7); "after damage is dealt" ones don't, as none was dealt ([Dealing Damage/Horror](https://arkhamdb.com/rules#Dealing_Damage_Horror)).
+  - Moving damage onto such an enemy is still allowed: no ruling says whether moving is damaging (unverified; no Core Set (2026) card does it).
 - Hiding Spot ("Each non-Elite enemy at attached location gains aloof") makes each non-Elite enemy at its location aloof ([Hiding Spot FAQ](https://arkhamdb.com/card/03038), RR "Aloof", "Gains"):
   - It does not engage when it readies, spawns there or an investigator enters, and while unengaged it cannot be attacked.
   - An enemy already engaged stays engaged: aloof only stops engaging.

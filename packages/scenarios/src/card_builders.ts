@@ -43,6 +43,8 @@ export interface AgendaOptions {
   actions?: readonly CardAction[];
   /** Its constant modifiers while it is the current agenda ("Each enemy gets +1 fight"). */
   modifiers?: readonly Modifier[];
+  /** Its constant "cannot" abilities while it is the current agenda. */
+  restrictions?: readonly CardRestriction[];
 }
 
 /** Card stats for a hand-entered agenda of `set`, with both printed sides. */
@@ -55,6 +57,7 @@ export function agenda({
   abilities,
   actions,
   modifiers,
+  restrictions,
   pictures,
 }: AgendaOptions): CardStats {
   return {
@@ -65,6 +68,7 @@ export function agenda({
     ...(abilities ? { abilities } : {}),
     ...(actions ? { actions } : {}),
     ...(modifiers ? { modifiers } : {}),
+    ...(restrictions ? { restrictions } : {}),
   };
 }
 
