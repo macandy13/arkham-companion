@@ -5,6 +5,8 @@
 - In enemy step 1, each **ready, unengaged** hunter moves one connection along the shortest path toward the nearest investigator. It doesn't move if an investigator is already at its location; with "Prey – … only" only an investigator its prey picks keeps it there ([prey.md](prey.md)).
   Test: `packages/engine/src/hunters.test.ts › MoveHunters › moves a hunter one step along the path to the investigator`
   Test: `packages/engine/src/hunters.test.ts › MoveHunters › heads for the nearest investigator`
+  Test: `packages/engine/src/hunters.test.ts › MoveHunters › does not move exhausted, engaged or non-hunter enemies`
+  Test: `packages/engine/src/hunters.test.ts › MoveHunters › does not move a hunter that $name`
   Test: `packages/engine/src/hunters.test.ts › MoveHunters with "Prey – Bob only" › moves towards bob past a nearer alice`
 - "Nearest" counts connections even through moves a card blocks. If the next step on the path is blocked by a card, the hunter doesn't move.
 - Equidistant investigators: prey picks the target; if prey doesn't decide it or there is none, the lead investigator does. The lead investigator also picks between several shortest paths.

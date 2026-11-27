@@ -22,9 +22,13 @@ describe('parseTestRefs', () => {
 
 describe('missingTests', () => {
   const hunterTests = [
+    "const moveHunters = { type: 'MoveHunters' };",
     "describe('MoveHunters', () => {",
     "  it('heads for the nearest investigator', () => {",
     '  it.each([])(`moves $count steps`, () => {',
+    '});',
+    "describe('MoveHunters order', () => {",
+    "  it('asks the lead investigator for the order', () => {",
   ].join('\n');
   const files: Record<string, string> = { 'hunters.test.ts': hunterTests };
   const read = (file: string): string | undefined => files[file];
@@ -50,10 +54,29 @@ describe('missingTests', () => {
       titles: ['Hunters', 'heads for the nearest investigator'],
       missing: true,
     },
+    {
+      name: 'a test named under a describe that comes after it',
+      titles: ['MoveHunters order', 'heads for the nearest investigator'],
+      missing: true,
+    },
   ])('$name is missing: $missing', ({ titles, missing }) => {
     const ref = { file: 'hunters.test.ts', titles };
 
     expect(missingTests([ref], read)).toEqual(missing ? [ref] : []);
+  });
+
+  it('does not take a command literal for a describe title', () => {
+    files['renamed.test.ts'] = [
+      "const moveHunters = { type: 'MoveHunters' };",
+      "describe('Hunter movement', () => {",
+      "  it('heads for the nearest investigator', () => {",
+    ].join('\n');
+    const ref = {
+      file: 'renamed.test.ts',
+      titles: ['MoveHunters', 'heads for the nearest investigator'],
+    };
+
+    expect(missingTests([ref], read)).toEqual([ref]);
   });
 
   it('counts a test in a deleted file as missing', () => {

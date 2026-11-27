@@ -27,9 +27,10 @@ export function parseTestRefs(markdown: string): TestRef[] {
 }
 
 /**
- * The references whose test no longer exists: its file is gone, or one of its titles is no
- * longer a string literal in that file. Checking each title as a literal, not running the
- * suite, keeps the check fast; a renamed or deleted test still fails it, which is the point.
+ * The references whose test no longer exists: its file is gone, or its titles are no longer
+ * the first argument of a call (`describe(`, `it(`, `it.each([…])(`) in that order in the file.
+ * Reading the source, not running the suite, keeps the check fast; a renamed, deleted or moved
+ * test still fails it, which is the point. Titles built with `${…}` can't be named.
  */
 export function missingTests(
   refs: readonly TestRef[],
@@ -38,8 +39,26 @@ export function missingTests(
   return refs.filter((ref) => {
     const source = readTestFile(ref.file);
     if (source === undefined) return true;
-    return !ref.titles.every((title) =>
-      ["'", '"', '`'].some((quote) => source.includes(`${quote}${title}${quote}`)),
-    );
+    let from = 0;
+    for (const title of ref.titles) {
+      const at = titleCallIndex(source, title, from);
+      if (at === undefined) return true;
+      from = at;
+    }
+    return false;
   });
+}
+
+// Where a call with this title as its first argument starts, at or after `from`. Only a call's
+// first argument counts, so the same words in a command literal (`{ type: 'MoveHunters' }`) don't.
+function titleCallIndex(source: string, title: string, from: number): number | undefined {
+  const quoted = ["'", '"', '`'].map((quote) => `${quote}${escapeRegExp(title)}${quote}`);
+  const call = new RegExp(`\\(\\s*(?:${quoted.join('|')})`, 'g');
+  call.lastIndex = from;
+  const match = call.exec(source);
+  return match === null ? undefined : match.index + match[0].length;
+}
+
+function escapeRegExp(text: string): string {
+  return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
