@@ -433,7 +433,7 @@ export type AbilityCommand =
           | 'HealEnemy'
           | 'DamageEnemy'
           | 'DefeatEnemy'
-          | 'MoveEnemyTowards'
+          | 'MoveEnemy'
           | 'DisengageEnemy'
           | 'EnemyAttacks'
           | 'EngageEnemy'

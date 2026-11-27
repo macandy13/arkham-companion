@@ -107,7 +107,7 @@ const REFUSAL_KINDS: Readonly<Record<RejectionCode, RefusalKind>> = {
   noSpawnLocation: 'never',
   notResolving: 'never',
   notAHunter: 'never',
-  hunterCannotMove: 'never',
+  enemyCannotMove: 'never',
   noRoute: 'never',
   triggerLoop: 'never',
   triggeredCommandRejected: 'never',

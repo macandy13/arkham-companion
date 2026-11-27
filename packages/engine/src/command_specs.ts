@@ -40,7 +40,6 @@ import {
   handleExhaustEnemy,
   handleRetreatEnemy,
   handleMoveEnemy,
-  handleMoveEnemyTowards,
   handleReadyEnemy,
 } from './handle_enemy';
 import {
@@ -287,7 +286,6 @@ const COMMAND_SPECS: CommandSpecs = {
   EvadeEnemy: { handle: handleEvadeEnemy },
   ReadyEnemy: { handle: handleReadyEnemy },
   MoveEnemy: { handle: handleMoveEnemy },
-  MoveEnemyTowards: { handle: handleMoveEnemyTowards },
   MoveHunters: { handle: handleMoveHunters },
   MoveHunter: { handle: handleMoveHunter },
   RequestDecision: { handle: handleRequestDecision },

@@ -697,9 +697,9 @@ describe('MoveEnemy', () => {
   });
 });
 
-describe('MoveEnemyTowards', () => {
-  const moveGhoulTowards = (towards: InstanceId) =>
-    ({ type: 'MoveEnemyTowards', enemyId: ghoul, towards }) as const;
+describe('MoveEnemy toward a location', () => {
+  const moveGhoulTowards = (toward: InstanceId) =>
+    ({ type: 'MoveEnemy', enemyId: ghoul, toward }) as const;
 
   it('moves an enemy in the attic one location towards the hall, into the cellar', () => {
     const { context, state } = hallCellarAttic
@@ -756,7 +756,7 @@ describe('MoveEnemyTowards', () => {
       .start();
     const asked = stateAfter(context, state, moveGhoulTowards(attic));
 
-    const after = stateAfter(context, asked, answer(`towards:${ghoul}`, garden));
+    const after = stateAfter(context, asked, answer(`move:${ghoul}`, garden));
 
     expect(asked.pending).toMatchObject([
       {
@@ -767,6 +767,18 @@ describe('MoveEnemyTowards', () => {
       },
     ]);
     expect(zoneOf(after, ghoul)).toEqual(atLocation(garden));
+  });
+
+  it('rejects a chosen step that is not the first of its shortest ways', () => {
+    const { context, state } = hallCellarAttic
+      .withCard(ghoul, ghoulCard, atLocation(attic))
+      .start();
+
+    expect(rejectionFrom(context, state, { ...moveGhoulTowards(hall), to: hall })).toEqual({
+      code: 'enemyCannotMove',
+      cardId: ghoul,
+      to: hall,
+    });
   });
 
   it('rejects moving an engaged enemy, which moves only with its investigator', () => {

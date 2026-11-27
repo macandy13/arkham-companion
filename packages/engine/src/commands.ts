@@ -90,7 +90,6 @@ export type Command = AskedByCard &
     | EvadeEnemy
     | ReadyEnemy
     | MoveEnemy
-    | MoveEnemyTowards
     | MoveHunters
     | MoveHunter
     | RequestDecision
@@ -958,20 +957,25 @@ export interface ReadyEnemy {
 }
 
 /**
- * A card effect moves an enemy in play to the location `to` ("move it to the
- * Hallway"), or the players carry such an effect out by dragging the enemy
- * on the map. Unlike a hunter's step it needs no connection. An engaged enemy
- * moves only with its investigator, so a plain effect is refused for it
- * (`enemyEngaged`); a forced instruction (`forced`) is followed whatever the
- * engagement, so the enemy disengages and moves. At `to` a ready enemy then
- * engages as when it spawns there (`engageEvents`); an enemy already at `to`
- * stays as it is. An enemy entering an unrevealed location does not reveal it. Produces `CardMoved`, then
- * `EnemyEngaged` or `DecisionRequested`.
+ * A card effect moves an enemy in play, or the players carry such an effect out by dragging the
+ * enemy on the map. With `to` alone it goes straight there ("move it to the Hallway"), connected
+ * or not. With the destination rule `toward` it moves one connection along a shortest path to
+ * that location ("each unengaged Ghoul enemy moves 1 location towards the Parlor"), exhausted or
+ * not: it stays when it is there already or has no path (also while `toward` is out of play), and
+ * equally short first steps become a `chooseLocation` decision for the lead investigator
+ * (`move:<enemy>`), answered by the same move with `to` naming the chosen step.
+ *
+ * An engaged enemy moves only with its investigator, so a plain effect is refused for it
+ * (`enemyEngaged`); a forced instruction (`forced`, "each Cultist enemy moves once toward
+ * Underground Cistern") is followed whatever the engagement, so the enemy disengages and moves
+ * from its investigator's location. At its destination a ready enemy then engages as when it
+ * spawns there (`engageEvents`); an enemy already at `to` stays as it is. An enemy entering an
+ * unrevealed location does not reveal it. Produces `CardMoved`, then `EnemyEngaged` or
+ * `DecisionRequested`, or only the step's `DecisionRequested`.
  */
-export interface MoveEnemy {
+export type MoveEnemy = {
   type: 'MoveEnemy';
   enemyId: InstanceId;
-  to: InstanceId;
   /** A forced instruction, followed even for an engaged enemy. Default false. */
   forced?: boolean;
   /**
@@ -980,29 +984,15 @@ export interface MoveEnemy {
    * it engages attacks the one it names.
    */
   attacksIfItEngages?: true;
-}
-
-/**
- * A card effect moves an unengaged enemy one connection towards the location
- * `towards` along a shortest path ("each unengaged Ghoul enemy moves 1
- * location towards the Parlor"), exhausted or not. It stays when it is
- * there already or has no path (also while `towards` is out of play); equally short first steps become a
- * `chooseLocation` decision for the lead investigator (`towards:<enemy>`),
- * answered with `MoveEnemy`. An engaged enemy moves only with its
- * investigator, so it is refused (`enemyEngaged`), unless the move is
- * `forced` ("each Cultist enemy moves once toward Underground Cistern",
- * Stop the Rite): then it disengages and moves from its investigator's
- * location. Produces what `MoveEnemy` produces, or the `DecisionRequested`.
- */
-export interface MoveEnemyTowards {
-  type: 'MoveEnemyTowards';
-  enemyId: InstanceId;
-  towards: InstanceId;
-  /** A forced instruction, followed even for an engaged enemy. Default false. */
-  forced?: boolean;
-  /** Passed on to the `MoveEnemy` it makes (`MoveEnemy.attacksIfItEngages`). */
-  attacksIfItEngages?: true;
-}
+} & (
+  | { to: InstanceId; toward?: never }
+  | {
+      /** The location it heads for, one connection at a time. */
+      toward: InstanceId;
+      /** The first step the players chose between equally short ones; it must be one of them. */
+      to?: InstanceId;
+    }
+);
 
 /**
  * Moves the ready, unengaged hunter enemies one step towards the nearest

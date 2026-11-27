@@ -546,7 +546,7 @@ describe('MoveHunter', () => {
       name: 'a location that is not connected',
       enemyId: hunter,
       to: 'd',
-      code: 'hunterCannotMove',
+      code: 'enemyCannotMove',
     },
   ])('rejects moving $name', ({ enemyId, to, code }) => {
     const { context, state } = layout();
