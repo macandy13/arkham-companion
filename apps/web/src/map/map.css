@@ -582,38 +582,38 @@
 }
 
 /*
- * The other locations to connect to or cut from (LocationConnections): opened, the group takes a
- * line of its own and lays them out under its button as toggles side by side, a connected one
- * filled in brass like a picked answer.
+ * Where a move from the location goes (Connections): the names as a line under its title, a tap
+ * target as wide as the page with the pencil at its end, and under it the menu of every other
+ * location with a tick on each connected one (base.css), lying over the page below.
  */
-#board #map footer > section:has(> [data-part='connections']) {
-  flex-basis: 100%;
-  padding-left: 0;
-  border-left: none;
+#map [data-part='connections'] {
+  position: relative;
 }
 
-#map footer > section > [data-part='connections'] {
-  grid-row: 3;
-  grid-column: 1 / -1;
+#map [data-part='connections'] > button[data-icon][aria-expanded] {
   display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
+  justify-content: space-between;
+  align-items: center;
   gap: var(--space-2);
+  width: 100%;
+  min-height: var(--touch-target);
+  padding: 0 var(--space-2);
+  border: var(--border-width) dashed var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: inherit;
+  text-align: start;
+}
+
+#map [data-part='connections'] > button[data-icon][aria-expanded]::before {
+  order: 1;
   margin: 0;
-  padding: 0;
-  list-style: none;
+  color: var(--color-text-muted);
 }
 
-#map [data-part='connections'] > li {
-  padding: 0;
-  border: none;
-  background: none;
-}
-
-#map [data-part='connections'] button[aria-pressed='true'] {
-  border-color: var(--color-accent);
-  background: var(--color-accent);
-  color: var(--color-accent-text);
+#map [data-part='connections'] > button[aria-expanded] + ul {
+  inset-inline: 0 auto;
 }
 
 /* The location's card, as big as a zoomed card. */

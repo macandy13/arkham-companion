@@ -1,4 +1,4 @@
-import { useId, useState, type ReactNode } from 'react';
+import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { assertNever } from '@arkham/util';
 import {
@@ -236,6 +236,7 @@ function LocationPage({
   return (
     <>
       <Here board={board} location={location} />
+      <Connections board={board} location={location} />
       <AttachedCards board={board} host={location.id} />
       <footer>
         {pills.length > 0 && <ActionGroup title={t('location.actions')}>{pills}</ActionGroup>}
@@ -252,35 +253,65 @@ function LocationPage({
             </button>
           </ActionGroup>
         )}
-        <LocationConnections board={board} location={location} />
       </footer>
     </>
   );
 }
 
 /**
- * The location's connections as a card changes them (River Docks "is connected to" another
- * location, another card says one "is no longer connected to" another): "Change connections"
- * opens a toggle for each other location in play, pressed while a move from here can go there
- * (`BoardView.connectedTo`), and a tap connects the two on this location's map
- * (`connectLocations`) or cuts their connection (`disconnectLocations`), only one way when only
- * this location leads there, since the cards allow no move back to cut. Performed as the card
- * effect it is, and closed at first, since a card asks for it rarely.
+ * Where a move from the location goes (`BoardView.connectedTo`), read as one line under who is
+ * there, and changed where it is shown, as a card says (River Docks "is connected to" another
+ * location, another card says one "is no longer connected to" another): a tap on the line opens a
+ * menu with a tick per other location in play, and a tap on one connects the two on this
+ * location's map (`connectLocations`) or cuts their connection (`disconnectLocations`), only one
+ * way when only this location leads there, since the cards allow no move back to cut. Performed
+ * as the card effect it is. The menu stays open for the next change and closes on Escape (which
+ * then does not close the window around it) or a press elsewhere.
  */
-function LocationConnections({ board, location }: { board: BoardView; location: LocationView }) {
+function Connections({ board, location }: { board: BoardView; location: LocationView }) {
   const { actions, busy } = usePlay();
   const { t } = useTranslation();
+  const titleId = useId();
+  const menuId = useId();
   const [open, setOpen] = useState(false);
+  const root = useRef<HTMLElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const away = (event: PointerEvent) => {
+      if (!root.current?.contains(event.target as Node)) setOpen(false);
+    };
+    document.addEventListener('pointerdown', away);
+    return () => document.removeEventListener('pointerdown', away);
+  }, [open]);
   const others = board.locations.filter(({ id }) => id !== location.id);
   if (others.length === 0) return null;
   const connected = board.connectedTo(location.id);
+  const names = others.filter(({ id }) => connected.includes(id)).map(({ name }) => name);
   return (
-    <ActionGroup title={t('location.connections.title')}>
-      <button type="button" aria-expanded={open} onClick={() => setOpen(!open)}>
-        {t('location.connections.change')}
+    <section
+      ref={root}
+      aria-labelledby={titleId}
+      data-part="connections"
+      onKeyDown={(event) => {
+        if (event.key !== 'Escape' || !open) return;
+        event.stopPropagation();
+        event.preventDefault();
+        setOpen(false);
+      }}
+    >
+      <h3 id={titleId}>{t('location.connections.title')}</h3>
+      <button
+        type="button"
+        data-icon="rename"
+        aria-expanded={open}
+        aria-controls={menuId}
+        aria-describedby={titleId}
+        onClick={() => setOpen(!open)}
+      >
+        {names.length === 0 ? t('location.connections.none') : names.join(' · ')}
       </button>
       {open && (
-        <ul aria-label={t('location.connections.connectedTo')} data-part="connections">
+        <ul id={menuId} aria-label={t('location.connections.change')}>
           {others.map((other) => {
             const linked = connected.includes(other.id);
             return (
@@ -308,7 +339,7 @@ function LocationConnections({ board, location }: { board: BoardView; location: 
           })}
         </ul>
       )}
-    </ActionGroup>
+    </section>
   );
 }
 

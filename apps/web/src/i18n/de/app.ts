@@ -434,9 +434,9 @@ export const appTexts = {
     },
     corrections: 'Spielfeld korrigieren',
     connections: {
-      title: 'Verbindungen',
+      title: 'Verbunden mit',
       change: 'Verbindungen ändern',
-      connectedTo: 'Verbunden mit',
+      none: 'Keinem Ort',
     },
     side: {
       above: 'Oben',

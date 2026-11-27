@@ -429,9 +429,9 @@ export const appTexts = {
     },
     corrections: 'Correct the board',
     connections: {
-      title: 'Connections',
+      title: 'Connected to',
       change: 'Change connections',
-      connectedTo: 'Connected to',
+      none: 'No location',
     },
     side: {
       above: 'Above',

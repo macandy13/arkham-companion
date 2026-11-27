@@ -27,7 +27,7 @@ test('the house map with Roland Banks in the Hallway', async ({ page }) => {
   await expect(hallway.getByRole('img', { name: 'Roland Banks' })).toBeVisible();
 });
 
-test('the Attic’s connections opened, the Parlor connected to it as a card connects them', async ({
+test('the Attic’s connections ticked in the menu its line opens, the Parlor connected as a card connects them', async ({
   page,
 }) => {
   await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
@@ -36,8 +36,8 @@ test('the Attic’s connections opened, the Parlor connected to it as a card con
     .getByRole('dialog', { name: 'Attic' })
     .or(page.getByRole('region', { name: 'Attic' }));
 
-  await details.getByRole('button', { name: 'Change connections' }).click();
-  const connections = details.getByRole('list', { name: 'Connected to' });
+  await details.getByRole('region', { name: 'Connected to' }).getByRole('button').click();
+  const connections = details.getByRole('list', { name: 'Change connections' });
   await connections.getByRole('button', { name: 'Parlor' }).click();
 
   await expect(connections.getByRole('button', { name: 'Parlor' })).toHaveAttribute(

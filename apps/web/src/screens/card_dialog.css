@@ -396,6 +396,11 @@
   display: none;
 }
 
+/* A menu open on the page lies over the tucked cards, which would otherwise cover its last lines. */
+#board dialog[data-shell]:has(> article button[aria-expanded='true'] + ul) > [data-part='tucked'] {
+  visibility: hidden;
+}
+
 #board dialog[data-shell]:not([data-lowered]):has(> [data-part='tucked'] > *) > article {
   padding-block-end: calc(var(--attached-card-width) * 7 / 10 + var(--space-3));
 }
