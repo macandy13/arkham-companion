@@ -321,10 +321,10 @@ describe('enemy phase', () => {
       .start();
 
     const asked = toEnemyPhase(context, state, alice, bob);
-    const answered = stateAfter(context, asked, answer('hunter:rat:investigator', 'bob'));
+    const answered = stateAfter(context, asked, answer('move:rat:investigator', 'bob'));
     const resumed = stateAfter(context, answered, next);
 
-    expect(asked.pending.map((decision) => decision.id)).toEqual(['hunter:rat:investigator']);
+    expect(asked.pending.map((decision) => decision.id)).toEqual(['move:rat:investigator']);
     expect(asked.meta.steps).toEqual([{ id: 'enemiesAttack' }]);
     expect(resumed.meta.steps).toEqual([
       { id: 'enemiesAttack', attacks: [{ enemyId: instanceId('rat'), investigatorId: bob }] },

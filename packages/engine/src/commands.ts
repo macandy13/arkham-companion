@@ -91,7 +91,6 @@ export type Command = AskedByCard &
     | ReadyEnemy
     | MoveEnemy
     | MoveHunters
-    | MoveHunter
     | RequestDecision
     | TestSkill
     | ForEachPoint
@@ -958,13 +957,24 @@ export interface ReadyEnemy {
 }
 
 /**
- * A card effect moves an enemy in play, or the players carry such an effect out by dragging the
- * enemy on the map. With `to` alone it goes straight there ("move it to the Hallway"), connected
- * or not. With the destination rule `toward` it moves one connection along a shortest path to
- * that location ("each unengaged Ghoul enemy moves 1 location towards the Parlor"), exhausted or
- * not: it stays when it is there already or has no path (also while `toward` is out of play), and
- * equally short first steps become a `chooseLocation` decision for the lead investigator
- * (`move:<enemy>`), answered by the same move with `to` naming the chosen step.
+ * The destination rule of a `MoveEnemy` step (`enemyWay` in `enemy_ways.ts`):
+ *
+ * - a location: along a shortest path there ("each unengaged Ghoul enemy moves 1 location
+ *   towards the Parlor"), staying while it is out of play;
+ * - `prey`: the hunter's rule (Rules Reference, "Hunter"), towards the nearest investigator, prey
+ *   breaking ties; equally near investigators whose ways part are first a `chooseInvestigator`
+ *   decision (`move:<enemy>:investigator`), answered by a move toward the chosen one's location.
+ *   It stays while an investigator is at its location.
+ */
+export type EnemyDestination = InstanceId | 'prey';
+
+/**
+ * A card effect or a hunter's step moves an enemy in play, or the players carry such an effect
+ * out by dragging the enemy on the map. With `to` alone it goes straight there ("move it to the
+ * Hallway"), connected or not. With a destination rule (`toward`, `EnemyDestination`) it moves
+ * one connection along its way, exhausted or not: it stays when it is there already or has no
+ * way, and equally short first steps become a `chooseLocation` decision for the lead
+ * investigator (`move:<enemy>`), answered by the same move with `to` naming the chosen step.
  *
  * An engaged enemy moves only with its investigator, so a plain effect is refused for it
  * (`enemyEngaged`); a forced instruction (`forced`, "each Cultist enemy moves once toward
@@ -988,8 +998,8 @@ export type MoveEnemy = {
 } & (
   | { to: InstanceId; toward?: never }
   | {
-      /** The location it heads for, one connection at a time. */
-      toward: InstanceId;
+      /** Where it heads, one connection at a time. */
+      toward: EnemyDestination;
       /** The first step the players chose between equally short ones; it must be one of them. */
       to?: InstanceId;
     }
@@ -997,10 +1007,9 @@ export type MoveEnemy = {
 
 /**
  * Moves the ready, unengaged hunter enemies one step towards the nearest
- * investigator (enemy phase; the phase assistant of M1.10 issues it). Hunters
- * with an investigator at their location, without a route or with a pending
- * decision stay. Equally near investigators and equally short routes are
- * settled by prey and then handed to the players. When two or more hunters
+ * investigator (enemy phase; the phase assistant of M1.10 issues it), each with
+ * a `MoveEnemy` toward its prey. Hunters with an investigator at their location,
+ * without a route or with a pending decision stay. When two or more hunters
  * would move, the lead investigator chooses the order (`hunterOrder`
  * decision, see `handleMoveHunters`) and nothing moves yet. Produces
  * `CardMoved` per moving hunter, then `EnemyEngaged` or `DecisionRequested`,
@@ -1015,24 +1024,6 @@ export interface MoveHunters {
    */
   hunters?: InstanceId[];
 }
-
-/**
- * Moves one hunter a step, as the players decided a tie in `MoveHunters`: to
- * the neighbouring location `to`, or towards `towards` along that
- * investigator's shortest routes (a remaining tie between routes becomes a
- * `chooseLocation` decision). The hunter must be an unengaged enemy at a location;
- * `to` must be connected to it. With neither `to` nor `towards` the hunter moves
- * along its own rule, as `MoveHunters` would move it alone. Produces `CardMoved`, then `EnemyEngaged` or
- * `DecisionRequested`.
- */
-export type MoveHunter = {
-  type: 'MoveHunter';
-  enemyId: InstanceId;
-} & (
-  | { to: InstanceId; towards?: never }
-  | { towards: InvestigatorId; to?: never }
-  | { to?: never; towards?: never }
-);
 
 /**
  * Raises a decision, for rule modules and card effects ("choose one: …", `leadDecides`).

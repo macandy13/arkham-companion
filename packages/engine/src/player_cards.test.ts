@@ -23,7 +23,7 @@ import {
   type GameState,
   type InstanceId,
 } from './index';
-import { rejectionFrom, stateAfter } from '../test/utils';
+import { answer, rejectionFrom, stateAfter } from '../test/utils';
 
 const alice = investigatorId('alice');
 const bob = investigatorId('bob');
@@ -213,6 +213,28 @@ describe('a location closed to enemies (Barricade)', () => {
       .start();
 
     const after = stateAfter(context, state, barricadeOnHall, { type: 'MoveHunters' });
+
+    expect(zoneOf(after, ghoul)).toEqual(atLocation(parlor));
+  });
+
+  it('keeps a hunter out on its way to the investigator the players chose', () => {
+    // Alice two steps away through the hall or the parlor, Bob two steps away through the shed.
+    const shed = instanceId('shed');
+    const garden = instanceId('garden');
+    const { context, state } = row
+      .withLocation(parlor, location)
+      .withLocation(shed, location)
+      .withLocation(garden, location)
+      .withConnection(study, parlor)
+      .withConnection(parlor, attic)
+      .withConnection(study, shed)
+      .withConnection(shed, garden)
+      .withInvestigator(bob, { locationId: garden })
+      .withCard(ghoul, hunterGhoul, atLocation(study))
+      .start();
+    const asked = stateAfter(context, state, barricadeOnHall, { type: 'MoveHunters' });
+
+    const after = stateAfter(context, asked, answer(`move:${ghoul}:investigator`, alice));
 
     expect(zoneOf(after, ghoul)).toEqual(atLocation(parlor));
   });

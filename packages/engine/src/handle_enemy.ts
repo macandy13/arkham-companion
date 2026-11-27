@@ -1,11 +1,5 @@
 import { isClosedToEnemy, isEnemyRestricted } from './restrictions';
-import {
-  firstSteps,
-  isLocationInPlay,
-  neighbours,
-  requireLocationInPlay,
-  shortestPaths,
-} from './board';
+import { neighbours, requireLocationInPlay } from './board';
 import { resolveAmount, type EngineContext } from './cards';
 import type {
   DamageEnemy,
@@ -15,12 +9,15 @@ import type {
   EngageEnemy,
   EvadeEnemy,
   ExhaustEnemy,
+  EnemyDestination,
   MoveEnemy,
   ReadyEnemy,
   RetreatEnemy,
 } from './commands';
 import { handleEnemyAttacks } from './attacks_of_opportunity';
-import { chooseLocation, engageEvents, investigatorsAt } from './engagement';
+import { chooseInvestigator, chooseLocation, engageEvents, investigatorsAt } from './engagement';
+import { enemyWay } from './enemy_ways';
+import { preyPrompt } from './prey';
 import type { EnemyDefeated, EnemyDisengaged, EnemyEngaged, Event, ExhaustChanged } from './events';
 import {
   defeatedByDamage,
@@ -128,21 +125,38 @@ export function handleMoveEnemy(ctx: EngineContext, state: GameState, cmd: MoveE
 }
 
 /**
- * One step towards `cmd.toward`: the only first step, the one the players chose (`to`), or the
- * lead investigator's choice between equally short ones (Rules Reference, "Choices").
+ * One step of the way `cmd.toward` leads (`enemyWay`): the only first step, the one the players
+ * chose (`to`), or the lead investigator's choice (Rules Reference, "Choices"), first between
+ * equally near investigators whose ways part, then between equally short steps.
  */
 function stepToward(
   ctx: EngineContext,
   state: GameState,
   enemy: CardInstance,
-  cmd: MoveEnemy & { toward: InstanceId },
+  cmd: MoveEnemy & { toward: EnemyDestination },
 ): Event[] {
-  const steps = enemySteps(ctx, state, enemy, cmd.toward);
+  const { steps, investigators } = enemyWay(ctx, state, enemy, cmd.toward);
+  const step = (move: { toward: EnemyDestination; to?: InstanceId }): MoveEnemy => ({
+    type: 'MoveEnemy',
+    enemyId: enemy.id,
+    ...move,
+    ...(cmd.forced === true ? { forced: true } : {}),
+    ...(cmd.attacksIfItEngages === true ? { attacksIfItEngages: true } : {}),
+  });
   if (cmd.to !== undefined) {
     if (!steps.includes(cmd.to))
       throw new CommandRejected({ code: 'enemyCannotMove', cardId: enemy.id, to: cmd.to });
     return arrive(ctx, state, enemy, cmd.to, cmd);
   }
+  if (investigators !== undefined)
+    return chooseInvestigator(
+      state,
+      enemy.id,
+      `move:${enemy.id}:investigator`,
+      preyPrompt(ctx, state, enemy, 'decision.chooseHunterTarget'),
+      investigators,
+      (chosen) => step({ toward: chosen.locationId }),
+    );
   const [only] = steps;
   if (only === undefined) return [];
   if (steps.length === 1) return arrive(ctx, state, enemy, only, cmd);
@@ -153,31 +167,7 @@ function stepToward(
     `move:${enemy.id}`,
     'decision.chooseEnemyDestination',
     steps,
-    (to) => ({
-      type: 'MoveEnemy',
-      enemyId: enemy.id,
-      toward: cmd.toward,
-      to,
-      ...(cmd.forced === true ? { forced: true } : {}),
-      ...(cmd.attacksIfItEngages === true ? { attacksIfItEngages: true } : {}),
-    }),
-  );
-}
-
-/**
- * The first steps of the enemy's shortest paths to `toward`: none while `toward` is out of play
- * (the Parlor while act 1 holds it set aside) or out of reach. Like a hunter, it does not step
- * into a location closed to it (RR "Hunter").
- */
-function enemySteps(
-  ctx: EngineContext,
-  state: GameState,
-  enemy: CardInstance,
-  toward: InstanceId,
-): InstanceId[] {
-  if (!isLocationInPlay(state, toward)) return [];
-  return firstSteps(shortestPaths(ctx, state, locationOf(state, enemy), toward)).filter(
-    (step) => !isClosedToEnemy(ctx, state, enemy, requireLocationInPlay(state, step)),
+    (to) => step({ toward: cmd.toward, to }),
   );
 }
 
