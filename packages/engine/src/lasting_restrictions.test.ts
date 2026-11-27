@@ -7,6 +7,7 @@ import {
   newGame,
   PlayTable,
   type Command,
+  type Forbidden,
   type InvestigatorRestriction,
 } from './index';
 import { stateAfter } from '../test/utils';
@@ -34,10 +35,15 @@ const restrictAlice = (restriction: InvestigatorRestriction): Command => ({
 });
 
 describe('RestrictInvestigator', () => {
-  it.each([
+  it.each<{ name: string; restriction: InvestigatorRestriction; forbidden?: Forbidden }>([
     {
       name: 'one card type, which the players keep to',
       restriction: noSkillsThisRound,
+      forbidden: undefined,
+    },
+    {
+      name: 'committing assets and events, which leaves skills to commit',
+      restriction: { cannot: ['commit'], what: 'cards', cards: { types: ['asset', 'event'] } },
       forbidden: undefined,
     },
     {
