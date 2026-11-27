@@ -53,6 +53,7 @@ The cards below add when an objective is checked, what counts towards it, and ac
 - Doom "for each [[Ghoul]] enemy in the Hallway or Parlor" (They're Getting Out!, at the end of the round) counts the matching enemies there as the round-end window opens, engaged ones included (an engaged enemy is at its investigator's location).
   Test: `packages/engine/src/triggers.test.ts › an effect repeated for each Ghoul enemy in the Hall or Parlor › places 2 doom for the ghoul engaged with alice in the hall and the one in the parlor`
   - Placed outside the mythos phase, it can only advance the agenda at the next threshold check.
+    Test: `packages/engine/src/doom.test.ts › threshold check › does not ask when doom reaches the threshold outside a check`
   - Our reading: counting as the window opens rather than as the effect resolves differs only if another round-end ability moved a Ghoul first, which no Night of the Zealot card does.
 - Ritual Site (The Devourer Below): "At the end of the round, if there are fewer than 2 clues per investigator on Ritual Site: Add clues to it until it has 2 clues per investigator on it."
   Test: `packages/engine/src/triggers.test.ts › trigger bus › turn-end and round-end abilities › tops up the $cellar cellar to 4 clues at the end of the round only once revealed`
