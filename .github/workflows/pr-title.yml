@@ -2,10 +2,15 @@ name: PR title
 
 # PRs are squash-merged with the PR title as the commit message, so the title must be a
 # Conventional Commit (feat:, fix:, docs:, …). Release Please builds the changelog from it.
-# pull_request_target is safe here: the job never checks out or runs PR code.
+# pull_request, not pull_request_target: GitHub started no pull_request_target run for Release
+# Please's pushes to its release PR, so the required `title` check never reported there and
+# blocked the merge, while the pull_request workflows did run. The job only reads the title, so
+# the read-only token a pull_request run gets is enough, fork PRs included. A PR now runs its
+# own copy of this file; a PR that changes .github/ waits for the owner, which keeps a PR from
+# loosening the check that judges it.
 
 on:
-  pull_request_target:
+  pull_request:
     types: [opened, edited, synchronize, reopened]
 
 permissions:
