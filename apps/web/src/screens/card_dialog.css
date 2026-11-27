@@ -396,8 +396,13 @@
   display: none;
 }
 
-/* A menu open on the page lies over the tucked cards, which would otherwise cover its last lines. */
-#board dialog[data-shell]:has(> article button[aria-expanded='true'] + ul) > [data-part='tucked'] {
+/*
+ * The menu of a location's connections opens downwards over the tucked cards, which would cover its
+ * last lines, so they step aside while it is open; the action row's menus open upwards and leave them.
+ */
+#board
+  dialog[data-shell]:has(> article [data-part='connections'] > button[aria-expanded='true'])
+  > [data-part='tucked'] {
   visibility: hidden;
 }
 
