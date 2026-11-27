@@ -1,4 +1,5 @@
 import type {
+  AddConnection,
   AdjustInvestigator,
   Adjustment,
   AttachPlayerCard,
@@ -8,9 +9,10 @@ import type {
   MoveEnemy,
   MoveInvestigator,
   ReleaseChaosToken,
+  RemoveConnection,
   SealChaosToken,
 } from './commands';
-import type { CardCode, InstanceId, InvestigatorId } from './ids';
+import type { CardCode, InstanceId, InvestigatorId, MapId } from './ids';
 import type { ChaosToken, InvestigatorStat, SkillName, TokenKind } from './state';
 
 /*
@@ -55,6 +57,22 @@ export function moveAlong(investigator: InvestigatorId, to: InstanceId): MoveInv
 /** The investigator takes one clue from `location`, their own, without a test (`DiscoverClues`). */
 export function takeOneClue(location: InstanceId, investigator: InvestigatorId): DiscoverClues {
   return { type: 'DiscoverClues', investigatorId: investigator, locationId: location, amount: 1 };
+}
+
+/**
+ * "[Location] is connected to [location]", as a card such as Shortcut (2) connects them
+ * (`AddConnection`): both ways, stored on `map`, the map of the location the players opened.
+ */
+export function connectLocations(from: InstanceId, to: InstanceId, map: MapId): AddConnection {
+  return { type: 'AddConnection', mapId: map, from, to };
+}
+
+/**
+ * "[Location] is no longer connected to [location]" (`RemoveConnection`): the edge goes, or the
+ * cards' printed connection between them is cut.
+ */
+export function disconnectLocations(from: InstanceId, to: InstanceId): RemoveConnection {
+  return { type: 'RemoveConnection', from, to };
 }
 
 /** A player card seals `token` on the investigator (`SealChaosToken`). */

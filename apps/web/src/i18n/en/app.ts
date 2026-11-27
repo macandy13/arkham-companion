@@ -428,6 +428,11 @@ export const appTexts = {
       clue: 'Clue',
     },
     corrections: 'Correct the board',
+    connections: {
+      title: 'Connections',
+      change: 'Change connections',
+      connectedTo: 'Connected to',
+    },
     side: {
       above: 'Above',
       left: 'To the left',

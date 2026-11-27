@@ -27,6 +27,26 @@ test('the house map with Roland Banks in the Hallway', async ({ page }) => {
   await expect(hallway.getByRole('img', { name: 'Roland Banks' })).toBeVisible();
 });
 
+test('the Attic’s connections opened, the Parlor connected to it as Shortcut (2) connects them', async ({
+  page,
+}) => {
+  await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
+  await page.getByRole('figure', { name: 'House' }).getByRole('group', { name: 'Attic' }).click();
+  const details = page
+    .getByRole('dialog', { name: 'Attic' })
+    .or(page.getByRole('region', { name: 'Attic' }));
+
+  await details.getByRole('button', { name: 'Change connections' }).click();
+  const connections = details.getByRole('list', { name: 'Connected to' });
+  await connections.getByRole('button', { name: 'Parlor' }).click();
+
+  await expect(connections.getByRole('button', { name: 'Parlor' })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
+  await connections.scrollIntoViewIfNeeded();
+});
+
 test('Roland Banks’ card opened whole from its art, to read its abilities', async ({ page }) => {
   await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
 

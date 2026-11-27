@@ -581,6 +581,41 @@
   color: var(--color-text-muted);
 }
 
+/*
+ * The other locations to connect to or cut from (LocationConnections): opened, the group takes a
+ * line of its own and lays them out under its button as toggles side by side, a connected one
+ * filled in brass like a picked answer.
+ */
+#board #map footer > section:has(> [data-part='connections']) {
+  flex-basis: 100%;
+  padding-left: 0;
+  border-left: none;
+}
+
+#map footer > section > [data-part='connections'] {
+  grid-row: 3;
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+#map [data-part='connections'] > li {
+  padding: 0;
+  border: none;
+  background: none;
+}
+
+#map [data-part='connections'] button[aria-pressed='true'] {
+  border-color: var(--color-accent);
+  background: var(--color-accent);
+  color: var(--color-accent-text);
+}
+
 /* The location's card, as big as a zoomed card. */
 #map [data-mode='location'] > svg {
   align-self: center;

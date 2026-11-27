@@ -433,6 +433,11 @@ export const appTexts = {
       clue: 'Hinweis',
     },
     corrections: 'Spielfeld korrigieren',
+    connections: {
+      title: 'Verbindungen',
+      change: 'Verbindungen ändern',
+      connectedTo: 'Verbunden mit',
+    },
     side: {
       above: 'Oben',
       left: 'Links',
