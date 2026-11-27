@@ -51,7 +51,7 @@ describe('an enemy that cannot move', () => {
     },
     {
       name: 'a card effect moving it towards the cellar',
-      move: { type: 'MoveEnemyTowards', enemyId: hunter, towards: cellar },
+      move: { type: 'MoveEnemy', enemyId: hunter, toward: cellar },
     },
     { name: 'an elusive retreat', move: { type: 'RetreatEnemy', enemyId: hunter } },
   ])('stays in the hall after $name', ({ move }) => {
