@@ -1,3 +1,7 @@
+// The file, not the package index: merge_gate runs under Node's type stripping (NodeNext), and
+// the index re-exports without file extensions.
+import { escapeRegExp } from '@arkham/util/src/string.ts';
+
 /**
  * The rules ledger: every claim on a rules summary page (`docs/rules/`) names the test that
  * proves it, as a code span `` `packages/engine/src/hunters.test.ts › MoveHunters › heads for the nearest investigator` ``
@@ -49,16 +53,17 @@ export function missingTests(
   });
 }
 
-// Where a call with this title as its first argument starts, at or after `from`. Only a call's
-// first argument counts, so the same words in a command literal (`{ type: 'MoveHunters' }`) don't.
+// Where a `describe`, `it` or `test` call (`.skip(` and the like too, and the `])(` after an
+// `.each` table) with this title as its first argument ends, at or after `from`. Only those calls
+// count, so the same words in a command literal (`{ type: 'MoveHunters' }`) or an assertion don't. The order is checked, not the
+// nesting: an `it` moved into a later sibling `describe` still passes.
 function titleCallIndex(source: string, title: string, from: number): number | undefined {
   const quoted = ["'", '"', '`'].map((quote) => `${quote}${escapeRegExp(title)}${quote}`);
-  const call = new RegExp(`\\(\\s*(?:${quoted.join('|')})`, 'g');
+  const call = new RegExp(
+    `(?:\\b(?:describe|it|test)(?:\\.\\w+)*|\\]\\))\\(\\s*(?:${quoted.join('|')})`,
+    'g',
+  );
   call.lastIndex = from;
   const match = call.exec(source);
   return match === null ? undefined : match.index + match[0].length;
-}
-
-function escapeRegExp(text: string): string {
-  return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
