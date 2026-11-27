@@ -24,7 +24,7 @@
   Test: `packages/engine/src/modifiers.test.ts › skillValues › never goes below 0: intellect 2 with -5`
 - "Cannot" is absolute: no ability or effect overrides it ([Cannot](https://arkhamdb.com/rules#Cannot)). Card rulings: [Restrictions](cards/restrictions.md).
 - An engaged enemy is at its investigator's location, so "each enemy at X" includes enemies engaged with investigators at X.
-  Test: `packages/engine/src/conditions.test.ts › an effect on each card in play at your location › places doom only on the Cultist in the hall with alice`
+  Test: `packages/engine/src/conditions.test.ts › a condition on the enemies at your location › gives alice $horror horror while the ghoul is $ghoulIs`
 - An [action ability](https://arkhamdb.com/rules#Abilities) ("[action]: …") on an encounter or scenario card is taken as an action in the investigator's own turn. Who may take it depends on where the card is:
   Test: `packages/engine/src/card_actions.test.ts › UseCardAction › lets bob take the action of $name`
   Test: `packages/engine/src/card_actions.test.ts › UseCardAction › rejects bob taking the action of $name`
@@ -67,7 +67,7 @@
   Test: `packages/engine/src/triggers.test.ts › an effect on an investigator the window investigator picks › heals alice without asking when she is the only one there`
 - "You must either A or B" (and "the lead investigator must decide") offers only the options that can change the game state ([Must](https://arkhamdb.com/rules#Must)):
   Test: `packages/engine/src/triggers.test.ts › a choice without the options that cannot be resolved › offers alice with $clues clues only the options that can be resolved`
-  Test: `packages/engine/src/triggers.test.ts › a choice whose options are offered only while their condition holds › with $damage damage and $horror horror alice takes the one she has more of, unasked`
+  Test: `packages/scenarios/src/the_devourer_below/cards.test.ts › The Devourer Below card abilities › Arkham Woods (Quiet Glade) › lets alice pick only the horror when she has no damage`
   - with no clues, "spend 1 clue or take 2 damage" leaves only the damage,
   - and with no damage the Quiet Glade's "heal 1 damage or 1 horror" leaves only the horror.
   - With an empty hand, Umôrdhoth's Wrath's "discard a card" can't be chosen, so each point costs 1 damage and 1 horror; the engine doesn't track hands, so the players keep to this at the table.
@@ -75,5 +75,4 @@
   - An option done at the table (no effect the engine runs) always stays.
   - With neither possible, nothing happens ([Effects](https://arkhamdb.com/rules#Effects): resolve as much as you are able).
     Test: `packages/engine/src/triggers.test.ts › a choice without the options that cannot be resolved › asks nothing when alice can resolve no option`
-    Test: `packages/engine/src/triggers.test.ts › a choice whose options are offered only while their condition holds › does nothing when no option holds`
   - An option that resolves only in part is still allowed by the rule; the engine drops it for now (no Night of the Zealot card has one).

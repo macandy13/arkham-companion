@@ -32,7 +32,7 @@ Card rulings: [Objectives and special acts and agendas](cards/objectives.md).
     Test: `packages/engine/src/doom.test.ts › Advance the act › does not count clues on the act towards its cost, and removes them as it advances`
 - Advancing an act removes all tokens from it (RR "Act Deck and Agenda Deck" step 1), flips it, follows the back, and makes the next act current (unless the back names one).
   Test: `packages/engine/src/doom.test.ts › Advance the act › does not count clues on the act towards its cost, and removes them as it advances`
-  Test: `packages/engine/src/doom.test.ts › Advance the act › keeps doom in play when an act advances`
+  Test: `packages/engine/src/doom.test.ts › Advance the act › charges the clues per investigator and makes the next act current`
 - For agenda and act alike, the back resolves completely first, including any choice it asks. Only then does the next card become current, and at that same moment the advanced card leaves the game (RR "Act Deck and Agenda Deck" step 3: "simultaneously removed").
   Test: `packages/engine/src/triggers.test.ts › trigger bus › runs the reverse side of the advancing agenda before the next one becomes current`
   Test: `packages/engine/src/doom.test.ts › a last act whose reverse side lets the lead investigator choose the resolution › keeps the last act in play while the question is open instead of asking for a resolution`

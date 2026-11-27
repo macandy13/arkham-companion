@@ -69,6 +69,6 @@ The Midnight Masks' Cultist deck is a deck of its own, out of play:
 
 - The players would discard the whole deck, shuffle the discard back in when the deck runs out ([encounter deck](https://arkhamdb.com/rules#Encounter_Deck)) and stop when no progress is possible ([effects](https://arkhamdb.com/rules#Effects): resolve as much as possible).
 - When the discard was just shuffled into the deck, as Rise of the Ghouls does first, that ends where it started, so the engine draws and discards nothing.
-  Test: `packages/scenarios/src/the_gathering/the_gathering.test.ts › The Gathering agendas 2 and 3 › shuffles the discard back and makes the lead draw the first Ghoul enemy`
+  Test: `packages/scenarios/src/the_gathering/the_gathering.test.ts › The Gathering agendas 2 and 3 › only shuffles when no Ghoul enemy is left among the encounter cards`
 - When the match is only in the discard (Infested Pipes late in Queen of Ash), the engine discards the rest of the deck, shuffles the discard back in and goes on discarding until the match turns up.
   Test: `packages/engine/src/encounter.test.ts › DrawCard with a match › discards the whole deck and shuffles the discard back in when the only match is in the discard`

@@ -37,5 +37,5 @@ Card rulings: [Story assets and earned cards](cards/story-assets.md).
   Test: `packages/engine/src/elimination.test.ts › DefeatInvestigator › records that a card effect defeated the investigator`
   Test: `packages/engine/src/elimination.test.ts › DefeatInvestigator › defeats an investigator outside their turn and the investigation phase`
 - Eliminated investigators still count for per-investigator values, and only there ([Elimination](https://arkhamdb.com/rules#Elimination)): otherwise they are no longer in the game, so "if there are exactly 1 or 2 investigators in the game" (Miskatonic Quad, Merchant District) counts only those still playing.
-  Test: `packages/scenarios/src/spreading_flames/cards.test.ts › Spreading Flames card abilities › Miskatonic Quad › refuses the move with 3 investigators in the game`
+  Test: `packages/engine/src/card_actions.test.ts › a fast action during your turn with 1 or 2 investigators in the game › offers alice the action with $game: $offered`
   Test: `packages/engine/src/doom.test.ts › Advance the act › keeps the starting player count after bob is defeated, so alice alone cannot pay`

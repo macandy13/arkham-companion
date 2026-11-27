@@ -22,7 +22,7 @@ Source: [RR "Bless and Curse Tokens"](https://arkhamdb.com/rules#Bless_and_Curse
 - At the end of the test (ST.8), a revealed bless or curse token goes back to the pool instead of into the bag.
   Test: `packages/engine/src/chaos_bag.test.ts › bless and curse tokens › revealed in a skill test › $name`
 - Cancelled or ignored in its entirety, a bless or curse token counts as never revealed, so it goes back into the bag, not the pool. No ruling says so directly; it is our reading of the Counterspell FAQ ("as if it had never been revealed"). The app sends only the resolved tokens as `revealed`.
-  Test: `packages/engine/src/draw_tokens.test.ts › a test draw › puts back the −1 a cancelled bless made the tester reveal`
+  Test: `packages/engine/src/draw_tokens.test.ts › a test draw › lists every drawn token, and as revealed only the resolved ones as they came out`
 - Revealed outside a skill test, they have no value and go back into the bag like any other token, unless a card says otherwise.
 - In the app: the answer to a skill test the app drew for carries the tokens (`ResolveDecision.revealed`), and the bless and curse among them leave the bag. A test drawn at the table changes nothing; the players return them with the chaos bag's − button.
 

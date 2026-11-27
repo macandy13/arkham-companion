@@ -42,7 +42,7 @@
     Test: `packages/engine/src/triggers.test.ts › trigger bus › abilities after an enemy is evaded › fires for an exhausted enemy evaded by a card effect`
   - "After you successfully evade [this enemy]" (Cornelia Akely) comes at the same point, but only after a passed evasion test, never after an automatic evade ([Automatic Failure/Success](https://arkhamdb.com/rules#Automatic_Failure_Success)).
 - [Engage](https://arkhamdb.com/rules#Engage_Action): take an enemy at your location into your threat area, even if it's exhausted, aloof or engaged with someone else (it disengages from them). Engaging and being engaged are the same event.
-  Test: `packages/engine/src/enemies.test.ts › engagement commands › rejects engaging $name`
+  Test: `packages/engine/src/triggers.test.ts › trigger bus › abilities after an engagement or a clue discovery › deals alice 1 horror when the lurker $name`
 - [Move](https://arkhamdb.com/rules#Move): to a connecting location unless the effect says otherwise.
   Test: `packages/engine/src/investigators.test.ts › MoveInvestigator › rejects a location that is not connected`
   Test: `packages/engine/src/investigators.test.ts › MoveInvestigator › allows an unconnected destination when connections are ignored`
