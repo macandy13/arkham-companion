@@ -61,6 +61,7 @@ jobs:
         with:
           node-version: 22
       # The head is read fresh: a comment event carries no PR, and a review may name an older one.
+      # gh prints each object of a --jq stream as one compact JSON line: NDJSON as cli.ts reads it.
       - id: decide
         run: |
           pr_json=$(gh api "repos/$GITHUB_REPOSITORY/pulls/$PR")
@@ -68,9 +69,9 @@ jobs:
           owner=$(jq -r .base.repo.owner.login <<<"$pr_json")
           gh api --paginate "repos/$GITHUB_REPOSITORY/pulls/$PR/files" --jq '.[].filename' > "$RUNNER_TEMP/files.txt"
           gh api --paginate "repos/$GITHUB_REPOSITORY/pulls/$PR/reviews" \
-            --jq '.[] | {author: .user.login, state, commit: .commit_id}' -c > "$RUNNER_TEMP/reviews.ndjson"
+            --jq '.[] | {author: .user.login, state, commit: .commit_id}' > "$RUNNER_TEMP/reviews.ndjson"
           gh api --paginate "repos/$GITHUB_REPOSITORY/issues/$PR/comments" \
-            --jq '.[] | {author: .user.login, body}' -c > "$RUNNER_TEMP/comments.ndjson"
+            --jq '.[] | {author: .user.login, body}' > "$RUNNER_TEMP/comments.ndjson"
           outcome=$(node packages/merge_gate/src/cli.ts --head "$head" --owner "$owner" \
             --files "$RUNNER_TEMP/files.txt" --reviews "$RUNNER_TEMP/reviews.ndjson" \
             --comments "$RUNNER_TEMP/comments.ndjson")
