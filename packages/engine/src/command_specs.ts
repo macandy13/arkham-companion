@@ -53,6 +53,7 @@ import {
   handleDiscoverClues,
   handleMoveInvestigator,
   handlePlayCard,
+  handleRestrictInvestigator,
   handleSetLeadInvestigator,
   handleTakeDamageAndHorror,
 } from './handle_investigator';
@@ -317,6 +318,9 @@ const COMMAND_SPECS: CommandSpecs = {
   },
   AdjustActions: {
     handle: (_ctx, state, command, strict) => handleAdjustActions(state, command, strict),
+  },
+  RestrictInvestigator: {
+    handle: (_ctx, state, command) => handleRestrictInvestigator(state, command),
   },
   SpendActions: { handle: (_ctx, state, command) => handleSpendActions(state, command) },
   DealEnemyAttack: {

@@ -232,6 +232,7 @@ export {
   dealDamageTo,
   discoverClues,
   loseActions,
+  youCannotThisRound,
   loseResources,
   endYourTurn,
   exhaustEnemy,

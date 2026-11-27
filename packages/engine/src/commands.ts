@@ -15,6 +15,7 @@ import type {
   ScenarioId,
 } from './ids';
 import type { GridCell, MapPlacement, MapSpec } from './map';
+import type { InvestigatorRestriction } from './restrictions';
 import type {
   Decision,
   ChaosBagChangeKind,
@@ -105,6 +106,7 @@ export type Command = AskedByCard &
     | UseCardAction
     | SetLeadInvestigator
     | AdjustActions
+    | RestrictInvestigator
     | SpendActions
     | DealEnemyAttack
     | EnemyAttacks
@@ -335,6 +337,18 @@ export interface HealInvestigator {
   investigatorId: InvestigatorId;
   stat: WoundKind;
   amount: number;
+}
+
+/**
+ * An effect forbids the investigator something until the round ends (`LastingRestriction`):
+ * Languor's "you cannot play or commit cards of that type this round". Nothing for an
+ * investigator no longer active. Produces `InvestigatorRestricted`.
+ */
+export interface RestrictInvestigator {
+  type: 'RestrictInvestigator';
+  investigatorId: InvestigatorId;
+  restriction: InvestigatorRestriction;
+  until: 'round';
 }
 
 /**

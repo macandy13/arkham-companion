@@ -74,6 +74,8 @@ import {
   whenTokensOnSelf,
   you,
   yourLocation,
+  whenTurnBegins,
+  youCannotThisRound,
   youMustEither,
 } from '@arkham/engine';
 import { act, agenda, enemy, location, picturesOf, treachery } from '../card_builders';
@@ -178,6 +180,30 @@ export const TORMENT_DECISION = decisionId('queenOfAsh.torment');
 const dissonance = 'scenario.queenOfAsh.dissonance';
 const torment = 'scenario.queenOfAsh.torment';
 
+/**
+ * Id of the question Languor asks its holder as their turn begins: what was the top card of their
+ * deck they discarded? The deck is the players', so they name it: a weakness they draw, or the
+ * card type they cannot play or commit this round.
+ */
+export const LANGUOR_DECISION = decisionId('queenOfAsh.languor');
+const languor = 'scenario.queenOfAsh.languor';
+
+/** Languor's answers: a weakness, drawn by hand, or a card type its holder cannot use this round. */
+const languorOptions = [
+  { id: 'weakness', label: `${languor}.weakness`, effects: [] },
+  ...(['asset', 'event', 'skill'] as const).map((cardType) => ({
+    id: cardType,
+    label: `${languor}.${cardType}`,
+    effects: [
+      youCannotThisRound({
+        cannot: ['play', 'commit'],
+        what: 'cards',
+        cards: { types: [cardType] },
+      }),
+    ],
+  })),
+];
+
 /** The card types "choose a cardtype" offers, each an option of the choice whose labels start with `key`. */
 function cardTypeOptions(key: string) {
   return (['asset', 'event', 'skill'] as const).map((cardType) => ({
@@ -259,7 +285,8 @@ const willpowerOrHorror = skillTest('willpower', 4, { onFail: [takeHorror(1)] })
  * - Blasphemous Invocation's Cultist drawn after a fail by 0 (only once a player card lowered the
  *   difficulty to 0) against a Cultist without doom: no doom was placed, but the app only draws
  *   when there is no such Cultist
- * - Languor's limit of 1 per investigator and its discard as its holder's turn begins
+ * - Languor's discard as its holder's turn begins, and drawing it when it is a weakness: the app
+ *   asks what it was and keeps a card type its holder cannot use this round in the log
  * - Collector's deckbuilding: the players add it to their decks
  */
 export const queenOfAshCardDefs: readonly CardStats[] = [
@@ -677,7 +704,11 @@ export const queenOfAshCardDefs: readonly CardStats[] = [
     pictures: jpg,
     traits: ['Hex', 'Bane'],
     quantity: 2,
-    abilities: [whenRevealed(putIntoThreatArea())],
+    limit: 'onePerInvestigator',
+    abilities: [
+      whenRevealed(putIntoThreatArea()),
+      whenTurnBegins(youMustEither(LANGUOR_DECISION, `${languor}.prompt`, languorOptions)),
+    ],
     actions: [{ actions: 2, effects: [discardSelf()] }],
   }),
   treachery({

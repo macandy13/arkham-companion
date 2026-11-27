@@ -87,6 +87,7 @@ export function noticeKindOf(event: Event): NoticeKind | undefined {
     case 'InvestigatorResigned':
     case 'LeadInvestigatorChanged':
     case 'ActionsAdjusted':
+    case 'InvestigatorRestricted':
     case 'ActionsSpent':
     case 'ActionsReset':
     case 'SkillBoostChanged':

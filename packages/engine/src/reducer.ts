@@ -173,7 +173,24 @@ export function apply(state: GameState, event: Event): GameState {
     case 'PhaseStepsChanged':
       return { ...state, meta: { ...state.meta, steps: event.steps } };
     case 'RoundEnded':
-      return { ...state, meta: { ...withoutKey(state.meta, 'actionsTaken'), turnsTaken: [] } };
+      return {
+        ...state,
+        meta: {
+          ...withoutKey(withoutKey(state.meta, 'actionsTaken'), 'lastingRestrictions'),
+          turnsTaken: [],
+        },
+      };
+    case 'InvestigatorRestricted': {
+      const { investigatorId, restriction, until } = event;
+      const lasting = { investigatorId, restriction, until };
+      return {
+        ...state,
+        meta: {
+          ...state.meta,
+          lastingRestrictions: [...(state.meta.lastingRestrictions ?? []), lasting],
+        },
+      };
+    }
     case 'TurnStarted':
       return {
         ...state,

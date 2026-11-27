@@ -131,6 +131,22 @@ export const appTexts = {
     roundEnded: 'Runde {{round}} endet',
     turnStarted: '{{investigator}} ist am Zug',
     turnEnded: 'Der Zug von {{investigator}} endet',
+    restricted: {
+      cards: {
+        play: '{{investigator}} kann in dieser Runde keine {{cards}} spielen',
+        commit: '{{investigator}} kann in dieser Runde keine {{cards}} einsetzen',
+        play_commit: '{{investigator}} kann in dieser Runde keine {{cards}} spielen oder einsetzen',
+      },
+      clues: {
+        discover: '{{investigator}} kann in dieser Runde keine Hinweise entdecken',
+        spend: '{{investigator}} kann in dieser Runde keine Hinweise ausgeben',
+        discover_spend:
+          '{{investigator}} kann in dieser Runde keine Hinweise entdecken oder ausgeben',
+      },
+      cardTypes: { asset: 'Vorteile', event: 'Ereignisse', skill: 'Fertigkeiten' },
+      anyCards: 'Karten',
+      or: ' oder ',
+    },
   },
   chaosBag: {
     title: 'Chaosbeutel',

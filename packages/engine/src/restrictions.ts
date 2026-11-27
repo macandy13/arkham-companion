@@ -18,15 +18,16 @@ export type LocationRestriction = (typeof LOCATION_RESTRICTIONS)[number];
 export const LOCATION_RESTRICTIONS = ['moveInto', 'investigate'] as const;
 
 /**
- * Every verb a constant "cannot" ability can forbid an investigator, by the noun it acts on
- * (`InvestigatorCardRestriction`), in the order `Forbidden` lists them: The Masked Hunter's "you
+ * Every verb a "cannot" can forbid an investigator, by the noun it acts on
+ * (`InvestigatorRestriction`), in the order `Forbidden` lists them: The Masked Hunter's "you
  * cannot discover or spend clues" is `clues: discover, spend`, Dissonant Voices' "You cannot play
- * assets or events" `cards: play`. A new "cannot" (healing horror, gaining resources) adds its
+ * assets or events" `cards: play`, Languor's "you cannot play or commit cards of that type"
+ * `cards: play, commit`. A new "cannot" (healing horror, gaining resources) adds its
  * verb, or its noun and verbs, here and a check in the handler that does it.
  */
 const RESTRICTED_VERBS = {
   clues: ['discover', 'spend'],
-  cards: ['play'],
+  cards: ['play', 'commit'],
 } as const;
 
 /** The verbs a restriction can forbid for each noun (`RESTRICTED_VERBS`). */
@@ -115,31 +116,47 @@ export interface LocationCardRestriction {
 }
 
 /** The player card types that are played: skills are committed to tests instead (RR "Play"). */
-export type PlayedCardType = 'asset' | 'event';
+type PlayedCardType = 'asset' | 'event';
+
+/** The player card types a `cards` restriction can name: the played ones and skills. */
+export type PlayerCardType = PlayedCardType | 'skill';
 
 /**
- * The player cards a `play` `cards` restriction names: those of one of `types` and, when `traits`
- * is set, with one of them; every played card when absent.
+ * The player cards a `cards` restriction names: those of one of `types` and, when `traits` is
+ * set, with one of them; every card when absent.
  */
 export interface PlayedCardFilter {
-  types?: readonly PlayedCardType[];
+  types?: readonly PlayerCardType[];
   traits?: readonly Trait[];
 }
 
 /**
- * A "cannot" about an investigator: verbs and the noun they act on. `{ cannot: ['discover',
- * 'spend'], what: 'clues', who: 'threatArea' }` is The Masked Hunter, `{ cannot: ['play'], what:
- * 'cards', who: 'threatArea', cards: { types: ['asset', 'event'] } }` Dissonant Voices; `cards`
- * narrows which cards.
+ * What an investigator cannot do: verbs and the noun they act on. `{ cannot: ['discover',
+ * 'spend'], what: 'clues' }` is The Masked Hunter's, `{ cannot: ['play'], what: 'cards', cards: {
+ * types: ['asset', 'event'] } }` Dissonant Voices'; `cards` narrows which cards. A card's text
+ * holds it as an `InvestigatorCardRestriction`, an effect for a while as a `LastingRestriction`.
  */
-export type InvestigatorCardRestriction =
-  | { cannot: readonly RestrictedVerbs['clues'][]; what: 'clues'; who: InvestigatorScope }
-  | {
-      cannot: readonly RestrictedVerbs['cards'][];
-      what: 'cards';
-      who: InvestigatorScope;
-      cards?: PlayedCardFilter;
-    };
+export type InvestigatorRestriction =
+  | { cannot: readonly RestrictedVerbs['clues'][]; what: 'clues' }
+  | { cannot: readonly RestrictedVerbs['cards'][]; what: 'cards'; cards?: PlayedCardFilter };
+
+/**
+ * A "cannot" about an investigator on a card, binding those `who` names: The Masked Hunter's is
+ * `who: 'threatArea'`, so it binds the investigator it is engaged with.
+ */
+export type InvestigatorCardRestriction = InvestigatorRestriction & { who: InvestigatorScope };
+
+/**
+ * A "cannot" an effect gives one investigator until the round ends (`RestrictInvestigator`):
+ * Languor's "you cannot play or commit cards of that type (asset, event, or skill) this round"
+ * is `{ cannot: ['play', 'commit'], what: 'cards', cards: { types: ['skill'] } }` once the
+ * discarded card was a skill. Kept in `GameMeta.lastingRestrictions`, cleared by `RoundEnded`.
+ */
+export interface LastingRestriction {
+  investigatorId: InvestigatorId;
+  until: 'round';
+  restriction: InvestigatorRestriction;
+}
 
 /**
  * A constant "cannot" ability (`CardStats.restrictions`), as card data. Like a `Modifier` it
@@ -240,10 +257,11 @@ function isAtLocationWith(
 }
 
 /**
- * Whether a card in play forbids `investigator` to do `cannot` to `what`, as `isRestricted` does
- * for a location. The engine never sees the player card a `PlayCard` plays, so `play` `cards`
- * holds only where a restriction names every played card (Dissonant Voices); a narrower one
- * ("cannot play Firearm assets") stays card text for the players.
+ * Whether a card in play, or an effect lasting this round (`GameMeta.lastingRestrictions`),
+ * forbids `investigator` to do `cannot` to `what`, as `isRestricted` does for a location. The
+ * engine never sees the player card a `PlayCard` plays or a test is committed, so a `cards`
+ * restriction holds only where it names every card (Dissonant Voices); a narrower one ("cannot
+ * play Firearm assets", Languor's one card type) stays text for the players.
  */
 export function isRestrictedFor<N extends RestrictedNoun>(
   ctx: EngineContext,
@@ -252,16 +270,30 @@ export function isRestrictedFor<N extends RestrictedNoun>(
   cannot: RestrictedVerbs[N],
   what: N,
 ): boolean {
-  return cardsInPlay(state).some((source) =>
-    activeRestrictions(ctx, source).some(
-      (restriction) =>
-        'who' in restriction &&
-        restriction.what === what &&
-        restriction.cannot.some((verb) => verb === cannot) &&
-        (restriction.what !== 'cards' || namesEveryPlayedCard(restriction.cards)) &&
-        binds(state, source, restriction.who, investigator),
-    ),
+  const forbids = (restriction: InvestigatorRestriction) =>
+    restriction.what === what &&
+    restriction.cannot.some((verb) => verb === cannot) &&
+    (restriction.what !== 'cards' || namesEveryCard(restriction.cards));
+  return (
+    cardsInPlay(state).some((source) =>
+      activeRestrictions(ctx, source).some(
+        (restriction) =>
+          'who' in restriction &&
+          forbids(restriction) &&
+          binds(state, source, restriction.who, investigator),
+      ),
+    ) || lastingRestrictionsOf(state, investigator).some((restriction) => forbids(restriction))
   );
+}
+
+/** What effects forbid `investigator` until the round ends (`LastingRestriction`), oldest first. */
+export function lastingRestrictionsOf(
+  state: GameState,
+  investigator: InvestigatorId,
+): InvestigatorRestriction[] {
+  return (state.meta.lastingRestrictions ?? [])
+    .filter((lasting) => lasting.investigatorId === investigator)
+    .map(({ restriction }) => restriction);
 }
 
 /** Every verb `isRestrictedFor` holds for `investigator`, by noun; nouns with none left out. */
@@ -291,7 +323,9 @@ function activeRestrictions(ctx: EngineContext, source: CardInstance): readonly 
   );
 }
 
-function namesEveryPlayedCard(cards: PlayedCardFilter | undefined): boolean {
+// Every played card is an asset or an event, so a filter naming both names every card a play
+// restriction is about.
+function namesEveryCard(cards: PlayedCardFilter | undefined): boolean {
   if (cards === undefined) return true;
   const types = cards.types ?? PLAYED_CARD_TYPES;
   return cards.traits === undefined && PLAYED_CARD_TYPES.every((type) => types.includes(type));

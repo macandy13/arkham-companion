@@ -12,6 +12,7 @@ import type {
 } from './ids';
 import type { Edge, GameMap, GridCell } from './map';
 import type { Rejection } from './rejection';
+import type { InvestigatorRestriction } from './restrictions';
 import type { RngState } from './rng';
 import type {
   HeldAction,
@@ -85,6 +86,7 @@ export type Event =
   | RoundEnded
   | TurnStarted
   | ActionsAdjusted
+  | InvestigatorRestricted
   | ActionsSpent
   | SkillBoostChanged
   | ActionsReset
@@ -643,6 +645,17 @@ export interface RoundEnded {
 export interface TurnStarted {
   type: 'TurnStarted';
   investigatorId: InvestigatorId;
+}
+
+/**
+ * An effect forbids the investigator something until the round ends
+ * (`GameMeta.lastingRestrictions`). Produced by `RestrictInvestigator`.
+ */
+export interface InvestigatorRestricted {
+  type: 'InvestigatorRestricted';
+  investigatorId: InvestigatorId;
+  restriction: InvestigatorRestriction;
+  until: 'round';
 }
 
 /**

@@ -1,5 +1,6 @@
 import type { AbilityUse } from './usage_limits';
 import type { TakenAction } from './action_costs';
+import type { LastingRestriction } from './restrictions';
 import type { AbilityEffect, OpenedWindow } from './abilities';
 import type { CampaignLog } from './campaign/campaign_log';
 import type { ChangeCause } from './change_cause';
@@ -624,6 +625,11 @@ export interface GameMeta {
    * when the round ends. None when absent.
    */
   actionsTaken?: TakenAction[];
+  /**
+   * What effects forbid the investigators until the round ends, oldest first
+   * (`InvestigatorRestricted`); cleared when the round ends. None when absent.
+   */
+  lastingRestrictions?: LastingRestriction[];
   /** The turn in progress during the investigation phase; absent between turns. */
   turn?: Turn;
   leadInvestigator?: InvestigatorId;

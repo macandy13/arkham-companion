@@ -7,6 +7,7 @@ import type {
   HealInvestigator,
   PlayCard,
   PlayerCardCommand,
+  RestrictInvestigator,
   DefeatInvestigator,
   DiscoverClues,
   MoveInvestigator,
@@ -21,11 +22,13 @@ import type {
   Event,
   InvestigatorChanged,
   InvestigatorMoved,
+  InvestigatorRestricted,
   LeadInvestigatorChanged,
   TokensChanged,
 } from './events';
 import {
   activeInvestigator,
+  requireInvestigator,
   clueSpendersAt,
   defaultCluePayments,
   groupCluePayments,
@@ -138,6 +141,17 @@ export function handleGainResources(state: GameState, cmd: GainResources): Inves
       delta: cmd.amount,
     },
   ];
+}
+
+/** `RestrictInvestigator`: the restriction for an active investigator; nothing for one who left. */
+export function handleRestrictInvestigator(
+  state: GameState,
+  cmd: RestrictInvestigator,
+): InvestigatorRestricted[] {
+  const { id, status } = requireInvestigator(state, cmd.investigatorId);
+  if (status !== 'active') return [];
+  const { restriction, until } = cmd;
+  return [{ type: 'InvestigatorRestricted', investigatorId: id, restriction, until }];
 }
 
 /** `SpendResources`: a positive whole amount the investigator has, taken off their resources. */

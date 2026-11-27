@@ -92,8 +92,10 @@ import { CommandRejected } from './rejection';
 import {
   forbiddenFor,
   isRestricted,
+  lastingRestrictionsOf,
   LOCATION_RESTRICTIONS,
   type Forbidden,
+  type InvestigatorRestriction,
   type LocationRestriction,
 } from './restrictions';
 import {
@@ -197,6 +199,12 @@ export interface InvestigatorView {
    * offers none of it; absent when nothing is forbidden.
    */
   forbidden?: Forbidden;
+  /**
+   * What effects forbid them until the round ends (`GameMeta.lastingRestrictions`), oldest first:
+   * Languor's one card type, which the players keep to themselves since the engine sees no
+   * played or committed cards. Absent when there is none.
+   */
+  thisRound?: InvestigatorRestriction[];
 }
 
 /**
@@ -1327,6 +1335,7 @@ function investigatorView(
       cardNamesIn(ctx, state, { kind: 'playArea', investigatorId: investigator.id }),
     ),
     ...recordIfAny('forbidden', forbiddenFor(ctx, state, investigator.id)),
+    ...listIfAny('thisRound', lastingRestrictionsOf(state, investigator.id)),
   };
 }
 
