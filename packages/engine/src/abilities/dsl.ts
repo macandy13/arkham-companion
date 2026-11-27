@@ -228,6 +228,32 @@ export function whenAnInvestigatorEnters(location: CardCode, ...effects: Ability
 }
 
 /**
+ * "Objective – If each undefeated investigator is at Miskatonic Quad, advance": `effects` resolve
+ * once someone is still in the scenario and nobody is elsewhere, checked as one enters the only copy
+ * of `location` and as one is eliminated (`eliminated`), since the last one away from it may be
+ * defeated or resign instead. Written `...whenEachInvestigatorIsAt(codes.miskatonicQuad,
+ * advanceAct())`.
+ */
+export function whenEachInvestigatorIsAt(
+  location: CardCode,
+  ...effects: AbilityEffect[]
+): Ability[] {
+  // With nobody left the scenario ends with no resolution instead, even when one effect
+  // eliminates everyone (Wild Flames), so someone must still be in the scenario.
+  const condition: AbilityCondition = {
+    kind: 'allOf',
+    conditions: [
+      thereAre(eachInvestigator(), { min: 1 }),
+      thereAre(eachInvestigator({ notAt: onlyCopy(location) }), { max: 0 }),
+    ],
+  };
+  return [
+    { ...whenAnInvestigatorEnters(location, ...effects), condition },
+    { window: { on: 'eliminated' }, condition, effects },
+  ];
+}
+
+/**
  * An objective of an agenda or act on the victory display: `effects` resolve once a card entering
  * it (or beneath the act) brings the cards `cards` names to `atLeast`. "If there are 6 unique
  * [[Cultist]] enemies in the victory display, advance" is
@@ -910,12 +936,22 @@ export function loseResources(
 
 /**
  * "Each investigator [at a location]" (`eachInvestigator`), which repeats the effect for each, in
- * player order: `takeHorror(1, eachInvestigator({ at: itsLocation() }))`.
+ * player order: `takeHorror(1, eachInvestigator({ at: itsLocation() }))`; with `notAt`, each one
+ * elsewhere.
  */
 export function eachInvestigator(
-  filter: { at?: RelativeCard } = {},
+  filter: { at?: RelativeCard; notAt?: RelativeCard } = {},
 ): Extract<RelativeInvestigator, { ref: 'eachInvestigator' }> {
   return { ref: 'eachInvestigator', ...filter };
+}
+
+/**
+ * "Any investigator" in an effect that names nobody to choose (an act's reverse side: "put Dr.
+ * Henry Armitage into play under any investigator's control"): the group picks, and the lead
+ * investigator decides when it can't agree (Rules Reference, "Choices"), so the lead is asked.
+ */
+export function anyInvestigator(): Extract<RelativeInvestigator, { ref: 'pick' }> {
+  return { ref: 'pick', among: eachInvestigator(), chooser: 'lead' };
 }
 
 /**

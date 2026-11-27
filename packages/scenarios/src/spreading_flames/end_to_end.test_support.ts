@@ -135,10 +135,9 @@ export function playSpreadingFlames(start: CampaignLog): CampaignLog {
   table.moveTo(daisy, byName('Miskatonic Quad'));
 
   // Escape the Dorms' objective (each undefeated investigator at the Quad) is met as Daisy
-  // arrives. The players check it and advance the act by hand. Its reverse side sets the Servant
+  // arrives, and the act advances. Its reverse side sets the Servant
   // aside, removes Your Friend's Room from the game, its Fire! going to the discard pile as it
   // leaves play, and puts Orne Library, Science Hall and Warren Observatory into play.
-  table.play({ type: 'Advance', deck: 'act' });
   table.endTurn(daisy);
 
   expect(table.board.act?.name).toBe('Searching for Dr. Armitage');
@@ -278,20 +277,25 @@ export function playSpreadingFlames(start: CampaignLog): CampaignLog {
 
   // Round 5 – upkeep: they spend the 6 clues as the round ends. Searching for Dr. Armitage's
   // reverse side brings the Servant of Flame back to the Quad, healed, and places 6 clues there.
-  // Dr. Armitage joining an investigator is the players' to do. Roland, the lead, searches for one
+  // Dr. Armitage comes under Roland's control, the lead's pick. Roland searches for one
   // Fire! per investigator, two in the discard pile, and draws them: the first attaches to Orne
   // Library, where he is, and the second to the nearest location without one, the Quad. Then the
   // encounter deck is shuffled.
   expect(table.nextPhase()).toEqual({ round: 5, phase: 'enemy' });
   expect(table.nextPhase()).toEqual({ round: 5, phase: 'upkeep', step: 'endRound' });
   table.play(answer(SEARCHING_FOR_ARMITAGE_DECISION, 'spend'));
+  expect(table.board.decisions).toMatchObject([{ kind: 'chooseInvestigator' }]);
+  table.answerOnly('Roland Banks');
   table.resolveRevelation(byName('Fire!'));
   table.resolveRevelation(byName('Fire!'));
 
   expect(table.board.act?.name).toBe('Blaze of Glory');
   expect(table.board.enemies).toEqual([{ name: servant, at: 'Miskatonic Quad', health: 10 }]);
   expect(table.board.location(byName('Miskatonic Quad')).clues).toBe(6);
-  expect(table.board.investigator(roland).clues).toBe(0);
+  expect(table.board.investigator(roland)).toMatchObject({
+    clues: 0,
+    controls: ['Dr. Henry Armitage'],
+  });
   expect(table.board.investigator(daisy).clues).toBe(0);
   expect(table.board.location(byName('Orne Library')).attachments).toEqual(['Fire!']);
   expect(table.board.location(byName('Miskatonic Quad')).attachments).toEqual(['Fire!']);

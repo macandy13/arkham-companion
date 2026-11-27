@@ -395,7 +395,8 @@ export function resolveEffect(
   const picked = pickedRef(deferred);
   if (picked === undefined) return commandsFor();
   const you = refs.windowInvestigator;
-  if (you === undefined) return [];
+  // The lead picks for a window that names nobody, such as an act's reverse side.
+  if (picked.chooser === 'you' && you === undefined) return [];
   const candidates = candidatesFor(ctx, state, picked, opened.cardId, refs);
   const [first, ...others] = candidates;
   if (first === undefined) return [];
@@ -618,7 +619,7 @@ function pickDecision(
   cardId: InstanceId,
   effect: AbilityEffect,
   picked: PickedRef,
-  investigatorId: InvestigatorId,
+  investigatorId: InvestigatorId | undefined,
   candidates: readonly (InstanceId | InvestigatorId)[],
   commandsFor: (pickedId: InstanceId | InvestigatorId) => Command[],
 ): Command {
@@ -633,7 +634,9 @@ function pickDecision(
       id: decisionId(`pick:${cardId}`),
       subject: cardId,
       decider:
-        picked.chooser === 'lead' ? { kind: 'lead' } : { kind: 'investigator', investigatorId },
+        picked.chooser === 'lead' || investigatorId === undefined
+          ? { kind: 'lead' }
+          : { kind: 'investigator', investigatorId },
       options: candidates.map((id, i) => ({
         id,
         label: labels[i] ?? id,
@@ -734,6 +737,8 @@ function eachId(
     case 'eachInvestigator': {
       const at = each.at === undefined ? undefined : resolveRefs(each.at, refs);
       if (each.at !== undefined && at === undefined) return [];
+      // A location out of play has nobody at it, so every investigator is not at it.
+      const notAt = each.notAt === undefined ? undefined : resolveRefs(each.notAt, refs);
       const bearer =
         each.bearerOf === undefined
           ? undefined
@@ -743,6 +748,7 @@ function eachId(
         .filter(
           (inv) =>
             (at === undefined || inv.locationId === at) &&
+            (notAt === undefined || inv.locationId !== notAt) &&
             (bearer === undefined || inv.id === bearer) &&
             (each.name === undefined || comparableName(inv.name) === comparableName(each.name)) &&
             (each.atLocationWith === undefined ||

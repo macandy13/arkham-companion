@@ -31,6 +31,6 @@ Card rulings: [Resolution order](cards/resolution-order.md).
     Test: [`packages/engine/src/doomed.test.ts › Doomed › places no doom when the bystander is discarded, which is no defeat`](../../packages/engine/src/doomed.test.ts#L58)
 - A defeated asset goes to its owner's discard.
 - A "when [this enemy] is defeated" forced ability ([When](https://arkhamdb.com/rules#Ability): before the defeat's impact) resolves after the enemy has gone, and "this location" is where it was (Goat Spawn: "each investigator at this location takes 1 horror").
-  Test: [`packages/engine/src/triggers.test.ts › trigger bus › abilities when an enemy is defeated › deals 1 horror to each investigator in the hall when it is defeated $name`](../../packages/engine/src/triggers.test.ts#L1153)
+  Test: [`packages/engine/src/triggers.test.ts › trigger bus › abilities when an enemy is defeated › deals 1 horror to each investigator in the hall when it is defeated $name`](../../packages/engine/src/triggers.test.ts#L1155)
   - Our stand-in for "when" changes nothing while such an ability only acts on its location. Doomed uses it too, so a Bystander's doom advances the agenda after the Bystander has gone; this differs only for an agenda whose reverse side acts on enemies in play, and no Spreading Flames agenda does.
     Test: [`packages/engine/src/doomed.test.ts › Doomed › asks to advance Past Curfew, threshold 1, when that doom reaches it`](../../packages/engine/src/doomed.test.ts#L50)

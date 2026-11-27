@@ -14,6 +14,7 @@ import {
   type CardStats,
   checkDoomThreshold,
   anEnemy,
+  anyInvestigator,
   dealDamageTo,
   moveToConnectingLocation,
   decisionId,
@@ -28,6 +29,7 @@ import {
   move,
   outOfGame,
   placeYourClues,
+  playAreaOf,
   loseResources,
   discardAtRandom,
   discardSelf,
@@ -64,6 +66,7 @@ import {
   resolutionId,
   searchAndDrawCopies,
   setAside,
+  setAsideCopy,
   shuffleEncounterDeck,
   skillTest,
   skillTestOfEither,
@@ -77,6 +80,7 @@ import {
   trait,
   whenAdvanced,
   whenDefeated,
+  whenEachInvestigatorIsAt,
   whenEnemyDefeated,
   whenRevealed,
   youMustEither,
@@ -225,9 +229,6 @@ const parleyWithABystander = parleyAction({
  *
  * Effects the engine has no rule for yet are left out, so the players resolve them from the card:
  *
- * - Escape the Dorms' objective (each undefeated investigator at Miskatonic Quad, MC2.14)
- * - Searching for Dr. Armitage's reverse side: Dr. Henry Armitage under any investigator's
- *   control (MC2.14)
  * - Your Friend's Room's Engage action (MC1.12); Orne Library's draw of 3 cards, a deferred
  *   command
  * - Dr. Henry Armitage's skill bonus and free first action: his controller's to apply, like a
@@ -309,6 +310,7 @@ export const spreadingFlamesCardDefs: readonly CardStats[] = [
     stage: 2,
     // Setting it aside heals the Servant of Flame, wherever it is, even from the victory display.
     abilities: [
+      ...whenEachInvestigatorIsAt(codes.miskatonicQuad, advanceAct()),
       whenAdvanced(
         move(onlyCopy(codes.servantOfFlame), setAside),
         discardEachEnemy(),
@@ -336,6 +338,7 @@ export const spreadingFlamesCardDefs: readonly CardStats[] = [
     abilities: [
       // "Put into play" engages like a spawn: a ready enemy engages an investigator at its location.
       whenAdvanced(
+        move(setAsideCopy(codes.drHenryArmitage), playAreaOf(anyInvestigator())),
         spawnEnemyAt(onlyCopy(codes.servantOfFlame), onlyCopy(codes.miskatonicQuad)),
         placeCluesOn(onlyCopy(codes.miskatonicQuad), perInvestigator(3)),
       ),

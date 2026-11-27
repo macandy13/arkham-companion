@@ -17,6 +17,7 @@ import {
   reaction,
   gainResources,
   anInvestigator,
+  anyInvestigator,
   heal,
   thisLocation,
   lead,
@@ -113,6 +114,7 @@ import {
   whenDefeated,
   whenEnemyDefeated,
   whenAnInvestigatorEnters,
+  whenEachInvestigatorIsAt,
   whenVictoryDisplayHolds,
   whenTokensOnSelf,
   whenRevealed,
@@ -2221,6 +2223,129 @@ describe('objectives on entering a location', () => {
     });
 
     expect(state.cards[agenda1]?.tokens.doom).toBe(1);
+  });
+});
+
+describe('objectives on each investigator being at a location', () => {
+  const bob = investigatorId('bob');
+  const cellarCode = cardCode('cellar');
+  /** "If each undefeated investigator is in the cellar, advance." */
+  const allInTheCellarAct = blankAct('all_in_the_cellar_act', {
+    abilities: whenEachInvestigatorIsAt(cellarCode, advanceAct()),
+  });
+  /** Alice in the cellar, bob in the hall next to it; the act's objective is current. */
+  const aliceInTheCellarBobInTheHall = () =>
+    newGame()
+      .withAgenda(agenda1, firstAgendaCard)
+      .withAct(act1, allInTheCellarAct)
+      .withAct(act2, secondActCard)
+      .withLocation(hall, blankLocation('hall'), { revealed: true })
+      .withLocation(cellar, blankLocation('cellar'), { revealed: true })
+      .withConnection(hall, cellar)
+      .withInvestigator(alice, { locationId: cellar })
+      .withInvestigator(bob, { locationId: hall })
+      .start();
+
+  it.each<{ name: string; command: Command; act: typeof act1 }>([
+    {
+      name: 'advances when bob joins alice in the cellar',
+      command: { type: 'MoveInvestigator', investigatorId: bob, to: cellar },
+      act: act2,
+    },
+    {
+      name: 'stays when alice leaves the cellar to bob in the hall',
+      command: { type: 'MoveInvestigator', investigatorId: alice, to: hall },
+      act: act1,
+    },
+    {
+      name: 'advances when bob, the only one away, resigns',
+      command: { type: 'Resign', investigatorId: bob, immediately: true },
+      act: act2,
+    },
+    {
+      name: 'advances when bob, the only one away, is defeated',
+      command: { type: 'DefeatInvestigator', investigatorId: bob },
+      act: act2,
+    },
+    {
+      name: 'stays when alice, in the cellar, is defeated with bob still away',
+      command: { type: 'DefeatInvestigator', investigatorId: alice },
+      act: act1,
+    },
+  ])('$name', ({ command, act }) => {
+    const { context, state: started } = aliceInTheCellarBobInTheHall();
+
+    const { state } = execute(context, started, command);
+
+    expect(state.act.current).toBe(act);
+  });
+
+  it('stays when alice, alone in the game and in the hall, is defeated: the scenario ends instead', () => {
+    const { context, state: started } = newGame()
+      .withAgenda(agenda1, firstAgendaCard)
+      .withAct(act1, allInTheCellarAct)
+      .withAct(act2, secondActCard)
+      .withLocation(hall, blankLocation('hall'), { revealed: true })
+      .withLocation(cellar, blankLocation('cellar'), { revealed: true })
+      .withInvestigator(alice, { locationId: hall })
+      .start();
+
+    const { state } = execute(context, started, {
+      type: 'DefeatInvestigator',
+      investigatorId: alice,
+    });
+
+    expect(state.act.current).toBe(act1);
+  });
+
+  it('stays when alice and bob, both in the hall, are defeated by one effect: the scenario ends instead', () => {
+    /** "When this agenda advances, each investigator is defeated." */
+    const defeatingAgenda = blankAgenda('defeating_agenda', fixed(3), {
+      abilities: [whenAdvanced(defeatEachInvestigator())],
+    });
+    const { context, state: started } = newGame()
+      .withAgenda(agenda1, defeatingAgenda)
+      .withAgenda(agenda2, secondAgendaCard)
+      .withAct(act1, allInTheCellarAct)
+      .withAct(act2, secondActCard)
+      .withLocation(hall, blankLocation('hall'), { revealed: true })
+      .withLocation(cellar, blankLocation('cellar'), { revealed: true })
+      .withInvestigator(alice, { locationId: hall })
+      .withInvestigator(bob, { locationId: hall })
+      .start();
+
+    const { state } = execute(context, started, { type: 'Advance', deck: 'agenda' });
+
+    expect(state.act.current).toBe(act1);
+  });
+});
+
+describe("a pick the lead makes on an act's reverse side", () => {
+  const bob = investigatorId('bob');
+  const storyAsset = instanceId('story_asset');
+  /** "Put the set-aside story asset into play under any investigator's control." */
+  const handingOverAct = blankAct('handing_over_act', {
+    abilities: [
+      whenAdvanced(move(setAsideCopy(cardCode('story_asset')), playAreaOf(anyInvestigator()))),
+    ],
+  });
+
+  it('asks the lead, alice, and puts the asset in the play area of bob, whom she picks', () => {
+    const { context, state: started } = newGame()
+      .withAgenda(agenda1, firstAgendaCard)
+      .withAct(act1, handingOverAct)
+      .withAct(act2, secondActCard)
+      .withLocation(hall, blankLocation('hall'), { revealed: true })
+      .withInvestigator(alice, { locationId: hall })
+      .withInvestigator(bob, { locationId: hall })
+      .withCard(storyAsset, blankAsset('story_asset'), setAside)
+      .start();
+
+    const asked = stateAfter(context, started, { type: 'Advance', deck: 'act' });
+    const state = stateAfter(context, asked, answer('pick:act1', bob));
+
+    expect(asked.pending).toMatchObject([{ decider: { kind: 'lead' } }]);
+    expect(state.cards[storyAsset]?.zone).toEqual(playAreaOf(bob));
   });
 });
 

@@ -11,6 +11,7 @@ import {
   skillTestSuggestion,
   zoneKey,
   type Command,
+  type InstanceId,
   type InvestigatorId,
   type Zone,
   type GameState,
@@ -51,6 +52,9 @@ const warrenObservatory = instanceId('12119#1');
 const orneLibrary = instanceId('12120#1');
 const pastCurfew = instanceId('12106#1');
 const litUp = instanceId('12107#1');
+const escapeTheDorms = instanceId('12110#1');
+const searchingForArmitage = instanceId('12111#1');
+const drHenryArmitage = instanceId('12115#1');
 const tank = investigatorId('tank');
 /** The two Fire! copies act 3's search finds for 2 investigators, deck first. */
 const firstFire = '12129#1';
@@ -325,6 +329,41 @@ describe("Spreading Flames act 1, Where There's Smoke...", () => {
 describe('Spreading Flames act 2, Escape the Dorms', () => {
   const advanceToEscape: Command[] = [{ type: 'Advance', deck: 'act' }];
   const advanceEscape: Command[] = [{ type: 'Advance', deck: 'act' }];
+  const seeker = investigatorId('seeker');
+  /** `investigator` walks to Miskatonic Quad from wherever they are. */
+  const toTheQuad = (investigator: InvestigatorId): Command => ({
+    type: 'MoveInvestigator',
+    investigatorId: investigator,
+    to: miskatonicQuad,
+    ignoreConnections: true,
+  });
+
+  it.each<{ name: string; commands: Command[]; act: InstanceId; then: string }>([
+    {
+      name: 'only the tank reaches the Quad',
+      commands: [toTheQuad(tank)],
+      act: escapeTheDorms,
+      then: 'stays current',
+    },
+    {
+      name: 'the tank and then the seeker reach the Quad',
+      commands: [toTheQuad(tank), toTheQuad(seeker)],
+      act: searchingForArmitage,
+      then: 'advances',
+    },
+    {
+      name: 'the tank reaches the Quad and the seeker resigns',
+      commands: [toTheQuad(tank), { type: 'Resign', investigatorId: seeker, immediately: true }],
+      act: searchingForArmitage,
+      then: 'advances',
+    },
+  ])('$then once $name', ({ commands, act }) => {
+    const atEscape = stateAfter(ctx, startScenario(ctx, { playerCount: 2 }), ...advanceToEscape);
+
+    const state = stateAfter(ctx, atEscape, ...commands);
+
+    expect(state.act.current).toBe(act);
+  });
 
   it("removes Your Friend's Room with its Fire! and puts the other three locations into play", () => {
     const atEscape = stateAfter(ctx, startScenario(ctx, { playerCount: 2 }), ...advanceToEscape);
@@ -366,7 +405,36 @@ describe('Spreading Flames act 3, Searching for Dr. Armitage', () => {
     { type: 'Advance', deck: 'act' },
     { type: 'Advance', deck: 'act' },
   ];
-  const advanceSearching: Command[] = [{ type: 'Advance', deck: 'act' }];
+  /** Act 3 advances, and the lead puts Dr. Henry Armitage under the tank's control. */
+  const advanceSearching: Command[] = [
+    { type: 'Advance', deck: 'act' },
+    answer(`pick:${searchingForArmitage}`, tank),
+  ];
+
+  it.each([
+    { name: 'the tank', picked: tank },
+    { name: 'the seeker', picked: investigatorId('seeker') },
+  ])(
+    'asks the lead whose control Dr. Henry Armitage comes under; picking $name puts him in their play area',
+    ({ picked }) => {
+      const atSearching = stateAfter(
+        ctx,
+        startScenario(ctx, { playerCount: 2 }),
+        ...advanceToSearching,
+      );
+
+      const asked = stateAfter(ctx, atSearching, { type: 'Advance', deck: 'act' });
+      const state = stateAfter(ctx, asked, answer(`pick:${searchingForArmitage}`, picked));
+
+      expect(asked.pending).toMatchObject([
+        { kind: 'chooseInvestigator', decider: { kind: 'lead' } },
+      ]);
+      expect(state.cards[drHenryArmitage]?.zone).toEqual({
+        kind: 'playArea',
+        investigatorId: picked,
+      });
+    },
+  );
 
   it.each([
     { at: 'Orne Library', location: orneLibrary, asked: [SEARCHING_FOR_ARMITAGE_DECISION] },
@@ -481,8 +549,8 @@ describe('Spreading Flames agenda 2, Lit Up', () => {
 
 describe('Spreading Flames act 4, Blaze of Glory, and the resolutions', () => {
   /**
-   * Acts 1 to 3 advance without paying; act 3 puts the Servant of Flame at Miskatonic Quad, and
-   * the players cancel the two Fire! its search has the lead draw.
+   * Acts 1 to 3 advance without paying; act 3 puts Dr. Henry Armitage under the tank's control
+   * and the Servant of Flame at Miskatonic Quad, and the players cancel the two Fire! its search has the lead draw.
    */
   function atBlazeOfGlory(): GameState {
     return stateAfter(
@@ -491,6 +559,7 @@ describe('Spreading Flames act 4, Blaze of Glory, and the resolutions', () => {
       { type: 'Advance', deck: 'act' },
       { type: 'Advance', deck: 'act' },
       { type: 'Advance', deck: 'act' },
+      answer(`pick:${searchingForArmitage}`, tank),
       cancelRevelation(firstFire),
       cancelRevelation(secondFire),
     );

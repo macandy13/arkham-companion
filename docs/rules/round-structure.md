@@ -59,7 +59,7 @@ Test: [`packages/engine/src/phases.test.ts › NextPhase › starts round 1 with
      Test: [`packages/engine/src/phases.test.ts › enemy phase › defeats an investigator once from damage and horror dealt together`](../../packages/engine/src/phases.test.ts#L411)
    - The enemy exhausts after its attack and any triggered abilities resolve.
      Test: [`packages/engine/src/phases.test.ts › enemy phase › deals the printed damage and horror of an attack, exhausts the enemy and ends the step`](../../packages/engine/src/phases.test.ts#L362)
-     Test: [`packages/engine/src/triggers.test.ts › trigger bus › abilities after an enemy attack › exhausts the ghast in the enemy phase only after its ability has resolved`](../../packages/engine/src/triggers.test.ts#L1000)
+     Test: [`packages/engine/src/triggers.test.ts › trigger bus › abilities after an enemy attack › exhausts the ghast in the enemy phase only after its ability has resolved`](../../packages/engine/src/triggers.test.ts#L1002)
    - A cancelled attack (Dodge) has no further consequences, but the enemy still exhausts ([Dodge FAQ](https://arkhamdb.com/card/01023)).
      Test: [`packages/engine/src/phases.test.ts › enemy phase › deals nothing for a cancelled attack, but the ghoul still exhausts`](../../packages/engine/src/phases.test.ts#L394)
    - The app asks about all of the step's attacks at once and leaves their order, across investigators too, to the players at the table.

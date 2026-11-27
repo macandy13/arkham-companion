@@ -38,11 +38,11 @@
   - A card ability may evade an enemy the investigator isn't engaged with (Stray Cat, Cunning Distraction FAQ), at their location or elsewhere; the engine tests it the same way (`Evade.atAnyLocation`), and a pass exhausts it where it is (our reading: there is no threat area to move it out of).
     Test: [`packages/engine/src/skill_tests.test.ts › Evade › exhausts the unengaged ghoul in the hallway when a card lets alice evade at any location`](../../packages/engine/src/skill_tests.test.ts#L723)
   - Either way the enemy is evaded, so "after [this enemy] is evaded" (Ruth Turner) follows once it is exhausted and disengaged; a failed evasion opens nothing. The evasion happens in ST.7 (apply results), so this comes after the ST.6 "after you succeed" triggers.
-    Test: [`packages/engine/src/triggers.test.ts › trigger bus › abilities after an enemy is evaded › deals alice $horror horror for a $result of her evasion`](../../packages/engine/src/triggers.test.ts#L1062)
-    Test: [`packages/engine/src/triggers.test.ts › trigger bus › abilities after an enemy is evaded › fires for an exhausted enemy evaded by a card effect`](../../packages/engine/src/triggers.test.ts#L1075)
+    Test: [`packages/engine/src/triggers.test.ts › trigger bus › abilities after an enemy is evaded › deals alice $horror horror for a $result of her evasion`](../../packages/engine/src/triggers.test.ts#L1064)
+    Test: [`packages/engine/src/triggers.test.ts › trigger bus › abilities after an enemy is evaded › fires for an exhausted enemy evaded by a card effect`](../../packages/engine/src/triggers.test.ts#L1077)
   - "After you successfully evade [this enemy]" (Cornelia Akely) comes at the same point, but only after a passed evasion test, never after an automatic evade ([Automatic Failure/Success](https://arkhamdb.com/rules#Automatic_Failure_Success)).
 - [Engage](https://arkhamdb.com/rules#Engage_Action): take an enemy at your location into your threat area, even if it's exhausted, aloof or engaged with someone else (it disengages from them). Engaging and being engaged are the same event.
-  Test: [`packages/engine/src/triggers.test.ts › trigger bus › abilities after an engagement or a clue discovery › deals alice 1 horror when the lurker $name`](../../packages/engine/src/triggers.test.ts#L906)
+  Test: [`packages/engine/src/triggers.test.ts › trigger bus › abilities after an engagement or a clue discovery › deals alice 1 horror when the lurker $name`](../../packages/engine/src/triggers.test.ts#L908)
 - [Move](https://arkhamdb.com/rules#Move): to a connecting location unless the effect says otherwise.
   Test: [`packages/engine/src/investigators.test.ts › MoveInvestigator › rejects a location that is not connected`](../../packages/engine/src/investigators.test.ts#L87)
   Test: [`packages/engine/src/investigators.test.ts › MoveInvestigator › allows an unconnected destination when connections are ignored`](../../packages/engine/src/investigators.test.ts#L97)
@@ -58,7 +58,7 @@
   - A move to the current location, or one with no valid destination, can't happen.
     Test: [`packages/engine/src/investigators.test.ts › MoveInvestigator › rejects moving to the current location`](../../packages/engine/src/investigators.test.ts#L119)
   - A location's "after you enter" ability fires for every move into it, by an action or a card effect, after the move has resolved (a reveal and engagements included).
-    Test: [`packages/engine/src/triggers.test.ts › trigger bus › abilities after entering a location › deals the horror to alice for $name, not to bob who was there`](../../packages/engine/src/triggers.test.ts#L446)
-    Test: [`packages/engine/src/triggers.test.ts › trigger bus › abilities after entering a location › fires when the move reveals the location too`](../../packages/engine/src/triggers.test.ts#L455)
+    Test: [`packages/engine/src/triggers.test.ts › trigger bus › abilities after entering a location › deals the horror to alice for $name, not to bob who was there`](../../packages/engine/src/triggers.test.ts#L448)
+    Test: [`packages/engine/src/triggers.test.ts › trigger bus › abilities after entering a location › fires when the move reveals the location too`](../../packages/engine/src/triggers.test.ts#L457)
   - Being placed at a starting location during setup is not a move, so it fires nothing (our reading; no rule says so).
-    Test: [`packages/engine/src/triggers.test.ts › trigger bus › abilities after entering a location › opens no window for an investigator who starts there`](../../packages/engine/src/triggers.test.ts#L472)
+    Test: [`packages/engine/src/triggers.test.ts › trigger bus › abilities after entering a location › opens no window for an investigator who starts there`](../../packages/engine/src/triggers.test.ts#L474)

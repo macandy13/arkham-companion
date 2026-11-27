@@ -156,6 +156,13 @@ export type WindowEvent =
    */
   | { on: 'defeated' }
   /**
+   * An investigator was eliminated (`InvestigatorDefeated` or `InvestigatorResigned`), naming
+   * them: the current agenda and act hear it for an objective the investigators still in the
+   * scenario may now meet ("If each undefeated investigator is at Miskatonic Quad, advance",
+   * `whenEachInvestigatorIsAt`).
+   */
+  | { on: 'eliminated' }
+  /**
    * An action ability of the card (`CardStats.actions`), taken with `UseCardAction`, naming the
    * investigator who took it and, as every window, the card. No event opens it: the command
    * queues the action's effects itself, so an `Ability` listing this window never fires.
@@ -188,6 +195,7 @@ export function defaultScope(on: WindowEvent['on']): ListenerScope {
     case 'roundEnds':
       return 'inPlay';
     case 'addedToVictoryDisplay':
+    case 'eliminated':
       return 'currentActOrAgenda';
     case 'succeeded':
       return 'here';
@@ -298,6 +306,8 @@ export type EachInPlayRef = {
 export type EachInvestigatorRef = {
   ref: 'eachInvestigator';
   at?: RelativeCard;
+  /** Only those not at this location ("each investigator not at Miskatonic Quad"). */
+  notAt?: RelativeCard;
   atLocationWith?: CardFilter;
   name?: string;
   bearerOf?: RelativeCard;
