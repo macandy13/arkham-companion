@@ -162,6 +162,20 @@ export class PlayTable {
     return table;
   }
 
+  /**
+   * A copy of this table that plays on independently, with the same state, log and undo groups.
+   * It replays nothing, as states are never changed in place, so a bot can try a step and look
+   * at where it leads many times a turn (the play tester's lookahead bot); `resume` would replay
+   * the whole log each time.
+   */
+  fork(): PlayTable {
+    const table = new PlayTable(this.ctx);
+    table.current = this.current;
+    table.log = [...this.log];
+    table.commandCount = this.commandCount;
+    return table;
+  }
+
   /** A table started by `start`, e.g. `compileSetup(ctx, …)`, in `ctx`. */
   static from(ctx: EngineContext, start: Command): PlayTable {
     const table = new PlayTable(ctx);

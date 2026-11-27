@@ -1,6 +1,7 @@
 import {
   byId,
   CANCEL_REVELATION_OPTION,
+  isEnemyAttackDecision,
   isRevelationDecision,
   optionName,
   type BoardView,
@@ -21,7 +22,8 @@ const GOAL_WEIGHT = 50;
  * for clues (investigates where there are some, else moves towards the nearest location with
  * clues or still unrevealed), advances the act, fights what is engaged with it, resolves the
  * attacks due and moves the round on once there is nothing left to do. It never corrects the
- * board or undoes, and never cancels a revelation, which takes a card it doesn't hold.
+ * board or undoes, and never cancels a revelation or an enemy attack, which takes a card it
+ * doesn't hold (Ward of Protection, Dodge; the deck bot plays those itself).
  */
 export function goalWeights(table: PlayTable, offered: readonly Step[]): number[] {
   const { board } = table;
@@ -29,7 +31,8 @@ export function goalWeights(table: PlayTable, offered: readonly Step[]): number[
   const engaged = turn === undefined ? [] : board.enemiesEngagedWith(turn).map(({ id }) => id);
   const at = turn === undefined ? undefined : board.locationOf(turn);
   const cluesHere = at !== undefined && board.location(byId(at)).clues > 0;
-  const towardClues = at === undefined || cluesHere ? [] : firstStepsToClues(board, at);
+  const towardClues =
+    at === undefined || cluesHere ? [] : (nearestClues(board, at)?.firstSteps ?? []);
   const actionsLeft = turn === undefined ? 0 : board.investigator(turn).actions;
   const turnsToStart = offered.some(({ verb }) => verb === 'startTurn');
   const movesOn = (step: Step): boolean => {
@@ -53,30 +56,47 @@ export function goalWeights(table: PlayTable, offered: readonly Step[]): number[
     }
   };
   return offered.map((step) =>
-    isRare(step) || cancelsRevelation(table, step) ? 0 : movesOn(step) ? GOAL_WEIGHT : 1,
+    isRare(step) || cancelsWithoutCard(table, step) ? 0 : movesOn(step) ? GOAL_WEIGHT : 1,
   );
-}
-
-/** Whether `step` answers a drawn treachery's question by cancelling its revelation. */
-function cancelsRevelation(table: PlayTable, step: Step): boolean {
-  if (step.verb !== 'answer') return false;
-  const asked = table.state.pending.find(
-    (decision) => isRevelationDecision(decision) && decision.subject === step.about,
-  );
-  const cancel = asked?.options.find(({ id }) => id === CANCEL_REVELATION_OPTION);
-  return cancel !== undefined && optionName(cancel) === step.option;
 }
 
 /**
- * The locations next to `from` that start a shortest way to the nearest location
- * with clues on it or still unrevealed (revealing puts its clues there); none when there is no
- * such location left.
+ * Whether `step` answers a question with the option a card in hand stands for: a drawn
+ * treachery's revelation cancelled, or an enemy attack (one due, or an attack of opportunity)
+ * that does not happen.
  */
-function firstStepsToClues(board: BoardView, from: InstanceId): InstanceId[] {
+function cancelsWithoutCard(table: PlayTable, step: Step): boolean {
+  if (step.verb !== 'answer') return false;
+  return table.state.pending.some((decision) => {
+    if (decision.subject !== step.about) return false;
+    const cancelId = isRevelationDecision(decision)
+      ? CANCEL_REVELATION_OPTION
+      : isEnemyAttackDecision(decision)
+        ? ATTACK_SKIP_OPTION
+        : undefined;
+    const cancel = decision.options.find(({ id }) => id === cancelId);
+    return cancel !== undefined && optionName(cancel) === step.option;
+  });
+}
+
+/** The option of an enemy attack's question that skips it (`attackDecision`'s `skip`). */
+const ATTACK_SKIP_OPTION = 'skip';
+
+/**
+ * The way to the nearest location with clues on it or still unrevealed (revealing puts its clues
+ * there), from `from`: how many moves it takes (0 at such a location) and the locations next to
+ * `from` that start a shortest way there. None when there is no such location left, or no way to
+ * one. The lookahead bot scores how close the investigators are by `moves`.
+ */
+export function nearestClues(
+  board: BoardView,
+  from: InstanceId,
+): { readonly moves: number; readonly firstSteps: readonly InstanceId[] } | undefined {
   const wanted = (id: InstanceId) => {
     const location = board.location(byId(id));
     return !location.revealed || location.clues > 0;
   };
+  if (wanted(from)) return { moves: 0, firstSteps: [] };
   const firstStep = new Map<InstanceId, InstanceId>();
   let frontier: InstanceId[] = [];
   for (const next of board.connectedTo(from)) {
@@ -84,9 +104,9 @@ function firstStepsToClues(board: BoardView, from: InstanceId): InstanceId[] {
     frontier.push(next);
   }
   const seen = new Set([from, ...frontier]);
-  while (frontier.length > 0) {
+  for (let moves = 1; frontier.length > 0; moves++) {
     const found = frontier.filter(wanted);
-    if (found.length > 0) return found.map((id) => firstStep.get(id)!);
+    if (found.length > 0) return { moves, firstSteps: found.map((id) => firstStep.get(id)!) };
     const further: InstanceId[] = [];
     for (const id of frontier)
       for (const next of board.connectedTo(id)) {
@@ -97,5 +117,5 @@ function firstStepsToClues(board: BoardView, from: InstanceId): InstanceId[] {
       }
     frontier = further;
   }
-  return [];
+  return undefined;
 }
