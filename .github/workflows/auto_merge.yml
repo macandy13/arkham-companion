@@ -1,0 +1,59 @@
+name: Auto-merge
+
+# Turns on squash auto-merge for every ready PR that open-pr.yml opened for a session, once it
+# targets `main`: when it opens there, leaves draft, or GitHub retargets a stacked PR to `main`
+# after the one below it merged. The PR then merges by itself once the ruleset is satisfied (the
+# owner's approval, and the `gate` status once the ruleset requires it), so nobody has to press
+# merge and a stack moves on alone (docs/automation.md, "Merge gate"). Stacked PRs are left alone
+# until then, as a squash into another PR's branch would bury the slice.
+#
+# Uses the PR bot's App token: a merge made with GITHUB_TOKEN starts no workflows on `main`, so
+# deploy, Release Please and PR sync would never see it. It never checks out PR code, so
+# pull_request_target is safe here.
+#
+# A PR that changes `.github/workflows/` is left for the owner to merge: GitHub refuses an App's
+# merge of workflow changes unless the App holds the workflows permission, which the PR bot
+# deliberately lacks. Those PRs need the owner's review anyway; one that gains a workflow change
+# after auto-merge was turned on falls back to GitHub's failed merge, which turns auto-merge off
+# by itself. A PR retargeted away from `main` gets auto-merge turned off again, so it never
+# squashes into another branch.
+
+on:
+  pull_request_target:
+    types: [opened, reopened, ready_for_review, edited]
+
+permissions: {}
+
+jobs:
+  enable:
+    if: >-
+      github.event.pull_request.user.login == 'arkham-claude[bot]' &&
+      !github.event.pull_request.draft &&
+      (github.event.action != 'edited' || github.event.changes.base)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/create-github-app-token@v3
+        id: app
+        with:
+          app-id: ${{ vars.CLAUDE_BOT_APP_ID || secrets.CLAUDE_BOT_APP_ID }}
+          private-key: ${{ secrets.CLAUDE_BOT_PRIVATE_KEY }}
+          permission-contents: write
+          permission-pull-requests: write
+      - env:
+          GH_TOKEN: ${{ steps.app.outputs.token }}
+          REPO: ${{ github.repository }}
+          PR: ${{ github.event.pull_request.number }}
+          BASE: ${{ github.event.pull_request.base.ref }}
+        run: |
+          if [ "$BASE" != main ]; then
+            if [ "$(gh pr view "$PR" --repo "$REPO" --json autoMergeRequest --jq '.autoMergeRequest != null')" = true ]; then
+              gh pr merge "$PR" --repo "$REPO" --disable-auto
+            fi
+            exit 0
+          fi
+          files=$(gh api --paginate "repos/$REPO/pulls/$PR/files" --jq '.[].filename')
+          if grep -q '^\.github/workflows/' <<<"$files"; then
+            echo "::notice::The PR changes .github/workflows/, so the owner merges it by hand."
+            exit 0
+          fi
+          gh pr merge "$PR" --repo "$REPO" --auto --squash
