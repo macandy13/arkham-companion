@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   blankLocation,
   cardName,
@@ -19,6 +19,10 @@ const easy_study = instanceId('easy_study');
 const hard_study = instanceId('hard_study');
 
 describe('the step the lookahead bot takes', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   /**
    * Alice, intellect 2, in a hall between two studies with a clue each: one of shroud 0, one of
    * shroud 9, which she cannot pass on the bag's only token, 0.
@@ -75,6 +79,23 @@ describe('the step the lookahead bot takes', () => {
     expect(toEasy).toBeGreaterThan(toHard);
   });
 
+  it('ranks a step that crashes the engine above every other, so the bot plays into the bug', () => {
+    const crashing = table.fork();
+    vi.spyOn(crashing, 'play').mockImplementation(() => {
+      throw new Error('engine bug');
+    });
+    vi.spyOn(table, 'fork').mockReturnValueOnce(crashing);
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    const broken = outlook(
+      table,
+      { verb: 'moveTo', investigator: cardName('alice'), location: hard_study },
+      7,
+    );
+
+    expect(broken).toBe(Number.POSITIVE_INFINITY);
+  });
+
   it('ranks a step the table refuses below every other', () => {
     const refused = outlook(table, { verb: 'endTurn', investigator: cardName('bob') }, 7);
 
@@ -97,6 +118,11 @@ describe('how the lookahead bot scores a change of the board', () => {
 
   it.each([
     { change: 'nothing', play: () => {}, points: 0 },
+    {
+      change: 'a clue discovered: 6 for the clue held, -1 for the clue gone from the study',
+      play: (table: PlayTable) => table.investigate(alice, { result: 'pass' }),
+      points: 5,
+    },
     {
       change: '1 damage of 9 health',
       play: (table: PlayTable) => table.takeDamage(alice, 1),

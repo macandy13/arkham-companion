@@ -37,6 +37,13 @@ const ASKED: Readonly<Record<AttackKind, { prompt: string; skip: string }>> = {
 };
 
 /**
+ * The id of an enemy attack question's option that skips the attack, which a card in hand stands
+ * for (Dodge, a card that "does not provoke"); the play tester's bots answer with it only when
+ * they hold such a card.
+ */
+export const ATTACK_SKIP_OPTION = 'skip';
+
+/**
  * The decision for one attack of `kind` of the enemy on the investigator. Its `attack` option
  * deals the enemy's printed damage and horror, which the players may lower (assets soak part of
  * it) through `ResolveDecision.amounts`. `skip` deals nothing; an enemy phase attack is still
@@ -73,7 +80,7 @@ export function attackDecision(
         amounts: printedAttack(ctx, state, enemyId),
       },
       {
-        id: 'skip',
+        id: ATTACK_SKIP_OPTION,
         label: asked.skip,
         commands:
           kind === 'enemyPhase'

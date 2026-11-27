@@ -1,10 +1,12 @@
 import {
   byId,
+  ATTACK_SKIP_OPTION,
   CANCEL_REVELATION_OPTION,
   isEnemyAttackDecision,
   isRevelationDecision,
   optionName,
   type BoardView,
+  type Decision,
   type InstanceId,
   type PlayTable,
 } from '@arkham/engine';
@@ -60,6 +62,13 @@ export function goalWeights(table: PlayTable, offered: readonly Step[]): number[
   );
 }
 
+/** The id of the option of `decision` that a card in hand stands for, if it has one. */
+function cancelOptionOf(decision: Decision): string | undefined {
+  if (isRevelationDecision(decision)) return CANCEL_REVELATION_OPTION;
+  if (isEnemyAttackDecision(decision)) return ATTACK_SKIP_OPTION;
+  return undefined;
+}
+
 /**
  * Whether `step` answers a question with the option a card in hand stands for: a drawn
  * treachery's revelation cancelled, or an enemy attack (one due, or an attack of opportunity)
@@ -69,18 +78,10 @@ function cancelsWithoutCard(table: PlayTable, step: Step): boolean {
   if (step.verb !== 'answer') return false;
   return table.state.pending.some((decision) => {
     if (decision.subject !== step.about) return false;
-    const cancelId = isRevelationDecision(decision)
-      ? CANCEL_REVELATION_OPTION
-      : isEnemyAttackDecision(decision)
-        ? ATTACK_SKIP_OPTION
-        : undefined;
-    const cancel = decision.options.find(({ id }) => id === cancelId);
+    const cancel = decision.options.find(({ id }) => id === cancelOptionOf(decision));
     return cancel !== undefined && optionName(cancel) === step.option;
   });
 }
-
-/** The option of an enemy attack's question that skips it (`attackDecision`'s `skip`). */
-const ATTACK_SKIP_OPTION = 'skip';
 
 /**
  * The way to the nearest location with clues on it or still unrevealed (revealing puts its clues

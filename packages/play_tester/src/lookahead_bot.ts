@@ -86,7 +86,9 @@ export function outlook(table: PlayTable, step: Step, seed: number): number {
   const copy = table.fork();
   const before = table.board;
   const logged = copy.events.length;
-  if (tryStep(copy, step) === 'refused') return Number.NEGATIVE_INFINITY;
+  const tried = tryStep(copy, step);
+  if (tried === 'refused') return Number.NEGATIVE_INFINITY;
+  if (tried === 'broken') return Number.POSITIVE_INFINITY;
   const random = new SeededRandom(seed);
   const turn = before.turn;
   for (let played = 0; played < HORIZON && !over(copy.board); played++) {
