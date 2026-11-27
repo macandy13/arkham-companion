@@ -129,7 +129,7 @@ details ul { padding-left: 20px; margin: 12px 0 0; display: grid; gap: 6px; font
 <header>
 <p class="kicker">ci · MA.6b · as of b73ddb5</p>
 <h1>Daily digest workflow</h1>
-<p class="meta"><span>3 stops</span><span>1 question</span><span>68 of 115 changed lines on the tour</span></p>
+<p class="meta"><span>3 stops</span><span>1 question</span><span>68 of 443 changed lines on the tour</span></p>
 </header>
 <section class="lead"><h2>The problem</h2><p>The digest renderer exists, but nothing runs it, so the owner has no daily page of what merged without them.</p></section>
 <section class="lead"><h2>What changes</h2><p>A scheduled workflow builds one NDJSON line per merged PR: its body, reviews, the gate status on its head, and the patches of its rules pages. It runs the digest CLI, publishes the page at digest/&lt;date&gt;/ and digest/, and comments on the digest issue only on days with entries.</p></section>
