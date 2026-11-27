@@ -54,7 +54,7 @@ Test: [`packages/engine/src/phases.test.ts › NextPhase › starts round 1 with
 1. [Hunter](hunter.md) enemies move (also [patrol](https://arkhamdb.com/rules#Patrol) enemies).
    Test: [`packages/engine/src/phases.test.ts › enemy phase › moves the hunters (3.2), then lists the attacks of the ready engaged enemies (3.3)`](../../packages/engine/src/phases.test.ts#L304)
 2. In player order, each investigator resolves the attacks of all ready enemies engaged with them, in an order the investigator chooses, before the next investigator's.
-   Test: [`packages/engine/src/enemies.test.ts › enemyAttackList › lists ready engaged enemies per investigator in seat order, with their damage and horror`](../../packages/engine/src/enemies.test.ts#L1032)
+   Test: [`packages/engine/src/enemies.test.ts › enemyAttackList › lists ready engaged enemies per investigator in seat order, with their damage and horror`](../../packages/engine/src/enemies.test.ts#L1044)
    - An attack deals its damage and horror at the same time.
      Test: [`packages/engine/src/phases.test.ts › enemy phase › defeats an investigator once from damage and horror dealt together`](../../packages/engine/src/phases.test.ts#L411)
    - The enemy exhausts after its attack and any triggered abilities resolve.

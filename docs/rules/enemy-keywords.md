@@ -7,7 +7,7 @@ Card rulings: [Children of Blood](cards/children-of-blood.md) (Predator).
   Test: [`packages/engine/src/enemy_effects.test.ts › a card effect that makes an enemy engage you › leaves a massive ghoul where it is`](../../packages/engine/src/enemy_effects.test.ts#L295)
   Test: [`packages/engine/src/skill_tests.test.ts › Fight › can attack a massive aloof enemy, which counts as engaged with everyone at its location`](../../packages/engine/src/skill_tests.test.ts#L488)
   - In the enemy phase it attacks each of them in an order the lead investigator picks, and exhausts after the last attack.
-    Test: [`packages/engine/src/enemies.test.ts › enemyAttackList › includes a ready massive enemy for every investigator at its location`](../../packages/engine/src/enemies.test.ts#L1068)
+    Test: [`packages/engine/src/enemies.test.ts › enemyAttackList › includes a ready massive enemy for every investigator at its location`](../../packages/engine/src/enemies.test.ts#L1080)
     Test: [`packages/engine/src/phases.test.ts › enemy phase › exhausts a massive enemy only after it attacked everyone at its location`](../../packages/engine/src/phases.test.ts#L465)
   - When exhausted it is engaged with nobody.
   - Its attack of opportunity only hits the investigator who provoked it.
