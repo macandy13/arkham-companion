@@ -441,11 +441,21 @@ describe('Spreading Flames act 3, Searching for Dr. Armitage', () => {
   });
 });
 
+/** Past Curfew advances, and each of the two investigators passes its willpower (3) test. */
+const pastCurfewAdvancesAndBothPass: Command[] = [
+  { type: 'Advance', deck: 'agenda' },
+  answer('test:12106#1', 'pass'),
+  answer('test:12106#1', 'pass'),
+];
+/** Lit Up advances, and each of the two investigators passes its agility (3) test. */
+const litUpAdvancesAndBothPass: Command[] = [
+  { type: 'Advance', deck: 'agenda' },
+  answer('test:12107#1', 'pass'),
+  answer('test:12107#1', 'pass'),
+];
+
 describe('Spreading Flames agenda 2, Lit Up', () => {
-  const advanceLitUp: Command[] = [
-    { type: 'Advance', deck: 'agenda' },
-    { type: 'Advance', deck: 'agenda' },
-  ];
+  const advanceLitUp = [...pastCurfewAdvancesAndBothPass, ...litUpAdvancesAndBothPass];
 
   it('puts 4 of the set-aside Fire! in the encounter discard', () => {
     const state = stateAfter(ctx, startScenario(ctx, { playerCount: 2 }), ...advanceLitUp);
@@ -551,8 +561,8 @@ describe('Spreading Flames without a resolution', () => {
     const ended = stateAfter(
       ctx,
       startScenario(ctx, { playerCount: 2 }),
-      { type: 'Advance', deck: 'agenda' },
-      { type: 'Advance', deck: 'agenda' },
+      ...pastCurfewAdvancesAndBothPass,
+      ...litUpAdvancesAndBothPass,
       { type: 'Advance', deck: 'agenda' },
     );
 

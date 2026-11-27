@@ -204,6 +204,19 @@ const stayOrGo = 'scenario.spreadingFlames.stayOrGo';
 /** ArkhamDB has the Core Set (2026)'s pictures as JPEGs. */
 const jpg = 'jpg';
 
+/** "A Bystander enemy at your location", picked by the investigator taking the Parley when several are there. */
+const bystanderHere = { name: 'Bystander', at: yourLocation() } as const;
+
+/**
+ * The three agendas' "[action]: Parley. Test [intellect] (2). If you succeed, discard a Bystander
+ * enemy at your location." It is offered only with a Bystander there, as without one it could
+ * change nothing; discarding is no defeat, so a Doomed Bystander places no doom.
+ */
+const parleyWithABystander = parleyAction({
+  condition: thereAre(eachEnemy(bystanderHere), { min: 1 }),
+  effects: [skillTest('intellect', 2, { onPass: [discard(anEnemy(bystanderHere))] })],
+});
+
 /**
  * Hand-entered card data for Spreading Flames, keyed by the real ArkhamDB codes; like The
  * Gathering's, only names, codes, numbers, traits, keywords and abilities (test skills and
@@ -224,19 +237,6 @@ const jpg = 'jpg';
  * - Unspeakable Truths' limit of 1 per investigator and its horror after its holder discovers
  *   clues
  */
-/** "A Bystander enemy at your location", picked by the investigator taking the Parley when several are there. */
-const bystanderHere = { name: 'Bystander', at: yourLocation() } as const;
-
-/**
- * The three agendas' "[action]: Parley. Test [intellect] (2). If you succeed, discard a Bystander
- * enemy at your location." It is offered only with a Bystander there, as without one it could
- * change nothing; discarding is no defeat, so a Doomed Bystander places no doom.
- */
-const parleyWithABystander = parleyAction({
-  condition: thereAre(eachEnemy(bystanderHere), { min: 1 }),
-  effects: [skillTest('intellect', 2, { onPass: [discard(anEnemy(bystanderHere))] })],
-});
-
 export const spreadingFlamesCardDefs: readonly CardStats[] = [
   agenda({
     code: codes.pastCurfew,

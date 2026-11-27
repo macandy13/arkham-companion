@@ -50,4 +50,5 @@ Card rulings: [Children of Blood](cards/children-of-blood.md) (Predator).
     Test: [`packages/engine/src/doomed.test.ts › Doomed › asks to advance Past Curfew, threshold 1, when that doom reaches it`](../../packages/engine/src/doomed.test.ts#L50)
   - Discarding the enemy (e.g. Factory Worker's Parley) is not defeating it, so Doomed doesn't trigger (2026 Core rules: "An effect that 'discards' an enemy is not considered to defeat that enemy"; reported from the campaign guide, not checked in the PDF).
     Test: [`packages/engine/src/doomed.test.ts › Doomed › places no doom when the bystander is discarded, which is no defeat`](../../packages/engine/src/doomed.test.ts#L58)
+    Test: [`packages/scenarios/src/spreading_flames/cards.test.ts › Spreading Flames card abilities › the agendas' Parley › tests alice's intellect (2) on $agenda; a $result $then, placing no doom`](../../packages/scenarios/src/spreading_flames/cards.test.ts#L944)
 - [Keywords](https://arkhamdb.com/rules#Keywords) in general: having the same keyword twice counts once. Keywords are mandatory unless their text says "may".
