@@ -936,6 +936,15 @@ describe('SwapPlaces', () => {
     });
   });
 
+  it('rejects a swap with a ghoul in the encounter discard pile', () => {
+    const { context, state } = aliceInHall.withCard(ghoul, ghoulCard, encounterDiscard).start();
+
+    expect(rejectionFrom(context, state, swapAliceWithGhoul)).toEqual({
+      code: 'enemyNotInPlay',
+      cardId: ghoul,
+    });
+  });
+
   it('changes nothing when alice and the ghoul share the hall', () => {
     const { context, state } = aliceInHall.withCard(ghoul, ghoulCard, engagedWith(alice)).start();
 
