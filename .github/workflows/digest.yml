@@ -102,8 +102,9 @@ jobs:
         if: steps.build.outputs.count != '0'
         env:
           COUNT: ${{ steps.build.outputs.count }}
-          URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/digest/${{ env.DATE }}/
         run: |
+          # A scheduled run's payload has no repository object, so the name comes from GITHUB_REPOSITORY.
+          URL="https://$GITHUB_REPOSITORY_OWNER.github.io/${GITHUB_REPOSITORY#*/}/digest/$DATE/"
           gh label create digest --description "The daily digest of PRs merged without the owner" --color 2f5d8a --force
           issue=$(gh issue list --repo "$GITHUB_REPOSITORY" --label digest --state open --json number --jq '.[0].number // empty')
           if [ -z "$issue" ]; then
