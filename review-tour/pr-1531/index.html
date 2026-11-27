@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>#1531 review tour</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400..700&amp;family=JetBrains+Mono:wght@400;600&amp;display=swap">
+<style>
+:root {
+  --bg: #fbfbf9; --fg: #1d1f21; --muted: #6b6f73; --line: #e6e5e0; --soft: #f2f1ec;
+  --accent: #2f5d8a; --accent-fg: #ffffff; --ask: #fdf4dc; --ask-fg: #3d3115; --code-bg: #ffffff;
+  --add-bg: #e9f5ec; --add-mark: #2e7d47; --del-bg: #fbecea; --del-mark: #b0413a; --hl: #fff3c4;
+  --tok-key: #8a3ffc; --tok-str: #2e7d47; --tok-com: #8c9196; --tok-type: #2f5d8a; --ok: #2e7d47;
+  --font-body: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-code: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  --radius: 8px;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #17191b; --fg: #e8e8e6; --muted: #9a9ea3; --line: #2b2e31; --soft: #202326;
+    --accent: #8ab4e0; --accent-fg: #10161c; --ask: #2b2617; --ask-fg: #f0e3bd; --code-bg: #1c1f22;
+    --add-bg: #1d2e23; --add-mark: #7cc596; --del-bg: #33201f; --del-mark: #e48a83; --hl: #3a3420;
+    --tok-key: #c4a1ff; --tok-str: #8fd0a4; --tok-com: #7c8288; --tok-type: #8ab4e0; --ok: #7cc596;
+    color-scheme: dark;
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.6 var(--font-body); -webkit-font-smoothing: antialiased; }
+main {
+  max-width: 720px; margin: 0 auto; display: grid; gap: 40px;
+  padding: 0 max(16px, env(safe-area-inset-right)) 56px max(16px, env(safe-area-inset-left));
+}
+a { color: var(--accent); text-underline-offset: 2px; }
+a:focus-visible, button:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+code { font-family: var(--font-code); font-size: .88em; background: var(--soft); padding: 1px 5px; border-radius: 4px; }
+nav {
+  position: sticky; top: 0; z-index: 5; display: flex; align-items: center; gap: 12px;
+  margin: 0 calc(-1 * max(16px, env(safe-area-inset-left))); padding: 10px max(16px, env(safe-area-inset-left));
+  background: color-mix(in srgb, var(--bg) 92%, transparent); backdrop-filter: blur(8px); border-bottom: 1px solid var(--line);
+}
+nav .number { font-size: 14px; font-weight: 600; color: var(--muted); }
+nav ol { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 0 auto; padding: 0; list-style: none; }
+nav ol a {
+  width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center;
+  color: var(--muted); background: var(--soft); font-size: 13px; font-weight: 600; text-decoration: none;
+}
+nav ol a.question { background: var(--ask); color: var(--ask-fg); }
+nav ol a.on { background: var(--accent); color: var(--accent-fg); }
+header { display: grid; gap: 12px; padding-top: 28px; }
+.kicker { font-size: 13px; color: var(--muted); }
+h1 { font-size: 28px; line-height: 1.2; font-weight: 650; letter-spacing: -0.015em; margin: 0; text-wrap: balance; }
+.lead { display: grid; gap: 6px; }
+.lead h2 { font-size: 12px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 0; }
+.lead p { font-size: 18px; margin: 0; max-width: 60ch; }
+.entry { display: grid; gap: 6px; padding-top: 24px; border-top: 1px solid var(--line); }
+.entry h2 { font-size: 22px; line-height: 1.3; font-weight: 600; margin: 0; }
+.entry h2 a { color: var(--fg); text-decoration: none; }
+.entry h3 { font-size: 12px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 10px 0 0; }
+.entry p, .entry ul { margin: 0; max-width: 60ch; }
+.entry ul { padding-left: 20px; }
+.entry .links { display: flex; gap: 18px; margin-top: 10px; font-weight: 600; }
+.meta { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 13px; color: var(--muted); margin: 0; }
+.questions { background: var(--ask); color: var(--ask-fg); border-radius: var(--radius); padding: 18px 20px; display: grid; gap: 14px; }
+.questions h2 { font-size: 12px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; margin: 0; opacity: .75; }
+.questions ol { margin: 0; padding-left: 20px; display: grid; gap: 12px; }
+.questions p { margin: 0; font-size: 17px; }
+.questions .about { font-size: 13px; opacity: .75; }
+.questions a { color: inherit; font-size: 14px; font-weight: 500; }
+section.evidence { display: grid; gap: 14px; scroll-margin-top: 64px; }
+.evidence h2 { font-size: 20px; line-height: 1.3; font-weight: 600; letter-spacing: -0.01em; margin: 0; }
+.evidence ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 18px; }
+.evidence li { display: grid; gap: 8px; padding-left: 28px; position: relative; }
+.evidence li::before { content: "✓"; position: absolute; left: 4px; color: var(--accent); font-weight: 600; }
+.evidence li > p { margin: 0; max-width: 62ch; }
+.evidence .test { font-size: 14px; color: var(--muted); }
+.example { margin: 0; padding: 12px 14px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--soft); overflow-x: auto; font: 13px/1.5 var(--font-code); font-variant-ligatures: none; }
+.usage { display: grid; gap: 4px; }
+.usage .when { margin: 4px 0 0; font-size: 12px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.example code { background: none; padding: 0; font-size: inherit; }
+.stop { display: grid; gap: 14px; scroll-margin-top: 64px; }
+.stop > header { display: grid; grid-template-columns: auto 1fr; gap: 2px 12px; align-items: center; padding: 0; }
+.stop-number {
+  grid-row: span 2; align-self: start; margin-top: 2px; width: 28px; height: 28px; border-radius: 50%;
+  display: grid; place-items: center; background: var(--accent); color: var(--accent-fg); font-size: 13px; font-weight: 600;
+}
+.stop h2 { font-size: 20px; line-height: 1.3; font-weight: 600; letter-spacing: -0.01em; margin: 0; text-wrap: balance; }
+.tag { font-size: 12px; color: var(--muted); letter-spacing: .04em; text-transform: uppercase; }
+.stop > p { margin: 0; max-width: 62ch; }
+figure { display: grid; gap: 8px; margin: 0; }
+.toggle { display: flex; flex-wrap: wrap; gap: 4px; }
+.segments { display: inline-flex; background: var(--soft); border-radius: 999px; padding: 3px; }
+.toggle button { font: 500 13px var(--font-body); color: var(--muted); background: transparent; border: 0; border-radius: 999px; padding: 4px 12px; cursor: pointer; }
+.toggle button[aria-pressed="true"] { background: var(--bg); color: var(--fg); box-shadow: 0 1px 2px rgb(0 0 0 / 12%); }
+.frame { border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; background: var(--soft); }
+.frame img { display: block; width: 100%; height: auto; }
+.frame.phone { max-width: 280px; margin-inline: auto; }
+.frame .missing { padding: 24px; text-align: center; color: var(--muted); font-size: 14px; }
+.code { border: 1px solid var(--line); border-radius: var(--radius); background: var(--code-bg); overflow: hidden; }
+.code > header {
+  display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; padding: 8px 12px;
+  border-bottom: 1px solid var(--line); background: var(--soft); font-size: 13px; color: var(--muted);
+}
+.code .file { color: var(--fg); font-family: var(--font-code); font-size: 12.5px; overflow-wrap: anywhere; }
+.code > header a { margin-left: auto; }
+.code pre code { display: block; padding: 0; background: none; font-size: inherit; }
+.code pre { margin: 0; padding: 6px 0; font: 12.5px/1.6 var(--font-code); font-variant-ligatures: none; }
+.line { display: grid; grid-template-columns: 3.2em 1.4em minmax(0, 1fr); }
+.line .number { color: var(--muted); text-align: right; padding-right: .6em; user-select: none; opacity: .6; }
+.line .mark { color: var(--muted); user-select: none; }
+.line .text { padding: 0 12px 0 2ch; text-indent: -2ch; white-space: pre-wrap; overflow-wrap: anywhere; }
+.line.added { background: var(--add-bg); } .line.added .mark { color: var(--add-mark); }
+.line.removed { background: var(--del-bg); } .line.removed .mark { color: var(--del-mark); }
+.line.highlighted { background: var(--hl); }
+.line.gap .text { color: var(--muted); font-family: var(--font-body); font-size: 12px; }
+.k { color: var(--tok-key); } .s { color: var(--tok-str); } .c { color: var(--tok-com); font-style: italic; } .t { color: var(--tok-type); }
+.done { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; }
+.done p { margin: 0; color: var(--muted); }
+.done a { background: var(--accent); color: var(--accent-fg); border-radius: 999px; padding: 9px 20px; text-decoration: none; font-weight: 600; font-size: 15px; }
+details { border-top: 1px solid var(--line); padding-top: 16px; }
+summary { cursor: pointer; font-size: 15px; font-weight: 600; }
+details ul { padding-left: 20px; margin: 12px 0 0; display: grid; gap: 6px; font-size: 15px; }
+@media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+</style>
+</head>
+<body>
+<main>
+<nav aria-label="Tour"><span class="number">#1531</span><ol><li><a class="question" href="#questions" aria-label="Questions">?</a></li><li><a href="#stop-1" data-stop="stop-1">1</a></li><li><a href="#stop-2" data-stop="stop-2">2</a></li><li><a class="evidence" href="#evidence" aria-label="How we know it works">✓</a></li></ol></nav>
+<header>
+<p class="kicker">feat(scenarios) · MC2.13 · as of b0abd94</p>
+<h1>Spreading Flames' Parley and agenda tests resolve in the app</h1>
+<p class="meta"><span>2 stops</span><span>1 question</span><span>19 of 194 changed lines on the tour</span></p>
+</header>
+<section class="lead"><h2>What changes</h2><p>Each Spreading Flames agenda offers a Parley: test intellect (2), and on a success discard a Bystander enemy at your location. As Past Curfew and Lit Up advance, each investigator in player order tests willpower (3) or agility (3), and each who fails takes 1 horror or 1 damage.</p></section>
+<section class="questions" id="questions"><h2>Question for you</h2><ol><li><p>The Parley is offered only with a Bystander at your location, as the task planned. No official ruling says whether the test alone counts as changing the game state, so the rules page marks this as our reading. Should the Parley stay hidden without a Bystander, or always be offered?</p><span class="about">Concerns <a href="#stop-1">stop 1</a>.</span></li></ol><a href="https://github.com/macandy13/arkham-companion/pull/1531">Answer on GitHub →</a></section>
+<section class="stop" id="stop-1">
+<header><span class="stop-number">1</span><span></span><h2>A Parley only with a Bystander there</h2></header>
+<p>The Parley's condition counts the Bystanders at the taker's location; a success discards one, picked when several are there. Discarding is no defeat, so Doomed places no doom.</p>
+
+<div class="code"><header><span class="file">packages/scenarios/src/spreading_flames/cards.ts</span><span>+24 −3</span><a href="https://github.com/macandy13/arkham-companion/pull/1531/files#diff-4e3c093853acaa8bbd8a17f456ed535169083eca628ffeb317700974acd22083R207-R218">Open in diff</a></header><pre><code><span class="line added"><span class="number">207</span><span class="mark">+</span><span class="text"><span class="c">/** &quot;A Bystander enemy at your location&quot;, picked by the investigator taking the Parley when several are there. */</span></span></span><span class="line added"><span class="number">208</span><span class="mark">+</span><span class="text"><span class="k">const</span> bystanderHere = { name: <span class="s">'Bystander'</span>, at: yourLocation() } <span class="k">as</span> <span class="k">const</span>;</span></span><span class="line added"><span class="number">209</span><span class="mark">+</span><span class="text"></span></span><span class="line added"><span class="number">210</span><span class="mark">+</span><span class="text">/**</span></span><span class="line added"><span class="number">211</span><span class="mark">+</span><span class="text"><span class="c"> * The three agendas' &quot;[action]: Parley. Test [intellect] (2). If you succeed, discard a Bystander</span></span></span><span class="line added"><span class="number">212</span><span class="mark">+</span><span class="text"><span class="c"> * enemy at your location.&quot; It is offered only with a Bystander there, as without one it could</span></span></span><span class="line added"><span class="number">213</span><span class="mark">+</span><span class="text"><span class="c"> * change nothing; discarding is no defeat, so a Doomed Bystander places no doom.</span></span></span><span class="line added"><span class="number">214</span><span class="mark">+</span><span class="text"><span class="c"> */</span></span></span><span class="line added"><span class="number">215</span><span class="mark">+</span><span class="text"><span class="k">const</span> parleyWithABystander = parleyAction({</span></span><span class="line added"><span class="number">216</span><span class="mark">+</span><span class="text">  condition: thereAre(eachEnemy(bystanderHere), { min: 1 }),</span></span><span class="line added"><span class="number">217</span><span class="mark">+</span><span class="text">  effects: [skillTest(<span class="s">'intellect'</span>, 2, { onPass: [discard(anEnemy(bystanderHere))] })],</span></span><span class="line added"><span class="number">218</span><span class="mark">+</span><span class="text">});</span></span></code></pre></div>
+</section>
+<section class="stop" id="stop-2">
+<header><span class="stop-number">2</span><span></span><h2>Each investigator tests as the agenda advances</h2></header>
+<p>All three agendas carry the Parley. Past Curfew and Lit Up repeat their test for each investigator, the lead first, with each outcome for its tester; Lit Up places its set-aside Fire! first.</p>
+
+<div class="code"><header><span class="file">packages/scenarios/src/spreading_flames/cards.ts</span><span>+24 −3</span><a href="https://github.com/macandy13/arkham-companion/pull/1531/files#diff-4e3c093853acaa8bbd8a17f456ed535169083eca628ffeb317700974acd22083R241-R276">Open in diff</a></header><pre><code><span class="line context"><span class="number">241</span><span class="mark"> </span><span class="text">  agenda({</span></span><span class="line context"><span class="number">242</span><span class="mark"> </span><span class="text">    code: codes.pastCurfew,</span></span><span class="line context"><span class="number">243</span><span class="mark"> </span><span class="text">    name: <span class="s">'Past Curfew'</span>,</span></span><span class="line context"><span class="number">244</span><span class="mark"> </span><span class="text">    set: own,</span></span><span class="line context"><span class="number">245</span><span class="mark"> </span><span class="text">    pictures: jpg,</span></span><span class="line context"><span class="number">246</span><span class="mark"> </span><span class="text">    stage: 1,</span></span><span class="line context"><span class="number">247</span><span class="mark"> </span><span class="text">    doom: 3,</span></span><span class="line added"><span class="number">248</span><span class="mark">+</span><span class="text">    actions: [parleyWithABystander],</span></span><span class="line added"><span class="number">249</span><span class="mark">+</span><span class="text">    abilities: [</span></span><span class="line added"><span class="number">250</span><span class="mark">+</span><span class="text">      forEachInvestigator(whenAdvanced(skillTest(<span class="s">'willpower'</span>, 3, { onFail: [takeHorror(1)] }))),</span></span><span class="line added"><span class="number">251</span><span class="mark">+</span><span class="text">    ],</span></span><span class="line context"><span class="number">252</span><span class="mark"> </span><span class="text">  }),</span></span><span class="line context"><span class="number">253</span><span class="mark"> </span><span class="text">  agenda({</span></span><span class="line context"><span class="number">254</span><span class="mark"> </span><span class="text">    code: codes.litUp,</span></span><span class="line context"><span class="number">255</span><span class="mark"> </span><span class="text">    name: <span class="s">'Lit Up'</span>,</span></span><span class="line context"><span class="number">256</span><span class="mark"> </span><span class="text">    set: own,</span></span><span class="line context"><span class="number">257</span><span class="mark"> </span><span class="text">    pictures: jpg,</span></span><span class="line context"><span class="number">258</span><span class="mark"> </span><span class="text">    stage: 2,</span></span><span class="line context"><span class="number">259</span><span class="mark"> </span><span class="text">    doom: 5,</span></span><span class="line added"><span class="number">260</span><span class="mark">+</span><span class="text">    actions: [parleyWithABystander],</span></span><span class="line context"><span class="number">261</span><span class="mark"> </span><span class="text">    <span class="c">// Where There's Smoke… may have taken the copies already; then none is placed.</span></span></span><span class="line context"><span class="number">262</span><span class="mark"> </span><span class="text">    abilities: [</span></span><span class="line context"><span class="number">263</span><span class="mark"> </span><span class="text">      whenAdvanced(...fromSetAside(<span class="t">Array</span>&lt;<span class="t">CardCode</span>&gt;(4).fill(codes.fire), encounterDiscard)),</span></span><span class="line added"><span class="number">264</span><span class="mark">+</span><span class="text">      forEachInvestigator(whenAdvanced(skillTest(<span class="s">'agility'</span>, 3, { onFail: [takeDamage(1)] }))),</span></span><span class="line context"><span class="number">265</span><span class="mark"> </span><span class="text">    ],</span></span><span class="line context"><span class="number">266</span><span class="mark"> </span><span class="text">  }),</span></span><span class="line context"><span class="number">267</span><span class="mark"> </span><span class="text">  agenda({</span></span><span class="line context"><span class="number">268</span><span class="mark"> </span><span class="text">    code: codes.wildFlames,</span></span><span class="line context"><span class="number">269</span><span class="mark"> </span><span class="text">    name: <span class="s">'Wild Flames'</span>,</span></span><span class="line context"><span class="number">270</span><span class="mark"> </span><span class="text">    set: own,</span></span><span class="line context"><span class="number">271</span><span class="mark"> </span><span class="text">    pictures: jpg,</span></span><span class="line context"><span class="number">272</span><span class="mark"> </span><span class="text">    stage: 3,</span></span><span class="line context"><span class="number">273</span><span class="mark"> </span><span class="text">    doom: 10,</span></span><span class="line added"><span class="number">274</span><span class="mark">+</span><span class="text">    actions: [parleyWithABystander],</span></span><span class="line context"><span class="number">275</span><span class="mark"> </span><span class="text">    abilities: [</span></span><span class="line context"><span class="number">276</span><span class="mark"> </span><span class="text">      afterTokensPlaced(<span class="s">'doom'</span>, drawFromEncounterDiscard({ name: <span class="s">'Fire!'</span> }, lead())),</span></span></code></pre></div>
+</section>
+<section class="evidence" id="evidence"><h2>How we know it works</h2><ul><li><p>Each agenda's Parley tests intellect (2); a pass discards the Bystander at your location, a fail leaves it.</p><p class="test">Checked by <code>packages/scenarios/src/spreading_flames/cards.test.ts › Spreading Flames card abilities › the agendas' Parley › tests alice's intellect (2) on $agenda; a $result $then</code></p></li><li><p>No Parley is offered with the only Bystander elsewhere.</p><p class="test">Checked by <code>packages/scenarios/src/spreading_flames/cards.test.ts › Spreading Flames card abilities › the agendas' Parley › refuses the Parley with the only Bystander at the Dormitories, away from alice</code></p></li><li><p>Past Curfew and Lit Up test alice, then bob; only the one who fails is wounded.</p><p class="test">Checked by <code>packages/scenarios/src/spreading_flames/cards.test.ts › Spreading Flames card abilities › Past Curfew and Lit Up advancing › tests alice, then bob, on $skill (3) as $agenda advances; only bob, who fails, takes 1 $wound</code></p></li><li><p>The full scenario plays through with Roland and Daisy answering both agendas' tests.</p><p class="test">Checked by <code>packages/scenarios/src/spreading_flames/end_to_end.test.ts</code></p></li></ul></section>
+<section class="done"><p>That's the whole change.</p><a href="https://github.com/macandy13/arkham-companion/pull/1531/files">Review on GitHub</a></section>
+
+</main>
+<script>
+document.querySelectorAll('figure[data-variants]').forEach((figure) => {
+  const variants = JSON.parse(figure.dataset.variants);
+  const state = { when: 'after', device: variants[0].device };
+  const frame = figure.querySelector('.frame');
+  const show = () => {
+    const variant = variants.find((v) => v.device === state.device);
+    const src = variant[state.when];
+    frame.classList.toggle('phone', state.device === 'phone');
+    frame.innerHTML = src
+      ? '<img alt="' + state.device + ', ' + state.when + '" src="' + src + '">'
+      : '<p class="missing">' + (state.when === 'before' ? 'New in this PR' : 'Removed in this PR') + '</p>';
+    figure.querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(b.value === state.when || b.value === state.device)));
+  };
+  figure.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => {
+    state[b.name] = b.value;
+    show();
+  }));
+  show();
+});
+const dots = [...document.querySelectorAll('nav a[data-stop]')];
+const seen = new IntersectionObserver((entries) => entries.forEach((entry) => {
+  if (entry.isIntersecting) dots.forEach((d) => d.classList.toggle('on', d.dataset.stop === entry.target.id));
+}), { rootMargin: '-40% 0px -55% 0px' });
+document.querySelectorAll('.stop').forEach((stop) => seen.observe(stop));
+</script>
+</body>
+</html>
