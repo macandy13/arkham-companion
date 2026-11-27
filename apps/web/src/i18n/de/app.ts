@@ -140,7 +140,7 @@ export const appTexts = {
     sealOn: '{{token}} bei {{investigator}} versiegeln',
     sealed: 'Versiegelt',
     sealedOn: 'bei {{investigator}}',
-    sealWhere: '{{token}} versiegeln bei',
+    pickedActions: '{{token}} versiegeln oder entfernen',
     releaseFrom: '{{token}} von {{investigator}} freigeben',
     release: 'Freigeben',
     pool: 'Segen und Fluch',
@@ -163,6 +163,15 @@ export const appTexts = {
     revealHint:
       'Für eine Karte, die außerhalb einer Fertigkeitsprobe Marker enthüllt. Sie bleiben im Beutel.',
     revealHowMany: 'Wie viele Marker enthüllt werden',
+    change: 'Den Beutel ändern',
+    lasts: {
+      scenario: 'Für dieses Szenario',
+      campaign: 'Für die Kampagne',
+    },
+    add: 'Einen Marker hinzufügen',
+    addWhich: 'Marker zum Hinzufügen',
+    addToken: 'Einen {{token}}-Marker hinzufügen',
+    remove: 'Einen {{token}}-Marker entfernen',
   },
   header: {
     round: 'Runde {{round}}',

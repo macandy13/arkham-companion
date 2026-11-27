@@ -19,6 +19,7 @@ import {
   blankLocation,
   blankTreachery,
   boardView,
+  campaign,
   byAny,
   byCode,
   byId,
@@ -350,6 +351,21 @@ describe('a skill test outside any decision', () => {
       .start();
 
     expect(boardView(bagContext, bagState).chaosBag).toEqual(['+1', '-1', 'skull', 'autoFail']);
+  });
+});
+
+describe('a game in a campaign or standalone', () => {
+  it.each([
+    {
+      game: 'a scenario of a campaign',
+      builder: newGame().withCampaign(campaign.createEmptyLog()),
+      inCampaign: true,
+    },
+    { game: 'a standalone game', builder: newGame(), inCampaign: false },
+  ])('says whether $game is in a campaign: $inCampaign', ({ builder, inCampaign }) => {
+    const { context, state } = builder.start();
+
+    expect(boardView(context, state).inCampaign).toBe(inCampaign);
   });
 });
 

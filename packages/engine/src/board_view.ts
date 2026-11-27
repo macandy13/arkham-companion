@@ -1000,6 +1000,14 @@ export class BoardView {
     return tokenModifier(this.ctx, this.state, token);
   }
 
+  /**
+   * Whether the game is a scenario of a campaign (`GameState.campaign`), so a change to the chaos
+   * bag can last for the rest of the campaign; a standalone game has no campaign to keep it.
+   */
+  get inCampaign(): boolean {
+    return this.state.campaign !== undefined;
+  }
+
   /** The tokens out of the bag because a card sealed them, each with the investigator holding it. */
   get sealedTokens(): readonly SealedToken[] {
     return this.state.sealedTokens;
