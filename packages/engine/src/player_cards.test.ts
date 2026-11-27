@@ -241,7 +241,8 @@ describe('a location closed to enemies (Barricade)', () => {
 
   it('sends an elusive enemy to the other connecting location, though Bob is there', () => {
     // The study connects to the empty hall, barricaded, and to the parlor, where Bob is.
-    const bat = blankEnemy('bat', { keywords: [{ name: 'elusive' }] });
+    const bat = instanceId('bat');
+    const elusiveBat = blankEnemy('bat', { keywords: [{ name: 'elusive' }] });
     const { context, state } = newGame()
       .withLocation(study, location)
       .withLocation(hall, location)
@@ -251,15 +252,15 @@ describe('a location closed to enemies (Barricade)', () => {
       .withInvestigator(alice, { locationId: study })
       .withInvestigator(bob, { locationId: parlor })
       .withCardData(barricade)
-      .withCard(ghoul, bat, engagedWith(alice))
+      .withCard(bat, elusiveBat, engagedWith(alice))
       .start();
 
     const after = stateAfter(context, state, barricadeOnHall, {
       type: 'RetreatEnemy',
-      enemyId: ghoul,
+      enemyId: bat,
     });
 
-    expect(zoneOf(after, ghoul)).toEqual(atLocation(parlor));
+    expect(zoneOf(after, bat)).toEqual(atLocation(parlor));
   });
 
   it('lets the hunter in again once Barricade is discarded', () => {
