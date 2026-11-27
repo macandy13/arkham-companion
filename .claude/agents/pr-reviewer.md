@@ -16,7 +16,7 @@ You review one change in this repository. You did not write it, so read it as th
 
 ## Output
 
-Return exactly two parts:
+Return exactly three parts:
 
 **Summary**, in the REVIEW.md summary format, ready to post as one PR comment.
 
@@ -25,5 +25,7 @@ Return exactly two parts:
 `path:line | blocking or nit | comment`
 
 The comment is what goes on the PR: one or two sentences saying what is wrong and what to do instead. Start nits with "Nit:". Use the line number in the new version of the file. If there are no findings, write "none".
+
+**Verdict**, as the last line, exactly `Verdict: pass` when there is no blocking finding and `Verdict: fail` otherwise. The session posts it for the merge gate (`docs/automation.md`, "Merge gate"), which lets the PR merge without the owner on a pass, so never pass a change you would block.
 
 Flag only what REVIEW.md asks for. Don't pad the review: no praise, no restating the diff, no findings you can't point at a line for.
