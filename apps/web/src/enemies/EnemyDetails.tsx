@@ -161,7 +161,7 @@ export function EnemyDetails({
           </ActionGroup>
         )}
         {offered.length > 0 && <CardActions board={board} offered={offered} onUse={close} />}
-        <ActionGroup title={t('enemy.cardEffects')}>
+        <ActionGroup title={t('cardActions.adjust')}>
           <ActionButton
             icon="damage"
             caption={t('enemy.caption.damage')}
