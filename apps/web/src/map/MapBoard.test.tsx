@@ -1557,8 +1557,10 @@ describe('MapBoard', () => {
       tapOnce(tile('study'));
 
       expect(
-        within(details('study')).getByRole('region', { name: 'Connected to' }).textContent,
-      ).toBe('Connected tohallway');
+        within(within(details('study')).getByRole('region', { name: 'Connected to' })).getByRole(
+          'button',
+        ).textContent,
+      ).toBe('hallway');
     });
 
     it('ticks the other locations a move from the study goes to in the menu of its connections', () => {

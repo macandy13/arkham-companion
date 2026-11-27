@@ -2,12 +2,15 @@ import { describe, expect, it } from 'vitest';
 import {
   adjustStat,
   beneath,
+  connectLocations,
   correctTokens,
+  disconnectLocations,
   dealDamageTo,
   encounterDiscard,
   evadeEnemy,
   instanceId,
   investigatorId,
+  mapId,
   move,
   moveAlong,
   moveEnemyTo,
@@ -31,6 +34,20 @@ describe('what the play screen performs, built by name', () => {
     {
       built: evadeEnemy(ghoul, alice),
       expected: { type: 'EvadeEnemy', enemyId: ghoul, investigatorId: alice },
+    },
+    // A card that connects two locations connects them both ways.
+    {
+      built: connectLocations(study, hall, mapId('house')),
+      expected: { type: 'AddConnection', mapId: mapId('house'), from: study, to: hall },
+    },
+    {
+      built: disconnectLocations(study, hall),
+      expected: { type: 'RemoveConnection', from: study, to: hall },
+    },
+    // Only the way the cards allow is left to cut.
+    {
+      built: disconnectLocations(study, hall, true),
+      expected: { type: 'RemoveConnection', from: study, to: hall, oneWay: true },
     },
     // A dragged enemy goes there engaged or not.
     {
