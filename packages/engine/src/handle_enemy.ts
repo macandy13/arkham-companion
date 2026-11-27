@@ -334,7 +334,9 @@ export function handleRetreatEnemy(
       pool,
       (to) => ({ type: 'RetreatEnemy', enemyId: enemy.id, to }),
     );
-  const to = cmd.to === undefined || open.includes(cmd.to) ? (cmd.to ?? pool[0]) : undefined;
+  // An answer naming a location that closed meanwhile leaves the enemy where it is, as no
+  // destination does: it still disengages and exhausts.
+  const to = cmd.to === undefined ? pool[0] : open.includes(cmd.to) ? cmd.to : undefined;
   const events: Event[] = enemy.zone.kind === 'engaged' ? [disengaged(state, enemy)] : [];
   const unengaged = replay(events, state).cards[enemy.id] ?? enemy;
   if (to !== undefined)
