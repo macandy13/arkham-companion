@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Digest 2026-11-27</title>
+<title>Digest 2026-11-28</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400..700&amp;family=JetBrains+Mono:wght@400;600&amp;display=swap">
 <style>
 :root {
@@ -126,11 +126,12 @@ details ul { padding-left: 20px; margin: 12px 0 0; display: grid; gap: 6px; font
 <body>
 <main>
 <header>
-<p class="kicker">macandy13/arkham-companion · 2026-11-27</p>
+<p class="kicker">macandy13/arkham-companion · 2026-11-28</p>
 <h1>Merged without you</h1>
-<p class="meta"><span>0 PRs</span></p>
+<p class="meta"><span>2 PRs</span></p>
 </header>
-<section class="lead"><p>Nothing merged without you.</p></section>
+<section class="entry"><p class="kicker">#1515 · docs · MA.4b</p><h2><a href="https://github.com/macandy13/arkham-companion/pull/1515">Every rules claim links its test</a></h2><h3>The problem</h3><p>The rules pages describe what the app does, but until now only the hunter page said which tests check it. A reader couldn't tell which claims the app enforces and tests, and which it leaves to the players or doesn't test at all.</p><h3>What changes</h3><p>Each claim gets one line per test that proves it, in the format MA.4a set up, as a link to the test's line. The rules checker read every named test against its claim and the wrong ones were replaced. Claims no test covers are left without a line and filed as gaps, grouped by area.</p><h3>Why it merged</h3><p>Needs the owner's review: the PR changes the merge gate and changes the session instructions.</p><p class="links"><a href="https://github.com/macandy13/arkham-companion/pull/1515">Revert</a> <a href="https://github.com/macandy13/arkham-companion/issues/new?title=Follow-up+to+%231515%3A+Every+rules+claim+links+its+test&amp;body=Follow-up+to+%231515.%0A%0A">Follow-up</a></p></section>
+<section class="entry"><p class="kicker">#1524 · ci · MA.6b</p><h2><a href="https://github.com/macandy13/arkham-companion/pull/1524">Daily digest workflow</a></h2><h3>The problem</h3><p>The digest renderer exists, but nothing runs it, so the owner has no daily page of what merged without them.</p><h3>What changes</h3><p>A scheduled workflow builds one NDJSON line per merged PR: its body, reviews, the gate status on its head, and the patches of its rules pages. It runs the digest CLI, publishes the page at digest/&lt;date&gt;/ and digest/, and comments on the digest issue only on days with entries.</p><h3>Why it merged</h3><p>Needs the owner's review: the PR changes the GitHub automation.</p><p class="links"><a href="https://github.com/macandy13/arkham-companion/pull/1524">Revert</a> <a href="https://github.com/macandy13/arkham-companion/issues/new?title=Follow-up+to+%231524%3A+Daily+digest+workflow&amp;body=Follow-up+to+%231524.%0A%0A">Follow-up</a></p></section>
 </main>
 </body>
 </html>
